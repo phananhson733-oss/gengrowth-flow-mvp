@@ -30,7 +30,7 @@ jobs:
             --page-id page_saturn_return \
             --entity "Saturn Return" \
             --target-keyword "saturn return" \
-            --expected-h2 5 \
+            --expected-h2 7 \
             --psych-safety transit \
             --llm-source "Claude Opus 4.7" \
             --prompt-version v8 \

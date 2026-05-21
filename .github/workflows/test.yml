@@ -1,0 +1,45 @@
+name: smoke-tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Run smoke test suite (pure node --test, zero npm deps)
+        run: node --test tools/scripts/__tests__/
+
+      - name: Verify red-lines + structure pass on bundled example article
+        run: |
+          # The bundled _staging/page_blue_aura_meaning-claude-v7-rl3-real.md
+          # was Phase-2-validated 6/6 at carve time. Re-run to catch any
+          # red-line / structure regression from lib changes.
+          mkdir -p .gg-cache/serp
+          cat > .gg-cache/serp/page_blue_aura_meaning.json <<'EOF'
+          {
+            "schema_version": "1",
+            "page_id": "page_blue_aura_meaning",
+            "entity": "Blue Aura",
+            "query": "blue aura meaning",
+            "snippets": [
+              "A blue aura often signals a calm intuitive person who values truth and clear communication above all else.",
+              "If you have a blue aura you may find yourself drawn to honest conversations and intuitive insights.",
+              "The blue aura is often associated with communication intuition and emotional balance in many esoteric traditions."
+            ]
+          }
+          EOF
+          node tools/scripts/_phase2-publish-blue-aura.mjs \
+            _staging/page_blue_aura_meaning-claude-v7-rl3-real.md \
+            ci-verify

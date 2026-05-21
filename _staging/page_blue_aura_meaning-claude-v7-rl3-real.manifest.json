@@ -1,0 +1,38 @@
+{
+  "schema_version": "1",
+  "page_id": "page_blue_aura_meaning",
+  "entity": "Blue Aura",
+  "target_keyword": "blue aura meaning",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "Claude Opus 4.7",
+  "prompt_version": "v7",
+  "generated_at": "2026-05-21T12:19:42.439Z",
+  "content_sha256_short": "c8852312d1913fc9",
+  "source_path": "/Users/wzb/gengrowth-wiki/_staging/page_blue_aura_meaning-claude-v7.md",
+  "staging_path": "/Users/wzb/gengrowth-wiki/_staging/page_blue_aura_meaning-claude-v7-rl3-real.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 7,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 1639,
+      "wikilinks": 4,
+      "tbdLinks": 4
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  },
+  "next_steps": [
+    "wzb 复核 _staging/page_blue_aura_meaning.md",
+    "copy to astrology site CMS / 内容资产/",
+    "Sheet Status: 写作中 → 质检 → 已发布（手动）"
+  ]
+}

@@ -1,0 +1,11 @@
+# Runtime caches and staging — keep clean repo, regenerate as needed.
+.gg-cache/
+_staging/*.tmp-*
+node_modules/
+.DS_Store
+*.log
+.env
+.env.local
+# Service Account / secrets (NEVER commit)
+_gg.env
+*.sa.json

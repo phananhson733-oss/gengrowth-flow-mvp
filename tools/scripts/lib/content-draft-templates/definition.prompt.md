@@ -94,9 +94,15 @@
 2. **Why It Matters for Self-Awareness**（H2，字面 H2 = `## Why It Matters for Self-Awareness`）— 1-2 段，必须落到 Friction 字段提到的真实痛点（不堆砌情绪形容词）
 3. **{{entity}} vs Adjacent Concepts: Mechanism + Trade-offs**（H2，字面 H2 = `## {{entity}} vs Adjacent Concepts: Mechanism + Trade-offs`，**禁止简写为 "vs Adjacent Concepts" — entity 前缀必须保留**）— ≥ 1 段对比 + 必须显式写出每个对比的 **mechanism（怎么作用）+ trade-off（什么情况下倾向哪种）**，引用 Logic 字段的「机制 + 权衡」
 4. **Quick Reference Table**（H2）— Markdown 表格 ≥ 4 列 × ≥ 3 行，**必须含「Property / Mechanism / Energy Center / Common Misread」4 列**（不是只列属性）
+   - **「Energy Center」语义按 entity 类型适配**（这一列不是固定 = 脉轮）：
+     - aura/color/chakra 类 entity → 对应脉轮名（throat / heart / crown 等）
+     - transit/cycle 类 entity（saturn return / chiron return / jupiter return / uranus opposition） → natal placement（natal house / natal sign / age window）
+     - sign/planet 类 entity → 主管 element / 主管 house
+     - **严禁在 transit/cycle entities 上塞 chakra / Human Design 术语**（如 "Root center" / "Solar plexus center" / "Heart center" / "throat center"）= RL1 invented_term，整篇作废
 5. **Reflection Prompts**（H2）— 必须 3 条 prompts，每条**≤ 25 词 / 1 句话**（不要写成治疗师式 multi-clause 长问），满足：
    - (a) 指向**具体情境回忆**（"Think of a recent moment when..."），**不要**「How does X make you feel?」泛问
    - (b) **关联 Logic 字段主题**（如 Logic 提到沟通能量，则 prompts 围绕沟通情境）
+   - (c) **必须 numbered list 格式 `1. ... / 2. ... / 3. ...`**，不要写成分段散文 — binary check 的 reflection_prompts 检测只识别 numbered 形式，paragraph 格式 = 0 prompts = fail
 6. **Related Reading**（H2）— 按 internal_link_rule 输出 wikilinks，**用 placeholder 格式** `[[<TBD-internal-link: short description>]]`（**绝不 invent 具体 anchor**），每条 1 句 1-line 为什么相关
 7. **Take Action**（H2，必须）— 文案 <field name="cta_text">{{cta_text}}</field>，链接 <field name="cta_target_url">{{cta_target_url}}</field>。**CTA 必须独立 H2，不能合并到结尾段，否则 structure check 直接 fail。**
 
@@ -239,6 +245,6 @@ target_keyword = **「{{target_keyword}}」**（完整 3 词短语）。**SEO + 
   - 全篇 ≥ {{WORD_RANGE}} 下限 = 通过；< 下限 = 重写整段并扩字数后再交稿
 
 - **关键词密度 check**：数 target_keyword "{{target_keyword}}" 在全文出现次数（case-insensitive，含变体如 "blue aura" / "blue-aura" / "blue aura color"）
-  - **若 > {{KW_COUNT_RANGE}} 上限 → 必须重写**，把多出来的 target_keyword 替换为代词（"this color" / "it" / "the trait" / "this energy"）或语义同义短语
+  - **若 > {{KW_COUNT_RANGE}} 上限 → 必须重写**，把多出来的 target_keyword 替换为代词（**按 entity 类型选合适代词** — aura/color 类 → "this color" / "this hue" / "the trait"；transit/cycle 类（saturn return / chiron return） → "the transit" / "this cycle" / "this passage" / "the return"；chakra/HD 类 → "this center" / "this energy"；通用回退 → "it" / "this" / entity 同义短语如 "Saturn's return" / "the planet's return"）
   - **绝不**用「同字塞」做 SEO（不要每段开头都用 "blue aura meaning"）
   - 上限内 ≤ {{KW_COUNT_RANGE}} 上限 = 通过；超 = 重写

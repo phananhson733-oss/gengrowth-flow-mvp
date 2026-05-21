@@ -21,25 +21,17 @@ jobs:
       - name: Run smoke test suite (pure node --test, zero npm deps)
         run: node --test 'tools/scripts/__tests__/*.test.mjs'
 
-      - name: Verify red-lines + structure pass on bundled example article
+      - name: Verify red-lines + structure pass on bundled v8 example article
         run: |
-          # The bundled _staging/page_blue_aura_meaning-claude-v7-rl3-real.md
-          # was Phase-2-validated 6/6 at carve time. Re-run to catch any
-          # red-line / structure regression from lib changes.
-          mkdir -p .gg-cache/serp
-          cat > .gg-cache/serp/page_blue_aura_meaning.json <<'EOF'
-          {
-            "schema_version": "1",
-            "page_id": "page_blue_aura_meaning",
-            "entity": "Blue Aura",
-            "query": "blue aura meaning",
-            "snippets": [
-              "A blue aura often signals a calm intuitive person who values truth and clear communication above all else.",
-              "If you have a blue aura you may find yourself drawn to honest conversations and intuitive insights.",
-              "The blue aura is often associated with communication intuition and emotional balance in many esoteric traditions."
-            ]
-          }
-          EOF
-          node tools/scripts/_phase2-publish-blue-aura.mjs \
-            _staging/page_blue_aura_meaning-claude-v7-rl3-real.md \
-            ci-verify
+          # Bundled Saturn Return v8 (Claude) was 6/6 PASS under v8 standard.
+          # Re-run via the generalized validator to catch any lib regression.
+          node tools/scripts/_phase2-validate.mjs \
+            --source _staging/page_saturn_return-claude-v8.md \
+            --page-id page_saturn_return \
+            --entity "Saturn Return" \
+            --target-keyword "saturn return" \
+            --expected-h2 5 \
+            --psych-safety transit \
+            --llm-source "Claude Opus 4.7" \
+            --prompt-version v8 \
+            --tag ci-verify

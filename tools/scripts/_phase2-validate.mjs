@@ -153,7 +153,13 @@ console.log(`Source: ${ctx.source}`);
 console.log(`LLM: ${ctx.llm_source} / prompt: ${ctx.prompt_version}`);
 console.log('━'.repeat(60));
 
-const draft = readFileSync(ctx.source, 'utf8');
+const rawSource = readFileSync(ctx.source, 'utf8');
+// Strip YAML frontmatter if present. Fresh LLM output has none; re-runs on
+// published files carry an auto-added frontmatter listing target_keyword +
+// associated_keywords which would otherwise double-count and falsely fail RL5.
+const draft = rawSource.startsWith('---\n')
+  ? rawSource.replace(/^---\n[\s\S]*?\n---\n+/, '')
+  : rawSource;
 if (!draft.match(/^#\s+.+$/m)) {
   console.error('ERROR: draft has no H1; aborting');
   process.exit(1);

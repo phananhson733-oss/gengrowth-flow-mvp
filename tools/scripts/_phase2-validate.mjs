@@ -157,30 +157,69 @@ function structureCheck(draft) {
 
   // Required H2 list is template-aware: Definition is leaf-entity shape,
   // Pillar is hub/aggregator shape.
-  const requiredH2s = ctx.template === 'Pillar'
+  //
+  // The "intro" H2 (`What is X?` / `What are X?` / `What is the X?` etc.) is
+  // entity-name-sensitive — Pillar entities are often plural-set ("Aura Colors",
+  // "Seven Chakras") which want "are", but they can also be singular abstract
+  // collectives ("Chakra System", "Four-Element Framework") which want "is" or
+  // "is the". Same for "at a Glance" / "vs Adjacent Concepts" H2s. Accept any
+  // grammatically-defensible variant so the validator doesn't reject the LLM
+  // for picking the natural article ("is the X" vs "are X") based on the
+  // entity itself. Only one variant must be present; missing = fail.
+  const introVariants = ctx.template === 'Pillar'
     ? [
         `## What are ${ctx.entity}?`,
-        '## Why It Matters for Self-Awareness',
-        `## The ${ctx.entity} at a Glance`,
-        // Section 4 "## The N {{entity}}: Quick Guide" uses dynamic count → match by suffix only
-        ': Quick Guide',
-        '## How Shade and Combination Shift Readings',
-        '## Common Misreads + Framework Limits',
-        '## Reflection Prompts',
-        '## Related Reading',
-        '## Take Action',
+        `## What are the ${ctx.entity}?`,
+        `## What is ${ctx.entity}?`,
+        `## What is the ${ctx.entity}?`,
       ]
     : [
         `## What is ${ctx.entity}?`,
-        '## Why It Matters for Self-Awareness',
-        `## ${ctx.entity} vs Adjacent Concepts: Mechanism + Trade-offs`,
-        '## Quick Reference Table',
-        '## Reflection Prompts',
-        '## Related Reading',
-        '## Take Action',
+        `## What is the ${ctx.entity}?`,
+        `## What is a ${ctx.entity}?`,
+        `## What is an ${ctx.entity}?`,
+        `## What are ${ctx.entity}?`,
       ];
-  for (const h of requiredH2s) {
-    if (!draft.includes(h)) findings.push(`missing required H2: "${h}"`);
+
+  const requiredH2Specs = ctx.template === 'Pillar'
+    ? [
+        { variants: introVariants, label: introVariants[0] },
+        { variants: ['## Why It Matters for Self-Awareness'], label: '## Why It Matters for Self-Awareness' },
+        {
+          variants: [
+            `## ${ctx.entity} at a Glance`,
+            `## The ${ctx.entity} at a Glance`,
+          ],
+          label: `## The ${ctx.entity} at a Glance`,
+        },
+        // Section 4 "## The N {{entity}}: Quick Guide" uses dynamic count
+        // (e.g. "The 7 Chakras: Quick Guide") → match by suffix only.
+        { variants: [': Quick Guide'], label: '<...>: Quick Guide' },
+        { variants: ['## How Shade and Combination Shift Readings'], label: '## How Shade and Combination Shift Readings' },
+        { variants: ['## Common Misreads + Framework Limits'], label: '## Common Misreads + Framework Limits' },
+        { variants: ['## Reflection Prompts'], label: '## Reflection Prompts' },
+        { variants: ['## Related Reading'], label: '## Related Reading' },
+        { variants: ['## Take Action'], label: '## Take Action' },
+      ]
+    : [
+        { variants: introVariants, label: introVariants[0] },
+        { variants: ['## Why It Matters for Self-Awareness'], label: '## Why It Matters for Self-Awareness' },
+        {
+          variants: [
+            `## ${ctx.entity} vs Adjacent Concepts: Mechanism + Trade-offs`,
+            `## The ${ctx.entity} vs Adjacent Concepts: Mechanism + Trade-offs`,
+          ],
+          label: `## ${ctx.entity} vs Adjacent Concepts: Mechanism + Trade-offs`,
+        },
+        { variants: ['## Quick Reference Table'], label: '## Quick Reference Table' },
+        { variants: ['## Reflection Prompts'], label: '## Reflection Prompts' },
+        { variants: ['## Related Reading'], label: '## Related Reading' },
+        { variants: ['## Take Action'], label: '## Take Action' },
+      ];
+
+  for (const spec of requiredH2Specs) {
+    const found = spec.variants.some((v) => draft.includes(v));
+    if (!found) findings.push(`missing required H2: "${spec.label}"`);
   }
 
   const wikilinks = draft.match(/\[\[[^\]]+\]\]/g) || [];

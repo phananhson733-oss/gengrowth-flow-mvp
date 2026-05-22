@@ -13,6 +13,12 @@
 //     --winner-llm claude --version v8 \
 //     --oracle-articles-dir /Users/wzb/Code/oracle/data/articles
 //
+// Mixed-winner batch (some pages claude, others codex):
+//   node tools/scripts/gg-md-to-oracle-ts.mjs --batch \
+//     --winner-llm claude --version v8 \
+//     --pages "page_orange_aura_meaning page_chakra_system_overview" \
+//     --winner-map "page_chakra_system_overview:codex"
+//
 // Body transforms applied (in order):
 //   1. Resolve `[[<TBD-internal-link: X>]]` via TBD_LINK_MAP:
 //      matched → `[X](/en/wiki/<slug>)` real markdown link
@@ -28,7 +34,7 @@
 // Lang: 'en' (our articles are EN-only).
 // Author: 'AstrologyWiki Team' (matches existing oracle convention).
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -230,6 +236,86 @@ function parseArgs(argv) {
   return out;
 }
 
+// Reverse of pageIdToSlug — recover page_id from slug. The forward
+// transform is `page_<snake_case>` → `<kebab-case>`; reverse is best-effort
+// since the prefix is hardcoded. Callers should still verify that the
+// returned page_id corresponds to a staging md (caller guards).
+export function slugToPageId(slug) {
+  return `page_${slug.replace(/-/g, '_')}`;
+}
+
+// Returns true if `_staging/<page_id>-<llm>-<version>.manifest.json` exists
+// AND its phase2_checks.overall is "pass". phase2-validate only enriches the
+// frontmatter + writes the manifest on PASS, so failures are correctly
+// invisible to refresh-existing.
+function hasPassedPhase2(stagingDir, pageId, llm, version) {
+  const manifestPath = join(stagingDir, `${pageId}-${llm}-${version}.manifest.json`);
+  if (!existsSync(manifestPath)) return false;
+  try {
+    const m = JSON.parse(readFileSync(manifestPath, 'utf8'));
+    return m?.phase2_checks?.overall === 'pass';
+  } catch {
+    return false;
+  }
+}
+
+// Find every oracle article slug that has at least one PHASE2-PASSED v8
+// staging md (claude preferred, codex as fallback). Used by --refresh-existing
+// to re-run the converter on previously-published articles so new
+// TBD_LINK_RULES entries get picked up in their body. Skips:
+//   - legacy articles (no v8 staging md at all — pre-aura cluster)
+//   - articles whose v8 staging md exists but FAILED phase2 (no frontmatter,
+//     no manifest → would break convertOne's `parseFrontmatter` anyway)
+export function findRefreshableArticles({ articlesDir, stagingDir, version = 'v8' }) {
+  if (!existsSync(articlesDir)) throw new Error(`articlesDir not found: ${articlesDir}`);
+  if (!existsSync(stagingDir)) throw new Error(`stagingDir not found: ${stagingDir}`);
+  const out = [];
+  for (const fname of readdirSync(articlesDir)) {
+    if (!fname.endsWith('.ts')) continue;
+    if (fname === 'index.ts' || fname.startsWith('_')) continue;
+    const slug = fname.replace(/\.ts$/, '');
+    const pageId = slugToPageId(slug);
+    // Prefer claude winner if it passed; else fall back to codex if it passed.
+    let winner = null;
+    if (hasPassedPhase2(stagingDir, pageId, 'claude', version)) winner = 'claude';
+    else if (hasPassedPhase2(stagingDir, pageId, 'codex', version)) winner = 'codex';
+    if (winner) out.push({ slug, pageId, winner });
+  }
+  return out;
+}
+
+// Audit TBD_LINK_RULES against the oracle articles directory. Reports two
+// drift modes:
+//   (1) oracle has an article whose slug is NOT a `href` target in any rule
+//       → TBD wikilinks for that entity will fall through to italic placeholder
+//       even though the article exists. Action: add a TBD_LINK_RULES entry.
+//   (2) a TBD_LINK_RULES rule points at a `/en/wiki/<slug>` that has no
+//       matching .ts file under oracle/data/articles/. Action: remove the
+//       rule or wait until the article ships.
+//
+// Returns 0 = clean / 1 = drift found. Doesn't modify anything.
+export function auditTbdRulesAgainstOracle(articlesDir, rules = TBD_LINK_RULES) {
+  if (!existsSync(articlesDir)) {
+    throw new Error(`oracle articles dir not found: ${articlesDir}`);
+  }
+  const slugsOnDisk = new Set();
+  // articlesDir is a flat directory of ~20 .ts files; sync readdir is fine.
+  for (const fname of readdirSync(articlesDir)) {
+    if (!fname.endsWith('.ts')) continue;
+    if (fname === 'index.ts' || fname.startsWith('_')) continue;
+    slugsOnDisk.add(fname.replace(/\.ts$/, ''));
+  }
+  const slugsCoveredByRules = new Set(
+    rules.map((r) => {
+      const m = /^\/en\/wiki\/([a-z0-9-]+)$/.exec(r.href || '');
+      return m ? m[1] : null;
+    }).filter(Boolean),
+  );
+  const missingRule = [...slugsOnDisk].filter((s) => !slugsCoveredByRules.has(s));
+  const danglingRule = [...slugsCoveredByRules].filter((s) => !slugsOnDisk.has(s));
+  return { missingRule, danglingRule, slugsOnDisk: [...slugsOnDisk], slugsCoveredByRules: [...slugsCoveredByRules] };
+}
+
 async function main(argv) {
   const args = parseArgs(argv);
   if (args.h || args.help) {
@@ -238,29 +324,100 @@ async function main(argv) {
     return 0;
   }
 
+  if (args.audit_links) {
+    const articlesDir = args.oracle_articles_dir || '/Users/wzb/Code/oracle/data/articles';
+    let report;
+    try {
+      report = auditTbdRulesAgainstOracle(articlesDir);
+    } catch (e) {
+      process.stderr.write(`✗ audit failed: ${e.message}\n`);
+      return 2;
+    }
+    process.stdout.write(`TBD_LINK_RULES audit (${articlesDir})\n`);
+    process.stdout.write(`  oracle articles on disk: ${report.slugsOnDisk.length}\n`);
+    process.stdout.write(`  slugs covered by rules:  ${report.slugsCoveredByRules.length}\n\n`);
+    if (report.missingRule.length === 0 && report.danglingRule.length === 0) {
+      process.stdout.write(`✓ rules + oracle articles are in sync.\n`);
+      return 0;
+    }
+    if (report.missingRule.length) {
+      process.stdout.write(`⚠ ${report.missingRule.length} oracle article(s) NOT routed by any rule — TBD wikilinks fall to italic placeholder:\n`);
+      for (const s of report.missingRule) process.stdout.write(`    /en/wiki/${s}\n`);
+      process.stdout.write(`  → add a TBD_LINK_RULES entry in tools/scripts/gg-md-to-oracle-ts.mjs\n\n`);
+    }
+    if (report.danglingRule.length) {
+      process.stdout.write(`⚠ ${report.danglingRule.length} rule(s) point at slug(s) with no .ts file on disk:\n`);
+      for (const s of report.danglingRule) process.stdout.write(`    /en/wiki/${s}\n`);
+      process.stdout.write(`  → remove the stale rule, or ship the article first.\n`);
+    }
+    return 1;
+  }
+
   if (args.batch) {
-    const winnerLlm = args.winner_llm || 'claude';
+    const defaultWinnerLlm = args.winner_llm || 'claude';
     const version = args.version || 'v8';
     const articlesDir = args.oracle_articles_dir || '/Users/wzb/Code/oracle/data/articles';
-    const pages = (args.pages && args.pages !== true) ? args.pages.split(/\s+/) : DEFAULT_PAGES;
     const stagingDir = args.staging_dir || join(FLOW_REPO, '_staging');
+
+    // Page list resolution priority:
+    //   1. --refresh-existing → every oracle article with a v8 staging md
+    //   2. --pages "..."     → explicit list
+    //   3. DEFAULT_PAGES     → the original 6 aura batch
+    let pages;
+    let autoWinnerMap = {};
+    if (args.refresh_existing) {
+      let refreshable;
+      try {
+        refreshable = findRefreshableArticles({ articlesDir, stagingDir, version });
+      } catch (e) {
+        process.stderr.write(`✗ refresh-existing failed: ${e.message}\n`);
+        return 2;
+      }
+      pages = refreshable.map((r) => r.pageId);
+      // Auto-populate winner map from whatever staging md is actually present.
+      // User-supplied --winner-map still wins over this auto-map.
+      for (const r of refreshable) autoWinnerMap[r.pageId] = r.winner;
+      process.stdout.write(`[refresh-existing] found ${refreshable.length} oracle article(s) with v8 staging md\n`);
+    } else {
+      pages = (args.pages && args.pages !== true) ? args.pages.split(/\s+/) : DEFAULT_PAGES;
+    }
+
+    // Per-page winner override map. Lets a mixed-winner batch (some pages
+    // claude-PASS, others codex-PASS) convert in one invocation:
+    //   --winner-map "page_chakra_system_overview:codex,page_orange_aura_meaning:claude"
+    // Resolution order per page: explicit --winner-map > autoWinnerMap
+    // (filled by --refresh-existing from existing staging md) > --winner-llm
+    // > 'claude'.
+    const winnerMap = { ...autoWinnerMap };
+    if (args.winner_map && args.winner_map !== true) {
+      for (const pair of String(args.winner_map).split(/[,\s]+/).filter(Boolean)) {
+        const idx = pair.indexOf(':');
+        if (idx <= 0) {
+          process.stderr.write(`invalid --winner-map pair "${pair}" — expected page_id:llm\n`);
+          return 2;
+        }
+        winnerMap[pair.slice(0, idx)] = pair.slice(idx + 1);
+      }
+    }
+
     const results = [];
     for (const pid of pages) {
       const slug = pageIdToSlug(pid);
+      const winnerLlm = winnerMap[pid] || defaultWinnerLlm;
       const source = join(stagingDir, `${pid}-${winnerLlm}-${version}.md`);
       const out = join(articlesDir, `${slug}.ts`);
       if (!existsSync(source)) {
         process.stderr.write(`✗ missing: ${source}\n`);
-        results.push({ pid, ok: false, reason: 'source missing' });
+        results.push({ pid, ok: false, reason: 'source missing', winnerLlm });
         continue;
       }
       try {
         const r = convertOne({ source, slug, out });
-        process.stdout.write(`✓ ${r.slug}  →  ${r.out}  (var: ${r.varName})\n`);
-        results.push({ pid, ok: true, ...r });
+        process.stdout.write(`✓ ${r.slug}  →  ${r.out}  (var: ${r.varName}, winner: ${winnerLlm})\n`);
+        results.push({ pid, ok: true, winnerLlm, ...r });
       } catch (e) {
         process.stderr.write(`✗ ${pid}: ${e.message}\n`);
-        results.push({ pid, ok: false, reason: e.message });
+        results.push({ pid, ok: false, reason: e.message, winnerLlm });
       }
     }
     const ok = results.filter((r) => r.ok);

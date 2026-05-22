@@ -24,6 +24,7 @@
 
 import { readFileSync, writeFileSync, existsSync, statSync, readdirSync } from 'node:fs';
 import { join, dirname, relative, sep } from 'node:path';
+import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 
 import {
@@ -38,8 +39,33 @@ import {
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = join(__dirname, '..', '..');
-const DEFAULT_VAULT = join(REPO_ROOT, 'wzb-obsidian', 'LLM-Wiki');
 const DEFAULT_CACHE = join(REPO_ROOT, '.gg-cache');
+
+// Vault path resolution order (first existing wins; CLI --vault-dir / env
+// GG_OBSIDIAN_VAULT override these defaults). Historical layout: vault was
+// once a submodule under flow-mvp; in production it lives in the sibling
+// gengrowth-wiki repo. Both paths checked so old configs keep working.
+export const VAULT_CANDIDATES = [
+  join(homedir(), 'gengrowth-wiki', 'wzb-obsidian', 'LLM-Wiki'),
+  join(REPO_ROOT, '..', 'gengrowth-wiki', 'wzb-obsidian', 'LLM-Wiki'),
+  join(REPO_ROOT, 'wzb-obsidian', 'LLM-Wiki'),
+];
+
+export function resolveDefaultVault() {
+  if (process.env.GG_OBSIDIAN_VAULT) return process.env.GG_OBSIDIAN_VAULT;
+  for (const candidate of VAULT_CANDIDATES) {
+    try {
+      if (existsSync(candidate)) return candidate;
+    } catch {
+      // ignore stat/permission errors, try next
+    }
+  }
+  // Return last candidate so the existing "vault not found" error path
+  // surfaces a sensible message instead of an undefined-path NPE.
+  return VAULT_CANDIDATES[VAULT_CANDIDATES.length - 1];
+}
+
+const DEFAULT_VAULT = resolveDefaultVault();
 
 const TOOL_NAME = 'gg-obsidian-rag';
 const TOOL_VERSION = `${TOOL_NAME} v1.0`;
@@ -107,7 +133,8 @@ flags:
   --page-id <slug>            required (matches [A-Za-z0-9_-]{1,64})
   --entity "<text>"           required (used for matching)
   --target-keyword "<text>"   optional (echoed into output for traceability)
-  --vault-dir <path>          default wzb-obsidian/LLM-Wiki/
+  --vault-dir <path>          default ${DEFAULT_VAULT}
+                              (override via env GG_OBSIDIAN_VAULT)
   --cache-dir <path>          default .gg-cache/
   --rebuild-index             force walk vault again (ignores cached index)
 `);

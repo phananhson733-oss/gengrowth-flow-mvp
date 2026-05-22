@@ -11,3 +11,5 @@ _gg.env
 *.sa.json
 # Claude Code agent worktree leftovers (transient, per-agent dirs)
 .claude/worktrees/
+# Obsidian opens any dir as vault and dumps config here — not a real vault.
+.obsidian/

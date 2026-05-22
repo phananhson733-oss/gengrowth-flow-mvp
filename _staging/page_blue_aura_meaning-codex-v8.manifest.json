@@ -6,12 +6,12 @@
   "template": "Definition",
   "tier": "T2",
   "track": "量产线",
-  "generated_by": "claude",
+  "generated_by": "codex",
   "prompt_version": "v8",
-  "generated_at": "2026-05-22T09:31:11.092Z",
-  "content_sha256_short": "00c451e57b1bc5d4",
-  "source_path": "_staging/page_blue_aura_meaning-claude-v8.md",
-  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/page_blue_aura_meaning-claude-v8.md",
+  "generated_at": "2026-05-22T09:31:11.123Z",
+  "content_sha256_short": "a7ed3d1d21680932",
+  "source_path": "_staging/page_blue_aura_meaning-codex-v8.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/page_blue_aura_meaning-codex-v8.md",
   "phase2_checks": {
     "overall": "pass",
     "structure": {
@@ -19,9 +19,9 @@
       "h2Count": 7,
       "h3Count": 0,
       "h4Count": 0,
-      "words": 1554,
-      "wikilinks": 5,
-      "tbdLinks": 5
+      "words": 1546,
+      "wikilinks": 6,
+      "tbdLinks": 6
     },
     "rl1": true,
     "rl2": true,

@@ -9,3 +9,5 @@ node_modules/
 # Service Account / secrets (NEVER commit)
 _gg.env
 *.sa.json
+# Claude Code agent worktree leftovers (transient, per-agent dirs)
+.claude/worktrees/

@@ -1,0 +1,16 @@
+{
+  "schema_version": "1",
+  "page_id": "page_white_aura_meaning",
+  "entity": "White Aura",
+  "target_keyword": "white aura meaning",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "Gemini 2.5 Pro",
+  "prompt_version": "v8",
+  "generated_at": "2026-05-22T09:05:28Z",
+  "content_sha256_short": "2513aed82f877e55",
+  "source_path": "_staging/page_white_aura_meaning-gemini-v8.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/page_white_aura_meaning-gemini-v8.md",
+  "phase2_checks": "pending"
+}

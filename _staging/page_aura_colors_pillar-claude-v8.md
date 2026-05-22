@@ -1,7 +1,7 @@
 ---
 title: Aura Colors Meaning
 slug: aura-colors-meaning
-date: 2026-05-21
+date: 2026-05-22
 status: ready-to-review
 type: wiki-entry
 template: Pillar
@@ -13,10 +13,10 @@ associated_keywords:
   - aura colors chart
   - aura color meanings
   - how to read auras
-generated_by: claude-opus-4-7
+generated_by: claude
 prompt_version: v8
-generated_at: 2026-05-21T17:36:48.018Z
-content_sha256_short: 5c0a4fa6ff7e9eb4
+generated_at: 2026-05-22T09:31:10.990Z
+content_sha256_short: 1a53be57f0dd710c
 phase2_checks: all-pass
 ---
 
@@ -24,91 +24,95 @@ phase2_checks: all-pass
 
 ## What are aura colors?
 
-Aura colors are the color labels practitioners in subtle-energy traditions use to describe the apparent dominant color of someone's energy field. The aura colors meaning, in the way the phrase gets used in popular astrology and energy work, refers to the interpretive framework that pairs each main color with a chakra center and a default temperament. The standard pairings, read up the body, run as follows: root (red), sacral (orange), solar plexus (yellow), heart (green), throat (blue), third eye joined with crown (purple), and crown extending into the soul-star center above the head (white). The framework offers a vocabulary for self-reflection, not a measurable physical claim. Most lineages cover seven main colors, though some split shades (violet from purple, light blue from indigo) or treat gold as a separate category. The honest reading is to treat these labels as state-and-shade sensitive interpretive descriptions rather than fixed identity verdicts.
+Aura colors are **the color labels practitioners use to describe a person's prevailing energetic state** within subtle-energy traditions. They are not a single thing — they are a family of seven main color categories (red, orange, yellow, green, blue, purple, and white) that together form an interpretive vocabulary. Each color maps to one of the seven main chakra centers, and the whole set is treated as a framework for self-reflection rather than a measurable physical signal. The aura colors meaning system gives readers a shared language for describing how someone's energy reads in a moment, without forcing every person into a single fixed label.
 
 ## Why It Matters for Self-Awareness
 
-People search aura colors meaning for one of three reasons, and each maps to a real form of confusion. The first is system credibility. Many popular write-ups treat aura colors as a quiz-style personality test — "your color says you are X" — without ever showing how the framework actually works. Readers come away unsure whether the aura colors meaning system is a real interpretive tradition with internal coherence or just vibes packaged for Instagram. The honest answer is that it is a working vocabulary used across several subtle-energy lineages with reasonable internal consistency, but the framework is interpretive — not measurable — and most articles fail to say so up front.
+Most articles on aura colors meaning treat each color as a personality verdict — read one paragraph, get told you are "a green person," move on. That misses the actual question people bring to the search bar. Readers usually arrive with three friction points stacked on top of each other. First, they cannot tell if the framework has any internal consistency or if every site is just inventing vibes. Second, they have seen aura photos showing two or three colors at once, and the articles around them keep picking only one as the answer. Third, they have read three sites giving three different definitions of the same color, and they want to know which tradition to trust.
 
-The second is shade and combination ambiguity. Many readers see two or three colors in the same aura photo, or notice their dominant color shifts over weeks. Most articles collapse this into a single "your color is X" verdict and ignore the rest. The aura colors meaning framework as practiced in most lineages actually handles shade and combination explicitly: bright versus muddy yellow are not the same state, light versus deep blue carry different meanings, and a green-blue combined read describes something real that neither color alone captures. The simplification is in the popular write-ups, not in the framework itself.
+Looking at the entire family before any single color helps with all three. Once you see how the seven colors sit next to each other — red at the grounded end, purple at the inward end, white as integration — the individual readings stop feeling like horoscope labels and start feeling like positions on a spectrum. The aura colors meaning system was always meant to be read this way: as a vocabulary, not a verdict. A green reading does not say you "are green forever"; it says that at this moment, the relational, heart-centered tone is what shows up most. That reframing matters because it lets people use the language without surrendering their identity to it.
 
-The third is cross-lineage inconsistency. One source describes purple as a psychic gift; another describes it as anxiety and overthinking; a third doesn't include purple at all. Readers reasonably wonder which lineage is the "right" one. The truthful frame: aura color systems are not perfectly consistent across traditions, and the right move when sources disagree is to notice which lineage a particular description is working in rather than declaring one source universally correct.
+The framework also matters because it gives self-reflection a structure that pure feelings-talk cannot. When someone says "I have been feeling off," that sentence has nowhere to land. When the same person says "lately my yellow feels muddy and my blue keeps getting blocked," they are using a shared vocabulary to describe an internal state with more precision than mood words alone allow. That is the real value of the aura colors meaning family — it is a self-awareness scaffold, not a diagnostic tool.
 
-The first self-awareness payoff is treating the aura colors meaning vocabulary as a working description rather than a fixed personality tag. A color that fits you in spring may not fit in November; a color that describes how you operate at work may not describe your inner emotional system. Differentiating which version of "you" the framework is describing in a given moment turns the labels from verdicts into useful self-reflection.
+There is also a social function worth naming. Friends, partners, and small communities use color language as a low-stakes way to discuss energetic dynamics without forcing each other into psychological labels. Saying "your green is doing a lot of work this week" lands differently than saying "you are burning out on caretaking." The first is observational and lets the person respond; the second feels like a verdict. The vocabulary works as a shared interface, not a stack of diagnoses, which is why people who grew up around it often keep using it long after they stop taking the metaphysical claims literally. The framework outlives its origin story because the language itself is useful.
 
-The second payoff is decision support. If your self-read settles consistently into one or two colors over time, the framework gives you a vocabulary for choosing roles, partnerships, and rhythms that match that orientation. A blue-leaning reader gravitates toward language work; a green-leaning reader toward care; a yellow-leaning reader toward visible authorship; a purple-leaning reader toward integration and pattern. Naming the preference without forcing it into a permanent identity is what keeps the framework useful instead of confining.
+Finally, looking at the whole family first protects readers from the most common trap: walking into a single-color article, identifying with the description, and walking out with an identity. Single-entity pages are deeper, but they are also where the "I am a green person" mistake gets minted. Pillar-level orientation — seeing the spectrum, seeing the overlaps, seeing the shade variations — gives readers context to use any single-color page as a description rather than a category they have to live inside.
 
 ## The aura colors at a Glance
 
-| Color | Core Theme | Energy Center | Common Misread |
-|-------|-----------|---------------|----------------|
-| Red | Vitality, grounding, embodied drive | Root chakra | Reading red as aggression rather than warm engaged energy |
-| Orange | Creativity, sensuality, playful warmth | Sacral chakra | Mistaking expressiveness for performative attention-seeking |
-| Yellow | Confidence, intellect, applied optimism | Solar plexus chakra | Reading bright yellow as ego or muddy yellow as character defect |
-| Green | Compassion, healing presence, relational steadiness | Heart chakra | Mistaking steady nurturing for over-giving or passivity |
-| Blue | Calm communication, truth-telling, clear expression | Throat chakra | Reading calm as flatness or as conflict avoidance |
-| Purple | Intuition, inward processing, meaning-making | Third eye + crown | Treating inwardness as detachment or as a psychic-tier claim |
-| White | Integration, full-spectrum balance, contextual rest | Crown + soul star | Treating white as a "highest tier" rather than a rare contextual state |
+| Aura Color | Core Theme | Energy Center (Chakra) | Common Misread |
+| --- | --- | --- | --- |
+| Red | Vitality, drive, grounded action | Root | Read as "anger" when it is simply unspent energy |
+| Orange | Creativity, sensuality, embodiment | Sacral | Read as "flirty" when it is creative aliveness |
+| Yellow | Confidence, intellect, momentum | Solar Plexus | Bright yellow read as ego when it is healthy self-trust |
+| Green | Care, healing, relational tuning | Heart | Read as "people-pleaser" when it is empathic capacity |
+| Blue | Calm, truth-telling, clear expression | Throat | Read as "cold" when it is measured composure |
+| Purple | Intuition, inward processing, mysticism | Third Eye / Crown | Read as "spaced out" when it is reflective depth |
+| White | Integration, full-spectrum balance | Crown / Soul Star | Read as "purity" when it is balance across the others |
 
 ## The 7 aura colors: Quick Guide
 
-**Red aura** — A red aura is read in most subtle-energy traditions as energetic, embodied vitality with a default toward action and grounded presence. Practitioners commonly link red to the root chakra and themes of safety, drive, and being firmly seated in the body. People who self-read as red-leaning often describe themselves as passionate, direct, and quick to engage. The common misread is treating red as aggression or anger — the framework's actual register is closer to "warm engine running" than "ready to fight," and confusing the two leads readers to dampen real energy they should be honoring. [[<TBD-internal-link: red aura explainer>]]
+**Red aura** — Red sits at the root chakra end of the family and reads as raw vitality: physical drive, embodied presence, and the willingness to take grounded action. People showing strong red tend to be doers, and the color often deepens when someone is in a survival-mode push rather than purely thriving. The common misread is to flatten red into "angry person." Red is energy and grounding, not aggression by default — muddy or overheated red can read as frustration, but bright clear red usually just means someone is alive in their body. For the deeper aura colors meaning of red, see [[<TBD-internal-link: red aura explainer>]].
 
-**Orange aura** — Orange auras tend to be read as sensual, creative, and warmly social — the color of embodied play. The framework links orange to the sacral chakra and themes of pleasure, expression, and relational warmth. Orange-leaning self-reads often surface in people whose default mode is collaborative, expressive, and playful with their work. The common misread is mistaking orange for showy or attention-seeking; the framework's actual register is closer to "comfortable in the body and in the room" than performance for an audience. [[<TBD-internal-link: orange aura explainer>]]
+**Orange aura** — Orange maps to the sacral chakra and reads as creative, sensual, expressive aliveness. People showing strong orange tend to be embodied and emotionally fluid, often working in creative or relational fields where being permeable to feeling is a feature, not a bug. The misread is to slot orange into "flirty" or "attention-seeking." That projection misses what orange actually carries: the capacity to make something — a meal, a room, a conversation — feel warm and alive. For the deeper reading, see [[<TBD-internal-link: orange aura explainer>]].
 
-**Yellow aura** — Yellow auras are read as confident, intellectually engaged, and forward-leaning, commonly linked to the solar plexus chakra and themes of personal power and clear self-expression. The yellow read covers a range of shades: bright yellow tends to be read as vitality, muddy yellow as strain or burnout, golden yellow as teaching-oriented mature confidence. The common misread is collapsing these shades into a single trait — bright and muddy yellow are not the same state, and treating them as one verdict misses what the shade is telling you. [[<TBD-internal-link: yellow aura explainer>]]
+**Yellow aura** — Yellow sits at the solar plexus and reads as confidence, mental clarity, and forward momentum. A bright clear yellow often shows up in people running on healthy self-trust — they make decisions and follow through without needing constant outside validation. The misread is to call bright yellow "ego." Self-trust is not the same as arrogance; muddy or anxious yellow reads very differently from clear yellow, and the distinction matters. For the deeper reading, see [[<TBD-internal-link: yellow aura explainer>]].
 
-**Green aura** — Green auras are framed as the color of healing presence, compassion, and relational grounding, commonly associated with the heart chakra. People with a green-leaning self-read often describe themselves as natural caretakers, mediators, or quiet stabilizers in their close circles. The common misread is hearing green as soft or inactive; the framework's actual read is closer to "steady ground that lets growth happen" than passivity. Over-care without limits is the most typical drift state when the green register slides under stress. [[<TBD-internal-link: green aura explainer>]]
+**Green aura** — Green maps to the heart chakra and reads as nurturing, healing-oriented, relationally tuned. People with strong green often work in caregiving roles or are the friend who notices when others are off. The common misread is to label green a "people-pleaser." Green's care is not codependence by default — it is empathic capacity, and the unhealthy version (muddy green leaning toward giving past one's limits) is a distortion of the core trait, not the core trait itself. For the deeper reading, see [[<TBD-internal-link: green aura explainer>]].
 
-**Blue aura** — Blue auras are read as the color of calm communication and truthful expression, linked in most lineages to the throat chakra. Blue-leaning self-reads often surface in writers, mediators, teachers, and counselors — people whose default register is to slow conflict down with clear words. Different shades carry different meanings: light blue toward sensitivity, dark blue or indigo toward inner intuition. The common misread is treating calm as avoidance or flatness — the framework's read is closer to "the most articulate version of presence" than disengagement. [[<TBD-internal-link: blue aura explainer>]]
+**Blue aura** — Blue sits at the throat chakra and reads as calm communication, truth-telling, and measured self-expression. People showing strong blue tend to be the steady voices in a group — they say what is true without theatrical delivery. The misread is to call blue "cold" or "detached." Composure under pressure is not absence of feeling; it is feeling that has been routed through clear expression rather than reactive volume. For the deeper reading, see [[<TBD-internal-link: blue aura explainer>]].
 
-**Purple aura** — Purple auras are read as the color of inward processing, intuition, and meaning-making, linked to the third-eye and crown chakras. Purple-leaning self-reads often appear in people who default to noticing patterns and integrating slowly before speaking. The common misread is treating purple as a mystical credential or psychic-tier claim — the framework's read is closer to "attention defaults to inner pattern" than supernatural ability. Slow integration is the gift; treating outward silence as detachment is the most common interpretive error from the outside. [[<TBD-internal-link: purple aura explainer>]]
+**Purple aura** — Purple bridges the third eye and crown chakras and reads as intuition, mystical orientation, and inward processing. People showing strong purple tend to be reflective, often picking up on subtle dynamics before others name them. The misread is to write purple off as "spaced out" or unfocused. Inward processing is not absence of presence — it is a different attention rhythm, and the depth purple brings is often what makes someone trustworthy in big-picture decisions. For the deeper reading, see [[<TBD-internal-link: purple aura explainer>]].
 
-**White aura** — White auras are treated by most lineages as rare and connected to the crown and soul star centers, representing integration and full-spectrum balance. People with a white-leaning self-read often describe a sense of having moved through several phases and arrived at something more whole. The common misread is treating white as a "top tier" — a hierarchy the framework does not actually claim. White is contextual: it can describe a momentary state of integration following hard work, not a permanent identity badge. [[<TBD-internal-link: white aura explainer>]]
+**White aura** — White sits at the crown and is treated in most traditions as full-spectrum integration rather than a single trait. People showing white are not "purer" than others — they typically read as having the other colors held in some kind of working balance, often in a season of integration or transition. The misread is to romanticize white as "spiritually advanced." White is balance, not hierarchy. For the deeper reading, see [[<TBD-internal-link: white aura explainer>]].
 
 ## How Shade and Combination Shift Readings
 
-Most subtle-energy traditions treat aura colors as state-sensitive: the same person can show different colors in different seasons, and even different shades of the same color across the same month. The aura colors meaning framework is not a fixed personality tag — it is a state-and-context vocabulary, and the shades matter as much as the categories.
+One of the biggest gaps in standard aura colors meaning coverage is that the seven main colors are not discrete labels. Real readings come in shades, combinations, and gradients, and the same base color can read in very different directions depending on its state and what else sits next to it.
 
-Shade differentiation is the first pattern worth noticing. Yellow is the clearest example: bright yellow is read as vitality and clarity, muddy yellow as strain or anxiety, gold as teaching maturity. The same person can show all three across a single year. Treating yellow as one trait misses what the shade is actually communicating about the current state of the system. Light blue and indigo carry the same kind of split — both blue, but they describe meaningfully different inner registers. Purple and violet, similarly, sit on the same spectrum but with different intensity readings, and most lineages handle this by treating the shade as the more important signal.
+Take blue as an example. A bright clear sky-blue reads as approachable, conversational truth-telling — the kind of communicator who lands a hard point without making the room tense. A deeper indigo-leaning blue gets you more depth of expression, but loses the lightness that makes communication feel approachable. To get the depth, you sacrifice the easy social flow. Neither is "better"; they describe different states of the same family.
 
-Combination is the second pattern. Many readers describe seeing two or three colors in the same photo or reading, and most popular articles handle this by simply picking the dominant color and pretending the others aren't there. The framework's actual handling is more honest: combinations are real and informative. Green-blue describes a healing-and-articulating mix, common in counselors and therapists. Yellow-orange describes intellectual play, common in creative writers and teachers. Indigo with purple describes deeper inward meaning-making than either color alone would suggest. Refusing to flatten the combination is one of the simpler ways to use the framework with intellectual honesty.
+Combinations work the same way. A green-blue reading (heart and throat together) often describes someone whose care comes out through measured language — they nurture by listening and reflecting, not by visibly fussing. A yellow-orange reading describes confidence channelled through creative expression — momentum that produces things rather than momentum that just powers through. These combination readings are not "tiebreakers"; they are richer descriptions that single-color readings flatten.
 
-State sensitivity is the third pattern. A person under rest can show one set of colors; the same person under stress, depletion, or grief can show different colors entirely. The shade often shifts before the category changes — bright yellow becomes muddy yellow weeks before it might transition to a different color category. Treating the read as a snapshot of state rather than a verdict on identity is what keeps the framework useful instead of brittle.
+Shade-state sensitivity is the meta layer that most quizzes drop entirely. Bright vs muddy is not a small distinction. A muddy green reads as care that has tipped into self-erasure; a bright green reads as care that has clear edges. A muddy yellow reads as anxious cognition spinning in place; a bright yellow reads as decisive self-trust. The same color name covers both, which is why a reading without shade information is roughly half the picture. When two sources disagree on what a color "means," they are often describing different shade-states of the same family.
 
-A practical caveat applies across all three patterns: aura color systems are not consistent across traditions. One lineage will split violet from purple; another will collapse them; a third will treat shade as more meaningful than category, and a fourth will weight combinations more heavily than either shade or category. When you encounter an aura colors meaning description that doesn't match yours, the right move isn't to declare one source wrong — it's to ask which interpretive lineage the source is working in, and whether its way of carving the categories matches the question you came in with. Most experienced readers eventually settle on one or two lineages whose carving lines up with how they actually notice themselves, and they hold the others as useful comparison rather than competing truth claims.
+A third example helps. Consider a red-purple reading: vitality and inward intuition together. On the surface those two seem to pull against each other — red wants to move, purple wants to reflect. In practice this combination often describes someone whose action choices are driven by a strong internal compass rather than by external incentives. They look decisive from the outside but only after a lot of inner processing the room never sees. Read that pair as "contradiction" and you miss the actual pattern; read it as "embodied intuition" and the reading actually describes the person. The point is not that any rule produces the right combo reading — the point is that combinations are where the framework gets specific.
+
+The takeaway for working with the aura colors meaning framework: train yourself to ask three questions instead of one. Which color? Which shade? What is it sitting next to? That shifts the reading from a personality verdict into something closer to a snapshot — useful for the moment, not binding for the year. Practitioners who have worked with the family for a long time tend to describe readings in two or three layers rather than a single label, and that habit is exactly what lets the framework stay accurate as people change over time.
 
 ## Common Misreads + Framework Limits
 
-Even the most careful reader stumbles into the same handful of misreads with the aura colors meaning framework. Four are worth naming explicitly.
+The aura colors meaning system gets misread in predictable ways once people start treating it as more than a vocabulary. Four patterns come up across almost every advice column and forum thread.
 
-The first is treating the framework as a diagnosis rather than a vocabulary. The aura colors are interpretive labels for self-reflection. They are not clinical assessments and they are not predictions. A purple aura read does not predict whether someone is psychic; a yellow read does not predict whether someone will succeed in a public-facing role. Treating the labels as verdicts is the most common drift state — and the one that turns the framework from useful into brittle.
+The first is treating the colors as a diagnostic instead of an interpretive language. "I have a green aura" is a sentence that only makes sense if the colors are stable physical properties measurable from the outside. They are not. The whole framework is built on practitioner observation and trained intuition, not instruments. Reading it as a diagnostic — the same way you would read a blood panel — overloads the system with claims it was never designed to make.
 
-The second is treating one lineage as universal truth. Different aura traditions split or combine colors differently, treat shade differently, and weight combinations differently. There is no single canonical chart that every lineage agrees on. Acknowledging this is not a weakness in the framework; it is honesty about what the framework actually is. The aura colors meaning vocabulary is plural, not monolithic, and reading across two or three lineages tends to surface the categories more clearly than insisting on any single source.
+The second is forcing consistency across lineages that genuinely disagree. Some traditions split violet from purple; others treat them as one color. Some include gold as a separate eighth category; others fold gold into yellow or white. Some teach the chakra mapping as fixed; others treat it as one mapping among several. When three sites give three different answers for "what does purple mean," they are often reflecting actual lineage differences, not bad scholarship. Picking one as "the correct one" and dismissing the others as wrong misses what the framework actually is — an interpretive convention that varies by school.
 
-The third is using the colors as identity tags rather than state descriptions. A "blue aura person" is a tag; a "blue-leaning self-read at this moment in this season" is a description. The first ossifies; the second adapts. Aura traditions almost universally treat the colors as state-sensitive — daily, seasonally, and across lifetimes. Treating the read as a permanent self-label fights the framework's actual design and sets the reader up to feel betrayed when their color shifts.
+The third is escalating the framework into an identity label. "I am a yellow person" closes a reading that was meant to open one. The colors describe states, tendencies, and moments — not fixed traits. Someone reading bright yellow this season may read muddy green in two years if their relational ground shifts. Locking in the label freezes a snapshot into a uniform.
 
-The fourth, and the most important, is expecting the framework to replace ground truth that lives outside it. The aura colors meaning is a vocabulary for self-reflection — it is not a substitute for clinical care when the strain runs deeper, not a substitute for honest conversation with people who know you well, and not a substitute for the lived data of an actual relationship. Used as one input among several — alongside sleep, real workload, professional support when needed, and the people who know you in person — the framework can sharpen self-awareness. Used as the only mirror, it becomes a competing voice that crowds out the others, and that is the point at which most readers who arrived hopeful about the framework end up walking away cynical about it. The framework rewards multi-input use; it punishes single-input use.
+The fourth — and most important for honest use — is expecting the framework to do work it was never built to do. Aura readings cannot replace clinical assessment for mental-health concerns. They cannot resolve relational conflicts by telling you "your partner has a yellow aura, that's why." They cannot tell you whether to take a job or leave one. The system gives you a vocabulary for self-reflection; it does not substitute for the kinds of ground-truth checks (clinical, relational, practical) that the relevant questions actually need. Holding the aura colors meaning framework at the right altitude — useful for self-awareness, not for diagnosis — is the difference between a tool that helps and a costume that gets in the way.
+
+Two practical guardrails make the framework safer to work with over time. The first is to keep the language descriptive, not prescriptive: "my green is doing a lot right now" rather than "I have to honor my green energy." The descriptive frame keeps the reading reversible, which is the whole point of treating it as a snapshot. The second is to cross-check important decisions outside the framework entirely. If a reading is telling you something you would not be willing to act on without confirmation from a friend, a therapist, or your own quiet judgment, then the reading was never going to be the deciding factor anyway — it was a prompt to look closer, and looking closer is the actual work.
 
 ## Reflection Prompts
 
-1. Think of a recent week where one aura colors meaning description matched you exactly and another felt completely wrong — what shade was each?
-2. Recall a time when your dominant color shifted noticeably under stress — what concrete signal made the shift visible to you?
-3. Notice one relationship where you've been reading someone through a single color label — what changes if you treat their read as state-sensitive instead?
+1. Think of a recent moment when you read someone — which color or shade did you reach for, and which would you reach for after sitting with it longer?
+2. Recall a season when your dominant color seemed to shift; what changed in your relationships or work that made the new reading more accurate?
+3. Notice when a single color label felt too small for what you were experiencing; what combination would have described it better?
 
 ## Related Reading
 
-- [[<TBD-internal-link: red aura explainer>]] — deep dive on the root-chakra color and its grounding themes.
-- [[<TBD-internal-link: orange aura explainer>]] — sacral-chakra color, sensuality, and creative play.
-- [[<TBD-internal-link: yellow aura explainer>]] — solar-plexus color and shade-state differentiation.
-- [[<TBD-internal-link: green aura explainer>]] — heart-chakra color and relational presence.
-- [[<TBD-internal-link: blue aura explainer>]] — throat-chakra color and clear communication.
-- [[<TBD-internal-link: purple aura explainer>]] — third-eye color and inward processing.
-- [[<TBD-internal-link: white aura explainer>]] — crown integration and full-spectrum balance.
-- [[<TBD-internal-link: chakra system overview>]] — the parallel framework most aura traditions anchor to.
-- [[<TBD-internal-link: guide to aura color shades>]] — how light/dark and combinations shift readings.
+- [[<TBD-internal-link: red aura explainer>]]
+- [[<TBD-internal-link: orange aura explainer>]]
+- [[<TBD-internal-link: yellow aura explainer>]]
+- [[<TBD-internal-link: green aura explainer>]]
+- [[<TBD-internal-link: blue aura explainer>]]
+- [[<TBD-internal-link: purple aura explainer>]]
+- [[<TBD-internal-link: white aura explainer>]]
+- [[<TBD-internal-link: overview of the chakra system>]]
+- [[<TBD-internal-link: guide to aura reading>]]
+- [[<TBD-internal-link: comparison with the four-element framework>]]
 
 ## Take Action
 
-Take the 60-second Aura Reading Quiz to see how your colors map:
-https://astrologywiki.com/tools/aura-reading-quiz
+Take the 60-second Aura Reading Quiz to see how your colors map: https://astrologywiki.com/tools/aura-reading-quiz

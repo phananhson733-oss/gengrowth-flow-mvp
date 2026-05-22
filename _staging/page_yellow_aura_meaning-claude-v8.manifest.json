@@ -6,10 +6,10 @@
   "template": "Definition",
   "tier": "T2",
   "track": "量产线",
-  "generated_by": "Claude Opus 4.7",
+  "generated_by": "claude",
   "prompt_version": "v8",
-  "generated_at": "2026-05-21T16:02:13.915Z",
-  "content_sha256_short": "57f69afe9b92e294",
+  "generated_at": "2026-05-22T09:31:11.186Z",
+  "content_sha256_short": "bccc4d4e040b1d61",
   "source_path": "_staging/page_yellow_aura_meaning-claude-v8.md",
   "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/page_yellow_aura_meaning-claude-v8.md",
   "phase2_checks": {
@@ -19,9 +19,9 @@
       "h2Count": 7,
       "h3Count": 0,
       "h4Count": 0,
-      "words": 1507,
-      "wikilinks": 4,
-      "tbdLinks": 4
+      "words": 1638,
+      "wikilinks": 5,
+      "tbdLinks": 5
     },
     "rl1": true,
     "rl2": true,

@@ -53,18 +53,40 @@
 - **绝不**在段间插评论性 italic 段（如 `*If you want to add this to the main article...*` / `*Note: this section breaks down...*`） — 这是 wiki 词条，不是 chat reply
 - **绝不**输出 "## 1. Expansion:" / "## 2. Draft:" 等分编号的章节 — 本任务只产 **1 篇文章**，不是多份草稿合集
 
-## Anti-fluff 开头硬要求（AI Overview / GEO 第一关）
+## Anti-fluff 开头硬要求（AI Overview / GEO 第一关；任一违反 = 整篇作废）
 
 > Instruction only; **do not** output this as an article section.
 
-- **H1 之后 0 段铺垫**，直接进 H2 #1 (Definition)
+- **H1 (`# <Title>`) 之后必须立即跟 `## What is {{entity}}?`，0 段铺垫、0 行其他文字**（空行除外）
+- **Phase 2 binary check 强制扫描**：H1 行和第一个 H2 行之间不能有任何非空文本，有任意 1 段就直接 fail（实测错误信息：`preamble paragraph found between H1 and H2 #1`）
 - **第一句必须是** `<entity> is …`（精确定义，主语开始，60 词以内）
 - **禁止开头模式**（绝不能用）：
   - `Auras have fascinated humans for centuries...`（背景铺垫）
   - `In the world of energy healing, ...`（场景化引子）
   - `Have you ever wondered what your aura color means?`（反问开场）
   - 任何「The concept of X dates back to...」「For thousands of years...」类历史背景开头
-- 头部页（cafe astrology / chaninicholas / mindbodygreen）通常用上述铺垫开场 — 你必须**直接对立**：1 句话定义后立即给 mechanism
+  - `<Entity> stereotypes can feel like a bad costume...` / `This article explains X, then separates Y...`（GPT 风格"先帮读者建立期待"铺垫——这不是 chatbot reply，是 wiki 词条，直接进定义）
+  - `If you've ever wondered...` / `Many people are confused about...`（共情铺垫开场）
+- ✅ **正确范例**：
+  ```
+  # Leo Personality
+
+  ## What is Leo?
+
+  Leo is a fixed fire sign...
+  ```
+- ❌ **错误范例**（GPT 2026-05-22 Leo 实测踩过 = Phase 2 fail）：
+  ```
+  # Leo Personality
+
+  Leo stereotypes can feel like a bad costume: loud, dramatic...   ← 任何这种段落 = fail
+  If you're quieter, private, or more sensitive, you may wonder...
+
+  ## What is Leo?
+  ```
+- 头部页（cafe astrology / chaninicholas / mindbodygreen）通常用上述铺垫开场——你必须**直接对立**：1 句话定义后立即给 mechanism
+
+**self-check（提交前默念）**：文章第 1 行 `# <Title>`，跳过空行后第 1 个非空行**必须**是 `## What is <entity>?`——中间任何其他文字（哪怕 1 句话的 "warm intro"），删掉再交。
 
 ## Heading level 字面规则（任一违反 = 整篇作废）
 
@@ -91,9 +113,17 @@
 ## 输出结构（严格 7 sections，对齐 PRD v0.7 附录 A 模板 B；H2 必须英文）
 
 1. **What is {{entity}}?**（H2，字面 H2 = `## What is {{entity}}?`）— 第一句**用日常英文**直接定义（plain English，不堆术语），共 120-160 词。可以在第 2-3 句引入主流脉轮对应（如「commonly associated with the throat chakra」），但**不要**在开头 2 句叠加 3 个以上专业词
+   - **Bolded direct answer 硬要求（AI Overview / featured snippet 抓取目标）**：本段 120-160 词内必须出现**正好 1 个** markdown bolded 短语（`**...**`），该短语是 target_keyword 的**直接答案 / 核心定义**（≤ 12 词，不含装饰词）
+   - ✅ 范例：`Blue aura usually reads as **a calm, communicative energy field tied to the throat center**.`
+   - ❌ 错误：整段无 bold / bold 的是装饰词（`**very**` / `**important**`）/ bold 的是 H2 字面重复（`**What is Blue Aura?**`）/ 2 个以上 bolded 短语稀释焦点
 2. **Why It Matters for Self-Awareness**（H2，字面 H2 = `## Why It Matters for Self-Awareness`）— 1-2 段，必须落到 Friction 字段提到的真实痛点（不堆砌情绪形容词）
 3. **{{entity}} vs Adjacent Concepts: Mechanism + Trade-offs**（H2，字面 H2 = `## {{entity}} vs Adjacent Concepts: Mechanism + Trade-offs`，**禁止简写为 "vs Adjacent Concepts" — entity 前缀必须保留**）— ≥ 1 段对比 + 必须显式写出每个对比的 **mechanism（怎么作用）+ trade-off（什么情况下倾向哪种）**，引用 Logic 字段的「机制 + 权衡」
+   - **Trade-off 表达硬要求（每个对比必须显式）**：每段对比里至少有 1 句话用「**To get A, you sacrifice B**」型表达，让 trade-off 不是抽象描述，而是**可读出的取舍**
+   - ✅ 范例：`Blue aura emphasises clarity of voice; the cost is being read as cool or detached.`（取得 A=表达清晰，付出 B=被读冷淡）
+   - ✅ 范例：`Choosing throat-led communication over heart-led empathy gets you precision, but you lose some warmth.`
+   - ❌ 错误：`Blue aura and green aura are different.`（说有差别，但没说取舍）/ `Each has pros and cons.`（空泛）
 4. **Quick Reference Table**（H2）— Markdown 表格 ≥ 4 列 × ≥ 3 行，**必须含「Property / Mechanism / Energy Center / Common Misread」4 列**（不是只列属性）
+   - **`## Quick Reference Table` 标题之后第一个非空段必须直接是 markdown 表格本身（以 `|` 开头）**，不能加任何 prose intro / SEO 解释段（例 ❌「Use this table to quickly compare key properties...」），否则 Phase 2 RL4 drift 检测把整 section 当 prose 走 jaccard，整篇 fail
    - **「Energy Center」语义按 entity 类型适配**（这一列不是固定 = 脉轮）：
      - aura/color/chakra 类 entity → 对应脉轮名（throat / heart / crown 等）
      - transit/cycle 类 entity（saturn return / chiron return / jupiter return / uranus opposition） → natal placement（natal house / natal sign / age window）
@@ -103,6 +133,7 @@
    - (a) 指向**具体情境回忆**（"Think of a recent moment when..."），**不要**「How does X make you feel?」泛问
    - (b) **关联 Logic 字段主题**（如 Logic 提到沟通能量，则 prompts 围绕沟通情境）
    - (c) **必须 numbered list 格式 `1. ... / 2. ... / 3. ...`**，不要写成分段散文 — binary check 的 reflection_prompts 检测只识别 numbered 形式，paragraph 格式 = 0 prompts = fail
+   - (d) **`## Reflection Prompts` 标题之后第一个非空段必须直接是 `1.` 起手的编号项**，不能加任何 prose intro / setup 句（例 ❌「Use these prompts to reflect on...」/「Spend a few minutes journaling on...」），否则 Phase 2 RL4 drift 检测把整 section 当 prose 走 jaccard，整篇 fail
 6. **Related Reading**（H2）— 按 internal_link_rule 输出 wikilinks，**用 placeholder 格式** `[[<TBD-internal-link: short description>]]`（**绝不 invent 具体 anchor**），每条 1 句 1-line 为什么相关
 7. **Take Action**（H2，必须）— 文案 <field name="cta_text">{{cta_text}}</field>，链接 <field name="cta_target_url">{{cta_target_url}}</field>。**CTA 必须独立 H2，不能合并到结尾段，否则 structure check 直接 fail。**
 
@@ -220,6 +251,30 @@ target_keyword = **「{{target_keyword}}」**（完整 3 词短语）。**SEO + 
    - **绝不**为了 unique 而打乱词序产 word salad — 不同的 wikilink 用不同的 **noun phrase 结构** 区分（譬如「explainer」/「comparison」/「guide」），不要把同一组词重排
 
 {{PSYCH_SAFETY_BLOCK}}
+
+## Anti-AI 词汇 blocklist（任一违反 = 重写该段）
+
+> Instruction only; **do not** output this as an article section.
+
+LLM 在没有 anti-style 指引时会回退到「企业培训手册」语气，这同时拉低 EEAT 信号（读起来不像人写的）+ 提高 AI detector 命中率。**以下词汇 / 短语全文禁用**（case-insensitive，含变体）：
+
+**陈词滥调动词**：delve, leverage, navigate (the landscape), unlock, harness, foster, cultivate, embark on, journey through
+
+**空洞形容词**：seamless, robust, holistic, comprehensive, multifaceted, transformative, profound (作形容词), revolutionary, game-changing
+
+**填充短语**：In conclusion, In summary, It's important to note (that), It's worth noting, At the end of the day, In today's fast-paced world, In the realm of, A myriad of, Plays a (crucial / pivotal / vital) role
+
+**伪学术 hedging**（注意：与现有"权威锚点"规则一致——禁止具名引用）：According to industry consensus, Leading researchers suggest, Studies have shown that (without naming)
+
+**正确替代方式**：
+- 不用 `delve into` → 直接 describe / look at / examine / break down
+- 不用 `leverage X` → 直接 use X / draw on X / work with X
+- 不用 `crucial` → important / matters / why it matters
+- 不用 `In conclusion` → 直接收尾，CTA 段不需要 "as we've seen"
+- 不用 `Studies have shown that...` → `In subtle-energy traditions...` / `Practitioners commonly describe...`
+- 不用 `navigate this energy` → `work with this energy` / `read this energy`
+
+**self-check（提交前默念）**：心里 grep 全文以上词汇，命中任意 1 个 = 重写那段。GPT 在 Reflection Prompts 里特别容易跑出 "delve into your feelings" / "navigate this energy" — 改写为 "think back to" / "notice when"。
 
 ## 6 红线（任一违反 = 文章作废）
 

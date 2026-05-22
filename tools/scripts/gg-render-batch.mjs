@@ -103,13 +103,16 @@ export function normalizeTemplate(raw) {
 }
 
 // Compose final renderAuraPrompt cfg from brief + per-page override.
+// override.page_id (if set) aliases row.page_id — lets row 3 (slug
+// page_aura_colors) point to the pre-existing page_aura_colors_pillar
+// RAG cache without renaming directories.
 export function composeCfg(row, override) {
   const b = row.brief || {};
   const o = override || {};
   const tpl = normalizeTemplate(o.template || b.template);
   const tier = o.tier || parseTier(b.tier) || 'T2';
   const cfg = {
-    page_id: row.page_id,
+    page_id: o.page_id || row.page_id,
     entity: o.entity || b.entity,
     target_keyword: o.target_keyword || b.target_keyword,
     associated_keywords: o.associated_keywords || b.associated_keywords || [],
@@ -207,6 +210,9 @@ async function main(argv) {
 
     const { cfg, warnings } = composeCfg(row, overrides[row.page_id]);
     detail.warnings = warnings;
+    if (cfg.page_id !== row.page_id) {
+      detail.page_id = `${row.page_id} → ${cfg.page_id}`;
+    }
 
     const miss = missingFields(cfg);
     if (miss.length) {
@@ -217,10 +223,10 @@ async function main(argv) {
       continue;
     }
 
-    const missRag = missingRagCaches(row.page_id);
+    const missRag = missingRagCaches(cfg.page_id);
     if (missRag.length) {
       detail.outcome = 'skipped';
-      detail.reason = `missing RAG: ${missRag.join(', ')} (run gg-entity-passport / gg-obsidian-rag for ${row.page_id})`;
+      detail.reason = `missing RAG: ${missRag.join(', ')} (run gg-entity-passport / gg-obsidian-rag for ${cfg.page_id})`;
       report.skipped += 1;
       report.details.push(detail);
       continue;
@@ -239,7 +245,7 @@ async function main(argv) {
       console.log(`\n━━━ row ${row.source_row} → ${row.page_id} ━━━`);
       renderAuraPrompt(cfg);
       detail.outcome = 'rendered';
-      detail.reason = `prompt + fixture written to .gg-cache/prompts/${row.page_id}.${cfg.prompt_version}-*`;
+      detail.reason = `prompt + fixture written to .gg-cache/prompts/${cfg.page_id}.${cfg.prompt_version}-*`;
       report.rendered += 1;
     } catch (e) {
       detail.outcome = 'errored';

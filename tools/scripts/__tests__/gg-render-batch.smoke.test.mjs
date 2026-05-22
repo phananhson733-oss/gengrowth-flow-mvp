@@ -143,6 +143,18 @@ test('composeCfg merges brief fields then override (override wins)', () => {
   assert.deepEqual(warnings, []);
 });
 
+test('composeCfg honors override.page_id as an alias (row 3 → pillar)', () => {
+  const row = { page_id: 'page_aura_colors', brief: { target_keyword: 'aura colors', entity: 'aura colors' } };
+  const { cfg } = composeCfg(row, { page_id: 'page_aura_colors_pillar' });
+  assert.equal(cfg.page_id, 'page_aura_colors_pillar');
+});
+
+test('composeCfg falls back to row.page_id when override.page_id absent', () => {
+  const row = { page_id: 'page_blue_aura_meaning', brief: {} };
+  const { cfg } = composeCfg(row, { entity: 'Blue Aura' });
+  assert.equal(cfg.page_id, 'page_blue_aura_meaning');
+});
+
 test('composeCfg defaults tier=T2 and template=Definition when both absent', () => {
   const { cfg } = composeCfg({ page_id: 'p', brief: { target_keyword: 'x', entity: 'y' } }, {});
   assert.equal(cfg.tier, 'T2');

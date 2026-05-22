@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "page_orange_aura_meaning",
+  "entity": "Orange Aura",
+  "target_keyword": "orange aura meaning",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "codex",
+  "prompt_version": "v8",
+  "generated_at": "2026-05-22T12:01:26.755Z",
+  "content_sha256_short": "5adfea9058dc2d7b",
+  "source_path": "_staging/page_orange_aura_meaning-codex-v8.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/page_orange_aura_meaning-codex-v8.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 7,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 1756,
+      "wikilinks": 4,
+      "tbdLinks": 4
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

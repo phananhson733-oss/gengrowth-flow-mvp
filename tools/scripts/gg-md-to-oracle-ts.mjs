@@ -14,9 +14,14 @@
 //     --oracle-articles-dir /Users/wzb/Code/oracle/data/articles
 //
 // Body transforms applied (in order):
-//   1. Replace `[[<TBD-internal-link: X>]]` → `**X**` (bold placeholder)
-//   2. Trim trailing whitespace
-//   3. Escape backticks + `${` for safe embedding in TS template literal
+//   1. Resolve `[[<TBD-internal-link: X>]]` via TBD_LINK_MAP:
+//      matched → `[X](/en/wiki/<slug>)` real markdown link
+//      unmatched → `*X*` italic placeholder (visually flags TBD without
+//                  faking a clickable link to nowhere)
+//   2. Auto-link bare http(s) URLs (not already inside `]( ... )`)
+//      → `[url](url)` so React-markdown renders an <a>
+//   3. Trim trailing whitespace
+//   4. Escape backticks + `${` for safe embedding in TS template literal
 //
 // Description: first ~160 chars of first paragraph after first ## section.
 // Keywords: target_keyword as first item, then associated_keywords.
@@ -109,9 +114,52 @@ export function deriveDescription(body, maxLen = 160) {
   return cleaned;
 }
 
+// Lookup table for resolving TBD wikilink descriptions to real oracle URLs.
+// First matching rule wins. Description matching is case-insensitive
+// substring/regex. Patterns are intentionally narrow to avoid mis-routing.
+// Anything unmatched falls through to an italic placeholder (no fake link).
+export const TBD_LINK_RULES = [
+  { match: /\bred\s*aura\b/i,    href: '/en/wiki/red-aura-meaning' },
+  { match: /\borange\s*aura\b/i, href: '/en/wiki/orange-aura-meaning' },
+  { match: /\bgreen\s*aura\b/i,  href: '/en/wiki/green-aura-meaning' },
+  { match: /\bblue\s*aura\b/i,   href: '/en/wiki/blue-aura-meaning' },
+  { match: /\byellow\s*aura\b/i, href: '/en/wiki/yellow-aura-meaning' },
+  { match: /\bpurple\s*aura\b/i, href: '/en/wiki/purple-aura-meaning' },
+  { match: /\bviolet\s*aura\b/i, href: '/en/wiki/purple-aura-meaning' },
+  { match: /\bindigo\s*aura\b/i, href: '/en/wiki/purple-aura-meaning' },
+  { match: /\bwhite\s*aura\b/i,  href: '/en/wiki/white-aura-meaning' },
+  { match: /\bfour[-\s]*element/i, href: '/en/wiki/four-element-framework' },
+  { match: /\bchakra/i,          href: '/en/wiki/chakra-system-overview' },
+  { match: /\baura\s*colors?\b/i, href: '/en/wiki/aura-colors-pillar' },
+  { match: /\baura\s*reading\b/i, href: '/en/wiki/aura-colors-pillar' },
+];
+
+export function resolveTbdLink(description) {
+  const d = description.trim();
+  for (const rule of TBD_LINK_RULES) {
+    if (rule.match.test(d)) return `[${d}](${rule.href})`;
+  }
+  return `*${d}*`;
+}
+
+// Auto-link bare http(s) URLs to markdown link form, but skip ones already
+// inside a markdown link target (`](https://...)`) or angle-bracket autolink
+// (`<https://...>`). Trailing punctuation `.,;:!?` is excluded from link.
+export function autoLinkBareUrls(s) {
+  return s.replace(/(?<![(\[<])https?:\/\/[^\s)<>]+/g, (m) => {
+    const trimmed = m.replace(/[.,;:!?]+$/, '');
+    const punct = m.slice(trimmed.length);
+    return `[${trimmed}](${trimmed})${punct}`;
+  });
+}
+
 export function transformBody(body) {
   let out = body;
-  out = out.replace(/\[\[<TBD-internal-link:\s*([^>]+)>\]\]/g, '**$1**');
+  out = out.replace(
+    /\[\[<TBD-internal-link:\s*([^>]+)>\]\]/g,
+    (_m, desc) => resolveTbdLink(desc),
+  );
+  out = autoLinkBareUrls(out);
   out = out.trimEnd();
   return out;
 }

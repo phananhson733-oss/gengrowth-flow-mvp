@@ -335,26 +335,29 @@ export function checkRL4(draft, ctx) {
   };
 }
 
-// ctx: { targetKeyword: string }
+// ctx: { targetKeyword: string, maxCount?: number }
+// maxCount lets Pillar pages raise the ceiling above the Definition default of 8
+// (Pillar uses wider 8-12 spread because the hub topic naturally repeats more).
 export function checkRL5(draft, ctx) {
   const target = (ctx.targetKeyword || '').trim();
   if (!target) {
     return { id: 'rl5_no_keyword_stuffing', pass: true, note: 'no target_keyword to count' };
   }
+  const maxCount = Number.isFinite(ctx.maxCount) ? ctx.maxCount : RL5_MAX_COUNT;
   // Whole-word, case-insensitive count using lookahead/lookbehind to avoid
   // boundary-consumption issues when the keyword appears back-to-back.
   const escaped = target.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const re = new RegExp(`(?<![A-Za-z0-9])${escaped}(?![A-Za-z0-9])`, 'gi');
   const matches = draft.match(re) || [];
   const count = matches.length;
-  if (count > RL5_MAX_COUNT) {
+  if (count > maxCount) {
     return {
       id: 'rl5_no_keyword_stuffing',
       pass: false,
-      note: `target_keyword count = ${count} (limit ${RL5_MAX_COUNT})`,
+      note: `target_keyword count = ${count} (limit ${maxCount})`,
     };
   }
-  let note = `target_keyword count = ${count} (limit ${RL5_MAX_COUNT})`;
+  let note = `target_keyword count = ${count} (limit ${maxCount})`;
   if (count < RL5_MIN_COUNT_WARN) note += ` — warn: density low`;
   return { id: 'rl5_no_keyword_stuffing', pass: true, note };
 }

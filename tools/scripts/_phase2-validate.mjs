@@ -3,23 +3,26 @@
 // via lib/red-lines.mjs + structure check. If all pass → writes _staging/{base}.md
 // with frontmatter + manifest.json.
 //
-// Usage:
+// Usage (modern, with fixture sidecar from renderer):
 //   node tools/scripts/_phase2-validate.mjs \
 //     --source <path-to-llm-output.md> \
-//     --tag <suffix>  \
+//     --tag <suffix> \
 //     --page-id <page_X> \
-//     --entity "Display Name" \
-//     --target-keyword "keyword phrase" \
+//     [--llm-source "gpt-5.2"] [--prompt-version v8]
+//   # Auto-loads .gg-cache/prompts/<page_X>.<prompt_version>-fixture.json
+//   # CLI flags below override fixture values.
+//
+// Usage (legacy, every value via CLI flag):
+//   node tools/scripts/_phase2-validate.mjs \
+//     --source <path-to-llm-output.md> --tag <suffix> --page-id <page_X> \
+//     --entity "Display Name" --target-keyword "keyword phrase" \
 //     [--associated-keywords "k1, k2, k3"] \
 //     [--template Definition] [--tier T2] \
 //     [--word-min 1500] [--word-max 1800] \
-//     [--kw-min 5] [--kw-max 8] \
-//     [--expected-h2 7] \
-//     [--psych-safety N] \
-//     [--llm-source "Claude Opus 4.7"] \
-//     [--prompt-version v7]
+//     [--kw-min 5] [--kw-max 8] [--expected-h2 7] \
+//     [--psych-safety N] [--llm-source "..."] [--prompt-version v8]
 
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
@@ -64,26 +67,76 @@ function req(name) {
   return args[name];
 }
 
+// Auto-load fixture sidecar written by renderer (carries entity / target_keyword /
+// associated_keywords / template / tier / ranges / expected_h2 / psych_safety).
+// Resolution: explicit --fixture wins; else if --page-id provided, try
+// .gg-cache/prompts/<page_id>.<prompt_version>-fixture.json. Missing fixture is
+// non-fatal — operator can still pass every value via CLI flags (legacy path).
+const promptVersion = args.prompt_version || 'v8';
+let fixture = {};
+let fixturePath = args.fixture;
+if (!fixturePath && args.page_id) {
+  const candidate = join(REPO, '.gg-cache', 'prompts', `${args.page_id}.${promptVersion}-fixture.json`);
+  if (existsSync(candidate)) fixturePath = candidate;
+}
+if (fixturePath) {
+  try {
+    fixture = JSON.parse(readFileSync(fixturePath, 'utf8'));
+    process.stderr.write(`[phase2] loaded fixture: ${fixturePath}\n`);
+  } catch (err) {
+    process.stderr.write(`[phase2] fixture load failed: ${err.message}\n`);
+    process.exit(2);
+  }
+}
+
+function pick(cliKey, fixtureKey, fallback) {
+  if (args[cliKey] !== undefined && args[cliKey] !== true) return args[cliKey];
+  if (fixture[fixtureKey] !== undefined) return fixture[fixtureKey];
+  if (fallback === '__required__') {
+    process.stderr.write(`[phase2] missing --${cliKey.replace(/_/g, '-')} (also absent from fixture)\n`);
+    process.exit(2);
+  }
+  return fallback;
+}
+
+const assocRaw = args.associated_keywords;
+const associated = assocRaw
+  ? assocRaw.split(',').map((s) => s.trim()).filter(Boolean)
+  : (Array.isArray(fixture.associated_keywords) ? fixture.associated_keywords : []);
+
+const templateRaw = pick('template', 'template', 'Definition');
+// Normalize case: accept "Definition" / "definition" / "Pillar" / "pillar".
+const template = /^pillar$/i.test(templateRaw) ? 'Pillar' : 'Definition';
+
+const templateDefaults = {
+  Definition: { word_range: [1500, 1800], kw_count_range: [5, 8], expected_h2: 7 },
+  Pillar: { word_range: [2500, 3500], kw_count_range: [8, 12], expected_h2: 9 },
+};
+const tplDef = templateDefaults[template];
+
+const wordRange = fixture.word_range || tplDef.word_range;
+const kwRange = fixture.kw_count_range || tplDef.kw_count_range;
+
 const ctx = {
   source: req('source'),
   tag: req('tag'),
-  page_id: req('page_id'),
-  entity: req('entity'),
-  target_keyword: req('target_keyword'),
-  associated_keywords: (args.associated_keywords || '').split(',').map((s) => s.trim()).filter(Boolean),
-  template: args.template || 'Definition',
-  tier: args.tier || 'T2',
+  page_id: pick('page_id', 'page_id', '__required__'),
+  entity: pick('entity', 'entity', '__required__'),
+  target_keyword: pick('target_keyword', 'target_keyword', '__required__'),
+  associated_keywords: associated,
+  template,
+  tier: pick('tier', 'tier', 'T2'),
   track: '量产线',
-  page_role: 'Support',
-  psych_safety_flag: args.psych_safety || 'N',
+  page_role: template === 'Pillar' ? 'Hub' : 'Support',
+  psych_safety_flag: pick('psych_safety', 'psych_safety', 'N'),
   llm_source: args.llm_source || 'unknown',
-  prompt_version: args.prompt_version || 'v7',
-  word_range_min: Number.parseInt(args.word_min, 10) || 1500,
-  word_range_max: Number.parseInt(args.word_max, 10) || 1800,
-  kw_min: Number.parseInt(args.kw_min, 10) || 5,
-  kw_max: Number.parseInt(args.kw_max, 10) || 8,
+  prompt_version: promptVersion,
+  word_range_min: Number.parseInt(args.word_min, 10) || wordRange[0],
+  word_range_max: Number.parseInt(args.word_max, 10) || wordRange[1],
+  kw_min: Number.parseInt(args.kw_min, 10) || kwRange[0],
+  kw_max: Number.parseInt(args.kw_max, 10) || kwRange[1],
   expected_h1: 1,
-  expected_h2: Number.parseInt(args.expected_h2, 10) || 7,
+  expected_h2: Number.parseInt(args.expected_h2, 10) || fixture.expected_h2 || tplDef.expected_h2,
 };
 const outBasename = `${ctx.page_id}-${ctx.tag}`;
 
@@ -102,15 +155,30 @@ function structureCheck(draft) {
   if (words < ctx.word_range_min) findings.push(`word count ${words} < min ${ctx.word_range_min}`);
   if (words > ctx.word_range_max) findings.push(`word count ${words} > max ${ctx.word_range_max}`);
 
-  const requiredH2s = [
-    `## What is ${ctx.entity}?`,
-    '## Why It Matters for Self-Awareness',
-    `## ${ctx.entity} vs Adjacent Concepts: Mechanism + Trade-offs`,
-    '## Quick Reference Table',
-    '## Reflection Prompts',
-    '## Related Reading',
-    '## Take Action',
-  ];
+  // Required H2 list is template-aware: Definition is leaf-entity shape,
+  // Pillar is hub/aggregator shape.
+  const requiredH2s = ctx.template === 'Pillar'
+    ? [
+        `## What are ${ctx.entity}?`,
+        '## Why It Matters for Self-Awareness',
+        `## The ${ctx.entity} at a Glance`,
+        // Section 4 "## The N {{entity}}: Quick Guide" uses dynamic count → match by suffix only
+        ': Quick Guide',
+        '## How Shade and Combination Shift Readings',
+        '## Common Misreads + Framework Limits',
+        '## Reflection Prompts',
+        '## Related Reading',
+        '## Take Action',
+      ]
+    : [
+        `## What is ${ctx.entity}?`,
+        '## Why It Matters for Self-Awareness',
+        `## ${ctx.entity} vs Adjacent Concepts: Mechanism + Trade-offs`,
+        '## Quick Reference Table',
+        '## Reflection Prompts',
+        '## Related Reading',
+        '## Take Action',
+      ];
   for (const h of requiredH2s) {
     if (!draft.includes(h)) findings.push(`missing required H2: "${h}"`);
   }
@@ -197,7 +265,7 @@ const rlChecks = [
   ['RL2 (competitor smear)', () => checkRL2(draft)],
   ['RL3 (SERP plagiarism)', () => checkRL3(draft, serpCtx)],
   ['RL4 (keyword anchored)', () => checkRL4(draft, { targetKeyword: ctx.target_keyword, entity: ctx.entity })],
-  ['RL5 (keyword stuffing)', () => checkRL5(draft, { targetKeyword: ctx.target_keyword })],
+  ['RL5 (keyword stuffing)', () => checkRL5(draft, { targetKeyword: ctx.target_keyword, maxCount: ctx.kw_max })],
   ['RL6 (psych safety)', () => checkRL6(draft, { psych_safety_flag: ctx.psych_safety_flag })],
 ];
 
@@ -239,8 +307,12 @@ console.log('OVERALL: PASS — writing to _staging');
 const sha = createHash('sha256').update(draft).digest('hex').slice(0, 16);
 const generatedAt = new Date().toISOString();
 
+const titleCased = ctx.target_keyword
+  .split(/\s+/)
+  .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
+  .join(' ');
 const frontmatter = `---
-title: ${ctx.entity} Meaning
+title: ${titleCased}
 slug: ${ctx.target_keyword.replace(/\s+/g, '-')}
 date: ${generatedAt.slice(0, 10)}
 status: ready-to-review

@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "page_aura_colors_pillar",
+  "entity": "aura colors",
+  "target_keyword": "aura colors meaning",
+  "template": "Pillar",
+  "tier": "T1",
+  "track": "量产线",
+  "generated_by": "claude-opus-4-7",
+  "prompt_version": "v8",
+  "generated_at": "2026-05-21T17:36:48.018Z",
+  "content_sha256_short": "5c0a4fa6ff7e9eb4",
+  "source_path": "_staging/page_aura_colors_pillar-claude-v8.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/page_aura_colors_pillar-claude-v8.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 9,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 2509,
+      "wikilinks": 16,
+      "tbdLinks": 16
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

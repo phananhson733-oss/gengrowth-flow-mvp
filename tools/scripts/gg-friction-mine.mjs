@@ -14,8 +14,17 @@
 // 退出码: 0 全绿；1 partial；2 fatal
 
 import { readFileSync, existsSync, writeFileSync, mkdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { homedir } from 'node:os';
+
+// Repo root — friction-mine RAG cache defaults here so gg-render-batch can
+// read it from the same path (v0.18: fixes the ~/.gg-cache vs repo .gg-cache
+// split that silently dropped real friction data).
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const REPO = join(__dirname, '..', '..');
+const REPO_RAG_DIR = join(REPO, '.gg-cache');
+const LEGACY_HOME_RAG_DIR = join(homedir(), '.gg-cache');
 
 // Shared helpers — single source of truth (codex review 2026-05-21).
 // Re-export so existing test imports + downstream callers keep working.
@@ -436,16 +445,33 @@ async function appendRows(token, workbookId, sheetTitle, rangeCols, rows) {
   );
 }
 
+// Resolve the RAG cache root. Priority:
+//   1. CLI --rag-dir <path>      (per-run override)
+//   2. env GG_FRICTION_RAG_DIR   (per-machine config)
+//   3. repo .gg-cache/           (default — matches what gg-render-batch reads)
+// Legacy ~/.gg-cache/ is allowed too (back-compat) but no longer the default.
+export function resolveRagRoot(args) {
+  const cli = args && (args.ragDir || args.rag_dir);
+  if (cli) return String(cli);
+  if (process.env.GG_FRICTION_RAG_DIR) return process.env.GG_FRICTION_RAG_DIR;
+  return REPO_RAG_DIR;
+}
+
 // Write the PII-scrubbed RAG cache for downstream prompt builders.
 // validatePageId + validateWritePath jail prevent path-traversal escape.
 function writeRagCache(args, validPoints, step1Ingest) {
   const pageId = validatePageId(args.pageId);
-  const ragRootRaw = join(homedir(), '.gg-cache');
+  const ragRootRaw = resolveRagRoot(args);
   if (!existsSync(ragRootRaw)) mkdirSync(ragRootRaw, { recursive: true });
   const ragDir = join(ragRootRaw, pageId);
   const ragPath = join(ragDir, 'friction-mine.rag.json');
+  // Jail: allow chosen root + legacy home-dir root (so older configs keep working)
+  // + repo root (default). Path-traversal still blocked by validateWritePath.
+  const allowedDirs = [ragRootRaw];
+  if (!allowedDirs.includes(REPO_RAG_DIR)) allowedDirs.push(REPO_RAG_DIR);
+  if (!allowedDirs.includes(LEGACY_HOME_RAG_DIR)) allowedDirs.push(LEGACY_HOME_RAG_DIR);
   const { abs } = validateWritePath(ragPath, {
-    allowedDirs: [ragRootRaw],
+    allowedDirs,
     allowedExtensions: ['.json'],
     mustCreateParent: true,
   });
@@ -473,7 +499,7 @@ async function runPhase2(args) {
   let realIngest;
   try { realIngest = validateIngestPath(ingestPath); }
   catch (e) {
-    recordFail('validate ingest path', e, `must be under ${ALLOWED_INGEST_DIR}/, end in .json, ≤1MB`);
+    recordFail('validate ingest path', e, 'must be under ~/.gg-cache/, end in .json, ≤1MB');
     return;
   }
 
@@ -586,6 +612,7 @@ function parseArgs(argv) {
     entity: null, ingest: null, dryRun: false,
     personaId: 'us-women-18-35-tiktok-reddit-entry',
     pageId: null, targetKeyword: null, forRag: false,
+    ragDir: null,
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -599,6 +626,7 @@ function parseArgs(argv) {
       out.targetKeyword = sanitize(raw).slice(0, TARGET_KEYWORD_MAX);
     }
     else if (a === '--for-rag') out.forRag = true;
+    else if (a === '--rag-dir') out.ragDir = argv[++i];
     else if (a === '--help' || a === '-h') out.help = true;
   }
   return out;
@@ -621,7 +649,9 @@ flags:
   --persona-id <str>       default us-women-18-35-tiktok-reddit-entry
   --page-id <slug>         Phase 2 — required with --for-rag, [A-Za-z0-9_-]{1,64}
   --target-keyword <str>   Phase 2 — context stored in RAG cache (<=120 chars)
-  --for-rag                Phase 2 — also write .gg-cache/{page_id}/friction-mine.rag.json
+  --for-rag                Phase 2 — also write <rag-dir>/{page_id}/friction-mine.rag.json
+  --rag-dir <path>         override RAG output root (default: <repo>/.gg-cache/)
+                           env GG_FRICTION_RAG_DIR also honored
 `);
 }
 

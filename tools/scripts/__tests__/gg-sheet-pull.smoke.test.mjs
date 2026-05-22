@@ -11,6 +11,7 @@ import {
   REQUIRED_BRIEF_FIELDS,
   OPTIONAL_BRIEF_FIELDS,
   slugifyPageId,
+  resolvePageId,
   parseSlice,
   isSectionHeader,
   parseAssociated,
@@ -171,11 +172,79 @@ test('mapRowToBrief maps a complete brief row to renderer fields', () => {
   assert.equal(brief.template, 'Definition');
   assert.equal(brief.entity, 'Blue Aura');
   assert.deepEqual(brief.related_entities, ['Throat Chakra']);
-  assert.equal(brief.content_angle, 'frame blue aura as ...');
+  // Logic column now maps to logic_brief (was misrouted to content_angle pre v0.18).
+  assert.equal(brief.logic_brief, 'frame blue aura as ...');
+  assert.equal(brief.content_angle, undefined, 'content_angle must NOT inherit Logic column');
   assert.equal(brief.cta_target_url, 'https://example.com/cta');
   assert.equal(raw['Target Keyword'], 'blue aura meaning');
   // " KD" header is stored with trimmed key in raw too
   assert.equal(raw['KD'], '0');
+});
+
+// ---------- v0.18 columns: page_id / cluster_id / page_role / content_angle / psych_safety_flag / journal_prompts ----------
+const FULL_HEADER = [
+  'Target Keyword', 'Associated Keywords', '月搜索量', 'KD',
+  'Intent', 'Tier', 'Template', 'Entity', 'Friction', 'Logic', 'CTA',
+  'GSC Keywords', 'Status', 'URL', 'Last Audit',
+  'page_id', 'cluster_id', 'page_role', 'content_angle',
+  'psych_safety_flag', 'journal_prompts',
+];
+
+test('mapRowToBrief picks up the 6 v0.18 columns when they are populated', () => {
+  const row = [
+    'orange aura meaning',     // 0  Target Keyword
+    'orange aura',              // 1  Associated
+    '5400', '5',                // 2-3 search_volume / kd
+    'Info', 'T2', 'Definition', // 4-6
+    'Orange Aura',              // 7  Entity
+    'shade confusion',          // 8  Friction
+    'frame orange aura as ...', // 9  Logic
+    'https://x.com/cta',        // 10 CTA
+    '', '待写', '', '',          // 11-14 GSC / Status / URL / LastAudit
+    'page_orange_aura_meaning', // 15 page_id (explicit, must win over auto-slug)
+    'clu_aura_colors',          // 16 cluster_id
+    'Series',                   // 17 page_role
+    'creative/playful angle',   // 18 content_angle (explicit, separate from logic_brief)
+    'N',                        // 19 psych_safety_flag
+    '',                         // 20 journal_prompts (empty)
+  ];
+  const { brief } = mapRowToBrief(FULL_HEADER, row);
+  assert.equal(brief.page_id_sheet, 'page_orange_aura_meaning');
+  assert.equal(brief.cluster_id, 'clu_aura_colors');
+  assert.equal(brief.page_role, 'Series');
+  assert.equal(brief.content_angle, 'creative/playful angle');
+  assert.equal(brief.logic_brief, 'frame orange aura as ...');
+  assert.equal(brief.psych_safety_flag, 'N');
+  assert.equal(brief.journal_prompts, '');
+  assert.equal(brief.friction_brief, 'shade confusion');
+});
+
+test('resolvePageId: sheet page_id wins over auto-slugified keyword', () => {
+  const brief = { page_id_sheet: 'page_chiron_7th_house', target_keyword: 'chiron in 7th house' };
+  assert.equal(resolvePageId(brief, true), 'page_chiron_7th_house');
+});
+
+test('resolvePageId: empty sheet page_id falls back to slugify(target_keyword)', () => {
+  assert.equal(resolvePageId({ page_id_sheet: '', target_keyword: 'orange aura meaning' }, true), 'page_orange_aura_meaning');
+  assert.equal(resolvePageId({ page_id_sheet: '  ', target_keyword: 'orange aura meaning' }, true), 'page_orange_aura_meaning');
+  assert.equal(resolvePageId({ target_keyword: 'orange aura meaning' }, true), 'page_orange_aura_meaning');
+});
+
+test('resolvePageId: non-data row returns null regardless of fields', () => {
+  assert.equal(resolvePageId({ page_id_sheet: 'page_x', target_keyword: 'x' }, false), null);
+});
+
+test('resolvePageId: nothing populated returns null', () => {
+  assert.equal(resolvePageId({}, true), null);
+  assert.equal(resolvePageId({ page_id_sheet: '' }, true), null);
+});
+
+test('content_angle and logic_brief are separate columns (Logic does NOT bleed into content_angle)', () => {
+  const row = ['k', 'a', '100', '0', 'Info', 'T2', 'Definition', 'E', '', 'logic text', '', '', '待写', '', '', '', '', '', 'angle text', 'N', ''];
+  const { brief } = mapRowToBrief(FULL_HEADER, row);
+  assert.equal(brief.logic_brief, 'logic text');
+  assert.equal(brief.content_angle, 'angle text');
+  assert.notEqual(brief.content_angle, brief.logic_brief);
 });
 
 test('mapRowToBrief tolerates short rows (missing trailing cells)', () => {

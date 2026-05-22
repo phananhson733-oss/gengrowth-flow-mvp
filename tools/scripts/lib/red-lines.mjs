@@ -362,9 +362,31 @@ export function checkRL5(draft, ctx) {
   return { id: 'rl5_no_keyword_stuffing', pass: true, note };
 }
 
-// ctx: { effectivePsychSafety: 'Y' | 'N' }
+// ctx: { effectivePsychSafety: 'Y' | 'N' } — also accepts legacy { psych_safety_flag } from v8 callers.
+// codex review v2: strict mode — if neither field is set, fail loudly instead of silently
+// passing as N/A. The whole point of RL6 is the disclaimer; if upstream forgot to pass the
+// flag, that's a wiring bug, not a "no psych content" signal.
 export function checkRL6(draft, ctx) {
-  if (ctx.effectivePsychSafety !== 'Y') {
+  const ePs = ctx.effectivePsychSafety;
+  const ePsLegacy = ctx.psych_safety_flag;
+  // Both undefined → wiring bug. Refuse to silently pass.
+  if (ePs === undefined && ePsLegacy === undefined) {
+    return {
+      id: 'rl6_psych_safety_disclaimer',
+      pass: false,
+      note: 'RL6 wiring bug: caller passed neither effectivePsychSafety nor psych_safety_flag — refusing to silently N/A. Pass an explicit "Y" or "N".',
+    };
+  }
+  const flag = ePs ?? ePsLegacy;
+  // Accept only the two canonical values; anything else (yes / y / 1 / true) is a wiring bug.
+  if (flag !== 'Y' && flag !== 'N') {
+    return {
+      id: 'rl6_psych_safety_disclaimer',
+      pass: false,
+      note: `RL6 wiring bug: psych_safety value "${flag}" not in {Y, N} — refusing to silently N/A.`,
+    };
+  }
+  if (flag !== 'Y') {
     return {
       id: 'rl6_psych_safety_disclaimer',
       pass: true,

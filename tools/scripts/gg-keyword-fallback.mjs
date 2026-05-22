@@ -434,7 +434,7 @@ async function runPhase2(args) {
   try {
     realIngest = validateIngestPath(ingestPath);
   } catch (e) {
-    recordFail('validate ingest path', e, `must be under ${ALLOWED_INGEST_DIR}/, end in .json, ≤1MB`);
+    recordFail('validate ingest path', e, 'must be under ~/.gg-cache/, end in .json, ≤1MB');
     return;
   }
   let ingest;
@@ -631,6 +631,7 @@ function parseArgs(argv) {
     entity: null,
     ingest: null,
     dryRun: false,
+    smoke: false,
     targetCount: 20,
     personaId: 'us-women-18-35-tiktok-reddit-entry',
   };
@@ -639,11 +640,57 @@ function parseArgs(argv) {
     if (a === '--entity') out.entity = argv[++i];
     else if (a === '--ingest') out.ingest = argv[++i];
     else if (a === '--dry-run') out.dryRun = true;
+    else if (a === '--smoke') out.smoke = true;
     else if (a === '--target-count') out.targetCount = parseInt(argv[++i], 10) || 20;
     else if (a === '--persona-id') out.personaId = argv[++i];
     else if (a === '--help' || a === '-h') out.help = true;
   }
   return out;
+}
+
+// Quick DataForSEO connectivity check. Queries the keyword exactly as given
+// (typically the entity name), prints volume/KD/CPC, writes nothing.
+// Exits 0 if creds + network + API are all healthy, 2 otherwise.
+async function runSmoke(args) {
+  const entity = args.entity;
+  console.log('Phase smoke — DataForSEO 1-query connectivity check');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log(`query:   "${entity}"`);
+  console.log('writes:  NONE (smoke test)');
+  console.log('');
+
+  const login = process.env.GG_DATAFORSEO_LOGIN;
+  const password = process.env.GG_DATAFORSEO_PASSWORD;
+  if (!login || !password) {
+    console.error('FAIL — GG_DATAFORSEO_LOGIN and/or GG_DATAFORSEO_PASSWORD not set');
+    console.error('       expected in ~/.config/gg/_gg.env or shell env');
+    process.exit(2);
+  }
+  console.log(`creds:   GG_DATAFORSEO_LOGIN set (${login.length} chars), password set (${password.length} chars)`);
+  console.log('');
+
+  const result = await callDataForSEO([entity], login, password);
+  if (!result.ok) {
+    console.error(`FAIL — DataForSEO returned error:`);
+    console.error(`       ${result.reason}`);
+    process.exit(2);
+  }
+
+  const meta = result.data[entity.toLowerCase()];
+  if (!meta) {
+    console.log('OK — API reached, but no volume row for this query (DataForSEO returned 0 rows).');
+    console.log('     Possible: keyword has <10 monthly searches in US, or unknown to Google Ads.');
+    process.exit(0);
+  }
+
+  console.log('OK — DataForSEO live:');
+  console.log(`     keyword       : ${entity}`);
+  console.log(`     volume        : ${meta.volume ?? '(null)'}`);
+  console.log(`     KD (approx)   : ${meta.kd ?? '(null)'}`);
+  console.log(`     CPC           : ${meta.cpc ?? '(null)'}`);
+  console.log(`     competition   : ${meta.competition ?? '(null)'}`);
+  console.log(`     SERP features : ${meta.serpFeatures.length ? meta.serpFeatures.join(', ') : '(none)'}`);
+  process.exit(0);
 }
 
 function printHelp() {
@@ -657,10 +704,14 @@ Phase 2 (ingest AI output → DataForSEO → GEO → Sheets):
     --entity "saturn return" \\
     --ingest ~/.gg-cache/keyword-fallback-<ts>-step2.json [--dry-run]
 
+Smoke test (DataForSEO connectivity check, no Sheets write):
+  node tools/scripts/gg-keyword-fallback.mjs --smoke --entity "blue aura"
+
 flags:
   --entity <str>          required
   --ingest <path>         Phase 2 only — AI-produced JSON
   --dry-run               Phase 2 only — skip Sheets writes
+  --smoke                 1-query DataForSEO check; prints volume/KD/CPC, writes nothing
   --target-count <n>      default 20
   --persona-id <str>      default us-women-18-35-tiktok-reddit-entry
 `);
@@ -687,7 +738,10 @@ async function main() {
   }
 
   try {
-    if (args.ingest) {
+    if (args.smoke) {
+      await runSmoke(args);
+      return; // runSmoke calls process.exit itself
+    } else if (args.ingest) {
       await runPhase2(args);
     } else {
       await runPhase1(args);

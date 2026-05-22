@@ -61,27 +61,53 @@ function serpSnippetsBlock(cache, fallbackKw) {
   return out + '</source>';
 }
 
+// Stable page_id regex — matches gg-friction-mine PAGE_ID_REGEX and gg-sheet-pull PAGE_ID_REGEX.
+// renderAuraPrompt writes files at .gg-cache/<page_id>/, so we MUST fail closed on invalid input
+// to prevent any path-traversal escape from upstream callers (bridges, batch scripts, overrides).
+export const PAGE_ID_REGEX = /^[A-Za-z0-9_-]{1,64}$/;
+
 export function renderAuraPrompt(cfg) {
   const PAGE_ID = cfg.page_id;
+  if (!PAGE_ID || !PAGE_ID_REGEX.test(String(PAGE_ID))) {
+    throw new Error(`renderAuraPrompt: invalid page_id "${PAGE_ID}" — must match /^[A-Za-z0-9_-]{1,64}$/`);
+  }
   const ENTITY = cfg.entity;
   const TARGET_KW = cfg.target_keyword;
   const ASSOC_KW = cfg.associated_keywords.join(', ');
   const PROMPT_VERSION = cfg.prompt_version || 'v8';
 
-  // 1. Synth friction-mine (real Reddit OAuth pending — B'.2).
+  // 1. friction-mine cache — prefer real Reddit-mined data when present,
+  // fall back to synth from cfg.friction_themes (v0.18: before this fix
+  // the synth call unconditionally overwrote any real RAG cache produced
+  // by gg-friction-mine --for-rag, silently dropping real user data).
   const frictionCachePath = join(REPO, '.gg-cache', PAGE_ID, 'friction-mine.rag.json');
   mkdirSync(dirname(frictionCachePath), { recursive: true });
-  const synthFriction = {
-    schema_version: '1',
-    page_id: PAGE_ID,
-    entity: ENTITY,
-    target_keyword: TARGET_KW,
-    generated_at: new Date().toISOString(),
-    themes: cfg.friction_themes,
-    pii_audit: { total_redactions: 0, by_type: {} },
-  };
-  writeFileSync(frictionCachePath, JSON.stringify(synthFriction, null, 2));
-  console.log('SYNTH friction-mine.rag.json:', frictionCachePath);
+  let frictionPayload = null;
+  if (existsSync(frictionCachePath)) {
+    try {
+      const existing = JSON.parse(readFileSync(frictionCachePath, 'utf8'));
+      if (Array.isArray(existing?.themes) && existing.themes.length > 0) {
+        frictionPayload = existing;
+        console.log('REAL friction-mine.rag.json:', frictionCachePath, `(${existing.themes.length} themes)`);
+      }
+    } catch {
+      // corrupt or unreadable → fall through to synth
+    }
+  }
+  if (!frictionPayload) {
+    frictionPayload = {
+      schema_version: '1',
+      page_id: PAGE_ID,
+      entity: ENTITY,
+      target_keyword: TARGET_KW,
+      generated_at: new Date().toISOString(),
+      themes: cfg.friction_themes,
+      pii_audit: { total_redactions: 0, by_type: {} },
+      _synth: true,
+    };
+    writeFileSync(frictionCachePath, JSON.stringify(frictionPayload, null, 2));
+    console.log('SYNTH friction-mine.rag.json:', frictionCachePath);
+  }
 
   // 2. Read template + caches.
   // Template selector: cfg.template = 'Definition' (default) | 'Pillar'.
@@ -130,7 +156,7 @@ export function renderAuraPrompt(cfg) {
     '{{WORD_RANGE}}': `${wordRangeArr[0]}-${wordRangeArr[1]}`,
     '{{KW_COUNT_RANGE}}': `${kwRangeArr[0]}-${kwRangeArr[1]}`,
     '{{ENTITY_PASSPORT_BLOCK}}': entityPassportBlock(passportCache),
-    '{{FRICTION_MINE_BLOCK}}': frictionMineBlock(synthFriction),
+    '{{FRICTION_MINE_BLOCK}}': frictionMineBlock(frictionPayload),
     '{{SERP_SNIPPETS_BLOCK}}': serpSnippetsBlock(serpCache, TARGET_KW),
     '{{OBSIDIAN_RAG_BLOCK}}': obsidianRagBlock(obsidianCache),
     // Pillar-only placeholders (Definition template never references these).

@@ -138,6 +138,9 @@ export function normalizeNumericStr(raw) {
 }
 
 // header 名 → brief 字段。trim 处理掉 " KD" 这种前导空格。
+// 选题登记表 21 列规范见 /Users/wzb/gengrowth-wiki/docs/03-marketing/03-seo/keyword-sheet-setup.gs
+// （v3.1: page_id / cluster_id / page_role / content_angle / psych_safety_flag / journal_prompts
+// 是 v0.18 新增列，gg-sheet-to-brief 桥要靠它们派生 v8 cfg。）
 const HEADER_MAP = {
   'Target Keyword': 'target_keyword',
   '关键词': 'target_keyword',
@@ -150,7 +153,7 @@ const HEADER_MAP = {
   'Template': 'template',
   'Entity': 'entity_raw',
   'Friction': 'friction_brief',
-  'Logic': 'content_angle',
+  'Logic': 'logic_brief',
   'CTA': 'cta_target_url',
   'GSC Keywords': 'gsc_keywords',
   'Status': 'status',
@@ -158,6 +161,12 @@ const HEADER_MAP = {
   'URL': 'publish_url',
   '发布URL': 'publish_url',
   'Last Audit': 'last_audit',
+  'page_id': 'page_id_sheet',
+  'cluster_id': 'cluster_id',
+  'page_role': 'page_role',
+  'content_angle': 'content_angle',
+  'psych_safety_flag': 'psych_safety_flag',
+  'journal_prompts': 'journal_prompts',
 };
 
 export function mapRowToBrief(header, row) {
@@ -191,6 +200,30 @@ export function identifyGaps(brief) {
     }
   }
   return todo;
+}
+
+// Stable foreign-key regex (matches gg-friction-mine PAGE_ID_REGEX). page_id
+// flows into file-system write paths (.gg-cache/<page_id>/...), so we MUST
+// fail-closed on invalid values — never trust raw Sheet data.
+export const PAGE_ID_REGEX = /^[A-Za-z0-9_-]{1,64}$/;
+
+// page_id 取值规则（v0.18+ 严格外键）：
+//   1. 选题登记表 page_id 列非空 + 命中 PAGE_ID_REGEX → 用它
+//   2. 否则用 slugify(target_keyword) — slugify 本身只输出合法字符
+//   3. 都没有 → null（行不可数据化）
+//   4. 任何最终结果都必须命中 PAGE_ID_REGEX，否则返回 null（防止 traversal）
+export function resolvePageId(brief, isDataRow) {
+  if (!isDataRow) return null;
+  const fromSheet = brief.page_id_sheet ? String(brief.page_id_sheet).trim() : '';
+  let candidate = '';
+  if (fromSheet) {
+    candidate = fromSheet;
+  } else if (brief.target_keyword) {
+    candidate = slugifyPageId(brief.target_keyword) || '';
+  }
+  if (!candidate) return null;
+  if (!PAGE_ID_REGEX.test(candidate)) return null;
+  return candidate;
 }
 
 export function classifyRow(rawA, brief) {
@@ -283,7 +316,7 @@ async function main(argv) {
     const entry = {
       source_row: sheetRow,
       status,
-      page_id: isDataRow && brief.target_keyword ? slugifyPageId(brief.target_keyword) : null,
+      page_id: resolvePageId(brief, isDataRow),
       raw,
       brief: isDataRow ? brief : null,
       todo: isDataRow ? identifyGaps(brief) : [],

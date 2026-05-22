@@ -128,7 +128,13 @@ const ctx = {
   tier: pick('tier', 'tier', 'T2'),
   track: '量产线',
   page_role: template === 'Pillar' ? 'Hub' : 'Support',
-  psych_safety_flag: pick('psych_safety', 'psych_safety', 'N'),
+  // RL6 strict mode (codex review): empty / null / unknown must default to 'N',
+  // not pass through as wiring-bug fail. Canonical values are 'Y' | 'N'.
+  psych_safety_flag: (() => {
+    const raw = pick('psych_safety', 'psych_safety', 'N');
+    const s = String(raw || '').trim().toUpperCase();
+    return (s === 'Y' || s === 'N') ? s : 'N';
+  })(),
   llm_source: args.llm_source || 'unknown',
   prompt_version: promptVersion,
   word_range_min: Number.parseInt(args.word_min, 10) || wordRange[0],
@@ -305,7 +311,7 @@ const rlChecks = [
   ['RL3 (SERP plagiarism)', () => checkRL3(draft, serpCtx)],
   ['RL4 (keyword anchored)', () => checkRL4(draft, { targetKeyword: ctx.target_keyword, entity: ctx.entity })],
   ['RL5 (keyword stuffing)', () => checkRL5(draft, { targetKeyword: ctx.target_keyword, maxCount: ctx.kw_max })],
-  ['RL6 (psych safety)', () => checkRL6(draft, { psych_safety_flag: ctx.psych_safety_flag })],
+  ['RL6 (psych safety)', () => checkRL6(draft, { effectivePsychSafety: ctx.psych_safety_flag })],
 ];
 
 const WAIVERS = new Set(); // No waivers — B'.3 SERP cache now live.

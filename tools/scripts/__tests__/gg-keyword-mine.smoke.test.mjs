@@ -238,7 +238,7 @@ test('SUSPICIOUS_SINGLE_TERMS includes the spec-required astrology bare words', 
 
 // ---------- 修法 #1: NEGATIVES_RANGE constant + sheet read + merge ----------
 test('NEGATIVES_RANGE constant declared at top of file', () => {
-  assert.equal(NEGATIVES_RANGE, '⚙️配置!A28:A45');
+  assert.equal(NEGATIVES_RANGE, '配置!A28:A45');
 });
 
 test('mergeNegatives: case-insensitive dedupe, preserves first-seen casing', () => {

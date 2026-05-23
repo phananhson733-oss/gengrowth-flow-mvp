@@ -31,11 +31,11 @@ upstream: spec/upstream-canon/2026-05-15-gengrowth-internal-growth-mvp-prd-v0.7.
 | DR 差距过滤（≤30）| SOP §二第一关 | ❌ mine 不算 DR，sheet G/I 列人工填 | — |
 | KD 过滤 | SOP §二 | ✅ mine `--max-kd` flag | — |
 | Volume 过滤 | SOP §二 | ✅ mine `--min-volume` flag | — |
-| NEGATIVE_KEYWORDS 否决 | PRD §7.3.2 修法 #1 + .gs v3.1 line 97-108 | ⚠️ mine 实现了 `isNegativeMatch` 但只读 CLI/env，**不读 sheet ⚙️配置区** | 高 |
+| NEGATIVE_KEYWORDS 否决 | PRD §7.3.2 修法 #1 + .gs v3.1 line 97-108 | ⚠️ mine 实现了 `isNegativeMatch` 但只读 CLI/env，**不读 sheet 配置区** | 高 |
 | 种子词不可用单个多义词 | SOP v2.4 §三 + PRD §7.3.2 修法 #3 | ❌ mine 完全未校验；CLI 接受任何 string | 中 |
 | AIO 风险预判（vol≥500 + what is/meaning/definition...）| SOP §二第三关 + .gs v3.1 line 250-254 | ✅ mine `isAioHighRisk` 实现正确，写 `ai_recommend` 列 | — |
 | GEO 评分（用于 fallback/mine 内部排序）| 自创（不在 SOP）| ✅ mine + fallback 共用 `computeGeo`，公式一致 | — |
-| 目标国家 Day-0 参数 | PRD §3.3 + SOP v2.4 + .gs v3.1 B4 | ⚠️ mine hardcode 2840 (US) 可用；但**不从 sheet ⚙️配置 B4 读** | 中 |
+| 目标国家 Day-0 参数 | PRD §3.3 + SOP v2.4 + .gs v3.1 B4 | ⚠️ mine hardcode 2840 (US) 可用；但**不从 sheet 配置 B4 读** | 中 |
 | 写入主表只碰 A-I（公式列 J-X 不动）| SOP §六 + .gs v3.1 | ✅ promote 严格 `关键词主表!A:I` 范围；mine 副表写 A:K | — |
 | 选题登记表 21 列（v2.1 = v2.0 15 列 + 新 6 列）| PRD 附录 C | ✅ bootstrap 列结构正确；promote 只写 A 列（target_keyword）| — |
 
@@ -51,17 +51,17 @@ upstream: spec/upstream-canon/2026-05-15-gengrowth-internal-growth-mvp-prd-v0.7.
 **实现状态：**
 | 子任务 | 实现 | 状态 |
 |---|---|---|
-| `.gs` 模板 ⚙️配置 A28:A45 NEGATIVE_KEYWORDS 区 | wiki `.gs v3.1` 已实现 | ✅（上游）|
+| `.gs` 模板 配置 A28:A45 NEGATIVE_KEYWORDS 区 | wiki `.gs v3.1` 已实现 | ✅（上游）|
 | 关键词主表 O 列前置 SUMPRODUCT(SEARCH(...)) 否决 | wiki `.gs v3.1` 已实现 | ✅（上游）|
 | **本地 sheet 同步该 schema** | `_bootstrap-flow-mvp-workbook.mjs` 创建的"关键词主表"是占位列名，**没有真公式**| ❌ |
 | mine 脚本本地 negative 二次过滤 | `gg-keyword-mine.mjs` `isNegativeMatch` | ⚠️ 实现了，但只读 CLI/env |
-| mine 脚本从 sheet ⚙️配置 A28:A45 拉负向词 | — | ❌ 未实现 |
+| mine 脚本从 sheet 配置 A28:A45 拉负向词 | — | ❌ 未实现 |
 
 **影响：** 跑 `gg-keyword-mine` 时如果不显式传 `--negatives` 或设 `GG_NEGATIVE_KEYWORDS` env，垃圾词照样进 keyword_candidates 副表。SOP 的"一劳永逸"承诺打折。
 
 **修法：**
 1. 重写 `_bootstrap-flow-mvp-workbook.mjs`，按 `.gs v3.1` 1:1 复刻 13 张工作表（含公式）
-2. 修改 `gg-keyword-mine.mjs` `parseNegatives()`，加一步从 sheet ⚙️配置 A28:A45 读取，与 CLI/env 合并去重
+2. 修改 `gg-keyword-mine.mjs` `parseNegatives()`，加一步从 sheet 配置 A28:A45 读取，与 CLI/env 合并去重
 
 ---
 
@@ -120,7 +120,7 @@ export function validateSeed(seed) {
 **实现状态：** ✅ 已落地（2026-05-23）
 
 **实现脚本：** `tools/scripts/gg-cluster-init.mjs`
-- 读关键词主表 R 列 = `⚡快速胜利` / `📌长尾词` 的行（默认；--buckets 可改）
+- 读关键词主表 R 列 = `快速胜利` / `长尾词` 的行（默认；--buckets 可改）
 - token 共现 + 词边界匹配聚类（优先 bigram seed，回退 unigram；stopwords 过滤）
 - 写主题集群表自动列：`cluster_id` / `cluster_name` / `keywords_included`
 - 业务字段（track / jtbd / content_angle / cta / priority / week）留空，人工补
@@ -137,7 +137,7 @@ export function validateSeed(seed) {
 
 ### 修法 #5 — 一次性人工扫桶
 
-**PRD 要求：** 对 ⚡快速胜利桶做一次 30 分钟人工扫一遍。
+**PRD 要求：** 对 快速胜利桶做一次 30 分钟人工扫一遍。
 
 **实现状态：** 这是人工动作，不写在脚本里。但脚本可以 **flag 嫌疑词**：
 
@@ -158,19 +158,19 @@ export function validateSeed(seed) {
 
 | Tab | 附录 D / .gs v3.1 规格 | 本地 bootstrap 实现 | 状态 |
 |---|---|---|---|
-| ⚙️配置 | 客户产品名 / 实验开始日期 / 目标国家 / TOPIC_KEYWORDS (A6:A25) / NEGATIVE_KEYWORDS (A28:A45) | ✅ 已建（B2/B3 客户产品名+实验日期 P0-4 落地）| ✅ 见 BOOTSTRAP_GS_DIFF_2026-05-23.md |
+| 配置 | 客户产品名 / 实验开始日期 / 目标国家 / TOPIC_KEYWORDS (A6:A25) / NEGATIVE_KEYWORDS (A28:A45) | ✅ 已建（B2/B3 客户产品名+实验日期 P0-4 落地）| ✅ 见 BOOTSTRAP_GS_DIFF_2026-05-23.md |
 | 关键词主表 | A–X 24 列含 J/K/M/N/O/R/S/U **公式列** | ✅ 24 列，10/10 公式 1:1 复刻 v3.1，fill-down row 1500 | ✅ 见 BOOTSTRAP_GS_DIFF_2026-05-23.md |
 | 主题集群表 | 19 列（含 us_share 三档）+ 表头颜色注释 | ✅ 19 列对齐 | ✅ |
 | 选题登记表 | 21 列（v2.0 15 + 新 6）+ 注释 | ✅ 21 列正确 + C2/D2 VLOOKUP | ✅ |
 | CTA Map | 6 列 | ✅ 6 列 + 6 行 Week-1 seed | ✅ |
 | 结果复盘表 | outcome_id / Day 14·30·60 / GSC粘贴区 / GA4粘贴区 | ✅ 12 列已建 + E/K 下拉 | ✅ 见 BOOTSTRAP_GS_DIFF_2026-05-23.md |
-| 🚀趋势词 | 视图（VLOOKUP 主表筛分桶= 趋势词）| ✅ 公式落 A1（视图样式 P1 cosmetic）| ✅ |
-| ⚡快速胜利 | 同上 | ✅ 同上 | ✅ |
-| 🎯战略词 | 同上 | ✅ 同上 | ✅ |
-| 📌长尾词 | 同上 | ✅ 同上 | ✅ |
-| 📋分桶规则 | 文档表 — 列各桶规则 | ✅ rows + cellStyling 对齐 | ✅ |
-| 📊内容追踪 | 已发布 URL + GSC 关键词 | ✅ 14 列 + G/H/L 公式 | ✅ 见 BOOTSTRAP_GS_DIFF_2026-05-23.md |
-| 📈来源分析 | 各来源命中率统计 | ✅ 6 列 + seed + tailRow 公式 | ✅ 见 BOOTSTRAP_GS_DIFF_2026-05-23.md |
+| 趋势词 | 视图（VLOOKUP 主表筛分桶= 趋势词）| ✅ 公式落 A1（视图样式 P1 cosmetic）| ✅ |
+| 快速胜利 | 同上 | ✅ 同上 | ✅ |
+| 战略词 | 同上 | ✅ 同上 | ✅ |
+| 长尾词 | 同上 | ✅ 同上 | ✅ |
+| 分桶规则 | 文档表 — 列各桶规则 | ✅ rows + cellStyling 对齐 | ✅ |
+| 内容追踪 | 已发布 URL + GSC 关键词 | ✅ 14 列 + G/H/L 公式 | ✅ 见 BOOTSTRAP_GS_DIFF_2026-05-23.md |
+| 来源分析 | 各来源命中率统计 | ✅ 6 列 + seed + tailRow 公式 | ✅ 见 BOOTSTRAP_GS_DIFF_2026-05-23.md |
 | keyword_candidates | 11 列副表 | ✅ 正确 | ✅ |
 | pipeline-status / publish-log / quality-metrics / cost-tracking / config（项目运维表）| 不在 .gs v3.1 范围 | ✅ 自建 | OK，gg-status 用 |
 | README | 不在 .gs v3.1 范围 | ✅ 自建 | OK |
@@ -225,7 +225,7 @@ node tools/scripts/_migrate-legacy-to-flow-mvp.mjs \
 | # | 动作 | 工作量 | 优先级 | 状态 |
 |---|---|---|---|---|
 | 1 | 重写 `_bootstrap-flow-mvp-workbook.mjs` 按 `.gs v3.1` 复刻 13 张工作表 | 4-6h | **P0** | ✅ 2026-05-23 |
-| 2 | 修 `gg-keyword-mine.mjs`：默认写 flow-mvp sheet + 从 ⚙️配置 A28:A45 拉负向词 | 1h | **P0** | ✅ 2026-05-23 |
+| 2 | 修 `gg-keyword-mine.mjs`：默认写 flow-mvp sheet + 从 配置 A28:A45 拉负向词 | 1h | **P0** | ✅ 2026-05-23 |
 | 3 | 新建 `_migrate-legacy-to-flow-mvp.mjs` 迁移 590 词 + 301 选题 | 2h | **P0** | ✅ 2026-05-23 |
 | 4 | 加 mine 种子词校验（SUSPICIOUS_SINGLE_TERMS 警告）| 30min | P1 | ✅ 2026-05-23 |
 | 5 | 加 mine 嫌疑词 flag（kd-vol-conflict / multi-token-mismatch）| 30min | P1 | ✅ 2026-05-23 |
@@ -236,7 +236,7 @@ node tools/scripts/_migrate-legacy-to-flow-mvp.mjs \
 | 10 | P0-1 `_sync-canon.sh` + `spec/upstream-canon/` | 30min | **P0** | ✅ 2026-05-23 |
 | 11 | P0-2 Reddit OAuth scaffold (`lib/_reddit-oauth.mjs` + `gg-friction-mine.mjs` + `REDDIT_OAUTH_SETUP.md`) | 2h | **P0** | ✅ 2026-05-23 |
 | 12 | P0-3 `gg-llm-orchestrator.mjs`（并行 + frontier-strict + retry）| 3h | **P0** | ✅ 2026-05-23 |
-| 13 | P0-4 ⚙️配置 B2/B3 客户产品名+实验开始日期 | 30min | **P0** | ✅ 2026-05-23 |
+| 13 | P0-4 配置 B2/B3 客户产品名+实验开始日期 | 30min | **P0** | ✅ 2026-05-23 |
 | 14 | P1-1 mine 4-项升级（sheet-read NEG / SUSPICIOUS_SINGLE_TERMS / 嫌疑词 flag / workbook default）| 1h | P1 | ✅ 2026-05-23 |
 | 15 | P1-2 `gg-cluster-fields-suggest.mjs` | 2h | P1 | ✅ 2026-05-23 |
 | 16 | P1-3 `gg-brief-suggest.mjs` | 2h | P1 | ✅ 2026-05-23 |
@@ -260,7 +260,7 @@ node tools/scripts/_migrate-legacy-to-flow-mvp.mjs \
 | TOPIC_KEYWORDS | 20 词（真实）| 从 oracle/data/articles/ 17 篇文章 keywords 反推 |
 | NEGATIVE_KEYWORDS | 5 词（默认 + 用户可扩展）| miami/dade/trimet/hub city/bus tracker |
 | 站 DR (I 列) | 5（用户 2026-05-23 告知 ≤5 区间上限）| 用 `gg-backfill-site-dr.mjs --dr <真实值>` 调整 |
-| R 列分桶 | 336 ⚡快速胜利 / 166 📌长尾 / 87 ❌跳过 / 1 🎯战略 | 公式 fill-down bug 修复后正确 |
+| R 列分桶 | 336 快速胜利 / 166 📌长尾 / 87 ❌跳过 / 1 🎯战略 | 公式 fill-down bug 修复后正确 |
 | 主题集群表 | 144 集群草稿 → Phase 2 合并为 24 publishable units | `gg-cluster-init.mjs --write` 落盘；详见 `CLUSTER_AUDIT_2026-05-23.md` |
 | 选题登记表 | 301 行 | 迁自老 sheet，C/D VLOOKUP 重写 |
 | keyword_candidates | 15 行 | wzb_approve 状态保留 |

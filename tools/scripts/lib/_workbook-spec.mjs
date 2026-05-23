@@ -24,15 +24,15 @@ export const COLORS = Object.freeze({
 export const SOURCE_LIST = ['竞品映射', '内容缺口', '种子词拓展', '社区挖掘', '趋势词', 'Social信号'];
 
 // 公式（关键词主表 J/K/M/N/O/R/S/U）— 1:1 复刻 .gs v3.1 line 199-260
-// 注：`'⚙️配置'` 在 Sheets 公式里需单引号
-const CFG = "'⚙️配置'";
+// 注：`'配置'` 在 Sheets 公式里需单引号
+const CFG = "'配置'";
 
 export const MASTER_FORMULAS = Object.freeze({
   J: '=IF(OR(G2="",I2=""),"待填",G2-I2)',
   K: `=IF(A2="","",IF(SUMPRODUCT((${CFG}!$A$6:$A$25<>"")*ISNUMBER(SEARCH(${CFG}!$A$6:$A$25,A2)))>0,"✅相关","⚠️待确认"))`,
   M: '=IF(A2="","",IF(OR(ISNUMBER(SEARCH("best ",A2)),ISNUMBER(SEARCH(" vs ",A2)),ISNUMBER(SEARCH("alternative",A2)),ISNUMBER(SEARCH("comparison",A2)),ISNUMBER(SEARCH("review",A2)),ISNUMBER(SEARCH("pricing",A2)),ISNUMBER(SEARCH("top ",A2))),"Commercial",IF(OR(ISNUMBER(SEARCH("buy ",A2)),ISNUMBER(SEARCH(" cost",A2)),ISNUMBER(SEARCH("cheap",A2)),ISNUMBER(SEARCH("discount",A2)),ISNUMBER(SEARCH("free trial",A2)),ISNUMBER(SEARCH("sign up",A2))),"Transactional",IF(OR(ISNUMBER(SEARCH("fix ",A2)),ISNUMBER(SEARCH("not working",A2)),ISNUMBER(SEARCH("how to fix",A2)),ISNUMBER(SEARCH("how to solve",A2)),ISNUMBER(SEARCH("problem",A2)),ISNUMBER(SEARCH(" error",A2))),"Problem-aware",IF(OR(ISNUMBER(SEARCH("how to ",A2)),ISNUMBER(SEARCH("what is",A2)),ISNUMBER(SEARCH(" guide",A2)),ISNUMBER(SEARCH("tutorial",A2)),ISNUMBER(SEARCH("why ",A2)),ISNUMBER(SEARCH("explained",A2))),"Informational","待确认")))))',
   N: '=IF(J2="待填","待填",IF(ISNUMBER(J2),IF(J2>30,"❌跳过","✅通过"),"待填"))',
-  O: `=IF(A2="","",IF(SUMPRODUCT((${CFG}!$A$28:$A$45<>"")*ISNUMBER(SEARCH(${CFG}!$A$28:$A$45,A2)))>0,"❌跳过",IF(N2="❌跳过","❌跳过",IF(AND(ISNUMBER(F2),F2>1.2,ISNUMBER(D2),D2<35,K2="✅相关",L2="Y"),"🚀趋势词",IF(AND(ISNUMBER(D2),D2<20,ISNUMBER(C2),C2>=100),"⚡快速胜利",IF(AND(ISNUMBER(D2),D2<20,OR(M2="Problem-aware",M2="Informational"),ISNUMBER(C2),C2>=50),"⚡快速胜利",IF(AND(ISNUMBER(D2),D2>=20,D2<=50,OR(M2="Commercial",M2="Transactional")),"🎯战略词","📌长尾词")))))))`,
+  O: `=IF(A2="","",IF(SUMPRODUCT((${CFG}!$A$28:$A$45<>"")*ISNUMBER(SEARCH(${CFG}!$A$28:$A$45,A2)))>0,"❌跳过",IF(N2="❌跳过","❌跳过",IF(AND(ISNUMBER(F2),F2>1.2,ISNUMBER(D2),D2<35,K2="✅相关",L2="Y"),"趋势词",IF(AND(ISNUMBER(D2),D2<20,ISNUMBER(C2),C2>=100),"快速胜利",IF(AND(ISNUMBER(D2),D2<20,OR(M2="Problem-aware",M2="Informational"),ISNUMBER(C2),C2>=50),"快速胜利",IF(AND(ISNUMBER(D2),D2>=20,D2<=50,OR(M2="Commercial",M2="Transactional")),"战略词","长尾词")))))))`,
   R: '=IF(A2="","",IF(P2<>"",P2&"★",O2))',
   S: '=IF(A2="","",IF(AND(ISNUMBER(C2),C2>=500,OR(ISNUMBER(SEARCH("what is",A2)),ISNUMBER(SEARCH("meaning",A2)),ISNUMBER(SEARCH("definition",A2)),ISNUMBER(SEARCH("how does",A2)),ISNUMBER(SEARCH("explained",A2)))),"⚠️疑似高风险",""))',
   U: '=IF(A2="",0,IF(H2="✅弱",3,IF(H2="⚠️中",2,1))+IF(OR(M2="Commercial",M2="Problem-aware"),1,0))',
@@ -60,7 +60,7 @@ export const TRACK_FORMULAS = Object.freeze({
 export const TABS = [
   // ────────── .gs v3.1 13 tab ──────────
   {
-    name: '⚙️配置',
+    name: '配置',
     type: 'config',
     headerColors: { 1: 'header', 2: 'header' }, // A1 B1 深灰
     rows: [
@@ -132,17 +132,17 @@ export const TABS = [
         { range: 'B2:B1500', list: SOURCE_LIST },
         { range: 'H2:H1500', list: ['✅弱', '⚠️中', '❌强', '未查'] },
         { range: 'L2:L1500', list: ['Y', 'N'] },
-        { range: 'P2:P1500', list: ['🚀趋势词', '⚡快速胜利', '🎯战略词', '📌长尾词', '❌跳过'] },
+        { range: 'P2:P1500', list: ['趋势词', '快速胜利', '战略词', '长尾词', '❌跳过'] },
         { range: 'T2:T1500', list: ['高', '低', '未查'] },
         { range: 'V2:V1500', list: ['未开始', '写作中', '已发布', '暂缓'] },
       ],
       conditionalFormats: [
         // R 列分桶（主色）
-        { range: 'R2:R1500', textContains: '🚀趋势词',    bg: { red: 0.784, green: 0.902, blue: 0.788 } }, // #c8e6c9
-        { range: 'R2:R1500', textContains: '⚡快速胜利★', bg: { red: 1.0,   green: 0.961, blue: 0.616 } }, // #fff59d
-        { range: 'R2:R1500', textContains: '⚡快速胜利',  bg: { red: 1.0,   green: 0.976, blue: 0.769 } }, // #fff9c4
-        { range: 'R2:R1500', textContains: '🎯战略词',    bg: { red: 0.733, green: 0.871, blue: 0.984 } }, // #bbdefb
-        { range: 'R2:R1500', textContains: '📌长尾词',    bg: { red: 0.988, green: 0.894, blue: 0.925 } }, // #fce4ec
+        { range: 'R2:R1500', textContains: '趋势词',    bg: { red: 0.784, green: 0.902, blue: 0.788 } }, // #c8e6c9
+        { range: 'R2:R1500', textContains: '快速胜利★', bg: { red: 1.0,   green: 0.961, blue: 0.616 } }, // #fff59d
+        { range: 'R2:R1500', textContains: '快速胜利',  bg: { red: 1.0,   green: 0.976, blue: 0.769 } }, // #fff9c4
+        { range: 'R2:R1500', textContains: '战略词',    bg: { red: 0.733, green: 0.871, blue: 0.984 } }, // #bbdefb
+        { range: 'R2:R1500', textContains: '长尾词',    bg: { red: 0.988, green: 0.894, blue: 0.925 } }, // #fce4ec
         { range: 'R2:R1500', textContains: '❌跳过',      bg: { red: 0.933, green: 0.933, blue: 0.933 } }, // #eeeeee
         // O 列浅色
         { range: 'O2:O1500', textContains: '🚀', bg: { red: 0.945, green: 0.973, blue: 0.914 } }, // #f1f8e9
@@ -160,14 +160,14 @@ export const TABS = [
       ],
       // 列注释（line 161-179）
       notes: {
-        C1: '月搜索量取「目标国家」(⚙️配置!B4) 的数值。Ahrefs Keywords Explorer 把国家设为目标国后导出的 Volume 即此列，不用全球量。',
+        C1: '月搜索量取「目标国家」(配置!B4) 的数值。Ahrefs Keywords Explorer 把国家设为目标国后导出的 Volume 即此列，不用全球量。',
         E1: 'CPC仅做参考展示，不用于分桶判断。战略词的主条件是意图（M列），不是CPC高低。',
         F1: 'Trends比值（手动，趋势词判断用）：近3个月均值 ÷ 近6个月均值。\n>1.2 = 近期上涨（趋势词候选）\n≈1.0 = 稳定\n<0.8 = 衰退词\n获取：Google Trends 或 Ahrefs "Trend"图表目测估算。留空视为平稳，仅趋势词分桶条件使用。',
         G1: 'Top10最低2站DR均值（查词时手动填写）：取Top10结果中DR最低的2个站，求均值。\n\n为何不用全平均？前期自有站DR=0或接近0，几个高DR站（如WordPress.com DR=94、Reddit DR=91）会把全平均拉到80+，几乎所有词被N列误判为❌跳过；看末两位DR更贴近"你实际能挤进的位置"。\n\n获取：Ahrefs关键词详情页SERP Overview → 按DR升序排 → 取最低2行DR均值；或安装Ahrefs SEO Toolbar直接在Google搜索结果页读DR。\n注：每个词不同，需和H列SERP弱度、I列自有站DR同步填写。',
-        H1: 'SERP弱度（⚡快速胜利桶必填，查词时同步判断）\n\n判断方式（三种）：\n① Ahrefs关键词详情页 → SERP Overview：直接看每个排名页DR/UR，最快\n② 安装Ahrefs SEO Toolbar浏览器插件（免费）：Google搜索结果每条旁边直接显示DR/UR\n③ 手工Google搜索：看是否有论坛帖、内容薄弱页、无针对性优化的页面\n\n判断标准：\n✅弱：Top10中≥3个页面DR低/内容薄弱/或有论坛帖（Reddit/Quora等）排名 → 可超越\n⚠️中：Top10中有1-2个可超越位置\n❌强：Top10全部为高质量高DR站点\n\n注：Reddit(DR=91)/Quora(DR=88)虽然站DR高，但单帖内容薄弱且UR低，出现在Top10 = ✅弱信号——说明该词缺乏高质量专业内容，正是内容站机会所在。',
+        H1: 'SERP弱度（快速胜利桶必填，查词时同步判断）\n\n判断方式（三种）：\n① Ahrefs关键词详情页 → SERP Overview：直接看每个排名页DR/UR，最快\n② 安装Ahrefs SEO Toolbar浏览器插件（免费）：Google搜索结果每条旁边直接显示DR/UR\n③ 手工Google搜索：看是否有论坛帖、内容薄弱页、无针对性优化的页面\n\n判断标准：\n✅弱：Top10中≥3个页面DR低/内容薄弱/或有论坛帖（Reddit/Quora等）排名 → 可超越\n⚠️中：Top10中有1-2个可超越位置\n❌强：Top10全部为高质量高DR站点\n\n注：Reddit(DR=91)/Quora(DR=88)虽然站DR高，但单帖内容薄弱且UR低，出现在Top10 = ✅弱信号——说明该词缺乏高质量专业内容，正是内容站机会所在。',
         I1: '自有站DR（查词当时的站DR快照，手动填写）：每次查词时填入你当前的Ahrefs站DR，只填一次，不随时间更新。\n获取：Ahrefs → 输入你的域名 → 查看Domain Rating。\n\n为何不用全局配置？G列是查词时的竞争快照，I列是同时刻你的站DR，两者配对才有意义。使用全局配置会导致新旧DR混用，比较无意义。',
         J1: 'DR差值 = Top10最低2站DR均值（G）- 自有站DR（I），自动计算。\n差值>30 → ❌跳过；差值≤30（含负值）→ ✅通过\n负值（如-5）= 你的站DR已超越该词SERP末位站，更应执行，属于正常情况。\n注：G和I均为查词时快照，执行前如距填写超60天建议重新核查SERP。',
-        K1: 'G1话题相关：自动检测关键词是否命中⚙️配置!A6:A25的TOPIC_KEYWORDS列表。\n✅相关=话题相关；⚠️待确认=未命中，需人工判断后决定是否填L列=Y。\n初始化后必须先更新配置表话题词，否则默认示例词无意义。',
+        K1: 'G1话题相关：自动检测关键词是否命中配置!A6:A25的TOPIC_KEYWORDS列表。\n✅相关=话题相关；⚠️待确认=未命中，需人工判断后决定是否填L列=Y。\n初始化后必须先更新配置表话题词，否则默认示例词无意义。',
         L1: 'G2可承接（手动）：站内是否有工具/内容/功能能承接该趋势词的用户需求？\n填Y才能进趋势桶；空值视为N。这是纯人工判断项，脚本无法自动识别。',
         M1: '意图（自动，模式匹配，约80%准确）：\nCommercial: best/vs/alternative/review/pricing\nTransactional: buy/cost/free trial\nProblem-aware: fix/not working/error\nInformational: what is/how to/guide\n未命中→待确认，批量交Claude/GPT用SOP第四节prompt处理。',
         N1: 'DR过滤（公式，唯一真正的过滤关卡）：基于J列DR差值自动判断。\n✅通过：差值≤30，可执行\n❌跳过：差值>30，当前站DR不足以竞争该词\n待填：G或I列未填，无法计算\n❌跳过的词仍留在主表。当站DR提升后重填I列，此列自动重判。',
@@ -355,14 +355,14 @@ export const TABS = [
   },
 
   // 5 视图表（line 540-577）
-  { name: '🚀趋势词', type: 'view', formula: VIEW_FORMULAS.trend, headerColor: { red: 0.910, green: 0.961, blue: 0.914 }, note: '趋势词 — Trends比值降序 | K列G1✅相关+L列G2=Y双门槛 | 发现即执行，不等周计划' },
-  { name: '⚡快速胜利', type: 'view', formula: VIEW_FORMULAS.quickWin, headerColor: { red: 1.0, green: 0.976, blue: 0.769 }, note: '快速胜利 — 排序权重（H列SERP弱度+M列意图）→ 月搜索量 降序 | H列SERP弱度填完后排序才有意义 | Week1-4主执行' },
-  { name: '🎯战略词', type: 'view', formula: VIEW_FORMULAS.strategic, headerColor: { red: 0.890, green: 0.949, blue: 0.992 }, note: '战略词 — CPC降序（辅助参考，实际优先级以主题集群相关度人工排序为主）| Week3起每周1-2篇' },
-  { name: '📌长尾词', type: 'view', formula: VIEW_FORMULAS.longTail, headerColor: { red: 0.988, green: 0.894, blue: 0.925 }, note: '长尾词 — 社区来源词验证搜索量后归入对应桶 | 50-100搜索量+意图明确→Week1并行 | 其余批量执行' },
+  { name: '趋势词', type: 'view', formula: VIEW_FORMULAS.trend, headerColor: { red: 0.910, green: 0.961, blue: 0.914 }, note: '趋势词 — Trends比值降序 | K列G1✅相关+L列G2=Y双门槛 | 发现即执行，不等周计划' },
+  { name: '快速胜利', type: 'view', formula: VIEW_FORMULAS.quickWin, headerColor: { red: 1.0, green: 0.976, blue: 0.769 }, note: '快速胜利 — 排序权重（H列SERP弱度+M列意图）→ 月搜索量 降序 | H列SERP弱度填完后排序才有意义 | Week1-4主执行' },
+  { name: '战略词', type: 'view', formula: VIEW_FORMULAS.strategic, headerColor: { red: 0.890, green: 0.949, blue: 0.992 }, note: '战略词 — CPC降序（辅助参考，实际优先级以主题集群相关度人工排序为主）| Week3起每周1-2篇' },
+  { name: '长尾词', type: 'view', formula: VIEW_FORMULAS.longTail, headerColor: { red: 0.988, green: 0.894, blue: 0.925 }, note: '长尾词 — 社区来源词验证搜索量后归入对应桶 | 50-100搜索量+意图明确→Week1并行 | 其余批量执行' },
 
-  // 📋分桶规则 — 静态文档表（line 580-638）
+  // 分桶规则 — 静态文档表（line 580-638）
   {
-    name: '📋分桶规则',
+    name: '分桶规则',
     type: 'rules',
     // 用 rows 直接填多区段；下方 builder 用 raw values
     rows: [
@@ -371,7 +371,7 @@ export const TABS = [
       ['一、前置关卡（顺序操作，共两种性质：过滤 / 标注）', '', '', ''],
       ['关卡', '操作列', '判断条件', '性质说明'],
       ['第一关：DR过滤', 'N列（公式自动）', 'DR差值≤30 → ✅通过；>30 → ❌跳过\n负值 = 你的站DR超越竞争均值，仍为✅通过', '唯一真正的过滤关卡，❌跳过的词不进入分桶，但保留在主表'],
-      ['第二关：SERP弱度', 'H列（手动填写）', '✅弱 / ⚠️中 / ❌强 / 未查', '标注，不过滤；⚡快速胜利桶必填；填写后U列排序权重自动更新'],
+      ['第二关：SERP弱度', 'H列（手动填写）', '✅弱 / ⚠️中 / ❌强 / 未查', '标注，不过滤；快速胜利桶必填；填写后U列排序权重自动更新'],
       ['第三关：AIO风险', 'T列（手动填写）', '高 / 低 / 未查', '标注，不过滤；搜索量≥500的定义型词优先确认；影响内容结构策略'],
       ['', '', '', ''],
       ['二、四桶分类规则（O列公式按以下优先级依次判断，通过DR过滤后才进入分桶）', '', '', ''],
@@ -415,9 +415,9 @@ export const TABS = [
     },
   },
 
-  // 📊内容追踪 (line 642-670)
+  // 内容追踪 (line 642-670)
   {
-    name: '📊内容追踪',
+    name: '内容追踪',
     type: 'standard',
     header: ['关键词', '分桶', '发布日期', '内容URL', 'KD', '月搜索量', '预期排名(W8)', '预期流量(W8)', '实际排名(W4)', '实际排名(W8)', '实际流量(W8)', '偏差%', '页面类型匹配', '备注'],
     headerColorByCol: {}, // 用 header 整体深灰
@@ -435,9 +435,9 @@ export const TABS = [
     },
   },
 
-  // 📈来源分析 (line 674-690)
+  // 来源分析 (line 674-690)
   {
-    name: '📈来源分析',
+    name: '来源分析',
     type: 'standard',
     header: ['来源', '执行词数', '已发布', '命中(P1-P30)', '命中率', '下次是否加大投入？'],
     headerColorByCol: {},
@@ -466,18 +466,19 @@ export const TABS = [
       [`Bootstrap on: ${new Date().toISOString()}`],
       [],
       ['Tab', '用途', '读/写方'],
-      ['⚙️配置', '目标国家 / TOPIC_KEYWORDS / NEGATIVE_KEYWORDS', '人工初始化，全公式 vlookup'],
+      ['配置', '目标国家 / TOPIC_KEYWORDS / NEGATIVE_KEYWORDS', '人工初始化，全公式 vlookup'],
       ['关键词主表', 'A-X 24 列；J/K/M/N/O/R/S/U 为公式自动', 'mine/promote 写 A-I；公式列勿动'],
       ['主题集群表', 'cluster_id / track / us_share 等', '人工填'],
       ['选题登记表', '21 列 v2.1（v2.0 15 列 + 新 6 列）', 'promote 写 A；人工补 B-U'],
       ['CTA Map', 'page_role → CTA 文案', '人工填，预填 6 行 Week-1 默认'],
       ['结果复盘表', 'Day 14/30/60 GSC+GA4 数据', '维护期手粘'],
-      ['🚀趋势词 / ⚡快速胜利 / 🎯战略词 / 📌长尾词', '主表 R 列分桶视图（公式自动）', '只读视图'],
-      ['📋分桶规则', '文档表，PRD §7.3.2 规则说明', '只读'],
-      ['📊内容追踪', '预期 vs 实际偏差', '人工填'],
-      ['📈来源分析', '6 来源命中率统计', '人工填'],
+      ['趋势词 / 快速胜利 / 战略词 / 长尾词', '主表 R 列分桶视图（公式自动）', '只读视图'],
+      ['分桶规则', '文档表，PRD §7.3.2 规则说明', '只读'],
+      ['内容追踪', '预期 vs 实际偏差', '人工填'],
+      ['来源分析', '6 来源命中率统计', '人工填'],
       ['keyword_candidates', 'mine 副表，wzb_approve 后 promote', 'mine 写 / promote 读'],
       ['pipeline-status / publish-log / quality-metrics / cost-tracking / config', '项目运维（gg-status.mjs）', '自动'],
+      ['monitor-auto', 'GSC + GA4 自动回填（区别于人工填的 内容追踪）', '自动 gg-monitor.mjs'],
       [],
       ['→ 操作手册：docs/PIPELINE.md'],
       ['→ CEO 看板：docs/OPS_OVERVIEW.md'],
@@ -527,6 +528,21 @@ export const TABS = [
     extras: { frozenRows: 1, headerBgAll: 'header', headerFontColor: 'white', headerBold: true },
   },
 
+  // gg-monitor.mjs Stage 17 自动写入 tab（ASCII 名，便于索引；区分人工填的 内容追踪）
+  {
+    name: 'monitor-auto',
+    type: 'standard',
+    header: ['report_date', 'url', 'clicks', 'impressions', 'ctr', 'position', 'sessions', 'avg_dwell_s', 'engagement_rate', 'cta_signups'],
+    headerColorByCol: {},
+    extras: {
+      frozenRows: 1,
+      headerBgAll: 'header',
+      headerFontColor: 'white',
+      headerBold: true,
+      columnWidths: [110, 280, 80, 100, 80, 80, 80, 100, 110, 100],
+    },
+  },
+
   {
     name: 'config',
     type: 'standard',
@@ -537,7 +553,7 @@ export const TABS = [
       ['mine.max_results', '15', 'rows', '', 'bootstrap', 'top-N candidates per mine run'],
       ['mine.location_code', '2840', 'code', '', 'bootstrap', 'DataForSEO location (2840 = United States)'],
       ['mine.language_code', 'en', 'iso', '', 'bootstrap', 'DataForSEO language'],
-      ['mine.read_negatives_from_sheet', 'true', 'bool', '', 'bootstrap', '从 ⚙️配置!A28:A45 拉负向词（PRD §7.3.2 修法 #1）'],
+      ['mine.read_negatives_from_sheet', 'true', 'bool', '', 'bootstrap', '从 配置!A28:A45 拉负向词（PRD §7.3.2 修法 #1）'],
       ['phase2.RL3_n_gram', '12', 'tokens', '', 'bootstrap', 'SERP plagiarism n-gram overlap threshold'],
       ['phase2.RL4_jaccard_floor', '0.05', 'ratio', '', 'bootstrap', 'per-H2 first-paragraph jaccard floor'],
       ['phase2.RL4_shingle_floor', '0.10', 'ratio', '', 'bootstrap', 'per-H2 first-paragraph 5-gram shingle floor'],

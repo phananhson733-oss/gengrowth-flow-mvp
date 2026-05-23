@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // _benchmark-embedding.mjs — three-way Ollama embedding model comparison
 //
-// 跑同一批关键词（默认 R=⚡快速胜利+📌长尾 / 475 词）通过 N 个 ollama embedding 模型
+// 跑同一批关键词（默认 R=快速胜利+📌长尾 / 475 词）通过 N 个 ollama embedding 模型
 // 比较：cluster 数 / assigned 词数 / singleton 数 / 跑时 / cost ($0 for ollama)
 // 也单独测 ind-002（50 词异质桶）能拆出几个子簇 — 这是判断 quality 的关键场景
 //
@@ -188,7 +188,7 @@ async function main() {
 
   console.log('\nloading input from sheet...');
   const { allWords, ind002Words } = await pullInputWords();
-  console.log(`  ${allWords.length} words from R=⚡快速胜利+📌长尾`);
+  console.log(`  ${allWords.length} words from R=快速胜利+📌长尾`);
   console.log(`  ${ind002Words.length} words from ind-002 (heterogeneous bucket)`);
 
   const results = { date: new Date().toISOString(), threshold: COSINE_THRESHOLD, models: {} };
@@ -236,7 +236,7 @@ async function main() {
   lines.push('');
   lines.push(`# Embedding Benchmark — ${new Date().toISOString().slice(0, 10)}`);
   lines.push('');
-  lines.push(`**Setup**: ${MODELS.length} models × ${allWords.length} keywords (R=⚡快速胜利+📌长尾)`);
+  lines.push(`**Setup**: ${MODELS.length} models × ${allWords.length} keywords (R=快速胜利+📌长尾)`);
   lines.push(`**Threshold**: cosine distance ${COSINE_THRESHOLD}`);
   lines.push(`**Algorithm**: average-linkage agglomerative, pure JS`);
   lines.push(`**Backend**: ollama @ ${OLLAMA_HOST} (local, $0 cost)`);

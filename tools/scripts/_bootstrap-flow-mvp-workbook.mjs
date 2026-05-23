@@ -6,7 +6,7 @@
 //
 // 用法：
 //   node tools/scripts/_bootstrap-flow-mvp-workbook.mjs --id <spreadsheetId>
-//   node tools/scripts/_bootstrap-flow-mvp-workbook.mjs --rebuild   # 删现有再重建（保留 ⚙️配置/关键词主表数据迁移）
+//   node tools/scripts/_bootstrap-flow-mvp-workbook.mjs --rebuild   # 删现有再重建（保留 配置/关键词主表数据迁移）
 //   node tools/scripts/_bootstrap-flow-mvp-workbook.mjs --dry-run   # 只打印动作计划
 //
 // 设计：
@@ -476,7 +476,7 @@ async function main() {
       ]));
     }
 
-    // View tab note row (📋分桶规则 不在此处；视图表 line 698-706 _styleViewSheet)
+    // View tab note row (分桶规则 不在此处；视图表 line 698-706 _styleViewSheet)
     if (tab.type === 'view') {
       // View sheet: row 1 is note (light bg, italic gray text); we already wrote formula at A1.
       // Need to: insertRowBefore to push formula to A2, then add note at A1
@@ -503,7 +503,7 @@ async function main() {
   console.log(`✅ Done. Open: https://docs.google.com/spreadsheets/d/${sid}/edit`);
   console.log('');
   console.log('NEXT STEPS:');
-  console.log('  1. 打开 ⚙️配置 tab，填写 B4 目标国家、A6-A25 TOPIC_KEYWORDS、A28-A45 NEGATIVE_KEYWORDS');
+  console.log('  1. 打开 配置 tab，填写 B4 目标国家、A6-A25 TOPIC_KEYWORDS、A28-A45 NEGATIVE_KEYWORDS');
   console.log('  2. 跑 _migrate-legacy.mjs 把老 sheet 590 词 + 301 选题迁过来');
   console.log('  3. 改 mine.mjs 默认通道 → GG_SHEETS_FLOW_MVP_WORKBOOK_ID');
 }

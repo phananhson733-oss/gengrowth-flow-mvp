@@ -2,7 +2,7 @@
 // gg-cluster-init.mjs — 主题集群初稿生成器
 //
 // PRD v0.7 §7.3.2 修法 #4 落地：
-//   只从 关键词主表 R 列 = "⚡快速胜利" 或 "📌长尾词" 的行喂入聚类，
+//   只从 关键词主表 R 列 = "快速胜利" 或 "长尾词" 的行喂入聚类，
 //   避免趋势词/战略词污染集群（趋势词应人工精修线、战略词独立做）。
 //
 // 设计原则（与 SOP v2.5 一致）：
@@ -47,10 +47,10 @@ const BUCKETS_ARG = arg('--buckets', '快速胜利,长尾词')
   .map((s) => s.trim());
 // Map shorthand → full R 列 value
 const BUCKETS = BUCKETS_ARG.map((b) => {
-  if (b.includes('快速胜利')) return '⚡快速胜利';
-  if (b.includes('长尾')) return '📌长尾词';
-  if (b.includes('趋势')) return '🚀趋势词';
-  if (b.includes('战略')) return '🎯战略词';
+  if (b.includes('快速胜利')) return '快速胜利';
+  if (b.includes('长尾')) return '长尾词';
+  if (b.includes('趋势')) return '趋势词';
+  if (b.includes('战略')) return '战略词';
   return b;
 });
 const MIN_CLUSTER_SIZE = parseInt(arg('--min-size', '2'), 10);

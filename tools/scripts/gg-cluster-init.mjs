@@ -85,12 +85,68 @@ const STOPWORDS = new Set([
   'can', 'should', 'will', 'would', 'could',
 ]);
 
+// 修补#3：cluster_name 美化用的次级 stopword（参与 tokenize 但命名时跳过）
+const NAMING_NOISE = new Set([
+  'calculator', 'chart', 'meaning', 'mean', 'definition', 'sign',
+  'free', 'online', 'best', 'top', 'guide', 'tool', 'app',
+]);
+
+// 修补#3：brand token 识别（用作命名前缀，便于人工识别）
+const BRAND_PATTERNS = [
+  { pattern: /astro[\s-]?seek/i, brand: 'astro-seek' },
+  { pattern: /\bcafe astrology\b/i, brand: 'cafe-astrology' },
+  { pattern: /\bco[\s-]?star\b/i, brand: 'co-star' },
+  { pattern: /\bchani\b/i, brand: 'chani' },
+  { pattern: /\bthe pattern\b/i, brand: 'the-pattern' },
+  { pattern: /\bastro\.com\b/i, brand: 'astro.com' },
+  { pattern: /\bastrosage\b/i, brand: 'astrosage' },
+];
+
 function tokenize(s) {
   return s
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, ' ')
     .split(/\s+/)
     .filter((t) => t && !STOPWORDS.has(t) && t.length >= 2);
+}
+
+// 修补#3：cluster name 美化
+//   1. 若任一成员命中 brand pattern，加 [brand:X] 前缀
+//   2. 在 cluster 内重新跑 trigram，若有 trigram 覆盖 ≥40% 成员，用 trigram 替代 raw seed
+//   3. 剥离命名层 noise（calculator/chart/meaning…）
+function prettifyClusterName(rawSeed, members) {
+  if (!members || !members.length) return rawSeed;
+
+  // brand 检测
+  let brand = null;
+  for (const { pattern, brand: b } of BRAND_PATTERNS) {
+    if (members.some((m) => pattern.test(m))) { brand = b; break; }
+  }
+
+  // trigram 优选
+  const trigramCount = new Map();
+  for (const w of members) {
+    const tokens = tokenize(w);
+    for (let i = 0; i < tokens.length - 2; i++) {
+      const tg = `${tokens[i]} ${tokens[i + 1]} ${tokens[i + 2]}`;
+      trigramCount.set(tg, (trigramCount.get(tg) || 0) + 1);
+    }
+  }
+  const minCoverage = Math.max(2, Math.ceil(members.length * 0.4));
+  const topTrigram = [...trigramCount.entries()]
+    .filter(([, n]) => n >= minCoverage)
+    .sort((a, b) => b[1] - a[1])[0];
+
+  let name = topTrigram ? topTrigram[0] : rawSeed;
+
+  // 剥离 NAMING_NOISE token（仅当剥离后仍 ≥1 实义 token）
+  const stripped = name
+    .split(/\s+/)
+    .filter((t) => !NAMING_NOISE.has(t.toLowerCase()))
+    .join(' ');
+  if (stripped && stripped.split(/\s+/).length >= 1) name = stripped;
+
+  return brand ? `[${brand}] ${name}` : name;
 }
 
 // 找最频繁的 unigram + bigram（除停用词），按出现频次倒序
@@ -117,24 +173,32 @@ function findClusterSeeds(words) {
   return { bigramSeeds, unigramSeeds };
 }
 
-// 把每个词分配到第一个匹配的 seed（贪心，优先 bigram）
+// 修补#2：扫所有 bigram seed 找匹配，选最长（最具体）的。
+// 全无 bigram 匹配才 fallback unigram（词边界匹配，避免 natal→prenatal 误判）。
+// 防止母词虹吸：避免 astrology 这种高频短词把 north node / square / house 等子主题词全吃掉。
 function assignClusters(words, seeds) {
-  const clusters = new Map(); // seed → [words]
+  const clusters = new Map();
   const unassigned = [];
 
   for (const w of words) {
     const wl = w.toLowerCase();
-    let matched = null;
-    // 优先 bigram
+    // bigram 最长匹配
+    let bestBigram = null;
     for (const seed of seeds.bigramSeeds) {
-      if (wl.includes(seed)) { matched = seed; break; }
-    }
-    // 退而求其次 unigram（用词边界避免 natal→prenatal 误匹）
-    if (!matched) {
-      for (const seed of seeds.unigramSeeds) {
-        const re = new RegExp(`\\b${seed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`);
-        if (re.test(wl)) { matched = seed; break; }
+      if (wl.includes(seed)) {
+        if (!bestBigram || seed.length > bestBigram.length) bestBigram = seed;
       }
+    }
+    if (bestBigram) {
+      if (!clusters.has(bestBigram)) clusters.set(bestBigram, []);
+      clusters.get(bestBigram).push(w);
+      continue;
+    }
+    // fallback: unigram 词边界匹配（first-match-wins，按 freq 倒序即可）
+    let matched = null;
+    for (const seed of seeds.unigramSeeds) {
+      const re = new RegExp(`\\b${seed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`);
+      if (re.test(wl)) { matched = seed; break; }
     }
     if (matched) {
       if (!clusters.has(matched)) clusters.set(matched, []);
@@ -167,11 +231,18 @@ function splitLargeClusters(clusters) {
       continue;
     }
     const subAssigned = assignClusters(words, { bigramSeeds: subSeeds, unigramSeeds: [] });
+    // 修补#1：子桶 size < MIN_CLUSTER_SIZE 全部回流到 "(其它)" 兜底桶，不独立成集群。
+    // 防止二级分裂时 freq=1 的 bigram 配贪心匹配产生 1 词桶（c-064~c-088 的根因）。
+    const overflow = [...subAssigned.unassigned];
     for (const [subName, subWords] of subAssigned.clusters.entries()) {
-      result.set(`${name} / ${subName}`, subWords);
+      if (subWords.length >= MIN_CLUSTER_SIZE) {
+        result.set(`${name} / ${subName}`, subWords);
+      } else {
+        overflow.push(...subWords);
+      }
     }
-    if (subAssigned.unassigned.length) {
-      result.set(`${name} (其它)`, subAssigned.unassigned);
+    if (overflow.length) {
+      result.set(`${name} (其它)`, overflow);
     }
   }
   return result;
@@ -258,6 +329,18 @@ async function main() {
   const seeds = findClusterSeeds(words);
   console.log(`\n种子词: bigram=${seeds.bigramSeeds.length} unigram=${seeds.unigramSeeds.length}`);
   const initial = assignClusters(words, seeds);
+
+  // 修补#1（一级补强）：一级集群 size < MIN_CLUSTER_SIZE 也回流到 unassigned 兜底，
+  // 不让 "find"/"ic"/"white" 这种 freq=2 的 unigram fallback 产生 1-2 词僵尸集群。
+  const oneLevelOverflow = [];
+  for (const [name, mem] of [...initial.clusters.entries()]) {
+    if (mem.length < MIN_CLUSTER_SIZE) {
+      oneLevelOverflow.push(...mem);
+      initial.clusters.delete(name);
+    }
+  }
+  if (oneLevelOverflow.length) initial.unassigned.push(...oneLevelOverflow);
+
   const clusters = splitLargeClusters(initial.clusters);
   console.log(`初步集群: ${clusters.size}  未分配: ${initial.unassigned.length}`);
 
@@ -266,9 +349,11 @@ async function main() {
   let seq = 1;
   for (const [name, members] of [...clusters.entries()].sort((a, b) => b[1].length - a[1].length)) {
     const cluster_id = `c-${String(seq).padStart(3, '0')}`;
+    // 修补#3：用 prettifyClusterName 美化 raw seed → brand 前缀 / trigram 替代 / 剥 noise
+    const prettyName = prettifyClusterName(name, members);
     out.push([
       cluster_id,                    // A cluster_id
-      name,                          // B cluster_name (auto, 人工可改)
+      prettyName,                    // B cluster_name (auto-prettified, 人工可改)
       '',                            // C track (人工)
       '',                            // D content_layer (人工)
       '',                            // E business_role (人工)
@@ -336,4 +421,4 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   });
 }
 
-export { tokenize, findClusterSeeds, assignClusters, splitLargeClusters };
+export { tokenize, findClusterSeeds, assignClusters, splitLargeClusters, prettifyClusterName };

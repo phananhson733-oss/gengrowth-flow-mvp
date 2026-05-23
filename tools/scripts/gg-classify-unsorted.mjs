@@ -41,6 +41,8 @@ function parseCliArgs(argv) {
   --dry-run               compute + write JSON only (default; safe)
   --write-sheet           apply: append words to target cluster L col, remove from source bucket
   --write-file            write JSON to .gg-cache/classify-suggestions/<target>.json (default ON)
+  --confidence-min X      (write-sheet only) only apply suggestions with sim ≥ X. Default = --cosine-threshold (apply all).
+                          推荐 --write-sheet 时同时 --confidence-min 0.75 (生产安全档)
   --embed-model X         embedding model (default text-embedding-3-small)
   --workbook X            flow-mvp (default) | legacy | <sheet-id>
 `);
@@ -64,9 +66,18 @@ function parseCliArgs(argv) {
     openai: 'text-embedding-3-small',
     ollama: 'nomic-embed-text',
   };
+  // --confidence-min: only --write-sheet suggestions with sim ≥ this. Edge cases (lower sim)
+  // remain in source bucket for manual review. Default 0.55 (same as COSINE_THRESHOLD ie. apply
+  // everything that classified). Recommended 0.75 for production safety.
+  const CONFIDENCE_MIN = parseFloat(arg('--confidence-min', String(COSINE_THRESHOLD)));
+  if (!Number.isFinite(CONFIDENCE_MIN) || CONFIDENCE_MIN < COSINE_THRESHOLD || CONFIDENCE_MIN >= 1) {
+    console.error(`ERR: --confidence-min must be in [${COSINE_THRESHOLD}, 1), got ${CONFIDENCE_MIN}`);
+    process.exit(2);
+  }
   return {
     TARGET,
     COSINE_THRESHOLD,
+    CONFIDENCE_MIN,
     WRITE_SHEET: has('--write-sheet'),
     DRY_RUN: !has('--write-sheet') || has('--dry-run'),
     WRITE_FILE: true,
@@ -323,8 +334,14 @@ async function runForTarget(cfg, targetId, clusters, embedOpts, token, sid) {
   }
 
   if (!cfg.DRY_RUN && cfg.WRITE_SHEET) {
-    console.log(`\n  WRITE-SHEET: applying ${suggestions.length} classifications...`);
-    await writeBackToSheet(token, sid, clusters, suggestions, targetId);
+    // Selective: only apply sim ≥ CONFIDENCE_MIN. Edge cases stay in source for human review.
+    const apply = suggestions.filter((s) => s.sim >= cfg.CONFIDENCE_MIN);
+    const defer = suggestions.length - apply.length;
+    console.log(`\n  WRITE-SHEET: applying ${apply.length}/${suggestions.length} classifications (confidence ≥ ${cfg.CONFIDENCE_MIN})${defer ? `, ${defer} deferred for review` : ''}`);
+    await writeBackToSheet(token, sid, clusters, apply, targetId);
+    payload.applied_count = apply.length;
+    payload.deferred_low_confidence = defer;
+    payload.confidence_min = cfg.CONFIDENCE_MIN;
   }
 
   return payload;

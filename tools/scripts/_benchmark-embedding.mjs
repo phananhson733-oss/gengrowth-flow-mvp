@@ -273,16 +273,32 @@ async function main() {
   }
   lines.push(`## 3. Recommendation`);
   lines.push('');
-  // Pick winner: prefer more clusters from ind-002 (better discrimination), then more assigned words
-  const winner = MODELS.map((m) => {
+  // Pick winner: weighted multi-dim score (no longer just ind-002 cluster count)
+  //   coverage      (assigned/input)         × 50    largest weight — direct production value
+  //   sub-split     ind-002 sub-clusters     × 5     algorithm quality on hardest input
+  //   anti-noise    -unassigned/input        × 30    less unassigned = better recall
+  //   speed_bonus   wall < 5s → +2           × 1     tie-break preference for fast
+  const scored = MODELS.map((m) => {
     const r = results.models[m];
-    if (!r?.full?.ok) return { m, score: -1 };
-    const score =
-      (r.ind002?.ok ? r.ind002.summary.clusters : 0) * 10 +
-      (r.full.summary.assigned / Math.max(1, r.full.summary.input));
-    return { m, score };
-  }).sort((a, b) => b.score - a.score)[0];
-  lines.push(`Selected winner: **\`${winner.m}\`** (highest ind-002 split × full assignment rate).`);
+    if (!r?.full?.ok) return { m, score: -1, breakdown: 'failed' };
+    const s = r.full.summary;
+    const coverage = s.assigned / Math.max(1, s.input);                            // 0..1
+    const antiNoise = -s.unassigned / Math.max(1, s.input);                        // -1..0
+    const subSplit = r.ind002?.ok ? r.ind002.summary.clusters : 0;
+    const speedBonus = r.full.wallMs < 5000 ? 1 : 0;
+    const score = coverage * 50 + antiNoise * 30 + subSplit * 5 + speedBonus * 2;
+    return {
+      m, score,
+      breakdown: `coverage=${(coverage * 50).toFixed(1)} anti-noise=${(antiNoise * 30).toFixed(1)} ind002=${(subSplit * 5).toFixed(1)} speed=${speedBonus * 2}`,
+    };
+  }).sort((a, b) => b.score - a.score);
+  const winner = scored[0];
+  lines.push(`Selected winner: **\`${winner.m}\`** (score=${winner.score.toFixed(1)} = ${winner.breakdown}).`);
+  lines.push('');
+  lines.push(`All models ranked by score:`);
+  for (const s of scored) {
+    lines.push(`- \`${s.m}\`: **${s.score.toFixed(1)}**  (${s.breakdown})`);
+  }
   lines.push('');
   lines.push(`Run real re-cluster: \`node tools/scripts/gg-cluster-init.mjs --algo embedding --embed-backend ollama --embed-model ${winner.m} --rebuild --write\``);
   lines.push('');

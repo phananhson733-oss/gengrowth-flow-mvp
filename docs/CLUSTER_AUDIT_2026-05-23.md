@@ -190,11 +190,16 @@ related:
 2. **拆 ind-002 astrology (其它) 50 词**：算法无能为力，需人工按子主题（aspects / IC / 9th house / juno / AI astrology / 付费 reading）拆开
 3. **归类 ind-001 (未聚类) 71 词**：人工浏览归入合适的 family 或新建独立 cluster
 4. **business 决策**（按 PM 视角）：砍 6 个 noise 桶（astro-seek 系列 / dosha / life coach / persephone / 颜色精神含义 / astrocartography）
-5. Phase 3 embedding 聚类已上 (`--algo embedding`) — ind-001/ind-002 自动归类工具落地 (`gg-classify-unsorted.mjs`).
-   - **2026-05-23 实测（ollama + nomic-embed-text）**：
-     - 全集 475 词 → **43 cluster / 442 已分配 / 33 未分配**（vs token 模式 52 cluster / 404 已分配）
-     - **ind-002 50 词异质桶 → 7 sub-cluster / 100% 拆开**（token 模式天花板：1 cluster）
-     - ind-001 71 兜底词 → **60 自动归类 (84.5%)** + 11 needs_new（包括 typo 如 "mecury"）
-     - top 自动归类去向：fam-nakshatra +16 / fam-birth-chart +6 / fam-lunar-nodes +5 / fam-vedic +3
-   - **不 --write 覆盖**：保留 Phase 2 手工 6-家族合并的 24 publishable units。Embedding 结果落 `.gg-cache/classify-suggestions/*.json` 供 review.
-   - **mxbai-embed-large (335M, MTEB 64.7) + qwen3-embedding:8b (8B, MTEB 70.58 multi)** 拉取卡在 CDN 95%，完成后用 `_benchmark-embedding.mjs` 自动 re-bench。完整结果见 [EMBEDDING_BENCHMARK_2026-05-23.md](./EMBEDDING_BENCHMARK_2026-05-23.md)。
+5. Phase 3 embedding 聚类已上 (`--algo embedding` + `--embed-backend ollama`) — ind-001/ind-002 自动归类工具落地 (`gg-classify-unsorted.mjs`).
+   - **2026-05-23 实测对比**（同输入 475 词，cosine threshold 0.35）：
+     | Model | 全集 cluster | 已分配 | 未分配 | ind-002 sub | wall |
+     |---|---:|---:|---:|---:|---:|
+     | nomic-embed-text (137M, MTEB 62.4) | 43 | 442 | 33 | **7** | 0.2s |
+     | **mxbai-embed-large (335M, MTEB 64.7)** | 45 | **454** | **21** | 4 | 5s |
+   - **threshold 对比**: 0.30 → 57 cluster / 437 / 38；0.35 → 43 / 442 / 33；0.45 → 26 / 458 / 17。**默认 0.35 是 sweet spot**。
+   - **selective --write-sheet 已实跑**（mxbai + `--confidence-min 0.75`）：
+     - ind-001: 71 → **47 词** (-24)，24 高置信归入 fam-lunar-nodes(+5) / fam-vedic(+5) / fam-birth-chart(+2) / fam-aura(+2) / ind-002(+5) 等
+     - ind-002: 50 → **38 词** (-17)，17 高置信归入 fam-vedic(+5) / fam-houses(+3) / fam-birth-chart(+1) / ind-006(+3) / ind-007(+1) / ind-009(+2) / ind-017(+2)
+     - **净改善**: 兜底桶减少 36 词，分散到 13 个真实主题桶
+   - **24 publishable units 结构保留**：embedding 仅用于把 ind-* 兜底桶里的词路由到现有 fam-/ind- cluster，未覆盖 Phase 2 手工合并结果
+   - `qwen3-embedding:8b` (8B, MTEB 70.58 multi) 拉取卡在 CDN — 完成后用 `_benchmark-embedding.mjs` 自动 re-bench。完整结果见 [EMBEDDING_BENCHMARK_2026-05-23.md](./EMBEDDING_BENCHMARK_2026-05-23.md)。

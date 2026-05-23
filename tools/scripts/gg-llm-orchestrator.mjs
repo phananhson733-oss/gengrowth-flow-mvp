@@ -122,13 +122,16 @@ function parseArgs(argv) {
 function usage() {
   process.stderr.write(
     `usage: gg-llm-orchestrator.mjs \\
-  --prompt <path>          v8 prompt (>=1KB)
-  --page-id <id>           e.g. page_aura_color_blue
-  --models <csv>           subset of: claude,codex,gemini,hermes
-  --out-dir <dir>          default: _staging
-  [--retry N]              default: 2 attempts per model
-  [--diversify-on-fail]    after N retries on a model, escalate to claude opus
-  [--dry-run]              print commands without invoking sub-CLIs
+  --prompt <path>                  v8 prompt (>=1KB)
+  --page-id <id>                   e.g. page_aura_color_blue
+  --models <csv>                   subset of: claude,codex,gemini,hermes
+  --out-dir <dir>                  default: _staging
+  [--retry N]                      default: 2 attempts per model (range 0..5)
+  [--diversify-on-fail]            after N retries on a model, escalate to claude opus
+  [--max-cost-usd-per-page X]      per-model budget gate; abort further retries/
+                                   diversify on this model once cumulative cost
+                                   exceeds X. Default 5.0 (typical run 0.5-1.5).
+  [--dry-run]                      print commands without invoking sub-CLIs
 `,
   );
 }
@@ -169,7 +172,14 @@ function validateInputs(args) {
   const retry = args.retry === undefined ? 2 : Number.parseInt(args.retry, 10);
   if (!Number.isFinite(retry) || retry < 0 || retry > 5) errors.push('--retry must be 0..5');
 
-  return { errors, models, retry };
+  const maxCostUsd = args.max_cost_usd_per_page === undefined
+    ? 5.0
+    : Number.parseFloat(args.max_cost_usd_per_page);
+  if (!Number.isFinite(maxCostUsd) || maxCostUsd <= 0 || maxCostUsd > 100) {
+    errors.push('--max-cost-usd-per-page must be > 0 and ≤ 100 (default 5.0)');
+  }
+
+  return { errors, models, retry, maxCostUsd };
 }
 
 // ─── 3. Sub-CLI availability + post-run guards ─────────────────────────────
@@ -329,10 +339,26 @@ function runAttempt(model, promptPath, outputPath) {
   });
 }
 
-// ─── 6. Model driver — retry + diversify ───────────────────────────────────
-async function driveModel({ model, promptPath, outDir, pageId, retry, diversifyOnFail }) {
+// ─── 6. Model driver — retry + diversify + cost budget ────────────────────
+// Estimate cumulative cost from prompt + output bytes after each attempt.
+// Returns USD spent on this attempt (0 if file missing).
+function attemptCostUsd(activeModel, promptPath, outputPath) {
+  if (!existsSync(outputPath)) return 0;
+  try {
+    const promptText = readFileSync(promptPath, 'utf8');
+    const outText = readFileSync(outputPath, 'utf8');
+    const c = estimateCostUsd(activeModel, promptText, outText);
+    return c?.usd || 0;
+  } catch {
+    return 0;
+  }
+}
+
+async function driveModel({ model, promptPath, outDir, pageId, retry, diversifyOnFail, maxCostUsd }) {
   const attempts = [];
   let activeModel = model;
+  let cumulativeCostUsd = 0;
+  let budgetExceeded = false;
 
   // Pre-flight: is sub-CLI installed? If not, gracefully skip (don't crash).
   if (!commandExists(modelBin(activeModel))) {
@@ -354,10 +380,14 @@ async function driveModel({ model, promptPath, outDir, pageId, retry, diversifyO
   for (let i = 0; i < totalTries; i++) {
     const cmd = buildCommand(activeModel, promptPath, outputPath);
     const attempt = await runAttempt(activeModel, promptPath, outputPath);
+    const attemptCost = attemptCostUsd(activeModel, promptPath, outputPath);
+    cumulativeCostUsd += attemptCost;
     attempts.push({
       try_index: i + 1,
       model: activeModel,
       command: renderShell(cmd),
+      cost_usd: Number(attemptCost.toFixed(4)),
+      cumulative_cost_usd: Number(cumulativeCostUsd.toFixed(4)),
       ...attempt,
     });
     lastResult = attempt;
@@ -375,21 +405,35 @@ async function driveModel({ model, promptPath, outDir, pageId, retry, diversifyO
       }
       break;
     }
+    // Budget gate: abort further retries if cumulative cost would exceed maxCostUsd.
+    if (cumulativeCostUsd >= maxCostUsd) {
+      budgetExceeded = true;
+      attempts[attempts.length - 1].budget_exceeded = true;
+      process.stderr.write(
+        `[orchestrator] ${model}: budget $${maxCostUsd.toFixed(2)} reached after ` +
+          `${i + 1} attempt(s) (spent $${cumulativeCostUsd.toFixed(4)}) — aborting further retries\n`,
+      );
+      break;
+    }
   }
 
-  // If still failing AND diversify requested AND escalation target available.
-  if (!lastResult?.ok && diversifyOnFail) {
+  // If still failing AND diversify requested AND escalation target available AND budget allows.
+  if (!lastResult?.ok && diversifyOnFail && !budgetExceeded) {
     const escalated = DIVERSIFY_ESCALATION[model];
     if (escalated && escalated !== activeModel && commandExists(modelBin(escalated))) {
       activeModel = escalated;
       outputPath = join(outDir, `${pageId}-${model}-then-${escalated}-v8.md`);
       const cmd = buildCommand(activeModel, promptPath, outputPath);
       const attempt = await runAttempt(activeModel, promptPath, outputPath);
+      const attemptCost = attemptCostUsd(activeModel, promptPath, outputPath);
+      cumulativeCostUsd += attemptCost;
       attempts.push({
         try_index: attempts.length + 1,
         model: activeModel,
         diversified_from: model,
         command: renderShell(cmd),
+        cost_usd: Number(attemptCost.toFixed(4)),
+        cumulative_cost_usd: Number(cumulativeCostUsd.toFixed(4)),
         ...attempt,
       });
       lastResult = attempt;
@@ -422,6 +466,9 @@ async function driveModel({ model, promptPath, outDir, pageId, retry, diversifyO
     retries: Math.max(0, attempts.length - 1),
     duration_s: attempts.reduce((s, a) => s + (a.duration_s || 0), 0),
     cost_estimate_usd: cost,
+    cumulative_cost_usd: Number(cumulativeCostUsd.toFixed(4)),
+    budget_exceeded: budgetExceeded,
+    budget_usd: maxCostUsd,
     attempts,
   };
 }
@@ -447,7 +494,7 @@ async function main() {
     usage();
     process.exit(0);
   }
-  const { errors, models, retry } = validateInputs(args);
+  const { errors, models, retry, maxCostUsd } = validateInputs(args);
   if (errors.length) {
     for (const e of errors) process.stderr.write(`[orchestrator] ERROR: ${e}\n`);
     process.stderr.write('\n');
@@ -477,7 +524,7 @@ async function main() {
   mkdirSync(outDir, { recursive: true });
 
   process.stderr.write(
-    `[orchestrator] page=${pageId} models=${models.join(',')} retry=${retry} diversify=${diversifyOnFail}\n`,
+    `[orchestrator] page=${pageId} models=${models.join(',')} retry=${retry} diversify=${diversifyOnFail} budget=$${maxCostUsd.toFixed(2)}/model\n`,
   );
 
   // Parallel exec. allSettled so one model crash doesn't sink the rest.
@@ -490,6 +537,7 @@ async function main() {
         pageId,
         retry,
         diversifyOnFail,
+        maxCostUsd,
       }),
     ),
   );
@@ -509,6 +557,9 @@ async function main() {
     }
   }
 
+  const budgetExceededModels = Object.entries(results)
+    .filter(([, r]) => r.budget_exceeded)
+    .map(([m]) => m);
   const summary = {
     page_id: pageId,
     prompt_path: promptPath,
@@ -516,6 +567,8 @@ async function main() {
     models_requested: models,
     retry,
     diversify_on_fail: diversifyOnFail,
+    max_cost_usd_per_page: maxCostUsd,
+    budget_exceeded_models: budgetExceededModels,
     ok_count: okCount,
     total_cost_estimate_usd: Number(totalCost.toFixed(4)),
     results,

@@ -34,6 +34,7 @@ import {
   checkRL5,
   checkRL6,
 } from './lib/red-lines.mjs';
+import { logFailure } from './lib/_failure-log.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO = join(__dirname, '..', '..');
@@ -58,6 +59,43 @@ function parseArgs(argv) {
 }
 
 const args = parseArgs(process.argv.slice(2));
+
+if (args.help || args.h) {
+  process.stdout.write(`_phase2-validate.mjs — generalized Phase 2 binary validator
+
+Runs structure check + RL1-RL6 (clinical / competitor / plagiarism / anchor / stuffing / psych)
+against an LLM-generated article. PASS → writes manifest.json next to source. FAIL → no manifest
+(downstream publish skips).
+
+Usage (modern, with fixture sidecar from renderer):
+  node tools/scripts/_phase2-validate.mjs \\
+    --source <path-to-llm-output.md> \\
+    --tag <suffix> \\
+    --page-id <page_X> \\
+    [--llm-source "claude-opus-4-7"] [--prompt-version v8]
+  # Auto-loads .gg-cache/prompts/<page_X>.<prompt_version>-fixture.json
+  # CLI flags below override fixture values.
+
+Usage (legacy, every value via CLI flag):
+  node tools/scripts/_phase2-validate.mjs \\
+    --source <path-to-llm-output.md> --tag <suffix> --page-id <page_X> \\
+    --entity "Display Name" --target-keyword "keyword phrase" \\
+    [--associated-keywords "k1, k2, k3"] \\
+    [--template Definition] [--tier T2] \\
+    [--word-min 1500] [--word-max 1800] \\
+    [--kw-min 5] [--kw-max 8] [--expected-h2 7] \\
+    [--psych-safety N] [--llm-source "..."] [--prompt-version v8]
+
+Flags:
+  --source <path>           required — LLM output .md
+  --tag <str>               required — output suffix tag (e.g. claude-v8)
+  --page-id <page_X>        required — page identifier (matches PAGE_ID_REGEX)
+  --fixture <path>          override auto-load fixture path
+  --allow-missing-serp      RL3 plagiarism skips when SERP cache missing
+  --help, -h                show this message
+`);
+  process.exit(0);
+}
 
 function req(name) {
   if (!args[name]) {
@@ -343,6 +381,25 @@ for (const [name, fn] of rlChecks) {
 console.log('\n' + '━'.repeat(60));
 if (!pass) {
   console.log('OVERALL: FAIL — not writing to _staging');
+  // Append a row to `failure-log` sheet tab for retro 聚类 ("80% fail = RL4...")
+  // Best-effort: never blocks exit; OAuth/network failure is silently skipped.
+  const failedChecks = Object.entries(results)
+    .filter(([, r]) => !r.pass && !r.waived)
+    .map(([name]) => name.split(' ')[0]);
+  const failReasons = Object.entries(results)
+    .filter(([, r]) => !r.pass && !r.waived)
+    .map(([name, r]) => `${name.split(' ')[0]}: ${r.note || r.error || JSON.stringify(r).slice(0, 80)}`)
+    .join(' | ');
+  await logFailure({
+    stage: 'phase2',
+    tool: '_phase2-validate',
+    page_id: ctx.page_id || '',
+    llm: ctx.llm_source || '',
+    tag: args.tag || '',
+    failed_checks: failedChecks,
+    fail_reason: failReasons,
+    notes: `tier=${ctx.tier || ''} template=${ctx.template || ''} prompt_version=${ctx.prompt_version || ''}`,
+  });
   process.exit(11);
 }
 console.log('OVERALL: PASS — writing to _staging');

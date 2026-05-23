@@ -479,6 +479,7 @@ export const TABS = [
       ['keyword_candidates', 'mine 副表，wzb_approve 后 promote', 'mine 写 / promote 读'],
       ['pipeline-status / publish-log / quality-metrics / cost-tracking / config', '项目运维（gg-status.mjs）', '自动'],
       ['monitor-auto', 'GSC + GA4 自动回填（区别于人工填的 内容追踪）', '自动 gg-monitor.mjs'],
+      ['failure-log', 'phase2 FAIL 时 append；retro 聚类找 prompt template 改进点', '自动 _phase2-validate.mjs'],
       [],
       ['→ 操作手册：docs/PIPELINE.md'],
       ['→ CEO 看板：docs/OPS_OVERVIEW.md'],
@@ -526,6 +527,21 @@ export const TABS = [
     header: ['timestamp', 'operation', 'tool', 'page_id', 'tokens_in', 'tokens_out', 'tokens_total', 'cost_usd', 'api_calls', 'notes'],
     headerColorByCol: {},
     extras: { frozenRows: 1, headerBgAll: 'header', headerFontColor: 'white', headerBold: true },
+  },
+
+  // _phase2-validate.mjs FAIL 时 append；retro 聚类用：80% fail = RL4 → 改 prompt template
+  {
+    name: 'failure-log',
+    type: 'standard',
+    header: ['timestamp', 'stage', 'tool', 'page_id', 'llm', 'tag', 'failed_checks', 'fail_reason', 'notes'],
+    headerColorByCol: {},
+    extras: {
+      frozenRows: 1,
+      headerBgAll: 'header',
+      headerFontColor: 'white',
+      headerBold: true,
+      columnWidths: [180, 80, 160, 200, 100, 100, 180, 320, 240],
+    },
   },
 
   // gg-monitor.mjs Stage 17 自动写入 tab（ASCII 名，便于索引；区分人工填的 内容追踪）

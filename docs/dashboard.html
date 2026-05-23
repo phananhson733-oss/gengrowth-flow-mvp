@@ -1,34 +1,274 @@
-<!doctype html><html><head><meta charset=utf8><title>flow-mvp dashboard</title><style>
-body{font:14px -apple-system,sans-serif;margin:24px;color:#222}
-table{border-collapse:collapse;width:100%;font-size:13px}
-th,td{border:1px solid #ddd;padding:6px 10px;text-align:left;vertical-align:top}
-th{background:#f6f6f6;font-weight:600}
-tr:nth-child(even){background:#fafafa}
-.ok{color:#0a0} .bad{color:#c00} .na{color:#aaa}
-code{font:12px ui-monospace,monospace;background:#f4f4f4;padding:1px 5px;border-radius:3px}
-h1{font-size:18px} h2{font-size:15px;margin-top:24px}
-</style></head><body>
-<h1>gengrowth-flow-mvp · pipeline status</h1>
-<p>Generated 2026-05-23T08:22:48Z · Total pages: <strong>15</strong></p>
-<h2>Per-page status</h2>
-<table><thead><tr><th>page_id</th><th>tier</th><th>tmpl</th><th>approved</th><th>promote</th><th>brief</th><th>override</th><th>prompt</th><th>rendered</th><th>phase2</th><th>published</th></tr></thead><tbody>
-<tr><td><code>page_aura_color_blue</code></td><td>—</td><td>—</td><td><span class=na>—</span></td><td><span class=na>—</span></td><td><span class=na>—</span></td><td><code>e2e-aura-color-blue.json</code></td><td><code>page_aura_color_blue.v8-prompt.md</code> (29.5 KB)</td><td>claude, codex</td><td><span class=ok>codex:pass</span></td><td>✅</td></tr>
-<tr><td><code>page_aura_colors_pillar</code></td><td>—</td><td>—</td><td><span class=na>—</span></td><td><span class=na>—</span></td><td><span class=na>—</span></td><td>—</td><td><code>page_aura_colors_pillar.v8-prompt.md</code> (28.4 KB)</td><td>claude, codex, gemini</td><td><span class=ok>claude:pass, codex:pass, codex:pass, gemini:unknown</span></td><td>✅</td></tr>
-<tr><td><code>page_blue_aura_meaning</code></td><td>—</td><td>—</td><td><span class=na>—</span></td><td><span class=na>—</span></td><td><span class=na>—</span></td><td><code>aura-colors-batch.json</code></td><td><code>page_blue_aura_meaning.v8-prompt.md</code> (31.3 KB)</td><td>chatgpt, claude, codex, gemini</td><td><span class=ok>chatgpt:pass, claude:pass, claude:pass, codex:pass, gemini:unknown</span></td><td>✅</td></tr>
-<tr><td><code>page_chakra_system_overview</code></td><td>—</td><td>—</td><td><span class=na>—</span></td><td><span class=na>—</span></td><td><span class=na>—</span></td><td><code>aura-related-batch.json</code></td><td><code>page_chakra_system_overview.v8-prompt.md</code> (34.0 KB)</td><td>claude, codex</td><td><span class=ok>codex:pass</span></td><td>✅</td></tr>
-<tr><td><code>page_chiron_7th_house</code></td><td>—</td><td>—</td><td><span class=na>—</span></td><td><span class=na>—</span></td><td><span class=na>—</span></td><td>—</td><td>—</td><td>—</td><td><span class=na>—</span></td><td>—</td></tr>
-<tr><td><code>page_four_element_framework</code></td><td>—</td><td>—</td><td><span class=na>—</span></td><td><span class=na>—</span></td><td><span class=na>—</span></td><td><code>aura-related-batch.json</code></td><td><code>page_four_element_framework.v8-prompt.md</code> (35.9 KB)</td><td>claude, codex</td><td><span class=ok>codex:pass</span></td><td>✅</td></tr>
-<tr><td><code>page_green_aura_meaning</code></td><td>—</td><td>—</td><td><span class=na>—</span></td><td><span class=na>—</span></td><td><span class=na>—</span></td><td><code>aura-related-batch.json</code></td><td><code>page_green_aura_meaning.v8-prompt.md</code> (32.0 KB)</td><td>claude, codex</td><td><span class=ok>claude:pass, codex:pass</span></td><td>✅</td></tr>
-<tr><td><code>page_leo_personality</code></td><td>—</td><td>—</td><td><span class=na>—</span></td><td><span class=na>—</span></td><td><span class=na>—</span></td><td>—</td><td><code>page_leo_personality.v8-prompt.md</code> (28.9 KB)</td><td>claude</td><td><span class=ok>claude:pass</span></td><td>✅</td></tr>
-<tr><td><code>page_orange_aura_meaning</code></td><td>—</td><td>—</td><td><span class=na>—</span></td><td><span class=na>—</span></td><td><span class=na>—</span></td><td><code>aura-related-batch.json</code></td><td><code>page_orange_aura_meaning.v8-prompt.md</code> (31.9 KB)</td><td>claude, codex</td><td><span class=ok>claude:pass, codex:pass</span></td><td>✅</td></tr>
-<tr><td><code>page_purple_aura_meaning</code></td><td>—</td><td>—</td><td><span class=na>—</span></td><td><span class=na>—</span></td><td><span class=na>—</span></td><td><code>aura-colors-batch.json</code></td><td><code>page_purple_aura_meaning.v8-prompt.md</code> (31.6 KB)</td><td>claude, codex, gemini</td><td><span class=ok>claude:pass, codex:pass, gemini:unknown</span></td><td>✅</td></tr>
-<tr><td><code>page_red_aura_meaning</code></td><td>—</td><td>—</td><td><span class=na>—</span></td><td><span class=na>—</span></td><td><span class=na>—</span></td><td><code>aura-colors-batch.json</code></td><td><code>page_red_aura_meaning.v8-prompt.md</code> (30.5 KB)</td><td>claude, codex, gemini</td><td><span class=ok>claude:pass, codex:pass, gemini:unknown</span></td><td>✅</td></tr>
-<tr><td><code>page_saturn_return</code></td><td>—</td><td>—</td><td><span class=na>—</span></td><td><span class=na>—</span></td><td><span class=na>—</span></td><td>—</td><td><code>page_saturn_return.v8-prompt.md</code> (41.0 KB)</td><td>chatgpt, claude</td><td><span class=ok>chatgpt:pass, claude:pass, claude:pass</span></td><td>✅</td></tr>
-<tr><td><code>page_throat_chakra</code></td><td>—</td><td>—</td><td><span class=na>—</span></td><td><span class=na>—</span></td><td><span class=na>—</span></td><td>—</td><td>—</td><td>—</td><td><span class=na>—</span></td><td>—</td></tr>
-<tr><td><code>page_white_aura_meaning</code></td><td>—</td><td>—</td><td><span class=na>—</span></td><td><span class=na>—</span></td><td><span class=na>—</span></td><td><code>aura-colors-batch.json</code></td><td><code>page_white_aura_meaning.v8-prompt.md</code> (30.7 KB)</td><td>claude, codex, gemini</td><td><span class=ok>claude:pass, codex:pass, gemini:unknown</span></td><td>✅</td></tr>
-<tr><td><code>page_yellow_aura_meaning</code></td><td>—</td><td>—</td><td><span class=na>—</span></td><td><span class=na>—</span></td><td><span class=na>—</span></td><td><code>aura-colors-batch.json</code></td><td><code>page_yellow_aura_meaning.v8-prompt.md</code> (31.4 KB)</td><td>claude, codex, gemini</td><td><span class=ok>claude:pass, codex:pass, gemini:unknown</span></td><td>✅</td></tr>
-</tbody></table>
-<h2>Bottlenecks (count of pages stuck at each transition)</h2>
-<table><thead><tr><th>Transition</th><th>Pages stuck</th></tr></thead><tbody><tr><td>mine → approve</td><td><strong>0</strong></td></tr><tr><td>approved → promote</td><td><strong>0</strong></td></tr><tr><td>promote → brief_fill</td><td><strong>0</strong></td></tr><tr><td>brief → bridge (override)</td><td><strong>0</strong></td></tr><tr><td>bridge → render (prompt)</td><td><strong>0</strong></td></tr><tr><td>render → LLM</td><td><strong>0</strong></td></tr><tr><td>LLM → phase2 PASS</td><td><strong>0</strong></td></tr><tr><td>phase2 PASS → publish</td><td><strong>0</strong></td></tr></tbody></table>
-<p style="margin-top:24px;color:#888">Legend: ✅ done · ❌ explicitly blocked · — not started/n/a · paths are relative to repo root.</p>
+<!doctype html><html lang="en"><head>
+<meta charset="utf8">
+<title>gengrowth-flow-mvp · dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root {
+  --primary: #1976d2;
+  --success: #388e3c;
+  --warning: #f57c00;
+  --danger: #c62828;
+  --neutral: #607d8b;
+  --bg: #f5f7fa;
+  --card-bg: #ffffff;
+  --border: #e0e6ed;
+  --text: #1a1a1a;
+  --dim: #6b7280;
+}
+* { box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  margin: 0;
+  padding: 24px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+}
+header {
+  background: linear-gradient(135deg, var(--primary), #1565c0);
+  color: white;
+  padding: 24px 32px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.15);
+}
+header h1 { margin: 0 0 6px 0; font-size: 22px; font-weight: 600; }
+header .meta { font-size: 13px; opacity: 0.85; }
+header a { color: #bbdefb; text-decoration: none; border-bottom: 1px solid #bbdefb; }
+header a:hover { color: white; border-color: white; }
+.section {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+}
+.section h2 {
+  margin: 0 0 16px 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 10px;
+}
+/* stage progress bars */
+.stage-row {
+  display: grid;
+  grid-template-columns: 110px 1fr 120px;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.stage-label { font-weight: 500; text-transform: capitalize; color: var(--text); }
+.stage-bar-bg {
+  height: 22px;
+  background: #eceff1;
+  border-radius: 11px;
+  overflow: hidden;
+}
+.stage-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--success));
+  transition: width 0.3s;
+}
+.stage-count { font-variant-numeric: tabular-nums; text-align: right; }
+/* bottlenecks */
+.bottleneck-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+.bottleneck-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--neutral);
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+.bottleneck-card.has-stuck { border-left-color: var(--warning); background: #fff8e1; }
+.bottleneck-card.clear { border-left-color: var(--success); }
+.bn-label { font-size: 12px; color: var(--dim); margin-bottom: 4px; }
+.bn-count { font-size: 24px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.bottleneck-card.has-stuck .bn-count { color: var(--warning); }
+.bottleneck-card.clear .bn-count { color: var(--success); }
+/* per-page table */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 13px;
+  background: var(--card-bg);
+}
+thead th {
+  background: #fafbfc;
+  color: var(--text);
+  font-weight: 600;
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+}
+tbody td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+tbody tr:hover { background: #f8fafc; }
+tbody tr.recent { background: #f1f8e9; }
+tbody tr.recent:hover { background: #e8f5e9; }
+.ok { color: var(--success); font-weight: 500; }
+.bad { color: var(--danger); font-weight: 500; }
+.na { color: #c0c0c0; }
+.dim { color: var(--dim); font-size: 11px; }
+code {
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 12px;
+  background: #f4f6f8;
+  color: #1565c0;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.llm-badge {
+  display: inline-block;
+  background: #e3f2fd;
+  color: #1565c0;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  margin: 0 2px 2px 0;
+  font-weight: 500;
+}
+footer {
+  margin-top: 32px;
+  text-align: center;
+  color: var(--dim);
+  font-size: 12px;
+}
+footer a { color: var(--primary); }
+</style>
+</head><body>
+<header>
+  <h1>📊 gengrowth-flow-mvp · pipeline dashboard</h1>
+  <div class="meta">
+    Generated <strong>2026-05-23T16:04:16Z</strong> · 15 pages tracked
+     · <a href="https://docs.google.com/spreadsheets/d/1CkjOCgYbRfXGYc6l2FJOaxUIzxT0NBVUhUpgCjyzcQc/edit" target="_blank">Open Sheet ↗</a>
+  </div>
+</header>
+
+<div class="section">
+  <h2>Stage completion</h2>
+  
+    <div class="stage-row">
+      <div class="stage-label">approved</div>
+      <div class="stage-bar-bg"><div class="stage-bar-fill" style="width:7%"></div></div>
+      <div class="stage-count">1/15 <span class="dim">(7%)</span></div>
+    </div>
+    <div class="stage-row">
+      <div class="stage-label">promoted</div>
+      <div class="stage-bar-bg"><div class="stage-bar-fill" style="width:7%"></div></div>
+      <div class="stage-count">1/15 <span class="dim">(7%)</span></div>
+    </div>
+    <div class="stage-row">
+      <div class="stage-label">brief</div>
+      <div class="stage-bar-bg"><div class="stage-bar-fill" style="width:7%"></div></div>
+      <div class="stage-count">1/15 <span class="dim">(7%)</span></div>
+    </div>
+    <div class="stage-row">
+      <div class="stage-label">override</div>
+      <div class="stage-bar-bg"><div class="stage-bar-fill" style="width:73%"></div></div>
+      <div class="stage-count">11/15 <span class="dim">(73%)</span></div>
+    </div>
+    <div class="stage-row">
+      <div class="stage-label">prompt</div>
+      <div class="stage-bar-bg"><div class="stage-bar-fill" style="width:87%"></div></div>
+      <div class="stage-count">13/15 <span class="dim">(87%)</span></div>
+    </div>
+    <div class="stage-row">
+      <div class="stage-label">rendered</div>
+      <div class="stage-bar-bg"><div class="stage-bar-fill" style="width:87%"></div></div>
+      <div class="stage-count">13/15 <span class="dim">(87%)</span></div>
+    </div>
+    <div class="stage-row">
+      <div class="stage-label">phase2</div>
+      <div class="stage-bar-bg"><div class="stage-bar-fill" style="width:87%"></div></div>
+      <div class="stage-count">13/15 <span class="dim">(87%)</span></div>
+    </div>
+    <div class="stage-row">
+      <div class="stage-label">published</div>
+      <div class="stage-bar-bg"><div class="stage-bar-fill" style="width:87%"></div></div>
+      <div class="stage-count">13/15 <span class="dim">(87%)</span></div>
+    </div>
+</div>
+
+<div class="section">
+  <h2>Bottlenecks — pages stuck at each transition</h2>
+  <div class="bottleneck-grid">
+    <div class="bottleneck-card clear">
+      <div class="bn-label">mine → approve</div>
+      <div class="bn-count">0</div>
+    </div>
+    <div class="bottleneck-card clear">
+      <div class="bn-label">approved → promote</div>
+      <div class="bn-count">0</div>
+    </div>
+    <div class="bottleneck-card clear">
+      <div class="bn-label">promote → brief_fill</div>
+      <div class="bn-count">0</div>
+    </div>
+    <div class="bottleneck-card clear">
+      <div class="bn-label">brief → bridge (override)</div>
+      <div class="bn-count">0</div>
+    </div>
+    <div class="bottleneck-card clear">
+      <div class="bn-label">bridge → render (prompt)</div>
+      <div class="bn-count">0</div>
+    </div>
+    <div class="bottleneck-card clear">
+      <div class="bn-label">render → LLM</div>
+      <div class="bn-count">0</div>
+    </div>
+    <div class="bottleneck-card clear">
+      <div class="bn-label">LLM → phase2 PASS</div>
+      <div class="bn-count">0</div>
+    </div>
+    <div class="bottleneck-card clear">
+      <div class="bn-label">phase2 PASS → publish</div>
+      <div class="bn-count">0</div>
+    </div></div>
+</div>
+
+<div class="section">
+  <h2>Per-page status</h2>
+  <table>
+    <thead><tr><th>page_id</th><th>tier</th><th>tmpl</th><th>approved</th><th>promote</th><th>brief</th><th>override</th><th>prompt</th><th>rendered</th><th>phase2</th><th>published</th></tr></thead>
+    <tbody>
+<tr class="recent"><td><code>page_aura_color_blue</code></td><td>Tier 2 (标准)</td><td>Tutorial</td><td><span class="ok">✅</span></td><td><span class="ok">✅</span></td><td><span class="ok">✅</span></td><td><code title=".gg-cache/overrides/20260523T155009-sheet-to-brief-rows-2-310.json">20260523T155009-sheet-to-brief-rows-2-310.json</code></td><td><code title=".gg-cache/prompts/page_aura_color_blue.v8-prompt.md">page_aura_color_blue.v8-prompt.md</code><br><span class="dim">29.5 KB</span></td><td><span class="llm-badge">claude</span> <span class="llm-badge">codex</span></td><td><span class="ok">codex:pass</span></td><td>✅</td></tr>
+<tr class="recent"><td><code>page_aura_colors_pillar</code></td><td>—</td><td>—</td><td><span class="na">—</span></td><td><span class="na">—</span></td><td><span class="na">—</span></td><td>—</td><td><code title=".gg-cache/prompts/page_aura_colors_pillar.v8-prompt.md">page_aura_colors_pillar.v8-prompt.md</code><br><span class="dim">28.4 KB</span></td><td><span class="llm-badge">claude</span> <span class="llm-badge">codex</span> <span class="llm-badge">gemini</span></td><td><span class="ok">claude:pass, codex:pass, codex:pass, gemini:unknown</span></td><td>✅</td></tr>
+<tr class="recent"><td><code>page_blue_aura_meaning</code></td><td>—</td><td>—</td><td><span class="na">—</span></td><td><span class="na">—</span></td><td><span class="na">—</span></td><td><code title=".gg-cache/overrides/20260523T155009-sheet-to-brief-rows-2-310.json">20260523T155009-sheet-to-brief-rows-2-310.json</code></td><td><code title=".gg-cache/prompts/page_blue_aura_meaning.v8-prompt.md">page_blue_aura_meaning.v8-prompt.md</code><br><span class="dim">31.3 KB</span></td><td><span class="llm-badge">chatgpt</span> <span class="llm-badge">claude</span> <span class="llm-badge">codex</span> <span class="llm-badge">gemini</span></td><td><span class="ok">chatgpt:pass, claude:pass, claude:pass, codex:pass, gemini:unknown</span></td><td>✅</td></tr>
+<tr class="recent"><td><code>page_chakra_system_overview</code></td><td>—</td><td>—</td><td><span class="na">—</span></td><td><span class="na">—</span></td><td><span class="na">—</span></td><td><code title=".gg-cache/overrides/aura-related-batch.json">aura-related-batch.json</code></td><td><code title=".gg-cache/prompts/page_chakra_system_overview.v8-prompt.md">page_chakra_system_overview.v8-prompt.md</code><br><span class="dim">34.0 KB</span></td><td><span class="llm-badge">claude</span> <span class="llm-badge">codex</span></td><td><span class="ok">codex:pass</span></td><td>✅</td></tr>
+<tr class="recent"><td><code>page_chiron_7th_house</code></td><td>—</td><td>—</td><td><span class="na">—</span></td><td><span class="na">—</span></td><td><span class="na">—</span></td><td>—</td><td>—</td><td>—</td><td><span class="na">—</span></td><td>—</td></tr>
+<tr class="recent"><td><code>page_four_element_framework</code></td><td>—</td><td>—</td><td><span class="na">—</span></td><td><span class="na">—</span></td><td><span class="na">—</span></td><td><code title=".gg-cache/overrides/aura-related-batch.json">aura-related-batch.json</code></td><td><code title=".gg-cache/prompts/page_four_element_framework.v8-prompt.md">page_four_element_framework.v8-prompt.md</code><br><span class="dim">35.9 KB</span></td><td><span class="llm-badge">claude</span> <span class="llm-badge">codex</span></td><td><span class="ok">codex:pass</span></td><td>✅</td></tr>
+<tr class="recent"><td><code>page_green_aura_meaning</code></td><td>—</td><td>—</td><td><span class="na">—</span></td><td><span class="na">—</span></td><td><span class="na">—</span></td><td><code title=".gg-cache/overrides/20260523T155009-sheet-to-brief-rows-2-310.json">20260523T155009-sheet-to-brief-rows-2-310.json</code></td><td><code title=".gg-cache/prompts/page_green_aura_meaning.v8-prompt.md">page_green_aura_meaning.v8-prompt.md</code><br><span class="dim">32.0 KB</span></td><td><span class="llm-badge">claude</span> <span class="llm-badge">codex</span></td><td><span class="ok">claude:pass, codex:pass</span></td><td>✅</td></tr>
+<tr class="recent"><td><code>page_leo_personality</code></td><td>—</td><td>—</td><td><span class="na">—</span></td><td><span class="na">—</span></td><td><span class="na">—</span></td><td>—</td><td><code title=".gg-cache/prompts/page_leo_personality.v8-prompt.md">page_leo_personality.v8-prompt.md</code><br><span class="dim">28.9 KB</span></td><td><span class="llm-badge">claude</span></td><td><span class="ok">claude:pass</span></td><td>✅</td></tr>
+<tr class="recent"><td><code>page_orange_aura_meaning</code></td><td>—</td><td>—</td><td><span class="na">—</span></td><td><span class="na">—</span></td><td><span class="na">—</span></td><td><code title=".gg-cache/overrides/20260523T155009-sheet-to-brief-rows-2-310.json">20260523T155009-sheet-to-brief-rows-2-310.json</code></td><td><code title=".gg-cache/prompts/page_orange_aura_meaning.v8-prompt.md">page_orange_aura_meaning.v8-prompt.md</code><br><span class="dim">31.9 KB</span></td><td><span class="llm-badge">claude</span> <span class="llm-badge">codex</span></td><td><span class="ok">claude:pass, codex:pass</span></td><td>✅</td></tr>
+<tr class="recent"><td><code>page_purple_aura_meaning</code></td><td>—</td><td>—</td><td><span class="na">—</span></td><td><span class="na">—</span></td><td><span class="na">—</span></td><td><code title=".gg-cache/overrides/20260523T155009-sheet-to-brief-rows-2-310.json">20260523T155009-sheet-to-brief-rows-2-310.json</code></td><td><code title=".gg-cache/prompts/page_purple_aura_meaning.v8-prompt.md">page_purple_aura_meaning.v8-prompt.md</code><br><span class="dim">31.6 KB</span></td><td><span class="llm-badge">claude</span> <span class="llm-badge">codex</span> <span class="llm-badge">gemini</span></td><td><span class="ok">claude:pass, codex:pass, gemini:unknown</span></td><td>✅</td></tr>
+<tr class="recent"><td><code>page_red_aura_meaning</code></td><td>—</td><td>—</td><td><span class="na">—</span></td><td><span class="na">—</span></td><td><span class="na">—</span></td><td><code title=".gg-cache/overrides/20260523T155009-sheet-to-brief-rows-2-310.json">20260523T155009-sheet-to-brief-rows-2-310.json</code></td><td><code title=".gg-cache/prompts/page_red_aura_meaning.v8-prompt.md">page_red_aura_meaning.v8-prompt.md</code><br><span class="dim">30.5 KB</span></td><td><span class="llm-badge">claude</span> <span class="llm-badge">codex</span> <span class="llm-badge">gemini</span></td><td><span class="ok">claude:pass, codex:pass, gemini:unknown</span></td><td>✅</td></tr>
+<tr class="recent"><td><code>page_saturn_return</code></td><td>—</td><td>—</td><td><span class="na">—</span></td><td><span class="na">—</span></td><td><span class="na">—</span></td><td><code title=".gg-cache/overrides/20260523T155009-sheet-to-brief-rows-2-310.json">20260523T155009-sheet-to-brief-rows-2-310.json</code></td><td><code title=".gg-cache/prompts/page_saturn_return.v8-prompt.md">page_saturn_return.v8-prompt.md</code><br><span class="dim">41.0 KB</span></td><td><span class="llm-badge">chatgpt</span> <span class="llm-badge">claude</span></td><td><span class="ok">chatgpt:pass, claude:pass, claude:pass</span></td><td>✅</td></tr>
+<tr class="recent"><td><code>page_throat_chakra</code></td><td>—</td><td>—</td><td><span class="na">—</span></td><td><span class="na">—</span></td><td><span class="na">—</span></td><td>—</td><td>—</td><td>—</td><td><span class="na">—</span></td><td>—</td></tr>
+<tr class="recent"><td><code>page_white_aura_meaning</code></td><td>—</td><td>—</td><td><span class="na">—</span></td><td><span class="na">—</span></td><td><span class="na">—</span></td><td><code title=".gg-cache/overrides/20260523T155009-sheet-to-brief-rows-2-310.json">20260523T155009-sheet-to-brief-rows-2-310.json</code></td><td><code title=".gg-cache/prompts/page_white_aura_meaning.v8-prompt.md">page_white_aura_meaning.v8-prompt.md</code><br><span class="dim">30.7 KB</span></td><td><span class="llm-badge">claude</span> <span class="llm-badge">codex</span> <span class="llm-badge">gemini</span></td><td><span class="ok">claude:pass, codex:pass, gemini:unknown</span></td><td>✅</td></tr>
+<tr class="recent"><td><code>page_yellow_aura_meaning</code></td><td>—</td><td>—</td><td><span class="na">—</span></td><td><span class="na">—</span></td><td><span class="na">—</span></td><td><code title=".gg-cache/overrides/20260523T155009-sheet-to-brief-rows-2-310.json">20260523T155009-sheet-to-brief-rows-2-310.json</code></td><td><code title=".gg-cache/prompts/page_yellow_aura_meaning.v8-prompt.md">page_yellow_aura_meaning.v8-prompt.md</code><br><span class="dim">31.4 KB</span></td><td><span class="llm-badge">claude</span> <span class="llm-badge">codex</span> <span class="llm-badge">gemini</span></td><td><span class="ok">claude:pass, codex:pass, gemini:unknown</span></td><td>✅</td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top:16px;color:var(--dim);font-size:12px">
+    Legend: ✅ done · ❌ blocked · — n/a · highlighted rows updated ≤ 7d ago. Hover paths for full file path.
+  </p>
+</div>
+
+<footer>
+  gengrowth-flow-mvp · PRD v0.7 · 2026-05-23
+</footer>
 </body></html>

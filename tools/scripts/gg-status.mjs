@@ -322,35 +322,42 @@ function emitMarkdown(rows) {
 
 // ---------- output: html dashboard ----------
 function emitHtml(rows) {
-  const head = `<!doctype html><html><head><meta charset=utf8><title>flow-mvp dashboard</title><style>
-body{font:14px -apple-system,sans-serif;margin:24px;color:#222}
-table{border-collapse:collapse;width:100%;font-size:13px}
-th,td{border:1px solid #ddd;padding:6px 10px;text-align:left;vertical-align:top}
-th{background:#f6f6f6;font-weight:600}
-tr:nth-child(even){background:#fafafa}
-.ok{color:#0a0} .bad{color:#c00} .na{color:#aaa}
-code{font:12px ui-monospace,monospace;background:#f4f4f4;padding:1px 5px;border-radius:3px}
-h1{font-size:18px} h2{font-size:15px;margin-top:24px}
-</style></head><body>`;
-  const tail = `</body></html>`;
   const stamp = new Date().toISOString().slice(0, 19) + 'Z';
+  const workbookId = process.env.GG_SHEETS_FLOW_MVP_WORKBOOK_ID || '';
+  const sheetUrl = workbookId ? `https://docs.google.com/spreadsheets/d/${workbookId}/edit` : '#';
   const cols = ['page_id', 'tier', 'tmpl', 'approved', 'promote', 'brief', 'override', 'prompt', 'rendered', 'phase2', 'published'];
+
+  // Stage completion stats
+  const stagesDone = {
+    approved: rows.filter((r) => r.approved === 'Y').length,
+    promoted: rows.filter((r) => r.promoted === 'Y').length,
+    brief: rows.filter((r) => r.brief_filled === 'Y').length,
+    override: rows.filter((r) => r.override_path).length,
+    prompt: rows.filter((r) => r.prompt_path).length,
+    rendered: rows.filter((r) => r.rendered_llms.size > 0).length,
+    phase2: rows.filter((r) => r.phase2_status.includes('pass')).length,
+    published: rows.filter((r) => r.wiki_published_path).length,
+  };
+  const total = rows.length || 1;
+
+  const cell = (v, ok) => v ? `<span class="${ok ? 'ok' : 'bad'}">${v}</span>` : `<span class="na">—</span>`;
   const rowsHtml = rows.map((r) => {
-    const cell = (v, ok) => v ? `<span class=${ok ? 'ok' : 'bad'}>${v}</span>` : `<span class=na>—</span>`;
-    return '<tr>' + [
+    const ageClass = r.last_updated && (Date.now() - new Date(r.last_updated).getTime()) < 7 * 24 * 3600 * 1000 ? 'recent' : '';
+    return `<tr class="${ageClass}">` + [
       `<code>${r.page_id}</code>`,
       r.tier || '—',
       r.template || '—',
       cell(r.approved === 'Y' ? '✅' : r.approved === 'N' ? '❌' : '', r.approved === 'Y'),
       cell(r.promoted === 'Y' ? '✅' : '', true),
       cell(r.brief_filled === 'Y' ? '✅' : r.brief_filled === 'N' ? '❌' : '', r.brief_filled === 'Y'),
-      r.override_path ? `<code>${basename(r.override_path)}</code>` : '—',
-      r.prompt_path ? `<code>${basename(r.prompt_path)}</code> (${(r.prompt_size / 1024).toFixed(1)} KB)` : '—',
-      r.rendered_llms.size ? [...r.rendered_llms].join(', ') : '—',
+      r.override_path ? `<code title="${r.override_path}">${basename(r.override_path)}</code>` : '—',
+      r.prompt_path ? `<code title="${r.prompt_path}">${basename(r.prompt_path)}</code><br><span class="dim">${(r.prompt_size / 1024).toFixed(1)} KB</span>` : '—',
+      r.rendered_llms.size ? `<span class="llm-badge">${[...r.rendered_llms].join('</span> <span class="llm-badge">')}</span>` : '—',
       cell(r.phase2_status || '', r.phase2_status.includes('pass')),
       r.wiki_published_path ? '✅' : '—',
     ].map((c) => `<td>${c}</td>`).join('') + '</tr>';
   }).join('\n');
+
   const breakdowns = {
     'mine → approve': rows.filter((r) => r.candidate_in_sheet === 'Y' && r.approved === 'N').length,
     'approved → promote': rows.filter((r) => r.approved === 'Y' && !r.promoted).length,
@@ -361,18 +368,210 @@ h1{font-size:18px} h2{font-size:15px;margin-top:24px}
     'LLM → phase2 PASS': rows.filter((r) => r.rendered_llms.size && !r.phase2_status.includes('pass')).length,
     'phase2 PASS → publish': rows.filter((r) => r.phase2_status.includes('pass') && !r.wiki_published_path).length,
   };
-  const bottleneckRows = Object.entries(breakdowns).map(([k, n]) => `<tr><td>${k}</td><td><strong>${n}</strong></td></tr>`).join('');
-  return head + `
-<h1>gengrowth-flow-mvp · pipeline status</h1>
-<p>Generated ${stamp} · Total pages: <strong>${rows.length}</strong></p>
-<h2>Per-page status</h2>
-<table><thead><tr>${cols.map((c) => `<th>${c}</th>`).join('')}</tr></thead><tbody>
+  const bottleneckCards = Object.entries(breakdowns).map(([k, n]) => `
+    <div class="bottleneck-card ${n > 0 ? 'has-stuck' : 'clear'}">
+      <div class="bn-label">${k}</div>
+      <div class="bn-count">${n}</div>
+    </div>`).join('');
+
+  const stageBarHtml = Object.entries(stagesDone).map(([stage, n]) => {
+    const pct = Math.round((n / total) * 100);
+    return `
+    <div class="stage-row">
+      <div class="stage-label">${stage}</div>
+      <div class="stage-bar-bg"><div class="stage-bar-fill" style="width:${pct}%"></div></div>
+      <div class="stage-count">${n}/${total} <span class="dim">(${pct}%)</span></div>
+    </div>`;
+  }).join('');
+
+  return `<!doctype html><html lang="en"><head>
+<meta charset="utf8">
+<title>gengrowth-flow-mvp · dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root {
+  --primary: #1976d2;
+  --success: #388e3c;
+  --warning: #f57c00;
+  --danger: #c62828;
+  --neutral: #607d8b;
+  --bg: #f5f7fa;
+  --card-bg: #ffffff;
+  --border: #e0e6ed;
+  --text: #1a1a1a;
+  --dim: #6b7280;
+}
+* { box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  margin: 0;
+  padding: 24px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+}
+header {
+  background: linear-gradient(135deg, var(--primary), #1565c0);
+  color: white;
+  padding: 24px 32px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.15);
+}
+header h1 { margin: 0 0 6px 0; font-size: 22px; font-weight: 600; }
+header .meta { font-size: 13px; opacity: 0.85; }
+header a { color: #bbdefb; text-decoration: none; border-bottom: 1px solid #bbdefb; }
+header a:hover { color: white; border-color: white; }
+.section {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+}
+.section h2 {
+  margin: 0 0 16px 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 10px;
+}
+/* stage progress bars */
+.stage-row {
+  display: grid;
+  grid-template-columns: 110px 1fr 120px;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.stage-label { font-weight: 500; text-transform: capitalize; color: var(--text); }
+.stage-bar-bg {
+  height: 22px;
+  background: #eceff1;
+  border-radius: 11px;
+  overflow: hidden;
+}
+.stage-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--success));
+  transition: width 0.3s;
+}
+.stage-count { font-variant-numeric: tabular-nums; text-align: right; }
+/* bottlenecks */
+.bottleneck-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+.bottleneck-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--neutral);
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+.bottleneck-card.has-stuck { border-left-color: var(--warning); background: #fff8e1; }
+.bottleneck-card.clear { border-left-color: var(--success); }
+.bn-label { font-size: 12px; color: var(--dim); margin-bottom: 4px; }
+.bn-count { font-size: 24px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.bottleneck-card.has-stuck .bn-count { color: var(--warning); }
+.bottleneck-card.clear .bn-count { color: var(--success); }
+/* per-page table */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 13px;
+  background: var(--card-bg);
+}
+thead th {
+  background: #fafbfc;
+  color: var(--text);
+  font-weight: 600;
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+}
+tbody td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+tbody tr:hover { background: #f8fafc; }
+tbody tr.recent { background: #f1f8e9; }
+tbody tr.recent:hover { background: #e8f5e9; }
+.ok { color: var(--success); font-weight: 500; }
+.bad { color: var(--danger); font-weight: 500; }
+.na { color: #c0c0c0; }
+.dim { color: var(--dim); font-size: 11px; }
+code {
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 12px;
+  background: #f4f6f8;
+  color: #1565c0;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.llm-badge {
+  display: inline-block;
+  background: #e3f2fd;
+  color: #1565c0;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  margin: 0 2px 2px 0;
+  font-weight: 500;
+}
+footer {
+  margin-top: 32px;
+  text-align: center;
+  color: var(--dim);
+  font-size: 12px;
+}
+footer a { color: var(--primary); }
+</style>
+</head><body>
+<header>
+  <h1>📊 gengrowth-flow-mvp · pipeline dashboard</h1>
+  <div class="meta">
+    Generated <strong>${stamp}</strong> · ${rows.length} pages tracked
+    ${workbookId ? ` · <a href="${sheetUrl}" target="_blank">Open Sheet ↗</a>` : ''}
+  </div>
+</header>
+
+<div class="section">
+  <h2>Stage completion</h2>
+  ${stageBarHtml}
+</div>
+
+<div class="section">
+  <h2>Bottlenecks — pages stuck at each transition</h2>
+  <div class="bottleneck-grid">${bottleneckCards}</div>
+</div>
+
+<div class="section">
+  <h2>Per-page status</h2>
+  <table>
+    <thead><tr>${cols.map((c) => `<th>${c}</th>`).join('')}</tr></thead>
+    <tbody>
 ${rowsHtml}
-</tbody></table>
-<h2>Bottlenecks (count of pages stuck at each transition)</h2>
-<table><thead><tr><th>Transition</th><th>Pages stuck</th></tr></thead><tbody>${bottleneckRows}</tbody></table>
-<p style="margin-top:24px;color:#888">Legend: ✅ done · ❌ explicitly blocked · — not started/n/a · paths are relative to repo root.</p>
-` + tail;
+    </tbody>
+  </table>
+  <p style="margin-top:16px;color:var(--dim);font-size:12px">
+    Legend: ✅ done · ❌ blocked · — n/a · highlighted rows updated ≤ 7d ago. Hover paths for full file path.
+  </p>
+</div>
+
+<footer>
+  gengrowth-flow-mvp · PRD v0.7 · ${stamp.slice(0, 10)}
+</footer>
+</body></html>`;
 }
 
 // ---------- output: sheet ----------

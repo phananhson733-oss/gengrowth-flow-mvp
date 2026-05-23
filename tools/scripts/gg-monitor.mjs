@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// gg-monitor.mjs — PIPELINE.md Stage 17: weekly GSC + GA4 → 📊内容追踪
+// gg-monitor.mjs — PIPELINE.md Stage 17: weekly GSC + GA4 → 内容追踪
 //
 // Pulls per-URL GSC (clicks/impressions/ctr/position) + per-pagePath GA4
 // engagement (sessions/avg_dwell_s/engagement_rate) + CTA event counts,
@@ -14,10 +14,10 @@
 // Schema: report_date|url|clicks|impressions|ctr|position|sessions|
 //         avg_dwell_s|engagement_rate|cta_signups
 //
-// Tab routing: canonical "📊内容追踪" is a manual planning view (14-col
-// 预期 vs 实际, see lib/_workbook-spec.mjs:418). We write to sibling
-// "📊内容追踪-自动" instead (auto-created). If canonical ever matches
-// the monitor schema exactly we'll use it; for now we always use -自动.
+// Tab routing: canonical "内容追踪" is a manual planning view (14-col
+// 预期 vs 实际, see lib/_workbook-spec.mjs). We write to ASCII-named
+// "monitor-auto" tab instead (auto-created, easier to grep/index than
+// emoji-prefixed tab names per user feedback 2026-05-23).
 //
 // CTA events: --cta-event NAME, else pull all ga4_event_name from CTA Map tab.
 // Cost: GSC + GA4 free for normal quotas.
@@ -33,8 +33,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO = join(__dirname, '..', '..');
 
 // ────────── constants ──────────
-export const MONITOR_TAB_CANONICAL = '📊内容追踪';
-export const MONITOR_TAB_AUTO = '📊内容追踪-自动';
+export const MONITOR_TAB_CANONICAL = '内容追踪';
+export const MONITOR_TAB_AUTO = 'monitor-auto';
 export const CTA_MAP_TAB = 'CTA Map';
 export const MONITOR_HEADER = [
   'report_date',
@@ -448,7 +448,7 @@ export async function runMonitor(argv, deps = {}) {
   const args = parseArgs(argv);
   if (args.help || args.h) {
     process.stdout.write(
-      'gg-monitor.mjs — weekly GSC + GA4 → 📊内容追踪\n' +
+      'gg-monitor.mjs — weekly GSC + GA4 → 内容追踪\n' +
       'Usage: node tools/scripts/gg-monitor.mjs --site sc-domain:DOMAIN [--ga4-property properties/ID] [--since 7d] [--dry-run] [--write-sheet] [--cta-event NAME]\n',
     );
     return 0;
@@ -489,8 +489,19 @@ export async function runMonitor(argv, deps = {}) {
     return 1;
   }
 
-  // Pull CTA event names (best-effort; needs GG_SHEETS_WORKBOOK_ID).
-  const workbookId = process.env.GG_SHEETS_WORKBOOK_ID;
+  // Pull CTA event names + monitor write target (workbook routing).
+  // PRD v0.7 SSOT = GG_SHEETS_FLOW_MVP_WORKBOOK_ID (v8 pipeline workbook).
+  // Falls back to legacy GG_SHEETS_WORKBOOK_ID for old runs that haven't
+  // migrated yet. `--workbook flow-mvp|legacy|<id>` overrides explicitly.
+  let workbookId;
+  const wbArg = args.workbook;
+  if (wbArg && wbArg !== true && wbArg !== 'flow-mvp' && wbArg !== 'legacy') {
+    workbookId = String(wbArg);
+  } else if (wbArg === 'legacy') {
+    workbookId = process.env.GG_SHEETS_WORKBOOK_ID;
+  } else {
+    workbookId = process.env.GG_SHEETS_FLOW_MVP_WORKBOOK_ID || process.env.GG_SHEETS_WORKBOOK_ID;
+  }
   let ctaEvents = [];
   if (args.cta_event && args.cta_event !== true) {
     ctaEvents = [String(args.cta_event)];
@@ -569,7 +580,7 @@ export async function runMonitor(argv, deps = {}) {
 
   // Write to sheet.
   if (!workbookId) {
-    process.stderr.write(`error: --write-sheet requires GG_SHEETS_WORKBOOK_ID in env\n`);
+    process.stderr.write(`error: --write-sheet requires GG_SHEETS_FLOW_MVP_WORKBOOK_ID (or GG_SHEETS_WORKBOOK_ID) in env, or --workbook <id> flag\n`);
     return 1;
   }
   let targetTab;

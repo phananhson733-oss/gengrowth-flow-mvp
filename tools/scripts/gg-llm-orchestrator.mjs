@@ -152,12 +152,16 @@ function validateInputs(args) {
   const valid = new Set(['claude', 'codex', 'gemini', 'hermes']);
   for (const m of models) if (!valid.has(m)) errors.push(`unknown model in --models: ${m}`);
 
-  if (args.prompt && !existsSync(args.prompt)) {
-    errors.push(`prompt file not found: ${args.prompt}`);
-  } else if (args.prompt) {
-    const size = statSync(args.prompt).size;
-    if (size < 1024) {
-      errors.push(`prompt file too small (${size}B < 1024B) — renderer usually emits ~30KB; refusing to burn frontier tokens on a stub`);
+  // Skip prompt-file existence + size guard in --dry-run: dry-run only renders
+  // the planned shell command, so a stub or missing prompt path is fine.
+  if (!args.dry_run) {
+    if (args.prompt && !existsSync(args.prompt)) {
+      errors.push(`prompt file not found: ${args.prompt}`);
+    } else if (args.prompt) {
+      const size = statSync(args.prompt).size;
+      if (size < 1024) {
+        errors.push(`prompt file too small (${size}B < 1024B) — renderer usually emits ~30KB; refusing to burn frontier tokens on a stub`);
+      }
     }
   }
 

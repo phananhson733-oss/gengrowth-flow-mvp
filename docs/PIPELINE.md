@@ -35,12 +35,14 @@
 
 ```
 [上游：选题 / 关键词 / 桥]
-1. mine          DataForSEO Labs → keyword_candidates 副表
-2. approve       人在 Sheet 标 K 列 wzb_approve=Y
-3. promote       approved → 关键词主表 A-I + 选题登记表 col A
-4. fill-v8       人补选题登记表 B-U 21 列 v8 brief
-5. cluster/CTA   人补主题集群表 + CTA Map 一行业务数据
-6. bridge        选题登记表 × 主题集群表 × CTA Map → brief override JSON
+1. mine             DataForSEO Labs → keyword_candidates 副表
+2. approve          人在 Sheet 标 K 列 wzb_approve=Y
+3. promote          approved → 关键词主表 A-I + 选题登记表 col A
+3.5 backfill-dr     `gg-backfill-site-dr.mjs --dr <Ahrefs真实值>` → 关键词主表 I 列
+3.6 cluster-init    `gg-cluster-init.mjs --write` → 主题集群表 草稿（仅喂 R=快速胜利/长尾，PRD §7.3.2 修法 #4）
+4. fill-v8          人补选题登记表 B-U 21 列 v8 brief
+5. cluster/CTA      人补主题集群表 业务字段（track / jtbd / content_angle / cta） + CTA Map 一行
+6. bridge           选题登记表 × 主题集群表 × CTA Map → brief override JSON
 
 [中游：RAG / Prompt]
 7. sheet-pull    选题登记表 row → batch fixture JSON

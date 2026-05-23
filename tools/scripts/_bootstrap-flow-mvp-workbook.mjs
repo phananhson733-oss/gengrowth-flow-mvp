@@ -323,8 +323,17 @@ function tabToValueData(tab) {
   return out;
 }
 
-// Build formula fill-down by repeating the same formula for each row.
-// USER_ENTERED + relative refs in the formula = Sheets auto-adjusts per row.
+// Rewrite row-2 relative refs (G2, I2, A2 etc.) to the target row number.
+// Skips absolute refs ($G$2) and trailing-digit guards (H20 stays H20).
+function rewriteFormulaRow(formula, newRow) {
+  return String(formula).replace(/(\$?[A-Z]+)2(?!\d)/g, (m, col) => {
+    if (col.startsWith('$')) return m;
+    return col + newRow;
+  });
+}
+
+// Build formula fill-down. Sheets API does NOT auto-adjust relative refs on bulk
+// PUT — must rewrite row numbers per row manually before writing.
 function buildFillDownValues(tab) {
   const ex = tab.extras || {};
   if (!ex.formulaFillDown) return [];
@@ -356,8 +365,11 @@ function buildFillDownValues(tab) {
 
     const allValues = [];
     for (let r = 0; r < dstRows; r++) {
+      const newRowNum = dstStartRow + r; // 1-indexed target row
       // Cycle through src rows (usually src has 1 row; this handles multi)
-      allValues.push(srcFormulas[r % srcRows]);
+      const srcRow = srcFormulas[r % srcRows];
+      const adjusted = srcRow.map((f) => (f ? rewriteFormulaRow(f, newRowNum) : ''));
+      allValues.push(adjusted);
     }
 
     const colStart = String.fromCharCode('A'.charCodeAt(0) + dstRange.startColumnIndex);

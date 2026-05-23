@@ -117,17 +117,21 @@ export function validateSeed(seed) {
 **PRD 要求：**
 > cluster doc 是 LLM 从关键词列表自动生成的，没读 R 列分桶。要求：集群生成只喂 R 列 = 快速胜利 / 长尾词 的行。
 
-**实现状态：**
-- ❌ 集群生成脚本本仓库未建（应在 `tools/scripts/gg-cluster-init.mjs` 或类似）
-- 老 sheet 主题集群表只有 1 行（手填）
+**实现状态：** ✅ 已落地（2026-05-23）
 
-**修法：** 新建 `tools/scripts/gg-cluster-init.mjs`：
-1. 读关键词主表 R 列 = 快速胜利 / 长尾词 的行
-2. 按 entity / token 相似度聚类（先简单 jaccard，后续可换 embedding）
-3. 写入主题集群表 cluster_id / cluster_name / primary_entity / keywords_included 列
-4. wzb 在 sheet 补 track / us_share / content_angle / pillar_page 等人工字段
+**实现脚本：** `tools/scripts/gg-cluster-init.mjs`
+- 读关键词主表 R 列 = `⚡快速胜利` / `📌长尾词` 的行（默认；--buckets 可改）
+- token 共现 + 词边界匹配聚类（优先 bigram seed，回退 unigram；stopwords 过滤）
+- 写主题集群表自动列：`cluster_id` / `cluster_name` / `keywords_included`
+- 业务字段（track / jtbd / content_angle / cta / priority / week）留空，人工补
+- 默认 dry-run，`--write` 才落；`--rebuild` 清空重建
 
-优先级：高（PRD §2.3 "执行单位 = 主题集群"，目前没有自动化）
+**首跑结果（2026-05-23, DR=5 回填后）：**
+- 502 词进入聚类（336 快速胜利 + 166 长尾）
+- 输出 144 集群（最大 40 词 / 平均 3.5 词 / 11 未分配）
+- 主题集群表 144 行草稿落盘
+
+依赖：本修法依赖 [修法 #1+2+3] + [关键词主表 I 列填了真实 Ahrefs DR]，否则 R 列全 ❌跳过，无米下锅。
 
 ---
 
@@ -214,16 +218,31 @@ node tools/scripts/_migrate-legacy-to-flow-mvp.mjs \
 
 ---
 
-## 六、优先级总结（建议落地顺序）
+## 六、优先级总结（落地状态）
 
-| # | 动作 | 工作量 | 优先级 |
-|---|---|---|---|
-| 1 | 重写 `_bootstrap-flow-mvp-workbook.mjs` 按 `.gs v3.1` 复刻 13 张工作表 | 4-6h | **P0** |
-| 2 | 修 `gg-keyword-mine.mjs`：默认写 flow-mvp sheet + 从 ⚙️配置 A28:A45 拉负向词 | 1h | **P0** |
-| 3 | 新建 `_migrate-legacy-to-flow-mvp.mjs` 迁移 590 词 + 301 选题 | 2h | **P0** |
-| 4 | 加 mine 种子词校验（SUSPICIOUS_SINGLE_TERMS 警告）| 30min | P1 |
-| 5 | 加 mine 嫌疑词 flag（kd-vol-conflict / multi-token-mismatch）| 30min | P1 |
-| 6 | 新建 `gg-cluster-init.mjs`（修法 #4）| 4h | **P0**（PRD 核心：cluster 是执行单位）|
-| 7 | 写 `_sync-canon.sh`（保持 upstream-canon 与 wiki 同步）| 30min | P2 |
+| # | 动作 | 工作量 | 优先级 | 状态 |
+|---|---|---|---|---|
+| 1 | 重写 `_bootstrap-flow-mvp-workbook.mjs` 按 `.gs v3.1` 复刻 13 张工作表 | 4-6h | **P0** | ✅ 2026-05-23 |
+| 2 | 修 `gg-keyword-mine.mjs`：默认写 flow-mvp sheet + 从 ⚙️配置 A28:A45 拉负向词 | 1h | **P0** | ✅ 2026-05-23 |
+| 3 | 新建 `_migrate-legacy-to-flow-mvp.mjs` 迁移 590 词 + 301 选题 | 2h | **P0** | ✅ 2026-05-23 |
+| 4 | 加 mine 种子词校验（SUSPICIOUS_SINGLE_TERMS 警告）| 30min | P1 | ✅ 2026-05-23 |
+| 5 | 加 mine 嫌疑词 flag（kd-vol-conflict / multi-token-mismatch）| 30min | P1 | ⏳ |
+| 6 | 新建 `gg-cluster-init.mjs`（修法 #4）| 4h | **P0** | ✅ 2026-05-23 |
+| 7 | 写 `_sync-canon.sh`（保持 upstream-canon 与 wiki 同步）| 30min | P2 | ⏳ |
+| 8 | 修 bootstrap fill-down 公式 row 号 bug（rewriteFormulaRow）| 30min | **P0** | ✅ 2026-05-23 |
+| 9 | 新建 `gg-backfill-site-dr.mjs`（按用户告知的真实 DR 批量回填 I 列）| 30min | **P0** | ✅ 2026-05-23 |
 
-**总工时：约 12-14h。**
+**已完成工时：~14h。剩余 #5/#7 共约 1h。**
+
+## 七、当前生产状态（2026-05-23）
+
+| 指标 | 值 | 说明 |
+|---|---|---|
+| 关键词主表行数 | 590 | 100% 迁自老 sheet（A-I 一字不差）|
+| TOPIC_KEYWORDS | 20 词（真实）| 从 oracle/data/articles/ 17 篇文章 keywords 反推 |
+| NEGATIVE_KEYWORDS | 5 词（默认 + 用户可扩展）| miami/dade/trimet/hub city/bus tracker |
+| 站 DR (I 列) | 5（用户 2026-05-23 告知 ≤5 区间上限）| 用 `gg-backfill-site-dr.mjs --dr <真实值>` 调整 |
+| R 列分桶 | 336 ⚡快速胜利 / 166 📌长尾 / 87 ❌跳过 / 1 🎯战略 | 公式 fill-down bug 修复后正确 |
+| 主题集群表 | 144 集群草稿 | `gg-cluster-init.mjs --write` 落盘，业务字段人工补 |
+| 选题登记表 | 301 行 | 迁自老 sheet，C/D VLOOKUP 重写 |
+| keyword_candidates | 15 行 | wzb_approve 状态保留 |

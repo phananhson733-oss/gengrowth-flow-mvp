@@ -42,13 +42,33 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
 import { getAccessToken, gFetch, loadEnv, redact } from './lib/gg-shared.mjs';
+import { getConfig } from './lib/_config.mjs';
 
-export const DEFAULT_LOCATION_CODE = 2840; // US
-export const DEFAULT_LANGUAGE_CODE = 'en';
-export const DEFAULT_MAX_KD = 50;
-export const DEFAULT_MIN_VOLUME = 50;
-export const DEFAULT_MAX_RESULTS = 15;
+// Two-layer defaults — *_FALLBACK = hardcoded; * = resolved via sheet snapshot.
+// Sheet overrides live in tab `config` (sync via tools/scripts/gg-config-sync.mjs).
+export const DEFAULT_LOCATION_CODE_FALLBACK = 2840; // US
+export const DEFAULT_LOCATION_CODE = getConfig('mine.location_code', DEFAULT_LOCATION_CODE_FALLBACK);
+export const DEFAULT_LANGUAGE_CODE_FALLBACK = 'en';
+export const DEFAULT_LANGUAGE_CODE = getConfig('mine.language_code', DEFAULT_LANGUAGE_CODE_FALLBACK);
+export const DEFAULT_MAX_KD_FALLBACK = 50;
+export const DEFAULT_MAX_KD = getConfig('mine.max_kd', DEFAULT_MAX_KD_FALLBACK);
+export const DEFAULT_MIN_VOLUME_FALLBACK = 50;
+export const DEFAULT_MIN_VOLUME = getConfig('mine.min_volume', DEFAULT_MIN_VOLUME_FALLBACK);
+export const DEFAULT_MAX_RESULTS_FALLBACK = 15;
+export const DEFAULT_MAX_RESULTS = getConfig('mine.max_results', DEFAULT_MAX_RESULTS_FALLBACK);
 export const PER_SEED_LIMIT = 100;
+
+// Sheet config range — single source of truth for NEGATIVE_KEYWORDS (修法 #1).
+// Backed by spec/upstream-canon/keyword-sheet-setup.gs v3.1 line 97-108.
+export const NEGATIVES_RANGE = '⚙️配置!A28:A45';
+
+// Suspicious-word flag thresholds (修法 #5).
+// kd-vol-conflict: typical "free lunch" anomaly — KD this low with volume this high
+// almost never survives a real SERP audit, so flag for manual review.
+export const KD_VOL_CONFLICT_KD_MAX = 5;
+export const KD_VOL_CONFLICT_VOLUME_MIN = 5000;
+// entity-mismatch: query has many tokens but none overlap with the seed entity.
+export const ENTITY_MISMATCH_MIN_TOKENS = 3;
 
 // AIO 风险预判词型（spec §二 第三关 + keyword-sheet-setup.gs v3.1 line 250-254）：
 // 月搜索量 ≥ 500 且词型含 "what is" / "meaning" / "definition" / "how does" / "explained" → 疑似高风险
@@ -61,7 +81,46 @@ export function isAioHighRisk(keyword, volume) {
   return AIO_TRIGGER_REGEX.test(String(keyword || ''));
 }
 
-// GEO 分公式（直接复用 gg-keyword-fallback.mjs:146 同一套公式，避免分叉）：
+// Tokenize a keyword/seed into a lowercased word set for overlap checks.
+// Strips punctuation; keeps alphanumeric and unicode letters.
+export function tokenize(s) {
+  return String(s || '')
+    .toLowerCase()
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter(Boolean);
+}
+
+// 嫌疑词 flag computation (PRD v0.7 §7.3.2 修法 #5).
+// Returns array of flag strings (e.g. ['⚠️AIO', '⚠️kd-vol-conflict']).
+// Caller joins with '|' to produce the ai_recommend column value.
+//   - kd-vol-conflict: KD ≤ KD_VOL_CONFLICT_KD_MAX AND volume ≥ KD_VOL_CONFLICT_VOLUME_MIN
+//     ("free lunch" anomaly — rare in reality, surface for manual review).
+//   - entity-mismatch: query has ≥ ENTITY_MISMATCH_MIN_TOKENS tokens AND zero overlap
+//     with the seed/entity token set (DataForSEO fan-out drifted into a different topic).
+//   - AIO: existing high-risk word-type detection.
+export function computeRecommendFlags(keyword, { volume, kd, seed, entity } = {}) {
+  const flags = [];
+  if (isAioHighRisk(keyword, volume)) flags.push('⚠️AIO');
+  const v = Number(volume);
+  const k = Number(kd);
+  if (Number.isFinite(v) && Number.isFinite(k)
+    && k <= KD_VOL_CONFLICT_KD_MAX && v >= KD_VOL_CONFLICT_VOLUME_MIN) {
+    flags.push('⚠️kd-vol-conflict');
+  }
+  const qTokens = tokenize(keyword);
+  if (qTokens.length >= ENTITY_MISMATCH_MIN_TOKENS) {
+    // Build seed-token universe from whichever signal we have (seed wins, entity backstop).
+    const seedTokens = new Set([
+      ...tokenize(seed),
+      ...tokenize(entity),
+    ]);
+    if (seedTokens.size) {
+      const overlap = qTokens.some((t) => seedTokens.has(t));
+      if (!overlap) flags.push('⚠️entity-mismatch');
+    }
+  }
+  return flags;
+}
 //   0.4 * (volume/1000) + 0.3 * (1 - kd/100) + 0.2 * (1 - min(kd/100, 1)) + 0.1 * AIO_bonus
 export function computeGeo({ volume, kd, serpFeatures }) {
   if (volume == null || Number.isNaN(volume)) return null;
@@ -86,13 +145,15 @@ export function isNegativeMatch(keyword, negatives) {
   return negatives.some((neg) => lc.includes(String(neg).toLowerCase()));
 }
 
-// 排序 + 过滤：去重 + KD/volume 闸门 + negative 否决 + GEO 分排序 → top N
+// 排序 + 过滤：去重 + KD/volume 闸门 + negative 否决 + GEO 分排序 → top N.
+// opts.entity (optional) is used by computeRecommendFlags for the entity-mismatch check.
 export function filterAndRank(candidates, opts) {
   const {
     maxKd = DEFAULT_MAX_KD,
     minVolume = DEFAULT_MIN_VOLUME,
     maxResults = DEFAULT_MAX_RESULTS,
     negatives = [],
+    entity = '',
   } = opts || {};
   const seen = new Set();
   const filtered = [];
@@ -106,10 +167,18 @@ export function filterAndRank(candidates, opts) {
     const k = c.kd == null ? 100 : Number(c.kd);
     if (Number.isFinite(v) && v < minVolume) continue;
     if (Number.isFinite(k) && k > maxKd) continue;
+    const flags = computeRecommendFlags(c.keyword, {
+      volume: c.volume,
+      kd: c.kd,
+      seed: c.source_seed,
+      entity,
+    });
     filtered.push({
       ...c,
       geo_score: computeGeo({ volume: c.volume, kd: c.kd, serpFeatures: c.serp_features }),
-      aio_risk: isAioHighRisk(c.keyword, c.volume) ? '⚠️疑似高风险' : '',
+      // ai_recommend column = pipe-joined flags (preserves existing ⚠️AIO consumers
+      // via substring match; adds kd-vol-conflict / entity-mismatch per 修法 #5).
+      aio_risk: flags.join('|'),
     });
   }
   // GEO 降序（null GEO 视为 -1）
@@ -290,27 +359,59 @@ export function parseNegatives(raw) {
   return String(raw).split(/[,，、]+/).map((s) => s.trim()).filter(Boolean);
 }
 
-// Read NEGATIVE_KEYWORDS from sheet ⚙️配置!A28:A45 (PRD v0.7 §7.3.2 修法 #1)
+// Read NEGATIVE_KEYWORDS from sheet ⚙️配置!A28:A45 (PRD v0.7 §7.3.2 修法 #1).
+// Cached for one CLI invocation via the module-level `_negativesCache` map
+// (keyed by workbookId), so a multi-seed run does one fetch, not N.
 // Falls back to [] on any failure — caller should merge with CLI/env negatives.
+const _negativesCache = new Map();
+export function _resetNegativesCacheForTests() { _negativesCache.clear(); }
+
 export async function readNegativesFromSheet(workbookId, token) {
+  if (_negativesCache.has(workbookId)) return _negativesCache.get(workbookId);
   try {
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${workbookId}/values/${encodeURIComponent('⚙️配置!A28:A45')}`;
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${workbookId}/values/${encodeURIComponent(NEGATIVES_RANGE)}`;
     const r = await gFetch(url, token);
     const vals = (r.values || []).map((row) => String(row[0] || '').trim()).filter(Boolean);
+    _negativesCache.set(workbookId, vals);
     return vals;
   } catch (e) {
-    console.error(`[mine] readNegativesFromSheet skipped: ${e.message}`);
+    console.warn(`[mine] readNegativesFromSheet skipped: ${e.message}`);
+    _negativesCache.set(workbookId, []);
     return [];
   }
 }
 
+// Merge CLI/env + sheet negatives, case-insensitive dedupe, preserving first-seen casing.
+export function mergeNegatives(...sources) {
+  const seenLc = new Set();
+  const out = [];
+  for (const src of sources) {
+    if (!src) continue;
+    for (const n of src) {
+      const s = String(n || '').trim();
+      if (!s) continue;
+      const lc = s.toLowerCase();
+      if (seenLc.has(lc)) continue;
+      seenLc.add(lc);
+      out.push(s);
+    }
+  }
+  return out;
+}
+
 // Suspicious single-token seeds (PRD v0.7 §7.3.2 修法 #3, SOP v2.4 §三).
+//
 // Single-token multi-meaning seeds let DataForSEO fan out into garbage (e.g.
 // `transit` matches astrological transits AND public-transit bus trackers).
 // SOP says use `transit chart` / `astrological transit` instead.
+//
+// To extend: append the bare multi-meaning term (lowercase, single token).
+// Examples already covered: occult astrology vocabulary that collides with
+// everyday meanings (transit, cycle, house, mercury, aspect, sign, chart,
+// reading, element, node, phase, return).
 export const SUSPICIOUS_SINGLE_TERMS = Object.freeze(new Set([
-  'transit', 'cycle', 'house', 'mercury', 'venus', 'mars',
-  'jupiter', 'saturn', 'moon', 'sun', 'water', 'fire', 'earth',
+  'transit', 'cycle', 'house', 'mercury', 'aspect', 'sign',
+  'chart', 'reading', 'element', 'node', 'phase', 'return',
 ]));
 
 export function validateSeed(seed) {
@@ -318,7 +419,10 @@ export function validateSeed(seed) {
   if (!lc) return { ok: false, reason: 'empty' };
   const tokens = lc.split(/\s+/);
   if (tokens.length === 1 && SUSPICIOUS_SINGLE_TERMS.has(tokens[0])) {
-    return { ok: true, warning: `single-token multi-meaning seed "${seed}" risks garbage candidates; SOP says use "${seed} chart" / "astrological ${seed}" instead` };
+    return {
+      ok: true,
+      warning: `seed "${seed}" is multi-meaning; consider "${seed} chart" or "astrological ${seed}"`,
+    };
   }
   return { ok: true };
 }
@@ -344,6 +448,7 @@ flags:
   --min-volume <n>         default 50
   --max-results <n>        default 15
   --negatives <csv>        merged with sheet ⚙️配置!A28:A45 + env GG_NEGATIVE_KEYWORDS (子串否决)
+  --no-sheet-negatives     skip sheet ⚙️配置!A28:A45 read; CLI/env only
   --dry-run                stdout candidates JSON, no Sheets writes
   --target-master          write to 关键词主表 A-E directly (default: write keyword_candidates副表)
 
@@ -365,7 +470,7 @@ env required:
   // PRD §7.3.2 修法 #3: warn on multi-meaning single-token seeds.
   for (const seed of seeds) {
     const v = validateSeed(seed);
-    if (v.warning) console.error(`⚠️  ${v.warning}`);
+    if (v.warning) console.warn(`⚠️  ${v.warning}`);
   }
 
   const login = process.env.GG_DATAFORSEO_LOGIN;
@@ -432,18 +537,21 @@ env required:
 
   const writerSa = process.env.GG_WRITER_SA_JSON || join(homedir(), '.config', 'gg', 'gg-writer-sa.json');
   let token = null;
-  if (workbookId && existsSync(writerSa)) {
+  const sheetNegativesEnabled = !args.no_sheet_negatives;
+  if (workbookId && existsSync(writerSa) && sheetNegativesEnabled) {
     try {
       ({ token } = await getAccessToken(writerSa, ['https://www.googleapis.com/auth/spreadsheets']));
       const sheetNegatives = await readNegativesFromSheet(workbookId, token);
       if (sheetNegatives.length) {
         const before = opts.negatives.length;
-        opts.negatives = [...new Set([...opts.negatives, ...sheetNegatives])];
-        console.error(`[mine] merged ${sheetNegatives.length} negatives from sheet ⚙️配置!A28:A45 (was ${before}, now ${opts.negatives.length})`);
+        opts.negatives = mergeNegatives(opts.negatives, sheetNegatives);
+        console.error(`[mine] merged ${sheetNegatives.length} negatives from sheet ${NEGATIVES_RANGE} (was ${before}, now ${opts.negatives.length})`);
       }
     } catch (e) {
-      console.error(`[mine] sheet negative-keyword preload skipped: ${e.message}`);
+      console.warn(`[mine] sheet negative-keyword preload skipped: ${e.message}`);
     }
+  } else if (!sheetNegativesEnabled) {
+    console.error('[mine] --no-sheet-negatives: skipping sheet negative-keyword preload');
   } else if (!args.dry_run) {
     // Strict in write mode: workbook + SA must exist to write later anyway.
     if (!workbookId) {
@@ -457,12 +565,13 @@ env required:
   }
 
   // 3. Filter + rank — now with sheet-merged negatives in opts.
-  const finalCandidates = filterAndRank(allCandidates, opts);
+  //    `entity` is passed so computeRecommendFlags can flag entity-mismatch (修法 #5).
+  const entity = args.entity || seeds[0];
+  const finalCandidates = filterAndRank(allCandidates, { ...opts, entity });
   console.error(`after filter (kd≤${opts.maxKd}, vol≥${opts.minVolume}, dedupe, negatives=${opts.negatives.length}): ${finalCandidates.length}`);
 
   // 4. Output.
   const runId = `mine-${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}`;
-  const entity = args.entity || seeds[0];
 
   if (args.dry_run) {
     process.stdout.write(JSON.stringify({

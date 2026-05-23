@@ -7,11 +7,21 @@
 // All thresholds + competitor list + black-words list are exported as named constants
 // so unit tests can import-and-assert without re-deriving values.
 //
-// Pure Node — no deps.
+// Pure Node — no deps (beyond _config.mjs which itself is dep-free).
+
+import { getConfig } from './_config.mjs';
 
 // ============================================================
 // Constants (exported for unit tests + audit)
 // ============================================================
+//
+// Two layers per tunable threshold:
+//   *_DEFAULT — the hardcoded fallback (used when sheet has no override).
+//   *         — the resolved value (sheet snapshot if present, else *_DEFAULT).
+//
+// red-lines.mjs is called from non-async validators, so getConfig() is sync —
+// it lazy-reads .gg-cache/config-snapshot.json via lib/_config.mjs. Snapshot
+// is refreshed by gg-config-sync.mjs (pulls from sheet `config` tab).
 
 // RL1: clinical-claim regex with required clinical-context follower (no disclaimer rescue, spec H3).
 // "treats" / "diagnoses" / "cures" alone are too aggressive — plain English uses
@@ -36,17 +46,23 @@ export const RL2_SENTIMENT_REGEX =
 export const RL2_WINDOW_CHARS = 200;
 
 // RL3: SERP plagiarism — longest contiguous token n-gram overlap with top-3
-// SERP snippets. > 12 tokens → fail.
-export const RL3_NGRAM_THRESHOLD = 12;
+// SERP snippets. > N tokens → fail. Override via sheet `config` key `phase2.RL3_n_gram`.
+export const RL3_NGRAM_THRESHOLD_DEFAULT = 12;
+export const RL3_NGRAM_THRESHOLD = getConfig('phase2.RL3_n_gram', RL3_NGRAM_THRESHOLD_DEFAULT);
 
 // RL4: per-H2 drift — Jaccard + 5-gram shingle dual check.
-export const RL4_JACCARD_FLOOR = 0.05;
-export const RL4_SHINGLE_FLOOR = 0.10;
+// Sheet overrides: phase2.RL4_jaccard_floor / phase2.RL4_shingle_floor / phase2.RL4_drifted_sections_fail.
+export const RL4_JACCARD_FLOOR_DEFAULT = 0.05;
+export const RL4_JACCARD_FLOOR = getConfig('phase2.RL4_jaccard_floor', RL4_JACCARD_FLOOR_DEFAULT);
+export const RL4_SHINGLE_FLOOR_DEFAULT = 0.10;
+export const RL4_SHINGLE_FLOOR = getConfig('phase2.RL4_shingle_floor', RL4_SHINGLE_FLOOR_DEFAULT);
 export const RL4_SHINGLE_N = 5;
-export const RL4_DRIFTED_SECTIONS_FAIL = 2;
+export const RL4_DRIFTED_SECTIONS_FAIL_DEFAULT = 2;
+export const RL4_DRIFTED_SECTIONS_FAIL = getConfig('phase2.RL4_drifted_sections_fail', RL4_DRIFTED_SECTIONS_FAIL_DEFAULT);
 
-// RL5: keyword stuffing.
-export const RL5_MAX_COUNT = 8;
+// RL5: keyword stuffing. Sheet override: phase2.RL5_keyword_max.
+export const RL5_MAX_COUNT_DEFAULT = 8;
+export const RL5_MAX_COUNT = getConfig('phase2.RL5_keyword_max', RL5_MAX_COUNT_DEFAULT);
 export const RL5_MIN_COUNT_WARN = 3;
 
 // RL6: psych-safety — disclaimer + non-clinical language + black-words.

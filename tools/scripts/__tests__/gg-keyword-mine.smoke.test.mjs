@@ -13,11 +13,17 @@ import {
   DEFAULT_MAX_RESULTS,
   PER_SEED_LIMIT,
   AIO_VOLUME_THRESHOLD,
+  NEGATIVES_RANGE,
+  KD_VOL_CONFLICT_KD_MAX,
+  KD_VOL_CONFLICT_VOLUME_MIN,
   MASTER_TAB,
   CANDIDATES_TAB,
+  SUSPICIOUS_SINGLE_TERMS,
   isAioHighRisk,
   computeGeo,
+  computeRecommendFlags,
   isNegativeMatch,
+  mergeNegatives,
   filterAndRank,
   parseLabsItem,
   buildCandidateRow,
@@ -25,6 +31,10 @@ import {
   parseArgs,
   parseSeeds,
   parseNegatives,
+  validateSeed,
+  tokenize,
+  readNegativesFromSheet,
+  _resetNegativesCacheForTests,
 } from '../gg-keyword-mine.mjs';
 
 // ---------- constants ----------
@@ -133,11 +143,178 @@ test('filterAndRank applies negatives', () => {
   assert.equal(out[0].keyword, 'blue aura');
 });
 
-test('filterAndRank attaches geo_score + aio_risk to each result', () => {
+test('filterAndRank attaches geo_score + aio_risk (now ⚠️AIO) to each result', () => {
   const cands = [{ keyword: 'what is blue aura', volume: 12100, kd: 8 }];
   const out = filterAndRank(cands, {});
   assert.ok(typeof out[0].geo_score === 'number');
-  assert.equal(out[0].aio_risk, '⚠️疑似高风险');
+  assert.equal(out[0].aio_risk, '⚠️AIO');
+});
+
+// ---------- 修法 #5: 嫌疑词 flags ----------
+test('computeRecommendFlags: AIO trigger preserved', () => {
+  const f = computeRecommendFlags('what is blue aura', { volume: 12100, kd: 8, seed: 'blue aura', entity: 'aura' });
+  assert.deepEqual(f, ['⚠️AIO']);
+});
+
+test('computeRecommendFlags: kd-vol-conflict when KD≤5 AND volume≥5000', () => {
+  const f = computeRecommendFlags('blue aura', { volume: 8000, kd: 3, seed: 'blue aura', entity: 'aura' });
+  assert.ok(f.includes('⚠️kd-vol-conflict'));
+});
+
+test('computeRecommendFlags: kd-vol-conflict NOT triggered when KD > 5', () => {
+  const f = computeRecommendFlags('blue aura', { volume: 8000, kd: 6, seed: 'blue aura', entity: 'aura' });
+  assert.ok(!f.includes('⚠️kd-vol-conflict'));
+});
+
+test('computeRecommendFlags: kd-vol-conflict NOT triggered when volume < 5000', () => {
+  const f = computeRecommendFlags('blue aura', { volume: 4999, kd: 3, seed: 'blue aura', entity: 'aura' });
+  assert.ok(!f.includes('⚠️kd-vol-conflict'));
+});
+
+test('computeRecommendFlags: entity-mismatch when ≥3 tokens AND zero overlap', () => {
+  // query "miami dade bus" has 3 tokens; seed/entity "blue aura" has tokens [blue,aura];
+  // no overlap → flag it.
+  const f = computeRecommendFlags('miami dade bus tracker', { volume: 6000, kd: 20, seed: 'blue aura', entity: 'aura' });
+  assert.ok(f.includes('⚠️entity-mismatch'));
+});
+
+test('computeRecommendFlags: entity-mismatch NOT triggered when one token overlaps', () => {
+  const f = computeRecommendFlags('aura color reading', { volume: 6000, kd: 20, seed: 'blue aura', entity: 'aura' });
+  assert.ok(!f.includes('⚠️entity-mismatch'));
+});
+
+test('computeRecommendFlags: entity-mismatch NOT triggered when <3 tokens', () => {
+  const f = computeRecommendFlags('miami dade', { volume: 6000, kd: 20, seed: 'blue aura', entity: 'aura' });
+  assert.ok(!f.includes('⚠️entity-mismatch'));
+});
+
+test('computeRecommendFlags: multiple flags concatenated', () => {
+  // AIO + entity-mismatch + kd-vol-conflict all trigger.
+  const f = computeRecommendFlags('what is miami transit explained', {
+    volume: 9000, kd: 3, seed: 'blue aura', entity: 'aura',
+  });
+  assert.ok(f.includes('⚠️AIO'));
+  assert.ok(f.includes('⚠️kd-vol-conflict'));
+  assert.ok(f.includes('⚠️entity-mismatch'));
+});
+
+test('filterAndRank joins multiple flags with pipe in ai_recommend column', () => {
+  const cands = [{ keyword: 'what is miami transit explained', volume: 9000, kd: 3, source_seed: 'blue aura' }];
+  const out = filterAndRank(cands, { entity: 'aura', minVolume: 0, maxKd: 100 });
+  const parts = out[0].aio_risk.split('|');
+  assert.ok(parts.includes('⚠️AIO'));
+  assert.ok(parts.includes('⚠️kd-vol-conflict'));
+  assert.ok(parts.includes('⚠️entity-mismatch'));
+});
+
+// ---------- 修法 #3: validateSeed ----------
+test('validateSeed: single multi-meaning seed produces warning (not blocking)', () => {
+  for (const t of ['transit', 'cycle', 'house', 'mercury', 'aspect', 'sign', 'chart',
+    'reading', 'element', 'node', 'phase', 'return']) {
+    const v = validateSeed(t);
+    assert.equal(v.ok, true, `${t} should not block`);
+    assert.ok(v.warning, `${t} should emit warning`);
+    assert.match(v.warning, /multi-meaning/);
+  }
+});
+
+test('validateSeed: multi-token seed (no warning)', () => {
+  const v = validateSeed('transit chart');
+  assert.equal(v.ok, true);
+  assert.equal(v.warning, undefined);
+});
+
+test('validateSeed: empty seed rejected', () => {
+  const v = validateSeed('');
+  assert.equal(v.ok, false);
+});
+
+test('SUSPICIOUS_SINGLE_TERMS includes the spec-required astrology bare words', () => {
+  for (const t of ['transit', 'cycle', 'house', 'mercury', 'aspect', 'sign',
+    'chart', 'reading', 'element', 'node', 'phase', 'return']) {
+    assert.ok(SUSPICIOUS_SINGLE_TERMS.has(t), `missing ${t}`);
+  }
+});
+
+// ---------- 修法 #1: NEGATIVES_RANGE constant + sheet read + merge ----------
+test('NEGATIVES_RANGE constant declared at top of file', () => {
+  assert.equal(NEGATIVES_RANGE, '⚙️配置!A28:A45');
+});
+
+test('mergeNegatives: case-insensitive dedupe, preserves first-seen casing', () => {
+  const out = mergeNegatives(['miami', 'Dade'], ['MIAMI', 'transit'], null, ['  ', 'TRANSIT']);
+  assert.deepEqual(out, ['miami', 'Dade', 'transit']);
+});
+
+test('mergeNegatives: handles empty inputs', () => {
+  assert.deepEqual(mergeNegatives(), []);
+  assert.deepEqual(mergeNegatives([], null, undefined), []);
+});
+
+test('readNegativesFromSheet: parses sheet values response and caches', async () => {
+  _resetNegativesCacheForTests();
+  // Stub global.fetch (gFetch uses fetch under the hood).
+  const orig = global.fetch;
+  let calls = 0;
+  global.fetch = async (url) => {
+    calls++;
+    assert.match(String(url), /A28%3AA45|A28:A45/i);
+    return {
+      ok: true,
+      status: 200,
+      headers: new Map([['content-type', 'application/json']]),
+      text: async () => JSON.stringify({ values: [['miami'], ['dade'], [''], ['bus tracker']] }),
+      json: async () => ({ values: [['miami'], ['dade'], [''], ['bus tracker']] }),
+    };
+  };
+  try {
+    const a = await readNegativesFromSheet('wb-test', 'tok');
+    assert.deepEqual(a, ['miami', 'dade', 'bus tracker']);
+    // Second call should be cached (no extra fetch).
+    const b = await readNegativesFromSheet('wb-test', 'tok');
+    assert.deepEqual(b, ['miami', 'dade', 'bus tracker']);
+    assert.equal(calls, 1, 'cache should prevent second fetch');
+  } finally {
+    global.fetch = orig;
+    _resetNegativesCacheForTests();
+  }
+});
+
+test('readNegativesFromSheet: returns [] on fetch failure (warn-and-continue)', async () => {
+  _resetNegativesCacheForTests();
+  const orig = global.fetch;
+  const origWarn = console.warn;
+  let warned = false;
+  console.warn = () => { warned = true; };
+  global.fetch = async () => ({
+    ok: false,
+    status: 500,
+    headers: new Map([['content-type', 'text/plain']]),
+    text: async () => 'boom',
+    json: async () => ({}),
+  });
+  try {
+    const out = await readNegativesFromSheet('wb-fail', 'tok');
+    assert.deepEqual(out, []);
+    assert.ok(warned, 'should console.warn on failure');
+  } finally {
+    global.fetch = orig;
+    console.warn = origWarn;
+    _resetNegativesCacheForTests();
+  }
+});
+
+// ---------- tokenize ----------
+test('tokenize: lowercase and split on non-letter/non-digit', () => {
+  assert.deepEqual(tokenize('Blue Aura, meaning!'), ['blue', 'aura', 'meaning']);
+  assert.deepEqual(tokenize(''), []);
+  assert.deepEqual(tokenize(null), []);
+});
+
+// ---------- thresholds ----------
+test('thresholds for 修法 #5 match spec', () => {
+  assert.equal(KD_VOL_CONFLICT_KD_MAX, 5);
+  assert.equal(KD_VOL_CONFLICT_VOLUME_MIN, 5000);
 });
 
 // ---------- parseLabsItem ----------

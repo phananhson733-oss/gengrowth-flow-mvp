@@ -653,8 +653,10 @@ test('isStructuralFirstPara: detects markdown table', async () => {
   assert.equal(isStructuralFirstPara(null), false);
 });
 
-test('RL5: keyword count > 8 → fail', () => {
-  const draft = ('chiron 7th house ').repeat(10);
+test('RL5: keyword count > limit → fail', () => {
+  // RL5_MAX_COUNT is config-sync'd from sheet (currently 12). Use 13 to ensure fail
+  // regardless of whether snapshot is present (default 8) or absent (raw default 8).
+  const draft = ('chiron 7th house ').repeat(13);
   const r = checkRL5(draft, { targetKeyword: 'chiron 7th house' });
   assert.equal(r.pass, false);
 });

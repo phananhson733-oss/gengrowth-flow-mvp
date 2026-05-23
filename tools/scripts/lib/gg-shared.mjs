@@ -345,12 +345,21 @@ const PII_URL_ALLOWLIST = Object.freeze(new Set([
   'old.reddit.com', 'np.reddit.com',
 ]));
 
-// Order matters: URL before email (URLs may contain @).
+// Order matters: URL before email (URLs may contain @). URL also runs before
+// REDDIT_USER so that a full https://old.reddit.com/u/foo URL is preserved
+// (allowlisted) instead of being doubly redacted.
 const PII_PATTERNS = Object.freeze([
   { type: 'REDACTED_URL', re: /https?:\/\/[^\s)>\]]+/gi, mode: 'url' },
   { type: 'REDACTED_EMAIL', re: /\b[\w.+-]+@[\w-]+\.[\w.-]+\b/gi, mode: 'plain' },
   { type: 'REDACTED_PHONE', re: /(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]\d{3,4}[-.\s]?\d{4}\b/g, mode: 'plain' },
   { type: 'REDACTED_HANDLE', re: /(^|\s)@\w{4,}\b/g, mode: 'keepG1' },
+  // Reddit-style user mentions in body text: `u/foo`, `/u/foo`, `/user/foo`.
+  // Reddit usernames map 1:1 to a person — same privacy posture as @handle.
+  // Length 3-20 per Reddit naming rules. Capture group 1 is the leading
+  // delimiter (start-of-string or whitespace) so we don't inadvertently
+  // match inside an already-preserved URL like `https://old.reddit.com/u/foo`
+  // (the slash inside the URL is not preceded by whitespace).
+  { type: 'REDACTED_REDDIT_USER', re: /(^|\s)\/?u(?:ser)?\/[A-Za-z0-9_-]{3,20}\b/gi, mode: 'keepG1' },
   { type: 'REDACTED_ADDRESS', re: /\b\d{1,5}\s+\w+\s+(St|Street|Ave|Avenue|Rd|Road|Blvd|Boulevard|Ln|Lane|Dr|Drive)\b/gi, mode: 'plain' },
   { type: 'REDACTED_ZIP', re: /\b[A-Z]{2}\s\d{5}(-\d{4})?\b/g, mode: 'plain' },
 ]);

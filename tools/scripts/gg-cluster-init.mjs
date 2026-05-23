@@ -20,14 +20,18 @@
 //   node tools/scripts/gg-cluster-init.mjs --write --rebuild
 //   node tools/scripts/gg-cluster-init.mjs --workbook legacy --dry-run
 //   node tools/scripts/gg-cluster-init.mjs --buckets 快速胜利,长尾词 --write
+//   node tools/scripts/gg-cluster-init.mjs --algo embedding --dry-run    (embedding 模式 Phase 3)
+//   node tools/scripts/gg-cluster-init.mjs --algo embedding --input /tmp/ind-002-words.txt --dry-run
 //
 // env required:
 //   GG_SHEETS_FLOW_MVP_WORKBOOK_ID (default) OR GG_SHEETS_WORKBOOK_ID (legacy)
 //   ~/.config/gg/gg-writer-sa.json
+//   OPENAI_API_KEY  — required only when --algo embedding
 
 import { join } from 'node:path';
 import { homedir } from 'node:os';
-import { existsSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { getAccessToken, gFetch, loadEnv } from './lib/gg-shared.mjs';
 
 const argv = process.argv.slice(2);
@@ -52,17 +56,39 @@ const BUCKETS = BUCKETS_ARG.map((b) => {
 const MIN_CLUSTER_SIZE = parseInt(arg('--min-size', '2'), 10);
 const MAX_CLUSTER_SIZE = parseInt(arg('--max-size', '15'), 10);
 
+// Phase 3: embedding-mode flags
+const ALGO = arg('--algo', 'token'); // 'token' (default, backward compat) | 'embedding'
+const COSINE_THRESHOLD = parseFloat(arg('--cosine-threshold', '0.35'));
+const EMBED_MODEL = arg('--embed-model', 'text-embedding-3-small');
+const EMBED_BATCH_SIZE = parseInt(arg('--embed-batch', '100'), 10);
+const INPUT_FILE = arg('--input', null); // 可选 newline-separated 关键词文件（绕过 sheet）
+
+if (!['token', 'embedding'].includes(ALGO)) {
+  console.error(`ERR: --algo must be 'token' or 'embedding', got '${ALGO}'`);
+  process.exit(2);
+}
+
 if (has('--help') || has('-h')) {
-  console.log(`gg-cluster-init.mjs — 主题集群初稿（PRD §7.3.2 修法 #4）
+  console.log(`gg-cluster-init.mjs — 主题集群初稿（PRD §7.3.2 修法 #4 + Phase 3 embedding）
 
 用法:
-  --write           落到 sheet（默认 dry-run 只打印）
-  --rebuild         清空 主题集群表 现有数据后重建
-  --dry-run         强制 dry-run（不写）
-  --workbook X      flow-mvp (默认) | legacy | <sheet-id>
-  --buckets a,b     喂入桶（默认 "快速胜利,长尾词"，PRD 修法 #4）
-  --min-size N      最小集群词数（默认 2）
-  --max-size N      最大集群词数（默认 15，超出拆分）
+  --write                落到 sheet（默认 dry-run 只打印）
+  --rebuild              清空 主题集群表 现有数据后重建
+  --dry-run              强制 dry-run（不写）
+  --workbook X           flow-mvp (默认) | legacy | <sheet-id>
+  --buckets a,b          喂入桶（默认 "快速胜利,长尾词"，PRD 修法 #4）
+  --min-size N           最小集群词数（默认 2）
+  --max-size N           最大集群词数（默认 15，超出拆分）
+  --algo X               token (默认) | embedding
+                         embedding 模式: OpenAI text-embedding-3-small + 凝聚聚类
+  --cosine-threshold X   embedding 模式下的余弦距离阈值（默认 0.35；越小越严苛）
+  --embed-model X        embedding model id（默认 text-embedding-3-small，1536 dim）
+  --embed-batch N        embedding API 单批次上限（默认 100）
+  --input FILE           从文件读关键词列表（绕过 sheet，每行一个；用于 ind-002 子聚类测试）
+
+embedding 模式 env:
+  OPENAI_API_KEY  必填；从 env 读取（绝不 log）；缺失则报错退出
+  缓存: .gg-cache/embeddings/<sha256(keyword)>.json（命中跳 API；已加入 .gitignore）
 `);
   process.exit(0);
 }
@@ -249,7 +275,335 @@ function splitLargeClusters(clusters) {
 }
 
 // ============================================================
-// 2. sheet io
+// 2. embedding-based clustering (Phase 3)
+//
+// Pipeline:
+//   words → OpenAI text-embedding-3-small (1536 dim, batched, cached)
+//   → L2-normalize vectors
+//   → average-linkage agglomerative clustering with cosine-distance threshold
+//   → reuse prettifyClusterName for human-readable names
+//
+// Cost model (2026-05): $0.020 / 1M tokens. ~3 tokens / short keyword.
+// 500 words ≈ 1500 tokens ≈ $0.00003 per full run (effectively free).
+// ============================================================
+
+const CACHE_ROOT = join(process.cwd(), '.gg-cache', 'embeddings');
+
+function ensureCacheDir() {
+  if (!existsSync(CACHE_ROOT)) {
+    mkdirSync(CACHE_ROOT, { recursive: true });
+  }
+}
+
+function cachePathFor(key) {
+  // key = `${model}:${keyword}` so model upgrade busts the cache.
+  const sha = createHash('sha256').update(key).digest('hex');
+  return join(CACHE_ROOT, `${sha}.json`);
+}
+
+function readCachedEmbedding(model, word) {
+  const p = cachePathFor(`${model}:${word}`);
+  if (!existsSync(p)) return null;
+  try {
+    const j = JSON.parse(readFileSync(p, 'utf8'));
+    if (j && Array.isArray(j.embedding) && j.embedding.length >= 16) return j.embedding;
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function writeCachedEmbedding(model, word, embedding) {
+  ensureCacheDir();
+  const p = cachePathFor(`${model}:${word}`);
+  writeFileSync(p, JSON.stringify({ model, word, embedding, ts: Date.now() }));
+}
+
+function estimateTokens(words) {
+  // Rough heuristic: 1 token ≈ 4 chars for short English phrases.
+  // Good enough for "estimated cost" preview; we'll report actual usage from API.
+  let total = 0;
+  for (const w of words) total += Math.max(1, Math.ceil(w.length / 4));
+  return total;
+}
+
+function estimateCostUsd(tokens, model = EMBED_MODEL) {
+  // text-embedding-3-small: $0.020 / 1M tokens (2026-05 OpenAI pricing).
+  // text-embedding-3-large: $0.130 / 1M tokens.
+  const rate = model === 'text-embedding-3-large' ? 0.130 : 0.020;
+  return (tokens / 1_000_000) * rate;
+}
+
+async function sleepMs(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Call OpenAI embeddings API for a batch of strings.
+ * Throws on persistent failure after retries.
+ *
+ * NOTE: never logs OPENAI_API_KEY.
+ */
+async function callEmbeddingApi(batch, apiKey, model) {
+  const url = 'https://api.openai.com/v1/embeddings';
+  let lastErr;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({ input: batch, model }),
+      });
+      const text = await res.text();
+      let body;
+      try { body = JSON.parse(text); } catch { body = text; }
+      if (!res.ok) {
+        const errMsg = typeof body === 'object' && body.error
+          ? body.error.message || JSON.stringify(body.error)
+          : (typeof body === 'string' ? body : JSON.stringify(body));
+        throw new Error(`OpenAI ${res.status} ${res.statusText}: ${errMsg}`);
+      }
+      if (!body.data || !Array.isArray(body.data) || body.data.length !== batch.length) {
+        throw new Error(`OpenAI: unexpected response shape (data.length=${body.data?.length} vs batch=${batch.length})`);
+      }
+      // Ordered by API contract: body.data[i].embedding aligns with batch[i].
+      return {
+        embeddings: body.data.map((d) => d.embedding),
+        usage: body.usage || null,
+      };
+    } catch (e) {
+      lastErr = e;
+      // Exponential backoff: 500ms, 1500ms, 4500ms
+      const wait = 500 * Math.pow(3, attempt);
+      console.error(`  ⚠ embedding API attempt ${attempt + 1} failed: ${e.message} (retry in ${wait}ms)`);
+      if (attempt < 2) await sleepMs(wait);
+    }
+  }
+  throw lastErr || new Error('OpenAI embeddings: exhausted retries');
+}
+
+/**
+ * Embed an array of words. Returns { vectors: number[][], tokensUsed, cacheHits, apiCalls }.
+ * Cache hits skip API entirely.
+ */
+async function embedWords(words, apiKey, model = EMBED_MODEL, batchSize = EMBED_BATCH_SIZE) {
+  ensureCacheDir();
+
+  const vectors = new Array(words.length);
+  const missingIdx = [];
+  let cacheHits = 0;
+
+  for (let i = 0; i < words.length; i++) {
+    const cached = readCachedEmbedding(model, words[i]);
+    if (cached) {
+      vectors[i] = cached;
+      cacheHits++;
+    } else {
+      missingIdx.push(i);
+    }
+  }
+
+  let tokensUsed = 0;
+  let apiCalls = 0;
+
+  for (let off = 0; off < missingIdx.length; off += batchSize) {
+    const idxBatch = missingIdx.slice(off, off + batchSize);
+    const wordBatch = idxBatch.map((i) => words[i]);
+    const { embeddings, usage } = await callEmbeddingApi(wordBatch, apiKey, model);
+    apiCalls++;
+    if (usage && typeof usage.total_tokens === 'number') tokensUsed += usage.total_tokens;
+    for (let k = 0; k < idxBatch.length; k++) {
+      vectors[idxBatch[k]] = embeddings[k];
+      writeCachedEmbedding(model, words[idxBatch[k]], embeddings[k]);
+    }
+  }
+
+  return { vectors, tokensUsed, cacheHits, apiCalls, totalMissing: missingIdx.length };
+}
+
+/**
+ * L2-normalize a vector in place (returns a new array).
+ */
+function l2normalize(v) {
+  let s = 0;
+  for (let i = 0; i < v.length; i++) s += v[i] * v[i];
+  const n = Math.sqrt(s) || 1;
+  const out = new Array(v.length);
+  for (let i = 0; i < v.length; i++) out[i] = v[i] / n;
+  return out;
+}
+
+/**
+ * Cosine distance between two L2-normalized vectors = 1 - dot.
+ */
+function cosDist(a, b) {
+  let s = 0;
+  for (let i = 0; i < a.length; i++) s += a[i] * b[i];
+  return 1 - s;
+}
+
+/**
+ * Average-linkage agglomerative clustering with cosine distance.
+ *
+ * Vectors must already be L2-normalized. Returns array of clusters (each = array of original indices).
+ * Stops merging when minimum inter-cluster distance > threshold.
+ *
+ * Complexity: O(N^2) memory + O(N^2 log N) time worst-case. Fine for N ≤ ~2000.
+ * For larger inputs, switch to HDBSCAN (out of scope for v1).
+ */
+function agglomerativeCluster(vectors, threshold) {
+  const n = vectors.length;
+  if (n === 0) return [];
+  if (n === 1) return [[0]];
+
+  // Each cluster starts as a singleton.
+  const clusters = vectors.map((_, i) => ({ id: i, members: [i], active: true }));
+
+  // Pairwise distance matrix (upper triangular).
+  const dist = new Float32Array(n * n);
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      const d = cosDist(vectors[i], vectors[j]);
+      dist[i * n + j] = d;
+      dist[j * n + i] = d;
+    }
+  }
+
+  // Track per-cluster sum used for average-linkage update.
+  // For average-linkage: D(A∪B, C) = (|A|·D(A,C) + |B|·D(B,C)) / (|A|+|B|)
+  // We maintain dist as cluster-to-cluster average (indexed by cluster.id).
+
+  while (true) {
+    // Find minimum-distance active pair.
+    let minD = Infinity;
+    let minI = -1, minJ = -1;
+    for (let i = 0; i < n; i++) {
+      if (!clusters[i].active) continue;
+      for (let j = i + 1; j < n; j++) {
+        if (!clusters[j].active) continue;
+        const d = dist[i * n + j];
+        if (d < minD) { minD = d; minI = i; minJ = j; }
+      }
+    }
+
+    if (minI === -1 || minD > threshold) break;
+
+    // Merge j into i.
+    const A = clusters[minI];
+    const B = clusters[minJ];
+    const sizeA = A.members.length;
+    const sizeB = B.members.length;
+
+    // Update distances: new distance from merged cluster (at id minI) to every other active cluster.
+    for (let k = 0; k < n; k++) {
+      if (k === minI || k === minJ || !clusters[k].active) continue;
+      const dAk = dist[minI * n + k];
+      const dBk = dist[minJ * n + k];
+      const dNew = (sizeA * dAk + sizeB * dBk) / (sizeA + sizeB);
+      dist[minI * n + k] = dNew;
+      dist[k * n + minI] = dNew;
+    }
+
+    // Merge members; mark B inactive.
+    A.members = A.members.concat(B.members);
+    B.active = false;
+  }
+
+  return clusters.filter((c) => c.active).map((c) => c.members);
+}
+
+/**
+ * Pick a representative "seed" name for a cluster from its member keywords.
+ * Heuristic: longest shared bigram if any, else most-frequent unigram across members,
+ * else first member verbatim. Then runs through prettifyClusterName for branding/noise-stripping.
+ */
+function seedNameForClusterMembers(members) {
+  // Reuse findClusterSeeds locally on the cluster's own words.
+  const sub = findClusterSeeds(members);
+  let rawSeed = null;
+  if (sub.bigramSeeds.length) rawSeed = sub.bigramSeeds[0];
+  else if (sub.unigramSeeds.length) rawSeed = sub.unigramSeeds[0];
+  else rawSeed = members[0]; // fallback: first keyword
+  return prettifyClusterName(rawSeed, members);
+}
+
+/**
+ * Run embedding-based clustering on `words`. Returns { clusters: Map<name, words[]>, unassigned: words[], stats }.
+ *
+ * Singletons (cluster size 1) and clusters smaller than MIN_CLUSTER_SIZE are collected into `unassigned`.
+ */
+async function clusterByEmbedding(words, apiKey) {
+  const tokensEst = estimateTokens(words);
+  const costEst = estimateCostUsd(tokensEst, EMBED_MODEL);
+  console.log(`\nembedding 模式：${words.length} 词，估算 ~${tokensEst} tokens，~$${costEst.toFixed(6)}`);
+  console.log(`  model=${EMBED_MODEL}  cosine-threshold=${COSINE_THRESHOLD}  batch=${EMBED_BATCH_SIZE}`);
+
+  const t0 = Date.now();
+  const { vectors, tokensUsed, cacheHits, apiCalls, totalMissing } = await embedWords(words, apiKey, EMBED_MODEL, EMBED_BATCH_SIZE);
+  const tEmbed = Date.now() - t0;
+  const actualCost = estimateCostUsd(tokensUsed, EMBED_MODEL);
+  console.log(`  embed done: cache=${cacheHits} api=${apiCalls} calls (${totalMissing} new words), ${tokensUsed} tokens, $${actualCost.toFixed(6)} actual, ${tEmbed}ms`);
+
+  // L2-normalize all vectors for cosine.
+  const normed = vectors.map(l2normalize);
+
+  // Agglomerative.
+  const t1 = Date.now();
+  const rawClusters = agglomerativeCluster(normed, COSINE_THRESHOLD);
+  const tCluster = Date.now() - t1;
+  console.log(`  agglomerative done: ${rawClusters.length} raw clusters (incl. singletons), ${tCluster}ms`);
+
+  // Build Map<name, words[]> + collect singletons/sub-MIN as unassigned.
+  const clusters = new Map();
+  const unassigned = [];
+  const usedNames = new Set();
+
+  // Sort large-first so name collisions resolve in favor of bigger cluster.
+  const sorted = rawClusters
+    .map((idxs) => idxs.map((i) => words[i]))
+    .sort((a, b) => b.length - a.length);
+
+  for (const members of sorted) {
+    if (members.length < MIN_CLUSTER_SIZE) {
+      unassigned.push(...members);
+      continue;
+    }
+    let name = seedNameForClusterMembers(members);
+    // De-dupe naming collisions across clusters.
+    let suffix = 2;
+    let base = name;
+    while (usedNames.has(name)) {
+      name = `${base} (${suffix++})`;
+    }
+    usedNames.add(name);
+    clusters.set(name, members);
+  }
+
+  return {
+    clusters,
+    unassigned,
+    stats: {
+      inputWords: words.length,
+      tokensUsed,
+      cacheHits,
+      apiCalls,
+      totalMissing,
+      actualCostUsd: actualCost,
+      estimatedCostUsd: costEst,
+      embedMs: tEmbed,
+      clusterMs: tCluster,
+      rawClusterCount: rawClusters.length,
+      finalClusterCount: clusters.size,
+      unassignedCount: unassigned.length,
+    },
+  };
+}
+
+// ============================================================
+// 3. sheet io
 // ============================================================
 
 async function fetchValues(token, sid, range) {
@@ -282,74 +636,20 @@ async function clearRange(token, sid, range) {
 }
 
 // ============================================================
-// 3. main
+// 4. main
 // ============================================================
 
-async function main() {
-  loadEnv();
-  let sid;
-  if (WORKBOOK === 'flow-mvp') sid = process.env.GG_SHEETS_FLOW_MVP_WORKBOOK_ID;
-  else if (WORKBOOK === 'legacy') sid = process.env.GG_SHEETS_WORKBOOK_ID;
-  else sid = WORKBOOK;
-  if (!sid) {
-    console.error(`ERR: workbook "${WORKBOOK}" — set GG_SHEETS_FLOW_MVP_WORKBOOK_ID or pass --workbook <id>`);
-    process.exit(2);
-  }
-
-  const sa = process.env.GG_WRITER_SA_JSON || join(homedir(), '.config', 'gg', 'gg-writer-sa.json');
-  if (!existsSync(sa)) {
-    console.error(`ERR: writer SA not found: ${sa}`);
-    process.exit(2);
-  }
-  const { token } = await getAccessToken(sa, ['https://www.googleapis.com/auth/spreadsheets']);
-
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log(`Workbook: ${WORKBOOK} (${sid.slice(0, 12)}…)`);
-  console.log(`Buckets:  ${BUCKETS.join(' / ')}`);
-  console.log(`Mode:     ${DRY ? 'DRY-RUN' : 'WRITE'}${REBUILD ? ' + REBUILD' : ''}`);
-  console.log('');
-
-  // 1. fetch 关键词主表
-  const rows = await fetchValues(token, sid, '关键词主表!A2:R1500');
-  console.log(`关键词主表 总行数: ${rows.length}`);
-  const eligible = rows.filter((r) => r[0] && BUCKETS.includes(r[17])); // R = col index 17
-  console.log(`  ${BUCKETS.join('/')} 桶合格行: ${eligible.length}`);
-
-  if (eligible.length === 0) {
-    console.log('\n⚠ 无合格行可聚类。');
-    console.log('  这通常意味着关键词主表 I 列（自有站 DR）未填，');
-    console.log('  导致 J 列差值=G-I 偏大，N 列 DR 闸门判 ❌跳过，R 列归入 ❌跳过。');
-    console.log('  → 按 SOP 在 Ahrefs 查 astrologywiki.com 当前 DR 并填入 I 列，再重跑。');
-    console.log('\nDRY-RUN: 无 sheet 写入。');
-    process.exit(0);
-  }
-
-  // 2. 聚类
-  const words = eligible.map((r) => String(r[0]));
-  const seeds = findClusterSeeds(words);
-  console.log(`\n种子词: bigram=${seeds.bigramSeeds.length} unigram=${seeds.unigramSeeds.length}`);
-  const initial = assignClusters(words, seeds);
-
-  // 修补#1（一级补强）：一级集群 size < MIN_CLUSTER_SIZE 也回流到 unassigned 兜底，
-  // 不让 "find"/"ic"/"white" 这种 freq=2 的 unigram fallback 产生 1-2 词僵尸集群。
-  const oneLevelOverflow = [];
-  for (const [name, mem] of [...initial.clusters.entries()]) {
-    if (mem.length < MIN_CLUSTER_SIZE) {
-      oneLevelOverflow.push(...mem);
-      initial.clusters.delete(name);
-    }
-  }
-  if (oneLevelOverflow.length) initial.unassigned.push(...oneLevelOverflow);
-
-  const clusters = splitLargeClusters(initial.clusters);
-  console.log(`初步集群: ${clusters.size}  未分配: ${initial.unassigned.length}`);
-
-  // 3. 组装主题集群表 row
+/**
+ * Build the rows-to-write payload from a (clusters, unassigned) pair.
+ * Shared by token and embedding modes so sheet schema stays in lockstep.
+ */
+function buildOutputRows(clusters, unassigned) {
   const out = [];
   let seq = 1;
   for (const [name, members] of [...clusters.entries()].sort((a, b) => b[1].length - a[1].length)) {
     const cluster_id = `c-${String(seq).padStart(3, '0')}`;
-    // 修补#3：用 prettifyClusterName 美化 raw seed → brand 前缀 / trigram 替代 / 剥 noise
+    // token-mode runs prettify here (raw seed → branded); embedding-mode already prettifies
+    // upstream in seedNameForClusterMembers, so a re-pass is idempotent.
     const prettyName = prettifyClusterName(name, members);
     out.push([
       cluster_id,                    // A cluster_id
@@ -374,25 +674,149 @@ async function main() {
     ]);
     seq++;
   }
-  if (initial.unassigned.length) {
+  if (unassigned && unassigned.length) {
     out.push([
       `c-${String(seq).padStart(3, '0')}`,
       '(未聚类 — 人工分配)',
       '', '', '', '', '', '', '', '', '',
-      initial.unassigned.join('\n'),
+      unassigned.join('\n'),
       '', '', '', '', '', '', '',
     ]);
   }
+  return out;
+}
 
-  // 4. 报告 + 写
+function readInputFile(path) {
+  const raw = readFileSync(path, 'utf8');
+  return raw
+    .split(/\r?\n/)
+    .map((s) => s.trim())
+    .filter((s) => s && !s.startsWith('#'));
+}
+
+async function main() {
+  loadEnv();
+
+  // Resolve API key up front so embedding mode fails loud before we waste effort.
+  let openaiKey = null;
+  if (ALGO === 'embedding') {
+    openaiKey = process.env.OPENAI_API_KEY || null;
+    if (!openaiKey) {
+      console.error('ERR: --algo embedding requires OPENAI_API_KEY in env (~/.config/gg/_gg.env or shell).');
+      console.error('     The key is never logged. Set OPENAI_API_KEY=sk-... and retry.');
+      process.exit(2);
+    }
+  }
+
+  // Source words: either --input file (test path, bypasses sheet) or 关键词主表 R 列.
+  let words = [];
+  let sid = null;
+  let token = null;
+
+  if (INPUT_FILE) {
+    if (!existsSync(INPUT_FILE)) {
+      console.error(`ERR: --input file not found: ${INPUT_FILE}`);
+      process.exit(2);
+    }
+    words = readInputFile(INPUT_FILE);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log(`Source:   --input ${INPUT_FILE}  (${words.length} words)`);
+    console.log(`Algo:     ${ALGO}${ALGO === 'embedding' ? `  threshold=${COSINE_THRESHOLD}` : ''}`);
+    console.log(`Mode:     ${DRY ? 'DRY-RUN' : 'WRITE'}${REBUILD ? ' + REBUILD' : ''}`);
+    console.log('');
+    if (!DRY) {
+      // --write only meaningful for the sheet; with --input we have no original sheet rows
+      // to overwrite — refuse so we don't surprise the user.
+      console.error('ERR: --input FILE only supports --dry-run (sheet write would orphan main-table provenance).');
+      process.exit(2);
+    }
+  } else {
+    if (WORKBOOK === 'flow-mvp') sid = process.env.GG_SHEETS_FLOW_MVP_WORKBOOK_ID;
+    else if (WORKBOOK === 'legacy') sid = process.env.GG_SHEETS_WORKBOOK_ID;
+    else sid = WORKBOOK;
+    if (!sid) {
+      console.error(`ERR: workbook "${WORKBOOK}" — set GG_SHEETS_FLOW_MVP_WORKBOOK_ID or pass --workbook <id>`);
+      process.exit(2);
+    }
+    const sa = process.env.GG_WRITER_SA_JSON || join(homedir(), '.config', 'gg', 'gg-writer-sa.json');
+    if (!existsSync(sa)) {
+      console.error(`ERR: writer SA not found: ${sa}`);
+      process.exit(2);
+    }
+    const auth = await getAccessToken(sa, ['https://www.googleapis.com/auth/spreadsheets']);
+    token = auth.token;
+
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log(`Workbook: ${WORKBOOK} (${sid.slice(0, 12)}…)`);
+    console.log(`Buckets:  ${BUCKETS.join(' / ')}`);
+    console.log(`Algo:     ${ALGO}${ALGO === 'embedding' ? `  threshold=${COSINE_THRESHOLD}` : ''}`);
+    console.log(`Mode:     ${DRY ? 'DRY-RUN' : 'WRITE'}${REBUILD ? ' + REBUILD' : ''}`);
+    console.log('');
+
+    const rows = await fetchValues(token, sid, '关键词主表!A2:R1500');
+    console.log(`关键词主表 总行数: ${rows.length}`);
+    const eligible = rows.filter((r) => r[0] && BUCKETS.includes(r[17])); // R = col index 17
+    console.log(`  ${BUCKETS.join('/')} 桶合格行: ${eligible.length}`);
+
+    if (eligible.length === 0) {
+      console.log('\n⚠ 无合格行可聚类。');
+      console.log('  这通常意味着关键词主表 I 列（自有站 DR）未填，');
+      console.log('  导致 J 列差值=G-I 偏大，N 列 DR 闸门判 ❌跳过，R 列归入 ❌跳过。');
+      console.log('  → 按 SOP 在 Ahrefs 查 astrologywiki.com 当前 DR 并填入 I 列，再重跑。');
+      console.log('\nDRY-RUN: 无 sheet 写入。');
+      process.exit(0);
+    }
+    words = eligible.map((r) => String(r[0]));
+  }
+
+  // ----- Cluster (mode-dependent) -----
+  let clusters;
+  let unassigned;
+
+  if (ALGO === 'token') {
+    const seeds = findClusterSeeds(words);
+    console.log(`\n种子词: bigram=${seeds.bigramSeeds.length} unigram=${seeds.unigramSeeds.length}`);
+    const initial = assignClusters(words, seeds);
+
+    // 修补#1（一级补强）：一级集群 size < MIN_CLUSTER_SIZE 也回流到 unassigned 兜底，
+    // 不让 "find"/"ic"/"white" 这种 freq=2 的 unigram fallback 产生 1-2 词僵尸集群。
+    const oneLevelOverflow = [];
+    for (const [name, mem] of [...initial.clusters.entries()]) {
+      if (mem.length < MIN_CLUSTER_SIZE) {
+        oneLevelOverflow.push(...mem);
+        initial.clusters.delete(name);
+      }
+    }
+    if (oneLevelOverflow.length) initial.unassigned.push(...oneLevelOverflow);
+
+    clusters = splitLargeClusters(initial.clusters);
+    unassigned = initial.unassigned;
+    console.log(`初步集群: ${clusters.size}  未分配: ${unassigned.length}`);
+  } else {
+    // embedding mode
+    const result = await clusterByEmbedding(words, openaiKey);
+    clusters = result.clusters;
+    unassigned = result.unassigned;
+    const s = result.stats;
+    console.log(`初步集群: ${clusters.size}  未分配: ${unassigned.length}  (raw=${s.rawClusterCount} 含奇异点)`);
+    console.log(`cache hits: ${s.cacheHits}/${s.inputWords}  api calls: ${s.apiCalls}  tokens: ${s.tokensUsed}  actual $${s.actualCostUsd.toFixed(6)}`);
+  }
+
+  // ----- Build rows + report -----
+  const out = buildOutputRows(clusters, unassigned);
+
   console.log('\n━━━ 集群草稿（按词数倒序前 10）━━━');
   for (const row of out.slice(0, 10)) {
     const memberCount = row[11].split('\n').filter(Boolean).length;
-    console.log(`  ${row[0]}  ${String(row[1]).padEnd(28)}  ${String(memberCount).padStart(3)} 词`);
+    console.log(`  ${row[0]}  ${String(row[1]).padEnd(36)}  ${String(memberCount).padStart(3)} 词`);
     const preview = row[11].split('\n').slice(0, 3).join(' | ');
     console.log(`         ↳ ${preview}${memberCount > 3 ? ' …' : ''}`);
   }
   if (out.length > 10) console.log(`  ... (+${out.length - 10} more clusters)`);
+
+  // Stats summary (useful for token-vs-embedding comparison runs)
+  const totalAssigned = [...clusters.values()].reduce((n, m) => n + m.length, 0);
+  console.log(`\n汇总: ${clusters.size} 集群 / ${totalAssigned} 词已分配 / ${unassigned.length} 未分配 / 输入 ${words.length} 词`);
 
   if (DRY) {
     console.log('\nDRY-RUN: 无 sheet 写入。加 --write 落盘。');
@@ -421,4 +845,20 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   });
 }
 
-export { tokenize, findClusterSeeds, assignClusters, splitLargeClusters, prettifyClusterName };
+export {
+  tokenize,
+  findClusterSeeds,
+  assignClusters,
+  splitLargeClusters,
+  prettifyClusterName,
+  // embedding-mode exports for tests / reuse
+  cachePathFor,
+  readCachedEmbedding,
+  writeCachedEmbedding,
+  l2normalize,
+  cosDist,
+  agglomerativeCluster,
+  seedNameForClusterMembers,
+  clusterByEmbedding,
+  embedWords,
+};

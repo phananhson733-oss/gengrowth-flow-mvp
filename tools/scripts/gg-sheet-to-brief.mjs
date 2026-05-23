@@ -24,20 +24,7 @@
 //   node tools/scripts/gg-sheet-to-brief.mjs --rows 3-7 --skip-non-v8  # 跳过 template != Pillar/Definition
 //   node tools/scripts/gg-sheet-to-brief.mjs --rows 3-7 --dry-run     # 只 stdout 不写文件
 //
-// 输出形如：
-//   {
-//     "_note": "Generated 2026-05-22T19:30:00Z from rows 3-7",
-//     "_skipped": [{ page_id, reason }],
-//     "page_orange_aura_meaning": {
-//       "page_id": "page_orange_aura_meaning",
-//       "cluster_jtbd": "...",
-//       ...
-//     }
-//   }
-//
-// 这份输出直接可以喂给：
-//   gg-batch-synth.mjs --pages "..." --overrides .gg-cache/overrides/<out>.json
-//   gg-render-batch.mjs --batch <pull-batch> --overrides .gg-cache/overrides/<out>.json
+// 输出形如 .gg-cache/overrides/<batch-id>.json，直接喂给 gg-batch-synth.mjs / gg-render-batch.mjs。
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { dirname, join, resolve as pathResolve } from 'node:path';
@@ -288,8 +275,16 @@ export function composeOverride(row, { clusterMap, ctaMap, repo, skipNonV8 = fal
   const rl6Hint = psychFlag === 'Y' ? PSYCH_SAFETY_RL6_HINT : STANDARD_RL6_HINT;
 
   const warnings = [];
-  if (clusterId && !cluster) warnings.push(`cluster_id "${clusterId}" not found in 主题集群表`);
-  if (pageRole && !cta) warnings.push(`page_role "${pageRole}" (track=${track || '?'}) not found in CTA Map`);
+  // joinFailures — main() converts these to FATAL + fuzzy suggestions unless --allow-missing-* set.
+  const joinFailures = [];
+  if (clusterId && !cluster) {
+    warnings.push(`cluster_id "${clusterId}" not found in 主题集群表`);
+    joinFailures.push({ kind: 'cluster_id', missing: clusterId });
+  }
+  if (pageRole && !cta) {
+    warnings.push(`page_role "${pageRole}" (track=${track || '?'}) not found in CTA Map`);
+    joinFailures.push({ kind: 'page_role', missing: pageRole, track });
+  }
   if (template && !/^pillar$|^definition$/i.test(template) && !skipNonV8) {
     warnings.push(`template "${template}" not yet supported by v8 — will fall back to Definition`);
   }
@@ -328,7 +323,102 @@ export function composeOverride(row, { clusterMap, ctaMap, repo, skipNonV8 = fal
     _review_status: 'needs_human_review_before_publish',
   };
 
-  return { entry, warnings };
+  return { entry, warnings, joinFailures };
+}
+
+// ---------- fuzzy-match diagnostics ----------
+// 3-way join failures (cluster_id / page_role) → top-3 candidates by Levenshtein distance ≤ 3
+// so the user catches case/whitespace/typo issues without crawling the Sheet by hand.
+
+// Classic DP edit-distance, single-row rolling. O(n*m) — fine for our short keys (<40 chars).
+export function levenshtein(a, b) {
+  const s = String(a == null ? '' : a);
+  const t = String(b == null ? '' : b);
+  if (s === t) return 0;
+  if (s.length === 0) return t.length;
+  if (t.length === 0) return s.length;
+  const m = s.length;
+  const n = t.length;
+  let prev = new Array(n + 1);
+  let curr = new Array(n + 1);
+  for (let j = 0; j <= n; j++) prev[j] = j;
+  for (let i = 1; i <= m; i++) {
+    curr[0] = i;
+    const si = s.charCodeAt(i - 1);
+    for (let j = 1; j <= n; j++) {
+      const cost = si === t.charCodeAt(j - 1) ? 0 : 1;
+      const del = prev[j] + 1;
+      const ins = curr[j - 1] + 1;
+      const sub = prev[j - 1] + cost;
+      curr[j] = del < ins ? (del < sub ? del : sub) : (ins < sub ? ins : sub);
+    }
+    [prev, curr] = [curr, prev];
+  }
+  return prev[n];
+}
+
+// Normalize for fuzzy matching: trim + lowercase (so "FAM-AURA" matches "fam-aura" at dist 0).
+function normalizeForFuzzy(s) {
+  return String(s == null ? '' : s).trim().toLowerCase();
+}
+
+// Top N candidates with normalized distance ≤ maxDist. candidates: [{key, label}]. Returns
+// [{key, label, dist}] sorted by dist asc, then key asc for determinism.
+export function suggestMatches(missingKey, candidates, opts = {}) {
+  const maxDist = opts.maxDist != null ? opts.maxDist : 3;
+  const limit = opts.limit != null ? opts.limit : 3;
+  const norm = normalizeForFuzzy(missingKey);
+  const scored = [];
+  for (const c of candidates) {
+    if (!c || !c.key) continue;
+    const d = levenshtein(norm, normalizeForFuzzy(c.key));
+    if (d <= maxDist) scored.push({ key: c.key, label: c.label || '', dist: d });
+  }
+  scored.sort((a, b) => a.dist - b.dist || a.key.localeCompare(b.key));
+  return scored.slice(0, limit);
+}
+
+// Render a "Did you mean" block for stderr. No trailing newline.
+export function formatSuggestionBlock(missingKey, sheetName, suggestions, fixHint) {
+  const lines = [`FATAL: ${sheetName} key "${missingKey}" not found`, ''];
+  if (suggestions.length === 0) {
+    lines.push('Did you mean: (no candidates within edit distance 3 — typo too large or wrong sheet)');
+  } else {
+    lines.push('Did you mean:');
+    const maxKeyLen = Math.max(...suggestions.map((s) => s.key.length));
+    for (const s of suggestions) {
+      const pad = ' '.repeat(Math.max(1, maxKeyLen - s.key.length + 2));
+      const labelStr = s.label ? `, ${s.label}` : '';
+      lines.push(`  ${s.key}${pad}(dist=${s.dist}${labelStr})`);
+    }
+  }
+  if (fixHint) {
+    lines.push('');
+    lines.push(`Fix: ${fixHint}`);
+  }
+  return lines.join('\n');
+}
+
+export function clusterCandidates(clusterMap) {
+  const out = [];
+  for (const [key, val] of clusterMap.entries()) {
+    out.push({ key, label: val && val.cluster_name ? val.cluster_name : '' });
+  }
+  return out;
+}
+
+// CTA keys are "page_role||track" — dedupe to one entry per page_role (first row wins, matching
+// buildCtaMap's insert-order semantics).
+export function ctaCandidates(ctaMap) {
+  const seen = new Map();
+  for (const [key, val] of ctaMap.entries()) {
+    const role = String(key).split('||')[0];
+    if (!role) continue;
+    if (!seen.has(role)) {
+      seen.set(role, { key: role, label: val && val.cta_text ? val.cta_text : '' });
+    }
+  }
+  return Array.from(seen.values());
 }
 
 // Validates a user-supplied --out path. Returns { ok, resolved, reason }.
@@ -382,8 +472,14 @@ usage:
   node tools/scripts/gg-sheet-to-brief.mjs --row 3 --out path/to/override.json
   node tools/scripts/gg-sheet-to-brief.mjs --rows 3-7 --skip-non-v8
   node tools/scripts/gg-sheet-to-brief.mjs --rows 3-7 --dry-run
+  node tools/scripts/gg-sheet-to-brief.mjs --rows 3-7 --suggest-fix-script .gg-cache/overrides/fix.json
 
-env required:
+flags:
+  --allow-missing-cluster      downgrade missing-cluster_id FATAL to warning
+  --allow-missing-cta          downgrade missing-page_role FATAL to warning
+  --suggest-fix-script <file>  on FAIL, write [{row,col,old,new,confidence}] JSON
+
+env:
   GG_SHEETS_WORKBOOK_ID + OAuth (via oauth-init.mjs)
 `);
     return 0;
@@ -450,7 +546,11 @@ env required:
   const overrides = {};
   const skipped = [];
   const allWarnings = [];
+  // joinFailures: { source_row, page_id, col, kind, missing, track? } per failed row.
+  // col letters per the 21-col 选题登记表 schema — fed to --suggest-fix-script for patcher.
+  const joinFailures = [];
   let readyCount = 0;
+  const SHEET_COL_FOR = { cluster_id: 'Q', page_role: 'P' };
 
   for (let i = startIdx; i <= endIdx; i++) {
     const row = dataRows[i] || [];
@@ -476,6 +576,61 @@ env required:
     if (result.warnings && result.warnings.length) {
       allWarnings.push(...result.warnings.map((w) => `row ${sheetRow} (${pageId}): ${w}`));
     }
+    if (result.joinFailures && result.joinFailures.length) {
+      for (const jf of result.joinFailures) {
+        joinFailures.push({
+          source_row: sheetRow,
+          page_id: pageId,
+          col: SHEET_COL_FOR[jf.kind] || '?',
+          ...jf,
+        });
+      }
+    }
+  }
+
+  // Fuzzy-suggestion FATAL: any join failure not explicitly allowed becomes a hard fail with
+  // top-3 candidates. Lists are small (~24 clusters, ~10 CTA roles) so levenshtein is sub-ms.
+  const clusterFailures = joinFailures.filter((f) => f.kind === 'cluster_id');
+  const ctaFailures = joinFailures.filter((f) => f.kind === 'page_role');
+  const blockingFailures = [];
+  if (clusterFailures.length && !args.allow_missing_cluster) blockingFailures.push(...clusterFailures);
+  if (ctaFailures.length && !args.allow_missing_cta) blockingFailures.push(...ctaFailures);
+
+  if (blockingFailures.length) {
+    const clusterCands = clusterCandidates(clusterMap);
+    const ctaCands = ctaCandidates(ctaMap);
+    const fixScript = [];
+    process.stderr.write('\n');
+    for (const f of blockingFailures) {
+      const isCluster = f.kind === 'cluster_id';
+      const cands = isCluster ? clusterCands : ctaCands;
+      const sheetName = isCluster ? '主题集群表 cluster_id' : 'CTA Map page_role';
+      const suggestions = suggestMatches(f.missing, cands);
+      const fixHint = suggestions.length
+        ? `update 选题登记表 row ${f.source_row} col ${f.col} from "${f.missing}" to "${suggestions[0].key}".`
+        : `check 选题登记表 row ${f.source_row} col ${f.col} — no close candidate in ${sheetName}; verify source sheet.`;
+      process.stderr.write(formatSuggestionBlock(f.missing, sheetName, suggestions, fixHint) + '\n\n');
+      if (suggestions.length) {
+        const best = suggestions[0];
+        const sameAfterNormalize = normalizeForFuzzy(f.missing) === normalizeForFuzzy(best.key);
+        const confidence = sameAfterNormalize || best.dist <= 1 ? 'high' : best.dist <= 2 ? 'medium' : 'low';
+        fixScript.push({ row: f.source_row, col: f.col, old: f.missing, new: best.key, confidence });
+      } else {
+        fixScript.push({ row: f.source_row, col: f.col, old: f.missing, new: null, confidence: 'none' });
+      }
+    }
+    if (args.suggest_fix_script) {
+      const fixCheck = validateOutPath(args.suggest_fix_script, REPO);
+      if (!fixCheck.ok) {
+        process.stderr.write(`warn: --suggest-fix-script path invalid (${fixCheck.reason}) — skipping write\n`);
+      } else {
+        mkdirSync(dirname(fixCheck.resolved), { recursive: true });
+        writeFileSync(fixCheck.resolved, JSON.stringify(fixScript, null, 2) + '\n');
+        process.stderr.write(`fix-script written: ${fixCheck.resolved}\n`);
+      }
+    }
+    process.stderr.write(`FATAL: ${blockingFailures.length} join failure(s). Pass --allow-missing-cluster / --allow-missing-cta to downgrade to warnings.\n`);
+    return 2;
   }
 
   const generatedAt = new Date().toISOString();

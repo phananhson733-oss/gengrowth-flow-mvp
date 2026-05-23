@@ -25,15 +25,28 @@
 //   }
 //
 // 还要 .gg-cache/<page_id>/{entity-passport,obsidian-rag}.rag.json 提前跑好（gg-entity-passport / gg-obsidian-rag）。
-// SERP cache 缺失不阻塞（renderer 自动降级注释）。
+// SERP cache 缺失不阻塞（renderer 自动降级注释），但 phase2 RL3 plagiarism check 会 skip。
+//
+// SERP cache 自动补齐（v0.19+，--auto-serp-snapshot）：
+//   传 --auto-serp-snapshot 时，render 前若 .gg-cache/serp/<page_id>.json 缺失，
+//   会尝试 invoke `tools/scripts/gg-serp-snapshot.mjs --page-id X --entity Y --query Z
+//   --paste .gg-cache/serp-pastes/<page_id>.json`（约定路径）。
+//   snapshot 脚本目前是 manual-paste 模式（需要预先准备 paste JSON），所以若 paste 文件
+//   不存在 → 打印 warning 并 skip（render 继续），不会阻塞链路。后续接 DataForSEO 抓取后
+//   只需调整 spawn 参数。
+//
+// SERP cache check（--check-only）：
+//   只 report 每个 page 的 SERP cache hit/miss，不 render。用于 ops dashboard。
 
 import { readFileSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
 import { renderAuraPrompt } from './lib/_render-aura-shared.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO = join(__dirname, '..', '..');
+const SERP_SNAPSHOT_SCRIPT = join(__dirname, 'gg-serp-snapshot.mjs');
 
 // renderAuraPrompt 直接 plug 到 template 的字段。少哪个 → 行被 skip。
 export const REQUIRED_CFG_FIELDS = [
@@ -157,6 +170,104 @@ export function missingRagCaches(pageId, repoRoot = REPO) {
   return missing;
 }
 
+// SERP cache lives at .gg-cache/serp/<page_id>.json (loadSerpSnippets contract).
+// Match _render-aura-shared.mjs:128 — the renderer reads this exact path.
+export function serpCachePath(pageId, repoRoot = REPO) {
+  return join(repoRoot, '.gg-cache', 'serp', `${pageId}.json`);
+}
+
+export function hasSerpCache(pageId, repoRoot = REPO) {
+  return existsSync(serpCachePath(pageId, repoRoot));
+}
+
+// Convention for manual-paste sidecar that gg-serp-snapshot.mjs needs.
+// If a user / upstream scraper drops a normalized SERP JSON here, we auto-pick it up.
+export function serpPastePath(pageId, repoRoot = REPO) {
+  return join(repoRoot, '.gg-cache', 'serp-pastes', `${pageId}.json`);
+}
+
+// Auto-trigger gg-serp-snapshot.mjs. Returns { invoked, ok, durationMs, exitCode, reason }.
+// dryRun=true prints the intended invocation and returns invoked=false, ok=null.
+// Never throws — caller wants graceful degradation (render continues regardless).
+export function autoSerpSnapshot({ pageId, entity, targetKeyword, repoRoot = REPO, dryRun = false, logger = console }) {
+  const result = { invoked: false, ok: false, durationMs: 0, exitCode: null, reason: null };
+  if (!pageId || !entity || !targetKeyword) {
+    result.reason = `missing inputs (page_id=${!!pageId} entity=${!!entity} target_keyword=${!!targetKeyword})`;
+    logger.error(`[auto-serp] ${pageId || '<no-page-id>'}: skip — ${result.reason}`);
+    return result;
+  }
+  const pastePath = serpPastePath(pageId, repoRoot);
+  if (!existsSync(pastePath)) {
+    result.reason = `no paste file at ${pastePath} (gg-serp-snapshot.mjs is manual-paste; drop a normalized SERP JSON here or wire a DataForSEO fetcher)`;
+    logger.error(`[auto-serp] ${pageId}: ❌ skip — ${result.reason}`);
+    return result;
+  }
+  const cmd = process.execPath;
+  const args = [
+    SERP_SNAPSHOT_SCRIPT,
+    '--page-id', pageId,
+    '--entity', entity,
+    '--query', targetKeyword,
+    '--paste', pastePath,
+  ];
+  if (dryRun) {
+    logger.log(`[auto-serp] ${pageId}: cache missing → would invoke: node ${args.join(' ')}`);
+    result.reason = 'dry-run';
+    return result;
+  }
+  logger.log(`[auto-serp] ${pageId}: cache missing → invoking gg-serp-snapshot...`);
+  const t0 = Date.now();
+  result.invoked = true;
+  const child = spawnSync(cmd, args, { encoding: 'utf8', cwd: repoRoot });
+  result.durationMs = Date.now() - t0;
+  result.exitCode = child.status;
+  if (child.status === 0 && hasSerpCache(pageId, repoRoot)) {
+    result.ok = true;
+    logger.log(`[auto-serp] ${pageId}: ✅ (took ${(result.durationMs / 1000).toFixed(1)}s)`);
+  } else {
+    result.ok = false;
+    result.reason = `exit=${child.status ?? 'null'} stderr=${(child.stderr || '').slice(0, 200).trim()}`;
+    logger.error(`[auto-serp] ${pageId}: ❌ (skipped, exit code ${child.status ?? 'null'}) — ${result.reason}`);
+  }
+  return result;
+}
+
+// --check-only report: enumerate ready rows, report SERP cache hit/miss.
+// Returns 0 (always — informational). Prints a stable table to stdout.
+export function checkOnlyReport(batch, slice, repoRoot = REPO, out = process.stdout) {
+  const lines = [];
+  let total = 0; let hit = 0; let miss = 0;
+  lines.push(`SERP cache check — batch ${batch.batch_id}`);
+  lines.push(`${'row'.padEnd(4)} ${'page_id'.padEnd(38)} ${'target_keyword'.padEnd(40)} status`);
+  lines.push('-'.repeat(96));
+  for (const row of batch.rows) {
+    if (row.status !== 'ready') continue;
+    if (!inSlice(row.source_row, slice)) continue;
+    if (!row.page_id) continue;
+    total += 1;
+    const has = hasSerpCache(row.page_id, repoRoot);
+    let tag;
+    if (has) {
+      hit += 1;
+      let snippets = '?';
+      try {
+        const c = JSON.parse(readFileSync(serpCachePath(row.page_id, repoRoot), 'utf8'));
+        snippets = Array.isArray(c.snippets) ? c.snippets.length : '?';
+      } catch { /* corrupt — count as miss-like */ }
+      tag = `✅ hit (${snippets} snippets)`;
+    } else {
+      miss += 1;
+      tag = '❌ miss';
+    }
+    const kw = (row.brief?.target_keyword || '-').slice(0, 40);
+    lines.push(`${String(row.source_row).padEnd(4)} ${String(row.page_id).padEnd(38)} ${kw.padEnd(40)} ${tag}`);
+  }
+  lines.push('-'.repeat(96));
+  lines.push(`total=${total} hit=${hit} miss=${miss}`);
+  out.write(lines.join('\n') + '\n');
+  return { total, hit, miss };
+}
+
 // ---------- main ----------
 async function main(argv) {
   const args = parseArgs(argv);
@@ -191,6 +302,14 @@ async function main(argv) {
   const slice = args.row || args.slice || null;
   const continueOnError = !!args.continue_on_error;
   const dryRun = !!args.dry_run;
+  const autoSerp = !!args.auto_serp_snapshot;
+  const checkOnly = !!args.check_only;
+
+  // --check-only short-circuits: just report SERP cache hit/miss table and exit 0.
+  if (checkOnly) {
+    checkOnlyReport(batch, slice);
+    return 0;
+  }
 
   const report = { batch_id: batch.batch_id, total: 0, rendered: 0, skipped: 0, errored: 0, details: [] };
 
@@ -230,6 +349,22 @@ async function main(argv) {
       report.skipped += 1;
       report.details.push(detail);
       continue;
+    }
+
+    // Auto-trigger SERP snapshot if requested and cache is missing.
+    // Quiet on cache-hit (don't spam stdout); only log when invoking or skipping.
+    if (autoSerp && !hasSerpCache(cfg.page_id)) {
+      const r = autoSerpSnapshot({
+        pageId: cfg.page_id,
+        entity: cfg.entity,
+        targetKeyword: cfg.target_keyword,
+        dryRun,
+      });
+      if (r.invoked && !r.ok) {
+        detail.warnings.push(`auto-serp failed: ${r.reason} (RL3 plagiarism will skip)`);
+      } else if (!r.invoked && r.reason && !dryRun) {
+        detail.warnings.push(`auto-serp skipped: ${r.reason}`);
+      }
     }
 
     if (dryRun) {

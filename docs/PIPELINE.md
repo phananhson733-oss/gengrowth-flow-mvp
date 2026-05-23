@@ -40,6 +40,8 @@
 3. promote          approved → 关键词主表 A-I + 选题登记表 col A
 3.5 backfill-dr     `gg-backfill-site-dr.mjs --dr <Ahrefs真实值>` → 关键词主表 I 列
 3.6 cluster-init    `gg-cluster-init.mjs --write` → 主题集群表 草稿（仅喂 R=快速胜利/长尾，PRD §7.3.2 修法 #4）
+                    `--algo embedding`（默认 token；embedding 走 text-embedding-3-small + 分簇，需 `OPENAI_API_KEY`）
+                    `gg-classify-unsorted.mjs` → 把 ind-001/ind-002 异质桶归类回 family
 4. fill-v8          人补选题登记表 B-U 21 列 v8 brief
 5. cluster/CTA      人补主题集群表 业务字段（track / jtbd / content_angle / cta） + CTA Map 一行
 6. bridge           选题登记表 × 主题集群表 × CTA Map → brief override JSON
@@ -153,6 +155,8 @@ node tools/scripts/gg-keyword-promote.mjs --dry-run --also-draft-pages
 **HEADER_MAP 在哪**：`tools/scripts/gg-sheet-pull.mjs:144`。
 **任何 schema 改动**：在 HEADER_MAP 里加映射条目即可，bridge/pull 都会用上。
 
+**辅助：`gg-brief-suggest.mjs`** — 读 promote 后空的 21 列 row，用 LLM + entity context 草拟 F-U 候选字段，落 sheet `选题登记表` 备注列供人工 review/采纳；省人工首遍肉眼填的时间。
+
 ---
 
 ## 阶段 5 — cluster/CTA：填业务元数据（人工）
@@ -181,6 +185,27 @@ node tools/scripts/gg-keyword-promote.mjs --dry-run --also-draft-pages
 
 **Schema 在代码哪**：`tools/scripts/gg-sheet-to-brief.mjs:77 CLUSTER_HEADER_MAP` + `:102 CTA_HEADER_MAP`。
 
+**辅助：`gg-cluster-fields-suggest.mjs`** — 跑完 cluster-init 后，对 144 集群草稿用 LLM 草拟 track / jtbd / content_angle / cta_primary 候选字段，落 sheet 备注列供人工采纳。
+
+---
+
+## 阶段 5.5 — config sync（sheet → code snapshot）
+
+| 项 | 值 |
+|---|---|
+| 工具 | `tools/scripts/gg-config-sync.mjs` |
+| 输入 | Sheet `config` tab + `⚙️配置` tab |
+| 输出 | `.gg-cache/config-snapshot.json`（`lib/_config.mjs` 读取入口）|
+| 用途 | 让 mine / red-lines / orchestrator 等脚本无需再各自 hardcode 阈值，统一从 snapshot 读 |
+| 触发 | sheet config 变更后跑一次；CI / orchestrator 启动前可自动 pull |
+
+```bash
+node tools/scripts/gg-config-sync.mjs            # 拉新 snapshot
+node tools/scripts/gg-config-sync.mjs --diff     # 对比当前 snapshot vs sheet
+```
+
+`lib/_config.mjs` 暴露 `getConfig(key, fallback)`：未命中 snapshot 时回退到代码常量，保证 dev / offline 仍可跑。
+
 ---
 
 ## 阶段 6 — bridge：3-way join → brief override JSON
@@ -208,6 +233,8 @@ cat .gg-cache/overrides/aura-color-blue.json | jq '."page_aura_color_blue" | {cl
 ```
 
 字段不空 = cluster / CTA join 真接上了。空 = 检查选题登记表 Q/R 列拼写 + 三张表 join key 一致性。
+
+**新增 `--suggest-fix-script` flag**（fuzzy match）：cluster_id / page_role 拼写错位时，bridge 跑 fuzzy 匹配，stderr 输出可执行 sheet fix 脚本，省一次人工肉眼对照。
 
 ---
 
@@ -268,6 +295,8 @@ node tools/scripts/gg-obsidian-rag.mjs --page-id page_aura_color_blue --entity "
 
 **重要**：友邻爬虫需要 Reddit OAuth credential（在 `_gg.env`），目前可选；如果没配，render 会用 SYNTH placeholder，phase2 不 fail 但文章 friction section 是 TODO 文字。
 
+**新增**：`gg-friction-mine.mjs --check-oauth` 可单独验证 OAuth 凭据是否生效（不抓取，仅 token 探测）。完整接入指南见 [REDDIT_OAUTH_SETUP.md](./REDDIT_OAUTH_SETUP.md)。
+
 ---
 
 ## 阶段 11 — render：组装 v8 prompt
@@ -292,13 +321,25 @@ node tools/scripts/gg-render-batch.mjs \
 - `SERP cache: MISSING` = 阶段 11 之前没跑 `gg-serp-snapshot`，phase2 RL3 会 skip
 - `Obsidian RAG: gap` = 阶段 9 0 match，正常
 
+**新增 SERP 自动化**：
+- `--auto-serp-snapshot`：render 前若 SERP cache 缺，自动调用 `gg-serp-snapshot.mjs` 取一份，免去顺序记忆负担。
+- `--check-only`：只验证 RAG / SERP / cfg 完整性，不写 prompt，CI / 预飞行用。
+
 ---
 
 ## 阶段 12 — llm-call：prompt → 文章
 
 > ⚠️ **Frontier-only policy**（wzb 2026-05-23）：SEO 内容生成必须用**精确**的 frontier 配置。一篇文章 LLM 成本（几美分到几元）远小于排名 ROI。**不允许**为省 token 降级。
 
-**精确 model 配置**：
+**Recommended：用 orchestrator 跑**，不要手敲 CLI。
+
+```bash
+node tools/scripts/gg-llm-orchestrator.mjs --pages "page_X,page_Y" --llms "claude,codex,hermes" --parallel
+```
+
+特性：3 LLM 并行、frontier-strict（命中 Sonnet 即 fail）、phase2 fail 自动 retry（同 model 最多 2 次，第 3 次切更高 frontier）、统一 manifest 输出。手敲单 CLI 仅用于排查。
+
+**精确 model 配置**（orchestrator 内嵌；下表用于排查 / 手敲）：
 
 | 厂商 | Model | Reasoning | 命令 |
 |------|-------|-----------|------|
@@ -349,6 +390,8 @@ node tools/scripts/_phase2-validate.mjs \
 - RL5 stuffing → 把多余 keyword 换同义词
 - RL6 缺 disclaimer → 文章末尾加 `> This is not a clinical/mental health interpretation/advice` 类语句
 
+**自动 retry**：`tools/scripts/gg-phase2-fix.mjs --page <id> --llm <llm>` 读 manifest 失败原因 → 注入定向修复 hint → 重跑 LLM → 重跑 phase2。orchestrator 内部已串好；单独调用用于 hotfix。
+
 ---
 
 ## 阶段 14 — publish：cp 到 wiki
@@ -381,11 +424,11 @@ git commit -m "feat(wiki): publish v8 <page_id> article"
 
 ---
 
-## 阶段 16-18（可选）—— deploy + monitor + retro
+## 阶段 16-18 —— deploy + monitor + retro
 
-**16. deploy**：oracle 仓库 `npm run build` → Vercel auto-deploy（其他 repo 自动检测 wiki repo 变化）
-**17. monitor**：GSC 看 impressions / clicks；GA4 看 dwell time / CTA CTR
-**18. retro**：每周一次跑 `gg-status.mjs` 看通过率，调阈值，重跑失败 page
+**16. deploy**：`bash tools/scripts/gg-deploy-oracle.sh` — wraps oracle 仓库 `npm run build` + Vercel deploy + 健康探针；Vercel auto-deploy 仍是主路径，此脚本用于手动 trigger / CI / 排查。
+**17. monitor**：`node tools/scripts/gg-monitor.mjs --since <date>` — 拉 GSC impressions/clicks + GA4 dwell/CTA CTR，写 sheet `quality-metrics` tab。
+**18. retro**：每周一次跑 `gg-status.mjs` 看通过率，调阈值，重跑失败 page。
 
 ---
 
@@ -422,19 +465,31 @@ git commit -m "feat(wiki): publish v8 <page_id> article"
 tools/scripts/
 ├── gg-keyword-mine.mjs          # 1
 ├── gg-keyword-promote.mjs       # 3
-├── gg-sheet-to-brief.mjs        # 6
+├── gg-sheet-to-brief.mjs        # 6 (+ --suggest-fix-script fuzzy)
 ├── gg-sheet-pull.mjs            # 7
 ├── gg-entity-passport.mjs       # 8
 ├── gg-obsidian-rag.mjs          # 9
-├── gg-friction-mine.mjs         # 10
-├── gg-render-batch.mjs          # 11
+├── gg-friction-mine.mjs         # 10 (+ --check-oauth)
+├── gg-render-batch.mjs          # 11 (+ --auto-serp-snapshot/--check-only)
 ├── _call-hermes.mjs             # 12 (OpenRouter)
+├── gg-llm-orchestrator.mjs      # 12 orchestrator (parallel + frontier-strict + retry)
 ├── _phase2-validate.mjs         # 13
+├── gg-phase2-fix.mjs            # 13 auto-fix (manifest → hint → retry)
 ├── gg-publish-to-wiki.sh        # 14
+├── gg-deploy-oracle.sh          # 16 deploy
+├── gg-monitor.mjs               # 17 GSC + GA4
 ├── gg-status.mjs                # dashboard（手册没单步）
+├── gg-cluster-init.mjs          # 3.6 cluster (token + embedding)
+├── gg-cluster-fields-suggest.mjs  # 5 suggest business fields
+├── gg-classify-unsorted.mjs     # 3.6 cluster gap (ind-001/ind-002)
+├── gg-brief-suggest.mjs         # 4 suggest 21-col brief
+├── gg-config-sync.mjs           # 5.5 sheet → code config snapshot
 ├── _bootstrap-flow-mvp-workbook.mjs  # 一次性建表
+├── _sync-canon.sh               # spec sync from wiki → spec/upstream-canon/
 ├── lib/red-lines.mjs            # 红线引擎（阈值在顶部）
 ├── lib/_render-aura-shared.mjs  # prompt 组装
+├── lib/_config.mjs              # config snapshot reader (getConfig fallback)
+├── lib/_reddit-oauth.mjs        # Reddit OAuth (friction-mine)
 ├── lib/gg-shared.mjs            # SA token, gFetch
 └── lib/_oauth-token.mjs         # OAuth token
 

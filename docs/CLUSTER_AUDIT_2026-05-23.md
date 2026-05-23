@@ -190,3 +190,4 @@ related:
 2. **拆 ind-002 astrology (其它) 50 词**：算法无能为力，需人工按子主题（aspects / IC / 9th house / juno / AI astrology / 付费 reading）拆开
 3. **归类 ind-001 (未聚类) 71 词**：人工浏览归入合适的 family 或新建独立 cluster
 4. **business 决策**（按 PM 视角）：砍 6 个 noise 桶（astro-seek 系列 / dosha / life coach / persephone / 颜色精神含义 / astrocartography）
+5. Phase 3 embedding 聚类已上 (`--algo embedding`) — ind-001/ind-002 自动归类工具落地 (`gg-classify-unsorted.mjs`). 实际归类率待 `OPENAI_API_KEY` 配齐后实测验证。

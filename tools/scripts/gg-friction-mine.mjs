@@ -42,6 +42,16 @@ import {
   safeFetch as safeFetchShared,
 } from './lib/gg-shared.mjs';
 
+// Reddit OAuth helpers (Stage 10 real friction-mine path).
+import {
+  getRedditToken,
+  redditSearch,
+  inspectCreds as inspectRedditCreds,
+  checkRedditOAuth,
+  RedditOAuthError,
+  SUBREDDIT_REGEX,
+} from './lib/_reddit-oauth.mjs';
+
 export { loadEnv, getAccessToken, redact, sanitize, scrubPII };
 
 // constants — Quora removed per codex v1.1 (scrape/login/redirect 不稳)
@@ -323,8 +333,12 @@ async function scrapeRedditPain(entity, { maxTotal = 30, includeComments = true 
       for (const p of posts) {
         if (out.length >= maxTotal) break;
         if (perSub >= 15) break;
-        const title = sanitize(p?.data?.title || '');
-        const selftext = sanitize(p?.data?.selftext || '').slice(0, 400);
+        // PII scrub before sanitize: titles/bodies frequently contain bare
+        // `u/foo`, `@handle`, email, or non-allowlisted URLs from the OP.
+        // Same posture as the OAuth path (scrubText) — never write raw
+        // user-voice text to the .rag.json cache.
+        const title = scrubText(p?.data?.title || '');
+        const selftext = scrubText((p?.data?.selftext || '').slice(0, 400));
         const permalink = p?.data?.permalink || '';
         if (!title) continue;
         if (!hasPainSignal(title) && !hasPainSignal(selftext)) continue;
@@ -336,7 +350,7 @@ async function scrapeRedditPain(entity, { maxTotal = 30, includeComments = true 
           top_comment: '',
         };
         if (includeComments && permalink) {
-          entry.top_comment = await fetchTopComment(permalink);
+          entry.top_comment = scrubText(await fetchTopComment(permalink));
         }
         out.push(entry);
         perSub++;
@@ -346,6 +360,116 @@ async function scrapeRedditPain(entity, { maxTotal = 30, includeComments = true 
     }
   }
   return out;
+}
+
+// --- OAuth-based scraper (preferred when GG_REDDIT_* creds present) ---
+
+// Default subreddits per entity vertical. Astrology + spiritual / esoteric pain
+// posts mostly live in these 4. Caller may override via --subreddits.
+export const DEFAULT_FRICTION_SUBREDDITS = Object.freeze([
+  'AskAstrologers',
+  'astrology',
+  'Spiritual',
+  'spirituality',
+]);
+
+function scrubAuthor(rawAuthor) {
+  // Reddit usernames map 1:1 to a person — always redact, even before generic
+  // scrubPII passes the post body. ('[deleted]' / null stay as-is for fidelity.)
+  if (!rawAuthor || rawAuthor === '[deleted]') return '[deleted]';
+  return '[redacted]';
+}
+
+function scrubText(input) {
+  // Run gg-shared scrubPII over titles/excerpts/comments BEFORE persisting
+  // so any embedded @handle / email / phone never lands in the cache file.
+  const { text } = scrubPII(sanitize(input || ''));
+  return text;
+}
+
+/**
+ * OAuth-based subreddit search → pain-filtered posts.
+ * @param {string} entity     keyword/topic to search for
+ * @param {object} opts
+ * @param {string[]} [opts.subreddits=DEFAULT_FRICTION_SUBREDDITS]
+ * @param {number} [opts.maxTotal=30]
+ * @param {number} [opts.perSubreddit=15]
+ * @param {number} [opts.limit=25] Reddit listing limit
+ */
+async function scrapeRedditPainOAuth(entity, {
+  subreddits = DEFAULT_FRICTION_SUBREDDITS,
+  maxTotal = 30,
+  perSubreddit = 15,
+  limit = 25,
+} = {}) {
+  const out = [];
+  for (const sub of subreddits) {
+    if (out.length >= maxTotal) break;
+    // Defense in depth — caller-supplied subreddit name must match the regex.
+    if (!SUBREDDIT_REGEX.test(sub)) {
+      recordWarn(`subreddit name invalid (skipped): ${sub}`, `must match ${SUBREDDIT_REGEX}`);
+      continue;
+    }
+    let body;
+    try {
+      body = await redditSearch(entity, { subreddit: sub, limit, sort: 'top', t: 'month' });
+    } catch (e) {
+      recordWarn(`reddit oauth search skipped: r/${sub}`, e.message);
+      continue;
+    }
+    const posts = body?.data?.children || [];
+    let perSub = 0;
+    for (const p of posts) {
+      if (out.length >= maxTotal) break;
+      if (perSub >= perSubreddit) break;
+      const title = scrubText(p?.data?.title || '');
+      const selftext = scrubText((p?.data?.selftext || '').slice(0, 400));
+      const permalink = p?.data?.permalink || '';
+      if (!title) continue;
+      if (!hasPainSignal(title) && !hasPainSignal(selftext)) continue;
+      out.push({
+        source: 'reddit_oauth',
+        subreddit: p?.data?.subreddit || sub,
+        title,
+        excerpt: selftext,
+        url: permalink ? `https://old.reddit.com${permalink}` : '',
+        top_comment: '',  // OAuth comment expansion deferred — extra req/post, not needed for Stage 10 v1
+        author: scrubAuthor(p?.data?.author),
+        score: typeof p?.data?.score === 'number' ? p.data.score : 0,
+        num_comments: typeof p?.data?.num_comments === 'number' ? p.data.num_comments : 0,
+      });
+      perSub++;
+    }
+  }
+  return out;
+}
+
+/**
+ * Choose Reddit scraper path:
+ *   - OAuth (preferred) if GG_REDDIT_CLIENT_ID + GG_REDDIT_CLIENT_SECRET set
+ *     and token fetch succeeds. Cleaner data + 100 req/min vs anonymous rate limits.
+ *   - Anonymous fallback (legacy) otherwise.
+ *
+ * @returns {Promise<{posts: object[], mode: 'oauth'|'anon', oauthError?: string}>}
+ */
+async function scrapeReddit(entity, opts = {}) {
+  const creds = inspectRedditCreds();
+  if (creds.hasClientId && creds.hasClientSecret) {
+    try {
+      // Probe once so we fail-fast with a clear message if creds are wrong.
+      await getRedditToken();
+      const posts = await scrapeRedditPainOAuth(entity, opts);
+      return { posts, mode: 'oauth' };
+    } catch (e) {
+      const isOAuthErr = e instanceof RedditOAuthError;
+      const note = isOAuthErr ? `${e.code}: ${e.message}` : e.message;
+      recordWarn('reddit oauth unavailable — falling back to anon scrape', note);
+      const posts = await scrapeRedditPain(entity, opts);
+      return { posts, mode: 'anon', oauthError: note };
+    }
+  }
+  const posts = await scrapeRedditPain(entity, opts);
+  return { posts, mode: 'anon' };
 }
 
 // --- Phase 1 → cache ---
@@ -364,8 +488,12 @@ async function runPhase1(args) {
   console.log(`Phase 1 — Reddit pain scrape for entity="${entity}"`);
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-  const reddit = await scrapeRedditPain(entity);
-  recordPass('reddit pain scrape', `${reddit.length} posts (pain-filtered)`);
+  const scrapeOpts = {};
+  if (Array.isArray(args.subreddits) && args.subreddits.length) {
+    scrapeOpts.subreddits = args.subreddits;
+  }
+  const { posts: reddit, mode } = await scrapeReddit(entity, scrapeOpts);
+  recordPass('reddit pain scrape', `${reddit.length} posts (pain-filtered, mode=${mode})`);
   recordWarn(
     'serp scrape skipped',
     `no built-in WebSearch — wzb can paste Google SERP top-10 + PAA for "${entity}" "I'm confused"|"why does"|"doesn't make sense" into Claude prompt manually`,
@@ -613,6 +741,8 @@ function parseArgs(argv) {
     personaId: 'us-women-18-35-tiktok-reddit-entry',
     pageId: null, targetKeyword: null, forRag: false,
     ragDir: null,
+    checkOauth: false,
+    subreddits: null, // optional override (comma-separated)
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -627,6 +757,11 @@ function parseArgs(argv) {
     }
     else if (a === '--for-rag') out.forRag = true;
     else if (a === '--rag-dir') out.ragDir = argv[++i];
+    else if (a === '--check-oauth') out.checkOauth = true;
+    else if (a === '--subreddits') {
+      const raw = argv[++i] || '';
+      out.subreddits = raw.split(',').map((s) => s.trim()).filter(Boolean);
+    }
     else if (a === '--help' || a === '-h') out.help = true;
   }
   return out;
@@ -642,8 +777,11 @@ Phase 2 (ingest AI friction_pack → schema → Sheets):
   node tools/scripts/gg-friction-mine.mjs --entity "saturn return" \\
     --ingest ~/.gg-cache/friction-mine-<ts>-step2.json [--dry-run]
 
+OAuth check (verify Reddit creds without scraping):
+  node tools/scripts/gg-friction-mine.mjs --check-oauth
+
 flags:
-  --entity <str>           required
+  --entity <str>           required (except for --check-oauth)
   --ingest <path>          Phase 2 — AI-produced friction_pack JSON
   --dry-run                Phase 2 — skip Sheets writes
   --persona-id <str>       default us-women-18-35-tiktok-reddit-entry
@@ -652,13 +790,81 @@ flags:
   --for-rag                Phase 2 — also write <rag-dir>/{page_id}/friction-mine.rag.json
   --rag-dir <path>         override RAG output root (default: <repo>/.gg-cache/)
                            env GG_FRICTION_RAG_DIR also honored
+  --subreddits a,b,c       Phase 1 — override default subreddit list
+                           (default: AskAstrologers, astrology, Spiritual, spirituality)
+  --check-oauth            probe Reddit OAuth token fetch, print result, exit
+
+env vars (in ~/.config/gg/_gg.env):
+  GG_REDDIT_CLIENT_ID      Reddit script-app ID  (see docs/REDDIT_OAUTH_SETUP.md)
+  GG_REDDIT_CLIENT_SECRET  Reddit script-app secret
+  GG_REDDIT_USER_AGENT     descriptive UA string (recommended)
 `);
+}
+
+async function runCheckOauth() {
+  console.log('GenGrowth /gg-friction-mine — Reddit OAuth probe');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  const creds = inspectRedditCreds();
+  console.log(`GG_REDDIT_CLIENT_ID:     ${creds.hasClientId ? 'present' : 'MISSING'}`);
+  console.log(`GG_REDDIT_CLIENT_SECRET: ${creds.hasClientSecret ? 'present' : 'MISSING'}`);
+  // User-Agent commonly contains `/u/<username>` — print presence only.
+  console.log(`GG_REDDIT_USER_AGENT:    ${creds.userAgent ? 'present (redacted)' : 'MISSING'}`);
+  console.log('');
+
+  if (!creds.hasClientId || !creds.hasClientSecret) {
+    console.log('❌ Reddit OAuth not configured.');
+    console.log('');
+    console.log('To enable real friction-mine (instead of SYNTH placeholder):');
+    console.log('  1. Register a script-type app: https://www.reddit.com/prefs/apps');
+    console.log('  2. Copy the 14-char ID + secret');
+    console.log('  3. Add to ~/.config/gg/_gg.env (chmod 600):');
+    console.log('       GG_REDDIT_CLIENT_ID=<your-id>');
+    console.log('       GG_REDDIT_CLIENT_SECRET=<your-secret>');
+    console.log('       GG_REDDIT_USER_AGENT=gengrowth-friction-mine/0.1 (by /u/<your-username>)');
+    console.log('  4. Re-run:  node tools/scripts/gg-friction-mine.mjs --check-oauth');
+    console.log('');
+    console.log('Full walkthrough: docs/REDDIT_OAUTH_SETUP.md');
+    process.exit(1);
+  }
+
+  try {
+    await checkRedditOAuth();
+    console.log('✅ Reddit OAuth working — token fetch succeeded.');
+    console.log('   Stage 10 friction-mine will use oauth.reddit.com (no SYNTH placeholder).');
+    process.exit(0);
+  } catch (e) {
+    if (e instanceof RedditOAuthError) {
+      console.log(`❌ Reddit OAuth failed (${e.code}${e.status ? `, HTTP ${e.status}` : ''}):`);
+      console.log(`   ${e.message}`);
+      if (e.registrationUrl) {
+        console.log('');
+        console.log(`Verify your app at: ${e.registrationUrl}`);
+        console.log('Full walkthrough:    docs/REDDIT_OAUTH_SETUP.md');
+      }
+    } else {
+      console.log(`❌ Reddit OAuth failed: ${redact(e.message || String(e))}`);
+    }
+    process.exit(1);
+  }
 }
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.help) { printHelp(); process.exit(0); }
-  const envPath = loadEnv();
+  // Strict mode: only ~/.config/gg/_gg.env or GG_ENV_FILE — never the
+  // cwd or repo-root `_gg.env` (per repo secrets convention; matches
+  // gg-content-draft+). requireMode 0o600 rejects world/group-readable
+  // env files at load time.
+  const envPath = loadEnv({ strict: true, requireMode: 0o600 });
+
+  // --check-oauth runs before --entity validation so wzb can probe creds
+  // without having to pass a dummy entity.
+  if (args.checkOauth) {
+    console.log(`env file: ${envPath || '(none — relying on shell env)'}\n`);
+    await runCheckOauth();
+    return; // runCheckOauth exits explicitly; here only if reached.
+  }
+
   console.log('GenGrowth /gg-friction-mine');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log(`env file:   ${envPath || '(none — relying on shell env)'}\n`);

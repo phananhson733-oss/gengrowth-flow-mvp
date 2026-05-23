@@ -152,28 +152,30 @@ export function validateSeed(seed) {
 
 ## 三、bootstrap sheet vs 附录 D 规格 gap 详表
 
-附录 D 要求 13 张工作表；当前 bootstrap 只建了 11 张占位 tab。逐项对比：
+> **2026-05-23 更新：本节旧 gap 表已作废。** Bootstrap 已重写为 spec-driven（`_workbook-spec.mjs`
+> 单数据源），13 张 .gs 表 + 7 张运维表全部建立，公式 / 下拉 / 条件格式 1:1 复刻 .gs v3.1。
+> 最新逐表 diff 见 [`BOOTSTRAP_GS_DIFF_2026-05-23.md`](./BOOTSTRAP_GS_DIFF_2026-05-23.md)。
 
-| Tab | 附录 D / .gs v3.1 规格 | 本地 bootstrap 实现 | gap |
+| Tab | 附录 D / .gs v3.1 规格 | 本地 bootstrap 实现 | 状态 |
 |---|---|---|---|
-| ⚙️配置 | 客户产品名 / 实验开始日期 / 目标国家 / TOPIC_KEYWORDS (A6:A25) / NEGATIVE_KEYWORDS (A28:A45) | ❌ 未建 | **整张表缺失** |
-| 关键词主表 | A–X 24 列含 J/K/M/N/O/R/S/U **公式列** | ⚠️ 24 个占位列名，**无公式**（J=DR差值名字对，但 K/L/M 等列名全错）| **公式全缺失，列名错乱** |
-| 主题集群表 | 19 列（含 us_share 三档）+ 表头颜色注释 | ✅ 20 列接近正确（多 child_entities）| 无大问题 |
-| 选题登记表 | 21 列（v2.0 15 + 新 6）+ 注释 | ✅ 21 列正确 | 无 |
-| CTA Map | 6 列 | ✅ 正确 | 无 |
-| 结果复盘表 | outcome_id / Day 14·30·60 / GSC粘贴区 / GA4粘贴区 | ❌ 未建 | **整张表缺失** |
-| 🚀趋势词 | 视图（VLOOKUP 主表筛分桶= 趋势词）| ❌ 未建 | 视图缺失 |
-| ⚡快速胜利 | 同上 | ❌ 未建 | 视图缺失 |
-| 🎯战略词 | 同上 | ❌ 未建 | 视图缺失 |
-| 📌长尾词 | 同上 | ❌ 未建 | 视图缺失 |
-| 📋分桶规则 | 文档表 — 列各桶规则 | ❌ 未建 | 文档缺失 |
-| 📊内容追踪 | 已发布 URL + GSC 关键词 | ❌ 未建 | 缺失 |
-| 📈来源分析 | 各来源命中率统计 | ❌ 未建 | 缺失 |
-| keyword_candidates | 11 列副表 | ✅ 正确 | 无 |
+| ⚙️配置 | 客户产品名 / 实验开始日期 / 目标国家 / TOPIC_KEYWORDS (A6:A25) / NEGATIVE_KEYWORDS (A28:A45) | ✅ 已建（B2/B3 客户产品名+实验日期 P0-4 落地）| ✅ 见 BOOTSTRAP_GS_DIFF_2026-05-23.md |
+| 关键词主表 | A–X 24 列含 J/K/M/N/O/R/S/U **公式列** | ✅ 24 列，10/10 公式 1:1 复刻 v3.1，fill-down row 1500 | ✅ 见 BOOTSTRAP_GS_DIFF_2026-05-23.md |
+| 主题集群表 | 19 列（含 us_share 三档）+ 表头颜色注释 | ✅ 19 列对齐 | ✅ |
+| 选题登记表 | 21 列（v2.0 15 + 新 6）+ 注释 | ✅ 21 列正确 + C2/D2 VLOOKUP | ✅ |
+| CTA Map | 6 列 | ✅ 6 列 + 6 行 Week-1 seed | ✅ |
+| 结果复盘表 | outcome_id / Day 14·30·60 / GSC粘贴区 / GA4粘贴区 | ✅ 12 列已建 + E/K 下拉 | ✅ 见 BOOTSTRAP_GS_DIFF_2026-05-23.md |
+| 🚀趋势词 | 视图（VLOOKUP 主表筛分桶= 趋势词）| ✅ 公式落 A1（视图样式 P1 cosmetic）| ✅ |
+| ⚡快速胜利 | 同上 | ✅ 同上 | ✅ |
+| 🎯战略词 | 同上 | ✅ 同上 | ✅ |
+| 📌长尾词 | 同上 | ✅ 同上 | ✅ |
+| 📋分桶规则 | 文档表 — 列各桶规则 | ✅ rows + cellStyling 对齐 | ✅ |
+| 📊内容追踪 | 已发布 URL + GSC 关键词 | ✅ 14 列 + G/H/L 公式 | ✅ 见 BOOTSTRAP_GS_DIFF_2026-05-23.md |
+| 📈来源分析 | 各来源命中率统计 | ✅ 6 列 + seed + tailRow 公式 | ✅ 见 BOOTSTRAP_GS_DIFF_2026-05-23.md |
+| keyword_candidates | 11 列副表 | ✅ 正确 | ✅ |
 | pipeline-status / publish-log / quality-metrics / cost-tracking / config（项目运维表）| 不在 .gs v3.1 范围 | ✅ 自建 | OK，gg-status 用 |
 | README | 不在 .gs v3.1 范围 | ✅ 自建 | OK |
 
-**结论：当前 bootstrap 不符合 PRD v0.7 附录 D 规格。最小修复 = 重写 bootstrap 1:1 复刻 .gs v3.1 + 保留我们自建的项目运维表。**
+**结论（2026-05-23）**：bootstrap 已符合 PRD v0.7 附录 D 规格。剩余 P1 gap（视图样式 `headerColors` 拼写、view tab 顶部说明行）见 `BOOTSTRAP_GS_DIFF_2026-05-23.md §七`。P0=0。
 
 ---
 
@@ -226,13 +228,29 @@ node tools/scripts/_migrate-legacy-to-flow-mvp.mjs \
 | 2 | 修 `gg-keyword-mine.mjs`：默认写 flow-mvp sheet + 从 ⚙️配置 A28:A45 拉负向词 | 1h | **P0** | ✅ 2026-05-23 |
 | 3 | 新建 `_migrate-legacy-to-flow-mvp.mjs` 迁移 590 词 + 301 选题 | 2h | **P0** | ✅ 2026-05-23 |
 | 4 | 加 mine 种子词校验（SUSPICIOUS_SINGLE_TERMS 警告）| 30min | P1 | ✅ 2026-05-23 |
-| 5 | 加 mine 嫌疑词 flag（kd-vol-conflict / multi-token-mismatch）| 30min | P1 | ⏳ |
+| 5 | 加 mine 嫌疑词 flag（kd-vol-conflict / multi-token-mismatch）| 30min | P1 | ✅ 2026-05-23 |
 | 6 | 新建 `gg-cluster-init.mjs`（修法 #4）| 4h | **P0** | ✅ 2026-05-23 |
-| 7 | 写 `_sync-canon.sh`（保持 upstream-canon 与 wiki 同步）| 30min | P2 | ⏳ |
+| 7 | 写 `_sync-canon.sh`（保持 upstream-canon 与 wiki 同步）| 30min | P2 | ✅ 2026-05-23 |
 | 8 | 修 bootstrap fill-down 公式 row 号 bug（rewriteFormulaRow）| 30min | **P0** | ✅ 2026-05-23 |
 | 9 | 新建 `gg-backfill-site-dr.mjs`（按用户告知的真实 DR 批量回填 I 列）| 30min | **P0** | ✅ 2026-05-23 |
+| 10 | P0-1 `_sync-canon.sh` + `spec/upstream-canon/` | 30min | **P0** | ✅ 2026-05-23 |
+| 11 | P0-2 Reddit OAuth scaffold (`lib/_reddit-oauth.mjs` + `gg-friction-mine.mjs` + `REDDIT_OAUTH_SETUP.md`) | 2h | **P0** | ✅ 2026-05-23 |
+| 12 | P0-3 `gg-llm-orchestrator.mjs`（并行 + frontier-strict + retry）| 3h | **P0** | ✅ 2026-05-23 |
+| 13 | P0-4 ⚙️配置 B2/B3 客户产品名+实验开始日期 | 30min | **P0** | ✅ 2026-05-23 |
+| 14 | P1-1 mine 4-项升级（sheet-read NEG / SUSPICIOUS_SINGLE_TERMS / 嫌疑词 flag / workbook default）| 1h | P1 | ✅ 2026-05-23 |
+| 15 | P1-2 `gg-cluster-fields-suggest.mjs` | 2h | P1 | ✅ 2026-05-23 |
+| 16 | P1-3 `gg-brief-suggest.mjs` | 2h | P1 | ✅ 2026-05-23 |
+| 17 | P1-4 `gg-phase2-fix.mjs`（RL fail 自动 retry）| 2h | P1 | ✅ 2026-05-23 |
+| 18 | P1-5 embedding 聚类（`--algo embedding` in gg-cluster-init）| 3h | P1 | ✅ 2026-05-23 |
+| 19 | P1-6 `gg-classify-unsorted.mjs`（ind-001/ind-002 归类）| 2h | P1 | ✅ 2026-05-23 |
+| 20 | P2-1 `gg-deploy-oracle.sh` | 1h | P2 | ✅ 2026-05-23 |
+| 21 | P2-2 `gg-monitor.mjs`（GSC + GA4）| 2h | P2 | ✅ 2026-05-23 |
+| 22 | P2-3 `gg-config-sync.mjs` + `lib/_config.mjs`（sheet → code config snapshot）| 2h | P2 | ✅ 2026-05-23 |
+| 23 | P2-4 bridge fuzzy match（`gg-sheet-to-brief.mjs` upgrade）| 1h | P2 | ✅ 2026-05-23 |
+| 24 | P2-5 SERP auto-snapshot（`gg-render-batch.mjs --auto-serp-snapshot/--check-only`）| 1h | P2 | ✅ 2026-05-23 |
+| 25 | P2-6 bootstrap 1:1 复核 → `BOOTSTRAP_GS_DIFF_2026-05-23.md` | 1h | P2 | ✅ 2026-05-23 |
 
-**已完成工时：~14h。剩余 #5/#7 共约 1h。**
+**2026-05-23 P0+P1+P2 wave 全部落地（18 项）**。原 9 项也已全部 ✅。
 
 ## 七、当前生产状态（2026-05-23）
 
@@ -243,6 +261,18 @@ node tools/scripts/_migrate-legacy-to-flow-mvp.mjs \
 | NEGATIVE_KEYWORDS | 5 词（默认 + 用户可扩展）| miami/dade/trimet/hub city/bus tracker |
 | 站 DR (I 列) | 5（用户 2026-05-23 告知 ≤5 区间上限）| 用 `gg-backfill-site-dr.mjs --dr <真实值>` 调整 |
 | R 列分桶 | 336 ⚡快速胜利 / 166 📌长尾 / 87 ❌跳过 / 1 🎯战略 | 公式 fill-down bug 修复后正确 |
-| 主题集群表 | 144 集群草稿 | `gg-cluster-init.mjs --write` 落盘，业务字段人工补 |
+| 主题集群表 | 144 集群草稿 → Phase 2 合并为 24 publishable units | `gg-cluster-init.mjs --write` 落盘；详见 `CLUSTER_AUDIT_2026-05-23.md` |
 | 选题登记表 | 301 行 | 迁自老 sheet，C/D VLOOKUP 重写 |
 | keyword_candidates | 15 行 | wzb_approve 状态保留 |
+| BOOTSTRAP_GS_DIFF_2026-05-23.md | 13 表 1:1 复核 → P0=0 / P1=3 / P2=2 | 详见该文件 §七 |
+
+---
+
+## 八、2026-05-23 Pipeline-Wave Summary
+
+本次 wave 一次性落地 P0+P1+P2 共 18 项。详细单项审计 / 设计 / 操作分散在以下文档：
+
+- [`CLUSTER_AUDIT_2026-05-23.md`](./CLUSTER_AUDIT_2026-05-23.md) — 聚类算法 4 路验收 + Phase 1/2/3 路径
+- [`BOOTSTRAP_GS_DIFF_2026-05-23.md`](./BOOTSTRAP_GS_DIFF_2026-05-23.md) — bootstrap vs SSOT .gs 1:1 复核
+- [`REDDIT_OAUTH_SETUP.md`](./REDDIT_OAUTH_SETUP.md) — Reddit OAuth 接入指南（friction RAG 真数据来源）
+- [`../spec/upstream-canon/README.md`](../spec/upstream-canon/README.md) — upstream-canon 同步规范（_sync-canon.sh）

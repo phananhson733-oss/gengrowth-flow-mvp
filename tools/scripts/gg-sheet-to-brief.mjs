@@ -480,14 +480,27 @@ flags:
   --suggest-fix-script <file>  on FAIL, write [{row,col,old,new,confidence}] JSON
 
 env:
-  GG_SHEETS_WORKBOOK_ID + OAuth (via oauth-init.mjs)
+  GG_SHEETS_FLOW_MVP_WORKBOOK_ID (default) or GG_SHEETS_WORKBOOK_ID (legacy fallback)
+  + OAuth (via oauth-init.mjs)
+
+flags:
+  --workbook flow-mvp|legacy|<id>   override env auto-detection (default: flow-mvp)
 `);
     return 0;
   }
   loadEnv();
-  const workbookId = process.env.GG_SHEETS_WORKBOOK_ID;
+  // PRD v0.7 SSOT = flow-mvp workbook. Falls back to legacy for backward-compat.
+  let workbookId;
+  const wbArg = args.workbook;
+  if (wbArg && wbArg !== true && wbArg !== 'flow-mvp' && wbArg !== 'legacy') {
+    workbookId = String(wbArg);
+  } else if (wbArg === 'legacy') {
+    workbookId = process.env.GG_SHEETS_WORKBOOK_ID;
+  } else {
+    workbookId = process.env.GG_SHEETS_FLOW_MVP_WORKBOOK_ID || process.env.GG_SHEETS_WORKBOOK_ID;
+  }
   if (!workbookId) {
-    console.error('GG_SHEETS_WORKBOOK_ID missing in env');
+    console.error('GG_SHEETS_FLOW_MVP_WORKBOOK_ID (or GG_SHEETS_WORKBOOK_ID) missing in env');
     return 2;
   }
 

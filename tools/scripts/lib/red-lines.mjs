@@ -61,7 +61,11 @@ export const RL4_DRIFTED_SECTIONS_FAIL_DEFAULT = 2;
 export const RL4_DRIFTED_SECTIONS_FAIL = getConfig('phase2.RL4_drifted_sections_fail', RL4_DRIFTED_SECTIONS_FAIL_DEFAULT);
 
 // RL5: keyword stuffing. Sheet override: phase2.RL5_keyword_max.
-export const RL5_MAX_COUNT_DEFAULT = 8;
+// Default lifted from 8 → 12 on 2026-05-23 after wzb 裁决 — production phase2
+// 通过率 validated at 12 across 13 published pages; bootstrap default 8 too strict.
+// Sheet `config` tab is source of truth; this constant is the fallback when
+// `.gg-cache/config-snapshot.json` is missing.
+export const RL5_MAX_COUNT_DEFAULT = 12;
 export const RL5_MAX_COUNT = getConfig('phase2.RL5_keyword_max', RL5_MAX_COUNT_DEFAULT);
 export const RL5_MIN_COUNT_WARN = 3;
 

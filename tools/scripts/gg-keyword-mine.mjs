@@ -290,6 +290,39 @@ export function parseNegatives(raw) {
   return String(raw).split(/[,，、]+/).map((s) => s.trim()).filter(Boolean);
 }
 
+// Read NEGATIVE_KEYWORDS from sheet ⚙️配置!A28:A45 (PRD v0.7 §7.3.2 修法 #1)
+// Falls back to [] on any failure — caller should merge with CLI/env negatives.
+export async function readNegativesFromSheet(workbookId, token) {
+  try {
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${workbookId}/values/${encodeURIComponent('⚙️配置!A28:A45')}`;
+    const r = await gFetch(url, token);
+    const vals = (r.values || []).map((row) => String(row[0] || '').trim()).filter(Boolean);
+    return vals;
+  } catch (e) {
+    console.error(`[mine] readNegativesFromSheet skipped: ${e.message}`);
+    return [];
+  }
+}
+
+// Suspicious single-token seeds (PRD v0.7 §7.3.2 修法 #3, SOP v2.4 §三).
+// Single-token multi-meaning seeds let DataForSEO fan out into garbage (e.g.
+// `transit` matches astrological transits AND public-transit bus trackers).
+// SOP says use `transit chart` / `astrological transit` instead.
+export const SUSPICIOUS_SINGLE_TERMS = Object.freeze(new Set([
+  'transit', 'cycle', 'house', 'mercury', 'venus', 'mars',
+  'jupiter', 'saturn', 'moon', 'sun', 'water', 'fire', 'earth',
+]));
+
+export function validateSeed(seed) {
+  const lc = String(seed || '').trim().toLowerCase();
+  if (!lc) return { ok: false, reason: 'empty' };
+  const tokens = lc.split(/\s+/);
+  if (tokens.length === 1 && SUSPICIOUS_SINGLE_TERMS.has(tokens[0])) {
+    return { ok: true, warning: `single-token multi-meaning seed "${seed}" risks garbage candidates; SOP says use "${seed} chart" / "astrological ${seed}" instead` };
+  }
+  return { ok: true };
+}
+
 // ---------- main ----------
 async function main(argv) {
   const args = parseArgs(argv);
@@ -304,17 +337,19 @@ usage:
 flags:
   --seeds <csv>            required (5-10 seed keywords, comma-separated)
   --entity <str>           candidate run_id tag, propagates to keyword_candidates row
+  --workbook flow-mvp|legacy|<id>    default flow-mvp (PRD v0.7 SSOT bookkeeping)
   --location-code <n>      default 2840 (US)
   --language-code <str>    default en
   --max-kd <n>             default 50
   --min-volume <n>         default 50
   --max-results <n>        default 15
-  --negatives <csv>        also accepts env GG_NEGATIVE_KEYWORDS (子串否决)
+  --negatives <csv>        merged with sheet ⚙️配置!A28:A45 + env GG_NEGATIVE_KEYWORDS (子串否决)
   --dry-run                stdout candidates JSON, no Sheets writes
   --target-master          write to 关键词主表 A-E directly (default: write keyword_candidates副表)
 
 env required:
-  GG_DATAFORSEO_LOGIN + GG_DATAFORSEO_PASSWORD + GG_SHEETS_WORKBOOK_ID + writer SA
+  GG_DATAFORSEO_LOGIN + GG_DATAFORSEO_PASSWORD + writer SA
+  + GG_SHEETS_FLOW_MVP_WORKBOOK_ID (default) OR GG_SHEETS_WORKBOOK_ID (--workbook legacy)
 `);
     return 0;
   }
@@ -325,6 +360,12 @@ env required:
   if (!seeds.length) {
     console.error('ERROR: --seeds is required (comma-separated list)');
     return 2;
+  }
+
+  // PRD §7.3.2 修法 #3: warn on multi-meaning single-token seeds.
+  for (const seed of seeds) {
+    const v = validateSeed(seed);
+    if (v.warning) console.error(`⚠️  ${v.warning}`);
   }
 
   const login = process.env.GG_DATAFORSEO_LOGIN;
@@ -375,17 +416,51 @@ env required:
   console.error(`total raw candidates: ${allCandidates.length}`);
 
   // Fail-fast: if every seed failed, the API is broken / creds wrong / network down.
-  // Don't silently exit 0 — that masks pipeline failures from cron/CI.
   if (seedFail === seeds.length) {
     console.error('FATAL: every seed failed; see errors above');
     return 2;
   }
 
-  // 2. Filter + rank.
-  const finalCandidates = filterAndRank(allCandidates, opts);
-  console.error(`after filter (kd≤${opts.maxKd}, vol≥${opts.minVolume}, dedupe, negatives): ${finalCandidates.length}`);
+  // 2. Resolve workbook + (if possible) load sheet ⚙️配置 NEGATIVE_KEYWORDS BEFORE filtering.
+  // PRD v0.7 §7.3.2 修法 #1: negative-word otherwise-否决 is the workhorse anti-garbage gate.
+  // Default workbook = flow-mvp (PRD v0.7 SSOT). `--workbook legacy` falls back to old sheet.
+  const workbookKey = args.workbook || 'flow-mvp';
+  let workbookId;
+  if (workbookKey === 'legacy') workbookId = process.env.GG_SHEETS_WORKBOOK_ID;
+  else if (workbookKey === 'flow-mvp') workbookId = process.env.GG_SHEETS_FLOW_MVP_WORKBOOK_ID;
+  else workbookId = workbookKey;
 
-  // 3. Output.
+  const writerSa = process.env.GG_WRITER_SA_JSON || join(homedir(), '.config', 'gg', 'gg-writer-sa.json');
+  let token = null;
+  if (workbookId && existsSync(writerSa)) {
+    try {
+      ({ token } = await getAccessToken(writerSa, ['https://www.googleapis.com/auth/spreadsheets']));
+      const sheetNegatives = await readNegativesFromSheet(workbookId, token);
+      if (sheetNegatives.length) {
+        const before = opts.negatives.length;
+        opts.negatives = [...new Set([...opts.negatives, ...sheetNegatives])];
+        console.error(`[mine] merged ${sheetNegatives.length} negatives from sheet ⚙️配置!A28:A45 (was ${before}, now ${opts.negatives.length})`);
+      }
+    } catch (e) {
+      console.error(`[mine] sheet negative-keyword preload skipped: ${e.message}`);
+    }
+  } else if (!args.dry_run) {
+    // Strict in write mode: workbook + SA must exist to write later anyway.
+    if (!workbookId) {
+      console.error(`GG_SHEETS_${workbookKey === 'legacy' ? 'WORKBOOK_ID' : 'FLOW_MVP_WORKBOOK_ID'} missing — set in ~/.config/gg/_gg.env or use --dry-run`);
+      return 2;
+    }
+    if (!existsSync(writerSa)) {
+      console.error(`writer SA not found: ${writerSa}`);
+      return 2;
+    }
+  }
+
+  // 3. Filter + rank — now with sheet-merged negatives in opts.
+  const finalCandidates = filterAndRank(allCandidates, opts);
+  console.error(`after filter (kd≤${opts.maxKd}, vol≥${opts.minVolume}, dedupe, negatives=${opts.negatives.length}): ${finalCandidates.length}`);
+
+  // 4. Output.
   const runId = `mine-${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}`;
   const entity = args.entity || seeds[0];
 
@@ -395,7 +470,7 @@ env required:
       _run_id: runId,
       _entity: entity,
       _seeds: seeds,
-      _opts: opts,
+      _opts: { ...opts, negatives_count: opts.negatives.length },
       _final_count: finalCandidates.length,
       candidates: finalCandidates,
       master_preview: finalCandidates.map(buildMasterRowMine),
@@ -408,19 +483,6 @@ env required:
     console.error('no candidates survived filter; nothing to write');
     return 0;
   }
-
-  // 4. Write Sheets.
-  const workbookId = process.env.GG_SHEETS_WORKBOOK_ID;
-  if (!workbookId) {
-    console.error('GG_SHEETS_WORKBOOK_ID missing — cannot write Sheets (use --dry-run to skip)');
-    return 2;
-  }
-  const writerSa = process.env.GG_WRITER_SA_JSON || join(homedir(), '.config', 'gg', 'gg-writer-sa.json');
-  if (!existsSync(writerSa)) {
-    console.error(`writer SA not found: ${writerSa}`);
-    return 2;
-  }
-  const { token } = await getAccessToken(writerSa, ['https://www.googleapis.com/auth/spreadsheets']);
 
   if (args.target_master) {
     // Direct write to 24-col 关键词主表 A-E (skips approve step).

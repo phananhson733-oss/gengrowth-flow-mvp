@@ -128,3 +128,65 @@ related:
 - 4 路 reviewer 完整输出归档在 conversation log
 - Codex thread ID: 019e549c-2329-7623-9550-7a343535a546
 - 集群 dump 文件（一次性）：原存 /tmp/clusters-full-dump.md，归档时已清理
+
+---
+
+## 九、Phase 2 落地：6 家族合并结果（2026-05-23）
+
+按 §三 共识做的 6 家族合并已落 sheet：**53 集群 → 24 publishable units**（-55%，475 词 100% 覆盖）。
+
+### 6 家族定义（SSOT — 未来重跑 cluster-init 后再做合并的参照）
+
+| family_id | name | 包含的 v2 cluster_name |
+|---|---|---|
+| **fam-aura** | 🌈 Aura Family（pillar + 8 colors + quiz/test/reading）| aura (其它) / aura color (其它) / green aura / purple aura / orange aura / red aura / white aura / blue aura / yellow aura / aura reading / color aura quiz / aura color test |
+| **fam-birth-chart** | 📋 Birth Chart Calculator Family | [astro-seek] birth (1) / [chani] birth (2) / birth (3) / astrology birth / [astro-seek] astro seek birth / astrological birth / starseed birth / [astro.com] astro com natal / natal |
+| **fam-lunar-nodes** | 🌗 Lunar Nodes Family（North + South Node）| north node (其它) / south node |
+| **fam-vedic** | 🕉 Vedic Astrology Family | vedic astrology (其它) / [astro-seek] vedic birth / vedic astrology birth / vedic / sidereal astrology |
+| **fam-nakshatra** | ⭐ 27 Nakshatras Family | nakshatra (1) / nakshatra (2) |
+| **fam-houses** | 🏛 Astrological Houses Family | house / rising houses / 8th house / mars 12th house / 8th house astrology |
+
+### 24 publishable units 完整名单
+
+```
+6 家族:
+  fam-aura            81 词  🌈 Aura Family
+  fam-birth-chart     62 词  📋 Birth Chart Calculator Family
+  fam-vedic           42 词  🕉 Vedic Astrology Family
+  fam-lunar-nodes     35 词  🌗 Lunar Nodes Family
+  fam-nakshatra       30 词  ⭐ 27 Nakshatras Family
+  fam-houses          26 词  🏛 Astrological Houses Family
+
+18 独立保留:
+  ind-001  71 词  (未聚类 — 人工分配)        ← 兜底，需人工归类
+  ind-002  50 词  astrology (其它)          ← 异质桶，需 embedding 才能拆
+  ind-003  10 词  pisces                   ← 2026 时效骨架
+  ind-004   9 词  chakra
+  ind-005   9 词  highly sensitive person  ← 差异化 anchor
+  ind-006   7 词  transit
+  ind-007   7 词  rahu
+  ind-008   4 词  black moon lilith
+  ind-009   4 词  sign
+  ind-010   4 词  past life                ← 高转化候选
+  ind-011   3 词  solar return
+  ind-012   3 词  saturn
+  ind-013   3 词  full moon                ← newsletter 主承接
+  ind-014   3 词  persephone
+  ind-015   3 词  compatibility
+  ind-016   3 词  color
+  ind-017   3 词  planets
+  ind-018   3 词  ascendant woman
+```
+
+### 合并执行方法
+
+一次性脚本（不入仓库）：按 cluster_name 模式匹配，把 family 成员的 keywords_included 合并写入新 cluster_id `fam-X`，content_angle 字段自动填家族描述，其他业务字段（track/jtbd/cta/priority）留空人工填。
+
+未来重跑 `gg-cluster-init.mjs` 后 cluster_name 可能变化，重做合并时按上表"包含的 v2 cluster_name"列匹配最接近的新 name。
+
+### Phase 2 后续待人工动作
+
+1. **填业务字段**（在 sheet 上）：每个 publishable unit 填 `track`（量产线/精修线）、`jtbd`、`content_angle` 细化、`cta_primary`（Newsletter/工具页/星盘页/注册）、`priority`（P0/P1/P2）、`week`
+2. **拆 ind-002 astrology (其它) 50 词**：算法无能为力，需人工按子主题（aspects / IC / 9th house / juno / AI astrology / 付费 reading）拆开
+3. **归类 ind-001 (未聚类) 71 词**：人工浏览归入合适的 family 或新建独立 cluster
+4. **business 决策**（按 PM 视角）：砍 6 个 noise 桶（astro-seek 系列 / dosha / life coach / persephone / 颜色精神含义 / astrocartography）

@@ -161,15 +161,21 @@ node tools/scripts/gg-status.mjs --md | head -40
 |------|-------|------------------|--------|
 | **Claude** | `claude-opus-4-7` | `xhigh`（extended-thinking max） | Sonnet, Haiku（CLI 默认会降级，**必须显式 `--model`**） |
 | **ChatGPT / Codex** | `GPT 5.5` | `high` | 4o, o1-mini, 任何 mini |
-| **Gemini** | `gemini-3.0-pro` | — | Flash, 2.5, 2.0 |
+| **Gemini** | `gemini-2.5-pro`（当前 CLI ceiling — Gemini 3 还没发布；待 Google 上线后升级 cli + 切到 `gemini-3-pro`） | — | Flash, 2.0 |
 | **OpenRouter Hermes** | `nousresearch/hermes-3-llama-3.1-405b` | — | 70b, 8b |
 
 **修复 retry 策略**：如果同 model retry 2 次都 phase2 fail → **换更高 frontier 或换厂商**，而不是同 model 第 3 次。例如 hermes-3 fail 2 次 → 换 Opus 4.7 xhigh 或 GPT 5.5 high。Diversity > repetition。
 
+**Frontier 模型验证状态**（2026-05-23 wzb 账户实测）：
+- Claude opus-4-7 xhigh：✅ 可用
+- GPT 5.5 high (codex CLI)：✅ 可用
+- Gemini 2.5-pro：✅ 可用（CLI 0.42.0；Gemini 3 还没发布）
+- Hermes-3-405b (OpenRouter)：上次 session 跑过，今天没复测
+
 **成本预期**（per 1500-word article）：
 - Opus 4.7 xhigh：约 $0.50-1.50（input 3k + thinking 30k + output 1.5k）
 - GPT 5.5 high：约 $0.40-1.20
-- Gemini 3.0 pro：约 $0.10-0.30
+- Gemini 2.5 pro：约 $0.10-0.30
 - hermes-3-405b：约 $0.05-0.10
 - → 5 篇文章/周 × 3 LLM diversity ≈ $5-25/周 LLM 总成本。可以接受。
 

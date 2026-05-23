@@ -302,10 +302,11 @@ node tools/scripts/gg-render-batch.mjs \
 |------|-------|-----------|------|
 | **Claude (本机 CLI)** | `claude-opus-4-7` | `xhigh`（extended-thinking max） | `claude -p --model claude-opus-4-7 < prompt > out.md` |
 | **ChatGPT / Codex (本机)** | `GPT 5.5` | `high` | `codex exec -c model=gpt-5.5 -c reasoning_effort=high - < prompt > out.md` |
-| **Gemini (本机 CLI)** | `gemini-3.0-pro` | — | `gemini --model gemini-3.0-pro < prompt > out.md` |
-| **OpenRouter (任一)** | `anthropic/claude-opus-4` / `openai/gpt-5.5` / `google/gemini-3-pro` / `nousresearch/hermes-3-llama-3.1-405b` | — | `node tools/scripts/_call-hermes.mjs --prompt X --output Y --model <id>` |
+| **Gemini (本机 CLI)** | `gemini-2.5-pro`（当前 CLI ceiling — Gemini 3 还没发布） | — | `gemini --model gemini-2.5-pro < prompt > out.md` |
+| **OpenRouter (任一)** | `anthropic/claude-opus-4` / `openai/gpt-5.5` / `google/gemini-2.5-pro` / `nousresearch/hermes-3-llama-3.1-405b` | — | `node tools/scripts/_call-hermes.mjs --prompt X --output Y --model <id>` |
 
 ⚠️ **Claude CLI 默认会降级到 Sonnet**，必须显式 `--model claude-opus-4-7`。
+⚠️ **Gemini 3.0 尚未发布**（gemini-cli 0.42.0 bundle 中无 `gemini-3` 字符串）。当前 ceiling 是 `gemini-2.5-pro`，待 Google 释放 Gemini 3 后升级 cli + 切换 model ID。
 ⚠️ **Retry 规则**：同 model 跑 2 次都 phase2 fail → 换更高 frontier model（diversity > repetition）。例如 hermes 失败 2 次 → 切 Opus 4.7 xhigh，不要第 3 次 hermes。
 
 **output 文件名约定**：`_staging/<page_id>-<llm>-v8.md`（publish 脚本靠这命名 matrix）

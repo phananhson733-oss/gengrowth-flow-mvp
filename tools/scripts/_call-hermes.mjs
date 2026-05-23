@@ -21,22 +21,24 @@
 //   SEO content generation must use the EXACT frontier tier below. Cost (a few cents
 //   per article) is dwarfed by ranking ROI. Do NOT downgrade to save tokens.
 //
-// Exact frontier configuration:
-//   Claude    : claude-opus-4-7 + reasoning=xhigh  (CLI: --model claude-opus-4-7)
-//   ChatGPT   : GPT 5.5 + reasoning=high           (codex: -c model=gpt-5.5 -c reasoning_effort=high)
-//   Gemini    : gemini-3.0-pro                     (NOT flash, NOT 2.5)
-//   Hermes    : nousresearch/hermes-3-llama-3.1-405b (default below)
+// Exact frontier configuration (verified 2026-05-23):
+//   Claude    : claude-opus-4-7 + reasoning=xhigh   ✅ verified
+//   ChatGPT   : GPT 5.5 + reasoning=high             ✅ verified (codex exec)
+//   Gemini    : gemini-2.5-pro                       ✅ verified (gemini-cli 0.42.0 ceiling;
+//                                                       gemini-3 not yet in CLI bundle —
+//                                                       upgrade + switch when Google ships it)
+//   Hermes    : nousresearch/hermes-3-llama-3.1-405b (default below; series frontier)
 //
 // OpenRouter IDs to pass via --model (verify at openrouter.ai/models per release):
 //   anthropic/claude-opus-4
 //   openai/gpt-5.5
-//   google/gemini-3-pro
+//   google/gemini-2.5-pro
 //   nousresearch/hermes-3-llama-3.1-405b
 //
 // For local CLIs (no OpenRouter needed):
 //   claude -p --model claude-opus-4-7 < prompt > out.md
-//   codex exec -c model=gpt-5.5 -c reasoning_effort=high - < prompt > out.md
-//   gemini --model gemini-3.0-pro < prompt > out.md
+//   codex exec -c 'model="gpt-5.5"' -c 'model_reasoning_effort="high"' - < prompt > out.md
+//   gemini --model gemini-2.5-pro < prompt > out.md
 
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { homedir } from 'node:os';

@@ -43,6 +43,7 @@ import { join } from 'node:path';
 import { homedir } from 'node:os';
 import { getAccessToken, gFetch, loadEnv, redact } from './lib/gg-shared.mjs';
 import { getConfig } from './lib/_config.mjs';
+import { logCost } from './lib/_cost-log.mjs';
 
 // Two-layer defaults — *_FALLBACK = hardcoded; * = resolved via sheet snapshot.
 // Sheet overrides live in tab `config` (sync via tools/scripts/gg-config-sync.mjs).
@@ -60,7 +61,7 @@ export const PER_SEED_LIMIT = 100;
 
 // Sheet config range — single source of truth for NEGATIVE_KEYWORDS (修法 #1).
 // Backed by spec/upstream-canon/keyword-sheet-setup.gs v3.1 line 97-108.
-export const NEGATIVES_RANGE = '⚙️配置!A28:A45';
+export const NEGATIVES_RANGE = '配置!A28:A45';
 
 // Suspicious-word flag thresholds (修法 #5).
 // kd-vol-conflict: typical "free lunch" anomaly — KD this low with volume this high
@@ -359,7 +360,7 @@ export function parseNegatives(raw) {
   return String(raw).split(/[,，、]+/).map((s) => s.trim()).filter(Boolean);
 }
 
-// Read NEGATIVE_KEYWORDS from sheet ⚙️配置!A28:A45 (PRD v0.7 §7.3.2 修法 #1).
+// Read NEGATIVE_KEYWORDS from sheet 配置!A28:A45 (PRD v0.7 §7.3.2 修法 #1).
 // Cached for one CLI invocation via the module-level `_negativesCache` map
 // (keyed by workbookId), so a multi-seed run does one fetch, not N.
 // Falls back to [] on any failure — caller should merge with CLI/env negatives.
@@ -447,8 +448,8 @@ flags:
   --max-kd <n>             default 50
   --min-volume <n>         default 50
   --max-results <n>        default 15
-  --negatives <csv>        merged with sheet ⚙️配置!A28:A45 + env GG_NEGATIVE_KEYWORDS (子串否决)
-  --no-sheet-negatives     skip sheet ⚙️配置!A28:A45 read; CLI/env only
+  --negatives <csv>        merged with sheet 配置!A28:A45 + env GG_NEGATIVE_KEYWORDS (子串否决)
+  --no-sheet-negatives     skip sheet 配置!A28:A45 read; CLI/env only
   --dry-run                stdout candidates JSON, no Sheets writes
   --target-master          write to 关键词主表 A-E directly (default: write keyword_candidates副表)
 
@@ -526,7 +527,7 @@ env required:
     return 2;
   }
 
-  // 2. Resolve workbook + (if possible) load sheet ⚙️配置 NEGATIVE_KEYWORDS BEFORE filtering.
+  // 2. Resolve workbook + (if possible) load sheet 配置 NEGATIVE_KEYWORDS BEFORE filtering.
   // PRD v0.7 §7.3.2 修法 #1: negative-word otherwise-否决 is the workhorse anti-garbage gate.
   // Default workbook = flow-mvp (PRD v0.7 SSOT). `--workbook legacy` falls back to old sheet.
   const workbookKey = args.workbook || 'flow-mvp';
@@ -611,6 +612,21 @@ env required:
     console.error(`appended ${resp.updates?.updatedRows ?? rows.length} rows to ${CANDIDATES_TAB}!A:K`);
     console.error(`next: wzb 在 ${CANDIDATES_TAB} 标 wzb_approve=Y, 然后跑 gg-keyword-promote`);
   }
+
+  // cost-tracking: 1 row per mine run (DataForSEO Labs $0.002 / 100 candidates).
+  const COST_PER_100 = 0.002;
+  const apiCalls = seedSuccess + seedFail; // each seed = 1 API call
+  const costUsd = (allCandidates.length / 100) * COST_PER_100;
+  await logCost([{
+    operation: 'mine',
+    tool: 'gg-keyword-mine',
+    page_id: '',
+    tokens_in: 0,
+    tokens_out: 0,
+    cost_usd: costUsd,
+    api_calls: apiCalls,
+    notes: `entity=${entity} seeds=${seeds.length} raw=${allCandidates.length} final=${finalCandidates.length} loc=${opts.locationCode}`,
+  }]);
 
   return 0;
 }

@@ -6,9 +6,14 @@
 > CEO/PM 想要的高级别概览见 [OPS_OVERVIEW.md](./OPS_OVERVIEW.md)。
 >
 > **配套**：
-> - 实时状态：[gengrowth-flow-mvp workbook](https://docs.google.com/spreadsheets/d/1CkjOCgYbRfXGYc6l2FJOaxUIzxT0NBVUhUpgCjyzcQc/edit) — 5 个业务 tab + 5 个自动产物索引 tab
+> - 实时状态：[gengrowth-flow-mvp workbook](https://docs.google.com/spreadsheets/d/1CkjOCgYbRfXGYc6l2FJOaxUIzxT0NBVUhUpgCjyzcQc/edit)
+>   - 业务（6）：`配置 / 关键词主表 / 主题集群表 / 选题登记表 / CTA Map / 结果复盘表`
+>   - 自动产物（5）：`pipeline-status / publish-log / quality-metrics / cost-tracking / monitor-auto`
+>   - 视图（公式驱动，6）：`趋势词 / 快速胜利 / 战略词 / 长尾词 / 分桶规则 / 内容追踪 / 来源分析`
 > - 旧版纯下游 runbook：[PIPELINE-v1-downstream-runbook.md](./PIPELINE-v1-downstream-runbook.md)（补 1 篇文章的最小路径）
 > - 本地 dashboard：`node tools/scripts/gg-status.mjs --md` → 当前所有 page 的进度表
+> - 端到端 smoke：[E2E_SMOKE_2026-05-23.md](./E2E_SMOKE_2026-05-23.md) — 15 stage 命令验证
+> - 完整审计：[E2E_AUDIT_2026-05-23.md](./E2E_AUDIT_2026-05-23.md) — PASS/WARN/FAIL 标签
 
 ---
 
@@ -198,14 +203,15 @@ node tools/scripts/gg-keyword-promote.mjs --dry-run --also-draft-pages
 | 项 | 值 |
 |---|---|
 | 工具 | `tools/scripts/gg-config-sync.mjs` |
-| 输入 | Sheet `config` tab + `⚙️配置` tab |
+| 输入 | Sheet `config` tab + `配置` tab |
 | 输出 | `.gg-cache/config-snapshot.json`（`lib/_config.mjs` 读取入口）|
 | 用途 | 让 mine / red-lines / orchestrator 等脚本无需再各自 hardcode 阈值，统一从 snapshot 读 |
 | 触发 | sheet config 变更后跑一次；CI / orchestrator 启动前可自动 pull |
 
 ```bash
-node tools/scripts/gg-config-sync.mjs            # 拉新 snapshot
-node tools/scripts/gg-config-sync.mjs --diff     # 对比当前 snapshot vs sheet
+node tools/scripts/gg-config-sync.mjs              # 拉新 snapshot
+node tools/scripts/gg-config-sync.mjs --diff-only  # 对比当前 snapshot vs sheet，不写
+node tools/scripts/gg-config-sync.mjs --dry-run    # 同 --diff-only
 ```
 
 `lib/_config.mjs` 暴露 `getConfig(key, fallback)`：未命中 snapshot 时回退到代码常量，保证 dev / offline 仍可跑。
@@ -358,6 +364,13 @@ node tools/scripts/gg-llm-orchestrator.mjs --pages "page_X,page_Y" --llms "claud
 
 **output 文件名约定**：`_staging/<page_id>-<llm>-v8.md`（publish 脚本靠这命名 matrix）
 
+**cost-tracking 自动写入**（2026-05-23 接入）：orchestrator 跑完后会对 `--llms` 列出的每个 model append 一行到 sheet `cost-tracking` tab：
+- `operation=llm_call`、`tool=gg-llm-orchestrator`、`page_id=<X>`
+- `tokens_in/out` 按 PRICING 估算（words / 1.3）
+- `cost_usd` = (input/1M × input_per_m) + (output/1M × output_per_m)
+- `notes` 含实际跑的 model、是否 diversify、retry 次数
+- 实现：`tools/scripts/lib/_cost-log.mjs` — 失败容错（OAuth fail / 网络问题不阻塞主流程）
+
 **坑**：claude/codex 第一轮容易啰嗦或字数不达标，准备好 retry。retry prompt 加显式 fix 提示能 1-2 轮收敛。
 
 **多 LLM 并行**：3 个 LLM 后台跑同 prompt，phase2 都过 → 选最好的一篇 publish（diversity benefits）。
@@ -494,6 +507,7 @@ tools/scripts/
 ├── lib/red-lines.mjs            # 红线引擎（阈值在顶部）
 ├── lib/_render-aura-shared.mjs  # prompt 组装
 ├── lib/_config.mjs              # config snapshot reader (getConfig fallback)
+├── lib/_cost-log.mjs            # cost-tracking append (orchestrator + mine)
 ├── lib/_reddit-oauth.mjs        # Reddit OAuth (friction-mine)
 ├── lib/gg-shared.mjs            # SA token, gFetch
 └── lib/_oauth-token.mjs         # OAuth token

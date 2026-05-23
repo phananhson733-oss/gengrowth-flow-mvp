@@ -108,11 +108,15 @@ node tools/scripts/gg-status.mjs --md | head -40
 | `选题登记表` | 21 列 page brief | promote 写 A 列 + 人工补 B-U |
 | `主题集群表` | cluster 元数据 | 人工填 |
 | `CTA Map` | CTA 文案库 | 人工填 |
-| `pipeline-status` | 每 page 进度（产物路径 + 状态） | `gg-status.mjs` 自动 |
-| `publish-log` | 每篇 publish 记录 | `gg-status.mjs` 自动 |
-| `quality-metrics` | phase2 每次跑的明细 | `gg-status.mjs` 自动 |
-| `cost-tracking` | LLM token / API call 计数 | （待集成） |
-| `config` | 阈值文档（人可改但代码不读） | 人工维护 |
+| `配置` | 目标国家 / TOPIC_KEYWORDS / NEGATIVE_KEYWORDS | 人工填 |
+| `pipeline-status` | 每 page 进度（产物路径 + 状态） | `gg-status.mjs --sheet` 重写 |
+| `publish-log` | 每篇 publish 记录 | `gg-status.mjs --sheet` append |
+| `quality-metrics` | phase2 每次跑的明细 | `gg-status.mjs --sheet` append |
+| `cost-tracking` | LLM token / API call 计数 | `gg-llm-orchestrator.mjs` + `gg-keyword-mine.mjs` 自动 append（2026-05-23 接入）|
+| `monitor-auto` | GSC + GA4 自动回填（清单 vs 人填的 `内容追踪`） | `gg-monitor.mjs --write-sheet` |
+| `config` | 阈值与门控（mine.* / phase2.* / tier*.word_*）| 人改 → `gg-config-sync.mjs` 拉到 `.gg-cache/config-snapshot.json` |
+
+> **2026-05-23 命名更新**：原 8 个 emoji 前缀 tab（⚙️配置 / 🚀趋势词 / ⚡快速胜利 / 🎯战略词 / 📌长尾词 / 📋分桶规则 / 📊内容追踪 / 📈来源分析）已全部 rename 去 emoji，便于 grep 与 IDE 搜索。原 PRD 文档仍保留 emoji 表述（SSOT），sheet 与代码已统一到无 emoji。
 
 ### 只在本地文件（需要工具看）
 
@@ -193,12 +197,14 @@ node tools/scripts/gg-status.mjs --md | head -40
 - 同样接 GA4：`dwell_time / cta_click_count`
 - **这样 CEO 一眼看到：这周 publish 的 5 篇文章，30 天后哪几篇真的带来流量**
 
-### 🥈 2. 成本追踪自动化（中 ROI）
+### 🥈 2. 成本追踪自动化（已落地 2026-05-23）
 
-当前 `cost-tracking` tab 是空的。建议：
-- LLM call 工具（`_call-hermes.mjs` / 调 codex 的 wrapper）写一行到 cost-tracking
-- DataForSEO 调用也记一笔（每次 mine 5 seed = 500 candidates ≈ $0.05）
-- **决策价值**：避免某个 entity 跑了 5 次 retry 烧了 $2 还没产出
+`cost-tracking` tab 已接入自动写入：
+- `gg-llm-orchestrator.mjs`：每篇 page × 每个 model 跑完 append 1 行（tokens_in / tokens_out / cost_usd / api_calls / notes）
+- `gg-keyword-mine.mjs`：每次 mine 跑完 append 1 行（DataForSEO $0.002 / 100 candidates）
+- 工具入口：`tools/scripts/lib/_cost-log.mjs` — 失败容错（OAuth / 网络问题不阻塞主流程）
+
+未来可扩展：rag-entity / friction-mine / serp-snapshot 也各加 1 行成本记录。
 
 ### 🥉 3. cluster 拓扑可视化（中 ROI，长期）
 

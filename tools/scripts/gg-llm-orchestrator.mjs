@@ -14,6 +14,7 @@ import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { logCost } from './lib/_cost-log.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO = resolve(__dirname, '..', '..');
@@ -523,6 +524,25 @@ async function main() {
   const summaryPath = join(outDir, `${pageId}-orchestrator.json`);
   writeFileSync(summaryPath, JSON.stringify(summary, null, 2));
   process.stderr.write(`[orchestrator] wrote ${summaryPath} (ok=${okCount}/${models.length}, est=$${totalCost.toFixed(4)})\n`);
+
+  // Append one cost-tracking row per model attempted (Stage 12 telemetry).
+  const costRows = [];
+  for (const m of models) {
+    const r = results[m];
+    if (!r) continue;
+    const c = r.cost_estimate_usd;
+    costRows.push({
+      operation: 'llm_call',
+      tool: 'gg-llm-orchestrator',
+      page_id: pageId,
+      tokens_in: c?.input_tokens_est || 0,
+      tokens_out: c?.output_tokens_est || 0,
+      cost_usd: c?.usd || 0,
+      api_calls: (r.attempts?.length) || 1,
+      notes: `${r.active_model || m}${r.diversified ? ` (diversified from ${m})` : ''} · ok=${r.ok ? 'yes' : 'no'} · retries=${r.retries ?? 0}`,
+    });
+  }
+  await logCost(costRows);
 
   // Exit non-zero if every model failed; partial success = exit 0 (downstream
   // publish picks whichever passed phase2).

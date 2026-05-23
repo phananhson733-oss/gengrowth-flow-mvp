@@ -1,424 +1,457 @@
-# PIPELINE.md — 补一篇新 SEO 文章的 12 步 runbook
+# PIPELINE.md — gengrowth-flow-mvp v8 完整链路操作手册
 
-> 实战来源：2026-05-22 补 4 篇 v8 aura-related 文章（orange / green aura, chakra
-> system overview, four-element framework）的完整路径。覆盖从空 page_id 到
-> astrologywiki.com 上线的全流程，包含每一步实际跑的命令、预期输出、踩过的坑。
+> **覆盖范围**：从"我们要做什么关键词"到"文章 commit 进 wiki repo"的全部 18 步。
 >
-> 适用：补 1 篇或一批新文章 + 让现有文章里指向新文章的占位符变成可点击 link。
+> **读者**：Ops（每天跑链路）、Engineer（调工具）、PM（看流程节点）。
+> CEO/PM 想要的高级别概览见 [OPS_OVERVIEW.md](./OPS_OVERVIEW.md)。
 >
-> 不适用：批量重写历史文章 / 改 prompt 模板 / 改 SEO stub 注入逻辑（这 3 件事
-> 走另外的流程，见末尾 § "不属于本 runbook"）。
+> **配套**：
+> - 实时状态：[gengrowth-flow-mvp workbook](https://docs.google.com/spreadsheets/d/1CkjOCgYbRfXGYc6l2FJOaxUIzxT0NBVUhUpgCjyzcQc/edit) — 5 个业务 tab + 5 个自动产物索引 tab
+> - 旧版纯下游 runbook：[PIPELINE-v1-downstream-runbook.md](./PIPELINE-v1-downstream-runbook.md)（补 1 篇文章的最小路径）
+> - 本地 dashboard：`node tools/scripts/gg-status.mjs --md` → 当前所有 page 的进度表
 
 ---
 
-## 0. Prerequisites
+## 0. 前置：环境与凭据
 
-**Repos**（都要本地 checkout）：
-
-| Repo | Path | 角色 |
+| Env 变量 | 用途 | 怎么获得 |
 |---|---|---|
-| `xdawayer/gengrowth-flow-mvp` | `/Users/wzb/gengrowth-flow-mvp` | 工具链 + staging |
-| `xdawayer/oracle` | `/Users/wzb/Code/oracle` | 网站源（Vite + React 19 SPA） |
-| `xdawayer/gengrowth-wiki` | `/Users/wzb/gengrowth-wiki` | Obsidian vault + 内容资产 |
+| `GG_SHEETS_FLOW_MVP_WORKBOOK_ID` | v8 链路用的新 Sheet | `1CkjOCgYbRfXGYc6l2FJOaxUIzxT0NBVUhUpgCjyzcQc`（直接写进 `~/.config/gg/_gg.env`） |
+| `GG_SHEETS_WORKBOOK_ID` | 旧 Sheet（继续保留，不动） | 跟之前一样 |
+| `GG_DATAFORSEO_LOGIN` / `PASSWORD` | DataForSEO Labs（Basic Auth） | dataforseo.com 后台 |
+| `GG_OAUTH_*` | 用户 OAuth（spreadsheets/GSC/GA4 scope） | `node tools/scripts/oauth-init.mjs` 一次 consent |
+| `GG_WRITER_SA_JSON` | writer SA JSON 路径 | `~/.config/gg/gg-writer-sa.json` |
 
-**Obsidian vault**：`/Users/wzb/gengrowth-wiki/wzb-obsidian/LLM-Wiki/`（**坑 #8**：
-`gg-obsidian-rag.mjs` 默认 vault-dir 是 `wzb-obsidian/LLM-Wiki/`，相对 flow-mvp 根目录解析，
-所以第一次跑不带 `--vault-dir` 一定失败。修复在 task #42。）
+**Service Account 必须共享到新 Sheet**：在新 workbook 点 Share → 加 `gg-writer-sa@aqueous-sandbox-496915-i1.iam.gserviceaccount.com` → Editor。否则 promote / mine / status 全部写不进去。
 
-**Env**：
-
-- 不强制要 `OPENROUTER_API_KEY` — 因为 LLM 输出走 Claude Code 主 session（codex MCP +
-  Agent fanout），不走 OpenRouter `_call-hermes.mjs`。
-- 不需要 `GG_SHEETS_WORKBOOK_ID` — 补充类 page 不在 Sheet 里，走 synth batch fixture。
+**两个 LLM CLI 任选其一**：
+- `claude` (Claude Code 自带) — 免费内置，但容易输出元评论
+- `codex exec` (OpenAI Codex CLI) — 输出最稳定，推荐
+- `_call-hermes.mjs` (OpenRouter Nous Hermes 3) — 需 `OPENROUTER_API_KEY`
 
 ---
 
-## 1. 设计 brief（手工，6 个必填字段）
+## 链路总览
 
-对每个新 page_id（约定 `page_<snake_case_entity>`），在
-`.gg-cache/overrides/<batch-name>.json` 加一个 entry：
+```
+[上游：选题 / 关键词 / 桥]
+1. mine          DataForSEO Labs → keyword_candidates 副表
+2. approve       人在 Sheet 标 K 列 wzb_approve=Y
+3. promote       approved → 关键词主表 A-I + 选题登记表 col A
+4. fill-v8       人补选题登记表 B-U 21 列 v8 brief
+5. cluster/CTA   人补主题集群表 + CTA Map 一行业务数据
+6. bridge        选题登记表 × 主题集群表 × CTA Map → brief override JSON
 
-```json
-{
-  "page_<entity>": {
-    "page_id": "page_<entity>",
-    "entity": "<Title-Cased Entity>",
-    "target_keyword": "<seo phrase>",
-    "associated_keywords": ["...", "...", "..."],
-    "search_volume": "<n>",
-    "cluster_jtbd": "<1 句话讲读者搜这个词的 JTBD>",
-    "content_angle": "<怎么写：framing + 区分度 + disclaimer>",
-    "internal_link_rule": "all → <pillar> + <siblings> + <chakra ref>",
-    "cta_text": "Take the 60-second Aura Reading Quiz to see how your colors map",
-    "cta_target_url": "https://astrologywiki.com/tools/aura-reading-quiz",
-    "tier_gate_block": "## Tier Gate（T2 Definition）\n\n- 必读 Friction（col J）: ...\n- 必读 Logic（col K）: ...\n- T2 = 标准版 — 字数 1500-1800，结构严格按 7 sections",
-    "rl6_hint": "<RL6 内容禁忌的 1-2 句提醒>",
-    "friction_themes": [
-      { "theme": "<key>", "scrubbed_quote": "<reddit-style quote>", "source_id": "reddit#1", "domain": "old.reddit.com", "mention_count": 8 },
-      { "theme": "<key>", "scrubbed_quote": "...", "source_id": "reddit#2", "domain": "...", "mention_count": 6 },
-      { "theme": "<key>", "scrubbed_quote": "...", "source_id": "reddit#3", "domain": "...", "mention_count": 5 }
-    ],
-    "tier": "T2",
-    "template": "Definition"
-  }
-}
+[中游：RAG / Prompt]
+7. sheet-pull    选题登记表 row → batch fixture JSON
+8. rag-entity    13-source entity passport → rag.json
+9. rag-obsidian  本地 Obsidian vault 检索 → rag.json
+10. rag-friction Reddit / community scrape → rag.json（缺则 SYNTH placeholder）
+11. render       batch + override + 3 个 RAG → v8 prompt + fixture sidecar
+
+[下游：LLM / 验证 / 发布]
+12. llm-call     prompt → claude/codex/hermes → _staging/X.md
+13. phase2       6 red lines 验证 → PASS 写 manifest
+14. publish      PASS 文章 → wiki 2 destinations cp
+15. commit       wiki repo git commit
+16. (可选) deploy oracle 网站 Vite build → Vercel
+17. (可选) monitor GSC 点击 + GA4 行为
+18. (可选) retro 周度回顾，调阈值 / 重跑失败 page
 ```
 
-T1 Pillar 多一个 `child_entities` + `child_count` 字段，`tier="T1"`，`template="Pillar"`。
-
-**参考已有 brief**：`.gg-cache/overrides/aura-colors-batch.json`（6 个完整 brief）+
-`.gg-cache/overrides/aura-related-batch.json`（4 个 2026-05-22 补充 brief）。
-
-**辅助工具**：`node tools/scripts/gg-brief-init.mjs --page-id <id> --entity "<X>" --tier T2 --template Definition` → 写一个带 TODO 占位符的骨架到
-`.gg-cache/overrides/<page-id>.json`。骨架里有 12 个 `TODO:` 标记（search_volume +
-cluster_jtbd + content_angle + internal_link_rule + tier_gate_block 内 2 个 + rl6_hint +
-3 × friction_themes 各 2 字段 = 6），用 `grep TODO: .gg-cache/overrides/<id>.json` 找全
-位置后逐个替换。
-
 ---
 
-## 2. 跑 Phase 0 RAG (entity-passport + obsidian-rag)
+## 阶段 1 — mine：拉关键词候选
+
+| 项 | 值 |
+|---|---|
+| 工具 | `tools/scripts/gg-keyword-mine.mjs` |
+| API | DataForSEO Labs `keyword_suggestions/live` |
+| 输入 | `--seeds "a,b,c" --entity "x"` |
+| 输出 | Sheet `keyword_candidates!A:K` 追加 N 行 |
+| 默认阈值 | `kd ≤ 50, volume ≥ 50, max 15 results`（见 config tab `mine.*`） |
+| 关键代码 | `parseLabsItem()` line 173, `keyword_properties.keyword_difficulty`（**不是** `keyword_info`） |
+| 打断点 | `--dry-run` 不写 Sheet，stdout 出 JSON |
+| 自定义 | `--max-kd 30 --min-vol 200 --max-results 20 --negatives "free,vs"` |
+| 失败模式 | 0/5 seed 成功 → exit 2；部分成功仍 ok |
+| 成本 | DataForSEO Labs $0.002 / 100 candidates；典型 5 seed = $0.05 |
+
+**实操命令**：
 
 ```bash
-node tools/scripts/gg-entity-passport.mjs \
-  --entity "<entity name>" --page-id page_<entity> --emit-rag
-
-node tools/scripts/gg-obsidian-rag.mjs \
-  --page-id page_<entity> --entity "<entity name>" \
-  --target-keyword "<seo phrase>" \
-  --vault-dir /Users/wzb/gengrowth-wiki/wzb-obsidian/LLM-Wiki
+node tools/scripts/gg-keyword-mine.mjs \
+  --seeds "blue aura,red aura,yellow aura,green aura,purple aura" \
+  --entity "aura"
 ```
 
-写出：
-- `.gg-cache/page_<entity>/entity-passport.rag.json`（13 源抓取，~30s/page）
-- `.gg-cache/page_<entity>/obsidian-rag.json`（扫 ~2258 notes，~0.7s/page）
+**怎么看产出**：Sheet `keyword_candidates` tab。每行：`query / volume / kd / cpc / serp_features / geo_score / ai_recommend / wzb_approve`。
 
-**4 个 page 并行**：每个进程独立、IO bound，直接 4 个 `&` 后台跑，wait。
+**`ai_recommend` 列含义**：`⚠️疑似高风险` = SERP 已有 AI Overview，蓝海词被吃风险大；空 = 正常。
 
-**WARN 是预期**：entity-passport 13 源里 reddit + chani + 3-4 个 esoteric 站常是
-"partial sources" 警告 — 这是 source rate-limit 或 placeholder 过滤的正常结果，
-不影响 rag.json 写出。
-
-**SERP cache 可选**：`gg-serp-snapshot.mjs` 写 `.gg-cache/serp/<page-id>.json`，
-缺失时 renderer 注释为 `<!-- SERP cache missing -->`，不阻塞渲染但内容质量略降。
+**`geo_score` 算法**：综合 volume + KD + CPC + intent，越高越值得做。当前 aura 长尾词 KD 全 0 → GEO 退化为 volume 排序。
 
 ---
 
-## 3. 写 batch fixture（synth，绕过 Sheet）
+## 阶段 2 — approve：人工筛 wzb_approve=Y
 
-新 page 不在 Sheet 里 → 不能用 `gg-sheet-pull`。手 mock 一个最小 fixture：
+| 项 | 值 |
+|---|---|
+| 触发 | 人在 Sheet 上把 `keyword_candidates!K` 改成 `Y` |
+| 严格规则 | `isApproved()` line 54：**必须严格 `'Y'`**，小写 `y` / `yes` / `是` 都拒绝 |
+| 判断依据 | I 列 geo_score（高优先）+ J 列 ai_recommend（避开 ⚠️）+ 业务直觉 |
+| 中断 | 任意时候改 K 列 |
 
-```json
-{
-  "schema_version": "1",
-  "batch_id": "<YYYYMMDDThhmmss>-<slug>-supplement",
-  "workbook_id": "synthetic",
-  "tab": "supplement",
-  "header": ["Target Keyword", "Tier", "Template", "Entity"],
-  "slice": { "start": 1, "end": <N> },
-  "pulled_at": "<YYYY-MM-DDTHH:MM:SS.000Z>",
-  "stats": { "total": <N>, "ready": <N> },
-  "rows": [
-    {
-      "source_row": 1,
-      "status": "ready",
-      "page_id": "page_<entity>",
-      "raw": { "_synthetic": "supplement row" },
-      "brief": {
-        "target_keyword": "<seo phrase>",
-        "entity": "<Entity>",
-        "tier": "T2",
-        "template": "Definition"
-      },
-      "todo": []
-    }
-  ]
-}
-```
-
-文件名：`.gg-cache/batches/<YYYYMMDDThhmmss>-<slug>-supplement.json`
-
-renderer 只需要 `row.status="ready"` + `row.page_id` 设置正确 — 其他 brief 字段会被
-overrides[page_id] 覆盖（见 `composeCfg` in `gg-render-batch.mjs:109`）。
-
-**自动化**（task #39 之后）：`node tools/scripts/gg-batch-synth.mjs --pages "page_X page_Y" --overrides .gg-cache/overrides/<file>.json` → 自动写 batch fixture。
+**节奏建议**：每周一次性 review 一批，标 5-10 个，不要一次标 50 个（promote 一次 batch 太大）。
 
 ---
 
-## 4. Render v8 prompt（写到 `.gg-cache/prompts/`）
+## 阶段 3 — promote：approved → 主表 + 选题登记表
+
+| 项 | 值 |
+|---|---|
+| 工具 | `tools/scripts/gg-keyword-promote.mjs` |
+| 输入 | Sheet 自动读 `keyword_candidates` + `关键词主表` |
+| 输出 | 主表 `A-I` 追加；可选选题登记表 `A` 追加 |
+| dedupe | `filterApprovedNotYetPromoted()` line 110，主表 A 列 lowercase 比对 |
+| 公式列保护 | `buildMasterRow()` line 60 — 只写 9 列，公式列 J/K/M/N/O/R/S/U 绝对不碰 |
+| 打断点 | `--dry-run` 看 JSON 预览 |
+| 常用 flag | `--also-draft-pages`（同时往选题登记表写一行 col A） |
+| Schema 漂移防护 | `validateCandidateHeader()` — 副表 header 缺 `query`/`wzb_approve` 会 fatal |
+
+**实操命令**：
+
+```bash
+node tools/scripts/gg-keyword-promote.mjs --also-draft-pages
+# 或先 dry-run
+node tools/scripts/gg-keyword-promote.mjs --dry-run --also-draft-pages
+```
+
+**报告输出**：stderr 写 `promoting N approved candidate(s) → 关键词主表!A:I`，stdout 列每个被 promote 的 query。
+
+---
+
+## 阶段 4 — fill-v8：选题登记表 21 列补完（人工）
+
+| 列 | 字段 | 必填？ | 作用 |
+|----|------|-------|------|
+| A | Target Keyword | promote 已填 | bridge 的 entry key |
+| F | Tier | ✅ | `Tier 1 (重装)` / `Tier 2 (标准)` — 决定字数 + 红线宽容度 |
+| G | Template | ✅ | `Pillar` / `Tutorial` / `Definition` |
+| H | Entity | ✅ | RAG 主体；**用简短名（"Blue Aura" 而非 "Aura / Blue Aura"）**，否则 RL4 escape hatch 不生效 |
+| I | Friction | ✅ | 用户痛点 3-5 句（喂 LLM friction_themes） |
+| J | Logic | ✅ | 写作 angle 一句话（喂 LLM 的 differentiator） |
+| K | CTA | 可选 | URL（CTA Map 会覆盖；空着也行） |
+| P | page_id | ✅ | 稳定 slug，正则 `/^[A-Za-z0-9_-]{1,64}$/` |
+| Q | cluster_id | ✅ | 关联 主题集群表 A 列 |
+| R | page_role | ✅ | 关联 CTA Map B 列 |
+| S | content_angle | ✅ | 写作角度（也供 LLM） |
+| T | psych_safety_flag | ✅ | `Y` / `N` — 严格大写。Y 则文章必须含 disclaimer（RL6） |
+| U | journal_prompts | 可选 | 反思问题，用 `|` 分隔 |
+
+**HEADER_MAP 在哪**：`tools/scripts/gg-sheet-pull.mjs:144`。
+**任何 schema 改动**：在 HEADER_MAP 里加映射条目即可，bridge/pull 都会用上。
+
+---
+
+## 阶段 5 — cluster/CTA：填业务元数据（人工）
+
+**主题集群表（20 列）**，关键字段：
+
+| 列 | 字段 | 解释 |
+|---|------|------|
+| A | cluster_id | 主键，被选题登记表 Q 列引用 |
+| C | track | `量产线` / `战略线` |
+| G | jtbd | Jobs-to-be-done 一句话 |
+| H | content_angle | 整个 cluster 的 angle |
+| N | internal_link_rule | 站内链规则（pillar / sibling 链接套路） |
+| O | cta_primary | 主推 CTA 的 page_role（匹配 CTA Map B 列） |
+| P | psych_safety_flag | cluster 级 Y/N（page 级 OR cluster 级 → 任一 Y 即触发 RL6） |
+
+**CTA Map（6 列）**，关键字段：
+
+| 列 | 字段 | 解释 |
+|---|------|------|
+| A | cta_id | 主键 |
+| B | page_role | 被主题集群表 O / 选题登记表 R 引用 |
+| C | cta_文案 | 显示给用户的文案 |
+| D | target_url | 落地页 URL |
+| E | ga4_event_name | 用于 GA4 事件追踪 |
+
+**Schema 在代码哪**：`tools/scripts/gg-sheet-to-brief.mjs:77 CLUSTER_HEADER_MAP` + `:102 CTA_HEADER_MAP`。
+
+---
+
+## 阶段 6 — bridge：3-way join → brief override JSON
+
+| 项 | 值 |
+|---|---|
+| 工具 | `tools/scripts/gg-sheet-to-brief.mjs` |
+| 输入 | Sheet 三张表 + `--row N` 或 `--rows N-M` |
+| 输出 | `.gg-cache/overrides/<X>.json` |
+| 路径监狱 | `validateOutPath()`：只能写 `.gg-cache/overrides/` 或 `_staging/`，防 `..` traversal |
+| Fail-loud gate | cluster_id 不在主题集群表 → FATAL（除非 `--allow-missing-cluster`） |
+| Fail-loud gate | page_role 不在 CTA Map → FATAL（除非 `--allow-missing-cta`） |
+| 打断点 | `--dry-run` stdout 出 JSON，不写文件 |
+
+**实操命令**：
+
+```bash
+node tools/scripts/gg-sheet-to-brief.mjs --row 310 --out .gg-cache/overrides/aura-color-blue.json
+```
+
+**输出验证**：
+
+```bash
+cat .gg-cache/overrides/aura-color-blue.json | jq '."page_aura_color_blue" | {cluster_jtbd, cta_text, cta_target_url, psych_safety_flag, content_angle}'
+```
+
+字段不空 = cluster / CTA join 真接上了。空 = 检查选题登记表 Q/R 列拼写 + 三张表 join key 一致性。
+
+---
+
+## 阶段 7 — sheet-pull：batch fixture
+
+| 项 | 值 |
+|---|---|
+| 工具 | `tools/scripts/gg-sheet-pull.mjs` |
+| 输出 | `.gg-cache/batches/<ISO>-<tab>-rows-<slice>.json` |
+| 与 bridge 区别 | sheet-pull 不 join cluster/CTA（下游 renderer 再 merge override） |
+
+```bash
+node tools/scripts/gg-sheet-pull.mjs --row 310 --out .gg-cache/batches/aura-color-blue.json
+```
+
+---
+
+## 阶段 8 — rag-entity：13-source 实体证据
+
+| 项 | 值 |
+|---|---|
+| 工具 | `tools/scripts/gg-entity-passport.mjs --emit-rag` |
+| 输出 | `.gg-cache/<page_id>/entity-passport.rag.json` |
+| 数据源 | Wikipedia, Reddit, Quora, 3-4 个 esoteric 站, etc.（13 个） |
+| 耗时 | ~30s / page |
+| WARN 是预期 | 部分 source rate-limit / placeholder 过滤 — 不阻塞 |
+
+```bash
+node tools/scripts/gg-entity-passport.mjs --entity "aura color blue" --page-id page_aura_color_blue --emit-rag
+```
+
+---
+
+## 阶段 9 — rag-obsidian：本地 vault 检索
+
+| 项 | 值 |
+|---|---|
+| 工具 | `tools/scripts/gg-obsidian-rag.mjs` |
+| 输出 | `.gg-cache/<page_id>/obsidian-rag.json` |
+| 数据源 | `/Users/wzb/gengrowth-wiki/wzb-obsidian/LLM-Wiki/` 默认 vault |
+| 耗时 | ~0.7s / page（扫 2258 notes） |
+| 0 match 不算 fail | 写入 `gap_note` 让 renderer 知道 |
+
+```bash
+node tools/scripts/gg-obsidian-rag.mjs --page-id page_aura_color_blue --entity "aura color blue" --target-keyword "aura color blue"
+```
+
+---
+
+## 阶段 10 — rag-friction：Reddit 社区抓取
+
+| 项 | 值 |
+|---|---|
+| 工具 | `tools/scripts/gg-friction-mine.mjs` |
+| 输出 | `.gg-cache/<page_id>/friction-mine.rag.json` |
+| 缺数据时 | renderer 自动 SYNTH placeholder（`TODO: scrubbed quote`）— **文章质量下降** |
+| RAG cache root | 默认仓库 `.gg-cache/`（曾误配为 `~/.gg-cache/` 已修） |
+
+**重要**：友邻爬虫需要 Reddit OAuth credential（在 `_gg.env`），目前可选；如果没配，render 会用 SYNTH placeholder，phase2 不 fail 但文章 friction section 是 TODO 文字。
+
+---
+
+## 阶段 11 — render：组装 v8 prompt
+
+| 项 | 值 |
+|---|---|
+| 工具 | `tools/scripts/gg-render-batch.mjs` |
+| 输入 | `--batch X.json --overrides Y.json` |
+| 输出 | `.gg-cache/prompts/<page_id>.v8-prompt.md`（≈30 KB / 3k tokens）+ `<page_id>.v8-fixture.json` |
+| Skip 条件 | RAG cache 缺、cfg 字段缺 → skip + hint |
+| 关键代码 | `lib/_render-aura-shared.mjs:renderAuraPrompt()` |
 
 ```bash
 node tools/scripts/gg-render-batch.mjs \
-  --batch .gg-cache/batches/<file>.json \
-  --overrides .gg-cache/overrides/<file>.json \
-  --dry-run  # 验证 cfg 13 字段齐了
-
-node tools/scripts/gg-render-batch.mjs \
-  --batch .gg-cache/batches/<file>.json \
-  --overrides .gg-cache/overrides/<file>.json \
-  --continue-on-error
+  --batch .gg-cache/batches/aura-color-blue.json \
+  --overrides .gg-cache/overrides/aura-color-blue.json
 ```
 
-写出每个 page：
-- `.gg-cache/prompts/page_<entity>.v8-prompt.md`（~29K 字符 / ~4200 tokens）
-- `.gg-cache/prompts/page_<entity>.v8-fixture.json`（validator 用的 sidecar）
-- `.gg-cache/page_<entity>/friction-mine.rag.json`（synth from brief.friction_themes）
+**看 prompt 内容**：直接 `less .gg-cache/prompts/<page_id>.v8-prompt.md`。
+**stderr 信号**：
+- `All placeholders replaced ✓` = 模板字段全填上
+- `SERP cache: MISSING` = 阶段 11 之前没跑 `gg-serp-snapshot`，phase2 RL3 会 skip
+- `Obsidian RAG: gap` = 阶段 9 0 match，正常
 
 ---
 
-## 5. LLM 生成（双 LLM × N pages 并行）
+## 阶段 12 — llm-call：prompt → 文章
 
-在 Claude Code 主 session 里 fanout：
+> ⚠️ **Frontier-only policy**（wzb 2026-05-23）：SEO 内容生成必须用**精确**的 frontier 配置。一篇文章 LLM 成本（几美分到几元）远小于排名 ROI。**不允许**为省 token 降级。
 
-```
-N × mcp__codex__codex calls (sandbox=workspace-write, cwd=flow-mvp)
-N × Agent(general-purpose) calls
-```
+**精确 model 配置**：
 
-每个调用都给同一段 prompt 模板：
+| 厂商 | Model | Reasoning | 命令 |
+|------|-------|-----------|------|
+| **Claude (本机 CLI)** | `claude-opus-4-7` | `xhigh`（extended-thinking max） | `claude -p --model claude-opus-4-7 < prompt > out.md` |
+| **ChatGPT / Codex (本机)** | `GPT 5.5` | `high` | `codex exec -c model=gpt-5.5 -c reasoning_effort=high - < prompt > out.md` |
+| **Gemini (本机 CLI)** | `gemini-3.0-pro` | — | `gemini --model gemini-3.0-pro < prompt > out.md` |
+| **OpenRouter (任一)** | `anthropic/claude-opus-4` / `openai/gpt-5.5` / `google/gemini-3-pro` / `nousresearch/hermes-3-llama-3.1-405b` | — | `node tools/scripts/_call-hermes.mjs --prompt X --output Y --model <id>` |
 
-> Read `.gg-cache/prompts/page_<X>.v8-prompt.md` (~29KB). That file IS your task spec. Write the complete markdown article to `_staging/page_<X>-<llm>-v8.md`. After writing, print exactly one line: `WROTE: <abs_path>  <word_count> words`.
+⚠️ **Claude CLI 默认会降级到 Sonnet**，必须显式 `--model claude-opus-4-7`。
+⚠️ **Retry 规则**：同 model 跑 2 次都 phase2 fail → 换更高 frontier model（diversity > repetition）。例如 hermes 失败 2 次 → 切 Opus 4.7 xhigh，不要第 3 次 hermes。
 
-约束（写到 prompt 里 — codex / Agent 都可能跑偏，要显式 restate）：
-- T2 Definition: 7 H2 (`What is X? / Why It Matters for Self-Awareness / X vs Adjacent Concepts: Mechanism + Trade-offs / Quick Reference Table / Reflection Prompts / Related Reading / Take Action`)
-- T1 Pillar: 9 H2 (`What are X? / Why It Matters for Self-Awareness / The X at a Glance / The N X: Quick Guide / How Shade and Combination Shift Readings / Common Misreads + Framework Limits / Reflection Prompts / Related Reading / Take Action`)
-- Word range: T2 1500-1800 / T1 2500-3500
-- target_keyword count: T2 5-8 / T1 8-12
-- Wikilinks 用 `[[<TBD-internal-link: <noun phrase>>]]` literal 格式
-- 无 YAML frontmatter / 无 preamble before H1 / 无 follow-up after CTA URL
+**output 文件名约定**：`_staging/<page_id>-<llm>-v8.md`（publish 脚本靠这命名 matrix）
 
-**坑 #3**：codex MCP 不会自然知道项目背景，写到 prompt 里 + 重述硬约束。
-**坑 #4**（已修，2026-05-22）：validator 早期 hardcode `## What are <Entity>?` 单一形式，
-对单数实体（"Chakra System" / "Four-Element Framework"）不友好。现在两个模板都接受
-4 种 `What is X? / What is the X? / What are X? / What are the X?` 变体，LLM 写任意
-grammatically-defensible 的形式都过。
+**坑**：claude/codex 第一轮容易啰嗦或字数不达标，准备好 retry。retry prompt 加显式 fix 提示能 1-2 轮收敛。
+
+**多 LLM 并行**：3 个 LLM 后台跑同 prompt，phase2 都过 → 选最好的一篇 publish（diversity benefits）。
 
 ---
 
-## 6. Phase 2 validate
+## 阶段 13 — phase2：6 红线验证
+
+| 检查 | 工具 | 阈值 (config tab) | FAIL 表现 |
+|------|------|------|----------|
+| Structure | `_phase2-validate.mjs:164` | H1=1, H2 列表 expected, words 范围 | 缺 H2 / 字数 < min |
+| RL1 clinical | `lib/red-lines.mjs:checkRL1` | 禁用 `clinical/treatment/cure/disorder/syndrome` | 命中即 fail |
+| RL2 competitor | `:checkRL2` | 6 个竞品名 ±200 char 范围内禁负面词 | 任意命中 fail |
+| RL3 plagiarism | `:checkRL3` | SERP top-10 n-gram overlap | `> 12 tokens` fail |
+| RL4 anchor | `:284` | jaccard < `0.05` AND shingle < `0.10` → drift | `≥ 2` drifted → fail；entity escape hatch line 319 |
+| RL5 stuffing | `:checkRL5` | target_keyword 出现次数 | `> 12` fail |
+| RL6 psych | `:367` | psych_safety=Y 时必须含 disclaimer | 缺 disclaimer fail（strict mode） |
+
+**实操命令**：
 
 ```bash
-tools/scripts/phase2-validate-batch.sh \
-  --pages "<page_id_1> <page_id_2> ..." \
-  --llms "claude codex" \
-  --version v8 \
-  --report /tmp/phase2-<slug>.md \
-  --logdir /tmp/phase2-logs-<slug>
+node tools/scripts/_phase2-validate.mjs \
+  --source _staging/page_aura_color_blue-codex-v8.md \
+  --page-id page_aura_color_blue \
+  --tag codex-v8
 ```
 
-PASS → 自动给 `_staging/<page>-<llm>-v8.md` 加 YAML frontmatter，写 `phase2_checks`
-到 manifest sidecar。FAIL → md/manifest 都不动，看 `/tmp/phase2-<slug>.md`
-诊断（结构 mismatch / RL drift）。
+**PASS 时**：写 `_staging/<page_id>-<llm>-v8.manifest.json`（`phase2_checks.overall = "pass"`）→ publish 才会捡。
+**FAIL 时**：不写 manifest → publish 跳过这一篇。
 
-**常见 FAIL**：
-- **`missing required H2: "..."`** — LLM 写的 H2 名字跟 validator hardcoded 不一致。
-  改文章或让 LLM 重写。
-- **`drifted sections: "<H2>" (jaccard=0.000)`** — first paragraph of section 没出现
-  entity 字面 — 加一句 entity 名进 first para 即可 fix。
+**修法**：
+- 字数不够 → retry LLM 加 "1500-1800 words" hint
+- RL4 drift → 在 drifted section 第一句加 entity 字面短语
+- RL5 stuffing → 把多余 keyword 换同义词
+- RL6 缺 disclaimer → 文章末尾加 `> This is not a clinical/mental health interpretation/advice` 类语句
 
 ---
 
-## 7. publish 到 wiki 双目标
+## 阶段 14 — publish：cp 到 wiki
+
+| 项 | 值 |
+|---|---|
+| 工具 | `tools/scripts/gg-publish-to-wiki.sh` |
+| 判断 | 只 publish `manifest.phase2_checks.overall == "pass"` 的 |
+| 落点 1 | `/Users/wzb/gengrowth-wiki/内容资产/astrologywiki/<batch-dir>/<date>-<slug>-<llm>.md` |
+| 落点 2 | `/Users/wzb/gengrowth-wiki/wzb-obsidian/LLM-Wiki/Writing/AstrologyWiki-<batch-dir>/...` |
+| Slug | 从 page_id 派生：`page_aura_color_blue` → `aura-color-blue` |
+| 打断点 | `--dry-run` 看 matrix |
 
 ```bash
-tools/scripts/gg-publish-to-wiki.sh \
-  --pages "<page_id_1> <page_id_2>" \
-  --llms "claude codex" \
-  --dry-run  # 先看会 cp 哪些
-
-tools/scripts/gg-publish-to-wiki.sh \
-  --pages "..." --llms "claude codex"
+bash tools/scripts/gg-publish-to-wiki.sh --pages "page_X" --llms "codex" --dry-run
+bash tools/scripts/gg-publish-to-wiki.sh --pages "page_X" --llms "codex"
 ```
 
-写到：
-- `/Users/wzb/gengrowth-wiki/内容资产/astrologywiki/v8-drafts-<YYYY-MM-DD>-claude/`
-- `/Users/wzb/gengrowth-wiki/wzb-obsidian/LLM-Wiki/Writing/AstrologyWiki-v8-drafts-<YYYY-MM-DD>-claude/`
-
-只 publish manifest.phase2_checks.overall=pass 的 — FAIL 自动 skip。
-
 ---
 
-## 8. 选 winner LLM
-
-约定：默认 claude；当 claude FAIL / codex 内容更好时用 codex。
-
-> 历史：2026-05-22 4 个新 page 里 orange/green 双双 PASS 选 claude（保持 convention），
-> chakra/four-element claude FAIL（自由发挥 H2 跟 hardcoded 不匹配） → 选 codex
-> winner。这是 mixed-winner 的典型场景。
-
----
-
-## 9. md → oracle ts（每个 winner 一次单文件 mode）
-
-batch 模式默认 `--winner-llm claude` 单 winner — mixed-winner 走 single-file × N：
+## 阶段 15 — commit：wiki repo
 
 ```bash
-node tools/scripts/gg-md-to-oracle-ts.mjs \
-  --source _staging/page_<X>-<winner>-v8.md \
-  --slug <slug> \
-  --out /Users/wzb/Code/oracle/data/articles/<slug>.ts
+cd /Users/wzb/gengrowth-wiki
+git add "内容资产/astrologywiki/<batch-dir>/<file>" "wzb-obsidian/LLM-Wiki/Writing/AstrologyWiki-<batch-dir>/<file>"
+git commit -m "feat(wiki): publish v8 <page_id> article"
 ```
 
-转换的 body transforms：
-1. `[[<TBD-internal-link: X>]]` → resolve via `TBD_LINK_RULES` → 命中 = real
-   markdown link / 未命中 = `*X*` italic
-2. autoLinkBareUrls — 裸 https URL 包成 `[url](url)`
-3. trim + escape `\`` / `${` for TS template
-
-**自动化**（task #41）：batch 模式增加 `--winner-map "page_X:codex,page_Y:claude"`。
+**不 push** — push 由人显式触发（避免被自动化推到远程）。
 
 ---
 
-## 10. 注册 oracle 4 处（手维护）
+## 阶段 16-18（可选）—— deploy + monitor + retro
 
-每个新文章 4 处都要加：
-
-### 10.1 `oracle/data/articles/index.ts`
-```ts
-import { <varName>En } from "./<slug>";
-// ...
-const ARTICLES_EN: WikiArticle[] = [
-  ..., // existing
-  <varName>En,
-];
-```
-
-### 10.2 `oracle/scripts/generate-seo-pages.mjs`
-```js
-const ARTICLE_SLUGS_EN_ONLY = [
-  ..., // existing
-  '<slug>',
-];
-```
-
-### 10.3 `flow-mvp/tools/scripts/gg-md-to-oracle-ts.mjs` TBD_LINK_RULES
-```js
-{ match: /\b<entity-regex>\b/i, href: '/en/wiki/<slug>' },
-```
-
-**注意 first-match-wins** — 把更窄的规则放上面（`green aura` before `aura colors`，
-`four-element` before `chakra`）。
-
-### 10.4 重生 6 篇老文章 .ts
-让新文章对应的 italic placeholder 变 link：
-
-```bash
-node tools/scripts/gg-md-to-oracle-ts.mjs --batch --winner-llm claude --version v8 \
-  --oracle-articles-dir /Users/wzb/Code/oracle/data/articles \
-  --pages "page_aura_colors_pillar page_blue_aura_meaning page_yellow_aura_meaning page_purple_aura_meaning page_white_aura_meaning page_red_aura_meaning"
-```
-
-**自动化**（task #43 + #44）：TBD_LINK_RULES 自动从 oracle/data/articles/*.ts 同步 +
-`gg-md-to-oracle-ts.mjs --refresh-existing` 自动重生所有现存 .ts。
+**16. deploy**：oracle 仓库 `npm run build` → Vercel auto-deploy（其他 repo 自动检测 wiki repo 变化）
+**17. monitor**：GSC 看 impressions / clicks；GA4 看 dwell time / CTA CTR
+**18. retro**：每周一次跑 `gg-status.mjs` 看通过率，调阈值，重跑失败 page
 
 ---
 
-## 11. codex review
+## 故障定位速查表
 
-```
-mcp__codex__codex(
-  cwd: /Users/wzb/Code/oracle,
-  sandbox: read-only,
-  approval-policy: never,
-  prompt: "<verify imports / sitemap / TBD rules / body diff drift / build chain>"
-)
-```
-
-返回 **Ship / Wait** + 5-bullet summary。HIGH 问题先修再 commit。
-
----
-
-## 12. commit + push + Vercel deploy verify
-
-### flow-mvp
-
-```bash
-git -C /Users/wzb/gengrowth-flow-mvp add \
-  tools/scripts/gg-md-to-oracle-ts.mjs \
-  _staging/page_<X>-{claude,codex}-v8.{md,manifest.json} \
-  docs/records/wzb/<YYYY-MM-DD>-chat-record.md
-
-git -C /Users/wzb/gengrowth-flow-mvp commit -m "feat(content): v8 supplement N <slug>"
-git -C /Users/wzb/gengrowth-flow-mvp push origin main
-```
-
-### oracle
-
-```bash
-cd /Users/wzb/Code/oracle && git add \
-  data/articles/index.ts data/articles/*.ts \
-  scripts/generate-seo-pages.mjs
-cd /Users/wzb/Code/oracle && git commit -m "feat(wiki): N new <cluster> articles + relink existing"
-cd /Users/wzb/Code/oracle && git push origin main
-```
-
-### Vercel deploy verify
-
-```bash
-until [ "$(gh api repos/xdawayer/oracle/commits/<sha>/status --jq .state 2>/dev/null)" != "pending" ]; do sleep 15; done && \
-  gh api repos/xdawayer/oracle/commits/<sha>/status --jq '{state, statuses: [.statuses[] | {context, state, target_url}]}'
-```
-
-期望 `state: success`。失败看 `target_url` 的 Vercel 日志。
+| 症状 | 大概率原因 | 修复 |
+|------|----------|------|
+| mine "no candidates" | seeds 太罕见 / DataForSEO API 抖动 | 加 seed 数 / 退而 `keyword_overview` 单查 |
+| mine status 401 | DataForSEO cred 失效 | 重新生成 + 改 `_gg.env` |
+| promote "no approved" | 主表 dedupe / wzb_approve 不是严格 'Y' | 看 K 列实际字符，必须大写 Y |
+| bridge "cluster fetch failed" | 主题集群表不存在 / SA 无权限 | share SA editor / 跑 bootstrap |
+| render "skipped — missing RAG" | 阶段 8/9 没跑 | 按 page_id 跑 entity-passport + obsidian-rag |
+| phase2 RL4 drifted | 第一段不含 entity literal | fixture entity 改单一短名 / 文章首句加 entity |
+| phase2 RL6 missing disclaimer | psych_safety=Y 但文章无 disclaimer | 文末加 disclaimer 行 |
+| publish "0 published" | manifest.overall != pass | 跑 phase2 → fix → 重跑 |
 
 ---
 
-## 踩过的 9 个坑（按时间序）
+## 阈值调整流程
 
-| # | 坑 | 触发条件 | Workaround | 永久 fix |
-|---|---|---|---|---|
-| 1 | brief 6 字段全靠手编 | 任何新 page | 抄已有 brief 模板改 | task #38 brief-init |
-| 2 | batch fixture 要手写 | page 不在 Sheet 里 | 手 mock 最小 fixture | task #39 synth batch |
-| 3 | LLM fanout 要手 fire | 任何渲染 | 主 session 一个 message 里 N × codex + N × Agent | task #45 one-shot |
-| 4 | ~~Pillar `What are <X>?` 期望复数~~ ✓ FIXED 2026-05-22 | — | — | validator 接受 4 变体 |
-| 5 | RL4 drift fail | section first para 不含 entity 字面 | edit 加一句 entity 进 first para | （hard to fix 自动化） |
-| 6 | mixed winner | claude/codex 各赢一些 page | single-file × N 调 gg-md-to-oracle-ts | task #41 winner-map |
-| 7 | TBD_LINK_RULES 双源漂移 | 新文章注册时 | 手在 mjs 加 regex | task #43 auto-sync |
-| 8 | obsidian-rag 默认 vault-dir 错 | 第一次跑 | 显式 `--vault-dir /Users/wzb/gengrowth-wiki/...` | task #42 default fix |
-| 9 | wiki repo `nothing to commit` | publish cp 后 | 不需要手 commit — auto-backup 定时跑 | 已是预期行为 |
+1. 在 Sheet `config` tab 改 value
+2. 同步改代码 — `lib/red-lines.mjs` (`RL3_N_GRAM`, `RL4_JACCARD_FLOOR`, etc.) 或 `gg-keyword-mine.mjs` (`maxKd` / `minVolume`)
+3. 在 config tab 的 `changed_at` / `changed_by` / `rationale` 填记录
+4. 必要时跑 retro 看历史 RL pass 率变化
+
+> ⚠️ Sheet config tab 当前是 **only-doc**（人可读），代码并不自动从 Sheet 读阈值。改阈值要改两处（Sheet + 代码）保持同步。
+> 后续可加 `gg-config-sync.mjs` 让代码从 Sheet 读阈值（在 [OPS_OVERVIEW.md "建议补充"](./OPS_OVERVIEW.md#补充建议) 中讨论）。
 
 ---
 
-## 不属于本 runbook（指向其他文档）
+## 文件目录速查
 
-- **改 v8 prompt 模板** → `tools/scripts/lib/content-draft-templates/{definition,pillar}.prompt.md`
-  + 重跑所有现有 page 的 render
-- **改 _phase2-validate 规则** → `tools/scripts/_phase2-validate.mjs` + `lib/red-lines.mjs`
-  + 重跑所有 phase2 batch
-- **改 SEO stub 注入** → `oracle/scripts/inject-spa-into-stubs.mjs` + 重 build oracle
-- **批量重写老文章** → 改 brief + 重跑 step 2-12，每个 page 一次
+```
+tools/scripts/
+├── gg-keyword-mine.mjs          # 1
+├── gg-keyword-promote.mjs       # 3
+├── gg-sheet-to-brief.mjs        # 6
+├── gg-sheet-pull.mjs            # 7
+├── gg-entity-passport.mjs       # 8
+├── gg-obsidian-rag.mjs          # 9
+├── gg-friction-mine.mjs         # 10
+├── gg-render-batch.mjs          # 11
+├── _call-hermes.mjs             # 12 (OpenRouter)
+├── _phase2-validate.mjs         # 13
+├── gg-publish-to-wiki.sh        # 14
+├── gg-status.mjs                # dashboard（手册没单步）
+├── _bootstrap-flow-mvp-workbook.mjs  # 一次性建表
+├── lib/red-lines.mjs            # 红线引擎（阈值在顶部）
+├── lib/_render-aura-shared.mjs  # prompt 组装
+├── lib/gg-shared.mjs            # SA token, gFetch
+└── lib/_oauth-token.mjs         # OAuth token
 
----
+.gg-cache/
+├── overrides/<X>.json           # bridge 产出（阶段 6）
+├── batches/<X>.json             # sheet-pull 产出（阶段 7）
+├── prompts/<page_id>.v8-prompt.md     # render 产出（阶段 11）
+├── prompts/<page_id>.v8-fixture.json  # phase2 自动读
+└── <page_id>/
+    ├── entity-passport.rag.json  # 阶段 8
+    ├── obsidian-rag.json         # 阶段 9
+    └── friction-mine.rag.json    # 阶段 10
 
-## 单 page 全流程估时（实测 2026-05-22）
+_staging/
+├── <page_id>-<llm>-v8.md         # 阶段 12
+└── <page_id>-<llm>-v8.manifest.json  # 阶段 13 PASS 时写
 
-| 步 | 时间 | Bottleneck |
-|---|---|---|
-| 1. brief | 5-15 min | 手写 6 字段 |
-| 2. entity-passport + obsidian-rag | ~1 min | 网络 IO（并行 4 个 page 也是 ~1 min） |
-| 3. batch fixture | 1 min | 手写 JSON |
-| 4. render prompt | 5s | CPU only |
-| 5. LLM 双 LLM 生成 | 3-8 min | LLM latency（并行所有 page 同时间） |
-| 6. phase2 validate | 10s | sync |
-| 7. publish wiki | 1s | cp |
-| 8. 选 winner | 0 | 看 phase2 report |
-| 9. md → ts | 5s × N |  |
-| 10. 注册 4 处 + 重生 6 篇老 | 3 min |  |
-| 11. codex review | 30s |  |
-| 12. commit + push + deploy verify | 2-3 min | Vercel build |
-
-补 1 篇 ≈ 20-30 min；补 4 篇并行 ≈ 30-40 min（瓶颈在 brief 写作）。
-
----
-
-## 实战参考
-
-最近一次完整跑通：2026-05-22 补 4 篇 aura-related。
-
-- flow-mvp commit: `b4206d8 feat(content): v8 supplement 4 aura-related articles + TBD_LINK_RULES expand`
-- oracle commit: `6e9a5a7 feat(wiki): 4 new aura articles + relink 6 existing aura entries`
-- live URLs:
-  - https://www.astrologywiki.com/en/wiki/orange-aura-meaning
-  - https://www.astrologywiki.com/en/wiki/green-aura-meaning
-  - https://www.astrologywiki.com/en/wiki/chakra-system-overview
-  - https://www.astrologywiki.com/en/wiki/four-element-framework
+docs/
+├── PIPELINE.md                  # 本文档
+├── OPS_OVERVIEW.md              # CEO/PM 视角
+├── PIPELINE-v1-downstream-runbook.md  # 旧 12 step runbook（补 1 篇）
+└── records/                     # 对话记录
+```

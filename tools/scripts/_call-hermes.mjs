@@ -16,6 +16,27 @@
 //   OPENROUTER_API_KEY=sk-or-v1-...
 //
 // Default model: nousresearch/hermes-3-llama-3.1-405b — override with --model.
+//
+// ⚠️ FRONTIER-ONLY POLICY (wzb 2026-05-23, see docs/OPS_OVERVIEW.md "LLM 选择策略"):
+//   SEO content generation must use the EXACT frontier tier below. Cost (a few cents
+//   per article) is dwarfed by ranking ROI. Do NOT downgrade to save tokens.
+//
+// Exact frontier configuration:
+//   Claude    : claude-opus-4-7 + reasoning=xhigh  (CLI: --model claude-opus-4-7)
+//   ChatGPT   : GPT 5.5 + reasoning=high           (codex: -c model=gpt-5.5 -c reasoning_effort=high)
+//   Gemini    : gemini-3.0-pro                     (NOT flash, NOT 2.5)
+//   Hermes    : nousresearch/hermes-3-llama-3.1-405b (default below)
+//
+// OpenRouter IDs to pass via --model (verify at openrouter.ai/models per release):
+//   anthropic/claude-opus-4
+//   openai/gpt-5.5
+//   google/gemini-3-pro
+//   nousresearch/hermes-3-llama-3.1-405b
+//
+// For local CLIs (no OpenRouter needed):
+//   claude -p --model claude-opus-4-7 < prompt > out.md
+//   codex exec -c model=gpt-5.5 -c reasoning_effort=high - < prompt > out.md
+//   gemini --model gemini-3.0-pro < prompt > out.md
 
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { homedir } from 'node:os';

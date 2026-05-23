@@ -59,12 +59,27 @@ const MAX_CLUSTER_SIZE = parseInt(arg('--max-size', '15'), 10);
 // Phase 3: embedding-mode flags
 const ALGO = arg('--algo', 'token'); // 'token' (default, backward compat) | 'embedding'
 const COSINE_THRESHOLD = parseFloat(arg('--cosine-threshold', '0.35'));
-const EMBED_MODEL = arg('--embed-model', 'text-embedding-3-small');
+// Backend: 'ollama' (local, free) | 'openai' (cloud, $). Auto-detect default:
+// OPENAI_API_KEY set → openai; else → ollama (assumes daemon at OLLAMA_HOST).
+const EMBED_BACKEND = arg(
+  '--embed-backend',
+  process.env.OPENAI_API_KEY ? 'openai' : 'ollama',
+);
+const DEFAULT_MODEL_BY_BACKEND = {
+  openai: 'text-embedding-3-small',
+  ollama: 'nomic-embed-text',
+};
+const EMBED_MODEL = arg('--embed-model', DEFAULT_MODEL_BY_BACKEND[EMBED_BACKEND] || 'nomic-embed-text');
 const EMBED_BATCH_SIZE = parseInt(arg('--embed-batch', '100'), 10);
+const OLLAMA_HOST = arg('--ollama-host', process.env.OLLAMA_HOST || 'http://localhost:11434');
 const INPUT_FILE = arg('--input', null); // 可选 newline-separated 关键词文件（绕过 sheet）
 
 if (!['token', 'embedding'].includes(ALGO)) {
   console.error(`ERR: --algo must be 'token' or 'embedding', got '${ALGO}'`);
+  process.exit(2);
+}
+if (!['openai', 'ollama'].includes(EMBED_BACKEND)) {
+  console.error(`ERR: --embed-backend must be 'openai' or 'ollama', got '${EMBED_BACKEND}'`);
   process.exit(2);
 }
 
@@ -80,9 +95,14 @@ if (has('--help') || has('-h')) {
   --min-size N           最小集群词数（默认 2）
   --max-size N           最大集群词数（默认 15，超出拆分）
   --algo X               token (默认) | embedding
-                         embedding 模式: OpenAI text-embedding-3-small + 凝聚聚类
+                         embedding 模式: 向量化 + 凝聚聚类（agglomerative）
+  --embed-backend X      ollama (默认无 key) | openai (设了 OPENAI_API_KEY 自动选)
+  --embed-model X        embedding model id
+                           ollama 默认: nomic-embed-text (768 dim, 137M, MIT)
+                                  备选: mxbai-embed-large (1024 dim, 335M, MTEB SOTA)
+                           openai 默认: text-embedding-3-small (1536 dim)
+  --ollama-host X        默认 http://localhost:11434 (env OLLAMA_HOST 也可)
   --cosine-threshold X   embedding 模式下的余弦距离阈值（默认 0.35；越小越严苛）
-  --embed-model X        embedding model id（默认 text-embedding-3-small，1536 dim）
   --embed-batch N        embedding API 单批次上限（默认 100）
   --input FILE           从文件读关键词列表（绕过 sheet，每行一个；用于 ind-002 子聚类测试）
 
@@ -327,7 +347,9 @@ function estimateTokens(words) {
   return total;
 }
 
-function estimateCostUsd(tokens, model = EMBED_MODEL) {
+function estimateCostUsd(tokens, model = EMBED_MODEL, backend = EMBED_BACKEND) {
+  // Ollama runs locally → $0.
+  if (backend === 'ollama') return 0;
   // text-embedding-3-small: $0.020 / 1M tokens (2026-05 OpenAI pricing).
   // text-embedding-3-large: $0.130 / 1M tokens.
   const rate = model === 'text-embedding-3-large' ? 0.130 : 0.020;
@@ -344,7 +366,7 @@ async function sleepMs(ms) {
  *
  * NOTE: never logs OPENAI_API_KEY.
  */
-async function callEmbeddingApi(batch, apiKey, model) {
+async function callOpenAIEmbed(batch, apiKey, model) {
   const url = 'https://api.openai.com/v1/embeddings';
   let lastErr;
   for (let attempt = 0; attempt < 3; attempt++) {
@@ -378,7 +400,7 @@ async function callEmbeddingApi(batch, apiKey, model) {
       lastErr = e;
       // Exponential backoff: 500ms, 1500ms, 4500ms
       const wait = 500 * Math.pow(3, attempt);
-      console.error(`  ⚠ embedding API attempt ${attempt + 1} failed: ${e.message} (retry in ${wait}ms)`);
+      console.error(`  ⚠ openai embed attempt ${attempt + 1} failed: ${e.message} (retry in ${wait}ms)`);
       if (attempt < 2) await sleepMs(wait);
     }
   }
@@ -386,18 +408,109 @@ async function callEmbeddingApi(batch, apiKey, model) {
 }
 
 /**
+ * Call Ollama embeddings API for a batch of strings.
+ * Uses POST /api/embed with input: [] (Ollama ≥0.1.46). Local, no auth.
+ */
+async function callOllamaEmbed(batch, model, host) {
+  const url = `${host.replace(/\/+$/, '')}/api/embed`;
+  let lastErr;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ model, input: batch }),
+      });
+      const text = await res.text();
+      let body;
+      try { body = JSON.parse(text); } catch { body = text; }
+      if (!res.ok) {
+        const errMsg = typeof body === 'object' && body.error
+          ? (typeof body.error === 'string' ? body.error : JSON.stringify(body.error))
+          : (typeof body === 'string' ? body : JSON.stringify(body));
+        throw new Error(`Ollama ${res.status} ${res.statusText}: ${errMsg}`);
+      }
+      if (!body.embeddings || !Array.isArray(body.embeddings) || body.embeddings.length !== batch.length) {
+        throw new Error(`Ollama: unexpected response shape (embeddings.length=${body.embeddings?.length} vs batch=${batch.length})`);
+      }
+      // Synthesize a "usage" so estimateCostUsd has something (cost is 0 for ollama).
+      const tokensApprox = batch.reduce((s, w) => s + Math.max(1, Math.ceil(w.length / 4)), 0);
+      return {
+        embeddings: body.embeddings,
+        usage: { total_tokens: tokensApprox },
+      };
+    } catch (e) {
+      lastErr = e;
+      // Ollama is local: ECONNREFUSED usually means daemon not running.
+      // Don't retry forever; surface fast.
+      if (/ECONNREFUSED|fetch failed/i.test(String(e.message))) {
+        throw new Error(
+          `Ollama daemon unreachable at ${host}. Start with: ollama serve  ` +
+          `(or check OLLAMA_HOST env). Original: ${e.message}`,
+        );
+      }
+      const wait = 500 * Math.pow(3, attempt);
+      console.error(`  ⚠ ollama embed attempt ${attempt + 1} failed: ${e.message} (retry in ${wait}ms)`);
+      if (attempt < 2) await sleepMs(wait);
+    }
+  }
+  throw lastErr || new Error('Ollama embeddings: exhausted retries');
+}
+
+/**
+ * Dispatch to the right backend.
+ */
+async function callEmbeddingApi(batch, model, opts) {
+  if (opts.backend === 'ollama') {
+    return callOllamaEmbed(batch, model, opts.host);
+  }
+  // OpenAI is the default for backward compat.
+  return callOpenAIEmbed(batch, opts.apiKey, model);
+}
+
+/**
  * Embed an array of words. Returns { vectors: number[][], tokensUsed, cacheHits, apiCalls }.
  * Cache hits skip API entirely.
+ *
+ * Signature is back-compat:
+ *   embedWords(words, apiKey, model, batchSize)    — old, defaults backend=openai
+ *   embedWords(words, { backend, apiKey, host, model, batchSize })  — new
  */
-async function embedWords(words, apiKey, model = EMBED_MODEL, batchSize = EMBED_BATCH_SIZE) {
+async function embedWords(words, optsOrApiKey, modelArg, batchSizeArg) {
   ensureCacheDir();
+
+  // Normalize options.
+  let opts;
+  if (typeof optsOrApiKey === 'string' || optsOrApiKey === null || optsOrApiKey === undefined) {
+    // Legacy positional call: (words, apiKey, model, batchSize)
+    opts = {
+      backend: optsOrApiKey ? 'openai' : EMBED_BACKEND, // null/empty key + ollama default works
+      apiKey: optsOrApiKey || null,
+      host: OLLAMA_HOST,
+      model: modelArg || EMBED_MODEL,
+      batchSize: batchSizeArg || EMBED_BATCH_SIZE,
+    };
+  } else {
+    opts = {
+      backend: optsOrApiKey.backend || EMBED_BACKEND,
+      apiKey: optsOrApiKey.apiKey || process.env.OPENAI_API_KEY || null,
+      host: optsOrApiKey.host || OLLAMA_HOST,
+      model: optsOrApiKey.model || EMBED_MODEL,
+      batchSize: optsOrApiKey.batchSize || EMBED_BATCH_SIZE,
+    };
+  }
+
+  if (opts.backend === 'openai' && !opts.apiKey) {
+    throw new Error('embedWords: backend=openai but no apiKey (OPENAI_API_KEY).');
+  }
 
   const vectors = new Array(words.length);
   const missingIdx = [];
   let cacheHits = 0;
 
+  // Cache key includes model name → different backends/models don't collide.
   for (let i = 0; i < words.length; i++) {
-    const cached = readCachedEmbedding(model, words[i]);
+    const cached = readCachedEmbedding(opts.model, words[i]);
     if (cached) {
       vectors[i] = cached;
       cacheHits++;
@@ -409,19 +522,19 @@ async function embedWords(words, apiKey, model = EMBED_MODEL, batchSize = EMBED_
   let tokensUsed = 0;
   let apiCalls = 0;
 
-  for (let off = 0; off < missingIdx.length; off += batchSize) {
-    const idxBatch = missingIdx.slice(off, off + batchSize);
+  for (let off = 0; off < missingIdx.length; off += opts.batchSize) {
+    const idxBatch = missingIdx.slice(off, off + opts.batchSize);
     const wordBatch = idxBatch.map((i) => words[i]);
-    const { embeddings, usage } = await callEmbeddingApi(wordBatch, apiKey, model);
+    const { embeddings, usage } = await callEmbeddingApi(wordBatch, opts.model, opts);
     apiCalls++;
     if (usage && typeof usage.total_tokens === 'number') tokensUsed += usage.total_tokens;
     for (let k = 0; k < idxBatch.length; k++) {
       vectors[idxBatch[k]] = embeddings[k];
-      writeCachedEmbedding(model, words[idxBatch[k]], embeddings[k]);
+      writeCachedEmbedding(opts.model, words[idxBatch[k]], embeddings[k]);
     }
   }
 
-  return { vectors, tokensUsed, cacheHits, apiCalls, totalMissing: missingIdx.length };
+  return { vectors, tokensUsed, cacheHits, apiCalls, totalMissing: missingIdx.length, backend: opts.backend, model: opts.model };
 }
 
 /**
@@ -697,14 +810,34 @@ function readInputFile(path) {
 async function main() {
   loadEnv();
 
-  // Resolve API key up front so embedding mode fails loud before we waste effort.
+  // Resolve credentials / daemon up front so embedding mode fails loud before we waste effort.
   let openaiKey = null;
   if (ALGO === 'embedding') {
-    openaiKey = process.env.OPENAI_API_KEY || null;
-    if (!openaiKey) {
-      console.error('ERR: --algo embedding requires OPENAI_API_KEY in env (~/.config/gg/_gg.env or shell).');
-      console.error('     The key is never logged. Set OPENAI_API_KEY=sk-... and retry.');
-      process.exit(2);
+    if (EMBED_BACKEND === 'openai') {
+      openaiKey = process.env.OPENAI_API_KEY || null;
+      if (!openaiKey) {
+        console.error('ERR: --embed-backend openai requires OPENAI_API_KEY in env (~/.config/gg/_gg.env or shell).');
+        console.error('     Key is never logged. Set OPENAI_API_KEY=sk-... or use --embed-backend ollama.');
+        process.exit(2);
+      }
+    } else if (EMBED_BACKEND === 'ollama') {
+      // Quick health probe; daemon unreachable → fail loud with actionable hint.
+      try {
+        const r = await fetch(`${OLLAMA_HOST.replace(/\/+$/, '')}/api/tags`);
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const j = await r.json();
+        const models = (j.models || []).map((m) => m.name);
+        if (!models.some((m) => m === EMBED_MODEL || m.startsWith(EMBED_MODEL + ':'))) {
+          console.error(`ERR: ollama model '${EMBED_MODEL}' not found on ${OLLAMA_HOST}.`);
+          console.error(`     Pull it first: ollama pull ${EMBED_MODEL}`);
+          console.error(`     Or pick from installed: ${models.join(', ') || '(none)'}`);
+          process.exit(2);
+        }
+      } catch (e) {
+        console.error(`ERR: cannot reach ollama daemon at ${OLLAMA_HOST}: ${e.message}`);
+        console.error('     Start it: ollama serve  (or set OLLAMA_HOST / --ollama-host)');
+        process.exit(2);
+      }
     }
   }
 

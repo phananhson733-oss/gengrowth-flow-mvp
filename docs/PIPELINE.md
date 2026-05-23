@@ -40,7 +40,11 @@
 3. promote          approved → 关键词主表 A-I + 选题登记表 col A
 3.5 backfill-dr     `gg-backfill-site-dr.mjs --dr <Ahrefs真实值>` → 关键词主表 I 列
 3.6 cluster-init    `gg-cluster-init.mjs --write` → 主题集群表 草稿（仅喂 R=快速胜利/长尾，PRD §7.3.2 修法 #4）
-                    `--algo embedding`（默认 token；embedding 走 text-embedding-3-small + 分簇，需 `OPENAI_API_KEY`）
+                    `--algo embedding`（默认 token；embedding 走向量化+凝聚聚类）
+                    `--embed-backend ollama|openai`（无 key 默认 ollama，本地免费）
+                    ollama 模型: `nomic-embed-text` (137M, 默认) / `mxbai-embed-large` (335M, MTEB+2) / `qwen3-embedding:8b` (8B, MTEB SOTA)
+                    openai 模型: `text-embedding-3-small` (默认，$0.02/M tokens)
+                    benchmark 工具: `tools/scripts/_benchmark-embedding.mjs` (3 模型同输入对比，输出 docs/EMBEDDING_BENCHMARK_*.md)
                     `gg-classify-unsorted.mjs` → 把 ind-001/ind-002 异质桶归类回 family
 4. fill-v8          人补选题登记表 B-U 21 列 v8 brief
 5. cluster/CTA      人补主题集群表 业务字段（track / jtbd / content_angle / cta） + CTA Map 一行
@@ -479,7 +483,8 @@ tools/scripts/
 ├── gg-deploy-oracle.sh          # 16 deploy
 ├── gg-monitor.mjs               # 17 GSC + GA4
 ├── gg-status.mjs                # dashboard（手册没单步）
-├── gg-cluster-init.mjs          # 3.6 cluster (token + embedding)
+├── gg-cluster-init.mjs          # 3.6 cluster (token + ollama/openai embedding)
+├── _benchmark-embedding.mjs     # ollama embedding 三模型对比
 ├── gg-cluster-fields-suggest.mjs  # 5 suggest business fields
 ├── gg-classify-unsorted.mjs     # 3.6 cluster gap (ind-001/ind-002)
 ├── gg-brief-suggest.mjs         # 4 suggest 21-col brief

@@ -56,13 +56,23 @@ function parseCliArgs(argv) {
     console.error(`ERR: --cosine-threshold must be in (0, 1), got ${COSINE_THRESHOLD}`);
     process.exit(2);
   }
+  const EMBED_BACKEND = arg(
+    '--embed-backend',
+    process.env.OPENAI_API_KEY ? 'openai' : 'ollama',
+  );
+  const DEFAULT_MODEL_BY_BACKEND = {
+    openai: 'text-embedding-3-small',
+    ollama: 'nomic-embed-text',
+  };
   return {
     TARGET,
     COSINE_THRESHOLD,
     WRITE_SHEET: has('--write-sheet'),
     DRY_RUN: !has('--write-sheet') || has('--dry-run'),
     WRITE_FILE: true,
-    EMBED_MODEL: arg('--embed-model', 'text-embedding-3-small'),
+    EMBED_BACKEND,
+    EMBED_MODEL: arg('--embed-model', DEFAULT_MODEL_BY_BACKEND[EMBED_BACKEND] || 'nomic-embed-text'),
+    OLLAMA_HOST: arg('--ollama-host', process.env.OLLAMA_HOST || 'http://localhost:11434'),
     WORKBOOK: arg('--workbook', 'flow-mvp'),
   };
 }
@@ -123,7 +133,7 @@ function cosSim(a, b) { return 1 - cosDist(a, b); }
 
 // Build a centroid for every cluster not in sourceIds. Small ind- clusters (1-2 words)
 // are kept as valid targets so e.g. ind-013 full-moon can still receive matches.
-async function buildClusterCentroids(clusters, sourceIds, apiKey, embedModel) {
+async function buildClusterCentroids(clusters, sourceIds, embedOpts) {
   const dests = clusters.filter((c) => !sourceIds.includes(c.cluster_id) && c.keywords.length >= 1);
   // Dedupe keywords across all destination clusters.
   const seen = new Set();
@@ -133,8 +143,8 @@ async function buildClusterCentroids(clusters, sourceIds, apiKey, embedModel) {
       if (!seen.has(k)) { seen.add(k); flat.push(k); }
     }
   }
-  console.log(`  embedding ${flat.length} unique destination keywords across ${dests.length} clusters...`);
-  const { vectors, tokensUsed, cacheHits, apiCalls, totalMissing } = await embedWords(flat, apiKey, embedModel);
+  console.log(`  embedding ${flat.length} unique destination keywords across ${dests.length} clusters via ${embedOpts.backend}/${embedOpts.model}...`);
+  const { vectors, tokensUsed, cacheHits, apiCalls, totalMissing } = await embedWords(flat, embedOpts);
   console.log(`  embed done: cache=${cacheHits}/${flat.length}  api=${apiCalls} calls (${totalMissing} new), tokens=${tokensUsed}`);
 
   // Map keyword → normed vec.
@@ -158,9 +168,9 @@ async function buildClusterCentroids(clusters, sourceIds, apiKey, embedModel) {
 
 // For each word, route to nearest centroid if sim ≥ threshold; else flag needs_new_cluster.
 // Returns { suggestions, needs_new_cluster, perClusterCount } (perClusterCount used for over-broad detection).
-async function classifyWords(words, centroids, apiKey, threshold, embedModel) {
-  console.log(`  embedding ${words.length} bucket words...`);
-  const { vectors, tokensUsed, cacheHits, apiCalls, totalMissing } = await embedWords(words, apiKey, embedModel);
+async function classifyWords(words, centroids, threshold, embedOpts) {
+  console.log(`  embedding ${words.length} bucket words via ${embedOpts.backend}/${embedOpts.model}...`);
+  const { vectors, tokensUsed, cacheHits, apiCalls, totalMissing } = await embedWords(words, embedOpts);
   console.log(`  embed done: cache=${cacheHits}/${words.length}  api=${apiCalls} calls (${totalMissing} new), tokens=${tokensUsed}`);
 
   const suggestions = [];
@@ -249,7 +259,7 @@ async function writeBackToSheet(token, sid, clusters, suggestions, sourceId) {
 
 function ensureDir(p) { if (!existsSync(p)) mkdirSync(p, { recursive: true }); }
 
-async function runForTarget(cfg, targetId, clusters, apiKey, token, sid) {
+async function runForTarget(cfg, targetId, clusters, embedOpts, token, sid) {
   console.log(`\n━━━ ${targetId} ━━━`);
   const source = clusters.find((c) => c.cluster_id === targetId);
   if (!source) { console.error(`ERR: cluster ${targetId} not on sheet — skipping`); return null; }
@@ -257,10 +267,10 @@ async function runForTarget(cfg, targetId, clusters, apiKey, token, sid) {
   console.log(`  source: ${source.cluster_name}  (${source.keywords.length} words)`);
 
   // Rebuild centroids per target so the source bucket can't pollute its own scoring.
-  const { centroids } = await buildClusterCentroids(clusters, [targetId], apiKey, cfg.EMBED_MODEL);
+  const { centroids } = await buildClusterCentroids(clusters, [targetId], embedOpts);
   console.log(`  built ${centroids.length} destination centroids`);
   const { suggestions, needs_new_cluster, perClusterCount } = await classifyWords(
-    source.keywords, centroids, apiKey, cfg.COSINE_THRESHOLD, cfg.EMBED_MODEL,
+    source.keywords, centroids, cfg.COSINE_THRESHOLD, embedOpts,
   );
 
   console.log(`\n  classified: ${suggestions.length} / ${source.keywords.length}  (${(100 * suggestions.length / source.keywords.length).toFixed(1)}%)`);
@@ -325,13 +335,39 @@ async function main() {
   await loadDeps();
   loadEnv();
 
-  const apiKey = process.env.OPENAI_API_KEY || null;
-  if (!apiKey) {
-    console.error('ERR: OPENAI_API_KEY missing in env (~/.config/gg/_gg.env or shell).');
-    console.error('     This script uses text-embedding-3-small. Key is never logged.');
-    console.error('     Set OPENAI_API_KEY=sk-... and retry.');
-    process.exit(2);
+  // Backend validation
+  let apiKey = null;
+  if (cfg.EMBED_BACKEND === 'openai') {
+    apiKey = process.env.OPENAI_API_KEY || null;
+    if (!apiKey) {
+      console.error('ERR: --embed-backend openai requires OPENAI_API_KEY in env.');
+      console.error('     Or use --embed-backend ollama (default if no key).');
+      process.exit(2);
+    }
+  } else if (cfg.EMBED_BACKEND === 'ollama') {
+    try {
+      const r = await fetch(`${cfg.OLLAMA_HOST.replace(/\/+$/, '')}/api/tags`);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const j = await r.json();
+      const models = (j.models || []).map((m) => m.name);
+      if (!models.some((m) => m === cfg.EMBED_MODEL || m.startsWith(cfg.EMBED_MODEL + ':'))) {
+        console.error(`ERR: ollama model '${cfg.EMBED_MODEL}' not found on ${cfg.OLLAMA_HOST}.`);
+        console.error(`     Pull it: ollama pull ${cfg.EMBED_MODEL}`);
+        console.error(`     Installed: ${models.join(', ') || '(none)'}`);
+        process.exit(2);
+      }
+    } catch (e) {
+      console.error(`ERR: cannot reach ollama at ${cfg.OLLAMA_HOST}: ${e.message}`);
+      console.error('     Start it: ollama serve');
+      process.exit(2);
+    }
   }
+  const embedOpts = {
+    backend: cfg.EMBED_BACKEND,
+    apiKey,
+    host: cfg.OLLAMA_HOST,
+    model: cfg.EMBED_MODEL,
+  };
 
   let sid;
   if (cfg.WORKBOOK === 'flow-mvp') sid = process.env.GG_SHEETS_FLOW_MVP_WORKBOOK_ID;
@@ -354,6 +390,7 @@ async function main() {
   console.log(`Workbook : ${cfg.WORKBOOK} (${sid.slice(0, 12)}…)`);
   console.log(`Target   : ${cfg.TARGET}`);
   console.log(`Threshold: ${cfg.COSINE_THRESHOLD} (cosine similarity)`);
+  console.log(`Backend  : ${cfg.EMBED_BACKEND}${cfg.EMBED_BACKEND === 'ollama' ? `  (${cfg.OLLAMA_HOST})` : ''}`);
   console.log(`Model    : ${cfg.EMBED_MODEL}`);
   console.log(`Mode     : ${cfg.DRY_RUN ? 'DRY-RUN' : 'WRITE-SHEET'}${cfg.WRITE_FILE ? ' + WRITE-FILE' : ''}`);
 
@@ -364,7 +401,7 @@ async function main() {
   const targets = cfg.TARGET === 'both' ? ['ind-001', 'ind-002'] : [cfg.TARGET];
   const results = [];
   for (const t of targets) {
-    const r = await runForTarget(cfg, t, clusters, apiKey, token, sid);
+    const r = await runForTarget(cfg, t, clusters, embedOpts, token, sid);
     if (r) results.push(r);
     // For 'both' mode: reload clusters between targets when writing.
     if (!cfg.DRY_RUN && cfg.WRITE_SHEET && targets.length > 1) {

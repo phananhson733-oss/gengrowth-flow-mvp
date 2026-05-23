@@ -190,4 +190,11 @@ related:
 2. **拆 ind-002 astrology (其它) 50 词**：算法无能为力，需人工按子主题（aspects / IC / 9th house / juno / AI astrology / 付费 reading）拆开
 3. **归类 ind-001 (未聚类) 71 词**：人工浏览归入合适的 family 或新建独立 cluster
 4. **business 决策**（按 PM 视角）：砍 6 个 noise 桶（astro-seek 系列 / dosha / life coach / persephone / 颜色精神含义 / astrocartography）
-5. Phase 3 embedding 聚类已上 (`--algo embedding`) — ind-001/ind-002 自动归类工具落地 (`gg-classify-unsorted.mjs`). 实际归类率待 `OPENAI_API_KEY` 配齐后实测验证。
+5. Phase 3 embedding 聚类已上 (`--algo embedding`) — ind-001/ind-002 自动归类工具落地 (`gg-classify-unsorted.mjs`).
+   - **2026-05-23 实测（ollama + nomic-embed-text）**：
+     - 全集 475 词 → **43 cluster / 442 已分配 / 33 未分配**（vs token 模式 52 cluster / 404 已分配）
+     - **ind-002 50 词异质桶 → 7 sub-cluster / 100% 拆开**（token 模式天花板：1 cluster）
+     - ind-001 71 兜底词 → **60 自动归类 (84.5%)** + 11 needs_new（包括 typo 如 "mecury"）
+     - top 自动归类去向：fam-nakshatra +16 / fam-birth-chart +6 / fam-lunar-nodes +5 / fam-vedic +3
+   - **不 --write 覆盖**：保留 Phase 2 手工 6-家族合并的 24 publishable units。Embedding 结果落 `.gg-cache/classify-suggestions/*.json` 供 review.
+   - **mxbai-embed-large (335M, MTEB 64.7) + qwen3-embedding:8b (8B, MTEB 70.58 multi)** 拉取卡在 CDN 95%，完成后用 `_benchmark-embedding.mjs` 自动 re-bench。完整结果见 [EMBEDDING_BENCHMARK_2026-05-23.md](./EMBEDDING_BENCHMARK_2026-05-23.md)。

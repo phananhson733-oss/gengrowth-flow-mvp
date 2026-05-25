@@ -66,6 +66,7 @@
 12. llm-call     prompt → claude/codex/hermes → _staging/X.md
 13. phase2       6 red lines 验证 → PASS 写 manifest
 14. publish      PASS 文章 → wiki 2 destinations cp
+14b. oracle-cv   PASS 文章 → oracle/data/articles/<slug>.ts (ZH 默认 merge 进 sibling EN)
 15. commit       wiki repo git commit
 16. (可选) deploy oracle 网站 Vite build → Vercel
 17. (可选) monitor GSC 点击 + GA4 行为
@@ -432,6 +433,26 @@ node tools/scripts/_phase2-validate.mjs \
 bash tools/scripts/gg-publish-to-wiki.sh --pages "page_X" --llms "codex" --dry-run
 bash tools/scripts/gg-publish-to-wiki.sh --pages "page_X" --llms "codex"
 ```
+
+---
+
+## 阶段 14b — oracle-convert：md → oracle/data/articles/<slug>.ts
+
+```bash
+# EN (default)：写 <slug>.ts，含 slugEn export
+node tools/scripts/gg-md-to-oracle-ts.mjs --batch --language en \
+  --oracle-articles-dir /Users/wzb/Code/oracle/data/articles
+
+# ZH：默认 merge 进 sibling EN <slug>.ts（single-file dual-export pattern）
+node tools/scripts/gg-md-to-oracle-ts.mjs --batch --language zh \
+  --oracle-articles-dir /Users/wzb/Code/oracle/data/articles
+
+# ZH，不 merge（写独立 <slug>.zh.ts，用于 dry-run / review）
+node tools/scripts/gg-md-to-oracle-ts.mjs --batch --language zh --no-merge \
+  --oracle-articles-dir /Users/wzb/Code/oracle/data/articles
+```
+
+详见 `docs/BILINGUAL.md §8`。merge 行为有 5 个加固（regex 终结符 / baseSlug / WikiArticle 检测 / CRLF / 原子写），smoke test 见 `tools/scripts/__tests__/gg-md-to-oracle-ts.smoke.test.mjs`。**stdout 末尾会输出 `⚠ MANDATORY follow-up` 提示** — 必须手动改 `oracle/data/articles/index.ts` 加 import + push ARTICLES_ZH，否则 ZH 页面 404。
 
 ---
 

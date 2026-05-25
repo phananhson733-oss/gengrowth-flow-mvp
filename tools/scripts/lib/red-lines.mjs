@@ -112,14 +112,93 @@ const STOP_WORDS = new Set([
   'i', 'me', 'my', 'them', 'their', 'they', 'he', 'she', 'his', 'her',
 ]);
 
-function tokenizeKeepStop(text) {
+// bilingual-v9-full: domain lexicon for ZH compound rejoin. Intl.Segmenter's
+// base Chinese dict knows common words like 蓝色 / 颜色 but doesn't know our
+// niche compounds — 气场 / 脉轮 / 喉轮 etc. — and splits them char-by-char.
+// We post-process the segmenter's output and greedily rejoin known compounds
+// so jaccard/shingle matches concept overlap rather than character overlap.
+// Ordered LONGEST-FIRST for greedy max-match correctness.
+export const ZH_DOMAIN_LEXICON = [
+  // 4-char compounds
+  '自我觉察', '心理安全', '直觉敏感', '能量中心', '内省冷静',
+  // 3-char compounds
+  '能量场', '冥想者', '反思性', '对照表', '速查表',
+  '海底轮', '生殖轮', '太阳轮', '眉心轮', '能量场',
+  // 2-char compounds — chakras
+  '脉轮', '心轮', '喉轮', '顶轮',
+  // 2-char compounds — aura family
+  '气场', '光环', '磁场', '能量',
+  // 2-char compounds — astrology / oracle vocab
+  '占星', '塔罗', '冥想', '瑜伽', '灵性', '神秘', '运势', '星盘',
+  // 2-char compounds — color × concept
+  '靛蓝', '气质', '反思', '觉察', '感知', '表达', '沟通',
+];
+
+// Greedy max-match rejoin: scan segmenter output for runs of single-char or
+// short tokens that concatenate into a known compound in ZH_DOMAIN_LEXICON.
+// E.g. ["气", "场"] → ["气场"]. Preserves all non-matching tokens verbatim.
+export function rejoinZhCompounds(tokens) {
+  const out = [];
+  let i = 0;
+  while (i < tokens.length) {
+    let matched = null;
+    for (const term of ZH_DOMAIN_LEXICON) {
+      let acc = '';
+      let j = i;
+      while (j < tokens.length && acc.length < term.length) {
+        acc += tokens[j];
+        j++;
+        if (acc === term) { matched = { term, end: j }; break; }
+        if (!term.startsWith(acc)) break;
+      }
+      if (matched) break;
+    }
+    if (matched) {
+      out.push(matched.term);
+      i = matched.end;
+    } else {
+      out.push(tokens[i]);
+      i++;
+    }
+  }
+  return out;
+}
+
+// Intl.Segmenter is in Node 18+ (built-in, no install) but its base Chinese
+// dict is weak on domain vocab. We use it for baseline word boundary detection
+// then rejoin our domain lexicon. Falls back to char-level when Segmenter is
+// missing (edge case: ancient Node).
+export function tokenizeZh(text) {
+  if (typeof Intl.Segmenter !== 'function') {
+    return (text.match(/[一-鿿]/g) || []);
+  }
+  const seg = new Intl.Segmenter('zh', { granularity: 'word' });
+  const base = [...seg.segment(text)].filter((s) => s.isWordLike).map((s) => s.segment);
+  return rejoinZhCompounds(base);
+}
+
+export function tokenizeKeepStop(text) {
   if (typeof text !== 'string') return [];
-  // bilingual-v9: regex matches EN words (lowercase ASCII alnum runs) OR
-  // single CJK character. Chinese has no word delimiters, so per-char
-  // tokenization is the cheap fallback (no jieba dependency); jaccard/
-  // shingle algorithms still work, just over char-level n-grams for ZH.
-  // EN behavior unchanged when text contains no CJK.
-  return (text.toLowerCase().match(/[a-z0-9]+|[一-鿿]/g) || []);
+  // bilingual-v9-full: hybrid tokenizer.
+  //   - EN/digits (lowercase alnum runs) — unchanged
+  //   - CJK runs — segmented via Intl.Segmenter + domain lexicon rejoin
+  // CJK runs are extracted as contiguous strings then tokenized; this keeps
+  // EN behavior bit-identical when there's no CJK and avoids segmenter
+  // overhead on EN-only docs.
+  const lower = text.toLowerCase();
+  if (!/[一-鿿]/.test(lower)) {
+    // EN-only fast path — unchanged from v9-demo.
+    return lower.match(/[a-z0-9]+/g) || [];
+  }
+  const tokens = [];
+  // Walk text, accumulating EN-alnum / CJK runs separately, then dispatching.
+  const re = /([a-z0-9]+)|([一-鿿]+)/g;
+  let m;
+  while ((m = re.exec(lower)) !== null) {
+    if (m[1]) tokens.push(m[1]);
+    else if (m[2]) tokens.push(...tokenizeZh(m[2]));
+  }
+  return tokens;
 }
 
 function tokensJaccard(a, b) {
@@ -342,9 +421,19 @@ export function checkRL4(draft, ctx) {
 
     const driftedByMetrics = jac < RL4_JACCARD_FLOOR && shg < RL4_SHINGLE_FLOOR;
     const containsEntity = entity && firstPara.toLowerCase().includes(entity);
+    // bilingual-v9-full: target-keyword recall (fraction of target tokens
+    // present in para) is a stronger anchor signal than jaccard for short
+    // keywords. Jaccard penalizes long paras because the union grows; recall
+    // doesn't. We anchor the section if ≥50% of target tokens appear in the
+    // para. Helps both EN (e.g. "aura color blue" → 2/3 present) and ZH
+    // (e.g. "蓝色气场代表什么" → 2/4 present via word-segmented tokenizer).
+    const paraSet = new Set(paraTokens);
+    const presentCount = targetTokens.filter((t) => paraSet.has(t)).length;
+    const targetCoverage = targetTokens.length === 0 ? 1 : presentCount / targetTokens.length;
+    const targetAnchored = targetCoverage >= 0.5;
 
-    if (driftedByMetrics && !containsEntity) {
-      drifted.push(`"${s.heading}" (jaccard=${jac.toFixed(3)}, shingle=${shg.toFixed(3)})`);
+    if (driftedByMetrics && !containsEntity && !targetAnchored) {
+      drifted.push(`"${s.heading}" (jaccard=${jac.toFixed(3)}, shingle=${shg.toFixed(3)}, target-recall=${targetCoverage.toFixed(2)})`);
     }
   }
   const pass = drifted.length < RL4_DRIFTED_SECTIONS_FAIL;

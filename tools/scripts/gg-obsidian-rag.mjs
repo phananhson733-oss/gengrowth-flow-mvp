@@ -32,6 +32,12 @@ import {
   validateWritePath,
   redact,
 } from './lib/gg-shared.mjs';
+// bilingual-v9-full: share the word-aware ZH tokenizer (Intl.Segmenter +
+// ZH_DOMAIN_LEXICON) so RAG matching against ZH notes uses the same
+// segmentation as phase2 RL4. Without this, entity "蓝色气场" would tokenize
+// to a single 4-char glob and never match note bodies that segment as
+// "蓝色 气场".
+import { tokenizeKeepStop as tokenizeZhAware } from './lib/red-lines.mjs';
 
 // ============================================================
 // constants
@@ -103,7 +109,10 @@ function parseArgs(argv) {
   const out = {
     pageId: null,
     entity: null,
+    entityZh: null,
     targetKeyword: '',
+    targetKeywordZh: '',
+    language: 'en',
     vaultDir: DEFAULT_VAULT,
     cacheDir: DEFAULT_CACHE,
     help: false,
@@ -113,7 +122,10 @@ function parseArgs(argv) {
     const a = argv[i];
     if (a === '--page-id') out.pageId = argv[++i];
     else if (a === '--entity') out.entity = argv[++i];
+    else if (a === '--entity-zh') out.entityZh = argv[++i];
     else if (a === '--target-keyword') out.targetKeyword = argv[++i] || '';
+    else if (a === '--target-keyword-zh') out.targetKeywordZh = argv[++i] || '';
+    else if (a === '--language') out.language = argv[++i];
     else if (a === '--vault-dir') out.vaultDir = argv[++i];
     else if (a === '--cache-dir') out.cacheDir = argv[++i];
     else if (a === '--rebuild-index') out.rebuildIndex = true;
@@ -131,8 +143,13 @@ usage:
 
 flags:
   --page-id <slug>            required (matches [A-Za-z0-9_-]{1,64})
-  --entity "<text>"           required (used for matching)
+  --entity "<text>"           required (used for matching, EN side)
+  --entity-zh "<text>"        optional ZH entity (e.g. "蓝色气场") — when set,
+                              notes are scored against BOTH EN and ZH tokens
+                              so the same cache serves EN+ZH renders
   --target-keyword "<text>"   optional (echoed into output for traceability)
+  --target-keyword-zh "<text>" optional (echoed into output as target_keyword_zh)
+  --language en|zh            optional (default en); echoed into output
   --vault-dir <path>          default ${DEFAULT_VAULT}
                               (override via env GG_OBSIDIAN_VAULT)
   --cache-dir <path>          default .gg-cache/
@@ -162,12 +179,36 @@ const STOPWORDS = new Set([
 
 export function tokenize(text) {
   if (!text || typeof text !== 'string') return [];
+  // bilingual-v9-full: route ZH content through the word-aware tokenizer
+  // (Intl.Segmenter + ZH_DOMAIN_LEXICON shared with phase2 RL4) so entity
+  // tokens for ZH inputs come out as words ("蓝色", "气场") rather than a
+  // single contiguous glob ("蓝色气场代表什么"). EN behavior unchanged.
+  if (/[一-鿿]/.test(text)) {
+    return tokenizeZhAware(text).filter((t) => t.length >= 1 && !STOPWORDS.has(t));
+  }
   return text
     .toLowerCase()
     .normalize('NFKC')
     .replace(/[^a-z0-9一-鿿\s]/g, ' ')
     .split(/\s+/)
     .filter((t) => t.length >= 2 && !STOPWORDS.has(t));
+}
+
+// bilingual-v9-full: combine EN + ZH entity tokens for matching when both
+// are available. Used by main() when --language zh or --entity-zh is passed.
+// Concept: a single Obsidian RAG cache can serve both EN and ZH renders so
+// long as the matching step considers tokens from both languages.
+export function combineEntityTokens(entityEn, entityZh) {
+  const en = entityEn ? tokenize(entityEn) : [];
+  const zh = entityZh ? tokenize(entityZh) : [];
+  // Dedup while preserving order: EN first (existing ranking behavior), ZH
+  // appended for additional reach into ZH notes.
+  const seen = new Set();
+  const out = [];
+  for (const t of [...en, ...zh]) {
+    if (!seen.has(t)) { seen.add(t); out.push(t); }
+  }
+  return out;
 }
 
 // ============================================================
@@ -479,14 +520,27 @@ export function pathPreferenceMultiplier(path) {
 export function rankNotes(index, entity, options = {}) {
   const max = options.max || MAX_NOTES;
   const entityTokens = tokenize(entity);
-  if (entityTokens.length === 0) return [];
+  // bilingual-v9-full: caller may pass options.entityTokensZh (ZH tokens) to
+  // ALSO score each note against the ZH entity. Notes are scored under EACH
+  // language separately, and the higher of the two scores wins. This lets a
+  // single RAG cache cover both EN and ZH renders — EN renders prefer EN-
+  // matched notes, ZH renders prefer ZH-matched notes.
+  const entityTokensZh = options.entityTokensZh || null;
+  if (entityTokens.length === 0 && (!entityTokensZh || entityTokensZh.length === 0)) return [];
+
+  const scoreOne = (note, body) => {
+    const candidates = [];
+    if (entityTokens.length) candidates.push(scoreNote(note, entityTokens, body));
+    if (entityTokensZh && entityTokensZh.length) candidates.push(scoreNote(note, entityTokensZh, body));
+    return candidates.reduce((a, b) => (b.score > a.score ? b : a), { score: 0, tier: null, matched: [] });
+  };
 
   // First pass: tier 1-3 + tier 5 (cheap; uses precomputed token sets).
   // We avoid loading body for T1/T2/T3 hits; only fall back to body for T5.
   const ranked = [];
   for (const [path, note] of Object.entries(index.noteByPath)) {
     // Cheap path: title/alias/heading match without body.
-    let res = scoreNote(note, entityTokens, '');
+    let res = scoreOne(note, '');
     if (res.score === 0) {
       // Read body lazily for T5 check (only first 16 KB to keep cost bounded).
       let body = '';
@@ -494,7 +548,7 @@ export function rankNotes(index, entity, options = {}) {
         const raw = readFileSync(path, 'utf8');
         body = stripFrontmatter(raw).slice(0, 16 * 1024);
       } catch { /* skip */ }
-      res = scoreNote(note, entityTokens, body);
+      res = scoreOne(note, body);
     }
     if (res.score > 0) {
       const multiplier = pathPreferenceMultiplier(path);
@@ -683,11 +737,19 @@ export function dedupSnippets(snippets) {
 // main runner
 // ============================================================
 
-export function buildOutput({ pageId, entity, targetKeyword, vaultRoot }) {
+export function buildOutput({ pageId, entity, entityZh, targetKeyword, targetKeywordZh, language, vaultRoot }) {
   const idx = buildIndex(vaultRoot);
   const entityTokens = tokenize(entity);
-  const ranked = rankNotes(idx, entity);
-  const snippets = buildSnippets(ranked, entityTokens, vaultRoot);
+  const entityTokensZh = entityZh ? tokenize(entityZh) : null;
+  const ranked = rankNotes(idx, entity, { entityTokensZh });
+  // For snippet extraction, use the union of tokens so snippets containing
+  // either EN or ZH entity hits get extracted. buildSnippets matches tokens
+  // verbatim against note body lines, so mixing is safe (no token-set-
+  // intersection logic that would zero out).
+  const snippetTokens = entityTokensZh
+    ? [...new Set([...entityTokens, ...entityTokensZh])]
+    : entityTokens;
+  const snippets = buildSnippets(ranked, snippetTokens, vaultRoot);
 
   const notesMatched = ranked.length;
   const stats = {
@@ -708,7 +770,12 @@ export function buildOutput({ pageId, entity, targetKeyword, vaultRoot }) {
     schema_version: SCHEMA_VERSION,
     page_id: pageId,
     entity,
+    // bilingual-v9-full: optional ZH fields for traceability + downstream
+    // identification. ZH render reads the same cache as EN render.
+    ...(entityZh ? { entity_zh: entityZh } : {}),
     target_keyword: targetKeyword || '',
+    ...(targetKeywordZh ? { target_keyword_zh: targetKeywordZh } : {}),
+    ...(language && language !== 'en' ? { language } : {}),
     generated_at: new Date().toISOString(),
     snippets,
     stats,
@@ -736,6 +803,13 @@ async function main() {
     return EXIT.CLI;
   }
   const targetKeyword = String(args.targetKeyword || '').trim();
+  // bilingual-v9-full: ZH inputs are optional; when present they augment the
+  // matching pass so notes containing only ZH content can be ranked into the
+  // RAG output. ZH render then reads the same cache and gets relevant
+  // ZH-content snippets.
+  const entityZh = args.entityZh ? String(args.entityZh).trim() : null;
+  const targetKeywordZh = String(args.targetKeywordZh || '').trim();
+  const language = args.language === 'zh' ? 'zh' : 'en';
 
   const vaultRoot = args.vaultDir;
   if (!existsSync(vaultRoot)) {
@@ -744,9 +818,10 @@ async function main() {
   }
   const cacheRoot = args.cacheDir;
 
-  console.log(`${TOOL_VERSION} — page_id="${pageId}" entity="${entity}"`);
+  const zhTag = entityZh ? ` entity_zh="${entityZh}"` : '';
+  console.log(`${TOOL_VERSION} — page_id="${pageId}" entity="${entity}"${zhTag} language="${language}"`);
   const t0 = Date.now();
-  const out = buildOutput({ pageId, entity, targetKeyword, vaultRoot });
+  const out = buildOutput({ pageId, entity, entityZh, targetKeyword, targetKeywordZh, language, vaultRoot });
   const ms = Date.now() - t0;
 
   // Write to .gg-cache/{page_id}/obsidian-rag.json

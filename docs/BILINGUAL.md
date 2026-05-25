@@ -106,7 +106,7 @@ optional `b.language` / `o.language` 字段已在 `composeCfg` 准备就绪。
 2. 中文 n-gram 用 `intl-segmenter` 或 jieba 切分后再算 jaccard / shingle
 3. RL4 / RL5 读 fixture 内新增的 `target_keyword_zh` 字段（先 LLM 派生填 fixture，后续 sheet 手填）
 
-## 8. Oracle 落盘（已就绪，未对接）
+## 8. Oracle 落盘（v9-full + auto-merge 已落地）
 
 Oracle 端**双语基础设施已完整**（无需改 oracle 代码）：
 
@@ -124,7 +124,16 @@ export function getArticleBySlug(slug: string, lang: Language): WikiArticle | un
 
 路由 `App.tsx` 已支持 `/:lang/wiki/:slug` 模式。同 slug 双语共存通过路由 lang 参数 + `getArticleBySlug(slug, lang)` 解决。
 
-**待对接** (`gg-md-to-oracle-ts.mjs`): 转换时读 `fixture.language`，决定 `varName` 后缀 (`En` / `Zh`) 和写入 `ARTICLES_EN[]` 还是 `ARTICLES_ZH[]`。当前脚本只走 EN 路径。
+**`gg-md-to-oracle-ts.mjs --language zh` 行为（v9-full + auto-merge）**：
+
+1. 默认 **merge 进 sibling EN `.ts`**（single-file dual-export 模式）：
+   - sibling `<slug>.ts` 存在 + 含 `WikiArticle` import → ZH export 注入文件末尾（`appended`），EN 不动；幂等再跑 → 替换已有 ZH block（`replaced`）。
+   - sibling 不存在 / sibling 不是 oracle article 模块（无 WikiArticle import）→ 退回写独立 `<slug>.zh.ts`（`standalone`）。
+2. `--no-merge` 强制 standalone，写 `<slug>.zh.ts` 不动 sibling。
+3. **必须手动同步 `oracle/data/articles/index.ts`**（脚本不动 index.ts）：把 `${slug}Zh` import 加到 sibling 已有的 import block，并 push 到 `ARTICLES_ZH[]`。stdout hint 第一行有 `⚠ MANDATORY follow-up` 提示。
+4. F1-F5 加固：终结符行首锚 + 防误切 markdown body 内 `\n};` / `};` 后跟注释也能匹配 / 已存在但格式不规范 → 报错不静默 append / CRLF 归一化 / 原子写（tmp + rename）/ 旧 `<slug>.zh.ts` 共存 stderr WARN。
+
+参考: `_staging/zh-demo/page_aura_color_blue-claude-v8.md` 是 demo 输入；smoke test `tools/scripts/__tests__/gg-md-to-oracle-ts.smoke.test.mjs` 覆盖 10 个 case。
 
 ## 9. Demo 验证记录 (2026-05-25)
 
@@ -174,11 +183,17 @@ total=2 rendered=2 skipped=0 errored=0
 - ✅ ZH demo phase2 全 PASS：Structure ✓ / RL1-6 全 PASS (RL4 中文 jaccard work)
 - ✅ EN regression 0 影响：RL1 still scans 6 EN competitors / RL5 EN keyword count / RL6 EN disclaimer 检测
 
+**§10 后续 (2026-05-25 收尾)**：
+
+- ✅ sheet 第 22 列在线 apply (调 `_bootstrap-flow-mvp-workbook.mjs` 把 spec 写到 GS) — 验证 `target_keyword_zh` 已在选题登记表 V1
+- ✅ oracle 自动合并 `<slug>.zh.ts` 进 `<slug>.ts` (single-file dual-export) — `gg-md-to-oracle-ts.mjs --language zh` 默认 merge，附 5 个加固（F1-F5）+ 10 case smoke test，4 路 review 验收
+- ✅ 中文 NLP 升级：`Intl.Segmenter` (Node 18+ 内置, 零依赖) + `ZH_DOMAIN_LEXICON` 后处理 (40+ aura/chakra/astrology 复合词) 替代 char-level; **RL4 新增 target-keyword recall escape** (50% target tokens 出现于 para 即 anchored, 适配 EN+ZH 短 keyword); 10 个 smoke test 验证; ZH demo + EN regression 均 PASS
+- ✅ 中文 obsidian RAG 接入：`gg-obsidian-rag.mjs` 新增 `--language` / `--entity-zh` / `--target-keyword-zh` flag; 复用 red-lines 的 word-aware tokenizer; 双语 entity 在 `rankNotes` 走 dual-score (取 max) — 单一 cache 同时服务 EN+ZH render，无需 render-side 改动。Live verify: ZH-aug 可拉到 EN-only 漏掉的中文 note（如 `go-reviewer - Go 代码审查`）；8 个 smoke test
+
 **仍待办 (low priority)**：
 
 | 项 | 工作量 | 优先级 |
 |---|---|---|
-| 中文版 obsidian RAG 接入 (现在中文 prompt 只能消费英文 RAG) | ~4-6h | 低 (LLM 中文化能力足够桥接) |
-| oracle 自动合并 `<slug>.zh.ts` 进 `<slug>.ts` (single-file dual-export) | ~1h | 低 (oracle 端可手动 merge) |
-| 中文 NLP 升级：用 jieba 替代 char-level tokenizer (RL4 jaccard 更准) | ~3-4h | 低 (char-level 已 work) |
-| sheet 第 22 列在线 apply (调 workbook-bootstrap 把 spec 实际写到 GS) | ~15min | 中 (此前操作时机) |
+| `gg-supplement-page.sh` 传 `--language` passthrough (避免 ZH 篇刷新时被吃成 EN) | ~15min | 低 (现仅 EN 路径用) |
+| `gg-render-batch.mjs --language zh` 时自动调 `gg-obsidian-rag.mjs --entity-zh ...` 重建 cache | ~30min | 低 (现可手动跑) |
+| jieba 升级到 native (现 lexicon-augmented Intl.Segmenter 已 work) | ~3-4h | 极低 |

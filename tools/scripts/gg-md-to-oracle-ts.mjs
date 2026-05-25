@@ -34,7 +34,7 @@
 // Lang: 'en' (our articles are EN-only).
 // Author: 'AstrologyWiki Team' (matches existing oracle convention).
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, renameSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -174,22 +174,22 @@ export function escapeForTemplate(s) {
   return s.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${');
 }
 
-export function emitTs({ slug, title, date, description, keywords, body, varName, language = 'en' }) {
+// Emit just the `export const <var>: WikiArticle = { ... };` block (no header,
+// no import). Used by both emitTs (full file) and mergeIntoSibling (append-only
+// path that preserves existing EN export).
+export function emitExportBlock({ slug, title, date, description, keywords, body, varName, language = 'en' }) {
   const escapedBody = escapeForTemplate(body);
   const keywordsLit = JSON.stringify(keywords, null, 2)
     .split('\n')
     .map((line, i) => (i === 0 ? line : '  ' + line))
     .join('\n');
   const lang = language === 'zh' ? 'zh' : 'en';
-  return `// Article: ${title}
-// Generated from flow-mvp _staging/ by tools/scripts/gg-md-to-oracle-ts.mjs.
-import type { WikiArticle } from "../../types";
-
-export const ${varName}: WikiArticle = {
+  const author = language === 'zh' ? 'AstrologyWiki 团队' : 'AstrologyWiki Team';
+  return `export const ${varName}: WikiArticle = {
   slug: ${JSON.stringify(slug)},
   title: ${JSON.stringify(title)},
   description: ${JSON.stringify(description)},
-  author: "AstrologyWiki Team",
+  author: ${JSON.stringify(author)},
   date: ${JSON.stringify(date)},
   schema: "Article",
   lang: "${lang}",
@@ -200,7 +200,92 @@ export const ${varName}: WikiArticle = {
 `;
 }
 
-function convertOne({ source, slug, out, language = 'en' }) {
+export function emitTs(opts) {
+  const block = emitExportBlock(opts);
+  return `// Article: ${opts.title}
+// Generated from flow-mvp _staging/ by tools/scripts/gg-md-to-oracle-ts.mjs.
+import type { WikiArticle } from "../../types";
+
+${block}`;
+}
+
+// Atomic write: tmp file in the same dir + rename, so a mid-write crash never
+// leaves a truncated .ts in oracle's articles dir (which would break the
+// whole oracle build because of an unterminated template literal).
+export function atomicWrite(path, contents) {
+  const tmp = `${path}.tmp.${process.pid}`;
+  writeFileSync(tmp, contents);
+  renameSync(tmp, path);
+}
+
+// Inject a new export block into an existing oracle <slug>.ts. Behavior:
+//   - If file already contains `export const ${varName}:` (the canonical
+//     line-starting form) → REPLACE that block in place (idempotent re-runs).
+//   - If file mentions `export const ${varName}` ANYWHERE but the strict block
+//     regex can't isolate it (formatting drift) → THROW. We never silent-append
+//     because that would emit a duplicate `export const ${varName}` and break
+//     TypeScript with "Cannot redeclare block-scoped variable".
+//   - If file lacks WikiArticle import → THROW. Caller falls back to writing a
+//     standalone file via emitTs (which includes the import).
+//   - Else → APPEND at file end (preserves all existing exports + comments).
+//
+// Regex strategy (F1):
+//   - Anchored block start: `^export const <varName>:\s*WikiArticle\s*=\s*\{`
+//   - Body: lazy `[\s\S]*?`
+//   - Terminator: `^};` at column 0, optionally followed by inline comment /
+//     whitespace, then end-of-line. The `m` flag enables `^/$` per line.
+//   This stops the markdown body's `\n};` inside a code fence from being
+//   mistaken for the export's closing brace, because the body lines are
+//   indented (inside a template literal, the closing `\`` sits before `};`).
+export function mergeIntoSibling(siblingPath, newBlock, varName) {
+  // F4: normalize CRLF → LF on read so the regex (which anchors on `\n`)
+  // behaves consistently across platforms.
+  const raw = readFileSync(siblingPath, 'utf8');
+  const existing = raw.replace(/\r\n/g, '\n');
+
+  // F3: sibling must be an oracle article module (or empty) so the injected
+  // `export const ...: WikiArticle = ...` resolves to the right type. We
+  // tolerate empty/whitespace-only files (caller will fall back to full
+  // emitTs). For non-empty files, the WikiArticle TYPE must be in scope —
+  // either via an `import ... WikiArticle` statement, or a local declaration
+  // (`interface WikiArticle` / `type WikiArticle`). A bare mention in a
+  // comment doesn't count.
+  const hasImport = /import\s+(?:type\s+)?\{[^}]*\bWikiArticle\b[^}]*\}/.test(existing);
+  const hasLocalDecl = /\b(?:interface|type)\s+WikiArticle\b/.test(existing);
+  if (existing.trim() !== '' && !hasImport && !hasLocalDecl) {
+    throw new Error(
+      `sibling ${siblingPath} does not import/declare WikiArticle — refusing to inject typed export. ` +
+      `Pass --no-merge to write a standalone .zh.ts instead.`,
+    );
+  }
+
+  const blockRegex = new RegExp(
+    `^export const ${varName}:\\s*WikiArticle\\s*=\\s*\\{[\\s\\S]*?^\\};[^\\n]*\\n?`,
+    'm',
+  );
+  if (blockRegex.test(existing)) {
+    return { merged: existing.replace(blockRegex, newBlock), mode: 'replaced' };
+  }
+
+  // F1 hard guard: if the symbol exists but our strict block extractor
+  // doesn't see it (unusual formatting / hand-edited), refuse rather than
+  // silently appending a duplicate.
+  const symbolRegex = new RegExp(`\\bexport const ${varName}\\b`);
+  if (symbolRegex.test(existing)) {
+    throw new Error(
+      `sibling ${siblingPath} contains "export const ${varName}" but our block ` +
+      `extractor couldn't isolate it (non-canonical formatting?). ` +
+      `Refusing to append a duplicate. Reformat the existing block to start with ` +
+      `"export const ${varName}: WikiArticle = {" and end with "};" on its own line, ` +
+      `or pass --no-merge.`,
+    );
+  }
+
+  const trimmed = existing.replace(/\s*$/, '');
+  return { merged: trimmed + '\n\n' + newBlock, mode: 'appended' };
+}
+
+function convertOne({ source, slug, out, language = 'en', mergeSibling = false, articlesDir = null }) {
   const md = readFileSync(source, 'utf8');
   const { frontmatter: fm, body } = parseFrontmatter(md);
   const resolvedSlug = slug || fm.slug;
@@ -213,17 +298,39 @@ function convertOne({ source, slug, out, language = 'en' }) {
   const keywords = [tgtKw, ...assoc].filter(Boolean);
   const transformedBody = transformBody(body);
   const description = deriveDescription(transformedBody);
-  // bilingual-v9: varName suffix follows language. Oracle convention is
-  // single-file dual-export (slugEn + slugZh in same .ts) for existing dual
-  // articles like track-mood-astrology.ts. v9-full demo emits a separate
-  // <slug>.zh.ts; oracle team merges manually (follow-up: auto-append into
-  // existing <slug>.ts when present).
+  // bilingual-v9-full: varName suffix follows language. Oracle convention is
+  // single-file dual-export (slugEn + slugZh in same .ts), e.g.
+  // track-mood-astrology.ts.
   const suffix = language === 'zh' ? 'Zh' : 'En';
   const varName = slugToCamel(resolvedSlug, suffix);
+  const exportBlock = emitExportBlock({ slug: resolvedSlug, title, date, description, keywords, body: transformedBody, varName, language });
+
+  // F2: sibling path is derived from the resolved (parsed) slug, not from
+  // `out`. This makes the merge target stable even if --out is a weird
+  // filename (e.g. foo.bar.ts, scratch path). `articlesDir` is the directory
+  // where oracle articles live; for the batch path it's args.oracle-articles-
+  // dir; for the single-file path it defaults to dirname(out).
+  const siblingDir = articlesDir || dirname(out);
+  const siblingPath = join(siblingDir, `${resolvedSlug}.ts`);
+
+  if (mergeSibling && siblingPath !== out && existsSync(siblingPath)) {
+    try {
+      const { merged, mode } = mergeIntoSibling(siblingPath, exportBlock, varName);
+      atomicWrite(siblingPath, merged);
+      return { slug: resolvedSlug, varName, out: siblingPath, language, mergeMode: mode };
+    } catch (e) {
+      // F3: WikiArticle type not in scope → fall back to writing a
+      // self-contained file (includes the import). All other errors (F1 hard
+      // guard etc.) propagate so the operator sees them.
+      if (!/does not import\/declare WikiArticle/.test(e.message)) throw e;
+      // Continue to standalone path below.
+    }
+  }
+
   const ts = emitTs({ slug: resolvedSlug, title, date, description, keywords, body: transformedBody, varName, language });
   mkdirSync(dirname(out), { recursive: true });
-  writeFileSync(out, ts);
-  return { slug: resolvedSlug, varName, out, language };
+  atomicWrite(out, ts);
+  return { slug: resolvedSlug, varName, out, language, mergeMode: 'standalone' };
 }
 
 function parseArgs(argv) {
@@ -379,6 +486,11 @@ async function main(argv) {
     }
     const language = langArg || 'en';
 
+    // bilingual-v9-full follow-up: ZH defaults to merging into EN sibling so
+    // oracle stays single-file dual-export. --no-merge keeps the legacy
+    // `<slug>.zh.ts` standalone output (useful for review / dry-run).
+    const mergeSibling = language === 'zh' && !args.no_merge;
+
     // Page list resolution priority:
     //   1. --refresh-existing → every oracle article with a v8 staging md
     //   2. --pages "..."     → explicit list
@@ -442,8 +554,10 @@ async function main(argv) {
         continue;
       }
       try {
-        const r = convertOne({ source, slug, out, language });
-        process.stdout.write(`✓ [${language}] ${r.slug}  →  ${r.out}  (var: ${r.varName}, winner: ${winnerLlm})\n`);
+        const r = convertOne({ source, slug, out, language, mergeSibling, articlesDir });
+        const tag = r.mergeMode === 'replaced' || r.mergeMode === 'appended'
+          ? `merge:${r.mergeMode}` : r.mergeMode;
+        process.stdout.write(`✓ [${language}] ${r.slug}  →  ${r.out}  (var: ${r.varName}, winner: ${winnerLlm}, ${tag})\n`);
         results.push({ pid, ok: true, winnerLlm, ...r });
       } catch (e) {
         process.stderr.write(`✗ ${pid}: ${e.message}\n`);
@@ -452,11 +566,24 @@ async function main(argv) {
     }
     const ok = results.filter((r) => r.ok);
     process.stderr.write(`\nbatch [${language}]: ${ok.length}/${results.length} converted\n`);
-    // Emit index.ts patch hint (imports + push lines) as machine-readable summary on stdout.
+    // F5: amplified post-batch hint. When ZH is merged into an EN sibling,
+    // index.ts MUST still be hand-patched or the ZH content is in the bundle
+    // but unreachable (silent /zh/wiki/<slug> 404). Show a ⚠ banner so the
+    // operator can't miss it. Also detect legacy `<slug>.zh.ts` co-existing
+    // with the merged file — those are stale and must be deleted, otherwise
+    // `oracle/data/articles/<slug>.zh.ts` and the merged `<slug>.ts` both
+    // claim the same slug.
     process.stdout.write('\n// --- index.ts patch hint ---\n');
-    const importPath = (r) => language === 'zh' ? `./${r.slug}.zh` : `./${r.slug}`;
+    const mergedResults = ok.filter((r) => r.mergeMode === 'replaced' || r.mergeMode === 'appended');
+    if (mergedResults.length) {
+      process.stdout.write('// ⚠ MANDATORY follow-up: oracle ZH 404 unless you patch index.ts.\n');
+      process.stdout.write('// The ZH export lives in <slug>.ts now, but ARTICLES_ZH still misses it.\n');
+    }
     for (const r of ok) {
-      process.stdout.write(`// import { ${r.varName} } from "${importPath(r)}";\n`);
+      const merged = r.mergeMode === 'replaced' || r.mergeMode === 'appended';
+      const importPath = (language === 'zh' && !merged) ? `./${r.slug}.zh` : `./${r.slug}`;
+      const noteSuffix = merged ? '  // add to existing import block' : '';
+      process.stdout.write(`// import { ${r.varName} } from "${importPath}";${noteSuffix}\n`);
     }
     const arr = language === 'zh' ? 'ARTICLES_ZH' : 'ARTICLES_EN';
     process.stdout.write(`// ${arr}.push:\n`);
@@ -467,6 +594,16 @@ async function main(argv) {
     for (const r of ok) {
       process.stdout.write(`//   '${r.slug}',\n`);
     }
+    // F5: legacy .zh.ts coexistence. After merge, `<slug>.ts` is the source
+    // of truth; an old `<slug>.zh.ts` is stale and risks index.ts importing
+    // from the wrong module.
+    const staleZhTs = mergedResults
+      .map((r) => join(articlesDir, `${r.slug}.zh.ts`))
+      .filter(existsSync);
+    if (staleZhTs.length) {
+      process.stderr.write('\n⚠ STALE FILES — delete these after patching index.ts:\n');
+      for (const p of staleZhTs) process.stderr.write(`    ${p}\n`);
+    }
     return ok.length === results.length ? 0 : 1;
   }
 
@@ -474,8 +611,17 @@ async function main(argv) {
     process.stderr.write('missing --source <md> and --out <ts>\n');
     return 2;
   }
-  const r = convertOne({ source: args.source, slug: args.slug, out: args.out });
-  process.stdout.write(`✓ ${r.slug}  →  ${r.out}  (var: ${r.varName})\n`);
+  const langArg = typeof args.language === 'string' ? args.language.toLowerCase() : null;
+  if (langArg && !['en', 'zh'].includes(langArg)) {
+    process.stderr.write(`invalid --language "${args.language}" — expected en|zh\n`);
+    return 2;
+  }
+  const language = langArg || 'en';
+  const mergeSibling = language === 'zh' && !args.no_merge;
+  // F2: sibling path is derived inside convertOne from the resolved frontmatter
+  // slug + dirname(out). No more guessing slug from --out filename.
+  const r = convertOne({ source: args.source, slug: args.slug, out: args.out, language, mergeSibling });
+  process.stdout.write(`✓ ${r.slug}  →  ${r.out}  (var: ${r.varName}, ${r.mergeMode})\n`);
   return 0;
 }
 

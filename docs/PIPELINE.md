@@ -335,6 +335,12 @@ node tools/scripts/gg-render-batch.mjs \
 - `--auto-serp-snapshot`：render 前若 SERP cache 缺，自动调用 `gg-serp-snapshot.mjs` 取一份，免去顺序记忆负担。
 - `--check-only`：只验证 RAG / SERP / cfg 完整性，不写 prompt，CI / 预飞行用。
 
+**双语轨道 (bilingual-v9, 2026-05-25)**：
+- `--language en` (默认) | `--language zh` | `--language both`
+- ZH 用独立中文 template (`definition.prompt.zh.md` / `pillar.prompt.zh.md`)，文化重写，**非翻译**
+- `--language both` 同 page 产 2 份 prompt + 2 份 fixture，文件名带 `.zh` 中缀互不覆盖
+- 详细规范见 [BILINGUAL.md](./BILINGUAL.md)
+
 ---
 
 ## 阶段 12 — llm-call：prompt → 文章

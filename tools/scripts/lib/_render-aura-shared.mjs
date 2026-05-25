@@ -114,9 +114,17 @@ export function renderAuraPrompt(cfg) {
   // Pillar template has different section structure (9 H2 hub/aggregator shape)
   // and different word/kw defaults (2500-3500 / 8-12) — fixture carries those
   // downstream to Phase 2 validator.
+  //
+  // bilingual-v9: cfg.language = 'en' (default) | 'zh' picks the language
+  // variant. ZH templates are full rewrites (not translations) tuned for
+  // cultural adaptation; EN remains the default for back-compat.
+  const lang = cfg.language === 'zh' ? 'zh' : 'en';
   const templateName = /^pillar$/i.test(cfg.template || '') ? 'pillar' : 'definition';
+  const templateFile = lang === 'zh'
+    ? `${templateName}.prompt.zh.md`
+    : `${templateName}.prompt.md`;
   const template = readFileSync(
-    join(REPO, 'tools/scripts/lib/content-draft-templates', `${templateName}.prompt.md`),
+    join(REPO, 'tools/scripts/lib/content-draft-templates', templateFile),
     'utf8'
   );
   const passportCache = JSON.parse(
@@ -130,8 +138,14 @@ export function renderAuraPrompt(cfg) {
 
   // 3. Replacements.
   const isPillar = templateName === 'pillar';
-  const wordRangeArr = cfg.word_range || (isPillar ? [2500, 3500] : [1500, 1800]);
+  // ZH defaults: Chinese articles measure in characters, not words. Tuned
+  // 2026-05-25 from first opus 4.7 production run (actual output 1590 chars).
+  // Chinese expression is denser; 1500-2000 chars ≈ EN 1500-1800 words depth.
+  const enWordDefault = isPillar ? [2500, 3500] : [1500, 1800];
+  const zhWordDefault = isPillar ? [3000, 4000] : [1500, 2000];
+  const wordRangeArr = cfg.word_range || (lang === 'zh' ? zhWordDefault : enWordDefault);
   const kwRangeArr = cfg.kw_count_range || (isPillar ? [8, 12] : [5, 8]);
+  const targetCountry = lang === 'zh' ? 'CN/华语圈 (简体中文)' : 'US (English)';
   const replacements = {
     '{{TIER}}': cfg.tier || 'T2',
     '{{target_keyword}}': TARGET_KW,
@@ -148,7 +162,7 @@ export function renderAuraPrompt(cfg) {
     '{{cta_text}}': cfg.cta_text,
     '{{cta_target_url}}': cfg.cta_target_url,
     '{{psych_safety_flag}}': cfg.psych_safety_flag || 'N',
-    '{{target_country}}': 'US (English)',
+    '{{target_country}}': targetCountry,
     '{{TIER_GATE_BLOCK}}': cfg.tier_gate_block,
     '{{TIER_LOGIC_HINT}}': '',
     '{{PSYCH_SAFETY_BLOCK}}': '',
@@ -169,11 +183,14 @@ export function renderAuraPrompt(cfg) {
     prompt = prompt.split(k).join(v);
   }
 
-  // 4. Write output.
-  const outPath = join(REPO, '.gg-cache', 'prompts', `${PAGE_ID}.${PROMPT_VERSION}-prompt.md`);
+  // 4. Write output. ZH variants get a .zh infix so EN and ZH coexist for the
+  // same page_id without overwriting each other:
+  //   EN: <page_id>.v8-prompt.md      ZH: <page_id>.v8.zh-prompt.md
+  const langInfix = lang === 'zh' ? '.zh' : '';
+  const outPath = join(REPO, '.gg-cache', 'prompts', `${PAGE_ID}.${PROMPT_VERSION}${langInfix}-prompt.md`);
   mkdirSync(dirname(outPath), { recursive: true });
   writeFileSync(outPath, prompt);
-  console.log('\nV8 PROMPT WRITTEN:', outPath);
+  console.log(`\n${lang.toUpperCase()} V8 PROMPT WRITTEN:`, outPath);
   console.log('Length:', prompt.length, 'chars,', prompt.split(/\s+/).filter(Boolean).length, 'tokens (rough)');
 
   const unmatched = prompt.match(/\{\{[A-Z_a-z]+\}\}/g);
@@ -188,7 +205,7 @@ export function renderAuraPrompt(cfg) {
   // 5. Write fixture.json sidecar — Phase 2 validator can auto-load via --page-id.
   // Carries all parameters needed for downstream validation, so the operator
   // only passes --source + --tag + --llm-source at validate time.
-  const fixturePath = join(REPO, '.gg-cache', 'prompts', `${PAGE_ID}.${PROMPT_VERSION}-fixture.json`);
+  const fixturePath = join(REPO, '.gg-cache', 'prompts', `${PAGE_ID}.${PROMPT_VERSION}${langInfix}-fixture.json`);
   const fixture = {
     schema_version: '1',
     page_id: PAGE_ID,
@@ -198,6 +215,7 @@ export function renderAuraPrompt(cfg) {
     template: isPillar ? 'Pillar' : 'Definition',
     tier: cfg.tier || 'T2',
     prompt_version: PROMPT_VERSION,
+    language: lang,
     word_range: wordRangeArr,
     kw_count_range: kwRangeArr,
     expected_h2: cfg.expected_h2 || (isPillar ? 9 : 7),

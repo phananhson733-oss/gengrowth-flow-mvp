@@ -146,11 +146,25 @@ const templateRaw = pick('template', 'template', 'Definition');
 // Normalize case: accept "Definition" / "definition" / "Pillar" / "pillar".
 const template = /^pillar$/i.test(templateRaw) ? 'Pillar' : 'Definition';
 
+// bilingual-v9: ZH defaults use Chinese character counts (≈ 1.4x EN word
+// counts) since Chinese has no whitespace word boundaries. wordCount() below
+// branches on language to count correctly.
 const templateDefaults = {
-  Definition: { word_range: [1500, 1800], kw_count_range: [5, 8], expected_h2: 7 },
-  Pillar: { word_range: [2500, 3500], kw_count_range: [8, 12], expected_h2: 9 },
+  en: {
+    Definition: { word_range: [1500, 1800], kw_count_range: [5, 8], expected_h2: 7 },
+    Pillar: { word_range: [2500, 3500], kw_count_range: [8, 12], expected_h2: 9 },
+  },
+  zh: {
+    // ZH word_range tuned 2026-05-25 from first opus 4.7 demo run: actual
+    // production output landed at 1590 chars; Chinese expression is denser
+    // than English so 1500-2000 chars ≈ EN 1500-1800 words in info density.
+    Definition: { word_range: [1500, 2000], kw_count_range: [5, 8], expected_h2: 7 },
+    Pillar: { word_range: [3000, 4000], kw_count_range: [8, 12], expected_h2: 9 },
+  },
 };
-const tplDef = templateDefaults[template];
+const langRaw = (args.language || fixture.language || 'en').toLowerCase();
+const language = langRaw === 'zh' ? 'zh' : 'en';
+const tplDef = templateDefaults[language][template];
 
 const wordRange = fixture.word_range || tplDef.word_range;
 const kwRange = fixture.kw_count_range || tplDef.kw_count_range;
@@ -175,6 +189,7 @@ const ctx = {
   })(),
   llm_source: args.llm_source || 'unknown',
   prompt_version: promptVersion,
+  language,
   word_range_min: Number.parseInt(args.word_min, 10) || wordRange[0],
   word_range_max: Number.parseInt(args.word_max, 10) || wordRange[1],
   kw_min: Number.parseInt(args.kw_min, 10) || kwRange[0],
@@ -184,32 +199,10 @@ const ctx = {
 };
 const outBasename = `${ctx.page_id}-${ctx.tag}`;
 
-function structureCheck(draft) {
-  const findings = [];
-  const h1Count = (draft.match(/^# /gm) || []).length;
-  const h2Count = (draft.match(/^## /gm) || []).length;
-  const h3Count = (draft.match(/^### /gm) || []).length;
-  const h4Count = (draft.match(/^#### /gm) || []).length;
-  if (h1Count !== ctx.expected_h1) findings.push(`H1 count = ${h1Count}, expected ${ctx.expected_h1}`);
-  if (h2Count !== ctx.expected_h2) findings.push(`H2 count = ${h2Count}, expected ${ctx.expected_h2}`);
-  if (h3Count !== 0) findings.push(`H3 count = ${h3Count}, expected 0`);
-  if (h4Count !== 0) findings.push(`H4 count = ${h4Count}, expected 0`);
-
-  const words = draft.trim().split(/\s+/).filter(Boolean).length;
-  if (words < ctx.word_range_min) findings.push(`word count ${words} < min ${ctx.word_range_min}`);
-  if (words > ctx.word_range_max) findings.push(`word count ${words} > max ${ctx.word_range_max}`);
-
-  // Required H2 list is template-aware: Definition is leaf-entity shape,
-  // Pillar is hub/aggregator shape.
-  //
-  // The "intro" H2 (`What is X?` / `What are X?` / `What is the X?` etc.) is
-  // entity-name-sensitive — Pillar entities are often plural-set ("Aura Colors",
-  // "Seven Chakras") which want "are", but they can also be singular abstract
-  // collectives ("Chakra System", "Four-Element Framework") which want "is" or
-  // "is the". Same for "at a Glance" / "vs Adjacent Concepts" H2s. Accept any
-  // grammatically-defensible variant so the validator doesn't reject the LLM
-  // for picking the natural article ("is the X" vs "are X") based on the
-  // entity itself. Only one variant must be present; missing = fail.
+// bilingual-v9: EN H2 spec builder (extracted from prior inline structure).
+// Literal entity substitution — LLM is expected to keep entity name verbatim
+// in EN articles (it's a noun phrase like "Blue Aura" / "Aura Colors").
+function buildEnH2Specs(ctx) {
   const introVariants = ctx.template === 'Pillar'
     ? [
         `## What are ${ctx.entity}?`,
@@ -224,8 +217,7 @@ function structureCheck(draft) {
         `## What is an ${ctx.entity}?`,
         `## What are ${ctx.entity}?`,
       ];
-
-  const requiredH2Specs = ctx.template === 'Pillar'
+  return ctx.template === 'Pillar'
     ? [
         { variants: introVariants, label: introVariants[0] },
         { variants: ['## Why It Matters for Self-Awareness'], label: '## Why It Matters for Self-Awareness' },
@@ -236,8 +228,6 @@ function structureCheck(draft) {
           ],
           label: `## The ${ctx.entity} at a Glance`,
         },
-        // Section 4 "## The N {{entity}}: Quick Guide" uses dynamic count
-        // (e.g. "The 7 Chakras: Quick Guide") → match by suffix only.
         { variants: [': Quick Guide'], label: '<...>: Quick Guide' },
         { variants: ['## How Shade and Combination Shift Readings'], label: '## How Shade and Combination Shift Readings' },
         { variants: ['## Common Misreads + Framework Limits'], label: '## Common Misreads + Framework Limits' },
@@ -260,9 +250,92 @@ function structureCheck(draft) {
         { variants: ['## Related Reading'], label: '## Related Reading' },
         { variants: ['## Take Action'], label: '## Take Action' },
       ];
+}
+
+// bilingual-v9: ZH H2 spec builder. ZH templates require LLM to translate
+// {{entity}} → native Chinese, so we can't substitute the EN entity literally.
+// Instead match by stable Chinese suffix (e.g. `是什么？` / `速查表` /
+// `自我觉察小提示`) — the LLM is constrained to those exact section titles
+// (definition.prompt.zh.md `## 输出结构` section).
+//
+// Question mark is full-width `？` per ZH typographic convention; we also accept
+// half-width `?` since LLM mixing is common.
+function buildZhH2Specs(ctx) {
+  const introQuestionMark = ['？', '?'];
+  const introVariants = introQuestionMark.flatMap((q) => [
+    `## ${ctx.entity} 是什么${q}`,           // EN entity kept (fallback)
+    `## ${ctx.entity}（${ctx.entity}） 是什么${q}`, // hybrid (we discourage but accept)
+  ]);
+  // For ZH, also match any line that ends with `是什么？` or `是什么?` since the
+  // LLM may translate the entity to a native Chinese name.
+  const introSuffixMatch = (draft) => {
+    const re = /^## [^\n]+?\s*是什么[？?]/m;
+    return re.test(draft);
+  };
+  return ctx.template === 'Pillar'
+    ? [
+        { variants: introVariants, label: `## <entity 中文译名> 是什么？`, matchFn: introSuffixMatch },
+        { variants: ['## 为什么先理解整个家族再看单一颜色', '## 为什么先理解整个家族'], label: '## 为什么先理解整个家族' },
+        { variants: ['一览表'], label: '## <entity> 一览表 (substring `一览表`)' },
+        { variants: ['：速览', ': 速览', '速览'], label: '## <count> 个 <entity>：速览' },
+        { variants: ['## 色调浓淡与组合如何改变解读'], label: '## 色调浓淡与组合如何改变解读' },
+        { variants: ['## 常见误读 + 框架边界', '## 常见误读+框架边界'], label: '## 常见误读 + 框架边界' },
+        { variants: ['## 自我觉察小提示'], label: '## 自我觉察小提示' },
+        { variants: ['## 延伸阅读'], label: '## 延伸阅读' },
+        { variants: ['## 下一步行动'], label: '## 下一步行动' },
+      ]
+    : [
+        { variants: introVariants, label: `## <entity 中文译名> 是什么？`, matchFn: introSuffixMatch },
+        { variants: ['## 为什么了解它能帮助自我觉察'], label: '## 为什么了解它能帮助自我觉察' },
+        { variants: ['与相近概念'], label: '## <entity> 与相近概念：机制 + 取舍 (substring `与相近概念`)' },
+        { variants: ['速查表'], label: '## <entity> 速查表 (substring `速查表`)' },
+        { variants: ['## 自我觉察小提示'], label: '## 自我觉察小提示' },
+        { variants: ['## 延伸阅读'], label: '## 延伸阅读' },
+        { variants: ['## 下一步行动'], label: '## 下一步行动' },
+      ];
+}
+
+function structureCheck(draft) {
+  const findings = [];
+  const h1Count = (draft.match(/^# /gm) || []).length;
+  const h2Count = (draft.match(/^## /gm) || []).length;
+  const h3Count = (draft.match(/^### /gm) || []).length;
+  const h4Count = (draft.match(/^#### /gm) || []).length;
+  if (h1Count !== ctx.expected_h1) findings.push(`H1 count = ${h1Count}, expected ${ctx.expected_h1}`);
+  if (h2Count !== ctx.expected_h2) findings.push(`H2 count = ${h2Count}, expected ${ctx.expected_h2}`);
+  if (h3Count !== 0) findings.push(`H3 count = ${h3Count}, expected 0`);
+  if (h4Count !== 0) findings.push(`H4 count = ${h4Count}, expected 0`);
+
+  // bilingual-v9: word count branches on language. EN uses whitespace word
+  // count; ZH counts CJK characters + latin words + digit groups (close to
+  // "tokens" for a Chinese reader). Without this, ZH drafts get ~1 word from
+  // split(/\s+/) and always fail the lower bound.
+  let words;
+  if (ctx.language === 'zh') {
+    const cjk = draft.match(/[一-鿿]/g) || [];
+    const latin = draft.match(/[A-Za-z]+/g) || [];
+    const digits = draft.match(/[0-9]+/g) || [];
+    words = cjk.length + latin.length + digits.length;
+  } else {
+    words = draft.trim().split(/\s+/).filter(Boolean).length;
+  }
+  if (words < ctx.word_range_min) findings.push(`word count ${words} < min ${ctx.word_range_min}`);
+  if (words > ctx.word_range_max) findings.push(`word count ${words} > max ${ctx.word_range_max}`);
+
+  // Required H2 list is template-aware (Definition leaf vs Pillar hub) AND
+  // language-aware (EN literal-match vs ZH substring-match — ZH entity may be
+  // translated by LLM so we match by stable Chinese suffix instead of literal
+  // {{entity}} substitution).
+  const requiredH2Specs = ctx.language === 'zh'
+    ? buildZhH2Specs(ctx)
+    : buildEnH2Specs(ctx);
 
   for (const spec of requiredH2Specs) {
-    const found = spec.variants.some((v) => draft.includes(v));
+    // bilingual-v9: spec.matchFn (if present) is a regex-aware matcher used
+    // for the ZH intro H2 where the entity may be translated by the LLM. If
+    // present, prefer it; fall back to substring variants for everything else.
+    const found = (typeof spec.matchFn === 'function' && spec.matchFn(draft))
+      || spec.variants.some((v) => draft.includes(v));
     if (!found) findings.push(`missing required H2: "${spec.label}"`);
   }
 

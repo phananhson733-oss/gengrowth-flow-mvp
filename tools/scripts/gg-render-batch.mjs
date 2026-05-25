@@ -6,6 +6,16 @@
 //   node tools/scripts/gg-render-batch.mjs --batch <path> --slice 3-5
 //   node tools/scripts/gg-render-batch.mjs --batch <path> --row 3 \
 //        --overrides path/to/overrides.json
+//   node tools/scripts/gg-render-batch.mjs --batch <path> --row 3 --language zh
+//   node tools/scripts/gg-render-batch.mjs --batch <path> --row 3 --language both
+//
+// bilingual-v9: --language en|zh|both
+//   - en   (default if omitted; uses definition.prompt.md / pillar.prompt.md)
+//   - zh   (uses definition.prompt.zh.md / pillar.prompt.zh.md — cultural
+//          adaptation, NOT translation. ZH prompts auto-derive native Chinese
+//          long-tail keywords from the same English target_keyword.)
+//   - both (renders each ready row twice; outputs land at
+//          .gg-cache/prompts/<page>.v8-prompt.md + <page>.v8.zh-prompt.md)
 //
 // 设计：renderAuraPrompt 要 13 个 cfg 字段，brief 只有 ~5 个（target_keyword / entity /
 // associated_keywords / search_volume / content_angle / cta_target_url）。其余字段
@@ -119,11 +129,16 @@ export function normalizeTemplate(raw) {
 // override.page_id (if set) aliases row.page_id — lets row 3 (slug
 // page_aura_colors) point to the pre-existing page_aura_colors_pillar
 // RAG cache without renaming directories.
-export function composeCfg(row, override) {
+//
+// bilingual-v9: cliLanguage (when provided) overrides override.language so
+// `--language zh` at the batch level beats per-page override. When neither is
+// set, downstream renderAuraPrompt defaults to 'en' for back-compat.
+export function composeCfg(row, override, cliLanguage) {
   const b = row.brief || {};
   const o = override || {};
   const tpl = normalizeTemplate(o.template || b.template);
   const tier = o.tier || parseTier(b.tier) || 'T2';
+  const language = cliLanguage || o.language || b.language || undefined;
   const cfg = {
     page_id: o.page_id || row.page_id,
     entity: o.entity || b.entity,
@@ -147,6 +162,7 @@ export function composeCfg(row, override) {
     expected_h2: o.expected_h2,
     child_entities: o.child_entities,
     child_count: o.child_count,
+    ...(language ? { language } : {}),
   };
   return { cfg, warnings: [tpl.warning].filter(Boolean) };
 }
@@ -305,6 +321,16 @@ async function main(argv) {
   const autoSerp = !!args.auto_serp_snapshot;
   const checkOnly = !!args.check_only;
 
+  // bilingual-v9: --language en|zh|both. Default = undefined → 'en' downstream
+  // (back-compat). 'both' renders each ready row twice (EN then ZH), so the
+  // EN pipeline is unchanged for callers that don't pass --language.
+  const langArg = typeof args.language === 'string' ? args.language.toLowerCase() : null;
+  if (langArg && !['en', 'zh', 'both'].includes(langArg)) {
+    process.stderr.write(`invalid --language "${args.language}" — expected en|zh|both\n`);
+    return 2;
+  }
+  const languages = langArg === 'both' ? ['en', 'zh'] : [langArg || null];
+
   // --check-only short-circuits: just report SERP cache hit/miss table and exit 0.
   if (checkOnly) {
     checkOnlyReport(batch, slice);
@@ -316,84 +342,103 @@ async function main(argv) {
   for (const row of batch.rows) {
     if (row.status !== 'ready') continue;
     if (!inSlice(row.source_row, slice)) continue;
-    report.total += 1;
-    const detail = { source_row: row.source_row, page_id: row.page_id, outcome: null, reason: null, warnings: [] };
 
     if (!row.page_id) {
-      detail.outcome = 'skipped';
-      detail.reason = 'no page_id (target_keyword missing)';
+      report.total += 1;
       report.skipped += 1;
-      report.details.push(detail);
-      continue;
-    }
-
-    const { cfg, warnings } = composeCfg(row, overrides[row.page_id]);
-    detail.warnings = warnings;
-    if (cfg.page_id !== row.page_id) {
-      detail.page_id = `${row.page_id} → ${cfg.page_id}`;
-    }
-
-    const miss = missingFields(cfg);
-    if (miss.length) {
-      detail.outcome = 'skipped';
-      detail.reason = `missing cfg fields: ${miss.join(', ')} (add to overrides.json[${row.page_id}])`;
-      report.skipped += 1;
-      report.details.push(detail);
-      continue;
-    }
-
-    const missRag = missingRagCaches(cfg.page_id);
-    if (missRag.length) {
-      detail.outcome = 'skipped';
-      detail.reason = `missing RAG: ${missRag.join(', ')} (run gg-entity-passport / gg-obsidian-rag for ${cfg.page_id})`;
-      report.skipped += 1;
-      report.details.push(detail);
-      continue;
-    }
-
-    // Auto-trigger SERP snapshot if requested and cache is missing.
-    // Quiet on cache-hit (don't spam stdout); only log when invoking or skipping.
-    if (autoSerp && !hasSerpCache(cfg.page_id)) {
-      const r = autoSerpSnapshot({
-        pageId: cfg.page_id,
-        entity: cfg.entity,
-        targetKeyword: cfg.target_keyword,
-        dryRun,
+      report.details.push({
+        source_row: row.source_row,
+        page_id: row.page_id,
+        outcome: 'skipped',
+        reason: 'no page_id (target_keyword missing)',
+        warnings: [],
       });
-      if (r.invoked && !r.ok) {
-        detail.warnings.push(`auto-serp failed: ${r.reason} (RL3 plagiarism will skip)`);
-      } else if (!r.invoked && r.reason && !dryRun) {
-        detail.warnings.push(`auto-serp skipped: ${r.reason}`);
-      }
-    }
-
-    if (dryRun) {
-      detail.outcome = 'would-render';
-      detail.reason = `cfg ready (template=${cfg.template}, tier=${cfg.tier})`;
-      report.rendered += 1;
-      report.details.push(detail);
       continue;
     }
 
-    try {
-      // renderAuraPrompt logs to console; redirect-style capture not needed for v0.
-      console.log(`\n━━━ row ${row.source_row} → ${row.page_id} ━━━`);
-      renderAuraPrompt(cfg);
-      detail.outcome = 'rendered';
-      detail.reason = `prompt + fixture written to .gg-cache/prompts/${cfg.page_id}.${cfg.prompt_version}-*`;
-      report.rendered += 1;
-    } catch (e) {
-      detail.outcome = 'errored';
-      detail.reason = String(e.message || e);
-      report.errored += 1;
-      if (!continueOnError) {
-        report.details.push(detail);
-        process.stderr.write(`\n❌ row ${row.source_row} failed: ${detail.reason}\n(use --continue-on-error to keep going)\n`);
-        emitReport(report);
-        return 1;
+    // bilingual-v9: render once per language. languages=[null] for unset
+    // (legacy EN-only behavior), [en, zh] for --language both. Each language
+    // gets its own report row so smoke counts are accurate.
+    for (const langChoice of languages) {
+      report.total += 1;
+      const detail = {
+        source_row: row.source_row,
+        page_id: row.page_id,
+        language: langChoice || 'en',
+        outcome: null,
+        reason: null,
+        warnings: [],
+      };
+
+      const { cfg, warnings } = composeCfg(row, overrides[row.page_id], langChoice);
+      detail.warnings = warnings;
+      if (cfg.page_id !== row.page_id) {
+        detail.page_id = `${row.page_id} → ${cfg.page_id}`;
       }
+
+      const miss = missingFields(cfg);
+      if (miss.length) {
+        detail.outcome = 'skipped';
+        detail.reason = `missing cfg fields: ${miss.join(', ')} (add to overrides.json[${row.page_id}])`;
+        report.skipped += 1;
+        report.details.push(detail);
+        continue;
+      }
+
+      const missRag = missingRagCaches(cfg.page_id);
+      if (missRag.length) {
+        detail.outcome = 'skipped';
+        detail.reason = `missing RAG: ${missRag.join(', ')} (run gg-entity-passport / gg-obsidian-rag for ${cfg.page_id})`;
+        report.skipped += 1;
+        report.details.push(detail);
+        continue;
+      }
+
+      // Auto-trigger SERP snapshot if requested and cache is missing.
+      // Quiet on cache-hit; only log when invoking or skipping. RAG is
+      // language-agnostic, so we only invoke once per page (skip on 2nd lang).
+      if (autoSerp && !hasSerpCache(cfg.page_id) && langChoice !== 'zh') {
+        const r = autoSerpSnapshot({
+          pageId: cfg.page_id,
+          entity: cfg.entity,
+          targetKeyword: cfg.target_keyword,
+          dryRun,
+        });
+        if (r.invoked && !r.ok) {
+          detail.warnings.push(`auto-serp failed: ${r.reason} (RL3 plagiarism will skip)`);
+        } else if (!r.invoked && r.reason && !dryRun) {
+          detail.warnings.push(`auto-serp skipped: ${r.reason}`);
+        }
+      }
+
+      if (dryRun) {
+        detail.outcome = 'would-render';
+        detail.reason = `cfg ready (template=${cfg.template}, tier=${cfg.tier}, lang=${detail.language})`;
+        report.rendered += 1;
+        report.details.push(detail);
+        continue;
+      }
+
+      try {
+        console.log(`\n━━━ row ${row.source_row} → ${row.page_id} [${detail.language}] ━━━`);
+        renderAuraPrompt(cfg);
+        const langInfix = detail.language === 'zh' ? '.zh' : '';
+        detail.outcome = 'rendered';
+        detail.reason = `prompt + fixture written to .gg-cache/prompts/${cfg.page_id}.${cfg.prompt_version}${langInfix}-*`;
+        report.rendered += 1;
+      } catch (e) {
+        detail.outcome = 'errored';
+        detail.reason = String(e.message || e);
+        report.errored += 1;
+        if (!continueOnError) {
+          report.details.push(detail);
+          process.stderr.write(`\n❌ row ${row.source_row} [${detail.language}] failed: ${detail.reason}\n(use --continue-on-error to keep going)\n`);
+          emitReport(report);
+          return 1;
+        }
+      }
+      report.details.push(detail);
     }
-    report.details.push(detail);
   }
 
   emitReport(report);
@@ -406,7 +451,8 @@ function emitReport(report) {
   process.stderr.write(`  total=${report.total} rendered=${report.rendered} skipped=${report.skipped} errored=${report.errored}\n`);
   for (const d of report.details) {
     const tag = d.outcome === 'rendered' ? '✅' : d.outcome === 'would-render' ? '🟡' : d.outcome === 'errored' ? '❌' : '⏭';
-    process.stderr.write(`  ${tag} row ${String(d.source_row).padStart(3)} ${d.page_id || '-'}: ${d.outcome} — ${d.reason}\n`);
+    const langTag = d.language ? ` [${d.language}]` : '';
+    process.stderr.write(`  ${tag} row ${String(d.source_row).padStart(3)}${langTag} ${d.page_id || '-'}: ${d.outcome} — ${d.reason}\n`);
     for (const w of d.warnings || []) process.stderr.write(`      ⚠️  ${w}\n`);
   }
 }

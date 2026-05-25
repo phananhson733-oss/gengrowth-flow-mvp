@@ -167,6 +167,8 @@ const HEADER_MAP = {
   'content_angle': 'content_angle',
   'psych_safety_flag': 'psych_safety_flag',
   'journal_prompts': 'journal_prompts',
+  // bilingual-v9: ZH main long-tail; ops hand-fills (LLM derivation fallback)
+  'target_keyword_zh': 'target_keyword_zh',
 };
 
 export function mapRowToBrief(header, row) {

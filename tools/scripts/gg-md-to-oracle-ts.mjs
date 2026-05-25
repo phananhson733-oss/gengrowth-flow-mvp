@@ -174,12 +174,13 @@ export function escapeForTemplate(s) {
   return s.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${');
 }
 
-export function emitTs({ slug, title, date, description, keywords, body, varName }) {
+export function emitTs({ slug, title, date, description, keywords, body, varName, language = 'en' }) {
   const escapedBody = escapeForTemplate(body);
   const keywordsLit = JSON.stringify(keywords, null, 2)
     .split('\n')
     .map((line, i) => (i === 0 ? line : '  ' + line))
     .join('\n');
+  const lang = language === 'zh' ? 'zh' : 'en';
   return `// Article: ${title}
 // Generated from flow-mvp _staging/ by tools/scripts/gg-md-to-oracle-ts.mjs.
 import type { WikiArticle } from "../../types";
@@ -191,7 +192,7 @@ export const ${varName}: WikiArticle = {
   author: "AstrologyWiki Team",
   date: ${JSON.stringify(date)},
   schema: "Article",
-  lang: "en",
+  lang: "${lang}",
   keywords: ${keywordsLit},
   content: \`${escapedBody}
 \`,
@@ -199,7 +200,7 @@ export const ${varName}: WikiArticle = {
 `;
 }
 
-function convertOne({ source, slug, out }) {
+function convertOne({ source, slug, out, language = 'en' }) {
   const md = readFileSync(source, 'utf8');
   const { frontmatter: fm, body } = parseFrontmatter(md);
   const resolvedSlug = slug || fm.slug;
@@ -212,11 +213,17 @@ function convertOne({ source, slug, out }) {
   const keywords = [tgtKw, ...assoc].filter(Boolean);
   const transformedBody = transformBody(body);
   const description = deriveDescription(transformedBody);
-  const varName = slugToCamel(resolvedSlug, 'En');
-  const ts = emitTs({ slug: resolvedSlug, title, date, description, keywords, body: transformedBody, varName });
+  // bilingual-v9: varName suffix follows language. Oracle convention is
+  // single-file dual-export (slugEn + slugZh in same .ts) for existing dual
+  // articles like track-mood-astrology.ts. v9-full demo emits a separate
+  // <slug>.zh.ts; oracle team merges manually (follow-up: auto-append into
+  // existing <slug>.ts when present).
+  const suffix = language === 'zh' ? 'Zh' : 'En';
+  const varName = slugToCamel(resolvedSlug, suffix);
+  const ts = emitTs({ slug: resolvedSlug, title, date, description, keywords, body: transformedBody, varName, language });
   mkdirSync(dirname(out), { recursive: true });
   writeFileSync(out, ts);
-  return { slug: resolvedSlug, varName, out };
+  return { slug: resolvedSlug, varName, out, language };
 }
 
 function parseArgs(argv) {
@@ -359,6 +366,19 @@ async function main(argv) {
     const articlesDir = args.oracle_articles_dir || '/Users/wzb/Code/oracle/data/articles';
     const stagingDir = args.staging_dir || join(FLOW_REPO, '_staging');
 
+    // bilingual-v9: --language en|zh (default en). When zh:
+    //   - source path defaults to <stagingDir>/zh-demo/<page>-<llm>-<v>.md
+    //     (matches gg-render-batch --language both convention)
+    //   - output filename gets .zh infix: aura-color-blue.zh.ts
+    //   - emitTs writes lang: "zh" + varName ends with Zh
+    //   - index.ts hint suggests ARTICLES_ZH.push instead of ARTICLES_EN
+    const langArg = typeof args.language === 'string' ? args.language.toLowerCase() : null;
+    if (langArg && !['en', 'zh'].includes(langArg)) {
+      process.stderr.write(`invalid --language "${args.language}" — expected en|zh\n`);
+      return 2;
+    }
+    const language = langArg || 'en';
+
     // Page list resolution priority:
     //   1. --refresh-existing → every oracle article with a v8 staging md
     //   2. --pages "..."     → explicit list
@@ -404,30 +424,42 @@ async function main(argv) {
     for (const pid of pages) {
       const slug = pageIdToSlug(pid);
       const winnerLlm = winnerMap[pid] || defaultWinnerLlm;
-      const source = join(stagingDir, `${pid}-${winnerLlm}-${version}.md`);
-      const out = join(articlesDir, `${slug}.ts`);
+      // ZH source convention: orchestrator --out-dir _staging/zh-demo/ writes
+      // <pid>-<llm>-<version>.md there (no .zh in filename — the directory
+      // disambiguates). EN stays at <stagingDir>/<pid>-<llm>-<v>.md.
+      const source = language === 'zh'
+        ? join(stagingDir, 'zh-demo', `${pid}-${winnerLlm}-${version}.md`)
+        : join(stagingDir, `${pid}-${winnerLlm}-${version}.md`);
+      // Output filename gets .zh infix for ZH so EN/ZH .ts files coexist in
+      // oracle articles dir without overwriting. Oracle team then merges into
+      // single-file dual-export by hand (follow-up: auto-merge into existing
+      // <slug>.ts when present).
+      const outName = language === 'zh' ? `${slug}.zh.ts` : `${slug}.ts`;
+      const out = join(articlesDir, outName);
       if (!existsSync(source)) {
         process.stderr.write(`✗ missing: ${source}\n`);
-        results.push({ pid, ok: false, reason: 'source missing', winnerLlm });
+        results.push({ pid, ok: false, reason: 'source missing', winnerLlm, language });
         continue;
       }
       try {
-        const r = convertOne({ source, slug, out });
-        process.stdout.write(`✓ ${r.slug}  →  ${r.out}  (var: ${r.varName}, winner: ${winnerLlm})\n`);
+        const r = convertOne({ source, slug, out, language });
+        process.stdout.write(`✓ [${language}] ${r.slug}  →  ${r.out}  (var: ${r.varName}, winner: ${winnerLlm})\n`);
         results.push({ pid, ok: true, winnerLlm, ...r });
       } catch (e) {
         process.stderr.write(`✗ ${pid}: ${e.message}\n`);
-        results.push({ pid, ok: false, reason: e.message, winnerLlm });
+        results.push({ pid, ok: false, reason: e.message, winnerLlm, language });
       }
     }
     const ok = results.filter((r) => r.ok);
-    process.stderr.write(`\nbatch: ${ok.length}/${results.length} converted\n`);
+    process.stderr.write(`\nbatch [${language}]: ${ok.length}/${results.length} converted\n`);
     // Emit index.ts patch hint (imports + push lines) as machine-readable summary on stdout.
     process.stdout.write('\n// --- index.ts patch hint ---\n');
+    const importPath = (r) => language === 'zh' ? `./${r.slug}.zh` : `./${r.slug}`;
     for (const r of ok) {
-      process.stdout.write(`// import { ${r.varName} } from "./${r.slug}";\n`);
+      process.stdout.write(`// import { ${r.varName} } from "${importPath(r)}";\n`);
     }
-    process.stdout.write('// ARTICLES_EN.push:\n');
+    const arr = language === 'zh' ? 'ARTICLES_ZH' : 'ARTICLES_EN';
+    process.stdout.write(`// ${arr}.push:\n`);
     for (const r of ok) {
       process.stdout.write(`//   ${r.varName},\n`);
     }

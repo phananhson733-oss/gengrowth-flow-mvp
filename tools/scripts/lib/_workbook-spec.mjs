@@ -233,22 +233,26 @@ export const TABS = [
   {
     name: '选题登记表',
     type: 'standard',
-    header: ['Target Keyword', 'Associated Keywords', '月搜索量', 'KD', 'Intent', 'Tier', 'Template', 'Entity', 'Friction', 'Logic', 'CTA', 'GSC Keywords', 'Status', 'URL', 'Last Audit', 'page_id', 'cluster_id', 'page_role', 'content_angle', 'psych_safety_flag', 'journal_prompts'],
+    // bilingual-v9: col 22 target_keyword_zh added for ZH main long-tail (ops
+    // hand-fills; LLM derivation is fallback). gg-sheet-pull picks this up
+    // automatically via header_map; composeCfg transfers it to fixture; phase2
+    // RL4/RL5 prefer it over H1-derive.
+    header: ['Target Keyword', 'Associated Keywords', '月搜索量', 'KD', 'Intent', 'Tier', 'Template', 'Entity', 'Friction', 'Logic', 'CTA', 'GSC Keywords', 'Status', 'URL', 'Last Audit', 'page_id', 'cluster_id', 'page_role', 'content_angle', 'psych_safety_flag', 'journal_prompts', 'target_keyword_zh'],
     headerColorByCol: {
       // navy: 3 4 (VLOOKUP)
       // green: 1 5 6 7 8 13 16 17 18 20
-      // slate: 2 9 10 11 12 14 15 19 21
+      // slate: 2 9 10 11 12 14 15 19 21 22
       1: 'green', 2: 'slate', 3: 'navy', 4: 'navy', 5: 'green', 6: 'green', 7: 'green',
       8: 'green', 9: 'slate', 10: 'slate', 11: 'slate', 12: 'slate', 13: 'green',
       14: 'slate', 15: 'slate', 16: 'green', 17: 'green', 18: 'green', 19: 'slate',
-      20: 'green', 21: 'slate',
+      20: 'green', 21: 'slate', 22: 'slate',
     },
     extras: {
       frozenRows: 1,
       headerFontColor: 'white',
       headerBold: true,
       headerFontSize: 11,
-      columnWidths: [180, 220, 80, 55, 80, 55, 110, 110, 150, 150, 90, 140, 70, 200, 90, 130, 150, 80, 180, 100, 200],
+      columnWidths: [180, 220, 80, 55, 80, 55, 110, 110, 150, 150, 90, 140, 70, 200, 90, 130, 150, 80, 180, 100, 200, 180],
       formulas: {
         C2: `=IF($A2="","",IFERROR(VLOOKUP($A2,'关键词主表'!$A:$X,3,FALSE),"未找到"))`,
         D2: `=IF($A2="","",IFERROR(VLOOKUP($A2,'关键词主表'!$A:$X,4,FALSE),"未找到"))`,
@@ -284,6 +288,7 @@ export const TABS = [
         S1: 'content_angle：精修线必填（差异化角度），量产线留空（用模板默认）。PRD v0.7 附录 C。',
         T1: 'psych_safety_flag：Y/N。Y 触发心理安全 QA——必须用反思性、非临床语言（附录 B），不做诊断/治疗承诺。默认 N。',
         U1: 'journal_prompts：仅精修线 product-led / healing 页填（如 chiron 反思 prompts）。量产线 aura/Vedic 长尾页留空。',
+        V1: 'target_keyword_zh：中文版主长尾词（bilingual-v9）。运营手填，用于 ZH 文章 phase2 RL4/RL5 keyword anchor。留空则 LLM 自动从英文 target_keyword 派生（demo 模式）。命名规范见 BILINGUAL.md §6：2-8 字、无空格、无 AI 农场尾缀。',
       },
     },
   },

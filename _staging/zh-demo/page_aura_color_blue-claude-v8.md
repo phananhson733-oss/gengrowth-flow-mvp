@@ -1,3 +1,26 @@
+---
+title: Aura Color Blue
+slug: aura-color-blue
+date: 2026-05-25
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: Tier 2 (标准)
+track: 量产线
+page_id: page_aura_color_blue
+target_keyword: aura color blue
+associated_keywords:
+  - blue aura
+  - blue aura meaning
+  - blue aura color
+  - what does blue aura mean
+generated_by: claude
+prompt_version: v8
+generated_at: 2026-05-25T07:20:59.734Z
+content_sha256_short: 8dd787f88e4ee5a2
+phase2_checks: all-pass
+---
+
 # 蓝色气场代表什么：含义、能量与自我觉察
 
 ## 蓝色气场（Blue Aura）是什么？

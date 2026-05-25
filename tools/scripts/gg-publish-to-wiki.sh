@@ -35,6 +35,7 @@ LLMS_DEFAULT="claude codex"   # gemini phase2 FAIL → skipped automatically too
 PAGES=""
 LLMS=""
 DRY_RUN=0
+LANGUAGE="en"   # bilingual-v9: en (default) | zh
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -43,18 +44,30 @@ while [ $# -gt 0 ]; do
     --version) VERSION="$2"; shift 2 ;;
     --pages) PAGES="$2"; shift 2 ;;
     --llms) LLMS="$2"; shift 2 ;;
+    --language) LANGUAGE="$2"; shift 2 ;;
     --dry-run) DRY_RUN=1; shift ;;
     -h|--help) sed -n '2,28p' "$0"; exit 0 ;;
     *) echo "unknown flag: $1" >&2; exit 2 ;;
   esac
 done
 
+case "$LANGUAGE" in en|zh) ;; *) echo "invalid --language $LANGUAGE — expected en|zh" >&2; exit 2 ;; esac
+
 PAGES="${PAGES:-$PAGES_DEFAULT}"
 LLMS="${LLMS:-$LLMS_DEFAULT}"
 
-STAGING="$REPO/_staging"
-PROD_DEST="$WIKI/内容资产/astrologywiki/$BATCH_DIR"
-OBS_DEST="$WIKI/wzb-obsidian/LLM-Wiki/Writing/AstrologyWiki-$BATCH_DIR"
+# bilingual-v9: ZH source is _staging/zh-demo/<page>-<llm>-<v>.md (phase2 writes
+# there when fixture.language='zh'). EN source unchanged at _staging/<>.md.
+# ZH destination dirs get a -zh suffix so EN and ZH batches don't collide.
+if [ "$LANGUAGE" = "zh" ]; then
+  STAGING="$REPO/_staging/zh-demo"
+  PROD_DEST="$WIKI/内容资产/astrologywiki/${BATCH_DIR}-zh"
+  OBS_DEST="$WIKI/wzb-obsidian/LLM-Wiki/Writing/AstrologyWiki-${BATCH_DIR}-zh"
+else
+  STAGING="$REPO/_staging"
+  PROD_DEST="$WIKI/内容资产/astrologywiki/$BATCH_DIR"
+  OBS_DEST="$WIKI/wzb-obsidian/LLM-Wiki/Writing/AstrologyWiki-$BATCH_DIR"
+fi
 
 [ -d "$WIKI" ] || { echo "wiki repo not found: $WIKI" >&2; exit 2; }
 [ -d "$STAGING" ] || { echo "staging dir not found: $STAGING" >&2; exit 2; }
@@ -64,6 +77,7 @@ if [ "$DRY_RUN" -eq 0 ]; then
 fi
 
 echo "Publishing PASS staging articles"
+echo "  language: $LANGUAGE"
 echo "  source  : $STAGING"
 echo "  prod    : $PROD_DEST"
 echo "  obs     : $OBS_DEST"

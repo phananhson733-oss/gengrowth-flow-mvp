@@ -34,6 +34,11 @@ import {
   checkRL5,
   checkRL6,
 } from './lib/red-lines.mjs';
+import {
+  checkRL1Zh,
+  checkRL2Zh,
+  checkRL6Zh,
+} from './lib/red-lines.zh.mjs';
 import { logFailure } from './lib/_failure-log.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -416,13 +421,51 @@ try {
   serpCtx = { serpState: 'missing-skipped', snippets: [], escapeReason: 'no cache' };
 }
 
+// bilingual-v9: ZH dispatcher for RL1/RL2/RL6. RL3 (SERP plagiarism) shares
+// EN algorithm (n-gram overlap is language-agnostic). RL4 (anchored) and
+// RL5 (stuffing) resolve the primary Chinese long-tail keyword via 3-step
+// priority: CLI --zh-keyword > fixture.target_keyword_zh > derive from H1
+// (split on full/half-width colon, take the head segment).
+//
+// Falls back to the EN target_keyword if no ZH keyword resolves at all,
+// which lets RL5 still count occurrences (will warn density low; that's the
+// already-known v9-full follow-up).
+function deriveZhKeywordFromDraft(s) {
+  const m = s.match(/^#\s+([^\n]+?)\s*$/m);
+  if (!m) return null;
+  const h1 = m[1].trim();
+  // Split on full-width or half-width colon — H1 convention is
+  // "<主中文长尾词>：<副标题>" per definition.prompt.zh.md examples
+  const head = h1.split(/[：:]/, 1)[0].trim();
+  // Sanity: must contain CJK chars; if not, the H1 was EN — bail out.
+  if (!/[一-鿿]/.test(head)) return null;
+  return head;
+}
+
+const isZh = ctx.language === 'zh';
+let zhKeyword = null;
+if (isZh) {
+  if (args.zh_keyword && args.zh_keyword !== true) zhKeyword = String(args.zh_keyword);
+  else if (fixture.target_keyword_zh) zhKeyword = String(fixture.target_keyword_zh);
+  else zhKeyword = deriveZhKeywordFromDraft(draft);
+  if (zhKeyword) {
+    console.log(`[zh-keyword] resolved: "${zhKeyword}" (source: ${args.zh_keyword ? 'CLI' : fixture.target_keyword_zh ? 'fixture' : 'H1-derive'})`);
+  } else {
+    console.log(`[zh-keyword] could not resolve — RL4/RL5 will fall back to EN target_keyword "${ctx.target_keyword}" (low density warning expected)`);
+  }
+}
+const rl4Keyword = isZh ? (zhKeyword || ctx.target_keyword) : ctx.target_keyword;
+const rl5Keyword = isZh ? (zhKeyword || ctx.target_keyword) : ctx.target_keyword;
+
 const rlChecks = [
-  ['RL1 (clinical claims)', () => checkRL1(draft)],
-  ['RL2 (competitor smear)', () => checkRL2(draft)],
+  ['RL1 (clinical claims)', () => isZh ? checkRL1Zh(draft) : checkRL1(draft)],
+  ['RL2 (competitor smear)', () => isZh ? checkRL2Zh(draft) : checkRL2(draft)],
   ['RL3 (SERP plagiarism)', () => checkRL3(draft, serpCtx)],
-  ['RL4 (keyword anchored)', () => checkRL4(draft, { targetKeyword: ctx.target_keyword, entity: ctx.entity })],
-  ['RL5 (keyword stuffing)', () => checkRL5(draft, { targetKeyword: ctx.target_keyword, maxCount: ctx.kw_max })],
-  ['RL6 (psych safety)', () => checkRL6(draft, { effectivePsychSafety: ctx.psych_safety_flag })],
+  ['RL4 (keyword anchored)', () => checkRL4(draft, { targetKeyword: rl4Keyword, entity: ctx.entity })],
+  ['RL5 (keyword stuffing)', () => checkRL5(draft, { targetKeyword: rl5Keyword, maxCount: ctx.kw_max })],
+  ['RL6 (psych safety)', () => isZh
+    ? checkRL6Zh(draft, { effectivePsychSafety: ctx.psych_safety_flag })
+    : checkRL6(draft, { effectivePsychSafety: ctx.psych_safety_flag })],
 ];
 
 const WAIVERS = new Set(); // No waivers — B'.3 SERP cache now live.
@@ -508,9 +551,13 @@ phase2_checks: all-pass
 
 `;
 
-mkdirSync(STAGING_DIR, { recursive: true });
-const outMdPath = join(STAGING_DIR, `${outBasename}.md`);
-const outManifestPath = join(STAGING_DIR, `${outBasename}.manifest.json`);
+// bilingual-v9: ZH-language pass outputs go to _staging/zh-demo/ to match
+// orchestrator --out-dir convention and what gg-md-to-oracle-ts.mjs --language
+// zh reads. EN unchanged at _staging/.
+const stagingDirEffective = isZh ? join(STAGING_DIR, 'zh-demo') : STAGING_DIR;
+mkdirSync(stagingDirEffective, { recursive: true });
+const outMdPath = join(stagingDirEffective, `${outBasename}.md`);
+const outManifestPath = join(stagingDirEffective, `${outBasename}.manifest.json`);
 
 writeFileSync(outMdPath, frontmatter + draft);
 console.log(`\n  ✓ wrote ${outMdPath} (${(frontmatter + draft).length} bytes)`);

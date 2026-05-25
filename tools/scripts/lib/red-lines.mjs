@@ -114,7 +114,12 @@ const STOP_WORDS = new Set([
 
 function tokenizeKeepStop(text) {
   if (typeof text !== 'string') return [];
-  return (text.toLowerCase().match(/[a-z0-9]+/g) || []);
+  // bilingual-v9: regex matches EN words (lowercase ASCII alnum runs) OR
+  // single CJK character. Chinese has no word delimiters, so per-char
+  // tokenization is the cheap fallback (no jieba dependency); jaccard/
+  // shingle algorithms still work, just over char-level n-grams for ZH.
+  // EN behavior unchanged when text contains no CJK.
+  return (text.toLowerCase().match(/[a-z0-9]+|[一-鿿]/g) || []);
 }
 
 function tokensJaccard(a, b) {

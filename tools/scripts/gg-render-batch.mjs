@@ -163,6 +163,12 @@ export function composeCfg(row, override, cliLanguage) {
     child_entities: o.child_entities,
     child_count: o.child_count,
     ...(language ? { language } : {}),
+    // bilingual-v9: ZH main long-tail keyword (ops-filled in sheet col V).
+    // When present, phase2 RL4/RL5 uses it instead of H1-derive. Omitted from
+    // cfg when empty so renderAuraPrompt sidecar doesn't carry null fields.
+    ...(o.target_keyword_zh || b.target_keyword_zh
+      ? { target_keyword_zh: o.target_keyword_zh || b.target_keyword_zh }
+      : {}),
   };
   return { cfg, warnings: [tpl.warning].filter(Boolean) };
 }

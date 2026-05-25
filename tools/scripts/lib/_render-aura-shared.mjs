@@ -220,6 +220,10 @@ export function renderAuraPrompt(cfg) {
     kw_count_range: kwRangeArr,
     expected_h2: cfg.expected_h2 || (isPillar ? 9 : 7),
     psych_safety: cfg.psych_safety_flag || 'N',
+    // bilingual-v9: ZH main long-tail (ops-filled). Carries through to phase2
+    // RL4/RL5 anchor check. Omitted when not provided so EN fixtures don't get
+    // a noise field.
+    ...(cfg.target_keyword_zh ? { target_keyword_zh: cfg.target_keyword_zh } : {}),
     ...(isPillar && cfg.child_entities ? { child_entities: cfg.child_entities, child_count: cfg.child_count || cfg.child_entities.length } : {}),
     generated_at: new Date().toISOString(),
   };

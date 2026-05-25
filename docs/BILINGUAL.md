@@ -149,9 +149,9 @@ total=2 rendered=2 skipped=0 errored=0
 ✅ row 310 [zh] page_aura_color_blue: rendered
 ```
 
-## 10. Open work (post-demo, post-review)
+## 10. Open work (post-demo, post-review, post-v9-full)
 
-**已完成 (2026-05-25 fan-out review 触发的紧急修复)**：
+**v9-demo 修复 (2026-05-25 fan-out review)**：
 
 - ✅ F1: phase2 中文 H2 spec
 - ✅ F2: phase2 中文字符 word count
@@ -162,15 +162,23 @@ total=2 rendered=2 skipped=0 errored=0
 - ✅ H2: chakra/aura 改三对照「气场 / 光环 / 磁场」
 - ✅ H3: keyword 形态 guardrail (长度 cap + AI 农场尾缀禁词 + 主语化测试)
 - ✅ H4: anti-AI blocklist 补 12 词小红书爆款腔
+- ✅ LLM ZH demo: opus 4.7 实际产出 1590 字中文 wiki 词条
 
-**仍待办（按优先级）**：
+**v9-full 落地 (2026-05-25)**：
+
+- ✅ Phase A: `gg-md-to-oracle-ts.mjs` 加 `--language zh` → ZH `.ts` 文件 + `lang: "zh"` + `${slug}Zh` 变体名 + index.ts hint 切 `ARTICLES_ZH.push`
+- ✅ Phase B: 新建 `lib/red-lines.zh.mjs` (66 中医 + 广告法禁词 / 18 中文竞品 / 神秘学营销红线) + phase2 按 `fixture.language` 切 RL1/RL2/RL6
+- ✅ Phase C: phase2 RL4/RL5 按 language 切中文 keyword (CLI `--zh-keyword` > `fixture.target_keyword_zh` > H1-derive) + `tokenizeKeepStop` 加 CJK char-level fallback
+- ✅ Phase D: Sheet 加第 22 列 `target_keyword_zh`（运营手填）+ `gg-sheet-pull.mjs` header_map + `gg-render-batch.mjs` composeCfg 透传 + `_render-aura-shared.mjs` fixture 字段
+- ✅ Phase E: `gg-publish-to-wiki.sh` 加 `--language en|zh`，ZH 文章分流到 `astrologywiki-<batch>-zh/` 子目录
+- ✅ ZH demo phase2 全 PASS：Structure ✓ / RL1-6 全 PASS (RL4 中文 jaccard work)
+- ✅ EN regression 0 影响：RL1 still scans 6 EN competitors / RL5 EN keyword count / RL6 EN disclaimer 检测
+
+**仍待办 (low priority)**：
 
 | 项 | 工作量 | 优先级 |
 |---|---|---|
-| 把 ZH prompt 喂给 LLM (Opus / Hermes) 实际生成 ZH 文章 | 1 LLM run + 人审 | 高 |
-| `gg-md-to-oracle-ts.mjs` 加 ZH 变体生成 (`${slug}Zh` → `ARTICLES_ZH`) | ~1h | 中 (LLM 产出 → 落 oracle 才用) |
-| `red-lines.zh.mjs` (中文版竞品 / 中医禁词 / 心理安全 keyword list) | ~2-3h | 中 (兜底，prompt 已硬禁) |
-| RL4 / RL5 按 fixture.language 切中文 keyword | ~2h | 中 (验证质量提升) |
-| Sheet 加 `target_keyword_zh` 列让运营手填 (替代 LLM 派生) | spec change + 1h | 低 (当前 LLM 派生方案 work) |
 | 中文版 obsidian RAG 接入 (现在中文 prompt 只能消费英文 RAG) | ~4-6h | 低 (LLM 中文化能力足够桥接) |
-| Wiki publish 把 ZH 文章发到 `astrologywiki-<batch>-zh/` 子目录 | ~30min | 低 |
+| oracle 自动合并 `<slug>.zh.ts` 进 `<slug>.ts` (single-file dual-export) | ~1h | 低 (oracle 端可手动 merge) |
+| 中文 NLP 升级：用 jieba 替代 char-level tokenizer (RL4 jaccard 更准) | ~3-4h | 低 (char-level 已 work) |
+| sheet 第 22 列在线 apply (调 workbook-bootstrap 把 spec 实际写到 GS) | ~15min | 中 (此前操作时机) |

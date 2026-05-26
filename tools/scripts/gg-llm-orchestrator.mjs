@@ -7,8 +7,9 @@
 // attempts; --diversify-on-fail escalates to opus (codex→opus, gemini→opus).
 // Usage:
 //   node tools/scripts/gg-llm-orchestrator.mjs --prompt <path> --page-id <id> \
-//     --models "claude,codex,gemini,hermes" --out-dir _staging \
+//     [--models claude] --out-dir _staging \
 //     [--retry 2] [--diversify-on-fail] [--dry-run]
+//   --models defaults to "claude" (Claude-only). Add codex/gemini for cross-val.
 // Outputs: <out>/<page_id>-<llm>-v8.md  +  <out>/<page_id>-orchestrator.json
 // FRONTIER-ONLY: refuses tiny prompts (<1KB), refuses downgraded Claude output
 // (<3KB suggests silent Sonnet fallback), surfaces all guards in summary.json.
@@ -33,7 +34,6 @@ const PRICING = {
   claude: { input_per_m: 15.0, output_per_m: 75.0, note: 'Opus 4.7 xhigh' },
   codex: { input_per_m: 10.0, output_per_m: 40.0, note: 'GPT 5.5 high' },
   gemini: { input_per_m: 3.5, output_per_m: 10.5, note: 'Gemini 2.5 Pro' },
-  hermes: { input_per_m: 4.0, output_per_m: 4.0, note: 'OpenRouter estimate' },
 };
 const WORDS_PER_TOKEN = 1 / 1.3; // ~1.3 tokens per English word
 // Diversify map: a failing cross-validation model escalates to Opus 4.7 xhigh
@@ -68,22 +68,6 @@ function buildCommand(model, promptPath, outputPath) {
         args: ['--model', 'gemini-2.5-pro'],
         stdinFromFile: promptPath,
         stdoutToFile: outputPath,
-      };
-    case 'hermes':
-      // Hermes script handles its own file IO + API key from env.
-      return {
-        bin: 'node',
-        args: [
-          join(REPO, 'tools', 'scripts', '_call-hermes.mjs'),
-          '--prompt',
-          promptPath,
-          '--output',
-          outputPath,
-          '--model',
-          'nousresearch/hermes-3-llama-3.1-405b',
-        ],
-        stdinFromFile: null,
-        stdoutToFile: null,
       };
     default:
       throw new Error(`unknown model: ${model}`);
@@ -127,7 +111,7 @@ function usage() {
     `usage: gg-llm-orchestrator.mjs \\
   --prompt <path>                  v8 prompt (>=1KB)
   --page-id <id>                   e.g. page_aura_color_blue
-  --models <csv>                   subset of: claude,codex,gemini,hermes
+  [--models <csv>]                 subset of: claude,codex,gemini (default: claude)
   --out-dir <dir>                  default: _staging
   [--retry N]                      default: 2 attempts per model (range 0..5)
   [--diversify-on-fail]            after N retries on a model, escalate to claude opus
@@ -148,15 +132,15 @@ function validateInputs(args) {
     // Path-traversal guard: page_id is interpolated into output file paths.
     errors.push(`--page-id "${String(args.page_id).slice(0, 80)}" invalid — must match ${PAGE_ID_REGEX}`);
   }
-  if (!args.models) errors.push('--models is required (csv)');
-
+  // Claude-only is the default (2026-05-26). Cross-validation with codex/gemini
+  // stays available on demand via --models but is NOT the default.
   const models = args.models
     ? String(args.models)
         .split(',')
         .map((m) => m.trim())
         .filter(Boolean)
-    : [];
-  const valid = new Set(['claude', 'codex', 'gemini', 'hermes']);
+    : ['claude'];
+  const valid = new Set(['claude', 'codex', 'gemini']);
   for (const m of models) if (!valid.has(m)) errors.push(`unknown model in --models: ${m}`);
 
   // Skip prompt-file existence + size guard in --dry-run: dry-run only renders
@@ -197,7 +181,6 @@ function commandExists(bin) {
 }
 
 function modelBin(model) {
-  if (model === 'hermes') return 'node';
   return model;
 }
 

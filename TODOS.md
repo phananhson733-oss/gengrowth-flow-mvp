@@ -5,23 +5,27 @@ items move to the bottom section with the version that shipped them.
 
 ## Publish path (oracle / wiki)
 
-### C2 — staging→oracle publish path does not carry title/slug frontmatter
+### C2 — author byline reaching the published oracle article
 **Priority:** P1
 **Noticed on:** feat/author-personas-mvp (pre-landing review, adversarial subagent)
 
-With the new content-draft templates the LLM emits no YAML frontmatter (output
-starts at `# H1`), and Phase 2 never builds SEO frontmatter. `buildAuthorFrontmatter`
-(`gg-content-draft.mjs`) prepends a byline-only block (`author_id`, `cluster_id`, …)
-with no `title`/`slug`/`target_keyword`. But `convertOne` in `gg-md-to-oracle-ts.mjs`
-requires `fm.title` and `fm.slug` (throws `no title`/`no slug`). So a new-template
-authored draft cannot be converted for publish as-is.
+**Corrected after investigation:** the publish-ready staging file IS written with
+`title`/`slug` — by `_phase2-validate.mjs` (the batch validator), not by
+content-draft's byline-only block. The real gap was that `_phase2-validate.mjs`
+emitted no `author_id`, so the oracle always fell back to the house byline.
 
-This is partly pre-existing (true on `main` too for new-template drafts) and the
-publish path is not exercised until the T9 live eval. Decide before T9: either
-(a) have `buildAuthorFrontmatter` merge the SEO frontmatter (title/slug/keywords
-from the brief/page row) into the same block, or (b) add a pre-oracle frontmatter
-assembly step. Verify against the real operator data flow (where title/slug come
-from today).
+**Done (writer side):** `_phase2-validate.mjs` now emits `author_id` +
+`author_display_name` into the publish frontmatter, sourced from `--author <id>` CLI
+or `fixture.author_id`. The oracle (`gg-md-to-oracle-ts.resolveAuthorMeta`) reads
+`author_id` (C1 fix) so a byline supplied this way publishes correctly.
+
+**Remaining (producer auto-routing):** nothing yet RESOLVES the author in the batch
+path — `gg-render-batch` → `renderAuraPrompt` never writes `author_id` (nor
+`banned_tokens`, so batch-path RL7 is also silently N/A). Until then operators must
+pass `--author` per page. Decision needed: resolve author once at pull time in
+`gg-sheet-pull` (page↔cluster join + author.map already available there) and carry
+`author_id` through the batch fixture → `renderAuraPrompt` fixture → `_phase2-validate`,
+vs resolve at render time, vs keep manual `--author`. Resolve before T9 live eval.
 
 ## Red lines (RL7 / RL8)
 

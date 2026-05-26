@@ -1,17 +1,17 @@
 {
   "schema_version": "1",
-  "page_id": "PG-HOUSE-004",
-  "entity": "The 9th House",
-  "target_keyword": "9th house astrology",
+  "page_id": "PG-HOUSE-002",
+  "entity": "The 8th House",
+  "target_keyword": "8th house meaning",
   "template": "Definition",
   "tier": "T2",
   "track": "量产线",
   "generated_by": "unknown",
   "prompt_version": "v8",
-  "generated_at": "2026-05-26T11:53:22.635Z",
-  "content_sha256_short": "4d3b76857ec26acc",
-  "source_path": ".gg-cache/drafts/PG-HOUSE-004.zh.raw.md",
-  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/PG-HOUSE-004-claude-v8.md",
+  "generated_at": "2026-05-26T11:53:22.553Z",
+  "content_sha256_short": "81cb06091a18bdeb",
+  "source_path": ".gg-cache/drafts/PG-HOUSE-002.zh.raw.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/PG-HOUSE-002-claude-v8.md",
   "phase2_checks": {
     "overall": "pass",
     "structure": {
@@ -19,7 +19,7 @@
       "h2Count": 7,
       "h3Count": 0,
       "h4Count": 0,
-      "words": 1500,
+      "words": 1632,
       "wikilinks": 3,
       "tbdLinks": 3
     },

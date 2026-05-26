@@ -77,11 +77,23 @@ export function pageIdToSlug(pageId) {
   return pageId.replace(/^page_/, '').replace(/_/g, '-');
 }
 
+// Leading ordinal tokens (8th-house-meaning → eighth…) must be spelled out:
+// a JS identifier cannot start with a digit, so "8thHouseMeaningEn" is a syntax
+// error that breaks the oracle build. Covers the 12 astrological houses.
+const ORDINAL_WORDS = Object.freeze({
+  '1st': 'first', '2nd': 'second', '3rd': 'third', '4th': 'fourth',
+  '5th': 'fifth', '6th': 'sixth', '7th': 'seventh', '8th': 'eighth',
+  '9th': 'ninth', '10th': 'tenth', '11th': 'eleventh', '12th': 'twelfth',
+});
+
 export function slugToCamel(slug, suffix = 'En') {
-  const camel = slug
-    .split('-')
+  const parts = slug.split('-');
+  if (parts.length && ORDINAL_WORDS[parts[0]]) parts[0] = ORDINAL_WORDS[parts[0]];
+  let camel = parts
     .map((w, i) => (i === 0 ? w : w[0].toUpperCase() + w.slice(1)))
     .join('');
+  // Fallback: any other leading digit → prefix so the identifier stays valid.
+  if (/^[0-9]/.test(camel)) camel = `n${camel}`;
   return camel + suffix;
 }
 

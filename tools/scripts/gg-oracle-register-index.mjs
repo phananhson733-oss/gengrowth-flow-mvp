@@ -19,6 +19,13 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
+// Single source of truth for the slug→export-var transform. Previously this
+// file mirrored a local copy, which drifted: gg-md-to-oracle-ts learned to
+// spell out leading ordinals (8th→eighth, valid JS identifier) while the local
+// mirror still emitted "8thHouseMeaningEn" — an invalid import that broke the
+// oracle build. Import the real one so the names can never diverge again.
+import { slugToCamel } from './gg-md-to-oracle-ts.mjs';
+
 function parseArgs(argv) {
   const out = { lang: 'en', dryRun: false };
   for (let i = 0; i < argv.length; i++) {
@@ -31,15 +38,6 @@ function parseArgs(argv) {
     else { console.error(`unknown arg: ${a}`); process.exit(2); }
   }
   return out;
-}
-
-// Mirror gg-md-to-oracle-ts.mjs slugToCamel so the export name matches exactly.
-export function slugToCamel(slug, suffix) {
-  const camel = slug
-    .split('-')
-    .map((w, i) => (i === 0 ? w : (w[0] || '').toUpperCase() + w.slice(1)))
-    .join('');
-  return camel + suffix;
 }
 
 export function registerInIndex(indexSrc, { slug, lang }) {

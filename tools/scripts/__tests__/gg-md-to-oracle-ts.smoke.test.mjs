@@ -15,6 +15,7 @@ import {
   emitTs,
   mergeIntoSibling,
   atomicWrite,
+  slugToCamel,
 } from '../gg-md-to-oracle-ts.mjs';
 
 function makeEnSibling(varName = 'auraColorBlueEn') {
@@ -165,4 +166,21 @@ test('atomicWrite: tmp file does not leak after successful write', () => {
   const leftovers = readdirSync(dir).filter((f) => f.includes('.tmp.'));
   assert.equal(leftovers.length, 0);
   rmSync(dir, { recursive: true });
+});
+
+// ---------- slugToCamel: leading-ordinal slugs must yield VALID JS identifiers ----------
+// (2026-05-26) "8th-house-meaning" → "8thHouseMeaningEn" is a syntax error that
+// broke the oracle build. Leading ordinals spell out; identifiers stay valid.
+test('slugToCamel: leading ordinal slugs → valid identifiers', () => {
+  const valid = (s) => /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(s);
+  assert.equal(slugToCamel('8th-house-meaning', 'En'), 'eighthHouseMeaningEn');
+  assert.equal(slugToCamel('9th-house-astrology', 'Zh'), 'ninthHouseAstrologyZh');
+  assert.equal(slugToCamel('11th-house', 'En'), 'eleventhHouseEn');
+  assert.equal(slugToCamel('12th-house-astrology', 'En'), 'twelfthHouseAstrologyEn');
+  for (const s of ['8th-house-meaning', '9th-house-astrology', '11th-house', '12th-house-astrology']) {
+    assert.ok(valid(slugToCamel(s, 'En')), `invalid id from ${s}`);
+    assert.ok(valid(slugToCamel(s, 'Zh')), `invalid id from ${s}`);
+  }
+  // non-ordinal slugs unchanged
+  assert.equal(slugToCamel('green-aura-meaning', 'En'), 'greenAuraMeaningEn');
 });

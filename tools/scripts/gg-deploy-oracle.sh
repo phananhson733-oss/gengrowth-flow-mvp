@@ -17,9 +17,12 @@
 
 set -euo pipefail
 
-ORACLE_DIR="/Users/wzb/Code/oracle"
-WIKI_BASE="/Users/wzb/gengrowth-wiki/内容资产/astrologywiki"
-FLOW_REPO="/Users/wzb/gengrowth-flow-mvp"
+# Paths are env-overridable so the script runs on any operator's machine.
+# Defaults preserve the original wzb layout; set GG_ORACLE_DIR / GG_WIKI_BASE /
+# GG_FLOW_REPO (e.g. in ~/.config/gg/_gg.env) to relocate.
+ORACLE_DIR="${GG_ORACLE_DIR:-/Users/wzb/Code/oracle}"
+WIKI_BASE="${GG_WIKI_BASE:-/Users/wzb/gengrowth-wiki/内容资产/astrologywiki}"
+FLOW_REPO="${GG_FLOW_REPO:-/Users/wzb/gengrowth-flow-mvp}"
 MD_TO_TS="${FLOW_REPO}/tools/scripts/gg-md-to-oracle-ts.mjs"
 
 MODE="preview"

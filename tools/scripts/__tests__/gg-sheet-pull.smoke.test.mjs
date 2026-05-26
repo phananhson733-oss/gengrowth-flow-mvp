@@ -21,7 +21,10 @@ import {
   identifyGaps,
   classifyRow,
   parseArgs,
+  buildClusterDomainMap,
+  resolveAuthorForBrief,
 } from '../gg-sheet-pull.mjs';
+import { buildAuthorMap } from '../lib/author-routing.mjs';
 
 // ---------- constants ----------
 test('SCHEMA_VERSION pinned to "1"', () => {
@@ -296,4 +299,48 @@ test('parseArgs treats consecutive flags correctly (no value capture)', () => {
   const args = parseArgs(['--dry-run', '--row', '5']);
   assert.equal(args.dry_run, true);
   assert.equal(args.row, '5');
+});
+
+// ---------- author routing at pull time (Lane B / T3, batch path) ----------
+
+test('buildClusterDomainMap: cluster_id → primary_entity', () => {
+  const rows = [
+    ['cluster_id', 'cluster_name', 'primary_entity'],
+    ['C1', 'Houses cluster', 'houses'],
+    ['C2', 'Aura cluster', 'aura'],
+    ['', 'blank id skipped', 'x'],
+  ];
+  const m = buildClusterDomainMap(rows);
+  assert.equal(m.get('C1'), 'houses');
+  assert.equal(m.get('C2'), 'aura');
+  assert.equal(m.has(''), false);
+});
+
+test('buildClusterDomainMap: missing cluster_id column → empty map (no throw)', () => {
+  const m = buildClusterDomainMap([['name', 'primary_entity'], ['x', 'houses']]);
+  assert.equal(m.size, 0);
+});
+
+test('resolveAuthorForBrief: auto-route by cluster primary_entity', () => {
+  const cdm = buildClusterDomainMap([['cluster_id', 'primary_entity'], ['C1', 'houses']]);
+  const { map: authorMap } = buildAuthorMap({ 'author.map.houses': 'julian-thorne' });
+  const r = resolveAuthorForBrief({ cluster_id: 'C1' }, { clusterDomainMap: cdm, authorMap });
+  assert.equal(r.author, 'julian-thorne');
+  assert.equal(r.author_source, 'auto');
+  assert.equal(r.cluster_domain, 'houses');
+});
+
+test('resolveAuthorForBrief: manual override wins over auto-map', () => {
+  const cdm = buildClusterDomainMap([['cluster_id', 'primary_entity'], ['C1', 'houses']]);
+  const { map: authorMap } = buildAuthorMap({ 'author.map.houses': 'julian-thorne' });
+  const r = resolveAuthorForBrief({ cluster_id: 'C1', author_override: 'marcus-orion' }, { clusterDomainMap: cdm, authorMap });
+  assert.equal(r.author, 'marcus-orion');
+  assert.equal(r.author_source, 'override');
+});
+
+test('resolveAuthorForBrief: unmatched domain → author blank (content-draft hard-blocks)', () => {
+  const cdm = buildClusterDomainMap([['cluster_id', 'primary_entity'], ['C1', 'houses']]);
+  const { map: authorMap } = buildAuthorMap({ 'author.map.aura': 'elena-vane' });
+  const r = resolveAuthorForBrief({ cluster_id: 'C1' }, { clusterDomainMap: cdm, authorMap });
+  assert.equal(r.author, '');
 });

@@ -144,3 +144,27 @@ aliases:
 经 AskUserQuestion 确认含义＝放开 credential integration。把 definition.prompt.md 的「第一人称硬禁」改为「受控一次」：允许署名作家用第一人称把真实背景织入正文一次（v4.3 §1），其余保持第三人称，科学边界仍适用。确认 RL10 只拦第二人称聊天残留不碰作者第一人称。随后用 codex 二次复核完整 diff，修了 5 处真问题（RL10/RL9 误伤、RL12 scheme-less URL 绕过、(d) 署名形态扩展、外链结构冲突），加回归测试，全套 867/867 通过，提交 956f1e1 + 12bda02。
 
 ---
+
+### Q11 — 19:30 [claude]
+
+**🙋 提问：**
+
+flow 中的逻辑，是不是用 skill 更稳定？尤其是在写 SEO 文章的时候？
+
+**🤖 回答：**
+
+澄清核心误区：skill 与脚本里的 prompt 模板本质同类（都是给 LLM 的结构化指令），搬进 skill 不会让生成更稳——SEO 文章的不稳定性在生成步，由 prompt 内容决定。真正差别在执行环境：脚本 flow 胜在可复现/可批量/可 CI/确定性编排，弱点是单次盲射无反馈回路；skill（会话内 agent）胜在自查回路+自适应，弱点是不可批量/烧 token/会漂移。结论：编排骨架不动，给生成步加"反馈回路"即可，且不必搬进 skill——在脚本内联 draft→校验→失败带原因回灌重写→pass 落盘，吃到两边稳定性。Day-1 跑量场景留在 flow 更稳。
+
+---
+
+### Q12 — 19:46 [claude]
+
+**🙋 提问：**
+
+可以，按照你的建议推进落地优化
+
+**🤖 回答：**
+
+按 TDD 落地反馈回路。先读 gg-content-draft.mjs 确认现状：Phase 2 失败只写 draft.tmp.md + 退出码 11/12，无回灌步。新建纯函数模块 lib/content-rework.mjs（buildReworkPrompt：原草稿+每条失败 note/issue+定向修正指令打包成可粘回 LLM 的返工 prompt，含 11 条红线 fix-hint 表 + 结构问题 pattern 映射 + MAX_REWORK_ITERATIONS 软上限）。接进 runPhase2 失败路径：listReworkPrompts 计 iteration、validateWritePath 写 rework prompt 到 prompt-out、manifest 记 rework 字段、LOOK 提示下一步。补 10 个单测 + 3 个 CLI 集成测试（fail 生成/pass 为 null/dry-run 不写）。code-reviewer 审查 0 CRITICAL/HIGH/MEDIUM，修了 LOW-1（dry-run LOOK 误导）+ 补 dry-run 测试。全套 880/880 通过，未提交（等用户指示）。
+
+---

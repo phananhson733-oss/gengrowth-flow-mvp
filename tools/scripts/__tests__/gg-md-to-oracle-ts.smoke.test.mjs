@@ -48,12 +48,12 @@ function makeNewBlock(varName = 'auraColorBlueZh') {
   });
 }
 
-test('emitExportBlock: ZH author is 团队 not Team', () => {
+test('emitExportBlock: ZH with no authorMeta → authorId "" + lang zh', () => {
   const out = emitExportBlock({
     slug: 'x', title: 't', date: '2026-05-25', description: 'd',
     keywords: ['k'], body: 'b', varName: 'xZh', language: 'zh',
   });
-  assert.match(out, /author: "AstrologyWiki 团队"/);
+  assert.match(out, /authorId: ""/);
   assert.match(out, /lang: "zh"/);
 });
 

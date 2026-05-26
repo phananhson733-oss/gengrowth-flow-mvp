@@ -219,20 +219,19 @@ export function emitExportBlock({ slug, title, date, description, keywords, body
     .map((line, i) => (i === 0 ? line : '  ' + line))
     .join('\n');
   const lang = language === 'zh' ? 'zh' : 'en';
-  // author display name: persona display name if resolved (Lane B / T10),
-  // else fall back to the house byline. authorSlug + authorBio are emitted only
-  // when a persona is resolved (oracle author bio page is a later plan).
-  const houseAuthor = language === 'zh' ? 'AstrologyWiki 团队' : 'AstrologyWiki Team';
-  const author = authorMeta && authorMeta.displayName ? authorMeta.displayName : houseAuthor;
-  const authorMetaLines = authorMeta
-    ? `  authorSlug: ${JSON.stringify(authorMeta.slug)},\n  authorBio: ${JSON.stringify(authorMeta.shortBio)},\n`
+  // WikiArticle now references the author by id only (authorId → AuthorPersona.id,
+  // resolved at render time from the oracle authors registry — replaces the old
+  // bare author/authorSlug/authorBio fields, which are no longer in the type and
+  // break the build's author-integrity gate). authorMeta.id is the persona id.
+  const authorId = authorMeta && (authorMeta.id || authorMeta.slug)
+    ? (authorMeta.id || authorMeta.slug)
     : '';
   return `export const ${varName}: WikiArticle = {
   slug: ${JSON.stringify(slug)},
   title: ${JSON.stringify(title)},
   description: ${JSON.stringify(description)},
-  author: ${JSON.stringify(author)},
-${authorMetaLines}  date: ${JSON.stringify(date)},
+  authorId: ${JSON.stringify(authorId)},
+  date: ${JSON.stringify(date)},
   schema: "Article",
   lang: "${lang}",
   keywords: ${keywordsLit},

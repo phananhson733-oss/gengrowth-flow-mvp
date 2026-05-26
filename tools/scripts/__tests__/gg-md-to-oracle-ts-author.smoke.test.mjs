@@ -45,7 +45,7 @@ test('resolveAuthorMeta: unknown kebab id → null (no throw reaches the convert
   assert.equal(resolveAuthorMeta('ghost-writer'), null);
 });
 
-test('emitExportBlock: authorMeta emits display name + authorSlug + authorBio', () => {
+test('emitExportBlock: authorMeta → authorId (persona id), no legacy author fields', () => {
   const out = emitExportBlock({
     slug: 'leo-personality',
     title: 'Leo Personality',
@@ -57,27 +57,31 @@ test('emitExportBlock: authorMeta emits display name + authorSlug + authorBio', 
     language: 'en',
     authorMeta: { id: 'marcus-orion', displayName: 'Marcus Orion', slug: 'marcus-orion', shortBio: 'Systems explainer.' },
   });
-  assert.match(out, /author: "Marcus Orion"/);
-  assert.match(out, /authorSlug: "marcus-orion"/);
-  assert.match(out, /authorBio: "Systems explainer\."/);
+  // WikiArticle references the author by id only; the registry resolves
+  // display name + bio at render time. Legacy author/authorSlug/authorBio
+  // fields are gone (they are not in the type and break the build's gate).
+  assert.match(out, /authorId: "marcus-orion"/);
+  assert.ok(!out.includes('authorSlug'));
+  assert.ok(!out.includes('authorBio'));
+  assert.ok(!/\bauthor: /.test(out));
 });
 
-test('emitExportBlock: no authorMeta → house byline, no author meta fields (back-compat)', () => {
+test('emitExportBlock: no authorMeta → authorId "" (house byline no longer expressible)', () => {
   const out = emitExportBlock({
     slug: 'x', title: 't', date: '2026-05-26', description: 'd',
     keywords: ['k'], body: 'b', varName: 'xEn', language: 'en',
   });
-  assert.match(out, /author: "AstrologyWiki Team"/);
+  assert.match(out, /authorId: ""/);
   assert.ok(!out.includes('authorSlug'));
   assert.ok(!out.includes('authorBio'));
 });
 
-test('emitExportBlock: zh + no authorMeta → 团队 byline', () => {
+test('emitExportBlock: zh + no authorMeta → authorId ""', () => {
   const out = emitExportBlock({
     slug: 'x', title: 't', date: '2026-05-26', description: 'd',
     keywords: ['k'], body: 'b', varName: 'xZh', language: 'zh',
   });
-  assert.match(out, /author: "AstrologyWiki 团队"/);
+  assert.match(out, /authorId: ""/);
 });
 
 // Round-trip regression (C1): the headline failure mode. content-draft's

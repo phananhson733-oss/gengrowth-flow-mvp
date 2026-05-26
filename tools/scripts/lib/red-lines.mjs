@@ -622,11 +622,27 @@ export function checkRL6(draft, ctx) {
   };
 }
 
+// A banned token is exempt only when it appears as a whole word/phrase inside a
+// GENUINE target keyword. Caps on length (80 chars) and word count (7) stop a
+// crafted bag-of-words keyword from exempting an author's entire ban list, and
+// the match is whole-word so "energy" isn't exempted by the keyword "synergy".
+const RL7_KEYWORD_MAX_LEN = 80;
+const RL7_KEYWORD_MAX_WORDS = 7;
+function isTokenExemptByKeyword(token, targetKeyword) {
+  if (!targetKeyword) return false;
+  if (targetKeyword.length > RL7_KEYWORD_MAX_LEN) return false;
+  if (targetKeyword.split(/\s+/).filter(Boolean).length > RL7_KEYWORD_MAX_WORDS) return false;
+  const escaped = token.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+');
+  return new RegExp(`(?<![a-z0-9])${escaped}(?![a-z0-9])`, 'i').test(targetKeyword);
+}
+
 // ctx: { authorBannedTokens?: string[], targetKeyword?: string }
 // RL7 — per-author banned-token red line. Scans prose body only (frontmatter,
-// blockquotes, fenced code stripped). A banned token that is a substring of the
-// article's target_keyword is exempt for this article (avoids killing the very
-// keyword the page must rank for). Word-boundary, case-insensitive. Hit = FAIL.
+// blockquotes, fenced code stripped). A banned token that appears as a whole word
+// inside a genuine target_keyword is exempt for this article (avoids killing the
+// very keyword the page must rank for). Multi-word tokens are matched against the
+// whole body so a phrase wrapped across a line break is still caught. Word-
+// boundary, case-insensitive. Hit = FAIL.
 export function checkRL7(draft, ctx) {
   const banned = Array.isArray(ctx && ctx.authorBannedTokens) ? ctx.authorBannedTokens : [];
   if (banned.length === 0) {
@@ -644,16 +660,16 @@ export function checkRL7(draft, ctx) {
   for (const rawToken of banned) {
     const token = String(rawToken || '').trim();
     if (!token) continue;
-    // Exempt: token is a substring of the target_keyword for this article.
-    if (targetKeyword && targetKeyword.includes(token.toLowerCase())) continue;
+    if (isTokenExemptByKeyword(token, targetKeyword)) continue;
     const escaped = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+');
+    // Scan the whole body (not per line) so a multi-word token split across a
+    // newline still matches — \s+ spans the line break. Line number is derived
+    // from the match offset for evidence.
     const re = new RegExp(`(?<![A-Za-z0-9])${escaped}(?![A-Za-z0-9])`, 'i');
-    for (let i = 0; i < bodyLines.length; i++) {
-      const m = bodyLines[i].match(re);
-      if (m) {
-        evidence.push({ token, line: i + 1, context: bodyLines[i].trim().slice(0, 160) });
-        break; // one hit per token is enough to fail; keep evidence compact.
-      }
+    const m = body.match(re);
+    if (m) {
+      const lineNo = body.slice(0, m.index).split('\n').length;
+      evidence.push({ token, line: lineNo, context: (bodyLines[lineNo - 1] || '').trim().slice(0, 160) });
     }
   }
 

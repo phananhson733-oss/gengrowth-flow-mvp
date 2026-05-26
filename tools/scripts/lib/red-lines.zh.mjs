@@ -223,10 +223,66 @@ export function checkRL6Zh(draft, ctx) {
 }
 
 // ─── RL7 (作家黑词) ───────────────────────────────────────────────────────
-// TODO(lane-c): 中文作家黑词清单暂未上线。Lane A 的作家 persona capsule 目前
-// 仅产出英文 banned_tokens；中文 capsule 落地后在此实现 checkRL7Zh（注意中文
-// 无 \b 词边界，需用域词典 / 子串 + 标点边界策略，不能照搬 EN 的 \b 方案）。
-// 在此之前 _phase2-validate.mjs 对 zh 文章跳过 RL7（视为该作家无中文黑词）。
+// 中文作家黑词。中文无 \b 词边界，故 CJK token 用子串扫描（与 RL1Zh/RL8Zh 一致）；
+// ASCII / 拉丁 token（中文文里夹带的英文词）仍用词边界，避免 "energy" 误中
+// "synergy"。跳过 frontmatter / fenced code / blockquote。命中 target_keyword
+// （CJK 子串 / ASCII 整词）的 token 豁免，带长度 + 词数上限防 bag-of-words 滥用。
+// 命中 = FAIL。ctx: { authorBannedTokens?: string[], targetKeyword?: string }。
+
+const RL7_ZH_KEYWORD_MAX_LEN = 80;
+const RL7_ZH_KEYWORD_MAX_WORDS = 7;
+// CJK unified ideographs + Japanese kana ranges — used to decide CJK vs ASCII token.
+const RL7_ZH_CJK_REGEX = /[㐀-鿿豈-﫿぀-ヿ]/;
+
+function stripBlockquoteZh(md) {
+  return md.split('\n').filter((l) => !/^\s*>/.test(l)).join('\n');
+}
+
+function isZhTokenExemptByKeyword(token, targetKeyword) {
+  if (!targetKeyword) return false;
+  if (targetKeyword.length > RL7_ZH_KEYWORD_MAX_LEN) return false;
+  if (targetKeyword.split(/\s+/).filter(Boolean).length > RL7_ZH_KEYWORD_MAX_WORDS) return false;
+  if (RL7_ZH_CJK_REGEX.test(token)) return targetKeyword.includes(token.toLowerCase());
+  const escaped = token.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+');
+  return new RegExp(`(?<![a-z0-9])${escaped}(?![a-z0-9])`, 'i').test(targetKeyword);
+}
+
+export function checkRL7Zh(draft, ctx) {
+  const banned = Array.isArray(ctx && ctx.authorBannedTokens) ? ctx.authorBannedTokens : [];
+  if (banned.length === 0) {
+    return { id: 'rl7_author_banned_tokens', pass: true, note: '该作家无中文黑词清单 — N/A' };
+  }
+  const targetKeyword = String((ctx && ctx.targetKeyword) || '').toLowerCase();
+  const body = stripBlockquoteZh(stripFencedCodeZh(stripFrontmatterZh(typeof draft === 'string' ? draft : '')));
+  const bodyLines = body.split('\n');
+  const evidence = [];
+  for (const rawToken of banned) {
+    const token = String(rawToken || '').trim();
+    if (!token) continue;
+    if (isZhTokenExemptByKeyword(token, targetKeyword)) continue;
+    let matchIdx = -1;
+    if (RL7_ZH_CJK_REGEX.test(token)) {
+      matchIdx = body.indexOf(token);
+    } else {
+      const escaped = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+');
+      const m = body.match(new RegExp(`(?<![A-Za-z0-9])${escaped}(?![A-Za-z0-9])`, 'i'));
+      matchIdx = m ? m.index : -1;
+    }
+    if (matchIdx >= 0) {
+      const lineNo = body.slice(0, matchIdx).split('\n').length;
+      evidence.push({ token, line: lineNo, context: (bodyLines[lineNo - 1] || '').trim().slice(0, 160) });
+    }
+  }
+  if (evidence.length > 0) {
+    return {
+      id: 'rl7_author_banned_tokens',
+      pass: false,
+      note: `中文作家黑词命中: ${evidence.map((e) => `"${e.token}"`).join(', ')}`,
+      evidence,
+    };
+  }
+  return { id: 'rl7_author_banned_tokens', pass: true, note: `扫描 ${banned.length} 个作家黑词, 无命中` };
+}
 
 // ─── RL8 (科学背书红线) ───────────────────────────────────────────────────
 // 全作家适用：占星 / 神秘学内容禁止把解释挂钩科学证明。子串匹配即可（中文无

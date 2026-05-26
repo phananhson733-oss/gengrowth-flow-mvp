@@ -40,6 +40,7 @@ import {
   checkRL1Zh,
   checkRL2Zh,
   checkRL6Zh,
+  checkRL7Zh,
   checkRL8Zh,
 } from './lib/red-lines.zh.mjs';
 import { logFailure } from './lib/_failure-log.mjs';
@@ -502,10 +503,10 @@ const rlChecks = [
   ['RL6 (psych safety)', () => isZh
     ? checkRL6Zh(draft, { effectivePsychSafety: ctx.psych_safety_flag })
     : checkRL6(draft, { effectivePsychSafety: ctx.psych_safety_flag })],
-  // RL7 — per-author black words. ZH has no banned-token list yet (TODO in
-  // red-lines.zh.mjs), so zh articles skip RL7 as N/A pass.
+  // RL7 — per-author black words. ZH uses checkRL7Zh (CJK substring + ASCII
+  // word-boundary); empty token list → N/A pass in either language.
   ['RL7 (author banned tokens)', () => isZh
-    ? { id: 'rl7_author_banned_tokens', pass: true, note: 'N/A (zh — author banned tokens not yet supported)' }
+    ? checkRL7Zh(draft, { authorBannedTokens: ctx.authorBannedTokens, targetKeyword: ctx.target_keyword })
     : checkRL7(draft, { authorBannedTokens: ctx.authorBannedTokens, targetKeyword: ctx.target_keyword })],
   // RL8 — shared scientific-endorsement red line (all authors, both languages).
   ['RL8 (scientific endorsement)', () => isZh ? checkRL8Zh(draft) : checkRL8(draft)],

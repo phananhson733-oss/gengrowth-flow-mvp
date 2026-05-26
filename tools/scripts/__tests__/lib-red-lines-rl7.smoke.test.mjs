@@ -127,3 +127,32 @@ This will manifest your destiny overnight.`;
   assert.equal(r.pass, false);
   assert.match(JSON.stringify(r.evidence), /manifest your destiny/i);
 });
+
+// ---------- P2 hardening: cross-line multi-word + scoped keyword exemption ----------
+
+test('RL7: multi-word token wrapped across a line break → FAIL (whole-body scan)', () => {
+  const draft = '# T\n\nThe result is proven by\nscience, no doubt.';
+  const r = checkRL7(draft, { authorBannedTokens: ['proven by science'], targetKeyword: '' });
+  assert.equal(r.pass, false);
+});
+
+test('RL7: crafted bag-of-words target_keyword cannot exempt the ban list', () => {
+  const draft = '# T\n\nPure energy everywhere.';
+  const r = checkRL7(draft, {
+    authorBannedTokens: ['energy'],
+    targetKeyword: 'spiritual energy vibration sacred divine aura chakra mystical',
+  });
+  assert.equal(r.pass, false, 'a >7-word keyword must not grant exemption');
+});
+
+test('RL7: genuine short keyword still exempts the token (whole word)', () => {
+  const draft = '# T\n\nBlue energy reading for beginners.';
+  const r = checkRL7(draft, { authorBannedTokens: ['energy'], targetKeyword: 'blue energy aura' });
+  assert.equal(r.pass, true);
+});
+
+test('RL7: keyword exemption is whole-word — "synergy" does not exempt "energy"', () => {
+  const draft = '# T\n\nPure energy here.';
+  const r = checkRL7(draft, { authorBannedTokens: ['energy'], targetKeyword: 'team synergy' });
+  assert.equal(r.pass, false);
+});

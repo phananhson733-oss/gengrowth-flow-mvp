@@ -54,6 +54,41 @@ under 800 needs splitting those (e.g. a phase1/ phase2 module pair) — a larger
 architectural refactor that warrants its own reviewed change rather than a hasty
 extraction of the core content pipeline.
 
+## Writing-pipeline gap closure (vs SOP v4.3 / 创作清单 v4.0) — follow-ups
+
+These are the deliberately-deferred remainders of the 2026-05-26 gap-closure
+(commit 956f1e1). The closed items are in Completed below.
+
+### Authority/credential parity on pillar + ZH templates
+**Priority:** P2
+The founders-allowlist (`{{authority_allowlist}}`), T2 external-link TBD rule, and
+credential-integration relaxation landed in `definition.prompt.md` (EN) only.
+`pillar.prompt.md` + `definition.prompt.zh.md` + `pillar.prompt.zh.md` still carry
+the old blanket no-naming / no-first-person rules. Mirror the EN changes there.
+
+### External-link TBD → real URL resolution step
+**Priority:** P2
+RL12 only enforces the `[[<TBD-external-link: source | title | reason>]]` placeholder
+discipline. Nothing yet resolves those placeholders into real `target="_blank"`
+Wikipedia/NASA URLs at publish time (parallel to the internal-link resolution).
+
+### RL12(d) allowlist extension for legitimate historical figures
+**Priority:** P3
+RL12(d) WARNs on any attributed name not in the per-author allowlist. Legit
+historical figures (Kepler, Ptolemy, Jung) will WARN until added. Kept as WARN
+(non-blocking) on purpose — escalating to FAIL would hard-block legit mentions.
+Extend `authority-allowlist.json` as real names surface in drafts.
+
+### Image / visual SEO (§6) — still unimplemented
+**Priority:** P3
+WebP / alt-text / kebab-case filename / ≤200KB — zero pipeline support. A separate
+subsystem; out of this round's scope (option B).
+
+### Variable pre-processor (§0) + SERP-gap automation
+**Priority:** P3
+No `变量预处理器` step; `content_angle` is hand-filled, not derived from a SERP
+top-5 title-gap analysis. RL3 only does plagiarism overlap, not gap validation.
+
 ## Completed
 
 - **RL7 multi-word cross-line evasion** (P2) — `checkRL7` now scans the whole body so
@@ -69,3 +104,19 @@ extraction of the core content pipeline.
 - **getAllConfig staleness warning** (P3) — `_config.getConfigStatus()` added;
   `gg-sheet-pull` warns when the config snapshot is missing/stale so an empty
   author.map surfaces clearly instead of silent downstream hard-blocks.
+- **Batch EN Definition render crash** (P0, 956f1e1) — `definition.prompt.md`'s 4
+  `{{author_*}}` placeholders were unfilled in the batch replacement map →
+  `process.exit(1)` on every batch EN Definition render (untested: the smoke test
+  skipped `renderAuraPrompt`). Fixed via `authorPromptCapsule` + `buildReplacements`;
+  added a real-template render test asserting zero residual placeholders.
+- **Journal_Prompts reconnected** (P2, 956f1e1) — sheet col 20 now injected into
+  both render paths via `journalPromptsBlock` + composeCfg passthrough.
+- **RL9–RL12 + SC1/SC2** (956f1e1) — atom-label leak (FAIL), de-personalization
+  EN+ZH (FAIL), weak verbs (WARN), citation/external-link hallucination guard
+  (FAIL+WARN), bolded-definition structure (FAIL), internal-link tier (WARN). All
+  aligned to current templates; codex-reviewed for false positives.
+- **Named-founder authority + external links** (956f1e1) — `authority-allowlist.json`
+  (4 curated domains) + template relaxation to name allowlisted founders + T2
+  external-link TBD placeholders; `_phase2-validate` accepts external TBD.
+- **Credential integration** (956f1e1) — `definition.prompt.md` first-person ban
+  relaxed to one in-body credential sentence (v4.3 §1).

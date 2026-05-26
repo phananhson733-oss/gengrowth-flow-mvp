@@ -33,11 +33,14 @@ import {
   checkRL4,
   checkRL5,
   checkRL6,
+  checkRL7,
+  checkRL8,
 } from './lib/red-lines.mjs';
 import {
   checkRL1Zh,
   checkRL2Zh,
   checkRL6Zh,
+  checkRL8Zh,
 } from './lib/red-lines.zh.mjs';
 import { logFailure } from './lib/_failure-log.mjs';
 
@@ -201,6 +204,18 @@ const ctx = {
   kw_max: Number.parseInt(args.kw_max, 10) || kwRange[1],
   expected_h1: 1,
   expected_h2: Number.parseInt(args.expected_h2, 10) || fixture.expected_h2 || tplDef.expected_h2,
+  // RL7: per-author black words. Source priority: CLI --banned_tokens (comma
+  // list) > fixture.banned_tokens (compiled by Lane A content-draft from the
+  // chosen author persona capsule). Empty/absent → RL7 N/A (author has no list).
+  authorBannedTokens: (() => {
+    const cli = (typeof args.banned_tokens === 'string' && args.banned_tokens !== 'true')
+      ? args.banned_tokens.split(',').map((s) => s.trim()).filter(Boolean)
+      : null;
+    if (cli && cli.length) return cli;
+    return Array.isArray(fixture.banned_tokens)
+      ? fixture.banned_tokens.map((s) => String(s).trim()).filter(Boolean)
+      : [];
+  })(),
 };
 const outBasename = `${ctx.page_id}-${ctx.tag}`;
 
@@ -466,6 +481,13 @@ const rlChecks = [
   ['RL6 (psych safety)', () => isZh
     ? checkRL6Zh(draft, { effectivePsychSafety: ctx.psych_safety_flag })
     : checkRL6(draft, { effectivePsychSafety: ctx.psych_safety_flag })],
+  // RL7 — per-author black words. ZH has no banned-token list yet (TODO in
+  // red-lines.zh.mjs), so zh articles skip RL7 as N/A pass.
+  ['RL7 (author banned tokens)', () => isZh
+    ? { id: 'rl7_author_banned_tokens', pass: true, note: 'N/A (zh — author banned tokens not yet supported)' }
+    : checkRL7(draft, { authorBannedTokens: ctx.authorBannedTokens, targetKeyword: ctx.target_keyword })],
+  // RL8 — shared scientific-endorsement red line (all authors, both languages).
+  ['RL8 (scientific endorsement)', () => isZh ? checkRL8Zh(draft) : checkRL8(draft)],
 ];
 
 const WAIVERS = new Set(); // No waivers — B'.3 SERP cache now live.

@@ -12,6 +12,8 @@ import {
   checkRL4,
   checkRL5,
   checkRL6,
+  checkRL7,
+  checkRL8,
 } from './lib/red-lines.mjs';
 
 const REPO = '/Users/wzb/gengrowth-wiki';
@@ -38,6 +40,8 @@ const ctx = {
   kw_max: 8,
   expected_h1: 1,
   expected_h2: 7,
+  // RL7: this fixed demo page has no author persona, so no banned tokens → N/A.
+  authorBannedTokens: [],
 };
 
 // ---------- structure check ----------
@@ -152,6 +156,8 @@ const rlChecks = [
   ['RL4 (keyword anchored)', () => checkRL4(draft, { targetKeyword: ctx.target_keyword, entity: ctx.entity })],
   ['RL5 (keyword stuffing)', () => checkRL5(draft, { targetKeyword: ctx.target_keyword })],
   ['RL6 (psych safety)', () => checkRL6(draft, { psych_safety_flag: ctx.psych_safety_flag })],
+  ['RL7 (author banned tokens)', () => checkRL7(draft, { authorBannedTokens: ctx.authorBannedTokens, targetKeyword: ctx.target_keyword })],
+  ['RL8 (scientific endorsement)', () => checkRL8(draft)],
 ];
 
 // v7 + B'.3 SERP cache live: no waivers. If RL3 fails now, that's real plagiarism risk.

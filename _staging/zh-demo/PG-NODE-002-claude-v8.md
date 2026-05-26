@@ -19,8 +19,8 @@ associated_keywords:
   - what is north node in scorpio
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-26T11:53:22.760Z
-content_sha256_short: a540eca3cd83623b
+generated_at: 2026-05-26T11:57:52.527Z
+content_sha256_short: b340d15b92452536
 phase2_checks: all-pass
 ---
 
@@ -52,7 +52,7 @@ phase2_checks: all-pass
 |---|---|---|---|
 | 成长方向 | 靠深入、坦诚、放手完成转化 | 呼应天蝎座与第八宫主题 | 误以为要刻意制造危机或冲突 |
 | 起点（南交点金牛） | 靠累积、守成获得安全感 | 呼应金牛座与第二宫主题 | 误以为安稳本身是错的 |
-| 主管星 | 冥王星（现代）／火星（传统）呼应转化与行动 | 呼应天蝎座本宫 | 误以为天蝎落点等于报复或极端 |
+| 主管星 | 冥王星（现代）／火星（传统）呼应转化与行动 | 呼应天蝎座主题 | 误以为天蝎落点等于报复或极端 |
 | 核心功课 | 在放手中练习信任与亲密 | 情感与共享资源的领域 | 误以为这是命中注定的剧本 |
 
 ## 自我觉察小提示

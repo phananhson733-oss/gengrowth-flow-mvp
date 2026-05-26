@@ -16,8 +16,8 @@ associated_keywords:
   - 8th house
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-26T11:53:22.553Z
-content_sha256_short: 81cb06091a18bdeb
+generated_at: 2026-05-26T11:57:52.624Z
+content_sha256_short: b49d36246cc7acda
 phase2_checks: all-pass
 ---
 
@@ -47,7 +47,7 @@ phase2_checks: all-pass
 
 | 属性 | 机制 | 能量中心（本命定位） | 常见误读 |
 |---|---|---|---|
-| 深度亲密 | 边界溶解后的融合体验 | 与第七宫相对、与第二宫对宫 | 当成单纯的「性宫位」 |
+| 深度亲密 | 边界溶解后的融合体验 | 与第二宫对宫（共享 vs 自有资源） | 当成单纯的「性宫位」 |
 | 共享资源 | 两人共有的钱、权力与责任 | 落在水象议题、与第二宫成轴 | 只看遗产税务等表层 |
 | 心理转化 | 旧自我形象被打破后重生 | 常与冥王星主题相呼应 | 误读为预示「死亡」凶兆 |
 | 控制与信任 | 臣服与被看穿之间的角力 | 关联上升点的盲点关系 | 当成性格缺陷而非觉察入口 |

@@ -60,3 +60,15 @@ aliases:
 按 3 条 lane 并行 fan-out 三个 worktree subagent 落地作家系统 MVP：Lane A（persona loader+capsule+content-draft 门+provenance）、Lane B（cluster→author 路由+预检+publish 元数据）、Lane C（RL7 黑词+RL8 红线）。合并到 feat/author-personas-mvp，调和跨 lane 不一致（统一 author-routing 混合路由、域键 cluster_domain||primary_entity、author_source 收敛 override/auto）。codex review 整 diff 找出 5 bug 全修（含 High：Phase2 RL7 恒空跑、路由域键）。全量 711/711 smoke 通过，干净 2 commit，清理 lane 分支/worktree。T9 实跑 4 篇 eval 需真实 API+sheet，留 operator（no-mock-data）。
 
 ---
+
+### Q4 — 16:30 [claude]
+
+**🙋 提问：**
+
+/ship（直接 ship）。中途追问：我们使用当前已有的 claude codex OAuth 不可以吗，必须用 API key 吗
+
+**🤖 回答：**
+
+先纠正之前的错误：管线是两阶段人在环设计（Phase 1 产出提示词 → 贴进 Claude OAuth 会话生成 → Phase 2 ingest 跑红线），全链路无需 Anthropic API key，唯一 OAuth 是 Google（Sheets）。/ship 预着陆 review（Codex + 对抗 + 安全 subagent 三方收敛）抓到 3 个分支引入 bug：C1 署名永远落不到生产（content-draft 写 author_id 含引号，oracle 读 fm.author 不脱引号 → 退回 house byline）、RL8 红线可绕过（只扫每行首个 phrase + 否定窗口过宽）、capsule 注入面未过滤。全部修复 + 8 条回归测试，719/719 通过。C2 发布路径 SEO frontmatter 缺口等记入 TODOS.md。无 VERSION/CHANGELOG（本仓库不用）。两条干净 commit，push 并开 PR #1。
+
+---

@@ -96,6 +96,25 @@ test('RL8: positive endorsement still FAILS despite a negation elsewhere', () =>
   assert.equal(r.pass, false);
 });
 
+// Bypass regressions (Codex P1 + adversarial + security, multi-source converged).
+// A negated disclaimer followed by an affirmative claim ON THE SAME LINE used to
+// pass because checkRL8 only inspected the first phrase per line; now every phrase
+// is scanned and negation is scoped to the phrase's own clause.
+test('RL8: disclaimer-then-claim on one line → FAIL (no scientific evidence, but studies show)', () => {
+  const r = checkRL8('# Blue\n\nThere is no scientific evidence for astrology, but studies show it works.');
+  assert.equal(r.pass, false);
+});
+
+test('RL8: negation in an earlier clause does not exempt a later claim → FAIL', () => {
+  const r = checkRL8('# Blue\n\nNot surprisingly, research shows blue auras calm the mind.');
+  assert.equal(r.pass, false);
+});
+
+test('RL8: colon-separated intensifier before a claim → FAIL', () => {
+  const r = checkRL8('# Blue\n\nIt cannot be overstated: research shows this is real.');
+  assert.equal(r.pass, false);
+});
+
 // ---------- exported constant is a regex ----------
 test('RL8: RL8_SCI_CLAIM_REGEX is exported regex', () => {
   assert.ok(RL8_SCI_CLAIM_REGEX instanceof RegExp);

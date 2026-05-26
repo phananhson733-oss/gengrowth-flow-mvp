@@ -17,6 +17,7 @@ import { join } from 'node:path';
 import {
   resolveAuthorMeta,
   emitExportBlock,
+  parseFrontmatter,
 } from '../gg-md-to-oracle-ts.mjs';
 
 function makePersonaDir() {
@@ -101,4 +102,38 @@ test('emitExportBlock: zh + no authorMeta → 团队 byline', () => {
     keywords: ['k'], body: 'b', varName: 'xZh', language: 'zh',
   });
   assert.match(out, /author: "AstrologyWiki 团队"/);
+});
+
+// Round-trip regression (C1): the headline failure mode. content-draft's
+// buildAuthorFrontmatter writes the persona id under `author_id`, JSON-quoted.
+// convertOne must read that key (not legacy `author`) AND tolerate the quotes,
+// or every authored article silently publishes under the house byline. This
+// exercises the parseFrontmatter -> resolveAuthorMeta path the other tests skip.
+test('round-trip (C1): author_id frontmatter (JSON-quoted) resolves the persona byline', () => {
+  const stagingMd = [
+    '---',
+    'title: Blue Aura Meaning',
+    'slug: blue-aura-meaning',
+    'author_id: "marcus-orion"',
+    'author_display_name: "Marcus Orion"',
+    'persona_version: "1.0"',
+    '---',
+    '',
+    '# Blue Aura Meaning',
+    '',
+    '## What is blue aura?',
+    'Body text.',
+  ].join('\n');
+  const { frontmatter: fm } = parseFrontmatter(stagingMd);
+  // same key precedence + resolution as convertOne
+  const meta = resolveAuthorMeta(fm.author_id || fm.author);
+  assert.ok(meta, 'author_id must resolve — reading fm.author or keeping quotes regresses to house byline');
+  assert.equal(meta.id, 'marcus-orion');
+  assert.equal(meta.displayName, 'Marcus Orion');
+});
+
+test('round-trip (C1): legacy `author` key still resolves (back-compat)', () => {
+  const meta = resolveAuthorMeta('elena-vane');
+  assert.ok(meta);
+  assert.equal(meta.id, 'elena-vane');
 });

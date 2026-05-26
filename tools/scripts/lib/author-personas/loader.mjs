@@ -165,11 +165,38 @@ function validateBody(body, bannedTokens, idForMsg) {
   }
 }
 
+// The four capsule scalars are injected verbatim into the LLM prompt, so they
+// need an injection-phrase filter — a "system:" or "ignore the previous
+// instructions" smuggled into voice_rule would otherwise reach the model. This
+// is a SUBSET of FORBIDDEN_BODY_PATTERNS: forbidden_moves legitimately uses
+// imperative voice ("Do not use academic framing"), so the body-only heading and
+// imperative-prompt-control patterns are excluded — only true injection vectors
+// remain. A length cap bounds the surface (personas use 1-3 sentences per field).
+const INJECTED_CAPSULE_FIELDS = Object.freeze(['voice_rule', 'allowed_moves', 'forbidden_moves', 'credential']);
+const MAX_CAPSULE_FIELD_LEN = 400;
+const FORBIDDEN_CAPSULE_PATTERNS = Object.freeze([
+  { re: /\{\{[^}]*\}\}/, label: 'template placeholder {{...}}' },
+  { re: /```/, label: 'fenced code block' },
+  { re: /\bignore\s+(the\s+)?(previous|above|outline|instructions)\b/i, label: 'prompt-injection phrase' },
+  { re: /\bsystem\s*:/i, label: 'system: directive' },
+]);
+
 function assertRequiredScalars(fm, idForMsg) {
   for (const key of REQUIRED_SCALARS) {
     const v = fm[key];
     if (typeof v !== 'string' || v.trim() === '') {
       throw new PersonaError(`persona "${idForMsg}": missing or empty required field "${key}"`);
+    }
+  }
+  for (const key of INJECTED_CAPSULE_FIELDS) {
+    const v = fm[key];
+    if (v.length > MAX_CAPSULE_FIELD_LEN) {
+      throw new PersonaError(`persona "${idForMsg}": capsule field "${key}" length ${v.length} exceeds ${MAX_CAPSULE_FIELD_LEN}`);
+    }
+    for (const { re, label } of FORBIDDEN_CAPSULE_PATTERNS) {
+      if (re.test(v)) {
+        throw new PersonaError(`persona "${idForMsg}": capsule field "${key}" contains forbidden ${label}`);
+      }
     }
   }
 }

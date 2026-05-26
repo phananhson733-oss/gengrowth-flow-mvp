@@ -51,11 +51,15 @@ const PERSONA_DIR = join(__dirname, 'lib', 'author-personas');
 //   2. Fallback: read lib/author-personas/<id>.md frontmatter directly
 //      (display_name / primary_focus / credential) — robust until the loader exists.
 // Returns { id, displayName, slug, shortBio } or null if author id is absent/invalid.
-// authorId comes from the staging md frontmatter `author` field (written by
-// content-draft from brief.author).
+// authorId comes from the staging md frontmatter `author_id` field (written by
+// content-draft's buildAuthorFrontmatter); legacy `author` is accepted at the call site.
 export function resolveAuthorMeta(authorId, { personaDir = PERSONA_DIR } = {}) {
-  if (!authorId || !isValidAuthorId(authorId)) return null;
-  const id = normalizeAuthorId(authorId);
+  // content-draft writes the byline value JSON-quoted (author_id: "marcus-orion")
+  // and parseFrontmatter does not strip quotes, so normalize surrounding quotes
+  // before validating — otherwise a valid id reads as invalid → silent house byline.
+  const raw = typeof authorId === 'string' ? authorId.replace(/^["']|["']$/g, '').trim() : authorId;
+  if (!raw || !isValidAuthorId(raw)) return null;
+  const id = normalizeAuthorId(raw);
   const fm = readPersonaFrontmatter(id, personaDir);
   if (!fm) return null;
   const displayName = fm.display_name || id;
@@ -354,9 +358,11 @@ function convertOne({ source, slug, out, language = 'en', mergeSibling = false, 
   // track-mood-astrology.ts.
   const suffix = language === 'zh' ? 'Zh' : 'En';
   const varName = slugToCamel(resolvedSlug, suffix);
-  // T10: carry author identity into publish metadata. The staging md frontmatter
-  // `author` field holds the persona id (written by content-draft from brief.author).
-  const authorMeta = resolveAuthorMeta(fm.author);
+  // T10: carry author identity into publish metadata. content-draft's
+  // buildAuthorFrontmatter writes the persona id under `author_id` (see
+  // gg-content-draft.mjs). Fall back to legacy `author` for hand-authored staging
+  // files. Reading the wrong key silently drops every byline to the house team.
+  const authorMeta = resolveAuthorMeta(fm.author_id || fm.author);
   const exportBlock = emitExportBlock({ slug: resolvedSlug, title, date, description, keywords, body: transformedBody, varName, language, authorMeta });
 
   // F2: sibling path is derived from the resolved (parsed) slug, not from

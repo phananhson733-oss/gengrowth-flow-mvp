@@ -124,6 +124,11 @@ const RL8_PHRASE_PATTERN = RL8_SCI_CLAIM_PHRASES
   .map((p) => p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+'))
   .join('|');
 export const RL8_SCI_CLAIM_REGEX = new RegExp(`\\b(?:${RL8_PHRASE_PATTERN})\\b`, 'i');
+// Global variant for scanning EVERY phrase on a line (not just the first). A
+// non-global match() stops at the first hit, so a negated disclaimer followed by
+// an affirmative claim on the same line ("no evidence, but studies show ...")
+// would slip through. matchAll over the global regex closes that bypass.
+const RL8_SCI_CLAIM_REGEX_G = new RegExp(`\\b(?:${RL8_PHRASE_PATTERN})\\b`, 'gi');
 
 // ============================================================
 // Scope helpers — strip non-prose regions before scanning (Codex #9).
@@ -672,20 +677,34 @@ export function checkRL7(draft, ctx) {
 // frontmatter + fenced code stripped. Hit = FAIL.
 // Negation / disclaimer cues that flip a sci-claim into an honest "there is no
 // scientific backing" statement, which is allowed (even desirable) on a
-// metaphysical wiki. If one appears in the ~50 chars before the matched phrase,
-// the match is not an endorsement.
+// metaphysical wiki. The cue only exempts a claim when it sits in the SAME
+// clause as the phrase — see clauseBeforeMatch. (Residual limitation: an
+// intensifier-negation like "there is no doubt that research shows ..." still
+// reads as a negation in-clause; that rarer construction is accepted as a
+// known false-negative rather than risking false-positives on honest disclaimers.)
 const RL8_NEGATION_REGEX =
-  /\b(no|not|never|without|lacks?|lacking|isn't|aren't|wasn't|weren't|doesn't|don't|didn't|cannot|can't|nor|neither|unproven|unsupported)\b[^.?!]*$/i;
+  /\b(no|not|never|without|lacks?|lacking|isn't|aren't|wasn't|weren't|doesn't|don't|didn't|cannot|can't|nor|neither|unproven|unsupported)\b[^,;:.?!]*$/i;
+
+// Slice the pre-match text down to the clause directly preceding the phrase, so a
+// negation in an earlier clause ("Not surprisingly, research shows ...") does not
+// falsely exempt an affirmative claim.
+function clauseBeforeMatch(before) {
+  let lastBoundary = -1;
+  for (const ch of [',', ';', ':', '.', '?', '!']) {
+    const idx = before.lastIndexOf(ch);
+    if (idx > lastBoundary) lastBoundary = idx;
+  }
+  return lastBoundary >= 0 ? before.slice(lastBoundary + 1) : before;
+}
 
 export function checkRL8(draft) {
   const body = proseBodyForSci(typeof draft === 'string' ? draft : '');
   const lines = body.split('\n');
   const evidence = [];
   for (let i = 0; i < lines.length; i++) {
-    const m = lines[i].match(RL8_SCI_CLAIM_REGEX);
-    if (m) {
+    for (const m of lines[i].matchAll(RL8_SCI_CLAIM_REGEX_G)) {
       const before = lines[i].slice(0, m.index);
-      if (RL8_NEGATION_REGEX.test(before)) continue; // negated claim → allowed
+      if (RL8_NEGATION_REGEX.test(clauseBeforeMatch(before))) continue; // negated in-clause → allowed
       evidence.push({ phrase: m[0], line: i + 1, context: lines[i].trim().slice(0, 160) });
     }
   }

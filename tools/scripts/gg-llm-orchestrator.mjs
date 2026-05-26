@@ -233,8 +233,7 @@ function runAttempt(model, promptPath, outputPath) {
     // Stale-output guard: delete any leftover output from a prior attempt
     // BEFORE spawning. Otherwise an empty-stdout run + the Claude sonnet
     // size check would silently read stale bytes from the previous try.
-    // Only delete for paths we'll write via stdoutToFile; hermes manages
-    // its own file IO and is its own source of truth.
+    // All current models route stdout → file, so this always applies.
     if (cmd.stdoutToFile) {
       try {
         statSync(cmd.stdoutToFile);

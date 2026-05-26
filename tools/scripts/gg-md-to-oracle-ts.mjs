@@ -38,55 +38,30 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, rename
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isValidAuthorId, normalizeAuthorId } from './lib/author-routing.mjs';
+import { loadPersona } from './lib/author-personas/loader.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const FLOW_REPO = join(__dirname, '..', '..');
 
-// Persona cards live here (Lane A owns the .md content; we only READ frontmatter).
-const PERSONA_DIR = join(__dirname, 'lib', 'author-personas');
-
-// Resolve author identity for publish metadata (Lane B / T10). Priority:
-//   1. Lane A loadPersona(id) loader if/when it lands (lib/author-personas/loader.mjs
-//      exporting loadPersona) — preferred single source of truth.
-//   2. Fallback: read lib/author-personas/<id>.md frontmatter directly
-//      (display_name / primary_focus / credential) — robust until the loader exists.
-// Returns { id, displayName, slug, shortBio } or null if author id is absent/invalid.
+// Resolve author identity for publish metadata (Lane B / T10) via loadPersona —
+// the single source of truth for persona cards (replaces a hand-rolled frontmatter
+// parser that drifted from the loader). Returns { id, displayName, slug, shortBio }
+// or null if the id is absent/invalid or the card fails the loader's validation.
 // authorId comes from the staging md frontmatter `author_id` field (written by
-// content-draft's buildAuthorFrontmatter); legacy `author` is accepted at the call site.
-export function resolveAuthorMeta(authorId, { personaDir = PERSONA_DIR } = {}) {
-  // content-draft writes the byline value JSON-quoted (author_id: "marcus-orion")
-  // and parseFrontmatter does not strip quotes, so normalize surrounding quotes
-  // before validating — otherwise a valid id reads as invalid → silent house byline.
+// content-draft's buildAuthorFrontmatter / _phase2-validate); legacy `author` is
+// accepted at the call site. The value may be JSON-quoted ("marcus-orion") and
+// parseFrontmatter does not strip quotes, so normalize them before validating.
+export function resolveAuthorMeta(authorId) {
   const raw = typeof authorId === 'string' ? authorId.replace(/^["']|["']$/g, '').trim() : authorId;
   if (!raw || !isValidAuthorId(raw)) return null;
   const id = normalizeAuthorId(raw);
-  const fm = readPersonaFrontmatter(id, personaDir);
-  if (!fm) return null;
-  const displayName = fm.display_name || id;
-  // short bio: prefer explicit credential line, else primary_focus.
-  const shortBio = fm.credential || fm.primary_focus || '';
-  return { id, displayName, slug: id, shortBio };
-}
-
-// Minimal frontmatter reader for persona cards. Only pulls the flat scalar keys
-// we need (display_name / primary_focus / credential); ignores list blocks.
-// Returns {} on parse trouble, null if the card file is missing.
-function readPersonaFrontmatter(id, personaDir) {
-  const path = join(personaDir, `${id}.md`);
-  if (!existsSync(path)) return null;
-  let raw;
-  try { raw = readFileSync(path, 'utf8'); } catch { return null; }
-  const m = raw.match(/^---\n([\s\S]*?)\n---/);
-  if (!m) return {};
-  const fm = {};
-  for (const line of m[1].split('\n')) {
-    const kv = line.match(/^([a-z_]+):\s*(.*)$/i);
-    if (kv && kv[2] !== '') {
-      // strip surrounding quotes from scalar values like version: "1.0"
-      fm[kv[1]] = kv[2].replace(/^["']|["']$/g, '');
-    }
+  try {
+    const p = loadPersona(id);
+    // short bio: prefer the credential capsule field, else primary focus.
+    return { id, displayName: p.displayName, slug: id, shortBio: p.capsule.credential || p.primaryFocus || '' };
+  } catch {
+    return null;
   }
-  return fm;
 }
 
 export const DEFAULT_PAGES = [

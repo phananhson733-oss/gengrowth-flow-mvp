@@ -10,9 +10,6 @@
 
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
-import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 
 import {
   resolveAuthorMeta,
@@ -20,53 +17,32 @@ import {
   parseFrontmatter,
 } from '../gg-md-to-oracle-ts.mjs';
 
-function makePersonaDir() {
-  const dir = mkdtempSync(join(tmpdir(), 'gg-persona-'));
-  writeFileSync(join(dir, 'marcus-orion.md'), `---
-id: marcus-orion
-display_name: Marcus Orion
-primary_focus: Astrology Basics / Transits / Aspects
-version: "1.0"
-credential: Seven years in commercial data analysis and systematic pattern-recognition.
----
-
-# Marcus Orion
-body text here.
-`);
-  return dir;
-}
-
+// resolveAuthorMeta now delegates to lib/author-personas/loadPersona (the single
+// source of truth), so these read the real persona cards — no temp fixture dir.
 test('resolveAuthorMeta: valid id reads display_name + credential as bio', () => {
-  const dir = makePersonaDir();
-  const meta = resolveAuthorMeta('marcus-orion', { personaDir: dir });
+  const meta = resolveAuthorMeta('marcus-orion');
   assert.ok(meta);
   assert.equal(meta.id, 'marcus-orion');
   assert.equal(meta.displayName, 'Marcus Orion');
   assert.equal(meta.slug, 'marcus-orion');
   assert.match(meta.shortBio, /data analysis/);
-  rmSync(dir, { recursive: true, force: true });
 });
 
 test('resolveAuthorMeta: case-insensitive id', () => {
-  const dir = makePersonaDir();
-  const meta = resolveAuthorMeta('Marcus-Orion', { personaDir: dir });
+  const meta = resolveAuthorMeta('Marcus-Orion');
   assert.ok(meta);
   assert.equal(meta.displayName, 'Marcus Orion');
-  rmSync(dir, { recursive: true, force: true });
 });
 
-test('resolveAuthorMeta: invalid author id → null', () => {
-  const dir = makePersonaDir();
-  assert.equal(resolveAuthorMeta('not-a-writer', { personaDir: dir }), null);
-  assert.equal(resolveAuthorMeta('', { personaDir: dir }), null);
-  assert.equal(resolveAuthorMeta(undefined, { personaDir: dir }), null);
-  rmSync(dir, { recursive: true, force: true });
+test('resolveAuthorMeta: invalid / empty / undefined author id → null', () => {
+  assert.equal(resolveAuthorMeta('not-a-writer'), null);
+  assert.equal(resolveAuthorMeta(''), null);
+  assert.equal(resolveAuthorMeta(undefined), null);
 });
 
-test('resolveAuthorMeta: valid id but persona card missing → null', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'gg-persona-empty-'));
-  assert.equal(resolveAuthorMeta('elena-vane', { personaDir: dir }), null);
-  rmSync(dir, { recursive: true, force: true });
+test('resolveAuthorMeta: unknown kebab id → null (no throw reaches the converter)', () => {
+  // rejected by isValidAuthorId before loadPersona; any loader throw is also caught.
+  assert.equal(resolveAuthorMeta('ghost-writer'), null);
 });
 
 test('emitExportBlock: authorMeta emits display name + authorSlug + authorBio', () => {

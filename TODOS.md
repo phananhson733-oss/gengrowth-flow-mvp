@@ -36,53 +36,36 @@ real sheet's `primary_entity` values match the author.map keys, or add a coarse
 
 ## Red lines (RL7 / RL8)
 
-### RL7 multi-word banned tokens evade detection across line wraps
-**Priority:** P2
-`checkRL7` scans `body.split('\n')` per line, so a multi-word token
-(e.g. `proven by science`, `according to a study`) split across two lines is never
-matched. Run multi-word token regexes against the whole prose body, then derive
-line numbers.
-
-### RL7 target_keyword exemption is article-wide
-**Priority:** P2
-`checkRL7` skips a banned token entirely if `targetKeyword.includes(token)` — a
-crafted/long keyword string can exempt a token everywhere in the article. Scope the
-exemption to whole-word match with a length + word-count cap on `target_keyword`.
-
 ### RL8 intensifier-negation residual false-negative
 **Priority:** P3
 `"there is no doubt that research shows ..."` still reads as in-clause negation and
 is accepted. Known limitation (chosen over risking false-positives on honest
 disclaimers). Revisit only if it shows up in real drafts.
 
-## Bilingual (ZH) parity
-
-### ZH RL7 not implemented; ZH red lines untested
-**Priority:** P2
-`checkRL7Zh` is a TODO — Chinese articles currently have no per-author banned-token
-enforcement (the persona voice firewall is EN-only while the pipeline publishes ZH).
-Also `checkRL8Zh` (and `checkRL1Zh`/`checkRL2Zh`/`checkRL6Zh`) have zero direct
-tests. Add a ZH red-lines smoke suite mirroring the EN RL8 suite, then implement
-`checkRL7Zh`.
-
 ## Maintainability
 
 ### gg-content-draft.mjs exceeds the 800-line file cap
-**Priority:** P3
-2002 lines (2.5× cap). Extract self-contained seams: CTA resolution, prompt
-rendering helpers, RAG block builders, Phase 2 red-lines dispatch wiring.
-
-### gg-md-to-oracle-ts.readPersonaFrontmatter duplicates loader.mjs
-**Priority:** P3
-Hand-rolled scalar YAML parser duplicates `lib/author-personas/loader.mjs`
-(the documented single source of truth). Switch `resolveAuthorMeta` to call
-`loadPersona(id)` once the loader contract is stable.
-
-### getAllConfig staleness is silent
-**Priority:** P3
-`_config.mjs` `getAllConfig()` returns `{}` on a missing/unreadable snapshot, so a
-freshly added `author.map.<domain>` row won't route (every auto-routed page
-hard-blocks) until `gg-config-sync` re-runs, with no warning the snapshot is older
-than the sheet. Add a snapshot-staleness warning.
+**Priority:** P3 (partially done)
+Was 2002 lines. Extracted the shared utils (lib/content-draft-util.mjs) and the
+Phase 0 RAG block builders (lib/content-draft-rag.mjs) → now 1791 lines, with both
+groups in cohesive modules and re-exported for back-compat. Still over the 800 cap:
+the bulk is the runPhase1 (~343) + runPhase2 (~420) async orchestrators. Getting
+under 800 needs splitting those (e.g. a phase1/ phase2 module pair) — a larger
+architectural refactor that warrants its own reviewed change rather than a hasty
+extraction of the core content pipeline.
 
 ## Completed
+
+- **RL7 multi-word cross-line evasion** (P2) — `checkRL7` now scans the whole body so
+  a banned phrase wrapped across a line break is caught.
+- **RL7 article-wide keyword exemption** (P2) — exemption scoped to whole-word matches
+  inside a genuine keyword (length + word-count caps); a crafted bag-of-words keyword
+  can no longer exempt the ban list.
+- **ZH RL7 + ZH red-line tests** (P2) — `checkRL7Zh` implemented (CJK substring + ASCII
+  word-boundary) and wired into `_phase2-validate`; added a 17-test ZH red-lines suite
+  (RL1/RL2/RL6/RL7/RL8 ZH, previously zero coverage).
+- **gg-md-to-oracle-ts persona-parser dedupe** (P3) — `resolveAuthorMeta` now calls
+  `loadPersona` (single source of truth); hand-rolled `readPersonaFrontmatter` removed.
+- **getAllConfig staleness warning** (P3) — `_config.getConfigStatus()` added;
+  `gg-sheet-pull` warns when the config snapshot is missing/stale so an empty
+  author.map surfaces clearly instead of silent downstream hard-blocks.

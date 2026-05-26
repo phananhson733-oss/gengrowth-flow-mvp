@@ -24,7 +24,7 @@ import { homedir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getAccessToken } from './lib/_oauth-token.mjs';
-import { getAllConfig } from './lib/_config.mjs';
+import { getAllConfig, getConfigStatus } from './lib/_config.mjs';
 import { buildAuthorMap, resolveAuthor } from './lib/author-routing.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -368,6 +368,15 @@ async function main(argv) {
     process.stderr.write(`[pull] cluster tab fetch failed (${e.message}); author auto-routing disabled this run\n`);
   }
   const { map: authorMap } = buildAuthorMap(getAllConfig());
+  // Surface a silent failure mode: a missing/stale config snapshot yields an empty
+  // author.map, so every auto-routed page hard-blocks downstream with a confusing
+  // "no author assigned" instead of a clear "refresh your config" signal.
+  const cfgStatus = getConfigStatus();
+  if (!cfgStatus.present) {
+    process.stderr.write('[pull] WARNING: config snapshot missing (.gg-cache/config-snapshot.json) — author auto-routing disabled (override-only). Run gg-config-sync.\n');
+  } else if (cfgStatus.stale) {
+    process.stderr.write(`[pull] WARNING: config snapshot ~${Math.floor(cfgStatus.ageMs / 3600000)}h old — author.map may be behind the sheet. Run gg-config-sync to refresh.\n`);
+  }
 
   const pulled_at = new Date().toISOString();
   const stats = { total: 0, ready: 0, incomplete: 0, section: 0, empty: 0 };

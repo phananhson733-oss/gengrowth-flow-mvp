@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-NODE-003",
+  "entity": "North Node in Taurus",
+  "target_keyword": "north node in taurus",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-05-26T11:27:21.477Z",
+  "content_sha256_short": "95f7e1438a155237",
+  "source_path": ".gg-cache/drafts/PG-NODE-003.raw.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-NODE-003-claude-v8.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 7,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 1551,
+      "wikilinks": 4,
+      "tbdLinks": 4
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

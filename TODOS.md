@@ -19,13 +19,20 @@ emitted no `author_id`, so the oracle always fell back to the house byline.
 or `fixture.author_id`. The oracle (`gg-md-to-oracle-ts.resolveAuthorMeta`) reads
 `author_id` (C1 fix) so a byline supplied this way publishes correctly.
 
-**Remaining (producer auto-routing):** nothing yet RESOLVES the author in the batch
-path — `gg-render-batch` → `renderAuraPrompt` never writes `author_id` (nor
-`banned_tokens`, so batch-path RL7 is also silently N/A). Until then operators must
-pass `--author` per page. Decision needed: resolve author once at pull time in
-`gg-sheet-pull` (page↔cluster join + author.map already available there) and carry
-`author_id` through the batch fixture → `renderAuraPrompt` fixture → `_phase2-validate`,
-vs resolve at render time, vs keep manual `--author`. Resolve before T9 live eval.
+**Done (producer auto-routing):** author now resolves at pull time. `gg-sheet-pull`
+fetches the cluster tab, joins `cluster_id` → `primary_entity`, runs `resolveAuthor`
+(override → author.map → blank) and stamps `author`/`author_source`/`cluster_domain`
+into the batch fixture. `gg-render-batch.composeCfg` carries `author_id` into cfg;
+`renderAuraPrompt` writes `author_id` + `banned_tokens` (+ display/version) into the
+fixture sidecar; `_phase2-validate` reads both — so the byline publishes AND batch-path
+RL7 is now enforced (no longer silently N/A). End-to-end chain closed; `--author`
+remains as a manual override.
+
+**Still to verify at T9 (live):** the cluster join key — `gg-sheet-pull` and
+`gg-sheet-to-brief` join on `primary_entity` (a concrete entity like "Chiron"),
+while `author.map.<domain>` keys are coarse (aura/houses/vedic/basics). Confirm the
+real sheet's `primary_entity` values match the author.map keys, or add a coarse
+`cluster_domain` column / per-entity author.map rows.
 
 ## Red lines (RL7 / RL8)
 

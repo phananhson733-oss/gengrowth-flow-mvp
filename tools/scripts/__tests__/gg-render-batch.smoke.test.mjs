@@ -20,6 +20,7 @@ import {
   missingFields,
   missingRagCaches,
 } from '../gg-render-batch.mjs';
+import { authorFixtureFields } from '../lib/_render-aura-shared.mjs';
 
 // ---------- constants ----------
 test('REQUIRED_CFG_FIELDS covers every renderAuraPrompt mandatory input', () => {
@@ -206,4 +207,40 @@ test('missingRagCaches scans .gg-cache/<page_id>/ for required cache files', () 
   writeFileSync(join(cacheDir, 'obsidian-rag.json'), '{}');
   assert.deepEqual(missingRagCaches('page_test', tmp), []);
   rmSync(tmp, { recursive: true, force: true });
+});
+
+// ---------- author routing passthrough (Lane B / T3, batch path) ----------
+
+test('composeCfg carries the pull-resolved author into cfg.author_id', () => {
+  const { cfg } = composeCfg({ brief: { entity: 'E', target_keyword: 'k', author: 'marcus-orion', author_source: 'auto' }, page_id: 'page_x' }, {});
+  assert.equal(cfg.author_id, 'marcus-orion');
+  assert.equal(cfg.author_source, 'auto');
+});
+
+test('composeCfg: override.author_id wins over brief.author', () => {
+  const { cfg } = composeCfg({ brief: { entity: 'E', target_keyword: 'k', author: 'marcus-orion' }, page_id: 'page_x' }, { author_id: 'elena-vane' });
+  assert.equal(cfg.author_id, 'elena-vane');
+});
+
+test('composeCfg: no author → cfg omits author_id (clean fixture)', () => {
+  const { cfg } = composeCfg({ brief: { entity: 'E', target_keyword: 'k' }, page_id: 'page_x' }, {});
+  assert.ok(!('author_id' in cfg), 'author_id must be omitted when no author resolved');
+});
+
+test('authorFixtureFields: valid id → author_id + display + banned_tokens', () => {
+  const f = authorFixtureFields({ author_id: 'marcus-orion', author_source: 'auto' });
+  assert.equal(f.author_id, 'marcus-orion');
+  assert.equal(f.author_source, 'auto');
+  assert.equal(typeof f.author_display_name, 'string');
+  assert.ok(Array.isArray(f.banned_tokens) && f.banned_tokens.length > 0);
+});
+
+test('authorFixtureFields: quoted id is normalized', () => {
+  const f = authorFixtureFields({ author_id: '"marcus-orion"' });
+  assert.equal(f.author_id, 'marcus-orion');
+});
+
+test('authorFixtureFields: absent / invalid → {} (no fixture noise)', () => {
+  assert.deepEqual(authorFixtureFields({}), {});
+  assert.deepEqual(authorFixtureFields({ author_id: 'not-a-writer' }), {});
 });

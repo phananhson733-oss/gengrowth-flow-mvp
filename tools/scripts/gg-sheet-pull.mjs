@@ -246,6 +246,48 @@ export function classifyRow(rawA, brief) {
   return 'ready';
 }
 
+// Minimal cluster_id → primary_entity map (the author-routing join key). Local,
+// header-scanned builder to avoid a circular import with gg-sheet-to-brief.
+// primary_entity matches the join field gg-sheet-to-brief.composeOverride uses.
+export function buildClusterDomainMap(rows) {
+  const out = new Map();
+  if (!rows || !rows.length) return out;
+  const header = rows[0];
+  let idCol = -1;
+  let domainCol = -1;
+  for (let i = 0; i < header.length; i++) {
+    const h = String(header[i] || '').trim();
+    if (h === 'cluster_id') idCol = i;
+    else if (h === 'primary_entity') domainCol = i;
+  }
+  if (idCol === -1) return out;
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i] || [];
+    const id = String(r[idCol] || '').trim();
+    if (!id) continue;
+    out.set(id, domainCol >= 0 ? String(r[domainCol] || '').trim() : '');
+  }
+  return out;
+}
+
+// Resolve the byline author for a brief at pull time (Lane B / T3, batch path).
+// Mirrors gg-sheet-to-brief.composeOverride: manual `author` column wins, else
+// auto-map cluster primary_entity → author.map.<domain>; unmatched → author ''.
+// Returns fields to merge into the brief plus any routing warnings. Never throws.
+export function resolveAuthorForBrief(brief, { clusterDomainMap, authorMap }) {
+  const clusterId = String(brief.cluster_id || '').trim();
+  const clusterDomain = clusterId && clusterDomainMap.has(clusterId)
+    ? clusterDomainMap.get(clusterId)
+    : '';
+  const route = resolveAuthor({ clusterDomain, overrideRaw: brief.author_override, authorMap });
+  return {
+    author: route.author,
+    cluster_domain: route.cluster_domain,
+    ...(route.author_source ? { author_source: route.author_source } : {}),
+    warnings: route.warnings || [],
+  };
+}
+
 // ---------- CLI arg parser ----------
 export function parseArgs(argv) {
   const out = {};
@@ -313,6 +355,20 @@ async function main(argv) {
     return 2;
   }
 
+  // Author routing (Lane B / T3, batch path): resolve the byline at pull time so
+  // it flows through the batch fixture → renderAuraPrompt → _phase2-validate →
+  // oracle without the operator hand-passing --author. Cluster tab supplies the
+  // primary_entity join key; author.map lives in the config snapshot. A failed
+  // cluster fetch is non-fatal — auto-routing just degrades to override-only.
+  let clusterDomainMap = new Map();
+  try {
+    const clusterRows = await fetchTab(workbookId, CLUSTERS_TAB, token);
+    clusterDomainMap = buildClusterDomainMap(clusterRows);
+  } catch (e) {
+    process.stderr.write(`[pull] cluster tab fetch failed (${e.message}); author auto-routing disabled this run\n`);
+  }
+  const { map: authorMap } = buildAuthorMap(getAllConfig());
+
   const pulled_at = new Date().toISOString();
   const stats = { total: 0, ready: 0, incomplete: 0, section: 0, empty: 0 };
   const outRows = [];
@@ -324,12 +380,22 @@ async function main(argv) {
     stats.total += 1;
     stats[status] += 1;
     const isDataRow = status === 'ready' || status === 'incomplete';
+    let finalBrief = isDataRow ? brief : null;
+    if (finalBrief) {
+      const route = resolveAuthorForBrief(finalBrief, { clusterDomainMap, authorMap });
+      finalBrief = {
+        ...finalBrief,
+        author: route.author,
+        cluster_domain: route.cluster_domain,
+        ...(route.author_source ? { author_source: route.author_source } : {}),
+      };
+    }
     const entry = {
       source_row: sheetRow,
       status,
       page_id: resolvePageId(brief, isDataRow),
       raw,
-      brief: isDataRow ? brief : null,
+      brief: finalBrief,
       todo: isDataRow ? identifyGaps(brief) : [],
     };
     outRows.push(entry);

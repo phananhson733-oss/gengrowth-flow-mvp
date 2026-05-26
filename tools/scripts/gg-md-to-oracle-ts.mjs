@@ -37,9 +37,57 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, renameSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { isValidAuthorId, normalizeAuthorId } from './lib/author-routing.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const FLOW_REPO = join(__dirname, '..', '..');
+
+// Persona cards live here (Lane A owns the .md content; we only READ frontmatter).
+const PERSONA_DIR = join(__dirname, 'lib', 'author-personas');
+
+// Resolve author identity for publish metadata (Lane B / T10). Priority:
+//   1. Lane A loadPersona(id) loader if/when it lands (lib/author-personas/loader.mjs
+//      exporting loadPersona) — preferred single source of truth.
+//   2. Fallback: read lib/author-personas/<id>.md frontmatter directly
+//      (display_name / primary_focus / credential) — robust until the loader exists.
+// Returns { id, displayName, slug, shortBio } or null if author id is absent/invalid.
+// authorId comes from the staging md frontmatter `author_id` field (written by
+// content-draft's buildAuthorFrontmatter); legacy `author` is accepted at the call site.
+export function resolveAuthorMeta(authorId, { personaDir = PERSONA_DIR } = {}) {
+  // content-draft writes the byline value JSON-quoted (author_id: "marcus-orion")
+  // and parseFrontmatter does not strip quotes, so normalize surrounding quotes
+  // before validating — otherwise a valid id reads as invalid → silent house byline.
+  const raw = typeof authorId === 'string' ? authorId.replace(/^["']|["']$/g, '').trim() : authorId;
+  if (!raw || !isValidAuthorId(raw)) return null;
+  const id = normalizeAuthorId(raw);
+  const fm = readPersonaFrontmatter(id, personaDir);
+  if (!fm) return null;
+  const displayName = fm.display_name || id;
+  // short bio: prefer explicit credential line, else primary_focus.
+  const shortBio = fm.credential || fm.primary_focus || '';
+  return { id, displayName, slug: id, shortBio };
+}
+
+// Minimal frontmatter reader for persona cards. Only pulls the flat scalar keys
+// we need (display_name / primary_focus / credential); ignores list blocks.
+// Returns {} on parse trouble, null if the card file is missing.
+function readPersonaFrontmatter(id, personaDir) {
+  const path = join(personaDir, `${id}.md`);
+  if (!existsSync(path)) return null;
+  let raw;
+  try { raw = readFileSync(path, 'utf8'); } catch { return null; }
+  const m = raw.match(/^---\n([\s\S]*?)\n---/);
+  if (!m) return {};
+  const fm = {};
+  for (const line of m[1].split('\n')) {
+    const kv = line.match(/^([a-z_]+):\s*(.*)$/i);
+    if (kv && kv[2] !== '') {
+      // strip surrounding quotes from scalar values like version: "1.0"
+      fm[kv[1]] = kv[2].replace(/^["']|["']$/g, '');
+    }
+  }
+  return fm;
+}
 
 export const DEFAULT_PAGES = [
   'page_aura_colors_pillar',
@@ -177,20 +225,27 @@ export function escapeForTemplate(s) {
 // Emit just the `export const <var>: WikiArticle = { ... };` block (no header,
 // no import). Used by both emitTs (full file) and mergeIntoSibling (append-only
 // path that preserves existing EN export).
-export function emitExportBlock({ slug, title, date, description, keywords, body, varName, language = 'en' }) {
+export function emitExportBlock({ slug, title, date, description, keywords, body, varName, language = 'en', authorMeta = null }) {
   const escapedBody = escapeForTemplate(body);
   const keywordsLit = JSON.stringify(keywords, null, 2)
     .split('\n')
     .map((line, i) => (i === 0 ? line : '  ' + line))
     .join('\n');
   const lang = language === 'zh' ? 'zh' : 'en';
-  const author = language === 'zh' ? 'AstrologyWiki 团队' : 'AstrologyWiki Team';
+  // author display name: persona display name if resolved (Lane B / T10),
+  // else fall back to the house byline. authorSlug + authorBio are emitted only
+  // when a persona is resolved (oracle author bio page is a later plan).
+  const houseAuthor = language === 'zh' ? 'AstrologyWiki 团队' : 'AstrologyWiki Team';
+  const author = authorMeta && authorMeta.displayName ? authorMeta.displayName : houseAuthor;
+  const authorMetaLines = authorMeta
+    ? `  authorSlug: ${JSON.stringify(authorMeta.slug)},\n  authorBio: ${JSON.stringify(authorMeta.shortBio)},\n`
+    : '';
   return `export const ${varName}: WikiArticle = {
   slug: ${JSON.stringify(slug)},
   title: ${JSON.stringify(title)},
   description: ${JSON.stringify(description)},
   author: ${JSON.stringify(author)},
-  date: ${JSON.stringify(date)},
+${authorMetaLines}  date: ${JSON.stringify(date)},
   schema: "Article",
   lang: "${lang}",
   keywords: ${keywordsLit},
@@ -303,7 +358,12 @@ function convertOne({ source, slug, out, language = 'en', mergeSibling = false, 
   // track-mood-astrology.ts.
   const suffix = language === 'zh' ? 'Zh' : 'En';
   const varName = slugToCamel(resolvedSlug, suffix);
-  const exportBlock = emitExportBlock({ slug: resolvedSlug, title, date, description, keywords, body: transformedBody, varName, language });
+  // T10: carry author identity into publish metadata. content-draft's
+  // buildAuthorFrontmatter writes the persona id under `author_id` (see
+  // gg-content-draft.mjs). Fall back to legacy `author` for hand-authored staging
+  // files. Reading the wrong key silently drops every byline to the house team.
+  const authorMeta = resolveAuthorMeta(fm.author_id || fm.author);
+  const exportBlock = emitExportBlock({ slug: resolvedSlug, title, date, description, keywords, body: transformedBody, varName, language, authorMeta });
 
   // F2: sibling path is derived from the resolved (parsed) slug, not from
   // `out`. This makes the merge target stable even if --out is a weird
@@ -327,7 +387,7 @@ function convertOne({ source, slug, out, language = 'en', mergeSibling = false, 
     }
   }
 
-  const ts = emitTs({ slug: resolvedSlug, title, date, description, keywords, body: transformedBody, varName, language });
+  const ts = emitTs({ slug: resolvedSlug, title, date, description, keywords, body: transformedBody, varName, language, authorMeta });
   mkdirSync(dirname(out), { recursive: true });
   atomicWrite(out, ts);
   return { slug: resolvedSlug, varName, out, language, mergeMode: 'standalone' };

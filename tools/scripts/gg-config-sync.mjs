@@ -31,6 +31,7 @@ import {
   DEFAULT_LOCATION_CODE_FALLBACK,
   DEFAULT_LANGUAGE_CODE_FALLBACK,
 } from './gg-keyword-mine.mjs';
+import { AUTHOR_MAP_PREFIX, isValidAuthorId, normalizeAuthorId } from './lib/author-routing.mjs';
 
 export const CONFIG_TAB_NAME = 'config';
 export const CONFIG_RANGE = `${CONFIG_TAB_NAME}!A1:F200`;
@@ -71,6 +72,10 @@ export const SCHEMA = Object.freeze({
   'phase2.RL4_shingle_floor':       { codeDefault: RL4_SHINGLE_FLOOR_DEFAULT,       coerce: num, constant: 'RL4_SHINGLE_FLOOR' },
   'phase2.RL4_drifted_sections_fail':{ codeDefault: RL4_DRIFTED_SECTIONS_FAIL_DEFAULT, coerce: int, constant: 'RL4_DRIFTED_SECTIONS_FAIL' },
   'phase2.RL5_keyword_max':         { codeDefault: RL5_MAX_COUNT_DEFAULT,           coerce: int, constant: 'RL5_MAX_COUNT' },
+  // author routing (Lane B / T3) — note: per-domain keys `author.map.<domain>`
+  // are DYNAMIC (the domain is a runtime cluster value), so they are NOT listed
+  // here one-by-one. They are matched by prefix in parseConfigRows + validated
+  // against KNOWN_AUTHOR_IDS. This entry documents the prefix for the diff table.
   // word-count tiers (not yet wired into code; tracked here for visibility)
   'tier1.word_min':      { codeDefault: 2800, coerce: int, constant: '(doc-only)' },
   'tier1.word_max':      { codeDefault: 3500, coerce: int, constant: '(doc-only)' },
@@ -125,6 +130,24 @@ export function parseConfigRows(rows) {
     if (!key) continue;
     const rawStr = rawVal == null ? '' : String(rawVal).trim();
     if (!rawStr) continue;
+    // Dynamic author-routing keys: `author.map.<cluster-domain>` → author_id.
+    // The domain segment is a runtime value (cluster.primary_entity), so these
+    // can't live in the static SCHEMA whitelist. Match by prefix + validate the
+    // value against KNOWN_AUTHOR_IDS so a typo'd author_id is caught here rather
+    // than silently routing to a non-existent persona.
+    if (key.startsWith(AUTHOR_MAP_PREFIX)) {
+      const domain = key.slice(AUTHOR_MAP_PREFIX.length).trim();
+      if (!domain) {
+        out.unparsable.push({ key, raw: rawStr, reason: 'empty cluster-domain after author.map.' });
+        continue;
+      }
+      if (!isValidAuthorId(rawStr)) {
+        out.unparsable.push({ key, raw: rawStr, reason: 'value is not a known author_id' });
+        continue;
+      }
+      out.values[key] = normalizeAuthorId(rawStr);
+      continue;
+    }
     const spec = SCHEMA[key];
     if (!spec) {
       out.unrecognised.push(key);
@@ -157,6 +180,18 @@ export function buildDiff(sheetValues) {
     else if (sheetVal === codeVal) status = 'match';
     else status = 'drift!';
     rows.push({ key, codeVal, sheetVal, sheetHas, status, constant: spec.constant });
+  }
+  // Dynamic author.map.<domain> keys (no code default — sheet is the only source).
+  for (const key of Object.keys(sheetValues)) {
+    if (!key.startsWith(AUTHOR_MAP_PREFIX)) continue;
+    rows.push({
+      key,
+      codeVal: '(none)',
+      sheetVal: sheetValues[key],
+      sheetHas: true,
+      status: 'sheet-only',
+      constant: '(author-routing)',
+    });
   }
   return rows;
 }

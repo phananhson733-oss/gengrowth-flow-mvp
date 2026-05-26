@@ -38,5 +38,15 @@ export function getConfig(key, fallback) {
   return Object.prototype.hasOwnProperty.call(snap.values, key) ? snap.values[key] : fallback;
 }
 
+/**
+ * Return a shallow copy of all snapshot values (the flat dotted-key map).
+ * Used by author-routing to prefix-match dynamic `author.map.<domain>` keys
+ * that getConfig() can't enumerate. Returns {} if snapshot missing/unreadable.
+ */
+export function getAllConfig() {
+  const snap = loadSnapshot();
+  return { ...snap.values };
+}
+
 /** Test-only: drop the cache so a fresh read can pick up new snapshot contents. */
 export function _resetConfigCache() { cached = null; }

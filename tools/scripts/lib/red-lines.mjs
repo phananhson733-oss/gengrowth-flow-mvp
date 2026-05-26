@@ -100,6 +100,75 @@ export const RL6_BLACKLIST_ALWAYS = Object.freeze([
 export const RL6_CONDITION_CONTEXT_REGEX =
   /\b(mental|medical|anxiety|depression|psychiatric|psychological|health|trauma|chronic)\s+condition\b|\bcondition\s+(of|like|such\s+as)\s+(anxiety|depression|trauma|adhd|ocd|ptsd|bipolar|mental|psychiatric)/i;
 
+// RL7: per-author banned tokens. No constant list here — the list is supplied
+// per-article via ctx.authorBannedTokens (string[], compiled by Lane A
+// content-draft from the chosen author persona capsule). RL7 has no notion of
+// "default" black words; absent/empty → the author has no black list → pass.
+
+// RL8: shared scientific-endorsement red line (all authors). Astrology / oracle
+// content must never dress interpretation up as scientific proof. Exported for
+// tests + audit (mirrors RL6_BLACKLIST_ALWAYS style). Measured: the 9 highest-
+// risk phrases only — neutral mentions of "science" stay legal.
+export const RL8_SCI_CLAIM_PHRASES = Object.freeze([
+  'research shows',
+  'studies show',
+  'studies suggest',
+  'scientifically proven',
+  'evidence-based',
+  'clinically proven',
+  'data confirms',
+  'proven by science',
+  'scientific evidence',
+]);
+const RL8_PHRASE_PATTERN = RL8_SCI_CLAIM_PHRASES
+  .map((p) => p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+'))
+  .join('|');
+export const RL8_SCI_CLAIM_REGEX = new RegExp(`\\b(?:${RL8_PHRASE_PATTERN})\\b`, 'i');
+// Global variant for scanning EVERY phrase on a line (not just the first). A
+// non-global match() stops at the first hit, so a negated disclaimer followed by
+// an affirmative claim on the same line ("no evidence, but studies show ...")
+// would slip through. matchAll over the global regex closes that bypass.
+const RL8_SCI_CLAIM_REGEX_G = new RegExp(`\\b(?:${RL8_PHRASE_PATTERN})\\b`, 'gi');
+
+// ============================================================
+// Scope helpers — strip non-prose regions before scanning (Codex #9).
+//   - YAML frontmatter: leading `---\n ... \n---` block.
+//   - fenced code: ``` ... ``` blocks.
+//   - blockquotes: lines beginning with `>` (after optional indent).
+// Used by RL7 (frontmatter + blockquote + fenced) and RL8 (frontmatter +
+// fenced; blockquotes kept since quoted "research shows" still implies the
+// claim, but neutral mentions are covered by phrase specificity).
+// ============================================================
+
+export function stripFrontmatter(md) {
+  if (typeof md !== 'string') return '';
+  // Frontmatter only counts when it is the very first thing in the doc.
+  const m = md.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/);
+  return m ? md.slice(m[0].length) : md;
+}
+
+function stripFencedCode(md) {
+  // Remove ``` ... ``` (and ~~~ ... ~~~) fenced blocks, fences inclusive.
+  return md.replace(/^[ \t]*(```|~~~)[\s\S]*?^[ \t]*\1[ \t]*$/gm, '');
+}
+
+function stripBlockquotes(md) {
+  return md
+    .split('\n')
+    .filter((line) => !/^\s{0,3}>/.test(line))
+    .join('\n');
+}
+
+// Prose body for RL7: drop frontmatter, fenced code, and blockquotes.
+function proseBodyForAuthor(md) {
+  return stripBlockquotes(stripFencedCode(stripFrontmatter(md)));
+}
+
+// Prose body for RL8: drop frontmatter and fenced code only.
+function proseBodyForSci(md) {
+  return stripFencedCode(stripFrontmatter(md));
+}
+
 // ============================================================
 // Token helpers (kept simple to avoid edge-case surprises)
 // ============================================================
@@ -553,6 +622,107 @@ export function checkRL6(draft, ctx) {
   };
 }
 
+// ctx: { authorBannedTokens?: string[], targetKeyword?: string }
+// RL7 — per-author banned-token red line. Scans prose body only (frontmatter,
+// blockquotes, fenced code stripped). A banned token that is a substring of the
+// article's target_keyword is exempt for this article (avoids killing the very
+// keyword the page must rank for). Word-boundary, case-insensitive. Hit = FAIL.
+export function checkRL7(draft, ctx) {
+  const banned = Array.isArray(ctx && ctx.authorBannedTokens) ? ctx.authorBannedTokens : [];
+  if (banned.length === 0) {
+    return {
+      id: 'rl7_author_banned_tokens',
+      pass: true,
+      note: 'no authorBannedTokens for this author — N/A',
+    };
+  }
+  const targetKeyword = (ctx.targetKeyword || '').toLowerCase();
+  const body = proseBodyForAuthor(draft);
+  const bodyLines = body.split('\n');
+  const evidence = [];
+
+  for (const rawToken of banned) {
+    const token = String(rawToken || '').trim();
+    if (!token) continue;
+    // Exempt: token is a substring of the target_keyword for this article.
+    if (targetKeyword && targetKeyword.includes(token.toLowerCase())) continue;
+    const escaped = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+');
+    const re = new RegExp(`(?<![A-Za-z0-9])${escaped}(?![A-Za-z0-9])`, 'i');
+    for (let i = 0; i < bodyLines.length; i++) {
+      const m = bodyLines[i].match(re);
+      if (m) {
+        evidence.push({ token, line: i + 1, context: bodyLines[i].trim().slice(0, 160) });
+        break; // one hit per token is enough to fail; keep evidence compact.
+      }
+    }
+  }
+
+  if (evidence.length > 0) {
+    return {
+      id: 'rl7_author_banned_tokens',
+      pass: false,
+      note: `author banned token(s) matched: ${evidence.map((e) => `"${e.token}"`).join(', ')}`,
+      evidence,
+    };
+  }
+  return {
+    id: 'rl7_author_banned_tokens',
+    pass: true,
+    note: `scanned ${banned.length} banned token(s), no hits`,
+  };
+}
+
+// RL8 — shared scientific-endorsement red line (all authors). Detects phrasing
+// that frames interpretation as scientific proof. Scans prose body with
+// frontmatter + fenced code stripped. Hit = FAIL.
+// Negation / disclaimer cues that flip a sci-claim into an honest "there is no
+// scientific backing" statement, which is allowed (even desirable) on a
+// metaphysical wiki. The cue only exempts a claim when it sits in the SAME
+// clause as the phrase — see clauseBeforeMatch. (Residual limitation: an
+// intensifier-negation like "there is no doubt that research shows ..." still
+// reads as a negation in-clause; that rarer construction is accepted as a
+// known false-negative rather than risking false-positives on honest disclaimers.)
+const RL8_NEGATION_REGEX =
+  /\b(no|not|never|without|lacks?|lacking|isn't|aren't|wasn't|weren't|doesn't|don't|didn't|cannot|can't|nor|neither|unproven|unsupported)\b[^,;:.?!]*$/i;
+
+// Slice the pre-match text down to the clause directly preceding the phrase, so a
+// negation in an earlier clause ("Not surprisingly, research shows ...") does not
+// falsely exempt an affirmative claim.
+function clauseBeforeMatch(before) {
+  let lastBoundary = -1;
+  for (const ch of [',', ';', ':', '.', '?', '!']) {
+    const idx = before.lastIndexOf(ch);
+    if (idx > lastBoundary) lastBoundary = idx;
+  }
+  return lastBoundary >= 0 ? before.slice(lastBoundary + 1) : before;
+}
+
+export function checkRL8(draft) {
+  const body = proseBodyForSci(typeof draft === 'string' ? draft : '');
+  const lines = body.split('\n');
+  const evidence = [];
+  for (let i = 0; i < lines.length; i++) {
+    for (const m of lines[i].matchAll(RL8_SCI_CLAIM_REGEX_G)) {
+      const before = lines[i].slice(0, m.index);
+      if (RL8_NEGATION_REGEX.test(clauseBeforeMatch(before))) continue; // negated in-clause → allowed
+      evidence.push({ phrase: m[0], line: i + 1, context: lines[i].trim().slice(0, 160) });
+    }
+  }
+  if (evidence.length > 0) {
+    return {
+      id: 'rl8_no_scientific_endorsement',
+      pass: false,
+      note: `scientific-endorsement phrase(s) matched: ${evidence.map((e) => `"${e.phrase}"`).join(', ')}`,
+      evidence,
+    };
+  }
+  return {
+    id: 'rl8_no_scientific_endorsement',
+    pass: true,
+    note: `scanned ${RL8_SCI_CLAIM_PHRASES.length} scientific-endorsement phrases, no hits`,
+  };
+}
+
 // ============================================================
 // Top-level orchestrator
 // ============================================================
@@ -568,6 +738,7 @@ export function checkRL6(draft, ctx) {
  * @param {'hit'|'missing-skipped'} ctx.serpState
  * @param {string[]} [ctx.snippets]  SERP top-3 snippets (required when serpState='hit').
  * @param {string|null} [ctx.escapeReason]  reason text when serpState='missing-skipped'.
+ * @param {string[]} [ctx.authorBannedTokens]  per-author black words (RL7); empty/absent → RL7 N/A.
  * @returns {{ all_pass: boolean, rules: object[] }}
  */
 export function redLinesCheck(draftMd, ctx) {
@@ -584,6 +755,8 @@ export function redLinesCheck(draftMd, ctx) {
     checkRL4(draftMd, ctx),
     checkRL5(draftMd, ctx),
     checkRL6(draftMd, ctx),
+    checkRL7(draftMd, ctx),
+    checkRL8(draftMd),
   ];
   const all_pass = rules.every((r) => r.pass);
   return { all_pass, rules };

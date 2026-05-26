@@ -44,6 +44,10 @@ import {
 
 import { redLinesCheck } from './lib/red-lines.mjs';
 
+import { loadPersona } from './lib/author-personas/loader.mjs';
+import { getAllConfig } from './lib/_config.mjs';
+import { buildAuthorMap, resolveAuthor as routeAuthor } from './lib/author-routing.mjs';
+
 // ============================================================
 // constants
 // ============================================================
@@ -89,6 +93,9 @@ const PAGE_COLS = Object.freeze({
   content_angle: 18,
   psych_safety_flag: 19,
   journal_prompts: 20,
+  // Lane A author signing columns. Lane B routing writes these; content-draft reads them.
+  author: 21,        // column V — author_id (kebab), e.g. "marcus-orion"
+  author_source: 22, // column W — provenance: where the assignment came from (default passthrough)
 });
 
 // 主题集群表 columns (0-indexed).
@@ -112,6 +119,9 @@ const CLUSTER_COLS = Object.freeze({
   priority: 16,
   week: 17,
   success_metric: 18,
+  // Lane A: cluster domain key for cluster->author routing (Lane B owns the mapping;
+  // content-draft reads it for ctx.clusterDomain provenance).
+  cluster_domain: 19, // column T
 });
 
 // CTA Map columns (0-indexed).
@@ -129,8 +139,8 @@ const CLUSTER_SHEET = '主题集群表';
 const CTA_SHEET = 'CTA Map';
 
 // Sheet ranges (read-only).
-const PAGE_RANGE = `${PAGE_SHEET}!A2:U300`;
-const CLUSTER_RANGE = `${CLUSTER_SHEET}!A2:S200`;
+const PAGE_RANGE = `${PAGE_SHEET}!A2:W300`;
+const CLUSTER_RANGE = `${CLUSTER_SHEET}!A2:T200`;
 const CTA_RANGE = `${CTA_SHEET}!A2:F500`;
 
 // Placeholder detection for newsletter target_url (spec §2.2 H2).
@@ -412,6 +422,56 @@ function gateCheckPage(pageRow, pageId) {
   return { ok: true, tier, template, clusterId, entity };
 }
 
+// Author gate (Lane A, CRITICAL). The author_id column (V) is written by Lane B
+// routing. If it is empty → hard-block: refuse to generate, so we never ship a
+// silently un-signed article. If it is set but the persona card is unknown /
+// malformed → loadPersona() throws (fail-loud, never a wrong byline).
+//
+// Returns { ok:true, authorId, authorSource, persona } on success, or
+// { ok:false, exit, reason } when the author cell is empty.
+// Hybrid routing (design Decision 1) delegated to the shared pure router in
+// lib/author-routing.mjs so the override/auto/empty logic lives in one place:
+//   1. manual override in sheet author column (valid id) → author_source 'override'
+//   2. else auto-map cluster primary_entity → author.map.<domain> (config tab) → 'auto'
+//   3. else (incl. rejected illegal override) → empty → hard-block here
+// `authorMap` is injectable for tests; defaults to the synced config snapshot.
+function resolveAuthor(pageRow, clusterRow, pageId, authorMap) {
+  const map = authorMap || buildAuthorMap(getAllConfig()).map;
+  const overrideRaw = (pageRow && pageRow[PAGE_COLS.author]) || '';
+  // Join key: explicit cluster_domain column (col T) wins if the sheet has one,
+  // else fall back to primary_entity (col F). Whichever is used is recorded as
+  // provenance via routed.cluster_domain so the manifest matches the lookup.
+  const clusterDomain = clusterRow
+    ? String(
+        clusterRow[CLUSTER_COLS.cluster_domain] ||
+          clusterRow[CLUSTER_COLS.primary_entity] ||
+          '',
+      ).trim()
+    : '';
+  const routed = routeAuthor({ clusterDomain, overrideRaw, authorMap: map });
+  if (!routed.author) {
+    return {
+      ok: false,
+      exit: EXIT.GATE,
+      reason:
+        `no author assigned for ${pageId}: sheet author column empty (or override rejected) ` +
+        `and no author.map match for domain "${routed.cluster_domain || '(none)'}". ` +
+        `Set author in 选题登记表 (column V) or add author.map.<domain> in the config tab.`,
+    };
+  }
+  // loadPersona throws on unknown id / missing field / malformed card — let it
+  // propagate so the run fails loud rather than producing a wrong-author draft.
+  // (Illegal override ids are already rejected upstream by routeAuthor.)
+  const persona = loadPersona(routed.author);
+  return {
+    ok: true,
+    authorId: routed.author,
+    authorSource: routed.author_source,
+    clusterDomain: routed.cluster_domain,
+    persona,
+  };
+}
+
 function gateCheckCluster(clusterRow, clusterId) {
   if (!clusterRow) {
     return { ok: false, exit: EXIT.GATE, reason: `cluster_id "${clusterId}" not found in ${CLUSTER_SHEET}` };
@@ -567,6 +627,30 @@ function rl6Hint(effective) {
   return '（本页 N/A）';
 }
 
+// Build the author byline + provenance YAML frontmatter prepended to the draft.
+// JSON.stringify gives YAML-safe double-quoted scalars (handles colons / quotes in
+// display_name or credential). The credential lives in byline metadata only — it is
+// never written into the article body (first-person ban is enforced via the prompt).
+function buildAuthorFrontmatter(author, clusterId) {
+  const p = author.persona;
+  const q = (s) => JSON.stringify(String(s == null ? '' : s));
+  return [
+    '---',
+    `author_id: ${q(author.authorId)}`,
+    `author_display_name: ${q(p.displayName)}`,
+    `author_primary_focus: ${q(p.primaryFocus)}`,
+    `author_credential: ${q(p.capsule.credential)}`,
+    `author_source: ${q(author.authorSource)}`,
+    `persona_version: ${q(p.version)}`,
+    `persona_source_ref: ${q(p.sourceRef)}`,
+    `cluster_id: ${q(clusterId)}`,
+    `cluster_domain: ${q(author.clusterDomain)}`,
+    '---',
+    '',
+    '',
+  ].join('\n');
+}
+
 function renderPrompt(template, ctx) {
   const tier = ctx.tier;
   let raw = loadTemplate(template);
@@ -600,6 +684,12 @@ function renderPrompt(template, ctx) {
     '{{cta_target_url}}': safeField(ctx.cta.target_url),
     '{{psych_safety_flag}}': safeField(ctx.effectivePsychSafety),
     '{{target_country}}': safeField(ctx.targetCountry || 'US'),
+    // Author voice capsule (Lane A). Expression-layer only; never alters structure.
+    // Each field is safeField-escaped so persona text cannot break out of <field>.
+    '{{author_voice_rule}}': safeField(ctx.authorCapsule ? ctx.authorCapsule.voiceRule : ''),
+    '{{author_allowed_moves}}': safeField(ctx.authorCapsule ? ctx.authorCapsule.allowedMoves : ''),
+    '{{author_forbidden_moves}}': safeField(ctx.authorCapsule ? ctx.authorCapsule.forbiddenMoves : ''),
+    '{{author_credential_meta}}': safeField(ctx.authorCapsule ? ctx.authorCapsule.credential : ''),
     // Phase 0 RAG source injection — raw XML blocks (already safeField-escaped per cell).
     '{{ENTITY_PASSPORT_BLOCK}}': ctx.entityPassportBlock || '',
     '{{FRICTION_MINE_BLOCK}}': ctx.frictionMineBlock || '',
@@ -977,6 +1067,33 @@ async function runPhase1(args, env) {
   }
   recordPass('cluster gate', `track=${clusterGate.track}`);
 
+  // 3b. Author gate (Lane A, CRITICAL): author_id empty → hard block, no draft.
+  //     loadPersona throws on unknown/malformed card (propagates to main → exit 1).
+  let author;
+  try {
+    author = resolveAuthor(pageRow, clusterRow, pageId);
+  } catch (e) {
+    recordFail('author gate', e,
+      `check 选题登记表 column V (author) value against tools/scripts/lib/author-personas/<id>.md`);
+    await writeRunsRow({
+      ...env, dryRun: args.dryRun,
+      payload: { phase: 1, page_id: pageId, fail_kind: 'gate', detail: formatErr(e) },
+      status: 'fail', notes: 'author persona load failed', entity: gate.entity,
+    });
+    return EXIT.GATE;
+  }
+  if (!author.ok) {
+    recordFail('author gate', new Error(author.reason),
+      'set the author column (V) in 选题登记表; routing is owned upstream (Lane B)');
+    await writeRunsRow({
+      ...env, dryRun: args.dryRun,
+      payload: { phase: 1, page_id: pageId, fail_kind: 'gate', detail: author.reason },
+      status: 'fail', notes: 'no author assigned', entity: gate.entity,
+    });
+    return author.exit;
+  }
+  recordPass('author gate', `author=${author.authorId} (source=${author.authorSource}, persona v${author.persona.version})`);
+
   // 4. Read CTA Map.
   const ctaRows = await readSheetRange(workbookId, token, CTA_RANGE);
   const cta = resolveCta(pageRow, clusterRow, ctaRows);
@@ -1152,6 +1269,13 @@ async function runPhase1(args, env) {
     frictionMineBlock: frictionBlock,
     serpSnippetsBlock: serpBlock,
     obsidianRagBlock: obsidianBlock,
+    // Lane A shared ctx — author signing fields consumed here + carried to manifest.
+    authorId: author.authorId,
+    authorSource: author.authorSource,
+    authorBannedTokens: author.persona.bannedTokens, // for Lane C RL7 (filled here, not enforced here)
+    authorCapsule: author.persona.capsule,
+    personaVersion: author.persona.version,
+    clusterDomain: author.clusterDomain,
   };
   const prompt = renderPrompt(gate.template, renderCtx);
 
@@ -1203,6 +1327,8 @@ async function runPhase1(args, env) {
     payload: {
       phase: 1, page_id: pageId, cluster_id: gate.clusterId,
       template: gate.template, tier: gate.tier, track: clusterGate.track,
+      author_id: author.authorId, author_source: author.authorSource,
+      persona_version: author.persona.version, cluster_domain: author.clusterDomain,
       psych_safety: effectivePsychSafety, serp_state: serpCheckState,
       rag_state: ragCheckState,
       prompt_path: args.dryRun ? null : relative(REPO_ROOT, promptPath),
@@ -1217,6 +1343,7 @@ async function runPhase1(args, env) {
   console.log(`✔ Phase 1 ready`);
   console.log(`  page_id:      ${pageId}`);
   console.log(`  template:     ${gate.template} | tier: ${gate.tier} | track: ${clusterGate.track}`);
+  console.log(`  author:       ${author.authorId} (source=${author.authorSource}, persona v${author.persona.version}, domain=${author.clusterDomain || '(none)'})`);
   console.log(`  psych_safety: ${effectivePsychSafety} (source=${effectivePsychSafetySource})`);
   console.log(`  cta:          ${cta.cta_id || '(none)'} — ${cta.text || '(empty)'}`);
   console.log(`  serp:         ${serpCheckState}`);
@@ -1355,6 +1482,33 @@ async function runPhase2(args, env) {
   const ctaRows = await readSheetRange(workbookId, token, CTA_RANGE);
   const cta = resolveCta(pageRow, clusterRow, ctaRows);
 
+  // Author gate (Lane A, CRITICAL): same hard-block as Phase 1 — never ingest an
+  // un-signed draft. Empty author column → exit 10; unknown/malformed card → throws.
+  let author;
+  try {
+    author = resolveAuthor(pageRow, clusterRow, pageId);
+  } catch (e) {
+    recordFail('author gate', e,
+      'check 选题登记表 column V (author) against tools/scripts/lib/author-personas/<id>.md');
+    await writeRunsRow({
+      ...env, dryRun: args.dryRun,
+      payload: { phase: 2, page_id: pageId, fail_kind: 'gate', detail: formatErr(e) },
+      status: 'fail', notes: 'author persona load failed', entity,
+    });
+    return EXIT.GATE;
+  }
+  if (!author.ok) {
+    recordFail('author gate', new Error(author.reason),
+      'set the author column (V) in 选题登记表 before Phase 2');
+    await writeRunsRow({
+      ...env, dryRun: args.dryRun,
+      payload: { phase: 2, page_id: pageId, fail_kind: 'gate', detail: author.reason },
+      status: 'fail', notes: 'no author assigned', entity,
+    });
+    return author.exit;
+  }
+  recordPass('author gate', `author=${author.authorId} (source=${author.authorSource}, persona v${author.persona.version})`);
+
   const pageSafety = String(pageRow[PAGE_COLS.psych_safety_flag] || '').trim().toUpperCase();
   const clusterSafety = String(clusterRow[CLUSTER_COLS.psych_safety_flag] || '').trim().toUpperCase();
   let effectivePsychSafety = 'N';
@@ -1402,9 +1556,12 @@ async function runPhase2(args, env) {
     serpState: serpCheckState,
     snippets: serpSnippets,
     escapeReason,
+    // RL7 needs the selected author's banned tokens; without this the per-author
+    // red line silently N/A-passes in the real Phase 2 path.
+    authorBannedTokens: author.persona.bannedTokens,
   });
   if (rl.all_pass) {
-    recordPass('red lines', `6/6 pass`);
+    recordPass('red lines', `${rl.rules.length}/${rl.rules.length} pass`);
   } else {
     const failed = rl.rules.filter((r) => !r.pass);
     for (const r of failed) {
@@ -1496,9 +1653,11 @@ async function runPhase2(args, env) {
       renameSync(manifestAbs, bak);
     }
 
-    // Always write draft (even on fail — as .tmp.md).
-    writeFileSync(draftAbs, draftMd, 'utf8');
-    recordPass('write draft', `${relative(REPO_ROOT, draftAbs)} (${draftMd.length} chars)`);
+    // Always write draft (even on fail — as .tmp.md). Prepend author byline
+    // frontmatter so the signing + provenance travels with the draft file itself.
+    const draftWithByline = buildAuthorFrontmatter(author, clusterId) + draftMd;
+    writeFileSync(draftAbs, draftWithByline, 'utf8');
+    recordPass('write draft', `${relative(REPO_ROOT, draftAbs)} (${draftWithByline.length} chars, author=${author.authorId})`);
   }
 
   // 11. Build + write manifest.
@@ -1518,6 +1677,11 @@ async function runPhase2(args, env) {
     tier,
     track: String(clusterRow[CLUSTER_COLS.track] || '').trim(),
     page_role: String(pageRow[PAGE_COLS.page_role] || '').trim(),
+    // Lane A provenance — written so a wrong byline can never be silent + is auditable.
+    author_id: author.authorId,
+    author_source: author.authorSource,
+    cluster_domain: author.clusterDomain,
+    persona_version: author.persona.version,
     intent: String(pageRow[PAGE_COLS.intent] || '').trim(),
     content_angle: String(pageRow[PAGE_COLS.content_angle] || '').trim() ||
       String(clusterRow[CLUSTER_COLS.content_angle] || '').trim(),
@@ -1607,6 +1771,8 @@ async function runPhase2(args, env) {
     ...env, dryRun: args.dryRun,
     payload: {
       phase: 2, page_id: pageId,
+      author_id: author.authorId, author_source: author.authorSource,
+      persona_version: author.persona.version, cluster_domain: author.clusterDomain,
       draft_path: args.dryRun ? null : relative(REPO_ROOT, draftAbs),
       red_lines_pass: true, structure_pass: true,
       status_before: status, status_after: STATUS_WRITING,
@@ -1619,8 +1785,9 @@ async function runPhase2(args, env) {
   console.log('━━━ Phase 2 LOOK ━━━');
   console.log(`✔ Phase 2 done`);
   console.log(`  page_id:    ${pageId}`);
+  console.log(`  author:     ${author.authorId} (source=${author.authorSource}, persona v${author.persona.version})`);
   console.log(`  draft:      ${relative(REPO_ROOT, draftAbs)} (${draftMd.length} chars, ${sc.h2_count} H2 sections)`);
-  console.log(`  red_lines:  ${rl.rules.filter((r) => r.pass).length}/6 pass`);
+  console.log(`  red_lines:  ${rl.rules.filter((r) => r.pass).length}/${rl.rules.length} pass`);
   console.log(`  structure:  ok`);
   console.log(`  sheets:     row ${rowIdx}: ${status} → ${STATUS_WRITING}`);
   return EXIT.OK;
@@ -1805,6 +1972,8 @@ export {
   parseArgs,
   gateCheckPage,
   gateCheckCluster,
+  resolveAuthor,
+  buildAuthorFrontmatter,
   resolveCta,
   renderPrompt,
   structureCheck,

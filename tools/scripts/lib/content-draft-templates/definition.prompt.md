@@ -37,6 +37,22 @@
 - psych_safety_flag: <field name="psych_safety_flag">{{psych_safety_flag}}</field>
 - target_country: <field name="target_country">{{target_country}}</field>
 
+## Author voice capsule（作家声音胶囊，仅影响表达层）
+
+> Instruction only; **do not** output this block as an article section. 以下 capsule 描述
+> 本篇署名作家的声音与解读立场，用来塑造 framing / 例子 / 隐喻 / 优先级。它**绝不**改变
+> H1 / snippet / 恰好 7 个 H2 的结构骨架 —— 上面的 Heading level 规则与 7-section 结构
+> **优先级最高**，capsule 只在这些约束**内部**调味。
+
+- voice_rule: <field name="author_voice_rule">{{author_voice_rule}}</field>
+- allowed_moves: <field name="author_allowed_moves">{{author_allowed_moves}}</field>
+- forbidden_moves: <field name="author_forbidden_moves">{{author_forbidden_moves}}</field>
+- author_credential（仅作 byline / metadata 提示）: <field name="author_credential_meta">{{author_credential_meta}}</field>
+
+**第一人称硬禁**：正文（article body）**禁止第一人称**（no "I", "my practice", "in my experience"）。
+作家身份只属于 byline / metadata，**不要**把 credential 句写进正文。capsule 用于决定**怎么解释**
+（措辞、对比角度、例子选择、章节内的强调点），不用于改变**写什么结构**。
+
 {{TIER_GATE_BLOCK}}
 
 ## One-shot output 硬要求（禁止 chatbot 行为，任一违反 = 整篇作废）

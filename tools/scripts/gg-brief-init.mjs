@@ -29,6 +29,8 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { getAllConfig } from './lib/_config.mjs';
+import { buildAuthorMap, resolveAuthor, KNOWN_AUTHOR_IDS } from './lib/author-routing.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO = join(__dirname, '..', '..');
@@ -73,12 +75,22 @@ export function deriveAssociatedKeywords(entity) {
 }
 
 // Render the TODO scaffold for a single brief entry.
-export function renderScaffold({ pageId, entity, tier, template, childEntities }) {
+export function renderScaffold({ pageId, entity, tier, template, childEntities, clusterDomain, authorOverride, authorMap = new Map() }) {
   const targetKeyword = deriveTargetKeyword(entity, template);
   const associatedKeywords = deriveAssociatedKeywords(entity);
   const isPillar = template === 'Pillar';
   const wordRange = isPillar ? '2500-3500' : '1500-1800';
   const sectionCount = isPillar ? '9 sections' : '7 sections';
+
+  // author routing (Lane B / T3). On the manual scaffold path the cluster table
+  // isn't joined, so cluster_domain comes from --cluster-domain (or stays blank
+  // for the editor to fill). --author overrides; valid → override, blank/unmatched
+  // → auto via map or blank (no default fallback).
+  const authorRoute = resolveAuthor({
+    clusterDomain: clusterDomain || '',
+    overrideRaw: authorOverride,
+    authorMap,
+  });
 
   const entry = {
     _ai_draft: true,
@@ -120,6 +132,13 @@ export function renderScaffold({ pageId, entity, tier, template, childEntities }
     ],
     tier,
     template,
+    // author routing (Lane B / T3) — author '' = unmatched (fill --author or
+    // --cluster-domain, or route via sheet author.map). cluster_domain blank →
+    // TODO marker so the editor knows it's the join key for auto-routing.
+    author: authorRoute.author,
+    cluster_domain: authorRoute.cluster_domain
+      || 'TODO: cluster domain (= 主题集群表 primary_entity) — join key for author auto-routing',
+    ...(authorRoute.author_source ? { author_source: authorRoute.author_source } : {}),
   };
 
   if (isPillar && childEntities && childEntities.length) {
@@ -147,6 +166,8 @@ flags:
   --tier T1|T2              default T2
   --template Pillar|Definition  default Definition
   --child-entities "a,b,c"  Pillar only, comma-separated
+  --author <id>             manual author override (one of: ${KNOWN_AUTHOR_IDS.join(', ')})
+  --cluster-domain <domain> cluster domain join key (= 主题集群表 primary_entity) for auto-routing
   --out <path>              default .gg-cache/overrides/<page_id>.json
   --merge <existing-file>   merge into existing overrides JSON (adds page_id key)
   --force                   overwrite existing file
@@ -180,13 +201,28 @@ flags:
     ? String(args.child_entities).split(',').map((s) => s.trim()).filter(Boolean)
     : null;
 
+  const authorOverride = (args.author && args.author !== true) ? String(args.author) : '';
+  const clusterDomain = (args.cluster_domain && args.cluster_domain !== true) ? String(args.cluster_domain) : '';
+  const { map: authorMap, warnings: authorMapWarnings } = buildAuthorMap(getAllConfig());
+  for (const w of authorMapWarnings) process.stderr.write(`warn: ${w}\n`);
+
   const entry = renderScaffold({
     pageId,
     entity: args.entity,
     tier,
     template,
     childEntities,
+    clusterDomain,
+    authorOverride,
+    authorMap,
   });
+  // Surface a rejected/unmatched author so the operator isn't surprised by a
+  // blank author downstream (content-draft will hard-block).
+  if (authorOverride && !entry.author) {
+    process.stderr.write(`warn: --author "${authorOverride}" rejected (must be one of ${KNOWN_AUTHOR_IDS.join('/')}) — author left blank\n`);
+  } else if (!entry.author) {
+    process.stderr.write('warn: author unresolved — set --author <id>, --cluster-domain <domain>, or add an author.map.<domain> row to sheet config\n');
+  }
 
   const defaultOut = join(REPO, '.gg-cache', 'overrides', `${pageId}.json`);
   const outPath = args.out || defaultOut;

@@ -61,6 +61,10 @@ import {
   serpSnippetsBlock,
   obsidianRagBlock,
 } from './lib/content-draft-rag.mjs';
+// journalPromptsBlock: shared <field>-wrapped Journal_Prompts seed renderer — one
+// implementation for both the human (Lane A) and batch (Lane B) render paths.
+import { journalPromptsBlock, authorityAllowlist } from './lib/_render-aura-shared.mjs';
+import { authorityNamesFor } from './lib/authority-allowlist.mjs';
 
 // ============================================================
 // constants
@@ -669,6 +673,13 @@ function renderPrompt(template, ctx) {
     '{{author_allowed_moves}}': safeField(ctx.authorCapsule ? ctx.authorCapsule.allowedMoves : ''),
     '{{author_forbidden_moves}}': safeField(ctx.authorCapsule ? ctx.authorCapsule.forbiddenMoves : ''),
     '{{author_credential_meta}}': safeField(ctx.authorCapsule ? ctx.authorCapsule.credential : ''),
+    // Authority allowlist (anti-hallucination v9-followup) — named-founder directive
+    // by author_id, or '' (neutral default → anonymous attribution). Always present
+    // so the placeholder never survives. Shared pure fn (same as Lane B batch path).
+    '{{authority_allowlist}}': authorityAllowlist({ author_id: ctx.authorId }),
+    // Journal_Prompts (col 20). Non-empty → <field>-wrapped seed block; empty → ''
+    // so the placeholder never survives. safeField-escaped (external sheet text).
+    '{{journal_prompts}}': journalPromptsBlock(ctx.journalPrompts),
     // Phase 0 RAG source injection — raw XML blocks (already safeField-escaped per cell).
     '{{ENTITY_PASSPORT_BLOCK}}': ctx.entityPassportBlock || '',
     '{{FRICTION_MINE_BLOCK}}': ctx.frictionMineBlock || '',
@@ -1048,6 +1059,10 @@ async function runPhase1(args, env) {
     pageRole: pageRow[PAGE_COLS.page_role],
     friction: pageRow[PAGE_COLS.friction],
     logic: pageRow[PAGE_COLS.logic],
+    // Journal_Prompts (col 20). Optional reflective-question seed for product-led
+    // / healing pages; '' for量产线 long-tail pages. Injected via renderPrompt as a
+    // <field>-wrapped block only when non-empty (else placeholder → '').
+    journalPrompts: pageRow[PAGE_COLS.journal_prompts] || '',
     clusterJtbd: clusterRow[CLUSTER_COLS.jtbd],
     contentAngle: pageRow[PAGE_COLS.content_angle] || clusterRow[CLUSTER_COLS.content_angle],
     internalLinkRule: clusterRow[CLUSTER_COLS.internal_link_rule],
@@ -1348,6 +1363,12 @@ async function runPhase2(args, env) {
     // RL7 needs the selected author's banned tokens; without this the per-author
     // red line silently N/A-passes in the real Phase 2 path.
     authorBannedTokens: author.persona.bannedTokens,
+    // RL12 sub-(a): the CTA target URL is a known-good URL that legitimately
+    // appears verbatim in the Take Action section — exempt it from the bare-URL
+    // hallucination check (only INVENTED external URLs should FAIL).
+    allowedUrls: cta && cta.target_url ? [cta.target_url] : [],
+    // RL12 sub-(d): real founders this author's domain may name.
+    authorityAllowlist: authorityNamesFor(author.authorId),
   });
   if (rl.all_pass) {
     recordPass('red lines', `${rl.rules.length}/${rl.rules.length} pass`);

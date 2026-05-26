@@ -9,6 +9,8 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isValidAuthorId, normalizeAuthorId } from './author-routing.mjs';
 import { loadPersona } from './author-personas/loader.mjs';
+import { safeField } from './content-draft-util.mjs';
+import { authorityNamesFor } from './authority-allowlist.mjs';
 
 // Author fields for the fixture sidecar (Lane B / T3). When cfg carries a valid
 // author_id (resolved at pull time), pull the persona's display name, version, and
@@ -31,6 +33,65 @@ export function authorFixtureFields(cfg) {
   } catch {
     return {};
   }
+}
+
+// Author voice capsule for the batch prompt (Lane B). Mirrors the human line
+// (gg-content-draft renderPrompt): the persona's capsule scalars are safeField-
+// escaped and injected into the 4 {{author_*}} placeholders so the EN/ZH
+// Definition + Pillar templates render. When cfg has no valid author_id (EN
+// pages without a byline) OR loadPersona throws (bad card must not break batch
+// rendering), every placeholder falls back to '' — same neutral default the
+// human line uses (ctx.authorCapsule ? ... : ''), so an unauthored page renders
+// the capsule block with empty <field> values instead of hard-exiting on a
+// stray {{...}}. Returns the 4 keys ALWAYS (never partial) — this is the
+// invariant that keeps renderAuraPrompt from ever process.exit(1) on these.
+export function authorPromptCapsule(cfg) {
+  const empty = {
+    '{{author_voice_rule}}': '',
+    '{{author_allowed_moves}}': '',
+    '{{author_forbidden_moves}}': '',
+    '{{author_credential_meta}}': '',
+  };
+  const raw = String(cfg.author_id || '').replace(/^["']|["']$/g, '').trim();
+  if (!raw || !isValidAuthorId(raw)) return empty;
+  try {
+    const c = loadPersona(normalizeAuthorId(raw)).capsule;
+    return {
+      '{{author_voice_rule}}': safeField(c.voiceRule),
+      '{{author_allowed_moves}}': safeField(c.allowedMoves),
+      '{{author_forbidden_moves}}': safeField(c.forbiddenMoves),
+      '{{author_credential_meta}}': safeField(c.credential),
+    };
+  } catch {
+    return empty;
+  }
+}
+
+// Authority allowlist injection (anti-hallucination v9-followup). Returns the
+// STRING value for the single {{authority_allowlist}} placeholder, by author_id.
+//
+// Curated path (author_id has a non-empty allowlist) → an explicit named-founder
+// directive: list the real founders the article MAY name to anchor authority,
+// plus the hard guard that NO other person, and NO concrete citation
+// (book title / year / page / university / lab / "a 2015 study" / "et al.") is
+// allowed. No author_id or no match → '' (NEUTRAL DEFAULT): the placeholder is
+// still replaced (renderAuraPrompt never hard-exits on it), and the template's
+// surrounding text keeps the old anonymous "traditional teachings describe"
+// attribution as the only safe mode. Pure — never throws, always returns a
+// string. Names are safeField-escaped (defense-in-depth; they are not user data
+// but the renderer wraps everything else, so we stay consistent).
+export function authorityAllowlist(cfg) {
+  const names = authorityNamesFor(cfg && cfg.author_id);
+  if (!names.length) return '';
+  const list = names.map((n) => safeField(n)).join(', ');
+  return (
+    `本页署名作家所在领域，**仅允许命名以下真实奠基人**来锚定权威（如 ` +
+    `"building on the framework <Name> established" / "the lineage descending from <Name>"）：\n` +
+    `**${list}**\n\n` +
+    `- ✅ 可命名上列任一人，可引用其传统 / 学派 / 解读脉络。\n` +
+    `- ❌ **绝对禁止**：任何具体书名 / 出版年份 / 页码 / 大学 / 实验室 / "a 2015 study" / ` +
+    `"et al." 等任何具体 citation；以及命名**上列之外**的任何人。违反 = 整篇作废。`
+  );
 }
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -86,6 +147,86 @@ function serpSnippetsBlock(cache, fallbackKw) {
   return out + '</source>';
 }
 
+// Journal_Prompts (sheet col 20 / brief.journal_prompts) — optional reflective
+// questions the ops team hand-fills for product-led / healing pages. Rendered as
+// a self-contained <field>-wrapped block ONLY when non-empty; empty → '' so the
+// {{journal_prompts}} placeholder never survives as a bare token (which would
+// trip the hard-exit). Value is safeField-escaped (external sheet text).
+export function journalPromptsBlock(raw) {
+  const v = String(raw == null ? '' : raw).trim();
+  if (!v) return '';
+  return (
+    '## Journal Prompts seed（可选，仅供取材；不改变 7-section 结构）\n\n' +
+    '> Instruction only; **do not** output this block verbatim. 以下是 ops 手填的反思\n' +
+    '> 问题种子，可在 Reflection Prompts section 内取材改写（仍须满足该 section 的\n' +
+    '> numbered / ≤25 词 / 关联 Logic 规则），不要新增 H2。\n\n' +
+    `- journal_prompts seed: <field name="journal_prompts">${safeField(v)}</field>`
+  );
+}
+
+// Pure replacements-map builder (no fs/IO). Given the resolved cfg plus the
+// already-rendered RAG block strings, returns the full {{...}} → value map the
+// template substitution loop consumes, along with the derived ranges/isPillar
+// the fixture sidecar needs. Extracted so a unit test can assert that, after
+// substitution, a Definition/Pillar template has ZERO residual {{...}} for both
+// authored and unauthored cfgs — the exact condition renderAuraPrompt hard-exits
+// on. ragBlocks fields default to '' so a test may omit them.
+export function buildReplacements(cfg, ragBlocks = {}) {
+  const lang = cfg.language === 'zh' ? 'zh' : 'en';
+  const isPillar = /^pillar$/i.test(cfg.template || '');
+  // ZH defaults: Chinese articles measure in characters, not words. Tuned
+  // 2026-05-25 from first opus 4.7 production run (actual output 1590 chars).
+  // Chinese expression is denser; 1500-2000 chars ≈ EN 1500-1800 words depth.
+  const enWordDefault = isPillar ? [2500, 3500] : [1500, 1800];
+  const zhWordDefault = isPillar ? [3000, 4000] : [1500, 2000];
+  const wordRangeArr = cfg.word_range || (lang === 'zh' ? zhWordDefault : enWordDefault);
+  const kwRangeArr = cfg.kw_count_range || (isPillar ? [8, 12] : [5, 8]);
+  const targetCountry = lang === 'zh' ? 'CN/华语圈 (简体中文)' : 'US (English)';
+  const replacements = {
+    '{{TIER}}': cfg.tier || 'T2',
+    '{{target_keyword}}': cfg.target_keyword,
+    '{{associated_keywords}}': (cfg.associated_keywords || []).join(', '),
+    '{{entity}}': cfg.entity,
+    '{{search_volume}}': cfg.search_volume,
+    '{{intent}}': 'Info',
+    '{{tier}}': cfg.tier || 'T2',
+    '{{track}}': '量产线',
+    '{{page_role}}': isPillar ? 'Hub' : 'Support',
+    '{{cluster_jtbd}}': cfg.cluster_jtbd,
+    '{{content_angle}}': cfg.content_angle,
+    '{{internal_link_rule}}': cfg.internal_link_rule,
+    '{{cta_text}}': cfg.cta_text,
+    '{{cta_target_url}}': cfg.cta_target_url,
+    '{{psych_safety_flag}}': cfg.psych_safety_flag || 'N',
+    '{{target_country}}': targetCountry,
+    '{{TIER_GATE_BLOCK}}': cfg.tier_gate_block,
+    '{{TIER_LOGIC_HINT}}': '',
+    '{{PSYCH_SAFETY_BLOCK}}': '',
+    '{{RL6_HINT}}': cfg.rl6_hint,
+    '{{WORD_RANGE}}': `${wordRangeArr[0]}-${wordRangeArr[1]}`,
+    '{{KW_COUNT_RANGE}}': `${kwRangeArr[0]}-${kwRangeArr[1]}`,
+    '{{ENTITY_PASSPORT_BLOCK}}': ragBlocks.entityPassport || '',
+    '{{FRICTION_MINE_BLOCK}}': ragBlocks.frictionMine || '',
+    '{{SERP_SNIPPETS_BLOCK}}': ragBlocks.serpSnippets || '',
+    '{{OBSIDIAN_RAG_BLOCK}}': ragBlocks.obsidianRag || '',
+    // Journal_Prompts (col 20). Empty → '' so the placeholder never survives.
+    '{{journal_prompts}}': journalPromptsBlock(cfg.journal_prompts),
+    // Author voice capsule (Lane B) — 4 placeholders, ALWAYS present (empty-string
+    // fallback inside authorPromptCapsule), so an unauthored EN page never
+    // hard-exits on a stray {{author_*}}.
+    ...authorPromptCapsule(cfg),
+    // Authority allowlist (anti-hallucination v9-followup) — single placeholder,
+    // ALWAYS present. Curated string when author_id has an allowlist; '' otherwise
+    // (neutral default → template falls back to anonymous attribution). Empty value
+    // still replaces the token, so renderAuraPrompt never hard-exits on it.
+    '{{authority_allowlist}}': authorityAllowlist(cfg),
+    // Pillar-only placeholders (Definition template never references these).
+    '{{child_entities}}': Array.isArray(cfg.child_entities) ? cfg.child_entities.join(', ') : (cfg.child_entities || ''),
+    '{{child_count}}': cfg.child_count != null ? String(cfg.child_count) : (Array.isArray(cfg.child_entities) ? String(cfg.child_entities.length) : ''),
+  };
+  return { replacements, wordRangeArr, kwRangeArr, isPillar };
+}
+
 // Stable page_id regex — matches gg-friction-mine PAGE_ID_REGEX and gg-sheet-pull PAGE_ID_REGEX.
 // renderAuraPrompt writes files at .gg-cache/<page_id>/, so we MUST fail closed on invalid input
 // to prevent any path-traversal escape from upstream callers (bridges, batch scripts, overrides).
@@ -98,7 +239,6 @@ export function renderAuraPrompt(cfg) {
   }
   const ENTITY = cfg.entity;
   const TARGET_KW = cfg.target_keyword;
-  const ASSOC_KW = cfg.associated_keywords.join(', ');
   const PROMPT_VERSION = cfg.prompt_version || 'v8';
 
   // 1. friction-mine cache — prefer real Reddit-mined data when present,
@@ -161,47 +301,15 @@ export function renderAuraPrompt(cfg) {
   const serpPath = join(REPO, '.gg-cache', 'serp', `${PAGE_ID}.json`);
   const serpCache = existsSync(serpPath) ? JSON.parse(readFileSync(serpPath, 'utf8')) : null;
 
-  // 3. Replacements.
-  const isPillar = templateName === 'pillar';
-  // ZH defaults: Chinese articles measure in characters, not words. Tuned
-  // 2026-05-25 from first opus 4.7 production run (actual output 1590 chars).
-  // Chinese expression is denser; 1500-2000 chars ≈ EN 1500-1800 words depth.
-  const enWordDefault = isPillar ? [2500, 3500] : [1500, 1800];
-  const zhWordDefault = isPillar ? [3000, 4000] : [1500, 2000];
-  const wordRangeArr = cfg.word_range || (lang === 'zh' ? zhWordDefault : enWordDefault);
-  const kwRangeArr = cfg.kw_count_range || (isPillar ? [8, 12] : [5, 8]);
-  const targetCountry = lang === 'zh' ? 'CN/华语圈 (简体中文)' : 'US (English)';
-  const replacements = {
-    '{{TIER}}': cfg.tier || 'T2',
-    '{{target_keyword}}': TARGET_KW,
-    '{{associated_keywords}}': ASSOC_KW,
-    '{{entity}}': ENTITY,
-    '{{search_volume}}': cfg.search_volume,
-    '{{intent}}': 'Info',
-    '{{tier}}': cfg.tier || 'T2',
-    '{{track}}': '量产线',
-    '{{page_role}}': isPillar ? 'Hub' : 'Support',
-    '{{cluster_jtbd}}': cfg.cluster_jtbd,
-    '{{content_angle}}': cfg.content_angle,
-    '{{internal_link_rule}}': cfg.internal_link_rule,
-    '{{cta_text}}': cfg.cta_text,
-    '{{cta_target_url}}': cfg.cta_target_url,
-    '{{psych_safety_flag}}': cfg.psych_safety_flag || 'N',
-    '{{target_country}}': targetCountry,
-    '{{TIER_GATE_BLOCK}}': cfg.tier_gate_block,
-    '{{TIER_LOGIC_HINT}}': '',
-    '{{PSYCH_SAFETY_BLOCK}}': '',
-    '{{RL6_HINT}}': cfg.rl6_hint,
-    '{{WORD_RANGE}}': `${wordRangeArr[0]}-${wordRangeArr[1]}`,
-    '{{KW_COUNT_RANGE}}': `${kwRangeArr[0]}-${kwRangeArr[1]}`,
-    '{{ENTITY_PASSPORT_BLOCK}}': entityPassportBlock(passportCache),
-    '{{FRICTION_MINE_BLOCK}}': frictionMineBlock(frictionPayload),
-    '{{SERP_SNIPPETS_BLOCK}}': serpSnippetsBlock(serpCache, TARGET_KW),
-    '{{OBSIDIAN_RAG_BLOCK}}': obsidianRagBlock(obsidianCache),
-    // Pillar-only placeholders (Definition template never references these).
-    '{{child_entities}}': Array.isArray(cfg.child_entities) ? cfg.child_entities.join(', ') : (cfg.child_entities || ''),
-    '{{child_count}}': cfg.child_count != null ? String(cfg.child_count) : (Array.isArray(cfg.child_entities) ? String(cfg.child_entities.length) : ''),
-  };
+  // 3. Replacements (pure — see buildReplacements). The RAG blocks are rendered
+  // here from the on-disk caches and handed in as plain strings so the map
+  // builder stays free of fs/IO and is unit-testable for placeholder coverage.
+  const { replacements, wordRangeArr, kwRangeArr, isPillar } = buildReplacements(cfg, {
+    entityPassport: entityPassportBlock(passportCache),
+    frictionMine: frictionMineBlock(frictionPayload),
+    serpSnippets: serpSnippetsBlock(serpCache, TARGET_KW),
+    obsidianRag: obsidianRagBlock(obsidianCache),
+  });
 
   let prompt = template;
   for (const [k, v] of Object.entries(replacements)) {

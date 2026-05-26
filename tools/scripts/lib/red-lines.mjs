@@ -740,6 +740,368 @@ export function checkRL8(draft) {
 }
 
 // ============================================================
+// RL9 — atom-block scaffold-label leak (FAIL).
+//
+// The current templates (definition.prompt.md / pillar.prompt.md) instruct the
+// LLM to write FLOWING prose — they never tell it to print the internal
+// "Topic-Process-Example" atom-block labels into the body. When those labels
+// leak verbatim (a sign the model echoed scaffolding instead of composing), the
+// page reads like a fill-in-the-blank worksheet. High confidence → FAIL.
+//
+// CRITICAL false-positive guard: we only match a label when it is a STRUCTURAL
+// MARKER — i.e. it sits at the start of a line and is immediately followed by a
+// colon or wrapped in parentheses, OR the whole (trimmed) line equals the label.
+// Ordinary prose like "For example, Saturn..." / "for instance, ..." must NOT
+// trip this. See lib-red-lines-rl9.smoke.test.mjs for the proof.
+// ============================================================
+
+// The leak shapes we flag, per line (already left-trimmed before testing):
+//   1. Whole line equals a bare label (optionally wrapped in parens):
+//        "Topic Sentence"   "(Topic Sentence)"   "Example"
+//   2. Label used as a structural marker prefix: label + ":" possibly with text
+//        "Topic Sentence: Saturn return is..."   "Process: first ..."
+//        "Example: when transiting ..."
+//      An optional markdown bullet / bold wrapper is tolerated before the label
+//      so "- **Process:** ..." / "**Example:** ..." also fail.
+//   3. The combined "Topic-Process-Example" scaffold name on its own line
+//      (with or without a trailing colon / paren wrap).
+//
+// Only the UNAMBIGUOUS scaffold markers are flagged. Bare "Process:" / "Example:"
+// at line-start are common in legitimate prose ("Example: a blue aura shows up
+// as calm speech.") so they are deliberately excluded to keep RL9 false-positive
+// free; the Topic-Process-Example framework leak is caught by its two canonical
+// names below.
+const RL9_ATOM_LABELS = Object.freeze([
+  'Topic Sentence',
+  'Topic-Process-Example',
+]);
+
+// Build a per-line regex. Allowed leading wrapper: optional list bullet
+// (`-`/`*`/`+` or `N.`) and/or markdown bold `**`. Then the label, then either
+// end-of-line (bare label) or a `:` marker. Parenthesised bare label handled
+// separately. Anchored to line start to stay a "structural marker", never
+// mid-sentence prose.
+const RL9_LABEL_ALT = RL9_ATOM_LABELS
+  .map((l) => l.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+  .join('|');
+// (a) marker prefix: optional bullet + optional bold, label, then `:`.
+const RL9_MARKER_PREFIX_REGEX = new RegExp(
+  `^\\s*(?:[-*+]\\s+|\\d+[.)]\\s+)?(?:\\*\\*\\s*)?(?:${RL9_LABEL_ALT})(?:\\s*\\*\\*)?\\s*:`,
+);
+// (b) bare label line (optionally paren-wrapped, optionally bold), nothing else.
+const RL9_BARE_LABEL_REGEX = new RegExp(
+  `^\\s*(?:\\*\\*\\s*)?\\(?(?:${RL9_LABEL_ALT})\\)?(?:\\s*\\*\\*)?\\s*$`,
+);
+
+export function checkRL9(draft) {
+  const id = 'rl9_atom_label_leak';
+  const body = proseBodyForSci(typeof draft === 'string' ? draft : '');
+  const lines = body.split('\n');
+  const evidence = [];
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    // Skip H1/H2 heading lines — section titles are validated by structureCheck.
+    if (/^#{1,6}\s/.test(line.trim())) continue;
+    if (RL9_MARKER_PREFIX_REGEX.test(line) || RL9_BARE_LABEL_REGEX.test(line)) {
+      evidence.push({ line: i + 1, context: line.trim().slice(0, 160) });
+    }
+  }
+  if (evidence.length > 0) {
+    return {
+      id,
+      pass: false,
+      note: `atom-block scaffold label leaked into body (${evidence.length} line(s)): ${evidence.map((e) => `L${e.line} "${e.context.slice(0, 40)}"`).join('; ')}`,
+      evidence,
+    };
+  }
+  return { id, pass: true, note: `scanned ${lines.length} body lines, no scaffold-label leaks` };
+}
+
+// ============================================================
+// RL10 — de-personalization / chat residue (FAIL).
+//
+// Wiki entries are not chat replies. The templates forbid first-person and
+// chatbot framing. A bare second-person "you"/"your" is LEGAL (FAQ voice), so
+// we only flag a fixed set of explicit two-person CONVERSATIONAL residue
+// phrases that betray a chat turn ("as you said", "you mentioned", "your
+// logic", ...). Whole-line scan with line numbers; case-insensitive. Hit =
+// FAIL. ZH equivalent lives in red-lines.zh.mjs (checkRL10Zh).
+// ============================================================
+
+// Only phrases that unambiguously betray a chat turn. Generic second-person
+// hypotheticals ("you might feel", "makes you feel") are LEGITIMATE in astrology
+// / self-awareness prose ("During a Saturn return, you might feel pressure...")
+// and were removed to avoid FAIL-level false positives — they are not chat
+// residue, just direct address, which RL10's own contract permits.
+export const RL10_CHAT_RESIDUE_PHRASES = Object.freeze([
+  'as you said',
+  'like you said',
+  'as you mentioned',
+  'you mentioned',
+  'your logic',
+]);
+const RL10_PHRASE_PATTERN = RL10_CHAT_RESIDUE_PHRASES
+  .map((p) => p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+'))
+  .join('|');
+export const RL10_CHAT_RESIDUE_REGEX = new RegExp(`\\b(?:${RL10_PHRASE_PATTERN})\\b`, 'i');
+const RL10_CHAT_RESIDUE_REGEX_G = new RegExp(`\\b(?:${RL10_PHRASE_PATTERN})\\b`, 'gi');
+
+export function checkRL10(draft) {
+  const id = 'rl10_depersonalization';
+  const body = proseBodyForSci(typeof draft === 'string' ? draft : '');
+  const lines = body.split('\n');
+  const evidence = [];
+  for (let i = 0; i < lines.length; i++) {
+    for (const m of lines[i].matchAll(RL10_CHAT_RESIDUE_REGEX_G)) {
+      evidence.push({ phrase: m[0], line: i + 1, context: lines[i].trim().slice(0, 160) });
+    }
+  }
+  if (evidence.length > 0) {
+    return {
+      id,
+      pass: false,
+      note: `chat-residue phrase(s) matched: ${evidence.map((e) => `"${e.phrase}" (L${e.line})`).join(', ')}`,
+      evidence,
+    };
+  }
+  return { id, pass: true, note: `scanned ${RL10_CHAT_RESIDUE_PHRASES.length} chat-residue phrases, no hits` };
+}
+
+// ============================================================
+// RL11 — weak definitional verbs (WARN, NOT fail).
+//
+// In a definition / claim context, "is about" and "relates to" are vague where
+// the template wants a precise mechanism verb. False-positive risk is high
+// ("this section is about to ...", "she relates to her sister"), so this is
+// WARN ONLY — it never blocks publish, it just surfaces a suggested stronger
+// verb. Returned shape carries pass:true plus a `warn:true` flag + violations
+// so the dispatcher can print it as a soft note rather than a hard fail.
+// ============================================================
+
+export const RL11_WEAK_VERB_PHRASES = Object.freeze(['is about', 'relates to']);
+const RL11_SUGGESTED_REPLACEMENTS = 'governs / filters / modulates / correlates with';
+const RL11_PATTERN = RL11_WEAK_VERB_PHRASES
+  .map((p) => p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+'))
+  .join('|');
+const RL11_WEAK_VERB_REGEX_G = new RegExp(`\\b(?:${RL11_PATTERN})\\b`, 'gi');
+
+export function checkRL11(draft) {
+  const id = 'rl11_weak_verb';
+  const body = proseBodyForSci(typeof draft === 'string' ? draft : '');
+  const lines = body.split('\n');
+  const violations = [];
+  for (let i = 0; i < lines.length; i++) {
+    if (/^#{1,6}\s/.test(lines[i].trim())) continue; // skip headings
+    for (const m of lines[i].matchAll(RL11_WEAK_VERB_REGEX_G)) {
+      violations.push({
+        phrase: m[0],
+        line: i + 1,
+        context: lines[i].trim().slice(0, 160),
+        hint: `consider a precise mechanism verb (${RL11_SUGGESTED_REPLACEMENTS})`,
+      });
+    }
+  }
+  // WARN semantics: pass stays true (never blocks), warn flag set when hits.
+  return {
+    id,
+    pass: true,
+    warn: violations.length > 0,
+    violations,
+    note: violations.length > 0
+      ? `weak verb(s) flagged (WARN, non-blocking): ${violations.map((v) => `"${v.phrase}" (L${v.line})`).join(', ')} — suggest ${RL11_SUGGESTED_REPLACEMENTS}`
+      : `scanned ${RL11_WEAK_VERB_PHRASES.length} weak-verb phrases, none flagged`,
+  };
+}
+
+// ============================================================
+// RL12 — anti-hallucination citation / external-link guard.
+//
+// The v9-followup relaxed the blanket "never name anyone" rule to allow naming a
+// per-page allowlist of REAL founders (see authority-allowlist.json), and to
+// allow EXTERNAL links only as TBD placeholders (never real URLs). RL12 enforces
+// the boundary that relaxation must not punch a hole in:
+//
+//   (a) FAIL — a bare EXTERNAL URL in the body (http(s)://) that is NOT inside a
+//       [[<TBD-external-link: ...>]] placeholder, is NOT on the own publish
+//       domain (ctx.ownDomains, default astrologywiki.com — the CTA target lives
+//       there and legitimately appears verbatim in the Take Action section), and
+//       is NOT an explicitly allowed URL (ctx.allowedUrls). The LLM must never
+//       INVENT a real off-site URL (hallucinated dead citations); only the
+//       human/lookup step resolves a TBD placeholder into a real target.
+//   (b) FAIL — a TBD-external-link placeholder whose Wikipedia/source TITLE
+//       (middle segment) contains paranormal / pseudoscience / alternative — these
+//       Wikipedia disambiguation pages frame the topic as fringe and hurt EEAT.
+//   (c) FAIL — hallucinated-citation markers: italic *Title* adjacent to a
+//       Capitalized Name, a (year) paren adjacent to an attribution, "et al.", or
+//       "<University> study/research".
+//   (d) WARN — an attributed "Capitalized First Last" (says/writes/describes/
+//       founded/...) that is NOT on this page's author allowlist. WARN only
+//       (false-positive risk: ordinary capitalized noun phrases). Requires the
+//       page allowlist via ctx.authorityAllowlist; absent → (d) skipped, (a)(b)(c)
+//       still run.
+//
+// Strip frontmatter + fenced code first (proseBodyForSci), same scope as RL8–11.
+// ============================================================
+
+// (a) Any external URL, with OR without a scheme — LLMs frequently drop the
+// scheme ("en.wikipedia.org/wiki/Chakra", "www.example.com/aura-study"), and the
+// "never raw URLs" boundary must hold for those too. Matches: http(s):// URLs,
+// www.* hosts, and bare host+path with a known TLD. We then subtract URLs inside
+// a TBD placeholder and own-domain/allowed URLs. Bare hosts WITHOUT a path are
+// not matched (keeps incidental "example.com" sentence mentions from tripping).
+const RL12_URL_REGEX_G =
+  /(?:https?:\/\/|www\.)[^\s<>)\]]+|\b(?:[a-z0-9-]+\.)+(?:com|org|net|edu|gov|io|co|uk|us|ai|info|dev)\/[^\s<>)\]]+/gi;
+// A TBD external-link placeholder, captured so we can read its title segment.
+// Shape: [[<TBD-external-link: <source> | <title> | <reason>>]]
+const RL12_TBD_EXTERNAL_REGEX_G =
+  /\[\[<TBD-external-link:\s*([^|\]]*?)\s*\|\s*([^|\]]*?)\s*\|\s*([^\]]*?)>\]\]/gi;
+// Disallowed Wikipedia disambiguation qualifiers in a TBD title.
+const RL12_BAD_TITLE_REGEX = /\((?:paranormal|pseudoscience|alternative)\)/i;
+// (c) Hallucinated-citation markers.
+//   - italic *Title* near a Capitalized "First Last" name (book-title citation
+//     shape: "<Name> in *Title*", "*Title* by <Name>", "<Name>'s *Title*"). The
+//     name and the italic span may be separated by a few connective words
+//     ("in", "wrote in", etc.), so allow a short gap.
+const RL12_ITALIC_NEAR_NAME_REGEX =
+  /([A-Z][a-z]+\s+[A-Z][a-z]+(?:'s)?(?:\s+\w+){0,3}\s+\*[^*\n]+\*|\*[^*\n]+\*\s+by\s+[A-Z][a-z]+\s+[A-Z][a-z]+)/;
+//   - (1900–2099) paren year next to an attribution verb (either side).
+const RL12_YEAR_ATTRIB_REGEX =
+  /([A-Z][a-z]+\s+\((?:19|20)\d{2}\)\s*(?:writes?|says?|notes?|describes?|argues?|claims?|found|observed?)|(?:writes?|says?|notes?|describes?|argues?|claims?|according\s+to)[^.\n]{0,40}\((?:19|20)\d{2}\))/i;
+//   - "et al."
+const RL12_ET_AL_REGEX = /\bet\s+al\.?/i;
+//   - "<University/Institute/Lab> study/research" and "a 2015 study"-style.
+const RL12_INSTITUTION_STUDY_REGEX =
+  /\b([A-Z][A-Za-z]+\s+(?:University|Institute|Laboratory|Lab|College)\s+(?:study|studies|research|researchers?)|(?:a|an|the|one)\s+(?:19|20)\d{2}\s+(?:study|paper|trial|experiment|review))\b/i;
+// (d) Attributed "First Last" — a capitalized two-token name in an attribution
+// frame. Three high-precision shapes so plain noun phrases ("Blue Aura
+// governs...", "Mercury Retrograde's influence", "from New York") do not trip it:
+//   1. name + attribution verb            "Jane Doe describes / founded ..."
+//   2. name's + authorship noun           "Liz Greene's framework / lineage ..."
+//   3. authority connective + name        "according to / descending from Jane Doe"
+const RL12_NAME = `[A-Z][a-z]+(?:\\s+[A-Z]\\.)?\\s+[A-Z][a-z]+`;
+const RL12_ATTRIBUTED_NAME_REGEXES = [
+  new RegExp(`\\b(${RL12_NAME})\\s+(?:says?|writes?|wrote|describes?|argues?|claims?|notes?|founded|established|developed|coined|introduced)\\b`, 'g'),
+  new RegExp(`\\b(${RL12_NAME})'s\\s+(?:system|framework|tradition|lineage|method|approach|model|work|teaching|teachings|school)\\b`, 'g'),
+  // Connective is capitalization-tolerant (sentence-start "According to ...");
+  // the NAME group stays case-sensitive so lowercase words are not read as names.
+  new RegExp(`\\b(?:[Aa]ccording\\s+to|[Dd]escending\\s+from|[Bb]uilding\\s+on|[Ff]ounded\\s+by|[Dd]eveloped\\s+by|[Ii]ntroduced\\s+by|[Ii]n\\s+the\\s+tradition\\s+of)\\s+(${RL12_NAME})\\b`, 'g'),
+];
+
+export function checkRL12(draft, ctx = {}) {
+  const id = 'rl12_citation_hallucination';
+  const body = proseBodyForSci(typeof draft === 'string' ? draft : '');
+  const lines = body.split('\n');
+  const failEvidence = [];
+  const warnViolations = [];
+  // Known-good URLs the LLM is allowed to render verbatim (the page's own CTA
+  // target etc.). Normalize by stripping a trailing slash so trivial variants
+  // still match. A bare URL equal to one of these is NOT a hallucination.
+  const trimSlash = (u) => String(u).replace(/\/+$/, '');
+  const allowedUrls = new Set(
+    (Array.isArray(ctx.allowedUrls) ? ctx.allowedUrls : [])
+      .map((u) => trimSlash(u).toLowerCase())
+      .filter(Boolean),
+  );
+  // Own publish domain(s) — URLs here are internal/CTA, not external citations.
+  const ownDomains = (Array.isArray(ctx.ownDomains) && ctx.ownDomains.length
+    ? ctx.ownDomains
+    : ['astrologywiki.com']
+  ).map((d) => String(d).toLowerCase().replace(/^www\./, ''));
+  const isOwnDomain = (url) => {
+    // Host extraction tolerant of missing scheme and a www. prefix.
+    const m = url.match(/^(?:https?:\/\/)?(?:www\.)?([^/?#\s]+)/i);
+    if (!m) return false;
+    const host = m[1].toLowerCase().replace(/^www\./, '');
+    return ownDomains.some((d) => host === d || host.endsWith(`.${d}`));
+  };
+
+  // Precompute the per-line spans covered by TBD external-link placeholders so we
+  // can exempt URLs that sit inside them (a TBD placeholder cannot contain a real
+  // URL by spec, but exempting defensively keeps (a) free of placeholder text).
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const lineNo = i + 1;
+
+    // Collect TBD placeholder spans + check their titles (b).
+    const tbdSpans = [];
+    for (const m of line.matchAll(RL12_TBD_EXTERNAL_REGEX_G)) {
+      tbdSpans.push([m.index, m.index + m[0].length]);
+      const title = (m[2] || '').trim();
+      if (RL12_BAD_TITLE_REGEX.test(title)) {
+        failEvidence.push({
+          sub: 'b',
+          line: lineNo,
+          context: `TBD external-link title flagged as fringe: "${title}"`,
+        });
+      }
+    }
+    const inTbd = (idx) => tbdSpans.some(([s, e]) => idx >= s && idx < e);
+
+    // (a) bare external URL not inside a TBD placeholder and not an allowed URL.
+    for (const m of line.matchAll(RL12_URL_REGEX_G)) {
+      if (inTbd(m.index)) continue;
+      // Trailing punctuation (".", ")", ",") is not part of the URL.
+      const url = m[0].replace(/[.,;:!?)\]]+$/, '');
+      if (allowedUrls.has(trimSlash(url).toLowerCase())) continue;
+      if (isOwnDomain(url)) continue; // own-site CTA / internal link — not a citation
+      failEvidence.push({ sub: 'a', line: lineNo, context: `bare external URL: ${url.slice(0, 80)}` });
+    }
+
+    // (c) hallucinated-citation markers.
+    if (RL12_ITALIC_NEAR_NAME_REGEX.test(line)) {
+      failEvidence.push({ sub: 'c', line: lineNo, context: `italic-title near name: ${line.trim().slice(0, 80)}` });
+    }
+    if (RL12_YEAR_ATTRIB_REGEX.test(line)) {
+      failEvidence.push({ sub: 'c', line: lineNo, context: `year-attribution: ${line.trim().slice(0, 80)}` });
+    }
+    if (RL12_ET_AL_REGEX.test(line)) {
+      failEvidence.push({ sub: 'c', line: lineNo, context: `"et al." citation: ${line.trim().slice(0, 80)}` });
+    }
+    if (RL12_INSTITUTION_STUDY_REGEX.test(line)) {
+      failEvidence.push({ sub: 'c', line: lineNo, context: `institution/year study: ${line.trim().slice(0, 80)}` });
+    }
+
+    // (d) attributed name not on this page's allowlist — WARN. Skip entirely when
+    // no allowlist context is supplied (no author → cannot decide off-list).
+    if (Array.isArray(ctx.authorityAllowlist)) {
+      const allowed = new Set(ctx.authorityAllowlist.map((n) => String(n).toLowerCase().trim()));
+      const seen = new Set();
+      for (const re of RL12_ATTRIBUTED_NAME_REGEXES) {
+        for (const m of line.matchAll(re)) {
+          const name = m[1].trim();
+          const key = `${name.toLowerCase()}@${lineNo}`;
+          if (!allowed.has(name.toLowerCase()) && !seen.has(key)) {
+            seen.add(key);
+            warnViolations.push({ name, line: lineNo, context: line.trim().slice(0, 120) });
+          }
+        }
+      }
+    }
+  }
+
+  if (failEvidence.length > 0) {
+    return {
+      id,
+      pass: false,
+      warn: warnViolations.length > 0,
+      violations: warnViolations,
+      note: `citation/external-link violation(s): ${failEvidence.map((e) => `[${e.sub}] L${e.line} ${e.context}`).join('; ')}`,
+      evidence: failEvidence,
+    };
+  }
+  if (warnViolations.length > 0) {
+    return {
+      id,
+      pass: true,
+      warn: true,
+      violations: warnViolations,
+      note: `off-allowlist named attribution (WARN, non-blocking): ${warnViolations.map((v) => `"${v.name}" (L${v.line})`).join(', ')} — verify the person is a real founder for this domain or use anonymous attribution`,
+    };
+  }
+  return { id, pass: true, note: `no bare URLs, no fringe-title links, no hallucinated citations${Array.isArray(ctx.authorityAllowlist) ? ', no off-allowlist names' : ''}` };
+}
+
+// ============================================================
 // Top-level orchestrator
 // ============================================================
 
@@ -755,6 +1117,7 @@ export function checkRL8(draft) {
  * @param {string[]} [ctx.snippets]  SERP top-3 snippets (required when serpState='hit').
  * @param {string|null} [ctx.escapeReason]  reason text when serpState='missing-skipped'.
  * @param {string[]} [ctx.authorBannedTokens]  per-author black words (RL7); empty/absent → RL7 N/A.
+ * @param {string[]} [ctx.authorityAllowlist]  per-page allowed founder names (RL12 sub-d); absent → (d) skipped.
  * @returns {{ all_pass: boolean, rules: object[] }}
  */
 export function redLinesCheck(draftMd, ctx) {
@@ -773,6 +1136,13 @@ export function redLinesCheck(draftMd, ctx) {
     checkRL6(draftMd, ctx),
     checkRL7(draftMd, ctx),
     checkRL8(draftMd),
+    checkRL9(draftMd),
+    checkRL10(draftMd),
+    checkRL11(draftMd), // WARN-only: pass stays true, never blocks all_pass.
+    // RL12 — citation/external-link hallucination guard. (a)(b)(c) FAIL,
+    // (d) off-allowlist name WARN. ctx.authorityAllowlist (string[]) gates (d);
+    // absent → (d) skipped, (a)(b)(c) still enforced.
+    checkRL12(draftMd, ctx),
   ];
   const all_pass = rules.every((r) => r.pass);
   return { all_pass, rules };

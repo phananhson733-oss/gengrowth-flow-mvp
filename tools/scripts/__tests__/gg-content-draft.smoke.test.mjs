@@ -715,14 +715,15 @@ test('RL6: blacklist has the spec-required 12 base words (allowing inflections)'
   }
 });
 
-test('redLinesCheck: all 8 pass → all_pass=true', () => {
+test('redLinesCheck: all 12 pass → all_pass=true', () => {
   const draft = `# T\n## chiron 7th house meaning\nReflective discussion of chiron 7th house.\n\n## related\nMore chiron content.\n\n## CTA\nClick.`;
   const r = redLinesCheck(draft, SERP_CTX('chiron 7th house', 'Chiron', 'N'));
-  assert.equal(r.rules.length, 8);
+  // RL1..RL12. RL11/RL12-(d) are WARN-only (pass:true) so they never affect all_pass.
+  assert.equal(r.rules.length, 12);
   assert.equal(r.all_pass, true);
 });
 
-test('redLinesCheck: returns 8 rules in order RL1..RL8', () => {
+test('redLinesCheck: returns 12 rules in order RL1..RL12', () => {
   const r = redLinesCheck('text', SERP_CTX('foo'));
   assert.deepEqual(r.rules.map((x) => x.id), [
     'rl1_no_clinical_claim',
@@ -733,6 +734,10 @@ test('redLinesCheck: returns 8 rules in order RL1..RL8', () => {
     'rl6_psych_safety_disclaimer',
     'rl7_author_banned_tokens',
     'rl8_no_scientific_endorsement',
+    'rl9_atom_label_leak',
+    'rl10_depersonalization',
+    'rl11_weak_verb',
+    'rl12_citation_hallucination',
   ]);
 });
 

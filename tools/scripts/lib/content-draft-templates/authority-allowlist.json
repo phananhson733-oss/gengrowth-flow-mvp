@@ -1,0 +1,8 @@
+{
+  "_comment": "Human-curated list of REAL foundational authors per author_id domain. These are the only people the SEO content pipeline is permitted to NAME for authority anchoring. This file is editable by ops to extend a domain's lineage, but it MUST NEVER be auto-populated by an LLM or a script — every name here is a deliberate human decision. The anti-hallucination boundary (no book titles / no publication years / no page numbers / no universities / no labs / no 'a 2015 study' / no 'et al.') stays fully in force; this list only relaxes the prior blanket ban on naming the discipline's founders. Keys are author_id (1:1 with the persona routing domain). An author_id with no entry, or no author_id at all, falls back to anonymous attribution ('traditional teachings describe...').",
+  "_invariant": "Do not add, remove, or rename any of these names except as a deliberate ops edit. Names must be the discipline's recognized foundational figures, not arbitrary citations.",
+  "elena-vane": ["Anodea Judith", "Charles Leadbeater", "Barbara Ann Brennan", "Cyndi Dale"],
+  "julian-thorne": ["Liz Greene", "Howard Sasportas", "Melanie Reinhart", "Richard Tarnas", "Robert Hand"],
+  "aditi-sharma": ["Parashara", "Varahamihira", "B. V. Raman", "K. N. Rao"],
+  "marcus-orion": ["Dane Rudhyar", "Robert Hand", "Stephen Arroyo", "Liz Greene", "Richard Tarnas"]
+}

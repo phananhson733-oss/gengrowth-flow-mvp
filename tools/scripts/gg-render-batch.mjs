@@ -147,6 +147,7 @@ export function composeCfg(row, override, cliLanguage) {
     search_volume: o.search_volume || b.search_volume || '',
     cluster_jtbd: o.cluster_jtbd,
     content_angle: o.content_angle || b.content_angle,
+    journal_prompts: o.journal_prompts || b.journal_prompts,
     internal_link_rule: o.internal_link_rule,
     cta_text: o.cta_text,
     cta_target_url: o.cta_target_url || b.cta_target_url,

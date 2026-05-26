@@ -338,3 +338,44 @@ export function checkRL8Zh(draft) {
     note: `扫描 ${RL8_ZH_SCI_CLAIM_TERMS.length} 个科学背书短语, 无命中`,
   };
 }
+
+// ─── RL10 (去人格化 / 聊天残留) ─────────────────────────────────────────────
+// wiki 词条不是聊天回复。模板禁止第一人称 + chatbot framing。单独的「你」/「您」
+// 合法（FAQ 口吻），故只抓固定的二人称聊天残留短语 —— 这些短语暴露了一次对话轮
+// 次的痕迹。中文无 \b 词边界，用子串扫描（这些短语本身足够具体，误伤风险低）。
+// 跳过 frontmatter + fenced code，与 EN RL10 对齐。整行扫描 + 行号。命中 = FAIL。
+export const RL10_ZH_CHAT_RESIDUE_TERMS = Object.freeze([
+  '如你所说',
+  '正如你所说',
+  '正如你提到',
+  '如你提到',
+  '你说的',
+  '你的逻辑',
+  '这让你感觉',
+]);
+
+export function checkRL10Zh(draft) {
+  const body = stripFencedCodeZh(stripFrontmatterZh(typeof draft === 'string' ? draft : ''));
+  const lines = body.split('\n');
+  const evidence = [];
+  for (let i = 0; i < lines.length; i++) {
+    for (const term of RL10_ZH_CHAT_RESIDUE_TERMS) {
+      if (lines[i].includes(term)) {
+        evidence.push({ phrase: term, line: i + 1, context: lines[i].trim().slice(0, 160) });
+      }
+    }
+  }
+  if (evidence.length > 0) {
+    return {
+      id: 'rl10_depersonalization',
+      pass: false,
+      note: `聊天残留短语命中: ${evidence.map((e) => `"${e.phrase}" (L${e.line})`).join(', ')}`,
+      evidence,
+    };
+  }
+  return {
+    id: 'rl10_depersonalization',
+    pass: true,
+    note: `扫描 ${RL10_ZH_CHAT_RESIDUE_TERMS.length} 个聊天残留短语, 无命中`,
+  };
+}

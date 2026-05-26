@@ -35,6 +35,10 @@ import {
   checkRL6,
   checkRL7,
   checkRL8,
+  checkRL9,
+  checkRL10,
+  checkRL11,
+  checkRL12,
 } from './lib/red-lines.mjs';
 import {
   checkRL1Zh,
@@ -42,9 +46,15 @@ import {
   checkRL6Zh,
   checkRL7Zh,
   checkRL8Zh,
+  checkRL10Zh,
 } from './lib/red-lines.zh.mjs';
+import {
+  checkBoldedDefinition,
+  checkInternalLinkTier,
+} from './lib/structure-checks.mjs';
 import { logFailure } from './lib/_failure-log.mjs';
 import { isValidAuthorId, normalizeAuthorId } from './lib/author-routing.mjs';
+import { authorityNamesFor } from './lib/authority-allowlist.mjs';
 import { loadPersona } from './lib/author-personas/loader.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -239,6 +249,12 @@ const ctx = {
     }
   })(),
 };
+// RL12 sub-(d): the per-page authority allowlist (real founders this domain may
+// name). Resolved from the same author_id as the byline. No author → leave
+// undefined so RL12 skips (d) entirely (no context to decide off-list); (a)(b)(c)
+// still run. An authored page passes the array (possibly empty if the domain has
+// no curated founders), enabling the off-allowlist WARN.
+ctx.authorityAllowlist = ctx.author ? authorityNamesFor(ctx.author.id) : undefined;
 const outBasename = `${ctx.page_id}-${ctx.tag}`;
 
 // bilingual-v9: EN H2 spec builder (extracted from prior inline structure).
@@ -381,12 +397,18 @@ function structureCheck(draft) {
     if (!found) findings.push(`missing required H2: "${spec.label}"`);
   }
 
+  // Both TBD shapes are valid: internal-link (SEO mesh) and external-link
+  // (T2 authority placeholder, added with the founders-allowlist relaxation).
+  // Only internal links count toward the internal-link floor; external authority
+  // placeholders must not be rejected as "malformed".
   const wikilinks = draft.match(/\[\[[^\]]+\]\]/g) || [];
-  const tbdLinks = wikilinks.filter((l) => /^\[\[<TBD-internal-link: /.test(l));
+  const internalTbd = wikilinks.filter((l) => /^\[\[<TBD-internal-link: /.test(l));
+  const externalTbd = wikilinks.filter((l) => /^\[\[<TBD-external-link: /.test(l));
+  const tbdLinks = [...internalTbd, ...externalTbd];
   if (wikilinks.length !== tbdLinks.length) {
     findings.push(`${wikilinks.length - tbdLinks.length} wikilink(s) not in TBD format`);
   }
-  if (wikilinks.length < 2) findings.push(`Related Reading has only ${wikilinks.length} wikilink(s), recommend ≥3`);
+  if (internalTbd.length < 2) findings.push(`Related Reading has only ${internalTbd.length} internal wikilink(s), recommend ≥3`);
 
   // Anti-fluff: no preamble between H1 and first H2.
   const lines = draft.split('\n');
@@ -408,7 +430,28 @@ function structureCheck(draft) {
     findings.push('trailing chatbot meta detected in last 500 chars');
   }
 
-  return { ok: findings.length === 0, findings, stats: { h1Count, h2Count, h3Count, h4Count, words, wikilinks: wikilinks.length, tbdLinks: tbdLinks.length } };
+  // SC1 — bolded direct-answer definition in first H2 section (FAIL, both langs;
+  // both templates hard-require it). EN entity is literal; ZH translates the
+  // entity but still mandates the bolded definition (definition.prompt.zh.md).
+  const boldDef = checkBoldedDefinition(draft);
+  if (!boldDef.pass) {
+    findings.push(`SC1 bolded definition: ${boldDef.note}`);
+  }
+
+  // SC2 — internal-link tier counting (WARN only; never blocks publish).
+  // Surfaced as a separate `warnings` list so it does not flip `ok`.
+  const warnings = [];
+  const linkTier = checkInternalLinkTier(draft, { tier: ctx.tier });
+  if (!linkTier.pass) {
+    warnings.push(`SC2 internal-link tier: ${linkTier.note}`);
+  }
+
+  return {
+    ok: findings.length === 0,
+    findings,
+    warnings,
+    stats: { h1Count, h2Count, h3Count, h4Count, words, wikilinks: wikilinks.length, tbdLinks: tbdLinks.length },
+  };
 }
 
 // ---------- main ----------
@@ -444,6 +487,8 @@ if (struct.ok) {
   console.log('  ✗ FAIL');
   struct.findings.forEach((f) => console.log(`    - ${f}`));
 }
+// SC2 + other WARN-level structure notes — non-blocking (never flips pass).
+(struct.warnings || []).forEach((w) => console.log(`  ⚠ WARN  ${w}`));
 
 // SERP cache load
 const serpPath = join(SERP_DIR, `${ctx.page_id}.json`);
@@ -510,6 +555,20 @@ const rlChecks = [
     : checkRL7(draft, { authorBannedTokens: ctx.authorBannedTokens, targetKeyword: ctx.target_keyword })],
   // RL8 — shared scientific-endorsement red line (all authors, both languages).
   ['RL8 (scientific endorsement)', () => isZh ? checkRL8Zh(draft) : checkRL8(draft)],
+  // RL9 — atom-block scaffold-label leak (FAIL). EN-only: the label vocabulary
+  // (Topic Sentence / Process / Example) is English scaffolding; ZH drafts use a
+  // translated structure with no equivalent leak vector, so skip when isZh.
+  ...(isZh ? [] : [['RL9 (atom-label leak)', () => checkRL9(draft)]]),
+  // RL10 — de-personalization / chat residue (FAIL, both languages).
+  ['RL10 (depersonalization)', () => isZh ? checkRL10Zh(draft) : checkRL10(draft)],
+  // RL11 — weak definitional verbs (WARN only; pass stays true, never blocks).
+  // EN-only ("is about" / "relates to" are English constructions).
+  ...(isZh ? [] : [['RL11 (weak verb)', () => checkRL11(draft)]]),
+  // RL12 — citation/external-link hallucination guard. (a) bare URL / (b) fringe
+  // Wikipedia title / (c) hallucinated citation markers → FAIL; (d) off-allowlist
+  // named attribution → WARN. Runs both languages: (a)(b) are language-agnostic;
+  // (c)(d) only match Latin-script citation/name shapes so ZH bodies are unaffected.
+  ['RL12 (citation/external-link)', () => checkRL12(draft, { authorityAllowlist: ctx.authorityAllowlist })],
 ];
 
 const WAIVERS = new Set(); // No waivers — B'.3 SERP cache now live.
@@ -520,7 +579,13 @@ for (const [name, fn] of rlChecks) {
     const r = fn();
     results[name] = r;
     if (r.pass === true) {
-      console.log(`  ✓ PASS  ${r.note || ''}`);
+      // WARN-level checks (e.g. RL11) pass:true but carry warn:true — surface
+      // them with a ⚠ marker so they are visible without blocking publish.
+      if (r.warn === true) {
+        console.log(`  ⚠ WARN  ${r.note || ''}`);
+      } else {
+        console.log(`  ✓ PASS  ${r.note || ''}`);
+      }
     } else {
       const rlKey = name.split(' ')[0];
       if (WAIVERS.has(rlKey)) {

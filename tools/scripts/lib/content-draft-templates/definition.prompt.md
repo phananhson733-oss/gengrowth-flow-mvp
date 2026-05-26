@@ -47,11 +47,14 @@
 - voice_rule: <field name="author_voice_rule">{{author_voice_rule}}</field>
 - allowed_moves: <field name="author_allowed_moves">{{author_allowed_moves}}</field>
 - forbidden_moves: <field name="author_forbidden_moves">{{author_forbidden_moves}}</field>
-- author_credential（仅作 byline / metadata 提示）: <field name="author_credential_meta">{{author_credential_meta}}</field>
+- author_credential（用于一次正文 credential integration + byline）: <field name="author_credential_meta">{{author_credential_meta}}</field>
 
-**第一人称硬禁**：正文（article body）**禁止第一人称**（no "I", "my practice", "in my experience"）。
-作家身份只属于 byline / metadata，**不要**把 credential 句写进正文。capsule 用于决定**怎么解释**
-（措辞、对比角度、例子选择、章节内的强调点），不用于改变**写什么结构**。
+**第一人称受控开放（credential integration）**：正文（article body）默认第三人称客观叙述；
+**允许且仅允许一次**用第一人称把署名作家的真实背景自然织入叙事（取材自上面的
+author_credential），放在首个解读密集段附近，例如 "In my years working with aura color, ..."
+或 "In my data-driven analysis of chart structures, ..."。**其余正文一律保持第三人称**，
+不得重复自我介绍、不得用 "in my experience" 给经验/生理/科学声明背书（科学边界规则仍然适用）。
+capsule 用于决定**怎么解释**（措辞、对比角度、例子选择、章节内的强调点），不用于改变**写什么结构**。
 
 {{TIER_GATE_BLOCK}}
 
@@ -198,19 +201,28 @@ target_keyword = **「{{target_keyword}}」**（完整 3 词短语）。**SEO + 
 
 {{OBSIDIAN_RAG_BLOCK}}
 
+{{journal_prompts}}
+
 ## 权威锚点 + 事实诚信硬要求（Top 10 + AIO 引用门槛 / 防 LLM 幻觉）
 
 > Instruction only; **do not** output this as an article section.
 
 以下规则**任一违反 = 整篇作废**：
 
-1. **绝不命名具体作者 / 书名 / 论文 / 年份 / 大学 / 实验室**。LLM 自我评估不可靠，任何具体 citation 都视为高风险幻觉。允许的 attribution 模式：
-   - ✅ `traditional subtle-energy teachings describe…`
-   - ✅ `practitioners in the chakra-aura field commonly relate…`
-   - ✅ `most aura literature distinguishes…`
-   - ❌ `Barbara Brennan in *Hands of Light* says…`（具体作者+书名）
-   - ❌ `a 2015 study at Stanford found…`（具体年份+机构）
-   - ❌ `Cyndi Dale describes…`（具体名字）
+1. **奠基人命名：只许白名单内，且绝不带任何具体 citation**。
+
+   {{authority_allowlist}}
+
+   - ✅ 允许命名**上方白名单**列出的奠基人来锚定权威（如 `building on the framework Dane Rudhyar established` / `the lineage descending from Parashara`），可引用其传统 / 学派 / 解读脉络。
+   - ✅ 若本页**没有提供白名单**（上方为空），仍按旧规则用匿名 attribution：
+     - `traditional subtle-energy teachings describe…`
+     - `practitioners in the chakra-aura field commonly relate…`
+     - `most aura literature distinguishes…`
+   - ❌ **绝对禁止任何具体 citation**（即使命名的人在白名单内）：具体书名 / 出版年份 / 页码 / 大学 / 实验室 / `a 2015 study` / `et al.` 等。
+     - ❌ `Barbara Brennan in *Hands of Light* says…`（书名 = 幻觉风险，禁）
+     - ❌ `a 2015 study at Stanford found…`（年份 + 机构，禁）
+     - ❌ `Cyndi Dale (2009) writes…`（年份括号，禁）
+   - ❌ **绝对禁止命名白名单之外的任何人**（哪怕真有其人）。违反 = 整篇作废。
 
 2. **绝不做经验/科学声明**（physical / physiological / neurological / clinical empirical claims）：
    - ❌ `lab studies show blue light lowers blood pressure`
@@ -265,6 +277,22 @@ target_keyword = **「{{target_keyword}}」**（完整 3 词短语）。**SEO + 
    - 结尾必须是 `>]]`
    - description **必须是自然英文 noun phrase**（读起来通顺：「X explainer」 / 「pillar page on X」 / 「comparison with X」 / 「guide to X」 / 「overview of X」）
    - **绝不**为了 unique 而打乱词序产 word salad — 不同的 wikilink 用不同的 **noun phrase 结构** 区分（譬如「explainer」/「comparison」/「guide」），不要把同一组词重排
+
+6. **外链 placeholder（任一违反 = 整篇作废）**：你**绝不允许写出任何真实 URL**（`http://` / `https://` 一律禁止；LLM 发的 URL 高概率是幻觉死链）。
+
+   - **仅 T2** 页可在「Related Reading」section 加 **1-2 个外部权威链接**，且**只能写成占位符**，由后续人工 / 查询步骤把占位符解析成带 `target="_blank"` 的真 URL。**T3 不加外链**（保持精简）。
+   - 字面格式（必须逐字遵守）：
+     ```
+     [[<TBD-external-link: Wikipedia | Exact Page Title | one-line reason it's relevant>]]
+     ```
+     - 第 1 段 = 源类型（只许 `Wikipedia` / `NASA`（仅天文实体，如行星 / 星座的天文学条目）/ 百科类）
+     - 第 2 段 = 该源上的**精确页面标题**（你已知的真实条目名）
+     - 第 3 段 = 1 句话说明为什么相关
+   - ✅ 范例：`[[<TBD-external-link: Wikipedia | Chakra | overview of the chakra system blue aura maps onto>]]`
+   - ✅ 范例：`[[<TBD-external-link: NASA | Saturn | the astronomical body behind the Saturn return cycle>]]`
+   - ❌ **绝对禁止**裸 URL：`https://en.wikipedia.org/wiki/Chakra`（写真 URL = 整篇作废）
+   - ❌ **绝对禁止**链接标题含 `(paranormal)` / `(pseudoscience)` / `(alternative)` 的 Wikipedia 页（这类页面把主题框定为伪科学，伤 EEAT）：`[[<TBD-external-link: Wikipedia | Aura (paranormal) | ...>]]` ❌
+   - 若没有合格的权威外链源（找不到精确真实页名）→ **直接省略**，不要硬凑、不要编造页名。
 
 {{PSYCH_SAFETY_BLOCK}}
 

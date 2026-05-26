@@ -163,6 +163,12 @@ export function composeCfg(row, override, cliLanguage) {
     child_entities: o.child_entities,
     child_count: o.child_count,
     ...(language ? { language } : {}),
+    // author routing (Lane B / T3): the byline id resolved at pull time
+    // (gg-sheet-pull). renderAuraPrompt writes it + banned_tokens into the fixture
+    // so the batch publish path carries the persona through to the oracle. Omitted
+    // when empty so EN fixtures without an author stay clean.
+    ...(o.author_id || b.author ? { author_id: o.author_id || b.author } : {}),
+    ...(o.author_source || b.author_source ? { author_source: o.author_source || b.author_source } : {}),
     // bilingual-v9: ZH main long-tail keyword (ops-filled in sheet col V).
     // When present, phase2 RL4/RL5 uses it instead of H1-derive. Omitted from
     // cfg when empty so renderAuraPrompt sidecar doesn't carry null fields.

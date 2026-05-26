@@ -7,6 +7,31 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { isValidAuthorId, normalizeAuthorId } from './author-routing.mjs';
+import { loadPersona } from './author-personas/loader.mjs';
+
+// Author fields for the fixture sidecar (Lane B / T3). When cfg carries a valid
+// author_id (resolved at pull time), pull the persona's display name, version, and
+// banned_tokens so _phase2-validate can publish the byline AND enforce RL7 in the
+// batch path. Invalid/absent → {} (graceful: EN fixtures without an author stay
+// clean). loadPersona failure is swallowed — a bad card must not break rendering.
+export function authorFixtureFields(cfg) {
+  const raw = String(cfg.author_id || '').replace(/^["']|["']$/g, '').trim();
+  if (!raw || !isValidAuthorId(raw)) return {};
+  const id = normalizeAuthorId(raw);
+  try {
+    const p = loadPersona(id);
+    return {
+      author_id: id,
+      ...(cfg.author_source ? { author_source: cfg.author_source } : {}),
+      author_display_name: p.displayName,
+      persona_version: p.version,
+      banned_tokens: p.bannedTokens,
+    };
+  } catch {
+    return {};
+  }
+}
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO = join(__dirname, '..', '..', '..');
@@ -225,6 +250,7 @@ export function renderAuraPrompt(cfg) {
     // a noise field.
     ...(cfg.target_keyword_zh ? { target_keyword_zh: cfg.target_keyword_zh } : {}),
     ...(isPillar && cfg.child_entities ? { child_entities: cfg.child_entities, child_count: cfg.child_count || cfg.child_entities.length } : {}),
+    ...authorFixtureFields(cfg),
     generated_at: new Date().toISOString(),
   };
   writeFileSync(fixturePath, JSON.stringify(fixture, null, 2));

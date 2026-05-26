@@ -714,14 +714,14 @@ test('RL6: blacklist has the spec-required 12 base words (allowing inflections)'
   }
 });
 
-test('redLinesCheck: all 6 pass → all_pass=true', () => {
+test('redLinesCheck: all 8 pass → all_pass=true', () => {
   const draft = `# T\n## chiron 7th house meaning\nReflective discussion of chiron 7th house.\n\n## related\nMore chiron content.\n\n## CTA\nClick.`;
   const r = redLinesCheck(draft, SERP_CTX('chiron 7th house', 'Chiron', 'N'));
-  assert.equal(r.rules.length, 6);
+  assert.equal(r.rules.length, 8);
   assert.equal(r.all_pass, true);
 });
 
-test('redLinesCheck: returns 6 rules in order RL1..RL6', () => {
+test('redLinesCheck: returns 8 rules in order RL1..RL8', () => {
   const r = redLinesCheck('text', SERP_CTX('foo'));
   assert.deepEqual(r.rules.map((x) => x.id), [
     'rl1_no_clinical_claim',
@@ -730,6 +730,8 @@ test('redLinesCheck: returns 6 rules in order RL1..RL6', () => {
     'rl4_keyword_anchored',
     'rl5_no_keyword_stuffing',
     'rl6_psych_safety_disclaimer',
+    'rl7_author_banned_tokens',
+    'rl8_no_scientific_endorsement',
   ]);
 });
 
@@ -2152,41 +2154,47 @@ test('capsule: missing authorCapsule → placeholders replaced with empty (no le
   assert.ok(!out.includes('{{author_credential_meta}}'));
 });
 
-test('author gate: empty author column → not ok, exit GATE, clear message', () => {
+test('author gate: empty author + no map match → not ok, exit GATE, clear message', () => {
   const page = makePageRow({ author: '' });
   const cluster = makeClusterRow();
-  const r = resolveAuthor(page, cluster, 'page_chiron_7th_house');
+  const r = resolveAuthor(page, cluster, 'page_chiron_7th_house', new Map());
   assert.equal(r.ok, false);
   assert.equal(r.exit, EXIT.GATE);
   assert.match(r.reason, /no author assigned for page_chiron_7th_house/);
 });
 
-test('author gate: valid author → persona + provenance resolved', () => {
-  const page = makePageRow({ author: 'marcus-orion', author_source: 'manual-override' });
-  const cluster = makeClusterRow({ cluster_domain: 'basics' });
-  const r = resolveAuthor(page, cluster, 'p');
+test('author gate: manual override (valid id) → source=override, persona resolved', () => {
+  const page = makePageRow({ author: 'marcus-orion' });
+  const cluster = makeClusterRow({ primary_entity: 'Basics' });
+  const r = resolveAuthor(page, cluster, 'p', new Map());
   assert.equal(r.ok, true);
   assert.equal(r.authorId, 'marcus-orion');
-  assert.equal(r.authorSource, 'manual-override');
-  assert.equal(r.clusterDomain, 'basics');
+  assert.equal(r.authorSource, 'override');
+  assert.equal(r.clusterDomain, 'basics'); // normalized lowercase
   assert.equal(r.persona.version, '1.0');
   assert.ok(Array.isArray(r.persona.bannedTokens));
 });
 
-test('author gate: unknown author id → throws (fail-loud, never wrong byline)', () => {
-  const page = makePageRow({ author: 'no-such-author' });
-  const cluster = makeClusterRow();
-  assert.throws(() => resolveAuthor(page, cluster, 'p'), /unknown author id/);
+test('author gate: auto-map by cluster domain (no override) → source=auto', () => {
+  const page = makePageRow({ author: '' });
+  const cluster = makeClusterRow({ primary_entity: 'Aura' });
+  const map = new Map([['aura', 'elena-vane']]);
+  const r = resolveAuthor(page, cluster, 'p', map);
+  assert.equal(r.ok, true);
+  assert.equal(r.authorId, 'elena-vane');
+  assert.equal(r.authorSource, 'auto');
 });
 
-test('author gate: author_source defaults to "sheet" when column blank', () => {
-  const page = makePageRow({ author: 'elena-vane', author_source: '' });
-  const r = resolveAuthor(page, makeClusterRow(), 'p');
-  assert.equal(r.authorSource, 'sheet');
+test('author gate: illegal override id → rejected, hard-block (not a wrong byline)', () => {
+  const page = makePageRow({ author: 'no-such-author' });
+  const cluster = makeClusterRow();
+  const r = resolveAuthor(page, cluster, 'p', new Map());
+  assert.equal(r.ok, false);
+  assert.equal(r.exit, EXIT.GATE);
 });
 
 test('buildAuthorFrontmatter: emits YAML byline with provenance fields', () => {
-  const author = resolveAuthor(makePageRow({ author: 'aditi-sharma' }), makeClusterRow({ cluster_domain: 'vedic' }), 'p');
+  const author = resolveAuthor(makePageRow({ author: 'aditi-sharma' }), makeClusterRow({ primary_entity: 'vedic' }), 'p', new Map());
   const fm = buildAuthorFrontmatter(author, 'clu_x');
   assert.match(fm, /^---\n/);
   assert.match(fm, /author_id: "aditi-sharma"/);
@@ -2263,8 +2271,8 @@ Some think chiron in 7th house predicts outcomes; it does not.
 查你的对应落座 https://astrologywiki.com/tools/birth-chart
 `;
   writeFileSync(ingestPath, draft);
-  const pageRow = makePageRow({ psych_safety_flag: 'N', status: '写作中', author: 'julian-thorne', author_source: 'cluster-domain-map' });
-  const clusterRow = makeClusterRow({ psych_safety_flag: 'N', cluster_domain: 'chiron-healing' });
+  const pageRow = makePageRow({ psych_safety_flag: 'N', status: '写作中', author: 'julian-thorne' });
+  const clusterRow = makeClusterRow({ psych_safety_flag: 'N', primary_entity: 'chiron-healing' });
   try {
     const r = runTool([
       '--page-id', 'page_chiron_7th_house', '--phase', '2',
@@ -2274,7 +2282,7 @@ Some think chiron in 7th house predicts outcomes; it does not.
     assert.equal(r.status, 0, `stderr: ${r.stderr}\nstdout: ${r.stdout}`);
     const manifest = JSON.parse(readFileSync(join(stagingDir, 'page_chiron_7th_house', 'manifest.json'), 'utf8'));
     assert.equal(manifest.author_id, 'julian-thorne');
-    assert.equal(manifest.author_source, 'cluster-domain-map');
+    assert.equal(manifest.author_source, 'override');
     assert.equal(manifest.cluster_domain, 'chiron-healing');
     assert.equal(manifest.persona_version, '1.0');
     const draftOut = readFileSync(join(stagingDir, 'page_chiron_7th_house', 'draft.md'), 'utf8');

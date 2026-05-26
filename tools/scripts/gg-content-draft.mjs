@@ -45,6 +45,8 @@ import {
 import { redLinesCheck } from './lib/red-lines.mjs';
 
 import { loadPersona } from './lib/author-personas/loader.mjs';
+import { getAllConfig } from './lib/_config.mjs';
+import { buildAuthorMap, resolveAuthor as routeAuthor } from './lib/author-routing.mjs';
 
 // ============================================================
 // constants
@@ -427,23 +429,40 @@ function gateCheckPage(pageRow, pageId) {
 //
 // Returns { ok:true, authorId, authorSource, persona } on success, or
 // { ok:false, exit, reason } when the author cell is empty.
-function resolveAuthor(pageRow, clusterRow, pageId) {
-  const authorId = String((pageRow && pageRow[PAGE_COLS.author]) || '').trim();
-  if (!authorId) {
+// Hybrid routing (design Decision 1) delegated to the shared pure router in
+// lib/author-routing.mjs so the override/auto/empty logic lives in one place:
+//   1. manual override in sheet author column (valid id) → author_source 'override'
+//   2. else auto-map cluster primary_entity → author.map.<domain> (config tab) → 'auto'
+//   3. else (incl. rejected illegal override) → empty → hard-block here
+// `authorMap` is injectable for tests; defaults to the synced config snapshot.
+function resolveAuthor(pageRow, clusterRow, pageId, authorMap) {
+  const map = authorMap || buildAuthorMap(getAllConfig()).map;
+  const overrideRaw = (pageRow && pageRow[PAGE_COLS.author]) || '';
+  const clusterDomain = clusterRow
+    ? String(clusterRow[CLUSTER_COLS.primary_entity] || '').trim()
+    : '';
+  const routed = routeAuthor({ clusterDomain, overrideRaw, authorMap: map });
+  if (!routed.author) {
     return {
       ok: false,
       exit: EXIT.GATE,
-      reason: `no author assigned for ${pageId}, set author in sheet (选题登记表 column V)`,
+      reason:
+        `no author assigned for ${pageId}: sheet author column empty (or override rejected) ` +
+        `and no author.map match for domain "${routed.cluster_domain || '(none)'}". ` +
+        `Set author in 选题登记表 (column V) or add author.map.<domain> in the config tab.`,
     };
   }
-  const authorSource = String((pageRow && pageRow[PAGE_COLS.author_source]) || '').trim() || 'sheet';
-  const clusterDomain = clusterRow
-    ? String(clusterRow[CLUSTER_COLS.cluster_domain] || '').trim()
-    : '';
   // loadPersona throws on unknown id / missing field / malformed card — let it
   // propagate so the run fails loud rather than producing a wrong-author draft.
-  const persona = loadPersona(authorId);
-  return { ok: true, authorId, authorSource, clusterDomain, persona };
+  // (Illegal override ids are already rejected upstream by routeAuthor.)
+  const persona = loadPersona(routed.author);
+  return {
+    ok: true,
+    authorId: routed.author,
+    authorSource: routed.author_source,
+    clusterDomain: routed.cluster_domain,
+    persona,
+  };
 }
 
 function gateCheckCluster(clusterRow, clusterId) {

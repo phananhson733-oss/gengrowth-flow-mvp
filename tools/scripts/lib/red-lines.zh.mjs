@@ -43,8 +43,8 @@ export const RL1_ZH_CLINICAL_TERMS = Object.freeze([
 // 《广告法》§9 绝对禁词（中文圈封号 / 罚款头号原因）
 // 这些是「极限程度词」+「程度强化词」+「承诺式」+「伪权威背书」
 export const RL1_ZH_AD_LAW_TERMS = Object.freeze([
-  // 极限程度
-  '国家级', '最高级', '最佳', '第一', '唯一', '首选', 'No.1',
+  // 极限程度（「第一」单独走 RL1_ZH_FIRST_SUPERLATIVE_RE，见下）
+  '国家级', '最高级', '最佳', '唯一', '首选', 'No.1',
   // 等级声誉
   '最权威', '最专业', '最准确',
   // 程度强化 — 「最」单字太广，要与下面具体词组组合
@@ -56,6 +56,15 @@ export const RL1_ZH_AD_LAW_TERMS = Object.freeze([
   // 独占式
   '独家', '绝无仅有', '前所未有', '史无前例',
 ]);
+
+// 「第一」既是《广告法》超级化用语（排名第一 / 第一品牌 / 销量第一），又是大量
+// 正当序数 / 惯用语（第一宫 / 第一印象 / 第一次 / 第一个 / 第一步 / 第一反应 /
+// 第一时间 / 第一眼），后者在占星词条里高频出现。纯子串匹配会误伤序数用法，
+// 因此仅当「第一」后面不是已知序数名词或枚举标点时，才判为超级化违规。
+export const RL1_ZH_FIRST_EXEMPT_AFTER = '宫印象次个步反应眼时间阶段轮季集章条页届代人称位线批波手件张双类种遍趟回场幕排列课期版招站关层圈';
+export const RL1_ZH_FIRST_SUPERLATIVE_RE = new RegExp(
+  `第一(?![${RL1_ZH_FIRST_EXEMPT_AFTER}])`,
+);
 
 export function checkRL1Zh(draft) {
   const allTerms = [...RL1_ZH_CLINICAL_TERMS, ...RL1_ZH_AD_LAW_TERMS];
@@ -73,7 +82,18 @@ export function checkRL1Zh(draft) {
       };
     }
   }
-  return { id: 'rl1_no_clinical_claim', pass: true, note: `扫描 ${allTerms.length} 个中医 + 广告法禁词，0 命中` };
+  // 「第一」超级化用法（已豁免序数 / 枚举）
+  const firstMatch = RL1_ZH_FIRST_SUPERLATIVE_RE.exec(draft);
+  if (firstMatch) {
+    const idx = firstMatch.index;
+    const ctx = draft.slice(Math.max(0, idx - 30), Math.min(draft.length, idx + 32));
+    return {
+      id: 'rl1_no_clinical_claim',
+      pass: false,
+      note: `《广告法》§9 禁词 "第一"（超级化用法）matched. context: "...${ctx.replace(/\s+/g, ' ').trim()}..."`,
+    };
+  }
+  return { id: 'rl1_no_clinical_claim', pass: true, note: `扫描 ${allTerms.length} 个中医 + 广告法禁词 + 第一超级化，0 命中` };
 }
 
 // ─── RL2 ──────────────────────────────────────────────────────────────

@@ -99,3 +99,20 @@ test('RL8Zh: 普通解读 → PASS', () => {
 test('RL8Zh: frontmatter 内的短语不算命中 → PASS', () => {
   assert.equal(checkRL8Zh('---\ntitle: 研究表明\n---\n\n正常内容。').pass, true);
 });
+
+// ---------- RL1: 「第一」超级化 vs 序数/惯用（2026-05-26 收窄，避免误伤占星词条） ----------
+test('RL1Zh: 第一 作序数/惯用 → PASS (第一宫/第一印象/第一次/第一个/第一反应/第一步/第一时间)', () => {
+  assert.equal(checkRL1Zh('# T\n\n第一宫多半落在自我与外在形象。').pass, true);
+  assert.equal(checkRL1Zh('# T\n\n形象与给人的第一印象。').pass, true);
+  assert.equal(checkRL1Zh('# T\n\n很多人第一次看盘会误读。').pass, true);
+  assert.equal(checkRL1Zh('# T\n\n常见的困惑。第一个是说法相反。').pass, true);
+  assert.equal(checkRL1Zh('# T\n\n有人第一反应是反驳。').pass, true);
+  assert.equal(checkRL1Zh('# T\n\n第一步先观察，第一时间记录。').pass, true);
+});
+
+test('RL1Zh: 第一 作超级化广告语 → FAIL (排名第一/第一品牌/销量第一/第一名)', () => {
+  assert.equal(checkRL1Zh('# T\n\n我们排名第一。').pass, false);
+  assert.equal(checkRL1Zh('# T\n\n全球第一品牌。').pass, false);
+  assert.equal(checkRL1Zh('# T\n\n销量第一的占星 app。').pass, false);
+  assert.equal(checkRL1Zh('# T\n\n第一名的选择。').pass, false);
+});

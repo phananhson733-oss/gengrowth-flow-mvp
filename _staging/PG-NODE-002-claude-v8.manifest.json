@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-NODE-002",
+  "entity": "North Node in Scorpio",
+  "target_keyword": "north node in scorpio",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-05-26T11:26:47.522Z",
+  "content_sha256_short": "ace4ac54d5e6c363",
+  "source_path": ".gg-cache/drafts/PG-NODE-002.raw.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-NODE-002-claude-v8.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 7,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 1538,
+      "wikilinks": 4,
+      "tbdLinks": 4
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

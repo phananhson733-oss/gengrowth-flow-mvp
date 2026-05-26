@@ -18,8 +18,8 @@ associated_keywords:
   - blue green aura meaning
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-26T11:22:38.683Z
-content_sha256_short: 6e6739195f1209e1
+generated_at: 2026-05-26T11:34:00.553Z
+content_sha256_short: f0b24c0c64484d6a
 phase2_checks: all-pass
 ---
 
@@ -39,7 +39,7 @@ The way out is to stop reading green as a personality label and start reading it
 
 A concrete case makes this clearer. Say a friend reads as green during a month when they are the one everyone texts at midnight, the person who drives across town to sit with someone who is falling apart. On the surface that looks like the "natural healer" reading. But if you ask how they slept, whether they ate, and the last time anyone asked how they were doing, the same green often turns out to be running on empty. The "healer" read and the "bitter" read are the start and the end of one arc, and the only honest way to tell them apart is to look at the situation rather than the swatch. In my years working with aura color, the people who got the most out of a green read were the ones who stopped asking "what does this say about me" and started asking "where is my care going, and is any of it coming back."
 
-It also matters because the framework around this color tends to get prescriptive fast. Plenty of writing tells green readers they are meant to become therapists, healers, or caretakers by calling. A graphic designer who feels green and feels fine does not need a career reassignment, and a teacher who reads green is not failing some destiny by liking their job. The point of a self-aware read is to notice where your care goes, whether it is balanced, and what it costs you, not to inherit a job description from a color chart. The Friction here is real: novices fail to decode green because they were handed a fixed trait list instead of a way to translate what they are seeing into something they can check against their own week. A trait list says "you are caring." A working read asks who you cared for this week, whether anyone returned it, and how you felt afterward. The first is a flattering or unflattering label; the second is a measurement you can actually take, and it is the measurement that lets you decide whether to keep giving at the current rate or pull some of that energy back toward yourself.
+It also matters because the framework around this color tends to get prescriptive fast. Plenty of writing tells green readers they are meant to become therapists, healers, or caretakers by calling. A graphic designer who feels green and feels fine does not need a career reassignment, and a teacher who reads green is not failing some destiny by liking their job. The point of a self-aware read is to notice where your care goes, whether it is balanced, and what it costs you, not to inherit a job description from a color chart. The friction here is real: novices fail to decode green because they were handed a fixed trait list instead of a way to translate what they are seeing into something they can check against their own week. A trait list says "you are caring." A working read asks who you cared for this week, whether anyone returned it, and how you felt afterward. The first is a flattering or unflattering label; the second is a measurement you can actually take, and it is the measurement that lets you decide whether to keep giving at the current rate or pull some of that energy back toward yourself.
 
 ## Green Aura vs Adjacent Concepts: Mechanism + Trade-offs
 

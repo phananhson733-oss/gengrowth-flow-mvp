@@ -96,3 +96,51 @@ aliases:
 定位 vault 钩子为 obsidian-git 插件（每分钟 auto-commit+push 整库到 main，无 per-path 排除）。方案：本地 .git/hooks/pre-commit 在备份提交时 unstage tools/scripts/，代码提交用 --no-verify 绕过（prose 备份不受影响，已测）。P2 完成：RL7 多词整行扫描 + keyword 豁免收紧到整词带上限 + 实现 checkRL7Zh（CJK 子串/ASCII 词边界）并接入 _phase2-validate + 新增 17 条 ZH 红线测试。P3 完成：gg-md-to-oracle 改用 loadPersona 去重、_config.getConfigStatus + gg-sheet-pull 快照陈旧告警、gg-content-draft 抽出 util + RAG 两个 lib 模块（2002→1791 行）。751/751 通过，已 push main。gg-content-draft 完全降到 800 行以下需拆 runPhase1/runPhase2 编排器，留作单独 review 的重构。
 
 ---
+
+### Q7 — 18:37 [claude]
+
+**🙋 提问：**
+
+优化了以后，我们再来评估一下当前的写作流程的优化是否合理和完整：提示词：inbox/03-content-briefs/2026-05-25-seo-content-os-v4.3-sop；作者卡：author-personas；创作要求清单：blog创作要求清单_v4.0。按照目标的方式检查一下 /goal 我们在参考了这个方案以后，同时进行了一定的优化，是否已经全部落地了
+
+**🤖 回答：**
+
+读取三份参考文档（在 /Users/wzb/Code/gengrowth-ops/），fan-out 4 个 subagent 并行做差距分析。结论：未全部落地，但分三类——有意优化（红线/RAG/双语/persona 比 v4.3 更强）、1 个确凿回归（EN Definition 批量渲染因 4 个 {{author_*}} 占位符未填而 process.exit(1)，测试跳过 renderAuraPrompt 故 751 全绿没拦住）、一批仅靠提示词无红线兜底的工程化校验。经 AskUserQuestion 选定执行范围＝「回归 + 低成本红线」。
+
+---
+
+### Q8 — 18:37 [claude]
+
+**🙋 提问：**
+
+注意：我们在运行的过程中，进行个gstack 等 review。所以会有一点的差异化和修改
+
+**🤖 回答：**
+
+确认参考 SOP 是起点而非验收线，运行中经 gstack/eng-review 有意改造，故「与 v4.3 不同」多数是有意优化不是缺口。据此把工作切成两条文件互不重叠的并行 lane（Lane A 渲染路径修回归+Journal、Lane B 红线/结构校验），并设硬护栏：新校验必须对齐当前模板实际产出，绝不强制 v4.3 里被有意移除的结构。两 lane 完成，全套 856/856 通过。
+
+---
+
+### Q9 — 18:37 [claude]
+
+**🙋 提问：**
+
+织入具名创始人 + Wikipedia/学术外链
+
+**🤖 回答：**
+
+这撞上模板一条刻意的反幻觉硬规则（禁 LLM 自由命名作者/发 URL）。经 AskUserQuestion 选定「白名单 + TBD 占位符」安全方案：人名白名单数据由我亲自策选真实奠基人（不让 subagent 凭记忆造名，避免违反禁 mock 数据），Lane C 做机械接线——authority-allowlist.json（4 域）+ 模板放开命名白名单内创始人 + T2 外链写成 TBD 占位符不发真 URL + RL12 兜底。
+
+---
+
+### Q10 — 18:37 [claude]
+
+**🙋 提问：**
+
+我们网站中有 具名的作家
+
+**🤖 回答：**
+
+经 AskUserQuestion 确认含义＝放开 credential integration。把 definition.prompt.md 的「第一人称硬禁」改为「受控一次」：允许署名作家用第一人称把真实背景织入正文一次（v4.3 §1），其余保持第三人称，科学边界仍适用。确认 RL10 只拦第二人称聊天残留不碰作者第一人称。随后用 codex 二次复核完整 diff，修了 5 处真问题（RL10/RL9 误伤、RL12 scheme-less URL 绕过、(d) 署名形态扩展、外链结构冲突），加回归测试，全套 867/867 通过，提交 956f1e1 + 12bda02。
+
+---

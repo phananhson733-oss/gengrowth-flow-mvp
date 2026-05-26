@@ -129,11 +129,16 @@ function validateBannedTokens(fm, idForMsg) {
   if (!Array.isArray(raw)) {
     throw new PersonaError(`persona "${idForMsg}": banned_tokens must be a list`);
   }
-  const tokens = raw.map((t) => String(t).trim().toLowerCase()).filter(Boolean);
-  for (const t of tokens) {
-    if (t !== String(t).toLowerCase()) {
-      throw new PersonaError(`persona "${idForMsg}": banned_token "${t}" must be lowercase`);
+  const tokens = [];
+  for (const t of raw) {
+    const trimmed = String(t).trim();
+    if (!trimmed) continue;
+    // Fail loud on uppercase: RL7 matches case-insensitively, but a stray
+    // uppercase token in a card signals a hand-edit mistake worth catching.
+    if (trimmed !== trimmed.toLowerCase()) {
+      throw new PersonaError(`persona "${idForMsg}": banned_token "${trimmed}" must be lowercase`);
     }
+    tokens.push(trimmed);
   }
   return tokens;
 }

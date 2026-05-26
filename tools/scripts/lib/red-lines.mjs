@@ -670,6 +670,13 @@ export function checkRL7(draft, ctx) {
 // RL8 — shared scientific-endorsement red line (all authors). Detects phrasing
 // that frames interpretation as scientific proof. Scans prose body with
 // frontmatter + fenced code stripped. Hit = FAIL.
+// Negation / disclaimer cues that flip a sci-claim into an honest "there is no
+// scientific backing" statement, which is allowed (even desirable) on a
+// metaphysical wiki. If one appears in the ~50 chars before the matched phrase,
+// the match is not an endorsement.
+const RL8_NEGATION_REGEX =
+  /\b(no|not|never|without|lacks?|lacking|isn't|aren't|wasn't|weren't|doesn't|don't|didn't|cannot|can't|nor|neither|unproven|unsupported)\b[^.?!]*$/i;
+
 export function checkRL8(draft) {
   const body = proseBodyForSci(typeof draft === 'string' ? draft : '');
   const lines = body.split('\n');
@@ -677,6 +684,8 @@ export function checkRL8(draft) {
   for (let i = 0; i < lines.length; i++) {
     const m = lines[i].match(RL8_SCI_CLAIM_REGEX);
     if (m) {
+      const before = lines[i].slice(0, m.index);
+      if (RL8_NEGATION_REGEX.test(before)) continue; // negated claim → allowed
       evidence.push({ phrase: m[0], line: i + 1, context: lines[i].trim().slice(0, 160) });
     }
   }

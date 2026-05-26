@@ -80,6 +80,22 @@ Blue is a symbol of calm.`;
   assert.equal(r.pass, true);
 });
 
+// ---------- negation / disclaimer is allowed (not an endorsement) ----------
+test('RL8: "no scientific evidence for this" → PASS (honest disclaimer)', () => {
+  const r = checkRL8('# Blue\n\nThere is no scientific evidence for this reading.');
+  assert.equal(r.pass, true);
+});
+
+test('RL8: "this is not evidence-based" → PASS', () => {
+  const r = checkRL8('# Blue\n\nThis is not evidence-based and should be read symbolically.');
+  assert.equal(r.pass, true);
+});
+
+test('RL8: positive endorsement still FAILS despite a negation elsewhere', () => {
+  const r = checkRL8('# Blue\n\nThis is not a joke. Studies show this aura is real.');
+  assert.equal(r.pass, false);
+});
+
 // ---------- exported constant is a regex ----------
 test('RL8: RL8_SCI_CLAIM_REGEX is exported regex', () => {
   assert.ok(RL8_SCI_CLAIM_REGEX instanceof RegExp);

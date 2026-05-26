@@ -438,8 +438,15 @@ function gateCheckPage(pageRow, pageId) {
 function resolveAuthor(pageRow, clusterRow, pageId, authorMap) {
   const map = authorMap || buildAuthorMap(getAllConfig()).map;
   const overrideRaw = (pageRow && pageRow[PAGE_COLS.author]) || '';
+  // Join key: explicit cluster_domain column (col T) wins if the sheet has one,
+  // else fall back to primary_entity (col F). Whichever is used is recorded as
+  // provenance via routed.cluster_domain so the manifest matches the lookup.
   const clusterDomain = clusterRow
-    ? String(clusterRow[CLUSTER_COLS.primary_entity] || '').trim()
+    ? String(
+        clusterRow[CLUSTER_COLS.cluster_domain] ||
+          clusterRow[CLUSTER_COLS.primary_entity] ||
+          '',
+      ).trim()
     : '';
   const routed = routeAuthor({ clusterDomain, overrideRaw, authorMap: map });
   if (!routed.author) {
@@ -1549,9 +1556,12 @@ async function runPhase2(args, env) {
     serpState: serpCheckState,
     snippets: serpSnippets,
     escapeReason,
+    // RL7 needs the selected author's banned tokens; without this the per-author
+    // red line silently N/A-passes in the real Phase 2 path.
+    authorBannedTokens: author.persona.bannedTokens,
   });
   if (rl.all_pass) {
-    recordPass('red lines', `6/6 pass`);
+    recordPass('red lines', `${rl.rules.length}/${rl.rules.length} pass`);
   } else {
     const failed = rl.rules.filter((r) => !r.pass);
     for (const r of failed) {
@@ -1777,7 +1787,7 @@ async function runPhase2(args, env) {
   console.log(`  page_id:    ${pageId}`);
   console.log(`  author:     ${author.authorId} (source=${author.authorSource}, persona v${author.persona.version})`);
   console.log(`  draft:      ${relative(REPO_ROOT, draftAbs)} (${draftMd.length} chars, ${sc.h2_count} H2 sections)`);
-  console.log(`  red_lines:  ${rl.rules.filter((r) => r.pass).length}/6 pass`);
+  console.log(`  red_lines:  ${rl.rules.filter((r) => r.pass).length}/${rl.rules.length} pass`);
   console.log(`  structure:  ok`);
   console.log(`  sheets:     row ${rowIdx}: ${status} → ${STATUS_WRITING}`);
   return EXIT.OK;

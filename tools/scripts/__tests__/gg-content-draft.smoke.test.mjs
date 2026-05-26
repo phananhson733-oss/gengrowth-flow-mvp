@@ -113,7 +113,8 @@ function makePageRow(overrides = {}) {
 
 function makeClusterRow(overrides = {}) {
   const row = new Array(20).fill('');
-  row[CLUSTER_COLS.cluster_domain] = 'chiron-healing';
+  // cluster_domain (col T) blank by default → routing falls back to primary_entity.
+  row[CLUSTER_COLS.cluster_domain] = '';
   row[CLUSTER_COLS.cluster_id] = 'clu_chiron_healing';
   row[CLUSTER_COLS.cluster_name] = 'Chiron Healing';
   row[CLUSTER_COLS.track] = '精修线';

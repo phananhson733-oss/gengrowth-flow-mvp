@@ -24,12 +24,18 @@ import { homedir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getAccessToken } from './lib/_oauth-token.mjs';
+import { getAllConfig } from './lib/_config.mjs';
+import { buildAuthorMap, resolveAuthor } from './lib/author-routing.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO = join(__dirname, '..', '..');
 
 export const SCHEMA_VERSION = '1';
 export const DEFAULT_TAB = '选题登记表';
+// Cluster tab carries the primary_entity domain used as the author-routing join
+// key. Mirrors gg-sheet-to-brief's CLUSTERS_TAB (kept local to avoid a circular
+// import — gg-sheet-to-brief imports fetchTab from here).
+export const CLUSTERS_TAB = '主题集群表';
 export const DEFAULT_LIMIT = 100;
 
 // renderAuraPrompt cfg 必填字段。少这些里任何一个 → status=incomplete。

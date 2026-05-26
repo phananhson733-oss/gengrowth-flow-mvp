@@ -221,3 +221,64 @@ export function checkRL6Zh(draft, ctx) {
     note: 'psych_safety=Y + 中文 disclaimer ✓ + 神秘学红线 ✓ + forbidden 句式 ✓',
   };
 }
+
+// ─── RL7 (作家黑词) ───────────────────────────────────────────────────────
+// TODO(lane-c): 中文作家黑词清单暂未上线。Lane A 的作家 persona capsule 目前
+// 仅产出英文 banned_tokens；中文 capsule 落地后在此实现 checkRL7Zh（注意中文
+// 无 \b 词边界，需用域词典 / 子串 + 标点边界策略，不能照搬 EN 的 \b 方案）。
+// 在此之前 _phase2-validate.mjs 对 zh 文章跳过 RL7（视为该作家无中文黑词）。
+
+// ─── RL8 (科学背书红线) ───────────────────────────────────────────────────
+// 全作家适用：占星 / 神秘学内容禁止把解释挂钩科学证明。子串匹配即可（中文无
+// 词边界问题，这些短语本身足够具体，误伤风险低）。跳过 frontmatter + fenced
+// code，与 EN RL8 对齐。
+export const RL8_ZH_SCI_CLAIM_TERMS = Object.freeze([
+  '研究表明',
+  '研究显示',
+  '科学研究表明',
+  '科学证明',
+  '科学证实',
+  '临床证实',
+  '临床证明',
+  '数据证实',
+  '有科学依据',
+  '科学依据表明',
+  '实验证明',
+]);
+
+function stripFrontmatterZh(md) {
+  if (typeof md !== 'string') return '';
+  const m = md.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/);
+  return m ? md.slice(m[0].length) : md;
+}
+
+function stripFencedCodeZh(md) {
+  return md.replace(/^[ \t]*(```|~~~)[\s\S]*?^[ \t]*\1[ \t]*$/gm, '');
+}
+
+export function checkRL8Zh(draft) {
+  const body = stripFencedCodeZh(stripFrontmatterZh(typeof draft === 'string' ? draft : ''));
+  const lines = body.split('\n');
+  const evidence = [];
+  for (let i = 0; i < lines.length; i++) {
+    for (const term of RL8_ZH_SCI_CLAIM_TERMS) {
+      if (lines[i].includes(term)) {
+        evidence.push({ phrase: term, line: i + 1, context: lines[i].trim().slice(0, 160) });
+        break;
+      }
+    }
+  }
+  if (evidence.length > 0) {
+    return {
+      id: 'rl8_no_scientific_endorsement',
+      pass: false,
+      note: `科学背书红线词命中: ${evidence.map((e) => `"${e.phrase}"`).join(', ')}`,
+      evidence,
+    };
+  }
+  return {
+    id: 'rl8_no_scientific_endorsement',
+    pass: true,
+    note: `扫描 ${RL8_ZH_SCI_CLAIM_TERMS.length} 个科学背书短语, 无命中`,
+  };
+}

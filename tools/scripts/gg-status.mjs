@@ -19,6 +19,8 @@ import { join, basename, dirname } from 'node:path';
 import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { loadEnv, getAccessToken, gFetch } from './lib/gg-shared.mjs';
+import { getAllConfig } from './lib/_config.mjs';
+import { buildAuthorMap, normalizeDomain } from './lib/author-routing.mjs';
 
 const REPO = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const CACHE = join(REPO, '.gg-cache');
@@ -100,6 +102,13 @@ function scanLocalPages() {
     const frictionPath = join(CACHE, pid, 'friction-mine.rag.json');
     const fr = safeReadJson(frictionPath);
     row.rag_friction_real = fr && Array.isArray(fr.themes) && fr.themes.length && !fr._synth ? 'real' : (fr ? 'synth' : '');
+    // author routing (Lane B / T8): read author + cluster_domain from the
+    // override JSON so the pre-flight report can flag unassigned pages.
+    const ov = row.override_path ? safeReadJson(join(REPO, row.override_path)) : null;
+    const ovEntry = ov && ov[pid] ? ov[pid] : null;
+    row.author = ovEntry && typeof ovEntry.author === 'string' ? ovEntry.author : '';
+    row.author_source = ovEntry && typeof ovEntry.author_source === 'string' ? ovEntry.author_source : '';
+    row.cluster_domain = ovEntry && typeof ovEntry.cluster_domain === 'string' ? ovEntry.cluster_domain : '';
     row.prompt_path = existsSync(join(CACHE, 'prompts', `${pid}.v8-prompt.md`)) ? join('.gg-cache', 'prompts', `${pid}.v8-prompt.md`) : '';
     row.prompt_size = row.prompt_path ? safeStat(join(REPO, row.prompt_path))?.size || 0 : 0;
     // phase2 status: latest manifest among llm variants
@@ -120,6 +129,9 @@ function makeRow(page_id) {
     approved: '',
     promoted: '',
     brief_filled: '',
+    author: '',
+    author_source: '',
+    cluster_domain: '',
     override_path: '',
     batch_path: '',
     rag_entity: '',
@@ -272,6 +284,55 @@ function decorateWikiPublish(rows) {
   return rows;
 }
 
+// ---------- author-assignment pre-flight (Lane B / T8) ----------
+// Scan pending pages (have an override / brief but not yet published) and flag:
+//   (1) author blank — page will be hard-blocked at content-draft
+//   (2) cluster_domain not present in author.map — auto-routing has no entry
+// Pure + exported for tests. authorMap: Map<normalized-domain, author_id>.
+//
+// "pending" = has a brief override AND not yet published to wiki. Published
+// pages already shipped, so a late author gap there is noise, not a blocker.
+export function auditAuthorAssignment(rows, authorMap) {
+  const map = authorMap instanceof Map ? authorMap : new Map();
+  const missingAuthor = [];
+  const unmappedDomain = [];
+  for (const r of rows) {
+    const isPending = !!r.override_path && !r.wiki_published_path;
+    if (!isPending) continue;
+    if (!r.author) {
+      missingAuthor.push({ page_id: r.page_id, cluster_domain: r.cluster_domain || '' });
+    }
+    const domain = normalizeDomain(r.cluster_domain);
+    // Only flag unmapped-domain when the page isn't an explicit override and the
+    // domain is non-empty — a blank domain is already implied by missingAuthor.
+    if (domain && r.author_source !== 'override' && !map.has(domain)) {
+      unmappedDomain.push({ page_id: r.page_id, cluster_domain: r.cluster_domain });
+    }
+  }
+  return { missingAuthor, unmappedDomain };
+}
+
+export function renderAuthorPreflight(report) {
+  const lines = [];
+  lines.push('## Author assignment pre-flight');
+  lines.push('');
+  const total = report.missingAuthor.length + report.unmappedDomain.length;
+  if (total === 0) {
+    lines.push('All pending pages have an assigned author. No gaps.');
+    return lines.join('\n');
+  }
+  lines.push(`**${report.missingAuthor.length}** pending page(s) with no author (blocked at content-draft):`);
+  for (const m of report.missingAuthor) {
+    lines.push(`- ${m.page_id}${m.cluster_domain ? ` (domain: ${m.cluster_domain})` : ' (no cluster_domain)'}`);
+  }
+  lines.push('');
+  lines.push(`**${report.unmappedDomain.length}** pending page(s) whose cluster domain has no \`author.map\` entry:`);
+  for (const u of report.unmappedDomain) {
+    lines.push(`- ${u.page_id} (domain: ${u.cluster_domain}) — add an \`author.map.${u.cluster_domain}\` row to sheet config`);
+  }
+  return lines.join('\n');
+}
+
 // ---------- output: markdown ----------
 function emitMarkdown(rows) {
   const cols = ['page_id', 'tier', 'template', 'approved', 'promoted', 'brief_filled', 'override', 'prompt', 'rendered', 'phase2', 'published'];
@@ -317,6 +378,9 @@ function emitMarkdown(rows) {
   for (const [k, n] of Object.entries(breakdowns)) {
     lines.push(`- ${k}: **${n}** page(s)`);
   }
+  lines.push('');
+  const { map: authorMap } = buildAuthorMap(getAllConfig());
+  lines.push(renderAuthorPreflight(auditAuthorAssignment(rows, authorMap)));
   return lines.join('\n');
 }
 
@@ -712,4 +776,8 @@ async function main() {
   return 0;
 }
 
-main().then((c) => process.exit(c || 0)).catch((e) => { console.error('ERR:', e.message); process.exit(1); });
+// Run only when invoked directly (not when imported by tests). The
+// author-preflight helpers above are exported pure functions.
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().then((c) => process.exit(c || 0)).catch((e) => { console.error('ERR:', e.message); process.exit(1); });
+}

@@ -348,6 +348,65 @@ test('composeOverride: both N → final N', () => {
   assert.equal(entry.psych_safety_flag, 'N');
 });
 
+// ---------- author routing (Lane B / T3) ----------
+// cluster_domain join key = cluster.primary_entity. Build a cluster + author map.
+function makeAuthorCtx(authorMapEntries = [['aura', 'elena-vane']]) {
+  const clusterMap = new Map([[
+    'clu_aura_colors',
+    {
+      cluster_id: 'clu_aura_colors',
+      cluster_name: 'Aura Colors',
+      track: '量产线',
+      primary_entity: 'Aura', // ← domain join key (note Title-case → normalized to "aura")
+      jtbd: 'understand my aura color',
+      content_angle: 'cluster-level angle (fallback)',
+      internal_link_rule: 'Pillar↔Series',
+      child_entities: [],
+    },
+  ]]);
+  const ctaMap = new Map([[
+    'Series||量产线',
+    {
+      page_role: 'Series', cta_text: 'x', target_url: 'https://astrologywiki.com/tools/aura-quiz', track: '量产线',
+    },
+  ]]);
+  const authorMap = new Map(authorMapEntries);
+  return { clusterMap, ctaMap, repo: '/tmp/__nonexistent_repo_for_test', authorMap };
+}
+
+test('composeOverride: cluster domain HIT → author + author_source=auto + cluster_domain', () => {
+  const row = makeRow();
+  const { entry } = composeOverride(row, makeAuthorCtx());
+  assert.equal(entry.author, 'elena-vane');
+  assert.equal(entry.author_source, 'auto');
+  assert.equal(entry.cluster_domain, 'aura');
+});
+
+test('composeOverride: cluster domain MISS → author blank, no author_source', () => {
+  const row = makeRow();
+  // author map has no entry for "aura"
+  const { entry } = composeOverride(row, makeAuthorCtx([['nodes', 'julian-thorne']]));
+  assert.equal(entry.author, '');
+  assert.equal(entry.author_source, undefined);
+  assert.equal(entry.cluster_domain, 'aura');
+});
+
+test('composeOverride: manual author override wins + not overwritten by auto', () => {
+  // auto would map aura → elena-vane; sheet author column forces julian-thorne.
+  const row = makeRow({ author_override: 'Julian-Thorne' });
+  const { entry } = composeOverride(row, makeAuthorCtx());
+  assert.equal(entry.author, 'julian-thorne');
+  assert.equal(entry.author_source, 'override');
+});
+
+test('composeOverride: illegal author override → rejected, author blank + warning', () => {
+  const row = makeRow({ author_override: 'not-a-writer' });
+  const { entry, warnings } = composeOverride(row, makeAuthorCtx());
+  assert.equal(entry.author, '');
+  assert.equal(entry.author_source, undefined);
+  assert.ok(warnings.some((w) => /not a known author_id/.test(w)));
+});
+
 test('composeOverride: missing cluster emits warning, blanks cluster fields', () => {
   const row = makeRow({ cluster_id: 'clu_does_not_exist' });
   const { entry, warnings } = composeOverride(row, makeCtx());

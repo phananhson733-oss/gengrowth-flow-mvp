@@ -169,6 +169,9 @@ const HEADER_MAP = {
   'journal_prompts': 'journal_prompts',
   // bilingual-v9: ZH main long-tail; ops hand-fills (LLM derivation fallback)
   'target_keyword_zh': 'target_keyword_zh',
+  // author routing (Lane B / T3): manual override column. Empty → auto-route by
+  // cluster domain; non-empty + valid → override (never overwritten by auto).
+  'author': 'author_override',
 };
 
 export function mapRowToBrief(header, row) {

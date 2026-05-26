@@ -60,3 +60,27 @@ aliases:
 按 3 条 lane 并行 fan-out 三个 worktree subagent 落地作家系统 MVP：Lane A（persona loader+capsule+content-draft 门+provenance）、Lane B（cluster→author 路由+预检+publish 元数据）、Lane C（RL7 黑词+RL8 红线）。合并到 feat/author-personas-mvp，调和跨 lane 不一致（统一 author-routing 混合路由、域键 cluster_domain||primary_entity、author_source 收敛 override/auto）。codex review 整 diff 找出 5 bug 全修（含 High：Phase2 RL7 恒空跑、路由域键）。全量 711/711 smoke 通过，干净 2 commit，清理 lane 分支/worktree。T9 实跑 4 篇 eval 需真实 API+sheet，留 operator（no-mock-data）。
 
 ---
+
+### Q4 — 16:30 [claude]
+
+**🙋 提问：**
+
+/ship（直接 ship）。中途追问：我们使用当前已有的 claude codex OAuth 不可以吗，必须用 API key 吗
+
+**🤖 回答：**
+
+纠正之前的错误：管线是两阶段人在环设计（Phase 1 产提示词 → 贴进 Claude OAuth 会话生成 → Phase 2 ingest 跑红线），全链路无需 Anthropic API key，唯一 OAuth 是 Google Sheets。/ship 预着陆 review（Codex + 对抗 + 安全 subagent 三方收敛）抓到 3 个真实阻塞 bug：C1 署名永远落不到生产（写 author_id 含引号、读 fm.author 不脱引号 → 退回 house byline）、RL8 红线可绕过（只扫每行首个 phrase + 否定窗口过宽）、capsule 注入面未过滤。全部修复 + 8 条回归测试，719/719 通过。C2 发布路径等记入 TODOS.md。PR #1 开了并 merged。
+
+---
+
+### Q5 — 17:10 [claude]
+
+**🙋 提问：**
+
+按照建议推进修复
+
+**🤖 回答：**
+
+深挖 C2 真实数据流后纠正结论：发布就绪文件其实带 title/slug（由 _phase2-validate 写），真缺口是它不写 author_id，且批量链路（gg-sheet-pull → gg-render-batch → renderAuraPrompt → _phase2-validate）producer 侧从未解析作家（fixture.banned_tokens 只读不写，批量 RL7 也恒 N/A）。按用户选择"pull 时解析"建全链路：gg-sheet-pull 拉 cluster tab + join primary_entity + resolveAuthor 盖进 batch fixture；composeCfg 透传 author_id；renderAuraPrompt 写 author_id+banned_tokens 进 fixture；_phase2-validate 读取并写 byline frontmatter + 强制 RL7。端到端打通，11 条回归测试，730/730 通过，已 push main。另外 flag 了 vault-backup 钩子自动 push 中间态到 main 的风险。T9 实跑前需核对 primary_entity 与 author.map 粗粒度键是否对齐。
+
+---

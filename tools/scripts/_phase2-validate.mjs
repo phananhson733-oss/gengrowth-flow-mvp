@@ -43,6 +43,8 @@ import {
   checkRL8Zh,
 } from './lib/red-lines.zh.mjs';
 import { logFailure } from './lib/_failure-log.mjs';
+import { isValidAuthorId, normalizeAuthorId } from './lib/author-routing.mjs';
+import { loadPersona } from './lib/author-personas/loader.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO = join(__dirname, '..', '..');
@@ -215,6 +217,25 @@ const ctx = {
     return Array.isArray(fixture.banned_tokens)
       ? fixture.banned_tokens.map((s) => String(s).trim()).filter(Boolean)
       : [];
+  })(),
+  // Author byline (T10 / C2): the persona id whose byline publishes to the oracle.
+  // Source priority: CLI --author > fixture.author_id. Display name comes from the
+  // persona card. Absent/invalid → null → no byline emitted (oracle falls back to
+  // the house team). This is the publish-frontmatter writer for the batch path, the
+  // counterpart to content-draft's buildAuthorFrontmatter on the human-in-loop path.
+  author: (() => {
+    const raw = (typeof args.author === 'string' && args.author !== 'true')
+      ? args.author
+      : (fixture.author_id || '');
+    const id = String(raw || '').replace(/^["']|["']$/g, '').trim();
+    if (!id || !isValidAuthorId(id)) return null;
+    const norm = normalizeAuthorId(id);
+    try {
+      const p = loadPersona(norm);
+      return { id: norm, displayName: p.displayName };
+    } catch {
+      return null;
+    }
   })(),
 };
 const outBasename = `${ctx.page_id}-${ctx.tag}`;
@@ -551,6 +572,12 @@ const titleCased = ctx.target_keyword
   .split(/\s+/)
   .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
   .join(' ');
+// Byline lines (C2): emit author_id so the oracle converter resolves the persona
+// byline instead of the house team. JSON.stringify keeps the value YAML-safe and
+// matches the quote-tolerant read in gg-md-to-oracle-ts.resolveAuthorMeta.
+const authorLines = ctx.author
+  ? `author_id: ${JSON.stringify(ctx.author.id)}\nauthor_display_name: ${JSON.stringify(ctx.author.displayName)}\n`
+  : '';
 const frontmatter = `---
 title: ${titleCased}
 slug: ${ctx.target_keyword.replace(/\s+/g, '-')}
@@ -561,7 +588,7 @@ template: ${ctx.template}
 tier: ${ctx.tier}
 track: ${ctx.track}
 page_id: ${ctx.page_id}
-target_keyword: ${ctx.target_keyword}
+${authorLines}target_keyword: ${ctx.target_keyword}
 associated_keywords:
 ${ctx.associated_keywords.map((k) => `  - ${k}`).join('\n')}
 generated_by: ${ctx.llm_source}

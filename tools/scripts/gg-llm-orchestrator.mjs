@@ -1,8 +1,10 @@
 #!/usr/bin/env node
-// gg-llm-orchestrator.mjs — drive Stage 12 of docs/PIPELINE.md across 4 LLMs.
-// Models: claude (opus-4-7 xhigh) / codex (gpt-5.5 high) / gemini (2.5-pro) / hermes (405b).
+// gg-llm-orchestrator.mjs — drive Stage 12 of docs/PIPELINE.md.
+// DEFAULT: Claude-only (opus-4-7 xhigh). Cross-validation models codex (gpt-5.5
+// high) / gemini (2.5-pro) stay available on demand via --models. The hermes
+// model (≈GPT-equivalent, needs OPENROUTER_API_KEY) was dropped 2026-05-26.
 // Parallel via Promise.allSettled + child_process.spawn. Each model gets --retry N
-// attempts; --diversify-on-fail escalates to opus (hermes→opus, codex→opus, gemini→opus).
+// attempts; --diversify-on-fail escalates to opus (codex→opus, gemini→opus).
 // Usage:
 //   node tools/scripts/gg-llm-orchestrator.mjs --prompt <path> --page-id <id> \
 //     --models "claude,codex,gemini,hermes" --out-dir _staging \
@@ -34,8 +36,9 @@ const PRICING = {
   hermes: { input_per_m: 4.0, output_per_m: 4.0, note: 'OpenRouter estimate' },
 };
 const WORDS_PER_TOKEN = 1 / 1.3; // ~1.3 tokens per English word
-// Diversify map per PIPELINE.md L312 ("hermes 失败 2 次 → 切 Opus 4.7 xhigh").
-const DIVERSIFY_ESCALATION = { hermes: 'claude', codex: 'claude', gemini: 'claude', claude: null };
+// Diversify map: a failing cross-validation model escalates to Opus 4.7 xhigh
+// (diversity > repetition). claude is already the ceiling, so it escalates to null.
+const DIVERSIFY_ESCALATION = { codex: 'claude', gemini: 'claude', claude: null };
 
 // Build the argv array for each model. `bin` is resolved via PATH on spawn.
 // stdin = prompt content, stdout captured to outputPath, stderr surfaced.

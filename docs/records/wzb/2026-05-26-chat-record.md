@@ -84,3 +84,15 @@ aliases:
 深挖 C2 真实数据流后纠正结论：发布就绪文件其实带 title/slug（由 _phase2-validate 写），真缺口是它不写 author_id，且批量链路（gg-sheet-pull → gg-render-batch → renderAuraPrompt → _phase2-validate）producer 侧从未解析作家（fixture.banned_tokens 只读不写，批量 RL7 也恒 N/A）。按用户选择"pull 时解析"建全链路：gg-sheet-pull 拉 cluster tab + join primary_entity + resolveAuthor 盖进 batch fixture；composeCfg 透传 author_id；renderAuraPrompt 写 author_id+banned_tokens 进 fixture；_phase2-validate 读取并写 byline frontmatter + 强制 RL7。端到端打通，11 条回归测试，730/730 通过，已 push main。另外 flag 了 vault-backup 钩子自动 push 中间态到 main 的风险。T9 实跑前需核对 primary_entity 与 author.map 粗粒度键是否对齐。
 
 ---
+
+### Q6 — 18:05 [claude]
+
+**🙋 提问：**
+
+帮我把 vault 钩子排除 tools/scripts/。同时 p2 p3 的 TODOS 完成
+
+**🤖 回答：**
+
+定位 vault 钩子为 obsidian-git 插件（每分钟 auto-commit+push 整库到 main，无 per-path 排除）。方案：本地 .git/hooks/pre-commit 在备份提交时 unstage tools/scripts/，代码提交用 --no-verify 绕过（prose 备份不受影响，已测）。P2 完成：RL7 多词整行扫描 + keyword 豁免收紧到整词带上限 + 实现 checkRL7Zh（CJK 子串/ASCII 词边界）并接入 _phase2-validate + 新增 17 条 ZH 红线测试。P3 完成：gg-md-to-oracle 改用 loadPersona 去重、_config.getConfigStatus + gg-sheet-pull 快照陈旧告警、gg-content-draft 抽出 util + RAG 两个 lib 模块（2002→1791 行）。751/751 通过，已 push main。gg-content-draft 完全降到 800 行以下需拆 runPhase1/runPhase2 编排器，留作单独 review 的重构。
+
+---

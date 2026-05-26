@@ -126,6 +126,39 @@ test('parseConfigRows: missing header columns → throws', () => {
   assert.throws(() => parseConfigRows(rows), /missing required columns/);
 });
 
+// ---------- author.map.<domain> dynamic keys (Lane B / T3) ----------
+test('parseConfigRows: valid author.map.<domain> → recognised + normalized', () => {
+  const rows = [
+    ['key', 'value'],
+    ['author.map.aura', 'Elena-Vane'],
+    ['author.map.transits', 'marcus-orion'],
+  ];
+  const out = parseConfigRows(rows);
+  assert.equal(out.values['author.map.aura'], 'elena-vane');
+  assert.equal(out.values['author.map.transits'], 'marcus-orion');
+  assert.equal(out.unrecognised.length, 0);
+  assert.equal(out.unparsable.length, 0);
+});
+
+test('parseConfigRows: author.map with illegal author_id → unparsable, not silently kept', () => {
+  const rows = [
+    ['key', 'value'],
+    ['author.map.aura', 'nonexistent-writer'],
+  ];
+  const out = parseConfigRows(rows);
+  assert.equal(Object.prototype.hasOwnProperty.call(out.values, 'author.map.aura'), false);
+  assert.equal(out.unparsable.length, 1);
+  assert.match(out.unparsable[0].reason, /not a known author_id/);
+});
+
+test('buildDiff: author.map.<domain> appears as sheet-only row', () => {
+  const diff = buildDiff({ 'author.map.aura': 'elena-vane' });
+  const r = diff.find((row) => row.key === 'author.map.aura');
+  assert.ok(r, 'author.map.aura should be in diff');
+  assert.equal(r.status, 'sheet-only');
+  assert.equal(r.sheetVal, 'elena-vane');
+});
+
 // ---------- 5: buildDiff classification ----------
 test('buildDiff: match / drift / missing classification', () => {
   const sheetValues = {

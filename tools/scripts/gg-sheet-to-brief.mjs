@@ -38,6 +38,8 @@ import {
   resolvePageId,
   classifyRow,
 } from './gg-sheet-pull.mjs';
+import { getAllConfig } from './lib/_config.mjs';
+import { buildAuthorMap, resolveAuthor } from './lib/author-routing.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO = join(__dirname, '..', '..');
@@ -250,7 +252,7 @@ export function loadFrictionThemes(repo, pageId, brief) {
 
 // 单个 row → override entry（核心派生逻辑）
 // 返回 { entry: ... , warnings: [...] } 或 { skip: true, reason: '...' }。
-export function composeOverride(row, { clusterMap, ctaMap, repo, skipNonV8 = false }) {
+export function composeOverride(row, { clusterMap, ctaMap, repo, skipNonV8 = false, authorMap = new Map() }) {
   const brief = row.brief || {};
   const pageId = row.page_id;
   if (!pageId) return { skip: true, reason: 'no page_id (sheet col 16 empty and target_keyword blank)' };
@@ -277,6 +279,20 @@ export function composeOverride(row, { clusterMap, ctaMap, repo, skipNonV8 = fal
   const warnings = [];
   // joinFailures — main() converts these to FATAL + fuzzy suggestions unless --allow-missing-* set.
   const joinFailures = [];
+
+  // author routing (Lane B / T3). join key = cluster.primary_entity (the cluster's
+  // domain/topic field). Manual `author` column (brief.author_override) wins +
+  // is never overwritten by auto. Unmatched → author left blank (no default
+  // fallback; content-draft hard-blocks blank author).
+  const clusterDomain = cluster ? cluster.primary_entity : '';
+  const authorRoute = resolveAuthor({
+    clusterDomain,
+    overrideRaw: brief.author_override,
+    authorMap,
+  });
+  if (authorRoute.warnings && authorRoute.warnings.length) {
+    warnings.push(...authorRoute.warnings);
+  }
   if (clusterId && !cluster) {
     warnings.push(`cluster_id "${clusterId}" not found in 主题集群表`);
     joinFailures.push({ kind: 'cluster_id', missing: clusterId });
@@ -315,6 +331,10 @@ export function composeOverride(row, { clusterMap, ctaMap, repo, skipNonV8 = fal
     tier: brief.tier || 'T2',
     template: template || 'Definition',
     psych_safety_flag: psychFlag,
+    // author routing (Lane B / T3) — see resolveAuthor above. author '' = unmatched.
+    author: authorRoute.author,
+    cluster_domain: authorRoute.cluster_domain,
+    ...(authorRoute.author_source ? { author_source: authorRoute.author_source } : {}),
     // Pillar child_entities — pull from cluster table if template=Pillar
     ...(template === 'Pillar' && cluster && cluster.child_entities.length
       ? { child_entities: cluster.child_entities, child_count: cluster.child_entities.length }
@@ -539,6 +559,11 @@ flags:
   }
 
   const clusterMap = buildClusterMap(clustersRaw);
+  // author.map.<domain> → author_id, sourced from .gg-cache/config-snapshot.json
+  // (written by gg-config-sync from sheet `config` tab). Empty map is fine —
+  // every row then routes to blank author (caught by the T8 pre-flight report).
+  const { map: authorMap, warnings: authorMapWarnings } = buildAuthorMap(getAllConfig());
+  for (const w of authorMapWarnings) console.error(`warn: ${w}`);
   const ctaBuildResult = buildCtaMap(ctaRaw);
   const ctaMap = ctaBuildResult.map;
   if (ctaBuildResult.dupes && ctaBuildResult.dupes.length) {
@@ -579,6 +604,7 @@ flags:
       ctaMap,
       repo: REPO,
       skipNonV8: !!args.skip_non_v8,
+      authorMap,
     });
     if (result.skip) {
       skipped.push({ source_row: sheetRow, page_id: pageId, reason: result.reason });

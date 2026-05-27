@@ -19,7 +19,7 @@ associated_keywords:
   - what does a north node in taurus mean
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-27T07:00:05.465Z
+generated_at: 2026-05-27T07:04:13.957Z
 content_sha256_short: d708be23c7605f61
 phase2_checks: all-pass
 ---

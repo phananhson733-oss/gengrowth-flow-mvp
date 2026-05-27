@@ -407,8 +407,11 @@ function structureCheck(draft) {
   } else {
     words = draft.trim().split(/\s+/).filter(Boolean).length;
   }
+  // Under-min is a hard FAIL (thin content must not ship). Over-max is a soft
+  // WARN (long-form is acceptable) — surfaced in the warnings block below so it
+  // never flips `ok`. (2026-05-27, per word-count pilot: prompt aim raised to
+  // 1800 to clear the 1500 floor, so habitual over-1800 must not block.)
   if (words < ctx.word_range_min) findings.push(`word count ${words} < min ${ctx.word_range_min}`);
-  if (words > ctx.word_range_max) findings.push(`word count ${words} > max ${ctx.word_range_max}`);
 
   // Required H2 list is template-aware (Definition leaf vs Pillar hub) AND
   // language-aware (EN literal-match vs ZH substring-match — ZH entity may be
@@ -537,6 +540,11 @@ function structureCheck(draft) {
 
   // ---- WARN-only checks (surfaced separately so they never flip `ok`) ----
   const warnings = [];
+
+  // Soft word-count ceiling: over word_range_max is informational only.
+  if (words > ctx.word_range_max) {
+    warnings.push(`word count ${words} > max ${ctx.word_range_max} (soft ceiling — long-form OK, not blocking)`);
+  }
 
   // SC6 — H1 value proposition (WARN, both langs; 清单 §1 / 审计 4.2).
   const h1Value = checkH1ValueProp(draft, { target_keyword: ctx.target_keyword });

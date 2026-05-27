@@ -179,7 +179,15 @@ export function buildReplacements(cfg, ragBlocks = {}) {
   // Chinese expression is denser; 1500-2000 chars ≈ EN 1500-1800 words depth.
   const enWordDefault = isPillar ? [2500, 3500] : [1500, 1800];
   const zhWordDefault = isPillar ? [3000, 4000] : [1500, 2000];
+  // GATE range — written to the fixture sidecar, read by _phase2-validate as the
+  // word_range_min (hard FAIL floor) and word_range_max (soft WARN ceiling).
   const wordRangeArr = cfg.word_range || (lang === 'zh' ? zhWordDefault : enWordDefault);
+  // PROMPT AIM — what the model is told to write. Set above the gate floor so the
+  // model's habitual ~15-20% undershoot still clears word_range_min. Over-max is
+  // a WARN, not a FAIL, so aiming high is safe. (2026-05-27 word-count pilot.)
+  const enAim = isPillar ? [2800, 3500] : [1800, 2200];
+  const zhAim = isPillar ? [3300, 4000] : [1800, 2400];
+  const promptAimArr = cfg.word_range_aim || (lang === 'zh' ? zhAim : enAim);
   const kwRangeArr = cfg.kw_count_range || (isPillar ? [8, 12] : [5, 8]);
   const targetCountry = lang === 'zh' ? 'CN/华语圈 (简体中文)' : 'US (English)';
   const replacements = {
@@ -203,7 +211,7 @@ export function buildReplacements(cfg, ragBlocks = {}) {
     '{{TIER_LOGIC_HINT}}': '',
     '{{PSYCH_SAFETY_BLOCK}}': '',
     '{{RL6_HINT}}': cfg.rl6_hint,
-    '{{WORD_RANGE}}': `${wordRangeArr[0]}-${wordRangeArr[1]}`,
+    '{{WORD_RANGE}}': `${promptAimArr[0]}-${promptAimArr[1]}`,
     '{{KW_COUNT_RANGE}}': `${kwRangeArr[0]}-${kwRangeArr[1]}`,
     '{{ENTITY_PASSPORT_BLOCK}}': ragBlocks.entityPassport || '',
     '{{FRICTION_MINE_BLOCK}}': ragBlocks.frictionMine || '',
@@ -224,7 +232,7 @@ export function buildReplacements(cfg, ragBlocks = {}) {
     '{{child_entities}}': Array.isArray(cfg.child_entities) ? cfg.child_entities.join(', ') : (cfg.child_entities || ''),
     '{{child_count}}': cfg.child_count != null ? String(cfg.child_count) : (Array.isArray(cfg.child_entities) ? String(cfg.child_entities.length) : ''),
   };
-  return { replacements, wordRangeArr, kwRangeArr, isPillar };
+  return { replacements, wordRangeArr, promptAimArr, kwRangeArr, isPillar };
 }
 
 // Stable page_id regex — matches gg-friction-mine PAGE_ID_REGEX and gg-sheet-pull PAGE_ID_REGEX.

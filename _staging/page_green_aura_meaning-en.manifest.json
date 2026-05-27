@@ -8,8 +8,8 @@
   "track": "量产线",
   "generated_by": "unknown",
   "prompt_version": "v8",
-  "generated_at": "2026-05-27T13:51:32.247Z",
-  "content_sha256_short": "9675babbe421e4c4",
+  "generated_at": "2026-05-27T14:42:55.967Z",
+  "content_sha256_short": "38b8ee37aff4db03",
   "source_path": "_staging/page_green_aura_meaning-claude-v8.md",
   "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/page_green_aura_meaning-en.md",
   "phase2_checks": {
@@ -19,9 +19,9 @@
       "h2Count": 9,
       "h3Count": 0,
       "h4Count": 0,
-      "words": 1607,
-      "wikilinks": 6,
-      "tbdLinks": 6
+      "words": 1808,
+      "wikilinks": 5,
+      "tbdLinks": 5
     },
     "rl1": true,
     "rl2": true,

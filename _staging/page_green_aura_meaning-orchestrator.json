@@ -1,7 +1,7 @@
 {
   "page_id": "page_green_aura_meaning",
-  "prompt_path": "/Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/page_green_aura_meaning.v8.zh-prompt.md",
-  "started_at": "2026-05-27T13:57:49.660Z",
+  "prompt_path": "/Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/page_green_aura_meaning.v8-prompt.md",
+  "started_at": "2026-05-27T14:35:42.475Z",
   "models_requested": [
     "claude"
   ],
@@ -10,7 +10,7 @@
   "max_cost_usd_per_page": 5,
   "budget_exceeded_models": [],
   "ok_count": 1,
-  "total_cost_estimate_usd": 0.0995,
+  "total_cost_estimate_usd": 0.2847,
   "results": {
     "claude": {
       "model": "claude",
@@ -19,31 +19,31 @@
       "ok": true,
       "output_path": "/Users/wzb/gengrowth-flow-mvp/_staging/page_green_aura_meaning-claude-v8.md",
       "retries": 0,
-      "duration_s": 357.4,
+      "duration_s": 304.6,
       "cost_estimate_usd": {
-        "usd": 0.0995,
-        "input_tokens_est": 5646,
-        "output_tokens_est": 198,
+        "usd": 0.2847,
+        "input_tokens_est": 6474,
+        "output_tokens_est": 2501,
         "pricing_note": "Opus 4.7 xhigh"
       },
-      "cumulative_cost_usd": 0.0995,
+      "cumulative_cost_usd": 0.2847,
       "budget_exceeded": false,
       "budget_usd": 5,
       "attempts": [
         {
           "try_index": 1,
           "model": "claude",
-          "command": "claude -p --model claude-opus-4-7 < /Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/page_green_aura_meaning.v8.zh-prompt.md > /Users/wzb/gengrowth-flow-mvp/_staging/page_green_aura_meaning-claude-v8.md",
-          "cost_usd": 0.0995,
-          "cumulative_cost_usd": 0.0995,
+          "command": "claude -p --model claude-opus-4-7 < /Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/page_green_aura_meaning.v8-prompt.md > /Users/wzb/gengrowth-flow-mvp/_staging/page_green_aura_meaning-claude-v8.md",
+          "cost_usd": 0.2847,
+          "cumulative_cost_usd": 0.2847,
           "ok": true,
           "exit_code": 0,
-          "duration_s": 357.4,
+          "duration_s": 304.6,
           "stderr_tail": "",
-          "stdout_bytes": 2469,
+          "stdout_bytes": 11514,
           "sonnet_guard": {
             "downgraded": false,
-            "bytes": 6189
+            "bytes": 11546
           }
         }
       ]

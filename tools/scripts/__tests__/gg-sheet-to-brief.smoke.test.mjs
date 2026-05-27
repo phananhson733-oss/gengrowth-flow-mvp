@@ -162,7 +162,7 @@ test('lookupCta last-resort fallback is deterministic (sorted)', () => {
 });
 
 // ---------- buildTierGateBlock ----------
-test('buildTierGateBlock T1 Pillar gets 9 sections + 2500-3500 words', () => {
+test('buildTierGateBlock T1 Pillar gets 11 sections + 2500-3500 words', () => {
   const block = buildTierGateBlock({
     tier: 'T1',
     template: 'Pillar',
@@ -173,13 +173,13 @@ test('buildTierGateBlock T1 Pillar gets 9 sections + 2500-3500 words', () => {
   });
   assert.match(block, /T1 Pillar/);
   assert.match(block, /2500-3500/);
-  assert.match(block, /9 sections/);
+  assert.match(block, /11 sections/);
   assert.match(block, /Hub|重装/);
   assert.match(block, /people confuse 7 vs 12 chakra systems/);
   assert.match(block, /frame as interpretive framework/);
 });
 
-test('buildTierGateBlock T2 Definition gets 7 sections + 1500-1800 words', () => {
+test('buildTierGateBlock T2 Definition gets 9 sections + 1500-1800 words', () => {
   const block = buildTierGateBlock({
     tier: 'T2',
     template: 'Definition',
@@ -190,7 +190,7 @@ test('buildTierGateBlock T2 Definition gets 7 sections + 1500-1800 words', () =>
   });
   assert.match(block, /T2 Definition/);
   assert.match(block, /1500-1800/);
-  assert.match(block, /7 sections/);
+  assert.match(block, /9 sections/);
   assert.match(block, /标准版/);
 });
 

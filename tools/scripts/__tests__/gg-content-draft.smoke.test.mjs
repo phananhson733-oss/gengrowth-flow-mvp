@@ -320,7 +320,7 @@ test('prompt: Tutorial × T2 contains all 8 section markers', () => {
   }
 });
 
-test('prompt: Definition × T2 contains 7 section markers', () => {
+test('prompt: Definition × T2 contains 9 section markers', () => {
   const out = renderPrompt('Definition', {
     tier: 'T2', template: 'Definition',
     targetKeyword: 'what is chiron', associatedKeywords: '', entity: 'Chiron',
@@ -329,7 +329,7 @@ test('prompt: Definition × T2 contains 7 section markers', () => {
     cta: { text: 'go', target_url: 'https://x.com', cta_id: 'c' },
     effectivePsychSafety: 'N', targetCountry: 'US',
   });
-  for (let i = 1; i <= 7; i++) {
+  for (let i = 1; i <= 9; i++) {
     assert.ok(new RegExp(`^${i}\\.`, 'm').test(out));
   }
 });
@@ -457,6 +457,10 @@ Body.
 | a | b | c |
 | d | e | f |
 
+## Frequently Asked Questions
+**What is it?**
+Answer.
+
 ## Reflection Prompts
 - p1
 - p2
@@ -465,11 +469,14 @@ Body.
 ## Related Wiki Links
 [[a]]
 
+## Sources
+- Robert Hand — houses framework
+
 ## CTA
 click here https://astrologywiki.com/tools/x
 `;
 
-test('structure: valid Definition 7 sections + table → ok', () => {
+test('structure: valid Definition 9 sections + table → ok', () => {
   const r = structureCheck(VALID_DEFINITION, {
     template: 'Definition', effectivePsychSafety: 'N',
     cta: { text: 'click here', target_url: 'https://astrologywiki.com/tools/x' },
@@ -715,15 +722,15 @@ test('RL6: blacklist has the spec-required 12 base words (allowing inflections)'
   }
 });
 
-test('redLinesCheck: all 12 pass → all_pass=true', () => {
+test('redLinesCheck: all 13 pass → all_pass=true', () => {
   const draft = `# T\n## chiron 7th house meaning\nReflective discussion of chiron 7th house.\n\n## related\nMore chiron content.\n\n## CTA\nClick.`;
   const r = redLinesCheck(draft, SERP_CTX('chiron 7th house', 'Chiron', 'N'));
-  // RL1..RL12. RL11/RL12-(d) are WARN-only (pass:true) so they never affect all_pass.
-  assert.equal(r.rules.length, 12);
+  // RL1..RL13. RL11/RL12-(d)/RL13-soft are WARN-only (pass:true) so they never affect all_pass.
+  assert.equal(r.rules.length, 13);
   assert.equal(r.all_pass, true);
 });
 
-test('redLinesCheck: returns 12 rules in order RL1..RL12', () => {
+test('redLinesCheck: returns 13 rules in order RL1..RL13', () => {
   const r = redLinesCheck('text', SERP_CTX('foo'));
   assert.deepEqual(r.rules.map((x) => x.id), [
     'rl1_no_clinical_claim',
@@ -738,6 +745,7 @@ test('redLinesCheck: returns 12 rules in order RL1..RL12', () => {
     'rl10_depersonalization',
     'rl11_weak_verb',
     'rl12_citation_hallucination',
+    'rl13_banned_jargon',
   ]);
 });
 
@@ -2271,18 +2279,18 @@ test('capsule: renderPrompt injects all 4 author placeholders (Definition)', () 
   assert.match(out, /<field name="author_forbidden_moves">No prediction\.<\/field>/);
 });
 
-test('capsule: injection does NOT break the structure section markers (Tutorial 8 / Definition 7)', () => {
+test('capsule: injection does NOT break the structure section markers (Tutorial 8 / Definition 9)', () => {
   const tut = renderPrompt('Tutorial', CAPSULE_CTX_BASE('Tutorial'));
   for (let i = 1; i <= 8; i++) {
     assert.ok(new RegExp(`^${i}\\.`, 'm').test(tut), `Tutorial section ${i} missing after capsule inject`);
   }
   const def = renderPrompt('Definition', CAPSULE_CTX_BASE('Definition'));
-  for (let i = 1; i <= 7; i++) {
+  for (let i = 1; i <= 9; i++) {
     assert.ok(new RegExp(`^${i}\\.`, 'm').test(def), `Definition section ${i} missing after capsule inject`);
   }
   // The H2-count rules are still literally present in both templates.
   assert.match(tut, /恰好 8 个 `## H2`/);
-  assert.match(def, /恰好 7 个 `## H2`/);
+  assert.match(def, /恰好 9 个 `## H2`/);
 });
 
 test('capsule: persona capsule text is safeField-escaped (no <field> breakout)', () => {

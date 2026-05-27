@@ -41,7 +41,7 @@
 
 > Instruction only; **do not** output this block as an article section. 以下 capsule 描述
 > 本篇署名作家的声音与解读立场，用来塑造 framing / 例子 / 隐喻 / 优先级。它**绝不**改变
-> H1 / snippet / 恰好 7 个 H2 的结构骨架 —— 上面的 Heading level 规则与 7-section 结构
+> H1 / snippet / 恰好 9 个 H2 的结构骨架 —— 上面的 Heading level 规则与 9-section 结构
 > **优先级最高**，capsule 只在这些约束**内部**调味。
 
 - voice_rule: <field name="author_voice_rule">{{author_voice_rule}}</field>
@@ -62,9 +62,9 @@ capsule 用于决定**怎么解释**（措辞、对比角度、例子选择、�
 
 > Instruction only; **do not** output this as an article section.
 
-- **输出从 `# <H1 Title>` 开始**，**到 Take Action 段的 CTA URL 结束** — 一次性整篇输出，禁止多轮
+- **输出从 `# <H1 Title>` 开始**，**到 Sources 段最后一条来源结束** — 一次性整篇输出，禁止多轮
 - **绝不**在 H1 之前写任何评论 / 问候 / "This is a strong draft..." / "Here is..." 类 meta
-- **绝不**在 CTA URL 之后写任何 follow-up question / editorial note / offer：
+- **CTA URL 之后只允许 Sources 段**（`## Sources` + 来源列表）；**Sources 段之后**绝不写任何 follow-up question / editorial note / offer：
   - ❌ `Would you like to refine and expand this next?`
   - ❌ `Do you want to expand on the specific nuances of...`
   - ❌ `I can also draft the throat chakra page...`
@@ -103,15 +103,18 @@ capsule 用于决定**怎么解释**（措辞、对比角度、例子选择、�
 
   ## What is Leo?
   ```
-- 头部页（cafe astrology / chaninicholas / mindbodygreen）通常用上述铺垫开场——你必须**直接对立**：1 句话定义后立即给 mechanism
+- 头部页（cafe astrology / chaninicholas / mindbodygreen）通常用上述铺垫开场——你必须**直接对立**：1 句话定义后立即给 how it works（怎么作用，禁用 "mechanism"）
 
 **self-check（提交前默念）**：文章第 1 行 `# <Title>`，跳过空行后第 1 个非空行**必须**是 `## What is <entity>?`——中间任何其他文字（哪怕 1 句话的 "warm intro"），删掉再交。
 
 ## Heading level 字面规则（任一违反 = 整篇作废）
 
 - **恰好 1 个 `# H1`**（文章标题，第 1 行）
-- **恰好 7 个 `## H2`**（下面 7 章节，按顺序）
+- **恰好 9 个 `## H2`**（下面 9 章节，按顺序）
 - **0 个 `### H3`、0 个 `#### H4`** — 禁止任何子标题层级
+- **H1 价值主张硬要求**：H1 必须在**前 3-5 词内含关键词**（保留原规则），**且必须携带价值主张 / 角度，不能是纯裸关键词**。沿用现有"无冒号死板模板"规则的同时，**允许用破折号或副标题承载价值主张**。
+  - ❌ `Orange Aura Meaning`（纯关键词，没有角度）
+  - ✅ `Orange Aura Meaning: Reading Your Energy Without Fear or Labels`（关键词在前 3 词 + 副标题承载价值主张）
 - ✅ 正确范例：
   ```
   # Blue Aura Meaning
@@ -129,32 +132,67 @@ capsule 用于决定**怎么解释**（措辞、对比角度、例子选择、�
   #### Calm vs Avoidance    ← 多了子层级 ❌
   ```
 
-## 输出结构（严格 7 sections，对齐 PRD v0.7 附录 A 模板 B；H2 必须英文）
+## 输出结构（严格 9 sections，对齐 PRD v0.7 附录 A 模板 B；H2 必须英文）
 
 1. **What is {{entity}}?**（H2，字面 H2 = `## What is {{entity}}?`）— 第一句**用日常英文**直接定义（plain English，不堆术语），共 120-160 词。可以在第 2-3 句引入主流脉轮对应（如「commonly associated with the throat chakra」），但**不要**在开头 2 句叠加 3 个以上专业词
    - **Bolded direct answer 硬要求（AI Overview / featured snippet 抓取目标）**：本段 120-160 词内必须出现**正好 1 个** markdown bolded 短语（`**...**`），该短语是 target_keyword 的**直接答案 / 核心定义**（≤ 12 词，不含装饰词）
    - ✅ 范例：`Blue aura usually reads as **a calm, communicative energy field tied to the throat center**.`
    - ❌ 错误：整段无 bold / bold 的是装饰词（`**very**` / `**important**`）/ bold 的是 H2 字面重复（`**What is Blue Aura?**`）/ 2 个以上 bolded 短语稀释焦点
+   - **snippet 后接 3-bullet 硬要求（AI Overview 提取优化）**：加粗定义句之后必须**紧跟正好 3 个 bullet point**（`- ` 起手），概括该实体的 **3 个核心特征**。snippet（加粗定义）后接 3-bullet 利于 AI Overview 抽取。
+     - ✅ 范例：
+       ```
+       Blue aura usually reads as **a calm, communicative energy field tied to the throat center**.
+
+       - Leads with clarity of expression over emotional intensity
+       - Most often associated with the throat center in chakra-aura systems
+       - Easily misread as cool or detached when it's really just measured
+       ```
+     - ❌ 错误：只有 2 个或 4+ 个 bullet / 写成散文而非 bullet / bullet 是空泛口号而非具体特征
 2. **Why It Matters for Self-Awareness**（H2，字面 H2 = `## Why It Matters for Self-Awareness`）— 1-2 段，必须落到 Friction 字段提到的真实痛点（不堆砌情绪形容词）
-3. **{{entity}} vs Adjacent Concepts: Mechanism + Trade-offs**（H2，字面 H2 = `## {{entity}} vs Adjacent Concepts: Mechanism + Trade-offs`，**禁止简写为 "vs Adjacent Concepts" — entity 前缀必须保留**）— ≥ 1 段对比 + 必须显式写出每个对比的 **mechanism（怎么作用）+ trade-off（什么情况下倾向哪种）**，引用 Logic 字段的「机制 + 权衡」
+3. **{{entity}} vs Adjacent Concepts: How It Works + Trade-offs**（H2，字面 H2 = `## {{entity}} vs Adjacent Concepts: How It Works + Trade-offs`，**禁止简写为 "vs Adjacent Concepts" — entity 前缀必须保留**）— ≥ 1 段对比 + 必须显式写出每个对比的 **how it works（怎么作用）+ trade-off（什么情况下倾向哪种）**，引用 Logic 字段的「运作 + 权衡」。**禁用 "mechanism" 一词**（SOP §7 / 清单 §5.3 禁词 + RL13 硬门禁会整篇 fail），改写成 "how it works" / "the way it functions"
    - **Trade-off 表达硬要求（每个对比必须显式）**：每段对比里至少有 1 句话用「**To get A, you sacrifice B**」型表达，让 trade-off 不是抽象描述，而是**可读出的取舍**
    - ✅ 范例：`Blue aura emphasises clarity of voice; the cost is being read as cool or detached.`（取得 A=表达清晰，付出 B=被读冷淡）
    - ✅ 范例：`Choosing throat-led communication over heart-led empathy gets you precision, but you lose some warmth.`
    - ❌ 错误：`Blue aura and green aura are different.`（说有差别，但没说取舍）/ `Each has pros and cons.`（空泛）
-4. **Quick Reference Table**（H2）— Markdown 表格 ≥ 4 列 × ≥ 3 行，**必须含「Property / Mechanism / Energy Center / Common Misread」4 列**（不是只列属性）
+4. **Quick Reference Table**（H2）— Markdown 表格 ≥ 4 列 × ≥ 3 行，**必须含「Property / How It Works / Energy Center / How to Observe」4 列**（不是只列属性）。**列名禁用 "Mechanism"**（已改为 "How It Works"）；「How to Observe」列满足清单 §3「如何观察 / 应用场景」要求，写读者实际能观察到 / 可操作的短句
    - **`## Quick Reference Table` 标题之后第一个非空段必须直接是 markdown 表格本身（以 `|` 开头）**，不能加任何 prose intro / SEO 解释段（例 ❌「Use this table to quickly compare key properties...」），否则 Phase 2 RL4 drift 检测把整 section 当 prose 走 jaccard，整篇 fail
    - **「Energy Center」语义按 entity 类型适配**（这一列不是固定 = 脉轮）：
      - aura/color/chakra 类 entity → 对应脉轮名（throat / heart / crown 等）
      - transit/cycle 类 entity（saturn return / chiron return / jupiter return / uranus opposition） → natal placement（natal house / natal sign / age window）
      - sign/planet 类 entity → 主管 element / 主管 house
      - **严禁在 transit/cycle entities 上塞 chakra / Human Design 术语**（如 "Root center" / "Solar plexus center" / "Heart center" / "throat center"）= RL1 invented_term，整篇作废
-5. **Reflection Prompts**（H2）— 必须 3 条 prompts，每条**≤ 25 词 / 1 句话**（不要写成治疗师式 multi-clause 长问），满足：
+5. **Frequently Asked Questions**（H2，字面 H2 = `## Frequently Asked Questions`）— 内含 **3-4 个真实 PAA 风格问题**，聚焦用户真实操作摩擦点 / 长尾搜索意图（不是泛问）。
+   - **格式约束（关键，违反 = 结构 fail）**：每个问题写成**加粗整行且以问号结尾**（如 `**What does an orange aura mean spiritually?**`），紧跟 2 句精确事实回答。**绝不用 `### H3` / `#### H4`**（H3 在本系统被结构校验禁止，会直接 FAIL）。
+   - ✅ 范例：
+     ```
+     **What does a blue aura mean spiritually?**
+
+     A blue aura is read as a calm, expression-led energy tied to the throat center. In subtle-energy traditions it points to someone who processes through clear communication rather than emotional intensity.
+
+     **Can your aura color change over time?**
+
+     Most aura literature treats color as a snapshot of a prevailing state, not a fixed trait. The same person can read differently across moods, seasons, or life phases.
+     ```
+   - ❌ 错误：用 H3/#### 写问题 / 问题不以问号结尾 / 问题没加粗 / 回答超过 2 句拖成长段 / 问题是泛问而非真实搜索意图
+6. **Reflection Prompts**（H2）— 必须 3 条 prompts，每条**≤ 25 词 / 1 句话**（不要写成治疗师式 multi-clause 长问），满足：
    - (a) 指向**具体情境回忆**（"Think of a recent moment when..."），**不要**「How does X make you feel?」泛问
    - (b) **关联 Logic 字段主题**（如 Logic 提到沟通能量，则 prompts 围绕沟通情境）
    - (c) **必须 numbered list 格式 `1. ... / 2. ... / 3. ...`**，不要写成分段散文 — binary check 的 reflection_prompts 检测只识别 numbered 形式，paragraph 格式 = 0 prompts = fail
    - (d) **`## Reflection Prompts` 标题之后第一个非空段必须直接是 `1.` 起手的编号项**，不能加任何 prose intro / setup 句（例 ❌「Use these prompts to reflect on...」/「Spend a few minutes journaling on...」），否则 Phase 2 RL4 drift 检测把整 section 当 prose 走 jaccard，整篇 fail
-6. **Related Reading**（H2）— **只放正文未内联出现的剩余 wikilinks**（pillar / spoke 已按下方「内链分布」内联进正文的，不要在这里重复堆叠），**用 placeholder 格式** `[[<TBD-internal-link: short description>]]`（**绝不 invent 具体 anchor**），每条 1 句 1-line 为什么相关
-7. **Take Action**（H2，必须）— 文案 <field name="cta_text">{{cta_text}}</field>，链接 <field name="cta_target_url">{{cta_target_url}}</field>。**CTA 必须独立 H2，不能合并到结尾段，否则 structure check 直接 fail。**
+7. **Related Reading**（H2）— **只放正文未内联出现的剩余 wikilinks**（pillar / spoke 已按下方「内链分布」内联进正文的，不要在这里重复堆叠），**用 placeholder 格式** `[[<TBD-internal-link: short description>]]`（**绝不 invent 具体 anchor**），每条 1 句 1-line 为什么相关
+8. **Take Action**（H2，必须）— 文案 <field name="cta_text">{{cta_text}}</field>，链接 <field name="cta_target_url">{{cta_target_url}}</field>。**CTA 必须独立 H2，不能合并到结尾段，否则 structure check 直接 fail。**
+   - **CTA 三段公式硬要求**：CTA 必须符合 `Action → Output → Life Insight`（行动 → 产出 → 人生洞察）三段结构 —— 先给一个具体行动，说明读者会得到什么产出，再落到一句人生 / 自我觉察层面的洞察。
+   - **真实 URL 硬要求**：必须使用**真实 CTA URL**（来自 <field name="cta_target_url">{{cta_target_url}}</field> 变量），**禁止**占位符式 URL（如 `https://example.com` / `[link]`）。
+   - **锚文本硬要求**：**禁止** "click here" / "read more" / "here" 这类无信息锚文本；锚文本必须描述目标内容。
+9. **Sources**（H2，字面 H2 = `## Sources`）— **受控引用**：只列出**正文中已经具名提及、且属于上方权威白名单内**的人物 / 典籍（如 Liz Greene、Dane Rudhyar、Howard Sasportas、Anodea Judith、Barbara Ann Brennan、Robert Hand 等）。
+   - 格式：每行一个 `- 权威名 — 一句话说明其领域贡献`。
+   - **严禁杜撰书名 / 年份 / URL / DOI**；若确需外链，只能用 `[[<TBD-external-link: ...>]]` 占位符。
+   - **不要引入正文未出现的新名字** —— 正文没具名提到的人，不能凭空出现在 Sources 里。
+   - ✅ 范例：
+     ```
+     - Dane Rudhyar — pioneered the psychological, person-centered reading of astrological cycles
+     - Anodea Judith — systematized the modern chakra framework this color mapping draws on
+     ```
 
 ## 段落原子化 + GEO 排版硬要求（对齐创作清单 v4.0 §3 Atomic GEO Layout；任一违反 = 重写该段）
 
@@ -163,14 +201,14 @@ capsule 用于决定**怎么解释**（措辞、对比角度、例子选择、�
 GEO / AI Overview 抓取偏好**短原子段**：长段（wall of text）既难被引用，也伤可读性 + EEAT。**实测旧稿单段 88-199 词 = 整页都是大段，直接踩雷。**
 
 - **任何 prose 段落 ≤ 4 行（≤ ~70 词）**。超过就拆成多个原子段，段间用空行分隔。表格行 / 列表项 / 标题 / 引用块不算 prose 段。
-- **本规则只管 prose 段落，绝不覆盖上面的结构硬规则**：Section 4「Quick Reference Table」标题后第一个非空行**仍必须直接是表格**、Section 5「Reflection Prompts」标题后第一个非空行**仍必须直接是 `1.` 编号项** —— 不要为了"原子化"在表格或编号列表前加任何 prose 引言段。
-- 每个 H2 section 内，把论述拆成「**事实金句 → 逻辑 / 机制 → 实例 / 结果**」三段式原子块，**每块独立成段**（不要把定义、机制、例子全塞进同一段）。
-- ❌ 错误：一段 150 词从定义一路讲到机制再到例子（wall of text）
+- **本规则只管 prose 段落，绝不覆盖上面的结构硬规则**：「Quick Reference Table」标题后第一个非空行**仍必须直接是表格**、「Reflection Prompts」标题后第一个非空行**仍必须直接是 `1.` 编号项** —— 不要为了"原子化"在表格或编号列表前加任何 prose 引言段。
+- 每个 H2 section 内，把论述拆成「**事实金句 → 逻辑 / 怎么作用 → 实例 / 结果**」三段式原子块，**每块独立成段**（不要把定义、怎么作用、例子全塞进同一段）。注意：英文正文里 **禁用 "mechanism" 一词**（RL13 硬门禁），用 "how it works" 表达。
+- ❌ 错误：一段 150 词从定义一路讲到怎么作用再到例子（wall of text）
 - ✅ 正确：
   ```
   Blue aura reads as a calm, communication-led energy.   ← 事实金句（1-2 句）
 
-  The mechanism is throat-center emphasis: ...           ← 机制（2-3 句）
+  How it works: throat-center emphasis ...               ← 怎么作用（2-3 句，禁用 "mechanism"）
 
   In practice, someone with this read often ...          ← 实例（2-3 句）
   ```
@@ -186,7 +224,7 @@ GEO / AI Overview 抓取偏好**短原子段**：长段（wall of text）既难�
 
 - **首链优先权**：至少 **1 个 pillar / 上位概念回链**必须**内联出现在正文前 ~150 词内**（Section 1「What is {{entity}}」或 Section 2 的句子里自然织入，**不是列表、不是结尾**）。
 - **spoke 内联**：至少 **1 个 spoke / 平级概念链接**内联在正文中段（Section 2 或 3 的论述句子里）。
-- **Related Reading（Section 6）只放正文未内联的剩余链接** + 1 句相关性说明，不要把所有链接都堆这里。
+- **Related Reading section 只放正文未内联的剩余链接** + 1 句相关性说明，不要把所有链接都堆这里。
 - 所有内联链接仍用 `[[<TBD-internal-link: short description>]]` placeholder 格式（真实 anchor 文案由后续步骤按「目标词 ｜ 语义背景 ｜ 点击收益」三段式解析；draft 阶段你只给自然英文 noun-phrase 描述）。
 - ✅ 内联范例：`This sits alongside the broader [[<TBD-internal-link: pillar page on all aura colors>]], which maps every color's energy.`
 - **Phase 2 SC4 binary check**：正文（Related Reading 之前）内联内链数 = 0 → 整篇 fail。
@@ -201,16 +239,17 @@ target_keyword = **「{{target_keyword}}」**（完整 3 词短语）。**SEO + 
 
 **硬规则**：
 
-- 完整短语 **「{{target_keyword}}」必须在以下 7 sections 中至少 4 个 section 里自然出现 1 次**（不算 H1 / H2 标题）：
+- 完整短语 **「{{target_keyword}}」必须在以下 9 sections 中至少 4 个 section 里自然出现 1 次**（不算 H1 / H2 标题）：
   - Section 1 (What is {{entity}}?)
   - Section 2 (Why It Matters for Self-Awareness)
   - Section 3 ({{entity}} vs Adjacent Concepts)
-  - Section 5 (Reflection Prompts) — 允许出现在某条 prompt 自然语句里
-  - **注**：Section 4 (Quick Ref Table) / Section 6 (Related Reading) / Section 7 (Take Action) 不强制（这些是结构性 section）
+  - Section 5 (Frequently Asked Questions) — 允许出现在某条问题或回答的自然语句里
+  - Section 6 (Reflection Prompts) — 允许出现在某条 prompt 自然语句里
+  - **注**：Section 4 (Quick Ref Table) / Section 7 (Related Reading) / Section 8 (Take Action) / Section 9 (Sources) 不强制（这些是结构性 section）
 
 - 不能**全用代词**「this color」「the color」「the trait」「this energy」代替 target_keyword — 这会触发 RL4 jaccard / shingle 漂移检测，整篇 fail
 
-- 也不能塞超 {{KW_COUNT_RANGE}} 上限 — 走中庸：**4 sections × 1 次 + 1 次在 H1 + 1 次在第 1 段定义句** ≈ 6 次（落在 5-8 的舒适区）
+- 也不能塞超 {{KW_COUNT_RANGE}} 上限 — 走中庸：**4 sections × 1 次 + 1 次在 H1 + 1 次在第 1 段定义句** ≈ 6 次（落在 {{KW_COUNT_RANGE}} 的舒适区）
 
 ✅ **正确范例**（每个 H2 section 开头自然带入完整短语）：
    - "{{target_keyword}} usually points to..." (S1 开头)

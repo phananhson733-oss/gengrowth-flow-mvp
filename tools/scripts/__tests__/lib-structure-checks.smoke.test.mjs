@@ -103,9 +103,21 @@ function draftWithLinks(n) {
   return `# X\n\n## What is X?\n\n**Bold def.**\n\n## Related Reading\n\n${links}`;
 }
 
-test('SC2: severity is warn', () => {
+test('SC2: severity is fail', () => {
   const r = checkInternalLinkTier(draftWithLinks(3), { tier: 'T2' });
-  assert.equal(r.severity, 'warn');
+  assert.equal(r.severity, 'fail');
+});
+
+test('SC2: T1 with 4 links → FAIL (below floor 5)', () => {
+  const r = checkInternalLinkTier(draftWithLinks(4), { tier: 'T1' });
+  assert.equal(r.pass, false);
+  assert.equal(r.severity, 'fail');
+  assert.ok(r.violations[0].hint.includes('≥ 5'));
+});
+
+test('SC2: T1 with 5 links → PASS', () => {
+  const r = checkInternalLinkTier(draftWithLinks(5), { tier: 'T1' });
+  assert.equal(r.pass, true, r.note);
 });
 
 test('SC2: T2 with ≥3 links → PASS', () => {
@@ -113,10 +125,10 @@ test('SC2: T2 with ≥3 links → PASS', () => {
   assert.equal(r.pass, true, r.note);
 });
 
-test('SC2: T2 with 2 links → WARN (pass:false but severity warn)', () => {
+test('SC2: T2 with 2 links → FAIL (below floor)', () => {
   const r = checkInternalLinkTier(draftWithLinks(2), { tier: 'T2' });
   assert.equal(r.pass, false);
-  assert.equal(r.severity, 'warn');
+  assert.equal(r.severity, 'fail');
   assert.ok(r.violations[0].hint.includes('≥ 3'));
 });
 
@@ -136,8 +148,8 @@ test('SC2: T3 with 3 links → WARN (over ceiling)', () => {
   assert.ok(r.violations[0].hint.includes('≤ 2'));
 });
 
-test('SC2: unknown tier (T1) → PASS with no opinion', () => {
-  const r = checkInternalLinkTier(draftWithLinks(0), { tier: 'T1' });
+test('SC2: unknown tier → PASS with no opinion', () => {
+  const r = checkInternalLinkTier(draftWithLinks(0), { tier: 'T9' });
   assert.equal(r.pass, true);
   assert.ok(/no tier floor/.test(r.note));
 });

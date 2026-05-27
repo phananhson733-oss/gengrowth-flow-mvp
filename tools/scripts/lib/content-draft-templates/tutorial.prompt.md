@@ -80,7 +80,7 @@
   - `In Vedic / Western astrology, ...`
   - `Have you ever wondered why...`
   - `The placement of X in your chart...`（先讲位置再讲意义）
-- 头部页通常铺垫 — 你必须**直接对立**：1 句答案 + 立即给 mechanism
+- 头部页通常铺垫 — 你必须**直接对立**：1 句答案 + 立即给 how it works（怎么作用，禁用 "mechanism"，RL13 硬门禁）
 
 ## Heading level 字面规则（任一违反 = 整篇作废）
 
@@ -94,7 +94,7 @@
   ## Quick Answer
   ...content...
 
-  ## What Saturn Return Means in the Chart: Mechanism + Trade-offs
+  ## What Saturn Return Means in the Chart: How It Works + Trade-offs
   ...
   ```
 - ❌ 错误范例（绝对禁止）：
@@ -106,8 +106,8 @@
 
 ## 输出结构（严格 8 sections，对齐 PRD v0.7 附录 A 模板 A；H2 必须英文）
 
-1. **Quick Answer**（H2，字面 H2 = `## Quick Answer`）— ≤ 120 词，第一句直接回答 target_keyword，再 1-2 句给出 mechanism（why it works this way）
-2. **What {{entity}} Means in the Chart: Mechanism + Trade-offs**（H2，字面 H2 = `## What {{entity}} Means in the Chart: Mechanism + Trade-offs`，**禁止简写为 "What It Means..." — entity 必须保留**）— 占星机制{{TIER_LOGIC_HINT}}；**必须显式写出 mechanism（怎么作用）+ trade-off（什么情况下倾向哪种解读）**
+1. **Quick Answer**（H2，字面 H2 = `## Quick Answer`）— ≤ 120 词，第一句直接回答 target_keyword，再 1-2 句给出 how it works（why it works this way；禁用 "mechanism"）
+2. **What {{entity}} Means in the Chart: How It Works + Trade-offs**（H2，字面 H2 = `## What {{entity}} Means in the Chart: How It Works + Trade-offs`，**禁止简写为 "What It Means..." — entity 必须保留**）— 占星运作方式{{TIER_LOGIC_HINT}}；**必须显式写出 how it works（怎么作用）+ trade-off（什么情况下倾向哪种解读）**。英文正文 **禁用 "mechanism" 一词**（RL13 硬门禁）
 3. **Patterns It May Reflect**（H2）— 不诊断、用反思语言（reflection language），落到 Friction 提到的真实痛点
 4. **Common Misreadings**（H2）— 列 2-3 条；**显式跟 SERP 头部页的主流写法对立**（如「头部页说 X，但忽略了 Y」），不要泛泛说「人们以为 X 但其实 Y」
 5. **Reflection / Journal Prompts**（H2）— 必须 3-5 条 prompts，每条 **≤ 25 词 / 1 句话**（不要治疗师式长问），满足：

@@ -39,6 +39,7 @@ import {
   checkRL10,
   checkRL11,
   checkRL12,
+  checkRL13,
 } from './lib/red-lines.mjs';
 import {
   checkRL1Zh,
@@ -53,8 +54,16 @@ import {
   checkInternalLinkTier,
   checkParagraphLength,
   checkLinkDistribution,
+  checkFaqSection,
+  checkH1ValueProp,
+  checkSnippetBullets,
+  checkCtaUrl,
+  checkSourcesSection,
+  checkSourcesNamesInBody,
+  checkTableIntegrity,
 } from './lib/structure-checks.mjs';
 import { logFailure } from './lib/_failure-log.mjs';
+import { checkAntiHomogenization } from './lib/anti-homogenization.mjs';
 import { isValidAuthorId, normalizeAuthorId } from './lib/author-routing.mjs';
 import { authorityNamesFor } from './lib/authority-allowlist.mjs';
 import { loadPersona } from './lib/author-personas/loader.mjs';
@@ -174,15 +183,15 @@ const template = /^pillar$/i.test(templateRaw) ? 'Pillar' : 'Definition';
 // branches on language to count correctly.
 const templateDefaults = {
   en: {
-    Definition: { word_range: [1500, 1800], kw_count_range: [5, 8], expected_h2: 7 },
-    Pillar: { word_range: [2500, 3500], kw_count_range: [8, 12], expected_h2: 9 },
+    Definition: { word_range: [1500, 1800], kw_count_range: [5, 8], expected_h2: 9 },
+    Pillar: { word_range: [2500, 3500], kw_count_range: [8, 12], expected_h2: 11 },
   },
   zh: {
     // ZH word_range tuned 2026-05-25 from first opus 4.7 demo run: actual
     // production output landed at 1590 chars; Chinese expression is denser
     // than English so 1500-2000 chars ≈ EN 1500-1800 words in info density.
-    Definition: { word_range: [1500, 2000], kw_count_range: [5, 8], expected_h2: 7 },
-    Pillar: { word_range: [3000, 4000], kw_count_range: [8, 12], expected_h2: 9 },
+    Definition: { word_range: [1500, 2000], kw_count_range: [5, 8], expected_h2: 9 },
+    Pillar: { word_range: [3000, 4000], kw_count_range: [8, 12], expected_h2: 11 },
   },
 };
 const langRaw = (args.language || fixture.language || 'en').toLowerCase();
@@ -201,6 +210,7 @@ const ctx = {
   associated_keywords: associated,
   template,
   tier: pick('tier', 'tier', 'T2'),
+  cta_target_url: pick('cta_target_url', 'cta_target_url', ''),
   track: '量产线',
   page_role: template === 'Pillar' ? 'Hub' : 'Support',
   // RL6 strict mode (codex review): empty / null / unknown must default to 'N',
@@ -218,7 +228,12 @@ const ctx = {
   kw_min: Number.parseInt(args.kw_min, 10) || kwRange[0],
   kw_max: Number.parseInt(args.kw_max, 10) || kwRange[1],
   expected_h1: 1,
-  expected_h2: Number.parseInt(args.expected_h2, 10) || fixture.expected_h2 || tplDef.expected_h2,
+  // v4.4: section count is canonical per template (tplDef = 9/11). Prefer the
+  // template default over a fixture sidecar so a STALE fixture (e.g. an old
+  // `.gg-cache/prompts/*.json` carrying expected_h2: 7) can't silently pin the
+  // pre-v4.4 count. Only an explicit CLI --expected-h2 overrides. fixture is the
+  // last-resort fallback (covers templates absent from templateDefaults).
+  expected_h2: Number.parseInt(args.expected_h2, 10) || tplDef.expected_h2 || fixture.expected_h2,
   // RL7: per-author black words. Source priority: CLI --banned_tokens (comma
   // list) > fixture.banned_tokens (compiled by Lane A content-draft from the
   // chosen author persona capsule). Empty/absent → RL7 N/A (author has no list).
@@ -257,6 +272,11 @@ const ctx = {
 // still run. An authored page passes the array (possibly empty if the domain has
 // no curated founders), enabling the off-allowlist WARN.
 ctx.authorityAllowlist = ctx.author ? authorityNamesFor(ctx.author.id) : undefined;
+// SOP §7 anti-homogenization: the set of metaphors / authorities / FAQ topics /
+// modulation angles / core analogies sibling pages already used. Sourced from the
+// fixture (ops-provided per SOP's optional Cluster_Context variable). Absent →
+// the check has no opinion.
+ctx.clusterContext = fixture.cluster_context || fixture.clusterContext || undefined;
 const outBasename = `${ctx.page_id}-${ctx.tag}`;
 
 // bilingual-v9: EN H2 spec builder (extracted from prior inline structure).
@@ -291,24 +311,28 @@ function buildEnH2Specs(ctx) {
         { variants: [': Quick Guide'], label: '<...>: Quick Guide' },
         { variants: ['## How Shade and Combination Shift Readings'], label: '## How Shade and Combination Shift Readings' },
         { variants: ['## Common Misreads + Framework Limits'], label: '## Common Misreads + Framework Limits' },
+        { variants: ['## Frequently Asked Questions'], label: '## Frequently Asked Questions' },
         { variants: ['## Reflection Prompts'], label: '## Reflection Prompts' },
         { variants: ['## Related Reading'], label: '## Related Reading' },
         { variants: ['## Take Action'], label: '## Take Action' },
+        { variants: ['## Sources'], label: '## Sources' },
       ]
     : [
         { variants: introVariants, label: introVariants[0] },
         { variants: ['## Why It Matters for Self-Awareness'], label: '## Why It Matters for Self-Awareness' },
         {
           variants: [
-            `## ${ctx.entity} vs Adjacent Concepts: Mechanism + Trade-offs`,
-            `## The ${ctx.entity} vs Adjacent Concepts: Mechanism + Trade-offs`,
+            `## ${ctx.entity} vs Adjacent Concepts: How It Works + Trade-offs`,
+            `## The ${ctx.entity} vs Adjacent Concepts: How It Works + Trade-offs`,
           ],
-          label: `## ${ctx.entity} vs Adjacent Concepts: Mechanism + Trade-offs`,
+          label: `## ${ctx.entity} vs Adjacent Concepts: How It Works + Trade-offs`,
         },
         { variants: ['## Quick Reference Table'], label: '## Quick Reference Table' },
+        { variants: ['## Frequently Asked Questions'], label: '## Frequently Asked Questions' },
         { variants: ['## Reflection Prompts'], label: '## Reflection Prompts' },
         { variants: ['## Related Reading'], label: '## Related Reading' },
         { variants: ['## Take Action'], label: '## Take Action' },
+        { variants: ['## Sources'], label: '## Sources' },
       ];
 }
 
@@ -340,18 +364,22 @@ function buildZhH2Specs(ctx) {
         { variants: ['：速览', ': 速览', '速览'], label: '## <count> 个 <entity>：速览' },
         { variants: ['## 色调浓淡与组合如何改变解读'], label: '## 色调浓淡与组合如何改变解读' },
         { variants: ['## 常见误读 + 框架边界', '## 常见误读+框架边界'], label: '## 常见误读 + 框架边界' },
+        { variants: ['## 常见问题', '## 常見問題'], label: '## 常见问题' },
         { variants: ['## 自我觉察小提示'], label: '## 自我觉察小提示' },
         { variants: ['## 延伸阅读'], label: '## 延伸阅读' },
         { variants: ['## 下一步行动'], label: '## 下一步行动' },
+        { variants: ['## 参考来源', '## 參考來源', '## 参考资料'], label: '## 参考来源' },
       ]
     : [
         { variants: introVariants, label: `## <entity 中文译名> 是什么？`, matchFn: introSuffixMatch },
         { variants: ['## 为什么了解它能帮助自我觉察'], label: '## 为什么了解它能帮助自我觉察' },
-        { variants: ['与相近概念'], label: '## <entity> 与相近概念：机制 + 取舍 (substring `与相近概念`)' },
+        { variants: ['与相近概念'], label: '## <entity> 与相近概念：运作方式 + 取舍 (substring `与相近概念`)' },
         { variants: ['速查表'], label: '## <entity> 速查表 (substring `速查表`)' },
+        { variants: ['## 常见问题', '## 常見問題'], label: '## 常见问题' },
         { variants: ['## 自我觉察小提示'], label: '## 自我觉察小提示' },
         { variants: ['## 延伸阅读'], label: '## 延伸阅读' },
         { variants: ['## 下一步行动'], label: '## 下一步行动' },
+        { variants: ['## 参考来源', '## 參考來源', '## 参考资料'], label: '## 参考来源' },
       ];
 }
 
@@ -410,7 +438,12 @@ function structureCheck(draft) {
   if (wikilinks.length !== tbdLinks.length) {
     findings.push(`${wikilinks.length - tbdLinks.length} wikilink(s) not in TBD format`);
   }
-  if (internalTbd.length < 2) findings.push(`Related Reading has only ${internalTbd.length} internal wikilink(s), recommend ≥3`);
+  // Tier-agnostic safety net for UNKNOWN tiers only — SC2 (tier-aware FAIL) owns
+  // the T1/T2/T3 ladder, so this no longer mis-fires on a legitimate T3=1 page.
+  const knownTier = ['T1', 'T2', 'T3'].includes(String(ctx.tier || '').toUpperCase());
+  if (!knownTier && internalTbd.length < 2) {
+    findings.push(`internal wikilink count ${internalTbd.length} < 2 (unknown tier; SC2 tier ladder not applicable)`);
+  }
 
   // Anti-fluff: no preamble between H1 and first H2.
   const lines = draft.split('\n');
@@ -458,12 +491,64 @@ function structureCheck(draft) {
     linkDist.violations.forEach((v) => findings.push(`  L${v.line}: ${v.hint}`));
   }
 
-  // SC2 — internal-link tier counting (WARN only; never blocks publish).
-  // Surfaced as a separate `warnings` list so it does not flip `ok`.
-  const warnings = [];
+  // SC5 — FAQ section present with >= 3 PAA Q&A (FAIL, both langs; v4.4 schema).
+  const faq = checkFaqSection(draft);
+  if (!faq.pass) {
+    findings.push(`SC5 FAQ section: ${faq.note}`);
+    faq.violations.forEach((v) => findings.push(`  L${v.line}: ${v.hint}`));
+  }
+
+  // SC8 — Take Action / CTA section: real link + matches cta_target_url + no
+  // banned anchor text (FAIL, both langs; v4.4 #6).
+  const ctaUrl = checkCtaUrl(draft, { cta_target_url: ctx.cta_target_url });
+  if (!ctaUrl.pass) {
+    findings.push(`SC8 CTA link: ${ctaUrl.note}`);
+    ctaUrl.violations.forEach((v) => findings.push(`  L${v.line}: ${v.hint}`));
+  }
+
+  // SC9 — controlled Sources section present with >= 1 entry (FAIL; v4.4 schema).
+  const sources = checkSourcesSection(draft);
+  if (!sources.pass) {
+    findings.push(`SC9 Sources section: ${sources.note}`);
+    sources.violations.forEach((v) => findings.push(`  L${v.line}: ${v.hint}`));
+  }
+
+  // SC10 — Decision-Value / Quick-Reference table shape ≥4 cols × ≥3 rows
+  // (FAIL; v4.4 #3 — guards the audit-named table 崩盘点 + SOP §5 / 清单 §3).
+  const table = checkTableIntegrity(draft);
+  if (!table.pass) {
+    findings.push(`SC10 table integrity: ${table.note}`);
+    table.violations.forEach((v) => findings.push(`  L${v.line}: ${v.hint}`));
+  }
+
+  // SC2 — internal-link tier ladder (FAIL; v4.4 #5 — SOP §3 / 清单 §2 T1=5/T2=3/T3=1-2).
   const linkTier = checkInternalLinkTier(draft, { tier: ctx.tier });
   if (!linkTier.pass) {
-    warnings.push(`SC2 internal-link tier: ${linkTier.note}`);
+    findings.push(`SC2 internal-link tier: ${linkTier.note}`);
+    linkTier.violations.forEach((v) => findings.push(`  L${v.line}: ${v.hint}`));
+  }
+
+  // SC7 — snippet bullets after the bolded definition (FAIL; v4.4 #8 — 审计 #4 致命).
+  const bullets = checkSnippetBullets(draft);
+  if (!bullets.pass) {
+    findings.push(`SC7 snippet bullets: ${bullets.note}`);
+    bullets.violations.forEach((v) => findings.push(`  L${v.line}: ${v.hint}`));
+  }
+
+  // ---- WARN-only checks (surfaced separately so they never flip `ok`) ----
+  const warnings = [];
+
+  // SC6 — H1 value proposition (WARN, both langs; 清单 §1 / 审计 4.2).
+  const h1Value = checkH1ValueProp(draft, { target_keyword: ctx.target_keyword });
+  if (!h1Value.pass) {
+    warnings.push(`SC6 H1 value-prop: ${h1Value.note}`);
+  }
+
+  // SC9b — Sources entries should appear in the body (WARN; v4.4 #9 — FP-safe).
+  const srcNames = checkSourcesNamesInBody(draft);
+  if (!srcNames.pass) {
+    warnings.push(`SC9b sources named in body: ${srcNames.note}`);
+    srcNames.violations.forEach((v) => warnings.push(`  L${v.line}: ${v.hint}`));
   }
 
   return {
@@ -589,6 +674,12 @@ const rlChecks = [
   // named attribution → WARN. Runs both languages: (a)(b) are language-agnostic;
   // (c)(d) only match Latin-script citation/name shapes so ZH bodies are unaffected.
   ['RL12 (citation/external-link)', () => checkRL12(draft, { authorityAllowlist: ctx.authorityAllowlist })],
+  // RL13 — SOP §7 banned jargon + AI metaphors. HARD terms FAIL; SOFT terms WARN.
+  // EN-only: the list is English AI-slop; ZH drafts carry no equivalent vector.
+  ...(isZh ? [] : [['RL13 (banned jargon)', () => checkRL13(draft)]]),
+  // Anti-homogenization — SOP §7 batch uniqueness (WARN). Conditional on a
+  // fixture-provided cluster_context; no opinion when absent. Both languages.
+  ['Anti-homogenization (SOP §7)', () => checkAntiHomogenization(draft, ctx.clusterContext)],
 ];
 
 const WAIVERS = new Set(); // No waivers — B'.3 SERP cache now live.

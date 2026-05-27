@@ -18,6 +18,7 @@ import { existsSync, mkdirSync, readFileSync, statSync, unlinkSync, writeFileSyn
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { logCost } from './lib/_cost-log.mjs';
+import { stripPreH1 } from './lib/strip-preamble.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO = resolve(__dirname, '..', '..');
@@ -283,7 +284,10 @@ function runAttempt(model, promptPath, outputPath) {
         // of stale bytes left over from a deleted prior attempt.
         if (cmd.stdoutToFile) {
           mkdirSync(dirname(cmd.stdoutToFile), { recursive: true });
-          writeFileSync(cmd.stdoutToFile, stdoutBuf);
+          // Drop any chatbot preamble before the first H1 (a nested `claude -p`
+          // can emit meta-commentary reacting to inherited skill-injection hooks).
+          // No-op when the draft already starts at the H1. See lib/strip-preamble.
+          writeFileSync(cmd.stdoutToFile, stripPreH1(stdoutBuf));
         }
       } catch (err) {
         return resolveAttempt({

@@ -1143,7 +1143,78 @@ export function redLinesCheck(draftMd, ctx) {
     // (d) off-allowlist name WARN. ctx.authorityAllowlist (string[]) gates (d);
     // absent → (d) skipped, (a)(b)(c) still enforced.
     checkRL12(draftMd, ctx),
+    // RL13 — SOP §7 banned jargon + AI metaphors. HARD terms FAIL; SOFT terms
+    // WARN (pass stays true). "mechanism" intentionally excluded (kept as a
+    // structural table/section term). EN-only matching; ZH bodies are unaffected.
+    checkRL13(draftMd),
   ];
   const all_pass = rules.every((r) => r.pass);
   return { all_pass, rules };
+}
+
+// ============================================================
+// RL13 — banned AI-slop jargon + AI metaphors (SOP v4.3 §7).
+//
+// SOP §7 lists BANNED JARGON + BANNED AI METAPHORS. Split by false-positive risk:
+//   HARD (FAIL): terms that never appear in legitimate astrology prose.
+//   SOFT (WARN): terms with occasional legitimate use (search ENGINE, jet LAG…).
+// "mechanism" and "architecture" are both banned (SOP §7 + blog 创作要求清单 v4.0
+// §5.3 list them as AI-slop jargon; the v4.3 audit named "Mechanism" in H2/table
+// headers as a defect). The tri-model eval (2026-05-27) reversed the earlier
+// "keep mechanism for the table column" decision: the EN templates were reworded
+// to "How It Works" so the structural role no longer needs the banned word.
+// EN-only: the list is English AI-slop; ZH drafts carry no equivalent vector
+// (Chinese 机制 is normal prose, so ZH headings use 运作方式 only for consistency).
+// ============================================================
+export const RL13_HARD_JARGON = Object.freeze([
+  'recursive', 'systemic', 'navigate the landscape', 'delve', 'unlock',
+  'high-bandwidth', 'antenna', 'rebooting', 'architecture', 'mechanism',
+]);
+export const RL13_SOFT_JARGON = Object.freeze(['engine', 'module', 'robust', 'lag']);
+
+const rl13Escape = (w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const RL13_HARD_REGEX_G = new RegExp(`\\b(?:${RL13_HARD_JARGON.map(rl13Escape).join('|')})\\b`, 'gi');
+const RL13_SOFT_REGEX_G = new RegExp(`\\b(?:${RL13_SOFT_JARGON.map(rl13Escape).join('|')})\\b`, 'gi');
+
+export function checkRL13(draft) {
+  const id = 'rl13_banned_jargon';
+  const body = proseBodyForSci(typeof draft === 'string' ? draft : '');
+  const lines = body.split('\n');
+  const hard = [];
+  const soft = [];
+  for (let i = 0; i < lines.length; i++) {
+    if (/^#{1,6}\s/.test(lines[i].trim())) continue; // skip headings
+    for (const m of lines[i].matchAll(RL13_HARD_REGEX_G)) {
+      hard.push({ phrase: m[0], line: i + 1, context: lines[i].trim().slice(0, 160), hint: 'SOP §7 banned jargon/metaphor — rewrite in plain language' });
+    }
+    for (const m of lines[i].matchAll(RL13_SOFT_REGEX_G)) {
+      soft.push({ phrase: m[0], line: i + 1, context: lines[i].trim().slice(0, 160), hint: 'SOP §7 listed term — confirm a real domain use, not AI-slop' });
+    }
+  }
+  const violations = [...hard, ...soft];
+  if (hard.length > 0) {
+    return {
+      id,
+      pass: false,
+      warn: soft.length > 0,
+      violations,
+      note: `SOP §7 banned jargon (FAIL): ${hard.map((v) => `"${v.phrase}" (L${v.line})`).join(', ')}`,
+    };
+  }
+  if (soft.length > 0) {
+    return {
+      id,
+      pass: true,
+      warn: true,
+      violations,
+      note: `SOP §7 soft jargon (WARN): ${soft.map((v) => `"${v.phrase}" (L${v.line})`).join(', ')}`,
+    };
+  }
+  return {
+    id,
+    pass: true,
+    warn: false,
+    violations: [],
+    note: `scanned ${RL13_HARD_JARGON.length + RL13_SOFT_JARGON.length} SOP §7 banned terms, none flagged`,
+  };
 }

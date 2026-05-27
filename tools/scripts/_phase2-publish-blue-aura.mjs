@@ -64,7 +64,7 @@ function structureCheck(draft) {
   const requiredH2s = [
     `## What is ${ctx.entity}?`,
     '## Why It Matters for Self-Awareness',
-    `## ${ctx.entity} vs Adjacent Concepts: Mechanism + Trade-offs`,
+    `## ${ctx.entity} vs Adjacent Concepts: How It Works + Trade-offs`,
     '## Quick Reference Table',
     '## Reflection Prompts',
     '## Related Reading',

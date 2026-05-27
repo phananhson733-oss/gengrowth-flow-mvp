@@ -50,9 +50,9 @@
 
 > Instruction only; **do not** output this as an article section.
 
-- **输出从 `# <H1 Title>` 开始**，**到 Take Action 段的 CTA URL 结束** — 一次性整篇输出，禁止多轮
+- **输出从 `# <H1 Title>` 开始**，**到 Sources 段最后一条来源结束** — 一次性整篇输出，禁止多轮
 - **绝不**在 H1 之前写任何评论 / 问候 / "Here is..." 类 meta
-- **绝不**在 CTA URL 之后写任何 follow-up question / editorial note / offer
+- **CTA URL 之后只允许 Sources 段**（`## Sources` + 来源列表）；**Sources 段之后**绝不写任何 follow-up question / editorial note / offer
 - **绝不**在段间插评论性 italic 段（如 `*If you want to add this...*`）
 - **绝不**输出 "## Draft 1:" / "## Expansion:" 等多版本章节 — 本任务只产 **1 篇文章**
 
@@ -91,16 +91,29 @@
 ## Heading level 字面规则（任一违反 = 整篇作废）
 
 - **恰好 1 个 `# H1`**（文章标题，第 1 行）
-- **恰好 9 个 `## H2`**（下面 9 章节，按顺序）
+- **恰好 11 个 `## H2`**（下面 11 章节，按顺序）
 - **0 个 `### H3`、0 个 `#### H4`** — 禁止任何子标题层级
-- ✅ 正确：H1 在最顶，9 个 H2 依次出现，章节内只有段落 / 列表 / 表格
+- ✅ 正确：H1 在最顶，11 个 H2 依次出现，章节内只有段落 / 列表 / 表格
+- **H1 价值主张硬要求**：H1 必须在**前 3-5 词内含关键词**（保留原规则），**且必须携带价值主张 / 角度，不能是纯裸关键词**。沿用现有"无冒号死板模板"规则的同时，**允许用破折号或副标题承载价值主张**。
+  - ❌ `Aura Colors Meaning`（纯关键词，没有角度）
+  - ✅ `Aura Colors Meaning: Reading the Whole Spectrum Without Forcing a Label`（关键词在前 3 词 + 副标题承载价值主张）
 
-## 输出结构（严格 9 sections；H2 必须英文，按顺序）
+## 输出结构（严格 11 sections；H2 必须英文，按顺序）
 
 1. **What are {{entity}}?**（H2，字面 H2 = `## What are {{entity}}?`）— 第一句**用日常英文**直接定义集合概念（120-180 词）。说清这是个 family / system / framework，不是单一事物。提到 child_entities 的数量和大致命名规则（不深挖每个）。
    - **Bolded direct answer 硬要求（AI Overview / featured snippet 抓取目标）**：本段 120-180 词内必须出现**正好 1 个** markdown bolded 短语（`**...**`），该短语是 target_keyword 的**直接答案 / family 级核心定义**（≤ 14 词，不含装饰词）
    - ✅ 范例：`Aura colors are **the color labels practitioners use to describe a person's prevailing energetic state**.`
    - ❌ 错误：整段无 bold / bold 的是装饰词 / bold 的是 H2 字面重复 / 2 个以上 bolded 短语稀释焦点
+   - **snippet 后接 3-bullet 硬要求（AI Overview 提取优化）**：加粗定义句之后必须**紧跟正好 3 个 bullet point**（`- ` 起手），概括这个 family / system 的 **3 个核心特征**。snippet（加粗定义）后接 3-bullet 利于 AI Overview 抽取。
+     - ✅ 范例：
+       ```
+       Aura colors are **the color labels practitioners use to describe a person's prevailing energetic state**.
+
+       - A family of related readings, not a single fixed label
+       - Each color maps loosely to an energy center or domain, with overlap between them
+       - Read as a spectrum and combinable, rather than discrete diagnostic categories
+       ```
+     - ❌ 错误：只有 2 个或 4+ 个 bullet / 写成散文而非 bullet / bullet 是空泛口号而非具体特征
 2. **Why It Matters for Self-Awareness**（H2，字面 H2 = `## Why It Matters for Self-Awareness`）— 2-3 段（350-500 词）。落到 Friction 字段提到的**集合层面**的真实痛点（不堆砌情绪形容词）：用户为什么需要先理解整个 family 再看单一 entity？
 3. **The {{entity}} at a Glance**（H2，字面 H2 = `## The {{entity}} at a Glance`）— Markdown 表格 ≥ 4 列 × ≥ {{child_count}} 行（每个 child entity 一行）。
    - **`## The {{entity}} at a Glance` 标题之后第一个非空段必须直接是 markdown 表格本身**（以 `|` 开头），不能加 prose intro / SEO 解释段，否则 Phase 2 RL4 drift 检测 fail
@@ -119,16 +132,41 @@
    - 跨 lineage 不一致时硬选一个为正解
    - 把 framework 升格为身份标签
    - 期待 framework 替代 clinical / relational ground truth
-7. **Reflection Prompts**（H2）— 必须 3 条 prompts，每条**≤ 25 词 / 1 句话**，跨 children 共同主题：
+7. **Frequently Asked Questions**（H2，字面 H2 = `## Frequently Asked Questions`）— 内含 **3-4 个真实 PAA 风格问题**，聚焦读者对**整个 family / system** 的真实操作摩擦点 / 长尾搜索意图（不是泛问）。
+   - **格式约束（关键，违反 = 结构 fail）**：每个问题写成**加粗整行且以问号结尾**（如 `**How many aura colors are there?**`），紧跟 2 句精确事实回答。**绝不用 `### H3` / `#### H4`**（H3 在本系统被结构校验禁止，会直接 FAIL）。
+   - ✅ 范例：
+     ```
+     **How many aura colors are there?**
+
+     Most aura systems work with a core set of around seven to twelve colors plus shades and combinations. The exact count varies by lineage, so treat any single number as a convention rather than a fixed rule.
+
+     **Should I read my aura color as a single color or a blend?**
+
+     Many readings show a dominant color alongside secondary tones. Treating it as a blend usually captures a person's state more accurately than forcing one label.
+     ```
+   - ❌ 错误：用 H3/#### 写问题 / 问题不以问号结尾 / 问题没加粗 / 回答超过 2 句拖成长段 / 问题是泛问而非真实搜索意图
+8. **Reflection Prompts**（H2）— 必须 3 条 prompts，每条**≤ 25 词 / 1 句话**，跨 children 共同主题：
    - (a) 指向**具体情境回忆**（"Think of a recent moment when..."），不要泛问
    - (b) **关联 cluster 共同 Logic 主题**
    - (c) **必须 numbered list 格式 `1. ... / 2. ... / 3. ...`** — paragraph 格式 = 0 prompts = fail
    - (d) **`## Reflection Prompts` 标题之后第一个非空段必须直接是 `1.` 起手的编号项**，不能加 prose intro
-8. **Related Reading**（H2）— 按 internal_link_rule 输出 wikilinks，**用 placeholder 格式** `[[<TBD-internal-link: short description>]]`。Pillar 的 related reading 必须**至少包含**：
+9. **Related Reading**（H2）— 按 internal_link_rule 输出 wikilinks，**用 placeholder 格式** `[[<TBD-internal-link: short description>]]`。Pillar 的 related reading 必须**至少包含**：
    - 1 条指向每个主要 child entity 的 Definition 页（"comparison" / "explainer" / "deep dive" 等 noun phrase）
    - 1 条指向上一级更宽 cluster（如果存在）
    - 1 条指向相关 adjacent framework（不同体系的对照）
-9. **Take Action**（H2，必须）— 文案 <field name="cta_text">{{cta_text}}</field>，链接 <field name="cta_target_url">{{cta_target_url}}</field>。**CTA 必须独立 H2**。
+10. **Take Action**（H2，必须）— 文案 <field name="cta_text">{{cta_text}}</field>，链接 <field name="cta_target_url">{{cta_target_url}}</field>。**CTA 必须独立 H2**。
+    - **CTA 三段公式硬要求**：CTA 必须符合 `Action → Output → Life Insight`（行动 → 产出 → 人生洞察）三段结构 —— 先给一个具体行动，说明读者会得到什么产出，再落到一句人生 / 自我觉察层面的洞察。
+    - **真实 URL 硬要求**：必须使用**真实 CTA URL**（来自 <field name="cta_target_url">{{cta_target_url}}</field> 变量），**禁止**占位符式 URL（如 `https://example.com` / `[link]`）。
+    - **锚文本硬要求**：**禁止** "click here" / "read more" / "here" 这类无信息锚文本；锚文本必须描述目标内容。
+11. **Sources**（H2，字面 H2 = `## Sources`）— **受控引用**：只列出**正文中已经具名提及、且属于上方权威白名单内**的人物 / 典籍（如 Liz Greene、Dane Rudhyar、Howard Sasportas、Anodea Judith、Barbara Ann Brennan、Robert Hand 等）。
+    - 格式：每行一个 `- 权威名 — 一句话说明其领域贡献`。
+    - **严禁杜撰书名 / 年份 / URL / DOI**；若确需外链，只能用 `[[<TBD-external-link: ...>]]` 占位符。
+    - **不要引入正文未出现的新名字** —— 正文没具名提到的人，不能凭空出现在 Sources 里。
+    - ✅ 范例：
+      ```
+      - Dane Rudhyar — pioneered the psychological, person-centered reading of astrological cycles
+      - Anodea Judith — systematized the modern chakra framework this color family maps onto
+      ```
 
 ## target_keyword 跨 section 分布硬要求（任一违反 = 整篇作废）
 
@@ -138,17 +176,18 @@ target_keyword = **「{{target_keyword}}」**。**SEO + RL4 binary check** 要�
 
 **硬规则**：
 
-- 完整短语 **「{{target_keyword}}」必须在以下 9 sections 中至少 5 个 section 里自然出现 1 次**（不算 H1 / H2 标题）：
+- 完整短语 **「{{target_keyword}}」必须在以下 11 sections 中至少 5 个 section 里自然出现 1 次**（不算 H1 / H2 标题）：
   - Section 1 (What are {{entity}}?)
   - Section 2 (Why It Matters)
   - Section 4 (Quick Guide)
   - Section 5 (Shade and Combination)
   - Section 6 (Common Misreads)
-  - **注**：Section 3 / 7 / 8 / 9 不强制（结构性 section）
+  - Section 7 (Frequently Asked Questions) — 允许出现在某条问题或回答的自然语句里
+  - **注**：Section 3 / 8 / 9 / 10 / 11 不强制（结构性 section）
 
 - 不能**全用代词**「these colors」「the system」「the family」代替 target_keyword — RL4 jaccard / shingle 漂移检测会 fail
 
-- 也不能塞超 {{KW_COUNT_RANGE}} 上限 — 走中庸：**5-6 sections × 1-2 次 + 1 次在 H1 + 1 次在第 1 段定义句** ≈ 10 次（落在 8-12 的舒适区）
+- 也不能塞超 {{KW_COUNT_RANGE}} 上限 — 走中庸：**5-6 sections × 1-2 次 + 1 次在 H1 + 1 次在第 1 段定义句** ≈ 10 次（落在 {{KW_COUNT_RANGE}} 的舒适区）
 
 **self-check（提交前默念）**：grep 全文「{{target_keyword}}」完整短语出现次数，分布在多少 H2 sections？< 5 sections 就重写。
 

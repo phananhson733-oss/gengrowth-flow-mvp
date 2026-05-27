@@ -160,7 +160,11 @@ export function composeCfg(row, override, cliLanguage) {
     psych_safety_flag: o.psych_safety_flag,
     word_range: o.word_range,
     kw_count_range: o.kw_count_range,
-    expected_h2: o.expected_h2,
+    // v4.4 schema: section count is fixed per template (Definition 9 / Pillar 11
+    // / Tutorial 8 — FAQ + Sources added). Derive from template so a stale
+    // per-row override can't pin the old 7/9 count into the fixture sidecar
+    // (which _phase2-validate reads ahead of tplDef).
+    expected_h2: o.expected_h2 || (tpl.value === 'Pillar' ? 11 : tpl.value === 'Tutorial' ? 8 : 9),
     child_entities: o.child_entities,
     child_count: o.child_count,
     ...(language ? { language } : {}),

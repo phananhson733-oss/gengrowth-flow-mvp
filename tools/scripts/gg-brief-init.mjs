@@ -80,7 +80,7 @@ export function renderScaffold({ pageId, entity, tier, template, childEntities, 
   const associatedKeywords = deriveAssociatedKeywords(entity);
   const isPillar = template === 'Pillar';
   const wordRange = isPillar ? '2500-3500' : '1500-1800';
-  const sectionCount = isPillar ? '9 sections' : '7 sections';
+  const sectionCount = isPillar ? '11 sections' : '9 sections';
 
   // author routing (Lane B / T3). On the manual scaffold path the cluster table
   // isn't joined, so cluster_domain comes from --cluster-domain (or stays blank

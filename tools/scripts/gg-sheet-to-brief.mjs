@@ -199,7 +199,7 @@ export function lookupCta(ctaMap, pageRole, track) {
 export function buildTierGateBlock({ tier, template, entity, friction_brief, logic_brief, target_keyword }) {
   const isPillar = template === 'Pillar';
   const wordRange = isPillar ? '2500-3500' : '1500-1800';
-  const sectionCount = isPillar ? '9 sections' : '7 sections';
+  const sectionCount = isPillar ? '11 sections' : '9 sections';
   const tierLabel = tier === 'T1' ? 'Hub / 重装' : (tier === 'T3' ? '极长尾占位' : '标准版');
   const frictionLine = friction_brief && friction_brief.trim()
     ? `- 必读 Friction（col J）: ${friction_brief.trim()}`

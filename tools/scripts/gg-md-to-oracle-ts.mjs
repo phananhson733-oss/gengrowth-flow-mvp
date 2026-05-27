@@ -331,7 +331,13 @@ function convertOne({ source, slug, out, language = 'en', mergeSibling = false, 
   const { frontmatter: fm, body } = parseFrontmatter(md);
   const resolvedSlug = slug || fm.slug;
   if (!resolvedSlug) throw new Error(`no slug for ${source}`);
-  const title = fm.title;
+  // Title source priority: the article's own `# H1` (the magnetic, keyword-woven
+  // headline the model wrote) over the frontmatter `title:` (often the bare
+  // keyword). The page renders `title` as the <h1> / <title> / og:title and skips
+  // the in-body H1 as a duplicate, so the magnetic H1 must land in `title` to be
+  // SEO-visible (清单 §1: magnetic title, no bare keyword / colon template).
+  const h1Match = body.match(/^#\s+(.+?)\s*$/m);
+  const title = (h1Match && h1Match[1].trim()) || fm.title;
   if (!title) throw new Error(`no title for ${source}`);
   const date = fm.date || new Date().toISOString().slice(0, 10);
   const tgtKw = fm.target_keyword || '';

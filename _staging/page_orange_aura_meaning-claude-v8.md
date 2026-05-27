@@ -1,25 +1,3 @@
----
-title: Orange Aura Meaning
-slug: orange-aura-meaning
-date: 2026-05-27
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T2
-track: 量产线
-page_id: page_orange_aura_meaning
-target_keyword: orange aura meaning
-associated_keywords:
-  - orange aura
-  - orange aura personality
-  - what does orange aura mean
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-05-27T14:11:19.004Z
-content_sha256_short: 9adc5ccee97ca77a
-phase2_checks: all-pass
----
-
 # 橙色气场代表什么——不被「性能量」标签绑架的诚实解读
 
 ## Orange Aura 是什么？

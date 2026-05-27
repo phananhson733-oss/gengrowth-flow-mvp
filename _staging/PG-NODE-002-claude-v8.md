@@ -19,8 +19,8 @@ associated_keywords:
   - what is north node in scorpio
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-27T07:04:13.843Z
-content_sha256_short: 9a06a5ce9545e60a
+generated_at: 2026-05-27T07:07:24.464Z
+content_sha256_short: fc95e985dfb7c493
 phase2_checks: all-pass
 ---
 
@@ -118,7 +118,7 @@ This is why the placement is better read as a practice than a prophecy. Nothing 
 ## Reflection Prompts
 
 1. Think of a recent moment when you held on to something stable mostly because letting go felt like loss.
-2. Recall a time you created tension or drama when the situation was actually calm and going well.
+2. Recall a time you kept things on the surface or avoided a deeper conversation because going there felt uncomfortable.
 3. Notice where north node in scorpio shows up: which relationship or resource would deepen if you shared more control?
 
 ## Related Reading

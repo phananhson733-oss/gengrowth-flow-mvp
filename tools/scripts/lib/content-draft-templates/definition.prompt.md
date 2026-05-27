@@ -198,23 +198,28 @@ capsule 用于决定**怎么解释**（措辞、对比角度、例子选择、�
 
 > Instruction only; **do not** output this as an article section.
 
-GEO / AI Overview 抓取偏好**短原子段**：长段（wall of text）既难被引用，也伤可读性 + EEAT。**实测旧稿单段 88-199 词 = 整页都是大段，直接踩雷。**
+一个 prose **段落 = 一个完整的意思单元，4-5 个句子**（句子以句号 `.` 为界）。把相关的「事实 + 怎么作用 + 例子」**写进同一段连续叙述**，让读者一段读完一个完整想法。两个极端都要避免：① wall of text（一段 7+ 句、180+ 词，难被 AI Overview 引用、伤 EEAT）；② **过度碎片化**（每写 1-2 句就空行断段，满页留白、读起来支离破碎）。
 
-- **任何 prose 段落 ≤ 4 行（≤ ~70 词）**。超过就拆成多个原子段，段间用空行分隔。表格行 / 列表项 / 标题 / 引用块不算 prose 段。
-- **本规则只管 prose 段落，绝不覆盖上面的结构硬规则**：「Quick Reference Table」标题后第一个非空行**仍必须直接是表格**、「Reflection Prompts」标题后第一个非空行**仍必须直接是 `1.` 编号项** —— 不要为了"原子化"在表格或编号列表前加任何 prose 引言段。
-- 每个 H2 section 内，把论述拆成「**事实金句 → 逻辑 / 怎么作用 → 实例 / 结果**」三段式原子块，**每块独立成段**（不要把定义、怎么作用、例子全塞进同一段）。注意：英文正文里 **禁用 "mechanism" 一词**（RL13 硬门禁），用 "how it works" 表达。
-- ❌ 错误：一段 150 词从定义一路讲到怎么作用再到例子（wall of text）
-- ✅ 正确：
+- **每个 prose 段落 4-5 句**（最多 ~6 句、≤ ~160 词）。只有 1-2 句的零碎段要并回相邻段，凑成一个 4-5 句的完整段；不要一句一段、连续空行。表格行 / 列表项 / 标题 / 引用块不算 prose 段。
+- **本规则只管 prose 段落，绝不覆盖上面的结构硬规则**：「Quick Reference Table」标题后第一个非空行**仍必须直接是表格**、「Reflection Prompts」标题后第一个非空行**仍必须直接是 `1.` 编号项** —— 不要为了排版在表格或编号列表前加任何 prose 引言段。
+- 每个 H2 section 内，把「**事实 → 怎么作用 → 例子**」**融进同一段的连续句子**里，而不是拆成三个独立单句段。注意：英文正文里 **禁用 "mechanism" 一词**（RL13 硬门禁），用 "how it works" 表达。
+- ❌ 错误 A（wall）：一段 180 词、8+ 句从定义一路讲到例子。
+- ❌ 错误 B（碎片，正是要避免的）：
   ```
-  Blue aura reads as a calm, communication-led energy.   ← 事实金句（1-2 句）
+  Blue aura reads as a calm, communication-led energy.
 
-  How it works: throat-center emphasis ...               ← 怎么作用（2-3 句，禁用 "mechanism"）
+  How it works is throat-center emphasis.
 
-  In practice, someone with this read often ...          ← 实例（2-3 句）
+  In practice, someone with this read often pauses before speaking.
   ```
-- **Phase 2 SC3 binary check 会逐段扫描词数**：任一 prose 段 > 85 词 = 整篇 fail。
+  （每段 1 句、连续空行 = 满页留白）
+- ✅ 正确（4-5 句一段，连续叙述）：
+  ```
+  Blue aura reads as a calm, communication-led energy. How it works is throat-center emphasis: attention pools around expression and listening. In practice, someone with this read often pauses before speaking and weighs words with care. The same steadiness can tip into over-explaining when they feel unheard. Read it as a current state, not a fixed verdict.
+  ```
+- **Phase 2 SC3 binary check 会逐段数句子**：任一 prose 段 > 7 句（或 > ~180 词）= 整篇 fail；另有碎片化 WARN（多数段落只有 1-2 句时触发）。
 
-**self-check（提交前默念）**：逐段数词数，任一 prose 段 > ~70 词就拆开再交。Section 1（What is X，120-160 词）必然要拆成 2-3 个原子段。
+**self-check（提交前默念）**：逐段数句号——每个 prose 段是不是 4-5 句的完整意思单元？有没有只剩 1-2 句的零碎段没并回去？Section 1（What is X，120-160 词）≈ 1-2 个 4-5 句的完整段。
 
 ## 内链分布硬要求（对齐创作清单 v4.0 §2 Link Master 链接母版；任一违反 = 整篇作废）
 

@@ -61,6 +61,7 @@ import {
   checkSourcesSection,
   checkSourcesNamesInBody,
   checkTableIntegrity,
+  checkParagraphFragmentation,
 } from './lib/structure-checks.mjs';
 import { logFailure } from './lib/_failure-log.mjs';
 import { checkAntiHomogenization } from './lib/anti-homogenization.mjs';
@@ -557,6 +558,13 @@ function structureCheck(draft) {
   if (!srcNames.pass) {
     warnings.push(`SC9b sources named in body: ${srcNames.note}`);
     srcNames.violations.forEach((v) => warnings.push(`  L${v.line}: ${v.hint}`));
+  }
+
+  // SC3b — over-fragmentation (WARN; paragraphs should be 4-5 句 idea units).
+  const fragmentation = checkParagraphFragmentation(draft);
+  if (!fragmentation.pass) {
+    warnings.push(`SC3b paragraph fragmentation: ${fragmentation.note}`);
+    fragmentation.violations.forEach((v) => warnings.push(`  ${v.hint}`));
   }
 
   return {

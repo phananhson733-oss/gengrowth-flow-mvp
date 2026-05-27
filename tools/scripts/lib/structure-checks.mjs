@@ -179,26 +179,35 @@ export function checkInternalLinkTier(draft, ctx = {}) {
 }
 
 // ============================================================
-// SC3 — Atomic paragraph length (FAIL, both langs).
+// SC3 — Prose paragraph rhythm (FAIL, both langs).
 //
-// blog创作要求清单 v4.0 §3 (Atomic GEO Layout) requires "任何段落不得超过 4 行":
-// prose must break into atomic 事实金句→逻辑/机制→实例 chunks so AI Overview /
-// featured-snippet extraction can quote a clean unit and human readers aren't
-// hit by a wall of text. Both definition templates now carry the rule
-// (§段落原子化), so an over-long prose paragraph is a FAIL.
+// Spec (2026-05-27, user clarification): a "paragraph" is the text block under
+// an H1/H2/H3 between blank lines, and each should be a complete idea unit of
+// 4-5 SENTENCES (sentence boundary = terminal punctuation . ! ? 。！？). The
+// earlier "≤ 4 行 / atomic chunk" wording was a misread that pushed the model to
+// break every 1-2 sentences, producing a page of fragments and whitespace.
 //
-// "4 lines" is layout-dependent, so we proxy by length. Language-aware:
-//   - CJK-bearing paragraph → CJK character count (≈ 4 lines × ~45 字 ≈ 180;
-//     fail above CJK_MAX with headroom).
-//   - otherwise → whitespace word count (4 lines × ~18 words ≈ 72; fail above
-//     EN_MAX with headroom).
+// So SC3 now measures SENTENCES per prose paragraph (the user's unit):
+//   - FAIL if a paragraph runs past SC3_MAX_SENTENCES (wall of text), or past a
+//     raised word/char backstop (a few run-on sentences that are still huge).
+// Under-length (over-fragmentation) is handled separately by
+// checkParagraphFragmentation (WARN) so a single short transition never FAILs.
 // We measure only PROSE paragraphs — headings, table rows, list items,
-// blockquotes and fenced code never count (they are not walls of prose and
-// have their own structural rules).
+// blockquotes and fenced code never count (they have their own rules).
 // ============================================================
 
-const SC3_EN_WORD_MAX = 85;   // EN prose paragraph hard ceiling (target ≤ ~70)
-const SC3_CJK_CHAR_MAX = 200; // CJK prose paragraph hard ceiling (target ≤ ~150)
+// Thresholds carry a ~20% tolerance above the 4-5 sentence target (user, 2026-05-27)
+// so natural variation never FAILs — only genuine walls do.
+const SC3_MAX_SENTENCES = 7;  // prose paragraph target 4-5 sentences; FAIL above 7 (wall)
+const SC3_EN_WORD_MAX = 180;  // backstop: a few run-on EN sentences still over this = wall
+const SC3_CJK_CHAR_MAX = 430; // backstop: run-on CJK sentences still over this = wall
+
+// Sentence boundary = terminal punctuation (EN . ! ?  /  ZH 。！？). Minor
+// over-count on abbreviations/decimals ("e.g.", "3.5") is absorbed by the >6
+// threshold. Used by SC3 and checkParagraphFragmentation so both agree.
+function countSentences(text) {
+  return (text.match(/[.!?。！？]/g) || []).length;
+}
 
 // Group consecutive prose lines into paragraphs. Returns [{ startLine, text }].
 // Skips structural lines so only real prose is measured.
@@ -237,8 +246,10 @@ function proseParagraphs(lines) {
 // paragraph (whose whitespace-token count is ~1) is caught by the char metric.
 // A paragraph fails if EITHER metric exceeds its ceiling.
 function measureParagraph(text) {
+  const sentences = countSentences(text);
   const cjkSize = (text.match(/[㐀-鿿　-〿＀-￯]/g) || []).length;
   const wordSize = text.split(/\s+/).filter(Boolean).length;
+  if (sentences > SC3_MAX_SENTENCES) return { over: true, metric: '句', size: sentences, max: SC3_MAX_SENTENCES };
   if (cjkSize > SC3_CJK_CHAR_MAX) return { over: true, metric: '字', size: cjkSize, max: SC3_CJK_CHAR_MAX };
   if (wordSize > SC3_EN_WORD_MAX) return { over: true, metric: 'words', size: wordSize, max: SC3_EN_WORD_MAX };
   return { over: false };
@@ -259,20 +270,93 @@ export function checkParagraphLength(draft) {
       violations.push({
         line: p.startLine,
         text: `${m.size} ${m.metric} — "${p.text.slice(0, 48)}…"`,
-        hint: `prose paragraph too long (${m.size} ${m.metric} > ${m.max}); split into atomic 事实金句→机制→实例 chunks (≤ 4 行, 清单 §3)`,
+        hint: `prose paragraph too long (${m.size} ${m.metric} > ${m.max}); 每段 4-5 个完整句子的意思单元，超过就另起一段 (清单 §3)`,
       });
     }
   }
   if (violations.length === 0) {
-    return { id, severity, pass: true, violations: [], note: `${paras.length} prose paragraph(s), all within atomic length` };
+    return { id, severity, pass: true, violations: [], note: `${paras.length} prose paragraph(s), all within 4-5 句 length` };
   }
   return {
     id,
     severity,
     pass: false,
     violations,
-    note: `${violations.length} prose paragraph(s) exceed atomic length (≤ 4 行)`,
+    note: `${violations.length} prose paragraph(s) over 4-5 句 / 长度上限`,
   };
+}
+
+// SC3b — Over-fragmentation (WARN, both langs). The opposite failure mode from
+// SC3's wall-of-text: a page where almost every prose paragraph is 1-2 sentences
+// reads as broken-up whitespace, not 4-5-sentence idea units. We flag it when the
+// MEDIAN sentences-per-paragraph is <= 2 across a body with enough paragraphs to
+// judge (median is robust to a few legitimately short transitions). WARN only —
+// "good rhythm" is fuzzy, so it informs without blocking; the template is the
+// primary lever.
+const SC3B_MIN_PARAS = 10;       // need enough paragraphs to judge rhythm (~20% looser)
+const SC3B_MEDIAN_FLOOR = 2;     // median sentences/para <= this = over-fragmented
+
+// Sections whose prose is legitimately short (FAQ answers, CTA, source list,
+// reflection prompts, related links) must NOT drag the rhythm median down. Match
+// by H2 heading substring, EN + ZH. A ZH article writes denser, fewer body
+// paragraphs, so without this its short FAQ answers alone flip the median to 2.
+const SC3B_EXCLUDED_HEADING = /Frequently Asked|Sources|Take Action|Related Reading|Reflection Prompts|常见问题|参考来源|下一步|行动|延伸阅读|自我觉察|速查表/i;
+
+// Prose paragraphs in NARRATIVE sections only (excludes the short-by-design
+// sections above). Mirrors proseParagraphs' structural skipping + heading track.
+function narrativeProseParagraphs(lines) {
+  const paras = [];
+  let inFence = false;
+  let excluded = false; // inside a short-by-design section
+  let cur = null;
+  const flush = () => {
+    if (cur && cur.parts.join(' ').trim()) paras.push({ startLine: cur.startLine, text: cur.parts.join(' ') });
+    cur = null;
+  };
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (/^```/.test(line) || /^~~~/.test(line)) { inFence = !inFence; flush(); continue; }
+    if (inFence) { flush(); continue; }
+    if (/^#{1,6}\s/.test(line)) { flush(); excluded = SC3B_EXCLUDED_HEADING.test(line); continue; }
+    const isStructural =
+      line === '' || /^\|/.test(line) || /^>/.test(line) || /^(\d+[.)]|[-*+])\s/.test(line);
+    if (isStructural) { flush(); continue; }
+    if (excluded) { flush(); continue; }
+    if (!cur) cur = { startLine: i + 1, parts: [] };
+    cur.parts.push(line);
+  }
+  flush();
+  return paras;
+}
+
+export function checkParagraphFragmentation(draft) {
+  const id = 'sc3b_paragraph_fragmentation';
+  const severity = 'warn';
+  if (typeof draft !== 'string' || !draft) {
+    return { id, severity, pass: true, violations: [], note: 'empty draft — skipped' };
+  }
+  const paras = narrativeProseParagraphs(draft.split('\n'));
+  if (paras.length < SC3B_MIN_PARAS) {
+    return { id, severity, pass: true, violations: [], note: `only ${paras.length} prose paragraph(s) — too few to judge rhythm` };
+  }
+  const counts = paras.map((p) => countSentences(p.text)).sort((a, b) => a - b);
+  const mid = Math.floor(counts.length / 2);
+  const median = counts.length % 2 ? counts[mid] : (counts[mid - 1] + counts[mid]) / 2;
+  if (median <= SC3B_MEDIAN_FLOOR) {
+    const shortCount = counts.filter((c) => c <= 2).length;
+    return {
+      id,
+      severity,
+      pass: false,
+      violations: [{
+        line: 0,
+        text: `median ${median} sentences/paragraph across ${paras.length} paragraphs (${shortCount} are ≤2 句)`,
+        hint: '段落过度碎片化：多数段落只有 1-2 句。每段应是 4-5 句的完整意思单元，把相邻零碎段并起来。',
+      }],
+      note: `over-fragmented: median ${median} 句/段 (${shortCount}/${paras.length} paragraphs ≤2 句)`,
+    };
+  }
+  return { id, severity, pass: true, violations: [], note: `median ${median} 句/段 across ${paras.length} paragraphs — OK` };
 }
 
 // ============================================================

@@ -15,6 +15,7 @@ import {
   checkInternalLinkTier,
   checkParagraphLength,
   checkLinkDistribution,
+  checkParagraphFragmentation,
 } from '../lib/structure-checks.mjs';
 
 // ============================================================
@@ -163,14 +164,23 @@ test('SC2: only counts TBD-format links, ignores invented anchors', () => {
 });
 
 // ============================================================
-// SC3 — atomic paragraph length (FAIL)
+// SC3 — prose paragraph rhythm (FAIL): 4-5 sentences/paragraph, ~20% tolerance
+// (sentence boundary = . ! ? 。！？; FAIL above 7 句 or the word/char backstop)
 // ============================================================
 
 const enWords = (n) => Array.from({ length: n }, (_, i) => `word${i}`).join(' ');
+const enSentences = (n) => Array.from({ length: n }, (_, i) => `This is sentence number ${i}.`).join(' ');
+const zhSentences = (n) => Array.from({ length: n }, (_, i) => `这是第${i}个句子。`).join('');
 
 test('SC3: severity is fail', () => {
   const r = checkParagraphLength('# X\n\n## What is X?\n\nShort prose.');
   assert.equal(r.severity, 'fail');
+});
+
+test('SC3: a 4-5 sentence paragraph → PASS (the target rhythm)', () => {
+  const draft = `# X\n\n## What is X?\n\n${enSentences(5)}`;
+  const r = checkParagraphLength(draft);
+  assert.equal(r.pass, true, r.note);
 });
 
 test('SC3: short EN paragraphs → PASS', () => {
@@ -178,28 +188,41 @@ test('SC3: short EN paragraphs → PASS', () => {
 
 ## What is X?
 
-X is a calm energy. This is a short atomic chunk.
+X is a calm energy. This is a short chunk.
 
-The mechanism works like this. Two short sentences only.`;
+How it works is simple. Two short sentences only.`;
   const r = checkParagraphLength(draft);
   assert.equal(r.pass, true, r.note);
 });
 
-test('SC3: a wall-of-text EN paragraph (>85 words) → FAIL with line', () => {
-  const draft = `# X\n\n## What is X?\n\n${enWords(120)}`;
+test('SC3: an 8-sentence EN paragraph → FAIL (over the 7 句 wall ceiling)', () => {
+  const draft = `# X\n\n## What is X?\n\n${enSentences(8)}`;
   const r = checkParagraphLength(draft);
   assert.equal(r.pass, false);
-  assert.ok(r.violations.length >= 1);
   assert.equal(typeof r.violations[0].line, 'number');
-  assert.ok(/words >/.test(r.violations[0].hint));
+  assert.ok(/句 >/.test(r.violations[0].hint), r.violations[0].hint);
 });
 
-test('SC3: long CJK paragraph (>220 chars) → FAIL', () => {
-  const para = '蓝'.repeat(260);
-  const draft = `# 蓝色气场\n\n## 蓝色气场是什么？\n\n${para}`;
+test('SC3: a run-on EN paragraph past the word backstop → FAIL (words)', () => {
+  // 200 words but only 1 sentence — sentence count passes, word backstop catches it.
+  const draft = `# X\n\n## What is X?\n\n${enWords(200)}.`;
   const r = checkParagraphLength(draft);
   assert.equal(r.pass, false);
-  assert.ok(/字 >/.test(r.violations[0].hint));
+  assert.ok(/words >/.test(r.violations[0].hint), r.violations[0].hint);
+});
+
+test('SC3: an 8-sentence CJK paragraph → FAIL (over 7 句)', () => {
+  const draft = `# 蓝色气场\n\n## 蓝色气场是什么？\n\n${zhSentences(8)}`;
+  const r = checkParagraphLength(draft);
+  assert.equal(r.pass, false);
+  assert.ok(/句 >/.test(r.violations[0].hint), r.violations[0].hint);
+});
+
+test('SC3: a long run-on CJK paragraph past the char backstop → FAIL (字)', () => {
+  const draft = `# 蓝色气场\n\n## 蓝色气场是什么？\n\n${'蓝'.repeat(440)}。`;
+  const r = checkParagraphLength(draft);
+  assert.equal(r.pass, false);
+  assert.ok(/字 >/.test(r.violations[0].hint), r.violations[0].hint);
 });
 
 test('SC3: short CJK paragraph → PASS', () => {
@@ -208,17 +231,8 @@ test('SC3: short CJK paragraph → PASS', () => {
   assert.equal(r.pass, true, r.note);
 });
 
-test('SC3: mixed paragraph — 120 EN words + 1 CJK char must still FAIL (word metric)', () => {
-  // Regression: a stray CJK char must not flip measurement to char-count and
-  // let a long English paragraph slip through.
-  const draft = `# X\n\n## What is X?\n\n气 ${enWords(120)}`;
-  const r = checkParagraphLength(draft);
-  assert.equal(r.pass, false);
-  assert.ok(/words >/.test(r.violations[0].hint));
-});
-
 test('SC3: tables / lists / blockquotes / fenced code are NOT counted as prose', () => {
-  const longCells = enWords(120);
+  const longCells = enSentences(8);
   const draft = `# X
 
 ## Quick Reference Table
@@ -228,15 +242,42 @@ test('SC3: tables / lists / blockquotes / fenced code are NOT counted as prose',
 
 ## Reflection Prompts
 
-1. ${enWords(120)}
+1. ${enSentences(8)}
 
-> ${enWords(120)}
+> ${enSentences(8)}
 
 \`\`\`
-${enWords(120)}
+${enSentences(8)}
 \`\`\``;
   const r = checkParagraphLength(draft);
   assert.equal(r.pass, true, r.note);
+});
+
+// ============================================================
+// SC3b — over-fragmentation (WARN): median sentences/paragraph <= 2
+// ============================================================
+
+test('SC3b: a page of single-sentence paragraphs → WARN (over-fragmented)', () => {
+  const frags = Array.from({ length: 12 }, (_, i) => `This is fragment number ${i}.`).join('\n\n');
+  const draft = `# X\n\n## What is X?\n\n${frags}`;
+  const r = checkParagraphFragmentation(draft);
+  assert.equal(r.severity, 'warn');
+  assert.equal(r.pass, false);
+  assert.ok(/median/.test(r.note), r.note);
+});
+
+test('SC3b: paragraphs of 4-5 sentences → PASS', () => {
+  const paras = Array.from({ length: 12 }, () => enSentences(5)).join('\n\n');
+  const draft = `# X\n\n## What is X?\n\n${paras}`;
+  const r = checkParagraphFragmentation(draft);
+  assert.equal(r.pass, true, r.note);
+});
+
+test('SC3b: too few paragraphs to judge → PASS (no opinion)', () => {
+  const draft = `# X\n\n## What is X?\n\nOne sentence.\n\nAnother sentence.`;
+  const r = checkParagraphFragmentation(draft);
+  assert.equal(r.pass, true);
+  assert.ok(/too few/.test(r.note), r.note);
 });
 
 // ============================================================

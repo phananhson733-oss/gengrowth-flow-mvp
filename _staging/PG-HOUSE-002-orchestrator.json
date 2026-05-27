@@ -1,7 +1,7 @@
 {
   "page_id": "PG-HOUSE-002",
-  "prompt_path": "/Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/PG-HOUSE-002.v8-prompt.md",
-  "started_at": "2026-05-27T13:23:25.786Z",
+  "prompt_path": "/Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/PG-HOUSE-002.v8.zh-prompt.md",
+  "started_at": "2026-05-27T13:30:02.368Z",
   "models_requested": [
     "claude"
   ],
@@ -10,7 +10,7 @@
   "max_cost_usd_per_page": 5,
   "budget_exceeded_models": [],
   "ok_count": 1,
-  "total_cost_estimate_usd": 0.219,
+  "total_cost_estimate_usd": 0.093,
   "results": {
     "claude": {
       "model": "claude",
@@ -19,31 +19,31 @@
       "ok": true,
       "output_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-HOUSE-002-claude-v8.md",
       "retries": 0,
-      "duration_s": 228.1,
+      "duration_s": 396.5,
       "cost_estimate_usd": {
-        "usd": 0.219,
-        "input_tokens_est": 5974,
-        "output_tokens_est": 1725,
+        "usd": 0.093,
+        "input_tokens_est": 5214,
+        "output_tokens_est": 198,
         "pricing_note": "Opus 4.7 xhigh"
       },
-      "cumulative_cost_usd": 0.219,
+      "cumulative_cost_usd": 0.093,
       "budget_exceeded": false,
       "budget_usd": 5,
       "attempts": [
         {
           "try_index": 1,
           "model": "claude",
-          "command": "claude -p --model claude-opus-4-7 < /Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/PG-HOUSE-002.v8-prompt.md > /Users/wzb/gengrowth-flow-mvp/_staging/PG-HOUSE-002-claude-v8.md",
-          "cost_usd": 0.219,
-          "cumulative_cost_usd": 0.219,
+          "command": "claude -p --model claude-opus-4-7 < /Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/PG-HOUSE-002.v8.zh-prompt.md > /Users/wzb/gengrowth-flow-mvp/_staging/PG-HOUSE-002-claude-v8.md",
+          "cost_usd": 0.093,
+          "cumulative_cost_usd": 0.093,
           "ok": true,
           "exit_code": 0,
-          "duration_s": 228.1,
+          "duration_s": 396.5,
           "stderr_tail": "",
-          "stdout_bytes": 8296,
+          "stdout_bytes": 2591,
           "sonnet_guard": {
             "downgraded": false,
-            "bytes": 8057
+            "bytes": 6740
           }
         }
       ]

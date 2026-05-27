@@ -1,7 +1,3 @@
-Looking at this, the message is a fully-rendered content-generation prompt from your gengrowth-wiki pipeline (the `orange aura meaning` T2 Definition brief). The Vercel `workflow`/`chat-sdk` hook suggestions are false positives (matched on words like "phase"/"stream"/"chatbot" in the brief text) — ignoring them. No skill applies to writing the article itself; the task is to produce the one-shot Markdown draft per the brief's hard rules.
-
-Here is the article:
-
 # Orange Aura Meaning: Reading Your Energy Without the Libido Label
 
 ## What is Orange Aura?

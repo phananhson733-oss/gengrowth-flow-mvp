@@ -589,36 +589,43 @@ export function checkH1ValueProp(draft, ctx = {}) {
     return { id, severity, pass: true, violations: [], note: 'no H1 (H1-count check authoritative)' };
   }
   const h1 = m[1].trim();
-  if (H1_SEPARATOR_REGEX.test(h1)) {
-    return { id, severity, pass: true, violations: [], note: 'H1 carries a subtitle / value proposition' };
-  }
-  const isCjk = CJK_REGEX.test(h1);
+  const line = (draft.slice(0, m.index).match(/\n/g) || []).length + 1;
   const kw = (ctx.target_keyword || '').trim();
+  const fail = (hint, note) => ({
+    id, severity, pass: false, violations: [{ line, text: h1.slice(0, 80), hint }], note,
+  });
+
+  // 清单 v4.0 §1: 严禁 `[关键词]: [从句]` 死板冒号模板. Flag an H1 that leads with the
+  // bare target keyword immediately followed by a colon (the rigid template).
+  const colonIdx = h1.search(/[:：]/);
+  if (colonIdx > -1 && kw) {
+    const beforeColon = h1.slice(0, colonIdx).trim().toLowerCase().replace(/\s+/g, ' ');
+    if (beforeColon === kw.toLowerCase().replace(/\s+/g, ' ')) {
+      return fail(
+        'H1 用了清单 §1 禁止的 `[关键词]: [从句]` 死板模板；把关键词自然融进一个磁性标题（前 60 字符/前 3-5 词内含关键词，不要"关键词 + 冒号 + 从句"）',
+        'H1 uses the forbidden `[keyword]: [clause]` rigid template (清单 §1)',
+      );
+    }
+  }
+
+  // Bare keyword (no value proposition / magnetic angle).
+  const isCjk = CJK_REGEX.test(h1);
   let bare;
   if (isCjk) {
-    // No reliable word split for CJK; without a separator, a short H1 is most
-    // likely a bare keyword. Use a conservative length gate.
     const len = h1.replace(/\s/g, '').length;
-    bare = len <= 12;
+    bare = len <= 12 && !H1_SEPARATOR_REGEX.test(h1);
   } else {
     const h1Tokens = h1.split(/\s+/).filter(Boolean).length;
     const kwTokens = kw ? kw.split(/\s+/).filter(Boolean).length : 0;
     bare = kw ? (h1Tokens - kwTokens) <= 1 : h1Tokens <= 4;
   }
-  if (!bare) {
-    return { id, severity, pass: true, violations: [], note: 'H1 has content beyond the bare keyword' };
+  if (bare) {
+    return fail(
+      'H1 看起来是纯关键词；做成磁性标题（含角度/价值主张），关键词自然融入前 60 字符，勿用 `[kw]: [从句]` 死板模板（清单 §1）',
+      'H1 appears to be a bare keyword without a magnetic angle',
+    );
   }
-  return {
-    id,
-    severity,
-    pass: false,
-    violations: [{
-      line: (draft.slice(0, m.index).match(/\n/g) || []).length + 1,
-      text: h1.slice(0, 80),
-      hint: 'H1 看起来是纯关键词，加一个价值主张/角度副标题（破折号或副标题，勿用 `[kw]: [从句]` 死板模板），清单 §1 / 审计 4.2',
-    }],
-    note: 'H1 appears to be a bare keyword without a value proposition',
-  };
+  return { id, severity, pass: true, violations: [], note: 'H1 is a magnetic title with the keyword woven in (no rigid colon template)' };
 }
 
 // ============================================================

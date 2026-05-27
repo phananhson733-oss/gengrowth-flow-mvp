@@ -112,12 +112,14 @@ capsule 用于决定**怎么解释**（措辞、对比角度、例子选择、�
 - **恰好 1 个 `# H1`**（文章标题，第 1 行）
 - **恰好 9 个 `## H2`**（下面 9 章节，按顺序）
 - **0 个 `### H3`、0 个 `#### H4`** — 禁止任何子标题层级
-- **H1 价值主张硬要求**：H1 必须在**前 3-5 词内含关键词**（保留原规则），**且必须携带价值主张 / 角度，不能是纯裸关键词**。沿用现有"无冒号死板模板"规则的同时，**允许用破折号或副标题承载价值主张**。
-  - ❌ `Orange Aura Meaning`（纯关键词，没有角度）
-  - ✅ `Orange Aura Meaning: Reading Your Energy Without Fear or Labels`（关键词在前 3 词 + 副标题承载价值主张）
-- ✅ 正确范例：
+- **H1 磁性标题硬要求**（清单 §1）：H1 必须**在前 60 字符（最好前 3-5 词）内自然含关键词**，且是有角度 / 价值主张的磁性标题。**严禁 `[关键词]: [从句]` 死板冒号模板**——不要写成"关键词 + 冒号 + 一句话"，要把关键词**织进**一个自然句式。
+  - ❌ `Orange Aura Meaning`（纯裸关键词，没有角度）
+  - ❌ `Orange Aura Meaning: Reading Your Energy Without Fear or Labels`（清单 §1 禁止的死板冒号模板）
+  - ✅ `What Your Orange Aura Really Says About Drive and Connection`（关键词自然融入、磁性、无冒号模板）
+  - ✅ `Reading an Orange Aura Without the Fear or the Hype`（关键词在前 60 字符、有角度、非冒号模板）
+- ✅ 正确范例（H1 磁性、关键词自然融入、无冒号模板）：
   ```
-  # Blue Aura Meaning
+  # What a Blue Aura Really Means for How You Connect
 
   ## What is Blue Aura?
   ...content...

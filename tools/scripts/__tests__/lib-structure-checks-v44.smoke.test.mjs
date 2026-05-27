@@ -109,13 +109,20 @@ test('SC6: bare-keyword H1 equal to target_keyword → WARN (pass=false)', () =>
   assert.equal(r.pass, false);
 });
 
-test('SC6: H1 with colon subtitle → PASS', () => {
+test('SC6: H1 = `[keyword]: [clause]` rigid colon template → WARN (清单 §1 forbids)', () => {
   const draft = `# Orange Aura Meaning: Reading Your Energy Without Fear or Labels\n\n## What is Orange Aura?\n\nBody.`;
   const r = checkH1ValueProp(draft, { target_keyword: 'orange aura meaning' });
-  assert.equal(r.pass, true);
+  assert.equal(r.pass, false);
+  assert.ok(/colon|冒号|rigid|模板/.test(`${r.violations[0].text} ${r.violations[0].hint} ${r.note}`));
 });
 
-test('SC6: H1 with dash subtitle → PASS', () => {
+test('SC6: magnetic H1 with keyword woven in (no colon template) → PASS', () => {
+  const draft = `# What Your Orange Aura Really Says About Drive and Connection\n\n## What is Orange Aura?\n\nBody.`;
+  const r = checkH1ValueProp(draft, { target_keyword: 'orange aura meaning' });
+  assert.equal(r.pass, true, r.note);
+});
+
+test('SC6: H1 with dash subtitle (not the forbidden colon template) → PASS', () => {
   const draft = `# 8th House Meaning — The Strengths You Keep Giving to Others\n\n## What is the 8th House?\n\nBody.`;
   const r = checkH1ValueProp(draft, { target_keyword: '8th house meaning' });
   assert.equal(r.pass, true);

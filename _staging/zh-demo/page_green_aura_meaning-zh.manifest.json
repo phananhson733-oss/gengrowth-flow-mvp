@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "page_green_aura_meaning",
+  "entity": "Green Aura",
+  "target_keyword": "green aura meaning",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-05-27T13:17:17.043Z",
+  "content_sha256_short": "db3b9af8103104d7",
+  "source_path": "_staging/page_green_aura_meaning-claude-v8.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/page_green_aura_meaning-zh.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 9,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 1545,
+      "wikilinks": 5,
+      "tbdLinks": 5
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

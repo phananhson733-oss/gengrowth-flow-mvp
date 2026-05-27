@@ -4,6 +4,7 @@ slug: green-aura-meaning
 date: 2026-05-27
 status: ready-to-review
 type: wiki-entry
+author_id: elena-vane
 template: Definition
 tier: T2
 track: 量产线

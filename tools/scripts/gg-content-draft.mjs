@@ -65,6 +65,12 @@ import {
 // implementation for both the human (Lane A) and batch (Lane B) render paths.
 import { journalPromptsBlock, authorityAllowlist } from './lib/_render-aura-shared.mjs';
 import { authorityNamesFor } from './lib/authority-allowlist.mjs';
+// Phase 2 fail → rework loop closure: turn the failed red-line / structure checks
+// into a ready-to-paste correction prompt (human-in-loop self-check回路).
+import { buildReworkPrompt, MAX_REWORK_ITERATIONS } from './lib/content-rework.mjs';
+// 清单 v4.0 §2/§3 structure validators (shared with _phase2-validate.mjs): atomic
+// paragraph length (SC3) + internal-link distribution (SC4). Both FAIL-level.
+import { checkParagraphLength, checkLinkDistribution } from './lib/structure-checks.mjs';
 
 // ============================================================
 // constants
@@ -749,6 +755,19 @@ function structureCheck(draftMd, ctx) {
     }
   }
 
+  // SC3 — atomic paragraph length (清单 v4.0 §3): no prose paragraph may be a wall
+  // of text. Shared validator with _phase2-validate.mjs so both Phase-2 entry
+  // points agree. Issue text carries "SC3" so the rework loop maps a directive.
+  const paraLen = checkParagraphLength(draftMd);
+  if (!paraLen.pass) {
+    for (const v of paraLen.violations) issues.push(`SC3 段落过长 (L${v.line}): ${v.text}`);
+  }
+
+  // SC4 — internal-link distribution / 首链优先权 (清单 v4.0 §2): at least one
+  // internal link woven into body prose, not all dumped in Related Reading.
+  const linkDist = checkLinkDistribution(draftMd);
+  if (!linkDist.pass) issues.push(`SC4 内链分布: ${linkDist.note}`);
+
   return {
     ok: issues.length === 0,
     issues,
@@ -1173,6 +1192,19 @@ function findLatestPrompt(promptOut, pageId) {
   return list.sort().reverse()[0];
 }
 
+// Rework prompts accumulate per page_id so the iteration count = how many times this
+// page has bounced back from Phase 2 (drives the MAX_REWORK_ITERATIONS escalation).
+function listReworkPrompts(promptOut, pageId) {
+  try {
+    if (!existsSync(promptOut)) return [];
+    return readdirSync(promptOut)
+      .filter((n) => n.startsWith(`${pageId}-rework-`) && n.endsWith('.md'))
+      .map((n) => join(promptOut, n));
+  } catch {
+    return [];
+  }
+}
+
 // ============================================================
 // Phase 2 — ingest LLM output + 6 red lines + write staging
 // ============================================================
@@ -1391,6 +1423,32 @@ async function runPhase2(args, env) {
   const isFail = !rl.all_pass || !sc.ok;
   const stagingPageDir = join(args.stagingDir, pageId);
 
+  // 8b. On fail: build the rework prompt (loop closure). iteration = prior rework
+  // prompts for this page + 1; the actual file write happens in the !dryRun block.
+  let reworkInfo = null;
+  let reworkPromptText = null;
+  let reworkAbs = null;
+  if (isFail) {
+    const iteration = listReworkPrompts(args.promptOut, pageId).length + 1;
+    reworkPromptText = buildReworkPrompt({
+      draftMd,
+      redLineResult: rl,
+      structureResult: sc,
+      ctx: {
+        pageId, template, tier, targetKeyword, entity,
+        effectivePsychSafety, iteration,
+      },
+    });
+    reworkAbs = join(args.promptOut, `${pageId}-rework-${utcStamp()}.md`);
+    reworkInfo = {
+      iteration,
+      max_reached: iteration > MAX_REWORK_ITERATIONS,
+      prompt_path: relative(REPO_ROOT, reworkAbs),
+      failed_red_lines: rl.rules.filter((r) => !r.pass).map((r) => r.id),
+      structure_issues: sc.ok ? [] : sc.issues,
+    };
+  }
+
   // Validate write target.
   const draftFilename = isFail ? 'draft.tmp.md' : 'draft.md';
   const manifestFilename = 'manifest.json';
@@ -1468,6 +1526,26 @@ async function runPhase2(args, env) {
     const draftWithByline = buildAuthorFrontmatter(author, clusterId) + draftMd;
     writeFileSync(draftAbs, draftWithByline, 'utf8');
     recordPass('write draft', `${relative(REPO_ROOT, draftAbs)} (${draftWithByline.length} chars, author=${author.authorId})`);
+
+    // On fail: write the rework prompt next to the Phase 1 prompt so the operator
+    // pastes it straight back to the LLM — manual diagnosis collapses to one paste.
+    if (reworkInfo && reworkAbs) {
+      try {
+        const { abs } = validateWritePath(reworkAbs, {
+          allowedDirs: [args.promptOut],
+          allowedExtensions: ['.md'],
+        });
+        writeFileSync(abs, reworkPromptText, 'utf8');
+        recordPass('write rework prompt',
+          `${relative(REPO_ROOT, abs)} (iteration ${reworkInfo.iteration}${reworkInfo.max_reached ? ', MAX reached → 转人工' : ''})`);
+        if (reworkInfo.max_reached) {
+          recordWarn('rework limit',
+            `第 ${reworkInfo.iteration} 次返工已超过软上限 ${MAX_REWORK_ITERATIONS}，建议转人工审核而非继续回灌`);
+        }
+      } catch (e) {
+        recordWarn('rework prompt write failed', formatErr(e));
+      }
+    }
   }
 
   // 11. Build + write manifest.
@@ -1521,6 +1599,9 @@ async function runPhase2(args, env) {
       cta_anchor_found: sc.cta_anchor_found,
       char_count: sc.char_count,
     },
+    // Rework loop closure (null on success). Records the generated rework-prompt path
+    // + iteration so a re-prompted page is auditable and the N-bounce escalation visible.
+    rework: reworkInfo,
     status_before: status,
     // statusAfter is mutated only after Sheets write succeeded (atomic).
     status_after: statusAfter,
@@ -1566,6 +1647,7 @@ async function runPhase2(args, env) {
           : sc.issues,
         red_lines_pass: rl.all_pass,
         structure_pass: sc.ok,
+        rework_iteration: reworkInfo ? reworkInfo.iteration : null,
       },
       status: 'fail',
       notes: !rl.all_pass ? 'red lines fail' : 'structure fail',
@@ -1574,6 +1656,13 @@ async function runPhase2(args, env) {
     console.log('');
     console.log('━━━ Phase 2 LOOK (FAIL) ━━━');
     console.log(`✗ exit=${exitCode}  draft kept as ${draftFilename}  manifest.status=fail  Sheets Status NOT flipped`);
+    if (reworkInfo) {
+      const dryTag = args.dryRun ? '（dry-run，未写入）' : '';
+      console.log(`  rework:     ${reworkInfo.prompt_path}${dryTag} (第 ${reworkInfo.iteration} 次${reworkInfo.max_reached ? '，已超上限→转人工' : ''})`);
+      if (!args.dryRun) {
+        console.log(`  next:       粘贴 rework prompt → LLM → 存修订稿 → 重跑 --phase 2 --ingest-file <修订稿>`);
+      }
+    }
     return exitCode;
   }
 

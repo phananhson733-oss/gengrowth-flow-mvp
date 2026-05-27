@@ -1264,6 +1264,149 @@ test('CLI: Phase 2 RL1 clinical claim → exit 12, draft.tmp.md + manifest.statu
   }
 });
 
+test('CLI: Phase 2 fail → rework prompt written + manifest.rework populated', () => {
+  const stagingDir = join(TMP_ROOT, 'staging-rework');
+  const promptDir = join(TMP_ROOT, 'prompts-rework');
+  const serpDir = join(TMP_ROOT, 'serp-rework');
+  mkdirSync(serpDir, { recursive: true });
+  writeFileSync(join(serpDir, 'page_chiron_7th_house.json'), JSON.stringify({
+    snippets: [{ snippet: 'completely different snippet text not in draft' }],
+  }));
+  const cacheDir = join(homedir(), 'Downloads');
+  if (!existsSync(cacheDir)) mkdirSync(cacheDir, { recursive: true });
+  const ingestPath = join(cacheDir, `__cd-rework-${process.pid}.md`);
+  // RL1 clinical claim → guaranteed red-line fail.
+  const draft = `# T\n## Quick\nchiron in 7th house. This diagnoses anxiety in many.\n## a\nx chiron in 7th house\n## b\nx chiron in 7th house\n## c\nx chiron in 7th house\n## d\nx\n## e\nx\n## f\nx\n## CTA\n查你的对应落座 https://astrologywiki.com/tools/birth-chart\n`;
+  writeFileSync(ingestPath, draft);
+  try {
+    const pageRow = makePageRow({ psych_safety_flag: 'N', status: '写作中' });
+    const clusterRow = makeClusterRow({ psych_safety_flag: 'N' });
+    const r = runTool([
+      '--page-id', 'page_chiron_7th_house', '--phase', '2',
+      '--ingest-file', ingestPath,
+      '--staging-dir', stagingDir, '--prompt-out', promptDir, '--serp-dir', serpDir,
+    ], { fixtureData: makeFixture({ pageRow, clusterRow }) });
+    assert.equal(r.status, EXIT.RED_LINES, `stderr: ${r.stderr}`);
+
+    // A rework prompt file must exist in the prompt-out dir for this page.
+    const reworks = readdirSync(promptDir).filter(
+      (n) => n.startsWith('page_chiron_7th_house-rework-') && n.endsWith('.md'));
+    assert.equal(reworks.length, 1, 'expected exactly one rework prompt');
+    const reworkBody = readFileSync(join(promptDir, reworks[0]), 'utf8');
+    assert.match(reworkBody, /返工指令/);
+    assert.match(reworkBody, /rl1_no_clinical_claim/);
+    assert.ok(reworkBody.includes('diagnoses anxiety'), 'original draft embedded');
+
+    // manifest.rework must carry iteration + path + failed rule ids.
+    const manifest = JSON.parse(
+      readFileSync(join(stagingDir, 'page_chiron_7th_house', 'manifest.json'), 'utf8'));
+    assert.equal(manifest.status, 'fail');
+    assert.ok(manifest.rework, 'manifest.rework present on fail');
+    assert.equal(manifest.rework.iteration, 1);
+    assert.equal(manifest.rework.max_reached, false);
+    assert.ok(manifest.rework.failed_red_lines.includes('rl1_no_clinical_claim'));
+  } finally {
+    unlinkSync(ingestPath);
+  }
+});
+
+test('CLI: Phase 2 success → manifest.rework is null (no rework on pass)', () => {
+  const stagingDir = join(TMP_ROOT, 'staging-rework-ok');
+  const promptDir = join(TMP_ROOT, 'prompts-rework-ok');
+  const serpDir = join(TMP_ROOT, 'serp-rework-ok');
+  mkdirSync(serpDir, { recursive: true });
+  writeFileSync(join(serpDir, 'page_chiron_7th_house.json'), JSON.stringify({
+    snippets: [{ snippet: 'completely different snippet text not in draft' }],
+  }));
+  const cacheDir = join(homedir(), 'Downloads');
+  if (!existsSync(cacheDir)) mkdirSync(cacheDir, { recursive: true });
+  const ingestPath = join(cacheDir, `__cd-rework-ok-${process.pid}.md`);
+  // Known-good draft (mirrors the "Phase 2 valid draft → exit 0" fixture above).
+  const draft = `# Chiron in 7th house guide
+
+## Quick Answer
+chiron in 7th house relates to relationship wounds. This is not a clinical interpretation.
+
+## chiron in 7th house meaning
+chiron in 7th house points to recurring relationship patterns and self-perception.
+
+## Possible patterns
+chiron in 7th house can show up as people-pleasing or fear of abandonment.
+
+## Common misconceptions
+Some assume chiron in 7th house predicts outcomes; it does not.
+
+## Reflection prompts
+- prompt 1 about chiron
+- prompt 2 about chiron
+- prompt 3 about chiron in 7th house
+
+## Daily observation
+1. Step 1 notice chiron patterns
+2. Step 2 journal them
+3. Step 3 review weekly
+
+## Related reading
+[[chiron in 12th house]]
+
+## CTA
+查你的对应落座 https://astrologywiki.com/tools/birth-chart
+`;
+  writeFileSync(ingestPath, draft);
+  try {
+    const pageRow = makePageRow({ psych_safety_flag: 'N', status: '写作中' });
+    const clusterRow = makeClusterRow({ psych_safety_flag: 'N' });
+    const r = runTool([
+      '--page-id', 'page_chiron_7th_house', '--phase', '2',
+      '--ingest-file', ingestPath,
+      '--staging-dir', stagingDir, '--prompt-out', promptDir, '--serp-dir', serpDir,
+    ], { fixtureData: makeFixture({ pageRow, clusterRow }) });
+    assert.equal(r.status, EXIT.OK, `stderr: ${r.stderr}`);
+    const manifest = JSON.parse(
+      readFileSync(join(stagingDir, 'page_chiron_7th_house', 'manifest.json'), 'utf8'));
+    assert.equal(manifest.status, 'ok');
+    assert.equal(manifest.rework, null, 'no rework prompt on success');
+    const reworks = existsSync(promptDir)
+      ? readdirSync(promptDir).filter((n) => n.includes('-rework-')) : [];
+    assert.equal(reworks.length, 0, 'no rework file on success');
+  } finally {
+    unlinkSync(ingestPath);
+  }
+});
+
+test('CLI: Phase 2 fail + --dry-run → no rework file, LOOK marks dry-run', () => {
+  const stagingDir = join(TMP_ROOT, 'staging-rework-dry');
+  const promptDir = join(TMP_ROOT, 'prompts-rework-dry');
+  const serpDir = join(TMP_ROOT, 'serp-rework-dry');
+  mkdirSync(serpDir, { recursive: true });
+  writeFileSync(join(serpDir, 'page_chiron_7th_house.json'), JSON.stringify({
+    snippets: [{ snippet: 'completely different snippet text not in draft' }],
+  }));
+  const cacheDir = join(homedir(), 'Downloads');
+  if (!existsSync(cacheDir)) mkdirSync(cacheDir, { recursive: true });
+  const ingestPath = join(cacheDir, `__cd-rework-dry-${process.pid}.md`);
+  const draft = `# T\n## Quick\nchiron in 7th house. This diagnoses anxiety in many.\n## a\nx chiron in 7th house\n## b\nx chiron in 7th house\n## c\nx chiron in 7th house\n## d\nx\n## e\nx\n## f\nx\n## CTA\n查你的对应落座 https://astrologywiki.com/tools/birth-chart\n`;
+  writeFileSync(ingestPath, draft);
+  try {
+    const pageRow = makePageRow({ psych_safety_flag: 'N', status: '写作中' });
+    const clusterRow = makeClusterRow({ psych_safety_flag: 'N' });
+    const r = runTool([
+      '--page-id', 'page_chiron_7th_house', '--phase', '2',
+      '--ingest-file', ingestPath, '--dry-run',
+      '--staging-dir', stagingDir, '--prompt-out', promptDir, '--serp-dir', serpDir,
+    ], { fixtureData: makeFixture({ pageRow, clusterRow }) });
+    assert.equal(r.status, EXIT.RED_LINES, `stderr: ${r.stderr}`);
+    // dry-run must not write any rework file…
+    const reworks = existsSync(promptDir)
+      ? readdirSync(promptDir).filter((n) => n.includes('-rework-')) : [];
+    assert.equal(reworks.length, 0, 'dry-run must not write a rework prompt');
+    // …and the LOOK output must say so rather than implying a pasteable file exists.
+    assert.match(r.stdout, /dry-run，未写入/);
+  } finally {
+    unlinkSync(ingestPath);
+  }
+});
+
 // ============================================================
 // Codex round 2 smoke gaps (M1-M6)
 // ============================================================

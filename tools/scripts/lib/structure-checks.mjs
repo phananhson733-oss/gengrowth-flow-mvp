@@ -174,3 +174,193 @@ export function checkInternalLinkTier(draft, ctx = {}) {
     note: `${count} TBD internal-link(s) within ${tier} band [${bounds.min}, ${bounds.max === Infinity ? '∞' : bounds.max}]`,
   };
 }
+
+// ============================================================
+// SC3 — Atomic paragraph length (FAIL, both langs).
+//
+// blog创作要求清单 v4.0 §3 (Atomic GEO Layout) requires "任何段落不得超过 4 行":
+// prose must break into atomic 事实金句→逻辑/机制→实例 chunks so AI Overview /
+// featured-snippet extraction can quote a clean unit and human readers aren't
+// hit by a wall of text. Both definition templates now carry the rule
+// (§段落原子化), so an over-long prose paragraph is a FAIL.
+//
+// "4 lines" is layout-dependent, so we proxy by length. Language-aware:
+//   - CJK-bearing paragraph → CJK character count (≈ 4 lines × ~45 字 ≈ 180;
+//     fail above CJK_MAX with headroom).
+//   - otherwise → whitespace word count (4 lines × ~18 words ≈ 72; fail above
+//     EN_MAX with headroom).
+// We measure only PROSE paragraphs — headings, table rows, list items,
+// blockquotes and fenced code never count (they are not walls of prose and
+// have their own structural rules).
+// ============================================================
+
+const SC3_EN_WORD_MAX = 85;   // EN prose paragraph hard ceiling (target ≤ ~70)
+const SC3_CJK_CHAR_MAX = 200; // CJK prose paragraph hard ceiling (target ≤ ~150)
+
+// Group consecutive prose lines into paragraphs. Returns [{ startLine, text }].
+// Skips structural lines so only real prose is measured.
+function proseParagraphs(lines) {
+  const paras = [];
+  let inFence = false;
+  let cur = null; // { startLine, parts: [] }
+  const flush = () => {
+    if (cur && cur.parts.join(' ').trim()) {
+      paras.push({ startLine: cur.startLine, text: cur.parts.join(' ') });
+    }
+    cur = null;
+  };
+  for (let i = 0; i < lines.length; i++) {
+    const raw = lines[i];
+    const line = raw.trim();
+    if (/^```/.test(line) || /^~~~/.test(line)) { inFence = !inFence; flush(); continue; }
+    if (inFence) { flush(); continue; }
+    const isStructural =
+      line === '' ||
+      /^#{1,6}\s/.test(line) ||      // heading
+      /^\|/.test(line) ||             // table row
+      /^>/.test(line) ||              // blockquote
+      /^(\d+[.)]|[-*+])\s/.test(line); // ordered/unordered list item
+    if (isStructural) { flush(); continue; }
+    if (!cur) cur = { startLine: i + 1, parts: [] };
+    cur.parts.push(line);
+  }
+  flush();
+  return paras;
+}
+
+// Measure a paragraph against BOTH metrics independently, so a mixed
+// CJK+Latin paragraph cannot dodge the ceiling: a long English paragraph with a
+// stray CJK char is still caught by the word metric, and a long Chinese
+// paragraph (whose whitespace-token count is ~1) is caught by the char metric.
+// A paragraph fails if EITHER metric exceeds its ceiling.
+function measureParagraph(text) {
+  const cjkSize = (text.match(/[㐀-鿿　-〿＀-￯]/g) || []).length;
+  const wordSize = text.split(/\s+/).filter(Boolean).length;
+  if (cjkSize > SC3_CJK_CHAR_MAX) return { over: true, metric: '字', size: cjkSize, max: SC3_CJK_CHAR_MAX };
+  if (wordSize > SC3_EN_WORD_MAX) return { over: true, metric: 'words', size: wordSize, max: SC3_EN_WORD_MAX };
+  return { over: false };
+}
+
+export function checkParagraphLength(draft) {
+  const id = 'sc3_paragraph_length';
+  const severity = 'fail';
+  if (typeof draft !== 'string' || !draft) {
+    return { id, severity, pass: true, violations: [], note: 'empty draft — skipped' };
+  }
+  const lines = draft.split('\n');
+  const paras = proseParagraphs(lines);
+  const violations = [];
+  for (const p of paras) {
+    const m = measureParagraph(p.text);
+    if (m.over) {
+      violations.push({
+        line: p.startLine,
+        text: `${m.size} ${m.metric} — "${p.text.slice(0, 48)}…"`,
+        hint: `prose paragraph too long (${m.size} ${m.metric} > ${m.max}); split into atomic 事实金句→机制→实例 chunks (≤ 4 行, 清单 §3)`,
+      });
+    }
+  }
+  if (violations.length === 0) {
+    return { id, severity, pass: true, violations: [], note: `${paras.length} prose paragraph(s), all within atomic length` };
+  }
+  return {
+    id,
+    severity,
+    pass: false,
+    violations,
+    note: `${violations.length} prose paragraph(s) exceed atomic length (≤ 4 行)`,
+  };
+}
+
+// ============================================================
+// SC4 — Internal-link distribution (FAIL, both langs).
+//
+// blog创作要求清单 v4.0 §2 (Link Master) requires 首链优先权: links must be
+// woven INTO the body (a pillar/上位 back-link early, spokes inline mid-body),
+// not all dumped in the trailing "Related Reading" section. Dumping every link
+// at the end passes no link weight through the body and serves no reader flow.
+// Both templates now instruct inline distribution (§内链分布), so "zero inline
+// internal links in the body" is a FAIL.
+//
+// We split on the Related Reading H2 (EN "Related Reading" / ZH "延伸阅读"):
+// every canonical TBD internal-link BEFORE that heading AND sitting on a PROSE
+// line counts as "inline body". A link buried in a table row, numbered list,
+// blockquote or heading does NOT count — 首链优先权 means the pillar/spoke link
+// is woven into a sentence, not parked in a structural block. Require ≥ 1 such
+// inline body link whenever the article has any internal links at all. No
+// Related Reading heading → prose-line links anywhere count (pass). Zero links
+// total → no opinion (SC2 / red-line handles count).
+// ============================================================
+
+const SC4_TBD_LINE_REGEX = /\[\[<TBD-internal-link:/;
+
+// A line that is NOT prose: heading / table row / list item / blockquote.
+// (Fenced code is handled by the caller's fence toggle.) Mirrors the skip set
+// in proseParagraphs so SC3 and SC4 agree on what "prose" means.
+function isStructuralLine(line) {
+  const t = line.trim();
+  return (
+    t === '' ||
+    /^#{1,6}\s/.test(t) ||
+    /^\|/.test(t) ||
+    /^>/.test(t) ||
+    /^(\d+[.)]|[-*+])\s/.test(t)
+  );
+}
+
+function relatedReadingIdx(lines) {
+  for (let i = 0; i < lines.length; i++) {
+    if (/^##\s+/.test(lines[i]) && /(related reading|延伸阅读|延伸閱讀)/i.test(lines[i])) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+export function checkLinkDistribution(draft) {
+  const id = 'sc4_link_distribution';
+  const severity = 'fail';
+  if (typeof draft !== 'string' || !draft) {
+    return { id, severity, pass: true, violations: [], note: 'empty draft — skipped' };
+  }
+  const lines = draft.split('\n');
+  const total = (draft.match(/\[\[<TBD-internal-link:/g) || []).length;
+  if (total === 0) {
+    return { id, severity, pass: true, violations: [], note: 'no TBD internal links — no opinion (SC2/red-line authoritative)' };
+  }
+  const rrIdx = relatedReadingIdx(lines);
+  // Body = everything before the Related Reading heading. No heading → whole doc.
+  const bodyEnd = rrIdx === -1 ? lines.length : rrIdx;
+  let bodyLinks = 0;        // links on prose lines before Related Reading (首链优先权)
+  let firstBodyLinkLine = null;
+  let inFence = false;
+  for (let i = 0; i < bodyEnd; i++) {
+    if (/^```/.test(lines[i].trim()) || /^~~~/.test(lines[i].trim())) { inFence = !inFence; continue; }
+    if (inFence) continue;
+    if (isStructuralLine(lines[i])) continue; // skip table/list/heading/quote
+    if (SC4_TBD_LINE_REGEX.test(lines[i])) {
+      bodyLinks += 1;
+      if (firstBodyLinkLine === null) firstBodyLinkLine = i + 1;
+    }
+  }
+  if (bodyLinks >= 1) {
+    return {
+      id,
+      severity,
+      pass: true,
+      violations: [],
+      note: `${bodyLinks}/${total} internal link(s) inline in body prose (首链优先权 satisfied)`,
+    };
+  }
+  return {
+    id,
+    severity,
+    pass: false,
+    violations: [{
+      line: rrIdx === -1 ? 1 : rrIdx + 1,
+      text: `0/${total} internal links inline in body prose`,
+      hint: 'no internal link woven into a body sentence (all in Related Reading or structural blocks); weave ≥ 1 pillar/spoke link into a body paragraph (首链优先权, 清单 §2)',
+    }],
+    note: `0/${total} internal link(s) inline in body prose — all parked in Related Reading / structural blocks (FAIL)`,
+  };
+}

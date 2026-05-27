@@ -51,6 +51,8 @@ import {
 import {
   checkBoldedDefinition,
   checkInternalLinkTier,
+  checkParagraphLength,
+  checkLinkDistribution,
 } from './lib/structure-checks.mjs';
 import { logFailure } from './lib/_failure-log.mjs';
 import { isValidAuthorId, normalizeAuthorId } from './lib/author-routing.mjs';
@@ -436,6 +438,24 @@ function structureCheck(draft) {
   const boldDef = checkBoldedDefinition(draft);
   if (!boldDef.pass) {
     findings.push(`SC1 bolded definition: ${boldDef.note}`);
+  }
+
+  // SC3 — atomic paragraph length (FAIL, both langs; 清单 §3 段落 ≤ 4 行).
+  // A wall-of-text prose paragraph blocks AI Overview extraction + hurts
+  // readability, so over-length is a hard fail. Each over-long paragraph is
+  // surfaced with its line + size so the rewrite is targeted.
+  const paraLen = checkParagraphLength(draft);
+  if (!paraLen.pass) {
+    findings.push(`SC3 paragraph length: ${paraLen.note}`);
+    paraLen.violations.forEach((v) => findings.push(`  L${v.line}: ${v.hint}`));
+  }
+
+  // SC4 — internal-link distribution (FAIL, both langs; 清单 §2 首链优先权).
+  // Links must be woven into the body, not all dumped in Related Reading.
+  const linkDist = checkLinkDistribution(draft);
+  if (!linkDist.pass) {
+    findings.push(`SC4 link distribution: ${linkDist.note}`);
+    linkDist.violations.forEach((v) => findings.push(`  L${v.line}: ${v.hint}`));
   }
 
   // SC2 — internal-link tier counting (WARN only; never blocks publish).

@@ -13,6 +13,8 @@ import { test } from 'node:test';
 import {
   checkBoldedDefinition,
   checkInternalLinkTier,
+  checkParagraphLength,
+  checkLinkDistribution,
 } from '../lib/structure-checks.mjs';
 
 // ============================================================
@@ -146,4 +148,184 @@ test('SC2: only counts TBD-format links, ignores invented anchors', () => {
   // 0 TBD links → below T2 floor → WARN (the 2 invented anchors are not counted).
   assert.equal(r.pass, false);
   assert.ok(/0 TBD internal-link/.test(r.note));
+});
+
+// ============================================================
+// SC3 — atomic paragraph length (FAIL)
+// ============================================================
+
+const enWords = (n) => Array.from({ length: n }, (_, i) => `word${i}`).join(' ');
+
+test('SC3: severity is fail', () => {
+  const r = checkParagraphLength('# X\n\n## What is X?\n\nShort prose.');
+  assert.equal(r.severity, 'fail');
+});
+
+test('SC3: short EN paragraphs → PASS', () => {
+  const draft = `# X
+
+## What is X?
+
+X is a calm energy. This is a short atomic chunk.
+
+The mechanism works like this. Two short sentences only.`;
+  const r = checkParagraphLength(draft);
+  assert.equal(r.pass, true, r.note);
+});
+
+test('SC3: a wall-of-text EN paragraph (>85 words) → FAIL with line', () => {
+  const draft = `# X\n\n## What is X?\n\n${enWords(120)}`;
+  const r = checkParagraphLength(draft);
+  assert.equal(r.pass, false);
+  assert.ok(r.violations.length >= 1);
+  assert.equal(typeof r.violations[0].line, 'number');
+  assert.ok(/words >/.test(r.violations[0].hint));
+});
+
+test('SC3: long CJK paragraph (>220 chars) → FAIL', () => {
+  const para = '蓝'.repeat(260);
+  const draft = `# 蓝色气场\n\n## 蓝色气场是什么？\n\n${para}`;
+  const r = checkParagraphLength(draft);
+  assert.equal(r.pass, false);
+  assert.ok(/字 >/.test(r.violations[0].hint));
+});
+
+test('SC3: short CJK paragraph → PASS', () => {
+  const draft = `# 蓝色气场\n\n## 蓝色气场是什么？\n\n蓝色气场是一种以表达和沟通为主调的能量场。`;
+  const r = checkParagraphLength(draft);
+  assert.equal(r.pass, true, r.note);
+});
+
+test('SC3: mixed paragraph — 120 EN words + 1 CJK char must still FAIL (word metric)', () => {
+  // Regression: a stray CJK char must not flip measurement to char-count and
+  // let a long English paragraph slip through.
+  const draft = `# X\n\n## What is X?\n\n气 ${enWords(120)}`;
+  const r = checkParagraphLength(draft);
+  assert.equal(r.pass, false);
+  assert.ok(/words >/.test(r.violations[0].hint));
+});
+
+test('SC3: tables / lists / blockquotes / fenced code are NOT counted as prose', () => {
+  const longCells = enWords(120);
+  const draft = `# X
+
+## Quick Reference Table
+
+| ${longCells} | b | c | d |
+| 1 | 2 | 3 | 4 |
+
+## Reflection Prompts
+
+1. ${enWords(120)}
+
+> ${enWords(120)}
+
+\`\`\`
+${enWords(120)}
+\`\`\``;
+  const r = checkParagraphLength(draft);
+  assert.equal(r.pass, true, r.note);
+});
+
+// ============================================================
+// SC4 — internal-link distribution (FAIL)
+// ============================================================
+
+test('SC4: severity is fail', () => {
+  const r = checkLinkDistribution('# X\n\nno links');
+  assert.equal(r.severity, 'fail');
+});
+
+test('SC4: all links dumped in Related Reading, none inline → FAIL', () => {
+  const draft = `# X
+
+## What is X?
+
+**X is calm.** Plain prose, no inline links here.
+
+## Related Reading
+
+[[<TBD-internal-link: pillar page on aura colors>]]
+[[<TBD-internal-link: throat chakra explainer>]]`;
+  const r = checkLinkDistribution(draft);
+  assert.equal(r.pass, false);
+  assert.ok(/0\/2/.test(r.note));
+});
+
+test('SC4: at least one link inline in body → PASS', () => {
+  const draft = `# X
+
+## What is X?
+
+**X is calm.** See the [[<TBD-internal-link: pillar page on aura colors>]] for the full map.
+
+## Related Reading
+
+[[<TBD-internal-link: throat chakra explainer>]]`;
+  const r = checkLinkDistribution(draft);
+  assert.equal(r.pass, true, r.note);
+  assert.ok(/1\/2/.test(r.note));
+});
+
+test('SC4: link buried in a table row / numbered list is NOT inline body → FAIL', () => {
+  // Regression: the only "before Related Reading" link sits in a table row and a
+  // numbered list — neither is woven into a sentence, so 首链优先权 is NOT met.
+  const draft = `# X
+
+## What is X?
+
+**X is calm.** Plain prose, no inline link in a sentence.
+
+## Quick Reference Table
+
+| Property | See |
+| calm | [[<TBD-internal-link: throat chakra explainer>]] |
+
+## Reflection Prompts
+
+1. Recall a moment — see [[<TBD-internal-link: pillar page on aura colors>]].
+
+## Related Reading
+
+[[<TBD-internal-link: comparison with violet aura>]]`;
+  const r = checkLinkDistribution(draft);
+  assert.equal(r.pass, false);
+  assert.ok(/0\/3/.test(r.note));
+});
+
+test('SC4: no internal links at all → PASS (no opinion)', () => {
+  const draft = `# X\n\n## What is X?\n\n**X is calm.** No links anywhere.`;
+  const r = checkLinkDistribution(draft);
+  assert.equal(r.pass, true);
+  assert.ok(/no opinion/.test(r.note));
+});
+
+test('SC4: ZH 延伸阅读 split — inline body link → PASS', () => {
+  const draft = `# 蓝色气场
+
+## 蓝色气场是什么？
+
+蓝色气场偏冷静，可参考 [[<TBD-internal-link: 气场颜色总览 pillar 页>]] 了解全貌。
+
+## 延伸阅读
+
+[[<TBD-internal-link: 喉轮深度解析>]]`;
+  const r = checkLinkDistribution(draft);
+  assert.equal(r.pass, true, r.note);
+});
+
+test('SC4: ZH 延伸阅读 split — all dumped at end → FAIL', () => {
+  const draft = `# 蓝色气场
+
+## 蓝色气场是什么？
+
+蓝色气场偏冷静，没有内联链接。
+
+## 延伸阅读
+
+[[<TBD-internal-link: 气场颜色总览 pillar 页>]]
+[[<TBD-internal-link: 喉轮深度解析>]]`;
+  const r = checkLinkDistribution(draft);
+  assert.equal(r.pass, false);
+  assert.ok(/0\/2/.test(r.note));
 });

@@ -153,8 +153,45 @@ capsule 用于决定**怎么解释**（措辞、对比角度、例子选择、�
    - (b) **关联 Logic 字段主题**（如 Logic 提到沟通能量，则 prompts 围绕沟通情境）
    - (c) **必须 numbered list 格式 `1. ... / 2. ... / 3. ...`**，不要写成分段散文 — binary check 的 reflection_prompts 检测只识别 numbered 形式，paragraph 格式 = 0 prompts = fail
    - (d) **`## Reflection Prompts` 标题之后第一个非空段必须直接是 `1.` 起手的编号项**，不能加任何 prose intro / setup 句（例 ❌「Use these prompts to reflect on...」/「Spend a few minutes journaling on...」），否则 Phase 2 RL4 drift 检测把整 section 当 prose 走 jaccard，整篇 fail
-6. **Related Reading**（H2）— 按 internal_link_rule 输出 wikilinks，**用 placeholder 格式** `[[<TBD-internal-link: short description>]]`（**绝不 invent 具体 anchor**），每条 1 句 1-line 为什么相关
+6. **Related Reading**（H2）— **只放正文未内联出现的剩余 wikilinks**（pillar / spoke 已按下方「内链分布」内联进正文的，不要在这里重复堆叠），**用 placeholder 格式** `[[<TBD-internal-link: short description>]]`（**绝不 invent 具体 anchor**），每条 1 句 1-line 为什么相关
 7. **Take Action**（H2，必须）— 文案 <field name="cta_text">{{cta_text}}</field>，链接 <field name="cta_target_url">{{cta_target_url}}</field>。**CTA 必须独立 H2，不能合并到结尾段，否则 structure check 直接 fail。**
+
+## 段落原子化 + GEO 排版硬要求（对齐创作清单 v4.0 §3 Atomic GEO Layout；任一违反 = 重写该段）
+
+> Instruction only; **do not** output this as an article section.
+
+GEO / AI Overview 抓取偏好**短原子段**：长段（wall of text）既难被引用，也伤可读性 + EEAT。**实测旧稿单段 88-199 词 = 整页都是大段，直接踩雷。**
+
+- **任何 prose 段落 ≤ 4 行（≤ ~70 词）**。超过就拆成多个原子段，段间用空行分隔。表格行 / 列表项 / 标题 / 引用块不算 prose 段。
+- **本规则只管 prose 段落，绝不覆盖上面的结构硬规则**：Section 4「Quick Reference Table」标题后第一个非空行**仍必须直接是表格**、Section 5「Reflection Prompts」标题后第一个非空行**仍必须直接是 `1.` 编号项** —— 不要为了"原子化"在表格或编号列表前加任何 prose 引言段。
+- 每个 H2 section 内，把论述拆成「**事实金句 → 逻辑 / 机制 → 实例 / 结果**」三段式原子块，**每块独立成段**（不要把定义、机制、例子全塞进同一段）。
+- ❌ 错误：一段 150 词从定义一路讲到机制再到例子（wall of text）
+- ✅ 正确：
+  ```
+  Blue aura reads as a calm, communication-led energy.   ← 事实金句（1-2 句）
+
+  The mechanism is throat-center emphasis: ...           ← 机制（2-3 句）
+
+  In practice, someone with this read often ...          ← 实例（2-3 句）
+  ```
+- **Phase 2 SC3 binary check 会逐段扫描词数**：任一 prose 段 > 85 词 = 整篇 fail。
+
+**self-check（提交前默念）**：逐段数词数，任一 prose 段 > ~70 词就拆开再交。Section 1（What is X，120-160 词）必然要拆成 2-3 个原子段。
+
+## 内链分布硬要求（对齐创作清单 v4.0 §2 Link Master 链接母版；任一违反 = 整篇作废）
+
+> Instruction only; **do not** output this as an article section.
+
+内链**不能全堆在结尾 Related Reading** —— 那样既不向正文传递链接权重，也不服务读者动线。**实测旧稿全部链接堆结尾 = 踩雷。** 按链接母版分布：
+
+- **首链优先权**：至少 **1 个 pillar / 上位概念回链**必须**内联出现在正文前 ~150 词内**（Section 1「What is {{entity}}」或 Section 2 的句子里自然织入，**不是列表、不是结尾**）。
+- **spoke 内联**：至少 **1 个 spoke / 平级概念链接**内联在正文中段（Section 2 或 3 的论述句子里）。
+- **Related Reading（Section 6）只放正文未内联的剩余链接** + 1 句相关性说明，不要把所有链接都堆这里。
+- 所有内联链接仍用 `[[<TBD-internal-link: short description>]]` placeholder 格式（真实 anchor 文案由后续步骤按「目标词 ｜ 语义背景 ｜ 点击收益」三段式解析；draft 阶段你只给自然英文 noun-phrase 描述）。
+- ✅ 内联范例：`This sits alongside the broader [[<TBD-internal-link: pillar page on all aura colors>]], which maps every color's energy.`
+- **Phase 2 SC4 binary check**：正文（Related Reading 之前）内联内链数 = 0 → 整篇 fail。
+
+**self-check（提交前默念）**：正文 Related Reading 之前，是否至少 1 条 `[[<TBD-internal-link:...>]]` 内联在段落句子里？没有就把 pillar 回链织进第 1-2 段。
 
 ## target_keyword 跨 section 分布硬要求（任一违反 = 整篇作废）
 

@@ -1,3 +1,28 @@
+---
+title: Sacral Chakra Meaning
+slug: sacral-chakra-meaning
+date: 2026-05-28
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-CHAKRA-005
+author_id: "elena-vane"
+author_display_name: "Elena Vane"
+target_keyword: sacral chakra meaning
+associated_keywords:
+  - svadhisthana
+  - second chakra
+  - sacral chakra healing
+  - sacral chakra blockage
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-05-28T20:05:37.885Z
+content_sha256_short: 6005a94689f890c3
+phase2_checks: all-pass
+---
+
 # 生殖轮代表什么，远不只是性那一面
 
 ## The Sacral Chakra 是什么？

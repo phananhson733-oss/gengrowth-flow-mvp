@@ -6,17 +6,17 @@ Vedic astrology is the traditional Indian system of chart reading, also called J
 
 - Vedic uses the sidereal zodiac, anchored to the visible fixed stars
 - Western uses the tropical zodiac, anchored to the seasons and the spring equinox
-- A gap of roughly 24 degrees between them is why your Sun sign can change
+- A gap of roughly 24 degrees between them is why your Sun placement can change
 
-Because the two zodiacs have drifted apart over the centuries, your Western Sun often lands one sign earlier in a Vedic chart, and your Moon and rising sign can move as well. For how both traditions fit among the wider family of methods, see this [[<TBD-internal-link: pillar guide to the major astrology systems>]].
+Because the two zodiacs have drifted apart over the centuries, your Western Sun often lands one sign earlier in a Vedic chart, and your Moon and ascendant (lagna) can move as well. For how both traditions fit among the wider family of methods, see this [[<TBD-internal-link: pillar guide to the major astrology systems>]].
 
 ## Why It Matters for Self-Awareness
 
-Understanding Vedic vs Western astrology matters because of one jarring moment almost every newcomer runs into: they pull a Vedic chart, and the Sun sign they have identified with for years has quietly disappeared. A lifelong Western Leo turns up as a Vedic Cancer; a confident Sagittarius slides back into Scorpio; a Capricorn becomes a Sagittarius. The first reaction is rarely curiosity. It is the uneasy sense that one chart must be broken and the other one is the "real" you, and that you now have to choose between them. What looks like a contradiction is really just two maps of the same territory drawn to different scales.
+Understanding Vedic vs Western astrology matters because of one jarring moment almost every newcomer runs into: they pull a Vedic chart, and the Sun placement they have identified with for years has quietly disappeared. A lifelong Western Leo turns up as a Vedic Cancer; a confident Sagittarius slides back into Scorpio; a Capricorn becomes a Sagittarius. The first reaction is rarely curiosity. It is the uneasy sense that one chart must be broken and the other one is the "real" you, and that you now have to choose between them. What looks like a contradiction is really just two maps of the same territory drawn to different scales.
 
 In a decade of reading charts alongside the classical Sanskrit texts I grew up with, I have watched this single mismatch unsettle more beginners than any other question they bring to a first session. The relief almost always arrives the same way. People stop asking which system is correct and start asking which question each one was built to answer. A tropical chart is designed to describe the seasonal moment you were born into, which maps closely onto temperament and personality. A sidereal chart is designed to track measurable star positions, which is what you want when the question is about timing rather than character.
 
-That reframe matters for self-awareness because the panic itself is the real lesson. If a relabeled Sun sign can shake your sense of who you are, the old label was probably carrying more weight than any single placement should. Reading both systems side by side tends to loosen that grip, leaving you holding flexible patterns instead of a fixed verdict about your identity. The point is not to crown a winner but to notice how lightly or tightly you were holding that label in the first place.
+That reframe matters for self-awareness because the panic itself is the real lesson. If a relabeled Sun placement can shake your sense of who you are, the old label was probably carrying more weight than any single placement should. Reading both systems side by side tends to loosen that grip, leaving you holding flexible patterns instead of a fixed verdict about your identity. The point is not to crown a winner but to notice how lightly or tightly you were holding that label in the first place.
 
 ## Vedic Astrology vs Adjacent Concepts: How It Works + Trade-offs
 

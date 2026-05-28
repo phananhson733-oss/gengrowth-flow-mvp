@@ -12,7 +12,7 @@ In the lineage of psychological astrology that Howard Sasportas helped shape, th
 
 ## Why It Matters for Self-Awareness
 
-Understanding the 5th house matters because most popular write-ups stop at romance and creativity, which leaves readers with a flattering but shallow picture of what this part of the chart is actually doing. The real friction tends to show up later. Someone reads that this house is about "fun," then cannot understand why sharing their art, flirting, or performing leaves them feeling so strangely exposed. That exposure is the point. To make something and show it, or to let yourself be wanted, is to risk being seen as you actually are — and to risk that the response will not be warm. This is the reading that Liz Greene and Howard Sasportas brought into modern psychological astrology: the house as a place of exposure, not just enjoyment.
+Understanding this house matters because most popular write-ups stop at romance and creativity, which leaves readers with a flattering but shallow picture of what this part of the chart is actually doing. The real friction tends to show up later. Someone reads that this house is about "fun," then cannot understand why sharing their art, flirting, or performing leaves them feeling so strangely exposed. That exposure is the point. To make something and show it, or to let yourself be wanted, is to risk being seen as you actually are — and to risk that the response will not be warm. This is the reading that Liz Greene and Howard Sasportas brought into modern psychological astrology: the house as a place of exposure, not just enjoyment.
 
 In twelve years of integrating psychological frameworks with evolutionary astrology, including thousands of hours of chart consultation, I have watched this one misread create more quiet self-doubt than almost any other placement. People assume the block is a lack of talent or charm. More often it is an old, unspoken fear that the authentic self — the one that wants to play and be admired — will be judged or dismissed. Seen this way, the house stops being a list of pleasant topics and becomes a growth question: where do you still hold back from being fully yourself, and what would it take to show that self anyway?
 
@@ -20,15 +20,15 @@ This is also why the house tends to split people into two recognisable strategie
 
 ## The 5th House vs Adjacent Concepts: How It Works + Trade-offs
 
-The 5th house is easiest to understand when you set it beside the houses it is most often confused with, because each one handles the question of "self" in a different way. Looking at how each works makes the trade-offs between them visible, and shows why the fifth cannot simply be reduced to fun.
+The fifth house is easiest to understand when you set it beside the houses it is most often confused with, because each one handles the question of "self" in a different way. Looking at how each works makes the trade-offs between them visible, and shows why the fifth cannot simply be reduced to fun.
 
 1. **This house versus the eleventh.** The fifth works in a deeply personal register, pushing you to express your individual spark for its own sake, with no audience required. The opposite [[<TBD-internal-link: spoke page on the 11th house>]] works through groups, friendships, and shared ideals, where the self is one voice among many. To get the undiluted joy of self-expression the fifth offers, you sacrifice the safety of blending into a collective; the eleventh hands you belonging in return, but quietly asks you to soften the very thing that makes you singular.
 2. **This house versus the first.** The first house works as your immediate self-presentation, the instinctive manner you wear at the door before a word is spoken. The fifth works one layer deeper, through what you deliberately choose to create and show once you feel safe enough to play. To keep the instantly recognisable identity the first provides, you sacrifice some spontaneity; to gain the playful authenticity of the fifth, you give up the protection of a fixed, predictable image.
 3. **This house versus the tenth.** The tenth house works through public achievement and reputation — the structured, long climb toward a visible goal. The fifth works through play that has no destination beyond the pleasure of doing it. To build the lasting status the tenth promises, you sacrifice spontaneity and immediacy; to keep the freedom of pure creative play, you give up any guarantee that the effort will amount to something the world rewards.
 
-## How to Read The 5th House in Your Chart
+## How to Read The Fifth House in Your Chart
 
-To read the 5th house in your own chart, start with three things — the sign on its cusp, any planets sitting inside it, and the condition of its ruling planet — then watch how those themes actually surface in daily life rather than only on paper.
+To read the fifth house in your own chart, start with three things — the sign on its cusp, any planets sitting inside it, and the condition of its ruling planet — then watch how those themes actually surface in daily life rather than only on paper.
 
 1. **Find the sign on the cusp.** Its element shows how you create — fire acts boldly, earth builds slowly, air plays with ideas, water creates from feeling.
 2. **Note any planets inside.** A planet here colours your self-expression; Venus leans toward beauty and romance, while Saturn often inhibits play until it feels earned.
@@ -45,7 +45,7 @@ Because surface-level write-ups dominate the search results, this house collects
 3. **Misread: wanting attention here is vanity.** The wish to be admired for what you make is a healthy developmental need, not a flaw, though it can tip into anxious approval-seeking when old fear is running it.
 4. **Misread: a strong placement here guarantees an easy creative life.** Prominent planets raise the stakes rather than the ease — Pluto here, for instance, can bring an intense, almost compulsive creative drive that has to be consciously shaped instead of simply enjoyed.
 
-## The 5th House at a Glance
+## The Fifth House at a Glance
 
 | Property | How It Works | Energy Center | How to Observe |
 | --- | --- | --- | --- |
@@ -54,7 +54,7 @@ Because surface-level write-ups dominate the search results, this house collects
 | Children and play | Carries a playful, generative impulse, literal or creative | Sun / Leo (fire) | You light up around kids, games, or open-ended making |
 | The risk of being seen | Asks you to show the real self and tolerate the response | Sun / Leo (fire) | You feel exposed when sharing work or being admired |
 
-## Questions People Ask About The 5th House
+## Questions People Ask About The Fifth House
 
 **What does the 5th house really mean in astrology?**
 
@@ -85,7 +85,7 @@ Because this part of the chart is exactly where the authentic self steps into op
 
 ## Take Action
 
-[Read the full Astrological Houses guide to place the 5th house within the chart](https://astrologywiki.com/en/wiki/astrology-houses), and map how each of the twelve houses frames a different arena of your life. With that whole-chart view in front of you, you can see exactly where your drive to create and be seen fits among your other needs, pressures, and commitments. From there, self-expression stops feeling like a risk to be managed and quietly becomes a part of yourself you can choose to honour on purpose.
+[Read the full Astrological Houses guide to place the fifth house within the chart](https://astrologywiki.com/en/wiki/astrology-houses), and map how each of the twelve houses frames a different arena of your life. With that whole-chart view in front of you, you can see exactly where your drive to create and be seen fits among your other needs, pressures, and commitments. From there, self-expression stops feeling like a risk to be managed and quietly becomes a part of yourself you can choose to honour on purpose.
 
 ## Sources
 

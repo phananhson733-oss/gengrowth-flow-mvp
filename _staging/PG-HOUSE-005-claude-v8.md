@@ -16,7 +16,7 @@ The 11th house is the sector of a birth chart that governs your relationship to 
 - Holds your social ideals and the future you are quietly working toward
 - Reveals how individual talent gets received, supported, or amplified by a collective
 
-This house sits inside the broader [[<TBD-internal-link: pillar page on the twelve astrological houses>]], which maps how every house connects into one readable wheel.
+This house sits inside the broader framework of the twelve astrological houses, which maps how every house connects into one readable wheel.
 
 ## Why It Matters for Self-Awareness
 
@@ -28,7 +28,7 @@ That question is about alignment rather than popularity, and missing it is where
 2. **The hidden vision.** The real prompt is whether your personal aims connect to a larger purpose, a thread that solo practitioners feel keenly but rarely name.
 3. **The support blind spot.** Many people overlook how a small, aligned group can carry an individual's work further, mistaking real support for mere socializing.
 
-A concrete example makes the stakes visible. Picture a quiet researcher who works mostly alone and assumes this house is dead weight, since they have no large circle to point to; read through the friction above, their three long-time correspondents who trade ideas and open doors are exactly the aligned support this sector describes, and the open-access vision they keep refining is the future this part of the wheel governs. The same correction applies to the founder who networks constantly yet feels strangely unsupported, because contacts collected for advantage are not the mutual, ideal-driven bonds the tradition points to. In both cases the real measure is alignment, not volume. Read this way, building on the depth-psychological lineage Liz Greene and Howard Sasportas helped shape, the house becomes a field of development rather than a verdict on your friend count, and a working grasp of the [[<TBD-internal-link: guide to the 5th house of self-expression>]] sharpens it further, since the two houses form one axis between the individual and the collective.
+A concrete example makes the stakes visible. Picture a quiet researcher who works mostly alone and assumes this house is dead weight, since they have no large circle to point to; read through the friction above, their three long-time correspondents who trade ideas and open doors are exactly the aligned support this sector describes, and the open-access vision they keep refining is the future this part of the wheel governs. The same correction applies to the founder who networks constantly yet feels strangely unsupported, because contacts collected for advantage are not the mutual, ideal-driven bonds the tradition points to. In both cases the real measure is alignment, not volume. Read this way, building on the depth-psychological lineage Liz Greene and Howard Sasportas helped shape, the house becomes a field of development rather than a verdict on your friend count, and a working grasp of the 5th house of self-expression sharpens it further, since the two houses form one axis between the individual and the collective.
 
 ## The 11th House vs Adjacent Concepts: How It Works + Trade-offs
 
@@ -95,7 +95,6 @@ These topics extend the house framework without repeating what is above:
 
 - [[<TBD-internal-link: the 7th house of partnership>]] — clarifies how one-to-one bonds differ from the group alliance this house tracks.
 - [[<TBD-internal-link: Saturn through the houses>]] — unpacks the complex belonging signal Saturn brings to this placement.
-- [[<TBD-internal-link: the 5th house of self-expression>]] — completes the axis, showing how individual creativity becomes collective contribution in the eleventh house.
 
 ## Take Action
 

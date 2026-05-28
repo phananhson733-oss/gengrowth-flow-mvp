@@ -1,30 +1,3 @@
----
-title: Astrology Houses
-slug: astrology-houses
-date: 2026-05-28
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T1
-track: 量产线
-page_id: PG-HOUSE-001
-author_id: "julian-thorne"
-author_display_name: "Julian Thorne"
-target_keyword: astrology houses
-associated_keywords:
-  - what are houses in astrology
-  - house meanings
-  - 8th house meaning
-  - 12th house astrology
-  - 9th house astrology
-  - 11th house
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-05-28T13:10:08.184Z
-content_sha256_short: 4d9f353a2fddbf8c
-phase2_checks: all-pass
----
-
 # 读懂占星宫位，行星和星座才拼得成一句完整的话
 
 ## The Astrological Houses 是什么？

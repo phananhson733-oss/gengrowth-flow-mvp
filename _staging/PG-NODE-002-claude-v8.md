@@ -62,12 +62,12 @@ Most surface-level write-ups flatten the North Node in Scorpio into something ti
 
 ## The Scorpio Node Axis at a Glance
 
-| Property | How It Works | Energy Center | How to Observe |
-|----------|--------------|---------------|----------------|
-| Growth direction | Pulls attention toward depth, intimacy, and honest exchange | Natural 8th-house themes; Scorpio, a Water sign | Notice where you avoid emotional risk, then lean in once |
-| South Node counterweight | Holds the comfort of stability, patience, and ownership | Natural 2nd-house themes; Taurus, an Earth sign | Catch the moment you reach for control when unsettled |
-| Emotional register | Asks for sustained feeling rather than quick reassurance | Water element, traditionally ruled by Mars, modern Pluto | Track whether you process a feeling or manage it away |
-| Core resistance | Treats change as loss until it is practiced on purpose | The Taurus-Scorpio polarity as a whole | Watch for holding a routine or item past its usefulness |
+| Property | How It Works | Chart Axis | How to Observe |
+|----------|--------------|------------|----------------|
+| Growth direction | Pulls attention toward depth, intimacy, and honest exchange | North Node in Scorpio, the 2nd-8th house growth pole | Notice where you avoid emotional risk, then lean in once |
+| South Node counterweight | Holds the comfort of stability, patience, and ownership | South Node in Taurus, the opposite anchor point | Catch the moment you reach for control when unsettled |
+| Emotional register | Asks for sustained feeling rather than quick reassurance | Scorpio half of the nodal axis, ruled by Mars and Pluto | Track whether you process a feeling or manage it away |
+| Core resistance | Treats change as loss until it is practiced on purpose | The full Taurus-Scorpio nodal polarity | Watch for holding a routine or item past its usefulness |
 
 ## Questions People Ask About the Scorpio Node
 

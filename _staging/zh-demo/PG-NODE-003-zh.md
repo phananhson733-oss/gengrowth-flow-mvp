@@ -19,8 +19,8 @@ associated_keywords:
   - what does a north node in taurus mean
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-28T15:52:34.206Z
-content_sha256_short: 96bea349a26b765c
+generated_at: 2026-05-28T16:19:13.582Z
+content_sha256_short: 07c91430f20f4c2a
 phase2_checks: all-pass
 ---
 
@@ -78,7 +78,7 @@ phase2_checks: all-pass
 | 舒适旧习 | 压力一来回到天蝎座的强烈与掌控 | 南交点落在正对面的天蝎座 | 注意遇事时你是否第一时间想深挖、对抗、翻盘 |
 | 交点轴整体 | 两端来回拉扯，求平衡而非偏废一边 | 横跨金牛—天蝎的一整条轴 | 回看近期成长，多发生在你顶着不安往安稳挪的时候 |
 
-## 关于North Node in Taurus的常见问题
+## 关于 North Node in Taurus 的常见问题
 
 **金牛座北交点代表什么样的人生功课？**
 
@@ -106,6 +106,7 @@ phase2_checks: all-pass
 
 - [[<TBD-internal-link: 天蝎座南交点解读与运用指南>]] — 想把轴另一端讲透，看清你熟悉的危机感到底怎么用而不是怎么丢，可以从这篇入手。
 - [[<TBD-internal-link: 北交点各星座落点对照说明>]] — 把金牛座这一落点放回十二星座一起看，比较各方向的成长功课有何不同。
+- [[<TBD-internal-link: 交点落入十二宫位的领域解读>]] — 想知道这条金牛—天蝎轴具体落在生活哪个领域发力，可以从宫位这一层切进去看。
 
 ## 下一步行动
 

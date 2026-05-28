@@ -58,9 +58,11 @@ const STRUCTURE_FIX_RULES = Object.freeze([
   [/table or bullet/i, 'Definition 至少需要 1 个 markdown 表格或 bullet 列表来组织信息。'],
   [/CTA anchor/i, '确保结尾 CTA 段落包含指定的 cta 文案或目标链接（或一个 `## CTA` 小节）。'],
   [/disclaimer/i, '补回 psych-safety disclaimer 行："This is not a clinical interpretation or mental health advice."'],
-  // v4.5 移动端优先段落密度（SC3）。
+  // v4.5.1 移动端优先排版：H2 小节是阅读单位（SC3c 反散 + SC3 反墙）。
+  [/SC3c|section scatter|段落散开/i,
+    '这个 H2 小节被空行拆成了太多零散短段，观感很"散"。改成「引子 + 编号列表」：先用一段引子句点题，再把各子要点收进 `1. **加粗标签。** 说明` 的编号列表里，由列表项承载分点，而不是用空行把正文切成 4+ 个独立短段。若本就是一个意思，就合并成一段连贯段落（4-6 句也没问题）。不要改动表格与已通过的小节。'],
   [/SC3|段落过长|paragraph too long|≤\s*4\s*行|wall of text/i,
-    '把过长的 prose 段落拆成短段：每段 2-3 句、英文 ≤~60 词 / 中文 ≤~120 字，一个想法讲完就断段；多点 / 多维内容（多组对比、多条要点）改写成 `1. 2. 3.` 编号列表来视觉切分。段间用空行分隔。不要改动表格与已通过的小节结构。'],
+    '只有真正的"文字墙"才要拆（单段 >7 句 / 英文 >180 词 / 中文 >430 字）。拆法不是切成零散短段，而是「引子 + 编号列表」：引子句点题，子要点进 `1. **标签。** 说明` 编号列表；或保留为一段更紧凑的连贯段落。不要把一段切成多个空行隔开的短段（那会触发 SC3c）。'],
   // 清单 v4.0 §2 Link Master — 内链分布 / 首链优先权（SC4）。
   [/SC4|内链.*分布|link distribution|首链优先/i,
     '内链不要全堆在结尾 Related Reading / 延伸阅读：至少把 1 条 pillar / spoke 内链自然内联织进正文前段的句子里（首链优先权），中段再内联 1 条，其余链接才留在延伸阅读小节。保持 `[[<TBD-internal-link: ...>]]` 占位格式。'],

@@ -14,6 +14,7 @@ import {
   checkBoldedDefinition,
   checkInternalLinkTier,
   checkParagraphLength,
+  checkSectionScatter,
   checkLinkDistribution,
   checkParagraphFragmentation,
 } from '../lib/structure-checks.mjs';
@@ -164,8 +165,10 @@ test('SC2: only counts TBD-format links, ignores invented anchors', () => {
 });
 
 // ============================================================
-// SC3 — prose paragraph rhythm (FAIL): 4-5 sentences/paragraph, ~20% tolerance
-// (sentence boundary = . ! ? 。！？; FAIL above 7 句 or the word/char backstop)
+// SC3 — anti-wall prose paragraph length (FAIL). v4.5.1: the reading unit is the
+// H2 SECTION (see SC3c), so SC3 only catches a genuine wall — a single prose
+// paragraph past 7 句 / 180 words / 430 字. A coherent 4-6 句 paragraph passes.
+// (sentence boundary = . ! ? 。！？)
 // ============================================================
 
 const enWords = (n) => Array.from({ length: n }, (_, i) => `word${i}`).join(' ');
@@ -195,8 +198,14 @@ How it works is simple. Two short sentences only.`;
   assert.equal(r.pass, true, r.note);
 });
 
-test('SC3: a 5-sentence EN paragraph → FAIL (over the v4.5 4 句 ceiling)', () => {
-  const draft = `# X\n\n## What is X?\n\n${enSentences(5)}`;
+test('SC3: a coherent 6-sentence EN paragraph → PASS (v4.5.1 — under the 7 句 wall)', () => {
+  const draft = `# X\n\n## What is X?\n\n${enSentences(6)}`;
+  const r = checkParagraphLength(draft);
+  assert.equal(r.pass, true, r.note);
+});
+
+test('SC3: an 8-sentence EN paragraph → FAIL (wall, over 7 句)', () => {
+  const draft = `# X\n\n## What is X?\n\n${enSentences(8)}`;
   const r = checkParagraphLength(draft);
   assert.equal(r.pass, false);
   assert.equal(typeof r.violations[0].line, 'number');
@@ -278,6 +287,75 @@ test('SC3b: too few paragraphs to judge → PASS (no opinion)', () => {
   const r = checkParagraphFragmentation(draft);
   assert.equal(r.pass, true);
   assert.ok(/too few/.test(r.note), r.note);
+});
+
+// ============================================================
+// SC3c — section scatter (FAIL): one H2 must not hold > 3 prose paragraphs
+// ============================================================
+
+test('SC3c: severity is fail', () => {
+  const r = checkSectionScatter('# X\n\n## What is X?\n\nOne coherent paragraph.');
+  assert.equal(r.severity, 'fail');
+});
+
+test('SC3c: a section chopped into 4 prose paragraphs → FAIL (scattered)', () => {
+  const draft = `# X
+
+## Why It Matters
+
+First short paragraph about the topic at hand.
+
+Second short paragraph split off by a blank line.
+
+Third short paragraph that keeps the scatter going.
+
+Fourth short paragraph tips it over the limit.`;
+  const r = checkSectionScatter(draft);
+  assert.equal(r.pass, false);
+  assert.equal(r.violations[0].line, 3);
+  assert.ok(/段落散开|scatter/i.test(r.violations[0].hint), r.violations[0].hint);
+});
+
+test('SC3c: lead-in paragraph + numbered list + closing → PASS (approved v4.5 shape)', () => {
+  const draft = `# X
+
+## Why It Matters
+
+Here is the lead-in paragraph that frames the three points below.
+
+1. **First point.** Detail carried inside the list item, not a loose paragraph.
+2. **Second point.** Another detail in the list.
+3. **Third point.** A final detail in the list.
+
+And here is a single closing paragraph that wraps the section up.`;
+  const r = checkSectionScatter(draft);
+  assert.equal(r.pass, true, r.note);
+});
+
+test('SC3c: one coherent paragraph per section → PASS', () => {
+  const draft = `# X\n\n## What is X?\n\nOne coherent paragraph here.\n\n## Why It Matters\n\nAnother single coherent paragraph here.`;
+  const r = checkSectionScatter(draft);
+  assert.equal(r.pass, true, r.note);
+});
+
+test('SC3c: short-by-design sections (FAQ) with scattered answers are excluded', () => {
+  const draft = `# X
+
+## Frequently Asked Questions
+
+**Q one?**
+
+Answer one.
+
+**Q two?**
+
+Answer two.
+
+**Q three?**
+
+Answer three.`;
+  const r = checkSectionScatter(draft);
+  assert.equal(r.pass, true, r.note);
 });
 
 // ============================================================

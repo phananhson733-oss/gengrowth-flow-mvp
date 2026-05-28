@@ -191,14 +191,18 @@ target_keyword = **「{{target_keyword}}」**。**SEO + RL4 binary check** 要�
 
 **self-check（提交前默念）**：grep 全文「{{target_keyword}}」完整短语出现次数，分布在多少 H2 sections？< 5 sections 就重写。
 
-## 段落密度 + GEO 排版硬要求（v4.5 移动端优先；任一违反 = 重写该段）
+## 段落与排版硬要求（v4.5 移动端优先 — 引子 + 编号列表；任一违反 = 重写该段）
 
 > Instruction only; **do not** output this as an article section.
 
-- **每个 prose 段落 2-3 句、≤ ~60 词**：一个想法讲完就断段，超过 ~60 词或超过 3 句就拆成两段。目标是移动端一段约 3-4 行、一眼能扫完。要消灭的核心问题是 **wall of text**（4-5+ 句、满屏密集文字——SEO 不违规，但伤跳出率/停留时间，GEO 抓取也难定位要点）。
-- **多点 / 多维内容用编号列表或短 bullet 切分**（如「How Shade and Combination Shift Readings」的多组对比、「Common Misreads + Framework Limits」的多条误读），别挤进一个长段；同时避免每句一段的过度碎片化。
-- 表格行 / 列表项 / 标题 / 引用块不算 prose 段；表格 / 编号列表标题后第一个非空行**仍必须直接是表格 / `1.` 项**，不要加 prose 引言段。
-- **Phase 2 SC3 binary check 逐段数句子/词数**：任一 prose 段 > 4 句 或 > ~75 词 = 整篇 fail。
+观感目标：每个 H2 section 下，内容要么是**连贯段落**，要么是**编号列表 / 带标识的模块** —— **绝不**用空行把内容切成一堆零散短段（那样读起来很"散"，移动端尤其难受；这是本版本要消灭的核心问题）。
+
+- **多要点 / 多模块 → 编号列表（首选）**：只要一个 section 有 2 个以上并列要点（如「How Shade and Combination Shift Readings」的多组对比、「Common Misreads + Framework Limits」的多条误读），就**先 1 句引子带出，再写 `1. **Bold label.** one-line explanation` 的编号列表**（每项 1-2 句），而不是 N 个空行分隔的短段。
+- **单一连贯叙事 → 1 个完整段落**：围绕一个意思 **3-5 句连贯展开**，**不要**每 1-2 句就空行断段。一个 section 下最多 1-2 个这样的完整段落。
+- **结构硬规则不被覆盖**：表格行 / 列表项 / 标题 / 引用块不算 prose 段；表格 / 编号列表标题后第一个非空行**仍必须直接是表格 / `1.` 项**，不要加 prose 引言段。英文正文里 **禁用 "mechanism" 一词**（RL13 硬门禁），用 "how it works" 表达。
+- ❌ 错误 A（scatter，正是要消除的）：一个 section 下 5-7 个空行分隔的 1-2 句短段，读起来很散。
+- ❌ 错误 B（wall）：一段 8+ 句、180+ 词从概念一路讲到例子，手机满屏。
+- **Phase 2 binary check**：SC3 — 任一 prose 段 > 7 句 或 > 180 词 = fail（wall）；SC3c — 任一 H2 section 下 ≥ 4 个空行分隔的 prose 短段 = fail（scatter，改成「引子 + 编号列表」或合并成连贯段落）。
 
 ## 外部数据源（RAG，引用时只许 paraphrase）
 

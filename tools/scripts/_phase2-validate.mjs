@@ -53,6 +53,7 @@ import {
   checkBoldedDefinition,
   checkInternalLinkTier,
   checkParagraphLength,
+  checkSectionScatter,
   checkLinkDistribution,
   checkFaqSection,
   checkH1ValueProp,
@@ -507,6 +508,14 @@ function structureCheck(draft) {
   if (!paraLen.pass) {
     findings.push(`SC3 paragraph length: ${paraLen.note}`);
     paraLen.violations.forEach((v) => findings.push(`  L${v.line}: ${v.hint}`));
+  }
+
+  // SC3c — section scatter (FAIL, both langs; v4.5.1 — 一个 H2 下不得散成 4+ 短段).
+  // The reading unit is the H2 section: one coherent paragraph, or 引子 + 编号列表.
+  const scatter = checkSectionScatter(draft);
+  if (!scatter.pass) {
+    findings.push(`SC3c section scatter: ${scatter.note}`);
+    scatter.violations.forEach((v) => findings.push(`  L${v.line}: ${v.hint}`));
   }
 
   // SC4 — internal-link distribution (FAIL, both langs; 清单 §2 首链优先权).

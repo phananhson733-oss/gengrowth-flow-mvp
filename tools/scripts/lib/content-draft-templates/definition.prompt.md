@@ -208,35 +208,29 @@ capsule 用于决定**怎么解释**（措辞、对比角度、例子选择、�
      - Anodea Judith — systematized the modern chakra framework this color mapping draws on
      ```
 
-## 段落原子化 + GEO 排版硬要求（对齐创作清单 v4.0 §3 Atomic GEO Layout；任一违反 = 重写该段）
+## 段落与排版硬要求（v4.5 移动端优先 — 引子 + 编号列表；任一违反 = 重写该段）
 
 > Instruction only; **do not** output this as an article section.
 
-一个 prose **段落 = 一个小意思单元，2-3 个句子、≤ ~60 词**（句子以句号 `.` 为界）。目标是**移动端优先**：一段在手机上约 3-4 行、一眼能扫完。本版本要消灭的核心问题是 **wall of text**（4-5+ 句、满屏密集文字——SEO 不违规，但伤跳出率/停留时间，GEO 抓取也难定位要点）；同时避免另一极端 **过度碎片化**（半句一段、连续空行满页留白）。
+观感目标：每个 H2 section 下，内容要么是**连贯段落**，要么是**编号列表 / 带标识的模块** —— **绝不**用空行把内容切成一堆零散短段（那样读起来很"散"，移动端尤其难受；这是本版本要消灭的核心问题）。
 
-- **每个 prose 段落 2-3 句、≤ ~60 词**：一个想法讲完就断段，超过 ~60 词或超过 3 句就拆成两段。表格行 / 列表项 / 标题 / 引用块不算 prose 段。
-- **多点 / 多维内容用编号列表或短 bullet 切分**，别塞进一个长段：如「vs Adjacent Concepts」的多组对比、「Why It Matters」的多个痛点，写成 `1. 2. 3.`（每项 1-2 句）比挤成长段更易读、也更易被 AI Overview 引用。
-- **本规则只管 prose 段落，绝不覆盖上面的结构硬规则**：「Quick Reference Table」标题后第一个非空行**仍必须直接是表格**、「Reflection Prompts」标题后第一个非空行**仍必须直接是 `1.` 编号项** —— 不要为了排版在表格或编号列表前加任何 prose 引言段。
-- 「**事实 → 怎么作用 → 例子**」用 1-2 个短段或编号列表呈现，不要挤成一个 4-5 句长段，也不要碎成每句一段。英文正文里 **禁用 "mechanism" 一词**（RL13 硬门禁），用 "how it works" 表达。
-- ❌ 错误 A（wall，正是要消除的）：一段 5 句、~140 词从定义一路讲到例子，手机上满屏密集字。
-- ❌ 错误 B（碎片，正是要避免的）：
+- **多要点 / 多模块 → 编号列表（首选）**：只要一个 section 有 2 个以上并列要点（多组对比、多条信号、多个误读、多个痛点），就**先 1 句引子带出，再写 `1. **加粗标签。** 一句说明` 的编号列表**（每项 1-2 句），而不是 N 个空行分隔的短段。
+- **单一连贯叙事 → 1 个完整段落**：围绕一个意思 **3-5 句连贯展开**（一个完整意思单元），**不要**每 1-2 句就空行断段。一个 section 下最多 1-2 个这样的完整段落。
+- **结构硬规则不被覆盖**：表格行 / 列表项 / 标题 / 引用块不算 prose 段；「Quick Reference Table」标题后第一个非空行**仍必须直接是表格**、「Reflection Prompts」标题后第一个非空行**仍必须直接是 `1.` 编号项**。
+- 「**事实 → 怎么作用 → 例子**」融进 1 个连贯段落或编号列表，**不要**碎成每句一段。英文正文里 **禁用 "mechanism" 一词**（RL13 硬门禁），用 "how it works" 表达。
+- ❌ 错误 A（scatter，正是要消除的）：一个 section 下 5-7 个空行分隔的 2 句短段，读起来很散（就是这种）。
+- ❌ 错误 B（wall）：一段 6+ 句、140 词从定义一路讲到例子，手机满屏。
+- ✅ 正确（引子 + 编号列表）：
   ```
-  Blue aura reads as a calm, communication-led energy.
+  Understanding orange aura meaning matters because the write-ups pull readers two opposite ways, and most people can't tell which fits. The confusion shows up in a few ways:
 
-  How it works is throat-center emphasis.
-
-  In practice, someone with this read often pauses before speaking.
+  1. **The two-camp split.** One side says overflowing creativity; the other, drained from overgiving — with no way to tell which applies today.
+  2. **The worry underneath.** Searchers aren't confused about the color; they fear their warmth has tipped into depletion.
+  3. **The mislabels that sting.** The artist reduced to sensuality; the burnt-out reader told orange means boundless energy.
   ```
-  （每段 1 句、连续空行 = 满页留白）
-- ✅ 正确（2-3 句一段，必要时编号列表）：
-  ```
-  Most orange-aura write-ups pull you two ways at once: one says you're overflowing with creativity, another says you're burning out from overgiving. Most people land in between with no way to tell which applies.
+- **Phase 2 binary check**：SC3 — 任一 prose 段 > 7 句 或 > 180 词 = fail（wall）；SC3c — 任一 H2 section 下 ≥ 4 个空行分隔的 prose 短段 = fail（scatter，改成「引子 + 编号列表」或合并成连贯段落）。
 
-  After years reading aura color, I've found searchers aren't confused about the color — they're quietly worried their warmth has tipped into overgiving. That gap is where a useful reading begins.
-  ```
-- **Phase 2 SC3 binary check 逐段数句子/词数**：任一 prose 段 > 4 句 或 > ~75 词 = 整篇 fail。
-
-**self-check（提交前默念）**：逐段数——每个 prose 段是不是 ≤3 句、≤ ~60 词？有没有该拆成两段、或转成编号列表的多点长段？Section 1（What is X）控制在 ~120 词、拆成 2 个短段。
+**self-check（提交前默念）**：每个 H2 section 是不是「连贯段落」或「引子 + 编号列表」？有没有哪个 section 被切成 4+ 个空行分隔的零散短段？有就改成编号列表或合并。
 
 ## 内链分布硬要求（对齐创作清单 v4.0 §2 Link Master 链接母版；任一违反 = 整篇作废）
 

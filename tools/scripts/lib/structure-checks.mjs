@@ -196,12 +196,13 @@ export function checkInternalLinkTier(draft, ctx = {}) {
 // blockquotes and fenced code never count (they have their own rules).
 // ============================================================
 
-// v4.5 (user, 2026-05-28): density flipped mobile-first. Paragraph target is now
-// 2-3 sentences / ≤~60 words; FAIL thresholds sit just above so natural variation
-// never FAILs — only genuine walls of dense text (the mobile readability problem).
-const SC3_MAX_SENTENCES = 4;  // prose paragraph target 2-3 sentences; FAIL above 4 (wall)
-const SC3_EN_WORD_MAX = 75;   // target ≤60 EN words; FAIL above 75 (run-on wall)
-const SC3_CJK_CHAR_MAX = 170; // ZH target ~120 chars; FAIL above 170 (run-on wall)
+// v4.5.1 (user, 2026-05-28): the unit is the SECTION, not the sentence. A coherent
+// paragraph (up to ~6-7 sentences) reads fine; chopping into 2-sentence stubs reads
+// "scattered" (user's word). So SC3 anti-wall stays LENIENT (only genuine run-on
+// walls fail); the real lever is checkSectionScatter (paragraph COUNT per H2).
+const SC3_MAX_SENTENCES = 7;  // FAIL above 7 (genuine wall); a coherent 4-6 句 paragraph is fine
+const SC3_EN_WORD_MAX = 180;  // FAIL above 180 (run-on wall); the intro definition (~120-160) is OK
+const SC3_CJK_CHAR_MAX = 430; // FAIL above 430 (run-on wall)
 
 // Sentence boundary = terminal punctuation (EN . ! ?  /  ZH 。！？). Minor
 // over-count on abbreviations/decimals ("e.g.", "3.5") is absorbed by the >6
@@ -271,19 +272,19 @@ export function checkParagraphLength(draft) {
       violations.push({
         line: p.startLine,
         text: `${m.size} ${m.metric} — "${p.text.slice(0, 48)}…"`,
-        hint: `prose paragraph too long (${m.size} ${m.metric} > ${m.max}); 每段 2-3 句、≤~60 词，超过就拆成两段或转编号列表 (v4.5 移动端优先)`,
+        hint: `prose paragraph wall (${m.size} ${m.metric} > ${m.max}); 把多要点改成「引子 + 编号列表」，或拆成连贯短段 (v4.5.1)`,
       });
     }
   }
   if (violations.length === 0) {
-    return { id, severity, pass: true, violations: [], note: `${paras.length} prose paragraph(s), all within 2-3 句 / ≤~60 词` };
+    return { id, severity, pass: true, violations: [], note: `${paras.length} prose paragraph(s), no wall` };
   }
   return {
     id,
     severity,
     pass: false,
     violations,
-    note: `${violations.length} prose paragraph(s) over 2-3 句 / 长度上限`,
+    note: `${violations.length} prose paragraph(s) over wall limit`,
   };
 }
 
@@ -361,6 +362,74 @@ export function checkParagraphFragmentation(draft) {
     };
   }
   return { id, severity, pass: true, violations: [], note: `median ${median} 句/段 across ${paras.length} paragraphs — OK` };
+}
+
+// ============================================================
+// SC3c — Section scatter (FAIL, both langs).
+//
+// v4.5.1 (user, 2026-05-28): the reading unit is the H2 SECTION, not the
+// sentence. "段落应该是 H2 标题；如果下面段落中需要分模块，用标识或编号标出来，
+// 而不是换行看起来非常散". What the user rejected was an H2 chopped into 4+ short
+// prose paragraphs split by blank lines — visually "scattered". So each narrative
+// H2 should read as ONE coherent paragraph, OR a lead-in paragraph + a numbered/
+// bulleted list (the list items carry the sub-points). We FAIL a narrative H2
+// whose body holds more than SC3C_MAX_SECTION_PARAS separate PROSE paragraph
+// blocks. List items, table rows, blockquotes and headings are NOT prose blocks,
+// so the approved "引子 + 编号列表" shape counts as 1-2 blocks and passes.
+// Short-by-design sections (FAQ, Sources, CTA…) are excluded via the SC3b set.
+// ============================================================
+const SC3C_MAX_SECTION_PARAS = 3; // > 3 separate prose paragraphs under one H2 = scattered
+
+// Count separate prose paragraph blocks per H2 section. A block is a run of
+// consecutive prose lines bounded by blank/structural lines. Returns one entry
+// per NON-excluded H2 section: { heading, startLine, paraCount }. Content before
+// the first H2 (the H1 title) is ignored; H3+ headings only break the run.
+function sectionProseBlocks(lines) {
+  const sections = [];
+  let inFence = false;
+  let cur = null;     // { heading, startLine, paraCount, excluded }
+  let inPara = false; // currently inside a prose block
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (/^```/.test(line) || /^~~~/.test(line)) { inFence = !inFence; inPara = false; continue; }
+    if (inFence) { inPara = false; continue; }
+    if (/^##\s/.test(line)) { // H2 opens a new section
+      if (cur && !cur.excluded) sections.push(cur);
+      cur = { heading: line.replace(/^#+\s*/, ''), startLine: i + 1, paraCount: 0, excluded: SC3B_EXCLUDED_HEADING.test(line) };
+      inPara = false;
+      continue;
+    }
+    if (/^#{1,6}\s/.test(line)) { inPara = false; continue; } // H1 / H3+ — break run, no new section
+    const isStructural =
+      line === '' || /^\|/.test(line) || /^>/.test(line) || /^(\d+[.)]|[-*+])\s/.test(line);
+    if (isStructural) { inPara = false; continue; }
+    if (!inPara) { if (cur) cur.paraCount += 1; inPara = true; } // start of a new prose block
+  }
+  if (cur && !cur.excluded) sections.push(cur);
+  return sections;
+}
+
+export function checkSectionScatter(draft) {
+  const id = 'sc3c_section_scatter';
+  const severity = 'fail';
+  if (typeof draft !== 'string' || !draft) {
+    return { id, severity, pass: true, violations: [], note: 'empty draft — skipped' };
+  }
+  const sections = sectionProseBlocks(draft.split('\n'));
+  const violations = [];
+  for (const s of sections) {
+    if (s.paraCount > SC3C_MAX_SECTION_PARAS) {
+      violations.push({
+        line: s.startLine,
+        text: `"${s.heading}" 下有 ${s.paraCount} 段散开的 prose 段落`,
+        hint: `H2 section 段落散开 (${s.paraCount} > ${SC3C_MAX_SECTION_PARAS}); 改成「引子 + 编号列表」，把子要点收进编号项而不是用空行散成多段 (v4.5.1)`,
+      });
+    }
+  }
+  if (violations.length === 0) {
+    return { id, severity, pass: true, violations: [], note: `${sections.length} narrative section(s), none scattered` };
+  }
+  return { id, severity, pass: false, violations, note: `${violations.length} section(s) with >${SC3C_MAX_SECTION_PARAS} scattered prose paragraphs` };
 }
 
 // ============================================================

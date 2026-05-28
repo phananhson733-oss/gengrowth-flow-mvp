@@ -24,7 +24,7 @@ In my years reading auras and energy centers, the people who get the most from a
 A chakra test differs from the tools it gets confused with most, and knowing how each one works keeps you from over-trusting any single result:
 
 1. **Versus a personality quiz.** A quiz sorts you into a stable type meant to hold for years; a chakra reading works from your present state, so it shifts as your life shifts. To get that here-and-now sensitivity, you sacrifice the comforting permanence of a fixed type.
-2. **Versus a clinical assessment.** A medical or psychological evaluation is built to diagnose a condition; a chakra reading only names a theme worth noticing. Choosing the chakra lens gets you a gentle, self-directed prompt, but you lose any claim to medical accuracy — a flagged center is never a substitute for care from a qualified professional.
+2. **Versus a clinical assessment.** A medical or psychological evaluation is built to assess and name a condition with professional rigor; a chakra reading only points to a theme worth noticing. Choosing the chakra lens gets you a gentle, self-directed prompt, but you lose any claim to medical accuracy — a flagged center is never a substitute for care from a qualified professional.
 3. **Versus aura color work.** Both read energy, but color speaks to the field around you while the centers speak to specific life domains. Lean on color and you get a broad mood read; lean on the centers and you trade that breadth for domain-by-domain detail.
 4. **Versus a mood tracker.** A tracker logs how you felt; a chakra reading tries to connect that feeling to a life area. You gain a sense of meaning and pattern, but you give up the tracker's plain, measurable simplicity.
 

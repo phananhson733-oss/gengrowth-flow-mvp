@@ -1,3 +1,29 @@
+---
+title: Vedic Birth Chart Calculator
+slug: vedic-birth-chart-calculator
+date: 2026-05-28
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-VEDIC-002
+author_id: "aditi-sharma"
+author_display_name: "Aditi Sharma"
+target_keyword: vedic birth chart calculator
+associated_keywords:
+  - best vedic birth chart calculator
+  - vedic birth chart calculator online free
+  - vedic astrology birth chart
+  - sidereal birth chart calculator
+  - free vedic birth chart with interpretation
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-05-28T20:07:59.197Z
+content_sha256_short: 88aa773b8d11516d
+phase2_checks: all-pass
+---
+
 # 排出吠陀星盘之后，最该先读懂的几个配置
 
 ## Vedic Birth Chart 是什么？

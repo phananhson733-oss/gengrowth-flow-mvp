@@ -1,3 +1,28 @@
+---
+title: Vedic Vs Western Astrology
+slug: Vedic-vs-Western-Astrology
+date: 2026-05-28
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-VEDIC-001
+author_id: "aditi-sharma"
+author_display_name: "Aditi Sharma"
+target_keyword: Vedic vs Western Astrology
+associated_keywords:
+  - sidereal vs tropical
+  - jyotish vs western astrology
+  - vedic astrology vs western
+  - sidereal zodiac
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-05-28T20:08:06.215Z
+content_sha256_short: 9dbbd068ecce1ab7
+phase2_checks: all-pass
+---
+
 # Why Vedic vs Western Astrology Gives You Two Different Signs
 
 ## What is Vedic Astrology?

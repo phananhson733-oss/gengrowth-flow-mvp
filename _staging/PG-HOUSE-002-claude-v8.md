@@ -1,26 +1,3 @@
----
-title: 8th House Meaning
-slug: 8th-house-meaning
-date: 2026-05-28
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T2
-track: 量产线
-page_id: PG-HOUSE-002
-author_id: "julian-thorne"
-author_display_name: "Julian Thorne"
-target_keyword: 8th house meaning
-associated_keywords:
-  - what does the 8th house represent
-  - 8th house
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-05-28T13:09:19.146Z
-content_sha256_short: 2b29d42607d319fe
-phase2_checks: all-pass
----
-
 # The 8th House Meaning Your Ascendant Can't See
 
 ## What is The 8th House?

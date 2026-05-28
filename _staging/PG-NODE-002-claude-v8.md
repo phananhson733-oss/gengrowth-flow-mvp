@@ -32,7 +32,7 @@ Held together, these comparisons turn an abstract polarity into a daily choice y
 
 ## How to Read North Node in Scorpio in Yourself
 
-Reading this placement in yourself starts with watching for the small, repeatable moments where the pull toward safety overrides the pull toward depth. The signals tend to be ordinary rather than dramatic, which is exactly why they are easy to miss:
+Reading the Scorpio node in yourself starts with watching for the small, repeatable moments where the pull toward safety overrides the pull toward depth. The signals tend to be ordinary rather than dramatic, which is exactly why they are easy to miss:
 
 1. **You guard resources tightly.** Notice when you protect money, time, or possessions so carefully that nothing new can ever be risked.
 2. **Calm feels like the only safe option.** Watch for treating any uncertainty as a problem to manage rather than a feeling to stay with.
@@ -60,7 +60,7 @@ Most surface-level write-ups flatten the North Node in Scorpio into something ti
 
 ## Questions People Ask About the Scorpio Node
 
-**What does this placement mean in simple terms?**
+**What does the Scorpio node mean in simple terms?**
 
 It points to a growth direction toward emotional depth, intimacy, and shared resources rather than surface comfort. The placement describes where you are still learning to stretch, not a trait you already display with ease.
 

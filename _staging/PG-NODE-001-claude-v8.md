@@ -16,7 +16,7 @@ Understanding North Node vs South Node matters because students often struggle t
 2. **The overcorrection trap.** Hearing that the South Node must be "released," people try to amputate a genuine talent instead of rebalancing it.
 3. **The fatalism worry.** Searchers fear the nodes describe a fixed destiny rather than a direction they can actually work with day to day.
 
-In my years integrating psychological frameworks with chart consultation, the most common reason a reading lands is that it answers this trust problem first: it treats the contradiction itself as information rather than pretending the disagreement does not exist. A reader who already over-relies on a South Node strength does not need to be told the strength is wrong; they need to see where the same skill, used past its point of usefulness, quietly costs them. Framed that way, the axis stops being a verdict about character and becomes a working question about balance, which is far easier to trust than a flat declaration of fate.
+In my years integrating psychological frameworks with chart consultation, the most common reason a reading lands is that it answers this trust problem first: it treats the contradiction itself as information rather than pretending the disagreement does not exist. The growth-centered approach that Howard Sasportas and Liz Greene helped establish is useful here precisely because it reads the axis as development rather than decree. A reader who already over-relies on a South Node strength does not need to be told the strength is wrong; they need to see where the same skill, used past its point of usefulness, quietly costs them. Framed that way, the axis stops being a verdict about character and becomes a working question about balance, which is far easier to trust than a flat declaration of fate.
 
 ## North Node vs South Node vs Adjacent Concepts: How It Works + Trade-offs
 
@@ -42,7 +42,7 @@ None of these signals is meant to be read once and filed away. The point of obse
 
 ## Common Misreadings
 
-Most popular write-ups flatten North Node vs South Node into slogans, and those shortcuts are exactly what trip up the readers who come looking for clarity. The modern internet leans almost entirely on a tidy "soul purpose" story, which sounds reassuring but skips the historical skepticism and the technical debates that make a careful reading possible. Each misreading has a more accurate version underneath it:
+Most popular write-ups flatten the North Node and South Node into slogans, and those shortcuts are exactly what trip up the readers who come looking for clarity. The modern internet leans almost entirely on a tidy "soul purpose" story, which sounds reassuring but skips the historical skepticism and the technical debates that make a careful reading possible. Each misreading has a more accurate version underneath it:
 
 1. **"Reject your South Node."** Misread: the past is a flaw to discard. Actual: the South Node is a real talent to keep using consciously, not abandon.
 2. **"The North Node is your destiny."** Misread: a fixed fate handed to you. Actual: it is a direction that tends to feel meaningful once practiced, never a promised outcome.

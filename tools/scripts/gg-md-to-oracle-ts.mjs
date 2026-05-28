@@ -147,6 +147,7 @@ export function deriveDescription(body, maxLen = 160) {
     .replace(/\*([^*]+)\*/g, '$1')
     .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
     .replace(/\[\[<TBD-internal-link:\s*([^>]+)>\]\]/g, '$1')
+    .replace(/\[\[<\s*TBD-external-link:[^|>]*\|\s*([^|>]+?)\s*\|[^>]*>\]\]/g, '$1')
     .replace(/\s+/g, ' ')
     .trim();
   if (cleaned.length > maxLen) {
@@ -224,6 +225,21 @@ export function resolveTbdLink(description, lang = 'en') {
   return `*${d}*`;
 }
 
+// Resolve `[[<TBD-external-link: Service | Topic | desc>]]` to a real link.
+// Only Wikipedia is recognized (the sole external source the content cites); the
+// Topic field becomes the article slug and lang picks the en/zh.wikipedia.org
+// host. An unknown service falls through to an italic flag (no fabricated URL),
+// mirroring resolveTbdLink's unmatched behavior.
+export function resolveExternalTbdLink(service, topic, lang = 'en') {
+  const t = topic.trim();
+  if (!/wikipedia|维基百科/i.test(service)) return `*${t}*`;
+  const isZh = lang === 'zh' || /[一-鿿]/.test(t);
+  const host = isZh ? 'zh.wikipedia.org' : 'en.wikipedia.org';
+  const url = `https://${host}/wiki/${encodeURI(t.replace(/ /g, '_'))}`;
+  const label = isZh ? `${t}（维基百科）` : `${t} (Wikipedia)`;
+  return `[${label}](${url})`;
+}
+
 // Auto-link bare http(s) URLs to markdown link form, but skip ones already
 // inside a markdown link target (`](https://...)`) or angle-bracket autolink
 // (`<https://...>`). Trailing punctuation `.,;:!?` is excluded from link.
@@ -240,6 +256,10 @@ export function transformBody(body, lang = 'en') {
   out = out.replace(
     /\[\[<TBD-internal-link:\s*([^>]+)>\]\]/g,
     (_m, desc) => resolveTbdLink(desc, lang),
+  );
+  out = out.replace(
+    /\[\[<\s*TBD-external-link:\s*([^|>]+?)\s*\|\s*([^|>]+?)\s*\|\s*[^>]*?>\]\]/g,
+    (_m, service, topic) => resolveExternalTbdLink(service, topic, lang),
   );
   out = autoLinkBareUrls(out);
   out = out.trimEnd();

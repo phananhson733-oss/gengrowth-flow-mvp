@@ -1,26 +1,3 @@
----
-title: 9th House Astrology
-slug: 9th-house-astrology
-date: 2026-05-28
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T2
-track: 量产线
-page_id: PG-HOUSE-004
-author_id: "julian-thorne"
-author_display_name: "Julian Thorne"
-target_keyword: 9th house astrology
-associated_keywords:
-  - 9th house meaning
-  - what is the 9th house
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-05-28T15:33:43.685Z
-content_sha256_short: bd913916e7eb71b3
-phase2_checks: all-pass
----
-
 # What 9th House Astrology Reveals About Your Inner Seeker
 
 ## What is The 9th House?

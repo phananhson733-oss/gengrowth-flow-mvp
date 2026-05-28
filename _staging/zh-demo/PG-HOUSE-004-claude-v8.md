@@ -1,26 +1,3 @@
----
-title: 9th House Astrology
-slug: 9th-house-astrology
-date: 2026-05-28
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T2
-track: 量产线
-page_id: PG-HOUSE-004
-author_id: "julian-thorne"
-author_display_name: "Julian Thorne"
-target_keyword: 9th house astrology
-associated_keywords:
-  - 9th house meaning
-  - what is the 9th house
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-05-28T15:34:22.587Z
-content_sha256_short: 42e92b0fd2a557a0
-phase2_checks: all-pass
----
-
 # 读懂第九宫，看清你为什么总在追问人生的意义
 
 ## The 9th House 是什么？

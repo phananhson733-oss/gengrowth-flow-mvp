@@ -191,6 +191,15 @@ target_keyword = **「{{target_keyword}}」**。**SEO + RL4 binary check** 要�
 
 **self-check（提交前默念）**：grep 全文「{{target_keyword}}」完整短语出现次数，分布在多少 H2 sections？< 5 sections 就重写。
 
+## 段落密度 + GEO 排版硬要求（v4.5 移动端优先；任一违反 = 重写该段）
+
+> Instruction only; **do not** output this as an article section.
+
+- **每个 prose 段落 2-3 句、≤ ~60 词**：一个想法讲完就断段，超过 ~60 词或超过 3 句就拆成两段。目标是移动端一段约 3-4 行、一眼能扫完。要消灭的核心问题是 **wall of text**（4-5+ 句、满屏密集文字——SEO 不违规，但伤跳出率/停留时间，GEO 抓取也难定位要点）。
+- **多点 / 多维内容用编号列表或短 bullet 切分**（如「How Shade and Combination Shift Readings」的多组对比、「Common Misreads + Framework Limits」的多条误读），别挤进一个长段；同时避免每句一段的过度碎片化。
+- 表格行 / 列表项 / 标题 / 引用块不算 prose 段；表格 / 编号列表标题后第一个非空行**仍必须直接是表格 / `1.` 项**，不要加 prose 引言段。
+- **Phase 2 SC3 binary check 逐段数句子/词数**：任一 prose 段 > 4 句 或 > ~75 词 = 整篇 fail。
+
 ## 外部数据源（RAG，引用时只许 paraphrase）
 
 > Instruction only; **do not** output this as an article section. 以下 source 来自权威站点抓取后 sanitize + (Reddit 类) PII scrub 过的真实片段。引用规则：

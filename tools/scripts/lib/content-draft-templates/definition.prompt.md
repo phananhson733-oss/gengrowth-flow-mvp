@@ -207,12 +207,13 @@ capsule 用于决定**怎么解释**（措辞、对比角度、例子选择、�
 
 > Instruction only; **do not** output this as an article section.
 
-一个 prose **段落 = 一个完整的意思单元，4-5 个句子**（句子以句号 `.` 为界）。把相关的「事实 + 怎么作用 + 例子」**写进同一段连续叙述**，让读者一段读完一个完整想法。两个极端都要避免：① wall of text（一段 7+ 句、180+ 词，难被 AI Overview 引用、伤 EEAT）；② **过度碎片化**（每写 1-2 句就空行断段，满页留白、读起来支离破碎）。
+一个 prose **段落 = 一个小意思单元，2-3 个句子、≤ ~60 词**（句子以句号 `.` 为界）。目标是**移动端优先**：一段在手机上约 3-4 行、一眼能扫完。本版本要消灭的核心问题是 **wall of text**（4-5+ 句、满屏密集文字——SEO 不违规，但伤跳出率/停留时间，GEO 抓取也难定位要点）；同时避免另一极端 **过度碎片化**（半句一段、连续空行满页留白）。
 
-- **每个 prose 段落 4-5 句**（最多 ~6 句、≤ ~160 词）。只有 1-2 句的零碎段要并回相邻段，凑成一个 4-5 句的完整段；不要一句一段、连续空行。表格行 / 列表项 / 标题 / 引用块不算 prose 段。
+- **每个 prose 段落 2-3 句、≤ ~60 词**：一个想法讲完就断段，超过 ~60 词或超过 3 句就拆成两段。表格行 / 列表项 / 标题 / 引用块不算 prose 段。
+- **多点 / 多维内容用编号列表或短 bullet 切分**，别塞进一个长段：如「vs Adjacent Concepts」的多组对比、「Why It Matters」的多个痛点，写成 `1. 2. 3.`（每项 1-2 句）比挤成长段更易读、也更易被 AI Overview 引用。
 - **本规则只管 prose 段落，绝不覆盖上面的结构硬规则**：「Quick Reference Table」标题后第一个非空行**仍必须直接是表格**、「Reflection Prompts」标题后第一个非空行**仍必须直接是 `1.` 编号项** —— 不要为了排版在表格或编号列表前加任何 prose 引言段。
-- 每个 H2 section 内，把「**事实 → 怎么作用 → 例子**」**融进同一段的连续句子**里，而不是拆成三个独立单句段。注意：英文正文里 **禁用 "mechanism" 一词**（RL13 硬门禁），用 "how it works" 表达。
-- ❌ 错误 A（wall）：一段 180 词、8+ 句从定义一路讲到例子。
+- 「**事实 → 怎么作用 → 例子**」用 1-2 个短段或编号列表呈现，不要挤成一个 4-5 句长段，也不要碎成每句一段。英文正文里 **禁用 "mechanism" 一词**（RL13 硬门禁），用 "how it works" 表达。
+- ❌ 错误 A（wall，正是要消除的）：一段 5 句、~140 词从定义一路讲到例子，手机上满屏密集字。
 - ❌ 错误 B（碎片，正是要避免的）：
   ```
   Blue aura reads as a calm, communication-led energy.
@@ -222,13 +223,15 @@ capsule 用于决定**怎么解释**（措辞、对比角度、例子选择、�
   In practice, someone with this read often pauses before speaking.
   ```
   （每段 1 句、连续空行 = 满页留白）
-- ✅ 正确（4-5 句一段，连续叙述）：
+- ✅ 正确（2-3 句一段，必要时编号列表）：
   ```
-  Blue aura reads as a calm, communication-led energy. How it works is throat-center emphasis: attention pools around expression and listening. In practice, someone with this read often pauses before speaking and weighs words with care. The same steadiness can tip into over-explaining when they feel unheard. Read it as a current state, not a fixed verdict.
-  ```
-- **Phase 2 SC3 binary check 会逐段数句子**：任一 prose 段 > 7 句（或 > ~180 词）= 整篇 fail；另有碎片化 WARN（多数段落只有 1-2 句时触发）。
+  Most orange-aura write-ups pull you two ways at once: one says you're overflowing with creativity, another says you're burning out from overgiving. Most people land in between with no way to tell which applies.
 
-**self-check（提交前默念）**：逐段数句号——每个 prose 段是不是 4-5 句的完整意思单元？有没有只剩 1-2 句的零碎段没并回去？Section 1（What is X，120-160 词）≈ 1-2 个 4-5 句的完整段。
+  After years reading aura color, I've found searchers aren't confused about the color — they're quietly worried their warmth has tipped into overgiving. That gap is where a useful reading begins.
+  ```
+- **Phase 2 SC3 binary check 逐段数句子/词数**：任一 prose 段 > 4 句 或 > ~75 词 = 整篇 fail。
+
+**self-check（提交前默念）**：逐段数——每个 prose 段是不是 ≤3 句、≤ ~60 词？有没有该拆成两段、或转成编号列表的多点长段？Section 1（What is X）控制在 ~120 词、拆成 2 个短段。
 
 ## 内链分布硬要求（对齐创作清单 v4.0 §2 Link Master 链接母版；任一违反 = 整篇作废）
 

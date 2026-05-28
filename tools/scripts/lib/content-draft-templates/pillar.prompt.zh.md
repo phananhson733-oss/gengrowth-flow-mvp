@@ -239,6 +239,15 @@ target_keyword 是英文 = **「{{target_keyword}}」**，本文要把它**自�
 
 **self-check**：主词字符数 _____ / 形态 _____ / 主语化通顺否 _____ / 次级变体形态数 _____
 
+## 段落密度 + GEO 排版硬要求（v4.5 移动端优先；任一违反 = 重写该段）
+
+> Instruction only; **do not** output this as an article section.
+
+- **每个 prose 段落 2-3 句、≤ ~120 字**：一个想法讲完就断段，超过 ~120 字或超过 3 句就拆成两段。目标是移动端一段约 3-4 行、一眼能扫完。要消灭的核心问题是**一大坨密集文字**（4-5+ 句、满屏——SEO 不违规，但伤跳出率/停留时间，GEO 抓取也难定位要点）。
+- **多点 / 多维内容用编号列表或短 bullet 切分**（如「色调浓淡与组合如何改变解读」的多组对比、「常见误读 + 框架边界」的多条误读），别挤进一个长段；同时避免每句一段的过度碎片化。
+- 表格行 / 列表项 / 标题 / 引用块不算 prose 段；表格 / 编号列表标题后第一个非空行**仍必须直接是表格 / `1.` 项**，不要加 prose 引言段。
+- **Phase 2 SC3 binary check 逐段数句子/字数**：任一 prose 段 > 4 句 或 > ~170 字 = 整篇 fail。
+
 ## 外部数据源（RAG，引用时只许中文化 paraphrase）
 
 > Instruction only; **do not** output this as an article section. 以下 source 来自权威站点（多为英文）抓取后 sanitize + (Reddit 类) PII scrub 过的真实片段。引用规则：

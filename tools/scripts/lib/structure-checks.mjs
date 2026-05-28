@@ -196,11 +196,12 @@ export function checkInternalLinkTier(draft, ctx = {}) {
 // blockquotes and fenced code never count (they have their own rules).
 // ============================================================
 
-// Thresholds carry a ~20% tolerance above the 4-5 sentence target (user, 2026-05-27)
-// so natural variation never FAILs — only genuine walls do.
-const SC3_MAX_SENTENCES = 7;  // prose paragraph target 4-5 sentences; FAIL above 7 (wall)
-const SC3_EN_WORD_MAX = 180;  // backstop: a few run-on EN sentences still over this = wall
-const SC3_CJK_CHAR_MAX = 430; // backstop: run-on CJK sentences still over this = wall
+// v4.5 (user, 2026-05-28): density flipped mobile-first. Paragraph target is now
+// 2-3 sentences / ≤~60 words; FAIL thresholds sit just above so natural variation
+// never FAILs — only genuine walls of dense text (the mobile readability problem).
+const SC3_MAX_SENTENCES = 4;  // prose paragraph target 2-3 sentences; FAIL above 4 (wall)
+const SC3_EN_WORD_MAX = 75;   // target ≤60 EN words; FAIL above 75 (run-on wall)
+const SC3_CJK_CHAR_MAX = 170; // ZH target ~120 chars; FAIL above 170 (run-on wall)
 
 // Sentence boundary = terminal punctuation (EN . ! ?  /  ZH 。！？). Minor
 // over-count on abbreviations/decimals ("e.g.", "3.5") is absorbed by the >6
@@ -270,19 +271,19 @@ export function checkParagraphLength(draft) {
       violations.push({
         line: p.startLine,
         text: `${m.size} ${m.metric} — "${p.text.slice(0, 48)}…"`,
-        hint: `prose paragraph too long (${m.size} ${m.metric} > ${m.max}); 每段 4-5 个完整句子的意思单元，超过就另起一段 (清单 §3)`,
+        hint: `prose paragraph too long (${m.size} ${m.metric} > ${m.max}); 每段 2-3 句、≤~60 词，超过就拆成两段或转编号列表 (v4.5 移动端优先)`,
       });
     }
   }
   if (violations.length === 0) {
-    return { id, severity, pass: true, violations: [], note: `${paras.length} prose paragraph(s), all within 4-5 句 length` };
+    return { id, severity, pass: true, violations: [], note: `${paras.length} prose paragraph(s), all within 2-3 句 / ≤~60 词` };
   }
   return {
     id,
     severity,
     pass: false,
     violations,
-    note: `${violations.length} prose paragraph(s) over 4-5 句 / 长度上限`,
+    note: `${violations.length} prose paragraph(s) over 2-3 句 / 长度上限`,
   };
 }
 
@@ -294,7 +295,10 @@ export function checkParagraphLength(draft) {
 // "good rhythm" is fuzzy, so it informs without blocking; the template is the
 // primary lever.
 const SC3B_MIN_PARAS = 10;       // need enough paragraphs to judge rhythm (~20% looser)
-const SC3B_MEDIAN_FLOOR = 2;     // median sentences/para <= this = over-fragmented
+// v4.5: target is now 2-3 sentences/para, so a median of 2 is HEALTHY (not a
+// warning). Only a body where almost every paragraph is a single sentence
+// (median <= 1) is genuinely over-fragmented.
+const SC3B_MEDIAN_FLOOR = 1;     // median sentences/para <= this = over-fragmented
 
 // Sections whose prose is legitimately short (FAQ answers, CTA, source list,
 // reflection prompts, related links) must NOT drag the rhythm median down. Match

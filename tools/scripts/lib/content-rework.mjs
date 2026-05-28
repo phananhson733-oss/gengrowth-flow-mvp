@@ -58,9 +58,9 @@ const STRUCTURE_FIX_RULES = Object.freeze([
   [/table or bullet/i, 'Definition 至少需要 1 个 markdown 表格或 bullet 列表来组织信息。'],
   [/CTA anchor/i, '确保结尾 CTA 段落包含指定的 cta 文案或目标链接（或一个 `## CTA` 小节）。'],
   [/disclaimer/i, '补回 psych-safety disclaimer 行："This is not a clinical interpretation or mental health advice."'],
-  // 清单 v4.0 §3 Atomic GEO Layout — 段落原子化（SC3）。
+  // v4.5 移动端优先段落密度（SC3）。
   [/SC3|段落过长|paragraph too long|≤\s*4\s*行|wall of text/i,
-    '把过长的 prose 段落拆成多个原子段：每段只承载「事实金句 / 机制 / 实例」之一，控制在 ≤4 行（英文 ≤~70 词，中文 ≤~150 字），段间用空行分隔。不要改动表格、编号列表与已通过的小节结构。'],
+    '把过长的 prose 段落拆成短段：每段 2-3 句、英文 ≤~60 词 / 中文 ≤~120 字，一个想法讲完就断段；多点 / 多维内容（多组对比、多条要点）改写成 `1. 2. 3.` 编号列表来视觉切分。段间用空行分隔。不要改动表格与已通过的小节结构。'],
   // 清单 v4.0 §2 Link Master — 内链分布 / 首链优先权（SC4）。
   [/SC4|内链.*分布|link distribution|首链优先/i,
     '内链不要全堆在结尾 Related Reading / 延伸阅读：至少把 1 条 pillar / spoke 内链自然内联织进正文前段的句子里（首链优先权），中段再内联 1 条，其余链接才留在延伸阅读小节。保持 `[[<TBD-internal-link: ...>]]` 占位格式。'],

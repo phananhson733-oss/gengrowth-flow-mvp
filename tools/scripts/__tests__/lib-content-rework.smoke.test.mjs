@@ -130,9 +130,9 @@ test('structureFixHint: known patterns map, unknown falls back', () => {
   assert.match(structureFixHint('some brand new issue text'), /按上面给出的问题描述修正/);
 });
 
-test('structureFixHint: SC3 段落过长 → atomization directive', () => {
+test('structureFixHint: SC3 段落过长 → v4.5 short-paragraph directive', () => {
   // matches the issue text gg-content-draft.structureCheck now emits
-  assert.match(structureFixHint('SC3 段落过长 (L42): 120 words — "X is …"'), /原子段|≤4 行/);
+  assert.match(structureFixHint('SC3 段落过长 (L42): 120 words — "X is …"'), /编号列表|2-3 句|≤~60/);
 });
 
 test('structureFixHint: SC4 内链分布 → 首链优先权 directive', () => {

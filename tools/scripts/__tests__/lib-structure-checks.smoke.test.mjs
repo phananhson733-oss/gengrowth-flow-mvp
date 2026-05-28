@@ -177,8 +177,8 @@ test('SC3: severity is fail', () => {
   assert.equal(r.severity, 'fail');
 });
 
-test('SC3: a 4-5 sentence paragraph → PASS (the target rhythm)', () => {
-  const draft = `# X\n\n## What is X?\n\n${enSentences(5)}`;
+test('SC3: a 2-3 sentence paragraph → PASS (v4.5 target rhythm)', () => {
+  const draft = `# X\n\n## What is X?\n\n${enSentences(3)}`;
   const r = checkParagraphLength(draft);
   assert.equal(r.pass, true, r.note);
 });
@@ -195,8 +195,8 @@ How it works is simple. Two short sentences only.`;
   assert.equal(r.pass, true, r.note);
 });
 
-test('SC3: an 8-sentence EN paragraph → FAIL (over the 7 句 wall ceiling)', () => {
-  const draft = `# X\n\n## What is X?\n\n${enSentences(8)}`;
+test('SC3: a 5-sentence EN paragraph → FAIL (over the v4.5 4 句 ceiling)', () => {
+  const draft = `# X\n\n## What is X?\n\n${enSentences(5)}`;
   const r = checkParagraphLength(draft);
   assert.equal(r.pass, false);
   assert.equal(typeof r.violations[0].line, 'number');

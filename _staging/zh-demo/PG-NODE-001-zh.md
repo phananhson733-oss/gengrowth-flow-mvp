@@ -20,7 +20,7 @@ associated_keywords:
   - how to find north node
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-28T15:44:03.390Z
+generated_at: 2026-05-28T15:52:30.075Z
 content_sha256_short: 29b089759f81ffb5
 phase2_checks: all-pass
 ---

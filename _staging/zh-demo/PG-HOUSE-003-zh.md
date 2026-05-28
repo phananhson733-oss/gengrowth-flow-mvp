@@ -16,7 +16,7 @@ associated_keywords:
   - 12th house
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-28T15:49:03.051Z
+generated_at: 2026-05-28T15:52:23.889Z
 content_sha256_short: d14221c0e7339f88
 phase2_checks: all-pass
 ---

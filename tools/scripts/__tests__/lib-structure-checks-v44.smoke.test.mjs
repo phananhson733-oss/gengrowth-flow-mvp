@@ -18,6 +18,10 @@ import {
   checkSnippetBullets,
   checkCtaUrl,
   checkSourcesSection,
+  EN_FAQ_HEADING_RE,
+  ZH_FAQ_HEADING_RE,
+  EN_TABLE_HEADING_RE,
+  ZH_TABLE_HEADING_RE,
 } from '../lib/structure-checks.mjs';
 
 // ============================================================
@@ -95,6 +99,86 @@ test('SC5: ZH FAQ heading 常见问题 → PASS', () => {
   const draft = `# 橙色光环含义\n\n## 橙色光环是什么？\n\n正文。\n\n${zh}`;
   const r = checkFaqSection(draft);
   assert.equal(r.pass, true);
+});
+
+// v4.5.1 Phase C — varied FAQ headings are still detected by role token.
+test('SC5: varied EN FAQ heading "Common Questions About …" → PASS', () => {
+  const varied = FAQ_BLOCK.replace('## Frequently Asked Questions', '## Common Questions About Orange Aura');
+  const draft = `# Orange Aura Meaning\n\n## What is Orange Aura?\n\nBody.\n\n${varied}`;
+  assert.equal(checkFaqSection(draft).pass, true);
+});
+
+test('SC5: varied EN FAQ heading "Orange Aura FAQ" → PASS', () => {
+  const varied = FAQ_BLOCK.replace('## Frequently Asked Questions', '## Orange Aura FAQ');
+  const draft = `# Orange Aura Meaning\n\n## What is Orange Aura?\n\nBody.\n\n${varied}`;
+  assert.equal(checkFaqSection(draft).pass, true);
+});
+
+test('SC5: varied ZH FAQ heading 橙色气场常见疑问 (contains 问) → PASS', () => {
+  const zh = `## 橙色气场常见疑问
+
+**橙色光环代表什么？**
+
+代表创造力与社交能量。它是当下状态的快照。
+
+**橙色光环会改变吗？**
+
+会。多数解读者视颜色为状态而非固定标签。
+
+**橙色光环常见吗？**
+
+在表达活跃期的人身上较常见。它很少固定不变。
+`;
+  const draft = `# 橙色光环含义\n\n## 橙色光环是什么？\n\n正文。\n\n${zh}`;
+  assert.equal(checkFaqSection(draft).pass, true);
+});
+
+test('SC5: a non-FAQ heading without a role token is NOT treated as the FAQ section → FAIL', () => {
+  // Bold ?-lines live under a heading carrying no faq/questions/ask/问 token, so
+  // role-based detection must not pick it up.
+  const draft = `# X\n\n## What is X?\n\nBody.\n\n## Sources of Confusion\n\n**Is X real?**\n\nYes.\n\n**Is X rare?**\n\nNo.\n\n**Is X fixed?**\n\nNo.`;
+  assert.equal(checkFaqSection(draft).pass, false);
+});
+
+// ============================================================
+// Phase C — role-token heading regexes (去模板感). Must match varied per-entity
+// headings but reject fixed non-table/non-FAQ section titles. Mirror in oracle.
+// ============================================================
+
+test('EN_FAQ_HEADING_RE: matches varied FAQ headings, rejects other sections', () => {
+  for (const h of ['## Frequently Asked Questions', '## Common Questions About Orange Aura', '## Orange Aura FAQ', '## Questions People Ask', '## Reader Q&A']) {
+    assert.ok(EN_FAQ_HEADING_RE.test(h), `should match: ${h}`);
+  }
+  for (const h of ['## What is Orange Aura?', '## Reflection Prompts', '## Sources', '## How to Read Orange Aura in Yourself', '## Take Action']) {
+    assert.ok(!EN_FAQ_HEADING_RE.test(h), `should NOT match: ${h}`);
+  }
+});
+
+test('EN_TABLE_HEADING_RE: matches varied table headings, rejects other sections', () => {
+  for (const h of ['## Quick Reference Table', '## Orange Aura at a Glance', '## Orange Aura Cheat Sheet', '## Key Traits of Orange Aura', '## Orange Aura by the Numbers']) {
+    assert.ok(EN_TABLE_HEADING_RE.test(h), `should match: ${h}`);
+  }
+  for (const h of ['## What is Orange Aura?', '## Frequently Asked Questions', '## Common Misreadings', '## Why It Matters for Self-Awareness']) {
+    assert.ok(!EN_TABLE_HEADING_RE.test(h), `should NOT match: ${h}`);
+  }
+});
+
+test('ZH_FAQ_HEADING_RE: matches headings containing 问, rejects others', () => {
+  for (const h of ['## 常见问题', '## 关于橙色气场的常见问题', '## 读者常问的问题', '## 橙色气场问答']) {
+    assert.ok(ZH_FAQ_HEADING_RE.test(h), `should match: ${h}`);
+  }
+  for (const h of ['## 为什么了解它能帮助自我觉察', '## 速查表', '## 自我觉察小提示', '## 橙色气场是什么？']) {
+    assert.ok(!ZH_FAQ_HEADING_RE.test(h), `should NOT match: ${h}`);
+  }
+});
+
+test('ZH_TABLE_HEADING_RE: matches table-token headings, rejects 代表/others', () => {
+  for (const h of ['## 速查表', '## 橙色气场速查表', '## 橙色气场一览', '## 橙色气场速览', '## 关键特征对照表']) {
+    assert.ok(ZH_TABLE_HEADING_RE.test(h), `should match: ${h}`);
+  }
+  for (const h of ['## 常见问题', '## 蓝色气场代表什么', '## 自我觉察小提示', '## 延伸阅读']) {
+    assert.ok(!ZH_TABLE_HEADING_RE.test(h), `should NOT match: ${h}`);
+  }
 });
 
 // ============================================================

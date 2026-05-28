@@ -63,6 +63,10 @@ import {
   checkSourcesNamesInBody,
   checkTableIntegrity,
   checkParagraphFragmentation,
+  EN_FAQ_HEADING_RE,
+  ZH_FAQ_HEADING_RE,
+  EN_TABLE_HEADING_RE,
+  ZH_TABLE_HEADING_RE,
 } from './lib/structure-checks.mjs';
 import { logFailure } from './lib/_failure-log.mjs';
 import { checkAntiHomogenization } from './lib/anti-homogenization.mjs';
@@ -322,7 +326,8 @@ function buildEnH2Specs(ctx) {
         { variants: [': Quick Guide'], label: '<...>: Quick Guide' },
         { variants: ['## How Shade and Combination Shift Readings'], label: '## How Shade and Combination Shift Readings' },
         { variants: ['## Common Misreads + Framework Limits'], label: '## Common Misreads + Framework Limits' },
-        { variants: ['## Frequently Asked Questions'], label: '## Frequently Asked Questions' },
+        // v4.5.1 Phase C — FAQ heading may vary per entity (role token required).
+        { variants: ['## Frequently Asked Questions'], matchFn: (d) => EN_FAQ_HEADING_RE.test(d), label: '## <entity> Questions / FAQ (varied; needs a questions/FAQ/ask token)' },
         { variants: ['## Reflection Prompts'], label: '## Reflection Prompts' },
         { variants: ['## Related Reading'], label: '## Related Reading' },
         { variants: ['## Take Action'], label: '## Take Action' },
@@ -349,8 +354,13 @@ function buildEnH2Specs(ctx) {
           label: `## How to Read ${ctx.entity} in Yourself`,
         },
         { variants: ['## Common Misreadings', '## Common Misreads', '## Common Misreads + Framework Limits'], matchFn: (d) => /^##\s+Common Misread/m.test(d), label: '## Common Misreadings' },
-        { variants: ['## Quick Reference Table'], label: '## Quick Reference Table' },
-        { variants: ['## Frequently Asked Questions'], label: '## Frequently Asked Questions' },
+        // v4.5.1 Phase C — heading variation (去模板感): the table + FAQ headings
+        // may vary per entity as long as they carry a stable ROLE token, so the
+        // library doesn't read as N identical "Quick Reference Table" / "Frequently
+        // Asked Questions" rows. SC10 verifies the table by shape, and the oracle
+        // FAQPage JSON-LD detector matches the same role tokens.
+        { variants: ['## Quick Reference Table'], matchFn: (d) => EN_TABLE_HEADING_RE.test(d), label: '## <entity> at a Glance / Quick Reference (varied; needs a table/reference/glance token)' },
+        { variants: ['## Frequently Asked Questions'], matchFn: (d) => EN_FAQ_HEADING_RE.test(d), label: '## <entity> Questions / FAQ (varied; needs a questions/FAQ/ask token)' },
         { variants: ['## Reflection Prompts'], label: '## Reflection Prompts' },
         { variants: ['## Related Reading'], label: '## Related Reading' },
         { variants: ['## Take Action'], label: '## Take Action' },
@@ -386,7 +396,8 @@ function buildZhH2Specs(ctx) {
         { variants: ['：速览', ': 速览', '速览'], label: '## <count> 个 <entity>：速览' },
         { variants: ['## 色调浓淡与组合如何改变解读'], label: '## 色调浓淡与组合如何改变解读' },
         { variants: ['## 常见误读 + 框架边界', '## 常见误读+框架边界'], label: '## 常见误读 + 框架边界' },
-        { variants: ['## 常见问题', '## 常見問題'], label: '## 常见问题' },
+        // v4.5.1 Phase C — FAQ 标题可按 entity 变体（H2 需含「问」）。
+        { variants: ['## 常见问题', '## 常見問題'], matchFn: (d) => ZH_FAQ_HEADING_RE.test(d), label: '## <entity> 常见问题 / 问答 (变体；H2 标题需含「问」)' },
         { variants: ['## 自我觉察小提示'], label: '## 自我觉察小提示' },
         { variants: ['## 延伸阅读'], label: '## 延伸阅读' },
         { variants: ['## 下一步行动'], label: '## 下一步行动' },
@@ -398,8 +409,9 @@ function buildZhH2Specs(ctx) {
         { variants: ['## 如何在自己身上识别', '## 如何在自己身上看出', '## 如何在星盘里识别', '## 如何识别'], matchFn: (d) => /^##\s*如何(在.{0,8})?(识别|看出|读出|认出|看见)/m.test(d), label: '## 如何识别 <entity>（实操观察）' },
         { variants: ['## 常见误读', '## 常见误读 + 框架边界', '## 常见误读+框架边界'], matchFn: (d) => /^##\s*常见误读/m.test(d), label: '## 常见误读' },
         { variants: ['与相近概念'], label: '## <entity> 与相近概念：运作方式 + 取舍 (substring `与相近概念`)' },
-        { variants: ['速查表'], label: '## <entity> 速查表 (substring `速查表`)' },
-        { variants: ['## 常见问题', '## 常見問題'], label: '## 常见问题' },
+        // v4.5.1 Phase C — 表格 / FAQ 标题可按 entity 变体（保留稳定 role token）。
+        { variants: ['速查表'], matchFn: (d) => ZH_TABLE_HEADING_RE.test(d), label: '## <entity> 速查表 / 一览 (变体；需含 速查/一览/速览/概览/对照表 token)' },
+        { variants: ['## 常见问题', '## 常見問題'], matchFn: (d) => ZH_FAQ_HEADING_RE.test(d), label: '## <entity> 常见问题 / 问答 (变体；H2 标题需含「问」)' },
         { variants: ['## 自我觉察小提示'], label: '## 自我觉察小提示' },
         { variants: ['## 延伸阅读'], label: '## 延伸阅读' },
         { variants: ['## 下一步行动'], label: '## 下一步行动' },

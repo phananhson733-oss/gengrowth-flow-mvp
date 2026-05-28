@@ -301,11 +301,35 @@ const SC3B_MIN_PARAS = 10;       // need enough paragraphs to judge rhythm (~20%
 // (median <= 1) is genuinely over-fragmented.
 const SC3B_MEDIAN_FLOOR = 1;     // median sentences/para <= this = over-fragmented
 
+// ============================================================
+// v4.5.1 Phase C — heading variation (去模板感). The table + FAQ section titles
+// may vary per entity, detected by a stable ROLE TOKEN instead of an exact
+// string, so a growing library doesn't repeat "Quick Reference Table" /
+// "Frequently Asked Questions" verbatim on every page. Single source of truth
+// shared by SC3b/SC3c (short-by-design skip), SC5 (FAQ) and the _phase2 H2 specs,
+// and MUST be mirrored by the oracle FAQPage JSON-LD detector
+// (WikiArticleDetailPage.tsx).
+//   FAQ:   EN needs a faq / questions / ask / Q&A token; ZH needs the char 问.
+//   Table: EN needs a glance / reference / table / cheat-sheet token;
+//          ZH needs 速查 / 一览 / 速览 / 概览 / 对照表.
+// Other section titles (Reflection Prompts, Sources, Take Action, …) stay fixed,
+// so they never carry these tokens and can't masquerade as table / FAQ.
+export const EN_FAQ_HEADING_RE = /^##\s+[^\n]*(?:\bfaq\b|\bquestions?\b|\bq\s*&\s*a\b|\bask(?:ed|ing|s)?\b)/im;
+export const ZH_FAQ_HEADING_RE = /^##\s*[^\n]*问/m;
+export const EN_TABLE_HEADING_RE = /^##\s+[^\n]*(?:at a glance|quick reference|reference table|cheat ?sheet|key (?:traits|properties|signals)|by the numbers|\btable\b)/im;
+export const ZH_TABLE_HEADING_RE = /^##\s*[^\n]*(?:速查表?|一览表?|一覽表?|速览|速覽|概览|概覽|对照表|對照表|速查)/m;
+
 // Sections whose prose is legitimately short (FAQ answers, CTA, source list,
-// reflection prompts, related links) must NOT drag the rhythm median down. Match
-// by H2 heading substring, EN + ZH. A ZH article writes denser, fewer body
-// paragraphs, so without this its short FAQ answers alone flip the median to 2.
-const SC3B_EXCLUDED_HEADING = /Frequently Asked|Sources|Take Action|Related Reading|Reflection Prompts|常见问题|参考来源|下一步|行动|延伸阅读|自我觉察|速查表/i;
+// reflection prompts, related links) must NOT drag the SC3b rhythm median down
+// nor trip SC3c scatter. Match by H2 heading, EN + ZH. The FAQ + table parts are
+// role-based (Phase C) so a varied heading is still recognized as short-by-design;
+// the rest are fixed-title sections.
+const SC3B_EXCLUDED_FIXED = /Sources|Take Action|Related Reading|Reflection Prompts|参考来源|下一步|行动|延伸阅读|自我觉察/i;
+function isShortByDesignHeading(line) {
+  return SC3B_EXCLUDED_FIXED.test(line)
+    || EN_FAQ_HEADING_RE.test(line) || ZH_FAQ_HEADING_RE.test(line)
+    || EN_TABLE_HEADING_RE.test(line) || ZH_TABLE_HEADING_RE.test(line);
+}
 
 // Prose paragraphs in NARRATIVE sections only (excludes the short-by-design
 // sections above). Mirrors proseParagraphs' structural skipping + heading track.
@@ -322,7 +346,7 @@ function narrativeProseParagraphs(lines) {
     const line = lines[i].trim();
     if (/^```/.test(line) || /^~~~/.test(line)) { inFence = !inFence; flush(); continue; }
     if (inFence) { flush(); continue; }
-    if (/^#{1,6}\s/.test(line)) { flush(); excluded = SC3B_EXCLUDED_HEADING.test(line); continue; }
+    if (/^#{1,6}\s/.test(line)) { flush(); excluded = isShortByDesignHeading(line); continue; }
     const isStructural =
       line === '' || /^\|/.test(line) || /^>/.test(line) || /^(\d+[.)]|[-*+])\s/.test(line);
     if (isStructural) { flush(); continue; }
@@ -395,7 +419,7 @@ function sectionProseBlocks(lines) {
     if (inFence) { inPara = false; continue; }
     if (/^##\s/.test(line)) { // H2 opens a new section
       if (cur && !cur.excluded) sections.push(cur);
-      cur = { heading: line.replace(/^#+\s*/, ''), startLine: i + 1, paraCount: 0, excluded: SC3B_EXCLUDED_HEADING.test(line) };
+      cur = { heading: line.replace(/^#+\s*/, ''), startLine: i + 1, paraCount: 0, excluded: isShortByDesignHeading(line) };
       inPara = false;
       continue;
     }
@@ -589,11 +613,11 @@ function sectionByHeading(lines, re) {
 // absence — or fewer than 3 questions — is a hard fail. Questions are formatted
 // as a bold line ending in `?`/`？` (H3 is forbidden by the structure check, so
 // FAQ cannot use ### sub-headings). We count those bold-question lines.
-// ============================================================
-// Heading is matched on the full `## ...` line, anchored so a section like
-// `## Sources of Confusion` / `## FAQ-ish digressions` can't masquerade as the
-// FAQ section.
-const FAQ_HEADING_REGEX = /^##\s+(frequently asked questions|faq|常见问题|常見問題)\s*$/i;
+// SC5 locates the FAQ section by either language's role token (single line — the
+// `m` flag is harmless when testing one line at a time via sectionByHeading).
+// Mirrors EN_FAQ_HEADING_RE / ZH_FAQ_HEADING_RE (defined above with the other
+// Phase C role regexes), combined for a single-pass per-line match.
+const FAQ_HEADING_REGEX = /^##\s+[^\n]*(?:\bfaq\b|\bquestions?\b|\bq\s*&\s*a\b|\bask(?:ed|ing|s)?\b|问)/i;
 // A question must be a WHOLE bold line ending in `?`/`？` — not an inline bold
 // fragment mid-answer (e.g. `Answer: **really?** maybe`).
 const FAQ_QUESTION_REGEX = /^\s*\*\*(?=\S)[^*\n]*[?？]\s*\*\*\s*$/;

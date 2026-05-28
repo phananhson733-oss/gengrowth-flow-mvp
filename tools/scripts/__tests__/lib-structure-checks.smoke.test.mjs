@@ -358,6 +358,54 @@ Answer three.`;
   assert.equal(r.pass, true, r.note);
 });
 
+test('SC3c: a VARIED FAQ heading (Phase C) is still excluded from scatter', () => {
+  // Regression: the short-by-design skip must be role-based, not keyed to the
+  // fixed "Frequently Asked Questions" string, or a varied FAQ heading scatters.
+  const draft = `# X
+
+## Common Questions About Orange Aura
+
+**Q one?**
+
+Answer one.
+
+**Q two?**
+
+Answer two.
+
+**Q three?**
+
+Answer three.
+
+**Q four?**
+
+Answer four.`;
+  assert.equal(checkSectionScatter(draft).pass, true, checkSectionScatter(draft).note);
+});
+
+test('SC3c: a VARIED ZH FAQ heading (含 问) is still excluded from scatter', () => {
+  const draft = `# X
+
+## 关于橙色气场的常见疑问
+
+**问题一？**
+
+答案一。
+
+**问题二？**
+
+答案二。
+
+**问题三？**
+
+答案三。
+
+**问题四？**
+
+答案四。`;
+  assert.equal(checkSectionScatter(draft).pass, true, checkSectionScatter(draft).note);
+});
+
 // ============================================================
 // SC4 — internal-link distribution (FAIL)
 // ============================================================

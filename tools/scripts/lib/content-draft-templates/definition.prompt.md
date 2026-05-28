@@ -168,14 +168,16 @@ capsule 用于决定**怎么解释**（措辞、对比角度、例子选择、�
    - 扣住 Logic / Friction 字段提到的真实场景，不空泛。
 5. **Common Misreadings**（H2）— 大众 / 浅层内容对 {{entity}} **最常见的 2-4 个误读**，逐条纠正（误读 → 实际）。
    - **用编号列表或加粗 lead-in 短段**呈现，每条 ≤ 2 句；紧扣 Friction 字段（读者正是被这些误读困住才来搜）。
-6. **Quick Reference Table**（H2）— Markdown 表格 ≥ 4 列 × ≥ 3 行，**必须含「Property / How It Works / Energy Center / How to Observe」4 列**（不是只列属性）。**列名禁用 "Mechanism"**（已改为 "How It Works"）；「How to Observe」列满足清单 §3「如何观察 / 应用场景」要求，写读者实际能观察到 / 可操作的短句
-   - **`## Quick Reference Table` 标题之后第一个非空段必须直接是 markdown 表格本身（以 `|` 开头）**，不能加任何 prose intro / SEO 解释段（例 ❌「Use this table to quickly compare key properties...」），否则 Phase 2 RL4 drift 检测把整 section 当 prose 走 jaccard，整篇 fail
+6. **速查表 / Quick Reference（H2，标题按 entity 变体）**— Markdown 表格 ≥ 4 列 × ≥ 3 行，**必须含「Property / How It Works / Energy Center / How to Observe」4 列**（不是只列属性）。**列名禁用 "Mechanism"**（已改为 "How It Works"）；「How to Observe」列满足清单 §3「如何观察 / 应用场景」要求，写读者实际能观察到 / 可操作的短句
+   - **标题去模板化（v4.5.1 Phase C）**：不要每篇都写死成 `## Quick Reference Table`（库一大就雷同）。请写一个 entity 专属、自然的标题，**且必须含一个 table/reference token**：`at a Glance` / `Quick Reference` / `Reference Table` / `Cheat Sheet` / `Key Traits` / `by the Numbers` / 或含 `Table`。例：`## {{entity}} at a Glance`、`## {{entity}} Cheat Sheet`、`## Key Traits of {{entity}}`。（检测靠 token，不靠固定字符串。）
+   - **该表格标题之后第一个非空段必须直接是 markdown 表格本身（以 `|` 开头）**，不能加任何 prose intro / SEO 解释段（例 ❌「Use this table to quickly compare key properties...」），否则 Phase 2 RL4 drift 检测把整 section 当 prose 走 jaccard，整篇 fail
    - **「Energy Center」语义按 entity 类型适配**（这一列不是固定 = 脉轮）：
      - aura/color/chakra 类 entity → 对应脉轮名（throat / heart / crown 等）
      - transit/cycle 类 entity（saturn return / chiron return / jupiter return / uranus opposition） → natal placement（natal house / natal sign / age window）
      - sign/planet 类 entity → 主管 element / 主管 house
      - **严禁在 transit/cycle entities 上塞 chakra / Human Design 术语**（如 "Root center" / "Solar plexus center" / "Heart center" / "throat center"）= RL1 invented_term，整篇作废
-7. **Frequently Asked Questions**（H2，字面 H2 = `## Frequently Asked Questions`）— 内含 **3-4 个真实 PAA 风格问题**，聚焦用户真实操作摩擦点 / 长尾搜索意图（不是泛问）。
+7. **常见问题 / FAQ（H2，标题按 entity 变体）**— 内含 **3-4 个真实 PAA 风格问题**，聚焦用户真实操作摩擦点 / 长尾搜索意图（不是泛问）。
+   - **标题去模板化（v4.5.1 Phase C）**：不要每篇都写死成 `## Frequently Asked Questions`。请写一个 entity 专属标题，**且必须含一个 questions/FAQ token**：`Questions` / `FAQ` / `Q&A` / `Ask`。例：`## Common Questions About {{entity}}`、`## {{entity}} FAQ`、`## Questions People Ask About {{entity}}`。（rich-result FAQPage 检测靠该 token + 下面的加粗问句行，所以 token 必须在。）
    - **格式约束（关键，违反 = 结构 fail）**：每个问题写成**加粗整行且以问号结尾**（如 `**What does an orange aura mean spiritually?**`），紧跟 2 句精确事实回答。**绝不用 `### H3` / `#### H4`**（H3 在本系统被结构校验禁止，会直接 FAIL）。
    - ✅ 范例：
      ```
@@ -216,7 +218,7 @@ capsule 用于决定**怎么解释**（措辞、对比角度、例子选择、�
 
 - **多要点 / 多模块 → 编号列表（首选）**：只要一个 section 有 2 个以上并列要点（多组对比、多条信号、多个误读、多个痛点），就**先 1 句引子带出，再写 `1. **加粗标签。** 一句说明` 的编号列表**（每项 1-2 句），而不是 N 个空行分隔的短段。
 - **单一连贯叙事 → 1 个完整段落**：围绕一个意思 **3-5 句连贯展开**（一个完整意思单元），**不要**每 1-2 句就空行断段。一个 section 下最多 1-2 个这样的完整段落。
-- **结构硬规则不被覆盖**：表格行 / 列表项 / 标题 / 引用块不算 prose 段；「Quick Reference Table」标题后第一个非空行**仍必须直接是表格**、「Reflection Prompts」标题后第一个非空行**仍必须直接是 `1.` 编号项**。
+- **结构硬规则不被覆盖**：表格行 / 列表项 / 标题 / 引用块不算 prose 段；**速查表 / Quick Reference section**（无论标题怎么变体）标题后第一个非空行**仍必须直接是表格**、「Reflection Prompts」标题后第一个非空行**仍必须直接是 `1.` 编号项**。
 - 「**事实 → 怎么作用 → 例子**」融进 1 个连贯段落或编号列表，**不要**碎成每句一段。英文正文里 **禁用 "mechanism" 一词**（RL13 硬门禁），用 "how it works" 表达。
 - ❌ 错误 A（scatter，正是要消除的）：一个 section 下 5-7 个空行分隔的 2 句短段，读起来很散（就是这种）。
 - ❌ 错误 B（wall）：一段 6+ 句、140 词从定义一路讲到例子，手机满屏。

@@ -16,7 +16,7 @@ The 11th house is the sector of a birth chart that governs your relationship to 
 - Holds your social ideals and the future you are quietly working toward
 - Reveals how individual talent gets received, supported, or amplified by a collective
 
-This house sits inside the broader framework of the twelve astrological houses, which maps how every house connects into one readable wheel.
+This house sits inside the broader [[<TBD-internal-link: pillar page on the twelve astrological houses>]], which maps how every house connects into one readable wheel.
 
 ## Why It Matters for Self-Awareness
 
@@ -94,7 +94,7 @@ An empty house operates through its cusp sign and that sign's ruler, so the life
 These topics extend the house framework without repeating what is above:
 
 - [[<TBD-internal-link: the 7th house of partnership>]] — clarifies how one-to-one bonds differ from the group alliance this house tracks.
-- [[<TBD-internal-link: Saturn through the houses>]] — unpacks the complex belonging signal Saturn brings to this placement.
+- Saturn through the houses — a closer look at this transit unpacks the complex belonging signal Saturn brings to this placement.
 
 ## Take Action
 

@@ -375,7 +375,7 @@ export function renderAuraPrompt(cfg) {
     ...(ctaTargetUrl ? { cta_target_url: ctaTargetUrl } : {}),
     word_range: wordRangeArr,
     kw_count_range: kwRangeArr,
-    expected_h2: cfg.expected_h2 || (isPillar ? 11 : 9),
+    expected_h2: cfg.expected_h2 || 11, // v4.5: Definition 9→11; Pillar already 11
     psych_safety: cfg.psych_safety_flag || 'N',
     // bilingual-v9: ZH main long-tail (ops-filled). Carries through to phase2
     // RL4/RL5 anchor check. Omitted when not provided so EN fixtures don't get

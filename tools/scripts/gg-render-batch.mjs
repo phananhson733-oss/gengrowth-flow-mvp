@@ -164,7 +164,7 @@ export function composeCfg(row, override, cliLanguage) {
     // / Tutorial 8 — FAQ + Sources added). Derive from template so a stale
     // per-row override can't pin the old 7/9 count into the fixture sidecar
     // (which _phase2-validate reads ahead of tplDef).
-    expected_h2: o.expected_h2 || (tpl.value === 'Pillar' ? 11 : tpl.value === 'Tutorial' ? 8 : 9),
+    expected_h2: o.expected_h2 || (tpl.value === 'Pillar' ? 11 : tpl.value === 'Tutorial' ? 8 : 11),
     child_entities: o.child_entities,
     child_count: o.child_count,
     ...(language ? { language } : {}),

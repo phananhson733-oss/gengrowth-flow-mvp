@@ -1,7 +1,7 @@
 {
   "page_id": "PG-HOUSE-006",
   "prompt_path": "/Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/PG-HOUSE-006.v8.zh-prompt.md",
-  "started_at": "2026-05-28T09:44:18.630Z",
+  "started_at": "2026-05-28T16:46:48.808Z",
   "models_requested": [
     "claude"
   ],
@@ -10,7 +10,7 @@
   "max_cost_usd_per_page": 5,
   "budget_exceeded_models": [],
   "ok_count": 1,
-  "total_cost_estimate_usd": 0.0947,
+  "total_cost_estimate_usd": 0.1015,
   "results": {
     "claude": {
       "model": "claude",
@@ -19,14 +19,14 @@
       "ok": true,
       "output_path": "/Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/PG-HOUSE-006-claude-v8.md",
       "retries": 0,
-      "duration_s": 378.5,
+      "duration_s": 324.8,
       "cost_estimate_usd": {
-        "usd": 0.0947,
-        "input_tokens_est": 5391,
-        "output_tokens_est": 185,
+        "usd": 0.1015,
+        "input_tokens_est": 5586,
+        "output_tokens_est": 237,
         "pricing_note": "Opus 4.7 xhigh"
       },
-      "cumulative_cost_usd": 0.0947,
+      "cumulative_cost_usd": 0.1015,
       "budget_exceeded": false,
       "budget_usd": 5,
       "attempts": [
@@ -34,16 +34,16 @@
           "try_index": 1,
           "model": "claude",
           "command": "claude -p --model claude-opus-4-7 < /Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/PG-HOUSE-006.v8.zh-prompt.md > /Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/PG-HOUSE-006-claude-v8.md",
-          "cost_usd": 0.0947,
-          "cumulative_cost_usd": 0.0947,
+          "cost_usd": 0.1015,
+          "cumulative_cost_usd": 0.1015,
           "ok": true,
           "exit_code": 0,
-          "duration_s": 378.5,
+          "duration_s": 324.8,
           "stderr_tail": "",
-          "stdout_bytes": 2659,
+          "stdout_bytes": 2947,
           "sonnet_guard": {
             "downgraded": false,
-            "bytes": 6829
+            "bytes": 7595
           }
         }
       ]

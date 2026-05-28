@@ -1,26 +1,3 @@
----
-title: 12th House Astrology
-slug: 12th-house-astrology
-date: 2026-05-28
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T2
-track: 量产线
-page_id: PG-HOUSE-003
-author_id: "julian-thorne"
-author_display_name: "Julian Thorne"
-target_keyword: 12th house astrology
-associated_keywords:
-  - 12th house meaning
-  - 12th house
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-05-28T15:07:27.722Z
-content_sha256_short: 45500fb8dc42e02e
-phase2_checks: all-pass
----
-
 # How 12th House Astrology Reframes Self-Undoing as Growth
 
 ## What is The 12th House?

@@ -63,12 +63,12 @@ Most popular write-ups flatten the North Node and South Node into slogans, and t
 
 ## North Node vs South Node at a Glance
 
-| Property | How It Works | Energy Center | How to Observe |
+| Property | How It Works | Chart Axis | How to Observe |
 | --- | --- | --- | --- |
-| South Node | An over-rehearsed pattern pulling backward toward comfort | Its natal sign and house placement | Notice the skill you default to automatically under pressure |
-| North Node | An underdeveloped pull toward unfamiliar growth | The opposite natal sign and house | Watch for the quality you admire but rarely practice |
-| The full axis | A directional tension between past habit and future stretch | The sign-pair the axis spans | Track a life theme that keeps repeating across years |
-| Reading method | Observe the contrast first, then apply meaning | Both poles read together, never alone | Compare what drains you against what slowly rewards you |
+| South Node | An over-rehearsed pattern pulling backward toward comfort | Its natal sign and house, with that sign's ruler coloring the habit | Notice the skill you default to automatically under pressure |
+| North Node | An underdeveloped pull toward unfamiliar growth | The exact opposite sign and house, ruled by the polar planet | Watch for the quality you admire but rarely practice |
+| The full axis | A directional tension between past habit and future stretch | The sign-pair the axis spans, always 180 degrees apart | Track a life theme that keeps repeating across years |
+| Reading method | Observe the contrast first, then apply meaning | Both poles of the axis read together, never one pole alone | Compare what drains you against what slowly rewards you |
 
 ## Common Questions About North Node vs South Node
 

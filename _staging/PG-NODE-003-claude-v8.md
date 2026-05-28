@@ -12,7 +12,7 @@ The North Node in Taurus marks **a growth direction toward stability, simplicity
 
 Understanding the North Node in Taurus matters because the most common resources frame it as a sentence to be served rather than a direction to grow into. Astrology students often read that releasing their Scorpio attachments is an insurmountable loss, so they brace for deprivation instead of recognizing the real friction: the comfort they keep reaching for is the calm they secretly distrust. Someone with this axis tends to find quiet suspicious, which makes the Taurus pull feel less like relief and more like a threat. Naming that reaction is the first practical step, and it sits close to the work mapped on the [[<TBD-internal-link: sibling guide to the South Node in Scorpio>]], the end of the axis this growth direction is reacting against.
 
-In my years integrating psychological frameworks with evolutionary astrology, the readers most stuck on this placement were rarely lacking depth; they were exhausted by it, and had mistaken their endurance of chaos for a personality. Self-awareness here begins with separating who you are from what you have survived.
+In my years integrating psychological frameworks with evolutionary astrology, the readers most stuck on this placement were rarely lacking depth; they were exhausted by it, and had mistaken their endurance of chaos for a personality. The psychological reading of the chart that Liz Greene shaped is useful here precisely because it treats the node as a developmental question rather than a fixed flaw. Consider a familiar pattern: someone leaves a calm job that was finally paying off, convinced it had grown stale, only to recreate the same scramble somewhere new. Self-awareness here begins with separating who you are from what you have survived, and noticing the difference between a real ending and a manufactured one.
 
 ## North Node in Taurus vs Adjacent Concepts: How It Works + Trade-offs
 
@@ -22,7 +22,7 @@ The North Node in Taurus is easy to confuse with a few nearby ideas, and seeing 
 2. **Taurus sign vs Taurus node.** Having Taurus traits is a present-life disposition, while the node is a developmental pull most people have to consciously practice. To grow the node, you give up treating Taurus calm as boring and start treating it as the point.
 3. **Placement vs prediction.** A node describes a tendency and a learning curve, not a fixed outcome. To work with it honestly, you trade the comfort of a settled verdict for the responsibility of choosing how you respond.
 
-The way it functions in daily life is direct: the chart pulls a person to release Scorpio's grip on crisis and rebuild around what is durable, and the cost of that durability is the loss of the intensity that used to organize their sense of self.
+The way it functions in daily life is direct: the chart pulls a person to release Scorpio's grip on crisis and rebuild around what is durable, and the cost of that durability is the loss of the intensity that used to organize their sense of self. In the teaching tradition Howard Sasportas developed, the nodes are read as a single growth axis rather than a good end and a bad end, which is why the goal is never to amputate the Scorpio gift. The point is to let the steadier Taurus side carry more of the weight, so that depth becomes something a person can return to by choice instead of a place they keep getting dragged back into.
 
 ## How to Read North Node in Taurus in Yourself
 
@@ -36,14 +36,14 @@ You can recognize the North Node in Taurus less by a personality quiz and more b
 
 ## Common Misreadings
 
-Most popular write-ups leave readers stuck because they repeat the same distortions about the North Node in Taurus. Each one is worth correcting directly:
+Most popular write-ups leave readers stuck because they repeat the same distortions about the Taurus node and its growth direction. Each one is worth correcting directly:
 
 1. **Misread: it is the hardest, most punishing placement.** Actually, it is demanding only because the lesson is unfamiliar, not because it is a sentence; the discomfort is the curve of learning ease.
 2. **Misread: it means giving up depth and intensity forever.** Actually, the Scorpio depth is kept as a resource; the growth is in no longer needing crisis to reach it.
 3. **Misread: Taurus here is purely about money and possessions.** Actually, the deeper pull is toward self-worth and embodiment, with material steadiness as one expression rather than the whole point.
 4. **Misread: the node fixes a single life outcome.** Actually, it describes a direction you can lean into or resist, which is why two people with the same axis can live it so differently.
 
-## North Node in Taurus at a Glance
+## The Taurus Node at a Glance
 
 | Property | How It Works | Ruling Element / Polarity | How to Observe |
 | --- | --- | --- | --- |
@@ -52,17 +52,17 @@ Most popular write-ups leave readers stuck because they repeat the same distorti
 | Core lesson | Trusting that simple and stable can be safe, not dull | Earth, value-and-body axis | Peace stops reading as a threat over time |
 | Common shadow | Clinging to intensity as proof of being alive | Scorpio-side overdevelopment | You distrust situations that are quietly going well |
 
-## Common Questions About North Node in Taurus
+## Common Questions People Ask
 
-**What does the North Node in Taurus mean in plain terms?**
+**What does the Taurus node mean in plain terms?**
 
-It points toward learning steadiness, self-worth, and enjoyment of simple stability, in contrast to a South Node in Scorpio that knows intensity well. Think of it as a growth direction to practice, not a fate to endure.
+It points toward learning steadiness, self-worth, and enjoyment of simple stability, in contrast to a South Node in Scorpio that knows intensity well. Think of this placement as a growth direction to practice, not a fate to endure.
 
-**Is the North Node in Taurus really the most difficult placement?**
+**Is the Taurus node really the most difficult placement?**
 
 It is often called difficult because the lesson runs against a deep instinct, but difficulty here means unfamiliar, not doomed. Many people with this placement describe relief once they stop treating calm as a problem to solve.
 
-**What about a North Node in Taurus and soulmate connections?**
+**What about the Taurus node and soulmate connections?**
 
 Relationships tend to grow when they offer steadiness rather than constant high-stakes drama, which can feel unexciting at first. The real work is learning that a calm, reliable bond is a strength, not a sign something is missing.
 

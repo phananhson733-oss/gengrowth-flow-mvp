@@ -1,27 +1,3 @@
----
-title: Green Aura Meaning
-slug: green-aura-meaning
-date: 2026-05-28
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T2
-track: 量产线
-page_id: page_green_aura_meaning
-author_id: "elena-vane"
-author_display_name: "Elena Vane"
-target_keyword: green aura meaning
-associated_keywords:
-  - green aura
-  - green aura personality
-  - what does green aura mean
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-05-28T13:13:13.404Z
-content_sha256_short: 87b024f8cadd1011
-phase2_checks: all-pass
----
-
 # What a Green Aura Really Means for Healing and Connection
 
 ## What is Green Aura?

@@ -562,7 +562,10 @@ function structureCheck(draft) {
 
   // SC10 — Decision-Value / Quick-Reference table shape ≥4 cols × ≥3 rows
   // (FAIL; v4.4 #3 — guards the audit-named table 崩盘点 + SOP §5 / 清单 §3).
-  const table = checkTableIntegrity(draft);
+  // Definition + Pillar mandate a quick-reference table (section 6); Tutorial does
+  // not. required=true makes SC10 fail on a missing table instead of delegating
+  // absence to the (now role-token, false-positive-prone) H2 spec.
+  const table = checkTableIntegrity(draft, { required: ctx.template === 'Definition' || ctx.template === 'Pillar' });
   if (!table.pass) {
     findings.push(`SC10 table integrity: ${table.note}`);
     table.violations.forEach((v) => findings.push(`  L${v.line}: ${v.hint}`));

@@ -257,6 +257,43 @@ function measureParagraph(text) {
   return { over: false };
 }
 
+// A list-item line: ordered (`1.` / `1)`) or unordered (`-` `*` `+`). Captures
+// the leading indent so continuation lines (indented under a marker) can be
+// folded into the same item.
+const LIST_ITEM_RE = /^(\s*)(\d+[.)]|[-*+])\s+(.*)$/;
+
+// Collect list items as measurable blocks: the marker line + any indented
+// continuation lines, joined; the marker and an optional leading bold label
+// (`**Label.**`) are stripped so we measure the prose the item actually carries.
+// SC3 measures these against the SAME wall ceiling as prose, so a wall hidden
+// inside one list item (e.g. `1. <220 words>`) is still caught — the user's
+// 引子+编号列表 rule means each item is a 1-2-句 point, not a paragraph in disguise.
+function listItemBlocks(lines) {
+  const items = [];
+  let inFence = false;
+  let cur = null; // { startLine, parts: [] }
+  const flush = () => {
+    if (cur) {
+      const joined = cur.parts.join(' ').trim();
+      const text = joined.replace(/^\*\*[^*\n]+\*\*[.:：]?\s*/, ''); // drop a leading bold label
+      if (text) items.push({ startLine: cur.startLine, text });
+    }
+    cur = null;
+  };
+  for (let i = 0; i < lines.length; i++) {
+    const raw = lines[i];
+    const trimmed = raw.trim();
+    if (/^```/.test(trimmed) || /^~~~/.test(trimmed)) { inFence = !inFence; flush(); continue; }
+    if (inFence) continue;
+    const m = raw.match(LIST_ITEM_RE);
+    if (m) { flush(); cur = { startLine: i + 1, parts: [m[3]] }; continue; }
+    if (cur && trimmed !== '' && /^\s/.test(raw)) { cur.parts.push(trimmed); continue; } // indented continuation
+    flush(); // blank / non-indented / heading / table ends the item
+  }
+  flush();
+  return items;
+}
+
 export function checkParagraphLength(draft) {
   const id = 'sc3_paragraph_length';
   const severity = 'fail';
@@ -265,6 +302,7 @@ export function checkParagraphLength(draft) {
   }
   const lines = draft.split('\n');
   const paras = proseParagraphs(lines);
+  const items = listItemBlocks(lines);
   const violations = [];
   for (const p of paras) {
     const m = measureParagraph(p.text);
@@ -276,15 +314,25 @@ export function checkParagraphLength(draft) {
       });
     }
   }
+  for (const it of items) {
+    const m = measureParagraph(it.text);
+    if (m.over) {
+      violations.push({
+        line: it.startLine,
+        text: `list item ${m.size} ${m.metric} — "${it.text.slice(0, 48)}…"`,
+        hint: `list item wall (${m.size} ${m.metric} > ${m.max}); 编号项应是 1-2 句的要点，过长就拆成多项或挪进正文段 (v4.5.1)`,
+      });
+    }
+  }
   if (violations.length === 0) {
-    return { id, severity, pass: true, violations: [], note: `${paras.length} prose paragraph(s), no wall` };
+    return { id, severity, pass: true, violations: [], note: `${paras.length} prose paragraph(s) + ${items.length} list item(s), no wall` };
   }
   return {
     id,
     severity,
     pass: false,
     violations,
-    note: `${violations.length} prose paragraph(s) over wall limit`,
+    note: `${violations.length} block(s) over wall limit`,
   };
 }
 
@@ -309,18 +357,23 @@ const SC3B_MEDIAN_FLOOR = 1;     // median sentences/para <= this = over-fragmen
 // shared by SC3b/SC3c (short-by-design skip), SC5 (FAQ) and the _phase2 H2 specs,
 // and MUST be mirrored by the oracle FAQPage JSON-LD detector
 // (WikiArticleDetailPage.tsx).
-//   FAQ:   EN needs a faq / questions / ask / Q&A token; ZH needs the char 问.
+//   FAQ:   EN needs faq(s) / questions / Q&A; ZH needs a real question compound
+//          问题/问答/常问/疑问 (+ 繁體 問題/問答/常問/疑問).
 //   Table: EN needs a glance / reference / table / cheat-sheet token;
 //          ZH needs 速查 / 一览 / 速览 / 概览 / 对照表.
 // Other section titles (Reflection Prompts, Sources, Take Action, …) stay fixed,
 // so they never carry these tokens and can't masquerade as table / FAQ.
-// EN FAQ token: faq / questions / Q&A (NOT bare "ask" — it false-matched
-// narrative headings like "How to Ask Your Practitioner"; every instructed FAQ
-// example carries Questions/FAQ/Q&A anyway). ZH FAQ token: a real question
-// compound 问题/问答/常问/疑问 (NOT bare 问 — it false-matched 访问/学问/顾问).
-export const EN_FAQ_HEADING_RE = /^##\s+[^\n]*(?:\bfaq\b|\bquestions?\b|\bq\s*&\s*a\b)/im;
-export const ZH_FAQ_HEADING_RE = /^##\s*[^\n]*(?:问题|问答|常问|疑问)/m;
-export const EN_TABLE_HEADING_RE = /^##\s+[^\n]*(?:at a glance|quick reference|reference table|cheat ?sheet|key (?:traits|properties|signals)|by the numbers|\btable\b)/im;
+// EN FAQ: faq(s) / questions / Q&A — NOT bare "ask" (false-matched "How to Ask
+// Your Practitioner"). \bfaqs?\b so plural "FAQs" matches too. ZH FAQ: a real
+// question compound, NOT bare 问 (false-matched 访问/学问/顾问); include 繁體 so a
+// "## 常見問題" heading is still recognized (the H2 spec accepts that variant).
+export const EN_FAQ_HEADING_RE = /^##\s+[^\n]*(?:\bfaqs?\b|\bquestions?\b|\bq\s*&\s*a\b)/im;
+export const ZH_FAQ_HEADING_RE = /^##\s*[^\n]*(?:问题|问答|常问|疑问|問題|問答|常問|疑問)/m;
+// Table tokens are STRONG table-headers only (dropped key traits/properties/
+// signals/by-the-numbers — those false-matched narrative headings, and SC10
+// passes when no table exists, so a narrative "Key Signals" H2 could have stood
+// in for a missing table). SC10 is now required-aware as the real backstop.
+export const EN_TABLE_HEADING_RE = /^##\s+[^\n]*(?:at a glance|quick reference|reference table|cheat ?sheet|\btable\b)/im;
 export const ZH_TABLE_HEADING_RE = /^##\s*[^\n]*(?:速查表?|一览表?|一覽表?|速览|速覽|概览|概覽|对照表|對照表|速查)/m;
 
 // Sections whose prose is legitimately short (FAQ answers, CTA, source list,
@@ -340,20 +393,24 @@ function isShortByDesignHeading(line) {
 function narrativeProseParagraphs(lines) {
   const paras = [];
   let inFence = false;
-  let excluded = false; // inside a short-by-design section
+  let excluded = false;   // inside a short-by-design section
+  let inListItem = false; // last line was a list marker or its indented continuation
   let cur = null;
   const flush = () => {
     if (cur && cur.parts.join(' ').trim()) paras.push({ startLine: cur.startLine, text: cur.parts.join(' ') });
     cur = null;
   };
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (/^```/.test(line) || /^~~~/.test(line)) { inFence = !inFence; flush(); continue; }
-    if (inFence) { flush(); continue; }
-    if (/^#{1,6}\s/.test(line)) { flush(); excluded = isShortByDesignHeading(line); continue; }
-    const isStructural =
-      line === '' || /^\|/.test(line) || /^>/.test(line) || /^(\d+[.)]|[-*+])\s/.test(line);
-    if (isStructural) { flush(); continue; }
+    const raw = lines[i];
+    const line = raw.trim();
+    if (/^```/.test(line) || /^~~~/.test(line)) { inFence = !inFence; flush(); inListItem = false; continue; }
+    if (inFence) { flush(); inListItem = false; continue; }
+    if (/^#{1,6}\s/.test(line)) { flush(); excluded = isShortByDesignHeading(line); inListItem = false; continue; }
+    if (line === '') { flush(); inListItem = false; continue; }
+    if (/^(\d+[.)]|[-*+])\s/.test(line)) { flush(); inListItem = true; continue; } // list marker
+    if (inListItem && /^\s/.test(raw)) { continue; } // indented list continuation — not prose
+    if (/^\|/.test(line) || /^>/.test(line)) { flush(); inListItem = false; continue; } // table / blockquote
+    inListItem = false;
     if (excluded) { flush(); continue; }
     if (!cur) cur = { startLine: i + 1, parts: [] };
     cur.parts.push(line);
@@ -415,22 +472,28 @@ const SC3C_MAX_SECTION_PARAS = 3; // > 3 separate prose paragraphs under one H2 
 function sectionProseBlocks(lines) {
   const sections = [];
   let inFence = false;
-  let cur = null;     // { heading, startLine, paraCount, excluded }
-  let inPara = false; // currently inside a prose block
+  let cur = null;        // { heading, startLine, paraCount, excluded }
+  let inPara = false;    // currently inside a prose block
+  let inListItem = false; // last line was a list marker or its indented continuation
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (/^```/.test(line) || /^~~~/.test(line)) { inFence = !inFence; inPara = false; continue; }
-    if (inFence) { inPara = false; continue; }
+    const raw = lines[i];
+    const line = raw.trim();
+    if (/^```/.test(line) || /^~~~/.test(line)) { inFence = !inFence; inPara = false; inListItem = false; continue; }
+    if (inFence) { inPara = false; inListItem = false; continue; }
     if (/^##\s/.test(line)) { // H2 opens a new section
       if (cur && !cur.excluded) sections.push(cur);
       cur = { heading: line.replace(/^#+\s*/, ''), startLine: i + 1, paraCount: 0, excluded: isShortByDesignHeading(line) };
-      inPara = false;
+      inPara = false; inListItem = false;
       continue;
     }
-    if (/^#{1,6}\s/.test(line)) { inPara = false; continue; } // H1 / H3+ — break run, no new section
-    const isStructural =
-      line === '' || /^\|/.test(line) || /^>/.test(line) || /^(\d+[.)]|[-*+])\s/.test(line);
-    if (isStructural) { inPara = false; continue; }
+    if (/^#{1,6}\s/.test(line)) { inPara = false; inListItem = false; continue; } // H1 / H3+ — break run, no new section
+    if (line === '') { inPara = false; inListItem = false; continue; }
+    if (/^(\d+[.)]|[-*+])\s/.test(line)) { inPara = false; inListItem = true; continue; } // list marker
+    // An indented line under a list item is a wrapped continuation, NOT a new
+    // prose block (else a list item that wraps would falsely count as scatter).
+    if (inListItem && /^\s/.test(raw)) continue;
+    if (/^\|/.test(line) || /^>/.test(line)) { inPara = false; inListItem = false; continue; } // table / blockquote
+    inListItem = false;
     if (!inPara) { if (cur) cur.paraCount += 1; inPara = true; } // start of a new prose block
   }
   if (cur && !cur.excluded) sections.push(cur);
@@ -621,7 +684,7 @@ function sectionByHeading(lines, re) {
 // `m` flag is harmless when testing one line at a time via sectionByHeading).
 // Mirrors EN_FAQ_HEADING_RE / ZH_FAQ_HEADING_RE (defined above with the other
 // Phase C role regexes), combined for a single-pass per-line match.
-const FAQ_HEADING_REGEX = /^##\s+[^\n]*(?:\bfaq\b|\bquestions?\b|\bq\s*&\s*a\b|问题|问答|常问|疑问)/i;
+const FAQ_HEADING_REGEX = /^##\s+[^\n]*(?:\bfaqs?\b|\bquestions?\b|\bq\s*&\s*a\b|问题|问答|常问|疑问|問題|問答|常問|疑問)/i;
 // A question must be a WHOLE bold line ending in `?`/`？` — not an inline bold
 // fragment mid-answer (e.g. `Answer: **really?** maybe`).
 const FAQ_QUESTION_REGEX = /^\s*\*\*(?=\S)[^*\n]*[?？]\s*\*\*\s*$/;
@@ -950,9 +1013,15 @@ function countTableCols(rowText) {
   return rowText.trim().replace(/^\||\|$/g, '').split('|').length;
 }
 
-export function checkTableIntegrity(draft) {
+// `opts.required` (v4.5.1 Phase C): Definition + Pillar MANDATE a quick-reference
+// table, so "no table found" is a FAIL — not a pass delegated to the H2 spec. The
+// H2 spec now matches the table heading by role token, which can false-positive
+// (a narrative "Key Signals" heading), so SC10 must independently verify the
+// table actually exists. Tutorial (no table) passes when required is false.
+export function checkTableIntegrity(draft, opts = {}) {
   const id = 'sc10_table_integrity';
   const severity = 'fail';
+  const required = opts.required === true;
   if (typeof draft !== 'string' || !draft) {
     return { id, severity, pass: true, violations: [], note: 'empty draft — skipped' };
   }
@@ -967,6 +1036,19 @@ export function checkTableIntegrity(draft) {
     }
   }
   if (headerIdx === -1) {
+    if (required) {
+      return {
+        id,
+        severity,
+        pass: false,
+        violations: [{
+          line: 0,
+          text: 'no markdown table found',
+          hint: '本模板要求一个速查表 / Quick-Reference 表格（≥4 列 × ≥3 行）；正文里没有任何 markdown 表格。变体标题可以，但表格本体必须存在。',
+        }],
+        note: 'required table missing (no markdown table in draft)',
+      };
+    }
     return { id, severity, pass: true, violations: [], note: 'no markdown table found (section absence checked by H2 spec)' };
   }
   const cols = countTableCols(lines[headerIdx]);

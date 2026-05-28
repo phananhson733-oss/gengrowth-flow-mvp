@@ -240,7 +240,7 @@ test('SC3: short CJK paragraph → PASS', () => {
   assert.equal(r.pass, true, r.note);
 });
 
-test('SC3: tables / lists / blockquotes / fenced code are NOT counted as prose', () => {
+test('SC3: tables / blockquotes / fenced code are NOT counted as prose', () => {
   const longCells = enSentences(8);
   const draft = `# X
 
@@ -251,13 +251,27 @@ test('SC3: tables / lists / blockquotes / fenced code are NOT counted as prose',
 
 ## Reflection Prompts
 
-1. ${enSentences(8)}
+1. ${enSentences(2)}
 
 > ${enSentences(8)}
 
 \`\`\`
 ${enSentences(8)}
 \`\`\``;
+  const r = checkParagraphLength(draft);
+  assert.equal(r.pass, true, r.note);
+});
+
+test('SC3: a wall hidden inside a single list item → FAIL (v4.5.1 — items are 1-2 句)', () => {
+  // A 220-word numbered item is a wall in disguise; the bold label is stripped.
+  const draft = `# X\n\n## What is X?\n\n1. **Label.** ${enWords(200)}.`;
+  const r = checkParagraphLength(draft);
+  assert.equal(r.pass, false);
+  assert.ok(/list item wall/.test(r.violations[0].hint), r.violations[0].hint);
+});
+
+test('SC3: a short bold-label list item → PASS', () => {
+  const draft = `# X\n\n## What is X?\n\nLead-in here.\n\n1. **Label.** A short one-line point.\n2. **Another.** Also short.`;
   const r = checkParagraphLength(draft);
   assert.equal(r.pass, true, r.note);
 });
@@ -328,6 +342,26 @@ Here is the lead-in paragraph that frames the three points below.
 3. **Third point.** A final detail in the list.
 
 And here is a single closing paragraph that wraps the section up.`;
+  const r = checkSectionScatter(draft);
+  assert.equal(r.pass, true, r.note);
+});
+
+test('SC3c: wrapped/indented list-item continuations are NOT counted as scatter blocks', () => {
+  // Regression (codex P1): a numbered item whose text wraps onto an indented
+  // continuation line must stay part of the item, not count as a prose block.
+  const draft = `# X
+
+## Why It Matters
+
+Lead-in paragraph that frames the points below.
+
+1. **First.** Detail that wraps onto
+   a continuation line under the item.
+2. **Second.** Another point that also wraps
+   across two physical lines here.
+3. **Third.** A final point.
+
+A single closing paragraph wraps the section.`;
   const r = checkSectionScatter(draft);
   assert.equal(r.pass, true, r.note);
 });

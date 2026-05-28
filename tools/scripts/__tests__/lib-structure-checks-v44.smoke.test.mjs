@@ -18,6 +18,7 @@ import {
   checkSnippetBullets,
   checkCtaUrl,
   checkSourcesSection,
+  checkTableIntegrity,
   EN_FAQ_HEADING_RE,
   ZH_FAQ_HEADING_RE,
   EN_TABLE_HEADING_RE,
@@ -146,7 +147,7 @@ test('SC5: a non-FAQ heading without a role token is NOT treated as the FAQ sect
 // ============================================================
 
 test('EN_FAQ_HEADING_RE: matches varied FAQ headings, rejects other sections', () => {
-  for (const h of ['## Frequently Asked Questions', '## Common Questions About Orange Aura', '## Orange Aura FAQ', '## Questions People Ask', '## Reader Q&A']) {
+  for (const h of ['## Frequently Asked Questions', '## Common Questions About Orange Aura', '## Orange Aura FAQ', '## Orange Aura FAQs', '## Questions People Ask', '## Reader Q&A']) {
     assert.ok(EN_FAQ_HEADING_RE.test(h), `should match: ${h}`);
   }
   for (const h of ['## What is Orange Aura?', '## Reflection Prompts', '## Sources', '## How to Read Orange Aura in Yourself', '## Take Action', '## How to Ask Your Practitioner']) {
@@ -154,17 +155,20 @@ test('EN_FAQ_HEADING_RE: matches varied FAQ headings, rejects other sections', (
   }
 });
 
-test('EN_TABLE_HEADING_RE: matches varied table headings, rejects other sections', () => {
-  for (const h of ['## Quick Reference Table', '## Orange Aura at a Glance', '## Orange Aura Cheat Sheet', '## Key Traits of Orange Aura', '## Orange Aura by the Numbers']) {
+test('EN_TABLE_HEADING_RE: matches strong table tokens, rejects narrative headings', () => {
+  for (const h of ['## Quick Reference Table', '## Orange Aura at a Glance', '## Orange Aura Cheat Sheet', '## Orange Aura Reference Table', '## Orange Aura Quick Reference']) {
     assert.ok(EN_TABLE_HEADING_RE.test(h), `should match: ${h}`);
   }
-  for (const h of ['## What is Orange Aura?', '## Frequently Asked Questions', '## Common Misreadings', '## Why It Matters for Self-Awareness']) {
+  // "key traits/properties/signals" + "by the numbers" were dropped — they
+  // false-matched narrative headings and SC10 (now required-aware) is the real
+  // table backstop. They must NOT match.
+  for (const h of ['## What is Orange Aura?', '## Frequently Asked Questions', '## Common Misreadings', '## Why It Matters for Self-Awareness', '## Key Traits of Orange Aura', '## Orange Aura by the Numbers', '## Key Signals You Are Overreading']) {
     assert.ok(!EN_TABLE_HEADING_RE.test(h), `should NOT match: ${h}`);
   }
 });
 
 test('ZH_FAQ_HEADING_RE: matches 问题/问答/常问/疑问, rejects 访问/学问/顾问 and others', () => {
-  for (const h of ['## 常见问题', '## 关于橙色气场的常见问题', '## 读者常问的问题', '## 橙色气场问答', '## 橙色气场常见疑问']) {
+  for (const h of ['## 常见问题', '## 关于橙色气场的常见问题', '## 读者常问的问题', '## 橙色气场问答', '## 橙色气场常见疑问', '## 常見問題', '## 橙色氣場問答']) {
     assert.ok(ZH_FAQ_HEADING_RE.test(h), `should match: ${h}`);
   }
   // bare 问 must NOT match (would false-fire on 访问/学问/顾问/慰问).
@@ -180,6 +184,38 @@ test('ZH_TABLE_HEADING_RE: matches table-token headings, rejects 代表/others',
   for (const h of ['## 常见问题', '## 蓝色气场代表什么', '## 自我觉察小提示', '## 延伸阅读']) {
     assert.ok(!ZH_TABLE_HEADING_RE.test(h), `should NOT match: ${h}`);
   }
+});
+
+// ============================================================
+// SC10 — table integrity, required-aware (Phase C backstop)
+// ============================================================
+
+const GOOD_TABLE = `## X at a Glance
+
+| Property | How It Works | Energy Center | How to Observe |
+|---|---|---|---|
+| a | b | c | d |
+| e | f | g | h |
+| i | j | k | l |`;
+
+test('SC10: required + no table at all → FAIL (varied heading cannot stand in)', () => {
+  // A narrative section title that is NOT a table; no markdown table anywhere.
+  const draft = `# X\n\n## What is X?\n\nBody.\n\n## Key Signals\n\nSome prose, no table.`;
+  const r = checkTableIntegrity(draft, { required: true });
+  assert.equal(r.pass, false);
+  assert.ok(/required table missing/.test(r.note), r.note);
+});
+
+test('SC10: not required + no table → PASS (Tutorial has no table)', () => {
+  const draft = `# X\n\n## Step 1\n\nDo the thing.`;
+  const r = checkTableIntegrity(draft, { required: false });
+  assert.equal(r.pass, true, r.note);
+});
+
+test('SC10: required + valid 4x3 table under a varied heading → PASS', () => {
+  const draft = `# X\n\n## What is X?\n\nBody.\n\n${GOOD_TABLE}`;
+  const r = checkTableIntegrity(draft, { required: true });
+  assert.equal(r.pass, true, r.note);
 });
 
 // ============================================================

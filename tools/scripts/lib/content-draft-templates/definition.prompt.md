@@ -169,7 +169,7 @@ capsule 用于决定**怎么解释**（措辞、对比角度、例子选择、�
 5. **Common Misreadings**（H2）— 大众 / 浅层内容对 {{entity}} **最常见的 2-4 个误读**，逐条纠正（误读 → 实际）。
    - **用编号列表或加粗 lead-in 短段**呈现，每条 ≤ 2 句；紧扣 Friction 字段（读者正是被这些误读困住才来搜）。
 6. **速查表 / Quick Reference（H2，标题按 entity 变体）**— Markdown 表格 ≥ 4 列 × ≥ 3 行，**必须含「Property / How It Works / Energy Center / How to Observe」4 列**（不是只列属性）。**列名禁用 "Mechanism"**（已改为 "How It Works"）；「How to Observe」列满足清单 §3「如何观察 / 应用场景」要求，写读者实际能观察到 / 可操作的短句
-   - **标题去模板化（v4.5.1 Phase C）**：不要每篇都写死成 `## Quick Reference Table`（库一大就雷同）。请写一个 entity 专属、自然的标题，**且必须含一个 table/reference token**：`at a Glance` / `Quick Reference` / `Reference Table` / `Cheat Sheet` / `Key Traits` / `by the Numbers` / 或含 `Table`。例：`## {{entity}} at a Glance`、`## {{entity}} Cheat Sheet`、`## Key Traits of {{entity}}`。（检测靠 token，不靠固定字符串。）
+   - **标题去模板化（v4.5.1 Phase C）**：不要每篇都写死成 `## Quick Reference Table`（库一大就雷同）。请写一个 entity 专属、自然的标题，**且必须含一个 table/reference token**：`at a Glance` / `Quick Reference` / `Reference Table` / `Cheat Sheet` / 或含 `Table`。例：`## {{entity}} at a Glance`、`## {{entity}} Cheat Sheet`、`## {{entity}} Quick Reference`。（检测靠 token，不靠固定字符串。）
    - **该表格标题之后第一个非空段必须直接是 markdown 表格本身（以 `|` 开头）**，不能加任何 prose intro / SEO 解释段（例 ❌「Use this table to quickly compare key properties...」），否则 Phase 2 RL4 drift 检测把整 section 当 prose 走 jaccard，整篇 fail
    - **「Energy Center」语义按 entity 类型适配**（这一列不是固定 = 脉轮）：
      - aura/color/chakra 类 entity → 对应脉轮名（throat / heart / crown 等）

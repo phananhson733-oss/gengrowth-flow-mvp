@@ -1,17 +1,17 @@
 {
   "schema_version": "1",
-  "page_id": "PG-HOUSE-006",
-  "entity": "The 1st House",
-  "target_keyword": "1st house meaning",
+  "page_id": "PG-AURA-009",
+  "entity": "Aura Reading",
+  "target_keyword": "aura reading",
   "template": "Definition",
   "tier": "T2",
   "track": "量产线",
   "generated_by": "unknown",
   "prompt_version": "v8",
-  "generated_at": "2026-05-28T20:41:52.810Z",
-  "content_sha256_short": "c5d1be779e29e1b3",
-  "source_path": "_staging/zh-demo/PG-HOUSE-006-claude-v8.md",
-  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/PG-HOUSE-006-zh.md",
+  "generated_at": "2026-05-28T20:41:52.888Z",
+  "content_sha256_short": "a54c9c4c3c8ccfe1",
+  "source_path": "_staging/zh-demo/PG-AURA-009-claude-v8.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/PG-AURA-009-zh.md",
   "phase2_checks": {
     "overall": "pass",
     "structure": {
@@ -19,7 +19,7 @@
       "h2Count": 11,
       "h3Count": 0,
       "h4Count": 0,
-      "words": 2205,
+      "words": 1989,
       "wikilinks": 5,
       "tbdLinks": 5
     },

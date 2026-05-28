@@ -1,3 +1,28 @@
+---
+title: Aura Reading
+slug: aura-reading
+date: 2026-05-28
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-AURA-009
+author_id: "elena-vane"
+author_display_name: "Elena Vane"
+target_keyword: aura reading
+associated_keywords:
+  - aura reading online
+  - how to read auras
+  - see your aura
+  - aura colors meaning
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-05-28T20:41:52.888Z
+content_sha256_short: a54c9c4c3c8ccfe1
+phase2_checks: all-pass
+---
+
 # 学气场解读，先靠感受而不是急着看见颜色
 
 ## Aura Reading 是什么？

@@ -19,7 +19,7 @@ associated_keywords:
   - free vedic birth chart with interpretation
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-28T20:07:59.197Z
+generated_at: 2026-05-28T20:41:52.849Z
 content_sha256_short: 88aa773b8d11516d
 phase2_checks: all-pass
 ---

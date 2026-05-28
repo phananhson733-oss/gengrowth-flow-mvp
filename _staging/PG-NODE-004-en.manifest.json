@@ -1,17 +1,17 @@
 {
   "schema_version": "1",
-  "page_id": "PG-HOUSE-012",
-  "entity": "The 7th House",
-  "target_keyword": "7th house astrology",
+  "page_id": "PG-NODE-004",
+  "entity": "The North Node",
+  "target_keyword": "how to find north node",
   "template": "Definition",
   "tier": "T2",
   "track": "量产线",
   "generated_by": "unknown",
   "prompt_version": "v8",
-  "generated_at": "2026-05-28T17:55:28.744Z",
-  "content_sha256_short": "de42436c7af9f1b8",
-  "source_path": "_staging/PG-HOUSE-012-claude-v8.md",
-  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-HOUSE-012-en.md",
+  "generated_at": "2026-05-28T17:55:26.341Z",
+  "content_sha256_short": "ad981bfdf8b60693",
+  "source_path": "_staging/PG-NODE-004-claude-v8.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-NODE-004-en.md",
   "phase2_checks": {
     "overall": "pass",
     "structure": {
@@ -19,9 +19,9 @@
       "h2Count": 11,
       "h3Count": 0,
       "h4Count": 0,
-      "words": 2014,
-      "wikilinks": 5,
-      "tbdLinks": 5
+      "words": 1772,
+      "wikilinks": 4,
+      "tbdLinks": 4
     },
     "rl1": true,
     "rl2": true,

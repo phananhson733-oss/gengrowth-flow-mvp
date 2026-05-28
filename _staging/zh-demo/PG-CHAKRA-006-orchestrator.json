@@ -1,7 +1,7 @@
 {
   "page_id": "PG-CHAKRA-006",
   "prompt_path": "/Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/PG-CHAKRA-006.v8.zh-prompt.md",
-  "started_at": "2026-05-28T17:32:31.079Z",
+  "started_at": "2026-05-28T17:49:05.296Z",
   "models_requested": [
     "claude"
   ],
@@ -10,7 +10,7 @@
   "max_cost_usd_per_page": 5,
   "budget_exceeded_models": [],
   "ok_count": 1,
-  "total_cost_estimate_usd": 0.1029,
+  "total_cost_estimate_usd": 0.1038,
   "results": {
     "claude": {
       "model": "claude",
@@ -19,14 +19,14 @@
       "ok": true,
       "output_path": "/Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/PG-CHAKRA-006-claude-v8.md",
       "retries": 0,
-      "duration_s": 694.1,
+      "duration_s": 483.2,
       "cost_estimate_usd": {
-        "usd": 0.1029,
+        "usd": 0.1038,
         "input_tokens_est": 5715,
-        "output_tokens_est": 229,
+        "output_tokens_est": 241,
         "pricing_note": "Opus 4.7 xhigh"
       },
-      "cumulative_cost_usd": 0.1029,
+      "cumulative_cost_usd": 0.1038,
       "budget_exceeded": false,
       "budget_usd": 5,
       "attempts": [
@@ -34,16 +34,16 @@
           "try_index": 1,
           "model": "claude",
           "command": "claude -p --model claude-opus-4-7 < /Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/PG-CHAKRA-006.v8.zh-prompt.md > /Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/PG-CHAKRA-006-claude-v8.md",
-          "cost_usd": 0.1029,
-          "cumulative_cost_usd": 0.1029,
+          "cost_usd": 0.1038,
+          "cumulative_cost_usd": 0.1038,
           "ok": true,
           "exit_code": 0,
-          "duration_s": 694.1,
+          "duration_s": 483.2,
           "stderr_tail": "",
-          "stdout_bytes": 2864,
+          "stdout_bytes": 2954,
           "sonnet_guard": {
             "downgraded": false,
-            "bytes": 7118
+            "bytes": 7260
           }
         }
       ]

@@ -18,7 +18,7 @@ associated_keywords:
   - sidereal zodiac
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-28T20:08:06.215Z
+generated_at: 2026-05-28T22:38:35.965Z
 content_sha256_short: 9dbbd068ecce1ab7
 phase2_checks: all-pass
 ---

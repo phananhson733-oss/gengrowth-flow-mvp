@@ -193,14 +193,14 @@ const template = /^pillar$/i.test(templateRaw) ? 'Pillar' : 'Definition';
 // branches on language to count correctly.
 const templateDefaults = {
   en: {
-    Definition: { word_range: [1500, 1800], kw_count_range: [5, 8], expected_h2: 9 },
+    Definition: { word_range: [1500, 1800], kw_count_range: [5, 8], expected_h2: 11 },
     Pillar: { word_range: [2500, 3500], kw_count_range: [8, 12], expected_h2: 11 },
   },
   zh: {
     // ZH word_range tuned 2026-05-25 from first opus 4.7 demo run: actual
     // production output landed at 1590 chars; Chinese expression is denser
     // than English so 1500-2000 chars ≈ EN 1500-1800 words in info density.
-    Definition: { word_range: [1500, 2000], kw_count_range: [5, 8], expected_h2: 9 },
+    Definition: { word_range: [1500, 2000], kw_count_range: [5, 8], expected_h2: 11 },
     Pillar: { word_range: [3000, 4000], kw_count_range: [8, 12], expected_h2: 11 },
   },
 };
@@ -337,6 +337,17 @@ function buildEnH2Specs(ctx) {
           ],
           label: `## ${ctx.entity} vs Adjacent Concepts: How It Works + Trade-offs`,
         },
+        {
+          variants: [
+            `## How to Read ${ctx.entity} in Yourself`,
+            `## How to Read ${ctx.entity} in Your Aura`,
+            `## How to Read ${ctx.entity} in Your Chart`,
+            `## How to Read ${ctx.entity} in Your Timing`,
+          ],
+          matchFn: (d) => /^##\s+How to (Read|Spot|Recognize|Work With)\b/m.test(d),
+          label: `## How to Read ${ctx.entity} in Yourself`,
+        },
+        { variants: ['## Common Misreadings', '## Common Misreads', '## Common Misreads + Framework Limits'], matchFn: (d) => /^##\s+Common Misread/m.test(d), label: '## Common Misreadings' },
         { variants: ['## Quick Reference Table'], label: '## Quick Reference Table' },
         { variants: ['## Frequently Asked Questions'], label: '## Frequently Asked Questions' },
         { variants: ['## Reflection Prompts'], label: '## Reflection Prompts' },
@@ -383,6 +394,8 @@ function buildZhH2Specs(ctx) {
     : [
         { variants: introVariants, label: `## <entity 中文译名> 是什么？`, matchFn: introSuffixMatch },
         { variants: ['## 为什么了解它能帮助自我觉察'], label: '## 为什么了解它能帮助自我觉察' },
+        { variants: ['## 如何在自己身上识别', '## 如何在自己身上看出', '## 如何在星盘里识别', '## 如何识别'], matchFn: (d) => /^##\s*如何(在.{0,8})?(识别|看出|读出|认出|看见)/m.test(d), label: '## 如何识别 <entity>（实操观察）' },
+        { variants: ['## 常见误读', '## 常见误读 + 框架边界', '## 常见误读+框架边界'], matchFn: (d) => /^##\s*常见误读/m.test(d), label: '## 常见误读' },
         { variants: ['与相近概念'], label: '## <entity> 与相近概念：运作方式 + 取舍 (substring `与相近概念`)' },
         { variants: ['速查表'], label: '## <entity> 速查表 (substring `速查表`)' },
         { variants: ['## 常见问题', '## 常見問題'], label: '## 常见问题' },

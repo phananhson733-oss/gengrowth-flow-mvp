@@ -451,6 +451,14 @@ Body.
 ## Distinctions
 Body.
 
+## How to Read It
+- s1
+- s2
+
+## Common Misreadings
+- m1
+- m2
+
 ## Quick Reference
 | name | meaning | usage |
 |------|---------|-------|
@@ -476,7 +484,7 @@ Answer.
 click here https://astrologywiki.com/tools/x
 `;
 
-test('structure: valid Definition 9 sections + table → ok', () => {
+test('structure: valid Definition 11 sections + table → ok', () => {
   const r = structureCheck(VALID_DEFINITION, {
     template: 'Definition', effectivePsychSafety: 'N',
     cta: { text: 'click here', target_url: 'https://astrologywiki.com/tools/x' },
@@ -2279,18 +2287,18 @@ test('capsule: renderPrompt injects all 4 author placeholders (Definition)', () 
   assert.match(out, /<field name="author_forbidden_moves">No prediction\.<\/field>/);
 });
 
-test('capsule: injection does NOT break the structure section markers (Tutorial 8 / Definition 9)', () => {
+test('capsule: injection does NOT break the structure section markers (Tutorial 8 / Definition 11)', () => {
   const tut = renderPrompt('Tutorial', CAPSULE_CTX_BASE('Tutorial'));
   for (let i = 1; i <= 8; i++) {
     assert.ok(new RegExp(`^${i}\\.`, 'm').test(tut), `Tutorial section ${i} missing after capsule inject`);
   }
   const def = renderPrompt('Definition', CAPSULE_CTX_BASE('Definition'));
-  for (let i = 1; i <= 9; i++) {
+  for (let i = 1; i <= 11; i++) {
     assert.ok(new RegExp(`^${i}\\.`, 'm').test(def), `Definition section ${i} missing after capsule inject`);
   }
   // The H2-count rules are still literally present in both templates.
   assert.match(tut, /恰好 8 个 `## H2`/);
-  assert.match(def, /恰好 9 个 `## H2`/);
+  assert.match(def, /恰好 11 个 `## H2`/);
 });
 
 test('capsule: persona capsule text is safeField-escaped (no <field> breakout)', () => {

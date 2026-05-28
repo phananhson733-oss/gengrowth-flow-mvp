@@ -713,9 +713,9 @@ function structureCheck(draftMd, ctx) {
   if (h1Count < 1) issues.push('missing H1 heading');
   if (h2Count < 3) issues.push(`H2 count = ${h2Count} (< 3)`);
 
-  // v4.4 schema: Definition grew 7 -> 9 H2 (FAQ + Sources added); Tutorial stays 8.
-  // (Pillar is excluded from this legacy/debug path; see ALLOWED_TEMPLATES.)
-  const expectedSections = ctx.template === 'Tutorial' ? 8 : 9;
+  // v4.5 schema: Definition grew 9 -> 11 H2 (+ How to Read / Common Misreadings);
+  // Tutorial stays 8. (Pillar excluded from this legacy/debug path; see ALLOWED_TEMPLATES.)
+  const expectedSections = ctx.template === 'Tutorial' ? 8 : 11;
   // For section counting we use H2 heading count as canonical (CTA may be H2 or trailing block).
   if (h2Count !== expectedSections) {
     issues.push(`${ctx.template} expected ${expectedSections} H2 sections, got ${h2Count}`);

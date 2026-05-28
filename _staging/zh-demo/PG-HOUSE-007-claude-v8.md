@@ -1,28 +1,3 @@
----
-title: 2nd House Astrology
-slug: 2nd-house-astrology
-date: 2026-05-28
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T2
-track: 量产线
-page_id: PG-HOUSE-007
-author_id: "julian-thorne"
-author_display_name: "Julian Thorne"
-target_keyword: 2nd house astrology
-associated_keywords:
-  - second house
-  - 2nd house money
-  - 2nd house values
-  - possessions astrology
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-05-28T16:47:53.866Z
-content_sha256_short: a489198613ced926
-phase2_checks: all-pass
----
-
 # 第二宫真正在说的，是你觉得自己值多少
 
 ## The 2nd House 是什么？

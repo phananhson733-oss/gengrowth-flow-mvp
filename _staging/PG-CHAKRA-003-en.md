@@ -1,3 +1,28 @@
+---
+title: Chakra Test
+slug: chakra-test
+date: 2026-05-28
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-CHAKRA-003
+author_id: "elena-vane"
+author_display_name: "Elena Vane"
+target_keyword: chakra test
+associated_keywords:
+  - chakra quiz
+  - which chakra is blocked
+  - chakra balance test
+  - chakra assessment
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-05-28T20:08:50.297Z
+content_sha256_short: 4cdf68a09e650afd
+phase2_checks: all-pass
+---
+
 # What Your Chakra Test Result Actually Tells You
 
 ## What is The Chakra System?

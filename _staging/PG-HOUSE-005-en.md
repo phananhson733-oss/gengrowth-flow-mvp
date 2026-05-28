@@ -16,8 +16,8 @@ associated_keywords:
   - 11th house meaning
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-28T16:28:18.808Z
-content_sha256_short: 7e2a6d40924b3476
+generated_at: 2026-05-28T16:40:16.511Z
+content_sha256_short: b9c4d0b79fa85e3f
 phase2_checks: all-pass
 ---
 
@@ -35,7 +35,7 @@ This house sits inside the broader [[<TBD-internal-link: pillar page on the twel
 
 ## Why It Matters for Self-Awareness
 
-Understanding the 11th House matters because most write-ups flatten it into a single word, "friendship," and that label quietly fails the very people searching for it. Students of astrology overlook this house's expansionary logic precisely because the reductionist "friends and networks" tag offers nothing to someone who lacks a large social circle, leads a solitary practice, or builds their contribution alone. In my years integrating psychological frameworks with evolutionary astrology, across community-counseling work and thousands of hours of consultation, this is the sector of the chart clients most often dismiss as irrelevant to them, when in fact it asks a deeper question they very much want answered.
+Understanding the 11th House matters because most write-ups flatten it into a single word, "friendship," and that label quietly fails the very people searching for it. Students of astrology overlook this house's expansionary logic precisely because the reductionist "friends and networks" tag offers nothing to someone who lacks a large social circle, leads a solitary practice, or builds their contribution alone. Over more than eighteen years guiding people through questions of community, group belonging, and the long-range vision they are quietly building toward, I have found this sector the one clients most often dismiss as irrelevant to them, when in fact it asks a deeper question they very much want answered.
 
 That question is about alignment rather than popularity, and missing it is where self-awareness stalls. The friction shows up in a few recognizable ways:
 

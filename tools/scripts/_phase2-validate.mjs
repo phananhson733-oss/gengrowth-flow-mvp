@@ -147,8 +147,17 @@ const promptVersion = args.prompt_version || 'v8';
 let fixture = {};
 let fixturePath = args.fixture;
 if (!fixturePath && args.page_id) {
-  const candidate = join(REPO, '.gg-cache', 'prompts', `${args.page_id}.${promptVersion}-fixture.json`);
-  if (existsSync(candidate)) fixturePath = candidate;
+  // ZH fixtures carry a .zh infix (renderer langInfix); a ZH validation must read
+  // the ZH fixture so it gets ZH word_range + the /zh/ cta_target_url. Fall back to
+  // the un-suffixed fixture when no ZH sidecar exists (single-fixture legacy path).
+  const langInfix = (args.language || '').toLowerCase() === 'zh' ? '.zh' : '';
+  const names = langInfix
+    ? [`${args.page_id}.${promptVersion}${langInfix}-fixture.json`, `${args.page_id}.${promptVersion}-fixture.json`]
+    : [`${args.page_id}.${promptVersion}-fixture.json`];
+  for (const name of names) {
+    const candidate = join(REPO, '.gg-cache', 'prompts', name);
+    if (existsSync(candidate)) { fixturePath = candidate; break; }
+  }
 }
 if (fixturePath) {
   try {

@@ -171,8 +171,20 @@ export function journalPromptsBlock(raw) {
 // substitution, a Definition/Pillar template has ZERO residual {{...}} for both
 // authored and unauthored cfgs — the exact condition renderAuraPrompt hard-exits
 // on. ragBlocks fields default to '' so a test may omit them.
+// Internal-link CTA targets carry a /<lang>/ path segment (SPA route /:lang/wiki/:id).
+// Overrides store the EN canonical URL; rewrite the lang segment so a ZH article links
+// to the ZH page and EN to EN. URLs without an /en/|/zh/ segment (e.g. /tools/... pages)
+// pass through unchanged, so aura tool-page CTAs keep working.
+export function ctaUrlForLang(url, lang) {
+  if (!url) return url;
+  const want = lang === 'zh' ? 'zh' : 'en';
+  return url.replace(/^(https?:\/\/[^/]+)\/(?:en|zh)\//i, (_m, host) => `${host}/${want}/`);
+}
+
 export function buildReplacements(cfg, ragBlocks = {}) {
   const lang = cfg.language === 'zh' ? 'zh' : 'en';
+  // CTA target: rewrite the /<lang>/ segment so ZH articles link to ZH pages (SC8 exact-target).
+  const ctaTargetUrl = ctaUrlForLang(cfg.cta_target_url, lang);
   const isPillar = /^pillar$/i.test(cfg.template || '');
   // ZH defaults: Chinese articles measure in characters, not words. Tuned
   // 2026-05-25 from first opus 4.7 production run (actual output 1590 chars).
@@ -204,7 +216,7 @@ export function buildReplacements(cfg, ragBlocks = {}) {
     '{{content_angle}}': cfg.content_angle,
     '{{internal_link_rule}}': cfg.internal_link_rule,
     '{{cta_text}}': cfg.cta_text,
-    '{{cta_target_url}}': cfg.cta_target_url,
+    '{{cta_target_url}}': ctaTargetUrl,
     '{{psych_safety_flag}}': cfg.psych_safety_flag || 'N',
     '{{target_country}}': targetCountry,
     '{{TIER_GATE_BLOCK}}': cfg.tier_gate_block,
@@ -232,7 +244,7 @@ export function buildReplacements(cfg, ragBlocks = {}) {
     '{{child_entities}}': Array.isArray(cfg.child_entities) ? cfg.child_entities.join(', ') : (cfg.child_entities || ''),
     '{{child_count}}': cfg.child_count != null ? String(cfg.child_count) : (Array.isArray(cfg.child_entities) ? String(cfg.child_entities.length) : ''),
   };
-  return { replacements, wordRangeArr, promptAimArr, kwRangeArr, isPillar };
+  return { replacements, wordRangeArr, promptAimArr, kwRangeArr, isPillar, ctaTargetUrl };
 }
 
 // Stable page_id regex — matches gg-friction-mine PAGE_ID_REGEX and gg-sheet-pull PAGE_ID_REGEX.
@@ -312,7 +324,7 @@ export function renderAuraPrompt(cfg) {
   // 3. Replacements (pure — see buildReplacements). The RAG blocks are rendered
   // here from the on-disk caches and handed in as plain strings so the map
   // builder stays free of fs/IO and is unit-testable for placeholder coverage.
-  const { replacements, wordRangeArr, kwRangeArr, isPillar } = buildReplacements(cfg, {
+  const { replacements, wordRangeArr, kwRangeArr, isPillar, ctaTargetUrl } = buildReplacements(cfg, {
     entityPassport: entityPassportBlock(passportCache),
     frictionMine: frictionMineBlock(frictionPayload),
     serpSnippets: serpSnippetsBlock(serpCache, TARGET_KW),
@@ -357,6 +369,10 @@ export function renderAuraPrompt(cfg) {
     tier: cfg.tier || 'T2',
     prompt_version: PROMPT_VERSION,
     language: lang,
+    // SC8 exact-target: the validator (_phase2-validate ctx.cta_target_url) reads this
+    // back to assert the article's CTA links to exactly this URL. Omitted when absent
+    // so EN fixtures without a CTA target don't carry an empty noise field.
+    ...(ctaTargetUrl ? { cta_target_url: ctaTargetUrl } : {}),
     word_range: wordRangeArr,
     kw_count_range: kwRangeArr,
     expected_h2: cfg.expected_h2 || (isPillar ? 11 : 9),

@@ -107,6 +107,13 @@ capsule 用于决定**怎么解释**（措辞、对比角度、例子选择、�
 
 **self-check（提交前默念）**：文章第 1 行 `# <Title>`，跳过空行后第 1 个非空行**必须**是 `## What is <entity>?`——中间任何其他文字（哪怕 1 句话的 "warm intro"），删掉再交。
 
+> Instruction only; **do not** output this as an article section.
+
+**措辞红线 — 命定式预测（命中 = Phase 2 RL7 整篇作废）**
+
+- ❌ 禁止命定式 / 预测性断言：不要写 `you will [feel / experience / find / attract]…`、`this means you will`、`destined to`、`fated to`。占星描述的是**倾向与模式**，不是注定的未来；这些短语是 author persona 的 banned_tokens，命中即 RL7 fail。
+- ✅ 改用倾向语气：`you may notice` / `you might find` / `this placement tends to` / `often` / `can surface as` / `many people with this placement describe`。
+
 ## Heading level 字面规则（任一违反 = 整篇作废）
 
 - **恰好 1 个 `# H1`**（文章标题，第 1 行）

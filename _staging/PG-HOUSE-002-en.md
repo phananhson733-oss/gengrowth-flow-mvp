@@ -16,7 +16,7 @@ associated_keywords:
   - 8th house
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-28T15:23:15.090Z
+generated_at: 2026-05-28T15:49:48.326Z
 content_sha256_short: 2b29d42607d319fe
 phase2_checks: all-pass
 ---

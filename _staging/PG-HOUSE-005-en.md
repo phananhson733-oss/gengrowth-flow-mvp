@@ -16,7 +16,7 @@ associated_keywords:
   - 11th house meaning
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-28T15:38:06.151Z
+generated_at: 2026-05-28T15:49:48.709Z
 content_sha256_short: ab0753c052e1d1c9
 phase2_checks: all-pass
 ---

@@ -16,7 +16,7 @@ associated_keywords:
   - what is the 9th house
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-28T15:33:43.685Z
+generated_at: 2026-05-28T15:49:48.516Z
 content_sha256_short: bd913916e7eb71b3
 phase2_checks: all-pass
 ---

@@ -19,8 +19,8 @@ associated_keywords:
   - what is north node in scorpio
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-28T15:49:48.896Z
-content_sha256_short: a1baeb2513177b3b
+generated_at: 2026-05-28T16:20:35.599Z
+content_sha256_short: eebe797fdf01661e
 phase2_checks: all-pass
 ---
 
@@ -42,7 +42,7 @@ Understanding the North Node in Scorpio matters because it names a friction most
 2. **Change read as threat.** Releasing control over money, routine, or a relationship sets off resistance that feels reasonable in each small instance but blocks the larger shift.
 3. **Waiting for a crisis.** Without a practice, many people only move when circumstances force the change, then call the upheaval fate.
 
-Once that resistance is visible, it stops reading as a character flaw and starts reading as the comfort zone doing exactly the job it was built to do. In twelve years of integrating psychological frameworks with evolutionary astrology, I have watched that resistance soften most when it is met with patience rather than force, in small deliberate steps rather than one dramatic break. Consider the everyday scenes where this plays out: a well-paid job that has gone flat, a relationship that is pleasant yet no longer honest, or savings guarded so closely that nothing new can ever be risked. None of these situations announces itself as a crisis, which is precisely why the placement is so easy to ignore until something forces the question open. Working with the paired [[<TBD-internal-link: guide to the South Node in Taurus>]] makes that contrast far easier to track in everyday decisions, because seeing both ends at once turns a vague restlessness into a choice you can actually name.
+Once that resistance is visible, it stops reading as a character flaw and starts reading as the comfort zone doing exactly the job it was built to do. Across the Scorpio-node charts I have read, the Taurus grip tends to loosen not in one dramatic break but through a string of small, deliberate releases that each feel survivable. Consider the everyday scenes where this plays out: a well-paid job that has gone flat, a relationship that is pleasant yet no longer honest, or savings guarded so closely that nothing new can ever be risked. None of these situations announces itself as a crisis, which is precisely why the placement is so easy to ignore until something forces the question open. Working with the paired [[<TBD-internal-link: guide to the South Node in Taurus>]] makes that contrast far easier to track in everyday decisions, because seeing both ends at once turns a vague restlessness into a choice you can actually name.
 
 ## North Node in Scorpio vs Adjacent Concepts: How It Works + Trade-offs
 
@@ -77,12 +77,12 @@ Most surface-level write-ups flatten the North Node in Scorpio into something ti
 
 ## The Scorpio Node Axis at a Glance
 
-| Property | How It Works | Energy Center | How to Observe |
-|----------|--------------|---------------|----------------|
-| Growth direction | Pulls attention toward depth, intimacy, and honest exchange | Natural 8th-house themes; Scorpio, a Water sign | Notice where you avoid emotional risk, then lean in once |
-| South Node counterweight | Holds the comfort of stability, patience, and ownership | Natural 2nd-house themes; Taurus, an Earth sign | Catch the moment you reach for control when unsettled |
-| Emotional register | Asks for sustained feeling rather than quick reassurance | Water element, traditionally ruled by Mars, modern Pluto | Track whether you process a feeling or manage it away |
-| Core resistance | Treats change as loss until it is practiced on purpose | The Taurus-Scorpio polarity as a whole | Watch for holding a routine or item past its usefulness |
+| Property | How It Works | Chart Axis | How to Observe |
+|----------|--------------|------------|----------------|
+| Growth direction | Pulls attention toward depth, intimacy, and honest exchange | Scorpio node, the 2nd-8th house growth pole | Notice where you avoid emotional risk, then lean in once |
+| South Node counterweight | Holds the comfort of stability, patience, and ownership | South Node in Taurus, the opposite anchor point | Catch the moment you reach for control when unsettled |
+| Emotional register | Asks for sustained feeling rather than quick reassurance | Scorpio half of the nodal axis, ruled by Mars and Pluto | Track whether you process a feeling or manage it away |
+| Core resistance | Treats change as loss until it is practiced on purpose | The full Taurus-Scorpio nodal polarity | Watch for holding a routine or item past its usefulness |
 
 ## Questions People Ask About the Scorpio Node
 

@@ -1,28 +1,3 @@
----
-title: 6th House Astrology
-slug: 6th-house-astrology
-date: 2026-05-28
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T2
-track: 量产线
-page_id: PG-HOUSE-011
-author_id: "julian-thorne"
-author_display_name: "Julian Thorne"
-target_keyword: 6th house astrology
-associated_keywords:
-  - sixth house
-  - 6th house health
-  - 6th house work
-  - daily routine astrology
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-05-28T16:58:58.672Z
-content_sha256_short: 2962b742e9e31971
-phase2_checks: all-pass
----
-
 # 第六宫看的不是工作或健康，而是串起两者的日常作息
 
 ## The 6th House 是什么？

@@ -177,7 +177,7 @@ capsule 用于决定**怎么解释**（措辞、对比角度、例子选择、�
      - sign/planet 类 entity → 主管 element / 主管 house
      - **严禁在 transit/cycle entities 上塞 chakra / Human Design 术语**（如 "Root center" / "Solar plexus center" / "Heart center" / "throat center"）= RL1 invented_term，整篇作废
 7. **常见问题 / FAQ（H2，标题按 entity 变体）**— 内含 **3-4 个真实 PAA 风格问题**，聚焦用户真实操作摩擦点 / 长尾搜索意图（不是泛问）。
-   - **标题去模板化（v4.5.1 Phase C）**：不要每篇都写死成 `## Frequently Asked Questions`。请写一个 entity 专属标题，**且必须含一个 questions/FAQ token**：`Questions` / `FAQ` / `Q&A` / `Ask`。例：`## Common Questions About {{entity}}`、`## {{entity}} FAQ`、`## Questions People Ask About {{entity}}`。（rich-result FAQPage 检测靠该 token + 下面的加粗问句行，所以 token 必须在。）
+   - **标题去模板化（v4.5.1 Phase C）**：不要每篇都写死成 `## Frequently Asked Questions`。请写一个 entity 专属标题，**且必须含一个 questions/FAQ token**：`Questions` / `FAQ` / `Q&A`。例：`## Common Questions About {{entity}}`、`## {{entity}} FAQ`、`## Questions People Ask About {{entity}}`。（rich-result FAQPage 检测靠该 token + 下面的加粗问句行，所以 token 必须在。）
    - **格式约束（关键，违反 = 结构 fail）**：每个问题写成**加粗整行且以问号结尾**（如 `**What does an orange aura mean spiritually?**`），紧跟 2 句精确事实回答。**绝不用 `### H3` / `#### H4`**（H3 在本系统被结构校验禁止，会直接 FAIL）。
    - ✅ 范例：
      ```

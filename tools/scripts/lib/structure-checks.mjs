@@ -314,8 +314,12 @@ const SC3B_MEDIAN_FLOOR = 1;     // median sentences/para <= this = over-fragmen
 //          ZH needs 速查 / 一览 / 速览 / 概览 / 对照表.
 // Other section titles (Reflection Prompts, Sources, Take Action, …) stay fixed,
 // so they never carry these tokens and can't masquerade as table / FAQ.
-export const EN_FAQ_HEADING_RE = /^##\s+[^\n]*(?:\bfaq\b|\bquestions?\b|\bq\s*&\s*a\b|\bask(?:ed|ing|s)?\b)/im;
-export const ZH_FAQ_HEADING_RE = /^##\s*[^\n]*问/m;
+// EN FAQ token: faq / questions / Q&A (NOT bare "ask" — it false-matched
+// narrative headings like "How to Ask Your Practitioner"; every instructed FAQ
+// example carries Questions/FAQ/Q&A anyway). ZH FAQ token: a real question
+// compound 问题/问答/常问/疑问 (NOT bare 问 — it false-matched 访问/学问/顾问).
+export const EN_FAQ_HEADING_RE = /^##\s+[^\n]*(?:\bfaq\b|\bquestions?\b|\bq\s*&\s*a\b)/im;
+export const ZH_FAQ_HEADING_RE = /^##\s*[^\n]*(?:问题|问答|常问|疑问)/m;
 export const EN_TABLE_HEADING_RE = /^##\s+[^\n]*(?:at a glance|quick reference|reference table|cheat ?sheet|key (?:traits|properties|signals)|by the numbers|\btable\b)/im;
 export const ZH_TABLE_HEADING_RE = /^##\s*[^\n]*(?:速查表?|一览表?|一覽表?|速览|速覽|概览|概覽|对照表|對照表|速查)/m;
 
@@ -617,7 +621,7 @@ function sectionByHeading(lines, re) {
 // `m` flag is harmless when testing one line at a time via sectionByHeading).
 // Mirrors EN_FAQ_HEADING_RE / ZH_FAQ_HEADING_RE (defined above with the other
 // Phase C role regexes), combined for a single-pass per-line match.
-const FAQ_HEADING_REGEX = /^##\s+[^\n]*(?:\bfaq\b|\bquestions?\b|\bq\s*&\s*a\b|\bask(?:ed|ing|s)?\b|问)/i;
+const FAQ_HEADING_REGEX = /^##\s+[^\n]*(?:\bfaq\b|\bquestions?\b|\bq\s*&\s*a\b|问题|问答|常问|疑问)/i;
 // A question must be a WHOLE bold line ending in `?`/`？` — not an inline bold
 // fragment mid-answer (e.g. `Answer: **really?** maybe`).
 const FAQ_QUESTION_REGEX = /^\s*\*\*(?=\S)[^*\n]*[?？]\s*\*\*\s*$/;

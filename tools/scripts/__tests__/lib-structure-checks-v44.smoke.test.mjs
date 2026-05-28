@@ -149,7 +149,7 @@ test('EN_FAQ_HEADING_RE: matches varied FAQ headings, rejects other sections', (
   for (const h of ['## Frequently Asked Questions', '## Common Questions About Orange Aura', '## Orange Aura FAQ', '## Questions People Ask', '## Reader Q&A']) {
     assert.ok(EN_FAQ_HEADING_RE.test(h), `should match: ${h}`);
   }
-  for (const h of ['## What is Orange Aura?', '## Reflection Prompts', '## Sources', '## How to Read Orange Aura in Yourself', '## Take Action']) {
+  for (const h of ['## What is Orange Aura?', '## Reflection Prompts', '## Sources', '## How to Read Orange Aura in Yourself', '## Take Action', '## How to Ask Your Practitioner']) {
     assert.ok(!EN_FAQ_HEADING_RE.test(h), `should NOT match: ${h}`);
   }
 });
@@ -163,11 +163,12 @@ test('EN_TABLE_HEADING_RE: matches varied table headings, rejects other sections
   }
 });
 
-test('ZH_FAQ_HEADING_RE: matches headings containing 问, rejects others', () => {
-  for (const h of ['## 常见问题', '## 关于橙色气场的常见问题', '## 读者常问的问题', '## 橙色气场问答']) {
+test('ZH_FAQ_HEADING_RE: matches 问题/问答/常问/疑问, rejects 访问/学问/顾问 and others', () => {
+  for (const h of ['## 常见问题', '## 关于橙色气场的常见问题', '## 读者常问的问题', '## 橙色气场问答', '## 橙色气场常见疑问']) {
     assert.ok(ZH_FAQ_HEADING_RE.test(h), `should match: ${h}`);
   }
-  for (const h of ['## 为什么了解它能帮助自我觉察', '## 速查表', '## 自我觉察小提示', '## 橙色气场是什么？']) {
+  // bare 问 must NOT match (would false-fire on 访问/学问/顾问/慰问).
+  for (const h of ['## 为什么了解它能帮助自我觉察', '## 速查表', '## 自我觉察小提示', '## 橙色气场是什么？', '## 专家访问录', '## 相关学问溯源', '## 资深顾问视角']) {
     assert.ok(!ZH_FAQ_HEADING_RE.test(h), `should NOT match: ${h}`);
   }
 });

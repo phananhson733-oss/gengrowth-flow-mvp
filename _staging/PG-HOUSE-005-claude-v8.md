@@ -20,6 +20,8 @@ That question is about alignment rather than popularity, and missing it is where
 2. **The hidden vision.** The real prompt is whether your personal aims connect to a larger purpose, a thread that solo practitioners feel keenly but rarely name.
 3. **The support blind spot.** Many people overlook how a small, aligned group can carry an individual's work further, mistaking real support for mere socializing.
 
+A concrete example makes the stakes visible. Picture a quiet researcher who works mostly alone and assumes this part of the chart is dead weight, since they have no large circle to point to. Read through the friction above, the picture shifts: their three long-time correspondents who trade ideas and open doors are exactly the aligned support the sector describes, and the open-access vision they keep refining is the future this part of the wheel governs. Nothing about that requires a crowd. The same correction applies to the founder who networks constantly yet feels strangely unsupported, because contacts collected for advantage are not the mutual, ideal-driven bonds the tradition points to. In both cases the real measure is alignment, not volume, and once a reader makes that switch they stop scoring themselves against a popularity contest they were never actually entered in.
+
 Read this way, building on the depth-psychological lineage Liz Greene and Howard Sasportas helped shape, the house becomes a field of development rather than a verdict on your friend count. A working grasp of the [[<TBD-internal-link: guide to the 5th house of self-expression>]] sharpens it further, since the two houses form one axis between the individual and the collective.
 
 ## The 11th House vs Adjacent Concepts: How It Works + Trade-offs
@@ -27,6 +29,8 @@ Read this way, building on the depth-psychological lineage Liz Greene and Howard
 The 11th house is most often confused with the 7th House and the 5th House, yet each answers a different question, and reading it well means accepting a trade-off rather than collapsing one into the other. The 7th House covers one-to-one partnership, the close mirror of a single significant other; the way it works is intimate and reciprocal. This house, by contrast, operates at the level of the group, the network, and the shared cause, where the bond is to a collective aim rather than a single face. To gain the broad reach and group support this sector supplies, you sacrifice the focused depth of the one-to-one tie; to gain the intimacy of the 7th, you give up the wider alignment a group can offer. Neither layer is complete alone, which is why a full reading places both.
 
 A second comparison runs along the 5th-to-11th axis itself, and here the trade-off is sharpest. The 5th House is where your unique self wants to shine for the pure joy of it, romance, play, creative output, the individual ego at full expression. This sector takes that same individuality and asks how it serves a future larger than the self. The way it functions is a deliberate handoff: personal creation in the 5th becomes contribution in the 11th. To get the collective meaning and lasting legacy this house offers, you trade away some of the spontaneous, self-centered delight the 5th House protects. Saturn placed here can make that handoff feel especially loaded, since the person both longs for the group and quietly fears being absorbed by it.
+
+A third confusion worth untangling is the overlap with the 10th House of career and public standing. The 10th is about your visible role and the reputation you build through it; the way it works is vertical, a climb toward recognition. The sector that follows it is horizontal instead, concerned with peers, allies, and the causes you join as an equal rather than the status you reach. To gain the lateral support and shared purpose this part of the chart offers, you set aside the solo authority the 10th rewards; to gain the public standing of the 10th, you give up some of the easy belonging a group of equals provides. A person with strong placements in both often feels the pull between leading from the front and standing shoulder to shoulder, which is less a contradiction than a rhythm to learn. Knowing which house a given motivation belongs to keeps a reading honest rather than blurring ambition and affiliation into one vague drive.
 
 ## How to Read The 11th House in Your Chart
 
@@ -88,7 +92,7 @@ These topics extend the house framework without repeating what is above:
 
 ## Take Action
 
-Place this house inside the whole wheel before reading it in isolation. Read the full [Astrological Houses guide](https://astrologywiki.com/en/wiki/astrology-houses) to see how the 11th house connects to the eleven other life areas, and you come away with a working map of the entire chart. More than a list of meanings, you gain a steadier sense of where your individual path meets the larger world it belongs to.
+Place this house inside the whole wheel before reading it in isolation. Read the full [Astrological Houses guide](https://astrologywiki.com/en/wiki/astrology-houses) to see how this house connects to the eleven other life areas, and you come away with a working map of the entire chart. More than a list of meanings, you gain a steadier sense of where your individual path meets the larger world it belongs to.
 
 ## Sources
 

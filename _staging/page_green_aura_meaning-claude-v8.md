@@ -1,3 +1,12 @@
+---
+slug: green-aura-meaning
+author_id: "elena-vane"
+target_keyword: "green aura meaning"
+associated_keywords:
+  - "green aura"
+  - "green aura personality"
+  - "what does green aura mean"
+---
 # What a Green Aura Really Means for Healing and Connection
 
 ## What is Green Aura?

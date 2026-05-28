@@ -1,3 +1,15 @@
+---
+slug: north-node-vs-south-node
+author_id: "julian-thorne"
+target_keyword: "North Node vs South Node"
+associated_keywords:
+  - "north node meaning"
+  - "south node astrology"
+  - "soul's path"
+  - "north node in scorpio"
+  - "north node in taurus"
+  - "how to find north node"
+---
 # 北交点和南交点，说的是成长方向而不是写好的命
 
 ## North Node vs South Node 是什么？

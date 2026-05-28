@@ -1,3 +1,14 @@
+---
+slug: north-node-in-scorpio
+author_id: "julian-thorne"
+target_keyword: "north node in scorpio"
+associated_keywords:
+  - "scorpio north node"
+  - "what is my north node"
+  - "north node in scorpio soulmate"
+  - "what does north node in scorpio mean"
+  - "what is north node in scorpio"
+---
 # 读懂天蝎座北交点，把成长方向看成功课而非宿命
 
 ## North Node in Scorpio 是什么？

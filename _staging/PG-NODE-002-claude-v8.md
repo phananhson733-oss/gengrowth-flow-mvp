@@ -1,3 +1,14 @@
+---
+slug: north-node-in-scorpio
+author_id: "julian-thorne"
+target_keyword: "north node in scorpio"
+associated_keywords:
+  - "scorpio north node"
+  - "what is my north node"
+  - "north node in scorpio soulmate"
+  - "what does north node in scorpio mean"
+  - "what is north node in scorpio"
+---
 # What the North Node in Scorpio Is Quietly Asking You to Risk
 
 ## What is North Node in Scorpio?

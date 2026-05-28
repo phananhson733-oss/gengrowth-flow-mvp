@@ -1,3 +1,11 @@
+---
+slug: 12th-house-astrology
+author_id: "julian-thorne"
+target_keyword: "12th house astrology"
+associated_keywords:
+  - "12th house meaning"
+  - "12th house"
+---
 # How 12th House Astrology Reframes Self-Undoing as Growth
 
 ## What is The 12th House?

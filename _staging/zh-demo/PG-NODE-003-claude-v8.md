@@ -1,3 +1,14 @@
+---
+slug: north-node-in-taurus
+author_id: "julian-thorne"
+target_keyword: "north node in taurus"
+associated_keywords:
+  - "taurus north node"
+  - "taurus nodes"
+  - "north node in taurus meaning"
+  - "north node in taurus soulmate"
+  - "what does a north node in taurus mean"
+---
 # 金牛座北交点，指的是把日子过踏实的成长方向
 
 ## North Node in Taurus 是什么？

@@ -1,3 +1,11 @@
+---
+slug: 9th-house-astrology
+author_id: "julian-thorne"
+target_keyword: "9th house astrology"
+associated_keywords:
+  - "9th house meaning"
+  - "what is the 9th house"
+---
 # 读懂第九宫，看清你为什么总在追问人生的意义
 
 ## The 9th House 是什么？

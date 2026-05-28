@@ -1,3 +1,11 @@
+---
+slug: 11th-house
+author_id: "julian-thorne"
+target_keyword: "11th house"
+associated_keywords:
+  - "astrology 11th house"
+  - "11th house meaning"
+---
 # 读懂第十一宫，把孤身一人也读成被群体接住的位置
 
 ## The 11th House 是什么？

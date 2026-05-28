@@ -1,3 +1,11 @@
+---
+slug: 8th-house-meaning
+author_id: "julian-thorne"
+target_keyword: "8th house meaning"
+associated_keywords:
+  - "what does the 8th house represent"
+  - "8th house"
+---
 # The 8th House Meaning Your Ascendant Can't See
 
 ## What is The 8th House?

@@ -1,3 +1,15 @@
+---
+slug: astrology-houses
+author_id: "julian-thorne"
+target_keyword: "astrology houses"
+associated_keywords:
+  - "what are houses in astrology"
+  - "house meanings"
+  - "8th house meaning"
+  - "12th house astrology"
+  - "9th house astrology"
+  - "11th house"
+---
 # How to Read the Astrology Houses as Living Patterns, Not Fixed Fate
 
 ## What is The Astrological Houses?

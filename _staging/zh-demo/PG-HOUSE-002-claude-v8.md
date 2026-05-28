@@ -1,3 +1,11 @@
+---
+slug: 8th-house-meaning
+author_id: "julian-thorne"
+target_keyword: "8th house meaning"
+associated_keywords:
+  - "what does the 8th house represent"
+  - "8th house"
+---
 # 读懂第八宫代表什么，找回那块你看不见的力量
 
 ## The 8th House 是什么？

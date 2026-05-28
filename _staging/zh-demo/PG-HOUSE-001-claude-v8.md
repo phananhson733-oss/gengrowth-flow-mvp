@@ -1,3 +1,15 @@
+---
+slug: astrology-houses
+author_id: "julian-thorne"
+target_keyword: "astrology houses"
+associated_keywords:
+  - "what are houses in astrology"
+  - "house meanings"
+  - "8th house meaning"
+  - "12th house astrology"
+  - "9th house astrology"
+  - "11th house"
+---
 # 读懂占星宫位，行星和星座才拼得成一句完整的话
 
 ## The Astrological Houses 是什么？

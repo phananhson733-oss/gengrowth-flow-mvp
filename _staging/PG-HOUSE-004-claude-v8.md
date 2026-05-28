@@ -1,3 +1,11 @@
+---
+slug: 9th-house-astrology
+author_id: "julian-thorne"
+target_keyword: "9th house astrology"
+associated_keywords:
+  - "9th house meaning"
+  - "what is the 9th house"
+---
 # What 9th House Astrology Reveals About Your Inner Seeker
 
 ## What is The 9th House?

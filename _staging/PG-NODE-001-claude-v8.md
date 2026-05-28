@@ -1,3 +1,15 @@
+---
+slug: north-node-vs-south-node
+author_id: "julian-thorne"
+target_keyword: "North Node vs South Node"
+associated_keywords:
+  - "north node meaning"
+  - "south node astrology"
+  - "soul's path"
+  - "north node in scorpio"
+  - "north node in taurus"
+  - "how to find north node"
+---
 # How North Node vs South Node Maps Your Growth Edge
 
 ## What is North Node vs South Node?

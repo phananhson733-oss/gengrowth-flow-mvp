@@ -1,3 +1,11 @@
+---
+slug: 11th-house
+author_id: "julian-thorne"
+target_keyword: "11th house"
+associated_keywords:
+  - "astrology 11th house"
+  - "11th house meaning"
+---
 # What the 11th House Really Governs Beyond Friendship
 
 ## What is The 11th House?

@@ -1,3 +1,12 @@
+---
+slug: orange-aura-meaning
+author_id: "elena-vane"
+target_keyword: "orange aura meaning"
+associated_keywords:
+  - "orange aura"
+  - "orange aura personality"
+  - "what does orange aura mean"
+---
 # 橙色气场到底在说你的哪种能量
 
 ## Orange Aura 是什么？

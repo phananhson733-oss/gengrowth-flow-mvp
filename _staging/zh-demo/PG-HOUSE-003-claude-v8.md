@@ -1,3 +1,11 @@
+---
+slug: 12th-house-astrology
+author_id: "julian-thorne"
+target_keyword: "12th house astrology"
+associated_keywords:
+  - "12th house meaning"
+  - "12th house"
+---
 # 读懂第十二宫代表什么，别把它读成命运的判决
 
 ## The 12th House 是什么？

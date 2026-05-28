@@ -1,3 +1,14 @@
+---
+slug: north-node-in-taurus
+author_id: "julian-thorne"
+target_keyword: "north node in taurus"
+associated_keywords:
+  - "taurus north node"
+  - "taurus nodes"
+  - "north node in taurus meaning"
+  - "north node in taurus soulmate"
+  - "what does a north node in taurus mean"
+---
 # Why the North Node in Taurus Is a Path Toward Steadiness, Not a Punishment
 
 ## What is North Node in Taurus?

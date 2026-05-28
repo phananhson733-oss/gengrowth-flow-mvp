@@ -84,7 +84,7 @@ Yes. An empty house operates through its sign and that sign's ruler, so the life
 
 ## Related Reading
 
-These guides extend the house framework without repeating what is above:
+These guides extend the framework of The Astrological Houses without repeating what is above:
 
 - [[<TBD-internal-link: guide to the twelve zodiac signs and their styles>]] — shows the "style" layer that each house cusp filters
 - [[<TBD-internal-link: explainer on the planets and what each one drives>]] — covers the "drive" layer you place inside the houses
@@ -92,7 +92,7 @@ These guides extend the house framework without repeating what is above:
 
 ## Take Action
 
-Ready to see the syntax in motion? Read the [8th House guide](https://astrologywiki.com/en/wiki/8th-house-meaning) to watch one house unfold across a working chart, with sign and planet layered into a single reading. You'll come away with a repeatable method you can run on any placement, and a steadier sense that your chart maps patterns to work with, not a fate to brace against.
+Ready to see the syntax of The Astrological Houses in motion? Read the [8th House guide](https://astrologywiki.com/en/wiki/8th-house-meaning) to watch one house unfold across a working chart, with sign and planet layered into a single reading. You'll come away with a repeatable method you can run on any placement, and a steadier sense that your chart maps patterns to work with, not a fate to brace against.
 
 ## Sources
 

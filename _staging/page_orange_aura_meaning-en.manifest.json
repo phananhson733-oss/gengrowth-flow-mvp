@@ -8,8 +8,8 @@
   "track": "量产线",
   "generated_by": "unknown",
   "prompt_version": "v8",
-  "generated_at": "2026-05-27T15:16:20.216Z",
-  "content_sha256_short": "1fa2bb3d0c9e57e8",
+  "generated_at": "2026-05-28T07:46:12.081Z",
+  "content_sha256_short": "a9acf906bfc8496b",
   "source_path": "_staging/page_orange_aura_meaning-claude-v8.md",
   "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/page_orange_aura_meaning-en.md",
   "phase2_checks": {
@@ -19,9 +19,9 @@
       "h2Count": 9,
       "h3Count": 0,
       "h4Count": 0,
-      "words": 1870,
-      "wikilinks": 6,
-      "tbdLinks": 6
+      "words": 1914,
+      "wikilinks": 5,
+      "tbdLinks": 5
     },
     "rl1": true,
     "rl2": true,

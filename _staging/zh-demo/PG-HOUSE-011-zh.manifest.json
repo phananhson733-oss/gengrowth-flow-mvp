@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-HOUSE-011",
+  "entity": "The 6th House",
+  "target_keyword": "6th house astrology",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-05-28T09:55:19.565Z",
+  "content_sha256_short": "534df7d464b0fd75",
+  "source_path": "_staging/zh-demo/PG-HOUSE-011-claude-v8.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/PG-HOUSE-011-zh.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 9,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 1854,
+      "wikilinks": 3,
+      "tbdLinks": 3
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

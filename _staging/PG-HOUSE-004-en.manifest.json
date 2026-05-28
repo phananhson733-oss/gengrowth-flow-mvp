@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-HOUSE-004",
+  "entity": "The 9th House",
+  "target_keyword": "9th house astrology",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-05-28T07:46:12.381Z",
+  "content_sha256_short": "85fefa330b1fa174",
+  "source_path": "_staging/PG-HOUSE-004-claude-v8.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-HOUSE-004-en.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 9,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 1598,
+      "wikilinks": 5,
+      "tbdLinks": 5
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-HOUSE-005",
+  "entity": "The 11th House",
+  "target_keyword": "11th house",
+  "template": "Definition",
+  "tier": "T3",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-05-28T07:46:12.457Z",
+  "content_sha256_short": "87dc4a8f6ff1f865",
+  "source_path": "_staging/PG-HOUSE-005-claude-v8.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-HOUSE-005-en.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 9,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 2002,
+      "wikilinks": 2,
+      "tbdLinks": 2
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

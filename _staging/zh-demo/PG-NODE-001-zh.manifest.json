@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-NODE-001",
+  "entity": "North Node vs South Node",
+  "target_keyword": "North Node vs South Node",
+  "template": "Definition",
+  "tier": "T1",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-05-28T07:46:12.574Z",
+  "content_sha256_short": "d77e9d37b0bc9a22",
+  "source_path": "_staging/zh-demo/PG-NODE-001-claude-v8.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/PG-NODE-001-zh.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 9,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 1975,
+      "wikilinks": 5,
+      "tbdLinks": 5
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

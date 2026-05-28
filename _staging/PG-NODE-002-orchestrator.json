@@ -1,0 +1,52 @@
+{
+  "page_id": "PG-NODE-002",
+  "prompt_path": "/Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/PG-NODE-002.v8-prompt.md",
+  "started_at": "2026-05-28T06:16:46.869Z",
+  "models_requested": [
+    "claude"
+  ],
+  "retry": 2,
+  "diversify_on_fail": false,
+  "max_cost_usd_per_page": 5,
+  "budget_exceeded_models": [],
+  "ok_count": 1,
+  "total_cost_estimate_usd": 0.2733,
+  "results": {
+    "claude": {
+      "model": "claude",
+      "active_model": "claude",
+      "diversified": false,
+      "ok": true,
+      "output_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-NODE-002-claude-v8.md",
+      "retries": 0,
+      "duration_s": 437.6,
+      "cost_estimate_usd": {
+        "usd": 0.2733,
+        "input_tokens_est": 6438,
+        "output_tokens_est": 2357,
+        "pricing_note": "Opus 4.7 xhigh"
+      },
+      "cumulative_cost_usd": 0.2733,
+      "budget_exceeded": false,
+      "budget_usd": 5,
+      "attempts": [
+        {
+          "try_index": 1,
+          "model": "claude",
+          "command": "claude -p --model claude-opus-4-7 < /Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/PG-NODE-002.v8-prompt.md > /Users/wzb/gengrowth-flow-mvp/_staging/PG-NODE-002-claude-v8.md",
+          "cost_usd": 0.2733,
+          "cumulative_cost_usd": 0.2733,
+          "ok": true,
+          "exit_code": 0,
+          "duration_s": 437.6,
+          "stderr_tail": "",
+          "stdout_bytes": 10947,
+          "sonnet_guard": {
+            "downgraded": false,
+            "bytes": 10955
+          }
+        }
+      ]
+    }
+  }
+}

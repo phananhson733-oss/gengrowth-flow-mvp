@@ -32,7 +32,7 @@ A concrete example makes the stakes visible. Picture a quiet researcher who work
 
 ## The 11th House vs Adjacent Concepts: How It Works + Trade-offs
 
-The 11th house is most often confused with the 7th House and the 5th House, yet each answers a different question, and reading it well means accepting a trade-off rather than collapsing one into the other. The 7th House covers one-to-one partnership, the close mirror of a single significant other; the way it works is intimate and reciprocal. This house, by contrast, operates at the level of the group, the network, and the shared cause, where the bond is to a collective aim rather than a single face. To gain the broad reach and group support this sector supplies, you sacrifice the focused depth of the one-to-one tie; to gain the intimacy of the 7th, you give up the wider alignment a group can offer. Neither layer is complete alone, which is why a full reading places both.
+The eleventh house is most often confused with the 7th House and the 5th House, yet each answers a different question, and reading it well means accepting a trade-off rather than collapsing one into the other. The 7th House covers one-to-one partnership, the close mirror of a single significant other; the way it works is intimate and reciprocal. This house, by contrast, operates at the level of the group, the network, and the shared cause, where the bond is to a collective aim rather than a single face. To gain the broad reach and group support this sector supplies, you sacrifice the focused depth of the one-to-one tie; to gain the intimacy of the 7th, you give up the wider alignment a group can offer. Neither layer is complete alone, which is why a full reading places both.
 
 A second comparison runs along the 5th-to-11th axis itself, and here the trade-off is sharpest. The 5th House is where your unique self wants to shine for the pure joy of it, romance, play, creative output, the individual ego at full expression. This house takes that same individuality and asks how it serves a future larger than the self. The way it functions is a deliberate handoff: personal creation in the 5th becomes contribution in the 11th. To get the collective meaning and lasting legacy this sector offers, you trade away some of the spontaneous, self-centered delight the 5th House protects. Saturn placed here can make that handoff feel especially loaded, since the person both longs for the group and quietly fears being absorbed by it.
 
@@ -93,9 +93,9 @@ An empty house operates through its cusp sign and that sign's ruler, so the life
 
 These topics extend the house framework without repeating what is above:
 
-- [[<TBD-internal-link: the 7th house of partnership>]] — clarifies how one-to-one bonds differ from the group alliance the 11th house tracks.
+- [[<TBD-internal-link: the 7th house of partnership>]] — clarifies how one-to-one bonds differ from the group alliance this house tracks.
 - [[<TBD-internal-link: Saturn through the houses>]] — unpacks the complex belonging signal Saturn brings to this placement.
-- [[<TBD-internal-link: the 5th house of self-expression>]] — completes the axis, showing how individual creativity becomes collective contribution in the 11th house.
+- [[<TBD-internal-link: the 5th house of self-expression>]] — completes the axis, showing how individual creativity becomes collective contribution in the eleventh house.
 
 ## Take Action
 

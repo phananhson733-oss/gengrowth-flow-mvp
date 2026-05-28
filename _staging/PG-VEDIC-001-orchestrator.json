@@ -1,7 +1,7 @@
 {
   "page_id": "PG-VEDIC-001",
   "prompt_path": "/Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/PG-VEDIC-001.v8-prompt.md",
-  "started_at": "2026-05-28T13:11:00.438Z",
+  "started_at": "2026-05-28T17:05:11.667Z",
   "models_requested": [
     "claude"
   ],
@@ -9,19 +9,24 @@
   "diversify_on_fail": false,
   "max_cost_usd_per_page": 5,
   "budget_exceeded_models": [],
-  "ok_count": 0,
-  "total_cost_estimate_usd": 0,
+  "ok_count": 1,
+  "total_cost_estimate_usd": 0.2651,
   "results": {
     "claude": {
       "model": "claude",
       "active_model": "claude",
       "diversified": false,
-      "ok": false,
-      "output_path": null,
-      "retries": 2,
-      "duration_s": 19.8,
-      "cost_estimate_usd": null,
-      "cumulative_cost_usd": 0.2856,
+      "ok": true,
+      "output_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-VEDIC-001-claude-v8.md",
+      "retries": 0,
+      "duration_s": 373,
+      "cost_estimate_usd": {
+        "usd": 0.2651,
+        "input_tokens_est": 6291,
+        "output_tokens_est": 2276,
+        "pricing_note": "Opus 4.7 xhigh"
+      },
+      "cumulative_cost_usd": 0.2651,
       "budget_exceeded": false,
       "budget_usd": 5,
       "attempts": [
@@ -29,37 +34,17 @@
           "try_index": 1,
           "model": "claude",
           "command": "claude -p --model claude-opus-4-7 < /Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/PG-VEDIC-001.v8-prompt.md > /Users/wzb/gengrowth-flow-mvp/_staging/PG-VEDIC-001-claude-v8.md",
-          "cost_usd": 0.0952,
-          "cumulative_cost_usd": 0.0952,
-          "ok": false,
-          "exit_code": 1,
-          "duration_s": 5.3,
+          "cost_usd": 0.2651,
+          "cumulative_cost_usd": 0.2651,
+          "ok": true,
+          "exit_code": 0,
+          "duration_s": 373,
           "stderr_tail": "",
-          "stdout_bytes": 63
-        },
-        {
-          "try_index": 2,
-          "model": "claude",
-          "command": "claude -p --model claude-opus-4-7 < /Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/PG-VEDIC-001.v8-prompt.md > /Users/wzb/gengrowth-flow-mvp/_staging/PG-VEDIC-001-claude-v8.md",
-          "cost_usd": 0.0952,
-          "cumulative_cost_usd": 0.1904,
-          "ok": false,
-          "exit_code": 1,
-          "duration_s": 7.8,
-          "stderr_tail": "",
-          "stdout_bytes": 63
-        },
-        {
-          "try_index": 3,
-          "model": "claude",
-          "command": "claude -p --model claude-opus-4-7 < /Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/PG-VEDIC-001.v8-prompt.md > /Users/wzb/gengrowth-flow-mvp/_staging/PG-VEDIC-001-claude-v8.md",
-          "cost_usd": 0.0952,
-          "cumulative_cost_usd": 0.2856,
-          "ok": false,
-          "exit_code": 1,
-          "duration_s": 6.7,
-          "stderr_tail": "",
-          "stdout_bytes": 63
+          "stdout_bytes": 10802,
+          "sonnet_guard": {
+            "downgraded": false,
+            "bytes": 10834
+          }
         }
       ]
     }

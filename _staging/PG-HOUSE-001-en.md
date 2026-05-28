@@ -20,8 +20,8 @@ associated_keywords:
   - 11th house
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-28T15:49:48.233Z
-content_sha256_short: 3726e385f950a414
+generated_at: 2026-05-28T16:40:06.316Z
+content_sha256_short: a75fefa457f829ba
 phase2_checks: all-pass
 ---
 
@@ -39,7 +39,7 @@ This framework sits at the center of the broader [[<TBD-internal-link: pillar pa
 
 ## Why It Matters for Self-Awareness
 
-Understanding the astrology houses matters because most beginners hit the same wall: they can name a sign and spot a planet, yet freeze the moment those pieces have to mean something together inside a house. In my twelve years integrating psychological frameworks with evolutionary astrology, across community-counseling settings and thousands of hours of chart consultation, the single most common stuck point is this missing grammar, not a shortage of memorized keywords. Most resources hand out isolated definitions, telling a reader that the 7th house "is partnership" without offering a repeatable way to fold sign, planet, and house into one coherent line of meaning. The result is a pile of disconnected facts that never quite becomes a reading.
+Understanding the astrology houses matters because most beginners hit the same wall: they can name a sign and spot a planet, yet freeze the moment those pieces have to mean something together inside a house. Across roughly fifteen years spent mapping whole birth charts and teaching the house system as a single wheel rather than twelve isolated rooms, in classroom workshops and sustained one-to-one chart work, the single most common stuck point is this missing grammar, not a shortage of memorized keywords. Most resources hand out isolated definitions, telling a reader that the 7th house "is partnership" without offering a repeatable way to fold sign, planet, and house into one coherent line of meaning. The result is a pile of disconnected facts that never quite becomes a reading.
 
 That gap is what quietly turns chart study into guesswork, and it is where self-awareness stalls. When the houses are treated as a modular language rather than a list of fixed verdicts, a placement stops feeling like a sentence handed down and starts reading as a question about where growth is being asked for. The depth-psychological lineage that Liz Greene and Howard Sasportas helped shape leans on exactly this move, framing each house as a field of development rather than a label. A working grasp of [[<TBD-internal-link: spoke guide to the rising sign and chart angles>]] reinforces it, since the angles anchor where the whole house wheel begins.
 

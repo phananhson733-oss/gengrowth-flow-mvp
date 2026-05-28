@@ -1,94 +1,90 @@
-# Why Vedic vs Western Astrology Place You in Two Different Signs
+# 吠陀星盘怎么看才能读懂恒星黄道与大运
 
-## What is Vedic Astrology?
+## 吠陀星盘是什么？
 
-Vedic Astrology, also called Jyotish, is the classical Indian system that reads a birth chart against the sidereal zodiac — the twelve signs measured from the actual positions of the constellations in the sky. The whole question of Vedic vs Western Astrology comes down to **two zodiacs measured from different starting points**. Vedic keeps its signs anchored to the visible stars, while Western astrology fixes its signs to the spring equinox. Over roughly two thousand years those two reference points have drifted about 24 degrees apart, which is why the same birthday can read as Leo in one system and Cancer in the other. This sits inside the broader [[<TBD-internal-link: pillar guide to how astrology systems differ>]], which maps the major traditions side by side.
+吠陀星盘（Vedic Birth Chart，印度占星本命盘）是**按恒星黄道定位行星的出生天宫图**。它和大多数人熟悉的西方星盘，差别就在参照系：西方占星用回归黄道（tropical），把春分点固定为白羊座 0 度；吠陀占星用恒星黄道（sidereal），对齐真实星空背景，两者目前相差约 24 度。所以同一个人的太阳星座，放进这张盘里常常会往后挪一个位置，这也是 [[<TBD-internal-link: 印度占星体系入门总览>]] 里反复提醒的第一道认知门槛。
 
-- Uses the sidereal zodiac, tied to where the constellations actually sit today
-- Built on classical Sanskrit texts rather than modern psychological models
-- Reads the same planets and houses as a Western chart, but from a shifted frame
+- 以恒星黄道（sidereal）定位，对齐真实星空而非季节
+- 以上升点（lagna，命宫起点）锚定整张盘的宫位结构
+- 用大运（dasha）系统把一生切成由不同行星主管的时间段
 
-## Why It Matters for Self-Awareness
+## 为什么了解它能帮助自我觉察
 
-Vedic vs Western Astrology matters most at the exact moment of confusion: someone pulls up two charts, sees two different sun signs, and assumes one app is broken or one tradition is fake. That reaction is the real friction. It quietly reframes a coordinate difference as a credibility contest, and the reading that loses is usually whichever one the person saw second. The signs differ not because anyone made an error, but because each system measures the sky from a different anchor and answers a different question. Picture a Sagittarius sun who suddenly reads as Scorpio in a Vedic chart: the instinct is to ask which one is "true," when the better question is what each placement was ever meant to describe.
+吠陀星盘怎么看，真正卡住大多数人的从来不是排不出盘——免费排盘工具一抓一大把——而是盘排出来以后，满屏的恒星黄道度数、上升点、大运周期，不知道该从哪一个先读起。困惑通常集中在三处：
 
-In my decade of independent work with classical Sanskrit texts as a second-generation Jyotish practitioner, the chart that unsettles people most is almost always their own. A lifelong Western Leo who turns up as a Vedic Cancer often feels subtly rewritten, as if a label they had organized their self-image around just dissolved overnight. The reframe that helps is simple: nothing was taken away. The Leo description still holds in the seasonal frame it was built for, and the Cancer reading adds a star-based layer that speaks more to timing and circumstance than to core temperament. Two signs, two purposes, and no real contradiction between them.
+1. **术语墙。** 排盘工具一次甩出 lagna、navamsa、vimshottari dasha 一连串梵文音译词，却没一处告诉你先看哪个、后看哪个。
+2. **参照系错位。** 你记了多年的太阳星座，在恒星黄道星盘里突然换了一个，于是开始怀疑到底哪个才算自己。
+3. **预言式担忧。** 大运被很多内容写成哪一年会发生什么，让人盯着时间表为未来发愁，而不是用它理解当下的人生阶段。
 
-Treating the gap as right-versus-wrong shuts down the more practical question — which lens to use for which purpose. Western astrology, with its season-based zodiac, tends to describe psychological temperament and the arc of personal growth, which is why it reads so naturally as a portrait of character. Vedic astrology, anchored to the stars and paired with its own timing techniques, leans toward concrete life events and the question of when they tend to surface. Knowing this keeps you from discarding a genuinely useful reading just because it disagrees with the first one you trusted. If you are still placing the basics, the [[<TBD-internal-link: explainer on sun, moon, and rising signs>]] shows what each placement is actually describing.
+把这张盘当成一面镜子，而不是一份写死的命运清单，它照见的是你习惯的反应模式、这几年正在反复出现的主题，而不是一句无法更改的判决。这一步想通了，后面的度数和符号才有意义。
 
-## Vedic Astrology vs Adjacent Concepts: How It Works + Trade-offs
+## 吠陀星盘与相近概念：运作方式 + 取舍
 
-Vedic vs Western Astrology is easiest to understand as a contrast of reference frames, and that same contrast is what separates it from a few neighboring approaches people often confuse it with. Each frame works in a specific way, and each one asks you to trade one strength for another:
+吠陀星盘怎么看，得先弄清它和几个相近体系在运作方式上的差别——同样是排盘，参照系和侧重点不同，读出来的结论就不同。
 
-1. **Western (tropical) astrology.** It pins the zodiac to the spring equinox, so the signs track the seasons rather than the stars. To get a clean map of psychological temperament and personal growth, you sacrifice alignment with the constellations that were physically overhead at your birth.
-2. **Vedic (sidereal) astrology.** It locks the signs to the visible constellations and adds dasha periods — planetary time cycles that indicate when particular themes switch on. To get sharper timing of life events, you sacrifice the seasonal intuitiveness that makes Western placements feel instantly familiar.
-3. **Psychological astrology.** Usually layered onto the Western frame, it treats the chart as a map of inner development and unresolved patterns. To get that rich character insight, you trade away the event-and-timing precision that classical Vedic technique was built to deliver.
+1. **对比西方星盘。** 西方盘以回归黄道贴合四季节律，这张盘以恒星黄道贴合真实星象；要换来与实际星空对齐的精度，就得牺牲你早已熟悉的那套星座标签。
+2. **对比单条星座运势。** 泛泛的星座运势只读太阳星座，吠陀星盘把上升、月亮、大运叠在一起；要得到贴合个人的细节，就得放弃一看就懂的轻松感。
+3. **对比纯预测式排盘。** 预测式用法盯着大运推断事件，自我觉察式用法把大运读成阶段主题；选了理解当下，就要放下对未来时间表的执念。
 
-The way it functions in practice is plain: you pick the zodiac that matches your question. If you want to understand a recurring emotional pattern, the Western psychological frame usually says more; if you want to know when a long-planned move is likely to pay off, the Vedic timing frame usually says more. Vedic vs Western Astrology is not a fight over which sky is real — both are honest measurements taken from different starting lines — but a choice about whether you need a seasonal or a stellar reference point. The classical Vedic side carries a long documented lineage, running from Parashara and Varahamihira in the ancient texts to twentieth-century systematizers such as B. V. Raman, which is part of why its timing methods grew so detailed.
+现代心理占星里，像 Dane Rudhyar 这样的作者就主张把星盘当成自我认识的地图，而不是命运判决；想进一步分清上升点怎么定调整张盘，可以对照 [[<TBD-internal-link: 上升点与命宫解读>]] 的拆解，那里把命宫的作用讲得更细。
 
-## How to Read Vedic Astrology in Your Chart
+## 如何在你的吠陀星盘里认出关键位置
 
-You do not need special software to see Vedic vs Western Astrology at work in your own chart — a few simple checks make the difference obvious:
+吠陀星盘怎么看才不至于无从下手？给自己定一个固定的阅读顺序，按下面几步在盘里逐一认位置，比一上来就背符号有效得多。
 
-1. Compare your sun sign in both systems; if it slides back exactly one sign, you are seeing the sidereal-tropical gap directly.
-2. Note how close your birthday sits to the start of a season — births near a cusp shift most dramatically between the two zodiacs.
-3. Check whether each reading emphasizes timing and concrete events (Vedic) or temperament and psychology (Western).
-4. Look for dasha periods in a Vedic report; a Western chart rarely includes this planetary-timing layer at all.
-5. Watch which light gets top billing — Vedic charts often lead with the moon sign, while Western charts open with the sun.
+1. 先找上升点（lagna），它决定十二宫从哪个星座起算。
+2. 再看月亮所在星座，吠陀传统把月亮看得比太阳重。
+3. 找出当前运行的大运主星，对应你这几年的主题。
+4. 留意聚在同一宫的几颗行星，那是能量被放大的位置。
+5. 最后才回到太阳，把它当作背景而非主角。
 
-## Common Misreadings
+## 常见误读
 
-A handful of misreadings keep readers stuck the moment they notice their signs disagree:
+围绕吠陀星盘怎么看，坊间最常见的几种说法其实都偏了，逐条对照一下就清楚问题出在哪。
 
-1. **"One system must be wrong."** Both are mathematically correct; they simply measure from different anchor points, one from the seasons and one from the stars. The disagreement is built into the design, not produced by a calculation error.
-2. **"Vedic is just an older version of Western astrology."** They share the same planets and houses, but they use different zodiacs and different timing tools, which makes them parallel systems rather than one nested inside the other. Reading one does not automatically translate into the other.
-3. **"My real sign is whichever I like better."** Each sign is valid only within its own frame, so preference cannot settle the question. The useful move is matching the system to what you actually want to know, not crowning a personal favorite.
-4. **"The 24-degree gap is a glitch."** That offset, called ayanamsa, is a deliberate and slowly growing difference between the two zodiacs. It widens by roughly one degree every seventy-two years as the equinox drifts against the stars, so it is a measurement, not a bug.
+1. **误以为星座和西方一样。** 实际上恒星黄道让多数人的太阳星座往后挪了一格，照搬西方解读会读错方向。
+2. **把大运当成精准预言。** 实际上它标的是阶段性主题，不是某年某月一定会发生的具体事件。
+3. **只盯太阳星座看。** 实际上不读上升与月亮，这张盘等于只看了三分之一，难怪越看越觉得不像自己。
 
-## Vedic vs Western Astrology at a Glance
+## 吠陀星盘关键要素对照表
 
-| Dimension | How It Works | Reference Point | How to Observe |
-|-----------|--------------|-----------------|----------------|
-| Zodiac type | Sidereal stays fixed to the constellations; tropical stays fixed to the seasons | Visible stars (Vedic) vs the spring equinox (Western) | Your sun sign usually shifts back one sign between the two charts |
-| Main use | Vedic favors timing of events; Western favors psychological insight | Dasha periods (Vedic) vs aspect cycles (Western) | Notice whether a report stresses "when" or "who you are" |
-| Core anchor | Each pins the same sign grid to a different starting line | The ~24-degree ayanamsa offset between the two grids | Births near a cusp change signs most between systems |
-| Lineage | Vedic descends from classical Sanskrit texts; Western from Hellenistic origins | Parashara's tradition (Vedic) vs Hellenistic origins (Western) | Vedic reports often lead with the moon rather than the sun |
+| 要素 | 运作方式 | 在盘中的定位 | 如何观察应用 |
+| --- | --- | --- | --- |
+| 上升点 lagna | 决定宫位从哪个星座起算 | 第一宫起点 | 先把它定下来，整张盘才有骨架 |
+| 月亮星座 | 反映情绪与内在心性 | 比太阳更受重视 | 心情起伏时回看它落在哪 |
+| 大运 dasha | 把一生分成行星主管的时段 | 时间周期层 | 对照当下主题，而非预测事件 |
+| 九曜行星 | 各自主管不同生活领域 | 分落十二宫 | 看哪几颗挤在同一宫 |
 
-## Common Questions About Vedic vs Western Astrology
+## 关于吠陀星盘的常见问题
 
-**Why is my sun sign different in Vedic and Western charts?**
+**为什么我的吠陀星盘星座和平时看的不一样？**
 
-The two systems use different zodiacs, so the same birth moment falls into a different sign. Western fixes signs to the seasons while Vedic fixes them to the constellations, leaving a gap of about 24 degrees.
+因为吠陀用恒星黄道，和西方的回归黄道目前相差约 24 度。这一格的偏移，会让不少人的太阳星座整体往后挪一个星座。
 
-**Which system is more accurate?**
+**新手第一次学吠陀星盘怎么看？**
 
-Neither is more accurate; they are different measurements answering different questions. Vedic is typically used for timing life events, while Western is typically used to describe psychological character.
+先别贪多，按上升、月亮、当前大运三步走。把这三处读顺了，再慢慢加入相位和分盘也不迟。
 
-**Can I use both systems at the same time?**
+**大运周期能预测具体事件吗？**
 
-Many readers do, treating each as a separate lens rather than blending them into one. The trick is keeping the questions apart — Western for temperament, Vedic for timing.
+它更适合用来认清人生阶段的主题，而不是某天某事的预言。把它当成季节切换，而不是写死的日程表。
 
-**What is the ayanamsa people keep mentioning?**
+## 自我觉察小提示
 
-Ayanamsa is the measured offset between the sidereal and tropical zodiacs. It is the single number that explains why Vedic vs Western Astrology produces two different sign placements.
+1. 回想最近一次你对星座运势说"不像我"，是在哪一刻？
+2. 你现在的大运主星，对应生活里哪个反复出现的主题？
+3. 上次把某件事归给"命"，是不是其实另有解释？
 
-## Reflection Prompts
+## 延伸阅读
 
-1. Recall the moment you first saw your two different signs — what did you assume had gone wrong, and why?
-2. Think of a recent decision about timing; would a system built for "when" have served you better than one built for "who"?
-3. Notice which sign description you instinctively defended — what does that pull reveal about the story you tell about yourself?
+- [[<TBD-internal-link: 大运周期 dasha 入门说明>]] — 先把整张盘的时间线看一遍，知道自己正处在哪一段大运，再回看单一行星会更有方向。
 
-## Related Reading
+## 下一步行动
 
-- [[<TBD-external-link: Wikipedia | Hindu astrology | encyclopedic overview of the Vedic system's history and core principles>]] — neutral background on Jyotish and its classical sources.
-- [[<TBD-external-link: Wikipedia | Sidereal and tropical astrology | technical explanation of the two zodiacs behind the comparison>]] — covers the exact measurement difference that splits the two systems.
+读一读[如何解读出生星盘的完整指南](https://astrologywiki.com/zh/wiki/how-to-read-birth-chart)，照着它把计算器跑出来的上升、月亮和大运逐一对上号，你会更清楚此刻该把心力放在哪一段人生主题上，而不是被一屏度数和梵文词吓退。
 
-## Take Action
+## 参考来源
 
-Pick whichever chart unsettled you and read it on purpose instead of dismissing it. [Read the How to Read a Birth Chart guide](https://astrologywiki.com/en/wiki/how-to-read-birth-chart) to apply either system to your own chart and see exactly which placements each zodiac is describing. Read that way, two different signs stop competing for the truth and start offering two honest angles on the same life.
-
-## Sources
-
-- Parashara — foundational sage credited with the classical Vedic framework of houses and planetary periods
-- Varahamihira — early authority who codified core principles of Indian astronomy and astrology
-- B. V. Raman — twentieth-century scholar who systematized and popularized modern Vedic practice
+- Dane Rudhyar — 开创以心理学、以人为中心的现代占星解读路径
+- Robert Hand — 系统整理了行星、宫位与相位的传统解读框架
+- Liz Greene — 把深层心理学引入星盘解读的代表人物

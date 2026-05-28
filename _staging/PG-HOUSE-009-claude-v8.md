@@ -1,28 +1,3 @@
----
-title: 4th House Meaning
-slug: 4th-house-meaning
-date: 2026-05-28
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T2
-track: 量产线
-page_id: PG-HOUSE-009
-author_id: "julian-thorne"
-author_display_name: "Julian Thorne"
-target_keyword: 4th house meaning
-associated_keywords:
-  - fourth house
-  - IC astrology
-  - 4th house family
-  - home astrology
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-05-28T16:51:59.658Z
-content_sha256_short: eea6f6b8ca23f0a1
-phase2_checks: all-pass
----
-
 # The 4th House Meaning Behind Your Emotional Foundation
 
 ## What is The 4th House?

@@ -1,27 +1,3 @@
----
-title: Green Aura Meaning
-slug: green-aura-meaning
-date: 2026-05-28
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T2
-track: 量产线
-page_id: page_green_aura_meaning
-author_id: "elena-vane"
-author_display_name: "Elena Vane"
-target_keyword: green aura meaning
-associated_keywords:
-  - green aura
-  - green aura personality
-  - what does green aura mean
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-05-28T15:47:26.265Z
-content_sha256_short: 61178bd8791726c6
-phase2_checks: all-pass
----
-
 # 绿色气场代表什么，不必在 healer 和嫉妒之间二选一
 
 ## Green Aura 是什么？

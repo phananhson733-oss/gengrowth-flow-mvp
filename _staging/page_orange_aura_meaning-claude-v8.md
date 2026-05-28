@@ -1,27 +1,3 @@
----
-title: Orange Aura Meaning
-slug: orange-aura-meaning
-date: 2026-05-28
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T2
-track: 量产线
-page_id: page_orange_aura_meaning
-author_id: "elena-vane"
-author_display_name: "Elena Vane"
-target_keyword: orange aura meaning
-associated_keywords:
-  - orange aura
-  - orange aura personality
-  - what does orange aura mean
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-05-28T12:43:12.204Z
-content_sha256_short: 9e403337c2aee53e
-phase2_checks: all-pass
----
-
 # Why an Orange Aura Reads as Drive, Pleasure, and Connection
 
 ## What is Orange Aura?

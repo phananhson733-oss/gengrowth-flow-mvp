@@ -20,9 +20,7 @@ That question is about alignment rather than popularity, and missing it is where
 2. **The hidden vision.** The real prompt is whether your personal aims connect to a larger purpose, a thread that solo practitioners feel keenly but rarely name.
 3. **The support blind spot.** Many people overlook how a small, aligned group can carry an individual's work further, mistaking real support for mere socializing.
 
-A concrete example makes the stakes visible. Picture a quiet researcher who works mostly alone and assumes this part of the chart is dead weight, since they have no large circle to point to. Read through the friction above, the picture shifts: their three long-time correspondents who trade ideas and open doors are exactly the aligned support the sector describes, and the open-access vision they keep refining is the future this part of the wheel governs. Nothing about that requires a crowd. The same correction applies to the founder who networks constantly yet feels strangely unsupported, because contacts collected for advantage are not the mutual, ideal-driven bonds the tradition points to. In both cases the real measure is alignment, not volume, and once a reader makes that switch they stop scoring themselves against a popularity contest they were never actually entered in.
-
-Read this way, building on the depth-psychological lineage Liz Greene and Howard Sasportas helped shape, the house becomes a field of development rather than a verdict on your friend count. A working grasp of the [[<TBD-internal-link: guide to the 5th house of self-expression>]] sharpens it further, since the two houses form one axis between the individual and the collective.
+A concrete example makes the stakes visible. Picture a quiet researcher who works mostly alone and assumes this part of the chart is dead weight, since they have no large circle to point to; read through the friction above, their three long-time correspondents who trade ideas and open doors are exactly the aligned support the sector describes, and the open-access vision they keep refining is the future this part of the wheel governs. The same correction applies to the founder who networks constantly yet feels strangely unsupported, because contacts collected for advantage are not the mutual, ideal-driven bonds the tradition points to. In both cases the real measure is alignment, not volume. Read this way, building on the depth-psychological lineage Liz Greene and Howard Sasportas helped shape, the house becomes a field of development rather than a verdict on your friend count, and a working grasp of the [[<TBD-internal-link: guide to the 5th house of self-expression>]] sharpens it further, since the two houses form one axis between the individual and the collective.
 
 ## The 11th House vs Adjacent Concepts: How It Works + Trade-offs
 
@@ -92,7 +90,7 @@ These topics extend the house framework without repeating what is above:
 
 ## Take Action
 
-Place this house inside the whole wheel before reading it in isolation. Read the full [Astrological Houses guide](https://astrologywiki.com/en/wiki/astrology-houses) to see how this house connects to the eleven other life areas, and you come away with a working map of the entire chart. More than a list of meanings, you gain a steadier sense of where your individual path meets the larger world it belongs to.
+Place this house inside the whole wheel before reading it in isolation. Read the full [Astrological Houses guide](https://astrologywiki.com/en/wiki/astrology-houses) to see how this house connects to the eleven other life areas, and you come away with a working map of the entire chart. More than a list of meanings, you gain a steadier sense of where your individual path meets the larger world it belongs to, and a clearer view of which alliances and hopes are quietly shaping the direction you are already moving in.
 
 ## Sources
 

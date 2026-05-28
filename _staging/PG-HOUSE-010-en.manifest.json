@@ -1,17 +1,17 @@
 {
   "schema_version": "1",
-  "page_id": "PG-CHAKRA-005",
-  "entity": "The Sacral Chakra",
-  "target_keyword": "sacral chakra meaning",
+  "page_id": "PG-HOUSE-010",
+  "entity": "The 5th House",
+  "target_keyword": "5th house",
   "template": "Definition",
   "tier": "T2",
   "track": "量产线",
   "generated_by": "unknown",
   "prompt_version": "v8",
-  "generated_at": "2026-05-28T20:06:14.759Z",
-  "content_sha256_short": "6005a94689f890c3",
-  "source_path": "_staging/zh-demo/PG-CHAKRA-005-claude-v8.md",
-  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/PG-CHAKRA-005-zh.md",
+  "generated_at": "2026-05-28T20:07:08.255Z",
+  "content_sha256_short": "a5702f5d5b761eac",
+  "source_path": "_staging/PG-HOUSE-010-claude-v8.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-HOUSE-010-en.md",
   "phase2_checks": {
     "overall": "pass",
     "structure": {
@@ -19,7 +19,7 @@
       "h2Count": 11,
       "h3Count": 0,
       "h4Count": 0,
-      "words": 2093,
+      "words": 1787,
       "wikilinks": 4,
       "tbdLinks": 4
     },

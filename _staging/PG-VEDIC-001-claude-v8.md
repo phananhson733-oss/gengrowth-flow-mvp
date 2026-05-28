@@ -24,16 +24,18 @@ Vedic vs Western astrology really comes down to one technical choice the two cam
 
 The Western tropical zodiac begins at the exact point where the Sun crosses the celestial equator each spring, which means 0° Aries is simply the spring equinox. The way it functions is seasonal: the signs stay locked to the solstices and equinoxes no matter how the background stars slowly shift. The payoff is intuitive, because the symbolism of each sign lines up with the season it falls in. To get a zodiac that always matches the seasons, though, Western astrology sacrifices alignment with the actual constellations. After roughly two thousand years of slow precession, tropical Aries no longer sits in front of the stars of the Aries constellation at all.
 
-The Vedic sidereal zodiac makes the opposite trade. It begins from a fixed stellar reference and applies an ayanamsa (the measured angle of offset between the two zodiacs, currently close to 24 degrees). The way it works keeps every sign pinned to the real star field, which is why the system pairs so naturally with dasha cycles (planetary time-periods used to date life events) and nakshatras (the 27 lunar mansions that subdivide the sky). To get a chart that matches the visible stars and supports precise timing, Vedic astrology sacrifices the tidy season-to-sign overlap that Western readers take for granted. This is also why the sidereal tradition, codified in classical form by Parashara and carried to modern English-speaking readers by B. V. Raman, leans predictive and remedial, while the tropical approach leans psychological. For the coordinate difference underneath all of this, this [[<TBD-internal-link: explainer on the sidereal versus tropical zodiac>]] lays it out step by step.
+The Vedic sidereal zodiac makes the opposite trade. It begins from a fixed stellar reference and applies an ayanamsa (the measured angle of offset between the two zodiacs, currently close to 24 degrees). The way it works keeps every sign pinned to the real star field, which is why the system pairs so naturally with dasha cycles (planetary time-periods used to date life events) and nakshatras (the 27 lunar mansions that subdivide the sky). To get a chart that matches the visible stars and supports precise timing, Vedic astrology sacrifices the tidy season-to-sign overlap that Western readers take for granted.
+
+This is also why the sidereal tradition, codified in classical form by Parashara and carried to modern English-speaking readers by B. V. Raman, leans predictive and remedial, while the tropical approach leans psychological. For the coordinate difference underneath all of this, this [[<TBD-internal-link: explainer on the sidereal versus tropical zodiac>]] lays it out step by step.
 
 ## How to Read Vedic Astrology in Your Chart
 
 You do not need software to feel the Vedic versus Western difference once you know what to look for. Pull both charts, set them side by side, and read these signals:
 
-1. **Check your Sun sign first.** A Vedic Sun one whole sign earlier than your Western Sun is the ~24-degree ayanamsa doing exactly what it should.
+1. **Check your Sun placement first.** A Vedic Sun one whole sign earlier than your Western Sun is the ~24-degree ayanamsa doing exactly what it should.
 2. **Notice the cutoff cases.** People born in the last days of a Western sign shift most, since they were already sitting near a boundary.
 3. **Look for timing language.** A Vedic reading names dated periods called dashas; a Western reading rarely commits to specific windows.
-4. **Watch the house emphasis.** Whole-sign houses dominate Vedic charts, so your rising sign often reorganizes which life areas stand out.
+4. **Watch the house emphasis.** Whole-sign houses dominate Vedic charts, so your ascendant (lagna) often reorganizes which life areas stand out.
 5. **Compare the tone, not the verdict.** One chart shows how you are wired; the other shows when familiar themes tend to surface.
 
 Read together, the two charts usually replace the "which one is right" reflex with a more useful habit: matching the question to the system before you read a single line.
@@ -42,7 +44,7 @@ Read together, the two charts usually replace the "which one is right" reflex wi
 
 Most of the confusion in the Vedic vs Western astrology debate comes from a few assumptions that sound reasonable but quietly miss the point. Here is what the popular version gets wrong, and what is actually happening:
 
-1. **"One system must be wrong."** Both are internally consistent and use valid math; they simply measure from different zero points. A different Sun sign is the expected result, not a mistake in either chart.
+1. **"One system must be wrong."** Both are internally consistent and use valid math; they simply measure from different zero points. A different Sun placement is the expected result, not a mistake in either chart.
 2. **"Vedic is the older and more accurate one."** Vedic is sidereal and very old, but age does not equal accuracy. Tropical is no less precise for personality work — the two are tuned for different questions.
 3. **"My real sign is the Vedic one."** Neither sign is more real than the other. Your tropical sign still describes the season you were born into, and your sidereal sign still tracks the actual stars.
 4. **"The two will eventually line up again."** The gap widens slowly through precession, so the systems keep drifting apart rather than back together. Expecting them to converge misunderstands what each zodiac is anchored to.
@@ -61,7 +63,7 @@ Every one of these misreadings shares the same root: treating two coordinate sys
 
 ## Common Questions About Vedic Astrology
 
-**Why is my Sun sign different in Vedic vs Western astrology?**
+**Why is my Sun placement different in Vedic vs Western astrology?**
 
 The two systems use different zodiacs, so a Western Sun usually moves back about one sign in a Vedic chart. The roughly 24-degree ayanamsa offset accounts for the shift, which means it reflects a difference in measurement rather than an error.
 
@@ -79,7 +81,7 @@ They use the same visible planets and place them in the same twelve houses. The 
 
 ## Reflection Prompts
 
-1. Think of the moment you first saw your Vedic Sun sign — what did you assume had gone wrong?
+1. Think of the moment you first saw your Vedic Sun placement — what did you assume had gone wrong?
 2. Recall a time a single label, like your sign, shaped how you explained your own behavior.
 3. Name one recent decision where knowing the timing, not the personality, would have helped most.
 
@@ -90,7 +92,7 @@ They use the same visible planets and place them in the same twelve houses. The 
 
 ## Take Action
 
-Open your birth chart in both a tropical and a sidereal setting, then compare where your Sun, Moon, and rising sign fall in each version. That gives you two readings that stop competing — one showing how you are wired, the other showing when your themes tend to move — so the mismatch becomes information instead of a problem to solve. To apply either system to your own placements, [read the How to Read a Birth Chart guide](https://astrologywiki.com/en/wiki/how-to-read-birth-chart), and you may find that holding both views at once tells you more about yourself than picking a single side ever could.
+Open your birth chart in both a tropical and a sidereal setting, then compare where your Sun, Moon, and ascendant (lagna) fall in each version. That gives you two readings that stop competing — one showing how you are wired, the other showing when your themes tend to move — so the mismatch becomes information instead of a problem to solve. To apply either system to your own placements, [read the How to Read a Birth Chart guide](https://astrologywiki.com/en/wiki/how-to-read-birth-chart), and you may find that holding both views at once tells you more about yourself than picking a single side ever could.
 
 ## Sources
 

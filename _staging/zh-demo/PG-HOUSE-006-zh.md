@@ -1,3 +1,28 @@
+---
+title: 1st House Meaning
+slug: 1st-house-meaning
+date: 2026-05-28
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-HOUSE-006
+author_id: "julian-thorne"
+author_display_name: "Julian Thorne"
+target_keyword: 1st house meaning
+associated_keywords:
+  - ascendant
+  - rising sign
+  - first house astrology
+  - 1st house planets
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-05-28T20:06:33.075Z
+content_sha256_short: c5d1be779e29e1b3
+phase2_checks: all-pass
+---
+
 # 第一宫代表什么，和你以为的太阳星座并不是一回事
 
 ## The 1st House 是什么？

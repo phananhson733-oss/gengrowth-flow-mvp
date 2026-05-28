@@ -1,3 +1,28 @@
+---
+title: Aura Reading
+slug: aura-reading
+date: 2026-05-28
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-AURA-009
+author_id: "elena-vane"
+author_display_name: "Elena Vane"
+target_keyword: aura reading
+associated_keywords:
+  - aura reading online
+  - how to read auras
+  - see your aura
+  - aura colors meaning
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-05-28T20:07:08.291Z
+content_sha256_short: 3dc3991f8290ae57
+phase2_checks: all-pass
+---
+
 # Aura Reading Starts With Feeling, Not Seeing
 
 ## What is Aura Reading?

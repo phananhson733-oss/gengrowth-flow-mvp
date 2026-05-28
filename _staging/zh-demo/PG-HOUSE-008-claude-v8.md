@@ -1,28 +1,3 @@
----
-title: 3rd House Astrology
-slug: 3rd-house-astrology
-date: 2026-05-28
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T2
-track: 量产线
-page_id: PG-HOUSE-008
-author_id: "julian-thorne"
-author_display_name: "Julian Thorne"
-target_keyword: 3rd house astrology
-associated_keywords:
-  - third house
-  - 3rd house communication
-  - siblings astrology
-  - 3rd house mercury
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-05-28T16:50:09.257Z
-content_sha256_short: 9758095ce67b6b25
-phase2_checks: all-pass
----
-
 # 第三宫不只是兄弟姐妹，更是你每天的思维方式
 
 ## The 3rd House 是什么？

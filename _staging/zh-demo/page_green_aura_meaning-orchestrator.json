@@ -1,0 +1,67 @@
+{
+  "page_id": "page_green_aura_meaning",
+  "prompt_path": "/Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/page_green_aura_meaning.v8.zh-prompt.md",
+  "started_at": "2026-05-28T14:48:22.647Z",
+  "models_requested": [
+    "claude"
+  ],
+  "retry": 2,
+  "diversify_on_fail": false,
+  "max_cost_usd_per_page": 5,
+  "budget_exceeded_models": [],
+  "ok_count": 0,
+  "total_cost_estimate_usd": 0,
+  "results": {
+    "claude": {
+      "model": "claude",
+      "active_model": "claude",
+      "diversified": false,
+      "ok": false,
+      "output_path": null,
+      "retries": 2,
+      "duration_s": 5709.3,
+      "cost_estimate_usd": null,
+      "cumulative_cost_usd": 0.2667,
+      "budget_exceeded": false,
+      "budget_usd": 5,
+      "attempts": [
+        {
+          "try_index": 1,
+          "model": "claude",
+          "command": "claude -p --model claude-opus-4-7 < /Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/page_green_aura_meaning.v8.zh-prompt.md > /Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/page_green_aura_meaning-claude-v8.md",
+          "cost_usd": 0.0892,
+          "cumulative_cost_usd": 0.0892,
+          "ok": false,
+          "exit_code": 1,
+          "duration_s": 6.2,
+          "stderr_tail": "",
+          "stdout_bytes": 63
+        },
+        {
+          "try_index": 2,
+          "model": "claude",
+          "command": "claude -p --model claude-opus-4-7 < /Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/page_green_aura_meaning.v8.zh-prompt.md > /Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/page_green_aura_meaning-claude-v8.md",
+          "cost_usd": 0.0892,
+          "cumulative_cost_usd": 0.1784,
+          "ok": false,
+          "exit_code": 1,
+          "duration_s": 1923.3,
+          "stderr_tail": "",
+          "stdout_bytes": 63
+        },
+        {
+          "try_index": 3,
+          "model": "claude",
+          "command": "claude -p --model claude-opus-4-7 < /Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/page_green_aura_meaning.v8.zh-prompt.md > /Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/page_green_aura_meaning-claude-v8.md",
+          "cost_usd": 0.0883,
+          "cumulative_cost_usd": 0.2667,
+          "ok": false,
+          "exit_code": 143,
+          "duration_s": 3779.8,
+          "stderr_tail": "",
+          "stdout_bytes": 0
+        }
+      ]
+    }
+  }
+}

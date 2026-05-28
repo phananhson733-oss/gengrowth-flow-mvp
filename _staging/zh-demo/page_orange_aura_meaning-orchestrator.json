@@ -1,7 +1,7 @@
 {
   "page_id": "page_orange_aura_meaning",
   "prompt_path": "/Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/page_orange_aura_meaning.v8.zh-prompt.md",
-  "started_at": "2026-05-28T07:03:00.070Z",
+  "started_at": "2026-05-28T12:50:13.790Z",
   "models_requested": [
     "claude"
   ],
@@ -10,7 +10,7 @@
   "max_cost_usd_per_page": 5,
   "budget_exceeded_models": [],
   "ok_count": 1,
-  "total_cost_estimate_usd": 0.0978,
+  "total_cost_estimate_usd": 0.1074,
   "results": {
     "claude": {
       "model": "claude",
@@ -19,14 +19,14 @@
       "ok": true,
       "output_path": "/Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/page_orange_aura_meaning-claude-v8.md",
       "retries": 0,
-      "duration_s": 474.1,
+      "duration_s": 421.5,
       "cost_estimate_usd": {
-        "usd": 0.0978,
-        "input_tokens_est": 5697,
-        "output_tokens_est": 165,
+        "usd": 0.1074,
+        "input_tokens_est": 5881,
+        "output_tokens_est": 256,
         "pricing_note": "Opus 4.7 xhigh"
       },
-      "cumulative_cost_usd": 0.0978,
+      "cumulative_cost_usd": 0.1074,
       "budget_exceeded": false,
       "budget_usd": 5,
       "attempts": [
@@ -34,16 +34,16 @@
           "try_index": 1,
           "model": "claude",
           "command": "claude -p --model claude-opus-4-7 < /Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/page_orange_aura_meaning.v8.zh-prompt.md > /Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/page_orange_aura_meaning-claude-v8.md",
-          "cost_usd": 0.0978,
-          "cumulative_cost_usd": 0.0978,
+          "cost_usd": 0.1074,
+          "cumulative_cost_usd": 0.1074,
           "ok": true,
           "exit_code": 0,
-          "duration_s": 474.1,
+          "duration_s": 421.5,
           "stderr_tail": "",
-          "stdout_bytes": 2710,
+          "stdout_bytes": 3019,
           "sonnet_guard": {
             "downgraded": false,
-            "bytes": 7122
+            "bytes": 7559
           }
         }
       ]

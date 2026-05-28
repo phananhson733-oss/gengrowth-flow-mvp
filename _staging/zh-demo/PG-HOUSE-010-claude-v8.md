@@ -1,28 +1,3 @@
----
-title: 5th House
-slug: 5th-house
-date: 2026-05-28
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T2
-track: 量产线
-page_id: PG-HOUSE-010
-author_id: "julian-thorne"
-author_display_name: "Julian Thorne"
-target_keyword: 5th house
-associated_keywords:
-  - fifth house
-  - 5th house creativity
-  - 5th house romance
-  - 5th house children
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-05-28T16:57:42.413Z
-content_sha256_short: 2523ccba37350026
-phase2_checks: all-pass
----
-
 # 第五宫代表什么，远不止恋爱与玩乐
 
 ## The 5th House 是什么？

@@ -173,12 +173,53 @@ export const TBD_LINK_RULES = [
   { match: /\bchakra/i,          href: '/en/wiki/chakra-system-overview' },
   { match: /\baura\s*colors?\b/i, href: '/en/wiki/aura-colors-pillar' },
   { match: /\baura\s*reading\b/i, href: '/en/wiki/aura-colors-pillar' },
+  // --- Astrological houses (8/9/11/12 + pillar exist; 2/3/4/5/7/10 fall back to
+  // the pillar — same cluster, keeps the link clickable instead of orphaned). ---
+  { match: /\b(eighth|8th)\s+house\b/i,    href: '/en/wiki/8th-house-meaning' },
+  { match: /\b(ninth|9th)\s+house\b/i,     href: '/en/wiki/9th-house-astrology' },
+  { match: /\b(eleventh|11th)\s+house\b/i, href: '/en/wiki/11th-house' },
+  { match: /\b(twelfth|12th)\s+house\b/i,  href: '/en/wiki/12th-house-astrology' },
+  { match: /第八宫/,   href: '/en/wiki/8th-house-meaning' },
+  { match: /第九宫/,   href: '/en/wiki/9th-house-astrology' },
+  { match: /第十一宫/, href: '/en/wiki/11th-house' },
+  { match: /第十二宫/, href: '/en/wiki/12th-house-astrology' },
+  { match: /\bhouses?\b/i, href: '/en/wiki/astrology-houses' },
+  { match: /宫/,          href: '/en/wiki/astrology-houses' },
+  // --- Lunar nodes (scorpio/taurus spokes + pillar). Scorpio/Taurus themes route
+  // to the matching nodal-sign spoke; generic node descriptions to the pillar. ---
+  { match: /\bscorpio\b/i, href: '/en/wiki/north-node-in-scorpio' },
+  { match: /天蝎/,         href: '/en/wiki/north-node-in-scorpio' },
+  { match: /\btaurus\b/i,  href: '/en/wiki/north-node-in-taurus' },
+  { match: /金牛/,         href: '/en/wiki/north-node-in-taurus' },
+  { match: /\b(lunar nodes?|nodal axis|north node|south node|north (and|&) south node)\b/i, href: '/en/wiki/north-node-vs-south-node' },
+  { match: /(交点|节点)/,  href: '/en/wiki/north-node-vs-south-node' },
+  // --- Birth chart fundamentals ---
+  { match: /\b(natal|birth)\s+chart\b/i, href: '/en/wiki/how-to-read-birth-chart' },
+  { match: /(出生星盘|本命盘|星盘入门|星图入门)/, href: '/en/wiki/how-to-read-birth-chart' },
+  // --- ZH aura cluster ---
+  { match: /气场颜色|气场.*总览/, href: '/en/wiki/aura-colors-pillar' },
+  { match: /红色?气场/,           href: '/en/wiki/red-aura-meaning' },
+  { match: /黄色?气场/,           href: '/en/wiki/yellow-aura-meaning' },
+  { match: /(生殖轮|脉轮|能量中心)/, href: '/en/wiki/chakra-system-overview' },
+  // --- Planets → domicile-house page (no standalone planet pages yet; classical
+  // rulership is the closest existing match). Signs without a page → ruling house. ---
+  { match: /\bjupiter\b|木星/i,   href: '/en/wiki/9th-house-astrology' },
+  { match: /\bpluto\b|冥王星/i,   href: '/en/wiki/8th-house-meaning' },
+  { match: /\bneptune\b|海王星/i,  href: '/en/wiki/12th-house-astrology' },
+  { match: /\bsagittarius\b|射手|人马/i, href: '/en/wiki/9th-house-astrology' },
+  { match: /\bpisces\b|双鱼/i,     href: '/en/wiki/12th-house-astrology' },
+  // Generic "planets in the chart" overview → birth-chart fundamentals.
+  { match: /行星.{0,6}(星盘|本命|含义|意义)|星盘里.{0,4}行星|planets?\s+in\s+the\s+(natal|birth)/i, href: '/en/wiki/how-to-read-birth-chart' },
+  // Nodal methodology / generic nodal-sign placement → nodes pillar.
+  { match: /\b(true node|mean node|evolutionary astrolog\w*|nodal sign)\b/i, href: '/en/wiki/north-node-vs-south-node' },
 ];
 
-export function resolveTbdLink(description) {
+export function resolveTbdLink(description, lang = 'en') {
   const d = description.trim();
+  // Rules store the EN path; rewrite /en/ → /<lang>/ so a ZH article links the ZH page.
+  const langPath = lang === 'zh' ? '/zh/' : '/en/';
   for (const rule of TBD_LINK_RULES) {
-    if (rule.match.test(d)) return `[${d}](${rule.href})`;
+    if (rule.match.test(d)) return `[${d}](${rule.href.replace('/en/', langPath)})`;
   }
   return `*${d}*`;
 }
@@ -194,11 +235,11 @@ export function autoLinkBareUrls(s) {
   });
 }
 
-export function transformBody(body) {
+export function transformBody(body, lang = 'en') {
   let out = body;
   out = out.replace(
     /\[\[<TBD-internal-link:\s*([^>]+)>\]\]/g,
-    (_m, desc) => resolveTbdLink(desc),
+    (_m, desc) => resolveTbdLink(desc, lang),
   );
   out = autoLinkBareUrls(out);
   out = out.trimEnd();
@@ -343,7 +384,7 @@ function convertOne({ source, slug, out, language = 'en', mergeSibling = false, 
   const tgtKw = fm.target_keyword || '';
   const assoc = Array.isArray(fm.associated_keywords) ? fm.associated_keywords : [];
   const keywords = [tgtKw, ...assoc].filter(Boolean);
-  const transformedBody = transformBody(body);
+  const transformedBody = transformBody(body, language);
   const description = deriveDescription(transformedBody);
   // bilingual-v9-full: varName suffix follows language. Oracle convention is
   // single-file dual-export (slugEn + slugZh in same .ts), e.g.
@@ -586,7 +627,6 @@ async function main(argv) {
 
     const results = [];
     for (const pid of pages) {
-      const slug = pageIdToSlug(pid);
       const winnerLlm = winnerMap[pid] || defaultWinnerLlm;
       // ZH source convention: orchestrator --out-dir _staging/zh-demo/ writes
       // <pid>-<llm>-<version>.md there (no .zh in filename — the directory
@@ -594,17 +634,21 @@ async function main(argv) {
       const source = language === 'zh'
         ? join(stagingDir, 'zh-demo', `${pid}-${winnerLlm}-${version}.md`)
         : join(stagingDir, `${pid}-${winnerLlm}-${version}.md`);
-      // Output filename gets .zh infix for ZH so EN/ZH .ts files coexist in
-      // oracle articles dir without overwriting. Oracle team then merges into
-      // single-file dual-export by hand (follow-up: auto-merge into existing
-      // <slug>.ts when present).
-      const outName = language === 'zh' ? `${slug}.zh.ts` : `${slug}.ts`;
-      const out = join(articlesDir, outName);
       if (!existsSync(source)) {
         process.stderr.write(`✗ missing: ${source}\n`);
         results.push({ pid, ok: false, reason: 'source missing', winnerLlm, language });
         continue;
       }
+      // Slug resolution: the md frontmatter `slug:` is the source of truth and the
+      // only thing that maps PG-* page_ids — pageIdToSlug only knows the aura
+      // page_<color>_aura_meaning rule and returns PG-* ids unchanged. Fall back to
+      // the derived slug for staging md that omits frontmatter.
+      const fmSlugMatch = readFileSync(source, 'utf8').slice(0, 2000).match(/^slug:\s*["']?([^"'\n]+?)["']?\s*$/m);
+      const slug = (fmSlugMatch && fmSlugMatch[1].trim()) || pageIdToSlug(pid);
+      // Output filename gets .zh infix for ZH so EN/ZH .ts files coexist in oracle
+      // articles dir without overwriting (ZH merges into the EN sibling unless --no-merge).
+      const outName = language === 'zh' ? `${slug}.zh.ts` : `${slug}.ts`;
+      const out = join(articlesDir, outName);
       try {
         const r = convertOne({ source, slug, out, language, mergeSibling, articlesDir });
         const tag = r.mergeMode === 'replaced' || r.mergeMode === 'appended'

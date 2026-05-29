@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-TERM-004",
+  "entity": "Square",
+  "target_keyword": "square astrology",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-05-29T05:16:57.471Z",
+  "content_sha256_short": "daa4ac4c81918ba8",
+  "source_path": "_staging/PG-TERM-004-claude-v8.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-TERM-004-en.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 1628,
+      "wikilinks": 4,
+      "tbdLinks": 4
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

@@ -1,3 +1,26 @@
+---
+title: Descendant Astrology
+slug: descendant-astrology
+date: 2026-05-29
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-TERM-005
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: descendant astrology
+associated_keywords:
+  - what is descendant
+  - 7th house cusp
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-05-29T05:16:45.234Z
+content_sha256_short: 309ad184a211337d
+phase2_checks: all-pass
+---
+
 # Why the Descendant in Astrology Marks Your Relationship Blind Spot
 
 ## What is the Descendant?

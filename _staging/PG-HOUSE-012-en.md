@@ -1,7 +1,7 @@
 ---
 title: 7th House Astrology
 slug: 7th-house-astrology
-date: 2026-05-28
+date: 2026-05-29
 status: ready-to-review
 type: wiki-entry
 template: Definition
@@ -18,7 +18,7 @@ associated_keywords:
   - descendant astrology
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-28T17:55:28.744Z
+generated_at: 2026-05-29T04:16:49.569Z
 content_sha256_short: de42436c7af9f1b8
 phase2_checks: all-pass
 ---

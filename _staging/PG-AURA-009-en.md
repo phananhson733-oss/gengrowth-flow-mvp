@@ -1,7 +1,7 @@
 ---
 title: Aura Reading
 slug: aura-reading
-date: 2026-05-28
+date: 2026-05-29
 status: ready-to-review
 type: wiki-entry
 template: Definition
@@ -18,7 +18,7 @@ associated_keywords:
   - aura colors meaning
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-28T22:38:36.076Z
+generated_at: 2026-05-29T04:16:50.015Z
 content_sha256_short: 3dc3991f8290ae57
 phase2_checks: all-pass
 ---

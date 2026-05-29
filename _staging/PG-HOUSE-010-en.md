@@ -1,7 +1,7 @@
 ---
 title: 5th House
 slug: 5th-house
-date: 2026-05-28
+date: 2026-05-29
 status: ready-to-review
 type: wiki-entry
 template: Definition
@@ -18,7 +18,7 @@ associated_keywords:
   - 5th house children
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-28T22:38:35.930Z
+generated_at: 2026-05-29T04:16:49.396Z
 content_sha256_short: a5702f5d5b761eac
 phase2_checks: all-pass
 ---

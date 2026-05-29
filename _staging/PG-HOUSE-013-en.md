@@ -1,7 +1,7 @@
 ---
 title: 10th House Astrology
 slug: 10th-house-astrology
-date: 2026-05-28
+date: 2026-05-29
 status: ready-to-review
 type: wiki-entry
 template: Definition
@@ -18,7 +18,7 @@ associated_keywords:
   - 10th house career
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-28T17:03:34.821Z
+generated_at: 2026-05-29T04:16:49.657Z
 content_sha256_short: faf32bed308f0ab3
 phase2_checks: all-pass
 ---

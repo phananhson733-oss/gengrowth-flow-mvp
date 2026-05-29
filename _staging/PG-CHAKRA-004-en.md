@@ -18,7 +18,7 @@ associated_keywords:
   - root chakra healing
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-29T04:15:06.189Z
+generated_at: 2026-05-29T04:16:50.276Z
 content_sha256_short: 3bbf56f4aa21df1e
 phase2_checks: all-pass
 ---

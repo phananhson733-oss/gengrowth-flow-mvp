@@ -1,7 +1,7 @@
 ---
 title: 3rd House Astrology
 slug: 3rd-house-astrology
-date: 2026-05-28
+date: 2026-05-29
 status: ready-to-review
 type: wiki-entry
 template: Definition
@@ -18,7 +18,7 @@ associated_keywords:
   - 3rd house mercury
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-28T16:50:23.138Z
+generated_at: 2026-05-29T04:16:49.220Z
 content_sha256_short: 0a7575682a8605a1
 phase2_checks: all-pass
 ---

@@ -1,7 +1,7 @@
 ---
 title: 2nd House Astrology
 slug: 2nd-house-astrology
-date: 2026-05-28
+date: 2026-05-29
 status: ready-to-review
 type: wiki-entry
 template: Definition
@@ -18,7 +18,7 @@ associated_keywords:
   - possessions astrology
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-28T17:48:43.614Z
+generated_at: 2026-05-29T04:16:49.132Z
 content_sha256_short: 82c6482142089a2f
 phase2_checks: all-pass
 ---

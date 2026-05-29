@@ -16,7 +16,7 @@ associated_keywords:
   - healing crystals guide
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-29T05:10:44.316Z
+generated_at: 2026-05-29T05:22:37.357Z
 content_sha256_short: 749207e33a41a379
 phase2_checks: all-pass
 ---

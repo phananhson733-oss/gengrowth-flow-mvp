@@ -16,7 +16,7 @@ associated_keywords:
   - throat chakra healing
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-29T05:08:34.850Z
+generated_at: 2026-05-29T05:22:27.086Z
 content_sha256_short: 8a38b4e21d32eedc
 phase2_checks: all-pass
 ---

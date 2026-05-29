@@ -115,6 +115,13 @@ PIPELINE.md 无"tool vs article 意图"概念。park 的 tool 词要有去处不
 
 ## 4. 收口：前半段流程梳理完成
 
-- **设计**：✅ 定稿。前半段（本文 + FRONT_HALF_FLOW.md）与后半段（PIPELINE.md）已拼成一条链，接缝（选题登记表一行 + Status baton）数据契约确认无缝隙。
-- **增量待落地**（★，§FRONT_HALF_FLOW 5.2，逐项放行再做）：queue-build 意图门、主表 cluster_id 列 + promote 回填、把 3.7 补进 PIPELINE.md、park 去处。
-- **后半段**：不碰。
+- **设计**：✅ 定稿。前半段（本文 + FRONT_HALF_FLOW.md）与后半段（PIPELINE.md）已拼成一条链；接缝 = 选题登记表一行 + Status baton，**字段契约**（§2）确认无缝隙。
+- **当前阻断**：写表/读表分裂（§3.7）——**落地第一步必须是 env 改指向，排在 queue-build 意图门之前**，否则前后接的是两张表。
+- **增量待落地**（★，逐项放行再做；与 FRONT_HALF_FLOW §5.2 合并）：
+  1. **env 改指向 1CkjOC**（§3.7，最优先，解阻断）
+  2. queue-build 意图门（park tool 词）+ park 去处（§3.5）
+  3. 主表 cluster_id 列 + promote 回填（§4.1c）
+  4. 修 bridge `SHEET_COL_FOR` page_role→'R'（§3.8，一行常量）
+  5. queue-build Status 列断言防护（§3.9）
+  6. 把 queue-build 补进 PIPELINE.md 总览（步骤 3.7）
+- **后半段**：不碰（§3.8 的 bug 仅记录待修，不在本次动）。

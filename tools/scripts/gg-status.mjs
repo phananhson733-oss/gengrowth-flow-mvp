@@ -203,10 +203,11 @@ async function decorateFromSheet(rows, opts) {
     return rows;
   }
 
-  // Pull 选题登记表 A1:U400 (v8 21-col schema)
+  // Pull 选题登记表 A1:V1500 — 22 列 schema（含 V=target_keyword_zh），行上限对齐视图公式的
+  // 1500 行（旧 A1:U500 会漏列 V、且 >500 行的词从 dashboard 静默消失；主表已 598 词）。
   let pagesRaw = { values: [] };
   try {
-    pagesRaw = await gFetch(`https://sheets.googleapis.com/v4/spreadsheets/${wb}/values/${encodeURIComponent('选题登记表!A1:U500')}?majorDimension=ROWS`, token);
+    pagesRaw = await gFetch(`https://sheets.googleapis.com/v4/spreadsheets/${wb}/values/${encodeURIComponent('选题登记表!A1:V1500')}?majorDimension=ROWS`, token);
   } catch {}
   const pagesRows = (pagesRaw.values || []).slice(1);
   // index page_id (col P = idx 15) → row obj

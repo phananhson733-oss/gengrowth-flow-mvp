@@ -1,3 +1,11 @@
+---
+slug: mars-in-12th-house
+author_id: "julian-thorne"
+target_keyword: "mars in 12th house"
+associated_keywords:
+  - "mars 12th house meaning"
+  - "hidden anger"
+---
 # What Mars in 12th House Really Says About Hidden Drive and Anger
 
 ## What is Mars in the 12th house?

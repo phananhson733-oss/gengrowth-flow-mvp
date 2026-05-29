@@ -1,3 +1,11 @@
+---
+slug: chiron-in-12th-house
+author_id: "julian-thorne"
+target_keyword: "chiron in 12th house"
+associated_keywords:
+  - "chiron 12th house meaning"
+  - "chiron in the twelfth house"
+---
 # What Chiron in 12th House Reveals About a Quiet, Hidden Sensitivity
 
 ## What is Chiron in the 12th house?

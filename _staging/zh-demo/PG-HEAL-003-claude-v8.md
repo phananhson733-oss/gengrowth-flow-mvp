@@ -1,3 +1,11 @@
+---
+slug: mars-in-12th-house
+author_id: "julian-thorne"
+target_keyword: "mars in 12th house"
+associated_keywords:
+  - "mars 12th house meaning"
+  - "hidden anger"
+---
 # 火星在12宫：那股被压在水面下的劲，到底去了哪里
 
 ## Mars in the 12th house 是什么？

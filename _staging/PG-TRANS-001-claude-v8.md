@@ -1,3 +1,11 @@
+---
+slug: saturn-in-pisces
+author_id: "marcus-orion"
+target_keyword: "saturn in pisces"
+associated_keywords:
+  - "saturn return in pisces"
+  - "saturn in pisces dates"
+---
 # Saturn in Pisces — A Grounded Field Guide to Building Structure Inside the Boundless
 
 ## What are Saturn in Pisces?

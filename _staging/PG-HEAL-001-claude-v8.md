@@ -1,3 +1,11 @@
+---
+slug: healing-your-inner-wound
+author_id: "julian-thorne"
+target_keyword: "Healing Your Inner Wound"
+associated_keywords:
+  - "chiron in 12th house"
+  - "mars in 12th house"
+---
 # Healing Your Inner Wound Through an Astrological Frame for Reflection
 
 ## What are inner wound?

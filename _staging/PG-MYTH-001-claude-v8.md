@@ -1,3 +1,11 @@
+---
+slug: persephone-goddess
+author_id: "julian-thorne"
+target_keyword: "persephone goddess"
+associated_keywords:
+  - "is persephone a goddess"
+  - "persephone archetype"
+---
 # Why the Persephone Goddess Still Names a Pattern You Live Through
 
 ## What is Persephone?

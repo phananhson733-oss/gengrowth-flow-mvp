@@ -1,3 +1,11 @@
+---
+slug: persephone-goddess
+author_id: "julian-thorne"
+target_keyword: "persephone goddess"
+associated_keywords:
+  - "is persephone a goddess"
+  - "persephone archetype"
+---
 # 读懂珀耳塞福涅原型：下降、转变、再回来的内在循环
 
 ## Persephone 是什么？

@@ -1,3 +1,11 @@
+---
+slug: healing-your-inner-wound
+author_id: "julian-thorne"
+target_keyword: "Healing Your Inner Wound"
+associated_keywords:
+  - "chiron in 12th house"
+  - "mars in 12th house"
+---
 # 内在伤口：用占星视角理解它，而不是急着修好它
 
 ## inner wound 是什么？

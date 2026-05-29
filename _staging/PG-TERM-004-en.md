@@ -16,8 +16,8 @@ associated_keywords:
   - what is a square
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-29T05:47:44.576Z
-content_sha256_short: daa4ac4c81918ba8
+generated_at: 2026-05-29T05:50:47.069Z
+content_sha256_short: a347d3b9fea04141
 phase2_checks: all-pass
 ---
 
@@ -35,7 +35,7 @@ A square is **a 90-degree angle between two planets that creates steady internal
 
 Most people meet square astrology through a one-word verdict: a square is "bad." That label is the friction this page exists to fix, because it sends readers looking for a way to remove the tension instead of working with it. The square does not break anything in your chart; it names a place where two drives keep colliding, and the collision is what eventually forces a real choice. When you treat that pressure as a flaw, you spend years bracing against it. When you read it as a prompt, the same pressure starts pointing somewhere useful.
 
-Building on the relational approach Dane Rudhyar established, a square is best read as one half of a relationship between two specific planets, never as a fixed sentence handed down to you. The drive for ease and the drive for structure, for example, will not stop arguing just because you want them to, and that ongoing argument is where the work lives. This is the same idea behind the [[<TBD-internal-link: explainer on the trine aspect>]]: where a trine hands you a talent that can quietly go undeveloped because nothing demands it, a square hands you a problem that keeps demanding attention until you build something durable around it. The trine flows; the square forges. Reading the aspect this way turns a verdict into a working instruction, and that shift is what self-awareness actually looks like here.
+Dane Rudhyar's person-centered tradition gives the better starting point: a square is best read as one half of a relationship between two specific planets, never as a fixed sentence handed down to you. The drive for ease and the drive for structure, for example, will not stop arguing just because you want them to, and that ongoing argument is where the work lives. This is the same idea behind the [[<TBD-internal-link: explainer on the trine aspect>]]: where a trine hands you a talent that can quietly go undeveloped because nothing demands it, a square hands you a problem that keeps demanding attention until you build something durable around it. The trine flows; the square forges. Reading the aspect this way turns a verdict into a working instruction, and that shift is what self-awareness actually looks like here.
 
 ## Square vs Adjacent Concepts: How It Works + Trade-offs
 
@@ -47,7 +47,7 @@ Square astrology gets confused with two neighbors that look similar on the surfa
 
 ## How to Read a Square in Your Chart
 
-Reading a square in your own chart works best as a short checklist you run in order, not as a pile of definitions. Pull up your chart and look for these signals one at a time, because square astrology hides in patterns more than in single dramatic placements.
+A square rarely announces itself in one obvious placement; square astrology tends to hide in repeating patterns, so hunt for it deliberately. Work down these five cues, settling each one before the next rather than skimming for a quick label.
 
 1. **Find the 90-degree gaps.** Look for two planets about a quarter-turn apart on the wheel; that gap is the square, and the tighter the angle, the louder it tends to run.
 2. **Name the two drives.** Identify what each planet wants, then notice where those two wants refuse to share the same plan.
@@ -107,6 +107,6 @@ Open your own chart and mark every pair of planets sitting about 90 degrees apar
 
 ## Sources
 
-- Dane Rudhyar — pioneered the person-centered reading of aspects that frames the square as a developmental prompt rather than a fixed sentence
-- Robert Hand — systematized the modern interpretation of aspects this reading of the square draws on
-- Stephen Arroyo — clarified the practice of reading an aspect's dynamic instead of scoring it good or bad
+- Dane Rudhyar — credited here for the move from fixed verdicts to a square read as a developmental prompt
+- Robert Hand — consulted for the practical interpretation of aspects that underwrites this take on the square
+- Stephen Arroyo — relied on for reading an aspect by its dynamic rather than scoring it good or bad

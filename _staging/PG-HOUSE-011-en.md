@@ -18,8 +18,8 @@ associated_keywords:
   - daily routine astrology
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-29T04:17:55.876Z
-content_sha256_short: 8f2e06d218394ef4
+generated_at: 2026-05-29T04:25:04.495Z
+content_sha256_short: 4440cb457d1db5b5
 phase2_checks: all-pass
 ---
 
@@ -76,7 +76,7 @@ The most common errors in 6th house astrology come from treating the house as sm
 
 | Property | How It Works | Energy Center | How to Observe |
 |---|---|---|---|
-| Daily work and craft | Turns ambition into repeatable, detailed effort | Mercury and Virgo, the natural rulers | How carefully you organize tasks and handle detail |
+| Daily work and craft | Turns ambition into repeatable, detailed effort | Mercury (natural ruler), Virgo (natural sign) | How carefully you organize tasks and handle detail |
 | Physical health | Registers the cost of your routines before the mind does | Digestion and the nervous system | Energy dips that follow changes in your schedule |
 | Habits and routine | Compounds small daily actions into long-term baselines | Earth-element steadiness | The one habit that, when skipped, derails the day |
 | Service to others | Channels skill into useful, ongoing, practical help | The hands and applied skill | Where you naturally pitch in without seeking applause |

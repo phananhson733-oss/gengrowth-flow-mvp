@@ -18,8 +18,8 @@ associated_keywords:
   - 1st house planets
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-29T04:17:55.441Z
-content_sha256_short: e4b04442e2b45fc3
+generated_at: 2026-05-29T04:24:57.433Z
+content_sha256_short: 47eec5e4b8c84cc9
 phase2_checks: all-pass
 ---
 
@@ -82,7 +82,7 @@ Each correction points the same direction: the 1st house is a real, observable l
 | --- | --- | --- | --- |
 | First impressions | The rising sign filters how your energy enters a room | Ascendant degree | Notice the vibe strangers name before they know you |
 | Physical presence | Colors appearance, posture, and bearing you project | Ascendant and Mars | Watch how you physically cross a threshold |
-| Instinctive self | The reflex you lead with before conscious thought | Aries, the natural ruler | Catch your unscripted first reaction under pressure |
+| Instinctive self | The reflex you lead with before conscious thought | Aries (natural sign), Mars (natural ruler) | Catch your unscripted first reaction under pressure |
 | Self-image | How you picture and assert the words "I am" | Any 1st-house planets | Listen for how you describe yourself to new people |
 
 ## Questions People Ask About the 1st House

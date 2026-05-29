@@ -18,8 +18,8 @@ associated_keywords:
   - 10th house career
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-29T04:17:56.051Z
-content_sha256_short: faf32bed308f0ab3
+generated_at: 2026-05-29T04:25:06.074Z
+content_sha256_short: 041c9db729ad7c5c
 phase2_checks: all-pass
 ---
 
@@ -27,7 +27,7 @@ phase2_checks: all-pass
 
 ## What is The 10th House?
 
-The 10th House is the sector of a birth chart that describes your public role — the reputation, standing, and authority you build in the world beyond your private life. Often written as the tenth house, it is also called the Midheaven, or MC, and it sits at the very top of the chart, the most visible point a person occupies. In 10th house astrology, this placement reads as **the chart's field of public role and earned authority**, not a fixed job title stamped on you at birth. It marks the direction your sense of vocation grows toward, and how the wider world slowly comes to recognise and rely on you. For a fuller map of how each sector fits together, the [[<TBD-internal-link: pillar guide to the astrological houses>]] shows where this one sits in the whole structure.
+The 10th House is the sector of a birth chart that describes your public role — the reputation, standing, and authority you build in the world beyond your private life. Often written as the tenth house, it is closely tied to the Midheaven (MC), the chart's highest and most visible point, which usually marks its cusp. In 10th house astrology, this placement reads as **the chart's field of public role and earned authority**, not a fixed job title stamped on you at birth. It marks the direction your sense of vocation grows toward, and how the wider world slowly comes to recognise and rely on you. For a fuller map of how each sector fits together, the [[<TBD-internal-link: pillar guide to the astrological houses>]] shows where this one sits in the whole structure.
 
 - Points to public role and reputation rather than the specific tasks of a job
 - Anchored at the Midheaven (MC), the highest and most visible point of the chart

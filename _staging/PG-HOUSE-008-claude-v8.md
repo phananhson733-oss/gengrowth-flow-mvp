@@ -30,7 +30,7 @@ You can read 3rd house astrology in a chart through a handful of concrete marker
 
 1. **Find the sign on the cusp.** It flavors your default thinking style — quick and verbal, cautious and methodical, or restless and endlessly curious.
 2. **Locate any planets inside it.** Mercury sharpens curiosity, the Moon ties thinking to mood, and Saturn slows and structures how you process.
-3. **Check where the ruling planet sits.** Mercury's own sign and house show where your everyday mind spends most of its attention.
+3. **Check where the ruling planet sits.** Mercury is the natural significator of the 3rd house, but your chart's actual 3rd-house ruler is the planet ruling the sign on that house's cusp — so it is not always Mercury. Track that ruler's sign and house to see where your everyday mind spends most of its attention.
 4. **Watch your real information habits.** Constant note-taking, rapid texting, or talking ideas out loud are this house working in plain sight.
 5. **Notice how you speak with siblings and neighbors.** These close, low-stakes exchanges tend to reveal your thinking style most plainly.
 
@@ -45,12 +45,12 @@ A few stubborn misreadings keep people from using this house well:
 
 ## The 3rd House at a Glance
 
-| Property | How It Works | Natural Ruler | How to Observe |
+| Property | How It Works | Natural Ruler & Sign | How to Observe |
 | --- | --- | --- | --- |
-| Everyday thinking | Sorts and labels information at close range | Mercury | You narrate, question, and categorize without being asked |
-| Communication style | Sends ideas outward quickly in speech and writing | Mercury / Gemini | You text, talk, or jot notes steadily through the day |
-| Learning mode | Picks things up in short, curious bursts | Mercury / Air | You skim widely and learn best by asking and doing |
-| Close relationships | Sets the tone of exchanges with siblings and neighbors | Gemini | Your easiest, lowest-stakes conversations show the pattern |
+| Everyday thinking | Sorts and labels information at close range | Mercury (ruler) | You narrate, question, and categorize without being asked |
+| Communication style | Sends ideas outward quickly in speech and writing | Mercury (ruler) / Gemini (sign) | You text, talk, or jot notes steadily through the day |
+| Learning mode | Picks things up in short, curious bursts | Mercury (ruler) / Air | You skim widely and learn best by asking and doing |
+| Close relationships | Sets the tone of exchanges with siblings and neighbors | Gemini (sign) | Your easiest, lowest-stakes conversations show the pattern |
 
 ## Questions People Ask About the 3rd House
 

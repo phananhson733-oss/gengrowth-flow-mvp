@@ -16,8 +16,8 @@ associated_keywords:
   - persephone archetype
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-29T12:28:04.324Z
-content_sha256_short: 6842f007dc55d6d5
+generated_at: 2026-05-29T12:50:45.931Z
+content_sha256_short: 882c3e329423beff
 phase2_checks: all-pass
 ---
 
@@ -57,7 +57,7 @@ The persephone goddess shows up less as a fixed trait and more as a recognizable
 4. **The altered return.** People say you seem different; you have authority where you once had only innocence.
 5. **The recurring cycle.** You notice this is not the first descent, and the pattern itself becomes familiar.
 
-In my years integrating evolutionary astrology with depth-psychological work, the people who recognized which phase they were standing in moved through the descent with far less self-blame than those who read it as personal failure. This way of treating myths as recurring patterns rather than relics owes a great deal to the archetypal lineage Richard Tarnas helped formalize, where the same mythic structures keep activating across both individual lives and shared history. The signals above are not a diagnosis and they do not predict an outcome; they are a way of locating yourself inside a rhythm. Often the most useful question is not how do I get out of this, but which beat of the cycle am I actually in right now, and what does this beat tend to ask of a person. Naming the phase rarely shortens the descent, but it tends to change how you carry it, and that shift is frequently what people describe as the turning point.
+People who recognize which phase they are standing in tend to move through the descent with far less self-blame than those who read it as personal failure. This way of treating myths as recurring patterns rather than relics owes a great deal to the archetypal lineage Richard Tarnas helped formalize, where the same mythic structures keep activating across both individual lives and shared history. The signals above are not a diagnosis and they do not predict an outcome; they are a way of locating yourself inside a rhythm. Often the most useful question is not how do I get out of this, but which beat of the cycle am I actually in right now, and what does this beat tend to ask of a person. Naming the phase rarely shortens the descent, but it tends to change how you carry it, and that shift is frequently what people describe as the turning point.
 
 ## Common Misreadings
 

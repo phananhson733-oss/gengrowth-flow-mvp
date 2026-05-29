@@ -10,7 +10,7 @@ associated_keywords:
 
 ## What are inner wound?
 
-An inner wound is **the long-standing sore spot in your psyche that shapes how you protect, withdraw, and reach for connection**. In astrology it is not a single placement but a family of chart signatures that point to where the sore spot tends to hide, repeat, and ask for attention — most of which gather in the hidden, dissolving 12th house, so the [[<TBD-internal-link: 12th house overview>]] is a useful first stop. Healing Your Inner Wound, in this reading, means learning to recognize the pattern rather than expecting the chart to erase it. The signatures cluster mostly around the hidden, dissolving parts of the chart, and they overlap rather than line up neatly.
+An inner wound is **the long-standing sore spot in your psyche that shapes how you protect, withdraw, and reach for connection**. In astrology it is not a single placement but a family of chart signatures that point to where the sore spot tends to hide, repeat, and ask for attention — several of which can involve hidden or 12th-house themes, depending on the chart, so the [[<TBD-internal-link: 12th house overview>]] is a useful first stop. Healing Your Inner Wound, in this reading, means learning to recognize the pattern rather than expecting the chart to erase it. The signatures cluster mostly around the hidden, dissolving parts of the chart, and they overlap rather than line up neatly.
 
 - A family of related chart signatures, not one fixed point you can isolate
 - Each signature names a different texture of the same sore spot, with heavy overlap between them
@@ -37,7 +37,7 @@ The pull toward a single answer is understandable. A wound is uncomfortable, and
 | Mars in the 12th house | Anger and drive that go underground instead of out | 12th house — the unconscious, self-undoing | Mistaking buried drive for weakness or passivity |
 | The 12th house overview | Where the self dissolves, hides, and rests | 12th house — endings, retreat, the unseen | Reading it only as the "bad house" of loss |
 | The 8th house | Depth, loss, shared resources, regeneration | 8th house — intimacy, transformation | Confusing intensity with danger |
-| The lunar nodes | The direction the wound keeps pointing toward | North node / south node axis | Reading the south node as a flaw instead of a comfort zone |
+| The lunar nodes | A growth-and-familiarity axis that can interact with wound themes | North node / south node axis | Reading the south node as a flaw instead of a comfort zone |
 
 ## The inner wound: Quick Guide
 
@@ -111,7 +111,7 @@ To go deeper into each signature that makes up the inner wound, these explainers
 
 ## Take Action
 
-To start Healing Your Inner Wound in practice, open your full birth chart and locate your own Chiron and Mars in the 12th house, then note which other placements touch them. Doing this gives you a personal map of where your sore spot hides and how your buried drive defends it — your own version of the family described above. Seen clearly, that map is less a list of problems to solve than a quieter understanding of why you protect what you protect. Read the full guide to reading a birth chart at [reading a birth chart from scratch](https://astrologywiki.com/en/wiki/how-to-read-birth-chart) to find these placements for yourself.
+To start Healing Your Inner Wound in practice, open your full birth chart and locate your own Chiron and Mars in the 12th house, then note which other placements touch them. Doing this gives you a reflective map of possible sore-spot themes and defensive patterns — your own version of the family described above. Seen clearly, that map is less a list of problems to solve than a quieter understanding of why you protect what you protect. Read the full guide to reading a birth chart at [reading a birth chart from scratch](https://astrologywiki.com/en/wiki/how-to-read-birth-chart) to find these placements for yourself.
 
 ## Sources
 

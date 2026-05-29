@@ -1,7 +1,7 @@
 ---
 title: Vedic Vs Western Astrology
 slug: Vedic-vs-Western-Astrology
-date: 2026-05-28
+date: 2026-05-29
 status: ready-to-review
 type: wiki-entry
 template: Definition
@@ -18,7 +18,7 @@ associated_keywords:
   - sidereal zodiac
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-28T17:10:48.105Z
+generated_at: 2026-05-29T04:17:56.270Z
 content_sha256_short: ce9243beab47b2c9
 phase2_checks: all-pass
 ---

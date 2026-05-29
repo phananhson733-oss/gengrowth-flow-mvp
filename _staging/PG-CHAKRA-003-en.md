@@ -18,7 +18,7 @@ associated_keywords:
   - chakra assessment
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-29T04:16:50.189Z
+generated_at: 2026-05-29T04:17:56.570Z
 content_sha256_short: 4cdf68a09e650afd
 phase2_checks: all-pass
 ---

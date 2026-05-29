@@ -1,7 +1,7 @@
 ---
 title: 4th House Meaning
 slug: 4th-house-meaning
-date: 2026-05-28
+date: 2026-05-29
 status: ready-to-review
 type: wiki-entry
 template: Definition
@@ -18,7 +18,7 @@ associated_keywords:
   - home astrology
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-28T16:55:46.653Z
+generated_at: 2026-05-29T04:17:55.749Z
 content_sha256_short: 8ef615a642910c5a
 phase2_checks: all-pass
 ---

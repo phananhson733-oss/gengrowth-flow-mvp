@@ -1,7 +1,7 @@
 ---
 title: How To Find North Node
 slug: how-to-find-north-node
-date: 2026-05-28
+date: 2026-05-29
 status: ready-to-review
 type: wiki-entry
 template: Definition
@@ -18,7 +18,7 @@ associated_keywords:
   - north node by sign
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-28T17:55:30.618Z
+generated_at: 2026-05-29T04:17:56.184Z
 content_sha256_short: 06240f5be4dc53ba
 phase2_checks: all-pass
 ---

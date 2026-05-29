@@ -18,7 +18,7 @@ associated_keywords:
   - 1st house planets
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-29T04:13:14.423Z
+generated_at: 2026-05-29T04:17:55.487Z
 content_sha256_short: 700bc8ec6f53730a
 phase2_checks: all-pass
 ---

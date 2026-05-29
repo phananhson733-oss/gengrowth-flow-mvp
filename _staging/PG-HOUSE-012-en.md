@@ -18,7 +18,7 @@ associated_keywords:
   - descendant astrology
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-29T04:16:49.569Z
+generated_at: 2026-05-29T04:17:55.963Z
 content_sha256_short: de42436c7af9f1b8
 phase2_checks: all-pass
 ---

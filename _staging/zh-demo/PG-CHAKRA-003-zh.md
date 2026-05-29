@@ -1,7 +1,7 @@
 ---
 title: Chakra Test
 slug: chakra-test
-date: 2026-05-28
+date: 2026-05-29
 status: ready-to-review
 type: wiki-entry
 template: Definition
@@ -18,7 +18,7 @@ associated_keywords:
   - chakra assessment
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-28T17:18:40.148Z
+generated_at: 2026-05-29T04:17:56.616Z
 content_sha256_short: 1de862e05ecb1153
 phase2_checks: all-pass
 ---

@@ -1,7 +1,7 @@
 ---
 title: Crown Chakra Meaning
 slug: crown-chakra-meaning
-date: 2026-05-28
+date: 2026-05-29
 status: ready-to-review
 type: wiki-entry
 template: Definition
@@ -18,7 +18,7 @@ associated_keywords:
   - seventh chakra
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-28T17:40:52.351Z
+generated_at: 2026-05-29T04:17:56.529Z
 content_sha256_short: 5990ce21d1925736
 phase2_checks: all-pass
 ---

@@ -18,7 +18,7 @@ associated_keywords:
   - home astrology
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-29T04:16:49.308Z
+generated_at: 2026-05-29T04:17:55.704Z
 content_sha256_short: eea6f6b8ca23f0a1
 phase2_checks: all-pass
 ---

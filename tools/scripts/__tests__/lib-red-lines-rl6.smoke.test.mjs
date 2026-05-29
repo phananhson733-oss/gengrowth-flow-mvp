@@ -106,3 +106,39 @@ test('RL6: third-party field name (e.g. psychSafety camelCase) → FAIL', () => 
   assert.equal(r.pass, false);
   assert.match(r.note, /wiring bug/i);
 });
+
+// ---------- keyword exemption (2026-05-29): a blacklist word that IS the SEO
+// keyword must not auto-fail the page. "Healing Your Inner Wound" is a real
+// target keyword; banning the page from ever writing "healing" makes the
+// keyword unrankable. Mirrors RL7's isTokenExemptByKeyword. The exemption is
+// scoped to the keyword token only — other blacklist words still fail. ----------
+test('RL6: psych_safety=Y + blacklist word ("healing") inside target_keyword → exempt PASS', () => {
+  const draft = `${DRAFT_WITH_DISCLAIMER}\n\nWorking on healing here is reframed as reflection.`;
+  const r = checkRL6(draft, {
+    effectivePsychSafety: 'Y',
+    targetKeyword: 'Healing Your Inner Wound',
+  });
+  assert.equal(r.pass, true, 'a banned word that is the target keyword must be exempt');
+  assert.match(r.note, /disclaimer found/);
+});
+
+test('RL6: psych_safety=Y + "healing" but NOT in keyword → still FAIL', () => {
+  const draft = `${DRAFT_WITH_DISCLAIMER}\n\nThis page is about healing the wound.`;
+  const r = checkRL6(draft, {
+    effectivePsychSafety: 'Y',
+    targetKeyword: 'chiron in 12th house',
+  });
+  assert.equal(r.pass, false, 'keyword does not contain "healing" → no exemption');
+  assert.match(r.note, /blacklist/);
+});
+
+test('RL6: keyword exemption is per-word — other blacklist words still FAIL', () => {
+  // "healing" exempt by keyword, but "cure" is a separate clinical-overreach claim.
+  const draft = `${DRAFT_WITH_DISCLAIMER}\n\nNo amount of healing will cure the placement.`;
+  const r = checkRL6(draft, {
+    effectivePsychSafety: 'Y',
+    targetKeyword: 'Healing Your Inner Wound',
+  });
+  assert.equal(r.pass, false, '"cure" is not the keyword → must still fail');
+  assert.match(r.note, /"cure"/);
+});

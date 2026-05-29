@@ -712,9 +712,13 @@ const rlChecks = [
   ['RL3 (SERP plagiarism)', () => checkRL3(draft, serpCtx)],
   ['RL4 (keyword anchored)', () => checkRL4(draft, { targetKeyword: rl4Keyword, entity: ctx.entity })],
   ['RL5 (keyword stuffing)', () => checkRL5(draft, { targetKeyword: rl5Keyword, maxCount: ctx.kw_max })],
+  // targetKeyword lets RL6 exempt a blacklist word that IS the SEO keyword
+  // (e.g. "Healing Your Inner Wound" → "healing"); other clinical-overreach
+  // words still fail. EN keyword is passed for both langs (ZH bodies embed the
+  // EN entity literal per RL4, so the EN keyword scopes the exemption there too).
   ['RL6 (psych safety)', () => isZh
-    ? checkRL6Zh(draft, { effectivePsychSafety: ctx.psych_safety_flag })
-    : checkRL6(draft, { effectivePsychSafety: ctx.psych_safety_flag })],
+    ? checkRL6Zh(draft, { effectivePsychSafety: ctx.psych_safety_flag, targetKeyword: ctx.target_keyword })
+    : checkRL6(draft, { effectivePsychSafety: ctx.psych_safety_flag, targetKeyword: ctx.target_keyword })],
   // RL7 — per-author black words. ZH uses checkRL7Zh (CJK substring + ASCII
   // word-boundary); empty token list → N/A pass in either language.
   ['RL7 (author banned tokens)', () => isZh

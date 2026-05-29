@@ -594,9 +594,15 @@ export function checkRL6(draft, ctx) {
       note: `forbidden phrase matched: "${forbidden[0]}"`,
     };
   }
-  // (c) blacklist words — tier 1 always-fail
+  // (c) blacklist words — tier 1 always-fail. A banned word that IS the page's
+  // target keyword is exempt (mirrors RL7 isTokenExemptByKeyword): e.g. the
+  // keyword "Healing Your Inner Wound" must be allowed to use "healing", or the
+  // page can never rank. Exemption is per-word — other clinical-overreach claims
+  // (treat/cure/diagnose…) still fail. ctx.targetKeyword absent → no exemption.
   const lower = draft.toLowerCase();
+  const targetKeyword = ctx.targetKeyword || '';
   for (const word of RL6_BLACKLIST_ALWAYS) {
+    if (isTokenExemptByKeyword(word, targetKeyword)) continue;
     const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const re = new RegExp(`\\b${escaped}\\b`, 'i');
     if (re.test(lower)) {

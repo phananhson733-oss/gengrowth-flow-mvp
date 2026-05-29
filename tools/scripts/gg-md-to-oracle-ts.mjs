@@ -161,6 +161,63 @@ export function deriveDescription(body, maxLen = 160) {
 // substring/regex. Patterns are intentionally narrow to avoid mis-routing.
 // Anything unmatched falls through to an italic placeholder (no fake link).
 export const TBD_LINK_RULES = [
+  // --- 5/30 cluster (healing_placements pillar+spokes, saturn-in-pisces transit,
+  // persephone-goddess myth). Placed FIRST so "Chiron/Mars in the 12th house" and
+  // "Saturn in Pisces" win over the broad 12th-house / pisces rules further down
+  // (first-match-wins). All target slugs ship in this same batch. ---
+  // healing_placements (EN) — chiron/mars-12th must precede the generic 12th-house rule
+  { match: /\bchiron\b/i, href: '/en/wiki/chiron-in-12th-house' },
+  { match: /\bmars\s+in\s+(the\s+)?(12th|twelfth)\s+house\b/i, href: '/en/wiki/mars-in-12th-house' },
+  { match: /\b(healing\s+your\s+inner\s+wound|inner\s+wound)\b/i, href: '/en/wiki/healing-your-inner-wound' },
+  // transit + myth (EN) — saturn-in-pisces must precede the broad /\bpisces\b/ rule
+  { match: /\bsaturn\s+in\s+pisces\b/i, href: '/en/wiki/saturn-in-pisces' },
+  { match: /\bpersephone\b/i, href: '/en/wiki/persephone-goddess' },
+  // healing_placements + transit + myth (ZH) — must precede 第十二宫 / 宫 / 双鱼
+  { match: /凯龙/, href: '/en/wiki/chiron-in-12th-house' },
+  { match: /火星.{0,5}(十二宫|12\s*宫)/, href: '/en/wiki/mars-in-12th-house' },
+  { match: /内在伤口/, href: '/en/wiki/healing-your-inner-wound' },
+  { match: /土星.{0,5}双鱼/, href: '/en/wiki/saturn-in-pisces' },
+  { match: /(珀耳塞福涅|珀尔塞福涅|佩瑟芬)/, href: '/en/wiki/persephone-goddess' },
+  // --- 5/29 cluster (chakra spokes + astrology-terms glossary + aspect/angle
+  // spokes). Placed FIRST so specific spokes win over the broad /\bchakra/i and
+  // ZH /脉轮/ pillar rules below (first-match-wins). All target slugs ship in this
+  // same batch. ---
+  // chakra spokes (EN) — must precede /\bchakra/i
+  { match: /\bheart\s*chakra\b/i,  href: '/en/wiki/heart-chakra-meaning' },
+  { match: /\bthroat\s*chakra\b/i, href: '/en/wiki/throat-chakra-meaning' },
+  { match: /\b(ajna|third[-\s]*eye|brow)\s*chakra\b/i, href: '/en/wiki/ajna-chakra' },
+  { match: /\bcrown\s*chakra\b/i,  href: '/en/wiki/crown-chakra-meaning' },
+  { match: /\bsolar\s*plexus\b/i,  href: '/en/wiki/solar-plexus-chakra-affirmations' },
+  { match: /\bchakra\s+crystals?\b|\bcrystals?\s+for\s+(each|the|every)\s+chakra\b/i, href: '/en/wiki/crystals-for-each-chakra' },
+  // chakra spokes (ZH) — must precede /(生殖轮|脉轮|能量中心)/
+  { match: /心轮/,   href: '/en/wiki/heart-chakra-meaning' },
+  { match: /喉轮/,   href: '/en/wiki/throat-chakra-meaning' },
+  { match: /(眉心轮|眉轮|第三眼)/, href: '/en/wiki/ajna-chakra' },
+  { match: /顶轮/,   href: '/en/wiki/crown-chakra-meaning' },
+  { match: /(太阳轮|太阳神经丛)/,  href: '/en/wiki/solar-plexus-chakra-affirmations' },
+  { match: /脉轮水晶/, href: '/en/wiki/crystals-for-each-chakra' },
+  // astrology-terms glossary pillar + aspect/angle spokes (EN)
+  { match: /\bsextile\b/i,        href: '/en/wiki/sextile-astrology' },
+  { match: /\btrine\b/i,          href: '/en/wiki/trine-in-astrology' },
+  { match: /\bsquare\s+aspect\b|\bsquare\b/i, href: '/en/wiki/square-astrology' },
+  { match: /\bdescendant\b/i,     href: '/en/wiki/descendant-astrology' },
+  { match: /\bimum\s+coeli\b|\bIC\s+angle\b|\bthe\s+IC\b/i, href: '/en/wiki/ic-astrology' },
+  { match: /\bastrology\s+terms?\b|\bglossary\b/i, href: '/en/wiki/astrology-terms' },
+  { match: /\b(major|minor|chart)\s+aspects?\b|\bfive\s+major\s+aspects\b/i, href: '/en/wiki/astrology-terms' },
+  { match: /\bascendant\b|\brising\s+sign\b/i, href: '/en/wiki/how-to-read-birth-chart' },
+  { match: /\bmidheaven\b/i,      href: '/en/wiki/how-to-read-birth-chart' },
+  // astrology-terms glossary + aspect/angle spokes (ZH)
+  { match: /六分相/, href: '/en/wiki/sextile-astrology' },
+  { match: /三分相/, href: '/en/wiki/trine-in-astrology' },
+  { match: /四分相/, href: '/en/wiki/square-astrology' },
+  { match: /下降点/, href: '/en/wiki/descendant-astrology' },
+  { match: /(天底|imum\s*coeli)/i, href: '/en/wiki/ic-astrology' },
+  { match: /占星术语/, href: '/en/wiki/astrology-terms' },
+  { match: /(主要相位|相位总览|次要相位)/, href: '/en/wiki/astrology-terms' },
+  { match: /(上升星座|上升点)/, href: '/en/wiki/how-to-read-birth-chart' },
+  { match: /(天顶|中天)/, href: '/en/wiki/how-to-read-birth-chart' },
+  { match: /(本命星盘|星盘阅读)/, href: '/en/wiki/how-to-read-birth-chart' },
+  // --- end 5/29 cluster ---
   { match: /\bred\s*aura\b/i,    href: '/en/wiki/red-aura-meaning' },
   { match: /\borange\s*aura\b/i, href: '/en/wiki/orange-aura-meaning' },
   { match: /\bgreen\s*aura\b/i,  href: '/en/wiki/green-aura-meaning' },

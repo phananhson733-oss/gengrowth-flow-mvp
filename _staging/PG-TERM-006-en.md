@@ -16,7 +16,7 @@ associated_keywords:
   - imum coeli
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-29T05:18:04.517Z
+generated_at: 2026-05-29T05:22:59.958Z
 content_sha256_short: 14ae51ee2e1296b4
 phase2_checks: all-pass
 ---

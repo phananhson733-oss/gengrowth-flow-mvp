@@ -304,8 +304,9 @@ export function parseArgs(argv) {
 
 // ---------- Sheets fetch ----------
 async function fetchTab(workbookId, tab, token) {
-  // Pull A1:Z<lots> — 26 cols covers both 24-col 关键词主表 and 15-col 选题登记表.
-  const range = encodeURIComponent(`${tab}!A1:Z2000`);
+  // 无界行范围 A:Z（26 列覆盖 25 列关键词主表 / 22 列选题登记表）——不设行上限，
+  // 否则 append 落到上限之外的行（如选题登记表因公式填充落到 1500+）会被读漏。
+  const range = encodeURIComponent(`${tab}!A:Z`);
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${workbookId}/values/${range}?majorDimension=ROWS`;
   const res = await fetch(url, { headers: { authorization: `Bearer ${token}` } });
   const body = await res.json().catch(() => ({}));

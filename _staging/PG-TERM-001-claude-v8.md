@@ -1,3 +1,14 @@
+---
+slug: astrology-terms
+author_id: "marcus-orion"
+target_keyword: "astrology terms"
+associated_keywords:
+  - "sextile"
+  - "trine"
+  - "square"
+  - "descendant"
+  - "ic"
+---
 # How the Core Astrology Terms Fit Together in One Chart
 
 ## What is Astrology Terms?

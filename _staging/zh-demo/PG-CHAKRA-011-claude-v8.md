@@ -1,3 +1,11 @@
+---
+slug: crystals-for-each-chakra
+author_id: "elena-vane"
+target_keyword: "crystals for each chakra"
+associated_keywords:
+  - "chakra stones"
+  - "healing crystals guide"
+---
 # 脉轮水晶：按能量状态挑选，而不是只看颜色
 
 ## Chakra Crystals 是什么？

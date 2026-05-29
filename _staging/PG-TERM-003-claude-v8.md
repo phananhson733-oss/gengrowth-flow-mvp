@@ -1,3 +1,11 @@
+---
+slug: trine-in-astrology
+author_id: "marcus-orion"
+target_keyword: "trine in astrology"
+associated_keywords:
+  - "what is a trine"
+  - "astrology trine"
+---
 # What a Trine in Astrology Reveals About Talent You Forget to Use
 
 ## What is a Trine?

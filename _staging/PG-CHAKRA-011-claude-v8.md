@@ -1,3 +1,11 @@
+---
+slug: crystals-for-each-chakra
+author_id: "elena-vane"
+target_keyword: "crystals for each chakra"
+associated_keywords:
+  - "chakra stones"
+  - "healing crystals guide"
+---
 # How to Pick Crystals for Each Chakra by Energy, Not Just Color
 
 ## What is Chakra Crystals?

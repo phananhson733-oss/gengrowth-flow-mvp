@@ -1,3 +1,11 @@
+---
+slug: square-astrology
+author_id: "marcus-orion"
+target_keyword: "square astrology"
+associated_keywords:
+  - "astrology square meaning"
+  - "what is a square"
+---
 # 四分相：星盘里最逼你成长的那个张力角度
 
 ## Square 是什么？

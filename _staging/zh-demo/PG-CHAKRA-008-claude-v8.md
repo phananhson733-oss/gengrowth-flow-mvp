@@ -1,3 +1,11 @@
+---
+slug: throat-chakra-meaning
+author_id: "elena-vane"
+target_keyword: "throat chakra meaning"
+associated_keywords:
+  - "vishuddha"
+  - "throat chakra healing"
+---
 # 喉轮含义，其实在说你能不能把真心话说出口
 
 ## Throat Chakra 是什么？

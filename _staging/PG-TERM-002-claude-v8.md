@@ -1,3 +1,11 @@
+---
+slug: sextile-astrology
+author_id: "marcus-orion"
+target_keyword: "sextile astrology"
+associated_keywords:
+  - "what is a sextile"
+  - "sextile meaning"
+---
 # Why a Sextile Is an Open Door, Not a Free Gift
 
 ## What is Sextile?

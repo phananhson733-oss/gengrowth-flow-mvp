@@ -1,3 +1,11 @@
+---
+slug: throat-chakra-meaning
+author_id: "elena-vane"
+target_keyword: "throat chakra meaning"
+associated_keywords:
+  - "vishuddha"
+  - "throat chakra healing"
+---
 # What Throat Chakra Meaning Says About Your Voice
 
 ## What is Throat Chakra?

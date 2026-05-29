@@ -1,3 +1,14 @@
+---
+slug: astrology-terms
+author_id: "marcus-orion"
+target_keyword: "astrology terms"
+associated_keywords:
+  - "sextile"
+  - "trine"
+  - "square"
+  - "descendant"
+  - "ic"
+---
 # 占星术语：把相位、轴点和虚点读成一张星盘
 
 ## Astrology Terms 是什么？

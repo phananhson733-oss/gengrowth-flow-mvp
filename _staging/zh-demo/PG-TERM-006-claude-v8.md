@@ -1,3 +1,11 @@
+---
+slug: ic-astrology
+author_id: "marcus-orion"
+target_keyword: "ic astrology"
+associated_keywords:
+  - "what is ic in astrology"
+  - "imum coeli"
+---
 # 天底 IC：星盘最底端那条藏起来的根
 
 ## IC 是什么？

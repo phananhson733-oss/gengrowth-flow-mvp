@@ -1,3 +1,11 @@
+---
+slug: square-astrology
+author_id: "marcus-orion"
+target_keyword: "square astrology"
+associated_keywords:
+  - "astrology square meaning"
+  - "what is a square"
+---
 # Why the Square in Astrology Is the Aspect That Pushes You to Grow
 
 ## What is a Square?

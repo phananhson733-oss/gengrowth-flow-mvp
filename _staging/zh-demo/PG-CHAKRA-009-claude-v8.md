@@ -1,3 +1,11 @@
+---
+slug: ajna-chakra
+author_id: "elena-vane"
+target_keyword: "ajna chakra"
+associated_keywords:
+  - "3rd eye chakra meaning"
+  - "brow chakra"
+---
 # 眉心轮代表什么：把真直觉和想太多分开
 
 ## Ajna Chakra 是什么？

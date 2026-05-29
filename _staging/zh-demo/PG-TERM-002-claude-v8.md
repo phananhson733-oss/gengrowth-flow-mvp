@@ -1,3 +1,11 @@
+---
+slug: sextile-astrology
+author_id: "marcus-orion"
+target_keyword: "sextile astrology"
+associated_keywords:
+  - "what is a sextile"
+  - "sextile meaning"
+---
 # 六分相：一扇为你打开却要你自己走过去的门
 
 ## Sextile 是什么？

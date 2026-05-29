@@ -1,3 +1,11 @@
+---
+slug: ajna-chakra
+author_id: "elena-vane"
+target_keyword: "ajna chakra"
+associated_keywords:
+  - "3rd eye chakra meaning"
+  - "brow chakra"
+---
 # How the Ajna Chakra Sharpens Real Insight Instead of Noise
 
 ## What is Ajna Chakra?

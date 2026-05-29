@@ -1,3 +1,11 @@
+---
+slug: trine-in-astrology
+author_id: "marcus-orion"
+target_keyword: "trine in astrology"
+associated_keywords:
+  - "what is a trine"
+  - "astrology trine"
+---
 # 三分相到底在说你哪一种被忽略的天赋
 
 ## Trine 是什么？

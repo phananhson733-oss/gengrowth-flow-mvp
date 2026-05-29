@@ -1,3 +1,11 @@
+---
+slug: ic-astrology
+author_id: "marcus-orion"
+target_keyword: "ic astrology"
+associated_keywords:
+  - "what is ic in astrology"
+  - "imum coeli"
+---
 # What IC Astrology Reveals About Your Private Roots
 
 ## What is IC?

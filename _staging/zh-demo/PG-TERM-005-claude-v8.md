@@ -1,3 +1,11 @@
+---
+slug: descendant-astrology
+author_id: "marcus-orion"
+target_keyword: "descendant astrology"
+associated_keywords:
+  - "what is descendant"
+  - "7th house cusp"
+---
 # 下降点为什么藏着你在亲密关系里的盲区
 
 ## Descendant 是什么？

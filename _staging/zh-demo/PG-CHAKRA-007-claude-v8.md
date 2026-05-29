@@ -1,3 +1,11 @@
+---
+slug: heart-chakra-meaning
+author_id: "elena-vane"
+target_keyword: "heart chakra meaning"
+associated_keywords:
+  - "anahata"
+  - "healing heart chakra"
+---
 # 心轮代表什么，远不只是谈情说爱
 
 ## Heart Chakra 是什么？

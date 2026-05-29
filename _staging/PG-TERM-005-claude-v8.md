@@ -1,3 +1,11 @@
+---
+slug: descendant-astrology
+author_id: "marcus-orion"
+target_keyword: "descendant astrology"
+associated_keywords:
+  - "what is descendant"
+  - "7th house cusp"
+---
 # Why the Descendant in Astrology Marks Your Relationship Blind Spot
 
 ## What is the Descendant?

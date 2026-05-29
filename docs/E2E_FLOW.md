@@ -9,7 +9,8 @@
 ## 0. 一句话结论
 
 前后两半**不是断的，是重叠的**：PIPELINE.md 的步骤 1-6 本就覆盖了前半段，但它从 `promote(3)` 直接跳到 `fill-v8(4)`，**缺一个"本周写哪些词"的显式选题/队列步骤**。
-`gg-queue-build` 填的正是这一刀。接缝本身是**一张表的一行**（选题登记表），数据契约干净、无缝隙；要对齐的是**两份文档的重叠**和**几处机制并存**。
+`gg-queue-build` 填的正是这一刀。接缝**设计上**是**一张表的一行**（选题登记表），字段契约干净（见 §2）。
+但**当前未落地状态下接缝并不成立**：promote 还默认写 legacy `1dejq`、后半段读规范表 `1CkjOC`，是两张表（§3.7，最硬的错位）。要对齐的是**两份文档的重叠**、**写表/读表分裂**、**几处机制并存**。
 
 ---
 
@@ -39,7 +40,7 @@
  8-10 RAG          entity-passport / obsidian / friction → rag.json     [PIPELINE 8-10]
  11 render         batch + override + 3×RAG → v8 prompt（en/zh/both）   [PIPELINE 11]
  12 llm-call       orchestrator：3 LLM 并行 + frontier-strict + retry   [PIPELINE 12]
- 13 phase2         6 红线（structure/RL1-6）→ PASS 写 manifest          [PIPELINE 13]
+ 13 phase2         structure + RL1-6（共7项）→ PASS 写 manifest          [PIPELINE 13]
  14 publish        PASS → wiki 2 落点 cp                                [PIPELINE 14]
  14b oracle-cv     md → oracle/data/articles/<slug>.ts（zh merge）      [PIPELINE 14b]
  15 commit         wiki repo git commit（不 push，人触发）              [PIPELINE 15]
@@ -80,7 +81,7 @@
 
 ### 3.1 两份文档在前半段重叠 → queue-build 是 PIPELINE.md 缺的步
 PIPELINE.md 总览 `3 promote → 4 fill-v8` 之间没有显式选题步；`promote --also-draft-pages` 把**所有** approved 词无差别写进选题登记表 A 列。**没有"本周选哪 N 个"的闸**。
-→ `gg-queue-build` 即此闸（暂记为 **3.7 queue-build**）。**落地后应把它补进 PIPELINE.md 总览**，否则两份文档对前半段各执一词。
+→ `gg-queue-build` 即此闸（暂记为 **PIPELINE 步骤 3.7**，区别于本文 §3.7 那条错位发现）。**落地后应把它补进 PIPELINE.md 总览**，否则两份文档对前半段各执一词。
 
 ### 3.2 两个 cluster 机制并存 → 创建 ≠ 归属，需分清
 - `gg-cluster-init`（PIPELINE 3.6，token/embedding 聚类）= **创建** 主题集群表的集群草稿。
@@ -98,6 +99,17 @@ PIPELINE.md 无"tool vs article 意图"概念。park 的 tool 词要有去处不
 
 ### 3.6 config 机制前后不对称（提醒，非阻塞）
 前半段规则 = Sheet 公式（实时、人改）；后半段阈值 = 代码 + `gg-config-sync` 快照。两套配置源。不阻塞链路，但全局一致性上值得记一笔。
+
+### 3.7 ⚠️【最硬错位】写表/读表分裂 → 当前接缝实际断开
+§0 的"接缝是一张表的一行"是**设计目标**，当前**不成立**：`gg-keyword-promote`/`fallback` 默认写 legacy `1dejq`（`GG_SHEETS_WORKBOOK_ID`），而 `gg-queue-build` 与整个后半段读规范表 `1CkjOC`（`GG_SHEETS_FLOW_MVP_WORKBOOK_ID`）。
+→ **promote 写进的那行 ≠ bridge 读的那张表**，除非先做 env 改指向（FRONT_HALF_FLOW §5.2 #3）。这是前后半段间最要命的真实错位，不是"config 不对称"那么轻。**落地顺序上，env 改指向应排在 queue-build 意图门之前。**
+
+### 3.8 ⚠️【真 bug，待修】bridge fix-script 把 page_role 指到错列
+`gg-sheet-to-brief.mjs:591` `SHEET_COL_FOR = { cluster_id:'Q', page_role:'P' }`——但 spec 里 **P=page_id、R 才是 page_role**。page_role join 失败时，bridge 的 fuzzy fix 提示会让人去改 **P（page_id）列**，改错地方。读字段靠 header 名不受影响，但**人按提示改表会改错列**，恰好反噬本接缝"靠人确认/修 R"的设计。→ 一行常量改 `page_role:'R'` 即修（待落地项，归 §5.2）。
+
+### 3.9 跨凭据 + Status 静默降级（次要依赖）
+- 接缝那一行：queue-build 用 **writer SA** 写、sheet-pull/bridge 用 **OAuth** 读，跨凭据（不算 bug，属未点明依赖）。
+- `gg-queue-build.mjs:419` 找不到 `Status` 列时 fallback 到 `内容状态`（那是**关键词主表**的列名），两者皆缺则 `statusCol=null`、**静默不写「待写」**→ 新行不进队列也无报错。§2 把 Status 称作"唯一入列信号"，这条静默失败路径需在落地时加断言防护。
 
 ---
 

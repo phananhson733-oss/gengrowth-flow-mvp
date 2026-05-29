@@ -12,7 +12,7 @@ A Vedic birth chart is **a sidereal map of where the planets stood at your birth
 
 The gap a vedic birth chart calculator exposes is not access — anyone can pull a free chart in under a minute — but interpretation. You are handed a finished diagram and left to guess where to look. The friction shows up in three predictable ways:
 
-1. **The placements stay abstract.** You can read that the Moon sits in Taurus or Mars in the tenth house, but nothing on the screen tells you what that pattern tends to mean for how you actually behave.
+1. **The placements stay abstract.** You can read that the Moon sits in Taurus or Mars in the tenth house, but nothing on the screen tells you what that pattern tends to mean for how you actually behave — a gap a plain-language [[<TBD-internal-link: walkthrough of how to read a birth chart>]] helps close.
 2. **The lagna gets ignored.** Most beginners check the sun sign first out of Western habit, yet a sidereal chart hangs almost every interpretation off the rising sign, so they start from the wrong anchor.
 3. **The dasha timeline goes unread.** The output includes a decades-long schedule of planetary periods, and without a key it reads like a train timetable printed in an unfamiliar script.
 

@@ -1,3 +1,28 @@
+---
+title: Root Chakra Meaning
+slug: root-chakra-meaning
+date: 2026-05-29
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-CHAKRA-004
+author_id: "elena-vane"
+author_display_name: "Elena Vane"
+target_keyword: root chakra meaning
+associated_keywords:
+  - muladhara
+  - root chakra blockage
+  - first chakra
+  - root chakra healing
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-05-29T04:15:06.189Z
+content_sha256_short: 3bbf56f4aa21df1e
+phase2_checks: all-pass
+---
+
 # What Root Chakra Meaning Reveals About Your Sense of Safety
 
 ## What is The Root Chakra?

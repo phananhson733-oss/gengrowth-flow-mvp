@@ -1,3 +1,29 @@
+---
+title: Vedic Birth Chart Calculator
+slug: vedic-birth-chart-calculator
+date: 2026-05-29
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-VEDIC-002
+author_id: "aditi-sharma"
+author_display_name: "Aditi Sharma"
+target_keyword: vedic birth chart calculator
+associated_keywords:
+  - best vedic birth chart calculator
+  - vedic birth chart calculator online free
+  - vedic astrology birth chart
+  - sidereal birth chart calculator
+  - free vedic birth chart with interpretation
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-05-29T04:16:15.121Z
+content_sha256_short: cc7116465ad9ca7f
+phase2_checks: all-pass
+---
+
 # Reading Your Vedic Birth Chart Calculator Output, Placement by Placement
 
 ## What is Vedic Birth Chart?

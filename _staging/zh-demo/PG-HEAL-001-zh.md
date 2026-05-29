@@ -16,7 +16,7 @@ associated_keywords:
   - mars in 12th house
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-29T12:26:34.795Z
+generated_at: 2026-05-29T12:27:49.912Z
 content_sha256_short: a3be7cf622628600
 phase2_checks: all-pass
 ---

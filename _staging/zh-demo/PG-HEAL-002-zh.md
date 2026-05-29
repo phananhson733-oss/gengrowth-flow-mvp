@@ -16,8 +16,8 @@ associated_keywords:
   - chiron in the twelfth house
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-29T12:07:46.493Z
-content_sha256_short: 0ae1cf811339a6d7
+generated_at: 2026-05-29T12:27:54.025Z
+content_sha256_short: 12bd6d9e22ed0702
 phase2_checks: all-pass
 ---
 
@@ -25,7 +25,7 @@ phase2_checks: all-pass
 
 ## Chiron in the 12th house 是什么？
 
-Chiron in the 12th house（凯龙在12宫）指的是凯龙星落在星盘最幽深、最私密的 [[<TBD-internal-link: 占星第十二宫总览 pillar 页>]]，标记出一处你很早就学会藏起来、几乎说不出口的敏感。它不是「你坏掉了」的证据，而是**一处被你藏起来、却能转成洞察的隐秘敏感**。凯龙在占星里常被叫作「受伤的疗愈者」，落进第十二宫后，这份伤往往连本人都难以指认。
+Chiron in the 12th house（凯龙在12宫）指的是凯龙星落在星盘最幽深、最私密的 [[<TBD-internal-link: 占星第十二宫总览 pillar 页>]]，标记出一处你很早就学会藏起来、几乎说不出口的敏感。它不是「你坏掉了」的证据，而是**一处被你藏起来、却能转成洞察的隐秘敏感**。凯龙星得名于希腊神话中的半人马凯龙，其神话核心是一道始终无法平复的旧伤，而非「以伤口命名」；落进第十二宫后，这份伤往往连本人都难以指认。
 
 - 它指向一处你习惯独自消化、很少向外人提起的敏感
 - 第十二宫主管潜意识、独处与一切看不见的内在世界

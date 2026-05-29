@@ -51,6 +51,10 @@
                     openai 模型: `text-embedding-3-small` (默认，$0.02/M tokens)
                     benchmark 工具: `tools/scripts/_benchmark-embedding.mjs` (3 模型同输入对比，输出 docs/EMBEDDING_BENCHMARK_*.md)
                     `gg-classify-unsorted.mjs` → 把 ind-001/ind-002 异质桶归类回 family
+3.7 queue-build     `gg-queue-build.mjs --week 'Week N' --capacity N` → 选题登记表 本周「待写」队列
+                    桶 × cluster优先级 × week × 产能 选词，写 {A keyword, M Status=待写, Q cluster_id}
+                    意图门：calculator/工具意图词默认 park 不入队（D1）；--include-tool-intent 关闭
+                    默认 dry-run，--write 真写。补 promote(3)→fill-v8(4) 间缺的"选题/队列"一刀。设计见 docs/E2E_FLOW.md
 4. fill-v8          人补选题登记表 B-U 21 列 v8 brief
 5. cluster/CTA      人补主题集群表 业务字段（track / jtbd / content_angle / cta） + CTA Map 一行
 6. bridge           选题登记表 × 主题集群表 × CTA Map → brief override JSON
@@ -141,6 +145,32 @@ node tools/scripts/gg-keyword-promote.mjs --dry-run --also-draft-pages
 ```
 
 **报告输出**：stderr 写 `promoting N approved candidate(s) → 关键词主表!A:I`，stdout 列每个被 promote 的 query。
+
+---
+
+## 阶段 3.7 — queue-build：选词入队（本周文章队列）
+
+| 项 | 值 |
+|---|---|
+| 工具 | `tools/scripts/gg-queue-build.mjs` |
+| 定位 | 补 promote(3) → fill-v8(4) 之间缺的「选题/队列」一刀：从主表已分桶的词里，按 `桶 × cluster优先级 × week × 产能` 选出本周要写的，写进选题登记表 |
+| 输入 | Sheet 三表（关键词主表 / 主题集群表 / 选题登记表）+ `--week` / `--priority` / `--capacity` |
+| 输出 | 选题登记表 append `{A: keyword, M: Status=待写, Q: cluster_id}`；page_role/brief 字段留空给 fill-v8(4) |
+| 规则来源 | **只 READ 主表 R 列已算好的「分桶」裁决，绝不在代码里重算分桶**（分桶规则继续留在 Sheets 公式） |
+| 意图门 (D1) | calculator/工具意图词（`isToolIntent`）**默认 park 不入文章队列**（文章页满足不了），留档上报；`--include-tool-intent` 关闭 park |
+| join | 关键词主表无 cluster_id 列时用子串种子匹配（keywords_included + primary_entity）归集群；§4.1(c) 棘轮落地后改读主表 cluster_id 列 |
+| 安全 | 默认 dry-run 只打印；`--write` 才真写；只 append A 列 + batchUpdate cluster_id/Status，不碰公式列 C/D |
+| 设计 | 详见 [FRONT_HALF_FLOW.md](./FRONT_HALF_FLOW.md) + [E2E_FLOW.md](./E2E_FLOW.md) |
+
+**实操命令**：
+
+```bash
+node tools/scripts/gg-queue-build.mjs --week 'Week 1' --capacity 10            # dry-run 预览
+node tools/scripts/gg-queue-build.mjs --week 'Week 1' --priority P0,P1 --capacity 8
+node tools/scripts/gg-queue-build.mjs --week 'Week 1' --capacity 10 --write    # 真写选题登记表
+```
+
+dry-run 输出会列：本周拟入队词表 + 「未归集群」词（提示补 keywords_included）+ park 的工具词（D1 产品决策素材）。
 
 ---
 
@@ -509,6 +539,7 @@ git commit -m "feat(wiki): publish v8 <page_id> article"
 tools/scripts/
 ├── gg-keyword-mine.mjs          # 1
 ├── gg-keyword-promote.mjs       # 3
+├── gg-queue-build.mjs           # 3.7 选词入队（桶×集群×week×产能 + 意图门 park）
 ├── gg-sheet-to-brief.mjs        # 6 (+ --suggest-fix-script fuzzy)
 ├── gg-sheet-pull.mjs            # 7
 ├── gg-entity-passport.mjs       # 8

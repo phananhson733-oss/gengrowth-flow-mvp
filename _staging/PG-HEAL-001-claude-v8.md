@@ -21,7 +21,7 @@ The pull toward a single answer is understandable. A wound is uncomfortable, and
 1. **The single-placement reader.** Someone reads that their Chiron sits in the 12th house, recognizes the description of a vague, inherited ache, and feels a flash of being seen — but if it stops there, the placement becomes a souvenir rather than a doorway, and they walk away with only a label.
 2. **The family-level reader.** The person who instead asks how that Chiron talks to their Mars, their nodes, and the 8th-house themes starts to see a working pattern — where the ache comes from, how they guard it, and which direction it keeps nudging them — and gets something they can actually sit with. Healing Your Inner Wound depends on exactly that shift from collecting interpretations to watching how they connect, because a wound that took years to form does not surrender to one tidy sentence about your chart.
 
-## The Inner Wound at a Glance
+## The inner wound at a Glance
 
 | Chart Signature | Core Theme | House / Domain | Common Misread |
 | --- | --- | --- | --- |
@@ -31,7 +31,7 @@ The pull toward a single answer is understandable. A wound is uncomfortable, and
 | The 8th house | Depth, loss, shared resources, regeneration | 8th house — intimacy, transformation | Confusing intensity with danger |
 | The lunar nodes | The direction the wound keeps pointing toward | North node / south node axis | Reading the south node as a flaw instead of a comfort zone |
 
-## The Inner Wound: A Quick Guide
+## The inner wound: Quick Guide
 
 **Chiron in the 12th house** — This is usually the first signature people reach for when they map the inner wound, describing a sore spot that feels older than you, tucked into the most private corner of the chart. People with it often sense an ache they cannot trace to a single event, and they tend to carry quiet sensitivity to suffering, their own and other people's. Because the wound lives in the hidden house, it can be hard to point to, which sometimes leaves people feeling like they are aching over nothing. The work here is to sit with the feeling without demanding it explain itself, and to let the sensitivity become a source of compassion rather than a private burden. Common misread: reading this as a fixed wound you were sentenced to, rather than a tender place that can soften with attention. To go deeper, see the [[<TBD-internal-link: Chiron in the 12th house explainer>]].
 

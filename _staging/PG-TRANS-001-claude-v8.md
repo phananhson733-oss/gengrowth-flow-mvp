@@ -19,7 +19,7 @@ The wide view also protects you from two failure modes that catch most people. A
 1. **Over-reading.** Turning every inconvenience into a fated message and burning your attention on signs that are really just a hard week.
 2. **Under-reading.** Dismissing a genuine, repeating pattern because the doom-laden language around the transit made you tune it out entirely.
 
-## The Transit at a Glance
+## The Saturn in Pisces at a Glance
 
 | Life Domain Under Review | Core Theme | Placement / House Link | Common Misread |
 | --- | --- | --- | --- |

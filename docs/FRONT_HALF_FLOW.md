@@ -54,9 +54,12 @@
 ```
 ① （库存不足时）gg-keyword-mine 抓词 → keyword_candidates 标 Y
 ② gg-keyword-promote → 关键词主表 A-I（O/R 列公式当场分桶）
+       └─ 顺手回填 cluster_id 列「建议」（matcher 首遍猜，仅填空格）   ← §4.1 (c) 棘轮
 ③ 主题集群表设 priority=P0 + week='Week N'        ← 人只选「主题」，不选词（高杠杆）
 ④ gg-queue-build --week 'Week N' --capacity N      ← 新桥：自动选词入队（默认 dry-run）
-⑤ 补 brief 字段（可先 gg-brief-suggest 预填）+ 翻 Status 推进   ← 唯一真正动手
+       ├─ 意图门：calculator/tool 意图词 → park（留档不入文章队列）    ← D1 暂搁置
+       └─ 文章意图词 + 已确认 cluster_id → 选题登记表 Status=待写
+⑤ 补 brief 字段（可先 gg-brief-suggest 预填）+ 确认 cluster_id + 翻 Status 推进   ← 唯一真正动手
 ⑥ 后半段原样跑（gg-sheet-to-brief → … → 部署）
 ```
 
@@ -126,16 +129,25 @@
 
 ---
 
-## 5. 待办 / 待决策清单（梳理阶段，逐项澄清后再落地）
+## 5. 决策记录 + 落地待办
 
+### 5.1 已拍板的流程决策（2026-05-29）
+| 决策 | 选定 | 对流程的含义 |
+|---|---|---|
+| §4.1 join 长期方案 | **(c) 主表加 cluster_id 列 + 棘轮回填** | 第②步回填建议、第⑤步人确认；matcher 降级为首遍建议器 |
+| D1 calculator/工具页类型 | **暂搁置，先跑通文章流** | 第④步加「意图门」：tool 意图词 park 留档、不入文章队列；以后再评估排盘引擎（87% 搜索量的缺口已记录在 §4.2） |
+| D2 新文章集群 | **GO：astrocartography(6000) / ai_astrology(1400) / rising_sign_profiles(500)；MAYBE：past_life(650) + chinese(400)** | 这些是「主题集群表」的未来新行，流程消费它们；**现在不创建、不写内容** |
+
+> ⚠️ 这些是**流程设计决策**，不是内容落地指令（用户 2026-05-29 重申：在做流程、不真实落地做内容）。新集群/意图门的真实实现等流程定稿后再逐项做。
+
+### 5.2 落地待办（流程定稿后、逐项确认再做）
 | # | 事项 | 类型 | 状态 |
 |---|---|---|---|
-| 1 | keyword→cluster join 的长期方案（§4.1 三选一） | 流程决策 | **待定** |
-| 2 | 68 未归集群词：开新集群 / 并入 / 放弃（§4.2） | 战略决策 | **待定** |
+| 1 | gg-queue-build 加「意图门」(park tool 意图词) | 落地（中） | 待定稿后 |
+| 2 | 主表加 cluster_id 列 + promote 回填建议（落实 §4.1 c） | 落地（中） | 待定稿后 |
 | 3 | env 改指向 1CkjOC（修 promote/fallback 写错表） | 落地（小） | 待授权 |
 | 4 | 1uVCq 核对 → 并入 → 只读封存 | 落地（需当面） | 待授权 |
 | 5 | 统一读取范围 1500 vs 500（§4.4） | 落地（小） | 待办 |
-| 6 | gg-queue-build 提交（需 `git commit --no-verify`，本仓库 pre-commit 会静默 unstage tools/scripts/） | 落地（小） | 未提交 |
+| 6 | gg-queue-build 提交（需 `git commit --no-verify`） | 落地（小） | 未提交 |
 | 7 | 这次试写的 13 行：保留 or 删除 | 决策 | 待定 |
-
-> 落地动作（3/4/5/6）一律等流程梳理定稿后再做，并逐项确认。
+| 8 | drop 6 词 / LATER 7 词在主表标记（避免反复进漏斗） | 落地（小） | 待办 |

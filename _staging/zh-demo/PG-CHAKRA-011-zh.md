@@ -16,8 +16,8 @@ associated_keywords:
   - healing crystals guide
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-29T05:22:37.357Z
-content_sha256_short: 749207e33a41a379
+generated_at: 2026-05-29T05:48:12.362Z
+content_sha256_short: d53768916c5481ef
 phase2_checks: all-pass
 ---
 
@@ -68,7 +68,7 @@ phase2_checks: all-pass
 
 | 能量中心 | 常用水晶 | 运作方式 | 如何观察应用 |
 | --- | --- | --- | --- |
-| 海底轮 | 红碧玉、黑曜石 | 带来踏实、有根的稳定感 | 压力后坐不住、没安全感时留意 |
+| 海底轮 | 红碧玉、赤铁矿 | 带来踏实、有根的稳定感 | 压力后坐不住、没安全感时留意 |
 | 生殖轮 | 红玉髓、橙方解石 | 支持创造与情绪的流动 | 对愉悦感到平淡、卡住时观察 |
 | 太阳轮 | 黄水晶、虎眼石 | 加强行动力与稳住的底气 | 决定时犹豫或过冲都要留意 |
 | 心轮 | 粉晶、绿东陵 | 让人更愿敞开、对己更宽和 | 看自己是给太多还是关上门 |

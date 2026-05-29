@@ -16,14 +16,14 @@ associated_keywords:
   - healing crystals guide
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-29T05:22:35.301Z
-content_sha256_short: 97f42c7be4613a7f
+generated_at: 2026-05-29T05:48:10.844Z
+content_sha256_short: 583533901e9dee54
 phase2_checks: all-pass
 ---
 
 # How to Pick Crystals for Each Chakra by Energy, Not Just Color
 
-## What is Chakra Crystals?
+## What are Chakra Crystals?
 
 Chakra crystals are stones paired with the seven energy centers of the body, where the idea of crystals for each chakra means **matching a stone to a center by its energy state, not its color alone**. Each center sits along the spine and gets one or two go-to stones, building on the framework Anodea Judith established, and the pairing sits inside the larger [[<TBD-internal-link: pillar page on the full chakra system>]] that maps how the seven centers relate.
 

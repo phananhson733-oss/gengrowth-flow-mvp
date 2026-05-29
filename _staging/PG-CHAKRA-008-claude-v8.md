@@ -94,7 +94,7 @@ Subtle-energy traditions have long mapped the throat center to blue, treating it
 
 ## Related Reading
 
-The pillar and heart-center links above already sit inline in the body, where they pass the most weight and follow the reader's actual path. If insight feels clear but stays unspoken, the center just above the throat is the natural next stop, since the throat is what turns that private clarity into words.
+If you want the bigger picture, the chakra-system overview earlier in this piece shows how the throat center leans on the others, and the heart-center reading explains the warmth it borrows from below. If insight feels clear but stays unspoken, the center just above the throat is the natural next stop, since the throat is what turns that private clarity into words.
 
 ## Take Action
 

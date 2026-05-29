@@ -16,8 +16,8 @@ associated_keywords:
   - imum coeli
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-29T05:22:59.958Z
-content_sha256_short: 14ae51ee2e1296b4
+generated_at: 2026-05-29T05:48:16.152Z
+content_sha256_short: b8ac2946fc04c5be
 phase2_checks: all-pass
 ---
 
@@ -87,9 +87,9 @@ Not quite. The IC is the exact angle at the base of the chart, while the 4th hou
 
 The IC is one of the four angles, and angles shift quickly as the earth rotates, so an inaccurate time moves the point into a different degree or sign. Without a precise birth time, the IC is the placement most likely to be wrong.
 
-**What sign rules the IC by default?**
+**Does the IC have a fixed ruling sign?**
 
-In the natural zodiic order the base of the chart corresponds to Cancer and its ruler, the Moon, which is why the IC carries themes of home, nurture, and belonging. Your own IC sign depends on your birth chart and may differ from this default resonance.
+No. The IC is an angle, a calculated point, not a sign, so it has no permanent ruler. The Cancer and Moon association you often see is only a "natural house" resonance: the 4th house, which the IC opens, is Cancer's natural house, which is why the angle carries themes of home, nurture, and belonging. The sign actually sitting on your IC depends entirely on your birth time and place, so it can be any of the twelve.
 
 ## Reflection Prompts
 

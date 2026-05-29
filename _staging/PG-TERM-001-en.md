@@ -19,8 +19,8 @@ associated_keywords:
   - ic
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-29T05:47:34.642Z
-content_sha256_short: e97c9f2a882847f2
+generated_at: 2026-05-29T05:48:35.730Z
+content_sha256_short: 277df550ace54d29
 phase2_checks: all-pass
 ---
 
@@ -38,7 +38,7 @@ Astrology terms are **the shared vocabulary that names the parts of a birth char
 
 Learning astrology terms in isolation is the trap that sends people back to search, which is why this glossary links each one out to the broader [[<TBD-internal-link: guide to reading a complete birth chart>]] where the words work together. You can memorize that a square is "tense" and a trine is "easy," then open your own chart and have no idea how those labels connect to the angles and points sitting right next to them. The terms feel like flashcards, not a system.
 
-The fix is the same one that keeps appearing in careful chart work: read every word as one half of a relationship, never as a fixed trait. Building on the relational approach Dane Rudhyar established, a trine is not a friendly shape on its own; it is a tie between two specific planets in two specific houses, and the meaning changes with the cast. When you treat the vocabulary as connections instead of standalone definitions, your own chart stops reading like a glossary and starts reading like a portrait. Stephen Arroyo's work pushed this further by showing that chart factors interact rather than standing alone, which is the difference between knowing the words and reading the page, and it is also why a flat alphabetical list of definitions so rarely sticks. The grouping into aspects, angles, and points is what turns scattered labels into a structure you can carry from one chart to the next.
+The fix is the same one that keeps appearing in careful chart work: read every word as one half of a relationship, never as a fixed trait. Dane Rudhyar spent his career arguing for exactly this person-centered angle, and it pays off immediately here: a trine is not a friendly shape on its own; it is a tie between two specific planets in two specific houses, and the meaning changes with the cast. When you treat the vocabulary as connections instead of standalone definitions, your own chart stops reading like a glossary and starts reading like a portrait. Stephen Arroyo's work pushed this further by showing that chart factors interact rather than standing alone, which is the difference between knowing the words and reading the page, and it is also why a flat alphabetical list of definitions so rarely sticks. The grouping into aspects, angles, and points is what turns scattered labels into a structure you can carry from one chart to the next.
 
 ## Astrology Terms vs Adjacent Concepts: How It Works + Trade-offs
 
@@ -52,10 +52,10 @@ A worked example shows how it works in practice. Two planets sitting 60 degrees 
 
 ## How to Read These Terms in Your Chart
 
-Reading astrology terms in your own chart works best as a short checklist you run in order, not as a pile of definitions. Pull up your chart and look for these signals one at a time.
+Once your wheel is in front of you, resist the urge to look up every word at once. Move through these four passes in sequence instead, treating each one as a single question to answer before the next.
 
 1. **Find the four angles first.** Locate the Ascendant, Midheaven, Descendant, and IC; the [[<TBD-internal-link: explainer on the descendant angle>]] marks your one-to-one relationships and the [[<TBD-internal-link: explainer on the IC angle, the Imum Coeli>]] marks your private roots and home base.
-2. **Trace the tightest aspect.** The two planets with the smallest gap between them carry the loudest relationship; name that aspect before any other.
+2. **Trace the tightest aspect.** The aspect sitting closest to its exact angle, the smallest orb, carries the loudest relationship; a trine within a degree of 120 outranks a sloppy one off by six, so name that near-exact pairing before any other.
 3. **Spot a repeated pattern.** If three or more planets keep forming the same shape, that pattern often outweighs a single dramatic label.
 4. **Check what touches an angle.** A planet sitting on an angle tends to act louder than its sign alone would suggest, so note which words cluster near those four corners.
 
@@ -72,7 +72,7 @@ The reason most people stay stuck is that the popular write-ups flatten astrolog
 
 | Term Group | How It Works | Chart Role | How to Observe |
 | --- | --- | --- | --- |
-| Aspects | Measure the angle between two planets | Show cooperation or friction | Find the two planets with the smallest gap |
+| Aspects | Measure the angle between two planets | Show cooperation or friction | Find the aspect with the smallest orb |
 | Angles | Fix the four pivot points of the wheel | Anchor where life themes play out | Locate the Ascendant, Midheaven, Descendant, IC |
 | Points | Mark calculated, non-planet positions | Fill in structural detail | Check what sits on or near an angle |
 | Major aspects | Use exact degree gaps (60, 90, 120) | Carry the loudest relationships | Read the tightest one first |
@@ -112,6 +112,6 @@ Open your own chart and label the four angles plus your single tightest aspect u
 
 ## Sources
 
-- Dane Rudhyar — pioneered the person-centered reading of aspects and chart structure that frames this relational approach
-- Robert Hand — systematized the modern interpretation of aspects and angles this vocabulary draws on
-- Stephen Arroyo — clarified how chart factors interact rather than standing alone, the core idea behind reading the words as a set
+- Dane Rudhyar, whose person-centered astrology reframed every term as part of a living chart rather than a fixed label
+- Robert Hand, a standard modern reference for how aspects and angles are actually interpreted in practice
+- Stephen Arroyo, for the working principle that chart factors shape one another instead of standing alone

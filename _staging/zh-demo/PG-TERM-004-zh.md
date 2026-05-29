@@ -1,3 +1,26 @@
+---
+title: Square Astrology
+slug: square-astrology
+date: 2026-05-29
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-TERM-004
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: square astrology
+associated_keywords:
+  - astrology square meaning
+  - what is a square
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-05-29T05:20:41.005Z
+content_sha256_short: 090c5d285e78d119
+phase2_checks: all-pass
+---
+
 # 四分相：星盘里最逼你成长的那个张力角度
 
 ## Square 是什么？

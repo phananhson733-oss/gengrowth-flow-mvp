@@ -1,3 +1,26 @@
+---
+title: Sextile Astrology
+slug: sextile-astrology
+date: 2026-05-29
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-TERM-002
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: sextile astrology
+associated_keywords:
+  - what is a sextile
+  - sextile meaning
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-05-29T05:20:50.427Z
+content_sha256_short: 7114d8e87f739c02
+phase2_checks: all-pass
+---
+
 # 六分相：一扇为你打开却要你自己走过去的门
 
 ## Sextile 是什么？

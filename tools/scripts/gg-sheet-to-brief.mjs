@@ -40,6 +40,7 @@ import {
 } from './gg-sheet-pull.mjs';
 import { getAllConfig } from './lib/_config.mjs';
 import { buildAuthorMap, resolveAuthor } from './lib/author-routing.mjs';
+import { TABS } from './lib/_workbook-spec.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO = join(__dirname, '..', '..');
@@ -48,6 +49,28 @@ export const SCHEMA_VERSION = '1';
 export const PAGES_TAB = '选题登记表';
 export const CLUSTERS_TAB = '主题集群表';
 export const CTA_TAB = 'CTA Map';
+
+// 选题登记表 字段 → A1 列字母，从 canonical spec header 派生（不再硬编码，防列位漂移）。
+// 历史 bug：曾硬编码 page_role:'P'，但 P 是 page_id 的列、page_role 实际在 R —— join 失败时
+// --suggest-fix-script 会把人指向错误的列。从 _workbook-spec 派生后即不会再漂。
+function pagesColLetter(fieldName) {
+  const pages = TABS.find((t) => t.name === PAGES_TAB);
+  const idx = pages && Array.isArray(pages.header) ? pages.header.indexOf(fieldName) : -1;
+  if (idx < 0) return '?';
+  let s = '';
+  let x = idx + 1;
+  while (x > 0) {
+    const r = (x - 1) % 26;
+    s = String.fromCharCode(65 + r) + s;
+    x = Math.floor((x - 1) / 26);
+  }
+  return s;
+}
+
+export const PAGES_FIX_COL = Object.freeze({
+  cluster_id: pagesColLetter('cluster_id'),
+  page_role: pagesColLetter('page_role'),
+});
 
 export const STANDARD_RL6_HINT =
   '不要用 clinical / treatment / cure / disorder / syndrome 类语言。把内容写成 interpretive framework，' +
@@ -585,10 +608,9 @@ flags:
   const skipped = [];
   const allWarnings = [];
   // joinFailures: { source_row, page_id, col, kind, missing, track? } per failed row.
-  // col letters per the 21-col 选题登记表 schema — fed to --suggest-fix-script for patcher.
+  // col letters 从 PAGES_FIX_COL（spec 派生）取 — fed to --suggest-fix-script for patcher.
   const joinFailures = [];
   let readyCount = 0;
-  const SHEET_COL_FOR = { cluster_id: 'Q', page_role: 'P' };
 
   for (let i = startIdx; i <= endIdx; i++) {
     const row = dataRows[i] || [];
@@ -620,7 +642,7 @@ flags:
         joinFailures.push({
           source_row: sheetRow,
           page_id: pageId,
-          col: SHEET_COL_FOR[jf.kind] || '?',
+          col: PAGES_FIX_COL[jf.kind] || '?',
           ...jf,
         });
       }

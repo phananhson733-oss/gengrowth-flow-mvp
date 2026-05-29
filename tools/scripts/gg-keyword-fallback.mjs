@@ -45,6 +45,7 @@ import {
   isAllowedUrl as isAllowedUrlShared,
   validateIngestPath as validateIngestPathShared,
   safeFetch as safeFetchShared,
+  resolveWorkbookId,
 } from './lib/gg-shared.mjs';
 
 export { loadEnv, getAccessToken, redact, sanitize };
@@ -541,9 +542,9 @@ async function runPhase2(args) {
 // `_runId` / `_entity` are kept on the signature for symmetry with the call site
 // and likely future use; per-row values come from `candidates[i].runId/.entity`.
 async function writeToSheets(candidates, _runId, _entity) {
-  const workbookId = process.env.GG_SHEETS_WORKBOOK_ID;
+  const workbookId = resolveWorkbookId();
   if (!workbookId) {
-    recordFail('Sheets write', 'GG_SHEETS_WORKBOOK_ID missing', 'set in _gg.env');
+    recordFail('Sheets write', 'GG_SHEETS_FLOW_MVP_WORKBOOK_ID/GG_SHEETS_WORKBOOK_ID missing', 'set in _gg.env');
     return;
   }
   const writerSa =
@@ -592,7 +593,7 @@ async function writeToSheets(candidates, _runId, _entity) {
 }
 
 async function writeRunsLog(candidates, entity, status, note = '') {
-  const workbookId = process.env.GG_SHEETS_WORKBOOK_ID;
+  const workbookId = resolveWorkbookId();
   if (!workbookId) return;
   const writerSa =
     process.env.GG_WRITER_SA_JSON ||

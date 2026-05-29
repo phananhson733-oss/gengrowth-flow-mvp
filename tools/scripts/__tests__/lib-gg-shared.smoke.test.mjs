@@ -22,6 +22,7 @@ import {
   parseIsoDate,
   appendRunsRow,
   RUNS_SHEET_HEADERS,
+  resolveWorkbookId,
 } from '../lib/gg-shared.mjs';
 
 let passed = 0;
@@ -507,6 +508,28 @@ test('returns matches[] in scrub order (URL first)', () => {
 test('handles null/undefined gracefully', () => {
   assert.deepEqual(scrubPII(null), { text: '', matches: [] });
   assert.deepEqual(scrubPII(undefined), { text: '', matches: [] });
+});
+
+// ============================================================
+// resolveWorkbookId — 规范主脑表优先 FLOW_MVP，回退 legacy
+// ============================================================
+console.log('\nresolveWorkbookId:');
+
+test('prefers FLOW_MVP over legacy', () => {
+  assert.equal(
+    resolveWorkbookId({ GG_SHEETS_FLOW_MVP_WORKBOOK_ID: 'flow', GG_SHEETS_WORKBOOK_ID: 'legacy' }),
+    'flow',
+  );
+});
+test('falls back to legacy when FLOW_MVP unset', () => {
+  assert.equal(resolveWorkbookId({ GG_SHEETS_WORKBOOK_ID: 'legacy' }), 'legacy');
+});
+test('null when neither set', () => {
+  assert.equal(resolveWorkbookId({}), null);
+});
+test('whitespace-only value → null（不当成有效 ID）', () => {
+  assert.equal(resolveWorkbookId({ GG_SHEETS_FLOW_MVP_WORKBOOK_ID: '   ' }), null);
+  assert.equal(resolveWorkbookId({ GG_SHEETS_FLOW_MVP_WORKBOOK_ID: '  ', GG_SHEETS_WORKBOOK_ID: 'legacy' }), 'legacy');
 });
 
 // ============================================================

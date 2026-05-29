@@ -26,7 +26,7 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
-import { getAccessToken, gFetch, loadEnv } from './lib/gg-shared.mjs';
+import { getAccessToken, gFetch, loadEnv, resolveWorkbookId } from './lib/gg-shared.mjs';
 
 export const CANDIDATES_TAB = 'keyword_candidates';
 export const MASTER_TAB = '关键词主表';
@@ -180,9 +180,10 @@ safety:
   }
 
   loadEnv();
-  const workbookId = process.env.GG_SHEETS_WORKBOOK_ID;
+  // 规范主脑表优先 FLOW_MVP（1CkjOC），回退 legacy —— 消灭写 legacy 表而后半段读规范表的分裂。
+  const workbookId = resolveWorkbookId();
   if (!workbookId) {
-    console.error('GG_SHEETS_WORKBOOK_ID missing in env');
+    console.error('GG_SHEETS_FLOW_MVP_WORKBOOK_ID (或 GG_SHEETS_WORKBOOK_ID) missing in env');
     return 2;
   }
   const writerSa = process.env.GG_WRITER_SA_JSON || join(homedir(), '.config', 'gg', 'gg-writer-sa.json');

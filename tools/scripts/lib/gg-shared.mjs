@@ -912,6 +912,19 @@ export async function appendRunsRow(workbookId, token, row) {
 }
 
 /**
+ * 规范主脑表（canonical workbook）选择：优先 FLOW_MVP（1CkjOC，后半段全部读它），
+ * 回退 legacy GG_SHEETS_WORKBOOK_ID。promote / fallback / queue-build 统一从此取，
+ * 消灭"promote 写 legacy 表、后半段读规范表"的 split-brain（E2E_FLOW §3.7）。
+ * @param {object} [env=process.env]
+ * @returns {string|null} workbook id，两者皆未设则 null。
+ */
+export function resolveWorkbookId(env = process.env) {
+  // .trim() 防 _gg.env 里值含意外空白被当成有效 ID（否则 Sheets API 会 404 给出迷惑错误）。
+  const v = (env.GG_SHEETS_FLOW_MVP_WORKBOOK_ID || '').trim() || (env.GG_SHEETS_WORKBOOK_ID || '').trim();
+  return v || null;
+}
+
+/**
  * Header row for the unified `runs` sheet. Pass to ensureSheet().
  * Frozen so callers can't accidentally mutate the shared schema.
  */

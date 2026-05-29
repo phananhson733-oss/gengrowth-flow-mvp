@@ -20,7 +20,9 @@ import {
   composeOverride,
   validateOutPath,
   parseArgs,
+  PAGES_FIX_COL,
 } from '../gg-sheet-to-brief.mjs';
+import { TABS } from '../lib/_workbook-spec.mjs';
 
 // ---------- constants ----------
 test('SCHEMA_VERSION pinned to "1"', () => {
@@ -553,4 +555,27 @@ test('parseArgs handles --skip-non-v8 boolean flag', () => {
   const args = parseArgs(['--rows', '3-7', '--skip-non-v8']);
   assert.equal(args.rows, '3-7');
   assert.equal(args.skip_non_v8, true);
+});
+
+// ---------- PAGES_FIX_COL (选题登记表 字段 → 列字母，防漂移) ----------
+test('PAGES_FIX_COL maps cluster_id→Q, page_role→R (was buggy page_role→P=page_id)', () => {
+  assert.equal(PAGES_FIX_COL.cluster_id, 'Q');
+  assert.equal(PAGES_FIX_COL.page_role, 'R', 'page_role 必须是 R；P 是 page_id 列（历史 bug 把它指到 P）');
+});
+
+test('PAGES_FIX_COL 与 _workbook-spec 选题登记表 header 同源（防 schema 漂移）', () => {
+  const pages = TABS.find((t) => t.name === '选题登记表');
+  const colOf = (name) => {
+    const i = pages.header.indexOf(name);
+    let s = '';
+    let x = i + 1;
+    while (x > 0) {
+      const r = (x - 1) % 26;
+      s = String.fromCharCode(65 + r) + s;
+      x = Math.floor((x - 1) / 26);
+    }
+    return s;
+  };
+  assert.equal(PAGES_FIX_COL.cluster_id, colOf('cluster_id'));
+  assert.equal(PAGES_FIX_COL.page_role, colOf('page_role'));
 });

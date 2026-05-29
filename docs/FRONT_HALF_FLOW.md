@@ -81,7 +81,8 @@
 - 但该列**很稀疏**（每集群 3-5 词）**且对不上主表实际词串**（集群写 `8th house`，主表是 `8th house astrology`）。
 - 现用**子串种子匹配**（keywords_included + primary_entity，种子≥4字）缓解：覆盖 0 → 20。
 - **仍有 68 个可生产词"无集群可归"** → 见 4.2。
-- **待决策**：长期 join 怎么定？(a) 维护 keywords_included(人工) (b) 用 primary_entity/语义匹配 (c) 给主表加 cluster_id 列由人/脚本回填。
+- **实测（2026-05-29）**：68 未归词里 **38 个其实属于现有 7 个集群**（aura/houses/terms/transit/lunar_nodes/synastry/vedic），只是 `keywords_included` 没列到——典型如 `north node calculator`(4500) 本属 `lunar_nodes_path`。这不是战略缺口，是**结构性 join 漏**。
+- **推荐方案 (c) 棘轮**：给主表加 `cluster_id` 列；现有子串 matcher 降级为"首遍建议器"，只填空格子，人确认后永久生效（确认过的不再被覆盖）。把"猜"变成可审计字段、自我收敛、零新依赖。否决 (a) 现状已失败 / (b) 语义匹配对 600 词过度工程。
 
 ### 4.2 ⚠️ 68 个高价值词"无集群可归" = 内容战略缺口
 `astrocartography` / `sidereal` / `chinese birth chart` / `past life` / `AI astrology` / `synastry calculator`…

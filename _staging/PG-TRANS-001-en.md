@@ -1,3 +1,26 @@
+---
+title: Saturn In Pisces
+slug: saturn-in-pisces
+date: 2026-05-29
+status: ready-to-review
+type: wiki-entry
+template: Pillar
+tier: T1
+track: 量产线
+page_id: PG-TRANS-001
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: saturn in pisces
+associated_keywords:
+  - saturn return in pisces
+  - saturn in pisces dates
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-05-29T12:07:32.735Z
+content_sha256_short: e8efe77d8638be5a
+phase2_checks: all-pass
+---
+
 # Saturn in Pisces — A Grounded Field Guide to Building Structure Inside the Boundless
 
 ## What are Saturn in Pisces?

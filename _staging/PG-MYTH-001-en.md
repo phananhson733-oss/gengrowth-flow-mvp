@@ -16,7 +16,7 @@ associated_keywords:
   - persephone archetype
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-29T12:04:27.900Z
+generated_at: 2026-05-29T12:06:50.677Z
 content_sha256_short: fb2f982ca49b401e
 phase2_checks: all-pass
 ---

@@ -2,7 +2,7 @@
 
 ## What is Persephone?
 
-Persephone is **the Greek goddess of the underworld whose myth maps the human pattern of descent, change, and altered return**. In Greek myth she is the maiden daughter of Demeter who is pulled down into the underworld by Hades, mourned by her grieving mother, and finally allowed to spend part of each year above ground. In astrology and depth psychology, the persephone goddess works as a living archetype rather than a finished story, naming a process people move through again and again.
+Persephone is **the Greek goddess of the underworld whose myth maps the human pattern of descent, change, and altered return**. In Greek myth she is the maiden daughter of Demeter who is pulled down into the underworld by Hades, mourned by her grieving mother, and finally allowed to spend part of each year above ground. That underworld she presides over is the same terrain read through the [[<TBD-internal-link: explainer on the eighth house of loss and regeneration>]], where loss and regeneration concentrate in a chart. In astrology and depth psychology, the persephone goddess works as a living archetype rather than a finished story, naming a process people move through again and again.
 
 - Describes a three-beat rhythm: being pulled under, being changed, and coming back different
 - Carries both roles at once, the innocent maiden and the queen of the dead
@@ -14,7 +14,7 @@ Most readers meet the persephone goddess as a tidy seasonal fable and stop there
 
 Seeing this matters because the archetype gives shape to experiences that otherwise feel like pure chaos. When you can name the part of the cycle you are in, the underworld stops looking like a permanent sentence and starts reading as one movement in a longer rhythm. Consider a few situations where this naming changes everything. A person whose long marriage has just ended often feels they have simply failed; reading the moment as a descent phase lets them see it as a passage they are moving through, not a verdict on their worth. Someone who has lost a job that held their whole identity can stop asking what is wrong with them and start asking what this underworld stretch is asking them to release. A parent watching a grown child leave home, the very situation the original Demeter and Persephone story was built to hold, can recognize the grief as part of a recurring human rhythm rather than a private catastrophe.
 
-That reframing is the difference between feeling buried and recognizing that descent, in this pattern, is followed by return. None of this promises a particular outcome or timeline; it offers a shape to stand inside while the hard season runs its course. To trace where loss and regeneration concentrate in a chart, this archetype is often read through the [[<TBD-internal-link: explainer on the eighth house of loss and regeneration>]], the underworld terrain Persephone presides over.
+That reframing is the difference between feeling buried and recognizing that descent, in this pattern, is followed by return. None of this promises a particular outcome or timeline; it offers a shape to stand inside while the hard season runs its course. To trace where loss and regeneration concentrate in a chart, this archetype is read through the underworld houses, the terrain Persephone presides over.
 
 ## Persephone vs Adjacent Concepts: How It Works + Trade-offs
 
@@ -84,7 +84,7 @@ Hades and Pluto are the force and the place; Persephone is the figure who underg
 
 ## Take Action
 
-Map your own chart for the descent-and-return pattern by working through the full birth-chart walkthrough step by step. You will come away with the specific placements, Pluto, the underworld houses, the nodal axis, where this rhythm tends to surface for you, along with a clearer sense of which season of the cycle you are living through right now and which one tends to come next. Reading your chart this way turns the myth from a story you admire into a map you can stand inside, so the next time the ground opens you already know the shape of the path back. Read the [full guide to reading a birth chart](https://astrologywiki.com/en/wiki/how-to-read-birth-chart) to see where the descent-and-return pattern shows up for you.
+Map your own chart for the descent-and-return pattern by working through the full birth-chart walkthrough step by step. You can come away with the specific placements, Pluto, the underworld houses, the nodal axis, where this rhythm tends to surface for you, along with a clearer sense of which season of the cycle you are living through right now and which one tends to come next. Reading your chart this way turns the myth from a story you admire into a map you can stand inside, so the next time the ground opens you already know the shape of the path back. Read the [full guide to reading a birth chart](https://astrologywiki.com/en/wiki/how-to-read-birth-chart) to see where the descent-and-return pattern shows up for you.
 
 ## Sources
 

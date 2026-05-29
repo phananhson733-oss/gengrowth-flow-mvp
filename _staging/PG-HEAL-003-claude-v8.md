@@ -2,7 +2,7 @@
 
 ## What is Mars in the 12th house?
 
-Mars in 12th house describes a placement where the planet of drive, will, and anger sits in the chart's most private, behind-the-scenes sector. In plain terms, it points to **a fighting energy that operates underground rather than out in the open**. The drive is not missing; it works indirectly, often surfacing in dreams, fatigue, or sudden bursts that seem to come from nowhere. This is not a clinical interpretation or mental health advice.
+Mars in 12th house describes a placement where the planet of drive, will, and anger sits in the chart's most private, behind-the-scenes sector, the part of the chart mapped in this [[<TBD-internal-link: overview of the twelfth house in astrology>]]. In plain terms, it points to **a fighting energy that operates underground rather than out in the open**. The drive is not missing; it works indirectly, often surfacing in dreams, fatigue, or sudden bursts that seem to come from nowhere. This is not a clinical interpretation or mental health advice.
 
 - Channels assertion and anger inwardly or behind the scenes rather than directly outward
 - Often misread as a "weak Mars" when the force is really just submerged
@@ -45,7 +45,7 @@ The reason mars in 12th house gets misunderstood is that surface-level content r
 1. **"Weak Mars."** The drive is not weak; it is submerged. Read it as redirected force, not missing force.
 2. **"You have no anger."** The anger is present and often strong, just rarely given a direct outlet, which is a different thing from absence.
 3. **"It only means self-sabotage."** Indirect action can be deliberate and protective, not only undermining. The same placement that hides effort can also guard it.
-4. **"It's purely spiritual, not personal."** The twelfth house does carry imaginative and collective themes, but mars in 12th house is also a very personal question of where your fight lives.
+4. **"It's purely spiritual, not personal."** The twelfth house does carry imaginative and collective themes, but this placement is also a very personal question of where your fight lives.
 
 ## Mars in the 12th house at a Glance
 
@@ -82,7 +82,7 @@ A first-house Mars acts straight outward and reads as visible confidence. The tw
 
 ## Related Reading
 
-- [[<TBD-internal-link: overview of the twelfth house in astrology>]] — explains the hidden, behind-the-scenes sector this whole placement lives in.
+- A full overview of the twelfth house in astrology — explains the hidden, behind-the-scenes sector this whole placement lives in.
 
 ## Take Action
 

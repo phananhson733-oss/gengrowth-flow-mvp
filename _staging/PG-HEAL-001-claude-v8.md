@@ -1,4 +1,4 @@
-# Healing Your Inner Wound: An Astrological Frame for Reflection, Not a Fix
+# Healing Your Inner Wound Through an Astrological Frame for Reflection
 
 ## What are inner wound?
 
@@ -12,17 +12,15 @@ This is not a clinical interpretation or mental health advice. The astrological 
 
 ## Why It Matters for Self-Awareness
 
-Most people come to the chart wanting the wound gone. They search for the one placement that explains the ache, hoping a single answer will do the work that years of living have not. The friction is real and worth naming plainly: readers want astrology to fix the wound, and miss that the chart only describes where the wound hides, not a method to apply to it. When you read one placement as the whole story, you flatten something that is layered, and you set yourself up for disappointment when the insight does not dissolve the feeling.
+Most people come to the chart wanting the inner wound gone. They search for the one placement that explains the ache, hoping a single answer will do the work that years of living have not. The friction is real and worth naming plainly: readers want astrology to fix the wound, and miss that the chart only describes where the wound hides, not a method to apply to it. When you read one placement as the whole story, you flatten something that is layered, and you set yourself up for disappointment when the insight does not dissolve the feeling.
 
 Reading the whole family first matters because the inner wound rarely sits in one room of the chart. A Chiron signature might describe the original sore spot, a Mars signature might describe how you defend it, and a nodal axis might describe the direction you keep circling back toward. If you only look at one, you mistake a symptom for the source, or a defense for the injury itself. Healing Your Inner Wound starts with seeing how these parts talk to each other, because the pattern lives in the relationship between them, not in any single cell of the chart. The 8th house often joins this conversation too, since the places where you share depth and risk loss tend to be where the older sore spot gets pressed on hardest.
 
-The pull toward a single answer is understandable. A wound is uncomfortable, and a tidy explanation promises relief. But the relief that comes from one neat sentence rarely lasts, because the chart was never built to deliver that kind of closure. What it can offer is steadier and slower: a vocabulary for noticing the same ache as it shows up across different parts of your life, and the patience to let that noticing do its quiet work over time. The family view trades the false comfort of a quick label for the truer comfort of being able to recognize your own pattern when it appears.
-
-There is also a quieter reason this matters. The family-level view keeps you honest about scale. A chart describes tendencies and themes, not the lived weight of a specific memory or relationship. When you hold the whole set of signatures loosely, you keep the reading where it belongs, as a frame for self-reflection, and you avoid the trap of letting an interpretation stand in for the slow, ordinary work of paying attention to your own life.
+The pull toward a single answer is understandable. A wound is uncomfortable, and a tidy explanation promises relief. But the relief that comes from one neat sentence rarely lasts, because the chart was never built to deliver that kind of closure. What it can offer is steadier and slower: a vocabulary for noticing the same ache as it shows up across different parts of your life, and the patience to let that noticing do its quiet work over time. The family view trades the false comfort of a quick label for the truer comfort of being able to recognize your own pattern when it appears. There is also a quieter reason this matters: the family-level view keeps you honest about scale. A chart describes tendencies and themes, not the lived weight of a specific memory or relationship. When you hold the whole set of signatures loosely, you keep the reading where it belongs, as a frame for self-reflection, and you avoid the trap of letting an interpretation stand in for the slow, ordinary work of paying attention to your own life.
 
 Consider how this plays out in everyday situations. Someone reads that their Chiron sits in the 12th house, recognizes the description of a vague, inherited ache, and feels a flash of being seen. That recognition is valuable, but if it stops there, the placement becomes a souvenir rather than a doorway. The person who instead asks how that Chiron talks to their Mars, their nodes, and the 8th-house themes in their life starts to see a working pattern: where the ache comes from, how they guard it, and which direction it keeps nudging them. The single-placement reader gets a label; the family-level reader gets something they can actually sit with. Healing Your Inner Wound depends on that shift from collecting interpretations to watching how they connect, because a wound that took years to form does not surrender to one tidy sentence about your chart.
 
-## The inner wound at a Glance
+## The Inner Wound at a Glance
 
 | Chart Signature | Core Theme | House / Domain | Common Misread |
 | --- | --- | --- | --- |
@@ -32,13 +30,13 @@ Consider how this plays out in everyday situations. Someone reads that their Chi
 | The 8th house | Depth, loss, shared resources, regeneration | 8th house — intimacy, transformation | Confusing intensity with danger |
 | The lunar nodes | The direction the wound keeps pointing toward | North node / south node axis | Reading the south node as a flaw instead of a comfort zone |
 
-## The  inner wound: Quick Guide
+## The Inner Wound: A Quick Guide
 
-**Chiron in the 12th house** — This signature describes a sore spot that feels older than you, tucked into the most private corner of the chart. People with it often sense an ache they cannot trace to a single event, and they tend to carry quiet sensitivity to suffering, their own and other people's. Because the wound lives in the hidden house, it can be hard to point to, which sometimes leaves people feeling like they are aching over nothing. The work here is to sit with the feeling without demanding it explain itself, and to let the sensitivity become a source of compassion rather than a private burden. Common misread: reading this as a fixed wound you were sentenced to, rather than a tender place that can soften with attention. To go deeper, see the [[<TBD-internal-link: Chiron in the 12th house explainer>]].
+**Chiron in the 12th house** — This is usually the first signature people reach for when they map the inner wound, describing a sore spot that feels older than you, tucked into the most private corner of the chart. People with it often sense an ache they cannot trace to a single event, and they tend to carry quiet sensitivity to suffering, their own and other people's. Because the wound lives in the hidden house, it can be hard to point to, which sometimes leaves people feeling like they are aching over nothing. The work here is to sit with the feeling without demanding it explain itself, and to let the sensitivity become a source of compassion rather than a private burden. Common misread: reading this as a fixed wound you were sentenced to, rather than a tender place that can soften with attention. To go deeper, see the [[<TBD-internal-link: Chiron in the 12th house explainer>]].
 
 **Mars in the 12th house** — Here the fire that usually pushes outward goes inward instead. Drive, anger, and assertion get filtered through the hidden house, so they can show up as self-sabotage, exhaustion, or a sense of fighting yourself rather than the situation in front of you. People with this placement often act most decisively on behalf of others while struggling to claim things for themselves. The invitation is to make peace with anger as information rather than pushing it back underground, and to find quiet, sustainable outlets for a drive that resists loud display. Common misread: mistaking buried drive for having no drive at all. For the full picture, read the [[<TBD-internal-link: Mars in the 12th house explainer>]].
 
-**The 12th house overall** — Both of those placements sit in the same room, so it helps to understand the room itself. The 12th house holds endings, retreat, the unconscious, and everything we keep out of daylight. It is where the self dissolves into something larger, for better and worse, and where the hardest material to face often quietly accumulates. Anything placed here tends to operate behind the scenes, which is why wounds that live in this house can feel so slippery and so persistent at once. Common misread: writing it off as purely the "house of self-undoing" when it also governs rest, compassion, dreams, and release. See the [[<TBD-internal-link: 12th house overview>]] for how this room frames both placements.
+**The 12th house overall** — Both of those placements sit in the same room, so it helps to understand the room itself. The 12th house holds endings, retreat, the unconscious, and everything we keep out of daylight. It is where the self dissolves into something larger, for better and worse, and where the hardest material to face often quietly accumulates. Anything placed here tends to operate behind the scenes, which is why wounds that live in this house can feel so slippery and so persistent at once. Common misread: writing it off as purely the "house of self-undoing" when it also governs rest, compassion, dreams, and release. Read this room as the frame that holds both placements rather than as the wound itself.
 
 When you read these signatures side by side, Healing Your Inner Wound stops being one answer and becomes a small map of how the sore spot forms, defends itself, and points somewhere.
 
@@ -97,7 +95,7 @@ The south node usually marks a comfort zone and a familiar pattern, not a defect
 
 ## Related Reading
 
-To go deeper into each signature in this family, these explainers cover the spokes and the surrounding territory:
+To go deeper into each signature that makes up the inner wound, these explainers cover the spokes and the surrounding territory:
 
 - [[<TBD-internal-link: Chiron in the 12th house deep dive>]]
 - [[<TBD-internal-link: Mars in the 12th house deep dive>]]
@@ -107,7 +105,7 @@ To go deeper into each signature in this family, these explainers cover the spok
 
 ## Take Action
 
-Open your full birth chart and locate your own Chiron and Mars in the 12th house, then note which other placements touch them. Doing this gives you a personal map of where your sore spot hides and how your buried drive defends it — your own version of the family described above. Seen clearly, that map is less a list of problems to solve than a quieter understanding of why you protect what you protect. Read the full guide to reading a birth chart at [reading a birth chart from scratch](https://astrologywiki.com/en/wiki/how-to-read-birth-chart) to find these placements for yourself.
+To start Healing Your Inner Wound in practice, open your full birth chart and locate your own Chiron and Mars in the 12th house, then note which other placements touch them. Doing this gives you a personal map of where your sore spot hides and how your buried drive defends it — your own version of the family described above. Seen clearly, that map is less a list of problems to solve than a quieter understanding of why you protect what you protect. Read the full guide to reading a birth chart at [reading a birth chart from scratch](https://astrologywiki.com/en/wiki/how-to-read-birth-chart) to find these placements for yourself.
 
 ## Sources
 

@@ -2,7 +2,7 @@
 
 ## What is Chiron in the 12th house?
 
-Chiron in the 12th house describes a birth-chart placement where the point named for an old, hard-to-name wound sits in the most private, behind-the-scenes part of the chart. In plain terms, chiron in 12th house usually points to **a tender spot you keep hidden, even from yourself**. The 12th house governs the unseen interior, so the sensitivity rarely shows up loudly; it works underneath ordinary life and shapes how you read other people's pain.
+Chiron in the 12th house describes a birth-chart placement where the point named for an old, hard-to-name wound sits in the most private, behind-the-scenes part of the chart. In plain terms, chiron in 12th house usually points to **a tender spot you keep hidden, even from yourself**. The [[<TBD-internal-link: explainer on the twelfth house in astrology>]] governs the unseen interior, so the sensitivity rarely shows up loudly; it works underneath ordinary life and shapes how you read other people's pain.
 
 - Centers on a private vulnerability you tend to conceal rather than name
 - Surfaces as quiet empathy or unease more than dramatic outer events
@@ -22,7 +22,7 @@ Chiron in the 12th house is easy to confuse with two neighbors, and the way each
 
 Action-driven placements work the opposite way. The sibling spoke, [[<TBD-internal-link: companion guide to Mars in the twelfth house>]], pushes drive and assertion underground, so the energy shows up as effort that hides itself or anger that turns inward; chiron in 12th house instead points to where you feel tender on behalf of others. To get the directness of a Mars reading, you lose the receptive, absorbing quality that defines this Chiron position. In practice, someone might recognize both currents in a single chart, the buried drive and the buried tenderness, and the work is telling which one is speaking in a given moment.
 
-The placement also leans on the nature of the 12th house overview itself, the [[<TBD-internal-link: explainer on the twelfth house in astrology>]], which frames why anything here operates out of sight. The 12th governs what dissolves, recedes, and works behind the scenes, so any point sitting there inherits that hidden register. Choosing the 12th's interior over a visible house gets you depth and inner range, but you give up easy outward recognition; the sensitivity rarely earns credit because almost no one sees it operating.
+The placement also leans on the nature of the 12th house overview itself, which frames why anything here operates out of sight. The 12th governs what dissolves, recedes, and works behind the scenes, so any point sitting there inherits that hidden register. Choosing the 12th's interior over a visible house gets you depth and inner range, but you give up easy outward recognition; the sensitivity rarely earns credit because almost no one sees it operating.
 
 ## How to Read Chiron in the 12th house in Yourself
 

@@ -16,7 +16,7 @@ The reason to understand the full system before zooming into any single piece is
 
 The wide view also protects you from the two failure modes that catch most people. The first is over-reading: turning every inconvenience into a fated message and burning your attention on signs that are really just a hard week. The second is under-reading: dismissing a genuine, repeating pattern because the doom-laden language around the transit made you tune it out entirely. A reader who holds the full family of themes in view can sort the signal from the noise — noticing, for instance, that the same boundary problem keeps surfacing across work, family, and friendship, which is information worth acting on, versus a one-off bad mood that needs nothing more than sleep. The point of the system is to give you a frame steady enough to make that call without spiraling in either direction. There is also a practical payoff to the wide view: when you know the transit is reshaping a specific area of your life rather than your whole identity, you can locate it. That means looking at which part of your chart Saturn is actually crossing — a question of placement, not personality. The same transit years land very differently depending on which life domain they fall on, and the way to find that is to locate the house your earlier chart-reading pointed to, so you can see which arena Saturn is reshaping for you specifically. Self-awareness here is less about absorbing a meaning and more about narrowing the question until it becomes something you can actually work on.
 
-## The Saturn in Pisces at a Glance
+## The Transit at a Glance
 
 | Life Domain Under Review | Core Theme | Placement / House Link | Common Misread |
 | --- | --- | --- | --- |

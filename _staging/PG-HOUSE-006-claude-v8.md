@@ -57,7 +57,7 @@ Each correction points the same direction: the 1st house is a real, observable l
 | --- | --- | --- | --- |
 | First impressions | The rising sign filters how your energy enters a room | Ascendant degree | Notice the vibe strangers name before they know you |
 | Physical presence | Colors appearance, posture, and bearing you project | Ascendant and Mars | Watch how you physically cross a threshold |
-| Instinctive self | The reflex you lead with before conscious thought | Aries, the natural ruler | Catch your unscripted first reaction under pressure |
+| Instinctive self | The reflex you lead with before conscious thought | Aries (natural sign), Mars (natural ruler) | Catch your unscripted first reaction under pressure |
 | Self-image | How you picture and assert the words "I am" | Any 1st-house planets | Listen for how you describe yourself to new people |
 
 ## Questions People Ask About the 1st House

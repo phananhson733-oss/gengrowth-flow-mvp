@@ -36,7 +36,7 @@ Each strand of Saturn in Pisces deserves a short orientation before you go deep 
 
 **Saturn and structured rest** — Pisces governs the part of life that runs underground: sleep, retreat, the unconscious, the need to dissolve and recover. Saturn here asks you to give rest an actual structure instead of treating it as the thing you do once everything else is finished. The core idea is that recovery is a discipline, not a reward. The common misread is mistaking real rest for laziness and powering through until you crash.
 
-**Saturn and creative discipline** — Pisces is the imaginative, image-rich part of the zodiac, and Saturn wants that imagination to take a durable shape. This strand rewards showing up to the work on a schedule rather than waiting to feel inspired. The misread is believing that structure kills creativity, when during Saturn in Pisces it is usually the only thing that lets a vague vision become finished work.
+**Saturn and creative discipline** — Pisces is the imaginative, image-rich part of the zodiac, and Saturn wants that imagination to take a durable shape. This strand rewards showing up to the work on a schedule rather than waiting to feel inspired. The misread is believing that structure kills creativity, when under this transit it is usually the only thing that lets a vague vision become finished work.
 
 **Saturn and maturing belief** — Faith, meaning, and what you trust in all come under quiet review. Saturn does not delete belief; it asks you to test it, drop what was sentimental, and keep what holds weight. The misread is reading honest doubt as a crisis of faith rather than the slow maturing of it. What survives this review tends to be sturdier than what went in, precisely because it has been questioned rather than inherited.
 
@@ -61,12 +61,12 @@ The practical takeaway is that you read this transit by blending, not by isolati
 
 The biggest errors with Saturn in Pisces happen at the level of the whole system, not any single strand. People tend to mistake an interpretive vocabulary for a fixed verdict, and that one move generates most of the confusion. A short list of the recurring mistakes:
 
-1. **Treating it as a verdict, not a vocabulary.** Saturn in Pisces is a way of describing a stretch of experience, not a sentence handed down about your character. Read it as language you can test against your own week, not a label you have to accept. The cure is to phrase every claim as a question you can check: "Is my drive actually draining where this says it should?" rather than "This proves I'm drained."
+1. **Treating it as a verdict, not a vocabulary.** Saturn here is a way of describing a stretch of experience, not a sentence handed down about your character. Read it as language you can test against your own week, not a label you have to accept. The cure is to phrase every claim as a question you can check: "Is my drive actually draining where this says it should?" rather than "This proves I'm drained."
 2. **Forcing one lineage to be the single right answer.** Traditional and modern astrologers describe this transit differently, and the descriptions do not always agree. When two lineages conflict, the honest move is to hold both as possibilities rather than pretending one is the settled truth.
 3. **Upgrading the framework into an identity.** "I'm in my Saturn era" can quietly become a story you hide inside, an explanation that excuses you from acting rather than a frame that helps you act. The transit is something passing through your life, not the name of who you are, and the difference shows up in whether the reading leaves you more able to do something or just more resigned.
 4. **Expecting it to replace real ground truth.** This transit can describe a season of fatigue or doubt; it cannot identify a medical or psychological condition, and it is not a substitute for the people and professionals who can. Where it overlaps the hidden, draining territory of the [[<TBD-internal-link: deep dive on the twelfth house>]], the temptation to over-explain difficulty through astrology alone gets strongest, and that is exactly where it helps to keep the framework in its lane.
 
-The limit worth naming plainly is that this is interpretive language, not measurement. Astrology offers a vocabulary for noticing patterns in your own experience; it does not make scientific claims about cause and effect, and treating it as if it did is the fastest way to misuse it. The fair test is whether a reading helps you describe and act on something you already half-noticed, not whether it can predict an outcome you could not have reached any other way. Held as a set of testable observations you check against real life, Saturn in Pisces stays useful. Held as proof of anything, it stops being honest.
+The limit worth naming plainly is that this is interpretive language, not measurement. Astrology offers a vocabulary for noticing patterns in your own experience; it does not make scientific claims about cause and effect, and treating it as if it did is the fastest way to misuse it. The fair test is whether a reading helps you describe and act on something you already half-noticed, not whether it can predict an outcome you could not have reached any other way. Held as a set of testable observations you check against real life, this transit stays useful. Held as proof of anything, it stops being honest.
 
 ## Common Questions About Saturn in Pisces
 
@@ -78,7 +78,7 @@ Saturn spends roughly two and a half to three years moving through a single sign
 
 A Saturn return is when Saturn comes back to the exact spot it occupied at your birth, an event that happens around ages 29 and 58. If you were born with this placement, that return brings these same boundary, rest, and faith themes to a personal turning point rather than a general one.
 
-**Is Saturn in Pisces bad luck?**
+**Is this Saturn transit bad luck?**
 
 No — the doom framing is the misread the whole transit pushes back on. The placement asks for specific, workable discipline around boundaries and rest, and the difficulty most people feel comes from skipping that work, not from the transit itself.
 

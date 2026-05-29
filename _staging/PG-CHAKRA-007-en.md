@@ -1,3 +1,26 @@
+---
+title: Heart Chakra Meaning
+slug: heart-chakra-meaning
+date: 2026-05-29
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T3
+track: 量产线
+page_id: PG-CHAKRA-007
+author_id: "elena-vane"
+author_display_name: "Elena Vane"
+target_keyword: heart chakra meaning
+associated_keywords:
+  - anahata
+  - healing heart chakra
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-05-29T05:06:23.189Z
+content_sha256_short: a761819fe0a0bb75
+phase2_checks: all-pass
+---
+
 # What the Heart Chakra Really Governs Beyond Romantic Love
 
 ## What is Heart Chakra?

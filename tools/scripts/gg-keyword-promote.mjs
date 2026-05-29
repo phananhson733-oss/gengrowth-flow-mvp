@@ -27,10 +27,16 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
 import { getAccessToken, gFetch, loadEnv, resolveWorkbookId } from './lib/gg-shared.mjs';
+import { buildClusterMap } from './gg-sheet-to-brief.mjs';
+import { buildClusterMatcher, parseStartRow } from './gg-queue-build.mjs';
 
 export const CANDIDATES_TAB = 'keyword_candidates';
 export const MASTER_TAB = '关键词主表';
 export const PAGES_TAB = '选题登记表';
+export const CLUSTERS_TAB = '主题集群表';
+// §4.1c：主表 cluster_id 列（spec 派生 = 第 25 列 Y）。promote 加词时回填 matcher 建议，
+// queue-build 读它（人确认值优先、matcher 兜底）。
+export const MASTER_CLUSTER_ID_COL = 'Y';
 
 // candidate 副表 → 关键词主表 source 列映射（B 列下拉值）
 // keyword-sheet-setup.gs v3.1 line 187 定义的 6 个合法值：
@@ -192,12 +198,17 @@ safety:
     return 2;
   }
 
-  const { token } = args.dry_run
-    ? { token: null }
-    : await getAccessToken(writerSa, ['https://www.googleapis.com/auth/spreadsheets']);
+  // dry-run：有 writer SA 就用它只读（不依赖易过期的 OAuth testing token）；无 SA 才走下面 OAuth 兜底。
+  let token = null;
+  if (!args.dry_run) {
+    ({ token } = await getAccessToken(writerSa, ['https://www.googleapis.com/auth/spreadsheets']));
+  } else if (existsSync(writerSa)) {
+    ({ token } = await getAccessToken(writerSa, ['https://www.googleapis.com/auth/spreadsheets.readonly']));
+  }
 
   let candidatesRaw;
   let masterRaw;
+  let clusterRaw = [];
   if (args.dry_run && !token) {
     // Dry-run without creds: try to read with an OAuth-style getAccessToken from gg-shared
     // (lib/_oauth-token.mjs). If that also fails, can't dry-run live; user must run with creds.
@@ -206,6 +217,7 @@ safety:
       const oauthToken = await getOauthToken();
       candidatesRaw = await fetchValues(workbookId, `${CANDIDATES_TAB}!A1:Z2000`, oauthToken);
       masterRaw = await fetchValues(workbookId, `${MASTER_TAB}!A1:A2000`, oauthToken);
+      clusterRaw = await fetchValues(workbookId, `${CLUSTERS_TAB}!A1:Z300`, oauthToken);
     } catch (e) {
       console.error('dry-run requires either writer SA or reader OAuth; both failed:', e.message);
       return 2;
@@ -213,6 +225,7 @@ safety:
   } else {
     candidatesRaw = await fetchValues(workbookId, `${CANDIDATES_TAB}!A1:Z2000`, token);
     masterRaw = await fetchValues(workbookId, `${MASTER_TAB}!A1:A2000`, token);
+    clusterRaw = await fetchValues(workbookId, `${CLUSTERS_TAB}!A1:Z300`, token);
   }
 
   if (!candidatesRaw.length) {
@@ -249,6 +262,10 @@ safety:
   const masterRows = filtered.map(buildMasterRow);
   const draftRows = args.also_draft_pages ? filtered.map(buildPageDraftRow) : [];
 
+  // §4.1c 棘轮：用 matcher 给每个新词算 cluster_id 建议（命中才回填，空的留给人工/新集群）。
+  const clusterMatcher = buildClusterMatcher(buildClusterMap(clusterRaw));
+  const clusterSuggestions = filtered.map((c) => clusterMatcher(String(c.query || '').trim().toLowerCase()) || '');
+
   console.error(`promoting ${filtered.length} approved candidate(s) → ${MASTER_TAB}!A:I`);
   for (const c of filtered) console.error(`  - ${c.query} (source=${remapSource(c.source)})`);
 
@@ -257,6 +274,7 @@ safety:
       _schema_version: '1',
       _dry_run: true,
       master_writes: { range: `${MASTER_TAB}!A:I`, rows: masterRows },
+      cluster_id_suggestions: clusterSuggestions,
       ...(draftRows.length ? { pages_writes: { range: `${PAGES_TAB}!A:A`, rows: draftRows } } : {}),
     }, null, 2) + '\n');
     return 0;
@@ -264,6 +282,21 @@ safety:
 
   const masterResp = await appendRows(workbookId, `${MASTER_TAB}!A:I`, masterRows, token);
   console.error(`appended ${masterResp.updates?.updatedRows ?? masterRows.length} rows to ${MASTER_TAB}!A:I`);
+
+  // §4.1c：把 cluster_id 建议回填到主表 Y 列（仅 matcher 命中的行；空的留人工）。
+  const startRow = parseStartRow(masterResp.updates?.updatedRange);
+  if (startRow != null) {
+    const data = [];
+    clusterSuggestions.forEach((cid, i) => {
+      if (cid) data.push({ range: `${MASTER_TAB}!${MASTER_CLUSTER_ID_COL}${startRow + i}`, values: [[cid]] });
+    });
+    if (data.length) {
+      await gFetch(`https://sheets.googleapis.com/v4/spreadsheets/${workbookId}/values:batchUpdate`, token, {
+        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ valueInputOption: 'RAW', data }),
+      });
+      console.error(`backfilled cluster_id on ${data.length}/${filtered.length} new master row(s) → ${MASTER_TAB}!${MASTER_CLUSTER_ID_COL}`);
+    }
+  }
 
   if (draftRows.length) {
     const draftResp = await appendRows(workbookId, `${PAGES_TAB}!A:A`, draftRows, token);

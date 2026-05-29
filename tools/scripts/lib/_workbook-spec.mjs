@@ -106,7 +106,7 @@ export const TABS = [
   {
     name: '关键词主表',
     type: 'master',
-    header: ['关键词', '来源', '月搜索量', 'KD', 'CPC($)', 'Trends比值', 'Top10最低2站DR均值', 'SERP弱度', '自有站DR', 'DR差值', 'G1话题相关', 'G2可承接', '意图', 'DR过滤', '分桶_自动', '手动分桶', '调整原因', '分桶', 'AIO预判', 'AIO风险', '弱度意图分', '内容状态', '发布URL', '备注'],
+    header: ['关键词', '来源', '月搜索量', 'KD', 'CPC($)', 'Trends比值', 'Top10最低2站DR均值', 'SERP弱度', '自有站DR', 'DR差值', 'G1话题相关', 'G2可承接', '意图', 'DR过滤', '分桶_自动', '手动分桶', '调整原因', '分桶', 'AIO预判', 'AIO风险', '弱度意图分', '内容状态', '发布URL', '备注', 'cluster_id'],
     headerColorByCol: { // 1-indexed
       // navy (公式自动): J K M N O R S U = 10 11 13 14 15 18 19 21
       1: 'green', 2: 'green', 3: 'green', 4: 'green', 5: 'slate', 6: 'slate',

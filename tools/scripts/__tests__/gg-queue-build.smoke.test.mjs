@@ -213,6 +213,26 @@ test('selectQueue：parkToolIntent=false 时工具词可入队', () => {
   assert.equal(r.parked.length, 0);
 });
 
+test('parseMasterRows：读取 cluster_id 列（若存在）', () => {
+  const header = ['关键词', '分桶', 'cluster_id'];
+  const rows = [header, ['kw one', '快速胜利', 'clu_x'], ['kw two', '快速胜利', '']];
+  const parsed = parseMasterRows(rows);
+  assert.equal(parsed[0].cluster_id, 'clu_x');
+  assert.equal(parsed[1].cluster_id, '');
+});
+
+test('selectQueue：主表 cluster_id 列优先于 matcher（§4.1c 棘轮）', () => {
+  const master = [{ keyword: 'foo bar', volume: 100, bucket: '快速胜利', u_score: 1, cluster_id: 'confirmed' }];
+  const clusterMap = new Map([
+    ['confirmed', { cluster_id: 'confirmed', keywords_included: 'nothing here', priority: 'P0', week: 'Week 1' }],
+    ['matched', { cluster_id: 'matched', keywords_included: 'foo bar', priority: 'P0', week: 'Week 1' }],
+  ]);
+  const matcher = buildClusterMatcher(clusterMap); // matcher 会把 'foo bar' 判给 'matched'
+  const r = selectQueue({ master, clusterMap, kwToCluster: matcher, priorities: ['P0'], week: 'Week 1' });
+  assert.equal(r.selected.length, 1);
+  assert.equal(r.selected[0].cluster_id, 'confirmed', '主表 cluster_id 列（人确认值）胜出，matcher 仅兜底');
+});
+
 test('colLetter / parseStartRow', () => {
   assert.equal(colLetter(0), 'A');
   assert.equal(colLetter(12), 'M'); // Status

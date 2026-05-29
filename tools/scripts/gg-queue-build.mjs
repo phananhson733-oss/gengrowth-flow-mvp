@@ -153,6 +153,7 @@ export function indexMasterHeader(header) {
     分桶: 'bucket',
     弱度意图分: 'u_score',
     内容状态: 'content_status',
+    cluster_id: 'cluster_id', // §4.1c：主表 cluster_id 列（人确认的归属），优先于 matcher
   };
   const idx = {};
   for (let i = 0; i < header.length; i++) {
@@ -183,6 +184,7 @@ export function parseMasterRows(rows) {
       bucket: normalizeBucket(idx.bucket != null ? r[idx.bucket] : ''),
       u_score: idx.u_score != null ? Number(r[idx.u_score]) || 0 : 0,
       content_status: idx.content_status != null ? String(r[idx.content_status] || '').trim() : '',
+      cluster_id: idx.cluster_id != null ? String(r[idx.cluster_id] || '').trim() : '',
     });
   }
   return out;
@@ -227,7 +229,8 @@ export function selectQueue({
       parked.push(m);
       continue;
     }
-    const cid = clusterOf(lc);
+    // §4.1c 棘轮：主表 cluster_id 列（人确认值）优先，matcher 仅对空白行兜底。
+    const cid = m.cluster_id || clusterOf(lc);
     const cluster = cid ? clusterMap.get(cid) : null;
     if (!cid || !cluster) {
       unclustered.push(m);

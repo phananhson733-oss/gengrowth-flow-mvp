@@ -125,3 +125,40 @@ PIPELINE.md 无"tool vs article 意图"概念。park 的 tool 词要有去处不
   5. queue-build Status 列断言防护（§3.9）
   6. 把 queue-build 补进 PIPELINE.md 总览（步骤 3.7）
 - **后半段**：不碰（§3.8 的 bug 仅记录待修，不在本次动）。
+
+---
+
+## 5. 落地状态更新（2026-05-29，§4 列表多数已做）
+
+§4 的"待落地"在 2026-05-29 已大部分落地（commit `d8fc01f`/`1f10f4e`/`f02fd52`/`2a8b0eb`）：
+
+| §4 待落地项 | 状态 |
+|---|---|
+| env 改指向 1CkjOC（§3.7 阻断） | ✅ resolveWorkbookId（promote/fallback/queue-build 统一）→ **写读同表，接缝实通** |
+| 修 bridge page_role→'R'（§3.8） | ✅ PAGES_FIX_COL 从 spec 派生（防漂移） |
+| queue-build 意图门 | ✅ isToolIntent + park（默认 ON）+ park 上报 |
+| 主表 cluster_id 列 + 回填 | ✅ live 加 Y 列 + matcher 回填 162；queue-build 读它(人确认优先)、promote 写它 |
+| 把 3.7 补进 PIPELINE.md | ✅ |
+| 读取行上限（§4.4 衍生） | ✅ fetchTab A:Z / gg-status A:V 无界 |
+| 3.9 Status 静默降级 | ⏳ 未加断言（低优先） |
+
+**live 数据**：3 GO 集群骨架(dormant) / drop-6 标跳过 / 7 队列行(待写)。
+
+## 6. 端到端空跑验证（2026-05-29，只读 trace，不写）
+
+| 阶段 | 工具 | 验证 | 结果 |
+|---|---|---|---|
+| 1 mine / 2 approve | gg-keyword-mine | 工具在 + E2E_SMOKE v3 | ✓ |
+| 3 promote | gg-keyword-promote | dry-run via SA（读 15 候选，无崩） | ✓ |
+| 3.6 cluster-init | gg-cluster-init | 工具在 + E2E v3 | ✓ |
+| **3.7 queue-build** | gg-queue-build | **实读 dry-run：598主/16集群/326页**，park 27、未归集群 29 | ✓ 活的 |
+| 4 fill-v8 / 5 cluster·CTA | brief-suggest + 人工 | 工具在；**人工步 by design**（接缝的"唯一动手处"） | ✓ |
+| 6 bridge | gg-sheet-to-brief | smoke 48 + 字段契约（§2）；**live 被 OAuth 过期阻断**（见下） | 逻辑✓ / 运营⚠️ |
+| 7–15 pull/RAG/render/llm/phase2/publish/oracle | … | **E2E_SMOKE_2026-05-24-v3：15 stage + 8 任务全 PASS**（status: validated） | ✓ |
+
+**结论：全链闭环、无设计断点。** 接缝（选题登记表一行）字段契约成立，写读同表（env 已统一）。
+
+**运营 gotcha（非设计缺陷，但影响每周能否跑起来）：**
+1. ⚠️ **OAuth 7 天过期**：`gg-sheet-to-brief`（bridge）及部分 RAG/读路径用 OAuth token（testing-mode 7 天失效），**当前已过期 → 后半段实跑被阻断**，需 `node tools/scripts/oauth-init.mjs` 重新授权。queue-build/promote 已优先用 writer SA（不受影响）。→ 每周 SOP 必须含"先 re-auth"，或后续把 bridge/读路径也切 SA。
+2. queue 行 append 落到 1500+（读已无界、不再漏；仅显示缺 vol/KD，cosmetic）。
+3. 3 个新集群 dormant（priority/week 空）——排期后才出文章词。

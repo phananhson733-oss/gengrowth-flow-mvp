@@ -12,7 +12,7 @@ associated_keywords:
 
 A sextile is **a 60-degree angle between two planets that signals easy cooperation you have to choose to use**. In sextile astrology, those two planets sit one-sixth of the way around the chart wheel, close enough to work together smoothly but far enough apart that nothing happens on its own. Most beginners learn the symbol and the number and stop there, which is why the term keeps sending people back to search. It belongs to the family of [[<TBD-internal-link: glossary of core astrology terms>]] that name the angles between planets, and it reads best as one relationship inside that set rather than an isolated label.
 
-- Links two planets at 60 degrees with a workable 4-5 degree margin of error
+- Links two planets at 60 degrees, two signs apart, typically allowed an orb of about 4-5 degrees from exact
 - Reads as a standing invitation that activates only when you take a deliberate step
 - Often involves planets in signs that share a compatible element, which is why the pairing feels natural
 
@@ -24,7 +24,7 @@ Understanding sextile astrology matters because the popular write-ups stop at th
 2. **The blame loop.** When the promised ease never materializes, readers decide either the chart is wrong or they are doing something wrong, when really nothing was ever automatic.
 3. **The overlooked placement.** Because a sextile makes no noise and creates no crisis, it is the first connection people ignore, even though it often points to the most usable skill in the chart.
 
-Reading the angle accurately reframes it from a prediction into a prompt. In my years of building systematic pattern-recognition frameworks for chart structure, the sextiles are the connections clients almost always undervalue, because nothing forces their hand. Building on the relational approach Dane Rudhyar established, the point is not what the angle promises but what it makes available once you act.
+Reading the angle accurately reframes it from a prediction into a prompt. In my years of building systematic pattern-recognition frameworks for chart structure, the sextiles are the connections clients almost always undervalue, because nothing forces their hand. This is where Dane Rudhyar's person-centered approach earns its keep: the question is not what the angle promises but what it makes available once you act.
 
 ## Sextile vs Adjacent Concepts: How It Works + Trade-offs
 
@@ -38,7 +38,7 @@ The practical takeaway is that the sextile occupies the middle ground: more work
 
 ## How to Read Sextile in Your Chart
 
-Reading sextile astrology in your own chart works best as a short checklist, not a pile of definitions. Pull up your chart and look for these signals one at a time.
+Spotting a sextile is more about scanning for a pattern than recalling a definition. With your wheel open, walk through these five cues in turn and let each one narrow the search before you move on.
 
 1. **Find the 60-degree gaps.** Look for two planets roughly two signs apart; that two-sign spacing is the quickest visual cue for a sextile.
 2. **Check the elements.** The two planets usually sit in compatible elements, fire with air or earth with water, which is the natural affinity you can build on.
@@ -61,7 +61,7 @@ The reason people stay stuck is that shallow content flattens sextile astrology 
 | --- | --- | --- | --- |
 | 60-degree angle | Two planets cooperate once you act | Compatible elements (fire-air, earth-water) | Spot two planets about two signs apart |
 | Opportunity, not gift | Stays dormant until a deliberate step | Shared affinity, not fusion | Notice a skill that comes easily but unused |
-| 4-5 degree orb | Tightens the closer the angle is to exact | Often crosses neighbouring signs | Check the degree gap between the two planets |
+| Roughly 4-5 degree orb | Tightens the closer the angle is to exact | Spans two signs of complementary elements | Check the degree gap between the two planets |
 | Action-activated | Rewards the first move, then flows | Air supports fire, water supports earth | Recall a chance that needed only your push |
 
 ## Common Questions About Sextile
@@ -99,6 +99,6 @@ Open your own chart and circle every pair of planets sitting about two signs apa
 
 ## Sources
 
-- Dane Rudhyar — pioneered the person-centered reading of aspects that frames the sextile as an opportunity rather than a fixed outcome
-- Stephen Arroyo — clarified how each aspect defines a specific exchange between planetary functions instead of a good-or-bad label
-- Robert Hand — systematized the modern interpretation of aspects, including how the same planets read differently across angles
+- Dane Rudhyar — the case for treating a sextile as an opportunity to act on rather than a fixed outcome traces back to his person-centered work
+- Stephen Arroyo — read here for the idea that each aspect names a specific exchange between two planetary functions, not a good-or-bad verdict
+- Robert Hand — drawn on for how the same two planets read so differently at 60, 90, and 120 degrees

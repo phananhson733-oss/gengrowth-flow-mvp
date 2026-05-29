@@ -97,6 +97,6 @@ Open your own chart and label the four angles plus your single tightest aspect u
 
 ## Sources
 
-- Dane Rudhyar, whose person-centered astrology reframed every term as part of a living chart rather than a fixed label
-- Robert Hand, a standard modern reference for how aspects and angles are actually interpreted in practice
-- Stephen Arroyo, for the working principle that chart factors shape one another instead of standing alone
+- Dane Rudhyar — his person-centered astrology reframed every term as part of a living chart rather than a fixed label
+- Robert Hand — a standard modern reference for how aspects and angles actually get interpreted in practice
+- Stephen Arroyo — the working principle that chart factors shape one another instead of standing alone comes from his writing

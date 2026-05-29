@@ -22,11 +22,13 @@ The grounded reading does not tell you any of those nags are destiny. It tells y
 
 ## Ajna Chakra vs Adjacent Concepts: How It Works + Trade-offs
 
-Ajna chakra is easiest to understand against the centers nearest to it, because the real differences are differences in how each one works. In the seven-center model that Charles Leadbeater helped popularize, the brow center governs perception and judgment, so it tends to step back and observe, and that distance is exactly what gives it clarity. Compared with the crown center above it, the brow stays grounded in interpreting what you sense, while the crown leans toward a more open, less defined awareness. The sharpest contrast is with the throat center just below it, which carries expression and voice. Working through the throat center, you turn an inner sense into clear words, and you trade some of the brow's quiet certainty for the risk of speaking before the insight has settled. To get the precision of clear inner seeing, you sacrifice the immediate relief of saying something out loud right away. The reverse trade also holds: lead with expression and you gain momentum, but you lose the pause where discernment actually happens. Read this way, the brow center is the part that watches and weighs, and its strength is also its cost, because it can sit so long in observation that it forgets to act.
+Ajna chakra is easiest to understand against the centers nearest to it, because the real differences are differences in how each one works. In the seven-center model that Charles Leadbeater helped popularize, the brow center governs perception and judgment, so it tends to step back and observe, and that distance is exactly what gives it clarity. Compared with the crown center above it, the brow stays grounded in interpreting what you sense, while the crown leans toward a more open, less defined awareness.
+
+The sharpest contrast is with the throat center just below it, which carries expression and voice. Working through the throat center, you turn an inner sense into clear words, and you trade some of the brow's quiet certainty for the risk of speaking before the insight has settled. To get the precision of clear inner seeing, you sacrifice the immediate relief of saying something out loud right away. The reverse trade also holds: lead with expression and you gain momentum, but you lose the pause where discernment actually happens. Read this way, the brow center is the part that watches and weighs, and its strength is also its cost, because it can sit so long in observation that it forgets to act.
 
 ## How to Spot the Brow Center in Yourself
 
-You do not need a special state to notice this center at work; it shows up in plain moments of judgment. A few practical signals make ajna chakra easier to spot in real life:
+You do not need a special state to notice this center at work; it shows up in plain moments of judgment. A few practical signals make the brow chakra easier to spot in real life:
 
 1. **The quiet "no" before the reasons.** You sense something is off about a plan or a person before you can list why, and later the reasons line up with the hunch.
 2. **The calm scan.** In a busy meeting or a crowded commute, you can step back and read the room without getting pulled into the mood of it.
@@ -36,7 +38,7 @@ You do not need a special state to notice this center at work; it shows up in pl
 
 ## Common Misreadings
 
-The popular write-ups push readers toward a few specific misreads of the brow center, and each one keeps people stuck on the friction that sent them searching. Corrected one by one:
+The popular write-ups push readers toward a few specific misreads of the brow chakra, and each one keeps people stuck on the friction that sent them searching. Corrected one by one:
 
 1. **"It means psychic powers."** The misread: an open third eye hands you supernatural sight. The reality: ajna chakra is described as clear discernment, telling a real signal from a stray thought, not magic.
 2. **"More activity is better."** The misread: a buzzing, hyper-active third eye is a sign of progress. The reality: an over-active brow center scatters focus, so flooding feels like awakening but reads as noise.
@@ -53,7 +55,7 @@ The popular write-ups push readers toward a few specific misreads of the brow ce
 
 ## Questions People Ask About the Third Eye
 
-**What does the ajna chakra do?**
+**What does the brow chakra do?**
 
 It is described as the center of inner perception and discernment, the part of you that notices a pattern and then weighs whether it is real. In practice that means telling a steady insight apart from an anxious thought.
 
@@ -61,7 +63,7 @@ It is described as the center of inner perception and discernment, the part of y
 
 A common sign is reading meaning into everything and feeling scattered or restless rather than clear. Traditional accounts treat that flooding as an over-active brow center, not a more "awakened" one.
 
-**Is the ajna chakra the same as the third eye?**
+**Is the brow chakra the same as the third eye?**
 
 Yes, in most modern usage the brow chakra and the third eye refer to the same sixth center. The "third eye" is the everyday name; ajna is the older term meaning command or perception.
 

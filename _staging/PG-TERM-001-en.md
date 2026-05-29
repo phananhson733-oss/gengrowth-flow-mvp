@@ -1,3 +1,29 @@
+---
+title: Astrology Terms
+slug: astrology-terms
+date: 2026-05-29
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T1
+track: 量产线
+page_id: PG-TERM-001
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: astrology terms
+associated_keywords:
+  - sextile
+  - trine
+  - square
+  - descendant
+  - ic
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-05-29T05:08:51.236Z
+content_sha256_short: 1bde385609b8da3e
+phase2_checks: all-pass
+---
+
 # How the Core Astrology Terms Fit Together in One Chart
 
 ## What is Astrology Terms?

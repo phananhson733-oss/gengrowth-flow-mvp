@@ -1,3 +1,26 @@
+---
+title: Throat Chakra Meaning
+slug: throat-chakra-meaning
+date: 2026-05-29
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T3
+track: 量产线
+page_id: PG-CHAKRA-008
+author_id: "elena-vane"
+author_display_name: "Elena Vane"
+target_keyword: throat chakra meaning
+associated_keywords:
+  - vishuddha
+  - throat chakra healing
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-05-29T05:08:34.850Z
+content_sha256_short: 8a38b4e21d32eedc
+phase2_checks: all-pass
+---
+
 # What Throat Chakra Meaning Says About Your Voice
 
 ## What is Throat Chakra?

@@ -1,17 +1,17 @@
 {
   "schema_version": "1",
-  "page_id": "PG-CHAKRA-007",
-  "entity": "Heart Chakra",
-  "target_keyword": "heart chakra meaning",
+  "page_id": "PG-CHAKRA-008",
+  "entity": "Throat Chakra",
+  "target_keyword": "throat chakra meaning",
   "template": "Definition",
   "tier": "T3",
   "track": "量产线",
   "generated_by": "unknown",
   "prompt_version": "v8",
-  "generated_at": "2026-05-29T05:08:41.183Z",
-  "content_sha256_short": "a761819fe0a0bb75",
-  "source_path": "_staging/PG-CHAKRA-007-claude-v8.md",
-  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-CHAKRA-007-en.md",
+  "generated_at": "2026-05-29T05:08:34.850Z",
+  "content_sha256_short": "8a38b4e21d32eedc",
+  "source_path": "_staging/PG-CHAKRA-008-claude-v8.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-CHAKRA-008-en.md",
   "phase2_checks": {
     "overall": "pass",
     "structure": {
@@ -19,7 +19,7 @@
       "h2Count": 11,
       "h3Count": 0,
       "h4Count": 0,
-      "words": 1566,
+      "words": 1656,
       "wikilinks": 2,
       "tbdLinks": 2
     },

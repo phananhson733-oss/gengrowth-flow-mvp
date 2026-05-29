@@ -1,3 +1,26 @@
+---
+title: Crystals For Each Chakra
+slug: crystals-for-each-chakra
+date: 2026-05-29
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T3
+track: 量产线
+page_id: PG-CHAKRA-011
+author_id: "elena-vane"
+author_display_name: "Elena Vane"
+target_keyword: crystals for each chakra
+associated_keywords:
+  - chakra stones
+  - healing crystals guide
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-05-29T05:10:44.316Z
+content_sha256_short: 749207e33a41a379
+phase2_checks: all-pass
+---
+
 # 脉轮水晶：按能量状态挑选，而不是只看颜色
 
 ## Chakra Crystals 是什么？

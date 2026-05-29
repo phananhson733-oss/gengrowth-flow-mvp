@@ -1,17 +1,17 @@
 {
   "schema_version": "1",
-  "page_id": "PG-CHAKRA-011",
-  "entity": "Chakra Crystals",
-  "target_keyword": "crystals for each chakra",
+  "page_id": "PG-CHAKRA-008",
+  "entity": "Throat Chakra",
+  "target_keyword": "throat chakra meaning",
   "template": "Definition",
   "tier": "T3",
   "track": "量产线",
   "generated_by": "unknown",
   "prompt_version": "v8",
-  "generated_at": "2026-05-29T05:10:44.267Z",
-  "content_sha256_short": "97f42c7be4613a7f",
-  "source_path": "_staging/PG-CHAKRA-011-claude-v8.md",
-  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-CHAKRA-011-en.md",
+  "generated_at": "2026-05-29T05:11:09.296Z",
+  "content_sha256_short": "7729e4512c76d25c",
+  "source_path": "_staging/zh-demo/PG-CHAKRA-008-claude-v8.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/PG-CHAKRA-008-zh.md",
   "phase2_checks": {
     "overall": "pass",
     "structure": {
@@ -19,7 +19,7 @@
       "h2Count": 11,
       "h3Count": 0,
       "h4Count": 0,
-      "words": 1528,
+      "words": 2543,
       "wikilinks": 2,
       "tbdLinks": 2
     },

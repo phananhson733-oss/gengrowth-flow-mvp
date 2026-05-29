@@ -1,17 +1,17 @@
 {
   "schema_version": "1",
-  "page_id": "PG-TERM-004",
-  "entity": "Square",
-  "target_keyword": "square astrology",
+  "page_id": "PG-TERM-002",
+  "entity": "Sextile",
+  "target_keyword": "sextile astrology",
   "template": "Definition",
   "tier": "T2",
   "track": "量产线",
   "generated_by": "unknown",
   "prompt_version": "v8",
-  "generated_at": "2026-05-29T05:17:04.186Z",
-  "content_sha256_short": "daa4ac4c81918ba8",
-  "source_path": "_staging/PG-TERM-004-claude-v8.md",
-  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-TERM-004-en.md",
+  "generated_at": "2026-05-29T05:17:31.644Z",
+  "content_sha256_short": "bf5223c961210efa",
+  "source_path": "_staging/PG-TERM-002-claude-v8.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-TERM-002-en.md",
   "phase2_checks": {
     "overall": "pass",
     "structure": {
@@ -19,7 +19,7 @@
       "h2Count": 11,
       "h3Count": 0,
       "h4Count": 0,
-      "words": 1628,
+      "words": 1589,
       "wikilinks": 4,
       "tbdLinks": 4
     },

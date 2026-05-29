@@ -1,3 +1,29 @@
+---
+title: Astrology Terms
+slug: astrology-terms
+date: 2026-05-29
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T1
+track: 量产线
+page_id: PG-TERM-001
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: astrology terms
+associated_keywords:
+  - sextile
+  - trine
+  - square
+  - descendant
+  - ic
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-05-29T05:12:17.080Z
+content_sha256_short: 78e2dc93521c19df
+phase2_checks: all-pass
+---
+
 # 占星术语：把相位、轴点和虚点读成一张星盘
 
 ## Astrology Terms 是什么？

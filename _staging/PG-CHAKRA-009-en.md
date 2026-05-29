@@ -16,7 +16,7 @@ associated_keywords:
   - brow chakra
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-29T05:09:00.486Z
+generated_at: 2026-05-29T05:11:19.620Z
 content_sha256_short: b4cfb43b5c295fa0
 phase2_checks: all-pass
 ---

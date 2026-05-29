@@ -18,7 +18,7 @@ associated_keywords:
   - 10th house career
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-29T04:25:06.074Z
+generated_at: 2026-05-29T04:28:21.279Z
 content_sha256_short: 041c9db729ad7c5c
 phase2_checks: all-pass
 ---

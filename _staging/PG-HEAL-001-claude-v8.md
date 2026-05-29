@@ -2,7 +2,7 @@
 
 ## What are inner wound?
 
-An inner wound is **the long-standing sore spot in your psyche that shapes how you protect, withdraw, and reach for connection**. In astrology it is not a single placement but a family of chart signatures that point to where the sore spot tends to hide, repeat, and ask for attention. Healing Your Inner Wound, in this reading, means learning to recognize the pattern rather than expecting the chart to erase it. The signatures cluster mostly around the hidden, dissolving parts of the chart, and they overlap rather than line up neatly.
+An inner wound is **the long-standing sore spot in your psyche that shapes how you protect, withdraw, and reach for connection**. In astrology it is not a single placement but a family of chart signatures that point to where the sore spot tends to hide, repeat, and ask for attention — most of which gather in the hidden, dissolving 12th house, so the [[<TBD-internal-link: 12th house overview>]] is a useful first stop. Healing Your Inner Wound, in this reading, means learning to recognize the pattern rather than expecting the chart to erase it. The signatures cluster mostly around the hidden, dissolving parts of the chart, and they overlap rather than line up neatly.
 
 - A family of related chart signatures, not one fixed point you can isolate
 - Each signature names a different texture of the same sore spot, with heavy overlap between them

@@ -8,8 +8,8 @@
   "track": "量产线",
   "generated_by": "unknown",
   "prompt_version": "v8",
-  "generated_at": "2026-05-28T20:06:14.718Z",
-  "content_sha256_short": "1dea008ea6460dd5",
+  "generated_at": "2026-05-29T04:13:14.580Z",
+  "content_sha256_short": "946b881557b1e719",
   "source_path": "_staging/zh-demo/PG-CHAKRA-004-claude-v8.md",
   "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/PG-CHAKRA-004-zh.md",
   "phase2_checks": {
@@ -19,7 +19,7 @@
       "h2Count": 11,
       "h3Count": 0,
       "h4Count": 0,
-      "words": 1753,
+      "words": 1750,
       "wikilinks": 3,
       "tbdLinks": 3
     },

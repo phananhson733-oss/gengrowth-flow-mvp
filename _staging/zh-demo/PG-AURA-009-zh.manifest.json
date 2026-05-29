@@ -8,8 +8,8 @@
   "track": "量产线",
   "generated_by": "unknown",
   "prompt_version": "v8",
-  "generated_at": "2026-05-28T20:41:52.888Z",
-  "content_sha256_short": "a54c9c4c3c8ccfe1",
+  "generated_at": "2026-05-29T04:13:14.531Z",
+  "content_sha256_short": "c4d615df9606a054",
   "source_path": "_staging/zh-demo/PG-AURA-009-claude-v8.md",
   "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/PG-AURA-009-zh.md",
   "phase2_checks": {
@@ -19,7 +19,7 @@
       "h2Count": 11,
       "h3Count": 0,
       "h4Count": 0,
-      "words": 1989,
+      "words": 1978,
       "wikilinks": 5,
       "tbdLinks": 5
     },

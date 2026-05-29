@@ -1,7 +1,7 @@
 ---
 title: Aura Reading
 slug: aura-reading
-date: 2026-05-28
+date: 2026-05-29
 status: ready-to-review
 type: wiki-entry
 template: Definition
@@ -18,8 +18,8 @@ associated_keywords:
   - aura colors meaning
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-28T20:41:52.888Z
-content_sha256_short: a54c9c4c3c8ccfe1
+generated_at: 2026-05-29T04:13:14.531Z
+content_sha256_short: c4d615df9606a054
 phase2_checks: all-pass
 ---
 
@@ -51,7 +51,7 @@ Aura Reading（气场解读）是一套先靠体感、再靠颜色联想去读�
 2. **颜色查表：先有结论，再套到人身上。** 直接背「蓝色等于沟通、红色等于行动」，快而省事。可要得到这份快，你就要牺牲贴合当下的准确度，很容易把活生生的状态压成一个死标签。
 3. **塔罗与星盘：靠固定符号系统推演。** 它们读的是过去与将来的结构。和它们相比，这种方法读的是「此刻」；选了当下的即时性，你就放弃了那套符号体系能给的可追溯性。
 
-## 如何认出 Aura Reading 读到的信号：从自己身上练起
+## 如何在自己身上识别 Aura Reading
 
 不必等到「看见光」，下面几步是 Aura Reading 的入门做法，从体感入手，今天就能试：
 
@@ -61,7 +61,7 @@ Aura Reading（气场解读）是一套先靠体感、再靠颜色联想去读�
 4. 别急着解释，先把那个颜色和对应的身体感受记下来。
 5. 一周后回看记录，留意同一种颜色常配着哪类场景。
 
-## 常见误读：关于 Aura Reading
+## 常见误读
 
 关于气场解读（Aura Reading），坊间流传的几个说法特别容易把新手带偏：
 

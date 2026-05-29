@@ -1,7 +1,7 @@
 ---
 title: Root Chakra Meaning
 slug: root-chakra-meaning
-date: 2026-05-28
+date: 2026-05-29
 status: ready-to-review
 type: wiki-entry
 template: Definition
@@ -18,8 +18,8 @@ associated_keywords:
   - root chakra healing
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-28T20:06:14.718Z
-content_sha256_short: 1dea008ea6460dd5
+generated_at: 2026-05-29T04:13:14.580Z
+content_sha256_short: 946b881557b1e719
 phase2_checks: all-pass
 ---
 
@@ -63,7 +63,7 @@ The Root Chakra（海底轮，又称根轮，梵文 Muladhara）是脉轮（chak
 2. **"打坐几次就能一劳永逸。"** 多数传统把打坐、调息当成觉察工具，帮你看清状态，而不是一键修好的开关。
 3. **"一紧张就准是海底轮出问题。"** 普通的累和压力也会带来类似的心慌，先分清是长期的不安，还是这两天的疲惫。
 
-## The Root Chakra 关键特征一览
+## The Root Chakra 速查表
 
 | 属性 | 运作方式 | 能量中心 | 如何观察应用 |
 | --- | --- | --- | --- |

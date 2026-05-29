@@ -1,7 +1,7 @@
 ---
 title: Vedic Birth Chart Calculator
 slug: vedic-birth-chart-calculator
-date: 2026-05-28
+date: 2026-05-29
 status: ready-to-review
 type: wiki-entry
 template: Definition
@@ -19,8 +19,8 @@ associated_keywords:
   - free vedic birth chart with interpretation
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-28T20:41:52.849Z
-content_sha256_short: 88aa773b8d11516d
+generated_at: 2026-05-29T04:13:14.481Z
+content_sha256_short: 3881b80c88ff70f4
 phase2_checks: all-pass
 ---
 
@@ -54,7 +54,7 @@ phase2_checks: all-pass
 
 恒星黄道星盘换来的是与真实天象对齐，代价是要重新认识一个略显"陌生"的自己。要不要为这份精确买单，是你读吠陀星盘前先得想清楚的取舍。这一点也和 [[<TBD-internal-link: 恒星黄道与回归黄道对比说明>]] 里讲的取舍互相呼应。
 
-## 如何识别 Vedic Birth Chart 里的关键配置
+## 如何在你的星盘里识别 Vedic Birth Chart
 
 拿到 Vedic Birth Chart 排盘工具给的盘面后，别想一次看懂全部，先按这几个信号逐个认：
 
@@ -66,7 +66,7 @@ phase2_checks: all-pass
 
 读这张盘的诀窍，是把抽象符号一条条对回到具体生活场景，而不是追求一次背完所有规则。
 
-## 常见误读：关于 Vedic Birth Chart
+## 常见误读
 
 围绕 Vedic Birth Chart 这张盘，网上流传的浅层说法最容易把人带偏。最常见的几个误读如下：
 
@@ -75,7 +75,7 @@ phase2_checks: all-pass
 3. **误读：上升星座一变，整个人就被推翻了。** 实际：换的只是参照坐标，你还是同一个人，变的是描述你的那套词汇。
 4. **误读：看懂这张盘就得先精通梵文术语。** 实际：lagna、dasha 这些词记住中文对照即可，理解盘面逻辑远比背术语重要。
 
-## Vedic Birth Chart 核心要素速查表
+## Vedic Birth Chart 速查表
 
 | 关键要素 | 运作方式 | 盘面定位 | 如何观察应用 |
 |---|---|---|---|

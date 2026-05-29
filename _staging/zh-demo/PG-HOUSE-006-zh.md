@@ -1,7 +1,7 @@
 ---
 title: 1st House Meaning
 slug: 1st-house-meaning
-date: 2026-05-28
+date: 2026-05-29
 status: ready-to-review
 type: wiki-entry
 template: Definition
@@ -18,8 +18,8 @@ associated_keywords:
   - 1st house planets
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-05-28T20:41:52.810Z
-content_sha256_short: c5d1be779e29e1b3
+generated_at: 2026-05-29T04:13:14.423Z
+content_sha256_short: 700bc8ec6f53730a
 phase2_checks: all-pass
 ---
 
@@ -51,7 +51,7 @@ phase2_checks: all-pass
 2. **第一宫 vs 第七宫。** 第一宫管"我本能怎么出场"，对面的第七宫管"我在关系里怎么迎向别人"。把能量押在第一宫的自我主张上，你换来鲜明的个人风格，代价是有时显得只顾自己、不够照顾对面的人。
 3. **上升点 vs 整张星盘。** 上升星座只是入口，它定调你给人的第一印象，说了算的是"开场"，却说不了"全程"。只盯着上升点，你会错过太阳、月亮共同写成的那个更完整的你。
 
-## 如何在你的星盘里认出 The 1st House
+## 如何在你的星盘里识别 The 1st House
 
 如果你还在纠结第一宫（The 1st House）是什么意思，想在自己身上认出它，其实不用先学会排盘，几个日常信号就能帮你定位：
 
@@ -61,7 +61,7 @@ phase2_checks: all-pass
 4. 排盘时找到东方地平线（ASC）那一格，落在哪个星座，就是你上升星座的底色。
 5. 如果上升星座的描述比太阳星座"更像别人眼里的你"，那基本就对了。
 
-## 常见误读：关于 The 1st House
+## 常见误读
 
 关于第一宫（The 1st House）代表什么，流传最广的几个说法，其实都站不太住：
 
@@ -78,7 +78,7 @@ phase2_checks: all-pass
 | 自我呈现 | 替你的内核"开门"，但不等于内核 | 与太阳星座分工互补 | 对比"别人眼里的你"和"你自认的你" |
 | 体态外貌 | 影响你给人的气质标签 | 第一宫对应头部与面容 | 想想你那个"气质标签"从何而来 |
 
-## 关于 The 1st House，读者常问
+## 关于 The 1st House 的常见问题
 
 **第一宫（The 1st House）和太阳星座到底有什么区别？**
 

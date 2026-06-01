@@ -1,3 +1,27 @@
+---
+title: Natal Chart Transits
+slug: natal-chart-transits
+date: 2026-06-01
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-TRANS-007
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: natal chart transits
+associated_keywords:
+  - natal transit chart
+  - birth chart transits
+  - natal chart transit
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-01T11:11:52.903Z
+content_sha256_short: 45dab8f7b0960e25
+phase2_checks: all-pass
+---
+
 # Reading Natal Chart Transits on Your Own Birth Chart
 
 ## What is Natal Chart Transits?

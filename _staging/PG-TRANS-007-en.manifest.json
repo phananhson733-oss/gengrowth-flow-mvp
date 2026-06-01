@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-TRANS-007",
+  "entity": "Natal Chart Transits",
+  "target_keyword": "natal chart transits",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-06-01T11:11:52.903Z",
+  "content_sha256_short": "45dab8f7b0960e25",
+  "source_path": "_staging/PG-TRANS-007-claude-v8.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-TRANS-007-en.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 1599,
+      "wikilinks": 3,
+      "tbdLinks": 3
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

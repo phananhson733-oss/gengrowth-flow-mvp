@@ -18,7 +18,7 @@ associated_keywords:
   - planetary transits
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-01T11:14:57.695Z
+generated_at: 2026-06-01T11:15:39.152Z
 content_sha256_short: c95cc18819d9622d
 phase2_checks: all-pass
 ---

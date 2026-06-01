@@ -12,21 +12,21 @@ Natal chart transits are **the current sky's planets forming aspects to your fix
 
 Most people hit the same wall. They can read a static birth chart — Sun here, Moon there, rising sign on the horizon — but they freeze the moment someone tells them to look at their transits. The chart they already know is fixed; transits are the part that moves, and that movement is exactly what makes them hard to grab. The questions that follow usually sound like quiet panic: which planet do I even watch, against which natal point, and how do I tell a real event apart from ordinary sky noise? That last question is the real friction. Without a way to sort signal from background, every planet looks equally important, so nothing does.
 
-In my years applying systematic pattern-recognition frameworks to chart structure, the people who stall are rarely short on knowledge — they are short on a filter for what to ignore. Reading natal chart transits well is mostly about discarding the ninety percent that does not matter on a given day and keeping the one contact that does. The tradition this draws on — shaped by readers like Dane Rudhyar and Robert Hand — treats these cycles as developmental timing rather than fixed fate, which is why a transit describes a window of pressure or opportunity, not a verdict about what happens to you. Once you have a working filter, the moving chart stops feeling intimidating and starts reading like a calendar you can actually use.
+In my years applying systematic pattern-recognition frameworks to chart structure, the people who stall are rarely short on knowledge — they are short on a filter for what to ignore. Reading these contacts well is mostly about discarding the ninety percent that does not matter on a given day and keeping the one transit that does. The tradition this draws on — shaped by readers like Dane Rudhyar and Robert Hand — treats these cycles as developmental timing rather than fixed fate, which is why a transit describes a window of pressure or opportunity, not a verdict about what happens to you. Once you have a working filter, the moving chart stops feeling intimidating and starts reading like a calendar you can actually use.
 
 ## Natal Chart Transits vs Adjacent Concepts: How It Works + Trade-offs
 
-Natal chart transits differ from the other timing tools they get confused with mainly in how each one maps time onto the birth chart. A transit uses the planets' real positions today; the adjacent methods bend or recast the chart in different ways. Setting them side by side makes the trade-offs clear:
+Transits to your natal chart differ from the other timing tools they get confused with mainly in how each one maps time onto the birth chart. A transit uses the planets' real positions today; the adjacent methods bend or recast the chart in different ways. Setting them side by side makes the trade-offs clear:
 
 1. **Transits vs secondary progressions.** Transits use where the planets actually are right now, while progressions symbolically advance the whole chart roughly a day for each year of life. To get the literal, datable timing transits give you, you sacrifice the slow inner-development arc that progressions are built to trace.
 2. **Transits vs the solar return.** A solar return casts a fresh chart for the exact moment the Sun comes back to your natal degree each year, producing one thematic portrait for the twelve months ahead. To get that single year-at-a-glance read, you sacrifice the day-level specificity that a live transit pins down.
 3. **Transits vs synastry.** Synastry compares two birth charts against each other; a transit compares one chart against the moving sky. To read the chemistry between two people you trade away the calendar — synastry tells you the dynamic, not the date.
 
-The point is not that one tool wins. Each answers a different question, and natal chart transits earn their place by being the only one of the three that tells you what the sky is doing to your chart this week, in real time.
+The point is not that one tool wins. Each answers a different question, and the transits earn their place by being the only one of the three that tells you what the sky is doing to your chart this week, in real time.
 
 ## How to Read Natal Chart Transits on Your Own Chart
 
-Reading natal chart transits on your own chart comes down to a short, repeatable sequence rather than memorizing every planetary cycle:
+Reading the transits on your own chart comes down to a short, repeatable sequence rather than memorizing every planetary cycle:
 
 1. Pull your birth chart and note your natal points — Sun, Moon, ascendant, and the personal planets — by exact degree.
 2. Get today's planetary positions from any ephemeris or chart app, listed by sign and degree.
@@ -38,16 +38,16 @@ Here is the sequence in action. Say transiting Saturn is sitting at a degree tha
 
 ## Common Misreadings
 
-The friction most readers feel with natal chart transits traces back to a handful of predictable misreadings, and correcting them does most of the work:
+The friction most readers feel with transit-to-natal contacts traces back to a handful of predictable misreadings, and correcting them does most of the work:
 
 1. **Treating every transit as major.** The fast Moon and inner planets shift constantly. Only tight contacts from the slow planets tend to mark genuine turning points; the rest is texture.
 2. **Tracking the wrong planet.** Beginners often watch whatever planet is currently "in their sign" instead of asking which transiting planet is actually aspecting a natal point. Sign alone is not contact.
 3. **Ignoring the orb.** A transit five or six degrees away is mostly background. The contact sharpens as the orb closes toward one or two degrees, which is when you may notice something concrete.
 4. **Reading meaning before mechanics.** People reach for what a transit "means" before confirming which natal point it touches. Locate the contact first; the meaning only makes sense once you know where it lands.
 
-## Natal Chart Transits at a Glance
+## Transit Contacts at a Glance
 
-| Property | How It Works | Energy Center | How to Observe |
+| Property | How It Works | Natal Point Touched | How to Observe |
 |---|---|---|---|
 | Transiting outer planet | A slow contact that stays in orb for months or years | The natal point it aspects, read by house | The same theme keeps resurfacing over a long stretch |
 | Transiting inner planet | A fast contact lasting hours to days | A personal-planet house being briefly touched | A short, passing mood or minor event |

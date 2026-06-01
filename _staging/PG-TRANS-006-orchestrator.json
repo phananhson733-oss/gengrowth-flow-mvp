@@ -1,0 +1,64 @@
+{
+  "page_id": "PG-TRANS-006",
+  "prompt_path": "/Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/PG-TRANS-006.v8-prompt.md",
+  "started_at": "2026-06-01T10:49:00.700Z",
+  "models_requested": [
+    "claude"
+  ],
+  "retry": 2,
+  "diversify_on_fail": false,
+  "max_cost_usd_per_page": 5,
+  "budget_exceeded_models": [],
+  "ok_count": 1,
+  "total_cost_estimate_usd": 0.3457,
+  "results": {
+    "claude": {
+      "model": "claude",
+      "active_model": "claude",
+      "diversified": false,
+      "ok": true,
+      "output_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-TRANS-006-claude-v8.md",
+      "retries": 1,
+      "duration_s": 386.09999999999997,
+      "cost_estimate_usd": {
+        "usd": 0.3457,
+        "input_tokens_est": 5303,
+        "output_tokens_est": 3549,
+        "pricing_note": "Opus 4.7 xhigh"
+      },
+      "cumulative_cost_usd": 0.4252,
+      "budget_exceeded": false,
+      "budget_usd": 5,
+      "attempts": [
+        {
+          "try_index": 1,
+          "model": "claude",
+          "command": "claude -p --model claude-opus-4-7 < /Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/PG-TRANS-006.v8-prompt.md > /Users/wzb/gengrowth-flow-mvp/_staging/PG-TRANS-006-claude-v8.md",
+          "cost_usd": 0.0795,
+          "cumulative_cost_usd": 0.0795,
+          "ok": false,
+          "exit_code": 143,
+          "duration_s": 48.2,
+          "stderr_tail": "",
+          "stdout_bytes": 0
+        },
+        {
+          "try_index": 2,
+          "model": "claude",
+          "command": "claude -p --model claude-opus-4-7 < /Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/PG-TRANS-006.v8-prompt.md > /Users/wzb/gengrowth-flow-mvp/_staging/PG-TRANS-006-claude-v8.md",
+          "cost_usd": 0.3457,
+          "cumulative_cost_usd": 0.4252,
+          "ok": true,
+          "exit_code": 0,
+          "duration_s": 337.9,
+          "stderr_tail": "",
+          "stdout_bytes": 16768,
+          "sonnet_guard": {
+            "downgraded": false,
+            "bytes": 16832
+          }
+        }
+      ]
+    }
+  }
+}

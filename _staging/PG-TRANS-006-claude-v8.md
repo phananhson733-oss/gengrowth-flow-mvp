@@ -34,7 +34,7 @@ There is also a self-knowledge payoff. The same contact lands differently depend
 
 The pattern that organizes this whole table is speed: the slower a planet moves, the longer its contact lasts and the deeper it tends to cut. Robert Hand built much of modern predictive astrology around exactly that hierarchy, which is why duration belongs in the same row as theme.
 
-## A Quick Guide to the Nine Transits
+## The Nine Transits: Quick Guide
 
 Here is each member at hub depth — enough to recognize these transits, with the full reading saved for each deep dive. Across all of them the same rule holds: faster planets bring events, slower planets bring processes.
 
@@ -48,7 +48,7 @@ Here is each member at hub depth — enough to recognize these transits, with th
 8. **Neptune** moves slowly, often lasting two to three years, and softens edges — dissolving old certainties, raising inspiration, and sometimes spreading confusion. It is excellent for art and devotion, harder for contracts and clear decisions. The misread is mistaking fog for clarity and acting on an idealized picture of a person or plan. The [[<TBD-internal-link: Neptune transit deep dive | staying grounded through a long blurry contact | the slow fog is where idealized misreadings cluster>]] covers how.
 9. **Pluto** is the rarest and longest, sometimes running two to three years, and works on the most guarded parts of your life. The theme is death and rebirth — not literal loss, but the ending of an identity or pattern that has outlived its use. The misread is bracing for outer catastrophe instead of expecting deep inner change. The [[<TBD-internal-link: Pluto transit explainer | the slow death-and-rebirth process | readers expect literal disaster from a contact about inner change>]] goes further.
 
-## How Planetary Combinations Reshape a Reading
+## How Shade and Combination Shift Readings
 
 Single transits rarely act alone, and reading one as an isolated event is the fastest way to misjudge it. What changes the meaning is angle, element, and overlap — the way several moving planets layer over each other and over your chart at once. Three factors do most of the work.
 
@@ -93,7 +93,7 @@ It depends entirely on the planet's speed: a Moon contact lasts hours, a Mars co
 2. Recall a time you blamed the stars for something — was it a real, timed angle, or a vague daily-horoscope worry?
 3. Notice which life area keeps showing up when big shifts hit, and consider which house a current contact may be lighting up.
 
-## Related Reading on Transits
+## Related Reading
 
 To read transits more deeply, follow these threads:
 
@@ -102,7 +102,7 @@ To read transits more deeply, follow these threads:
 - The [[<TBD-internal-link: astrology aspects overview | how the angles between planets are measured and weighted | the angle is half of every contact's meaning>]] for measuring the angles
 - A [[<TBD-internal-link: comparison with Vedic astrology timing | how a different tradition handles the same question of when | shows the method is one approach among several>]] for an outside view
 
-## Take Action With Your Transits
+## Take Action
 
 Pick one slow-moving planet in the current sky and find where it falls in your own chart, then watch how its transits unfold against your fixed points. Start with the [full guide to reading a birth chart](https://astrologywiki.com/en/wiki/how-to-read-birth-chart), then track which planets are currently crossing it. Do this for a few weeks and the sky stops feeling like fate happening to you and starts feeling like a clock you can finally read.
 

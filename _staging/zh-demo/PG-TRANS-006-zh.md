@@ -1,3 +1,28 @@
+---
+title: Transits
+slug: transits
+date: 2026-06-01
+status: ready-to-review
+type: wiki-entry
+template: Pillar
+tier: T1
+track: 量产线
+page_id: PG-TRANS-006
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: transits
+associated_keywords:
+  - transits astrology
+  - astrological transits
+  - what are transits in astrology
+  - planetary transits
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-01T11:13:17.905Z
+content_sha256_short: 4ca82bd0c9aa46f0
+phase2_checks: all-pass
+---
+
 # 占星行运是什么：不预设吉凶，读懂此刻天象怎样落在你的本命盘上
 
 ## Astrological Transits 是什么？

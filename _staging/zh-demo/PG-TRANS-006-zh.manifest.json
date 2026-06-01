@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-TRANS-006",
+  "entity": "Astrological Transits",
+  "target_keyword": "transits",
+  "template": "Pillar",
+  "tier": "T1",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-06-01T11:13:17.905Z",
+  "content_sha256_short": "4ca82bd0c9aa46f0",
+  "source_path": "_staging/zh-demo/PG-TRANS-006-claude-v8.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/PG-TRANS-006-zh.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 3167,
+      "wikilinks": 16,
+      "tbdLinks": 16
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

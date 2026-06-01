@@ -1,3 +1,28 @@
+---
+title: Transits
+slug: transits
+date: 2026-06-01
+status: ready-to-review
+type: wiki-entry
+template: Pillar
+tier: T1
+track: 量产线
+page_id: PG-TRANS-006
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: transits
+associated_keywords:
+  - transits astrology
+  - astrological transits
+  - what are transits in astrology
+  - planetary transits
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-01T11:14:57.695Z
+content_sha256_short: c95cc18819d9622d
+phase2_checks: all-pass
+---
+
 # Astrological Transits — Reading the Moving Sky Against Your Fixed Chart
 
 ## What are Astrological Transits?

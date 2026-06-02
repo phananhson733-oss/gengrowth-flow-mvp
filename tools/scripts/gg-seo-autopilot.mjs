@@ -35,6 +35,7 @@
 // Env (paths localised — defaults are this machine):
 //   GG_FLOW_REPO   default ~/gengrowth-flow-mvp
 //   GG_ORACLE_DIR  default ~/oracle
+//   GG_ORACLE_WORKTREE_ROOT default ~/oracle-worktrees/seo-autopilot
 //   GG_OPS_DIR     default ~/gengrowth-ops
 //   GG_WINNER_LLM  default claude
 //   GG_VERSION     default v8
@@ -56,13 +57,12 @@ import { homedir } from 'node:os';
 const HOME = homedir();
 const FLOW = process.env.GG_FLOW_REPO || join(HOME, 'gengrowth-flow-mvp');
 const ORACLE = process.env.GG_ORACLE_DIR || join(HOME, 'oracle');
+const WORKTREE_ROOT = process.env.GG_ORACLE_WORKTREE_ROOT || join(HOME, 'oracle-worktrees', 'seo-autopilot');
 const OPS = process.env.GG_OPS_DIR || join(HOME, 'gengrowth-ops');
 const WINNER = process.env.GG_WINNER_LLM || 'claude';
 const VERSION = process.env.GG_VERSION || 'v8';
 
 const STAGING = join(FLOW, '_staging');
-const ART = join(ORACLE, 'data', 'articles');
-const AUTHORS_INDEX = join(ORACLE, 'data', 'authors', 'index.ts');
 const CONV = join(FLOW, 'tools', 'scripts', 'gg-md-to-oracle-ts.mjs');
 const REG = join(FLOW, 'tools', 'scripts', 'gg-oracle-register-index.mjs');
 const PLAN_GLOB_DIR = join(OPS, 'inbox', '06-tasks', 'tasks');
@@ -75,7 +75,10 @@ const SLUG_RE = /^[a-z0-9][a-z0-9-]*$/;
 function sh(cmd, args, opts = {}) {
   return execFileSync(cmd, args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], ...opts });
 }
-function git(args, opts = {}) { return sh('git', ['-C', ORACLE, ...args], opts); }
+function gitIn(repo, args, opts = {}) { return sh('git', ['-C', repo, ...args], opts); }
+function git(args, opts = {}) { return gitIn(ORACLE, args, opts); }
+function articlesDir(repo) { return join(repo, 'data', 'articles'); }
+function authorsIndex(repo) { return join(repo, 'data', 'authors', 'index.ts'); }
 function log(...a) { process.stderr.write(`[autopilot] ${a.join(' ')}\n`); }
 function sleepSync(ms) {
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
@@ -87,21 +90,40 @@ function die(message, code = 1) {
 
 // CRITICAL: the local oracle clone lags prod badly (observed 71 commits behind),
 // which yields false build failures and risks re-publishing already-live slugs.
-// Always hard-sync to origin/main before evaluating anything. oracle is a
-// publish target, not a dev workspace, so discarding local cruft is correct.
+// Keep /oracle itself as the updated GitHub baseline; all article writes happen
+// in per-branch worktrees below WORKTREE_ROOT.
 function syncOracle() {
-  git(['fetch', '--quiet', 'origin']);
-  const dirty = git(['status', '--porcelain']).trim();
+  git(['fetch', '--quiet', '--prune', 'origin']);
+  const dirty = git(['status', '--porcelain', '--untracked-files=no']).trim();
   if (dirty && process.env.GG_AUTOPILOT_FORCE_ORACLE_CLEAN !== '1') {
     throw new Error(
-      `oracle workspace is dirty; refusing to reset ${ORACLE}. ` +
-      `Clean/stash it or set GG_AUTOPILOT_FORCE_ORACLE_CLEAN=1 for a dedicated autopilot clone.`,
+      `oracle has tracked local changes; refusing to reset ${ORACLE}. ` +
+      `Commit/stash them or set GG_AUTOPILOT_FORCE_ORACLE_CLEAN=1 for a dedicated baseline clone.`,
     );
   }
   try { git(['checkout', '-q', 'main']); } catch { /* already on main */ }
-  git(['clean', '-fd', 'data/articles']);
   git(['reset', '--hard', '-q', 'origin/main']);
   log(`synced oracle → origin/main @ ${git(['rev-parse', '--short', 'HEAD']).trim()}`);
+}
+
+function worktreePath(branch) {
+  return join(WORKTREE_ROOT, branch.replace(/[^A-Za-z0-9._-]+/g, '__'));
+}
+
+function preparePublishWorktree(branch) {
+  mkdirSync(WORKTREE_ROOT, { recursive: true });
+  const wt = worktreePath(branch);
+  try { git(['worktree', 'remove', '--force', wt]); } catch { /* no stale worktree */ }
+  try { git(['branch', '-D', branch]); } catch { /* no stale local branch */ }
+  git(['worktree', 'add', '--force', '-B', branch, wt, 'origin/main']);
+  log(`worktree ${branch} → ${wt}`);
+  return wt;
+}
+
+function cleanupWorktree(worktree) {
+  if (!worktree) return;
+  try { git(['worktree', 'remove', '--force', worktree]); }
+  catch { /* keep best-effort cleanup non-fatal */ }
 }
 
 function parseArgs(argv) {

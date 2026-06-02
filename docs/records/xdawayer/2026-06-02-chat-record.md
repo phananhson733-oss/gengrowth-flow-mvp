@@ -136,3 +136,15 @@ ok，先修复问题，准备明天 B
 确认当前 Codex App 提供 `automation_update` 自动化能力，并查阅 Codex 手册中 Automations 与 Worktrees 章节。结论：可以使用 Codex 自动化模块实现定时唤醒和后台编排，且推荐用于替代 launchd 的调度层；但不建议让自动化直接承担全部发布逻辑，应保留 `tools/scripts/gg-seo-autopilot.mjs` 作为确定性 driver，继续负责 GitHub 同步、worktree 写作、ledger 状态机、preview 验收状态和 merge 硬门闩。建议明天先创建 paused 或手动触发的 project automation，在 `/Users/awayer_mini/gengrowth-flow-mvp` 运行，执行 scan、preview 获取、codex/chrome 验收，成功后调用 `--mark-verified` 与 `--merge`，失败则 `--mark-failed`。
 
 ---
+
+### Q5 — 22:18
+
+**🙋 提问：**
+
+你帮我总结一个上下文，让我发给 codex 自动化
+
+**🤖 回答：**
+
+为 Codex 自动化整理可直接粘贴的 durable prompt，上下文包括：自动化只负责定时唤醒和编排，不承载发布安全逻辑；`tools/scripts/gg-seo-autopilot.mjs` 是确定性 driver，负责 `/oracle` 同步、oracle worktree、claim ledger、build gate、preview 验收状态和 merge 硬门闩；自动化每次只处理一篇，先 `--scan`，再读取 `--status`，对 `pushed-preview` 获取 Vercel preview URL 并做 codex/chrome 验收，成功调用 `--mark-verified` 与 `--merge`，失败调用 `--mark-failed`。
+
+---

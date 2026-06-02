@@ -25,11 +25,20 @@ trap 'rmdir "$LOCK" 2>/dev/null' EXIT
 
 echo "$(date '+%F %T') tick start" >> "$LOG"
 
-# --dangerously-skip-permissions: required for unattended autonomy. The autopilot
-# only touches its own preview branches + the publish pipeline; it merges to prod
-# ONLY after codex + chrome verification pass (the gate lives in the prompt).
-claude -p "$(cat "$PROMPT_FILE")" \
-  --dangerously-skip-permissions \
-  >> "$LOG" 2>&1
+AUTO="$SCRIPT_DIR/gg-seo-autopilot.mjs"
 
-echo "$(date '+%F %T') tick end (exit $?)" >> "$LOG"
+# 1) Deterministic pass (no LLM cost on idle ticks): sync oracle, claim one ready
+#    task, convert, build-gate, push a preview branch + PR — or stand down.
+node "$AUTO" --scan --limit 1 >> "$LOG" 2>&1
+
+# 2) Only spend an LLM tick when there is a pushed preview to verify + merge.
+if node "$AUTO" --status 2>/dev/null | grep -q '"pushed-preview"'; then
+  echo "$(date '+%F %T') preview pushed → running verify+merge tick" >> "$LOG"
+  # --dangerously-skip-permissions: unattended autonomy. The autopilot only ever
+  # merges to prod AFTER codex + chrome verification pass (gate lives in prompt).
+  claude -p "$(cat "$PROMPT_FILE")" --dangerously-skip-permissions >> "$LOG" 2>&1
+else
+  echo "$(date '+%F %T') no preview to verify — idle/parked, skipping LLM tick" >> "$LOG"
+fi
+
+echo "$(date '+%F %T') tick end" >> "$LOG"

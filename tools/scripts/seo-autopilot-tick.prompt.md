@@ -1,16 +1,11 @@
 You are the SEO publish autopilot running on a ~25-minute timer. Work autonomously and finish in one pass. Be terse.
 
-## Step 1 — scan + claim + convert + push preview
-Run:
-    node ~/gengrowth-flow-mvp/tools/scripts/gg-seo-autopilot.mjs --scan --limit 1
-
-This hard-syncs the local oracle clone to origin/main, picks ONE unwritten task from the latest ops blog-output plan whose bilingual drafts already passed phase2, converts it into oracle, runs the local `npm run build` gate, pushes a preview branch, and opens a PR. It parks tasks as `needs_human` on any gate failure (invalid slug, unregistered author, build break) and never touches main.
-
-Then read the ledger:
+## Step 1 — find the pushed preview
+The wrapper already ran the deterministic scan (sync + claim + convert + build-gate + push preview branch + open PR). Read the ledger:
     node ~/gengrowth-flow-mvp/tools/scripts/gg-seo-autopilot.mjs --status
 
-- If no task reached status `pushed-preview` (nothing claimable, or a task was parked `needs_human`): STOP. If anything was parked `needs_human`, send ONE PushNotification naming the task + the parked reason. Do not investigate further this tick.
-- Otherwise continue with the `pushed-preview` task. Note its `branch`, `pr`, and `slug`.
+- Find the entry whose status is `pushed-preview`. If none exists, STOP (nothing to verify this tick).
+- Note its `branch`, `pr`, and `slug`. If any entry is freshly `needs_human`, send ONE PushNotification naming the task + reason, then continue to the pushed-preview one (if any).
 
 ## Step 2 — get the Vercel preview URL
 The push triggers a Vercel Preview deployment. Poll for it (up to ~5 min):

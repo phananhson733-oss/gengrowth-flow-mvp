@@ -64,6 +64,42 @@ function git(cwd, args) {
   return execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
 }
 
+function initOracleWithOrigin(h) {
+  const origin = join(h.root, 'origin.git');
+  git(h.root, ['init', '--bare', origin]);
+  git(h.oracle, ['init', '-b', 'main']);
+  git(h.oracle, ['config', 'user.name', 'Test User']);
+  git(h.oracle, ['config', 'user.email', 'test@example.com']);
+  mkdirSync(join(h.oracle, 'data', 'articles'), { recursive: true });
+  mkdirSync(join(h.oracle, 'data', 'authors'), { recursive: true });
+  writeFileSync(join(h.oracle, 'README.md'), 'clean\n');
+  writeFileSync(join(h.oracle, 'data', 'articles', 'index.ts'), 'const ARTICLES_EN: WikiArticle[] = [\n];\nconst ARTICLES_ZH: WikiArticle[] = [\n];\n');
+  writeFileSync(join(h.oracle, 'data', 'authors', 'index.ts'), 'export const authors = [{ id: "test-author" }];\n');
+  git(h.oracle, ['add', '.']);
+  git(h.oracle, ['commit', '-m', 'init']);
+  git(h.oracle, ['remote', 'add', 'origin', origin]);
+  git(h.oracle, ['push', '-u', 'origin', 'main']);
+}
+
+function writeStubFlow(h, slug = 'test-slug') {
+  const flow = join(h.root, 'flow');
+  const scripts = join(flow, 'tools', 'scripts');
+  const staging = join(flow, '_staging');
+  mkdirSync(scripts, { recursive: true });
+  mkdirSync(staging, { recursive: true });
+  writeFileSync(join(staging, 'PG-TEST-001-en.md'), `---\nslug: ${slug}\nauthor_id: test-author\n---\n# Test\n\nBody.\n`);
+  writeFileSync(join(staging, 'PG-TEST-001-en.manifest.json'), JSON.stringify({ phase2_checks: { overall: 'pass' } }));
+  writeFileSync(join(scripts, 'gg-md-to-oracle-ts.mjs'), `#!/usr/bin/env node
+import { writeFileSync, mkdirSync } from 'node:fs';
+import { dirname } from 'node:path';
+const out = process.argv[process.argv.indexOf('--out') + 1];
+mkdirSync(dirname(out), { recursive: true });
+writeFileSync(out, 'export const testSlugEn = { authorId: "test-author" };\\n');
+`);
+  writeFileSync(join(scripts, 'gg-oracle-register-index.mjs'), 'process.exit(0);\n');
+  return flow;
+}
+
 test('--merge refuses a pushed-preview branch that has not been marked verified', () => {
   const h = makeHarness();
   try {
@@ -157,16 +193,7 @@ test('--mark-failed parks a pushed preview with a required failure reason', () =
 test('--scan refuses to hard-reset a dirty oracle workspace', () => {
   const h = makeHarness();
   try {
-    const origin = join(h.root, 'origin.git');
-    git(h.root, ['init', '--bare', origin]);
-    git(h.oracle, ['init', '-b', 'main']);
-    git(h.oracle, ['config', 'user.name', 'Test User']);
-    git(h.oracle, ['config', 'user.email', 'test@example.com']);
-    writeFileSync(join(h.oracle, 'README.md'), 'clean\n');
-    git(h.oracle, ['add', 'README.md']);
-    git(h.oracle, ['commit', '-m', 'init']);
-    git(h.oracle, ['remote', 'add', 'origin', origin]);
-    git(h.oracle, ['push', '-u', 'origin', 'main']);
+    initOracleWithOrigin(h);
 
     writeFileSync(join(h.tasks, '2026-06-03-blog-output-plan.md'), '- [ ] `PG-TEST-001` test keyword\n');
     writeFileSync(join(h.oracle, 'README.md'), 'human local edit\n');
@@ -176,6 +203,32 @@ test('--scan refuses to hard-reset a dirty oracle workspace', () => {
     assert.notEqual(r.status, 0);
     assert.match(`${r.stdout}${r.stderr}`, /dirty|refusing/i);
     assert.equal(readFileSync(join(h.oracle, 'README.md'), 'utf8'), 'human local edit\n');
+  } finally {
+    h.cleanup();
+  }
+});
+
+test('--scan does not reclaim a task already waiting in pushed-preview', () => {
+  const h = makeHarness();
+  try {
+    initOracleWithOrigin(h);
+    const flow = writeStubFlow(h);
+    writeFileSync(join(h.bin, 'npm'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
+    writeFileSync(join(h.tasks, '2026-06-03-blog-output-plan.md'), '- [ ] `PG-TEST-001` test keyword\n');
+    writeClaims(h, {
+      'PG-TEST-001': {
+        status: 'pushed-preview',
+        branch: 'seo/auto/2026-06-03-PG-TEST-001',
+        slug: 'test-slug',
+      },
+    });
+
+    const r = runAuto(h, ['--scan', '--dry-run', '--limit', '1'], { GG_FLOW_REPO: flow });
+
+    assert.equal(r.status, 0, `${r.stdout}${r.stderr}`);
+    const claims = JSON.parse(readFileSync(h.claimsPath, 'utf8'));
+    assert.equal(claims['PG-TEST-001'].status, 'pushed-preview');
+    assert.match(`${r.stdout}${r.stderr}`, /claim=pushed-preview/);
   } finally {
     h.cleanup();
   }

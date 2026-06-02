@@ -1,3 +1,28 @@
+---
+title: Ketu Mahadasha
+slug: ketu-mahadasha
+date: 2026-06-02
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-MAHADASHA-002
+author_id: "aditi-sharma"
+author_display_name: "Aditi Sharma"
+target_keyword: ketu mahadasha
+associated_keywords:
+  - ketu mahadasha effects
+  - ketu dasha
+  - 7 year ketu period
+  - ketu mahadasha remedies
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-02T10:45:15.736Z
+content_sha256_short: 155f65980ec028c9
+phase2_checks: all-pass
+---
+
 # What Ketu Mahadasha Really Asks of You Over Seven Years
 
 ## What is Ketu Mahadasha?

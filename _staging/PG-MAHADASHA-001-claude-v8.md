@@ -16,7 +16,7 @@ The reason to learn the system before any single planet is that the periods only
 
 There is also a quieter reason. When you treat a single period as your fate, you start reading every event of those years through that one lens, which narrows how you see your own life. Holding the full nine-period family in mind keeps any one cycle in proportion: it is a chapter with a beginning, a length, and an end, not a permanent identity. That framing is the difference between using the system as a planning tool and using it as a source of fear.
 
-## The Nine Planetary Periods at a Glance
+## The Mahadasha at a Glance
 
 | Planetary Period | Span (Years) | Core Theme | Life Domains Emphasized | Common Misread |
 | --- | --- | --- | --- | --- |
@@ -32,7 +32,7 @@ There is also a quieter reason. When you treat a single period as your fate, you
 
 ## The Nine Mahadasha Periods: Quick Guide
 
-The Vimshottari scheme of the *Brihat Parashara Hora Shastra* runs the nine periods in a fixed order, each carrying its own theme, span, and characteristic misread. Here is the whole family at a glance, with the headline tendency for each and the trap to avoid:
+The Vimshottari scheme of the Brihat Parashara Hora Shastra runs the nine periods in a fixed order, each carrying its own theme, span, and characteristic misread. Here is the whole family at a glance, with the headline tendency for each and the trap to avoid:
 
 1. **Ketu period (7 years)** — The shortest period after the Sun, Ketu's stretch tends toward detachment, loose ends, and a pull inward. Classical readings tie it to release, spiritual questioning, and the quiet dismantling of things that no longer fit. The common misread is to label every Ketu year as misfortune; the same energy that strips away can also free you from what you were clinging to. Read it as a clearing season, not a punishment, in [[<TBD-internal-link: guide to the Ketu mahadasha period>]].
 2. **Venus period (20 years)** — The longest period of all, Venus colors two decades with themes of relationship, comfort, creativity, and material ease. It often coincides with marriage, artistic output, and a softer relationship with pleasure and money. The trap is assuming twenty years will be uniformly sweet; Venus also tests how you handle attachment and excess, and the period reads very differently depending on the planet's condition in the chart. A fuller treatment lives in [[<TBD-internal-link: overview of the Venus mahadasha period>]].

@@ -8,9 +8,11 @@ This period is the roughly 18-year stretch in a Vedic birth chart when Rahu, the
 - Anchored to the north lunar node, not a physical planet you can point at in the sky
 - Associated with strong ambition, foreign or unfamiliar pulls, and a hunger for the new
 
+The Brihat Parashara Hora Shastra, which sets out the Vimshottari scheme, fixes this 18-year allotment precisely and places it in a defined order among the nine rulers. In practice the long period is never read as a single flat tone. It is subdivided into antardashas, sub-periods governed in turn by each of the nine planets, so the opening years under Rahu's own sub-period read differently from the later years colored by Jupiter or Saturn. That internal structure is what lets a practitioner trace how the chapter actually moves rather than treating eighteen years as one undifferentiated block.
+
 ## Why It Matters for Self-Awareness
 
-This 18-year dasha matters because of one specific dread: people hear the name and brace for eighteen years of disaster, then read every setback as proof the curse is real. The tradition does not say that. It describes a long season of intensified wanting and rapid, often disorienting growth — something to work with, not something to survive. Across a decade of independent research in the classical Sanskrit texts I grew up around as a second-generation Jyotish practitioner, I have watched this single misreading create more needless fear than almost any other placement.
+Rahu Mahadasha matters because of one specific dread: people hear the name and brace for eighteen years of disaster, then read every setback as proof the curse is real. The tradition does not say that. It describes a long season of intensified wanting and rapid, often disorienting growth — something to work with, not something to survive. Across a decade of independent research in the classical Sanskrit texts I grew up around as a second-generation Jyotish practitioner, I have watched this single misreading create more needless fear than almost any other placement.
 
 It also helps to know which system you are reading. Vedic astrology uses the sidereal zodiac and the dasha timeline, so a Rahu period has no clean equivalent in the tropical, transit-based approach most Western horoscopes use. The two describe different machinery, and conflating them muddies both — a distinction worth understanding through a plain explanation of [[<TBD-internal-link: how Vedic and Western astrology differ in zodiac and timing>]]. Reading the period as tendency rather than decree is what turns it into useful self-knowledge instead of low-grade anxiety.
 
@@ -36,7 +38,7 @@ The point of the Rahu period is not prediction but recognition. These are observ
 
 ## Common Misreadings
 
-Most surface-level write-ups distort this period in a few predictable ways. Each correction below moves from the popular misread to what the tradition actually holds.
+Most surface-level write-ups distort Rahu Mahadasha in a few predictable ways. Each correction below moves from the popular misread to what the tradition actually holds.
 
 1. **"It guarantees ruin."** Misread: eighteen years of guaranteed disaster. Reality: the texts describe amplification and unconventional growth that can swing either way depending on the whole chart and how the energy is handled.
 2. **"Remedies cancel it out."** Misread: the right ritual makes the period painless. Reality: classical sources frame practices as ways to work with a tendency, never as guaranteed cures that override it.
@@ -52,7 +54,7 @@ Most surface-level write-ups distort this period in a few predictable ways. Each
 | Sub-periods | Each antardasha shifts the tone over months to years | Each sub-period ruled by a different planet in turn | Track which antardasha is currently active for nuance |
 | Reading stance | Read as tendency, never as a fixed outcome | Weighed against the whole chart, not Rahu in isolation | Separate recurring patterns from one-off events |
 
-## Questions People Ask About Rahu Mahadasha
+## Questions People Ask About the Rahu Period
 
 **Is Rahu Mahadasha always bad?**
 
@@ -66,7 +68,7 @@ It runs about 18 years, the second-longest of the nine planetary periods. Within
 
 The Vimshottari dasha system is set out in the Brihat Parashara Hora Shastra, the classical text attributed to the sage Parashara. It defines the period lengths and the order in which the nine planets rule.
 
-**Does Rahu Mahadasha mean the same thing in Western astrology?**
+**Does this dasha mean the same thing in Western astrology?**
 
 Not directly. The dasha system belongs to Vedic astrology and its sidereal zodiac, so there is no clean Western equivalent built on tropical transits.
 
@@ -83,7 +85,7 @@ Not directly. The dasha system belongs to Vedic astrology and its sidereal zodia
 
 ## Take Action
 
-Pull your dasha timeline and find the start year of your Rahu period; you will come away knowing exactly which 18-year chapter you are in and which sub-period is active right now. That single act trades vague dread for a clear map — and once you can see the period as a season of amplified wanting rather than a verdict, you can decide what to do with the drive instead of bracing against it. Want the full system first? Read the complete guide to mahadasha and the Vimshottari periods: https://astrologywiki.com/en/wiki/mahadasha
+Pull your dasha timeline and find the start year of your Rahu period; doing so reveals exactly which 18-year chapter you are in and which sub-period is active right now. That single act trades vague dread for a clear map — and once you can see the period as a season of amplified wanting rather than a verdict, you can decide what to do with the drive instead of bracing against it. Want the full system first? Read the complete guide to mahadasha and the Vimshottari periods: https://astrologywiki.com/en/wiki/mahadasha
 
 ## Sources
 

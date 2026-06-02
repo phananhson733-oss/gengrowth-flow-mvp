@@ -10,7 +10,7 @@ Ketu Mahadasha is **the seven-year Vimshottari period assigned to the south luna
 
 ## Why It Matters for Self-Awareness
 
-This period matters for self-awareness because the fear attached to it usually outruns the facts. Many people reach this period braced for seven years of loss — a relationship that ends, work that dissolves, a creeping sense of drift — and miss that the same tradition frames those events as release rather than punishment. In a decade of independent research into the classical Sanskrit sources, working as a second-generation Jyotish practitioner, I have watched this single reframe change how people meet the period: the outer events may look similar, but read as completion they stop feeling like things being done *to* you.
+Ketu Mahadasha matters for self-awareness because the fear attached to it usually outruns the facts. Many people reach this period braced for seven years of loss — a relationship that ends, work that dissolves, a creeping sense of drift — and miss that the same tradition frames those events as release rather than punishment. In a decade of independent research into the classical Sanskrit sources, working as a second-generation Jyotish practitioner, I have watched this single reframe change how people meet the period: the outer events may look similar, but read as completion they stop feeling like things being done *to* you.
 
 The practical value is that naming a tendency is not the same as predicting a fate. Knowing the period leans toward detachment lets you notice where you are already over-attached — to a title, a role, an old plan that no longer fits — and meet the loosening on purpose instead of resisting it. People often describe the years as quieter, less driven, more reflective. That shift can read as disorientation if you expected forward motion, or as relief if you were ready to set something down. Either way, the awareness that this is a season with a shape, not a random run of bad luck, is what makes it workable.
 
@@ -22,7 +22,7 @@ It also reads differently from a generic planetary period. A benefic period migh
 
 ## How to Read Ketu Mahadasha in Your Chart
 
-Reading this 7-year dasha in your own chart starts with noticing where detachment is already showing up, not waiting for a single dramatic event. A few observable signals:
+Reading Ketu Mahadasha in your own chart starts with noticing where detachment is already showing up, not waiting for a single dramatic event. A few observable signals:
 
 1. **Fading pull toward old goals.** Ambitions that once drove you quietly lose their charge, and you stop chasing them without quite deciding to.
 2. **Rising interest in the inner life.** Solitude, study, meditation, or spiritual questions start feeling more compelling than social wins or material milestones.
@@ -42,7 +42,7 @@ The loudest takes on this period tend to be the least accurate, and a few misrea
 3. **"Remedies will cancel it."** Traditional practices are framed as ways to meet the period consciously, not guaranteed cures that erase its themes.
 4. **"Detachment means depression."** Spiritual disinterest in the classical reading is a reorientation of attention, not a clinical mood state to diagnose.
 
-## Ketu Mahadasha at a Glance
+## Ketu's Dasha at a Glance
 
 | Property | How It Works | Natal Anchor | How to Observe |
 | --- | --- | --- | --- |
@@ -53,7 +53,7 @@ The loudest takes on this period tend to be the least accurate, and a few misrea
 
 ## Ketu Mahadasha FAQ
 
-**How long does the Ketu Mahadasha period last?**
+**How long does this period last?**
 
 It runs for exactly seven years within the Vimshottari cycle. That makes it the shortest of the system's major planetary periods.
 

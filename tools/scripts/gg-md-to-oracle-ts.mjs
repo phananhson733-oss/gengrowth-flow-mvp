@@ -185,6 +185,22 @@ export const TBD_LINK_RULES = [
   { match: /(名人|公众人物).{0,8}高敏感|高敏感.{0,8}名人(案例)?/, href: '/en/wiki/famous-highly-sensitive-people' },
   { match: /高敏感(人群)?(特质)?(总览|概览|pillar)|高敏感人群特质总览/, href: '/en/wiki/highly-sensitive-person' },
   { match: /(疗愈|安放|理解|安顿).{0,4}内在.{0,3}创伤|内在情绪创伤/, href: '/en/wiki/healing-your-inner-wound' },
+  // --- 6/2 MAHADASHA cluster (mahadasha pillar + rahu/ketu/saturn(shani)/venus
+  // spokes). Planet spokes MUST precede the generic mahadasha pillar rule
+  // (first-match-wins); vedic-vs-western-astrology is the bridge. Saturn-dasha
+  // matches only with "dasha/period" so "saturn in pisces" still routes below. ---
+  { match: /\brahu\s+(maha)?dasha\b|\brahu\s+(planetary\s+)?period\b/i, href: '/en/wiki/rahu-mahadasha' },
+  { match: /\bketu\s+(maha)?dasha\b|\bketu\s+(planetary\s+)?period\b/i, href: '/en/wiki/ketu-mahadasha' },
+  { match: /\b(saturn|shani)\s+(maha)?dasha\b|\bsaturn\s+(planetary\s+)?period\b/i, href: '/en/wiki/saturn-mahadasha' },
+  { match: /\b(venus|shukra)\s+(maha)?dasha\b|\bvenus\s+(planetary\s+)?period\b/i, href: '/en/wiki/venus-mahadasha' },
+  { match: /vedic\s+(and|vs\.?|versus)\s+western|western\s+astrology|vedic\s+versus\s+western/i, href: '/en/wiki/vedic-vs-western-astrology' },
+  { match: /pillar\s+guide\s+to\s+(the\s+)?mahadasha|mahadasha\s+(system|and\s+(the\s+)?vimshottari)|\bmahadasha\b\s+(pillar|overview|guide)|vimshottari\s+dasha\s+system/i, href: '/en/wiki/mahadasha' },
+  { match: /计都.{0,3}大运|ketu.{0,4}大运/i, href: '/en/wiki/ketu-mahadasha' },
+  { match: /(罗睺|羅睺|拉胡).{0,3}大运|rahu.{0,4}大运/i, href: '/en/wiki/rahu-mahadasha' },
+  { match: /(土星|shani|沙尼).{0,3}大运|saturn.{0,4}大运/i, href: '/en/wiki/saturn-mahadasha' },
+  { match: /(金星|shukra).{0,3}大运|venus.{0,4}大运/i, href: '/en/wiki/venus-mahadasha' },
+  { match: /吠陀占星?.{0,8}西方|吠陀.{0,4}西方占星|吠陀占星核心概念/, href: '/en/wiki/vedic-vs-western-astrology' },
+  { match: /大运(周期|体系|系统)?.{0,6}(总览|pillar)|大运.{0,4}mahadasha|mahadasha.{0,4}总览/i, href: '/en/wiki/mahadasha' },
   // --- 5/30 cluster (healing_placements pillar+spokes, saturn-in-pisces transit,
   // persephone-goddess myth). Placed FIRST so "Chiron/Mars in the 12th house" and
   // "Saturn in Pisces" win over the broad 12th-house / pisces rules further down

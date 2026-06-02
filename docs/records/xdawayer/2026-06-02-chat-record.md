@@ -17,6 +17,7 @@ tags:
 
 - 评审了 SEO 自动出稿调度器 Phase 0 / Phase 1 的方案与本地落地情况，确认语法校验通过、账本为空、launchd 未加载，但不建议直接启用全自动 prod 合并。
 - 识别出主要风险：`--merge` 缺少确定性验证条件、claim 账本并发写入不安全、headless Claude 验收/通知链路未实测、oracle hard reset 需要明确专用 clone 边界。
+- 修复了 SEO autopilot 的 merge 安全门闩、claim 状态机、账本锁、oracle 脏改保护和 tick prompt，为 2026-06-03 手动 B 流程做准备。
 
 ---
 
@@ -95,5 +96,17 @@ tags:
 **🤖 回答：**
 
 按本地证据评审 SEO 自动出稿调度器：读取 `AGENTS.md`、检查必需 profile/reminders 文件、使用 review 技能，核对 git 状态、4 个脚本文件、launchd 状态、oracle/ops 状态和语法校验。结论是不建议直接选择 A 上线全自动 prod 合并，建议先走 B 手动端到端验一单。关键发现包括：`--merge` 仅执行 `gh pr merge`，没有在确定性代码里强制校验 codex/chrome/Vercel 结果；claim 账本是普通 JSON 读写，不能证明跨 session 并发安全；headless `claude -p` 的 `/codex`、chrome MCP、PushNotification 链路尚未实测；`syncOracle()` 会 hard reset/clean，需要确保 oracle 是专用发布 clone；`5435cb3` 这一笔实际只包含 3 个目标文件，prompt 文件来自前一笔提交。本地验证：`node --check`、`bash -n`、`plutil -lint` 通过；`gg-seo-autopilot.mjs --status` 输出 `{}`；launchd 未加载；oracle 无脏改且无 open PR；gengrowth-ops 当前存在既有脏改且 claim 文件不存在。
+
+---
+
+### Q2 — 22:01
+
+**🙋 提问：**
+
+ok，先修复问题，准备明天 B
+
+**🤖 回答：**
+
+按 TDD 流程修复 SEO autopilot：新增 `tools/scripts/__tests__/gg-seo-autopilot.smoke.test.mjs` 覆盖 merge 必须先验收、`--mark-verified`、`--mark-failed`、dirty oracle 拒绝 reset、`pushed-preview` 不重复认领；修改 `tools/scripts/gg-seo-autopilot.mjs`，加入 claim ledger 锁、原子写、`verified-preview` 状态门闩、失败 park 命令、oracle dirty preflight 和更完整的 claim 状态过滤；更新 `tools/scripts/gg-seo-autopilot-tick.sh` 与 `tools/scripts/seo-autopilot-tick.prompt.md`，使 tick 能处理 `pushed-preview/verified-preview` 并通过确定性命令标记验收或失败。验证命令：`node --test tools/scripts/__tests__/gg-seo-autopilot.smoke.test.mjs` 5/5 通过；`node --check tools/scripts/gg-seo-autopilot.mjs && bash -n tools/scripts/gg-seo-autopilot-tick.sh && plutil -lint tools/scripts/com.gengrowth.seo-autopilot.plist` 通过；`node tools/scripts/gg-seo-autopilot.mjs --status` 输出 `{}`。
 
 ---

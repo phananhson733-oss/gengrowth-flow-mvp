@@ -35,8 +35,8 @@ node "$AUTO" --scan --limit 1 >> "$LOG" 2>&1
 #    preview whose merge needs retry.
 if node "$AUTO" --status 2>/dev/null | grep -Eq '"(pushed-preview|verified-preview)"'; then
   echo "$(date '+%F %T') preview pending → running verify+merge tick" >> "$LOG"
-  # --dangerously-skip-permissions: unattended autonomy. The autopilot only ever
-  # merges to prod AFTER codex + chrome verification pass (gate lives in prompt).
+  # --dangerously-skip-permissions: unattended autonomy. The driver only merges
+  # after the ledger is marked verified by the codex + chrome preview gate.
   claude -p "$(cat "$PROMPT_FILE")" --dangerously-skip-permissions >> "$LOG" 2>&1
 else
   echo "$(date '+%F %T') no preview to verify — idle/parked, skipping LLM tick" >> "$LOG"

@@ -1,6 +1,6 @@
 You are the SEO publish autopilot running on a ~25-minute timer. Work autonomously and finish in one pass. Be terse.
 
-## Step 1 — find the pushed preview
+## Step 1 — find the pending preview
 The wrapper already ran the deterministic scan (sync + claim + convert + build-gate + push preview branch + open PR). Read the ledger:
     node ~/gengrowth-flow-mvp/tools/scripts/gg-seo-autopilot.mjs --status
 

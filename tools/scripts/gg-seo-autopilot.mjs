@@ -4,8 +4,8 @@
 // Scans the latest ops weekly blog-output plan, claims ONE unwritten task whose
 // bilingual drafts already exist + passed phase2 in flow-mvp _staging, converts
 // it into the oracle repo, validates it, and (unless --dry-run) pushes a preview
-// branch. Verification (codex + chrome MCP) and the final merge-to-main are done
-// by the orchestrating agent via --merge, NOT by this deterministic script.
+// branch. Verification (codex + chrome MCP) marks the ledger via --mark-verified;
+// final merge-to-main is refused unless that verified-preview state exists.
 //
 // This script encodes the gates discovered during Phase 0 dry-run:
 //   1. draft-exists   : EN enriched md (_staging/<PID>-en.md) must exist
@@ -27,6 +27,8 @@
 //
 // Usage:
 //   node gg-seo-autopilot.mjs [--scan] [--dry-run] [--limit 1]
+//   node gg-seo-autopilot.mjs --mark-verified --branch seo/auto/<date>-<PID> --preview-url https://...
+//   node gg-seo-autopilot.mjs --mark-failed --branch seo/auto/<date>-<PID> --reason "..."
 //   node gg-seo-autopilot.mjs --merge --branch seo/auto/<date>-<PID>
 //   node gg-seo-autopilot.mjs --status
 //

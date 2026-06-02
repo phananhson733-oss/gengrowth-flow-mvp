@@ -206,11 +206,12 @@ function doScan(o) {
     claims[t.pgId] = { status: 'active', slug: t.slug, owner: 'autopilot', plan: basename(plan) };
     saveClaims(claims);
 
-    // ensure clean oracle main before branching
-    if (!o.dryRun) { git(['fetch', '--quiet', 'origin']); git(['checkout', 'main']); git(['pull', '--quiet', '--ff-only']); }
-
     const branch = `seo/auto/${new Date().toISOString().slice(0, 10)}-${t.pgId}`;
-    if (!o.dryRun) { try { git(['checkout', '-b', branch]); } catch { git(['checkout', branch]); } }
+    if (!o.dryRun) {
+      git(['checkout', '-q', 'main']);
+      try { git(['branch', '-D', branch]); } catch { /* no stale branch */ }
+      git(['checkout', '-q', '-b', branch]);
+    }
 
     let res;
     try { res = convert(t.pgId, t.slug); }

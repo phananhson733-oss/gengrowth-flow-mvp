@@ -18,6 +18,7 @@ tags:
 - 评审了 SEO 自动出稿调度器 Phase 0 / Phase 1 的方案与本地落地情况，确认语法校验通过、账本为空、launchd 未加载，但不建议直接启用全自动 prod 合并。
 - 识别出主要风险：`--merge` 缺少确定性验证条件、claim 账本并发写入不安全、headless Claude 验收/通知链路未实测、oracle hard reset 需要明确专用 clone 边界。
 - 修复了 SEO autopilot 的 merge 安全门闩、claim 状态机、账本锁、oracle 脏改保护和 tick prompt，为 2026-06-03 手动 B 流程做准备。
+- 进一步调整 SEO autopilot：`/oracle` 先远程同步 GitHub 主线，文章生成/提交改为在独立 oracle worktree 中完成，避免污染主工作区。
 
 ---
 
@@ -108,5 +109,17 @@ ok，先修复问题，准备明天 B
 **🤖 回答：**
 
 按 TDD 流程修复 SEO autopilot：新增 `tools/scripts/__tests__/gg-seo-autopilot.smoke.test.mjs` 覆盖 merge 必须先验收、`--mark-verified`、`--mark-failed`、dirty oracle 拒绝 reset、`pushed-preview` 不重复认领；修改 `tools/scripts/gg-seo-autopilot.mjs`，加入 claim ledger 锁、原子写、`verified-preview` 状态门闩、失败 park 命令、oracle dirty preflight 和更完整的 claim 状态过滤；更新 `tools/scripts/gg-seo-autopilot-tick.sh` 与 `tools/scripts/seo-autopilot-tick.prompt.md`，使 tick 能处理 `pushed-preview/verified-preview` 并通过确定性命令标记验收或失败。验证命令：`node --test tools/scripts/__tests__/gg-seo-autopilot.smoke.test.mjs` 5/5 通过；`node --check tools/scripts/gg-seo-autopilot.mjs && bash -n tools/scripts/gg-seo-autopilot-tick.sh && plutil -lint tools/scripts/com.gengrowth.seo-autopilot.plist` 通过；`node tools/scripts/gg-seo-autopilot.mjs --status` 输出 `{}`。
+
+---
+
+### Q3 — 22:10
+
+**🙋 提问：**
+
+在 /oracle 中，需要先 远程更新 github。同时建议新建 worktree 进行写 seo 文章然后合并
+
+**🤖 回答：**
+
+按用户建议继续修改 SEO autopilot：新增测试覆盖 `/oracle` 先追上 `origin/main`，并在独立 worktree 中写入 SEO 文章、build、commit、push，确保 `/oracle` 主工作区保持 `main` 且不写入文章文件。修改 `tools/scripts/gg-seo-autopilot.mjs`：新增 `GG_ORACLE_WORKTREE_ROOT`，默认 `~/oracle-worktrees/seo-autopilot`；`syncOracle()` 改为 `fetch --prune origin` 后 reset `main` 到 `origin/main`，仅拒绝已跟踪文件脏改，允许 `.playwright-mcp/` 这类未跟踪运行产物；新增 worktree 创建/清理逻辑；转换、作者校验、build、commit、PR 创建都在 publish worktree 中执行；merge 后清理对应 worktree 并重新同步 `/oracle`。验证命令：`node --test tools/scripts/__tests__/gg-seo-autopilot.smoke.test.mjs` 6/6 通过；`node --check tools/scripts/gg-seo-autopilot.mjs && bash -n tools/scripts/gg-seo-autopilot-tick.sh && plutil -lint tools/scripts/com.gengrowth.seo-autopilot.plist` 通过；`node tools/scripts/gg-seo-autopilot.mjs --status` 输出 `{}`。
 
 ---

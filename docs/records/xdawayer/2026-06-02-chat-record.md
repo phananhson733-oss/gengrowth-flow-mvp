@@ -19,6 +19,7 @@ tags:
 - 识别出主要风险：`--merge` 缺少确定性验证条件、claim 账本并发写入不安全、headless Claude 验收/通知链路未实测、oracle hard reset 需要明确专用 clone 边界。
 - 修复了 SEO autopilot 的 merge 安全门闩、claim 状态机、账本锁、oracle 脏改保护和 tick prompt，为 2026-06-03 手动 B 流程做准备。
 - 进一步调整 SEO autopilot：`/oracle` 先远程同步 GitHub 主线，文章生成/提交改为在独立 oracle worktree 中完成，避免污染主工作区。
+- 评估 Codex App 自动化模块可用于替代 launchd 的定时唤醒和编排层，但 deterministic driver 仍应保留为 Git/worktree/ledger/merge 硬门闩。
 
 ---
 
@@ -121,5 +122,17 @@ ok，先修复问题，准备明天 B
 **🤖 回答：**
 
 按用户建议继续修改 SEO autopilot：新增测试覆盖 `/oracle` 先追上 `origin/main`，并在独立 worktree 中写入 SEO 文章、build、commit、push，确保 `/oracle` 主工作区保持 `main` 且不写入文章文件。修改 `tools/scripts/gg-seo-autopilot.mjs`：新增 `GG_ORACLE_WORKTREE_ROOT`，默认 `~/oracle-worktrees/seo-autopilot`；`syncOracle()` 改为 `fetch --prune origin` 后 reset `main` 到 `origin/main`，仅拒绝已跟踪文件脏改，允许 `.playwright-mcp/` 这类未跟踪运行产物；新增 worktree 创建/清理逻辑；转换、作者校验、build、commit、PR 创建都在 publish worktree 中执行；merge 后清理对应 worktree 并重新同步 `/oracle`。验证命令：`node --test tools/scripts/__tests__/gg-seo-autopilot.smoke.test.mjs` 6/6 通过；`node --check tools/scripts/gg-seo-autopilot.mjs && bash -n tools/scripts/gg-seo-autopilot-tick.sh && plutil -lint tools/scripts/com.gengrowth.seo-autopilot.plist` 通过；`node tools/scripts/gg-seo-autopilot.mjs --status` 输出 `{}`。
+
+---
+
+### Q4 — 22:15
+
+**🙋 提问：**
+
+或者我使用 /codex 中的 “自动化”模块实现呢，可以做到吗
+
+**🤖 回答：**
+
+确认当前 Codex App 提供 `automation_update` 自动化能力，并查阅 Codex 手册中 Automations 与 Worktrees 章节。结论：可以使用 Codex 自动化模块实现定时唤醒和后台编排，且推荐用于替代 launchd 的调度层；但不建议让自动化直接承担全部发布逻辑，应保留 `tools/scripts/gg-seo-autopilot.mjs` 作为确定性 driver，继续负责 GitHub 同步、worktree 写作、ledger 状态机、preview 验收状态和 merge 硬门闩。建议明天先创建 paused 或手动触发的 project automation，在 `/Users/awayer_mini/gengrowth-flow-mvp` 运行，执行 scan、preview 获取、codex/chrome 验收，成功后调用 `--mark-verified` 与 `--merge`，失败则 `--mark-failed`。
 
 ---

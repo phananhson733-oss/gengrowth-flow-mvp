@@ -19,7 +19,7 @@ tags:
 - 识别出主要风险：`--merge` 缺少确定性验证条件、claim 账本并发写入不安全、headless Claude 验收/通知链路未实测、oracle hard reset 需要明确专用 clone 边界。
 - 修复了 SEO autopilot 的 merge 安全门闩、claim 状态机、账本锁、oracle 脏改保护和 tick prompt，为 2026-06-03 手动 B 流程做准备。
 - 进一步调整 SEO autopilot：`/oracle` 先远程同步 GitHub 主线，文章生成/提交改为在独立 oracle worktree 中完成，避免污染主工作区。
-- 评估 Codex App 自动化模块可用于替代 launchd 的定时唤醒和编排层，但 deterministic driver 仍应保留为 Git/worktree/ledger/merge 硬门闩。
+- 评估 Codex App 自动化模块可用于替代 launchd 的定时唤醒和编排层，但 deterministic driver 仍应保留为 Git/worktree/ledger/merge 硬门闩；随后按自动化 prompt 实跑一次，因 oracle tracked local changes 被 driver 拒绝，ledger 为空，无 preview 可验收或合并。
 
 ---
 
@@ -146,5 +146,74 @@ ok，先修复问题，准备明天 B
 **🤖 回答：**
 
 为 Codex 自动化整理可直接粘贴的 durable prompt，上下文包括：自动化只负责定时唤醒和编排，不承载发布安全逻辑；`tools/scripts/gg-seo-autopilot.mjs` 是确定性 driver，负责 `/oracle` 同步、oracle worktree、claim ledger、build gate、preview 验收状态和 merge 硬门闩；自动化每次只处理一篇，先 `--scan`，再读取 `--status`，对 `pushed-preview` 获取 Vercel preview URL 并做 codex/chrome 验收，成功调用 `--mark-verified` 与 `--merge`，失败调用 `--mark-failed`。
+
+---
+
+### Q6 — 22:24
+
+**🙋 提问：**
+
+你是 GenGrowth SEO autopilot 的 Codex 自动化编排器。每次运行只处理 1 篇文章。不要绕过 deterministic driver，不要手改 claim JSON，不要直接在 /Users/awayer_mini/oracle 主工作区写文章，不要加载 launchd。
+
+工作目录：
+/Users/awayer_mini/gengrowth-flow-mvp
+
+核心原则：
+- 自动化只负责定时唤醒、预览验收和调用命令。
+- 发布安全逻辑必须由 tools/scripts/gg-seo-autopilot.mjs 承担。
+- driver 会先同步 /Users/awayer_mini/oracle 到 origin/main，然后在独立 oracle worktree 写 SEO 文章、build、commit、push preview PR。
+- merge 必须先经过 preview 验收，并通过 --mark-verified 写入 verified-preview 状态；--merge 会拒绝未验收分支。
+
+每次运行步骤：
+
+1. 运行确定性 scan：
+   cd /Users/awayer_mini/gengrowth-flow-mvp
+   node tools/scripts/gg-seo-autopilot.mjs --scan --limit 1
+
+2. 查看 ledger：
+   node tools/scripts/gg-seo-autopilot.mjs --status
+
+3. 如果没有 status 为 pushed-preview 或 verified-preview 的条目：
+   - 结束本次运行。
+   - 不要创建文件，不要发 PR，不要合并。
+
+4. 如果存在 needs_human：
+   - 报告 task id、slug、error。
+   - 不要合并。
+
+5. 如果存在 pushed-preview：
+   - 记录 branch、pr、slug、zh。
+   - 用 GitHub/Vercel 获取该 branch 的 Vercel preview URL。
+   - 等待 preview deployment success，最多等待约 5 分钟。
+   - 如果 preview 没成功，运行：
+     node tools/scripts/gg-seo-autopilot.mjs --mark-failed --branch <branch> --reason "<具体失败原因>"
+     然后停止。
+
+6. 对 preview 做验收：
+   - codex review PR diff，重点检查 WikiArticle shape、authorId、schema/JSON-LD、SEO title/description、placeholder/TBD/internal link 泄漏。
+   - 用 chrome/browser/playwright 验收：
+     <preview_url>/en/wiki/<slug>
+     必须确认页面是真实内容，不是 soft 404，有 h1，有 JSON-LD，无明显 console error。
+   - 如果 ledger 里 zh:true，也验收：
+     <preview_url>/zh/wiki/<slug>
+
+7. 如果任一验收失败：
+   node tools/scripts/gg-seo-autopilot.mjs --mark-failed --branch <branch> --reason "<具体失败原因>"
+   停止，不要 merge。
+
+8. 如果全部验收通过：
+   node tools/scripts/gg-seo-autopilot.mjs --mark-verified --branch <branch> --preview-url <preview_url> --evidence "codex review + chrome preview verification passed"
+   node tools/scripts/gg-seo-autopilot.mjs --merge --branch <branch>
+
+9. 输出简短结果：
+   - published <slug> -> prod
+   或
+   - parked <slug>: <reason>
+   或
+   - nothing claimable
+
+**🤖 回答：**
+
+按自动化 prompt 执行单篇 SEO autopilot 流程：读取项目指令与适用技能，运行 `node tools/scripts/gg-seo-autopilot.mjs --scan --limit 1`，driver 因 `/Users/awayer_mini/oracle` 存在 tracked local changes 拒绝 reset 并停止；随后运行 `node tools/scripts/gg-seo-autopilot.mjs --status`，ledger 输出 `{}`。辅助检查 `/Users/awayer_mini/oracle` 显示当前在 `seo/auto/rehearsal-222340`，`data/articles/index.ts` 有 tracked 修改，另有 untracked `.playwright-mcp/` 与 `data/articles/autopilot-rehearsal.ts`。由于 ledger 没有 `pushed-preview` 或 `verified-preview` 条目，本轮没有 preview 可验收或合并；未创建文章、未发 PR、未合并。
 
 ---

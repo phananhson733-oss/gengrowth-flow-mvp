@@ -31,9 +31,10 @@ AUTO="$SCRIPT_DIR/gg-seo-autopilot.mjs"
 #    task, convert, build-gate, push a preview branch + PR — or stand down.
 node "$AUTO" --scan --limit 1 >> "$LOG" 2>&1
 
-# 2) Only spend an LLM tick when there is a pushed preview to verify + merge.
-if node "$AUTO" --status 2>/dev/null | grep -q '"pushed-preview"'; then
-  echo "$(date '+%F %T') preview pushed → running verify+merge tick" >> "$LOG"
+# 2) Only spend an LLM tick when there is a preview to verify or a verified
+#    preview whose merge needs retry.
+if node "$AUTO" --status 2>/dev/null | grep -Eq '"(pushed-preview|verified-preview)"'; then
+  echo "$(date '+%F %T') preview pending → running verify+merge tick" >> "$LOG"
   # --dangerously-skip-permissions: unattended autonomy. The autopilot only ever
   # merges to prod AFTER codex + chrome verification pass (gate lives in prompt).
   claude -p "$(cat "$PROMPT_FILE")" --dangerously-skip-permissions >> "$LOG" 2>&1

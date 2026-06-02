@@ -335,14 +335,13 @@ function doMerge(o) {
     const claims = loadClaims();
     const { pgId, claim } = claimForBranch(claims, o.branch);
     if (claim.status !== 'verified-preview') {
-      die(
+      throw new Error(
         `refusing merge for ${o.branch}: claim status is "${claim.status}", expected "verified-preview". ` +
         `Run --mark-verified only after codex + chrome preview verification pass.`,
-        1,
       );
     }
     if (!claim.previewUrl) {
-      die(`refusing merge for ${o.branch}: verified claim is missing previewUrl`, 1);
+      throw new Error(`refusing merge for ${o.branch}: verified claim is missing previewUrl`);
     }
     // Merge via gh so the PR closes cleanly; Vercel then deploys main → prod.
     sh('gh', ['pr', 'merge', o.branch, '--repo', 'xdawayer/oracle', '--merge', '--delete-branch'], { cwd: ORACLE });
@@ -363,7 +362,7 @@ function doMarkVerified(o) {
     const claims = loadClaims();
     const { pgId, claim } = claimForBranch(claims, o.branch);
     if (!['pushed-preview', 'verified-preview'].includes(claim.status)) {
-      die(`cannot mark ${o.branch} verified from status "${claim.status}"`, 1);
+      throw new Error(`cannot mark ${o.branch} verified from status "${claim.status}"`);
     }
     claims[pgId] = {
       ...claim,
@@ -384,7 +383,7 @@ function doMarkFailed(o) {
     const claims = loadClaims();
     const { pgId, claim } = claimForBranch(claims, o.branch);
     if (!['active', 'pushed-preview', 'verified-preview'].includes(claim.status)) {
-      die(`cannot park ${o.branch} from status "${claim.status}"`, 1);
+      throw new Error(`cannot park ${o.branch} from status "${claim.status}"`);
     }
     claims[pgId] = {
       ...claim,

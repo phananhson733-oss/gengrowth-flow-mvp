@@ -230,13 +230,14 @@ function frontmatterSlug(mdPath) {
   const m = head.match(/^slug:\s*["']?([^"'\n]+?)["']?\s*$/m);
   return m ? m[1].trim() : null;
 }
-function registeredAuthorIds() {
-  if (!existsSync(AUTHORS_INDEX)) return new Set();
-  const src = readFileSync(AUTHORS_INDEX, 'utf8');
+function registeredAuthorIds(repo) {
+  const index = authorsIndex(repo);
+  if (!existsSync(index)) return new Set();
+  const src = readFileSync(index, 'utf8');
   return new Set([...src.matchAll(/\bid:\s*"([a-z0-9-]+)"/g)].map((m) => m[1]));
 }
-function articleAuthorIds(slug) {
-  const f = join(ART, `${slug}.ts`);
+function articleAuthorIds(repo, slug) {
+  const f = join(articlesDir(repo), `${slug}.ts`);
   if (!existsSync(f)) return [];
   const src = readFileSync(f, 'utf8');
   return [...src.matchAll(/authorId:\s*"?([^",\n]*)"?/g)].map((m) => m[1].trim());
@@ -254,25 +255,26 @@ function claimable(task, claims) {
   const slug = frontmatterSlug(enDraft(task.pgId));
   if (!slug) return { ok: false, reason: 'EN draft missing frontmatter slug' };
   if (!SLUG_RE.test(slug)) return { ok: false, reason: `invalid slug "${slug}" (needs source fix)` };
-  if (existsSync(join(ART, `${slug}.ts`)) && st !== 'needs_human')
+  if (existsSync(join(articlesDir(ORACLE), `${slug}.ts`)) && st !== 'needs_human')
     return { ok: false, reason: `oracle already has ${slug}.ts` };
   return { ok: true, slug };
 }
 
-function convert(pgId, slug) {
-  sh('node', [CONV, '--source', enDraft(pgId), '--slug', slug, '--out', join(ART, `${slug}.ts`)]);
-  sh('node', [REG, '--oracle-articles-dir', ART, '--slug', slug, '--lang', 'en']);
+function convert(repo, pgId, slug) {
+  const art = articlesDir(repo);
+  sh('node', [CONV, '--source', enDraft(pgId), '--slug', slug, '--out', join(art, `${slug}.ts`)]);
+  sh('node', [REG, '--oracle-articles-dir', art, '--slug', slug, '--lang', 'en']);
   let zh = false;
   if (existsSync(zhDraft(pgId))) {
-    sh('node', [CONV, '--source', zhDraft(pgId), '--slug', slug, '--out', join(ART, `${slug}.zh.ts`), '--language', 'zh']);
-    sh('node', [REG, '--oracle-articles-dir', ART, '--slug', slug, '--lang', 'zh']);
+    sh('node', [CONV, '--source', zhDraft(pgId), '--slug', slug, '--out', join(art, `${slug}.zh.ts`), '--language', 'zh']);
+    sh('node', [REG, '--oracle-articles-dir', art, '--slug', slug, '--lang', 'zh']);
     zh = true;
   }
   return { zh };
 }
 
-function buildGate() {
-  try { sh('npm', ['run', 'build'], { cwd: ORACLE, stdio: ['ignore', 'pipe', 'pipe'] }); return { ok: true }; }
+function buildGate(repo) {
+  try { sh('npm', ['run', 'build'], { cwd: repo, stdio: ['ignore', 'pipe', 'pipe'] }); return { ok: true }; }
   catch (e) {
     const out = `${e.stdout || ''}${e.stderr || ''}`;
     const m = out.match(/SEO (?:generation|build)[^\n]*|error[^\n]*/i);
@@ -308,36 +310,45 @@ function doScanLocked(o) {
     saveClaims(claims);
 
     const branch = `seo/auto/${new Date().toISOString().slice(0, 10)}-${t.pgId}`;
-    if (!o.dryRun) {
-      git(['checkout', '-q', 'main']);
-      try { git(['branch', '-D', branch]); } catch { /* no stale branch */ }
-      git(['checkout', '-q', '-b', branch]);
+    const worktreeBranch = o.dryRun ? `${branch}-dry-run-${process.pid}` : branch;
+    let publishRepo;
+    try {
+      publishRepo = preparePublishWorktree(worktreeBranch);
+      claims[t.pgId].worktree = publishRepo;
+      claims[t.pgId].branch = branch;
+      saveClaims(claims);
+    } catch (e) {
+      claims[t.pgId].status = 'needs_human';
+      claims[t.pgId].error = `worktree: ${e.message}`;
+      saveClaims(claims);
+      log(`FAIL worktree ${t.pgId}`);
+      continue;
     }
 
     let res;
-    try { res = convert(t.pgId, t.slug); }
+    try { res = convert(publishRepo, t.pgId, t.slug); }
     catch (e) { claims[t.pgId].status = 'needs_human'; claims[t.pgId].error = `convert: ${e.message}`; saveClaims(claims); log(`FAIL convert ${t.pgId}`); continue; }
 
     // author-known gate
-    const known = registeredAuthorIds();
-    const used = articleAuthorIds(t.slug);
+    const known = registeredAuthorIds(publishRepo);
+    const used = articleAuthorIds(publishRepo, t.slug);
     const missing = used.filter((a) => a && a !== 'undefined' && !known.has(a));
     if (missing.length) { claims[t.pgId].status = 'needs_human'; claims[t.pgId].error = `unregistered author(s): ${[...new Set(missing)].join(',')}`; saveClaims(claims); log(`PARK ${t.pgId}: ${claims[t.pgId].error}`); continue; }
 
     // build gate
-    const b = buildGate();
+    const b = buildGate(publishRepo);
     if (!b.ok) { claims[t.pgId].status = 'needs_human'; claims[t.pgId].error = `build: ${b.error}`; saveClaims(claims); log(`PARK ${t.pgId}: build failed`); continue; }
 
     claims[t.pgId].zh = res.zh;
-    claims[t.pgId].branch = branch;
     if (o.dryRun) {
       claims[t.pgId].status = 'dry-run-ok';
       saveClaims(claims);
+      cleanupWorktree(publishRepo);
       log(`DRY-RUN OK ${t.pgId} (${t.slug}${res.zh ? '+zh' : ' EN-only'}) build✓ — not pushed`);
     } else {
-      git(['add', 'data/articles']);
-      git(['commit', '-q', '-m', `feat(articles): publish ${t.slug} (${WINNER} ${VERSION}) [autopilot]`]);
-      git(['push', '-u', 'origin', branch]);
+      gitIn(publishRepo, ['add', 'data/articles']);
+      gitIn(publishRepo, ['commit', '-q', '-m', `feat(articles): publish ${t.slug} (${WINNER} ${VERSION}) [autopilot]`]);
+      gitIn(publishRepo, ['push', '-u', 'origin', branch]);
       // Open a PR so Vercel posts a Preview deployment + check; merge happens
       // in --merge AFTER codex + chrome verify pass (the human-equivalent gate).
       let prUrl = '';
@@ -345,7 +356,7 @@ function doScanLocked(o) {
         prUrl = sh('gh', ['pr', 'create', '--repo', 'xdawayer/oracle', '--base', 'main', '--head', branch,
           '--title', `[autopilot] publish ${t.slug}`,
           '--body', `Automated SEO publish of \`${t.pgId}\` → \`${t.slug}\`${res.zh ? ' (EN+ZH)' : ' (EN-only)'}.\n\nAwaiting codex review + chrome MCP verification on the Vercel preview before merge.`],
-          { cwd: ORACLE }).trim();
+          { cwd: publishRepo }).trim();
       } catch (e) { prUrl = `(pr-create-failed: ${e.message})`; }
       claims[t.pgId].status = 'pushed-preview';
       claims[t.pgId].pr = prUrl;
@@ -371,6 +382,7 @@ function doMerge(o) {
     }
     // Merge via gh so the PR closes cleanly; Vercel then deploys main → prod.
     sh('gh', ['pr', 'merge', o.branch, '--repo', 'xdawayer/oracle', '--merge', '--delete-branch'], { cwd: ORACLE });
+    cleanupWorktree(claim.worktree);
     git(['fetch', '--quiet', 'origin']); git(['checkout', '-q', 'main']); git(['reset', '--hard', '-q', 'origin/main']);
     claims[pgId].status = 'done';
     claims[pgId].mergedAt = new Date().toISOString();

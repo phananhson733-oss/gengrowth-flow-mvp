@@ -38,7 +38,16 @@
 //   GG_VERSION     default v8
 
 import { execFileSync } from 'node:child_process';
-import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  renameSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
 import { join, dirname, basename } from 'node:path';
 import { homedir } from 'node:os';
 
@@ -56,6 +65,9 @@ const CONV = join(FLOW, 'tools', 'scripts', 'gg-md-to-oracle-ts.mjs');
 const REG = join(FLOW, 'tools', 'scripts', 'gg-oracle-register-index.mjs');
 const PLAN_GLOB_DIR = join(OPS, 'inbox', '06-tasks', 'tasks');
 const CLAIMS_PATH = join(PLAN_GLOB_DIR, '.autopilot-claims.json');
+const CLAIMS_LOCK = `${CLAIMS_PATH}.lock`;
+const CLAIMS_LOCK_TIMEOUT_MS = parseInt(process.env.GG_AUTOPILOT_LOCK_TIMEOUT_MS || '30000', 10);
+const CLAIMS_LOCK_STALE_MS = parseInt(process.env.GG_AUTOPILOT_LOCK_STALE_MS || String(2 * 60 * 60 * 1000), 10);
 const SLUG_RE = /^[a-z0-9][a-z0-9-]*$/;
 
 function sh(cmd, args, opts = {}) {
@@ -63,6 +75,13 @@ function sh(cmd, args, opts = {}) {
 }
 function git(args, opts = {}) { return sh('git', ['-C', ORACLE, ...args], opts); }
 function log(...a) { process.stderr.write(`[autopilot] ${a.join(' ')}\n`); }
+function sleepSync(ms) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+}
+function die(message, code = 1) {
+  log(`ERROR: ${message}`);
+  process.exit(code);
+}
 
 // CRITICAL: the local oracle clone lags prod badly (observed 71 commits behind),
 // which yields false build failures and risks re-publishing already-live slugs.
@@ -70,8 +89,14 @@ function log(...a) { process.stderr.write(`[autopilot] ${a.join(' ')}\n`); }
 // publish target, not a dev workspace, so discarding local cruft is correct.
 function syncOracle() {
   git(['fetch', '--quiet', 'origin']);
+  const dirty = git(['status', '--porcelain']).trim();
+  if (dirty && process.env.GG_AUTOPILOT_FORCE_ORACLE_CLEAN !== '1') {
+    throw new Error(
+      `oracle workspace is dirty; refusing to reset ${ORACLE}. ` +
+      `Clean/stash it or set GG_AUTOPILOT_FORCE_ORACLE_CLEAN=1 for a dedicated autopilot clone.`,
+    );
+  }
   try { git(['checkout', '-q', 'main']); } catch { /* already on main */ }
-  git(['checkout', '--', '.']);
   git(['clean', '-fd', 'data/articles']);
   git(['reset', '--hard', '-q', 'origin/main']);
   log(`synced oracle → origin/main @ ${git(['rev-parse', '--short', 'HEAD']).trim()}`);
@@ -84,12 +109,17 @@ function parseArgs(argv) {
     if (a === '--scan') o.scan = true;
     else if (a === '--dry-run') o.dryRun = true;
     else if (a === '--merge') o.merge = true;
+    else if (a === '--mark-verified') o.markVerified = true;
+    else if (a === '--mark-failed') o.markFailed = true;
     else if (a === '--status') o.status = true;
     else if (a === '--branch') o.branch = argv[++i];
+    else if (a === '--preview-url') o.previewUrl = argv[++i];
+    else if (a === '--evidence') o.evidence = argv[++i];
+    else if (a === '--reason') o.reason = argv[++i];
     else if (a === '--limit') o.limit = parseInt(argv[++i], 10) || 1;
     else if (a === '--task') o.task = argv[++i];
   }
-  if (!o.scan && !o.merge && !o.status) o.scan = true;
+  if (!o.scan && !o.merge && !o.markVerified && !o.markFailed && !o.status) o.scan = true;
   return o;
 }
 
@@ -116,8 +146,49 @@ function loadClaims() {
   if (!existsSync(CLAIMS_PATH)) return {};
   try { return JSON.parse(readFileSync(CLAIMS_PATH, 'utf8')); } catch { return {}; }
 }
-function saveClaims(c) { writeFileSync(CLAIMS_PATH, JSON.stringify(c, null, 2) + '\n'); }
+function saveClaims(c) {
+  mkdirSync(dirname(CLAIMS_PATH), { recursive: true });
+  const tmp = `${CLAIMS_PATH}.tmp.${process.pid}`;
+  writeFileSync(tmp, JSON.stringify(c, null, 2) + '\n');
+  renameSync(tmp, CLAIMS_PATH);
+}
 function claimStatus(claims, pgId) { return claims[pgId]?.status || null; }
+function acquireClaimsLock() {
+  const started = Date.now();
+  for (;;) {
+    try {
+      mkdirSync(CLAIMS_LOCK);
+      writeFileSync(join(CLAIMS_LOCK, 'owner'), `${process.pid} ${new Date().toISOString()}\n`);
+      return () => rmSync(CLAIMS_LOCK, { recursive: true, force: true });
+    } catch (e) {
+      if (e.code !== 'EEXIST') throw e;
+      let stale = false;
+      try { stale = Date.now() - statSync(CLAIMS_LOCK).mtimeMs > CLAIMS_LOCK_STALE_MS; }
+      catch { stale = true; }
+      if (stale) {
+        log(`removing stale claim lock ${CLAIMS_LOCK}`);
+        rmSync(CLAIMS_LOCK, { recursive: true, force: true });
+        continue;
+      }
+      if (Date.now() - started > CLAIMS_LOCK_TIMEOUT_MS) {
+        throw new Error(`claim ledger locked by another autopilot run: ${CLAIMS_LOCK}`);
+      }
+      sleepSync(250);
+    }
+  }
+}
+function withClaimsLock(fn) {
+  const release = acquireClaimsLock();
+  try { return fn(); }
+  finally { release(); }
+}
+function claimForBranch(claims, branch) {
+  const matches = Object.entries(claims).filter(([, c]) => c?.branch === branch);
+  if (!matches.length) throw new Error(`no claim ledger entry found for branch ${branch}`);
+  if (matches.length > 1) throw new Error(`multiple claim ledger entries found for branch ${branch}`);
+  const [pgId, claim] = matches[0];
+  return { pgId, claim };
+}
 
 // ── per-task helpers ────────────────────────────────────────────────────────
 function enDraft(pgId) { return join(STAGING, `${pgId}-en.md`); }
@@ -185,6 +256,10 @@ function buildGate() {
 
 // ── main flows ──────────────────────────────────────────────────────────────
 function doScan(o) {
+  return withClaimsLock(() => doScanLocked(o));
+}
+
+function doScanLocked(o) {
   const plan = latestPlan();
   if (!plan) { log('no blog-output-plan found'); return; }
   log(`plan: ${basename(plan)}`);
@@ -255,17 +330,71 @@ function doScan(o) {
 }
 
 function doMerge(o) {
-  if (!o.branch) { log('--merge requires --branch'); process.exit(2); }
-  // Merge via gh so the PR closes cleanly; Vercel then deploys main → prod.
-  sh('gh', ['pr', 'merge', o.branch, '--repo', 'xdawayer/oracle', '--merge', '--delete-branch'], { cwd: ORACLE });
-  git(['fetch', '--quiet', 'origin']); git(['checkout', '-q', 'main']); git(['reset', '--hard', '-q', 'origin/main']);
-  // flip claim → done + check the plan box
-  const claims = loadClaims();
-  for (const [pid, c] of Object.entries(claims)) {
-    if (c.branch === o.branch) { c.status = 'done'; checkPlanBox(pid); }
-  }
-  saveClaims(claims);
-  log(`MERGED ${o.branch} → main (prod deploy triggered)`);
+  if (!o.branch) die('--merge requires --branch', 2);
+  return withClaimsLock(() => {
+    const claims = loadClaims();
+    const { pgId, claim } = claimForBranch(claims, o.branch);
+    if (claim.status !== 'verified-preview') {
+      die(
+        `refusing merge for ${o.branch}: claim status is "${claim.status}", expected "verified-preview". ` +
+        `Run --mark-verified only after codex + chrome preview verification pass.`,
+        1,
+      );
+    }
+    if (!claim.previewUrl) {
+      die(`refusing merge for ${o.branch}: verified claim is missing previewUrl`, 1);
+    }
+    // Merge via gh so the PR closes cleanly; Vercel then deploys main → prod.
+    sh('gh', ['pr', 'merge', o.branch, '--repo', 'xdawayer/oracle', '--merge', '--delete-branch'], { cwd: ORACLE });
+    git(['fetch', '--quiet', 'origin']); git(['checkout', '-q', 'main']); git(['reset', '--hard', '-q', 'origin/main']);
+    claims[pgId].status = 'done';
+    claims[pgId].mergedAt = new Date().toISOString();
+    checkPlanBox(pgId);
+    saveClaims(claims);
+    log(`MERGED ${o.branch} → main (prod deploy triggered)`);
+  });
+}
+
+function doMarkVerified(o) {
+  if (!o.branch) die('--mark-verified requires --branch', 2);
+  if (!o.previewUrl) die('--mark-verified requires --preview-url', 2);
+  if (!/^https:\/\/[^/]+/.test(o.previewUrl)) die(`invalid --preview-url: ${o.previewUrl}`, 2);
+  return withClaimsLock(() => {
+    const claims = loadClaims();
+    const { pgId, claim } = claimForBranch(claims, o.branch);
+    if (!['pushed-preview', 'verified-preview'].includes(claim.status)) {
+      die(`cannot mark ${o.branch} verified from status "${claim.status}"`, 1);
+    }
+    claims[pgId] = {
+      ...claim,
+      status: 'verified-preview',
+      previewUrl: o.previewUrl,
+      verificationEvidence: o.evidence || 'codex+chrome preview verification passed',
+      verifiedAt: new Date().toISOString(),
+    };
+    saveClaims(claims);
+    log(`VERIFIED ${o.branch} preview=${o.previewUrl}`);
+  });
+}
+
+function doMarkFailed(o) {
+  if (!o.branch) die('--mark-failed requires --branch', 2);
+  if (!o.reason) die('--mark-failed requires --reason', 2);
+  return withClaimsLock(() => {
+    const claims = loadClaims();
+    const { pgId, claim } = claimForBranch(claims, o.branch);
+    if (!['active', 'pushed-preview', 'verified-preview'].includes(claim.status)) {
+      die(`cannot park ${o.branch} from status "${claim.status}"`, 1);
+    }
+    claims[pgId] = {
+      ...claim,
+      status: 'needs_human',
+      error: o.reason,
+      failedAt: new Date().toISOString(),
+    };
+    saveClaims(claims);
+    log(`PARKED ${o.branch}: ${o.reason}`);
+  });
 }
 
 function checkPlanBox(pgId) {
@@ -282,6 +411,12 @@ function doStatus() {
 }
 
 const o = parseArgs(process.argv.slice(2));
-if (o.status) doStatus();
-else if (o.merge) doMerge(o);
-else doScan(o);
+try {
+  if (o.status) doStatus();
+  else if (o.merge) doMerge(o);
+  else if (o.markVerified) doMarkVerified(o);
+  else if (o.markFailed) doMarkFailed(o);
+  else doScan(o);
+} catch (e) {
+  die(e.message || String(e), 1);
+}

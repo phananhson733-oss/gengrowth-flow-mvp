@@ -237,9 +237,19 @@ function doScan(o) {
       git(['add', 'data/articles']);
       git(['commit', '-q', '-m', `feat(articles): publish ${t.slug} (${WINNER} ${VERSION}) [autopilot]`]);
       git(['push', '-u', 'origin', branch]);
+      // Open a PR so Vercel posts a Preview deployment + check; merge happens
+      // in --merge AFTER codex + chrome verify pass (the human-equivalent gate).
+      let prUrl = '';
+      try {
+        prUrl = sh('gh', ['pr', 'create', '--repo', 'xdawayer/oracle', '--base', 'main', '--head', branch,
+          '--title', `[autopilot] publish ${t.slug}`,
+          '--body', `Automated SEO publish of \`${t.pgId}\` → \`${t.slug}\`${res.zh ? ' (EN+ZH)' : ' (EN-only)'}.\n\nAwaiting codex review + chrome MCP verification on the Vercel preview before merge.`],
+          { cwd: ORACLE }).trim();
+      } catch (e) { prUrl = `(pr-create-failed: ${e.message})`; }
       claims[t.pgId].status = 'pushed-preview';
+      claims[t.pgId].pr = prUrl;
       saveClaims(claims);
-      log(`PUSHED preview ${branch} — awaiting codex+chrome verify, then --merge`);
+      log(`PUSHED preview ${branch} PR=${prUrl} — awaiting codex+chrome verify, then --merge`);
     }
   }
 }

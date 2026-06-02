@@ -2,7 +2,7 @@
 
 ## What are Mahadasha?
 
-Mahadasha are **the major planetary periods of the Vimshottari timing system in Vedic astrology**. They split a 120-year span across the nine grahas (the planets and lunar nodes of Vedic astrology), so that one planet "rules" a long stretch of life before handing over to the next. This is a family of nine related periods, not a single label — each named after a graha (Ketu, Venus, Sun, Moon, Mars, Rahu, Jupiter, Saturn, and Mercury) and each lasting a fixed number of years.
+A mahadasha is **a major planetary period in the Vimshottari timing system of Vedic astrology**. They split a 120-year span across the nine grahas (the planets and lunar nodes of Vedic astrology), so that one planet "rules" a long stretch of life before handing over to the next. This is a family of nine related periods, not a single label — each named after a graha (Ketu, Venus, Sun, Moon, Mars, Rahu, Jupiter, Saturn, and Mercury) and each lasting a fixed number of years.
 
 - A connected system of nine planetary periods that always run in the same fixed order, not nine isolated verdicts
 - Each period maps to one graha and one span of years, with sub-periods nested inside it
@@ -16,7 +16,7 @@ The reason to learn the system before any single planet is that the periods only
 
 There is also a quieter reason. When you treat a single period as your fate, you start reading every event of those years through that one lens, which narrows how you see your own life. Holding the full nine-period family in mind keeps any one mahadasha in proportion: it is a chapter with a beginning, a length, and an end, not a permanent identity. That framing is the difference between using the system as a planning tool and using it as a source of fear.
 
-## The Mahadasha at a Glance
+## The Nine Planetary Periods at a Glance
 
 | Planetary Period | Span (Years) | Core Theme | Life Domains Emphasized | Common Misread |
 | --- | --- | --- | --- | --- |
@@ -71,7 +71,7 @@ Most of the trouble people have with this system comes from a handful of predict
 
 The limit worth stating plainly is that the spans are a structured convention, set out in the classical Vimshottari teaching, not a measured law of nature. They are useful precisely because they give a shared, repeatable map of timing — and they are misused the moment that map is treated as destiny rather than as a tool for paying attention.
 
-## Common Questions About Mahadasha
+## Common Questions About the Planetary Periods
 
 **How is my current mahadasha actually determined?**
 

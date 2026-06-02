@@ -8,11 +8,11 @@ Saturn (Shani) Mahadasha is the longest major planetary period in Vedic astrolog
 - Linked with discipline, delay, and structure earned through patient effort
 - Answers to both names at once, since Shani and Saturn are one graha in two languages
 
-A Saturn mahadasha tends to reward steady, honest work over sudden luck, which is why the tradition treats its nineteen years as an apprenticeship in patience rather than a stretch of bad fortune.
+This period tends to reward steady, honest work over sudden luck, which is why the tradition treats its nineteen years as an apprenticeship in patience rather than a stretch of bad fortune.
 
 ## Why It Matters for Self-Awareness
 
-Understanding a Saturn mahadasha matters because most people meet the word with dread, bracing for nineteen years of loss when the tradition describes something closer to a long apprenticeship. In my years working across classical Sanskrit texts and birth charts as a second-generation Jyotish practitioner, this is the period clients most often fear and most often misread. The friction is real and specific: the long span gets read as a sentence to be served, so the patient, structured effort it actually asks for goes unnoticed, and people brace against the years instead of working with them.
+Understanding this 19-year dasha matters because most people meet the word with dread, bracing for nineteen years of loss when the tradition describes something closer to a long apprenticeship. In my years working across classical Sanskrit texts and birth charts as a second-generation Jyotish practitioner, this is the period clients most often fear and most often misread. The friction is real and specific: the long span gets read as a sentence to be served, so the patient, structured effort it actually asks for goes unnoticed, and people brace against the years instead of working with them.
 
 It helps to set the long Shani period beside a shorter, sharper one like the [[<TBD-internal-link: companion page on the Ketu mahadasha period>]], where the lessons tend to arrive fast and end quickly; Saturn's run does the opposite, asking for endurance over reaction. Modern Jyotish teachers in the Parashara lineage, including B. V. Raman and K. N. Rao, kept reading the dasha as timing and tendency rather than fixed fate — a framing that turns the period from something happening to you into something you can read and work through.
 
@@ -28,7 +28,7 @@ The way it functions is cumulative rather than sudden: Saturn asks for the same 
 
 ## How to Read Saturn (Shani) Mahadasha in Your Timing
 
-To spot a Saturn mahadasha in your own timing, you read the dasha sequence from your birth chart rather than your mood. A few concrete signals stand out:
+To spot Saturn's dasha in your own timing, you read the dasha sequence from your birth chart rather than your mood. A few concrete signals stand out:
 
 1. Check your dasha dates first: if Saturn rules the current major period, you are inside the nineteen-year window.
 2. Notice themes of delay, responsibility, and slow-building work showing up across career and home at the same time.
@@ -38,7 +38,7 @@ To spot a Saturn mahadasha in your own timing, you read the dasha sequence from 
 
 ## Common Misreadings
 
-The most common misreading of the Saturn mahadasha is treating it as a verdict instead of a season of work. The same mistakes show up again and again:
+The most common misreading of this period is treating it as a verdict instead of a season of work. The same mistakes show up again and again:
 
 1. **"Nineteen years of suffering."** The tradition frames the period as disciplined maturation, not punishment; the hardship is the texture of the work, not a sentence handed down.
 2. **"Nothing good can happen now."** Saturn tends to reward patient, honest effort, so gains are real here — they simply arrive earned and slow rather than quick and free.
@@ -62,7 +62,7 @@ The tradition associates it with discipline, delay, responsibility, and structur
 
 **Is the Saturn mahadasha always bad?**
 
-No — the classical reading treats it as demanding rather than doomed. The weight it brings is the cost of building something durable, so the period tends to reward honest, sustained effort instead of punishing the person living it.
+No — the classical reading treats it as demanding rather than ruinous. The weight it brings is the cost of building something durable, so the period tends to reward honest, sustained effort instead of punishing the person living it.
 
 **What is the difference between Shani mahadasha and Saturn mahadasha?**
 

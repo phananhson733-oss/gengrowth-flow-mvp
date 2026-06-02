@@ -2,7 +2,7 @@
 
 ## What is Rahu Mahadasha?
 
-Rahu Mahadasha is the roughly 18-year stretch in a Vedic birth chart when Rahu, the north lunar node, sets the background tone of a person's life. It is one of nine planetary periods in the [[<TBD-internal-link: pillar guide to the mahadasha system and Vimshottari periods>]], the timing framework that splits a 120-year cycle among nine planets. In this tradition, the period reads as **a roughly 18-year stretch of amplification, ambition, and unconventional growth**. Because Rahu is a calculated point rather than a visible planet, its years tend to pull a person toward what is foreign, novel, or just outside the script they inherited.
+This period is the roughly 18-year stretch in a Vedic birth chart when Rahu, the north lunar node, sets the background tone of a person's life. It is one of nine planetary periods in the [[<TBD-internal-link: pillar guide to the mahadasha system and Vimshottari periods>]], the timing framework that splits a 120-year cycle among nine planets. In this tradition, the period reads as **a roughly 18-year stretch of amplification, ambition, and unconventional growth**. Because Rahu is a calculated point rather than a visible planet, its years tend to pull a person toward what is foreign, novel, or just outside the script they inherited.
 
 - Runs about 18 years, the second-longest single share in the Vimshottari sequence
 - Anchored to the north lunar node, not a physical planet you can point at in the sky
@@ -10,23 +10,23 @@ Rahu Mahadasha is the roughly 18-year stretch in a Vedic birth chart when Rahu, 
 
 ## Why It Matters for Self-Awareness
 
-Rahu Mahadasha matters because of one specific dread: people hear the name and brace for eighteen years of disaster, then read every setback as proof the curse is real. The tradition does not say that. It describes a long season of intensified wanting and rapid, often disorienting growth — something to work with, not something to survive. Across a decade of independent research in the classical Sanskrit texts I grew up around as a second-generation Jyotish practitioner, I have watched this single misreading create more needless fear than almost any other placement.
+This 18-year dasha matters because of one specific dread: people hear the name and brace for eighteen years of disaster, then read every setback as proof the curse is real. The tradition does not say that. It describes a long season of intensified wanting and rapid, often disorienting growth — something to work with, not something to survive. Across a decade of independent research in the classical Sanskrit texts I grew up around as a second-generation Jyotish practitioner, I have watched this single misreading create more needless fear than almost any other placement.
 
 It also helps to know which system you are reading. Vedic astrology uses the sidereal zodiac and the dasha timeline, so a Rahu period has no clean equivalent in the tropical, transit-based approach most Western horoscopes use. The two describe different machinery, and conflating them muddies both — a distinction worth understanding through a plain explanation of [[<TBD-internal-link: how Vedic and Western astrology differ in zodiac and timing>]]. Reading the period as tendency rather than decree is what turns it into useful self-knowledge instead of low-grade anxiety.
 
 ## Rahu Mahadasha vs Adjacent Concepts: How It Works + Trade-offs
 
-Rahu Mahadasha is easiest to understand next to its natural pair. The clearest contrast is with the [[<TBD-internal-link: sibling page on the Ketu mahadasha period of the south lunar node>]], Rahu's opposite node. Here is how each works and what each asks you to trade.
+Rahu's dasha is easiest to understand next to its natural pair. The clearest contrast is with the [[<TBD-internal-link: sibling page on the Ketu mahadasha period of the south lunar node>]], Rahu's opposite node. Here is how each works and what each asks you to trade.
 
 1. **Rahu period vs Ketu period.** Rahu's years work by pushing outward — toward acquisition, status, and the unfamiliar — while Ketu's seven-year period works by pulling inward toward detachment and release. To get Rahu's expansion and worldly drive, you tend to sacrifice some inner steadiness; the reaching can outrun your sense of who you are.
 2. **Rahu period vs Saturn period.** Saturn's long period works through structure, patience, and slow consolidation. Rahu works through sudden acceleration and shortcut-seeking. To get Rahu's speed and reach, you give up Saturn's reliability — gains can arrive fast and prove hard to hold.
-3. **Rahu mahadasha vs a passing Rahu transit.** A transit is a brief weather pattern; the mahadasha is the whole climate of a multi-year chapter. The way it functions is cumulative, so the trade is depth for immediacy: the period shapes long arcs, not a single dramatic week.
+3. **This dasha vs a passing Rahu transit.** A transit is a brief weather pattern; the mahadasha is the whole climate of a multi-year chapter. The way it functions is cumulative, so the trade is depth for immediacy: the period shapes long arcs, not a single dramatic week.
 
 The thread across all three is that Rahu rewards ambition and novelty at the cost of grounding. Naming that trade is what keeps a long period of amplification from being read as fate.
 
 ## How to Read Rahu Mahadasha in Yourself
 
-The point of Rahu mahadasha is not prediction but recognition. These are observable signals the tradition links to the period — patterns to notice, not omens to fear.
+The point of the Rahu period is not prediction but recognition. These are observable signals the tradition links to the period — patterns to notice, not omens to fear.
 
 1. **Sudden, unfamiliar ambition.** You might find yourself drawn to fields, places, or goals that have no precedent in your past or your family.
 2. **A pull toward the foreign.** Many people describe new interest in other cultures, languages, technologies, or subcultures that feel both magnetic and slightly off-script.
@@ -36,7 +36,7 @@ The point of Rahu mahadasha is not prediction but recognition. These are observa
 
 ## Common Misreadings
 
-Most surface-level write-ups distort Rahu mahadasha in a few predictable ways. Each correction below moves from the popular misread to what the tradition actually holds.
+Most surface-level write-ups distort this period in a few predictable ways. Each correction below moves from the popular misread to what the tradition actually holds.
 
 1. **"It guarantees ruin."** Misread: eighteen years of guaranteed disaster. Reality: the texts describe amplification and unconventional growth that can swing either way depending on the whole chart and how the energy is handled.
 2. **"Remedies cancel it out."** Misread: the right ritual makes the period painless. Reality: classical sources frame practices as ways to work with a tendency, never as guaranteed cures that override it.
@@ -58,7 +58,7 @@ Most surface-level write-ups distort Rahu mahadasha in a few predictable ways. E
 
 No. The Vimshottari tradition reads it as a period of amplification and unconventional growth, not a sentence. How it unfolds depends on Rahu's placement and the chart as a whole.
 
-**How long does Rahu Mahadasha last?**
+**How long does the Rahu period last?**
 
 It runs about 18 years, the second-longest of the nine planetary periods. Within it, shorter sub-periods called antardashas change the tone every few months to years.
 

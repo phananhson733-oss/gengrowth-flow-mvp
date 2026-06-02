@@ -1,3 +1,28 @@
+---
+title: Venus Mahadasha
+slug: venus-mahadasha
+date: 2026-06-02
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-MAHADASHA-006
+author_id: "aditi-sharma"
+author_display_name: "Aditi Sharma"
+target_keyword: venus mahadasha
+associated_keywords:
+  - shukra mahadasha
+  - venus dasha
+  - 20 year venus period
+  - venus mahadasha effects
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-02T10:42:07.457Z
+content_sha256_short: dd752fb4ce4c575f
+phase2_checks: all-pass
+---
+
 # What Venus Mahadasha Really Brings Over Its Long Twenty Years
 
 ## What is Venus (Shukra) Mahadasha?

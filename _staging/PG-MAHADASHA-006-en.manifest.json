@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-MAHADASHA-006",
+  "entity": "Venus (Shukra) Mahadasha",
+  "target_keyword": "venus mahadasha",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-06-02T10:42:07.457Z",
+  "content_sha256_short": "dd752fb4ce4c575f",
+  "source_path": "_staging/PG-MAHADASHA-006-claude-v8.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-MAHADASHA-006-en.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 1532,
+      "wikilinks": 3,
+      "tbdLinks": 3
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

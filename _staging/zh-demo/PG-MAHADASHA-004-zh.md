@@ -1,3 +1,29 @@
+---
+title: Saturn Mahadasha
+slug: saturn-mahadasha
+date: 2026-06-02
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-MAHADASHA-004
+author_id: "aditi-sharma"
+author_display_name: "Aditi Sharma"
+target_keyword: saturn mahadasha
+associated_keywords:
+  - shani mahadasha
+  - saturn dasha
+  - shani dasha
+  - 19 year saturn period
+  - saturn mahadasha effects
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-02T10:41:47.563Z
+content_sha256_short: 5595cf2a4d548940
+phase2_checks: all-pass
+---
+
 # 土星大运这19年，其实是在教你慢慢成器
 
 ## Saturn (Shani) Mahadasha 是什么？

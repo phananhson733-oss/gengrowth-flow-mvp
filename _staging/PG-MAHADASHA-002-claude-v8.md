@@ -10,24 +10,28 @@ Ketu Mahadasha is **the seven-year Vimshottari period assigned to the south luna
 
 ## Why It Matters for Self-Awareness
 
-Ketu Mahadasha matters for self-awareness because the fear attached to it usually outruns the facts. Many people reach this period braced for seven years of loss — a relationship that ends, work that dissolves, a creeping sense of drift — and miss that the same tradition frames those events as release rather than punishment. In a decade of independent research into the classical Sanskrit sources, working as a second-generation Jyotish practitioner, I have watched this single reframe change how people meet the period: the outer events may look similar, but read as completion they stop feeling like things being done *to* you.
+This period matters for self-awareness because the fear attached to it usually outruns the facts. Many people reach this period braced for seven years of loss — a relationship that ends, work that dissolves, a creeping sense of drift — and miss that the same tradition frames those events as release rather than punishment. In a decade of independent research into the classical Sanskrit sources, working as a second-generation Jyotish practitioner, I have watched this single reframe change how people meet the period: the outer events may look similar, but read as completion they stop feeling like things being done *to* you.
 
 The practical value is that naming a tendency is not the same as predicting a fate. Knowing the period leans toward detachment lets you notice where you are already over-attached — to a title, a role, an old plan that no longer fits — and meet the loosening on purpose instead of resisting it. People often describe the years as quieter, less driven, more reflective. That shift can read as disorientation if you expected forward motion, or as relief if you were ready to set something down. Either way, the awareness that this is a season with a shape, not a random run of bad luck, is what makes it workable.
 
 ## Ketu Mahadasha vs Adjacent Concepts: How It Works + Trade-offs
 
-Ketu Mahadasha works differently from the periods around it, and the clearest contrast is with its own axis-partner. Where the [[<TBD-internal-link: companion guide to the Rahu Mahadasha period>]] pushes outward toward desire, accumulation, and worldly ambition, Ketu pulls in the opposite direction — toward release, disinterest, and the inner search. The way it functions is subtractive: it tends to strip away what a person has over-identified with, so something quieter can surface underneath. To get that clarity and detachment, you sacrifice the comfort of the familiar attachments the period loosens. That trade is the whole point, and it is also why the same years can feel freeing to one person and unmooring to another.
+Ketu's dasha works differently from the periods around it, and the clearest contrast is with its own axis-partner. Where the [[<TBD-internal-link: companion guide to the Rahu Mahadasha period>]] pushes outward toward desire, accumulation, and worldly ambition, Ketu pulls in the opposite direction — toward release, disinterest, and the inner search. The way it functions is subtractive: it tends to strip away what a person has over-identified with, so something quieter can surface underneath. To get that clarity and detachment, you sacrifice the comfort of the familiar attachments the period loosens. That trade is the whole point, and it is also why the same years can feel freeing to one person and unmooring to another.
 
 It also reads differently from a generic planetary period. A benefic period might add resources or relationships; Ketu's chapter more often removes the scaffolding around an identity to test what stands without it. Choosing to read it this way gets you a usable map of where to let go, but you lose the reassurance of a forecast that promises gain. Modern classical teachers such as K. N. Rao keep stressing that a dasha marks a tendency in timing, not a fixed event — a distinction that separates a sober Vedic reading from a fatalistic one, and that keeps the south node's period from being mistaken for a guaranteed downturn.
 
 ## How to Read Ketu Mahadasha in Your Chart
 
-Reading Ketu Mahadasha in your own chart starts with noticing where detachment is already showing up, not waiting for a single dramatic event. A few observable signals:
+Reading this 7-year dasha in your own chart starts with noticing where detachment is already showing up, not waiting for a single dramatic event. A few observable signals:
 
 1. **Fading pull toward old goals.** Ambitions that once drove you quietly lose their charge, and you stop chasing them without quite deciding to.
 2. **Rising interest in the inner life.** Solitude, study, meditation, or spiritual questions start feeling more compelling than social wins or material milestones.
 3. **Endings that arrive cleanly.** Relationships or commitments close with less drama than you expected, as if they had simply finished their course.
 4. **A sense of being between chapters.** Familiar identities feel loose, and you may notice you no longer answer "what do you do" the same way.
+
+Where these signals land depends on the house and sign Ketu occupies in your natal chart. The south node carries a fixed set of significations — detachment, past-life residue, sudden cut-offs, and a pull toward moksha or spiritual release — and the period tends to activate them through whatever life area Ketu sits in. Ketu in the tenth house may loosen ambition around career or status; in the seventh, it can quietly thin attachment to a partnership; in the ninth or twelfth, it often sharpens the inner search the node already favors. Parashara's framework also weights the dispositor of Ketu and any conjunctions, so the chapter rarely reads identically for two charts.
+
+Working with this period consciously means meeting the loosening on purpose rather than bracing against it. Practitioners often suggest building in deliberate solitude, simplifying commitments before they fall away on their own, and treating endings as completions to close cleanly. The aim is not to force loss but to stop over-gripping what the period is already asking you to hold more lightly.
 
 ## Common Misreadings
 

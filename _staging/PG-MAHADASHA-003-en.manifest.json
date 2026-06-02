@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-MAHADASHA-003",
+  "entity": "Rahu Mahadasha",
+  "target_keyword": "rahu mahadasha",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-06-02T10:43:40.631Z",
+  "content_sha256_short": "2ab77c191b0b3496",
+  "source_path": "_staging/PG-MAHADASHA-003-claude-v8.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-MAHADASHA-003-en.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 1536,
+      "wikilinks": 5,
+      "tbdLinks": 5
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

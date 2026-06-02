@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-MAHADASHA-001",
+  "entity": "Mahadasha",
+  "target_keyword": "mahadasha",
+  "template": "Pillar",
+  "tier": "T1",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-06-02T10:43:42.411Z",
+  "content_sha256_short": "aa73743f42a89812",
+  "source_path": "_staging/zh-demo/PG-MAHADASHA-001-claude-v8.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/PG-MAHADASHA-001-zh.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 3641,
+      "wikilinks": 12,
+      "tbdLinks": 12
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

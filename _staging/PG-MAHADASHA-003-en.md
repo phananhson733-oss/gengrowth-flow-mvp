@@ -1,3 +1,28 @@
+---
+title: Rahu Mahadasha
+slug: rahu-mahadasha
+date: 2026-06-02
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-MAHADASHA-003
+author_id: "aditi-sharma"
+author_display_name: "Aditi Sharma"
+target_keyword: rahu mahadasha
+associated_keywords:
+  - rahu mahadasha effects
+  - rahu dasha
+  - 18 year rahu period
+  - rahu mahadasha remedies
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-02T10:43:40.631Z
+content_sha256_short: 2ab77c191b0b3496
+phase2_checks: all-pass
+---
+
 # What Rahu Mahadasha Really Brings Over Its 18-Year Span
 
 ## What is Rahu Mahadasha?

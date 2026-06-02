@@ -1,3 +1,29 @@
+---
+title: Mahadasha
+slug: mahadasha
+date: 2026-06-02
+status: ready-to-review
+type: wiki-entry
+template: Pillar
+tier: T1
+track: 量产线
+page_id: PG-MAHADASHA-001
+author_id: "aditi-sharma"
+author_display_name: "Aditi Sharma"
+target_keyword: mahadasha
+associated_keywords:
+  - vimshottari mahadasha
+  - mahadasha meaning
+  - what is mahadasha
+  - dasha system
+  - planetary periods vedic astrology
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-02T10:43:42.411Z
+content_sha256_short: aa73743f42a89812
+phase2_checks: all-pass
+---
+
 # 行星大运是什么：把吠陀占星的九大行星周期当成趋势而非定数来读
 
 ## Mahadasha 是什么？

@@ -53,7 +53,7 @@ The loudest takes on this period tend to be the least accurate, and a few misrea
 
 ## Ketu Mahadasha FAQ
 
-**How long does this period last?**
+**How long does the Ketu Mahadasha period last?**
 
 It runs for exactly seven years within the Vimshottari cycle. That makes it the shortest of the system's major planetary periods.
 

@@ -121,26 +121,23 @@ export function parseFrontmatter(md) {
 
 export function deriveDescription(body, maxLen = 160) {
   const lines = body.split('\n');
-  let collecting = false;
+  let started = false;
   let para = '';
   for (const line of lines) {
-    if (/^##\s+/.test(line)) {
-      if (!collecting) {
-        collecting = true;
-        continue;
-      } else {
-        break;
-      }
+    const t = line.trim();
+    // Begin after the first ## section, then keep scanning across later ##
+    // sections until a real prose paragraph is found. A section may be
+    // table-only (e.g. a "Key Dates at a Glance" markdown table) — its pipe
+    // rows must never leak into the description.
+    if (/^##\s+/.test(line)) { started = true; continue; }
+    if (!started) continue;
+    if (t === '') { if (para) break; else continue; }
+    if (/^#{1,6}\s/.test(line)) continue;          // sub-heading: skip
+    if (/^\|/.test(t) || /^[-:|\s]+$/.test(t)) {    // markdown table row / separator
+      if (para) break;                              // prose already collected → end
+      continue;                                     // table before any prose → skip past it
     }
-    if (collecting) {
-      if (line.trim() === '') {
-        if (para) break;
-      } else if (/^#{1,6}\s/.test(line)) {
-        break;
-      } else {
-        para += (para ? ' ' : '') + line.trim();
-      }
-    }
+    para += (para ? ' ' : '') + t;
   }
   let cleaned = para
     .replace(/\*\*([^*]+)\*\*/g, '$1')
@@ -151,7 +148,19 @@ export function deriveDescription(body, maxLen = 160) {
     .replace(/\s+/g, ' ')
     .trim();
   if (cleaned.length > maxLen) {
-    cleaned = cleaned.slice(0, maxLen - 3).replace(/\s+\S*$/, '') + '...';
+    // Clean truncation — never emit a trailing "..." (reads as broken to users
+    // and Google). Prefer ending on a full sentence at/under maxLen; otherwise
+    // cut at a word boundary and strip any dangling CJK/ASCII pause punctuation.
+    const window = cleaned.slice(0, maxLen);
+    const sentEnd = Math.max(
+      window.lastIndexOf('. '), window.lastIndexOf('! '), window.lastIndexOf('? '),
+      window.lastIndexOf('。'), window.lastIndexOf('！'), window.lastIndexOf('？'),
+    );
+    if (sentEnd >= 80) {
+      cleaned = cleaned.slice(0, sentEnd + 1).trim();
+    } else {
+      cleaned = window.replace(/\s+\S*$/, '').replace(/[，、；,;:\s]+$/u, '').trim();
+    }
   }
   return cleaned;
 }
@@ -161,6 +170,21 @@ export function deriveDescription(body, maxLen = 160) {
 // substring/regex. Patterns are intentionally narrow to avoid mis-routing.
 // Anything unmatched falls through to an italic placeholder (no fake link).
 export const TBD_LINK_RULES = [
+  // --- 6/2 EMPATH/HSP cluster (highly-sensitive-person pillar + signs / vs-autism
+  // / famous spokes). Specific spokes MUST precede the general pillar rule
+  // (first-match-wins) so "HSP vs autism" / "signs of a HSP" route to their own
+  // spoke. 12th-house + inner-wound (EN) bridges resolve via existing rules below;
+  // the pillar rule matches ONLY explicit "pillar/trait/overview" phrasing so a
+  // bare "highly sensitive person" in the pillar's own body never self-links. ---
+  { match: /high(ly)?\s+sensitiv\w*\s+(person|people).{0,24}\bautism\b|high\s+sensitivity\s+(vs\.?|versus|and)\s+autism|\bhsp\b\s+(vs\.?|versus|and)\s+autism/i, href: '/en/wiki/highly-sensitive-person-vs-autism' },
+  { match: /signs?\s+of\s+(a\s+)?high(ly)?\s+sensitiv\w*|signs?\s+of\s+high\s+sensitivity|high(ly)?\s+sensitive\s+person\s+(signs|checklist)/i, href: '/en/wiki/signs-of-a-highly-sensitive-person' },
+  { match: /famous\s+high(ly)?\s+sensitiv\w*\s+(people|person|figures)|celebrit\w+\s+who\s+are\s+high(ly)?\s+sensitiv/i, href: '/en/wiki/famous-highly-sensitive-people' },
+  { match: /pillar\s+guide\s+to\s+the\s+high(ly)?\s+sensitiv\w*|high(ly)?\s+sensitive\s+person\s+(trait|pillar|overview|guide)|guide\s+to\s+the\s+highly\s+sensitive\s+person\b/i, href: '/en/wiki/highly-sensitive-person' },
+  { match: /高敏感.{0,8}自闭|敏感.{0,4}自闭症/, href: '/en/wiki/highly-sensitive-person-vs-autism' },
+  { match: /高敏感.{0,8}(自查|信号|迹象|清单)|(自查|典型信号).{0,4}清单/, href: '/en/wiki/signs-of-a-highly-sensitive-person' },
+  { match: /(名人|公众人物).{0,8}高敏感|高敏感.{0,8}名人(案例)?/, href: '/en/wiki/famous-highly-sensitive-people' },
+  { match: /高敏感(人群)?(特质)?(总览|概览|pillar)|高敏感人群特质总览/, href: '/en/wiki/highly-sensitive-person' },
+  { match: /(疗愈|安放|理解|安顿).{0,4}内在.{0,3}创伤|内在情绪创伤/, href: '/en/wiki/healing-your-inner-wound' },
   // --- 5/30 cluster (healing_placements pillar+spokes, saturn-in-pisces transit,
   // persephone-goddess myth). Placed FIRST so "Chiron/Mars in the 12th house" and
   // "Saturn in Pisces" win over the broad 12th-house / pisces rules further down
@@ -178,6 +202,20 @@ export const TBD_LINK_RULES = [
   { match: /内在伤口/, href: '/en/wiki/healing-your-inner-wound' },
   { match: /土星.{0,5}双鱼/, href: '/en/wiki/saturn-in-pisces' },
   { match: /(珀耳塞福涅|珀尔塞福涅|佩瑟芬)/, href: '/en/wiki/persephone-goddess' },
+  // --- 6/1 transit cluster (transits pillar + natal-chart-transits spoke). MUST
+  // precede the broad /(natal|birth) chart/ rule (line ~255) so "natal chart
+  // transits" routes to its own spoke, not the birth-chart fundamentals page.
+  // natal-chart-transits (specific) precedes the pillar rule. Single-planet
+  // "<planet> transit" links have NO page yet — deliberately NOT matched here so
+  // they fall through to the planet→house fallback (line ~264) or an italic TBD
+  // placeholder, rather than self-linking the pillar. Only EXPLICIT pillar
+  // references route to /transits. ---
+  { match: /\b(natal|birth)\s+chart\s+transits?\b|\btransits?\s+to\s+(your|the|a|one'?s)\s+(natal|birth)\s+chart\b|\btransit[-\s]to[-\s]natal\s+contacts?\b/i, href: '/en/wiki/natal-chart-transits' },
+  { match: /\bastrological\s+transits?\b|\bplanetary\s+transits?\b|\b(pillar\s+guide\s+to\s+|guide\s+to\s+)?transits?\s+(pillar|hub|overview|guide|101|explained)\b|\bpillar\s+guide\s+to\s+(astrological\s+)?transits?\b/i, href: '/en/wiki/transits' },
+  // transit cluster (ZH) — 本命盘行运 (specific) before pillar; single-planet
+  // 「X行运」 deliberately unmatched (no spoke yet → house fallback or italic).
+  { match: /本命盘?.{0,3}行运|出生盘.{0,3}行运|行运.{0,3}本命/, href: '/en/wiki/natal-chart-transits' },
+  { match: /占星行运(总览|概览|入门|pillar)|行运(总览|概览|入门|pillar)|行运总览/, href: '/en/wiki/transits' },
   // --- 5/29 cluster (chakra spokes + astrology-terms glossary + aspect/angle
   // spokes). Placed FIRST so specific spokes win over the broad /\bchakra/i and
   // ZH /脉轮/ pillar rules below (first-match-wins). All target slugs ship in this
@@ -274,12 +312,18 @@ export const TBD_LINK_RULES = [
 
 export function resolveTbdLink(description, lang = 'en') {
   const d = description.trim();
+  // TBD descriptions may be single-segment ("astrology houses overview") or the
+  // three-part "anchor | context | reason" form the v8 prompt teaches. Match on
+  // the full string (context/reason add recall) but only ever SHOW the anchor —
+  // the first `|`-segment — so the internal authoring metadata never leaks into
+  // the rendered link text. Single-segment descriptions are unaffected.
+  const anchor = d.split('|')[0].trim();
   // Rules store the EN path; rewrite /en/ → /<lang>/ so a ZH article links the ZH page.
   const langPath = lang === 'zh' ? '/zh/' : '/en/';
   for (const rule of TBD_LINK_RULES) {
-    if (rule.match.test(d)) return `[${d}](${rule.href.replace('/en/', langPath)})`;
+    if (rule.match.test(d)) return `[${anchor}](${rule.href.replace('/en/', langPath)})`;
   }
-  return `*${d}*`;
+  return `*${anchor}*`;
 }
 
 // Resolve `[[<TBD-external-link: Service | Topic | desc>]]` to a real link.

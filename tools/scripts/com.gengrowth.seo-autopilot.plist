@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SEO publish autopilot — fires the tick every 25 min (≈ the 20–30 min stagger).
+     INSTALL (Phase 1 go-live, run yourself):
+       cp tools/scripts/com.gengrowth.seo-autopilot.plist ~/Library/LaunchAgents/
+       launchctl load ~/Library/LaunchAgents/com.gengrowth.seo-autopilot.plist
+     STOP:
+       launchctl unload ~/Library/LaunchAgents/com.gengrowth.seo-autopilot.plist
+     Each tick is single-instanced (mkdir mutex) and stands down when nothing is
+     claimable. LLM is only spent when a preview needs verify+merge. -->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.gengrowth.seo-autopilot</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-seo-autopilot-tick.sh</string>
+  </array>
+  <key>StartInterval</key>
+  <integer>1500</integer>
+  <key>RunAtLoad</key>
+  <false/>
+  <key>StandardOutPath</key>
+  <string>/Users/awayer_mini/gengrowth-agents/cron-sync/seo_autopilot/launchd.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/awayer_mini/gengrowth-agents/cron-sync/seo_autopilot/launchd.err.log</string>
+  <key>ProcessType</key>
+  <string>Background</string>
+</dict>
+</plist>

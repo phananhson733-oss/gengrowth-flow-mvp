@@ -4,10 +4,12 @@ You are the SEO publish autopilot running on a ~25-minute timer. Work autonomous
 The wrapper already ran the deterministic scan (sync + claim + convert + build-gate + push preview branch + open PR). Read the ledger:
     node ~/gengrowth-flow-mvp/tools/scripts/gg-seo-autopilot.mjs --status
 
-- Find the entry whose status is `pushed-preview`. If none exists, STOP (nothing to verify this tick).
-- Note its `branch`, `pr`, and `slug`. If any entry is freshly `needs_human`, send ONE PushNotification naming the task + reason, then continue to the pushed-preview one (if any).
+- Find the entry whose status is `pushed-preview` or `verified-preview`. If none exists, STOP (nothing to verify this tick).
+- Note its `branch`, `pr`, and `slug`. If any entry is freshly `needs_human`, send ONE PushNotification naming the task + reason, then continue to the preview entry (if any).
 
 ## Step 2 — get the Vercel preview URL
+If the entry is already `verified-preview`, skip to Step 4 and merge using the stored `previewUrl`.
+
 The push triggers a Vercel Preview deployment. Poll for it (up to ~5 min):
     gh api "repos/xdawayer/oracle/deployments?ref=<branch>" --jq '.[0].id'
     gh api "repos/xdawayer/oracle/deployments/<id>/statuses" --jq '.[0] | {state,environment_url}'
@@ -25,8 +27,11 @@ Both checks must pass:
 
 ## Step 4 — gate decision
 - If BOTH pass → merge (this deploys to prod www.astrologywiki.com):
+      node ~/gengrowth-flow-mvp/tools/scripts/gg-seo-autopilot.mjs --mark-verified --branch <branch> --preview-url <environment_url> --evidence "codex review + chrome preview verification passed"
       node ~/gengrowth-flow-mvp/tools/scripts/gg-seo-autopilot.mjs --merge --branch <branch>
   Then PushNotification: "autopilot published <slug> → prod".
-- If EITHER fails → do NOT merge. Leave the PR open, set the ledger entry to needs_human with the failure reason (edit the JSON at ~/gengrowth-ops/inbox/06-tasks/tasks/.autopilot-claims.json), and PushNotification the specific failure. A human will review the open PR.
+- If EITHER fails → do NOT merge. Leave the PR open, park the ledger with:
+      node ~/gengrowth-flow-mvp/tools/scripts/gg-seo-autopilot.mjs --mark-failed --branch <branch> --reason "<specific failure>"
+  Then PushNotification the specific failure. A human will review the open PR.
 
 Stop after one task. The timer will fire again for the next one (this is the 20–30 min stagger).

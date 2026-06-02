@@ -21,8 +21,8 @@ Both checks must pass:
 (a) codex review of the diff:
     cd ~/oracle && /codex review the PR diff for <branch> — focus on: valid WikiArticle shape, no broken TBD/internal links, JSON-LD/schema correctness, no placeholder leakage, SEO title/description sanity.
 
-(b) chrome MCP on the preview URL (use the playwright MCP tools):
-    - navigate `<environment_url>/en/wiki/<slug>` — assert: page renders real content (not SPA soft-404), an <h1> is present, a JSON-LD <script type="application/ld+json"> exists, and there are no console errors.
+(b) chrome MCP on the preview URL — the playwright MCP is loaded via the wrapper's --mcp-config; tools are `mcp__playwright__browser_navigate`, `browser_snapshot`, `browser_console_messages`; call `browser_close` when done:
+    - navigate `<environment_url>/en/wiki/<slug>` — assert: page renders real article content (not the empty SPA soft-404 shell), an <h1> is present, and a JSON-LD `<script type="application/ld+json">` exists. For console: FAIL only on uncaught JS exceptions / failed app-bundle loads — IGNORE benign network 404s (favicon, analytics, fonts).
     - if the task is bilingual (ledger `zh:true`), also verify `<environment_url>/zh/wiki/<slug>` the same way.
 
 ## Step 4 — gate decision

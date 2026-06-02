@@ -37,7 +37,13 @@ if node "$AUTO" --status 2>/dev/null | grep -Eq '"(pushed-preview|verified-previ
   echo "$(date '+%F %T') preview pending → running verify+merge tick" >> "$LOG"
   # --dangerously-skip-permissions: unattended autonomy. The driver only merges
   # after the ledger is marked verified by the codex + chrome preview gate.
-  claude -p "$(cat "$PROMPT_FILE")" --dangerously-skip-permissions >> "$LOG" 2>&1
+  # --mcp-config: headless `claude -p` does NOT auto-load the user-scoped
+  # playwright MCP; load it explicitly so the chrome preview verification works.
+  # </dev/null: prompt is passed as an arg, so skip the 3s stdin wait.
+  claude -p "$(cat "$PROMPT_FILE")" \
+    --mcp-config "$SCRIPT_DIR/autopilot-mcp.json" \
+    --allowedTools "Bash Skill mcp__playwright__browser_navigate mcp__playwright__browser_snapshot mcp__playwright__browser_console_messages mcp__playwright__browser_evaluate mcp__playwright__browser_close" \
+    --dangerously-skip-permissions </dev/null >> "$LOG" 2>&1
 else
   echo "$(date '+%F %T') no preview to verify — idle/parked, skipping LLM tick" >> "$LOG"
 fi

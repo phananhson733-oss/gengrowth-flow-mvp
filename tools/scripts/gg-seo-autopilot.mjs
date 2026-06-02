@@ -222,7 +222,9 @@ function articleAuthorIds(slug) {
 function claimable(task, claims) {
   if (task.checked) return { ok: false, reason: 'already checked in plan' };
   const st = claimStatus(claims, task.pgId);
-  if (st === 'active' || st === 'done') return { ok: false, reason: `claim=${st}` };
+  if (['active', 'pushed-preview', 'verified-preview', 'needs_human', 'done'].includes(st)) {
+    return { ok: false, reason: `claim=${st}` };
+  }
   if (!existsSync(enDraft(task.pgId))) return { ok: false, reason: 'no EN enriched draft (upstream not done)' };
   if (!phase2Passed(task.pgId)) return { ok: false, reason: 'phase2 not pass' };
   const slug = frontmatterSlug(enDraft(task.pgId));

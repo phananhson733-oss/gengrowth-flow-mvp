@@ -81,6 +81,17 @@ function initOracleWithOrigin(h) {
   git(h.oracle, ['push', '-u', 'origin', 'main']);
 }
 
+function addRemoteMainCommit(h) {
+  const clone = join(h.root, 'remote-clone');
+  git(h.root, ['clone', join(h.root, 'origin.git'), clone]);
+  git(clone, ['config', 'user.name', 'Remote User']);
+  git(clone, ['config', 'user.email', 'remote@example.com']);
+  writeFileSync(join(clone, 'README.md'), 'remote update\n');
+  git(clone, ['add', 'README.md']);
+  git(clone, ['commit', '-m', 'remote update']);
+  git(clone, ['push', 'origin', 'main']);
+}
+
 function writeStubFlow(h, slug = 'test-slug') {
   const flow = join(h.root, 'flow');
   const scripts = join(flow, 'tools', 'scripts');
@@ -229,6 +240,39 @@ test('--scan does not reclaim a task already waiting in pushed-preview', () => {
     const claims = JSON.parse(readFileSync(h.claimsPath, 'utf8'));
     assert.equal(claims['PG-TEST-001'].status, 'pushed-preview');
     assert.match(`${r.stdout}${r.stderr}`, /claim=pushed-preview/);
+  } finally {
+    h.cleanup();
+  }
+});
+
+test('--scan updates /oracle main first, then publishes from a separate worktree', () => {
+  const h = makeHarness();
+  try {
+    initOracleWithOrigin(h);
+    addRemoteMainCommit(h);
+    const flow = writeStubFlow(h);
+    const worktreeRoot = join(h.root, 'oracle-worktrees');
+    writeFileSync(join(h.bin, 'npm'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
+    writeFileSync(join(h.bin, 'gh'), '#!/bin/sh\nprintf "https://github.com/xdawayer/oracle/pull/123\\n"\n', { mode: 0o755 });
+    writeFileSync(join(h.tasks, '2026-06-03-blog-output-plan.md'), '- [ ] `PG-TEST-001` test keyword\n');
+
+    const r = runAuto(h, ['--scan', '--limit', '1'], {
+      GG_FLOW_REPO: flow,
+      GG_ORACLE_WORKTREE_ROOT: worktreeRoot,
+    });
+
+    assert.equal(r.status, 0, `${r.stdout}${r.stderr}`);
+    assert.equal(git(h.oracle, ['branch', '--show-current']).trim(), 'main');
+    assert.equal(git(h.oracle, ['rev-parse', 'main']).trim(), git(h.oracle, ['rev-parse', 'origin/main']).trim());
+    assert.equal(readFileSync(join(h.oracle, 'README.md'), 'utf8'), 'remote update\n');
+    assert.equal(existsSync(join(h.oracle, 'data', 'articles', 'test-slug.ts')), false);
+
+    const claims = JSON.parse(readFileSync(h.claimsPath, 'utf8'));
+    const claim = claims['PG-TEST-001'];
+    assert.equal(claim.status, 'pushed-preview');
+    assert.ok(claim.worktree && claim.worktree.startsWith(worktreeRoot), `unexpected worktree: ${claim.worktree}`);
+    assert.notEqual(claim.worktree, h.oracle);
+    assert.match(git(h.oracle, ['show', `${claim.branch}:data/articles/test-slug.ts`]), /authorId: "test-author"/);
   } finally {
     h.cleanup();
   }

@@ -188,6 +188,7 @@ function doScan(o) {
   const plan = latestPlan();
   if (!plan) { log('no blog-output-plan found'); return; }
   log(`plan: ${basename(plan)}`);
+  syncOracle(); // hard-sync BEFORE claimable() so the "already published" check is accurate
   const claims = loadClaims();
   const tasks = parseTasks(plan);
 

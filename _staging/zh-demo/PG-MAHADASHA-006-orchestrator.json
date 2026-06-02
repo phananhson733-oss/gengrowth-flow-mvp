@@ -1,0 +1,52 @@
+{
+  "page_id": "PG-MAHADASHA-006",
+  "prompt_path": "/Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/PG-MAHADASHA-006.v8.zh-prompt.md",
+  "started_at": "2026-06-02T10:39:32.016Z",
+  "models_requested": [
+    "claude"
+  ],
+  "retry": 2,
+  "diversify_on_fail": false,
+  "max_cost_usd_per_page": 5,
+  "budget_exceeded_models": [],
+  "ok_count": 1,
+  "total_cost_estimate_usd": 0.1003,
+  "results": {
+    "claude": {
+      "model": "claude",
+      "active_model": "claude",
+      "diversified": false,
+      "ok": true,
+      "output_path": "/Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/PG-MAHADASHA-006-claude-v8.md",
+      "retries": 0,
+      "duration_s": 295.9,
+      "cost_estimate_usd": {
+        "usd": 0.1003,
+        "input_tokens_est": 5507,
+        "output_tokens_est": 237,
+        "pricing_note": "Opus 4.7 xhigh"
+      },
+      "cumulative_cost_usd": 0.1003,
+      "budget_exceeded": false,
+      "budget_usd": 5,
+      "attempts": [
+        {
+          "try_index": 1,
+          "model": "claude",
+          "command": "claude -p --model claude-opus-4-8 < /Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/PG-MAHADASHA-006.v8.zh-prompt.md > /Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/PG-MAHADASHA-006-claude-v8.md",
+          "cost_usd": 0.1003,
+          "cumulative_cost_usd": 0.1003,
+          "ok": true,
+          "exit_code": 0,
+          "duration_s": 295.9,
+          "stderr_tail": "",
+          "stdout_bytes": 2978,
+          "sonnet_guard": {
+            "downgraded": false,
+            "bytes": 7177
+          }
+        }
+      ]
+    }
+  }
+}

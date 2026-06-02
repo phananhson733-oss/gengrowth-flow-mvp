@@ -1,3 +1,29 @@
+---
+title: Mahadasha
+slug: mahadasha
+date: 2026-06-02
+status: ready-to-review
+type: wiki-entry
+template: Pillar
+tier: T1
+track: 量产线
+page_id: PG-MAHADASHA-001
+author_id: "aditi-sharma"
+author_display_name: "Aditi Sharma"
+target_keyword: mahadasha
+associated_keywords:
+  - vimshottari mahadasha
+  - mahadasha meaning
+  - what is mahadasha
+  - dasha system
+  - planetary periods vedic astrology
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-02T10:47:51.302Z
+content_sha256_short: 5f658fe7a95de7f1
+phase2_checks: all-pass
+---
+
 # Mahadasha Explained: Reading Vedic Planetary Periods as Seasons, Not Sentences
 
 ## What are Mahadasha?

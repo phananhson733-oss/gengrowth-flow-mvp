@@ -14,7 +14,7 @@
 //                       (apostrophes etc. produce invalid JS identifiers)
 //   4. author-known   : every authorId on the converted article must be a
 //                       registered AuthorPersona in oracle/data/authors/index.ts
-//   5. build-gate     : `npm run build` in oracle must succeed
+//   5. build-gate     : `npm run build` in the publish worktree must succeed
 // A task failing 3/4/5 is parked as needs_human in the claim ledger (no merge),
 // consistent with the kanban invisible-default direction (gate only on explicit
 // human-required conditions).
@@ -383,7 +383,7 @@ function doMerge(o) {
     // Merge via gh so the PR closes cleanly; Vercel then deploys main → prod.
     sh('gh', ['pr', 'merge', o.branch, '--repo', 'xdawayer/oracle', '--merge', '--delete-branch'], { cwd: ORACLE });
     cleanupWorktree(claim.worktree);
-    git(['fetch', '--quiet', 'origin']); git(['checkout', '-q', 'main']); git(['reset', '--hard', '-q', 'origin/main']);
+    syncOracle();
     claims[pgId].status = 'done';
     claims[pgId].mergedAt = new Date().toISOString();
     checkPlanBox(pgId);

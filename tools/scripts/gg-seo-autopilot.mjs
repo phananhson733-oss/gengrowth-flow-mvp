@@ -256,9 +256,9 @@ function doScan(o) {
 
 function doMerge(o) {
   if (!o.branch) { log('--merge requires --branch'); process.exit(2); }
-  git(['checkout', 'main']); git(['pull', '--quiet', '--ff-only']);
-  git(['merge', '--no-ff', '-m', `merge ${o.branch} [autopilot verified]`, o.branch]);
-  git(['push', 'origin', 'main']); // Vercel auto-deploys prod
+  // Merge via gh so the PR closes cleanly; Vercel then deploys main → prod.
+  sh('gh', ['pr', 'merge', o.branch, '--repo', 'xdawayer/oracle', '--merge', '--delete-branch'], { cwd: ORACLE });
+  git(['fetch', '--quiet', 'origin']); git(['checkout', '-q', 'main']); git(['reset', '--hard', '-q', 'origin/main']);
   // flip claim → done + check the plan box
   const claims = loadClaims();
   for (const [pid, c] of Object.entries(claims)) {

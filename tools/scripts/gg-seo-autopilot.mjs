@@ -64,6 +64,19 @@ function sh(cmd, args, opts = {}) {
 function git(args, opts = {}) { return sh('git', ['-C', ORACLE, ...args], opts); }
 function log(...a) { process.stderr.write(`[autopilot] ${a.join(' ')}\n`); }
 
+// CRITICAL: the local oracle clone lags prod badly (observed 71 commits behind),
+// which yields false build failures and risks re-publishing already-live slugs.
+// Always hard-sync to origin/main before evaluating anything. oracle is a
+// publish target, not a dev workspace, so discarding local cruft is correct.
+function syncOracle() {
+  git(['fetch', '--quiet', 'origin']);
+  try { git(['checkout', '-q', 'main']); } catch { /* already on main */ }
+  git(['checkout', '--', '.']);
+  git(['clean', '-fd', 'data/articles']);
+  git(['reset', '--hard', '-q', 'origin/main']);
+  log(`synced oracle → origin/main @ ${git(['rev-parse', '--short', 'HEAD']).trim()}`);
+}
+
 function parseArgs(argv) {
   const o = { limit: 1 };
   for (let i = 0; i < argv.length; i++) {

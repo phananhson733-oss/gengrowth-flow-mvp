@@ -91,7 +91,10 @@ function main() {
   let critique = '';
   const critiqueFile = `${o.out}.critique.txt`;
   try {
-    run(CODEX, ['exec', '-c', 'model=gpt-5.5', '-c', `reasoning_effort=${CODEX_EFFORT}`,
+    // -s read-only: codex exec defaults to workspace-write + approval:never, so
+    // it will agentically EDIT FILES (it appended to a chat-record on the first
+    // run). read-only sandbox blocks all writes — we only want a text critique.
+    run(CODEX, ['exec', '-s', 'read-only', '-c', 'model=gpt-5.5', '-c', `reasoning_effort=${CODEX_EFFORT}`,
       '--output-last-message', critiqueFile, '-'],
       CRITIQUE_PROMPT(o.entity, o.targetKeyword, draft), 600000);
     if (existsSync(critiqueFile)) critique = readFileSync(critiqueFile, 'utf8').trim();

@@ -1,0 +1,57 @@
+- generic [ref=e2]:
+  - navigation "Main navigation" [ref=e3]:
+    - generic [ref=e4]:
+      - link "AstrologyWiki" [ref=e5] [cursor=pointer]:
+        - img "AstrologyWiki" [ref=e6]
+        - text: AstrologyWiki
+      - generic [ref=e7]:
+        - link "Birth" [ref=e8] [cursor=pointer]:
+          - /url: /dashboard
+        - link "Transit" [ref=e9] [cursor=pointer]:
+          - /url: /forecast
+        - link "Synastry" [ref=e10] [cursor=pointer]:
+          - /url: /us
+        - link "Ask" [ref=e11] [cursor=pointer]:
+          - /url: /oracle
+        - link "Journal" [ref=e12] [cursor=pointer]:
+          - /url: /journal
+        - link "Wiki" [ref=e13] [cursor=pointer]:
+          - /url: /en/wiki
+        - button "☀" [ref=e15] [cursor=pointer]
+        - button "中" [ref=e16] [cursor=pointer]
+        - button "Sign In" [ref=e18] [cursor=pointer]:
+          - img [ref=e19]
+          - generic [ref=e22]: Sign In
+  - main [ref=e23]:
+    - generic [ref=e24]:
+      - generic:
+        - img
+      - generic [ref=e25]:
+        - img [ref=e29]
+        - img [ref=e33]
+      - generic [ref=e62]:
+        - generic [ref=e63]: CONSULTING THE STARS
+        - generic [ref=e64]: CONSULTING THE STARS
+  - contentinfo [ref=e69]:
+    - generic [ref=e70]:
+      - navigation "Footer navigation" [ref=e71]:
+        - list [ref=e72]:
+          - listitem [ref=e73]:
+            - link "Privacy Policy" [ref=e74] [cursor=pointer]:
+              - /url: /en/privacy
+          - listitem [ref=e75]:
+            - link "Terms of Service" [ref=e76] [cursor=pointer]:
+              - /url: /en/terms
+          - listitem [ref=e77]:
+            - link "Cookies" [ref=e78] [cursor=pointer]:
+              - /url: /en/cookies
+          - listitem [ref=e79]:
+            - link "About" [ref=e80] [cursor=pointer]:
+              - /url: /en/about
+          - listitem [ref=e81]:
+            - link "Help" [ref=e82] [cursor=pointer]:
+              - /url: /en/help
+          - listitem [ref=e83]:
+            - link "Contact" [ref=e84] [cursor=pointer]:
+              - /url: mailto:support@astrologywiki.com
+      - paragraph [ref=e86]: © 2026 AstrologyWiki. All rights reserved.

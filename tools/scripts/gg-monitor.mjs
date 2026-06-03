@@ -483,7 +483,8 @@ export async function runMonitor(argv, deps = {}) {
   const getToken = deps.getAccessToken || getAccessToken;
   let token;
   try {
-    token = await getToken();
+    // GSC + GA4 live on the user's properties; the SA can't reach them — keep USER OAuth here.
+    token = await getToken({ user: true });
   } catch (e) {
     process.stderr.write(`error: cannot mint access_token — ${e.message}\n`);
     return 1;

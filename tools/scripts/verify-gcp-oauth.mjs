@@ -198,7 +198,7 @@ async function checkGA4(token) {
 
   let token;
   try {
-    token = await getAccessToken();
+    token = await getAccessToken({ user: true }); // this tool verifies USER OAuth (incl. GSC/GA scopes)
     console.log(`🔑 access_token minted (${token.length} chars)`);
     console.log('');
   } catch (e) {

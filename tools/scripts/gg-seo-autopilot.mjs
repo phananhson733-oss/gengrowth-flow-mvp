@@ -54,6 +54,7 @@ import {
 } from 'node:fs';
 import { join, dirname, basename } from 'node:path';
 import { homedir } from 'node:os';
+import { buildAuthorMap, resolveAuthor } from './lib/author-routing.mjs';
 
 const HOME = homedir();
 const FLOW = process.env.GG_FLOW_REPO || join(HOME, 'gengrowth-flow-mvp');
@@ -66,6 +67,18 @@ const VERSION = process.env.GG_VERSION || 'v8';
 const STAGING = join(FLOW, '_staging');
 const CONV = join(FLOW, 'tools', 'scripts', 'gg-md-to-oracle-ts.mjs');
 const REG = join(FLOW, 'tools', 'scripts', 'gg-oracle-register-index.mjs');
+
+// upstream authoring-stage scripts (used by --author when a plan task has no
+// passing draft yet): bridge → RAG → render → orchestrator → phase2.
+const SCRIPTS = join(FLOW, 'tools', 'scripts');
+const SHEET_PULL = join(SCRIPTS, 'gg-sheet-pull.mjs');
+const BRIDGE = join(SCRIPTS, 'gg-sheet-to-brief.mjs');
+const OBSIDIAN_RAG = join(SCRIPTS, 'gg-obsidian-rag.mjs');
+const ENTITY_PASSPORT = join(SCRIPTS, 'gg-entity-passport.mjs');
+const RENDER = join(SCRIPTS, 'gg-render-batch.mjs');
+const ORCHESTRATOR = join(SCRIPTS, 'gg-llm-orchestrator.mjs');
+const PHASE2 = join(SCRIPTS, '_phase2-validate.mjs');
+const CONFIG_SNAPSHOT = join(FLOW, '.gg-cache', 'config-snapshot.json');
 const PLAN_GLOB_DIR = join(OPS, 'inbox', '06-tasks', 'tasks');
 const CLAIMS_PATH = join(PLAN_GLOB_DIR, '.autopilot-claims.json');
 const CLAIMS_LOCK = `${CLAIMS_PATH}.lock`;

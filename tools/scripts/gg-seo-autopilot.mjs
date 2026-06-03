@@ -49,6 +49,7 @@ import {
   renameSync,
   rmSync,
   statSync,
+  symlinkSync,
   writeFileSync,
 } from 'node:fs';
 import { join, dirname, basename } from 'node:path';
@@ -116,6 +117,14 @@ function preparePublishWorktree(branch) {
   try { git(['worktree', 'remove', '--force', wt]); } catch { /* no stale worktree */ }
   try { git(['branch', '-D', branch]); } catch { /* no stale local branch */ }
   git(['worktree', 'add', '--force', '-B', branch, wt, 'origin/main']);
+  // git worktrees don't carry node_modules (gitignored — it lives only in the
+  // baseline checkout), so the build gate's `npm run build` can't resolve
+  // typescript / next. Symlink the baseline's installed deps into the worktree.
+  const baselineModules = join(ORACLE, 'node_modules');
+  const wtModules = join(wt, 'node_modules');
+  if (existsSync(baselineModules) && !existsSync(wtModules)) {
+    try { symlinkSync(baselineModules, wtModules); } catch { /* best-effort, build gate will surface it */ }
+  }
   log(`worktree ${branch} → ${wt}`);
   return wt;
 }

@@ -55,6 +55,16 @@ function tokens(text) {
     .filter((t) => t.length >= 3 && !STOP.has(t));
 }
 
+// Keep grounding to the curated astrology vault (the "deep-reading book notes
+// from wzb personal vault" the renderer cites) — drop internal SEO/planning docs
+// (docs/, inbox/, keyword-cluster, chat-records) that gbrain also indexes, so
+// Chinese planning tables and our own prompts can't leak into article grounding.
+function isVaultSlug(slug) {
+  const s = slug.toLowerCase();
+  return (s.includes('llm-wiki') || s.includes('wzb-obsidian')) &&
+    !s.includes('/inbox/') && !s.includes('keyword') && !s.includes('chat-record') && !s.includes('daily-digest');
+}
+
 // `gbrain query` prints one ranked line per chunk: "[score] slug -- preview…".
 function parseQuery(out) {
   const rows = [];
@@ -150,7 +160,7 @@ function main(argv) {
     const seen = new Set();
     const topSlugs = [];
     for (const r of rows) {
-      if (seen.has(r.slug)) continue;
+      if (seen.has(r.slug) || !isVaultSlug(r.slug)) continue;
       seen.add(r.slug);
       topSlugs.push(r);
       if (topSlugs.length >= o.limit) break;

@@ -1,0 +1,8 @@
+- `48-hour integration window` 被写成决定性机制，但这不是公认占星事实 → 改成作者建议的实践框架，删掉 `determines/materializes/crystallizes` 这类硬因果词。
+- 权威引用牵强：Anodea Judith、Howard Sasportas、Dane Rudhyar 被用来支撑不完全对应的主张 → 要么删掉人名，要么精确改成各自真正贡献，别让来源像装饰性背书。
+- 缺少核心占星基础 → 补一句 full moon 是太阳与月亮对冲、象征照亮/ culmination/ release，并说明可看落在哪个星座、宫位和本命盘触点。
+- 搜索意图回答不够实用 → 在前半部分加入一个简短可执行流程：准备空间、写下释放对象、命名替代行动、安全处理纸/蜡烛、做一个 24-48 小时 follow-up action。
+- 语气过度武断和羞辱感偏强，如“posting the candle photo”与“most beginners lose the thread” → 改成温和但有判断力的建议，避免把个人仪式风格判成失败。
+- “most traditions”认为满月前三天能量相同的说法过宽 → 改为“many modern practitioners use the night before/day of/day after; exact timing matters more in stricter astrological timing work.”
+- 缺少安全和文化边界 → 加入 candle/fire safety、烟熏材料通风、避免借用封闭传统、仪式不能替代治疗或专业支持。
+- CTA 承诺过度：birth chart 页面不一定显示当前满月触发点 → 改成“if your tool includes current transits, check the full moon’s sign/house/aspects”，或链接到真正的 transit/full moon guide。

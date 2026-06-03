@@ -25,41 +25,10 @@ trap 'rmdir "$LOCK" 2>/dev/null' EXIT
 
 echo "$(date '+%F %T') tick start" >> "$LOG"
 
-# ── 0) pull latest authored content from xdawayer GitHub before scanning ─────
-# This machine is the auto-publish node; wzb authors on a separate machine and
-# pushes to github.com/xdawayer/{gengrowth-flow-mvp,gengrowth-ops}. Bring the
-# drafts (_staging) + the task plan current here first. SAFETY: never force or
-# reset (cf. the oracle baseline incident) — every step is log-and-continue, and
-# GIT_TERMINAL_PROMPT=0 makes a missing credential fail fast instead of hanging
-# an unattended tick.
-export GIT_TERMINAL_PROMPT=0
-FLOW_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"   # gengrowth-flow-mvp (holds _staging drafts)
-OPS_DIR="$HOME/gengrowth-ops"                 # holds inbox/06-tasks/tasks/*blog-output-plan*.md
-PLAN_SUBDIR="inbox/06-tasks/tasks"
-
-# Drafts: flow-mvp is also driven by the obsidian-git vault-backup plugin, so a
-# concurrent commit may hold .git/index.lock — yield rather than fight it, and
-# fast-forward only (a diverged local vault-backup commit defers to a later tick
-# / the plugin's own pull).
-if [ -e "$FLOW_DIR/.git/index.lock" ]; then
-  echo "$(date '+%F %T') flow-mvp sync skipped — git index.lock held (obsidian-git busy)" >> "$LOG"
-elif git -C "$FLOW_DIR" fetch --quiet origin 2>>"$LOG" \
-     && git -C "$FLOW_DIR" merge --quiet --ff-only origin/main 2>>"$LOG"; then
-  echo "$(date '+%F %T') flow-mvp synced @ $(git -C "$FLOW_DIR" rev-parse --short HEAD)" >> "$LOG"
-else
-  echo "$(date '+%F %T') flow-mvp sync skipped (diverged/locked — not fast-forward)" >> "$LOG"
-fi
-
-# Ops plan: this repo carries unrelated local WIP we deliberately don't manage.
-# We only care about the task plan, so check out just that subdir from origin —
-# leaves the WIP untouched, needs no clean working tree, and the autopilot claims
-# ledger (.autopilot-claims.json, untracked) survives.
-if git -C "$OPS_DIR" fetch --quiet origin 2>>"$LOG" \
-   && git -C "$OPS_DIR" checkout --quiet origin/main -- "$PLAN_SUBDIR" 2>>"$LOG"; then
-  echo "$(date '+%F %T') ops plan synced ($PLAN_SUBDIR @ origin/main)" >> "$LOG"
-else
-  echo "$(date '+%F %T') ops plan sync skipped (fetch/checkout failed)" >> "$LOG"
-fi
+# NOTE: flow-mvp (_staging drafts) and gengrowth-ops (task plan) are BOTH kept
+# current by their obsidian-git plugins (autoPullInterval=1 → pull every ~1 min,
+# pullBeforePush=true), so the tick does NOT pull them itself — that would be
+# redundant and risk fighting the plugin for .git/index.lock.
 
 AUTO="$SCRIPT_DIR/gg-seo-autopilot.mjs"
 

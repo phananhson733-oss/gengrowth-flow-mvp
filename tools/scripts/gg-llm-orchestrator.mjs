@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // gg-llm-orchestrator.mjs — drive Stage 12 of docs/PIPELINE.md.
-// DEFAULT: Claude-only (opus-4-7 xhigh). Cross-validation models codex (gpt-5.5
+// DEFAULT: Claude-only (opus-4-8 xhigh). Cross-validation models codex (gpt-5.5
 // high) / gemini (2.5-pro) stay available on demand via --models. The hermes
 // model (≈GPT-equivalent, needs OPENROUTER_API_KEY) was dropped 2026-05-26.
 // Parallel via Promise.allSettled + child_process.spawn. Each model gets --retry N
@@ -41,7 +41,7 @@ const PRICING = {
   gemini: { input_per_m: 3.5, output_per_m: 10.5, note: 'Gemini 2.5 Pro' },
 };
 const WORDS_PER_TOKEN = 1 / 1.3; // ~1.3 tokens per English word
-// Diversify map: a failing cross-validation model escalates to Opus 4.7 xhigh
+// Diversify map: a failing cross-validation model escalates to Opus 4.8 xhigh
 // (diversity > repetition). claude is already the ceiling, so it escalates to null.
 const DIVERSIFY_ESCALATION = { codex: 'claude', gemini: 'claude', claude: null };
 
@@ -201,7 +201,7 @@ function detectClaudeDowngrade(outputPath) {
       return {
         downgraded: true,
         bytes: size,
-        message: `claude output is ${size}B (< ${CLAUDE_OPUS_MIN_BYTES}B). Sonnet downgrade suspected. Verify CLI honored --model claude-opus-4-7 (run \`claude --version\` and check ~/.claude/settings.json for a default model override). Re-run after fixing.`,
+        message: `claude output is ${size}B (< ${CLAUDE_OPUS_MIN_BYTES}B). Sonnet downgrade suspected. Verify CLI honored --model ${CLAUDE_MODEL} (run \`claude --version\` and check ~/.claude/settings.json for a default model override). Re-run after fixing.`,
       };
     }
     return { downgraded: false, bytes: size };

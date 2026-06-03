@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-MOON-002",
+  "entity": "full moon energy",
+  "target_keyword": "full moon energy",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-06-03T16:35:51.365Z",
+  "content_sha256_short": "de185c3db7977479",
+  "source_path": "_staging/PG-MOON-002-claude-v8.md",
+  "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-MOON-002-en.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 1677,
+      "wikilinks": 5,
+      "tbdLinks": 5
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

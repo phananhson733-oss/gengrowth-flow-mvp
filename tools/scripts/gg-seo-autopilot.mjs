@@ -630,7 +630,9 @@ function doScanLocked(o) {
       cleanupWorktree(publishRepo);
       log(`DRY-RUN OK ${t.pgId} (${t.slug}${res.zh ? '+zh' : ' EN-only'}) build✓ — not pushed`);
     } else {
-      gitIn(publishRepo, ['add', 'data/articles', 'scripts/generate-seo-pages.mjs']);
+      const addPaths = ['data/articles'];
+      if (existsSync(join(publishRepo, 'scripts', 'generate-seo-pages.mjs'))) addPaths.push('scripts/generate-seo-pages.mjs');
+      gitIn(publishRepo, ['add', ...addPaths]);
       gitIn(publishRepo, ['commit', '-q', '-m', `feat(articles): publish ${t.slug} (${WINNER} ${VERSION}) [autopilot]`]);
       gitIn(publishRepo, ['push', '-u', 'origin', branch]);
       // Open a PR so Vercel posts a Preview deployment + check; merge happens

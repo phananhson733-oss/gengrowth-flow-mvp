@@ -428,27 +428,36 @@ function doAuthor() {
       slug = (keyword || pgId).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
     } catch (e) { return park(null, `override unreadable: ${errTail(e)}`); }
 
+    // Clean entity: strip leading interrogatives so we have the topic noun, not the
+    // question ("what is a full moon ritual" → "full moon ritual"). Used for RAG
+    // search AND (when the Sheet entity is a phrase-salad) for the rendered {{entity}}.
+    const cleanEntity = keyword
+      .replace(/^\s*(what\s+(is|are|to\s+do\s+(on|with|during|after))|how\s+(to|do(es)?)|why\s+(is|are|do(es)?)|when\s+(is|are|to|do(es)?))\s+(a|an|the)?\s*/i, '')
+      .replace(/[?？]+\s*$/, '').trim() || keyword;
+    const ragEntity = cleanEntity;
+
     const author = resolveAuthorForDomain(domain);
     if (!author) return park(slug, `no author for cluster_domain "${domain}" (author.map miss)`);
     entry.author = author;
     entry.author_source = 'auto';
+
+    // The Sheet `entity` column is sometimes a phrase-salad of angles
+    // ("intentional energy work · lunar phase timing · …") instead of the entity
+    // name; rendered verbatim it produces garbage H2s like "## What is intentional
+    // energy work · …?". When it looks like a list (·-separated / 3+ comma items),
+    // swap in the clean topic noun so headings read naturally.
+    const messyEntity = /·/.test(entry.entity || '') || ((entry.entity || '').split(',').length >= 3);
+    if (messyEntity && cleanEntity) entry.entity = cleanEntity;
 
     // English-template CTA when the Sheet CTA text is non-English (CJK) or blank.
     // Keep the Sheet's absolute cta_target_url. (User-approved 2026-06-03.)
     if (/[㐀-鿿]/.test(entry.cta_text || '') || !(entry.cta_text || '').trim()) {
       if (!/^https?:\/\//.test(entry.cta_target_url || ''))
         return park(slug, 'CTA text non-English but no absolute cta_target_url to keep');
-      entry.cta_text = `Generate your free birth chart to explore ${keyword}.`;
+      entry.cta_text = `Generate your free birth chart to explore ${cleanEntity}.`;
     }
     try { writeFileSync(absOverride, JSON.stringify(ov, null, 2)); }
     catch (e) { return park(slug, `override write failed: ${errTail(e)}`); }
-
-    // RAG entity: strip leading interrogatives so the vault/web search matches the
-    // entity itself, not the question ("what is a full moon ritual" → "full moon
-    // ritual"); the raw question tokens otherwise match 0 vault notes.
-    const ragEntity = keyword
-      .replace(/^\s*(what\s+(is|are|to\s+do\s+(on|with|during|after))|how\s+(to|do(es)?)|why\s+(is|are|do(es)?)|when\s+(is|are|to|do(es)?))\s+(a|an|the)?\s*/i, '')
-      .replace(/[?？]+\s*$/, '').trim() || keyword;
 
     // 4. batch fixture
     mkdirSync(join(FLOW, '.gg-cache', 'batches'), { recursive: true });

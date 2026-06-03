@@ -153,6 +153,8 @@ function parseArgs(argv) {
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--scan') o.scan = true;
+    else if (a === '--author') o.author = true;
+    else if (a === '--next-unauthored') o.nextUnauthored = true;
     else if (a === '--dry-run') o.dryRun = true;
     else if (a === '--merge') o.merge = true;
     else if (a === '--mark-verified') o.markVerified = true;
@@ -165,7 +167,7 @@ function parseArgs(argv) {
     else if (a === '--limit') o.limit = parseInt(argv[++i], 10) || 1;
     else if (a === '--task') o.task = argv[++i];
   }
-  if (!o.scan && !o.merge && !o.markVerified && !o.markFailed && !o.status) o.scan = true;
+  if (!o.scan && !o.author && !o.nextUnauthored && !o.merge && !o.markVerified && !o.markFailed && !o.status) o.scan = true;
   return o;
 }
 
@@ -301,6 +303,169 @@ function buildGate(repo) {
     const out = `${e.stdout || ''}${e.stderr || ''}`;
     const m = out.match(/SEO (?:generation|build)[^\n]*|error[^\n]*/i);
     return { ok: false, error: (m && m[0]) || out.slice(-400) };
+  }
+}
+
+// ── authoring (upstream) ─────────────────────────────────────────────────────
+// When a plan task has no passing draft yet, run the deterministic authoring
+// chain so the next --scan can publish it: bridge → RAG → render → orchestrator
+// → phase2. The orchestrator spends the LLM $ (Opus); every other stage is plain
+// glue. On phase2 PASS we leave _staging/<pid>-en.md (+manifest) and write NO
+// claim — the next scan claims it. On ANY stage failure we park the task as
+// needs_human with a specific reason, so it is skipped on future ticks instead
+// of re-burning an LLM call every 25 min. (Proven manually on PG-SOLAR-001.)
+function shFlow(cmd, args, timeout = 120000) {
+  return sh(cmd, args, { cwd: FLOW, timeout });
+}
+function errTail(e, n = 180) {
+  return `${e.stdout || ''}${e.stderr || ''}${e.stdout || e.stderr ? '' : e.message || e}`
+    .toString().replace(/\s+/g, ' ').trim().slice(-n);
+}
+
+// First plan task that is unchecked, unclaimed, and not already authored+passing.
+function nextUnauthored(tasks, claims) {
+  for (const t of tasks) {
+    if (t.checked) continue;
+    if (claimStatus(claims, t.pgId)) continue; // active/pushed/verified/needs_human/done
+    if (existsSync(enDraft(t.pgId)) && phase2Passed(t.pgId)) continue; // ready → scan's job
+    return t;
+  }
+  return null;
+}
+
+// cluster_domain → author_id via the config snapshot's author.map (the documented
+// auto-routing rule). overrideRaw='' on purpose so a malformed Sheet author column
+// (display names like "Aditi Sharma") can't block routing. '' if unresolved.
+function resolveAuthorForDomain(clusterDomain) {
+  if (!existsSync(CONFIG_SNAPSHOT)) return '';
+  let values;
+  try { values = JSON.parse(readFileSync(CONFIG_SNAPSHOT, 'utf8')).values || {}; }
+  catch { return ''; }
+  const { map } = buildAuthorMap(values);
+  return resolveAuthor({ clusterDomain, overrideRaw: '', authorMap: map }).author || '';
+}
+
+// Locate this task's row in 选题登记表 (page_id column). {row, brief} or null.
+function findSheetRow(pgId) {
+  const out = shFlow('node', [SHEET_PULL, '--rows', '2-300', '--limit', '400', '--dry-run']);
+  let rows;
+  try { const j = JSON.parse(out); rows = j.rows || j; } catch { throw new Error('sheet-pull output not JSON'); }
+  const r = (rows || []).find((x) => String(x.page_id) === pgId);
+  return r ? { row: String(r.source_row), brief: r.brief || {} } : null;
+}
+
+function parkAuthor(pgId, slug, plan, reason) {
+  withClaimsLock(() => {
+    const claims = loadClaims();
+    claims[pgId] = {
+      ...(claims[pgId] || {}),
+      status: 'needs_human', slug: slug || claims[pgId]?.slug, owner: 'autopilot',
+      stage: 'authoring', plan, error: `authoring: ${reason}`, failedAt: new Date().toISOString(),
+    };
+    saveClaims(claims);
+  });
+  log(`PARK(author) ${pgId}: ${reason}`);
+}
+
+function nextUnauthoredTask() {
+  const plan = latestPlan();
+  if (!plan) return null;
+  return { plan, task: nextUnauthored(parseTasks(plan), loadClaims()) };
+}
+
+function doNextUnauthored() {
+  const r = nextUnauthoredTask();
+  process.stdout.write((r && r.task ? JSON.stringify({ pgId: r.task.pgId, keyword: r.task.keyword }) : '') + '\n');
+}
+
+function doAuthor() {
+  const sel = nextUnauthoredTask();
+  if (!sel || !sel.task) { log('nothing to author this run'); return; }
+  const { task: t } = sel;
+  const pgId = t.pgId;
+  const planName = basename(sel.plan);
+  log(`author candidate ${pgId} (${t.keyword || ''})`);
+  const park = (slug, reason) => parkAuthor(pgId, slug, planName, reason);
+
+  try {
+    // 1. locate the Sheet row
+    let loc;
+    try { loc = findSheetRow(pgId); }
+    catch (e) { return park(null, `sheet-pull failed: ${errTail(e)}`); }
+    if (!loc) return park(null, `no row for ${pgId} in 选题登记表`);
+    const row = loc.row;
+
+    // 2. bridge → override (no --allow-missing-cta: a missing CTA Map row parks)
+    mkdirSync(join(FLOW, '.gg-cache', 'overrides'), { recursive: true });
+    const overridePath = join('.gg-cache', 'overrides', `${pgId}.json`);
+    try { shFlow('node', [BRIDGE, '--row', row, '--out', overridePath]); }
+    catch (e) {
+      const m = `${e.stdout || ''}${e.stderr || ''}`.match(/CTA Map[^\n]*/);
+      return park(null, m ? `CTA Map gap — ${m[0].trim()}` : `bridge failed: ${errTail(e)}`);
+    }
+
+    // 3. fix author (auto-route) + CTA (Chinese→English template) in the override
+    const absOverride = join(FLOW, overridePath);
+    let ov, entry, keyword, domain, slug;
+    try {
+      ov = JSON.parse(readFileSync(absOverride, 'utf8'));
+      const key = ov[pgId] ? pgId : Object.keys(ov).find((k) => !k.startsWith('_'));
+      entry = ov[key];
+      keyword = (entry.target_keyword || t.keyword || '').trim();
+      domain = entry.cluster_domain || '';
+      slug = (keyword || pgId).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    } catch (e) { return park(null, `override unreadable: ${errTail(e)}`); }
+
+    const author = resolveAuthorForDomain(domain);
+    if (!author) return park(slug, `no author for cluster_domain "${domain}" (author.map miss)`);
+    entry.author = author;
+    entry.author_source = 'auto';
+
+    // English-template CTA when the Sheet CTA text is non-English (CJK) or blank.
+    // Keep the Sheet's absolute cta_target_url. (User-approved 2026-06-03.)
+    if (/[㐀-鿿]/.test(entry.cta_text || '') || !(entry.cta_text || '').trim()) {
+      if (!/^https?:\/\//.test(entry.cta_target_url || ''))
+        return park(slug, 'CTA text non-English but no absolute cta_target_url to keep');
+      entry.cta_text = `Generate your free birth chart to explore ${keyword}.`;
+    }
+    try { writeFileSync(absOverride, JSON.stringify(ov, null, 2)); }
+    catch (e) { return park(slug, `override write failed: ${errTail(e)}`); }
+
+    // 4. batch fixture
+    mkdirSync(join(FLOW, '.gg-cache', 'batches'), { recursive: true });
+    const batchPath = join('.gg-cache', 'batches', `${pgId}.json`);
+    try { shFlow('node', [SHEET_PULL, '--row', row, '--out', batchPath]); }
+    catch (e) { return park(slug, `batch pull failed: ${errTail(e)}`); }
+
+    // 5. RAG: obsidian (local vault) + entity-passport (13 web sources, single-shot)
+    try { shFlow('node', [OBSIDIAN_RAG, '--page-id', pgId, '--entity', keyword, '--target-keyword', keyword], 240000); }
+    catch (e) { return park(slug, `obsidian-rag failed: ${errTail(e)}`); }
+    try { shFlow('node', [ENTITY_PASSPORT, '--entity', keyword, '--page-id', pgId, '--emit-rag'], 300000); }
+    catch (e) { return park(slug, `entity-passport failed: ${errTail(e)}`); }
+
+    // 6. render → v8 prompt + fixture
+    try { shFlow('node', [RENDER, '--batch', batchPath, '--overrides', overridePath]); }
+    catch (e) { return park(slug, `render failed: ${errTail(e)}`); }
+    const promptPath = join('.gg-cache', 'prompts', `${pgId}.v8-prompt.md`);
+    if (!existsSync(join(FLOW, promptPath))) return park(slug, 'render produced no v8 prompt');
+
+    // 7. orchestrator (claude / Opus, retry 2) → _staging/<pid>-claude-v8.md
+    try { shFlow('node', [ORCHESTRATOR, '--prompt', promptPath, '--page-id', pgId, '--models', WINNER, '--out-dir', '_staging', '--retry', '2'], 900000); }
+    catch (e) { return park(slug, `generation failed: ${errTail(e)}`); }
+    const draftV8 = join('_staging', `${pgId}-${WINNER}-v8.md`);
+    if (!existsSync(join(FLOW, draftV8))) return park(slug, 'orchestrator produced no draft');
+
+    // 8. phase2 gate (v4.4/v4.5.1) → _staging/<pid>-en.md + manifest (author injected)
+    try { shFlow('node', [PHASE2, '--source', draftV8, '--page-id', pgId, '--tag', 'en', '--author', author]); }
+    catch (e) {
+      const m = `${e.stdout || ''}${e.stderr || ''}`.match(/(FAIL|RL\d+|SC\d+|✗)[^\n]*/);
+      return park(slug, `phase2 failed${m ? ` — ${m[0].trim()}` : `: ${errTail(e)}`}`);
+    }
+    if (!(existsSync(enDraft(pgId)) && phase2Passed(pgId))) return park(slug, 'phase2 wrote no passing manifest');
+
+    log(`AUTHORED ${pgId} → ${enDraft(pgId)} (author=${author}) — ready for next scan to publish`);
+  } catch (e) {
+    park(null, `unexpected: ${errTail(e)}`);
   }
 }
 
@@ -472,6 +637,8 @@ function doStatus() {
 const o = parseArgs(process.argv.slice(2));
 try {
   if (o.status) doStatus();
+  else if (o.nextUnauthored) doNextUnauthored();
+  else if (o.author) doAuthor();
   else if (o.merge) doMerge(o);
   else if (o.markVerified) doMarkVerified(o);
   else if (o.markFailed) doMarkFailed(o);

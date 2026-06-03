@@ -73,7 +73,10 @@ const REG = join(FLOW, 'tools', 'scripts', 'gg-oracle-register-index.mjs');
 const SCRIPTS = join(FLOW, 'tools', 'scripts');
 const SHEET_PULL = join(SCRIPTS, 'gg-sheet-pull.mjs');
 const BRIDGE = join(SCRIPTS, 'gg-sheet-to-brief.mjs');
-const OBSIDIAN_RAG = join(SCRIPTS, 'gg-obsidian-rag.mjs');
+// local-knowledge RAG: gbrain (embedded PGLite brain, hybrid vector+keyword) writes
+// the obsidian-rag.json the renderer consumes — replaces gg-obsidian-rag's AND-token
+// vault walk that matched 0 notes for multi-word entities like "full moon ritual".
+const GBRAIN_RAG = join(SCRIPTS, 'gg-gbrain-rag.mjs');
 const ENTITY_PASSPORT = join(SCRIPTS, 'gg-entity-passport.mjs');
 const RENDER = join(SCRIPTS, 'gg-render-batch.mjs');
 const ORCHESTRATOR = join(SCRIPTS, 'gg-llm-orchestrator.mjs');
@@ -458,9 +461,9 @@ function doAuthor() {
     //    some sites block scraping) yet still emit a usable cache, so gate on the
     //    OUTPUT file, not the exit code. render hard-requires both caches to exist.
     const ragDir = join(FLOW, '.gg-cache', pgId);
-    try { shFlow('node', [OBSIDIAN_RAG, '--page-id', pgId, '--entity', ragEntity, '--target-keyword', keyword], 240000); }
-    catch (e) { log(`obsidian-rag exit non-zero: ${errTail(e, 80)}`); }
-    if (!existsSync(join(ragDir, 'obsidian-rag.json'))) return park(slug, 'obsidian-rag produced no cache');
+    try { shFlow('node', [GBRAIN_RAG, '--page-id', pgId, '--entity', ragEntity, '--target-keyword', keyword], 240000); }
+    catch (e) { log(`gbrain-rag exit non-zero: ${errTail(e, 80)}`); }
+    if (!existsSync(join(ragDir, 'obsidian-rag.json'))) return park(slug, 'gbrain-rag produced no cache');
     try { shFlow('node', [ENTITY_PASSPORT, '--entity', ragEntity, '--page-id', pgId, '--emit-rag'], 300000); }
     catch (e) { log(`entity-passport exit non-zero (partial sources?): ${errTail(e, 80)}`); }
     const epRag = join(ragDir, 'entity-passport.rag.json');

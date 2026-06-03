@@ -16,10 +16,12 @@ The push triggers a Vercel Preview deployment. Poll for it (up to ~5 min):
 Wait until `state=="success"` and capture `environment_url` (the preview base URL). If it never succeeds, treat as a FAIL (Step 4 park).
 
 ## Step 3 — verify on the preview (this is the gate)
-All THREE checks must pass — codex review, chrome preview, AND the subagent panel:
+The REQUIRED content gates are (b) chrome preview + (c) the 3-subagent panel — BOTH must pass. (a) codex is an advisory 4th opinion, BEST-EFFORT only: a TOOLING failure (codex can't run / hangs / EACCES) must NOT block the merge; only a codex review that actually RUNS and flags a concrete publish-blocker counts against the gate.
 
-(a) codex review of the diff:
-    cd ~/oracle && /codex review the PR diff for <branch> — focus on: valid WikiArticle shape, no broken TBD/internal links, JSON-LD/schema correctness, no placeholder leakage, SEO title/description sanity.
+(a) codex review of the diff — BEST-EFFORT (the global `/codex` skill is flaky here: broken npm cache perms + `codex exec` has hung for ~19 min). Use the WORKING npm-global binary with a HARD timeout, never the `/codex` skill:
+    DIFF=$(gh pr diff <pr> --repo xdawayer/oracle 2>/dev/null | head -c 80000)
+    printf 'Review this astrology-wiki article PR diff. Flag only publish-BLOCKERS: invalid WikiArticle shape, broken/TBD links, JSON-LD/schema errors, placeholder leakage, wrong/missing CTA, bad SEO title/description. End with one line: VERDICT: PASS or VERDICT: FAIL — <reason>.\n\n%s' "$DIFF" | timeout 240 ~/.npm-global/bin/codex exec -s read-only -c model=gpt-5.5 -c reasoning_effort=high --output-last-message /tmp/codex-rev.txt - >/dev/null 2>&1; cat /tmp/codex-rev.txt 2>/dev/null
+    If codex times out / errors / writes nothing → treat as SKIPPED (tooling), record "codex: skipped (tooling)", and DO NOT block. Only `VERDICT: FAIL` from a codex run that completed counts.
 
 (b) chrome MCP on the preview URL — the playwright MCP is loaded via the wrapper's --mcp-config; tools are `mcp__playwright__browser_navigate`, `browser_snapshot`, `browser_console_messages`; call `browser_close` when done:
     - The preview sits behind Vercel Deployment Protection, so first read the automation bypass secret:
@@ -34,9 +36,9 @@ All THREE checks must pass — codex review, chrome preview, AND the subagent pa
     - Reviewer C — links, CTA & SEO: in the `.ts` (NOT the draft — the draft's `[[<TBD-internal-link>]]` are expected and resolved by conversion), is there any broken link or raw unresolved `<TBD` residual, is the CTA an absolute `astrologywiki.com` URL, and are the title/description/target-keyword coherent with search intent?
 
 ## Step 4 — gate decision
-Merge ONLY if ALL pass: codex review clean, chrome preview renders, AND all three subagents returned `VERDICT: PASS`.
-- If ALL pass → merge (this deploys to prod www.astrologywiki.com):
-      node ~/gengrowth-flow-mvp/tools/scripts/gg-seo-autopilot.mjs --mark-verified --branch <branch> --preview-url <environment_url> --evidence "codex review + chrome preview + 3-subagent panel passed"
+Merge if the REQUIRED gates pass: chrome preview renders AND all three subagents returned `VERDICT: PASS` — AND codex did NOT produce a completed `VERDICT: FAIL` (codex skipped-for-tooling is fine, does NOT block).
+- If those pass → merge (this deploys to prod www.astrologywiki.com):
+      node ~/gengrowth-flow-mvp/tools/scripts/gg-seo-autopilot.mjs --mark-verified --branch <branch> --preview-url <environment_url> --evidence "chrome preview + 3-subagent panel passed (codex: <ran-clean|skipped-tooling>)"
       node ~/gengrowth-flow-mvp/tools/scripts/gg-seo-autopilot.mjs --merge --branch <branch>
   Then notify BOTH ways: a PushNotification "autopilot published <slug> → prod", AND a Feishu push:
       bash ~/gengrowth-flow-mvp/tools/scripts/gg-lark-notify.sh "✅ SEO autopilot 已发布 <slug> → 线上 www.astrologywiki.com"

@@ -392,8 +392,18 @@ function doNextUnauthored() {
   process.stdout.write((r && r.task ? JSON.stringify({ pgId: r.task.pgId, keyword: r.task.keyword }) : '') + '\n');
 }
 
-function doAuthor() {
-  const sel = nextUnauthoredTask();
+function doAuthor(o = {}) {
+  let sel;
+  if (o.task) {
+    const plan = latestPlan();
+    if (!plan) { log('no blog-output-plan found'); return; }
+    const t = parseTasks(plan).find((x) => x.pgId === o.task);
+    if (!t) { log(`--task ${o.task} not found in plan`); return; }
+    if (claimStatus(loadClaims(), t.pgId)) { log(`--task ${o.task} already has a claim (clear it first)`); return; }
+    sel = { plan, task: t };
+  } else {
+    sel = nextUnauthoredTask();
+  }
   if (!sel || !sel.task) { log('nothing to author this run'); return; }
   const { task: t } = sel;
   const pgId = t.pgId;

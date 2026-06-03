@@ -86,14 +86,19 @@ function main() {
   const draft = readFileSync(o.source, 'utf8');
   const keep = (why) => { writeFileSync(o.out, draft); process.stdout.write(`review: no-change (${why})\n`); process.exit(0); };
 
-  // 1. Codex critique (independent reviewer)
-  let critique;
+  // 1. Codex critique (independent reviewer). codex exec puts its banner on stderr
+  // and nothing usable on stdout — capture the final message via --output-last-message.
+  let critique = '';
+  const critiqueFile = `${o.out}.critique.txt`;
   try {
-    critique = run(CODEX, ['exec', '-c', 'model=gpt-5.5', '-c', `reasoning_effort=${CODEX_EFFORT}`, '-'],
-      CRITIQUE_PROMPT(o.entity, o.targetKeyword, draft), 600000).trim();
+    run(CODEX, ['exec', '-c', 'model=gpt-5.5', '-c', `reasoning_effort=${CODEX_EFFORT}`,
+      '--output-last-message', critiqueFile, '-'],
+      CRITIQUE_PROMPT(o.entity, o.targetKeyword, draft), 600000);
+    if (existsSync(critiqueFile)) critique = readFileSync(critiqueFile, 'utf8').trim();
   } catch (e) {
     return keep(`codex review unavailable: ${String(e.message || e).replace(/\s+/g, ' ').slice(-100)}`);
   }
+  if (!critique) return keep('codex produced no critique');
   const bullets = critique.split('\n').filter((l) => /^\s*([-*]|\d+\.)\s+\S/.test(l));
   if (/\bLGTM\b/i.test(critique) || bullets.length === 0) return keep('codex: LGTM / no actionable issues');
 

@@ -53,7 +53,7 @@ if node "$AUTO" --status 2>/dev/null | grep -Eq '"(pushed-preview|verified-previ
   # </dev/null: prompt is passed as an arg, so skip the 3s stdin wait.
   claude -p "$(cat "$PROMPT_FILE")" \
     --mcp-config "$SCRIPT_DIR/autopilot-mcp.json" \
-    --allowedTools "Bash Skill Task Read Grep mcp__playwright__browser_navigate mcp__playwright__browser_snapshot mcp__playwright__browser_console_messages mcp__playwright__browser_evaluate mcp__playwright__browser_close" \
+    --allowedTools "Bash Skill Task Agent Read Grep mcp__playwright__browser_navigate mcp__playwright__browser_snapshot mcp__playwright__browser_console_messages mcp__playwright__browser_evaluate mcp__playwright__browser_close" \
     --dangerously-skip-permissions </dev/null >> "$LOG" 2>&1
 else
   # 3) No preview pending → spend this tick AUTHORING the next unwritten plan task.

@@ -353,7 +353,9 @@ function resolveAuthorForDomain(clusterDomain) {
 function findSheetRow(pgId) {
   mkdirSync(join(FLOW, '.gg-cache', 'batches'), { recursive: true });
   const outRel = join('.gg-cache', 'batches', '_allrows.json');
-  shFlow('node', [SHEET_PULL, '--rows', '2-300', '--limit', '400', '--dry-run', '--out', outRel]);
+  // --out writes the JSON file (no --dry-run: --dry-run prints to stdout and skips
+  // the file write); same read-only pull the per-row batch step below uses.
+  shFlow('node', [SHEET_PULL, '--rows', '2-300', '--limit', '400', '--out', outRel]);
   let rows;
   try { const j = JSON.parse(readFileSync(join(FLOW, outRel), 'utf8')); rows = j.rows || j; }
   catch { throw new Error('sheet-pull output not parseable'); }

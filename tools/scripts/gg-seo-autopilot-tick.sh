@@ -1,8 +1,14 @@
 #!/bin/bash
-# gg-seo-autopilot-tick.sh — launchd entry point for the SEO publish autopilot.
-# Fires every ~25 min; runs ONE headless claude pass that scans the ops plan,
-# publishes a ready task to an oracle preview branch, verifies (codex + chrome),
-# and merges to prod on pass. One task per tick = the 20–30 min publish stagger.
+# gg-seo-autopilot-tick.sh — launchd entry point for the SEO autopilot (full loop).
+# Fires every ~25 min. Each tick does ONE heavy op (never both):
+#   • scan (cheap) claims a ready draft → oracle preview branch + PR; then if a
+#     preview is pending, a headless claude pass verifies (codex + chrome) + merges
+#     to prod. — the PUBLISH half.
+#   • else, if a plan task has no draft yet, --author runs the deterministic
+#     authoring chain (bridge→RAG→render→orchestrator→phase2) so the NEXT tick's
+#     scan can publish it. — the AUTHORING half (the orchestrator spends the Opus $).
+# One task per tick = the 20–30 min stagger. Find task → Sheet → LLM author →
+# verify → publish, all on this machine, unattended.
 #
 # Single-instance: a mkdir mutex (macOS has no flock) prevents overlapping ticks.
 # Install: see com.gengrowth.seo-autopilot.plist (NOT auto-loaded).

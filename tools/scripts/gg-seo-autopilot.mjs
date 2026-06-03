@@ -484,21 +484,33 @@ function doAuthor() {
     const promptPath = join('.gg-cache', 'prompts', `${pgId}.v8-prompt.md`);
     if (!existsSync(join(FLOW, promptPath))) return park(slug, 'render produced no v8 prompt');
 
-    // 7. orchestrator (claude / Opus, retry 2) → _staging/<pid>-claude-v8.md
-    try { shFlow('node', [ORCHESTRATOR, '--prompt', promptPath, '--page-id', pgId, '--models', WINNER, '--out-dir', '_staging', '--retry', '2'], 900000); }
-    catch (e) { log(`orchestrator exit non-zero: ${errTail(e, 80)}`); }
+    // 7+8. Generate (Opus) → validate (phase2 v4.4/v4.5.1), retrying on failure.
+    //   phase2 trips on generation variance — esp. SC3c "section scatter" (≤3 prose
+    //   paragraphs per H2 section), the same check PG-SOLAR-001 failed on its first
+    //   generation — so regenerate up to GG_AUTHOR_GEN_ATTEMPTS times (different
+    //   sampling) before parking. orchestrator overwrites the draft each attempt;
+    //   phase2 writes _staging/<pid>-en.md + manifest ONLY on PASS (exit 11 on fail).
     const draftV8 = join('_staging', `${pgId}-${WINNER}-v8.md`);
-    if (!existsSync(join(FLOW, draftV8))) return park(slug, 'orchestrator produced no draft');
-
-    // 8. phase2 gate (v4.4/v4.5.1) → _staging/<pid>-en.md + manifest (author injected)
-    try { shFlow('node', [PHASE2, '--source', draftV8, '--page-id', pgId, '--tag', 'en', '--author', author]); }
-    catch (e) {
-      const m = `${e.stdout || ''}${e.stderr || ''}`.match(/(FAIL|RL\d+|SC\d+|✗)[^\n]*/);
-      return park(slug, `phase2 failed${m ? ` — ${m[0].trim()}` : `: ${errTail(e)}`}`);
+    const attempts = Math.max(1, parseInt(process.env.GG_AUTHOR_GEN_ATTEMPTS || '3', 10));
+    let lastFail = '';
+    for (let i = 1; i <= attempts; i++) {
+      try { shFlow('node', [ORCHESTRATOR, '--prompt', promptPath, '--page-id', pgId, '--models', WINNER, '--out-dir', '_staging', '--retry', '2'], 900000); }
+      catch (e) { log(`orchestrator exit non-zero (attempt ${i}): ${errTail(e, 80)}`); }
+      if (!existsSync(join(FLOW, draftV8))) { lastFail = 'orchestrator produced no draft'; continue; }
+      try { shFlow('node', [PHASE2, '--source', draftV8, '--page-id', pgId, '--tag', 'en', '--author', author]); }
+      catch (e) {
+        const m = `${e.stdout || ''}${e.stderr || ''}`.match(/(SC\d+|RL\d+)[^\n]*/);
+        lastFail = `phase2 ${m ? m[0].trim() : 'FAIL'}`;
+        log(`phase2 attempt ${i}/${attempts} failed — ${lastFail}${i < attempts ? ' — regenerating' : ''}`);
+        continue;
+      }
+      if (existsSync(enDraft(pgId)) && phase2Passed(pgId)) {
+        log(`AUTHORED ${pgId} → ${enDraft(pgId)} (author=${author}, attempt ${i}/${attempts}) — ready for next scan to publish`);
+        return;
+      }
+      lastFail = 'phase2 wrote no passing manifest';
     }
-    if (!(existsSync(enDraft(pgId)) && phase2Passed(pgId))) return park(slug, 'phase2 wrote no passing manifest');
-
-    log(`AUTHORED ${pgId} → ${enDraft(pgId)} (author=${author}) — ready for next scan to publish`);
+    return park(slug, `${lastFail || 'phase2 failed'} after ${attempts} generation attempt(s)`);
   } catch (e) {
     park(null, `unexpected: ${errTail(e)}`);
   }

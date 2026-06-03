@@ -514,7 +514,7 @@ function doAuthor() {
         const revisedV8 = join('_staging', `${pgId}-revised-v8.md`);
         try {
           const out = shFlow('node', [REVIEW, '--source', draftV8, '--out', revisedV8,
-            '--page-id', pgId, '--entity', cleanEntity, '--target-keyword', keyword], 1200000).trim();
+            '--page-id', pgId, '--entity', cleanEntity, '--target-keyword', keyword], 1500000).trim();
           log(out || 'review: (no output)');
           if (/revised/.test(out) && existsSync(join(FLOW, revisedV8))) {
             try {

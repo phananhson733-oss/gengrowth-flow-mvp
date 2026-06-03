@@ -115,7 +115,7 @@ function main() {
   // 2. Opus revises to address the critique
   let revised;
   try {
-    revised = run(CLAUDE, ['-p', '--model', CLAUDE_MODEL], REVISE_PROMPT(critique, draft), 700000);
+    revised = run(CLAUDE, ['-p', '--model', CLAUDE_MODEL], REVISE_PROMPT(critique, draft), 780000);
   } catch (e) {
     return keep(`reviser failed: ${String(e.message || e).replace(/\s+/g, ' ').slice(-100)}`);
   }

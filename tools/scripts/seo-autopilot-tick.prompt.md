@@ -5,7 +5,7 @@ The wrapper already ran the deterministic scan (sync + claim + convert + build-g
     node ~/gengrowth-flow-mvp/tools/scripts/gg-seo-autopilot.mjs --status
 
 - Find the entry whose status is `pushed-preview` or `verified-preview`. If none exists, STOP (nothing to verify this tick).
-- Note its `branch`, `pr`, and `slug`. If any entry is freshly `needs_human`, send ONE PushNotification naming the task + reason, then continue to the preview entry (if any).
+- Note its `pgId` (the entry KEY), `branch`, `pr`, `slug`, and `worktree` (Step 3c's subagents need pgId + worktree + slug). If any entry is freshly `needs_human`, send ONE PushNotification naming the task + reason, then continue to the preview entry (if any).
 
 ## Step 2 — get the Vercel preview URL
 If the entry is already `verified-preview`, skip to Step 4 and merge using the stored `previewUrl`.
@@ -16,7 +16,7 @@ The push triggers a Vercel Preview deployment. Poll for it (up to ~5 min):
 Wait until `state=="success"` and capture `environment_url` (the preview base URL). If it never succeeds, treat as a FAIL (Step 4 park).
 
 ## Step 3 — verify on the preview (this is the gate)
-Both checks must pass:
+All THREE checks must pass — codex review, chrome preview, AND the subagent panel:
 
 (a) codex review of the diff:
     cd ~/oracle && /codex review the PR diff for <branch> — focus on: valid WikiArticle shape, no broken TBD/internal links, JSON-LD/schema correctness, no placeholder leakage, SEO title/description sanity.
@@ -28,13 +28,19 @@ Both checks must pass:
     - navigate `<environment_url>/en/wiki/<slug>?x-vercel-protection-bypass=$BYPASS&x-vercel-set-bypass-cookie=true` — assert: page renders real article content (not the empty SPA soft-404 shell), an <h1> is present, and a JSON-LD `<script type="application/ld+json">` exists. If you instead land on `vercel.com/login` or get an auth/401 wall, the bypass secret is wrong/expired → park needs_human. For console: FAIL only on uncaught JS exceptions / failed app-bundle loads — IGNORE benign network 404s (favicon, analytics, fonts).
     - if the task is bilingual (ledger `zh:true`), also verify `<environment_url>/zh/wiki/<slug>` (the bypass cookie from the first navigate carries over, so no suffix needed).
 
+(c) subagent review panel — spawn THREE reviewers IN PARALLEL via the Task tool (ONE message, three Task calls, `subagent_type: "general-purpose"`). Each reads the CONVERTED article (the actual published artifact — `[[<TBD-internal-link>]]` placeholders are already resolved/stripped here) at `<worktree>/data/articles/<slug>.ts` plus the EN draft `~/gengrowth-flow-mvp/_staging/<pgId>-en.md` (take `<worktree>`, `<slug>`, `<pgId>` from the ledger `--status` entry), reviews ONE dimension, and ENDS its reply with exactly one line: `VERDICT: PASS` or `VERDICT: FAIL — <one-line blocking reason>`. Reviewers must FAIL only on publish-blocking defects, never style nits:
+    - Reviewer A — astrology & facts: are the astrological claims correct and non-dubious, and is the content specifically grounded (real substance, not generic filler)?
+    - Reviewer B — schema & structure: is the WikiArticle `.ts` well-formed and valid (JSON-LD/schema correct, frontmatter/fields sane, the 11 H2 sections intact, no truncation or malformed markup)?
+    - Reviewer C — links, CTA & SEO: in the `.ts` (NOT the draft — the draft's `[[<TBD-internal-link>]]` are expected and resolved by conversion), is there any broken link or raw unresolved `<TBD` residual, is the CTA an absolute `astrologywiki.com` URL, and are the title/description/target-keyword coherent with search intent?
+
 ## Step 4 — gate decision
-- If BOTH pass → merge (this deploys to prod www.astrologywiki.com):
-      node ~/gengrowth-flow-mvp/tools/scripts/gg-seo-autopilot.mjs --mark-verified --branch <branch> --preview-url <environment_url> --evidence "codex review + chrome preview verification passed"
+Merge ONLY if ALL pass: codex review clean, chrome preview renders, AND all three subagents returned `VERDICT: PASS`.
+- If ALL pass → merge (this deploys to prod www.astrologywiki.com):
+      node ~/gengrowth-flow-mvp/tools/scripts/gg-seo-autopilot.mjs --mark-verified --branch <branch> --preview-url <environment_url> --evidence "codex review + chrome preview + 3-subagent panel passed"
       node ~/gengrowth-flow-mvp/tools/scripts/gg-seo-autopilot.mjs --merge --branch <branch>
   Then PushNotification: "autopilot published <slug> → prod".
-- If EITHER fails → do NOT merge. Leave the PR open, park the ledger with:
-      node ~/gengrowth-flow-mvp/tools/scripts/gg-seo-autopilot.mjs --mark-failed --branch <branch> --reason "<specific failure>"
+- If codex / chrome / ANY subagent fails → do NOT merge. Leave the PR open, park the ledger with:
+      node ~/gengrowth-flow-mvp/tools/scripts/gg-seo-autopilot.mjs --mark-failed --branch <branch> --reason "<which gate + the specific blocking issue>"
   Then PushNotification the specific failure. A human will review the open PR.
 
 Stop after one task. The timer will fire again for the next one (this is the 20–30 min stagger).

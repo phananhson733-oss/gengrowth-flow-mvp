@@ -50,7 +50,21 @@ if node "$AUTO" --status 2>/dev/null | grep -Eq '"(pushed-preview|verified-previ
     --allowedTools "Bash Skill mcp__playwright__browser_navigate mcp__playwright__browser_snapshot mcp__playwright__browser_console_messages mcp__playwright__browser_evaluate mcp__playwright__browser_close" \
     --dangerously-skip-permissions </dev/null >> "$LOG" 2>&1
 else
-  echo "$(date '+%F %T') no preview to verify — idle/parked, skipping LLM tick" >> "$LOG"
+  # 3) No preview pending → spend this tick AUTHORING the next unwritten plan task.
+  #    Deterministic chain (bridge→RAG→render→orchestrator→phase2); the orchestrator
+  #    spends the Opus $, every other stage is glue. --author self-gates (cheap exit
+  #    if nothing needs authoring) and PARKS needs_human on any stage failure, so a
+  #    broken task is skipped next tick instead of re-burning an LLM call. The fresh
+  #    draft is claimed + published by the NEXT tick's --scan above — one heavy LLM
+  #    op per tick (verify OR author, never both). Authoring needs Sheets creds.
+  if [ -n "$(node "$AUTO" --next-unauthored 2>/dev/null)" ]; then
+    echo "$(date '+%F %T') no preview → authoring next unwritten task" >> "$LOG"
+    ( set -a; . "$HOME/.config/gg/_gg.env" 2>/dev/null; set +a
+      export GG_SHEETS_WORKBOOK_ID="${GG_SHEETS_FLOW_MVP_WORKBOOK_ID:-$GG_SHEETS_WORKBOOK_ID}"
+      node "$AUTO" --author --limit 1 ) >> "$LOG" 2>&1
+  else
+    echo "$(date '+%F %T') no preview, nothing to author — idle" >> "$LOG"
+  fi
 fi
 
 echo "$(date '+%F %T') tick end" >> "$LOG"

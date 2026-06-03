@@ -446,21 +446,28 @@ function doAuthor() {
     try { shFlow('node', [SHEET_PULL, '--row', row, '--out', batchPath]); }
     catch (e) { return park(slug, `batch pull failed: ${errTail(e)}`); }
 
-    // 5. RAG: obsidian (local vault) + entity-passport (13 web sources, single-shot)
+    // 5. RAG: obsidian (local vault) + entity-passport (web sources). Both stages
+    //    exit non-zero on benign WARNs (thin vault match / partial source scrape —
+    //    some sites block scraping) yet still emit a usable cache, so gate on the
+    //    OUTPUT file, not the exit code. render hard-requires both caches to exist.
+    const ragDir = join(FLOW, '.gg-cache', pgId);
     try { shFlow('node', [OBSIDIAN_RAG, '--page-id', pgId, '--entity', keyword, '--target-keyword', keyword], 240000); }
-    catch (e) { return park(slug, `obsidian-rag failed: ${errTail(e)}`); }
+    catch (e) { log(`obsidian-rag exit non-zero: ${errTail(e, 80)}`); }
+    if (!existsSync(join(ragDir, 'obsidian-rag.json'))) return park(slug, 'obsidian-rag produced no cache');
     try { shFlow('node', [ENTITY_PASSPORT, '--entity', keyword, '--page-id', pgId, '--emit-rag'], 300000); }
-    catch (e) { return park(slug, `entity-passport failed: ${errTail(e)}`); }
+    catch (e) { log(`entity-passport exit non-zero (partial sources?): ${errTail(e, 80)}`); }
+    const epRag = join(ragDir, 'entity-passport.rag.json');
+    if (!existsSync(epRag) || statSync(epRag).size < 512) return park(slug, 'entity-passport produced no RAG');
 
-    // 6. render → v8 prompt + fixture
+    // 6. render → v8 prompt + fixture (render WARNs on missing SERP cache; gate on file)
     try { shFlow('node', [RENDER, '--batch', batchPath, '--overrides', overridePath]); }
-    catch (e) { return park(slug, `render failed: ${errTail(e)}`); }
+    catch (e) { log(`render exit non-zero: ${errTail(e, 80)}`); }
     const promptPath = join('.gg-cache', 'prompts', `${pgId}.v8-prompt.md`);
     if (!existsSync(join(FLOW, promptPath))) return park(slug, 'render produced no v8 prompt');
 
     // 7. orchestrator (claude / Opus, retry 2) → _staging/<pid>-claude-v8.md
     try { shFlow('node', [ORCHESTRATOR, '--prompt', promptPath, '--page-id', pgId, '--models', WINNER, '--out-dir', '_staging', '--retry', '2'], 900000); }
-    catch (e) { return park(slug, `generation failed: ${errTail(e)}`); }
+    catch (e) { log(`orchestrator exit non-zero: ${errTail(e, 80)}`); }
     const draftV8 = join('_staging', `${pgId}-${WINNER}-v8.md`);
     if (!existsSync(join(FLOW, draftV8))) return park(slug, 'orchestrator produced no draft');
 

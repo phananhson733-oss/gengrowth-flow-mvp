@@ -70,7 +70,14 @@ Output ONLY a short bulleted list of CONCRETE, actionable fixes (each "- <issue>
 --- DRAFT ---
 ${draft}`;
 
-const REVISE_PROMPT = (critique, draft) => `You are revising your own astrology SEO article after an editor's review. Apply every applicable point of the feedback, but PRESERVE the structure exactly: the same H1, the same set of H2 sections with their exact heading wording, the CTA section + its link, the Sources section, and the 1500–1800 word range. Improve substance and specificity; do not pad, do not regress structure, do not add meta commentary.
+const REVISE_PROMPT = (critique, draft) => `You are revising your own astrology SEO article after an editor's review. Apply every applicable point of the feedback to raise accuracy, grounding, and usefulness.
+
+HARD CONSTRAINTS — an automated gate re-checks the result; breaking ANY of these makes the revision worthless and it will be discarded:
+- Keep the EXACT same H1 and the EXACT same H2 headings (verbatim wording, same order). Do not add, remove, rename, or reorder sections.
+- TOTAL length MUST stay 1500–1800 words. The feedback asks you to ADD things, so you MUST also CUT or tighten weaker prose to compensate — count the words and trim to land under 1800.
+- The FIRST internal wiki-link [[...]] must appear within the first ~150 words of body text (keep it inside the opening of section 1 or 2); do not push it later, and do not add more [[...]] links than the draft already has.
+- Keep the CTA section's markdown link and the Sources section; do not invent or add citations.
+- No meta commentary, no preamble.
 
 Output the COMPLETE revised article ONLY — from the "# " H1 line through the final Sources entry. Nothing before the H1, nothing after the last source.
 

@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-SOLAR-001",
+  "entity": "solar return ascendant, natal chart overlay, sun's house placement, ascendant ruling planet, critical degree positions",
+  "target_keyword": "solar return chart",
+  "template": "Definition",
+  "tier": "T1",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-06-03T11:08:30.278Z",
+  "content_sha256_short": "f628540e0f9164fa",
+  "source_path": "_staging/PG-SOLAR-001-claude-v8.md",
+  "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-SOLAR-001-claude-v8.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 1652,
+      "wikilinks": 6,
+      "tbdLinks": 6
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

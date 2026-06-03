@@ -440,6 +440,13 @@ function doAuthor() {
     try { writeFileSync(absOverride, JSON.stringify(ov, null, 2)); }
     catch (e) { return park(slug, `override write failed: ${errTail(e)}`); }
 
+    // RAG entity: strip leading interrogatives so the vault/web search matches the
+    // entity itself, not the question ("what is a full moon ritual" → "full moon
+    // ritual"); the raw question tokens otherwise match 0 vault notes.
+    const ragEntity = keyword
+      .replace(/^\s*(what\s+(is|are|to\s+do\s+(on|with|during|after))|how\s+(to|do(es)?)|why\s+(is|are|do(es)?)|when\s+(is|are|to|do(es)?))\s+(a|an|the)?\s*/i, '')
+      .replace(/[?？]+\s*$/, '').trim() || keyword;
+
     // 4. batch fixture
     mkdirSync(join(FLOW, '.gg-cache', 'batches'), { recursive: true });
     const batchPath = join('.gg-cache', 'batches', `${pgId}.json`);

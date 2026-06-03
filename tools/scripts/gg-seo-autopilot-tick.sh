@@ -67,6 +67,7 @@ else
     echo "$(date '+%F %T') no preview → authoring next unwritten task" >> "$LOG"
     ( set -a; . "$HOME/.config/gg/_gg.env" 2>/dev/null; set +a
       export GG_SHEETS_WORKBOOK_ID="${GG_SHEETS_FLOW_MVP_WORKBOOK_ID:-$GG_SHEETS_WORKBOOK_ID}"
+      export PATH="$HOME/.local/bin:$PATH"   # gbrain CLI (local-knowledge RAG) lives here
       node "$AUTO" --author --limit 1 ) >> "$LOG" 2>&1
   else
     echo "$(date '+%F %T') no preview, nothing to author — idle" >> "$LOG"

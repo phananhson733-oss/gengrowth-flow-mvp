@@ -315,7 +315,9 @@ function buildGate(repo) {
 // needs_human with a specific reason, so it is skipped on future ticks instead
 // of re-burning an LLM call every 25 min. (Proven manually on PG-SOLAR-001.)
 function shFlow(cmd, args, timeout = 120000) {
-  return sh(cmd, args, { cwd: FLOW, timeout });
+  // maxBuffer well above any stage's stdout (sheet-pull ~0.5MB, orchestrator logs)
+  // so a chatty stage can't make execFileSync throw and trigger a spurious park.
+  return sh(cmd, args, { cwd: FLOW, timeout, maxBuffer: 64 * 1024 * 1024 });
 }
 function errTail(e, n = 180) {
   return `${e.stdout || ''}${e.stderr || ''}${e.stdout || e.stderr ? '' : e.message || e}`
@@ -346,10 +348,15 @@ function resolveAuthorForDomain(clusterDomain) {
 }
 
 // Locate this task's row in 选题登记表 (page_id column). {row, brief} or null.
+// Write to a file and read it back — the full sheet is ~0.5MB and capturing that
+// through execFileSync stdout truncates (pipe limit); a file read is reliable.
 function findSheetRow(pgId) {
-  const out = shFlow('node', [SHEET_PULL, '--rows', '2-300', '--limit', '400', '--dry-run']);
+  mkdirSync(join(FLOW, '.gg-cache', 'batches'), { recursive: true });
+  const outRel = join('.gg-cache', 'batches', '_allrows.json');
+  shFlow('node', [SHEET_PULL, '--rows', '2-300', '--limit', '400', '--dry-run', '--out', outRel]);
   let rows;
-  try { const j = JSON.parse(out); rows = j.rows || j; } catch { throw new Error('sheet-pull output not JSON'); }
+  try { const j = JSON.parse(readFileSync(join(FLOW, outRel), 'utf8')); rows = j.rows || j; }
+  catch { throw new Error('sheet-pull output not parseable'); }
   const r = (rows || []).find((x) => String(x.page_id) === pgId);
   return r ? { row: String(r.source_row), brief: r.brief || {} } : null;
 }

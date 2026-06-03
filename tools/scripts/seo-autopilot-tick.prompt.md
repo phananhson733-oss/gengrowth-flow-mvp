@@ -38,9 +38,12 @@ Merge ONLY if ALL pass: codex review clean, chrome preview renders, AND all thre
 - If ALL pass → merge (this deploys to prod www.astrologywiki.com):
       node ~/gengrowth-flow-mvp/tools/scripts/gg-seo-autopilot.mjs --mark-verified --branch <branch> --preview-url <environment_url> --evidence "codex review + chrome preview + 3-subagent panel passed"
       node ~/gengrowth-flow-mvp/tools/scripts/gg-seo-autopilot.mjs --merge --branch <branch>
-  Then PushNotification: "autopilot published <slug> → prod".
+  Then notify BOTH ways: a PushNotification "autopilot published <slug> → prod", AND a Feishu push:
+      bash ~/gengrowth-flow-mvp/tools/scripts/gg-lark-notify.sh "✅ SEO autopilot 已发布 <slug> → 线上 www.astrologywiki.com"
 - If codex / chrome / ANY subagent fails → do NOT merge. Leave the PR open, park the ledger with:
       node ~/gengrowth-flow-mvp/tools/scripts/gg-seo-autopilot.mjs --mark-failed --branch <branch> --reason "<which gate + the specific blocking issue>"
-  Then PushNotification the specific failure. A human will review the open PR.
+  Then notify the specific failure BOTH ways — a PushNotification, AND a Feishu push:
+      bash ~/gengrowth-flow-mvp/tools/scripts/gg-lark-notify.sh "⚠️ SEO autopilot 发布 gate 未过 <slug>（<which gate>）：<blocking issue> — PR 待人工"
+  A human will review the open PR.
 
 Stop after one task. The timer will fire again for the next one (this is the 20–30 min stagger).

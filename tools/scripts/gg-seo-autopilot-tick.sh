@@ -65,12 +65,19 @@ else
   #    op per tick (verify OR author, never both). Authoring needs Sheets creds.
   if [ -n "$(node "$AUTO" --next-unauthored 2>/dev/null)" ]; then
     echo "$(date '+%F %T') no preview → authoring next unwritten task" >> "$LOG"
-    ( set -a; . "$HOME/.config/gg/_gg.env" 2>/dev/null; set +a
+    AOUT=$( ( set -a; . "$HOME/.config/gg/_gg.env" 2>/dev/null; set +a
       export GG_SHEETS_WORKBOOK_ID="${GG_SHEETS_FLOW_MVP_WORKBOOK_ID:-$GG_SHEETS_WORKBOOK_ID}"
       # gbrain (~/.local/bin, RAG) + codex (~/.npm-global/bin, multi-party review);
       # claude/node are in /opt/homebrew/bin (already on PATH from the top export).
       export PATH="$HOME/.local/bin:$HOME/.npm-global/bin:$PATH"
-      node "$AUTO" --author --limit 1 ) >> "$LOG" 2>&1
+      node "$AUTO" --author --limit 1 ) 2>&1 )
+    printf '%s\n' "$AOUT" >> "$LOG"
+    # Feishu alert (via lark-cli REST — reliable) on a fresh park (needs a human)
+    # or a freshly-authored draft (progress). Best-effort, never blocks the tick.
+    PARK=$(printf '%s\n' "$AOUT" | grep -oE 'PARK\(author\) .*' | head -1)
+    DONE=$(printf '%s\n' "$AOUT" | grep -oE 'AUTHORED PG-[A-Z0-9-]+ [^—]*' | head -1)
+    [ -n "$PARK" ] && "$SCRIPT_DIR/gg-lark-notify.sh" "⚠️ SEO autopilot 写稿暂停（needs_human）：$PARK"
+    [ -n "$DONE" ] && "$SCRIPT_DIR/gg-lark-notify.sh" "✍️ SEO autopilot 写好一篇：$DONE— 下个 tick 发布"
   else
     echo "$(date '+%F %T') no preview, nothing to author — idle" >> "$LOG"
   fi

@@ -289,6 +289,27 @@ function claimable(task, claims) {
   return { ok: true, slug };
 }
 
+// Register a converted slug for STATIC SEO generation. The site's
+// scripts/generate-seo-pages.mjs uses HARDCODED allowlists — `ARTICLE_SLUGS`
+// (bilingual) and `ARTICLE_SLUGS_EN_ONLY` (EN-only) — to decide which articles
+// get crawler-visible static HTML + a sitemap entry. Discovery is NOT automatic:
+// an article merged into data/articles/ without this stays a client-only SPA
+// route, so crawlers get the empty shell and it never enters the sitemap → never
+// indexed. Insert the slug into the right array so `npm run build`
+// (→ generate-seo-pages) + the Vercel prod deploy emit its static page + sitemap
+// URL. Idempotent; non-fatal if the script/array layout changes.
+function registerSeoSlug(repo, slug, zh) {
+  const f = join(repo, 'scripts', 'generate-seo-pages.mjs');
+  if (!existsSync(f)) { log(`WARN no generate-seo-pages.mjs — ${slug} won't get a static SEO page`); return; }
+  let src = readFileSync(f, 'utf8');
+  if (new RegExp(`['"]${slug}['"]`).test(src)) return; // already registered
+  const arr = zh ? 'ARTICLE_SLUGS' : 'ARTICLE_SLUGS_EN_ONLY';
+  const re = new RegExp(`(const ${arr} = \\[\\n)`);
+  if (!re.test(src)) { log(`WARN ${arr} not found in generate-seo-pages.mjs — ${slug} not registered for static SEO`); return; }
+  writeFileSync(f, src.replace(re, `$1  '${slug}',\n`));
+  log(`registered ${slug} → ${arr} (static SEO page + sitemap)`);
+}
+
 function convert(repo, pgId, slug) {
   const art = articlesDir(repo);
   sh('node', [CONV, '--source', enDraft(pgId), '--slug', slug, '--out', join(art, `${slug}.ts`)]);
@@ -299,6 +320,7 @@ function convert(repo, pgId, slug) {
     sh('node', [REG, '--oracle-articles-dir', art, '--slug', slug, '--lang', 'zh']);
     zh = true;
   }
+  registerSeoSlug(repo, slug, zh);
   return { zh };
 }
 
@@ -608,7 +630,7 @@ function doScanLocked(o) {
       cleanupWorktree(publishRepo);
       log(`DRY-RUN OK ${t.pgId} (${t.slug}${res.zh ? '+zh' : ' EN-only'}) build✓ — not pushed`);
     } else {
-      gitIn(publishRepo, ['add', 'data/articles']);
+      gitIn(publishRepo, ['add', 'data/articles', 'scripts/generate-seo-pages.mjs']);
       gitIn(publishRepo, ['commit', '-q', '-m', `feat(articles): publish ${t.slug} (${WINNER} ${VERSION}) [autopilot]`]);
       gitIn(publishRepo, ['push', '-u', 'origin', branch]);
       // Open a PR so Vercel posts a Preview deployment + check; merge happens

@@ -1,0 +1,52 @@
+{
+  "page_id": "PG-MOON-001",
+  "prompt_path": "/Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-MOON-001.v8-prompt.md",
+  "started_at": "2026-06-03T14:06:16.297Z",
+  "models_requested": [
+    "claude"
+  ],
+  "retry": 2,
+  "diversify_on_fail": false,
+  "max_cost_usd_per_page": 5,
+  "budget_exceeded_models": [],
+  "ok_count": 1,
+  "total_cost_estimate_usd": 0.3051,
+  "results": {
+    "claude": {
+      "model": "claude",
+      "active_model": "claude",
+      "diversified": false,
+      "ok": true,
+      "output_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-MOON-001-claude-v8.md",
+      "retries": 0,
+      "duration_s": 636.1,
+      "cost_estimate_usd": {
+        "usd": 0.3051,
+        "input_tokens_est": 7610,
+        "output_tokens_est": 2545,
+        "pricing_note": "Opus 4.7 xhigh"
+      },
+      "cumulative_cost_usd": 0.3051,
+      "budget_exceeded": false,
+      "budget_usd": 5,
+      "attempts": [
+        {
+          "try_index": 1,
+          "model": "claude",
+          "command": "claude -p --model claude-opus-4-7 < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-MOON-001.v8-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-MOON-001-claude-v8.md",
+          "cost_usd": 0.3051,
+          "cumulative_cost_usd": 0.3051,
+          "ok": true,
+          "exit_code": 0,
+          "duration_s": 636.1,
+          "stderr_tail": "",
+          "stdout_bytes": 11610,
+          "sonnet_guard": {
+            "downgraded": false,
+            "bytes": 11680
+          }
+        }
+      ]
+    }
+  }
+}

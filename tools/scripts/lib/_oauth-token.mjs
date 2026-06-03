@@ -13,10 +13,35 @@
 // 注意：refresh_token 不绑 scope，scope 在 consent 时已固化。
 // 如要扩 scope，跑 `node tools/scripts/oauth-init.mjs` 重新 consent。
 
-let cached = { token: null, exp: 0 };
+import { existsSync } from 'node:fs';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
+import { getAccessToken as saAccessToken } from './gg-shared.mjs';
 
-export async function getAccessToken({ force = false } = {}) {
+const SHEETS_SCOPE = 'https://www.googleapis.com/auth/spreadsheets';
+function saPath() {
+  return process.env.GG_WRITER_SA_JSON || join(homedir(), '.config', 'gg', 'gg-writer-sa.json');
+}
+
+let cached = { token: null, exp: 0 };   // user OAuth token cache
+let saCached = { token: null, exp: 0 }; // service-account token cache
+
+export async function getAccessToken({ force = false, user = false } = {}) {
   const now = Math.floor(Date.now() / 1000);
+
+  // Default to the non-expiring writer service account for Sheets work — it is
+  // shared as Editor on the workbooks. User OAuth refresh tokens expire after
+  // 7 days in Testing mode, which is unfit for an unattended autonomous node.
+  // Callers that need the USER identity (GSC / GA properties the SA cannot
+  // reach) pass {user:true} or set GG_FORCE_USER_OAUTH=1.
+  const forceUser = user || process.env.GG_FORCE_USER_OAUTH === '1';
+  if (!forceUser && existsSync(saPath())) {
+    if (!force && saCached.token && saCached.exp - 60 > now) return saCached.token;
+    const { token } = await saAccessToken(saPath(), [SHEETS_SCOPE]);
+    saCached = { token, exp: now + 3600 };
+    return token;
+  }
+
   if (!force && cached.token && cached.exp - 60 > now) return cached.token;
 
   const clientId = process.env.GG_OAUTH_CLIENT_ID;

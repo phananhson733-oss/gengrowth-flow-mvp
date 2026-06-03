@@ -31,9 +31,13 @@ const PAGE_ID_REGEX = /^[A-Za-z0-9_-]{1,64}$/;
 
 // ─── 1. Config — model registry, prices, command builders ──────────────────
 // PRICING: per 1M tokens, estimates from provider public pages 2026-05-23.
+// Generation models (overridable via env). Default to the latest: Opus 4.8 +
+// GPT-5.5 at xhigh reasoning effort.
+const CLAUDE_MODEL = process.env.GG_CLAUDE_MODEL || 'claude-opus-4-8';
+const CODEX_EFFORT = process.env.GG_CODEX_EFFORT || 'xhigh';
 const PRICING = {
-  claude: { input_per_m: 15.0, output_per_m: 75.0, note: 'Opus 4.7 xhigh' },
-  codex: { input_per_m: 10.0, output_per_m: 40.0, note: 'GPT 5.5 high' },
+  claude: { input_per_m: 15.0, output_per_m: 75.0, note: 'Opus 4.8 xhigh' },
+  codex: { input_per_m: 10.0, output_per_m: 40.0, note: 'GPT 5.5 xhigh' },
   gemini: { input_per_m: 3.5, output_per_m: 10.5, note: 'Gemini 2.5 Pro' },
 };
 const WORDS_PER_TOKEN = 1 / 1.3; // ~1.3 tokens per English word
@@ -46,18 +50,18 @@ const DIVERSIFY_ESCALATION = { codex: 'claude', gemini: 'claude', claude: null }
 function buildCommand(model, promptPath, outputPath) {
   switch (model) {
     case 'claude':
-      // CRITICAL: --model claude-opus-4-7 is load-bearing. Without it Claude
-      // CLI silently downgrades to Sonnet. We re-verify below in validation.
+      // CRITICAL: --model is load-bearing. Without it the Claude CLI silently
+      // downgrades to Sonnet. We re-verify below in validation. (default Opus 4.8)
       return {
         bin: 'claude',
-        args: ['-p', '--model', 'claude-opus-4-7'],
+        args: ['-p', '--model', CLAUDE_MODEL],
         stdinFromFile: promptPath,
         stdoutToFile: outputPath,
       };
     case 'codex':
       return {
         bin: 'codex',
-        args: ['exec', '-c', 'model=gpt-5.5', '-c', 'reasoning_effort=high', '-'],
+        args: ['exec', '-c', 'model=gpt-5.5', '-c', `reasoning_effort=${CODEX_EFFORT}`, '-'],
         stdinFromFile: promptPath,
         stdoutToFile: outputPath,
       };

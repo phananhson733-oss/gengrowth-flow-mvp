@@ -27,6 +27,9 @@ import { homedir } from 'node:os';
 const HOME = homedir();
 const CODEX = [join(HOME, '.npm-global', 'bin', 'codex')].find(existsSync) || 'codex';
 const CLAUDE = ['/opt/homebrew/bin/claude'].find(existsSync) || 'claude';
+// Reviewer = Codex gpt-5.5 xhigh; reviser = Claude Opus 4.8 (overridable).
+const CLAUDE_MODEL = process.env.GG_CLAUDE_MODEL || 'claude-opus-4-8';
+const CODEX_EFFORT = process.env.GG_CODEX_EFFORT || 'xhigh';
 
 function parseArgs(argv) {
   const o = {};
@@ -86,8 +89,8 @@ function main() {
   // 1. Codex critique (independent reviewer)
   let critique;
   try {
-    critique = run(CODEX, ['exec', '-c', 'model=gpt-5.5', '-c', 'reasoning_effort=high', '-'],
-      CRITIQUE_PROMPT(o.entity, o.targetKeyword, draft), 420000).trim();
+    critique = run(CODEX, ['exec', '-c', 'model=gpt-5.5', '-c', `reasoning_effort=${CODEX_EFFORT}`, '-'],
+      CRITIQUE_PROMPT(o.entity, o.targetKeyword, draft), 600000).trim();
   } catch (e) {
     return keep(`codex review unavailable: ${String(e.message || e).replace(/\s+/g, ' ').slice(-100)}`);
   }
@@ -97,7 +100,7 @@ function main() {
   // 2. Opus revises to address the critique
   let revised;
   try {
-    revised = run(CLAUDE, ['-p', '--model', 'claude-opus-4-7'], REVISE_PROMPT(critique, draft), 600000);
+    revised = run(CLAUDE, ['-p', '--model', CLAUDE_MODEL], REVISE_PROMPT(critique, draft), 700000);
   } catch (e) {
     return keep(`reviser failed: ${String(e.message || e).replace(/\s+/g, ' ').slice(-100)}`);
   }

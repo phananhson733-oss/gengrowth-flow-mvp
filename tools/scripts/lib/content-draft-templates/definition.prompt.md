@@ -114,6 +114,13 @@ capsule 用于决定**怎么解释**（措辞、对比角度、例子选择、�
 - ❌ 禁止命定式 / 预测性断言：不要写 `you will [feel / experience / find / attract]…`、`this means you will`、`destined to`、`fated to`。占星描述的是**倾向与模式**，不是注定的未来；这些短语是 author persona 的 banned_tokens，命中即 RL7 fail。
 - ✅ 改用倾向语气：`you may notice` / `you might find` / `this placement tends to` / `often` / `can surface as` / `many people with this placement describe`。
 
+**措辞红线 — 临床 / 医疗主张（命中 = Phase 2 RL1 整篇作废，disclaimer 不豁免）**
+
+- ❌ 绝不把占星 / 星象 / "能量" 写成能 **治疗 / 治愈 / 诊断 / 处方** 身心疾病。具体禁止这些动词+名词组合：`heal(s) your anxiety / depression / trauma / grief / PTSD / ...`、`treat(s) [anxiety / depression / trauma / insomnia / fatigue / pain / inflammation / illness / symptoms / chronic / acute ...]`、`cure(s) [anxiety / depression / illness / disease / chronic ...]`、`diagnose(s) [your / the / symptoms / disorder / condition ...]`、`prescribe(s) medication / treatment / dosage`、`therapy for <X>`、`prescription for <X>`。
+- ⚠️ **Vedic / nakshatra / dasha / "energy" / "healing" / chakra / lunar-cycle 主题尤其高危**——这些题材最容易让你不自觉写出"这股能量治好焦虑 / 这个 nakshatra 主管某器官、易患某病"之类临床主张。写这类题材时，提交前**逐句自查上面的动词**。
+- ✅ 改用象征 / 反思 / 关联措辞：`is associated with` / `is a symbolic lens for` / `many people use it to reflect on` / `can support self-awareness around` / `is traditionally linked to themes of` / `offers a framework for thinking about`。把"治愈/治疗 X"重写成"为思考 X 提供一个象征性框架 / 与 X 这一**主题**相关"。
+- ✅ 谈情绪/身心时保持**象征关联**而非**因果医疗**：不是 "the full moon's energy heals your anxiety"，而是 "the full moon is often used as a moment to reflect on emotional tension"。
+
 ## Heading level 字面规则（任一违反 = 整篇作废）
 
 - **恰好 1 个 `# H1`**（文章标题，第 1 行）

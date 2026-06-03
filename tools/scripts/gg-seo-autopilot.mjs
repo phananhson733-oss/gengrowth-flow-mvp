@@ -713,7 +713,7 @@ const o = parseArgs(process.argv.slice(2));
 try {
   if (o.status) doStatus();
   else if (o.nextUnauthored) doNextUnauthored();
-  else if (o.author) doAuthor();
+  else if (o.author) doAuthor(o);
   else if (o.merge) doMerge(o);
   else if (o.markVerified) doMarkVerified(o);
   else if (o.markFailed) doMarkFailed(o);

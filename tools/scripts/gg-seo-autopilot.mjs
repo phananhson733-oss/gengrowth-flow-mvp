@@ -80,6 +80,8 @@ const GBRAIN_RAG = join(SCRIPTS, 'gg-gbrain-rag.mjs');
 const ENTITY_PASSPORT = join(SCRIPTS, 'gg-entity-passport.mjs');
 const RENDER = join(SCRIPTS, 'gg-render-batch.mjs');
 const ORCHESTRATOR = join(SCRIPTS, 'gg-llm-orchestrator.mjs');
+// multi-party review: Codex (gpt-5.5 xhigh) critiques → Opus 4.8 revises.
+const REVIEW = join(SCRIPTS, 'gg-author-review.mjs');
 const PHASE2 = join(SCRIPTS, '_phase2-validate.mjs');
 const CONFIG_SNAPSHOT = join(FLOW, '.gg-cache', 'config-snapshot.json');
 const PLAN_GLOB_DIR = join(OPS, 'inbox', '06-tasks', 'tasks');
@@ -505,6 +507,22 @@ function doAuthor() {
         continue;
       }
       if (existsSync(enDraft(pgId)) && phase2Passed(pgId)) {
+        // multi-party review (user-approved 2026-06-03): Codex critiques the
+        // phase2-passing draft → Opus revises → re-validate. Adopt the revision
+        // ONLY if it still passes phase2 (best-effort improvement, never regress —
+        // on any failure _staging/<pid>-en.md stays the original passing draft).
+        const revisedV8 = join('_staging', `${pgId}-revised-v8.md`);
+        try {
+          const out = shFlow('node', [REVIEW, '--source', draftV8, '--out', revisedV8,
+            '--page-id', pgId, '--entity', cleanEntity, '--target-keyword', keyword], 1200000).trim();
+          log(out || 'review: (no output)');
+          if (/revised/.test(out) && existsSync(join(FLOW, revisedV8))) {
+            try {
+              shFlow('node', [PHASE2, '--source', revisedV8, '--page-id', pgId, '--tag', 'en', '--author', author]);
+              log(phase2Passed(pgId) ? 'review: revised draft adopted (passed phase2)' : 'review: revision kept original');
+            } catch { log('review: revised draft failed phase2 — kept original'); }
+          }
+        } catch (e) { log(`review skipped: ${errTail(e, 80)}`); }
         log(`AUTHORED ${pgId} → ${enDraft(pgId)} (author=${author}, attempt ${i}/${attempts}) — ready for next scan to publish`);
         return;
       }

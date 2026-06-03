@@ -458,10 +458,10 @@ function doAuthor() {
     //    some sites block scraping) yet still emit a usable cache, so gate on the
     //    OUTPUT file, not the exit code. render hard-requires both caches to exist.
     const ragDir = join(FLOW, '.gg-cache', pgId);
-    try { shFlow('node', [OBSIDIAN_RAG, '--page-id', pgId, '--entity', keyword, '--target-keyword', keyword], 240000); }
+    try { shFlow('node', [OBSIDIAN_RAG, '--page-id', pgId, '--entity', ragEntity, '--target-keyword', keyword], 240000); }
     catch (e) { log(`obsidian-rag exit non-zero: ${errTail(e, 80)}`); }
     if (!existsSync(join(ragDir, 'obsidian-rag.json'))) return park(slug, 'obsidian-rag produced no cache');
-    try { shFlow('node', [ENTITY_PASSPORT, '--entity', keyword, '--page-id', pgId, '--emit-rag'], 300000); }
+    try { shFlow('node', [ENTITY_PASSPORT, '--entity', ragEntity, '--page-id', pgId, '--emit-rag'], 300000); }
     catch (e) { log(`entity-passport exit non-zero (partial sources?): ${errTail(e, 80)}`); }
     const epRag = join(ragDir, 'entity-passport.rag.json');
     if (!existsSync(epRag) || statSync(epRag).size < 512) return park(slug, 'entity-passport produced no RAG');

@@ -8,6 +8,8 @@ template: Definition
 tier: T1
 track: 量产线
 page_id: PG-SOLAR-001
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
 target_keyword: solar return chart
 associated_keywords:
   - solar return
@@ -16,7 +18,7 @@ associated_keywords:
   - solar return chart calculator
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-03T12:25:14.076Z
+generated_at: 2026-06-03T12:27:34.430Z
 content_sha256_short: f628540e0f9164fa
 phase2_checks: all-pass
 ---

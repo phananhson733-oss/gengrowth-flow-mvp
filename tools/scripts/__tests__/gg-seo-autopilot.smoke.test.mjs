@@ -51,6 +51,7 @@ function runAuto(h, args, extraEnv = {}) {
       GG_OPS_DIR: h.ops,
       GG_ORACLE_DIR: h.oracle,
       GG_FLOW_REPO: join(__dirname, '..', '..', '..'),
+      GG_AUTOPILOT_NO_NOTIFY: '1', // never send a real Feishu push from tests
       ...extraEnv,
     },
   });

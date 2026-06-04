@@ -40,8 +40,7 @@ Merge if the REQUIRED gates pass: chrome preview renders AND all three subagents
 - If those pass → merge (this deploys to prod www.astrologywiki.com):
       node ~/gengrowth-flow-mvp/tools/scripts/gg-seo-autopilot.mjs --mark-verified --branch <branch> --preview-url <environment_url> --evidence "chrome preview + 3-subagent panel passed (codex: <ran-clean|skipped-tooling>)"
       node ~/gengrowth-flow-mvp/tools/scripts/gg-seo-autopilot.mjs --merge --branch <branch>
-  Then notify BOTH ways: a PushNotification "autopilot published <slug> → prod", AND a Feishu push:
-      bash ~/gengrowth-flow-mvp/tools/scripts/gg-lark-notify.sh "✅ SEO autopilot 已发布 <slug> → 线上 www.astrologywiki.com"
+  (The `--merge` command itself appends the ops publish register row AND pushes the Feishu "已发布" alert deterministically — do NOT send your own Feishu publish push, that would double it.) Then send ONE PushNotification "autopilot published <slug> → prod".
 - If codex / chrome / ANY subagent fails → do NOT merge. Leave the PR open, park the ledger with:
       node ~/gengrowth-flow-mvp/tools/scripts/gg-seo-autopilot.mjs --mark-failed --branch <branch> --reason "<which gate + the specific blocking issue>"
   Then notify the specific failure BOTH ways — a PushNotification, AND a Feishu push:

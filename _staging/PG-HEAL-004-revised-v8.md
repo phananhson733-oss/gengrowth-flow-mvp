@@ -1,27 +1,3 @@
----
-title: Chiron In Taurus
-slug: Chiron-in-Taurus
-date: 2026-06-04
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T2
-track: 量产线
-page_id: PG-HEAL-004
-author_id: "julian-thorne"
-author_display_name: "Julian Thorne"
-target_keyword: Chiron in Taurus
-associated_keywords:
-  - chiron in 12th house
-  - healing placements
-  - chiron astrology
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-06-04T12:18:23.910Z
-content_sha256_short: 383985d66fcee1f5
-phase2_checks: all-pass
----
-
 # Why Chiron in Taurus Is Really About Worth, Not Money
 
 ## What is Chiron in Taurus?

@@ -648,7 +648,10 @@ function doScanLocked(o) {
       if (existsSync(join(publishRepo, 'scripts', 'generate-seo-pages.mjs'))) addPaths.push('scripts/generate-seo-pages.mjs');
       gitIn(publishRepo, ['add', ...addPaths]);
       gitIn(publishRepo, ['commit', '-q', '-m', `feat(articles): publish ${t.slug} (${WINNER} ${VERSION}) [autopilot]`]);
-      gitIn(publishRepo, ['push', '-u', 'origin', branch]);
+      // --force: these seo/auto/<date>-<pgid> branches are disposable & autopilot-
+      // owned; a re-publish (or a stale remote branch created off an older main
+      // before other merges advanced it) otherwise rejects as non-fast-forward.
+      gitIn(publishRepo, ['push', '-u', '--force', 'origin', branch]);
       // Open a PR so Vercel posts a Preview deployment + check; merge happens
       // in --merge AFTER codex + chrome verify pass (the human-equivalent gate).
       let prUrl = '';

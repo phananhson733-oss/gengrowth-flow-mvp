@@ -537,7 +537,7 @@ function doAuthor(o = {}) {
       // scatter…), so plain regeneration rarely converges. Feed the previous
       // attempt's EXACT failures back into the prompt so the model fixes those.
       if (lastFail && i > 1) {
-        writeFileSync(promptAbs, `${basePrompt}\n\n## ⚠️ 上一稿被自动校验拦下 — 本稿必须修掉以下每一条（否则整篇作废）\n${lastFail}\n\n继续遵守上面所有硬规则，同时逐条修正以上失败。尤其：① 临床/医疗动词（heal/treat/cure/diagnose + 焦虑/抑郁/创伤/疾病/疼痛/失眠等病症名）一律改写成象征/反思措辞（"is associated with" / "a symbolic lens for"）；② target_keyword 完整短语全文 5–8 次即可，**绝不超过 8 次**，多余的用代词/同义改写稀释。\n`);
+        writeFileSync(promptAbs, `${basePrompt}\n\n## ⚠️ 上一稿被自动校验拦下 — 本稿必须修掉以下每一条（否则整篇作废）\n${lastFail}\n\n继续遵守上面所有硬规则，同时**对照下表逐条修正**（命中哪条改哪条）：\n- 临床/医疗主张（RL1：heal/treat/cure/diagnose + 焦虑/抑郁/创伤/疾病/疼痛/失眠等病症名）→ 改成象征/反思措辞（"a reflective lens for" / "some people explore this theme" / "is traditionally associated with"）。\n- target_keyword 堆词（RL5：count 超 8）→ 完整短语全文**只出现 5–8 次**，多余的用代词/短形/同义改写替换。\n- drifted sections（RL4）→ 在被点名的**每个** H2 小节里，让 target_keyword 完整短语自然出现至少 1 次（实质回扣主题，别泛泛）。\n- 缺免责声明（RL6 / disclaimer，psych-safety 主题必需）→ 在正文结尾**逐字加入这一行**：This is not a clinical interpretation or mental health advice.\n- section scatter（SC3c）→ 被空行散成多段的小节改成「引子句 + 编号列表（\`1. **标签。** 说明\`）」。\n- link distribution（SC4）→ 至少 1 条内链自然内联织进正文前段句子里（首链优先），别全堆结尾。\n`);
       }
       try { shFlow('node', [ORCHESTRATOR, '--prompt', promptPath, '--page-id', pgId, '--models', WINNER, '--out-dir', '_staging', '--retry', '2'], 900000); }
       catch (e) { log(`orchestrator exit non-zero (attempt ${i}): ${errTail(e, 80)}`); }

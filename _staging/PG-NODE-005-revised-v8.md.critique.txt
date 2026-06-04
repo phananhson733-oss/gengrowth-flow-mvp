@@ -1,0 +1,8 @@
+- “South Node = innate skills you arrive fluent in” 太绝对 → 改成“熟悉的本能、默认策略、过度发展的能力”，避免把每个南交点都写成天生才华。
+- 全文频繁用 “descending node” 替代目标词 → 统一主称为 “South Node”，首次说明 “also called the descending lunar node”，否则 SEO 和读者意图会被稀释。
+- “每六个月同一课题会回来” 表述不准 → 改成“eclipse seasons roughly every six months activate the current nodal axis; natal South Node themes are strongest when eclipses/transiting nodes contact it.”
+- 解读方法太浅，只看 sign/house/贴近行星 → 加入 ruler、aspects、orb、opposite North Node 的 polarity，给出“sign = style, house = life arena, ruler = where it plays out”的具体读法。
+- 例子太泛，如 “bold fire sign in career house” → 换成具体轴线案例，例如 South Node in Leo 10th / North Node in Aquarius 4th，并写出过度使用、成熟使用、下一步动作。
+- “Liz Greene / Sasportas / Rudhyar” 像权威点名但无可核查支撑 → 补具体书名/观点来源，或删掉这句，避免懂行读者觉得装饰性引用。
+- “Energy Center” 表格列名不符合占星术语 → 改成 “Chart Location / Interpretive Focus / How to Observe”，不要暗示南交点是能量中心。
+- 搜索 “south node” 的用户通常想快速知道自己的南交点含义 → 增加简短 sign + house interpretive template 或链接到各星座/宫位页，而不只停留在概念层。

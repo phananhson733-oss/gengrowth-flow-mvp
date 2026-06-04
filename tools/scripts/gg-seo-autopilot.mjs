@@ -55,6 +55,7 @@ import {
 import { join, dirname, basename } from 'node:path';
 import { homedir } from 'node:os';
 import { buildAuthorMap, resolveAuthor } from './lib/author-routing.mjs';
+import { slugifyPageId } from './gg-sheet-pull.mjs';
 
 const HOME = homedir();
 const FLOW = process.env.GG_FLOW_REPO || join(HOME, 'gengrowth-flow-mvp');
@@ -375,19 +376,35 @@ function resolveAuthorForDomain(clusterDomain) {
   return resolveAuthor({ clusterDomain, overrideRaw: '', authorMap: map }).author || '';
 }
 
-// Locate this task's row in 选题登记表 (page_id column). {row, brief} or null.
+// Locate this task's row in 选题登记表. {row, brief} or null.
 // Write to a file and read it back — the full sheet is ~0.5MB and capturing that
 // through execFileSync stdout truncates (pipe limit); a file read is reliable.
-function findSheetRow(pgId) {
+//
+// Matching order (the 选题登记表 is KEYWORD-indexed, not PG-id-indexed: gg-sheet-pull
+// derives page_id = slugifyPageId(target_keyword) when the sheet's page_id column is
+// blank, which it now is for every row — so a bare PG-id match finds nothing):
+//   1. exact page_id === PG-id   (legacy: only matches a sheet that literally stores PG-ids)
+//   2. page_id === slugifyPageId(plan keyword)   (e.g. "Chiron in Taurus" → page_chiron_in_taurus)
+//   3. target_keyword === plan keyword (case-insensitive)   (final exact-keyword fallback)
+// 2 and 3 are precise (exact derived-slug / exact keyword), so no risk of matching the
+// wrong topic; 1 stays first to keep PG-id sheets working.
+function findSheetRow(pgId, keyword = '') {
   mkdirSync(join(FLOW, '.gg-cache', 'batches'), { recursive: true });
   const outRel = join('.gg-cache', 'batches', '_allrows.json');
-  // --out writes the JSON file (no --dry-run: --dry-run prints to stdout and skips
-  // the file write); same read-only pull the per-row batch step below uses.
-  shFlow('node', [SHEET_PULL, '--rows', '2-300', '--limit', '400', '--out', outRel]);
+  // wide range: tasks live anywhere in the sheet (observed up to row ~286).
+  shFlow('node', [SHEET_PULL, '--rows', '2-600', '--limit', '700', '--out', outRel]);
   let rows;
   try { const j = JSON.parse(readFileSync(join(FLOW, outRel), 'utf8')); rows = j.rows || j; }
   catch { throw new Error('sheet-pull output not parseable'); }
-  const r = (rows || []).find((x) => String(x.page_id) === pgId);
+  rows = rows || [];
+  const kw = String(keyword || '').trim();
+  const kwSlug = kw ? slugifyPageId(kw) : null;
+  const kwLower = kw.toLowerCase();
+  const r =
+    rows.find((x) => String(x.page_id) === pgId) ||
+    (kwSlug && rows.find((x) => String(x.page_id) === kwSlug)) ||
+    (kwLower && rows.find((x) => String((x.brief && x.brief.target_keyword) || '').trim().toLowerCase() === kwLower)) ||
+    null;
   return r ? { row: String(r.source_row), brief: r.brief || {} } : null;
 }
 
@@ -437,9 +454,9 @@ function doAuthor(o = {}) {
   try {
     // 1. locate the Sheet row
     let loc;
-    try { loc = findSheetRow(pgId); }
+    try { loc = findSheetRow(pgId, t.keyword); }
     catch (e) { return park(null, `sheet-pull failed: ${errTail(e)}`); }
-    if (!loc) return park(null, `no row for ${pgId} in 选题登记表`);
+    if (!loc) return park(null, `no row for ${pgId} ("${t.keyword || ''}") in 选题登记表`);
     const row = loc.row;
 
     // 2. bridge → override (no --allow-missing-cta: a missing CTA Map row parks)

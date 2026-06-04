@@ -687,6 +687,7 @@ function doMerge(o) {
     claims[pgId].mergedAt = new Date().toISOString();
     checkPlanBox(pgId);
     saveClaims(claims);
+    appendPublishLog(pgId, claims[pgId].slug); // writing record → ops (self-synced)
     log(`MERGED ${o.branch} → main (prod deploy triggered)`);
   });
 }
@@ -739,6 +740,54 @@ function checkPlanBox(pgId) {
   const src = readFileSync(plan, 'utf8');
   const out = src.replace(new RegExp(`(^\\s*-\\s*\\[) (\\]\\s*\`?${pgId}\`?)`, 'm'), '$1x$2');
   if (out !== src) writeFileSync(plan, out);
+}
+
+// Commit + push specific OPS files ourselves (path-restricted) so writing records
+// sync to the team's ops repo WITHOUT depending on obsidian-git (which only runs
+// while the Obsidian app is open and was observed stalled for ~15h). Best-effort:
+// never blocks the merge; coexists with obsidian-git by committing only OUR paths
+// and rebasing once if the push is rejected.
+function syncOpsFiles(absPaths, msg) {
+  const rel = absPaths.filter(Boolean).map((p) => p.replace(`${OPS}/`, ''));
+  if (!rel.length) return;
+  try {
+    gitIn(OPS, ['add', ...rel]);
+    gitIn(OPS, ['commit', '-q', '-m', `${msg} [autopilot]`, '--', ...rel]);
+  } catch { return; } // nothing staged for our paths (already committed) → done
+  try { gitIn(OPS, ['push', 'origin', 'HEAD']); }
+  catch {
+    try { gitIn(OPS, ['pull', '--rebase', '--autostash', 'origin', 'main']); gitIn(OPS, ['push', 'origin', 'HEAD']); }
+    catch (e) { log(`ops push deferred (obsidian-git will catch up): ${errTail(e, 80)}`); }
+  }
+}
+
+function opsPublishLog() { return join(OPS, 'inbox', '06-tasks', 'seo-autopilot-publish-log.md'); }
+
+// Append one row per published article to the ops publish register (the "写作记录"),
+// then sync it + the plan to ops. Title/author come from the en.md frontmatter.
+function appendPublishLog(pgId, slug) {
+  try {
+    const f = opsPublishLog();
+    let title = '', author = '';
+    if (existsSync(enDraft(pgId))) {
+      const head = readFileSync(enDraft(pgId), 'utf8').slice(0, 1500);
+      title = ((head.match(/^title:\s*(.+)$/m) || [])[1] || '').trim().replace(/^["']|["']$/g, '');
+      author = (head.match(/^author_id:\s*["']?([a-z0-9-]+)/m) || [])[1] || '';
+    }
+    const date = new Date().toISOString().slice(0, 10);
+    const url = `https://www.astrologywiki.com/en/wiki/${slug}`;
+    if (!existsSync(f)) {
+      mkdirSync(dirname(f), { recursive: true });
+      writeFileSync(f, `---\ntitle: SEO Autopilot 发布登记\ntype: log\nupdated: ${date}\n---\n\n# 📝 SEO Autopilot 发布登记（自动维护）\n\n> autopilot 每篇文章发布到 prod 后自动追加一行并 commit+push。\n\n| 日期 | PG-id | slug | 标题 | 作者 | 线上 URL | 状态 |\n|---|---|---|---|---|---|---|\n`);
+    }
+    let src = readFileSync(f, 'utf8');
+    if (!src.includes(`| ${pgId} |`)) {
+      src = src.replace(/\nupdated:\s*[\d-]+/, `\nupdated: ${date}`) +
+        `| ${date} | ${pgId} | ${slug} | ${title.replace(/\|/g, '/')} | ${author} | ${url} | published |\n`;
+      writeFileSync(f, src);
+    }
+    syncOpsFiles([f, latestPlan()], `chore(seo): publish ${slug}`);
+  } catch (e) { log(`publish-log skipped: ${errTail(e, 80)}`); }
 }
 
 function doStatus() {

@@ -823,7 +823,7 @@ const authorLines = ctx.author
   : '';
 const frontmatter = `---
 title: ${titleCased}
-slug: ${ctx.target_keyword.replace(/\s+/g, '-')}
+slug: ${ctx.target_keyword.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}
 date: ${generatedAt.slice(0, 10)}
 status: ready-to-review
 type: wiki-entry

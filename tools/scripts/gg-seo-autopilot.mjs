@@ -763,6 +763,7 @@ function syncOpsFiles(absPaths, msg) {
 }
 
 function larkNotify(msg) {
+  if (process.env.GG_AUTOPILOT_NO_NOTIFY === '1') return; // suppressed in tests
   try { sh('bash', [LARK_NOTIFY, msg]); } catch { /* best-effort; never blocks */ }
 }
 

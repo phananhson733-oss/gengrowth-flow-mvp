@@ -1,0 +1,8 @@
+- 把 Ashlesha 写成“strong Mercury in Cancer”会误导 → 改成“Moon/Ascendant/行星落入 Ashlesha；Mercury 是 nakshatra lord，不等于本命 Mercury 必在 Cancer”。
+- “serpent is not a warning”过度洗白 → 加入 Nagas、毒、缠缚、保护、秘密知识的双重传统含义，避免把传统阴影全改写成心理优势。
+- 缺少核心基础资料 → 在正文或表格补上精确度数 `Cancer 16°40′–30°00′`、deity `Nagas`、lord `Mercury`、symbol、shakti、gana/temperament 等读者会查的硬信息。
+- “不需要精确出生时间”不严谨 → 改为“确认 Moon nakshatra 可能需要出生时间，尤其 Moon 接近边界；Ascendant、houses、padas 必须依赖准确出生时间”。
+- Gandanta 说法太泛 → 明确 Ashlesha 末段通常指第 4 pada / Cancer 26°40′–30°00′，并注明不同传统对最敏感区间可能划得更窄。
+- 缺少四个 padas 的实际区分 → 加一段简短说明 1–4 pada 的 navamsa 差异及表现，否则“不是每个度数一样”这句没有落地。
+- Dane Rudhyar 引用削弱 Vedic 权威感 → 若保留，标成现代心理占星视角；主要 grounding 改用 Vedic/Jyotisha 术语和经典来源。
+- 搜索意图覆盖不够完整 → 增加更具体的 reader-use cases：Moon in Ashlesha、Ascendant in Ashlesha、career/relationship/shadow work/remedies 如何分别判断。

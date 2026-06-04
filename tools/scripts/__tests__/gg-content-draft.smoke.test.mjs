@@ -688,6 +688,31 @@ test('RL5: keyword count 4 → pass', () => {
   assert.equal(r.pass, true);
 });
 
+test('RL5: 3-word keyword gets density headroom in a full-length article → pass', () => {
+  // Regression: a 3-word long-tail phrase appearing 12× in an ~1800-word article is
+  // ~1.9% coverage (normal SEO density), but RL4 per-section recall forces that many
+  // occurrences. The flat cap=8 fought RL4 head-on and parked HEAL-004 (chiron in
+  // taurus). Multi-word keywords now get effectiveMax = max(flatCap, densityCap).
+  const filler = ('the wounded healer placement carries a tender ache through life ').repeat(150); // ~1500 words
+  const draft = filler + Array(12).fill('chiron in taurus').join(' and so the ');
+  const r = checkRL5(draft, { targetKeyword: 'chiron in taurus', maxCount: 8 });
+  assert.equal(r.pass, true, r.note);
+  assert.match(r.note, /limit (1[0-9]|[2-9][0-9])/); // headroom above the flat 8
+});
+
+test('RL5: 3-word keyword genuinely stuffed (high density) → still fail', () => {
+  const draft = Array(60).fill('chiron in taurus').join(' '); // ~180 words, 100% coverage
+  const r = checkRL5(draft, { targetKeyword: 'chiron in taurus', maxCount: 8 });
+  assert.equal(r.pass, false);
+});
+
+test('RL5: 3-word keyword in a SHORT draft falls back to flat cap (no spurious headroom)', () => {
+  // Tiny drafts get densityCap≈0, so effectiveMax = flat cap. count 4 ≤ 8 → pass.
+  const draft = `intro words here\n chiron in taurus\n more body text\n chiron in taurus end`;
+  const r = checkRL5(draft, { targetKeyword: 'chiron in taurus', maxCount: 8 });
+  assert.equal(r.pass, true, r.note);
+});
+
 test('RL6: psych_safety=N → N/A pass', () => {
   const r = checkRL6('any text', { effectivePsychSafety: 'N' });
   assert.equal(r.pass, true);

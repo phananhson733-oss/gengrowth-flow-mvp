@@ -82,6 +82,7 @@ const RENDER = join(SCRIPTS, 'gg-render-batch.mjs');
 const ORCHESTRATOR = join(SCRIPTS, 'gg-llm-orchestrator.mjs');
 // multi-party review: Codex (gpt-5.5 xhigh) critiques → Opus 4.8 revises.
 const REVIEW = join(SCRIPTS, 'gg-author-review.mjs');
+const LARK_NOTIFY = join(SCRIPTS, 'gg-lark-notify.sh'); // Feishu push (best-effort)
 const PHASE2 = join(SCRIPTS, '_phase2-validate.mjs');
 const CONFIG_SNAPSHOT = join(FLOW, '.gg-cache', 'config-snapshot.json');
 const PLAN_GLOB_DIR = join(OPS, 'inbox', '06-tasks', 'tasks');
@@ -761,6 +762,10 @@ function syncOpsFiles(absPaths, msg) {
   }
 }
 
+function larkNotify(msg) {
+  try { sh('bash', [LARK_NOTIFY, msg]); } catch { /* best-effort; never blocks */ }
+}
+
 function opsPublishLog() { return join(OPS, 'inbox', '06-tasks', 'seo-autopilot-publish-log.md'); }
 
 // Append one row per published article to the ops publish register (the "写作记录"),
@@ -787,6 +792,7 @@ function appendPublishLog(pgId, slug) {
       writeFileSync(f, src);
     }
     syncOpsFiles([f, latestPlan()], `chore(seo): publish ${slug}`);
+    larkNotify(`✅ SEO autopilot 已发布上线：${title || slug}\nhttps://www.astrologywiki.com/en/wiki/${slug}\n（作者 ${author || '?'}，已登记到 ops）`);
   } catch (e) { log(`publish-log skipped: ${errTail(e, 80)}`); }
 }
 

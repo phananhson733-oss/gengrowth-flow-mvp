@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-NODE-006",
+  "entity": "north node in gemini",
+  "target_keyword": "north node in gemini",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-06-04T19:49:51.599Z",
+  "content_sha256_short": "0cf8ed6f17784a7d",
+  "source_path": "_staging/PG-NODE-006-claude-v8.md",
+  "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-NODE-006-en.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 2029,
+      "wikilinks": 6,
+      "tbdLinks": 6
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

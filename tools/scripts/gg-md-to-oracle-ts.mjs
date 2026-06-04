@@ -159,7 +159,16 @@ export function deriveDescription(body, maxLen = 160) {
     if (sentEnd >= 80) {
       cleaned = cleaned.slice(0, sentEnd + 1).trim();
     } else {
-      cleaned = window.replace(/\s+\S*$/, '').replace(/[，、；,;:\s]+$/u, '').trim();
+      // No sentence end within the window → prefer the last clause boundary
+      // (comma/semicolon ≥ 80), else cut at a word boundary; then strip dangling
+      // function-words so the description never ends mid-phrase on a preposition/
+      // article/conjunction (e.g. "…the deity of" → "…by Yama").
+      const clause = Math.max(window.lastIndexOf(', '), window.lastIndexOf('; '));
+      let cut = clause >= 80 ? window.slice(0, clause) : window.replace(/\s+\S*$/, '');
+      cut = cut.replace(/[，、；,;:\s]+$/u, '').trim();
+      const danglingTail = /\s+(of|the|a|an|and|or|to|by|in|on|for|with|at|as|from|into|over|under|that|this|these|those|its|their|his|her|is|are|was|were|be|been)$/i;
+      while (danglingTail.test(cut)) cut = cut.replace(danglingTail, '');
+      cleaned = cut.trim();
     }
   }
   return cleaned;

@@ -660,7 +660,16 @@ function doScanLocked(o) {
           '--title', `[autopilot] publish ${t.slug}`,
           '--body', `Automated SEO publish of \`${t.pgId}\` → \`${t.slug}\`${res.zh ? ' (EN+ZH)' : ' (EN-only)'}.\n\nAwaiting codex review + chrome MCP verification on the Vercel preview before merge.`],
           { cwd: publishRepo }).trim();
-      } catch (e) { prUrl = `(pr-create-failed: ${e.message})`; }
+      } catch (e) {
+        // A re-publish of the same date+pgId branch hits "a pull request already
+        // exists" — that's fine (we force-pushed the fixed content to it); reuse
+        // the existing PR URL so the verify/diff/notify steps have a real number.
+        if (/already exists/i.test(e.message || '')) {
+          try { prUrl = sh('gh', ['pr', 'view', branch, '--repo', 'xdawayer/oracle', '--json', 'url', '--jq', '.url'], { cwd: publishRepo }).trim(); }
+          catch { prUrl = ''; }
+        }
+        if (!prUrl) prUrl = `(pr-create-failed: ${e.message})`;
+      }
       claims[t.pgId].status = 'pushed-preview';
       claims[t.pgId].pr = prUrl;
       saveClaims(claims);

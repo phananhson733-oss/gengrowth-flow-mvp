@@ -68,6 +68,15 @@ export const RL4_DRIFTED_SECTIONS_FAIL = getConfig('phase2.RL4_drifted_sections_
 export const RL5_MAX_COUNT_DEFAULT = 12;
 export const RL5_MAX_COUNT = getConfig('phase2.RL5_keyword_max', RL5_MAX_COUNT_DEFAULT);
 export const RL5_MIN_COUNT_WARN = 3;
+// For 3+ word long-tail keywords the flat occurrence cap (tuned for 1-2 word
+// keywords) fights RL4 head-on: RL4 REQUIRES the phrase across most of the ~11
+// H2 sections, which alone pushes a 3-word phrase to ~9-12 occurrences. So for
+// multi-word phrases RL5 gates on COVERAGE DENSITY (share of total words the
+// phrase occupies) — the actual stuffing signal — at a conservative ceiling.
+// 2.8% ≈ Yoast's upper "good" band; a 3-word phrase at 12× in 1886 words = 1.9%.
+export const RL5_MULTIWORD_MIN_WORDS = 3;
+export const RL5_MULTIWORD_DENSITY_CEIL_DEFAULT = 0.028;
+export const RL5_MULTIWORD_DENSITY_CEIL = getConfig('phase2.RL5_multiword_density_ceil', RL5_MULTIWORD_DENSITY_CEIL_DEFAULT);
 
 // RL6: psych-safety — disclaimer + non-clinical language + black-words.
 export const RL6_DISCLAIMER_REGEX =
@@ -533,6 +542,28 @@ export function checkRL5(draft, ctx) {
   const re = new RegExp(`(?<![A-Za-z0-9])${escaped}(?![A-Za-z0-9])`, 'gi');
   const matches = draft.match(re) || [];
   const count = matches.length;
+
+  // 3+ word long-tail keyword: gate on coverage density, not the flat count cap.
+  // The flat cap (tuned for short keywords) collides with RL4's per-section recall
+  // requirement; an exact multi-word phrase is also intrinsically hard to "stuff".
+  const kwWords = target.split(/\s+/).filter(Boolean).length;
+  if (kwWords >= RL5_MULTIWORD_MIN_WORDS) {
+    const totalWords = (draft.match(/[A-Za-z0-9'’]+/g) || []).length || 1;
+    const coverage = (count * kwWords) / totalWords;
+    const ceilPct = (RL5_MULTIWORD_DENSITY_CEIL * 100).toFixed(1);
+    const covPct = (coverage * 100).toFixed(1);
+    if (coverage > RL5_MULTIWORD_DENSITY_CEIL) {
+      return {
+        id: 'rl5_no_keyword_stuffing',
+        pass: false,
+        note: `target_keyword coverage = ${covPct}% (limit ${ceilPct}%; ${count}×${kwWords}-word / ${totalWords} words)`,
+      };
+    }
+    let mNote = `target_keyword count = ${count} (${kwWords}-word phrase, coverage ${covPct}% ≤ ${ceilPct}%)`;
+    if (count < RL5_MIN_COUNT_WARN) mNote += ` — warn: density low`;
+    return { id: 'rl5_no_keyword_stuffing', pass: true, note: mNote };
+  }
+
   if (count > maxCount) {
     return {
       id: 'rl5_no_keyword_stuffing',

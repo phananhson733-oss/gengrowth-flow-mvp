@@ -525,20 +525,32 @@ function doAuthor(o = {}) {
     //   sampling) before parking. orchestrator overwrites the draft each attempt;
     //   phase2 writes _staging/<pid>-en.md + manifest ONLY on PASS (exit 11 on fail).
     const draftV8 = join('_staging', `${pgId}-${WINNER}-v8.md`);
-    const attempts = Math.max(1, parseInt(process.env.GG_AUTHOR_GEN_ATTEMPTS || '3', 10));
+    const promptAbs = join(FLOW, promptPath);
+    const basePrompt = readFileSync(promptAbs, 'utf8');
+    const restorePrompt = () => { try { writeFileSync(promptAbs, basePrompt); } catch { /* best-effort */ } };
+    const attempts = Math.max(1, parseInt(process.env.GG_AUTHOR_GEN_ATTEMPTS || '5', 10));
     let lastFail = '';
     for (let i = 1; i <= attempts; i++) {
+      // FEEDBACK-DRIVEN retry: hard topics (Vedic/nakshatra/healing) hit a DIFFERENT
+      // phase2 check each blind attempt (RL1 clinical, RL5 keyword-stuffing, SC
+      // scatter…), so plain regeneration rarely converges. Feed the previous
+      // attempt's EXACT failures back into the prompt so the model fixes those.
+      if (lastFail && i > 1) {
+        writeFileSync(promptAbs, `${basePrompt}\n\n## ⚠️ 上一稿被自动校验拦下 — 本稿必须修掉以下每一条（否则整篇作废）\n${lastFail}\n\n继续遵守上面所有硬规则，同时逐条修正以上失败。尤其：① 临床/医疗动词（heal/treat/cure/diagnose + 焦虑/抑郁/创伤/疾病/疼痛/失眠等病症名）一律改写成象征/反思措辞（"is associated with" / "a symbolic lens for"）；② target_keyword 完整短语全文 5–8 次即可，**绝不超过 8 次**，多余的用代词/同义改写稀释。\n`);
+      }
       try { shFlow('node', [ORCHESTRATOR, '--prompt', promptPath, '--page-id', pgId, '--models', WINNER, '--out-dir', '_staging', '--retry', '2'], 900000); }
       catch (e) { log(`orchestrator exit non-zero (attempt ${i}): ${errTail(e, 80)}`); }
-      if (!existsSync(join(FLOW, draftV8))) { lastFail = 'orchestrator produced no draft'; continue; }
+      if (!existsSync(join(FLOW, draftV8))) { lastFail = '- orchestrator produced no draft'; continue; }
       try { shFlow('node', [PHASE2, '--source', draftV8, '--page-id', pgId, '--tag', 'en', '--author', author]); }
       catch (e) {
-        const m = `${e.stdout || ''}${e.stderr || ''}`.match(/(SC\d+|RL\d+)[^\n]*/);
-        lastFail = `phase2 ${m ? m[0].trim() : 'FAIL'}`;
-        log(`phase2 attempt ${i}/${attempts} failed — ${lastFail}${i < attempts ? ' — regenerating' : ''}`);
+        const out = `${e.stdout || ''}${e.stderr || ''}`;
+        const fails = [...out.matchAll(/✗\s*(?:FAIL\s*)?([^\n]+)/g)].map((m) => `- ${m[1].trim()}`).filter((s) => s.length > 6).slice(0, 8);
+        lastFail = fails.length ? fails.join('\n') : '- phase2 FAIL (no detail captured)';
+        log(`phase2 attempt ${i}/${attempts} failed:\n${lastFail}${i < attempts ? '\n  → regenerating WITH feedback' : ''}`);
         continue;
       }
       if (existsSync(enDraft(pgId)) && phase2Passed(pgId)) {
+        restorePrompt(); // drop the transient feedback addendum now that a draft passed
         // multi-party review (user-approved 2026-06-03): Codex critiques the
         // phase2-passing draft → Opus revises → re-validate. Adopt the revision
         // ONLY if it still passes phase2 (best-effort improvement, never regress —
@@ -558,9 +570,10 @@ function doAuthor(o = {}) {
         log(`AUTHORED ${pgId} → ${enDraft(pgId)} (author=${author}, attempt ${i}/${attempts}) — ready for next scan to publish`);
         return;
       }
-      lastFail = 'phase2 wrote no passing manifest';
+      lastFail = '- phase2 wrote no passing manifest';
     }
-    return park(slug, `${lastFail || 'phase2 failed'} after ${attempts} generation attempt(s)`);
+    restorePrompt();
+    return park(slug, `${(lastFail || 'phase2 failed').replace(/\n/g, ' | ')} after ${attempts} generation attempt(s)`);
   } catch (e) {
     park(null, `unexpected: ${errTail(e)}`);
   }

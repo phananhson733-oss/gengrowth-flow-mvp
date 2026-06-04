@@ -1,26 +1,3 @@
----
-title: Cancer North Node
-slug: cancer-north-node
-date: 2026-06-04
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T2
-track: 量产线
-page_id: PG-NODE-008
-author_id: "julian-thorne"
-author_display_name: "Julian Thorne"
-target_keyword: cancer north node
-associated_keywords:
-  - south node in capricorn
-  - cancer north node meaning
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-06-04T22:49:32.022Z
-content_sha256_short: 65957bc920399bb3
-phase2_checks: all-pass
----
-
 # What Your North Node in Cancer Is Really Asking You to Unlearn
 
 ## What is cancer north node?

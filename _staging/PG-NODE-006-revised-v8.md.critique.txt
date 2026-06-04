@@ -1,0 +1,8 @@
+- “北交点在双子座 sits in whichever house holds Gemini”不够准确 → 改成“北交点的具体度数落在哪个宫位，就把双子课题带到那个生活领域；不同宫制可能不同”。
+- Rudhyar/Sasportas 的来源归因偏虚 → 要么删掉这段权威背书，要么换成更精确的节点/演化占星来源，并把“past-life”明确标成一种占星流派解读。
+- 全文把核心课题过度缩成“害怕失去权威/可信度” → 保留这个角度，但补足双子北交的经典主题：事实收集、语言学习、写作、倾听、邻里/手足/日常交流、多视角验证。
+- 缺少出生日期/周期信息，SEO intent 没吃满 → 增加一句“出生在哪些年份段的人可能有 Gemini North Node”，并注明 true node/mean node 日期会略有差异。
+- “Gemini Sun or Mercury”对比段逻辑混乱 → 改成区分“人格天赋/思维风格”与“灵魂成长方向”，并提醒还要看水星状态、宫位和相位。
+- “reverse nodal axis = learning to commit to a single truth”太简化 → 改成“从分散信息、过度相对化，走向整合、意义和判断”，更符合 Gemini South Node/Sagittarius North Node。
+- 实用性还停在抽象建议 → 每个核心段落加一个具体练习，例如“发表观点前先问两个澄清问题”“把一个信念拆成3条可验证事实”“记录一次被说服的对话”。
+- “Energy Center”表头不专业且可能误导 → 改为“Element / Ruler / How It Shows Up”，避免让读者以为北交点本身由 Mercury 直接主宰。

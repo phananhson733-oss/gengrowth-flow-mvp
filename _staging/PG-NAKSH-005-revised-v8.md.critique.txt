@@ -1,0 +1,9 @@
+- 只讲“忠诚/边界”一个角度太窄 → 增补 Anuradha 的核心传统要素：Mitra 的契约/盟约属性、lotus/archway 象征、rādhana shakti、Saturn+Mars 张力，而不只是关系忠诚。
+- “Moon placement sets someone in this nakshatra”表述过窄 → 改成 Moon defines Janma Nakshatra, but Lagna and other planets in 3°20'–16°40' sidereal Scorpio also matter.
+- 缺少 sidereal 计算提醒 → 在读盘段明确使用 Vedic/sidereal zodiac, not tropical Scorpio，否则读者会直接算错。
+- “name points to following devotion through”有词源硬编感 → 用更稳的说法解释 Anuradha 常被理解为 “following Radha/success” 或 “subsequent success/devotion”，并避免把词源当人格结论。
+- SEO 意图覆盖不足 → 增补读者最常搜的实用维度：pada-by-pada differences, career tendencies, marriage/compatibility, strengths/weaknesses, remedies or growth practices。
+- “Parashara lineage”一句太虚且像权威包装 → 要么给出具体可核查的 classical anchor，要么删掉，避免用“descends from Parashara”替代真实依据。
+- 表格里的 “Energy Center” 列不专业 → 改成 “Traditional Basis” 或 “Chart Factor”，并把“3°20'–16°40' Scorpio”从“energy center”改为 “zodiac span”。
+- 结尾 CTA 只让读者找 Moon，和正文自我觉察脱节 → 改成具体操作：calculate sidereal chart, check Moon/Lagna/planets in Anuradha, note Saturn/Mars condition, then use prompts for loyalty-boundary reflection。
+

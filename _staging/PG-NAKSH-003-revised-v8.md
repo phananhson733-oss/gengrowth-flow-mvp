@@ -1,26 +1,3 @@
----
-title: Rohini Nakshatra
-slug: rohini-nakshatra
-date: 2026-06-04
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T2
-track: 量产线
-page_id: PG-NAKSH-003
-author_id: "aditi-sharma"
-author_display_name: "Aditi Sharma"
-target_keyword: rohini nakshatra
-associated_keywords:
-  - rohini
-  - rohini nakshatra rashi
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-06-04T15:35:11.318Z
-content_sha256_short: dd746ea8d8ba4bca
-phase2_checks: all-pass
----
-
 # Why Rohini Nakshatra Is the Moon's Favored Station of Abundance
 
 ## What is rohini nakshatra?

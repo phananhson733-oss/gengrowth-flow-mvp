@@ -1,6 +1,6 @@
 ---
 title: Chiron In Taurus
-slug: Chiron-in-Taurus
+slug: chiron-in-taurus
 date: 2026-06-04
 status: ready-to-review
 type: wiki-entry

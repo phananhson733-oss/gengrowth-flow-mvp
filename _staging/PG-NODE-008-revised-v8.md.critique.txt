@@ -1,0 +1,8 @@
+- 过度把 Cancer North Node 简化成“学会求助” → 增加 Cancer 的具体母题：家、归属、情绪记忆、身体安全感、照护与被照护，而不只反复讲“别逞强”。
+- “Cancer Sun emotionally fluent by default / needing more backbone”说法太粗糙 → 改成更准确的区别：Sun/Moon 是人格与情绪风格，North Node 是发展方向；避免贬低 Cancer Sun。
+- 把 Capricorn South Node 写得像固定心理诊断 → 加一句限定：这是现代/演化占星中的常见读法，实际表现会受宫位、相位、月亮和土星状态影响。
+- 表格里的“Cancer / Water / 4th-house themes”容易混淆星座和宫位 → 改为“相关象征主题”，并说明 Cancer 不等于第四宫，除非落宫支持。
+- 可执行建议偏少 → 加 3-5 个具体练习，例如每周提出一次小请求、先说感受再解决问题、允许别人完成一件家务/支持、建立稳定居家仪式。
+- 搜索意图覆盖不够完整 → 增加“North Node in Cancer, South Node in Capricorn in the natal chart”小节，并说明宫位会决定具体生活领域。
+- Rudhyar / Sasportas 来源像权威点缀但不够扎实 → 补具体书名或删掉泛泛引用，避免显得像没有实证支撑的 name-dropping。
+- 结尾 CTA 说“exact houses”但没提醒出生时间 → 加一句：宫位解读需要准确出生时间，否则只能可靠读星座轴线。

@@ -535,7 +535,7 @@ export function checkRL5(draft, ctx) {
   if (!target) {
     return { id: 'rl5_no_keyword_stuffing', pass: true, note: 'no target_keyword to count' };
   }
-  const maxCount = Number.isFinite(ctx.maxCount) ? ctx.maxCount : RL5_MAX_COUNT;
+  const baseMax = Number.isFinite(ctx.maxCount) ? ctx.maxCount : RL5_MAX_COUNT;
   // Whole-word, case-insensitive count using lookahead/lookbehind to avoid
   // boundary-consumption issues when the keyword appears back-to-back.
   const escaped = target.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -543,25 +543,19 @@ export function checkRL5(draft, ctx) {
   const matches = draft.match(re) || [];
   const count = matches.length;
 
-  // 3+ word long-tail keyword: gate on coverage density, not the flat count cap.
-  // The flat cap (tuned for short keywords) collides with RL4's per-section recall
-  // requirement; an exact multi-word phrase is also intrinsically hard to "stuff".
+  // 3+ word long-tail keyword: the flat count cap (tuned for 1-2 word keywords)
+  // collides head-on with RL4's per-section recall requirement, which alone pushes
+  // an exact 3-word phrase to ~9-12 occurrences across the ~11 H2 sections. An exact
+  // multi-word phrase is also intrinsically hard to "stuff". So allow the flat cap as
+  // a FLOOR, plus density headroom proportional to article length — capped at the
+  // coverage ceiling so genuine stuffing in a long doc still fails. Short drafts
+  // (and tiny fixtures) get no headroom and fall back to the flat cap.
   const kwWords = target.split(/\s+/).filter(Boolean).length;
+  let maxCount = baseMax;
   if (kwWords >= RL5_MULTIWORD_MIN_WORDS) {
     const totalWords = (draft.match(/[A-Za-z0-9'’]+/g) || []).length || 1;
-    const coverage = (count * kwWords) / totalWords;
-    const ceilPct = (RL5_MULTIWORD_DENSITY_CEIL * 100).toFixed(1);
-    const covPct = (coverage * 100).toFixed(1);
-    if (coverage > RL5_MULTIWORD_DENSITY_CEIL) {
-      return {
-        id: 'rl5_no_keyword_stuffing',
-        pass: false,
-        note: `target_keyword coverage = ${covPct}% (limit ${ceilPct}%; ${count}×${kwWords}-word / ${totalWords} words)`,
-      };
-    }
-    let mNote = `target_keyword count = ${count} (${kwWords}-word phrase, coverage ${covPct}% ≤ ${ceilPct}%)`;
-    if (count < RL5_MIN_COUNT_WARN) mNote += ` — warn: density low`;
-    return { id: 'rl5_no_keyword_stuffing', pass: true, note: mNote };
+    const densityCap = Math.floor((totalWords * RL5_MULTIWORD_DENSITY_CEIL) / kwWords);
+    maxCount = Math.max(baseMax, densityCap);
   }
 
   if (count > maxCount) {

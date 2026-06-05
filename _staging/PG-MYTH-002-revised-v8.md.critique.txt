@@ -1,0 +1,8 @@
+- “Juno decides whether the connection is built to last” 过度拟人且绝对 → 改成“Juno describes commitment needs and recurring partnership dynamics, but cannot determine outcomes alone.”
+- “Venus governs attraction rather than endurance” 太窄化 Venus → 补一句 Venus also covers values, pleasure, affection, and relational style, not only chemistry.
+- 缺少 Juno 在天文/占星定位的基础信息 → 加入“Juno is asteroid 3 Juno, one of the four major asteroid goddesses,”以及如何在 chart calculator 中找到它。
+- “asteroid-goddess revival restored feminine figures the classical seven planets left out” 表述偏意识形态且模糊 → 改成更准确的“20th-century astrologers increasingly incorporated Ceres, Pallas, Juno, and Vesta to expand symbolic readings beyond traditional planets.”
+- 搜索意图覆盖不够完整 → 增加简短小节说明“Juno sign meanings / house meanings / aspects”至少给 3-4 个具体示例，而不只讲方法论。
+- “power, not romance”角度鲜明但反复过度 → 减少多处“not soulmate / not Venus”的重复，把篇幅换成可操作解读步骤和例子。
+- Sources 太弱，只有人物名没有作品或可核查依据 → 补具体书名/出处或删掉“tradition associated with Liz Greene / Rudhyar established”的权威背书式说法。
+- CTA 链接到 birth chart guide 而不是实际生成 chart 的工具，和“Generate your free birth chart”不匹配 → 改为真正的 chart calculator URL，或把按钮文案改成“learn how to read your chart.”

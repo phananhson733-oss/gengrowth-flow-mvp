@@ -1,3 +1,30 @@
+---
+title: Nakshatra
+slug: nakshatra
+date: 2026-06-05
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T1
+track: 量产线
+page_id: PG-NAKSH-001
+author_id: "aditi-sharma"
+author_display_name: "Aditi Sharma"
+target_keyword: nakshatra
+associated_keywords:
+  - 27 nakshatras
+  - ashlesha nakshatra
+  - rohini nakshatra
+  - bharani nakshatra
+  - pushya nakshatra
+  - anuradha nakshatra
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-05T13:51:12.069Z
+content_sha256_short: ce3658edb46e13e7
+phase2_checks: all-pass
+---
+
 # What Nakshatra Tells You About Timing That Your Sun Sign Cannot
 
 ## What is nakshatra?

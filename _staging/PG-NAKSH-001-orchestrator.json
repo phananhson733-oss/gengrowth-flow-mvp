@@ -1,7 +1,7 @@
 {
   "page_id": "PG-NAKSH-001",
   "prompt_path": "/Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-NAKSH-001.v8-prompt.md",
-  "started_at": "2026-06-05T12:03:33.018Z",
+  "started_at": "2026-06-05T12:23:38.716Z",
   "models_requested": [
     "claude"
   ],
@@ -9,24 +9,19 @@
   "diversify_on_fail": false,
   "max_cost_usd_per_page": 5,
   "budget_exceeded_models": [],
-  "ok_count": 1,
-  "total_cost_estimate_usd": 0.0608,
+  "ok_count": 0,
+  "total_cost_estimate_usd": 0,
   "results": {
     "claude": {
       "model": "claude",
       "active_model": "claude",
       "diversified": false,
-      "ok": true,
-      "output_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-NAKSH-001-claude-v8.md",
+      "ok": false,
+      "output_path": null,
       "retries": 0,
-      "duration_s": 1117.2,
-      "cost_estimate_usd": {
-        "usd": 0.0608,
-        "input_tokens_est": 6600,
-        "output_tokens_est": 2733,
-        "pricing_note": "Sonnet 4.6 xhigh"
-      },
-      "cumulative_cost_usd": 0.0608,
+      "duration_s": 1200.2,
+      "cost_estimate_usd": null,
+      "cumulative_cost_usd": 0,
       "budget_exceeded": false,
       "budget_usd": 5,
       "attempts": [
@@ -34,17 +29,12 @@
           "try_index": 1,
           "model": "claude",
           "command": "claude -p --model claude-sonnet-4-6 --effort high < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-NAKSH-001.v8-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-NAKSH-001-claude-v8.md",
-          "cost_usd": 0.0608,
-          "cumulative_cost_usd": 0.0608,
-          "ok": true,
-          "exit_code": 0,
-          "duration_s": 1117.2,
-          "stderr_tail": "",
-          "stdout_bytes": 13430,
-          "sonnet_guard": {
-            "downgraded": false,
-            "bytes": 13517
-          }
+          "cost_usd": 0,
+          "cumulative_cost_usd": 0,
+          "ok": false,
+          "exit_code": -2,
+          "duration_s": 1200.2,
+          "stderr_tail": "WATCHDOG: exceeded hard ceiling 1200s"
         }
       ]
     }

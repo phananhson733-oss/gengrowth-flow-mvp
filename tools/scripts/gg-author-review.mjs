@@ -33,9 +33,13 @@ const CLAUDE = ['/opt/homebrew/bin/claude'].find(existsSync) || 'claude';
 // (Sonnet 4.6 xhigh) revises its own draft addressing the combined feedback. All
 // overridable via env. `--effort`: low|medium|high|xhigh|max.
 const OPUS_CRITIC_MODEL = process.env.GG_REVIEW_OPUS_MODEL || 'claude-opus-4-8';
+// Critics review with xhigh (short output — a bulleted critique — so latency is
+// modest, and we want the strongest review, "评审和 gpt 一样").
 const OPUS_CRITIC_EFFORT = process.env.GG_REVIEW_OPUS_EFFORT || 'xhigh';
 const REVISER_MODEL = process.env.GG_REVISER_MODEL || process.env.GG_CLAUDE_MODEL || 'claude-sonnet-4-6';
-const REVISER_EFFORT = process.env.GG_REVISER_EFFORT || 'xhigh';
+// Reviser rewrites the FULL article (long output) → use 'high' for speed, matching
+// the generation effort; the re-run phase2 gate guards quality. Override via env.
+const REVISER_EFFORT = process.env.GG_REVISER_EFFORT || 'high';
 const CODEX_EFFORT = process.env.GG_CODEX_EFFORT || 'xhigh';
 
 function parseArgs(argv) {

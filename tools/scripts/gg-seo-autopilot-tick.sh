@@ -38,11 +38,17 @@ MAX_CYCLES="${GG_AUTOPILOT_MAX_CYCLES:-50}"
 # without a concurrent fire stealing the lock on an age heuristic.
 if [ -d "$LOCK" ]; then
   lock_pid="$(cat "$LOCK/pid" 2>/dev/null)"
-  if [ -n "$lock_pid" ] && kill -0 "$lock_pid" 2>/dev/null; then
+  if [ -z "$lock_pid" ]; then
+    # No pid file = a legacy mkdir-lock from an older wrapper still finishing, or a
+    # pid not yet written. Treat as ACTIVE (never steal) — wait for it to release.
+    echo "$(date '+%F %T') skip — lock present (legacy/no-pid), previous run still active" >> "$LOG"
+    exit 0
+  fi
+  if kill -0 "$lock_pid" 2>/dev/null; then
     echo "$(date '+%F %T') skip — previous run (pid $lock_pid) still active" >> "$LOG"
     exit 0
   fi
-  echo "$(date '+%F %T') stale lock (pid '${lock_pid:-?}' not alive) — taking over" >> "$LOG"
+  echo "$(date '+%F %T') stale lock (pid $lock_pid dead) — taking over" >> "$LOG"
   rm -rf "$LOCK" 2>/dev/null
 fi
 if ! mkdir "$LOCK" 2>/dev/null; then

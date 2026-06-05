@@ -1,27 +1,3 @@
----
-title: How To Balance Vata Dosha
-slug: how-to-balance-vata-dosha
-date: 2026-06-05
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T2
-track: 量产线
-page_id: PG-AYUR-001
-author_id: "aditi-sharma"
-author_display_name: "Aditi Sharma"
-target_keyword: how to balance vata dosha
-associated_keywords:
-  - 3 gunas
-  - sattva rajas tamas
-  - vata dosha
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-06-05T02:36:15.373Z
-content_sha256_short: f2766cfc1942b62c
-phase2_checks: all-pass
----
-
 # How to Balance Vata Dosha Without Overhauling Your Whole Life
 
 ## What is balance vata dosha?

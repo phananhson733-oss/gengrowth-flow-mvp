@@ -1,3 +1,27 @@
+---
+title: Sattva Rajas Tamas
+slug: sattva-rajas-tamas
+date: 2026-06-05
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-AYUR-003
+author_id: "aditi-sharma"
+author_display_name: "Aditi Sharma"
+target_keyword: sattva rajas tamas
+associated_keywords:
+  - sattvic lifestyle
+  - rajasic energy
+  - tamasic meaning
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-05T14:57:55.438Z
+content_sha256_short: 3e071efa5038b321
+phase2_checks: all-pass
+---
+
 # Why Sattva Rajas Tamas Work as a Dial, Not a Moral Rank
 
 ## What is sattva rajas tamas?

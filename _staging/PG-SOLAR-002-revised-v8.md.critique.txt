@@ -1,0 +1,8 @@
+- “每年生日重置/生日到生日”表述过粗 → 改成“太阳精确回到本命黄经的时刻”，并说明可能落在公历生日当天、前一天或后一天；年份边界以精确回归时刻为准，不是生日零点。
+- FAQ 里“cast for your exact birth moment and place”不准确 → 改为：本命出生时间用于确定本命太阳度数，solar return chart 按太阳回归的精确时刻和所选地点起盘；地点争议主要影响上升点与宫位。
+- “birthplace differs 会让两人 annual charts 不同”说法混淆 → 拆开写：出生时间决定本命太阳精确度数与回归时刻；回归所在地/采用出生地则决定回归盘角度和宫位。
+- “solar return 只能激活本命承诺/孤立 placement 很少有意义”过度绝对化 → 改成明确的编辑立场或流派偏好，并补一句：部分传统/预测派会更重视回归盘自身的角、宫主、月亮和行星状态。
+- “Transits pinpoint exact dates and events”太决定论 → 改为“transits are better for narrowing timing windows and triggers”，避免承诺能精确锁定事件。
+- 示例仍偏泛，缺少可学习的占星细节 → 加 1 个完整小案例：如 SR Asc、chart ruler、SR Sun house、SR Moon、角宫行星、与 natal planet/house 的连接如何合成一句年度主题。
+- “themes tend to build toward the middle of the year and soften…”依据不足 → 删除或改为：solar return 的具体 timing 通常要靠 transits to SR chart、monthly returns、profections 或进展来细分。
+- Sources 像权威名人背书但不可核验 → 用具体书名/方法替换泛泛的 Rudhyar/Hand；若保留二者，说明引用的是“natal baseline/cyclic approach”而非直接 solar return 技法来源。

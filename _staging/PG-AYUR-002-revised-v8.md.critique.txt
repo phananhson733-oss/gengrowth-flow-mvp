@@ -1,0 +1,8 @@
+- 出生星盘 CTA 没有被正文支撑 → 要么删掉 birth chart CTA，要么补一段明确的 Jyotish/占星用法，说明 gunas 如何具体对应星盘判断。
+- “Energy Center”列很可疑 → 删除 chakra 对应，或改成“现代能量疗愈中的非经典联想”，避免把 gunas 和脉轮硬绑定。
+- dosha 对比过度简化 → 区分稳定的 `prakriti` 和会随季节/饮食/状态变化的 `vikriti`，不要说 dosha “if at all” 才变化。
+- “sattva 不是更好”说法太平 → 改为：瑜伽传统通常鼓励培养 sattva，但最终不是贴标签，而是理解并超越三 guna。
+- “dial not label”重复太多 → 压缩 2-3 段重复论证，换成更具体的识别与调整步骤：tamas 先动起来，rajas 先降速，sattva 先保持。
+- 来源太泛 → 用具体文本锚定关键说法，如《Bhagavad Gita》第 14/17/18 章、Samkhya Karika，并把“饮食/行动/心智状态”的说法落到出处。
+- SEO intent 还不够直接 → 开头补清楚三者的 Sanskrit 含义、经典定义和日常例子，让搜索 “3 gunas” 的读者更快得到答案。
+- voice 有辨识度但实质偏 wellness → 增加一两个更懂行的细节，如 gunas 属于 prakriti 的三种质性，不只是“moods”或心理状态。

@@ -8,9 +8,9 @@
   "track": "量产线",
   "generated_by": "unknown",
   "prompt_version": "v8",
-  "generated_at": "2026-06-05T05:23:26.709Z",
-  "content_sha256_short": "8f9c04c209ef757d",
-  "source_path": "_staging/PG-AYUR-002-claude-v8.md",
+  "generated_at": "2026-06-05T05:31:12.592Z",
+  "content_sha256_short": "8622527d7d49ce5c",
+  "source_path": "_staging/PG-AYUR-002-revised-v8.md",
   "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-AYUR-002-en.md",
   "phase2_checks": {
     "overall": "pass",
@@ -19,7 +19,7 @@
       "h2Count": 11,
       "h3Count": 0,
       "h4Count": 0,
-      "words": 1922,
+      "words": 1721,
       "wikilinks": 5,
       "tbdLinks": 5
     },

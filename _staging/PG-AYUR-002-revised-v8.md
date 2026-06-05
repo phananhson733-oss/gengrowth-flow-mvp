@@ -1,27 +1,3 @@
----
-title: 3 Gunas
-slug: 3-gunas
-date: 2026-06-05
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T1
-track: 量产线
-page_id: PG-AYUR-002
-author_id: "aditi-sharma"
-author_display_name: "Aditi Sharma"
-target_keyword: 3 gunas
-associated_keywords:
-  - sattva rajas tamas
-  - three gunas meaning
-  - gunas in yoga
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-06-05T05:31:12.592Z
-content_sha256_short: 8622527d7d49ce5c
-phase2_checks: all-pass
----
-
 # Reading the 3 Gunas as a Dial You Can Turn, Not a Label You Wear
 
 ## What is 3 gunas?

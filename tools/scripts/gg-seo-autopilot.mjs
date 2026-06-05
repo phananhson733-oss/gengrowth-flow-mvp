@@ -566,8 +566,14 @@ function doAuthor(o = {}) {
       // 30 min, and drop the orchestrator's blind internal retry to 1 (2 internal ×
       // 10 min would blow the budget) — the autopilot's own 5-attempt FEEDBACK loop is
       // the smart retry. Override via GG_AUTHOR_ORCH_TIMEOUT_MS.
+      // --retry 0: the orchestrator's CPU-watchdog self-bounds ONE generation to
+      // ≤20 min (kills the process GROUP on a deadlock — no orphans), and the
+      // autopilot's own 5-attempt FEEDBACK loop (below) is the smart retry. A blind
+      // orchestrator-internal retry would just double the wall-clock under no outer
+      // control. The 30-min shFlow timeout is then only a rare backstop (> the 20-min
+      // watchdog ceiling), so the in-orchestrator watchdog fires first and cleanly.
       const orchTimeout = parseInt(process.env.GG_AUTHOR_ORCH_TIMEOUT_MS || '1800000', 10);
-      try { shFlow('node', [ORCHESTRATOR, '--prompt', promptPath, '--page-id', pgId, '--models', WINNER, '--out-dir', '_staging', '--retry', '1'], orchTimeout); }
+      try { shFlow('node', [ORCHESTRATOR, '--prompt', promptPath, '--page-id', pgId, '--models', WINNER, '--out-dir', '_staging', '--retry', '0'], orchTimeout); }
       catch (e) { log(`orchestrator exit non-zero (attempt ${i}): ${errTail(e, 80)}`); }
       if (!existsSync(join(FLOW, draftV8))) { lastFail = '- orchestrator produced no draft'; continue; }
       try { shFlow('node', [PHASE2, '--source', draftV8, '--page-id', pgId, '--tag', 'en', '--author', author]); }

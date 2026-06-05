@@ -297,24 +297,32 @@ function runAttempt(model, promptPath, outputPath) {
     let stdoutBuf = '';
     let promptContent = '';
 
-    // ── DEADLOCK WATCHDOG ──────────────────────────────────────────────────
-    // A healthy `claude -p` STREAMS tokens to stdout continuously. A hung/dead-
-    // locked generation emits nothing. So: if NO stdout/stderr arrives for
-    // STALL_MS (default 5 min — user spec "从开始写 5min 就检查"), or the attempt
-    // exceeds the HARD ceiling, kill the whole process group and fail this attempt
-    // (the retry loop moves on). Catches hangs in ~5 min instead of running forever.
-    const STALL_MS = parseInt(process.env.GG_GEN_STALL_MS || '300000', 10);   // 5 min no output
-    const HARD_MS = parseInt(process.env.GG_GEN_HARD_MS || '900000', 10);      // 15 min absolute
-    let lastData = Date.now();
+    // ── DEADLOCK WATCHDOG (CPU-activity based) ─────────────────────────────
+    // `claude -p` does NOT stream to stdout during its (silent) thinking phase — it
+    // buffers and emits at the end — so "no stdout" is NOT a hang signal (measured:
+    // a healthy 'high' gen is stdout-silent for 11+ min while thinking). But its
+    // process GROUP burns CPU continuously the whole time (parsing the API's streamed
+    // thinking tokens): cumulative CPU climbs steadily (measured ~0.3-1s per 20s). A
+    // true deadlock (blocked on a lock / dead socket) leaves CPU FLAT. So the hang
+    // signal is: group CPU (and stdout) have not advanced for CPU_STALL_MS. Plus a
+    // HARD ceiling. On trigger, kill the whole process GROUP (detached pgid) → no
+    // orphaned grandchildren (the bug that hung NAKSH-001 for 36 min).
+    const CPU_STALL_MS = parseInt(process.env.GG_GEN_CPU_STALL_MS || '180000', 10); // 3 min flat CPU = deadlock
+    const HARD_MS = parseInt(process.env.GG_GEN_HARD_MS || '1200000', 10);          // 20 min absolute ceiling
+    let lastData = Date.now();       // stdout growth also counts as progress (streaming models)
+    let maxCpu = -1;
+    let lastProgressAt = Date.now();
     let killedReason = null;
     const killTree = (sig) => {
       try { process.kill(-child.pid, sig); }      // negative pid = whole process group
       catch { try { child.kill(sig); } catch { /* already gone */ } }
     };
     const watchdog = setInterval(() => {
-      const idle = Date.now() - lastData;
       const total = Date.now() - t0;
-      if (idle >= STALL_MS) killedReason = `WATCHDOG: stalled ${Math.round(idle / 1000)}s with no output (deadlock)`;
+      const cpu = groupCpuSeconds(child.pid);   // pgid === child.pid (spawned detached)
+      if (cpu > maxCpu + 0.2) { maxCpu = cpu; lastProgressAt = Date.now(); } // CPU advanced → alive
+      const idle = Date.now() - Math.max(lastProgressAt, lastData);
+      if (idle >= CPU_STALL_MS) killedReason = `WATCHDOG: no CPU/output progress for ${Math.round(idle / 1000)}s (deadlock); group cpu=${cpu.toFixed(1)}s`;
       else if (total >= HARD_MS) killedReason = `WATCHDOG: exceeded hard ceiling ${Math.round(total / 1000)}s`;
       if (killedReason) {
         clearInterval(watchdog);

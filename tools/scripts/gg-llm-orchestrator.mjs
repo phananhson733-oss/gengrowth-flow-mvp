@@ -36,6 +36,15 @@ const PAGE_ID_REGEX = /^[A-Za-z0-9_-]{1,64}$/;
 // `--effort` accepts low|medium|high|xhigh|max (claude CLI). Opus 4.8 stays the
 // cross-validation escalation ceiling (see DIVERSIFY_ESCALATION) and the reviewer.
 const CLAUDE_MODEL = process.env.GG_CLAUDE_MODEL || 'claude-sonnet-4-6';
+// Rate-limit fallback: if Sonnet 4.6 hits a quota/429/overloaded error, retry the
+// SAME generation once on Opus (4.8 'high' by default; set GG_CLAUDE_FALLBACK_MODEL
+// to claude-opus-4-7 if preferred). Keeps authoring flowing when Sonnet is throttled.
+const CLAUDE_FALLBACK_MODEL = process.env.GG_CLAUDE_FALLBACK_MODEL || 'claude-opus-4-8';
+const CLAUDE_FALLBACK_EFFORT = process.env.GG_CLAUDE_FALLBACK_EFFORT || 'high';
+// Detect a rate-limit / quota / overload signal in a failed attempt's stderr.
+function isRateLimited(stderr) {
+  return /rate.?limit|\b429\b|overloaded|over capacity|quota|usage limit|too many requests|insufficient_quota/i.test(String(stderr || ''));
+}
 // Writing effort: 'high' (not 'xhigh'). Measured: Sonnet 4.6 xhigh = ~585s/gen
 // (~10 min, ~3× Opus) → the 5-attempt feedback loop made each article take hours.
 // For the highly-structured v8 prompt, 'high' is near-identical quality at ~3×
@@ -54,14 +63,15 @@ const DIVERSIFY_ESCALATION = { codex: 'claude', gemini: 'claude', claude: null }
 
 // Build the argv array for each model. `bin` is resolved via PATH on spawn.
 // stdin = prompt content, stdout captured to outputPath, stderr surfaced.
-function buildCommand(model, promptPath, outputPath) {
+function buildCommand(model, promptPath, outputPath, opts = {}) {
   switch (model) {
     case 'claude':
       // CRITICAL: --model is load-bearing — without it the CLI uses its default
-      // session model. --effort sets reasoning depth (xhigh) for the writing pass.
+      // session model. --effort sets reasoning depth for the writing pass. opts lets
+      // the rate-limit fallback swap in the Opus model/effort for one retry.
       return {
         bin: 'claude',
-        args: ['-p', '--model', CLAUDE_MODEL, '--effort', CLAUDE_EFFORT],
+        args: ['-p', '--model', opts.claudeModel || CLAUDE_MODEL, '--effort', opts.claudeEffort || CLAUDE_EFFORT],
         stdinFromFile: promptPath,
         stdoutToFile: outputPath,
       };

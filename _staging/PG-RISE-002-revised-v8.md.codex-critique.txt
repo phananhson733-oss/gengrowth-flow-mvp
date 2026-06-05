@@ -1,0 +1,8 @@
+- 重大占星错误：文中说 Saturn “rules the 7th and 8th” → 改为：Leo rising 下 Saturn 传统上掌管第 6 宫 Capricorn 和第 7 宫 Aquarius；第 8 宫 Pisces 由 Jupiter 掌管，若采用现代共同守护再提 Neptune。
+- “fixed house map / house cusp” 表述过度确定 → 明确全文采用 Whole Sign houses；若不采用 whole sign，Leo rising 不一定让第 10 宫落 Taurus，Venus 掌管 career 的说法就不稳。
+- 守护星体系混用但未说明 → 要么全篇用传统守护星，要么清楚标注现代共同守护；否则 7 宫只讲 Saturn、8 宫却写 Jupiter/Neptune 会显得不专业。
+- 搜索意图没有完全满足：读者搜 “leo rising houses” 通常想看 12 宫完整分布 → 增加完整 1-12 宫表，不要只重点讲 1/3/7/8/10 宫。
+- 关系结论太单线：几乎把 Leo rising 关系模式都归因于 Saturn 7 宫 → 加入限定：需结合 Saturn 落宫落座、7 宫内行星、Venus/Mars、相位与 sect，否则会显得过度决定论。
+- Aquarius rising 对比里把 Sun-ruled 7 宫写成 “spontaneous solar ease” → 改得更谨慎：Leo 7 宫可能带来可见度、戏剧性或自我表达需求，但不必然轻松，仍取决于 Sun 状态。
+- Venus 段落偏泛： “aesthetic sensibility / diplomacy” 重复较多 → 补具体例子，如 3 宫 Libra 对谈判、写作语气、兄弟姐妹/邻里关系的影响；10 宫 Taurus 对稳定品牌、审美行业、长期声誉建设的影响。
+- Sources 太笼统，不像可核查资料 → 给出具体书名或章节级来源，并把 TBD internal/external links 替换成真实链接或删除占位。

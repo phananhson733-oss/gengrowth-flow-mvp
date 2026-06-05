@@ -560,7 +560,14 @@ function doAuthor(o = {}) {
       if (lastFail && i > 1) {
         writeFileSync(promptAbs, `${basePrompt}\n\n## ⚠️ 上一稿被自动校验拦下 — 本稿必须修掉以下每一条（否则整篇作废）\n${lastFail}\n\n继续遵守上面所有硬规则，同时**对照下表逐条修正**（命中哪条改哪条）：\n- 临床/医疗主张（RL1：heal/treat/cure/diagnose + 焦虑/抑郁/创伤/疾病/疼痛/失眠等病症名）→ 改成象征/反思措辞（"a reflective lens for" / "some people explore this theme" / "is traditionally associated with"）。\n- target_keyword 堆词（RL5：count 超 8）→ 完整短语全文**只出现 5–8 次**，多余的用代词/短形/同义改写替换。\n- drifted sections（RL4）→ 在被点名的**每个** H2 小节里，让 target_keyword 完整短语自然出现至少 1 次（实质回扣主题，别泛泛）。\n- 缺免责声明（RL6 / disclaimer，psych-safety 主题必需）→ 在正文结尾**逐字加入这一行**：This is not a clinical interpretation or mental health advice.\n- section scatter（SC3c）→ 被空行散成多段的小节改成「引子句 + 编号列表（\`1. **标签。** 说明\`）」。\n- link distribution（SC4）→ 至少 1 条内链自然内联织进正文前段句子里（首链优先），别全堆结尾。\n`);
       }
-      try { shFlow('node', [ORCHESTRATOR, '--prompt', promptPath, '--page-id', pgId, '--models', WINNER, '--out-dir', '_staging', '--retry', '2'], 900000); }
+      // Sonnet 4.6 xhigh is SLOW (~10 min/generation, measured 585s; ~3× Opus), and
+      // the feedback-retry prompt (longer) pushes it longer still. The old 15-min
+      // timeout killed attempts 2-5 → "orchestrator produced no draft" parks. Give it
+      // 30 min, and drop the orchestrator's blind internal retry to 1 (2 internal ×
+      // 10 min would blow the budget) — the autopilot's own 5-attempt FEEDBACK loop is
+      // the smart retry. Override via GG_AUTHOR_ORCH_TIMEOUT_MS.
+      const orchTimeout = parseInt(process.env.GG_AUTHOR_ORCH_TIMEOUT_MS || '1800000', 10);
+      try { shFlow('node', [ORCHESTRATOR, '--prompt', promptPath, '--page-id', pgId, '--models', WINNER, '--out-dir', '_staging', '--retry', '1'], orchTimeout); }
       catch (e) { log(`orchestrator exit non-zero (attempt ${i}): ${errTail(e, 80)}`); }
       if (!existsSync(join(FLOW, draftV8))) { lastFail = '- orchestrator produced no draft'; continue; }
       try { shFlow('node', [PHASE2, '--source', draftV8, '--page-id', pgId, '--tag', 'en', '--author', author]); }
@@ -579,8 +586,12 @@ function doAuthor(o = {}) {
         // on any failure _staging/<pid>-en.md stays the original passing draft).
         const revisedV8 = join('_staging', `${pgId}-revised-v8.md`);
         try {
+          // Review now runs TWO critics (Codex + Opus 4.8) + a Sonnet 4.6 xhigh
+          // reviser; at xhigh these stack up, so allow 30 min (was 25). The reviser
+          // is the slow part (~10 min); critiques are shorter. Override via env.
+          const reviewTimeout = parseInt(process.env.GG_AUTHOR_REVIEW_TIMEOUT_MS || '1800000', 10);
           const out = shFlow('node', [REVIEW, '--source', draftV8, '--out', revisedV8,
-            '--page-id', pgId, '--entity', cleanEntity, '--target-keyword', keyword], 1500000).trim();
+            '--page-id', pgId, '--entity', cleanEntity, '--target-keyword', keyword], reviewTimeout).trim();
           log(out || 'review: (no output)');
           if (/revised/.test(out) && existsSync(join(FLOW, revisedV8))) {
             try {

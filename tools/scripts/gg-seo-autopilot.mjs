@@ -367,13 +367,24 @@ function nextUnauthored(tasks, claims) {
 // cluster_domain → author_id via the config snapshot's author.map (the documented
 // auto-routing rule). overrideRaw='' on purpose so a malformed Sheet author column
 // (display names like "Aditi Sharma") can't block routing. '' if unresolved.
+// Generalist fallback author for cluster_domains that match no author.map rule
+// (exact OR whole-word substring). marcus-orion is the documented "everything else /
+// unclassified" persona, so a brand-new task with an off-map domain (e.g. "journal
+// prompts") AUTHORS instead of parking — keeping the queue self-healing as the plan
+// grows. A WARN is logged + the choice is auditable so a genuine miscategorization
+// can be corrected in the Sheet author.map. Override via GG_AUTHOR_FALLBACK.
+const AUTHOR_FALLBACK = process.env.GG_AUTHOR_FALLBACK || 'marcus-orion';
+
 function resolveAuthorForDomain(clusterDomain) {
-  if (!existsSync(CONFIG_SNAPSHOT)) return '';
+  if (!existsSync(CONFIG_SNAPSHOT)) return AUTHOR_FALLBACK;
   let values;
   try { values = JSON.parse(readFileSync(CONFIG_SNAPSHOT, 'utf8')).values || {}; }
-  catch { return ''; }
+  catch { return AUTHOR_FALLBACK; }
   const { map } = buildAuthorMap(values);
-  return resolveAuthor({ clusterDomain, overrideRaw: '', authorMap: map }).author || '';
+  const resolved = resolveAuthor({ clusterDomain, overrideRaw: '', authorMap: map }).author || '';
+  if (resolved) return resolved;
+  log(`author.map miss for cluster_domain "${clusterDomain}" → generalist fallback ${AUTHOR_FALLBACK} (add a Sheet author.map rule if a specialist fits better)`);
+  return AUTHOR_FALLBACK;
 }
 
 // Locate this task's row in 选题登记表. {row, brief} or null.

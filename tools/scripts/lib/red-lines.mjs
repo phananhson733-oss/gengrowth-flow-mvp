@@ -74,7 +74,12 @@ export const RL5_MIN_COUNT_WARN = 3;
 // multi-word phrases RL5 gates on COVERAGE DENSITY (share of total words the
 // phrase occupies) — the actual stuffing signal — at a conservative ceiling.
 // 2.8% ≈ Yoast's upper "good" band; a 3-word phrase at 12× in 1886 words = 1.9%.
-export const RL5_MULTIWORD_MIN_WORDS = 3;
+// 2+ words: an exact multi-word phrase is intrinsically hard to "stuff" AND RL4's
+// per-section recall requirement forces it across most of the ~11 H2 sections, so
+// the flat count cap (tuned for single words) collides with RL4 for 2-word phrases
+// too (e.g. "pushya nakshatra" hit 10 vs cap 8 yet only ~1.1% coverage). Single
+// words keep the flat cap — they're genuinely stuffable and lack the RL4 pressure.
+export const RL5_MULTIWORD_MIN_WORDS = 2;
 export const RL5_MULTIWORD_DENSITY_CEIL_DEFAULT = 0.028;
 export const RL5_MULTIWORD_DENSITY_CEIL = getConfig('phase2.RL5_multiword_density_ceil', RL5_MULTIWORD_DENSITY_CEIL_DEFAULT);
 

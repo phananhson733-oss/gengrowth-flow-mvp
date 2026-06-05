@@ -95,10 +95,29 @@ export function resolveAuthor({ clusterDomain, overrideRaw, authorMap }) {
     return { author: '', author_source: undefined, cluster_domain: domain, warnings };
   }
 
-  // 2. 自动：按 cluster_domain 查映射。
+  // 2. 自动：按 cluster_domain 精确查映射。
   const mapped = authorMap instanceof Map ? authorMap.get(domain) : undefined;
   if (mapped) {
     return { author: mapped, author_source: 'auto', cluster_domain: domain, warnings };
+  }
+
+  // 2b. 子串兜底：选题登记表的 cluster_domain 有时是带后缀的脏串
+  // （如 "ai astrology app / chart analysis"），精确匹配不上干净的 map key
+  // （"ai astrology"）。若某个 map-key 以**词边界**出现在 cluster_domain 内，
+  // 命中它——取**最长**（最具体）的那个。纯规则、确定性：只会解析到 map 已经
+  // 显式分配的作者，绝不发明一个新作者；命中即记 warning 便于审计。
+  if (authorMap instanceof Map && domain) {
+    let best = '';
+    for (const key of authorMap.keys()) {
+      if (!key || key.length <= best.length) continue;
+      const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const re = new RegExp(`(?:^|[^a-z0-9])${escaped}(?:[^a-z0-9]|$)`, 'i');
+      if (re.test(domain)) best = key;
+    }
+    if (best) {
+      warnings.push(`cluster_domain "${domain}" 未精确命中 author.map；按词边界子串匹配到 "${best}" → ${authorMap.get(best)}`);
+      return { author: authorMap.get(best), author_source: 'auto-substr', cluster_domain: domain, warnings };
+    }
   }
 
   // 3. 未命中 → 留空（硬拦在 content-draft）。

@@ -17,8 +17,8 @@ associated_keywords:
   - leo ascendant houses
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-05T16:29:31.479Z
-content_sha256_short: 76fedfbb4a7df284
+generated_at: 2026-06-05T17:05:49.289Z
+content_sha256_short: 66b92f103bbbee75
 phase2_checks: all-pass
 ---
 

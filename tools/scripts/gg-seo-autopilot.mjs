@@ -550,7 +550,12 @@ function doAuthor(o = {}) {
     const promptAbs = join(FLOW, promptPath);
     const basePrompt = readFileSync(promptAbs, 'utf8');
     const restorePrompt = () => { try { writeFileSync(promptAbs, basePrompt); } catch { /* best-effort */ } };
-    const attempts = Math.max(1, parseInt(process.env.GG_AUTHOR_GEN_ATTEMPTS || '5', 10));
+    // Default 3 (was 5): each Sonnet 4.6 gen is ~10-15 min, so 5 attempts on a
+    // failing task burns ~65 min before parking. Historically tasks that pass do so
+    // by attempt ≤3 (HEAL-004, NAKSH-005); attempts 4-5 almost never rescue a parker
+    // — so 3 cuts ~24 min of waste off each hard/parking task at negligible loss.
+    // Override via GG_AUTHOR_GEN_ATTEMPTS.
+    const attempts = Math.max(1, parseInt(process.env.GG_AUTHOR_GEN_ATTEMPTS || '3', 10));
     let lastFail = '';
     for (let i = 1; i <= attempts; i++) {
       // FEEDBACK-DRIVEN retry: hard topics (Vedic/nakshatra/healing) hit a DIFFERENT

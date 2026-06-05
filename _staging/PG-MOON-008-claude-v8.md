@@ -24,17 +24,15 @@ Understanding which of these three patterns is active in a given entry is the fi
 
 ## new moon journal prompts vs Adjacent Concepts: How It Works + Trade-offs
 
-This practice is frequently grouped with general journaling, gratitude writing, and manifestation scripting — but how each one functions differs in ways that affect what a practitioner actually gets.
+This practice is frequently grouped with general journaling, gratitude writing, and manifestation scripting — but how each one functions differs in ways that affect what a practitioner actually gets. What separates new moon journal prompts from looser approaches is a three-layer structure: an observable external expectation (something you can confirm or deny at the full moon), an internal shift (the belief that must change for the intention to be genuine), and a behavioral anchor (one concrete action within 48 hours). This structure, rooted in the tradition practitioners like Bernadette Brady helped establish, treats the lunar phase as a specific functional window — not a mood descriptor.
 
-What separates this practice from looser approaches is the three-layer structure. The first layer asks for the external expectation: something observable enough to confirm or deny at the full moon. The second layer asks for the internal shift: what belief or self-story would need to change for the intention to be genuine. The third layer asks for the behavioral anchor: one concrete action in the next 48 hours that proves the intention has begun. This structure draws on the tradition that practitioners like Bernadette Brady helped establish — treating lunar phases not as mood descriptors but as specific functional windows with defined starts and endpoints. To get that degree of specificity, you give up the open-ended warmth of freewriting. Entries become more accountable and less flowing.
+Each adjacent practice makes a different trade:
 
-Compare this to gratitude journaling, which reviews what already exists and builds a sense of arrival in the present moment. To get that grounded feeling, you give up forward momentum and any testable claim about the coming two weeks. Gratitude practice is effective for building emotional baseline and recognizing what is already working — but it doesn't ask the journaler to project forward, commit to an action, or create a moment of honest reckoning two weeks later.
+1. **Gratitude journaling.** Reviews what already exists and builds a sense of arrival in the present. Effective for recognizing what is working — but does not ask the journaler to project forward, commit to an action, or create a testable reckoning two weeks later.
+2. **Manifestation scripting.** Immerses the writer in the felt sense of an outcome to activate emotional investment. The cost is the layer-by-layer specificity that makes a new moon entry closeable at the full moon.
+3. **General freewriting.** Captures mood and process in real time — useful for emotional clarity, but generates no structure for cycle-based self-tracking.
 
-Manifestation scripting — writing your desired reality in the present tense — works by immersing the writer in the felt sense of an outcome and activating emotional investment. To get that emotional intensity, you give up the layer-by-layer specificity that makes an intention honest and closeable at the full moon.
-
-General freewriting captures mood and process in real time. The cost is that it generates no structure for assessment — useful for emotional clarity, but not designed for cycle-based self-tracking. These distinctions matter because different goals require different tools, and mixing them — as most published moon-prompt collections do — produces entries that are neither usable for assessment nor satisfying as pure expression.
-
-[[<TBD-internal-link: guide to full moon journaling and release practices>]] covers the counterpart phase functions that complete the two-week cycle.
+Mixing these approaches — as most published moon-prompt collections do — produces entries that are neither usable for assessment nor satisfying as pure expression.
 
 ## How to Read new moon journal prompts in Yourself
 
@@ -91,8 +89,6 @@ Because content is often drawn from general moon-cycle libraries without disting
 ## Related Reading
 
 - [[<TBD-internal-link: full moon journaling and release practices>]] — the counterpart practice: how the full moon's phase function supports honest review and release of what was planted at the new moon
-- [[<TBD-internal-link: lunar cycle overview with all eight moon phases>]] — maps the full eight-phase cycle and shows where new moon intention-setting fits within it
-- [[<TBD-internal-link: moon ritual guide for building consistent monthly practice>]] — practical structure for a complete lunar-cycle ritual that spans the full month
 
 ## Take Action
 

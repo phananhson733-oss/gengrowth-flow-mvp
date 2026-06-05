@@ -38,14 +38,14 @@ echo "$(date '+%F %T') tick start" >> "$LOG"
 
 AUTO="$SCRIPT_DIR/gg-seo-autopilot.mjs"
 
-# 1) Deterministic pass (no LLM cost on idle ticks): sync oracle, claim one ready
-#    task, convert, build-gate, push a preview branch + PR — or stand down.
-node "$AUTO" --scan --limit 1 >> "$LOG" 2>&1
-
-# 2) Only spend an LLM tick when there is a preview to verify or a verified
-#    preview whose merge needs retry.
-if node "$AUTO" --status 2>/dev/null | grep -Eq '"(pushed-preview|verified-preview)"'; then
-  echo "$(date '+%F %T') preview pending → running verify+merge tick" >> "$LOG"
+# publish_if_pending — if a preview is pending (pushed/verified), run the headless
+# verify+merge gate (codex best-effort + chrome + 3-subagent panel) which merges to
+# prod. Returns 0 if it ran the gate, 1 if there was nothing to publish. Reused both
+# after the opening scan AND right after authoring, so a freshly-written draft is
+# published in the SAME tick instead of waiting for the next one.
+publish_if_pending() {
+  node "$AUTO" --status 2>/dev/null | grep -Eq '"(pushed-preview|verified-preview)"' || return 1
+  echo "$(date '+%F %T') preview pending → running verify+merge gate" >> "$LOG"
   # --dangerously-skip-permissions: unattended autonomy. The driver only merges
   # after the ledger is marked verified by the codex + chrome preview gate.
   # --mcp-config: headless `claude -p` does NOT auto-load the user-scoped
@@ -55,14 +55,23 @@ if node "$AUTO" --status 2>/dev/null | grep -Eq '"(pushed-preview|verified-previ
     --mcp-config "$SCRIPT_DIR/autopilot-mcp.json" \
     --allowedTools "Bash Skill Task Agent Read Grep mcp__playwright__browser_navigate mcp__playwright__browser_snapshot mcp__playwright__browser_console_messages mcp__playwright__browser_evaluate mcp__playwright__browser_close" \
     --dangerously-skip-permissions </dev/null >> "$LOG" 2>&1
+  return 0
+}
+
+# 1) Deterministic pass (no LLM cost on idle ticks): sync oracle, claim one ready
+#    task, convert, build-gate, push a preview branch + PR — or stand down.
+node "$AUTO" --scan --limit 1 >> "$LOG" 2>&1
+
+# 2) Publish a pending preview if there is one (verify + merge to prod).
+if publish_if_pending; then
+  : # published this tick
 else
-  # 3) No preview pending → spend this tick AUTHORING the next unwritten plan task.
+  # 3) No preview pending → AUTHOR the next unwritten plan task, then IMMEDIATELY
+  #    publish it in this same tick (write→publish, no waiting for the next tick).
   #    Deterministic chain (bridge→RAG→render→orchestrator→phase2); the orchestrator
   #    spends the Opus $, every other stage is glue. --author self-gates (cheap exit
   #    if nothing needs authoring) and PARKS needs_human on any stage failure, so a
-  #    broken task is skipped next tick instead of re-burning an LLM call. The fresh
-  #    draft is claimed + published by the NEXT tick's --scan above — one heavy LLM
-  #    op per tick (verify OR author, never both). Authoring needs Sheets creds.
+  #    broken task is skipped next tick instead of re-burning an LLM call. Sheets creds.
   if [ -n "$(node "$AUTO" --next-unauthored 2>/dev/null)" ]; then
     echo "$(date '+%F %T') no preview → authoring next unwritten task" >> "$LOG"
     AOUT=$( ( set -a; . "$HOME/.config/gg/_gg.env" 2>/dev/null; set +a
@@ -77,7 +86,13 @@ else
     PARK=$(printf '%s\n' "$AOUT" | grep -oE 'PARK\(author\) .*' | head -1)
     DONE=$(printf '%s\n' "$AOUT" | grep -oE 'AUTHORED PG-[A-Z0-9-]+ [^—]*' | head -1)
     [ -n "$PARK" ] && "$SCRIPT_DIR/gg-lark-notify.sh" "⚠️ SEO autopilot 写稿暂停（needs_human）：$PARK"
-    [ -n "$DONE" ] && "$SCRIPT_DIR/gg-lark-notify.sh" "✍️ SEO autopilot 写好一篇：$DONE— 下个 tick 发布"
+    if [ -n "$DONE" ]; then
+      "$SCRIPT_DIR/gg-lark-notify.sh" "✍️ SEO autopilot 写好一篇：$DONE— 立即发布中"
+      # IMMEDIATE PUBLISH: claim+convert+preview the just-written draft, then run the
+      # verify+merge gate on it NOW — no waiting for the next scheduled tick.
+      node "$AUTO" --scan --limit 1 >> "$LOG" 2>&1
+      publish_if_pending || echo "$(date '+%F %T') authored but no preview to publish (scan/convert gate?)" >> "$LOG"
+    fi
   else
     echo "$(date '+%F %T') no preview, nothing to author — idle" >> "$LOG"
   fi

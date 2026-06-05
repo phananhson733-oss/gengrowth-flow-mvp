@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-RISE-003",
+  "entity": "scorpio rising houses",
+  "target_keyword": "scorpio rising houses",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-06-05T17:01:08.328Z",
+  "content_sha256_short": "15f2fd6b4212e3eb",
+  "source_path": "_staging/PG-RISE-003-claude-v8.md",
+  "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-RISE-003-en.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 2266,
+      "wikilinks": 5,
+      "tbdLinks": 5
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

@@ -1,0 +1,9 @@
+- “Saturn in Cancer is traditionally debilitated”是硬伤 → 改为“Saturn is debilitated in Aries, not Cancer；Cancer 是 Moon 的领域/对 Saturn 不舒适”，并同步修正后文“Saturn’s debilitation in Cancer”。
+- “most auspicious / beginning anything meant to last”说得过满 → 加入 muhurta 例外，尤其 Pushya 通常不推荐用于婚礼；同时说明仍需看 tithi、weekday、tara/chandra bala 和完整盘。
+- “Parashara’s tradition identifies…”像伪精确引用 → 要么给出具体经典出处/章节，要么改成“modern interpretive synthesis”；Sources 也需补真实可核查来源，不要只列一个笼统 Parashara。
+- 表格里的“Jupiter-Mercury wisdom axis”无依据 → 删除 Mercury，改为 Brihaspati/Jupiter 的 priest-teacher/wise counsel 语义；Mercury 只保留在 Ashlesha 对比里。
+- 全文过度重复“structured care / sustainable nourishment” → 压缩重复段落，补 Pushya 专属硬信息：pada/navamsa 差异、shakti、gana、symbols、typical strengths/challenges。
+- 搜索意图覆盖不足 → 加一个基础读者会找的实用区块：Pushya traits、career/work style、relationship/marriage cautions、Moon/Ascendant/planet placements、pada-by-pada reading。
+- Natal/transit/dasha 判断太确定 → 加 chart-context caveat：house、lordship、aspects、Moon condition、planet dignity、dasha lordship 会显著改变表现，避免把所有 Pushya placement 都读成“caregiver”。
+- CTA 与链接不匹配 → “Generate your free birth chart”应指向真实 birth chart calculator；若链接只是教程，就把文案改成“learn how to read your birth chart”。
+

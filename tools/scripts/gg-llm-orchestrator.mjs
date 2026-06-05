@@ -13,7 +13,7 @@
 // Outputs: <out>/<page_id>-<llm>-v8.md  +  <out>/<page_id>-orchestrator.json
 // FRONTIER-ONLY: refuses tiny prompts (<1KB), refuses downgraded Claude output
 // (<3KB suggests silent Sonnet fallback), surfaces all guards in summary.json.
-import { spawn } from 'node:child_process';
+import { spawn, execSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -237,6 +237,29 @@ function estimateCostUsd(model, promptText, outputText) {
 }
 
 // ─── 5. Attempt runner — single model, single try ──────────────────────────
+// Parse a `ps` TIME field ("MM:SS.ss" or "HH:MM:SS.ss") → cumulative CPU seconds.
+function parseCpuTime(s) {
+  const p = String(s).trim().split(':');
+  if (p.length === 2) return parseFloat(p[0]) * 60 + parseFloat(p[1]);
+  if (p.length === 3) return parseFloat(p[0]) * 3600 + parseFloat(p[1]) * 60 + parseFloat(p[2]);
+  return 0;
+}
+
+// Sum cumulative CPU seconds across every process in a process GROUP (pgid). Used
+// by the deadlock watchdog: a healthy generation's group burns CPU continuously
+// (even while stdout-silent during server-side thinking); a deadlock leaves it flat.
+function groupCpuSeconds(pgid) {
+  try {
+    const out = execSync('ps -axo pgid=,time=', { encoding: 'utf8', timeout: 10000 });
+    let total = 0;
+    for (const line of out.split('\n')) {
+      const m = line.trim().match(/^(\d+)\s+(\S+)$/);
+      if (m && parseInt(m[1], 10) === pgid) total += parseCpuTime(m[2]);
+    }
+    return total;
+  } catch { return -1; }
+}
+
 function runAttempt(model, promptPath, outputPath) {
   return new Promise((resolveAttempt) => {
     const cmd = buildCommand(model, promptPath, outputPath);

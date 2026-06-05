@@ -387,6 +387,16 @@ export function transformBody(body, lang = 'en') {
     /\[\[<\s*TBD-external-link:\s*([^|>]+?)\s*\|\s*([^|>]+?)\s*\|\s*[^>]*?>\]\]/g,
     (_m, service, topic) => resolveExternalTbdLink(service, topic, lang),
   );
+  // Catch-all: any remaining TBD-external-link that ISN'T the canonical
+  // `Service | Topic | desc` triple (e.g. a single-segment bare description the
+  // model emitted) would otherwise ship as raw `[[...]]` markup. De-link it to
+  // plain italic text — take the last `|`-segment as the label — so no raw
+  // wikilink syntax ever reaches the published page. (Mirrors the unmatched
+  // internal-link → italic behavior.)
+  out = out.replace(
+    /\[\[<\s*TBD-external-link:\s*([^>]+?)\s*>\]\]/g,
+    (_m, inner) => { const p = inner.split('|'); return `*${p[p.length - 1].trim()}*`; },
+  );
   out = autoLinkBareUrls(out);
   out = out.trimEnd();
   return out;

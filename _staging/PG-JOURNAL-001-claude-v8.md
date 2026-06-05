@@ -28,7 +28,7 @@ Two structural models dominate what's available online, and they produce differe
 
 Shadow work prompts, when well-constructed, follow the diagnostic model — which is exactly why they tend to feel harder than general prompt lists. They don't ask how the avoided material feels; they ask what you actually did when it showed up in a specific situation. That behavioral specificity is what separates a prompt that surfaces something genuinely new from one that produces a more elaborate version of what the writer already knew about themselves. A detailed guide to building this kind of prompting practice is covered in [[<TBD-internal-link: guide to shadow work journaling and what it surfaces>]].
 
-The three structural rules that distinguish diagnostic from narrative prompts hold across all topic areas: they name a function rather than a feeling, they span multiple situations rather than one event, and they demand behavioral evidence rather than interpretation. All three must hold for a prompt to produce pattern-level insight rather than emotionally honest narrative.
+The three structural rules that distinguish diagnostic journal prompts from narrative ones hold across all topic areas: they name a function rather than a feeling, they span multiple situations rather than one event, and they demand behavioral evidence rather than interpretation. All three must hold for a prompt to produce pattern-level insight rather than emotionally honest narrative.
 
 ## How to Read journal prompts in Yourself
 
@@ -46,7 +46,7 @@ Distinguishing diagnostic prompts from narrative ones in any given list takes a 
 
 ## Common Misreadings
 
-The way prompt lists are discussed and packaged online produces consistent misconceptions that keep journalers working at the narrative level:
+The way journal prompts are discussed and packaged online produces consistent misconceptions that keep journalers working at the narrative level:
 
 1. **"More prompts means more insight."** Volume and depth don't scale together. Fifty narrative prompts organized by theme produce fifty narrative entries. One well-framed diagnostic question — "Recall the last three times you avoided a conversation you knew you needed to have. What did you actually do instead?" — can surface more usable pattern data than a full month of theme-organized writing. The potential of journal prompts for self discovery doesn't scale with volume; it scales with the structural quality of the question.
 
@@ -73,7 +73,7 @@ A diagnostic prompt targets a psychological function, spans multiple situations,
 
 **How many prompts should you work with in one session?**
 
-One diagnostic question per session is typically more productive than a list. When prompts stack, writers tend to treat each as a separate entry rather than following a single thread to its real edge. The behavioral specificity that makes a prompt diagnostic disappears when attention is spread across ten questions at once — you answer shallowly rather than concretely.
+One diagnostic question per session is typically more productive than a list. When prompts stack, writers tend to handle each as a separate entry rather than following a single thread to its real edge. The behavioral specificity that makes a prompt diagnostic disappears when attention is spread across ten questions at once — you answer shallowly rather than concretely.
 
 **What's the difference between self-directed reflection prompts and prompts used in professional mental health settings?**
 
@@ -99,8 +99,10 @@ Length is not the goal. A short entry naming three specific behavioral instances
 
 ## Take Action
 
-[Generate your free birth chart](https://astrologywiki.com/en/wiki/how-to-read-birth-chart) to explore how structured self-reflection connects to your natal placements. Your chart maps the recurring patterns in your psychological and relational life — the same patterns that diagnostic prompting is designed to surface. When you can see those patterns on paper, a single well-framed question can do more work than an entire themed list.
+[Generate your free birth chart](https://astrologywiki.com/en/wiki/how-to-read-birth-chart) to explore how structured self-reflection connects to your natal placements. Your chart maps the recurring patterns in your psychological and relational life — the same patterns that diagnostic prompting is designed to surface. When you can see those patterns on paper, well-framed journal prompts can do more work than an entire themed list.
 
 ## Sources
 
-This article draws on structural analysis of self-reflection prompts as documented across personal growth and mindfulness traditions. No named individuals from the authority list are cited in the body text.
+- Pennebaker, J. W., & Smyth, J. M. (2016). *Opening Up by Writing It Down* (3rd ed.). Guilford Press. Research basis for expressive writing and its effects on self-awareness and pattern recognition.
+- Progoff, I. (1975). *At a Journal Workshop*. Dialogue House Library. Foundational framework for structured, diagnostic journaling as a tool for self-inquiry.
+- Cameron, J. (1992). *The Artist's Way*. TarcherPerigee. Widely used prompt-based journaling practice illustrating topic-organized structure and its effects.

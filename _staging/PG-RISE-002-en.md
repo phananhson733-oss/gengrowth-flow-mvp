@@ -28,7 +28,7 @@ phase2_checks: all-pass
 
 Leo rising houses is **a fixed house map placing Saturn over the partnership domain and Venus over communication and career**, produced when Leo occupies the Ascendant in a birth chart. Because the Ascendant determines which sign sits on each house cusp — and therefore which planet rules each life domain — the rising sign builds a structural template that distributes planetary energy across every area of lived experience.
 
-- Saturn, as ruler of Capricorn, becomes the planetary lord of the 7th house (close partnerships) and the 8th house (shared resources, deep transformation), carrying weight, discipline, and maturation demands into the relational domain
+- Saturn, as ruler of Aquarius, becomes the planetary lord of the 7th house (close partnerships), carrying weight, discipline, and maturation demands into the relational domain
 - Venus, ruling both Taurus and Libra, governs the 3rd house (communication, local connections) and the 10th house (career, public standing), making diplomacy and aesthetic sensibility central to how Leo rising connects and builds professionally
 - The Sun, ruler of Leo itself, anchors the 1st house as chart ruler, explaining the characteristic warmth and commanding presence — but that solar energy governs the self-layer only, not the partnership layer
 

@@ -1,6 +1,6 @@
 ---
 title: Signs You're A Highly Sensitive Person
-slug: signs-you're-a-highly-sensitive-person
+slug: signs-you-re-a-highly-sensitive-person
 date: 2026-06-02
 status: ready-to-review
 type: wiki-entry

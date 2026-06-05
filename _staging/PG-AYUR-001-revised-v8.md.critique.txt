@@ -1,0 +1,8 @@
+- Ayurveda 和 astrology 被混在 CTA 里 → 删掉“birth chart 能指导平衡 Vata”的承诺，或明确改成“占星元素反思，不作 Ayurveda 诊断”。
+- “Energy Center” 表格缺乏传统依据且映射混乱 → 删除 chakra 列，或标注为现代类比并重新校准 air/space/root grounding 的关系。
+- Charaka 说法过于笼统 → 改为更谨慎的表述，并补具体来源；避免“Charaka codified 三 dosha”“稳 Vata 就能稳另外两者”这种绝对化说法。
+- 实操性仍偏薄 → 增加可执行的 7 天起步方案：固定早餐时间、热熟食示例、温饮、早睡窗口、芝麻油自我按摩、减少冷食/生食/咖啡因。
+- “sacrifice quickness and spark” 误导 → 改成“保留 Vata 的创造力和敏捷，只降低过度轻浮、失序和耗散”。
+- 症状边界不够安全 → 补一句：持续失眠、焦虑、体重下降、严重干燥或消化问题应咨询专业人士，不要仅按 dosha 自我解释。
+- 文章反复批评“generic checklist/overhaul” → 压缩这部分，把篇幅让给更具体的 Vata pattern 判断和按症状选第一习惯。
+- 搜索意图是 “how to balance vata dosha” → 开头更快给出“先做哪 3 件事/避免哪 3 件事”，再展开理念。

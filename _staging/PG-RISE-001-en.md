@@ -1,3 +1,27 @@
+---
+title: Libra Rising Houses
+slug: libra-rising-houses
+date: 2026-06-05
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-RISE-001
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: libra rising houses
+associated_keywords:
+  - libra ascendant meaning
+  - libra rising personality
+  - libra ascendant houses
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-05T15:42:15.924Z
+content_sha256_short: ce65b3b892d16df6
+phase2_checks: all-pass
+---
+
 # How Libra Rising Houses Link Your Finances to Your Closest Relationships
 
 ## What is libra rising houses?

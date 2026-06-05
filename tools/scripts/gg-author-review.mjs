@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 // gg-author-review.mjs — multi-party review for the autopilot authoring loop.
 //
-// "多方审核撰写": an INDEPENDENT model (Codex / gpt-5.5) critiques a draft the
-// writer model (Opus) produced, then Opus revises to address the critique. This
-// adds the qualitative review layer that the deterministic phase2 gate cannot do
+// "多方审核撰写": TWO independent critics (Codex GPT-5.5 xhigh + Claude Opus 4.8)
+// each critique a draft the author model (Sonnet 4.6 xhigh) produced, then the
+// author model revises to address the combined feedback. This adds the qualitative
+// review layer (two cross-vendor opinions) that the deterministic phase2 gate cannot do
 // (phase2 checks structure + red-line rules; it can't judge whether the article
 // is factually sound, well-grounded, genuinely useful, or generic filler).
 //
@@ -27,8 +28,14 @@ import { homedir } from 'node:os';
 const HOME = homedir();
 const CODEX = [join(HOME, '.npm-global', 'bin', 'codex')].find(existsSync) || 'codex';
 const CLAUDE = ['/opt/homebrew/bin/claude'].find(existsSync) || 'claude';
-// Reviewer = Codex gpt-5.5 xhigh; reviser = Claude Opus 4.8 (overridable).
-const CLAUDE_MODEL = process.env.GG_CLAUDE_MODEL || 'claude-opus-4-8';
+// "多方审核撰写" (user pref 2026-06-05): TWO independent critics — Codex GPT-5.5
+// xhigh AND Claude Opus 4.8 (Opus reviews like GPT does) — then the AUTHOR model
+// (Sonnet 4.6 xhigh) revises its own draft addressing the combined feedback. All
+// overridable via env. `--effort`: low|medium|high|xhigh|max.
+const OPUS_CRITIC_MODEL = process.env.GG_REVIEW_OPUS_MODEL || 'claude-opus-4-8';
+const OPUS_CRITIC_EFFORT = process.env.GG_REVIEW_OPUS_EFFORT || 'xhigh';
+const REVISER_MODEL = process.env.GG_REVISER_MODEL || process.env.GG_CLAUDE_MODEL || 'claude-sonnet-4-6';
+const REVISER_EFFORT = process.env.GG_REVISER_EFFORT || 'xhigh';
 const CODEX_EFFORT = process.env.GG_CODEX_EFFORT || 'xhigh';
 
 function parseArgs(argv) {
@@ -87,35 +94,59 @@ ${critique}
 --- CURRENT DRAFT ---
 ${draft}`;
 
+// Is a critique actionable (real fixes), vs LGTM / empty / unavailable?
+function actionableBullets(critique) {
+  if (!critique) return 0;
+  if (/\bLGTM\b/i.test(critique)) return 0;
+  return critique.split('\n').filter((l) => /^\s*([-*]|\d+\.)\s+\S/.test(l)).length;
+}
+
+// Critic 1 — Codex GPT-5.5 xhigh. codex exec puts its banner on stderr and nothing
+// usable on stdout, so capture the final message via --output-last-message. Returns
+// '' on any tooling failure (best-effort — the Opus critic can still carry the pass).
+function critiqueViaCodex(o, draft) {
+  const critiqueFile = `${o.out}.codex-critique.txt`;
+  try {
+    // -s read-only: codex exec defaults to workspace-write + approval:never, so it
+    // will agentically EDIT FILES. read-only blocks all writes — we only want text.
+    run(CODEX, ['exec', '-s', 'read-only', '-c', 'model=gpt-5.5', '-c', `reasoning_effort=${CODEX_EFFORT}`,
+      '--output-last-message', critiqueFile, '-'],
+      CRITIQUE_PROMPT(o.entity, o.targetKeyword, draft), 600000);
+    return existsSync(critiqueFile) ? readFileSync(critiqueFile, 'utf8').trim() : '';
+  } catch { return ''; }
+}
+
+// Critic 2 — Claude Opus 4.8 (reviews like GPT does). Independent second opinion.
+function critiqueViaOpus(o, draft) {
+  try {
+    return run(CLAUDE, ['-p', '--model', OPUS_CRITIC_MODEL, '--effort', OPUS_CRITIC_EFFORT],
+      CRITIQUE_PROMPT(o.entity, o.targetKeyword, draft), 780000).trim();
+  } catch { return ''; }
+}
+
 function main() {
   const o = parseArgs(process.argv.slice(2));
   if (!o.source || !o.out) { process.stderr.write('usage: --source <draft.md> --out <revised.md> --page-id <id>\n'); process.exit(2); }
   const draft = readFileSync(o.source, 'utf8');
   const keep = (why) => { writeFileSync(o.out, draft); process.stdout.write(`review: no-change (${why})\n`); process.exit(0); };
 
-  // 1. Codex critique (independent reviewer). codex exec puts its banner on stderr
-  // and nothing usable on stdout — capture the final message via --output-last-message.
-  let critique = '';
-  const critiqueFile = `${o.out}.critique.txt`;
-  try {
-    // -s read-only: codex exec defaults to workspace-write + approval:never, so
-    // it will agentically EDIT FILES (it appended to a chat-record on the first
-    // run). read-only sandbox blocks all writes — we only want a text critique.
-    run(CODEX, ['exec', '-s', 'read-only', '-c', 'model=gpt-5.5', '-c', `reasoning_effort=${CODEX_EFFORT}`,
-      '--output-last-message', critiqueFile, '-'],
-      CRITIQUE_PROMPT(o.entity, o.targetKeyword, draft), 600000);
-    if (existsSync(critiqueFile)) critique = readFileSync(critiqueFile, 'utf8').trim();
-  } catch (e) {
-    return keep(`codex review unavailable: ${String(e.message || e).replace(/\s+/g, ' ').slice(-100)}`);
-  }
-  if (!critique) return keep('codex produced no critique');
-  const bullets = critique.split('\n').filter((l) => /^\s*([-*]|\d+\.)\s+\S/.test(l));
-  if (/\bLGTM\b/i.test(critique) || bullets.length === 0) return keep('codex: LGTM / no actionable issues');
+  // 1. TWO independent critics in sequence: Codex GPT-5.5 + Claude Opus 4.8.
+  const codexCritique = critiqueViaCodex(o, draft);
+  const opusCritique = critiqueViaOpus(o, draft);
+  const codexN = actionableBullets(codexCritique);
+  const opusN = actionableBullets(opusCritique);
+  if (codexN === 0 && opusN === 0) return keep('both critics: LGTM / no actionable issues / unavailable');
 
-  // 2. Opus revises to address the critique
+  // Combine the actionable critiques into one feedback block for the reviser.
+  const combined = [
+    codexN ? `## Reviewer 1 — Codex GPT-5.5 (xhigh)\n${codexCritique}` : '',
+    opusN ? `## Reviewer 2 — Claude Opus 4.8\n${opusCritique}` : '',
+  ].filter(Boolean).join('\n\n');
+
+  // 2. The author model (Sonnet 4.6 xhigh) revises its own draft per the combined feedback.
   let revised;
   try {
-    revised = run(CLAUDE, ['-p', '--model', CLAUDE_MODEL], REVISE_PROMPT(critique, draft), 780000);
+    revised = run(CLAUDE, ['-p', '--model', REVISER_MODEL, '--effort', REVISER_EFFORT], REVISE_PROMPT(combined, draft), 780000);
   } catch (e) {
     return keep(`reviser failed: ${String(e.message || e).replace(/\s+/g, ' ').slice(-100)}`);
   }
@@ -124,7 +155,8 @@ function main() {
   if (!/^# .+/m.test(revised) || revised.length < draft.length * 0.6) return keep('revision looked malformed — kept original');
 
   writeFileSync(o.out, revised);
-  process.stdout.write(`review: revised (${bullets.length} issue(s) from codex)\n`);
+  const who = [codexN && 'codex', opusN && 'opus'].filter(Boolean).join('+');
+  process.stdout.write(`review: revised (${codexN + opusN} issue(s) from ${who})\n`);
 }
 
 main();

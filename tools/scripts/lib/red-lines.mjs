@@ -74,14 +74,21 @@ export const RL5_MIN_COUNT_WARN = 3;
 // multi-word phrases RL5 gates on COVERAGE DENSITY (share of total words the
 // phrase occupies) — the actual stuffing signal — at a conservative ceiling.
 // 2.8% ≈ Yoast's upper "good" band; a 3-word phrase at 12× in 1886 words = 1.9%.
-// 2+ words: an exact multi-word phrase is intrinsically hard to "stuff" AND RL4's
-// per-section recall requirement forces it across most of the ~11 H2 sections, so
-// the flat count cap (tuned for single words) collides with RL4 for 2-word phrases
-// too (e.g. "pushya nakshatra" hit 10 vs cap 8 yet only ~1.1% coverage). Single
-// words keep the flat cap — they're genuinely stuffable and lack the RL4 pressure.
-export const RL5_MULTIWORD_MIN_WORDS = 2;
+// ALL keywords are density-aware (min words = 1). The flat count cap collides with
+// RL4's per-section recall requirement for ANY topic-defining keyword: RL4 wants the
+// keyword in most of the ~11 H2 sections, which alone pushes it well past 8 — both
+// for exact phrases ("pushya nakshatra" hit 10) AND broad single words ("nakshatra"
+// hit 12 yet only 0.67% of the text). Driving the count down to satisfy RL5 then
+// STARVES sections of the keyword → RL4 drift. So gate on COVERAGE DENSITY instead.
+export const RL5_MULTIWORD_MIN_WORDS = 1;
+// 2.8% ≈ Yoast's upper "good" band, for multi-word phrases (intrinsically hard to stuff).
 export const RL5_MULTIWORD_DENSITY_CEIL_DEFAULT = 0.028;
 export const RL5_MULTIWORD_DENSITY_CEIL = getConfig('phase2.RL5_multiword_density_ceil', RL5_MULTIWORD_DENSITY_CEIL_DEFAULT);
+// Single words ARE more stuffable than exact phrases, so a TIGHTER ceiling (1.5%):
+// a topic word recurs ~10-20× naturally in 1800 words (~0.7-1.1%), which 1.5% (~27×)
+// comfortably allows while still catching egregious single-word stuffing.
+export const RL5_SINGLEWORD_DENSITY_CEIL_DEFAULT = 0.015;
+export const RL5_SINGLEWORD_DENSITY_CEIL = getConfig('phase2.RL5_singleword_density_ceil', RL5_SINGLEWORD_DENSITY_CEIL_DEFAULT);
 
 // RL6: psych-safety — disclaimer + non-clinical language + black-words.
 export const RL6_DISCLAIMER_REGEX =
@@ -559,7 +566,9 @@ export function checkRL5(draft, ctx) {
   let maxCount = baseMax;
   if (kwWords >= RL5_MULTIWORD_MIN_WORDS) {
     const totalWords = (draft.match(/[A-Za-z0-9'’]+/g) || []).length || 1;
-    const densityCap = Math.floor((totalWords * RL5_MULTIWORD_DENSITY_CEIL) / kwWords);
+    // single words get the tighter 1.5% ceiling; multi-word phrases the 2.8% band.
+    const ceil = kwWords >= 2 ? RL5_MULTIWORD_DENSITY_CEIL : RL5_SINGLEWORD_DENSITY_CEIL;
+    const densityCap = Math.floor((totalWords * ceil) / kwWords);
     maxCount = Math.max(baseMax, densityCap);
   }
 

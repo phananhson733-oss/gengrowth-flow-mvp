@@ -192,9 +192,9 @@ function modelBin(model) {
   return model;
 }
 
-// SONNET DOWNGRADE GUARD. Claude Sonnet typically produces 600-1500 byte
-// articles for our v8 prompts (it ignores depth instructions); Opus produces
-// 6000-15000 bytes. Threshold of 3000B = clearly downgraded.
+// SHORT-OUTPUT GUARD. A real 1500-1800 word v8 article is ~9000-15000 bytes.
+// Sub-3000B means the generation failed, truncated, or the CLI silently fell back
+// to a weak default model (no --model honored). Threshold 3000B = clearly broken.
 const CLAUDE_OPUS_MIN_BYTES = 3000;
 
 function detectClaudeDowngrade(outputPath) {
@@ -204,7 +204,7 @@ function detectClaudeDowngrade(outputPath) {
       return {
         downgraded: true,
         bytes: size,
-        message: `claude output is ${size}B (< ${CLAUDE_OPUS_MIN_BYTES}B). Sonnet downgrade suspected. Verify CLI honored --model ${CLAUDE_MODEL} (run \`claude --version\` and check ~/.claude/settings.json for a default model override). Re-run after fixing.`,
+        message: `claude output is ${size}B (< ${CLAUDE_OPUS_MIN_BYTES}B) — generation failed/truncated or CLI ignored --model. Verify CLI honored --model ${CLAUDE_MODEL} --effort ${CLAUDE_EFFORT} (run \`claude --version\` and check ~/.claude/settings.json for a default model override). Re-run after fixing.`,
       };
     }
     return { downgraded: false, bytes: size };

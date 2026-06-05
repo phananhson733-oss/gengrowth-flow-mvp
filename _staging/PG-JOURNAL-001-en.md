@@ -1,3 +1,28 @@
+---
+title: Journal Prompts
+slug: journal-prompts
+date: 2026-06-05
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T1
+track: 量产线
+page_id: PG-JOURNAL-001
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: journal prompts
+associated_keywords:
+  - shadow work journal prompts
+  - self reflection journal prompts
+  - journal prompts for anxiety
+  - journal prompts for self discovery
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-05T21:39:07.892Z
+content_sha256_short: 0a685d8d9f34bb8f
+phase2_checks: all-pass
+---
+
 # Journal Prompts That Actually Surface Patterns vs. the Ones That Fill Pages
 
 ## What is journal prompts?

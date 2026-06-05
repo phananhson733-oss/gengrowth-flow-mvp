@@ -145,6 +145,8 @@ export function deriveDescription(body, maxLen = 160) {
     .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
     .replace(/\[\[<TBD-internal-link:\s*([^>]+)>\]\]/g, '$1')
     .replace(/\[\[<\s*TBD-external-link:[^|>]*\|\s*([^|>]+?)\s*\|[^>]*>\]\]/g, '$1')
+    // catch-all for single-segment / malformed TBD-external-link (no pipe triple)
+    .replace(/\[\[<\s*TBD-external-link:\s*([^>]+?)\s*>\]\]/g, (_m, inner) => { const p = inner.split('|'); return p[p.length - 1].trim(); })
     .replace(/\s+/g, ' ')
     .trim();
   if (cleaned.length > maxLen) {

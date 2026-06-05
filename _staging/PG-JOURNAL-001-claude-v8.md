@@ -103,6 +103,6 @@ Length is not the goal. A short entry naming three specific behavioral instances
 
 ## Sources
 
-- Pennebaker, J. W., & Smyth, J. M. (2016). *Opening Up by Writing It Down* (3rd ed.). Guilford Press. Research basis for expressive writing and its effects on self-awareness and pattern recognition.
-- Progoff, I. (1975). *At a Journal Workshop*. Dialogue House Library. Foundational framework for structured, diagnostic journaling as a tool for self-inquiry.
-- Cameron, J. (1992). *The Artist's Way*. TarcherPerigee. Widely used prompt-based journaling practice illustrating topic-organized structure and its effects.
+- Pennebaker, J. W., & Smyth, J. M. (2016). *Opening Up by Writing It Down* (3rd ed.). Guilford Press.
+- Progoff, I. (1975). *At a Journal Workshop*. Dialogue House Library.
+- Cameron, J. (1992). *The Artist's Way*. TarcherPerigee.

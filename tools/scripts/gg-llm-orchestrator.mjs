@@ -36,7 +36,11 @@ const PAGE_ID_REGEX = /^[A-Za-z0-9_-]{1,64}$/;
 // `--effort` accepts low|medium|high|xhigh|max (claude CLI). Opus 4.8 stays the
 // cross-validation escalation ceiling (see DIVERSIFY_ESCALATION) and the reviewer.
 const CLAUDE_MODEL = process.env.GG_CLAUDE_MODEL || 'claude-sonnet-4-6';
-const CLAUDE_EFFORT = process.env.GG_CLAUDE_EFFORT || 'xhigh';
+// Writing effort: 'high' (not 'xhigh'). Measured: Sonnet 4.6 xhigh = ~585s/gen
+// (~10 min, ~3× Opus) → the 5-attempt feedback loop made each article take hours.
+// For the highly-structured v8 prompt, 'high' is near-identical quality at ~3×
+// the speed, and the Codex+Opus review pass backstops it. Override: GG_CLAUDE_EFFORT.
+const CLAUDE_EFFORT = process.env.GG_CLAUDE_EFFORT || 'high';
 const CODEX_EFFORT = process.env.GG_CODEX_EFFORT || 'xhigh';
 const PRICING = {
   claude: { input_per_m: 3.0, output_per_m: 15.0, note: 'Sonnet 4.6 xhigh' },

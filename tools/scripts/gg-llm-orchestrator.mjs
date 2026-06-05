@@ -259,17 +259,49 @@ function runAttempt(model, promptPath, outputPath) {
     const stdio = ['pipe', 'pipe', 'pipe'];
     // Security: never pass secrets via argv (they would show in `ps`).
     // Hermes script reads OPENROUTER_API_KEY from process.env directly.
+    // detached:true → the child is its own process-group LEADER, so we can kill the
+    // WHOLE tree (claude + any grandchildren) with process.kill(-pid). Without this,
+    // a watchdog/timeout kill of `claude` leaves orphaned grandchildren (PPID=1)
+    // that pile up and starve the box — the exact failure that hung NAKSH-001.
     const child = spawn(cmd.bin, cmd.args, {
       cwd: REPO,
       env: process.env,
       stdio,
+      detached: true,
     });
 
     let stderrBuf = '';
     let stdoutBuf = '';
     let promptContent = '';
 
+    // ── DEADLOCK WATCHDOG ──────────────────────────────────────────────────
+    // A healthy `claude -p` STREAMS tokens to stdout continuously. A hung/dead-
+    // locked generation emits nothing. So: if NO stdout/stderr arrives for
+    // STALL_MS (default 5 min — user spec "从开始写 5min 就检查"), or the attempt
+    // exceeds the HARD ceiling, kill the whole process group and fail this attempt
+    // (the retry loop moves on). Catches hangs in ~5 min instead of running forever.
+    const STALL_MS = parseInt(process.env.GG_GEN_STALL_MS || '300000', 10);   // 5 min no output
+    const HARD_MS = parseInt(process.env.GG_GEN_HARD_MS || '900000', 10);      // 15 min absolute
+    let lastData = Date.now();
+    let killedReason = null;
+    const killTree = (sig) => {
+      try { process.kill(-child.pid, sig); }      // negative pid = whole process group
+      catch { try { child.kill(sig); } catch { /* already gone */ } }
+    };
+    const watchdog = setInterval(() => {
+      const idle = Date.now() - lastData;
+      const total = Date.now() - t0;
+      if (idle >= STALL_MS) killedReason = `WATCHDOG: stalled ${Math.round(idle / 1000)}s with no output (deadlock)`;
+      else if (total >= HARD_MS) killedReason = `WATCHDOG: exceeded hard ceiling ${Math.round(total / 1000)}s`;
+      if (killedReason) {
+        clearInterval(watchdog);
+        process.stderr.write(`[orchestrator] ${killedReason} — killing process group ${child.pid}\n`);
+        killTree('SIGKILL');
+      }
+    }, 30000);
+
     child.on('error', (err) => {
+      clearInterval(watchdog);
       resolveAttempt({
         ok: false,
         exit_code: -1,
@@ -280,14 +312,26 @@ function runAttempt(model, promptPath, outputPath) {
     });
 
     child.stdout.on('data', (d) => {
+      lastData = Date.now();
       stdoutBuf += d.toString();
     });
     child.stderr.on('data', (d) => {
+      lastData = Date.now();
       stderrBuf += d.toString();
     });
 
     child.on('close', (code) => {
+      clearInterval(watchdog);
       const duration_s = Number(((Date.now() - t0) / 1000).toFixed(1));
+      // Watchdog-killed → fail this attempt loudly so the retry loop moves on.
+      if (killedReason) {
+        return resolveAttempt({
+          ok: false,
+          exit_code: code === null ? -2 : code,
+          duration_s,
+          stderr_tail: killedReason,
+        });
+      }
       try {
         // Models that route stdout → file: write captured buffer now.
         // Always write — even when stdoutBuf is empty — so downstream size

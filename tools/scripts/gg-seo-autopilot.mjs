@@ -443,6 +443,38 @@ function doNextUnauthored() {
   process.stdout.write((r && r.task ? JSON.stringify({ pgId: r.task.pgId, keyword: r.task.keyword }) : '') + '\n');
 }
 
+// Agentic-rescue prompt: hand `claude -p` the failed draft + the exact phase2
+// failures and have it SURGICALLY repair (never rewrite) + self-check via phase2
+// until it passes. Validated on NAKSH-001 (rigid blind-regen: 8 parks; agentic: 1
+// iteration → PASS) — works because it can READ "section X lacks the keyword" and
+// edit that section, which blind regeneration can't.
+function agenticRescuePrompt(pgId, keyword, author, draftRel, fails) {
+  return [
+    `你在修复一篇 SEO 文章草稿（结构已生成，但卡在自动 QA 的若干条）。只做外科式（surgical）修正，绝不整篇重写。`,
+    `本次是自动化修复子任务：忽略仓库 CLAUDE.md 的对话记录/会话提醒维护规则，只做下面的修复，不要碰其它文件。`,
+    ``,
+    `文件（相对仓库根 ${FLOW}）：${draftRel}`,
+    `target_keyword 字面短语 = "${keyword}"`,
+    ``,
+    `phase2 QA 卡在以下条目（逐条修掉）：`,
+    fails,
+    ``,
+    `对症修法：`,
+    `- RL4 漂移 / drifted sections（某 H2 节 target-recall=0）→ 在被点名的每个小节里，把某处代词/"this system"/泛指自然替换成字面 "${keyword}"，每节至少 1 次，自然不堆砌。`,
+    `- RL5 stuffing（count 超限）→ 多余的完整短语用代词/短形/同义替换，降到限内。`,
+    `- 缺免责声明（RL6/psych-safety）→ 结尾逐字加：This is not a clinical interpretation or mental health advice.`,
+    `- RL1 临床主张 → 改象征/反思措辞。`,
+    `- SC3c 段落散乱 → 该小节合并成 1-2 连贯段，或 "1. **标签。** 说明" 编号列表。`,
+    `- 其它条目按 phase2 提示对症修。`,
+    ``,
+    `硬约束：H2 标题逐字不动、同序同数；总词数尽量 1500-1800；保留免责声明 + CTA + Sources；不新增 [[...]] 链接数。`,
+    ``,
+    `流程（最多 3 次迭代）：1) Read 草稿 2) Edit 外科修正 3) 自检运行 \`node tools/scripts/_phase2-validate.mjs --source ${draftRel} --page-id ${pgId} --tag en --author ${author} 2>&1 | tail -30\` 读输出 4) 仍 fail 就再修 5) PASS 或 3 次后停。`,
+    ``,
+    `只输出一行：最终 phase2 是否 PASS。不要发布、不要 git。`,
+  ].join('\n');
+}
+
 function doAuthor(o = {}) {
   let sel;
   if (o.task) {
@@ -628,7 +660,34 @@ function doAuthor(o = {}) {
       lastFail = '- phase2 wrote no passing manifest';
     }
     restorePrompt();
-    return park(slug, `${(lastFail || 'phase2 failed').replace(/\n/g, ' | ')} after ${attempts} generation attempt(s)`);
+
+    // AGENTIC RESCUE (user-approved 2026-06-05): the deterministic feedback loop just
+    // failed `attempts`× — usually on gen-quality issues blind regeneration can't fix
+    // (e.g. RL4 drift: the model won't anchor the literal keyword in every section).
+    // Escalate ONCE to an agentic `claude -p` that reads the failure + draft and
+    // SURGICALLY repairs it, self-checking via phase2 until it passes. Only fires on
+    // the park boundary, so it never slows the common (≤3-attempt) path. The shFlow
+    // timeout bounds it; phase2-on-PASS writes <pid>-en.md, which is our success test.
+    // Toggle GG_AUTHOR_AGENTIC_RESCUE=0.
+    if (process.env.GG_AUTHOR_AGENTIC_RESCUE !== '0' && existsSync(join(FLOW, draftV8))) {
+      log(`agentic rescue: deterministic loop failed ${attempts}× — escalating to agentic surgical repair of ${draftV8}`);
+      const agModel = process.env.GG_AGENTIC_MODEL || 'claude-sonnet-4-6';
+      const agEffort = process.env.GG_AGENTIC_EFFORT || 'high';
+      const agTimeout = parseInt(process.env.GG_AUTHOR_AGENTIC_TIMEOUT_MS || '1800000', 10);
+      const prompt = agenticRescuePrompt(pgId, keyword, author, draftV8, lastFail || '- phase2 failed');
+      try {
+        const out = shFlow('claude', ['-p', prompt, '--model', agModel, '--effort', agEffort,
+          '--allowedTools', 'Bash Read Edit Write Grep', '--dangerously-skip-permissions'], agTimeout);
+        log(`agentic rescue out: ${String(out).trim().split('\n').slice(-2).join(' ').slice(0, 180)}`);
+      } catch (e) { log(`agentic rescue errored: ${errTail(e, 80)}`); }
+      if (existsSync(enDraft(pgId)) && phase2Passed(pgId)) {
+        log(`AUTHORED ${pgId} → ${enDraft(pgId)} (author=${author}, via AGENTIC RESCUE) — ready for next scan to publish`);
+        return;
+      }
+      log('agentic rescue did not yield a passing draft — parking');
+    }
+
+    return park(slug, `${(lastFail || 'phase2 failed').replace(/\n/g, ' | ')} after ${attempts} attempt(s) + agentic rescue`);
   } catch (e) {
     park(null, `unexpected: ${errTail(e)}`);
   }

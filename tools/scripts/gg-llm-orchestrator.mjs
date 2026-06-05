@@ -31,12 +31,15 @@ const PAGE_ID_REGEX = /^[A-Za-z0-9_-]{1,64}$/;
 
 // ─── 1. Config — model registry, prices, command builders ──────────────────
 // PRICING: per 1M tokens, estimates from provider public pages 2026-05-23.
-// Generation models (overridable via env). Default to the latest: Opus 4.8 +
-// GPT-5.5 at xhigh reasoning effort.
-const CLAUDE_MODEL = process.env.GG_CLAUDE_MODEL || 'claude-opus-4-8';
+// Generation models (overridable via env). Default authoring model = Sonnet 4.6 at
+// xhigh effort (user pref 2026-06-05: Sonnet 4.6 xhigh writes; Opus 4.8 reviews).
+// `--effort` accepts low|medium|high|xhigh|max (claude CLI). Opus 4.8 stays the
+// cross-validation escalation ceiling (see DIVERSIFY_ESCALATION) and the reviewer.
+const CLAUDE_MODEL = process.env.GG_CLAUDE_MODEL || 'claude-sonnet-4-6';
+const CLAUDE_EFFORT = process.env.GG_CLAUDE_EFFORT || 'xhigh';
 const CODEX_EFFORT = process.env.GG_CODEX_EFFORT || 'xhigh';
 const PRICING = {
-  claude: { input_per_m: 15.0, output_per_m: 75.0, note: 'Opus 4.8 xhigh' },
+  claude: { input_per_m: 3.0, output_per_m: 15.0, note: 'Sonnet 4.6 xhigh' },
   codex: { input_per_m: 10.0, output_per_m: 40.0, note: 'GPT 5.5 xhigh' },
   gemini: { input_per_m: 3.5, output_per_m: 10.5, note: 'Gemini 2.5 Pro' },
 };
@@ -50,11 +53,11 @@ const DIVERSIFY_ESCALATION = { codex: 'claude', gemini: 'claude', claude: null }
 function buildCommand(model, promptPath, outputPath) {
   switch (model) {
     case 'claude':
-      // CRITICAL: --model is load-bearing. Without it the Claude CLI silently
-      // downgrades to Sonnet. We re-verify below in validation. (default Opus 4.8)
+      // CRITICAL: --model is load-bearing — without it the CLI uses its default
+      // session model. --effort sets reasoning depth (xhigh) for the writing pass.
       return {
         bin: 'claude',
-        args: ['-p', '--model', CLAUDE_MODEL],
+        args: ['-p', '--model', CLAUDE_MODEL, '--effort', CLAUDE_EFFORT],
         stdinFromFile: promptPath,
         stdoutToFile: outputPath,
       };

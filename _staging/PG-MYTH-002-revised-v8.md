@@ -1,27 +1,3 @@
----
-title: Juno Astrology
-slug: juno-astrology
-date: 2026-06-05
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T2
-track: 量产线
-page_id: PG-MYTH-002
-author_id: "marcus-orion"
-author_display_name: "Marcus Orion"
-target_keyword: juno astrology
-associated_keywords:
-  - my juno sign
-  - juno sign
-  - juno asteroid astrology
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-06-05T00:49:33.000Z
-content_sha256_short: 16d0582216a9a9a4
-phase2_checks: all-pass
----
-
 # What Your Juno Sign Reveals About Power, Not Romance
 
 ## What is juno astrology?

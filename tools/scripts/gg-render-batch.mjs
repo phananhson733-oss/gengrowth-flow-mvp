@@ -116,6 +116,12 @@ export function normalizeTemplate(raw) {
   const s = String(raw).trim().toLowerCase();
   if (s === 'pillar') return { value: 'Pillar', warning: null };
   if (s === 'definition') return { value: 'Definition', warning: null };
+  // Comparison intent is covered by the Definition 11-section structure: it already
+  // ships a "{{entity}} vs Adjacent Concepts: How It Works + Trade-offs" section, a
+  // 4-column Quick-Reference comparison TABLE, and a "Common Misreadings" section
+  // (ideal for e.g. the Barnum-effect caveat on "ai astrology app"). So Comparison
+  // routes to the Definition template intentionally — recognized, no warning.
+  if (s === 'comparison') return { value: 'Definition', warning: null };
   if (s === 'tutorial') {
     return {
       value: 'Definition',

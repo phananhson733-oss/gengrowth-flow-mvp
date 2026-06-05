@@ -504,8 +504,12 @@ function doAuthor(o = {}) {
     // English-template CTA when the Sheet CTA text is non-English (CJK) or blank.
     // Keep the Sheet's absolute cta_target_url. (User-approved 2026-06-03.)
     if (/[㐀-鿿]/.test(entry.cta_text || '') || !(entry.cta_text || '').trim()) {
+      // If the Sheet cta_target_url is a placeholder (CJK like "工具页") rather than an
+      // absolute URL, fall back to the canonical birth-chart tool page instead of
+      // parking — every astrology article can sensibly CTA to "generate your free
+      // birth chart". A real absolute Sheet URL is always preserved.
       if (!/^https?:\/\//.test(entry.cta_target_url || ''))
-        return park(slug, 'CTA text non-English but no absolute cta_target_url to keep');
+        entry.cta_target_url = 'https://astrologywiki.com/en/wiki/how-to-read-birth-chart';
       entry.cta_text = `Generate your free birth chart to explore ${cleanEntity}.`;
     }
     try { writeFileSync(absOverride, JSON.stringify(ov, null, 2)); }

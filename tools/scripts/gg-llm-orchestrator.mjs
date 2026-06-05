@@ -270,9 +270,9 @@ function groupCpuSeconds(pgid) {
   } catch { return -1; }
 }
 
-function runAttempt(model, promptPath, outputPath) {
+function runAttempt(model, promptPath, outputPath, opts = {}) {
   return new Promise((resolveAttempt) => {
-    const cmd = buildCommand(model, promptPath, outputPath);
+    const cmd = buildCommand(model, promptPath, outputPath, opts);
     const t0 = Date.now();
 
     // Stale-output guard: delete any leftover output from a prior attempt
@@ -499,6 +499,39 @@ async function driveModel({ model, promptPath, outDir, pageId, retry, diversifyO
           `${i + 1} attempt(s) (spent $${cumulativeCostUsd.toFixed(4)}) — aborting further retries\n`,
       );
       break;
+    }
+  }
+
+  // RATE-LIMIT FALLBACK: Sonnet 4.6 throttled (429 / overloaded / quota) → retry the
+  // SAME generation once on Opus (4.8 high). Writes to the SAME outputPath so the
+  // caller transparently picks up the Opus draft as `<pageId>-claude-v8.md`.
+  if (!lastResult?.ok && model === 'claude' && isRateLimited(lastResult?.stderr_tail) && !budgetExceeded) {
+    process.stderr.write(
+      `[orchestrator] claude (${CLAUDE_MODEL}) rate-limited — falling back to ${CLAUDE_FALLBACK_MODEL} ${CLAUDE_FALLBACK_EFFORT}\n`,
+    );
+    const fbOpts = { claudeModel: CLAUDE_FALLBACK_MODEL, claudeEffort: CLAUDE_FALLBACK_EFFORT };
+    const cmd = buildCommand('claude', promptPath, outputPath, fbOpts);
+    const attempt = await runAttempt('claude', promptPath, outputPath, fbOpts);
+    const attemptCost = attemptCostUsd(activeModel, promptPath, outputPath);
+    cumulativeCostUsd += attemptCost;
+    attempts.push({
+      try_index: attempts.length + 1,
+      model: activeModel,
+      rate_limit_fallback_to: CLAUDE_FALLBACK_MODEL,
+      command: renderShell(cmd),
+      cost_usd: Number(attemptCost.toFixed(4)),
+      cumulative_cost_usd: Number(cumulativeCostUsd.toFixed(4)),
+      ...attempt,
+    });
+    lastResult = attempt;
+    if (attempt.ok) {
+      const guard = detectClaudeDowngrade(outputPath);
+      attempts[attempts.length - 1].sonnet_guard = guard;
+      if (guard.downgraded) {
+        attempt.ok = false;
+        attempts[attempts.length - 1].ok = false;
+        attempts[attempts.length - 1].stderr_tail = guard.message;
+      }
     }
   }
 

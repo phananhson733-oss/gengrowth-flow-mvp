@@ -784,20 +784,31 @@ function doAuthor(o = {}) {
     if (!existsSync(join(FLOW, promptPath))) return park(slug, `render produced no ${modeZhBackfill ? 'ZH ' : ''}v8 prompt`);
 
     if (modeZhBackfill) {
-      const draftV8 = join('_staging', 'zh-demo', `${pgId}-${WINNER}-v8.md`);
+      const defaultDraftV8 = join('_staging', 'zh-demo', `${pgId}-${WINNER}-v8.md`);
+      const orchestratorMeta = join('_staging', 'zh-demo', `${pgId}-orchestrator.json`);
       const promptAbs = join(FLOW, promptPath);
       const basePrompt = readFileSync(promptAbs, 'utf8');
       const restorePrompt = () => { try { writeFileSync(promptAbs, basePrompt); } catch { /* best-effort */ } };
-      const attempts = Math.max(1, parseInt(process.env.GG_AUTHOR_GEN_ATTEMPTS || '3', 10));
+      const attemptsRaw = Number.parseInt(process.env.GG_AUTHOR_GEN_ATTEMPTS || '3', 10);
+      const attempts = Number.isFinite(attemptsRaw) && attemptsRaw > 0 ? attemptsRaw : 3;
+      const zhModels = process.env.GG_ZH_BACKFILL_MODELS || process.env.GG_AUTHOR_MODELS || (WINNER === 'claude' ? 'claude,codex,gemini' : WINNER);
       let lastFail = '';
       for (let i = 1; i <= attempts; i++) {
         if (lastFail && i > 1) {
           writeFileSync(promptAbs, `${basePrompt}\n\n## ⚠️ 上一稿被自动校验拦下 — 本稿必须逐条修掉\n${lastFail}\n\n补救要求：\n- 这是中文稿，保留中文 H2 与正文，不要退回英文。\n- RL4 漂移 → 被点名的小节里自然补回主中文关键词或对应主题短语。\n- RL5 堆词 → 过密处改成代词 / 近义表达，别机械重复。\n- RL6 / 合规 → 保留反思性、非疗效、非诊断措辞；不要写治疗、改善病症、调理体质。\n- 结构类 FAIL → 只做外科式修正，不整篇重写。\n`);
         }
         const orchTimeout = parseInt(process.env.GG_AUTHOR_ORCH_TIMEOUT_MS || '1800000', 10);
-        try { shFlow('node', [ORCHESTRATOR, '--prompt', promptPath, '--page-id', pgId, '--models', WINNER, '--out-dir', '_staging/zh-demo', '--retry', '0'], orchTimeout); }
+        try { shFlow('node', [ORCHESTRATOR, '--prompt', promptPath, '--page-id', pgId, '--models', zhModels, '--out-dir', '_staging/zh-demo', '--retry', '0'], orchTimeout); }
         catch (e) { log(`zh orchestrator exit non-zero (attempt ${i}): ${errTail(e, 80)}`); }
-        if (!existsSync(join(FLOW, draftV8))) { lastFail = '- orchestrator produced no zh draft'; continue; }
+        let draftV8 = defaultDraftV8;
+        if (!existsSync(join(FLOW, draftV8)) && existsSync(join(FLOW, orchestratorMeta))) {
+          try {
+            const meta = JSON.parse(readFileSync(join(FLOW, orchestratorMeta), 'utf8'));
+            const okEntry = Object.values(meta.results || {}).find((r) => r && r.ok && r.output_path);
+            if (okEntry && okEntry.output_path) draftV8 = relative(FLOW, okEntry.output_path);
+          } catch { /* best-effort */ }
+        }
+        if (!existsSync(join(FLOW, draftV8))) { lastFail = `- orchestrator produced no zh draft (models=${zhModels})`; continue; }
         try { shFlow('node', [PHASE2, '--source', draftV8, '--page-id', pgId, '--tag', 'zh', '--language', 'zh', '--author', author]); }
         catch (e) {
           const out = `${e.stdout || ''}${e.stderr || ''}`;

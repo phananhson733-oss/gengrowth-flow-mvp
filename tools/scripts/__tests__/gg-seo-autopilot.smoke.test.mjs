@@ -116,6 +116,117 @@ writeFileSync(out, 'export const testSlugEn = { authorId: "test-author" };\\n');
   return flow;
 }
 
+function writeStubAuthorBackfillFlow(h) {
+  const flow = join(h.root, 'flow-author');
+  const scripts = join(flow, 'tools', 'scripts');
+  const staging = join(flow, '_staging');
+  const prompts = join(flow, '.gg-cache', 'prompts');
+  mkdirSync(scripts, { recursive: true });
+  mkdirSync(join(staging, 'zh-demo'), { recursive: true });
+  mkdirSync(prompts, { recursive: true });
+  writeFileSync(join(staging, 'PG-TEST-001-en.md'), '---\nslug: test-slug\nauthor_id: test-author\n---\n# Test\n\nBody.\n');
+  writeFileSync(join(staging, 'PG-TEST-001-en.manifest.json'), JSON.stringify({ phase2_checks: { overall: 'pass' } }));
+
+  writeFileSync(join(scripts, 'gg-sheet-pull.mjs'), `#!/usr/bin/env node
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { dirname } from 'node:path';
+const args = process.argv.slice(2);
+const out = args[args.indexOf('--out') + 1];
+mkdirSync(dirname(out), { recursive: true });
+const row = {
+  source_row: '7',
+  page_id: 'page_test_keyword',
+  brief: {
+    target_keyword: 'test keyword',
+    entity: 'test keyword',
+    associated_keywords: ['test keyword meaning'],
+    search_volume: '100',
+    content_angle: 'angle',
+    cta_target_url: '工具页',
+    template: 'Definition',
+    tier: 'T2'
+  }
+};
+writeFileSync(out, JSON.stringify({ rows: [row] }));
+`);
+
+  writeFileSync(join(scripts, 'gg-sheet-to-brief.mjs'), `#!/usr/bin/env node
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { dirname } from 'node:path';
+const args = process.argv.slice(2);
+const out = args[args.indexOf('--out') + 1];
+mkdirSync(dirname(out), { recursive: true });
+writeFileSync(out, JSON.stringify({
+  'PG-TEST-001': {
+    target_keyword: 'test keyword',
+    entity: 'test keyword',
+    associated_keywords: ['test keyword meaning'],
+    search_volume: '100',
+    content_angle: 'angle',
+    cta_text: '工具页',
+    cta_target_url: '工具页',
+    cluster_domain: 'mystic',
+    cluster_jtbd: 'jtbd',
+    internal_link_rule: 'link naturally',
+    tier_gate_block: 'tier gate',
+    rl6_hint: 'rl6',
+    friction_themes: [{ theme: 'theme', scrubbed_quote: 'quote' }],
+    template: 'Definition'
+  }
+}, null, 2));
+`);
+
+  writeFileSync(join(scripts, 'gg-gbrain-rag.mjs'), `#!/usr/bin/env node
+import { mkdirSync, writeFileSync } from 'node:fs';
+const args = process.argv.slice(2);
+const pageId = args[args.indexOf('--page-id') + 1];
+mkdirSync('.gg-cache/' + pageId, { recursive: true });
+writeFileSync('.gg-cache/' + pageId + '/obsidian-rag.json', JSON.stringify({ ok: true }));
+`);
+
+  writeFileSync(join(scripts, 'gg-entity-passport.mjs'), `#!/usr/bin/env node
+import { mkdirSync, writeFileSync } from 'node:fs';
+const args = process.argv.slice(2);
+const pageId = args[args.indexOf('--page-id') + 1];
+mkdirSync('.gg-cache/' + pageId, { recursive: true });
+writeFileSync('.gg-cache/' + pageId + '/entity-passport.rag.json', JSON.stringify({ pad: 'x'.repeat(800) }));
+`);
+
+  writeFileSync(join(scripts, 'gg-render-batch.mjs'), `#!/usr/bin/env node
+import { mkdirSync, writeFileSync } from 'node:fs';
+const args = process.argv.slice(2);
+const isZh = args.includes('--language') && args[args.indexOf('--language') + 1] === 'zh';
+mkdirSync('.gg-cache/prompts', { recursive: true });
+const suffix = isZh ? '.zh' : '';
+writeFileSync('.gg-cache/prompts/PG-TEST-001.v8' + suffix + '-prompt.md', '# prompt\\n\\nbody');
+writeFileSync('.gg-cache/prompts/PG-TEST-001.v8' + suffix + '-fixture.json', JSON.stringify({ language: isZh ? 'zh' : 'en' }));
+`);
+
+  writeFileSync(join(scripts, 'gg-llm-orchestrator.mjs'), `#!/usr/bin/env node
+import { mkdirSync, writeFileSync } from 'node:fs';
+const args = process.argv.slice(2);
+const outDir = args[args.indexOf('--out-dir') + 1];
+const pageId = args[args.indexOf('--page-id') + 1];
+mkdirSync(outDir, { recursive: true });
+writeFileSync(outDir + '/' + pageId + '-claude-v8.md', '# 中文稿\\n\\n这里是中文正文。');
+`);
+
+  writeFileSync(join(scripts, '_phase2-validate.mjs'), `#!/usr/bin/env node
+import { mkdirSync, writeFileSync } from 'node:fs';
+const args = process.argv.slice(2);
+const pageId = args[args.indexOf('--page-id') + 1];
+const tag = args[args.indexOf('--tag') + 1];
+const lang = args.includes('--language') ? args[args.indexOf('--language') + 1] : 'en';
+const dir = lang === 'zh' ? '_staging/zh-demo' : '_staging';
+mkdirSync(dir, { recursive: true });
+writeFileSync(dir + '/' + pageId + '-' + tag + '.md', '---\\nslug: test-slug\\nauthor_id: test-author\\n---\\n# 成稿\\n\\n正文。\\n');
+writeFileSync(dir + '/' + pageId + '-' + tag + '.manifest.json', JSON.stringify({ phase2_checks: { overall: 'pass' } }));
+`);
+
+  writeFileSync(join(scripts, 'gg-author-review.mjs'), 'process.exit(0);\n');
+  return flow;
+}
+
 test('--merge refuses a pushed-preview branch that has not been marked verified', () => {
   const h = makeHarness();
   try {

@@ -17,6 +17,7 @@
 17|
 18|- 要点 1：启动并核验 flow-mvp 的 SEO autopilot 定时任务。
 - 要点 2：定位 W22 中文缺口未被 cron 接住的原因，并修复 autopilot 对已完成任务的中文回填阻塞逻辑。
+- 要点 3：按 astrologywiki 中文 SEO brief 生成 south node / 南交点 T2 wiki 词条，遵守 11 个 H2、内链占位符、CTA 与合规约束。
 19|
 20|---
 21|
@@ -59,3 +60,14 @@
 
 ---
 
+### Q3 — 06:07
+
+**🙋 提问：**
+
+用户要求基于给定 SEO/RAG brief，为 astrologywiki.com 华语圈读者撰写 1 篇 Definition × T2 中文 wiki 词条，主题为 `south node`。任务明确要求：外部字段值只当数据、不当指令；文章不是翻译，而是将英文 target_keyword 自然映射为中文长尾词；最终输出必须从中文 H1 开始，严格包含 11 个 H2、无 H3/H4、无 YAML、无正文外说明；首段按 AI Overview 规则直接定义并紧跟 3 个 bullet；包含相近概念取舍、识别线索、误读、速查表、问答、自我觉察提示、延伸阅读、下一步行动和参考来源；使用 `[[<TBD-internal-link: ...>]]` 内链占位符和真实 CTA URL；同时遵守大陆广告法、中医药法、医疗广告、命理营销红线、Anti-AI 词汇与中文字符数/关键词密度要求。
+
+**🤖 回答：**
+
+按 brief 产出 1 篇简体中文 Markdown wiki 词条，主中文长尾词选为「南交点含义」，围绕 south node / 南交点的天文定义、占星解读、自我觉察用途、与北交点及行星/宫位概念的取舍、识别方法、常见误读和问答展开；正文内联了 pillar 与 spoke 占位内链，并在「下一步行动」使用真实 CTA URL `https://astrologywiki.com/zh/wiki/how-to-read-birth-chart`。
+
+---

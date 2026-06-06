@@ -16,6 +16,7 @@ associated_keywords:
   - solar return chart calculator
 generated_by: gpt-5.5
 prompt_version: v8
+author: Marcus Orion
 generated_at: 2026-06-06T18:10:30.513Z
 content_sha256_short: f95dd97126225a3c
 phase2_checks: all-pass

@@ -1,0 +1,67 @@
+{
+  "page_id": "PG-SOLAR-001",
+  "prompt_path": "/Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-SOLAR-001.v8.zh-prompt.md",
+  "started_at": "2026-06-06T17:45:45.047Z",
+  "models_requested": [
+    "claude"
+  ],
+  "retry": 2,
+  "diversify_on_fail": false,
+  "max_cost_usd_per_page": 5,
+  "budget_exceeded_models": [],
+  "ok_count": 0,
+  "total_cost_estimate_usd": 0,
+  "results": {
+    "claude": {
+      "model": "claude",
+      "active_model": "claude",
+      "diversified": false,
+      "ok": false,
+      "output_path": null,
+      "retries": 2,
+      "duration_s": 8,
+      "cost_estimate_usd": null,
+      "cumulative_cost_usd": 0.0558,
+      "budget_exceeded": false,
+      "budget_usd": 5,
+      "attempts": [
+        {
+          "try_index": 1,
+          "model": "claude",
+          "command": "claude -p --model claude-sonnet-4-6 --effort high < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-SOLAR-001.v8.zh-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/zh-demo/PG-SOLAR-001-claude-v8.md",
+          "cost_usd": 0.0186,
+          "cumulative_cost_usd": 0.0186,
+          "ok": false,
+          "exit_code": 1,
+          "duration_s": 3.1,
+          "stderr_tail": "",
+          "stdout_bytes": 145
+        },
+        {
+          "try_index": 2,
+          "model": "claude",
+          "command": "claude -p --model claude-sonnet-4-6 --effort high < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-SOLAR-001.v8.zh-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/zh-demo/PG-SOLAR-001-claude-v8.md",
+          "cost_usd": 0.0186,
+          "cumulative_cost_usd": 0.0372,
+          "ok": false,
+          "exit_code": 1,
+          "duration_s": 2.5,
+          "stderr_tail": "",
+          "stdout_bytes": 145
+        },
+        {
+          "try_index": 3,
+          "model": "claude",
+          "command": "claude -p --model claude-sonnet-4-6 --effort high < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-SOLAR-001.v8.zh-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/zh-demo/PG-SOLAR-001-claude-v8.md",
+          "cost_usd": 0.0186,
+          "cumulative_cost_usd": 0.0558,
+          "ok": false,
+          "exit_code": 1,
+          "duration_s": 2.4,
+          "stderr_tail": "",
+          "stdout_bytes": 145
+        }
+      ]
+    }
+  }
+}

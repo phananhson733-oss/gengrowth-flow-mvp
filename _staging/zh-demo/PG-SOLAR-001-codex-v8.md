@@ -1,3 +1,26 @@
+---
+title: Solar Return Chart
+slug: solar-return-chart
+date: 2026-06-06
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T1
+track: 量产线
+page_id: PG-SOLAR-001
+target_keyword: solar return chart
+associated_keywords:
+  - solar return
+  - how to interpret solar return chart
+  - solar chart
+  - solar return chart calculator
+generated_by: gpt-5.5
+prompt_version: v8
+generated_at: 2026-06-06T18:10:30.513Z
+content_sha256_short: f95dd97126225a3c
+phase2_checks: all-pass
+---
+
 # 读懂太阳回归盘这一年的主题线索
 
 ## solar return ascendant, natal chart overlay, sun's house placement, ascendant ruling planet, critical degree positions 是什么？
@@ -22,7 +45,7 @@ solar return ascendant, natal chart overlay, sun's house placement, ascendant ru
 
 1. **本命盘。** 本命盘描述长期性格和生活结构，回归盘描述某一年被点到的主题。要得到年度聚焦，就要牺牲一部分人生全景；要保留人生全景，就会少掉这一年的优先级。
 2. **行运。** 行运按天、按月追踪天空行星与本命点的互动，适合看阶段变化。要得到细密时间线，就要牺牲单张年度图的简洁；要得到年度轮廓，就要放下每天都解释的冲动。
-3. **独立年度盘。** 单看太阳返照盘很快，但容易把每个人都读成同一种年度模板。要得到贴合本命的判断，就要牺牲快速套话，改用 [[<TBD-internal-link: 本命盘相位基础指南>]] 里的合相思路，只抓回归盘贴近本命点的位置。
+3. **独立年度盘。** 单看太阳返照盘很快，但容易把每个人都读成同一种年度模板。要得到贴合本命的判断，就要牺牲快速套话，改用 [[<TBD-internal-link: 本命盘相位基础指南>]] 和 [[<TBD-internal-link: 太阳返照盘计算器使用指南>]] 里的合相思路，只抓回归盘贴近本命点的位置。
 
 ## 如何在你的星盘里识别 solar return ascendant, natal chart overlay, sun's house placement, ascendant ruling planet, critical degree positions
 

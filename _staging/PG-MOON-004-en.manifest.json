@@ -8,9 +8,9 @@
   "track": "量产线",
   "generated_by": "unknown",
   "prompt_version": "v8",
-  "generated_at": "2026-06-05T18:45:42.209Z",
-  "content_sha256_short": "9e430741d706488e",
-  "source_path": "_staging/PG-MOON-004-en.md",
+  "generated_at": "2026-06-06T05:48:36.457Z",
+  "content_sha256_short": "e0ac8a08c01c10be",
+  "source_path": "_staging/PG-MOON-004-claude-v8.md",
   "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-MOON-004-en.md",
   "phase2_checks": {
     "overall": "pass",

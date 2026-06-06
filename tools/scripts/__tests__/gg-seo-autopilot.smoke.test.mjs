@@ -73,9 +73,11 @@ function initOracleWithOrigin(h) {
   git(h.oracle, ['config', 'user.email', 'test@example.com']);
   mkdirSync(join(h.oracle, 'data', 'articles'), { recursive: true });
   mkdirSync(join(h.oracle, 'data', 'authors'), { recursive: true });
+  mkdirSync(join(h.oracle, 'scripts'), { recursive: true });
   writeFileSync(join(h.oracle, 'README.md'), 'clean\n');
   writeFileSync(join(h.oracle, 'data', 'articles', 'index.ts'), 'const ARTICLES_EN: WikiArticle[] = [\n];\nconst ARTICLES_ZH: WikiArticle[] = [\n];\n');
   writeFileSync(join(h.oracle, 'data', 'authors', 'index.ts'), 'export const authors = [{ id: "test-author" }];\n');
+  writeFileSync(join(h.oracle, 'scripts', 'generate-seo-pages.mjs'), 'const ARTICLE_SLUGS = [\n];\nconst ARTICLE_SLUGS_EN_ONLY = [\n];\n');
   git(h.oracle, ['add', '.']);
   git(h.oracle, ['commit', '-m', 'init']);
   git(h.oracle, ['remote', 'add', 'origin', origin]);
@@ -93,14 +95,16 @@ function addRemoteMainCommit(h) {
   git(clone, ['push', 'origin', 'main']);
 }
 
-function writeStubFlow(h, slug = 'test-slug') {
+function writeStubFlow(h, slug = 'test-slug', { zh = false } = {}) {
   const flow = join(h.root, 'flow');
   const scripts = join(flow, 'tools', 'scripts');
   const staging = join(flow, '_staging');
   mkdirSync(scripts, { recursive: true });
   mkdirSync(staging, { recursive: true });
+  mkdirSync(join(staging, 'zh-demo'), { recursive: true });
   writeFileSync(join(staging, 'PG-TEST-001-en.md'), `---\nslug: ${slug}\nauthor_id: test-author\n---\n# Test\n\nBody.\n`);
   writeFileSync(join(staging, 'PG-TEST-001-en.manifest.json'), JSON.stringify({ phase2_checks: { overall: 'pass' } }));
+  if (zh) writeFileSync(join(staging, 'zh-demo', 'PG-TEST-001-zh.md'), `---\nslug: ${slug}\nauthor_id: test-author\n---\n# 测试\n\n正文。\n`);
   writeFileSync(join(scripts, 'gg-md-to-oracle-ts.mjs'), `#!/usr/bin/env node
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';

@@ -305,19 +305,34 @@ function articleAuthorIds(repo, slug) {
   return [...src.matchAll(/authorId:\s*"?([^",\n]*)"?/g)].map((m) => m[1].trim());
 }
 
+function zhBackfillCandidate(task, claims) {
+  const claim = claims[task.pgId] || {};
+  return Boolean(
+    task.checked &&
+    claim.status === 'done' &&
+    claim.slug &&
+    claim.zh !== true &&
+    existsSync(enDraft(task.pgId)) &&
+    phase2Passed(task.pgId) &&
+    existsSync(zhDraft(task.pgId)),
+  );
+}
+
 // A task is claimable for downstream publish iff drafts exist + pass + not done.
 function claimable(task, claims) {
-  if (task.checked) return { ok: false, reason: 'already checked in plan' };
+  const zhBackfill = zhBackfillCandidate(task, claims);
+  if (task.checked && !zhBackfill) return { ok: false, reason: 'already checked in plan' };
   const st = claimStatus(claims, task.pgId);
-  if (['active', 'pushed-preview', 'verified-preview', 'needs_human', 'done'].includes(st)) {
+  if (['active', 'pushed-preview', 'verified-preview', 'needs_human'].includes(st)) {
     return { ok: false, reason: `claim=${st}` };
   }
+  if (st === 'done' && !zhBackfill) return { ok: false, reason: 'claim=done' };
   if (!existsSync(enDraft(task.pgId))) return { ok: false, reason: 'no EN enriched draft (upstream not done)' };
   if (!phase2Passed(task.pgId)) return { ok: false, reason: 'phase2 not pass' };
-  const slug = frontmatterSlug(enDraft(task.pgId));
+  const slug = (zhBackfill ? (claims[task.pgId] || {}).slug : null) || frontmatterSlug(enDraft(task.pgId));
   if (!slug) return { ok: false, reason: 'EN draft missing frontmatter slug' };
   if (!SLUG_RE.test(slug)) return { ok: false, reason: `invalid slug "${slug}" (needs source fix)` };
-  if (existsSync(join(articlesDir(ORACLE), `${slug}.ts`)) && st !== 'needs_human')
+  if (existsSync(join(articlesDir(ORACLE), `${slug}.ts`)) && st !== 'needs_human' && !zhBackfill)
     return { ok: false, reason: `oracle already has ${slug}.ts` };
   return { ok: true, slug };
 }
@@ -335,12 +350,32 @@ function registerSeoSlug(repo, slug, zh) {
   const f = join(repo, 'scripts', 'generate-seo-pages.mjs');
   if (!existsSync(f)) { log(`WARN no generate-seo-pages.mjs — ${slug} won't get a static SEO page`); return; }
   let src = readFileSync(f, 'utf8');
-  if (new RegExp(`['"]${slug}['"]`).test(src)) return; // already registered
-  const arr = zh ? 'ARTICLE_SLUGS' : 'ARTICLE_SLUGS_EN_ONLY';
-  const re = new RegExp(`(const ${arr} = \\[\\n)`);
-  if (!re.test(src)) { log(`WARN ${arr} not found in generate-seo-pages.mjs — ${slug} not registered for static SEO`); return; }
-  writeFileSync(f, src.replace(re, `$1  '${slug}',\n`));
-  log(`registered ${slug} → ${arr} (static SEO page + sitemap)`);
+  const hasIn = (arr) => new RegExp(`const ${arr} = \\[([\\s\\S]*?)\\n\\];`, 'm').test(src)
+    && new RegExp(`const ${arr} = \\[([\\s\\S]*?)['"]${slug}['"]([\\s\\S]*?)\\n\\];`, 'm').test(src);
+  const insertInto = (arr) => {
+    const re = new RegExp(`(const ${arr} = \\[\\n)`);
+    if (!re.test(src)) { log(`WARN ${arr} not found in generate-seo-pages.mjs — ${slug} not registered for static SEO`); return false; }
+    src = src.replace(re, `$1  '${slug}',\n`);
+    return true;
+  };
+  const removeFrom = (arr) => {
+    src = src.replace(new RegExp(`^\\s*['"]${slug}['"],\\n`, 'm'), '');
+  };
+
+  if (zh) {
+    if (hasIn('ARTICLE_SLUGS')) return;
+    const wasEnOnly = hasIn('ARTICLE_SLUGS_EN_ONLY');
+    if (wasEnOnly) removeFrom('ARTICLE_SLUGS_EN_ONLY');
+    if (!insertInto('ARTICLE_SLUGS')) return;
+    writeFileSync(f, src);
+    log(`${wasEnOnly ? 'promoted' : 'registered'} ${slug} → ARTICLE_SLUGS (static SEO page + sitemap)`);
+    return;
+  }
+
+  if (hasIn('ARTICLE_SLUGS') || hasIn('ARTICLE_SLUGS_EN_ONLY')) return;
+  if (!insertInto('ARTICLE_SLUGS_EN_ONLY')) return;
+  writeFileSync(f, src);
+  log(`registered ${slug} → ARTICLE_SLUGS_EN_ONLY (static SEO page + sitemap)`);
 }
 
 function convert(repo, pgId, slug) {

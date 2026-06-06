@@ -292,6 +292,32 @@ function frontmatterSlug(mdPath) {
   const m = head.match(/^slug:\s*["']?([^"'\n]+?)["']?\s*$/m);
   return m ? m[1].trim() : null;
 }
+function readMdFrontmatter(mdPath) {
+  const src = readFileSync(mdPath, 'utf8');
+  const m = src.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
+  if (!m) return { attrs: {}, body: src };
+  const attrs = {};
+  let currentList = null;
+  for (const line of m[1].split('\n')) {
+    const item = line.match(/^\s*-\s*(.+?)\s*$/);
+    if (item && currentList) {
+      attrs[currentList].push(item[1].replace(/^['"]|['"]$/g, ''));
+      continue;
+    }
+    const kv = line.match(/^([A-Za-z0-9_]+):\s*(.*)$/);
+    if (!kv) { currentList = null; continue; }
+    const [, key, raw] = kv;
+    const value = raw.trim();
+    if (!value) {
+      attrs[key] = [];
+      currentList = key;
+      continue;
+    }
+    currentList = null;
+    attrs[key] = value.replace(/^['"]|['"]$/g, '');
+  }
+  return { attrs, body: m[2] };
+}
 function registeredAuthorIds(repo) {
   const index = authorsIndex(repo);
   if (!existsSync(index)) return new Set();

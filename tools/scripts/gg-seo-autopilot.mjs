@@ -432,6 +432,29 @@ function nextUnauthored(tasks, claims) {
   return null;
 }
 
+// Checked plan items that are already published in EN (claim=done) but still lack
+// the upstream ZH source draft. These are NOT scan-claimable yet — scan only knows
+// how to publish a zh backfill once _staging/zh-demo/<PG>-zh.md exists — so --author
+// needs a second lane that manufactures that missing source.
+function needsZhSourceBackfill(task, claims) {
+  const claim = claims[task.pgId] || {};
+  return Boolean(
+    task.checked &&
+    claim.status === 'done' &&
+    claim.zh !== true &&
+    existsSync(enDraft(task.pgId)) &&
+    phase2Passed(task.pgId) &&
+    !existsSync(zhDraft(task.pgId)),
+  );
+}
+
+function nextZhSourceBackfill(tasks, claims) {
+  for (const t of tasks) {
+    if (needsZhSourceBackfill(t, claims)) return t;
+  }
+  return null;
+}
+
 // cluster_domain → author_id via the config snapshot's author.map (the documented
 // auto-routing rule). overrideRaw='' on purpose so a malformed Sheet author column
 // (display names like "Aditi Sharma") can't block routing. '' if unresolved.
@@ -545,21 +568,30 @@ function agenticRescuePrompt(pgId, keyword, author, draftRel, fails) {
 
 function doAuthor(o = {}) {
   let sel;
+  const claims = loadClaims();
   if (o.task) {
     const plan = latestPlan();
     if (!plan) { log('no blog-output-plan found'); return; }
     const t = parseTasks(plan).find((x) => x.pgId === o.task);
     if (!t) { log(`--task ${o.task} not found in plan`); return; }
-    if (claimStatus(loadClaims(), t.pgId)) { log(`--task ${o.task} already has a claim (clear it first)`); return; }
-    sel = { plan, task: t };
+    const zhBackfill = needsZhSourceBackfill(t, claims);
+    if (claimStatus(claims, t.pgId) && !zhBackfill) { log(`--task ${o.task} already has a claim (clear it first)`); return; }
+    sel = { plan, task: t, mode: zhBackfill ? 'zh-backfill' : 'en-author' };
   } else {
-    sel = nextUnauthoredTask();
+    const plan = latestPlan();
+    if (!plan) { log('no blog-output-plan found'); return; }
+    const tasks = parseTasks(plan);
+    const task = nextUnauthored(tasks, claims) || nextZhSourceBackfill(tasks, claims);
+    sel = task
+      ? { plan, task, mode: needsZhSourceBackfill(task, claims) ? 'zh-backfill' : 'en-author' }
+      : null;
   }
   if (!sel || !sel.task) { log('nothing to author this run'); return; }
   const { task: t } = sel;
   const pgId = t.pgId;
+  const modeZhBackfill = sel.mode === 'zh-backfill';
   const planName = basename(sel.plan);
-  log(`author candidate ${pgId} (${t.keyword || ''})`);
+  log(`${modeZhBackfill ? 'zh-backfill candidate' : 'author candidate'} ${pgId} (${t.keyword || ''})`);
   const park = (slug, reason) => parkAuthor(pgId, slug, planName, reason);
 
   try {
@@ -612,16 +644,20 @@ function doAuthor(o = {}) {
     const messyEntity = /·/.test(entry.entity || '') || ((entry.entity || '').split(',').length >= 3);
     if (messyEntity && cleanEntity) entry.entity = cleanEntity;
 
-    // English-template CTA when the Sheet CTA text is non-English (CJK) or blank.
-    // Keep the Sheet's absolute cta_target_url. (User-approved 2026-06-03.)
+    // CTA normalization by lane:
+    // - EN authoring keeps the prior English fallback.
+    // - ZH backfill needs a native Chinese CTA; otherwise the generated Chinese draft
+    //   inherits an English CTA block, which is jarring and weakens the whole point
+    //   of the bilingual backfill.
     if (/[㐀-鿿]/.test(entry.cta_text || '') || !(entry.cta_text || '').trim()) {
-      // If the Sheet cta_target_url is a placeholder (CJK like "工具页") rather than an
-      // absolute URL, fall back to the canonical birth-chart tool page instead of
-      // parking — every astrology article can sensibly CTA to "generate your free
-      // birth chart". A real absolute Sheet URL is always preserved.
-      if (!/^https?:\/\//.test(entry.cta_target_url || ''))
-        entry.cta_target_url = 'https://astrologywiki.com/en/wiki/how-to-read-birth-chart';
-      entry.cta_text = `Generate your free birth chart to explore ${cleanEntity}.`;
+      if (!/^https?:\/\//.test(entry.cta_target_url || '')) {
+        entry.cta_target_url = modeZhBackfill
+          ? 'https://astrologywiki.com/zh/wiki/how-to-read-birth-chart'
+          : 'https://astrologywiki.com/en/wiki/how-to-read-birth-chart';
+      }
+      entry.cta_text = modeZhBackfill
+        ? `免费生成你的本命盘，继续了解${cleanEntity}。`
+        : `Generate your free birth chart to explore ${cleanEntity}.`;
     }
     try { writeFileSync(absOverride, JSON.stringify(ov, null, 2)); }
     catch (e) { return park(slug, `override write failed: ${errTail(e)}`); }
@@ -646,10 +682,46 @@ function doAuthor(o = {}) {
     if (!existsSync(epRag) || statSync(epRag).size < 512) return park(slug, 'entity-passport produced no RAG');
 
     // 6. render → v8 prompt + fixture (render WARNs on missing SERP cache; gate on file)
-    try { shFlow('node', [RENDER, '--batch', batchPath, '--overrides', overridePath]); }
+    const renderArgs = ['node', [RENDER, '--batch', batchPath, '--overrides', overridePath]];
+    if (modeZhBackfill) renderArgs[1].push('--language', 'zh');
+    try { shFlow(renderArgs[0], renderArgs[1]); }
     catch (e) { log(`render exit non-zero: ${errTail(e, 80)}`); }
-    const promptPath = join('.gg-cache', 'prompts', `${pgId}.v8-prompt.md`);
-    if (!existsSync(join(FLOW, promptPath))) return park(slug, 'render produced no v8 prompt');
+    const promptPath = join('.gg-cache', 'prompts', `${pgId}.v8${modeZhBackfill ? '.zh' : ''}-prompt.md`);
+    if (!existsSync(join(FLOW, promptPath))) return park(slug, `render produced no ${modeZhBackfill ? 'ZH ' : ''}v8 prompt`);
+
+    if (modeZhBackfill) {
+      const draftV8 = join('_staging', 'zh-demo', `${pgId}-${WINNER}-v8.md`);
+      const promptAbs = join(FLOW, promptPath);
+      const basePrompt = readFileSync(promptAbs, 'utf8');
+      const restorePrompt = () => { try { writeFileSync(promptAbs, basePrompt); } catch { /* best-effort */ } };
+      const attempts = Math.max(1, parseInt(process.env.GG_AUTHOR_GEN_ATTEMPTS || '3', 10));
+      let lastFail = '';
+      for (let i = 1; i <= attempts; i++) {
+        if (lastFail && i > 1) {
+          writeFileSync(promptAbs, `${basePrompt}\n\n## ⚠️ 上一稿被自动校验拦下 — 本稿必须逐条修掉\n${lastFail}\n\n补救要求：\n- 这是中文稿，保留中文 H2 与正文，不要退回英文。\n- RL4 漂移 → 被点名的小节里自然补回主中文关键词或对应主题短语。\n- RL5 堆词 → 过密处改成代词 / 近义表达，别机械重复。\n- RL6 / 合规 → 保留反思性、非疗效、非诊断措辞；不要写治疗、改善病症、调理体质。\n- 结构类 FAIL → 只做外科式修正，不整篇重写。\n`);
+        }
+        const orchTimeout = parseInt(process.env.GG_AUTHOR_ORCH_TIMEOUT_MS || '1800000', 10);
+        try { shFlow('node', [ORCHESTRATOR, '--prompt', promptPath, '--page-id', pgId, '--models', WINNER, '--out-dir', '_staging/zh-demo', '--retry', '0'], orchTimeout); }
+        catch (e) { log(`zh orchestrator exit non-zero (attempt ${i}): ${errTail(e, 80)}`); }
+        if (!existsSync(join(FLOW, draftV8))) { lastFail = '- orchestrator produced no zh draft'; continue; }
+        try { shFlow('node', [PHASE2, '--source', draftV8, '--page-id', pgId, '--tag', 'zh', '--language', 'zh', '--author', author]); }
+        catch (e) {
+          const out = `${e.stdout || ''}${e.stderr || ''}`;
+          const fails = [...out.matchAll(/✗\s*(?:FAIL\s*)?([^\n]+)/g)].map((m) => `- ${m[1].trim()}`).filter((s) => s.length > 6).slice(0, 8);
+          lastFail = fails.length ? fails.join('\n') : '- zh phase2 FAIL (no detail captured)';
+          log(`zh phase2 attempt ${i}/${attempts} failed:\n${lastFail}${i < attempts ? '\n  → regenerating WITH feedback' : ''}`);
+          continue;
+        }
+        if (existsSync(zhDraft(pgId))) {
+          restorePrompt();
+          log(`AUTHORED ZH ${pgId} → ${zhDraft(pgId)} (author=${author}, attempt ${i}/${attempts}) — ready for next scan to publish bilingual backfill`);
+          return;
+        }
+        lastFail = '- zh phase2 wrote no passing draft';
+      }
+      restorePrompt();
+      return park(slug, `${(lastFail || 'zh phase2 failed').replace(/\n/g, ' | ')} after ${attempts} zh attempt(s)`);
+    }
 
     // 7+8. Generate (Opus) → validate (phase2 v4.4/v4.5.1), retrying on failure.
     //   phase2 trips on generation variance — esp. SC3c "section scatter" (≤3 prose

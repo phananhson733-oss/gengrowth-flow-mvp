@@ -19,6 +19,7 @@
 - 要点 2：定位 W22 中文缺口未被 cron 接住的原因，并修复 autopilot 对已完成任务的中文回填阻塞逻辑。
 - 要点 3：按 astrologywiki 中文 SEO brief 生成 south node / 南交点 T2 wiki 词条，遵守 11 个 H2、内链占位符、CTA 与合规约束。
 - 要点 4：按 astrologywiki 中文 SEO brief 生成 full moon energy / 满月能量 Definition × T2 wiki 词条，完成结构、内链、CTA、字数与关键词密度自检。
+- 要点 5：基于英文 Phase 2 成稿生成 solar return chart / 太阳回归盘中文 Phase 2 Markdown 正文，保留原 H2 顺序、中文 CTA 与免责声明。
 19|
 20|---
 21|
@@ -82,5 +83,29 @@
 **🤖 回答：**
 
 按 brief 产出 1 篇简体中文 Markdown wiki 词条，主中文长尾词选为「满月能量」，围绕 full moon energy / 满月能量的月相周期定义、灵性读法、自我觉察用途、与新月/月食/普通情绪波动的取舍、识别方法、常见误读和问答展开；正文内联了 pillar 与 spoke 占位内链，并在「下一步行动」使用真实 CTA URL `https://astrologywiki.com/zh/wiki/how-to-read-birth-chart`。提交前自检：1 个 H1、11 个 H2、0 个 H3/H4，主词 7 次，中文字符与标点计数约 1847，未命中自列禁词检查。
+
+---
+
+### Q5 — 06:20
+
+**🙋 提问：**
+
+看下flow-mvp看下有没有问题卡住了，帮我修复一下；重点继续检查 W22 中文草稿生成链路，补一条自动 backfill 缺失 zh draft 的上游链路，并验证能实际继续产出。
+
+**🤖 回答：**
+
+继续排查后确认真正卡点有两层：第一层是旧的 zh backfill 仍然依赖 选题登记表→bridge→override 这条英文生产链，而 W22 中至少 `PG-SOLAR-001 / solar return chart` 的表格行本身不完整，bridge 会直接产出 `ready=0` 并把任务卡死；第二层是当前环境里的 `claude` CLI 订阅访问被禁用，导致即使绕过 sheet 也会在模型调用处秒退。已在 `tools/scripts/gg-seo-autopilot.mjs` 修成新的正式上游链：对已完成但缺失 zh draft 的条目，不再先走 sheet bridge，而是直接读取已通过 phase2 的 EN draft frontmatter + 正文，自动合成 `.gg-cache/prompts/<page>.v8.zh-prompt.md`，以英文成稿为 source-of-truth 生成中文 backfill；同时补了多模型回退能力，zh backfill 默认可从 `claude,codex,gemini` 中择可用模型继续，而不是被单个 claude 权限问题卡死。已完成真实回归：`node --check tools/scripts/gg-seo-autopilot.mjs` 通过，`node --test tools/scripts/__tests__/gg-seo-autopilot.smoke.test.mjs` 8/8 通过；随后实际触发 `node tools/scripts/gg-seo-autopilot.mjs --author`，不再停在 `bridge failed`，已进入真实 zh backfill 生成流程（进程仍在跑，说明链路已从“上游解析即卡死”推进到“模型生成中”）。
+
+---
+
+### Q5 — 02:46
+
+**🙋 提问：**
+
+用户要求以 AstrologyWiki 中文内容编辑身份，基于已通过英文 Phase 2 的 `solar return chart` 成稿，产出一篇可直接进入中文 Phase 2 的简体中文版本。硬性要求包括：输出纯 Markdown 正文、不要 YAML frontmatter、不要解释过程；保留英文稿相同整体结构与 H2 顺序且不减少小节；H1 为自然中文标题，正文与 H2 全部使用简体中文；保留反思性 / 象征性语气，禁止诊断、治疗、治愈、改善病症等医疗承诺；结尾必须保留中文免责声明，表达“这不是临床解读或心理健康建议”；CTA 改写为中文并指向 `https://astrologywiki.com/zh/wiki/how-to-read-birth-chart`；如原文出现 `astrologywiki.com/en/` 内链或 CTA，改成 `/zh/` 对应路径，拿不准时只保留 CTA 这个确定链接；不要照搬英文句子，可为中文读者自然重写但忠于英文稿核心含义；不要输出 TODO、占位符、方括号备注或英文审校说明；自行选择自然中文主关键词，并在 H1 与正文主体稳定复用。元数据为：page_id `PG-SOLAR-001`，slug `solar-return-chart`，author_id `marcus-orion`，target_keyword_en `solar return chart`，entity `solar return chart`，template `Definition`，tier `T1`，track `量产线`，associated_keywords_en 包括 `solar return`、`how to interpret solar return chart`、`solar chart`、`solar return chart calculator`。英文源稿结构包括 H1 `What a Solar Return Chart Really Reveals About the Year Ahead`，以及关于五个阅读层（solar return ascendant、natal chart overlay、sun's house placement、ascendant ruling planet、critical degree positions）、自我觉察意义、与 transits / secondary progressions / standalone return 的取舍、五步阅读方法、常见误读、速查表、常见问题、反思提示、延伸阅读、Take Action 和 Sources 的全部小节内容。
+
+**🤖 回答：**
+
+按英文 Phase 2 成稿结构产出 1 篇简体中文 Markdown 正文，主中文关键词选为「太阳回归盘」。正文保留原文 H2 顺序与全部小节，将 CTA 改写并指向 `https://astrologywiki.com/zh/wiki/how-to-read-birth-chart`；移除不确定占位内链，只保留确定 CTA；结尾加入“这不是临床解读或心理健康建议”的中文免责声明。
 
 ---

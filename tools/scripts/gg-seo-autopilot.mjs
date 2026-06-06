@@ -350,8 +350,10 @@ function registerSeoSlug(repo, slug, zh) {
   const f = join(repo, 'scripts', 'generate-seo-pages.mjs');
   if (!existsSync(f)) { log(`WARN no generate-seo-pages.mjs — ${slug} won't get a static SEO page`); return; }
   let src = readFileSync(f, 'utf8');
-  const hasIn = (arr) => new RegExp(`const ${arr} = \\[([\\s\\S]*?)\\n\\];`, 'm').test(src)
-    && new RegExp(`const ${arr} = \\[([\\s\\S]*?)['"]${slug}['"]([\\s\\S]*?)\\n\\];`, 'm').test(src);
+  const hasIn = (arr) => {
+    const body = (src.match(new RegExp(`const ${arr} = \\[([\\s\\S]*?)\\n\\];`, 'm')) || [])[1] || '';
+    return new RegExp(`['"]${slug}['"]`).test(body);
+  };
   const insertInto = (arr) => {
     const re = new RegExp(`(const ${arr} = \\[\\n)`);
     if (!re.test(src)) { log(`WARN ${arr} not found in generate-seo-pages.mjs — ${slug} not registered for static SEO`); return false; }

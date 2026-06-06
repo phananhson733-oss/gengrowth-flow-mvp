@@ -109,3 +109,15 @@
 按英文 Phase 2 成稿结构产出 1 篇简体中文 Markdown 正文，主中文关键词选为「太阳回归盘」。正文保留原文 H2 顺序与全部小节，将 CTA 改写并指向 `https://astrologywiki.com/zh/wiki/how-to-read-birth-chart`；移除不确定占位内链，只保留确定 CTA；结尾加入“这不是临床解读或心理健康建议”的中文免责声明。
 
 ---
+
+### Q6 — 02:57
+
+**🙋 提问：**
+
+用户要求以 AstrologyWiki 中文内容编辑身份，基于已经通过英文 Phase 2 的 `full moon energy` 成稿，产出一篇可直接进入中文 Phase 2 的简体中文版本。硬性要求包括：输出纯 Markdown 正文、不要 YAML frontmatter、不要解释过程；不要沿用英文 H2 文案，必须改写进中文 Phase 2 认可的 11 个 H2 骨架；H1 必须是自然中文标题，正文与 H2 全部用简体中文；第一部分必须用 `## <你选定的中文主词> 是什么？` 开头，首段里要有 1 个加粗定义短语，随后紧跟正好 3 个 bullet；第二部分 H2 必须逐字写成 `## 为什么了解它能帮助自我觉察`；第三部分 H2 必须写成 `## <你选定的中文主词> 与相近概念：运作方式 + 取舍`，每个对比都要写出明确取舍；第四部分必须用“识别”而不是“阅读/判断”作 H2 动词；第五到第十一部分依次覆盖常见误读、速查表/一览、常见问题/问答、自我觉察小提示、延伸阅读、下一步行动、参考来源；`## 自我觉察小提示` 标题后第一行必须直接开始 `1.` / `2.` / `3.` 三条编号提示；至少放入 5 条 `[[<TBD-internal-link: ...>]]` 中文内链占位符；保留反思性 / 象征性语气，禁止医疗承诺；明确避开广告/承诺词；结尾保留中文免责声明，表达“这不是临床解读或心理健康建议”；CTA 改写为中文并指向 `https://astrologywiki.com/zh/wiki/how-to-read-birth-chart`；如原文出现 astrologywiki.com/en/ 内链或 CTA，改成 `/zh/` 对应路径，拿不准时只保留 CTA；不要照搬英文句子，可为中文读者自然重写但忠于英文稿核心含义；不要输出 TODO、占位符、方括号备注或英文审校说明；自行选择自然中文主关键词，并在 H1 与正文主体稳定复用。元数据为：page_id `PG-MOON-002`，slug `full-moon-energy`，author_id `marcus-orion`，target_keyword_en `full moon energy`，entity `full moon energy`，template `Definition`，tier `T2`，track `量产线`，associated_keywords_en 包括 `full moon meaning spiritually`、`full moon effects on humans`、`full moon ritual ideas`。英文源稿主题为 `Why Full Moon Energy Feels Amplified and How to Read It`，围绕满月能量的定义、自我觉察意义、与新月能量/月食能量/亏月阶段/普通情绪波动的取舍、识别线索、常见误读、速查表、常见问题、反思提示、延伸阅读、Take Action 和 Sources 展开。
+
+**🤖 回答：**
+
+按英文 Phase 2 成稿语义产出 1 篇简体中文 Markdown 正文，主中文关键词选为「满月能量」。正文采用中文 Phase 2 11 个 H2 骨架，包含定义、3 条首段 bullet、自我觉察意义、相近概念取舍、自身识别线索、常见误读、速查表、常见问题、自我觉察提示、延伸阅读、中文 CTA 与参考来源；CTA 指向 `https://astrologywiki.com/zh/wiki/how-to-read-birth-chart`，结尾保留“这不是临床解读或心理健康建议”的免责声明。
+
+---

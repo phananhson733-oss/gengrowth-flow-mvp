@@ -621,6 +621,64 @@ function doAuthor(o = {}) {
   const park = (slug, reason) => parkAuthor(pgId, slug, planName, reason);
 
   try {
+    const enSourcePath = enDraft(pgId);
+    const enMeta = existsSync(enSourcePath) ? readMdFrontmatter(enSourcePath) : { attrs: {}, body: '' };
+
+    if (modeZhBackfill) {
+      const fm = enMeta.attrs || {};
+      const slug = ((claims[pgId] || {}).slug || fm.slug || (t.keyword || pgId).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')).trim();
+      const keyword = String(fm.target_keyword || t.keyword || '').trim();
+      const cleanEntity = String(fm.entity || keyword || t.keyword || '')
+        .replace(/^\s*(what\s+(is|are|to\s+do\s+(on|with|during|after))|how\s+(to|do(es)?)|why\s+(is|are|do(es)?)|when\s+(is|are|to|do(es)?))\s+(a|an|the)?\s*/i, '')
+        .replace(/[?？]+\s*$/, '').trim() || keyword;
+      const author = String(fm.author_id || fm.author || '').trim();
+      const associatedKeywords = Array.isArray(fm.associated_keywords) ? fm.associated_keywords.filter(Boolean) : [];
+      const template = String(fm.template || 'Definition').trim() || 'Definition';
+      const tier = String(fm.tier || 'T2').trim() || 'T2';
+      const track = String(fm.track || '量产线').trim() || '量产线';
+      const zhKeyword = String(fm.target_keyword_zh || '').trim();
+      const enBody = String(enMeta.body || '').trim();
+      if (!author) return park(slug, 'EN draft missing author_id for zh backfill');
+      if (!keyword) return park(slug, 'EN draft missing target_keyword for zh backfill');
+      if (!enBody) return park(slug, 'EN draft body empty — cannot synthesize zh backfill prompt');
+
+      mkdirSync(join(FLOW, '.gg-cache', 'prompts'), { recursive: true });
+      const promptPath = join('.gg-cache', 'prompts', `${pgId}.v8.zh-prompt.md`);
+      const promptAbs = join(FLOW, promptPath);
+      const promptBase = `# Role\n你是 AstrologyWiki 的中文内容编辑。你的任务不是逐句翻译，而是基于一篇已经通过英文 Phase 2 的成稿，产出一篇可直接进入中文 Phase 2 的简体中文版本。\n\n# Hard requirements\n- 输出纯 Markdown 正文，不要 YAML frontmatter，不要解释过程。\n- 保留与英文稿相同的整体结构与 H2 顺序；不要减少小节。\n- H1 必须是自然中文标题；正文与 H2 全部用简体中文。\n- 保留反思性 / 象征性语气，禁止诊断、治疗、治愈、改善病症等医疗承诺。\n- 结尾必须保留免责声明，用中文表达“这不是临床解读或心理健康建议”。\n- 将 CTA 改写为中文，并指向 https://astrologywiki.com/zh/wiki/how-to-read-birth-chart 。\n- 如原文出现 astrologywiki.com/en/ 内链或 CTA，请改成 /zh/ 对应路径；拿不准时只保留 CTA 这一个确定链接。\n- 不要照搬英文句子；允许为中文读者做自然重写，但核心含义必须忠于英文稿。\n- 不要输出 TODO、占位符、方括号备注或英文审校说明。\n${zhKeyword ? `- 主中文关键词固定使用：${zhKeyword} 。H1 与至少多数主体段落自然回扣它，避免换成别的说法导致锚点漂移。\n` : '- 自行选择一个自然的中文主关键词，并在 H1 与正文主体里稳定复用，避免同义改写过度导致锚点漂移。\n'}\n# Metadata\n- page_id: ${pgId}\n- slug: ${slug}\n- author_id: ${author}\n- target_keyword_en: ${keyword}\n- entity: ${cleanEntity || keyword}\n- template: ${template}\n- tier: ${tier}\n- track: ${track}\n- associated_keywords_en: ${(associatedKeywords.length ? associatedKeywords.join(', ') : '(none)')}\n\n# Source English article (structure source of truth)\n\n${enBody}\n`;
+      writeFileSync(promptAbs, promptBase);
+
+      const draftV8 = join('_staging', 'zh-demo', `${pgId}-${WINNER}-v8.md`);
+      const attempts = Math.max(1, parseInt(process.env.GG_AUTHOR_GEN_ATTEMPTS || '3', 10));
+      let lastFail = '';
+      for (let i = 1; i <= attempts; i++) {
+        if (lastFail && i > 1) {
+          writeFileSync(promptAbs, `${promptBase}\n\n## ⚠️ 上一稿被自动校验拦下 — 本稿必须逐条修掉\n${lastFail}\n\n补救要求：\n- 保持中文，不要回退英文标题或英文小节。\n- RL4 漂移 → 在被点名小节自然补回主中文关键词；不要只在开头堆一次。\n- RL5 堆词 → 重复过密处改成代词 / 短称 / 解释句，但别把主关键词完全丢掉。\n- RL6 / 合规 → 改成象征、反思、传统关联，不要承诺疗效或心理治疗作用。\n- 结构 FAIL → 以英文稿结构为准，小修，不整篇推倒重写。\n`);
+        }
+        const orchTimeout = parseInt(process.env.GG_AUTHOR_ORCH_TIMEOUT_MS || '1800000', 10);
+        try { shFlow('node', [ORCHESTRATOR, '--prompt', promptPath, '--page-id', pgId, '--models', WINNER, '--out-dir', '_staging/zh-demo', '--retry', '0'], orchTimeout); }
+        catch (e) { log(`zh orchestrator exit non-zero (attempt ${i}): ${errTail(e, 80)}`); }
+        if (!existsSync(join(FLOW, draftV8))) { lastFail = '- orchestrator produced no zh draft'; continue; }
+        const phase2Args = ['node', [PHASE2, '--source', draftV8, '--page-id', pgId, '--tag', 'zh', '--language', 'zh', '--author', author, '--entity', cleanEntity || keyword, '--target-keyword', keyword, '--template', template, '--tier', tier, '--track', track, '--prompt-version', VERSION]];
+        if (associatedKeywords.length) phase2Args[1].push('--associated-keywords', associatedKeywords.join(', '));
+        if (zhKeyword) phase2Args[1].push('--zh-keyword', zhKeyword);
+        try { shFlow(phase2Args[0], phase2Args[1]); }
+        catch (e) {
+          const out = `${e.stdout || ''}${e.stderr || ''}`;
+          const fails = [...out.matchAll(/✗\s*(?:FAIL\s*)?([^\n]+)/g)].map((m) => `- ${m[1].trim()}`).filter((s) => s.length > 6).slice(0, 8);
+          lastFail = fails.length ? fails.join('\n') : '- zh phase2 FAIL (no detail captured)';
+          log(`zh phase2 attempt ${i}/${attempts} failed:\n${lastFail}${i < attempts ? '\n  → regenerating WITH feedback' : ''}`);
+          continue;
+        }
+        if (existsSync(zhDraft(pgId))) {
+          log(`AUTHORED ZH ${pgId} → ${zhDraft(pgId)} (author=${author}, attempt ${i}/${attempts}) — ready for next scan to publish bilingual backfill`);
+          return;
+        }
+        lastFail = '- zh phase2 wrote no passing draft';
+      }
+      return park(slug, `${(lastFail || 'zh phase2 failed').replace(/\n/g, ' | ')} after ${attempts} zh attempt(s)`);
+    }
+
     // 1. locate the Sheet row
     let loc;
     try { loc = findSheetRow(pgId, t.keyword); }

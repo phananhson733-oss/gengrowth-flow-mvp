@@ -8,8 +8,8 @@
   "track": "量产线",
   "generated_by": "unknown",
   "prompt_version": "v8",
-  "generated_at": "2026-06-05T18:49:36.367Z",
-  "content_sha256_short": "2c6d1fc0c77203ac",
+  "generated_at": "2026-06-06T15:29:15.231Z",
+  "content_sha256_short": "a8237710b00d8ae3",
   "source_path": "_staging/PG-MOON-005-claude-v8.md",
   "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-MOON-005-en.md",
   "phase2_checks": {
@@ -19,9 +19,9 @@
       "h2Count": 11,
       "h3Count": 0,
       "h4Count": 0,
-      "words": 1948,
-      "wikilinks": 5,
-      "tbdLinks": 5
+      "words": 1500,
+      "wikilinks": 4,
+      "tbdLinks": 4
     },
     "rl1": true,
     "rl2": true,

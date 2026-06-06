@@ -435,3 +435,28 @@ test('--scan can backfill zh for a checked done task and promote the slug from E
     h.cleanup();
   }
 });
+
+test('--author can generate the missing zh source draft for a checked done task before scan picks it up', () => {
+  const h = makeHarness();
+  try {
+    const flow = writeStubAuthorBackfillFlow(h);
+    writeFileSync(join(h.tasks, '2026-06-03-blog-output-plan.md'), '- [x] `PG-TEST-001` test keyword\n');
+    writeClaims(h, {
+      'PG-TEST-001': {
+        status: 'done',
+        slug: 'test-slug',
+        owner: 'autopilot',
+        zh: false,
+      },
+    });
+
+    const r = runAuto(h, ['--author'], { GG_FLOW_REPO: flow });
+
+    assert.equal(r.status, 0, `${r.stdout}${r.stderr}`);
+    assert.equal(existsSync(join(flow, '_staging', 'zh-demo', 'PG-TEST-001-zh.md')), true, `${r.stdout}${r.stderr}`);
+    assert.equal(existsSync(join(flow, '.gg-cache', 'prompts', 'PG-TEST-001.v8.zh-prompt.md')), true);
+    assert.match(`${r.stdout}${r.stderr}`, /AUTHORED ZH PG-TEST-001/);
+  } finally {
+    h.cleanup();
+  }
+});

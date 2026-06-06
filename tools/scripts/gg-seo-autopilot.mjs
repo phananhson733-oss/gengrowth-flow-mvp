@@ -246,6 +246,36 @@ function claimForBranch(claims, branch) {
   return { pgId, claim };
 }
 
+function ghPrMeta(branch) {
+  try {
+    return JSON.parse(sh(
+      'gh',
+      ['pr', 'view', branch, '--repo', 'xdawayer/oracle', '--json', 'state,mergedAt,closedAt,url'],
+      { cwd: ORACLE },
+    ));
+  } catch {
+    return null;
+  }
+}
+
+function reconcileClaimsWithGitHub(claims) {
+  let changed = false;
+  for (const [pgId, claim] of Object.entries(claims)) {
+    if (!claim?.branch || claim.status === 'done') continue;
+    const pr = ghPrMeta(claim.branch);
+    if (!pr || pr.state !== 'MERGED') continue;
+    claims[pgId] = {
+      ...claim,
+      status: 'done',
+      pr: claim.pr || pr.url,
+      mergedAt: claim.mergedAt || pr.mergedAt || new Date().toISOString(),
+      reconciliationNote: claim.reconciliationNote || 'auto-reconciled from merged GitHub PR',
+    };
+    changed = true;
+  }
+  return changed;
+}
+
 // ── per-task helpers ────────────────────────────────────────────────────────
 function enDraft(pgId) { return join(STAGING, `${pgId}-en.md`); }
 function zhDraft(pgId) { return join(STAGING, 'zh-demo', `${pgId}-zh.md`); }
@@ -931,8 +961,11 @@ function appendPublishLog(pgId, slug) {
 }
 
 function doStatus() {
-  const claims = loadClaims();
-  process.stdout.write(JSON.stringify(claims, null, 2) + '\n');
+  return withClaimsLock(() => {
+    const claims = loadClaims();
+    if (reconcileClaimsWithGitHub(claims)) saveClaims(claims);
+    process.stdout.write(JSON.stringify(claims, null, 2) + '\n');
+  });
 }
 
 const o = parseArgs(process.argv.slice(2));

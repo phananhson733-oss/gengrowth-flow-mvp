@@ -55,6 +55,7 @@ import {
 import { join, dirname, basename } from 'node:path';
 import { homedir } from 'node:os';
 import { buildAuthorMap, resolveAuthor } from './lib/author-routing.mjs';
+import { detectProtectedFactDrift, summarizeProtectedFactDrift } from './lib/review-fact-guard.mjs';
 import { slugifyPageId } from './gg-sheet-pull.mjs';
 
 const HOME = homedir();
@@ -648,10 +649,17 @@ function doAuthor(o = {}) {
             '--page-id', pgId, '--entity', cleanEntity, '--target-keyword', keyword], reviewTimeout).trim();
           log(out || 'review: (no output)');
           if (/revised/.test(out) && existsSync(join(FLOW, revisedV8))) {
-            try {
-              shFlow('node', [PHASE2, '--source', revisedV8, '--page-id', pgId, '--tag', 'en', '--author', author]);
-              log(phase2Passed(pgId) ? 'review: revised draft adopted (passed phase2)' : 'review: revision kept original');
-            } catch { log('review: revised draft failed phase2 — kept original'); }
+            const originalDraft = readFileSync(join(FLOW, draftV8), 'utf8');
+            const revisedDraft = readFileSync(join(FLOW, revisedV8), 'utf8');
+            const drift = detectProtectedFactDrift(originalDraft, revisedDraft);
+            if (drift.hasDrift) {
+              log(`review: revised draft changed protected facts — kept original (${summarizeProtectedFactDrift(drift)})`);
+            } else {
+              try {
+                shFlow('node', [PHASE2, '--source', revisedV8, '--page-id', pgId, '--tag', 'en', '--author', author]);
+                log(phase2Passed(pgId) ? 'review: revised draft adopted (passed phase2)' : 'review: revision kept original');
+              } catch { log('review: revised draft failed phase2 — kept original'); }
+            }
           }
         } catch (e) { log(`review skipped: ${errTail(e, 80)}`); }
         log(`AUTHORED ${pgId} → ${enDraft(pgId)} (author=${author}, attempt ${i}/${attempts}) — ready for next scan to publish`);

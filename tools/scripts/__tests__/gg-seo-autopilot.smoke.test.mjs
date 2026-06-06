@@ -282,3 +282,45 @@ test('--scan updates /oracle main first, then publishes from a separate worktree
     h.cleanup();
   }
 });
+
+test('--scan can backfill zh for a checked done task and promote the slug from EN-only to bilingual SEO generation', () => {
+  const h = makeHarness();
+  try {
+    initOracleWithOrigin(h);
+    writeFileSync(join(h.oracle, 'data', 'articles', 'test-slug.ts'), 'export const testSlugEn = { authorId: "test-author" };\n');
+    writeFileSync(join(h.oracle, 'scripts', 'generate-seo-pages.mjs'), 'const ARTICLE_SLUGS = [\n];\nconst ARTICLE_SLUGS_EN_ONLY = [\n  \'test-slug\',\n];\n');
+    git(h.oracle, ['add', 'data/articles/test-slug.ts', 'scripts/generate-seo-pages.mjs']);
+    git(h.oracle, ['commit', '-m', 'seed en-only article']);
+    git(h.oracle, ['push', 'origin', 'main']);
+
+    const flow = writeStubFlow(h, 'test-slug', { zh: true });
+    const worktreeRoot = join(h.root, 'oracle-worktrees');
+    writeFileSync(join(h.bin, 'npm'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
+    writeFileSync(join(h.bin, 'gh'), '#!/bin/sh\nprintf "https://github.com/xdawayer/oracle/pull/456\\n"\n', { mode: 0o755 });
+    writeFileSync(join(h.tasks, '2026-06-03-blog-output-plan.md'), '- [x] `PG-TEST-001` test keyword\n');
+    writeClaims(h, {
+      'PG-TEST-001': {
+        status: 'done',
+        slug: 'test-slug',
+        owner: 'autopilot',
+        zh: false,
+      },
+    });
+
+    const r = runAuto(h, ['--scan', '--limit', '1'], {
+      GG_FLOW_REPO: flow,
+      GG_ORACLE_WORKTREE_ROOT: worktreeRoot,
+    });
+
+    assert.equal(r.status, 0, `${r.stdout}${r.stderr}`);
+    const claims = JSON.parse(readFileSync(h.claimsPath, 'utf8'));
+    const claim = claims['PG-TEST-001'];
+    assert.equal(claim.status, 'pushed-preview');
+    assert.equal(claim.zh, true);
+    const seo = git(h.oracle, ['show', `${claim.branch}:scripts/generate-seo-pages.mjs`]);
+    assert.match(seo, /const ARTICLE_SLUGS = \[\n  'test-slug',/);
+    assert.doesNotMatch(seo, /ARTICLE_SLUGS_EN_ONLY = \[[\s\S]*'test-slug'/);
+  } finally {
+    h.cleanup();
+  }
+});

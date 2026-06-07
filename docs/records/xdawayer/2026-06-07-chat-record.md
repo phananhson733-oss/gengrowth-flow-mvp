@@ -145,3 +145,15 @@ obsidian://open?vault=gengrowth-wiki&file=docs%2F03-marketing%2F2026-06-05-keywo
 定 SSOT=按 artifact 分归属、先出草稿不进 wiki 后，落地 Part C 中版本无关/失败安全的脚本改动 + 测试：gg-queue-build 加「竞争建议」→dr_filter 别名（v3.2 改名兼容）；gg-sheet-pull 抓取范围 A:Z→A:AB（覆盖 v3.3 主表 28 列）；gg-keyword-promote 把 cluster_id 回填从硬编码 Y 改为按表头名 clusterColFromHeader() 解析，解析不到/抓取失败一律跳过（绝不盲写进 v3.3 的 Y=生产状态列）。全量 1040 smoke 测试绿、code-reviewer APPROVE（0 CRITICAL/HIGH）。HOLD：_workbook-spec.mjs 全量 v3.3 不改（须匹配未迁移活表）；活表迁移本身是独立 PM 任务。未碰 wiki。reconciliation 草稿留在 docs/2026-06-07-v33-plan-reconciliation-DRAFT.md。
 
 ---
+
+### Q9 — 22:15 [claude]
+
+**🙋 提问：**
+
+（/goal）开始迁移 + 提醒"不是说先 copy 一份吗"
+
+**🤖 回答：**
+
+按迁移说明 §3 step1 先复制副本（MCP 复制原表为 user-owned 1UaTx，原表未动），再用 SA 只读原表侦察真实 schema：活表仍 v3.1（N=DR过滤、25列止 Y cluster_id、626行），V内容状态/W发布URL 全空、X备注8条、Y cluster_id 162条；并发现活表 vs wiki canonical 多处差异（config tab=配置、桶名无emoji、❌跳过、cluster_id在Y）须保留活表写法。写权限被卡（SA对副本403/SA无配额/OAuth过期/MCP无授权工具），需用户把副本共享给 SA 邮箱为 Editor 才能继续。已落执行计划 docs/2026-06-07-v33-live-migration-plan.md（cluster_id→AC、N/O reformula、搬X→AB/Y→AC、加V-AB+生产候选视图、验收查询、回滚）。
+
+---

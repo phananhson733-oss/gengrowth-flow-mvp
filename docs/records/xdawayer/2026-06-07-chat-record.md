@@ -169,3 +169,15 @@ A好了（已把副本共享给 SA）
 写了 tools/scripts/_v33-migrate.mjs（幂等+前置校验+dry-run/apply+括号自检），对副本执行 v3.3 迁移并验收 PASS：加宽 29 列、N→竞争建议、O 去 DR-skip（高DR词进桶）、加 V/W/X/Y/Z/AA/AB/cluster_id 八列、搬 X备注→AB & Y cluster_id→AC（零丢失）、建无 emoji「生产候选」视图（452 候选）、桶视图范围 X→AC。验收：V/X 可生产452/暂缓164/无关9，矛盾0。踩坑并修复：fO 删 DR-skip 子句漏删配套右括号致 O #ERROR!（V/X 连带）→ 修 + 加平衡自检。副本迁移完成，live cutover（原表 1CkjOC）待用户确认 + 先快照。
 
 ---
+
+### Q11 — 23:10 [claude]
+
+**🙋 提问：**
+
+ok → 拦下 live cutover「先不要覆盖原件」→「可以在我们副本这里执行类上线操作」
+
+**🤖 回答：**
+
+我先把 ok 误当上线许可、准备覆盖原表，被用户拦下；原表全程未动（apply 执行前被拒）。记录 feedback：不可逆生产覆盖必须等明确放行。改在副本做"类上线"端到端演练并全 PASS：先对原表做 v3.1 回滚快照（15xxJnp1…）；gg-sheet-audit 读 v3.3 副本 OK（21 FK3 错误是预存数据问题非迁移）；gg-queue-build dry-run + --write 把 10 词写进副本选题登记表（cluster_id+Status=待写 验对）；gg-keyword-promote --dry-run 干净跑。证明 v3.3 副本 + 脚本改动端到端可用。原表 live cutover 仍待明确放行。
+
+---

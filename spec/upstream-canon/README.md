@@ -14,7 +14,8 @@ Authoritative source paths (in `gengrowth-wiki`):
 
 | File in this directory | Upstream path |
 | --- | --- |
-| `2026-05-15-gengrowth-internal-growth-mvp-prd-v0.7.md` | `docs/03-marketing/2026-05-15-gengrowth-internal-growth-mvp-prd-v0.7.md` |
+| `2026-05-15-gengrowth-internal-growth-mvp-prd-v0.8.md` | `docs/03-marketing/2026-05-15-gengrowth-internal-growth-mvp-prd-v0.8.md` |
+| `2026-06-05-keyword-sheet-v3.3-migration-collaboration.md` | `docs/03-marketing/2026-06-05-keyword-sheet-v3.3-migration-collaboration.md` |
 | `keyword-research-overview.md` | `docs/03-marketing/01-strategy/keyword-research-overview.md` |
 | `keyword-research-sop.md` | `docs/03-marketing/03-seo/keyword-research-sop.md` |
 | `keyword-sheet-setup.gs` | `docs/03-marketing/03-seo/keyword-sheet-setup.gs` |

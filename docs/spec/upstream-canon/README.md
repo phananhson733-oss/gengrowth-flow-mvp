@@ -10,21 +10,22 @@ status: live
 > **本目录是关键词模块与 GenGrowth 增长系统的 single source of truth（SSOT）。**
 > 所有 spec/ 内的本地稿都从属于本目录中的文档；冲突以本目录为准。
 > 复制自 wiki `/Users/wzb/gengrowth-wiki/docs/03-marketing/`，禁止在本目录内做单独的"改稿"——
-> 上游变更后用 `tools/scripts/_sync-canon.sh`（待建）重新拉取。
+> 上游变更后用 `tools/scripts/_sync-canon.sh` 重新拉取（脚本已就绪；注意它只自动写 `spec/upstream-canon/`，本 `docs/spec/` 镜像目前需手动同步）。
 
 ## 文档清单
 
 | 文档 | 上游路径 | 性质 | 引用方 |
 |------|---------|------|--------|
-| `2026-05-15-gengrowth-internal-growth-mvp-prd-v0.7.md` | `wiki/docs/03-marketing/` | **当前执行基准**（status=final，v0.6 取代） | `docs/spec/*` 全部本地稿的 upstream |
-| `keyword-research-overview.md` | `wiki/docs/03-marketing/01-strategy/` | 跨获客方式 + 跨业务 + 跨站点阶段的关键词路由总览（v0.4） | mine / promote / fallback 上层方法论 |
-| `keyword-research-sop.md` | `wiki/docs/03-marketing/03-seo/` | 六源挖掘 → 四桶分级 SOP（v2.5）| `gg-keyword-mine.mjs` / `gg-keyword-promote.mjs` 直接对标 |
-| `keyword-sheet-setup.gs` | `wiki/docs/03-marketing/03-seo/` | Google Apps Script v3.1，一键生成 13 张工作表的权威 schema 实现 | `tools/scripts/_bootstrap-flow-mvp-workbook.mjs` 必须按本文件复刻 |
+| `2026-05-15-gengrowth-internal-growth-mvp-prd-v0.8.md` | `wiki/docs/03-marketing/` | **当前执行基准**（status=final，取代 v0.7） | `docs/spec/*` 全部本地稿的 upstream |
+| `2026-06-05-keyword-sheet-v3.3-migration-collaboration.md` | `wiki/docs/03-marketing/` | v3.3 列结构（V-AB 生产准入/状态）+ v0.7→v0.8 迁移与 PM/运营分工说明 | 关键词主表 v3.3 schema 变更的权威解释 |
+| `keyword-research-overview.md` | `wiki/docs/03-marketing/01-strategy/` | 跨获客方式 + 跨业务 + 跨站点阶段的关键词路由总览（v0.5） | mine / promote / fallback 上层方法论 |
+| `keyword-research-sop.md` | `wiki/docs/03-marketing/03-seo/` | 六源挖掘 → 四桶分级 SOP（changelog 至 v2.5；.gs/PRD 引用的"SOP v2.3"是本文件内的版本行）| `gg-keyword-mine.mjs` / `gg-keyword-promote.mjs` 直接对标 |
+| `keyword-sheet-setup.gs` | `wiki/docs/03-marketing/03-seo/` | Google Apps Script v3.3，一键生成 14 张工作表的权威 schema 实现（关键词主表 A–AB 28 列，新增 🧩生产候选 视图） | `tools/scripts/_bootstrap-flow-mvp-workbook.mjs` 必须按本文件复刻 |
 
 ## 与 spec/ 内本地稿的关系
 
 ```
-upstream-canon/PRD v0.7  (SSOT, 现行基准)
+upstream-canon/PRD v0.8  (SSOT, 现行基准)
         │
         │ 实施层细化（保留在 docs/spec/）
         ├── 工具栈方案 v1.2          ← 落地 §7.1 (.gs v3.0) / §7.5 (v2.0 SOP)
@@ -40,7 +41,9 @@ upstream-canon/PRD v0.7  (SSOT, 现行基准)
         └── _archived/ → 见该目录 README
 ```
 
-## 关键决策（v0.7 现行基准）
+## 关键决策（现行基准 v0.8，下列条目待对照复核）
+
+> ⚠️ **待复核**：以下「关键决策」与后面的「对账」表是按 **PRD v0.7** 写的，2026-06-07 镜像已同步到 **v0.8**，但本节正文尚未逐条对照 v0.8 复核。v0.8 已知改动（需重新落到下列条目）：DR/KD 不再作为集群架构删除规则（改 N 竞争建议 + V/W/X 生产准入 + Y 生产状态）、产能口径改为 AI 批量 + 1 人审核 10+ 篇/天、内容 SOP 对齐 v2.3。详见 `2026-06-05-keyword-sheet-v3.3-migration-collaboration.md`。
 
 - **执行单位 = 主题集群**（不是关键词，不是单个页面）— §2.3
 - **内容双线**：量产线 / 精修线（不再叫"双轨"）— §3

@@ -121,3 +121,15 @@
 按英文 Phase 2 成稿语义产出 1 篇简体中文 Markdown 正文，主中文关键词选为「满月能量」。正文采用中文 Phase 2 11 个 H2 骨架，包含定义、3 条首段 bullet、自我觉察意义、相近概念取舍、自身识别线索、常见误读、速查表、常见问题、自我觉察提示、延伸阅读、中文 CTA 与参考来源；CTA 指向 `https://astrologywiki.com/zh/wiki/how-to-read-birth-chart`，结尾保留“这不是临床解读或心理健康建议”的免责声明。
 
 ---
+
+### Q7 — 17:13 [claude]
+
+**🙋 提问：**
+
+obsidian://open?vault=gengrowth-wiki&file=docs%2F03-marketing%2F2026-06-05-keyword-sheet-v3.3-migration-collaboration 帮我评估一下这个方案，在 gengrowth-wiki 中的内容，对应我们现在的 flow-mvp。需要将 flow-mvp 本地更新到最新
+
+**🤖 回答：**
+
+用 workflow 多维评估 wiki 的 keyword-sheet v3.3 迁移方案并落地本地同步。评审结论：设计 sound（拆 V/W/X 生产准入 vs Y 生产状态，修了高 DR Pillar 词被旧 DR过滤误删的真缺陷），但 runbook 有洞（§4 创始人处理争议整节空白、活表列插入无 layout diff/冻结窗口/回滚、验收不可测、.gs 内 v3.2 changelog 与 v3.3 实现自相矛盾）。对 flow-mvp 关键发现：新 V-AB 列全在关键词主表，flow-mvp 活表主表 V/W/X/Y(内容状态/发布URL/备注/cluster_id)与 v3.3 canonical 全错位，gg-keyword-promote 写 Y=真冲突，gg-content-draft 不受影响（纠正了子代理误判）。本地更新已落地：改 _sync-canon.sh(v0.7→v0.8 路径)并运行，两镜像目录同步到 .gs v3.3 / PRD v0.8 / 加迁移说明 / 删 v0.7 孤儿 / 更新两 README。消费脚本未动（依赖独立的活表迁移 PM 任务）。
+
+---

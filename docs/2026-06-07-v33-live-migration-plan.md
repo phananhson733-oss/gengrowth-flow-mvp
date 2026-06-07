@@ -18,7 +18,15 @@ work_copy_mcp: 1UaTxBQNdgeSomL6qlNJZMSRxovsSL5SasyWmuO5ny7M (gengrowth-flow-mvp 
 - [x] **读真实 schema + 数据分布**（§3 的"先 diff 活表"前置）。
 - [x] **写权限**：用户把副本共享给 SA 为 Editor（解卡）。
 - [x] **在副本上 apply 迁移 + 验收 PASS**（脚本 `tools/scripts/_v33-migrate.mjs --apply`）。
-- [ ] **live cutover**：经用户确认 + 对原表做快照后，`_v33-migrate.mjs --workbook 1CkjOC… --apply`。
+- [x] **副本"类上线"演练 PASS**（用户："原件别动，副本可执行类上线"）：见下。
+- [ ] **live cutover**：⏸ 用户喊停"先不要覆盖原件"。已留快照 `15xxJnp1Wf1M…`(v3.1 回滚件)。待**明确**放行后，`_v33-migrate.mjs --workbook 1CkjOC… --apply`（脚本幂等+前置校验+括号自检）。**注：覆盖原表是不可逆生产操作，必须等用户无歧义放行（见 memory feedback-no-overwrite-prod-sheet）。**
+
+### 副本"类上线"端到端演练（2026-06-07，PASS）
+用 flow-mvp 真实工具链指向副本跑生产级操作：
+- `gg-sheet-audit`：读 v3.3 副本 OK（625 词/21 集群）；21 FK3 错误 + 3 重复警告均为**预存数据问题**（集群 cta_primary 标签对不上 CTA Map id；集群重复），**非迁移引入**（未动主题集群表/CTA Map）。
+- `gg-queue-build` dry-run + `--write`：读 v3.3 主表建队列，cluster_id 关联正确；`--write` 把 10 词写入选题登记表 `A1521:A1530`（Status=待写 + cluster_id），**v3.3 完整生产写路径验通**。
+- `gg-keyword-promote --dry-run`：v3.3 上干净运行。
+结论：迁移后 v3.3 副本 + 已落地脚本改动（竞争建议别名 / cluster_id 按名解析 / A:AB）端到端可用。
 
 ### 副本迁移验收结果（2026-06-07，PASS）
 - 表头 29 列，N=竞争建议，V–AC = 生产准入_自动/手动生产准入/生产准入/生产状态/page_id/发布URL/备注/cluster_id。

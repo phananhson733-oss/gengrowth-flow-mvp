@@ -73,9 +73,11 @@ function initOracleWithOrigin(h) {
   git(h.oracle, ['config', 'user.email', 'test@example.com']);
   mkdirSync(join(h.oracle, 'data', 'articles'), { recursive: true });
   mkdirSync(join(h.oracle, 'data', 'authors'), { recursive: true });
+  mkdirSync(join(h.oracle, 'scripts'), { recursive: true });
   writeFileSync(join(h.oracle, 'README.md'), 'clean\n');
   writeFileSync(join(h.oracle, 'data', 'articles', 'index.ts'), 'const ARTICLES_EN: WikiArticle[] = [\n];\nconst ARTICLES_ZH: WikiArticle[] = [\n];\n');
   writeFileSync(join(h.oracle, 'data', 'authors', 'index.ts'), 'export const authors = [{ id: "test-author" }];\n');
+  writeFileSync(join(h.oracle, 'scripts', 'generate-seo-pages.mjs'), 'const ARTICLE_SLUGS = [\n];\nconst ARTICLE_SLUGS_EN_ONLY = [\n];\n');
   git(h.oracle, ['add', '.']);
   git(h.oracle, ['commit', '-m', 'init']);
   git(h.oracle, ['remote', 'add', 'origin', origin]);
@@ -93,14 +95,16 @@ function addRemoteMainCommit(h) {
   git(clone, ['push', 'origin', 'main']);
 }
 
-function writeStubFlow(h, slug = 'test-slug') {
+function writeStubFlow(h, slug = 'test-slug', { zh = false } = {}) {
   const flow = join(h.root, 'flow');
   const scripts = join(flow, 'tools', 'scripts');
   const staging = join(flow, '_staging');
   mkdirSync(scripts, { recursive: true });
   mkdirSync(staging, { recursive: true });
+  mkdirSync(join(staging, 'zh-demo'), { recursive: true });
   writeFileSync(join(staging, 'PG-TEST-001-en.md'), `---\nslug: ${slug}\nauthor_id: test-author\n---\n# Test\n\nBody.\n`);
   writeFileSync(join(staging, 'PG-TEST-001-en.manifest.json'), JSON.stringify({ phase2_checks: { overall: 'pass' } }));
+  if (zh) writeFileSync(join(staging, 'zh-demo', 'PG-TEST-001-zh.md'), `---\nslug: ${slug}\nauthor_id: test-author\n---\n# 测试\n\n正文。\n`);
   writeFileSync(join(scripts, 'gg-md-to-oracle-ts.mjs'), `#!/usr/bin/env node
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
@@ -109,6 +113,117 @@ mkdirSync(dirname(out), { recursive: true });
 writeFileSync(out, 'export const testSlugEn = { authorId: "test-author" };\\n');
 `);
   writeFileSync(join(scripts, 'gg-oracle-register-index.mjs'), 'process.exit(0);\n');
+  return flow;
+}
+
+function writeStubAuthorBackfillFlow(h) {
+  const flow = join(h.root, 'flow-author');
+  const scripts = join(flow, 'tools', 'scripts');
+  const staging = join(flow, '_staging');
+  const prompts = join(flow, '.gg-cache', 'prompts');
+  mkdirSync(scripts, { recursive: true });
+  mkdirSync(join(staging, 'zh-demo'), { recursive: true });
+  mkdirSync(prompts, { recursive: true });
+  writeFileSync(join(staging, 'PG-TEST-001-en.md'), '---\nslug: test-slug\nauthor_id: test-author\n---\n# Test\n\nBody.\n');
+  writeFileSync(join(staging, 'PG-TEST-001-en.manifest.json'), JSON.stringify({ phase2_checks: { overall: 'pass' } }));
+
+  writeFileSync(join(scripts, 'gg-sheet-pull.mjs'), `#!/usr/bin/env node
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { dirname } from 'node:path';
+const args = process.argv.slice(2);
+const out = args[args.indexOf('--out') + 1];
+mkdirSync(dirname(out), { recursive: true });
+const row = {
+  source_row: '7',
+  page_id: 'page_test_keyword',
+  brief: {
+    target_keyword: 'test keyword',
+    entity: 'test keyword',
+    associated_keywords: ['test keyword meaning'],
+    search_volume: '100',
+    content_angle: 'angle',
+    cta_target_url: '工具页',
+    template: 'Definition',
+    tier: 'T2'
+  }
+};
+writeFileSync(out, JSON.stringify({ rows: [row] }));
+`);
+
+  writeFileSync(join(scripts, 'gg-sheet-to-brief.mjs'), `#!/usr/bin/env node
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { dirname } from 'node:path';
+const args = process.argv.slice(2);
+const out = args[args.indexOf('--out') + 1];
+mkdirSync(dirname(out), { recursive: true });
+writeFileSync(out, JSON.stringify({
+  'PG-TEST-001': {
+    target_keyword: 'test keyword',
+    entity: 'test keyword',
+    associated_keywords: ['test keyword meaning'],
+    search_volume: '100',
+    content_angle: 'angle',
+    cta_text: '工具页',
+    cta_target_url: '工具页',
+    cluster_domain: 'mystic',
+    cluster_jtbd: 'jtbd',
+    internal_link_rule: 'link naturally',
+    tier_gate_block: 'tier gate',
+    rl6_hint: 'rl6',
+    friction_themes: [{ theme: 'theme', scrubbed_quote: 'quote' }],
+    template: 'Definition'
+  }
+}, null, 2));
+`);
+
+  writeFileSync(join(scripts, 'gg-gbrain-rag.mjs'), `#!/usr/bin/env node
+import { mkdirSync, writeFileSync } from 'node:fs';
+const args = process.argv.slice(2);
+const pageId = args[args.indexOf('--page-id') + 1];
+mkdirSync('.gg-cache/' + pageId, { recursive: true });
+writeFileSync('.gg-cache/' + pageId + '/obsidian-rag.json', JSON.stringify({ ok: true }));
+`);
+
+  writeFileSync(join(scripts, 'gg-entity-passport.mjs'), `#!/usr/bin/env node
+import { mkdirSync, writeFileSync } from 'node:fs';
+const args = process.argv.slice(2);
+const pageId = args[args.indexOf('--page-id') + 1];
+mkdirSync('.gg-cache/' + pageId, { recursive: true });
+writeFileSync('.gg-cache/' + pageId + '/entity-passport.rag.json', JSON.stringify({ pad: 'x'.repeat(800) }));
+`);
+
+  writeFileSync(join(scripts, 'gg-render-batch.mjs'), `#!/usr/bin/env node
+import { mkdirSync, writeFileSync } from 'node:fs';
+const args = process.argv.slice(2);
+const isZh = args.includes('--language') && args[args.indexOf('--language') + 1] === 'zh';
+mkdirSync('.gg-cache/prompts', { recursive: true });
+const suffix = isZh ? '.zh' : '';
+writeFileSync('.gg-cache/prompts/PG-TEST-001.v8' + suffix + '-prompt.md', '# prompt\\n\\nbody');
+writeFileSync('.gg-cache/prompts/PG-TEST-001.v8' + suffix + '-fixture.json', JSON.stringify({ language: isZh ? 'zh' : 'en' }));
+`);
+
+  writeFileSync(join(scripts, 'gg-llm-orchestrator.mjs'), `#!/usr/bin/env node
+import { mkdirSync, writeFileSync } from 'node:fs';
+const args = process.argv.slice(2);
+const outDir = args[args.indexOf('--out-dir') + 1];
+const pageId = args[args.indexOf('--page-id') + 1];
+mkdirSync(outDir, { recursive: true });
+writeFileSync(outDir + '/' + pageId + '-claude-v8.md', '# 中文稿\\n\\n这里是中文正文。');
+`);
+
+  writeFileSync(join(scripts, '_phase2-validate.mjs'), `#!/usr/bin/env node
+import { mkdirSync, writeFileSync } from 'node:fs';
+const args = process.argv.slice(2);
+const pageId = args[args.indexOf('--page-id') + 1];
+const tag = args[args.indexOf('--tag') + 1];
+const lang = args.includes('--language') ? args[args.indexOf('--language') + 1] : 'en';
+const dir = lang === 'zh' ? '_staging/zh-demo' : '_staging';
+mkdirSync(dir, { recursive: true });
+writeFileSync(dir + '/' + pageId + '-' + tag + '.md', '---\\nslug: test-slug\\nauthor_id: test-author\\n---\\n# 成稿\\n\\n正文。\\n');
+writeFileSync(dir + '/' + pageId + '-' + tag + '.manifest.json', JSON.stringify({ phase2_checks: { overall: 'pass' } }));
+`);
+
+  writeFileSync(join(scripts, 'gg-author-review.mjs'), 'process.exit(0);\n');
   return flow;
 }
 
@@ -274,6 +389,73 @@ test('--scan updates /oracle main first, then publishes from a separate worktree
     assert.ok(claim.worktree && claim.worktree.startsWith(worktreeRoot), `unexpected worktree: ${claim.worktree}`);
     assert.notEqual(claim.worktree, h.oracle);
     assert.match(git(h.oracle, ['show', `${claim.branch}:data/articles/test-slug.ts`]), /authorId: "test-author"/);
+  } finally {
+    h.cleanup();
+  }
+});
+
+test('--scan can backfill zh for a checked done task and promote the slug from EN-only to bilingual SEO generation', () => {
+  const h = makeHarness();
+  try {
+    initOracleWithOrigin(h);
+    writeFileSync(join(h.oracle, 'data', 'articles', 'test-slug.ts'), 'export const testSlugEn = { authorId: "test-author" };\n');
+    writeFileSync(join(h.oracle, 'scripts', 'generate-seo-pages.mjs'), 'const ARTICLE_SLUGS = [\n];\nconst ARTICLE_SLUGS_EN_ONLY = [\n  \'test-slug\',\n];\n');
+    git(h.oracle, ['add', 'data/articles/test-slug.ts', 'scripts/generate-seo-pages.mjs']);
+    git(h.oracle, ['commit', '-m', 'seed en-only article']);
+    git(h.oracle, ['push', 'origin', 'main']);
+
+    const flow = writeStubFlow(h, 'test-slug', { zh: true });
+    const worktreeRoot = join(h.root, 'oracle-worktrees');
+    writeFileSync(join(h.bin, 'npm'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
+    writeFileSync(join(h.bin, 'gh'), '#!/bin/sh\nprintf "https://github.com/xdawayer/oracle/pull/456\\n"\n', { mode: 0o755 });
+    writeFileSync(join(h.tasks, '2026-06-03-blog-output-plan.md'), '- [x] `PG-TEST-001` test keyword\n');
+    writeClaims(h, {
+      'PG-TEST-001': {
+        status: 'done',
+        slug: 'test-slug',
+        owner: 'autopilot',
+        zh: false,
+      },
+    });
+
+    const r = runAuto(h, ['--scan', '--limit', '1'], {
+      GG_FLOW_REPO: flow,
+      GG_ORACLE_WORKTREE_ROOT: worktreeRoot,
+    });
+
+    assert.equal(r.status, 0, `${r.stdout}${r.stderr}`);
+    const claims = JSON.parse(readFileSync(h.claimsPath, 'utf8'));
+    const claim = claims['PG-TEST-001'];
+    assert.equal(claim.status, 'pushed-preview');
+    assert.equal(claim.zh, true);
+    const seo = git(h.oracle, ['show', `${claim.branch}:scripts/generate-seo-pages.mjs`]);
+    assert.match(seo, /const ARTICLE_SLUGS = \[\n  'test-slug',/);
+    assert.doesNotMatch(seo, /ARTICLE_SLUGS_EN_ONLY = \[[\s\S]*'test-slug'/);
+  } finally {
+    h.cleanup();
+  }
+});
+
+test('--author can generate the missing zh source draft for a checked done task before scan picks it up', () => {
+  const h = makeHarness();
+  try {
+    const flow = writeStubAuthorBackfillFlow(h);
+    writeFileSync(join(h.tasks, '2026-06-03-blog-output-plan.md'), '- [x] `PG-TEST-001` test keyword\n');
+    writeClaims(h, {
+      'PG-TEST-001': {
+        status: 'done',
+        slug: 'test-slug',
+        owner: 'autopilot',
+        zh: false,
+      },
+    });
+
+    const r = runAuto(h, ['--author'], { GG_FLOW_REPO: flow });
+
+    assert.equal(r.status, 0, `${r.stdout}${r.stderr}`);
+    assert.equal(existsSync(join(flow, '_staging', 'zh-demo', 'PG-TEST-001-zh.md')), true, `${r.stdout}${r.stderr}`);
+    assert.equal(existsSync(join(flow, '.gg-cache', 'prompts', 'PG-TEST-001.v8.zh-prompt.md')), true);
+    assert.match(`${r.stdout}${r.stderr}`, /AUTHORED ZH PG-TEST-001/);
   } finally {
     h.cleanup();
   }

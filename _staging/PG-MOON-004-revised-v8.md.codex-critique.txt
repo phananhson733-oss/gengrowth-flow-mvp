@@ -1,0 +1,9 @@
+- 日期是硬伤 → 把“June 30”改成带时区口径：美国读者为 **June 29, 2026, 7:56/7:57 p.m. EDT**；UTC 为 June 29 23:56/23:57；June 30 只适用于英国以后部分时区。
+- “Mercury 同时站逆”过度精确 → 改成“同一 UTC 日、相隔约 6 小时”，并给出 Mercury station 的时间与度数：June 29, 2026 17:35 UTC，26°15/26°26 Cancer。
+- “25-day review cycle / enters retrograde shadow immediately”不准确 → 改为 Mercury retrograde proper 从 June 29 到 July 23/24，pre-shadow 已在 June 12/13 开始，June 30 不是“进入 shadow”。
+- “double-completion signal”占星逻辑略硬拗 → Mercury station retrograde 是 review/reversal 的开始，不是 completion；改成“full-moon culmination + Mercury review station”更可信。
+- 缺少搜索者最想要的基础信息 → 在开头或表格加入 exact time、timezone conversions、tropical sign/degree、Strawberry Moon、Micro Full Moon/near apogee、观测日期。
+- 语气太绝对、像恐吓式 timing advice → 把“wrong day / actively counterproductive / unintended consequences”改成“avoid irreversible launches; use for review, revision, soft planning, internal audits”。
+- 论断缺少证据 → 删除或软化“widely circulated ritual guides consistently misread this”，或给出具体比较对象；Rudhyar 也要引用具体作品，否则删掉。
+- 实用段落重复“audit/release”但操作不够具体 → 增加一个短的 do/don’t checklist：审 3 个项目、暂停公开发布、复核合同/邮件、写 release list、不做不可逆承诺。
+

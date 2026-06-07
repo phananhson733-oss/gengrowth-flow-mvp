@@ -1,0 +1,85 @@
+{
+  "page_id": "PG-MOON-002",
+  "prompt_path": "/Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-MOON-002.v8.zh-prompt.md",
+  "started_at": "2026-06-06T19:02:55.586Z",
+  "models_requested": [
+    "claude",
+    "codex",
+    "gemini"
+  ],
+  "retry": 0,
+  "diversify_on_fail": false,
+  "max_cost_usd_per_page": 5,
+  "budget_exceeded_models": [],
+  "ok_count": 1,
+  "total_cost_estimate_usd": 0.0334,
+  "results": {
+    "claude": {
+      "model": "claude",
+      "active_model": "claude",
+      "diversified": false,
+      "ok": false,
+      "output_path": null,
+      "retries": 0,
+      "duration_s": 2.7,
+      "cost_estimate_usd": null,
+      "cumulative_cost_usd": 0.0078,
+      "budget_exceeded": false,
+      "budget_usd": 5,
+      "attempts": [
+        {
+          "try_index": 1,
+          "model": "claude",
+          "command": "claude -p --model claude-sonnet-4-6 --effort high < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-MOON-002.v8.zh-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/zh-demo/PG-MOON-002-claude-v8.md",
+          "cost_usd": 0.0078,
+          "cumulative_cost_usd": 0.0078,
+          "ok": false,
+          "exit_code": 1,
+          "duration_s": 2.7,
+          "stderr_tail": "",
+          "stdout_bytes": 145
+        }
+      ]
+    },
+    "codex": {
+      "model": "codex",
+      "active_model": "codex",
+      "diversified": false,
+      "ok": true,
+      "output_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/zh-demo/PG-MOON-002-codex-v8.md",
+      "retries": 0,
+      "duration_s": 336.9,
+      "cost_estimate_usd": {
+        "usd": 0.0334,
+        "input_tokens_est": 2434,
+        "output_tokens_est": 226,
+        "pricing_note": "GPT 5.5 xhigh"
+      },
+      "cumulative_cost_usd": 0.0334,
+      "budget_exceeded": false,
+      "budget_usd": 5,
+      "attempts": [
+        {
+          "try_index": 1,
+          "model": "codex",
+          "command": "codex exec -c model=gpt-5.5 -c reasoning_effort=xhigh - < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-MOON-002.v8.zh-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/zh-demo/PG-MOON-002-codex-v8.md",
+          "cost_usd": 0.0334,
+          "cumulative_cost_usd": 0.0334,
+          "ok": true,
+          "exit_code": 0,
+          "duration_s": 336.9,
+          "stderr_tail": "cts on humans`、`full moon ritual ideas`。英文源稿主题为 `Why Full Moon Energy Feels Amplified and How to Read It`，围绕满月能量的定义、自我觉察意义、与新月能量/月食能量/亏月阶段/普通情绪波动的取舍、识别线索、常见误读、速查表、常见问题、反思提示、延伸阅读、Take Action 和 Sources 展开。\n+\n+**🤖 回答：**\n+\n+按英文 Phase 2 成稿语义产出 1 篇简体中文 Markdown 正文，主中文关键词选为「满月能量」。正文采用中文 Phase 2 11 个 H2 骨架，包含定义、3 条首段 bullet、自我觉察意义、相近概念取舍、自身识别线索、常见误读、速查表、常见问题、自我觉察提示、延伸阅读、中文 CTA 与参考来源；CTA 指向 `https://astrologywiki.com/zh/wiki/how-to-read-birth-chart`，结尾保留“这不是临床解读或心理健康建议”的免责声明。\n+\n+---\n\ntokens used\n53,723",
+          "stdout_bytes": 3303
+        }
+      ]
+    },
+    "gemini": {
+      "model": "gemini",
+      "active_model": "gemini",
+      "ok": false,
+      "skipped": true,
+      "reason": "gemini not in PATH — install the CLI or remove from --models",
+      "attempts": []
+    }
+  }
+}

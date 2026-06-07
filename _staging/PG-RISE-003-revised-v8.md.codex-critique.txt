@@ -1,0 +1,8 @@
+- 过度绝对化“每个 Scorpio rising 都是 Taurus 7th / Libra 12th” → 加一句限定：这是以整宫制或等宫式的基础映射为主；Placidus 等分宫可能出现截夺或宫头偏移。
+- “Venus 比多数占星师承认的更多”角度有点强行 → 改成更准确的主张：Venus 对 Scorpio rising 的关系轴与隐秘生活很关键，而不是暗示它压过 Mars/Pluto。
+- “稳定吸引 Taurus-type 伴侣”说得太确定 → 改为“常被 Taurus/Venus 特质吸引或在伴侣中投射这些需求”，避免把 7 宫宫头简化成伴侣类型预测。
+- 12 宫被写得过于正面，淡化了传统含义 → 保留 Libra/Venus 的美感、关系反思，同时补上可能表现为取悦、隐秘关系、回避冲突、失衡的亲密模式。
+- 只讲 1/6/7/12 宫，搜索意图没有完整满足 → 增加 12 宫全表，至少每宫一句具体含义：2 宫 Sagittarius、3 宫 Capricorn、4 宫 Aquarius、5 宫 Pisces 等。
+- Mars/Pluto “共同统治 1 宫和 6 宫”有争议 → 区分传统与现代：Mars 是 Scorpio 与 Aries 的传统 ruler，Pluto 是现代 Scorpio ruler，不应把 Pluto 也直接套到 Aries 6 宫。
+- 实用步骤偏观察伴侣，缺少 chart-level 操作 → 加入“看 Venus 落入哪宫、受相位、尊贵/失势、与 7 宫内行星互动”的具体读法。
+- 来源太松散，Liz Greene / Arroyo 只被泛称 → 要么给出具体书名和观点归属，要么删掉权威背书式措辞，避免看起来像未核实引用。

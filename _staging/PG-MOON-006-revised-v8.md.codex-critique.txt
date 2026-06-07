@@ -1,0 +1,8 @@
+- “28-day lunar rhythm”不准确 → 改为“约 29.5 天的朔望月”，避免把月相周期硬说成 28 天。
+- “four distinct phases”过度简化 → 改成“四段式 journaling model”，并说明实际月相常分为 8 个阶段。
+- “full moon is not for release”说得太绝对 → 改为“本框架中 full moon 先评估，release 放到 waning；若做 full-moon release，也要单独保留评估步骤。”
+- Steven Forrest 来源表述太泛 → 换成可支撑的具体传统/书名，或改成“modern psychological astrology often frames...”避免硬挂权威。
+- CTA 里“natal moon sign 决定你自然偏向哪个 phase function”占星逻辑可疑 → 改为 Moon sign/house/aspects 影响情绪处理风格；phase affinity 应看 natal lunar phase。
+- 搜索意图还缺“怎么开始” → 增加一个极简 moon journal 模板：日期、月相、星座、意图、阻碍、结果、释放。
+- 文章论点太反 mood tracking → 承认情绪记录可以是有效数据，只是不能替代 intention-to-outcome review。
+- 缺真实示例 → 加一个完整 mini cycle 示例，从 new moon intention 到 full moon evaluation，再到 waning release。

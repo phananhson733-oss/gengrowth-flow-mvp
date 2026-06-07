@@ -133,3 +133,15 @@ obsidian://open?vault=gengrowth-wiki&file=docs%2F03-marketing%2F2026-06-05-keywo
 用 workflow 多维评估 wiki 的 keyword-sheet v3.3 迁移方案并落地本地同步。评审结论：设计 sound（拆 V/W/X 生产准入 vs Y 生产状态，修了高 DR Pillar 词被旧 DR过滤误删的真缺陷），但 runbook 有洞（§4 创始人处理争议整节空白、活表列插入无 layout diff/冻结窗口/回滚、验收不可测、.gs 内 v3.2 changelog 与 v3.3 实现自相矛盾）。对 flow-mvp 关键发现：新 V-AB 列全在关键词主表，flow-mvp 活表主表 V/W/X/Y(内容状态/发布URL/备注/cluster_id)与 v3.3 canonical 全错位，gg-keyword-promote 写 Y=真冲突，gg-content-draft 不受影响（纠正了子代理误判）。本地更新已落地：改 _sync-canon.sh(v0.7→v0.8 路径)并运行，两镜像目录同步到 .gs v3.3 / PRD v0.8 / 加迁移说明 / 删 v0.7 孤儿 / 更新两 README。消费脚本未动（依赖独立的活表迁移 PM 任务）。
 
 ---
+
+### Q8 — 17:30 [claude]
+
+**🙋 提问：**
+
+（/goal）去落地执行，先不用更新 wiki
+
+**🤖 回答：**
+
+定 SSOT=按 artifact 分归属、先出草稿不进 wiki 后，落地 Part C 中版本无关/失败安全的脚本改动 + 测试：gg-queue-build 加「竞争建议」→dr_filter 别名（v3.2 改名兼容）；gg-sheet-pull 抓取范围 A:Z→A:AB（覆盖 v3.3 主表 28 列）；gg-keyword-promote 把 cluster_id 回填从硬编码 Y 改为按表头名 clusterColFromHeader() 解析，解析不到/抓取失败一律跳过（绝不盲写进 v3.3 的 Y=生产状态列）。全量 1040 smoke 测试绿、code-reviewer APPROVE（0 CRITICAL/HIGH）。HOLD：_workbook-spec.mjs 全量 v3.3 不改（须匹配未迁移活表）；活表迁移本身是独立 PM 任务。未碰 wiki。reconciliation 草稿留在 docs/2026-06-07-v33-plan-reconciliation-DRAFT.md。
+
+---

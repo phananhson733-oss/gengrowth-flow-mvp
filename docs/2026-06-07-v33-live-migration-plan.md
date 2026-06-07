@@ -16,8 +16,17 @@ work_copy_mcp: 1UaTxBQNdgeSomL6qlNJZMSRxovsSL5SasyWmuO5ny7M (gengrowth-flow-mvp 
 
 - [x] **复制副本**（迁移说明 §3 step 1）：`1UaTx…`（owner xdawayer，原表未动）。
 - [x] **读真实 schema + 数据分布**（§3 的"先 diff 活表"前置）。
-- [ ] **写权限**：⛔ 被卡（见 §4）。SA 对副本 403、SA 无 Drive 配额不能自有副本、user OAuth refresh token 已过期、MCP 无授权工具。需用户一次性操作。
-- [ ] 在副本上 apply 迁移 → 验收 → 经确认后再 apply 到原表（live cutover）。
+- [x] **写权限**：用户把副本共享给 SA 为 Editor（解卡）。
+- [x] **在副本上 apply 迁移 + 验收 PASS**（脚本 `tools/scripts/_v33-migrate.mjs --apply`）。
+- [ ] **live cutover**：经用户确认 + 对原表做快照后，`_v33-migrate.mjs --workbook 1CkjOC… --apply`。
+
+### 副本迁移验收结果（2026-06-07，PASS）
+- 表头 29 列，N=竞争建议，V–AC = 生产准入_自动/手动生产准入/生产准入/生产状态/page_id/发布URL/备注/cluster_id。
+- 公式产出：N {✅可做 459, ⏸暂缓 124, 待填(含空行)}；O {快速胜利 392, 长尾词 174, 战略词 50, ❌无关 9}；V/X {可生产 452, 暂缓 164, 无关 9}。
+- 数据零丢失：cluster_id 162→AC、备注 8→AB，旧 Y 已清空。
+- 生产候选视图 452 条；矛盾(O=❌无关但X=可生产) 0。
+- 副本：https://docs.google.com/spreadsheets/d/1UaTxBQNdgeSomL6qlNJZMSRxovsSL5SasyWmuO5ny7M/edit
+- **踩坑**：首版 fO 末尾多 1 个 `)`（删 DR-skip 子句时漏删配套右括号）→ O #ERROR! → V/X 连带。已修 + 脚本加括号平衡自检。tab 名用无 emoji `生产候选`（用户偏好 + 活表约定）。config tab 真名 `配置`（无 emoji）。
 
 ## 1. 活表真实现状（已侦察）
 

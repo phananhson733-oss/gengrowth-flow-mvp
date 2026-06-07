@@ -157,3 +157,15 @@ obsidian://open?vault=gengrowth-wiki&file=docs%2F03-marketing%2F2026-06-05-keywo
 按迁移说明 §3 step1 先复制副本（MCP 复制原表为 user-owned 1UaTx，原表未动），再用 SA 只读原表侦察真实 schema：活表仍 v3.1（N=DR过滤、25列止 Y cluster_id、626行），V内容状态/W发布URL 全空、X备注8条、Y cluster_id 162条；并发现活表 vs wiki canonical 多处差异（config tab=配置、桶名无emoji、❌跳过、cluster_id在Y）须保留活表写法。写权限被卡（SA对副本403/SA无配额/OAuth过期/MCP无授权工具），需用户把副本共享给 SA 邮箱为 Editor 才能继续。已落执行计划 docs/2026-06-07-v33-live-migration-plan.md（cluster_id→AC、N/O reformula、搬X→AB/Y→AC、加V-AB+生产候选视图、验收查询、回滚）。
 
 ---
+
+### Q10 — 22:40 [claude]
+
+**🙋 提问：**
+
+A好了（已把副本共享给 SA）
+
+**🤖 回答：**
+
+写了 tools/scripts/_v33-migrate.mjs（幂等+前置校验+dry-run/apply+括号自检），对副本执行 v3.3 迁移并验收 PASS：加宽 29 列、N→竞争建议、O 去 DR-skip（高DR词进桶）、加 V/W/X/Y/Z/AA/AB/cluster_id 八列、搬 X备注→AB & Y cluster_id→AC（零丢失）、建无 emoji「生产候选」视图（452 候选）、桶视图范围 X→AC。验收：V/X 可生产452/暂缓164/无关9，矛盾0。踩坑并修复：fO 删 DR-skip 子句漏删配套右括号致 O #ERROR!（V/X 连带）→ 修 + 加平衡自检。副本迁移完成，live cutover（原表 1CkjOC）待用户确认 + 先快照。
+
+---

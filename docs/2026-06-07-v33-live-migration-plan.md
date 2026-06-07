@@ -2,7 +2,7 @@
 title: keyword-sheet v3.3 活表迁移执行计划
 date: 2026-06-07
 type: migration-runbook
-status: blocked-on-write-access
+status: copy-migrated-verified-awaiting-live-cutover
 author: wzb
 target_live: 关键词主表 @ 1CkjOCgYbRfXGYc6l2FJOaxUIzxT0NBVUhUpgCjyzcQc (gengrowth-flow-mvp)
 work_copy_mcp: 1UaTxBQNdgeSomL6qlNJZMSRxovsSL5SasyWmuO5ny7M (gengrowth-flow-mvp — v3.3 迁移副本, owner=xdawayer)

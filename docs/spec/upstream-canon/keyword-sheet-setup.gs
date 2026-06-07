@@ -1,6 +1,17 @@
 /**
- * GenGrowth 关键词研究主表 · 一键生成脚本 v3.1
- * 配合《关键词研究 SOP（六源挖掘 → 四桶分级）》+ GenGrowth MVP PRD v0.7 使用
+ * GenGrowth 关键词研究主表 · 一键生成脚本 v3.3
+ * 配合《关键词研究 SOP（六源挖掘 → 四桶分级）》+ GenGrowth MVP PRD v0.8 使用
+ *
+ * v3.3 变更（2026-06-05）：
+ *   - 将「是否进入生产」与「生产进度」拆开：
+ *     V 生产准入_自动 / W 手动生产准入 / X 生产准入 / Y 生产状态
+ *   - Z 回填 page_id，AA 发布URL，AB 备注
+ *
+ * v3.2 变更（2026-06-04）：
+ *   - N 列从「DR过滤」改为「竞争建议」：DR/KD 不再作为架构删除规则，只提示可做/暂缓
+ *   - O/R 分桶保留四桶机会分类；高 DR/KD 词仍归入分桶，供集群架构使用
+ *   - V 列改为「生产状态」：可生产 / 暂缓 / 集群必需 / 无关 / 已建卡 / 已发布
+ *   - 新增「🧩生产候选」视图：仅汇总 V 列为可生产/集群必需/已建卡/已发布的关键词
  *
  * v3.1 变更（2026-05-20）：
  *   - 4 张新增表（主题集群表 / 选题登记表 / CTA Map / 结果复盘表）表头加颜色区分：
@@ -20,11 +31,11 @@
  * 4. 授权后自动创建新文件，链接打印在日志中
  * ⚠️  运行后请先在 ⚙️配置 表填写：目标国家(B4)、TOPIC_KEYWORDS(A6起)、NEGATIVE_KEYWORDS(A28起)
  *
- * 生成 13 个工作表：
+ * 生成 14 个工作表：
  *   ⚙️配置 / 关键词主表 / 主题集群表 / 选题登记表 / CTA Map / 结果复盘表 /
- *   🚀趋势词 / ⚡快速胜利 / 🎯战略词 / 📌长尾词 / 📋分桶规则 / 📊内容追踪 / 📈来源分析
+ *   🧩生产候选 / 🚀趋势词 / ⚡快速胜利 / 🎯战略词 / 📌长尾词 / 📋分桶规则 / 📊内容追踪 / 📈来源分析
  *
- * 列结构（关键词主表，A–X 共 24 列）：
+ * 列结构（关键词主表，A–AB 共 28 列）：
  *   A  关键词         手动
  *   B  来源           下拉
  *   C  月搜索量       手动（Ahrefs/SEMrush）
@@ -38,7 +49,7 @@
  *   K  G1话题相关     公式（匹配配置!TOPIC_KEYWORDS，趋势词闸门1）
  *   L  G2可承接       下拉（Y/N，站内能承接该话题，趋势词闸门2）
  *   M  意图           公式（Commercial/Transactional/Problem-aware/Informational/待确认）
- *   N  DR过滤         公式（J>30→❌跳过，唯一真正的过滤关卡）
+ *   N  竞争建议       公式（J>30→⏸暂缓；≤30→✅可做；仅建议，不删除架构）
  *   O  分桶_自动      公式（四桶分类逻辑，不含人工干预）
  *   P  手动分桶       下拉（非空时覆盖O，R列显示桶名+"★"）
  *   Q  调整原因       手动（记录人工调整依据，供复盘是否调整规则）
@@ -46,9 +57,13 @@
  *   S  AIO预判        公式（搜索量≥500+定义型词→⚠️疑似高风险，供人工抽检参考）
  *   T  AIO风险        下拉（高/低/未查）人工无痕窗口确认后填写
  *   U  弱度意图分     公式（H列SERP弱度+M列意图；集群模式下为聚类辅助分流，非执行优先级）
- *   V  内容状态       下拉
- *   W  发布URL        手动
- *   X  备注           手动
+ *   V  生产准入_自动  公式（可生产/暂缓/无关）
+ *   W  手动生产准入   下拉（可生产/暂缓/集群必需/无关）
+ *   X  生产准入       公式（W非空→W，否则=V）
+ *   Y  生产状态       下拉（未开始/已建卡/已发布/已合并/暂停）
+ *   Z  page_id        手动（建卡后回填）
+ *   AA 发布URL        手动
+ *   AB 备注           手动
  */
 
 function createGenGrowthKeywordSheet() {
@@ -94,7 +109,7 @@ function createGenGrowthKeywordSheet() {
   );
 
   // NEGATIVE_KEYWORDS（负向词，v3.0 新增）
-  configSh.getRange('A27').setValue('NEGATIVE_KEYWORDS（负向词，关键词含其一即在主表 O 列判 ❌跳过，每行一个）');
+  configSh.getRange('A27').setValue('NEGATIVE_KEYWORDS（负向词，关键词含其一即在主表 O 列判 ❌无关，每行一个）');
   configSh.getRange('A27').setFontWeight('bold').setBackground('#ffcdd2');
   var defaultNegatives = ['miami', 'dade', 'trimet', 'hub city', 'bus tracker'];
   for (var ni = 0; ni < defaultNegatives.length; ni++) {
@@ -102,7 +117,7 @@ function createGenGrowthKeywordSheet() {
   }
   configSh.getRange('A28:A45').setBackground('#fff5f5');
   configSh.getRange('A28').setNote(
-    '负向词：与产品无关的词根，关键词命中即在关键词主表 O 列直接判 ❌跳过。\n' +
+    '负向词：与产品无关的词根，关键词命中即在关键词主表 O 列直接判 ❌无关。\n' +
     '最多18行（A28:A45），子串匹配，填词根即可（"bus tracker" 命中 "miami dade bus tracker"）。\n' +
     '默认值是 astrologywiki 的公交类无关词示例，换产品时替换为该产品的无关词；留空=不否决。'
   );
@@ -129,7 +144,7 @@ function createGenGrowthKeywordSheet() {
     'G1话题相关',     // K  11
     'G2可承接',       // L  12
     '意图',           // M  13
-    'DR过滤',         // N  14
+    '竞争建议',       // N  14
     '分桶_自动',      // O  15
     '手动分桶',       // P  16
     '调整原因',       // Q  17
@@ -137,9 +152,13 @@ function createGenGrowthKeywordSheet() {
     'AIO预判',        // S  19
     'AIO风险',        // T  20
     '弱度意图分',     // U  21
-    '内容状态',       // V  22
-    '发布URL',        // W  23
-    '备注'            // X  24
+    '生产准入_自动',  // V  22
+    '手动生产准入',   // W  23
+    '生产准入',       // X  24
+    '生产状态',       // Y  25
+    'page_id',        // Z  26
+    '发布URL',        // AA 27
+    '备注'            // AB 28
   ];
 
   master.getRange(1, 1, 1, headers.length)
@@ -147,9 +166,9 @@ function createGenGrowthKeywordSheet() {
     .setFontColor('#ffffff').setFontWeight('bold').setFontSize(11);
 
   // 三色表头：深蓝=公式自动 / 深绿=必填手动 / 深灰=选填手动
-  var navyCols  = [10, 11, 13, 14, 15, 18, 19, 21]; // J K M N O R S U
+  var navyCols  = [10, 11, 13, 14, 15, 18, 19, 21, 22, 24]; // J K M N O R S U V X
   var greenCols = [1, 2, 3, 4, 7, 8, 9];             // A B C D G H I
-  var slateCols = [5, 6, 12, 16, 17, 20, 22, 23, 24]; // E F L P Q T V W X
+  var slateCols = [5, 6, 12, 16, 17, 20, 23, 25, 26, 27, 28]; // E F L P Q T W Y Z AA AB
   navyCols.forEach(function(c)  { master.getRange(1, c).setBackground('#1a237e'); });
   greenCols.forEach(function(c) { master.getRange(1, c).setBackground('#2e7d32'); });
   slateCols.forEach(function(c) { master.getRange(1, c).setBackground('#455a64'); });
@@ -164,18 +183,25 @@ function createGenGrowthKeywordSheet() {
     7:  'Top10最低2站DR均值（查词时手动填写）：取Top10结果中DR最低的2个站，求均值。\n\n为何不用全平均？前期自有站DR=0或接近0，几个高DR站（如WordPress.com DR=94、Reddit DR=91）会把全平均拉到80+，几乎所有词被N列误判为❌跳过；看末两位DR更贴近"你实际能挤进的位置"。\n\n获取：Ahrefs关键词详情页SERP Overview → 按DR升序排 → 取最低2行DR均值；或安装Ahrefs SEO Toolbar直接在Google搜索结果页读DR。\n注：每个词不同，需和H列SERP弱度、I列自有站DR同步填写。',
     8:  'SERP弱度（⚡快速胜利桶必填，查词时同步判断）\n\n判断方式（三种）：\n① Ahrefs关键词详情页 → SERP Overview：直接看每个排名页DR/UR，最快\n② 安装Ahrefs SEO Toolbar浏览器插件（免费）：Google搜索结果每条旁边直接显示DR/UR\n③ 手工Google搜索：看是否有论坛帖、内容薄弱页、无针对性优化的页面\n\n判断标准：\n✅弱：Top10中≥3个页面DR低/内容薄弱/或有论坛帖（Reddit/Quora等）排名 → 可超越\n⚠️中：Top10中有1-2个可超越位置\n❌强：Top10全部为高质量高DR站点\n\n注：Reddit(DR=91)/Quora(DR=88)虽然站DR高，但单帖内容薄弱且UR低，出现在Top10 = ✅弱信号——说明该词缺乏高质量专业内容，正是内容站机会所在。',
     9:  '自有站DR（查词当时的站DR快照，手动填写）：每次查词时填入你当前的Ahrefs站DR，只填一次，不随时间更新。\n获取：Ahrefs → 输入你的域名 → 查看Domain Rating。\n\n为何不用全局配置？G列是查词时的竞争快照，I列是同时刻你的站DR，两者配对才有意义。使用全局配置会导致新旧DR混用，比较无意义。',
-    10: 'DR差值 = Top10最低2站DR均值（G）- 自有站DR（I），自动计算。\n差值>30 → ❌跳过；差值≤30（含负值）→ ✅通过\n负值（如-5）= 你的站DR已超越该词SERP末位站，更应执行，属于正常情况。\n注：G和I均为查词时快照，执行前如距填写超60天建议重新核查SERP。',
+    10: 'DR差值 = Top10最低2站DR均值（G）- 自有站DR（I），自动计算。\n差值>30 → N列提示⏸暂缓；差值≤30（含负值）→ ✅可做。\n负值（如-5）= 你的站DR已超越该词SERP末位站，更应执行，属于正常情况。\n注：G和I均为查词时快照，执行前如距填写超60天建议重新核查SERP。',
     11: 'G1话题相关：自动检测关键词是否命中⚙️配置!A6:A25的TOPIC_KEYWORDS列表。\n✅相关=话题相关；⚠️待确认=未命中，需人工判断后决定是否填L列=Y。\n初始化后必须先更新配置表话题词，否则默认示例词无意义。',
     12: 'G2可承接（手动）：站内是否有工具/内容/功能能承接该趋势词的用户需求？\n填Y才能进趋势桶；空值视为N。这是纯人工判断项，脚本无法自动识别。',
     13: '意图（自动，模式匹配，约80%准确）：\nCommercial: best/vs/alternative/review/pricing\nTransactional: buy/cost/free trial\nProblem-aware: fix/not working/error\nInformational: what is/how to/guide\n未命中→待确认，批量交Claude/GPT用SOP第四节prompt处理。',
-    14: 'DR过滤（公式，唯一真正的过滤关卡）：基于J列DR差值自动判断。\n✅通过：差值≤30，可执行\n❌跳过：差值>30，当前站DR不足以竞争该词\n待填：G或I列未填，无法计算\n❌跳过的词仍留在主表。当站DR提升后重填I列，此列自动重判。',
-    15: '分桶_自动：系统按SOP规则计算的分桶结果（公式列，勿直接修改）。\n如需调整，在P列选目标桶，Q列说明原因。O列始终保留自动判断结果供复盘参考。',
+    14: '竞争建议（公式）：基于J列DR差值自动判断。\n✅可做：差值≤30，默认可进入生产候选。\n⏸暂缓：差值>30，当前站DR不足以正面竞争，但仍可进入集群架构；若是 Pillar/核心实体，可在V列标「集群必需」。\n待填：G或I列未填，无法计算。\n注意：N列不是过滤关卡，DR/KD 不再决定是否从集群中删除。',
+    15: '分桶_自动：系统按SOP规则计算的机会分桶（公式列，勿直接修改）。\n分桶仍存在，用于判断机会类型；生产优先级由主题集群表 priority + X列生产准入共同决定。\n如需调整，在P列选目标桶，Q列说明原因。O列始终保留自动判断结果供复盘参考。',
     16: '手动分桶：非空时覆盖自动分桶（O列），R列显示"桶名★"。\n用途：纠正误分类/强制品牌词进指定桶/试验性调整。\n所有手动调整必须在Q列填写原因，复盘时判断是否调整分类规则。',
     17: '调整原因示例：\n"品牌词，强制快速胜利" / "CPC=0且无商业意图，误入战略词" / "试验：观察低KD定义词SERP弱度表现"',
-    18: '分桶（最终结果，只读公式列）：★=人工调整（P列非空），无★=自动分桶结果。\n⚠️ 请勿直接修改R列。如需调整：P列选目标桶→Q列填原因→R列自动更新显示"桶名★"。\n各桶视图Sheet按此列筛选，是决定一个词"去哪里执行"的最终依据。',
+    18: '分桶（最终结果，只读公式列）：★=人工调整（P列非空），无★=自动分桶结果。\n⚠️ 请勿直接修改R列。如需调整：P列选目标桶→Q列填原因→R列自动更新显示"桶名★"。\n各桶视图Sheet按此列筛选；它表示机会类型，不再等同于生产状态。',
     19: 'AIO预判（自动）：搜索量≥500且含 what is/meaning/definition/how does/explained 时自动标注。\n仅供参考，须在T列用无痕窗口实际确认后填写最终结论。',
     20: 'AIO风险（手动，S列标记⚠️疑似高风险词须优先确认）：无痕窗口搜索目标词，查看是否出现AI Overview框。\n高：搜索结果顶部有AI Overview摘要框（须用无痕窗口，避免个性化影响）\n低：无AI Overview框\n未查：待确认\n高风险内容策略：避免纯定义型，改为操作型/对比型/案例型，增加原创视角。',
-    21: '弱度意图分（自动）：H列SERP弱度+M列意图的合成分，供快速胜利桶视图排序、并在集群模式下作聚类辅助分流信号；不是执行优先级——执行优先级是集群级的（见主题集群表 priority）。\nH列SERP弱度：✅弱=3/⚠️中=2/❌强=1；M列意图：Commercial或Problem-aware各+1分。\nH列（SERP弱度）填完后排序才有实际意义。'
+    21: '弱度意图分（自动）：H列SERP弱度+M列意图的合成分，供快速胜利桶视图排序、并在集群模式下作聚类辅助分流信号；不是执行优先级——执行优先级是集群级的（见主题集群表 priority）。\nH列SERP弱度：✅弱=3/⚠️中=2/❌强=1；M列意图：Commercial或Problem-aware各+1分。\nH列（SERP弱度）填完后排序才有实际意义。',
+    22: '生产准入_自动（公式）：根据 O列分桶 和 N列竞争建议自动给出默认准入。\nO=❌无关 → 无关；N=✅可做 → 可生产；N=⏸暂缓 → 暂缓。\n此列不手改，如需调整用 W列。',
+    23: '手动生产准入（人工覆盖）：可生产 / 暂缓 / 集群必需 / 无关。\n用途：把高DR但集群骨架必需的词从“暂缓”改为“集群必需”；或把自动可生产但本轮不做的词改为“暂缓”。',
+    24: '生产准入（最终，公式）：W列非空则用W列，否则用V列。\n进入生产候选的准入值：可生产 / 集群必需。暂缓 / 无关 不进入。',
+    25: '生产状态（人工进度）：未开始 / 已建卡 / 已发布 / 已合并 / 暂停。\n这列只追踪生产进度，不决定这个词是否应该生产。',
+    26: 'page_id：建卡后回填选题登记表 page_id。多个关键词合并为同一页面时，可回填同一个 page_id。',
+    27: '发布URL：发布后回填正式 URL。',
+    28: '备注：人工说明、迁移备注、特殊判断。'
   };
   Object.keys(notes).forEach(function(col) {
     master.getRange(1, parseInt(col)).setNote(notes[col]);
@@ -190,11 +216,13 @@ function createGenGrowthKeywordSheet() {
   master.getRange('L2:L500').setDataValidation(  // L: G2可承接
     dv().requireValueInList(['Y','N'], true).build());
   master.getRange('P2:P500').setDataValidation(  // P: 手动分桶
-    dv().requireValueInList(['🚀趋势词','⚡快速胜利','🎯战略词','📌长尾词','❌跳过'], true).build());
+    dv().requireValueInList(['🚀趋势词','⚡快速胜利','🎯战略词','📌长尾词','❌无关'], true).build());
   master.getRange('T2:T500').setDataValidation(  // T: AIO风险
     dv().requireValueInList(['高','低','未查'], true).build());
-  master.getRange('V2:V500').setDataValidation(  // V: 内容状态
-    dv().requireValueInList(['未开始','写作中','已发布','暂缓'], true).build());
+  master.getRange('W2:W500').setDataValidation(  // W: 手动生产准入
+    dv().requireValueInList(['可生产','暂缓','集群必需','无关'], true).build());
+  master.getRange('Y2:Y500').setDataValidation(  // Y: 生产状态
+    dv().requireValueInList(['未开始','已建卡','已发布','已合并','暂停'], true).build());
 
   // ── 公式 ──
 
@@ -227,21 +255,20 @@ function createGenGrowthKeywordSheet() {
       'ISNUMBER(SEARCH("why ",A2)),ISNUMBER(SEARCH("explained",A2))),"Informational",' +
     '"待确认")))))';
 
-  // N: DR过滤（唯一真正的过滤关卡，基于J列DR差值）
-  var fN = '=IF(J2="待填","待填",IF(ISNUMBER(J2),IF(J2>30,"❌跳过","✅通过"),"待填"))';
+  // N: 竞争建议（仅建议，不再作为架构删除规则）
+  var fN = '=IF(J2="待填","待填",IF(ISNUMBER(J2),IF(J2>30,"⏸暂缓","✅可做"),"待填"))';
 
   // O: 分桶_自动（v3.0：最前面加 NEGATIVE_KEYWORDS 否决）
-  // 优先级：负向词❌ > DR❌ > 🚀趋势词 > ⚡快速胜利 > 🎯战略词 > 📌长尾词
+  // 优先级：负向词❌无关 > 🚀趋势词 > ⚡快速胜利 > 🎯战略词 > 📌长尾词
   // 负向词公式同样用 <>"" 掩码：空负向词格不会误伤（留空=不否决）
   var fO =
     '=IF(A2="","",' +
-    'IF(SUMPRODUCT((' + CFG + '!$A$28:$A$45<>"")*ISNUMBER(SEARCH(' + CFG + '!$A$28:$A$45,A2)))>0,"❌跳过",' +
-    'IF(N2="❌跳过","❌跳过",' +
+    'IF(SUMPRODUCT((' + CFG + '!$A$28:$A$45<>"")*ISNUMBER(SEARCH(' + CFG + '!$A$28:$A$45,A2)))>0,"❌无关",' +
     'IF(AND(ISNUMBER(F2),F2>1.2,ISNUMBER(D2),D2<35,K2="✅相关",L2="Y"),"🚀趋势词",' +
     'IF(AND(ISNUMBER(D2),D2<20,ISNUMBER(C2),C2>=100),"⚡快速胜利",' +
     'IF(AND(ISNUMBER(D2),D2<20,OR(M2="Problem-aware",M2="Informational"),ISNUMBER(C2),C2>=50),"⚡快速胜利",' +
     'IF(AND(ISNUMBER(D2),D2>=20,D2<=50,OR(M2="Commercial",M2="Transactional")),"🎯战略词",' +
-    '"📌长尾词")))))))';
+    '"📌长尾词"))))))';
 
   // R: 分桶（最终：P非空→人工调整加★；否则=自动结果）
   var fR = '=IF(A2="","",IF(P2<>"",P2&"★",O2))';
@@ -259,6 +286,12 @@ function createGenGrowthKeywordSheet() {
     'IF(H2="✅弱",3,IF(H2="⚠️中",2,1))' +
     '+IF(OR(M2="Commercial",M2="Problem-aware"),1,0))';
 
+  // V: 生产准入_自动（公式默认值，不手改）
+  var fV = '=IF(A2="","",IF(O2="❌无关","无关",IF(N2="✅可做","可生产",IF(N2="⏸暂缓","暂缓","暂缓"))))';
+
+  // X: 生产准入（最终：W非空→人工覆盖，否则=V自动）
+  var fX = '=IF(A2="","",IF(W2<>"",W2,V2))';
+
   // 应用公式
   master.getRange('J2').setFormula(fJ);
   master.getRange('K2').setFormula(fK);
@@ -268,15 +301,19 @@ function createGenGrowthKeywordSheet() {
   master.getRange('R2').setFormula(fR);
   master.getRange('S2').setFormula(fS);
   master.getRange('U2').setFormula(fU);
+  master.getRange('V2').setFormula(fV);
+  master.getRange('X2').setFormula(fX);
 
   // 向下复制（仅公式列）
   master.getRange('J2:O2').copyTo(master.getRange('J3:O500'));
   master.getRange('R2').copyTo(master.getRange('R3:R500'));
   master.getRange('S2').copyTo(master.getRange('S3:S500'));
   master.getRange('U2').copyTo(master.getRange('U3:U500'));
+  master.getRange('V2').copyTo(master.getRange('V3:V500'));
+  master.getRange('X2').copyTo(master.getRange('X3:X500'));
 
-  // 列宽（A-X 共 24 列）
-  [270,100,90,55,65,90,100,80,80,80,100,70,110,70,120,110,200,120,110,70,80,90,220,120]
+  // 列宽（A-AB 共 28 列）
+  [270,100,90,55,65,90,100,80,80,80,100,70,110,80,120,110,200,120,110,70,80,110,110,110,90,130,220,160]
     .forEach(function(w, i) { master.setColumnWidth(i + 1, w); });
 
   // ── 条件格式 ──
@@ -290,7 +327,7 @@ function createGenGrowthKeywordSheet() {
     { t: '⚡快速胜利',  bg: '#fff9c4' },
     { t: '🎯战略词',    bg: '#bbdefb' },
     { t: '📌长尾词',    bg: '#fce4ec' },
-    { t: '❌跳过',      bg: '#eeeeee' }
+    { t: '❌无关',      bg: '#eeeeee' }
   ].forEach(function(r) {
     rules.push(SpreadsheetApp.newConditionalFormatRule()
       .whenTextContains(r.t).setBackground(r.bg).setRanges([rR]).build());
@@ -324,6 +361,31 @@ function createGenGrowthKeywordSheet() {
   rules.push(SpreadsheetApp.newConditionalFormatRule()
     .whenTextContains('疑似高风险').setBackground('#ffe0b2')
     .setRanges([master.getRange('S2:S500')]).build());
+
+  // V-X列（生产准入）
+  var accessR = master.getRange('V2:X500');
+  [
+    { t: '可生产', bg: '#e8f5e9' },
+    { t: '集群必需', bg: '#d1c4e9' },
+    { t: '暂缓', bg: '#fff9c4' },
+    { t: '无关', bg: '#eeeeee' }
+  ].forEach(function(r) {
+    rules.push(SpreadsheetApp.newConditionalFormatRule()
+      .whenTextContains(r.t).setBackground(r.bg).setRanges([accessR]).build());
+  });
+
+  // Y列（生产状态）
+  var statusR = master.getRange('Y2:Y500');
+  [
+    { t: '未开始', bg: '#ffffff' },
+    { t: '已建卡', bg: '#bbdefb' },
+    { t: '已发布', bg: '#c8e6c9' },
+    { t: '已合并', bg: '#e0e0e0' },
+    { t: '暂停', bg: '#ffcdd2' }
+  ].forEach(function(r) {
+    rules.push(SpreadsheetApp.newConditionalFormatRule()
+      .whenTextContains(r.t).setBackground(r.bg).setRanges([statusR]).build());
+  });
 
   master.setConditionalFormatRules(rules);
 
@@ -409,8 +471,8 @@ function createGenGrowthKeywordSheet() {
   pgSlate.forEach(function(c) { pageSh.getRange(1, c).setBackground('#455a64'); });
 
   // C / D 列从关键词主表 VLOOKUP 自动同步（月搜索量取目标国数值）
-  pageSh.getRange('C2').setFormula('=IF($A2="","",IFERROR(VLOOKUP($A2,\'关键词主表\'!$A:$X,3,FALSE),"未找到"))');
-  pageSh.getRange('D2').setFormula('=IF($A2="","",IFERROR(VLOOKUP($A2,\'关键词主表\'!$A:$X,4,FALSE),"未找到"))');
+  pageSh.getRange('C2').setFormula('=IF($A2="","",IFERROR(VLOOKUP($A2,\'关键词主表\'!$A:$AB,3,FALSE),"未找到"))');
+  pageSh.getRange('D2').setFormula('=IF($A2="","",IFERROR(VLOOKUP($A2,\'关键词主表\'!$A:$AB,4,FALSE),"未找到"))');
   pageSh.getRange('C2:D2').copyTo(pageSh.getRange('C3:D300'));
 
   // 数据验证下拉
@@ -428,18 +490,18 @@ function createGenGrowthKeywordSheet() {
     3:  '月搜索量：公式自动从「关键词主表」VLOOKUP，勿手填。"未找到"=该词在主表没匹配上，核对关键词字符串。主表 C 列已切到目标国数值。',
     4:  'KD：公式自动从「关键词主表」VLOOKUP，勿手填。',
     5:  'Intent：Info / Compare / Tutorial / Utility / Experience / BOFU。决定 Template 选择。',
-    6:  'Tier：T1 重装（Pillar/战略/心理风险页，审 60-120 分钟）/ T2 标准（Series 主力，30-45 分钟）/ T3 占位（极长尾，10-20 分钟）。每周 T1 ≤ 3 篇（审核产能上限，PRD v0.7 §7.5）。',
+    6:  'Tier：T1 重装（Pillar/战略/心理风险页，45-60 分钟）/ T2 标准（Series 主力，10-15 分钟）/ T3 占位（极长尾，<5 分钟 + 5秒QA）。每周 T1 ≤ 3 篇（审核产能上限，PRD v0.8 §7.5）。',
     7:  'Template：Definition / Comparison / Tutorial / Programmatic / Case Study。和 Intent 配对，具体结构见 PRD v0.7 附录 A 5 个页面模板。',
     8:  'Entity：本页主权实体，如 Midheaven。v0.18 主权机制：同集群其他页不能再用同 Entity，防内容内耗。',
     9:  'Friction：真实痛点证据（Reddit/论坛抓取的具体案例）。T1 必填、T2 AI 辅助、T3 跳过。严禁填形容词。',
     10: 'Logic：机制 + 权衡（Mechanism + Trade-off）。T1 必填、T2 必填、T3 跳过。',
     11: 'CTA：页面 CTA 文案/URL。可由 R 列 page_role + track 经 CTA Map 自动决定，不必逐页手填（只在偏离默认时填）。',
     12: 'GSC Keywords：发布 30 天后从 GSC 抓取该 URL 已获排名但正文中缺失的词，用于内容刷新。维护期填。',
-    13: 'Status：待写 / 写作中 / 质检 / 已发布 / 已刷新。',
+    13: 'Status：待写 / 写作中 / 质检 / 已发布 / 已刷新。选题登记表是页面生产视图，只放已决定生产或已生产的 page；关键词筛选与暂缓原因回到关键词主表 V列。',
     14: 'URL：发布后填入正式在线网址。',
     15: 'Last Audit：最后一次内容审计/刷新日期。',
     16: 'page_id：6-ID 主键，如 page_chiron_7th_house。手工编号，命名稳定。',
-    17: 'cluster_id：外键 → 主题集群表。每个页面必须归属一个集群，无 cluster_id 的页面属违规（PRD v0.7 §2.3）。',
+    17: 'cluster_id：外键 → 主题集群表。每个页面必须归属一个集群，无 cluster_id 的页面属违规（PRD v0.8 §2.3）。',
     18: 'page_role：Pillar / Series / Support / Tool / Wiki / Strategic。决定页面广深（Pillar 写广、Series 写深）、内链方向、CTA 选择。显式列，不靠行位置。',
     19: 'content_angle：精修线必填（差异化角度），量产线留空（用模板默认）。PRD v0.7 附录 C。',
     20: 'psych_safety_flag：Y/N。Y 触发心理安全 QA——必须用反思性、非临床语言（附录 B），不做诊断/治疗承诺。默认 N。',
@@ -537,47 +599,57 @@ function createGenGrowthKeywordSheet() {
   // ════════════════════════════════════════════
 
   // ────────────────────────────────────────────
-  // SHEET 2: 🚀趋势词（按 Trends比值 降序）
+  // SHEET 2: 🧩生产候选（按生产准入筛选）
+  // ────────────────────────────────────────────
+  var prodSh = ss.insertSheet('🧩生产候选');
+  prodSh.getRange('A1').setFormula(
+    "=IF(COUNTIF('关键词主表'!X:X,\"可生产\")+COUNTIF('关键词主表'!X:X,\"集群必需\")>0,{'关键词主表'!A1:AB1;FILTER('关键词主表'!A2:AB500,REGEXMATCH('关键词主表'!X2:X500,\"可生产|集群必需\"))},{\"暂无生产候选\"})"
+  );
+  _styleViewSheet(prodSh, '#ede7f6',
+    '生产候选 — 从关键词主表进入选题登记表前的过渡视图 | X列=可生产/集群必需 | 分桶表示机会类型，不等于生产状态');
+
+  // ────────────────────────────────────────────
+  // SHEET 3: 🚀趋势词（按 Trends比值 降序）
   // ────────────────────────────────────────────
   var trendSh = ss.insertSheet('🚀趋势词');
   trendSh.getRange('A1').setFormula(
-    "=IF(COUNTIF('关键词主表'!R:R,\"*趋势词*\")>0,{'关键词主表'!A1:X1;SORT(FILTER('关键词主表'!A2:X500,REGEXMATCH('关键词主表'!R2:R500,\"趋势词\")),6,FALSE)},{\"暂无趋势词\"})"
+    "=IF(COUNTIF('关键词主表'!R:R,\"*趋势词*\")>0,{'关键词主表'!A1:AB1;SORT(FILTER('关键词主表'!A2:AB500,REGEXMATCH('关键词主表'!R2:R500,\"趋势词\")),6,FALSE)},{\"暂无趋势词\"})"
   );
   _styleViewSheet(trendSh, '#e8f5e9',
     '趋势词 — Trends比值降序 | K列G1✅相关+L列G2=Y双门槛 | 发现即执行，不等周计划');
 
   // ────────────────────────────────────────────
-  // SHEET 3: ⚡快速胜利（按排序权重U列→月搜索量C列 降序）
+  // SHEET 4: ⚡快速胜利（按排序权重U列→月搜索量C列 降序）
   // ────────────────────────────────────────────
   var qwSh = ss.insertSheet('⚡快速胜利');
   qwSh.getRange('A1').setFormula(
-    "=IF(COUNTIF('关键词主表'!R:R,\"*快速胜利*\")>0,{'关键词主表'!A1:X1;SORT(FILTER('关键词主表'!A2:X500,REGEXMATCH('关键词主表'!R2:R500,\"快速胜利\")),21,FALSE,3,FALSE)},{\"暂无快速胜利词\"})"
+    "=IF(COUNTIF('关键词主表'!R:R,\"*快速胜利*\")>0,{'关键词主表'!A1:AB1;SORT(FILTER('关键词主表'!A2:AB500,REGEXMATCH('关键词主表'!R2:R500,\"快速胜利\")),21,FALSE,3,FALSE)},{\"暂无快速胜利词\"})"
   );
   _styleViewSheet(qwSh, '#fff9c4',
     '快速胜利 — 排序权重（H列SERP弱度+M列意图）→ 月搜索量 降序 | H列SERP弱度填完后排序才有意义 | Week1-4主执行');
 
   // ────────────────────────────────────────────
-  // SHEET 4: 🎯战略词（按 CPC 降序，辅助参考）
+  // SHEET 5: 🎯战略词（按 CPC 降序，辅助参考）
   // ────────────────────────────────────────────
   var stratSh = ss.insertSheet('🎯战略词');
   stratSh.getRange('A1').setFormula(
-    "=IF(COUNTIF('关键词主表'!R:R,\"*战略词*\")>0,{'关键词主表'!A1:X1;SORT(FILTER('关键词主表'!A2:X500,REGEXMATCH('关键词主表'!R2:R500,\"战略词\")),5,FALSE)},{\"暂无战略词\"})"
+    "=IF(COUNTIF('关键词主表'!R:R,\"*战略词*\")>0,{'关键词主表'!A1:AB1;SORT(FILTER('关键词主表'!A2:AB500,REGEXMATCH('关键词主表'!R2:R500,\"战略词\")),5,FALSE)},{\"暂无战略词\"})"
   );
   _styleViewSheet(stratSh, '#e3f2fd',
     '战略词 — CPC降序（辅助参考，实际优先级以主题集群相关度人工排序为主）| Week3起每周1-2篇');
 
   // ────────────────────────────────────────────
-  // SHEET 5: 📌长尾词
+  // SHEET 6: 📌长尾词
   // ────────────────────────────────────────────
   var ltSh = ss.insertSheet('📌长尾词');
   ltSh.getRange('A1').setFormula(
-    "=IF(COUNTIF('关键词主表'!R:R,\"*长尾词*\")>0,{'关键词主表'!A1:X1;FILTER('关键词主表'!A2:X500,REGEXMATCH('关键词主表'!R2:R500,\"长尾词\"))},{\"暂无长尾词\"})"
+    "=IF(COUNTIF('关键词主表'!R:R,\"*长尾词*\")>0,{'关键词主表'!A1:AB1;FILTER('关键词主表'!A2:AB500,REGEXMATCH('关键词主表'!R2:R500,\"长尾词\"))},{\"暂无长尾词\"})"
   );
   _styleViewSheet(ltSh, '#fce4ec',
     '长尾词 — 社区来源词验证搜索量后归入对应桶 | 50-100搜索量+意图明确→Week1并行 | 其余批量执行');
 
   // ────────────────────────────────────────────
-  // SHEET 6: 📋分桶规则
+  // SHEET 7: 📋分桶规则
   // ────────────────────────────────────────────
   var ruleSh = ss.insertSheet('📋分桶规则');
 
@@ -588,26 +660,26 @@ function createGenGrowthKeywordSheet() {
 
   // ── 一、前置关卡 ──
   ruleSh.getRange(3, 1, 1, 4).setBackground('#e8eaf6');
-  ruleSh.getRange('A3').setValue('一、前置关卡（顺序操作，共两种性质：过滤 / 标注）').setFontWeight('bold');
+  ruleSh.getRange('A3').setValue('一、前置判断（顺序操作，共两种性质：过滤 / 建议 / 标注）').setFontWeight('bold');
   ruleSh.getRange(4, 1, 1, 4).setValues([['关卡', '操作列', '判断条件', '性质说明']])
     .setBackground('#3949ab').setFontColor('#ffffff').setFontWeight('bold');
   ruleSh.getRange(5, 1, 3, 4).setValues([
-    ['第一关：DR过滤', 'N列（公式自动）', 'DR差值≤30 → ✅通过；>30 → ❌跳过\n负值 = 你的站DR超越竞争均值，仍为✅通过', '唯一真正的过滤关卡，❌跳过的词不进入分桶，但保留在主表'],
+    ['第一关：竞争建议', 'N列（公式自动）', 'DR差值≤30 → ✅可做；>30 → ⏸暂缓\n负值 = 你的站DR超越竞争均值，仍为✅可做', '建议，不过滤；高DR/KD词仍进入分桶与集群架构。若是 Pillar/核心实体，在W列手动标「集群必需」'],
     ['第二关：SERP弱度', 'H列（手动填写）', '✅弱 / ⚠️中 / ❌强 / 未查', '标注，不过滤；⚡快速胜利桶必填；填写后U列排序权重自动更新'],
     ['第三关：AIO风险', 'T列（手动填写）', '高 / 低 / 未查', '标注，不过滤；搜索量≥500的定义型词优先确认；影响内容结构策略']
   ]).setVerticalAlignment('top').setWrap(true);
 
   // ── 二、四桶分类规则 ──
   ruleSh.getRange(9, 1, 1, 4).setBackground('#e8f5e9');
-  ruleSh.getRange('A9').setValue('二、四桶分类规则（O列公式按以下优先级依次判断，通过DR过滤后才进入分桶）').setFontWeight('bold');
+  ruleSh.getRange('A9').setValue('二、四桶分类规则（O列公式按以下优先级依次判断；分桶=机会类型，不等于生产状态）').setFontWeight('bold');
   ruleSh.getRange(10, 1, 1, 4).setValues([['优先级', '桶名', '分类条件', '桶内排序']])
     .setBackground('#2e7d32').setFontColor('#ffffff').setFontWeight('bold');
   ruleSh.getRange(11, 1, 5, 4).setValues([
-    ['① 最高', '❌ 跳过', 'DR差值>30（J列超标，N列=❌跳过）', '—'],
+    ['① 最高', '❌ 无关', '命中 NEGATIVE_KEYWORDS 或人工判定与产品无关', '—'],
     ['②', '🚀 趋势词', 'Trends比值>1.2  且  KD<35  且  K列G1=✅相关  且  L列G2=Y', 'Trends比值降序（F列）'],
     ['③', '⚡ 快速胜利', '主规则：KD<20 且 搜索量≥100\n豁免规则：KD<20 且 M列意图=Problem-aware 或 Informational 且 搜索量≥50', 'H列SERP弱度权重(U列) → 搜索量 降序'],
     ['④', '🎯 战略词', 'KD 20-50  且  M列意图=Commercial 或 Transactional', 'CPC降序（辅助参考，实际以主题集群相关度人工排序为主）'],
-    ['⑤ 兜底', '📌 长尾词', '其余所有通过DR过滤的词（含意图=待确认、搜索量低于阈值等未命中上述条件的词）', '—']
+    ['⑤ 兜底', '📌 长尾词', '其余所有相关词（含高DR暂缓词、意图=待确认、搜索量低于阈值等未命中上述条件的词）', '—']
   ]).setVerticalAlignment('top').setWrap(true);
 
   // ── 三、意图自动分类规则 ──
@@ -627,7 +699,9 @@ function createGenGrowthKeywordSheet() {
   ruleSh.getRange(25, 1, 1, 4).setBackground('#f5f5f5').setFontStyle('italic');
   ruleSh.getRange('A25').setValue(
     '四、人工调整分桶：P列选目标桶 → Q列填调整原因 → R列自动更新为"桶名★"\n' +
-    'O列（分桶_自动）始终保留原始公式计算结果，供复盘时对比差异，判断是否需要调整分类规则本身。'
+    'O列（分桶_自动）始终保留原始公式计算结果，供复盘时对比差异，判断是否需要调整分类规则本身。\n' +
+    'V列（生产准入_自动）给默认值，W列（手动生产准入）可覆盖，X列（生产准入）决定是否进入「🧩生产候选」和选题登记表：可生产 / 集群必需 进入候选；暂缓 / 无关不进入。\n' +
+    'Y列（生产状态）只记录进度：未开始 / 已建卡 / 已发布 / 已合并 / 暂停。'
   ).setWrap(true);
 
   // ── 列宽 & 行高 ──
@@ -690,7 +764,7 @@ function createGenGrowthKeywordSheet() {
   srcSh.getRange('A1').setNote('命中率最高的来源=GenGrowth产品优先自动化的模块');
 
   // ────────────────────────────────────────────
-  Logger.log('✅ 创建成功（v3.1 · 13 表）：' + ss.getUrl());
+  Logger.log('✅ 创建成功（v3.3 · 14 表）：' + ss.getUrl());
   Logger.log('⚠️  请先在 ⚙️配置 表填写：目标国家(B4)、TOPIC_KEYWORDS(A6:A25)、NEGATIVE_KEYWORDS(A28:A45)');
 }
 
@@ -698,10 +772,10 @@ function createGenGrowthKeywordSheet() {
 function _styleViewSheet(sheet, color, note) {
   sheet.insertRowBefore(1);
   sheet.getRange('A1').setValue('⬆ 数据从第3行起自动填充 | ' + note);
-  sheet.getRange(1, 1, 1, 24)
+  sheet.getRange(1, 1, 1, 28)
     .setBackground(color).setFontStyle('italic').setFontColor('#555555');
-  // 第2行是公式输出的表头行（来自关键词主表!A1:X1），统一加深色样式
-  sheet.getRange(2, 1, 1, 24)
+  // 第2行是公式输出的表头行（来自关键词主表!A1:AB1），统一加深色样式
+  sheet.getRange(2, 1, 1, 28)
     .setBackground('#37474f').setFontColor('#ffffff').setFontWeight('bold');
   sheet.setFrozenRows(2);
 }

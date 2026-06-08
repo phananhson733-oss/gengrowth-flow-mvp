@@ -107,3 +107,15 @@ signs-of-a-highly-sensitive-person 和 signs-you-re-a-highly-sensitive-person �
 根因:不是两个关键词各写一篇,而是同一个任务 PG-EMPATH-004、同一份草稿被发了两遍。entity="Signs of a Highly Sensitive Person"(人工 6/2 用它当 slug `signs-of-`),target_keyword="signs you're..."(autopilot 6/5 用它当 slug `signs-you-re-`,撇号修复后才解锁)。`claimable()` 去重只比对单一 frontmatter slug,从不比 entity/正文/附属词,所以漏判。两层修复:① autopilot 加 `draftAliasSlugs()`——发布前也查 entity+target_keyword 派生 slug,加回归测试(无修复必失败);② 线上清理保留 `signs-of-`,删 `signs-you-re-` 模块+注册,加 308 跳转 /en+/zh(PR #122 已合并,生产已验证 308→200)。
 
 ---
+
+### Q8 — 18:46 [claude]
+
+**🙋 提问：**
+
+为 astrologywiki.com 撰写 target_keyword "swati nakshatra"（SV 800，T2 Definition，Info 意图）的英文 SEO wiki 词条。内容角度：Rahu-Venus 循环模式导致财富流通而非积累；SERP 缺口为无结果解释了这个被 Reddit 用户识别为最一致、最令人困惑的真实生活体验。
+
+**🤖 回答：**
+
+完成约 1900 词英文 SEO 词条，H1 "Swati Nakshatra and the Rahu-Venus Pattern That Keeps Money Moving"。核心角度：Rahu（欲望扩张节点）+ Venus（Libra 交换导向）组合结构性地产生财富流通而非积累模式，Vayu 风神编码方向性适应作为核心力量。11 个 H2 严格符合规范：定义句含加粗 snippet + 3 bullet、pillar 内链在 S1 自然织入（指向全 27 nakshatra pillar）、spoke 内链在 S3 对比 Chitra/Vishakha 处内联；target_keyword 6 次分布于 S1/S2/S3/S4 正文（满足 4-section 分布最低要求）；Quick Reference 4 列×4 行、FAQ 4 条加粗问句含 swathi/swati 拼写变体、Reflection Prompts 编号直接起手、CTA 三段公式含真实 URL、Sources 引用古典 Jyotish 传统。
+
+---

@@ -1,3 +1,29 @@
+---
+title: Black Moon Lilith
+slug: black-moon-lilith
+date: 2026-06-08
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T1
+track: 量产线
+page_id: PG-LILITH-001
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: black moon lilith
+associated_keywords:
+  - lilith astrology
+  - black lilith meaning
+  - true lilith vs mean lilith
+  - lilith in birth chart
+  - black lilith
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-08T08:00:21.239Z
+content_sha256_short: 1a79e7e72807686c
+phase2_checks: all-pass
+---
+
 # Why Your Black Moon Lilith Placement Keeps Changing (True vs. Mean vs. Asteroid Lilith Explained)
 
 ## What is black moon lilith?

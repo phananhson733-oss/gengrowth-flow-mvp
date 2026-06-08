@@ -95,3 +95,15 @@ aliases:
 用户选择不回填原表,先让 SEO ops + CEO 评审副本。遵从"不覆盖原件",原表不动。产出评审简报 `docs/2026-06-08-v33-copy-review-brief.md`(commit e9a2519):副本链接 + SEO ops 检查项(生产候选抽查/7个新集群0关键词/11个P1 calculator默认暂缓/42争议归属)+ CEO 检查项(P0覆盖2-2/准入盘/§4争议流程待定义/回填go-no-go)。提示:共享权限需 owner 自己加(我不可代操作);副本选题登记表行1515-1530是演练测试行需忽略或清除。
 
 ---
+
+### Q7 — 18:18 [claude]
+
+**🙋 提问：**
+
+signs-of-a-highly-sensitive-person 和 signs-you-re-a-highly-sensitive-person 两篇 blog 内容一致,发布了两篇。为什么会重复?不是关键词等一系列问题应该不一致才对啊,会识别到写同一篇吗?
+
+**🤖 回答：**
+
+根因:不是两个关键词各写一篇,而是同一个任务 PG-EMPATH-004、同一份草稿被发了两遍。entity="Signs of a Highly Sensitive Person"(人工 6/2 用它当 slug `signs-of-`),target_keyword="signs you're..."(autopilot 6/5 用它当 slug `signs-you-re-`,撇号修复后才解锁)。`claimable()` 去重只比对单一 frontmatter slug,从不比 entity/正文/附属词,所以漏判。两层修复:① autopilot 加 `draftAliasSlugs()`——发布前也查 entity+target_keyword 派生 slug,加回归测试(无修复必失败);② 线上清理保留 `signs-of-`,删 `signs-you-re-` 模块+注册,加 308 跳转 /en+/zh(PR #122 已合并,生产已验证 308→200)。
+
+---

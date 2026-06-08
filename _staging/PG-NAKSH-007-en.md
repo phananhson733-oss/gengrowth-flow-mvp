@@ -1,3 +1,28 @@
+---
+title: Mrigashira Nakshatra
+slug: mrigashira-nakshatra
+date: 2026-06-08
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-NAKSH-007
+author_id: "aditi-sharma"
+author_display_name: "Aditi Sharma"
+target_keyword: mrigashira nakshatra
+associated_keywords:
+  - mrigashira
+  - mrigasira nakshatra
+  - mrigashira nakshatra rashi
+  - mrigashira nakshatra characteristics
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-08T09:54:14.919Z
+content_sha256_short: c169421254d2b50c
+phase2_checks: all-pass
+---
+
 # What Mrigashira Nakshatra's Restlessness Is Really Telling You
 
 ## What is mrigashira nakshatra?

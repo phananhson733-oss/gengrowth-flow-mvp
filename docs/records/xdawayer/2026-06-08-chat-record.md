@@ -119,3 +119,15 @@ signs-of-a-highly-sensitive-person 和 signs-you-re-a-highly-sensitive-person �
 完成约 1900 词英文 SEO 词条，H1 "Swati Nakshatra and the Rahu-Venus Pattern That Keeps Money Moving"。核心角度：Rahu（欲望扩张节点）+ Venus（Libra 交换导向）组合结构性地产生财富流通而非积累模式，Vayu 风神编码方向性适应作为核心力量。11 个 H2 严格符合规范：定义句含加粗 snippet + 3 bullet、pillar 内链在 S1 自然织入（指向全 27 nakshatra pillar）、spoke 内链在 S3 对比 Chitra/Vishakha 处内联；target_keyword 6 次分布于 S1/S2/S3/S4 正文（满足 4-section 分布最低要求）；Quick Reference 4 列×4 行、FAQ 4 条加粗问句含 swathi/swati 拼写变体、Reflection Prompts 编号直接起手、CTA 三段公式含真实 URL、Sources 引用古典 Jyotish 传统。
 
 ---
+
+### Q9 — 23:30 [claude]
+
+**🙋 提问：**
+
+统一选题阶段 entity 和 target_keyword 的措辞 / 我看又卡住了，快 2 个小时没有新文章生成了 / 你为什么没有自动修复吗 / 对我来说，只要是没有推送到线上，就算是没完成
+
+**🤖 回答：**
+
+(1) 选题层去重：`gg-sheet-to-brief.mjs composeOverride()` 新增 warning —— entity 与 target_keyword 去停用词后内容词相同但 slug 不同时报警（signs-of/signs-you-re 会报、orange-aura/orange-aura-meaning 不报），覆盖人工+autopilot 两路，加正反测试，桥接 50/50 全绿。(2) 排查"卡住"：不是崩溃，是 W22 计划写完了（88/90），cron 每 25min 正常空转；剩 2 个都堵着。我的去重守卫今天触发 0 次、撞车记录早于我改动，排除自身影响。(3) 解释"为什么不自动修"：撰写阶段有 agentic 自愈，但发布门的事实错误 park 按设计留人工（自动改事实风险高）。(4) 记下"done=live"偏好存入记忆。(5) 修 PG-NAKSH-010 到上线：改导语事实错误（"only three"→"one of several"，实际~9 个 nakshatra 跨界）→ phase2 PASS + Reviewer-A PASS → 解合并冲突（取 main 版 + 只补 krittika 三行，未复活已删的 signs-you-re）→ 合并 PR #125 → 生产验证 200 + 修正导语。(6) PG-TRANS-007 查清：草稿写成了 natal-chart-transits（已在线上），neptune-in-pisces 从没写过，需重写或剔除。
+
+---

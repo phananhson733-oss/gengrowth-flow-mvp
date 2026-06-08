@@ -1,0 +1,8 @@
+- 标题和正文把 `hasta nakshatra` 几乎等同于 “Moon in Virgo” → 要么改成专讲 “Moon in Hasta”，要么补充 Ascendant、Sun、其他行星落 Hasta 的读法。
+- 缺少四个 pada，是明显搜索意图缺口 → 增加 1-4 pada 的度数、navamsa 与简短解读，说明同为 Hasta 时表现如何不同。
+- Savitar 被反复写成“worldly artistry / craft mastery”过窄且有点牵强 → 改回更传统的 Savitar 关键词：太阳性、激发、赋能、让事物成形，再把“手艺/技巧”作为推论。
+- “self-critical calibration loop”是好角度，但重复过多 → 保留为核心洞察，减少重复段落，换成更具体的表现：工作、亲密关系、服务、创作各给一个真实场景。
+- 缺少读者最常搜的实用信息 → 增加精简小节覆盖 career/work style、relationship/marriage dynamics、strengths/shadows、remedies或成长建议。
+- 多处断言太绝对，如 “Moon here does not express freely”“one of the more internally demanding positions” → 加入条件限制：需结合 Moon/Mercury 状态、house、aspects、dasha，不要把单一 nakshatra 写成定论。
+- “trade-offs”框架像产品文档，不像占星文章 → 改成 “How Hasta differs from Ashwini / Uttara Phalguni / Chitra”，用象征逻辑解释差异，减少商业化措辞。
+- Sources 太弱，只写 “Parashara” 会显得虚 → 补充更具体的传统依据或现代权威来源；无法精确引用的地方，改成“traditional nakshatra symbolism commonly associates…”之类的谨慎表述。

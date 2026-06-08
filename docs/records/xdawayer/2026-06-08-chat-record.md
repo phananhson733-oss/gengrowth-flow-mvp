@@ -47,3 +47,15 @@ aliases:
 完成 ~1900 词英文 SEO 词条，核心角度：SERP 充斥数量驱动列表（100+ prompts）而缺乏诊断框架，文章以 Jungian shadow complex 为锚点，区分投射提示、行为矛盾提示、早期适应提示三类结构，11 个 H2 严格符合规范，含正好 1 个加粗定义短语 + 3 bullet、Quick Reference 表格、FAQ（加粗问题格式）、3 条 Reflection Prompts（编号列表）、内链 placeholder 分布于正文及 Related Reading，CTA 三段公式，Sources 两条（Jung / von Franz），末尾含 psych_safety 免责声明。
 
 ---
+
+### Q3 — 15:44 [claude]
+
+**🙋 提问：**
+
+（SEO 内容生产任务 — black moon lilith，完整 prompt 含 target_keyword / content_angle / Friction / Logic 字段及 11-section 结构规范，上稿含 drifted section 修正要求）
+
+**🤖 回答：**
+
+完成 ~1900 词英文 SEO 词条（Definition × T1），H1 "Why Your Black Moon Lilith Placement Keeps Changing"；核心角度：三套独立 Lilith 点（True / Mean 计算方式 + Asteroid 1181）产生系统性解读分歧，而非 SERP 主流的"shadow/taboo"框架。严格修复上稿被校验拦下的 3 个 drifted sections（S3/S4/S5 正文各含关键词至少 1 次）；Quick Reference 表 4 列×3 行；FAQ 4 条加粗问句；Reflection Prompts 编号列表直接起手；内链 pillar 在 S1 内联 + spoke 在 S3 内联；CTA 三段公式含真实 URL；Sources 含 Rudhyar/Greene（两人均在正文中具名提及）；末尾 psych_safety 免责声明。
+
+---

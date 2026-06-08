@@ -19,6 +19,9 @@ import {
   filterApprovedNotYetPromoted,
   validateCandidateHeader,
   parseArgs,
+  colIndexToLetter,
+  clusterColFromHeader,
+  MASTER_CLUSTER_ID_COL,
 } from '../gg-keyword-promote.mjs';
 
 // ---------- constants ----------
@@ -230,4 +233,40 @@ test('validateCandidateHeader: empty header → all required missing', () => {
 test('validateCandidateHeader: missing query → flagged', () => {
   const header = ['run_id', 'entity', 'kw', 'source', 'wzb_approve']; // typo: kw instead of query
   assert.deepEqual(validateCandidateHeader(header), ['query']);
+});
+
+// ---------- cluster_id 列解析（v3.3 防误写进生产状态列）----------
+test('colIndexToLetter: 0→A, 24→Y, 25→Z, 26→AA, 27→AB, 28→AC；非法→null', () => {
+  assert.equal(colIndexToLetter(0), 'A');
+  assert.equal(colIndexToLetter(24), 'Y');
+  assert.equal(colIndexToLetter(25), 'Z');
+  assert.equal(colIndexToLetter(26), 'AA');
+  assert.equal(colIndexToLetter(27), 'AB');
+  assert.equal(colIndexToLetter(28), 'AC'); // flow-mvp v3.3 cluster_id 列
+  assert.equal(colIndexToLetter(-1), null);
+  assert.equal(colIndexToLetter(1.5), null);
+});
+
+test('clusterColFromHeader: v3.1 主表 cluster_id 在 Y 列（与 MASTER_CLUSTER_ID_COL 默认一致）', () => {
+  const v31 = ['关键词', '来源', '月搜索量', 'KD', 'CPC($)', 'Trends比值', 'Top10最低2站DR均值', 'SERP弱度', '自有站DR', 'DR差值', 'G1话题相关', 'G2可承接', '意图', 'DR过滤', '分桶_自动', '手动分桶', '调整原因', '分桶', 'AIO预判', 'AIO风险', '弱度意图分', '内容状态', '发布URL', '备注', 'cluster_id'];
+  assert.equal(clusterColFromHeader(v31), 'Y'); // 第 25 列 idx 24
+  assert.equal(clusterColFromHeader(v31), MASTER_CLUSTER_ID_COL);
+});
+
+test('clusterColFromHeader: 纯 canonical v3.3 主表无 cluster_id → null（Y 列＝生产状态，绝不可写）', () => {
+  const v33 = ['关键词', '来源', '月搜索量', 'KD', 'CPC($)', 'Trends比值', 'Top10最低2站DR均值', 'SERP弱度', '自有站DR', 'DR差值', 'G1话题相关', 'G2可承接', '意图', '竞争建议', '分桶_自动', '手动分桶', '调整原因', '分桶', 'AIO预判', 'AIO风险', '弱度意图分', '生产准入_自动', '手动生产准入', '生产准入', '生产状态', 'page_id', '发布URL', '备注'];
+  assert.equal(clusterColFromHeader(v33), null);
+  assert.equal(v33[24], '生产状态'); // 证明若硬写 Y 会污染生产状态列
+});
+
+test('clusterColFromHeader: flow-mvp v3.3 主表 cluster_id 在 AC（第29列）→ AC（前提：表头读到 A1:AC1）', () => {
+  const v33mvp = ['关键词', '来源', '月搜索量', 'KD', 'CPC($)', 'Trends比值', 'Top10最低2站DR均值', 'SERP弱度', '自有站DR', 'DR差值', 'G1话题相关', 'G2可承接', '意图', '竞争建议', '分桶_自动', '手动分桶', '调整原因', '分桶', 'AIO预判', 'AIO风险', '弱度意图分', '生产准入_自动', '手动生产准入', '生产准入', '生产状态', 'page_id', '发布URL', '备注', 'cluster_id'];
+  assert.equal(clusterColFromHeader(v33mvp), 'AC'); // 第 29 列 idx 28
+  assert.equal(v33mvp[28], 'cluster_id'); // 表头若只读到 AB(28列) 则解析不到 → 跳过回填（即旧 bug）
+});
+
+test('clusterColFromHeader: 非数组/空 → null', () => {
+  assert.equal(clusterColFromHeader(null), null);
+  assert.equal(clusterColFromHeader(undefined), null);
+  assert.equal(clusterColFromHeader([]), null);
 });

@@ -89,7 +89,8 @@ export function isProducible(bucket, { includeLongTail = false } = {}) {
 }
 
 // 从主题集群表的 keywords_included 列建 keyword(小写) → cluster_id 精确索引（首个命中胜出）。
-// 关键词主表本身没有 cluster_id 列，集群归属唯一的事实源就是集群表这一列。
+// 这是兜底 matcher：主表 cluster_id 列（flow-mvp v3.3 在 AC，人工确认）才是首选事实源
+// （见 selectQueue：m.cluster_id || clusterOf(lc)），本索引只在主表该行 cluster_id 为空时补建议。
 export function buildKeywordClusterIndex(clusterMap) {
   const idx = new Map();
   for (const [cid, c] of clusterMap) {
@@ -150,6 +151,7 @@ export function indexMasterHeader(header) {
     月搜索量: 'volume',
     KD: 'kd',
     DR过滤: 'dr_filter',
+    竞争建议: 'dr_filter', // v3.2：N 列 DR过滤→竞争建议改名；别名保证 dr_filter 跨版本仍能填充
     分桶: 'bucket',
     弱度意图分: 'u_score',
     内容状态: 'content_status',

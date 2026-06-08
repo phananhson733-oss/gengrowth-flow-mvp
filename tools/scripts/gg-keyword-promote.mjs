@@ -34,9 +34,34 @@ export const CANDIDATES_TAB = 'keyword_candidates';
 export const MASTER_TAB = '关键词主表';
 export const PAGES_TAB = '选题登记表';
 export const CLUSTERS_TAB = '主题集群表';
-// §4.1c：主表 cluster_id 列（spec 派生 = 第 25 列 Y）。promote 加词时回填 matcher 建议，
-// queue-build 读它（人确认值优先、matcher 兜底）。
+// §4.1c：主表 cluster_id 列在 v3.1 spec 的位置（第 25 列 Y）——文档参考用。
+// ⚠️ 列位随版本漂移：v3.1 在 Y；flow-mvp v3.3 迁移把它搬到 AC（V–AB 让给 canonical
+// 的生产准入/状态列，cluster_id 保留在 AC）；纯 canonical 主表则根本不含此列。
+// 回填一律用 clusterColFromHeader() 按表头名解析真实列；解析不到（或表头抓取失败）则
+// 跳过回填，绝不按本常量盲写（避免把 cluster_id 误写进别的列）。本常量不作运行时兜底，
+// 仅供 queue-build 文档/测试参考。
 export const MASTER_CLUSTER_ID_COL = 'Y';
+
+// 0-based 列 index → A1 列字母（0→A, 24→Y, 26→AA, 27→AB）。非法 index 返回 null。
+export function colIndexToLetter(idx) {
+  if (!Number.isInteger(idx) || idx < 0) return null;
+  let n = idx;
+  let s = '';
+  do {
+    s = String.fromCharCode(65 + (n % 26)) + s;
+    n = Math.floor(n / 26) - 1;
+  } while (n >= 0);
+  return s;
+}
+
+// 从主表表头行解析 cluster_id 所在列字母；找不到返回 null。
+// flow-mvp v3.3 主表 cluster_id 在 AC → 返回 'AC'（前提：调用方把表头读到 AC，见下方
+// fetchValues A1:AC1）。纯 canonical 主表不含此列 → 返回 null → 调用方跳过回填，绝不误写。
+export function clusterColFromHeader(headerRow) {
+  if (!Array.isArray(headerRow)) return null;
+  const i = headerRow.findIndex((h) => String(h || '').trim() === 'cluster_id');
+  return i >= 0 ? colIndexToLetter(i) : null;
+}
 
 // candidate 副表 → 关键词主表 source 列映射（B 列下拉值）
 // keyword-sheet-setup.gs v3.1 line 187 定义的 6 个合法值：
@@ -283,18 +308,34 @@ safety:
   const masterResp = await appendRows(workbookId, `${MASTER_TAB}!A:I`, masterRows, token);
   console.error(`appended ${masterResp.updates?.updatedRows ?? masterRows.length} rows to ${MASTER_TAB}!A:I`);
 
-  // §4.1c：把 cluster_id 建议回填到主表 Y 列（仅 matcher 命中的行；空的留人工）。
+  // §4.1c：把 cluster_id 建议回填到主表 cluster_id 列（仅 matcher 命中的行；空的留人工）。
+  // 用表头名解析目标列，抗列位漂移：flow-mvp v3.3 主表 cluster_id 在 AC（故表头读到 A1:AC1）；
+  // 纯 canonical 主表无此列时解析不到（或表头抓取失败）一律跳过回填，绝不盲写可能错位的列。
+  // 回填只是 matcher 建议，跳过无损（人工/重跑可补）；MASTER_CLUSTER_ID_COL 仅作文档参考。
   const startRow = parseStartRow(masterResp.updates?.updatedRange);
   if (startRow != null) {
-    const data = [];
-    clusterSuggestions.forEach((cid, i) => {
-      if (cid) data.push({ range: `${MASTER_TAB}!${MASTER_CLUSTER_ID_COL}${startRow + i}`, values: [[cid]] });
-    });
-    if (data.length) {
-      await gFetch(`https://sheets.googleapis.com/v4/spreadsheets/${workbookId}/values:batchUpdate`, token, {
-        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ valueInputOption: 'RAW', data }),
+    let clusterCol = null;
+    try {
+      const headerRaw = await fetchValues(workbookId, `${MASTER_TAB}!A1:AC1`, token);
+      clusterCol = clusterColFromHeader((headerRaw && headerRaw[0]) || []);
+      if (!clusterCol) {
+        console.error(`skip cluster_id backfill: '${MASTER_TAB}' 表头未找到 cluster_id 列（纯 canonical 主表不含此列）；请在选题登记表维护 cluster_id`);
+      }
+    } catch (e) {
+      // 表头抓取失败 → clusterCol 保持 null → 跳过本次回填（绝不盲写可能错位的列）；可重跑。
+      console.error(`cluster_id 列表头解析失败（${e.message}）；本次跳过 cluster_id 回填，可重跑 promote`);
+    }
+    if (clusterCol) {
+      const data = [];
+      clusterSuggestions.forEach((cid, i) => {
+        if (cid) data.push({ range: `${MASTER_TAB}!${clusterCol}${startRow + i}`, values: [[cid]] });
       });
-      console.error(`backfilled cluster_id on ${data.length}/${filtered.length} new master row(s) → ${MASTER_TAB}!${MASTER_CLUSTER_ID_COL}`);
+      if (data.length) {
+        await gFetch(`https://sheets.googleapis.com/v4/spreadsheets/${workbookId}/values:batchUpdate`, token, {
+          method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ valueInputOption: 'RAW', data }),
+        });
+        console.error(`backfilled cluster_id on ${data.length}/${filtered.length} new master row(s) → ${MASTER_TAB}!${clusterCol}`);
+      }
     }
   }
 

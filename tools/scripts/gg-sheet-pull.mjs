@@ -304,9 +304,12 @@ export function parseArgs(argv) {
 
 // ---------- Sheets fetch ----------
 async function fetchTab(workbookId, tab, token) {
-  // 无界行范围 A:Z（26 列覆盖 25 列关键词主表 / 22 列选题登记表）——不设行上限，
+  // 无界行范围 A:AC（29 列覆盖 flow-mvp v3.3 关键词主表 A–AC）——不设行上限，
   // 否则 append 落到上限之外的行（如选题登记表因公式填充落到 1500+）会被读漏。
-  const range = encodeURIComponent(`${tab}!A:Z`);
+  // v3.3：主表 V–AB（生产准入/状态/page_id/发布URL/备注）+ AC（flow-mvp 本地保留的
+  // cluster_id，迁移时从 v3.1 的 Y 搬到 AC）。读到 AB 会漏 cluster_id，下游 gg-queue-build
+  // 的「主表人工集群归属优先」会失效、退回子串 matcher。其他 tab 多读几列空白无害。
+  const range = encodeURIComponent(`${tab}!A:AC`);
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${workbookId}/values/${range}?majorDimension=ROWS`;
   const res = await fetch(url, { headers: { authorization: `Bearer ${token}` } });
   const body = await res.json().catch(() => ({}));

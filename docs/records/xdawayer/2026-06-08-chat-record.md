@@ -83,3 +83,15 @@ aliases:
 用只读生成器 `_v33-report.mjs` 读线上原表 1CkjOC 产出方案 §5 迁移报告 `docs/2026-06-08-v33-migration-report.md`(commit 6badfcf):列29/#ERROR0/准入计数/P0覆盖2-2 ✅/回填预览168全Z空/争议清单42全 via=target 解析对。新发现 7 个较新 P1 集群(mahadasha/empath/lilith/solar-return/healing/journal/rising-sign)主表 0 关键词带其 cluster_id —— 预存"新集群词未回标 cluster_id"编辑缺口,非迁移 bug。剩余:回填原表(B2 已证 0 冲突安全,按"不覆盖原件"约定等明确放行)、B3 人工标 W=集群必需、B4/B5 低优先文案与公式加固、§4 创始人争议流程(需人工)。
 
 ---
+
+### Q6 — 16:50 [claude]
+
+**🙋 提问：**
+
+（D2 回填原表？）→ 我让 SEO ops 和 CEO 先验收一下副本
+
+**🤖 回答：**
+
+用户选择不回填原表,先让 SEO ops + CEO 评审副本。遵从"不覆盖原件",原表不动。产出评审简报 `docs/2026-06-08-v33-copy-review-brief.md`(commit e9a2519):副本链接 + SEO ops 检查项(生产候选抽查/7个新集群0关键词/11个P1 calculator默认暂缓/42争议归属)+ CEO 检查项(P0覆盖2-2/准入盘/§4争议流程待定义/回填go-no-go)。提示:共享权限需 owner 自己加(我不可代操作);副本选题登记表行1515-1530是演练测试行需忽略或清除。
+
+---

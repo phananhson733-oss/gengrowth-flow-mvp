@@ -318,6 +318,31 @@ function readMdFrontmatter(mdPath) {
   }
   return { attrs, body: m[2] };
 }
+// Slug the same way the publishing pipeline derives them (_phase2-validate.mjs and
+// this script's own keyword fallback): lowercase, non-alphanumeric runs collapse to a
+// single hyphen, trim leading/trailing hyphens.
+function slugify(s) {
+  return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+// Every slug a draft could ALREADY be live under: its own frontmatter slug, plus slugs
+// derived from `entity` and `target_keyword`. A human sometimes publishes a draft under a
+// renamed slug (e.g. the entity-derived `signs-of-a-highly-sensitive-person` instead of the
+// keyword-derived `signs-you-re-a-highly-sensitive-person`), so a frontmatter-slug-only dedup
+// misses it and the autopilot republishes identical content under a second slug. entity and
+// target_keyword are article-specific (unlike associated_keywords, which are broad head terms
+// shared with pillar pages), so checking them does not false-positive on legitimately new pages.
+function draftAliasSlugs(mdPath, primarySlug) {
+  const slugs = new Set();
+  if (primarySlug) slugs.add(primarySlug);
+  try {
+    const { attrs } = readMdFrontmatter(mdPath);
+    for (const field of ['entity', 'target_keyword']) {
+      const s = slugify(attrs[field]);
+      if (s && SLUG_RE.test(s)) slugs.add(s);
+    }
+  } catch { /* best-effort: fall back to the primary slug only */ }
+  return [...slugs];
+}
 function registeredAuthorIds(repo) {
   const index = authorsIndex(repo);
   if (!existsSync(index)) return new Set();
@@ -358,8 +383,20 @@ function claimable(task, claims) {
   const slug = (zhBackfill ? (claims[task.pgId] || {}).slug : null) || frontmatterSlug(enDraft(task.pgId));
   if (!slug) return { ok: false, reason: 'EN draft missing frontmatter slug' };
   if (!SLUG_RE.test(slug)) return { ok: false, reason: `invalid slug "${slug}" (needs source fix)` };
-  if (existsSync(join(articlesDir(ORACLE), `${slug}.ts`)) && st !== 'needs_human' && !zhBackfill)
-    return { ok: false, reason: `oracle already has ${slug}.ts` };
+  if (st !== 'needs_human' && !zhBackfill) {
+    // Skip if THIS slug — or an entity/keyword alias of it — is already live in oracle.
+    // The alias check stops the autopilot from republishing a draft a human already
+    // published under a renamed slug (the duplicate-content bug, e.g. signs-of- vs signs-you-re-).
+    const aliases = draftAliasSlugs(enDraft(task.pgId), slug);
+    const liveSlug = aliases.find((s) => existsSync(join(articlesDir(ORACLE), `${s}.ts`)));
+    if (liveSlug)
+      return {
+        ok: false,
+        reason: liveSlug === slug
+          ? `oracle already has ${slug}.ts`
+          : `oracle already has ${liveSlug}.ts (entity/keyword alias of ${slug}) — duplicate content, skipping`,
+      };
+  }
   return { ok: true, slug };
 }
 

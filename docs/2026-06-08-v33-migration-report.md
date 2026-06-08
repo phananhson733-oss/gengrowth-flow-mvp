@@ -13,7 +13,7 @@ method: 只读读取线上表 + 公式产出统计（_v33-report.mjs）
 > 无关/暂缓/集群必需计数 + P0 问题 + 争议清单。数据为只读读取线上表实时产出。
 
 ## 1. schema 落地
-- 表头列数 **29**；N 列 = **true**（DR过滤→竞争建议，只建议不删）。
+- 表头列数 **29**；N 列 = **竞争建议**（DR过滤→竞争建议，只建议不删）。
 - V–AC = 生产准入_自动 / 手动生产准入 / 生产准入 / 生产状态 / page_id / 发布URL / 备注 / cluster_id。
 - 全表 #ERROR 单元格：**0** ✅。
 - cluster_id（AC）非空 **162**；备注（AB）非空 **8**（v3.1 数据零丢失搬移）。
@@ -33,14 +33,17 @@ method: 只读读取线上表 + 公式产出统计（_v33-report.mjs）
 | P1 | lunar_nodes_path（Lunar Nodes & Life Purpose） | 12 | 12 | ✅ |
 | P1 | vedic_astrology_basics（Vedic Astrology Basics） | 34 | 22 | ✅ |
 | P1 | chakra_healing_basics（Chakras & Energy Healing） | 3 | 2 | ✅ |
-| P1 | healing_placements（Healing Placements (Chiron & 12th)） | 0 | 0 | ⚠️ |
+| P1 | healing_placements（Healing Placements (Chiron & 12th)） | 0 | 0 | ⚪ 0集群词 |
 | P1 | transit_events（Planetary Transits & Major Cycles） | 5 | 5 | ✅ |
-| P1 | hsp_empath_guide（HSP & Empath Self-Discovery） | 0 | 0 | ⚠️ |
-| P1 | vedic_mahadashas（Vedic Mahadashas & Life Timing） | 0 | 0 | ⚠️ |
-| P1 | solar_return_reading（Solar Return & Personal Year Chart） | 0 | 0 | ⚠️ |
-| P1 | journal_prompts_writing（Journal Prompts & Self-Reflection Writing） | 0 | 0 | ⚠️ |
-| P1 | black_moon_lilith（Black Moon Lilith & Asteroid Lilith） | 0 | 0 | ⚠️ |
-| P1 | rising_sign_profiles（Rising Sign Profiles 上升星座画像） | 0 | 0 | ⚠️ |
+| P1 | hsp_empath_guide（HSP & Empath Self-Discovery） | 0 | 0 | ⚪ 0集群词 |
+| P1 | vedic_mahadashas（Vedic Mahadashas & Life Timing） | 0 | 0 | ⚪ 0集群词 |
+| P1 | solar_return_reading（Solar Return & Personal Year Chart） | 0 | 0 | ⚪ 0集群词 |
+| P1 | journal_prompts_writing（Journal Prompts & Self-Reflection Writing） | 0 | 0 | ⚪ 0集群词 |
+| P1 | black_moon_lilith（Black Moon Lilith & Asteroid Lilith） | 0 | 0 | ⚪ 0集群词 |
+| P1 | rising_sign_profiles（Rising Sign Profiles 上升星座画像） | 0 | 0 | ⚪ 0集群词 |
+
+- **P0**：2/2 集群均有词进生产候选 ✅（§5 核心准入达标）。
+- **P1 中 7 个集群 0 集群词**（healing_placements、hsp_empath_guide、vedic_mahadashas、solar_return_reading、journal_prompts_writing、black_moon_lilith、rising_sign_profiles）：主表无关键词带其 cluster_id（AC 的 162 个 cluster_id 只覆盖 v3.1 那批老集群；这些较新集群的词从未回标）。**非迁移 bug**（迁移忠实保留了旧 cluster_id），是预存的「新集群关键词未回标 cluster_id」编辑缺口（与 front-half-queue 记录的 68 未归集群同源）。B1 修复后 gg-queue-build 的集群表 matcher 仍可兜底归集这些词。
 
 ## 4. 问题清单
 ### 4.1 N=待填 默认暂缓（缺 DR 数据）

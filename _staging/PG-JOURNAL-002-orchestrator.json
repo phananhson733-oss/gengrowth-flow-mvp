@@ -1,7 +1,7 @@
 {
   "page_id": "PG-JOURNAL-002",
   "prompt_path": "/Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-JOURNAL-002.v8-prompt.md",
-  "started_at": "2026-06-08T06:52:50.975Z",
+  "started_at": "2026-06-08T06:59:17.097Z",
   "models_requested": [
     "claude"
   ],
@@ -19,9 +19,9 @@
       "ok": false,
       "output_path": null,
       "retries": 0,
-      "duration_s": 450.2,
+      "duration_s": 383.3,
       "cost_estimate_usd": null,
-      "cumulative_cost_usd": 0.0211,
+      "cumulative_cost_usd": 0.0237,
       "budget_exceeded": false,
       "budget_usd": 5,
       "attempts": [
@@ -29,17 +29,17 @@
           "try_index": 1,
           "model": "claude",
           "command": "claude -p --model claude-sonnet-4-6 --effort high < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-JOURNAL-002.v8-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-JOURNAL-002-claude-v8.md",
-          "cost_usd": 0.0211,
-          "cumulative_cost_usd": 0.0211,
+          "cost_usd": 0.0237,
+          "cumulative_cost_usd": 0.0237,
           "ok": false,
           "exit_code": 0,
-          "duration_s": 450.2,
-          "stderr_tail": "claude output is 1B (< 3000B) — generation failed/truncated or CLI ignored --model. Verify CLI honored --model claude-sonnet-4-6 --effort high (run `claude --version` and check ~/.claude/settings.json for a default model override). Re-run after fixing.",
-          "stdout_bytes": 1,
+          "duration_s": 383.3,
+          "stderr_tail": "claude output is 906B (< 3000B) — generation failed/truncated or CLI ignored --model. Verify CLI honored --model claude-sonnet-4-6 --effort high (run `claude --version` and check ~/.claude/settings.json for a default model override). Re-run after fixing.",
+          "stdout_bytes": 896,
           "sonnet_guard": {
             "downgraded": true,
-            "bytes": 1,
-            "message": "claude output is 1B (< 3000B) — generation failed/truncated or CLI ignored --model. Verify CLI honored --model claude-sonnet-4-6 --effort high (run `claude --version` and check ~/.claude/settings.json for a default model override). Re-run after fixing."
+            "bytes": 906,
+            "message": "claude output is 906B (< 3000B) — generation failed/truncated or CLI ignored --model. Verify CLI honored --model claude-sonnet-4-6 --effort high (run `claude --version` and check ~/.claude/settings.json for a default model override). Re-run after fixing."
           }
         }
       ]

@@ -2,7 +2,7 @@
 title: keyword-sheet v3.3 活表迁移执行计划
 date: 2026-06-07
 type: migration-runbook
-status: copy-migrated-verified-awaiting-live-cutover
+status: live-cutover-DONE-by-user-verified; data-backfill+report+disputes-pending
 author: wzb
 target_live: 关键词主表 @ 1CkjOCgYbRfXGYc6l2FJOaxUIzxT0NBVUhUpgCjyzcQc (gengrowth-flow-mvp)
 work_copy_mcp: 1UaTxBQNdgeSomL6qlNJZMSRxovsSL5SasyWmuO5ny7M (gengrowth-flow-mvp — v3.3 迁移副本, owner=xdawayer)
@@ -19,7 +19,10 @@ work_copy_mcp: 1UaTxBQNdgeSomL6qlNJZMSRxovsSL5SasyWmuO5ny7M (gengrowth-flow-mvp 
 - [x] **写权限**：用户把副本共享给 SA 为 Editor（解卡）。
 - [x] **在副本上 apply 迁移 + 验收 PASS**（脚本 `tools/scripts/_v33-migrate.mjs --apply`）。
 - [x] **副本"类上线"演练 PASS**（用户："原件别动，副本可执行类上线"）：见下。
-- [ ] **live cutover**：⏸ 用户喊停"先不要覆盖原件"。已留快照 `15xxJnp1Wf1M…`(v3.1 回滚件)。待**明确**放行后，`_v33-migrate.mjs --workbook 1CkjOC… --apply`（脚本幂等+前置校验+括号自检）。**注：覆盖原表是不可逆生产操作，必须等用户无歧义放行（见 memory feedback-no-overwrite-prod-sheet）。**
+- [x] **live cutover DONE（2026-06-08 验证发现）**：原表 `1CkjOC` 已是 v3.3 —— 我的 --apply 当时被拒没跑，**是用户自己跑了幂等脚本**。亲验 clean：29列/N=竞争建议/V-AC、X 452/164/9、高DR 122/124进桶、AC 162/AB 8、生产候选452、N/O/V/X 零 #ERROR、数据零丢失。
+- [ ] **数据回填（§3 step4/5/7 · §6-4）**：主表 W手动/Y生产状态/Z page_id/AA发布URL 四列全空 → 从选题登记表回填 page_id/状态/URL 到 Z/Y/AA + 骨架词标 W=集群必需（SEO/运营；mechanical 部分可脚本化）。
+- [ ] **§5 迁移报告**：未产出（无关/暂缓/集群必需计数 + P0 问题 + 争议清单）。
+- [ ] **§4 创始人争议流程**：方案该节空白，未定义（创始人/方案作者补）。
 
 ### 副本"类上线"端到端演练（2026-06-07，PASS）
 用 flow-mvp 真实工具链指向副本跑生产级操作：

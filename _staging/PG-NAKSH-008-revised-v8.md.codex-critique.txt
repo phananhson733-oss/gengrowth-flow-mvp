@@ -1,0 +1,9 @@
+- “钱会流走/难以积累”被写成 Swati 的核心定律，过度决定论 → 改成“可能表现之一”，并补上 Moon/Lagna/行星落入、2宫/11宫、财星、dasha 等全盘条件，避免把单一 nakshatra 当成财务诊断。
+- “Vishakha（Jupiter-Saturn co-ruled）”有明显可疑/错误 → 改为 Vishakha 由 Jupiter 主宰，传统神祇为 Indra-Agni；如果要谈 Saturn 式长期结构，需另找依据或删除。
+- “Rahu-Venus circulation pattern / Rahu-Venus axis”像自创术语但语气像经典定论 → 明确标为本文解释框架，并用 Swati 的 Rahu lordship、Libra/Venus sign context、Vayu、Chara 属性来支撑。
+- 搜索 “swati nakshatra” 的用户通常要基础全貌，本文过窄地押在 money angle → 加一段简洁覆盖 padas、traits、career、relationship/marriage、strengths/challenges，再把金钱流动定位为独特深挖角度。
+- 实用建议不足，反复解释“流动”但没有给结构 → 增加具体做法：自动隔离储蓄账户、收入分桶、合作项目预算上限、审美/关系型支出的冷静期、周期性复盘表。
+- “many people with prominent Swati placements describe...”缺少来源，像泛泛背书 → 换成更谨慎的经验表达，或加入可观察案例/情境：自由职业收入、合作分账、社交型消费、品牌/美学投入。
+- “Sources”太弱，只写 Parashara 不够可核查 → 补具体经典/现代参考来源；对 Chara classification、deity、symbol、degree span分别给可追溯依据。
+- 表格里的 “Energy Center / Directional / kinetic”不是标准 Jyotish 分类 → 要么定义为编辑性观察维度，要么替换成更标准字段：pada、gana、guna、yoni、varna、shakti、muhurta suitability。
+

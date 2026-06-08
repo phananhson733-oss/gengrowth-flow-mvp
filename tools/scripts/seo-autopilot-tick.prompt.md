@@ -5,7 +5,7 @@ The wrapper already ran the deterministic scan (sync + claim + convert + build-g
     node ~/gengrowth-flow-mvp/tools/scripts/gg-seo-autopilot.mjs --status
 
 - Find the entry whose status is `pushed-preview` or `verified-preview`. If none exists, STOP (nothing to verify this tick).
-- Note its `pgId` (the entry KEY), `branch`, `pr`, `slug`, and `worktree` (Step 3c's subagents need pgId + worktree + slug). If any entry is freshly `needs_human`, send a Feishu alert `bash ~/gengrowth-flow-mvp/tools/scripts/gg-lark-notify.sh "⚠️ SEO autopilot 暂停 <pgId>（needs_human）：<reason>"`, then continue to the preview entry (if any). (Do NOT use the harness PushNotification — mobile Remote Control is inactive, so it just fails; Feishu via lark-cli is the working channel.)
+- Note its `pgId` (the entry KEY), `branch`, `pr`, `slug`, and `worktree` (Step 3c's subagents need pgId + worktree + slug). If any entry is freshly `needs_human`, send a Feishu alert (action-needed → @王志彪 via GG_LARK_NOTIFY_AT_OPERATOR=1) `GG_LARK_NOTIFY_AT_OPERATOR=1 bash ~/gengrowth-flow-mvp/tools/scripts/gg-lark-notify.sh "⚠️ SEO autopilot 暂停 <pgId>（needs_human）：<reason>"`, then continue to the preview entry (if any). (Do NOT use the harness PushNotification — mobile Remote Control is inactive, so it just fails; Feishu via lark-cli is the working channel.)
 
 ## Step 2 — get the Vercel preview URL
 If the entry is already `verified-preview`, skip to Step 4 and merge using the stored `previewUrl`.

@@ -1,0 +1,8 @@
+- “one of only three nakshatras to cross a sign boundary” 不准确 → 改成“one of the nakshatras that cross a rashi boundary”，或列明不是只有三颗。
+- “Agni rulership” 表述混淆 → 明确区分 deity 是 Agni、nakshatra lord 是 Sun；FAQ 也应从 Sun/Agni/Mars 三者关系重写。
+- 过度把整篇押在 Aries/Taurus split 上 → 补入搜索者期待的基础信息：4 padas、ruling planet、deity、symbol、key traits、career/relationship tendencies、strengths/risks。
+- “near the sign cusp… both signatures may surface through dasha periods” 太可疑 → 改为提示核对 ayanamsha、出生时间和精确度数；不要暗示 cusp blending 或 dasha 会混合 pada 性质。
+- Ardra 被写成“storm-fire”不够传统 → 改为 Rudra/storm/disruption 的对比，避免把它塞进 fire-associated nakshatra 框架。
+- “Parashari tradition encodes razor” 依据感偏弱 → 改成“classical nakshatra symbolism”并加具体传统属性，而不是泛称 Parashara。
+- 文章声音过于抽象心理化 → 加 2-3 个具体生活场景，如批改、烹饪、工艺、质量控制、团队反馈，展示 Krittika 如何实际运作。
+- SEO 意图覆盖偏窄 → 增加读者常搜问题的可用答案，如 Krittika moon、marriage/compatibility、career、male/female traits、lucky syllables 或 pada-wise traits。

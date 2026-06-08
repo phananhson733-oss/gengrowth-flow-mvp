@@ -43,8 +43,8 @@ Merge if the REQUIRED gates pass: chrome preview renders AND all three subagents
   (The `--merge` command itself appends the ops publish register row AND pushes the Feishu "已发布" alert deterministically — do NOT send your own publish notification, it is already covered. Do NOT use the harness PushNotification anywhere — mobile is inactive, it only fails.)
 - If codex / chrome / ANY subagent fails → do NOT merge. Leave the PR open, park the ledger with:
       node ~/gengrowth-flow-mvp/tools/scripts/gg-seo-autopilot.mjs --mark-failed --branch <branch> --reason "<which gate + the specific blocking issue>"
-  Then push the specific failure to Feishu (the only working channel — no PushNotification):
-      bash ~/gengrowth-flow-mvp/tools/scripts/gg-lark-notify.sh "⚠️ SEO autopilot 发布 gate 未过 <slug>（<which gate>）：<blocking issue> — PR 待人工"
+  Then push the specific failure to Feishu (the only working channel — no PushNotification). This is an action-needed alert → set GG_LARK_NOTIFY_AT_OPERATOR=1 so it @'s 王志彪:
+      GG_LARK_NOTIFY_AT_OPERATOR=1 bash ~/gengrowth-flow-mvp/tools/scripts/gg-lark-notify.sh "⚠️ SEO autopilot 发布 gate 未过 <slug>（<which gate>）：<blocking issue> — PR 待人工"
   A human will review the open PR.
 
 Stop after one task. The timer will fire again for the next one (this is the 20–30 min stagger).

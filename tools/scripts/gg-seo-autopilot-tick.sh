@@ -112,7 +112,7 @@ run_one_cycle() {
   local PARK DONE
   PARK=$(printf '%s\n' "$AOUT" | grep -oE 'PARK\(author\) .*' | head -1)
   DONE=$(printf '%s\n' "$AOUT" | grep -oE 'AUTHORED PG-[A-Z0-9-]+ [^—]*' | head -1)
-  [ -n "$PARK" ] && "$SCRIPT_DIR/gg-lark-notify.sh" "⚠️ SEO autopilot 写稿暂停（needs_human）：$PARK"
+  [ -n "$PARK" ] && GG_LARK_NOTIFY_AT_OPERATOR=1 "$SCRIPT_DIR/gg-lark-notify.sh" "⚠️ SEO autopilot 写稿暂停（needs_human）：$PARK"
   if [ -n "$DONE" ]; then
     "$SCRIPT_DIR/gg-lark-notify.sh" "✍️ SEO autopilot 写好一篇：$DONE— 立即发布中"
     # IMMEDIATE PUBLISH: claim+convert+preview the just-written draft, then verify+merge.
@@ -128,7 +128,21 @@ while [ "$cycle" -lt "$MAX_CYCLES" ]; do
   cycle=$((cycle + 1))
   echo "$(date '+%F %T') ── cycle $cycle/$MAX_CYCLES ──" >> "$LOG"
   if ! run_one_cycle; then
-    echo "$(date '+%F %T') queue drained — idle after $((cycle - 1)) working cycle(s); exiting loop" >> "$LOG"
+    worked=$((cycle - 1))
+    echo "$(date '+%F %T') queue drained — idle after $worked working cycle(s); exiting loop" >> "$LOG"
+    # Day-complete notice (@马博洋): only if this run actually DID work then drained
+    # (worked≥1), AND no needs_human parks remain (a park = not fully complete; the
+    # park alert already @'d 王志彪). A tick that starts already-idle (worked=0) stays
+    # quiet, so the PM isn't re-pinged every idle poll.
+    if [ "$worked" -ge 1 ]; then
+      parks=$(node "$AUTO" --status 2>/dev/null | grep -c '"needs_human"')
+      if [ "$parks" -eq 0 ]; then
+        pub=$(grep -cE '^\| 2026' "$HOME/gengrowth-ops/inbox/06-tasks/seo-autopilot-publish-log.md" 2>/dev/null)
+        GG_LARK_NOTIFY_AT_PM=1 "$SCRIPT_DIR/gg-lark-notify.sh" "✅ SEO autopilot：本批计划内容已全部写完并上线（发布登记表累计 ${pub:-?} 篇），队列已清空。"
+      else
+        echo "$(date '+%F %T') drained with $parks park(s) — not sending day-complete (parks need a human)" >> "$LOG"
+      fi
+    fi
     break
   fi
 done

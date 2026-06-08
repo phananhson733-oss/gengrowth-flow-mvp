@@ -1,7 +1,7 @@
 {
   "page_id": "PG-NAKSH-008",
   "prompt_path": "/Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-NAKSH-008.v8-prompt.md",
-  "started_at": "2026-06-08T10:47:52.910Z",
+  "started_at": "2026-06-08T10:57:52.310Z",
   "models_requested": [
     "claude"
   ],
@@ -9,19 +9,24 @@
   "diversify_on_fail": false,
   "max_cost_usd_per_page": 5,
   "budget_exceeded_models": [],
-  "ok_count": 0,
-  "total_cost_estimate_usd": 0,
+  "ok_count": 1,
+  "total_cost_estimate_usd": 0.0572,
   "results": {
     "claude": {
       "model": "claude",
       "active_model": "claude",
       "diversified": false,
-      "ok": false,
-      "output_path": null,
+      "ok": true,
+      "output_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-NAKSH-008-claude-v8.md",
       "retries": 0,
-      "duration_s": 488.4,
-      "cost_estimate_usd": null,
-      "cumulative_cost_usd": 0.0235,
+      "duration_s": 595.2,
+      "cost_estimate_usd": {
+        "usd": 0.0572,
+        "input_tokens_est": 6864,
+        "output_tokens_est": 2443,
+        "pricing_note": "Sonnet 4.6 xhigh"
+      },
+      "cumulative_cost_usd": 0.0572,
       "budget_exceeded": false,
       "budget_usd": 5,
       "attempts": [
@@ -29,17 +34,16 @@
           "try_index": 1,
           "model": "claude",
           "command": "claude -p --model claude-sonnet-4-6 --effort high < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-NAKSH-008.v8-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-NAKSH-008-claude-v8.md",
-          "cost_usd": 0.0235,
-          "cumulative_cost_usd": 0.0235,
-          "ok": false,
+          "cost_usd": 0.0572,
+          "cumulative_cost_usd": 0.0572,
+          "ok": true,
           "exit_code": 0,
-          "duration_s": 488.4,
-          "stderr_tail": "claude output is 1036B (< 3000B) — generation failed/truncated or CLI ignored --model. Verify CLI honored --model claude-sonnet-4-6 --effort high (run `claude --version` and check ~/.claude/settings.json for a default model override). Re-run after fixing.",
-          "stdout_bytes": 1031,
+          "duration_s": 595.2,
+          "stderr_tail": "",
+          "stdout_bytes": 12982,
           "sonnet_guard": {
-            "downgraded": true,
-            "bytes": 1036,
-            "message": "claude output is 1036B (< 3000B) — generation failed/truncated or CLI ignored --model. Verify CLI honored --model claude-sonnet-4-6 --effort high (run `claude --version` and check ~/.claude/settings.json for a default model override). Re-run after fixing."
+            "downgraded": false,
+            "bytes": 13066
           }
         }
       ]

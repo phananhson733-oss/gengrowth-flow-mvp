@@ -1,0 +1,8 @@
+- “midpoint method ignores when and where both people were born” 是硬伤 → 改成：出生日期/时间先决定行星位置，出生时间/地点还会影响上升、MC、宫位；midpoint 是在已算出的两张本命盘之间取黄道中点。删掉 “same local time / open ocean” 例子。
+- Robert Hand 与 Davison 的归属混在一起 → Hand 可作为 composite 解释传统的来源；Davison chart 应明确归到 Ronald C. Davison / 时间空间中点法，不要暗示 Hand 建立了 Davison 方法。
+- “Sun house divergence signals one is Davison” 过度推断 → 改为先核对 calculation method、house system、zodiac、birth time/timezone、true/mean node；只有同设置下比较 midpoint vs Davison 才能归因到方法差异。
+- “any calculator can reproduce consistently” 太绝对 → 加一段 settings checklist：0° Aries 跨界中点处理、宫制、角点/宫头算法、节点 true/mean、tropical/sidereal 都可能造成结果差异。
+- 搜索意图没有充分满足 “calculator” → 增加“如何选择/使用 composite chart calculator”：需要输入什么、结果页应显示哪些设置、如何保存/比较两种方法；CTA 改成生成 composite chart，而不是 free birth chart。
+- 无精确出生时间的风险写轻了 → 改成 houses/Asc/MC 不可靠，Moon 度数、相位甚至临界星座也可能受影响；建议区分“可读行星主题”和“暂不解读宫位/角点”。
+- 读盘步骤偏象征词，缺少验证动作 → 在 Sun/Moon/Venus-Mars/Saturn 后加一个小模板：placement → 关系行为假设 → 现实证据 → 修正解读，让读者能实际操作。
+- 语言有重复的 AI 痕迹，如 “third entity / structural / directional pull” 反复出现 → 保留方法选择这个强角度，但替换部分抽象词为具体关系场景，如共同创作、财务协商、公开承诺、冲突节奏。

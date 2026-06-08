@@ -436,6 +436,52 @@ test('--scan can backfill zh for a checked done task and promote the slug from E
   }
 });
 
+test('--scan skips a draft whose entity-derived slug is already live under a different (human-renamed) slug — duplicate-content guard', () => {
+  const h = makeHarness();
+  try {
+    initOracleWithOrigin(h);
+    // Oracle already has the article live under the ENTITY-derived slug — exactly what a
+    // human does when they rename the keyword-derived slug before publishing.
+    writeFileSync(
+      join(h.oracle, 'data', 'articles', 'signs-of-a-highly-sensitive-person.ts'),
+      'export const signsOfAHighlySensitivePersonEn = { authorId: "test-author" };\n',
+    );
+    git(h.oracle, ['add', 'data/articles/signs-of-a-highly-sensitive-person.ts']);
+    git(h.oracle, ['commit', '-m', 'seed live article under entity-derived slug']);
+    git(h.oracle, ['push', 'origin', 'main']);
+
+    const flow = writeStubFlow(h, 'signs-you-re-a-highly-sensitive-person');
+    // Same draft, but its frontmatter slug is the KEYWORD-derived one (differs from the live
+    // entity slug). entity slugifies back to the live slug, so the alias check must catch it.
+    writeFileSync(
+      join(flow, '_staging', 'PG-TEST-001-en.md'),
+      '---\nslug: signs-you-re-a-highly-sensitive-person\nentity: Signs of a Highly Sensitive Person\ntarget_keyword: signs you\'re a highly sensitive person\nauthor_id: test-author\n---\n# Test\n\nBody.\n',
+    );
+    writeFileSync(join(h.bin, 'npm'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
+    writeFileSync(
+      join(h.tasks, '2026-06-03-blog-output-plan.md'),
+      "- [ ] `PG-TEST-001` signs you're a highly sensitive person\n",
+    );
+
+    const r = runAuto(h, ['--scan', '--dry-run', '--limit', '1'], { GG_FLOW_REPO: flow });
+
+    assert.equal(r.status, 0, `${r.stdout}${r.stderr}`);
+    // Must recognize the live entity alias and skip, NOT publish a second copy.
+    assert.match(
+      `${r.stdout}${r.stderr}`,
+      /skip PG-TEST-001: oracle already has signs-of-a-highly-sensitive-person\.ts/,
+    );
+    const claims = existsSync(h.claimsPath) ? JSON.parse(readFileSync(h.claimsPath, 'utf8')) : {};
+    assert.notEqual(
+      (claims['PG-TEST-001'] || {}).status,
+      'dry-run-ok',
+      'duplicate draft must not be picked for publish',
+    );
+  } finally {
+    h.cleanup();
+  }
+});
+
 test('--author can generate the missing zh source draft for a checked done task before scan picks it up', () => {
   const h = makeHarness();
   try {

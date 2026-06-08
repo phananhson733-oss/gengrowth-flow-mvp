@@ -1,0 +1,8 @@
+- 把 Ketu 解释成“已精炼能力/准确判断”过于绝对 → 改成“自动化、脱离、前世惯性、非线性直觉”，并明确 Ashwini 的第一反应不一定总是正确。
+- “Ketu in Ashwini vs Ketu elsewhere”混淆了 nakshatra lordship 与本命 Ketu 落 Ashwini → 拆成“Ashwini 受 Ketu 主宰”和“本命 Ketu 落 Ashwini”两个概念。
+- 缺少 Ashwini 四个 pada，这是搜索意图里的核心信息 → 增加 0°–3°20′、3°20′–6°40′、6°40′–10°、10°–13°20′ 的 pada/navamsa 差异。
+- “Guna = Rajas”表述容易被懂行读者质疑 → 改用更标准的分类，如 Deva gana、Laghu/Kshipra nature，并说明若保留 rajas 属于哪套体系。
+- Ashwini Kumaras 被写成“energetic transfer”太现代化且缺乏依据 → 改为传统可验证表述：双生神医、快速救援、疗愈、复苏、马与黎明/速度象征。
+- “classical sources consistently name…”后面列的“difficulty sustaining slow processes”等像现代推论 → 区分“经典来源直接说法”和“现代解读推论”，避免假借经典背书。
+- SEO 覆盖面偏窄，几乎全押在“Ketu 为什么让它快”这个角度 → 补入读者常找的 traits、strengths/weaknesses、career、relationship、Moon/Lagna/Sun in Ashwini 的简明实用段。
+- 文章抽象词密度过高，如“prior-cycle competence / structural paradox”反复出现 → 每个核心判断配一个具体场景例子，例如急救、创业启动、运动反应、快速诊断、项目开局。

@@ -20,7 +20,8 @@ work_copy_mcp: 1UaTxBQNdgeSomL6qlNJZMSRxovsSL5SasyWmuO5ny7M (gengrowth-flow-mvp 
 - [x] **在副本上 apply 迁移 + 验收 PASS**（脚本 `tools/scripts/_v33-migrate.mjs --apply`）。
 - [x] **副本"类上线"演练 PASS**（用户："原件别动，副本可执行类上线"）：见下。
 - [x] **live cutover DONE（2026-06-08 验证发现）**：原表 `1CkjOC` 已是 v3.3 —— 我的 --apply 当时被拒没跑，**是用户自己跑了幂等脚本**。亲验 clean：29列/N=竞争建议/V-AC、X 452/164/9、高DR 122/124进桶、AC 162/AB 8、生产候选452、N/O/V/X 零 #ERROR、数据零丢失。
-- [~] **数据回填（§3 step4/7 · §6-4）**：脚本 `tools/scripts/_v33-backfill.mjs` 已建，**副本测试 PASS**：回填 168 行 Z page_id + Y 生产状态（已发布119/已建卡49），§6-4 回查生效、Z有Y空=0。匹配=Target 精确 + 含逗号 Associated（95页）；12 页无分隔拼接的 Associated 安全跳过。**AA 发布URL 不回填**（选题登记表 URL 列全空，无源）。**待办**：经放行后对原表 `1CkjOC` 跑 `_v33-backfill.mjs --workbook 1CkjOC… --apply`；`W=集群必需`（骨架词人工标）仍需运营。
+- [~] **数据回填（§3 step4/7 · §6-4）**：脚本 `tools/scripts/_v33-backfill.mjs` 已建，**副本测试 PASS**：回填 168 行 Z page_id + Y 生产状态（已发布119/已建卡49），§6-4 回查生效、Z有Y空=0。匹配=Target 精确 + 含逗号 Associated；无分隔拼接的 Associated 安全跳过。**AA 发布URL 不回填**（选题登记表 URL 列全空，无源）。**B2 只读冲突审计（`_v33-backfill-audit.mjs`，2026-06-08）对原表 1CkjOC 跑出：Z/Y 各 168 命中全 FILL、0 CONFLICT → 回填纯新增不覆盖任何人工值，安全**；42 个「同词多 page_id」歧义全 via=target 解析正确。**待办**：经放行后对原表跑 `_v33-backfill.mjs --workbook 1CkjOC… --apply`（已审计无冲突）；`W=集群必需`（骨架词人工标）仍需运营。
+- [x] **副本完整验收（2026-06-08，QA）**：API 只读硬核对 + Chrome 线上肉眼 + codex 对抗二审。副本数据层全 PASS（见 `docs/2026-06-08-v33-copy-acceptance-report.md`）。**修复 B1**（commit 4d66dbb）：下游 `gg-sheet-pull` A:AB→A:AC、`gg-keyword-promote` A1:AB1→A1:AC1，使其读到 AC 的 cluster_id（原读漏 → queue-build 拿不到 162 人工归属）；全量 1041 测试绿。**建 B2** 审计脚本（commit 79643cc）。
 - [ ] **§5 迁移报告**：未产出（无关/暂缓/集群必需计数 + P0 问题 + 争议清单）。
 - [ ] **§4 创始人争议流程**：方案该节空白，未定义（创始人/方案作者补）。
 

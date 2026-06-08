@@ -20,7 +20,7 @@ work_copy_mcp: 1UaTxBQNdgeSomL6qlNJZMSRxovsSL5SasyWmuO5ny7M (gengrowth-flow-mvp 
 - [x] **在副本上 apply 迁移 + 验收 PASS**（脚本 `tools/scripts/_v33-migrate.mjs --apply`）。
 - [x] **副本"类上线"演练 PASS**（用户："原件别动，副本可执行类上线"）：见下。
 - [x] **live cutover DONE（2026-06-08 验证发现）**：原表 `1CkjOC` 已是 v3.3 —— 我的 --apply 当时被拒没跑，**是用户自己跑了幂等脚本**。亲验 clean：29列/N=竞争建议/V-AC、X 452/164/9、高DR 122/124进桶、AC 162/AB 8、生产候选452、N/O/V/X 零 #ERROR、数据零丢失。
-- [ ] **数据回填（§3 step4/5/7 · §6-4）**：主表 W手动/Y生产状态/Z page_id/AA发布URL 四列全空 → 从选题登记表回填 page_id/状态/URL 到 Z/Y/AA + 骨架词标 W=集群必需（SEO/运营；mechanical 部分可脚本化）。
+- [~] **数据回填（§3 step4/7 · §6-4）**：脚本 `tools/scripts/_v33-backfill.mjs` 已建，**副本测试 PASS**：回填 168 行 Z page_id + Y 生产状态（已发布119/已建卡49），§6-4 回查生效、Z有Y空=0。匹配=Target 精确 + 含逗号 Associated（95页）；12 页无分隔拼接的 Associated 安全跳过。**AA 发布URL 不回填**（选题登记表 URL 列全空，无源）。**待办**：经放行后对原表 `1CkjOC` 跑 `_v33-backfill.mjs --workbook 1CkjOC… --apply`；`W=集群必需`（骨架词人工标）仍需运营。
 - [ ] **§5 迁移报告**：未产出（无关/暂缓/集群必需计数 + P0 问题 + 争议清单）。
 - [ ] **§4 创始人争议流程**：方案该节空白，未定义（创始人/方案作者补）。
 

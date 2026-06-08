@@ -59,3 +59,15 @@ aliases:
 完成 ~1900 词英文 SEO 词条（Definition × T1），H1 "Why Your Black Moon Lilith Placement Keeps Changing"；核心角度：三套独立 Lilith 点（True / Mean 计算方式 + Asteroid 1181）产生系统性解读分歧，而非 SERP 主流的"shadow/taboo"框架。严格修复上稿被校验拦下的 3 个 drifted sections（S3/S4/S5 正文各含关键词至少 1 次）；Quick Reference 表 4 列×3 行；FAQ 4 条加粗问句；Reflection Prompts 编号列表直接起手；内链 pillar 在 S1 内联 + spoke 在 S3 内联；CTA 三段公式含真实 URL；Sources 含 Rudhyar/Greene（两人均在正文中具名提及）；末尾 psych_safety 免责声明。
 
 ---
+
+### Q4 — 16:35 [claude]
+
+**🙋 提问：**
+
+/qa 验收一下，你可以调用 /codex 和 mcp chrome 去线上验收一下副本
+
+**🤖 回答：**
+
+对 v3.3 迁移副本(1UaTx)做三路验收:Sheets API 只读硬核对 + Chrome 线上肉眼 + codex 对抗二审。副本数据层全 PASS(29列/全表#ERROR=0/生产候选452=X可生产452/cluster_id 162→AC/回填Z·Y各168/下拉+68条件格式)。codex 挑出真问题并处理:**B1[已修]** 下游 gg-sheet-pull/gg-keyword-promote 读到 AB 漏掉 AC 的 cluster_id → 改为读 A:AC/A1:AC1(全量1041测试绿);**B2[已建]** 回填覆盖保护 → 建只读冲突审计脚本,跑原表得 Z/Y 各168命中全 FILL、0 CONFLICT,证明 cutover 回填零覆盖安全。报告 docs/2026-06-08-v33-copy-acceptance-report.md。
+
+---

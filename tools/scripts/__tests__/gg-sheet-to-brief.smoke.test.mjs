@@ -310,6 +310,25 @@ test('composeOverride produces all 13 cfg fields for a full Sheet row', () => {
   assert.equal(warnings.length, 0);
 });
 
+test('composeOverride: warns when entity and target_keyword are the same topic worded differently (duplicate-content guard)', () => {
+  const row = makeRow({
+    entity: "Signs of a Highly Sensitive Person",
+    target_keyword: "signs you're a highly sensitive person",
+  });
+  const { warnings } = composeOverride(row, makeCtx());
+  const dupWarn = warnings.find((w) => /same topic worded differently/.test(w));
+  assert.ok(dupWarn, `expected a duplicate-content warning, got: ${JSON.stringify(warnings)}`);
+  assert.match(dupWarn, /signs-of-a-highly-sensitive-person/);
+  assert.match(dupWarn, /signs-you-re-a-highly-sensitive-person/);
+});
+
+test('composeOverride: does NOT warn on the benign qualifier pattern (entity vs entity+meaning)', () => {
+  // The default row is entity "Orange Aura" / target_keyword "orange aura meaning":
+  // a different slug but a legitimate qualifier difference, not a duplicate.
+  const { warnings } = composeOverride(makeRow(), makeCtx());
+  assert.equal(warnings.filter((w) => /same topic worded differently/.test(w)).length, 0);
+});
+
 test('composeOverride: psych_safety=Y switches rl6_hint to PSYCH_SAFETY_RL6_HINT', () => {
   const row = makeRow({ psych_safety_flag: 'Y' });
   const { entry } = composeOverride(row, makeCtx());

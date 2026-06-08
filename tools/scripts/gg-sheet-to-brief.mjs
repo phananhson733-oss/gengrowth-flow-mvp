@@ -328,6 +328,31 @@ export function composeOverride(row, { clusterMap, ctaMap, repo, skipNonV8 = fal
     warnings.push(`template "${template}" not yet supported by v8 — will fall back to Definition`);
   }
 
+  // Duplicate-content guard at the SELECTION stage: flag when `entity` and
+  // `target_keyword` are the SAME topic worded differently, which lets one article
+  // ship under two slugs (e.g. signs-of-a-highly-sensitive-person vs
+  // signs-you-re-a-highly-sensitive-person). The trigger is precise — same content
+  // words (stopwords stripped) but different slugs — so the COMMON benign pattern
+  // where the keyword just adds a qualifier ("orange aura" vs "orange aura meaning")
+  // does NOT warn. Curators should unify the Sheet wording to one canonical phrase.
+  const ENTITY_KW_STOPWORDS = new Set([
+    'a', 'an', 'the', 'of', 'to', 'for', 'in', 'on', 'and', 'or', 'is', 'are', 'be',
+    'you', 'your', 're', 's', 'my', 'i', 'it', 'its', 'this', 'that', 'what', 'how', 'why', 'when',
+  ]);
+  const ekSlugify = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  const ekContentTokens = (s) => ekSlugify(s).split('-').filter((t) => t && !ENTITY_KW_STOPWORDS.has(t)).sort();
+  const entitySlug = ekSlugify(brief.entity);
+  const keywordSlug = ekSlugify(brief.target_keyword);
+  if (entitySlug && keywordSlug && entitySlug !== keywordSlug) {
+    const eTok = ekContentTokens(brief.entity);
+    const kTok = ekContentTokens(brief.target_keyword);
+    if (eTok.length && eTok.join(' ') === kTok.join(' ')) {
+      warnings.push(
+        `entity "${brief.entity}" and target_keyword "${brief.target_keyword}" are the same topic worded differently (slugs "${entitySlug}" vs "${keywordSlug}") — unify the Sheet wording to one canonical phrase so the page can't ship under two URLs`,
+      );
+    }
+  }
+
   const tierGateBlock = buildTierGateBlock({
     tier: brief.tier && /T\d/.test(brief.tier) ? brief.tier.match(/T\d/)[0] : null,
     template: template || 'Definition',

@@ -1,3 +1,28 @@
+---
+title: Shadow Work Journal Prompts
+slug: shadow-work-journal-prompts
+date: 2026-06-08
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-JOURNAL-002
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: shadow work journal prompts
+associated_keywords:
+  - shadow work prompts
+  - inner child journal prompts
+  - dark side journaling
+  - jungian shadow work
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-08T07:06:09.388Z
+content_sha256_short: 8f321fc726ee6b66
+phase2_checks: all-pass
+---
+
 # Shadow Work Journal Prompts That Reveal Root Wounds, Not Just Feelings
 
 ## What is shadow work journal prompts?

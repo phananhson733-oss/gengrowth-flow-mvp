@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-JOURNAL-002",
+  "entity": "shadow work journal prompts",
+  "target_keyword": "shadow work journal prompts",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-06-08T07:06:09.388Z",
+  "content_sha256_short": "8f321fc726ee6b66",
+  "source_path": "_staging/PG-JOURNAL-002-claude-v8.md",
+  "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-JOURNAL-002-en.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 1509,
+      "wikilinks": 4,
+      "tbdLinks": 4
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

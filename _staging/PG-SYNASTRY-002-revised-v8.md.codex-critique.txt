@@ -1,0 +1,8 @@
+- Saturn/Pluto 被写成“更耐久/更深”的正向信号过重 → 改成“可能带来粘性、责任、强度，也可能表现为控制、压抑、执念或耗损”，明确耐久不等于健康。
+- “mutual aspects”解释有概念错误：Venus-Mars 本来就是同一个互相成相 → 改为“双重打击”示例，如你的 Venus 合他 Mars、他的 Venus 拱你 Mars。
+- “angular contacts”用词容易误导成四轴点 → 改为“inter-chart aspects”，并单独说明 Asc/Desc、MC/IC 这类 angles。
+- 缺少出生时间/地点限制 → 增加说明：没有准确 birth time，宫位叠加、上升/下降点、月亮度数都可能不可靠。
+- 搜索意图还差一步可执行流程 → 增加一个简短“如何检查 synastry chart compatibility”的步骤：拿两张盘、看紧密相位、个人星、Saturn、Venus/Mars、Moon、宫位叠加。
+- Pluto 段落忽略世代行星问题 → 补充：Pluto 只有紧密触及个人行星/角点时才足够关系特异，宽松外行星相位不要过度解读。
+- Liz Greene / Jeffrey Wolf Green 的归因太笼统 → 要么补具体书名/体系来源，要么改成“部分心理/进化占星读法”，避免像权威背书但无出处。
+- CTA 链接与承诺不匹配：文字说生成免费 birth chart，链接却像教程页 → 换成真正的 birth chart/synastry chart 工具页，或调整 CTA 文案。

@@ -1,3 +1,28 @@
+---
+title: Neptune In Pisces
+slug: neptune-in-pisces
+date: 2026-06-08
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-TRANS-007
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: neptune in pisces
+associated_keywords:
+  - neptune in pisces meaning
+  - when did neptune enter pisces
+  - neptune pisces dates
+  - neptune pisces generation
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-08T16:59:34.233Z
+content_sha256_short: caff79ead1eaf285
+phase2_checks: all-pass
+---
+
 # How Neptune in Pisces Shapes the 2012–2026 Birth Chart Cohort
 
 ## What is neptune in pisces?

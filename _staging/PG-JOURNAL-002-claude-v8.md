@@ -14,7 +14,9 @@ The approach is grounded in the observation that the shadow complex does not dis
 
 Most people searching for journaling tools are already caught in a recurring loop — the same argument returning, the same self-critical voice, the same pull toward withdrawal or overperformance. Shadow work journal prompts matter because generic question lists activate that loop without giving it structural direction.
 
-The difference is in what the prompt targets. A quantity-driven list asks "how does X make you feel?" — which rehearses the emotion but does not anchor it to a source. A diagnostic prompt asks where the feeling has appeared before, what behavior follows it, and whose face it originally wore. That sequence moves from symptom to pattern to origin, which is where behavioral change happens. Without that map, writers can fill notebooks without touching the structure producing the distress.
+The difference is in what the prompt targets. A quantity-driven list asks "how does X make you feel?" — which rehearses the emotion but does not anchor it to a source. A diagnostic prompt asks where the feeling has appeared before, what behavior follows it, and whose face it originally wore. That sequence moves from symptom to pattern to origin, which is where behavioral change happens.
+
+Marie-Louise von Franz, who extended Jung's shadow work into detailed case studies of projection, noted that the shadow complex rarely announces itself directly — it speaks through the emotional charge in reactions to other people. That observation is the practical basis for diagnostic prompting: the charge points to the disowned material, and the prompt gives it a structured way in. Without that map, writers can fill notebooks without touching the structure producing the distress.
 
 ## shadow work journal prompts vs Adjacent Concepts: How It Works + Trade-offs
 
@@ -39,10 +41,10 @@ The prompts produce movement when applied to concrete, recent moments rather tha
 
 Four misreadings consistently lead writers away from productive shadow work and back into surface cycling.
 
-1. **More prompts equals deeper work.** Volume lists encourage quantity over precision. One well-aimed prompt worked repeatedly across different memories produces more structural movement than cycling through dozens of general questions without slowing down.
-2. **Writing about emotions is enough.** Naming a feeling does not move shadow material. What moves it is tracing the feeling back to a behavioral pattern — identifying *when* it appears and *what it protects*, not just *that* it appears.
-3. **Shadow work is only for people who have experienced serious trauma.** The shadow complex forms in ordinary development. Compulsive agreeableness, difficulty receiving criticism, and over-identification with competence are as common as suppressed anger.
-4. **Completing a prompt sequence closes the pattern.** Shadow integration is not sequential. The same pattern resurfaces in new form after significant life changes. The prompts function as a recurring diagnostic tool, not a course to complete once and move on from.
+1. **More prompts equals deeper work.** Volume lists encourage quantity over precision. One well-aimed prompt worked repeatedly across different memories produces more structural movement than cycling through dozens of general questions without slowing down. The length of a list is not a proxy for the depth of the inquiry.
+2. **Writing about emotions is enough.** Naming a feeling does not move shadow material. What moves it is tracing the feeling back to a behavioral pattern — identifying *when* it appears and *what it protects*, not just *that* it appears. The goal is structural recognition, not emotional release alone.
+3. **Shadow work is only for people who have experienced serious trauma.** The shadow complex forms in ordinary development. Compulsive agreeableness, difficulty receiving criticism, and over-identification with competence are as common shadow presentations as suppressed anger. These patterns emerge from the ordinary need to belong and to be approved of.
+4. **Completing a prompt sequence closes the pattern.** Shadow integration is not sequential. The same pattern resurfaces in new form after significant life changes — a new relationship, a career shift, a loss. The prompts function as a recurring diagnostic tool, not a course to complete once and leave behind.
 
 ## Shadow Work Prompts at a Glance
 
@@ -55,7 +57,7 @@ Four misreadings consistently lead writers away from productive shadow work and 
 
 ## Questions About Shadow Work Journaling
 
-**What makes a shadow work prompt different from a therapy question?**
+**What makes a shadow work prompt different from a clinical journaling question?**
 
 Shadow work journal prompts are structured self-reflection tools used in personal journaling practice. They are not clinical instruments and do not replace professional mental health support. *This is not a clinical interpretation or mental health advice.*
 
@@ -65,7 +67,7 @@ One prompt worked deeply across three to five recent memories tends to produce m
 
 **Can this type of journaling increase distress?**
 
-Writing into shadow material can surface activation — discomfort, irritability, or temporary emotional intensity — because the prompts are designed to contact defended material. If writing consistently increases distress without producing any sense of recognition or relief, working alongside a therapist is worth considering.
+Writing into shadow material can surface activation — discomfort, irritability, or temporary emotional intensity — because the prompts are designed to contact defended material. If writing consistently increases distress without producing any sense of recognition or relief, working with a licensed mental health professional alongside journaling is worth considering.
 
 **What is the difference between shadow work and dark side journaling?**
 

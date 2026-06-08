@@ -18,8 +18,8 @@ associated_keywords:
   - krittika nakshatra famous personalities
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-08T12:38:11.520Z
-content_sha256_short: 5157de6923c6d71c
+generated_at: 2026-06-08T15:56:57.421Z
+content_sha256_short: 11269ab76449cc9b
 phase2_checks: all-pass
 ---
 

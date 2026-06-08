@@ -71,3 +71,15 @@ aliases:
 对 v3.3 迁移副本(1UaTx)做三路验收:Sheets API 只读硬核对 + Chrome 线上肉眼 + codex 对抗二审。副本数据层全 PASS(29列/全表#ERROR=0/生产候选452=X可生产452/cluster_id 162→AC/回填Z·Y各168/下拉+68条件格式)。codex 挑出真问题并处理:**B1[已修]** 下游 gg-sheet-pull/gg-keyword-promote 读到 AB 漏掉 AC 的 cluster_id → 改为读 A:AC/A1:AC1(全量1041测试绿);**B2[已建]** 回填覆盖保护 → 建只读冲突审计脚本,跑原表得 Z/Y 各168命中全 FILL、0 CONFLICT,证明 cutover 回填零覆盖安全。报告 docs/2026-06-08-v33-copy-acceptance-report.md。
 
 ---
+
+### Q5 — 16:46 [claude]
+
+**🙋 提问：**
+
+可以生成。剩下的内容完成
+
+**🤖 回答：**
+
+用只读生成器 `_v33-report.mjs` 读线上原表 1CkjOC 产出方案 §5 迁移报告 `docs/2026-06-08-v33-migration-report.md`(commit 6badfcf):列29/#ERROR0/准入计数/P0覆盖2-2 ✅/回填预览168全Z空/争议清单42全 via=target 解析对。新发现 7 个较新 P1 集群(mahadasha/empath/lilith/solar-return/healing/journal/rising-sign)主表 0 关键词带其 cluster_id —— 预存"新集群词未回标 cluster_id"编辑缺口,非迁移 bug。剩余:回填原表(B2 已证 0 冲突安全,按"不覆盖原件"约定等明确放行)、B3 人工标 W=集群必需、B4/B5 低优先文案与公式加固、§4 创始人争议流程(需人工)。
+
+---

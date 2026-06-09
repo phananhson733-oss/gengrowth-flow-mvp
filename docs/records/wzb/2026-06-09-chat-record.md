@@ -151,6 +151,18 @@ hero 图不错但内联插图很一般，参考 baoyu 插图 skill 看有没有�
 
 ---
 
+### Q13 — 20:49 [claude]
+
+**🙋 提问：**
+
+`...Aura Cluster SEO优化修改清单.md` 确认一下这里涉及要优化的文章有改到吗，包括美术插图和结构。
+
+**🤖 回答：**
+
+逐篇核实 8 篇 EN aura 页（清单全范围=`/en/wiki/`）：插图（hero 8/8 + 内联信息图：pillar 1 张脉轮图、7 色页各 2 张 vs/shades）+ 结构（H3：pillar18/yellow10/white7/purple6/red·blue5/green·orange2）+ FAQ/Sources/内链补丁，全部已提交（0cf5f67→23d3e12→179d1f8→1554a9f）。线上 fetch 验证 yellow(hero3/h3=10/h1=1/faq✓)、pillar(hero2/h3=18) 全 live；Chrome 截图确认暗色 SPA H3 金标题+左金条+缩进真渲染。落地唯一未提交的 H3 样式（6c04af6）+ merge 回 main（a0b3be3）。诚实标注两处未做：pillar URL 改名 aura-colors-guide+301 本轮缓做；green/orange 的 ZH 版有 hero 但无内联图/H3（aura 集群 index.ts:29 标 EN-only，出 EN 清单范围）。
+
+---
+
 ### Q12 — 19:20 [claude]
 
 **🙋 提问：**

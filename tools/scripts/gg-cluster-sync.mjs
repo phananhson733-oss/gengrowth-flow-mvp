@@ -26,6 +26,17 @@ const norm = (s) => String(s || '').trim().toLowerCase();
 
 // ---- 纯函数（可测） ----
 
+// 主表 grid(含表头) → [{row, kw, ac}]；跳过空 A 列与 section header(## ...)。
+// 与 gg-queue-build.parseMasterRows 同源过滤，但这里必须保留 sheet 行号(row) 以便回写 AC，故单列。
+export function buildMasterRows(grid) {
+  return grid.slice(1)
+    .map((r, i) => ({ row: i + 2, kw: r[0], ac: r[28] }))
+    .filter(({ kw }) => {
+      const k = String(kw || '').trim();
+      return k && !/^#{1,6}\s+/.test(k); // section header(## …) 不是关键词，不进任何桶
+    });
+}
+
 // clusterMap(Map<cid,obj>) → Map<kw_norm, Set<cid>>（精确成员，含多归属以便报冲突）
 export function buildExactClusterIndex(clusterMap) {
   const idx = new Map();
@@ -90,7 +101,7 @@ async function main() {
   const grid = await get(`${MASTER}!A1:AC1500`);
   const mh = grid[0] || [];
   if (mh[28] !== 'cluster_id') throw new Error(`前置校验失败：${MASTER} AC(28)=${mh[28]}，期望 cluster_id（需 v3.3）。`);
-  const masterRows = grid.slice(1).map((r, i) => ({ row: i + 2, kw: r[0], ac: r[28] })).filter((x) => String(x.kw || '').trim());
+  const masterRows = buildMasterRows(grid);
   const masterKwSet = new Set(masterRows.map((x) => norm(x.kw)));
 
   const clusterMap = buildClusterMap(await get(`${CLUSTERS}!A1:S999`));
@@ -105,7 +116,7 @@ async function main() {
   if (syncs.length) { console.log('  自动写(精确唯一命中):'); for (const s of syncs.slice(0, 30)) console.log(`    行${s.row} ${s.kw} → ${s.cid}`); if (syncs.length > 30) console.log(`    …另 ${syncs.length - 30}`); }
   if (conflicts.length) { console.log('  ⚠️ 冲突(一词多集群，留人工):'); for (const c of conflicts.slice(0, 15)) console.log(`    行${c.row} ${c.kw}: [${c.cids.join(', ')}]`); }
   if (fuzzyHits.length) { console.log('  💡 疑似漏配(仅模糊命中，请确认是否补进 keywords_included 或留空):'); for (const f of fuzzyHits.slice(0, 20)) console.log(`    行${f.row} ${f.kw} ~ ${f.cid}`); if (fuzzyHits.length > 20) console.log(`    …另 ${fuzzyHits.length - 20}`); }
-  if (orphans.length) { console.log('  🔎 集群表对不上主表的词(措辞/拼写漂移或主表缺词):'); for (const o of orphans.slice(0, 20)) console.log(`    ${o.cid}: "${o.kw}"`); if (orphans.length > 20) console.log(`    …另 ${orphans.length - 20}`); }
+  if (orphans.length) { console.log('  🔎 集群表对不上主表的词(措辞/拼写漂移或主表缺词):'); for (const o of orphans.slice(0, 100)) console.log(`    ${o.cid}: "${o.kw}"`); if (orphans.length > 100) console.log(`    …另 ${orphans.length - 100}`); }
   console.log(`  仍未归集群(主表 AC 空且无任何命中): ${unclustered.length}`);
 
   if (!APPLY) { console.log('  DRY-RUN（未写入）。'); return 0; }

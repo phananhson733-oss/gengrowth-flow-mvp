@@ -66,3 +66,15 @@ baoyu skills 中那个是用 Google OAuth 不是 key 吧？（附微信文章链
 按"通用规则"建可复用配图系统（aura=第1次运行）：① 渲染器内联图支持（SPA processInlineContent 块级 + stub mdToHtml，`![alt](src)`→figure/img）；② stub buildBody 渲染 hero（爬虫可见+alt）；③ plan 驱动 `illustrate-article.mjs`（gemini-web 重试+sips 压缩+wire hero/inline，双语全 export 对象）；④ plan JSON。上下文驱动概念（red=鲜红vs浊红、blue=光谱、pillar=手写SVG「7色×脉轮」内联信息图）。全部部署 live，8 页 hero+pillar内联图 HTTP200、h1=1 无回归。
 
 ---
+
+### Q5 — 16:55 [claude]
+
+**🙋 提问：**
+
+我看除了 pillar，其他都只有一张图。+ 生图逻辑应该是"哪里需要就生图（上下文+LLM 决定、数量可变）"，不是固定每页一张，这也要通用逻辑。+ 当然 Hero 是固定需要一张的。
+
+**🤖 回答：**
+
+补两层架构：① LLM 规划层（规划 agent 读全文逐页决定该配几张内联图、配哪），hero 固定。规划层判定 7 色页各需 2 张内联：shade-spectrum（该色色调表→标注色块，放 Table 后）+ sibling-comparison（该色 vs 正文真正对比的 2-3 邻色，放对比段后）。② 执行层复用：数据驱动 SVG 生成器 `gen-shade-strip.mjs`（--suffix 切 shades/vs）+ 内容取自正文的数据 JSON + illustrate-article insertInline 改插到章节末（不卡表格）。生成 14 张 SVG，wire 后部署。最终 pillar=2 图、7 色页各 3 图（hero+shade+comparison），共 23 图，全 live：每页 img=3、两 SVG HTTP200、h1=1 无回归。
+
+---

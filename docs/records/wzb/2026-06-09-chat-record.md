@@ -126,3 +126,39 @@ baoyu skills 中那个是用 Google OAuth 不是 key 吧？（附微信文章链
 通用两层配图系统第 2 次跑通并全部 live on astrologywiki.com。① 规划层：3 个 agent 按 cluster 并行读全文逐篇定 hero(固定1)+内联图(可变,15张:sequence×8/compare×5/timeline×2)，双语锚点+标签，年限核原文。② 执行层：新建 gen-infographic.mjs(数据驱动双语 SVG，3 kind)+扩 illustrate-article 双语 alt/inline；gemini-web 出 13 hero。QA：Chrome 截图视觉验收 30 SVG+13 hero，抓到 HSP pillar hero 双联拼接→重生成单张。单次原子 prod 部署，curl/node-fetch 验证 13 stub hero=1/内联数对/h1=1、资源全 200、ZH 本地化 alt 在。提交在 detached HEAD 内容线(105acf0+0566ff2)。**上报：oracle 内容 prod 线又漂回 detached HEAD、与 main 分叉，从 main 部署会回退配图——与你"只在 main"规则冲突，待你定夺是否锚分支/调和。**
 
 ---
+
+### Q10 — 18:40 [claude]
+
+**🙋 提问：**
+
+hero 图不错但内联插图很一般，参考 baoyu 插图 skill 看有没有参考价值；+ 目前尺寸手机端会不会字太小/显示不全，封面可考虑 1200×675 或 1200×628 比例不失真；你自己判断再确认要不要优化。
+
+**🤖 回答：**
+
+读 baoyu-article-illustrator(Type×Style 生成式插图)→ 评估：我的扁平 SVG 像 PPT 图表、与绘画 hero 不同调。按你选"升级 SVG 设计"重写 gen-infographic 为 celestial editorial(星空/星云/金箔奖章/sparkle，纯形状不依赖字形)。量化确认尺寸问题：内联图 4.6:1 太宽，桌面栏缩到 0.59x、手机 0.28x→名字仅 3.6px。按你选"竖版/网格"重构(左 spine+满宽每项+放大字)+hero 归一 1200×675(cover-crop 不失真)。Chrome 手机模拟(360px)验收字可读。单次部署 live，13 stub+资源全验证过。
+
+---
+
+### Q11 — 18:55 [claude]
+
+**🙋 提问：**
+
+验证完直接 merge 回 main。
+
+**🤖 回答：**
+
+在 .worktrees/main-clean(main 在独立 worktree)merge 内容线。解 2 个语义冲突：generate-seo-pages.mjs 取 main 的 faqSchema+psych-footer 并入内容线 hero/H1-strip/自链修复(避免双 FAQPage)，FOLDER.md 并集；build 验证 FAQPage=1/h1=1/hero=1。**强调上报：main 含 20 个从未上 prod 的 App 提交(货币/synastry/CSP/a11y/funnel)，从 main 部署=一次性推未 QA 改动上线，第一次 main 部署须单独 QA。** 内容线仍是 live。
+
+---
+
+### Q12 — 19:20 [claude]
+
+**🙋 提问：**
+
+新优化文章出现大段落文字块，全用编号分割不现实，加 H3 更好，为什么之前 OK？+ 所有修改要统一沉淀进 flow-mvp 工作流不是一次性补几篇，主要是今天改的部分 + H3 扩到 aura 8 篇。
+
+**🤖 回答：**
+
+数据扫描定位：墙在 v4.0 旧版 aura(6-9 段)，不在这 13 篇(1-2 段,v4.5+ SC3c 后本就列表结构)。按"沉淀"原则修根因(commit 0813b39)：① SC3c 改为按 H2/H3 子节计 prose 段(H3 重置)→H3 成一等破墙方式;② 4 个 prompt 模板解禁 H3(章节仍 H2,FAQ 不用);+2 单测 97/97 绿;+spec 文档。再用 SC3c 当 gate 修存量:3 agent 给 8 篇 aura 加 H3(pillar18/yellow10/...),SC3c 验证全 PASS,部署后 live stub 全含 H3(yellow 墙被 10 个 H3 破开)。提交内容线 1554a9f→merge main 90c8005。
+
+---

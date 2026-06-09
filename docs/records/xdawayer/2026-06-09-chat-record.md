@@ -90,3 +90,15 @@ tags:
 落地两件:① 加 `buildMasterRows()`(跳过空 A 列与 `^#{1,6}\s+` 标题行)+ 1 个新测试，孤儿显示 cap 20→100。② 重算后诚实更正:数字不变(fuzzy=9/unclustered=413)——主表当前根本没有 `## ` 标题行,所以 413 是真·未归类,过滤纯属防御性一致(已被测试锁住)。③ 生成 27 孤儿词→主表对照清单:A 类(可对齐/清理)21 个、B 类(主表缺词)6 个;3 个 "(NEW)" 后缀清理后会精确命中并被下一跳自动同步;同时指出启发式有误报(如 `ic`→`malefic` 是子串误判,需人工)。全量 1050 绿、0 失败(含新测试),改动已由 vault backup 自动提交到 main。
 
 ---
+
+### Q7 — 17:34 [claude]
+
+**🙋 提问：**
+
+可以，按照你的建议优化
+
+**🤖 回答：**
+
+按建议把 12 个高置信孤儿词就地纠正 `主题集群表.keywords_included`(结构保留替换、dry-run 先行)。dry-run 抓出 `lilith sign`→`black moon lilith sign` 会和已存在词重复 → 自动留人工,实际写 6 个 cell / 11 个 token。随后跑 `gg-cluster-sync --apply` 闭环:orphans 27→16,当场写 4 行主表 cluster_id(saturn return in pisces / ketu / venus mahadasha / signs you're a HSP),其余 7 个对应主表词原已归类;复跑 dry-run synced=0 验证幂等。剩余 16 孤儿(🟡需人工 10 / 🔵主表缺词 6)+ 7 疑似漏配 落成运营清单 `docs/cluster-keywords-cleanup-2026-06-09.md`。全程 additive 不删数据。
+
+---

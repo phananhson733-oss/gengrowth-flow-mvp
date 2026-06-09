@@ -450,43 +450,55 @@ export function checkParagraphFragmentation(draft) {
 }
 
 // ============================================================
-// SC3c — Section scatter (FAIL, both langs).
+// SC3c — Section scatter / prose-wall (FAIL, both langs).
 //
 // v4.5.1 (user, 2026-05-28): the reading unit is the H2 SECTION, not the
 // sentence. "段落应该是 H2 标题；如果下面段落中需要分模块，用标识或编号标出来，
-// 而不是换行看起来非常散". What the user rejected was an H2 chopped into 4+ short
-// prose paragraphs split by blank lines — visually "scattered". So each narrative
-// H2 should read as ONE coherent paragraph, OR a lead-in paragraph + a numbered/
-// bulleted list (the list items carry the sub-points). We FAIL a narrative H2
-// whose body holds more than SC3C_MAX_SECTION_PARAS separate PROSE paragraph
-// blocks. List items, table rows, blockquotes and headings are NOT prose blocks,
-// so the approved "引子 + 编号列表" shape counts as 1-2 blocks and passes.
+// 而不是换行看起来非常散". What the user rejected was a section chopped into 4+
+// separate prose paragraph blocks split by blank lines — visually "scattered" /
+// a wall of text. A section should read as ONE coherent paragraph, OR a lead-in
+// paragraph + a numbered/bulleted list, OR — for genuinely multi-part narrative
+// prose — be organized under `### ` H3 SUBHEADINGS.
+//
+// 2026-06-09 (user "内容更丰富时全用标号分割不太现实，加 H3 效果会好一些"): H3
+// subheadings are now a first-class way to break a long narrative section, not
+// just numbered lists. So we measure prose blocks PER SUBSECTION (bounded by H2
+// OR H3), not per whole H2: a long section passes as long as EACH H2/H3 subsection
+// holds ≤ SC3C_MAX_SECTION_PARAS consecutive prose blocks. A true wall (>limit
+// prose blocks under one heading, with no H3 and no list) still FAILs. List items,
+// table rows, blockquotes are NOT prose blocks, so "引子 + 编号列表" passes.
 // Short-by-design sections (FAQ, Sources, CTA…) are excluded via the SC3b set.
 // ============================================================
-const SC3C_MAX_SECTION_PARAS = 3; // > 3 separate prose paragraphs under one H2 = scattered
+const SC3C_MAX_SECTION_PARAS = 3; // > 3 consecutive prose paragraphs in one H2/H3 subsection = wall
 
-// Count separate prose paragraph blocks per H2 section. A block is a run of
-// consecutive prose lines bounded by blank/structural lines. Returns one entry
-// per NON-excluded H2 section: { heading, startLine, paraCount }. Content before
-// the first H2 (the H1 title) is ignored; H3+ headings only break the run.
+// Per NON-excluded H2 section, find the MAX number of consecutive prose paragraph
+// blocks within any single subsection bounded by an H2 or an H3 heading. A block
+// is a run of consecutive prose lines bounded by blank/structural lines. Returns
+// one entry per section: { heading, startLine, paraCount } where paraCount is that
+// per-subsection max — so adding `### ` H3 subheadings (which reset the running
+// sub-tally) genuinely breaks a wall into compliant sub-groups. Content before the
+// first H2 (the H1 title) is ignored.
 function sectionProseBlocks(lines) {
   const sections = [];
   let inFence = false;
-  let cur = null;        // { heading, startLine, paraCount, excluded }
-  let inPara = false;    // currently inside a prose block
+  let cur = null;         // { heading, startLine, paraCount, excluded }
+  let subParas = 0;       // prose blocks in the current H2/H3 subsection
+  let inPara = false;     // currently inside a prose block
   let inListItem = false; // last line was a list marker or its indented continuation
+  const bump = () => { if (cur && subParas > cur.paraCount) cur.paraCount = subParas; };
   for (let i = 0; i < lines.length; i++) {
     const raw = lines[i];
     const line = raw.trim();
     if (/^```/.test(line) || /^~~~/.test(line)) { inFence = !inFence; inPara = false; inListItem = false; continue; }
     if (inFence) { inPara = false; inListItem = false; continue; }
     if (/^##\s/.test(line)) { // H2 opens a new section
+      bump();
       if (cur && !cur.excluded) sections.push(cur);
       cur = { heading: line.replace(/^#+\s*/, ''), startLine: i + 1, paraCount: 0, excluded: isShortByDesignHeading(line) };
-      inPara = false; inListItem = false;
+      subParas = 0; inPara = false; inListItem = false;
       continue;
     }
-    if (/^#{1,6}\s/.test(line)) { inPara = false; inListItem = false; continue; } // H1 / H3+ — break run, no new section
+    if (/^#{1,6}\s/.test(line)) { bump(); subParas = 0; inPara = false; inListItem = false; continue; } // H1 / H3+ — subsection boundary
     if (line === '') { inPara = false; inListItem = false; continue; }
     if (/^(\d+[.)]|[-*+])\s/.test(line)) { inPara = false; inListItem = true; continue; } // list marker
     // An indented line under a list item is a wrapped continuation, NOT a new
@@ -494,8 +506,9 @@ function sectionProseBlocks(lines) {
     if (inListItem && /^\s/.test(raw)) continue;
     if (/^\|/.test(line) || /^>/.test(line)) { inPara = false; inListItem = false; continue; } // table / blockquote
     inListItem = false;
-    if (!inPara) { if (cur) cur.paraCount += 1; inPara = true; } // start of a new prose block
+    if (!inPara) { subParas += 1; inPara = true; } // start of a new prose block in this subsection
   }
+  bump();
   if (cur && !cur.excluded) sections.push(cur);
   return sections;
 }
@@ -512,8 +525,8 @@ export function checkSectionScatter(draft) {
     if (s.paraCount > SC3C_MAX_SECTION_PARAS) {
       violations.push({
         line: s.startLine,
-        text: `"${s.heading}" 下有 ${s.paraCount} 段散开的 prose 段落`,
-        hint: `H2 section 段落散开 (${s.paraCount} > ${SC3C_MAX_SECTION_PARAS}); 改成「引子 + 编号列表」，把子要点收进编号项而不是用空行散成多段 (v4.5.1)`,
+        text: `"${s.heading}" 某子节有 ${s.paraCount} 段连续 prose（墙/散开）`,
+        hint: `子节 prose 段过多 (${s.paraCount} > ${SC3C_MAX_SECTION_PARAS}); 用 \`### \` H3 小标题把长叙述分组(每组 ≤3 段)，或改成「引子 + 编号列表」(v4.5.1 / 2026-06-09 H3)`,
       });
     }
   }

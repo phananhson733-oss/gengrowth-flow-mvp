@@ -92,8 +92,8 @@
 
 - **恰好 1 个 `# H1`**（文章标题，第 1 行）
 - **恰好 11 个 `## H2`**（下面 11 章节，按顺序）
-- **0 个 `### H3`、0 个 `#### H4`** — 禁止任何子标题层级
-- ✅ 正确：H1 在最顶，11 个 H2 依次出现，章节内只有段落 / 列表 / 表格
+- **`### H3` 仅用于"超长叙述章节"内部分组**（2026-06-09）：叙述型章节正文 prose 会达到 4+ 段时，用 2-3 个 `### ` 小标题拆成每组 ≤3 段（对齐 SC3c），不堆文字墙、也不把叙述硬塞编号列表。H3 非必须，短章节/编号列表章节不加。**0 个 `#### H4`**；章节标题永远是 `## H2`。
+- ✅ 正确：H1 在最顶，11 个 H2 依次出现；章节内是段落 / 列表 / 表格，超长叙述章节可用 `### ` H3 分组（章节标题仍是 ##）
 - **H1 价值主张硬要求**：H1 必须在**前 3-5 词内含关键词**（保留原规则），**且必须携带价值主张 / 角度，不能是纯裸关键词**。沿用现有"无冒号死板模板"规则的同时，**允许用破折号或副标题承载价值主张**。
   - ❌ `Aura Colors Meaning`（纯关键词，没有角度）
   - ✅ `Aura Colors Meaning: Reading the Whole Spectrum Without Forcing a Label`（关键词在前 3 词 + 副标题承载价值主张）
@@ -134,7 +134,7 @@
    - 期待 framework 替代 clinical / relational ground truth
 7. **常见问题 / FAQ（H2，标题按 entity 变体）**— 内含 **3-4 个真实 PAA 风格问题**，聚焦读者对**整个 family / system** 的真实操作摩擦点 / 长尾搜索意图（不是泛问）。
    - **标题去模板化（v4.5.1 Phase C）**：不要每篇都写死成 `## Frequently Asked Questions`。请写一个 entity 专属标题，**且必须含一个 questions/FAQ token**：`Questions` / `FAQ` / `Q&A`。例：`## Common Questions About {{entity}}`、`## {{entity}} FAQ`。（rich-result FAQPage 检测靠该 token + 加粗问句行。）
-   - **格式约束（关键，违反 = 结构 fail）**：每个问题写成**加粗整行且以问号结尾**（如 `**How many aura colors are there?**`），紧跟 2 句精确事实回答。**绝不用 `### H3` / `#### H4`**（H3 在本系统被结构校验禁止，会直接 FAIL）。
+   - **格式约束（关键，违反 = 结构 fail）**：每个问题写成**加粗整行且以问号结尾**（如 `**How many aura colors are there?**`），紧跟 2 句精确事实回答。**FAQ 章节里不用 `### H3` / `#### H4`**（FAQ 用加粗问句整行；H3 仅限超长叙述章节内分组，FAQ 不需要）。
    - ✅ 范例：
      ```
      **How many aura colors are there?**

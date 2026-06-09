@@ -327,7 +327,50 @@ Fourth short paragraph tips it over the limit.`;
   const r = checkSectionScatter(draft);
   assert.equal(r.pass, false);
   assert.equal(r.violations[0].line, 3);
-  assert.ok(/段落散开|scatter/i.test(r.violations[0].hint), r.violations[0].hint);
+  assert.ok(/段过多|墙|H3|scatter/i.test(r.violations[0].hint), r.violations[0].hint);
+});
+
+test('SC3c: a long narrative section broken by ### H3 subheadings → PASS (2026-06-09 H3 wall-breaker)', () => {
+  // The user-approved alternative to numbered lists for genuinely multi-part
+  // narrative prose: H3 subheadings reset the per-subsection prose-block tally,
+  // so 5 paragraphs organized under H3s (each sub-group ≤3) is NOT a wall.
+  const draft = `# X
+
+## Why It Matters
+
+A lead-in paragraph that frames what follows.
+
+### The first angle
+
+First paragraph under the first angle.
+
+Second paragraph under the first angle.
+
+### The second angle
+
+Third paragraph under the second angle.
+
+Fourth paragraph under the second angle.`;
+  const r = checkSectionScatter(draft);
+  assert.equal(r.pass, true, r.note);
+});
+
+test('SC3c: same paragraph count with NO H3 → still FAIL (H3 must actually break the wall)', () => {
+  const draft = `# X
+
+## Why It Matters
+
+A lead-in paragraph that frames what follows.
+
+First body paragraph with no subheading.
+
+Second body paragraph with no subheading.
+
+Third body paragraph with no subheading.
+
+Fourth body paragraph with no subheading.`;
+  const r = checkSectionScatter(draft);
+  assert.equal(r.pass, false, r.note);
 });
 
 test('SC3c: lead-in paragraph + numbered list + closing → PASS (approved v4.5 shape)', () => {

@@ -33,8 +33,10 @@ tags:
 | houses_life_areas | `9th house` → `9th house astrology` |
 | nakshatras_27_stars | `rohini` / `pushya` → 各加 ` nakshatra` |
 | transit_events | `saturn return pisces` → `saturn return in pisces` |
+| chakra_healing_basics | `solar plexus affirmations` → `solar plexus chakra affirmations` |
+| mythology_deities | `persephone` → `persephone goddess` |
 
-其中 4 个（`saturn return in pisces`、`ketu mahadasha`、`venus mahadasha`、`signs you're a highly sensitive person`）当场写入主表 cluster_id；其余 7 个对应的主表词原本已归类，仅做集群表措辞对齐。
+第一批 11 个 token 中 4 个当场写入主表 cluster_id（`saturn return in pisces`、`ketu mahadasha`、`venus mahadasha`、`signs you're a highly sensitive person`）；第二批 2 个（上表末两行）再写 1 个（`solar plexus chakra affirmations`）。其余对应的主表词原本已归类，仅做集群表措辞对齐。
 
 ---
 

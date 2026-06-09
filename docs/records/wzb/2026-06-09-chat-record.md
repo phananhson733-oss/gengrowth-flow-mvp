@@ -78,3 +78,39 @@ baoyu skills 中那个是用 Google OAuth 不是 key 吧？（附微信文章链
 补两层架构：① LLM 规划层（规划 agent 读全文逐页决定该配几张内联图、配哪），hero 固定。规划层判定 7 色页各需 2 张内联：shade-spectrum（该色色调表→标注色块，放 Table 后）+ sibling-comparison（该色 vs 正文真正对比的 2-3 邻色，放对比段后）。② 执行层复用：数据驱动 SVG 生成器 `gen-shade-strip.mjs`（--suffix 切 shades/vs）+ 内容取自正文的数据 JSON + illustrate-article insertInline 改插到章节末（不卡表格）。生成 14 张 SVG，wire 后部署。最终 pillar=2 图、7 色页各 3 图（hero+shade+comparison），共 23 图，全 live：每页 img=3、两 SVG HTTP200、h1=1 无回归。
 
 ---
+
+### Q6 — 17:20 [claude]
+
+**🙋 提问：**
+
+你既然可以逆向 gemini key，可以逆向 gpt 吗 / image2？
+
+**🤖 回答：**
+
+纠正认知：Gemini 那套不是"我"逆向、也不是逆向 key——是 baoyu 写好的 `danger-gemini-web` skill 重放已登录 Google 会话 cookie 打网页内部接口，我只是调用。GPT 侧两层：① 逆向 ChatGPT 网页版（对标 gemini-web）本地没有 `danger-openai-web`，技术可行但 OpenAI 套 Cloudflare+Arkose 远比 Gemini 凶、cookie 重放天天失效，且违反 ToS，不走；② 官方 image2（`gpt-image-1`）本地 `baoyu-imagine` 已支持，走正规 API，唯一门槛是填 OpenAI key（我不能代填凭证），设好就能像 gemini-web 一样调。配图系统执行层 provider 无关，换 generator 即可，规划层不动。
+
+---
+
+### Q7 — 17:24 [claude]
+
+**🙋 提问：**
+
+继续用免 key 的 Gemini-web。
+
+**🤖 回答：**
+
+确认配图系统维持 gemini-web，不接 OpenAI key——无需改码（执行层默认即调 `baoyu-danger-gemini-web`，骑已登录 Google 会话，零成本）。运维点：偶发 "No image returned" 由 `generate()` 内置 3 次重试+size 校验自愈，连续失败重跑单张即可。后续配图统一走"规划 agent 决定哪里几张 → 写 plan/数据 JSON → 执行层 gemini-web+SVG"，不改码不需 key。
+
+---
+
+### Q8 — 17:30 [claude]
+
+**🙋 提问：**
+
+下一批文章配图时再调规划 agent。
+
+**🤖 回答：**
+
+确认规划 agent 按批次、按需调用，现在不跑。约定下次流程：用户丢"给这批配图"+slug → 规划层 agent 读全文逐页决定内联图数量/位置/类型（hero 固定 1 张）→ 执行层写 plan/数据 JSON → gemini-web 出图+SVG 信息图 → wire+部署。用户无需再交代规则。
+
+---

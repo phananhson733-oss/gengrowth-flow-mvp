@@ -66,3 +66,27 @@ tags:
 先答:`_v33-cluster-backfill.mjs` 不自动(纯手动一次性),pipeline 里只有 gg-keyword-promote 在 promote 新词时自动填 AC、不管存量也不管 keywords_included 后续扩充。用户点 D4=A(自动同步+漏检报告)后,建 `gg-cluster-sync.mjs`:精确唯一命中自动填 AC(additive/幂等/不覆盖)、冲突/模糊/孤儿只报告;接进 autopilot tick(launchd 每 25min fire 跑一次 --apply,独立日志,NON-FATAL)。漏检报告堵两种隐性漏:疑似漏配(仅模糊命中)+ 集群表孤儿词(措辞对不上主表,如 "9th house" vs "9th house astrology"、"(NEW)" 后缀)。6 测试+全量 1050 绿,commit 386b3df。线上 synced=0/fuzzy=9/orphans=27/unclustered=413。
 
 ---
+
+### Q5 — 17:16 [claude]
+
+**🙋 提问：**
+
+我刚刚优化了这里的自动化内容，你看下（截图：gg-cluster-sync 接入 autopilot tick + 漏检报告，commit 386b3df）
+
+**🤖 回答：**
+
+通读脚本/测试/tick 接法后给结论：设计是对的、可放心跑——写入真 additive/幂等/不覆盖、最小权限(dry-run 只读)、子 shell `||` 非阻断、行号映射与 AC 列校验都正确。提了三点改进：① 没跳过 `## section header` 行(同模块 parseMasterRows 有这道过滤，怀疑虚报 413/9)；② 报告显示截断在 20，但有 27 个孤儿词要给运营，第 21–27 个任何输出都拿不到；③ 硬编码范围 A1:AC1500 + 关键词写死 r[0] 是静默上限/无抗漂移。提议补 ①header 过滤+重算，并完整拉出 27 孤儿对照清单。
+
+---
+
+### Q6 — 17:21 [claude]
+
+**🙋 提问：**
+
+可以，你去推进吧
+
+**🤖 回答：**
+
+落地两件:① 加 `buildMasterRows()`(跳过空 A 列与 `^#{1,6}\s+` 标题行)+ 1 个新测试，孤儿显示 cap 20→100。② 重算后诚实更正:数字不变(fuzzy=9/unclustered=413)——主表当前根本没有 `## ` 标题行,所以 413 是真·未归类,过滤纯属防御性一致(已被测试锁住)。③ 生成 27 孤儿词→主表对照清单:A 类(可对齐/清理)21 个、B 类(主表缺词)6 个;3 个 "(NEW)" 后缀清理后会精确命中并被下一跳自动同步;同时指出启发式有误报(如 `ic`→`malefic` 是子串误判,需人工)。全量 1050 绿、0 失败(含新测试),改动已由 vault backup 自动提交到 main。
+
+---

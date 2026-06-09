@@ -54,6 +54,18 @@ v0.6 把 PRD 与真实关键词库、astrologywiki.com 真实基础设施对了�
 
 v0.6 评审发现的 8 个 gap（G1–G8）已在 v0.6 修复，v0.7 继承，不再重列。
 
+### 0.3 GEO 修订（2026-06-09）
+
+对 PRD 的 GEO（AI 搜索可见性）判断做了一次评估，落 5 处增补。原文默认"做好 SEO = GEO 自然好"，但被 AI 引用的机制与 SERP 排名不完全重合，且原文无任何 AI 可见性仪表、无 AI 抓取/索引技术项。增补不改 SEO 主线，只把 GEO 从"隐式副产品"补成"可证伪的赌注 + 最低成本仪表 + 技术前提核查"。原文里 AIO 防御（定义词加工具/表格，§7.3）、Direct Answer Block（§7.5.4）、实体不堆砌（§7.9）三条 GEO 直觉本就成立，保留。
+
+| # | 增补 | 章节 |
+|---|---|---|
+| G-1 | "SEO 好 → GEO 好"明确标为**待验证假设**、非结论 | §3.2 |
+| G-2 | 发布前技术闸加 **AI 抓取/索引层核查**（SSR / JSON-LD / AI 爬虫不误封 / 可选 llms.txt）| §7.4 |
+| G-3 | `entity_map` **前移为生产时主动要求**（非 Day-30 排名补救），但仍禁堆砌 | §7.5.1 |
+| G-4 | 加零开发 **AI 可见性探针**（ChatGPT/Perplexity 人工抽查核心词被引），检验 G-1 | §7.9 §7.8 |
+| G-5 | 周度行动清单纳入 AI 可见性探针信号 | §7.8 |
+
 ---
 
 ## 1. 文档定位与现实对账
@@ -169,6 +181,8 @@ MVP 只做内部系统，服务 GenGrowth 自研或深度参与的增长项目�
 - 两条线都按集群组织，都发到同一站点。量产线提供量与广度，精修线提供"语义主权"与转化资产。只有量没有精修线，站点会变成泛占星内容农场；只有精修线没有量，60 天到不了 5000 PV。
 - **精修线不需要重做关键词研究。** 现有《关键词研究主表》已有大量 placement / house / node 词。精修线 = 把这些词按"自我认知 / journaling"角度重新切集群，不是新挖词。
 - aura / Vedic / nakshatra 词原样进量产线。
+
+**GEO 假设（GEO 修订 2026-06-09，待验证）**：本版默认"做好 SEO 集群内容 + 语义清晰 → AI 搜索可见性（被 ChatGPT/Perplexity/Gemini 引用）自然到位"。这是**未验证的假设、非既定结论**——被 AI 引用的机制与 SERP 排名不完全重合（更依赖可被抽取的论断、结构化数据、第三方权威提及）。处理：(a) §7.9 自 Day 30 起用轻量 AI 可见性探针检验此假设；(b) 若 AI 引用与排名脱节，再单列 GEO 动作。GEO 暂作 SEO 副产品处理，但作为**可证伪的赌注**、不写死为结论。
 
 ### 3.3 与真实关键词库对账 + 地区闸门（修订 3）
 
@@ -418,6 +432,8 @@ Week 1 选题规则：可规划 8–12 个集群，实际只启动 2–3 个 P0 
 
 只检查阻塞项：GSC property 已验证、sitemap 新 URL 可提交、robots/noindex 未阻挡、canonical 正确、页面可渲染、内链入口（Pillar 与 Series 互链）、Core Web Vitals 无阻塞级问题。GA4 + CTA 事件见 §8 建设任务；装好前不阻塞内容发布，但 CTA 数据不计入验收。
 
+**AI 抓取/索引层（GEO 修订 2026-06-09，一次性核查 + 每页轻查）**：① 核心内容是否 SSR（服务端渲染）而非纯 CSR——AI 爬虫对 JS 渲染弱，纯 CSR 正文 AI 可能抓不到（一次性核查 astrologywiki 当前栈）；② Pillar / 工具页是否有 JSON-LD 结构化数据（Article / FAQPage / Organization）——AI 提取实体的"通用语"；③ robots.txt 未误封 AI 爬虫（GPTBot / ClaudeBot / Google-Extended 等）；④（可选，低优先）站点根加 llms.txt 指向核心内容/工具页。这四项是 GEO 的技术前提，与 SEO 闸并列、不阻塞发布但须记录缺口。
+
 不做：日志分析、完整 crawl budget、大规模 JS parity 检测、自动技术任务卡。
 
 ### 7.5 Step 5：内容生产引擎（SOP = v2.3，量产线 / 精修线）
@@ -427,6 +443,8 @@ Week 1 选题规则：可规划 8–12 个集群，实际只启动 2–3 个 P0 
 #### 7.5.1 集群级 Brief
 
 每个 P0 集群先写一张集群级 Brief：`cluster_name` / `track` / `content_layer` / `us_share` / `user_question` / `entity_map` / `content_angle` / `pillar_angle` / `series_rule` / `link_plan` / `CTA_rule` / `evidence_requirement` / `psych_safety_rule` / `quality_bar` / `page_template`（指定附录 A 中的模板）。
+
+**（GEO 修订 2026-06-09）** `entity_map` 是**生产时**的主动要求、不是 Day-30 排名差了才补的补救：Pillar/Series 建卡时即按 entity_map 覆盖该主题核心实体（人/概念/关系），让 AI 能从页面直接抽取主题权威。仍遵守"覆盖 ≠ 堆砌"——禁止为覆盖而无脑补 FAQ 或塞实体（见 §7.9 Day 30）。
 
 #### 7.5.2 页面级生产卡 = 选题登记表 v2.3
 
@@ -462,7 +480,7 @@ v2.3 继续保留 `page_id`、`cluster_id`、显式 `page_role`、`content_angle
 
 ### 7.8 Step 8：周度增长行动清单
 
-每周一生成 `Weekly Action List`：上周发布、收录情况、GSC 信号、GA4/CTA 信号（搭好后）、本周内容（含 **Tier 混合是否在审核产能内**）、本周分发、风险（含审核溢出、地区闸门未核查）、决策。AI 生成初稿，创始人或 SEO 负责人审核。每个 action 有 owner 和 due date。
+每周一生成 `Weekly Action List`：上周发布、收录情况、GSC 信号、GA4/CTA 信号（搭好后）、AI 可见性探针信号（自 Day 30，见 §7.9）、本周内容（含 **Tier 混合是否在审核产能内**）、本周分发、风险（含审核溢出、地区闸门未核查）、决策。AI 生成初稿，创始人或 SEO 负责人审核。每个 action 有 owner 和 due date。
 
 ### 7.9 Step 9：刷新、合并、暂停规则
 
@@ -471,6 +489,8 @@ v2.3 继续保留 `page_id`、`cluster_id`、显式 `page_role`、`content_angle
 | Day 14 | 未收录 → 查 sitemap/内链/noindex/质量；有 impressions → 观察；精修线页无 prompts → 补 |
 | Day 30 | 未进 Top 100 或排名弱，按 `Intent mismatch -> Title mismatch -> Internal links -> Content gap -> Entity coverage` 排查；禁止无脑补 FAQ 或堆实体 |
 | Day 60 | 带 clicks → 保留扩展集群；只 impressions → 优化标题摘要；无信号 → 合并/noindex/暂停；集群整体无信号 → 停止换下一个 |
+
+**AI 可见性探针（GEO 修订 2026-06-09，零开发起步）**：自 Day 30 起，每周对 5–10 个核心定义型词，人工在 ChatGPT 与 Perplexity 各问一次对应 buyer query，记 astrologywiki.com 是否被引用/提及（被引 / 被提未链 / 未出现）。这是检验 §3.2「GEO 假设」的最低成本仪表——GSC 只测 Google（含 AIO 曝光），测不到 ChatGPT/Perplexity/Gemini 的引用。结果进 §7.8 周度清单；若核心词在 AI 答案中长期缺席而 SERP 排名尚可，即触发"GEO 与排名脱节"、单列 GEO 动作。
 
 验收：每个页面有 Day 14/30/60 复盘日期；每个集群 Day 60 给出继续/调整/暂停；60 天 PV 目标按 cluster 拆分复盘，并按 `us_share` 区分美国 PV 与总 PV。
 

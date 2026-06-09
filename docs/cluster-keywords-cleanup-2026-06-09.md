@@ -40,9 +40,11 @@ tags:
 
 ---
 
-## 🟡 待确认：措辞像漂移，但需人工判断（10 个）
+## 🟡 待确认：措辞像漂移，但需人工判断（8 个）
 
 把 `keywords_included` 里的"现写法"改成"建议主表写法"即可被自动接住；**但下列匹配置信度不高，请先确认语义是否一致，不要盲改**。
+
+> 原 10 个中较可信的 2 个（`solar plexus affirmations`、`persephone`）已在 2026-06-09 改完并归类，见上方 ✅。
 
 | 集群 | 现写法（孤儿） | 建议改成 | 备注 |
 |---|---|---|---|
@@ -50,9 +52,7 @@ tags:
 | astrology_basics_terms | `ic` | （脚本误判过 `malefic`，**勿采纳**） | `ic`=Imum Coeli 真术语；多半主表缺词，或应为 `ic astrology` |
 | black_moon_lilith | `lilith sign` | — | 该集群已含 `black moon lilith sign`，`lilith sign` 要么删（冗余）要么作独立词加进主表 |
 | black_moon_lilith | `lilith in birth chart` | `lilith birth chart calculator` | 仅 60% 词相似，意图可能不同 |
-| chakra_healing_basics | `solar plexus affirmations` | `solar plexus chakra affirmations` | 75% 相似，较可信 |
 | journal_prompts_writing | `self reflection journal prompts` | （勿塌缩成 `journal prompts`） | 大概率是独立长尾，建议主表新增 |
-| mythology_deities | `persephone` | `persephone goddess` | 较可信 |
 | rising_sign_profiles | `ascendant woman` | `leo ascendant woman`？ | 泛词 vs 狮子座专属，需定位 |
 | rising_sign_profiles | `rising houses` | `leo rising houses`？ | 同上 |
 | synastry_compatibility | `relationship astrology calculator` | `vedic astrology calculator` | 仅 50% 相似，存疑 |
@@ -83,6 +83,6 @@ tags:
 
 ## 当前线上状态（2026-06-09 改后）
 
-`synced=0(已同步) · conflicts=0 · fuzzy=7 · orphans=16 · unclustered=411`
+`synced=0(已同步) · conflicts=0 · fuzzy=7 · orphans=14 · unclustered=410`
 
 > `unclustered=411` 是主表里既无精确也无模糊命中的关键词，需人工扩 `keywords_included` 或新建集群——与本清单的孤儿词是两回事。

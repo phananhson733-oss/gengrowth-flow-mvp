@@ -114,3 +114,15 @@ baoyu skills 中那个是用 Google OAuth 不是 key 吧？（附微信文章链
 确认规划 agent 按批次、按需调用，现在不跑。约定下次流程：用户丢"给这批配图"+slug → 规划层 agent 读全文逐页决定内联图数量/位置/类型（hero 固定 1 张）→ 执行层写 plan/数据 JSON → gemini-web 出图+SVG 信息图 → wire+部署。用户无需再交代规则。
 
 ---
+
+### Q9 — 18:05 [claude]
+
+**🙋 提问：**
+
+/goal 给这批配图（锁定"最近全部未配图 13 篇"：transits×4 + HSP×4 + mahadasha×5，双语）。
+
+**🤖 回答：**
+
+通用两层配图系统第 2 次跑通并全部 live on astrologywiki.com。① 规划层：3 个 agent 按 cluster 并行读全文逐篇定 hero(固定1)+内联图(可变,15张:sequence×8/compare×5/timeline×2)，双语锚点+标签，年限核原文。② 执行层：新建 gen-infographic.mjs(数据驱动双语 SVG，3 kind)+扩 illustrate-article 双语 alt/inline；gemini-web 出 13 hero。QA：Chrome 截图视觉验收 30 SVG+13 hero，抓到 HSP pillar hero 双联拼接→重生成单张。单次原子 prod 部署，curl/node-fetch 验证 13 stub hero=1/内联数对/h1=1、资源全 200、ZH 本地化 alt 在。提交在 detached HEAD 内容线(105acf0+0566ff2)。**上报：oracle 内容 prod 线又漂回 detached HEAD、与 main 分叉，从 main 部署会回退配图——与你"只在 main"规则冲突，待你定夺是否锚分支/调和。**
+
+---

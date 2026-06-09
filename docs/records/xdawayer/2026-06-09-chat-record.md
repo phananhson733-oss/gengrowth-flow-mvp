@@ -102,3 +102,15 @@ tags:
 按建议把 12 个高置信孤儿词就地纠正 `主题集群表.keywords_included`(结构保留替换、dry-run 先行)。dry-run 抓出 `lilith sign`→`black moon lilith sign` 会和已存在词重复 → 自动留人工,实际写 6 个 cell / 11 个 token。随后跑 `gg-cluster-sync --apply` 闭环:orphans 27→16,当场写 4 行主表 cluster_id(saturn return in pisces / ketu / venus mahadasha / signs you're a HSP),其余 7 个对应主表词原已归类;复跑 dry-run synced=0 验证幂等。剩余 16 孤儿(🟡需人工 10 / 🔵主表缺词 6)+ 7 疑似漏配 落成运营清单 `docs/cluster-keywords-cleanup-2026-06-09.md`。全程 additive 不删数据。
 
 ---
+
+### Q8 — 17:42 [claude]
+
+**🙋 提问：**
+
+可以
+
+**🤖 回答：**
+
+把 🟡 里较高置信的 2 个也改了:`solar plexus affirmations`→`solar plexus chakra affirmations`、`persephone`→`persephone goddess`。脚本加了"写前确认目标词存在于主表"的安全闸(避免只改名不归类),两个都通过、无 dup。apply 后跑 cluster-sync:orphans 16→14,当场再写 1 行主表 cluster_id(solar plexus chakra affirmations;persephone goddess 对应主表词已归类),复跑 synced=0 幂等。同步更新运营清单 `docs/cluster-keywords-cleanup-2026-06-09.md`(🟡 10→8、状态行 orphans→14)。
+
+---

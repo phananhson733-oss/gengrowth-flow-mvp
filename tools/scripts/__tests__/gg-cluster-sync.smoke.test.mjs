@@ -17,6 +17,20 @@ function fakeClusterMap() {
   ]);
 }
 
+test('buildMasterRows: 跳过空 A 列与 ## section header，保留 sheet 行号', () => {
+  const grid = [
+    ['关键词'],            // 行1 表头
+    ['## 占星基础'],       // 行2 一级小节标题 → 跳过
+    ['moon journal'],      // 行3 正常关键词
+    [''],                  // 行4 空 A 列 → 跳过
+    ['### 进阶玩法'],      // 行5 多级标题 → 跳过
+    ['black moon lilith'], // 行6 正常关键词
+  ];
+  const rows = buildMasterRows(grid);
+  assert.deepEqual(rows.map((r) => r.kw), ['moon journal', 'black moon lilith']);
+  assert.deepEqual(rows.map((r) => r.row), [3, 6]); // 行号对齐 sheet（表头=行1）
+});
+
 test('buildExactClusterIndex: keywords_included → kw→Set(cid)，多归属记冲突', () => {
   const idx = buildExactClusterIndex(fakeClusterMap());
   assert.deepEqual([...idx.get('journal prompts')], ['c_journal']);

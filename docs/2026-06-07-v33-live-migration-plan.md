@@ -2,7 +2,7 @@
 title: keyword-sheet v3.3 活表迁移执行计划
 date: 2026-06-07
 type: migration-runbook
-status: live-cutover-DONE-by-user-verified; data-backfill+report+disputes-pending
+status: live-cutover+data-backfill+§5-report DONE-verified; remaining = W=集群必需人工标 + 7新集群cluster_id回标 + B4/B5可选 + §4争议流程(创始人)
 author: wzb
 target_live: 关键词主表 @ 1CkjOCgYbRfXGYc6l2FJOaxUIzxT0NBVUhUpgCjyzcQc (gengrowth-flow-mvp)
 work_copy_mcp: 1UaTxBQNdgeSomL6qlNJZMSRxovsSL5SasyWmuO5ny7M (gengrowth-flow-mvp — v3.3 迁移副本, owner=xdawayer)

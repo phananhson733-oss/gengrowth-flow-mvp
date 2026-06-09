@@ -54,3 +54,15 @@ tags:
 按 ultracode "先内联探路→workflow 对抗核验→亲手顺序写"做完追加补强(全 additive 不删数据)。dry-run scoped 后起 3 视角 workflow(集群语义/公式安全/完备性)核验无 block，再对线上原表 1CkjOC 应用:① cluster_id 回标 41 行 AC(精确匹配集群表 keywords_included，162→203，覆盖 7 新 P1 集群+P2/P3);② B3 11 个 vedic calculator 词标 W=集群必需(暂缓→集群必需);③ B5a 生产候选正则锚定。复验 PASS:#ERROR=0、W=集群必需11、生产候选 452→463。commit 2bd8437。缓做 B4/B5b(确认合理)；剩 422 未归集群词+2 边界归属待人工。
 
 ---
+
+### Q4 — 16:38 [claude]
+
+**🙋 提问：**
+
+我们这个脚本会自动同步吗 / 每次都要手动，不是很麻烦，那要是漏了怎么办
+
+**🤖 回答：**
+
+先答:`_v33-cluster-backfill.mjs` 不自动(纯手动一次性),pipeline 里只有 gg-keyword-promote 在 promote 新词时自动填 AC、不管存量也不管 keywords_included 后续扩充。用户点 D4=A(自动同步+漏检报告)后,建 `gg-cluster-sync.mjs`:精确唯一命中自动填 AC(additive/幂等/不覆盖)、冲突/模糊/孤儿只报告;接进 autopilot tick(launchd 每 25min fire 跑一次 --apply,独立日志,NON-FATAL)。漏检报告堵两种隐性漏:疑似漏配(仅模糊命中)+ 集群表孤儿词(措辞对不上主表,如 "9th house" vs "9th house astrology"、"(NEW)" 后缀)。6 测试+全量 1050 绿,commit 386b3df。线上 synced=0/fuzzy=9/orphans=27/unclustered=413。
+
+---

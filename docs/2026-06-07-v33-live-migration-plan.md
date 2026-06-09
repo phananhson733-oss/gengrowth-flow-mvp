@@ -2,7 +2,7 @@
 title: keyword-sheet v3.3 活表迁移执行计划
 date: 2026-06-07
 type: migration-runbook
-status: live-cutover+data-backfill+§5-report DONE-verified; remaining = W=集群必需人工标 + 7新集群cluster_id回标 + B4/B5可选 + §4争议流程(创始人)
+status: live-cutover+data-backfill+§5-report+追加补强(cluster_id回标41/B3 W=集群必需11/B5a锚定) DONE-verified; remaining = B4/B5b可选 + 422未归集群词(编辑) + §4争议流程(创始人)
 author: wzb
 target_live: 关键词主表 @ 1CkjOCgYbRfXGYc6l2FJOaxUIzxT0NBVUhUpgCjyzcQc (gengrowth-flow-mvp)
 work_copy_mcp: 1UaTxBQNdgeSomL6qlNJZMSRxovsSL5SasyWmuO5ny7M (gengrowth-flow-mvp — v3.3 迁移副本, owner=xdawayer)
@@ -23,6 +23,7 @@ work_copy_mcp: 1UaTxBQNdgeSomL6qlNJZMSRxovsSL5SasyWmuO5ny7M (gengrowth-flow-mvp 
 - [x] **数据回填 DONE（2026-06-09，原表已 apply）**：副本验收通过后，经用户明确放行，对线上原表 `1CkjOC` 跑 `_v33-backfill.mjs --apply` → 写 **168 行 Z page_id + Y 生产状态（336 单元格；已发布135/已建卡33；target 103/assoc 65）**。**复验 PASS**：审计重跑 Z/Y 全 SAME（FILL0/SAME168/CONFLICT0，幂等）、全表 #ERROR=0（回填未碰坏公式）。**纯追加、不删不覆盖任何既有数据**。**AA 发布URL 不回填**（选题登记表 URL 列全空，无源）。**仍待运营**：`W=集群必需`（骨架词人工标）。
 - [x] **副本完整验收（2026-06-08，QA）**：API 只读硬核对 + Chrome 线上肉眼 + codex 对抗二审。副本数据层全 PASS（见 `docs/2026-06-08-v33-copy-acceptance-report.md`）。**修复 B1**（commit 4d66dbb）：下游 `gg-sheet-pull` A:AB→A:AC、`gg-keyword-promote` A1:AB1→A1:AC1，使其读到 AC 的 cluster_id（原读漏 → queue-build 拿不到 162 人工归属）；全量 1041 测试绿。**建 B2** 审计脚本（commit 79643cc）。
 - [x] **§5 迁移报告（2026-06-08）**：已产出 `docs/2026-06-08-v33-migration-report.md`（只读生成器 `_v33-report.mjs` 读线上原表）：列29/#ERROR0/X可生产452·暂缓164·无关9/候选452=452/矛盾0/P0覆盖2-2/回填预览168全Z空/争议42全via=target/7个新P1集群0集群词(预存未回标缺口非迁移bug)。
+- [x] **追加补强 DONE（2026-06-09，原表已 apply + 经 3 视角 workflow 对抗核验无 block）**：脚本 `_v33-cluster-backfill.mjs` + `_v33-augment-apply.mjs`（全 additive 不删数据）。① cluster_id 回标 **41 行 AC**（精确匹配集群表 keywords_included，AC 162→203），覆盖 7 新 P1 集群 + astrocartography/ai_astrology/lunar_rituals/synastry/ayurvedic。② B3 **11 个 vedic calculator P1 骨架词标 W=集群必需**（暂缓→集群必需进生产候选）。③ B5a 生产候选!A1 REGEXMATCH 锚定 `^(可生产|集群必需)$`（行为保持）。**复验 PASS**：全表 #ERROR=0、W=集群必需 11、X{可生产452/暂缓153/集群必需11/无关9}、生产候选 452→**463**。**边界待人工**（均来自人工 keywords_included，如要改请改集群表源头再同步）：`sattva rajas tamas→ayurvedic_healing`、`lilith conjunct north node synastry→black_moon_lilith`。**仍剩**：422 个无任何集群列入的未归集群词（编辑缺口，需人工/扩 keywords_included）；B4 文案 token（旧 token 不触发，纯 cosmetic）；B5b X 公式 TRIM+白名单（W 仅 11 个干净值，未来批量改 W 前再做）。
 - [ ] **§4 创始人争议流程**：方案该节空白，未定义（创始人/方案作者补）。
 
 ### 副本"类上线"端到端演练（2026-06-07，PASS）

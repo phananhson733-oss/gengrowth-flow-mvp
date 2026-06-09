@@ -60,6 +60,18 @@ trap 'rm -rf "$LOCK" 2>/dev/null' EXIT
 
 echo "$(date '+%F %T') loop start (pid $$, max $MAX_CYCLES cycles)" >> "$LOG"
 
+# ── cluster_id sync (D4, 2026-06-09) ────────────────────────────────────────
+# keywords_included(主题集群表) → 关键词主表 cluster_id(AC) 同步：additive/幂等/不覆盖
+# （只填 AC 空行的精确唯一命中；冲突/模糊/孤儿词只报告不写）。每次 fire 跑一次，写独立
+# 日志（含漏检报告：疑似漏配 / 集群表对不上主表的词 / 仍未归类计数）。NON-FATAL：同步出错
+# 绝不阻断内容线。手动看：node tools/scripts/gg-cluster-sync.mjs（dry-run 出报告）。
+CLUSTER_SYNC_LOG="$LOG_DIR/cluster-sync-$(date +%Y-%m-%d).log"
+(
+  echo "$(date '+%F %T') ── cluster-sync tick (pid $$) ──"
+  set -a; . "$HOME/.config/gg/_gg.env" 2>/dev/null; set +a
+  node "$SCRIPT_DIR/gg-cluster-sync.mjs" --apply
+) >> "$CLUSTER_SYNC_LOG" 2>&1 || echo "$(date '+%F %T') cluster-sync failed (non-fatal, see cluster-sync log)" >> "$LOG"
+
 # NOTE: flow-mvp (_staging drafts) and gengrowth-ops (task plan) are BOTH kept
 # current by their obsidian-git plugins (autoPullInterval=1), so the loop does NOT
 # pull them itself — that would be redundant and risk fighting the plugin for the

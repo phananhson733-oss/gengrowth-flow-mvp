@@ -47,3 +47,15 @@ aliases:
 授权后用 Chrome MCP 在 Google Search Console（已登录 sc-domain:astrologywiki.com）给新 URL `aura-colors-guide` 提交「请求编入索引」。深链 `inspect?id=` 格式 404 失效→改走 GSC 概述页顶部「检查任意网址」搜索框（坐标点击 + 输入 + 回车，ref 点击对输入框无效）。检查结果「网址尚未收录到 Google」（新页预期）→点「请求编入索引」→实测约 30s→确认「已请求编入索引，已加入优先抓取队列」。旧 URL 权重靠 301 自动传递，无需单独提交。
 
 ---
+
+### Q3 — 15:18 [claude]
+
+**🙋 提问：**
+
+可以（给 green/orange 中文页也提交索引）。
+
+**🤖 回答：**
+
+同流程给 `zh/wiki/green-aura-meaning` + `zh/wiki/orange-aura-meaning` 各提交「请求编入索引」，均确认「已请求编入索引、加入优先抓取队列」。两页检查结果都显示「尚未收录到 Google」——/zh/ 中文页 Google 还没抓到，这次提交能加速收录 + 抓到新配图。本轮 GSC 共提交 3 个 URL（guide EN + green/orange ZH），均在每日配额内。
+
+---

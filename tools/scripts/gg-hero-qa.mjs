@@ -79,9 +79,12 @@ try {
   const prominence = seamVal / median;
 
   // Flag only when BOTH: the centre band is a strong outlier vs the picture's
-  // texture AND the seam runs down most of the frame (a real split, not just a
-  // central subject like a moon).
-  const isSeam = prominence >= 3.0 && seamRowFrac >= 0.55;
+  // texture AND the seam runs down ALMOST the full frame. A real left/right
+  // diptych split spans ~80%+ of rows top-to-bottom; a legitimate central
+  // vertical SUBJECT (a balance-scale pole, a tree trunk, a tower) only occupies
+  // the middle band (~30-60% of rows), so the high row-fraction requirement
+  // separates true splits from centred subjects and keeps false positives rare.
+  const isSeam = prominence >= 4.0 && seamRowFrac >= 0.72;
   if (isSeam) {
     out(false, `likely centre diptych seam at x≈${Math.round((seamX / W) * EXPECT_W)} (prominence ${prominence.toFixed(1)}×, ${Math.round(seamRowFrac * 100)}% of rows)`,
       { seamProminence: +prominence.toFixed(2), seamRowFrac: +seamRowFrac.toFixed(2) });

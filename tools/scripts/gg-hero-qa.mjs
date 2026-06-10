@@ -14,11 +14,18 @@
 // Usage: node gg-hero-qa.mjs <hero.jpg> [--json]
 // Exit 0 = pass, 1 = fail (reason on stderr / in JSON).
 
-import sharp from 'sharp';
+import { createRequire } from 'node:module';
+import path from 'node:path';
 
 const file = process.argv[2];
 const asJson = process.argv.includes('--json');
 if (!file) { console.error('usage: gg-hero-qa.mjs <hero.jpg> [--json]'); process.exit(2); }
+
+// sharp lives in the oracle repo's node_modules, not the flow repo's. Resolve it
+// from GG_SHARP_BASE (the oracle worktree) so this runs from anywhere.
+const sharpBase = process.env.GG_SHARP_BASE || process.cwd();
+const require = createRequire(path.join(sharpBase, 'noop.cjs'));
+const sharp = require('sharp');
 
 const EXPECT_W = 1200, EXPECT_H = 675;        // the optimize() target ratio
 const MIN_BYTES = 20_000;                     // below this, generation effectively failed

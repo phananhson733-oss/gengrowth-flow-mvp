@@ -41,6 +41,18 @@ aliases:
 
 ---
 
+### Q4 — 23:29 [claude]
+
+**🙋 提问：**
+
+/goal 要加入到 cron 闭环。未决的地方你可以帮我评估一下给出决策
+
+**🤖 回答：**
+
+把配图并入 autopilot 发布闭环，三个未决项我评估后拍板：① 配图绝不阻塞文字——会话死/hero 失败则发纯文字+内联（内联确定性无网络）+ 打 needs_hero + 60min 会话冷却；② diptych 自动 QA 用 sharp 中线接缝启发式（prominence≥4×且≥72%行高，区分真分屏与中央立柱/塔，实测合成 diptych 命中、天秤/塔不误报），动作保守——硬失败才删 hero，接缝可疑则重生一次后保留+记 qa_warn（绝不误删好图）；③ provider 维持 gemini-web（用户已确认零成本），env 可切官方 keyed API 不改码。实现：新增 `lib/illustrate.mjs`（LLM 规划 claude -p 出 plan + 容错解析 + 模板兜底 → gen-infographic 内联 → illustrate-article hero → QA → 兜底）+ `gg-hero-qa.mjs`，插在 gg-seo-autopilot doScanLocked 的 convert→buildGate 之间（try/catch + 模块自身全程 fail-safe）。env 开关 GG_AUTOPILOT_ILLUSTRATE/GG_ILLUSTRATE_LLM_PLAN/GG_ILLUSTRATE_MODEL/GG_GEMINI_SKILL。scratch worktree 端到端验证：LLM plan 有效+双语 anchor 验过→3 内联→gemini hero→QA clean→双 export wire→npm build 通过→stub hero=1/inline=3/h1=1；模板兜底与接缝检测分别验过。autopilot 直接从工作树运行，已提交即 live（队列当前 drained，下一篇 claimable 文章起自动带图）。提案文档转 active，记忆更新。
+
+---
+
 ### Q3 — 21:00 [claude]
 
 **🙋 提问：**

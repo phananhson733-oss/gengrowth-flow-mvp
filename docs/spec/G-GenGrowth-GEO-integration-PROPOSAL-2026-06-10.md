@@ -65,7 +65,7 @@ fixture 新增 `geo_brief` 字段（由 brief/override 链路传入），render 
 
 ## 冲突台账（单一权威；scope=geo_bank 涉实验锁页 / site_sweep=纯 SEO 侧；v2 脚本+审查双路实证）
 
-> **裁决状态（2026-06-10）**：wzb 经 /goal 采纳下表"建议"列为裁决；机器可读裁决记录 = geo 仓 `_staging/sheet-mapping/astrologywiki/conflict-decisions.json`（11 组，含 apply_when/apply_action）。**应用动作属实施期（窗后第一批），本表当前只是已裁未应用。**
+> **裁决状态（2026-06-10）**：wzb 经 /goal 采纳下表"建议"列为裁决。**执行权威 = geo 仓 `_staging/sheet-mapping/astrologywiki/conflict-decisions.json`**（conflict-decisions/2，11 组，status 状态机：accepted_ready/pending_human_angle/pending_intent_doc/applied）；本表是发现/输入依据。应用动作统一在窗后第一批（不提前），仅 `accepted_ready` 可标 applied_at。
 
 | # | Sheet 侧 | 冲突 | scope | must_decide | 建议 |
 |---|---|---|---|---|---|

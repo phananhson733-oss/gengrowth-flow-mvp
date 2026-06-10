@@ -59,6 +59,10 @@ fixture 新增 `geo_brief` 字段（由 brief/override 链路传入），render 
 | 2 | PG-AURA-009 "aura reading" 待写 | oracle `aura-reading.ts` 已上线（geo global control） | 重指既有页作 update（窗后） |
 | 3 | PG-EMPATH-005 "HSP Books Ranked"（backlog） | HSP 簇领地，意图与既有页不同 | 可作新内容放行；窗内不得新增指向锁定页的站内链 |
 | 4 | PG-EMPATH-007 "HSP Debunked?"（backlog） | 同上 | 同上 |
+| 5 | **PG-VEDIC-003 "vedic birth chart calculator online free" 待写** | oracle `vedic-birth-chart-calculator.ts` 已上线（非 geo 页，纯 SEO 侧自我蚕食） | 重指既有页作 update，或合并进 -004 一并裁 |
+| 6 | **PG-VEDIC-004 "best vedic birth chart calculator" 待写** | 同上 | 同上 |
+
+> 低优先（仅提示）：PG-HEAL-005 "Pluto in the 6th House" 与既有 `6th-house-astrology.ts` 词面相邻，但 placement 专题与宫位总览意图不同，按新内容处理即可。
 
 ## 实施排期与边界
 

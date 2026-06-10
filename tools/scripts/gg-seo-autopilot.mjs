@@ -1036,6 +1036,17 @@ function doScanLocked(o) {
     const missing = used.filter((a) => a && a !== 'undefined' && !known.has(a));
     if (missing.length) { claims[t.pgId].status = 'needs_human'; claims[t.pgId].error = `unregistered author(s): ${[...new Set(missing)].join(',')}`; saveClaims(claims); log(`PARK ${t.pgId}: ${claims[t.pgId].error}`); continue; }
 
+    // illustration (best-effort enrichment, NEVER blocks the text publish).
+    // Generates an atmospheric hero + 0-3 inline infographics into the worktree.
+    // Any failure degrades to fewer/no images — the try/catch + illustrate()'s own
+    // fail-safe guarantees a broken image step can't sink a publishable article.
+    let ill = { hero: false, inline: 0, needsHero: false };
+    try {
+      ill = illustrate({ repo: publishRepo, slug: t.slug, flowDir: FLOW, log });
+      log(`illustrate ${t.pgId}: hero=${ill.hero} inline=${ill.inline}${ill.needsHero ? ' needs_hero' : ''}${ill.qaWarn ? ' qa_warn' : ''}${ill.note ? ` (${ill.note})` : ''}`);
+    } catch (e) { log(`illustrate ${t.pgId}: caught ${errTail(e, 80)} — publishing without images`); }
+    if (ill.needsHero) claims[t.pgId].needs_hero = true;
+
     // build gate
     const b = buildGate(publishRepo);
     if (!b.ok) { claims[t.pgId].status = 'needs_human'; claims[t.pgId].error = `build: ${b.error}`; saveClaims(claims); log(`PARK ${t.pgId}: build failed`); continue; }

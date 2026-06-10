@@ -59,3 +59,15 @@ aliases:
 同流程给 `zh/wiki/green-aura-meaning` + `zh/wiki/orange-aura-meaning` 各提交「请求编入索引」，均确认「已请求编入索引、加入优先抓取队列」。两页检查结果都显示「尚未收录到 Google」——/zh/ 中文页 Google 还没抓到，这次提交能加速收录 + 抓到新配图。本轮 GSC 共提交 3 个 URL（guide EN + green/orange ZH），均在每日配额内。
 
 ---
+
+### Q4 — 15:40 [claude]
+
+**🙋 提问：**
+
+commit and push（两仓）→ 发现 oracle 双线分叉后 →"合并 + 部署并集，同时你可以在线上看一下"+"可以理解为只需 commit and push，vercel 会自动部署"。
+
+**🤖 回答：**
+
+flow-mvp 直接 FF push（含对话记录 vault 提交）。oracle 发现严重分叉：origin/main 是 autopilot 自动发文线（领先内容线 123、41 篇新文章从没 live），内容线领先 19（我的 aura 工作）——根因是我一直用 CLI `vercel --prod` 从内容线部署、盖掉了 origin/main 的 GitHub 自动部署。先非破坏性推内容线到备份分支。用户要"合并+部署并集"后：在 main-clean worktree merge origin/main 进内容线，解 5 个冲突（generate-seo-pages slug 并集+pillar→guide / vercel.json 301 并集 / famous-hsp 取单数 / blue-aura 留两边 / FOLDER.md 并集），本地 vite build + 全 stub 链验证通过，commit `eb0049e`（2 parents）FF push origin/main → Vercel 自动部署（~30s）。线上验证 273 URL：autopilot 文章(neptune/ashwini/synastry/full-moon) + 我的 aura(guide/blue 双内容/green ZH 图/301) 全 live。**订正部署机制写入 memory：今后 oracle 部署=push origin/main 自动部署，绝不再 CLI --prod。**
+
+---

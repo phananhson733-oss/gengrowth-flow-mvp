@@ -57,6 +57,7 @@ import { homedir } from 'node:os';
 import { buildAuthorMap, resolveAuthor } from './lib/author-routing.mjs';
 import { detectProtectedFactDrift, summarizeProtectedFactDrift } from './lib/review-fact-guard.mjs';
 import { slugifyPageId } from './gg-sheet-pull.mjs';
+import { illustrate } from './lib/illustrate.mjs';
 
 const HOME = homedir();
 const FLOW = process.env.GG_FLOW_REPO || join(HOME, 'gengrowth-flow-mvp');

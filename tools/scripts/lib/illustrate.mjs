@@ -152,7 +152,7 @@ export function illustrate(opts) {
         const tmo = parseInt(process.env.GG_ILLUSTRATE_PLAN_TIMEOUT_MS || '600000', 10);
         run('claude', ['-p', planPromptFor(repo, slug), '--model', model,
           '--allowedTools', 'Bash Read Write Grep', '--dangerously-skip-permissions'], { timeout: tmo });
-        if (existsSync(planAbs)) plan = JSON.parse(readFileSync(planAbs, 'utf8'));
+        if (existsSync(planAbs)) plan = parseLoose(readFileSync(planAbs, 'utf8'));
       } catch (e) { log(`illustrate: LLM plan failed (${String(e.message).slice(0, 80)}) → template`); }
     }
     if (!plan || !validatePlan(plan, repo, slug, log)) {
@@ -219,6 +219,19 @@ export function illustrate(opts) {
     log(`illustrate: ${result.note}`);
     return result;
   }
+}
+
+// Tolerant parse: strip code fences and trailing commas the LLM sometimes emits,
+// then JSON.parse. Returns null if still unparseable (→ template fallback).
+function parseLoose(raw) {
+  try { return JSON.parse(raw); } catch { /* try to clean */ }
+  try {
+    let s = raw.replace(/^\s*```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '');
+    const a = s.indexOf('{'), b = s.lastIndexOf('}');
+    if (a >= 0 && b > a) s = s.slice(a, b + 1);
+    s = s.replace(/,(\s*[}\]])/g, '$1'); // trailing commas
+    return JSON.parse(s);
+  } catch { return null; }
 }
 
 function stripHero(plan, slug) {

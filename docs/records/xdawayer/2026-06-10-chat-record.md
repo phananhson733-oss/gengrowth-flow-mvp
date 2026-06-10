@@ -21,7 +21,7 @@ aliases:
 - 风格按用户 june-2026 标杆**统一为氛围式**（风景+星云+符号融入，弃星盘轮图解）；35 张图解/diptych/徽标 hero 改写 prompt 重生，全 89 张逐一视觉验收。
 - 解决多项工程问题：本机 Google 登录态（Chrome cookie 解密注入）、skill 下载图 UA 403 bug、单会话 70+ 张限流（分批+刷新）、setHero 单引号兼容 bug、insertInline 跨 export 边界 bug（best-astrology i1）。
 - 部署：PR #128（89 篇）+ #129（insertInline 修复）合并 main → Vercel prod，commit ca8edde live。build gate + 全量 live 验收通过。
-- cron 全自动配图集成写成提案 `docs/spec/G-GenGrowth-illustration-cron-integration-PROPOSAL-2026-06-10.md`（unattended gemini 会话/双联 QA/ToS 未决，待 wzb 定夺）。
+- **配图并入 autopilot cron 闭环并落地**（/goal）：新增 `lib/illustrate.mjs` + `gg-hero-qa.mjs`，插在 convert→buildGate 之间，全程 fail-safe（绝不阻塞文字）。三个未决项我评估拍板：hero 失败发纯文字+needs_hero+会话冷却 / sharp 中线接缝 QA 保守动作 / 维持 gemini-web 可 env 切换。scratch worktree 端到端验证通过（LLM plan→内联→hero→QA→build→stub）。提案文档转 active。
 
 ---
 

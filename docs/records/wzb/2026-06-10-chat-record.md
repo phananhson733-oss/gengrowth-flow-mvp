@@ -1,0 +1,37 @@
+---
+title: 对话记录 — 2026-06-10
+date: 2026-06-10
+updated: 2026-06-10
+type: chat-record
+author: wzb
+agent: claude
+tags:
+  - record
+  - daily
+aliases:
+  - 2026-06-10 chat record
+  - 对话记录 2026-06-10
+---
+
+# 对话记录 — 2026-06-10
+
+## Daily Summary
+
+> 【本区域在每天最后一次对话结束时生成/更新】
+> 用 3-5 个要点概括当天所有对话的核心内容、关键决策和产出成果。
+
+---
+
+## 对话记录
+
+### Q1 — 15:01 [claude]
+
+**🙋 提问：**
+
+可以，一起处理了（落地 aura SEO 清单两项遗留：① pillar URL 改名 + 301；② green/orange 中文版补内联图 + H3）。
+
+**🤖 回答：**
+
+两项 live + commit `e7cd1df` + merge main `04bd368`。① **URL 改名** `aura-colors-pillar`→`aura-colors-guide`：改 slug 字段（文件/export 名不动）+ ARTICLE_SLUGS_EN_ONLY + manifest key + 全局替换 30 处内链（11 文件）+ 删旧 stub/og + vercel.json 加 **statusCode:301**（含尾斜杠变体，非 308）；image 路径不动。线上验证 301 精确触发、guide 200/h1=1/FAQ、sitemap guide在pillar无、内链全 guide。② **green/orange 中文配图**：aura 是 EN-only 但这两篇有 ZH 版（缺内联图）→ 造中文数据文件跑 `gen-shade-strip.mjs` 出 4 张中文 SVG（CJK 系统字体 fallback，Chrome 实测渲染正常）→ wire 进 ZH 正文（各 3 图与 EN parity）；**不加 H3**（scatter 检查证最大连续 prose 段=2 无墙，FAQ 加粗问句须当软分隔避免误报）。merge 遇 rename/modify 冲突（theirs 把 pillar stub 重命名为 guide、ours 原地改过）→ `git checkout --theirs` 解。
+
+---

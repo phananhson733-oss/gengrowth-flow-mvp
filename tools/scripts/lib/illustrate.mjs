@@ -81,6 +81,7 @@ function planPromptFor(repo, slug) {
     ``,
     `INLINE RULES — include inline ONLY for genuinely data-bearing sections (an enumeration, a comparison, a time-ordered process). Definition/short articles often need 0-1; pillar/guide 2-3. ALL data (names, years, orderings) MUST be faithfully extracted from the article text. afterHeadingEn/Zh MUST be a verbatim "## " H2 heading line that exists in that language's content — VERIFY each with: grep -nF '## <heading>' ${join(repo, artRel)}  (and only use afterHeadingZh if grep -c 'export const .*Zh' ${join(repo, artRel)} >= 1). Drop any anchor you cannot verify.`,
     ``,
+    `BEFORE FINISHING (mandatory): run  node -e "JSON.parse(require('fs').readFileSync('${planAbs}','utf8'))"  and if it errors, fix ${planRel} until it parses cleanly. The file MUST be valid JSON.`,
     `Write ONLY the JSON file. Output one final line: DONE.`,
   ].join('\n');
 }

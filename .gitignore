@@ -13,3 +13,4 @@ _gg.env
 .claude/worktrees/
 # Obsidian opens any dir as vault and dumps config here — not a real vault.
 .obsidian/
+.gstack/

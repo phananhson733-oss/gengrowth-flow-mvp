@@ -1,63 +1,45 @@
 ---
-title: 配图并入 autopilot cron 闭环（提案）
+title: 配图并入 autopilot cron 闭环（已决策 + 已实现）
 date: 2026-06-10
+updated: 2026-06-10
 type: spec
-status: proposal
-tags: [workflow, illustration, autopilot, cron, proposal]
+status: active
+tags: [workflow, illustration, autopilot, cron]
 ---
 
-# 配图并入 autopilot cron 闭环（提案 — 待 wzb 确认）
+# 配图并入 autopilot cron 闭环
 
-> 背景：用户要求把配图并入"之前定义的 cron 全自动推送流程（自动检测 + 写作/插图 + 推送上线 + 检测验收）"。
-> 本文是**提案**，不是已落地。回填 89 篇完成 + 用户确认后再实施。
-> 关联：[[G-GenGrowth-illustration-and-H3-workflow-2026-06-09]]（两层配图系统）。
+> 用户要求把配图并入"之前定义的 cron 全自动推送流程（自动检测 + 写作/插图 + 推送上线 + 检测验收）"，并授权我评估未决项给出决策。
+> 2026-06-10 已落地。关联：[[G-GenGrowth-illustration-and-H3-workflow-2026-06-09]]（两层配图系统）。
 
-## 现状：autopilot 闭环里没有配图
+## 三项决策（已拍板）
 
-`tools/scripts/gg-seo-autopilot.mjs` 的 publish 链（`doScan`）：
+1. **会话失败/过期 → 绝不阻塞文字上线。** 配图是 best-effort 富化。gemini 会话死/hero 生成失败 → 照常发**纯文字 + 内联图**（内联 SVG 确定性、不依赖网络），hero 缺省并打 `needs_hero`，同时设**会话冷却**（默认 60 分钟，避免每 tick 浪费 ~90s 重试死会话）；会话恢复后由后续 tick 或人工补 hero。
+2. **双联拼接质量 → 廉价确定性 backstop + 保守动作。** `gg-hero-qa.mjs`（sharp）检测两类可自动判定的缺陷：尺寸/空文件、**正中竖缝 diptych**（中列梯度相对中位数的 prominence ≥4× 且贯穿 ≥72% 行高——区别于天秤立柱/塔/树干等中央主体，实测 juno/2nd-house/塔等不误报，合成 diptych 准确命中）。**动作保守**：硬失败（无图/尺寸错/<20KB）才删 hero+defer；仅接缝可疑 → 重生 1 次，仍疑则**保留 hero + 记 qa_warn**（绝不误删中央主体好图）。生成 prompt 的 "one continuous scene, no split" 仍是第一道防线，本门是第二道。诚实标注：本门不替代人眼，只挡明显硬缝。
+3. **ToS 风险 → 维持 gemini-web（用户此前已确认不接 OpenAI key），provider 由 env 可切换。** 不引入新风险（与 wzb 手动同机制、零成本）。`GG_GEMINI_SKILL` 可切到官方 keyed API（gpt-image-1 via baoyu-imagine），执行层 provider 无关，不改码。
 
-```
-claimable 任务 → convert(md→.ts) → buildGate(npm build) → commit → push → PR → gh pr merge → Vercel 部署 main→prod
-```
+## 实现
 
-`convert()`（:446）只产出**纯文字** `.ts`。新文章上线即**无 hero、无内联图**——这正是现在 106→（回填后）剩余文章缺图的来源：autopilot 持续产出无图文章。
+**插入点**：`gg-seo-autopilot.mjs` 的 `doScanLocked()`，在 author-gate 之后、`buildGate()` 之前调用 `illustrate()`；整段 try/catch 包裹，`illustrate()` 自身也全程 fail-safe——**任何失败都不抛进发布路径，最坏只是少图/无图**。
 
-## 插入点：`convert()` 之后、`buildGate()` 之前
+**新文件**：
+- `tools/scripts/lib/illustrate.mjs` — 编排：① LLM 规划（`claude -p` 写 `scripts/plans/auto-<slug>.json`，hero 氛围 prompt + 0-3 内联，anchor 自验；JSON 自校验 + 解析端容错去尾逗号/围栏；失败 → **确定性模板 hero（无内联）**兜底）② `gen-infographic.mjs` 出内联 SVG ③ `illustrate-article.mjs` 出 hero(gemini)+wire ④ hero QA + 兜底策略 ⑤ 会话冷却。
+- `tools/scripts/gg-hero-qa.mjs` — sharp 中线接缝/尺寸 QA（`GG_SHARP_BASE` 指向 worktree 解析 sharp）。
 
-`.ts` 已生成、slug 已知、build 尚未跑。在此插一步 `illustrate()`：
+**资产落点**：`public/images/blog/<slug>.jpg` + `<slug>-i<idx>-<lang>.svg`（单目录，区别于手动回填的 per-cluster 目录）。commit 时 addPaths 增加 `public/images/blog` + `scripts/plans/auto-<slug>.json`。
 
-```
-convert → ✦illustrate(slug)✦ → buildGate(覆盖 hero/inline 渲染) → commit → …
-```
+**env 开关**：
+- `GG_AUTOPILOT_ILLUSTRATE=0` 整步关闭（默认开）
+- `GG_ILLUSTRATE_LLM_PLAN=0` 跳过 LLM、只用模板 hero（默认开 LLM）
+- `GG_ILLUSTRATE_MODEL`（默认 claude-sonnet-4-6）/ `GG_ILLUSTRATE_PLAN_TIMEOUT_MS`（默认 600000）
+- `GG_GEMINI_SKILL` provider 路径覆盖
 
-`buildGate` 的 `npm run build` 会重渲 stub + OG，天然覆盖新插入的 hero/inline。
+**渲染**：oracle SPA + stub 早已支持 hero(image 字段) + 内联(`![](svg)`)，无需改渲染。
+**发布后验证**：现有 `tools/scripts/verify-live`（或 `/tmp/verify-live-illustrations.mjs`）验 stub hero/内联/资源 200。
 
-## `illustrate(slug)` 三个子步
+## 已知残余 / 运维
 
-| 子步 | 实现 | 性质 |
-|---|---|---|
-| 1. 规划 | 新建 `gg-illustrate-plan.mjs`：1 次 LLM 调用（复用 orchestrator 的 `claude -p` 模式）读全文 → 产 `scripts/plans/auto-<slug>.json`（hero prompt + 0-3 内联规格，anchor 须 grep 命中、双语标签） | LLM（每文 1 次，类比 authoring 的 orchestrator 调用） |
-| 2. 出图 | `gen-infographic.mjs --plan` 出 SVG + `illustrate-article.mjs --plan` 调 gemini-web 出 hero 并 wire | 确定性 glue |
-| 3. 验收 | 新建 `gg-illustrate-gate.mjs`：程序化检查（hero 文件 >20KB、尺寸 1200×675、SVG 无 undefined/截断、anchor 命中数对）；**hero 视觉验收（双联拼接检测）暂无自动手段** | 半自动 |
-
-## 必须先解决的可靠性问题（unattended cron 特有）
-
-1. **Google 会话过期**：gemini-web 骑已登录 Google 会话，cookie 会失效（今天首次就是空会话 + 403）。cron 无人值守时会话一断，hero 步骤每 tick 失败。
-   - **缓解**：hero 失败**不阻塞发布**（illustrate-article 已是"hero 失败仍 wire inline"）；改为 hero 失败时**仍发文（无 hero）+ park 一个 `needs_hero` 标记**，会话恢复后用单独 lane 补 hero。绝不让配图失败挡住文字上线。
-   - 或：定期 `--login` 刷新 + 会话健康检查（tick 开头探活，失败则跳过配图直接发文）。
-2. **双联拼接等 diffusion 坑无自动 QA**：扩散模型偶发把 hero 拼成左右双联。当前靠人 Chrome 截图看。cron 里需要一个轻量自动判据（如长宽比/中线对称性启发式，或一个便宜的 vision 判别调用），否则可能上线坏 hero。**这是接入 cron 前的最大未决项。**
-3. **会话 ToS 风险**：`danger-` 前缀已表明 gemini-web 是重放会话 cookie 打内部接口，违反 Google ToS。无人值守高频调用放大风险。需用户接受或改走官方 `gpt-image-1`（需 OpenAI key）。
-4. **repo 体积**：每文 hero(JPEG ~150KB) + N×SVG 永久进 git。cron 长期跑需评估 + 可能迁 CDN/对象存储。
-5. **LLM 成本**：每篇多 1 次规划 LLM 调用（读全文 ~ 几千 token）。
-
-## 建议落地顺序
-
-1. **先批量回填**（本轮，89 篇，人盯 QA）——验证两层系统在全量上的质量。✅ 进行中
-2. 回填稳定后，先做**最低风险的 cron 接入**：只在 tick 开头探活 Google 会话；活则发文带 hero（规划+出图+程序化 gate），不活则发纯文字文 + `needs_hero` park。**不接内联图自动化**（内联图规划质量更吃 LLM 判断，先留人工批次）。
-3. 补**双联拼接自动判据**后，再放开内联图自动化。
-
-## 决策点（需用户拍板）
-
-- 是否接受 unattended cron 调 gemini-web 的 ToS 风险？还是切官方 image API（填 key）？
-- hero 失败时：发纯文字文 + 补图 lane（推荐）vs 卡住不发？
-- 内联图自动化：先人工批次，还是一并进 cron？
+- **会话需登录态**：本机 cookie 从 Chrome 注入（`/tmp/import-gemini-cookies.mjs`，需钥匙串授权）；testing-mode 会过期，过期则走冷却 + needs_hero，文字照发。
+- **QA 是启发式**：subtle 构图问题（非硬缝）不挡；low-volume cron（每 tick ~1 篇）下可接受，必要时人工 review `qa_warn`/`needs_hero` 标记。
+- **LLM plan 偶发无效 JSON**：已加自校验 + 容错解析；仍失败则模板 hero（无内联）兜底，不影响发布。
+- **needs_hero 补图 lane**：目前标记写进 claims（`needs_hero:true`）；后续可加专门 lane 在会话恢复后批量补 hero（暂依赖人工或重跑）。

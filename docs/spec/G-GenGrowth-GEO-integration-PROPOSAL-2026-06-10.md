@@ -65,6 +65,8 @@ fixture 新增 `geo_brief` 字段（由 brief/override 链路传入），render 
 
 ## 冲突台账（单一权威；scope=geo_bank 涉实验锁页 / site_sweep=纯 SEO 侧；v2 脚本+审查双路实证）
 
+> **裁决状态（2026-06-10）**：wzb 经 /goal 采纳下表"建议"列为裁决；机器可读裁决记录 = geo 仓 `_staging/sheet-mapping/astrologywiki/conflict-decisions.json`（11 组，含 apply_when/apply_action）。**应用动作属实施期（窗后第一批），本表当前只是已裁未应用。**
+
 | # | Sheet 侧 | 冲突 | scope | must_decide | 建议 |
 |---|---|---|---|---|---|
 | 1 | **PG-MAHADASHA-005 "shani mahadasha" 待写** | **双重撞**：语义别名撞 saturn-mahadasha（**B 轨 treatment**，6-08 刚干预上线）+ 词面父主题撞 mahadasha（**control**） | geo_bank | **是** | **不另写新页**：窗后重指既有页 update，或 defer。另写 = 站内蚕食 + 污染复测 |

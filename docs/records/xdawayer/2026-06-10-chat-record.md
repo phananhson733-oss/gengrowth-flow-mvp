@@ -17,8 +17,11 @@ aliases:
 
 ## Daily Summary
 
-> 【本区域在每天最后一次对话结束时生成/更新】
-> 用 3-5 个要点概括当天所有对话的核心内容、关键决策和产出成果。
+- **完成 astrologywiki.com 剩余 89 篇 blog 的 hero + 内联图全量回填并上线 prod**（线上 21+89=110 篇全覆盖，89/89 线上验收通过）。出图用 nano banana 2（baoyu-danger-gemini-web），内联用 gen-infographic.mjs 数据驱动 SVG。
+- 风格按用户 june-2026 标杆**统一为氛围式**（风景+星云+符号融入，弃星盘轮图解）；35 张图解/diptych/徽标 hero 改写 prompt 重生，全 89 张逐一视觉验收。
+- 解决多项工程问题：本机 Google 登录态（Chrome cookie 解密注入）、skill 下载图 UA 403 bug、单会话 70+ 张限流（分批+刷新）、setHero 单引号兼容 bug、insertInline 跨 export 边界 bug（best-astrology i1）。
+- 部署：PR #128（89 篇）+ #129（insertInline 修复）合并 main → Vercel prod，commit ca8edde live。build gate + 全量 live 验收通过。
+- cron 全自动配图集成写成提案 `docs/spec/G-GenGrowth-illustration-cron-integration-PROPOSAL-2026-06-10.md`（unattended gemini 会话/双联 QA/ToS 未决，待 wzb 定夺）。
 
 ---
 

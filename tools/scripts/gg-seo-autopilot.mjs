@@ -1060,6 +1060,12 @@ function doScanLocked(o) {
     } else {
       const addPaths = ['data/articles'];
       if (existsSync(join(publishRepo, 'scripts', 'generate-seo-pages.mjs'))) addPaths.push('scripts/generate-seo-pages.mjs');
+      // Commit the generated illustration assets (hero jpg + inline svgs) + the
+      // per-article plan so the published article actually carries its images.
+      if (ill.hero || ill.inline > 0) {
+        if (existsSync(join(publishRepo, 'public', 'images', 'blog'))) addPaths.push('public/images/blog');
+        if (existsSync(join(publishRepo, 'scripts', 'plans', `auto-${t.slug}.json`))) addPaths.push(`scripts/plans/auto-${t.slug}.json`);
+      }
       gitIn(publishRepo, ['add', ...addPaths]);
       gitIn(publishRepo, ['commit', '-q', '-m', `feat(articles): publish ${t.slug} (${WINNER} ${VERSION}) [autopilot]`]);
       // --force: these seo/auto/<date>-<pgid> branches are disposable & autopilot-

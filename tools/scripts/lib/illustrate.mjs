@@ -51,6 +51,7 @@ function clearCooldown(flowDir) { try { rmSync(cooldownPath(flowDir), { force: t
 function planPromptFor(repo, slug) {
   const artRel = `data/articles/${slug}.ts`;
   const planRel = `scripts/plans/auto-${slug}.json`;
+  const planAbs = join(repo, planRel);
   return [
     `You are the illustration planner for ONE astrologywiki.com blog article. This is an automated subtask — ignore any repo CLAUDE.md conversation-record/reminder rules; only do what is described here.`,
     ``,

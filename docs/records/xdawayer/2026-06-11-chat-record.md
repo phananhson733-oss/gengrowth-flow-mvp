@@ -24,6 +24,18 @@ aliases:
 
 ## 对话记录
 
+### Q2 — 20:04 [claude]
+
+**🙋 提问：**
+
+/goal 补上这 4 篇的 FAQ 模块
+
+**🤖 回答：**
+
+给清单里缺 FAQ 的 4 篇补上 FAQ 模块（争 Featured Snippet）：june/july-2026-planetary-transits（双语 EN+ZH）+ chakra-system-overview + four-element-framework（EN）。先摸清 oracle 的 FAQ 约定（`scripts/lib/faq-jsonld.mjs`：`## ` 标题含 FAQ/question/常见问题 触发，段内 `**问句?**` 加粗行 + prose 答案，≥2 条自动生成 FAQPage JSON-LD，stub 与 SPA 同源解析）。用 4-agent workflow 严格依据各文原文撰写（每篇 4 条 Q&A，所有日期/数字 grep 逐字核验原文、不新增事实、保留反思非临床语气），脚本精准插入（Take Action/立即行动/Reflection Prompts 之前，否则内容末尾；transits 双语两段都插）。验证：6 个语境（EN+ZH）解析均 4 Q&A→FAQPage、node --check 通过、`npm run build` 通过、stub 全部带 FAQPage JSON-LD+FAQ 标题。PR #131 合并 → prod `57c2e3a` → 线上验收：4 篇 EN + 2 篇 ZH 全部 FAQPage JSON-LD ✓。worktree 已清理。
+
+---
+
 ### Q1 — 19:44 [claude]
 
 **🙋 提问：**

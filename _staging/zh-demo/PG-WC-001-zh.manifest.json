@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-WC-001",
+  "entity": "2026世界杯占星",
+  "target_keyword": "world cup 2026 astrology prediction",
+  "template": "Definition",
+  "tier": "T1",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-06-12T17:34:26.485Z",
+  "content_sha256_short": "7de2a2b95a1c27c8",
+  "source_path": "_staging/zh-demo/PG-WC-001-claude-v8.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/PG-WC-001-zh.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 2598,
+      "wikilinks": 5,
+      "tbdLinks": 5
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

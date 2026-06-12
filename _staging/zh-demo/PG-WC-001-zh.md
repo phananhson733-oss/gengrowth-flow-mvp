@@ -1,3 +1,28 @@
+---
+title: World Cup 2026 Astrology Prediction
+slug: world-cup-2026-astrology-prediction
+date: 2026-06-12
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T1
+track: 量产线
+page_id: PG-WC-001
+author_id: "julian-thorne"
+author_display_name: "Julian Thorne"
+target_keyword: world cup 2026 astrology prediction
+associated_keywords:
+  - world cup 2026 winner astrology
+  - fifa world cup 2026 astrology
+  - football astrology 2026
+  - world cup astrology 2026
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-12T17:34:26.485Z
+content_sha256_short: 7de2a2b95a1c27c8
+phase2_checks: all-pass
+---
+
 # 透过巨蟹座木星读懂 2026 世界杯占星预测
 
 ## 2026世界杯占星是什么？

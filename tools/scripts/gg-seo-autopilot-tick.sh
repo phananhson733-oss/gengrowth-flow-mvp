@@ -121,10 +121,21 @@ run_one_cycle() {
   printf '%s\n' "$AOUT" >> "$LOG"
 
   # Feishu alert on a fresh park (needs a human) or a freshly-authored draft.
+  # Anti-刷屏 (2026-06-12): the continuous loop can park a whole plan batch
+  # back-to-back off ONE shared root cause (e.g. 选题登记表 missing every row of a
+  # new daily batch → 10 needs_human alerts in ~70s). Only the FIRST park of this
+  # run alerts immediately; the rest accumulate into one roll-up sent at loop end.
   local PARK DONE
   PARK=$(printf '%s\n' "$AOUT" | grep -oE 'PARK\(author\) .*' | head -1)
   DONE=$(printf '%s\n' "$AOUT" | grep -oE 'AUTHORED PG-[A-Z0-9-]+ [^—]*' | head -1)
-  [ -n "$PARK" ] && GG_LARK_NOTIFY_AT_OPERATOR=1 "$SCRIPT_DIR/gg-lark-notify.sh" "⚠️ SEO autopilot 写稿暂停（needs_human）：$PARK"
+  if [ -n "$PARK" ]; then
+    PARK_COUNT=$((PARK_COUNT + 1))
+    if [ "$PARK_COUNT" -eq 1 ]; then
+      GG_LARK_NOTIFY_AT_OPERATOR=1 "$SCRIPT_DIR/gg-lark-notify.sh" "⚠️ SEO autopilot 写稿暂停（needs_human）：$PARK"
+    else
+      PARK_REST="${PARK_REST}${PARK}"$'\n'
+    fi
+  fi
   if [ -n "$DONE" ]; then
     "$SCRIPT_DIR/gg-lark-notify.sh" "✍️ SEO autopilot 写好一篇：$DONE— 立即发布中"
     # IMMEDIATE PUBLISH: claim+convert+preview the just-written draft, then verify+merge.
@@ -135,6 +146,9 @@ run_one_cycle() {
 }
 
 # ── continuous serial loop ──────────────────────────────────────────────────
+# Park-alert roll-up state (mutated by run_one_cycle, which runs in this shell).
+PARK_COUNT=0
+PARK_REST=""
 cycle=0
 while [ "$cycle" -lt "$MAX_CYCLES" ]; do
   cycle=$((cycle + 1))

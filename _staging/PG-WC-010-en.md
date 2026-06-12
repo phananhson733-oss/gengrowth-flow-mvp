@@ -18,8 +18,8 @@ associated_keywords:
   - jupiter cancer june 2026
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-12T20:45:58.210Z
-content_sha256_short: 28a8d0ad38fdb637
+generated_at: 2026-06-12T20:50:14.784Z
+content_sha256_short: 4b7f6f7c24c066ae
 phase2_checks: all-pass
 ---
 
@@ -31,7 +31,7 @@ The June 2026 tournament sky is **the set of transits and lunations overhead dur
 
 - Jupiter sits exalted in Cancer through June 30, favoring collective, home-soil themes
 - Saturn in Aries adds a steadying, testing undertone across the whole opening month
-- June's lunations mark natural reset and culmination windows during group play
+- June's lunations — a New Moon mid-month and a Full Moon near month's end — mark reset and culmination windows
 
 This is a symbolic, educational reading — not a prediction of results or a betting guide.
 
@@ -85,7 +85,7 @@ Jupiter is exalted in Cancer through June 30, the standout feature of the openin
 
 **Does Jupiter in Cancer favor the host nations?**
 
-Symbolically it warms home-soil and belonging themes, which suits hosts on home turf, but it never decides a result. Exalted means the planet is at its most expressive in this sign, so the warmth reads strongly through June; the emphasis then shifts once Jupiter enters Leo at the end of the month, just as the tournament turns toward the knockouts.
+Symbolically it warms home-soil and belonging themes, which suits hosts on home turf, but it never decides a result. Exalted means Jupiter is traditionally strengthened in Cancer, so the symbolic warmth reads strongly through June; the emphasis then shifts once Jupiter enters Leo at the end of the month, just as the tournament turns toward the knockouts.
 
 **What does Saturn in Aries add in June 2026?**
 
@@ -93,7 +93,7 @@ Saturn in Aries runs as a steadying undertone all month, a test of patience, ner
 
 **How do the June moons fit in?**
 
-The month's New Moon works as a reset window and its Full Moon as a culmination, natural turning points in both the group stage and your own June plans. A New Moon is a good time to begin or recommit, while a Full Moon tends to bring things to a head; reading them as timing rather than destiny keeps the lens honest and useful.
+The mid-month New Moon works as a reset for the group stage, while the late-June Full Moon culminates around the opening knockout window rather than group play. A New Moon is a good time to begin or recommit and a Full Moon tends to bring things to a head; reading them as timing rather than destiny keeps the lens honest and useful.
 
 ## Reflection Prompts
 

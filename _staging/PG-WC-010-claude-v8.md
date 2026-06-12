@@ -28,16 +28,18 @@ A third angle is the rhythm of the month itself. The opening rounds sit under ex
 
 You can follow the same June sky for your own month, not only the tournament's.
 
-1. Note Jupiter exalted in Cancer through June 30 as a warm, belonging-centered backdrop to world cup 2026 june astrology.
+1. Note Jupiter exalted in Cancer through June 30 as a warm, belonging-centered backdrop to the opening rounds.
 2. Watch the late-June shift as Jupiter enters Leo, turning the tone toward visibility and individual flair.
 3. Track Saturn in Aries as a steadying test of patience and nerve under pressure.
 4. Use the month's New Moon as a reset point and its Full Moon as a culmination, in the tournament and in your own plans.
 5. Read each window as a mood to meet, not a fixed outcome to await.
 
+Run those five passes and the month stops being a guessing game and becomes a readable arc. The same exalted Jupiter that lifts the group stage gives way to a Leo spotlight by the knockouts, and the two moons mark where the energy resets and where it peaks — a rhythm you can feel in the tournament and use in your own June.
+
 ## Common Misreadings
 
 1. **The June sky predicts the winner.** World cup 2026 june astrology describes atmosphere and timing; the result rests on the players, not the planets.
-2. **Jupiter in Cancer guarantees the home teams.** Exalted Jupiter favors collective, home-soil themes symbolically, but it never settles a match — and it leaves Cancer on June 30.
+2. **Jupiter in Cancer guarantees the home teams.** Exalted Jupiter favors collective, home-soil themes symbolically, but it never settles a match — and it leaves Cancer on June 30, so the home-warmth reading mostly applies to the group stage rather than the final.
 3. **One transit rules the whole tournament.** The month blends Jupiter, Saturn, and the lunations; no single placement decides the mood, let alone the score.
 4. **You read the sky differently from the tournament's.** The lens is identical — same transits, same lunations — whether you apply the June sky to a World Cup or to your own month.
 
@@ -58,15 +60,15 @@ Jupiter is exalted in Cancer through June 30, the standout feature of the openin
 
 **Does Jupiter in Cancer favor the host nations?**
 
-Symbolically it warms home-soil and belonging themes, which suits hosts on home turf, but it never decides a result. The emphasis also shifts once Jupiter enters Leo at the end of June.
+Symbolically it warms home-soil and belonging themes, which suits hosts on home turf, but it never decides a result. Exalted means the planet is at its most expressive in this sign, so the warmth reads strongly through June; the emphasis then shifts once Jupiter enters Leo at the end of the month, just as the tournament turns toward the knockouts.
 
 **What does Saturn in Aries add in June 2026?**
 
-Saturn in Aries runs as a steadying undertone all month, a test of patience, nerve, and composure. It reads as the quiet discipline behind a confident performance, not a verdict.
+Saturn in Aries runs as a steadying undertone all month, a test of patience, nerve, and composure under fire. It reads as the quiet discipline behind a confident performance rather than a verdict, the part of any big occasion that asks you to hold your shape when the pressure rises.
 
 **How do the June moons fit in?**
 
-The month's New Moon works as a reset window and its Full Moon as a culmination, natural turning points in both the group stage and your own June plans. Treat them as timing, not destiny.
+The month's New Moon works as a reset window and its Full Moon as a culmination, natural turning points in both the group stage and your own June plans. A New Moon is a good time to begin or recommit, while a Full Moon tends to bring things to a head; reading them as timing rather than destiny keeps the lens honest and useful.
 
 ## Reflection Prompts
 

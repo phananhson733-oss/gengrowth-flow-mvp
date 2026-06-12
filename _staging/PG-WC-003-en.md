@@ -1,3 +1,28 @@
+---
+title: Lionel Messi Zodiac Sign
+slug: lionel-messi-zodiac-sign
+date: 2026-06-12
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-WC-003
+author_id: "julian-thorne"
+author_display_name: "Julian Thorne"
+target_keyword: lionel messi zodiac sign
+associated_keywords:
+  - messi zodiac
+  - lionel messi astrology
+  - messi birth chart
+  - messi star sign
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-12T19:00:15.202Z
+content_sha256_short: 1fac0b9e51284ec0
+phase2_checks: all-pass
+---
+
 # Lionel Messi's Zodiac Sign: Reading a Cancer Sun's 2026 World Cup Timing
 
 ## What is Lionel Messi's Zodiac Sign?

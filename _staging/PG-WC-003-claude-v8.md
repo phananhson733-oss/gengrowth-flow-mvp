@@ -64,7 +64,7 @@ Jupiter sits in Cancer until June 30, passing over a Cancer Sun as a symbolic sp
 
 **What does the Cancer-Capricorn axis mean?**
 
-It pairs a security-seeking Cancer Sun with a mastery-seeking Capricorn point, framing a growth arc from private safety toward earned authority. It is a developmental theme, not a fixed trait.
+It pairs a security-seeking Cancer Sun with a mastery-seeking Capricorn point, framing a growth arc from private safety toward earned authority. When a confirmed birth time supports the Capricorn rising it becomes the spine of the chart's growth story, and without that time it reads as a likely emphasis rather than a settled fact — a developmental theme, not a fixed trait.
 
 ## Reflection Prompts
 

@@ -85,6 +85,14 @@ This is [[<TBD-internal-link: personal transit timing self-reflection>]] — usi
 
 People with Cancer prominent in their charts often report that Jupiter's transit through that sign brings both opportunity and the pressure to step into visibility — feelings that mirror what the host nations are experiencing collectively.
 
+## Why It Matters for Self-Awareness
+
+Following planetary transits through a major collective event changes how you relate to your own chart. When the tournament unfolds against a backdrop of Jupiter in Cancer, your natal Cancer placements are activated alongside an entire cultural moment — giving you a tangible anchor for otherwise abstract symbolic shifts.
+
+Self-awareness in this context means tracking your internal response to the same transits everyone is experiencing. If Jupiter is crossing your natal seventh house during the World Cup, notice where themes of partnership, negotiation, and balanced competition arise in your own life. The planetary weather is the same for everyone; your chart describes which rooms of your inner house the wind is blowing through.
+
+This is not therapy and not prediction. It is orientation — a way of using shared astronomical events to situate your own symbolic timing within a larger collective rhythm.
+
 ## Common Misreadings
 
 The most persistent error in world cup 2026 astrology prediction is treating transit support as a guarantee of outcome rather than as a description of conditions.

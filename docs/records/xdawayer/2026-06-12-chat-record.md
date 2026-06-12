@@ -17,8 +17,9 @@ aliases:
 
 ## Daily Summary
 
-> 【本区域在每天最后一次对话结束时生成/更新】
-> 用 3-5 个要点概括当天所有对话的核心内容、关键决策和产出成果。
+- 定位并修复 SEO autopilot 连续 PARK 告警：根因是 30 个 W22 选题缺少 选题登记表 行，最小修复为合并 park 告警通报，未 push、未对外发消息。
+- 修复本机 gbrain：确认真实问题不是 query 返回 0，而是 `~/.gbrain/brain.pglite` WAL/checkpoint 损坏导致 PGLite 初始化 `Aborted()`；先备份真实库，再用 PostgreSQL 17 `pg_resetwal` 恢复。
+- 验证 gbrain 恢复：`gbrain query "saturn return" --limit 5` 返回结果，`gbrain stats` 读到 1357 pages / 2794 chunks，`gg-gbrain-rag.mjs` 成功生成 6 条 snippets。
 
 ---
 
@@ -33,5 +34,17 @@ aliases:
 **🤖 回答：**
 
 定位根因：不是死循环 —— claim ledger 正确去重，每个 PG 只 PARK 一次；真实原因是 PM 在 W22 计划里新增的 6/10、6/11、6/12 三批共 30 个选题（JOURNAL-003、NODE-009~011、NAKSH-012~019、TRANS-008~010、RISE-004~008、WC-001~0010）没有登记进 选题登记表（FLOW_MVP workbook 数据止于第 111 行 = PG-NAKSH-011），导致 findSheetRow 全部 miss，连续 serial loop 每 ~7 秒 park 一篇并各发一条 @王志彪 群消息，形成每天 10 连刷屏。最小修复：改 `tools/scripts/gg-seo-autopilot-tick.sh`，park 告警合并通报（首篇即时 @，其余汇总为一条 roll-up 并附处理提示），bash -n + 用当天真实 10 条 park 日志做 harness 验证（10 park → 2 条消息）。30 篇仍阻塞在 PM 数据：登记行需要 cluster_id / page_role / CTA 等内容决策，不能自动捏造；补齐后清掉 claims 里对应 needs_human 条目即可恢复。未 push（vault 插件自动 backup 同步属既有行为），未发任何群消息。
+
+---
+
+### Q2 — 22:01 [codex]
+
+**🙋 提问：**
+
+对——关键发现:gbrain 在这台机器上挂了(macOS 26.3 的 PGLite WASM bug,query 直接失败返回 0  修复一下 gbrain。什么情况
+
+**🤖 回答：**
+
+按 systematic-debugging 路径排查并修复本机 gbrain。先确认 Codex 沙箱会造成假性 `PGLite lock` 超时；提权后真实错误为 `PGLite failed to initialize its WASM runtime ... Original error: Aborted()`。进一步用 fresh/in-memory PGLite 验证系统和包本身可启动，问题限定在 `~/.gbrain/brain.pglite` 数据目录；PGLite debug 显示 `invalid magic number ... WAL segment`、`invalid checkpoint record`、`could not locate a valid checkpoint record`。安装 PostgreSQL 17 工具，只在 `/tmp` 副本上验证 `pg_resetwal` 可恢复并能让 `gbrain query "saturn return"` 返回结果；随后备份真实库到 `/Users/wzb/.gbrain/brain.pglite.backup-20260612-2158`，保留真实 `postmaster.pid` 为 `postmaster.pid.bak-20260612-2158`，执行 `/opt/homebrew/opt/postgresql@17/bin/pg_resetwal /Users/wzb/.gbrain/brain.pglite`。验证通过：`gbrain query "saturn return" --limit 5` 返回 2 条结果，`gbrain stats` 返回 1357 pages / 2794 chunks，项目侧 `node tools/scripts/gg-gbrain-rag.mjs ...` 生成 6 条 snippets。
 
 ---

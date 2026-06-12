@@ -58,7 +58,7 @@ His Sun is in Cancer, based on his July 13, 2007 birth date. That placement need
 
 **Is he a "double Cancer"?**
 
-The reported Cancer Moon would make him a Sun-and-Moon Cancer, but the Moon's exact sign and degree depend on a birth time that is not firmly confirmed. Treat the double-Cancer label as plausible rather than settled.
+The reported Cancer Moon would make him a Sun-and-Moon Cancer, but the Moon's sign is likely Cancer from the date, while its exact degree and house depend on a birth time that is not firmly confirmed. Treat the double-Cancer label as plausible rather than settled.
 
 **What does Jupiter in Cancer symbolize for him in 2026?**
 
@@ -88,4 +88,4 @@ A Virgo rising depends on an exact birth time that is not firmly public. Treat a
 ## Sources
 
 - Liz Greene — shaped the psychological, growth-centered reading of the Sun sign this piece draws on
-- Robert Hand — known for reading transits as timing activators rather than fixed character verdicts
+- Robert Hand — *Planets in Transit*, the standard reference for reading transits as timing activators rather than fixed verdicts

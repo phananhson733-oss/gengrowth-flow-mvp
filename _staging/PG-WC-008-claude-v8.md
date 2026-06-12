@@ -83,7 +83,7 @@ Yes, and it is the most useful part. Read your Sun's element and modality as a p
 
 ## Take Action
 
-[Generate your free birth chart](https://astrologywiki.com/en/wiki/how-to-read-birth-chart) to find your own Sun's element and read yourself through the zodiac signs as World Cup 2026 teams lens. You get a clear view of whether you lead with fire, earth, air, or water, and, more quietly, a friendly way to notice your own default style long after the final whistle has blown.
+[Generate your free birth chart](https://astrologywiki.com/en/wiki/how-to-read-birth-chart) to find your own Sun's element and read yourself through the zodiac signs as World Cup 2026 teams lens. You get a clear view of whether you lead with fire, earth, air, or water, and, more quietly, a friendly way to notice your own default style long after the final whistle has blown, win, lose, or draw, on any team you happen to love.
 
 ## Sources
 

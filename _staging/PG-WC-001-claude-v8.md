@@ -24,7 +24,7 @@ Against pure natal-player astrology, the mundane lens trades intimate detail for
 
 ## How to Read World Cup 2026 Astrology in Your Timing
 
-You can follow the same transit logic the professionals use without ever touching a betting slip. Dane Rudhyar's person-centered reading of collective cycles is the spirit to keep: the sky sets conditions, and people supply the meaning.
+You can follow the same transit logic that World Cup 2026 astrology professionals use without ever touching a betting slip. Dane Rudhyar's person-centered reading of collective cycles is the spirit to keep here: the 2026 sky sets the conditions, and the players and nations supply the meaning. Walk the tournament window in five steps.
 
 1. Locate Jupiter in Cancer across the tournament and note which nations carry natal Cancer placements it touches.
 2. Read the June 11 opening chart at MetLife Stadium as the timing frame for which angles govern group play versus the knockout rounds.

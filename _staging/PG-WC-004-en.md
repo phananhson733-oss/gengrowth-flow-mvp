@@ -1,3 +1,28 @@
+---
+title: Cristiano Ronaldo Zodiac Sign
+slug: cristiano-ronaldo-zodiac-sign
+date: 2026-06-12
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-WC-004
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: cristiano ronaldo zodiac sign
+associated_keywords:
+  - ronaldo zodiac
+  - cristiano ronaldo astrology
+  - ronaldo birth chart
+  - ronaldo star sign
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-12T19:15:25.956Z
+content_sha256_short: 7a31246be2133c3d
+phase2_checks: all-pass
+---
+
 # Cristiano Ronaldo's Zodiac Sign: An Aquarius Sun Under Saturn in Aries
 
 ## What is Cristiano Ronaldo's Zodiac Sign?

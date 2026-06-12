@@ -21,6 +21,7 @@ aliases:
 - 修复本机 gbrain：确认真实问题不是 query 返回 0，而是 `~/.gbrain/brain.pglite` WAL/checkpoint 损坏导致 PGLite 初始化 `Aborted()`；先备份真实库，再用 PostgreSQL 17 `pg_resetwal` 恢复。
 - 验证 gbrain 恢复：`gbrain query "saturn return" --limit 5` 返回结果，`gbrain stats` 读到 1357 pages / 2794 chunks，`gg-gbrain-rag.mjs` 成功生成 6 条 snippets。
 - 升级 gbrain 到上游 master `0.42.41.0`：`check-update` 因无 GitHub Releases 误报 `no_releases`，改走 git fast-forward；旧库迁移卡在损坏索引 `idx_chunks_page_index`，最终用 markdown export/import 重建干净 PGLite 库并验证 query/RAG 正常。
+- 复查 Claude 中 gbrain 不可用：确认数据库和版本正常，真正原因是 Claude 自动拉起的 `gbrain serve` MCP 进程长期持有 PGLite 单写者锁，导致项目脚本里另起的 `gbrain query` CLI 超时；短期可回退 obsidian-rag，根修复需要让 serve 不长期独占本地 PGLite 或让脚本改走 MCP/HTTP broker。
 
 ---
 
@@ -83,5 +84,17 @@ gbrain 应该可以更新到最新了吧
 **🤖 回答：**
 
 确认可以更新，但 `gbrain check-update --json` 因上游没有 GitHub Releases 返回 `no_releases`，不能作为最新版本依据；改用官方 git remote。将 `/Users/wzb/gbrain` 从 detached `0.18.2` 切回 `master` 并 fast-forward 到 `origin/master` commit `7c27fa12`，`VERSION` 为 `0.42.41.0`，执行 `bun install`。升级后旧库 postinstall/schema migration 卡在损坏索引 `idx_chunks_page_index`；原地 `REINDEX/CREATE INDEX` 经 PGLite 会挂住，因此保留所有旧库和备份，将旧库导出为 `/tmp/gbrain-export-20260612-2232`（1382 个 markdown），归档损坏库到 `/Users/wzb/.gbrain/brain.pglite.corrupt-index-20260612-2232`，用最新版 `gbrain init --pglite --no-embedding --force --non-interactive` 新建 schema 116，再 `gbrain import ... --no-embed` 导入 1382 pages / 7095 chunks / 0 errors。验证：`gbrain version` 为 `0.42.41.0`，`gbrain stats` 为 1382 pages / 7095 chunks / 218 links / 415 tags 且无 pending migration，`gbrain apply-migrations --list` 显示 `All migrations up to date`，`gbrain query "saturn return"` 正常返回结果，项目侧 `node tools/scripts/gg-gbrain-rag.mjs ...` 生成 10 条 snippets。旧备份保留：`brain.pglite.backup-20260612-2158`、`brain.pglite.backup-pre-reindex-20260612-2216`、`brain.pglite.broken-after-index-rebuild-20260612-2230`。
+
+---
+
+### Q6 — 23:46 [codex]
+
+**🙋 提问：**
+
+（用户截图：Claude 中显示 gbrain 已升级到 `0.42.41.0` / `1382` 页，但访问仍撞 `PGLite` 锁；`gbrain serve` 守护进程占锁，`gg-gbrain-rag` 直接 `gbrain query` 抢不到；提问：为什么在 claude 中不可用）
+
+**🤖 回答：**
+
+按 systematic-debugging 复查：当前 `gbrain version` 为 `0.42.41.0`，`gbrain stats` 正常，数据库不是坏的；锁文件显示 Claude/MCP 自动拉起的 `gbrain serve` 持有 `.gbrain-lock` 并刷新 heartbeat。复现 `gbrain query "world cup 2026 astrology prediction"` 时 30 秒后返回 `GBrain: Timed out waiting for PGLite lock`。根因是 `gbrain serve` 在 CLI 路径里先 `connectEngine()`，作为 stdio MCP 常驻后不 `disconnect()`，因此长期独占 PGLite 单进程锁；项目脚本 `gg-gbrain-rag.mjs` 另起 CLI `gbrain query` 打同一个本地库，会被锁挡住。短期不要依赖 Claude 中的 direct CLI gbrain query，可用 obsidian-rag 回退；根修复方向是改 gbrain serve 锁生命周期或让 RAG 脚本改走 MCP/HTTP broker，避免同库双进程直连。
 
 ---

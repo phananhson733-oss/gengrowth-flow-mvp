@@ -21,6 +21,7 @@ aliases:
 - 分析 SEO autopilot cron 挂 Mac mini 的稳定性风险：确认当前链路由 `gg-seo-autopilot-tick.sh` 调 `claude -p` 驱动 verify/merge gate，authoring 由 `gg-seo-autopilot.mjs` 串起 bridge/RAG/render/orchestrator/phase2/review；核心问题是 headless Claude CLI 既当总控又当工具执行环境，容易受 PATH、HOME、登录态、MCP、timeout、锁和 CLI 输出影响。修正建议为“OAuth CLI worker + deterministic runner”：保留 OAuth/订阅态 CLI 作为写稿主路径以节省 token 费用，但只让 CLI 输出文本；Node 状态机负责文件写入、校验、重试、预览验证和 merge。API 仅作为可选 fallback，不作为默认主路径。
 - 使用 `superpowers:writing-plans` 写出 OAuth CLI Worker 化实施计划，保存到 `docs/plans/2026-06-13-oauth-cli-worker-autopilot-plan.md`。计划包含 10 个任务：Mac mini preflight、LLM worker contract、deterministic repair、preview wait、Playwright preview verify、结构化 review worker、替换 prompt-driven verify/merge gate、claim lease heartbeat、runbook、端到端验证。
 - 解释“终端 Claude Code 成功率高，但 cron spawn 失败率高”的差异：二者不是同一运行条件。交互式终端有 TTY、完整 shell 环境、解锁登录态、上下文与人工监督；cron/launchd spawn 运行在无 TTY、pipe stdout、最小 env、无交互恢复、硬 watchdog/timeout 和独立 process group 下。当前代码还存在 `claude -p` 在 verify/merge gate 中承担 MCP/工具/merge 总控、authoring 中 agentic rescue 带 `Bash/Edit/Write` 的高耦合点，因此 cron 更容易因环境/权限/输出/超时/工具链任一环节失败而无法完成。
+- 做了小范围 Claude CLI 对照测试：当前 shell 虽为 `not a tty`，但 `claude -p 'Return exactly: OK'` 在当前 env、模拟干净 env 和 PTY 下均成功，耗时约 9-11 秒；`--allowedTools Bash --dangerously-skip-permissions` 的极小 pipe 任务也成功，耗时约 19 秒。结论：基础 CLI/auth/单步工具调用不是立即失败点；更可能的问题是长时多阶段 agentic workflow 在 launchd/pipe 下不可恢复。讨论了 cron 调 Claude Code、Claude Desktop/Computer Use、Codex 自动化的可行性：可做 rescue/operator lane，但不宜作为主生产 cron。
 
 ---
 
@@ -83,5 +84,17 @@ aliases:
 **🤖 回答：**
 
 调用 `superpowers:systematic-debugging` 分析该异常。结论：交互式 Claude Code 与 cron spawn 的 `claude -p` 不是同一运行条件；终端里具备 TTY、完整 shell profile、已解锁 OAuth/keychain、当前 cwd、长上下文、工具权限和人工恢复，而 cron/launchd spawn 是无 TTY、stdin/stdout pipe、最小环境变量、无交互恢复、hard timeout/watchdog、独立 process group。项目代码证据包括：`gg-llm-orchestrator.mjs` 使用 `spawn` + `stdio pipe` + `detached` + CPU watchdog；`gg-seo-autopilot-tick.sh` 的 publish gate 用 headless `claude -p` 调 MCP/工具并决定 verify/merge；`gg-seo-autopilot.mjs` 的 agentic rescue 允许 `Bash Read Edit Write Grep`。建议先做并行对照诊断：同一个 prompt 同时在交互式 shell 与 launchd wrapper 中记录 env/PATH/HOME/cwd/tty/claude version/auth smoke/stdout bytes/duration/exit code，再定位是环境、TTY/pipe、权限登录态、watchdog timeout、还是 agentic gate 耦合导致。
+
+---
+
+### Q6 — 02:28 [codex]
+
+**🙋 提问：**
+
+你去测试吧，不过我觉得意义不大！结果肯定差异会很大。如果是这样的话，cron 可以调起 claude code 吗或者使用 computer use 等方式去调起 claude desktop 吗，或者使用 codex 的自动化功能呢。否则的话我觉得可行性还是一般，提升的程度不大
+
+**🤖 回答：**
+
+执行小范围 smoke：`claude --version` 为 `2.1.170 (Claude Code)`；当前 Codex shell 是 `not a tty`，但当前 env 下 `claude -p 'Return exactly: OK'` 成功（约 11 秒），模拟干净 env 下也成功（约 9 秒），PTY 下也成功（约 9.8 秒）；`--output-format json` 可返回结构化结果；`--allowedTools Bash --dangerously-skip-permissions` 的极小 Bash pipe 任务也成功（约 19 秒）。因此基础 CLI、auth、TTY 和单步工具调用没有立即失败。判断真正风险在完整 cron 的长时多阶段 agentic workflow：写稿、phase2 retry、agentic rescue、review、MCP preview gate、merge 任一环节失败都无法像交互式 Claude Code 一样恢复。评估替代方案：cron 可技术上启动 Claude Code interactive，但需要 PTY/tmux/expect 或 GUI Terminal 控制，缺结构化完成信号；Computer Use/Claude Desktop 依赖 active GUI session、窗口焦点和 Accessibility，适合人工 takeover，不适合主生产 cron；Codex 自动化适合做监督/审稿/repair fallback，但主链路仍应保持 Node deterministic runner + OAuth CLI text worker。
 
 ---

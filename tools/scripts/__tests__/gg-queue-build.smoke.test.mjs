@@ -67,6 +67,22 @@ test('indexMasterHeader / parseMasterRows：按名取列，跳过空行与 secti
   assert.equal(parsed[0].u_score, 3);
 });
 
+test('indexMasterHeader：v3.2 竞争建议 别名映射 dr_filter（N 列 DR过滤→竞争建议 改名兼容）', () => {
+  // v3.3 主表 28 列（A–AB）：N=竞争建议，新增 V–AB 生产准入/状态/page_id/发布URL/备注
+  const v33Header = ['关键词', '来源', '月搜索量', 'KD', 'CPC($)', 'Trends比值', 'Top10最低2站DR均值', 'SERP弱度', '自有站DR', 'DR差值', 'G1话题相关', 'G2可承接', '意图', '竞争建议', '分桶_自动', '手动分桶', '调整原因', '分桶', 'AIO预判', 'AIO风险', '弱度意图分', '生产准入_自动', '手动生产准入', '生产准入', '生产状态', 'page_id', '发布URL', '备注'];
+  const idx = indexMasterHeader(v33Header);
+  assert.equal(idx.dr_filter, 13, '竞争建议 应解析为 dr_filter（N 列 idx 13）');
+  assert.equal(idx.bucket, 17);
+  const rows = [
+    v33Header,
+    ['blue aura', '竞品映射', '8000', '0', '', '', '', '', '', '', '', '', '', '✅可做', '', '', '', '快速胜利', '', '', '3', '', '', '', '', '', '', ''],
+  ];
+  const parsed = parseMasterRows(rows);
+  assert.equal(parsed.length, 1);
+  assert.equal(parsed[0].dr_filter, '✅可做', '竞争建议 列值应填入 dr_filter');
+  assert.equal(parsed[0].bucket, '快速胜利');
+});
+
 test('collectExistingKeywords：去重源，跳过 header/section/空', () => {
   const rows = [
     ['Target Keyword', 'Associated Keywords'],

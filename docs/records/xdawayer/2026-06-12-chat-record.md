@@ -21,7 +21,7 @@ aliases:
 - 修复本机 gbrain：确认真实问题不是 query 返回 0，而是 `~/.gbrain/brain.pglite` WAL/checkpoint 损坏导致 PGLite 初始化 `Aborted()`；先备份真实库，再用 PostgreSQL 17 `pg_resetwal` 恢复。
 - 验证 gbrain 恢复：`gbrain query "saturn return" --limit 5` 返回结果，`gbrain stats` 读到 1357 pages / 2794 chunks，`gg-gbrain-rag.mjs` 成功生成 6 条 snippets。
 - 升级 gbrain 到上游 master `0.42.41.0`：`check-update` 因无 GitHub Releases 误报 `no_releases`，改走 git fast-forward；旧库迁移卡在损坏索引 `idx_chunks_page_index`，最终用 markdown export/import 重建干净 PGLite 库并验证 query/RAG 正常。
-- 复查 Claude 中 gbrain 不可用：确认数据库和版本正常，真正原因是 Claude 自动拉起的 `gbrain serve` MCP 进程长期持有 PGLite 单写者锁，导致项目脚本里另起的 `gbrain query` CLI 超时；短期可回退 obsidian-rag，根修复需要让 serve 不长期独占本地 PGLite 或让脚本改走 MCP/HTTP broker。
+- 复查并修复 Claude 中 gbrain RAG 不可用：确认 `gbrain serve` MCP 长期持有 PGLite 锁，导致 direct `gbrain query` 超时；已让 `gg-gbrain-rag.mjs` 在 PGLite 锁/初始化错误时自动回退 `gg-obsidian-rag.mjs`，并让 autopilot 传入 `--fallback-entity` 以提高 phrase-salad 选题的命中率。
 
 ---
 
@@ -96,5 +96,17 @@ gbrain 应该可以更新到最新了吧
 **🤖 回答：**
 
 按 systematic-debugging 复查：当前 `gbrain version` 为 `0.42.41.0`，`gbrain stats` 正常，数据库不是坏的；锁文件显示 Claude/MCP 自动拉起的 `gbrain serve` 持有 `.gbrain-lock` 并刷新 heartbeat。复现 `gbrain query "world cup 2026 astrology prediction"` 时 30 秒后返回 `GBrain: Timed out waiting for PGLite lock`。根因是 `gbrain serve` 在 CLI 路径里先 `connectEngine()`，作为 stdio MCP 常驻后不 `disconnect()`，因此长期独占 PGLite 单进程锁；项目脚本 `gg-gbrain-rag.mjs` 另起 CLI `gbrain query` 打同一个本地库，会被锁挡住。短期不要依赖 Claude 中的 direct CLI gbrain query，可用 obsidian-rag 回退；根修复方向是改 gbrain serve 锁生命周期或让 RAG 脚本改走 MCP/HTTP broker，避免同库双进程直连。
+
+---
+
+### Q7 — 00:04 [codex]
+
+**🙋 提问：**
+
+帮我修复
+
+**🤖 回答：**
+
+按 TDD + verification-before-completion 修复项目侧兼容问题。新增 `tools/scripts/__tests__/gg-gbrain-rag.smoke.test.mjs` 覆盖两种回归：`gbrain query` 因 `PGLite lock` 失败时自动回退 Obsidian RAG，以及 keyword-style entity 无匹配时用 `--fallback-entity` 候选拆分命中 `mundane astrology`。修改 `tools/scripts/gg-gbrain-rag.mjs`：支持 `--fallback-entity`、`--vault-dir`、中英文参数透传，识别 `Timed out waiting for PGLite lock` / `PGLite failed` / `Aborted()` 后调用 `gg-obsidian-rag.mjs`，写回同一个 `obsidian-rag.json` 并标注 `source: obsidian-fallback`、`fallback_from: gbrain`、`fallback_entity_used`、`fallback_reason`。在 `tools/scripts/gg-seo-autopilot.mjs` 的 RAG 调用处保留清洗后的主 entity，同时把原始 Sheet entity 作为 `--fallback-entity` 传入。验证通过：`node --check tools/scripts/gg-gbrain-rag.mjs`、`node --check tools/scripts/gg-seo-autopilot.mjs`、`node tools/scripts/__tests__/gg-gbrain-rag.smoke.test.mjs`（2 passed）、真实 `gbrain serve` 持锁复现命令（先报 `Timed out waiting for PGLite lock`，随后 Obsidian fallback 拿到 2 snippets，`fallback_entity_used: mundane astrology`）、`node tools/scripts/__tests__/gg-seo-autopilot.smoke.test.mjs`（9 pass）、`node tools/scripts/__tests__/gg-obsidian-rag.smoke.test.mjs`（40 passed）。
 
 ---

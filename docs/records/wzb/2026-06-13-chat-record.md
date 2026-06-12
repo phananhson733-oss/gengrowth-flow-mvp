@@ -19,6 +19,7 @@ aliases:
 
 - 评估是否需要给 gbrain 配置 embedding：确认当前 PGLite 配置为 `embedding_disabled: true`、无持久化 provider key；Ollama 本地可用且已安装 `nomic-embed-text`、`mxbai-embed-large`、`qwen3-embedding:8b`，但 embedding 不能解决 Claude `gbrain serve` 与 CLI 抢 PGLite 锁的问题。
 - 分析 SEO autopilot cron 挂 Mac mini 的稳定性风险：确认当前链路由 `gg-seo-autopilot-tick.sh` 调 `claude -p` 驱动 verify/merge gate，authoring 由 `gg-seo-autopilot.mjs` 串起 bridge/RAG/render/orchestrator/phase2/review；核心问题是 headless Claude CLI 既当总控又当工具执行环境，容易受 PATH、HOME、登录态、MCP、timeout、锁和 CLI 输出影响。修正建议为“OAuth CLI worker + deterministic runner”：保留 OAuth/订阅态 CLI 作为写稿主路径以节省 token 费用，但只让 CLI 输出文本；Node 状态机负责文件写入、校验、重试、预览验证和 merge。API 仅作为可选 fallback，不作为默认主路径。
+- 使用 `superpowers:writing-plans` 写出 OAuth CLI Worker 化实施计划，保存到 `docs/plans/2026-06-13-oauth-cli-worker-autopilot-plan.md`。计划包含 10 个任务：Mac mini preflight、LLM worker contract、deterministic repair、preview wait、Playwright preview verify、结构化 review worker、替换 prompt-driven verify/merge gate、claim lease heartbeat、runbook、端到端验证。
 
 ---
 
@@ -57,5 +58,17 @@ aliases:
 **🤖 回答：**
 
 澄清方案 B 不必默认切 API；应改成“OAuth CLI worker + deterministic runner”。保留 `claude -p` / `codex exec` 的 OAuth/订阅态作为写稿和审稿主路径以控制成本，但限制为纯文本 worker：输入 prompt、输出 Markdown 或结构化 JSON，不允许它做 Bash/Edit/Write/MCP/merge 等副作用。Node runner 负责 stage 状态、文件写入、phase2、重试、修稿落盘、Playwright 预览验证、PR merge 和 Feishu 通知。API 只作为可选 fallback 或紧急兜底，默认关闭。
+
+---
+
+### Q4 — 02:21 [codex]
+
+**🙋 提问：**
+
+帮我把方案写一下，可以调用 skill
+
+**🤖 回答：**
+
+调用 `superpowers:writing-plans`，按项目文档路由规则将工程实施计划保存为 `docs/plans/2026-06-13-oauth-cli-worker-autopilot-plan.md`。计划明确目标是保留 OAuth/订阅态 CLI 写稿主路径，同时把 cron 改成 Node-owned deterministic runner；包含非协商约束、目标架构、阶段顺序、10 个可执行任务、每个任务的文件清单、测试、实现步骤、验证命令、提交点、回滚计划和成功标准。未修改现有代码。
 
 ---

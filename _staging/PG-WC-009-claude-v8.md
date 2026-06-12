@@ -20,6 +20,8 @@ It helps to set the best-player zodiac question against two neighbors. Against a
 
 Against a results prediction, the dataset trades certainty for honesty. It can show that the best soccer players' zodiac sign pattern shifts when a country moves its cutoff, which is exactly what you would not expect if the stars were responsible. The trade-off stays honest: naming a measurable bias in selection is not the same as crowning a sign, and it is far more useful for understanding why some birthdays show up more often.
 
+This is also where the honest reading of astrology lives. Liz Greene treated the chart as a language of symbol rather than a statistical claim, and Robert Hand framed it as meaning rather than a predictive machine, so neither would expect a horoscope to explain a selection bias. The best soccer players' zodiac sign question, taken that way, lets you enjoy the symbolism of a sign while crediting the calendar for the data, and that separation is the whole point of reading either one well.
+
 ## How to Read the Best-Player Zodiac Question in the Data
 
 You can check the claim yourself with a few honest steps.
@@ -46,7 +48,7 @@ You can check the claim yourself with a few honest steps.
 | Zodiac as label | Maps a birth month onto a sign, not a cause | The sign covering the overrepresented months | A sign looks "lucky" only because of the calendar |
 | No astrological signal | No sign causes talent in the data | Any sign, once the cutoff is controlled for | The pattern vanishes when you correct for age bands |
 
-## Common Questions About the Best Soccer Players' Zodiac Sign
+## Common Questions About the Best-Player Zodiac Question
 
 **Is there really a best zodiac sign for soccer?**
 
@@ -83,5 +85,5 @@ Yes — as symbolism, not statistics. Read the sign for fun, but credit the Rela
 
 ## Sources
 
-- Marcus Orion — note: birth-month clustering in elite sport is documented in relative-age research, not astrological causation
-- Liz Greene — grounded the psychological reading of astrology as symbol rather than statistical claim
+- Liz Greene — grounded the reading of astrology as symbol rather than a statistical claim, the stance this data-first piece takes
+- Robert Hand — known for treating astrology as a language of meaning rather than a predictive mechanism

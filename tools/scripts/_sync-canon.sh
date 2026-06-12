@@ -27,7 +27,8 @@ DEST_DIR="${REPO_ROOT}/spec/upstream-canon"
 # DEST_DIR/<basename>. Keep this list authoritative — if you add a new
 # upstream canon doc, add it here.
 SPEC_FILES=(
-  "docs/03-marketing/2026-05-15-gengrowth-internal-growth-mvp-prd-v0.7.md"
+  "docs/03-marketing/2026-05-15-gengrowth-internal-growth-mvp-prd-v0.8.md"
+  "docs/03-marketing/2026-06-05-keyword-sheet-v3.3-migration-collaboration.md"
   "docs/03-marketing/01-strategy/keyword-research-overview.md"
   "docs/03-marketing/03-seo/keyword-research-sop.md"
   "docs/03-marketing/03-seo/keyword-sheet-setup.gs"

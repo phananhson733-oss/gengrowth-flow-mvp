@@ -176,4 +176,13 @@ if [ "$cycle" -ge "$MAX_CYCLES" ]; then
   echo "$(date '+%F %T') hit MAX_CYCLES=$MAX_CYCLES — exiting; launchd re-fire continues the backlog" >> "$LOG"
 fi
 
+# Roll-up for parks 2..N of this run (first one already alerted in-cycle). One
+# message instead of N keeps the group readable when a whole batch shares one
+# root cause; the per-page detail still lands in $LOG and the claims ledger.
+if [ "$PARK_COUNT" -gt 1 ]; then
+  echo "$(date '+%F %T') sending park roll-up ($PARK_COUNT parks this run)" >> "$LOG"
+  GG_LARK_NOTIFY_AT_OPERATOR=1 "$SCRIPT_DIR/gg-lark-notify.sh" "⚠️ SEO autopilot 本轮共暂停 ${PARK_COUNT} 篇（needs_human）。首篇已单独通报，其余 $((PARK_COUNT - 1)) 篇合并通报（防刷屏）：
+${PARK_REST}处理提示：若原因均为「no row … in 选题登记表」，说明计划里新加的一批选题还没登记进 选题登记表 — 补齐登记行后，清掉 .autopilot-claims.json 里对应 needs_human 条目即可恢复写作。"
+fi
+
 echo "$(date '+%F %T') loop end" >> "$LOG"

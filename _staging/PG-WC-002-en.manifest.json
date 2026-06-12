@@ -8,8 +8,8 @@
   "track": "量产线",
   "generated_by": "unknown",
   "prompt_version": "v8",
-  "generated_at": "2026-06-12T18:20:32.961Z",
-  "content_sha256_short": "1c21d37af5eda11e",
+  "generated_at": "2026-06-12T18:30:21.308Z",
+  "content_sha256_short": "635f8daca70297f6",
   "source_path": "_staging/PG-WC-002-claude-v8.md",
   "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-WC-002-en.md",
   "phase2_checks": {
@@ -19,7 +19,7 @@
       "h2Count": 11,
       "h3Count": 0,
       "h4Count": 0,
-      "words": 1504,
+      "words": 1514,
       "wikilinks": 5,
       "tbdLinks": 5
     },

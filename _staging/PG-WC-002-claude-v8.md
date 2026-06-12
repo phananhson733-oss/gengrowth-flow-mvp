@@ -12,7 +12,7 @@ This is an educational, symbolic reading — not a prediction of results or a be
 
 ## Why It Matters for Self-Awareness
 
-Most celebrity-chart content stops at sign labels: Sagittarius means adventurous, Capricorn Moon means disciplined, and so on. That is where readers get stuck, because a list of traits never explains how the [[<TBD-internal-link: World Cup 2026 astrology pillar page>]] connects a placement to a moment. The more useful question is how the Sun's ruler times its peaks. Robert Hand's approach of reading transits as timing activators, rather than fixed character verdicts, is the method here, and Howard Sasportas added the psychological reading of the Sun and its ruler that lets a single placement be read as a developing theme rather than a frozen trait. Seen through both, the chart does not promise a golden boot; it shows when a Jupiter-ruled Sagittarius is most likely to express its archetype on a large stage.
+Most celebrity-chart content stops at sign labels: Sagittarius means adventurous, Capricorn Moon means disciplined, and so on. That is where readers get stuck, because a list of traits never explains how the [[<TBD-internal-link: World Cup 2026 astrology pillar page>]] connects a placement to a moment. The more useful question is how the Sun's ruler times its peaks. Robert Hand's approach of reading transits as timing activators, rather than fixed character verdicts, is the method here, and Howard Sasportas added the psychological reading of the Sun and its ruler that lets a single placement be read as a developing theme rather than a frozen trait. Seen through both, Mbappé's birth chart does not promise a golden boot; it shows when a Jupiter-ruled Sagittarius is most likely to express its archetype on a large stage, and that is the only thing a birth chart can honestly time.
 
 A reader who searches for the mbappe birth chart usually wants a verdict, but the honest payoff is a method. Learn which planet rules your Sun, watch its transits, and you can track your own high-visibility windows the same way. Treated that way, a famous chart stops being a label to wait on and becomes a study in timing — which is a skill you can use long after the tournament ends, on any chart you read next.
 
@@ -60,9 +60,9 @@ His Sun is in Sagittarius, based on his December 20, 1998 birth date. That place
 
 The Sun sign and the Moon's sign are date-stable, but the Ascendant and the Moon's exact degree, house, and aspects depend on a time that is not publicly confirmed. Treat any specific Ascendant claim as contested.
 
-**Why does Jupiter matter so much here?**
+**Why does Jupiter matter so much in the Mbappé birth chart?**
 
-Jupiter rules Sagittarius, so it is the ruler of his Sun. That makes Jupiter's transits the main timing signal for when the Sun's expansive themes turn up.
+Jupiter rules Sagittarius, so it is the ruler of his Sun. That makes Jupiter's transits the main timing signal in the birth chart for when the Sun's expansive themes turn up.
 
 **Does the 2026 sky favor him?**
 

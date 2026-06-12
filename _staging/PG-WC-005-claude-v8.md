@@ -6,7 +6,7 @@ Lamine Yamal's birth chart is **the natal horoscope of the footballer born July 
 
 - A Cancer Sun ties identity to instinct, belonging, and emotional memory
 - The Moon rules the sign, so the Moon's condition shapes how that instinct is expressed
-- A widely cited Cancer Moon and Virgo rising depend on a birth time that is not firmly confirmed
+- A Cancer Moon is likely from the date itself; its exact degree, the houses, and a reported Virgo rising stay unconfirmed without a birth time
 
 This is a symbolic, reflective reading — not a prediction of results or a betting guide.
 
@@ -20,7 +20,7 @@ Liz Greene's reading of the chart as a map of meaning rather than a fixed event 
 
 It helps to set Lamine Yamal's birth chart, a Cancer Sun, against two neighbors. Against a flat sun-sign profile, a psychological reading of the lamine yamal birth chart explains how it works: a Cancer Sun led by the Moon makes instinct and emotional timing central, so the growth arc is about trusting a read of the room rather than forcing a plan. To gain that developmental depth, you sacrifice the comfort of a fixed verdict — this reading describes a direction, not a destiny.
 
-Against a transit forecast, the natal lens trades timing for meaning, and 2026 is where the timing turns concrete. Jupiter spends 2025-26 in Cancer, Yamal's own Sun sign, a once-in-twelve-years expansion of his solar themes. Its exact pass over his roughly twenty-degree Cancer Sun fell earlier in 2026, so the tournament catches the separating tail of that contact rather than its peak, while Jupiter sits in late Cancer until it changes sign on June 30. The trade-off stays honest: naming a year of expansion is not the same as calling a result.
+Against a transit forecast, the natal lens trades timing for meaning, and 2026 is where the timing turns concrete. Jupiter spends 2025-26 in Cancer, Yamal's own Sun sign, a once-in-twelve-years expansion of his solar themes. Its final exact pass over his roughly twenty-degree Cancer Sun fell in mid-May 2026, after earlier contacts across 2025, so the tournament catches the separating tail of that transit rather than its peak, while Jupiter sits in late Cancer until it changes sign on June 30. The trade-off stays honest: naming a year of expansion is not the same as calling a result.
 
 A second comparison sharpens it. Set Lamine Yamal's birth chart beside a results-driven prediction, and the difference is what each will claim. The prediction names a winner and stands or falls on it; the psychological reading names a direction — a Cancer Sun learning to trust a well-timed instinct — and a window when the year's sky widens it. That restraint is the point, not a weakness, because a reading that refuses to call the score keeps its credibility for the next chart you bring it, and for the reader's own. It also keeps the focus on a theme a young player can actually grow into, rather than a scoreline no chart can supply.
 
@@ -60,9 +60,9 @@ His Sun is in Cancer, based on his July 13, 2007 birth date. That placement need
 
 The reported Cancer Moon would make him a Sun-and-Moon Cancer, but the Moon's exact sign and degree depend on a birth time that is not firmly confirmed. Treat the double-Cancer label as plausible rather than settled.
 
-**Does Jupiter in Cancer help him in 2026?**
+**What does Jupiter in Cancer symbolize for him in 2026?**
 
-Jupiter spends 2025-26 in Cancer, his Sun sign, a year-long expansion of his solar themes, though its exact contact fell earlier in 2026. Read it as a growth backdrop rather than a result indicator, and note that the emphasis shifts once Jupiter leaves Cancer for Leo at the end of June, partway through the tournament.
+Jupiter spends 2025-26 in Cancer, his Sun sign, a year-long expansion of his solar themes, though its final exact contact fell in mid-May 2026. Read it as a growth backdrop rather than a result indicator, and note that the emphasis shifts once Jupiter leaves Cancer for Leo at the end of June, partway through the tournament.
 
 **Is his Virgo rising confirmed?**
 

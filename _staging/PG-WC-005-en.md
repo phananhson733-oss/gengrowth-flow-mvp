@@ -1,3 +1,28 @@
+---
+title: Lamine Yamal Birth Chart
+slug: lamine-yamal-birth-chart
+date: 2026-06-12
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-WC-005
+author_id: "julian-thorne"
+author_display_name: "Julian Thorne"
+target_keyword: lamine yamal birth chart
+associated_keywords:
+  - lamine yamal astrology
+  - yamal natal chart
+  - lamine yamal zodiac
+  - yamal star sign
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-12T19:33:46.869Z
+content_sha256_short: d5adb707f661194d
+phase2_checks: all-pass
+---
+
 # Lamine Yamal's Birth Chart: A Cancer Sun Catching Jupiter's 2026 Tail
 
 ## What is Lamine Yamal's Birth Chart?

@@ -1,3 +1,28 @@
+---
+title: World Cup 2026 June Astrology
+slug: world-cup-2026-june-astrology
+date: 2026-06-12
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T3
+track: 量产线
+page_id: PG-WC-010
+author_id: "elena-vane"
+author_display_name: "Elena Vane"
+target_keyword: world cup 2026 june astrology
+associated_keywords:
+  - june 2026 astrology
+  - world cup astrology june
+  - 2026 planetary transits june
+  - jupiter cancer june 2026
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-12T20:45:58.210Z
+content_sha256_short: 28a8d0ad38fdb637
+phase2_checks: all-pass
+---
+
 # Reading World Cup 2026 June Astrology Over the Opening Rounds
 
 ## What is the June 2026 Tournament Sky?

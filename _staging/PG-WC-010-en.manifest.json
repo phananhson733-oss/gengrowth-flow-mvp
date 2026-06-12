@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-WC-010",
+  "entity": "the June 2026 Tournament Sky",
+  "target_keyword": "world cup 2026 june astrology",
+  "template": "Definition",
+  "tier": "T3",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-06-12T20:45:58.210Z",
+  "content_sha256_short": "28a8d0ad38fdb637",
+  "source_path": "_staging/PG-WC-010-claude-v8.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-WC-010-en.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 1503,
+      "wikilinks": 2,
+      "tbdLinks": 2
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

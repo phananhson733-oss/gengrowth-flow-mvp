@@ -15,18 +15,21 @@
 //
 // Usage:
 //   node gg-gbrain-rag.mjs --page-id <id> --entity "<text>" [--target-keyword "<t>"]
-//                          [--limit <pages>] [--cache-dir <dir>]
+//                          [--limit <pages>] [--cache-dir <dir>] [--vault-dir <dir>]
 // Always exits 0 with a valid obsidian-rag.json (empty snippets + gap_note if
 // gbrain is unavailable) so the render gate never hard-blocks on RAG.
 
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { homedir } from 'node:os';
+import { fileURLToPath } from 'node:url';
 
 const HOME = homedir();
 const REPO = process.env.GG_FLOW_REPO || join(HOME, 'gengrowth-flow-mvp');
 const GBRAIN = [join(HOME, '.local', 'bin', 'gbrain')].find(existsSync) || 'gbrain';
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const OBSIDIAN_RAG = join(__dirname, 'gg-obsidian-rag.mjs');
 
 const MAX_PAGES = 6;          // distinct gbrain pages to pull full text from
 const MAX_SNIPPETS = 10;      // total snippets written
@@ -40,8 +43,14 @@ function parseArgs(argv) {
     if (a === '--page-id') o.pageId = argv[++i];
     else if (a === '--entity') o.entity = argv[++i];
     else if (a === '--target-keyword') o.targetKeyword = argv[++i];
+    else if (a === '--entity-zh') o.entityZh = argv[++i];
+    else if (a === '--target-keyword-zh') o.targetKeywordZh = argv[++i];
+    else if (a === '--fallback-entity') o.fallbackEntity = argv[++i];
+    else if (a === '--language') o.language = argv[++i];
     else if (a === '--limit') o.limit = parseInt(argv[++i], 10) || MAX_PAGES;
     else if (a === '--cache-dir') o.cacheDir = argv[++i];
+    else if (a === '--vault-dir') o.vaultDir = argv[++i];
+    else if (a === '--rebuild-index') o.rebuildIndex = true;
   }
   return o;
 }
@@ -141,6 +150,82 @@ function buildSnippets(pages, entTokens) {
   return snippets;
 }
 
+function compactError(e) {
+  const parts = [
+    e?.message,
+    e?.stderr,
+    e?.stdout,
+  ].filter(Boolean).map(String);
+  return parts.join('\n').replace(/\s+/g, ' ').trim();
+}
+
+function shouldTryObsidianFallback(e) {
+  return /PGLite lock|PGlite lock|Timed out waiting for PGLite lock|PGLite failed|Aborted\(\)/i
+    .test(compactError(e));
+}
+
+function splitEntityCandidates(text) {
+  return String(text || '')
+    .split(/\s*(?:·|,|;|\||\n)\s*/g)
+    .map((s) => s.trim())
+    .filter((s) => s.length >= 3);
+}
+
+function fallbackEntityCandidates(o) {
+  const candidates = [
+    ...splitEntityCandidates(o.fallbackEntity),
+    ...splitEntityCandidates(o.entity),
+    o.entity,
+  ];
+  const seen = new Set();
+  return candidates.filter((candidate) => {
+    const key = candidate.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function runObsidianOnce(o, outPath, entity, originalError) {
+  const args = [
+    OBSIDIAN_RAG,
+    '--page-id', o.pageId,
+    '--entity', entity,
+    '--cache-dir', o.cacheDir,
+  ];
+  if (o.targetKeyword) args.push('--target-keyword', o.targetKeyword);
+  if (o.entityZh) args.push('--entity-zh', o.entityZh);
+  if (o.targetKeywordZh) args.push('--target-keyword-zh', o.targetKeywordZh);
+  if (o.language) args.push('--language', o.language);
+  if (o.vaultDir) args.push('--vault-dir', o.vaultDir);
+  if (o.rebuildIndex) args.push('--rebuild-index');
+
+  execFileSync(process.execPath, args, {
+    encoding: 'utf8',
+    timeout: 60000,
+    maxBuffer: 32 * 1024 * 1024,
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+
+  const payload = JSON.parse(readFileSync(outPath, 'utf8'));
+  payload.source = 'obsidian-fallback';
+  payload.fallback_from = 'gbrain';
+  payload.fallback_entity_used = entity;
+  payload.fallback_reason = compactError(originalError).slice(0, 240);
+  writeFileSync(outPath, JSON.stringify(payload, null, 2));
+  return payload;
+}
+
+function runObsidianFallback(o, outPath, originalError) {
+  let lastPayload = null;
+  for (const entity of fallbackEntityCandidates(o)) {
+    const payload = runObsidianOnce(o, outPath, entity, originalError);
+    lastPayload = payload;
+    if ((payload.snippets || []).length > 0) return payload;
+  }
+  return lastPayload || runObsidianOnce(o, outPath, o.entity, originalError);
+}
+
 function main(argv) {
   const o = parseArgs(argv);
   if (!o.pageId || !o.entity) {
@@ -174,7 +259,17 @@ function main(argv) {
     snippets = buildSnippets(pages, entTokens);
     if (!snippets.length) gapNote = `gbrain returned ${rows.length} hits for "${o.entity}" but no usable excerpts`;
   } catch (e) {
-    gapNote = `gbrain query failed: ${String(e.message || e).slice(0, 160)}`;
+    if (shouldTryObsidianFallback(e)) {
+      try {
+        const fallback = runObsidianFallback(o, outPath, e);
+        process.stderr.write(`[gbrain-rag] WARN gbrain unavailable; used obsidian fallback (${fallback.snippets?.length || 0} snippets)\n`);
+        process.stdout.write(`gbrain-rag → ${outPath} (${fallback.snippets?.length || 0} snippets) [obsidian fallback]\n`);
+        return;
+      } catch (fallbackError) {
+        process.stderr.write(`[gbrain-rag] WARN obsidian fallback failed: ${compactError(fallbackError).slice(0, 240)}\n`);
+      }
+    }
+    gapNote = `gbrain query failed: ${compactError(e).slice(0, 160)}`;
     process.stderr.write(`[gbrain-rag] WARN ${gapNote}\n`);
   }
 

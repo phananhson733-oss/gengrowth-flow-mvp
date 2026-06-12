@@ -54,7 +54,7 @@ import {
 } from 'node:fs';
 import { join, dirname, basename, relative } from 'node:path';
 import { homedir } from 'node:os';
-import { buildAuthorMap, resolveAuthor } from './lib/author-routing.mjs';
+import { buildAuthorMap, resolveAuthor, isValidAuthorId, normalizeAuthorId } from './lib/author-routing.mjs';
 import { detectProtectedFactDrift, summarizeProtectedFactDrift } from './lib/review-fact-guard.mjs';
 import { slugifyPageId } from './gg-sheet-pull.mjs';
 import { illustrate } from './lib/illustrate.mjs';
@@ -557,8 +557,9 @@ function resolveAuthorForDomain(clusterDomain) {
 function findSheetRow(pgId, keyword = '') {
   mkdirSync(join(FLOW, '.gg-cache', 'batches'), { recursive: true });
   const outRel = join('.gg-cache', 'batches', '_allrows.json');
-  // wide range: tasks live anywhere in the sheet (observed up to row ~286).
-  shFlow('node', [SHEET_PULL, '--rows', '2-600', '--limit', '700', '--out', outRel]);
+  // wide range: tasks live anywhere in the sheet (observed up to row ~286; trend
+  // batches like worldcup2026_astro append at the tail, ~1541). Cover the full sheet.
+  shFlow('node', [SHEET_PULL, '--rows', '2-1600', '--limit', '1700', '--out', outRel]);
   let rows;
   try { const j = JSON.parse(readFileSync(join(FLOW, outRel), 'utf8')); rows = j.rows || j; }
   catch { throw new Error('sheet-pull output not parseable'); }
@@ -758,15 +759,21 @@ function doAuthor(o = {}) {
     // Clean entity: strip leading interrogatives so we have the topic noun, not the
     // question ("what is a full moon ritual" → "full moon ritual"). Used for RAG
     // search AND (when the Sheet entity is a phrase-salad) for the rendered {{entity}}.
+    const fallbackRagEntity = String(entry.entity || '').trim();
     const cleanEntity = keyword
       .replace(/^\s*(what\s+(is|are|to\s+do\s+(on|with|during|after))|how\s+(to|do(es)?)|why\s+(is|are|do(es)?)|when\s+(is|are|to|do(es)?))\s+(a|an|the)?\s*/i, '')
       .replace(/[?？]+\s*$/, '').trim() || keyword;
     const ragEntity = cleanEntity;
 
-    const author = resolveAuthorForDomain(domain);
+    // Per-page author wins (rule 1): honor a VALID Sheet author column (entry.author
+    // from bridge, now kebab-normalized so display names like "Julian Thorne" resolve).
+    // Only fall back to cluster_domain auto-routing when the Sheet author is absent/invalid.
+    const sheetAuthor = normalizeAuthorId(entry.author || '');
+    const usePerPage = isValidAuthorId(sheetAuthor);
+    const author = usePerPage ? sheetAuthor : resolveAuthorForDomain(domain);
     if (!author) return park(slug, `no author for cluster_domain "${domain}" (author.map miss)`);
     entry.author = author;
-    entry.author_source = 'auto';
+    entry.author_source = usePerPage ? 'override' : 'auto';
 
     // The Sheet `entity` column is sometimes a phrase-salad of angles
     // ("intentional energy work · lunar phase timing · …") instead of the entity
@@ -805,7 +812,11 @@ function doAuthor(o = {}) {
     //    some sites block scraping) yet still emit a usable cache, so gate on the
     //    OUTPUT file, not the exit code. render hard-requires both caches to exist.
     const ragDir = join(FLOW, '.gg-cache', pgId);
-    try { shFlow('node', [GBRAIN_RAG, '--page-id', pgId, '--entity', ragEntity, '--target-keyword', keyword], 240000); }
+    const gbrainRagArgs = [GBRAIN_RAG, '--page-id', pgId, '--entity', ragEntity, '--target-keyword', keyword];
+    if (fallbackRagEntity && fallbackRagEntity.toLowerCase() !== ragEntity.toLowerCase()) {
+      gbrainRagArgs.push('--fallback-entity', fallbackRagEntity);
+    }
+    try { shFlow('node', gbrainRagArgs, 240000); }
     catch (e) { log(`gbrain-rag exit non-zero: ${errTail(e, 80)}`); }
     if (!existsSync(join(ragDir, 'obsidian-rag.json'))) return park(slug, 'gbrain-rag produced no cache');
     try { shFlow('node', [ENTITY_PASSPORT, '--entity', ragEntity, '--page-id', pgId, '--emit-rag'], 300000); }

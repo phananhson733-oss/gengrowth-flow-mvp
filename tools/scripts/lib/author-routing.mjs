@@ -24,10 +24,13 @@ export const KNOWN_AUTHOR_IDS = Object.freeze([
 // config snapshot 里 author.map 的 key 前缀（动态域名）。
 export const AUTHOR_MAP_PREFIX = 'author.map.';
 
-// 规整 author id：trim + lowercase（"Marcus-Orion" / " marcus-orion " → "marcus-orion"）。
+// 规整 author id：trim + lowercase + 空白→连字符
+// （"Marcus-Orion" / " marcus-orion " → "marcus-orion"；显示名 "Julian Thorne" → "julian-thorne"）。
+// 合法 kebab id 无内部空白，故 kebab 化对其是 no-op；只把 Sheet 里的人类显示名规整成 id，
+// 使选题登记表的 author 列即便填显示名也能命中 rule-1 逐页 override（不再被误拒为空）。
 export function normalizeAuthorId(raw) {
   if (raw == null) return '';
-  return String(raw).trim().toLowerCase();
+  return String(raw).trim().toLowerCase().replace(/\s+/g, '-');
 }
 
 // 是否合法 author id（对照 4 个已知 id，大小写不敏感）。

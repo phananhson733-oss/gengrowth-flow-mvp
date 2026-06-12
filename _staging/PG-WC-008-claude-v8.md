@@ -22,6 +22,8 @@ It helps to set the Zodiac-Team lens against two neighbors. Against a serious na
 
 Against a results prediction, the elemental lens trades certainty for play. It can say a fire-sign style favors the open game while an earth-sign style favors the grind, yet it never claims which approach wins on the day among the World Cup 2026 teams. Liz Greene's psychological reading of the elements keeps the tone honest: a temperament is a tendency, not a fate. The trade-off is the whole charm — naming a style is not the same as calling a scoreline, so the fun never pretends to be a tip.
 
+A third layer is modality, which keeps the lens from feeling like four flat boxes. Cardinal signs — Aries, Cancer, Libra, Capricorn — start things, the sides that set the tempo and force the first move. Fixed signs — Taurus, Leo, Scorpio, Aquarius — hold a shape and refuse to be pushed off it. Mutable signs — Gemini, Virgo, Sagittarius, Pisces — adapt in real time, changing the plan at half-time without losing themselves. Crossed with the four elements, that gives twelve flavors of the elemental lens, which is just enough texture to be fun without ever pretending to be a forecast.
+
 ## How to Read the Zodiac-Team Lens in Your Chart
 
 You can turn the World Cup 2026 game on yourself and read your own sign as a playing style.
@@ -58,15 +60,15 @@ No. Reading zodiac signs as World Cup 2026 teams is a playful archetypal mapping
 
 **How are the signs matched to styles?**
 
-They are sorted by element: fire for attack and flair, earth for structure, air for passing and tactics, water for intuition and flow. Modality adds a second layer of how a style starts, holds, or adapts.
+They are sorted by element first: fire for attack and flair, earth for structure and stamina, air for passing and tactics, and water for intuition and flow. Modality adds a second layer of how a style starts, holds, or adapts, so a cardinal fire sign and a mutable fire sign play their attack quite differently. The pairing of element and mode is what gives each of the zodiac signs as World Cup 2026 teams its own recognizable character.
 
 **Which element is the "best" for football?**
 
-None is best; each carries a strength and a trade-off. Fire entertains but overextends, earth endures but can stall, air controls but can overthink, and water adapts but can drift.
+None is best; each carries a strength and a trade-off. Fire entertains but overextends, earth endures but can stall, air controls but can overthink, and water adapts but can drift. The best element is simply the one that fits the moment, which is why a balanced side borrows from all four across a single match.
 
 **Can I use this for my own chart?**
 
-Yes, and it is the most useful part. Read your Sun's element and modality as a playing style, and treat the result as a mirror for temperament rather than a forecast.
+Yes, and it is the most useful part. Read your Sun's element and modality as a playing style, and treat the result as a mirror for temperament rather than a forecast. It is a light, honest way to watch the tournament and learn a little about how you yourself tend to play.
 
 ## Reflection Prompts
 

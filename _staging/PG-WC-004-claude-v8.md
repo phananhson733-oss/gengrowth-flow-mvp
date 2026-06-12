@@ -14,7 +14,7 @@ This is an educational, symbolic reading — not a prediction of results or a be
 
 Most "what is Cristiano Ronaldo's zodiac sign" content stops at one word and a list of traits. That is where readers get stuck, because a label never shows how a placement is tested over time. The method that matters here is the one Robert Hand is known for: read a transit as something that times a theme, not something that fixes a result. A cristiano ronaldo zodiac sign reading, done that way, is not a forecast of trophies; it shows when an Aquarius Sun's themes of legacy and self-definition meet a season of pressure. Held like that, a famous chart becomes a study in how anyone might handle a demanding chapter rather than a verdict handed down in advance.
 
-Liz Greene's reading of Saturn as a teacher of structure, not a simple misfortune, keeps the tone honest. A season of Saturn pressure on an Aquarius Sun's legacy theme is an invitation to consolidate, not a sentence passed down, and that distinction is what turns a celebrity label into something a reader can actually use. The same move works on any chart: name the structure first, then let the year's transits show when it is loaded.
+Liz Greene's reading of Saturn as a teacher of structure, not a simple misfortune, keeps the tone honest. A season when the ruler of an Aquarius Sun is itself crossing a demanding sign is an invitation to consolidate, not a sentence passed down, and that distinction is what turns a celebrity label into something a reader can actually use. The same move works on any chart: name the structure first, then let the year's transits show when it is loaded.
 
 ## Cristiano Ronaldo's Zodiac Sign vs Adjacent Concepts: How It Works + Trade-offs
 
@@ -47,7 +47,7 @@ You can apply the same method behind a Cristiano Ronaldo zodiac sign reading to 
 | --- | --- | --- | --- |
 | Aquarius Sun | Ties identity to legacy and long-range goals | Natal Sun in Aquarius (fixed by date) | A drive to build what outlasts the moment |
 | Saturn, Aquarius's ruler | Times the chart's seasons of pressure | Saturn as traditional ruler of the Sun | Demanding chapters tend to track Saturn's transits |
-| Saturn in Aries (2025-26) | A same-sign backdrop to the reported Leo Moon | Transiting Saturn in Aries, the Moon's sign | A season of consolidation rather than expansion |
+| Saturn in Aries (2025-26) | A ruler-transit backdrop over his Aries planets | Transiting Saturn in Aries, on natal Mars and Venus | A season of consolidation rather than expansion |
 | Birth time unknown | Leaves the Moon's degree and houses provisional | Lunar degree and houses, time-dependent | Treat exact-aspect claims as contested |
 
 ## Common Questions About Cristiano Ronaldo's Zodiac Sign
@@ -62,7 +62,7 @@ Aquarius is traditionally ruled by Saturn and, in modern practice, co-ruled by U
 
 **What does Saturn in Aries mean for him in 2026?**
 
-Saturn moves through Aries across 2025-26, the same sign as his reported Leo Moon, reading as a long season of consolidating emotional drive and legacy. It is a symbolic backdrop, not a result indicator, and its exact timing depends on a confirmed birth time.
+Saturn, the traditional ruler of his Aquarius Sun, moves through Aries across 2025-26 and over his natal Mars and Venus there, reading as a long season of disciplining drive and consolidating legacy. It is a symbolic backdrop, not a result indicator, and any tight timing depends on a confirmed birth time.
 
 **Is his Leo Moon confirmed?**
 

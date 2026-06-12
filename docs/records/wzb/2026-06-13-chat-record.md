@@ -20,6 +20,7 @@ aliases:
 - 评估是否需要给 gbrain 配置 embedding：确认当前 PGLite 配置为 `embedding_disabled: true`、无持久化 provider key；Ollama 本地可用且已安装 `nomic-embed-text`、`mxbai-embed-large`、`qwen3-embedding:8b`，但 embedding 不能解决 Claude `gbrain serve` 与 CLI 抢 PGLite 锁的问题。
 - 分析 SEO autopilot cron 挂 Mac mini 的稳定性风险：确认当前链路由 `gg-seo-autopilot-tick.sh` 调 `claude -p` 驱动 verify/merge gate，authoring 由 `gg-seo-autopilot.mjs` 串起 bridge/RAG/render/orchestrator/phase2/review；核心问题是 headless Claude CLI 既当总控又当工具执行环境，容易受 PATH、HOME、登录态、MCP、timeout、锁和 CLI 输出影响。修正建议为“OAuth CLI worker + deterministic runner”：保留 OAuth/订阅态 CLI 作为写稿主路径以节省 token 费用，但只让 CLI 输出文本；Node 状态机负责文件写入、校验、重试、预览验证和 merge。API 仅作为可选 fallback，不作为默认主路径。
 - 使用 `superpowers:writing-plans` 写出 OAuth CLI Worker 化实施计划，保存到 `docs/plans/2026-06-13-oauth-cli-worker-autopilot-plan.md`。计划包含 10 个任务：Mac mini preflight、LLM worker contract、deterministic repair、preview wait、Playwright preview verify、结构化 review worker、替换 prompt-driven verify/merge gate、claim lease heartbeat、runbook、端到端验证。
+- 解释“终端 Claude Code 成功率高，但 cron spawn 失败率高”的差异：二者不是同一运行条件。交互式终端有 TTY、完整 shell 环境、解锁登录态、上下文与人工监督；cron/launchd spawn 运行在无 TTY、pipe stdout、最小 env、无交互恢复、硬 watchdog/timeout 和独立 process group 下。当前代码还存在 `claude -p` 在 verify/merge gate 中承担 MCP/工具/merge 总控、authoring 中 agentic rescue 带 `Bash/Edit/Write` 的高耦合点，因此 cron 更容易因环境/权限/输出/超时/工具链任一环节失败而无法完成。
 
 ---
 
@@ -70,5 +71,17 @@ aliases:
 **🤖 回答：**
 
 调用 `superpowers:writing-plans`，按项目文档路由规则将工程实施计划保存为 `docs/plans/2026-06-13-oauth-cli-worker-autopilot-plan.md`。计划明确目标是保留 OAuth/订阅态 CLI 写稿主路径，同时把 cron 改成 Node-owned deterministic runner；包含非协商约束、目标架构、阶段顺序、10 个可执行任务、每个任务的文件清单、测试、实现步骤、验证命令、提交点、回滚计划和成功标准。未修改现有代码。
+
+---
+
+### Q5 — 02:22 [codex]
+
+**🙋 提问：**
+
+有一个差异：我自己在终端（在 flow-mvp 目录下），使用 claude code 去完成这个 cron 任务（撰写 SEO 文章）成功率就很高，但是通过 cron 的形式，使用 spawn 的方式进行撰写通过率就很低，甚至完不成。为什么呢
+
+**🤖 回答：**
+
+调用 `superpowers:systematic-debugging` 分析该异常。结论：交互式 Claude Code 与 cron spawn 的 `claude -p` 不是同一运行条件；终端里具备 TTY、完整 shell profile、已解锁 OAuth/keychain、当前 cwd、长上下文、工具权限和人工恢复，而 cron/launchd spawn 是无 TTY、stdin/stdout pipe、最小环境变量、无交互恢复、hard timeout/watchdog、独立 process group。项目代码证据包括：`gg-llm-orchestrator.mjs` 使用 `spawn` + `stdio pipe` + `detached` + CPU watchdog；`gg-seo-autopilot-tick.sh` 的 publish gate 用 headless `claude -p` 调 MCP/工具并决定 verify/merge；`gg-seo-autopilot.mjs` 的 agentic rescue 允许 `Bash Read Edit Write Grep`。建议先做并行对照诊断：同一个 prompt 同时在交互式 shell 与 launchd wrapper 中记录 env/PATH/HOME/cwd/tty/claude version/auth smoke/stdout bytes/duration/exit code，再定位是环境、TTY/pipe、权限登录态、watchdog timeout、还是 agentic gate 耦合导致。
 
 ---

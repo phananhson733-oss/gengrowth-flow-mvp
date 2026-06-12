@@ -12,13 +12,13 @@ This is a symbolic, reflective reading — not a prediction of results or a bett
 
 ## Why It Matters for Self-Awareness
 
-Most "what is Lionel Messi's zodiac sign" content stops at one word, Cancer, and a list of adjectives. That is where readers get stuck, because a label never shows how a placement develops over a life or activates in a given year. Evolutionary astrology, in the lineage Liz Greene helped shape, treats the Sun sign as a direction of growth rather than a verdict — a Cancer Sun learning to lead from care instead of retreating into it. Held that way, a famous chart becomes a mirror: it asks the reader where their own security needs help or hinder their ambitions, which is the real value of reading a sign at all.
+Most "what is Lionel Messi's zodiac sign" content stops at one word, Cancer, and a list of adjectives. That is where readers get stuck, because a label never shows how a placement develops over a life or activates in a given year. Psychological astrology, in the lineage Liz Greene helped shape, treats the Sun sign as a direction of growth rather than a verdict — a Cancer Sun learning to lead from care instead of retreating into it. Held that way, a famous chart becomes a mirror: it asks the reader where their own security needs help or hinder their ambitions, which is the real value of reading a sign at all.
 
 Robert Hand's reminder that transits time a theme rather than fix a fate keeps the method honest here. A lionel messi zodiac sign reading is not a forecast of trophies; it is a map of when a Cancer Sun's themes are most awake, and that distinction is exactly what turns a celebrity label into a usable tool. The same move works on any chart: name the growth direction first, then let the year's transits say when it is lit.
 
 ## Lionel Messi's Zodiac Sign vs Adjacent Concepts: How It Works + Trade-offs
 
-It helps to set Lionel Messi's zodiac sign, a Cancer Sun, against two neighbors. Against a flat sun-sign profile, an evolutionary reading of the lionel messi zodiac sign explains how it works: the Cancer-Capricorn axis pairs an emotional, security-seeking Sun with a reported Capricorn rising's drive toward mastery and public structure, so the growth arc moves from private safety toward earned authority. To gain that developmental depth, you sacrifice the comfort of a fixed verdict — this reading describes a direction, not a destiny. Against a transit forecast, the natal lens trades timing for meaning: it explains the axis, but it takes the 2026 sky to say when the theme lights up. That is where the tournament enters. Jupiter sits in Cancer until June 30, 2026, passing over a Cancer Sun as a symbolic spotlight on belonging and visibility in the early rounds, then moves into Leo and shifts the emphasis elsewhere. The trade-off stays honest: naming a favorable early window is not the same as calling a result.
+It helps to set Lionel Messi's zodiac sign, a Cancer Sun, against two neighbors. Against a flat sun-sign profile, an evolutionary reading of the lionel messi zodiac sign explains how it works: the Cancer-Capricorn axis pairs an emotional, security-seeking Sun with a reported Capricorn rising's drive toward mastery and public structure, so the growth arc moves from private safety toward earned authority. To gain that developmental depth, you sacrifice the comfort of a fixed verdict — this reading describes a direction, not a destiny. Against a transit forecast, the natal lens trades timing for meaning: it explains the axis, but it takes the 2026 sky to say when the theme lights up. That is where the tournament enters. Jupiter sits in Cancer until June 30, 2026, so the World Cup opens under the broad same-sign backdrop of Jupiter moving through Messi's Sun sign — a once-in-twelve-years emphasis on Cancer themes like belonging and team identity, not a degree-exact contact to his early-Cancer Sun, which Jupiter already made earlier in its transit. After June 30 it shifts into Leo. The trade-off stays honest: naming a symbolic same-sign backdrop is not the same as calling a result.
 
 A second comparison sharpens it. Set Lionel Messi's zodiac sign beside a results-driven prediction, and the difference is what each will claim. The prediction names a champion and stands or falls on it; the evolutionary reading names a direction — a Cancer Sun maturing from private safety toward public authority along the Cancer-Capricorn axis — and a window when the year's sky underlines it. That restraint is the point, not a weakness, because a reading that refuses to call the score keeps its credibility for the next chart you bring it, and for the reader's own. It also keeps the focus where it belongs: on a theme a person can actually work with, rather than a scoreline no chart can promise.
 
@@ -29,7 +29,7 @@ You can apply the same evolutionary method behind a Lionel Messi zodiac sign rea
 1. Locate the Sun in Cancer and read it as a security-and-belonging theme, not a fixed mood.
 2. Check the Moon, Cancer's ruler, since its sign and house color how that security is sought.
 3. Note the Cancer-Capricorn axis if a Capricorn rising is confirmed — the pull between safety and mastery.
-4. Track transiting Jupiter through Cancer until June 30, 2026, as a spotlight passing over the Sun.
+4. Track transiting Jupiter through Cancer until June 30, 2026, as a same-sign backdrop to the Sun rather than an exact contact during the tournament.
 5. Treat any rising-sign claim as provisional until a birth time is confirmed.
 
 ## Common Misreadings
@@ -46,7 +46,7 @@ You can apply the same evolutionary method behind a Lionel Messi zodiac sign rea
 | Cancer Sun | Ties identity to security and belonging | Natal Sun in Cancer (fixed by date) | A protective, memory-led way of leading |
 | Moon, Cancer's ruler | Colors how that security is sought | The Moon's sign and house in the chart | Mood and motivation track the Moon's condition |
 | Cancer-Capricorn axis | Pairs safety-seeking with a drive to master | Sun in Cancer, reported rising in Capricorn | A pull between private care and public authority |
-| Jupiter in Cancer (to Jun 30) | Spotlights the Sun's belonging theme | Transiting Jupiter over the natal Cancer Sun | Early-tournament visibility, fading after June 30 |
+| Jupiter in Cancer (to Jun 30) | A same-sign backdrop to the Cancer Sun | Transiting Jupiter in Cancer, Messi's Sun sign | A broad Cancer-theme backdrop, not an exact natal transit |
 
 ## Common Questions About Lionel Messi's Zodiac Sign
 

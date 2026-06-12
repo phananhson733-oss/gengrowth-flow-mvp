@@ -58,13 +58,13 @@ His Sun is in Cancer, based on his June 24, 1987 birth date. That placement need
 
 The widely cited Capricorn rising depends on an exact birth time that is not firmly confirmed. Treat any rising-sign claim as provisional rather than settled.
 
-**Does his Cancer Sun help in 2026?**
+**What does Jupiter in Cancer mean for his sign in 2026?**
 
-Jupiter sits in Cancer until June 30, passing over a Cancer Sun as a symbolic spotlight on belonging and visibility. Read it as a supportive early window for the group stage, not a settled outcome, and note that the emphasis shifts once Jupiter moves into Leo at the end of June.
+Jupiter spends 2025-26 moving through Cancer, Messi's Sun sign, a broad same-sign emphasis on belonging, team identity, and legacy rather than a measurable competitive edge. It is a symbolic backdrop, not a result indicator, and it gives way to Leo themes once Jupiter changes sign on June 30.
 
 **What does the Cancer-Capricorn axis mean?**
 
-It pairs a security-seeking Cancer Sun with a mastery-seeking Capricorn point, framing a growth arc from private safety toward earned authority. When a confirmed birth time supports the Capricorn rising it becomes the spine of the chart's growth story, and without that time it reads as a likely emphasis rather than a settled fact — a developmental theme, not a fixed trait.
+It pairs a security-seeking Cancer Sun with a mastery-seeking Capricorn point, framing a growth arc from private safety toward earned authority. When a confirmed birth time supports the Capricorn rising it becomes the spine of the chart's growth story, and without that time it reads as a reported, speculative emphasis rather than a settled fact — a developmental theme, not a fixed trait.
 
 ## Reflection Prompts
 

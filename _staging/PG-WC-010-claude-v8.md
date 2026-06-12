@@ -1,4 +1,4 @@
-# World Cup 2026 June Astrology: The Sky Over the Opening Rounds
+# Reading World Cup 2026 June Astrology Over the Opening Rounds
 
 ## What is the June 2026 Tournament Sky?
 
@@ -14,11 +14,15 @@ This is a symbolic, educational reading — not a prediction of results or a bet
 
 Most world cup 2026 june astrology content jumps straight to "who wins." That is where it goes wrong, because the June sky describes a mood, not a result. Reading the month's transits is really a way of noticing atmosphere: a Jupiter-in-Cancer warmth around belonging and home crowds, a Saturn-in-Aries reminder that nerve and patience are being tested. Held that way, the June 2026 tournament sky becomes a mirror for the viewer too — it asks what you reach for under pressure, which is the quiet value of watching any sky, not just a tournament's.
 
+Robert Hand's habit of reading transits as timing rather than fixed verdicts is the method underneath, and Liz Greene's reading of lunations and slow transits as mood rather than fate keeps the tone honest. Between them, the month becomes a weather report, not a results sheet. A June of exalted Jupiter is a season that rewards warmth, belonging, and the steady nerve Saturn keeps testing, and that is a frame any viewer can carry into their own month, win or lose.
+
 ## the June 2026 Tournament Sky vs Adjacent Concepts: How It Works + Trade-offs
 
 It helps to set the June 2026 tournament sky against two neighbors. Against a single team's chart, the month-sky view trades personal detail for a shared backdrop: world cup 2026 june astrology describes the weather everyone plays under, but it cannot read one squad's specific form. To gain that shared lens, you sacrifice the close-up — this is the atmosphere, not the lineup.
 
 Against a results prediction, the June calendar trades certainty for texture. It can say Jupiter is exalted in Cancer through June 30 and then shifts into Leo, moving the tone from collective warmth toward individual spotlight, yet it never claims which team lifts the trophy. The trade-off stays honest: naming the month's mood is not the same as calling a scoreline, and the mood is the part astrology can actually speak to.
+
+A third angle is the rhythm of the month itself. The opening rounds sit under exalted Jupiter, a generous, home-leaning warmth, while Saturn in Aries threads patience and nerve through every match. Then the late-June turn into Leo lifts the tone toward spotlight and individual flair, just as the tournament moves from group play toward the knockouts. Reading world cup 2026 june astrology as that arc — warmth, test, then spotlight — gives a shape to the month without ever pretending to know the result.
 
 ## How to Read the June 2026 Tournament Sky in Your Timing
 
@@ -72,7 +76,6 @@ The month's New Moon works as a reset window and its Full Moon as a culmination,
 
 ## Related Reading
 
-- [[<TBD-internal-link: World Cup 2026 astrology prediction pillar>]] — the hub that frames the tournament's wider astrology
 - [[<TBD-internal-link: what Jupiter in Cancer means>]] — the standout transit behind the June mood
 
 ## Take Action

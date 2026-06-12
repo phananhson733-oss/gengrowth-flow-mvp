@@ -32,11 +32,14 @@ You can apply the same method to any chart, famous or your own.
 4. Treat any unverified Ascendant or Moon as provisional until a birth time is confirmed.
 5. Read each transit as a window that still has to be lived, not a fixed outcome.
 
+Run those five passes and the reading stays honest: the mbappe birth chart becomes a worked example of a repeatable method rather than a one-off celebrity verdict, and the same five steps carry straight over to your own chart, your own Sun, and your own ruling planet.
+
 ## Common Misreadings
 
 1. **A Sagittarius Sun guarantees flair on demand.** The Sun shows a default style; Jupiter's transits show when that style is most supported, and 2026 favors the later rounds.
 2. **The Capricorn Moon makes him cold.** A Capricorn Moon points to disciplined emotional control, not absence of feeling — and it is unverified without a birth time.
 3. **The whole chart predicts the World Cup.** The Mbappé birth chart frames timing and temperament; the tournament outcome rests on the team, not the planets.
+4. **A famous chart is read differently from your own.** The method is identical — find the Sun's ruler, then track its transits — whether the chart belongs to a World Cup striker or to you.
 
 ## The Mbappé Birth Chart at a Glance
 
@@ -63,7 +66,7 @@ Jupiter rules Sagittarius, so it is the ruler of his Sun. That makes Jupiter's t
 
 **Does the 2026 sky favor him?**
 
-Jupiter enters Leo on June 30 and trines his Sagittarius Sun, a supportive angle for the later rounds — a favorable window, not a settled result.
+Jupiter enters Leo on June 30 and trines his Sagittarius Sun, a supportive fire-to-fire angle that lands over the later rounds. Read it as a favorable window for big-stage expression rather than a settled result, since the chart times conditions, not scorelines.
 
 ## Reflection Prompts
 

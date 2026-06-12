@@ -20,6 +20,7 @@ aliases:
 - 定位并修复 SEO autopilot 连续 PARK 告警：根因是 30 个 W22 选题缺少 选题登记表 行，最小修复为合并 park 告警通报，未 push、未对外发消息。
 - 修复本机 gbrain：确认真实问题不是 query 返回 0，而是 `~/.gbrain/brain.pglite` WAL/checkpoint 损坏导致 PGLite 初始化 `Aborted()`；先备份真实库，再用 PostgreSQL 17 `pg_resetwal` 恢复。
 - 验证 gbrain 恢复：`gbrain query "saturn return" --limit 5` 返回结果，`gbrain stats` 读到 1357 pages / 2794 chunks，`gg-gbrain-rag.mjs` 成功生成 6 条 snippets。
+- 升级 gbrain 到上游 master `0.42.41.0`：`check-update` 因无 GitHub Releases 误报 `no_releases`，改走 git fast-forward；旧库迁移卡在损坏索引 `idx_chunks_page_index`，最终用 markdown export/import 重建干净 PGLite 库并验证 query/RAG 正常。
 
 ---
 
@@ -58,5 +59,17 @@ aliases:
 **🤖 回答：**
 
 按 systematic-debugging 路径排查并修复本机 gbrain。先确认 Codex 沙箱会造成假性 `PGLite lock` 超时；提权后真实错误为 `PGLite failed to initialize its WASM runtime ... Original error: Aborted()`。进一步用 fresh/in-memory PGLite 验证系统和包本身可启动，问题限定在 `~/.gbrain/brain.pglite` 数据目录；PGLite debug 显示 `invalid magic number ... WAL segment`、`invalid checkpoint record`、`could not locate a valid checkpoint record`。安装 PostgreSQL 17 工具，只在 `/tmp` 副本上验证 `pg_resetwal` 可恢复并能让 `gbrain query "saturn return"` 返回结果；随后备份真实库到 `/Users/wzb/.gbrain/brain.pglite.backup-20260612-2158`，保留真实 `postmaster.pid` 为 `postmaster.pid.bak-20260612-2158`，执行 `/opt/homebrew/opt/postgresql@17/bin/pg_resetwal /Users/wzb/.gbrain/brain.pglite`。验证通过：`gbrain query "saturn return" --limit 5` 返回 2 条结果，`gbrain stats` 返回 1357 pages / 2794 chunks，项目侧 `node tools/scripts/gg-gbrain-rag.mjs ...` 生成 6 条 snippets。
+
+---
+
+### Q4 — 22:37 [codex]
+
+**🙋 提问：**
+
+gbrain 应该可以更新到最新了吧
+
+**🤖 回答：**
+
+确认可以更新，但 `gbrain check-update --json` 因上游没有 GitHub Releases 返回 `no_releases`，不能作为最新版本依据；改用官方 git remote。将 `/Users/wzb/gbrain` 从 detached `0.18.2` 切回 `master` 并 fast-forward 到 `origin/master` commit `7c27fa12`，`VERSION` 为 `0.42.41.0`，执行 `bun install`。升级后旧库 postinstall/schema migration 卡在损坏索引 `idx_chunks_page_index`；原地 `REINDEX/CREATE INDEX` 经 PGLite 会挂住，因此保留所有旧库和备份，将旧库导出为 `/tmp/gbrain-export-20260612-2232`（1382 个 markdown），归档损坏库到 `/Users/wzb/.gbrain/brain.pglite.corrupt-index-20260612-2232`，用最新版 `gbrain init --pglite --no-embedding --force --non-interactive` 新建 schema 116，再 `gbrain import ... --no-embed` 导入 1382 pages / 7095 chunks / 0 errors。验证：`gbrain version` 为 `0.42.41.0`，`gbrain stats` 为 1382 pages / 7095 chunks / 218 links / 415 tags 且无 pending migration，`gbrain apply-migrations --list` 显示 `All migrations up to date`，`gbrain query "saturn return"` 正常返回结果，项目侧 `node tools/scripts/gg-gbrain-rag.mjs ...` 生成 10 条 snippets。旧备份保留：`brain.pglite.backup-20260612-2158`、`brain.pglite.backup-pre-reindex-20260612-2216`、`brain.pglite.broken-after-index-rebuild-20260612-2230`。
 
 ---

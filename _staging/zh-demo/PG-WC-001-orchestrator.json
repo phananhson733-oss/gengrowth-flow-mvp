@@ -1,0 +1,70 @@
+{
+  "page_id": "PG-WC-001",
+  "prompt_path": "/Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/PG-WC-001.v8.zh-prompt.md",
+  "started_at": "2026-06-12T14:26:41.101Z",
+  "models_requested": [
+    "claude"
+  ],
+  "retry": 2,
+  "diversify_on_fail": false,
+  "max_cost_usd_per_page": 5,
+  "budget_exceeded_models": [],
+  "ok_count": 0,
+  "total_cost_estimate_usd": 0,
+  "results": {
+    "claude": {
+      "model": "claude",
+      "active_model": "claude",
+      "diversified": false,
+      "ok": false,
+      "output_path": null,
+      "retries": 2,
+      "duration_s": 1604.3,
+      "cost_estimate_usd": null,
+      "cumulative_cost_usd": 0.0198,
+      "budget_exceeded": false,
+      "budget_usd": 5,
+      "attempts": [
+        {
+          "try_index": 1,
+          "model": "claude",
+          "command": "claude -p --model claude-sonnet-4-6 --effort high < /Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/PG-WC-001.v8.zh-prompt.md > /Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/PG-WC-001-claude-v8.md",
+          "cost_usd": 0.0198,
+          "cumulative_cost_usd": 0.0198,
+          "ok": false,
+          "exit_code": 0,
+          "duration_s": 824.1,
+          "stderr_tail": "claude output is 824B (< 3000B) — generation failed/truncated or CLI ignored --model. Verify CLI honored --model claude-sonnet-4-6 --effort high (run `claude --version` and check ~/.claude/settings.json for a default model override). Re-run after fixing.",
+          "stdout_bytes": 404,
+          "sonnet_guard": {
+            "downgraded": true,
+            "bytes": 824,
+            "message": "claude output is 824B (< 3000B) — generation failed/truncated or CLI ignored --model. Verify CLI honored --model claude-sonnet-4-6 --effort high (run `claude --version` and check ~/.claude/settings.json for a default model override). Re-run after fixing."
+          }
+        },
+        {
+          "try_index": 2,
+          "model": "claude",
+          "command": "claude -p --model claude-sonnet-4-6 --effort high < /Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/PG-WC-001.v8.zh-prompt.md > /Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/PG-WC-001-claude-v8.md",
+          "cost_usd": 0,
+          "cumulative_cost_usd": 0.0198,
+          "ok": false,
+          "exit_code": -2,
+          "duration_s": 570.1,
+          "stderr_tail": "WATCHDOG: no CPU/output progress for 180s (deadlock); group cpu=8.5s"
+        },
+        {
+          "try_index": 3,
+          "model": "claude",
+          "command": "claude -p --model claude-sonnet-4-6 --effort high < /Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/PG-WC-001.v8.zh-prompt.md > /Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/PG-WC-001-claude-v8.md",
+          "cost_usd": 0,
+          "cumulative_cost_usd": 0.0198,
+          "ok": false,
+          "exit_code": -2,
+          "duration_s": 210.1,
+          "stderr_tail": "WATCHDOG: no CPU/output progress for 180s (deadlock); group cpu=5.5s"
+        }
+      ]
+    }
+  }
+}

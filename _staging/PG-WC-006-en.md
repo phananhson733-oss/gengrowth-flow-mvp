@@ -1,3 +1,28 @@
+---
+title: Vinicius Jr Zodiac Sign
+slug: vinicius-jr-zodiac-sign
+date: 2026-06-12
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-WC-006
+author_id: "aditi-sharma"
+author_display_name: "Aditi Sharma"
+target_keyword: vinicius jr zodiac sign
+associated_keywords:
+  - vinicius jr astrology
+  - vinicius zodiac
+  - vinicius junior birth chart
+  - vinicius star sign
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-12T19:48:08.788Z
+content_sha256_short: 29769e338473d78f
+phase2_checks: all-pass
+---
+
 # Vinicius Jr's Zodiac Sign: A Cancer Sun With a Sagittarius Moon
 
 ## What is Vinicius Jr's Zodiac Sign?

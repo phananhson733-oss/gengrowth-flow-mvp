@@ -12,7 +12,9 @@ This is an educational, symbolic reading — not a prediction of results or a be
 
 ## Why It Matters for Self-Awareness
 
-Most celebrity-chart content stops at sign labels: Sagittarius means adventurous, Capricorn Moon means disciplined, and so on. That is where readers get stuck, because a list of traits never explains how the [[<TBD-internal-link: World Cup 2026 astrology pillar page>]] connects a placement to a moment. The more useful question is how a chart's ruler times its peaks. Robert Hand's approach of reading transits as timing activators, rather than fixed character verdicts, is the method here: the Mbappé birth chart does not promise a golden boot, it shows when a Jupiter-ruled Sagittarius is most likely to express its archetype on a large stage. Treated that way, a famous chart becomes a study in how anyone might track their own timing instead of waiting for a label to come true.
+Most celebrity-chart content stops at sign labels: Sagittarius means adventurous, Capricorn Moon means disciplined, and so on. That is where readers get stuck, because a list of traits never explains how the [[<TBD-internal-link: World Cup 2026 astrology pillar page>]] connects a placement to a moment. The more useful question is how a chart's ruler times its peaks. Robert Hand's approach of reading transits as timing activators, rather than fixed character verdicts, is the method here, and Howard Sasportas added the psychological reading of the Sun and its ruler that lets a single placement be read as a developing theme rather than a frozen trait. Seen through both, the Mbappé birth chart does not promise a golden boot; it shows when a Jupiter-ruled Sagittarius is most likely to express its archetype on a large stage.
+
+A reader who searches for the mbappe birth chart usually wants a verdict, but the honest payoff is a method. Learn which planet rules your Sun, watch its transits, and you can track your own high-visibility windows the same way. Treated that way, a famous chart stops being a label to wait on and becomes a study in timing — which is a skill you can use long after the tournament ends, on any chart you read next.
 
 ## The Mbappé Birth Chart vs Adjacent Concepts: How It Works + Trade-offs
 
@@ -36,7 +38,7 @@ You can apply the same method to any chart, famous or your own.
 
 ## The Mbappé Birth Chart at a Glance
 
-| Property | How It Works | Energy Center (natal placement) | How to Observe |
+| Property | How It Works | Natal Placement | How to Observe |
 | --- | --- | --- | --- |
 | Sagittarius Sun | Ties identity to expansion and large stages | Natal Sun in Sagittarius (verified by date) | A pull toward big-occasion performance over routine |
 | Jupiter chart ruler | Times the chart's high-visibility windows | Jupiter as ruler of the Sagittarius Sun | Form peaks tend to track Jupiter's transits |

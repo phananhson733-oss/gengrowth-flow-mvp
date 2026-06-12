@@ -1,0 +1,48 @@
+{
+  "page_id": "PG-WC-001",
+  "prompt_path": "/Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/PG-WC-001.v8-prompt.md",
+  "started_at": "2026-06-12T16:04:36.575Z",
+  "models_requested": [
+    "claude"
+  ],
+  "retry": 0,
+  "diversify_on_fail": false,
+  "max_cost_usd_per_page": 5,
+  "budget_exceeded_models": [],
+  "ok_count": 0,
+  "total_cost_estimate_usd": 0,
+  "results": {
+    "claude": {
+      "model": "claude",
+      "active_model": "claude",
+      "diversified": false,
+      "ok": false,
+      "output_path": null,
+      "retries": 0,
+      "duration_s": 882.1,
+      "cost_estimate_usd": null,
+      "cumulative_cost_usd": 0.0206,
+      "budget_exceeded": false,
+      "budget_usd": 5,
+      "attempts": [
+        {
+          "try_index": 1,
+          "model": "claude",
+          "command": "claude -p --model claude-sonnet-4-6 --effort high < /Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/PG-WC-001.v8-prompt.md > /Users/wzb/gengrowth-flow-mvp/_staging/PG-WC-001-claude-v8.md",
+          "cost_usd": 0.0206,
+          "cumulative_cost_usd": 0.0206,
+          "ok": false,
+          "exit_code": 0,
+          "duration_s": 882.1,
+          "stderr_tail": "claude output is 1B (< 3000B) — generation failed/truncated or CLI ignored --model. Verify CLI honored --model claude-sonnet-4-6 --effort high (run `claude --version` and check ~/.claude/settings.json for a default model override). Re-run after fixing.",
+          "stdout_bytes": 1,
+          "sonnet_guard": {
+            "downgraded": true,
+            "bytes": 1,
+            "message": "claude output is 1B (< 3000B) — generation failed/truncated or CLI ignored --model. Verify CLI honored --model claude-sonnet-4-6 --effort high (run `claude --version` and check ~/.claude/settings.json for a default model override). Re-run after fixing."
+          }
+        }
+      ]
+    }
+  }
+}

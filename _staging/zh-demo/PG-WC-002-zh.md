@@ -1,3 +1,28 @@
+---
+title: Mbappe Birth Chart
+slug: mbappe-birth-chart
+date: 2026-06-12
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-WC-002
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: mbappe birth chart
+associated_keywords:
+  - kylian mbappe astrology
+  - mbappe zodiac sign
+  - mbappe sagittarius
+  - mbappe natal chart
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-12T18:32:56.286Z
+content_sha256_short: e28fd219479b167d
+phase2_checks: all-pass
+---
+
 # 姆巴佩的出生星盘：一张木星主管的射手座盘在 2026 年怎么读
 
 ## 姆巴佩的出生星盘是什么？

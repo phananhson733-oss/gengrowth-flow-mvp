@@ -1,3 +1,27 @@
+---
+title: Zodiac Signs As World Cup 2026 Teams
+slug: zodiac-signs-as-world-cup-2026-teams
+date: 2026-06-13
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T3
+track: 量产线
+page_id: PG-WC-008
+author_id: "elena-vane"
+author_display_name: "Elena Vane"
+target_keyword: zodiac signs as world cup 2026 teams
+associated_keywords:
+  - which world cup team based on zodiac
+  - zodiac sign world cup team 2026
+  - astrology world cup team pick
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-13T02:53:52.632Z
+content_sha256_short: fc2dfe9522a929a9
+phase2_checks: all-pass
+---
+
 # 用星座看世界杯球队，把四元素读成踢球风格
 
 ## 星座球队透镜是什么？

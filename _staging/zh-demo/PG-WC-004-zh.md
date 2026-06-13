@@ -1,3 +1,28 @@
+---
+title: Cristiano Ronaldo Zodiac Sign
+slug: cristiano-ronaldo-zodiac-sign
+date: 2026-06-13
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-WC-004
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: cristiano ronaldo zodiac sign
+associated_keywords:
+  - ronaldo birth chart
+  - ronaldo astrology
+  - cr7 zodiac
+  - ronaldo star sign
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-13T02:53:47.971Z
+content_sha256_short: 6f66b74185e6b747
+phase2_checks: all-pass
+---
+
 # C罗星座是一颗水瓶座太阳：在土星行经白羊的一年里读它
 
 ## C罗的星座是什么？

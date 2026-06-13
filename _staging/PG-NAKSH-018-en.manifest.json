@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-NAKSH-018",
+  "entity": "Ardra",
+  "target_keyword": "ardra nakshatra",
+  "template": "Definition",
+  "tier": "T3",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-06-13T05:36:36.476Z",
+  "content_sha256_short": "d5fc0701d8acf35b",
+  "source_path": "_staging/PG-NAKSH-018-claude-v8.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-NAKSH-018-en.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 1648,
+      "wikilinks": 3,
+      "tbdLinks": 3
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

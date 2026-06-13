@@ -1,3 +1,28 @@
+---
+title: Magha Nakshatra
+slug: magha-nakshatra
+date: 2026-06-13
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T3
+track: 量产线
+page_id: PG-NAKSH-017
+author_id: "aditi-sharma"
+author_display_name: "Aditi Sharma"
+target_keyword: magha nakshatra
+associated_keywords:
+  - magha nakshatra meaning
+  - magha deity
+  - magha pada
+  - magha traits
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-13T05:35:58.399Z
+content_sha256_short: 0d7ac0369c674a20
+phase2_checks: all-pass
+---
+
 # Magha Nakshatra and the Throne You Inherit Rather Than Earn
 
 ## What is Magha?

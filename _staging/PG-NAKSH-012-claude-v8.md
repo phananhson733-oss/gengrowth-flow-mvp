@@ -14,7 +14,7 @@ Read traditionally, this nakshatra encodes a specific paradox: power that grows 
 
 Most write-ups on Uttara Bhadrapada flatten it into a list of pleasant traits — wise, calm, spiritual — and stop there. That summary misses how the placement actually works, and the miss matters for anyone trying to read it in their own chart. Calm here is not the absence of intensity; it is intensity held in reserve. Saturn does not produce serenity by removing depth. It produces it by containing depth, the way a deep ocean appears motionless at the surface while immense pressure builds below.
 
-The self-awareness question this reframes is a common one. People with strong Uttara Bhadrapada influence often hear that they are too withdrawn, too slow to act, too unwilling to push. Held against the placement's actual logic, that feedback inverts. The restraint is the strength. Ahirbudhnya, the deep-sea serpent, does not strike — it knows, and it waits. The more useful inner question becomes not "why am I so reserved?" but "what am I holding in reserve, and what conditions release it well?" Treating the still water as a feature rather than a flaw changes how a person relates to their own depth.
+The self-awareness question this reframes is a common one. People with strong Uttara Bhadrapada influence often hear that they are too withdrawn, too slow to act, too unwilling to push, yet held against the placement's actual logic, that feedback inverts: the restraint is the strength. Ahirbudhnya, the deep-sea serpent, does not strike — it knows, and it waits. The more useful inner question becomes not "why am I so reserved?" but "what am I holding in reserve, and what conditions release it well?" Treating the still water as a feature rather than a flaw changes how a person relates to their own depth.
 
 There is a further layer worth holding. Uttara Bhadrapada is the penultimate nakshatra, second from the end of the entire lunar cycle. In classical framing, a placement this late carries the integrated learning of the mansions before it — wisdom arrived at rather than wisdom assumed. For self-awareness work, that positioning suggests the placement's gifts mature with time and rarely announce themselves early. The depth is real; it simply does not advertise.
 
@@ -81,7 +81,6 @@ Vedic astrology does not assign a mansion a fixed positive or negative value out
 ## Related Reading
 
 - [[<TBD-internal-link: Purva Bhadrapada nakshatra overview>]] — the preceding mansion that shares the Bhadrapada root but carries Jupiter's spiritual fire rather than Saturn's still depth; the single most useful contrast for reading Uttara Bhadrapada accurately
-- [[<TBD-internal-link: Revati nakshatra overview>]] — the final mansion that follows, where Mercury guides the close of the lunar cycle, completing the Piscean arc Uttara Bhadrapada deepens
 - [[<TBD-external-link: Wikipedia | Nakshatra | overview of the nakshatra system and how the 27 lunar mansions are structured>]]
 
 ## Take Action

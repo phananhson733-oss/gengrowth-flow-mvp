@@ -1,3 +1,28 @@
+---
+title: Revati Nakshatra
+slug: revati-nakshatra
+date: 2026-06-13
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T3
+track: 量产线
+page_id: PG-NAKSH-015
+author_id: "aditi-sharma"
+author_display_name: "Aditi Sharma"
+target_keyword: revati nakshatra
+associated_keywords:
+  - revati nakshatra meaning
+  - revati deity
+  - revati pada
+  - revati traits
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-13T05:36:35.952Z
+content_sha256_short: 70a57864b2d708c5
+phase2_checks: all-pass
+---
+
 # Revati Nakshatra, the 27th and Final Lunar Mansion, Explained
 
 ## What is Revati?

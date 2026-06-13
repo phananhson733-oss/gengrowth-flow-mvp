@@ -1,3 +1,28 @@
+---
+title: Emotion Journal
+slug: emotion-journal
+date: 2026-06-13
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T3
+track: 量产线
+page_id: PG-JOURNAL-003
+author_id: "elena-vane"
+author_display_name: "Elena Vane"
+target_keyword: emotion journal
+associated_keywords:
+  - emotion journaling
+  - feelings journal
+  - mood journal
+  - how to journal emotions
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-13T05:36:07.850Z
+content_sha256_short: 0b950bb2e913f155
+phase2_checks: all-pass
+---
+
 # Emotion Journal Habits That Name Feelings Instead of Just Logging Them
 
 ## What is the Affect-Labeling Practice?

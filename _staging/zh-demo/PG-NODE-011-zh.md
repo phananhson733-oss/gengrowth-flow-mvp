@@ -11,16 +11,12 @@ page_id: PG-NODE-011
 author_id: "julian-thorne"
 author_display_name: "Julian Thorne"
 target_keyword: rahu and ketu astrology
-target_keyword_zh: 罗睺计都占星
 associated_keywords:
-  - rahu ketu meaning
-  - rahu ketu vedic astrology
-  - rahu north node ketu south node
-  - rahu ketu axis
+
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-13T05:35:24.168Z
-language: zh
+generated_at: 2026-06-13T08:25:10.041Z
+content_sha256_short: 4699c9c9631c0e5f
 phase2_checks: all-pass
 ---
 

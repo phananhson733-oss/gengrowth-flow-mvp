@@ -1,6 +1,6 @@
 ---
-title: 足球运动员星座
-slug: 
+title: Best Soccer Players Zodiac Sign
+slug: best-soccer-players-zodiac-sign
 date: 2026-06-13
 status: ready-to-review
 type: wiki-entry
@@ -10,7 +10,7 @@ track: 量产线
 page_id: PG-WC-009
 author_id: "marcus-orion"
 author_display_name: "Marcus Orion"
-target_keyword: 足球运动员星座
+target_keyword: best soccer players zodiac sign
 associated_keywords:
   - famous football players zodiac signs
   - soccer player star signs
@@ -18,7 +18,7 @@ associated_keywords:
   - best players by zodiac
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-13T02:49:25.791Z
+generated_at: 2026-06-13T02:55:07.758Z
 content_sha256_short: 3a166fbc879c5fcc
 phase2_checks: all-pass
 ---

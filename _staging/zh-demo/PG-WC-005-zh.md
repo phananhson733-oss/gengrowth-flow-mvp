@@ -1,6 +1,6 @@
 ---
-title: 亚马尔星盘
-slug: 
+title: Lamine Yamal Birth Chart
+slug: lamine-yamal-birth-chart
 date: 2026-06-13
 status: ready-to-review
 type: wiki-entry
@@ -10,14 +10,14 @@ track: 量产线
 page_id: PG-WC-005
 author_id: "julian-thorne"
 author_display_name: "Julian Thorne"
-target_keyword: 亚马尔星盘
+target_keyword: lamine yamal birth chart
 associated_keywords:
   - lamine yamal zodiac sign
   - lamine yamal astrology
   - yamal spain world cup 2026
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-13T02:49:25.579Z
+generated_at: 2026-06-13T02:55:07.531Z
 content_sha256_short: 97c5f56dcfe27004
 phase2_checks: all-pass
 ---

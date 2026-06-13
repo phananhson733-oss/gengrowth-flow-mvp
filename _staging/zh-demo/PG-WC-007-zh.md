@@ -1,6 +1,6 @@
 ---
-title: 阿根廷世界杯占星
-slug: 
+title: Argentina World Cup 2026 Astrology
+slug: argentina-world-cup-2026-astrology
 date: 2026-06-13
 status: ready-to-review
 type: wiki-entry
@@ -10,14 +10,14 @@ track: 量产线
 page_id: PG-WC-007
 author_id: "aditi-sharma"
 author_display_name: "Aditi Sharma"
-target_keyword: 阿根廷世界杯占星
+target_keyword: argentina world cup 2026 astrology
 associated_keywords:
   - argentina natal chart astrology
   - messi argentina world cup astrology
   - copa del mundo 2026 astrologia
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-13T02:49:25.684Z
+generated_at: 2026-06-13T02:55:07.643Z
 content_sha256_short: 8de6afb4103c3569
 phase2_checks: all-pass
 ---

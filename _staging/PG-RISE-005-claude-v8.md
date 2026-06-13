@@ -2,7 +2,7 @@
 
 ## What is the Cancer Ascendant?
 
-The Cancer Ascendant is **a chart in which the sign Cancer was rising on the eastern horizon at birth, which places the Moon as the ruler of the whole chart and gives the outer self a tidal, mood-responsive quality often labeled cancer rising**. The mask you wear when meeting the world is governed not by a fixed planet but by the most changeable body in astrology, so the impression you make seems to move with an inner weather.
+The Cancer Ascendant is **a chart in which the sign Cancer was rising on the eastern horizon at birth, which places the Moon as the ruler of the whole chart and gives the outer self a tidal, mood-responsive quality often labeled cancer rising**. The mask worn when meeting the world is governed not by a fixed planet but by the most changeable body in astrology, so the impression made seems to move with an inner weather. Read alongside [[<TBD-internal-link: the twelve houses and life areas>]], the placement makes more sense as a doorway shaped by which house its ruling Moon happens to occupy.
 
 - The first house sits in Cancer, the sign of home, memory, and protective care
 - The Moon becomes the chart ruler, so its sign, house, and phase color how you come across
@@ -10,11 +10,11 @@ The Cancer Ascendant is **a chart in which the sign Cancer was rising on the eas
 
 This is an interpretive framework for reading symbolism, not a fixed verdict about anyone's personality.
 
-## Why the Moon Ruler Matters
+## Why It Matters for Self-Awareness
 
 Most descriptions of this placement borrow the traits of the Cancer Sun and stop there, which is where readers get a slightly wrong picture. A Sun in Cancer describes a steady inner identity; an Ascendant in Cancer describes a doorway, and the Moon stands at that door deciding how open it is on a given day. Because the Moon governs the chart, the entire reading bends toward feeling, rootedness, and the rhythm of retreat and return.
 
-That is also why cancer rising can feel hard to pin down, even to the person living it. The same individual may seem tender at one meeting and reserved at the next, not from inconsistency but because the chart's ruler is genuinely a body of cycles. Reading the Ascendant well means asking where the Moon actually sits in that chart, rather than assuming a single Cancer flavor will explain everything you observe.
+That is also why this placement can feel hard to pin down, even to the person living it. The same individual may seem tender at one meeting and reserved at the next, not from inconsistency but because the chart's ruler is genuinely a body of cycles, waxing toward openness and waning toward retreat. The lunar phase at birth and the Moon's current transits both leave a trace on the outer manner, which is why a reading that ignores the Moon tends to flatten a living, breathing surface into a single static trait. Reading the Ascendant well means asking where the Moon actually sits in that chart, rather than assuming a single Cancer flavor will explain everything you observe.
 
 ## the Cancer Ascendant vs Adjacent Concepts: How It Works + Trade-offs
 
@@ -76,7 +76,7 @@ Yes. The Moon's sign, house, and aspects all modify the Cancer mask, so a chart 
 
 ## Related Reading
 
-- [[<TBD-internal-link: the twelve houses and life areas>]] — how the house your Moon occupies shapes where the Cancer mask shows up most
+- [[<TBD-internal-link: the Moon as chart ruler and its placements>]] — how the Moon's sign and house tune the Cancer mask from the inside
 
 ## Take Action
 

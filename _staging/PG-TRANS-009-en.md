@@ -1,3 +1,28 @@
+---
+title: Uranus Opposition
+slug: uranus-opposition
+date: 2026-06-13
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T3
+track: 量产线
+page_id: PG-TRANS-009
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: uranus opposition
+associated_keywords:
+  - uranus opposition transit
+  - uranus opposition age
+  - midlife uranus
+  - uranus opposition meaning
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-13T05:30:40.730Z
+content_sha256_short: e566633ca455a32e
+phase2_checks: all-pass
+---
+
 # Uranus Opposition Explained: The Midlife Transit Behind the Age-42 Awakening
 
 ## What is the Midlife Uranus Transit?

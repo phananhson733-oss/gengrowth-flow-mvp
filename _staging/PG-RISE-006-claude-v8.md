@@ -14,7 +14,7 @@ This is an interpretive astrology framework for self-reflection, not a personali
 
 Most virgo rising content stops at "meticulous and modest," and that is exactly where readers get a thin picture. The analytical first impression often gets misread as social coldness, when the reality is closer to attentiveness: a Virgo Ascendant tends to register the details of a room before deciding what to say about them. Naming that gap matters, because the difference between "reserved" and "carefully observing" changes how someone reads their own opening move in any new situation.
 
-The deeper reason this ascendant rewards self-awareness is its ruler. Mercury governs perception, language, and the sorting of information, so a Mercury-ruled rising experiences the world as something to be parsed and made sense of. Held consciously, that wiring becomes a gift for noticing what others miss; held unconsciously, it can tip into over-correction. Seeing the Virgo Ascendant as a lens for processing rather than a verdict on character is what turns a flat label into a usable map of how you tend to meet the world.
+The deeper reason this ascendant rewards self-awareness is its ruler. Mercury governs perception, language, and the sorting of information, so a Mercury-ruled rising experiences the world as something to be parsed and made sense of. That same orientation explains why daily systems, lists, and quiet improvements often feel satisfying rather than tedious to this placement. Held consciously, the wiring becomes a gift for noticing what others miss and for translating that noticing into something useful; held unconsciously, it can tip into over-correction and a habit of editing what was already fine. Seeing the Virgo Ascendant as a lens for processing rather than a verdict on character is what turns a flat label into a usable map of how you tend to meet the world, and it keeps the strengths in view alongside the friction.
 
 ## the Virgo Ascendant vs Adjacent Concepts: How It Works + Trade-offs
 
@@ -26,7 +26,7 @@ This separation is where careful astrology lives. Liz Greene treated the chart a
 
 ## How to Read the Virgo Ascendant in a Birth Chart
 
-You can read a Virgo rising for yourself with a few honest steps, and the method holds for any ascendant once you know to start from the chart ruler.
+You can read a Virgo Ascendant for yourself with a few honest steps, and the method holds for any ascendant once you know to start from the chart ruler.
 
 1. Confirm Virgo sits on the 1st-house cusp, which sets the Ascendant and makes Mercury the chart ruler.
 2. Find Mercury's sign and house, since that placement modifies the whole expression — a Mercury in a bold sign reads warmer than one in a reserved one.
@@ -60,7 +60,7 @@ It means Virgo was on the eastern horizon at your birth, which sets Virgo as you
 
 Because Mercury rules Virgo, it steers how the entire chart expresses itself. Mercury's own sign and house then color the rising substantially — a Mercury in an outgoing sign can read warmer and more talkative than the meticulous stereotype suggests, while a more reserved Mercury leans quieter.
 
-**Is a Virgo rising person really a perfectionist?**
+**Is someone with this ascendant really a perfectionist?**
 
 Not necessarily. The analytical quality is real, but it often shows up as discernment and a habit of spotting what is off, rather than rigid perfectionism. The "modest perfectionist" label captures the surface and misses Mercury's communicative, adaptable side.
 
@@ -76,9 +76,7 @@ Yes — that is the healthier way to read it. Treat the Virgo Ascendant as a voc
 
 ## Related Reading
 
-- [[<TBD-internal-link: houses_life_areas cluster on rising sign house systems>]] — how the houses map onto each rising sign
-- [[<TBD-internal-link: Mercury as chart ruler explained>]] — the dual-rulership engine behind a Virgo rising
-- [[<TBD-internal-link: Ascendant vs Sun sign>]] — why the outward mask differs from inner identity
+- [[<TBD-internal-link: Mercury as chart ruler explained>]] — how dual Mercury rulership shapes a Mercury-ruled ascendant, and why its sign and house refine the read
 
 ## Take Action
 

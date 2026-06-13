@@ -28,7 +28,7 @@ It helps to set the punarvasu nakshatra against two neighbors so the renewal cla
 
 ## How to Read Punarvasu in Your Chart
 
-Locating this station requires a Vedic natal chart rather than a Western one, since the two systems use different zero-point references and the Moon's stated degree will differ between them. With a Vedic chart available, these are the practical signals to read:
+Locating Punarvasu requires a Vedic natal chart rather than a Western one, since the two systems use different zero-point references and the Moon's stated degree will differ between them. With a Vedic chart available, these are the practical signals to read:
 
 1. **Confirm the Moon sits between 20° Gemini and 3°20' Cancer.** That longitude band is what defines the station; a Vedic calculator will name it and display the pada, one of four 3°20' quarters that refine the placement.
 2. **Read Jupiter's condition.** Because Jupiter rules the station, its placement, sign, and aspects color how the renewal theme expresses — a well-placed Jupiter tends to amplify the expansive, restorative quality.
@@ -38,10 +38,10 @@ Locating this station requires a Vedic natal chart rather than a Western one, si
 
 ## Common Misreadings
 
-The most persistent misreading treats this station as a guarantee that everything broken will be restored. That sends readers looking for reassurance instead of the working insight the station actually carries.
+The most persistent misreading treats Punarvasu as a guarantee that everything broken will be restored. That sends readers looking for reassurance instead of the working insight the station actually carries.
 
 1. **"Punarvasu means everything resets to normal."** The renewal is return-with-growth, not return-to-baseline. The point is that you re-enter your footing changed and wiser, not that the setback is erased.
-2. **"It's basically Cancer-Moon energy."** The station ends in Cancer, which invites the confusion, but its ruler is Jupiter. The renewal mechanism is expansion and perspective, with Cancer adding emotional depth downstream — not the other way around.
+2. **"It's basically Cancer-Moon energy."** The station ends in Cancer, which invites the confusion, but its ruler is Jupiter. The renewal here is expansion and perspective, with Cancer adding emotional depth downstream — not the other way around.
 3. **"The deity is just a comforting story."** Aditi as the boundless sky encodes a specific claim: that renewal potential is inexhaustible, so accumulated setbacks need not harden into permanent limits. That is the structural reason the station reads adversity as temporary.
 4. **"The Gemini half doesn't matter much."** It matters a great deal — the intellectual agility of the Gemini portion is half of why recovery here is active reframing rather than passive endurance.
 
@@ -70,7 +70,7 @@ It spans from 20° Gemini to 3°20' Cancer, so it sits across the Gemini-Cancer 
 
 **Is Punarvasu the same as Cancer-Moon energy?**
 
-No. Because the station ends in Cancer, the two are easily confused, but the station's ruler is Jupiter, not the Moon. The renewal mechanism is expansion and perspective; Cancer adds emotional depth as a secondary layer rather than as the primary driver.
+No. Because the station ends in Cancer, the two are easily confused, but the station's ruler is Jupiter, not the Moon. The renewal works through expansion and perspective; Cancer adds emotional depth as a secondary layer rather than as the primary driver.
 
 ## Reflection Prompts
 
@@ -81,11 +81,10 @@ No. Because the station ends in Cancer, the two are easily confused, but the sta
 ## Related Reading
 
 - [[<TBD-internal-link: Vimshottari dasha system explainer>]] — how Jupiter's periods unfold once you know your Moon's natal station
-- [[<TBD-internal-link: guide to all 27 lunar mansions>]] — individual profiles of each station and how its themes are read
 
 ## Take Action
 
-[Generate your free birth chart](https://astrologywiki.com/en/wiki/how-to-read-birth-chart) to find your Moon's exact degree and see whether it sits in this Jupiter-ruled station — and which half, Gemini or Cancer, colors its renewal theme. With that placement in hand, you get a concrete frame for reading your own pattern of recovery: where setbacks have tended to return as growth, and how to hold the next one as material to re-enter wiser rather than damage to undo.
+[Generate your free birth chart](https://astrologywiki.com/en/wiki/how-to-read-birth-chart) to find your Moon's exact degree and see whether it sits in Punarvasu — and which half, Gemini or Cancer, colors this Jupiter-ruled station's renewal theme. With that placement in hand, you get a concrete frame for reading your own pattern of recovery: where setbacks have tended to return as growth, and how to hold the next one as material to re-enter wiser rather than damage to undo.
 
 ## Sources
 

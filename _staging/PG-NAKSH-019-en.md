@@ -1,3 +1,28 @@
+---
+title: Dhanishta Nakshatra
+slug: dhanishta-nakshatra
+date: 2026-06-13
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T3
+track: 量产线
+page_id: PG-NAKSH-019
+author_id: "aditi-sharma"
+author_display_name: "Aditi Sharma"
+target_keyword: dhanishta nakshatra
+associated_keywords:
+  - dhanishta nakshatra meaning
+  - dhanishta deity
+  - dhanishta pada
+  - dhanishta traits
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-13T05:37:30.861Z
+content_sha256_short: 2f70e5d8485141eb
+phase2_checks: all-pass
+---
+
 # Dhanishta Nakshatra Explained: The Cosmic Drum Where "Wealth" Means Rhythm, Not Riches
 
 ## What is Dhanishta?

@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-NAKSH-012",
+  "entity": "Uttara Bhadrapada",
+  "target_keyword": "uttara bhadrapada nakshatra",
+  "template": "Definition",
+  "tier": "T3",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-06-13T05:36:43.657Z",
+  "content_sha256_short": "b4daf56c3678b42f",
+  "source_path": "_staging/PG-NAKSH-012-claude-v8.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-NAKSH-012-en.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 1864,
+      "wikilinks": 3,
+      "tbdLinks": 3
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

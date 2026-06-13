@@ -1,3 +1,28 @@
+---
+title: Blue Node Astrology
+slug: blue-node-astrology
+date: 2026-06-13
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-NODE-009
+author_id: "julian-thorne"
+author_display_name: "Julian Thorne"
+target_keyword: blue node astrology
+associated_keywords:
+  - blue node birth chart
+  - north node blue
+  - true node vs mean node
+  - lunar nodes meaning
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-13T05:36:50.410Z
+content_sha256_short: 107352c729eadc16
+phase2_checks: all-pass
+---
+
 # Why the Blue Node in Your Chart Is Just a Color, Not a New Placement
 
 ## What is the Blue-Node Convention?

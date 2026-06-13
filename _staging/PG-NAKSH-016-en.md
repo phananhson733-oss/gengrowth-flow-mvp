@@ -1,3 +1,28 @@
+---
+title: Punarvasu Nakshatra
+slug: punarvasu-nakshatra
+date: 2026-06-13
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T3
+track: 量产线
+page_id: PG-NAKSH-016
+author_id: "aditi-sharma"
+author_display_name: "Aditi Sharma"
+target_keyword: punarvasu nakshatra
+associated_keywords:
+  - punarvasu nakshatra meaning
+  - punarvasu deity
+  - punarvasu pada
+  - punarvasu traits
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-13T05:38:53.205Z
+content_sha256_short: 2e43664c6c6d6923
+phase2_checks: all-pass
+---
+
 # Why Punarvasu Reads Setbacks as the Return of Light, Not the End
 
 ## What is Punarvasu?

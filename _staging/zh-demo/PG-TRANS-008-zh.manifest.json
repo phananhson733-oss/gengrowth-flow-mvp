@@ -1,17 +1,17 @@
 {
   "schema_version": "1",
-  "page_id": "PG-RISE-008",
-  "entity": "月亮与上升",
-  "target_keyword": "moon rising sign",
+  "page_id": "PG-TRANS-008",
+  "entity": "土星行经白羊",
+  "target_keyword": "saturn in aries 2026",
   "template": "Definition",
   "tier": "T2",
   "track": "量产线",
   "generated_by": "unknown",
   "prompt_version": "v8",
-  "generated_at": "2026-06-13T08:22:28.243Z",
-  "content_sha256_short": "90cf220f1cc0c507",
-  "source_path": "_staging/zh-demo/PG-RISE-008-claude-v8.md",
-  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/PG-RISE-008-zh.md",
+  "generated_at": "2026-06-13T08:22:49.632Z",
+  "content_sha256_short": "e1210303945f9490",
+  "source_path": "_staging/zh-demo/PG-TRANS-008-claude-v8.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/PG-TRANS-008-zh.md",
   "phase2_checks": {
     "overall": "pass",
     "structure": {
@@ -19,7 +19,7 @@
       "h2Count": 11,
       "h3Count": 0,
       "h4Count": 0,
-      "words": 3007,
+      "words": 2852,
       "wikilinks": 6,
       "tbdLinks": 6
     },

@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-JOURNAL-003",
+  "entity": "情绪记录练习",
+  "target_keyword": "emotion journal",
+  "template": "Definition",
+  "tier": "T3",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-06-13T08:22:14.524Z",
+  "content_sha256_short": "c0a63c71ec5438ae",
+  "source_path": "_staging/zh-demo/PG-JOURNAL-003-claude-v8.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/PG-JOURNAL-003-zh.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 2771,
+      "wikilinks": 2,
+      "tbdLinks": 2
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

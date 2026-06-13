@@ -1,3 +1,25 @@
+---
+title: Ascendant Meaning
+slug: ascendant-meaning
+date: 2026-06-13
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-RISE-004
+author_id: "julian-thorne"
+author_display_name: "Julian Thorne"
+target_keyword: ascendant meaning
+associated_keywords:
+
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-13T08:22:53.427Z
+content_sha256_short: bb19116f2f12ebb0
+phase2_checks: all-pass
+---
+
 # 上升星座到底在说什么：为什么这一个度数能撑起整张星盘
 
 ## 上升点是什么？

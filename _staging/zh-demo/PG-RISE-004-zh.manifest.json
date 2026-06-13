@@ -1,17 +1,17 @@
 {
   "schema_version": "1",
-  "page_id": "PG-RISE-008",
-  "entity": "月亮与上升",
-  "target_keyword": "moon rising sign",
+  "page_id": "PG-RISE-004",
+  "entity": "上升点",
+  "target_keyword": "ascendant meaning",
   "template": "Definition",
   "tier": "T2",
   "track": "量产线",
   "generated_by": "unknown",
   "prompt_version": "v8",
-  "generated_at": "2026-06-13T08:22:28.243Z",
-  "content_sha256_short": "90cf220f1cc0c507",
-  "source_path": "_staging/zh-demo/PG-RISE-008-claude-v8.md",
-  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/PG-RISE-008-zh.md",
+  "generated_at": "2026-06-13T08:22:53.427Z",
+  "content_sha256_short": "bb19116f2f12ebb0",
+  "source_path": "_staging/zh-demo/PG-RISE-004-claude-v8.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/PG-RISE-004-zh.md",
   "phase2_checks": {
     "overall": "pass",
     "structure": {
@@ -19,9 +19,9 @@
       "h2Count": 11,
       "h3Count": 0,
       "h4Count": 0,
-      "words": 3007,
-      "wikilinks": 6,
-      "tbdLinks": 6
+      "words": 2783,
+      "wikilinks": 5,
+      "tbdLinks": 5
     },
     "rl1": true,
     "rl2": true,

@@ -1,3 +1,25 @@
+---
+title: Virgo Rising
+slug: virgo-rising
+date: 2026-06-13
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T3
+track: 量产线
+page_id: PG-RISE-006
+author_id: "julian-thorne"
+author_display_name: "Julian Thorne"
+target_keyword: virgo rising
+associated_keywords:
+
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-13T08:22:12.511Z
+content_sha256_short: f1a6198584408fed
+phase2_checks: all-pass
+---
+
 # 处女座上升，真正发号施令的其实是那颗水星
 
 ## 处女座上升盘是什么?

@@ -1,3 +1,25 @@
+---
+title: Cancer Rising
+slug: cancer-rising
+date: 2026-06-13
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T3
+track: 量产线
+page_id: PG-RISE-005
+author_id: "julian-thorne"
+author_display_name: "Julian Thorne"
+target_keyword: cancer rising
+associated_keywords:
+
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-13T08:21:36.885Z
+content_sha256_short: a966f3c7aeb487e4
+phase2_checks: all-pass
+---
+
 # 巨蟹座上升盘随月亮而变，第一印象从来都不固定
 
 ## 巨蟹座上升盘是什么?

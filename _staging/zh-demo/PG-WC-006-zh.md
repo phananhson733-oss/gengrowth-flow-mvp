@@ -1,3 +1,27 @@
+---
+title: Vinicius Jr Zodiac Sign
+slug: vinicius-jr-zodiac-sign
+date: 2026-06-13
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-WC-006
+author_id: "aditi-sharma"
+author_display_name: "Aditi Sharma"
+target_keyword: vinicius jr zodiac sign
+associated_keywords:
+  - vinicius jr birth chart
+  - vinicius junior astrology
+  - brazil world cup astrology 2026
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-13T02:52:09.436Z
+content_sha256_short: 76e4df99993d3101
+phase2_checks: all-pass
+---
+
 # 维尼修斯星座为什么踢出和梅西不一样的味道，答案在那颗射手月亮
 
 ## 维尼修斯的星座是什么?

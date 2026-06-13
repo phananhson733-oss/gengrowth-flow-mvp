@@ -1,3 +1,25 @@
+---
+title: Uranus Opposition
+slug: uranus-opposition
+date: 2026-06-13
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T3
+track: 量产线
+page_id: PG-TRANS-009
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: uranus opposition
+associated_keywords:
+
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-13T08:29:53.399Z
+content_sha256_short: b32e695f97748bcc
+phase2_checks: all-pass
+---
+
 # 天王星对分相：40 到 42 岁那场写进星历表的中年觉醒
 
 ## 中年天王星过运是什么？

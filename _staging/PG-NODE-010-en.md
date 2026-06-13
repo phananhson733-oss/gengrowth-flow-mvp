@@ -1,3 +1,28 @@
+---
+title: North Node In Leo
+slug: north-node-in-leo
+date: 2026-06-13
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T3
+track: 量产线
+page_id: PG-NODE-010
+author_id: "julian-thorne"
+author_display_name: "Julian Thorne"
+target_keyword: north node in leo
+associated_keywords:
+  - north node leo
+  - leo north node meaning
+  - north node in leo south node aquarius
+  - leo nodal axis
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-13T05:35:25.762Z
+content_sha256_short: 7dd79361cbd21ca2
+phase2_checks: all-pass
+---
+
 # North Node in Leo and the Quiet Courage to Be Seen
 
 ## What is the Leo North Node?

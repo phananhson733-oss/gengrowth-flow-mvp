@@ -1,3 +1,25 @@
+---
+title: Uttara Phalguni Nakshatra
+slug: uttara-phalguni-nakshatra
+date: 2026-06-13
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T3
+track: 量产线
+page_id: PG-NAKSH-013
+author_id: "aditi-sharma"
+author_display_name: "Aditi Sharma"
+target_keyword: uttara phalguni nakshatra
+associated_keywords:
+
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-13T08:32:17.961Z
+content_sha256_short: 1a2a420427b26822
+phase2_checks: all-pass
+---
+
 # 乌塔拉帕尔古尼，当太阳学会成为靠山
 
 ## 乌塔拉帕尔古尼星宿是什么?

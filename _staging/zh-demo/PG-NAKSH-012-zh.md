@@ -1,3 +1,25 @@
+---
+title: Uttara Bhadrapada Nakshatra
+slug: uttara-bhadrapada-nakshatra
+date: 2026-06-13
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T3
+track: 量产线
+page_id: PG-NAKSH-012
+author_id: "aditi-sharma"
+author_display_name: "Aditi Sharma"
+target_keyword: uttara bhadrapada nakshatra
+associated_keywords:
+
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-13T08:34:31.498Z
+content_sha256_short: 5fab7760faaa285f
+phase2_checks: all-pass
+---
+
 # 乌塔拉巴德拉帕达，那片静水深流里藏着的吠陀智慧
 
 ## 乌塔拉巴德拉帕达星宿是什么？

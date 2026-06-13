@@ -1,3 +1,25 @@
+---
+title: Ardra Nakshatra
+slug: ardra-nakshatra
+date: 2026-06-13
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T3
+track: 量产线
+page_id: PG-NAKSH-018
+author_id: "aditi-sharma"
+author_display_name: "Aditi Sharma"
+target_keyword: ardra nakshatra
+associated_keywords:
+
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-13T08:34:31.909Z
+content_sha256_short: a416eca5fd1a234a
+phase2_checks: all-pass
+---
+
 # 阿德拉星宿，从风暴里长出来的那份清醒
 
 ## 阿德拉星宿是什么?

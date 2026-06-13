@@ -1,17 +1,17 @@
 {
   "schema_version": "1",
-  "page_id": "PG-NAKSH-017",
-  "entity": "玛迦星宿",
-  "target_keyword": "magha nakshatra",
+  "page_id": "PG-NAKSH-012",
+  "entity": "乌塔拉巴德拉帕达星宿",
+  "target_keyword": "uttara bhadrapada nakshatra",
   "template": "Definition",
   "tier": "T3",
   "track": "量产线",
   "generated_by": "unknown",
   "prompt_version": "v8",
-  "generated_at": "2026-06-13T08:34:22.570Z",
-  "content_sha256_short": "f262f700bde5341f",
-  "source_path": "_staging/zh-demo/PG-NAKSH-017-claude-v8.md",
-  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/PG-NAKSH-017-zh.md",
+  "generated_at": "2026-06-13T08:34:31.498Z",
+  "content_sha256_short": "5fab7760faaa285f",
+  "source_path": "_staging/zh-demo/PG-NAKSH-012-claude-v8.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/PG-NAKSH-012-zh.md",
   "phase2_checks": {
     "overall": "pass",
     "structure": {
@@ -19,7 +19,7 @@
       "h2Count": 11,
       "h3Count": 0,
       "h4Count": 0,
-      "words": 2959,
+      "words": 3221,
       "wikilinks": 2,
       "tbdLinks": 2
     },

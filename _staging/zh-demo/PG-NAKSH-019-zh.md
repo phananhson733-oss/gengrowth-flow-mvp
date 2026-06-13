@@ -1,3 +1,25 @@
+---
+title: Dhanishta Nakshatra
+slug: dhanishta-nakshatra
+date: 2026-06-13
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T3
+track: 量产线
+page_id: PG-NAKSH-019
+author_id: "aditi-sharma"
+author_display_name: "Aditi Sharma"
+target_keyword: dhanishta nakshatra
+associated_keywords:
+
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-13T08:34:25.296Z
+content_sha256_short: 3a56e2004c43c4aa
+phase2_checks: all-pass
+---
+
 # 达尼湿塔：那面叫"财富"的鼓，敲的其实是宇宙的节奏
 
 ## 达尼湿塔星宿是什么？

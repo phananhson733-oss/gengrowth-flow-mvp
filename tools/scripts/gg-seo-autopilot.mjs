@@ -1133,7 +1133,28 @@ function doMerge(o) {
     saveClaims(claims);
     appendPublishLog(pgId, claims[pgId].slug); // writing record → ops (self-synced)
     log(`MERGED ${o.branch} → main (prod deploy triggered)`);
+    submitGoogleIndex(claims[pgId].slug, claims[pgId].zh === true);
   });
+}
+
+// Best-effort post-merge Google Indexing API submission for the just-published
+// article URL(s). Mirrors the Bing/Yandex IndexNow channel (build-time) but for
+// Google, which IndexNow can't reach. No-op without GOOGLE_INDEXING_SA[_JSON];
+// runs against the live URL (not the sitemap) so prod-deploy lag doesn't matter —
+// Google recrawls after the notification, by which time the page is live.
+// NEVER blocks or raises (the merge already succeeded).
+function submitGoogleIndex(slug, hasZh) {
+  if (!slug) return;
+  const base = (process.env.SITE_URL || 'https://www.astrologywiki.com').replace(/\/+$/, '');
+  const args = ['scripts/gsc-index-submit.mjs', '--url', `${base}/en/wiki/${slug}`];
+  if (hasZh) args.push('--url', `${base}/zh/wiki/${slug}`);
+  try {
+    const out = sh('node', args, { cwd: ORACLE });
+    const last = String(out).trim().split('\n').filter(Boolean).pop();
+    if (last) log(`gsc-index: ${last}`);
+  } catch (e) {
+    log(`gsc-index: skipped (non-fatal: ${errTail(e, 60)})`);
+  }
 }
 
 function doMarkVerified(o) {

@@ -1,3 +1,25 @@
+---
+title: Gemini Rising
+slug: gemini-rising
+date: 2026-06-13
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T3
+track: 量产线
+page_id: PG-RISE-007
+author_id: "julian-thorne"
+author_display_name: "Julian Thorne"
+target_keyword: gemini rising
+associated_keywords:
+
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-13T08:24:05.756Z
+content_sha256_short: d87961ae242287d4
+phase2_checks: all-pass
+---
+
 # 双子座上升,真正在主持这场表达的其实是水星
 
 ## 双子座上升盘是什么?

@@ -1,17 +1,17 @@
 {
   "schema_version": "1",
-  "page_id": "PG-JOURNAL-003",
-  "entity": "情绪记录练习",
-  "target_keyword": "emotion journal",
+  "page_id": "PG-RISE-007",
+  "entity": "双子座上升盘",
+  "target_keyword": "gemini rising",
   "template": "Definition",
   "tier": "T3",
   "track": "量产线",
   "generated_by": "unknown",
   "prompt_version": "v8",
-  "generated_at": "2026-06-13T08:23:11.259Z",
-  "content_sha256_short": "12ca062dfc213947",
-  "source_path": "_staging/zh-demo/PG-JOURNAL-003-claude-v8.md",
-  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/PG-JOURNAL-003-zh.md",
+  "generated_at": "2026-06-13T08:24:05.756Z",
+  "content_sha256_short": "d87961ae242287d4",
+  "source_path": "_staging/zh-demo/PG-RISE-007-claude-v8.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/PG-RISE-007-zh.md",
   "phase2_checks": {
     "overall": "pass",
     "structure": {
@@ -19,7 +19,7 @@
       "h2Count": 11,
       "h3Count": 0,
       "h4Count": 0,
-      "words": 2855,
+      "words": 2535,
       "wikilinks": 2,
       "tbdLinks": 2
     },

@@ -1,3 +1,25 @@
+---
+title: Punarvasu Nakshatra
+slug: punarvasu-nakshatra
+date: 2026-06-13
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T3
+track: 量产线
+page_id: PG-NAKSH-016
+author_id: "aditi-sharma"
+author_display_name: "Aditi Sharma"
+target_keyword: punarvasu nakshatra
+associated_keywords:
+
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-13T08:37:39.026Z
+content_sha256_short: 4c55665f26240e78
+phase2_checks: all-pass
+---
+
 # 普纳瓦苏为何把挫折读成光的归来，而不是终点
 
 ## 普纳瓦苏星宿是什么?

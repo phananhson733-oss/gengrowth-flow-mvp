@@ -1,4 +1,4 @@
-# Ascendant Meaning: Why the Rising Degree Anchors Your Whole Chart
+# Ascendant Meaning Explained — Why the Rising Degree Anchors Your Whole Chart
 
 ## What is the Ascendant?
 

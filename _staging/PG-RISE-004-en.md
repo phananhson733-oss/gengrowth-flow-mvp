@@ -18,12 +18,12 @@ associated_keywords:
   - rising sign vs sun sign
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-13T05:28:33.909Z
-content_sha256_short: dbc091b66593c565
+generated_at: 2026-06-13T05:28:56.614Z
+content_sha256_short: 2e2097d9fdc84a19
 phase2_checks: all-pass
 ---
 
-# Ascendant Meaning: Why the Rising Degree Anchors Your Whole Chart
+# Ascendant Meaning Explained — Why the Rising Degree Anchors Your Whole Chart
 
 ## What is the Ascendant?
 

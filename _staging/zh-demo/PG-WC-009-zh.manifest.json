@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-WC-009",
+  "entity": "顶尖球员星座论",
+  "target_keyword": "足球运动员星座",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-06-13T02:49:25.791Z",
+  "content_sha256_short": "3a166fbc879c5fcc",
+  "source_path": "_staging/zh-demo/PG-WC-009-claude-v8.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/PG-WC-009-zh.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 2398,
+      "wikilinks": 4,
+      "tbdLinks": 4
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

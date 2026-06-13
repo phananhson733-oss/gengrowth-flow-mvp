@@ -1,3 +1,27 @@
+---
+title: World Cup 2026 June Astrology
+slug: world-cup-2026-june-astrology
+date: 2026-06-13
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T3
+track: 量产线
+page_id: PG-WC-010
+author_id: "elena-vane"
+author_display_name: "Elena Vane"
+target_keyword: world cup 2026 june astrology
+associated_keywords:
+  - june 2026 astrology world cup
+  - world cup schedule astrology
+  - world cup dates planetary transits
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-13T02:54:16.722Z
+content_sha256_short: f99a147cf7005bae
+phase2_checks: all-pass
+---
+
 # 2026世界杯六月占星：读开赛初的那片天空
 
 ## 2026年6月赛事天象是什么？

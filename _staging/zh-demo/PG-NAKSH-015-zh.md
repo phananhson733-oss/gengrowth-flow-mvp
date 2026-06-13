@@ -1,3 +1,25 @@
+---
+title: Revati Nakshatra
+slug: revati-nakshatra
+date: 2026-06-13
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T3
+track: 量产线
+page_id: PG-NAKSH-015
+author_id: "aditi-sharma"
+author_display_name: "Aditi Sharma"
+target_keyword: revati nakshatra
+associated_keywords:
+
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-13T08:32:31.549Z
+content_sha256_short: 15bec0e17cc4a95d
+phase2_checks: all-pass
+---
+
 # 走到黄道尽头的瑞瓦蒂，把"结束"读成了一次被护送的渡口
 
 ## 瑞瓦蒂星宿是什么?

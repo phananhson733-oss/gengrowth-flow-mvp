@@ -1,17 +1,17 @@
 {
   "schema_version": "1",
-  "page_id": "PG-NAKSH-013",
-  "entity": "乌塔拉帕尔古尼星宿",
-  "target_keyword": "uttara phalguni nakshatra",
+  "page_id": "PG-NAKSH-017",
+  "entity": "玛迦星宿",
+  "target_keyword": "magha nakshatra",
   "template": "Definition",
   "tier": "T3",
   "track": "量产线",
   "generated_by": "unknown",
   "prompt_version": "v8",
-  "generated_at": "2026-06-13T08:32:30.881Z",
-  "content_sha256_short": "1a2a420427b26822",
-  "source_path": "_staging/zh-demo/PG-NAKSH-013-claude-v8.md",
-  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/PG-NAKSH-013-zh.md",
+  "generated_at": "2026-06-13T08:32:40.185Z",
+  "content_sha256_short": "e4c96d90829e49b8",
+  "source_path": "_staging/zh-demo/PG-NAKSH-017-claude-v8.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/PG-NAKSH-017-zh.md",
   "phase2_checks": {
     "overall": "pass",
     "structure": {
@@ -19,7 +19,7 @@
       "h2Count": 11,
       "h3Count": 0,
       "h4Count": 0,
-      "words": 2477,
+      "words": 2588,
       "wikilinks": 2,
       "tbdLinks": 2
     },

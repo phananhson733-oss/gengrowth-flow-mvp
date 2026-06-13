@@ -1,17 +1,17 @@
 {
   "schema_version": "1",
-  "page_id": "PG-TRANS-009",
-  "entity": "the Midlife Uranus Transit",
-  "target_keyword": "uranus opposition",
+  "page_id": "PG-RISE-006",
+  "entity": "the Virgo Ascendant",
+  "target_keyword": "virgo rising",
   "template": "Definition",
   "tier": "T3",
   "track": "量产线",
   "generated_by": "unknown",
   "prompt_version": "v8",
-  "generated_at": "2026-06-13T05:31:17.222Z",
-  "content_sha256_short": "4ed95195f4066150",
-  "source_path": "_staging/PG-TRANS-009-claude-v8.md",
-  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-TRANS-009-en.md",
+  "generated_at": "2026-06-13T05:31:24.364Z",
+  "content_sha256_short": "fa76d060c85e953d",
+  "source_path": "_staging/PG-RISE-006-claude-v8.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-RISE-006-en.md",
   "phase2_checks": {
     "overall": "pass",
     "structure": {
@@ -19,7 +19,7 @@
       "h2Count": 11,
       "h3Count": 0,
       "h4Count": 0,
-      "words": 1550,
+      "words": 1506,
       "wikilinks": 2,
       "tbdLinks": 2
     },

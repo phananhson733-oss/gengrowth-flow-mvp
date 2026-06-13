@@ -22,7 +22,7 @@ It helps to set the uranus opposition against the story most people already carr
 
 The planetary structure explains the difference. In the natal chart, Uranus sits in a house and a sign that describe one pole of a polarity. When the transiting planet reaches the opposite point, it activates the complementary house across the chart, the life domain that has usually been underdeveloped. The work of the transit is to bring that suppressed side into the picture rather than to demolish what already exists. That is why practitioners describe it as polarity integration: not a verdict, but a rebalancing.
 
-This is also where the honest reading of astrology lives. Liz Greene treated the chart as a language of symbol rather than a statistical claim about fate, and Robert Hand framed transits as patterns of meaning rather than a predictive machine that dictates outcomes. Read that way, the uranus opposition is a structured invitation to examine what authenticity costs, not a guarantee that any particular event will happen. The symbol carries weight; it does not carry certainty.
+This is also where the honest reading of astrology lives. Liz Greene treated the chart as a language of symbol rather than a statistical claim about fate, and Robert Hand framed transits as patterns of meaning rather than a predictive machine that dictates outcomes. Read that way, this transit is a structured invitation to examine what authenticity costs, not a guarantee that any particular event will happen. The symbol carries weight; it does not carry certainty.
 
 ## How to Read the Uranus Opposition in Your Chart
 

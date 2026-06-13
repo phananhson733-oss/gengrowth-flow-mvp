@@ -1,3 +1,28 @@
+---
+title: Moon Rising Sign
+slug: moon-rising-sign
+date: 2026-06-13
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-RISE-008
+author_id: "julian-thorne"
+author_display_name: "Julian Thorne"
+target_keyword: moon rising sign
+associated_keywords:
+  - moon sign vs rising sign
+  - big three astrology
+  - sun moon rising
+  - rising sign meaning
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-13T05:31:26.632Z
+content_sha256_short: 73e2d270f7d80cc6
+phase2_checks: all-pass
+---
+
 # Moon and Rising Sign: How Your Inner Tides and Outer Mask Work Together
 
 ## What is the Moon and Ascendant?

@@ -1,3 +1,28 @@
+---
+title: Virgo Rising
+slug: virgo-rising
+date: 2026-06-13
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T3
+track: 量产线
+page_id: PG-RISE-006
+author_id: "julian-thorne"
+author_display_name: "Julian Thorne"
+target_keyword: virgo rising
+associated_keywords:
+  - virgo ascendant
+  - virgo rising sign
+  - mercury ruler virgo rising
+  - virgo rising appearance
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-13T05:31:24.364Z
+content_sha256_short: fa76d060c85e953d
+phase2_checks: all-pass
+---
+
 # Virgo Rising, Decoded: Why a Mercury-Ruled Ascendant Reads as Quietly Sharp, Not Cold
 
 ## What is the Virgo Ascendant?

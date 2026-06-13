@@ -28,7 +28,7 @@ This is also where honest astrology lives. The ascendant is one of the "big thre
 
 You can locate the ascendant meaning in your own chart with a few deliberate steps, and the same method works for any chart you are handed.
 
-1. Gather an accurate birth time — to the minute if you can, since the rising sign can change within a four-minute window.
+1. Gather an accurate birth time — to the minute if you can, since the rising degree moves about one per four minutes, and near a sign's edge that drift can tip you into a different rising sign.
 2. Cast the chart for that exact time and place; the ascendant appears on the left, at the nine-o'clock point of the wheel.
 3. Note the sign and degree on that point — that is your rising sign and your first house cusp.
 4. Trace the house numbers around from there, watching how the ascendant fixes where each life domain begins.
@@ -47,7 +47,7 @@ You can locate the ascendant meaning in your own chart with a few deliberate ste
 | --- | --- | --- | --- |
 | Rising sign | The zodiac sign on the eastern horizon at birth | Exact birth time and place | The sign at the left point of the chart wheel |
 | First house cusp | The starting line of the house system | The ascendant's precise degree | Every other cusp is numbered from it |
-| Time sensitivity | How fast the point moves | Roughly one degree every four minutes | The rising sign can change within minutes |
+| Time sensitivity | How fast the point moves | Roughly one degree every four minutes | The rising sign typically changes about every two hours |
 | Big-three role | The outward, instinctive self | Birth time, unlike sun and moon by date | First impressions and physical bearing |
 
 ## Common Questions About the Ascendant
@@ -58,7 +58,7 @@ Yes — they name the same point. The ascendant meaning refers to the zodiac deg
 
 **Why does my exact birth time matter so much?**
 
-Because the ascendant moves roughly one degree every four minutes, so the rising sign can shift within a short window. A small error in the recorded time can change which sign is rising and slide every house cusp with it. Your planetary sign positions stay valid on a rough time, but the house placements — where each planet's life domain sits — become unreliable until the time is accurate.
+Because the ascendant moves roughly one degree every four minutes, the whole rising sign turns over about every two hours — so on most birth times a few minutes will not change it. The exception matters: if you were born close to the boundary between two signs, a small error in the recorded time can change which sign is rising and slide every house cusp with it. Your planetary sign positions stay valid on a rough time, but the house placements — where each planet's life domain sits — become unreliable until the time is accurate.
 
 **Is the ascendant more important than the sun sign?**
 

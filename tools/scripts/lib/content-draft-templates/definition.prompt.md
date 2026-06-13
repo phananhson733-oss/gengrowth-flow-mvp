@@ -76,7 +76,7 @@ capsule 用于决定**怎么解释**（措辞、对比角度、例子选择、�
 
 > Instruction only; **do not** output this as an article section.
 
-- **H1 (`# <Title>`) 之后必须立即跟 `## What is {{entity}}?`，0 段铺垫、0 行其他文字**（空行除外）
+- **H1 (`# <Title>`) 之后必须立即跟一个 `## What Is <Entity>?` 形态的定义 H2，0 段铺垫、0 行其他文字**（空行除外）。**标题必须用 Title Case + 正确冠词**（"Is" 大写、按需补 a/an/the），entity 用自然名词短语而**非裸关键词**：✅ `## What Is a Full Moon Ritual?` / `## What Is the Root Chakra?`；❌ `## What is full moon ritual?`（"is" 小写 + 裸关键词逐字塞入）/ `## What is The Root Chakra?`（"is" 小写）。这是 Phase 2 SC11 硬门禁，违反整篇作废。
 - **Phase 2 binary check 强制扫描**：H1 行和第一个 H2 行之间不能有任何非空文本，有任意 1 段就直接 fail（实测错误信息：`preamble paragraph found between H1 and H2 #1`）
 - **第一句必须是** `<entity> is …`（精确定义，主语开始，60 词以内）
 - **禁止开头模式**（绝不能用）：
@@ -90,7 +90,7 @@ capsule 用于决定**怎么解释**（措辞、对比角度、例子选择、�
   ```
   # Leo Personality
 
-  ## What is Leo?
+  ## What Is Leo?
 
   Leo is a fixed fire sign...
   ```
@@ -101,11 +101,11 @@ capsule 用于决定**怎么解释**（措辞、对比角度、例子选择、�
   Leo stereotypes can feel like a bad costume: loud, dramatic...   ← 任何这种段落 = fail
   If you're quieter, private, or more sensitive, you may wonder...
 
-  ## What is Leo?
+  ## What Is Leo?
   ```
 - 头部页（cafe astrology / chaninicholas / mindbodygreen）通常用上述铺垫开场——你必须**直接对立**：1 句话定义后立即给 how it works（怎么作用，禁用 "mechanism"）
 
-**self-check（提交前默念）**：文章第 1 行 `# <Title>`，跳过空行后第 1 个非空行**必须**是 `## What is <entity>?`——中间任何其他文字（哪怕 1 句话的 "warm intro"），删掉再交。
+**self-check（提交前默念）**：文章第 1 行 `# <Title>`，跳过空行后第 1 个非空行**必须**是 `## What Is <Entity>?`（Title Case，"Is" 大写，entity 自然名词短语）——中间任何其他文字（哪怕 1 句话的 "warm intro"），删掉再交。
 
 > Instruction only; **do not** output this as an article section.
 
@@ -135,7 +135,7 @@ capsule 用于决定**怎么解释**（措辞、对比角度、例子选择、�
   ```
   # What a Blue Aura Really Means for How You Connect
 
-  ## What is Blue Aura?
+  ## What Is a Blue Aura?
   ...content...
 
   ## Why It Matters for Self-Awareness
@@ -144,7 +144,7 @@ capsule 用于决定**怎么解释**（措辞、对比角度、例子选择、�
 - ❌ 错误范例（绝对禁止）：
   ```
   ## Blue Aura Meaning      ← H1 用了 ## ❌
-  ### What is Blue Aura?    ← 11 章节标题用了 ### ❌（章节标题必须 ##）
+  ### What Is a Blue Aura?  ← 11 章节标题用了 ### ❌（章节标题必须 ##）
   #### Calm vs Avoidance    ← 多了 H4 子层级 ❌
   ```
 - ✅ H3 正确用法（仅在超长叙述章节内分组，不替代 11 个 H2 章节）：
@@ -161,7 +161,7 @@ capsule 用于决定**怎么解释**（措辞、对比角度、例子选择、�
 
 ## 输出结构（严格 11 sections，对齐 PRD v0.7 附录 A 模板 B + v4.5 +2 section；H2 必须英文）
 
-1. **What is {{entity}}?**（H2，字面 H2 = `## What is {{entity}}?`）— 第一句**用日常英文**直接定义（plain English，不堆术语），共 120-160 词。可以在第 2-3 句引入主流脉轮对应（如「commonly associated with the throat chakra」），但**不要**在开头 2 句叠加 3 个以上专业词
+1. **What Is {{entity}}?**（H2，形态 = `## What Is <Entity>?`）— **标题硬规则（Phase 2 SC11 门禁）**：必须 Title Case，**"Is" 永远大写**（不要写成 "What is"），entity 用**自然名词短语 + 正确冠词**（按需补 a/an/the），**禁止把裸关键词逐字小写塞进标题**。✅ `## What Is a Full Moon Ritual?` / `## What Is the Root Chakra?` / `## What Is Blue Aura?`；❌ `## What is full moon ritual?` / `## What is The Root Chakra?`。正文第一句**用日常英文**直接定义（plain English，不堆术语），共 120-160 词。可以在第 2-3 句引入主流脉轮对应（如「commonly associated with the throat chakra」），但**不要**在开头 2 句叠加 3 个以上专业词
    - **Bolded direct answer 硬要求（AI Overview / featured snippet 抓取目标）**：本段 120-160 词内必须出现**正好 1 个** markdown bolded 短语（`**...**`），该短语是 target_keyword 的**直接答案 / 核心定义**（≤ 12 词，不含装饰词）
    - ✅ 范例：`Blue aura usually reads as **a calm, communicative energy field tied to the throat center**.`
    - ❌ 错误：整段无 bold / bold 的是装饰词（`**very**` / `**important**`）/ bold 的是 H2 字面重复（`**What is Blue Aura?**`）/ 2 个以上 bolded 短语稀释焦点
@@ -176,12 +176,12 @@ capsule 用于决定**怎么解释**（措辞、对比角度、例子选择、�
        ```
      - ❌ 错误：只有 2 个或 4+ 个 bullet / 写成散文而非 bullet / bullet 是空泛口号而非具体特征
 2. **Why It Matters for Self-Awareness**（H2，字面 H2 = `## Why It Matters for Self-Awareness`）— 1-2 段，必须落到 Friction 字段提到的真实痛点（不堆砌情绪形容词）
-3. **{{entity}} vs Adjacent Concepts: How It Works + Trade-offs**（H2，字面 H2 = `## {{entity}} vs Adjacent Concepts: How It Works + Trade-offs`，**禁止简写为 "vs Adjacent Concepts" — entity 前缀必须保留**）— ≥ 1 段对比 + 必须显式写出每个对比的 **how it works（怎么作用）+ trade-off（什么情况下倾向哪种）**，引用 Logic 字段的「运作 + 权衡」。**禁用 "mechanism" 一词**（SOP §7 / 清单 §5.3 禁词 + RL13 硬门禁会整篇 fail），改写成 "how it works" / "the way it functions"
+3. **对比 section（H2，标题必须命名真实的相邻概念）**— **标题硬规则（Phase 2 SC11 门禁）**：**绝不**写死成 `## {{entity}} vs Adjacent Concepts: How It Works + Trade-offs` —— "vs Adjacent Concepts" 是无意义的样板短语，命中 SC11 整篇作废。请写一个**具体、自然的对比标题，明确点出真正要对比的那个相邻概念**（从 Logic 字段挑最容易混淆的近邻实体）。✅ `## Full Moon vs New Moon Energy: What Actually Differs` / `## Blue Aura vs Green Aura: Where People Mix Them Up` / `## How Saturn Return Differs From a Saturn Square`；❌ `## {{entity}} vs Adjacent Concepts: ...`（样板）。正文 ≥ 1 段对比 + 必须显式写出每个对比的 **how it works（怎么作用）+ trade-off（什么情况下倾向哪种）**，引用 Logic 字段的「运作 + 权衡」。**禁用 "mechanism" 一词**（SOP §7 / 清单 §5.3 禁词 + RL13 硬门禁会整篇 fail），改写成 "how it works" / "the way it functions"
    - **Trade-off 表达硬要求（每个对比必须显式）**：每段对比里至少有 1 句话用「**To get A, you sacrifice B**」型表达，让 trade-off 不是抽象描述，而是**可读出的取舍**
    - ✅ 范例：`Blue aura emphasises clarity of voice; the cost is being read as cool or detached.`（取得 A=表达清晰，付出 B=被读冷淡）
    - ✅ 范例：`Choosing throat-led communication over heart-led empathy gets you precision, but you lose some warmth.`
    - ❌ 错误：`Blue aura and green aura are different.`（说有差别，但没说取舍）/ `Each has pros and cons.`（空泛）
-4. **How to Read {{entity}} in Yourself**（H2；实操观察 section。标题按 entity 适配：aura/color → "in Yourself" / "in Your Aura"；house/sign/planet → "in Your Chart"；transit/cycle → "in Your Timing"）— 给读者**可观察、可操作**的线索：这个 entity 在真实生活 / 星盘里**怎么认出来**。
+4. **实操观察 section（H2，"How to Read ..." 形态，全程 Title Case）**— **标题硬规则（Phase 2 SC11 门禁）**：写成自然的 "How to Read ..." 标题，**全程 Title Case + 自然措辞**，**禁止把裸关键词逐字小写塞进标题**。entity 适配收尾：aura/color → "in Yourself" / "in Your Aura"；house/sign/planet → "in Your Chart"；transit/cycle → "in Your Timing"。✅ `## How to Read Your Full Moon Energy` / `## How to Spot a Blue Aura in Yourself` / `## How to Read This Transit in Your Timing`；❌ `## How to Read full moon energy in Yourself`（裸小写关键词）。正文给读者**可观察、可操作**的线索：这个 entity 在真实生活 / 星盘里**怎么认出来**。
    - **优先用 3-5 条编号列表**（每条 1-2 句、≤ 25 词，一个可观察信号 / 一个具体场景），而不是长 prose 段 —— 直接服务移动端密度。
    - 扣住 Logic / Friction 字段提到的真实场景，不空泛。
 5. **Common Misreadings**（H2）— 大众 / 浅层内容对 {{entity}} **最常见的 2-4 个误读**，逐条纠正（误读 → 实际）。
@@ -258,7 +258,7 @@ capsule 用于决定**怎么解释**（措辞、对比角度、例子选择、�
 
 内链**不能全堆在结尾 Related Reading** —— 那样既不向正文传递链接权重，也不服务读者动线。**实测旧稿全部链接堆结尾 = 踩雷。** 按链接母版分布：
 
-- **首链优先权**：至少 **1 个 pillar / 上位概念回链**必须**内联出现在正文前 ~150 词内**（Section 1「What is {{entity}}」或 Section 2 的句子里自然织入，**不是列表、不是结尾**）。
+- **首链优先权**：至少 **1 个 pillar / 上位概念回链**必须**内联出现在正文前 ~150 词内**（Section 1 定义 section 或 Section 2 的句子里自然织入，**不是列表、不是结尾**）。
 - **spoke 内联**：至少 **1 个 spoke / 平级概念链接**内联在正文中段（Section 2 或 3 的论述句子里）。
 - **Related Reading section 只放正文未内联的剩余链接** + 1 句相关性说明，不要把所有链接都堆这里。
 - 所有内联链接仍用 `[[<TBD-internal-link: short description>]]` placeholder 格式（真实 anchor 文案由后续步骤按「目标词 ｜ 语义背景 ｜ 点击收益」三段式解析；draft 阶段你只给自然英文 noun-phrase 描述）。
@@ -276,10 +276,10 @@ target_keyword = **「{{target_keyword}}」**（完整 3 词短语）。**SEO + 
 **硬规则**：
 
 - 完整短语 **「{{target_keyword}}」必须在以下 11 sections 中至少 4 个 section 里自然出现 1 次**（不算 H1 / H2 标题）：
-  - Section 1 (What is {{entity}}?)
+  - Section 1 (What Is {{entity}}? 定义 section)
   - Section 2 (Why It Matters for Self-Awareness)
-  - Section 3 ({{entity}} vs Adjacent Concepts)
-  - Section 4 (How to Read {{entity}} in Yourself) — 可在观察线索的自然句里
+  - Section 3 (与真实相邻概念的对比 section)
+  - Section 4 (How to Read ... 实操观察 section) — 可在观察线索的自然句里
   - Section 5 (Common Misreadings) — 可在纠正误读的自然句里
   - Section 7 (Frequently Asked Questions) — 允许出现在某条问题或回答的自然语句里
   - Section 8 (Reflection Prompts) — 允许出现在某条 prompt 自然语句里
@@ -453,7 +453,7 @@ LLM 在没有 anti-style 指引时会回退到「企业培训手册」语气，�
 ## 字数 + 关键词密度 self-check（提交前默念，任一违反 = 重写）
 
 - **字数 check**：数完整篇 word count
-  - 若 < {{WORD_RANGE}} 下限 → **不要 submit**，继续扩写「Why It Matters for Self-Awareness」+「{{entity}} vs Adjacent Concepts」段，每段加 2-3 个具体场景例子 / 误用案例 / 真实生活回忆触发点
+  - 若 < {{WORD_RANGE}} 下限 → **不要 submit**，继续扩写「Why It Matters for Self-Awareness」+ 对比 section（命名真实相邻概念）段，每段加 2-3 个具体场景例子 / 误用案例 / 真实生活回忆触发点
   - 若 < {{WORD_RANGE}} 下限 → **绝不**用 "more detail to follow" / "[continue here]" / "..." 类占位
   - 全篇 ≥ {{WORD_RANGE}} 下限 = 通过；< 下限 = 重写整段并扩字数后再交稿
 

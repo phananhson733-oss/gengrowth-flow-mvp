@@ -63,6 +63,7 @@ import {
   checkSourcesNamesInBody,
   checkTableIntegrity,
   checkParagraphFragmentation,
+  checkBannedHeadings,
   EN_FAQ_HEADING_RE,
   ZH_FAQ_HEADING_RE,
   EN_TABLE_HEADING_RE,
@@ -297,24 +298,38 @@ const outBasename = `${ctx.page_id}-${ctx.tag}`;
 // bilingual-v9: EN H2 spec builder (extracted from prior inline structure).
 // Literal entity substitution — LLM is expected to keep entity name verbatim
 // in EN articles (it's a noun phrase like "Blue Aura" / "Aura Colors").
+//
+// 2026-06-13 de-templating: the intro / comparison / observation H2s are matched
+// by ROLE (matchFn), not by a literal entity-substituted string, so the templates
+// can emit grammatical, de-templated headings (Title-Case "What Is …", a real
+// comparison naming the adjacent concept, natural "How to Read …") without
+// tripping "missing required H2". SC11 (structure-checks.mjs) independently FAILS
+// the banned casing/boilerplate forms.
 function buildEnH2Specs(ctx) {
+  // Role matchers — presence of the section regardless of exact entity wording.
+  // Intro: "## What Is/Are …?" (Title Case preferred; legacy "is/are" still
+  // matches presence so SC11 owns the casing verdict, not a double "missing H2").
+  const introMatch = (d) => /^##\s+What\s+(Is|Are|is|are)\b/m.test(d);
+  // Comparison: a real "X vs Y" / "X versus Y" / "How X Differs From Y" heading.
+  const comparisonMatch = (d) =>
+    /^##\s+[^\n]*\b(vs\.?|versus)\b/im.test(d) || /^##\s+How\s+[^\n]*\bDiffer/i.test(d);
   const introVariants = ctx.template === 'Pillar'
     ? [
-        `## What are ${ctx.entity}?`,
-        `## What are the ${ctx.entity}?`,
-        `## What is ${ctx.entity}?`,
-        `## What is the ${ctx.entity}?`,
+        `## What Are ${ctx.entity}?`,
+        `## What Are the ${ctx.entity}?`,
+        `## What Is ${ctx.entity}?`,
+        `## What Is the ${ctx.entity}?`,
       ]
     : [
-        `## What is ${ctx.entity}?`,
-        `## What is the ${ctx.entity}?`,
-        `## What is a ${ctx.entity}?`,
-        `## What is an ${ctx.entity}?`,
-        `## What are ${ctx.entity}?`,
+        `## What Is ${ctx.entity}?`,
+        `## What Is the ${ctx.entity}?`,
+        `## What Is a ${ctx.entity}?`,
+        `## What Is an ${ctx.entity}?`,
+        `## What Are ${ctx.entity}?`,
       ];
   return ctx.template === 'Pillar'
     ? [
-        { variants: introVariants, label: introVariants[0] },
+        { variants: introVariants, matchFn: introMatch, label: '## What Are/Is <entity>? (定义 section; Title Case)' },
         { variants: ['## Why It Matters for Self-Awareness'], label: '## Why It Matters for Self-Awareness' },
         {
           variants: [
@@ -334,14 +349,17 @@ function buildEnH2Specs(ctx) {
         { variants: ['## Sources'], label: '## Sources' },
       ]
     : [
-        { variants: introVariants, label: introVariants[0] },
+        { variants: introVariants, matchFn: introMatch, label: '## What Is <entity>? (定义 section; Title Case)' },
         { variants: ['## Why It Matters for Self-Awareness'], label: '## Why It Matters for Self-Awareness' },
         {
+          // De-templated: a real comparison heading naming the adjacent concept
+          // ("X vs Y" / "How X Differs From Y"), NOT the banned "vs Adjacent
+          // Concepts" boilerplate (which SC11 fails outright).
           variants: [
-            `## ${ctx.entity} vs Adjacent Concepts: How It Works + Trade-offs`,
-            `## The ${ctx.entity} vs Adjacent Concepts: How It Works + Trade-offs`,
+            `## ${ctx.entity} vs `,
           ],
-          label: `## ${ctx.entity} vs Adjacent Concepts: How It Works + Trade-offs`,
+          matchFn: comparisonMatch,
+          label: '## <entity> vs <real adjacent concept> (comparison section; no "Adjacent Concepts" boilerplate)',
         },
         {
           variants: [
@@ -583,6 +601,15 @@ function structureCheck(draft) {
   if (!bullets.pass) {
     findings.push(`SC7 snippet bullets: ${bullets.note}`);
     bullets.violations.forEach((v) => findings.push(`  L${v.line}: ${v.hint}`));
+  }
+
+  // SC11 — banned templated heading patterns (FAIL, EN only; 2026-06-13 SEO audit).
+  // "vs Adjacent Concepts" boilerplate + broken-casing "What is <lowercase>" /
+  // "How to Read <lowercase>" headings signal AI mass-production and hurt indexing.
+  const bannedHeadings = checkBannedHeadings(draft);
+  if (!bannedHeadings.pass) {
+    findings.push(`SC11 banned headings: ${bannedHeadings.note}`);
+    bannedHeadings.violations.forEach((v) => findings.push(`  L${v.line}: ${v.hint}`));
   }
 
   // ---- WARN-only checks (surfaced separately so they never flip `ok`) ----

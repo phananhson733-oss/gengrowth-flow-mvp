@@ -1149,3 +1149,110 @@ export function checkSourcesNamesInBody(draft) {
   }
   return { id, severity, pass: false, violations, note: `${violations.length} Sources entry(ies) not found in body (WARN)` };
 }
+
+// ============================================================
+// SC11 — Banned templated heading patterns (FAIL, EN only).
+//
+// The 2026-06-13 SEO audit found three grammatically-broken, mass-production-
+// signalling H2/H3 patterns live across ~16 articles. They originate from the
+// content-draft templates injecting the raw {{entity}} verbatim into a fixed
+// heading skeleton, which produces wrong casing and meaningless boilerplate that
+// reads as AI mass-production and hurts indexing. The templates have been
+// de-templated (definition/pillar/tutorial.prompt.md §输出结构); SC11 is the
+// backstop that FAILS any draft still emitting the banned shapes.
+//
+// Three patterns, each conservative to avoid false positives:
+//
+//   P1 — literal boilerplate phrase "vs Adjacent Concepts" (case-insensitive).
+//        This phrase is meaningless in every article; a real comparison heading
+//        names the actual adjacent concept ("Full Moon vs New Moon Energy").
+//
+//   P2 — heading begins "What is " with a LOWERCASE "is". Correct Title Case
+//        capitalises the verb ("What Is …"); a lowercase "is" is the broken-
+//        casing tell, whether the next word is a raw lowercase keyword
+//        ("What is full moon ritual?") or oddly Title-Cased ("What is The Root
+//        Chakra?"). Legitimate "What Is the Root Chakra?" (capital "Is") passes
+//        because it never starts with the lowercase "What is " form.
+//
+//   P3 — "How to Read " (heading-initial) followed by a lowercase CONTENT word.
+//        Correct headings continue in Title Case / natural phrasing ("How to
+//        Read Your Full Moon Energy", "How to Read a Birth Chart in Plain
+//        English" — the article "a" is legitimately lowercase). A lowercase
+//        CONTENT word right after "How to Read " means a raw lowercase keyword
+//        was injected ("How to Read full moon energy in Yourself"). Short
+//        function words (a/an/the/of/in/...) are allowed lowercase per Title Case
+//        and are exempted to avoid false positives.
+//
+// EN-only: the casing/grammar heuristics are English-specific. ZH templates
+// translate the entity in-place and use no Title Case, so the P2/P3 anchors
+// ("What is" / "How to Read") never appear; the regexes simply never match ZH
+// headings. Only `## ` / `### ` heading lines are scanned, never body prose.
+// ============================================================
+
+// P1: the literal boilerplate phrase, anywhere in a heading, case-insensitive.
+const SC11_ADJACENT_CONCEPTS_RE = /vs\s+adjacent\s+concepts/i;
+
+// P2: heading begins "What is " with a lowercase "is" (case-SENSITIVE). The
+// lowercase verb is the broken-casing signal regardless of what follows.
+const SC11_WHAT_IS_BROKEN_RE = /^What is\b/;
+
+// P3: heading begins "How to Read " then a lowercase word. Case-SENSITIVE on
+// the prefix; the captured word is checked against the function-word allow-list
+// below so a legitimate lowercase article ("a Birth Chart") does not false-fire.
+const SC11_HOW_TO_READ_BROKEN_RE = /^How to Read ([a-z][a-z'-]*)\b/;
+
+// Function words that are legitimately lowercase in English Title Case. A
+// lowercase word here after "How to Read " is fine; any OTHER lowercase word is
+// an injected raw keyword.
+const SC11_TITLECASE_LOWER_OK = new Set([
+  'a', 'an', 'the', 'and', 'or', 'nor', 'but', 'for', 'so', 'yet',
+  'of', 'in', 'on', 'at', 'to', 'by', 'as', 'up', 'via', 'per', 'with',
+]);
+
+// Strip the leading "## " / "### " marker and surrounding whitespace.
+function headingText(line) {
+  return line.replace(/^#{2,3}\s+/, '').trim();
+}
+
+export function checkBannedHeadings(draft) {
+  const id = 'sc11_banned_headings';
+  const severity = 'fail';
+  if (typeof draft !== 'string' || !draft) {
+    return { id, severity, pass: true, violations: [], note: 'empty draft — skipped' };
+  }
+  const lines = draft.split('\n');
+  const violations = [];
+  for (let i = 0; i < lines.length; i++) {
+    if (!/^#{2,3}\s+/.test(lines[i])) continue;
+    const text = headingText(lines[i]);
+    if (SC11_ADJACENT_CONCEPTS_RE.test(text)) {
+      violations.push({
+        line: i + 1,
+        text: text.slice(0, 80),
+        hint: 'boilerplate "vs Adjacent Concepts" — name the real adjacent concept instead (e.g. "Full Moon vs New Moon Energy")',
+      });
+      continue;
+    }
+    if (SC11_WHAT_IS_BROKEN_RE.test(text)) {
+      violations.push({
+        line: i + 1,
+        text: text.slice(0, 80),
+        hint: 'broken "What is <lowercase>" heading — use Title Case with correct articles (e.g. "What Is a Full Moon Ritual?")',
+      });
+      continue;
+    }
+    const howToRead = text.match(SC11_HOW_TO_READ_BROKEN_RE);
+    if (howToRead && !SC11_TITLECASE_LOWER_OK.has(howToRead[1])) {
+      violations.push({
+        line: i + 1,
+        text: text.slice(0, 80),
+        hint: 'broken "How to Read <lowercase>" heading — use Title Case / natural phrasing (e.g. "How to Read Your Full Moon Energy")',
+      });
+      continue;
+    }
+  }
+  if (violations.length === 0) {
+    return { id, severity, pass: true, violations: [], note: 'no banned templated heading patterns' };
+  }
+  return { id, severity, pass: false, violations, note: `${violations.length} banned templated heading(s) (SC11)` };
+}

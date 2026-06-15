@@ -131,7 +131,7 @@ run_one_cycle() {
   if [ -n "$PARK" ]; then
     PARK_COUNT=$((PARK_COUNT + 1))
     if [ "$PARK_COUNT" -eq 1 ]; then
-      GG_LARK_NOTIFY_AT_OPERATOR=1 GG_LARK_NOTIFY_AT_PM=1 "$SCRIPT_DIR/gg-lark-notify.sh" "⚠️ SEO autopilot 写稿暂停（needs_human）：$PARK"
+      GG_LARK_NOTIFY_AT_PM=1 GG_LARK_NOTIFY_AT_OPS=1 "$SCRIPT_DIR/gg-lark-notify.sh" "⚠️ SEO autopilot 写稿暂停（needs_human）：$PARK"
     else
       PARK_REST="${PARK_REST}${PARK}"$'\n'
     fi
@@ -164,7 +164,7 @@ while [ "$cycle" -lt "$MAX_CYCLES" ]; do
       parks=$(node "$AUTO" --status 2>/dev/null | grep -c '"needs_human"')
       if [ "$parks" -eq 0 ]; then
         pub=$(grep -cE '^\| 2026' "$HOME/gengrowth-ops/inbox/06-tasks/seo-autopilot-publish-log.md" 2>/dev/null)
-        GG_LARK_NOTIFY_AT_PM=1 "$SCRIPT_DIR/gg-lark-notify.sh" "✅ SEO autopilot：本批计划内容已全部写完并上线（发布登记表累计 ${pub:-?} 篇），队列已清空。"
+        GG_LARK_NOTIFY_AT_OPS=1 "$SCRIPT_DIR/gg-lark-notify.sh" "✅ SEO autopilot：本批计划内容已全部写完并上线（发布登记表累计 ${pub:-?} 篇），队列已清空。"
       else
         echo "$(date '+%F %T') drained with $parks park(s) — not sending day-complete (parks need a human)" >> "$LOG"
       fi
@@ -181,7 +181,7 @@ fi
 # root cause; the per-page detail still lands in $LOG and the claims ledger.
 if [ "$PARK_COUNT" -gt 1 ]; then
   echo "$(date '+%F %T') sending park roll-up ($PARK_COUNT parks this run)" >> "$LOG"
-  GG_LARK_NOTIFY_AT_OPERATOR=1 GG_LARK_NOTIFY_AT_PM=1 "$SCRIPT_DIR/gg-lark-notify.sh" "⚠️ SEO autopilot 本轮共暂停 ${PARK_COUNT} 篇（needs_human）。首篇已单独通报，其余 $((PARK_COUNT - 1)) 篇合并通报（防刷屏）：
+  GG_LARK_NOTIFY_AT_PM=1 GG_LARK_NOTIFY_AT_OPS=1 "$SCRIPT_DIR/gg-lark-notify.sh" "⚠️ SEO autopilot 本轮共暂停 ${PARK_COUNT} 篇（needs_human）。首篇已单独通报，其余 $((PARK_COUNT - 1)) 篇合并通报（防刷屏）：
 ${PARK_REST}处理提示：若原因均为「no row … in 选题登记表」，说明计划里新加的一批选题还没登记进 选题登记表 — 补齐登记行后，清掉 .autopilot-claims.json 里对应 needs_human 条目即可恢复写作。"
 fi
 

@@ -5,7 +5,7 @@ The wrapper already ran the deterministic scan (sync + claim + convert + build-g
     node ~/gengrowth-flow-mvp/tools/scripts/gg-seo-autopilot.mjs --status
 
 - Find the entry whose status is `pushed-preview` or `verified-preview`. If none exists, STOP (nothing to verify this tick).
-- Note its `pgId` (the entry KEY), `branch`, `pr`, `slug`, and `worktree` (Step 3c's subagents need pgId + worktree + slug). If any entry is freshly `needs_human`, send a Feishu alert (action-needed → @王志彪 via GG_LARK_NOTIFY_AT_OPERATOR=1) `GG_LARK_NOTIFY_AT_OPERATOR=1 bash ~/gengrowth-flow-mvp/tools/scripts/gg-lark-notify.sh "⚠️ SEO autopilot 暂停 <pgId>（needs_human）：<reason>"`, then continue to the preview entry (if any). (Do NOT use the harness PushNotification — mobile Remote Control is inactive, so it just fails; Feishu via lark-cli is the working channel.)
+- Note its `pgId` (the entry KEY), `branch`, `pr`, `slug`, and `worktree` (Step 3c's subagents need pgId + worktree + slug). If any entry is freshly `needs_human`, send a Feishu alert (action-needed → @王志彪(PM)+马博洋(Ops) via GG_LARK_NOTIFY_AT_PM=1 GG_LARK_NOTIFY_AT_OPS=1) `GG_LARK_NOTIFY_AT_PM=1 GG_LARK_NOTIFY_AT_OPS=1 bash ~/gengrowth-flow-mvp/tools/scripts/gg-lark-notify.sh "⚠️ SEO autopilot 暂停 <pgId>（needs_human）：<reason>"`, then continue to the preview entry (if any). (Do NOT use the harness PushNotification — mobile Remote Control is inactive, so it just fails; Feishu via lark-cli is the working channel.)
 
 ## Step 2 — get the Vercel preview URL
 If the entry is already `verified-preview`, skip to Step 4 and merge using the stored `previewUrl`.
@@ -43,8 +43,8 @@ Merge if the REQUIRED gates pass: chrome preview renders AND all three subagents
   (The `--merge` command itself appends the ops publish register row AND pushes the Feishu "已发布" alert deterministically — do NOT send your own publish notification, it is already covered. Do NOT use the harness PushNotification anywhere — mobile is inactive, it only fails.)
 - If codex / chrome / ANY subagent fails → do NOT merge. Leave the PR open, park the ledger with:
       node ~/gengrowth-flow-mvp/tools/scripts/gg-seo-autopilot.mjs --mark-failed --branch <branch> --reason "<which gate + the specific blocking issue>"
-  Then push the specific failure to Feishu (the only working channel — no PushNotification). This is an action-needed alert → set GG_LARK_NOTIFY_AT_OPERATOR=1 so it @'s 王志彪:
-      GG_LARK_NOTIFY_AT_OPERATOR=1 bash ~/gengrowth-flow-mvp/tools/scripts/gg-lark-notify.sh "⚠️ SEO autopilot 发布 gate 未过 <slug>（<which gate>）：<blocking issue> — PR 待人工"
+  Then push the specific failure to Feishu (the only working channel — no PushNotification). This is an action-needed alert → set GG_LARK_NOTIFY_AT_PM=1 GG_LARK_NOTIFY_AT_OPS=1 so it @'s 王志彪(PM)+马博洋(Ops):
+      GG_LARK_NOTIFY_AT_PM=1 GG_LARK_NOTIFY_AT_OPS=1 bash ~/gengrowth-flow-mvp/tools/scripts/gg-lark-notify.sh "⚠️ SEO autopilot 发布 gate 未过 <slug>（<which gate>）：<blocking issue> — PR 待人工"
   A human will review the open PR.
 
 Stop after one task. The timer will fire again for the next one (this is the 20–30 min stagger).

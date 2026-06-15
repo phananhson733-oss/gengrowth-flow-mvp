@@ -1,0 +1,17 @@
+import { getAccessToken } from '../lib/gg-shared.mjs';
+import { join } from 'node:path'; import { homedir } from 'node:os';
+const WB='1CkjOCgYbRfXGYc6l2FJOaxUIzxT0NBVUhUpgCjyzcQc';
+const TAB='选题登记表';
+const SA=join(homedir(),'.config','gg','gg-writer-sa.json');
+const SCOPE=['https://www.googleapis.com/auth/spreadsheets.readonly'];
+const PIDS=['PG-JOURNAL-003','PG-NODE-009','PG-NODE-010','PG-NODE-011','PG-NAKSH-012','PG-NAKSH-013','PG-NAKSH-014','PG-NAKSH-015','PG-NAKSH-016','PG-NAKSH-017','PG-NAKSH-018','PG-NAKSH-019','PG-TRANS-008','PG-TRANS-009','PG-TRANS-010','PG-RISE-004','PG-RISE-005','PG-RISE-006','PG-RISE-007','PG-RISE-008'];
+const {token}=await getAccessToken(SA,SCOPE);
+const range=encodeURIComponent(`${TAB}!A1:AE3000`);
+const res=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${WB}/values/${range}?majorDimension=ROWS`,{headers:{authorization:`Bearer ${token}`}});
+const b=await res.json(); const rows=b.values||[]; const H=rows[0]||[];
+const ci=(n)=>H.indexOf(n);
+const cP=ci('page_id'),cK=ci('target_keyword'),cC=ci('cluster_id'),cT=ci('template'),cA=ci('author'),cTier=ci('tier');
+console.log('header 关键列:',['page_id','target_keyword','cluster_id','template','author','tier'].map(n=>`${n}@${ci(n)}`).join(' '));
+const found={};
+rows.forEach((r,i)=>{ if(i===0)return; const p=(r[cP]||'').trim(); if(PIDS.includes(p)) found[p]={row:i+1,kw:r[cK]||'',cluster:r[cC]||'',tpl:r[cT]||'',author:r[cA]||'',tier:r[cTier]||''}; });
+PIDS.forEach(p=>{ const f=found[p]; console.log(f?`✅ ${p} r${f.row} | kw="${f.kw}" | cluster=${f.cluster||'∅'} | tpl=${f.tpl||'∅'} | author=${f.author||'∅'} | ${f.tier||''}`:`❌ ${p} 不在表中`);});

@@ -131,7 +131,7 @@ run_one_cycle() {
   if [ -n "$PARK" ]; then
     PARK_COUNT=$((PARK_COUNT + 1))
     if [ "$PARK_COUNT" -eq 1 ]; then
-      GG_LARK_NOTIFY_AT_OPERATOR=1 "$SCRIPT_DIR/gg-lark-notify.sh" "⚠️ SEO autopilot 写稿暂停（needs_human）：$PARK"
+      GG_LARK_NOTIFY_AT_OPERATOR=1 GG_LARK_NOTIFY_AT_PM=1 "$SCRIPT_DIR/gg-lark-notify.sh" "⚠️ SEO autopilot 写稿暂停（needs_human）：$PARK"
     else
       PARK_REST="${PARK_REST}${PARK}"$'\n'
     fi
@@ -158,7 +158,7 @@ while [ "$cycle" -lt "$MAX_CYCLES" ]; do
     echo "$(date '+%F %T') queue drained — idle after $worked working cycle(s); exiting loop" >> "$LOG"
     # Day-complete notice (@马博洋): only if this run actually DID work then drained
     # (worked≥1), AND no needs_human parks remain (a park = not fully complete; the
-    # park alert already @'d 王志彪). A tick that starts already-idle (worked=0) stays
+    # park alert already @'d 王志彪+马博洋). A tick that starts already-idle (worked=0) stays
     # quiet, so the PM isn't re-pinged every idle poll.
     if [ "$worked" -ge 1 ]; then
       parks=$(node "$AUTO" --status 2>/dev/null | grep -c '"needs_human"')
@@ -181,7 +181,7 @@ fi
 # root cause; the per-page detail still lands in $LOG and the claims ledger.
 if [ "$PARK_COUNT" -gt 1 ]; then
   echo "$(date '+%F %T') sending park roll-up ($PARK_COUNT parks this run)" >> "$LOG"
-  GG_LARK_NOTIFY_AT_OPERATOR=1 "$SCRIPT_DIR/gg-lark-notify.sh" "⚠️ SEO autopilot 本轮共暂停 ${PARK_COUNT} 篇（needs_human）。首篇已单独通报，其余 $((PARK_COUNT - 1)) 篇合并通报（防刷屏）：
+  GG_LARK_NOTIFY_AT_OPERATOR=1 GG_LARK_NOTIFY_AT_PM=1 "$SCRIPT_DIR/gg-lark-notify.sh" "⚠️ SEO autopilot 本轮共暂停 ${PARK_COUNT} 篇（needs_human）。首篇已单独通报，其余 $((PARK_COUNT - 1)) 篇合并通报（防刷屏）：
 ${PARK_REST}处理提示：若原因均为「no row … in 选题登记表」，说明计划里新加的一批选题还没登记进 选题登记表 — 补齐登记行后，清掉 .autopilot-claims.json 里对应 needs_human 条目即可恢复写作。"
 fi
 

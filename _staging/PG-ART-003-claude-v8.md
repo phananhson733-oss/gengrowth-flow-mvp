@@ -27,7 +27,7 @@ In each scenario the value comes from intervening at the right step rather than 
 
 Teams stumble on a few predictable points when they treat the audit as one undifferentiated list:
 
-1. **Treating GBP and on-page as the same lever.** A local SEO audit that buries profile completeness inside a 40-point on-page checklist hides the single factor that often controls local pack entry.
+1. **Treating GBP and on-page as the same lever.** A review that buries profile completeness inside a 40-point on-page checklist hides the single factor that often controls local pack entry.
 2. **Assuming reviews only affect reputation.** Review velocity and recency feed local ranking signals, so an audit that logs star rating but ignores cadence misses a live lever.
 3. **Confusing citation volume with citation quality.** Stacking hundreds of low-trust directory listings does little; consistent NAP across a handful of authoritative sources does more.
 4. **Reporting every issue at equal weight.** A flat list reads as thorough but leaves the client guessing what to fix first, which is exactly the friction the audit should remove.
@@ -43,7 +43,7 @@ Teams stumble on a few predictable points when they treat the audit as one undif
 
 ## How to Evaluate Whether the Audit Is Doing Its Job
 
-You can judge a local SEO audit against a handful of observable standards rather than vague promises:
+You can judge the review against a handful of observable standards rather than vague promises:
 
 1. **It separates the two ranking systems.** A strong audit explicitly labels which findings affect local pack inclusion and which affect organic rankings, instead of blending them.
 2. **It ranks findings by impact.** Each issue carries a priority tied to how much it moves local visibility, so the fix order is obvious.
@@ -89,7 +89,7 @@ A full audit at onboarding and a lighter health check each reporting cycle tends
 
 ## Take Action
 
-Run your first local SEO audit inside one workspace and let it produce a prioritized, client-ready report instead of a flat checklist. [Start your free GenGrowth trial](https://gengrowth.ai/app) to audit a profile, separate local pack signals from organic ones, and export the findings in minutes. Once the diagnosis and the report live in the same place, the deciding question stops being which tool to buy and becomes which fix to ship first.
+Run your first audit inside one workspace and let it produce a prioritized, client-ready report instead of a flat checklist. [Start your free GenGrowth trial](https://gengrowth.ai/app) to audit a profile, separate local pack signals from organic ones, and export the findings in minutes. Once the diagnosis and the report live in the same place, the deciding question stops being which tool to buy and becomes which fix to ship first.
 
 ## Sources
 

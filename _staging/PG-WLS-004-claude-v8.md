@@ -83,7 +83,7 @@ Many are free to use but add a vendor footer credit on the free tier that your c
 
 A client who paid your agency for an audit reads an unfamiliar brand name as a sign the work was outsourced. It invites questions about who does the work and what your markup covers.
 
-**What is the most common hidden limit on free white label seo tools?**
+**What is the most common hidden limit on these free tools?**
 
 Export format and audit volume. Free tiers often restrict you to PDF exports rather than full portal access, and cap monthly audits, both of which surface only as your client list grows.
 

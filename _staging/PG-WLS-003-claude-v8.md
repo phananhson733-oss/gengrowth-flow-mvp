@@ -17,7 +17,7 @@ That mismatch shows up as real business cost in a few predictable ways:
 1. **Trust leakage.** A report that still hints at the provider's domain or tooling undermines the premium positioning you sold the client on, and once a client spots the seam, the relationship rarely fully recovers.
 2. **Margin compression.** Resold work carries a hard markup ceiling, and pricing it like in-house labor quietly erodes the very margin that justified outsourcing in the first place.
 3. **Delivery risk.** You inherit the partner's standards, so a weak handoff surfaces as a churned account a quarter later, long after the contract felt like a win.
-4. **Switching cost.** Tooling that locks reporting history inside the provider's platform makes it expensive to change partners, which weakens your leverage at renewal.
+4. **Switching cost.** Tooling that locks reporting history inside the provider's platform makes it expensive to change partners, which weakens your negotiating position at renewal.
 
 The reason the tier question deserves this much attention is that it compounds. A wrong tier at one client is an annoyance; the same wrong choice across a book of twenty accounts becomes a structural margin problem that no amount of upselling fixes. Most owners only feel that compounding once they're already three or four contracts deep, which is exactly why working it out before the first signature pays off.
 
@@ -35,7 +35,7 @@ The job most agencies are trying to finish is reselling SEO under their own bran
 
 ## Common Implementation Misreadings
 
-Agencies usually get burned not by a bad provider but by misreading what a given white-label tier delivers. The most common misreads each map to the friction that sends owners searching in the first place:
+Agencies usually get burned not by a bad provider but by misreading what a given tier delivers. Each of these misreads is something owners only discover after the contract is signed, which is precisely the moment it's hardest to fix. The most common ones each map to the friction that sends people searching in the first place:
 
 1. **"White-label means fully branded."** The reality: a whitelabel seo tool at Level 1 only swaps the report logo. Custom domains and isolated logins are a Level 3 feature, and assuming otherwise is how clients spot the provider mid-engagement.
 2. **"The portal runs on my domain."** The reality: most Level 2 portals live on the provider's shared subdomain. If a client-facing custom domain matters to your positioning, confirm it in writing, not in the sales deck.
@@ -70,6 +70,7 @@ Rolling out a whitelabel seo tool cleanly means matching the tier to your client
 4. Verify the custom domain, login isolation, and footer branding against the evaluation criteria above before signing.
 5. Run one client through the full delivery loop as a pilot, watching every touchpoint where the provider's identity could leak.
 6. Price the resold work with a deliberate markup floor so the margin survives once you scale past a handful of accounts.
+7. Document the branding and isolation terms the provider agreed to, so you can hold them to the same standard as your book grows.
 
 ## Common Questions About White-Label SEO Tools
 

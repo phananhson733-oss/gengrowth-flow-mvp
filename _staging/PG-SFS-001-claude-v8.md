@@ -1,3 +1,27 @@
+---
+title: Seo For Saas
+slug: seo-for-saas
+date: 2026-06-16
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T1
+track: 量产线
+page_id: PG-SFS-001
+target_keyword: seo for saas
+associated_keywords:
+  - saas seo strategy
+  - seo strategy for saas
+  - seo for saas companies
+  - saas content marketing
+  - saas seo guide
+generated_by: claude-opus-4-8
+prompt_version: v8
+generated_at: 2026-06-16T17:44:22.008Z
+content_sha256_short: 3e26c79ac31585ef
+phase2_checks: all-pass
+---
+
 # Why SEO for SaaS Needs a Page-by-Page Plan, Not Just More Blog Posts
 
 ## What Is SaaS SEO Strategy / Product-Led Content?
@@ -95,7 +119,7 @@ There is no fixed count. The page structure matters once you have any commercial
 
 ## Take Action
 
-Run your full URL list through a page-type inventory using GenGrowth's workflow to label every blog, feature, pricing, comparison, and trial page in one pass. You will get a clear map of which high-intent pages are thin or missing, so you can fix the architecture instead of adding more posts. That map is the difference between an SEO program that compounds into revenue and one that just grows traffic that never converts. [Start your free GenGrowth trial](https://gengrowth.ai/app) to build your page-type map.
+Run your full URL list through a page-type inventory using GenGrowth's workflow to label every blog, feature, pricing, comparison, and trial page in one pass. You will get a clear map of which high-intent pages are thin or missing, so you can fix the page structure instead of adding more posts. That map is the difference between an SEO program that compounds into revenue and one that just grows traffic that never converts. [Start your free GenGrowth trial](https://gengrowth.ai/app) to build your page-type map.
 
 ## Sources
 

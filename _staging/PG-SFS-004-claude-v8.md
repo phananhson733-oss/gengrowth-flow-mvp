@@ -1,3 +1,26 @@
+---
+title: Seo For Saas Startups
+slug: seo-for-saas-startups
+date: 2026-06-16
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-SFS-004
+target_keyword: seo for saas startups
+associated_keywords:
+  - saas startup seo
+  - seo for early stage saas
+  - seo strategy for saas startup
+  - saas startup seo guide
+generated_by: claude-opus-4-8
+prompt_version: v8
+generated_at: 2026-06-16T17:46:14.866Z
+content_sha256_short: 3027ebbce792e8a0
+phase2_checks: all-pass
+---
+
 # How to Start SEO for SaaS Startups from Day 1 with Zero DA
 
 ## What Is SaaS Startup SEO?

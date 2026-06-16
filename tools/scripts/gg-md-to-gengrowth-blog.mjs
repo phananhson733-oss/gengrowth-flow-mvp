@@ -49,24 +49,23 @@ import {
 const AUTHOR_BY_LOCALE = { en: 'GenGrowth Team', zh: 'GenGrowth 团队' };
 
 // blog_posts.category is a TEXT CHECK limited to 4 content-TYPE values; the W25 SEO
-// clusters are TOPICS, none of which match. Cluster identity is preserved in the
-// free-text `pillar_slug` column; `category` collapses to a valid enum (methodology
-// = how-to/framework guide, the shape every W25 post takes). Zero schema change.
+// clusters are TOPICS, none of which match. `category` collapses to a valid enum
+// (methodology = how-to/framework guide, the shape every W25 post takes). Zero schema change.
 const VALID_CATEGORIES = new Set(['case_study', 'methodology', 'weekly_review', 'experiment_log']);
-const CLUSTER_BY_PREFIX = {
-  'PG-WLS': 'white_label_seo',
-  'PG-ART': 'agency_rank_tracking',
-  'PG-SFS': 'seo_for_saas',
-  'PG-EOS': 'ethical_organic_seo',
-  'PG-AIS': 'ai_seo_automation',
-  'PG-TAS': 'technical_seo_audit',
-  'PG-SDS': 'startup_diy_seo',
-  'PG-B2B': 'b2b_agency_seo',
-  'PG-CMP': 'seo_tools_comparison',
-  'PG-SLB': 'social_link_building',
-  'PG-SMS': 'social_media_seo_tools',
-};
 const DEFAULT_CATEGORY = 'methodology';
+
+// pillar_slug must be one of the blog's canonical PILLARS (the blog index filter tabs,
+// src/app/[locale]/blog/page.tsx). It is NOT the fine W25 cluster id. Live W25 SEO posts
+// (white-label, agency rank tracking, etc.) all use 'seo_content' — verified in prod
+// (qeeocwurjslqppjxlsbk). Map page_id prefix -> pillar; unknown W25 -> seo_content.
+const VALID_PILLARS = new Set(['growth_automation', 'experiment_driven', 'attribution', 'seo_content', 'customer_stories']);
+const PILLAR_BY_PREFIX = {
+  'PG-WLS': 'seo_content', 'PG-ART': 'seo_content', 'PG-SFS': 'seo_content',
+  'PG-EOS': 'seo_content', 'PG-AIS': 'seo_content', 'PG-TAS': 'seo_content',
+  'PG-SDS': 'seo_content', 'PG-B2B': 'seo_content', 'PG-CMP': 'seo_content',
+  'PG-SLB': 'seo_content', 'PG-SMS': 'seo_content',
+};
+const DEFAULT_PILLAR = 'seo_content';
 
 // Deterministic UUIDv5 (RFC 4122, SHA-1) from `${slug}|${locale}` so the row id is
 // stable across re-publish (SQL diffs stay clean) and never collides with another

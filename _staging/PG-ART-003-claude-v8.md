@@ -2,7 +2,7 @@
 
 ## What Is a Local SEO Audit?
 
-A local SEO audit is **a structured review of the signals that decide whether a business shows up in the local pack and in nearby map and organic results**. It looks at the Google Business Profile, citations, reviews, and on-page factors together, then judges each one by how much it moves local visibility rather than treating them as a single undifferentiated checklist. Done well, it sits under the broader [[<TBD-internal-link: pillar guide to local search ranking>]] and gives a consultant a clear read on why a client ranks in one place but vanishes in another.
+A local SEO audit is **a structured review of the signals that decide whether a business shows up in the local pack and in nearby map and organic results**. It looks at the Google Business Profile, citations, reviews, and on-page factors together, then judges each one by how much it moves local visibility rather than treating them as a single undifferentiated checklist. Done well, it sits under the broader [[<TBD-internal-link: pillar guide to local search ranking>]] and shows why a client ranks in one place but vanishes in another.
 
 - It evaluates Google Business Profile completeness, NAP consistency, and review velocity as local pack inputs
 - It separately weighs on-page content, technical health, and backlinks as organic ranking inputs
@@ -10,7 +10,13 @@ A local SEO audit is **a structured review of the signals that decide whether a 
 
 ## Why It Matters for Your Workflow
 
-A local SEO audit matters because most consultants conflate a site audit with a local pack audit, and that confusion shows up as wasted hours and a frustrated client. When someone ranks on page one organically but never appears in the three-pack, a general on-page review will not explain the gap. The two outcomes run on different ranking systems, so a report that mixes them together rarely points to the real fix. This connects to the larger job most agencies are chasing here: tracking client rankings and producing professional reports at scale without re-diagnosing the same problem every month. Across the rollouts we've audited, the deciding factor isn't how many tools you run, it's whether the audit tells you which lever actually controls local pack inclusion. A workflow that answers that question first saves the back-and-forth that erodes both margin and trust, and it pairs naturally with a [[<TBD-internal-link: guide to automated rank tracking for client reports>]].
+A local SEO audit matters because most consultants conflate a site audit with a local pack audit, and that confusion shows up as wasted hours and a frustrated client. When someone ranks on page one organically but never appears in the three-pack, a general on-page review will not explain the gap, because the two outcomes run on different ranking systems. This connects to the larger job most agencies are chasing here: tracking client rankings and producing professional reports at scale without re-diagnosing the same problem every month. Across the rollouts we've audited, the deciding factor isn't how many tools you run, it's whether the diagnosis tells you which lever actually controls local pack inclusion. The cost of getting it wrong shows up in a few concrete ways:
+
+1. **Hours billed against the wrong system.** A team spends a sprint rewriting page content when the real blocker was an unverified profile, and the client sees no movement in the map results.
+2. **Reports that confuse instead of clarify.** A flat list of 40 mixed issues reads as thorough but leaves the client unsure what to approve, which stalls the work and the invoice.
+3. **Margin lost to rework.** Every cycle that re-audits the whole site from scratch eats time that a repeatable, prioritized review would protect.
+
+A workflow that answers the right question first saves the back-and-forth that erodes both margin and trust, and it pairs naturally with a [[<TBD-internal-link: guide to automated rank tracking for client reports>]].
 
 ## How the Audit Plays Out in Real Agency Work
 
@@ -30,7 +36,9 @@ Teams stumble on a few predictable points when they treat the audit as one undif
 1. **Treating GBP and on-page as the same lever.** A review that buries profile completeness inside a 40-point on-page checklist hides the single factor that often controls local pack entry.
 2. **Assuming reviews only affect reputation.** Review velocity and recency feed local ranking signals, so an audit that logs star rating but ignores cadence misses a live lever.
 3. **Confusing citation volume with citation quality.** Stacking hundreds of low-trust directory listings does little; consistent NAP across a handful of authoritative sources does more.
-4. **Reporting every issue at equal weight.** A flat list reads as thorough but leaves the client guessing what to fix first, which is exactly the friction the audit should remove.
+4. **Reporting every issue at equal weight.** A flat list reads as thorough but leaves the client guessing what to fix first, which is exactly the friction the review should remove.
+
+The thread running through all four is the same: when local pack signals and organic signals are scored on one undifferentiated scale, the most actionable findings get buried next to the trivial ones, and the client pays for diagnosis they cannot act on.
 
 ## Local Pack vs Organic Signals at a Glance — Quick Reference
 
@@ -49,16 +57,16 @@ You can judge the review against a handful of observable standards rather than v
 2. **It ranks findings by impact.** Each issue carries a priority tied to how much it moves local visibility, so the fix order is obvious.
 3. **It checks NAP consistency across real sources.** The audit verifies that name, address, and phone match across the profile and major citations, not just on the website.
 4. **It tracks review cadence, not just rating.** A red flag is an audit that records a 4.6-star average but never notes that reviews stopped six months ago.
-5. **It produces a client-ready output.** If the findings can't drop into a report a non-technical client understands, the audit adds work instead of removing it.
+5. **It produces a client-ready output.** If the findings can't drop into a report a non-technical client understands and approve quickly, the diagnosis adds work instead of removing it, and the next reporting cycle inherits the same confusion.
 
 ## How to Run the Review Step by Step
 
 Follow an ordered path so the audit stays repeatable across accounts:
 
-1. Confirm the Google Business Profile is verified, claimed, and complete, including category, hours, services, and photos.
-2. Check NAP consistency across the profile, the website, and the main citation sources, and flag every mismatch.
-3. Review the review profile for volume, recent velocity, and unanswered reviews that signal neglect.
-4. Run the on-page and technical checks separately, labeling them as organic-ranking inputs rather than local pack inputs.
+1. Confirm the Google Business Profile is verified, claimed, and complete, including primary category, secondary categories, hours, services, and recent photos, since a missing primary category alone can keep a business out of the pack.
+2. Check NAP consistency across the profile, the website, and the main citation sources, and flag every mismatch, because even small variations in suite numbers or phone formats can fragment the trust signal.
+3. Review the review profile for volume, recent velocity, and unanswered reviews that signal neglect, then compare cadence against the nearest competitors rather than against a fixed target.
+4. Run the on-page and technical checks separately, labeling them as organic-ranking inputs rather than local pack inputs, so the report never implies that a content fix will solve a profile problem.
 5. Score the local backlink and citation footprint against the closest local competitors.
 6. Prioritize every finding by local pack impact, then organic impact, into a single ordered fix list.
 7. Package the results into a client-facing report that names the next three actions, and lean on [[<TBD-internal-link: white-label SEO reporting overview>]] when the work is resold under another brand.

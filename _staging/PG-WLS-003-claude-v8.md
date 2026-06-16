@@ -2,7 +2,7 @@
 
 ## What Is a White-Label SEO Tool?
 
-A white-label SEO tool is **software or fulfillment that one provider builds and another agency resells under its own brand**. The reselling agency presents the work, dashboards, and reports as its own, while the underlying provider stays invisible to the end client. The catch most buyers miss is that "white-label" is not one thing: it spans a tier spectrum, and the gap between a logo swap and a fully isolated client platform is where margin, trust, and churn quietly get decided. A whitelabel seo tool can mean very different products depending on how far that branding control actually reaches.
+A white-label SEO tool is **software or fulfillment that one provider builds and another agency resells under its own brand**. The reselling agency presents the work, the dashboards, and the reports as its own, while the underlying provider stays invisible to the end client. The catch most buyers miss is that "white-label" is not one thing: it spans a tier spectrum, and the gap between a simple logo swap and a fully isolated client platform is where margin, trust, and churn quietly get decided. A whitelabel seo tool can mean very different products depending on how far that branding control actually reaches, from a swapped header on a PDF all the way to a custom-domain portal a client could never trace back to anyone else. Understanding where a given product sits on that spectrum is the whole game.
 
 - Lets a reselling agency offer SEO without building an in-house delivery team
 - The fulfillment partner stays hidden from the end client across reports and logins

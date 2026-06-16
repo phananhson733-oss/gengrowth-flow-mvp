@@ -1,3 +1,26 @@
+---
+title: White Label Keyword Research
+slug: white-label-keyword-research
+date: 2026-06-16
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-WLS-001
+target_keyword: white label keyword research
+associated_keywords:
+  - whitelabel keyword research
+  - white label seo research
+  - white label seo keyword tool
+  - seo white labeled ranking tool
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-16T15:34:10.118Z
+content_sha256_short: b19fe8ff8c4873f1
+phase2_checks: all-pass
+---
+
 # How White-Label Keyword Research Reaches Clients Under Your Own Brand
 
 ## What Is a White-Label Keyword Research Tool?

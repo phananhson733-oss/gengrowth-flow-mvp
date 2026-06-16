@@ -55,3 +55,15 @@ aliases:
 确认 autopilot 保持 disabled，下一步建第二站点的发布层。先把 gengrowth-agents-repo 从落后 156 提交 ff 到最新 `f8a43067`。查实本机只有 `.env.example`、无真实 Supabase service-role key（在 Vercel/wzb）——发布机制选型成关键决策。起设计 Workflow（5 reader 吃透 blog_posts 表结构/渲染格式/写入路径+凭证/flow 草稿契约/分类作者 IA → 综合发布桥设计 → Codex 评审），产出 `docs/2026-06-17-gengrowth-publish-bridge-design.md`。设计原则：镜像 oracle 的 gg-md-to-oracle-ts.mjs，但 gengrowth 需 md→HTML→Supabase blog_posts；推荐生成可审 SQL seed→PR→部署（规避本机无密钥），最小切片先发通一篇 PG-WLS-001 EN。（workflow 运行中，结果待回）
 
 ---
+
+### Q4 — 01:30 [claude]
+
+**🙋 提问：**
+
+（AskUserQuestion 选择）发布机制：可以走 supabase CLI，按推荐推进
+
+**🤖 回答：**
+
+按机制 (b) 实现 gengrowth.ai 发布桥并出首篇 PR。先在最新代码上吃透发布目标（5-reader 设计 workflow + Codex 评审，产出 `docs/2026-06-17-gengrowth-publish-bridge-design.md`，Codex 纠正 3 个承重缺陷：非法 `EXCLUDED.*`→逐列枚举、`published_at` 非上线门→`status='published'` 才是、PR 不自动 apply→须 operator 手动跑）。实现：flow-mvp 加 `package.json` + `marked@17/sanitize-html@2.17`（pin 对齐 agents repo，使 md→HTML 的 sanitize 策略与渲染端逐字一致）；新脚本 `tools/scripts/gg-md-to-gengrowth-blog.mjs`（镜像 oracle bridge，复用其已 export 的 parseFrontmatter/deriveDescription/transformBody/atomicWrite；net-new：marked→sanitize、cluster→category(methodology)/pillar_slug 映射、固定 GenGrowth Team byline、确定性 UUIDv5、跨站链接 scrub、15 列 `ON CONFLICT (slug,locale) DO UPDATE` 逐列枚举幂等 upsert）。dry-run 验过：H1 抽为 title 并从正文剥离、表格/FAQ/CTA(gengrowth.ai/app) 正确渲染、引号转义、excerpt 干净、reading_time=8。emit `supabase/seed-blog-w25.sql`（PG-WLS-001 EN），引号/括号平衡校验过。开 PR **#209** 到 xdawayer/gengrowth-agents（OPEN+MERGEABLE）。**未上线**：done=live 还差 merge #209 + 用 supabase CLI apply SQL 到 prod（需 prod 已有迁移 20260327000000）+ 特权 DB 查询验收 —— 这步需 Supabase 访问权（本机仅 .env.example、无 service-role key、无 CLI），待用户。
+
+---

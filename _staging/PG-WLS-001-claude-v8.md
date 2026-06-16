@@ -16,7 +16,7 @@ associated_keywords:
   - seo white labeled ranking tool
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-16T15:34:10.118Z
+generated_at: 2026-06-16T15:38:44.552Z
 content_sha256_short: b19fe8ff8c4873f1
 phase2_checks: all-pass
 ---

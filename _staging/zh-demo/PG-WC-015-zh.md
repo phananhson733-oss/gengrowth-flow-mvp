@@ -1,6 +1,6 @@
 ---
-title: Scotland World Cup 2026 Astrology Saturn Return
-slug: scotland-world-cup-2026-astrology-saturn-return
+title: 苏格兰世界杯土星回归
+slug: 
 date: 2026-06-16
 status: ready-to-review
 type: wiki-entry
@@ -10,13 +10,13 @@ track: 量产线
 page_id: PG-WC-015
 author_id: "julian-thorne"
 author_display_name: "Julian Thorne"
-target_keyword: scotland world cup 2026 astrology saturn return
+target_keyword: 苏格兰世界杯土星回归
 associated_keywords:
 
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-16T16:19:46.192Z
-content_sha256_short: da707bc4b2185b66
+generated_at: 2026-06-16T16:43:44.918Z
+content_sha256_short: ab661c2b5b903a9f
 phase2_checks: all-pass
 ---
 
@@ -40,7 +40,7 @@ phase2_checks: all-pass
 
 ## 苏格兰的世界杯土星回归与相近概念：运作方式 + 取舍
 
-要把苏格兰世界杯土星回归说清楚，最好把它摆在两个邻居旁边比一比。和某位球员本命盘上的行运相比，土星周期这层镜片是用细腻换规模：它读的是一整个足球国度如何消化漫长延迟，却没法告诉你具体哪一场会成为转折。要换来这种集体的、原型层面的视野，就得放弃个人化特写，因为这篇读的是一个国家的时间通道，而非一份首发名单。
+要把苏格兰世界杯土星回归说清楚，不妨把它摆在两个邻居旁边比一比。和某位球员本命盘上的行运相比，土星周期这层镜片是用细腻换规模：它读的是一整个足球国度如何消化漫长延迟，却没法告诉你具体哪一场会成为转折。要换来这种集体的、原型层面的视野，就得放弃个人化特写，因为这篇读的是一个国家的时间通道，而非一份首发名单。
 
 和一次字面意义上的本命盘土星回归相比，这篇则是用精确换诚实。这里并没有为苏格兰足协主张任何经过核验的建会星历，所以不会断言土星精确回归到某个本命度数。沿着 Robert Hand 处理行运的方式——把行运看作给某个主题"标定时机"而非锁定结果——它把原型映射到那段刚好差一点凑满土星周期的 28 年空档上，称之为节律而非字面回归。再摆到一位贴士专家的预测旁边：贴士专家点出结果并押上去，而这种解读点出的是一段凭实力重返、走向成熟的时节，把结局留给开放——一份拒绝替你报比分的解读，反而守得住可信度。
 

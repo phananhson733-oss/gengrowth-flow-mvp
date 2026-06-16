@@ -359,3 +359,26 @@ the 170-rule astrology `TBD_LINK_RULES` data.
 _Bridge file (to be created): `tools/scripts/gg-md-to-gengrowth-blog.mjs`.
 Model on: `tools/scripts/gg-md-to-oracle-ts.mjs`. Target repo:
 `/Users/awayer_mini/gengrowth-agents-repo` (`xdawayer/gengrowth-agents`)._
+
+---
+
+## Codex 评审纠正（gpt-5.5 xhigh，只读，带 file:line）
+
+裁决：**改掉 3 个承重缺陷后可建**。核心假设（HTML 存储、RLS/凭证推理、机制 (b) 可行）已确认。
+
+### 必须先改的 3 个承重缺陷
+1. **upsert SQL 非法**。设计写的 `ON CONFLICT (slug,locale) DO UPDATE SET = EXCLUDED.*` **不是合法 Postgres**。真实 `seed-blog.sql:826-837` 是**逐列枚举**（`title=EXCLUDED.title, content=EXCLUDED.content, …`）且**排除 id/slug/locale/created_at`**。bridge 必须发枚举形式。
+2. **`published_at` 不是上线门**。读路径只过滤 `status='published' + locale`（`blog.ts:51-57,98-106`），从不看 `published_at<=now()`。未来日期的 `published_at` 行也会立刻上线。设计把它当"上线时间戳"是误导 —— **唯一上线门是 `status='published'`**。
+3. **PR 不会自动上线**。CI（`ci.yml`）只 lint/test/typecheck，**不跑任何 db push/seed**。合并 PR 不会让 post 上线 —— **必须由有权限的人在 Supabase SQL Editor 手动跑一次 SQL**（这是硬步骤，不是软 tradeoff）。
+
+### 其他纠正（已纳入实现清单）
+- **mock 回退会掩盖坏读**：`blog.ts:69-72,114-122` 在空/错时回退到 `MOCK_BLOG_POSTS` → 页面可能显示 mock 数据假装上线。**验收必须直接查 prod DB（特权查询），不能只看 `/en/blog/<slug>` 渲染页**。
+- **契约对齐 TS 类型而非仅 DB**：DB 里 `pillar_slug/locale_exclusive/updated_at/reading_time/created_at` 可空，但 `src/types/blog.ts:18,21-24` 要求 `locale_exclusive/updated_at/reading_time/created_at` —— 省略能插进 DB 但会破 UI。**按 TS 类型补全**。
+- **`created_at` 用 `DEFAULT` 占位**：要保 15 列位置序又想走默认，VALUES 第 15 槽必须字面写 `DEFAULT`。
+- **`(slug,locale)` 唯一索引是 prod 前置**：由迁移 `20260327000000` 加（`website_tables.sql:7` 原本只 slug UNIQUE）。**apply 前先确认 prod 已有该迁移**，否则 ON CONFLICT 报错。
+- **机制 (c) 是纯假设**：repo 里**没有** `/api/blog/publish` 路由（全是读）；`createAdminSupabaseClient`（`admin.ts:11-19`）缺 key 会 throw；部署指南的 Vercel env 列表也没列 service-role key。(c) = 净新代码+部署+配 token+先在 Vercel 配 key。
+
+### Codex 确认设计对的部分
+HTML 经 `dangerouslySetInnerHTML` 渲染、无 markdown parser（`blog-article-content.tsx:120-131`）→ 必须存 HTML；sanitize 策略 `defaults.concat(['img'])`（用 concat，不是手写 tag 列表）；`category` 是裸 TEXT CHECK 无 FK → collapse-to-methodology 零 schema 改动可行；RLS 允许 anon 读 published、无 public insert → 特权 SQL/服务端写、anon 不能写；无 cover 列；15 列序与 seed+CREATE TABLE 一致；机制 (b) 无本机密钥可行、拒绝 (a) 正确。
+
+> 注：inline `<img>` 只在正文内渲染，**不会**成为 blog-card 缩略图或标题上方 hero（`blog-card.tsx` 只渲染 category/date/title/excerpt/reading_time）。要 hero/缩略图是另一个 schema+renderer 改动，v1 不含。

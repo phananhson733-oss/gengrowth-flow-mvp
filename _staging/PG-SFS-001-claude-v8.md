@@ -1,8 +1,8 @@
-# Why SEO for SaaS Needs a Page-by-Page Architecture, Not Just More Blog Posts
+# Why SEO for SaaS Needs a Page-by-Page Plan, Not Just More Blog Posts
 
 ## What Is SaaS SEO Strategy / Product-Led Content?
 
-SaaS SEO strategy is **a framework that optimizes every page type a SaaS site owns, not only its blog**. Where a generic content site optimizes one asset type, seo for saas treats the blog, the feature page, the pricing page, the comparison page, and the trial signup as separate assets with separate jobs. Each page sits at a different point in the buying decision, so each one earns rankings on different intent and converts on different cues. Product-led content is the part of that framework where the product itself becomes the proof, the example, and the path to signup.
+SaaS SEO strategy is **a framework that optimizes every page type a SaaS site owns, not just the blog**. Where a generic content site optimizes one asset type, seo for saas treats the blog, the feature page, the pricing page, the comparison page, and the trial signup as separate assets with separate jobs. Each page sits at a different point in the buying decision, so each one earns rankings on different intent and converts on different cues. Product-led content is the part of that framework where the product itself becomes the proof, the example, and the path to signup.
 
 - The blog earns top-of-funnel traffic; the pricing and trial pages convert the bottom of it
 - Feature and comparison pages target high-intent, low-volume queries that blogs rarely reach

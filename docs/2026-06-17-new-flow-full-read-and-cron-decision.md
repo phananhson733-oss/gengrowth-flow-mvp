@@ -224,3 +224,63 @@ risks. In short:
 9. Path drift: deploy scripts default to `/Users/wzb/…` and some sync scripts to
    `/Users/lynne/…`; correct operation on this machine relies on env overrides
    (`GG_ORACLE_DIR` etc.).
+
+---
+
+## Codex 二次意见（gpt-5.5 xhigh，只读，对抗式复核）
+
+Codex 独立读了 `gg-seo-autopilot-tick.sh` / `gg-seo-autopilot.mjs` / `lib/site-profile.mjs` /
+`docs/FLOW-content-production-to-vault.md`，带 file:line 核验综合结论。**确认**了大部分，并
+**纠正了两处会影响决策的过度断言**。
+
+### Codex 确认（与综合一致）
+- tick 是 **full author+publish loop**，不是 publish-only（`tick.sh:100-143`、`:31-33`、`:153-176`，MAX_CYCLES=50）。
+- publish-gate 的 `claude -p "$(cat ...)"` **没有 timeout wrapper**（`tick.sh:83-94`）→ token 过期会 401、或无限挂起静默卡死。
+- `latestPlan()` 只取排序最后的 `*blog-output-plan*.md`（`autopilot.mjs:184-190`），W25 gengrowth plan 排最后。
+- publish 路径硬编码 oracle / xdawayer/oracle / www.astrologywiki.com（`autopilot.mjs:63-65,1090,1127,1148-1150`）。
+- `GG_SITE` split-brain 真实：`activeSite()` 归一化（`site-profile.mjs:31-34`），但 `_phase2-validate.mjs:35,520-522` 和 `_render-aura-shared.mjs:312-314` 用裸 `process.env.GG_SITE==='gengrowth'`。
+
+### Codex 纠正（综合的两处错误）
+1. **"第一轮 --scan 就会把现有 gengrowth 草稿合并上线 astrologywiki" — 过度断言。** `claimable()/phase2Passed()`
+   只认 `_staging/<pgId>-en.md` + `<pgId>-en.manifest.json`（`autopilot.mjs:281-289,382-383`）；磁盘上的
+   gengrowth 草稿是 `PG-WLS-001-claude-v8.md`（无 `-en.md` 变体）→ **第一轮 scan 会跳过**。污染**真实但延后**：
+   一旦 loop 自己的 author leg 把 PG-WLS 写成 `-en.md`，`--scan` 走 plan-task→`claimable()` 且**不调用** `findSheetRow()`
+   （`autopilot.mjs:1002-1015`），passing 的 B2B "white label" 稿就会被转换并 PR/merge 到 astrologywiki。
+2. **".autopilot-claims.json 空/未初始化" — 错。** ledger 在 `~/gengrowth-ops/inbox/06-tasks/tasks/.autopilot-claims.json`（~55KB），
+   不在 repo 根；目前无 PG-WLS/PG-ART 条目、无 pushed/verified-preview 条目。
+- 另：author orchestrator/rescue **有** execFileSync timeout（`:478-481,:977-981`）；只有 publish-gate 的 claude -p 无界。
+- 另：`--status` **非只读** —— 会 reconcile 已 merge 的 PR 并 `saveClaims()`（`:1264-1268`），"只是看看"也会改 ledger。
+
+### Codex 最终裁决：**LEAVE DISABLED（先别重载）**
+当前脚本**没有 publish-only 模式**，tick 无条件跑 `--scan → claude-p verify/merge → --author` 整个环 ——
+正撞 canonical runbook 禁止的本机 autopilot 撰写路径（`FLOW-content-production-to-vault.md:18-19`）。
+安全的 publish-only 重载**需要先改代码，不是配置开关**：
+
+1. 加真正的 publish-only 硬门（如 `GG_AUTOPILOT_MODE=publish-only`：publish_if_pending 后即 idle，永不调 `--author`）。
+2. 给 publish-gate 的 `claude -p` 包 `gtimeout ~1800s`（`tick.sh:90-93`）。
+3. plan 选择加 `GG_AUTOPILOT_PLAN` override 或 astrology-only 过滤，别让 `latestPlan` 选中 W25 gengrowth plan。
+4. reload 前置检查：launchctl 未加载、ledger 无 pushed/verified-preview、`~/oracle` clean、`claude --version` + `gh auth status` 均绿。
+5. 跑 smoke：`gg-seo-autopilot.smoke` + `lib-site-profile.smoke`。
+
+**在这个确定性门建好之前，综合里的 Option B 无法靠配置实现 → 实际塌缩为 Option C（保持关闭 / 主-LLM 手动撰写+发布）。**
+
+### Codex 补充的、综合漏掉的风险
+- 空 `authorId` 不被 author-known gate 拦（`gg-md-to-oracle-ts.mjs:438-445` vs `autopilot.mjs:1045-1048`）→ gengrowth 稿能绕过 persona 守卫。
+- `checkPlanBox()/appendPublishLog()` 在 merge 后仍调 `latestPlan()`（`:1202-1207,1259`）→ 合并旧 W22 astrology 分支可能更新错的（W25 gengrowth）plan 文件。
+- preview 验收 prompt 是 astrology-specific（`tick.prompt.md:33-36`，Reviewer A 审占星事实、CTA=astrologywiki），不适用 gengrowth.ai。
+
+---
+
+## 最终决定（2026-06-17）
+
+**不重载 `com.gengrowth.seo-autopilot`，保持 disabled。** 这覆盖了本会话早先"重新加载+修自启"的选择 ——
+全解读 + Codex 复核后证明：当前脚本只有 full-loop、没有 publish-only 模式，直接重载会(1)复活被 canonical
+runbook 禁止的 ~40% 卡死撰写路径、(2)在后续周期把 W25 gengrowth B2B 稿误发到 astrologywiki、(3)publish-gate
+无 timeout 会 401/挂死静默卡线。
+
+**gengrowth.ai（第二站点）现状：撰写/校验层已接（`GG_SITE=gengrowth`），但发布层是半成品 —— 没有
+draft→Supabase blog_posts 桥、没有 per-site workbook、没有站点感知作者路由、SC-GEO 未接未校准。
+cron 当前完全无法把 gengrowth 发上线。**
+
+下一步两条路（见 cron_options B/C）：要么投入做上面 5 项代码改造再开 publish-only；要么保持手动，等
+`docs/plans/2026-06-13-oauth-cli-worker-autopilot-plan.md`（确定性 verify/merge worker）落地。

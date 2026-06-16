@@ -1,6 +1,6 @@
-// _workbook-spec.mjs — 13 tab schema 规格（1:1 复刻 .gs v3.1）+ 6 个项目运维 tab
+// _workbook-spec.mjs — tab schema 规格（1:1 复刻 .gs v3.3：关键词主表 29 列 + 生产候选视图）+ 6 个项目运维 tab
 //
-// SSOT: docs/spec/upstream-canon/keyword-sheet-setup.gs  (Apps Script v3.1)
+// SSOT: docs/spec/upstream-canon/keyword-sheet-setup.gs  (Apps Script v3.3)
 //   ⚠️ 不允许在本文件做单独偏离。如果 .gs 上游变更：
 //      1. 先 `_sync-canon.sh` 拉新 .gs
 //      2. 再同步改本文件
@@ -23,7 +23,7 @@ export const COLORS = Object.freeze({
 // SOURCE 下拉值（gg-keyword-promote.mjs 同步）
 export const SOURCE_LIST = ['竞品映射', '内容缺口', '种子词拓展', '社区挖掘', '趋势词', 'Social信号'];
 
-// 公式（关键词主表 J/K/M/N/O/R/S/U）— 1:1 复刻 .gs v3.1 line 199-260
+// 公式（关键词主表 J/K/M/N/O/R/S/U/V/X）— 1:1 复刻 .gs v3.3
 // 注：`'配置'` 在 Sheets 公式里需单引号
 const CFG = "'配置'";
 
@@ -31,19 +31,25 @@ export const MASTER_FORMULAS = Object.freeze({
   J: '=IF(OR(G2="",I2=""),"待填",G2-I2)',
   K: `=IF(A2="","",IF(SUMPRODUCT((${CFG}!$A$6:$A$25<>"")*ISNUMBER(SEARCH(${CFG}!$A$6:$A$25,A2)))>0,"✅相关","⚠️待确认"))`,
   M: '=IF(A2="","",IF(OR(ISNUMBER(SEARCH("best ",A2)),ISNUMBER(SEARCH(" vs ",A2)),ISNUMBER(SEARCH("alternative",A2)),ISNUMBER(SEARCH("comparison",A2)),ISNUMBER(SEARCH("review",A2)),ISNUMBER(SEARCH("pricing",A2)),ISNUMBER(SEARCH("top ",A2))),"Commercial",IF(OR(ISNUMBER(SEARCH("buy ",A2)),ISNUMBER(SEARCH(" cost",A2)),ISNUMBER(SEARCH("cheap",A2)),ISNUMBER(SEARCH("discount",A2)),ISNUMBER(SEARCH("free trial",A2)),ISNUMBER(SEARCH("sign up",A2))),"Transactional",IF(OR(ISNUMBER(SEARCH("fix ",A2)),ISNUMBER(SEARCH("not working",A2)),ISNUMBER(SEARCH("how to fix",A2)),ISNUMBER(SEARCH("how to solve",A2)),ISNUMBER(SEARCH("problem",A2)),ISNUMBER(SEARCH(" error",A2))),"Problem-aware",IF(OR(ISNUMBER(SEARCH("how to ",A2)),ISNUMBER(SEARCH("what is",A2)),ISNUMBER(SEARCH(" guide",A2)),ISNUMBER(SEARCH("tutorial",A2)),ISNUMBER(SEARCH("why ",A2)),ISNUMBER(SEARCH("explained",A2))),"Informational","待确认")))))',
-  N: '=IF(J2="待填","待填",IF(ISNUMBER(J2),IF(J2>30,"❌跳过","✅通过"),"待填"))',
-  O: `=IF(A2="","",IF(SUMPRODUCT((${CFG}!$A$28:$A$45<>"")*ISNUMBER(SEARCH(${CFG}!$A$28:$A$45,A2)))>0,"❌跳过",IF(N2="❌跳过","❌跳过",IF(AND(ISNUMBER(F2),F2>1.2,ISNUMBER(D2),D2<35,K2="✅相关",L2="Y"),"趋势词",IF(AND(ISNUMBER(D2),D2<20,ISNUMBER(C2),C2>=100),"快速胜利",IF(AND(ISNUMBER(D2),D2<20,OR(M2="Problem-aware",M2="Informational"),ISNUMBER(C2),C2>=50),"快速胜利",IF(AND(ISNUMBER(D2),D2>=20,D2<=50,OR(M2="Commercial",M2="Transactional")),"战略词","长尾词")))))))`,
+  // v3.3：DR过滤 → 竞争建议（公式据 J 列 DR 差值给产能建议，不再删词）
+  N: '=IF(J2="待填","待填",IF(ISNUMBER(J2),IF(J2>30,"⏸暂缓","✅可做"),"待填"))',
+  // v3.3：去掉 DR-skip 子句（高 DR 词仍进桶），负向词命中返回 ❌无关
+  O: `=IF(A2="","",IF(SUMPRODUCT((${CFG}!$A$28:$A$45<>"")*ISNUMBER(SEARCH(${CFG}!$A$28:$A$45,A2)))>0,"❌无关",IF(AND(ISNUMBER(F2),F2>1.2,ISNUMBER(D2),D2<35,K2="✅相关",L2="Y"),"趋势词",IF(AND(ISNUMBER(D2),D2<20,ISNUMBER(C2),C2>=100),"快速胜利",IF(AND(ISNUMBER(D2),D2<20,OR(M2="Problem-aware",M2="Informational"),ISNUMBER(C2),C2>=50),"快速胜利",IF(AND(ISNUMBER(D2),D2>=20,D2<=50,OR(M2="Commercial",M2="Transactional")),"战略词","长尾词"))))))`,
   R: '=IF(A2="","",IF(P2<>"",P2&"★",O2))',
   S: '=IF(A2="","",IF(AND(ISNUMBER(C2),C2>=500,OR(ISNUMBER(SEARCH("what is",A2)),ISNUMBER(SEARCH("meaning",A2)),ISNUMBER(SEARCH("definition",A2)),ISNUMBER(SEARCH("how does",A2)),ISNUMBER(SEARCH("explained",A2)))),"⚠️疑似高风险",""))',
   U: '=IF(A2="",0,IF(H2="✅弱",3,IF(H2="⚠️中",2,1))+IF(OR(M2="Commercial",M2="Problem-aware"),1,0))',
+  // v3.3 新列：生产准入_自动（O 无关 → 无关；否则据 N 竞争建议给可生产/暂缓）
+  V: '=IF(A2="","",IF(O2="❌无关","无关",IF(N2="✅可做","可生产",IF(N2="⏸暂缓","暂缓","暂缓"))))',
+  // v3.3 新列：生产准入（W 手动准入优先，否则取 V 自动准入）
+  X: '=IF(A2="","",IF(W2<>"",W2,V2))',
 });
 
-// 视图表的 SORT/FILTER 公式（line 542-577）
+// 视图表的 SORT/FILTER 公式（v3.3：范围 A:X → A:AC，29 列）
 export const VIEW_FORMULAS = Object.freeze({
-  trend:     `=IF(COUNTIF('关键词主表'!R:R,"*趋势词*")>0,{'关键词主表'!A1:X1;SORT(FILTER('关键词主表'!A2:X1500,REGEXMATCH('关键词主表'!R2:R1500,"趋势词")),6,FALSE)},{"暂无趋势词"})`,
-  quickWin:  `=IF(COUNTIF('关键词主表'!R:R,"*快速胜利*")>0,{'关键词主表'!A1:X1;SORT(FILTER('关键词主表'!A2:X1500,REGEXMATCH('关键词主表'!R2:R1500,"快速胜利")),21,FALSE,3,FALSE)},{"暂无快速胜利词"})`,
-  strategic: `=IF(COUNTIF('关键词主表'!R:R,"*战略词*")>0,{'关键词主表'!A1:X1;SORT(FILTER('关键词主表'!A2:X1500,REGEXMATCH('关键词主表'!R2:R1500,"战略词")),5,FALSE)},{"暂无战略词"})`,
-  longTail:  `=IF(COUNTIF('关键词主表'!R:R,"*长尾词*")>0,{'关键词主表'!A1:X1;FILTER('关键词主表'!A2:X1500,REGEXMATCH('关键词主表'!R2:R1500,"长尾词"))},{"暂无长尾词"})`,
+  trend:     `=IF(COUNTIF('关键词主表'!R:R,"*趋势词*")>0,{'关键词主表'!A1:AC1;SORT(FILTER('关键词主表'!A2:AC1500,REGEXMATCH('关键词主表'!R2:R1500,"趋势词")),6,FALSE)},{"暂无趋势词"})`,
+  quickWin:  `=IF(COUNTIF('关键词主表'!R:R,"*快速胜利*")>0,{'关键词主表'!A1:AC1;SORT(FILTER('关键词主表'!A2:AC1500,REGEXMATCH('关键词主表'!R2:R1500,"快速胜利")),21,FALSE,3,FALSE)},{"暂无快速胜利词"})`,
+  strategic: `=IF(COUNTIF('关键词主表'!R:R,"*战略词*")>0,{'关键词主表'!A1:AC1;SORT(FILTER('关键词主表'!A2:AC1500,REGEXMATCH('关键词主表'!R2:R1500,"战略词")),5,FALSE)},{"暂无战略词"})`,
+  longTail:  `=IF(COUNTIF('关键词主表'!R:R,"*长尾词*")>0,{'关键词主表'!A1:AC1;FILTER('关键词主表'!A2:AC1500,REGEXMATCH('关键词主表'!R2:R1500,"长尾词"))},{"暂无长尾词"})`,
 });
 
 // 内容追踪公式（line 660-662）
@@ -106,27 +112,31 @@ export const TABS = [
   {
     name: '关键词主表',
     type: 'master',
-    header: ['关键词', '来源', '月搜索量', 'KD', 'CPC($)', 'Trends比值', 'Top10最低2站DR均值', 'SERP弱度', '自有站DR', 'DR差值', 'G1话题相关', 'G2可承接', '意图', 'DR过滤', '分桶_自动', '手动分桶', '调整原因', '分桶', 'AIO预判', 'AIO风险', '弱度意图分', '内容状态', '发布URL', '备注', 'cluster_id'],
+    header: ['关键词', '来源', '月搜索量', 'KD', 'CPC($)', 'Trends比值', 'Top10最低2站DR均值', 'SERP弱度', '自有站DR', 'DR差值', 'G1话题相关', 'G2可承接', '意图', '竞争建议', '分桶_自动', '手动分桶', '调整原因', '分桶', 'AIO预判', 'AIO风险', '弱度意图分', '生产准入_自动', '手动生产准入', '生产准入', '生产状态', 'page_id', '发布URL', '备注', 'cluster_id'],
     headerColorByCol: { // 1-indexed
-      // navy (公式自动): J K M N O R S U = 10 11 13 14 15 18 19 21
+      // navy (公式自动): J K M N O R S U V X = 10 11 13 14 15 18 19 21 22 24
       1: 'green', 2: 'green', 3: 'green', 4: 'green', 5: 'slate', 6: 'slate',
       7: 'green', 8: 'green', 9: 'green', 10: 'navy', 11: 'navy', 12: 'slate',
       13: 'navy', 14: 'navy', 15: 'navy', 16: 'slate', 17: 'slate', 18: 'navy',
-      19: 'navy', 20: 'slate', 21: 'navy', 22: 'slate', 23: 'slate', 24: 'slate',
+      19: 'navy', 20: 'slate', 21: 'navy', 22: 'navy', 23: 'slate', 24: 'navy',
+      25: 'slate', 26: 'slate', 27: 'slate', 28: 'slate', 29: 'slate',
     },
     extras: {
       frozenRows: 1,
       headerFontColor: 'white',
       headerBold: true,
       headerFontSize: 11,
-      columnWidths: [270, 100, 90, 55, 65, 90, 100, 80, 80, 80, 100, 70, 110, 70, 120, 110, 200, 120, 110, 70, 80, 90, 220, 120],
-      formulas: { J2: MASTER_FORMULAS.J, K2: MASTER_FORMULAS.K, M2: MASTER_FORMULAS.M, N2: MASTER_FORMULAS.N, O2: MASTER_FORMULAS.O, R2: MASTER_FORMULAS.R, S2: MASTER_FORMULAS.S, U2: MASTER_FORMULAS.U },
-      // 向下复制公式到行 500
+      // 前 21 列（A-U）同 v3.1；V-AC（22-29）为 v3.3 新列
+      columnWidths: [270, 100, 90, 55, 65, 90, 100, 80, 80, 80, 100, 70, 110, 70, 120, 110, 200, 120, 110, 70, 80, 90, 110, 90, 90, 130, 220, 120, 120],
+      formulas: { J2: MASTER_FORMULAS.J, K2: MASTER_FORMULAS.K, M2: MASTER_FORMULAS.M, N2: MASTER_FORMULAS.N, O2: MASTER_FORMULAS.O, R2: MASTER_FORMULAS.R, S2: MASTER_FORMULAS.S, U2: MASTER_FORMULAS.U, V2: MASTER_FORMULAS.V, X2: MASTER_FORMULAS.X },
+      // 向下复制公式到行 1500
       formulaFillDown: [
         { src: 'J2:O2', dst: 'J3:O1500' },
         { src: 'R2', dst: 'R3:R1500' },
         { src: 'S2', dst: 'S3:S1500' },
         { src: 'U2', dst: 'U3:U1500' },
+        { src: 'V2', dst: 'V3:V1500' },
+        { src: 'X2', dst: 'X3:X1500' },
       ],
       dataValidations: [
         { range: 'B2:B1500', list: SOURCE_LIST },
@@ -134,7 +144,10 @@ export const TABS = [
         { range: 'L2:L1500', list: ['Y', 'N'] },
         { range: 'P2:P1500', list: ['趋势词', '快速胜利', '战略词', '长尾词', '❌跳过'] },
         { range: 'T2:T1500', list: ['高', '低', '未查'] },
-        { range: 'V2:V1500', list: ['未开始', '写作中', '已发布', '暂缓'] },
+        // v3.3：W 手动生产准入（V/X 现为公式列，不设下拉）
+        { range: 'W2:W1500', list: ['可生产', '暂缓', '集群必需', '无关'] },
+        // v3.3：Y 生产状态
+        { range: 'Y2:Y1500', list: ['未开始', '已建卡', '已发布', '已合并', '暂停'] },
       ],
       conditionalFormats: [
         // R 列分桶（主色）
@@ -157,6 +170,16 @@ export const TABS = [
         { range: 'H2:H1500', textContains: '❌强', bg: { red: 1.0,   green: 0.804, blue: 0.824 } },
         // S 列 AIO 橙警
         { range: 'S2:S1500', textContains: '疑似高风险', bg: { red: 1.0, green: 0.878, blue: 0.698 } }, // #ffe0b2
+        // v3.3：V:X 生产准入色（V生产准入_自动 / W手动生产准入 / X生产准入）
+        { range: 'V2:X1500', textContains: '无关',   bg: { red: 0.933, green: 0.933, blue: 0.933 } }, // #eeeeee
+        { range: 'V2:X1500', textContains: '暂缓',   bg: { red: 1.0,   green: 0.976, blue: 0.769 } }, // #fff9c4
+        { range: 'V2:X1500', textContains: '集群必需', bg: { red: 0.819, green: 0.769, blue: 0.914 } }, // #d1c4e9
+        { range: 'V2:X1500', textContains: '可生产', bg: { red: 0.910, green: 0.961, blue: 0.914 } }, // #e8f5e9
+        // v3.3：Y 生产状态色
+        { range: 'Y2:Y1500', textContains: '已建卡', bg: { red: 0.733, green: 0.871, blue: 0.984 } }, // #bbdefb
+        { range: 'Y2:Y1500', textContains: '已发布', bg: { red: 0.784, green: 0.902, blue: 0.788 } }, // #c8e6c9
+        { range: 'Y2:Y1500', textContains: '已合并', bg: { red: 0.878, green: 0.878, blue: 0.878 } }, // #e0e0e0
+        { range: 'Y2:Y1500', textContains: '暂停',   bg: { red: 1.0,   green: 0.804, blue: 0.824 } }, // #ffcdd2
       ],
       // 列注释（line 161-179）
       notes: {
@@ -170,7 +193,7 @@ export const TABS = [
         K1: 'G1话题相关：自动检测关键词是否命中配置!A6:A25的TOPIC_KEYWORDS列表。\n✅相关=话题相关；⚠️待确认=未命中，需人工判断后决定是否填L列=Y。\n初始化后必须先更新配置表话题词，否则默认示例词无意义。',
         L1: 'G2可承接（手动）：站内是否有工具/内容/功能能承接该趋势词的用户需求？\n填Y才能进趋势桶；空值视为N。这是纯人工判断项，脚本无法自动识别。',
         M1: '意图（自动，模式匹配，约80%准确）：\nCommercial: best/vs/alternative/review/pricing\nTransactional: buy/cost/free trial\nProblem-aware: fix/not working/error\nInformational: what is/how to/guide\n未命中→待确认，批量交Claude/GPT用SOP第四节prompt处理。',
-        N1: 'DR过滤（公式，唯一真正的过滤关卡）：基于J列DR差值自动判断。\n✅通过：差值≤30，可执行\n❌跳过：差值>30，当前站DR不足以竞争该词\n待填：G或I列未填，无法计算\n❌跳过的词仍留在主表。当站DR提升后重填I列，此列自动重判。',
+        N1: '竞争建议（v3.3 公式，产能建议，不再删词）：基于J列DR差值自动给生产产能建议。\n✅可做：差值≤30，当前站DR足以竞争，优先生产\n⏸暂缓：差值>30，当前站DR暂不足以竞争，建议暂缓（仍保留在主表，不剔除）\n待填：G或I列未填，无法计算\n站DR提升后重填I列，此列自动重判。最终是否生产看 X 列生产准入。',
         O1: '分桶_自动：系统按SOP规则计算的分桶结果（公式列，勿直接修改）。\n如需调整，在P列选目标桶，Q列说明原因。O列始终保留自动判断结果供复盘参考。',
         P1: '手动分桶：非空时覆盖自动分桶（O列），R列显示"桶名★"。\n用途：纠正误分类/强制品牌词进指定桶/试验性调整。\n所有手动调整必须在Q列填写原因，复盘时判断是否调整分类规则。',
         Q1: '调整原因示例：\n"品牌词，强制快速胜利" / "CPC=0且无商业意图，误入战略词" / "试验：观察低KD定义词SERP弱度表现"',
@@ -178,6 +201,14 @@ export const TABS = [
         S1: 'AIO预判（自动）：搜索量≥500且含 what is/meaning/definition/how does/explained 时自动标注。\n仅供参考，须在T列用无痕窗口实际确认后填写最终结论。',
         T1: 'AIO风险（手动，S列标记⚠️疑似高风险词须优先确认）：无痕窗口搜索目标词，查看是否出现AI Overview框。\n高：搜索结果顶部有AI Overview摘要框（须用无痕窗口，避免个性化影响）\n低：无AI Overview框\n未查：待确认\n高风险内容策略：避免纯定义型，改为操作型/对比型/案例型，增加原创视角。',
         U1: '弱度意图分（自动）：H列SERP弱度+M列意图的合成分，供快速胜利桶视图排序、并在集群模式下作聚类辅助分流信号；不是执行优先级——执行优先级是集群级的（见主题集群表 priority）。\nH列SERP弱度：✅弱=3/⚠️中=2/❌强=1；M列意图：Commercial或Problem-aware各+1分。\nH列（SERP弱度）填完后排序才有实际意义。',
+        V1: '生产准入_自动（v3.3 公式，勿改）：综合 O 列分桶与 N 列竞争建议给自动准入结论。\nO=❌无关 → 无关；N=✅可做 → 可生产；N=⏸暂缓（或待填）→ 暂缓。\n如需人工覆盖，在 W 列填手动准入；最终结论看 X 列。',
+        W1: '手动生产准入（v3.3 手动）：非空时覆盖 V 列自动准入，写入 X 列。\n可选值：可生产 / 暂缓 / 集群必需 / 无关。\n用途：把暂缓但集群必需的词强制纳入生产（集群必需），或人工剔除（无关）。',
+        X1: '生产准入（v3.3 最终结论，只读公式列）：W 手动准入非空时取 W，否则取 V 自动准入。\n生产候选视图按本列筛「可生产 / 集群必需」。这是决定一个词是否进入内容生产的最终依据。',
+        Y1: '生产状态（v3.3 手动）：该词对应页面的生产进度。\n可选值：未开始 / 已建卡 / 已发布 / 已合并 / 暂停。\n建卡=已进选题登记表；已合并=并入其他页面；与选题登记表 Status 对齐。',
+        Z1: 'page_id（v3.3）：该词对应页面的 6-ID 主键（如 page_chiron_7th_house），外键 → 选题登记表。建卡后回填。',
+        AA1: '发布URL（v3.3）：该词对应页面发布后的正式在线网址。发布后回填。',
+        AB1: '备注（v3.3）：该词的人工备注、决策记录、合并说明等自由文本。',
+        AC1: 'cluster_id（v3.3）：该词归属的集群 ID，外键 → 主题集群表。用于集群级聚类与产能规划。',
       },
     },
   },
@@ -330,17 +361,19 @@ export const TABS = [
   {
     name: '结果复盘表',
     type: 'standard',
-    header: ['outcome_id', 'page_id', 'cluster_id', 'url', 'day14_收录', 'day14_impressions', 'day30_进Top50词数', 'day30_clicks', 'day60_pv', 'day60_目标国pv', '决策', '备注'],
-    headerColorByCol: { 1: 'green', 2: 'green', 3: 'green', 4: 'green', 5: 'green', 6: 'slate', 7: 'slate', 8: 'slate', 9: 'slate', 10: 'slate', 11: 'green', 12: 'slate' },
+    // v3.3：在 v3.1 基础上插入 4 列（申请时间 F / 索引修复状态 G / 记录日期 I / 当前最高排名词（排名）K）
+    header: ['outcome_id', 'page_id', 'cluster_id', 'url', 'day14_收录', '申请时间', '索引修复状态', 'day14_impressions', '记录日期', 'day30_进Top50词数', '当前最高排名词（排名）', 'day30_clicks', 'day60_pv', 'day60_目标国pv', '决策', '备注'],
+    headerColorByCol: { 1: 'green', 2: 'green', 3: 'green', 4: 'green', 5: 'green', 6: 'slate', 7: 'slate', 8: 'slate', 9: 'slate', 10: 'slate', 11: 'slate', 12: 'slate', 13: 'slate', 14: 'slate', 15: 'green', 16: 'slate' },
     extras: {
       frozenRows: 1,
       headerFontColor: 'white',
       headerBold: true,
       headerFontSize: 11,
-      columnWidths: [130, 130, 170, 220, 90, 130, 130, 100, 90, 120, 70, 260],
+      columnWidths: [130, 130, 170, 220, 90, 110, 120, 130, 110, 130, 160, 100, 90, 120, 70, 260],
       dataValidations: [
         { range: 'E2:E1500', list: ['Y', 'N'] },
-        { range: 'K2:K1500', list: ['继续', '调整', '暂停'] },
+        // v3.3：决策下拉从 K 列移到 O 列
+        { range: 'O2:O1500', list: ['继续', '调整', '暂停'] },
       ],
       notes: {
         A1: 'outcome_id：6-ID 主键。每个页面 × 每个时点（Day 14 / 30 / 60）一行，或集群级汇总一行。手工编号如 out_001、out_clu_aura_d30。',
@@ -348,16 +381,23 @@ export const TABS = [
         C1: 'cluster_id：外键 → 主题集群表。集群级汇总时填。',
         D1: 'url：发布 URL。便于直接复盘。',
         E1: 'day14_收录：Y/N。GSC → URL Inspection 看页面是否已收录。Day 14 节点。',
-        F1: 'day14_impressions：GSC 该 URL 近 14 天 impressions（按 Country 维度筛目标国）。手工粘贴 GSC 导出。',
-        G1: 'day30_进Top50词数：该 URL 在 GSC 排名 P1-P50 的 query 数。Day 30 节点。',
-        H1: 'day30_clicks：GSC 该 URL 近 30 天 clicks（目标国）。',
-        I1: 'day60_pv：GA4 该 URL 近 60 天 page_view 总数（全部地区）。',
-        J1: 'day60_目标国pv：GA4 按 Country 维度筛目标国后的 PV。核对「美国为主」目标用这个，不用全部 PV（PRD v0.7 §12 / §13）。',
-        K1: '决策：继续 / 调整 / 暂停。按 PRD v0.7 §7.9 Day 14/30/60 规则判：Day 14 未收录→查技术；Day 30 P31-P80→刷新标题；Day 60 无信号→合并/noindex/暂停。',
-        L1: '备注：复盘观察、调整原因、下一步动作。',
+        F1: '申请时间（v3.3）：向 GSC 提交收录/索引申请（URL Inspection → Request Indexing）的日期。',
+        G1: '索引修复状态（v3.3）：未收录页面的索引问题排查/修复进度（如 已提交 / 已收录 / 待处理）。',
+        H1: 'day14_impressions：GSC 该 URL 近 14 天 impressions（按 Country 维度筛目标国）。手工粘贴 GSC 导出。',
+        I1: '记录日期（v3.3）：本行数据的采集/记录日期。',
+        J1: 'day30_进Top50词数：该 URL 在 GSC 排名 P1-P50 的 query 数。Day 30 节点。',
+        K1: '当前最高排名词（排名）（v3.3）：该 URL 当前排名最高的 query 及其排名，如 "orange aura meaning (P7)"。',
+        L1: 'day30_clicks：GSC 该 URL 近 30 天 clicks（目标国）。',
+        M1: 'day60_pv：GA4 该 URL 近 60 天 page_view 总数（全部地区）。',
+        N1: 'day60_目标国pv：GA4 按 Country 维度筛目标国后的 PV。核对「美国为主」目标用这个，不用全部 PV（PRD v0.7 §12 / §13）。',
+        O1: '决策：继续 / 调整 / 暂停。按 PRD v0.7 §7.9 Day 14/30/60 规则判：Day 14 未收录→查技术；Day 30 P31-P80→刷新标题；Day 60 无信号→合并/noindex/暂停。',
+        P1: '备注：复盘观察、调整原因、下一步动作。',
       },
     },
   },
+
+  // 生产候选视图（v3.3）— 按关键词主表 X 列（生产准入）筛 可生产/集群必需 的只读视图
+  { name: '生产候选', type: 'view', formula: `=IF(COUNTIF('关键词主表'!X:X,"可生产")+COUNTIF('关键词主表'!X:X,"集群必需")>0,{'关键词主表'!A1:AC1;FILTER('关键词主表'!A2:AC1500,REGEXMATCH('关键词主表'!X2:X1500,"^(可生产|集群必需)$"))},{"暂无生产候选"})`, headerColor: { red: 0.851, green: 0.918, blue: 0.827 }, note: '生产候选 — 按关键词主表 X 列(生产准入)筛 可生产/集群必需 的只读视图' },
 
   // 5 视图表（line 540-577）
   { name: '趋势词', type: 'view', formula: VIEW_FORMULAS.trend, headerColor: { red: 0.910, green: 0.961, blue: 0.914 }, note: '趋势词 — Trends比值降序 | K列G1✅相关+L列G2=Y双门槛 | 发现即执行，不等周计划' },
@@ -467,16 +507,17 @@ export const TABS = [
       ['gengrowth-flow-mvp · v8 pipeline workbook (PRD v0.7 附录 D 复刻)'],
       [],
       ['Owner: xdawayer@gmail.com. Writer SA: gg-writer-sa@aqueous-sandbox-496915-i1.iam.gserviceaccount.com'],
-      [`Schema 复刻自: docs/spec/upstream-canon/keyword-sheet-setup.gs (v3.1)`],
+      [`Schema 复刻自: docs/spec/upstream-canon/keyword-sheet-setup.gs (v3.3)`],
       [`Bootstrap on: ${new Date().toISOString()}`],
       [],
       ['Tab', '用途', '读/写方'],
       ['配置', '目标国家 / TOPIC_KEYWORDS / NEGATIVE_KEYWORDS', '人工初始化，全公式 vlookup'],
-      ['关键词主表', 'A-X 24 列；J/K/M/N/O/R/S/U 为公式自动', 'mine/promote 写 A-I；公式列勿动'],
+      ['关键词主表', 'A-AC 29 列（v3.3）；J/K/M/N/O/R/S/U/V/X 为公式自动', 'mine/promote 写 A-I；公式列勿动；W/Y-AC 人工填'],
       ['主题集群表', 'cluster_id / track / us_share 等', '人工填'],
       ['选题登记表', '21 列 v2.1（v2.0 15 列 + 新 6 列）', 'promote 写 A；人工补 B-U'],
       ['CTA Map', 'page_role → CTA 文案', '人工填，预填 6 行 Week-1 默认'],
-      ['结果复盘表', 'Day 14/30/60 GSC+GA4 数据', '维护期手粘'],
+      ['结果复盘表', '16 列（v3.3）；Day 14/30/60 GSC+GA4 数据 + 收录申请/索引修复/记录日期/最高排名词', '维护期手粘'],
+      ['生产候选', '主表 X 列（生产准入）筛 可生产/集群必需（公式自动）', '只读视图'],
       ['趋势词 / 快速胜利 / 战略词 / 长尾词', '主表 R 列分桶视图（公式自动）', '只读视图'],
       ['分桶规则', '文档表，PRD §7.3.2 规则说明', '只读'],
       ['内容追踪', '预期 vs 实际偏差', '人工填'],

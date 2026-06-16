@@ -14,9 +14,9 @@ Most founders inherit a blog-first mental model and quietly let it run the whole
 
 The cost of getting the architecture wrong shows up in a few concrete ways:
 
-1. **Misallocated effort.** A team publishes forty blog posts a quarter while the pricing page, which captures the most decision-ready visitors, has thin copy and no internal links pointing at it.
-2. **Invisible conversion gaps.** Rankings look healthy in aggregate, but the pages closest to revenue never enter the report, so nobody notices they convert poorly.
-3. **Slow compounding.** Without a feature-page layer, the site never ranks for the specific "tool for X" queries that bring in users already shopping for a solution.
+1. **Misallocated effort.** A team publishes forty blog posts a quarter while the pricing page, which captures the most decision-ready visitors, has thin copy and no internal links pointing at it. The calendar stays full, but the work never lands on the pages that move revenue.
+2. **Invisible conversion gaps.** Rankings look healthy in aggregate, but the pages closest to revenue never enter the report, so nobody notices they convert poorly. By the time a founder asks why traffic is up and trials are flat, months of effort have already pointed the wrong direction.
+3. **Slow compounding.** Without a feature-page layer, the site never ranks for the specific "tool for X" queries that bring in users already shopping for a solution. Those queries carry less volume than informational topics, but the visitors arrive far closer to a decision, which is exactly where a SaaS site should compete.
 
 ## How SaaS SEO Strategy Works in Real SaaS Scenarios
 
@@ -27,6 +27,8 @@ seo for saas plays out differently on each page type, and the framework only wor
 3. **Pricing pages** optimize for branded and "[product] pricing" searches, answer the comparison and objection questions buyers actually type, and keep crawlable text rather than hiding everything in interactive components.
 4. **Comparison pages** target "[you] vs [competitor]" intent with honest, neutral framing, since users arriving on these queries are already mid-evaluation. This layer connects to the [[<TBD-internal-link: explainer on competitor comparison pages>]] that breaks down the format in depth.
 5. **Trial signup pages** are treated as indexable SEO assets, not just an app route, so branded and high-intent searches land somewhere that ranks and converts in one step.
+
+A concrete pattern makes the difference visible. Picture a SaaS company with a strong blog ranking for "how to manage remote teams." It draws steady traffic, but almost none of it signs up, because the post answers a question and then sends readers away. Once the team adds a feature page for "remote team scheduling software," links the blog post to it, and gives the pricing page crawlable comparison copy, the same audience now has a path from question to product to checkout. Nothing about the blog changed; the architecture around it did.
 
 ## Common Implementation Misreadings
 

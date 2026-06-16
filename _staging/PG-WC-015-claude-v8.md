@@ -14,7 +14,7 @@ This is a symbolic, educational reading, not a prediction of results or a bettin
 
 Most "scotland world cup 2026 astrology saturn return" content collapses into hope or dread about the draw. That is where readers get stuck, because the draw never explains why a 28-year wait feels less like bad luck and more like a threshold that had to be earned. The lens that helps is the one Liz Greene is known for: read Saturn not as a punishing planet but as the principle of time, limitation, and the slow maturation that gives an achievement its weight. Read that way, Scotland's return frames a Saturn-style passage, where a nation circles back to a doorway it last reached in 1998 and steps through it on merit.
 
-A Saturn return, in psychological terms, is less about reward and more about consolidation, the moment you account for who you have become across a full cycle. Scotland reached six of seven World Cups from 1974 to 1998, then endured six straight qualifying failures, a long contraction that mirrors Saturn's themes of testing and patience. The return, when it comes, can read as the maturity earned through that wait rather than a guarantee of what happens next, and that is the same discipline a reader can bring to any threshold they have circled back toward.
+A Saturn return, in psychological terms, is less about reward and more about consolidation, the moment you account for who you have become across a full cycle. Scotland reached six of seven World Cups from 1974 to 1998, then endured six straight qualifying failures, a long contraction that mirrors Saturn's themes of testing and patience. The return, when it comes, can read as the maturity earned through that wait rather than a promise of what happens next, and that is the same discipline a reader can bring to any threshold they have circled back toward.
 
 ## Scotland's World Cup Saturn Return vs a Literal Natal Saturn Return: How It Works + Trade-offs
 
@@ -37,7 +37,7 @@ You can apply the same Saturn-cycle method to any long-delayed return, not only 
 ## Common Misreadings
 
 1. **The 28-year gap is an exact Saturn return.** A full Saturn return runs about 29.5 years, so 28 years sits just short of it; the honest framing is the rhythm of a Saturn cycle, not a literal completed return.
-2. **A Saturn return guarantees triumph.** Saturn marks consolidation and earned maturity, which can read as durability or as a hard lesson; it never promises a trophy, and the chart predicts no result.
+2. **A Saturn return promises triumph.** Saturn marks consolidation and earned maturity, which can read as durability or as a hard lesson; it never promises a trophy, and the chart predicts no result.
 3. **This uses Scotland's verified founding chart.** No specific Scottish-FA natal-chart Saturn return is claimed here, since there is no verified founding-chart ephemeris in hand; the reading is archetypal, applied to the 28-year gap.
 4. **Saturn in Aries is just background noise.** Saturn in Aries (2025-28) is a cardinal fresh start, and it mirrors the theme of returning on merit, though it times a symbolic mood rather than a match.
 
@@ -48,7 +48,7 @@ You can apply the same Saturn-cycle method to any long-delayed return, not only 
 | Saturn return rhythm | Marks earned thresholds across a full cycle | Archetypal Saturn cycle of about 29.4 years | A 28-year wait read as a near-complete Saturn passage |
 | The 1998-2026 gap | Frames a long contraction and delayed re-entry | Six qualifying failures after six finals in seven | A return to a doorway last reached in 1998 |
 | Saturn in Aries (2025-28) | Symbolizes a cardinal fresh start on merit | Transiting Saturn moving through Aries | The note of beginning again after a long wait |
-| Qualification moment | Reads as the threshold reached and earned | The 4-2 win over Denmark on 18 November 2025 | Maturity earned through patience, not a guaranteed result |
+| Qualification moment | Reads as the threshold reached and earned | The 4-2 win over Denmark on 18 November 2025 | Maturity earned through patience, not a promised result |
 
 ## Common Questions About Scotland's World Cup Saturn Return
 
@@ -72,7 +72,7 @@ No, this is symbolic and educational astrology that times themes of maturity and
 
 1. Recall a threshold you reached once, then lost for years; what did the long wait ask of you before you could return?
 2. Think of an achievement that felt earned only because it was delayed; how did the waiting change its weight?
-3. Notice where you want a return to be guaranteed; what would shift if you read it as a Saturn cycle of maturity instead?
+3. Notice where you want a return to be certain; what would shift if you read it as a Saturn cycle of maturity instead?
 
 ## Related Reading
 

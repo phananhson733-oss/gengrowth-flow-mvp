@@ -18,8 +18,8 @@ associated_keywords:
   - german players star signs
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-16T13:01:48.844Z
-content_sha256_short: f379f4ffef67754e
+generated_at: 2026-06-16T13:14:17.453Z
+content_sha256_short: dfe72a255a9a883a
 phase2_checks: all-pass
 ---
 
@@ -88,7 +88,7 @@ Joshua Kimmich's Aquarius Sun rhymes with the German Football Association's own 
 
 **Do the 2026 transits favour Germany's players?**
 
-They mark themes, not outcomes. Jupiter sits in Cancer for the group stage from 11 to 29 June, forming a flowing water trine to Musiala's Pisces Sun, then moves into Leo on 30 June for the knockout phase, where it sits at an awkward quincunx to that same Pisces Sun. Jupiter in Cancer also sextiles Wirtz's Taurus Sun, while Saturn in Aries sextiles Kimmich's Aquarius Sun as a measured, disciplined support — descriptions of theme, never of a scoreline.
+They mark themes, not outcomes. Jupiter sits in Cancer from 11 to 29 June, forming a flowing water trine to Musiala's Pisces Sun, then moves into Leo on 30 June, by which point the knockout rounds are under way, where it sits at an awkward quincunx to that same Pisces Sun. Jupiter in Cancer also sextiles Wirtz's Taurus Sun, while Saturn in Aries sextiles Kimmich's Aquarius Sun as a measured, disciplined support — descriptions of theme, never of a scoreline.
 
 **Is this Western or Vedic astrology?**
 

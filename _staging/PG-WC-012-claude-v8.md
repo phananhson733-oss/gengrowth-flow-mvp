@@ -63,7 +63,7 @@ Joshua Kimmich's Aquarius Sun rhymes with the German Football Association's own 
 
 **Do the 2026 transits favour Germany's players?**
 
-They mark themes, not outcomes. Jupiter sits in Cancer for the group stage from 11 to 29 June, forming a flowing water trine to Musiala's Pisces Sun, then moves into Leo on 30 June for the knockout phase, where it sits at an awkward quincunx to that same Pisces Sun. Jupiter in Cancer also sextiles Wirtz's Taurus Sun, while Saturn in Aries sextiles Kimmich's Aquarius Sun as a measured, disciplined support — descriptions of theme, never of a scoreline.
+They mark themes, not outcomes. Jupiter sits in Cancer from 11 to 29 June, forming a flowing water trine to Musiala's Pisces Sun, then moves into Leo on 30 June, by which point the knockout rounds are under way, where it sits at an awkward quincunx to that same Pisces Sun. Jupiter in Cancer also sextiles Wirtz's Taurus Sun, while Saturn in Aries sextiles Kimmich's Aquarius Sun as a measured, disciplined support — descriptions of theme, never of a scoreline.
 
 **Is this Western or Vedic astrology?**
 

@@ -16,7 +16,7 @@ A saas seo platform matters because the default tooling steers SaaS teams toward
 2. **A crawlable-page ceiling.** Integration and comparison pages get hand-built one at a time, so you cap out at dozens of indexable pages when the opportunity is hundreds.
 3. **Misaligned reporting.** Generic tools report rankings and traffic; your board asks about trial starts and pipeline, and nobody can connect the two.
 
-Anchoring the work to the funnel is the job most teams actually came to do. This connects to the [[<TBD-internal-link: explainer on product-led SEO]], which frames why product pages deserve the same rigor as content.
+Anchoring the work to the funnel is the job most teams actually came to do. This connects to the [[<TBD-internal-link: explainer on product-led SEO>]], which frames why product pages deserve the same rigor as content. The reason the gap persists is structural: the tools that dominate this category were built for media sites with thousands of articles, so their default workflows assume content volume is the lever. For a SaaS business, the lever is usually a handful of high-intent pages that decide whether a visitor starts a trial. When the tooling can't see that distinction, your team inherits its blind spot and spends quarters polishing posts that never touch revenue.
 
 ## How a SaaS SEO Platform Works in Real Product Workflows
 
@@ -90,9 +90,9 @@ There's no fixed number; the limit is whether each page answers a distinct query
 
 ## Related Reading
 
-- [[<TBD-internal-link: startup guide to DIY SEO]] — for early teams deciding what to handle in-house before buying software
-- [[<TBD-internal-link: comparison of B2B agency SEO models]] — for teams weighing an agency partner alongside platform tooling
-- [[<TBD-internal-link: guide to pricing page optimization]] — a deeper look at the funnel page most SaaS teams under-optimize
+- [[<TBD-internal-link: startup guide to DIY SEO>]] — for early teams deciding what to handle in-house before buying software
+- [[<TBD-internal-link: comparison of B2B agency SEO models>]] — for teams weighing an agency partner alongside platform tooling
+- [[<TBD-internal-link: guide to pricing page optimization>]] — a deeper look at the funnel page most SaaS teams under-optimize
 
 ## Take Action
 

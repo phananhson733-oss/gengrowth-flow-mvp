@@ -25,7 +25,7 @@ phase2_checks: all-pass
 
 ## What Is a SaaS SEO Platform?
 
-A saas seo platform is **software built to optimize the specific pages a SaaS company ranks and converts on — trial, pricing, integration, and comparison pages — rather than generic blog content**. It treats your product surface as the ranking asset, not an afterthought. Most general SEO tools were designed for content sites and publishers, so they grade you on keyword counts and backlink volume while ignoring whether your pricing page is crawlable or your integration directory can scale to hundreds of indexable entries. The right tooling sits closer to your product and funnel than to your blog. It sits under the broader [[<TBD-internal-link: pillar guide to SaaS SEO strategy>]], which maps how each page type earns and converts organic search.
+A saas seo platform is **software built to optimize the specific pages a SaaS company ranks and converts on — trial, pricing, integration, and comparison pages — rather than generic blog content**. It treats your product surface as the ranking asset, not an afterthought. Most general SEO tools were designed for content sites and publishers, so they grade you on keyword counts and backlink volume while ignoring whether your pricing page is crawlable or your integration directory can scale to hundreds of indexable entries. The right tooling sits closer to your product and funnel than to your blog. It sits under the broader pillar guide to SaaS SEO strategy, which maps how each page type earns and converts organic search.
 
 - Scores funnel pages (trial, pricing, integrations) on conversion-relevant SEO signals, not just word count
 - Generates and maintains programmatic pages — integration directories, comparison pages — at scale

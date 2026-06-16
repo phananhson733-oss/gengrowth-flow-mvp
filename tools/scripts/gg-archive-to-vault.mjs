@@ -37,7 +37,8 @@ const SITE = args.site || 'astrologywiki';
 const VAULT = args.vault || join(process.env.HOME, 'gengrowth-wiki');
 const ORACLE = args.oracle || '/Users/wzb/Code/oracle';
 const DRY = !!args['dry-run'];
-const SITE_HOST = 'https://www.astrologywiki.com';
+const SITE_HOST = args['site-host'] || 'https://www.astrologywiki.com';
+const URL_PATH = args['url-path'] || '/en/wiki/'; // leading+trailing slash
 
 const LINK_RULES = [
   [/vinicius.{0,6}(jr|junior).{0,16}(zodiac|sun)\s*sign/i, 'vinicius-jr-zodiac-sign'],
@@ -133,13 +134,13 @@ function buildNote({ fm, body, slug, related }) {
 
 // ---- backfill mode: source from a JSON dump of oracle WikiArticle objects -----
 function linkify(content, slugToTitle) {
-  return content.replace(/\[([^\]]+)\]\(\/(?:en|zh)\/wiki\/([a-z0-9-]+)\)/g, (_, text, slug) => {
+  return content.replace(/\[([^\]]+)\]\(\/(?:en|zh)\/(?:wiki|blog)\/([a-z0-9-]+)\)/g, (_, text, slug) => {
     const t = slugToTitle[slug];
     return t ? `[[${safeTitle(t)}|${text}]]` : `[[${slug}|${text}]]`;
   });
 }
 function buildNoteFromArticle(art, slugToTitle) {
-  const url = `${SITE_HOST}/en/wiki/${art.slug}`;
+  const url = `${SITE_HOST}${URL_PATH}${art.slug}`;
   const title = safeTitle(art.title || art.slug);
   const heroBase = (art.image || '').split('/').pop() || `${art.slug}.jpg`;
   const kws = Array.isArray(art.keywords) ? art.keywords : [];

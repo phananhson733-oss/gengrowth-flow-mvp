@@ -79,7 +79,7 @@ Before committing to this page structure, judge your current setup against obser
 1. **Page-type coverage.** Pull your indexed URLs and sort by template. If feature, pricing, and comparison pages are missing or thin, the upside is high.
 2. **Intent distribution.** Map your top organic queries to funnel stage. A pile of informational traffic with almost no commercial-intent rankings is a red flag worth fixing.
 3. **Internal link flow.** Trace whether blog posts actually link to feature and pricing pages. If links dead-end inside the blog, authority never reaches the converting pages.
-4. **Conversion instrumentation.** Confirm pricing and trial pages are tracked as SEO landing pages. If they are absent from your reporting, you cannot yet judge whether they work.
+4. **Conversion instrumentation.** Confirm pricing and trial pages are tracked as SEO landing pages, which is exactly the funnel visibility [a SaaS SEO platform should give you](/en/blog/saas-seo-platform). If they are absent from your reporting, you cannot yet judge whether they work.
 
 ## How to Implement SaaS SEO Strategy Step by Step
 

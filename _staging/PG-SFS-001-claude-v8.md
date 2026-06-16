@@ -34,7 +34,7 @@ SaaS SEO strategy is **a framework that optimizes every page type a SaaS site ow
 
 ## Why It Matters for Your Workflow
 
-Most founders inherit a blog-first mental model and quietly let it run the whole SEO program. That is the friction this guide exists to fix: seo for saas gets conflated with blog content strategy, so teams chase post volume while the highest-intent pages on the site, the pricing and trial pages, sit unoptimized and uninstrumented. The job you came here to do is learn an SEO framework built for SaaS page structures rather than borrow a content-site playbook that ignores them. This page sits under the broader [[<TBD-internal-link: pillar guide to SaaS organic growth>]], which maps how each page type feeds the next.
+Most founders inherit a blog-first mental model and quietly let it run the whole SEO program. That is the friction this guide exists to fix: seo for saas gets conflated with blog content strategy, so teams chase post volume while the highest-intent pages on the site, the pricing and trial pages, sit unoptimized and uninstrumented. The job you came here to do is learn an SEO framework built for SaaS page structures rather than borrow a content-site playbook that ignores them. This page sits under the broader pillar guide to SaaS organic growth, which maps how each page type feeds the next.
 
 The cost of getting the page structure wrong shows up in a few concrete ways:
 
@@ -49,7 +49,7 @@ seo for saas plays out differently on each page type, and the framework only wor
 1. **Blog posts** capture broad informational queries and link internally to the feature and comparison pages, passing both authority and readers downstream.
 2. **Feature pages** target "software for [use case]" queries, lead with the product solving that exact job, and link laterally to related features so the cluster reinforces itself.
 3. **Pricing pages** optimize for branded and "[product] pricing" searches, answer the comparison and objection questions buyers actually type, and keep crawlable text rather than hiding everything in interactive components.
-4. **Comparison pages** target "[you] vs [competitor]" intent with honest, neutral framing, since users arriving on these queries are already mid-evaluation. This layer connects to the [[<TBD-internal-link: explainer on competitor comparison pages>]] that breaks down the format in depth.
+4. **Comparison pages** target "[you] vs [competitor]" intent with honest, neutral framing, since users arriving on these queries are already mid-evaluation. This layer connects to the explainer on competitor comparison pages that breaks down the format in depth.
 5. **Trial signup pages** are treated as indexable SEO assets, not just an app route, so branded and high-intent searches land somewhere that ranks and converts in one step.
 
 A concrete pattern makes the difference visible. Picture a SaaS company with a strong blog ranking for "how to manage remote teams." It draws steady traffic, but almost none of it signs up, because the post answers a question and then sends readers away. Once the team adds a feature page for "remote team scheduling software," links the blog post to it, and gives the pricing page crawlable comparison copy, the same audience now has a path from question to product to checkout. Nothing about the blog changed; the page structure around it did.
@@ -90,7 +90,7 @@ Use this order so each layer reinforces the next; applying seo for saas as a seq
 3. Rewrite pricing and trial pages with crawlable, objection-answering copy and confirm they are indexable rather than blocked behind app logic.
 4. Build the feature-page layer next, one page per core "software for [job]" query, each leading with the product solving that job.
 5. Add neutral comparison pages for the rivals buyers already search against, linking them to the relevant feature pages.
-6. Wire internal links so blog posts flow authority and readers into feature, pricing, and comparison pages instead of looping inside the blog. The handoff sits alongside the [[<TBD-internal-link: guide to internal linking for product sites>]].
+6. Wire internal links so blog posts flow authority and readers into feature, pricing, and comparison pages instead of looping inside the blog. The handoff sits alongside the guide to internal linking for product sites.
 7. Instrument every page type as an SEO landing page so reporting reflects the full funnel, not just blog sessions.
 
 ## Common Questions About SaaS SEO Strategy
@@ -113,8 +113,8 @@ There is no fixed count. The page structure matters once you have any commercial
 
 ## Related Reading
 
-- [[<TBD-internal-link: guide to startup DIY SEO for early teams>]] — for founders running the program without an agency
-- [[<TBD-internal-link: guide to B2B agency SEO delivery>]] — for teams evaluating outside help on this page structure
+- [SEO for SaaS startups on a lean budget](/en/blog/seo-for-saas-startups) — for founders running the program without an agency
+- a guide to B2B agency SEO delivery — for teams evaluating outside help on this page structure
 - [[<TBD-internal-link: overview of programmatic SEO for SaaS feature pages>]] — for scaling the feature-page layer beyond a handful of URLs
 
 ## Take Action

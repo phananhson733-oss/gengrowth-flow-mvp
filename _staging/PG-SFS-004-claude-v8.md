@@ -31,13 +31,13 @@ SaaS startup SEO is **the practice of earning search traffic for a software prod
 - It treats your product, pricing, and integration pages as ranking assets, not just the blog
 - It accepts a slow compounding curve because a zero-DA domain earns trust gradually
 
-This sits inside the broader [[<TBD-internal-link: pillar guide to SaaS SEO strategy>]], which maps how each stage of growth shifts the priorities below.
+This sits inside the broader pillar guide to SaaS SEO strategy, which maps how each stage of growth shifts the priorities below.
 
 ## Why It Matters for Your Workflow
 
 Pre-revenue founders skip SEO for a rational reason: most startup guides assume an existing domain, a publishing cadence, and a writer on payroll. When the playbook you find online quietly requires a content team you do not have, the sensible move looks like ignoring search entirely until later. That delay is expensive, because the trust signals a domain accumulates are slow and cumulative, and starting at month one beats starting at month twelve.
 
-Across the early-stage rollouts we've audited, the deciding factor is rarely effort and almost always sequencing. Founders who treat seo for saas startups as a weekly two-hour habit, rather than a quarterly content sprint, tend to see the first qualified signups before they have written ten posts. The job here is concrete: learn a repeatable framework that fits SaaS product and pricing pages, not generic content-site logic, and that survives a five-hour weekly ceiling. This complements your broader [[<TBD-internal-link: founder-led DIY SEO checklist>]] for the weeks when you have no budget at all.
+Across the early-stage rollouts we've audited, the deciding factor is rarely effort and almost always sequencing. Founders who treat seo for saas startups as a weekly two-hour habit, rather than a quarterly content sprint, tend to see the first qualified signups before they have written ten posts. The job here is concrete: learn a repeatable framework that fits SaaS product and pricing pages, not generic content-site logic, and that survives a five-hour weekly ceiling. This complements your broader founder-led DIY SEO checklist for the weeks when you have no budget at all.
 
 ## How SaaS Startup SEO Works in Real Founder Workflows
 
@@ -107,8 +107,8 @@ A sustainable solo cadence is roughly three to five hours weekly, split between 
 
 ## Related Reading
 
-- [[<TBD-internal-link: comparison of in-house versus agency SEO for startups>]] — for founders weighing when to stop doing it solo
-- [[<TBD-internal-link: guide to programmatic SEO for SaaS>]] — for the stage when one cluster has proven the model and you want to scale page production
+- A comparison of in-house versus agency SEO for startups — for founders weighing when to stop doing it solo
+- A guide to programmatic SEO for SaaS — for the stage when one cluster has proven the model and you want to scale page production
 
 ## Take Action
 

@@ -1,3 +1,28 @@
+---
+title: Scotland World Cup 2026 Astrology Saturn Return
+slug: scotland-world-cup-2026-astrology-saturn-return
+date: 2026-06-16
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T3
+track: 量产线
+page_id: PG-WC-015
+author_id: "julian-thorne"
+author_display_name: "Julian Thorne"
+target_keyword: scotland world cup 2026 astrology saturn return
+associated_keywords:
+  - scotland national team astrology
+  - scotland saturn return football
+  - scotland world cup 2026 astrology
+  - tartan army astrology
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-16T13:00:07.800Z
+content_sha256_short: c1bde49fc58b9dc1
+phase2_checks: all-pass
+---
+
 # Scotland's World Cup Saturn Return: Reading a 28-Year Wait Through the Rhythm of Saturn
 
 ## What Is Scotland's World Cup Saturn Return?

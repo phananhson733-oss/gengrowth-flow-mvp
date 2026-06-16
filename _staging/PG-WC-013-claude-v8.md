@@ -1,6 +1,6 @@
 # Germany's World Cup 2026 Team Astrology: An Aquarius System Between Saturn and Jupiter
 
-## What is Germany's World Cup 2026 Team Astrology?
+## What Is Germany's World Cup 2026 Team Astrology?
 
 Germany's World Cup 2026 team astrology is **a mundane reading of the German Football Association's 1900 founding chart against the year's transits, anchored by an Aquarius Sun**. Mundane astrology reads institutions and nations through their founding charts rather than personal ones, so the question is not a single player's form but which collective themes the 2026 sky activates for a federation built on system over stars. Read as a structure rather than a slogan, [[<TBD-internal-link: World Cup 2026 astrology themes pillar>]] sets the DFB's Aquarius Sun against two slow transits to ask when its themes of order and visibility are most active.
 

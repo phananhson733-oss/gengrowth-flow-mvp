@@ -1,3 +1,28 @@
+---
+title: Vinicius Jr Birth Chart Astrology
+slug: vinicius-jr-birth-chart-astrology
+date: 2026-06-16
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-WC-014
+author_id: "aditi-sharma"
+author_display_name: "Aditi Sharma"
+target_keyword: vinicius jr birth chart astrology
+associated_keywords:
+  - vinicius junior birth chart
+  - vinicius jr natal chart
+  - vinicius cancer sun sagittarius moon
+  - brazil world cup astrology 2026
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-16T12:59:45.086Z
+content_sha256_short: 6ca256f8377142e5
+phase2_checks: all-pass
+---
+
 # The Vinicius Jr Birth Chart in Astrology: A Cancer Sun, a Sagittarius Moon, and the 2026 Sky
 
 ## What Is the Vinicius Jr Birth Chart?

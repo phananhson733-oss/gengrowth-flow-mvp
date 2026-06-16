@@ -1,6 +1,6 @@
 # Germany's World Cup Player Charts 2026: Reading the Sun Signs of a Young Core
 
-## What is Germany's World Cup Player Charts?
+## What Is Germany's World Cup Player Charts?
 
 Germany's World Cup Player Charts are **a symbolic Sun-sign reading of key squad members in Julian Nagelsmann's 2026 selection, used to describe archetypes rather than to call match results**. Read this way, a chart is a vocabulary for temperament and tendency, not a scoreboard, so the question is what each player symbolically brings, not who lifts the trophy. Approached carefully, the germany world cup players birth chart 2026 question becomes a study of contrasting styles, and the broader [[<TBD-internal-link: Germany World Cup 2026 team astrology>]] sits behind these three Suns as a single squad signature rather than a set of separate horoscopes.
 

@@ -1,3 +1,28 @@
+---
+title: Vozinha Birth Chart
+slug: vozinha-birth-chart
+date: 2026-06-16
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T3
+track: 量产线
+page_id: PG-WC-011
+author_id: "elena-vane"
+author_display_name: "Elena Vane"
+target_keyword: vozinha birth chart
+associated_keywords:
+  - josimar dias astrology
+  - cape verde world cup astrology
+  - vozinha zodiac sign
+  - goalkeeper birth chart
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-16T13:00:50.988Z
+content_sha256_short: 1eaf39d1fdd22bf8
+phase2_checks: all-pass
+---
+
 # The Vozinha Birth Chart: A Gemini Keeper and the Island That Reached Its First World Cup
 
 ## What Is the Vozinha Birth Chart?

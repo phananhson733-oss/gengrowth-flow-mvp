@@ -1,3 +1,28 @@
+---
+title: Germany World Cup 2026 Astrology Team
+slug: germany-world-cup-2026-astrology-team
+date: 2026-06-16
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-WC-013
+author_id: "aditi-sharma"
+author_display_name: "Aditi Sharma"
+target_keyword: germany world cup 2026 astrology team
+associated_keywords:
+  - dfb natal chart astrology
+  - germany national team astrology
+  - germany mundane astrology
+  - germany world cup astrology
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-16T13:00:56.980Z
+content_sha256_short: 6cb8831a69d79f6c
+phase2_checks: all-pass
+---
+
 # Germany's World Cup 2026 Team Astrology: An Aquarius System Between Saturn and Jupiter
 
 ## What Is Germany's World Cup 2026 Team Astrology?

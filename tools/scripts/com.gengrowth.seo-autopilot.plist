@@ -16,10 +16,17 @@
     <string>/bin/bash</string>
     <string>/Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-seo-autopilot-tick.sh</string>
   </array>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <!-- publish-only (2026-06-17): the cron NEVER authors on this machine (canonical
+         runbook); it only claims ready drafts + verify/merges previews to prod. -->
+    <key>GG_AUTOPILOT_MODE</key>
+    <string>publish-only</string>
+  </dict>
   <key>StartInterval</key>
   <integer>1500</integer>
   <key>RunAtLoad</key>
-  <false/>
+  <true/>
   <key>StandardOutPath</key>
   <string>/Users/awayer_mini/gengrowth-agents/cron-sync/seo_autopilot/launchd.out.log</string>
   <key>StandardErrorPath</key>

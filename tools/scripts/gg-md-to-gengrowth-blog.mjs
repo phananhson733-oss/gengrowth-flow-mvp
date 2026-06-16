@@ -168,7 +168,8 @@ function buildRow(args) {
   const pageId = args.pageId || (typeof frontmatter.page_id === 'string' ? frontmatter.page_id : '')
     || basename(sourceAbs).match(/(PG-[A-Z0-9]+-\d+)/)?.[1] || '';
   const prefix = pageId.match(/^(PG-[A-Z]+)/)?.[1] || '';
-  const cluster = args.pillar || CLUSTER_BY_PREFIX[prefix] || (prefix ? slugify(prefix) : 'gengrowth');
+  const pillar = args.pillar || PILLAR_BY_PREFIX[prefix] || DEFAULT_PILLAR;
+  if (!VALID_PILLARS.has(pillar)) throw new Error(`invalid pillar '${pillar}' (must be one of ${[...VALID_PILLARS].join(', ')})`);
   let category = args.category || DEFAULT_CATEGORY;
   if (!VALID_CATEGORIES.has(category)) throw new Error(`invalid category '${category}' (must be one of ${[...VALID_CATEGORIES].join(', ')})`);
 
@@ -204,7 +205,7 @@ function buildRow(args) {
     content,
     excerpt,
     category,
-    pillar_slug: cluster,
+    pillar_slug: pillar,
     locale,
     locale_exclusive: true, // EN-only phase; flip to false once a sibling-locale row exists
     author: AUTHOR_BY_LOCALE[locale],
@@ -214,7 +215,7 @@ function buildRow(args) {
     status: 'published', // the ONLY go-live gate (read path filters status='published')
     created_at: publishedAt,
   };
-  return { row, meta: { pageId, cluster, words, scrubbed, sourceAbs } };
+  return { row, meta: { pageId, pillar, words, scrubbed, sourceAbs } };
 }
 
 // ── emit: idempotent SQL upsert, merged-by-(slug,locale) within --out file ────

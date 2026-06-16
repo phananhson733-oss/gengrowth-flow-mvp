@@ -26,7 +26,7 @@ phase2_checks: all-pass
 
 ## What Is an Agency Rank Tracking Tool?
 
-An agency rank tracking tool is **software that monitors keyword positions for many clients at once and turns that data into branded reports automatically**. Instead of one team member pulling rankings by hand for each account, the system checks positions on a schedule, stores the history, and assembles client-ready exports. That shift matters because agency rank tracking is rarely a data-accuracy problem; it is a capacity and margin problem hiding behind a spreadsheet. This sits under the broader [[<TBD-internal-link: pillar guide to agency SEO reporting workflows>]], which maps how delivery models shape profitability.
+An agency rank tracking tool is **software that monitors keyword positions for many clients at once and turns that data into branded reports automatically**. Instead of one team member pulling rankings by hand for each account, the system checks positions on a schedule, stores the history, and assembles client-ready exports. That shift matters because agency rank tracking is rarely a data-accuracy problem; it is a capacity and margin problem hiding behind a spreadsheet. This sits under the broader question of agency SEO reporting workflows, which maps how delivery models shape profitability.
 
 - Tracks positions for multiple client portfolios from a single dashboard
 - Generates white-label reports without manual copy-paste each cycle
@@ -36,7 +36,7 @@ An agency rank tracking tool is **software that monitors keyword positions for m
 
 Agency rank tracking matters because the time spent pulling positions by hand is invisible until you price it. Most managers evaluate trackers on accuracy and location settings, then never count the recurring hours each client costs every month. Across the white-label rollouts we've audited, the pattern repeats: the deciding factor isn't tracking precision, it's how many billable hours the team quietly burns on reporting that no client sees as value.
 
-The job most readers want done here is straightforward: track client rankings on autopilot and ship professional reports at scale, without adding headcount. When that job is unmet, three costs compound. The team's senior time leaks into clerical pulls, report quality drifts as accounts pile up, and the agency leaves a new deliverable — AI search visibility — entirely unbilled. The [[<TBD-internal-link: explainer on white-label SEO reporting>]] covers how that last gap is reshaping client expectations.
+The job most readers want done here is straightforward: track client rankings on autopilot and ship professional reports at scale, without adding headcount. When that job is unmet, three costs compound. The team's senior time leaks into clerical pulls, report quality drifts as accounts pile up, and the agency leaves a new deliverable — AI search visibility — entirely unbilled. Our look at [SEO reporting tools built for SEO companies](/en/blog/seo-reporting-tool-for-seo-companies) covers how that last gap is reshaping client expectations.
 
 The margin math is the part feature-comparison pages skip entirely. Picture a strategist earning a meaningful hourly rate who spends two hours a month per client pulling positions, formatting exports, and writing commentary. At twenty clients, that is roughly a full working week each month spent on a task that generates no new strategic insight. The retainer still has to absorb that cost, so it comes straight out of the margin the agency thought it was earning. Teams often see this only after a slow quarter, when the reporting load stays flat while revenue dips and the per-client overhead suddenly looks indefensible. Modeling that hidden cost is exactly why this page exists — and why a checklist of tracking features tends to lead managers to the wrong decision.
 
@@ -116,9 +116,9 @@ Not if reports are fully white-labeled. Unbranded exports, your logo, and a sing
 
 ## Related Reading
 
-- [[<TBD-internal-link: comparison with managed SEO reporting services>]] — for teams weighing in-house tracking against an outsourced reporting partner
-- [[<TBD-internal-link: guide to white-label SEO pricing>]] — for setting retainer prices that protect margin once reporting is automated
-- [[<TBD-internal-link: local SEO audit workflow for multi-client agencies>]] — for teams layering local audits onto their tracking and reporting stack
+- Comparison with managed SEO reporting services — for teams weighing in-house tracking against an outsourced reporting partner
+- A guide to white-label SEO pricing — for setting retainer prices that protect margin once reporting is automated
+- A [local SEO audit workflow](/en/blog/local-seo-audit) for multi-client agencies — for teams layering local audits onto their tracking and reporting stack
 
 ## Take Action
 
@@ -127,4 +127,4 @@ Connect a few client portfolios and run one automated reporting cycle inside Gen
 ## Sources
 
 - Based on patterns GenGrowth has observed across multi-client agency reporting rollouts; no third-party study is cited.
-- [[<TBD-external-link: Google Search Central | Google Search's guidance on AI features in Search | the official reference for how AI Overviews surface content described here>]]
+- Google Search Central — Google Search's guidance on AI features in Search, the official reference for how AI Overviews surface content described here.

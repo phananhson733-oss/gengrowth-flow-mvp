@@ -26,7 +26,7 @@ phase2_checks: all-pass
 
 ## What Is a Local SEO Audit?
 
-A local SEO audit is **a structured review of the signals that decide local search and local pack visibility**. It looks at the Google Business Profile, citations, reviews, and on-page factors together, then judges each one by how much it moves local visibility rather than treating them as a single undifferentiated checklist. Done well, it sits under the broader [[<TBD-internal-link: pillar guide to local search ranking>]] and shows why a client ranks in one place but vanishes in another.
+A local SEO audit is **a structured review of the signals that decide local search and local pack visibility**. It looks at the Google Business Profile, citations, reviews, and on-page factors together, then judges each one by how much it moves local visibility rather than treating them as a single undifferentiated checklist. Done well, it sits under the broader pillar guide to local search ranking and shows why a client ranks in one place but vanishes in another.
 
 - It evaluates Google Business Profile completeness, NAP consistency, and review velocity as local pack inputs
 - It separately weighs on-page content, technical health, and backlinks as organic ranking inputs
@@ -40,7 +40,7 @@ A local SEO audit matters because most consultants conflate a site audit with a 
 2. **Reports that confuse instead of clarify.** A flat list of 40 mixed issues reads as thorough but leaves the client unsure what to approve, which stalls the work and the invoice.
 3. **Margin lost to rework.** Every cycle that re-audits the whole site from scratch eats time that a repeatable, prioritized review would protect.
 
-A workflow that answers the right question first saves the back-and-forth that erodes both margin and trust, and it pairs naturally with a [[<TBD-internal-link: guide to automated rank tracking for client reports>]].
+A workflow that answers the right question first saves the back-and-forth that erodes both margin and trust, and it pairs naturally with [automating rank tracking across every client](/en/blog/agency-rank-tracking).
 
 ## How the Audit Plays Out in Real Agency Work
 
@@ -93,7 +93,7 @@ Follow an ordered path so the audit stays repeatable across accounts:
 4. Run the on-page and technical checks separately, labeling them as organic-ranking inputs rather than local pack inputs, so the report never implies that a content fix will solve a profile problem.
 5. Score the local backlink and citation footprint against the closest local competitors.
 6. Prioritize every finding by local pack impact, then organic impact, into a single ordered fix list.
-7. Package the results into a client-facing report that names the next three actions, and lean on [[<TBD-internal-link: white-label SEO reporting overview>]] when the work is resold under another brand.
+7. Package the results into a client-facing report that names the next three actions, and lean on a [reporting tool built for SEO companies](/en/blog/seo-reporting-tool-for-seo-companies) when the work is resold under another brand.
 
 ## Common Questions About a Local SEO Audit
 
@@ -115,9 +115,9 @@ A full audit at onboarding and a lighter health check each reporting cycle tends
 
 ## Related Reading
 
-- [[<TBD-internal-link: explainer on Google Business Profile optimization>]] — for the local pack signals this audit weighs most heavily
-- [[<TBD-internal-link: comparison of local and national SEO strategy>]] — for teams deciding where to focus limited hours
-- [[<TBD-internal-link: guide to NAP citation cleanup>]] — for fixing the consistency issues the audit surfaces
+- Google Business Profile optimization — for the local pack signals this audit weighs most heavily
+- Local versus national SEO strategy — for teams deciding where to focus limited hours
+- NAP citation cleanup — for fixing the consistency issues the audit surfaces
 
 ## Take Action
 

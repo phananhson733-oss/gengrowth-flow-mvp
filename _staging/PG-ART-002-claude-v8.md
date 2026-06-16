@@ -33,7 +33,7 @@ An SEO reporting tool is **software that pulls ranking, traffic, and backlink da
 
 ## Why It Matters for Your Workflow
 
-Most agency account managers do not lose clients over rankings. They lose them over reporting that reads like a data dump. A seo reporting tool for seo companies matters because the report is often the only artifact a client sees between calls, and it quietly sets whether a retainer feels worth the spend. This sits inside the broader [[<TBD-internal-link: pillar guide to agency SEO fulfillment workflows>]], which maps where reporting fits in the delivery chain.
+Most agency account managers do not lose clients over rankings. They lose them over reporting that reads like a data dump. A seo reporting tool for seo companies matters because the report is often the only artifact a client sees between calls, and it quietly sets whether a retainer feels worth the spend. This sits inside the broader picture of agency SEO fulfillment workflows, which maps where reporting fits in the delivery chain.
 
 The business cost shows up in a few concrete ways:
 
@@ -45,7 +45,7 @@ Across the white-label rollouts we've audited, the deciding factor is rarely the
 
 ## How an SEO Reporting Tool Works in Real Agency Rollouts
 
-In practice a seo reporting tool for seo companies sits at the handoff point between fulfillment and client communication, and it earns its keep by replacing manual assembly. It pairs naturally with a [[<TBD-internal-link: white-label SEO delivery overview>]] that covers the rest of the unbranded stack. Here is how it typically plays out:
+In practice a seo reporting tool for seo companies sits at the handoff point between fulfillment and client communication, and it earns its keep by replacing manual assembly. It pairs naturally with [working out which whitelabel SEO tool tier your agency actually needs](/en/blog/whitelabel-seo-tool) to cover the rest of the unbranded stack. Here is how it typically plays out:
 
 1. **Data pull.** The tool connects to Search Console, an analytics property, and a rank tracker, then syncs the latest numbers without a manual export.
 2. **Branding layer.** The agency applies its own logo, colors, and sending domain once, so every report ships under the agency brand by default.
@@ -114,8 +114,8 @@ Monthly is the common cadence for retainer clients because it matches billing an
 
 ## Related Reading
 
-- [[<TBD-internal-link: guide to SEO reseller pricing and margins>]] — why resold reporting work has a hard markup ceiling worth modeling before you scale
-- [[<TBD-internal-link: comparison with managed SEO services>]] — how reporting choices differ when you fully outsource fulfillment versus run it in-house
+- A look at SEO reseller pricing and margins — why resold reporting work has a hard markup ceiling worth modeling before you scale
+- A comparison with managed SEO services — how reporting choices differ when you fully outsource fulfillment versus run it in-house
 
 ## Take Action
 

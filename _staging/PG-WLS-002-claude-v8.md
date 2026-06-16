@@ -31,7 +31,7 @@ A white-label SEO tool is **software that lets one agency deliver SEO work anoth
 - Hides the fulfillment partner and the underlying software from the end client
 - Splits into resale tiers, from branded PDFs up to a fully rebrandable client platform
 
-This sits under the broader [[<TBD-internal-link: pillar guide to agency SEO fulfillment models>]], which maps how delivery, branding, and margin fit together.
+This sits under the broader picture of agency SEO fulfillment models, which maps how delivery, branding, and margin fit together.
 
 ## Why It Matters for Your Workflow
 
@@ -41,7 +41,7 @@ Agency owners conflate tool quality with SEO feature depth because most comparis
 2. **Delivery risk.** A tool that brands the PDF but not the dashboard forces a workaround the moment a client asks to log in, and that scramble surfaces in front of the buyer.
 3. **Margin pressure.** Resold work has a hard ceiling on markup, so a tool whose per-seat pricing climbs with client count quietly compresses the margin that justified outsourcing in the first place.
 
-The job most readers came here to finish is reselling SEO under their own brand without building delivery from scratch. That goal lives or dies on branding depth, which is why this guide ranks by resale tier first. A tool that scores high on rank-tracking accuracy but only brands a PDF will still satisfy a feature checklist and fail the one moment that matters: when a client clicks into a portal and sees a vendor name. For pricing trade-offs specifically, see the [[<TBD-internal-link: guide to SEO reseller pricing>]].
+The job most readers came here to finish is reselling SEO under their own brand without building delivery from scratch. That goal lives or dies on branding depth, which is why this guide ranks by resale tier first. A tool that scores high on rank-tracking accuracy but only brands a PDF will still satisfy a feature checklist and fail the one moment that matters: when a client clicks into a portal and sees a vendor name. For pricing trade-offs specifically, weigh how SEO reseller pricing behaves as your client count grows.
 
 ## How White-Label SEO Tools Play Out in Real Agency Workflows
 
@@ -51,7 +51,7 @@ The best white label seo tool earns its place at the exact step where your brand
 2. **Level 2, client portal.** A growing agency gives clients a self-serve dashboard at its own subdomain; the tool now has to rebrand the login, the URL, and the in-app labels, not just the export.
 3. **Level 3, full platform resale.** An agency sells SEO software as its own product, so the tool must support a custom domain, removed vendor identity, and reseller billing under the agency's name.
 
-Each level pulls in at a different point in delivery, and a tool tuned for Level 1 rarely stretches cleanly to Level 3. The mistake we see most often is an agency buying for the tier above its actual sales motion, paying for full platform resale when its clients only ever want a monthly branded report. The opposite error is just as costly: an agency lands a client that wants self-serve access, then realizes its Level 1 tool cannot host a branded login at all. This is also where the choice connects to your [[<TBD-internal-link: comparison with managed SEO services>]], since a fully resold platform behaves more like a managed offering than a single report.
+Each level pulls in at a different point in delivery, and a tool tuned for Level 1 rarely stretches cleanly to Level 3. The mistake we see most often is an agency buying for the tier above its actual sales motion, paying for full platform resale when its clients only ever want a monthly branded report. The opposite error is just as costly: an agency lands a client that wants self-serve access, then realizes its Level 1 tool cannot host a branded login at all. This is also where the choice starts to resemble managed SEO services, since a fully resold platform behaves more like a managed offering than a single report.
 
 ## Common Implementation Misreadings
 
@@ -81,7 +81,7 @@ Evaluating the best white label seo tool means scoring resale depth on things yo
 4. **Report customization.** Verify you can set your logo, colors, and sender details without the tool stamping its own brand anywhere on the output.
 5. **Migration cost.** Ask what happens when you move up a tier; if clients must re-onboard into a new portal, factor that friction in before you commit.
 
-These map directly to where agencies get burned, which is why a tool with a thinner feature set but cleaner Level 3 resale often beats a feature-rich tool stuck at Level 1. The [[<TBD-internal-link: explainer on agency rank tracking workflows>]] covers how the tracking layer specifically affects this scoring.
+These map directly to where agencies get burned, which is why a tool with a thinner feature set but cleaner Level 3 resale often beats a feature-rich tool stuck at Level 1. Our breakdown of [multi-client rank tracking for agencies](/en/blog/agency-rank-tracking) covers how the tracking layer specifically affects this scoring.
 
 ## How to Implement a White-Label SEO Tool Step by Step
 
@@ -116,8 +116,8 @@ Level 1 brands the report only, Level 2 adds a rebrandable client portal, and Le
 
 ## Related Reading
 
-- [[<TBD-internal-link: overview of white-label content services for agencies>]] — for resellers extending beyond SEO into content fulfillment
-- [[<TBD-internal-link: guide to building an in-house SEO team>]] — the build-side comparison when resale margins no longer justify outsourcing
+- White-label content services for agencies — for resellers extending beyond SEO into content fulfillment
+- Building an in-house SEO team — the build-side comparison when resale margins no longer justify outsourcing
 
 ## Take Action
 
@@ -126,4 +126,4 @@ Map your current clients against the three resale tiers, then start a free GenGr
 ## Sources
 
 - Based on patterns GenGrowth has observed across white-label SEO rollouts; no third-party study is cited
-- [[<TBD-external-link: Schema.org | Service | the canonical reference for how a resold service is structured as a distinct offering>]]
+- Schema.org Service — the canonical reference for how a resold service is structured as a distinct offering

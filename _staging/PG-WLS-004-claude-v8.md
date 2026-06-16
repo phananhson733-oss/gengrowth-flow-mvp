@@ -31,7 +31,7 @@ A Free White Label SEO Report Generator is **a tool that produces SEO audit repo
 - The reporting vendor is meant to stay invisible to the end client
 - On most free tiers, that invisibility is exactly what breaks down
 
-This sits under the broader [[<TBD-internal-link: pillar guide to agency SEO fulfillment>]], which maps how reselling fits the wider delivery model.
+This sits under the broader picture of agency SEO fulfillment, which maps how reselling fits the wider delivery model.
 
 ## Why It Matters for Your Workflow
 
@@ -116,7 +116,7 @@ Upgrade once you pass roughly three to five clients, since recurring branded del
 
 ## Related Reading
 
-- [[<TBD-internal-link: explainer on agency rank tracking workflows>]] — pairs with branded reporting to round out a client-facing delivery stack.
+- [How agency rank tracking shapes reporting margins](/en/blog/agency-rank-tracking) — pairs with branded reporting to round out a client-facing delivery stack.
 
 ## Take Action
 

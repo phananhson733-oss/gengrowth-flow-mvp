@@ -31,7 +31,7 @@ A white-label keyword research tool is software that runs the keyword discovery,
 - Output ships as branded reports, a logo-skinned portal, or a reseller API the agency wires into its own dashboard
 - The end client should never encounter the vendor's name, domain, or login screen
 
-This sits under the broader [[<TBD-internal-link: pillar guide to agency SEO fulfillment>]], which maps every delivery model an agency can choose between.
+This sits under the broader pillar guide to agency SEO fulfillment, which maps every delivery model an agency can choose between.
 
 ## Why It Matters for Your Workflow
 
@@ -45,7 +45,7 @@ White label keyword research differs from in-house delivery because the agency a
 
 1. **Tool access.** The agency logs into the vendor platform, pulls keyword volume, difficulty, and clustering data, and treats that screen as an internal workspace clients never see.
 2. **Branded delivery.** The agency exports findings into reports or a portal carrying its own logo, colors, and domain, so deliverables read as first-party work.
-3. **Reseller API.** Larger agencies skip manual export entirely and pipe the vendor's data into their own dashboard through an API, then layer their own client-tracking views on top, often alongside [[<TBD-internal-link: guide to agency rank tracking>]].
+3. **Reseller API.** Larger agencies skip manual export entirely and pipe the vendor's data into their own dashboard through an API, then layer their own client-tracking views on top, often alongside [rank tracking across every client account](/en/blog/agency-rank-tracking).
 4. **Account fronting.** One account manager fronts all communication, so the client experiences a single brand even though research, reporting, and tracking run on separate systems.
 
 The friction shows up between layers one and two. A platform can advertise billions of keywords and still hand you a PDF stamped with its own name, which means the delivery layer is where most evaluations should focus.
@@ -109,15 +109,15 @@ No. Resold work carries a hard markup floor set by the vendor's price, so your p
 
 ## Related Reading
 
-- [[<TBD-internal-link: comparison with managed SEO services>]] — for deciding when full-service fulfillment beats research-only resale
-- [[<TBD-internal-link: guide to SEO reseller pricing>]] — for setting a markup that survives the resold-cost floor
-- [[<TBD-internal-link: content gap analysis explainer>]] — for turning raw keyword data into client-facing strategy
+- A comparison with managed SEO services — for deciding when full-service fulfillment beats research-only resale
+- A guide to SEO reseller pricing — for setting a markup that survives the resold-cost floor
+- A content gap analysis explainer — for turning raw keyword data into client-facing strategy
 
 ## Take Action
 
-Map your own delivery workflow against a real branded export before you sign any vendor contract, and you'll surface the vendor-leakage gaps that comparison posts never mention. To see how a clean, client-ready reference walks a reader through a structured analysis end to end, work through the [step-by-step birth chart reading guide](https://astrologywiki.com/en/wiki/how-to-read-birth-chart) and study how it sequences explanation into deliverable. The agencies that win resale margin are the ones that treat delivery format, not database size, as the product.
+Map your own delivery workflow against a real branded export before you sign any vendor contract, and you'll surface the vendor-leakage gaps that comparison posts never mention. To see how clean, client-ready research output comes together end to end, [start a free GenGrowth trial](https://gengrowth.ai/app) and run a real branded export through the workflow yourself. The agencies that win resale margin are the ones that treat delivery format, not database size, as the product.
 
 ## Sources
 
 - Based on patterns GenGrowth has observed across white-label SEO rollouts; no third-party study is cited
-- [[<TBD-external-link: Schema.org | Service | reference for structuring the service-arrangement concept described here>]]
+- Schema.org Service: reference for structuring the service-arrangement concept described here

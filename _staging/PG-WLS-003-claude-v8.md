@@ -33,7 +33,7 @@ A white-label SEO tool is **software or fulfillment that one provider builds and
 
 ## Why It Matters for Your Workflow
 
-Choosing a whitelabel seo tool is a build-or-buy call that sets your margin ceiling before you sign anything, and most agency owners decide it on a vendor demo rather than on how delivery will actually feel at month three. This decision sits under the broader [[<TBD-internal-link: pillar guide to agency SEO fulfillment models>]], which maps every delivery option an agency can choose. The friction is specific: owners conflate a logo-on-PDF arrangement with full client portal isolation, then discover post-contract that "white-label" meant a swapped header, not a separate login your client could trust.
+Choosing a whitelabel seo tool is a build-or-buy call that sets your margin ceiling before you sign anything, and most agency owners decide it on a vendor demo rather than on how delivery will actually feel at month three. This decision sits under the broader question of agency SEO fulfillment models, which maps every delivery option an agency can choose. The friction is specific: owners conflate a logo-on-PDF arrangement with full client portal isolation, then discover post-contract that "white-label" meant a swapped header, not a separate login your client could trust.
 
 That mismatch shows up as real business cost in a few predictable ways:
 
@@ -46,7 +46,7 @@ The reason the tier question deserves this much attention is that it compounds. 
 
 ## How a White-Label SEO Tool Plays Out Across Three Tiers
 
-A whitelabel seo tool differs from in-house delivery because branding control is a spectrum, not a switch, and each tier changes what your client can see. Across the reseller rollouts we've audited, the deciding factor isn't the feature list, it's how far the provider's identity disappears at each touchpoint. This is the distinction the broader [[<TBD-internal-link: explainer on managed versus reselling SEO models>]] keeps returning to.
+A whitelabel seo tool differs from in-house delivery because branding control is a spectrum, not a switch, and each tier changes what your client can see. Across the reseller rollouts we've audited, the deciding factor isn't the feature list, it's how far the provider's identity disappears at each touchpoint. This is the distinction the managed-versus-reselling SEO question keeps returning to.
 
 In practice the spectrum resolves into three workable tiers:
 
@@ -115,9 +115,9 @@ Generally yes, because deeper isolation means the provider gives up more brand v
 
 ## Related Reading
 
-- [[<TBD-internal-link: comparison of white-label and managed SEO services>]] — for deciding between reselling and referring work out entirely
-- [[<TBD-internal-link: guide to SEO reseller pricing and markup>]] — for modeling the margin floor referenced in the evaluation steps
-- [[<TBD-internal-link: explainer on agency client reporting dashboards>]] — for the portal and reporting details that separate the tiers
+- Comparison of white-label and managed SEO services — for deciding between reselling and referring work out entirely
+- A guide to SEO reseller pricing and markup — for modeling the margin floor referenced in the evaluation steps
+- [How client-facing branded reports separate the tiers](/en/blog/seo-reporting-tool-for-seo-companies) — for the portal and reporting details that distinguish each level
 
 ## Take Action
 
@@ -126,4 +126,4 @@ Run your current client list through the tier-matching steps above, then pressur
 ## Sources
 
 - Based on patterns GenGrowth has observed across agency reseller rollouts; no third-party study is cited
-- [[<TBD-external-link: Schema.org | Service | the standard vocabulary for describing the resold service offerings referenced above>]]
+- Schema.org Service — the standard vocabulary for describing the resold service offerings referenced above

@@ -26,7 +26,14 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
-import {
+// EN red-line module is site-selected: GG_SITE=gengrowth → B2B profile
+// (drops astrology-only RLs, inverts RL8/RL12 for attribution); default/unset →
+// the oracle red-lines.mjs, byte-identical behavior. Namespace-import both and
+// pick at load so the rest of the file's checkRL* call sites stay unchanged.
+import * as oracleRedLines from './lib/red-lines.mjs';
+import * as gengrowthRedLines from './lib/red-lines.gengrowth.mjs';
+const _EN_RL = process.env.GG_SITE === 'gengrowth' ? gengrowthRedLines : oracleRedLines;
+const {
   checkRL1,
   checkRL2,
   checkRL3,
@@ -40,7 +47,7 @@ import {
   checkRL11,
   checkRL12,
   checkRL13,
-} from './lib/red-lines.mjs';
+} = _EN_RL;
 import {
   checkRL1Zh,
   checkRL2Zh,
@@ -386,6 +393,43 @@ function buildEnH2Specs(ctx) {
       ];
 }
 
+// gengrowth (B2B SEO+GEO) EN H2 spec builder — matches guide.prompt.md's 11
+// sections by ROLE (matchFn), since the LLM varies exact wording. EN-only
+// (gengrowth is EN-first). No astrology titles. Same spec shape as buildEnH2Specs;
+// only loaded when GG_SITE=gengrowth, so the oracle path is untouched.
+function buildGengrowthH2Specs(ctx) {
+  const e = ctx.entity;
+  return [
+    {
+      variants: [`## What Is ${e}?`, `## What Is a ${e}?`, `## What Is an ${e}?`, `## What Are ${e}?`],
+      matchFn: (d) => /^##\s+What\s+(Is|Are)\b/m.test(d),
+      label: '## What Is <entity>? (definition section)',
+    },
+    { variants: ['## Why It Matters'], matchFn: (d) => /^##\s+Why It Matters\b/m.test(d), label: '## Why It Matters for Your Workflow' },
+    {
+      variants: ['## How '],
+      matchFn: (d) => /^##\s+How\b[^\n]*\b(Real|Agenc|SaaS|Scenario|Rollout|Practice|Works?|Reaches?|Plays?|Deliver|Client|Looks?|Happens?|Flows?|Fits?|Shows?)\b/im.test(d),
+      label: '## How <entity> Works / Plays Out in Real Agency-SaaS Scenarios',
+    },
+    { variants: ['## Common '], matchFn: (d) => /^##\s+Common\b[^\n]*\bMisread/im.test(d), label: '## Common Implementation Misreadings' },
+    {
+      variants: ['at a Glance', 'Quick Reference'],
+      matchFn: (d) => /^##\s+[^\n]*\b(at[- ]a[- ]Glance|Quick Reference|Quick Guide|Decision (Grid|Table)|Comparison Table)\b/im.test(d),
+      label: '## <entity> at a Glance / Quick Reference (decision table)',
+    },
+    { variants: ['## How to Evaluate', '## How to Choose'], matchFn: (d) => /^##\s+How to (Evaluate|Choose|Assess|Compare|Pick|Select|Vet|Decide)\b/im.test(d), label: '## How to Evaluate <entity>' },
+    {
+      variants: ['Step by Step'],
+      matchFn: (d) => /^##\s+How to (Implement|Roll Out|Set Up|Deploy|Get Started|Build|Launch|Adopt|Run)\b/im.test(d) || /^##\s+[^\n]*\bStep by Step\b/im.test(d),
+      label: '## How to Implement <entity> Step by Step',
+    },
+    { variants: ['## Frequently Asked Questions', '## Common Questions'], matchFn: (d) => EN_FAQ_HEADING_RE.test(d), label: '## Common Questions About <entity> (FAQ; needs questions/FAQ/ask token)' },
+    { variants: ['## Related Reading'], label: '## Related Reading' },
+    { variants: ['## Take Action'], label: '## Take Action' },
+    { variants: ['## Sources'], label: '## Sources' },
+  ];
+}
+
 // bilingual-v9: ZH H2 spec builder. ZH templates require LLM to translate
 // {{entity}} → native Chinese, so we can't substitute the EN entity literally.
 // Instead match by stable Chinese suffix (e.g. `是什么？` / `速查表` /
@@ -473,7 +517,9 @@ function structureCheck(draft) {
   // {{entity}} substitution).
   const requiredH2Specs = ctx.language === 'zh'
     ? buildZhH2Specs(ctx)
-    : buildEnH2Specs(ctx);
+    : process.env.GG_SITE === 'gengrowth'
+      ? buildGengrowthH2Specs(ctx)
+      : buildEnH2Specs(ctx);
 
   for (const spec of requiredH2Specs) {
     // bilingual-v9: spec.matchFn (if present) is a regex-aware matcher used

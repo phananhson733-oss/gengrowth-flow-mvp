@@ -304,7 +304,14 @@ export function renderAuraPrompt(cfg) {
   // variant. ZH templates are full rewrites (not translations) tuned for
   // cultural adaptation; EN remains the default for back-compat.
   const lang = cfg.language === 'zh' ? 'zh' : 'en';
-  const templateName = /^pillar$/i.test(cfg.template || '') ? 'pillar' : 'definition';
+  // gengrowth (B2B) uses the Guide template (guide.prompt.md) in place of the
+  // astrology Definition — same 11-H2 structure + placeholder contract, B2B+GEO
+  // prose — so it inherits Definition's section-count / tier-gate / expected_h2
+  // handling unchanged. Pillar is untouched. Oracle (GG_SITE unset) keeps the
+  // original pillar/definition selection byte-for-byte.
+  const _baseTemplate = /^pillar$/i.test(cfg.template || '') ? 'pillar' : 'definition';
+  const templateName =
+    process.env.GG_SITE === 'gengrowth' && _baseTemplate === 'definition' ? 'guide' : _baseTemplate;
   const templateFile = lang === 'zh'
     ? `${templateName}.prompt.zh.md`
     : `${templateName}.prompt.md`;

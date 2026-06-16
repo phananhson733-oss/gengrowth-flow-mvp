@@ -526,7 +526,12 @@ export function checkRL4(draft, ctx) {
       drifted.push(`"${s.heading}" (jaccard=${jac.toFixed(3)}, shingle=${shg.toFixed(3)}, target-recall=${targetCoverage.toFixed(2)})`);
     }
   }
-  const pass = drifted.length < RL4_DRIFTED_SECTIONS_FAIL;
+  // ctx.driftThreshold lets a caller raise the drift ceiling per-call (mirrors
+  // RL5's ctx.maxCount). The gengrowth B2B profile passes a higher value because
+  // a 4-word keyword ("white label keyword research") can't anchor every H2.
+  // Default/unset → the config-sourced RL4_DRIFTED_SECTIONS_FAIL, byte-identical.
+  const driftFail = typeof ctx.driftThreshold === 'number' ? ctx.driftThreshold : RL4_DRIFTED_SECTIONS_FAIL;
+  const pass = drifted.length < driftFail;
   const skipNote = skippedStructural.length
     ? ` (skipped ${skippedStructural.length} structural: ${skippedStructural.map((h) => `"${h}"`).join(', ')})`
     : '';

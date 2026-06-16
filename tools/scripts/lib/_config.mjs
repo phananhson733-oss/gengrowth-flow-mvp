@@ -8,6 +8,8 @@ import { existsSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { configSnapshotPath } from './site-profile.mjs';
+
 // A snapshot older than this is "stale" — likely behind the sheet, so dynamic
 // keys (e.g. author.map.<domain>) added since the last gg-config-sync won't be
 // seen. CLI entry points surface this; the library itself stays quiet.
@@ -18,9 +20,13 @@ const REPO_ROOT = (() => {
   try { return realpathSync(join(__dirname, '..', '..', '..')); } catch { return null; }
 })();
 
-export const CONFIG_SNAPSHOT_PATH = REPO_ROOT
-  ? join(REPO_ROOT, '.gg-cache', 'config-snapshot.json')
-  : join(__dirname, '..', '..', '..', '.gg-cache', 'config-snapshot.json');
+// Per-site snapshot path (default site → original global path, byte-for-byte).
+// Deriving this from site-profile keeps the reader (here) and writer
+// (gg-config-sync.mjs, which imports CONFIG_SNAPSHOT_PATH) on the same per-site
+// path, so syncing a second site's `config` tab can never clobber oracle's.
+export const CONFIG_SNAPSHOT_PATH = configSnapshotPath(
+  REPO_ROOT || join(__dirname, '..', '..', '..'),
+);
 
 let cached = null;
 let cachedStatus = null;

@@ -59,8 +59,10 @@ test('_config.getConfig: missing snapshot file → returns fallback', async () =
   // a key guaranteed not to be in the snapshot.
   const v = getConfig('__definitely_not_a_real_key__', 'fallback-sentinel');
   assert.equal(v, 'fallback-sentinel');
-  // Also assert the snapshot path is under the repo
-  assert.ok(CONFIG_SNAPSHOT_PATH.endsWith('.gg-cache/config-snapshot.json'));
+  // Also assert the snapshot path is the .gg-cache config snapshot. Per-site
+  // isolation (GG_SITE) puts non-default sites under .gg-cache/sites/<site>/,
+  // so accept both the default global path and a per-site path.
+  assert.ok(/\.gg-cache(?:\/sites\/[^/]+)?\/config-snapshot\.json$/.test(CONFIG_SNAPSHOT_PATH));
 });
 
 test('_config.getConfig: valid snapshot → returns snapshot value', async () => {

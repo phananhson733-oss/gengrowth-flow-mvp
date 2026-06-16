@@ -79,3 +79,15 @@ aliases:
 验证 supabase CLI 流程**通畅**：装 CLI 2.106（brew）→ 用户 `supabase login`（GitHub 2FA + Supabase 验证码两步）→ `projects api-keys` 新版格式没变、`_emit-sb-key.mjs` 取到 service_role → REST GET 200。确认 gengrowth.ai prod = `qeeocwurjslqppjxlsbk`（"Agents", us-east-1），W25 SEO 7 篇 + 共 17 篇已 published（wzb 经 REST 发的，pillar=`seo_content`）。**对齐 bridge**：发现我 bridge/PR #209 的 pillar_slug 用了细 cluster id（white_label_seo），与线上 canonical pillar（seo_content）偏离 → 改 bridge 用 canonical PILLARS（seo_content）+ 加 `--emit rest`（CLI→key→REST 幂等 upsert on (slug,locale)，dry-run 验过）。PR #209 已被合并 → 发 PR #210 把合进 main 的 seed 文件 pillar 修成 seo_content（消除误用 footgun）。写**多站点 publish-only cron 分阶段计划** `docs/2026-06-17-multisite-publish-cron-plan.md`：Lane A gengrowth = 新建简单 rest-upsert ticker；Lane B oracle = autopilot 加 publish-only 模式 + timeout + plan 过滤再启用（canonical runbook 禁 cron 撰写）。待用户拍板 cron 范围 + 无人值守 auth 方式 + 是否动有风险的 autopilot。
 
 ---
+
+### Q6 — 02:03 [claude]
+
+**🙋 提问：**
+
+在这个 repo 中，我们给 gengrowth.ai这个网站在写文的时候，加入了一些 GEO 的代码和内容。应该是引入了本地的 gengrowth-geo 流程中的方法和规则，以及流程，我们在写 astrologywiki.com blog 时，也可以引入 GEO 部分的内容
+
+**🤖 回答：**
+
+把 GEO 引入 astrologywiki 写作流。先盘清：astrologywiki 的 Definition 模板已有外链/anti-fluff/权威锚点/反 hedging 等 GEO 杠杆，真正缺口=①模板无"正向纳入带源事实"要求(审计 statistics=0)②citability 引擎(checkScGeo)已移植但零调用。按风险改动惯例先 codex 二审(needs-changes 全吸收)。落地 6 文件(1096 测试 green)：definition/pillar 模板加「GEO 事实锚点」软杠杆(只锚天文/历史/文化/信念调查四类客观外部事实,占星安全绝不暗示有效性,可计数句式 `According to <具名>,<数字>`)；structure-checks.geo.mjs 加 formatScGeoAdvisory；phase2 末尾加非门控 SC-GEO citability advisory 纯打印(stash 前后 exit 一致证明非门控)；test+runbook。改动已由 vault-backup auto-commit 落 HEAD。
+
+---

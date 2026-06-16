@@ -57,3 +57,35 @@ export function configSnapshotPath(repoRoot, env = process.env) {
   }
   return join(repoRoot, '.gg-cache', 'sites', site, 'config-snapshot.json');
 }
+
+// Per-site CTA fallback. The gengrowth workbook's "CTA Map" tab still carries the
+// oracle astrology CTA (astrologywiki.com), so the brief's (page_role,track)
+// lookup leaks a cross-site URL into B2B articles. composeOverride uses this to
+// reject any non-site CTA URL for a recognized non-default site and substitute
+// the product CTA. Default (oracle) returns null → original behavior unchanged.
+const SITE_DEFAULT_CTA = {
+  gengrowth: { cta_text: 'Start your free GenGrowth trial', cta_target_url: 'https://gengrowth.ai/app' },
+};
+
+/**
+ * Default CTA for the active site (null for the default/oracle site).
+ * @param {NodeJS.ProcessEnv} [env]
+ * @returns {{cta_text: string, cta_target_url: string}|null}
+ */
+export function defaultCta(env = process.env) {
+  return SITE_DEFAULT_CTA[activeSite(env)] || null;
+}
+
+/** Host that a recognized non-default site's CTA URLs must belong to (else they
+ * are treated as a cross-site leak and replaced by defaultCta). null = no constraint. */
+const SITE_CTA_HOST = { gengrowth: 'gengrowth.ai' };
+
+/**
+ * For a non-default site, returns the required CTA host (e.g. 'gengrowth.ai');
+ * null for the default site or sites with no constraint.
+ * @param {NodeJS.ProcessEnv} [env]
+ * @returns {string|null}
+ */
+export function siteCtaHost(env = process.env) {
+  return SITE_CTA_HOST[activeSite(env)] || null;
+}

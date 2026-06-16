@@ -23,6 +23,24 @@ import {
   PAGES_FIX_COL,
 } from '../gg-sheet-to-brief.mjs';
 import { TABS } from '../lib/_workbook-spec.mjs';
+import { defaultCta } from '../lib/site-profile.mjs';
+
+// composeOverride's CTA composition reads GG_SITE from the environment: a
+// recognized non-default site (gengrowth) substitutes its product CTA for any
+// off-host workbook CTA. These oracle-fixture tests assert DEFAULT behavior, so
+// pin GG_SITE off regardless of how the suite is invoked (it is also run under
+// GG_SITE=gengrowth as a regression gate).
+function withGgSite(site, fn) {
+  const prev = process.env.GG_SITE;
+  if (site === undefined) delete process.env.GG_SITE;
+  else process.env.GG_SITE = site;
+  try {
+    return fn();
+  } finally {
+    if (prev === undefined) delete process.env.GG_SITE;
+    else process.env.GG_SITE = prev;
+  }
+}
 
 // ---------- constants ----------
 test('SCHEMA_VERSION pinned to "1"', () => {
@@ -290,7 +308,7 @@ function makeCtx(overrides = {}) {
 test('composeOverride produces all 13 cfg fields for a full Sheet row', () => {
   const row = makeRow();
   const ctx = makeCtx();
-  const { entry, warnings } = composeOverride(row, ctx);
+  const { entry, warnings } = withGgSite(undefined, () => composeOverride(row, ctx));
   assert.equal(entry.page_id, 'page_orange_aura_meaning');
   assert.equal(entry.entity, 'Orange Aura');
   assert.equal(entry.target_keyword, 'orange aura meaning');
@@ -438,9 +456,23 @@ test('composeOverride: missing cluster emits warning, blanks cluster fields', ()
 
 test('composeOverride: missing CTA emits warning, blanks cta fields', () => {
   const row = makeRow({ page_role: 'Wiki' }); // not in our test CTA map
-  const { entry, warnings } = composeOverride(row, makeCtx());
+  const { entry, warnings } = withGgSite(undefined, () => composeOverride(row, makeCtx()));
   assert.equal(entry.cta_text, '');
   assert.ok(warnings.some((w) => w.includes('Wiki')));
+});
+
+test('composeOverride: GG_SITE=gengrowth substitutes product CTA for off-host workbook CTA', () => {
+  const row = makeRow(); // ctaMap resolves to the oracle astrologywiki CTA
+  const { entry } = withGgSite('gengrowth', () => composeOverride(row, makeCtx()));
+  const dft = defaultCta({ GG_SITE: 'gengrowth' });
+  assert.equal(entry.cta_target_url, dft.cta_target_url); // gengrowth.ai/app, not astrologywiki
+  assert.equal(entry.cta_text, dft.cta_text);
+});
+
+test('composeOverride: GG_SITE=gengrowth missing-CTA page still gets product default (not blank)', () => {
+  const row = makeRow({ page_role: 'Wiki' }); // not in CTA map
+  const { entry } = withGgSite('gengrowth', () => composeOverride(row, makeCtx()));
+  assert.equal(entry.cta_target_url, 'https://gengrowth.ai/app');
 });
 
 test('composeOverride: page.content_angle wins over cluster.content_angle', () => {

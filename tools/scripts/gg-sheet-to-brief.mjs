@@ -41,6 +41,7 @@ import {
 import { getAllConfig } from './lib/_config.mjs';
 import { buildAuthorMap, resolveAuthor } from './lib/author-routing.mjs';
 import { TABS } from './lib/_workbook-spec.mjs';
+import { defaultCta, siteCtaHost } from './lib/site-profile.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO = join(__dirname, '..', '..');
@@ -362,6 +363,19 @@ export function composeOverride(row, { clusterMap, ctaMap, repo, skipNonV8 = fal
     target_keyword: brief.target_keyword,
   });
 
+  // Resolve CTA, then enforce per-site host: a recognized non-default site (e.g.
+  // gengrowth) must not inherit the workbook CTA Map's cross-site URL — the
+  // gengrowth workbook still carries the oracle astrologywiki CTA. When the
+  // looked-up URL is missing or off-host, fall back to the site product CTA.
+  let ctaText = cta ? cta.cta_text : '';
+  let ctaUrl = cta ? cta.target_url : (brief.cta_target_url || '');
+  const _ctaHost = siteCtaHost();
+  const _siteCta = defaultCta();
+  if (_ctaHost && _siteCta && !(typeof ctaUrl === 'string' && ctaUrl.includes(_ctaHost))) {
+    ctaText = _siteCta.cta_text;
+    ctaUrl = _siteCta.cta_target_url;
+  }
+
   const entry = {
     page_id: pageId,
     entity: brief.entity || null,
@@ -371,8 +385,8 @@ export function composeOverride(row, { clusterMap, ctaMap, repo, skipNonV8 = fal
     cluster_jtbd: cluster ? cluster.jtbd : '',
     content_angle: brief.content_angle || (cluster ? cluster.content_angle : ''),
     internal_link_rule: cluster ? cluster.internal_link_rule : '',
-    cta_text: cta ? cta.cta_text : '',
-    cta_target_url: cta ? cta.target_url : (brief.cta_target_url || ''),
+    cta_text: ctaText,
+    cta_target_url: ctaUrl,
     tier_gate_block: tierGateBlock,
     rl6_hint: rl6Hint,
     friction_themes: loadFrictionThemes(repo, pageId, brief),

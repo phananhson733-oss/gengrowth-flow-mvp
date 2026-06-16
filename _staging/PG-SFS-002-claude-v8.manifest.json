@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-SFS-002",
+  "entity": "SaaS SEO Platform / SEO Software for SaaS",
+  "target_keyword": "saas seo platform",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "claude-opus-4-8",
+  "prompt_version": "v8",
+  "generated_at": "2026-06-16T17:34:31.098Z",
+  "content_sha256_short": "6532f51b67d603aa",
+  "source_path": "_staging/PG-SFS-002-claude-v8.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-SFS-002-claude-v8.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 1825,
+      "wikilinks": 6,
+      "tbdLinks": 6
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

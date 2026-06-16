@@ -87,9 +87,9 @@ There is no fixed count. The architecture matters once you have any commercial-i
 
 ## Related Reading
 
-- [[<TBD-internal-link: guide to startup DIY SEO for early teams]] — for founders running the program without an agency
-- [[<TBD-internal-link: guide to B2B agency SEO delivery]] — for teams evaluating outside help on this architecture
-- [[<TBD-internal-link: overview of programmatic SEO for SaaS feature pages]] — for scaling the feature-page layer beyond a handful of URLs
+- [[<TBD-internal-link: guide to startup DIY SEO for early teams>]] — for founders running the program without an agency
+- [[<TBD-internal-link: guide to B2B agency SEO delivery>]] — for teams evaluating outside help on this architecture
+- [[<TBD-internal-link: overview of programmatic SEO for SaaS feature pages>]] — for scaling the feature-page layer beyond a handful of URLs
 
 ## Take Action
 

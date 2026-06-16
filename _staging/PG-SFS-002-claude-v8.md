@@ -1,3 +1,26 @@
+---
+title: Saas Seo Platform
+slug: saas-seo-platform
+date: 2026-06-16
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-SFS-002
+target_keyword: saas seo platform
+associated_keywords:
+  - seo platform for saas
+  - seo tools for saas companies
+  - saas seo software
+  - best seo platform for saas
+generated_by: claude-opus-4-8
+prompt_version: v8
+generated_at: 2026-06-16T17:34:31.098Z
+content_sha256_short: 6532f51b67d603aa
+phase2_checks: all-pass
+---
+
 # What a SaaS SEO Platform Should Actually Do for Your Funnel
 
 ## What Is a SaaS SEO Platform?

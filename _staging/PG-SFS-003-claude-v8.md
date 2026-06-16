@@ -1,3 +1,27 @@
+---
+title: Saas Seo Consultant
+slug: saas-seo-consultant
+date: 2026-06-16
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-SFS-003
+target_keyword: saas seo consultant
+associated_keywords:
+  - seo consultant for saas
+  - saas seo expert
+  - seo consulting for saas companies
+  - saas seo agency consultant
+  - saas seo specialist
+generated_by: claude-opus-4-8
+prompt_version: v8
+generated_at: 2026-06-16T17:43:31.432Z
+content_sha256_short: 150db8a721a99203
+phase2_checks: all-pass
+---
+
 # How to Tell a Real SaaS SEO Consultant From a Generalist
 
 ## What Is a SaaS SEO Consultant?

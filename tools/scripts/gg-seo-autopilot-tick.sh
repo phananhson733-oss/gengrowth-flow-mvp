@@ -32,6 +32,11 @@ AUTO="$SCRIPT_DIR/gg-seo-autopilot.mjs"
 # concurrency guard). High enough to drain a normal backlog in one continuous run.
 MAX_CYCLES="${GG_AUTOPILOT_MAX_CYCLES:-50}"
 
+# Operating mode (2026-06-17): full = author+publish (legacy); publish-only = NEVER author
+# (the canonical runbook bans cron authoring on this machine — nested `claude -p` ~40% hang).
+# Default 'full' keeps legacy behavior byte-for-byte when the env is unset.
+MODE="${GG_AUTOPILOT_MODE:-full}"
+
 # ── PID-liveness mutex ──────────────────────────────────────────────────────
 # A previous run still alive (its pid responds to kill -0) → skip. A dead pid
 # (crash) → steal the lock and take over. This lets one fire loop for hours

@@ -35,6 +35,10 @@ astrologywiki.com SEO 文章从选题到上线、收录推送、知识库归档�
 - 自跑 `tools/scripts/_phase2-validate.mjs --source _staging/<PID>-claude-v8.md --tag en --page-id <PID> --entity "<干净短实体>" --target-keyword "<字面无所有格无重音>" --associated-keywords "..." --author <id> --tier <T2|T3> --template Definition --cta-target-url <url> [--kw-min 3(长尾)] --prompt-version v8 --allow-missing-serp` 迭代到 `OVERALL: PASS`（PASS 自动写 `_staging/<PID>-en.md`）。
 - 关键门：词数 1500–1800；关键词字面 3–8 次；narrative H2 含关键词词元（防 RL4 漂移）；首个内链在前 150 词织进正文；CTA 真 markdown 链接；表格无空格；FAQ 标题 "Common Questions"；作者红线 RL7（julian 禁 "you will"/"guaranteed"，传 `--banned-tokens` 强校）；marcus 表头禁 "energy" 用 "Natal Placement"。
 - **H3 规则**：H2 下有大段叙述墙时用 H3 破开（SC3c 按 H2/H3 子节计段）。短 Definition 篇通常无墙；一旦某节 >5–6 段，插 H3 子标题。
+- **GEO 事实锚点杠杆（2026-06-17 引入）**：AI 搜索引擎更倾向引用带具体可核查事实的页面（citability 的 statistics+cite-sources 权重最高）。Definition/Pillar 模板新增「GEO 事实锚点杠杆」软规则——在自然契合处织入 1（pillar 1–2）处事实锚点，**只限四类客观外部事实**（天文/历史/文化/公众信念调查），按优先级：天文 > 历史起源 > 文化脉络 > 信念调查（最低，别塞核心定义句）。
+  - **可计数句式（关键）**：必须 `According to <具名来源>, <具体数字/年代/百分比>…`（如 `According to NASA, Saturn takes about 29.5 years…` / `According to a 2017 Pew Research Center survey, about 29% of U.S. adults…`）——具名来源+具体数字才被 citability 计为有效引用；`a 2017 study…` 这种无具名机构形态会被 RL12 判作废。
+  - **占星安全边界**：只陈述客观事实，**绝不**暗示占星能预测/导致/证明任何结果（红线 2）；信念调查是「关于人群信念的事实」不是有效性证明；查不到真实事实就**省略**，绝不编造。天文事实走正文 in-body 归因（converter 只解析 Wikipedia 外链，NASA 外链会变斜体死链）。
+- **SC-GEO citability advisory（非门控）**：phase2 末尾打印 `▸ GEO citability (advisory)` 一行（score + stats/citations/quotes/defs 计数 + weak levers），**只提示不阻断**——OVERALL pass/fail 完全不受影响。看 `citations`/`stats` 偏低就回去补一处合规事实锚点。校准期保持 advisory，未来才考虑转门控。
 
 ## 阶段 2 — Codex 占星硬审（不同模型家族对抗）
 
@@ -95,7 +99,8 @@ astrologywiki.com SEO 文章从选题到上线、收录推送、知识库归档�
 ---
 
 ## 复用脚本（flow-mvp）
-- `_phase2-validate.mjs` — 结构二元门
+- `_phase2-validate.mjs` — 结构二元门（+ 末尾 SC-GEO citability advisory 非门控打印）
+- `lib/structure-checks.geo.mjs` — SC-GEO citability（`formatScGeoAdvisory` 供 phase2 oracle 路径 print-only 消费）+ `lib/citability.mjs` 评分引擎
 - `gg-md-to-oracle-ts.mjs` — md→.ts + TBD 内链解析（TBD_LINK_RULES）
 - `gg-oracle-register-index.mjs` — index.ts 注册
 - `lib/illustrate.mjs` — hero+内联配图

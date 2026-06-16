@@ -182,8 +182,19 @@ function parseArgs(argv) {
 
 // ── plan discovery + parsing ────────────────────────────────────────────────
 function latestPlan() {
+  // GG_AUTOPILOT_PLAN override: an explicit plan file (basename under PLAN_GLOB_DIR, or
+  // an absolute path) pins exactly which plan this autopilot processes.
+  const override = (process.env.GG_AUTOPILOT_PLAN || '').trim();
+  if (override) {
+    const p = override.includes('/') ? override : join(PLAN_GLOB_DIR, override);
+    return existsSync(p) ? p : null;
+  }
   const files = readdirSync(PLAN_GLOB_DIR)
     .filter((f) => /blog-output-plan.*\.md$/.test(f))
+    // EXCLUDE the gengrowth.ai plan (2026-06-17): this is the astrologywiki/oracle autopilot;
+    // it must never claim/author the second site's tasks (cross-site contamination). The
+    // gengrowth line publishes via the separate gg-gengrowth-publish ticker (Lane A).
+    .filter((f) => !/gengrowth/i.test(f))
     .sort(); // ISO-prefixed names sort chronologically
   if (!files.length) return null;
   return join(PLAN_GLOB_DIR, files[files.length - 1]);

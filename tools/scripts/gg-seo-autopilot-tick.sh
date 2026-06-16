@@ -92,10 +92,14 @@ publish_if_pending() {
   # after the ledger is marked verified by the codex + chrome preview gate.
   # --mcp-config: headless `claude -p` does NOT auto-load the user-scoped playwright
   # MCP; load it explicitly so the chrome preview verification works.
-  claude -p "$(cat "$PROMPT_FILE")" \
+  # gtimeout (2026-06-17): the headless `claude -p` publish gate can 401 on token expiry
+  # or hang forever with no cap, silently stalling the loop. Bound it hard (default 30min).
+  gtimeout "${GG_AUTOPILOT_PUBLISH_TIMEOUT:-1800}" claude -p "$(cat "$PROMPT_FILE")" \
     --mcp-config "$SCRIPT_DIR/autopilot-mcp.json" \
     --allowedTools "Bash Skill Task Agent Read Grep mcp__playwright__browser_navigate mcp__playwright__browser_snapshot mcp__playwright__browser_console_messages mcp__playwright__browser_evaluate mcp__playwright__browser_close" \
     --dangerously-skip-permissions </dev/null >> "$LOG" 2>&1
+  _rc=$?
+  [ "$_rc" -ne 0 ] && echo "$(date '+%F %T') publish gate exited rc=$_rc (timeout/err) — continuing" >> "$LOG"
   return 0
 }
 
@@ -108,6 +112,11 @@ run_one_cycle() {
 
   # b) publish a pending preview if one exists (verify + merge to prod).
   if publish_if_pending; then return 0; fi
+
+  # publish-only (2026-06-17): never author in cron on this machine (canonical runbook).
+  # step (a) --scan already claimed any ready draft into a preview; with nothing pending
+  # to merge, stand down instead of authoring.
+  if [ "$MODE" = "publish-only" ]; then return 1; fi
 
   # c) else author the next unwritten plan task, then IMMEDIATELY publish it.
   local NEXT

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- gengrowth.ai blog publish ticker (LANE A) — fires hourly, publishes ready drafts.
+     INSTALL (run yourself):
+       cp tools/scripts/com.gengrowth.gengrowth-publish.plist ~/Library/LaunchAgents/
+       launchctl load -w ~/Library/LaunchAgents/com.gengrowth.gengrowth-publish.plist
+     STOP:
+       launchctl unload ~/Library/LaunchAgents/com.gengrowth.gengrowth-publish.plist
+     Single-instanced (PID-liveness mutex). Publish-only + idempotent: already-live posts
+     are skipped, so it stands down when there is nothing new to publish. -->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.gengrowth.gengrowth-publish</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-gengrowth-publish-tick.sh</string>
+  </array>
+  <key>StartInterval</key>
+  <integer>3600</integer>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>StandardOutPath</key>
+  <string>/Users/awayer_mini/gengrowth-agents/cron-sync/gengrowth-publish/launchd.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/awayer_mini/gengrowth-agents/cron-sync/gengrowth-publish/launchd.err.log</string>
+  <key>ProcessType</key>
+  <string>Background</string>
+</dict>
+</plist>

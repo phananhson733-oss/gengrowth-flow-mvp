@@ -67,3 +67,15 @@ aliases:
 按机制 (b) 实现 gengrowth.ai 发布桥并出首篇 PR。先在最新代码上吃透发布目标（5-reader 设计 workflow + Codex 评审，产出 `docs/2026-06-17-gengrowth-publish-bridge-design.md`，Codex 纠正 3 个承重缺陷：非法 `EXCLUDED.*`→逐列枚举、`published_at` 非上线门→`status='published'` 才是、PR 不自动 apply→须 operator 手动跑）。实现：flow-mvp 加 `package.json` + `marked@17/sanitize-html@2.17`（pin 对齐 agents repo，使 md→HTML 的 sanitize 策略与渲染端逐字一致）；新脚本 `tools/scripts/gg-md-to-gengrowth-blog.mjs`（镜像 oracle bridge，复用其已 export 的 parseFrontmatter/deriveDescription/transformBody/atomicWrite；net-new：marked→sanitize、cluster→category(methodology)/pillar_slug 映射、固定 GenGrowth Team byline、确定性 UUIDv5、跨站链接 scrub、15 列 `ON CONFLICT (slug,locale) DO UPDATE` 逐列枚举幂等 upsert）。dry-run 验过：H1 抽为 title 并从正文剥离、表格/FAQ/CTA(gengrowth.ai/app) 正确渲染、引号转义、excerpt 干净、reading_time=8。emit `supabase/seed-blog-w25.sql`（PG-WLS-001 EN），引号/括号平衡校验过。开 PR **#209** 到 xdawayer/gengrowth-agents（OPEN+MERGEABLE）。**未上线**：done=live 还差 merge #209 + 用 supabase CLI apply SQL 到 prod（需 prod 已有迁移 20260327000000）+ 特权 DB 查询验收 —— 这步需 Supabase 访问权（本机仅 .env.example、无 service-role key、无 CLI），待用户。
 
 ---
+
+### Q5 — 02:30 [claude]
+
+**🙋 提问：**
+
+（接续 + Goal）保证 supabase CLI 流程通畅；Goal：去落地，最终设置好 cron（gengrowth.ai W25 plan + astrologywiki.com W22 plan 两个站点）
+
+**🤖 回答：**
+
+验证 supabase CLI 流程**通畅**：装 CLI 2.106（brew）→ 用户 `supabase login`（GitHub 2FA + Supabase 验证码两步）→ `projects api-keys` 新版格式没变、`_emit-sb-key.mjs` 取到 service_role → REST GET 200。确认 gengrowth.ai prod = `qeeocwurjslqppjxlsbk`（"Agents", us-east-1），W25 SEO 7 篇 + 共 17 篇已 published（wzb 经 REST 发的，pillar=`seo_content`）。**对齐 bridge**：发现我 bridge/PR #209 的 pillar_slug 用了细 cluster id（white_label_seo），与线上 canonical pillar（seo_content）偏离 → 改 bridge 用 canonical PILLARS（seo_content）+ 加 `--emit rest`（CLI→key→REST 幂等 upsert on (slug,locale)，dry-run 验过）。PR #209 已被合并 → 发 PR #210 把合进 main 的 seed 文件 pillar 修成 seo_content（消除误用 footgun）。写**多站点 publish-only cron 分阶段计划** `docs/2026-06-17-multisite-publish-cron-plan.md`：Lane A gengrowth = 新建简单 rest-upsert ticker；Lane B oracle = autopilot 加 publish-only 模式 + timeout + plan 过滤再启用（canonical runbook 禁 cron 撰写）。待用户拍板 cron 范围 + 无人值守 auth 方式 + 是否动有风险的 autopilot。
+
+---

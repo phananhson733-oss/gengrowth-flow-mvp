@@ -115,7 +115,7 @@ There is no fixed count. The page structure matters once you have any commercial
 
 - [SEO for SaaS startups on a lean budget](/en/blog/seo-for-saas-startups) — for founders running the program without an agency
 - a guide to B2B agency SEO delivery — for teams evaluating outside help on this page structure
-- [[<TBD-internal-link: overview of programmatic SEO for SaaS feature pages>]] — for scaling the feature-page layer beyond a handful of URLs
+- an overview of programmatic SEO for SaaS feature pages — for scaling the feature-page layer beyond a handful of URLs
 
 ## Take Action
 

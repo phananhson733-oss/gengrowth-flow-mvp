@@ -14,13 +14,16 @@ Choosing a whitelabel seo tool is a build-or-buy call that sets your margin ceil
 
 That mismatch shows up as real business cost in a few predictable ways:
 
-1. **Trust leakage.** A report that still hints at the provider's domain or tooling undermines the premium positioning you sold the client on.
-2. **Margin compression.** Resold work carries a hard markup ceiling, and pricing it like in-house labor quietly erodes the very margin that justified outsourcing.
+1. **Trust leakage.** A report that still hints at the provider's domain or tooling undermines the premium positioning you sold the client on, and once a client spots the seam, the relationship rarely fully recovers.
+2. **Margin compression.** Resold work carries a hard markup ceiling, and pricing it like in-house labor quietly erodes the very margin that justified outsourcing in the first place.
 3. **Delivery risk.** You inherit the partner's standards, so a weak handoff surfaces as a churned account a quarter later, long after the contract felt like a win.
+4. **Switching cost.** Tooling that locks reporting history inside the provider's platform makes it expensive to change partners, which weakens your leverage at renewal.
+
+The reason the tier question deserves this much attention is that it compounds. A wrong tier at one client is an annoyance; the same wrong choice across a book of twenty accounts becomes a structural margin problem that no amount of upselling fixes. Most owners only feel that compounding once they're already three or four contracts deep, which is exactly why working it out before the first signature pays off.
 
 ## How a White-Label SEO Tool Plays Out Across Three Tiers
 
-A whitelabel seo tool differs from in-house delivery because branding control is a spectrum, not a switch, and each tier changes what your client can see. Across the white-label rollouts we've audited, the deciding factor isn't the feature list, it's how far the provider's identity disappears at each touchpoint. This is the distinction the broader [[<TBD-internal-link: explainer on managed versus reselling SEO models>]] keeps returning to.
+A whitelabel seo tool differs from in-house delivery because branding control is a spectrum, not a switch, and each tier changes what your client can see. Across the reseller rollouts we've audited, the deciding factor isn't the feature list, it's how far the provider's identity disappears at each touchpoint. This is the distinction the broader [[<TBD-internal-link: explainer on managed versus reselling SEO models>]] keeps returning to.
 
 In practice the spectrum resolves into three workable tiers:
 
@@ -28,7 +31,7 @@ In practice the spectrum resolves into three workable tiers:
 2. **Level 2, client portal.** You get a branded portal where clients log in to see progress, with your colors and naming, though it usually runs on the provider's shared domain rather than yours.
 3. **Level 3, full platform resale.** The whitelabel seo tool runs on your custom domain with isolated client logins, your footer branding, and reporting clients can't trace back to the provider at all.
 
-The job most agencies are trying to finish is reselling SEO under their own brand without building a team from scratch, and the tier you pick decides whether that brand actually holds up when a client clicks "log in."
+The job most agencies are trying to finish is reselling SEO under their own brand without building a team from scratch, and the tier you pick decides whether that brand actually holds up when a client clicks "log in." A useful way to picture it: at Level 1 the client experience ends at a polished PDF, at Level 2 it extends to a dashboard they can open themselves, and at Level 3 the entire surface, from URL to support email, belongs to you. Each step up trades a little cost for a lot of brand control, and teams that run this workflow well tend to choose the step deliberately rather than defaulting to whatever the cheapest plan offers.
 
 ## Common Implementation Misreadings
 
@@ -49,7 +52,7 @@ Agencies usually get burned not by a bad provider but by misreading what a given
 
 ## How to Evaluate a White-Label SEO Tool Before You Commit
 
-Evaluate a whitelabel seo tool on observable isolation, not on the marketing word "white-label," because that single term hides the Level 1 to Level 3 gap entirely. We've found the contract clauses matter more than the demo. Score any provider against criteria you can verify before signing:
+Evaluate a whitelabel seo tool on observable isolation, not on the marketing label itself, because that single term hides the Level 1 to Level 3 gap entirely. We've found the contract clauses matter more than the demo. Score any provider against criteria you can verify before signing:
 
 1. **Custom domain support.** Confirm whether client logins and reports can run on your domain, or only the provider's shared subdomain. This is the single clearest tier signal.
 2. **Login isolation.** Check whether each client gets a separate, branded login that never exposes the provider's identity or other clients' data.
@@ -98,5 +101,5 @@ Run your current client list through the tier-matching steps above, then pressur
 
 ## Sources
 
-- Based on patterns GenGrowth has observed across white-label SEO rollouts; no third-party study is cited
+- Based on patterns GenGrowth has observed across agency reseller rollouts; no third-party study is cited
 - [[<TBD-external-link: Schema.org | Service | the standard vocabulary for describing the resold service offerings referenced above>]]

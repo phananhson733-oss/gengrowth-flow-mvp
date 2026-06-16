@@ -12,16 +12,16 @@ A local SEO audit is **a structured review of the signals that decide whether a 
 
 A local SEO audit matters because most consultants conflate a site audit with a local pack audit, and that confusion shows up as wasted hours and a frustrated client. When someone ranks on page one organically but never appears in the three-pack, a general on-page review will not explain the gap. The two outcomes run on different ranking systems, so a report that mixes them together rarely points to the real fix. This connects to the larger job most agencies are chasing here: tracking client rankings and producing professional reports at scale without re-diagnosing the same problem every month. Across the rollouts we've audited, the deciding factor isn't how many tools you run, it's whether the audit tells you which lever actually controls local pack inclusion. A workflow that answers that question first saves the back-and-forth that erodes both margin and trust, and it pairs naturally with a [[<TBD-internal-link: guide to automated rank tracking for client reports>]].
 
-## How a Local SEO Audit Plays Out in Real Agency Work
+## How the Audit Plays Out in Real Agency Work
 
-A local SEO audit usually runs in a few recurring scenarios, and naming them keeps the review honest about what each finding is worth:
+A local SEO audit usually runs in a few recurring scenarios, and naming them keeps the review honest about what each finding is worth. The point is not to run every check on every account but to know which scenario you are in and where to intervene first:
 
-1. **The organic-but-invisible client.** A business ranks for service terms but never enters the local pack, so the audit starts with Google Business Profile completeness and NAP consistency before touching on-page content.
-2. **The multi-location rollout.** A franchise or chain needs each location audited the same way, so the audit becomes a repeatable template that flags citation gaps and duplicate listings per location.
-3. **The new-client triage.** During onboarding, the audit separates quick local pack wins (verifying the profile, fixing a wrong category) from slower organic plays (content depth, link acquisition) so the first 30 days show movement.
-4. **The monthly health check.** For retained accounts, a lighter version of the audit tracks review velocity and ranking drift, feeding the client report instead of starting from scratch.
+1. **The organic-but-invisible client.** A business ranks for service terms but never enters the local pack, so the review starts with Google Business Profile completeness and NAP consistency before touching on-page content. This is the case where mixing the two systems hides the actual fix, and where separating them earns the fastest win.
+2. **The multi-location rollout.** A franchise or chain needs each location reviewed the same way, so the work becomes a repeatable template that flags citation gaps and duplicate listings per location. The template matters more than any single tool, because consistency across locations is what the data has to prove.
+3. **The new-client triage.** During onboarding, the review separates quick local pack wins, such as verifying the profile or fixing a wrong primary category, from slower organic plays like content depth and link acquisition, so the first 30 days show visible movement and the client stays patient through the longer work.
+4. **The monthly health check.** For retained accounts, a lighter pass tracks review velocity and ranking drift against the prior cycle, feeding the client report instead of starting from scratch. This is where the repeatable structure pays off, because the diagnosis from last month becomes the baseline for this month.
 
-In each case the value comes from intervening at the right step, not from running every check on every account.
+In each scenario the value comes from intervening at the right step rather than restating every possible issue, and that discipline is what keeps the work profitable when client count climbs.
 
 ## Common Implementation Misreadings
 
@@ -32,7 +32,7 @@ Teams stumble on a few predictable points when they treat the audit as one undif
 3. **Confusing citation volume with citation quality.** Stacking hundreds of low-trust directory listings does little; consistent NAP across a handful of authoritative sources does more.
 4. **Reporting every issue at equal weight.** A flat list reads as thorough but leaves the client guessing what to fix first, which is exactly the friction the audit should remove.
 
-## A Local SEO Audit at a Glance — Quick Reference
+## Local Pack vs Organic Signals at a Glance — Quick Reference
 
 | Scenario | Baseline approach | Local pack / SaaS audit approach | How to tell which fits |
 | --- | --- | --- | --- |
@@ -41,7 +41,7 @@ Teams stumble on a few predictable points when they treat the audit as one undif
 | New client with thin local presence | Start with keyword research and content | Triage quick profile and citation fixes before content work | The profile is unverified or missing core fields |
 | Retained account losing local visibility | Re-audit the whole site from zero | Track review velocity and ranking drift against the last audit | Rankings slipped but the site itself hasn't changed |
 
-## How to Evaluate Whether a Local SEO Audit Is Doing Its Job
+## How to Evaluate Whether the Audit Is Doing Its Job
 
 You can judge a local SEO audit against a handful of observable standards rather than vague promises:
 
@@ -51,7 +51,7 @@ You can judge a local SEO audit against a handful of observable standards rather
 4. **It tracks review cadence, not just rating.** A red flag is an audit that records a 4.6-star average but never notes that reviews stopped six months ago.
 5. **It produces a client-ready output.** If the findings can't drop into a report a non-technical client understands, the audit adds work instead of removing it.
 
-## How to Run a Local SEO Audit Step by Step
+## How to Run the Review Step by Step
 
 Follow an ordered path so the audit stays repeatable across accounts:
 
@@ -67,7 +67,7 @@ Follow an ordered path so the audit stays repeatable across accounts:
 
 **How is a local SEO audit different from a regular SEO audit?**
 
-A local SEO audit prioritizes signals that control local pack inclusion, such as Google Business Profile completeness and NAP consistency, while a general SEO audit focuses on organic factors like content and backlinks. The two overlap but answer different questions.
+It prioritizes signals that control local pack inclusion, such as Google Business Profile completeness and NAP consistency, while a general site review focuses on organic factors like content and backlinks. The two overlap but answer different questions.
 
 **Can I run a free local SEO audit?**
 
@@ -75,7 +75,7 @@ You can cover the basics for free by checking profile completeness, NAP consiste
 
 **Why does a client rank organically but not in the local pack?**
 
-This usually traces to an incomplete or inconsistent Google Business Profile, weak NAP consistency, or thin review velocity, none of which a content-focused audit surfaces. That gap is the main reason a local SEO audit treats the two systems separately.
+This usually traces to an incomplete or inconsistent Google Business Profile, weak NAP consistency, or thin review velocity, none of which a content-focused review surfaces. That gap is the main reason the two ranking systems deserve separate treatment.
 
 **How often should an agency rerun the audit?**
 

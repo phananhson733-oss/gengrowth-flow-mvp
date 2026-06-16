@@ -14,6 +14,8 @@ Agency rank tracking matters because the time spent pulling positions by hand is
 
 The job most readers want done here is straightforward: track client rankings on autopilot and ship professional reports at scale, without adding headcount. When that job is unmet, three costs compound. The team's senior time leaks into clerical pulls, report quality drifts as accounts pile up, and the agency leaves a new deliverable — AI search visibility — entirely unbilled. The [[<TBD-internal-link: explainer on white-label SEO reporting>]] covers how that last gap is reshaping client expectations.
 
+The margin math is the part feature-comparison pages skip entirely. Picture a strategist earning a meaningful hourly rate who spends two hours a month per client pulling positions, formatting exports, and writing commentary. At twenty clients, that is roughly a full working week each month spent on a task that generates no new strategic insight. The retainer still has to absorb that cost, so it comes straight out of the margin the agency thought it was earning. Teams often see this only after a slow quarter, when the reporting load stays flat while revenue dips and the per-client overhead suddenly looks indefensible. Modeling that hidden cost is exactly why this page exists — and why a checklist of tracking features tends to lead managers to the wrong decision.
+
 ## How Agency Rank Tracking Works in Real Agency Rollouts
 
 Agency rank tracking differs from a single-site tracker because it has to scale across portfolios without scaling the labor behind it. In practice, the workflow shows up in a few recurring scenarios:
@@ -23,7 +25,9 @@ Agency rank tracking differs from a single-site tracker because it has to scale 
 3. **Segmented tracking.** Rankings split by location and device, so a multi-location client sees city-level movement rather than a blended national average that hides the real story.
 4. **AI search monitoring.** Newer trackers also log appearances in Google AI Overviews, ChatGPT, and Perplexity — a visibility layer most agencies aren't reporting on yet.
 
-The point where this intervenes is the handoff: the moment raw position data would otherwise become someone's manual task, the tool absorbs it.
+The point where this intervenes is the handoff: the moment raw position data would otherwise become someone's manual task, the tool absorbs it. That handoff is where most manual workflows quietly break. A strategist forgets a client's monthly pull during a busy week, or copies last month's figures into the wrong template, and the error only surfaces when the client notices. Automating the pull removes that failure point entirely, because the schedule does not skip a client when the team is underwater.
+
+Two more scenarios show up once a roster grows. First, onboarding a new client becomes a five-minute keyword import rather than a recurring reporting chore that the team has to remember forever. Second, when a client churns, their tracking simply pauses instead of leaving an orphaned spreadsheet that someone keeps updating out of habit. In agency rollouts we've watched fail, the wasted effort was rarely in the tracking itself; it was in the dozens of small manual steps clustered around it. Folding those steps into a scheduled, templated process is what frees senior time for the analysis clients actually pay for.
 
 ## Common Implementation Misreadings
 
@@ -33,6 +37,8 @@ Most shallow comparison content treats agency rank tracking as a feature checkli
 2. **"Manual pulls are basically free."** Reality: a strategist spending even two hours monthly per client on reporting is a real, recurring cost that erodes the margin on every retainer.
 3. **"AI search isn't our problem yet."** Reality: clients are already asking why they vanish from AI answers; tracking only classic rankings leaves that question unanswered.
 4. **"One report template fits all clients."** Reality: agencies running this workflow tend to find that segmentation by location and device is what separates a credible report from a generic one.
+
+The common thread is that each misreading treats reporting as a clerical detail rather than a profit lever. Once a manager reframes it around hours and margin instead of feature parity, the buying decision usually changes — and so does the conversation they have with clients about value.
 
 ## Agency Rank Tracking at a Glance — Quick Reference
 
@@ -70,9 +76,9 @@ Rolling out agency rank tracking works best as an ordered sequence rather than a
 
 It depends on roster size and reporting depth, but most teams that automate report cutting recurring reporting time sharply once manual pulls and formatting are removed. The savings compound as the client count grows.
 
-**Do agencies need to track AI search engines now?**
+**Do agencies need to track AI search results now?**
 
-Increasingly, yes. Clients are starting to ask why they appear or vanish in AI Overviews and chatbots, and only trackers that monitor those surfaces can answer with data.
+Increasingly, yes. Clients are starting to ask why they appear or vanish in AI Overviews and chatbots, and only trackers that monitor those surfaces can answer with data rather than a guess.
 
 **Can a small agency justify a paid rank tracker?**
 

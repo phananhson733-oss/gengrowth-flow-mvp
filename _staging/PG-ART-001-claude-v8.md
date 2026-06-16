@@ -1,3 +1,27 @@
+---
+title: Agency Rank Tracking
+slug: agency-rank-tracking
+date: 2026-06-16
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T1
+track: 量产线
+page_id: PG-ART-001
+target_keyword: agency rank tracking
+associated_keywords:
+  - rank tracking for agencies
+  - seo rank tracking for agencies
+  - agency seo rank tracker
+  - rank tracker for seo agencies
+  - seo rank tracking agency
+generated_by: claude-opus-4-8
+prompt_version: v8
+generated_at: 2026-06-16T16:36:44.346Z
+content_sha256_short: 2136b1320c303808
+phase2_checks: all-pass
+---
+
 # How Agency Rank Tracking Quietly Decides Your Reporting Margin
 
 ## What Is an Agency Rank Tracking Tool?
@@ -94,6 +118,7 @@ Not if reports are fully white-labeled. Unbranded exports, your logo, and a sing
 
 - [[<TBD-internal-link: comparison with managed SEO reporting services>]] — for teams weighing in-house tracking against an outsourced reporting partner
 - [[<TBD-internal-link: guide to white-label SEO pricing>]] — for setting retainer prices that protect margin once reporting is automated
+- [[<TBD-internal-link: local SEO audit workflow for multi-client agencies>]] — for teams layering local audits onto their tracking and reporting stack
 
 ## Take Action
 

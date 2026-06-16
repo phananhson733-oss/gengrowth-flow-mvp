@@ -1,3 +1,26 @@
+---
+title: Whitelabel Seo Tool
+slug: whitelabel-seo-tool
+date: 2026-06-16
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-WLS-003
+target_keyword: whitelabel seo tool
+associated_keywords:
+  - white label seo tool
+  - seo white label tool
+  - white label seo reseller
+  - white label seo platform
+generated_by: claude-opus-4-8
+prompt_version: v8
+generated_at: 2026-06-16T16:36:41.459Z
+content_sha256_short: bbe2ddd1e713b17d
+phase2_checks: all-pass
+---
+
 # How to Tell Which Whitelabel SEO Tool Tier Your Agency Actually Needs
 
 ## What Is a White-Label SEO Tool?

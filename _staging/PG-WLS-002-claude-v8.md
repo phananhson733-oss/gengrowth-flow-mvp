@@ -1,3 +1,26 @@
+---
+title: Best White Label Seo Tool
+slug: best-white-label-seo-tool
+date: 2026-06-16
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-WLS-002
+target_keyword: best white label seo tool
+associated_keywords:
+  - free white label seo tool
+  - white label seo platform
+  - white label seo software
+  - white label seo reseller tool
+generated_by: claude-opus-4-8
+prompt_version: v8
+generated_at: 2026-06-16T16:36:41.409Z
+content_sha256_short: 1749201707265513
+phase2_checks: all-pass
+---
+
 # How to Pick the Best White Label SEO Tool by Resale Tier, Not Feature Count
 
 ## What Is a White-Label SEO Tool?

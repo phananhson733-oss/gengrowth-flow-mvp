@@ -1,8 +1,32 @@
+---
+title: Local Seo Audit
+slug: local-seo-audit
+date: 2026-06-16
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T1
+track: 量产线
+page_id: PG-ART-003
+target_keyword: local seo audit
+associated_keywords:
+  - local seo audit checklist
+  - local seo audit report
+  - local seo audit service
+  - local seo audit free
+  - free local seo audit tool
+generated_by: claude-opus-4-8
+prompt_version: v8
+generated_at: 2026-06-16T16:36:44.440Z
+content_sha256_short: df0354029ccd98dd
+phase2_checks: all-pass
+---
+
 # Why a Local SEO Audit Has to Separate Local Pack Signals From Organic Ones
 
 ## What Is a Local SEO Audit?
 
-A local SEO audit is **a structured review of the signals that decide whether a business shows up in the local pack and in nearby map and organic results**. It looks at the Google Business Profile, citations, reviews, and on-page factors together, then judges each one by how much it moves local visibility rather than treating them as a single undifferentiated checklist. Done well, it sits under the broader [[<TBD-internal-link: pillar guide to local search ranking>]] and shows why a client ranks in one place but vanishes in another.
+A local SEO audit is **a structured review of the signals that decide local search and local pack visibility**. It looks at the Google Business Profile, citations, reviews, and on-page factors together, then judges each one by how much it moves local visibility rather than treating them as a single undifferentiated checklist. Done well, it sits under the broader [[<TBD-internal-link: pillar guide to local search ranking>]] and shows why a client ranks in one place but vanishes in another.
 
 - It evaluates Google Business Profile completeness, NAP consistency, and review velocity as local pack inputs
 - It separately weighs on-page content, technical health, and backlinks as organic ranking inputs
@@ -102,4 +126,4 @@ Run your first audit inside one workspace and let it produce a prioritized, clie
 ## Sources
 
 - Google Business Profile Help documentation — the canonical reference for the profile fields and verification steps described above
-- Based on patterns GenGrowth has observed across local SEO and white-label rollouts; no third-party study is cited
+- Based on recurring patterns the GenGrowth team has observed across local SEO and white-label agency rollouts; no third-party study is cited

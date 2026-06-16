@@ -1,3 +1,26 @@
+---
+title: Seo Reporting Tool For Seo Companies
+slug: seo-reporting-tool-for-seo-companies
+date: 2026-06-16
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-ART-002
+target_keyword: seo reporting tool for seo companies
+associated_keywords:
+  - seo report tool for agencies
+  - seo reports for clients
+  - client seo report tool
+  - white label seo reporting tool
+generated_by: claude-opus-4-8
+prompt_version: v8
+generated_at: 2026-06-16T16:36:44.396Z
+content_sha256_short: 2ecc441471fed9b0
+phase2_checks: all-pass
+---
+
 # How an SEO Reporting Tool for SEO Companies Earns Client Trust
 
 ## What Is an SEO Reporting Tool?

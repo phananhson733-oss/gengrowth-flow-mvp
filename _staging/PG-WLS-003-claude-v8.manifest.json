@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-WLS-003",
+  "entity": "White-Label SEO Tool / Agency SEO Reseller",
+  "target_keyword": "whitelabel seo tool",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "claude-opus-4-8",
+  "prompt_version": "v8",
+  "generated_at": "2026-06-16T16:36:41.459Z",
+  "content_sha256_short": "bbe2ddd1e713b17d",
+  "source_path": "_staging/PG-WLS-003-claude-v8.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-WLS-003-claude-v8.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 1880,
+      "wikilinks": 6,
+      "tbdLinks": 6
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

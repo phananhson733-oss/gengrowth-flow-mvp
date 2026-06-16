@@ -11,16 +11,12 @@ page_id: PG-WC-013
 author_id: "aditi-sharma"
 author_display_name: "Aditi Sharma"
 target_keyword: germany world cup 2026 astrology team
-target_keyword_zh: 德国世界杯2026占星
 associated_keywords:
-  - dfb natal chart astrology
-  - germany national team astrology
-  - germany mundane astrology
-  - germany world cup astrology
+
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-16T13:14:17.506Z
-content_sha256_short: 793dc0eac58c6439
+generated_at: 2026-06-16T16:15:45.944Z
+content_sha256_short: dada1550fd7d8750
 phase2_checks: all-pass
 ---
 

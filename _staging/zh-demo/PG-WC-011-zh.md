@@ -12,14 +12,11 @@ author_id: "elena-vane"
 author_display_name: "Elena Vane"
 target_keyword: vozinha birth chart
 associated_keywords:
-  - josimar dias astrology
-  - cape verde world cup astrology
-  - vozinha zodiac sign
-  - goalkeeper birth chart
+
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-16T13:00:50.988Z
-content_sha256_short: 1eaf39d1fdd22bf8
+generated_at: 2026-06-16T16:15:31.334Z
+content_sha256_short: 70130b4dcadfe9b9
 phase2_checks: all-pass
 ---
 

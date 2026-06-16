@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-WC-011",
+  "entity": "沃齐尼亚的出生星盘",
+  "target_keyword": "vozinha birth chart",
+  "template": "Definition",
+  "tier": "T3",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-06-16T16:15:31.334Z",
+  "content_sha256_short": "70130b4dcadfe9b9",
+  "source_path": "_staging/zh-demo/PG-WC-011-claude-v8.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/PG-WC-011-zh.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 2467,
+      "wikilinks": 2,
+      "tbdLinks": 2
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

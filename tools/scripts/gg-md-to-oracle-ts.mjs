@@ -181,6 +181,19 @@ export function deriveDescription(body, maxLen = 160) {
 // substring/regex. Patterns are intentionally narrow to avoid mis-routing.
 // Anything unmatched falls through to an italic placeholder (no fake link).
 export const TBD_LINK_RULES = [
+  // --- 6/16 World Cup 2026 astrology cluster (pillar + player / team / national
+  // spokes). Specific spokes precede the general pillar rule (first-match-wins),
+  // and the whole block sits at the TOP so "germany ... birth chart" routes to its
+  // own spoke before the broad /(natal|birth) chart/ rule further down. Target
+  // slugs world-cup-2026-astrology-prediction / argentina-* / vinicius-jr-zodiac-
+  // sign / saturn-in-aries-2026 are live; germany-* ship in the 6/16 batch. ---
+  { match: /vinicius.{0,6}(jr|junior).{0,16}(zodiac|sun)\s*sign|vinicius.{0,6}(jr|junior).{0,16}sun[-\s]?sign/i, href: '/en/wiki/vinicius-jr-zodiac-sign' },
+  { match: /germany\s+world\s+cup.{0,24}(players?|squad).{0,16}chart|germany.{0,16}(players?|squad).{0,12}birth\s*chart/i, href: '/en/wiki/germany-world-cup-players-birth-chart-2026' },
+  { match: /germany\s+world\s+cup\s+2026\s+team\s+astrology|germany.{0,16}team\s+astrology/i, href: '/en/wiki/germany-world-cup-2026-astrology-team' },
+  { match: /argentina\s+world\s+cup\s+2026\s+astrology/i, href: '/en/wiki/argentina-world-cup-2026-astrology' },
+  { match: /transit_events\s+cluster|jupiter\s+in\s+cancer.{0,20}saturn\s+in\s+aries|saturn\s+in\s+aries(\s+2026)?(\s+transit)?/i, href: '/en/wiki/saturn-in-aries-2026' },
+  { match: /world\s+cup\s+2026\s+astrology\s+(themes?\s+)?(pillar|prediction|hub|overview|guide)|world\s+cup\s+2026\s+astrology\s+themes|world\s+cup\s+2026\s+astrology\s+prediction/i, href: '/en/wiki/world-cup-2026-astrology-prediction' },
+  { match: /how\s+to\s+read\s+a\s+(national|mundane)\s+(or\s+mundane\s+)?chart|(national|mundane)\s+chart\b/i, href: '/en/wiki/how-to-read-birth-chart' },
   // --- 6/2 EMPATH/HSP cluster (highly-sensitive-person pillar + signs / vs-autism
   // / famous spokes). Specific spokes MUST precede the general pillar rule
   // (first-match-wins) so "HSP vs autism" / "signs of a HSP" route to their own

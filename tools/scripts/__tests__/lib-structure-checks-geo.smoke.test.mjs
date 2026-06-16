@@ -12,7 +12,11 @@ import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 
 import { scoreCitability, extractCitabilityFeatures } from '../lib/citability.mjs';
-import { checkScGeo, SC_GEO_DEFAULT_THRESHOLD } from '../lib/structure-checks.geo.mjs';
+import {
+  checkScGeo,
+  SC_GEO_DEFAULT_THRESHOLD,
+  formatScGeoAdvisory,
+} from '../lib/structure-checks.geo.mjs';
 
 // Citation/stat/definition/structure-rich draft → should score high.
 const RICH = `## What is white label keyword research
@@ -74,4 +78,35 @@ test('SC-GEO: result shape is stable', () => {
   assert.equal(typeof r.score, 'number');
   assert.equal(typeof r.detail, 'string');
   assert.ok(r.features && r.features.normalized);
+});
+
+// --- formatScGeoAdvisory: the print-only string consumed by _phase2-validate ---
+
+test('formatScGeoAdvisory: deterministic single line with score + raw counts', () => {
+  const out = formatScGeoAdvisory(RICH);
+  assert.equal(out, formatScGeoAdvisory(RICH)); // deterministic
+  assert.equal(out.includes('\n'), false); // single line (caller adds its own prefix)
+  assert.match(out, /^citability=[\d.]+ \(advisory, non-gating\) \| /);
+  assert.match(out, /stats=\d+ citations=\d+ quotes=\d+ defs=\d+/);
+});
+
+test('formatScGeoAdvisory: never throws on empty / non-string', () => {
+  assert.doesNotThrow(() => formatScGeoAdvisory(''));
+  assert.doesNotThrow(() => formatScGeoAdvisory(undefined));
+  assert.doesNotThrow(() => formatScGeoAdvisory(null));
+  assert.match(formatScGeoAdvisory(''), /weak levers:/); // empty → weak levers named
+});
+
+test('formatScGeoAdvisory: names "levers ok" when citability is strong', () => {
+  // RICH has stats+citations+quotes+defs+structure → above per-feature floor.
+  assert.match(formatScGeoAdvisory(RICH), /levers ok|weak levers:/);
+});
+
+// The astrology-safe factual-anchor句式 the templates teach must be the form the
+// citability engine actually counts (codex finding): "According to <named>, <N>%".
+test('citability counts the taught factual-anchor sentence form', () => {
+  const taught = `According to a 2017 Pew Research Center survey, about 29% of U.S. adults said they believed in astrology. According to NASA, Saturn takes about 29.5 years to complete one orbit.`;
+  const f = extractCitabilityFeatures(taught).raw;
+  assert.ok(f.statistics >= 2, `expected stats>=2, got ${f.statistics}`);
+  assert.ok(f.citations >= 2, `expected citations>=2, got ${f.citations}`);
 });

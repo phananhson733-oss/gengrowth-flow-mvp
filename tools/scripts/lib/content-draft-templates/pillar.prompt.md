@@ -244,6 +244,18 @@ target_keyword = **「{{target_keyword}}」**。**SEO + RL4 binary check** 要�
    - 结尾必须是 `>]]`
    - description 必须是自然 noun phrase：「X explainer」 / 「comparison with X」 / 「guide to X」 / 「overview of X」 / 「deep dive on X」
 
+6. **GEO 事实锚点杠杆（factual anchor；软杠杆，非作废红线）**：AI 搜索引擎更倾向引用带具体可核查事实的页面（citability 的 statistics + cite-sources 权重最高）。Pillar 作为集合 / hub 页尤其受益——在自然契合处织入 **1-2 处**事实锚点；**没有真实可核查的事实可锚 → 直接省略**，绝不编造。
+
+   **作用域边界**：上方**规则 1**（绝不命名具体作者 / 书名 / 年份 / 机构）约束的是**密传 / esoteric 权威**的 citation；本杠杆是其**唯一例外**，**只**适用于以下四类**客观外部事实**，且**只陈述事实本身、绝不暗示占星能预测 / 导致 / 证明任何结果**（规则 2 全程有效）。按优先级从高到低：
+   1. **天文事实**（最优先）：`According to NASA, Saturn takes about 29.5 years to complete one orbit…`
+   2. **历史 / 起源事实**：`The twelve-house framework is commonly traced to Hellenistic astrology in the early centuries CE.`（`is commonly traced to` 归属语气，不配书名页码）
+   3. **文化 / 地理脉络事实**（不带具体书名 / 页码）。
+   4. **公众信念调查**（**最低优先**，只放概览 / 文化背景段，别塞进核心定义句）：`According to a 2017 Pew Research Center survey, about 29% of U.S. adults said they believed in astrology.`（关于**信念本身**的事实，不是有效性的科学声明）
+
+   **可计数句式（关键）**：必须 **`According to <具名来源>, <具体数字 / 百分比 / 年代>…`**——具名来源 + 具体数字才会被 AI 引擎与 citability 计为有效引用；`a 2017 study…` 这种无具名机构的形态会被 RL12 判作废。
+
+   **绝对禁止**：信念调查偷换成有效性证明（`studies show astrology predicts personality`）/ 伪科学数字（`74% of Geminis are extroverted`）/ 无具名来源的 `studies show` `research proves`（反 hedging）/ 为凑杠杆编造年代比例机构。
+
 {{PSYCH_SAFETY_BLOCK}}
 
 ## Anti-AI 词汇 blocklist（任一违反 = 重写该段）

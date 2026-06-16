@@ -76,6 +76,9 @@ import {
   EN_TABLE_HEADING_RE,
   ZH_TABLE_HEADING_RE,
 } from './lib/structure-checks.mjs';
+// GEO citability advisory (print-only; never gates OVERALL). See header of
+// lib/structure-checks.geo.mjs for the advisory-not-gate posture on the oracle path.
+import { formatScGeoAdvisory } from './lib/structure-checks.geo.mjs';
 import { logFailure } from './lib/_failure-log.mjs';
 import { checkAntiHomogenization } from './lib/anti-homogenization.mjs';
 import { isValidAuthorId, normalizeAuthorId } from './lib/author-routing.mjs';
@@ -851,6 +854,20 @@ for (const [name, fn] of rlChecks) {
     console.log(`  ✗ ERROR: ${e.message}`);
     results[name] = { pass: false, error: e.message };
   }
+}
+
+// ---- GEO citability advisory (non-gating; never flips OVERALL) ----
+// PRINT-ONLY: surfaces the AI-search citability score + weakest levers so the
+// author can add a verifiable factual anchor (astronomy/history/survey — see the
+// "GEO 事实锚点杠杆" block in the prompt templates). It is deliberately NOT added
+// to struct.findings / struct.warnings / manifest and NEVER touches `pass`, so
+// the oracle pass/fail contract stays byte-identical. try/catch guarantees an
+// advisory bug can only print a WARN, never block phase2. Runs for all sites.
+console.log('\n▸ GEO citability (advisory)');
+try {
+  console.log(`  ⓘ ${formatScGeoAdvisory(draft)}`);
+} catch (e) {
+  console.log(`  ⚠ advisory skipped: ${e.message}`);
 }
 
 console.log('\n' + '━'.repeat(60));

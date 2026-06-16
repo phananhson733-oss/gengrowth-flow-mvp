@@ -21,16 +21,19 @@ const TITLES = {
   'agency-rank-tracking': 'How Agency Rank Tracking Quietly Decides Your Reporting Margin',
   'seo-reporting-tool-for-seo-companies': 'How an SEO Reporting Tool for SEO Companies Earns Client Trust',
   'local-seo-audit': 'Why a Local SEO Audit Has to Separate Local Pack Signals From Organic Ones',
+  'seo-for-saas': 'Why SEO for SaaS Needs a Page-by-Page Plan, Not Just More Blog Posts',
+  'saas-seo-platform': 'What a SaaS SEO Platform Should Actually Do for Your Funnel',
+  'saas-seo-consultant': 'How to Tell a Real SaaS SEO Consultant From a Generalist',
+  'seo-for-saas-startups': 'How to Start SEO for SaaS Startups from Day 1 with Zero DA',
 };
 
+// W26 seo_for_saas batch (W25 cluster already archived; TITLES keeps all 11 so
+// intra-cluster /en/blog links in these notes resolve to [[Title]] wikilinks).
 const BATCH = [
-  { pid: 'PG-WLS-001', slug: 'white-label-keyword-research', date: '2026-06-16' },
-  { pid: 'PG-WLS-002', slug: 'best-white-label-seo-tool', date: '2026-06-17' },
-  { pid: 'PG-WLS-003', slug: 'whitelabel-seo-tool', date: '2026-06-17' },
-  { pid: 'PG-WLS-004', slug: 'free-white-label-seo', date: '2026-06-17' },
-  { pid: 'PG-ART-001', slug: 'agency-rank-tracking', date: '2026-06-17' },
-  { pid: 'PG-ART-002', slug: 'seo-reporting-tool-for-seo-companies', date: '2026-06-17' },
-  { pid: 'PG-ART-003', slug: 'local-seo-audit', date: '2026-06-17' },
+  { pid: 'PG-SFS-001', slug: 'seo-for-saas', date: '2026-06-17' },
+  { pid: 'PG-SFS-002', slug: 'saas-seo-platform', date: '2026-06-17' },
+  { pid: 'PG-SFS-003', slug: 'saas-seo-consultant', date: '2026-06-17' },
+  { pid: 'PG-SFS-004', slug: 'seo-for-saas-startups', date: '2026-06-17' },
 ];
 
 function splitFm(md) {

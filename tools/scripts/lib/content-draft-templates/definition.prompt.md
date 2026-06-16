@@ -399,14 +399,43 @@ target_keyword = **「{{target_keyword}}」**（完整 3 词短语）。**SEO + 
      ```
      [[<TBD-external-link: Wikipedia | Exact Page Title | one-line reason it's relevant>]]
      ```
-     - 第 1 段 = 源类型（只许 `Wikipedia` / `NASA`（仅天文实体，如行星 / 星座的天文学条目）/ 百科类）
+     - 第 1 段 = 源类型（**只许 `Wikipedia` / 百科类**；converter 目前只解析 Wikipedia 外链，写 `NASA` 等其他服务会被渲染成斜体死链——**天文 / 调查类事实改走下方「GEO 事实锚点」杠杆的正文 in-body 归因**，不走外链占位符）
      - 第 2 段 = 该源上的**精确页面标题**（你已知的真实条目名）
      - 第 3 段 = 1 句话说明为什么相关
    - ✅ 范例：`[[<TBD-external-link: Wikipedia | Chakra | overview of the chakra system blue aura maps onto>]]`
-   - ✅ 范例：`[[<TBD-external-link: NASA | Saturn | the astronomical body behind the Saturn return cycle>]]`
+   - ✅ 范例：`[[<TBD-external-link: Wikipedia | Saturn | the astronomical body behind the Saturn return cycle>]]`
    - ❌ **绝对禁止**裸 URL：`https://en.wikipedia.org/wiki/Chakra`（写真 URL = 整篇作废）
    - ❌ **绝对禁止**链接标题含 `(paranormal)` / `(pseudoscience)` / `(alternative)` 的 Wikipedia 页（这类页面把主题框定为伪科学，伤 EEAT）：`[[<TBD-external-link: Wikipedia | Aura (paranormal) | ...>]]` ❌
    - 若没有合格的权威外链源（找不到精确真实页名）→ **直接省略**，不要硬凑、不要编造页名。
+
+## GEO 事实锚点杠杆（factual anchor；提升 AI 引擎可引用性 — 软杠杆，非作废红线）
+
+> Instruction only; **do not** output this as an article section.
+
+**作用域边界（先读，避免与上方红线打架）**：上面「权威锚点 + 事实诚信」**红线 1** 约束的是**密传 / esoteric 权威**（奠基人、学派、典籍）的 citation——那些**绝不**配具体书名 / 年份 / 页码。本杠杆是该红线**唯一的例外**，且**只**适用于下面四类**客观外部事实**（天文 / 历史 / 文化 / 公众信念调查）；两者来源域不同，不冲突。**红线 2**（禁经验 / 科学声明）仍然全程有效——本杠杆只陈述客观事实，**绝不**暗示占星能预测 / 导致 / 证明任何结果。
+
+AI 搜索引擎（AI Overview / ChatGPT / Perplexity）更倾向引用**带具体、可核查事实锚点**的页面（citability 的 statistics + cite-sources 权重最高）。**软目标**：在自然契合处织入 **1 处**事实锚点（最多别超过 2-3 处）；**没有真实可核查的事实可锚 → 直接省略**，绝不为凑杠杆编造数字 / 年代 / 机构。
+
+**合格事实只限以下四类，按优先级从高到低**：
+
+1. **天文事实**（最优先）：行星公转 / 周期、星座的天文学背景——**正文 in-body 归因**到 NASA / 天文学（不走外链占位符）。
+   - ✅ `According to NASA, Saturn takes about 29.5 years to complete one orbit, which is why the Saturn return recurs near ages 29 and 58.`
+   - ❌ 绝不延伸成 `therefore Saturn causes anxiety / forces maturity`（占星因果声明 = 红线 2 禁）
+2. **历史 / 起源事实**：体系 / 概念的成文年代、文化源头——用 `is commonly traced to` / `is often associated with` 的归属语气，**不**假装精确断代，**不**配书名页码。
+   - ✅ `The twelve-house framework is commonly traced to Hellenistic astrology in the early centuries CE.`
+3. **文化 / 地理脉络事实**：传统的地域传承的客观存在（不带具体书名 / 页码——见红线 1）。
+4. **公众信念调查**（**最低优先级**，只放结尾 / "why it matters" / 文化背景类语境，**别**塞进核心定义句；aura color / house / chakra 这类纯定义篇通常不需要）：可核查的"多少比例的人**相信 / 使用**占星"这类**关于信念本身**的调查。
+   - ✅ `According to a 2017 Pew Research Center survey, about 29% of U.S. adults said they believed in astrology.`
+   - ⚠️ 这是关于**人群信念**的事实，**不是**占星有效性的科学声明（后者仍被红线 2 禁）。
+
+**可计数句式（关键 — 决定杠杆是否真生效）**：事实锚点必须写成 **`According to <具名来源>, <具体数字 / 百分比 / 年代 / 单位>…`** 形态——**具名来源 + 具体数字**才会被 AI 引擎和 citability 引擎计为有效引用；模糊版（`a Pew survey found roughly a quarter…` 无具名机构 + 无精确数字）计为 0，等于白写。
+- ❌ **禁** `a 2017 study…` / `a recent report…` 形态：无具名机构 = 幻觉 citation marker，会被 RL12 判作废。必须 `According to the Pew Research Center,` / `According to NASA,` 这种具名开头。
+
+**绝对禁止**（命中 = 退回红线 1 / 2 或反 hedging，整篇作废）：
+- ❌ 信念调查偷换成有效性证明：`studies show astrology accurately predicts personality`
+- ❌ 给占星机制配伪科学数字：`74% of Geminis are extroverted`（编造统计）
+- ❌ 任何无具名来源的模糊归因：`studies show` / `research proves` / `experts agree`（与上方反 hedging 一致）
+- ❌ 为凑杠杆编造年代 / 比例 / 机构 / 书名——查不到真实事实就**省略**，用定性表述代替。
 
 {{PSYCH_SAFETY_BLOCK}}
 

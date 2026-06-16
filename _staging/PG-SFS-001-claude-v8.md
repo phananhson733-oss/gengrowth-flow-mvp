@@ -6,13 +6,13 @@ SaaS SEO strategy is **a framework that optimizes every page type a SaaS site ow
 
 - The blog earns top-of-funnel traffic; the pricing and trial pages convert the bottom of it
 - Feature and comparison pages target high-intent, low-volume queries that blogs rarely reach
-- The architecture, not raw post count, decides how much organic traffic turns into revenue
+- The page structure, not raw post count, decides how much organic traffic turns into revenue
 
 ## Why It Matters for Your Workflow
 
 Most founders inherit a blog-first mental model and quietly let it run the whole SEO program. That is the friction this guide exists to fix: seo for saas gets conflated with blog content strategy, so teams chase post volume while the highest-intent pages on the site, the pricing and trial pages, sit unoptimized and uninstrumented. The job you came here to do is learn an SEO framework built for SaaS page structures rather than borrow a content-site playbook that ignores them. This page sits under the broader [[<TBD-internal-link: pillar guide to SaaS organic growth>]], which maps how each page type feeds the next.
 
-The cost of getting the architecture wrong shows up in a few concrete ways:
+The cost of getting the page structure wrong shows up in a few concrete ways:
 
 1. **Misallocated effort.** A team publishes forty blog posts a quarter while the pricing page, which captures the most decision-ready visitors, has thin copy and no internal links pointing at it. The calendar stays full, but the work never lands on the pages that move revenue.
 2. **Invisible conversion gaps.** Rankings look healthy in aggregate, but the pages closest to revenue never enter the report, so nobody notices they convert poorly. By the time a founder asks why traffic is up and trials are flat, months of effort have already pointed the wrong direction.
@@ -28,13 +28,13 @@ seo for saas plays out differently on each page type, and the framework only wor
 4. **Comparison pages** target "[you] vs [competitor]" intent with honest, neutral framing, since users arriving on these queries are already mid-evaluation. This layer connects to the [[<TBD-internal-link: explainer on competitor comparison pages>]] that breaks down the format in depth.
 5. **Trial signup pages** are treated as indexable SEO assets, not just an app route, so branded and high-intent searches land somewhere that ranks and converts in one step.
 
-A concrete pattern makes the difference visible. Picture a SaaS company with a strong blog ranking for "how to manage remote teams." It draws steady traffic, but almost none of it signs up, because the post answers a question and then sends readers away. Once the team adds a feature page for "remote team scheduling software," links the blog post to it, and gives the pricing page crawlable comparison copy, the same audience now has a path from question to product to checkout. Nothing about the blog changed; the architecture around it did.
+A concrete pattern makes the difference visible. Picture a SaaS company with a strong blog ranking for "how to manage remote teams." It draws steady traffic, but almost none of it signs up, because the post answers a question and then sends readers away. Once the team adds a feature page for "remote team scheduling software," links the blog post to it, and gives the pricing page crawlable comparison copy, the same audience now has a path from question to product to checkout. Nothing about the blog changed; the page structure around it did.
 
 ## Common Implementation Misreadings
 
 Teams following standard guides tend to stumble on the same few assumptions about this framework. Correcting them is usually worth more than any single keyword win:
 
-1. **"More blog posts equals more SaaS SEO."** Volume helps top-of-funnel reach, but it does nothing for the pricing and feature pages where most revenue-intent searches land. The fix is balancing the architecture, not the calendar.
+1. **"More blog posts equals more SaaS SEO."** Volume helps top-of-funnel reach, but it does nothing for the pricing and feature pages where most revenue-intent searches land. The fix is balancing the page structure, not the calendar.
 2. **"Pricing and trial pages are app routes, not SEO pages."** Treating them as outside the SEO program leaves the highest-intent traffic on the table. They deserve crawlable copy, internal links, and their own target queries.
 3. **"Comparison pages are too aggressive to publish."** Buyers search "[product] vs [alternative]" with or without you. A neutral, accurate comparison captures that intent; refusing to publish one just hands it to a competitor or a review aggregator.
 4. **"Product-led content means stuffing CTAs everywhere."** It means using the product as the worked example, so the demonstration does the persuading instead of repeated banners.
@@ -50,7 +50,7 @@ Teams following standard guides tend to stumble on the same few assumptions abou
 
 ## How to Evaluate Whether SaaS SEO Strategy Fits Your Site
 
-Before committing to this architecture, judge your current setup against observable signals rather than gut feel. seo for saas earns its keep when the gaps below are real on your site, and you can check each one in an afternoon:
+Before committing to this page structure, judge your current setup against observable signals rather than gut feel. seo for saas earns its keep when the gaps below are real on your site, and you can check each one in an afternoon:
 
 1. **Page-type coverage.** Pull your indexed URLs and sort by template. If feature, pricing, and comparison pages are missing or thin, the upside is high.
 2. **Intent distribution.** Map your top organic queries to funnel stage. A pile of informational traffic with almost no commercial-intent rankings is a red flag worth fixing.
@@ -85,12 +85,12 @@ Not when they are accurate and neutral. Buyers run "[product] vs [competitor]" s
 
 **How many blog posts does a SaaS site need before this matters?**
 
-There is no fixed count. The architecture matters once you have any commercial-intent demand at all, because a single optimized pricing or feature page can outperform a quarter of blog output on revenue.
+There is no fixed count. The page structure matters once you have any commercial-intent demand at all, because a single optimized pricing or feature page can outperform a quarter of blog output on revenue.
 
 ## Related Reading
 
 - [[<TBD-internal-link: guide to startup DIY SEO for early teams>]] — for founders running the program without an agency
-- [[<TBD-internal-link: guide to B2B agency SEO delivery>]] — for teams evaluating outside help on this architecture
+- [[<TBD-internal-link: guide to B2B agency SEO delivery>]] — for teams evaluating outside help on this page structure
 - [[<TBD-internal-link: overview of programmatic SEO for SaaS feature pages>]] — for scaling the feature-page layer beyond a handful of URLs
 
 ## Take Action

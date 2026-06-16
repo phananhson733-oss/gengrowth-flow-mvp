@@ -1,7 +1,7 @@
 {
   "page_id": "PG-WLS-001",
   "prompt_path": "/Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/PG-WLS-001.v8-prompt.md",
-  "started_at": "2026-06-16T15:25:42.050Z",
+  "started_at": "2026-06-16T15:32:18.624Z",
   "models_requested": [
     "claude"
   ],
@@ -10,7 +10,7 @@
   "max_cost_usd_per_page": 5,
   "budget_exceeded_models": [],
   "ok_count": 1,
-  "total_cost_estimate_usd": 0.0434,
+  "total_cost_estimate_usd": 0.0452,
   "results": {
     "claude": {
       "model": "claude",
@@ -19,14 +19,14 @@
       "ok": true,
       "output_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-WLS-001-claude-v8.md",
       "retries": 0,
-      "duration_s": 227,
+      "duration_s": 125.6,
       "cost_estimate_usd": {
-        "usd": 0.0434,
-        "input_tokens_est": 5301,
-        "output_tokens_est": 1834,
+        "usd": 0.0452,
+        "input_tokens_est": 5183,
+        "output_tokens_est": 1976,
         "pricing_note": "Sonnet 4.6 xhigh"
       },
-      "cumulative_cost_usd": 0.0434,
+      "cumulative_cost_usd": 0.0452,
       "budget_exceeded": false,
       "budget_usd": 5,
       "attempts": [
@@ -34,16 +34,16 @@
           "try_index": 1,
           "model": "claude",
           "command": "claude -p --model claude-opus-4-8 --effort high < /Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/PG-WLS-001.v8-prompt.md > /Users/wzb/gengrowth-flow-mvp/_staging/PG-WLS-001-claude-v8.md",
-          "cost_usd": 0.0434,
-          "cumulative_cost_usd": 0.0434,
+          "cost_usd": 0.0452,
+          "cumulative_cost_usd": 0.0452,
           "ok": true,
           "exit_code": 0,
-          "duration_s": 227,
+          "duration_s": 125.6,
           "stderr_tail": "",
-          "stdout_bytes": 8897,
+          "stdout_bytes": 9662,
           "sonnet_guard": {
             "downgraded": false,
-            "bytes": 8921
+            "bytes": 9672
           }
         }
       ]

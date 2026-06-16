@@ -270,17 +270,44 @@ function mergeIntoSqlFile(outPath, block, slug, locale) {
   return `${existing.replace(/\n+$/, '\n')}\n${block}\n`;
 }
 
+// ── emit: REST upsert via the CLI-fetched service_role key (the proven CLI flow) ──
+// Mirrors wzb's live path: `supabase projects api-keys -o json` -> service_role ->
+// POST /rest/v1/blog_posts. Upsert on the (slug,locale) unique constraint via PostgREST
+// on_conflict + merge-duplicates. Omits id + created_at so the DB fills them on insert
+// and PRESERVES them on conflict (matches the seed ON CONFLICT, which excludes both).
+function rowToRestPayload(row) {
+  const { id, created_at, ...rest } = row; // eslint-disable-line no-unused-vars
+  return rest;
+}
+async function emitRest(row, { dryRun }) {
+  const SB_URL = process.env.SB_URL;
+  const SB_KEY = process.env.SB_KEY;
+  const payload = rowToRestPayload(row);
+  if (dryRun) {
+    process.stdout.write(`\n[DRY-RUN --emit rest] POST ${SB_URL || '$SB_URL'}/rest/v1/blog_posts?on_conflict=slug,locale  (SB_KEY ${SB_KEY ? 'set,len ' + SB_KEY.length : 'NOT set'})\n--- payload (omits id/created_at) ---\n${JSON.stringify(payload, null, 2)}\n`);
+    return null;
+  }
+  if (!SB_URL || !SB_KEY) throw new Error('--emit rest needs SB_URL + SB_KEY env. Fetch: SB_KEY=$(supabase projects api-keys --project-ref <ref> -o json | node tools/scripts/oneoff/_emit-sb-key.mjs); SB_URL=https://<ref>.supabase.co');
+  const res = await fetch(`${SB_URL}/rest/v1/blog_posts?on_conflict=slug,locale`, {
+    method: 'POST',
+    headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=representation' },
+    body: JSON.stringify(payload),
+  });
+  const body = await res.text();
+  if (!res.ok) throw new Error(`REST upsert failed: ${res.status} ${res.statusText} — ${body.slice(0, 300)}`);
+  try { return JSON.parse(body)[0] || null; } catch { return null; }
+}
+
 // ── main ──────────────────────────────────────────────────────────────────────
-function main() {
+async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.help || !args.source) {
     process.stdout.write(readFileSync(fileURLToPath(import.meta.url), 'utf8').split('\n').filter((l) => l.startsWith('//')).join('\n') + '\n');
     process.exit(args.source ? 0 : 1);
   }
-  if (args.emit !== 'sql') throw new Error(`--emit ${args.emit} not implemented yet (only 'sql' in v1)`);
+  if (!['sql', 'rest'].includes(args.emit)) throw new Error(`--emit must be 'sql' or 'rest' (got '${args.emit}')`);
 
   const { row, meta } = buildRow(args);
-  const block = rowToSqlBlock(row);
 
   const summary = [
     `page_id:       ${meta.pageId}`,
@@ -299,6 +326,15 @@ function main() {
     `excerpt:       ${row.excerpt}`,
   ].join('\n');
 
+  if (args.emit === 'rest') {
+    const returned = await emitRest(row, args);
+    if (args.dryRun) process.stdout.write(`\n${summary}\n`);
+    else process.stdout.write(`\n✓ upserted ${row.slug} [${row.locale}] -> ${process.env.SB_URL}/rest/v1/blog_posts\n${summary}\n${returned ? `db id: ${returned.id}\n` : ''}`);
+    return;
+  }
+
+  // emit === 'sql'
+  const block = rowToSqlBlock(row);
   if (args.dryRun) {
     process.stdout.write(`\n[DRY-RUN] ${meta.sourceAbs}\n${summary}\n\n--- SANITIZED HTML (content) ---\n${row.content}\n\n--- SQL BLOCK ---\n${block}\n`);
     return;
@@ -311,5 +347,5 @@ function main() {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  try { main(); } catch (e) { console.error(`ERROR: ${e.message}`); process.exit(1); }
+  main().catch((e) => { console.error(`ERROR: ${e.message}`); process.exit(1); });
 }

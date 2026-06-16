@@ -26,7 +26,7 @@ phase2_checks: all-pass
 
 ## What Is a SaaS SEO Consultant?
 
-A saas seo consultant is **a specialist who builds search growth around product-led content, trial conversion, and pricing-page structure rather than generic blog volume**. The distinction matters because SaaS sites earn revenue from sign-ups and product pages, not from ad impressions on high-traffic articles. A generalist optimizes for sessions; a SaaS specialist optimizes for the path from a search query to an activated account. The work sits inside the broader practice of [[<TBD-internal-link: pillar guide to SaaS growth marketing>]], which maps how content, product, and pricing reinforce each other.
+A saas seo consultant is **a specialist who builds search growth around product-led content, trial conversion, and pricing-page structure rather than generic blog volume**. The distinction matters because SaaS sites earn revenue from sign-ups and product pages, not from ad impressions on high-traffic articles. A generalist optimizes for sessions; a SaaS specialist optimizes for the path from a search query to an activated account. The work sits inside the broader practice of SaaS growth marketing, which maps how content, product, and pricing reinforce each other.
 
 - Designs content for product-led growth, not pageview totals
 - Treats pricing and feature pages as primary ranking and conversion assets
@@ -38,7 +38,7 @@ Most SaaS founders comparing consultants are stuck on the same problem: listing 
 
 Across the engagements we've audited, the deciding factor isn't the headcount or the testimonial wall, it's whether the candidate can describe how product-led pages convert searchers into activated accounts. That ambiguity carries a real cost. A wrong hire burns three to six months of runway, and the damage surfaces as flat sign-up numbers long after the invoices clear. Worse, the team often blames SEO as a channel when the real issue was a generalist applying content-site logic to a product that earns revenue from sign-ups.
 
-The job most readers come here to finish is concrete: build or borrow a repeatable framework for judging SaaS search work before money changes hands. The friction is that the loudest sources, ranking lists and marketplaces, optimize for breadth of names rather than depth of method. So the work of comparison lands back on the buyer, usually a founder or growth lead with no SEO background, exactly when the stakes are highest. This connects to the [[<TBD-internal-link: explainer on B2B agency SEO models>]] for teams weighing in-house versus outside help, and it sets up the evaluation criteria later in this guide.
+The job most readers come here to finish is concrete: build or borrow a repeatable framework for judging SaaS search work before money changes hands. The friction is that the loudest sources, ranking lists and marketplaces, optimize for breadth of names rather than depth of method. So the work of comparison lands back on the buyer, usually a founder or growth lead with no SEO background, exactly when the stakes are highest. This connects to the question of B2B agency SEO models for teams weighing in-house versus outside help, and it sets up the evaluation criteria later in this guide.
 
 ## How a SaaS SEO Consultant Works in Real SaaS Scenarios
 
@@ -115,9 +115,9 @@ Programmatic pages fail when teams build templates without real search demand be
 
 ## Related Reading
 
-- [[<TBD-internal-link: guide to startup DIY SEO for founders>]] — for early teams deciding whether to run search in-house before hiring
-- [[<TBD-internal-link: comparison of B2B agency SEO engagement models>]] — for weighing a consultant against an agency or in-house build
-- [[<TBD-internal-link: explainer on product-led content strategy>]] — for the content philosophy that underpins this approach
+- [running SEO from day one as a SaaS startup](/en/blog/seo-for-saas-startups) — for early teams deciding whether to run search in-house before hiring
+- comparing B2B agency SEO engagement models — for weighing a consultant against an agency or in-house build
+- product-led content strategy — for the content philosophy that underpins this approach
 
 ## Take Action
 
@@ -126,4 +126,4 @@ Run a quick audit of your own pricing and use-case pages against the evaluation 
 ## Sources
 
 - Based on patterns GenGrowth has observed across SaaS SEO engagements; no third-party study is cited
-- [[<TBD-external-link: Google Search Central | Creating helpful, reliable, people-first content | the official reference for how Google evaluates the product-led content described here>]]
+- Google Search Central, "Creating helpful, reliable, people-first content" — the official reference for how Google evaluates the product-led content described here

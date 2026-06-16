@@ -11,16 +11,12 @@ page_id: PG-WC-014
 author_id: "aditi-sharma"
 author_display_name: "Aditi Sharma"
 target_keyword: vinicius jr birth chart astrology
-target_keyword_zh: 维尼修斯出生星盘
 associated_keywords:
-  - vinicius junior birth chart
-  - vinicius jr natal chart
-  - vinicius cancer sun sagittarius moon
-  - brazil world cup astrology 2026
+
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-16T12:59:45.086Z
-content_sha256_short: 6ca256f8377142e5
+generated_at: 2026-06-16T16:14:48.401Z
+content_sha256_short: 4b37e648f69599ae
 phase2_checks: all-pass
 ---
 

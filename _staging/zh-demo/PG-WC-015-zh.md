@@ -1,5 +1,5 @@
 ---
-title: 苏格兰的世界杯土星回归
+title: Scotland World Cup 2026 Astrology Saturn Return
 slug: scotland-world-cup-2026-astrology-saturn-return
 date: 2026-06-16
 status: ready-to-review
@@ -11,16 +11,12 @@ page_id: PG-WC-015
 author_id: "julian-thorne"
 author_display_name: "Julian Thorne"
 target_keyword: scotland world cup 2026 astrology saturn return
-target_keyword_zh: 苏格兰世界杯土星回归
 associated_keywords:
-  - scotland national team astrology
-  - scotland saturn return football
-  - scotland world cup 2026 astrology
-  - tartan army astrology
+
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-16T13:14:17.557Z
-content_sha256_short: d7f89f9482d7f2e2
+generated_at: 2026-06-16T16:14:25.958Z
+content_sha256_short: 2127b5e0516beddd
 phase2_checks: all-pass
 ---
 

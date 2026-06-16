@@ -131,9 +131,56 @@ function buildNote({ fm, body, slug, related }) {
   return fmBlock + callout.join('\n') + relatedBlock.join('\n') + '\n' + out.trimStart();
 }
 
+// ---- backfill mode: source from a JSON dump of oracle WikiArticle objects -----
+function linkify(content, slugToTitle) {
+  return content.replace(/\[([^\]]+)\]\(\/(?:en|zh)\/wiki\/([a-z0-9-]+)\)/g, (_, text, slug) => {
+    const t = slugToTitle[slug];
+    return t ? `[[${safeTitle(t)}|${text}]]` : `[[${slug}|${text}]]`;
+  });
+}
+function buildNoteFromArticle(art, slugToTitle) {
+  const url = `${SITE_HOST}/en/wiki/${art.slug}`;
+  const title = safeTitle(art.title || art.slug);
+  const heroBase = (art.image || '').split('/').pop() || `${art.slug}.jpg`;
+  const kws = Array.isArray(art.keywords) ? art.keywords : [];
+  const tags = [...new Set(['content-asset', SITE, 'seo', 'astrology', ...kws.map((k) => k.replace(/[^a-z0-9]+/gi, '-').toLowerCase()).filter(Boolean)])];
+  const aliases = [...new Set([art.slug, ...kws].filter(Boolean))];
+  const fm = [
+    '---', `title: "${title.replace(/"/g, "'")}"`, `slug: ${art.slug}`, `site: ${SITE}`,
+    `url: ${url}`, `date: ${art.date || ''}`, `type: content-asset`, `status: published`,
+    `author_id: ${art.authorId || ''}`, `hero: ${heroBase}`,
+    'tags:', ...tags.map((t) => `  - ${t}`), 'aliases:', ...aliases.map((a) => `  - ${a}`), '---', '',
+  ].join('\n');
+  const callout = [`> [!info] 发布信息`, `> 已发布于 [${SITE}.com](${url}) · ${art.date || ''}${art.description ? ` · ${art.description}` : ''}`, '', `![[${heroBase}]]`, '', '---', ''];
+  return fm + callout.join('\n') + '\n' + linkify(art.content || '', slugToTitle).trimStart();
+}
+function mainJson() {
+  const all = JSON.parse(readFileSync(args['from-json'], 'utf8'));
+  const en = all.filter((a) => (a.lang || 'en') === 'en');
+  const slugToTitle = Object.fromEntries(all.map((a) => [a.slug, a.title]));
+  const attachDir = join(VAULT, '内容资产', SITE, 'attachments');
+  if (!DRY) mkdirSync(attachDir, { recursive: true });
+  let n = 0, imgs = 0;
+  for (const art of en) {
+    const dateFolder = art.date || 'undated';
+    const notesDir = join(VAULT, '内容资产', SITE, dateFolder);
+    if (!DRY) mkdirSync(notesDir, { recursive: true });
+    const heroBase = (art.image || '').split('/').pop();
+    for (const im of [heroBase, `${art.slug}-i0-en.svg`, `${art.slug}-i1-en.svg`]) {
+      if (!im) continue;
+      const from = join(ORACLE, 'public', 'images', 'blog', im);
+      if (existsSync(from)) { if (!DRY) copyFileSync(from, join(attachDir, im)); imgs++; }
+    }
+    if (!DRY) writeFileSync(join(notesDir, `${safeTitle(art.title || art.slug)}.md`), buildNoteFromArticle(art, slugToTitle));
+    n++;
+  }
+  console.log(`${DRY ? '[dry] ' : ''}backfilled ${n} EN articles, ${imgs} images -> ${SITE} vault`);
+}
+
 function main() {
+  if (args['from-json'] && args['from-json'] !== true) return mainJson();
   const pagesArg = args.pages;
-  if (!pagesArg || pagesArg === true) { console.error('missing --pages "PID:slug ..."'); process.exit(2); }
+  if (!pagesArg || pagesArg === true) { console.error('missing --pages "PID:slug ..." (or --from-json <dump.json>)'); process.exit(2); }
   const pairs = String(pagesArg).trim().split(/\s+/).map((p) => { const [pid, slug] = p.split(':'); return { pid, slug }; });
 
   const loaded = [];

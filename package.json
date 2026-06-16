@@ -1,0 +1,11 @@
+{
+  "name": "gengrowth-flow-mvp",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "GenGrowth flow-mvp tooling. Scripts run as bare `node tools/scripts/*.mjs`. Deps are pinned to match gengrowth-agents-repo so md->HTML conversion matches the blog render path exactly.",
+  "dependencies": {
+    "marked": "^17.0.4",
+    "sanitize-html": "^2.17.1"
+  }
+}

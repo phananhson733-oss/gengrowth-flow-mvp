@@ -27,7 +27,7 @@ A saas seo consultant plugs into a product team at specific decision points rath
 
 The pattern across all four is the same: effort follows intent and conversion, not search volume. A generalist will often inherit a blog and try to scale its output. A specialist looks at the product first and asks which pages a buyer actually reads before they sign up, then builds search strategy backward from there. This is the part that listing pages and marketplace profiles structurally cannot show you, because it lives in the working method, not in a star rating.
 
-It also explains why two consultants with similar resumes can produce opposite results. One treats the pricing page as a conversion screen to leave alone and pours effort into educational posts; the other treats that same page as the highest-leverage URL on the site and rebuilds the internal links pointing toward it. Same budget, same months, very different trial numbers. The methodology, not the credential, is what separated them, which is precisely why the rest of this guide focuses on tests you can observe rather than reputations you have to trust.
+It also explains why two consultants with similar resumes can produce opposite results. One treats the pricing page as a conversion screen to leave alone and pours effort into educational posts; the other treats that same page as the highest-value URL on the site and rebuilds the internal links pointing toward it. Same budget, same months, very different trial numbers. The methodology, not the credential, is what separated them, which is precisely why the rest of this guide focuses on tests you can observe rather than reputations you have to trust.
 
 ## Common Implementation Misreadings
 
@@ -38,7 +38,7 @@ Generalist playbooks and shallow listing pages spread a few predictable misreadi
 3. **SaaS SEO is just B2B SEO.** Generic B2B tactics ignore pricing-page structure and free-trial conversion, which is exactly where SaaS search revenue is won or lost.
 4. **Programmatic pages are free scale.** Templated pages without genuine search intent become bloat that dilutes site quality instead of compounding it, and search engines increasingly treat thin templated pages as a quality liability.
 
-Each of these misreadings traces back to importing content-site logic into a product business. On a media site, more pages and more traffic genuinely do mean more revenue. On a SaaS product, the only pages that pay are the ones a buyer touches on the way to a sign-up, so the same tactics that grow a blog can quietly stall a product.
+Each of these misreadings traces back to importing content-site logic into a product business. On a media site, more pages and more traffic genuinely do mean more revenue. On a SaaS product, the only pages that pay are the ones a buyer touches on the way to a sign-up, so the same tactics that grow a blog can quietly stall a product. The trap is that the vanity version looks like progress on a dashboard, which is why it survives quarter after quarter until someone finally ties the spend to activated accounts and finds the line is flat.
 
 ## SaaS SEO Consultant at a Glance — Quick Reference
 
@@ -58,6 +58,8 @@ Treat the evaluation as a methodology audit, not a reputation check. A genuine s
 3. **Product-led examples.** Request specific pages they shipped that drove sign-ups for a comparable SaaS, not a generic case study.
 4. **Pruning discipline.** A specialist talks about removing weak pages as readily as adding new ones; an endless publishing pitch signals a generalist.
 5. **Intent over volume.** They should explain why some high-volume keywords aren't worth targeting because the searchers never convert.
+
+Taken together, these checks turn an opaque hiring decision into a scorecard. A candidate who answers four or five of them with specifics, naming real pages, real metrics, and real pruning calls, is operating with a method. One who deflects to logos, awards, or a promise of more content each month is selling reputation in place of methodology, and that is the exact gap these directories leave unfilled.
 
 ## How to Implement a SaaS SEO Consultant Engagement Step by Step
 

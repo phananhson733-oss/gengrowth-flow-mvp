@@ -10,16 +10,20 @@ A saas seo consultant is **a specialist who builds search growth around product-
 
 ## Why It Matters for Your Workflow
 
-Most SaaS founders comparing consultants are stuck on the same problem: listing pages and marketplaces show names, reviews, and prices, but never define what a saas seo consultant actually delivers that a generalist cannot. Across the engagements we've audited, the deciding factor isn't the headcount or the testimonial wall, it's whether the consultant can describe how product-led pages convert searchers into trials. That ambiguity carries a real cost: a wrong hire burns three to six months of runway, and the damage surfaces as flat sign-up numbers long after the invoices clear. This connects to the [[<TBD-internal-link: explainer on B2B agency SEO models>]] for teams weighing in-house versus outside help.
+Most SaaS founders comparing consultants are stuck on the same problem: listing pages and marketplaces show names, reviews, and prices, but never define what a saas seo consultant actually delivers that a generalist cannot. The category is full of vetted-consultant lists and marketplace profiles, yet none of them publish a methodology standard a buyer can apply. So the comparison collapses into who has the nicer testimonials, which tells you almost nothing about how a candidate will treat your pricing page or your trial funnel.
+
+Across the engagements we've audited, the deciding factor isn't the headcount or the testimonial wall, it's whether the candidate can describe how product-led pages convert searchers into activated accounts. That ambiguity carries a real cost. A wrong hire burns three to six months of runway, and the damage surfaces as flat sign-up numbers long after the invoices clear. Worse, the team often blames SEO as a channel when the real issue was a generalist applying content-site logic to a product that earns revenue from sign-ups. This connects to the [[<TBD-internal-link: explainer on B2B agency SEO models>]] for teams weighing in-house versus outside help, and it sets up the evaluation criteria later in this guide.
 
 ## How a SaaS SEO Consultant Works in Real SaaS Scenarios
 
-A saas seo consultant plugs into a product team at specific decision points rather than running a detached content calendar. The job usually plays out in a few recurring scenarios:
+A saas seo consultant plugs into a product team at specific decision points rather than running a detached content calendar. The work attaches to where the product already converts, which is why it looks different from generic content-site SEO. The job usually plays out in a few recurring scenarios:
 
-1. **Pricing-page hierarchy.** They restructure tiers and feature comparisons so the page ranks for commercial queries and answers buying questions in one scroll.
-2. **Bottom-of-funnel content.** They prioritize use-case and alternative-to pages that capture searchers already evaluating tools, not top-of-funnel definitions that rarely convert.
-3. **Programmatic page systems.** They build templated pages for integrations, templates, or segments where intent is real and repeatable, then prune the ones that draw no qualified sign-ups.
-4. **Trial-path mapping.** They trace which organic entry pages lead to activated accounts and shift effort toward the patterns that already work.
+1. **Pricing-page hierarchy.** They restructure tiers and feature comparisons so the page ranks for commercial queries and answers buying questions in one scroll, because a pricing page is often the highest-intent URL on the site.
+2. **Bottom-of-funnel content.** They prioritize use-case and alternative-to pages that capture searchers already evaluating tools, not top-of-funnel definitions that rarely convert a single trial.
+3. **Programmatic page systems.** They build templated pages for integrations, templates, or audience segments where intent is real and repeatable, then prune the ones that draw no qualified sign-ups instead of letting them dilute the site.
+4. **Trial-path mapping.** They trace which organic entry pages lead to activated accounts and shift effort toward the patterns that already work, rather than spreading attention evenly across every keyword.
+
+The pattern across all four is the same: effort follows intent and conversion, not search volume. A generalist will often inherit a blog and try to scale its output. A specialist looks at the product first and asks which pages a buyer actually reads before they sign up, then builds search strategy backward from there. This is the part that listing pages and marketplace profiles structurally cannot show you, because it lives in the working method, not in a star rating.
 
 ## Common Implementation Misreadings
 
@@ -28,7 +32,9 @@ Generalist playbooks and shallow listing pages spread a few predictable misreadi
 1. **More articles equal more growth.** In reality, a saas seo consultant often cuts thin posts and concentrates effort on a handful of product-adjacent pages that actually convert trials.
 2. **Traffic is the scoreboard.** The real scoreboard is sign-ups and activation; high-traffic pages that never touch the product are vanity, not value.
 3. **SaaS SEO is just B2B SEO.** Generic B2B tactics ignore pricing-page structure and free-trial conversion, which is exactly where SaaS search revenue is won or lost.
-4. **Programmatic pages are free scale.** Templated pages without genuine search intent become bloat that dilutes site quality instead of compounding it.
+4. **Programmatic pages are free scale.** Templated pages without genuine search intent become bloat that dilutes site quality instead of compounding it, and search engines increasingly treat thin templated pages as a quality liability.
+
+Each of these misreadings traces back to importing content-site logic into a product business. On a media site, more pages and more traffic genuinely do mean more revenue. On a SaaS product, the only pages that pay are the ones a buyer touches on the way to a sign-up, so the same tactics that grow a blog can quietly stall a product.
 
 ## SaaS SEO Consultant at a Glance — Quick Reference
 

@@ -2,7 +2,7 @@
 <!-- gengrowth.ai blog publish ticker (LANE A) — fires hourly, publishes ready drafts.
      INSTALL (run yourself):
        cp tools/scripts/com.gengrowth.gengrowth-publish.plist ~/Library/LaunchAgents/
-       launchctl load -w ~/Library/LaunchAgents/com.gengrowth.gengrowth-publish.plist
+       launchctl load -S Background -w ~/Library/LaunchAgents/com.gengrowth.gengrowth-publish.plist
      STOP:
        launchctl unload ~/Library/LaunchAgents/com.gengrowth.gengrowth-publish.plist
      Single-instanced (PID-liveness mutex). Publish-only + idempotent: already-live posts
@@ -16,6 +16,8 @@
     <string>/bin/bash</string>
     <string>/Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-gengrowth-publish-tick.sh</string>
   </array>
+  <key>LimitLoadToSessionType</key>
+  <string>Background</string>
   <key>StartInterval</key>
   <integer>3600</integer>
   <key>RunAtLoad</key>

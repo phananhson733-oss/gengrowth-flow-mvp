@@ -2,7 +2,7 @@
 <!-- SEO publish autopilot — fires the tick every 25 min (≈ the 20–30 min stagger).
      INSTALL (Phase 1 go-live, run yourself):
        cp tools/scripts/com.gengrowth.seo-autopilot.plist ~/Library/LaunchAgents/
-       launchctl load ~/Library/LaunchAgents/com.gengrowth.seo-autopilot.plist
+       launchctl load -S Background -w ~/Library/LaunchAgents/com.gengrowth.seo-autopilot.plist
      STOP:
        launchctl unload ~/Library/LaunchAgents/com.gengrowth.seo-autopilot.plist
      Each tick is single-instanced (mkdir mutex) and stands down when nothing is
@@ -23,6 +23,8 @@
     <key>GG_AUTOPILOT_MODE</key>
     <string>publish-only</string>
   </dict>
+  <key>LimitLoadToSessionType</key>
+  <string>Background</string>
   <key>StartInterval</key>
   <integer>1500</integer>
   <key>RunAtLoad</key>

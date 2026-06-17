@@ -20,6 +20,11 @@ aliases:
 > 【本区域在每天最后一次对话结束时生成/更新】
 > 用 3-5 个要点概括当天所有对话的核心内容、关键决策和产出成果。
 
+- 对 flow-mvp / oracle / gengrowth.ai 的多站点自动发布链路做了完整复盘，明确本机 cron 只能走 publish-only，不能恢复旧的 authoring autopilot。
+- 设计并落地 gengrowth.ai 的 Supabase 发布桥与发布 ticker，确认 W25 ready draft 已能通过 REST 幂等校验和发布验证。
+- 为 astrologywiki 写作流补入 GEO/citability 非门控校验，保留占星安全边界，不把外部事实锚点写成效果背书。
+- 夜间检查并修复本地 flow-mvp launchd：确认 `com.gengrowth.gengrowth-publish` 与 `com.gengrowth.seo-autopilot` 均已重新装载；后者已切到 `GG_AUTOPILOT_MODE=publish-only`，两条任务手动 kickstart 均成功、最新日志落到 2026-06-17 23:21。
+
 ---
 
 ## 对话记录
@@ -91,3 +96,27 @@ aliases:
 把 GEO 引入 astrologywiki 写作流。先盘清：astrologywiki 的 Definition 模板已有外链/anti-fluff/权威锚点/反 hedging 等 GEO 杠杆，真正缺口=①模板无"正向纳入带源事实"要求(审计 statistics=0)②citability 引擎(checkScGeo)已移植但零调用。按风险改动惯例先 codex 二审(needs-changes 全吸收)。落地 6 文件(1096 测试 green)：definition/pillar 模板加「GEO 事实锚点」软杠杆(只锚天文/历史/文化/信念调查四类客观外部事实,占星安全绝不暗示有效性,可计数句式 `According to <具名>,<数字>`)；structure-checks.geo.mjs 加 formatScGeoAdvisory；phase2 末尾加非门控 SC-GEO citability advisory 纯打印(stash 前后 exit 一致证明非门控)；test+runbook。改动已由 vault-backup auto-commit 落 HEAD。
 
 ---
+
+### Q7 — 22:44 [hermes]
+
+**🙋 提问：**
+
+帮我检查一下本地的flow-mvp中cron启动了吗。正常运转了吗
+
+**🤖 回答：**
+
+检查了 flow-mvp 当前两条本地 LaunchAgent：`com.gengrowth.gengrowth-publish` 已加载但日志停在 02:24、未证明在持续按小时触发；`com.gengrowth.seo-autopilot` 处于 disabled，且 `~/Library/LaunchAgents/` 中仍是旧 plist（缺少 `GG_AUTOPILOT_MODE=publish-only`、`RunAtLoad` 未打开）。同时核对到 gengrowth publish 的 Supabase 鉴权可用、W25 的 11 个 ready draft 当前都已 live；seo-autopilot 状态里共有 73 条任务，其中 52 条 done、21 条 needs_human，因此结论不是“完全正常运转”，而是只有一半启动且存在旧配置/停用问题。
+
+---
+
+### Q8 — 23:21 [hermes]
+
+**🙋 提问：**
+
+2
+
+直接修
+
+**🤖 回答：**
+
+按 repo 最新版本直接修复本地 launchd。先把两条 plist 备份到 `~/Library/LaunchAgents/.hermes-backup-20260617-232005/`，再用 repo 中的 `com.gengrowth.gengrowth-publish.plist` 和 `com.gengrowth.seo-autopilot.plist` 覆盖到 `~/Library/LaunchAgents/`。`gengrowth-publish` 通过 `launchctl bootstrap/enable/kickstart` 重装成功，手动触发后 `runs=2`、`last exit code=0`，23:20–23:21 日志再次写入且 11 个 ready draft 全部 `SKIP(live)`。`seo-autopilot` 先用 `load -w` 解除 disabled，再确认新环境变量 `GG_AUTOPILOT_MODE=publish-only` 已生效；手动 kickstart 后 `runs=1`、`last exit code=0`，23:21 日志显示 `nothing claimable this run` 并正常 idle 退出。最终两条 LaunchAgent 均已 enabled、可运行，且这次实测触发都成功。

@@ -8,7 +8,7 @@
 #
 # INSTALL (run yourself):
 #   cp tools/scripts/com.gengrowth.gengrowth-publish.plist ~/Library/LaunchAgents/
-#   launchctl load -w ~/Library/LaunchAgents/com.gengrowth.gengrowth-publish.plist
+#   launchctl load -S Background -w ~/Library/LaunchAgents/com.gengrowth.gengrowth-publish.plist
 # STOP:
 #   launchctl unload ~/Library/LaunchAgents/com.gengrowth.gengrowth-publish.plist
 

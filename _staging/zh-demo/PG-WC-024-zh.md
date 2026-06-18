@@ -18,8 +18,8 @@ associated_keywords:
   - 美国2026世界杯占星
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-18T11:52:25.537Z
-content_sha256_short: 48f147ad1778acd1
+generated_at: 2026-06-18T12:11:47.215Z
+content_sha256_short: f602547a793cc42a
 phase2_checks: all-pass
 ---
 

@@ -18,8 +18,8 @@ associated_keywords:
   - three lions astrology 2026
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-18T11:50:58.682Z
-content_sha256_short: 4ce9b3f1126afbc9
+generated_at: 2026-06-18T12:11:47.258Z
+content_sha256_short: b4ba1f261a7d38ee
 phase2_checks: all-pass
 ---
 
@@ -56,7 +56,7 @@ Applying this method cleanly requires a few ordered steps, and the same steps wo
 1. Start with verified birth dates only. Every Sun sign used in england world cup 2026 astrology comes from a confirmed public record: Kane born 28 July 1993, Bellingham 29 June 2003, Saka 5 September 2001, Rice 14 January 1999, Tuchel 29 August 1973. No birth time means no Moon, no Ascendant, no houses; say so explicitly before continuing.
 2. Map Sun signs to the tournament arc. The group stage runs from 11 June 2026, when the tournament opens at Estadio Azteca in Mexico City, through 27 June; the knockout rounds begin on 28 June with the Round of 32 and carry through to the final on 19 July 2026. Jupiter's ingress from Cancer into Leo falls around 30 June, almost exactly at the turn from the group stage into the knockouts.
 3. Read the Cancer window symbolically. From 11 to 30 June, Jupiter is still in Cancer. Bellingham's Cancer Sun catches a brief backdrop of Jupiter moving through its own emotional register, a symbolic tailwind of homecoming and protection during the group stage. This is theme, not prediction.
-4. Read the Leo window symbolically. From around 30 June through the knockouts and into the final, Jupiter is in Leo. Kane's Leo Sun aligns with that second window, the sign of the captain and the stage, arriving precisely when the tournament narrows to its final eight and four. Symbolically, the captain's season arrives late.
+4. Read the Leo window symbolically. From around 30 June through the knockouts and into the final, Jupiter is in Leo. Kane's Leo Sun aligns with that second window, the sign of the captain and the stage, arriving just as the knockout rounds get underway and carrying through to the final. Symbolically, the captain's season arrives late.
 5. Hold the Virgo and Capricorn voices as structural counterweights. Tuchel's Virgo Sun and Saka's Virgo Sun suggest a managerial and creative precision that runs through the whole campaign. Rice's Capricorn Sun, in a sign traditionally ruled by Saturn, and Saturn is in Aries through 2025–2028, adds the archetype of disciplined structure. None of this predicts a tactical system; it describes a symbolic cast.
 6. Keep the reading open. Jupiter transits time year-level themes, not individual fixtures. This symbolic frame names the season; it never names the result.
 

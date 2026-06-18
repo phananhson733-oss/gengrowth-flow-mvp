@@ -3,12 +3,13 @@
      This job ONLY authors drafts into flow-mvp/_staging; the publish lane picks them up + publishes.
      Decoupled, small-batch, hard-timeboxed, parks-on-fail with a Feishu human-fallback alert.
 
-     NOT auto-enabled. To turn on (supervise the FIRST run):
+     ENABLED 2026-06-18 (round-4 /review passed: ship-after-fixes → Fix #1 landed, Fix #2 operator-stop
+     limitation documented in the tick header). To (re)install + turn on (supervise the FIRST run):
        cp tools/scripts/com.gengrowth.seo-author.plist ~/Library/LaunchAgents/
        launchctl enable    gui/$(id -u)/com.gengrowth.seo-author
        launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.gengrowth.seo-author.plist
        launchctl kickstart gui/$(id -u)/com.gengrowth.seo-author   # watch the first article
-     Stop:
+     Stop (attended — see the operator-stop KNOWN LIMITATION in the tick header):
        launchctl bootout gui/$(id -u)/com.gengrowth.seo-author
 
      Runs in the user (Aqua) session — authoring needs the keychain + claude/codex/gbrain CLIs; do

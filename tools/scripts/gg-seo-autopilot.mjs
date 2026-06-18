@@ -924,7 +924,20 @@ function doAuthor(o = {}) {
         lastFail = '- zh phase2 wrote no passing draft';
       }
       restorePrompt();
-      return park(slug, `${(lastFail || 'zh phase2 failed').replace(/\n/g, ' | ')} after ${attempts} zh attempt(s)`);
+      // zh-backfill park boundary (full-pipeline path): same shared deterministic-repair escalation
+      // before parking, validated with this path's zh phase2 gate.
+      if (tryDeterministicRepair({
+        pgId, draftV8: defaultDraftV8, candidate: join('_staging', 'zh-demo', `${pgId}-repair-candidate.md`),
+        targetKeyword: keyword, author, failures: lastFail, language: 'zh',
+        validate: (cand) => {
+          shFlow('node', [PHASE2, '--source', cand, '--page-id', pgId, '--tag', 'zh', '--language', 'zh', '--author', author]);
+          return existsSync(zhDraft(pgId));
+        },
+      })) {
+        log(`AUTHORED ZH ${pgId} → ${zhDraft(pgId)} (author=${author}, via deterministic repair) — ready for next scan to publish bilingual backfill`);
+        return;
+      }
+      return park(slug, `${(lastFail || 'zh phase2 failed').replace(/\n/g, ' | ')} after ${attempts} zh attempt(s) + deterministic repair`);
     }
 
     // 7+8. Generate (Opus) → validate (phase2 v4.4/v4.5.1), retrying on failure.
@@ -1012,34 +1025,21 @@ function doAuthor(o = {}) {
     }
     restorePrompt();
 
-    // DETERMINISTIC REPAIR (2026-06-18, OAuth-CLI-worker plan Task 3): the deterministic
-    // feedback loop just failed `attempts`× — usually on gen-quality issues blind regeneration
-    // can't fix (e.g. RL4 drift: the model won't anchor the literal keyword in every section).
-    // Escalate ONCE to gg-author-repair.mjs — a TEXT-ONLY worker (NO Bash/Edit/Write/Grep/MCP/
-    // --dangerously-skip-permissions): it reads the failed draft + the phase2 failures and emits
-    // a corrected article to a SEPARATE candidate file; WE run phase2 on the candidate and adopt
-    // it only if it passes. Replaces the old unattended agentic `claude -p --allowedTools ...`
-    // rescue (unsafe headless). Only fires at the park boundary. Toggle GG_AUTHOR_REPAIR=0.
-    if (process.env.GG_AUTHOR_REPAIR !== '0' && existsSync(join(FLOW, draftV8))) {
-      log(`deterministic repair: loop failed ${attempts}× — calling gg-author-repair on ${draftV8}`);
-      const repModel = process.env.GG_AGENTIC_MODEL || 'claude-sonnet-4-6';
-      const repEffort = process.env.GG_AGENTIC_EFFORT || 'high';
-      const repTimeout = parseInt(process.env.GG_AUTHOR_REPAIR_TIMEOUT_MS || process.env.GG_AUTHOR_AGENTIC_TIMEOUT_MS || '1800000', 10);
-      const candidate = join('_staging', `${pgId}-repair-candidate.md`);
-      try {
-        shFlow('node', [join(SCRIPTS, 'gg-author-repair.mjs'),
-          '--source', draftV8, '--out', candidate, '--page-id', pgId,
-          '--target-keyword', keyword, '--author', author,
-          '--failures', lastFail || '- phase2 failed',
-          '--model', repModel, '--effort', repEffort], repTimeout);
-        // WE validate the candidate (the worker never runs phase2 itself); adopt only on PASS.
-        shFlow('node', [PHASE2, '--source', candidate, '--page-id', pgId, '--tag', 'en', '--author', author]);
-        if (existsSync(enDraft(pgId)) && phase2Passed(pgId)) {
-          log(`AUTHORED ${pgId} → ${enDraft(pgId)} (author=${author}, via deterministic repair) — ready for next scan to publish`);
-          return;
-        }
-      } catch (e) { log(`deterministic repair errored: ${errTail(e, 80)}`); }
-      log('deterministic repair did not yield a passing draft — parking');
+    // DETERMINISTIC REPAIR (2026-06-18, OAuth-CLI-worker plan Task 3): the feedback loop just failed
+    // every attempt — usually on gen-quality issues blind regeneration can't fix (e.g. RL4 drift: the
+    // model won't anchor the literal keyword in every section). Escalate ONCE to the shared text-only
+    // gg-author-repair worker (NO tools / NO --dangerously-skip-permissions), validating the candidate
+    // with the EN phase2 gate; adopt only on PASS. Only fires at the park boundary. Toggle GG_AUTHOR_REPAIR=0.
+    if (tryDeterministicRepair({
+      pgId, draftV8, candidate: join('_staging', `${pgId}-repair-candidate.md`),
+      targetKeyword: keyword, author, failures: lastFail,
+      validate: (cand) => {
+        shFlow('node', [PHASE2, '--source', cand, '--page-id', pgId, '--tag', 'en', '--author', author]);
+        return existsSync(enDraft(pgId)) && phase2Passed(pgId);
+      },
+    })) {
+      log(`AUTHORED ${pgId} → ${enDraft(pgId)} (author=${author}, via deterministic repair) — ready for next scan to publish`);
+      return;
     }
 
     return park(slug, `${(lastFail || 'phase2 failed').replace(/\n/g, ' | ')} after ${attempts} attempt(s) + deterministic repair`);

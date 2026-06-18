@@ -2,7 +2,7 @@
 
 ## What Is the Kane Birth Chart?
 
-The Kane Birth Chart is **a symbolic reading of England captain Harry Kane's natal placements, anchored on his Leo Sun, used as an educational lens on the leader-striker archetype rather than a forecast of how he plays**. A harry kane birth chart starts from verifiable record: Harry Kane was born on 28 July 1993 in Leytonstone, London, England, with the Sun at roughly 5 degrees of Leo. Read as a frame and not a prediction, [[<TBD-internal-link: world-cup-2026-astrology-prediction | the World Cup 2026 astrology pillar>]] treats his Leo Sun as the symbol of the captain who performs under the spotlight, and the harry kane astrology story becomes one of timing, leadership, and a season that may arrive late.
+The Kane Birth Chart is **a symbolic reading of England captain Harry Kane's natal placements, anchored on his Leo Sun, used as an educational lens on the leader-striker archetype rather than a forecast of how he plays**. A harry kane birth chart starts from verifiable record: Harry Kane was born on 28 July 1993 in Leytonstone, London, England, with the Sun at roughly 5 degrees of Leo. Read as a frame and not a prediction, [[<TBD-internal-link: the World Cup 2026 astrology pillar>]] treats his Leo Sun as the symbol of the captain who performs under the spotlight, and the harry kane astrology story becomes one of timing, leadership, and a season that may arrive late.
 
 - Harry Kane was born 28 July 1993 in Leytonstone, London, with a Sun near 5 degrees Leo, the classic harry kane zodiac sign placement
 - His birth time is not part of any verified public record, so his Moon, Ascendant, and house placements are unknown and are not invented here
@@ -76,7 +76,7 @@ No. This is symbolic and educational astrology that frames themes of leadership 
 
 ## Related Reading
 
-- [[<TBD-internal-link: best-soccer-players-zodiac-sign | the best soccer players by zodiac sign>]] — a wider symbolic survey of the Sun signs across the World Cup field, including the Leo and Cancer contrasts drawn here
+- [[<TBD-internal-link: the best soccer players by zodiac sign>]] — a wider symbolic survey of the Sun signs across the World Cup field, including the Leo and Cancer contrasts drawn here
 
 ## Take Action
 

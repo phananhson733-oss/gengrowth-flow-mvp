@@ -7,7 +7,7 @@
 //
 // Checks (ALL collected — never bails on the first failure):
 //   1. required dirs exist  — GG_FLOW_REPO / GG_OPS_DIR / GG_ORACLE_DIR
-//   2. required commands in PATH — node / git / gh / claude / codex
+//   2. required commands in PATH — node / git / gh / claude (codex is optional: WARN only)
 //   3. WARN (not error) if VERCEL_AUTOMATION_BYPASS_SECRET is unset
 //   4. unless --skip-live-cli: a 60s `claude -p 'Return exactly: OK'` smoke; error
 //      unless the model returns OK.
@@ -59,9 +59,14 @@ for (const [key, value] of Object.entries(requiredDirs)) {
 }
 
 // 2. required commands in PATH
-for (const cmd of ['node', 'git', 'gh', 'claude', 'codex']) {
+for (const cmd of ['node', 'git', 'gh', 'claude']) {
   if (!commandExists(cmd)) errors.push(`command not in PATH: ${cmd}`);
 }
+// codex is OPTIONAL for the publish leg — the gate runs a best-effort 4th-opinion review and SKIPs
+// it when codex/GG_CODEX_BIN is absent. codex lives in ~/.local/bin, which the cron PATH does NOT
+// include at preflight time, so a HARD requirement would exit(2) and stand down every publish-only
+// fire for a tool the publish path doesn't actually need. Warn, never fail.
+if (!commandExists('codex')) warnings.push('codex not in PATH (optional — publish gate runs without it)');
 
 // 3. preview-bypass secret — WARN only (often sourced from _gg.env later in tick).
 if (!process.env.VERCEL_AUTOMATION_BYPASS_SECRET) {

@@ -99,7 +99,12 @@ publish_if_pending() {
     --allowedTools "Bash Skill Task Agent Read Grep mcp__playwright__browser_navigate mcp__playwright__browser_snapshot mcp__playwright__browser_console_messages mcp__playwright__browser_evaluate mcp__playwright__browser_close" \
     --dangerously-skip-permissions </dev/null >> "$LOG" 2>&1
   _rc=$?
-  [ "$_rc" -ne 0 ] && echo "$(date '+%F %T') publish gate exited rc=$_rc (timeout/err) — continuing" >> "$LOG"
+  if [ "$_rc" -ne 0 ]; then
+    # gate failed/timed out: END this fire (return 2) rather than re-looping on the same bad
+    # preview up to MAX_CYCLES (which could hold the lock for hours). launchd retries next interval.
+    echo "$(date '+%F %T') publish gate exited rc=$_rc (timeout/err) — ending this fire; launchd retries" >> "$LOG"
+    return 2
+  fi
   return 0
 }
 
@@ -111,7 +116,9 @@ run_one_cycle() {
   node "$AUTO" --scan --limit 1 >> "$LOG" 2>&1
 
   # b) publish a pending preview if one exists (verify + merge to prod).
-  if publish_if_pending; then return 0; fi
+  publish_if_pending; _pp=$?
+  if [ "$_pp" -eq 0 ]; then return 0; fi   # published → keep looping for the next pending preview
+  if [ "$_pp" -eq 2 ]; then return 1; fi   # gate failed/timed out → end this fire (avoid hammering)
 
   # publish-only (2026-06-17): never author in cron on this machine (canonical runbook).
   # step (a) --scan already claimed any ready draft into a preview; with nothing pending

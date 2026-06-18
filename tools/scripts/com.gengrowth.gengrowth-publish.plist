@@ -2,11 +2,13 @@
 <!-- gengrowth.ai blog publish ticker (LANE A) — fires hourly, publishes ready drafts.
      INSTALL (run yourself):
        cp tools/scripts/com.gengrowth.gengrowth-publish.plist ~/Library/LaunchAgents/
-       launchctl load -S Background -w ~/Library/LaunchAgents/com.gengrowth.gengrowth-publish.plist
+       launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.gengrowth.gengrowth-publish.plist
      STOP:
-       launchctl unload ~/Library/LaunchAgents/com.gengrowth.gengrowth-publish.plist
-     Single-instanced (PID-liveness mutex). Publish-only + idempotent: already-live posts
-     are skipped, so it stands down when there is nothing new to publish. -->
+       launchctl bootout gui/$(id -u)/com.gengrowth.gengrowth-publish
+     Runs in the user (Aqua) session — it needs the user keychain (supabase token) + node;
+     do NOT set LimitLoadToSessionType=Background (that pins it to the pre-login session,
+     which can't reach the keychain). ProcessType=Background just sets scheduling priority.
+     Single-instanced (PID-liveness mutex); publish-only + idempotent (already-live skipped). -->
 <plist version="1.0">
 <dict>
   <key>Label</key>
@@ -16,8 +18,6 @@
     <string>/bin/bash</string>
     <string>/Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-gengrowth-publish-tick.sh</string>
   </array>
-  <key>LimitLoadToSessionType</key>
-  <string>Background</string>
   <key>StartInterval</key>
   <integer>3600</integer>
   <key>RunAtLoad</key>

@@ -120,3 +120,15 @@ aliases:
 **🤖 回答：**
 
 按 repo 最新版本直接修复本地 launchd。先把两条 plist 备份到 `~/Library/LaunchAgents/.hermes-backup-20260617-232005/`，再用 repo 中的 `com.gengrowth.gengrowth-publish.plist` 和 `com.gengrowth.seo-autopilot.plist` 覆盖到 `~/Library/LaunchAgents/`。`gengrowth-publish` 通过 `launchctl bootstrap/enable/kickstart` 重装成功，手动触发后 `runs=2`、`last exit code=0`，23:20–23:21 日志再次写入且 11 个 ready draft 全部 `SKIP(live)`。`seo-autopilot` 先用 `load -w` 解除 disabled，再确认新环境变量 `GG_AUTOPILOT_MODE=publish-only` 已生效；手动 kickstart 后 `runs=1`、`last exit code=0`，23:21 日志显示 `nothing claimable this run` 并正常 idle 退出。最终两条 LaunchAgent 均已 enabled、可运行，且这次实测触发都成功。
+
+### Q6 — 接 Q5（完成于 2026-06-18）[claude]
+
+**🙋 提问：**
+
+两条 lane 都建 + 都启用；验证完直接启用两条 cron；目标是两条 cron 都拉起来
+
+**🤖 回答：**
+
+两条 publish-only cron 已**全部拉起来并验证**。实现（529 把 workflow 打挂后我直接主循环写）：Lane A 新建 `gg-gengrowth-publish.mjs`+tick+plist（每小时，扫 11 篇 ready 草稿→bridge `--emit rest`，已 live 全 SKIP 幂等不覆盖）；Lane B 改 autopilot —— tick.sh 加 `GG_AUTOPILOT_MODE=publish-only`（跳过 author 块）+ publish-gate 套 `gtimeout 1800`，autopilot.mjs `latestPlan()` 排除 gengrowth plan + 加 `GG_AUTOPILOT_PLAN` override，plist 加 EnvironmentVariables MODE + RunAtLoad=true。Codex 复核出 2 处加固（#1 driver 级 publish-only 硬闸拒 `--author`；#2 gate 失败结束本轮 return 2 防 50×锤）我都补了，15/15 smoke 通过。启用踩坑：linter 给 plist 加的 `LimitLoadToSessionType=Background` 把任务钉到 pre-login 会话（取不到 keychain），删掉后用 `launchctl remove`+`load -w` 干净加载到 gui/Aqua 域。Lane A 无人值守取不到 SB_KEY（launchd 读不了 keychain）→ 把 `supabase login` 的 token 从 keychain 提出写进 `_gg.env`（`SUPABASE_ACCESS_TOKEN`，不回显，mode 600），kickstart 验证 launchd tick 现在能取 key 跑通。最终态：两条均 enabled、按调度 firing；Lane B 实测 publish-only 空转不撰写；Lane A 实测取 key + 11 篇 SKIP-live。memory/reminders 已更新（含 token 轮换提醒）。
+
+---

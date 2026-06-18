@@ -1281,6 +1281,13 @@ function doStatus() {
 }
 
 const o = parseArgs(process.argv.slice(2));
+// Hard publish-only gate (2026-06-17): in GG_AUTOPILOT_MODE=publish-only the driver REFUSES to
+// author or select an unauthored task, even if --author/--next-unauthored is passed — defense in
+// depth beyond the tick wrapper. Clean exit 0 with no stdout so callers treat it as "no task".
+if (process.env.GG_AUTOPILOT_MODE === 'publish-only' && (o.author || o.nextUnauthored)) {
+  process.stderr.write('gg-seo-autopilot: publish-only mode — refusing to author / select unauthored task\n');
+  process.exit(0);
+}
 try {
   if (o.status) doStatus();
   else if (o.nextUnauthored) doNextUnauthored();

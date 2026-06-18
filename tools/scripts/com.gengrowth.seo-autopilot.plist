@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- SEO publish autopilot — fires the tick every 25 min (≈ the 20–30 min stagger).
-     INSTALL (Phase 1 go-live, run yourself):
+     INSTALL (run yourself):
        cp tools/scripts/com.gengrowth.seo-autopilot.plist ~/Library/LaunchAgents/
-       launchctl load -S Background -w ~/Library/LaunchAgents/com.gengrowth.seo-autopilot.plist
+       launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.gengrowth.seo-autopilot.plist
      STOP:
-       launchctl unload ~/Library/LaunchAgents/com.gengrowth.seo-autopilot.plist
-     Each tick is single-instanced (mkdir mutex) and stands down when nothing is
-     claimable. LLM is only spent when a preview needs verify+merge. -->
+       launchctl bootout gui/$(id -u)/com.gengrowth.seo-autopilot
+     Runs in the user (Aqua) session — the tick needs the user keychain + claude/gh CLIs; do
+     NOT set LimitLoadToSessionType=Background (pins to pre-login, no keychain). Each tick is
+     single-instanced + publish-only (GG_AUTOPILOT_MODE below) — never authors. -->
 <plist version="1.0">
 <dict>
   <key>Label</key>
@@ -23,8 +24,6 @@
     <key>GG_AUTOPILOT_MODE</key>
     <string>publish-only</string>
   </dict>
-  <key>LimitLoadToSessionType</key>
-  <string>Background</string>
   <key>StartInterval</key>
   <integer>1500</integer>
   <key>RunAtLoad</key>

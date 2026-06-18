@@ -1,17 +1,17 @@
 {
   "schema_version": "1",
-  "page_id": "PG-WC-016",
-  "entity": "贝林厄姆星盘",
-  "target_keyword": "jude bellingham birth chart",
+  "page_id": "PG-WC-017",
+  "entity": "哈兰德星盘",
+  "target_keyword": "erling haaland birth chart",
   "template": "Definition",
   "tier": "T3",
   "track": "量产线",
   "generated_by": "unknown",
   "prompt_version": "v8",
-  "generated_at": "2026-06-18T05:39:11.414Z",
-  "content_sha256_short": "ee5cdba3e77ed405",
-  "source_path": "_staging/zh-demo/PG-WC-016-claude-v8.md",
-  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/PG-WC-016-zh.md",
+  "generated_at": "2026-06-18T05:39:55.951Z",
+  "content_sha256_short": "f1ea2027ccc37d5f",
+  "source_path": "_staging/zh-demo/PG-WC-017-claude-v8.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/PG-WC-017-zh.md",
   "phase2_checks": {
     "overall": "pass",
     "structure": {
@@ -19,7 +19,7 @@
       "h2Count": 11,
       "h3Count": 0,
       "h4Count": 0,
-      "words": 2303,
+      "words": 2425,
       "wikilinks": 2,
       "tbdLinks": 2
     },

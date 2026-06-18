@@ -1,3 +1,25 @@
+---
+title: Erling Haaland Birth Chart
+slug: erling-haaland-birth-chart
+date: 2026-06-18
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T3
+track: 量产线
+page_id: PG-WC-017
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: erling haaland birth chart
+associated_keywords:
+
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-18T05:39:55.951Z
+content_sha256_short: f1ea2027ccc37d5f
+phase2_checks: all-pass
+---
+
 # 读懂哈兰德星盘：一颗落在狮子座门槛上的巨蟹末度太阳
 
 ## 哈兰德星盘是什么？

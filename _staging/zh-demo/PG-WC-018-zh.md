@@ -1,3 +1,25 @@
+---
+title: Messi World Cup Record Astrology
+slug: messi-world-cup-record-astrology
+date: 2026-06-18
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-WC-018
+author_id: "julian-thorne"
+author_display_name: "Julian Thorne"
+target_keyword: messi world cup record astrology
+associated_keywords:
+
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-18T05:39:03.724Z
+content_sha256_short: cf59808d79061470
+phase2_checks: all-pass
+---
+
 # 用占星看梅西的世界杯之路：巨蟹太阳，与土星的漫长拉锯
 
 ## 梅西的世界杯占星是什么？

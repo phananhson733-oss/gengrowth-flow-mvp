@@ -1,3 +1,28 @@
+---
+title: England World Cup 2026 Astrology
+slug: england-world-cup-2026-astrology
+date: 2026-06-18
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-WC-025
+author_id: "elena-vane"
+author_display_name: "Elena Vane"
+target_keyword: england world cup 2026 astrology
+associated_keywords:
+  - england world cup squad astrology
+  - england team zodiac signs
+  - harry kane leo sun
+  - three lions astrology 2026
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-18T11:50:58.682Z
+content_sha256_short: 4ce9b3f1126afbc9
+phase2_checks: all-pass
+---
+
 # England's World Cup 2026 Astrology: Sun Signs, Jupiter's Shift, and a Season of Themes
 
 ## What Is England World Cup 2026 Astrology?

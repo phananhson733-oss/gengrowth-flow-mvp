@@ -41,8 +41,49 @@ validation, retries, preview verification, PR state, and Feishu notifications ar
   (`gg-gengrowth-publish.mjs`, needs `SUPABASE_ACCESS_TOKEN` in `_gg.env`). Shares the `_staging`
   `PG-<id>-<llm>-v8.md` naming contract — a regression test (`gengrowth-invariants.smoke.test.mjs`)
   locks it so Lane B changes can't silently break Lane A.
-- **Operating mode**: both lanes run `GG_AUTOPILOT_MODE=publish-only` (never author in cron). The
-  planned end state consolidates authoring back onto this machine (Task 11 cutover, below).
+- **Author lane** — `com.gengrowth.seo-author` (every 2h): the ONLY lane that authors. Writes drafts
+  into `_staging`; the publish lanes pick them up. Decoupled, small-batch, hard-timeboxed,
+  parks-on-fail. Driver `gg-seo-author-tick.sh` → `gg-seo-autopilot.mjs --author`. See below.
+- **Operating mode**: Lane A + Lane B run `GG_AUTOPILOT_MODE=publish-only` (never author in cron);
+  authoring is isolated in the separate author lane above. This replaces the old publish-only→full
+  flip — authoring failures can never touch the publish path.
+
+## Author lane (`com.gengrowth.seo-author`) — separate, decoupled authoring
+
+Authoring is the riskiest leg (a headless `claude -p` can run for minutes / hang), so it lives in its
+OWN launchd job instead of flipping the publish lane to `full`. It ONLY writes drafts into `_staging`
+(`gg-seo-author-tick.sh` → `gg-seo-autopilot.mjs --author --limit N`); the publish-only lanes pick
+them up and publish. Small batch, hard-timeboxed, parks-on-fail with a Feishu @PM/@Ops alert.
+
+- **Interval** `StartInterval=7200` (2h). **Knobs**: `GG_AUTHOR_BATCH` (default 1, clamped 1..10),
+  `GG_AUTHOR_TICK_TIMEOUT` (default 1800s hard wall-clock cap). `RunAtLoad=false` — loading never
+  instantly authors; kickstart the first fire by hand.
+- **Logs**: `~/gengrowth-agents/cron-sync/seo_author/<date>.log`.
+- **Install / enable** (supervise the first article):
+  ```bash
+  cp ~/gengrowth-flow-mvp/tools/scripts/com.gengrowth.seo-author.plist ~/Library/LaunchAgents/
+  launchctl enable    gui/$(id -u)/com.gengrowth.seo-author
+  launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.gengrowth.seo-author.plist
+  launchctl kickstart gui/$(id -u)/com.gengrowth.seo-author    # watch the first article
+  ```
+- **Stop** (attended — see the operator-stop limitation below):
+  ```bash
+  launchctl bootout gui/$(id -u)/com.gengrowth.seo-author
+  ```
+
+**Orphan cleanup**: workers are spawned detached (own session). The orchestrator traps SIGTERM/INT/HUP
+and group-SIGKILLs its in-flight workers before exiting, so a gtimeout cap-hit (the automatic
+unattended path) reaps cleanly — verified control-vs-fix with real gtimeout, on every spawn path incl.
+prompt-read-fail. The tick does NOT reap groups itself (a prior bash-reap was do-not-enable'd twice for
+PGID-reuse risk).
+
+**KNOWN LIMITATION — operator-stop (accepted 2026-06-18)**: on a MANUAL `launchctl bootout` / stop,
+launchd SIGTERMs only the bash wrapper (whose trap can't forward TERM to node mid-foreground-command),
+then SIGKILLs the job group — so the orchestrator can die by uncatchable SIGKILL before its handler
+runs, briefly orphaning detached workers. Rare (only mid-authoring), self-limiting (a worker finishes
+in minutes), and attended (the operator who stopped it is present). If a stop ever leaves strays:
+`pkill -f gg-llm-orchestrator` (plus any leftover `claude`/`codex` worker). Revisit with a per-worker
+self-timeout only if it ever actually bites.
 
 ## Paths (do NOT use `/Users/wzb/...` or `~/Code/...` here)
 
@@ -107,14 +148,17 @@ The launchd jobs may be unloaded. To resume:
 ```bash
 launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.gengrowth.seo-autopilot.plist
 launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.gengrowth.gengrowth-publish.plist
-# stop: launchctl bootout gui/$(id -u)/com.gengrowth.seo-autopilot
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.gengrowth.seo-author.plist
+# stop: launchctl bootout gui/$(id -u)/com.gengrowth.seo-autopilot   (also: …/gengrowth-publish, …/seo-author)
 ```
+If a job was `launchctl disable`'d (not just bootout), `launchctl enable gui/$(id -u)/<label>` FIRST,
+else bootstrap throws errno-5 (EIO).
 
 ## Open follow-ups (not yet done)
 
 - **Task 10 — acceptance**: 3 real previews must pass `gg-preview-gate.mjs → merge` with no manual
   intervention before deleting the deprecated `seo-autopilot-tick.prompt.md`. Needs live content.
-- **Task 11 — cron-authoring cutover**: flip `GG_AUTOPILOT_MODE` `publish-only → full` (authoring
-  returns to this machine; wzb stops writing) — the last live change, after a soak period the
-  operator picks.
+- **Task 11 — authoring on this machine**: done via the separate `com.gengrowth.seo-author` lane
+  (above) instead of a publish-only→full flip — decoupled, small-batch, leased, parks-on-fail. The
+  publish lanes stay `publish-only`. Remaining: a soak period to confirm the 2h cadence + batch size.
 - **Task 12 — Lane A active improvements**: only the guardrail invariants are locked so far.

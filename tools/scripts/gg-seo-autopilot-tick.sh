@@ -82,30 +82,46 @@ CLUSTER_SYNC_LOG="$LOG_DIR/cluster-sync-$(date +%Y-%m-%d).log"
 # pull them itself — that would be redundant and risk fighting the plugin for the
 # .git/index.lock.
 
-# publish_if_pending — if a preview is pending (pushed/verified), run the headless
-# verify+merge gate (codex best-effort + chrome + 3-subagent panel) which merges to
-# prod. Returns 0 if it ran the gate, 1 if there was nothing to publish.
+# publish_if_pending — if a preview is pending (pushed/verified), run the deterministic
+# verify+merge gate (gg-preview-gate.mjs: preview-wait → chrome verify → 3-dim review panel →
+# optional best-effort codex → mark-verified+merge). Returns 0 if it published, 1 if nothing was
+# pending, 2 if the gate failed/timed out (end this fire; lock released, launchd re-fires next
+# interval). GG_USE_PROMPT_PREVIEW_GATE=1 hot-rolls-back to the legacy `claude -p` gate (kept
+# verbatim below) for one run if the deterministic gate misbehaves unattended.
 publish_if_pending() {
-  node "$AUTO" --status 2>/dev/null | grep -Eq '"(pushed-preview|verified-preview)"' || return 1
-  echo "$(date '+%F %T') preview pending → running verify+merge gate" >> "$LOG"
-  # --dangerously-skip-permissions: unattended autonomy. The driver only merges
-  # after the ledger is marked verified by the codex + chrome preview gate.
-  # --mcp-config: headless `claude -p` does NOT auto-load the user-scoped playwright
-  # MCP; load it explicitly so the chrome preview verification works.
-  # gtimeout (2026-06-17): the headless `claude -p` publish gate can 401 on token expiry
-  # or hang forever with no cap, silently stalling the loop. Bound it hard (default 30min).
-  gtimeout "${GG_AUTOPILOT_PUBLISH_TIMEOUT:-1800}" claude -p "$(cat "$PROMPT_FILE")" \
-    --mcp-config "$SCRIPT_DIR/autopilot-mcp.json" \
-    --allowedTools "Bash Skill Task Agent Read Grep mcp__playwright__browser_navigate mcp__playwright__browser_snapshot mcp__playwright__browser_console_messages mcp__playwright__browser_evaluate mcp__playwright__browser_close" \
-    --dangerously-skip-permissions </dev/null >> "$LOG" 2>&1
-  _rc=$?
-  if [ "$_rc" -ne 0 ]; then
-    # gate failed/timed out: END this fire (return 2) rather than re-looping on the same bad
-    # preview up to MAX_CYCLES (which could hold the lock for hours). launchd retries next interval.
-    echo "$(date '+%F %T') publish gate exited rc=$_rc (timeout/err) — ending this fire; launchd retries" >> "$LOG"
-    return 2
+  # Find the branch of a pending preview (pushed/verified) — read-only ledger parse.
+  local BRANCH
+  BRANCH="$(node "$AUTO" --status 2>/dev/null | node -e '
+const fs=require("fs"); let c; try{c=JSON.parse(fs.readFileSync(0,"utf8"));}catch{process.exit(1);}
+for (const v of Object.values(c||{})){ if(v&&(v.status==="pushed-preview"||v.status==="verified-preview")){console.log(v.branch||"");process.exit(0);} }
+process.exit(1);
+')"
+  [ -z "$BRANCH" ] && return 1   # nothing pending → caller falls through (publish-only stand-down)
+  echo "$(date '+%F %T') preview pending on $BRANCH → running verify+merge gate" >> "$LOG"
+
+  # ── ROLLBACK (GG_USE_PROMPT_PREVIEW_GATE=1): legacy headless `claude -p` gate, verbatim ──
+  # In-place hot rollback if the deterministic gate misbehaves unattended.
+  if [ "${GG_USE_PROMPT_PREVIEW_GATE:-0}" = "1" ]; then
+    echo "$(date '+%F %T') GG_USE_PROMPT_PREVIEW_GATE=1 → legacy prompt gate" >> "$LOG"
+    gtimeout "${GG_AUTOPILOT_PUBLISH_TIMEOUT:-1800}" claude -p "$(cat "$PROMPT_FILE")" \
+      --mcp-config "$SCRIPT_DIR/autopilot-mcp.json" \
+      --allowedTools "Bash Skill Task Agent Read Grep mcp__playwright__browser_navigate mcp__playwright__browser_snapshot mcp__playwright__browser_console_messages mcp__playwright__browser_evaluate mcp__playwright__browser_close" \
+      --dangerously-skip-permissions </dev/null >> "$LOG" 2>&1
+    [ "$?" -ne 0 ] && { echo "$(date '+%F %T') legacy gate rc≠0 — ending this fire" >> "$LOG"; return 2; }
+    return 0
   fi
-  return 0
+
+  # ── DEFAULT (2026-06-18): deterministic node gate ──
+  # gg-preview-gate.mjs self-enforces per-step hard timeouts and maps any timeout→exit 2.
+  # gtimeout is a loose wall-clock BACKSTOP (above the gate's worst-case internal sum) against
+  # a wedged process. Exit contract maps 1:1: 0=published, 1=nothing-pending, 2=gate-failed.
+  gtimeout "${GG_PREVIEW_GATE_TIMEOUT:-3600}" node "$SCRIPT_DIR/gg-preview-gate.mjs" --branch "$BRANCH" >> "$LOG" 2>&1
+  _rc=$?
+  case "$_rc" in
+    0|1|2) return "$_rc" ;;
+    124)   echo "$(date '+%F %T') preview gate hit wall-clock backstop — ending this fire" >> "$LOG"; return 2 ;;
+    *)     echo "$(date '+%F %T') preview gate exited rc=$_rc (unexpected) — ending this fire" >> "$LOG"; return 2 ;;
+  esac
 }
 
 # run_one_cycle — do ONE unit of work. Returns 0 if it did something (published or

@@ -62,6 +62,28 @@ const WORDS_PER_TOKEN = 1 / 1.3; // ~1.3 tokens per English word
 // (diversity > repetition). claude is already the ceiling, so it escalates to null.
 const DIVERSIFY_ESCALATION = { codex: 'claude', gemini: 'claude', claude: null };
 
+// ── clean-shutdown worker reaping ────────────────────────────────────────────
+// Workers are spawned detached (their own process GROUP). If THIS orchestrator is signaled — e.g.
+// the gg-seo-author lane's `gtimeout` cap-hit SIGTERMs the whole wrapper process group, which
+// includes this execFileSync'd orchestrator — Node's default action terminates us instantly, taking
+// the per-worker watchdog with it and ORPHANING the detached worker groups (they are in their own
+// session, so the group SIGTERM never reaches them). So trap terminating signals and killTree every
+// in-flight worker group BEFORE exiting. Idempotent; a no-op when there are no live workers.
+const liveWorkers = new Set();
+let _orchShuttingDown = false;
+function reapLiveWorkers(signal) {
+  if (_orchShuttingDown) return;
+  _orchShuttingDown = true;
+  for (const c of liveWorkers) {
+    try { process.kill(-c.pid, 'SIGKILL'); }   // negative pid = the worker's whole process group
+    catch { try { c.kill('SIGKILL'); } catch { /* already gone */ } }
+  }
+  process.exit(signal === 'SIGINT' ? 130 : 143);
+}
+process.on('SIGTERM', () => reapLiveWorkers('SIGTERM'));
+process.on('SIGINT', () => reapLiveWorkers('SIGINT'));
+process.on('SIGHUP', () => reapLiveWorkers('SIGHUP'));
+
 // Build the argv array for each model. `bin` is resolved via PATH on spawn.
 // stdin = prompt content, stdout captured to outputPath, stderr surfaced.
 function buildCommand(model, promptPath, outputPath, opts = {}) {

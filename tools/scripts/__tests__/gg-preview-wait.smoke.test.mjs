@@ -329,6 +329,9 @@ test('pickVercelCommitState: success / failure / pending / none', () => {
   assert.equal(pickVercelCommitState(mk([{ context: 'Vercel – oracle', state: 'success' }])), 'success');
   // failure takes precedence (fail-closed) when multiple vercel contexts disagree
   assert.equal(pickVercelCommitState(mk([{ context: 'Vercel', state: 'success' }, { context: 'Vercel – x', state: 'failure' }])), 'failure');
+  // ALL matched vercel contexts must succeed: one success + one pending ⇒ pending
+  // (codex review: don't pass the gate before every preview is ready).
+  assert.equal(pickVercelCommitState(mk([{ context: 'Vercel', state: 'success' }, { context: 'Vercel – x', state: 'pending' }])), 'pending');
   assert.equal(pickVercelCommitState('not json'), 'none');
 });
 

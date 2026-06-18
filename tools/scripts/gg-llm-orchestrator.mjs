@@ -14,7 +14,7 @@
 // FRONTIER-ONLY: refuses tiny prompts (<1KB), refuses downgraded Claude output
 // (<3KB suggests silent Sonnet fallback), surfaces all guards in summary.json.
 import { spawn, execSync } from 'node:child_process';
-import { appendFileSync, existsSync, mkdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { logCost } from './lib/_cost-log.mjs';
@@ -61,27 +61,6 @@ const WORDS_PER_TOKEN = 1 / 1.3; // ~1.3 tokens per English word
 // Diversify map: a failing cross-validation model escalates to Opus 4.8 xhigh
 // (diversity > repetition). claude is already the ceiling, so it escalates to null.
 const DIVERSIFY_ESCALATION = { codex: 'claude', gemini: 'claude', claude: null };
-
-// ── author-lane orphan tracking ──────────────────────────────────────────────
-// Each LLM worker is spawned detached:true (its own process-GROUP leader), so a force-kill of THIS
-// orchestrator (e.g. the gg-seo-author lane's gtimeout cap) before the watchdog cleans up would
-// leave the worker group running. When GG_AUTHOR_WORKER_PIDFILE is set (ONLY by that lane's tick),
-// record each worker's PGID (= child.pid) so the tick can `kill -- -<pgid>` the orphaned groups.
-// Env-gated: a no-op for every other caller (publish lane, manual runs). Best-effort, never throws.
-function trackWorkerPid(pid) {
-  const pf = process.env.GG_AUTHOR_WORKER_PIDFILE;
-  if (!pf || !pid) return;
-  try { appendFileSync(pf, `${pid}\n`); } catch { /* best-effort */ }
-}
-function untrackWorkerPid(pid) {
-  const pf = process.env.GG_AUTHOR_WORKER_PIDFILE;
-  if (!pf || !pid) return;
-  try {
-    if (!existsSync(pf)) return;
-    const keep = readFileSync(pf, 'utf8').split('\n').filter((l) => l.trim() && l.trim() !== String(pid));
-    writeFileSync(pf, keep.length ? keep.join('\n') + '\n' : '');
-  } catch { /* best-effort */ }
-}
 
 // Build the argv array for each model. `bin` is resolved via PATH on spawn.
 // stdin = prompt content, stdout captured to outputPath, stderr surfaced.
@@ -304,7 +283,6 @@ function runAttempt(model, promptPath, outputPath, opts = {}) {
       stdio,
       detached: true,
     });
-    trackWorkerPid(child.pid); // author-lane orphan tracking (env-gated; no-op for other callers)
 
     let stderrBuf = '';
     let stdoutBuf = '';

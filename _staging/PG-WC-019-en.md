@@ -1,3 +1,28 @@
+---
+title: Harry Kane Birth Chart
+slug: harry-kane-birth-chart
+date: 2026-06-18
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T3
+track: 量产线
+page_id: PG-WC-019
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: harry kane birth chart
+associated_keywords:
+  - harry kane astrology
+  - harry kane zodiac sign
+  - kane leo sun
+  - england captain astrology
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-18T05:18:03.756Z
+content_sha256_short: 37a6406bd06f026d
+phase2_checks: all-pass
+---
+
 # The Kane Birth Chart: Reading England's Captain Through a Leo Sun and a Late-Arriving Season
 
 ## What Is the Kane Birth Chart?

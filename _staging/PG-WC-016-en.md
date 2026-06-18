@@ -1,3 +1,28 @@
+---
+title: Jude Bellingham Birth Chart
+slug: jude-bellingham-birth-chart
+date: 2026-06-18
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T3
+track: 量产线
+page_id: PG-WC-016
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: jude bellingham birth chart
+associated_keywords:
+  - jude bellingham astrology
+  - jude bellingham zodiac sign
+  - bellingham cancer sun
+  - england world cup 2026 astrology
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-18T05:17:12.524Z
+content_sha256_short: 95608e069d7f5a17
+phase2_checks: all-pass
+---
+
 # Jude Bellingham's Birth Chart: Reading a Cancer Sun Through the Lens of the 2026 World Cup
 
 ## What Is the Bellingham Birth Chart?

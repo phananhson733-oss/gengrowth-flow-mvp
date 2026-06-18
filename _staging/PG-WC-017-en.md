@@ -1,3 +1,28 @@
+---
+title: Erling Haaland Birth Chart
+slug: erling-haaland-birth-chart
+date: 2026-06-18
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T3
+track: 量产线
+page_id: PG-WC-017
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: erling haaland birth chart
+associated_keywords:
+  - erling haaland astrology
+  - haaland zodiac sign
+  - haaland cancer sun
+  - norway world cup astrology
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-18T05:17:29.926Z
+content_sha256_short: 07cae129130066e2
+phase2_checks: all-pass
+---
+
 # Reading the Erling Haaland Birth Chart: A Late-Cancer Sun on the Edge of Leo
 
 ## What Is the Haaland Birth Chart?

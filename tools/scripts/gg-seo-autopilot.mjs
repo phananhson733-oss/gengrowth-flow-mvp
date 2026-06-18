@@ -768,6 +768,10 @@ function doAuthor(o = {}) {
           const a = [PHASE2, '--source', cand, '--page-id', pgId, '--tag', 'zh', '--language', 'zh', '--author', author, '--entity', cleanEntity || keyword, '--target-keyword', keyword, '--template', template, '--tier', tier, '--track', track, '--prompt-version', VERSION];
           if (associatedKeywords.length) a.push('--associated-keywords', associatedKeywords.join(', '));
           if (zhKeyword) a.push('--zh-keyword', zhKeyword);
+          // Freshness binding (zh lacks EN's phase2Passed manifest gate): delete the canonical zh draft
+          // FIRST, so the existsSync below can only be true if THIS candidate's phase2 just (re)wrote it
+          // — phase2 throws on fail and writes the draft only on pass, so a stale file can't fake adoption.
+          rmSync(zhDraft(pgId), { force: true });
           shFlow('node', a);
           return existsSync(zhDraft(pgId));
         },
@@ -930,6 +934,9 @@ function doAuthor(o = {}) {
         pgId, draftV8: defaultDraftV8, candidate: join('_staging', 'zh-demo', `${pgId}-repair-candidate.md`),
         targetKeyword: keyword, author, failures: lastFail, language: 'zh',
         validate: (cand) => {
+          // Freshness binding (see path #1): delete the canonical zh draft first so existsSync below
+          // proves THIS candidate's phase2 just (re)wrote it, not a stale leftover.
+          rmSync(zhDraft(pgId), { force: true });
           shFlow('node', [PHASE2, '--source', cand, '--page-id', pgId, '--tag', 'zh', '--language', 'zh', '--author', author]);
           return existsSync(zhDraft(pgId));
         },

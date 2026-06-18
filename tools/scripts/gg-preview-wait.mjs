@@ -134,12 +134,20 @@ export function parseStatus(json) {
 // times out forever. These helpers add the commit-status (readiness) + comment (URL)
 // path. All pure + fixture-testable; the poll loop shells out via runGh.
 
-// normalizeUrl — ensure an https:// scheme. The bot blob stores a bare hostname
-// (`oracle-git-…vercel.app`); the markdown link is already fully-qualified.
-function normalizeUrl(u) {
-  const s = String(u || '').trim();
-  if (!s) return null;
-  return /^https?:\/\//i.test(s) ? s : `https://${s}`;
+// toVercelPreviewUrl — normalize + VALIDATE. The bot blob stores a bare hostname
+// (`oracle-git-…vercel.app`); the markdown link is fully-qualified. Returns the URL
+// ONLY if it parses to an https://*.vercel.app host — otherwise null. This is the
+// trust boundary for every extraction path (codex review: don't return arbitrary
+// hosts/schemes from PR-comment text).
+function toVercelPreviewUrl(u) {
+  const s0 = String(u || '').trim();
+  if (!s0) return null;
+  const s = /^https?:\/\//i.test(s0) ? s0 : `https://${s0}`;
+  let parsed;
+  try { parsed = new URL(s); } catch { return null; }
+  if (parsed.protocol !== 'https:') return null;
+  if (!/\.vercel\.app$/i.test(parsed.hostname)) return null;
+  return s;
 }
 
 // extractVercelPreviewUrl — pull the preview URL from a single vercel[bot] PR

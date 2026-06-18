@@ -283,10 +283,12 @@ export async function waitForPreview(opts, deps = {}) {
   while (true) {
     // ── Path A: GitHub deployment (legacy; still works if Vercel creates one) ──
     // 1) newest deployment for this branch ref.
+    let deploymentFound = false;
     const depRes = await runGhFn(['api', `repos/${repo}/deployments?ref=${encodeURIComponent(branch)}`]);
     if (depRes.code === 0) {
       const { id } = parseDeployments(depRes.stdout);
       if (id != null) {
+        deploymentFound = true; // this repo IS using deployments → Path A is authoritative
         // 2) newest status for that deployment.
         const stRes = await runGhFn(['api', `repos/${repo}/deployments/${id}/statuses`]);
         if (stRes.code === 0) {
@@ -297,42 +299,46 @@ export async function waitForPreview(opts, deps = {}) {
         }
         // gh status call failed (transient) → keep polling until timeout
       }
-      // no deployment yet → fall through to Path B
     }
 
     // ── Path B: Vercel commit-status (readiness) + vercel[bot] PR comment (URL) ──
-    // The current Vercel-for-GitHub behavior: no deployment object, only a commit
-    // status + a PR comment. Resolve the branch HEAD sha, read its combined commit
-    // status, and on Vercel success extract the preview URL from the PR comment.
-    const shaRes = await runGhFn(['api', `repos/${repo}/commits/${encodeURIComponent(branch)}`]);
-    if (shaRes.code === 0) {
-      const sha = parseCommitSha(shaRes.stdout);
-      if (sha) {
-        const stsRes = await runGhFn(['api', `repos/${repo}/commits/${sha}/status`]);
-        if (stsRes.code === 0) {
-          const vState = pickVercelCommitState(stsRes.stdout);
-          if (vState === 'failure') {
-            return { ok: false, reason: 'vercel deployment failed (commit-status)' };
-          }
-          if (vState === 'success') {
-            // Deployment is Ready — now fetch the preview URL from the PR comment.
-            const pullsRes = await runGhFn(['api', `repos/${repo}/commits/${sha}/pulls`]);
-            if (pullsRes.code === 0) {
-              const prNum = parsePrNumber(pullsRes.stdout);
-              if (prNum != null) {
-                const cmtRes = await runGhFn([
-                  'api', `repos/${repo}/issues/${prNum}/comments`, '--paginate',
-                ]);
-                if (cmtRes.code === 0) {
-                  const url = findPreviewUrlInComments(cmtRes.stdout);
-                  if (url) return { ok: true, previewUrl: url };
-                  // status=success but the bot comment hasn't landed yet → keep polling
-                }
-              }
-              // no PR yet (comment/PR lag) → keep polling
+    // Only when Path A found NO deployment object — the current Vercel-for-GitHub
+    // behavior posts no deployment, only a commit status + a PR comment. Running
+    // this ONLY in the no-deployment case keeps the two paths from interleaving
+    // (a repo uses one mechanism or the other, never both for the same push).
+    // Resolve the branch HEAD sha, read its combined commit status, and on Vercel
+    // success extract the preview URL from the PR comment.
+    if (!deploymentFound) {
+      const shaRes = await runGhFn(['api', `repos/${repo}/commits/${encodeURIComponent(branch)}`]);
+      if (shaRes.code === 0) {
+        const sha = parseCommitSha(shaRes.stdout);
+        if (sha) {
+          const stsRes = await runGhFn(['api', `repos/${repo}/commits/${sha}/status`]);
+          if (stsRes.code === 0) {
+            const vState = pickVercelCommitState(stsRes.stdout);
+            if (vState === 'failure') {
+              return { ok: false, reason: 'vercel deployment failed (commit-status)' };
             }
+            if (vState === 'success') {
+              // Deployment is Ready — now fetch the preview URL from the PR comment.
+              const pullsRes = await runGhFn(['api', `repos/${repo}/commits/${sha}/pulls`]);
+              if (pullsRes.code === 0) {
+                const prNum = parsePrNumber(pullsRes.stdout);
+                if (prNum != null) {
+                  const cmtRes = await runGhFn([
+                    'api', `repos/${repo}/issues/${prNum}/comments`, '--paginate',
+                  ]);
+                  if (cmtRes.code === 0) {
+                    const url = findPreviewUrlInComments(cmtRes.stdout);
+                    if (url) return { ok: true, previewUrl: url };
+                    // status=success but the bot comment hasn't landed yet → keep polling
+                  }
+                }
+                // no PR yet (comment/PR lag) → keep polling
+              }
+            }
+            // pending / none → fall through to wait
           }
-          // pending / none → fall through to wait
         }
       }
     }

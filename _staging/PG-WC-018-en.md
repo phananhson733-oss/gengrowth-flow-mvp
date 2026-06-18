@@ -1,3 +1,29 @@
+---
+title: Messi World Cup Record Astrology
+slug: messi-world-cup-record-astrology
+date: 2026-06-18
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-WC-018
+author_id: "julian-thorne"
+author_display_name: "Julian Thorne"
+target_keyword: messi world cup record astrology
+associated_keywords:
+  - lionel messi astrology
+  - messi world cup 2022
+  - lionel messi cancer sun
+  - messi saturn return
+  - argentina world cup astrology
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-18T05:18:43.112Z
+content_sha256_short: 29dad143dea9c675
+phase2_checks: all-pass
+---
+
 # Messi's World Cup Record Through Astrology: A Cancer Sun and the Long Arc of Saturn
 
 ## What Is Messi's World Cup Astrology?

@@ -18,8 +18,8 @@ associated_keywords:
   - england captain astrology
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-18T05:18:03.756Z
-content_sha256_short: 37a6406bd06f026d
+generated_at: 2026-06-18T05:18:18.134Z
+content_sha256_short: 422bebb52fe96417
 phase2_checks: all-pass
 ---
 
@@ -111,4 +111,4 @@ No. This is symbolic and educational astrology that frames themes of leadership 
 
 - Liz Greene — *The Astrology of Fate*, a standard reference for reading Sun-sign archetypes as symbols of identity rather than fixed predictions
 - Robert Hand — *Planets in Transit*, a reference for reading planetary cycles as timing activators of themes rather than verdicts on outcomes
-- Public birth-data record: Harry Kane, born 28 July 1993, Leytonstone, London, England
+- Public birth-data record for Harry Kane — the verified birth date of 28 July 1993 in Leytonstone, London, England, cited throughout this reading

@@ -86,4 +86,4 @@ No. This is symbolic and educational astrology that frames themes of leadership 
 
 - Liz Greene — *The Astrology of Fate*, a standard reference for reading Sun-sign archetypes as symbols of identity rather than fixed predictions
 - Robert Hand — *Planets in Transit*, a reference for reading planetary cycles as timing activators of themes rather than verdicts on outcomes
-- Public birth-data record: Harry Kane, born 28 July 1993, Leytonstone, London, England
+- Public birth-data record for Harry Kane — the verified birth date of 28 July 1993 in Leytonstone, London, England, cited throughout this reading

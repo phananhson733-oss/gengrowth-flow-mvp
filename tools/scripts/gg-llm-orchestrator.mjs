@@ -324,7 +324,6 @@ function runAttempt(model, promptPath, outputPath, opts = {}) {
 
     child.on('error', (err) => {
       clearInterval(watchdog);
-      untrackWorkerPid(child.pid);
       resolveAttempt({
         ok: false,
         exit_code: -1,
@@ -345,7 +344,6 @@ function runAttempt(model, promptPath, outputPath, opts = {}) {
 
     child.on('close', (code) => {
       clearInterval(watchdog);
-      untrackWorkerPid(child.pid);
       const duration_s = Number(((Date.now() - t0) / 1000).toFixed(1));
       // Watchdog-killed → fail this attempt loudly so the retry loop moves on.
       if (killedReason) {

@@ -12,7 +12,7 @@ This is a symbolic, educational reading, not a prediction of results or a guide 
 
 ## Why It Matters for Self-Awareness
 
-Most england world cup 2026 astrology content either inflates astrology into a prediction engine or dismisses it as noise. The more useful register is the one Liz Greene favours in her work: planets as a language for cycles and themes, not verdicts on what will happen. Reading England's campaign through Sun signs and a Jupiter ingress does not tell you who wins on 19 July 2026 at MetLife Stadium in New Jersey. It gives you a symbolic vocabulary for understanding what the tournament window means as a stretch of time, which turns out to be more durable than a scoreline.
+Most coverage of England's 2026 campaign and astrology either inflates astrology into a prediction machine or dismisses it as noise. The more useful register is the one Liz Greene favours in her work: planets as a language for cycles and themes, not verdicts on what will happen. Reading England's campaign through Sun signs and a Jupiter ingress does not tell you who wins on 19 July 2026 at MetLife Stadium in New Jersey. It gives you a symbolic vocabulary for understanding what the tournament window means as a stretch of time, which turns out to be more durable than a scoreline.
 
 That matters for any reader, not only a football fan. The Jupiter-in-Cancer-to-Leo shift is a planetary transition that happens regardless of England's result. Noticing where your own chart sits in relation to that ingress, whether your Sun is in Cancer or Leo, whether you carry a Capricorn Saturn echo like Declan Rice's, is a practice of reading your season honestly rather than managing your anxiety with a false forecast. England's squad becomes a cast of examples rather than a collection of predictions.
 
@@ -20,9 +20,9 @@ That matters for any reader, not only a football fan. The Jupiter-in-Cancer-to-L
 
 Setting england world cup 2026 astrology against a standard zodiac forecast sharpens what each one does. A zodiac forecast for July 2026 might tell a Leo reader that "Jupiter enters your sign," and leave the implication hovering that good things will follow. The approach here is narrower and more careful: it names the ingress, pins it to a calendar date (around 30 June 2026), and then asks what a Leo Sun theme looks like in a tournament context, without claiming it guarantees anything.
 
-A second contrast is with a full natal reading. For a footballer with a recorded birth time, you could weigh Moon, Ascendant, and houses against the transit backdrop. Harry Kane's birth time is not publicly documented, so the honest version of his chart stops at the Leo Sun. That restraint is not a limitation; it is the discipline that keeps the reading from fabricating data. A fuller chart without a verified birth time is less reliable, not more.
+A second contrast is with a full natal reading. For a footballer with a recorded birth time, you could weigh Moon, Ascendant, and houses against the transit backdrop. Harry Kane's birth time is not publicly documented, so the honest version of his chart stops at the Leo Sun. That restraint is not a limitation; it is the discipline that keeps the reading from fabricating data. Following the method Robert Hand develops in *Planets in Transit*, a fuller chart without a verified birth time is less reliable, not more.
 
-A third contrast is with the broader tournament astrology that covers all thirty-two nations. England world cup 2026 astrology narrows that wide angle to a single squad, reading the interplay between specific players' Sun signs and the two main Jupiter windows. That specificity makes it more useful as a case study, while the wider pillar supplies the astronomical context it cannot cover on its own.
+A third contrast is with the broader tournament astrology that covers all thirty-two nations. This squad-level reading narrows that wide angle to England, tracing the interplay between specific players' Sun signs and the two main Jupiter windows. That specificity makes it more useful as a case study, while the wider pillar supplies the astronomical context it cannot cover on its own.
 
 ## How to Read England World Cup 2026 Astrology in the 2026 World Cup Window
 
@@ -33,7 +33,7 @@ Applying this method cleanly requires a few ordered steps, and the same steps wo
 3. Read the Cancer window symbolically. From 11 to 30 June, Jupiter is still in Cancer. Bellingham's Cancer Sun catches a brief backdrop of Jupiter moving through its own emotional register, a symbolic tailwind of homecoming and protection during the group stage. This is theme, not prediction.
 4. Read the Leo window symbolically. From around 30 June through the knockouts and into the final, Jupiter is in Leo. Kane's Leo Sun aligns with that second window, the sign of the captain and the stage, arriving precisely when the tournament narrows to its final eight and four. Symbolically, the captain's season arrives late.
 5. Hold the Virgo and Capricorn voices as structural counterweights. Tuchel's Virgo Sun and Saka's Virgo Sun suggest a managerial and creative precision that runs through the whole campaign. Rice's Capricorn Sun, in a sign traditionally ruled by Saturn, and Saturn is in Aries through 2025–2028, adds the archetype of disciplined structure. None of this predicts a tactical system; it describes a symbolic cast.
-6. Keep the reading open. Jupiter transits time year-level themes, not individual fixtures. England world cup 2026 astrology names the symbolic season; it never names the result.
+6. Keep the reading open. Jupiter transits time year-level themes, not individual fixtures. This symbolic frame names the season; it never names the result.
 
 ## Common Misreadings
 
@@ -76,7 +76,7 @@ Harry Kane's 2026 appearance is his third World Cup, equalling the record held b
 1. Jupiter shifts from Cancer into Leo around 30 June 2026; if you trace that same ingress in your own chart, which house does Leo fall in, and what kind of stage or leadership theme might be activating for you that month?
 2. The Cancer-Leo arc in this squad reads as protective drive transitioning into visible performance; where in your own work or relationships do you move between those two registers, and what triggers the shift?
 3. Rice's Capricorn Sun as structural anchor sits alongside Kane's Leo Sun as the stage; think about the people in your own team who hold each role — what does the balance between discipline and visibility look like for you?
-4. Notice where you want england world cup 2026 astrology to give you a prediction; what does that want tell you about what you are actually looking for when you read a chart?
+4. Notice where you want this astrological reading of England's 2026 campaign to give you a prediction; what does that want tell you about what you are actually looking for when you read a chart?
 
 ## Related Reading
 
@@ -85,7 +85,7 @@ Harry Kane's 2026 appearance is his third World Cup, equalling the record held b
 
 ## Take Action
 
-[Generate your free birth chart](https://astrologywiki.com/en/wiki/how-to-read-birth-chart) to find your own Sun sign alongside the same Jupiter ingress this piece traces through England's squad. You get a clear view of where your Sun sits in relation to the Cancer-to-Leo shift around 30 June 2026, and a way to read that transition as a theme in your own year rather than as a verdict you should trust to a planet.
+If england world cup 2026 astrology sparked your curiosity about how Jupiter transits map onto your own year, the next step is your own chart. [Generate your free birth chart](https://astrologywiki.com/en/wiki/how-to-read-birth-chart) to find your own Sun sign alongside the same Cancer-to-Leo ingress traced here. You get a clear view of where your Sun sits in relation to that 30 June 2026 shift, and a way to read the transition as a theme in your own year rather than as a verdict you should trust to a planet.
 
 ## Sources
 

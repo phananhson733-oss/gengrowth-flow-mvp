@@ -1,3 +1,28 @@
+---
+title: Yoane Wissa Birth Chart
+slug: yoane-wissa-birth-chart
+date: 2026-06-18
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T3
+track: 量产线
+page_id: PG-WC-023
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: yoane wissa birth chart
+associated_keywords:
+  - yoane wissa astrology
+  - yoane wissa zodiac sign
+  - yoane wissa virgo sun
+  - dr congo world cup 2026 astrology
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-18T11:49:51.904Z
+content_sha256_short: ae80ba079f6d5b3b
+phase2_checks: all-pass
+---
+
 # Yoane Wissa's Birth Chart: Reading a Virgo Sun Through the Lens of the 2026 World Cup
 
 ## What Is the Yoane Wissa Birth Chart?

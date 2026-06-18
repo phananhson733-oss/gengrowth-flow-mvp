@@ -1,7 +1,7 @@
 {
   "page_id": "PG-SOLAR-001",
   "prompt_path": "/Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-SOLAR-001.v8.zh-prompt.md",
-  "started_at": "2026-06-18T14:25:43.538Z",
+  "started_at": "2026-06-18T14:29:23.300Z",
   "models_requested": [
     "claude",
     "codex",
@@ -12,7 +12,7 @@
   "max_cost_usd_per_page": 5,
   "budget_exceeded_models": [],
   "ok_count": 1,
-  "total_cost_estimate_usd": 0.0115,
+  "total_cost_estimate_usd": 0.0113,
   "results": {
     "claude": {
       "model": "claude",
@@ -21,14 +21,14 @@
       "ok": true,
       "output_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/zh-demo/PG-SOLAR-001-claude-v8.md",
       "retries": 0,
-      "duration_s": 240.9,
+      "duration_s": 216.7,
       "cost_estimate_usd": {
-        "usd": 0.0115,
-        "input_tokens_est": 2518,
-        "output_tokens_est": 265,
+        "usd": 0.0113,
+        "input_tokens_est": 2510,
+        "output_tokens_est": 254,
         "pricing_note": "Sonnet 4.6 xhigh"
       },
-      "cumulative_cost_usd": 0.0115,
+      "cumulative_cost_usd": 0.0113,
       "budget_exceeded": false,
       "budget_usd": 5,
       "attempts": [
@@ -36,16 +36,16 @@
           "try_index": 1,
           "model": "claude",
           "command": "claude -p --model claude-sonnet-4-6 --effort high < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-SOLAR-001.v8.zh-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/zh-demo/PG-SOLAR-001-claude-v8.md",
-          "cost_usd": 0.0115,
-          "cumulative_cost_usd": 0.0115,
+          "cost_usd": 0.0113,
+          "cumulative_cost_usd": 0.0113,
           "ok": true,
           "exit_code": 0,
-          "duration_s": 240.9,
+          "duration_s": 216.7,
           "stderr_tail": "",
-          "stdout_bytes": 3266,
+          "stdout_bytes": 3452,
           "sonnet_guard": {
             "downgraded": false,
-            "bytes": 8291
+            "bytes": 8862
           }
         }
       ]
@@ -59,7 +59,7 @@
       "retries": 0,
       "duration_s": 0.1,
       "cost_estimate_usd": null,
-      "cumulative_cost_usd": 0.0252,
+      "cumulative_cost_usd": 0.0251,
       "budget_exceeded": false,
       "budget_usd": 5,
       "attempts": [
@@ -67,8 +67,8 @@
           "try_index": 1,
           "model": "codex",
           "command": "codex exec -c model=gpt-5.5 -c reasoning_effort=xhigh - < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-SOLAR-001.v8.zh-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/zh-demo/PG-SOLAR-001-codex-v8.md",
-          "cost_usd": 0.0252,
-          "cumulative_cost_usd": 0.0252,
+          "cost_usd": 0.0251,
+          "cumulative_cost_usd": 0.0251,
           "ok": false,
           "exit_code": 1,
           "duration_s": 0.1,

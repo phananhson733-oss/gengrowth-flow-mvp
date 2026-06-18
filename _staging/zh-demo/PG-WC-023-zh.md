@@ -1,3 +1,28 @@
+---
+title: Yoane Wissa Birth Chart
+slug: yoane-wissa-birth-chart
+date: 2026-06-18
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T3
+track: 量产线
+page_id: PG-WC-023
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: yoane wissa birth chart
+associated_keywords:
+  - 维萨占星
+  - 维萨星座
+  - 维萨处女座太阳
+  - 刚果金2026世界杯占星
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-18T11:55:31.576Z
+content_sha256_short: 3922e3227643cd52
+phase2_checks: all-pass
+---
+
 # 约阿内·维萨星盘：透过 2026 世界杯读一颗处女座太阳
 
 ## 约阿内·维萨星盘是什么？

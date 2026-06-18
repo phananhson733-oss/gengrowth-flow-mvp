@@ -48,6 +48,20 @@ function recordingFakeBin(payload) {
   return { bin: p, argvLog };
 }
 
+// A fake bin that records the EXACT stdin (the built prompt) it received, so a
+// test can assert the prompt content (e.g. the zh language guard).
+function stdinCapturingFakeBin(payload) {
+  const dir = join(TMP, `stdinbin-${Math.random().toString(36).slice(2)}`);
+  mkdirSync(dir, { recursive: true });
+  const stdinLog = join(dir, 'stdin.txt');
+  const p = join(dir, 'claude');
+  const quoted = `'${payload.replace(/'/g, `'\\''`)}'`;
+  const script = `#!/bin/sh\ncat > '${stdinLog}'\nprintf '%s' ${quoted}\nexit 0\n`;
+  writeFileSync(p, script);
+  chmodSync(p, 0o755);
+  return { bin: p, stdinLog };
+}
+
 function seedSource() {
   const src = join(TMP, `src-${Math.random().toString(36).slice(2)}.md`);
   writeFileSync(src, SOURCE_CONTENT);
@@ -196,6 +210,42 @@ test('nonexistent --source → exit 2', () => {
   );
   assert.equal(r.status, 2);
   assert.match(r.stderr, /not found/);
+});
+
+test('--language zh injects the Simplified-Chinese guard into the prompt', () => {
+  const src = seedSource();
+  const out = join(TMP, `out-zh-${Math.random().toString(36).slice(2)}.md`);
+  const { bin, stdinLog } = stdinCapturingFakeBin('# 已修正\n\n正文');
+  const r = run(
+    [
+      '--source', src, '--out', out, '--page-id', 'PG-SOLAR-001',
+      '--target-keyword', 'solar return meaning', '--author', 'lynne-wang',
+      '--failures', '- RL6 合规：禁词「最佳」', '--language', 'zh',
+    ],
+    { fake: bin },
+  );
+  assert.equal(r.status, 0, `expected exit 0; stderr: ${r.stderr}`);
+  const prompt = readFileSync(stdinLog, 'utf8');
+  assert.match(prompt, /语言要求：输出必须保持简体中文/, 'zh language guard missing from prompt');
+  // The source draft + the failures are still fenced into the prompt.
+  assert.ok(prompt.includes(SOURCE_CONTENT.trim().split('\n')[0]), 'source draft missing from prompt');
+  assert.ok(prompt.includes('禁词「最佳」'), 'failures text missing from prompt');
+});
+
+test('WITHOUT --language the prompt has NO zh guard (EN prompt unchanged)', () => {
+  const src = seedSource();
+  const out = join(TMP, `out-en-${Math.random().toString(36).slice(2)}.md`);
+  const { bin, stdinLog } = stdinCapturingFakeBin('# Fixed\n\nBody');
+  const r = run(
+    [
+      '--source', src, '--out', out, '--page-id', 'PG-X',
+      '--target-keyword', 'kw', '--author', 'a', '--failures', '- RL4 drift',
+    ],
+    { fake: bin },
+  );
+  assert.equal(r.status, 0, `expected exit 0; stderr: ${r.stderr}`);
+  const prompt = readFileSync(stdinLog, 'utf8');
+  assert.ok(!/语言要求/.test(prompt), 'zh guard leaked into a non-zh repair prompt');
 });
 
 test('cleanup', () => {

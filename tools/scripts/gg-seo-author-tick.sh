@@ -8,6 +8,13 @@
 # (writes drafts to flow-mvp/_staging); the separate publish-only `seo-autopilot` lane picks up the
 # ready drafts and publishes them. Authoring failures never touch the publish path.
 #
+# ⚠️ DO NOT ENABLE YET — 2026-06-18 /review (3 lenses + Codex) verdict = do-not-enable. The core
+# safety feature (reaping the orchestrator's DETACHED claude/codex/gemini workers) is broken on the
+# two paths that matter: the reap never runs on a gtimeout cap-hit (script exits 0 → trap clears the
+# lock → next fire sees no stale lock), and even when it runs it greps the node wrappers and MISSES
+# the real worker process groups. Fix required before enabling: orchestrator writes its detached
+# worker PGIDs to a pidfile; the tick kills those PGIDs INLINE on rc=124 and on stale-takeover.
+#
 # Install (DISABLED until you explicitly enable — do NOT auto-run):
 #   cp tools/scripts/com.gengrowth.seo-author.plist ~/Library/LaunchAgents/
 #   launchctl enable    gui/$(id -u)/com.gengrowth.seo-author

@@ -187,6 +187,19 @@ export const TBD_LINK_RULES = [
   // own spoke before the broad /(natal|birth) chart/ rule further down. Target
   // slugs world-cup-2026-astrology-prediction / argentina-* / vinicius-jr-zodiac-
   // sign / saturn-in-aries-2026 are live; germany-* ship in the 6/16 batch. ---
+  // --- 6/18 World Cup 2026 player + Cancer-cluster spokes (PG-WC-016~020). These
+  // MUST precede the generic /(natal|birth) chart/ rule (~line 343) and the WC-2026
+  // pillar rule below (first-match-wins). messi-record precedes messi-zodiac so a
+  // "world cup record" description never routes to the zodiac spoke. EN + ZH. ---
+  { match: /jude\s+bellingham|bellingham\s+birth\s+chart|裘德.{0,2}贝林厄姆|贝林厄姆/i, href: '/en/wiki/jude-bellingham-birth-chart' },
+  { match: /erling\s+haaland|haaland\s+birth\s+chart|哈兰德/i, href: '/en/wiki/erling-haaland-birth-chart' },
+  { match: /messi\s+world\s+cup\s+record|messi'?s?\s+world\s+cup\s+astrology|梅西.{0,8}世界杯/i, href: '/en/wiki/messi-world-cup-record-astrology' },
+  { match: /lionel\s+messi\s+zodiac\s+sign|messi\s+zodiac\s+sign|梅西.{0,4}星座/i, href: '/en/wiki/lionel-messi-zodiac-sign' },
+  { match: /harry\s+kane|kane\s+birth\s+chart|哈里.{0,2}凯恩|凯恩星盘/i, href: '/en/wiki/harry-kane-birth-chart' },
+  { match: /cancer\s+zodiac\s+world\s+cup|cancer\s+world\s+cup\s+lens|巨蟹座?.{0,8}世界杯/i, href: '/en/wiki/cancer-zodiac-world-cup-2026' },
+  { match: /best\s+soccer\s+players?\s+(by\s+)?zodiac|soccer\s+players?\s+by\s+zodiac\s+sign|顶尖足球.{0,6}星座/i, href: '/en/wiki/best-soccer-players-zodiac-sign' },
+  { match: /world\s+cup\s+2026\s+june\s+astrology|june\s+2026.{0,16}(transit|astrology)\s+calendar|june\s+2026\s+(planetary\s+)?transits?|世界杯.{0,6}六月/i, href: '/en/wiki/world-cup-2026-june-astrology' },
+  { match: /(2026)?\s*世界杯.{0,4}占星.{0,4}(总览|预测|专题|指南|pillar)|世界杯占星(总览|专题)/, href: '/en/wiki/world-cup-2026-astrology-prediction' },
   { match: /vinicius.{0,6}(jr|junior).{0,16}(zodiac|sun)\s*sign|vinicius.{0,6}(jr|junior).{0,16}sun[-\s]?sign/i, href: '/en/wiki/vinicius-jr-zodiac-sign' },
   { match: /germany\s+world\s+cup.{0,24}(players?|squad).{0,16}chart|germany.{0,16}(players?|squad).{0,12}birth\s*chart/i, href: '/en/wiki/germany-world-cup-players-birth-chart-2026' },
   { match: /germany\s+world\s+cup\s+2026\s+team\s+astrology|germany.{0,16}team\s+astrology/i, href: '/en/wiki/germany-world-cup-2026-astrology-team' },

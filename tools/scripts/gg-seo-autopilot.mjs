@@ -635,6 +635,36 @@ function doNextUnauthored() {
 // `claude -p --allowedTools Bash/Edit/Write --dangerously-skip-permissions` rescue, replaced by
 // the text-only gg-author-repair.mjs (Task 3). Deleted to avoid inviting a re-wire of the unsafe path.
 
+// Deterministic-repair escalation (Task 3) — shared by EVERY author park boundary (EN + both zh paths).
+// After the feedback loop has failed every attempt, escalate ONCE to gg-author-repair.mjs: a TEXT-ONLY
+// worker (NO Bash/Edit/Write/Grep/MCP/--dangerously-skip-permissions) that reads the failed draft + the
+// phase2 failures and emits a corrected article to a SEPARATE candidate file. `validate(candidate)` runs
+// phase2 on that candidate and returns whether it passed; we adopt it ONLY on a pass — a tooling failure
+// or a still-failing candidate parks exactly as before. Centralized so a new author path can never again
+// silently ship WITHOUT the repair safety net (the divergence that parked PG-SOLAR-001's zh backfill: EN
+// had the escalation, the zh paths did not). Toggle GG_AUTHOR_REPAIR=0. Returns true iff a repaired
+// candidate passed and was adopted (the caller then logs AUTHORED and returns).
+function tryDeterministicRepair({ pgId, draftV8, candidate, targetKeyword, author, failures, language, validate }) {
+  if (process.env.GG_AUTHOR_REPAIR === '0' || !existsSync(join(FLOW, draftV8))) return false;
+  log(`deterministic repair: feedback loop failed — calling gg-author-repair on ${draftV8}${language ? ` (${language})` : ''}`);
+  const repModel = process.env.GG_AGENTIC_MODEL || 'claude-sonnet-4-6';
+  const repEffort = process.env.GG_AGENTIC_EFFORT || 'high';
+  const repTimeout = parseInt(process.env.GG_AUTHOR_REPAIR_TIMEOUT_MS || process.env.GG_AUTHOR_AGENTIC_TIMEOUT_MS || '1800000', 10);
+  try {
+    const args = [join(SCRIPTS, 'gg-author-repair.mjs'),
+      '--source', draftV8, '--out', candidate, '--page-id', pgId,
+      '--target-keyword', targetKeyword, '--author', author,
+      '--failures', failures || '- phase2 failed',
+      '--model', repModel, '--effort', repEffort];
+    if (language) args.push('--language', language);
+    shFlow('node', args, repTimeout);
+    // WE validate the candidate (the worker never runs phase2 itself); adopt only on PASS.
+    if (validate(candidate)) return true;
+  } catch (e) { log(`deterministic repair errored: ${errTail(e, 80)}`); }
+  log('deterministic repair did not yield a passing draft — parking');
+  return false;
+}
+
 function doAuthor(o = {}) {
   let sel;
   const claims = loadClaims();

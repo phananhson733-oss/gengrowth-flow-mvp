@@ -76,11 +76,16 @@ reap_worker_pgids() {
 STALE_TAKEOVER=0
 if [ -d "$LOCK" ]; then
   lock_pid="$(cat "$LOCK/pid" 2>/dev/null)"
-  if [ -n "$lock_pid" ] && kill -0 "$lock_pid" 2>/dev/null; then
+  lock_start="$(cat "$LOCK/start" 2>/dev/null)"
+  cur_start=""
+  [ -n "$lock_pid" ] && cur_start="$(ps -o lstart= -p "$lock_pid" 2>/dev/null | tr -s ' ')"
+  # "Active" requires the pid alive AND its start-time matching what we stored — so a RECYCLED pid
+  # (OS reused the dead fire's pid for an unrelated process) can't wedge authoring into a silent stall.
+  if [ -n "$lock_pid" ] && kill -0 "$lock_pid" 2>/dev/null && [ -n "$lock_start" ] && [ "$cur_start" = "$lock_start" ]; then
     echo "$(date '+%F %T') skip — previous authoring fire (pid $lock_pid) still active" >> "$LOG"
     exit 0
   fi
-  echo "$(date '+%F %T') stale author lock (pid ${lock_pid:-?} dead) — taking over + reaping orphans" >> "$LOG"
+  echo "$(date '+%F %T') stale author lock (pid ${lock_pid:-?} dead/recycled) — taking over" >> "$LOG"
   STALE_TAKEOVER=1
   rm -rf "$LOCK" 2>/dev/null
 fi
@@ -91,12 +96,14 @@ fi
 # trap BEFORE the pid write + on INT/TERM too, so a signal between mkdir and pid-write still cleans up.
 trap 'rm -rf "$LOCK" 2>/dev/null' EXIT INT TERM
 echo "$$" > "$LOCK/pid"
+ps -o lstart= -p $$ 2>/dev/null | tr -s ' ' > "$LOCK/start"   # identity cookie vs PID reuse
 
-# Reap orphaned authoring children ONLY when we took over a dead fire's lock (so we never kill a
-# human's manual orchestrator run during normal operation). Scoped to the exact script paths —
-# never a broad `pkill claude` (that would kill an interactive Claude Code session).
+# Reap a dead fire's orphans ONLY on stale-takeover (so we never touch a human's manual run during
+# normal operation): kill the detached LLM-worker GROUPS by recorded PGID (the real fix), then the
+# cheap node wrapper shells by exact script path — never a bare `pkill claude`.
 if [ "$STALE_TAKEOVER" = "1" ]; then
-  pkill -f "$SCRIPT_DIR/gg-llm-orchestrator.mjs" 2>/dev/null && echo "$(date '+%F %T') reaped orphan orchestrator(s)" >> "$LOG"
+  reap_worker_pgids
+  pkill -f "$SCRIPT_DIR/gg-llm-orchestrator.mjs" 2>/dev/null
   pkill -f "$AUTO --author" 2>/dev/null
 fi
 
@@ -117,8 +124,10 @@ echo "$(date '+%F %T') author tick start (pid $$, batch $BATCH, cap ${TICK_TIMEO
 # timeouts (GG_AUTHOR_ORCH_TIMEOUT_MS) bound individual LLM calls inside it. NOTE: GG_AUTOPILOT_MODE
 # must NOT be publish-only here (the driver refuses --author in publish-only) — this lane runs it
 # unset so authoring is allowed; it never publishes (no --scan/--merge in this script).
+: > "$WORKER_PIDFILE"   # fresh per fire; the orchestrator appends each detached worker PGID here
 AOUT=$( ( set -a; . "$HOME/.config/gg/_gg.env" 2>/dev/null; set +a
   unset GG_AUTOPILOT_MODE
+  export GG_AUTHOR_WORKER_PIDFILE="$WORKER_PIDFILE"   # → orchestrator records worker PGIDs for reaping
   export GG_SHEETS_WORKBOOK_ID="${GG_SHEETS_FLOW_MVP_WORKBOOK_ID:-$GG_SHEETS_WORKBOOK_ID}"
   # gbrain (~/.local/bin, RAG) + codex (~/.npm-global/bin, multi-party review) on PATH for authoring.
   export PATH="$HOME/.local/bin:$HOME/.npm-global/bin:$PATH"

@@ -1004,7 +1004,24 @@ function doAuthor(o = {}) {
 
 // ── main flows ──────────────────────────────────────────────────────────────
 function doScan(o) {
-  return withClaimsLock(() => doScanLocked(o));
+  // Locking is scoped INSIDE doScanLocked now: the claimable→claim SELECTION is atomic, but the
+  // minutes-long per-task publish (build/push/PR) runs UNLOCKED so a concurrent --status/--merge
+  // doesn't block on it and throw.
+  return doScanLocked(o);
+}
+
+// Atomic single-claim ledger write: load-modify-save under the claims lock, plus the Task-8
+// stage/lease stamp. Used for every write OUTSIDE the short selection phase. Safe to re-load:
+// once a claim is 'active' it is owned by this run, so patching the freshly-loaded ledger can
+// neither lose nor be lost by another writer.
+function stampClaim(pgId, stage, patch = {}) {
+  return withClaimsLock(() => {
+    const c = loadClaims();
+    c[pgId] = { ...(c[pgId] || {}), ...patch };
+    heartbeatClaim(c, pgId, stage);
+    saveClaims(c);
+    return c[pgId];
+  });
 }
 
 function doScanLocked(o) {

@@ -65,36 +65,16 @@ const DIVERSIFY_ESCALATION = { codex: 'claude', gemini: 'claude', claude: null }
 // Build the argv array for each model. `bin` is resolved via PATH on spawn.
 // stdin = prompt content, stdout captured to outputPath, stderr surfaced.
 function buildCommand(model, promptPath, outputPath, opts = {}) {
-  switch (model) {
-    case 'claude':
-      // CRITICAL: --model is load-bearing — without it the CLI uses its default
-      // session model. --effort sets reasoning depth for the writing pass. opts lets
-      // the rate-limit fallback swap in the Opus model/effort for one retry.
-      return {
-        bin: 'claude',
-        args: ['-p', '--model', opts.claudeModel || CLAUDE_MODEL, '--effort', opts.claudeEffort || CLAUDE_EFFORT],
-        stdinFromFile: promptPath,
-        stdoutToFile: outputPath,
-      };
-    case 'codex':
-      return {
-        bin: 'codex',
-        args: ['exec', '-c', 'model=gpt-5.5', '-c', `reasoning_effort=${CODEX_EFFORT}`, '-'],
-        stdinFromFile: promptPath,
-        stdoutToFile: outputPath,
-      };
-    case 'gemini':
-      // TODO(2026-Hx): when google/gemini-cli ships gemini-3 in the bundle,
-      // bump model id here (verify with `gemini --help | grep gemini-3`).
-      return {
-        bin: 'gemini',
-        args: ['--model', 'gemini-2.5-pro'],
-        stdinFromFile: promptPath,
-        stdoutToFile: outputPath,
-      };
-    default:
-      throw new Error(`unknown model: ${model}`);
-  }
+  // Argv contract extracted to ./lib/llm-worker.mjs (Task 2) so the same text-worker shape is
+  // reusable (gg-author-repair, review workers) and unit-testable. Defaults are resolved HERE and
+  // passed through, so the emitted argv stays byte-identical (incl. the rate-limit Opus fallback
+  // via opts.claudeModel/opts.claudeEffort). The stdin/stdout file layering stays in the wrapper.
+  const { bin, args } = buildWorkerCommand(model, {
+    claudeModel: opts.claudeModel || CLAUDE_MODEL,
+    claudeEffort: opts.claudeEffort || CLAUDE_EFFORT,
+    codexEffort: CODEX_EFFORT,
+  });
+  return { bin, args, stdinFromFile: promptPath, stdoutToFile: outputPath };
 }
 
 // Human-readable shell representation, for --dry-run and summary.json.

@@ -749,7 +749,7 @@ function doAuthor(o = {}) {
         catch (e) {
           const out = `${e.stdout || ''}${e.stderr || ''}`;
           const fails = [...out.matchAll(/✗\s*(?:FAIL\s*)?([^\n]+)/g)].map((m) => `- ${m[1].trim()}`).filter((s) => s.length > 6).slice(0, 8);
-          lastFail = fails.length ? fails.join('\n') : '- zh phase2 FAIL (no detail captured)';
+          lastFail = fails.length ? fails.join('\n') : ('- zh phase2 FAIL: ' + (out.split('\n').map((s) => s.trim()).filter(Boolean).slice(-3).join(' | ') || 'no detail captured'));
           log(`zh phase2 attempt ${i}/${attempts} failed:\n${lastFail}${i < attempts ? '\n  → regenerating WITH feedback' : ''}`);
           continue;
         }
@@ -759,7 +759,23 @@ function doAuthor(o = {}) {
         }
         lastFail = '- zh phase2 wrote no passing draft';
       }
-      return park(slug, `${(lastFail || 'zh phase2 failed').replace(/\n/g, ' | ')} after ${attempts} zh attempt(s)`);
+      // zh-backfill park boundary: escalate to the shared deterministic repair before parking (the
+      // gap that parked PG-SOLAR-001). Validate the repaired candidate with the SAME zh phase2 gate.
+      if (tryDeterministicRepair({
+        pgId, draftV8: defaultDraftV8, candidate: join('_staging', 'zh-demo', `${pgId}-repair-candidate.md`),
+        targetKeyword: keyword, author, failures: lastFail, language: 'zh',
+        validate: (cand) => {
+          const a = [PHASE2, '--source', cand, '--page-id', pgId, '--tag', 'zh', '--language', 'zh', '--author', author, '--entity', cleanEntity || keyword, '--target-keyword', keyword, '--template', template, '--tier', tier, '--track', track, '--prompt-version', VERSION];
+          if (associatedKeywords.length) a.push('--associated-keywords', associatedKeywords.join(', '));
+          if (zhKeyword) a.push('--zh-keyword', zhKeyword);
+          shFlow('node', a);
+          return existsSync(zhDraft(pgId));
+        },
+      })) {
+        log(`AUTHORED ZH ${pgId} → ${zhDraft(pgId)} (author=${author}, via deterministic repair) — ready for next scan to publish bilingual backfill`);
+        return;
+      }
+      return park(slug, `${(lastFail || 'zh phase2 failed').replace(/\n/g, ' | ')} after ${attempts} zh attempt(s) + deterministic repair`);
     }
 
     // 1. locate the Sheet row
@@ -896,7 +912,7 @@ function doAuthor(o = {}) {
         catch (e) {
           const out = `${e.stdout || ''}${e.stderr || ''}`;
           const fails = [...out.matchAll(/✗\s*(?:FAIL\s*)?([^\n]+)/g)].map((m) => `- ${m[1].trim()}`).filter((s) => s.length > 6).slice(0, 8);
-          lastFail = fails.length ? fails.join('\n') : '- zh phase2 FAIL (no detail captured)';
+          lastFail = fails.length ? fails.join('\n') : ('- zh phase2 FAIL: ' + (out.split('\n').map((s) => s.trim()).filter(Boolean).slice(-3).join(' | ') || 'no detail captured'));
           log(`zh phase2 attempt ${i}/${attempts} failed:\n${lastFail}${i < attempts ? '\n  → regenerating WITH feedback' : ''}`);
           continue;
         }
@@ -956,7 +972,7 @@ function doAuthor(o = {}) {
       catch (e) {
         const out = `${e.stdout || ''}${e.stderr || ''}`;
         const fails = [...out.matchAll(/✗\s*(?:FAIL\s*)?([^\n]+)/g)].map((m) => `- ${m[1].trim()}`).filter((s) => s.length > 6).slice(0, 8);
-        lastFail = fails.length ? fails.join('\n') : '- phase2 FAIL (no detail captured)';
+        lastFail = fails.length ? fails.join('\n') : ('- phase2 FAIL: ' + (out.split('\n').map((s) => s.trim()).filter(Boolean).slice(-3).join(' | ') || 'no detail captured'));
         log(`phase2 attempt ${i}/${attempts} failed:\n${lastFail}${i < attempts ? '\n  → regenerating WITH feedback' : ''}`);
         continue;
       }

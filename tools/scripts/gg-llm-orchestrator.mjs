@@ -301,10 +301,12 @@ function runAttempt(model, promptPath, outputPath, opts = {}) {
     // a watchdog/timeout kill of `claude` leaves orphaned grandchildren (PPID=1)
     // that pile up and starve the box — the exact failure that hung NAKSH-001.
     const child = spawn(cmd.bin, cmd.args, {
-      // cwd OUTSIDE the repo so the worker does NOT inherit the project CLAUDE.md/AGENTS.md/GEMINI.md
-      // (the repo's interactive rules leaked in and made claude -p emit meta-commentary instead of the
-      // article — no-H1 garbage drafts). The worker is text-only (stdin→stdout), so it needs no repo cwd.
-      cwd: WORKER_CWD,
+      // claude ONLY: cwd OUTSIDE the repo so `claude -p` doesn't inherit the project CLAUDE.md (its
+      // interactive rules — chat-record/reminders — leaked in and made it emit meta-commentary instead
+      // of the article: no-H1 garbage drafts). The worker is text-only (stdin→stdout) so claude needs no
+      // repo cwd. codex/gemini KEEP cwd:REPO — their original, proven behavior (their drafts were clean),
+      // and they may rely on repo-local config/AGENTS.md/GEMINI.md; don't change their execution context.
+      cwd: cmd.bin === 'claude' ? WORKER_CWD : REPO,
       env: process.env,
       stdio,
       detached: true,

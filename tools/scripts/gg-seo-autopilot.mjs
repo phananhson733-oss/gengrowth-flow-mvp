@@ -1164,8 +1164,13 @@ function doMerge(o) {
     if (!claim.previewUrl) {
       throw new Error(`refusing merge for ${o.branch}: verified claim is missing previewUrl`);
     }
+    // Pin to the REVIEWED commit: --match-head-commit makes gh refuse the merge if the PR head
+    // moved since --mark-verified captured it. Without this, a push/force-push between verify and
+    // merge would ship unreviewed (or attacker-modified) code straight to prod. Claims verified
+    // before this field existed merge unpinned (backward-compat).
+    const matchHead = claim.headRefOid ? ['--match-head-commit', claim.headRefOid] : [];
     // Merge via gh so the PR closes cleanly; Vercel then deploys main → prod.
-    sh('gh', ['pr', 'merge', o.branch, '--repo', 'xdawayer/oracle', '--merge', '--delete-branch'], { cwd: ORACLE });
+    sh('gh', ['pr', 'merge', o.branch, '--repo', 'xdawayer/oracle', '--merge', '--delete-branch', ...matchHead], { cwd: ORACLE });
     cleanupWorktree(claim.worktree);
     syncOracle();
     claims[pgId].status = 'done';
@@ -1208,15 +1213,25 @@ function doMarkVerified(o) {
     if (!['pushed-preview', 'verified-preview'].includes(claim.status)) {
       throw new Error(`cannot mark ${o.branch} verified from status "${claim.status}"`);
     }
+    // Capture the PR head SHA NOW (immediately after the review passed) so --merge can pin to the
+    // exact reviewed commit. Best-effort: if gh can't report it, merge proceeds unpinned rather
+    // than blocking a verified article.
+    let headRefOid = null;
+    try {
+      headRefOid = sh('gh', ['pr', 'view', o.branch, '--repo', 'xdawayer/oracle', '--json', 'headRefOid', '-q', '.headRefOid'], { cwd: ORACLE }).trim() || null;
+    } catch (e) {
+      log(`mark-verified: could not capture headRefOid (${errTail(e, 60)}) — merge will not pin head`);
+    }
     claims[pgId] = {
       ...claim,
       status: 'verified-preview',
       previewUrl: o.previewUrl,
       verificationEvidence: o.evidence || 'codex+chrome preview verification passed',
       verifiedAt: new Date().toISOString(),
+      ...(headRefOid ? { headRefOid } : {}),
     };
     saveClaims(claims);
-    log(`VERIFIED ${o.branch} preview=${o.previewUrl}`);
+    log(`VERIFIED ${o.branch} preview=${o.previewUrl}${headRefOid ? ` head=${headRefOid.slice(0, 8)}` : ''}`);
   });
 }
 

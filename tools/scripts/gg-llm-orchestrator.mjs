@@ -414,7 +414,15 @@ function runAttempt(model, promptPath, outputPath, opts = {}) {
       try {
         promptContent = readFileSync(cmd.stdinFromFile);
       } catch (err) {
-        child.kill();
+        // Mirror the close/error handlers EXACTLY (the cleanup invariant must hold on every spawn
+        // path, not just the happy one): stop the watchdog, group-SIGKILL the detached worker via
+        // killTree (a bare single-PID child.kill would orphan grandchildren — the NAKSH-001 class
+        // the group-kill exists to prevent), and drop it from liveWorkers so a later reap can't
+        // target a since-recycled PID. Trigger is narrow (the prompt file — which we wrote — vanishes
+        // between validateInputs and this read) but the gap is real.
+        clearInterval(watchdog);
+        killTree('SIGKILL');
+        liveWorkers.delete(child);
         return resolveAttempt({
           ok: false,
           exit_code: -1,

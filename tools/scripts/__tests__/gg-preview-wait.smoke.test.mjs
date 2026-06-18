@@ -266,3 +266,130 @@ test('waitForPreview: NaN pollMs is clamped (no busy-loop) → terminates at tim
   assert.deepEqual(res, { ok: false, reason: 'timeout' });
   assert.ok(sleeps >= 1, 'should have slept with the clamped (finite) poll interval');
 });
+
+// ============================================================
+// Path B — Vercel commit-status + vercel[bot] PR comment (2026-06 behavior)
+// ============================================================
+import {
+  extractVercelPreviewUrl,
+  pickVercelCommitState,
+  parseCommitSha,
+  parsePrNumber,
+  findPreviewUrlInComments,
+} from '../gg-preview-wait.mjs';
+
+const vcBlob = (previewUrl) =>
+  '[vc]: #h:' + Buffer.from(JSON.stringify({ projects: [{ previewUrl }] })).toString('base64');
+
+test('extractVercelPreviewUrl: structured [vc] blob → https-qualified url', () => {
+  const body = vcBlob('oracle-git-x-wzbs.vercel.app') + '\n\n| Project | … |';
+  assert.equal(extractVercelPreviewUrl(body), 'https://oracle-git-x-wzbs.vercel.app');
+});
+
+test('extractVercelPreviewUrl: markdown [Preview](url) fallback when blob absent', () => {
+  const body = 'some text\n[Preview](https://oracle-git-y.vercel.app), [Comment](https://vercel.live/open-feedback/oracle-git-y.vercel.app)';
+  assert.equal(extractVercelPreviewUrl(body), 'https://oracle-git-y.vercel.app');
+});
+
+test('extractVercelPreviewUrl: never returns a vercel.live feedback link', () => {
+  const body = 'only a feedback link: https://vercel.live/open-feedback/oracle-git-z.vercel.app?via=x';
+  assert.equal(extractVercelPreviewUrl(body), null);
+});
+
+test('extractVercelPreviewUrl: bare *.vercel.app last-resort (not vercel.live)', () => {
+  const body = 'deployed to https://oracle-git-q.vercel.app/en done';
+  assert.equal(extractVercelPreviewUrl(body), 'https://oracle-git-q.vercel.app/en');
+});
+
+test('extractVercelPreviewUrl: null/empty/no-url → null', () => {
+  assert.equal(extractVercelPreviewUrl(''), null);
+  assert.equal(extractVercelPreviewUrl(null), null);
+  assert.equal(extractVercelPreviewUrl('no urls here'), null);
+});
+
+test('pickVercelCommitState: success / failure / pending / none', () => {
+  const mk = (statuses) => JSON.stringify({ statuses });
+  assert.equal(pickVercelCommitState(mk([{ context: 'Vercel', state: 'success' }])), 'success');
+  assert.equal(pickVercelCommitState(mk([{ context: 'Vercel', state: 'failure' }])), 'failure');
+  assert.equal(pickVercelCommitState(mk([{ context: 'Vercel', state: 'pending' }])), 'pending');
+  assert.equal(pickVercelCommitState(mk([{ context: 'ci/other', state: 'success' }])), 'none');
+  // failure takes precedence (fail-closed) when multiple vercel contexts disagree
+  assert.equal(pickVercelCommitState(mk([{ context: 'Vercel', state: 'success' }, { context: 'Vercel – x', state: 'failure' }])), 'failure');
+  assert.equal(pickVercelCommitState('not json'), 'none');
+});
+
+test('parseCommitSha / parsePrNumber', () => {
+  assert.equal(parseCommitSha(JSON.stringify({ sha: 'abc123' })), 'abc123');
+  assert.equal(parseCommitSha('[]'), null);
+  assert.equal(parsePrNumber(JSON.stringify([{ number: 5, state: 'closed' }, { number: 9, state: 'open' }])), 9);
+  assert.equal(parsePrNumber(JSON.stringify([{ number: 3, state: 'closed' }])), 3);
+  assert.equal(parsePrNumber('[]'), null);
+});
+
+test('findPreviewUrlInComments: picks the vercel[bot] blob comment', () => {
+  const comments = JSON.stringify([
+    { user: { login: 'someone' }, body: 'lgtm' },
+    { user: { login: 'vercel[bot]' }, body: vcBlob('oracle-git-pr.vercel.app') },
+    { user: { login: 'codex[bot]' }, body: 'review notes' },
+  ]);
+  assert.equal(findPreviewUrlInComments(comments), 'https://oracle-git-pr.vercel.app');
+});
+
+// URL-aware fake gh router for Path B (call sequence differs from Path A).
+function routeGh(routes) {
+  return async (args) => {
+    const url = (args || []).join(' ');
+    for (const r of routes) if (url.includes(r.match)) {
+      return typeof r.res === 'function' ? r.res(args) : r.res;
+    }
+    return { code: 0, stdout: '[]' };
+  };
+}
+
+test('waitForPreview Path B: no deployment → commit-status success → comment URL', async () => {
+  const gh = routeGh([
+    { match: 'deployments?ref=', res: { code: 0, stdout: '[]' } },             // no GH deployment
+    { match: '/status', res: { code: 0, stdout: JSON.stringify({ statuses: [{ context: 'Vercel', state: 'success' }] }) } },
+    { match: '/pulls', res: { code: 0, stdout: JSON.stringify([{ number: 77, state: 'open' }]) } },
+    { match: '/comments', res: { code: 0, stdout: JSON.stringify([{ user: { login: 'vercel[bot]' }, body: vcBlob('oracle-git-b.vercel.app') }]) } },
+    { match: '/commits/', res: { code: 0, stdout: JSON.stringify({ sha: 'deadbeef' }) } }, // sha resolve
+  ]);
+  const res = await waitForPreview(
+    { branch: 'feat', repo: DEFAULT_REPO, timeoutMs: 10000, pollMs: 1 },
+    { runGhFn: gh, sleepFn: async () => {} },
+  );
+  assert.deepEqual(res, { ok: true, previewUrl: 'https://oracle-git-b.vercel.app' });
+});
+
+test('waitForPreview Path B: vercel commit-status failure → terminal (no poll-to-timeout)', async () => {
+  let sleeps = 0;
+  const gh = routeGh([
+    { match: 'deployments?ref=', res: { code: 0, stdout: '[]' } },
+    { match: '/status', res: { code: 0, stdout: JSON.stringify({ statuses: [{ context: 'Vercel', state: 'failure' }] }) } },
+    { match: '/commits/', res: { code: 0, stdout: JSON.stringify({ sha: 'deadbeef' }) } },
+  ]);
+  const res = await waitForPreview(
+    { branch: 'feat', repo: DEFAULT_REPO, timeoutMs: 999999, pollMs: 1 },
+    { runGhFn: gh, sleepFn: async () => { sleeps++; } },
+  );
+  assert.equal(res.ok, false);
+  assert.match(res.reason, /vercel deployment failed/);
+  assert.equal(sleeps, 0, 'terminal failure must not poll');
+});
+
+test('waitForPreview: transient deployments failure does NOT trigger Path B', async () => {
+  let commitCalls = 0;
+  const gh = async (args) => {
+    const url = (args || []).join(' ');
+    if (url.includes('deployments?ref=')) return { code: 1, stdout: '', stderr: 'rate limit' };
+    if (url.includes('/commits/')) { commitCalls++; return { code: 0, stdout: JSON.stringify({ sha: 'x' }) }; }
+    return { code: 0, stdout: '[]' };
+  };
+  let t = 0; const now = () => t;
+  const res = await waitForPreview(
+    { branch: 'b', repo: DEFAULT_REPO, timeoutMs: 30, pollMs: 10 },
+    { runGhFn: gh, now, sleepFn: async (ms) => { t += ms; } },
+  );
+  assert.deepEqual(res, { ok: false, reason: 'timeout' });
+  assert.equal(commitCalls, 0, 'Path B must not run while deployments call is failing transiently');
+});

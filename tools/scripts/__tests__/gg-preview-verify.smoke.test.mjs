@@ -342,3 +342,73 @@ test('--json: empty-secret park emits failReason + tooling=false + park in JSON'
   assert.ok(Array.isArray(obj.checked));
   assert.ok(Array.isArray(obj.warnings));
 });
+
+// ============================================================
+// Known-benign global classList error allowance (oracle font-ready bug)
+// ============================================================
+import { isKnownBenignPageError } from '../gg-preview-verify.mjs';
+
+const CLASSLIST_MSG = "Cannot read properties of null (reading 'classList')";
+const INLINE_STACK = `TypeError: ${CLASSLIST_MSG}\n    at https://preview.example.com/en/wiki/slug:135:23`;
+const BUNDLE_STACK = `TypeError: ${CLASSLIST_MSG}\n    at https://preview.example.com/_next/static/chunks/main-abc.js:5:10`;
+
+test('isKnownBenignPageError: classList-null + inline-document stack → benign', () => {
+  assert.equal(isKnownBenignPageError(CLASSLIST_MSG, INLINE_STACK), true);
+});
+
+test('isKnownBenignPageError: classList-null with NO stack → benign (narrow message)', () => {
+  assert.equal(isKnownBenignPageError(CLASSLIST_MSG, ''), true);
+});
+
+test('isKnownBenignPageError: classList-null from a JS BUNDLE → NOT benign (still fails gate)', () => {
+  assert.equal(isKnownBenignPageError(CLASSLIST_MSG, BUNDLE_STACK), false);
+});
+
+test('isKnownBenignPageError: a different error is never benign', () => {
+  assert.equal(isKnownBenignPageError('foo is not a function', INLINE_STACK), false);
+  assert.equal(isKnownBenignPageError('Cannot read properties of null (reading \'foo\')', INLINE_STACK), false);
+});
+
+test('isKnownBenignPageError: GG_VERIFY_ALLOW_KNOWN_ERRORS=0 disables the allowance', () => {
+  const prev = process.env.GG_VERIFY_ALLOW_KNOWN_ERRORS;
+  process.env.GG_VERIFY_ALLOW_KNOWN_ERRORS = '0';
+  try {
+    assert.equal(isKnownBenignPageError(CLASSLIST_MSG, INLINE_STACK), false);
+  } finally {
+    if (prev === undefined) delete process.env.GG_VERIFY_ALLOW_KNOWN_ERRORS;
+    else process.env.GG_VERIFY_ALLOW_KNOWN_ERRORS = prev;
+  }
+});
+
+test('GATE LIVE: benign classList pageerror (inline stack) → verifyPage ok:TRUE + recorded warning', async () => {
+  const errorBuffers = new Map();
+  const warnings = [];
+  const navUrl = 'https://preview.example.com/en/wiki/slug';
+  const page = makeFakePage({
+    queuedEvents: [{ type: 'pageerror', payload: { message: CLASSLIST_MSG, stack: INLINE_STACK } }],
+  });
+  wirePageListeners(page, errorBuffers, warnings);
+  errorBuffers.set(navUrl, []);
+  page.__activeUrl = navUrl;
+
+  const res = await verifyPage(page, navUrl, { errorBuffers });
+  assert.equal(res.ok, true, 'the known-benign global classList error must NOT fail the gate');
+  assert.equal(warnings.length, 1, 'it must be recorded as a visible warning, not silently dropped');
+  assert.match(warnings[0], /known-benign global error ignored/);
+});
+
+test('GATE LIVE: classList pageerror from a JS BUNDLE → verifyPage STILL ok:false', async () => {
+  const errorBuffers = new Map();
+  const warnings = [];
+  const navUrl = 'https://preview.example.com/en/wiki/slug';
+  const page = makeFakePage({
+    queuedEvents: [{ type: 'pageerror', payload: { message: CLASSLIST_MSG, stack: BUNDLE_STACK } }],
+  });
+  wirePageListeners(page, errorBuffers, warnings);
+  errorBuffers.set(navUrl, []);
+  page.__activeUrl = navUrl;
+
+  const res = await verifyPage(page, navUrl, { errorBuffers });
+  assert.equal(res.ok, false, 'a classList error originating in app code MUST still fail the gate');
+  assert.match(res.failReason, /uncaught JS exception/);
+});

@@ -169,6 +169,7 @@ function parseArgs(argv) {
     else if (a === '--mark-verified') o.markVerified = true;
     else if (a === '--mark-failed') o.markFailed = true;
     else if (a === '--status') o.status = true;
+    else if (a === '--stale-report') o.staleReport = true;
     else if (a === '--branch') o.branch = argv[++i];
     else if (a === '--preview-url') o.previewUrl = argv[++i];
     else if (a === '--evidence') o.evidence = argv[++i];
@@ -176,7 +177,7 @@ function parseArgs(argv) {
     else if (a === '--limit') o.limit = parseInt(argv[++i], 10) || 1;
     else if (a === '--task') o.task = argv[++i];
   }
-  if (!o.scan && !o.author && !o.nextUnauthored && !o.merge && !o.markVerified && !o.markFailed && !o.status) o.scan = true;
+  if (!o.scan && !o.author && !o.nextUnauthored && !o.merge && !o.markVerified && !o.markFailed && !o.status && !o.staleReport) o.scan = true;
   return o;
 }
 
@@ -221,6 +222,24 @@ function saveClaims(c) {
   renameSync(tmp, CLAIMS_PATH);
 }
 function claimStatus(claims, pgId) { return claims[pgId]?.status || null; }
+
+// ── claim lease heartbeat (Task 8) ──────────────────────────────────────────
+// Stamp an in-flight claim with the current publish STAGE + a short renewable LEASE so a
+// stuck/crashed run is observable (and reportable via --stale-report) WITHOUT a destructive
+// auto-reclaim. These fields are net-new; older claims simply lack them (claimIsStale → false).
+const CLAIM_LEASE_MS = parseInt(process.env.GG_AUTOPILOT_CLAIM_LEASE_MS || String(30 * 60 * 1000), 10);
+function heartbeatClaim(claims, pgId, stage) {
+  const c = claims[pgId];
+  if (!c) return;
+  const now = new Date();
+  c.stage = stage;
+  c.lockedBy = String(process.pid);
+  c.leaseUntil = new Date(now.getTime() + CLAIM_LEASE_MS).toISOString();
+  c.updatedAt = now.toISOString();
+}
+function claimIsStale(claim) {
+  return !!(claim && claim.leaseUntil && Date.parse(claim.leaseUntil) < Date.now());
+}
 function acquireClaimsLock() {
   const started = Date.now();
   for (;;) {
@@ -1280,6 +1299,29 @@ function doStatus() {
   });
 }
 
+// --stale-report (Task 8): READ-ONLY observability of in-flight claims and their lease/stage.
+// Surfaces a crashed/stuck publish (active claim past its lease) or a preview that has been
+// awaiting the gate too long — WITHOUT any mutation or auto-reclaim (the operator decides).
+function doStaleReport() {
+  const claims = loadClaims();
+  const INFLIGHT = ['active', 'pushed-preview', 'verified-preview'];
+  const rows = [];
+  for (const [pgId, c] of Object.entries(claims)) {
+    if (!c || !INFLIGHT.includes(c.status)) continue;
+    rows.push({
+      pgId, status: c.status, stage: c.stage || null, lockedBy: c.lockedBy || null,
+      leaseUntil: c.leaseUntil || null, updatedAt: c.updatedAt || null,
+      branch: c.branch || null, stale: claimIsStale(c),
+    });
+  }
+  rows.sort((a, b) => Number(b.stale) - Number(a.stale));
+  process.stdout.write(JSON.stringify({
+    now: new Date().toISOString(),
+    inflight: rows,
+    staleCount: rows.filter((r) => r.stale).length,
+  }, null, 2) + '\n');
+}
+
 const o = parseArgs(process.argv.slice(2));
 // Hard publish-only gate (2026-06-17): in GG_AUTOPILOT_MODE=publish-only the driver REFUSES to
 // author or select an unauthored task, even if --author/--next-unauthored is passed — defense in
@@ -1290,6 +1332,7 @@ if (process.env.GG_AUTOPILOT_MODE === 'publish-only' && (o.author || o.nextUnaut
 }
 try {
   if (o.status) doStatus();
+  else if (o.staleReport) doStaleReport();
   else if (o.nextUnauthored) doNextUnauthored();
   else if (o.author) doAuthor(o);
   else if (o.merge) doMerge(o);

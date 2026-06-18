@@ -66,6 +66,7 @@ function parseArgs(argv) {
     else if (a === '--failures') o.failures = argv[++i];
     else if (a === '--model') o.model = argv[++i];
     else if (a === '--effort') o.effort = argv[++i];
+    else if (a === '--language') o.language = argv[++i];
     else if (a === '--timeout-ms') o.timeoutMs = argv[++i];
   }
   return o;
@@ -111,10 +112,17 @@ function resolveFailures(failures) {
 // fix the named phase2 failures without a full rewrite), but the model returns the
 // corrected ARTICLE as text — it does not run tools or self-check. The contract
 // line is verbatim from the Task 3 spec.
-function buildPrompt({ source, targetKeyword, author, failures }) {
-  return [
+function buildPrompt({ source, targetKeyword, author, failures, language }) {
+  const lines = [
     'You are repairing a single SEO article draft that failed an automated QA pass.',
     'Apply the smallest changes that fix the listed failures — surgical edits, not a rewrite.',
+  ];
+  // Language guard: the draft is the source of truth for language, but the failures text and these
+  // instructions are mixed-language — pin zh explicitly so a "surgical edit" never drifts to English.
+  if (language === 'zh') {
+    lines.push('语言要求：输出必须保持简体中文（与原稿同一语言），不要翻译成英文；H1、所有 H2 与正文全部使用简体中文。');
+  }
+  lines.push(
     '',
     `target_keyword (the exact literal phrase): "${targetKeyword}"`,
     `author id: ${author}`,
@@ -126,7 +134,8 @@ function buildPrompt({ source, targetKeyword, author, failures }) {
     '',
     '--- CURRENT DRAFT ---',
     source,
-  ].join('\n');
+  );
+  return lines.join('\n');
 }
 
 // ── Worker spawn — claude -p --model <m> --effort <e>, prompt on stdin ────────
@@ -177,7 +186,7 @@ function main() {
   }
 
   const failures = resolveFailures(o.failures);
-  const prompt = buildPrompt({ source, targetKeyword: o.targetKeyword, author: o.author, failures });
+  const prompt = buildPrompt({ source, targetKeyword: o.targetKeyword, author: o.author, failures, language: o.language });
 
   const res = runWorker({ model, effort, prompt, timeoutMs });
   if (res.error) {

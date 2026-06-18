@@ -27,9 +27,9 @@ phase2_checks: all-pass
 
 ## What Is the Yoane Wissa Birth Chart?
 
-The **yoane wissa birth chart** is **a symbolic, data-anchored reading of footballer Yoane Wissa's natal placements, built from his verified birth date of 3 September 1996 and centred on his Virgo Sun**. A yoane wissa birth chart starts from one confirmed fact: born in Epinay-sur-Seine, France, his Sun sits at roughly 11 degrees of Virgo, the mutable earth sign associated with precision, craft, and service. Held as a frame rather than a forecast, the chart pairs naturally with [[<TBD-internal-link: the World Cup 2026 astrology pillar>]], which reads the tournament's astronomical backdrop the same careful way: as theme, not result.
+The **yoane wissa birth chart** is **a symbolic, data-anchored reading of footballer Yoane Wissa's natal placements, built from his verified birth date of 3 September 1996 and centred on his Virgo Sun**. A yoane wissa birth chart starts from one confirmed fact: born in Épinay-sous-Sénart, France, his Sun sits at roughly 11 degrees of Virgo, the mutable earth sign associated with precision, craft, and service. Held as a frame rather than a forecast, the chart pairs naturally with [[<TBD-internal-link: the World Cup 2026 astrology pillar>]], which reads the tournament's astronomical backdrop the same careful way: as theme, not result.
 
-- Yoane Wissa was born 3 September 1996 in Epinay-sur-Seine, France, placing his Sun at about 11 degrees of Virgo, a mutable earth sign
+- Yoane Wissa was born 3 September 1996 in Épinay-sous-Sénart, France, placing his Sun at about 11 degrees of Virgo, a mutable earth sign
 - He plays as a forward for Newcastle United and DR Congo; his birth time is not on public record, so his Moon sign, Ascendant, and houses cannot be verified
 - DR Congo qualified for the 2026 World Cup — only their second-ever appearance (first as Zaire in 1974) — providing a historic factual backdrop to any reading
 
@@ -53,7 +53,7 @@ A third contrast sharpens the picture. Set this chart against a transit forecast
 
 The following steps apply the same method to any athlete's chart, not only this one.
 
-1. Anchor on the verified fact first: the yoane wissa birth chart begins from 3 September 1996 in Epinay-sur-Seine, which fixes the Sun at roughly 11 degrees of Virgo.
+1. Anchor on the verified fact first: the yoane wissa birth chart begins from 3 September 1996 in Épinay-sous-Sénart, which fixes the Sun at roughly 11 degrees of Virgo.
 2. Flag what is unknown out loud. With no public birth time, treat the Moon sign, Ascendant, and house placements as unverified, and do not fill that gap with guesses.
 3. Read the Virgo Sun as a symbolic arc: Mercury-ruled adaptability, mutable-earth precision, a career built through service and incremental refinement rather than a single breakout moment. Wissa's journeyman path — born in France, representing DR Congo, moving from Brentford to Newcastle in 2025 — traces that arc with unusual clarity.
 4. Note the timing backdrop. Saturn is in Aries through 2025–2028, a placement that symbolically accents themes of disciplined assertion and tested ambition. Jupiter transits Cancer until about 30 June 2026, covering the group stage of the World Cup (which opens 11 June 2026 at Estadio Azteca, Mexico City), before entering Leo for the July knockout phase (the final is 19 July 2026 at MetLife Stadium, New Jersey).
@@ -71,7 +71,7 @@ The following steps apply the same method to any athlete's chart, not only this 
 | Property | How It Works | Natal Placement | How to Observe |
 | --- | --- | --- | --- |
 | Sun sign | Anchors the lifelong developmental drive | Virgo, about 11 degrees | Read as precision, craft, and Mercury-ruled adaptability — not a fixed personality label |
-| Birth date | Fixes the Sun reliably without a birth time | 3 September 1996, Epinay-sur-Seine, France | A verified record that grounds the entire reading |
+| Birth date | Fixes the Sun reliably without a birth time | 3 September 1996, Épinay-sous-Sénart, France | A verified record that grounds the entire reading |
 | Birth time | Would set Moon, Ascendant, and houses | Unrecorded, so those layers are unverified | Flagged as unknown, never fabricated |
 | 2026 timing backdrop | Times a symbolic theme, not an outcome | Saturn in Aries 2025–2028; Jupiter in Cancer until ~30 June 2026 | Group-stage backdrop; Jupiter moves into Leo for July knockouts |
 
@@ -79,7 +79,7 @@ The following steps apply the same method to any athlete's chart, not only this 
 
 **When and where was Yoane Wissa born?**
 
-He was born on 3 September 1996 in Epinay-sur-Seine, France. That verified date places his Sun at roughly 11 degrees of Virgo, which is the anchor for any honest natal reading of his chart.
+He was born on 3 September 1996 in Épinay-sous-Sénart, France. That verified date places his Sun at roughly 11 degrees of Virgo, which is the anchor for any honest natal reading of his chart.
 
 **Do we know his Moon sign or Ascendant?**
 
@@ -111,4 +111,4 @@ DR Congo qualifying for WC 2026 — only their second World Cup appearance, and 
 
 - Liz Greene — *The Astrology of Fate*, a standard reference for reading the Sun as a story of purpose and developmental pull rather than fixed personality
 - Robert Hand — *Planets in Transit*, a reference for treating transits as timing activators of symbolic themes rather than predictors of fixed outcomes
-- Public birth-data records list Yoane Wissa as born 3 September 1996 in Epinay-sur-Seine, France; his birth time is not publicly documented
+- Public birth-data records list Yoane Wissa as born 3 September 1996 in Épinay-sous-Sénart, France; his birth time is not publicly documented

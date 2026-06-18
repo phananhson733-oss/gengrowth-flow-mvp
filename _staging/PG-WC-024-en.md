@@ -64,7 +64,7 @@ You can apply the same method to any athlete's chart, not only this one.
 1. **The chart predicts how Pulisic will perform at the 2026 World Cup.** It does not. Astrology here times themes, not fixtures, and a Sun placement carries no information about a scoreline, a starting lineup, or a knockout result.
 2. **We know his Moon sign and Ascendant.** We do not. His birth time is not on public record, so those placements are unverified, and any chart that lists them is fabricating data rather than reading it.
 3. **A Virgo Sun means he is rigidly perfectionist in a limiting way.** Virgo is a mutable sign, adaptable by nature; its perfectionism is more accurately read as a drive toward improvement and versatility, which mirrors Pulisic's demonstrated ability to thrive across multiple attacking positions and two major club environments in the Premier League and Serie A.
-4. **Saturn in Aries means a difficult tournament for him personally.** Saturn transits Aries as a generational structural pressure affecting an entire cohort of people born in the late 1990s, not a personal signal about one player's form. That framing is too narrow, and the symbolism does not resolve to a result.
+4. **Saturn in Aries means a difficult tournament for him personally.** Saturn's transit through Aries during 2025 to 2028 is a broad collective backdrop over the whole tournament, shared by everyone under the sky of these years, not a personal signal about one player's form or a marker tied to his own birth chart. That framing is too narrow, and the symbolism does not resolve to a result.
 
 ## The Christian Pulisic Birth Chart at a Glance
 

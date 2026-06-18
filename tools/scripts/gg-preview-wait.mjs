@@ -284,8 +284,10 @@ export async function waitForPreview(opts, deps = {}) {
     // ── Path A: GitHub deployment (legacy; still works if Vercel creates one) ──
     // 1) newest deployment for this branch ref.
     let deploymentFound = false;
+    let deploymentsCallOk = false;
     const depRes = await runGhFn(['api', `repos/${repo}/deployments?ref=${encodeURIComponent(branch)}`]);
     if (depRes.code === 0) {
+      deploymentsCallOk = true;
       const { id } = parseDeployments(depRes.stdout);
       if (id != null) {
         deploymentFound = true; // this repo IS using deployments → Path A is authoritative
@@ -302,13 +304,15 @@ export async function waitForPreview(opts, deps = {}) {
     }
 
     // ── Path B: Vercel commit-status (readiness) + vercel[bot] PR comment (URL) ──
-    // Only when Path A found NO deployment object — the current Vercel-for-GitHub
-    // behavior posts no deployment, only a commit status + a PR comment. Running
-    // this ONLY in the no-deployment case keeps the two paths from interleaving
-    // (a repo uses one mechanism or the other, never both for the same push).
+    // Only when the deployments call SUCCEEDED but returned NO deployment object —
+    // a definitive "this repo isn't using deployments" signal (the current
+    // Vercel-for-GitHub behavior posts no deployment, only a commit status + a PR
+    // comment). A transient deployments-call failure is NOT that signal — we retry
+    // Path A next poll rather than racing Path B. Gating this way also keeps the two
+    // paths from interleaving (a repo uses one mechanism or the other per push).
     // Resolve the branch HEAD sha, read its combined commit status, and on Vercel
     // success extract the preview URL from the PR comment.
-    if (!deploymentFound) {
+    if (deploymentsCallOk && !deploymentFound) {
       const shaRes = await runGhFn(['api', `repos/${repo}/commits/${encodeURIComponent(branch)}`]);
       if (shaRes.code === 0) {
         const sha = parseCommitSha(shaRes.stdout);

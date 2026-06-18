@@ -1,3 +1,28 @@
+---
+title: England World Cup 2026 Astrology
+slug: england-world-cup-2026-astrology
+date: 2026-06-18
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-WC-025
+author_id: "elena-vane"
+author_display_name: "Elena Vane"
+target_keyword: england world cup 2026 astrology
+associated_keywords:
+  - 英格兰世界杯阵容占星
+  - 英格兰球队星座
+  - 凯恩狮子座太阳
+  - 三狮军团2026占星
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-18T11:58:20.405Z
+content_sha256_short: 9775214f970f3a2d
+phase2_checks: all-pass
+---
+
 # 英格兰2026世界杯占星：太阳星座、木星换座与一个赛季的主题图景
 
 ## 英格兰2026世界杯占星是什么？

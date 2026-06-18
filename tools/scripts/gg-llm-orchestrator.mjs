@@ -18,6 +18,7 @@ import { existsSync, mkdirSync, readFileSync, statSync, unlinkSync, writeFileSyn
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { logCost } from './lib/_cost-log.mjs';
+import { WORKER_CWD } from './lib/worker-cwd.mjs';
 import { stripPreH1 } from './lib/strip-preamble.mjs';
 import { buildWorkerCommand } from './lib/llm-worker.mjs';
 
@@ -300,7 +301,10 @@ function runAttempt(model, promptPath, outputPath, opts = {}) {
     // a watchdog/timeout kill of `claude` leaves orphaned grandchildren (PPID=1)
     // that pile up and starve the box — the exact failure that hung NAKSH-001.
     const child = spawn(cmd.bin, cmd.args, {
-      cwd: REPO,
+      // cwd OUTSIDE the repo so the worker does NOT inherit the project CLAUDE.md/AGENTS.md/GEMINI.md
+      // (the repo's interactive rules leaked in and made claude -p emit meta-commentary instead of the
+      // article — no-H1 garbage drafts). The worker is text-only (stdin→stdout), so it needs no repo cwd.
+      cwd: WORKER_CWD,
       env: process.env,
       stdio,
       detached: true,

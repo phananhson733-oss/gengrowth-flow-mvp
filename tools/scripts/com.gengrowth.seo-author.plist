@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SEO AUTHOR lane — SEPARATE from the publish lane (com.gengrowth.seo-autopilot, publish-only).
+     This job ONLY authors drafts into flow-mvp/_staging; the publish lane picks them up + publishes.
+     Decoupled, small-batch, hard-timeboxed, parks-on-fail with a Feishu human-fallback alert.
+
+     NOT auto-enabled. To turn on (supervise the FIRST run):
+       cp tools/scripts/com.gengrowth.seo-author.plist ~/Library/LaunchAgents/
+       launchctl enable    gui/$(id -u)/com.gengrowth.seo-author
+       launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.gengrowth.seo-author.plist
+       launchctl kickstart gui/$(id -u)/com.gengrowth.seo-author   # watch the first article
+     Stop:
+       launchctl bootout gui/$(id -u)/com.gengrowth.seo-author
+
+     Runs in the user (Aqua) session — authoring needs the keychain + claude/codex/gbrain CLIs; do
+     NOT set LimitLoadToSessionType=Background (pins to pre-login, no keychain). RunAtLoad is FALSE
+     so loading does not instantly author unattended — kickstart the first fire by hand. -->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.gengrowth.seo-author</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-seo-author-tick.sh</string>
+  </array>
+  <key>StartInterval</key>
+  <integer>7200</integer>
+  <key>RunAtLoad</key>
+  <false/>
+  <key>StandardOutPath</key>
+  <string>/Users/awayer_mini/gengrowth-agents/cron-sync/seo_author/launchd.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/awayer_mini/gengrowth-agents/cron-sync/seo_author/launchd.err.log</string>
+  <key>ProcessType</key>
+  <string>Background</string>
+</dict>
+</plist>

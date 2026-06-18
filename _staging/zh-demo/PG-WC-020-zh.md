@@ -1,3 +1,25 @@
+---
+title: Cancer Zodiac World Cup 2026
+slug: cancer-zodiac-world-cup-2026
+date: 2026-06-18
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-WC-020
+author_id: "elena-vane"
+author_display_name: "Elena Vane"
+target_keyword: cancer zodiac world cup 2026
+associated_keywords:
+
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-18T05:38:31.905Z
+content_sha256_short: c2ca7e0aa3b0b60b
+phase2_checks: all-pass
+---
+
 # 巨蟹座世界杯视角：为什么 2026 小组赛读起来像一场象征性的巨蟹季
 
 ## 巨蟹座世界杯视角是什么？

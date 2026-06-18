@@ -1,3 +1,25 @@
+---
+title: Harry Kane Birth Chart
+slug: harry-kane-birth-chart
+date: 2026-06-18
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T3
+track: 量产线
+page_id: PG-WC-019
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: harry kane birth chart
+associated_keywords:
+
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-18T05:38:41.161Z
+content_sha256_short: 0ddf4462758460b5
+phase2_checks: all-pass
+---
+
 # 凯恩星盘：透过狮子座太阳与一个迟来的季节，读懂英格兰队长
 
 ## 凯恩星盘是什么？

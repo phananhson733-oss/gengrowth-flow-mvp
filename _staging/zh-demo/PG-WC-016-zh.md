@@ -1,3 +1,25 @@
+---
+title: Jude Bellingham Birth Chart
+slug: jude-bellingham-birth-chart
+date: 2026-06-18
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T3
+track: 量产线
+page_id: PG-WC-016
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: jude bellingham birth chart
+associated_keywords:
+
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-18T05:38:25.988Z
+content_sha256_short: 38e04e90c5771442
+phase2_checks: all-pass
+---
+
 # 裘德·贝林厄姆星盘：透过 2026 世界杯读一颗巨蟹座太阳
 
 ## 贝林厄姆星盘是什么？

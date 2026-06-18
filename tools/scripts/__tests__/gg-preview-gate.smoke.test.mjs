@@ -391,6 +391,27 @@ test('--status failure (autopilot exits nonzero) → exit 2, skips mark-failed, 
   assert.ok(sentinelHit(sentinels, 'lark-notify'), 'gate still fires the failure notify');
 });
 
+// ── (k) per-step hard timeout → exit 2 + park + notify (the hammer-prevention contract) ──
+// The gate SIGKILLs a child that exceeds its per-step timeout and maps timedOut → gateFail/exit 2.
+// This is what stops the cron from re-looping on a wedged preview and holding the PID lock for
+// hours. Previously every fake exited instantly, so this branch was never exercised.
+test('a sub-step that exceeds its timeout → exit 2, mark-failed + lark-notify, no merge', () => {
+  const { dir, sentinels } = freshCase();
+  const env = fakeEnv({ dir, sentinelsDir: sentinels, statusJson: CLAIM_VERIFIED(), reviewBin: reviewPassBin(dir, sentinels) });
+  // A verify fake that records its invocation then sleeps WAY past the injected --verify-timeout-ms.
+  const slowVerify = join(dir, 'fake-verify-slow.mjs');
+  writeFileSync(slowVerify, `import { appendFileSync } from 'node:fs';\nappendFileSync(${JSON.stringify(join(sentinels, 'preview-verify'))}, process.argv.slice(2).join(' ') + '\\n');\nsetTimeout(() => { process.stdout.write('{"ok":true}'); process.exit(0); }, 5000);\n`);
+  chmodSync(slowVerify, 0o755);
+  env.GG_PREVIEW_VERIFY_BIN = slowVerify;
+  const r = run(['--branch', BRANCH, '--verify-timeout-ms', '150', '--json'], env);
+  assert.equal(r.status, 2, `expected gate-failed exit 2 on timeout; stderr: ${r.stderr}; stdout: ${r.stdout}`);
+  assert.match(JSON.parse(r.stdout.trim()).reason, /timeout/i);
+  assert.ok(sentinelHit(sentinels, 'preview-verify'), 'the slow verify did run');
+  assert.ok(sentinelHit(sentinels, 'autopilot-mark-failed'), 'timeout parks the claim');
+  assert.ok(sentinelHit(sentinels, 'lark-notify'), 'timeout fires the failure notify');
+  assert.ok(!sentinelHit(sentinels, 'autopilot-merge'), 'a timed-out gate must NOT merge');
+});
+
 test('cleanup', () => {
   rmSync(ROOT, { recursive: true, force: true });
 });

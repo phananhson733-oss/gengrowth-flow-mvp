@@ -1,3 +1,28 @@
+---
+title: James Rodriguez Birth Chart
+slug: james-rodriguez-birth-chart
+date: 2026-06-18
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T3
+track: 量产线
+page_id: PG-WC-021
+author_id: "julian-thorne"
+author_display_name: "Julian Thorne"
+target_keyword: james rodriguez birth chart
+associated_keywords:
+  - 哈梅斯占星
+  - 哈梅斯星座
+  - 哈梅斯巨蟹座太阳
+  - 哥伦比亚2026世界杯占星
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-18T11:53:40.785Z
+content_sha256_short: b28924b7d2f64d71
+phase2_checks: all-pass
+---
+
 # 哈梅斯·罗德里格斯星盘：透过 2026 世界杯读一颗巨蟹座太阳
 
 ## 哈梅斯·罗德里格斯星盘是什么？

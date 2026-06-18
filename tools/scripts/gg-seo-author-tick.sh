@@ -41,11 +41,38 @@ case "$TICK_TIMEOUT" in ''|*[!0-9]*) TICK_TIMEOUT=1800 ;; esac
 [ "$BATCH" -ge 1 ] 2>/dev/null || BATCH=1; [ "$BATCH" -le 10 ] 2>/dev/null || BATCH=10
 [ "$TICK_TIMEOUT" -ge 60 ] 2>/dev/null || TICK_TIMEOUT=1800
 
+# Stable path (OUTSIDE the lock dir, which the trap removes) so a dead fire's leaked worker PGIDs
+# survive for the next fire's stale-takeover reap. The orchestrator appends each detached worker's
+# PGID here (gated on GG_AUTHOR_WORKER_PIDFILE, set only in the author subshell below).
+WORKER_PIDFILE="/tmp/gg-seo-author.workers.pgids"
+
+# reap_worker_pgids — kill the orchestrator's DETACHED LLM-worker process GROUPS by their recorded
+# PGID. Precise (never name-matching), so it can't hit an interactive Claude Code session or a
+# human's manual run. Guards: skip our own pgroup, only-if-alive, and a comm check against PID reuse.
+reap_worker_pgids() {
+  [ -f "$WORKER_PIDFILE" ] || return 0
+  local pgid comm mygrp sig
+  mygrp="$(ps -o pgid= -p $$ 2>/dev/null | tr -d ' ')"
+  for sig in TERM KILL; do
+    while read -r pgid; do
+      case "$pgid" in ''|*[!0-9]*) continue ;; esac
+      [ "$pgid" = "$$" ] && continue
+      [ -n "$mygrp" ] && [ "$pgid" = "$mygrp" ] && continue     # NEVER kill our own process group
+      kill -0 "$pgid" 2>/dev/null || continue                  # already dead
+      comm="$(ps -o comm= -p "$pgid" 2>/dev/null)"
+      case "$comm" in *claude*|*codex*|*gemini*|*node*) ;; *) continue ;; esac  # PID-reuse sanity guard
+      kill -"$sig" "-$pgid" 2>/dev/null && echo "$(date '+%F %T') reap $sig pgroup $pgid ($comm)" >> "$LOG"
+    done < "$WORKER_PIDFILE"
+    [ "$sig" = "TERM" ] && sleep 2
+  done
+  : > "$WORKER_PIDFILE"
+}
+
 # ── PID-liveness mutex (macOS has no flock) ─────────────────────────────────
-# A previous authoring fire still alive (pid responds to kill -0) → skip. A dead pid (crash) →
-# steal the lock AND reap any orphaned detached orchestrator children it left behind (the
-# orchestrator double-forks/detaches for its CPU watchdog, so a force-killed fire can leave live
-# `node gg-llm-orchestrator.mjs` / `--author` processes that bootout never reaped).
+# A previous authoring fire still alive (same pid AND same start-time) → skip. A dead/recycled pid →
+# steal the lock AND reap (by recorded PGID) any detached orchestrator workers it left behind (the
+# orchestrator detaches LLM workers for its CPU watchdog, so a force-killed fire leaves live worker
+# groups that launchd bootout never reaps).
 STALE_TAKEOVER=0
 if [ -d "$LOCK" ]; then
   lock_pid="$(cat "$LOCK/pid" 2>/dev/null)"

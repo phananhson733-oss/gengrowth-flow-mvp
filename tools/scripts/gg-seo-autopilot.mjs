@@ -227,7 +227,9 @@ function claimStatus(claims, pgId) { return claims[pgId]?.status || null; }
 // Stamp an in-flight claim with the current publish STAGE + a short renewable LEASE so a
 // stuck/crashed run is observable (and reportable via --stale-report) WITHOUT a destructive
 // auto-reclaim. These fields are net-new; older claims simply lack them (claimIsStale → false).
-const CLAIM_LEASE_MS = parseInt(process.env.GG_AUTOPILOT_CLAIM_LEASE_MS || String(30 * 60 * 1000), 10);
+// 60min default: a single in-lock publish (build + push + PR) can legitimately exceed 30min, and
+// --stale-report would then false-flag a healthy in-flight scan as stale. Sized above realistic max.
+const CLAIM_LEASE_MS = parseInt(process.env.GG_AUTOPILOT_CLAIM_LEASE_MS || String(60 * 60 * 1000), 10);
 function heartbeatClaim(claims, pgId, stage) {
   const c = claims[pgId];
   if (!c) return;
@@ -629,37 +631,9 @@ function doNextUnauthored() {
   process.stdout.write((r && r.task ? JSON.stringify({ pgId: r.task.pgId, keyword: r.task.keyword }) : '') + '\n');
 }
 
-// Agentic-rescue prompt: hand `claude -p` the failed draft + the exact phase2
-// failures and have it SURGICALLY repair (never rewrite) + self-check via phase2
-// until it passes. Validated on NAKSH-001 (rigid blind-regen: 8 parks; agentic: 1
-// iteration → PASS) — works because it can READ "section X lacks the keyword" and
-// edit that section, which blind regeneration can't.
-function agenticRescuePrompt(pgId, keyword, author, draftRel, fails) {
-  return [
-    `你在修复一篇 SEO 文章草稿（结构已生成，但卡在自动 QA 的若干条）。只做外科式（surgical）修正，绝不整篇重写。`,
-    `本次是自动化修复子任务：忽略仓库 CLAUDE.md 的对话记录/会话提醒维护规则，只做下面的修复，不要碰其它文件。`,
-    ``,
-    `文件（相对仓库根 ${FLOW}）：${draftRel}`,
-    `target_keyword 字面短语 = "${keyword}"`,
-    ``,
-    `phase2 QA 卡在以下条目（逐条修掉）：`,
-    fails,
-    ``,
-    `对症修法：`,
-    `- RL4 漂移 / drifted sections（某 H2 节 target-recall=0）→ 在被点名的每个小节里，把某处代词/"this system"/泛指自然替换成字面 "${keyword}"，每节至少 1 次，自然不堆砌。`,
-    `- RL5 stuffing（count 超限）→ 多余的完整短语用代词/短形/同义替换，降到限内。`,
-    `- 缺免责声明（RL6/psych-safety）→ 结尾逐字加：This is not a clinical interpretation or mental health advice.`,
-    `- RL1 临床主张 → 改象征/反思措辞。`,
-    `- SC3c 段落散乱 → 该小节合并成 1-2 连贯段，或 "1. **标签。** 说明" 编号列表。`,
-    `- 其它条目按 phase2 提示对症修。`,
-    ``,
-    `硬约束：H2 标题逐字不动、同序同数；总词数尽量 1500-1800；保留免责声明 + CTA + Sources；不新增 [[...]] 链接数。`,
-    ``,
-    `流程（最多 3 次迭代）：1) Read 草稿 2) Edit 外科修正 3) 自检运行 \`node tools/scripts/_phase2-validate.mjs --source ${draftRel} --page-id ${pgId} --tag en --author ${author} 2>&1 | tail -30\` 读输出 4) 仍 fail 就再修 5) PASS 或 3 次后停。`,
-    ``,
-    `只输出一行：最终 phase2 是否 PASS。不要发布、不要 git。`,
-  ].join('\n');
-}
+// (removed 2026-06-18) agenticRescuePrompt was the prompt for the old unattended agentic
+// `claude -p --allowedTools Bash/Edit/Write --dangerously-skip-permissions` rescue, replaced by
+// the text-only gg-author-repair.mjs (Task 3). Deleted to avoid inviting a re-wire of the unsafe path.
 
 function doAuthor(o = {}) {
   let sel;

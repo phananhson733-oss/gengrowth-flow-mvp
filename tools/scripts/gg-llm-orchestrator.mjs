@@ -19,6 +19,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { logCost } from './lib/_cost-log.mjs';
 import { stripPreH1 } from './lib/strip-preamble.mjs';
+import { buildWorkerCommand } from './lib/llm-worker.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO = resolve(__dirname, '..', '..');

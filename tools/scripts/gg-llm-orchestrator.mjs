@@ -305,6 +305,7 @@ function runAttempt(model, promptPath, outputPath, opts = {}) {
       stdio,
       detached: true,
     });
+    liveWorkers.add(child); // tracked so a SIGTERM to the orchestrator kills the worker group too
 
     let stderrBuf = '';
     let stdoutBuf = '';
@@ -346,6 +347,7 @@ function runAttempt(model, promptPath, outputPath, opts = {}) {
 
     child.on('error', (err) => {
       clearInterval(watchdog);
+      liveWorkers.delete(child);
       resolveAttempt({
         ok: false,
         exit_code: -1,

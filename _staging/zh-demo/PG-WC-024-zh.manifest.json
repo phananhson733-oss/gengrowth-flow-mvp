@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-WC-024",
+  "entity": "克里斯蒂安·普利西奇星盘",
+  "target_keyword": "christian pulisic birth chart",
+  "template": "Definition",
+  "tier": "T3",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-06-18T11:52:25.537Z",
+  "content_sha256_short": "48f147ad1778acd1",
+  "source_path": "_staging/zh-demo/PG-WC-024-claude-v8.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/PG-WC-024-zh.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 2829,
+      "wikilinks": 2,
+      "tbdLinks": 2
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

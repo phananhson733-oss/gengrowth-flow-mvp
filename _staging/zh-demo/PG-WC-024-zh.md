@@ -1,3 +1,28 @@
+---
+title: Christian Pulisic Birth Chart
+slug: christian-pulisic-birth-chart
+date: 2026-06-18
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T3
+track: 量产线
+page_id: PG-WC-024
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: christian pulisic birth chart
+associated_keywords:
+  - 普利西奇占星
+  - 普利西奇星座
+  - 普利西奇处女座太阳
+  - 美国2026世界杯占星
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-18T11:52:25.537Z
+content_sha256_short: 48f147ad1778acd1
+phase2_checks: all-pass
+---
+
 # 克里斯蒂安·普利西奇星盘：透过 2026 世界杯读一颗处女座太阳
 
 ## 克里斯蒂安·普利西奇星盘是什么？

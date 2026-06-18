@@ -66,6 +66,18 @@ supbase可以使用cli啊。优先保证astrologywiki网站的。这里需要人
 
 ---
 
+### Q5 — 19:51 [claude]
+
+**🙋 提问：**
+
+You are Elena Vane (reflective roundup tone). Write ONE English SEO wiki article for astrologywiki.com. ENTITY: "England's World Cup 2026 Astrology". TARGET KEYWORD: "england world cup 2026 astrology". TIER: T2 with THREE internal link placeholders.
+
+**🤖 回答：**
+
+生成 PG-WC-025 英文 wiki 文章（England's World Cup 2026 Astrology），以 Elena Vane 视角切入：squad Sun 符号分布（Bellingham Cancer/Kane Leo/Saka+Tuchel Virgo/Rice Capricorn）+ Jupiter 6月30日由巨蟹入狮子的转折弧，3 个 TBD 内链占位符，section 10 CTA 唯一 markdown 链接。经 3 次 phase2 校验（修复 RL5 关键词超量14→11、RL4 章节漂移、RL12 斜体书名+作者名触发引用校验），最终 OVERALL: PASS，输出至 `_staging/PG-WC-025-en.md`（13685 bytes）。
+
+---
+
 ### Q4 — 18:51 [codex]
 
 **🙋 提问：**
@@ -75,3 +87,15 @@ supbase可以使用cli啊。优先保证astrologywiki网站的。这里需要人
 **🤖 回答：**
 
 按当前 repo 做了代码级验收与本机可运行测试：核心结论是，当前更接近“publish-only 安全调度 + deterministic preview gate/repair 基础设施”已经比较完整，而不是“cron 自动写作”已经闭环。`gg-seo-autopilot-tick.sh` 默认先跑 pending preview 发布 gate；当 `GG_AUTOPILOT_MODE=publish-only` 时不会进入 authoring，且 `gg-seo-autopilot.mjs` 在 driver 层会拒绝 `--author`/`--next-unauthored`。定向 smoke tests 覆盖 `gg-seo-autopilot`、preflight、preview gate、author repair、article review、preview wait/verify 等，合计 115/115 通过；`GG_AUTOPILOT_MODE=publish-only ... --next-unauthored` 也实测会输出拒绝自动写作并以 0 退出。`gg-gengrowth-publish.mjs` dry-run 能在 `_staging` 中识别 11 篇 ready drafts，但当前本机没有 `SB_KEY`，只能证明候选扫描与 dry-run，不能证明 Mac mini live 发布。另发现本机 `launchctl` 没有加载两个服务，repo plist 又指向 `/Users/awayer_mini/...`，所以只能给代码完成度判断，不能替代在 Mac mini 上检查 `launchctl print`、日志和 `SUPABASE_ACCESS_TOKEN/SB_KEY` 的 live 验收。
+
+### Q6 — 19:52 [claude]
+
+**🙋 提问：**
+
+你是Marcus Orion (data/factual tone)。把英文文章 PG-WC-022-en.md 本地化成中文 SEO 维基文章。实体："路易斯·迪亚斯星盘"，1500-2000 汉字，11 H2 模板，2 内链占位符，phase2 校验 PASS。
+
+**🤖 回答：**
+
+以 Marcus Orion 数据/事实语气，将 PG-WC-022-en.md 本地化为中文 SEO 维基文章。关键词"路易斯·迪亚斯星盘"精确用 8 次（上限）；修复 H2 节标题以满足 phase2 结构检查（"与相近概念：运作方式 + 取舍" + "如何识别…实操观察"）；2 次迭代后 OVERALL: PASS，输出至 `_staging/zh-demo/PG-WC-022-zh.md`（9983 bytes）。
+
+---

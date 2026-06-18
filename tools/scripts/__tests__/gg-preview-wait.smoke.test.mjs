@@ -307,22 +307,37 @@ test('extractVercelPreviewUrl: null/empty/no-url → null', () => {
   assert.equal(extractVercelPreviewUrl('no urls here'), null);
 });
 
+test('extractVercelPreviewUrl: rejects non-*.vercel.app hosts (trust boundary)', () => {
+  // blob with a non-vercel host → rejected (no scheme upgrade to an arbitrary host).
+  assert.equal(extractVercelPreviewUrl(vcBlob('evil.example.com')), null);
+  // markdown [Preview] pointing off-host → rejected.
+  assert.equal(extractVercelPreviewUrl('[Preview](https://evil.example.com/oracle)'), null);
+  // http (not https) vercel.app → rejected.
+  assert.equal(extractVercelPreviewUrl('see http://oracle-x.vercel.app here'), null);
+  // a host merely CONTAINING vercel.app but not ending in it → rejected.
+  assert.equal(extractVercelPreviewUrl('[Preview](https://oracle.vercel.app.evil.com)'), null);
+});
+
 test('pickVercelCommitState: success / failure / pending / none', () => {
   const mk = (statuses) => JSON.stringify({ statuses });
   assert.equal(pickVercelCommitState(mk([{ context: 'Vercel', state: 'success' }])), 'success');
   assert.equal(pickVercelCommitState(mk([{ context: 'Vercel', state: 'failure' }])), 'failure');
   assert.equal(pickVercelCommitState(mk([{ context: 'Vercel', state: 'pending' }])), 'pending');
   assert.equal(pickVercelCommitState(mk([{ context: 'ci/other', state: 'success' }])), 'none');
+  // anchored: a context merely CONTAINING "vercel" must NOT satisfy readiness.
+  assert.equal(pickVercelCommitState(mk([{ context: 'my-vercel-check', state: 'success' }])), 'none');
+  assert.equal(pickVercelCommitState(mk([{ context: 'Vercel – oracle', state: 'success' }])), 'success');
   // failure takes precedence (fail-closed) when multiple vercel contexts disagree
   assert.equal(pickVercelCommitState(mk([{ context: 'Vercel', state: 'success' }, { context: 'Vercel – x', state: 'failure' }])), 'failure');
   assert.equal(pickVercelCommitState('not json'), 'none');
 });
 
-test('parseCommitSha / parsePrNumber', () => {
+test('parseCommitSha / parsePrNumber (OPEN-only)', () => {
   assert.equal(parseCommitSha(JSON.stringify({ sha: 'abc123' })), 'abc123');
   assert.equal(parseCommitSha('[]'), null);
   assert.equal(parsePrNumber(JSON.stringify([{ number: 5, state: 'closed' }, { number: 9, state: 'open' }])), 9);
-  assert.equal(parsePrNumber(JSON.stringify([{ number: 3, state: 'closed' }])), 3);
+  // OPEN-only: a closed PR's comment can carry a stale preview URL → never fall back.
+  assert.equal(parsePrNumber(JSON.stringify([{ number: 3, state: 'closed' }])), null);
   assert.equal(parsePrNumber('[]'), null);
 });
 
@@ -333,6 +348,15 @@ test('findPreviewUrlInComments: picks the vercel[bot] blob comment', () => {
     { user: { login: 'codex[bot]' }, body: 'review notes' },
   ]);
   assert.equal(findPreviewUrlInComments(comments), 'https://oracle-git-pr.vercel.app');
+});
+
+test('findPreviewUrlInComments: IGNORES a non-bot comment carrying a [vc] blob (injection guard)', () => {
+  // An attacker comment with a forged [vc] blob must NOT be trusted — only vercel[bot].
+  const comments = JSON.stringify([
+    { user: { login: 'random-attacker' }, body: vcBlob('oracle-git-evil.vercel.app') },
+    { user: { login: 'not-vercel[bot]' }, body: vcBlob('oracle-git-evil2.vercel.app') },
+  ]);
+  assert.equal(findPreviewUrlInComments(comments), null);
 });
 
 // URL-aware fake gh router for Path B (call sequence differs from Path A).

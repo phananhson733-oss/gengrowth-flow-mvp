@@ -992,33 +992,37 @@ function doAuthor(o = {}) {
     }
     restorePrompt();
 
-    // AGENTIC RESCUE (user-approved 2026-06-05): the deterministic feedback loop just
-    // failed `attempts`× — usually on gen-quality issues blind regeneration can't fix
-    // (e.g. RL4 drift: the model won't anchor the literal keyword in every section).
-    // Escalate ONCE to an agentic `claude -p` that reads the failure + draft and
-    // SURGICALLY repairs it, self-checking via phase2 until it passes. Only fires on
-    // the park boundary, so it never slows the common (≤3-attempt) path. The shFlow
-    // timeout bounds it; phase2-on-PASS writes <pid>-en.md, which is our success test.
-    // Toggle GG_AUTHOR_AGENTIC_RESCUE=0.
-    if (process.env.GG_AUTHOR_AGENTIC_RESCUE !== '0' && existsSync(join(FLOW, draftV8))) {
-      log(`agentic rescue: deterministic loop failed ${attempts}× — escalating to agentic surgical repair of ${draftV8}`);
-      const agModel = process.env.GG_AGENTIC_MODEL || 'claude-sonnet-4-6';
-      const agEffort = process.env.GG_AGENTIC_EFFORT || 'high';
-      const agTimeout = parseInt(process.env.GG_AUTHOR_AGENTIC_TIMEOUT_MS || '1800000', 10);
-      const prompt = agenticRescuePrompt(pgId, keyword, author, draftV8, lastFail || '- phase2 failed');
+    // DETERMINISTIC REPAIR (2026-06-18, OAuth-CLI-worker plan Task 3): the deterministic
+    // feedback loop just failed `attempts`× — usually on gen-quality issues blind regeneration
+    // can't fix (e.g. RL4 drift: the model won't anchor the literal keyword in every section).
+    // Escalate ONCE to gg-author-repair.mjs — a TEXT-ONLY worker (NO Bash/Edit/Write/Grep/MCP/
+    // --dangerously-skip-permissions): it reads the failed draft + the phase2 failures and emits
+    // a corrected article to a SEPARATE candidate file; WE run phase2 on the candidate and adopt
+    // it only if it passes. Replaces the old unattended agentic `claude -p --allowedTools ...`
+    // rescue (unsafe headless). Only fires at the park boundary. Toggle GG_AUTHOR_REPAIR=0.
+    if (process.env.GG_AUTHOR_REPAIR !== '0' && existsSync(join(FLOW, draftV8))) {
+      log(`deterministic repair: loop failed ${attempts}× — calling gg-author-repair on ${draftV8}`);
+      const repModel = process.env.GG_AGENTIC_MODEL || 'claude-sonnet-4-6';
+      const repEffort = process.env.GG_AGENTIC_EFFORT || 'high';
+      const repTimeout = parseInt(process.env.GG_AUTHOR_REPAIR_TIMEOUT_MS || process.env.GG_AUTHOR_AGENTIC_TIMEOUT_MS || '1800000', 10);
+      const candidate = join('_staging', `${pgId}-repair-candidate.md`);
       try {
-        const out = shFlow('claude', ['-p', prompt, '--model', agModel, '--effort', agEffort,
-          '--allowedTools', 'Bash Read Edit Write Grep', '--dangerously-skip-permissions'], agTimeout);
-        log(`agentic rescue out: ${String(out).trim().split('\n').slice(-2).join(' ').slice(0, 180)}`);
-      } catch (e) { log(`agentic rescue errored: ${errTail(e, 80)}`); }
-      if (existsSync(enDraft(pgId)) && phase2Passed(pgId)) {
-        log(`AUTHORED ${pgId} → ${enDraft(pgId)} (author=${author}, via AGENTIC RESCUE) — ready for next scan to publish`);
-        return;
-      }
-      log('agentic rescue did not yield a passing draft — parking');
+        shFlow('node', [join(SCRIPTS, 'gg-author-repair.mjs'),
+          '--source', draftV8, '--out', candidate, '--page-id', pgId,
+          '--target-keyword', keyword, '--author', author,
+          '--failures', lastFail || '- phase2 failed',
+          '--model', repModel, '--effort', repEffort], repTimeout);
+        // WE validate the candidate (the worker never runs phase2 itself); adopt only on PASS.
+        shFlow('node', [PHASE2, '--source', candidate, '--page-id', pgId, '--tag', 'en', '--author', author]);
+        if (existsSync(enDraft(pgId)) && phase2Passed(pgId)) {
+          log(`AUTHORED ${pgId} → ${enDraft(pgId)} (author=${author}, via deterministic repair) — ready for next scan to publish`);
+          return;
+        }
+      } catch (e) { log(`deterministic repair errored: ${errTail(e, 80)}`); }
+      log('deterministic repair did not yield a passing draft — parking');
     }
 
-    return park(slug, `${(lastFail || 'phase2 failed').replace(/\n/g, ' | ')} after ${attempts} attempt(s) + agentic rescue`);
+    return park(slug, `${(lastFail || 'phase2 failed').replace(/\n/g, ' | ')} after ${attempts} attempt(s) + deterministic repair`);
   } catch (e) {
     park(null, `unexpected: ${errTail(e)}`);
   }

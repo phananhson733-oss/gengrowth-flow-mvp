@@ -77,6 +77,19 @@ CLUSTER_SYNC_LOG="$LOG_DIR/cluster-sync-$(date +%Y-%m-%d).log"
   node "$SCRIPT_DIR/gg-cluster-sync.mjs" --apply
 ) >> "$CLUSTER_SYNC_LOG" 2>&1 || echo "$(date '+%F %T') cluster-sync failed (non-fatal, see cluster-sync log)" >> "$LOG"
 
+# Runtime preflight (Task 1): fail FAST on a broken Mac-mini env (missing dirs/bins) before any
+# publish work, with a Feishu alert — instead of a confusing mid-publish crash. --skip-live-cli:
+# the live `claude -p` smoke is slow/flaky unattended and publish-only never authors, so a PATH
+# presence + required-dir check is enough here. Verified ok:true on awayer_mini (defaults
+# ~/oracle + ~/gengrowth-ops), so this cannot false-trip and take down the working cron.
+(
+  set -a; . "$HOME/.config/gg/_gg.env" 2>/dev/null; set +a
+  node "$SCRIPT_DIR/gg-autopilot-preflight.mjs" --skip-live-cli >> "$LOG" 2>&1
+) || {
+  GG_LARK_NOTIFY_AT_OPS=1 "$SCRIPT_DIR/gg-lark-notify.sh" "⚠️ SEO autopilot preflight failed on Mac mini — env broken (see $LOG). Skipping this fire."
+  exit 2
+}
+
 # NOTE: flow-mvp (_staging drafts) and gengrowth-ops (task plan) are BOTH kept
 # current by their obsidian-git plugins (autoPullInterval=1), so the loop does NOT
 # pull them itself — that would be redundant and risk fighting the plugin for the

@@ -184,7 +184,7 @@ export async function loadPlaywright(oracleDir) {
 //
 // Exported so a unit test can drive it with a fake page/EventEmitter (no chromium).
 // ---------------------------------------------------------------------------
-export function wirePageListeners(page, errorBuffers) {
+export function wirePageListeners(page, errorBuffers, warnings = []) {
   const push = (line) => {
     const buf = errorBuffers.get(page.__activeUrl);
     // If no active buffer is seeded, fail LOUD- in-buffer is impossible; seed a
@@ -192,9 +192,17 @@ export function wirePageListeners(page, errorBuffers) {
     if (buf) buf.push(line);
     else errorBuffers.set(page.__activeUrl, [line]);
   };
+  // A known-benign error is NOT silently dropped — it's recorded as a visible
+  // warning (surfaced in --json `warnings`) so the allowance stays auditable.
+  const noteBenign = (message) => {
+    warnings.push(`known-benign global error ignored on ${page.__activeUrl}: ${message}`);
+  };
 
   page.on('pageerror', (err) => {
-    push(`uncaught JS exception: ${err && err.message ? err.message : String(err)}`);
+    const message = err && err.message ? err.message : String(err);
+    const stack = err && err.stack ? err.stack : '';
+    if (isKnownBenignPageError(message, stack)) { noteBenign(message); return; }
+    push(`uncaught JS exception: ${message}`);
   });
   page.on('console', (msg) => {
     if (msg.type() !== 'error') return;
@@ -209,6 +217,8 @@ export function wirePageListeners(page, errorBuffers) {
       if (isAppBundleUrl(text)) push(`failed app-bundle load (console): ${text}`);
       return;
     }
+    // Same known-benign global error, should it surface via console rather than pageerror.
+    if (isKnownBenignPageError(text, '')) { noteBenign(text); return; }
     // Uncaught/Unhandled errors in console.
     if (/uncaught|unhandled|TypeError|ReferenceError|SyntaxError/i.test(text)) {
       push(`console error: ${text}`);
@@ -332,7 +342,7 @@ export async function runVerification(opts) {
     // ONE shared context so the Vercel bypass cookie persists across en -> zh.
     const context = await browser.newContext();
     const page = await context.newPage();
-    wirePageListeners(page, errorBuffers);
+    wirePageListeners(page, errorBuffers, warnings);
 
     // Seed + activate a url's buffer BEFORE navigating, so the listeners and the
     // verifyPage gate read the SAME buffer (page.__activeUrl points the listeners
@@ -415,16 +425,19 @@ async function main() {
   const redactSecret = (s) => String(s ?? '').replace(/(x-vercel-protection-bypass=)[^&\s"'<]+/gi, '$1<redacted>');
   const safeChecked = (result.checked || []).map((c) => ({ ...c, url: redactSecret(c.url) }));
   const safeFailReason = result.failReason ? redactSecret(result.failReason) : null;
+  // warnings may embed the EN nav url (which carries ?x-vercel-protection-bypass=<secret>)
+  // — redact them too, same as checked/failReason. Never let the secret reach logs.
+  const safeWarnings = (result.warnings || []).map(redactSecret);
 
   if (opts.json) {
-    const { ok, warnings } = result;
+    const { ok } = result;
     // Include failReason + a tooling boolean (and park, when set) so a consumer can
     // classify the failure (tooling vs verify vs park-needs_human) WITHOUT keying on
     // the process exit code.
     process.stdout.write(JSON.stringify({
       ok,
       checked: safeChecked,
-      warnings,
+      warnings: safeWarnings,
       failReason: safeFailReason,
       tooling: Boolean(result.tooling),
       ...(result.park ? { park: result.park } : {}),

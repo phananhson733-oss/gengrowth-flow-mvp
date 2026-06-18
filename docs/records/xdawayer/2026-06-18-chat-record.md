@@ -20,12 +20,11 @@ aliases:
 > 【本区域在每天最后一次对话结束时生成/更新】
 > 用 3-5 个要点概括当天所有对话的核心内容、关键决策和产出成果。
 
-- 继续验收 flow-mvp 两条本地 LaunchAgent 的自然定时触发，发现 `gui/<uid>` 域会把 interval 任务卡在 `pending spawn, domain in on-demand-only mode`，并非真正健康 idle。
-- 用 30 秒临时 probe 复现实验并定位根因：同样的 plist 在 `gui/<uid>` 不会自动 tick，但加 `LimitLoadToSessionType=Background` 并通过 `launchctl load -S Background -w` 装到 `user/<uid>` 后可正常按间隔递增 runs。
-- 已把 `com.gengrowth.gengrowth-publish.plist` 与 `com.gengrowth.seo-autopilot.plist` 的 repo 版本补上 `LimitLoadToSessionType=Background`，同步覆盖到 `~/Library/LaunchAgents/` 并重载到 `user/501` 域。
-- `seo-autopilot` 现已在 `user/501` 域跑通 `RunAtLoad`；`gengrowth-publish` 同样能启动，但暴露无人值守 Supabase 鉴权缺口：Background session 下取不到 service_role，本轮日志记录为 `SB_KEY unavailable`。
-- 后台最终验收监控已完成：`seo-autopilot` 的 `runs` 从 1 自然增至 3，`gengrowth-publish` 的 `runs` 从 1 自然增至 2，证明两条任务在 `user/501` Background 域都能按真实 interval 自然触发；但 `gengrowth-publish` 每次触发仍因缺少 headless Supabase 鉴权而记录 `SB_KEY unavailable`，因此调度层已恢复、业务执行层仍未完全闭环。
-- 按“优先保证 astrologywiki”重新核对 `seo-autopilot` 的 21 个 `needs_human`：其中 20 个已可证明人工补录/写作部分其实完成（W22 计划勾选完成、EN/ZH staging 存在、phase2 manifest 为 pass、对应 oracle 文章文件已存在），属于 stale ledger；仅 `PG-WC-0010` 仍没有计划勾选、staging 产物和 oracle 文章，是真正未完成项。
+- 继续验收 flow-mvp 两条本地 LaunchAgent 的自然定时触发，定位到 `gui/<uid>` 域会把 interval 任务卡在 `pending spawn, domain in on-demand-only mode`；改用 `LimitLoadToSessionType=Background` 并加载到 `user/501` 后，`runs` 能按真实 interval 自然递增。
+- `seo-autopilot` 与 `gengrowth-publish` 调度层均已跑通自然触发，服务最终处于 `not running` 且 `last exit code = 0` 的健康空闲态；但 `gengrowth-publish` 业务执行仍受无人值守 Supabase 鉴权影响，日志为 `SB_KEY unavailable`。
+- 按“优先保证 astrologywiki”复查 21 个 `needs_human` 后确认 20 个属于 stale ledger：W22 计划已勾选、EN/ZH staging 存在、phase2 manifest 为 pass、oracle 文章文件已存在；仅 `PG-WC-0010` 是真正未完成项。
+- 新一轮代码验收显示当前自动化写文章链路更准确地说是“publish-only + deterministic preview gate/repair 基础设施”已基本完成，而不是 cron 自动写作已完成；`GG_AUTOPILOT_MODE=publish-only` 会在 driver 层拒绝 `--author`/`--next-unauthored`。
+- 针对核心脚本跑过定向 smoke tests：`gg-seo-autopilot`、preflight、preview gate、author repair、article review、preview wait/verify 等合计 115/115 通过；当前本机无法证明 Mac mini live launchd 状态，因为 repo plist 指向 `/Users/awayer_mini/...` 且本机 `gui/501` 未加载对应服务。
 
 ---
 
@@ -64,3 +63,15 @@ supbase可以使用cli啊。优先保证astrologywiki网站的。这里需要人
 **🤖 回答：**
 
 按 astrologywiki 优先级复查后，当前结论已经比较清楚：`supabase` CLI 在交互式 shell 里确实可用，但那是 `gengrowth-publish` 的 Background 无人值守鉴权问题，不应阻塞 astrologywiki 主线。针对 `seo-autopilot --status` 里 21 个 `needs_human`，我逐项核对了 claim ledger、W22 计划、staging 产物和 oracle 文章文件：其中 20 个其实已经完成了人工补录/写作侧动作，证据是一致的——W22 计划里对应条目都已 `[x]`，`_staging` 下 EN/ZH 文稿都在，manifest 的 `phase2_checks.overall` 为 `pass`，并且 `oracle/data/articles/<slug>.ts` 已存在。这 20 个不是真 blocker，而是旧的 `needs_human` 状态没有回写，属于 stale ledger。只有 `PG-WC-0010` 仍未完成：它没有计划勾选、没有 EN/ZH staging，也没有 oracle 文章文件，所以这一个才是当前真正需要人工确认/补齐的项。也就是说，在“人工部分先确认是否完成”这一步上，结论是 20/21 已完成、仅剩 `PG-WC-0010` 未完成；下一步不该继续盲目等人，而应优先做 ledger reconciliation，把这 20 个旧阻塞清掉，再单独保留 `PG-WC-0010` 为真实人工项。
+
+---
+
+### Q4 — 18:51 [codex]
+
+**🙋 提问：**
+
+我刚才改了一下我们的自动化写文章的功能，部署在 macmini 上。你可以帮我看看当前的完成度怎么样
+
+**🤖 回答：**
+
+按当前 repo 做了代码级验收与本机可运行测试：核心结论是，当前更接近“publish-only 安全调度 + deterministic preview gate/repair 基础设施”已经比较完整，而不是“cron 自动写作”已经闭环。`gg-seo-autopilot-tick.sh` 默认先跑 pending preview 发布 gate；当 `GG_AUTOPILOT_MODE=publish-only` 时不会进入 authoring，且 `gg-seo-autopilot.mjs` 在 driver 层会拒绝 `--author`/`--next-unauthored`。定向 smoke tests 覆盖 `gg-seo-autopilot`、preflight、preview gate、author repair、article review、preview wait/verify 等，合计 115/115 通过；`GG_AUTOPILOT_MODE=publish-only ... --next-unauthored` 也实测会输出拒绝自动写作并以 0 退出。`gg-gengrowth-publish.mjs` dry-run 能在 `_staging` 中识别 11 篇 ready drafts，但当前本机没有 `SB_KEY`，只能证明候选扫描与 dry-run，不能证明 Mac mini live 发布。另发现本机 `launchctl` 没有加载两个服务，repo plist 又指向 `/Users/awayer_mini/...`，所以只能给代码完成度判断，不能替代在 Mac mini 上检查 `launchctl print`、日志和 `SUPABASE_ACCESS_TOKEN/SB_KEY` 的 live 验收。

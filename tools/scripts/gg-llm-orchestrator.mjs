@@ -14,7 +14,7 @@
 // FRONTIER-ONLY: refuses tiny prompts (<1KB), refuses downgraded Claude output
 // (<3KB suggests silent Sonnet fallback), surfaces all guards in summary.json.
 import { spawn, execSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { logCost } from './lib/_cost-log.mjs';

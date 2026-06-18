@@ -106,7 +106,7 @@ publish_if_pending() {
   local BRANCH
   BRANCH="$(node "$AUTO" --status 2>/dev/null | node -e '
 const fs=require("fs"); let c; try{c=JSON.parse(fs.readFileSync(0,"utf8"));}catch{process.exit(1);}
-for (const v of Object.values(c||{})){ if(v&&(v.status==="pushed-preview"||v.status==="verified-preview")){console.log(v.branch||"");process.exit(0);} }
+for (const v of Object.values(c||{})){ if(v&&(v.status==="pushed-preview"||v.status==="verified-preview")&&v.branch){console.log(v.branch);process.exit(0);} }
 process.exit(1);
 ')"
   [ -z "$BRANCH" ] && return 1   # nothing pending → caller falls through (publish-only stand-down)

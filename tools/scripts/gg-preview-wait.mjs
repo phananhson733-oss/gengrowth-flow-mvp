@@ -126,6 +126,108 @@ export function parseStatus(json) {
   return { kind: 'pending' };
 }
 
+// ── Vercel commit-status + PR-comment path (2026-06 Vercel behavior) ──────────
+// Vercel for this repo no longer creates a GitHub *deployment* for branch pushes;
+// it posts only a commit STATUS (context "Vercel", state pending→success, target_url
+// = dashboard) and a PR *comment* from vercel[bot] that carries the real
+// `*.vercel.app` preview hostname. So the deployments path above finds nothing and
+// times out forever. These helpers add the commit-status (readiness) + comment (URL)
+// path. All pure + fixture-testable; the poll loop shells out via runGh.
+
+// normalizeUrl — ensure an https:// scheme. The bot blob stores a bare hostname
+// (`oracle-git-…vercel.app`); the markdown link is already fully-qualified.
+function normalizeUrl(u) {
+  const s = String(u || '').trim();
+  if (!s) return null;
+  return /^https?:\/\//i.test(s) ? s : `https://${s}`;
+}
+
+// extractVercelPreviewUrl — pull the preview URL from a single vercel[bot] PR
+// comment body. Prefers the structured `[vc]: #<hash>:<base64>` metadata blob
+// (decode → projects[].previewUrl), falls back to the markdown `[Preview](url)`
+// link, then any `*.vercel.app` — always EXCLUDING vercel.live feedback links.
+// Returns a fully-qualified https URL or null.
+export function extractVercelPreviewUrl(commentBody) {
+  if (!commentBody) return null;
+  const body = String(commentBody);
+  // 1) structured metadata blob (most reliable; survives markdown changes).
+  const m = body.match(/\[vc\]:\s*#[^:\n]+:([A-Za-z0-9+/=]+)/);
+  if (m) {
+    try {
+      const json = JSON.parse(Buffer.from(m[1], 'base64').toString('utf8'));
+      const projects = Array.isArray(json && json.projects) ? json.projects : [];
+      for (const p of projects) {
+        if (p && p.previewUrl) return normalizeUrl(p.previewUrl);
+      }
+    } catch { /* fall through to markdown */ }
+  }
+  // 2) markdown [Preview](url) — the explicit preview link (skip vercel.live).
+  const md = body.match(/\[Preview\]\((https?:\/\/[^)]+)\)/i);
+  if (md && !/vercel\.live/i.test(md[1])) return normalizeUrl(md[1]);
+  // 3) last resort: any bare *.vercel.app host that isn't a vercel.live link.
+  const any = body.match(/https?:\/\/[a-z0-9-]+\.vercel\.app[^\s)"'<]*/i);
+  if (any && !/vercel\.live/i.test(any[0])) return normalizeUrl(any[0]);
+  return null;
+}
+
+// pickVercelCommitState — classify the Vercel context from a combined
+// `repos/<repo>/commits/<sha>/status` response (.statuses[] rolled up per
+// context). Returns 'success' | 'failure' | 'pending' | 'none'. Failure takes
+// precedence (fail-closed): any Vercel failure status ends the wait.
+export function pickVercelCommitState(json) {
+  let obj;
+  try { obj = typeof json === 'string' ? JSON.parse(json) : json; }
+  catch { return 'none'; }
+  const statuses = Array.isArray(obj && obj.statuses) ? obj.statuses : [];
+  const vercel = statuses.filter((s) => /vercel/i.test(String((s && s.context) || '')));
+  if (!vercel.length) return 'none';
+  let sawSuccess = false;
+  for (const s of vercel) {
+    const k = classifyState(s && s.state);
+    if (k === 'failure') return 'failure';
+    if (k === 'success') sawSuccess = true;
+  }
+  return sawSuccess ? 'success' : 'pending';
+}
+
+// parseCommitSha — pull .sha from a `repos/<repo>/commits/<ref>` response.
+export function parseCommitSha(json) {
+  try {
+    const o = typeof json === 'string' ? JSON.parse(json) : json;
+    return o && o.sha ? o.sha : null;
+  } catch { return null; }
+}
+
+// parsePrNumber — pick the PR number from a `repos/<repo>/commits/<sha>/pulls`
+// array. Prefers an open PR, else the first. Returns number or null.
+export function parsePrNumber(json) {
+  let arr;
+  try { arr = typeof json === 'string' ? JSON.parse(json) : json; }
+  catch { return null; }
+  if (!Array.isArray(arr) || !arr.length) return null;
+  const open = arr.find((p) => p && p.state === 'open');
+  const pick = open || arr[0];
+  return pick && pick.number != null ? pick.number : null;
+}
+
+// findPreviewUrlInComments — scan an `issues/<n>/comments` array (oldest→newest)
+// from the END for the vercel[bot] comment carrying a preview URL. Accepts any
+// comment that carries the `[vc]:` blob even if the login filter misses.
+export function findPreviewUrlInComments(json) {
+  let arr;
+  try { arr = typeof json === 'string' ? JSON.parse(json) : json; }
+  catch { return null; }
+  if (!Array.isArray(arr)) return null;
+  for (let i = arr.length - 1; i >= 0; i--) {
+    const c = arr[i];
+    if (!c || !c.body) continue;
+    const login = c.user && c.user.login ? String(c.user.login) : '';
+    const url = extractVercelPreviewUrl(c.body);
+    if (url && (/vercel/i.test(login) || /\[vc\]:/.test(String(c.body)))) return url;
+  }
+  return null;
+}
+
 // ── gh shell-out ──────────────────────────────────────────────────────────────
 // runGh — spawn `gh <args>`, resolve { code, stdout, stderr }. Never rejects;
 // a spawn error (gh missing) resolves with code:127 so the caller stays structured.
@@ -179,6 +281,7 @@ export async function waitForPreview(opts, deps = {}) {
   const deadline = now() + timeoutMs;
 
   while (true) {
+    // ── Path A: GitHub deployment (legacy; still works if Vercel creates one) ──
     // 1) newest deployment for this branch ref.
     const depRes = await runGhFn(['api', `repos/${repo}/deployments?ref=${encodeURIComponent(branch)}`]);
     if (depRes.code === 0) {
@@ -194,9 +297,46 @@ export async function waitForPreview(opts, deps = {}) {
         }
         // gh status call failed (transient) → keep polling until timeout
       }
-      // no deployment yet → keep polling until timeout
+      // no deployment yet → fall through to Path B
     }
-    // gh deployments call failed (transient/rate-limit) → keep polling until timeout
+
+    // ── Path B: Vercel commit-status (readiness) + vercel[bot] PR comment (URL) ──
+    // The current Vercel-for-GitHub behavior: no deployment object, only a commit
+    // status + a PR comment. Resolve the branch HEAD sha, read its combined commit
+    // status, and on Vercel success extract the preview URL from the PR comment.
+    const shaRes = await runGhFn(['api', `repos/${repo}/commits/${encodeURIComponent(branch)}`]);
+    if (shaRes.code === 0) {
+      const sha = parseCommitSha(shaRes.stdout);
+      if (sha) {
+        const stsRes = await runGhFn(['api', `repos/${repo}/commits/${sha}/status`]);
+        if (stsRes.code === 0) {
+          const vState = pickVercelCommitState(stsRes.stdout);
+          if (vState === 'failure') {
+            return { ok: false, reason: 'vercel deployment failed (commit-status)' };
+          }
+          if (vState === 'success') {
+            // Deployment is Ready — now fetch the preview URL from the PR comment.
+            const pullsRes = await runGhFn(['api', `repos/${repo}/commits/${sha}/pulls`]);
+            if (pullsRes.code === 0) {
+              const prNum = parsePrNumber(pullsRes.stdout);
+              if (prNum != null) {
+                const cmtRes = await runGhFn([
+                  'api', `repos/${repo}/issues/${prNum}/comments`, '--paginate',
+                ]);
+                if (cmtRes.code === 0) {
+                  const url = findPreviewUrlInComments(cmtRes.stdout);
+                  if (url) return { ok: true, previewUrl: url };
+                  // status=success but the bot comment hasn't landed yet → keep polling
+                }
+              }
+              // no PR yet (comment/PR lag) → keep polling
+            }
+          }
+          // pending / none → fall through to wait
+        }
+      }
+    }
+    // any gh call failed (transient/rate-limit) → keep polling until timeout
 
     // self-enforced timeout: stop BEFORE sleeping past the deadline.
     if (now() >= deadline) return { ok: false, reason: 'timeout' };

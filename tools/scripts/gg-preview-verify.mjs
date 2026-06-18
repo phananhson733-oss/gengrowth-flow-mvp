@@ -382,27 +382,33 @@ async function main() {
 
   const result = await runVerification(opts);
 
+  // Defense-in-depth: never let the bypass secret (carried in the EN url's
+  // ?x-vercel-protection-bypass=<secret> query) reach stdout / --json / the autopilot log.
+  const redactSecret = (s) => String(s ?? '').replace(/(x-vercel-protection-bypass=)[^&\s"'<]+/gi, '$1<redacted>');
+  const safeChecked = (result.checked || []).map((c) => ({ ...c, url: redactSecret(c.url) }));
+  const safeFailReason = result.failReason ? redactSecret(result.failReason) : null;
+
   if (opts.json) {
-    const { ok, checked, warnings } = result;
+    const { ok, warnings } = result;
     // Include failReason + a tooling boolean (and park, when set) so a consumer can
     // classify the failure (tooling vs verify vs park-needs_human) WITHOUT keying on
     // the process exit code.
     process.stdout.write(JSON.stringify({
       ok,
-      checked,
+      checked: safeChecked,
       warnings,
-      failReason: result.failReason ?? null,
+      failReason: safeFailReason,
       tooling: Boolean(result.tooling),
       ...(result.park ? { park: result.park } : {}),
     }) + '\n');
   } else {
     if (result.ok) {
-      process.stdout.write(`PASS — verified ${result.checked.length} url(s)\n`);
-      for (const c of result.checked) {
+      process.stdout.write(`PASS — verified ${safeChecked.length} url(s)\n`);
+      for (const c of safeChecked) {
         process.stdout.write(`  ${c.url}\n    h1=${JSON.stringify(c.h1)} jsonLd=${c.jsonLd}\n`);
       }
     } else {
-      process.stderr.write(`FAIL — ${result.failReason}\n`);
+      process.stderr.write(`FAIL — ${safeFailReason}\n`);
     }
   }
 

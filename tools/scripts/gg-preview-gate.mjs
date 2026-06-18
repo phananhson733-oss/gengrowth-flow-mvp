@@ -426,13 +426,6 @@ function lastJsonLine(s) {
   return String(s || '').trim();
 }
 function safeJson(s) { try { return JSON.parse(s); } catch { return null; } }
-// Redact the bypass secret in the printed plan.
-function redact(args) {
-  const out = [...args];
-  const i = out.indexOf('--bypass-secret');
-  if (i >= 0 && i + 1 < out.length) out[i + 1] = out[i + 1] ? '<redacted>' : '<empty>';
-  return out;
-}
 
 // ── main ────────────────────────────────────────────────────────────────────
 export async function main(argv) {

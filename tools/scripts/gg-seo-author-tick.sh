@@ -101,7 +101,7 @@ if [ "$_rc" -ne 0 ]; then
   # Capped/killed (rc=124) or errored — the fire is INCOMPLETE. Do NOT parse AOUT for AUTHORED/PARK:
   # a half-written _staging draft must never be announced as ready, or the publish lane would pick up
   # a half-baked article. (Orphaned workers, if any, are reaped by the orchestrator's own watchdog.)
-  echo "$(date '+%F %T') author fire rc=$_rc (cap/err) — incomplete; not announcing (orphans self-clean via orchestrator watchdog)" >> "$LOG"
+  echo "$(date '+%F %T') author fire rc=$_rc (cap/err) — incomplete; not announcing (worker groups killed by the orchestrator SIGTERM handler)" >> "$LOG"
   [ "$_rc" -eq 124 ] && GG_LARK_NOTIFY_AT_OPS=1 "$SCRIPT_DIR/gg-lark-notify.sh" "⚠️ SEO author lane：撰写超 ${TICK_TIMEOUT}s 被硬杀，本炮放弃（草稿可能半成品，未上报）。"
 else
   # Clean exit only: Feishu on a fresh park (needs a human) or a freshly-authored draft. The

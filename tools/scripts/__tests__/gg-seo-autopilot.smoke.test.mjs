@@ -386,6 +386,11 @@ test('--scan updates /oracle main first, then publishes from a separate worktree
     const claims = JSON.parse(readFileSync(h.claimsPath, 'utf8'));
     const claim = claims['PG-TEST-001'];
     assert.equal(claim.status, 'pushed-preview');
+    // Task 8: a published claim carries lease/stage heartbeat metadata.
+    assert.equal(claim.stage, 'pushed-preview', 'final stage should be stamped');
+    assert.ok(String(claim.lockedBy || '').length > 0, 'lockedBy should be stamped');
+    assert.match(claim.leaseUntil, /^\d{4}-\d{2}-\d{2}T/, 'leaseUntil should be an ISO timestamp');
+    assert.match(claim.updatedAt, /^\d{4}-\d{2}-\d{2}T/, 'updatedAt should be an ISO timestamp');
     assert.ok(claim.worktree && claim.worktree.startsWith(worktreeRoot), `unexpected worktree: ${claim.worktree}`);
     assert.notEqual(claim.worktree, h.oracle);
     assert.match(git(h.oracle, ['show', `${claim.branch}:data/articles/test-slug.ts`]), /authorId: "test-author"/);
@@ -502,6 +507,34 @@ test('--author can generate the missing zh source draft for a checked done task 
     assert.equal(existsSync(join(flow, '_staging', 'zh-demo', 'PG-TEST-001-zh.md')), true, `${r.stdout}${r.stderr}`);
     assert.equal(existsSync(join(flow, '.gg-cache', 'prompts', 'PG-TEST-001.v8.zh-prompt.md')), true);
     assert.match(`${r.stdout}${r.stderr}`, /AUTHORED ZH PG-TEST-001/);
+  } finally {
+    h.cleanup();
+  }
+});
+
+test('--stale-report flags in-flight claims past their lease, read-only, excludes terminal claims', () => {
+  const h = makeHarness();
+  try {
+    const past = new Date(Date.now() - 3600e3).toISOString();
+    const future = new Date(Date.now() + 3600e3).toISOString();
+    writeClaims(h, {
+      'PG-STALE': { status: 'active', slug: 's1', stage: 'convert', lockedBy: '999', leaseUntil: past, updatedAt: past, branch: 'b1' },
+      'PG-FRESH': { status: 'pushed-preview', slug: 's2', stage: 'pushed-preview', leaseUntil: future, branch: 'b2' },
+      'PG-DONE': { status: 'done', slug: 's3' },
+    });
+    const before = readFileSync(h.claimsPath, 'utf8');
+
+    const r = runAuto(h, ['--stale-report']);
+    assert.equal(r.status, 0, `${r.stdout}${r.stderr}`);
+    const out = JSON.parse(r.stdout);
+    const byId = Object.fromEntries(out.inflight.map((x) => [x.pgId, x]));
+    assert.equal(byId['PG-STALE'].stale, true, 'an active claim past its lease is stale');
+    assert.equal(byId['PG-STALE'].stage, 'convert', 'stale report carries the last stage');
+    assert.equal(byId['PG-FRESH'].stale, false, 'a claim within its lease is not stale');
+    assert.equal(byId['PG-DONE'], undefined, 'terminal (done) claims are excluded from the in-flight report');
+    assert.equal(out.staleCount, 1);
+    // READ-ONLY: the ledger must be byte-identical after a stale report.
+    assert.equal(readFileSync(h.claimsPath, 'utf8'), before, '--stale-report must not mutate the ledger');
   } finally {
     h.cleanup();
   }

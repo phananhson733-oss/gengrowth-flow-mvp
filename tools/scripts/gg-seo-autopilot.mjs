@@ -1025,120 +1025,126 @@ function stampClaim(pgId, stage, patch = {}) {
 }
 
 function doScanLocked(o) {
-  const plan = latestPlan();
-  if (!plan) { log('no blog-output-plan found'); return; }
-  log(`plan: ${basename(plan)}`);
-  syncOracle(); // hard-sync BEFORE claimable() so the "already published" check is accurate
-  const claims = loadClaims();
-  const tasks = parseTasks(plan);
+  // PHASE 1 (locked, short): pick claimable tasks and mark them 'active'. Selection (syncOracle +
+  // claimable + claim) MUST be atomic so two runs can't double-claim the same task.
+  const picked = withClaimsLock(() => {
+    const plan = latestPlan();
+    if (!plan) { log('no blog-output-plan found'); return []; }
+    log(`plan: ${basename(plan)}`);
+    syncOracle(); // hard-sync BEFORE claimable() so the "already published" check is accurate
+    const claims = loadClaims();
+    const tasks = parseTasks(plan);
 
-  const picked = [];
-  for (const t of tasks) {
-    if (picked.length >= o.limit) break;
-    const c = claimable(t, claims);
-    if (!c.ok) { log(`skip ${t.pgId}: ${c.reason}`); continue; }
-    picked.push({ ...t, slug: c.slug });
-  }
-  if (!picked.length) { log('nothing claimable this run'); return; }
-
-  for (const t of picked) {
-    log(`claim ${t.pgId} → ${t.slug}`);
-    claims[t.pgId] = { status: 'active', slug: t.slug, owner: 'autopilot', plan: basename(plan) };
-    // Task 8: stamp stage + a renewable lease so a stuck/crashed publish is observable
-    // via --stale-report (the last stamp's stage shows where a parked claim failed).
-    const stamp = (stage) => { heartbeatClaim(claims, t.pgId, stage); saveClaims(claims); };
-    stamp('claim');
-
-    const branch = `seo/auto/${new Date().toISOString().slice(0, 10)}-${t.pgId}`;
-    const worktreeBranch = o.dryRun ? `${branch}-dry-run-${process.pid}` : branch;
-    let publishRepo;
-    stamp('worktree');
-    try {
-      publishRepo = preparePublishWorktree(worktreeBranch);
-      claims[t.pgId].worktree = publishRepo;
-      claims[t.pgId].branch = branch;
-      saveClaims(claims);
-    } catch (e) {
-      claims[t.pgId].status = 'needs_human';
-      claims[t.pgId].error = `worktree: ${e.message}`;
-      saveClaims(claims);
-      log(`FAIL worktree ${t.pgId}`);
-      continue;
+    const sel = [];
+    for (const t of tasks) {
+      if (sel.length >= o.limit) break;
+      const c = claimable(t, claims);
+      if (!c.ok) { log(`skip ${t.pgId}: ${c.reason}`); continue; }
+      sel.push({ ...t, slug: c.slug });
     }
+    if (!sel.length) { log('nothing claimable this run'); return []; }
 
-    let res;
-    stamp('convert');
-    try { res = convert(publishRepo, t.pgId, t.slug); }
-    catch (e) { claims[t.pgId].status = 'needs_human'; claims[t.pgId].error = `convert: ${e.message}`; saveClaims(claims); log(`FAIL convert ${t.pgId}`); continue; }
-
-    // author-known gate
-    const known = registeredAuthorIds(publishRepo);
-    const used = articleAuthorIds(publishRepo, t.slug);
-    const missing = used.filter((a) => a && a !== 'undefined' && !known.has(a));
-    if (missing.length) { claims[t.pgId].status = 'needs_human'; claims[t.pgId].error = `unregistered author(s): ${[...new Set(missing)].join(',')}`; saveClaims(claims); log(`PARK ${t.pgId}: ${claims[t.pgId].error}`); continue; }
-
-    // illustration (best-effort enrichment, NEVER blocks the text publish).
-    // Generates an atmospheric hero + 0-3 inline infographics into the worktree.
-    // Any failure degrades to fewer/no images — the try/catch + illustrate()'s own
-    // fail-safe guarantees a broken image step can't sink a publishable article.
-    let ill = { hero: false, inline: 0, needsHero: false };
-    try {
-      ill = illustrate({ repo: publishRepo, slug: t.slug, flowDir: FLOW, log });
-      log(`illustrate ${t.pgId}: hero=${ill.hero} inline=${ill.inline}${ill.needsHero ? ' needs_hero' : ''}${ill.qaWarn ? ' qa_warn' : ''}${ill.note ? ` (${ill.note})` : ''}`);
-    } catch (e) { log(`illustrate ${t.pgId}: caught ${errTail(e, 80)} — publishing without images`); }
-    if (ill.needsHero) claims[t.pgId].needs_hero = true;
-
-    // build gate
-    stamp('build-gate');
-    const b = buildGate(publishRepo);
-    if (!b.ok) { claims[t.pgId].status = 'needs_human'; claims[t.pgId].error = `build: ${b.error}`; saveClaims(claims); log(`PARK ${t.pgId}: build failed`); continue; }
-
-    claims[t.pgId].zh = res.zh;
-    if (o.dryRun) {
-      claims[t.pgId].status = 'dry-run-ok';
-      saveClaims(claims);
-      cleanupWorktree(publishRepo);
-      log(`DRY-RUN OK ${t.pgId} (${t.slug}${res.zh ? '+zh' : ' EN-only'}) build✓ — not pushed`);
-    } else {
-      stamp('push');
-      const addPaths = ['data/articles'];
-      if (existsSync(join(publishRepo, 'scripts', 'generate-seo-pages.mjs'))) addPaths.push('scripts/generate-seo-pages.mjs');
-      // Commit the generated illustration assets (hero jpg + inline svgs) + the
-      // per-article plan so the published article actually carries its images.
-      if (ill.hero || ill.inline > 0) {
-        if (existsSync(join(publishRepo, 'public', 'images', 'blog'))) addPaths.push('public/images/blog');
-        if (existsSync(join(publishRepo, 'scripts', 'plans', `auto-${t.slug}.json`))) addPaths.push(`scripts/plans/auto-${t.slug}.json`);
-      }
-      gitIn(publishRepo, ['add', ...addPaths]);
-      gitIn(publishRepo, ['commit', '-q', '-m', `feat(articles): publish ${t.slug} (${WINNER} ${VERSION}) [autopilot]`]);
-      // --force: these seo/auto/<date>-<pgid> branches are disposable & autopilot-
-      // owned; a re-publish (or a stale remote branch created off an older main
-      // before other merges advanced it) otherwise rejects as non-fast-forward.
-      gitIn(publishRepo, ['push', '-u', '--force', 'origin', branch]);
-      // Open a PR so Vercel posts a Preview deployment + check; merge happens
-      // in --merge AFTER codex + chrome verify pass (the human-equivalent gate).
-      let prUrl = '';
-      try {
-        prUrl = sh('gh', ['pr', 'create', '--repo', 'xdawayer/oracle', '--base', 'main', '--head', branch,
-          '--title', `[autopilot] publish ${t.slug}`,
-          '--body', `Automated SEO publish of \`${t.pgId}\` → \`${t.slug}\`${res.zh ? ' (EN+ZH)' : ' (EN-only)'}.\n\nAwaiting codex review + chrome MCP verification on the Vercel preview before merge.`],
-          { cwd: publishRepo }).trim();
-      } catch (e) {
-        // A re-publish of the same date+pgId branch hits "a pull request already
-        // exists" — that's fine (we force-pushed the fixed content to it); reuse
-        // the existing PR URL so the verify/diff/notify steps have a real number.
-        if (/already exists/i.test(e.message || '')) {
-          try { prUrl = sh('gh', ['pr', 'view', branch, '--repo', 'xdawayer/oracle', '--json', 'url', '--jq', '.url'], { cwd: publishRepo }).trim(); }
-          catch { prUrl = ''; }
-        }
-        if (!prUrl) prUrl = `(pr-create-failed: ${e.message})`;
-      }
-      claims[t.pgId].status = 'pushed-preview';
-      claims[t.pgId].pr = prUrl;
-      stamp('pushed-preview');
-      log(`PUSHED preview ${branch} PR=${prUrl} — awaiting codex+chrome verify, then --merge`);
+    for (const t of sel) {
+      log(`claim ${t.pgId} → ${t.slug}`);
+      claims[t.pgId] = { status: 'active', slug: t.slug, owner: 'autopilot', plan: basename(plan) };
+      heartbeatClaim(claims, t.pgId, 'claim'); // Task 8: stage/lease so a stuck publish is observable
     }
+    saveClaims(claims);
+    return sel;
+  });
+
+  // PHASE 2 (UNLOCKED): the heavy per-task publish. Each ledger write is its own atomic stampClaim()
+  // (load-modify-save), so the minutes-long build/push never hold the claims lock — a concurrent
+  // --status/--merge no longer blocks on it and throws.
+  for (const t of picked) publishOne(o, t);
+}
+
+// Publish one already-claimed ('active') task: worktree → convert → author-gate → illustrate →
+// build → push+PR. Runs WITHOUT the claims lock; every ledger transition is an atomic stampClaim,
+// and the last stamped stage shows where a parked claim failed (--stale-report).
+function publishOne(o, t) {
+  const branch = `seo/auto/${new Date().toISOString().slice(0, 10)}-${t.pgId}`;
+  const worktreeBranch = o.dryRun ? `${branch}-dry-run-${process.pid}` : branch;
+
+  let publishRepo;
+  stampClaim(t.pgId, 'worktree');
+  try {
+    publishRepo = preparePublishWorktree(worktreeBranch);
+    stampClaim(t.pgId, 'worktree', { worktree: publishRepo, branch });
+  } catch (e) {
+    stampClaim(t.pgId, 'worktree', { status: 'needs_human', error: `worktree: ${e.message}` });
+    log(`FAIL worktree ${t.pgId}`);
+    return;
   }
+
+  let res;
+  stampClaim(t.pgId, 'convert');
+  try { res = convert(publishRepo, t.pgId, t.slug); }
+  catch (e) { stampClaim(t.pgId, 'convert', { status: 'needs_human', error: `convert: ${e.message}` }); log(`FAIL convert ${t.pgId}`); return; }
+
+  // author-known gate
+  const known = registeredAuthorIds(publishRepo);
+  const used = articleAuthorIds(publishRepo, t.slug);
+  const missing = used.filter((a) => a && a !== 'undefined' && !known.has(a));
+  if (missing.length) {
+    const reason = `unregistered author(s): ${[...new Set(missing)].join(',')}`;
+    stampClaim(t.pgId, 'author-known', { status: 'needs_human', error: reason });
+    log(`PARK ${t.pgId}: ${reason}`);
+    return;
+  }
+
+  // illustration (best-effort enrichment, NEVER blocks the text publish). A broken image step can't
+  // sink a publishable article — illustrate() and this try/catch both fail safe.
+  let ill = { hero: false, inline: 0, needsHero: false };
+  try {
+    ill = illustrate({ repo: publishRepo, slug: t.slug, flowDir: FLOW, log });
+    log(`illustrate ${t.pgId}: hero=${ill.hero} inline=${ill.inline}${ill.needsHero ? ' needs_hero' : ''}${ill.qaWarn ? ' qa_warn' : ''}${ill.note ? ` (${ill.note})` : ''}`);
+  } catch (e) { log(`illustrate ${t.pgId}: caught ${errTail(e, 80)} — publishing without images`); }
+  const heroPatch = ill.needsHero ? { needs_hero: true } : {};
+
+  // build gate
+  stampClaim(t.pgId, 'build-gate');
+  const b = buildGate(publishRepo);
+  if (!b.ok) { stampClaim(t.pgId, 'build-gate', { status: 'needs_human', error: `build: ${b.error}` }); log(`PARK ${t.pgId}: build failed`); return; }
+
+  if (o.dryRun) {
+    stampClaim(t.pgId, 'dry-run-ok', { status: 'dry-run-ok', zh: res.zh, ...heroPatch });
+    cleanupWorktree(publishRepo);
+    log(`DRY-RUN OK ${t.pgId} (${t.slug}${res.zh ? '+zh' : ' EN-only'}) build✓ — not pushed`);
+    return;
+  }
+
+  stampClaim(t.pgId, 'push');
+  const addPaths = ['data/articles'];
+  if (existsSync(join(publishRepo, 'scripts', 'generate-seo-pages.mjs'))) addPaths.push('scripts/generate-seo-pages.mjs');
+  // Commit the generated illustration assets (hero jpg + inline svgs) + the per-article plan.
+  if (ill.hero || ill.inline > 0) {
+    if (existsSync(join(publishRepo, 'public', 'images', 'blog'))) addPaths.push('public/images/blog');
+    if (existsSync(join(publishRepo, 'scripts', 'plans', `auto-${t.slug}.json`))) addPaths.push(`scripts/plans/auto-${t.slug}.json`);
+  }
+  gitIn(publishRepo, ['add', ...addPaths]);
+  gitIn(publishRepo, ['commit', '-q', '-m', `feat(articles): publish ${t.slug} (${WINNER} ${VERSION}) [autopilot]`]);
+  // --force: these seo/auto/<date>-<pgid> branches are disposable & autopilot-owned; a re-publish
+  // (or a stale remote branch off an older main) otherwise rejects as non-fast-forward.
+  gitIn(publishRepo, ['push', '-u', '--force', 'origin', branch]);
+  // Open a PR so Vercel posts a Preview deployment; merge happens in --merge after the gate passes.
+  let prUrl = '';
+  try {
+    prUrl = sh('gh', ['pr', 'create', '--repo', 'xdawayer/oracle', '--base', 'main', '--head', branch,
+      '--title', `[autopilot] publish ${t.slug}`,
+      '--body', `Automated SEO publish of \`${t.pgId}\` → \`${t.slug}\`${res.zh ? ' (EN+ZH)' : ' (EN-only)'}.\n\nAwaiting codex review + chrome MCP verification on the Vercel preview before merge.`],
+      { cwd: publishRepo }).trim();
+  } catch (e) {
+    // Re-publish of the same date+pgId branch hits "a pull request already exists" — fine (we
+    // force-pushed the fixed content); reuse the existing PR URL so verify/notify have a number.
+    if (/already exists/i.test(e.message || '')) {
+      try { prUrl = sh('gh', ['pr', 'view', branch, '--repo', 'xdawayer/oracle', '--json', 'url', '--jq', '.url'], { cwd: publishRepo }).trim(); }
+      catch { prUrl = ''; }
+    }
+    if (!prUrl) prUrl = `(pr-create-failed: ${e.message})`;
+  }
+  stampClaim(t.pgId, 'pushed-preview', { status: 'pushed-preview', pr: prUrl, zh: res.zh, ...heroPatch });
+  log(`PUSHED preview ${branch} PR=${prUrl} — awaiting codex+chrome verify, then --merge`);
 }
 
 function doMerge(o) {

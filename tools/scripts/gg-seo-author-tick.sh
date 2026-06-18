@@ -8,17 +8,29 @@
 # flow-mvp/_staging); the separate publish-only `seo-autopilot` lane picks up the ready drafts and
 # publishes them. Authoring failures never touch the publish path.
 #
-# ORPHAN CLEANUP (orchestrator SIGTERM handler, 2026-06-18 after three /review cycles): the LLM
+# ORPHAN CLEANUP (orchestrator SIGTERM handler, 2026-06-18 after four /review cycles): the LLM
 # workers are spawned detached by gg-llm-orchestrator.mjs (own session). On a gtimeout cap-hit,
 # gtimeout (no --foreground) SIGTERMs the WHOLE wrapper process group, which INCLUDES the
 # execFileSync'd orchestrator. The orchestrator traps SIGTERM/INT/HUP and killTree's its in-flight
 # detached worker groups (process.kill(-worker.pid)) BEFORE exiting, so no worker leaks. Verified
-# with REAL gtimeout: WITHOUT the handler the detached worker leaks; WITH it the worker is killed.
-# This tick deliberately does NOT reap process groups itself (a prior bash-reap was do-not-enable'd
-# twice — PGID reuse over the inter-fire window could SIGKILL an innocent recycled group, e.g. a
-# live Claude Code session, comm=claude).
+# with REAL gtimeout (control-vs-fix): WITHOUT the handler the detached worker leaks; WITH it the
+# worker is killed. The cleanup invariant holds on EVERY orchestrator spawn path incl. the
+# prompt-read-fail branch (round-4 fix). This tick deliberately does NOT reap process groups itself
+# (a prior bash-reap was do-not-enable'd twice — PGID reuse over the inter-fire window could SIGKILL
+# an innocent recycled group, e.g. a live Claude Code session, comm=claude).
 #
-# ⚠️ NOT YET ENABLED — pending re-/review of the SIGTERM-handler design. Enable only after it passes.
+# KNOWN LIMITATION (operator-stop, accepted 2026-06-18): the orchestrator cleanup only fires if it
+# RECEIVES the signal. The automatic unattended path (gtimeout cap-hit) is proven clean. But on a
+# MANUAL `launchctl bootout` / stop, launchd SIGTERMs only the bash wrapper — whose trap just removes
+# the lock (bash defers a trap during a foreground command, so it can't forward TERM to node) — then
+# SIGKILLs the job group, so the orchestrator can die by uncatchable SIGKILL before its handler runs,
+# briefly orphaning its detached workers. This is rare (only mid-authoring), self-limiting (a worker
+# finishes in minutes), and attended (the operator who issued the stop is present and can
+# `pkill -f gg-llm-orchestrator`). Accepted as-is; revisit with a per-worker self-timeout if it bites.
+#
+# ENABLED 2026-06-18 (gate passed round-4 /review, ship-after-fixes → Fix #1 landed; Fix #2 documented
+# above). RunAtLoad is FALSE, so loading does NOT instantly author — kickstart the first fire by hand
+# and watch one article, then it fires on StartInterval.
 # Install:
 #   cp tools/scripts/com.gengrowth.seo-author.plist ~/Library/LaunchAgents/
 #   launchctl enable    gui/$(id -u)/com.gengrowth.seo-author
@@ -100,7 +112,8 @@ printf '%s\n' "$AOUT" >> "$LOG"
 if [ "$_rc" -ne 0 ]; then
   # Capped/killed (rc=124) or errored — the fire is INCOMPLETE. Do NOT parse AOUT for AUTHORED/PARK:
   # a half-written _staging draft must never be announced as ready, or the publish lane would pick up
-  # a half-baked article. (Orphaned workers, if any, are reaped by the orchestrator's own watchdog.)
+  # a half-baked article. (Workers are reaped by the orchestrator's SIGTERM handler on a gtimeout
+  # cap-hit, or by its in-flight watchdog if it outlives the signal; see ORPHAN CLEANUP header note.)
   echo "$(date '+%F %T') author fire rc=$_rc (cap/err) — incomplete; not announcing (worker groups killed by the orchestrator SIGTERM handler)" >> "$LOG"
   [ "$_rc" -eq 124 ] && GG_LARK_NOTIFY_AT_OPS=1 "$SCRIPT_DIR/gg-lark-notify.sh" "⚠️ SEO author lane：撰写超 ${TICK_TIMEOUT}s 被硬杀，本炮放弃（草稿可能半成品，未上报）。"
 else

@@ -27,6 +27,12 @@ LOG="$LOG_DIR/$(date +%Y-%m-%d).log"
 AUTO="$SCRIPT_DIR/gg-seo-autopilot.mjs"
 BATCH="${GG_AUTHOR_BATCH:-1}"
 TICK_TIMEOUT="${GG_AUTHOR_TICK_TIMEOUT:-1800}"
+# Validate numeric + clamp (env-controlled, but guard against option-injection / chaos config:
+# a non-numeric or leading-'-' value would corrupt the gtimeout/--limit args).
+case "$BATCH" in ''|*[!0-9]*) BATCH=1 ;; esac
+case "$TICK_TIMEOUT" in ''|*[!0-9]*) TICK_TIMEOUT=1800 ;; esac
+[ "$BATCH" -ge 1 ] 2>/dev/null || BATCH=1; [ "$BATCH" -le 10 ] 2>/dev/null || BATCH=10
+[ "$TICK_TIMEOUT" -ge 60 ] 2>/dev/null || TICK_TIMEOUT=1800
 
 # ── PID-liveness mutex (macOS has no flock) ─────────────────────────────────
 # A previous authoring fire still alive (pid responds to kill -0) → skip. A dead pid (crash) →
@@ -48,8 +54,9 @@ if ! mkdir "$LOCK" 2>/dev/null; then
   echo "$(date '+%F %T') skip — lost author mutex race" >> "$LOG"
   exit 0
 fi
+# trap BEFORE the pid write + on INT/TERM too, so a signal between mkdir and pid-write still cleans up.
+trap 'rm -rf "$LOCK" 2>/dev/null' EXIT INT TERM
 echo "$$" > "$LOCK/pid"
-trap 'rm -rf "$LOCK" 2>/dev/null' EXIT
 
 # Reap orphaned authoring children ONLY when we took over a dead fire's lock (so we never kill a
 # human's manual orchestrator run during normal operation). Scoped to the exact script paths —
@@ -84,20 +91,25 @@ AOUT=$( ( set -a; . "$HOME/.config/gg/_gg.env" 2>/dev/null; set +a
   gtimeout "$TICK_TIMEOUT" node "$AUTO" --author --limit "$BATCH" ) 2>&1 )
 _rc=$?
 printf '%s\n' "$AOUT" >> "$LOG"
-if [ "$_rc" -eq 124 ]; then
-  echo "$(date '+%F %T') author fire hit ${TICK_TIMEOUT}s wall-clock cap — killed; next fire reaps orphans" >> "$LOG"
-  GG_LARK_NOTIFY_AT_OPS=1 "$SCRIPT_DIR/gg-lark-notify.sh" "⚠️ SEO author lane：撰写超 ${TICK_TIMEOUT}s 被硬杀，本炮放弃（下炮会清孤儿重试）。"
-fi
-
-# Feishu on a fresh park (needs a human) or a freshly-authored draft. The publish-only lane will
-# pick up an authored draft on its next fire and publish it.
-PARK=$(printf '%s\n' "$AOUT" | grep -oE 'PARK\(author\) .*' | head -1)
-DONE=$(printf '%s\n' "$AOUT" | grep -oE 'AUTHORED PG-[A-Z0-9-]+ [^—]*' | head -1)
-if [ -n "$PARK" ]; then
-  GG_LARK_NOTIFY_AT_PM=1 GG_LARK_NOTIFY_AT_OPS=1 "$SCRIPT_DIR/gg-lark-notify.sh" "⚠️ SEO author lane 写稿暂停（needs_human）：$PARK"
-fi
-if [ -n "$DONE" ]; then
-  "$SCRIPT_DIR/gg-lark-notify.sh" "✍️ SEO author lane 写好一篇：$DONE— 待 publish lane 发布"
+if [ "$_rc" -ne 0 ]; then
+  # Capped/killed (rc=124) or errored — the fire is INCOMPLETE. Do NOT parse AOUT for AUTHORED/PARK:
+  # a half-written _staging draft must never be announced as ready, or the publish lane would pick
+  # up a half-baked article. (KNOWN GAP pending the orphan-reap redesign: a cap-hit can still leak
+  # the orchestrator's detached claude/codex/gemini workers — DO NOT enable this lane until that
+  # inline PGID reap lands; see the /review do-not-enable verdict.)
+  echo "$(date '+%F %T') author fire rc=$_rc (cap/err) — incomplete; not announcing" >> "$LOG"
+  [ "$_rc" -eq 124 ] && GG_LARK_NOTIFY_AT_OPS=1 "$SCRIPT_DIR/gg-lark-notify.sh" "⚠️ SEO author lane：撰写超 ${TICK_TIMEOUT}s 被硬杀，本炮放弃（草稿可能半成品，未上报）。"
+else
+  # Clean exit only: Feishu on a fresh park (needs a human) or a freshly-authored draft. The
+  # publish-only lane picks up an authored draft on its next fire and publishes it.
+  PARK=$(printf '%s\n' "$AOUT" | grep -oE 'PARK\(author\) .*' | head -1)
+  DONE=$(printf '%s\n' "$AOUT" | grep -oE 'AUTHORED PG-[A-Z0-9-]+ [^—]*' | head -1)
+  if [ -n "$PARK" ]; then
+    GG_LARK_NOTIFY_AT_PM=1 GG_LARK_NOTIFY_AT_OPS=1 "$SCRIPT_DIR/gg-lark-notify.sh" "⚠️ SEO author lane 写稿暂停（needs_human）：$PARK"
+  fi
+  if [ -n "$DONE" ]; then
+    "$SCRIPT_DIR/gg-lark-notify.sh" "✍️ SEO author lane 写好一篇：$DONE— 待 publish lane 发布"
+  fi
 fi
 
 echo "$(date '+%F %T') author tick end (rc=$_rc)" >> "$LOG"

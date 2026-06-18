@@ -111,6 +111,34 @@ export function isAppBundleUrl(u) {
   return /\.(?:m?js|cjs|css|json)(?:[?#].*)?$/.test(s) || /\/_next\//.test(s) || /\/assets?\//.test(s);
 }
 
+// isKnownBenignPageError — allowance for ONE pre-existing global error present on
+// EVERY astrologywiki prerendered page (EN + ZH, prod AND preview): the <head>
+// font-ready script does `document.body.classList.…` inside
+// `document.fonts.ready.then()`; when fonts are cached the promise resolves before
+// <body> is parsed, so `document.body` is null and it throws. It is CAUGHT, purely
+// cosmetic (a font-class swap), verified on LIVE prod, and NOT a regression — so it
+// must not gate every publish. Matched TIGHTLY: the null-classList message AND a
+// stack frame in the inline HTML document (NOT a /_next//assets/ JS bundle), so a
+// genuine future classList bug in app code still fails the gate. The oracle root-fix
+// (index.html null-guard) removes the error at source on re-prerender; this stays a
+// belt-and-suspenders net for the ~145 already-prerendered pages. Disable with
+// GG_VERIFY_ALLOW_KNOWN_ERRORS=0.
+export function isKnownBenignPageError(message, stack) {
+  if (process.env.GG_VERIFY_ALLOW_KNOWN_ERRORS === '0') return false;
+  const msg = String(message || '');
+  const isNullClassList =
+    /Cannot read properties of null \(reading 'classList'\)/.test(msg) ||
+    /null is not an object \(evaluating '[^']*\.classList'\)/.test(msg); // WebKit phrasing
+  if (!isNullClassList) return false;
+  // Must originate from the inline document script, not an app bundle. A bundle
+  // frame looks like `…/_next/…`, `…/assets/…`, or `….js:line:col`; the inline
+  // frame is `at https://host/en/wiki/slug:135:23` (the document URL, no .js).
+  const s = String(stack || '');
+  if (!s) return true; // no stack → trust the (already narrow) message match
+  const inBundle = /\/_next\/|\/assets?\/|\.(?:m?js|cjs)(?:[:?]|$)/i.test(s);
+  return !inBundle;
+}
+
 // Heuristic: is this an auth / vercel-login wall (bypass wrong/expired)?
 export function looksLikeAuthWall({ url, title, bodyText }) {
   const u = String(url || '').toLowerCase();

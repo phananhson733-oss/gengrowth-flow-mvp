@@ -43,6 +43,7 @@
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync, statSync } from 'node:fs';
 import { stripPreH1 } from './lib/strip-preamble.mjs';
+import { WORKER_CWD } from './lib/worker-cwd.mjs';
 
 // Defaults mirror the agentic-rescue knobs in gg-seo-autopilot.mjs
 // (GG_AGENTIC_MODEL || 'claude-sonnet-4-6', GG_AGENTIC_EFFORT || 'high') so the
@@ -148,6 +149,8 @@ function runWorker({ model, effort, prompt, timeoutMs }) {
     || ['/opt/homebrew/bin/claude'].find(existsSync)
     || 'claude';
   const res = spawnSync(bin, ['-p', '--model', model, '--effort', effort], {
+    // cwd outside the repo so the repair worker doesn't inherit the project CLAUDE.md (see worker-cwd.mjs).
+    cwd: WORKER_CWD,
     input: prompt,
     encoding: 'utf8',
     timeout: timeoutMs,

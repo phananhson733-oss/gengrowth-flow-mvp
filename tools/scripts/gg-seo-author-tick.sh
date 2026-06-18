@@ -8,12 +8,11 @@
 # (writes drafts to flow-mvp/_staging); the separate publish-only `seo-autopilot` lane picks up the
 # ready drafts and publishes them. Authoring failures never touch the publish path.
 #
-# ⚠️ DO NOT ENABLE YET — 2026-06-18 /review (3 lenses + Codex) verdict = do-not-enable. The core
-# safety feature (reaping the orchestrator's DETACHED claude/codex/gemini workers) is broken on the
-# two paths that matter: the reap never runs on a gtimeout cap-hit (script exits 0 → trap clears the
-# lock → next fire sees no stale lock), and even when it runs it greps the node wrappers and MISSES
-# the real worker process groups. Fix required before enabling: orchestrator writes its detached
-# worker PGIDs to a pidfile; the tick kills those PGIDs INLINE on rc=124 and on stale-takeover.
+# ⚠️ NOT YET ENABLED — pending a re-/review of the orphan-reap fix. The original lane failed /review
+# (do-not-enable, 2026-06-18). Fixed: the orchestrator now records each DETACHED worker's PGID to a
+# pidfile (GG_AUTHOR_WORKER_PIDFILE) and this tick reaps those PGID groups INLINE on a gtimeout
+# cap-hit AND on stale-takeover (precise kill -- -<pgid>, never `pkill claude`), plus a start-time
+# mutex guard against PID reuse. Re-review before enabling.
 #
 # Install (DISABLED until you explicitly enable — do NOT auto-run):
 #   cp tools/scripts/com.gengrowth.seo-author.plist ~/Library/LaunchAgents/
@@ -135,13 +134,14 @@ AOUT=$( ( set -a; . "$HOME/.config/gg/_gg.env" 2>/dev/null; set +a
 _rc=$?
 printf '%s\n' "$AOUT" >> "$LOG"
 if [ "$_rc" -ne 0 ]; then
-  # Capped/killed (rc=124) or errored — the fire is INCOMPLETE. Do NOT parse AOUT for AUTHORED/PARK:
-  # a half-written _staging draft must never be announced as ready, or the publish lane would pick
-  # up a half-baked article. (KNOWN GAP pending the orphan-reap redesign: a cap-hit can still leak
-  # the orchestrator's detached claude/codex/gemini workers — DO NOT enable this lane until that
-  # inline PGID reap lands; see the /review do-not-enable verdict.)
-  echo "$(date '+%F %T') author fire rc=$_rc (cap/err) — incomplete; not announcing" >> "$LOG"
-  [ "$_rc" -eq 124 ] && GG_LARK_NOTIFY_AT_OPS=1 "$SCRIPT_DIR/gg-lark-notify.sh" "⚠️ SEO author lane：撰写超 ${TICK_TIMEOUT}s 被硬杀，本炮放弃（草稿可能半成品，未上报）。"
+  # Capped/killed (rc=124) or errored — the fire is INCOMPLETE. (1) Reap the orchestrator's DETACHED
+  # LLM-worker groups INLINE NOW (gtimeout only SIGTERMs the direct --author child; the detached
+  # workers survive it). (2) Do NOT parse AOUT for AUTHORED/PARK — a half-written _staging draft must
+  # never be announced as ready, or the publish lane would pick up a half-baked article.
+  echo "$(date '+%F %T') author fire rc=$_rc (cap/err) — incomplete; reaping orphan worker groups inline" >> "$LOG"
+  reap_worker_pgids
+  pkill -f "$SCRIPT_DIR/gg-llm-orchestrator.mjs" 2>/dev/null
+  [ "$_rc" -eq 124 ] && GG_LARK_NOTIFY_AT_OPS=1 "$SCRIPT_DIR/gg-lark-notify.sh" "⚠️ SEO author lane：撰写超 ${TICK_TIMEOUT}s 被硬杀，孤儿已就地清理，本炮放弃。"
 else
   # Clean exit only: Feishu on a fresh park (needs a human) or a freshly-authored draft. The
   # publish-only lane picks up an authored draft on its next fire and publishes it.

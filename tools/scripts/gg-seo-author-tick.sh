@@ -8,16 +8,17 @@
 # flow-mvp/_staging); the separate publish-only `seo-autopilot` lane picks up the ready drafts and
 # publishes them. Authoring failures never touch the publish path.
 #
-# ORPHAN CLEANUP (watchdog-only, 2026-06-18 after two /review cycles): the LLM workers are spawned
-# detached by gg-llm-orchestrator.mjs. On a gtimeout cap-hit, gtimeout SIGTERMs only the `node
-# --author` wrapper; the detached orchestrator stays ALIVE (reparented to init) and its OWN watchdog
-# (setInterval killTree, GG_GEN_HARD_MS 20min / 3min CPU-stall) reaps its worker groups — verified:
-# an orphaned orchestrator's watchdog still fires and kills the workers. So this tick does NOT try to
-# reap process groups itself (a prior bash-reap design was do-not-enable'd because PGID reuse over
-# the inter-fire window could SIGKILL an innocent recycled group, e.g. a live Claude Code session).
-# Worst case: a few leaked workers self-terminate within ~20min via the orchestrator's own ceiling.
+# ORPHAN CLEANUP (orchestrator SIGTERM handler, 2026-06-18 after three /review cycles): the LLM
+# workers are spawned detached by gg-llm-orchestrator.mjs (own session). On a gtimeout cap-hit,
+# gtimeout (no --foreground) SIGTERMs the WHOLE wrapper process group, which INCLUDES the
+# execFileSync'd orchestrator. The orchestrator traps SIGTERM/INT/HUP and killTree's its in-flight
+# detached worker groups (process.kill(-worker.pid)) BEFORE exiting, so no worker leaks. Verified
+# with REAL gtimeout: WITHOUT the handler the detached worker leaks; WITH it the worker is killed.
+# This tick deliberately does NOT reap process groups itself (a prior bash-reap was do-not-enable'd
+# twice — PGID reuse over the inter-fire window could SIGKILL an innocent recycled group, e.g. a
+# live Claude Code session, comm=claude).
 #
-# ⚠️ NOT YET ENABLED — pending re-/review of the watchdog-only design. Enable only after that passes.
+# ⚠️ NOT YET ENABLED — pending re-/review of the SIGTERM-handler design. Enable only after it passes.
 # Install:
 #   cp tools/scripts/com.gengrowth.seo-author.plist ~/Library/LaunchAgents/
 #   launchctl enable    gui/$(id -u)/com.gengrowth.seo-author
@@ -83,9 +84,9 @@ echo "$(date '+%F %T') author tick start (pid $$, batch $BATCH, cap ${TICK_TIMEO
 }
 
 # ── author one small batch, HARD-timeboxed ──────────────────────────────────
-# gtimeout is the wall-clock cap on the whole fire. On cap-hit it SIGTERMs the `node --author`
-# wrapper; the detached orchestrator + its workers are cleaned up by the orchestrator's OWN watchdog
-# (see ORPHAN CLEANUP note in the header) — this tick deliberately does NOT kill process groups.
+# gtimeout is the wall-clock cap on the whole fire. On cap-hit (no --foreground) it SIGTERMs the
+# whole process group incl. the execFileSync'd orchestrator, which traps SIGTERM and kills its
+# detached worker groups before exiting (see ORPHAN CLEANUP note) — so this tick never kills groups.
 # NOTE: GG_AUTOPILOT_MODE must NOT be publish-only here (the driver refuses --author in publish-only),
 # so it's unset; this lane never publishes (no --scan/--merge anywhere in this script).
 AOUT=$( ( set -a; . "$HOME/.config/gg/_gg.env" 2>/dev/null; set +a

@@ -368,6 +368,7 @@ function runAttempt(model, promptPath, outputPath, opts = {}) {
 
     child.on('close', (code) => {
       clearInterval(watchdog);
+      liveWorkers.delete(child);
       const duration_s = Number(((Date.now() - t0) / 1000).toFixed(1));
       // Watchdog-killed → fail this attempt loudly so the retry loop moves on.
       if (killedReason) {

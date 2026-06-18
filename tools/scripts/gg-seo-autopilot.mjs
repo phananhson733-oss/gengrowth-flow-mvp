@@ -1049,11 +1049,15 @@ function doScanLocked(o) {
   for (const t of picked) {
     log(`claim ${t.pgId} → ${t.slug}`);
     claims[t.pgId] = { status: 'active', slug: t.slug, owner: 'autopilot', plan: basename(plan) };
-    saveClaims(claims);
+    // Task 8: stamp stage + a renewable lease so a stuck/crashed publish is observable
+    // via --stale-report (the last stamp's stage shows where a parked claim failed).
+    const stamp = (stage) => { heartbeatClaim(claims, t.pgId, stage); saveClaims(claims); };
+    stamp('claim');
 
     const branch = `seo/auto/${new Date().toISOString().slice(0, 10)}-${t.pgId}`;
     const worktreeBranch = o.dryRun ? `${branch}-dry-run-${process.pid}` : branch;
     let publishRepo;
+    stamp('worktree');
     try {
       publishRepo = preparePublishWorktree(worktreeBranch);
       claims[t.pgId].worktree = publishRepo;
@@ -1068,6 +1072,7 @@ function doScanLocked(o) {
     }
 
     let res;
+    stamp('convert');
     try { res = convert(publishRepo, t.pgId, t.slug); }
     catch (e) { claims[t.pgId].status = 'needs_human'; claims[t.pgId].error = `convert: ${e.message}`; saveClaims(claims); log(`FAIL convert ${t.pgId}`); continue; }
 
@@ -1089,6 +1094,7 @@ function doScanLocked(o) {
     if (ill.needsHero) claims[t.pgId].needs_hero = true;
 
     // build gate
+    stamp('build-gate');
     const b = buildGate(publishRepo);
     if (!b.ok) { claims[t.pgId].status = 'needs_human'; claims[t.pgId].error = `build: ${b.error}`; saveClaims(claims); log(`PARK ${t.pgId}: build failed`); continue; }
 
@@ -1099,6 +1105,7 @@ function doScanLocked(o) {
       cleanupWorktree(publishRepo);
       log(`DRY-RUN OK ${t.pgId} (${t.slug}${res.zh ? '+zh' : ' EN-only'}) build✓ — not pushed`);
     } else {
+      stamp('push');
       const addPaths = ['data/articles'];
       if (existsSync(join(publishRepo, 'scripts', 'generate-seo-pages.mjs'))) addPaths.push('scripts/generate-seo-pages.mjs');
       // Commit the generated illustration assets (hero jpg + inline svgs) + the
@@ -1133,7 +1140,7 @@ function doScanLocked(o) {
       }
       claims[t.pgId].status = 'pushed-preview';
       claims[t.pgId].pr = prUrl;
-      saveClaims(claims);
+      stamp('pushed-preview');
       log(`PUSHED preview ${branch} PR=${prUrl} — awaiting codex+chrome verify, then --merge`);
     }
   }

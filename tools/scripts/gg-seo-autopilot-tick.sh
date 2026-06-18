@@ -125,10 +125,13 @@ process.exit(1);
   fi
 
   # ── DEFAULT (2026-06-18): deterministic node gate ──
-  # gg-preview-gate.mjs self-enforces per-step hard timeouts and maps any timeout→exit 2.
-  # gtimeout is a loose wall-clock BACKSTOP (above the gate's worst-case internal sum) against
-  # a wedged process. Exit contract maps 1:1: 0=published, 1=nothing-pending, 2=gate-failed.
-  gtimeout "${GG_PREVIEW_GATE_TIMEOUT:-3600}" node "$SCRIPT_DIR/gg-preview-gate.mjs" --branch "$BRANCH" >> "$LOG" 2>&1
+  # Source _gg.env in a subshell so the gate inherits VERCEL_AUTOMATION_BYPASS_SECRET (which
+  # preview-verify reads from ENV — never argv, so the secret stays out of `ps` and the log) plus
+  # any path overrides. gg-preview-gate.mjs self-enforces per-step hard timeouts and maps any
+  # timeout→exit 2; gtimeout is a wall-clock BACKSTOP set above the gate's summed per-step ceilings
+  # (~3560s, so 4500 leaves real headroom). Exit contract maps 1:1: 0=published, 1=nothing, 2=failed.
+  ( set -a; . "$HOME/.config/gg/_gg.env" 2>/dev/null; set +a
+    gtimeout "${GG_PREVIEW_GATE_TIMEOUT:-4500}" node "$SCRIPT_DIR/gg-preview-gate.mjs" --branch "$BRANCH" ) >> "$LOG" 2>&1
   _rc=$?
   case "$_rc" in
     0|1|2) return "$_rc" ;;

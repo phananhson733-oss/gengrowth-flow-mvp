@@ -201,13 +201,17 @@ export function pickVercelCommitState(json) {
   // satisfy readiness).
   const vercel = statuses.filter((s) => /^vercel\b/i.test(String((s && s.context) || '').trim()));
   if (!vercel.length) return 'none';
-  let sawSuccess = false;
+  // ALL matched Vercel contexts must be success to report readiness (codex review):
+  // a monorepo can post several Vercel statuses; returning 'success' while another is
+  // still pending would pass the gate before every preview is built. Failure still
+  // takes precedence (fail-closed); any non-success ⇒ pending (keep polling).
+  let allSuccess = true;
   for (const s of vercel) {
     const k = classifyState(s && s.state);
     if (k === 'failure') return 'failure';
-    if (k === 'success') sawSuccess = true;
+    if (k !== 'success') allSuccess = false;
   }
-  return sawSuccess ? 'success' : 'pending';
+  return allSuccess ? 'success' : 'pending';
 }
 
 // parseCommitSha — pull .sha from a `repos/<repo>/commits/<ref>` response.

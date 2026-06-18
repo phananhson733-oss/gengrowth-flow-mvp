@@ -293,11 +293,12 @@ export async function runGate(o, deps = {}) {
     }
   }
 
-  // (3) chrome verify (en + zh when claim has zh).
-  const bypass = process.env.VERCEL_AUTOMATION_BYPASS_SECRET || '';
-  const verifyArgs = ['--preview-url', previewUrl, '--slug', String(claim.slug), '--bypass-secret', bypass, '--json'];
+  // (3) chrome verify (en + zh when claim has zh). The bypass secret is inherited by verify from
+  // the ENV (it reads VERCEL_AUTOMATION_BYPASS_SECRET as its default) — NOT passed as argv, so it
+  // never lands in `ps`, the gate plan, or the log.
+  const verifyArgs = ['--preview-url', previewUrl, '--slug', String(claim.slug), '--json'];
   if (hasZh) verifyArgs.push('--zh');
-  log(`verify: node ${B.previewVerify} ${redact(verifyArgs).join(' ')} (timeout ${o.verifyTimeoutMs}ms)`);
+  log(`verify: node ${B.previewVerify} ${verifyArgs.join(' ')} (timeout ${o.verifyTimeoutMs}ms)`);
   if (!o.dryRun) {
     const vr = await node(B.previewVerify, verifyArgs, { timeoutMs: o.verifyTimeoutMs });
     if (vr.timedOut) {
@@ -332,23 +333,30 @@ export async function runGate(o, deps = {}) {
   }
 
   // (4b) optional codex diff review — BEST-EFFORT, never blocks on tooling failure.
+  let codexEvidence = B.codex ? 'no-verdict' : 'skipped-no-bin';
   if (B.codex) {
     log(`codex: ${B.codex} (best-effort, pr=${claim.pr || '?'}, timeout ${o.codexTimeoutMs}ms)`);
     if (!o.dryRun) {
       const cr = await node(B.codex, ['--repo', o.repo, '--pr', String(claim.pr || '')],
         { timeoutMs: o.codexTimeoutMs });
       const cls = classifyCodex(cr);
+      codexEvidence = cls.verdict === 'PASS' ? 'ran-pass'
+        : cls.verdict === 'FAIL' ? 'ran-fail' : `skipped:${cls.reason}`;
       if (cls.verdict === 'FAIL') {
         return gateFail(o, B, deps, pgId, claim, `codex completed with ${cls.reason}`, plan);
       }
       log(`codex: ${cls.verdict}${cls.reason ? ` (${cls.reason})` : ''} — not blocking`);
+    } else {
+      codexEvidence = 'dry-run';
     }
   } else {
     log('codex: SKIPPED (no GG_CODEX_BIN configured) — best-effort, not blocking');
   }
 
   // (5) all REQUIRED gates passed → mark-verified + merge (success notify owned by --merge).
-  const evidence = `chrome preview + 3-dimension review panel passed (codex: ${B.codex ? 'ran' : 'skipped-tooling'})`;
+  // evidence records the ACTUAL codex outcome (ran-pass / ran-fail / skipped:<reason> / no-bin / dry-run),
+  // not mere bin presence — so post-incident forensics on a prod auto-merge aren't misled.
+  const evidence = `chrome preview + 3-dimension review panel passed (codex: ${codexEvidence})`;
   log(`final: mark-verified --branch ${o.branch} --preview-url ${previewUrl} --evidence "${evidence}"`);
   log(`final: merge --branch ${o.branch} (deploys prod; --merge owns success notify)`);
 

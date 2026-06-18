@@ -32,7 +32,9 @@
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 
-const DIMENSIONS = new Set(['astrology', 'schema', 'links-seo']);
+// Exported so the gate (gg-preview-gate.mjs REVIEW_DIMENSIONS) can be regression-checked against
+// this single source of truth — the two lists must not drift.
+export const DIMENSIONS = new Set(['astrology', 'schema', 'links-seo']);
 // Default to a frontier Claude model (Opus 4.8 reviews — matches gg-author-review's
 // OPUS_CRITIC_MODEL). Overridable via --model / GG_REVIEW_WORKER_MODEL.
 const DEFAULT_MODEL = process.env.GG_REVIEW_WORKER_MODEL || 'claude-opus-4-8';

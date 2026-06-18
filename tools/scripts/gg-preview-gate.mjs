@@ -371,7 +371,11 @@ export async function runGate(o, deps = {}) {
     return gateFail(o, B, deps, pgId, claim,
       `mark-verified failed: ${mv.timedOut ? 'timeout' : tail(mv.stderr) || `exit ${mv.code}`}`, plan);
   }
-  const mg = await node(B.autopilot, ['--merge', '--branch', o.branch], { timeoutMs: o.statusTimeoutMs });
+  // --merge does real work (gh pr merge + worktree cleanup + oracle sync + index submit) that can
+  // exceed the 60s status budget; give it a dedicated wall (GG_GATE_MERGE_TIMEOUT_MS, default 5min)
+  // so the gate doesn't SIGKILL a merge mid-flight and diverge the ledger from GitHub.
+  const mergeTimeoutMs = Number(process.env.GG_GATE_MERGE_TIMEOUT_MS) || 300000;
+  const mg = await node(B.autopilot, ['--merge', '--branch', o.branch], { timeoutMs: mergeTimeoutMs });
   if (mg.timedOut || mg.code !== 0) {
     return gateFail(o, B, deps, pgId, claim,
       `merge failed: ${mg.timedOut ? 'timeout' : tail(mg.stderr) || `exit ${mg.code}`}`, plan);

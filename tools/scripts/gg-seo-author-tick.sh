@@ -50,7 +50,7 @@ mkdir -p "$LOG_DIR"
 LOG="$LOG_DIR/$(date +%Y-%m-%d).log"
 AUTO="$SCRIPT_DIR/gg-seo-autopilot.mjs"
 BATCH="${GG_AUTHOR_BATCH:-1}"
-TICK_TIMEOUT="${GG_AUTHOR_TICK_TIMEOUT:-1800}"
+TICK_TIMEOUT="${GG_AUTHOR_TICK_TIMEOUT:-3600}"
 # Validate numeric + clamp (env-controlled, but guard against option-injection / chaos config:
 # a non-numeric or leading-'-' value would corrupt the gtimeout/--limit args).
 case "$BATCH" in ''|*[!0-9]*) BATCH=1 ;; esac

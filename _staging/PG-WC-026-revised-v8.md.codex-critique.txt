@@ -1,0 +1,8 @@
+- 赛程硬伤：文中写 Spain-Cape Verde 为 6月18日、Spain-Saudi 为 6月22日，但 Group H 赛程显示分别是 2026-06-15 和 2026-06-21 → 全文统一日期，并说明是否按北京时间换算。参考：[Group H](https://en.wikipedia.org/wiki/2026_FIFA_World_Cup_Group_H)
+- 核心占星错误：“Jupiter in Cancer squares Capricorn”反复出现，但 Cancer 与 Capricorn 是对冲，不是四分相 → 改成 opposition，并重写“Cancer-Capricorn cardinal square”相关论证。
+- “Capricorn-dominant institutional chart”缺乏证明；RFEF 采用 1913-09-29 时，太阳在 Libra，不能直接说 Capricorn 主导 → 增加具体出生图数据、度数和采用日期/时间依据，或降级为“Capricorn-related factor”。参考：[RFEF founding](https://en.wikipedia.org/wiki/Royal_Spanish_Football_Federation)
+- “June 22 most exact alignment”没有给出 Jupiter 度数或 natal Capricorn 点位 → 加入精确度数、orb、触发对象；若无法证明，删掉“most exact”。
+- “2010 configuration mirrors 2026”太重但无证据，且 2010 的关键天象并非 Jupiter in Cancer → 改为具体比较 2010/2026 的行星、度数和比赛日期，或删除“mirrors”。
+- “must-win”表述夸大：48队赛制下小组第三仍可能晋级，6月21 对 Saudi 不一定是数学意义上的必须赢 → 改为“high-pressure second group match”或用当时积分形势精确说明。
+- Greene/Hand/Pew 被当作权威装饰，未真正支撑 Spain 这张盘 → 换成具体书名/概念/应用句，或删掉 Pew 段落，把篇幅用于 RFEF chart 与比赛观察指标。
+- 读者搜索意图需要更直接：文章有大量心理化抽象，但缺少“Spain 2026 astrology prediction / match outlook”式可用结论 → 开头增加简明结论框：关键日期、主要 transit、风险、机会、对 Saudi/Uruguay 两场的具体观察点。

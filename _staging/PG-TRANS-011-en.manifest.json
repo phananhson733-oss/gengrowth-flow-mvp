@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-TRANS-011",
+  "entity": "Chiron in Taurus 2026",
+  "target_keyword": "chiron in taurus 2026 astrology",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-06-21T11:10:56.444Z",
+  "content_sha256_short": "d2a2c22751bea530",
+  "source_path": "_staging/PG-TRANS-011-src.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-TRANS-011-en.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 1661,
+      "wikilinks": 4,
+      "tbdLinks": 4
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

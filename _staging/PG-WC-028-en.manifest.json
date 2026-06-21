@@ -1,17 +1,17 @@
 {
   "schema_version": "1",
   "page_id": "PG-WC-028",
-  "entity": "scotland brazil world cup astrology",
+  "entity": "Scotland Brazil World Cup Astrology",
   "target_keyword": "scotland brazil world cup astrology",
   "template": "Definition",
   "tier": "T2",
   "track": "量产线",
   "generated_by": "unknown",
   "prompt_version": "v8",
-  "generated_at": "2026-06-21T11:02:59.798Z",
-  "content_sha256_short": "003697777a8dedb3",
-  "source_path": "_staging/PG-WC-028-claude-v8.md",
-  "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-WC-028-en.md",
+  "generated_at": "2026-06-21T11:10:33.966Z",
+  "content_sha256_short": "ad81c35211a8236d",
+  "source_path": "_staging/PG-WC-028-src.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-WC-028-en.md",
   "phase2_checks": {
     "overall": "pass",
     "structure": {
@@ -19,7 +19,7 @@
       "h2Count": 11,
       "h3Count": 0,
       "h4Count": 0,
-      "words": 2046,
+      "words": 1790,
       "wikilinks": 5,
       "tbdLinks": 5
     },

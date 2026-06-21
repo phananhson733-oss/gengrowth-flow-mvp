@@ -1,28 +1,3 @@
----
-title: Scotland Brazil World Cup Astrology
-slug: scotland-brazil-world-cup-astrology
-date: 2026-06-21
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T2
-track: 量产线
-page_id: PG-WC-028
-author_id: "elena-vane"
-author_display_name: "Elena Vane"
-target_keyword: scotland brazil world cup astrology
-associated_keywords:
-  - scotland world cup 2026 astrology
-  - brazil world cup 2026 astrology
-  - scotland vs brazil astrology
-  - group c world cup 2026
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-06-21T11:10:33.966Z
-content_sha256_short: ad81c35211a8236d
-phase2_checks: all-pass
----
-
 # Scotland vs Brazil World Cup Astrology: Reading the June 24 Group C Decider as a Season of Themes
 
 ## What Is Scotland Brazil World Cup Astrology?

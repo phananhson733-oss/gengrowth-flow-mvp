@@ -130,13 +130,18 @@ export function isKnownBenignPageError(message, stack) {
     /Cannot read properties of null \(reading 'classList'\)/.test(msg) ||
     /null is not an object \(evaluating '[^']*\.classList'\)/.test(msg); // WebKit phrasing
   if (!isNullClassList) return false;
-  // Must originate from the inline document script, not an app bundle. A bundle
-  // frame looks like `…/_next/…`, `…/assets/…`, or `….js:line:col`; the inline
-  // frame is `at https://host/en/wiki/slug:135:23` (the document URL, no .js).
+  // REQUIRE a stack (fail-closed): a bare message with no stack is NOT trusted —
+  // a real app-code classList bug that surfaces without a usable stack must still
+  // fail the gate. (codex review: the no-stack allowance was a fail-open hole.)
   const s = String(stack || '');
-  if (!s) return true; // no stack → trust the (already narrow) message match
-  const inBundle = /\/_next\/|\/assets?\/|\.(?:m?js|cjs)(?:[:?]|$)/i.test(s);
-  return !inBundle;
+  if (!s) return false;
+  // Any frame in a JS/CSS bundle disqualifies it (that's real app code, not the
+  // inline <head> font script): `…/_next/…`, `…/assets/…`, or a `….js:line:col`.
+  if (/\/_next\/|\/assets?\/|\.(?:m?js|cjs|css)(?:[:?]|$)/i.test(s)) return false;
+  // POSITIVELY require an inline-document frame: `at <https doc url>:line:col`
+  // where the url has no script/style extension (the <head> inline font script).
+  // A genuine bug lives in a bundle and won't reach here.
+  return /\bat\s+https?:\/\/[^\s)]+?:\d+:\d+/i.test(s);
 }
 
 // Heuristic: is this an auth / vercel-login wall (bypass wrong/expired)?
@@ -194,8 +199,12 @@ export function wirePageListeners(page, errorBuffers, warnings = []) {
   };
   // A known-benign error is NOT silently dropped — it's recorded as a visible
   // warning (surfaced in --json `warnings`) so the allowance stays auditable.
+  // Redact the bypass secret AT SOURCE: page.__activeUrl (the EN nav url) carries
+  // ?x-vercel-protection-bypass=<secret>, so result.warnings must never hold it raw
+  // — every downstream consumer/log path is then safe, not just --json output.
+  const redactSecret = (s) => String(s ?? '').replace(/(x-vercel-protection-bypass=)[^&\s"'<]+/gi, '$1<redacted>');
   const noteBenign = (message) => {
-    warnings.push(`known-benign global error ignored on ${page.__activeUrl}: ${message}`);
+    warnings.push(redactSecret(`known-benign global error ignored on ${page.__activeUrl}: ${message}`));
   };
 
   page.on('pageerror', (err) => {
@@ -217,8 +226,11 @@ export function wirePageListeners(page, errorBuffers, warnings = []) {
       if (isAppBundleUrl(text)) push(`failed app-bundle load (console): ${text}`);
       return;
     }
-    // Same known-benign global error, should it surface via console rather than pageerror.
-    if (isKnownBenignPageError(text, '')) { noteBenign(text); return; }
+    // NOTE: the known-benign classList allowance is intentionally NOT applied to
+    // console errors — they carry no usable browser stack, so they can't satisfy
+    // isKnownBenignPageError's inline-document-frame requirement, and allowing them
+    // on message alone would be a fail-open hole (codex review). The real error is
+    // an uncaught pageerror (handled above), so nothing legitimate is lost here.
     // Uncaught/Unhandled errors in console.
     if (/uncaught|unhandled|TypeError|ReferenceError|SyntaxError/i.test(text)) {
       push(`console error: ${text}`);

@@ -356,8 +356,15 @@ test('isKnownBenignPageError: classList-null + inline-document stack → benign'
   assert.equal(isKnownBenignPageError(CLASSLIST_MSG, INLINE_STACK), true);
 });
 
-test('isKnownBenignPageError: classList-null with NO stack → benign (narrow message)', () => {
-  assert.equal(isKnownBenignPageError(CLASSLIST_MSG, ''), true);
+test('isKnownBenignPageError: classList-null with NO stack → NOT benign (fail-closed)', () => {
+  // A bare message with no usable stack must still fail the gate — a real app-code
+  // classList bug without a stack must not be silently allowed (codex review).
+  assert.equal(isKnownBenignPageError(CLASSLIST_MSG, ''), false);
+});
+
+test('isKnownBenignPageError: classList-null with a non-document stack → NOT benign', () => {
+  // Non-empty stack but no `at <https doc url>:line:col` frame → not trusted.
+  assert.equal(isKnownBenignPageError(CLASSLIST_MSG, 'TypeError: boom\n    at <anonymous>'), false);
 });
 
 test('isKnownBenignPageError: classList-null from a JS BUNDLE → NOT benign (still fails gate)', () => {
@@ -411,4 +418,22 @@ test('GATE LIVE: classList pageerror from a JS BUNDLE → verifyPage STILL ok:fa
   const res = await verifyPage(page, navUrl, { errorBuffers });
   assert.equal(res.ok, false, 'a classList error originating in app code MUST still fail the gate');
   assert.match(res.failReason, /uncaught JS exception/);
+});
+
+test('GATE LIVE: benign-warning redacts the bypass secret AT SOURCE (not just JSON output)', async () => {
+  const errorBuffers = new Map();
+  const warnings = [];
+  const secret = 'SUPER-SECRET-BYPASS';
+  const navUrl = `https://preview.example.com/en/wiki/slug?x-vercel-protection-bypass=${secret}&x-vercel-set-bypass-cookie=true`;
+  const page = makeFakePage({
+    queuedEvents: [{ type: 'pageerror', payload: { message: CLASSLIST_MSG, stack: INLINE_STACK } }],
+  });
+  wirePageListeners(page, errorBuffers, warnings);
+  errorBuffers.set(navUrl, []);
+  page.__activeUrl = navUrl;
+
+  await verifyPage(page, navUrl, { errorBuffers });
+  assert.equal(warnings.length, 1);
+  assert.ok(!warnings[0].includes(secret), 'result.warnings must NOT contain the raw bypass secret');
+  assert.match(warnings[0], /x-vercel-protection-bypass=<redacted>/);
 });

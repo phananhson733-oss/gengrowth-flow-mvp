@@ -134,12 +134,20 @@ export function parseStatus(json) {
 // times out forever. These helpers add the commit-status (readiness) + comment (URL)
 // path. All pure + fixture-testable; the poll loop shells out via runGh.
 
-// normalizeUrl — ensure an https:// scheme. The bot blob stores a bare hostname
-// (`oracle-git-…vercel.app`); the markdown link is already fully-qualified.
-function normalizeUrl(u) {
-  const s = String(u || '').trim();
-  if (!s) return null;
-  return /^https?:\/\//i.test(s) ? s : `https://${s}`;
+// toVercelPreviewUrl — normalize + VALIDATE. The bot blob stores a bare hostname
+// (`oracle-git-…vercel.app`); the markdown link is fully-qualified. Returns the URL
+// ONLY if it parses to an https://*.vercel.app host — otherwise null. This is the
+// trust boundary for every extraction path (codex review: don't return arbitrary
+// hosts/schemes from PR-comment text).
+function toVercelPreviewUrl(u) {
+  const s0 = String(u || '').trim();
+  if (!s0) return null;
+  const s = /^https?:\/\//i.test(s0) ? s0 : `https://${s0}`;
+  let parsed;
+  try { parsed = new URL(s); } catch { return null; }
+  if (parsed.protocol !== 'https:') return null;
+  if (!/\.vercel\.app$/i.test(parsed.hostname)) return null;
+  return s;
 }
 
 // extractVercelPreviewUrl — pull the preview URL from a single vercel[bot] PR
@@ -157,16 +165,25 @@ export function extractVercelPreviewUrl(commentBody) {
       const json = JSON.parse(Buffer.from(m[1], 'base64').toString('utf8'));
       const projects = Array.isArray(json && json.projects) ? json.projects : [];
       for (const p of projects) {
-        if (p && p.previewUrl) return normalizeUrl(p.previewUrl);
+        if (p && p.previewUrl) {
+          const u = toVercelPreviewUrl(p.previewUrl);
+          if (u) return u;
+        }
       }
     } catch { /* fall through to markdown */ }
   }
   // 2) markdown [Preview](url) — the explicit preview link (skip vercel.live).
   const md = body.match(/\[Preview\]\((https?:\/\/[^)]+)\)/i);
-  if (md && !/vercel\.live/i.test(md[1])) return normalizeUrl(md[1]);
+  if (md && !/vercel\.live/i.test(md[1])) {
+    const u = toVercelPreviewUrl(md[1]);
+    if (u) return u;
+  }
   // 3) last resort: any bare *.vercel.app host that isn't a vercel.live link.
   const any = body.match(/https?:\/\/[a-z0-9-]+\.vercel\.app[^\s)"'<]*/i);
-  if (any && !/vercel\.live/i.test(any[0])) return normalizeUrl(any[0]);
+  if (any && !/vercel\.live/i.test(any[0])) {
+    const u = toVercelPreviewUrl(any[0]);
+    if (u) return u;
+  }
   return null;
 }
 
@@ -179,15 +196,22 @@ export function pickVercelCommitState(json) {
   try { obj = typeof json === 'string' ? JSON.parse(json) : json; }
   catch { return 'none'; }
   const statuses = Array.isArray(obj && obj.statuses) ? obj.statuses : [];
-  const vercel = statuses.filter((s) => /vercel/i.test(String((s && s.context) || '')));
+  // Anchored: the context must START with "Vercel" (e.g. "Vercel", "Vercel – oracle"),
+  // NOT merely contain it (codex review: a context like "my-vercel-check" must not
+  // satisfy readiness).
+  const vercel = statuses.filter((s) => /^vercel\b/i.test(String((s && s.context) || '').trim()));
   if (!vercel.length) return 'none';
-  let sawSuccess = false;
+  // ALL matched Vercel contexts must be success to report readiness (codex review):
+  // a monorepo can post several Vercel statuses; returning 'success' while another is
+  // still pending would pass the gate before every preview is built. Failure still
+  // takes precedence (fail-closed); any non-success ⇒ pending (keep polling).
+  let allSuccess = true;
   for (const s of vercel) {
     const k = classifyState(s && s.state);
     if (k === 'failure') return 'failure';
-    if (k === 'success') sawSuccess = true;
+    if (k !== 'success') allSuccess = false;
   }
-  return sawSuccess ? 'success' : 'pending';
+  return allSuccess ? 'success' : 'pending';
 }
 
 // parseCommitSha — pull .sha from a `repos/<repo>/commits/<ref>` response.
@@ -198,21 +222,30 @@ export function parseCommitSha(json) {
   } catch { return null; }
 }
 
-// parsePrNumber — pick the PR number from a `repos/<repo>/commits/<sha>/pulls`
-// array. Prefers an open PR, else the first. Returns number or null.
+// parsePrNumber — pick the OPEN PR number from a `repos/<repo>/commits/<sha>/pulls`
+// array. OPEN-only (codex review): a closed/merged PR's bot comment can carry a
+// STALE preview URL after the branch advanced, so never fall back to a closed PR —
+// if no PR is open for this HEAD, keep polling. Returns number or null.
 export function parsePrNumber(json) {
   let arr;
   try { arr = typeof json === 'string' ? JSON.parse(json) : json; }
   catch { return null; }
   if (!Array.isArray(arr) || !arr.length) return null;
   const open = arr.find((p) => p && p.state === 'open');
-  const pick = open || arr[0];
-  return pick && pick.number != null ? pick.number : null;
+  return open && open.number != null ? open.number : null;
+}
+
+// isVercelBotLogin — the trusted comment author. GitHub App bots post as
+// `vercel[bot]`; accept the bare `vercel` too. Anchored so a lookalike like
+// `not-vercel[bot]` or `vercel-evil` is rejected (codex review: only trust the bot).
+export function isVercelBotLogin(login) {
+  return /^vercel(\[bot\])?$/i.test(String(login || '').trim());
 }
 
 // findPreviewUrlInComments — scan an `issues/<n>/comments` array (oldest→newest)
-// from the END for the vercel[bot] comment carrying a preview URL. Accepts any
-// comment that carries the `[vc]:` blob even if the login filter misses.
+// from the END for the vercel[bot] comment carrying a preview URL. ONLY the trusted
+// bot author is honored — a preview URL pulled from an arbitrary commenter's body is
+// an injection vector (codex review), so the `[vc]:`-any-author fallback is removed.
 export function findPreviewUrlInComments(json) {
   let arr;
   try { arr = typeof json === 'string' ? JSON.parse(json) : json; }
@@ -221,9 +254,10 @@ export function findPreviewUrlInComments(json) {
   for (let i = arr.length - 1; i >= 0; i--) {
     const c = arr[i];
     if (!c || !c.body) continue;
-    const login = c.user && c.user.login ? String(c.user.login) : '';
+    const login = c.user && c.user.login ? c.user.login : '';
+    if (!isVercelBotLogin(login)) continue;
     const url = extractVercelPreviewUrl(c.body);
-    if (url && (/vercel/i.test(login) || /\[vc\]:/.test(String(c.body)))) return url;
+    if (url) return url;
   }
   return null;
 }

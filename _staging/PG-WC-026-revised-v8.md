@@ -2,7 +2,7 @@
 
 ## What Is La Roja's Astrology Chart?
 
-**2026 outlook snapshot:** Spain opened Group H on June 15 with a 0-0 draw against Cape Verde. The second match against Saudi Arabia falls on June 21 under a Jupiter-Cancer opposition to the Cardinal axis. Key transit: Jupiter at approximately 27° Cancer opposing the Capricorn symbolic point. Risk: possession without urgency; opportunity: group-stage pressure activating La Roja's highest institutional expression.
+**Spain World Cup 2026 astrology — 2026 outlook snapshot:** Spain opened Group H on June 15 with a 0-0 draw against Cape Verde. The second match against Saudi Arabia falls on June 21 under a Jupiter-Cancer opposition to the Cardinal axis. Key transit: Jupiter at approximately 27° Cancer opposing the Capricorn symbolic point. Risk: possession without urgency; opportunity: group-stage pressure activating La Roja's highest institutional expression.
 
 La Roja's astrology chart is best understood through the framework in [[<TBD-internal-link: pillar page on mundane astrology and national charts>]], which maps how institutional founding dates create the structural signature that future transits test. Spain's institutional profile operates from a **Cardinal-axis base under Jupiter-Cancer opposition pressure in June 2026**. The RFEF was founded September 29, 1913, placing the institutional Sun at approximately 5° Libra — a cardinal air sign, not Capricorn. Spain's football identity has nonetheless been consistently read through a Capricorn symbolic lens in mundane astrology: the structured tiki-taka methodology aligns with Saturn-ruled Capricorn values of disciplined, earned authority. Understanding spain world cup 2026 astrology means holding both the natal chart data and that symbolic tradition at once.
 
@@ -20,7 +20,7 @@ The key distinction is not whether Spain is a strong football nation; it is whet
 
 ## Crisis Before Breakthrough vs. Inherited Dominance: What Spain's 2026 Chart Shows
 
-The most widely circulated reading of La Roja's current situation treats the Jupiter-Cancer transit as broadly favorable. Jupiter expands what it touches, Cancer brings emotional cohesion and fluid creativity — therefore Spain should thrive. That logic holds for Jupiter in Cancer in isolation. The complication is the opposition to Spain's Capricorn symbolic axis.
+The most widely circulated reading in Spain World Cup 2026 astrology treats the Jupiter-Cancer transit as broadly favorable for La Roja. Jupiter expands what it touches, Cancer brings emotional cohesion and fluid creativity — therefore Spain should thrive. That logic holds for Jupiter in Cancer in isolation. The complication is the opposition to Spain's Capricorn symbolic axis.
 
 In *Saturn: A New Look at an Old Devil* (1976), Liz Greene established that Saturn-ruled energy — the quality Capricorn expresses — carries its highest potential precisely under pressure from opposing forces. A Jupiter-Cancer opposition to a Capricorn-associated chart does not cancel Jupiter's expansiveness; it routes it through a confrontation point. Cancer's quality asks for fluid, responsive, unscripted play. Capricorn's structure defaults to disciplined, possession-controlled, managed expression. To receive Cancer's expansive flow, the Capricorn-associated chart has to release its controlling grip — visible first as vulnerability, then as earned breakthrough.
 

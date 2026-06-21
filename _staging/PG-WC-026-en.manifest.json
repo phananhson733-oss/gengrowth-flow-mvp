@@ -1,17 +1,17 @@
 {
   "schema_version": "1",
   "page_id": "PG-WC-026",
-  "entity": "Spain national football team (RFEF founded 1913; 2026 WC Group F; drew 0-0 vs Cape Verde June 18; must win vs Saudi Arabia to advance)",
+  "entity": "Spain World Cup 2026 Astrology",
   "target_keyword": "spain world cup 2026 astrology",
   "template": "Definition",
   "tier": "T2",
   "track": "量产线",
   "generated_by": "unknown",
   "prompt_version": "v8",
-  "generated_at": "2026-06-21T09:59:03.711Z",
-  "content_sha256_short": "c2e7ab6138910573",
-  "source_path": "_staging/PG-WC-026-claude-v8.md",
-  "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-WC-026-en.md",
+  "generated_at": "2026-06-21T11:00:21.112Z",
+  "content_sha256_short": "99816a35f96dd98e",
+  "source_path": "_staging/PG-WC-026-revised-v8.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-WC-026-en.md",
   "phase2_checks": {
     "overall": "pass",
     "structure": {
@@ -19,7 +19,7 @@
       "h2Count": 11,
       "h3Count": 0,
       "h4Count": 0,
-      "words": 1893,
+      "words": 1937,
       "wikilinks": 5,
       "tbdLinks": 5
     },

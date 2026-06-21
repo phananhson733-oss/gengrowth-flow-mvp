@@ -8,7 +8,7 @@ La Roja's astrology chart is best understood through the framework in [[<TBD-int
 
 - The RFEF's 1913 founding (Sun ≈ 5° Libra, cardinal air) establishes the Cardinal-quadrant character; Capricorn symbolic values shape how Spain's playing identity is read in mundane practice
 - Jupiter transiting Cancer at approximately 27° in June 2026 opposes the Capricorn axis of that Cardinal cross, placing expansive, fluid energy in direct tension with Spain's habitual controlled discipline
-- The June 21 high-pressure second group match against Saudi Arabia falls as that opposition remains within tight orb — the tournament's astrological inflection point
+- The June 21 high-pressure second group match against Saudi Arabia falls while Jupiter is still in late Cancer — the tournament's astrological inflection point
 
 ## Why It Matters for Self-Awareness
 

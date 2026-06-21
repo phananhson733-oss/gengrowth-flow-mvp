@@ -1,17 +1,17 @@
 {
   "schema_version": "1",
   "page_id": "PG-WC-027",
-  "entity": "Matheus Santos Carneiro da Cunha (born May 27 1999, João Pessoa Brazil; Gemini Sun; Man Utd forward; scored brace for Brazil vs Haiti in 2026 WC group stage)",
+  "entity": "the Matheus Cunha Birth Chart",
   "target_keyword": "matheus cunha birth chart",
   "template": "Definition",
   "tier": "T1",
   "track": "量产线",
   "generated_by": "unknown",
   "prompt_version": "v8",
-  "generated_at": "2026-06-21T10:34:52.443Z",
-  "content_sha256_short": "6521e47c4346c76e",
-  "source_path": "_staging/PG-WC-027-repair-candidate.md",
-  "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-WC-027-en.md",
+  "generated_at": "2026-06-21T11:50:21.174Z",
+  "content_sha256_short": "586035f2c6bc2111",
+  "source_path": "_staging/PG-WC-027-src.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-WC-027-en.md",
   "phase2_checks": {
     "overall": "pass",
     "structure": {
@@ -19,7 +19,7 @@
       "h2Count": 11,
       "h3Count": 0,
       "h4Count": 0,
-      "words": 2075,
+      "words": 2117,
       "wikilinks": 5,
       "tbdLinks": 5
     },

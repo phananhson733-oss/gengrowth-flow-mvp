@@ -1,28 +1,3 @@
----
-title: Matheus Cunha Birth Chart
-slug: matheus-cunha-birth-chart
-date: 2026-06-21
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T1
-track: 量产线
-page_id: PG-WC-027
-author_id: "aditi-sharma"
-author_display_name: "Aditi Sharma"
-target_keyword: matheus cunha birth chart
-associated_keywords:
-  - matheus cunha zodiac sign
-  - matheus cunha astrology
-  - matheus cunha gemini
-  - brazil world cup 2026 astrology
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-06-21T11:50:21.174Z
-content_sha256_short: 586035f2c6bc2111
-phase2_checks: all-pass
----
-
 # What the Matheus Cunha Birth Chart Says About a Gemini Sun Forward
 
 ## What Is the Matheus Cunha Birth Chart?

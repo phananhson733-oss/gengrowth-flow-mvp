@@ -106,6 +106,11 @@ AOUT=$( ( set -a; . "$HOME/.config/gg/_gg.env" 2>/dev/null; set +a
   export GG_SHEETS_WORKBOOK_ID="${GG_SHEETS_FLOW_MVP_WORKBOOK_ID:-$GG_SHEETS_WORKBOOK_ID}"
   # gbrain (~/.local/bin, RAG) + codex (~/.npm-global/bin, multi-party review) on PATH for authoring.
   export PATH="$HOME/.local/bin:$HOME/.npm-global/bin:$PATH"
+  # Multi-party review is best-effort. Keep Codex on a short leash so one slow critic
+  # cannot stall the whole author lane and block the next article from starting.
+  export GG_REVIEW_CODEX_TIMEOUT_MS="${GG_REVIEW_CODEX_TIMEOUT_MS:-60000}"
+  export GG_REVIEW_OPUS_TIMEOUT_MS="${GG_REVIEW_OPUS_TIMEOUT_MS:-420000}"
+  export GG_REVIEW_REVISER_TIMEOUT_MS="${GG_REVIEW_REVISER_TIMEOUT_MS:-420000}"
   gtimeout "$TICK_TIMEOUT" node "$AUTO" --author --limit "$BATCH" ) 2>&1 )
 _rc=$?
 printf '%s\n' "$AOUT" >> "$LOG"

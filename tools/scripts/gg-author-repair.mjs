@@ -164,6 +164,21 @@ function fail(reason) {
   process.exit(1);
 }
 
+function writeDebugArtifact(path, content) {
+  try {
+    if (!path || !content) return;
+    writeFileSync(path, String(content));
+  } catch {
+    // best-effort only: never mask the primary repair failure
+  }
+}
+
+function writeWorkerDebugSidecars(outPath, res) {
+  if (!outPath || !res) return;
+  writeDebugArtifact(`${outPath}.repair.stdout.txt`, String(res.stdout || ''));
+  writeDebugArtifact(`${outPath}.repair.stderr.txt`, String(res.stderr || ''));
+}
+
 function main() {
   const o = parseArgs(process.argv.slice(2));
   const { errors, timeoutMs } = validate(o);
@@ -193,11 +208,13 @@ function main() {
 
   const res = runWorker({ model, effort, prompt, timeoutMs });
   if (res.error) {
+    writeWorkerDebugSidecars(o.out, res);
     if (res.error.code === 'ETIMEDOUT') return fail(`worker timed out after ${timeoutMs}ms`);
     if (res.error.code === 'ENOENT') return fail('claude CLI not found in PATH');
     return fail(`worker spawn failed (${res.error.code || res.error.message})`);
   }
   if (res.status !== 0) {
+    writeWorkerDebugSidecars(o.out, res);
     const tail = String(res.stderr || '').slice(-200).replace(/\s+/g, ' ').trim();
     return fail(`worker exited ${res.status}${tail ? ` (${tail})` : ''}`);
   }
@@ -206,7 +223,10 @@ function main() {
   // lib/strip-preamble.mjs), then require real content. Empty/whitespace-only
   // output is a tooling failure — write nothing so the caller parks as before.
   const fixed = stripPreH1(String(res.stdout || ''));
-  if (!fixed || !fixed.trim()) return fail('worker produced empty output');
+  if (!fixed || !fixed.trim()) {
+    writeWorkerDebugSidecars(o.out, res);
+    return fail('worker produced empty output');
+  }
 
   // Write ONLY --out. --source is never touched.
   try {

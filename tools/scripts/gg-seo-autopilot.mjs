@@ -791,7 +791,10 @@ function doAuthor(o = {}) {
     let loc;
     try { loc = findSheetRow(pgId, t.keyword); }
     catch (e) { return park(null, `sheet-pull failed: ${errTail(e)}`); }
-    if (!loc) return park(null, `no row for ${pgId} ("${t.keyword || ''}") in 选题登记表`);
+    if (!loc) {
+      const wb = ACTIVE_WORKBOOK_ID || process.env.GG_SHEETS_WORKBOOK_ID || '(unknown workbook)';
+      return park(null, `no row for ${pgId} ("${t.keyword || ''}") in 选题登记表 [workbook=${wb}]`);
+    }
     const row = loc.row;
 
     // 2. bridge → override (no --allow-missing-cta: a missing CTA Map row parks)

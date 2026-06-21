@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Background timer that periodically kickstarts the real GUI/Aqua author job.
+     Needed because this machine's gui/$(id -u) launchd domain is currently stuck in
+     interval on-demand-only behavior: timers do not naturally fire there, but an
+     explicit kickstart still launches the authenticated GUI worker successfully.
+
+     Install:
+       cp tools/scripts/com.gengrowth.seo-author-kicker.plist ~/Library/LaunchAgents/
+       launchctl load -S Background -w ~/Library/LaunchAgents/com.gengrowth.seo-author-kicker.plist
+
+     The real author worker remains com.gengrowth.seo-author in gui/<uid> so Claude/
+     keychain-backed auth keeps working. This background wrapper only supplies time.
+-->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.gengrowth.seo-author-kicker</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>-lc</string>
+    <string>uid=$(id -u); /bin/launchctl kickstart -k gui/$uid/com.gengrowth.seo-author</string>
+  </array>
+  <key>StartInterval</key>
+  <integer>7200</integer>
+  <key>RunAtLoad</key>
+  <false/>
+  <key>LimitLoadToSessionType</key>
+  <string>Background</string>
+  <key>StandardOutPath</key>
+  <string>/Users/awayer_mini/gengrowth-agents/cron-sync/seo_author/kicker.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/awayer_mini/gengrowth-agents/cron-sync/seo_author/kicker.err.log</string>
+  <key>ProcessType</key>
+  <string>Background</string>
+</dict>
+</plist>

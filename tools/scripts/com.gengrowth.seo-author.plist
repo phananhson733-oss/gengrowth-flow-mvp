@@ -28,6 +28,8 @@
   <integer>7200</integer>
   <key>RunAtLoad</key>
   <false/>
+  <key>LimitLoadToSessionType</key>
+  <string>Background</string>
   <key>StandardOutPath</key>
   <string>/Users/awayer_mini/gengrowth-agents/cron-sync/seo_author/launchd.out.log</string>
   <key>StandardErrorPath</key>

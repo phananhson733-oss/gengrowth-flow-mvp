@@ -1,3 +1,28 @@
+---
+title: Toy Story 5 Zodiac Signs
+slug: toy-story-5-zodiac-signs
+date: 2026-06-21
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-MYTH-006
+author_id: "elena-vane"
+author_display_name: "Elena Vane"
+target_keyword: toy story 5 zodiac signs
+associated_keywords:
+  - toy story 5 characters zodiac
+  - toy story zodiac signs
+  - toy story 5 astrology
+  - woody buzz zodiac
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-21T11:12:19.823Z
+content_sha256_short: 748d5a352028f7a3
+phase2_checks: all-pass
+---
+
 # What the Toy Story 5 Zodiac Signs Say About Woody, Buzz, and the New Cast
 
 ## What Are Toy Story 5 Zodiac Signs?

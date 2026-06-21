@@ -18,8 +18,8 @@ associated_keywords:
   - jupiter in cancer 2026
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-21T11:00:21.112Z
-content_sha256_short: 99816a35f96dd98e
+generated_at: 2026-06-21T11:48:55.357Z
+content_sha256_short: bc7c1f8f7cf3aefa
 phase2_checks: all-pass
 ---
 
@@ -27,7 +27,7 @@ phase2_checks: all-pass
 
 ## What Is La Roja's Astrology Chart?
 
-**Spain World Cup 2026 astrology — 2026 outlook snapshot:** Spain opened Group H on June 15 with a 0-0 draw against Cape Verde. The second match against Saudi Arabia falls on June 21 under a Jupiter-Cancer opposition to the Cardinal axis. Key transit: Jupiter at approximately 27° Cancer opposing the Capricorn symbolic point. Risk: possession without urgency; opportunity: group-stage pressure activating La Roja's highest institutional expression.
+**Spain World Cup 2026 astrology — 2026 outlook snapshot:** Spain opened Group H on June 15 with a 0-0 draw against Cape Verde. The second match against Saudi Arabia falls on June 21 while Jupiter sits in late Cancer (~27°) — the zodiac polarity symbolically opposite the Capricorn values Spain's game is traditionally read through. Key transit: Jupiter in late Cancer, read in mundane practice against Spain's Capricorn symbolic emphasis (not a measured aspect to a verified natal point). Risk: possession without urgency; opportunity: group-stage pressure activating La Roja's highest institutional expression.
 
 La Roja's astrology chart is best understood through the framework in [[<TBD-internal-link: pillar page on mundane astrology and national charts>]], which maps how institutional founding dates create the structural signature that future transits test. Spain's institutional profile operates from a **Cardinal-axis base under Jupiter-Cancer opposition pressure in June 2026**. The RFEF was founded September 29, 1913, placing the institutional Sun at approximately 5° Libra — a cardinal air sign, not Capricorn. Spain's football identity has nonetheless been consistently read through a Capricorn symbolic lens in mundane astrology: the structured tiki-taka methodology aligns with Saturn-ruled Capricorn values of disciplined, earned authority. Understanding spain world cup 2026 astrology means holding both the natal chart data and that symbolic tradition at once.
 
@@ -77,7 +77,7 @@ Several assumptions about spain world cup 2026 astrology circulate in ways that 
 | RFEF cardinal chart (Sun ≈ 5° Libra, 1913) | Structures Spain's chart in the Cardinal quadrant; Capricorn symbolic values shape the playing identity as read in mundane practice | Saturn-Capricorn association; Cardinal cross | Tiki-taka: patient possession cycling before decisive action |
 | Jupiter-Cancer opposition (~27° Cancer) | Cancer expansion opposes Capricorn structure; growth arrives through direct confrontation rather than smooth flow | Cancer-Capricorn cardinal opposition axis | Stalled finishing despite intact possession; visible in the June 15 draw |
 | Crisis-before-breakthrough pattern | Group-stage compression echoes Spain's 2010 opening (0-1 vs Switzerland before title run); planetary causes differ but phase pattern recurs | Capricorn resistance before Cardinal release | Track whether urgency activates against Saudi Arabia rather than contracting |
-| June 21 inflection point | Opposition within tight orb at ~27° Cancer; Capricorn-associated charts historically peak under genuine existential necessity | Cardinal axis earned-authority expression | Whether Spain's play shifts from managed performance to earned urgency |
+| June 21 inflection point | Jupiter in late Cancer (~27°), the polarity symbolically opposite Capricorn; Capricorn-associated charts historically peak under genuine existential necessity | Cardinal axis earned-authority expression | Whether Spain's play shifts from managed performance to earned urgency |
 
 ## Common Questions About Spain's 2026 World Cup Astrology
 

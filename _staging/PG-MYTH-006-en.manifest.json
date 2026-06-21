@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-MYTH-006",
+  "entity": "Toy Story 5 Zodiac Signs",
+  "target_keyword": "toy story 5 zodiac signs",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-06-21T11:12:19.823Z",
+  "content_sha256_short": "748d5a352028f7a3",
+  "source_path": "_staging/PG-MYTH-006-src.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-MYTH-006-en.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 1519,
+      "wikilinks": 4,
+      "tbdLinks": 4
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

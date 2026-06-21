@@ -1,3 +1,28 @@
+---
+title: Toy Story 5 Zodiac Signs
+slug: toy-story-5-zodiac-signs
+date: 2026-06-21
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-MYTH-006
+author_id: "elena-vane"
+author_display_name: "Elena Vane"
+target_keyword: toy story 5 zodiac signs
+associated_keywords:
+  - 玩具总动员5角色星座
+  - 玩具总动员星座
+  - 玩具总动员5占星
+  - 胡迪巴斯星座
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-21T11:15:15.628Z
+content_sha256_short: 24f9877ff541778f
+phase2_checks: all-pass
+---
+
 # 玩具总动员5星座：胡迪、巴斯与新角色背后的趣味星座解读
 
 ## 玩具总动员5星座是什么？

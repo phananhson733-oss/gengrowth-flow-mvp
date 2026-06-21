@@ -1,3 +1,28 @@
+---
+title: Matheus Cunha Birth Chart
+slug: matheus-cunha-birth-chart
+date: 2026-06-21
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T1
+track: 量产线
+page_id: PG-WC-027
+author_id: "aditi-sharma"
+author_display_name: "Aditi Sharma"
+target_keyword: matheus cunha birth chart
+associated_keywords:
+  - 库尼亚星座
+  - 库尼亚占星
+  - 库尼亚双子座
+  - 巴西2026世界杯占星
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-21T11:15:20.517Z
+content_sha256_short: 97791bc4572c69d3
+phase2_checks: all-pass
+---
+
 # 马特乌斯·库尼亚星盘为何早早指向了一场世界杯式的爆发
 
 ## 马特乌斯·库尼亚星盘是什么？

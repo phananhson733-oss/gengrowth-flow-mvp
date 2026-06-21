@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-WC-027",
+  "entity": "马特乌斯·库尼亚星盘",
+  "target_keyword": "matheus cunha birth chart",
+  "template": "Definition",
+  "tier": "T1",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-06-21T11:15:20.517Z",
+  "content_sha256_short": "97791bc4572c69d3",
+  "source_path": "_staging/PG-WC-027-zh-src.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/zh-demo/PG-WC-027-zh.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 3877,
+      "wikilinks": 5,
+      "tbdLinks": 5
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

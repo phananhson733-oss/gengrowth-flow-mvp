@@ -41,6 +41,11 @@ const REVISER_MODEL = process.env.GG_REVISER_MODEL || process.env.GG_CLAUDE_MODE
 // the generation effort; the re-run phase2 gate guards quality. Override via env.
 const REVISER_EFFORT = process.env.GG_REVISER_EFFORT || 'high';
 const CODEX_EFFORT = process.env.GG_CODEX_EFFORT || 'xhigh';
+const CODEX_TIMEOUT_MS = parseInt(process.env.GG_REVIEW_CODEX_TIMEOUT_MS || '180000', 10);
+const OPUS_TIMEOUT_MS = parseInt(process.env.GG_REVIEW_OPUS_TIMEOUT_MS || '480000', 10);
+const REVISER_TIMEOUT_MS = parseInt(process.env.GG_REVIEW_REVISER_TIMEOUT_MS || '480000', 10);
+const DISABLE_CODEX_REVIEW = process.env.GG_REVIEW_DISABLE_CODEX === '1';
+const DISABLE_OPUS_REVIEW = process.env.GG_REVIEW_DISABLE_OPUS === '1';
 
 function parseArgs(argv) {
   const o = {};
@@ -109,22 +114,24 @@ function actionableBullets(critique) {
 // usable on stdout, so capture the final message via --output-last-message. Returns
 // '' on any tooling failure (best-effort — the Opus critic can still carry the pass).
 function critiqueViaCodex(o, draft) {
+  if (DISABLE_CODEX_REVIEW) return '';
   const critiqueFile = `${o.out}.codex-critique.txt`;
   try {
     // -s read-only: codex exec defaults to workspace-write + approval:never, so it
     // will agentically EDIT FILES. read-only blocks all writes — we only want text.
     run(CODEX, ['exec', '-s', 'read-only', '-c', 'model=gpt-5.5', '-c', `reasoning_effort=${CODEX_EFFORT}`,
       '--output-last-message', critiqueFile, '-'],
-      CRITIQUE_PROMPT(o.entity, o.targetKeyword, draft), 600000);
+      CRITIQUE_PROMPT(o.entity, o.targetKeyword, draft), CODEX_TIMEOUT_MS);
     return existsSync(critiqueFile) ? readFileSync(critiqueFile, 'utf8').trim() : '';
   } catch { return ''; }
 }
 
 // Critic 2 — Claude Opus 4.8 (reviews like GPT does). Independent second opinion.
 function critiqueViaOpus(o, draft) {
+  if (DISABLE_OPUS_REVIEW) return '';
   try {
     return run(CLAUDE, ['-p', '--model', OPUS_CRITIC_MODEL, '--effort', OPUS_CRITIC_EFFORT],
-      CRITIQUE_PROMPT(o.entity, o.targetKeyword, draft), 780000).trim();
+      CRITIQUE_PROMPT(o.entity, o.targetKeyword, draft), OPUS_TIMEOUT_MS).trim();
   } catch { return ''; }
 }
 
@@ -150,7 +157,7 @@ function main() {
   // 2. The author model (Sonnet 4.6 xhigh) revises its own draft per the combined feedback.
   let revised;
   try {
-    revised = run(CLAUDE, ['-p', '--model', REVISER_MODEL, '--effort', REVISER_EFFORT], REVISE_PROMPT(combined, draft), 780000);
+    revised = run(CLAUDE, ['-p', '--model', REVISER_MODEL, '--effort', REVISER_EFFORT], REVISE_PROMPT(combined, draft), REVISER_TIMEOUT_MS);
   } catch (e) {
     return keep(`reviser failed: ${String(e.message || e).replace(/\s+/g, ' ').slice(-100)}`);
   }

@@ -56,8 +56,13 @@ import { join, dirname, basename, relative } from 'node:path';
 import { homedir } from 'node:os';
 import { buildAuthorMap, resolveAuthor, isValidAuthorId, normalizeAuthorId } from './lib/author-routing.mjs';
 import { detectProtectedFactDrift, summarizeProtectedFactDrift } from './lib/review-fact-guard.mjs';
+import { loadEnv, resolveWorkbookId } from './lib/gg-shared.mjs';
 import { slugifyPageId } from './gg-sheet-pull.mjs';
 import { illustrate } from './lib/illustrate.mjs';
+
+loadEnv();
+const ACTIVE_WORKBOOK_ID = resolveWorkbookId();
+if (ACTIVE_WORKBOOK_ID) process.env.GG_SHEETS_WORKBOOK_ID = ACTIVE_WORKBOOK_ID;
 
 const HOME = homedir();
 const FLOW = process.env.GG_FLOW_REPO || join(HOME, 'gengrowth-flow-mvp');

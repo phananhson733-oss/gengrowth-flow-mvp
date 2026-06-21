@@ -1,3 +1,28 @@
+---
+title: Scotland Brazil World Cup Astrology
+slug: scotland-brazil-world-cup-astrology
+date: 2026-06-21
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-WC-028
+author_id: "elena-vane"
+author_display_name: "Elena Vane"
+target_keyword: scotland brazil world cup astrology
+associated_keywords:
+  - 苏格兰2026世界杯占星
+  - 巴西2026世界杯占星
+  - 苏格兰对巴西占星
+  - 2026世界杯C组
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-21T11:14:14.522Z
+content_sha256_short: 57c5035c1e5b2452
+phase2_checks: all-pass
+---
+
 # 苏格兰对巴西世界杯占星：把6月24日C组生死战读作一段主题时节
 
 ## 苏格兰巴西世界杯占星是什么？

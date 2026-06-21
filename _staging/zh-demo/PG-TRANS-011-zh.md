@@ -1,3 +1,28 @@
+---
+title: Chiron In Taurus 2026 Astrology
+slug: chiron-in-taurus-2026-astrology
+date: 2026-06-21
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-TRANS-011
+author_id: "julian-thorne"
+author_display_name: "Julian Thorne"
+target_keyword: chiron in taurus 2026 astrology
+associated_keywords:
+  - 凯龙星金牛座
+  - 凯龙入金牛
+  - 凯龙金牛含义
+  - 凯龙金牛行运
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-21T11:14:19.259Z
+content_sha256_short: fb8b2ce58875b427
+phase2_checks: all-pass
+---
+
 # 凯龙星入金牛座2026，对你的"价值感"提出了什么问题
 
 ## 凯龙星入金牛座2026是什么？

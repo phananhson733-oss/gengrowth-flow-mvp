@@ -86,6 +86,57 @@ test('default paths use ~/oracle + ~/gengrowth-ops (NO Code segment)', () => {
   assert.ok(!out.dirs.GG_OPS_DIR.includes('/Code/'), 'no Code segment in ops');
 });
 
+test('codex not reachable is an ERROR (REQUIRED for the publish factual-review gate)', () => {
+  const root = mkdtempSync(join(tmpdir(), 'gg-preflight-codex-'));
+  const bin = join(root, 'bin');
+  const flow = join(root, 'flow');
+  const ops = join(root, 'ops');
+  const oracle = join(root, 'oracle');
+  const home = join(root, 'home'); // empty HOME → no ~/.npm-global/bin or ~/.local/bin codex
+  for (const d of [bin, flow, ops, oracle, home]) mkdirSync(d);
+  // node/git/gh/claude present, but deliberately NO codex anywhere reachable.
+  for (const name of ['node', 'git', 'gh', 'claude']) {
+    writeFileSync(join(bin, name), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
+  }
+  const env = {
+    ...process.env,
+    GG_FLOW_REPO: flow, GG_OPS_DIR: ops, GG_ORACLE_DIR: oracle,
+    PATH: bin, HOME: home, VERCEL_AUTOMATION_BYPASS_SECRET: 'x',
+  };
+  delete env.GG_CODEX_BIN;
+  delete env.GG_CODEX_GATE_REQUIRED;
+  const r = spawnSync(process.execPath, [SCRIPT, '--json', '--skip-live-cli'], { encoding: 'utf8', env });
+  assert.equal(r.status, 2, r.stderr);
+  const out = JSON.parse(r.stdout);
+  assert.equal(out.ok, false);
+  assert.ok(out.errors.some((e) => /codex/i.test(e)), 'codex unreachable must be an error');
+});
+
+test('GG_CODEX_GATE_REQUIRED=0: codex not reachable is a WARNING, not an error', () => {
+  const root = mkdtempSync(join(tmpdir(), 'gg-preflight-codex0-'));
+  const bin = join(root, 'bin');
+  const flow = join(root, 'flow');
+  const ops = join(root, 'ops');
+  const oracle = join(root, 'oracle');
+  const home = join(root, 'home');
+  for (const d of [bin, flow, ops, oracle, home]) mkdirSync(d);
+  for (const name of ['node', 'git', 'gh', 'claude']) {
+    writeFileSync(join(bin, name), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
+  }
+  const env = {
+    ...process.env,
+    GG_FLOW_REPO: flow, GG_OPS_DIR: ops, GG_ORACLE_DIR: oracle,
+    PATH: bin, HOME: home, VERCEL_AUTOMATION_BYPASS_SECRET: 'x',
+    GG_CODEX_GATE_REQUIRED: '0',
+  };
+  delete env.GG_CODEX_BIN;
+  const r = spawnSync(process.execPath, [SCRIPT, '--json', '--skip-live-cli'], { encoding: 'utf8', env });
+  assert.equal(r.status, 0, r.stderr);
+  const out = JSON.parse(r.stdout);
+  assert.equal(out.ok, true);
+  assert.ok(out.warnings.some((w) => /codex/i.test(w)), 'codex unreachable is a warning under the escape hatch');
+});
+
 test('VERCEL_AUTOMATION_BYPASS_SECRET unset is a WARNING, not an error', () => {
   const root = mkdtempSync(join(tmpdir(), 'gg-preflight-warn-'));
   const bin = join(root, 'bin');

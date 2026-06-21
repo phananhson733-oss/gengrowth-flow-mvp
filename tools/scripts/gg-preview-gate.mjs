@@ -3,9 +3,10 @@
 // gate that replaces the free-form `claude -p` autopilot tick gate described in
 // tools/scripts/seo-autopilot-tick.prompt.md. It glues the three Task 4/5/6 sub-scripts
 // (gg-preview-wait, gg-preview-verify, gg-article-review-worker) together with the real
-// gg-seo-autopilot.mjs ledger CLI, runs an OPTIONAL best-effort codex diff review, and on
-// success marks the claim verified + merges it; on any required-gate failure it parks the
-// claim (guarded) and fires the failure Feishu notify itself.
+// gg-seo-autopilot.mjs ledger CLI, runs a REQUIRED codex factual diff review (the only gate
+// step that fact-checks real-world, non-astrological claims), and on success marks the claim
+// verified + merges it; on any required-gate failure it parks the claim (guarded) and fires
+// the failure Feishu notify itself.
 //
 // ─────────────────────────────────────────────────────────────────────────────
 // EXIT CODE CONTRACT (so the tick wiring in gg-seo-autopilot-tick.sh is trivial):
@@ -19,8 +20,14 @@
 //        failure Feishu notify. "end-fire": the tick should treat 2 as a handled stop.
 //   (a bad/missing --branch exits nonzero too — stderr '--branch is required'.)
 //
-// Codex (Step 3a) is BEST-EFFORT: a codex tooling failure (can't run / hangs / EACCES) must
-// NOT block the merge; only a codex run that COMPLETES and emits `VERDICT: FAIL` counts.
+// Codex (Step 4b) is REQUIRED by default (safety-first, 2026-06-21): the 3 LLM dimensions above
+// scope themselves OUT of real-world facts (sports schedules, birth data, event dates), so codex
+// is the ONLY gate that catches a factually-wrong-but-structurally-valid article (the "spain Group
+// F / June 22" auto-publish incident). Any non-PASS codex outcome — a completed `VERDICT: FAIL`, a
+// tooling SKIPPED (can't run / hangs / EACCES / no VERDICT line), OR no GG_CODEX_BIN configured —
+// PARKS the claim (needs_human) instead of merging. GG_CODEX_GATE_REQUIRED=0 hot-rolls-back to the
+// legacy best-effort behavior (block only on a completed `VERDICT: FAIL`) for one run if codex is
+// wedged unattended and a human is watching.
 //
 // Every sub-process runs under a HARD per-step timeout; on timeout we classify the step as a
 // gate failure (exit 2 path). Every sub-invocation path is env-overridable so the hermetic
@@ -30,7 +37,8 @@
 //   GG_PREVIEW_VERIFY_BIN   gg-preview-verify.mjs
 //   GG_REVIEW_WORKER_BIN    gg-article-review-worker.mjs
 //   GG_LARK_NOTIFY_BIN      gg-lark-notify.sh
-//   GG_CODEX_BIN            codex exec wrapper             (optional; absent ⇒ codex SKIPPED)
+//   GG_CODEX_BIN            codex PR factual-review wrapper (REQUIRED by default; absent ⇒ PARK,
+//                           unless GG_CODEX_GATE_REQUIRED=0 ⇒ legacy best-effort SKIPPED)
 //   GG_ORACLE_WORKTREE_ROOT / claim.worktree → <worktree>/data/articles/<slug>.ts
 //   GG_FLOW_REPO            → <flow>/_staging/<pgId>-en.md
 //   VERCEL_AUTOMATION_BYPASS_SECRET  passed to gg-preview-verify
@@ -87,7 +95,7 @@ export function bins() {
     previewVerify: resolveBin('GG_PREVIEW_VERIFY_BIN', 'gg-preview-verify.mjs'),
     reviewWorker: resolveBin('GG_REVIEW_WORKER_BIN', 'gg-article-review-worker.mjs'),
     larkNotify: resolveBin('GG_LARK_NOTIFY_BIN', 'gg-lark-notify.sh'),
-    codex: process.env.GG_CODEX_BIN || null, // optional — absent ⇒ codex SKIPPED (best-effort)
+    codex: process.env.GG_CODEX_BIN || null, // REQUIRED by default — absent ⇒ PARK (GG_CODEX_GATE_REQUIRED=0 ⇒ legacy SKIPPED)
   };
 }
 
@@ -212,11 +220,24 @@ export function articlePaths(pgId, claim) {
 export function classifyCodex({ code, stdout, timedOut }) {
   if (timedOut) return { verdict: 'SKIPPED', reason: 'codex timed out' };
   if (code !== 0) return { verdict: 'SKIPPED', reason: `codex exited ${code}` };
-  const text = String(stdout || '');
-  const m = text.match(/VERDICT:\s*(PASS|FAIL)([^\n]*)/i);
-  if (!m) return { verdict: 'SKIPPED', reason: 'codex produced no VERDICT line' };
-  const v = m[1].toUpperCase();
-  if (v === 'FAIL') return { verdict: 'FAIL', reason: `codex FAIL${m[2] ? ` —${m[2].trim()}` : ''}` };
+  const text = String(stdout || '').replace(/\r\n?/g, '\n'); // normalize CRLF so `$` isn't fooled by \r
+  // Collect EVERY line-anchored verdict. A mid-sentence "…the diff says VERDICT: PASS…" never matches
+  // (not line-start). Decision rules, all fail-closed:
+  //   - FAIL DOMINATES: any FAIL line ⇒ FAIL. A planted "VERDICT: PASS" the model quoted from the
+  //     untrusted diff can never override a real FAIL, and a genuine FAIL is never mislabeled a skip.
+  //   - else exactly ONE bare PASS ⇒ PASS (the only path that merges).
+  //   - else (zero / multiple PASS / a qualified "PASS — but unsure") ⇒ SKIPPED, never merge.
+  const verdicts = [];
+  for (const line of text.split('\n')) {
+    const m = line.match(/^\s*VERDICT:\s*(PASS|FAIL)\b(.*)$/i);
+    if (m) verdicts.push({ v: m[1].toUpperCase(), suffix: m[2] || '' });
+  }
+  if (verdicts.length === 0) return { verdict: 'SKIPPED', reason: 'codex produced no line-anchored VERDICT' };
+  const fail = verdicts.find((x) => x.v === 'FAIL');
+  if (fail) return { verdict: 'FAIL', reason: `codex FAIL${fail.suffix ? ` —${fail.suffix.replace(/^[\s—-]+/, ' ').trim()}` : ''}` };
+  if (verdicts.length > 1) return { verdict: 'SKIPPED', reason: `codex produced ${verdicts.length} PASS verdicts (ambiguous — fail-closed)` };
+  // PASS must be BARE: "VERDICT: PASS — but unsure" is ambiguous → fail-closed, do not merge on it.
+  if (verdicts[0].suffix.trim()) return { verdict: 'SKIPPED', reason: `codex PASS carried an unexpected qualifier "${verdicts[0].suffix.trim().slice(0, 60)}" (fail-closed)` };
   return { verdict: 'PASS', reason: '' };
 }
 
@@ -332,25 +353,37 @@ export async function runGate(o, deps = {}) {
     log(`review[${dim}]: PASS`);
   }
 
-  // (4b) optional codex diff review — BEST-EFFORT, never blocks on tooling failure.
+  // (4b) codex factual diff review — REQUIRED by default (GG_CODEX_GATE_REQUIRED=0 ⇒ legacy
+  // best-effort). In required mode ANY non-PASS outcome parks the claim; only a completed
+  // `VERDICT: PASS` proceeds to merge. dry-run never parks — it only records the intent.
+  const codexRequired = process.env.GG_CODEX_GATE_REQUIRED !== '0';
   let codexEvidence = B.codex ? 'no-verdict' : 'skipped-no-bin';
-  if (B.codex) {
-    log(`codex: ${B.codex} (best-effort, pr=${claim.pr || '?'}, timeout ${o.codexTimeoutMs}ms)`);
-    if (!o.dryRun) {
-      const cr = await node(B.codex, ['--repo', o.repo, '--pr', String(claim.pr || '')],
-        { timeoutMs: o.codexTimeoutMs });
-      const cls = classifyCodex(cr);
-      codexEvidence = cls.verdict === 'PASS' ? 'ran-pass'
-        : cls.verdict === 'FAIL' ? 'ran-fail' : `skipped:${cls.reason}`;
-      if (cls.verdict === 'FAIL') {
-        return gateFail(o, B, deps, pgId, claim, `codex completed with ${cls.reason}`, plan);
-      }
-      log(`codex: ${cls.verdict}${cls.reason ? ` (${cls.reason})` : ''} — not blocking`);
-    } else {
-      codexEvidence = 'dry-run';
+  if (o.dryRun) {
+    codexEvidence = B.codex ? 'dry-run' : (codexRequired ? 'would-park:no-bin' : 'skipped-no-bin');
+    log(`codex: ${B.codex ? `${B.codex} (pr=${claim.pr || '?'})` : 'no GG_CODEX_BIN'} — dry-run`
+      + `${!B.codex && codexRequired ? ' (REQUIRED — a real run would PARK)' : ''}`);
+  } else if (!B.codex) {
+    if (codexRequired) {
+      return gateFail(o, B, deps, pgId, claim,
+        'codex factual review REQUIRED but GG_CODEX_BIN not configured (set GG_CODEX_GATE_REQUIRED=0 to override)', plan);
     }
+    log('codex: SKIPPED (no GG_CODEX_BIN configured) — GG_CODEX_GATE_REQUIRED=0, not blocking');
   } else {
-    log('codex: SKIPPED (no GG_CODEX_BIN configured) — best-effort, not blocking');
+    log(`codex: ${B.codex} (${codexRequired ? 'REQUIRED' : 'best-effort'}, pr=${claim.pr || '?'}, timeout ${o.codexTimeoutMs}ms)`);
+    const cr = await node(B.codex, ['--repo', o.repo, '--pr', String(claim.pr || ''), '--branch', o.branch],
+      { timeoutMs: o.codexTimeoutMs });
+    const cls = classifyCodex(cr);
+    codexEvidence = cls.verdict === 'PASS' ? 'ran-pass'
+      : cls.verdict === 'FAIL' ? 'ran-fail' : `skipped:${cls.reason}`;
+    if (cls.verdict === 'FAIL') {
+      return gateFail(o, B, deps, pgId, claim, `codex completed with ${cls.reason}`, plan);
+    }
+    if (cls.verdict !== 'PASS' && codexRequired) {
+      // SKIPPED in required mode blocks: a factual review that could not COMPLETE is not a pass.
+      return gateFail(o, B, deps, pgId, claim,
+        `codex factual review could not complete (${cls.reason}) — required gate`, plan);
+    }
+    log(`codex: ${cls.verdict}${cls.reason ? ` (${cls.reason})` : ''} — ${cls.verdict === 'PASS' ? 'PASS' : 'not blocking (best-effort)'}`);
   }
 
   // (5) all REQUIRED gates passed → mark-verified + merge (success notify owned by --merge).

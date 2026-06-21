@@ -23,13 +23,21 @@
          runbook); it only claims ready drafts + verify/merges previews to prod. -->
     <key>GG_AUTOPILOT_MODE</key>
     <string>publish-only</string>
+    <!-- codex factual-review gate (2026-06-21): the publish gate's codex review is the only step
+         that fact-checks real-world claims and it now PARKS on a non-PASS. Point GG_CODEX_BIN at the
+         wrapper; codex itself must be installed + authenticated (preflight stands the fire down with
+         an alert if it is not). Set GG_CODEX_GATE_REQUIRED=0 here only for an emergency codex-less run. -->
+    <key>GG_CODEX_BIN</key>
+    <string>/Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-codex-pr-review.mjs</string>
   </dict>
   <key>StartInterval</key>
   <integer>1500</integer>
   <key>RunAtLoad</key>
   <true/>
-  <key>LimitLoadToSessionType</key>
-  <string>Background</string>
+  <!-- NO LimitLoadToSessionType: the tick needs the user (Aqua) keychain + claude/gh/codex CLIs.
+       Pinning to Background loads it pre-login with no keychain (see the header comment) — the
+       gui/$(id -u) bootstrap above is the supported load. Removed 2026-06-21 (file had contradicted
+       its own header). ProcessType=Background below is fine (scheduling hint, not a session pin). -->
   <key>StandardOutPath</key>
   <string>/Users/awayer_mini/gengrowth-agents/cron-sync/seo_autopilot/launchd.out.log</string>
   <key>StandardErrorPath</key>

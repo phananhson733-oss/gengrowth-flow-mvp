@@ -7,7 +7,9 @@
 //
 // Checks (ALL collected — never bails on the first failure):
 //   1. required dirs exist  — GG_FLOW_REPO / GG_OPS_DIR / GG_ORACLE_DIR
-//   2. required commands in PATH — node / git / gh / claude (codex is optional: WARN only)
+//   2. required commands in PATH — node / git / gh / claude, plus codex (REQUIRED since
+//      2026-06-21: the publish gate's codex factual review is a hard merge gate, so a fire
+//      with no reachable codex must stand down loudly, not silently park every article).
 //   3. WARN (not error) if VERCEL_AUTOMATION_BYPASS_SECRET is unset
 //   4. unless --skip-live-cli: a 60s `claude -p 'Return exactly: OK'` smoke; error
 //      unless the model returns OK.
@@ -25,7 +27,7 @@
 //      the slow/flaky live claude smoke — recommended in cron).
 // Output: {ok, dirs, errors, warnings}. Exit 0 if ok, else 2.
 
-import { existsSync } from 'node:fs';
+import { existsSync, accessSync, constants } from 'node:fs';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
 import { spawnSync } from 'node:child_process';
@@ -50,6 +52,28 @@ function commandExists(name) {
   return false;
 }
 
+// codex resolution mirrors gg-codex-pr-review.mjs / gg-author-review.mjs: it commonly lives in
+// ~/.npm-global/bin (sometimes ~/.local/bin), neither of which the cron PATH includes at preflight
+// time. So checking PATH alone would false-fail on a host where codex IS installed. Check PATH plus
+// those known install dirs, and honor GG_CODEX_BIN (the wrapper the gate actually invokes).
+function isExecutable(p) {
+  try { accessSync(p, constants.X_OK); return true; } catch { return false; }
+}
+function codexReachable() {
+  // The codex CLI ITSELF must be resolvable AND executable. A present GG_CODEX_BIN wrapper file is
+  // NOT proof codex works — the wrapper shells out to codex, so a wrapper-only check would pass
+  // preflight yet park every claim at the gate's codex step. Check PATH + the known install dirs
+  // (the cron PATH omits ~/.npm-global/bin and ~/.local/bin, so PATH alone would false-fail where
+  // codex IS installed), and require the executable bit (a dir / broken shim is not "reachable").
+  const onPath = String(process.env.PATH || '').split(':').some((dir) => dir && isExecutable(join(dir, 'codex')));
+  const inKnownDir = [join(HOME, '.npm-global', 'bin', 'codex'), join(HOME, '.local', 'bin', 'codex')].some(isExecutable);
+  if (!onPath && !inKnownDir) return false;
+  // If the gate is pointed at a wrapper (GG_CODEX_BIN), that wrapper file must exist too — else the
+  // gate's `node <GG_CODEX_BIN>` invocation fails and every claim parks at the codex step.
+  if (process.env.GG_CODEX_BIN && !existsSync(process.env.GG_CODEX_BIN)) return false;
+  return true;
+}
+
 const errors = [];
 const warnings = [];
 
@@ -62,11 +86,17 @@ for (const [key, value] of Object.entries(requiredDirs)) {
 for (const cmd of ['node', 'git', 'gh', 'claude']) {
   if (!commandExists(cmd)) errors.push(`command not in PATH: ${cmd}`);
 }
-// codex is OPTIONAL for the publish leg — the gate runs a best-effort 4th-opinion review and SKIPs
-// it when codex/GG_CODEX_BIN is absent. codex lives in ~/.local/bin, which the cron PATH does NOT
-// include at preflight time, so a HARD requirement would exit(2) and stand down every publish-only
-// fire for a tool the publish path doesn't actually need. Warn, never fail.
-if (!commandExists('codex')) warnings.push('codex not in PATH (optional — publish gate runs without it)');
+// codex is REQUIRED for the publish leg (2026-06-21): the gate's codex factual review is the ONLY
+// step that fact-checks real-world claims, and it now PARKS on a non-PASS. A fire with no reachable
+// codex should stand down here with one actionable alert, rather than claim/convert/push N previews
+// and park them all at the codex step. codexReachable() checks GG_CODEX_BIN + PATH + the known
+// ~/.npm-global/bin and ~/.local/bin install dirs (the cron PATH omits those). Override for an
+// emergency codex-less run by exporting GG_CODEX_GATE_REQUIRED=0 (the gate then best-efforts codex).
+if (process.env.GG_CODEX_GATE_REQUIRED === '0') {
+  if (!codexReachable()) warnings.push('codex not reachable (GG_CODEX_GATE_REQUIRED=0 — publish gate best-efforts it)');
+} else if (!codexReachable()) {
+  errors.push('codex not reachable (REQUIRED for the publish factual-review gate; install/auth codex or set GG_CODEX_GATE_REQUIRED=0)');
+}
 
 // 3. preview-bypass secret — WARN only (often sourced from _gg.env later in tick).
 if (!process.env.VERCEL_AUTOMATION_BYPASS_SECRET) {

@@ -1,3 +1,28 @@
+---
+title: Spain World Cup 2026 Astrology
+slug: spain-world-cup-2026-astrology
+date: 2026-06-21
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-WC-026
+author_id: "julian-thorne"
+author_display_name: "Julian Thorne"
+target_keyword: spain world cup 2026 astrology
+associated_keywords:
+  - 斗牛士军团占星
+  - 西班牙国家队星盘
+  - 西班牙足球星座2026
+  - 2026木星巨蟹
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-21T11:13:17.886Z
+content_sha256_short: e96b3123dc850a37
+phase2_checks: all-pass
+---
+
 # 西班牙2026世界杯占星：斗牛士军团的危机与突破图景
 
 ## 斗牛士军团的星盘是什么？

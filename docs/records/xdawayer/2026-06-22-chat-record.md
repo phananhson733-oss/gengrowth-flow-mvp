@@ -107,6 +107,18 @@ hero 应该是 gemini-web 的 path 设置有问题
 
 ---
 
+### Q8 — 14:34
+
+**🙋 提问：**
+
+needs_human 里面哪有些内容
+
+**🤖 回答：**
+
+查询 `gg-seo-autopilot.mjs --status` 并筛选 `needs_human`：当前共有 25 个条目，其中 21 个停在 `authoring`，原因均为选题登记表中找不到对应 row；4 个停在 `push`，为 6/21 遗留的无 PR、lease 过期旧 active claim，已 park 到 `needs_human` 以解除队列阻塞。同步复核 `gg-seo-autopilot.mjs --stale-report`，结果为 `inflight: []`、`staleCount: 0`。
+
+---
+
 ### Q8 — 14:28
 
 **🙋 提问：**

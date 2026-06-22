@@ -22,8 +22,6 @@
   <integer>3600</integer>
   <key>RunAtLoad</key>
   <true/>
-  <key>LimitLoadToSessionType</key>
-  <string>Background</string>
   <key>StandardOutPath</key>
   <string>/Users/awayer_mini/gengrowth-agents/cron-sync/gengrowth-publish/launchd.out.log</string>
   <key>StandardErrorPath</key>

@@ -39,7 +39,7 @@ const CODEX = process.env.GG_CODEX_REVIEW_CODEX_BIN
 const GH = process.env.GG_CODEX_REVIEW_GH_BIN || 'gh';
 const CODEX_MODEL = process.env.GG_CODEX_REVIEW_MODEL || 'gpt-5.5';
 const CODEX_EFFORT = process.env.GG_CODEX_REVIEW_EFFORT || 'high';
-const DIFF_BUDGET = 120000; // max PR-diff bytes fed to codex; OVER budget = fail-closed (PARK), never
+const DIFF_BUDGET = 200000; // max PR-diff bytes fed to codex; OVER budget = fail-closed (PARK), never
                             // a PASS on a truncated fact-check. One autopilot article PR (prose +
                             // a few small inline SVGs + plan; hero is binary → no diff content) sits
                             // well under this; an anomalously large PR parks for a human.

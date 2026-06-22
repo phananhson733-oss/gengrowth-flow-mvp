@@ -176,7 +176,7 @@ test('no data/articles changes in the diff → exit 3 (nothing to fact-check)', 
 
 test('article diff exceeding the review budget → exit 3 (fail-closed, never PASS on truncation)', () => {
   const dir = caseDir();
-  const big = 'diff --git a/data/articles/x.ts b/data/articles/x.ts\n@@\n+ ' + 'x'.repeat(130000) + '\n';
+  const big = 'diff --git a/data/articles/x.ts b/data/articles/x.ts\n@@\n+ ' + 'x'.repeat(230000) + '\n';
   const r = run(['--repo', 'xdawayer/oracle', '--pr', '196'],
     { gh: ghWithDiff(dir, big), codex: codexFake(dir, { verdict: 'PASS' }) });
   assert.equal(r.status, 3, `stderr: ${r.stderr}; stdout: ${r.stdout}`);

@@ -375,3 +375,15 @@ continue（推进 WC-029 / MYTH-008 收尾）
 用户质疑后直接读真表，挖出真正根因：autopilot 的 findSheetRow→gg-sheet-pull 读的是遗留 workbook 1dejq（GG_SHEETS_WORKBOOK_ID），不是 canonical 1CkjOC（GG_SHEETS_FLOW_MVP_WORKBOOK_ID）。遗留表 stale/空（ready=9/incomplete=286），canonical 满（ready=178/incomplete=0）。这才是"no row"park + 我误判"缺数据/要建 4 个 pillar"的真凶；WC-029/MYTH-008 在 canonical 里有完整 brief（T1/T2 + Birth Chart 模板 + 正确 cluster），之前用错表的 Definition 模板才 park 在红线。修复 b676005：gg-sheet-pull 改 canonical-first（resolveWorkbookId 逻辑），2026-05-29 split-brain 修复漏掉的 straggler。实证：现读 1CkjOC、找到 PG-WC-029(T1 Birth Chart)/PG-MYTH-008(T2 Birth Chart)。删除了基于误诊的 pillar 草稿。清 claim 后台用全修复链路重跑两篇（bidqauv83）。备注 gg-entity-passport 同类直读遗留变量，未修。
 
 ---
+
+### Q28 — 20:52 [claude]
+
+**🙋 提问：**
+
+我们这里主要是为了完善 skill
+
+**🤖 回答：**
+
+重新聚焦主线=完善 operating-gengrowth-flow skill：把这轮实战 dogfooding 学到的全部回灌。新增 references/data-sources.md（canonical 1CkjOC vs 遗留 1dejq workbook 陷阱=#1 no-row 根因、各 tab/gid、选题登记表列）；troubleshooting 修正 no-row 诊断（先验 workbook 非补行）、TBD 占位符真相（SC2 要求≥5/≥3、转换器解析、勿删）、模型现状（作者+修复均 Opus）、新增 repair-adopt 修复行、codex 星历假阳性行（WC-028 类）；script-routing 补 --reconcile-published；SKILL.md 诊断段改为 no-row 先查 canonical + references 加 data-sources。skill validator 通过。dogfooding 附带修了 3 个真 flow bug：b676005（gg-sheet-pull 读错 workbook 根因）、b409f18（repair 验证缺 --prompt-version 永不采纳）、d2a87d8（no-row 自动对账 + codex 星历豁免）。副线：23/25 解决；末 2 篇后台用全修复链路重跑（bidqauv83），仍撞内容固有红线（H3/sun sign），Opus 修复现可采纳会接手。
+
+---

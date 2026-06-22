@@ -53,6 +53,18 @@ const LINK_RULES = [
   [/lionel\s+messi\s+zodiac\s+sign|messi\s+zodiac\s+sign/i, 'lionel-messi-zodiac-sign'],
   [/harry\s+kane|kane\s+birth\s+chart/i, 'harry-kane-birth-chart'],
   [/cancer\s+zodiac\s+world\s+cup|cancer\s+world\s+cup\s+lens/i, 'cancer-zodiac-world-cup-2026'],
+  // 6/18 batch-2 WC player + England-team spokes (PG-WC-021~025); before the pillar rule
+  [/james\s+rodr[ií]guez|rodr[ií]guez\s+birth\s+chart/i, 'james-rodriguez-birth-chart'],
+  [/luis\s+d[ií]az|d[ií]az\s+birth\s+chart/i, 'luis-diaz-birth-chart'],
+  [/yoane\s+wissa|wissa\s+birth\s+chart/i, 'yoane-wissa-birth-chart'],
+  [/christian\s+pulisic|pulisic\s+birth\s+chart/i, 'christian-pulisic-birth-chart'],
+  [/england\s+world\s+cup\s+2026\s+astrology|england\s+(team|squad|national)\s+(team\s+)?astrology/i, 'england-world-cup-2026-astrology'],
+  // 6/21 batch (PG-WC-026/027/028, TRANS-011, MYTH-006); chiron-in-taurus before generic chiron rule
+  [/spain\s+world\s+cup\s+2026\s+astrology|la\s+roja\s+astrology|spain\s+(national\s+team\s+)?(birth\s+)?chart/i, 'spain-world-cup-2026-astrology'],
+  [/matheus\s+cunha|cunha\s+birth\s+chart/i, 'matheus-cunha-birth-chart'],
+  [/scotland\s+(vs\.?\s+|and\s+|[-\s]+)brazil.{0,24}(world\s+cup\s+)?astrology/i, 'scotland-brazil-world-cup-astrology'],
+  [/chiron\s+in\s+taurus|chiron\s+taurus(\s+2026)?(\s+transit)?/i, 'chiron-in-taurus-2026-astrology'],
+  [/toy\s+story\s+5\s+(characters?\s+)?zodiac|toy\s+story\s+(5\s+)?zodiac\s+signs?/i, 'toy-story-5-zodiac-signs'],
   [/best\s+soccer\s+players?\s+(by\s+)?zodiac|soccer\s+players?\s+by\s+zodiac/i, 'best-soccer-players-zodiac-sign'],
   [/world\s+cup\s+2026\s+june\s+astrology|june\s+2026.{0,16}(transit|astrology)\s+calendar/i, 'world-cup-2026-june-astrology'],
   [/world\s+cup\s+2026\s+astrology\s+(themes?\s+)?(pillar|prediction|hub|overview|guide)|world\s+cup\s+2026\s+astrology\s+themes/i, 'world-cup-2026-astrology-prediction'],

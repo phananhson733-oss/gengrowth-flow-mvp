@@ -492,7 +492,8 @@ function structureCheck(draft) {
   const h4Count = (draft.match(/^#### /gm) || []).length;
   if (h1Count !== ctx.expected_h1) findings.push(`H1 count = ${h1Count}, expected ${ctx.expected_h1}`);
   if (h2Count !== ctx.expected_h2) findings.push(`H2 count = ${h2Count}, expected ${ctx.expected_h2}`);
-  if (h3Count !== 0) findings.push(`H3 count = ${h3Count}, expected 0`);
+  // H3 allowed both sites (user 2026-06-22: "需要有 H3，如果有必要的话"); SC3C
+  // (structure-checks) governs subsection quality / wall-of-text. H4 stays banned (too deep).
   if (h4Count !== 0) findings.push(`H4 count = ${h4Count}, expected 0`);
 
   // bilingual-v9: word count branches on language. EN uses whitespace word

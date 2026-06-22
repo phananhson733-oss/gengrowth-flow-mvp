@@ -1015,7 +1015,7 @@ function doAuthor(o = {}) {
           // Freshness binding (see path #1): delete the canonical zh draft first so existsSync below
           // proves THIS candidate's phase2 just (re)wrote it, not a stale leftover.
           rmSync(zhDraft(pgId), { force: true });
-          shFlow('node', [PHASE2, '--source', cand, '--page-id', pgId, '--tag', 'zh', '--language', 'zh', '--author', author]);
+          shFlow('node', [PHASE2, '--source', cand, '--page-id', pgId, '--tag', 'zh', '--language', 'zh', '--author', author, '--prompt-version', VERSION]);
           return existsSync(zhDraft(pgId));
         },
       })) {
@@ -1119,7 +1119,7 @@ function doAuthor(o = {}) {
       pgId, draftV8, candidate: join('_staging', `${pgId}-repair-candidate.md`),
       targetKeyword: keyword, author, failures: lastFail,
       validate: (cand) => {
-        shFlow('node', [PHASE2, '--source', cand, '--page-id', pgId, '--tag', 'en', '--author', author]);
+        shFlow('node', [PHASE2, '--source', cand, '--page-id', pgId, '--tag', 'en', '--author', author, '--prompt-version', VERSION]);
         return existsSync(enDraft(pgId)) && phase2Passed(pgId);
       },
     })) {

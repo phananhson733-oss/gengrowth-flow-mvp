@@ -130,7 +130,13 @@ export function checkInternalLinkTier(draft, ctx = {}) {
     return { id, severity, pass: true, violations: [], note: 'empty draft — skipped' };
   }
   const tier = String(ctx.tier || '').trim().toUpperCase();
-  const count = countTbdLinks(draft);
+  let count = countTbdLinks(draft);
+  // gengrowth (B2B) publishes via marked, which does NOT resolve [[<TBD>]] placeholders,
+  // so its articles ship RESOLVED markdown internal links (/en/blog/<slug>) — the live EOS
+  // convention. Count those toward the tier floor too (user 2026-06-22: EOS-style links).
+  if (process.env.GG_SITE === 'gengrowth') {
+    count += (draft.match(/\]\(\/en\/blog\/[a-z0-9-]+\)/g) || []).length;
+  }
   const bounds = TIER_LINK_BOUNDS[tier];
   if (!bounds) {
     return {

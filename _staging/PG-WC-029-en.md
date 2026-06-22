@@ -107,7 +107,7 @@ This is not a clinical interpretation or mental health advice.
 ## Related Reading
 
 - [[<TBD-internal-link: guide to reading any footballer's birth chart>]] — a step-by-step for applying this method to other players.
-- [[<TBD-internal-link: guide to reading a national chart>]] — how a country's chart frames a squad's 2026 run.
+- [[<TBD-internal-link: the Erling Haaland birth chart>]] — a contrasting World Cup forward read through the same lens.
 - [[<TBD-internal-link: best soccer players by zodiac sign>]] — how Gemini and other signs show up across top footballers.
 
 ## Take Action

@@ -1,28 +1,3 @@
----
-title: Father's Day Astrology 2026
-slug: father-s-day-astrology-2026
-date: 2026-06-22
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T1
-track: 量产线
-page_id: PG-TRANS-012
-author_id: "elena-vane"
-author_display_name: "Elena Vane"
-target_keyword: father's day astrology 2026
-associated_keywords:
-  - father's day astrology
-  - sun enters cancer 2026
-  - cancer season fathers day
-  - father zodiac astrology
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-06-22T15:28:45.960Z
-content_sha256_short: c5277a0f920a4ec7
-phase2_checks: all-pass
----
-
 # What Father's Day Astrology 2026 Says About Home and Roots
 
 ## What Is Father's Day Astrology 2026?

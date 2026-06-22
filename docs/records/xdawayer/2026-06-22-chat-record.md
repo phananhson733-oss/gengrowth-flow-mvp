@@ -19,6 +19,7 @@ tags:
 - 清理旧队列：将 6/21 四个无 PR 且 lease 过期的 `active/stage=push` claim 安全 park 到 `needs_human`，最终 `preflight: ok`、`staleCount: 0`、仓库状态干净。
 - 复核可自动化条件：`seo-author` 与 `seo-autopilot` 均由 launchd 周期调度，当前无 active/preview 中间态残留，可按安全门禁无人值守继续运行。
 - 核验 6/21 四篇文章已在 `origin/main` 与线上 EN/ZH URL 发布，并通过 `--reconcile-published` 将对应 claim 从 `needs_human` 修正为 `done`。
+- 为 Codex 自动化落地生成两个待确认 cron automation 提案：`GenGrowth SEO Author Lane` 与 `GenGrowth SEO Publish Lane`，保留 deterministic driver 安全边界。
 
 ---
 
@@ -141,5 +142,17 @@ needs_human 里面哪有些内容
 **🤖 回答：**
 
 按系统化排查检查了当前 Git 状态：读取 `AGENTS.md`、`ai-profile/reminders.md` 与相关 superpowers 技能；确认 `ai-profile/lynne-soul.md` 在当前目录不存在；执行 `git status --branch --porcelain=v2`、`git diff --name-only --diff-filter=U`、`git ls-files -u`、`git fetch --prune origin`、`git rev-list --left-right --count HEAD...@{u}`、`git status --short -- tools/scripts/gg-md-to-oracle-ts.mjs`、`git push --dry-run origin main` 等验证。结论：当前仓库没有未完成 merge、没有冲突、`tools/scripts/gg-md-to-oracle-ts.mjs` 没有本地改动，`main` 与 `origin/main` 为 `+0/-0`，push dry-run 返回 `Everything up-to-date`。期间观察到 Obsidian 正在运行，且 14:28:30 自动产生 `vault backup` 提交 `6d3375f` 并同步到远端，因此截图中的错误应是并发自动同步期间留下的旧失败通知；当前状态已恢复同步。
+
+---
+
+### Q10 — 14:43
+
+**🙋 提问：**
+
+我想把这个自动写文的 cron，这个自动化 任务写入到 codex-自动化 中，应该如何去落地呢
+
+**🤖 回答：**
+
+提出落地方式：保持 deterministic driver 为唯一状态机，不把 claim/merge 逻辑搬进 prompt；在 Codex 自动化中拆成两个 cron job。已生成两个待用户确认的 Codex automation 提案：`GenGrowth SEO Author Lane`，每 2 小时在 `/Users/awayer_mini/gengrowth-flow-mvp` 本地执行 `bash tools/scripts/gg-seo-author-tick.sh`，只负责写稿并报告 `needs_human`/stale；`GenGrowth SEO Publish Lane`，每小时执行 `node tools/scripts/gg-seo-autopilot.mjs --reconcile-published` 与 `bash tools/scripts/gg-seo-autopilot-tick.sh`，只通过 driver 执行 scan/preview gate/merge，并报告发布、park、inflight/stale 状态。
 
 ---

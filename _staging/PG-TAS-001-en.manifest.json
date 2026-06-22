@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-TAS-001",
+  "entity": "SEO Audit Checklist / Technical SEO Checklist",
+  "target_keyword": "seo audit checklist",
+  "template": "Definition",
+  "tier": "T1",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-06-22T14:47:22.578Z",
+  "content_sha256_short": "3d469c007903c9e6",
+  "source_path": "_staging/PG-TAS-001-claude-v8.md",
+  "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-TAS-001-en.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 3,
+      "h4Count": 0,
+      "words": 1879,
+      "wikilinks": 0,
+      "tbdLinks": 0
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

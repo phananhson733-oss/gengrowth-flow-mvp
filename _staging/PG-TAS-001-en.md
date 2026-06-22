@@ -1,11 +1,23 @@
 ---
-title: SEO Audit Checklist
+title: Seo Audit Checklist
 slug: seo-audit-checklist
-entity: SEO Audit Checklist / Technical SEO Checklist
-target_keyword: seo audit checklist
-template: Checklist + Tool
+date: 2026-06-22
+status: ready-to-review
+type: wiki-entry
+template: Definition
 tier: T1
 track: 量产线
+page_id: PG-TAS-001
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: seo audit checklist
+associated_keywords:
+
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-22T14:47:22.578Z
+content_sha256_short: 3d469c007903c9e6
+phase2_checks: all-pass
 ---
 
 # The SEO Audit Checklist Ordered by Ranking Impact, Not by Category

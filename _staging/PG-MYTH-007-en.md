@@ -95,7 +95,7 @@ No. Houses, rising sign, and several fast-moving placements require an exact bir
 
 **Why did searches for NiKo's birth chart spike after Cologne?**
 
-The Cologne Major win made the Aquarius breakthrough arc retrospectively legible to a community with no prior connection between esports performance and natal chart reading. According to a 2017 Pew Research Center survey, about 29% of U.S. adults said they believed in astrology — a population large enough that a high-profile win matching an astrological archetype this closely was always going to produce a significant search spike.
+The Cologne Major win made the Aquarius breakthrough arc retrospectively legible to a community with no prior connection between esports performance and natal chart reading. When a high-profile player finally resolves a long-running competitive story, astrology-curious fans often search for a symbolic frame that makes the timing feel readable.
 
 ## Reflection Prompts
 

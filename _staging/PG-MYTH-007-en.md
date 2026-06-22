@@ -23,11 +23,13 @@ content_sha256_short: 30b6b6cedfa6e6f3
 phase2_checks: all-pass
 ---
 
-# Why the NiKo Birth Chart Made the Cologne Major Inevitable
+# Why the NiKo Birth Chart Fits the Cologne Major Breakthrough
 
 ## What Is the NiKo Birth Chart?
 
-The NiKo birth chart is **a public-date astrology reading for CS2 player Nikola Kovač**, born February 16, 1997 — a limited chart discussion that can responsibly use his Aquarius Sun while avoiding house, rising-sign, or Moon-sign claims that require a confirmed birth time.
+The NiKo birth chart is **a public-date astrology reading for CS2 player Nikola Kovač**, born February 16, 1997, centered on Aquarius Sun symbolism.
+
+Because NiKo's birth time is not publicly confirmed, the reading stays limited: it avoids house, rising-sign, or Moon-sign claims that require verified private birth data.
 
 - Places NiKo's publicly known birth date in Aquarius, a fixed air sign associated with sustained vision, technical originality, and long-range pattern recognition
 - Treats the Cologne result as a symbolic Aquarius reading rather than a verified full natal-chart claim

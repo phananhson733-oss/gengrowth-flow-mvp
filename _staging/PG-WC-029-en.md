@@ -8,8 +8,8 @@ template: Definition
 tier: T1
 track: 量产线
 page_id: PG-WC-029
-author_id: "aditi-sharma"
-author_display_name: "Aditi Sharma"
+author_id: "julian-thorne"
+author_display_name: "Julian Thorne"
 target_keyword: mo salah birth chart
 associated_keywords:
   - mo salah zodiac sign
@@ -18,7 +18,7 @@ associated_keywords:
   - mo salah egypt world cup 2026
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-22T12:56:16.024Z
+generated_at: 2026-06-22T13:48:36.043Z
 content_sha256_short: 65802d817b4b092c
 phase2_checks: all-pass
 ---

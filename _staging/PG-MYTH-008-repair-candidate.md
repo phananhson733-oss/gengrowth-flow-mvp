@@ -88,9 +88,7 @@ This is not a clinical interpretation or mental health advice.
 
 ## Related Reading
 
-- [[<TBD-internal-link: guide to the Cancer moon placement>]] — goes deeper on the private emotional needs his Moon describes
-- [[<TBD-internal-link: guide to the Sagittarius rising sign>]] — explains the public mask sitting over his Cancer core
-- [[<TBD-internal-link: overview of Neptune aspects to the Ascendant>]] — covers why his first impression reads as dreamy and hard to pin down
+- [How to read a birth chart](/en/wiki/how-to-read-birth-chart) — how Sun, Moon, and Rising combine in any chart, not just his
 - [[<TBD-external-link: Wikipedia | William, Prince of Wales | the birth-date and biographical facts behind this chart reading>]]
 
 ## Take Action

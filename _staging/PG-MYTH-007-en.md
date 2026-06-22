@@ -39,7 +39,7 @@ Aquarius is a fixed air sign — meaning it holds its core orientation long afte
 
 Understanding the NiKo birth chart matters because the Aquarius stereotype — cold, remote, more interested in ideas than in people — is almost the inverse of what the sign produces when it finally aligns with the right collective structure. CS2 fans who searched this chart after Cologne came expecting confirmation that an Aquarius Sun can't carry a team to a championship. What they found was a different pattern entirely. Aquarius doesn't fail to win; it requires that the team and the moment develop the capacity to meet what the individual already knows — and that process takes time.
 
-The seventeen-major wait is not a contradiction of the Aquarius archetype. It is a textbook expression of it. Aquarius Sun placements frequently carry a sense of operating ahead of the available context, and the breakthrough, when it arrives, tends to feel both sudden to observers and quietly overdue to the chart holder. Building on the person-centered chart reading tradition that Liz Greene helped establish, this reading treats the Aquarius Sun not as a fixed personality type but as a developmental arc — one that cannot be rushed from the outside. The [[<TBD-internal-link: guide to fixed sign endurance in long-form competitive arcs>]] offers a fuller treatment of how fixed air energy reads across extended time horizons.
+The seventeen-major wait is not a contradiction of the Aquarius archetype. It is a textbook expression of it as symbolism, not a deterministic explanation of match outcomes. Aquarius Sun placements frequently carry a sense of operating ahead of the available context, and the breakthrough, when it arrives, tends to feel both sudden to observers and quietly overdue to the chart holder. Building on the person-centered chart reading tradition that Liz Greene helped establish, this reading treats the Aquarius Sun not as a fixed personality type but as a developmental arc — one that cannot be rushed from the outside. The [[<TBD-internal-link: guide to fixed sign endurance in long-form competitive arcs>]] offers a fuller treatment of how fixed air energy reads across extended time horizons.
 
 ## Aquarius vs Capricorn: Where the Championship Timelines Diverge
 
@@ -70,9 +70,7 @@ The most persistent errors in popular Aquarius interpretation apply directly to 
 
 ## NiKo Birth Chart at a Glance
 
-| Property | How It Works | Ruling Element | How to Observe |
-|---|---|---|---|
-| Public birth-date signal | How It Works | Ruling Element | How to Observe |
+| Public birth-date signal | How It Works | Element | How to Observe |
 |---|---|---|---|
 | Sun in Aquarius (Feb 16) | Fixed air holds a recognizable vision while external structures shift | Air | Consistent elite performance across changing team configurations |
 | Public career chronology | The timeline supplies the evidence layer; astrology supplies the symbolic language | Evidence first | Long period of individual recognition before a collective major win |

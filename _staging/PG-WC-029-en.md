@@ -27,9 +27,9 @@ phase2_checks: all-pass
 
 ## What Is Mohamed Salah's Birth Chart?
 
-Mohamed Salah's birth chart is the snapshot of the sky at the moment he was born on June 15, 1992, in Nagrig, Egypt — a Gemini Sun map that astrologers read as **a chart built around shared momentum, not solo glory**. The Mo Salah birth chart places the Sun in Gemini, the sign of the messenger, and that single placement reframes how fans read his career at 34, the age at which he captains Egypt at what many consider his last World Cup. Read this way, the chart is less a scoreboard and more a portrait of a communicator. Seen against the long arc of his career, that single placement helps explain why Salah has so often thrived as the player who links the attack rather than the lone finisher, and why his role on the pitch keeps shifting as he ages. For wider context, this page sits alongside the [[<TBD-internal-link: World Cup 2026 astrology prediction pillar>]], which maps every squad through the same astrological lens.
+Mohamed Salah's birth chart is the snapshot of the sky at the moment he was born on June 15, 1992, in Nagrig, Egypt — a Gemini Sun map that astrologers read as **a chart built around versatile, two-way play rather than one-note finishing**. The Mo Salah birth chart places the Sun in Gemini, the sign of the messenger, and that single placement reframes how fans read his career at 34, the age at which he captains Egypt at what many consider his last World Cup. Read this way, the chart is less a scoreboard and more a portrait of a communicator who can both create and finish. Seen against the long arc of his career, that single placement helps explain why Salah has so often thrived as a two-way player who both links the attack and finishes it, and why his role on the pitch keeps shifting as he ages. For wider context, this page sits alongside the [[<TBD-internal-link: World Cup 2026 astrology prediction pillar>]], which maps every squad through the same astrological lens.
 
-- Leads with a Gemini Sun, the archetype of the connector who links play rather than only finishing it
+- Leads with a Gemini Sun, the archetype of the connector who both links play and finishes it
 - Born June 15, a birthday that in 2026 lands on Egypt's opening match against Belgium
 - Read by many astrologers as a legacy chart rather than a pure goal-scoring one
 
@@ -38,16 +38,16 @@ Mohamed Salah's birth chart is the snapshot of the sky at the moment he was born
 The Mo Salah birth chart matters because football fans keep blending two different things, and the confusion shapes how a whole nation reads its captain. The friction shows up in a few ways:
 
 1. **Versatility mistaken for scoring.** Fans assume a Gemini Sun explains nonstop brilliance, when the sign's deeper theme is communication — turning personal gift into team movement.
-2. **The finisher expectation.** Searchers want the chart to promise goals at 34, but the Gemini archetype tends to peak as the player who sets up the decisive moment rather than the one who takes it.
+2. **The finisher expectation.** Searchers want the chart to promise goals at 34, but the Gemini archetype tends to peak as the two-way player who both sets up the decisive moment and takes it.
 3. **The legacy question underneath.** People aren't really asking about one tournament; they want to know what their captain's final act means.
 
-This is where a Vedic reading adds a second layer. In my decade of independent research as a second-generation Jyotish practitioner working with classical Sanskrit texts, I weigh transit timing against the natal Moon — the *manas*, or perceiving mind — rather than the Sun alone, and that shift moves the focus from output to maturity. The assist that fed Egypt's decisive goal in the 3-1 win over New Zealand on June 21 reads, on this view, as the chart working exactly as a mature Gemini chart should. For supporters, the payoff is less prediction and more perspective: the reading offers a calmer way to weigh a 34-year-old captain by what he gives the collective rather than by raw goal tallies alone.
+This is where a Vedic reading adds a second layer. In my decade of independent research as a second-generation Jyotish practitioner working with classical Sanskrit texts, I weigh transit timing against the natal Moon — the *manas*, or perceiving mind — rather than the Sun alone, and that shift moves the focus from output to maturity. Against New Zealand on June 21 — Egypt's first-ever World Cup win, 3-1 — Salah both struck the go-ahead goal himself in the 67th minute and later laid one on for Trezeguet, a create-and-finish double that reads, on this view, as the chart working exactly as a mature Gemini chart should. For supporters, the payoff is less prediction and more perspective: the reading offers a calmer way to weigh a 34-year-old captain by what he gives the collective rather than by raw goal tallies alone.
 
 ## Gemini Sun Placement vs the Full Birth Chart: What Actually Explains Salah
 
 A single Sun placement and the full Mo Salah birth chart are not the same tool, and the gap is where most hot takes go wrong. The Gemini Sun is one placement; the full chart reads the Sun together with the Moon, the houses, and the current transits. Here is how each works and what you trade by stopping at one:
 
-- The Sun-only read works fast: it labels Salah a clever, adaptable Gemini and stops there. To get that speed, you sacrifice accuracy — it cannot explain why a winger turns into a creator at 34.
+- The Sun-only read works fast: it labels Salah a clever, adaptable Gemini and stops there. To get that speed, you sacrifice accuracy — it cannot explain why a winger turns into a two-way force, both creator and finisher, at 34.
 - The full-chart read works slower: it weighs the Gemini Sun against Jupiter moving through Cancer, which traditional technique ties to the natal second house of resources and legacy. To get that depth, you give up the one-line answer.
 
 In Western tropical astrology this Jupiter-in-Cancer transit is read as a pull toward building lasting worth over personal glory. According to NASA, Jupiter takes about 12 years to complete one orbit, so its passage through Cancer marks a roughly once-in-12-years emphasis. Vedic astrology, which uses the sidereal zodiac and would place several points differently, frames the same period through *dasha* planetary cycles — a distinction worth keeping separate rather than blending the two systems. This movement also sits next to the [[<TBD-internal-link: World Cup 2026 June astrology transit calendar>]], which tracks the same shift across other charts.
@@ -65,7 +65,7 @@ You can spot the pattern that defines the Mo Salah birth chart in any chart thro
 
 Most quick takes on Mohamed Salah's chart get stuck on the same few errors. Each one reads a tendency as a fixed promise:
 
-1. **"Gemini means goals."** The misread treats versatility as scoring output. In practice the Gemini archetype is the communicator, which is why the assist for Egypt's decisive goal fits the chart better than a hat-trick would.
+1. **"Gemini means goals."** The misread treats versatility as scoring output. In practice the Gemini archetype is the communicator, which is why scoring the go-ahead goal and assisting another in the same New Zealand match fits the chart better than a one-note hat-trick would.
 2. **"The Sun is the whole story."** The Sun is one voice among many; the Moon, houses, and transits carry just as much weight.
 3. **"A birthday on match day guarantees a result."** A natal activation is a window of emphasis, not a scripted outcome — the chart describes a tendency, never a guaranteed score.
 
@@ -73,20 +73,20 @@ Most quick takes on Mohamed Salah's chart get stuck on the same few errors. Each
 
 | Property | How It Works | Energy Center | How to Observe |
 |---|---|---|---|
-| Gemini Sun | Frames identity around communication and connection | Mutable air, ruled by Mercury | Notice the pass that opens a defense, not just the finish |
+| Gemini Sun | Frames identity around communication and connection | Mutable air, ruled by Mercury | Notice both the pass that opens a defense and the finish |
 | June 15 birthday | Activates the natal Sun when transited | Natal Sun, third-house themes | Watch for performances clustered around mid-June |
 | Jupiter in Cancer | Shifts emphasis toward legacy and resources | Natal second house | Look for setup play over personal tallies |
-| Captain role at 34 | Channels the Gemini gift into collective momentum | First and tenth houses | Track assists and tempo-setting, not goal count |
+| Captain role at 34 | Channels the Gemini gift into collective momentum | First and tenth houses | Track assists, goals, and tempo-setting alike |
 
 ## Questions People Ask About Mohamed Salah's Chart
 
 **What is Mo Salah's zodiac sign?**
 
-Mohamed Salah is a Gemini, born June 15, 1992. Astrologers read the Gemini Sun as the communicator archetype, which fits his role as the creator who links Egypt's attack.
+Mohamed Salah is a Gemini, born June 15, 1992. Astrologers read the Gemini Sun as the communicator archetype, which fits his role as the two-way force who both links and finishes Egypt's attack.
 
 **Does the Mo Salah birth chart predict goals at the 2026 World Cup?**
 
-No careful reading predicts a scoreline. The chart points to tendencies — at 34, a Gemini Sun often peaks as the provider, which is why the assist against New Zealand suits the pattern. Treated honestly, the Mo Salah birth chart is a lens for understanding tendencies, not a forecasting machine, and that distinction keeps the interpretation grounded.
+No careful reading predicts a scoreline. The chart points to tendencies — at 34, a Gemini Sun often peaks as a two-way contributor, which is why both scoring and assisting against New Zealand suits the pattern. Treated honestly, the Mo Salah birth chart is a lens for understanding tendencies, not a forecasting machine, and that distinction keeps the interpretation grounded.
 
 **Why does his June 15 birthday matter astrologically?**
 

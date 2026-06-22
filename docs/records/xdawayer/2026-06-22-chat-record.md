@@ -327,3 +327,15 @@ cron 这个可以不在 skill 范围内，手动去触发 skill（确认范围�
 按 TDD 在隔离 worktree 硬化两处并 land 到主树（commit d2a87d8）：(1) lib/oracle-live.mjs 的 keywordLiveSlug——no-row authoring 失败若主题已上线则对账标 done 而非 park needs_human（接到 gg-seo-autopilot.mjs:836，fail-safe）；(2) gg-codex-pr-review.mjs 把行星过境/ingress 星历日期排除出 fact-check 范围（修 WC-028 假阳性）。6 个新测试全过、全量基线 28 个既有环境失败不变。提交时撞上 15:05 的陈旧 index.lock（vault-backup 崩溃残留，连带阻塞了 vault-backup），自诊断后删除并重试成功（顺带解封 vault-backup）。回应"agentic 修复"：该机制已存在（gg-author-repair.mjs 单次纯文本 LLM 修复），WC-029 修不好是因为修复用的独立 GG_AGENTIC_MODEL 仍是 Sonnet——已一并升到 Opus 4.8（_gg.env），作者+修复现都是 Opus。
 
 ---
+
+### Q24 — 19:52 [claude]
+
+**🙋 提问：**
+
+continue（推进 WC-029 / MYTH-008 收尾）
+
+**🤖 回答：**
+
+诊断后台重写日志发现 agentic 修复其实"报错"而非"修不好"——但深查是 autopilot 的 validate() 不传 fixture、候选稿被剥 frontmatter 致 phase2 auto-load 失败。用显式 --fixture 验证候选稿后拿到真实窄失败：WC-029 仅 SC3c（L23 七段散文），MYTH-008 仅 184 词段落墙。机械修复：把相关小节改成「引子+编号列表」（避开 H3=0 约束）。WC-029 改后 phase2 PASS、写出 en 草稿；MYTH-008 改后仍需调整。但最终硬阻塞浮现：两篇各 5 个 [[<TBD-internal-link>]] 指向不存在的 pillar/related 页、且零真实内链——发布 gate links-seo 会拦死链。已查清 10 个 TBD 目标哪些有现成文章可指。拒绝发死链/假标 done，将内容架构决策（映射现成/去链/建 pillar）交回用户。
+
+---

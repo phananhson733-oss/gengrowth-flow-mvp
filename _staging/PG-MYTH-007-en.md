@@ -93,9 +93,9 @@ From a public-date astrology perspective, the wait maps cleanly onto the Aquariu
 
 No. Houses, rising sign, and several fast-moving placements require an exact birth time and location. Without that confirmation, this article treats the NiKo birth chart as a limited public-date reading centered on the Aquarius Sun and the visible career timeline.
 
-**Why did searches for NiKo's birth chart rise after IEM Cologne Major 2026?**
+**Why do fans search for NiKo's birth chart after IEM Cologne Major 2026?**
 
-IEM Cologne Major 2026 made the Aquarius breakthrough arc legible to a community with no prior connection between esports performance and natal chart reading. When a famous player resolves a long-running competitive story on a major stage, astrology-curious fans often search for a symbolic frame that makes the timing feel readable.
+IEM Cologne Major 2026 made the Aquarius breakthrough arc easy to map onto a public esports story. When a famous player resolves a long-running competitive narrative on a major stage, astrology-curious fans may search for a symbolic frame that makes the timing feel readable.
 
 ## Reflection Prompts
 

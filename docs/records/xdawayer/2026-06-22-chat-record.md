@@ -106,3 +106,15 @@ hero 应该是 gemini-web 的 path 设置有问题
 复核完成条件后给出判断：可以理解为当前 SEO 自动写稿/发布 task 已达到可无人值守自动化运行状态；证据包括 `gg-autopilot-preflight.mjs` 输出 `preflight: ok`，`gg-seo-autopilot.mjs --stale-report` 输出 `inflight: []`、`staleCount: 0`，`seo-author` 与 `seo-autopilot` LaunchAgent 均加载且最近退出码为 0，状态表中无 `active`、`pushed-preview`、`verified-preview` 中间态残留。同时说明“完全自动化”指 happy path 无需手动 kick 或人工发布；若内容事实、schema、链接、预览或 Codex review 失败，系统仍会按设计停到 `needs_human`，这是安全门禁而非链路不通。
 
 ---
+
+### Q8 — 14:28
+
+**🙋 提问：**
+
+用户上传截图 `/var/folders/c8/k7q0dcp13rd8590xbtxs_9n80000gn/T/codex-clipboard-d45c2ec7-5562-4127-b3fb-f2b85be13c90.png`，截图显示 Obsidian/Git 通知：`Pull failed (merge): error: Your local changes to the following files would be overwritten by merge: tools/scripts/gg-md-to-oracle-ts.mjs`，以及 push 到 `origin/main` 被拒绝、提示本地分支落后于远端。
+
+**🤖 回答：**
+
+按系统化排查检查了当前 Git 状态：读取 `AGENTS.md`、`ai-profile/reminders.md` 与相关 superpowers 技能；确认 `ai-profile/lynne-soul.md` 在当前目录不存在；执行 `git status --branch --porcelain=v2`、`git diff --name-only --diff-filter=U`、`git ls-files -u`、`git fetch --prune origin`、`git rev-list --left-right --count HEAD...@{u}`、`git status --short -- tools/scripts/gg-md-to-oracle-ts.mjs`、`git push --dry-run origin main` 等验证。结论：当前仓库没有未完成 merge、没有冲突、`tools/scripts/gg-md-to-oracle-ts.mjs` 没有本地改动，`main` 与 `origin/main` 为 `+0/-0`，push dry-run 返回 `Everything up-to-date`。期间观察到 Obsidian 正在运行，且 14:28:30 自动产生 `vault backup` 提交 `6d3375f` 并同步到远端，因此截图中的错误应是并发自动同步期间留下的旧失败通知；当前状态已恢复同步。
+
+---

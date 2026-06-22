@@ -263,7 +263,7 @@ export async function verifyPage(page, navUrl, { errorBuffers }) {
   }
 
   // Give the SPA a beat to hydrate its <h1> / JSON-LD.
-  try { await page.waitForSelector('h1', { timeout: 8000 }); } catch { /* asserted below */ }
+  try { await page.waitForSelector('h1', { timeout: 20000 }); } catch { /* asserted below */ }
 
   const status = resp ? resp.status() : 0;
   const finalUrl = page.url();

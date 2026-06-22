@@ -75,7 +75,7 @@ const DEFAULTS = {
   previewTimeoutMs: 600000,   // matches gg-preview-wait DEFAULT_TIMEOUT_MS
   verifyTimeoutMs: 180000,
   reviewTimeoutMs: 780000,    // matches gg-article-review-worker DEFAULT_TIMEOUT_MS
-  codexTimeoutMs: 240000,
+  codexTimeoutMs: 600000,
 };
 
 // ── bin resolution (env-overridable; falls back to the sibling script dir) ────

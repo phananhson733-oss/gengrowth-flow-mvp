@@ -317,6 +317,67 @@ test('--mark-failed parks a pushed preview with a required failure reason', () =
   }
 });
 
+test('--retry-failed restores a human-fixed parked preview without bypassing verification', () => {
+  const h = makeHarness();
+  try {
+    writeClaims(h, {
+      'PG-TEST-001': {
+        status: 'needs_human',
+        branch: 'seo/auto/2026-06-03-PG-TEST-001',
+        slug: 'test-slug',
+        pr: 'https://github.com/xdawayer/oracle/pull/123',
+        needs_hero: true,
+        error: 'review[schema] FAIL: description truncated',
+        failedAt: '2026-06-03T00:00:00.000Z',
+      },
+    });
+
+    const r = runAuto(h, [
+      '--retry-failed',
+      '--branch',
+      'seo/auto/2026-06-03-PG-TEST-001',
+      '--evidence',
+      'description regenerated and hero fixed',
+      '--clear-needs-hero',
+    ]);
+
+    assert.equal(r.status, 0, `${r.stdout}${r.stderr}`);
+    const claims = JSON.parse(readFileSync(h.claimsPath, 'utf8'));
+    const c = claims['PG-TEST-001'];
+    assert.equal(c.status, 'pushed-preview');
+    assert.equal(c.stage, 'pushed-preview');
+    assert.equal(c.error, undefined);
+    assert.equal(c.failedAt, undefined);
+    assert.equal(c.needs_hero, undefined);
+    assert.equal(c.retryEvidence, 'description regenerated and hero fixed');
+    assert.match(c.retryAt, /^\d{4}-\d{2}-\d{2}T/);
+    assert.notEqual(c.status, 'verified-preview', 'retry must not bypass the verification gate');
+
+    const verified = runAuto(h, ['--merge', '--branch', 'seo/auto/2026-06-03-PG-TEST-001']);
+    assert.notEqual(verified.status, 0, 'merge must still require a later mark-verified');
+  } finally {
+    h.cleanup();
+  }
+});
+
+test('--retry-failed refuses non-parked claims', () => {
+  const h = makeHarness();
+  try {
+    writeClaims(h, {
+      'PG-TEST-001': {
+        status: 'active',
+        branch: 'seo/auto/2026-06-03-PG-TEST-001',
+        slug: 'test-slug',
+      },
+    });
+    const r = runAuto(h, ['--retry-failed', '--branch', 'seo/auto/2026-06-03-PG-TEST-001']);
+    assert.notEqual(r.status, 0);
+    assert.match(`${r.stdout}${r.stderr}`, /needs_human/);
+  } finally {
+    h.cleanup();
+  }
+});
+
 test('--scan refuses to hard-reset a dirty oracle workspace', () => {
   const h = makeHarness();
   try {

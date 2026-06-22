@@ -29,6 +29,7 @@
 //   node gg-seo-autopilot.mjs [--scan] [--dry-run] [--limit 1]
 //   node gg-seo-autopilot.mjs --mark-verified --branch seo/auto/<date>-<PID> --preview-url https://...
 //   node gg-seo-autopilot.mjs --mark-failed --branch seo/auto/<date>-<PID> --reason "..."
+//   node gg-seo-autopilot.mjs --retry-failed --branch seo/auto/<date>-<PID> --evidence "fixed ..."
 //   node gg-seo-autopilot.mjs --merge --branch seo/auto/<date>-<PID>
 //   node gg-seo-autopilot.mjs --status
 //
@@ -173,6 +174,8 @@ function parseArgs(argv) {
     else if (a === '--merge') o.merge = true;
     else if (a === '--mark-verified') o.markVerified = true;
     else if (a === '--mark-failed') o.markFailed = true;
+    else if (a === '--retry-failed') o.retryFailed = true;
+    else if (a === '--clear-needs-hero') o.clearNeedsHero = true;
     else if (a === '--status') o.status = true;
     else if (a === '--stale-report') o.staleReport = true;
     else if (a === '--branch') o.branch = argv[++i];
@@ -182,7 +185,7 @@ function parseArgs(argv) {
     else if (a === '--limit') o.limit = parseInt(argv[++i], 10) || 1;
     else if (a === '--task') o.task = argv[++i];
   }
-  if (!o.scan && !o.author && !o.nextUnauthored && !o.merge && !o.markVerified && !o.markFailed && !o.status && !o.staleReport) o.scan = true;
+  if (!o.scan && !o.author && !o.nextUnauthored && !o.merge && !o.markVerified && !o.markFailed && !o.retryFailed && !o.status && !o.staleReport) o.scan = true;
   return o;
 }
 
@@ -1313,6 +1316,30 @@ function doMarkFailed(o) {
   });
 }
 
+function doRetryFailed(o) {
+  if (!o.branch) die('--retry-failed requires --branch', 2);
+  return withClaimsLock(() => {
+    const claims = loadClaims();
+    const { pgId, claim } = claimForBranch(claims, o.branch);
+    if (claim.status !== 'needs_human') {
+      throw new Error(`cannot retry ${o.branch} from status "${claim.status}" — expected needs_human`);
+    }
+    const next = {
+      ...claim,
+      status: 'pushed-preview',
+      retryEvidence: o.evidence || 'human-fixed parked preview; rerun preview gate',
+      retryAt: new Date().toISOString(),
+    };
+    delete next.error;
+    delete next.failedAt;
+    if (o.clearNeedsHero) delete next.needs_hero;
+    claims[pgId] = next;
+    heartbeatClaim(claims, pgId, 'pushed-preview');
+    saveClaims(claims);
+    log(`RETRY ${o.branch}: restored to pushed-preview for gate rerun`);
+  });
+}
+
 function checkPlanBox(pgId) {
   const plan = latestPlan();
   if (!plan) return;
@@ -1422,6 +1449,7 @@ try {
   else if (o.merge) doMerge(o);
   else if (o.markVerified) doMarkVerified(o);
   else if (o.markFailed) doMarkFailed(o);
+  else if (o.retryFailed) doRetryFailed(o);
   else doScan(o);
 } catch (e) {
   die(e.message || String(e), 1);

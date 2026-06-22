@@ -13,10 +13,11 @@ tags:
 ## Daily Summary
 
 - 更新 `gengrowth-flow-mvp` 与 `/Users/awayer_mini/oracle` 到最新，并用仓库 plist 重新安装/加载 GUI LaunchAgent；`seo-autopilot` 与 `seo-author` 均已能由 launchd 运行。
-- 验证自动写稿链路：`seo-author` 成功生成 `PG-MYTH-007` staging 稿件；`seo-autopilot` 成功 convert/build/push PR，并通过 Vercel preview verify 与 astrology review。
-- 验证门禁行为：`PG-WC-026`、`PG-MYTH-007` 均因 schema description 截断被自动 mark-failed/needs_human，说明闸门在工作，但全流程尚未达到全绿自动合并。
+- 打通并实跑发布链路：`PG-MYTH-007` 与 `PG-WC-026` 均完成 preview verify、astrology/schema/links-seo/codex gate，最终 merge/published。
+- 修复阻塞项：schema description 逗号截断、Codex review 超时与 diff budget、preview H1 等待过短、`PG-WC-026` 内链占位、`PG-MYTH-007` 事实/占星表述风险。
 - 定位 hero 失败：`gemini-web` 脚本 path 正确，根因是旧 Gemini Web cookie/session；从本机 Chrome profile 重新导入 35 个 cookie 后，图片 smoke test 成功生成 PNG。
-- 遗留事项：6/21 仍有 4 个 `active/stage=push` 旧任务需单独修复或重试，`gengrowth-publish` LaunchAgent 仍非本次主链路重点。
+- 清理旧队列：将 6/21 四个无 PR 且 lease 过期的 `active/stage=push` claim 安全 park 到 `needs_human`，最终 `preflight: ok`、`staleCount: 0`、仓库状态干净。
+- 复核可自动化条件：`seo-author` 与 `seo-autopilot` 均由 launchd 周期调度，当前无 active/preview 中间态残留，可按安全门禁无人值守继续运行。
 
 ---
 
@@ -79,5 +80,53 @@ hero 应该是 gemini-web 的 path 设置有问题
 **🤖 回答：**
 
 复核 cookie 后确认本机确实有 cookie，但原 `cookies.json` 是 6/10 的旧 session，初始只有少量 `cookieMap` 项；登录刷新命令超时，随后用 `tools/scripts/gg-gemini-cookie-import.mjs` 从本机 Chrome `Default` profile 重新导入 35 个 cookie，包含 `__Secure-1PSID`、`__Secure-1PSIDTS`、`__Secure-1PSIDCC`。刷新后重新执行 Gemini Web 图片 smoke test，成功生成 `/tmp/gg-gemini-smoke-1782103262.png`，PNG 1408x768，退出码 0；因此 hero 根因收敛为旧 cookie/session 失效，而不是 `gemini-web` 脚本 path 配错。
+
+---
+
+### Q6 — 14:10
+
+**🙋 提问：**
+
+继续处理到完成通畅
+
+**🤖 回答：**
+
+继续修复并验收到闭环：修复 `gg-md-to-oracle-ts.mjs` 的 description 截断逻辑并补 smoke test；为 `gg-seo-autopilot.mjs` 增加 `--retry-failed`/`--clear-needs-hero` 以便用 driver 恢复已 park 的 preview；提高 preview gate/Codex review 超时与 diff budget，并提高 preview verify 等待 H1 的超时。实际处理 `PG-MYTH-007` 与 `PG-WC-026` 两个 PR，分别修正事实风险、内链占位与 schema/hero 数据后完成 gate 并 merge/published。将 6/21 四个无 PR 且 lease 过期的 active claim 通过 `--mark-failed` park 到 `needs_human`。最终验证：相关 smoke tests 104 项全过，`gg-autopilot-preflight.mjs` 输出 `preflight: ok`，`gg-seo-autopilot.mjs --stale-report` 输出 `inflight: []`、`staleCount: 0`，`seo-autopilot` 与 `seo-author` LaunchAgent 均加载且最近退出码为 0。
+
+---
+
+### Q7 — 14:27
+
+**🙋 提问：**
+
+那么是不是可以理解为，这个 task 已经好了，可以完全自动化了
+
+**🤖 回答：**
+
+复核完成条件后给出判断：可以理解为当前 SEO 自动写稿/发布 task 已达到可无人值守自动化运行状态；证据包括 `gg-autopilot-preflight.mjs` 输出 `preflight: ok`，`gg-seo-autopilot.mjs --stale-report` 输出 `inflight: []`、`staleCount: 0`，`seo-author` 与 `seo-autopilot` LaunchAgent 均加载且最近退出码为 0，状态表中无 `active`、`pushed-preview`、`verified-preview` 中间态残留。同时说明“完全自动化”指 happy path 无需手动 kick 或人工发布；若内容事实、schema、链接、预览或 Codex review 失败，系统仍会按设计停到 `needs_human`，这是安全门禁而非链路不通。
+
+---
+
+### Q8 — 14:34
+
+**🙋 提问：**
+
+needs_human 里面哪有些内容
+
+**🤖 回答：**
+
+查询 `gg-seo-autopilot.mjs --status` 并筛选 `needs_human`：当前共有 25 个条目，其中 21 个停在 `authoring`，原因均为选题登记表中找不到对应 row；4 个停在 `push`，为 6/21 遗留的无 PR、lease 过期旧 active claim，已 park 到 `needs_human` 以解除队列阻塞。同步复核 `gg-seo-autopilot.mjs --stale-report`，结果为 `inflight: []`、`staleCount: 0`。
+
+---
+
+### Q8 — 14:28
+
+**🙋 提问：**
+
+用户上传截图 `/var/folders/c8/k7q0dcp13rd8590xbtxs_9n80000gn/T/codex-clipboard-d45c2ec7-5562-4127-b3fb-f2b85be13c90.png`，截图显示 Obsidian/Git 通知：`Pull failed (merge): error: Your local changes to the following files would be overwritten by merge: tools/scripts/gg-md-to-oracle-ts.mjs`，以及 push 到 `origin/main` 被拒绝、提示本地分支落后于远端。
+
+**🤖 回答：**
+
+按系统化排查检查了当前 Git 状态：读取 `AGENTS.md`、`ai-profile/reminders.md` 与相关 superpowers 技能；确认 `ai-profile/lynne-soul.md` 在当前目录不存在；执行 `git status --branch --porcelain=v2`、`git diff --name-only --diff-filter=U`、`git ls-files -u`、`git fetch --prune origin`、`git rev-list --left-right --count HEAD...@{u}`、`git status --short -- tools/scripts/gg-md-to-oracle-ts.mjs`、`git push --dry-run origin main` 等验证。结论：当前仓库没有未完成 merge、没有冲突、`tools/scripts/gg-md-to-oracle-ts.mjs` 没有本地改动，`main` 与 `origin/main` 为 `+0/-0`，push dry-run 返回 `Everything up-to-date`。期间观察到 Obsidian 正在运行，且 14:28:30 自动产生 `vault backup` 提交 `6d3375f` 并同步到远端，因此截图中的错误应是并发自动同步期间留下的旧失败通知；当前状态已恢复同步。
 
 ---

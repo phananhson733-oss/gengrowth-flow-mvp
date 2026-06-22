@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-AIS-002",
+  "entity": "SEO Automation / SEO Workflow Automation",
+  "target_keyword": "seo automation",
+  "template": "Definition",
+  "tier": "T1",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-06-22T14:45:55.968Z",
+  "content_sha256_short": "1172bc297b2caf30",
+  "source_path": "_staging/PG-AIS-002-claude-v8.md",
+  "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-AIS-002-en.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 3,
+      "h4Count": 0,
+      "words": 1846,
+      "wikilinks": 0,
+      "tbdLinks": 0
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

@@ -363,3 +363,15 @@ continue（推进 WC-029 / MYTH-008 收尾）
 开始执行后实测到前半段真实边界：findSheetRow 读线上共享「选题登记表」无本地旁路；现有 rising 兄弟行 brief 字段全空（无模板可照搬）；无"写整行 brief"工具（仅 cluster 驱动的 A 列 append）；整表 286/309 incomplete。结论：产 pillar 需凭空编整套品牌编辑 brief + 用裸 Sheets API 写共享生产表（列映射不确定、有污染风险）——这是会破坏共享生产数据、难撤销的动作，不应无监督自动做。改为最大化安全推进：把 4 个 pillar（egypt-wc / sagittarius-rising / cancer-moon / neptune-conjunct-ascendant）的完整 brief 草稿（含 6 个编辑字段 + tier/template/cluster/角度/friction/建议内链）写到 docs/2026-06-22-pillar-briefs-for-wc029-myth008.md 供审核。审核入表后 autopilot 自动产出，我再加 TBD_LINK_RULES 发原 2 篇。WC-029/MYTH-008 如实留 needs_human，未假标 done/未发死链。23/25 真解决 + 全部使能工程上线。
 
 ---
+
+### Q27 — 20:45 [claude]
+
+**🙋 提问：**
+
+这里面的信息为空吗？？？（给出 canonical 选题登记表 链接）/ 我找了一下 PG-WC-029 还有 MYTH-008 都有数据
+
+**🤖 回答：**
+
+用户质疑后直接读真表，挖出真正根因：autopilot 的 findSheetRow→gg-sheet-pull 读的是遗留 workbook 1dejq（GG_SHEETS_WORKBOOK_ID），不是 canonical 1CkjOC（GG_SHEETS_FLOW_MVP_WORKBOOK_ID）。遗留表 stale/空（ready=9/incomplete=286），canonical 满（ready=178/incomplete=0）。这才是"no row"park + 我误判"缺数据/要建 4 个 pillar"的真凶；WC-029/MYTH-008 在 canonical 里有完整 brief（T1/T2 + Birth Chart 模板 + 正确 cluster），之前用错表的 Definition 模板才 park 在红线。修复 b676005：gg-sheet-pull 改 canonical-first（resolveWorkbookId 逻辑），2026-05-29 split-brain 修复漏掉的 straggler。实证：现读 1CkjOC、找到 PG-WC-029(T1 Birth Chart)/PG-MYTH-008(T2 Birth Chart)。删除了基于误诊的 pillar 草稿。清 claim 后台用全修复链路重跑两篇（bidqauv83）。备注 gg-entity-passport 同类直读遗留变量，未修。
+
+---

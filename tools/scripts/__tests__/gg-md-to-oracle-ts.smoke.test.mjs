@@ -204,12 +204,13 @@ test('deriveDescription: keeps a complete long sentence instead of truncating a 
 
 test('deriveDescription: short complete CJK sentence beats partial second sentence', () => {
   const firstSentence = '西班牙2026世界杯占星，是一套以西班牙足协奠基日期为结构锚点、结合木星约27度巨蟹座对相位本届赛事窗口进行象征性解读的参考框架。';
+  const secondSentence = '西班牙于6月15日在 H 组首战以0比0战平佛得角，第二场对阵沙特阿拉伯落在6月21日，正值木星行经晚段巨蟹座（约27度）——象征上与西班牙被关联的摩羯座价值相对立，而非对某个已验证本命点的精确相位。';
   const body = [
     '# 西班牙2026世界杯占星',
     '',
     '## 斗牛士军团的星盘是什么？',
     '',
-    `${firstSentence} 西班牙于6月15日在 H 组首战以0比0战平佛得角，第二场对阵沙特阿拉伯落在6月21日。`,
+    `${firstSentence} ${secondSentence}`,
   ].join('\n');
   assert.equal(deriveDescription(body), firstSentence);
 });

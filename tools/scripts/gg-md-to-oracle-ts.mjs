@@ -152,20 +152,45 @@ export function deriveDescription(body, maxLen = 160) {
   if (cleaned.length > maxLen) {
     // Clean truncation — never emit a trailing "..." (reads as broken to users
     // and Google). Prefer ending on a full sentence at/under maxLen; otherwise
-    // cut at a word boundary and strip any dangling CJK/ASCII pause punctuation.
+    // keep the first full sentence when it is still within a sane hard cap.
+    const sentenceEnd = (s, start = 0) => {
+      for (let i = start; i < s.length; i++) {
+        const ch = s[i];
+        if (ch === '。' || ch === '！' || ch === '？') return i;
+        if (ch === '.' || ch === '!' || ch === '?') {
+          const next = s[i + 1] || '';
+          if (!next || /\s/.test(next)) return i;
+        }
+      }
+      return -1;
+    };
+    const lastSentenceEndWithin = (s, limit) => {
+      let last = -1;
+      let i = 0;
+      while (i < Math.min(limit, s.length)) {
+        const end = sentenceEnd(s, i);
+        if (end < 0 || end >= limit) break;
+        last = end;
+        i = end + 1;
+      }
+      return last;
+    };
+    const hasCjk = /[\u3400-\u9fff]/u.test(cleaned);
+    const minFullSentence = hasCjk ? 40 : 80;
+    const hardMax = Math.max(maxLen + 120, 240);
     const window = cleaned.slice(0, maxLen);
-    const sentEnd = Math.max(
-      window.lastIndexOf('. '), window.lastIndexOf('! '), window.lastIndexOf('? '),
-      window.lastIndexOf('。'), window.lastIndexOf('！'), window.lastIndexOf('？'),
-    );
-    if (sentEnd >= 80) {
+    const sentEnd = lastSentenceEndWithin(cleaned, maxLen);
+    const firstSentEnd = sentenceEnd(cleaned);
+    if (sentEnd >= minFullSentence) {
       cleaned = cleaned.slice(0, sentEnd + 1).trim();
+    } else if (firstSentEnd >= minFullSentence && firstSentEnd + 1 <= hardMax) {
+      cleaned = cleaned.slice(0, firstSentEnd + 1).trim();
     } else {
       // No sentence end within the window → prefer the last clause boundary
       // (comma/semicolon ≥ 80), else cut at a word boundary; then strip dangling
       // function-words so the description never ends mid-phrase on a preposition/
       // article/conjunction (e.g. "…the deity of" → "…by Yama").
-      const clause = Math.max(window.lastIndexOf(', '), window.lastIndexOf('; '));
+      const clause = Math.max(window.lastIndexOf('; '), window.lastIndexOf('；'));
       let cut = clause >= 80 ? window.slice(0, clause) : window.replace(/\s+\S*$/, '');
       cut = cut.replace(/[，、；,;:\s]+$/u, '').trim();
       const danglingTail = /\s+(of|the|a|an|and|or|to|by|in|on|for|with|at|as|from|into|over|under|that|this|these|those|its|their|his|her|is|are|was|were|be|been)$/i;

@@ -27,7 +27,7 @@ phase2_checks: all-pass
 
 ## 玩具总动员5星座是什么？
 
-玩具总动员5星座，**是一种把这部2026年皮克斯电影里的每个角色，按其已确立的性格匹配到某个星座原型的趣味玩法，而不是对任何真实出生星盘的断言。** 这部影片在洛杉矶于6月9日首映后，于2026年6月19日登陆美国院线，胡迪、巴斯光年与翠丝悉数回归，并围绕"玩具对抗科技"的主线引入了一批新角色。用这种方式读这些角色，最适合当作一次性格观察练习，就像你看待[[<TBD-internal-link: guide to the twelve zodiac signs and their personalities>]]时那种轻松的视角。
+玩具总动员5星座，**是一种把这部2026年皮克斯电影里的每个角色，按其已确立的性格匹配到某个星座原型的趣味玩法，而不是对任何真实出生星盘的断言。** 这部影片在洛杉矶于6月9日首映后，于2026年6月19日登陆美国院线，胡迪、巴斯光年与翠丝悉数回归，并围绕"玩具对抗科技"的主线引入了一批新角色。用这种方式读这些角色，最适合当作一次性格观察练习，就像你看待这份[把星座原型映射到公众人物的对照](/zh/wiki/best-soccer-players-zodiac-sign)时那种轻松的视角。
 
 - 按性格特质把每个玩具对应到一个星座，绝不依据任何虚构的生日或出生时间
 - 既覆盖回归的老面孔，也覆盖新角色，比如聪明裤、平板"莉莉"、阿特拉斯和咔嚓
@@ -101,8 +101,8 @@ phase2_checks: all-pass
 
 ## 延伸阅读
 
-- [[<TBD-internal-link: Leo personality traits explainer>]] —— 如果你想拿一个大胆、爱舞台的原型，去对照巴斯带给这群角色的那股勇敢气质，这篇很有用
-- [[<TBD-internal-link: pillar page on zodiac signs in movies and pop culture>]] —— 更宏观地看看粉丝如何为了好玩，把占星原型映射到虚构角色身上
+- [从交点视角看狮子座原型](/zh/wiki/north-node-in-leo) —— 如果你想拿一个大胆、爱舞台的原型，去对照巴斯带给这群角色的那股勇敢气质，这条线索很有用
+- [星座对应整支球队的另一种流行文化映射](/zh/wiki/zodiac-signs-as-world-cup-2026-teams) —— 更宏观地看看粉丝如何为了好玩，把占星原型映射到虚构或集体的角色身上
 - [[<TBD-external-link: Wikipedia | Toy Story 5 | the 2026 Pixar film these character archetypes are drawn from>]]
 
 ## 下一步行动

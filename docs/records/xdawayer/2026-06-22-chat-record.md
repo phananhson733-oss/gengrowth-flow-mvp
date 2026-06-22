@@ -14,12 +14,11 @@ tags:
 
 - 更新 `gengrowth-flow-mvp` 与 `/Users/awayer_mini/oracle` 到最新，并用仓库 plist 重新安装/加载 GUI LaunchAgent；`seo-autopilot` 与 `seo-author` 均已能由 launchd 运行。
 - 打通并实跑发布链路：`PG-MYTH-007` 与 `PG-WC-026` 均完成 preview verify、astrology/schema/links-seo/codex gate，最终 merge/published。
-- 修复阻塞项：schema description 逗号截断、Codex review 超时与 diff budget、preview H1 等待过短、`PG-WC-026` 内链占位、`PG-MYTH-007` 事实/占星表述风险。
-- 定位 hero 失败：`gemini-web` 脚本 path 正确，根因是旧 Gemini Web cookie/session；从本机 Chrome profile 重新导入 35 个 cookie 后，图片 smoke test 成功生成 PNG。
-- 清理旧队列：将 6/21 四个无 PR 且 lease 过期的 `active/stage=push` claim 安全 park 到 `needs_human`，最终 `preflight: ok`、`staleCount: 0`、仓库状态干净。
-- 复核可自动化条件：`seo-author` 与 `seo-autopilot` 均由 launchd 周期调度，当前无 active/preview 中间态残留，可按安全门禁无人值守继续运行。
-- 核验 6/21 四篇文章已在 `origin/main` 与线上 EN/ZH URL 发布，并通过 `--reconcile-published` 将对应 claim 从 `needs_human` 修正为 `done`。
-- 为 Codex 自动化落地生成两个待确认 cron automation 提案：`GenGrowth SEO Author Lane` 与 `GenGrowth SEO Publish Lane`，保留 deterministic driver 安全边界。
+- 修复阻塞项：schema description 截断、Codex review 超时与 diff budget、preview H1 等待、内链占位、事实/占星表述风险，并刷新 Gemini Web cookie 解决 hero 生成失败。
+- 清理与核验旧队列：确认 6/21 四篇文章已上线，并通过 `--reconcile-published` 将对应 claim 修正为 `done`；`stale-report` 曾验证为 `inflight: []`、`staleCount: 0`。
+- 为 Codex 自动化落地生成 Author/Publish 两条 lane；本轮 Author Lane automation 调用加载本地 gg env 后安全跳过（已有 pid 62984 在跑），随后 stale report 显示 `PG-WC-027` 处于 active convert 且 `staleCount: 0`。
+- 执行 Codex 自动化 Author/Publish 两条 lane：Author 因已有 fire 持锁而安全跳过；Publish 处理 `PG-WC-027`，预览与 astrology review 通过，但 schema review 因 ZH meta description 泄漏英文占位短语而 park 到 `needs_human`，最终 `staleCount: 0`。
+- 澄清 publish lane 重试语义：gate fail 默认 park 到 `needs_human`，不会盲重试；修复原因后可用 driver 的 `--retry-failed` 将 branch 恢复到 `pushed-preview` 再由 wrapper 重跑 gate。
 
 ---
 
@@ -154,5 +153,165 @@ needs_human 里面哪有些内容
 **🤖 回答：**
 
 提出落地方式：保持 deterministic driver 为唯一状态机，不把 claim/merge 逻辑搬进 prompt；在 Codex 自动化中拆成两个 cron job。已生成两个待用户确认的 Codex automation 提案：`GenGrowth SEO Author Lane`，每 2 小时在 `/Users/awayer_mini/gengrowth-flow-mvp` 本地执行 `bash tools/scripts/gg-seo-author-tick.sh`，只负责写稿并报告 `needs_human`/stale；`GenGrowth SEO Publish Lane`，每小时执行 `node tools/scripts/gg-seo-autopilot.mjs --reconcile-published` 与 `bash tools/scripts/gg-seo-autopilot-tick.sh`，只通过 driver 执行 scan/preview gate/merge，并报告发布、park、inflight/stale 状态。
+
+---
+
+### Q11 — 15:38
+
+**🙋 提问：**
+
+Automation: GenGrowth SEO Author Lane
+Automation ID: gengrowth-seo-author-lane
+Automation memory: $CODEX_HOME/automations/gengrowth-seo-author-lane/memory.md
+Last run: 2026-06-22T07:35:36.505Z (1782113736505)
+
+Run the GenGrowth SEO authoring lane through the existing deterministic wrapper. Preserve the established safety rules: do not edit claim JSON directly, do not publish or merge from this lane, and do not write directly into the oracle baseline checkout. Load the local gg environment if available, then run `bash tools/scripts/gg-seo-author-tick.sh`. After it exits, run `node tools/scripts/gg-seo-autopilot.mjs --stale-report` and summarize the result concisely with any authored task id, any newly parked `needs_human` id/reason, and whether `inflight` or `staleCount` is nonzero.
+
+**🤖 回答：**
+
+按自动化要求执行 author lane：读取本地规则、automation memory、相关 profile/reminder 与 superpowers 技能；加载本地 gg env 后运行 `bash tools/scripts/gg-seo-author-tick.sh`。本轮 wrapper 退出码为 `0`，但因 `/tmp/gg-seo-author.lock` 显示已有 author fire（pid `62984`，15:35:59 启动）仍在运行，本次没有启动第二个 author job；日志尾部未出现新的 `AUTHORED` 或 `PARK(author)`。随后运行 `node tools/scripts/gg-seo-autopilot.mjs --stale-report`，结果显示 `PG-WC-027` 处于 non-stale `active/convert`，`inflight` 非空，`staleCount: 0`。已写入 automation memory。
+
+---
+
+### Q12 — 15:38
+
+**🙋 提问：**
+
+Automation: GenGrowth SEO Author Lane
+Automation ID: gengrowth-seo-author-lane
+Automation memory: $CODEX_HOME/automations/gengrowth-seo-author-lane/memory.md
+Last run: 2026-06-22T07:35:05.154Z (1782113705154)
+
+Run the GenGrowth SEO authoring lane through the existing deterministic wrapper. Preserve the established safety rules: do not edit claim JSON directly, do not publish or merge from this lane, and do not write directly into the oracle baseline checkout. Load the local gg environment if available, then run `bash tools/scripts/gg-seo-author-tick.sh`. After it exits, run `node tools/scripts/gg-seo-autopilot.mjs --stale-report` and summarize the result concisely with any authored task id, any newly parked `needs_human` id/reason, and whether `inflight` or `staleCount` is nonzero.
+
+**🤖 回答：**
+
+按本轮 automation prompt 重新确认：`$CODEX_HOME` 在 shell 中未设置，按 `/Users/awayer_mini/.codex` 读取/追加 automation memory；加载 `/Users/awayer_mini/.config/gg/_gg.env` 后执行 `bash tools/scripts/gg-seo-author-tick.sh`，命中 pid `62984` 仍 active 的 author mutex 并安全跳过，退出码 `0`。本轮没有新的 authored task id，也没有新的 `PARK(author)` / `needs_human` id。随后执行 `node tools/scripts/gg-seo-autopilot.mjs --stale-report`，结果显示 `inflight` 非空：`PG-WC-027` active/stage `convert`，branch `seo/auto/2026-06-22-PG-WC-027`，`stale=false`；`staleCount=0`。未直接编辑 claim JSON，未 publish/merge，未直接写入 `/Users/awayer_mini/oracle` baseline checkout。
+
+---
+
+### Q13 — 15:46
+
+**🙋 提问：**
+
+Automation: GenGrowth SEO Author Lane
+Automation ID: gengrowth-seo-author-lane
+Automation memory: $CODEX_HOME/automations/gengrowth-seo-author-lane/memory.md
+Last run: never
+
+Run the GenGrowth SEO authoring lane through the existing deterministic wrapper. Preserve the established safety rules: do not edit claim JSON directly, do not publish or merge from this lane, and do not write directly into the oracle baseline checkout. Load the local gg environment if available, then run `bash tools/scripts/gg-seo-author-tick.sh`. After it exits, run `node tools/scripts/gg-seo-autopilot.mjs --stale-report` and summarize the result concisely with any authored task id, any newly parked `needs_human` id/reason, and whether `inflight` or `staleCount` is nonzero.
+
+**🤖 回答：**
+
+按本轮 automation prompt 执行：读取 `AGENTS.md`、`ai-profile/reminders.md`、automation memory 与相关 superpowers 技能；`ai-profile/lynne-soul.md` 在仓库内未找到。加载 `/Users/awayer_mini/.config/gg/_gg.env` 后运行 `bash tools/scripts/gg-seo-author-tick.sh`，wrapper 与 preflight 成功启动，但 author lane 持续由 pid `62984` 占用，观察窗口内未出现新的 `AUTHORED` 或 `PARK(author)` 输出，因此本轮没有可确认的新 authored task id，也没有新 `needs_human` id/reason。随后以只读方式执行 `node tools/scripts/gg-seo-autopilot.mjs --stale-report`，结果为 `inflight: []`、`staleCount: 0`。未直接编辑 claim JSON，未 publish/merge，未直接写入 `/Users/awayer_mini/oracle` baseline checkout；并将本轮结论写入 `/Users/awayer_mini/.codex/automations/gengrowth-seo-author-lane/memory.md`。
+
+---
+
+### Q14 — 15:46
+
+**🙋 提问：**
+
+Automation: GenGrowth SEO Publish Lane
+Automation ID: gengrowth-seo-publish-lane
+Automation memory: $CODEX_HOME/automations/gengrowth-seo-publish-lane/memory.md
+Last run: never
+
+Run the GenGrowth SEO publish lane through the existing deterministic wrappers. Preserve the established safety rules: one article at a time, never edit claim JSON directly, never reproduce merge logic in the prompt, never write articles directly into the oracle baseline checkout, and only let the driver advance states. First run `node tools/scripts/gg-seo-autopilot.mjs --reconcile-published` to clear already-published ledger drift. Then load the local gg environment if available and run `bash tools/scripts/gg-seo-autopilot-tick.sh`. After it exits, run `node tools/scripts/gg-seo-autopilot.mjs --stale-report` and summarize the published/parked task ids, PR or preview URL if present, and whether `inflight` or `staleCount` is nonzero. If any gate fails, report the exact id, branch, and reason instead of retrying by hand.
+
+**🤖 回答：**
+
+按 deterministic wrapper 执行 publish lane：先运行 `node tools/scripts/gg-seo-autopilot.mjs --reconcile-published`，结果为 oracle 同步到 `origin/main @ 96e1f5e`，未发现 published claim drift；随后加载本地 gg env 并运行 `bash tools/scripts/gg-seo-autopilot-tick.sh`。本轮 claim 了 `PG-WC-027`（`matheus-cunha-birth-chart`），branch 为 `seo/auto/2026-06-22-PG-WC-027`，PR 为 `https://github.com/xdawayer/oracle/pull/200`，preview URL 为 `https://oracle-git-seo-auto2026-06-22-pg-wc-027-wzbs-projects-39a68c1d.vercel.app`；preview verify 通过 2 个 URL，astrology review 通过，但 schema review 失败，driver 通过 `mark-failed` 将任务 park 为 `needs_human`，原因是 ZH meta description 中间泄漏英文占位短语 `pillar page on World Cup 2026 player and team birth charts`。随后运行 `node tools/scripts/gg-seo-autopilot.mjs --stale-report`，结果为 `inflight: []`、`staleCount: 0`。本轮没有 published task id；已写入 automation memory，未手改 claim JSON，未复刻 merge logic，未直接写入 oracle baseline。
+
+---
+
+### Q15 — 15:48
+
+**🙋 提问：**
+
+你这里失败不会重试的吗
+
+**🤖 回答：**
+
+核对 driver 与 wrapper 后确认：publish gate 失败后默认不会自动盲重试，而是通过 driver `--mark-failed` park 到 `needs_human`；wrapper 注释明确 `needs_human` 会在下一轮被跳过，避免坏稿/坏 metadata 反复卡住队列或重复通知。driver 提供显式重试命令 `--retry-failed --branch <branch> --evidence <evidence>`，只能从 `needs_human` 状态恢复到 `pushed-preview`，用于人工或修复脚本解决原因后再重跑 gate。`PG-WC-027` 当前失败原因为 ZH meta description 泄漏英文占位短语，应先修复该 metadata，再用 deterministic driver 重试，不应在失败状态下让 automation 自动反复跑。
+
+---
+
+### Q16 — 16:12
+
+**🙋 提问：**
+
+Automation: GenGrowth SEO Author Lane
+Automation ID: gengrowth-seo-author-lane-2
+Automation memory: $CODEX_HOME/automations/gengrowth-seo-author-lane-2/memory.md
+Last run: never
+
+Run the GenGrowth SEO authoring lane through the existing deterministic wrapper. Preserve the established safety rules: do not edit claim JSON directly, do not publish or merge from this lane, and do not write directly into the oracle baseline checkout. Load the local gg environment if available, then run `bash tools/scripts/gg-seo-author-tick.sh`. After it exits, run `node tools/scripts/gg-seo-autopilot.mjs --stale-report` and summarize the result concisely with any authored task id, any newly parked `needs_human` id/reason, and whether `inflight` or `staleCount` is nonzero.
+
+**🤖 回答：**
+
+按本轮 automation prompt 执行 author lane：读取项目规则、automation memory、`ai-profile/reminders.md` 与相关 superpowers 技能；`ai-profile/lynne-soul.md` 在仓库内未找到，`$CODEX_HOME` 在 shell 中未设置，按实际 Codex home `/Users/awayer_mini/.codex` 写入 automation memory。确认本地 gg env 位于 `/Users/awayer_mini/.config/gg/_gg.env`，并等待已启动的 deterministic wrapper fire（pid `62984`，15:35:59 启动）退出，未并发启动第二个 author job。wrapper 退出码为 `0`，本轮没有新的 `AUTHORED` draft；`PG-WC-029` 被 park 到 `needs_human`，原因是 `H3 count = 3, expected 0` 且命中 author banned token `"rising sign"`、`"you will"`，3 次尝试与 deterministic repair 后仍未通过。随后运行 `node tools/scripts/gg-seo-autopilot.mjs --stale-report`，结果为 `inflight: []`、`staleCount: 0`。未直接编辑 claim JSON，未 publish/merge，未直接写入 `/Users/awayer_mini/oracle` baseline checkout；已写入 `/Users/awayer_mini/.codex/automations/gengrowth-seo-author-lane-2/memory.md`。
+
+---
+
+### Q18 — 16:19 [claude]
+
+**🙋 提问：**
+
+我看也没有自动写文章啊？也没有看到有自动发布啊
+
+**🤖 回答：**
+
+排查后定位：自动**写**是在跑的——Mac 的 seo-author 在 16:10 刚草拟了 PG-WC-029（Mo Salah 星盘，orchestrator ok:true），今天更早还写了 PG-MYTH-007、PG-WC-026。问题在自动**发布**：PG-WC-029 卡在 _staging 的 repair-candidate，草稿里有未解析的 `<TBD-internal-link>` 占位符，没过 convert/链接质检门，所以没走到 register→build→merge→deploy，线上 sitemap 仍冻结在 235 EN/121 ZH。另外 .gg-bridge 桥从未收到任何 ack（Mac 端 com.gengrowth.cowork-bridge 大概率没装），且 obsidian-git 自动提交停在 15:04。供应商需人工：查 seo_autopilot 日志看 repair 为何没收尾、装桥 watcher、确认同步仍活。
+
+---
+
+### Q19 — 16:46
+
+**🙋 提问：**
+
+Automation: GenGrowth SEO Publish Lane
+Automation ID: gengrowth-seo-publish-lane
+Automation memory: $CODEX_HOME/automations/gengrowth-seo-publish-lane/memory.md
+Last run: 2026-06-22T07:35:10.958Z (1782113710958)
+
+Run the GenGrowth SEO publish lane through the existing deterministic wrappers. Preserve the established safety rules: one article at a time, never edit claim JSON directly, never reproduce merge logic in the prompt, never write articles directly into the oracle baseline checkout, and only let the driver advance states. First run `node tools/scripts/gg-seo-autopilot.mjs --reconcile-published` to clear already-published ledger drift. Then load the local gg environment if available and run `bash tools/scripts/gg-seo-autopilot-tick.sh`. After it exits, run `node tools/scripts/gg-seo-autopilot.mjs --stale-report` and summarize the published/parked task ids, PR or preview URL if present, and whether `inflight` or `staleCount` is nonzero. If any gate fails, report the exact id, branch, and reason instead of retrying by hand.
+
+**🤖 回答：**
+
+按 deterministic wrapper 执行 publish lane：先运行 `node tools/scripts/gg-seo-autopilot.mjs --reconcile-published`，退出码 `0`，oracle 同步到 `origin/main @ 05305ac`，并将已上线漂移同步为 `done`：`PG-WC-027`、`PG-WC-028`、`PG-TRANS-011`。随后加载 `/Users/awayer_mini/.config/gg/_gg.env` 并运行 `bash tools/scripts/gg-seo-autopilot-tick.sh`。本轮 tick claim `PG-WC-028`（`scotland-brazil-world-cup-astrology`），branch 为 `seo/auto/2026-06-22-PG-WC-028`，PR 为 `https://github.com/xdawayer/oracle/pull/202`，preview URL 为 `https://oracle-git-seo-auto2026-06-22-pg-wc-028-wzbs-projects-39a68c1d.vercel.app`。preview verify 通过 2 个 URL，但 astrology review 失败，driver 执行 `mark-failed` 将 `PG-WC-028` park 为 `needs_human`，原因是文章反复声称 `Chiron entered Taurus on June 19, 2026`，而 review 判定 Chiron 在 2026 年仍位于 Aries，直到 2027 年才进入 Taurus。随后运行 `node tools/scripts/gg-seo-autopilot.mjs --stale-report`，结果为 `inflight: []`、`staleCount: 0`。本轮未手改 claim JSON，未复刻 merge logic，未直接写入 oracle baseline，也未手工重试；已写入 `/Users/awayer_mini/.codex/automations/gengrowth-seo-publish-lane/memory.md`。
+
+### Q20 — 17:29 [claude]
+
+**🙋 提问：**
+
+我想把这个整体的flow-mvp 提炼为一个完善的 skill。这样的话，流程完善化不乱出错；调用 scripts 也很符合 skill 的方式，来帮我评估一下，可以使用 /skill-creator 这个 skill（先把这个 skill 更新到最新）
+
+**🤖 回答：**
+
+评估了把 flow-mvp 提炼为 skill。结论：值得做，但应做成 operator 控制面 skill（仪表盘+方向盘）而非重写流水线——cron 引擎保持不动。skill-creator 经 marketplace 更新已确认最新。用 workflow 把流程/运行时/gate/脚本目录读透并做反驳校验，逮到硬伤：实测仅 2 个 GUI cron 可见、诊断应基于 claim.error 而非 claim.stage、缺 --mark-failed 恢复杆、--status 会改 ledger、锁是目录、publish-only 模式下手动 --author 会静默空跑。建议 1 skill + 5 references，脚本留 repo、skill 放全局 ~/.claude/skills。已抛 3 个决定性问题（站点范围/动作权限/是否现在就建）待拍板。
+
+---
+
+### Q21 — 17:49 [claude]
+
+**🙋 提问：**
+
+cron 这个可以不在 skill 范围内，手动去触发 skill（确认范围：v1 仅 oracle/astrologywiki、允许执行变更动作、现在就建）
+
+**🤖 回答：**
+
+按 writing-skills 的 TDD 流程建成全局 skill operating-gengrowth-flow（~/.claude/skills，SKILL.md + 5 references），cron 移出范围、纯手动触发。RED 基线（无 skill）实测踩雷：裸跑 gg-seo-autopilot.mjs/--help 穿透到 doScan 把 oracle push 到 origin/main、不确定 --status 是否只读。GREEN 验证（带 skill）全部纠正：用 --stale-report、按 stage 分流恢复、authoring park 不用 retry-failed、锁用 -d 判断。据 GREEN 反馈补了三处缺口（never-authored vs 已起草、_staging 孤儿草稿、--author 不接受 --model）。skill-creator 的 quick_validate 通过。skill-creator 插件本身未 install（只更新了 marketplace），如需其 eval 闭环可 /plugin install skill-creator。
+
+---
+
+### Q22 — 18:15 [claude]
+
+**🙋 提问：**
+
+全部都去修复吧。不过比如说 no-row 这个报错的内容其实都已经早都上线了吧 / 以线上为准 / 要不要把 sonnet 改成 opus 4.8 high（sonnet 一直报错的话）
+
+**🤖 回答：**
+
+用 operating-gengrowth-flow skill 实跑只读诊断并据此修复 25 个 needs_human park。核实确认：21 个 no-row 全是已上线文章的陈旧重复 → 补 slug + --reconcile-published 对账清账（绝不重发）。WC-028 的 Chiron review[astrology] FAIL 经 WebSearch 证实是假阳性（2026-06-19 Chiron 确实首入金牛），内容正确、关 PR#202。MYTH-006 已上线、内链无目标属化妆品级、关 PR#204。needs_human 从 25 → 0。授权模型按用户决定从 Sonnet 4.6 切到 Opus 4.8 high（写入 ~/.config/gg/_gg.env，覆盖 06-05 旧偏好）。最后两篇真未上线的（mo-salah / prince-william）清 claim 后用 Opus 4.8 后台重写（bfskicmke），author 通过后由 publish cron 走 gate 合并。
 
 ---

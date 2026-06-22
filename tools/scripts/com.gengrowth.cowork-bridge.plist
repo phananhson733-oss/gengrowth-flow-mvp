@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  com.gengrowth.cowork-bridge — Mac-side listener for the Cowork→Mac autopilot bridge.
+  Fires every 5 min, runs gg-cowork-bridge-watcher.sh, which kicks com.gengrowth.seo-autopilot
+  (and seo-author when asked) on a fresh kick-request dropped by the Cowork scheduled task.
+
+  Install (GUI domain so launchctl kickstart of the autopilot works):
+    cp ~/gengrowth-flow-mvp/tools/scripts/com.gengrowth.cowork-bridge.plist ~/Library/LaunchAgents/
+    launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.gengrowth.cowork-bridge.plist
+    launchctl enable    gui/$(id -u)/com.gengrowth.cowork-bridge
+  Stop:
+    launchctl bootout   gui/$(id -u)/com.gengrowth.cowork-bridge
+
+  NOTE: replace /Users/awayer_mini below if $HOME differs.
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.gengrowth.cowork-bridge</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>/Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-cowork-bridge-watcher.sh</string>
+    </array>
+
+    <!-- every 5 minutes -->
+    <key>StartInterval</key>
+    <integer>300</integer>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>/Users/awayer_mini/gengrowth-agents/cron-sync/cowork_bridge/launchd.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/awayer_mini/gengrowth-agents/cron-sync/cowork_bridge/launchd.err.log</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+        <key>GG_FLOW_REPO</key>
+        <string>/Users/awayer_mini/gengrowth-flow-mvp</string>
+    </dict>
+</dict>
+</plist>

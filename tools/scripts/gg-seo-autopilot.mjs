@@ -61,6 +61,7 @@ import { detectProtectedFactDrift, summarizeProtectedFactDrift } from './lib/rev
 import { loadEnv, resolveWorkbookId } from './lib/gg-shared.mjs';
 import { slugifyPageId } from './gg-sheet-pull.mjs';
 import { illustrate } from './lib/illustrate.mjs';
+import { keywordLiveSlug } from './lib/oracle-live.mjs';
 
 loadEnv();
 const ACTIVE_WORKBOOK_ID = resolveWorkbookId();
@@ -665,6 +666,24 @@ function parkAuthor(pgId, slug, plan, reason) {
   log(`PARK(author) ${pgId}: ${reason}`);
 }
 
+// Mark an authoring claim done because its topic is already published (mirrors
+// doReconcilePublished). Used when a "no row in 选题登记表" failure is really a stale
+// duplicate of an already-live article, so it does NOT pile up as needs_human noise.
+function reconcileAuthorDone(pgId, slug, plan, note) {
+  withClaimsLock(() => {
+    const claims = loadClaims();
+    claims[pgId] = {
+      ...(claims[pgId] || {}),
+      status: 'done', slug, owner: 'autopilot', stage: 'authoring', plan,
+      reconciliationNote: note, mergedAt: claims[pgId]?.mergedAt || new Date().toISOString(),
+    };
+    delete claims[pgId].error;
+    delete claims[pgId].failedAt;
+    saveClaims(claims);
+  });
+  log(`RECONCILE(author→done) ${pgId}: ${note}`);
+}
+
 function nextUnauthoredTask() {
   const plan = latestPlan();
   if (!plan) return null;
@@ -737,6 +756,7 @@ function doAuthor(o = {}) {
   const planName = basename(sel.plan);
   log(`${modeZhBackfill ? 'zh-backfill candidate' : 'author candidate'} ${pgId} (${t.keyword || ''})`);
   const park = (slug, reason) => parkAuthor(pgId, slug, planName, reason);
+  const reconcileDone = (slug, note) => reconcileAuthorDone(pgId, slug, planName, note);
 
   try {
     const enSourcePath = enDraft(pgId);
@@ -832,6 +852,16 @@ function doAuthor(o = {}) {
     try { loc = findSheetRow(pgId, t.keyword); }
     catch (e) { return park(null, `sheet-pull failed: ${errTail(e)}`); }
     if (!loc) {
+      // The topic may already be published under its keyword's slug (the 选题登记表 row was
+      // never added because the article already exists). Reconcile to done instead of parking
+      // needs_human noise. Fail-safe: any error falls through to the normal park.
+      try {
+        const live = keywordLiveSlug(t.keyword, ORACLE);
+        if (live) {
+          reconcileDone(live, `topic already live as ${live}.ts — 选题登记表 row missing but article exists`);
+          return;
+        }
+      } catch { /* fall through to park */ }
       const wb = ACTIVE_WORKBOOK_ID || process.env.GG_SHEETS_WORKBOOK_ID || '(unknown workbook)';
       return park(null, `no row for ${pgId} ("${t.keyword || ''}") in 选题登记表 [workbook=${wb}]`);
     }

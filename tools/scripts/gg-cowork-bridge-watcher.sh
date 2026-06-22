@@ -35,9 +35,10 @@ LOG_DIR="$HOME/gengrowth-agents/cron-sync/cowork_bridge"
 LOCK="/tmp/gg-cowork-bridge.lock"
 # How fresh a request must be to act on (ignore stale leftovers). Default 2h.
 FRESH_SECS="${GG_BRIDGE_FRESH_SECS:-7200}"
-# launchd labels (match the existing seo autopilot install).
-LABEL_PUBLISH="com.gengrowth.seo-autopilot"
-LABEL_AUTHOR="com.gengrowth.seo-author"
+# launchd labels (match the existing install).
+LABEL_PUBLISH="com.gengrowth.seo-autopilot"      # astrologywiki / oracle publish lane (Lane B)
+LABEL_AUTHOR="com.gengrowth.seo-author"          # shared author lane
+LABEL_GENGROWTH="com.gengrowth.gengrowth-publish" # gengrowth.ai → Supabase publish lane (Lane A)
 
 mkdir -p "$REQ_DIR" "$ACK_DIR" "$LOG_DIR"
 LOG="$LOG_DIR/$(date +%Y-%m-%d).log"
@@ -83,7 +84,9 @@ fi
 # Parse the requested action (default: publish-pending). 'author-and-publish' also kicks the author lane.
 ACTION="$(node -e 'try{const r=require(process.argv[1]);process.stdout.write(String(r.action||"publish-pending"))}catch{process.stdout.write("publish-pending")}' "$REQ" 2>/dev/null || echo publish-pending)"
 REASON="$(node -e 'try{const r=require(process.argv[1]);process.stdout.write(String(r.reason||""))}catch{}' "$REQ" 2>/dev/null || echo '')"
-log "handling $(basename "$REQ") action=$ACTION reason=\"$REASON\""
+# site routes which publish lane to kick: "gengrowth" → Lane A (Supabase); anything else → Lane B (oracle/astrologywiki).
+SITE="$(node -e 'try{const r=require(process.argv[1]);process.stdout.write(String(r.site||"astrologywiki"))}catch{process.stdout.write("astrologywiki")}' "$REQ" 2>/dev/null || echo astrologywiki)"
+log "handling $(basename "$REQ") site=$SITE action=$ACTION reason=\"$REASON\""
 
 kicked=()
 kick(){ # $1 = launchd label
@@ -96,15 +99,26 @@ kick(){ # $1 = launchd label
     if [ "$label" = "$LABEL_PUBLISH" ] && [ -x "$SCRIPT_DIR/gg-seo-autopilot-tick.sh" ]; then
       GG_AUTOPILOT_MODE=publish-only nohup "$SCRIPT_DIR/gg-seo-autopilot-tick.sh" >> "$LOG" 2>&1 &
       log "spawned gg-seo-autopilot-tick.sh (publish-only) as fallback"; kicked+=("$label(tick-fallback)")
+    elif [ "$label" = "$LABEL_GENGROWTH" ] && [ -x "$SCRIPT_DIR/gg-gengrowth-publish-tick.sh" ]; then
+      nohup "$SCRIPT_DIR/gg-gengrowth-publish-tick.sh" >> "$LOG" 2>&1 &
+      log "spawned gg-gengrowth-publish-tick.sh as fallback"; kicked+=("$label(tick-fallback)")
     else
       kicked+=("$label(FAILED)")
     fi
   fi
 }
 
-case "$ACTION" in
-  author-and-publish) kick "$LABEL_AUTHOR"; kick "$LABEL_PUBLISH" ;;
-  publish-pending|*)  kick "$LABEL_PUBLISH" ;;
+case "$SITE" in
+  gengrowth|gengrowth.ai)   # Lane A — gengrowth.ai → Supabase upsert
+    case "$ACTION" in
+      author-and-publish) kick "$LABEL_AUTHOR"; kick "$LABEL_GENGROWTH" ;;
+      *)                  kick "$LABEL_GENGROWTH" ;;
+    esac ;;
+  *)                        # Lane B — astrologywiki.com / oracle (default)
+    case "$ACTION" in
+      author-and-publish) kick "$LABEL_AUTHOR"; kick "$LABEL_PUBLISH" ;;
+      *)                  kick "$LABEL_PUBLISH" ;;
+    esac ;;
 esac
 
 # Mark processed + write ack JSON for the next Cowork supervisor run to read.

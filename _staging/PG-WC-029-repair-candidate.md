@@ -2,7 +2,7 @@
 
 ## What Is Mohamed Salah's Birth Chart?
 
-Mohamed Salah's birth chart is the map of the sky at the moment he was born on June 15, 1992, in Nagrig, Egypt — read in astrology as **a Gemini Sun map of communication, versatility, and shared momentum**. As Egypt's captain at the 2026 World Cup, his chart sits inside the broader [[<TBD-internal-link: pillar page on World Cup 2026 player birth charts>]], which maps the astrology behind the tournament's key figures. The mo salah birth chart centers on Gemini, the sign both Western and Vedic traditions tie to the messenger — the one who connects play rather than only finishes it. In plain terms, the chart is a symbolic snapshot rather than a forecast — a lens for reading tendencies, not a script that fixes results.
+Mohamed Salah's birth chart is the map of the sky at the moment he was born on June 15, 1992, in Nagrig, Egypt — read in astrology as **a Gemini Sun map of communication, versatility, and shared momentum**. As Egypt's captain at the 2026 World Cup, his chart sits inside the broader [guide to World Cup 2026 player birth charts](/en/wiki/best-soccer-players-zodiac-sign), which maps the astrology behind the tournament's key figures. The mo salah birth chart centers on Gemini, the sign both Western and Vedic traditions tie to the messenger — the one who connects play rather than only finishes it. In plain terms, the chart is a symbolic snapshot rather than a forecast — a lens for reading tendencies, not a script that fixes results.
 
 - Leads with a Gemini Sun, the zodiac's communicator and connector
 - Born June 15, so his 34th birthday lands on Egypt's opening match against Belgium
@@ -18,7 +18,7 @@ The friction shows up in a few recognizable ways:
 2. **The age anxiety.** Searchers read fewer goals at 33 or 34 as decline, when the chart points to a shift in how the gift is spent, not its loss.
 3. **The legacy blind spot.** People hunt for the next individual highlight and overlook the assist that decides the match — the very thing this chart underlines now.
 
-This is where the reading connects to the wider [[<TBD-internal-link: guide to Gemini Sun traits in athletes>]], which looks at how the communicator archetype tends to age into a creative, organizing role rather than a finishing one.
+This is where the reading connects to a wider pattern in how a Gemini Sun ages in athletes: the communicator archetype tends to shift into a creative, organizing role rather than a finishing one.
 
 ## Solar Placement vs Whole Chart: Why a Gemini Reading Isn't Just the Sun
 
@@ -84,9 +84,8 @@ This is not a clinical interpretation or mental health advice.
 
 ## Related Reading
 
-- [[<TBD-internal-link: national birth chart of Egypt for the 2026 World Cup>]] — how a country's chart reads alongside its captain's.
-- [[<TBD-internal-link: transit events cluster for the 2026 World Cup>]] — the Jupiter and solar-return timing that frames this tournament.
-- [[<TBD-internal-link: explainer on solar returns and birthdays>]] — why a birthday-on-match-day reads as an activation window.
+- [World Cup 2026 June astrology and transits](/en/wiki/world-cup-2026-june-astrology) — the Jupiter and solar-return timing that frames this tournament.
+- [Solar returns and birthdays](/en/wiki/solar-return) — why a birthday-on-match-day reads as an activation window.
 
 ## Take Action
 

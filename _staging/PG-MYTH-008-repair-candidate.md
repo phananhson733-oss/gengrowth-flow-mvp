@@ -2,7 +2,7 @@
 
 ## What Is Prince William's Birth Chart?
 
-The Prince William birth chart is the snapshot of the sky at his birth — June 21, 1982, at 9:03 PM in London — and it reads as **a Cancer Sun and Moon hidden behind a Sagittarius mask**. His Sun and Moon both sit in Cancer, while Sagittarius rises on the horizon with Neptune sitting right on it. That stack is the heart of the [[<TBD-internal-link: pillar guide to reading any birth chart>]], which shows how Sun, Moon, and Rising work together rather than in isolation.
+The Prince William birth chart is the snapshot of the sky at his birth — June 21, 1982, at 9:03 PM in London — and it reads as **a Cancer Sun and Moon hidden behind a Sagittarius mask**. His Sun and Moon both sit in Cancer, while Sagittarius rises on the horizon with Neptune sitting right on it. That stack is the heart of the [pillar guide to reading any birth chart](/en/wiki/how-to-read-birth-chart), which shows how Sun, Moon, and Rising work together rather than in isolation.
 
 - Leads with deep emotional sensitivity that almost never shows on the surface
 - Filters identity and instinct through one unified Cancer lens, with no inner tug-of-war
@@ -16,7 +16,7 @@ Understanding the Prince William birth chart matters because most royal watchers
 2. **The privacy people miss.** A Cancer Moon plus Neptune on the Ascendant builds a guarded inner world, so the warmth you see is real but carefully managed, not the unfiltered feeling underneath.
 3. **The growth angle.** Knowing the difference helps anyone with strong Cancer placements see that protecting your feelings and having shallow feelings are not the same thing.
 
-In my years working with energy patterns and somatic cues alongside chart structures, I've noticed the most composed people often carry the softest interiors — and his chart is a textbook version of that gap between surface and core. This sits next to the broader idea of the [[<TBD-internal-link: explainer on the Cancer sun sign>]], which maps the same water-sign sensitivity in anyone, royal or not.
+In my years working with energy patterns and somatic cues alongside chart structures, I've noticed the most composed people often carry the softest interiors — and his chart is a textbook version of that gap between surface and core. This reflects the same broader water-sign sensitivity that shows up in any Cancer-led chart, royal or not.
 
 The self-awareness payoff is practical. People who lead with a managed, agreeable surface often start to wonder whether anyone sees the real them, or whether they have buried their needs so well that even they have lost track of them. The double-Cancer pattern names that exact tension: a rich emotional core paired with a strong instinct to keep it out of view. Seeing it laid out makes the difference between hiding feelings and not having them feel obvious, and that distinction is where the growth usually starts.
 

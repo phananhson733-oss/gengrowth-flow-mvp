@@ -27,7 +27,7 @@ phase2_checks: all-pass
 
 ## What Is Mohamed Salah's Birth Chart?
 
-Mohamed Salah's birth chart is the snapshot of the sky at the moment he was born on June 15, 1992, in Nagrig, Egypt — a Gemini Sun map that astrologers read as **a chart built around shared momentum, not solo glory**. The Mo Salah birth chart places the Sun in Gemini, the sign of the messenger, and that single placement reframes how fans read his career at 34, the age at which he captains Egypt at what many consider his last World Cup. Read this way, the chart is less a scoreboard and more a portrait of a communicator. Seen against the long arc of his career, that single placement helps explain why Salah has so often thrived as the player who links the attack rather than the lone finisher, and why his role on the pitch keeps shifting as he ages. For wider context, this page sits alongside the [[<TBD-internal-link: pillar page on World Cup 2026 player birth charts>]], which maps every squad through the same astrological lens.
+Mohamed Salah's birth chart is the snapshot of the sky at the moment he was born on June 15, 1992, in Nagrig, Egypt — a Gemini Sun map that astrologers read as **a chart built around shared momentum, not solo glory**. The Mo Salah birth chart places the Sun in Gemini, the sign of the messenger, and that single placement reframes how fans read his career at 34, the age at which he captains Egypt at what many consider his last World Cup. Read this way, the chart is less a scoreboard and more a portrait of a communicator. Seen against the long arc of his career, that single placement helps explain why Salah has so often thrived as the player who links the attack rather than the lone finisher, and why his role on the pitch keeps shifting as he ages. For wider context, this page sits alongside the [[<TBD-internal-link: World Cup 2026 astrology prediction pillar>]], which maps every squad through the same astrological lens.
 
 - Leads with a Gemini Sun, the archetype of the connector who links play rather than only finishing it
 - Born June 15, a birthday that in 2026 lands on Egypt's opening match against Belgium
@@ -50,7 +50,7 @@ A single Sun placement and the full Mo Salah birth chart are not the same tool, 
 - The Sun-only read works fast: it labels Salah a clever, adaptable Gemini and stops there. To get that speed, you sacrifice accuracy — it cannot explain why a winger turns into a creator at 34.
 - The full-chart read works slower: it weighs the Gemini Sun against Jupiter moving through Cancer, which traditional technique ties to the natal second house of resources and legacy. To get that depth, you give up the one-line answer.
 
-In Western tropical astrology this Jupiter-in-Cancer transit is read as a pull toward building lasting worth over personal glory. According to NASA, Jupiter takes about 12 years to complete one orbit, so its passage through Cancer marks a roughly once-in-12-years emphasis. Vedic astrology, which uses the sidereal zodiac and would place several points differently, frames the same period through *dasha* planetary cycles — a distinction worth keeping separate rather than blending the two systems. This movement also sits next to the [[<TBD-internal-link: spoke page on Jupiter transit events in 2026>]], which tracks the same shift across other charts.
+In Western tropical astrology this Jupiter-in-Cancer transit is read as a pull toward building lasting worth over personal glory. According to NASA, Jupiter takes about 12 years to complete one orbit, so its passage through Cancer marks a roughly once-in-12-years emphasis. Vedic astrology, which uses the sidereal zodiac and would place several points differently, frames the same period through *dasha* planetary cycles — a distinction worth keeping separate rather than blending the two systems. This movement also sits next to the [[<TBD-internal-link: World Cup 2026 June astrology transit calendar>]], which tracks the same shift across other charts.
 
 ## How to Read a Gemini Signature in a Birth Chart
 
@@ -107,8 +107,8 @@ This is not a clinical interpretation or mental health advice.
 ## Related Reading
 
 - [[<TBD-internal-link: guide to reading any footballer's birth chart>]] — a step-by-step for applying this method to other players.
-- [[<TBD-internal-link: overview of the Egypt national team chart>]] — the country chart that frames the squad's 2026 run.
-- [[<TBD-internal-link: explainer on Gemini Sun traits>]] — a closer look at the communicator archetype behind this reading.
+- [[<TBD-internal-link: guide to reading a national chart>]] — how a country's chart frames a squad's 2026 run.
+- [[<TBD-internal-link: best soccer players by zodiac sign>]] — how Gemini and other signs show up across top footballers.
 
 ## Take Action
 

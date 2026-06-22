@@ -1,11 +1,23 @@
 ---
-title: International SEO Audit
+title: International Seo Audit
 slug: international-seo-audit
-entity: International SEO Audit / Hreflang Audit
-target_keyword: international seo audit
-template: Checklist + Guide
+date: 2026-06-22
+status: ready-to-review
+type: wiki-entry
+template: Definition
 tier: T2
 track: 量产线
+page_id: PG-TAS-003
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: international seo audit
+associated_keywords:
+
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-22T14:46:48.542Z
+content_sha256_short: 988d9b3c0bdc1eb7
+phase2_checks: all-pass
 ---
 
 # The International SEO Audit Step Most Checklists Skip: Hreflang Pair Validation

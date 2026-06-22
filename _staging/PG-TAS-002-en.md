@@ -1,11 +1,23 @@
 ---
 title: Content Audit Tool
 slug: content-audit-tool
-entity: Content Audit Tool / SEO Content Analyzer
-target_keyword: content audit tool
-template: Tool + Comparison
+date: 2026-06-22
+status: ready-to-review
+type: wiki-entry
+template: Definition
 tier: T2
 track: 量产线
+page_id: PG-TAS-002
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: content audit tool
+associated_keywords:
+
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-22T14:46:55.208Z
+content_sha256_short: 2c898ea45ca34273
+phase2_checks: all-pass
 ---
 
 # Why a Content Audit Tool Decides Update-vs-Remove, Not Just Crawls Your Site

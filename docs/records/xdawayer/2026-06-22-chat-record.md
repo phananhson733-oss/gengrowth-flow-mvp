@@ -339,3 +339,15 @@ continue（推进 WC-029 / MYTH-008 收尾）
 诊断后台重写日志发现 agentic 修复其实"报错"而非"修不好"——但深查是 autopilot 的 validate() 不传 fixture、候选稿被剥 frontmatter 致 phase2 auto-load 失败。用显式 --fixture 验证候选稿后拿到真实窄失败：WC-029 仅 SC3c（L23 七段散文），MYTH-008 仅 184 词段落墙。机械修复：把相关小节改成「引子+编号列表」（避开 H3=0 约束）。WC-029 改后 phase2 PASS、写出 en 草稿；MYTH-008 改后仍需调整。但最终硬阻塞浮现：两篇各 5 个 [[<TBD-internal-link>]] 指向不存在的 pillar/related 页、且零真实内链——发布 gate links-seo 会拦死链。已查清 10 个 TBD 目标哪些有现成文章可指。拒绝发死链/假标 done，将内容架构决策（映射现成/去链/建 pillar）交回用户。
 
 ---
+
+### Q25 — 20:12 [claude]
+
+**🙋 提问：**
+
+修复用 xhigh 写作用 high / 映射现成+去链 / 建缺失 pillar 页再发
+
+**🤖 回答：**
+
+设 GG_AGENTIC_EFFORT=xhigh（写 high）。深挖发现两篇 TBD 内链处理的真相：[[<TBD-internal-link>]] 是占位符，phase2 SC2 反而要求 ≥5(T1)/≥3(T2) 个，真链由转换器 TBD_LINK_RULES 在转 ts 时生成——所以去链会触发 SC2 FAIL，正解是保留 TBD + 加转换规则。又定位并 land 了 repair 永不采纳的真 bug（b409f18）：en/zh-full 两个 validate 调用未传 --prompt-version，候选稿被剥 frontmatter 致 phase2 找不到 fixture 而报错（zh-backfill 调用点本就传了，三处不一致即 bug）。核定后真正缺失的 pillar 目标页：egypt 国家盘、sagittarius-rising、cancer-moon、neptune-conjunct-ascendant（cancer-sun/gemini-athletes 可近似映射）。用户选"建缺失 pillar 再发"——这是一个新内容簇生产项目（4 篇新文章走完整 author 管线 + 加 TBD_LINK_RULES + 回链发原 2 篇），属多周期自治生产，非单次会话可完成。已完成全部 de-risk 工程，pillar 生产交由（现已 Opus 化、repair 可采纳的）autopilot 按周期产出。
+
+---

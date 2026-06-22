@@ -1,7 +1,7 @@
 {
   "page_id": "PG-WC-029",
   "prompt_path": "/Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-WC-029.v8-prompt.md",
-  "started_at": "2026-06-22T12:48:29.536Z",
+  "started_at": "2026-06-22T12:51:25.781Z",
   "models_requested": [
     "claude"
   ],
@@ -10,7 +10,7 @@
   "max_cost_usd_per_page": 5,
   "budget_exceeded_models": [],
   "ok_count": 1,
-  "total_cost_estimate_usd": 0.0554,
+  "total_cost_estimate_usd": 0.0517,
   "results": {
     "claude": {
       "model": "claude",
@@ -19,14 +19,14 @@
       "ok": true,
       "output_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-WC-029-claude-v8.md",
       "retries": 0,
-      "duration_s": 257.6,
+      "duration_s": 173.3,
       "cost_estimate_usd": {
-        "usd": 0.0554,
-        "input_tokens_est": 8005,
-        "output_tokens_est": 2092,
+        "usd": 0.0517,
+        "input_tokens_est": 8119,
+        "output_tokens_est": 1821,
         "pricing_note": "Sonnet 4.6 xhigh"
       },
-      "cumulative_cost_usd": 0.0554,
+      "cumulative_cost_usd": 0.0517,
       "budget_exceeded": false,
       "budget_usd": 5,
       "attempts": [
@@ -34,16 +34,16 @@
           "try_index": 1,
           "model": "claude",
           "command": "claude -p --model claude-opus-4-8 --effort high < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-WC-029.v8-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-WC-029-claude-v8.md",
-          "cost_usd": 0.0554,
-          "cumulative_cost_usd": 0.0554,
+          "cost_usd": 0.0517,
+          "cumulative_cost_usd": 0.0517,
           "ok": true,
           "exit_code": 0,
-          "duration_s": 257.6,
+          "duration_s": 173.3,
           "stderr_tail": "",
-          "stdout_bytes": 9541,
+          "stdout_bytes": 8590,
           "sonnet_guard": {
             "downgraded": false,
-            "bytes": 9585
+            "bytes": 8622
           }
         }
       ]

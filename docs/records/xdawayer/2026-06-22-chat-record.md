@@ -17,6 +17,7 @@ tags:
 - 修复阻塞项：schema description 逗号截断、Codex review 超时与 diff budget、preview H1 等待过短、`PG-WC-026` 内链占位、`PG-MYTH-007` 事实/占星表述风险。
 - 定位 hero 失败：`gemini-web` 脚本 path 正确，根因是旧 Gemini Web cookie/session；从本机 Chrome profile 重新导入 35 个 cookie 后，图片 smoke test 成功生成 PNG。
 - 清理旧队列：将 6/21 四个无 PR 且 lease 过期的 `active/stage=push` claim 安全 park 到 `needs_human`，最终 `preflight: ok`、`staleCount: 0`、仓库状态干净。
+- 复核可自动化条件：`seo-author` 与 `seo-autopilot` 均由 launchd 周期调度，当前无 active/preview 中间态残留，可按安全门禁无人值守继续运行。
 
 ---
 
@@ -91,5 +92,17 @@ hero 应该是 gemini-web 的 path 设置有问题
 **🤖 回答：**
 
 继续修复并验收到闭环：修复 `gg-md-to-oracle-ts.mjs` 的 description 截断逻辑并补 smoke test；为 `gg-seo-autopilot.mjs` 增加 `--retry-failed`/`--clear-needs-hero` 以便用 driver 恢复已 park 的 preview；提高 preview gate/Codex review 超时与 diff budget，并提高 preview verify 等待 H1 的超时。实际处理 `PG-MYTH-007` 与 `PG-WC-026` 两个 PR，分别修正事实风险、内链占位与 schema/hero 数据后完成 gate 并 merge/published。将 6/21 四个无 PR 且 lease 过期的 active claim 通过 `--mark-failed` park 到 `needs_human`。最终验证：相关 smoke tests 104 项全过，`gg-autopilot-preflight.mjs` 输出 `preflight: ok`，`gg-seo-autopilot.mjs --stale-report` 输出 `inflight: []`、`staleCount: 0`，`seo-autopilot` 与 `seo-author` LaunchAgent 均加载且最近退出码为 0。
+
+---
+
+### Q7 — 14:27
+
+**🙋 提问：**
+
+那么是不是可以理解为，这个 task 已经好了，可以完全自动化了
+
+**🤖 回答：**
+
+复核完成条件后给出判断：可以理解为当前 SEO 自动写稿/发布 task 已达到可无人值守自动化运行状态；证据包括 `gg-autopilot-preflight.mjs` 输出 `preflight: ok`，`gg-seo-autopilot.mjs --stale-report` 输出 `inflight: []`、`staleCount: 0`，`seo-author` 与 `seo-autopilot` LaunchAgent 均加载且最近退出码为 0，状态表中无 `active`、`pushed-preview`、`verified-preview` 中间态残留。同时说明“完全自动化”指 happy path 无需手动 kick 或人工发布；若内容事实、schema、链接、预览或 Codex review 失败，系统仍会按设计停到 `needs_human`，这是安全门禁而非链路不通。
 
 ---

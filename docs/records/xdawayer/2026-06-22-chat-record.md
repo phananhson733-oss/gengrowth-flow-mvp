@@ -13,10 +13,10 @@ tags:
 ## Daily Summary
 
 - 更新 `gengrowth-flow-mvp` 与 `/Users/awayer_mini/oracle` 到最新，并用仓库 plist 重新安装/加载 GUI LaunchAgent；`seo-autopilot` 与 `seo-author` 均已能由 launchd 运行。
-- 验证自动写稿链路：`seo-author` 成功生成 `PG-MYTH-007` staging 稿件；`seo-autopilot` 成功 convert/build/push PR，并通过 Vercel preview verify 与 astrology review。
-- 验证门禁行为：`PG-WC-026`、`PG-MYTH-007` 均因 schema description 截断被自动 mark-failed/needs_human，说明闸门在工作，但全流程尚未达到全绿自动合并。
+- 打通并实跑发布链路：`PG-MYTH-007` 与 `PG-WC-026` 均完成 preview verify、astrology/schema/links-seo/codex gate，最终 merge/published。
+- 修复阻塞项：schema description 逗号截断、Codex review 超时与 diff budget、preview H1 等待过短、`PG-WC-026` 内链占位、`PG-MYTH-007` 事实/占星表述风险。
 - 定位 hero 失败：`gemini-web` 脚本 path 正确，根因是旧 Gemini Web cookie/session；从本机 Chrome profile 重新导入 35 个 cookie 后，图片 smoke test 成功生成 PNG。
-- 遗留事项：6/21 仍有 4 个 `active/stage=push` 旧任务需单独修复或重试，`gengrowth-publish` LaunchAgent 仍非本次主链路重点。
+- 清理旧队列：将 6/21 四个无 PR 且 lease 过期的 `active/stage=push` claim 安全 park 到 `needs_human`，最终 `preflight: ok`、`staleCount: 0`、仓库状态干净。
 
 ---
 
@@ -79,5 +79,17 @@ hero 应该是 gemini-web 的 path 设置有问题
 **🤖 回答：**
 
 复核 cookie 后确认本机确实有 cookie，但原 `cookies.json` 是 6/10 的旧 session，初始只有少量 `cookieMap` 项；登录刷新命令超时，随后用 `tools/scripts/gg-gemini-cookie-import.mjs` 从本机 Chrome `Default` profile 重新导入 35 个 cookie，包含 `__Secure-1PSID`、`__Secure-1PSIDTS`、`__Secure-1PSIDCC`。刷新后重新执行 Gemini Web 图片 smoke test，成功生成 `/tmp/gg-gemini-smoke-1782103262.png`，PNG 1408x768，退出码 0；因此 hero 根因收敛为旧 cookie/session 失效，而不是 `gemini-web` 脚本 path 配错。
+
+---
+
+### Q6 — 14:10
+
+**🙋 提问：**
+
+继续处理到完成通畅
+
+**🤖 回答：**
+
+继续修复并验收到闭环：修复 `gg-md-to-oracle-ts.mjs` 的 description 截断逻辑并补 smoke test；为 `gg-seo-autopilot.mjs` 增加 `--retry-failed`/`--clear-needs-hero` 以便用 driver 恢复已 park 的 preview；提高 preview gate/Codex review 超时与 diff budget，并提高 preview verify 等待 H1 的超时。实际处理 `PG-MYTH-007` 与 `PG-WC-026` 两个 PR，分别修正事实风险、内链占位与 schema/hero 数据后完成 gate 并 merge/published。将 6/21 四个无 PR 且 lease 过期的 active claim 通过 `--mark-failed` park 到 `needs_human`。最终验证：相关 smoke tests 104 项全过，`gg-autopilot-preflight.mjs` 输出 `preflight: ok`，`gg-seo-autopilot.mjs --stale-report` 输出 `inflight: []`、`staleCount: 0`，`seo-autopilot` 与 `seo-author` LaunchAgent 均加载且最近退出码为 0。
 
 ---

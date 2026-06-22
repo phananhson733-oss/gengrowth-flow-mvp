@@ -11,6 +11,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import {
+  deriveDescription,
   emitExportBlock,
   emitTs,
   mergeIntoSibling,
@@ -183,4 +184,32 @@ test('slugToCamel: leading ordinal slugs → valid identifiers', () => {
   }
   // non-ordinal slugs unchanged
   assert.equal(slugToCamel('green-aura-meaning', 'En'), 'greenAuraMeaningEn');
+});
+
+test('deriveDescription: keeps a complete long sentence instead of truncating a date at comma', () => {
+  const body = [
+    '# Why the NiKo Birth Chart Made the Cologne Major Inevitable',
+    '',
+    '## What Is the NiKo Birth Chart?',
+    '',
+    'The NiKo birth chart is **an Aquarius-dominant natal map for CS2 player Nikola Kovač**, born February 16, 1997 — a horoscope that traditional astrologers associate with exceptional individual output followed by delayed collective breakthrough.',
+    '',
+    'More prose.',
+  ].join('\n');
+  const desc = deriveDescription(body);
+  assert.match(desc, /February 16, 1997/);
+  assert.match(desc, /breakthrough\.$/);
+  assert.doesNotMatch(desc, /February 16$/);
+});
+
+test('deriveDescription: short complete CJK sentence beats partial second sentence', () => {
+  const firstSentence = '西班牙2026世界杯占星，是一套以西班牙足协奠基日期为结构锚点、结合木星约27度巨蟹座对相位本届赛事窗口进行象征性解读的参考框架。';
+  const body = [
+    '# 西班牙2026世界杯占星',
+    '',
+    '## 斗牛士军团的星盘是什么？',
+    '',
+    `${firstSentence} 西班牙于6月15日在 H 组首战以0比0战平佛得角，第二场对阵沙特阿拉伯落在6月21日。`,
+  ].join('\n');
+  assert.equal(deriveDescription(body), firstSentence);
 });

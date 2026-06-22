@@ -1,27 +1,3 @@
----
-title: Prince William Birth Chart
-slug: prince-william-birth-chart
-date: 2026-06-22
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T2
-track: 量产线
-page_id: PG-MYTH-008
-author_id: "elena-vane"
-author_display_name: "Elena Vane"
-target_keyword: prince william birth chart
-associated_keywords:
-  - prince william zodiac sign
-  - prince william cancer astrology
-  - prince william horoscope 2026
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-06-22T13:02:16.259Z
-content_sha256_short: df61105dfb932096
-phase2_checks: all-pass
----
-
 # What the Prince William Birth Chart Reveals About a Cancer Who Rarely Shows It
 
 ## What Is Prince William's Birth Chart?

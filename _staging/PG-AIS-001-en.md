@@ -1,11 +1,23 @@
 ---
-title: Best AI SEO Tools
+title: Best Ai Seo Tools
 slug: best-ai-seo-tools
-entity: AI SEO Tool / AI-Powered SEO Platform
-target_keyword: best ai seo tools
-template: Comparison + Guide
+date: 2026-06-22
+status: ready-to-review
+type: wiki-entry
+template: Definition
 tier: T1
 track: 量产线
+page_id: PG-AIS-001
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: best ai seo tools
+associated_keywords:
+
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-22T14:39:44.221Z
+content_sha256_short: 63052a666d829205
+phase2_checks: all-pass
 ---
 
 # Why the Best AI SEO Tools Automate the Workflow, Not Just the Writing

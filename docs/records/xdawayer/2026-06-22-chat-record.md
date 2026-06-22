@@ -351,3 +351,15 @@ continue（推进 WC-029 / MYTH-008 收尾）
 设 GG_AGENTIC_EFFORT=xhigh（写 high）。深挖发现两篇 TBD 内链处理的真相：[[<TBD-internal-link>]] 是占位符，phase2 SC2 反而要求 ≥5(T1)/≥3(T2) 个，真链由转换器 TBD_LINK_RULES 在转 ts 时生成——所以去链会触发 SC2 FAIL，正解是保留 TBD + 加转换规则。又定位并 land 了 repair 永不采纳的真 bug（b409f18）：en/zh-full 两个 validate 调用未传 --prompt-version，候选稿被剥 frontmatter 致 phase2 找不到 fixture 而报错（zh-backfill 调用点本就传了，三处不一致即 bug）。核定后真正缺失的 pillar 目标页：egypt 国家盘、sagittarius-rising、cancer-moon、neptune-conjunct-ascendant（cancer-sun/gemini-athletes 可近似映射）。用户选"建缺失 pillar 再发"——这是一个新内容簇生产项目（4 篇新文章走完整 author 管线 + 加 TBD_LINK_RULES + 回链发原 2 篇），属多周期自治生产，非单次会话可完成。已完成全部 de-risk 工程，pillar 生产交由（现已 Opus 化、repair 可采纳的）autopilot 按周期产出。
 
 ---
+
+### Q26 — 20:25 [claude]
+
+**🙋 提问：**
+
+1（驱动第一篇 pillar 端到端，看后再定其余）
+
+**🤖 回答：**
+
+开始执行后实测到前半段真实边界：findSheetRow 读线上共享「选题登记表」无本地旁路；现有 rising 兄弟行 brief 字段全空（无模板可照搬）；无"写整行 brief"工具（仅 cluster 驱动的 A 列 append）；整表 286/309 incomplete。结论：产 pillar 需凭空编整套品牌编辑 brief + 用裸 Sheets API 写共享生产表（列映射不确定、有污染风险）——这是会破坏共享生产数据、难撤销的动作，不应无监督自动做。改为最大化安全推进：把 4 个 pillar（egypt-wc / sagittarius-rising / cancer-moon / neptune-conjunct-ascendant）的完整 brief 草稿（含 6 个编辑字段 + tier/template/cluster/角度/friction/建议内链）写到 docs/2026-06-22-pillar-briefs-for-wc029-myth008.md 供审核。审核入表后 autopilot 自动产出，我再加 TBD_LINK_RULES 发原 2 篇。WC-029/MYTH-008 如实留 needs_human，未假标 done/未发死链。23/25 真解决 + 全部使能工程上线。
+
+---

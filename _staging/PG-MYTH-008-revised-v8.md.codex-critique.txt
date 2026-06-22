@@ -1,0 +1,8 @@
+- 出生数据缺少权威支撑 → 在正文或 Sources 中补上 Astro-Databank/官方传记级别来源，并明确采用 tropical、house system、出生地、时区。
+- 只讲 Sun/Moon/Rising/Neptune，搜索意图答得不够完整 → 增加完整核心表：Sun、Moon、Asc、Mercury、Venus、Mars、Jupiter、Saturn、Neptune 的星座/度数/宫位/主要相位。
+- “4th-house themes”混淆 Cancer 与实际宫位 → 不要把 Cancer 自然对应第四宫当成他的实际宫位；改成真实宫位解读，或把表头改为“archetypal themes”。
+- 漏掉最有含金量的点：Cancer New Moon / Sun-Moon conjunction → 补充他出生在 Cancer 新月附近，这比反复说“双 Cancer”更具体、更专业。
+- “Cancer Moon paired with Neptune”技术上含糊 → 区分 Moon 的真实相位与 Neptune conjunct Ascendant；不要暗示 Moon-Neptune 有强相位，除非列出 orb。
+- 2026 Father’s Day/solstice 段落像日历填充 → 删除或降级；若保留 2026 horoscope，就改用真实 transit/profection/solar return 依据。
+- 能量工作与 aura-reading 自述削弱占星可信度 → 换成具体占星方法论：相位、宫位、统治星、orb、出生资料等级，而不是 Anodea Judith/Cyndi Dale。
+- Take Action 句子关键词堆砌且不自然 → 改成“compare your chart with Prince William’s placements”，并给出具体可做步骤：先看 Moon、Asc、Neptune-Asc，再比较自己的对应点。

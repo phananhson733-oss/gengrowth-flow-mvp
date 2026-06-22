@@ -116,3 +116,4 @@ The Cologne Major win made the Aquarius breakthrough arc retrospectively legible
 ## Sources
 
 - Liz Greene — integrated depth psychology with natal chart interpretation, establishing the person-centered framework for reading Aquarius placements as developmental arcs rather than fixed personality types
+- Esports Earnings and Esports Charts player profiles — list Nikola "NiKo" Kovač's date of birth as February 16, 1997

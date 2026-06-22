@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-SDS-003",
+  "entity": "SEO Starter Package / Entry-Level SEO Service",
+  "target_keyword": "seo starter package",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-06-22T14:46:15.960Z",
+  "content_sha256_short": "a6beb5789aada7cf",
+  "source_path": "_staging/PG-SDS-003-claude-v8.md",
+  "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-SDS-003-en.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 3,
+      "h4Count": 0,
+      "words": 1832,
+      "wikilinks": 0,
+      "tbdLinks": 0
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

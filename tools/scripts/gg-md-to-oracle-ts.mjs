@@ -197,6 +197,22 @@ export const TBD_LINK_RULES = [
   { match: /lionel\s+messi\s+zodiac\s+sign|messi\s+zodiac\s+sign|梅西.{0,4}星座/i, href: '/en/wiki/lionel-messi-zodiac-sign' },
   { match: /harry\s+kane|kane\s+birth\s+chart|哈里.{0,2}凯恩|凯恩星盘/i, href: '/en/wiki/harry-kane-birth-chart' },
   { match: /cancer\s+zodiac\s+world\s+cup|cancer\s+world\s+cup\s+lens|巨蟹座?.{0,8}世界杯/i, href: '/en/wiki/cancer-zodiac-world-cup-2026' },
+  // --- 6/18 batch-2 WC player + England-team spokes (PG-WC-021~025). MUST precede
+  // the generic /(natal|birth) chart/ rule (~line 351) and the WC-2026 pillar rule
+  // below (first-match-wins) so a player "birth chart" routes to its own spoke. EN+ZH. ---
+  { match: /james\s+rodr[ií]guez|rodr[ií]guez\s+birth\s+chart|哈梅斯|J\s*罗\b|罗德里格斯/i, href: '/en/wiki/james-rodriguez-birth-chart' },
+  { match: /luis\s+d[ií]az|d[ií]az\s+birth\s+chart|路易斯.{0,2}迪亚斯|迪亚斯星盘?/i, href: '/en/wiki/luis-diaz-birth-chart' },
+  { match: /yoane\s+wissa|wissa\s+birth\s+chart|约阿内|维萨星盘?/i, href: '/en/wiki/yoane-wissa-birth-chart' },
+  { match: /christian\s+pulisic|pulisic\s+birth\s+chart|普利西奇/i, href: '/en/wiki/christian-pulisic-birth-chart' },
+  { match: /england\s+world\s+cup\s+2026\s+astrology|england\s+(team|squad|national)\s+(team\s+)?astrology|英格兰.{0,8}世界杯.{0,6}占星/i, href: '/en/wiki/england-world-cup-2026-astrology' },
+  // --- 6/21 batch (PG-WC-026 Spain / 027 Cunha / 028 Scotland-Brazil / TRANS-011 Chiron-in-Taurus / MYTH-006 Toy Story 5).
+  // MUST precede the generic /(natal|birth) chart/ rule (~line 351), the WC-2026 pillar rule below, AND the generic
+  // /\bchiron\b/ rule (~line 260) — first-match-wins — so chiron-in-taurus routes to its own spoke, not the 12th-house page. EN+ZH. ---
+  { match: /spain\s+world\s+cup\s+2026\s+astrology|la\s+roja\s+astrology|spain\s+(national\s+team\s+)?(birth\s+)?chart|西班牙.{0,8}世界杯.{0,6}占星|斗牛士.{0,8}占星/i, href: '/en/wiki/spain-world-cup-2026-astrology' },
+  { match: /matheus\s+cunha|cunha\s+birth\s+chart|马特乌斯|库尼亚/i, href: '/en/wiki/matheus-cunha-birth-chart' },
+  { match: /scotland\s+(vs\.?\s+|and\s+|[-\s]+)brazil.{0,24}(world\s+cup\s+)?astrology|苏格兰.{0,4}巴西.{0,8}占星/i, href: '/en/wiki/scotland-brazil-world-cup-astrology' },
+  { match: /chiron\s+in\s+taurus|chiron\s+taurus(\s+2026)?(\s+transit)?|凯龙.{0,4}金牛/i, href: '/en/wiki/chiron-in-taurus-2026-astrology' },
+  { match: /toy\s+story\s+5\s+(characters?\s+)?zodiac|toy\s+story\s+(5\s+)?zodiac\s+signs?|玩具总动员.{0,4}星座/i, href: '/en/wiki/toy-story-5-zodiac-signs' },
   { match: /best\s+soccer\s+players?\s+(by\s+)?zodiac|soccer\s+players?\s+by\s+zodiac\s+sign|顶尖足球.{0,6}星座/i, href: '/en/wiki/best-soccer-players-zodiac-sign' },
   { match: /world\s+cup\s+2026\s+june\s+astrology|june\s+2026.{0,16}(transit|astrology)\s+calendar|june\s+2026\s+(planetary\s+)?transits?|世界杯.{0,6}六月/i, href: '/en/wiki/world-cup-2026-june-astrology' },
   { match: /(2026)?\s*世界杯.{0,4}占星.{0,4}(总览|预测|专题|指南|pillar)|世界杯占星(总览|专题)/, href: '/en/wiki/world-cup-2026-astrology-prediction' },

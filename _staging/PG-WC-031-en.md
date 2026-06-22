@@ -23,7 +23,7 @@ content_sha256_short: 0db7cc40a7c70c9f
 phase2_checks: all-pass
 ---
 
-# What the Jeremy Doku Birth Chart Reveals About His World Cup Exit
+# What the Jeremy Doku Birth Chart Reveals About His World Cup Paternity Choice
 
 ## What Is Jeremy Doku's Birth Chart?
 

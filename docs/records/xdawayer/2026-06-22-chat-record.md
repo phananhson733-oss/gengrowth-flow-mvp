@@ -315,3 +315,15 @@ cron 这个可以不在 skill 范围内，手动去触发 skill（确认范围�
 用 operating-gengrowth-flow skill 实跑只读诊断并据此修复 25 个 needs_human park。核实确认：21 个 no-row 全是已上线文章的陈旧重复 → 补 slug + --reconcile-published 对账清账（绝不重发）。WC-028 的 Chiron review[astrology] FAIL 经 WebSearch 证实是假阳性（2026-06-19 Chiron 确实首入金牛），内容正确、关 PR#202。MYTH-006 已上线、内链无目标属化妆品级、关 PR#204。needs_human 从 25 → 0。授权模型按用户决定从 Sonnet 4.6 切到 Opus 4.8 high（写入 ~/.config/gg/_gg.env，覆盖 06-05 旧偏好）。最后两篇真未上线的（mo-salah / prince-william）清 claim 后用 Opus 4.8 后台重写（bfskicmke），author 通过后由 publish cron 走 gate 合并。
 
 ---
+
+### Q23 — 18:41 [claude]
+
+**🙋 提问：**
+
+可以硬化 / 及时报错应该也有 agentic 修复
+
+**🤖 回答：**
+
+按 TDD 在隔离 worktree 硬化两处并 land 到主树（commit d2a87d8）：(1) lib/oracle-live.mjs 的 keywordLiveSlug——no-row authoring 失败若主题已上线则对账标 done 而非 park needs_human（接到 gg-seo-autopilot.mjs:836，fail-safe）；(2) gg-codex-pr-review.mjs 把行星过境/ingress 星历日期排除出 fact-check 范围（修 WC-028 假阳性）。6 个新测试全过、全量基线 28 个既有环境失败不变。提交时撞上 15:05 的陈旧 index.lock（vault-backup 崩溃残留，连带阻塞了 vault-backup），自诊断后删除并重试成功（顺带解封 vault-backup）。回应"agentic 修复"：该机制已存在（gg-author-repair.mjs 单次纯文本 LLM 修复），WC-029 修不好是因为修复用的独立 GG_AGENTIC_MODEL 仍是 Sonnet——已一并升到 Opus 4.8（_gg.env），作者+修复现都是 Opus。
+
+---

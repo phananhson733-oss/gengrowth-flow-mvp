@@ -27,7 +27,7 @@ phase2_checks: all-pass
 
 ## What Are Toy Story 5 Zodiac Signs?
 
-Toy story 5 zodiac signs are **a for-fun way of matching each character in the 2026 Pixar film to a zodiac archetype based on their established personality**, not a claim about any real birth chart. The film reached US theaters on June 19, 2026, after its Los Angeles premiere on June 9, and it brings back Woody, Buzz Lightyear, and Jessie while introducing a new cast around the toys-versus-technology story. Reading the characters this way works best as a character study, the same playful lens you might bring to the broader [[<TBD-internal-link: guide to the twelve zodiac signs and their personalities>]].
+Toy story 5 zodiac signs are **a for-fun way of matching each character in the 2026 Pixar film to a zodiac archetype based on their established personality**, not a claim about any real birth chart. The film reached US theaters on June 19, 2026, after its Los Angeles premiere on June 9, and it brings back Woody, Buzz Lightyear, and Jessie while introducing a new cast around the toys-versus-technology story. Reading the characters this way works best as a character study, the same playful lens you might bring to a broader [zodiac archetype mapping applied to public figures](/en/wiki/best-soccer-players-zodiac-sign).
 
 - Maps each toy to a sign by its traits, never by an invented birthday or birth time
 - Covers returning favorites and new faces like Smarty Pants, Lily the tablet, Atlas, and Snappy
@@ -101,8 +101,8 @@ Yes, and that is part of the fun. Because this game rests on personality reading
 
 ## Related Reading
 
-- [[<TBD-internal-link: Leo personality traits explainer>]] — useful if you want to compare a bold, stage-loving archetype against the brave register Buzz brings to the cast
-- [[<TBD-internal-link: pillar page on zodiac signs in movies and pop culture>]] — a wider look at how fans map astrology archetypes onto fictional characters for fun
+- [the Leo zodiac archetype through a nodal lens](/en/wiki/north-node-in-leo) — useful for comparing a bold, stage-loving register against the brave one Buzz brings to the cast
+- [zodiac signs mapped to entire teams as another pop-culture lens](/en/wiki/zodiac-signs-as-world-cup-2026-teams) — a wider look at how fans map astrology archetypes onto fictional or collective groups for fun
 - [[<TBD-external-link: Wikipedia | Toy Story 5 | the 2026 Pixar film these character archetypes are drawn from>]]
 
 ## Take Action

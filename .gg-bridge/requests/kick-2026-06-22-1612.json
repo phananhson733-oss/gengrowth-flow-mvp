@@ -1,0 +1,10 @@
+{
+  "requestedAt": "2026-06-22T16:12:25+08:00",
+  "requestedBy": "cowork-seo-supervisor",
+  "utc8Date": "2026-06-22",
+  "action": "author-and-publish",
+  "reason": "选题登记表 has a non-empty 待写 authoring backlog (≈60 rows; 7 concrete briefed topics with PG ids). No authored-but-unpublished slugs and no missing published slugs — publish lane is clean; author lane has work.",
+  "pendingSlugs": [],
+  "pendingPgIds": ["PG-AURA-009","PG-VEDIC-002","PG-VEDIC-003","PG-VEDIC-004","PG-MAHADASHA-005","PG-TRANS-006","PG-AI-001"],
+  "note": "7 concrete 待写 topics (aura reading; vedic astrology birth chart; vedic birth chart calculator online free; best vedic birth chart calculator; shani mahadasha; mercury in retrograde; ai astrology app) + ~51 placeholder 待写 rows. Acceptance clean: 200 EN-article + 121 ZH live; 149/152 registered EN match exactly, 3 are slug-drift only (live under renamed slugs). First scheduled fire — GSC baseline snapshot established, 0 submitted."
+}

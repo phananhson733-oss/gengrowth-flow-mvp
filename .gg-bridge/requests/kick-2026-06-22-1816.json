@@ -1,0 +1,18 @@
+{
+  "requestedAt": "2026-06-22T18:16:07+08:00",
+  "requestedBy": "cowork-seo-supervisor",
+  "utc8Date": "2026-06-22",
+  "action": "author-and-publish",
+  "reason": "选题登记表 authoring backlog still non-empty (7 concrete briefed topics + ~51 placeholder 待写). Publish lane clean (0 truly-missing live slugs; 3 are slug-drift only). Re-kick: prior kick (1612) is 1816-era unacked >90min and about to cross the >2h stale threshold; fresh nudge.",
+  "pendingSlugs": [],
+  "pendingPgIds": [
+    "PG-AURA-009",
+    "PG-VEDIC-002",
+    "PG-VEDIC-003",
+    "PG-VEDIC-004",
+    "PG-MAHADASHA-005",
+    "PG-TRANS-006",
+    "PG-AI-001"
+  ],
+  "note": "RUN 3. Live unchanged vs 16:19 (235 EN/121 ZH, SHA-256 match). 152 registered EN → 149 live, 3 slug-drift. newlyLive=0 → GSC 0/10. acks/ STILL EMPTY (0 acks ever) → Mac watcher com.gengrowth.cowork-bridge likely not installed; author lane runs on its own launchd timer, but the publish gap (RUN2: PG-WC-029 stuck at QA gate on an unresolved TBD internal link) remains a human blocker."
+}

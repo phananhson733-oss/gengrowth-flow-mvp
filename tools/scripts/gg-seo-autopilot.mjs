@@ -30,6 +30,7 @@
 //   node gg-seo-autopilot.mjs --mark-verified --branch seo/auto/<date>-<PID> --preview-url https://...
 //   node gg-seo-autopilot.mjs --mark-failed --branch seo/auto/<date>-<PID> --reason "..."
 //   node gg-seo-autopilot.mjs --retry-failed --branch seo/auto/<date>-<PID> --evidence "fixed ..."
+//   node gg-seo-autopilot.mjs --reconcile-published [--task <PID>]
 //   node gg-seo-autopilot.mjs --merge --branch seo/auto/<date>-<PID>
 //   node gg-seo-autopilot.mjs --status
 //
@@ -175,6 +176,7 @@ function parseArgs(argv) {
     else if (a === '--mark-verified') o.markVerified = true;
     else if (a === '--mark-failed') o.markFailed = true;
     else if (a === '--retry-failed') o.retryFailed = true;
+    else if (a === '--reconcile-published') o.reconcilePublished = true;
     else if (a === '--clear-needs-hero') o.clearNeedsHero = true;
     else if (a === '--status') o.status = true;
     else if (a === '--stale-report') o.staleReport = true;
@@ -185,7 +187,7 @@ function parseArgs(argv) {
     else if (a === '--limit') o.limit = parseInt(argv[++i], 10) || 1;
     else if (a === '--task') o.task = argv[++i];
   }
-  if (!o.scan && !o.author && !o.nextUnauthored && !o.merge && !o.markVerified && !o.markFailed && !o.retryFailed && !o.status && !o.staleReport) o.scan = true;
+  if (!o.scan && !o.author && !o.nextUnauthored && !o.merge && !o.markVerified && !o.markFailed && !o.retryFailed && !o.reconcilePublished && !o.status && !o.staleReport) o.scan = true;
   return o;
 }
 
@@ -315,6 +317,41 @@ function reconcileClaimsWithGitHub(claims) {
     changed = true;
   }
   return changed;
+}
+
+function articleRegisteredInOracle(slug) {
+  if (!slug || !SLUG_RE.test(slug)) return false;
+  if (!existsSync(join(articlesDir(ORACLE), `${slug}.ts`))) return false;
+  const index = join(articlesDir(ORACLE), 'index.ts');
+  if (!existsSync(index)) return false;
+  const src = readFileSync(index, 'utf8');
+  return src.includes(`from "./${slug}"`) || src.includes(`from './${slug}'`);
+}
+
+function doReconcilePublished(o) {
+  return withClaimsLock(() => {
+    syncOracle();
+    const claims = loadClaims();
+    let changed = false;
+    for (const [pgId, claim] of Object.entries(claims)) {
+      if (o.task && pgId !== o.task) continue;
+      if (!claim || claim.status === 'done') continue;
+      const slug = claim.slug;
+      if (!articleRegisteredInOracle(slug)) continue;
+      claims[pgId] = {
+        ...claim,
+        status: 'done',
+        mergedAt: claim.mergedAt || new Date().toISOString(),
+        reconciliationNote: claim.reconciliationNote || 'auto-reconciled from oracle main article registration',
+      };
+      delete claims[pgId].error;
+      delete claims[pgId].failedAt;
+      log(`PUBLISHED ${pgId} ${slug}`);
+      changed = true;
+    }
+    if (changed) saveClaims(claims);
+    else log('reconcile-published: no published claims found');
+  });
 }
 
 // ── per-task helpers ────────────────────────────────────────────────────────
@@ -1450,6 +1487,7 @@ try {
   else if (o.markVerified) doMarkVerified(o);
   else if (o.markFailed) doMarkFailed(o);
   else if (o.retryFailed) doRetryFailed(o);
+  else if (o.reconcilePublished) doReconcilePublished(o);
   else doScan(o);
 } catch (e) {
   die(e.message || String(e), 1);

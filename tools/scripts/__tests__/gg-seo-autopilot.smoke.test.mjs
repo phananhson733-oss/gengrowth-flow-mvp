@@ -600,3 +600,41 @@ test('--stale-report flags in-flight claims past their lease, read-only, exclude
     h.cleanup();
   }
 });
+
+test('--reconcile-published marks parked claims done when oracle already has the article registered', () => {
+  const h = makeHarness();
+  try {
+    initOracleWithOrigin(h);
+    writeFileSync(
+      join(h.oracle, 'data', 'articles', 'already-live.ts'),
+      'export const alreadyLiveEn = { id: "already-live", authorId: "test-author" };\n',
+    );
+    writeFileSync(
+      join(h.oracle, 'data', 'articles', 'index.ts'),
+      'import { alreadyLiveEn } from "./already-live";\nconst ARTICLES_EN: WikiArticle[] = [\n  alreadyLiveEn,\n];\nconst ARTICLES_ZH: WikiArticle[] = [\n];\n',
+    );
+    git(h.oracle, ['add', 'data/articles/already-live.ts', 'data/articles/index.ts']);
+    git(h.oracle, ['commit', '-m', 'seed already-live article']);
+    git(h.oracle, ['push', 'origin', 'main']);
+    writeClaims(h, {
+      'PG-LIVE': {
+        status: 'needs_human',
+        slug: 'already-live',
+        stage: 'push',
+        branch: 'seo/auto/2026-06-21-PG-LIVE',
+        error: 'stale push claim',
+      },
+    });
+
+    const r = runAuto(h, ['--reconcile-published']);
+
+    assert.equal(r.status, 0, `${r.stdout}${r.stderr}`);
+    assert.match(`${r.stdout}${r.stderr}`, /PUBLISHED PG-LIVE already-live/);
+    const claims = JSON.parse(readFileSync(h.claimsPath, 'utf8'));
+    assert.equal(claims['PG-LIVE'].status, 'done');
+    assert.equal(claims['PG-LIVE'].reconciliationNote, 'auto-reconciled from oracle main article registration');
+    assert.match(claims['PG-LIVE'].mergedAt, /^\d{4}-\d{2}-\d{2}T/);
+  } finally {
+    h.cleanup();
+  }
+});

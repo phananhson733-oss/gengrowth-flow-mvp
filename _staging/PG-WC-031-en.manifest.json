@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-WC-031",
+  "entity": "Jeremy Doku (born May 27 2002 Antwerp Belgium; Gemini Sun; Leo Rising; Mars at 29 Gemini anaretic degree; Man City winger; Belgium WC 2026; temporarily left World Cup June 2026 to witness childs birth; French L-Equipe presenter controversy just to cut an umbilical cord went viral globally on Fathers Day weekend)",
+  "target_keyword": "jeremy doku birth chart",
+  "template": "Definition",
+  "tier": "T1",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-06-22T14:59:43.884Z",
+  "content_sha256_short": "0db7cc40a7c70c9f",
+  "source_path": "_staging/PG-WC-031-claude-v8.md",
+  "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-WC-031-en.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 2,
+      "h4Count": 0,
+      "words": 1701,
+      "wikilinks": 6,
+      "tbdLinks": 6
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

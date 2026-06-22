@@ -329,9 +329,15 @@ async function main(argv) {
     return 0;
   }
   loadEnv();
-  const workbookId = process.env.GG_SHEETS_WORKBOOK_ID;
+  // Canonical-first (matches lib/gg-shared resolveWorkbookId): prefer the flow-mvp workbook
+  // (1CkjOC) over the legacy GG_SHEETS_WORKBOOK_ID (1dejq). Reading the legacy var alone made
+  // findSheetRow pull the STALE workbook → false "no row in 选题登记表" parks + wrong-template
+  // briefs (e.g. PG-WC-029 read as Definition instead of its canonical Birth Chart). Root cause
+  // surfaced 2026-06-22; this was the straggler the 2026-05-29 resolveWorkbookId fix missed.
+  const workbookId = (process.env.GG_SHEETS_FLOW_MVP_WORKBOOK_ID || '').trim()
+    || (process.env.GG_SHEETS_WORKBOOK_ID || '').trim();
   if (!workbookId) {
-    console.error('GG_SHEETS_WORKBOOK_ID missing in env');
+    console.error('workbook id missing (GG_SHEETS_FLOW_MVP_WORKBOOK_ID / GG_SHEETS_WORKBOOK_ID)');
     return 2;
   }
   const tab = args.tab || DEFAULT_TAB;

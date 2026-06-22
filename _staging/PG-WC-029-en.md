@@ -1,3 +1,28 @@
+---
+title: Mo Salah Birth Chart
+slug: mo-salah-birth-chart
+date: 2026-06-22
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T1
+track: 量产线
+page_id: PG-WC-029
+author_id: "aditi-sharma"
+author_display_name: "Aditi Sharma"
+target_keyword: mo salah birth chart
+associated_keywords:
+  - mo salah zodiac sign
+  - mohamed salah astrology
+  - salah gemini
+  - mo salah egypt world cup 2026
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-22T11:47:52.127Z
+content_sha256_short: dcf4372e828a195e
+phase2_checks: all-pass
+---
+
 # Reading the Mo Salah Birth Chart for a Gemini's Last World Cup
 
 ## What Is Mohamed Salah's Birth Chart?

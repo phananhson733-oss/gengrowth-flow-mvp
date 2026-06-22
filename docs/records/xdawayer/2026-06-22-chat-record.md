@@ -387,3 +387,75 @@ continue（推进 WC-029 / MYTH-008 收尾）
 重新聚焦主线=完善 operating-gengrowth-flow skill：把这轮实战 dogfooding 学到的全部回灌。新增 references/data-sources.md（canonical 1CkjOC vs 遗留 1dejq workbook 陷阱=#1 no-row 根因、各 tab/gid、选题登记表列）；troubleshooting 修正 no-row 诊断（先验 workbook 非补行）、TBD 占位符真相（SC2 要求≥5/≥3、转换器解析、勿删）、模型现状（作者+修复均 Opus）、新增 repair-adopt 修复行、codex 星历假阳性行（WC-028 类）；script-routing 补 --reconcile-published；SKILL.md 诊断段改为 no-row 先查 canonical + references 加 data-sources。skill validator 通过。dogfooding 附带修了 3 个真 flow bug：b676005（gg-sheet-pull 读错 workbook 根因）、b409f18（repair 验证缺 --prompt-version 永不采纳）、d2a87d8（no-row 自动对账 + codex 星历豁免）。副线：23/25 解决；末 2 篇后台用全修复链路重跑（bidqauv83），仍撞内容固有红线（H3/sun sign），Opus 修复现可采纳会接手。
 
 ---
+
+### Q29 — 21:00 [claude]
+
+**🙋 提问：**
+
+验收一下这个 skill，可以使用 /codex 和 fan-out 验收，同时使用 skill-creator 跑一边正式的 eval/grader。同时注意：1.先确定任务当前的状态（以 ops 中的文档状态/线上是否提交了为准）；2.根据 ops 中的文档的需求，找 Google sheet（两个不同的网站，对应他们各自的网站，不要搞混了），根据脚本+Google sheet 确定如何去写文章；3 写文章，使用指定的模型，然后 Opus+gpt-5.5 xhigh 审核；不通过可以通过 agentic 修复 4.文章通过了以后，发布到 prod。astrologywiki push了以后会自动 vercel 发布；而 gengrowth 是写在 supbase 中（有 cookies 或者说 supabase CLI）；5.上线了以后需要使用 chrome mcp 验收。6.需要给 GSC 提交（这里需要注意如何去做自动提交的逻辑）。看看有没有漏的。
+
+**🤖 回答：**
+
+用 codex(gpt-5.5 xhigh) + 6 个 fan-out agent + skill-creator 全面验收 skill。对照 6 步发现实为 ~9 阶段，回填 7 块新内容（两站矩阵、Model map、上线后 chrome 验收、GSC 索引、Lane A 重写、告警入口、新建 zh-localization.md）。推翻多处旧认知：index.ts 注册是 autopilot 自动非手动；preview-verify 是 Playwright 非 chrome/MCP；Lane A 发布腿是 live 非"experimental"；GSC submitter 其实存在（~/oracle）；codex 事实门禁默认 high 非 xhigh。quick_validate 通过；ledger 79 全 done。
+
+---
+
+### Q30 — 21:05 [claude]
+
+**🙋 提问：**
+
+可能不止 6 步，你自己注意评估
+
+**🤖 回答：**
+
+完整性批判确认 >6 步：补齐 zh 并行轨、告警入口（Lark）、插图腿、归档腿、上线后修复/回滚。据此驱动两件实操：WC-029 用干净 clone 定向发布、修复 Lane A launchd 停摆（两份 plist 误设 LimitLoadToSessionType=Background → 重载 gui 域，21:22 tick 实跑到达 supabase）。确认 MYTH-008（prince-william）早已上线（PR #205）。
+
+---
+
+### Q31 — 21:40 [claude]
+
+**🙋 提问：**
+
+等 WC-029 上线后用 chrome MCP 验收 / 门禁过了把完整发布流程补进 skill / 门禁过了确认 mo-salah 真上线了再继续
+
+**🤖 回答：**
+
+定向发布 WC-029（mo-salah）端到端，连环命中并修复每类 park（全部回填 skill）：①~/oracle 脏树→stash（可逆，确认 492 文件是冗余可再生构建产物）；②手动跑漏 source _gg.env→preview-verify 无 bypass secret；③不继承 plist 的 GG_CODEX_BIN→codex park；④links-seo TBD 错映/死链/重复→重映到 5 个独立存活页；⑤误提 public/→PR 503 文件→gh pr diff >300→清成 5 文件。本会话无独立 chrome MCP server，用 flow 自带 Playwright（同款 Chromium）完成等价渲染验收。
+
+---
+
+### Q32 — 22:10 [claude]
+
+**🙋 提问：**
+
+[截图：两个待决阻塞 — WC-029 astrology 门(无出生时间断言宫位+月亮)、gengrowth AIS/TAS/SDS 没有 brief 行；底部 Invalid tool parameters]
+
+**🤖 回答：**
+
+对齐截图（旧状态）：WC-029 astrology 门本会话历次均 PASS、不复现。codex 真正跑起来后产出真实 VERDICT: FAIL——抓到承重事实错误："Salah 助攻"实为"亲自打进制胜球"。WebSearch 三源核实 codex 对（67' 进球 + 82' 助攻 Trezeguet，埃及队史首胜）→ 主旨级忠实改写为 Gemini 二元"既创造又终结"→ codex PASS → merge → prod 实测确认上线（H1/事实/sitemap/Playwright 均 OK）。同修上游 override 错误事实源（赛前预测 brief）。
+
+---
+
+### Q33 — 22:25 [claude]
+
+**🙋 提问：**
+
+门禁过了把完整发布流程补进 skill
+
+**🤖 回答：**
+
+新建 references/manual-publish-one.md：手动定向发布单篇的完整流程（autopilot 不能 --task 定向 → 单行 GG_AUTOPILOT_PLAN 技巧）+ 全程 7 关 park gauntlet（脏树/env/links/PR文件爆炸/codex 事实错误，每关附 lever）+ 上线后 prod 验收。挂进 SKILL.md（router 行 + 引用清单），quick_validate 通过（现 8 个 reference）。
+
+---
+
+### Q34 — 22:35 [claude]
+
+**🙋 提问：**
+
+把 hero 补上，再把 Q&A 补进 chat-record。没有 brief 吗。是不是链接错了：https://docs.google.com/spreadsheets/d/1RRxsyFmdWgtd6tojjze_8lxwSUTTZKm4TqU4gZTIRA8/edit?gid=1885678792#gid=1885678792。需要跑正式的 grader。
+
+**🤖 回答：**
+
+用户第三次纠正我看错表——1RRx 是 gengrowth 自己的 workbook（31 行 ready，AIS/TAS/SDS/EOS brief 全在），只是没接进 resolveWorkbookId（无 GG_SHEETS_GENGROWTH_WORKBOOK_ID）→ 标准入口读 oracle 表 → 假"no brief"。已纠正 data-sources.md + 新建 memory gengrowth-workbook-unwired。hero：gemini-web 会话已死（独立重试同样 illustrate-article 失败），inline SVG 能生成但 hero 需交互刷新会话（用户动作），cooldown 已清待下次重试。正式 grader 以 Workflow 跑（8 场景 × 带/不带 skill × grader 打分）。
+
+---

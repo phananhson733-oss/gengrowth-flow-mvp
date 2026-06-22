@@ -1,8 +1,8 @@
-- `Jupiter–Venus in Cancer` 被写成父亲节当天/全年主轴，但合相实际在 6月8-9日，且 Venus 6月13日已进 Leo → 改成“6月上旬背景”，父亲节当天只保留 Sun ingress/solstice + Jupiter late Cancer。
-- “Father’s Day 是 retailers 设定的商业日”不准确 → 改为“美国 Father’s Day 是6月第三个周日的民俗/法定节日，后来被商业化”。
-- “Cancer’s natural home / fourth house / father”混用了现代 natural-house 和传统父亲归属 → 明确口径：部分传统体系把父亲/家族根系读在4宫，现代读法常用 Sun、Saturn、10宫/IC，避免说成定论。
-- “rare alignment / how often”太含糊 → 给出可验证频率或删掉“rare”；至少写成“uncommon U.S. calendar overlap”，并注明依赖时区与美国第三个周日规则。
-- 文章回答搜索意图不够直接 → 加一段可操作速查：2026父亲节日期、Sun enters Cancer 时间、按 rising sign/natal house 找 0° Cancer 落点、父亲/父亲形象相关提问。
-- 表格里的 `Energy Center` 实际列的是 natal chart factors，概念错位 → 改列名为 `Chart factor to check`，并填具体项：0° Cancer house、natal Sun、IC/4th ruler、Cancer placements。
-- 作者经历段落像自我背书，削弱专业度 → 缩短为一句方法说明，把篇幅给具体星象、ephemeris source、读者如何在自己盘里应用。
-- “Cancer turn may create honest conversations”略过度承诺 → 改成低风险建议：一条可说出口的话、一个可问的问题、一个适合疏离/失亲/复杂父子关系读者的替代仪式。
+- “close Jupiter–Venus meeting” 时间点不准 → 改成“6月8-9日合相为背景；父亲节当天两星同在巨蟹，但不是精确合相”。
+- 表格把 Sun enters Cancer 对应到 “Natal 4th house and Moon” 过度简化 → 改为查看本命盘中 `0° Cancer` 所落宫位及对本命行星/轴点的相位。
+- “Natal June chart degrees” 表述含糊且不专业 → 改成“关注 0° Cancer，以及 0° Aries/Libra/Capricorn 附近的本命点”。
+- 搜索意图回答不够直接 → 增加一小段明确回答：2026 美国父亲节日期、太阳入巨蟹精确时间、主要星象、适合谁重点关注。
+- 内容反复停留在“home/roots/father archetype” → 加入更具体的可操作解读，如按上升星座/宫位判断父亲、家庭、照护主题落在哪里。
+- “energy-work and somatic-informed practice” 像泛泛背书 → 用具体占星逻辑或案例替代，例如“若巨蟹落第10宫，父亲/权威主题可能更偏公开角色与责任”。
+- 父亲主题处理过于单一温情 → 补入非传统父亲、缺席父亲、关系紧张者如何使用这个日期做反思，避免像贺卡文案。
+- Sources 太笼统，不像可核查来源 → 换成具体 ephemeris/天文来源验证太阳入巨蟹、Venus-Jupiter 时间和 Jupiter 周期。

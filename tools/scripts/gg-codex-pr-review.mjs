@@ -49,7 +49,7 @@ function parseArgs(argv) {
     repo: 'xdawayer/oracle',
     pr: '',
     branch: '',
-    timeoutMs: Number(process.env.GG_CODEX_REVIEW_TIMEOUT_MS) || 220000,
+    timeoutMs: Number(process.env.GG_CODEX_REVIEW_TIMEOUT_MS) || 600000,
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];

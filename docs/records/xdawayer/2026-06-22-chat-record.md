@@ -18,6 +18,7 @@ tags:
 - 定位 hero 失败：`gemini-web` 脚本 path 正确，根因是旧 Gemini Web cookie/session；从本机 Chrome profile 重新导入 35 个 cookie 后，图片 smoke test 成功生成 PNG。
 - 清理旧队列：将 6/21 四个无 PR 且 lease 过期的 `active/stage=push` claim 安全 park 到 `needs_human`，最终 `preflight: ok`、`staleCount: 0`、仓库状态干净。
 - 复核可自动化条件：`seo-author` 与 `seo-autopilot` 均由 launchd 周期调度，当前无 active/preview 中间态残留，可按安全门禁无人值守继续运行。
+- 核验 6/21 四篇文章已在 `origin/main` 与线上 EN/ZH URL 发布，并通过 `--reconcile-published` 将对应 claim 从 `needs_human` 修正为 `done`。
 
 ---
 
@@ -116,6 +117,18 @@ needs_human 里面哪有些内容
 **🤖 回答：**
 
 查询 `gg-seo-autopilot.mjs --status` 并筛选 `needs_human`：当前共有 25 个条目，其中 21 个停在 `authoring`，原因均为选题登记表中找不到对应 row；4 个停在 `push`，为 6/21 遗留的无 PR、lease 过期旧 active claim，已 park 到 `needs_human` 以解除队列阻塞。同步复核 `gg-seo-autopilot.mjs --stale-report`，结果为 `inflight: []`、`staleCount: 0`。
+
+---
+
+### Q9 — 14:39
+
+**🙋 提问：**
+
+21 号的内容都已经上线了，根本不需要这些了；你核验一下
+
+**🤖 回答：**
+
+核验确认用户判断正确：`PG-WC-027`、`PG-WC-028`、`PG-TRANS-011`、`PG-MYTH-006` 四篇均已在 `/Users/awayer_mini/oracle` 的 `origin/main` 历史与 `data/articles/index.ts` 中存在，且线上 EN/ZH 共 8 个 URL 均返回 200 并有匹配的 title/H1。补充 deterministic driver 命令 `--reconcile-published`，其只在 oracle 主线存在文章文件且 index 已注册时将 claim 标记为 `done`；新增 smoke test，并验证红转绿与全组 `gg-seo-autopilot` smoke 13/13 通过。随后执行 `node tools/scripts/gg-seo-autopilot.mjs --reconcile-published`，四个 6/21 claim 已更新为 `done`，`needs_human` 剩余 21 个均为选题登记表缺 row 的 authoring 类旧项，`stale-report` 仍为 `inflight: []`、`staleCount: 0`。
 
 ---
 

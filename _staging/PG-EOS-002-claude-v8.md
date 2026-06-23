@@ -117,8 +117,9 @@ Sometimes, when one person on the team has real search-craft and the cadence is 
 ## Related Reading
 
 - Comparison with [cost-effective SEO services](/en/blog/cost-effective-seo-services) — for buyers weighing organic durability against a tighter monthly budget
-- A guide to white-label SEO pricing — for agencies translating organic deliverables into a retainer their fulfilment partner can hit
-- A look at AI search citation hygiene — for teams wiring AI Overview and chatbot visibility into a standing brief
+- A guide to [white-label SEO tooling](/en/blog/best-white-label-seo-tool) — for agencies translating organic deliverables into a retainer their fulfilment partner can hit
+- A look at [AI SEO tooling](/en/blog/best-ai-seo-tools) — for teams wiring AI Overview and chatbot visibility into a standing brief
+- How [SEO for SaaS](/en/blog/seo-for-saas) compounds — the channel context organic services build on
 
 ## Take Action
 

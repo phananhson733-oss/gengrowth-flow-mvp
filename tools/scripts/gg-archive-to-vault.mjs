@@ -13,12 +13,31 @@
 //   node tools/scripts/gg-archive-to-vault.mjs --pages "PG-WC-011:vozinha-birth-chart ..." \
 //     [--site astrologywiki] [--vault ~/gengrowth-wiki] [--oracle ~/Code/oracle] [--dry-run]
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync, copyFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, copyFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const FLOW_REPO = join(__dirname, '..', '..');
+
+// Resolve a draft's _staging source file lane-agnostically: Lane B (oracle) phase2 writes
+// <pid>-en.md; Lane A (gengrowth) drafts are <pid>-<llm>-v8.md (and phase2 may also emit a
+// normalized <pid>-en.md). Prefer -en.md, then -claude-v8.md, then any <pid>-*-v8.md, so the
+// SAME archive script works for both lanes (parity — only the source filename convention differs).
+function resolveStagingSource(pid) {
+  const dir = join(FLOW_REPO, '_staging');
+  const preferred = [`${pid}-en.md`, `${pid}-claude-v8.md`];
+  for (const name of preferred) {
+    const p = join(dir, name);
+    if (existsSync(p)) return p;
+  }
+  try {
+    const re = new RegExp(`^${pid}-[a-z0-9]+-v8\\.md$`, 'i');
+    const hit = readdirSync(dir).find((f) => re.test(f));
+    if (hit) return join(dir, hit);
+  } catch { /* dir missing */ }
+  return null;
+}
 
 function parseArgs(argv) {
   const out = {};
@@ -207,8 +226,8 @@ function main() {
 
   const loaded = [];
   for (const { pid, slug } of pairs) {
-    const src = join(FLOW_REPO, '_staging', `${pid}-en.md`);
-    if (!existsSync(src)) { console.error(`SKIP ${pid}: no ${src}`); continue; }
+    const src = resolveStagingSource(pid);
+    if (!src) { console.error(`SKIP ${pid}: no _staging source (tried ${pid}-en.md / ${pid}-*-v8.md)`); continue; }
     const { fm, body } = parseFrontmatter(readFileSync(src, 'utf8'));
     loaded.push({ pid, slug, fm, body, title: fm.title || slug });
   }

@@ -12,7 +12,7 @@ track: 量产线
 
 ## What Is an SEO Audit Checklist?
 
-An SEO audit checklist is **a structured list of the technical, on-page, and off-page items you inspect on a site to find what is suppressing its rankings — and, done right, a sequence that tells you which of those items to fix first**. Almost every published checklist nails the first half and skips the second: it lists the items but groups them by category instead of by how much each one moves rankings. That ordering gap is the whole reason this guide exists.
+An SEO audit checklist is **a structured list of the technical, on-page, and off-page items you inspect on a site to find what is suppressing its rankings — and, done right, a sequence that tells you which of those items to fix first**. Most published checklists nail the first half and only gesture at the second: they list the items, usually grouped by category, and at best tell you to rank them by impact yourself rather than handing you a finished, site-specific order. That ordering gap is the whole reason this guide exists.
 
 - Inventories the full surface: crawlability, indexation, on-page signals, site speed, and backlinks
 - Should rank each item by ranking impact magnitude, not file it under a tidy category header

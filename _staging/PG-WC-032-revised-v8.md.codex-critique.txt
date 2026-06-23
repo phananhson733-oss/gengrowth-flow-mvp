@@ -1,0 +1,8 @@
+- 上升天蝎被当成硬事实，但没有出生时间出处；上升星座不能只靠生日推出 → 补可靠出生时间来源，否则把所有 “Scorpio rising” 改成未证实/可选解读，并删掉依赖它的硬结论。
+- “past his 200th senior milestone” 含混且疑似不准；公开国家队统计约为 196 caps → 改成精确里程碑，如 Croatia most-capped player、2018 Ballon d’Or/World Cup Golden Ball、Real Madrid 28 trophies。
+- “2026 tournament approaches” 已有时效风险 → 按发布日期改成当前世界杯语境，或写成 evergreen，不要用会过期的倒计时角度。
+- “评论员长期把他误读成 Leo-style flair” 像稻草人，没有证据 → 改成 “readers may mistake grace for Leo flair”，并用生日直接说明他是 Virgo，不要虚构舆论趋势。
+- aura-reading、广告背景、Brennan/Cyndi Dale 段落偏离搜索意图 → 缩短或删除，换成出生信息、Moon/Rising可信度、职业事实与星盘解读的关系。
+- Virgo/Cancer/Scorpio 解读太泛，可套到任何沉稳球员 → 每个 placement 至少配一个 Modrić 专属例子：Croatia captaincy、late-career Real Madrid role、2018/2022 tournament leadership、tempo-control passing。
+- “Virgo–Scorpio chart naturally explains longevity/late peak” 过度决定论 → 改成 interpretive lens，避免把竞技状态、职业选择和年龄表现说成星盘因果。
+- Sources 错位：现在列的是能量疗愈作者，不是事实来源 → Sources 改列 birth date/career stats 来源，如 Wikipedia/HNS/UEFA；Brennan/Dale 若保留，只能作为方法论背景。

@@ -43,7 +43,12 @@ function parseArgs(argv) {
     else if (k === '--locale') a.locale = argv[++i];
     else if (k === '--staging-dir') a.stagingDir = argv[++i];
     else if (k === '--pages') a.pages = argv[++i].split(/[\s,]+/).filter(Boolean);
+    else if (k === '--limit') a.limit = parseInt(argv[++i], 10) || 0;
   }
+  // Serial cadence (parity with Lane B): publish at most `limit` per run so a backlog
+  // drip-feeds across the hourly cron instead of dumping all at once. 0 = unlimited.
+  // Env GG_GENGROWTH_PUBLISH_LIMIT lets the cron tick set it without editing args.
+  if (a.limit == null) a.limit = parseInt(process.env.GG_GENGROWTH_PUBLISH_LIMIT || '0', 10) || 0;
   return a;
 }
 
@@ -120,23 +125,33 @@ async function main() {
   }
 
   let published = 0, failed = 0, verified = 0;
-  for (const d of actions) {
-    if (!/^PUBLISH|^REPUBLISH/.test(d.action)) continue;
+  const queue = actions.filter((d) => /^PUBLISH|^REPUBLISH/.test(d.action));
+  const slice = args.limit > 0 ? queue.slice(0, args.limit) : queue;
+  if (args.limit > 0 && queue.length > slice.length) {
+    console.log(`  (serial cadence: publishing ${slice.length}/${queue.length} this run; ${queue.length - slice.length} deferred to the next hourly tick)`);
+  }
+  for (const d of slice) {
     try {
       execFileSync('node', [BRIDGE, '--source', d.mdPath, '--locale', args.locale, '--emit', 'rest'], {
         env: { ...process.env, SB_URL, SB_KEY }, stdio: ['ignore', 'inherit', 'inherit'], timeout: 120000,
       });
       published++;
       const after = await liveStatus(SB_URL, SB_KEY, d.slug, args.locale);
-      if (after.known && after.exists && after.status === 'published') { verified++; console.log(`  ✓ verified live: ${d.slug}`); }
+      const ok = after.known && after.exists && after.status === 'published';
+      if (ok) { verified++; console.log(`  ✓ verified live: ${d.slug}`); }
       else console.log(`  ⚠️ ${d.slug} upserted but verify says: ${JSON.stringify(after)}`);
+      // Per-article notification (parity with Lane B's per-article "已发布上线" notice),
+      // instead of one aggregate ticker — one Hermes-bot message per published article.
+      let title = d.slug;
+      try { title = (parseFrontmatter(readFileSync(d.mdPath, 'utf8')).frontmatter.title || d.slug).toString().trim(); } catch { /* */ }
+      if (ok) larkBestEffort(`✅ SEO autopilot 已发布上线：${title}\nhttps://gengrowth.ai/en/blog/${d.slug}\n（gengrowth.ai 博客）`);
     } catch (e) {
       failed++;
       console.error(`  ✖ ${d.pageId} (${d.slug}) failed: ${e.message}`);
+      larkBestEffort(`⚠️ gengrowth 发布失败：${d.pageId} (${d.slug}) — ${e.message}`);
     }
   }
   console.log(`\n=== done: published=${published} verified=${verified} failed=${failed} ===`);
-  if (published > 0) larkBestEffort(`✅ gengrowth 发布 ticker：上线 ${published} 篇（验收 ${verified}），失败 ${failed}。`);
   if (failed > 0) process.exitCode = 1;
 }
 

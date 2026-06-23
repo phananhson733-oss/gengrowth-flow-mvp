@@ -18,8 +18,8 @@ associated_keywords:
   - portugal captain zodiac
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-23T17:17:14.046Z
-content_sha256_short: dbafe33be570f39c
+generated_at: 2026-06-23T17:18:01.442Z
+content_sha256_short: a40ecf1bc096b4a8
 phase2_checks: all-pass
 ---
 
@@ -83,7 +83,7 @@ Most quick takes on the Bruno Fernandes zodiac sign stop at the surface and get 
 
 **What is the Bruno Fernandes zodiac sign?**
 
-He is a Virgo Sun, born on 8 September 1994, with Mars in Cancer (both set by his birth date). Chart sites also commonly cite a Libra Moon and a Scorpio rising, but those are unconfirmed because he has never made his birth time public. The Virgo Sun is the part most responsible for his standards-driven reactions on the pitch.
+He is a Virgo Sun, born on 8 September 1994. Chart sites also commonly cite a Libra Moon and a Scorpio rising, but those are unconfirmed because he has never made his birth time public. The Virgo Sun is the part most responsible for his standards-driven reactions on the pitch.
 
 **Is Bruno Fernandes's frustration a sign of a fiery temperament?**
 
@@ -107,7 +107,7 @@ This is not a clinical interpretation or mental health advice.
 
 ## Related Reading
 
-- [[<TBD-internal-link: Cancer zodiac World Cup 2026>]] — the Cancer-sign themes behind his protective Mars in Cancer.
+- [[<TBD-internal-link: Cancer zodiac World Cup 2026>]] — the Cancer-sign themes that run through the World Cup field.
 - [[<TBD-internal-link: Vinicius Jr's zodiac sign>]] — another World Cup attacker read through his chart.
 - [[<TBD-internal-link: Saturn in Aries 2026 transit>]] — the headline 2026 transit shaping the squad through the tournament.
 - [[<TBD-external-link: Wikipedia | Bruno Fernandes | career profile of Manchester United's captain and Portugal midfielder>]] — background on the player behind the chart.

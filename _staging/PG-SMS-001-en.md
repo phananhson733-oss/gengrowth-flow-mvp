@@ -15,8 +15,8 @@ associated_keywords:
 
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-23T06:27:09.481Z
-content_sha256_short: 042f8c4328b659c5
+generated_at: 2026-06-23T06:28:01.268Z
+content_sha256_short: 0979401f0c38cb4b
 phase2_checks: all-pass
 ---
 
@@ -124,5 +124,5 @@ List the ten queries your audience types into TikTok search, then run one video 
 
 ## Sources
 
-- Google, public statements by Senior Vice President Prabhakar Raghavan — the executive acknowledgment, cited above, that a large share of younger users now discover places and products through TikTok rather than traditional search
+- Prabhakar Raghavan, Senior Vice President at Google — the public statement, cited above, that a large share of younger users now discover places and products through TikTok rather than traditional search
 - TikTok Search and the in-app search bar — the platform behavior referenced above on transcribed speech, on-screen text, autocomplete, and related-search suggestions as discovery signals

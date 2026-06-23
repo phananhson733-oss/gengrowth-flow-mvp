@@ -1,17 +1,17 @@
 {
   "schema_version": "1",
-  "page_id": "PG-SMS-001",
-  "entity": "TikTok SEO Tool / TikTok Search Optimization",
-  "target_keyword": "tiktok seo tool",
+  "page_id": "PG-B2B-003",
+  "entity": "B2B SEO Tools / B2B SEO Platform",
+  "target_keyword": "best tools for seo for b2b",
   "template": "Definition",
   "tier": "T2",
   "track": "量产线",
   "generated_by": "unknown",
   "prompt_version": "v8",
-  "generated_at": "2026-06-23T06:28:01.268Z",
-  "content_sha256_short": "0979401f0c38cb4b",
-  "source_path": "_staging/PG-SMS-001-claude-v8.md",
-  "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-SMS-001-en.md",
+  "generated_at": "2026-06-23T06:28:10.512Z",
+  "content_sha256_short": "53f665cc063095ea",
+  "source_path": "_staging/PG-B2B-003-claude-v8.md",
+  "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-B2B-003-en.md",
   "phase2_checks": {
     "overall": "pass",
     "structure": {
@@ -19,7 +19,7 @@
       "h2Count": 11,
       "h3Count": 3,
       "h4Count": 0,
-      "words": 1832,
+      "words": 1805,
       "wikilinks": 0,
       "tbdLinks": 0
     },

@@ -1,24 +1,22 @@
 ---
-title: Organic SEO Services
+title: Organic Seo Services
 slug: organic-seo-services
-date: 2026-06-22
+date: 2026-06-23
 status: ready-to-review
 type: wiki-entry
 template: Definition
 tier: T1
 track: 量产线
 page_id: PG-EOS-002
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
 target_keyword: organic seo services
 associated_keywords:
-  - organic seo agency
-  - organic search engine optimization services
-  - organic seo company
-  - organic search optimization services
-  - organic seo consulting
-generated_by: claude-opus-4-7
+
+generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-22T09:22:00.000Z
-content_sha256_short: 7ff3d2c92dee8057
+generated_at: 2026-06-23T08:54:00.987Z
+content_sha256_short: 9f02bee1d76a3a8a
 phase2_checks: all-pass
 ---
 

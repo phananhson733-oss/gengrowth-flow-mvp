@@ -18,8 +18,8 @@ associated_keywords:
   - portugal captain zodiac
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-23T16:58:06.903Z
-content_sha256_short: a9dbbc518d8cd493
+generated_at: 2026-06-23T17:09:34.767Z
+content_sha256_short: 226fbe5d872237ec
 phase2_checks: all-pass
 ---
 
@@ -37,7 +37,7 @@ Bruno Fernandes zodiac sign is Virgo — a Virgo Sun born on 8 September 1994 in
 
 Understanding the Bruno Fernandes zodiac sign matters because the public read of him gets the cause backwards, and that misread shapes how fans, pundits, and even teammates judge his leadership. According to the Pew Research Center, about 29% of U.S. adults say they believe in astrology, so these player charts get shared and argued over far beyond niche forums. In my own data-driven analysis of chart structures, the same problem shows up again and again: a visible behavior gets pinned to the loudest-looking placement instead of the one actually driving it. That is the same person-centered approach Dane Rudhyar brought to reading a chart as a developing whole rather than a fixed label.
 
-The stakes here are practical, not abstract. Fernandes captains Manchester United and is Portugal's vice-captain, behind Cristiano Ronaldo — so when his frustration is filed under "bad temperament," it feeds debates about how he leads. Read accurately, the picture changes from a control problem into a standards problem — which is coached differently and judged more fairly. The confusion tends to cluster in three spots:
+The stakes here are practical, not abstract. Fernandes captains Manchester United, and for Portugal he plays under captain Cristiano Ronaldo — so when his frustration is filed under "bad temperament," it feeds debates about how he leads. Read accurately, the picture changes from a control problem into a standards problem — which is coached differently and judged more fairly. The confusion tends to cluster in three spots:
 
 1. **The temper misread.** Fans see arm-waving and clipped body language and file it under fire-sign heat, when the source is a Virgo standard a teammate just fell short of.
 2. **The spectacle assumption.** Virgo values refined function over flash, so his worth to Portugal shows up in service and accuracy — easy to undervalue if you only score highlight-reel moments.
@@ -110,7 +110,7 @@ This is not a clinical interpretation or mental health advice.
 - [[<TBD-internal-link: Cancer zodiac World Cup 2026>]] — the Cancer-sign themes behind his protective Mars in Cancer.
 - [[<TBD-internal-link: Vinicius Jr's zodiac sign>]] — another World Cup attacker read through his chart.
 - [[<TBD-internal-link: Saturn in Aries 2026 transit>]] — the headline 2026 transit shaping the squad through the tournament.
-- [[<TBD-external-link: Wikipedia | Bruno Fernandes | career profile of Manchester United's captain and Portugal's vice-captain>]] — background on the player behind the chart.
+- [[<TBD-external-link: Wikipedia | Bruno Fernandes | career profile of Manchester United's captain and Portugal midfielder>]] — background on the player behind the chart.
 
 ## Take Action
 

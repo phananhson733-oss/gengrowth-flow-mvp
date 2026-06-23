@@ -107,7 +107,7 @@ Because the Sun and Jupiter touch every chart, all twelve signs feel the emotion
 
 **When does this Cancer season peak?**
 
-The emotional charge tends to feel strongest in the first ten days, right after the Sun enters Cancer around June 21. It eases as the Sun nears Leo in late July, though the Jupiter backdrop keeps the themes warm well beyond the month itself.
+The emotional charge tends to feel strongest in the first ten days, right after the Sun enters Cancer around June 21. It eases as the Sun nears Leo in late July, and Jupiter's own move into Leo on June 30 begins shifting the tone soon after those opening days.
 
 ## Reflection Prompts
 
@@ -117,10 +117,10 @@ The emotional charge tends to feel strongest in the first ten days, right after 
 
 ## Related Reading
 
-- [[<TBD-internal-link: explainer on Mercury retrograde 2026 timing>]] — because the overlapping retrograde shapes how this season's conversations feel.
-- [[<TBD-internal-link: guide to the Cancer zodiac sign meaning>]] — for the core emotional themes the Sun and Jupiter are both amplifying.
-- [[<TBD-internal-link: overview of Saturn oppositions in the chart>]] — to understand the duty-versus-need tension running through 2026.
-- [[<TBD-internal-link: explainer on the fourth house and home>]] — for the home and family area this season activates most.
+- [[<TBD-internal-link: Saturn in Aries 2026 transit>]] — the Sun's square to Saturn that runs through this season's duty-versus-need tension.
+- [[<TBD-internal-link: Chiron in Taurus 2026 transit>]] — another slow 2026 transit working under the surface of the emotional year.
+- [[<TBD-internal-link: Saturn in Pisces transit>]] — where Saturn sat before its 2026 shift into Aries.
+- [[<TBD-internal-link: the fourth house and home>]] — the chart area Cancer rules, where this season tends to land most.
 
 ## Take Action
 

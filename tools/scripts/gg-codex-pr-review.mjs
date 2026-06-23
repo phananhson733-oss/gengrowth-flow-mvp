@@ -163,6 +163,29 @@ function runCodex(prompt, timeoutMs) {
 
 function main() {
   const o = parseArgs(process.argv.slice(2));
+
+  // ── --source mode (Lane A / gengrowth parity) ──────────────────────────────
+  // Fact-check a standalone article markdown file directly: no PR, no branch, no
+  // `gh`. Same codex model + nonce fence + VERDICT contract that the publish gate's
+  // classifyCodex() consumes, so gengrowth gets the IDENTICAL factual review oracle
+  // gets — only the input (a file, not a PR diff) differs.
+  if (o.source) {
+    if (o.source.startsWith('-')) toolFail(`refusing --source starting with '-' (arg-injection guard): ${o.source}`);
+    if (!existsSync(o.source)) toolFail(`--source file not found: ${o.source}`);
+    let content = '';
+    try { content = readFileSync(o.source, 'utf8'); } catch (e) { toolFail(`cannot read --source: ${e.code || e.message}`); }
+    if (!content.trim()) toolFail('empty --source file');
+    // Fail-closed if oversize — never PASS on a truncated fact-check (same budget as the PR path).
+    if (content.length > DIFF_BUDGET) {
+      toolFail(`--source ${content.length}B exceeds review budget ${DIFF_BUDGET}B (fail-closed; would truncate the fact-check)`);
+    }
+    const msg = runCodex(buildPrompt(content, 'ARTICLE MARKDOWN'), o.timeoutMs);
+    const hasVerdict = msg.replace(/\r\n?/g, '\n').split('\n').some((l) => /^\s*VERDICT:\s*(PASS|FAIL)\b/i.test(l));
+    if (!hasVerdict) toolFail('codex produced no line-anchored VERDICT');
+    process.stdout.write(msg.endsWith('\n') ? msg : msg + '\n');
+    process.exit(0);
+  }
+
   const ref = resolveRef(o);
   if (!ref) toolFail(`no usable PR ref (--pr "${o.pr}", --branch "${o.branch}")`);
   // Arg-injection guard: spawnSync avoids a shell, but a ref beginning with "-" would be parsed by

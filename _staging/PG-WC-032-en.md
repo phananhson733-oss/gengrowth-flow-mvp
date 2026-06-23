@@ -27,11 +27,11 @@ phase2_checks: all-pass
 
 ## What Is Luka Modric's Zodiac Sign?
 
-Luka Modric's zodiac sign is Virgo, anchored by a Sun in Virgo, a Moon in Cancer, and Scorpio on the ascendant. Born on September 9, 1985, the Croatian captain falls squarely in Virgo season, and within the wider [[<TBD-internal-link: pillar guide to World Cup 2026 player birth charts>]] his chart stands out for what it leaves unsaid. Astrologers reading the Luka Modric zodiac sign sum it up as **a Virgo Sun paired with a Cancer Moon and Scorpio rising**.
+Luka Modric's zodiac sign is Virgo, anchored by a Sun in Virgo and a Moon in Cancer. Born on September 9, 1985, the Croatian captain falls squarely in Virgo season, and within the wider [[<TBD-internal-link: World Cup 2026 astrology prediction hub>]] his chart stands out for what it leaves unsaid — including his birth time, which has never been made public. Astrologers reading the Luka Modric zodiac sign sum it up as **a Virgo Sun paired with a Cancer Moon**, with Scorpio the rising sign most often attributed to him — though without a confirmed birth time that ascendant stays unverified, and other sources cite Cancer or Libra instead.
 
 - Virgo Sun: a pull toward craft, refinement, and doing the unglamorous work well
 - Cancer Moon: deep loyalty and emotional attachment, here poured into national identity
-- Scorpio rising: a still, hard-to-read presence in the highest-pressure moments
+- Scorpio rising (commonly attributed, though unconfirmed without a birth time): the still, hard-to-read presence many read into his highest-pressure moments
 
 Together, those three layers describe the player Croatia still leans on at 40 — not the loudest name on the team sheet, but the one the whole shape runs through.
 
@@ -39,9 +39,9 @@ Together, those three layers describe the player Croatia still leans on at 40 �
 
 Understanding the Luka Modric zodiac sign matters because the standard read gets him backwards. For years, commentators have folded his elegance on the ball into Leo-style flair — the showman, the entertainer — when the chart points somewhere quieter and far more revealing. Virgo isn't the sign of the spotlight; it's the sign of the person who makes everyone around them look better and rarely collects the credit. That gap between what Modrić actually does and how he's described is the same gap most people feel about their own chart: flattened into one loud trait, missing the part that quietly runs the show.
 
-In eight years of aura-reading and energy work — with a background in advertising and somatic therapy training — I've watched people get reduced to a single headline trait, and it almost never holds up. Reading the whole field instead of one label is the approach practitioners like Barbara Ann Brennan and Cyndi Dale built their work around, and it applies cleanly here: Modrić's Virgo precision, Cancer loyalty, and Scorpio composure only make sense as a set. That fuller picture is exactly what a sign-by-sign breakdown such as the [[<TBD-internal-link: deep dive on the Virgo sun sign>]] is for.
+In eight years of aura-reading and energy work — with a background in advertising and somatic therapy training — I've watched people get reduced to a single headline trait, and it almost never holds up. Reading the whole field instead of one label is the approach practitioners like Barbara Ann Brennan and Cyndi Dale built their work around, and it applies cleanly here: Modrić's Virgo precision and Cancer loyalty — plus the Scorpio composure many readers attribute to him — only make sense as a set. That fuller picture is exactly what a sign-by-sign breakdown such as the [[<TBD-internal-link: best soccer players by zodiac sign>]] is for.
 
-It also reframes the part of his story everyone is talking about now. At 40, past his 200th senior milestone and circling the end of his career, Modrić is still the player Croatia builds around — and most coverage treats that as a happy accident rather than the natural arc of a Virgo–Scorpio chart. According to a 2017 Pew Research Center survey, about 29% of U.S. adults said they believed in astrology, and many of them know their Sun sign and stop there. Looking past the label is where the useful self-awareness actually starts.
+It also reframes the part of his story everyone is talking about now. At 40, Croatia's most-capped player ever and circling the end of his career, Modrić is still the player Croatia builds around — and most coverage treats that as a happy accident rather than the natural arc of a Virgo–Scorpio chart. According to a 2017 Pew Research Center survey, about 29% of U.S. adults said they believed in astrology, and many of them know their Sun sign and stop there. Looking past the label is where the useful self-awareness actually starts.
 
 ## Virgo Sun vs Leo Sun: Why Modric Reads as Quiet, Not Flashy
 
@@ -55,10 +55,10 @@ For Modrić specifically, that trade-off is the whole point. He chose — season
 
 ## How to Read Modrić's Chart Across Sun, Moon, and Rising
 
-You don't need to know Modrić to recognize this pattern — the Luka Modric zodiac sign shows up as a set of observable habits in any chart. As the 2026 tournament approaches and the [[<TBD-internal-link: 2026 World Cup transit timeline>]] builds, these are the cues that separate a Virgo–Scorpio competitor from a flashier one:
+You don't need to know Modrić to recognize this pattern — the Luka Modric zodiac sign shows up as a set of observable habits in any chart. As the 2026 tournament unfolds and the [[<TBD-internal-link: Saturn in Aries 2026 transit>]] backdrop builds, these are the cues that separate a Virgo–Scorpio competitor from a flashier one:
 
 1. Watch for someone who fixes the small thing nobody noticed was broken, then says nothing about it afterward.
-2. Look for steadiness under pressure — a flat, unreadable expression exactly when the stakes spike (Scorpio rising).
+2. Look for steadiness under pressure — a flat, unreadable expression exactly when the stakes spike (the Scorpio rising often attributed to him).
 3. Notice loyalty that runs deeper than logic: staying with a club, a country, or a cause well past the point others would walk (Cancer Moon).
 4. Check whether the person peaks late, accumulating standing through consistency rather than one explosive breakout season.
 5. Listen for how rarely they claim credit, even when the replay shows the whole move started with them.
@@ -69,7 +69,7 @@ A few readings of the Luka Modric zodiac sign get repeated so often they've hard
 
 1. **Misread: he's a flashy Leo.** Reality: the elegance is Virgo precision, not Leo showmanship — function that happens to look like flair.
 2. **Misread: Virgo "invisibility" means he isn't really the main contributor.** Reality: the invisibility *is* the contribution; the work happens before the highlight reel starts rolling.
-3. **Misread: Scorpio's blank face means he's cold or detached.** Reality: it's composure — a way of holding pressure rather than leaking it to everyone watching.
+3. **Misread: the Scorpio-rising "blank face" often attributed to him means he's cold or detached.** Reality: read as composure — a way of holding pressure rather than leaking it to everyone watching.
 4. **Misread: a Cancer Moon makes an athlete soft.** Reality: here it reads as the loyalty and emotional anchor that has sustained a two-decade international career.
 
 Strip those four away and the same portrait appears every time — a player whose value lives in the work nobody puts on a highlight reel.

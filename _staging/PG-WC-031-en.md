@@ -27,10 +27,10 @@ phase2_checks: all-pass
 
 ## What Is Jeremy Doku's Birth Chart?
 
-Jeremy Doku's birth chart is the snapshot of the sky at the moment he was born on May 27, 2002, in Antwerp, Belgium, read most often as **a Gemini Sun, Leo Rising portrait of a present-tense competitor**. The Jeremy Doku birth chart pairs a quick, curious Gemini Sun with a Leo Rising built for the stage, then places Mars at the anaretic 29th degree of Gemini — a charged finishing point that the wider [[<TBD-internal-link: pillar page on World Cup 2026 player birth charts>]] helps put in context.
+Jeremy Doku's birth chart is the snapshot of the sky at the moment he was born on May 27, 2002, in Antwerp, Belgium, read most often as **a Gemini Sun, Venus-in-Cancer portrait of a present-tense competitor**. The Jeremy Doku birth chart pairs a quick, curious Gemini Sun with Venus in Cancer, where affection roots in home and family, then places Mars at the anaretic 29th degree of Gemini — right on the cusp of Cancer, a charged finishing point that the wider [[<TBD-internal-link: pillar page on World Cup 2026 player birth charts>]] helps put in context.
 
 - A Gemini Sun that leans toward immediate, lived connection over abstract long-game narrative
-- A Leo Rising that gives him a watchable, audience-aware presence on and off the pitch
+- Venus in Cancer, rooting what he values in home, family, and emotional security
 - Mars at 29° Gemini, a critical threshold degree where one mode of action runs at full intensity
 
 ## Why It Matters for Self-Awareness

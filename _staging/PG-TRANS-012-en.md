@@ -1,7 +1,7 @@
 ---
 title: Father's Day Astrology 2026
 slug: father-s-day-astrology-2026
-date: 2026-06-22
+date: 2026-06-23
 status: ready-to-review
 type: wiki-entry
 template: Definition
@@ -18,8 +18,8 @@ associated_keywords:
   - father zodiac astrology
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-22T15:28:45.960Z
-content_sha256_short: c5277a0f920a4ec7
+generated_at: 2026-06-23T05:14:35.890Z
+content_sha256_short: 1c39d706bbf5accb
 phase2_checks: all-pass
 ---
 
@@ -27,7 +27,7 @@ phase2_checks: all-pass
 
 ## What Is Father's Day Astrology 2026?
 
-Father's Day astrology 2026 is the cluster of sky events around June 21, 2026, when the Sun moves into Cancer at 4:24 AM EDT and opens Cancer season on the same weekend many U.S. households celebrate fathers. In traditional Western astrology the Sun stands for the father or central authority figure, while Cancer rules home, family, and ancestral roots — a pairing you can place on the wider [[<TBD-internal-link: pillar page on 2026 transit dates>]] alongside the year's other ingresses. A close Jupiter–Venus meeting in Cancer layers in warmth and a sense of emotional abundance, so the symbolism of the father points straight at the themes of home. Put simply, the day reads as **the Sun lighting the father archetype as Cancer season opens**.
+Father's Day astrology 2026 is the cluster of sky events around June 21, 2026, when the Sun moves into Cancer at 4:24 AM EDT and opens Cancer season on the same weekend many U.S. households celebrate fathers. In traditional Western astrology the Sun stands for the father or central authority figure, while Cancer rules home, family, and ancestral roots — a pairing you can place on the wider [2026 planetary transit calendar](/en/wiki/june-2026-planetary-transits) alongside the year's other ingresses. A close Jupiter–Venus meeting in Cancer layers in warmth and a sense of emotional abundance, so the symbolism of the father points straight at the themes of home. Put simply, the day reads as **the Sun lighting the father archetype as Cancer season opens**.
 
 - Centers on the Sun's exact move into Cancer at the June solstice
 - Ties the father symbol to home, memory, and family roots
@@ -38,7 +38,7 @@ Father's Day astrology 2026 is the cluster of sky events around June 21, 2026, w
 Most people file Father's Day under greeting cards and backyard grilling, so the idea that it carries any sky meaning sounds like a stretch. That reflex is exactly the friction worth examining, because father's day astrology 2026 lands on a real astronomical hinge, not a date invented to sell ties and mugs. In my years of energy-work and somatic-informed practice, I've watched how a single marked day on the calendar can quietly reopen old questions about home, care, and who looked after whom. The gap between "just a Sunday" and "a meaningful turn" usually shows up in a few specific ways:
 
 1. **The commercial blur.** Because the holiday feels manufactured, the solstice ingress sitting underneath it goes completely unnoticed.
-2. **The "it's only a Sunday" shrug.** Few people realize the Sun actually changes signs that morning — a shift you can track against any [[<TBD-internal-link: explainer on the Sun changing zodiac signs>]].
+2. **The "it's only a Sunday" shrug.** Few people realize the Sun actually changes signs that morning — a shift you can track against the [Sun's movement through the zodiac](/en/wiki/sun).
 3. **The missed mirror.** Looking at your own chart around this date can surface how you relate to home, to fathering, and to being cared for, rather than only how you shop for a gift.
 
 Self-awareness is the payoff here. The date gives you a low-stakes prompt to notice patterns you usually run on autopilot, which is more useful than any horoscope prediction.
@@ -115,9 +115,9 @@ This is not a clinical interpretation or mental health advice.
 
 ## Related Reading
 
-- [[<TBD-internal-link: guide to Cancer season themes>]] — unpacks the home-and-family mood that opens on this exact date.
-- [[<TBD-internal-link: overview of the Jupiter and Venus conjunction>]] — explains the warmth this pairing adds across 2026.
-- [[<TBD-internal-link: explainer on reading transits by house>]] — shows where this Cancer emphasis actually lands in your own chart.
+- [Cancer season themes](/en/wiki/cancer) — unpacks the home-and-family mood that opens on this exact date.
+- [Venus through the signs](/en/wiki/venus) — explains the warmth this pairing adds across 2026.
+- [Reading natal chart transits](/en/wiki/natal-chart-transits) — shows where this Cancer emphasis actually lands in your own chart.
 
 ## Take Action
 

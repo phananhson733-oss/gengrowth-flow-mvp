@@ -24,7 +24,7 @@ A small business owner comparing one bundle against another finds price tables a
 
 The cost of buying an SEO starter package on price and deliverable count is invisible until the contract is months old. An owner picks the bundle with the most posts per dollar, then discovers at month four that more content was produced and nothing moved in the rankings. The deliverables were all met. The outcome never arrived, and there was no clause that made it the vendor's problem.
 
-That bias is baked into how the category is sold. Walk the search results and the pattern is uniform. bkacontent publishes a "7 best SEO starter packages" comparison that ranks options by price and deliverable count. ALM Corp lists a tier at $399, Merchant Service sells its own, and productized kits like Salted Pages and seostarterpack.net describe themselves the same way — posts per month, backlinks per month, hours per month. Every one of them defines the offering by activity volume. None of them define it by a ranking milestone you could hold the vendor to.
+That bias is baked into how the category is sold. Walk the search results and the pattern is uniform. BKA Content publishes a "7 Best SEO Starter Packages" comparison that walks vendor-by-vendor through price and what each one ships — MerchantService.com at roughly $1,500 a month, BKA's own custom tier from $999, and budget options down toward $199 a month — describing each by its deliverables. Productized kits sit alongside them but are a different animal entirely: Salted Pages sells a one-time custom keyword-and-on-page kit (around $599, no blog posts or backlinks), and seostarterpack.net is a one-time DIY toolkit of training videos, checklists, and templates (about $47), not a monthly service at all. What unites the monthly tiers is that each defines the offering by activity volume — posts, links, and hours per month. None of them define it by a ranking milestone you could hold the vendor to.
 
 The hours a starter buyer most needs back are the evaluation hours, and those are exactly the ones no comparison post helps with. Because the whole field competes inside a narrow $399-$599 band, differentiating on quality is impossible without an outcome frame. Two bundles at $499 can look identical on a deliverable table while one drives first-page positions and the other produces motion with no movement. The activity count cannot tell those two apart. A milestone commitment can, which is the same discipline behind any [cost-effective SEO services](/en/blog/cost-effective-seo-services) decision — pay for what compounds, not for what fills a deliverable checklist.
 
@@ -51,7 +51,7 @@ Most disappointment with an entry-level package traces back to a few predictable
 1. **"The cheapest package with the most deliverables is the best value."** Inside the $399-$599 band, deliverable count is the one axis where every vendor has essentially tied. Buying on it means buying on the dimension that cannot separate a good package from a bad one.
 2. **"More content per month means faster ranking."** Volume without intent and internal structure produces pages that exist but do not rank. The starter buyer often pays for more posts and gets no more movement.
 3. **"Deliverables met means the package worked."** A contract can be fully satisfied while the business gains zero positions. Without a milestone clause, "we did the work" is the vendor's finish line, not yours.
-4. **"Comparison posts are buyer's guides."** The "7 best" lists are price-and-deliverable catalogs wearing a buyer-guide title. Read them to learn what is on sale, not to learn what will rank.
+4. **"Comparison posts are buyer's guides."** The "best packages" round-ups walk you through each vendor's price and deliverable list, but they stop there — none commit a vendor to a ranking outcome. Read them to learn what is on sale, not to learn what will rank.
 
 ## SEO Starter Package at a Glance — Quick Reference
 
@@ -112,6 +112,7 @@ Before you compare one starter package against another on price, write down the 
 
 ## Sources
 
-- bkacontent, "7 best SEO starter packages" — the comparison named above that ranks packages by price and deliverable count
-- ALM Corp and Merchant Service — the agency service pages referenced above whose starter tiers are defined by monthly activity
-- Salted Pages and seostarterpack.net — the productized starter kits cited above that describe themselves by posts and links per month
+- BKA Content, "The 7 Best SEO Starter Packages" — the vendor-by-vendor comparison named above that describes each package by price and deliverables (e.g., MerchantService.com at ~$1,499.99/month, BKA's custom tier from $999/month, budget options near $199/month)
+- MerchantService.com — an agency starter tier referenced above whose offering is defined by monthly activity (pages and keywords per month)
+- Salted Pages — a one-time custom keyword-and-on-page SEO kit (base "SEO Starter Package" ~$599), which does not include blog posts, backlinks, or a monthly subscription
+- seostarterpack.net — a one-time DIY toolkit (~$47) of training videos, checklists, and templates, not a monthly posts-and-links service

@@ -20,15 +20,27 @@
 //   ... --pages "PG-WLS-001 PG-ART-002"   # restrict to specific page_ids
 
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseFrontmatter } from './gg-md-to-oracle-ts.mjs';
+// Reuse Lane B's authoritative codex-verdict classifier so the factual gate is
+// IDENTICAL across both lanes (no fork/drift): FAIL dominates, exactly-one-bare-PASS
+// passes, anything else (timeout / nonzero / no-verdict / ambiguous) → SKIPPED.
+import { classifyCodex } from './gg-preview-gate.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO = resolve(__dirname, '..', '..');
+const HOME = process.env.HOME || '';
 const BRIDGE = join(__dirname, 'gg-md-to-gengrowth-blog.mjs');
 const LARK = join(__dirname, 'gg-lark-notify.sh');
+// Parity with Lane B (oracle): same factual reviewer, same GSC indexing submit, same
+// vault archive. Only the inputs differ (a file vs a PR; a gengrowth URL vs an oracle URL).
+const CODEX_BIN = process.env.GG_CODEX_BIN || join(__dirname, 'gg-codex-pr-review.mjs');
+const GSC_SUBMIT = join(HOME, 'oracle', 'scripts', 'gsc-index-submit.mjs');
+const ARCHIVE_BIN = join(__dirname, 'gg-archive-to-vault.mjs');
+const SITE_HOST = 'https://gengrowth.ai';
+const URL_PATH = '/en/blog/';
 
 // W25+ gengrowth SEO page-id prefixes (see 2026-06-16-W25-gengrowth-blog-output-plan.md).
 const W25_PREFIXES = ['WLS', 'ART', 'SFS', 'EOS', 'AIS', 'TAS', 'SDS', 'B2B', 'CMP', 'SLB', 'SMS'];
@@ -54,6 +66,65 @@ function parseArgs(argv) {
 
 function larkBestEffort(msg) {
   try { execFileSync('bash', [LARK, msg], { stdio: 'ignore', timeout: 20000 }); } catch { /* never throw */ }
+}
+
+// ── Pre-publish factual gate (parity with Lane B's gg-preview-gate step 4b) ──────
+// Runs the SAME cross-model factual reviewer oracle uses (GG_CODEX_BIN →
+// gg-codex-pr-review.mjs) in its --source mode against the standalone draft md, and
+// classifies the verdict with Lane B's classifyCodex. This is the gate that catches a
+// factually-wrong-but-structurally-valid article (e.g. the fabricated-Ahrefs-data and
+// product-overpromise errors found retroactively in the W25 batch).
+//
+// GG_CODEX_GATE_REQUIRED !== '0' (default): any non-PASS (FAIL *or* SKIPPED/tooling) PARKS
+// the article — fail-closed, never publish an unreviewed claim. =0 hot-rolls-back to legacy
+// best-effort (block only on a completed FAIL; a SKIPPED tooling failure does not block).
+function factualReview(mdPath) {
+  const required = process.env.GG_CODEX_GATE_REQUIRED !== '0';
+  if (!existsSync(CODEX_BIN)) {
+    return { verdict: 'SKIPPED', reason: `codex review bin missing: ${CODEX_BIN}`, required };
+  }
+  const timeoutMs = Number(process.env.GG_CODEX_REVIEW_TIMEOUT_MS) || 600000;
+  const r = spawnSync('node', [CODEX_BIN, '--source', mdPath], {
+    encoding: 'utf8', timeout: timeoutMs, maxBuffer: 32 * 1024 * 1024,
+  });
+  const timedOut = !!(r.error && r.error.code === 'ETIMEDOUT');
+  const cls = classifyCodex({ code: r.status ?? 1, stdout: r.stdout, timedOut });
+  return { ...cls, required };
+}
+
+// ── Post-publish Google Indexing API submit (parity with autopilot submitGoogleIndex) ──
+// Best-effort; never throws. Runs AFTER verify-live so Google recrawls a live URL (not a 404).
+// gengrowth has no zh locale → single EN URL. SA at ~/.config/gg/google-indexing-sa.json
+// (now a verified owner of the gengrowth.ai property — confirmed 1/1 accepted 2026-06-23).
+function submitGoogleIndex(slug) {
+  if (!slug || !existsSync(GSC_SUBMIT)) return;
+  try {
+    const out = execFileSync('node', [GSC_SUBMIT, '--url', `${SITE_HOST}${URL_PATH}${slug}`], {
+      cwd: join(HOME, 'oracle'), encoding: 'utf8', timeout: 60000,
+    });
+    const last = String(out).trim().split('\n').filter(Boolean).pop();
+    if (last) console.log(`  gsc-index: ${last}`);
+  } catch (e) {
+    console.log(`  gsc-index: skipped (non-fatal: ${String(e.message || e).slice(0, 80)})`);
+  }
+}
+
+// ── Post-publish vault archive (parity with the FLOW post-deploy archive step) ──────
+// COPIES the live article into the gengrowth-wiki Obsidian vault as an OFM/RAG note via
+// the SAME gg-archive-to-vault.mjs oracle uses, only with gengrowth's site-host + url-path.
+// Best-effort; never throws.
+function archiveToVault(pageId, slug) {
+  if (!existsSync(ARCHIVE_BIN)) return;
+  try {
+    execFileSync('node', [
+      ARCHIVE_BIN, '--pages', `${pageId}:${slug}`,
+      '--site', 'gengrowth', '--site-host', SITE_HOST, '--url-path', URL_PATH,
+      '--oracle', join(HOME, 'oracle'),
+    ], { encoding: 'utf8', timeout: 60000 });
+    console.log(`  vault-archive: ${pageId}:${slug} → 内容资产/gengrowth/`);
+  } catch (e) {
+    console.log(`  vault-archive: skipped (non-fatal: ${String(e.message || e).slice(0, 80)})`);
+  }
 }
 
 // Ready drafts: PG-<W25>-NNN-<llm>-v8.md + sibling manifest overall==='pass'.

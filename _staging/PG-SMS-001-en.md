@@ -15,8 +15,8 @@ associated_keywords:
 
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-23T08:54:32.229Z
-content_sha256_short: 6d2db284df9b8684
+generated_at: 2026-06-23T09:05:23.883Z
+content_sha256_short: fb2a617cf7d70ed8
 phase2_checks: all-pass
 ---
 
@@ -60,7 +60,7 @@ A startup needs to know whether TikTok search even carries demand for its catego
 
 Most disappointment with a TikTok SEO tool traces back to a few predictable misreads:
 
-1. **"Hashtags are TikTok SEO."** Hashtags are one weak topic signal among four. TikTok's search reads spoken audio and on-screen text first; a tool that stops at hashtags optimizes the smallest lever.
+1. **"Hashtags are TikTok SEO."** Hashtags are one weak topic signal among four. TikTok's search can read and index spoken audio, on-screen text, and written captions — not just hashtags; a tool that stops at hashtags optimizes the smallest lever.
 2. **"TikTok SEO is just Google SEO on video."** Google ranks pages by links and authority over weeks; TikTok matches a query to a clip by transcribed speech, on-screen text, and engagement in the first hours. The signals and the timeline are different, so Google-SEO tactics ported straight over miss.
 3. **"More volume fixes discoverability."** Posting more untagged, unspoken-keyword videos just adds more clips that rank for nothing. Coverage of real queries beats raw output.
 4. **"A viral video means you won search."** For You virality and search rank are different surfaces. A video can trend once and still never appear for the query its audience actually types.

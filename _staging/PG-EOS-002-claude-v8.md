@@ -22,7 +22,7 @@ content_sha256_short: 7ff3d2c92dee8057
 phase2_checks: all-pass
 ---
 
-# How Organic SEO Services Earn the Half of Your Pipeline That Doesn't Pay Per Click
+# How Organic SEO Services Earn the Share of Your Pipeline That Doesn't Pay Per Click
 
 ## What Are Organic SEO Services?
 
@@ -34,7 +34,7 @@ Organic SEO services are **an external engagement that grows a site's earned vis
 
 ## Why It Matters for Your Workflow
 
-Organic SEO services matter because the half of pipeline that comes from search is the half that does not zero out the day budgets pause. Paid channels can be turned on and off like a tap; organic compounds over months and quarters, then keeps producing after the team's attention has moved elsewhere. The deciding factor in most retainers is rarely whether the agency knows the latest tactic; it is whether the team has the capacity and craft to ship substance at the cadence the category demands.
+Organic SEO services matter because the share of pipeline that comes from search is the share that does not zero out the day budgets pause. Paid channels can be turned on and off like a tap; organic compounds over months and quarters, then keeps producing after the team's attention has moved elsewhere. The deciding factor in most retainers is rarely whether the agency knows the latest tactic; it is whether the team has the capacity and craft to ship substance at the cadence the category demands.
 
 The job most buyers want done here is straightforward: own meaningful share of voice on the keywords that matter without hiring a specialist who would spend half the week not specialising. When that job is unmet, three costs compound. Paid budgets keep absorbing demand that an organic page should have caught for free, the team's senior time leaks into the keyword-and-content work nobody on the roster is built for, and the brand's AI-search presence — increasingly a buying signal — gets shaped by competitors who are publishing instead.
 

@@ -18,8 +18,8 @@ associated_keywords:
   - portugal captain zodiac
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-23T16:45:31.863Z
-content_sha256_short: 7fe8faa432bb4b84
+generated_at: 2026-06-23T16:58:06.903Z
+content_sha256_short: a9dbbc518d8cd493
 phase2_checks: all-pass
 ---
 
@@ -27,7 +27,7 @@ phase2_checks: all-pass
 
 ## What Is Bruno Fernandes's Zodiac Sign?
 
-Bruno Fernandes zodiac sign is Virgo — a Virgo Sun born on 8 September 1994 in Maia, Portugal, with Mars in Cancer on the same date (both fixed by the birth date alone). Chart sites also commonly list a Libra Moon and a Scorpio rising, but Fernandes has never made his birth time public, so those two placements come from an estimated noon chart and can't be confirmed. In plain terms, his core identity runs on craft, accuracy, and high personal standards, while the commonly cited Moon and rising shape how he handles feeling and how strangers first read him. A useful way to picture it: the rising is what people meet first, the Moon is what teammates discover up close, and the Sun is the standard he keeps working toward. This three-layer setup sits inside a broader [[<TBD-internal-link: World Cup 2026 astrology prediction hub>]] that maps the same method across other squads. Read together, the layers explain why his on-pitch frustration usually signals a standards problem rather than a hot temper. The short version most fans want: **a Virgo Sun with Mars in Cancer, plus a commonly cited (though unconfirmed) Libra Moon and Scorpio rising**.
+Bruno Fernandes zodiac sign is Virgo — a Virgo Sun born on 8 September 1994 in Maia, Portugal, with Mars in Cancer on the same date (both fixed by the birth date alone). Chart sites also commonly list a Libra Moon and a Scorpio rising, but Fernandes has never made his birth time public, so those two placements come from an estimated noon chart and can't be confirmed. In plain terms, his core identity runs on craft, accuracy, and high personal standards, while the commonly cited Moon and rising shape how he handles feeling and how strangers first read him. This three-layer setup sits inside a broader [[<TBD-internal-link: World Cup 2026 astrology prediction hub>]] that maps the same method across other squads. Read together, the layers explain why his on-pitch frustration usually signals a standards problem rather than a hot temper. The short version most fans want: **a Virgo Sun with Mars in Cancer, plus a commonly cited (though unconfirmed) Libra Moon and Scorpio rising**.
 
 - Leads with exacting standards and refined function over individual spectacle
 - Built on a Virgo Sun, with a commonly cited (unconfirmed) Libra Moon softening the social edges

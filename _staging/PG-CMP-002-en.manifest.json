@@ -1,17 +1,17 @@
 {
   "schema_version": "1",
-  "page_id": "PG-SLB-001",
-  "entity": "Backlink Monitor Tool / Link Monitoring",
-  "target_keyword": "why use a backlink monitor tool",
+  "page_id": "PG-CMP-002",
+  "entity": "SE Rankings Alternative / SEO Tool Comparison",
+  "target_keyword": "serankings",
   "template": "Definition",
   "tier": "T2",
   "track": "量产线",
   "generated_by": "unknown",
   "prompt_version": "v8",
-  "generated_at": "2026-06-23T06:39:30.255Z",
-  "content_sha256_short": "92faa684c62405da",
-  "source_path": "_staging/PG-SLB-001-claude-v8.md",
-  "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-SLB-001-en.md",
+  "generated_at": "2026-06-23T06:38:47.047Z",
+  "content_sha256_short": "5767228a9d4a6579",
+  "source_path": "_staging/PG-CMP-002-claude-v8.md",
+  "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-CMP-002-en.md",
   "phase2_checks": {
     "overall": "pass",
     "structure": {
@@ -19,7 +19,7 @@
       "h2Count": 11,
       "h3Count": 3,
       "h4Count": 0,
-      "words": 1911,
+      "words": 1860,
       "wikilinks": 0,
       "tbdLinks": 0
     },

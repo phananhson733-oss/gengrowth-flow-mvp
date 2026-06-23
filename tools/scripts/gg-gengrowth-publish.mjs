@@ -1,9 +1,18 @@
 #!/usr/bin/env node
-// gg-gengrowth-publish.mjs — LANE A: publish-only ticker for gengrowth.ai.
+// gg-gengrowth-publish.mjs — LANE A: publish ticker for gengrowth.ai.
 //
-// Independent of the oracle SEO autopilot. Scans ready gengrowth drafts in _staging/
-// and upserts the not-yet-live ones to the gengrowth.ai blog (Supabase blog_posts) via
-// the bridge gg-md-to-gengrowth-blog.mjs --emit rest. Idempotent; DRY-RUN by default.
+// Independent of the oracle SEO autopilot, but FLOW-IDENTICAL to Lane B (oracle): the
+// only differences are the target site (gengrowth.ai blog / Supabase blog_posts vs
+// astrologywiki.com / Vercel) and the data source (gengrowth workbook vs oracle sheet).
+// Everything else is the SAME machinery:
+//   1. scan ready gengrowth drafts in _staging/ (manifest overall=pass)
+//   2. PRE-PUBLISH FACTUAL GATE — gg-codex-pr-review.mjs --source (same reviewer Lane B
+//      runs on a PR diff); a non-PASS PARKS the article (needs_human), never publishes it
+//   3. upsert the not-yet-live ones via the bridge gg-md-to-gengrowth-blog.mjs --emit rest
+//   4. verify live (Supabase row status=published)
+//   5. POST-PUBLISH — Google Indexing API submit (gsc-index-submit.mjs) + vault archive
+//      (gg-archive-to-vault.mjs) + per-article Hermes-bot notification
+// Idempotent; DRY-RUN by default (the factual gate + post-publish steps run only on --apply).
 //
 // "ready" = _staging/PG-<W25prefix>-NNN-<llm>-v8.md WITH a sibling .manifest.json whose
 // phase2_checks.overall === 'pass'. The bridge derives slug/pillar/category/HTML; this
@@ -195,13 +204,28 @@ async function main() {
     return;
   }
 
-  let published = 0, failed = 0, verified = 0;
+  let published = 0, failed = 0, verified = 0, parked = 0;
   const queue = actions.filter((d) => /^PUBLISH|^REPUBLISH/.test(d.action));
   const slice = args.limit > 0 ? queue.slice(0, args.limit) : queue;
   if (args.limit > 0 && queue.length > slice.length) {
     console.log(`  (serial cadence: publishing ${slice.length}/${queue.length} this run; ${queue.length - slice.length} deferred to the next hourly tick)`);
   }
   for (const d of slice) {
+    // ── Pre-publish factual gate (parity with Lane B) ── run BEFORE the upsert so a
+    // factually-wrong draft never reaches production; a non-PASS parks (needs_human).
+    const fr = factualReview(d.mdPath);
+    if (fr.verdict !== 'PASS') {
+      const block = fr.required || fr.verdict === 'FAIL';
+      if (block) {
+        parked++;
+        console.log(`  ⛔ ${d.pageId.padEnd(12)} ${(d.slug || '-').padEnd(40)} PARKED by factual gate: ${fr.reason}`);
+        larkBestEffort(`⚠️ gengrowth 事实门未过（needs_human）：${d.pageId}（${d.slug}）— ${fr.reason}。已跳过发布，待人工核对后再发。`);
+        continue;
+      }
+      console.log(`  ⚠️ ${d.pageId} factual gate ${fr.verdict} (${fr.reason}) — GG_CODEX_GATE_REQUIRED=0, not blocking`);
+    } else {
+      console.log(`  ✓ factual gate PASS: ${d.pageId}`);
+    }
     try {
       execFileSync('node', [BRIDGE, '--source', d.mdPath, '--locale', args.locale, '--emit', 'rest'], {
         env: { ...process.env, SB_URL, SB_KEY }, stdio: ['ignore', 'inherit', 'inherit'], timeout: 120000,
@@ -211,18 +235,24 @@ async function main() {
       const ok = after.known && after.exists && after.status === 'published';
       if (ok) { verified++; console.log(`  ✓ verified live: ${d.slug}`); }
       else console.log(`  ⚠️ ${d.slug} upserted but verify says: ${JSON.stringify(after)}`);
+      // ── Post-publish parity steps (mirror Lane B post-merge): submit to Google's
+      // Indexing API + archive into the wiki vault — only after verify-live succeeds.
+      if (ok) {
+        submitGoogleIndex(d.slug);
+        archiveToVault(d.pageId, d.slug);
+      }
       // Per-article notification (parity with Lane B's per-article "已发布上线" notice),
       // instead of one aggregate ticker — one Hermes-bot message per published article.
       let title = d.slug;
       try { title = (parseFrontmatter(readFileSync(d.mdPath, 'utf8')).frontmatter.title || d.slug).toString().trim(); } catch { /* */ }
-      if (ok) larkBestEffort(`✅ SEO autopilot 已发布上线：${title}\nhttps://gengrowth.ai/en/blog/${d.slug}\n（gengrowth.ai 博客）`);
+      if (ok) larkBestEffort(`✅ SEO autopilot 已发布上线：${title}\n${SITE_HOST}${URL_PATH}${d.slug}\n（gengrowth.ai 博客）`);
     } catch (e) {
       failed++;
       console.error(`  ✖ ${d.pageId} (${d.slug}) failed: ${e.message}`);
       larkBestEffort(`⚠️ gengrowth 发布失败：${d.pageId} (${d.slug}) — ${e.message}`);
     }
   }
-  console.log(`\n=== done: published=${published} verified=${verified} failed=${failed} ===`);
+  console.log(`\n=== done: published=${published} verified=${verified} parked=${parked} failed=${failed} ===`);
   if (failed > 0) process.exitCode = 1;
 }
 

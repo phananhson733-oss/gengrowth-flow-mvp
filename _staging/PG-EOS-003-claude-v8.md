@@ -128,4 +128,4 @@ Run one cost-effective SEO audit cycle inside GenGrowth on the smallest cluster 
 
 - Based on patterns GenGrowth has observed across small-budget SEO engagements; no third-party study is cited for the portfolio-durability framing.
 - Google Search Central — Google's public documentation on Search Essentials and Helpful Content guidance, the official reference for which practices age well at any budget.
-- Google Search Central — Google's documentation on AI features in Search, the official reference for how AI Overviews surface and attribute content discussed here.
+- Google Search Central — Google's documentation on AI features in Search, which states there are no additional requirements or special optimisations needed to appear in AI Overviews beyond creating helpful, reliable, people-first content.

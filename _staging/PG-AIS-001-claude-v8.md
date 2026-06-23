@@ -78,7 +78,7 @@ This is the same portfolio discipline behind choosing sustainable, defensible ch
 
 1. **Baseline the week.** Record where SEO hours actually go before any tool enters, so the win is measurable.
 2. **Automate the largest sink first.** If reporting eats six hours, start there, not with content.
-3. **Keep a human gate on anything that writes to the live site.** Technical auto-fixes get staged and approved, never auto-pushed against Google Search Central's own guidance to change deliberately.
+3. **Keep a human gate on anything that writes to the live site.** Technical auto-fixes get staged and approved, never auto-pushed — site-wide changes deserve deliberate review, consistent with Google's published Search Essentials guidance for site owners.
 4. **Measure recovered hours, not output volume.** The win is time returned to strategy, not more drafts in the queue.
 5. **Re-baseline after a month** and move to the next sink.
 

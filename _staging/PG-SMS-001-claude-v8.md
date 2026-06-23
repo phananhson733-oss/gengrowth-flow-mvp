@@ -22,7 +22,7 @@ A marketer searching for a way to optimize TikTok finds shelves of "viral hashta
 
 ## Why It Matters for Your Workflow
 
-TikTok stopped being only a recommendation feed and became a place people type queries into. Younger audiences now open the app and search the way an earlier cohort opened Google. Senior Vice President Prabhakar Raghavan, speaking for Google, publicly acknowledged this shift in how a large share of new users discover places and products. When a platform turns into a search engine, the optimization job changes from "go viral once" to "get found repeatedly," and most tools never caught up.
+TikTok stopped being only a recommendation feed and became a place people type queries into. Younger audiences now open the app and search the way an earlier cohort opened Google. Google Senior Vice President Prabhakar Raghavan said in 2022 that the company's own research found almost 40% of young users, when looking for somewhere to eat lunch, go to TikTok or Instagram instead of Google Search or Maps. When a platform turns into a search engine, the optimization job changes from "go viral once" to "get found repeatedly," and most tools never caught up.
 
 That gap is structural. The hashtag-generator era trained a whole category of tools to treat TikTok as a feed you game with tags, so the typical "tiktok seo tool" still outputs trending hashtags and a caption template. None of that touches the signals TikTok's search now reads. A video can carry perfect hashtags and stay invisible in search because the spoken words and on-screen text never named the thing a person was looking for.
 
@@ -112,5 +112,5 @@ List the ten queries your audience types into TikTok search, then run one video 
 
 ## Sources
 
-- Prabhakar Raghavan, Senior Vice President at Google — the public statement, cited above, that a large share of younger users now discover places and products through TikTok rather than traditional search
+- Prabhakar Raghavan, Senior Vice President at Google (July 2022) — the public statement, cited above, that almost 40% of young users looking for a place to eat go to TikTok or Instagram instead of Google Search or Maps
 - TikTok Search and the in-app search bar — the platform behavior referenced above on transcribed speech, on-screen text, autocomplete, and related-search suggestions as discovery signals

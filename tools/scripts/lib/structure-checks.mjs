@@ -136,6 +136,12 @@ export function checkInternalLinkTier(draft, ctx = {}) {
   // convention. Count those toward the tier floor too (user 2026-06-22: EOS-style links).
   if (process.env.GG_SITE === 'gengrowth') {
     count += (draft.match(/\]\(\/en\/blog\/[a-z0-9-]+\)/g) || []).length;
+  } else {
+    // oracle (astrologywiki): the published page renders [[<TBD>]] as plain text with no href,
+    // so the links-seo review FAILs unless internal links are RESOLVED to real /en/wiki/<slug>
+    // markdown links. Count those toward the tier floor too (user 2026-06-23: EOS-style resolved
+    // links on BOTH sites) so SC2 and the links-seo gate stop contradicting each other.
+    count += (draft.match(/\]\(\/en\/wiki\/[a-z0-9-]+\)/g) || []).length;
   }
   const bounds = TIER_LINK_BOUNDS[tier];
   if (!bounds) {

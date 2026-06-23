@@ -117,8 +117,9 @@ Yes. Google's own guidance says there are no special optimisations or markup nee
 ## Related Reading
 
 - Comparison with [ethical SEO](/en/blog/ethical-seo) — for small teams worried about durability rather than discount price
-- A guide to white-label SEO pricing — for agencies translating a tight scope into a retainer that still pays their writer
-- A look at AI search citation hygiene — for small libraries wiring AI Overview and chatbot visibility into a one-page brief
+- A guide to [white-label SEO tooling](/en/blog/free-white-label-seo) — for agencies translating a tight scope into a retainer that still pays their writer
+- A look at [AI SEO tooling](/en/blog/best-ai-seo-tools) — for small teams wiring AI Overview and chatbot visibility into a one-page brief
+- How [startup SEO](/en/blog/startup-seo) builds early — the zero-budget playbook a cost-effective scope grows from
 
 ## Take Action
 

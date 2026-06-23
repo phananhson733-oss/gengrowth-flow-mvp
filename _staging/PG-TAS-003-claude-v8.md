@@ -111,6 +111,6 @@ Map your locale cluster into a pair matrix and run one audit against the rendere
 
 ## Sources
 
-- Google Search Central — the public documentation on hreflang return tags and confirmed bidirectional annotations, cited above on why missing return links cause Google to ignore the tag set
-- Weglot — a 2026 international SEO checklist named in the SERP analysis that lists hreflang as a single presence item
+- Google Search Central, "Tell Google about localized versions of a page" (developers.google.com/search/docs/specialty/international/localized-versions) — the public documentation on hreflang return tags, cited above on why missing return links cause Google to ignore the non-reciprocal annotations while still processing the pairs that point to each other
+- Weglot — an international SEO checklist named in the SERP analysis that lists hreflang as a single presence item
 - Swiftbrief — an international SEO audit guide named in the SERP analysis that confirms missing return links as a common hreflang error

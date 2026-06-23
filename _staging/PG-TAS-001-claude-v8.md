@@ -38,7 +38,7 @@ An agency cannot run 50 items across forty sites by hand each quarter. The SEO a
 
 ### The SaaS startup with one marketer
 
-A lone marketer running a technical SEO checklist needs to know what to fix before lunch, not what exists. If indexation is broken — a stray noindex, a robots.txt block, a canonical pointing at the wrong URL — nothing else on the list matters until it is fixed, because the page cannot rank at all. An impact-ordered audit puts those items at position one, where a generic [local SEO audit](/en/blog/local-seo-audit) template would file them halfway down under "Technical."
+A lone marketer running a technical SEO checklist needs to know what to fix before lunch, not what exists. If indexation is broken — a stray noindex directive, a canonical pointing at the wrong URL, or a robots.txt rule blocking the crawler from ever reading the page — nothing else on the list matters until it is fixed, because a page Google cannot index or read properly cannot rank on its own merits. (Note the distinction Google Search Central draws here: a noindex tag removes a page from the index, while a robots.txt disallow only blocks crawling — a robots.txt-blocked URL can still be indexed and surface in results if other sites link to it, which is its own audit problem.) An impact-ordered audit puts those items at position one, where a generic [local SEO audit](/en/blog/local-seo-audit) template would file them halfway down under "Technical."
 
 ### The in-house team inheriting a legacy site
 
@@ -57,7 +57,7 @@ Most wasted audit effort traces back to a few predictable misreads:
 
 | Audit area | Typical ranking impact | What category lists get wrong | What to check first |
 | --- | --- | --- | --- |
-| Indexation & crawlability | Highest — a blocked page ranks for nothing | Filed mid-list under "Technical" | Is the money page indexable right now? |
+| Indexation & crawlability | Highest — a non-indexed page ranks for nothing | Filed mid-list under "Technical" | Is the money page indexed and crawlable right now? |
 | Core on-page signals | High — titles, headings, intent match | Split across several category headers | Do top pages match search intent? |
 | Site speed & Core Web Vitals | Moderate — a tiebreaker, not a switch | Often listed first because it is easy to test | Are mobile LCP and CLS in the green? |
 | Internal linking | Moderate — distributes authority | Buried under "On-Page" near the end | Do top pages link to your targets? |
@@ -76,7 +76,7 @@ The discipline here mirrors choosing defensible channels: optimize for what comp
 
 ## How to Implement an SEO Audit Checklist Step by Step
 
-1. **Crawl and confirm indexation first.** Before anything else, verify your priority pages are indexable — no stray noindex, no robots.txt block, no wrong canonical. This is item one because a blocked page ranks for nothing, and Google Search Central is explicit that crawlability precedes every other signal.
+1. **Crawl and confirm indexation first.** Before anything else, verify your priority pages are both crawlable and indexable — no stray noindex directive, no wrong canonical, and no robots.txt rule blocking the crawler from reading the page. This is item one because Google Search Central is explicit that crawling and indexing precede serving: a page Google cannot index ranks for nothing, and a page Google cannot crawl never has its on-page signals read at all. (Worth knowing: a noindex tag is what actually keeps a URL out of the index — a robots.txt disallow only stops crawling, and a disallowed URL can still be indexed if it is linked from elsewhere.)
 2. **Match top pages to intent.** Pull your highest-traffic and highest-potential URLs and confirm the title, headings, and content answer the query they target. Intent mismatch caps a page no amount of technical polish can lift.
 3. **Triage Core Web Vitals on mobile.** Treat speed as a tiebreaker, not a switch. Fix the pages that fail mobile LCP or CLS and that already rank near the top, where the gain is real.
 4. **Audit internal links to your targets.** Confirm your strongest pages link to the URLs you want ranking. This is cheap, high-leverage, and almost always under-done.

@@ -116,6 +116,6 @@ Pick your three winnable keywords this week, then run one of them through GenGro
 
 ## Sources
 
-- CXL — the startup SEO moat-building guide named above, written for companies with some domain history to defend
-- Respona — the small-team SEO budget guide referenced above, the closest to the zero-resource constraint but still assuming a recurring content commitment
-- Salesforce — the beginner-friendly SEO overview cited above, friendly but generic for any small business
+- CXL — ["Startup SEO: How to Build a Defensive MOAT As a Startup"](https://cxl.com/blog/startup-seo/), the moat-building guide named above, framed around earning first-page rankings competitors then struggle to displace
+- Respona — ["SEO for Startups on a Budget: Small Team Guide"](https://respona.com/blog/seo-for-startups/), the small-team budget guide referenced above, the closest to the zero-resource constraint but still assuming a recurring content commitment
+- Salesforce — ["Beginner's Guide to Small Business SEO and SEO Writing"](https://www.salesforce.com/ca/resources/articles/guide-small-business-seo/), the beginner-friendly overview cited above, friendly but generic for any small business

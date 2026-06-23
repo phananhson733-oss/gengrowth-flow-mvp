@@ -114,4 +114,4 @@ Map your own five SEO jobs to hours, then run one workflow — your biggest time
 
 - Google Search Central, "Search Essentials" — the public guidelines any automated change should respect, cited above on deliberate technical changes
 - Ahrefs — industry time-allocation data on how SEO teams spend the week, referenced above on audit and reporting hours
-- Rankability, Whatagraph, OneLittleWeb, and BehindRankings — the 2026 comparison reviews named above whose criteria center on AI content quality
+- Rankability, Whatagraph, OneLittleWeb, and BehindRankings — the 2026 comparison reviews named above, whose tool counts and evaluation criteria are referenced; several foreground AI content quality, though some (such as BehindRankings) also weigh pricing, rank tracking, and audit features

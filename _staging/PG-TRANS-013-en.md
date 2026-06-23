@@ -27,10 +27,10 @@ phase2_checks: all-pass
 
 ## What Is Cancer Season 2026 Astrology?
 
-Cancer season 2026 astrology is the stretch of about thirty days — roughly June 21 to July 22, 2026 — when the Sun moves through Cancer and turns attention toward home, family, and emotional safety. It is one of the recurring moments mapped in the broader [[<TBD-internal-link: pillar guide to 2026 transit dates>]]. In plain terms, it is **the Sun's yearly month in Cancer, amplified this year by Jupiter**. What makes the 2026 version different is that Jupiter has been sitting in Cancer since mid-2025, widening the same themes the Sun lights up. According to NASA, Jupiter takes about twelve years to orbit the Sun, so it spends close to a year in each sign — which is why this overlap is a roughly once-a-decade backdrop, not a yearly repeat.
+Cancer season 2026 astrology is the stretch of about thirty days — roughly June 21 to July 22, 2026 — when the Sun moves through Cancer and turns attention toward home, family, and emotional safety. It is one of the recurring moments mapped in the broader [[<TBD-internal-link: pillar guide to transits>]]. In plain terms, it is **the Sun's yearly month in Cancer, opening on a rare cluster of transits**. What makes the 2026 version different is its timing: Jupiter spent the past year in Cancer (since June 2025) but leaves for Leo on June 30, 2026, so the season opens as that year-long emphasis culminates and then hands off. According to NASA, Jupiter takes about twelve years to orbit the Sun, so it spends close to a year in each sign — which is why this send-off is a roughly once-a-decade marker, not a yearly repeat.
 
 - Runs about a month, raising emotional and domestic awareness for everyone
-- Sits against a year-long Jupiter-in-Cancer backdrop that stretches the usual themes
+- Opens as Jupiter's year in Cancer ends — it leaves for Leo on June 30, 2026 — then runs on a Mercury retrograde and a Sun–Saturn square
 - Easily mistaken for personal instability when it is really heightened sensitivity
 
 ## Why It Matters for Self-Awareness
@@ -38,18 +38,18 @@ Cancer season 2026 astrology is the stretch of about thirty days — roughly Jun
 Understanding cancer season 2026 astrology matters because most people read the rising emotional tide as something going wrong with them, rather than a season they are simply passing through. That single misread is where the real stress comes from — not the feelings themselves, but the story that the feelings mean instability. In my years working with aura color and somatic practice, I've noticed the emotional swell of this month reads less like a malfunction and more like weather: it rises, peaks, and recedes on its own schedule. Once you can name the weather, you stop fighting it, and that small shift in framing is where the self-awareness actually lives. This way of treating felt emotional states as something you can actually read, rather than something to fix, draws on the energy-work lineage that practitioners like Barbara Ann Brennan and Cyndi Dale helped systematize. The confusion tends to show up in a few specific ways:
 
 1. **Intensity gets labeled instability.** Feeling more, crying easier, or wanting to stay home reads as "falling apart" instead of ordinary seasonal sensitivity.
-2. **The Jupiter layer goes unnoticed.** Most write-ups treat this like any Cancer season and miss that [[<TBD-internal-link: explainer on Jupiter in Cancer 2026>]] has been amplifying these themes all year.
-3. **Old patterns feel like new problems.** With Mercury retrograde overlapping, unfinished past conversations resurface and get mistaken for fresh conflict.
+2. **The handoff goes unnoticed.** Most write-ups treat this like any Cancer season and miss that the season's [[<TBD-internal-link: transits to your natal chart>]] open with Jupiter leaving Cancer for Leo on June 30, just as the Sun arrives.
+3. **Old patterns feel like new problems.** With Mercury retrograde in Cancer from June 29 to July 23, unfinished past conversations resurface and get mistaken for fresh conflict.
 
-## Cancer Season vs Jupiter in Cancer: What Actually Differs
+## What Actually Sets Cancer Season 2026 Apart
 
-People keep blending two different things, and cancer season 2026 astrology only makes sense once you pull them apart. The Sun's month in Cancer is short and sharp; Jupiter's year in Cancer is slow and wide. They rhyme thematically — home, feeling, belonging — but they work on completely different timescales, and that gap is the whole story of why this year stands out. Here is how each one works and what you trade for it:
+People keep flattening cancer season 2026 astrology into a generic emotional month, and it only makes sense once you see the specific transits packed into these four weeks. The Sun's month in Cancer is the constant; what makes this year distinct is the cluster of moving parts around it. Here is how each one works and what it asks of you:
 
-1. **The Sun in Cancer works like a spotlight.** For about thirty days it brightens emotional and home-related needs, then moves on. To get that clarity of focus, you sacrifice staying power — once the Sun leaves Cancer in late July, the spotlight dims and attention shifts to Leo's territory.
-2. **Jupiter in Cancer works like a rising tide.** It has been slowly raising the water line on family, intuition, and belonging since 2025. To get that long expansion, you sacrifice precision — Jupiter blurs edges and can tip generosity into overcommitment or over-giving.
-3. **Together they stack.** The reason 2026 feels heavier than a standard Cancer season is that the Sun's spotlight now lands on top of Jupiter's already-raised tide, so the same month carries a year's worth of built-up emotional weight.
+1. **Jupiter hands Cancer off to Leo.** Jupiter spent a year deepening Cancer themes — home, family, belonging — but it leaves for Leo on June 30, 2026, only days into the season. So that "expansion" peaks in the opening week, and then the focus begins shifting from private comfort toward Leo's more outward, expressive territory.
+2. **Mercury turns retrograde in Cancer.** From June 29 to July 23, 2026, Mercury is retrograde in Cancer, overlapping most of the season. It tends to reopen old, unfinished emotional conversations rather than push new ones forward — useful for repair, frustrating if you expect linear progress.
+3. **The Sun squares Saturn in Aries.** Around July 6, the Cancer Sun forms an exact square to Saturn in Aries — a reality-check aspect that sets what you owe others against what your body actually needs. It is friction, not failure: a prompt to set a sustainable boundary.
 
-If you remember one thing, let it be this: the emotion that surfaces in late June and July 2026 is being amplified by a transit that began a year earlier, so it runs deeper than the calendar month alone would suggest.
+If you remember one thing, let it be this: the emotion that surfaces in late June and July 2026 is shaped less by the calendar month alone than by this cluster — a Jupiter send-off, a Mercury retrograde, and a Saturn square — landing together.
 
 ## How to Read This Transit in Your Timing
 
@@ -58,8 +58,8 @@ You can read cancer season 2026 astrology in your own timing by watching for a h
 1. **Home pull.** You may notice a stronger urge to nest, cook, reorganize a room, or quietly cancel plans in favor of staying in.
 2. **Family on the mind.** Calls, old photos, or unresolved threads with relatives surface more often than they have in months.
 3. **Thinner skin.** Comments that normally slide right off you may land harder and linger longer for a few weeks.
-4. **Looping conversations.** With Mercury retrograde overlapping the ingress, talks tend to circle back to old, unfinished topics instead of moving forward.
-5. **Duty-versus-rest tension.** The Saturn–Sun opposition can surface as a steady push-pull between what you feel you owe others and what your body is asking for.
+4. **Looping conversations.** With Mercury retrograde in Cancer from June 29 to July 23, talks tend to circle back to old, unfinished topics instead of moving forward.
+5. **Duty-versus-rest tension.** The Sun's square to Saturn in Aries (exact around July 6) can surface as a steady push-pull between what you feel you owe others and what your body is asking for.
 
 None of these are commands or guarantees; they are patterns many people with strong Cancer placements describe during cancer season 2026 astrology. They tend to peak near the season's start in late June 2026 and ease as the Sun approaches Leo in late July, with Jupiter in Cancer keeping the themes warm underneath. The point is not to brace for impact but to recognize the texture early, so a quiet evening at home reads as a need being met rather than a sign of withdrawal. When you can see the pattern coming, you can plan around it — protecting rest, softening your calendar, and leaving room for the conversations that want to resurface.
 

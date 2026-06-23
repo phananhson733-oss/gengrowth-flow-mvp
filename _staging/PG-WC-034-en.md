@@ -18,8 +18,8 @@ associated_keywords:
   - saka england zodiac
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-23T15:53:25.614Z
-content_sha256_short: 098d72d14b7332d4
+generated_at: 2026-06-23T16:03:43.067Z
+content_sha256_short: 395664eda2975491
 phase2_checks: all-pass
 ---
 
@@ -43,7 +43,7 @@ The mismatch between what fans see and what's actually driving him shows up in a
 2. **The talent-only story.** Commentators credit raw gift and skip the disposition — the repeatable, disciplined decision-making that makes the gift reliable.
 3. **The flattened paradox.** People pick one label, "clinical" or "explosive," when the interesting thing is that both run at once, in sequence.
 
-Reading only the surface flattens a layered competitor into a single adjective. The fuller picture lines up with the [[<TBD-internal-link: guide to Virgo Sun traits>]], where precision, not raw power, is the headline trait — and seeing that split clearly is the same self-awareness skill anyone can apply to their own chart. Most people carry a similar gap between the trait others notice first and the quieter one that actually runs the show. Naming both, instead of collapsing them into one word, is where an honest read of any chart starts to pay off.
+Reading only the surface flattens a layered competitor into a single adjective. The fuller picture lines up with how the [[<TBD-internal-link: best soccer players by zodiac sign>]] read, where precision, not raw power, is the headline trait — and seeing that split clearly is the same self-awareness skill anyone can apply to their own chart. Most people carry a similar gap between the trait others notice first and the quieter one that actually runs the show. Naming both, instead of collapsing them into one word, is where an honest read of any chart starts to pay off.
 
 ## Virgo Sun vs Aries Moon: Which One You're Actually Watching
 
@@ -117,10 +117,10 @@ The Bukayo Saka zodiac sign works as a symbolic lens, not a cause. The Virgo–A
 
 ## Related Reading
 
-- [[<TBD-internal-link: Aries Moon explainer>]] — unpacks the combative reflex that gives Saka his bite
-- [[<TBD-internal-link: Mars in Sagittarius guide>]] — the placement behind his long-range, wide-angle attempts
-- [[<TBD-internal-link: comparison of Sun sign and Moon sign roles>]] — how identity and emotional reflex differ in any chart
-- [[<TBD-internal-link: cluster on World Cup 2026 transit events>]] — how upcoming transits could colour the tournament
+- [[<TBD-internal-link: England World Cup 2026 astrology>]] — the team-chart backdrop to Saka's tournament
+- [[<TBD-internal-link: Vinicius Jr's zodiac sign>]] — another World Cup winger read through his chart
+- [[<TBD-internal-link: Cancer zodiac World Cup 2026>]] — how one sign's archetype maps onto the tournament
+- [[<TBD-internal-link: Saturn in Aries 2026 transit>]] — the headline 2026 transit shaping the tournament
 - [[<TBD-external-link: Wikipedia | Bukayo Saka | background on the player whose chart this profile reads>]] — basic biography and career facts
 
 ## Take Action

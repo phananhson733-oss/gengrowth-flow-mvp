@@ -1,17 +1,17 @@
 {
   "schema_version": "1",
-  "page_id": "PG-B2B-003",
-  "entity": "B2B SEO Tools / B2B SEO Platform",
-  "target_keyword": "best tools for seo for b2b",
+  "page_id": "PG-SLB-001",
+  "entity": "Backlink Monitor Tool / Link Monitoring",
+  "target_keyword": "why use a backlink monitor tool",
   "template": "Definition",
   "tier": "T2",
   "track": "量产线",
   "generated_by": "unknown",
   "prompt_version": "v8",
-  "generated_at": "2026-06-23T06:29:43.025Z",
-  "content_sha256_short": "a5f9ab7115522e3f",
-  "source_path": "_staging/PG-B2B-003-claude-v8.md",
-  "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-B2B-003-en.md",
+  "generated_at": "2026-06-23T06:28:59.012Z",
+  "content_sha256_short": "24d9ed4c0bad9c58",
+  "source_path": "_staging/PG-SLB-001-claude-v8.md",
+  "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-SLB-001-en.md",
   "phase2_checks": {
     "overall": "pass",
     "structure": {
@@ -19,7 +19,7 @@
       "h2Count": 11,
       "h3Count": 3,
       "h4Count": 0,
-      "words": 1806,
+      "words": 2227,
       "wikilinks": 0,
       "tbdLinks": 0
     },

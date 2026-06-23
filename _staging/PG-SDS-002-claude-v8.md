@@ -112,4 +112,4 @@ Before you book any free SEO consultation, write down the one question you need 
 
 ## Sources
 
-- Author analysis of 2026 SERP listings for the target term — the recurring lead-generation-funnel pattern described above
+- Author analysis of how free-consultation offers are commonly structured — the lead-generation-funnel pattern described above

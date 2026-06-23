@@ -15,8 +15,8 @@ associated_keywords:
 
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-23T09:22:21.561Z
-content_sha256_short: 3c2c4a554a221a6a
+generated_at: 2026-06-23T09:33:36.998Z
+content_sha256_short: b1dcce1964a47f19
 phase2_checks: all-pass
 ---
 
@@ -30,7 +30,7 @@ An international SEO audit is **a structured review of how a multi-language or m
 - Confirms canonical and hreflang signals agree rather than contradict each other across language-region pairs
 - Sits inside a broader technical program, the same discipline a [local SEO audit](/en/blog/local-seo-audit) brings to a single market
 
-A team running this audit from a generic checklist will confirm hreflang "exists" on every page and still lose rankings, because the annotations on the pairs that fail to reciprocate can be ignored. Per Google Search Central, when pages do not both point to each other "those annotations may be ignored or not interpreted correctly" — so every unclosed pair is at risk of dropping out of the calculation while the reciprocated pairs are still processed. Published guides from Weglot and Swiftbrief list hreflang as a checklist line, and Swiftbrief even flags missing return links as a common error — yet none walk through the pair-level validation that error demands. This guide audits the way the search engine actually reads the markup.
+A team running this audit from a generic checklist will confirm hreflang "exists" on every page and still lose rankings, because the annotations on the pairs that fail to reciprocate can be ignored. Per Google Search Central, when pages do not both point to each other "those annotations may be ignored or not interpreted correctly" — so every unclosed pair is at risk of dropping out of the calculation while the reciprocated pairs are still processed. Most international-SEO checklists list hreflang as a single presence item, and some even flag missing return links as a common error — yet they rarely walk through the pair-level validation that error demands. This guide audits the way the search engine actually reads the markup.
 
 ## Why It Matters for Your Workflow
 
@@ -124,5 +124,3 @@ Map your locale cluster into a pair matrix and run one audit against the rendere
 ## Sources
 
 - Google Search Central, "Tell Google about localized versions of a page" (developers.google.com/search/docs/specialty/international/localized-versions) — the public documentation on hreflang return tags, cited above on why missing return links mean the non-reciprocal annotations may be ignored or not interpreted correctly while Google still processes the pairs that point to each other
-- Weglot — an international SEO checklist named in the SERP analysis that lists hreflang as a single presence item
-- Swiftbrief — an international SEO audit guide named in the SERP analysis that confirms missing return links as a common hreflang error

@@ -49,7 +49,7 @@ A team comparing a standalone tracker, a standalone crawler, a standalone keywor
 Most disappointment with the "all in one seo" search traces back to a few predictable misreads:
 
 1. **"All in One SEO means AIOSEO."** It does not. AIOSEO is one WordPress plugin brand that ranks for the generic term; the category of integrated, multi-site SEO platforms is much broader and largely invisible on this SERP.
-2. **"A WordPress plugin is an all-in-one platform."** A plugin optimizes one site inside one CMS. An all-in-one SEO platform tracks, audits, and reports across many sites on any stack. Conflating the two buys a single-site tool for a multi-site job.
+2. **"A WordPress plugin is an all-in-one platform."** Even where a plugin's top tier adds WordPress-multisite or client-dashboard features, it stays locked to self-hosted WordPress installs. An all-in-one SEO platform tracks, audits, and reports across many sites on any stack. Conflating the two buys a WordPress-only tool for an any-stack job.
 3. **"Integrated always means fewer features."** A good integrated platform is not a watered-down bundle; it is point-tool depth on tracking, auditing, and reporting with the handoffs removed. Judge the depth of each module, not the count of logos it replaces.
 4. **"More modules is automatically better."** A platform that bolts on a weak keyword tool to claim coverage is worse than a focused one with deep tracking and clean reporting. Coverage only counts where each module is actually usable.
 
@@ -57,10 +57,10 @@ Most disappointment with the "all in one seo" search traces back to a few predic
 
 | Workflow job | What an integrated platform does | What a WordPress plugin misses | What to check before buying |
 | --- | --- | --- | --- |
-| Rank tracking | Tracks every client domain in one view | Lives inside one site, no multi-site view | Does it track domains on any stack, not just WordPress? |
-| Technical audit | Scheduled crawls across all properties | Audits only the site it is installed on | Can it crawl non-WordPress clients? |
+| Rank tracking | Tracks every client domain in one view | Only covers WordPress installs it runs on | Does it track domains on any stack, not just WordPress? |
+| Technical audit | Scheduled crawls across all properties | Audits only the WordPress sites it is installed on | Can it crawl non-WordPress clients? |
 | Content gap analysis | Compares your pages to competitors | No competitor or cross-site comparison | Does it surface gaps against real SERP rivals? |
-| Client reporting | One scheduled, multi-property report | Manual export, one site at a time | Does it assemble reports across all accounts? |
+| Client reporting | One scheduled, multi-property report | Limited to WordPress, even on multisite tiers | Does it assemble reports across all accounts? |
 | Onboarding a new client | Add a domain, no CMS install needed | Requires a plugin install per site | Is setup a domain entry or a plugin deploy? |
 
 ## How to Evaluate an All-in-One SEO Platform
@@ -90,7 +90,7 @@ No. AIOSEO is one WordPress plugin brand that happens to rank for the generic te
 
 **Can a WordPress plugin work as an all-in-one platform for an agency?**
 
-Not for a multi-client agency. A plugin lives inside one WordPress install and cannot reach clients on Webflow, Shopify, or custom stacks. An agency needs a platform that adds a domain rather than deploying a plugin per site.
+Not for a multi-client agency. Even where a plugin's top tier manages a WordPress multisite network or several WordPress installs from one dashboard, it stays confined to self-hosted WordPress and cannot reach clients on Webflow, Shopify, or custom stacks. An agency needs a platform that adds a domain rather than deploying a plugin per site.
 
 **Does an integrated platform mean shallower features than point tools?**
 

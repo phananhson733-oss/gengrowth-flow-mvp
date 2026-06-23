@@ -1,7 +1,7 @@
 ---
 title: Jeremy Doku Birth Chart
 slug: jeremy-doku-birth-chart
-date: 2026-06-22
+date: 2026-06-23
 status: ready-to-review
 type: wiki-entry
 template: Definition
@@ -18,8 +18,8 @@ associated_keywords:
   - jeremy doku belgium world cup 2026
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-22T14:59:43.884Z
-content_sha256_short: 0db7cc40a7c70c9f
+generated_at: 2026-06-23T04:49:15.400Z
+content_sha256_short: 13671642626a6520
 phase2_checks: all-pass
 ---
 
@@ -83,7 +83,7 @@ Popular write-ups tend to flatten his chart into a one-line verdict, and the sam
 | Gemini Sun | Drives identity through curiosity and immediate connection | Mutable Air, traditionally linked to themes of communication and the natal 3rd house | Quick speech, improvised play, present-tense choices |
 | Leo Rising | Shapes first impressions as warm, watchable performance | Fixed Fire, tied to 1st-house self-presentation | Stage presence, comfort being watched on the pitch |
 | Mars at 29° Gemini | Channels drive at a critical, all-or-nothing threshold | Anaretic degree of an Air sign, action expressed through words and quick decisions | Decisive bursts, urgency to act in the moment |
-| Late-June Sun–Cancer timing | Backdrops the exit with a seasonal turn toward home themes | Cardinal Water season around the solstice | Family-first choices clustering near Father's Day weekend |
+| Late-June Sun–Cancer timing | Backdrops the decision with a seasonal turn toward home themes | Cardinal Water season around the solstice | Family-first choices clustering near Father's Day weekend |
 
 ## Common Questions About Jeremy Doku's Birth Chart
 

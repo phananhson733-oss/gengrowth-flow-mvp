@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-SMS-001",
+  "entity": "TikTok SEO Tool / TikTok Search Optimization",
+  "target_keyword": "tiktok seo tool",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-06-23T06:27:09.481Z",
+  "content_sha256_short": "042f8c4328b659c5",
+  "source_path": "_staging/PG-SMS-001-claude-v8.md",
+  "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-SMS-001-en.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 3,
+      "h4Count": 0,
+      "words": 1834,
+      "wikilinks": 0,
+      "tbdLinks": 0
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

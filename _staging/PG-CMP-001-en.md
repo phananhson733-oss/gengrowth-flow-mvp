@@ -1,11 +1,23 @@
 ---
-title: Affordable SEO Tools
+title: Affordable Seo Tools
 slug: affordable-seo-tools
-entity: Affordable SEO Tools / Budget-Friendly SEO Software
-target_keyword: affordable seo tools
-template: Comparison + Guide
+date: 2026-06-23
+status: ready-to-review
+type: wiki-entry
+template: Definition
 tier: T2
 track: 量产线
+page_id: PG-CMP-001
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: affordable seo tools
+associated_keywords:
+
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-06-23T06:27:00.348Z
+content_sha256_short: 7ebbea6e351291c7
+phase2_checks: all-pass
 ---
 
 # Why Affordable SEO Tools Are the Ones That Automate the Most Jobs, Not the Cheapest Sticker

@@ -8,8 +8,8 @@
   "track": "量产线",
   "generated_by": "unknown",
   "prompt_version": "v8",
-  "generated_at": "2026-06-23T05:01:05.117Z",
-  "content_sha256_short": "75ec23408ddf6087",
+  "generated_at": "2026-06-23T05:12:40.456Z",
+  "content_sha256_short": "5a0578137d88fa6e",
   "source_path": "_staging/PG-WC-031-en.md",
   "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-WC-031-en.md",
   "phase2_checks": {
@@ -19,9 +19,9 @@
       "h2Count": 11,
       "h3Count": 2,
       "h4Count": 0,
-      "words": 1751,
-      "wikilinks": 6,
-      "tbdLinks": 6
+      "words": 1722,
+      "wikilinks": 0,
+      "tbdLinks": 0
     },
     "rl1": true,
     "rl2": true,

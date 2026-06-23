@@ -1,17 +1,17 @@
 {
   "schema_version": "1",
-  "page_id": "PG-B2B-003",
-  "entity": "B2B SEO Tools / B2B SEO Platform",
-  "target_keyword": "best tools for seo for b2b",
+  "page_id": "PG-B2B-001",
+  "entity": "Technology Company SEO / B2B Tech SEO Strategy",
+  "target_keyword": "seo for technology companies",
   "template": "Definition",
   "tier": "T2",
   "track": "量产线",
   "generated_by": "unknown",
   "prompt_version": "v8",
-  "generated_at": "2026-06-23T06:30:09.148Z",
-  "content_sha256_short": "e010f769ff36b0a9",
-  "source_path": "_staging/PG-B2B-003-claude-v8.md",
-  "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-B2B-003-en.md",
+  "generated_at": "2026-06-23T06:30:02.630Z",
+  "content_sha256_short": "c23768376c41e573",
+  "source_path": "_staging/PG-B2B-001-claude-v8.md",
+  "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-B2B-001-en.md",
   "phase2_checks": {
     "overall": "pass",
     "structure": {
@@ -19,7 +19,7 @@
       "h2Count": 11,
       "h3Count": 3,
       "h4Count": 0,
-      "words": 1805,
+      "words": 2376,
       "wikilinks": 0,
       "tbdLinks": 0
     },

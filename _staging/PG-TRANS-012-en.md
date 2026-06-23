@@ -27,11 +27,11 @@ phase2_checks: all-pass
 
 ## What Is Father's Day Astrology 2026?
 
-Father's Day astrology 2026 is the cluster of sky events around the June 21 solstice, when the Sun moves into Cancer and opens Cancer season. The ingress, exact at 4:24 AM EDT, lands on the same weekend many U.S. households celebrate fathers. In traditional Western astrology the Sun stands for the father or central authority figure, while Cancer rules home, family, and ancestral roots — a pairing you can place on the wider [2026 planetary transit calendar](/en/wiki/june-2026-planetary-transits) alongside the year's other ingresses. A close Jupiter–Venus meeting in Cancer layers in warmth and a sense of emotional abundance, so the symbolism of the father points straight at the themes of home. Put simply, the day reads as **the Sun lighting the father archetype as Cancer season opens**.
+Father's Day astrology 2026 is the cluster of sky events around the June 21 solstice, when the Sun moves into Cancer and opens Cancer season. The ingress, exact at 4:24 AM EDT, lands on the same weekend many U.S. households celebrate fathers. In traditional Western astrology the Sun stands for the father or central authority figure, while Cancer rules home, family, and ancestral roots — a pairing you can place on the wider [2026 planetary transit calendar](/en/wiki/june-2026-planetary-transits) alongside the year's other ingresses. Jupiter, generous and expansive, is finishing a year-long transit through Cancer that layers in warmth and a sense of emotional abundance, so the symbolism of the father points straight at the themes of home. Put simply, the day reads as **the Sun lighting the father archetype as Cancer season opens**.
 
 - Centers on the Sun's exact move into Cancer at the June solstice
 - Ties the father symbol to home, memory, and family roots
-- Carries extra warmth from Jupiter and Venus traveling through Cancer
+- Carries extra warmth from Jupiter finishing its year-long transit through Cancer
 
 ## Why It Matters for Self-Awareness
 
@@ -53,7 +53,7 @@ In an ordinary year the ingress is a quiet seasonal turn. The way it works is si
 
 ### What 2026 stacks on top
 
-The 2026 version is louder. That same Sun crossing lands on Father's Day weekend and arrives with Jupiter and Venus already sitting in Cancer, which amplifies the emotional tone considerably. The reading gains warmth, generosity, and a sentimental pull — but it also gains complexity, with several themes asking for attention at once.
+The 2026 version is louder. That same Sun crossing lands on Father's Day weekend while Jupiter is still finishing its year in Cancer — it moves on to Leo June 29 — which amplifies the emotional tone considerably. The reading gains warmth, generosity, and a sentimental pull — but it also gains complexity, with several themes asking for attention at once.
 
 Here the trade-off is real and worth naming plainly. To get the headline emotional charge of 2026, you sacrifice the clean, single-note clarity of a plain ingress: more planets in the mix means more meanings layered together. A quiet ingress hands you simplicity about one thing — the seasonal shift. This richer alignment hands you intensity and depth, but you lose that easy, one-line read.
 

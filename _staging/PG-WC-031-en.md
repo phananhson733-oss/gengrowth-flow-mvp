@@ -18,8 +18,8 @@ associated_keywords:
   - jeremy doku belgium world cup 2026
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-23T04:49:15.400Z
-content_sha256_short: 13671642626a6520
+generated_at: 2026-06-23T05:01:05.117Z
+content_sha256_short: 75ec23408ddf6087
 phase2_checks: all-pass
 ---
 
@@ -43,7 +43,7 @@ When Doku announced he would leave the Belgium camp to be present for the birth 
 
 In twelve years of integrating psychological frameworks with evolutionary astrology, I've found that a choice like this rarely reflects indecision. It usually reflects a chart whose core value system was never actually in conflict, even when everyone watching assumed it had to be.
 
-## Gemini Sun and Venus in Cancer: What Drives the Decision
+## Gemini Sun vs Venus in Cancer: What Drives the Decision
 
 The easiest mix-up in the Jeremy Doku birth chart is treating his Gemini Sun as the whole story and missing what Venus in Cancer is quietly steering, read in the integrated lineage Robert Hand and Liz Greene helped establish, where no single placement is the whole person.
 
@@ -122,4 +122,4 @@ Astrologically it is a lens, not a prediction, and this reading makes no claim a
 ## Sources
 
 - Robert Hand — helped establish the modern practice of reading a natal chart as one integrated psychological picture rather than a list of separate traits
-- Liz Greene — shaped the depth-psychology lineage this reading draws on for interpreting the tension between Sun, Rising, and Mars
+- Liz Greene — shaped the depth-psychology lineage this reading draws on for interpreting the interplay between Sun, Venus, and Mars

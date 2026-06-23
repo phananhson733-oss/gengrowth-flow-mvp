@@ -113,6 +113,5 @@ Map your own five SEO jobs to hours, then run one workflow — your biggest time
 
 ## Sources
 
-- Google Search Central, "Search Essentials" — the public guidelines any automated change should respect, cited above on deliberate technical changes
-- Ahrefs — industry time-allocation data on how SEO teams spend the week, referenced above on audit and reporting hours
-- Backlinko and Semrush — the 2026 comparison roundups named above whose criteria sort tools by monthly price rather than cost per job
+- Backlinko — its 2026 affordable/cheap SEO tools comparison roundup, named above, which ranks tools by monthly price tier
+- Semrush — its affordable-SEO-tools roundup, named above, sorting tools into cheap / mid / premium price tiers rather than by cost per job

@@ -15,8 +15,8 @@ associated_keywords:
 
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-23T06:39:30.255Z
-content_sha256_short: 92faa684c62405da
+generated_at: 2026-06-23T06:49:54.474Z
+content_sha256_short: 469aa5fe5a65c72c
 phase2_checks: all-pass
 ---
 
@@ -122,7 +122,7 @@ Set it to alert in real time for spikes and removals, then do a standing weekly 
 
 ## Take Action
 
-Run one profile — your own — through a risk lens this week: pull current referring domains, set a toxic-spike threshold, and route one alert to a channel you actually watch. You will see in days which links are quietly slipping and which spikes deserve a disavow. [Start your free GenGrowth trial](https://gengrowth.ai/app) and turn link monitoring into surveillance instead of a dashboard nobody opens.
+Run one profile — your own — through a risk lens this week with a dedicated backlink monitor: pull current referring domains, set a toxic-spike threshold, and route one alert to a channel you actually watch. You will see in days which links are quietly slipping and which spikes deserve a disavow. Once that surveillance is in place, [Start your free GenGrowth trial](https://gengrowth.ai/app) to automate the wider organic-growth workflow your link profile feeds into.
 
 ## Sources
 

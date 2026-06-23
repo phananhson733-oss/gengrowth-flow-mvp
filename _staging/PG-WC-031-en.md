@@ -43,19 +43,19 @@ When Doku announced he would leave the Belgium camp to be present for the birth 
 
 In twelve years of integrating psychological frameworks with evolutionary astrology, I've found that a choice like this rarely reflects indecision. It usually reflects a chart whose core value system was never actually in conflict, even when everyone watching assumed it had to be.
 
-## Gemini Sun vs Leo Rising: Which Side Drives the Decision
+## Gemini Sun and Venus in Cancer: What Drives the Decision
 
-The easiest mix-up in the Jeremy Doku birth chart is treating his Leo Rising as the engine when the Gemini Sun is actually steering, read in the integrated lineage Robert Hand and Liz Greene helped establish, where no single placement is the whole person.
+The easiest mix-up in the Jeremy Doku birth chart is treating his Gemini Sun as the whole story and missing what Venus in Cancer is quietly steering, read in the integrated lineage Robert Hand and Liz Greene helped establish, where no single placement is the whole person.
 
 ### How the Two Placements Actually Work
 
-Leo Rising functions as performance: it wants the gesture to land, the crowd to feel it, the moment to look good. To get that magnetic stage presence, you sacrifice some privacy — a Leo Rising is read in public, which is part of why the umbilical-cord jab stung in such a public way and traveled so fast. It is the entrance and the mask, the layer most people meet first, much like the contrast mapped in [[<TBD-internal-link: comparison of Sun sign and rising sign roles>]].
+Venus in Cancer functions as attachment: it wants closeness, safety, and the people it loves within reach. Cancer is the sign astrology ties most directly to home, family, and roots, so a Venus here tends to rank being present for family above nearly anything competing for the same hours. It is the quiet value underneath the louder Gemini surface, the layer most fans miss first, much like the contrast mapped in [[<TBD-internal-link: comparison of Sun sign and Venus sign roles>]].
 
-The Gemini Sun functions differently. It prioritizes the immediate, lived connection in the room he is standing in over the abstract story other people want to tell about him. To get that authenticity of presence, you sacrifice the clean narrative — planning to choose the delivery room over a tournament match looks inconsistent only if you expected the Leo mask to be the whole man.
+The Gemini Sun functions differently. It prioritizes the immediate, lived connection in the room he is standing in over the abstract story other people want to tell about him. Pair that present-tense Sun with a Venus that roots in family, and planning to choose the delivery room over a tournament match stops looking inconsistent — it looks like both placements wanting the same thing.
 
 ### Where the Trade-Off Shows Up
 
-Read together, the decision is not a Leo ego move and not a betrayal of duty; it is the Gemini Sun doing the thing it values most while the Leo Rising simply made the choice visible. The timing sharpened the effect. According to NASA, the June solstice falls around June 21 each year, the same window the tropical zodiac marks the Sun's shift out of Gemini and into Cancer, a sign associated with home, family, and roots. The controversy landing on Father's Day weekend, right as that seasonal turn toward home themes arrived, is why the moment felt so on-cue to readers tracking the [[<TBD-internal-link: guide to 2026 transit events and the Sun's move into Cancer>]].
+Read together, the decision is not an ego move and not a betrayal of duty; it is the Gemini Sun and Venus in Cancer valuing the same thing — lived presence with the people who matter most. The timing sharpened the effect. According to NASA, the June solstice falls around June 21 each year, the same window the tropical zodiac marks the Sun's shift out of Gemini and into Cancer, a sign associated with home, family, and roots — the very sign his natal Venus already occupies, and the one his anaretic Mars sits poised to enter. The controversy landing on Father's Day weekend, right as that seasonal turn toward home themes arrived, is why the moment felt so on-cue to readers tracking the [[<TBD-internal-link: guide to 2026 transit events and the Sun's move into Cancer>]].
 
 ## How to Read a Gemini Sun and Anaretic Mars in a Chart
 
@@ -65,7 +65,7 @@ Reading his chart in real life means watching for a few observable signals rathe
 2. **Words as a working tool.** A strong Gemini Sun tends to process out loud, so the quick interview answer and the quick on-field decision come from the same instinct rather than two different skills.
 3. **The anaretic urgency.** Mars at 29° can surface as all-or-nothing timing — a sense that a moment has to be acted on now, not deferred, which reads as both his best bursts and his most impatient ones.
 4. **Presence over posture.** When forced to choose, this signature tends to pick the live, embodied moment over the version that photographs well later.
-5. **Audience awareness that sharpens, not softens.** The Leo Rising means he rarely forgets he is being watched, which tends to focus the Gemini instinct rather than dull it.
+5. **Values that anchor the restlessness.** Venus in Cancer means the fast Gemini surface sits on a steady attachment to home and family, which tends to ground his choices when the stakes turn personal.
 
 ## Common Misreadings
 
@@ -73,7 +73,7 @@ Popular write-ups tend to flatten his chart into a one-line verdict, and the sam
 
 1. **Misreading: "Gemini means flaky."** The actual pattern is prioritizing immediate connection over abstract obligation — not an inability to commit, but a different ranking of what counts as commitment in the first place.
 2. **Misreading: "The anaretic Mars is a weakness."** A 29th-degree Mars reads better as peak intensity at a threshold than as a flaw. It tends to show up as decisiveness under pressure, not malfunction.
-3. **Misreading: "Leo Rising makes it all about ego."** The visible confidence is the entrance, not the motive; the decision to leave was Sun-led presence, not Rising-led showmanship.
+3. **Misreading: "It's all about chasing the spotlight."** The visible confidence reads as showmanship, but the motive traces to Venus in Cancer; the decision to leave was values-led presence, not image management.
 4. **Misreading: "The chart predicts how he'll perform."** A birth chart describes tendencies and patterns, not fixed outcomes — it offers a lens on how he chooses, never a forecast of results.
 
 ## The Jeremy Doku Birth Chart at a Glance
@@ -81,7 +81,7 @@ Popular write-ups tend to flatten his chart into a one-line verdict, and the sam
 | Placement | How It Works | Energy Center | How to Observe |
 |-----------|-------------|---------------|----------------|
 | Gemini Sun | Drives identity through curiosity and immediate connection | Mutable Air, traditionally linked to themes of communication and the natal 3rd house | Quick speech, improvised play, present-tense choices |
-| Leo Rising | Shapes first impressions as warm, watchable performance | Fixed Fire, tied to 1st-house self-presentation | Stage presence, comfort being watched on the pitch |
+| Venus in Cancer | Roots what he values in home, family, and emotional security | Cardinal Water, associated with care and belonging | Family-first choices, loyalty to close bonds |
 | Mars at 29° Gemini | Channels drive at a critical, all-or-nothing threshold | Anaretic degree of an Air sign, action expressed through words and quick decisions | Decisive bursts, urgency to act in the moment |
 | Late-June Sun–Cancer timing | Backdrops the decision with a seasonal turn toward home themes | Cardinal Water season around the solstice | Family-first choices clustering near Father's Day weekend |
 
@@ -89,7 +89,7 @@ Popular write-ups tend to flatten his chart into a one-line verdict, and the sam
 
 **What zodiac sign is Jeremy Doku?**
 
-Jeremy Doku is a Gemini, born on May 27, 2002. His chart also carries a Leo Rising and Mars at the final degree of Gemini, which colors how that Gemini energy comes out.
+Jeremy Doku is a Gemini, born on May 27, 2002. His chart also carries Venus in Cancer and Mars at the final degree of Gemini, which colors how that Gemini energy comes out.
 
 **Why does the Jeremy Doku birth chart make leaving the World Cup look consistent?**
 
@@ -113,7 +113,7 @@ Astrologically it is a lens, not a prediction, and this reading makes no claim a
 
 - [[<TBD-internal-link: explainer on Gemini Sun traits and motivation>]] — unpacks the sign driving this whole chart in more depth.
 - [[<TBD-internal-link: guide to anaretic and critical degrees in astrology>]] — explains why a 29th-degree planet behaves the way Doku's Mars does.
-- [[<TBD-internal-link: overview of Leo Rising and public presence>]] — covers the entrance-and-mask layer that fans see first.
+- [[<TBD-internal-link: overview of Venus in Cancer and what it values>]] — covers the home-and-family layer underneath the Gemini surface.
 
 ## Take Action
 

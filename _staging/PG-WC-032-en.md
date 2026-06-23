@@ -18,8 +18,8 @@ associated_keywords:
   - modric virgo
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-23T16:19:24.497Z
-content_sha256_short: 4ccc3f684fdd31b7
+generated_at: 2026-06-23T16:30:32.360Z
+content_sha256_short: 9d71430f2c61bf19
 phase2_checks: all-pass
 ---
 
@@ -80,14 +80,14 @@ Strip those four away and the same portrait appears every time — a player whos
 |---|---|---|---|
 | Virgo Sun | Drives refinement of craft and function over spectacle | Earth element, ruled by Mercury | The perfect simple pass; fixing what others overlook |
 | Cancer Moon | Anchors emotional life in loyalty and belonging | Water element, ruled by the Moon | Deep attachment to country and club; playing for something larger |
-| Scorpio Rising | Filters outward presentation into stillness and control | Water element, ruled by Mars and Pluto | The unreadable face in peak-pressure moments |
+| Scorpio Rising (attributed, unconfirmed) | Filters outward presentation into stillness and control | Water element, ruled by Mars and Pluto | The unreadable face in peak-pressure moments |
 | Virgo–Scorpio axis | Builds legacy through consistency, not theatrical peaks | Earth–Water blend | Peaking later than expected; standing that compounds over years |
 
 ## Common Questions About Modrić's Chart
 
 **What is Luka Modric's zodiac sign?**
 
-Luka Modrić is a Virgo, born on September 9, 1985. His wider chart pairs that Virgo Sun with a Cancer Moon and Scorpio rising.
+Luka Modrić is a Virgo, born on September 9, 1985. His wider chart pairs that Virgo Sun with a Cancer Moon; Scorpio is the rising sign most often attributed to him, though it's unconfirmed without a public birth time.
 
 **Is Luka Modrić a Virgo or a Leo?**
 
@@ -109,9 +109,9 @@ The Virgo–Scorpio blend often correlates with people who peak later and build 
 
 ## Related Reading
 
-- [[<TBD-internal-link: companion profile of another World Cup 2026 captain's chart>]] — see how a different leadership style reads in a chart.
-- [[<TBD-internal-link: guide to the Cancer moon sign>]] — more on the loyalty and emotional-anchor themes behind Modrić's Moon.
-- [[<TBD-internal-link: explainer on the Scorpio rising sign>]] — why some athletes come across as still and unreadable under pressure.
+- [[<TBD-internal-link: Harry Kane birth chart>]] — see how a different World Cup captain's leadership style reads in a chart.
+- [[<TBD-internal-link: Cancer zodiac World Cup 2026>]] — more on the loyalty and emotional-anchor themes behind Modrić's Cancer Moon.
+- [[<TBD-internal-link: Vinicius Jr's zodiac sign>]] — another World Cup player read through his chart.
 - [[<TBD-external-link: Wikipedia | Luka Modrić | biographical background, including his September 9, 1985 birth date>]] — confirms the birth data the chart is built on.
 
 ## Take Action

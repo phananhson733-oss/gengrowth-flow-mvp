@@ -15,8 +15,8 @@ associated_keywords:
 
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-23T06:38:00.305Z
-content_sha256_short: 1fe4fd09440a9c8f
+generated_at: 2026-06-23T06:38:26.386Z
+content_sha256_short: 4d4a89f2ee2dac26
 phase2_checks: all-pass
 ---
 
@@ -48,7 +48,7 @@ Picture a SaaS content team that ships a page, watches it climb for three weeks,
 
 ### The Site-Structure Map: When Pages Compete With Each Other
 
-A growing agency client has forty blog posts and three of them target nearly the same query. Rankings flicker between them because the site has no clear hierarchy. The site-structure map fixes this by forcing the relationships onto paper. Draw the homepage at the top, category or pillar pages as a middle row, and supporting posts as leaves underneath — then draw a link arrow from every leaf up to its parent and across to its closest sibling. Cannibalization shows up instantly as two leaves pointing at the same parent with no link between them, and orphan pages show up as leaves with no arrow at all. This is the siloing view, and it is the practical companion to [organic SEO services](/en/blog/organic-seo-services) thinking, where the shape of the site quietly decides which pages can rank.
+A growing agency client has forty blog posts and three of them target nearly the same query. Rankings flicker between them because the site has no clear hierarchy. The site-structure map fixes this by forcing the relationships onto paper. Draw the homepage at the top, category or pillar pages as a middle row, and supporting posts as leaves underneath — then draw a link arrow from every leaf up to its parent and across to its closest sibling. Cannibalization shows up instantly as two leaves pointing at the same parent with no link between them, and orphan pages show up as leaves with no arrow at all. Google Search Central frames crawling and indexing around exactly this hierarchy, which is why the map holds up in practice. This is the siloing view, and it is the practical companion to [organic SEO services](/en/blog/organic-seo-services) thinking, where the shape of the site quietly decides which pages can rank.
 
 ### The Audit-to-Fix Flow: When the Audit Report Is 200 Rows Long
 
@@ -80,7 +80,7 @@ Evaluating an SEO diagram means scoring whether it changes decisions, not whethe
 
 1. **The redraw test.** Can a teammate who has seen it once redraw it on a whiteboard a week later? If not, it is too complex to survive real use.
 2. **The decision test.** Name the specific choice the diagram forces — refresh vs. new page, park vs. fix. A frame that does not end in a fork is documentation wearing a diagram's clothes.
-3. **The single-layer test.** A good frame isolates one layer of the problem. A diagram that tries to show workflow, structure, and ranking factors at once shows none of them clearly.
+3. **The single-layer test.** A good frame isolates one layer of the problem. The Nielsen Norman Group's usability research on information design makes the same point: a diagram that tries to show workflow, structure, and ranking factors at once shows none of them clearly.
 4. **The handoff test.** Hand the diagram to someone outside SEO and watch whether they can act on it. If it needs a forty-minute voiceover, the picture is not carrying the load.
 
 Scored this way, the question stops being "is this diagram nice" and becomes "does redrawing this move the work." That lens is what a [SaaS SEO consultant](/en/blog/saas-seo-consultant) brings that a stock-image roundup never will: the diagrams are tools, and tools are judged by what they let you decide.

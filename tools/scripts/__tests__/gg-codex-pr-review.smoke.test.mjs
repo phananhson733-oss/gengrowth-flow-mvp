@@ -222,4 +222,62 @@ test('pr-create-failed sentinel as --pr falls back to --branch', () => {
   assert.match(r.stdout, /VERDICT:\s*PASS/);
 });
 
+// ── --source mode (Lane A / gengrowth parity): fact-check a standalone article md,
+// no gh / PR / branch. Same codex invocation + VERDICT relay + tooling-failure contract. ──
+function srcFile(dir, content = '# A Real Article\n\nSome prose with checkable claims.\n') {
+  const p = join(dir, 'draft.md');
+  writeFileSync(p, content);
+  return p;
+}
+
+test('--source PASS → exit 0, relays VERDICT: PASS (no gh used)', () => {
+  const dir = caseDir();
+  const r = run(['--source', srcFile(dir)],
+    { gh: ghFake(dir, 'fail') /* unused in source mode */, codex: codexFake(dir, { verdict: 'PASS' }) });
+  assert.equal(r.status, 0, `stderr: ${r.stderr}; stdout: ${r.stdout}`);
+  assert.match(r.stdout, /VERDICT:\s*PASS/);
+});
+
+test('--source FAIL → exit 0, relays VERDICT: FAIL (publish gate parks)', () => {
+  const dir = caseDir();
+  const r = run(['--source', srcFile(dir)],
+    { gh: ghFake(dir, 'ok'), codex: codexFake(dir, { verdict: 'FAIL', reason: 'fabricated EU SEO directive' }) });
+  assert.equal(r.status, 0, `stderr: ${r.stderr}; stdout: ${r.stdout}`);
+  assert.match(r.stdout, /VERDICT:\s*FAIL/);
+  assert.match(r.stdout, /directive/i);
+});
+
+test('--source missing file → exit 3 tooling failure, no VERDICT', () => {
+  const dir = caseDir();
+  const r = run(['--source', join(dir, 'nope.md')],
+    { gh: ghFake(dir, 'ok'), codex: codexFake(dir, { verdict: 'PASS' }) });
+  assert.equal(r.status, 3, `stderr: ${r.stderr}`);
+  assert.doesNotMatch(r.stdout || '', /VERDICT:/);
+  assert.match(r.stderr, /not found/i);
+});
+
+test('--source empty file → exit 3 tooling failure', () => {
+  const dir = caseDir();
+  const r = run(['--source', srcFile(dir, '   \n')],
+    { gh: ghFake(dir, 'ok'), codex: codexFake(dir, { verdict: 'PASS' }) });
+  assert.equal(r.status, 3, `stderr: ${r.stderr}`);
+  assert.match(r.stderr, /empty --source/i);
+});
+
+test('--source + codex no-verdict → exit 3 (SKIPPED → park under required gate)', () => {
+  const dir = caseDir();
+  const r = run(['--source', srcFile(dir)],
+    { gh: ghFake(dir, 'ok'), codex: codexFake(dir, { verdict: null }) });
+  assert.equal(r.status, 3, `stderr: ${r.stderr}; stdout: ${r.stdout}`);
+  assert.match(r.stderr, /no line-anchored VERDICT/i);
+});
+
+test('--source starting with "-" → exit 3 (arg-injection guard)', () => {
+  const dir = caseDir();
+  const r = run(['--source', '-rf'],
+    { gh: ghFake(dir, 'ok'), codex: codexFake(dir, { verdict: 'PASS' }) });
+  assert.equal(r.status, 3, `stderr: ${r.stderr}`);
+  assert.match(r.stderr, /arg-injection guard/i);
+});
+
 test('cleanup', () => { rmSync(ROOT, { recursive: true, force: true }); });

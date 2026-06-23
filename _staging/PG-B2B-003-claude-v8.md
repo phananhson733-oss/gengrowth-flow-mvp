@@ -72,7 +72,7 @@ Evaluate against the B2B buying motion, not the demo. A useful sequence:
 3. Discount any capability that still needs a manual spreadsheet to connect to pipeline; that is a keyword tool, not a B2B SEO tool.
 4. Weigh the score by your actual revenue impact, so the tool that ties organic to MQLs wins even if its keyword database is smaller than a rival's.
 
-This is the same portfolio discipline behind picking defensible channels — the logic in [organic SEO services](/en/blog/organic-seo-services) applies to tool selection too: optimize for what compounds into pipeline, not for what demos a bigger number.
+This is the same portfolio discipline behind picking defensible channels — the logic in [organic SEO services](/en/blog/organic-seo-services) applies to tool selection: optimize for what compounds into pipeline, not for what demos a bigger number.
 
 ## How to Implement B2B SEO Tools Step by Step
 

@@ -81,7 +81,7 @@ Evaluating cost effective SEO services well means scoring durability per dollar,
 2. **Refresh share of the roadmap.** Confirm refreshes appear in the plan, since they are often the highest-return activity available to a small budget.
 3. **What they refuse to do.** A provider that names tactics they will not run (scaled programmatic, link networks, AI-only drafts) is usually one whose remaining tactics still hold a year out.
 4. **Editorial layer.** Look for a real editor in the workflow, not just a content manager renaming files; the page that converts is the page that reads as edited.
-5. **AI search readiness.** Check whether briefs explicitly structure quotable answers and clean citations, since that is the deliverable AI Overviews now reward without raising the per-page cost.
+5. **AI search readiness.** Check whether briefs explicitly structure quotable answers and clear sourcing, which aligns with the helpful, reliable, people-first content Google's documentation says it surfaces — and which costs nothing extra to add to a brief template.
 
 Scored this way, the conversation stops being about which agency is cheapest and becomes a question of which one builds the smallest library a future update will still endorse. That is the lens most discount providers skip, and it is the one that predicts whether the retainer still earns its place two years in.
 
@@ -112,7 +112,7 @@ Refresh first, almost always. A page that already has some authority lifts faste
 
 **Can cost effective SEO services keep up with AI search?**
 
-Yes, because the work that gets a page cited in AI Overviews — clean attribution, quotable summaries, named authorship — costs nothing extra once the brief template includes it. The teams who struggle here are usually the ones whose existing brief was vague to begin with.
+Yes. Google's own guidance says there are no special optimisations or markup needed to appear in AI Overviews — the same helpful, reliable, clearly sourced content that ranks in regular search is what those features draw on. Building quotable summaries and clear sourcing into the brief template costs nothing extra, so a focused budget is not at a disadvantage here. The teams who struggle are usually the ones whose existing brief was vague to begin with.
 
 ## Related Reading
 

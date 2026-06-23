@@ -24,7 +24,7 @@ A business owner searching for a free SEO consultation has usually been burned o
 
 The cost of a hollow free SEO consultation is not the hour you spend on the call. It is the false confidence afterward. You walk away believing you have been "looked at," deprioritize SEO for a quarter, and only later discover the audit named nothing your competitors were not already doing better. The wasted resource is attention, and attention is the one thing a small team cannot refund.
 
-That hollowness is structural, not accidental. Walk the 2026 SERP for the term and a common pattern emerges: many providers run the free consultation as a lead-generation funnel — the offer exists to capture an email and book a sales call, and the analysis is whatever templated audit the closer needs to justify a proposal. A few listings do better on tone, promising a no-sales-pitch call rather than a hard close, but a promise about the call's tone still commits to nothing you leave with. A different pattern shows up in vendor promotions that attach a headline dollar value to a "free" call and then condition it on a paid purchase, so the offer reads as a discount on a subscription rather than a genuinely free standalone consultation. Either way, the framing tells you nothing about what the call commits to deliver.
+That hollowness is structural, not accidental. The free consultation is, all too often, the front door of a sales funnel — the offer exists to capture an email and book a sales call, and the analysis is whatever templated audit the closer needs to justify a proposal. Some providers do better on tone, promising a no-sales-pitch call rather than a hard close, but a promise about the call's tone still commits to nothing you leave with. A different pattern shows up in vendor promotions that attach a headline dollar value to a "free" call and then condition it on a paid purchase, so the offer reads as a discount on a subscription rather than a genuinely free standalone consultation. Either way, the framing tells you nothing about what the call commits to deliver.
 
 The honest version of a free SEO consultation should give back time, not just absorb it. A good call hands you a starting backlog: the two or three fixes worth doing this month whether you hire anyone or not. That is the same compounding logic behind [organic SEO services](/en/blog/organic-seo-services) — the value is in the prioritized list of what moves rankings, not in the slide that lists every issue equally. A consultation that returns a 90-item checklist has automated the wrong thing; it has produced volume where you needed a decision.
 
@@ -86,7 +86,7 @@ This is the same discipline behind sustainable channel choices — the logic in 
 
 **Is a free SEO consultation actually free, or is it a sales call in disguise?**
 
-It depends entirely on what the page pre-commits to. Many SERP results run the consultation as a lead-generation funnel where the analysis serves the proposal. A genuinely free consultation commits to deliverables you keep whether or not you buy.
+It depends entirely on what the page pre-commits to. A free consultation is often run as a lead-generation funnel where the analysis serves the proposal. A genuinely free consultation commits to deliverables you keep whether or not you buy.
 
 **What should I receive from a good consultation call?**
 

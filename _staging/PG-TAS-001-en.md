@@ -1,7 +1,7 @@
 ---
 title: Seo Audit Checklist
 slug: seo-audit-checklist
-date: 2026-06-22
+date: 2026-06-23
 status: ready-to-review
 type: wiki-entry
 template: Definition
@@ -15,8 +15,8 @@ associated_keywords:
 
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-22T14:47:22.578Z
-content_sha256_short: 3d469c007903c9e6
+generated_at: 2026-06-23T08:51:27.267Z
+content_sha256_short: c8cedd95257975ae
 phase2_checks: all-pass
 ---
 
@@ -24,7 +24,7 @@ phase2_checks: all-pass
 
 ## What Is an SEO Audit Checklist?
 
-An SEO audit checklist is **a structured list of the technical, on-page, and off-page items you inspect on a site to find what is suppressing its rankings — and, done right, a sequence that tells you which of those items to fix first**. Almost every published checklist nails the first half and skips the second: it lists the items but groups them by category instead of by how much each one moves rankings. That ordering gap is the whole reason this guide exists.
+An SEO audit checklist is **a structured list of the technical, on-page, and off-page items you inspect on a site to find what is suppressing its rankings — and, done right, a sequence that tells you which of those items to fix first**. Most published checklists nail the first half and only gesture at the second: they list the items, usually grouped by category, and at best tell you to rank them by impact yourself rather than handing you a finished, site-specific order. That ordering gap is the whole reason this guide exists.
 
 - Inventories the full surface: crawlability, indexation, on-page signals, site speed, and backlinks
 - Should rank each item by ranking impact magnitude, not file it under a tidy category header
@@ -36,7 +36,7 @@ A practitioner who works a 50-item list top to bottom spends the same effort on 
 
 Time is the constraint a category-organized checklist quietly wastes. When items sit under "Technical," "On-Page," and "Off-Page" headers, you process them in reading order, and reading order has nothing to do with ranking impact. You can burn an hour normalizing trailing-slash redirects while a noindex tag on your money page goes unspotted until item 38.
 
-The pattern is consistent across the published field. Walk the 2026 SERP for this term and you find a 14-step audit from SpyFu, an advanced guide from Serpstat, a "50+ things we actually check" list from Shortlist, and a complete checklist with AI prompts from MarketingAid — all thorough, with the Shortlist one genuinely comprehensive. But comprehensive and prioritized are different attributes — none of them orders its items by ranking impact, so a buyer cannot tell from any of them what to fix on Monday morning.
+The pattern across the published field is mixed. Walk the 2026 SERP for this term and you find a 14-step audit from SpyFu, an advanced guide from Serpstat, a "50+ things we actually check" list from Shortlist, and a complete checklist with AI prompts from MarketingAid — all thorough. A few of the best, Shortlist's among them, do lead with crawlability and indexation and explicitly tell you to rank issues by impact and effort and fix the top few first, which is exactly the right instinct. But most checklists still present their items grouped by category, and even the prioritized ones stop at "rank by impact yourself" rather than handing you a finished, site-specific order — so a buyer reading a generic list cannot tell, without doing the triage by hand, what to fix on Monday morning.
 
 That distinction compounds for small teams. An agency auditing forty sites, or a startup with one marketer, does not have the hours to execute a 50-item SEO audit checklist on every property every quarter. What they need is the priority-first cut: the five or six items that, fixed, recover most of the lost rankings — the same triage discipline behind sustainable [organic SEO services](/en/blog/organic-seo-services). A checklist that forces equal attention on every item is, in practice, a checklist most teams abandon halfway through.
 
@@ -50,7 +50,7 @@ An agency cannot run 50 items across forty sites by hand each quarter. The SEO a
 
 ### The SaaS startup with one marketer
 
-A lone marketer running a technical SEO checklist needs to know what to fix before lunch, not what exists. If indexation is broken — a stray noindex, a robots.txt block, a canonical pointing at the wrong URL — nothing else on the list matters until it is fixed, because the page cannot rank at all. An impact-ordered audit puts those items at position one, where a generic [local SEO audit](/en/blog/local-seo-audit) template would file them halfway down under "Technical."
+A lone marketer running a technical SEO checklist needs to know what to fix before lunch, not what exists. If indexation is broken — a stray noindex directive, a canonical pointing at the wrong URL, or a robots.txt rule blocking the crawler from ever reading the page — nothing else on the list matters until it is fixed, because a page Google cannot index or read properly cannot rank on its own merits. (Note the distinction Google Search Central draws here: a noindex tag removes a page from the index, while a robots.txt disallow only blocks crawling — a robots.txt-blocked URL can still be indexed and surface in results if other sites link to it, which is its own audit problem.) An impact-ordered audit puts those items at position one, where a generic [local SEO audit](/en/blog/local-seo-audit) template would file them halfway down under "Technical."
 
 ### The in-house team inheriting a legacy site
 
@@ -69,7 +69,7 @@ Most wasted audit effort traces back to a few predictable misreads:
 
 | Audit area | Typical ranking impact | What category lists get wrong | What to check first |
 | --- | --- | --- | --- |
-| Indexation & crawlability | Highest — a blocked page ranks for nothing | Filed mid-list under "Technical" | Is the money page indexable right now? |
+| Indexation & crawlability | Highest — a non-indexed page ranks for nothing | Filed mid-list under "Technical" | Is the money page indexed and crawlable right now? |
 | Core on-page signals | High — titles, headings, intent match | Split across several category headers | Do top pages match search intent? |
 | Site speed & Core Web Vitals | Moderate — a tiebreaker, not a switch | Often listed first because it is easy to test | Are mobile LCP and CLS in the green? |
 | Internal linking | Moderate — distributes authority | Buried under "On-Page" near the end | Do top pages link to your targets? |
@@ -88,7 +88,7 @@ The discipline here mirrors choosing defensible channels: optimize for what comp
 
 ## How to Implement an SEO Audit Checklist Step by Step
 
-1. **Crawl and confirm indexation first.** Before anything else, verify your priority pages are indexable — no stray noindex, no robots.txt block, no wrong canonical. This is item one because a blocked page ranks for nothing, and Google Search Central is explicit that crawlability precedes every other signal.
+1. **Crawl and confirm indexation first.** Before anything else, verify your priority pages are both crawlable and indexable — no stray noindex directive, no wrong canonical, and no robots.txt rule blocking the crawler from reading the page. This is item one because Google Search Central is explicit that crawling and indexing precede serving: a page Google cannot index ranks for nothing, and a page Google cannot crawl never has its on-page signals read at all. (Worth knowing: a noindex tag is what actually keeps a URL out of the index — a robots.txt disallow only stops crawling, and a disallowed URL can still be indexed if it is linked from elsewhere.)
 2. **Match top pages to intent.** Pull your highest-traffic and highest-potential URLs and confirm the title, headings, and content answer the query they target. Intent mismatch caps a page no amount of technical polish can lift.
 3. **Triage Core Web Vitals on mobile.** Treat speed as a tiebreaker, not a switch. Fix the pages that fail mobile LCP or CLS and that already rank near the top, where the gain is real.
 4. **Audit internal links to your targets.** Confirm your strongest pages link to the URLs you want ranking. This is cheap, high-leverage, and almost always under-done.
@@ -129,8 +129,9 @@ List your own audit items, then re-sort them by ranking impact before you fix an
 
 ## Sources
 
-- Google Search Central — the public guidance that crawlability and indexation precede every other ranking signal, cited above on item one
-- SpyFu — the 14-step audit referenced above as a category-organized example
-- Serpstat — the advanced audit guide named above whose structure groups items by SEO category
-- Shortlist — the "50+ things we actually check" list cited above as comprehensive but not impact-ordered
-- MarketingAid — the complete checklist with AI prompts referenced above, organized by category rather than impact
+- Google Search Central, "In-Depth Guide to How Google Search Works" (developers.google.com/search/docs/fundamentals/how-search-works) — the public guidance that crawling and indexing precede serving, cited above on item one
+- Google Search Central, "Introduction to robots.txt" (developers.google.com/search/docs/crawling-indexing/robots/intro) — confirms robots.txt is not a reliable way to keep a page out of the index and that a disallowed URL can still be indexed if linked elsewhere; the noindex/robots.txt distinction cited above
+- SpyFu, "A 14-Step SEO Audit Checklist to Boost Your Rankings" (spyfu.com/blog/seo-audit/) — the 14-step audit referenced above as a category-organized example
+- Serpstat, "Advanced SEO Audit: A Complete Guide to All Stages of The Analysis" (serpstat.com/blog/seo-audit-guide/) — the advanced audit guide named above whose structure groups items by SEO category
+- Shortlist, "The Technical SEO Audit Checklist: 50+ things we actually check" (shortlist.io/blog/technical-seo-audit-checklist/) — the comprehensive list cited above that leads with crawlability/indexation and recommends ranking issues by impact and effort
+- MarketingAid, "Complete SEO Audit Checklist + AI Prompts" (marketingaid.io/complete-seo-audit-checklist-ai-prompts/) — the complete checklist with AI prompts referenced above, organized by category rather than impact

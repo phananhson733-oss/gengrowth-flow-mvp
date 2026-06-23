@@ -1,7 +1,7 @@
 ---
 title: Free Seo Consultation
 slug: free-seo-consultation
-date: 2026-06-22
+date: 2026-06-23
 status: ready-to-review
 type: wiki-entry
 template: Definition
@@ -15,8 +15,8 @@ associated_keywords:
 
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-22T14:45:27.385Z
-content_sha256_short: efe676258bbd4cd3
+generated_at: 2026-06-23T08:51:26.604Z
+content_sha256_short: 47fb6d537c6de61c
 phase2_checks: all-pass
 ---
 
@@ -36,7 +36,7 @@ A business owner searching for a free SEO consultation has usually been burned o
 
 The cost of a hollow free SEO consultation is not the hour you spend on the call. It is the false confidence afterward. You walk away believing you have been "looked at," deprioritize SEO for a quarter, and only later discover the audit named nothing your competitors were not already doing better. The wasted resource is attention, and attention is the one thing a small team cannot refund.
 
-That hollowness is structural, not accidental. Walk the 2026 SERP for the term and the pattern is uniform: PinkSEO, SF Media, Angry Apple Media, and IdeaHills all run their free consultation as a lead-generation funnel — the offer exists to capture an email and book a sales call, and the analysis is whatever templated audit the closer needs to justify a proposal. One result breaks the mold. Luca Tagliaferro explicitly markets "no sales pitch in the call, just free SEO strategy and consultation advice," which is the only listing that pre-commits to a non-sales experience — but it commits to a tone, not to deliverables. Semrush inverts the model entirely through its TechRadar deal, attaching a stated dollar value (a $300 consultation bundled with a PRO subscription) so the free offer reads as a discount rather than a giveaway.
+That hollowness is structural, not accidental. Walk the 2026 SERP for the term and the pattern is uniform: PinkSEO, SF Media, Angry Apple Media, and IdeaHills all run their free consultation as a lead-generation funnel — the offer exists to capture an email and book a sales call, and the analysis is whatever templated audit the closer needs to justify a proposal. One result breaks the mold: Luca Tagliaferro's listing explicitly promises the call carries no sales pitch, just free strategy advice — the only one that pre-commits to a non-sales experience, but it commits to a tone, not to deliverables. A different pattern shows up in vendor promotions that attach a headline dollar value to a "free" call and then condition it on a paid purchase, so the offer reads as a discount on a subscription rather than a genuinely free standalone consultation. Either way, the dollar figure tells you nothing about what the call commits to deliver.
 
 The honest version of a free SEO consultation should give back time, not just absorb it. A good call hands you a starting backlog: the two or three fixes worth doing this month whether you hire anyone or not. That is the same compounding logic behind [organic SEO services](/en/blog/organic-seo-services) — the value is in the prioritized list of what moves rankings, not in the slide that lists every issue equally. A consultation that returns a 90-item checklist has automated the wrong thing; it has produced volume where you needed a decision.
 
@@ -125,5 +125,4 @@ Before you book any free SEO consultation, write down the one question you need 
 ## Sources
 
 - PinkSEO, SF Media, Angry Apple Media, and IdeaHills — the SERP listings named above whose free consultations run as lead-generation funnels
-- Luca Tagliaferro — the one result cited above that pre-commits to a non-sales call ("no sales pitch in the call, just free SEO strategy and consultation advice")
-- Semrush — the TechRadar deal referenced above that attaches a stated dollar value to its consultation offer
+- Luca Tagliaferro's pricing/booking page (lucatagliaferro.com/pricing) — the consultation listing cited above that pre-commits to a non-sales call

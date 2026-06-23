@@ -45,5 +45,7 @@ if [ -z "$SB_KEY" ]; then
 fi
 export SB_KEY
 
-node "$SCRIPT_DIR/gg-gengrowth-publish.mjs" --apply >> "$LOG" 2>&1
+# Serial cadence (parity with Lane B): publish at most N per hourly tick so a backlog
+# drip-feeds instead of dumping all at once. Override via GG_GENGROWTH_PUBLISH_LIMIT.
+node "$SCRIPT_DIR/gg-gengrowth-publish.mjs" --apply --limit "${GG_GENGROWTH_PUBLISH_LIMIT:-1}" >> "$LOG" 2>&1
 echo "$(date '+%F %T') gengrowth-publish tick end (rc=$?)" >> "$LOG"

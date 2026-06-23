@@ -15,8 +15,8 @@ associated_keywords:
 
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-23T08:54:31.903Z
-content_sha256_short: 4f4b0cd779c73e14
+generated_at: 2026-06-23T09:08:14.280Z
+content_sha256_short: de9b407572df275f
 phase2_checks: all-pass
 ---
 
@@ -52,7 +52,7 @@ Free white-label reporting differs from in-house reporting because the tool does
 2. **Monthly recurring report.** You schedule a recurring audit so each client gets a consistent branded update, which is where free-tier export caps (often PDF-only) start to pinch.
 3. **Pitch and proposal.** You generate a sample audit during a sales call to show prospects what they are missing, and any visible vendor credit here costs you credibility in the exact moment trust is forming.
 
-The step that decides everything is the handoff: whether the finished report carries your brand alone or quietly carries the vendor's too. A tool like MetricSpot offers a genuinely useful permanent free plan, but on that free tier the exported PDF carries MetricSpot's own branding that a client can see, which moves the report from "ours" to "outsourced" in one glance; removing it is a paid step. Others, like SEOptimer, do not run a permanent free plan at all — only a 14-day free trial plus a no-account instant audit on their own site — so a "free" branded report is not really on the table, and reaching white-label output means a paid plan from day one. Free tiers also tend to restrict accounts to PDF exports rather than a live portal, so the format a client gets is decided for you rather than by you.
+The step that decides everything is the handoff: whether the finished report carries your brand alone or quietly carries the vendor's too. A tool like MetricSpot offers a genuinely useful permanent free plan, but on that free tier the exported PDF carries MetricSpot's own branding that a client can see, which moves the report from "ours" to "outsourced" in one glance; removing it is a paid step. Others, like SEOptimer, offer a 14-day free trial of their white-label reporting rather than a permanent free plan, so the branded output is fully available during the trial but moves to a paid plan once the trial ends. Free tiers also tend to restrict accounts to PDF exports rather than a live portal, so the format a client gets is decided for you rather than by you.
 
 A clean version of this workflow keeps the vendor invisible at every touchpoint. The audit data comes from the tool, but the report header, the sending address, and the follow-up conversation all read as the agency. Where rollouts break is rarely the data quality; it is the seam where a free tier's defaults leak the vendor's identity into a document the client was told the agency produced. Mapping those seams before the first send is what separates a smooth handoff from an awkward one.
 

@@ -15,8 +15,8 @@ associated_keywords:
 
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-23T08:54:28.305Z
-content_sha256_short: c017c60f5aeb0bc7
+generated_at: 2026-06-23T09:08:00.006Z
+content_sha256_short: 2f2fc2d932ab0968
 phase2_checks: all-pass
 ---
 
@@ -71,7 +71,7 @@ Most disappointment with the "all in one seo" search traces back to a few predic
 | --- | --- | --- | --- |
 | Rank tracking | Tracks every client domain in one view | Only covers WordPress installs it runs on | Does it track domains on any stack, not just WordPress? |
 | Technical audit | Scheduled crawls across all properties | Audits only the WordPress sites it is installed on | Can it crawl non-WordPress clients? |
-| Content gap analysis | Compares your pages to competitors | No competitor or cross-site comparison | Does it surface gaps against real SERP rivals? |
+| Content gap analysis | Compares your pages to competitors | Tied to the single site it runs on, not a cross-site view | Does it surface gaps against real SERP rivals? |
 | Client reporting | One scheduled, multi-property report | Limited to WordPress, even on multisite tiers | Does it assemble reports across all accounts? |
 | Onboarding a new client | Add a domain, no CMS install needed | Requires a plugin install per site | Is setup a domain entry or a plugin deploy? |
 

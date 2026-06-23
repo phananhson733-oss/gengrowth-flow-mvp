@@ -27,7 +27,7 @@ phase2_checks: all-pass
 
 ## What Is Jeremy Doku's Birth Chart?
 
-Jeremy Doku's birth chart is the snapshot of the sky at the moment he was born on May 27, 2002, in Antwerp, Belgium, read most often as **a Gemini Sun, Venus-in-Cancer portrait of a present-tense competitor**. The Jeremy Doku birth chart pairs a quick, curious Gemini Sun with Venus in Cancer, where affection roots in home and family, then places Mars at the anaretic 29th degree of Gemini — right on the cusp of Cancer, a charged finishing point that the wider [[<TBD-internal-link: pillar page on World Cup 2026 player birth charts>]] helps put in context.
+Jeremy Doku's birth chart is the snapshot of the sky at the moment he was born on May 27, 2002, in Antwerp, Belgium, read most often as **a Gemini Sun, Venus-in-Cancer portrait of a present-tense competitor**. The Jeremy Doku birth chart pairs a quick, curious Gemini Sun with Venus in Cancer, where affection roots in home and family, then places Mars at the anaretic 29th degree of Gemini — right on the cusp of Cancer, a charged finishing point that the wider [guide to World Cup 2026 player birth charts](/en/wiki/world-cup-2026-astrology-prediction) helps put in context.
 
 - A Gemini Sun that leans toward immediate, lived connection over abstract long-game narrative
 - Venus in Cancer, rooting what he values in home, family, and emotional security
@@ -49,13 +49,13 @@ The easiest mix-up in the Jeremy Doku birth chart is treating his Gemini Sun as 
 
 ### How the Two Placements Actually Work
 
-Venus in Cancer functions as attachment: it wants closeness, safety, and the people it loves within reach. Cancer is the sign astrology ties most directly to home, family, and roots, so a Venus here tends to rank being present for family above nearly anything competing for the same hours. It is the quiet value underneath the louder Gemini surface, the layer most fans miss first, much like the contrast mapped in [[<TBD-internal-link: comparison of Sun sign and Venus sign roles>]].
+Venus in Cancer functions as attachment: it wants closeness, safety, and the people it loves within reach. Cancer is the sign astrology ties most directly to home, family, and roots, so a Venus here tends to rank being present for family above nearly anything competing for the same hours. It is the quiet value underneath the louder Gemini surface, the layer most fans miss first, much like what a reading of [Venus by sign](/en/wiki/venus) brings into focus.
 
 The Gemini Sun functions differently. It prioritizes the immediate, lived connection in the room he is standing in over the abstract story other people want to tell about him. Pair that present-tense Sun with a Venus that roots in family, and planning to choose the delivery room over a tournament match stops looking inconsistent — it looks like both placements wanting the same thing.
 
 ### Where the Trade-Off Shows Up
 
-Read together, the decision is not an ego move and not a betrayal of duty; it is the Gemini Sun and Venus in Cancer valuing the same thing — lived presence with the people who matter most. The timing sharpened the effect. According to NASA, the June solstice falls around June 21 each year, the same window the tropical zodiac marks the Sun's shift out of Gemini and into Cancer, a sign associated with home, family, and roots — the very sign his natal Venus already occupies, and the one his anaretic Mars sits poised to enter. The controversy landing on Father's Day weekend, right as that seasonal turn toward home themes arrived, is why the moment felt so on-cue to readers tracking the [[<TBD-internal-link: guide to 2026 transit events and the Sun's move into Cancer>]].
+Read together, the decision is not an ego move and not a betrayal of duty; it is the Gemini Sun and Venus in Cancer valuing the same thing — lived presence with the people who matter most. The timing sharpened the effect. According to NASA, the June solstice falls around June 21 each year, the same window the tropical zodiac marks the Sun's shift out of Gemini and into Cancer, a sign associated with home, family, and roots — the very sign his natal Venus already occupies, and the one his anaretic Mars sits poised to enter. The controversy landing on Father's Day weekend, right as that seasonal turn toward home themes arrived, is why the moment felt so on-cue to readers tracking the [June 2026 planetary transits](/en/wiki/june-2026-planetary-transits).
 
 ## How to Read a Gemini Sun and Anaretic Mars in a Chart
 
@@ -111,9 +111,9 @@ Astrologically it is a lens, not a prediction, and this reading makes no claim a
 
 ## Related Reading
 
-- [[<TBD-internal-link: explainer on Gemini Sun traits and motivation>]] — unpacks the sign driving this whole chart in more depth.
-- [[<TBD-internal-link: guide to anaretic and critical degrees in astrology>]] — explains why a 29th-degree planet behaves the way Doku's Mars does.
-- [[<TBD-internal-link: overview of Venus in Cancer and what it values>]] — covers the home-and-family layer underneath the Gemini surface.
+- [Gemini sign traits](/en/wiki/gemini) — unpacks the sign driving this whole chart in more depth.
+- [Astrology terms and chart degrees](/en/wiki/astrology-terms) — explains why a 29th-degree planet behaves the way Doku's Mars does.
+- [The Cancer sign](/en/wiki/cancer) — covers the home-and-family layer underneath the Gemini surface.
 
 ## Take Action
 

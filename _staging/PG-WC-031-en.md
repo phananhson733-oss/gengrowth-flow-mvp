@@ -43,7 +43,7 @@ When Doku announced he would leave the Belgium camp to be present for the birth 
 
 In twelve years of integrating psychological frameworks with evolutionary astrology, I've found that a choice like this rarely reflects indecision. It usually reflects a chart whose core value system was never actually in conflict, even when everyone watching assumed it had to be.
 
-## Gemini Sun vs Leo Rising: Which Side Drove the Exit
+## Gemini Sun vs Leo Rising: Which Side Drives the Decision
 
 The easiest mix-up in the Jeremy Doku birth chart is treating his Leo Rising as the engine when the Gemini Sun is actually steering, read in the integrated lineage Robert Hand and Liz Greene helped establish, where no single placement is the whole person.
 
@@ -51,11 +51,11 @@ The easiest mix-up in the Jeremy Doku birth chart is treating his Leo Rising as 
 
 Leo Rising functions as performance: it wants the gesture to land, the crowd to feel it, the moment to look good. To get that magnetic stage presence, you sacrifice some privacy — a Leo Rising is read in public, which is part of why the umbilical-cord jab stung in such a public way and traveled so fast. It is the entrance and the mask, the layer most people meet first, much like the contrast mapped in [[<TBD-internal-link: comparison of Sun sign and rising sign roles>]].
 
-The Gemini Sun functions differently. It prioritizes the immediate, lived connection in the room he is standing in over the abstract story other people want to tell about him. To get that authenticity of presence, you sacrifice the clean narrative — choosing the delivery room over the tournament looks inconsistent only if you expected the Leo mask to be the whole man.
+The Gemini Sun functions differently. It prioritizes the immediate, lived connection in the room he is standing in over the abstract story other people want to tell about him. To get that authenticity of presence, you sacrifice the clean narrative — planning to choose the delivery room over a tournament match looks inconsistent only if you expected the Leo mask to be the whole man.
 
 ### Where the Trade-Off Shows Up
 
-Read together, the exit is not a Leo ego move and not a betrayal of duty; it is the Gemini Sun doing the thing it values most while the Leo Rising simply made the choice visible. The timing sharpened the effect. According to NASA, the June solstice falls around June 21 each year, the same window the tropical zodiac marks the Sun's shift out of Gemini and into Cancer, a sign associated with home, family, and roots. Doku's exit landing on Father's Day weekend, right as that seasonal turn toward home themes arrived, is why the moment felt so on-cue to readers tracking the [[<TBD-internal-link: guide to 2026 transit events and the Sun's move into Cancer>]].
+Read together, the decision is not a Leo ego move and not a betrayal of duty; it is the Gemini Sun doing the thing it values most while the Leo Rising simply made the choice visible. The timing sharpened the effect. According to NASA, the June solstice falls around June 21 each year, the same window the tropical zodiac marks the Sun's shift out of Gemini and into Cancer, a sign associated with home, family, and roots. The controversy landing on Father's Day weekend, right as that seasonal turn toward home themes arrived, is why the moment felt so on-cue to readers tracking the [[<TBD-internal-link: guide to 2026 transit events and the Sun's move into Cancer>]].
 
 ## How to Read a Gemini Sun and Anaretic Mars in a Chart
 

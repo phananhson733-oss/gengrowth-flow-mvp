@@ -117,8 +117,9 @@ List your own audit items, then re-sort them by ranking impact before you fix an
 
 ## Sources
 
-- Google Search Central — the public guidance that crawlability and indexation precede every other ranking signal, cited above on item one
-- SpyFu — the 14-step audit referenced above as a category-organized example
-- Serpstat — the advanced audit guide named above whose structure groups items by SEO category
-- Shortlist — the "50+ things we actually check" list cited above as comprehensive but not impact-ordered
-- MarketingAid — the complete checklist with AI prompts referenced above, organized by category rather than impact
+- Google Search Central, "In-Depth Guide to How Google Search Works" (developers.google.com/search/docs/fundamentals/how-search-works) — the public guidance that crawling and indexing precede serving, cited above on item one
+- Google Search Central, "Introduction to robots.txt" (developers.google.com/search/docs/crawling-indexing/robots/intro) — confirms robots.txt is not a mechanism for keeping a page out of the index and that a disallowed URL can still be indexed if linked elsewhere; the noindex/robots.txt distinction cited above
+- SpyFu, "A 14-Step SEO Audit Checklist to Boost Your Rankings" (spyfu.com/blog/seo-audit/) — the 14-step audit referenced above as a category-organized example
+- Serpstat, "Advanced SEO Audit: A Complete Guide to All Stages of The Analysis" (serpstat.com/blog/seo-audit-guide/) — the advanced audit guide named above whose structure groups items by SEO category
+- Shortlist, "The Technical SEO Audit Checklist: 50+ things we actually check" (shortlist.io/blog/technical-seo-audit-checklist/) — the list cited above as comprehensive but not impact-ordered
+- MarketingAid, "Complete SEO Audit Checklist + AI Prompts" (marketingaid.io/complete-seo-audit-checklist-ai-prompts/) — the complete checklist with AI prompts referenced above, organized by category rather than impact

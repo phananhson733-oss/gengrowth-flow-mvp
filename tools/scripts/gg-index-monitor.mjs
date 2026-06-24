@@ -388,9 +388,9 @@ function mergeRecapRow(existing = {}, fresh = {}) {
     page_id: existing.page_id || fresh.page_id || '',
     cluster_id: existing.cluster_id || fresh.cluster_id || '',
     url: fresh.url || existing.url || '',
-    'day14_收录': fresh['day14_收录'] || existing['day14_收录'] || '',
-    '索引修复状态': fresh['索引修复状态'] || existing['索引修复状态'] || '',
-    '记录日期': fresh['记录日期'] || existing['记录日期'] || '',
+    'day14_收录': Object.hasOwn(fresh, 'day14_收录') ? fresh['day14_收录'] : existing['day14_收录'] || '',
+    '索引修复状态': Object.hasOwn(fresh, '索引修复状态') ? fresh['索引修复状态'] : existing['索引修复状态'] || '',
+    '记录日期': Object.hasOwn(fresh, '记录日期') ? fresh['记录日期'] : existing['记录日期'] || '',
     '备注': existing['备注'] || fresh['备注'] || '',
   };
 }

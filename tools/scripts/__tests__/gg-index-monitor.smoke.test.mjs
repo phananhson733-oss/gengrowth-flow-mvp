@@ -462,6 +462,40 @@ test('runIndexMonitor --sync-recap upserts final presentation rows from staging 
   assert.equal(appended[0].day14_收录, 'N');
 });
 
+test('runIndexMonitor --sync-recap clears stale recap indexing flags until GSC evidence exists', async () => {
+  let updated = null;
+  const code = await runIndexMonitor(['--sync-recap', '--write-sheet', '--workbook', 'wb-test'], {
+    now: new Date('2026-06-25T00:00:00Z'),
+    sheetToken: 'sheet-token',
+    readTrackingRows: async () => [{
+      url: 'https://www.astrologywiki.com/en/wiki/pending-live',
+      page_id: 'PG-PENDING',
+      current_gsc_status: 'pending_first_check',
+      monitor_status: 'monitoring',
+      source: 'live-sitemap',
+    }],
+    readRecapRows: async () => [{
+      _rowNumber: 12,
+      outcome_id: 'out_PG-PENDING_latest',
+      page_id: 'PG-PENDING',
+      url: 'https://www.astrologywiki.com/en/wiki/pending-live',
+      day14_收录: 'Y',
+      索引修复状态: '已收录',
+      备注: 'manual note stays',
+    }],
+    updateRecapRow: async (token, workbookId, tabName, rowNumber, row) => {
+      updated = { token, workbookId, tabName, rowNumber, row };
+    },
+    appendRecapRows: async () => {},
+  });
+
+  assert.equal(code, 0);
+  assert.equal(updated.rowNumber, 12);
+  assert.equal(updated.row.day14_收录, '');
+  assert.equal(updated.row.索引修复状态, '待GSC检查');
+  assert.equal(updated.row.备注, 'manual note stays');
+});
+
 test('runIndexMonitor --check-due skips GSC token when no rows are due', async () => {
   let readArgs = null;
   const code = await runIndexMonitor(['--check-due', '--workbook', 'wb-test'], {

@@ -18,8 +18,8 @@ associated_keywords:
   - mariah carey moon sign
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-24T13:10:31.086Z
-content_sha256_short: ff373bb5e184d375
+generated_at: 2026-06-24T13:11:33.474Z
+content_sha256_short: 8284aaabc34d3d37
 phase2_checks: all-pass
 ---
 
@@ -65,7 +65,7 @@ The Mariah Carey zodiac sign attracts a few persistent misreadings, and each one
 
 1. **"She's a diva purely because she's an Aries."** The misread treats Aries as the whole story. In reality the assertive vocal command is Aries, but the guardedness around it comes from the private Cancer Moon.
 2. **"Aries means she's openly combative."** The label assumes fire always means confrontation. Her chart channels that fire into perfectionism and behind-the-scenes control instead of public fights.
-3. **"Her Sun sign tells you everything."** A Sun sign names a direction, not a finished personality. The Cancer Moon and 12th-house cluster modulate the Aries drive in ways the Sun alone cannot show.
+3. **"Her Sun sign tells you everything."** A Sun sign names a direction, not a finished personality. The Cancer Moon modulates the Aries drive in ways the Sun alone cannot show.
 
 ## The Mariah Carey Zodiac Sign at a Glance
 

@@ -1,17 +1,17 @@
 {
   "schema_version": "1",
-  "page_id": "page_emma_watson_zodiac_sign",
-  "entity": "Emma Watson",
+  "page_id": "PG-CELEB-001",
+  "entity": "emma watson zodiac sign",
   "target_keyword": "emma watson zodiac sign",
   "template": "Definition",
   "tier": "T2",
   "track": "量产线",
   "generated_by": "unknown",
   "prompt_version": "v8",
-  "generated_at": "2026-06-24T11:53:43.458Z",
+  "generated_at": "2026-06-24T11:54:58.299Z",
   "content_sha256_short": "7f3821719690c91b",
-  "source_path": "/tmp/emma-watson-zodiac-fix-en.md",
-  "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/page_emma_watson_zodiac_sign-en.md",
+  "source_path": "_staging/PG-CELEB-001-repair-candidate.md",
+  "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-CELEB-001-en.md",
   "phase2_checks": {
     "overall": "pass",
     "structure": {

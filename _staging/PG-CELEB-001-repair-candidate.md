@@ -1,25 +1,3 @@
----
-title: Emma Watson Zodiac Sign
-slug: emma-watson-zodiac-sign
-date: 2026-06-24
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T2
-track: 量产线
-page_id: page_emma_watson_zodiac_sign
-author_id: "marcus-orion"
-author_display_name: "Marcus Orion"
-target_keyword: emma watson zodiac sign
-associated_keywords:
-
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-06-24T11:53:43.458Z
-content_sha256_short: 7f3821719690c91b
-phase2_checks: all-pass
----
-
 # Emma Watson's Zodiac Sign and the Calm-Activist Paradox
 
 ## What Is Emma Watson's Zodiac Sign?

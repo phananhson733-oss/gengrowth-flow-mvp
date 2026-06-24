@@ -1,28 +1,3 @@
----
-title: Bukayo Saka Zodiac Sign
-slug: bukayo-saka-zodiac-sign
-date: 2026-06-24
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T2
-track: 量产线
-page_id: PG-WC-034
-author_id: "marcus-orion"
-author_display_name: "Marcus Orion"
-target_keyword: bukayo saka zodiac sign
-associated_keywords:
-  - bukayo saka star sign
-  - bukayo saka astrology
-  - bukayo saka virgo
-  - saka england zodiac
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-06-24T06:19:55.131Z
-content_sha256_short: ee9c23284da83d88
-phase2_checks: all-pass
----
-
 # 萨卡的星座：一名精准又无畏边锋的盘面密码
 
 ## 萨卡的星座是什么？

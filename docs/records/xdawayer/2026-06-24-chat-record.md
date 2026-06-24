@@ -1030,3 +1030,33 @@ Generate your free birth chart to explore the Luka Modric zodiac sign and see ho
 完成 Phase 1 索引发现与监控自动化落地：在真实需求 Sheet 创建/校正 `index-tracking` 表头；补充 `gg-index-monitor.mjs` 的 `--ensure-tab`、发布后入队、D+3/D+7/D+14/D+21/D+30 URL Inspection 监控分类与告警逻辑；停用普通文章的 Google Indexing API 路径；安装并加载 `com.gengrowth.index-monitor` LaunchAgent，每日 09:00 运行。验证包括：`gg-index-monitor` smoke 14/14、`gg-seo-autopilot` smoke 13/13、`lib-gg-shared` smoke 84/84、wrapper `bash -n` 与 plist lint、真实 Sheet dry-run `rows=0 due=0`、wrapper 手动运行日志正常。当前上线前阻塞项：GSC user OAuth refresh token 已过期，需运行 `node tools/scripts/oauth-init.mjs` 重新授权后，未来有 due URL 时才能实际调用 URL Inspection。
 
 ---
+
+### Q9 — 15:16
+
+**🙋 提问：**
+
+```text
+用户要求以 AstrologyWiki 中文内容编辑身份，基于 PG-WC-033 / `bruno-fernandes-zodiac-sign` 已通过英文 Phase 2 的成稿，产出可直接进入中文 Phase 2 的简体中文 Markdown 正文。硬性要求包括：无 YAML、中文 H1/H2、11 个中文 H2 骨架、第一节为 `<中文主词> 是什么？` 且首段含加粗定义短语并紧跟 3 个 bullet、第二节标题逐字为 `为什么了解它能帮助自我觉察`、第三节标题为 `<中文主词> 与相近概念：运作方式 + 取舍`、第四节用“识别”、第五到第十一节依次覆盖常见误读/速查表/常见问题/自我觉察小提示/延伸阅读/下一步行动/参考来源、至少 5 条中文 `[[<TBD-internal-link: ...>]]` 内链、主中文关键词出现 5-8 次、参考来源权威名需先在正文具名、避免医疗承诺和广告禁词、CTA 指向 `https://astrologywiki.com/zh/wiki/how-to-read-birth-chart`、结尾保留“不是临床解读或心理健康建议”的中文免责声明。
+
+用户同时给出上一稿自动校验失败项：SC8 CTA 链接目标不一致；《广告法》禁词“最佳”命中；多个小节 RL4 漂移，包括“为什么了解它能帮助自我觉察”、“布鲁诺·费尔南德斯星座与相近概念：运作方式 + 取舍”、“如何在你的星盘里识别布鲁诺·费尔南德斯星座”、“常见误读”、“下一步行动”。补救要求为保持中文、不回退英文标题；在漂移小节自然补回主中文关键词；避免关键词堆砌；使用象征/反思/传统关联表达；以英文稿结构为准小修，不整篇推倒重写。
+```
+
+**🤖 回答：**
+
+根据本地 fixture 确认中文锚点为 `布鲁诺费尔南德斯星座`，产出修正版中文 Markdown 正文：H1 使用该关键词，11 个 H2 按用户指定顺序组织；在被点名小节自然补回关键词或核心 token，主关键词精确出现 8 次；CTA 使用 `https://astrologywiki.com/zh/wiki/how-to-read-birth-chart`；避开“最佳/承诺/保证/改命/改运”等禁词；保留 Dane Rudhyar、Liz Greene、Pew Research Center 并在正文先具名。执行不落盘 Node 自检：H1=1、H2=11、主关键词=8、中文内链=7、无 `/en/` CTA、禁词未命中；关键结构检查、CTA、FAQ、表格、RL1Zh/RL2Zh/RL4/RL5/RL6Zh/RL7Zh/RL8Zh/RL10Zh 均通过。
+
+---
+
+### Q10 — 15:23
+
+**🙋 提问：**
+
+```text
+继续执行 active goal：goal 开始执行 Phase 1
+```
+
+**🤖 回答：**
+
+继续按需求文档审计 Phase 1 当前状态，并补强两个运行细节：将 `Alternate page with proper canonical tag` 归为正常 canonical，不再误报；D+30 未解决页面升级为 `needs_focus` 并刷新升级告警；定时 wrapper 增加 `--require-gsc-auth`，在已有 tracking 行但尚未 due 时也预检 GSC 授权，避免 OAuth 过期沉默到检查日。验证：`gg-index-monitor` smoke 18/18、`gg-seo-autopilot` smoke 13/13、`lib-gg-shared` smoke 84/84、wrapper/plist lint 通过；真实 Sheet 已有 `PG-WC-032` tracking 行；wrapper 手动运行明确暴露 OAuth 过期。代码经自动 `vault backup` 提交到 `4c312fe` 并同步到 `origin/main`。当前仍需账号本人运行 `node tools/scripts/oauth-init.mjs` 重新授权。
+
+---

@@ -1261,3 +1261,171 @@ Generate your free birth chart to explore the Bruno Fernandes zodiac sign, and r
 检查 fresh runtime 状态：`launchctl print` 显示 `com.gengrowth.index-monitor` 已执行 1 次且 `last exit code = 0`；当天 index monitor 日志从 15:22 的 `refresh_token rejected` 变为 15:40 的 `rows=1 due=0`、`no due URLs`、`index monitor ok`。运行 `verify-gcp-oauth.mjs` 后确认 Sheets read、GSC searchAnalytics、GA4 Data API 通过，唯一失败为通用测试范围 `Test!A1` 不存在导致的 400；再直接运行 `gg-index-monitor.mjs --ensure-tab --write-sheet` 与 `--check-due --write-sheet --require-gsc-auth`，输出 `ensured index-tracking`、`rows=1 due=0 mode=write-sheet`、`no due URLs`。结论：Phase 1 当前监控入口已恢复运行；但 Google OAuth 仍处于 Testing 模式，refresh_token 7 天过期的长期边界仍需后续处理。
 
 ---
+
+### Q15 — 15:44
+
+**🙋 提问：**
+
+````text
+# Role
+你是 AstrologyWiki 的中文内容编辑。你的任务不是逐句翻译，而是基于一篇已经通过英文 Phase 2 的成稿，产出一篇可直接进入中文 Phase 2 的简体中文版本。
+
+# Hard requirements
+- 输出纯 Markdown 正文，不要 YAML frontmatter，不要解释过程。
+- 不要沿用英文 H2 文案；必须把英文语义改写进中文 Phase 2 认可的 11 个 H2 骨架。
+- H1 必须是自然中文标题；正文与 H2 全部用简体中文。
+- 第一部分必须用 `## <你选定的中文主词> 是什么？` 开头；首段里要有 1 个**加粗定义短语**，随后**紧跟正好 3 个 bullet**。
+- 第二部分 H2 必须逐字写成 `## 为什么了解它能帮助自我觉察`。
+- 第三部分 H2 必须写成 `## <你选定的中文主词> 与相近概念：运作方式 + 取舍`，每个对比都要写出明确取舍。
+- 第四部分必须用“识别”而不是“阅读/判断”作 H2 动词：星盘/宫位/行运类主题用 `## 如何在你的星盘里识别 <你选定的中文主词>`；其他主题用 `## 如何在自己身上识别 <你选定的中文主词>`。
+- 第五到第十一部分依次必须覆盖：常见误读、速查表/一览、常见问题/问答、自我觉察小提示、延伸阅读、下一步行动、参考来源。
+- `## 自我觉察小提示` 标题后第一行必须直接开始 `1.` / `2.` / `3.` 三条编号提示，不能先写引导段。
+- 至少放入 5 条 `[[<TBD-internal-link: ...>]]` 中文内链占位符；不要输出 0 条内链。
+- 主中文关键词全篇总出现次数控制在 5-8 次之间；不要在每个 H2 都机械重复，能用“它 / 这个主题 / 这张盘 / 该相位”等代词时就改写。
+- `参考来源` 里出现的权威名，正文里必须先具名提到；不要在 Sources 里新增正文没出现过的人名或条目。
+- 保留反思性 / 象征性语气，禁止诊断、治疗、治愈、改善病症等医疗承诺。
+- 明确避开广告/承诺词：不要写 承诺 / 保证 / 立刻见效 / 改命 / 改运 / 疗愈创伤 / 修复焦虑 这类表述。
+- 结尾必须保留免责声明，用中文表达“这不是临床解读或心理健康建议”。
+- 将 CTA 改写为中文，并指向 https://astrologywiki.com/zh/wiki/how-to-read-birth-chart 。
+- 如原文出现 astrologywiki.com/en/ 内链或 CTA，请改成 /zh/ 对应路径；拿不准时只保留 CTA 这一个确定链接。
+- 不要照搬英文句子；允许为中文读者做自然重写，但核心含义必须忠于英文稿。
+- 不要输出 TODO、占位符、方括号备注或英文审校说明。
+- 自行选择一个自然的中文主关键词，并在 H1 与正文主体里稳定复用，避免同义改写过度导致锚点漂移。
+
+# Metadata
+- page_id: PG-MYTH-009
+- slug: rhaenyra-targaryen-zodiac-sign
+- author_id: elena-vane
+- target_keyword_en: rhaenyra targaryen zodiac sign
+- entity: rhaenyra targaryen zodiac sign
+- template: Definition
+- tier: T2
+- track: 量产线
+- associated_keywords_en: rhaenyra zodiac, rhaenyra targaryen astrology, house of the dragon zodiac, rhaenyra scorpio
+
+# Source English article (semantic source of truth, not heading template)
+
+# Why the Rhaenyra Targaryen Zodiac Sign Reads as Scorpio, Not Fire
+
+## What Is the Rhaenyra Targaryen Zodiac Sign?
+
+The Rhaenyra Targaryen zodiac sign is the astrological profile fans assign to House of the Dragon's heir based on how she behaves on screen, not a canon birth date. Because she is fictional, her sign is **a Scorpio reading built from behavior, not a birthday**. When you pattern-match her choices to the zodiac, they land on fixed water: an obsession with power, a long memory for betrayal, and growth that only arrives through crisis.
+
+- Assigned by behavioral pattern-matching, since no in-world birth date exists
+- Leads with power obsession and survival calculus rather than open displays of fire
+- Assigned different signs across fan sites — Sagittarius, Taurus, Aries, and Aquarius all appear — with a strong behavioral case for Scorpio
+
+The same behavior-first method drives other character reads, like our [[<TBD-internal-link: toy story 5 zodiac signs>]] breakdown, which translates a sign into observable behavior instead of vague vibes.
+
+## Why It Matters for Self-Awareness
+
+Understanding the Rhaenyra Targaryen zodiac sign matters because the fan debate gets stuck on the wrong clue. People see dragons, fire, and a claim to a fiery throne, and they jump straight to Aries or Leo. That guess feels obvious, which is exactly why it misleads. Her fire imagery is set dressing; the engine underneath is a quiet, calculated survival instinct that watches, waits, and remembers.
+
+In my own years reading energy and behavioral patterns, the figures that stay with people are the ones whose choices repeat under pressure — and Rhaenyra's repeat with unsettling consistency. She holds grudges across decades. She tests loyalty before she trusts it. She would rather control the room's hidden currents than burn it down in the open. When you use a character as a mirror, mislabeling that pattern as "fiery and impulsive" hands you the wrong lesson about your own restraint, your own slow-burning resolve, and the way you protect what is yours. Reading her as Scorpio keeps the focus where the story actually puts it.
+
+That correction is not academic. Once you label the pattern correctly, you can borrow it on purpose — the patience that waits for a real opening, the memory that refuses to repeat an old mistake, the resolve that hardens rather than flares. Those are learnable habits, and they read as Scorpio every time. For more on the fixed-water depth this read leans on, see [[<TBD-internal-link: north node in scorpio>]].
+
+## Scorpio vs Taurus: Which Fixed Sign Actually Fits Rhaenyra
+
+Fans and astrology writers don't actually agree on her sign — Sagittarius, Taurus, Aries, and Aquarius all get floated, and a few sites even pin Scorpio on Mysaria rather than Rhaenyra. Set the fire-sign guesses aside, though, and the most revealing contest is Scorpio versus Taurus, two fixed signs that look similar from a distance. Both are stubborn, both endure, and both refuse to let go. The difference is what each one refuses to let go of, and that distinction decides the read.
+
+1. **How Taurus works.** Taurus filters everything through territory and resources. It claims what is rightfully hers and digs in. Reading Rhaenyra as Taurus highlights her birthright, her patience, and her refusal to surrender the crown. To get that grounded, immovable endurance, you sacrifice the psychological edge — Taurus does not explain her appetite for leverage over people.
+2. **How Scorpio works.** Scorpio filters through power dynamics and emotional control. It is less interested in owning the land than in owning the loyalty of everyone standing on it. To get that precision about manipulation, secrecy, and survival-at-any-cost, you give up the simpler "she just wants her property back" reading.
+3. **The trade-off in one line.** Choosing Taurus gets you a story about controlling resources; choosing Scorpio gets you a story about controlling people. Across the series, Rhaenyra does the second far more than the first.
+
+Because both are fixed signs, this is a debate about focus, not about elements. That is why the popular Aries and Leo guesses, for all their screen-logic, argue the wrong axis.
+
+## How to Read the Rhaenyra Targaryen Zodiac Sign in Her Arc
+
+The Rhaenyra Targaryen zodiac sign becomes clearer once you stop watching for dragons and start watching for behavior. A few repeatable signals give the Scorpio read away:
+
+1. **She plans for betrayal before it happens.** She reads threats early and positions herself quietly, which is classic fixed-water survival instinct.
+2. **She weaponizes loyalty.** She tests who is truly with her, then leans on those bonds as leverage rather than open force.
+3. **She transforms through loss, not triumph.** Every major shift in her comes after grief or treachery, the Scorpio pattern of growth through crisis.
+4. **She keeps her real intentions submerged.** What she says in council rarely matches the full calculation underneath.
+5. **She holds the long grudge.** Slights from years earlier still steer her decisions, a hallmark of the sign's deep memory.
+
+Spot two or three of these in a scene and you are watching Scorpio behavior, regardless of how much fire is on the screen. None of these signals depends on her dragons or her title; strip those away and the same calculating, self-protective pattern remains, which is exactly why the water read holds up.
+
+## Common Misreadings
+
+Most quick takes online stumble on the same two or three places, and they are exactly what sends searchers looking for a clearer answer.
+
+1. **"Fire on screen means a fire sign."** The misread: dragons and a flaming throne equal Aries or Leo. The reality: imagery is not temperament. Her drive is controlled and submerged, which reads as water, not fire.
+2. **"She's just stubborn, so she's Taurus."** The misread: her refusal to yield makes her an earth sign. The reality: she is stubborn about power and loyalty, not soil and property — that specificity is Scorpio.
+3. **"Bold heir equals Leo confidence."** The misread: a claimant to the throne must be a showy Leo. The reality: she rules through strategy and emotional leverage, not spotlight charisma.
+
+## The Rhaenyra Scorpio Profile at a Glance
+
+| Property | How It Works | Energy Center | How to Observe |
+|---|---|---|---|
+| Power obsession | Pursues control of people over control of land | Fixed Water (8th-house themes) | Watch her manage loyalties, not territory |
+| Betrayal sensitivity | Reads threats early and never forgets a slight | Mars/Pluto rulership | Note grudges that resurface seasons later |
+| Survival calculus | Trades open displays for quiet positioning | Water element | Track what she hides in council scenes |
+| Transformation | Changes most after grief and treachery | Fixed modality | Mark each shift that follows a loss |
+
+## Common Questions About the Rhaenyra Targaryen Zodiac Sign
+
+**Is Rhaenyra Targaryen a Scorpio or a Taurus?**
+
+The strongest behavioral read is Scorpio, because she controls power and loyalty more than resources. Taurus fits her stubborn endurance but misses her appetite for emotional leverage and secrecy.
+
+**Do fans agree on Rhaenyra's zodiac sign?**
+
+No. Assignments range across Sagittarius, Taurus, Aries, and Aquarius depending on the writer, and Scorpio is sometimes given to Mysaria instead. Because there is no canonical birthday, none of these is provable — this piece argues that Scorpio's fixed-water profile fits her behavior best.
+
+**Why isn't Rhaenyra a fire sign if she rides dragons?**
+
+Dragon and fire imagery is visual, not astrological. Her actual behavior is calculated, private, and survival-focused, which pattern-matches to fixed water rather than fire.
+
+**How do you assign a zodiac sign to a fictional character?**
+
+You match repeated behavior to a sign's core themes instead of using a birth date. The method works because a sign is really a cluster of repeated tendencies, and a well-written character repeats theirs scene after scene. You weigh the patterns that show up most often under pressure, then name the sign whose core themes they match.
+
+**Does the show ever confirm her sign?**
+
+No. Canon records only that she was born in 97 AC — no month, no day — and Westeros has no zodiac, so every reading is interpretive, built from how she acts across the series rather than from a birth date.
+
+## Reflection Prompts
+
+1. Think of a recent moment when you stayed patient and waited for the right opening instead of reacting — what were you protecting?
+2. Recall a time someone broke your trust; how long did that memory shape your later choices?
+3. Picture a hard season that changed you for the better — what did the crisis ask you to let go of?
+
+## Related Reading
+
+- [[<TBD-internal-link: persephone goddess>]] — another mythic figure read through archetype rather than a birth date.
+- [[<TBD-internal-link: north node in taurus>]] — the Taurus side of the fixed-sign debate, for contrast.
+- [[<TBD-external-link: Wikipedia | Rhaenyra Targaryen | background on the character this astrological read is built from>]] — context on her arc across the series.
+
+This is not a clinical interpretation or mental health advice.
+
+## Take Action
+
+Map the same Scorpio patterns onto your own placements: generate your free birth chart to explore this same fixed-water profile and see where those themes show up for you. Expect a full chart that names your signs, houses, and the planets driving them — and from there, a clearer sense of where your own quiet resolve and long memory actually come from. [Generate your free birth chart to explore rhaenyra targaryen zodiac sign.](https://astrologywiki.com/en/wiki/how-to-read-birth-chart)
+
+## Sources
+
+- [[<TBD-external-link: Wikipedia | Scorpio (astrology) | reference for the fixed-water themes this character read draws on>]]
+- [[<TBD-external-link: Wikipedia | House of the Dragon | source for the on-screen behavior used to assign the sign>]]
+````
+
+**🤖 回答：**
+
+基于 PG-MYTH-009 / `rhaenyra-targaryen-zodiac-sign` 英文 Phase 2 成稿，产出可进入中文 Phase 2 的简体中文 Markdown 正文：主关键词选为 `雷妮拉·坦格利安星座`，生成 1 个中文 H1 与 11 个中文 H2；第一节含 1 个加粗定义短语并紧跟 3 条 bullet；第二、三、四节使用指定中文 H2 骨架；保留行为匹配、天蝎固定水象、金牛/火象等取舍、角色弧线识别、CTA `/zh/` 路径与中文免责声明。执行字符串自检：H1=1、H2=11、主关键词=6、中文内链占位符=6、CTA=1、禁用词未命中。
+
+---
+
+### Q15 — 15:48
+
+**🙋 提问：**
+
+```text
+我们不是有 SA 吗，不要走 test
+```
+
+**🤖 回答：**
+
+按用户要求把 Phase 1 index monitor 的 GSC 认证从 Testing-mode user OAuth 切到 reader SA：`gg-index-monitor.mjs` 新增 `getGscAccessToken()`，使用 `GG_READER_SA_JSON` / `~/.config/gg/gg-reader-sa.json` 换取 `webmasters.readonly` token；`--require-gsc-auth` 改为调用 `preflightGscAccess()`，用 Search Analytics 轻量查询预检 GSC property 权限，不再传 `{user:true}`；wrapper 失败告警从 OAuth refresh_token 过期改为提示 `GSC reader SA 权限不足`。TDD 验证：先新增测试抓到旧行为失败，再修复；最终 `gg-index-monitor` smoke 19/19、wrapper/plist lint、`gg-seo-autopilot` smoke 13/13、`lib-gg-shared` smoke 84/84 均通过。真实环境验证显示 reader SA 目前能读 Sheet，但对 `sc-domain:astrologywiki.com` 的 GSC preflight 返回 403，GA4 也返回 403；后续需要在 Search Console 将 `gg-reader-sa@aqueous-sandbox-496915-i1.iam.gserviceaccount.com` 加为 Full user，GA4 若要走 SA 则加 Viewer。
+
+---

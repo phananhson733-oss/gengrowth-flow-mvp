@@ -552,3 +552,15 @@ Ready to see where this sits in your chart? Mapping your placements shows the ex
 产出一篇无 YAML frontmatter 的简体中文 Markdown 正文，采用中文 Phase 2 的 11 个 H2 骨架；主关键词选为“金牛座凯龙星”，控制出现频次；保留英文稿关于价值感、身体经验、物质安全、金钱误读、金星与第二宫线索、与土星/天蝎座凯龙星对比的核心语义。正文先具名 Dane Rudhyar、Liz Greene、Howard Sasportas，再在参考来源列出；CTA 指向 `https://astrologywiki.com/zh/wiki/how-to-read-birth-chart`，并保留“这不是临床解读或心理健康建议”的中文免责声明。
 
 ---
+
+### Q8 — 04:32
+
+**🙋 提问：**
+
+用户要求基于 `PG-HEAL-004 / chiron-in-taurus / Chiron in Taurus` 英文 Phase 2 成稿，产出可进入中文 Phase 2 的简体中文 Markdown 正文；要求保留 11 个中文 H2 骨架、选择稳定中文主关键词、控制关键词频次、至少 5 条中文内链占位符、CTA 指向 `https://astrologywiki.com/zh/wiki/how-to-read-birth-chart`，并修复上一稿校验拦下的问题：SC8 CTA link、广告法禁词“彻底”、指定小节语义漂移、缺少中文心理安全免责声明。用户强调保持中文，不回退英文标题或英文小节，以英文稿结构为准小修，不整篇推倒重写。
+
+**🤖 回答：**
+
+重新产出一篇无 YAML frontmatter 的纯 Markdown 正文；主关键词选为“凯龙星在金牛座”，H1 为自然中文标题，正文使用 11 个中文 H2 骨架。内容保留英文稿的核心语义：价值感、安全感、身体经验与物质安全是核心，金钱只是可见入口之一；补回与“金钱伤口”、金牛座土星、天蝎座凯龙的明确取舍；在星盘识别部分覆盖宫位、相位、金星状态、第二宫/金牛主题和日常信号。完成本地自检：主关键词 8 次、H2 11 个、`[[<TBD-internal-link: ...>]]` 7 条、CTA 为指定 `/zh/` 链接、免责声明存在、禁词列表未命中。
+
+---

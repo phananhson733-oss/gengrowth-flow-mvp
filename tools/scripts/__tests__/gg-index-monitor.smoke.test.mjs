@@ -378,6 +378,7 @@ test('runIndexMonitor --sync-published upserts live sitemap EN URLs into the sta
     sitemapRows: extractEnWikiSitemapRows(`
       <url><loc>https://www.astrologywiki.com/en/wiki/existing-live</loc><lastmod>2026-06-24</lastmod></url>
       <url><loc>https://www.astrologywiki.com/en/wiki/new-live</loc><lastmod>2026-06-24</lastmod></url>
+      <url><loc>https://www.astrologywiki.com/en/wiki/site-native-live</loc><lastmod>2026-06-24</lastmod></url>
       <url><loc>https://www.astrologywiki.com/zh/wiki/new-live</loc><lastmod>2026-06-24</lastmod></url>
     `),
     ensureIndexTrackingTab: async () => INDEX_TRACKING_TAB,
@@ -390,6 +391,7 @@ test('runIndexMonitor --sync-published upserts live sitemap EN URLs into the sta
     }],
     readTrackingRows: async () => [{
       ...buildTrackingSeedRow({
+        pageId: 'PG-EXISTING',
         slug: 'existing-live',
         url: 'https://www.astrologywiki.com/en/wiki/existing-live',
         title: '',
@@ -432,6 +434,7 @@ test('runIndexMonitor --sync-published can batch update tracking rows', async ()
     readRecapRows: async () => [],
     readTrackingRows: async () => [{
       ...buildTrackingSeedRow({
+        pageId: 'PG-EXISTING',
         slug: 'existing-live',
         url: 'https://www.astrologywiki.com/en/wiki/existing-live',
         title: '',

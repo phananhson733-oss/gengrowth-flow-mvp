@@ -2,9 +2,10 @@
 # gg-index-monitor-tick.sh — launchd entry point for Phase 1 index monitoring.
 #
 # Lightweight daily job:
-#   - reads index-tracking rows from the flow-mvp workbook
+#   - syncs live EN wiki URLs from the public sitemap into index-tracking
 #   - checks due URLs with Search Console URL Inspection
-#   - writes status updates and sends Feishu alerts for overdue/problem URLs
+#   - writes final human-facing status into 结果复盘表
+#   - sends Feishu alerts for overdue/problem URLs
 #
 # It intentionally does not author, publish, merge, or request indexing.
 
@@ -41,11 +42,21 @@ echo "$(date '+%F %T') index monitor start (pid $$, limit $LIMIT)" >> "$LOG"
   . "$HOME/.config/gg/_gg.env" 2>/dev/null
   set +a
 
+  run_rc=0
+  node "$SCRIPT_DIR/gg-index-monitor.mjs" --sync-published --write-sheet || run_rc=$?
+
   if command -v gtimeout >/dev/null 2>&1; then
-    gtimeout "$TIMEOUT" node "$SCRIPT_DIR/gg-index-monitor.mjs" --check-due --write-sheet --require-gsc-auth --limit "$LIMIT"
+    gtimeout "$TIMEOUT" node "$SCRIPT_DIR/gg-index-monitor.mjs" --check-due --write-sheet --require-gsc-auth --limit "$LIMIT" || run_rc=$?
   else
-    node "$SCRIPT_DIR/gg-index-monitor.mjs" --check-due --write-sheet --require-gsc-auth --limit "$LIMIT"
+    node "$SCRIPT_DIR/gg-index-monitor.mjs" --check-due --write-sheet --require-gsc-auth --limit "$LIMIT" || run_rc=$?
   fi
+
+  node "$SCRIPT_DIR/gg-index-monitor.mjs" --sync-recap --write-sheet
+  recap_rc=$?
+  if [ "$recap_rc" -ne 0 ] && [ "$run_rc" -eq 0 ]; then
+    run_rc="$recap_rc"
+  fi
+  exit "$run_rc"
 ) >> "$LOG" 2>&1
 rc=$?
 

@@ -70,11 +70,37 @@ export const RECAP_HEADER = Object.freeze([
   '备注',
 ]);
 
+export const REQUEST_INDEXING_QUEUE_TAB = 'request-indexing-queue';
+export const REQUEST_INDEXING_QUEUE_HEADER = Object.freeze([
+  'candidate_id',
+  'priority',
+  'page_id',
+  'url',
+  'title',
+  'day14_收录',
+  'gsc_status',
+  'diagnosis_category',
+  'monitor_status',
+  'first_tracked_at',
+  'last_checked_at',
+  'days_since_first_tracked',
+  'discovery_status',
+  'discovery_actions',
+  'request_reason',
+  'gsc_inspection_url',
+  'computer_use_status',
+  'computer_use_instruction',
+  'created_at',
+  'updated_at',
+  'notes',
+]);
+
 const DUE_MILESTONES = Object.freeze([3, 7, 14, 21, 30]);
 const DEFAULT_SITE = 'sc-domain:astrologywiki.com';
 const DEFAULT_SITE_ORIGIN = 'https://www.astrologywiki.com';
 const SHEETS_SCOPE = 'https://www.googleapis.com/auth/spreadsheets';
 const GSC_READONLY_SCOPE = 'https://www.googleapis.com/auth/webmasters.readonly';
+const GSC_WRITE_SCOPE = 'https://www.googleapis.com/auth/webmasters';
 const DEFAULT_SITEMAP_URL = 'https://www.astrologywiki.com/sitemap.xml';
 
 function readerSaPath() {
@@ -95,6 +121,11 @@ export async function getGscAccessToken() {
   return token;
 }
 
+export async function getGscWriteAccessToken() {
+  const { token } = await getSaAccessToken(readerSaPath(), [GSC_WRITE_SCOPE]);
+  return token;
+}
+
 export async function preflightGscAccess(token, siteUrl, fetcher = gFetch) {
   const today = new Date();
   const endDate = today.toISOString().slice(0, 10);
@@ -107,6 +138,14 @@ export async function preflightGscAccess(token, siteUrl, fetcher = gFetch) {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ startDate, endDate, dimensions: ['date'], rowLimit: 1 }),
     },
+  );
+}
+
+export async function submitSitemap(token, siteUrl, sitemapUrl = DEFAULT_SITEMAP_URL, fetcher = gFetch) {
+  return fetcher(
+    `https://www.googleapis.com/webmasters/v3/sites/${encodeURIComponent(siteUrl)}/sitemaps/${encodeURIComponent(sitemapUrl)}`,
+    token,
+    { method: 'PUT' },
   );
 }
 

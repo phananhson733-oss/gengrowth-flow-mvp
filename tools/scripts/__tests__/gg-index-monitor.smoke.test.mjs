@@ -11,7 +11,10 @@ import { TABS } from '../lib/_workbook-spec.mjs';
 import {
   INDEX_TRACKING_HEADER,
   INDEX_TRACKING_TAB,
+  REQUEST_INDEXING_QUEUE_HEADER,
+  REQUEST_INDEXING_QUEUE_TAB,
   RECAP_TAB,
+  buildRequestIndexingCandidateRows,
   buildTrackingSeedRow,
   classifyInspection,
   extractEnWikiSitemapRows,
@@ -22,6 +25,7 @@ import {
   rowToSheetValues,
   runIndexMonitor,
   sheetValuesToRow,
+  submitSitemap,
 } from '../gg-index-monitor.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -47,6 +51,13 @@ test('workbook spec declares the index-tracking auto tab', () => {
   const tab = TABS.find((t) => t.name === INDEX_TRACKING_TAB);
   assert.ok(tab, 'index-tracking tab must be part of the workbook spec');
   assert.deepEqual(tab.header, [...INDEX_TRACKING_HEADER]);
+  assert.equal(tab.type, 'standard');
+});
+
+test('workbook spec declares the request-indexing queue tab', () => {
+  const tab = TABS.find((t) => t.name === REQUEST_INDEXING_QUEUE_TAB);
+  assert.ok(tab, 'request-indexing-queue tab must be part of the workbook spec');
+  assert.deepEqual(tab.header, [...REQUEST_INDEXING_QUEUE_HEADER]);
   assert.equal(tab.type, 'standard');
 });
 
@@ -708,4 +719,101 @@ test('runIndexMonitor --require-gsc-auth preflights GSC service-account access w
     token: 'gsc-sa-token',
     siteUrl: 'sc-domain:astrologywiki.com',
   });
+});
+
+test('submitSitemap uses the official Search Console Sitemaps submit endpoint', async () => {
+  let seen = null;
+  await submitSitemap('gsc-write-token', 'sc-domain:astrologywiki.com', 'https://www.astrologywiki.com/sitemap.xml', async (url, token, init) => {
+    seen = { url, token, init };
+    return {};
+  });
+
+  assert.match(seen.url, /\/webmasters\/v3\/sites\/sc-domain%3Aastrologywiki\.com\/sitemaps\/https%3A%2F%2Fwww\.astrologywiki\.com%2Fsitemap\.xml$/);
+  assert.equal(seen.token, 'gsc-write-token');
+  assert.equal(seen.init.method, 'PUT');
+});
+
+test('buildRequestIndexingCandidateRows prioritizes non-indexed page_id-backed rows for assisted submission', () => {
+  const rows = buildRequestIndexingCandidateRows({
+    recapRows: [{
+      page_id: 'PG-UNKNOWN',
+      url: 'https://www.astrologywiki.com/en/wiki/unknown-page',
+      day14_收录: 'N',
+      索引修复状态: 'needs_attention：unknown_attention',
+      记录日期: '2026-06-24',
+    }, {
+      page_id: 'PG-INDEXED',
+      url: 'https://www.astrologywiki.com/en/wiki/indexed-page',
+      day14_收录: 'Y',
+      索引修复状态: '已收录',
+    }, {
+      page_id: '',
+      url: 'https://www.astrologywiki.com/en/wiki/site-native',
+      day14_收录: 'N',
+    }],
+    trackingRows: [{
+      page_id: 'PG-UNKNOWN',
+      url: 'https://www.astrologywiki.com/en/wiki/unknown-page',
+      title: 'Unknown Page',
+      current_gsc_status: 'URL is unknown to Google',
+      diagnosis_category: 'unknown_attention',
+      monitor_status: 'needs_attention',
+      first_tracked_at: '2026-06-01',
+      last_checked_at: '2026-06-24',
+      days_since_first_tracked: 23,
+    }],
+    now: new Date('2026-06-25T00:00:00Z'),
+  });
+
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].priority, 'P1');
+  assert.equal(rows[0].page_id, 'PG-UNKNOWN');
+  assert.match(rows[0].request_reason, /Google 尚未知/);
+  assert.match(rows[0].gsc_inspection_url, /search-console\/inspect/);
+  assert.equal(rows[0].computer_use_status, '待人工确认');
+});
+
+test('runIndexMonitor --sync-request-queue writes queue rows and sends Feishu notification', async () => {
+  let queued = null;
+  let formatted = null;
+  let notified = null;
+  const code = await runIndexMonitor(['--sync-request-queue', '--write-sheet', '--notify', '--workbook', 'wb-test'], {
+    now: new Date('2026-06-25T00:00:00Z'),
+    sheetToken: 'sheet-token',
+    ensureRequestQueueTab: async () => REQUEST_INDEXING_QUEUE_TAB,
+    readRecapRows: async () => [{
+      page_id: 'PG-CONTENT',
+      url: 'https://www.astrologywiki.com/en/wiki/content-page',
+      day14_收录: 'N',
+      索引修复状态: 'needs_attention：content_quality',
+    }],
+    readTrackingRows: async () => [{
+      page_id: 'PG-CONTENT',
+      url: 'https://www.astrologywiki.com/en/wiki/content-page',
+      title: 'Content Page',
+      current_gsc_status: 'Crawled - currently not indexed',
+      diagnosis_category: 'content_quality',
+      monitor_status: 'needs_attention',
+      first_tracked_at: '2026-06-01',
+      last_checked_at: '2026-06-24',
+      days_since_first_tracked: 23,
+    }],
+    readRequestQueueRows: async () => [],
+    replaceRequestQueueRows: async (token, workbookId, tabName, rows) => {
+      queued = { token, workbookId, tabName, rows };
+    },
+    formatRequestQueue: async () => {
+      formatted = true;
+    },
+    notify: (message) => {
+      notified = message;
+    },
+  });
+
+  assert.equal(code, 0);
+  assert.equal(queued.tabName, REQUEST_INDEXING_QUEUE_TAB);
+  assert.equal(queued.rows.length, 1);
+  assert.equal(queued.rows[0].priority, 'P1');
+  assert.match(notified, /Request Indexing 候选/);
+  assert.equal(formatted, true);
 });

@@ -16,6 +16,7 @@ tags:
 - 要点 2：中文成稿需遵守 11 个 H2 骨架、中文主关键词出现频次、内链占位符、CTA `/zh/` 路径、免责声明与参考来源约束，并修正上一稿结构漂移、禁词和 H2 不匹配问题。
 - 要点 3：根据 PG-WC-032 / `luka-modric-zodiac-sign` 的英文 Phase 2 成稿，改写为可进入中文 Phase 2 的简体中文 Markdown 正文。
 - 要点 4：开始前读取 AGENTS 规则、brainstorming 技能与提醒文件；`ai-profile/lynne-soul.md` 在当前仓库不存在。
+- 要点 5：继续修正 PG-WC-032 中文稿的 CTA 精确 URL、广告禁词、被点名小节漂移和主关键词密度问题。
 
 ---
 

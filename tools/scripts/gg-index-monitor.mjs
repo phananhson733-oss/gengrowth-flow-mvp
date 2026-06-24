@@ -1022,7 +1022,8 @@ async function runCheckDue(args, {
     ? rows.filter((row) =>
       isEnWikiArticleUrl(row.url) &&
       !['indexed', 'canonical_ok'].includes(String(row.monitor_status || 'monitoring')) &&
-      String(row.last_checked_at || '') !== isoDay(now)
+      (String(row.last_checked_at || '') !== isoDay(now) ||
+        String(row.current_gsc_status || '') === 'pending_first_check')
     )
     : rows.filter((row) => isDueForInspection(row, now));
   const due = dueSource.slice(0, limit);

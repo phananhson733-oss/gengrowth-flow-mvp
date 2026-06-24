@@ -601,6 +601,38 @@ test('runIndexMonitor --check-all inspects pending rows before milestone due dat
   assert.equal(updated.row.monitor_status, 'monitoring');
 });
 
+test('runIndexMonitor --check-all retries pending rows after same-day transient failures', async () => {
+  let inspected = null;
+  const code = await runIndexMonitor(['--check-all', '--write-sheet', '--workbook', 'wb-test'], {
+    now: new Date('2026-06-24T09:00:00Z'),
+    sheetToken: 'sheet-token',
+    gscToken: 'gsc-token',
+    ensureIndexTrackingTab: async () => INDEX_TRACKING_TAB,
+    readTrackingRows: async () => [{
+      _rowNumber: 2,
+      url: 'https://www.astrologywiki.com/en/wiki/transient-failure',
+      page_id: 'PG-RETRY',
+      first_tracked_at: '2026-06-22',
+      last_checked_at: '2026-06-24',
+      current_gsc_status: 'pending_first_check',
+      monitor_status: 'monitoring',
+      notes: 'ERR_NETWORK: fetch failed',
+      check_count: 1,
+    }],
+    fetchUrlInspection: async (token, siteUrl, url) => {
+      inspected = { token, siteUrl, url };
+      return {
+        verdict: 'PASS',
+        coverageState: 'Submitted and indexed',
+      };
+    },
+    updateTrackingRow: async () => {},
+  });
+
+  assert.equal(code, 0);
+  assert.equal(inspected.url, 'https://www.astrologywiki.com/en/wiki/transient-failure');
+});
+
 test('preflightGscAccess probes Search Analytics with the GSC reader SA token', async () => {
   let seen = null;
   await preflightGscAccess('gsc-sa-token', 'sc-domain:astrologywiki.com', async (url, token, init) => {

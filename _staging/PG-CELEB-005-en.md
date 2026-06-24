@@ -18,8 +18,8 @@ associated_keywords:
   - sharon osbourne rising sign
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-24T13:08:54.855Z
-content_sha256_short: 36973d4fa948c1c6
+generated_at: 2026-06-24T13:47:08.043Z
+content_sha256_short: 3fdfb304eac9bf44
 phase2_checks: all-pass
 ---
 
@@ -90,7 +90,7 @@ Her Sun is firmly in Libra, while her Rising sign is disputed between Cancer and
 
 **Why does Sharon Osbourne seem so combative for a Libra?**
 
-A Gemini Moon supplies quick, cutting verbal reflexes that surprise people expecting Libra softness. Paired with Saturn inside the stellium, the diplomacy comes with real bite.
+Mercury and Saturn inside the Libra stellium supply quick, precise, sometimes cutting wording that surprises people expecting Libra softness. With Saturn's judgment in the mix, the diplomacy comes with real bite.
 
 **What does Venus in Scorpio say about her?**
 

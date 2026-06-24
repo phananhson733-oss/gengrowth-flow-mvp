@@ -511,6 +511,16 @@ test('recapRowFromTrackingRow presents latest GSC URL Inspection status in resul
   assert.equal(notIndexed.outcome_id, 'out_luka-modric-zodiac-sign_latest');
   assert.equal(notIndexed.day14_收录, 'N');
   assert.equal(notIndexed.索引修复状态, '⚠️ 超期未收录（触发诊断）');
+
+  const resubmitted = recapRowFromTrackingRow({
+    url: 'https://www.astrologywiki.com/en/wiki/resubmitted-page',
+    page_id: 'PG-RESUBMITTED',
+    current_gsc_status: 'Crawled - currently not indexed',
+    monitor_status: 'monitoring',
+    fix_status: '已重新提交',
+    last_checked_at: '2026-06-24',
+  }, { now: new Date('2026-06-25T00:00:00Z') });
+  assert.equal(resubmitted.索引修复状态, '已重新提交');
 });
 
 test('recapRowFromTrackingRow does not mark canonical duplicate states as indexed', () => {
@@ -760,6 +770,7 @@ test('formatRecapStatusTab colors recap repair status values in column G', async
     '⚠️ 超期未收录',
     '已收录',
     '监控中',
+    '已重新提交',
     '待GSC检查',
     '已提交',
   ]);

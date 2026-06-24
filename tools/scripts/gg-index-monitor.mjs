@@ -588,7 +588,7 @@ export function recapRowFromTrackingRow(row = {}, { now = new Date() } = {}) {
     : repairDisplayStatus
       ? repairDisplayStatus
       : !checked
-    ? '待GSC检查'
+        ? '待GSC检查'
         : lifecycleFixStatus(row, { monitor_status: monitor, diagnosis_category: diagnosis });
   const noteParts = [
     'GSC URL Inspection',

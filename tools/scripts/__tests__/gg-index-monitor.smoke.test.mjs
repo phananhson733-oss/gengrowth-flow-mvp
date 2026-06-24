@@ -386,7 +386,7 @@ test('recapRowFromTrackingRow presents latest GSC URL Inspection status in resul
   }, { now: new Date('2026-06-25T00:00:00Z') });
   assert.equal(notIndexed.outcome_id, 'out_luka-modric-zodiac-sign_latest');
   assert.equal(notIndexed.day14_收录, 'N');
-  assert.match(notIndexed.索引修复状态, /needs_attention/);
+  assert.equal(notIndexed.索引修复状态, '⚠️ 超期未收录（触发诊断）');
 });
 
 test('seo autopilot enqueues index tracking instead of calling article Indexing API', () => {

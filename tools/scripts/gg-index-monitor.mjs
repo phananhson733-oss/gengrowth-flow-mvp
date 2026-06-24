@@ -95,7 +95,7 @@ export const REQUEST_INDEXING_QUEUE_HEADER = Object.freeze([
   'notes',
 ]);
 
-const DUE_MILESTONES = Object.freeze([3, 7, 14, 21, 30]);
+const DUE_MILESTONES = Object.freeze([3, 7, 14, 30]);
 const DEFAULT_SITE = 'sc-domain:astrologywiki.com';
 const DEFAULT_SITE_ORIGIN = 'https://www.astrologywiki.com';
 const SHEETS_SCOPE = 'https://www.googleapis.com/auth/spreadsheets';
@@ -302,7 +302,7 @@ export function buildTrackingSeedRow({
     diagnosis_category: '',
     alert_level: '',
     alert_sent_at: '',
-    fix_status: '未处理',
+    fix_status: '已提交',
     retry_round: 0,
     recommendation: '',
     notes: '',
@@ -394,6 +394,16 @@ function isIndexedTrackingRow(row = {}) {
   return monitor === 'indexed' || ((verdict === 'PASS' || /\bindexed\b/i.test(status)) && !/not indexed/i.test(status));
 }
 
+function lifecycleFixStatus(row = {}, classification = {}) {
+  const monitor = String(classification.monitor_status || row.monitor_status || '').trim();
+  if (monitor === 'indexed' || monitor === 'canonical_ok') return '✅ 已收录';
+  if (monitor === 'urgent') return '🔴 紧急问题（404/5xx）';
+  if (monitor === 'needs_focus') return '需重点关注';
+  if (monitor === 'needs_attention') return '⚠️ 超期未收录（触发诊断）';
+  if (monitor === 'monitoring') return '监控中';
+  return row.fix_status || '已提交';
+}
+
 function hasInspectionEvidence(row = {}) {
   const status = String(row.current_gsc_status || '').trim();
   return !!status && status !== 'pending_first_check';
@@ -409,7 +419,7 @@ export function recapRowFromTrackingRow(row = {}, { now = new Date() } = {}) {
     ? '待GSC检查'
     : indexed
       ? '已收录'
-      : `${monitor || '待处理'}${diagnosis ? `：${diagnosis}` : ''}`;
+      : lifecycleFixStatus(row, { monitor_status: monitor, diagnosis_category: diagnosis });
   const noteParts = [
     'GSC URL Inspection',
     status ? `status=${status}` : 'status=pending',
@@ -658,7 +668,7 @@ export function classifyInspection(indexStatus = {}, { daysSinceFirstTracked = 0
         recommendation: 'D+30 unresolved. Escalate as a focus URL: improve internal links, sitemap discovery signals, and crawl priority.',
       };
     }
-    const overdue = daysSinceFirstTracked >= 21;
+    const overdue = daysSinceFirstTracked >= 14;
     return {
       ...base,
       monitor_status: overdue ? 'needs_attention' : 'monitoring',
@@ -666,7 +676,7 @@ export function classifyInspection(indexStatus = {}, { daysSinceFirstTracked = 0
       alert_level: overdue ? 'P2' : '',
       should_alert: overdue,
       recommendation: overdue
-        ? 'Still discovered at D+21. Improve internal links and check sitemap discovery signals.'
+        ? 'D+14 still discovered but not indexed. Improve internal links, sitemap discovery signals, and crawl priority.'
         : 'Normal queue state for a new site. Continue monitoring without alert noise.',
     };
   }
@@ -1132,6 +1142,7 @@ export function mergeInspectionIntoRow(row, indexStatus, now = new Date()) {
     monitor_status: cls.monitor_status,
     diagnosis_category: cls.diagnosis_category,
     alert_level: cls.alert_level,
+    fix_status: lifecycleFixStatus(row, cls),
     recommendation: cls.recommendation,
   };
   if (cls.first_indexed_at && !next.first_indexed_at) {
@@ -1145,14 +1156,18 @@ export function formatAlertMessage(row, classification) {
   const level = classification.alert_level || row.alert_level || 'P3';
   const title = row.title || row.slug || row.page_id || row.url;
   const age = row.days_since_first_tracked || 0;
+  const header = level === 'P0'
+    ? '🔴 紧急索引问题'
+    : String(row.monitor_status || classification.monitor_status || '') === 'needs_focus'
+      ? '⚠️ 索引升级提醒'
+      : '⚠️ 索引超期提醒';
   return [
-    `⚠️ 索引监控告警（${level}）`,
+    header,
     `页面：${title}`,
     `URL：${row.url}`,
-    `page_id：${row.page_id || '-'}`,
-    `已监控天数：D+${age}`,
+    `发布日期：${row.published_at || row.first_tracked_at || '-'}`,
+    `已过天数：D+${age}`,
     `当前 GSC 状态：${row.current_gsc_status || '-'}`,
-    `诊断类别：${row.diagnosis_category || classification.diagnosis_category || '-'}`,
     `建议操作：${row.recommendation || classification.recommendation || '请人工查看 URL Inspection 原始状态。'}`,
   ].join('\n');
 }

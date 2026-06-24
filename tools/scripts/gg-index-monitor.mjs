@@ -44,13 +44,10 @@ export const INDEX_TRACKING_HEADER = Object.freeze([
   'alert_level',
   'alert_sent_at',
   'fix_status',
-  'fix_date',
-  'requeued_at',
   'retry_round',
   'recommendation',
   'notes',
   'source',
-  'author',
 ]);
 
 export const RECAP_TAB = '结果复盘表';
@@ -234,7 +231,6 @@ export function buildTrackingSeedRow({
   slug,
   url,
   title = '',
-  author = '',
   publishedAt,
   firstTrackedAt,
   now = new Date(),
@@ -268,13 +264,10 @@ export function buildTrackingSeedRow({
     alert_level: '',
     alert_sent_at: '',
     fix_status: '未处理',
-    fix_date: '',
-    requeued_at: '',
     retry_round: 0,
     recommendation: '',
     notes: '',
     source,
-    author: cleanCell(author),
   };
 }
 
@@ -331,7 +324,6 @@ export function mergePublishedTrackingRow(existing = {}, fresh = {}) {
     monitor_status: existing.monitor_status || fresh.monitor_status || 'monitoring',
     fix_status: existing.fix_status || fresh.fix_status || '未处理',
     source: fresh.source || existing.source || '',
-    author: fresh.author || existing.author || '',
   };
 }
 

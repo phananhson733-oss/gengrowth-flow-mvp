@@ -55,7 +55,6 @@ test('buildTrackingSeedRow creates an idempotent monitor row from a publish even
     pageId: 'PG-TEST-001',
     slug: 'test-slug',
     title: 'A | Pipe Heavy Title',
-    author: 'elena-vane',
     publishedAt: '2026-06-24',
     now: new Date('2026-06-24T09:00:00.000Z'),
   });
@@ -70,7 +69,6 @@ test('buildTrackingSeedRow creates an idempotent monitor row from a publish even
   assert.equal(row.fix_status, '未处理');
   assert.equal(row.retry_round, 0);
   assert.equal(row.source, 'seo-autopilot');
-  assert.equal(row.author, 'elena-vane');
 });
 
 test('extractEnWikiSitemapRows copies only live EN wiki article URLs from sitemap XML', () => {

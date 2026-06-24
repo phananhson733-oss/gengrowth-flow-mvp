@@ -331,8 +331,22 @@ function recapValuesToRow(values = [], rowNumber = null) {
   return row;
 }
 
+function requestQueueValuesToRow(values = [], rowNumber = null) {
+  const row = {};
+  REQUEST_INDEXING_QUEUE_HEADER.forEach((h, i) => { row[h] = values[i] ?? ''; });
+  if (rowNumber != null) row._rowNumber = rowNumber;
+  return row;
+}
+
 function recapRowToValues(row) {
   return RECAP_HEADER.map((h) => {
+    const v = row?.[h];
+    return v == null ? '' : v;
+  });
+}
+
+function requestQueueRowToValues(row) {
+  return REQUEST_INDEXING_QUEUE_HEADER.map((h) => {
     const v = row?.[h];
     return v == null ? '' : v;
   });
@@ -421,6 +435,106 @@ export function recapRowFromTrackingRow(row = {}, { now = new Date() } = {}) {
     '决策': '',
     '备注': noteParts.join(' | '),
   };
+}
+
+function searchConsoleInspectionUrl(url, site = DEFAULT_SITE) {
+  return `https://search.google.com/search-console/inspect?resource_id=${encodeURIComponent(site)}&id=${encodeURIComponent(url)}`;
+}
+
+function requestPriority({ recap = {}, tracking = {} } = {}) {
+  const fix = String(recap['索引修复状态'] || '').toLowerCase();
+  const diagnosis = String(tracking.diagnosis_category || '').toLowerCase();
+  const monitor = String(tracking.monitor_status || '').toLowerCase();
+  const status = String(tracking.current_gsc_status || '').toLowerCase();
+  const age = Number(tracking.days_since_first_tracked || 0);
+
+  if (monitor === 'urgent' || /technical|robots|noindex|blocked|404|5xx/.test(`${fix} ${diagnosis} ${status}`)) return 'P0';
+  if (monitor === 'needs_focus' || /content_quality|unknown_attention/.test(`${fix} ${diagnosis}`) || age >= 21) return 'P1';
+  if (/canonical_duplicate|normal_queue|discovered|crawled - currently not indexed/.test(`${fix} ${diagnosis} ${status}`)) return 'P2';
+  return 'P3';
+}
+
+function requestReason({ recap = {}, tracking = {} } = {}) {
+  const status = String(tracking.current_gsc_status || '').trim();
+  const diagnosis = String(tracking.diagnosis_category || '').trim();
+  if (/URL is unknown to Google/i.test(status) || diagnosis === 'unknown_attention') {
+    return 'Google 尚未知该 URL；已通过 sitemap/discovery 提醒，建议人工 Request Indexing。';
+  }
+  if (/Crawled - currently not indexed/i.test(status) || diagnosis === 'content_quality') {
+    return 'Google 已抓取但暂未收录；检查内容/内链后可人工 Request Indexing。';
+  }
+  if (/canonical|duplicate/i.test(status) || diagnosis === 'canonical_duplicate') {
+    return 'Google 选择了不同 canonical；先确认 canonical/重复内容，再决定是否 Request Indexing。';
+  }
+  if (String(recap['day14_收录'] || '') === 'N') {
+    return 'Day14 仍未收录；进入人工 Request Indexing 候选队列。';
+  }
+  return '未收录候选；请复核 GSC 状态后处理。';
+}
+
+function discoveryActions({ priority, tracking = {} } = {}) {
+  const status = String(tracking.current_gsc_status || '');
+  const actions = ['官方 Sitemaps API 刷新 sitemap'];
+  if (/unknown/i.test(status)) actions.push('补强站内发现入口/内链');
+  if (/Crawled - currently not indexed/i.test(status)) actions.push('复查内容质量、重复覆盖和 HTML 可抓取性');
+  if (/canonical|duplicate/i.test(status)) actions.push('复查 canonical 与重复 URL 选择');
+  if (priority === 'P0') actions.push('先修技术阻断，再提交');
+  actions.push('Computer Use 打开 GSC，最终 Request Indexing 点击需人工确认');
+  return actions.join('；');
+}
+
+export function buildRequestIndexingCandidateRows({
+  recapRows = [],
+  trackingRows = [],
+  existingRows = [],
+  now = new Date(),
+  siteUrl = DEFAULT_SITE,
+} = {}) {
+  const day = isoDay(now);
+  const trackingByUrl = new Map(trackingRows.map((row) => [normalizeUrl(row.url), row]));
+  const existingByPage = new Map(existingRows.map((row) => [String(row.page_id || '').trim(), row]));
+  const rows = [];
+
+  for (const recap of recapRows) {
+    const pageId = String(recap.page_id || '').trim();
+    const url = normalizeUrl(recap.url);
+    if (!pageId || !isEnWikiArticleUrl(url)) continue;
+    const indexed = String(recap['day14_收录'] || '').trim() === 'Y' || String(recap['索引修复状态'] || '').trim() === '已收录';
+    if (indexed) continue;
+
+    const tracking = trackingByUrl.get(url) || {};
+    const priority = requestPriority({ recap, tracking });
+    const existing = existingByPage.get(pageId) || {};
+    const title = tracking.title || titleFromSlug(slugFromEnWikiUrl(url));
+    rows.push({
+      candidate_id: `req_${pageId}`,
+      priority,
+      page_id: pageId,
+      url,
+      title,
+      'day14_收录': recap['day14_收录'] || '',
+      gsc_status: tracking.current_gsc_status || recap['索引修复状态'] || '',
+      diagnosis_category: tracking.diagnosis_category || '',
+      monitor_status: tracking.monitor_status || '',
+      first_tracked_at: tracking.first_tracked_at || '',
+      last_checked_at: tracking.last_checked_at || '',
+      days_since_first_tracked: tracking.days_since_first_tracked || '',
+      discovery_status: 'sitemap已刷新',
+      discovery_actions: discoveryActions({ priority, tracking }),
+      request_reason: requestReason({ recap, tracking }),
+      gsc_inspection_url: searchConsoleInspectionUrl(url, siteUrl),
+      computer_use_status: existing.computer_use_status || '待人工确认',
+      computer_use_instruction: 'Computer Use 可打开 gsc_inspection_url 并粘贴 URL 检查；看到 Request Indexing 前必须停下等待人工确认。确认后再点击提交。',
+      created_at: existing.created_at || day,
+      updated_at: day,
+      notes: existing.notes || '',
+    });
+  }
+
+  const rank = { P0: 0, P1: 1, P2: 2, P3: 3 };
+  return rows.sort((a, b) => (rank[a.priority] ?? 9) - (rank[b.priority] ?? 9) ||
+    Number(b.days_since_first_tracked || 0) - Number(a.days_since_first_tracked || 0) ||
+    String(a.page_id).localeCompare(String(b.page_id)));
 }
 
 function mergeRecapRow(existing = {}, fresh = {}) {
@@ -651,6 +765,31 @@ async function writeHeader(token, workbookId, tabName) {
   );
 }
 
+async function readRequestQueueHeader(token, workbookId, tabName = REQUEST_INDEXING_QUEUE_TAB) {
+  try {
+    const last = colLetter(REQUEST_INDEXING_QUEUE_HEADER.length - 1);
+    const body = await gFetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${workbookId}/values/${encodeURIComponent(`${tabName}!A1:${last}1`)}`,
+      token,
+    );
+    return (body.values?.[0] || []).map((h) => String(h || '').trim());
+  } catch {
+    return [];
+  }
+}
+
+async function writeRequestQueueHeader(token, workbookId, tabName = REQUEST_INDEXING_QUEUE_TAB) {
+  return gFetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${workbookId}/values/${encodeURIComponent(`${tabName}!A1`)}?valueInputOption=RAW`,
+    token,
+    {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ values: [REQUEST_INDEXING_QUEUE_HEADER] }),
+    },
+  );
+}
+
 export async function ensureIndexTrackingTab(token, workbookId, deps = {}) {
   const fetcher = deps.gFetch || gFetch;
   const meta = await fetcher(`https://sheets.googleapis.com/v4/spreadsheets/${workbookId}?includeGridData=false`, token);
@@ -678,6 +817,33 @@ export async function ensureIndexTrackingTab(token, workbookId, deps = {}) {
   return INDEX_TRACKING_TAB;
 }
 
+export async function ensureRequestQueueTab(token, workbookId, deps = {}) {
+  const fetcher = deps.gFetch || gFetch;
+  const meta = await fetcher(`https://sheets.googleapis.com/v4/spreadsheets/${workbookId}?includeGridData=false`, token);
+  const sheets = meta.sheets || [];
+  const has = sheets.some((s) => s.properties?.title === REQUEST_INDEXING_QUEUE_TAB);
+  if (!has) {
+    await fetcher(
+      `https://sheets.googleapis.com/v4/spreadsheets/${workbookId}:batchUpdate`,
+      token,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ requests: [{ addSheet: { properties: { title: REQUEST_INDEXING_QUEUE_TAB } } }] }),
+      },
+    );
+  }
+  const header = deps.readHeader
+    ? await deps.readHeader(token, workbookId, REQUEST_INDEXING_QUEUE_TAB)
+    : await readRequestQueueHeader(token, workbookId, REQUEST_INDEXING_QUEUE_TAB);
+  const matches = REQUEST_INDEXING_QUEUE_HEADER.every((h, i) => header[i] === h);
+  if (!matches) {
+    if (deps.writeHeader) await deps.writeHeader(token, workbookId, REQUEST_INDEXING_QUEUE_TAB);
+    else await writeRequestQueueHeader(token, workbookId, REQUEST_INDEXING_QUEUE_TAB);
+  }
+  return REQUEST_INDEXING_QUEUE_TAB;
+}
+
 export async function readTrackingRows(token, workbookId, tabName = INDEX_TRACKING_TAB) {
   const last = colLetter(INDEX_TRACKING_HEADER.length - 1);
   const body = await gFetch(
@@ -687,6 +853,17 @@ export async function readTrackingRows(token, workbookId, tabName = INDEX_TRACKI
   return (body.values || [])
     .map((values, i) => sheetValuesToRow(values, i + 2))
     .filter((row) => row.url || row.page_id);
+}
+
+export async function readRequestQueueRows(token, workbookId, tabName = REQUEST_INDEXING_QUEUE_TAB) {
+  const last = colLetter(REQUEST_INDEXING_QUEUE_HEADER.length - 1);
+  const body = await gFetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${workbookId}/values/${encodeURIComponent(`${tabName}!A2:${last}2000`)}`,
+    token,
+  );
+  return (body.values || [])
+    .map((values, i) => requestQueueValuesToRow(values, i + 2))
+    .filter((row) => row.url || row.page_id || row.candidate_id);
 }
 
 export async function appendTrackingRows(token, workbookId, tabName, rows) {
@@ -700,6 +877,121 @@ export async function appendTrackingRows(token, workbookId, tabName, rows) {
       body: JSON.stringify({ values: rows.map(rowToSheetValues) }),
     },
   );
+}
+
+export async function replaceRequestQueueRows(token, workbookId, tabName, rows) {
+  const last = colLetter(REQUEST_INDEXING_QUEUE_HEADER.length - 1);
+  await gFetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${workbookId}/values/${encodeURIComponent(`${tabName}!A2:${last}2000`)}:clear`,
+    token,
+    {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({}),
+    },
+  );
+  if (!rows.length) return { updatedRows: 0 };
+  return gFetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${workbookId}/values/${encodeURIComponent(`${tabName}!A2:${last}${rows.length + 1}`)}?valueInputOption=RAW`,
+    token,
+    {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ values: rows.map(requestQueueRowToValues) }),
+    },
+  );
+}
+
+export async function formatRequestQueueTab(token, workbookId, tabName = REQUEST_INDEXING_QUEUE_TAB) {
+  const meta = await gFetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${workbookId}?includeGridData=false&fields=sheets(properties(sheetId,title),conditionalFormats)`,
+    token,
+  );
+  const sheet = (meta.sheets || []).find((s) => s.properties?.title === tabName);
+  if (!sheet) throw new Error(`tab not found: ${tabName}`);
+  const sheetId = sheet.properties.sheetId;
+  const priorityCol = REQUEST_INDEXING_QUEUE_HEADER.indexOf('priority');
+  const computerUseCol = REQUEST_INDEXING_QUEUE_HEADER.indexOf('computer_use_status');
+  const existing = sheet.conditionalFormats || [];
+  const isPriorityRule = (rule) =>
+    (rule.ranges || []).some((range) =>
+      range.sheetId === sheetId &&
+      range.startRowIndex === 1 &&
+      range.startColumnIndex === priorityCol &&
+      range.endColumnIndex === priorityCol + 1) &&
+    rule.booleanRule?.condition?.type === 'TEXT_EQ';
+  const requests = [];
+  existing.forEach((rule, index) => {
+    if (isPriorityRule(rule)) requests.push({ deleteConditionalFormatRule: { sheetId, index } });
+  });
+  requests.sort((a, b) => b.deleteConditionalFormatRule.index - a.deleteConditionalFormatRule.index);
+
+  const formats = [
+    ['P0', { red: 0.85, green: 0.18, blue: 0.18 }, { red: 1.0, green: 0.88, blue: 0.88 }],
+    ['P1', { red: 0.70, green: 0.28, blue: 0.00 }, { red: 1.0, green: 0.90, blue: 0.72 }],
+    ['P2', { red: 0.45, green: 0.35, blue: 0.00 }, { red: 1.0, green: 0.96, blue: 0.70 }],
+    ['P3', { red: 0.20, green: 0.32, blue: 0.55 }, { red: 0.86, green: 0.91, blue: 1.0 }],
+  ];
+  for (const [value, fg, bg] of formats) {
+    requests.push({
+      addConditionalFormatRule: {
+        index: 0,
+        rule: {
+          ranges: [{ sheetId, startRowIndex: 1, startColumnIndex: priorityCol, endColumnIndex: priorityCol + 1 }],
+          booleanRule: {
+            condition: { type: 'TEXT_EQ', values: [{ userEnteredValue: value }] },
+            format: {
+              backgroundColorStyle: { rgbColor: bg },
+              textFormat: { foregroundColorStyle: { rgbColor: fg }, bold: true },
+            },
+          },
+        },
+      },
+    });
+  }
+  requests.push({
+    setDataValidation: {
+      range: { sheetId, startRowIndex: 1, startColumnIndex: computerUseCol, endColumnIndex: computerUseCol + 1 },
+      rule: {
+        condition: {
+          type: 'ONE_OF_LIST',
+          values: ['待人工确认', '已打开GSC', '已提交', '跳过'].map((userEnteredValue) => ({ userEnteredValue })),
+        },
+        strict: true,
+        showCustomUi: true,
+      },
+    },
+  });
+  requests.push({
+    updateSheetProperties: {
+      properties: { sheetId, gridProperties: { frozenRowCount: 1 } },
+      fields: 'gridProperties.frozenRowCount',
+    },
+  });
+  requests.push({
+    repeatCell: {
+      range: { sheetId, startRowIndex: 0, endRowIndex: 1 },
+      cell: {
+        userEnteredFormat: {
+          textFormat: { bold: true, foregroundColorStyle: { rgbColor: { red: 1, green: 1, blue: 1 } } },
+          backgroundColorStyle: { rgbColor: { red: 0.216, green: 0.278, blue: 0.310 } },
+        },
+      },
+      fields: 'userEnteredFormat(textFormat,backgroundColorStyle)',
+    },
+  });
+  if (requests.length) {
+    await gFetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${workbookId}:batchUpdate`,
+      token,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ requests }),
+      },
+    );
+  }
+  return { formatted: true };
 }
 
 export async function batchUpdateTrackingRows(token, workbookId, tabName, updates, appends) {

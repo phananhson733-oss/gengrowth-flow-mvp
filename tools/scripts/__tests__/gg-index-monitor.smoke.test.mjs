@@ -11,10 +11,14 @@ import { TABS } from '../lib/_workbook-spec.mjs';
 import {
   INDEX_TRACKING_HEADER,
   INDEX_TRACKING_TAB,
+  RECAP_TAB,
   buildTrackingSeedRow,
   classifyInspection,
+  extractEnWikiSitemapRows,
   isDueForInspection,
+  mergePublishedTrackingRow,
   preflightGscAccess,
+  recapRowFromTrackingRow,
   rowToSheetValues,
   runIndexMonitor,
   sheetValuesToRow,
@@ -67,6 +71,63 @@ test('buildTrackingSeedRow creates an idempotent monitor row from a publish even
   assert.equal(row.retry_round, 0);
   assert.equal(row.source, 'seo-autopilot');
   assert.equal(row.author, 'elena-vane');
+});
+
+test('extractEnWikiSitemapRows copies only live EN wiki article URLs from sitemap XML', () => {
+  const rows = extractEnWikiSitemapRows(`
+    <url><loc>https://www.astrologywiki.com/en/wiki/bruno-fernandes-zodiac-sign</loc><lastmod>2026-06-24</lastmod></url>
+    <url><loc>https://www.astrologywiki.com/zh/wiki/bruno-fernandes-zodiac-sign</loc><lastmod>2026-06-24</lastmod></url>
+    <url><loc>https://www.astrologywiki.com/en/wiki</loc><lastmod>2026-06-24</lastmod></url>
+    <url><loc>https://www.astrologywiki.com/en/tools</loc><lastmod>2026-06-24</lastmod></url>
+  `, { now: new Date('2026-06-25T00:00:00Z') });
+
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].url, 'https://www.astrologywiki.com/en/wiki/bruno-fernandes-zodiac-sign');
+  assert.equal(rows[0].slug, 'bruno-fernandes-zodiac-sign');
+  assert.equal(rows[0].page_id, '');
+  assert.equal(rows[0].published_at, '2026-06-24');
+  assert.equal(rows[0].first_tracked_at, '2026-06-24');
+  assert.equal(rows[0].source, 'live-sitemap');
+});
+
+test('mergePublishedTrackingRow refreshes source fields without clobbering GSC state', () => {
+  const existing = {
+    ...buildTrackingSeedRow({
+      pageId: 'PG-OLD',
+      slug: 'old-slug',
+      url: 'https://www.astrologywiki.com/en/wiki/bruno-fernandes-zodiac-sign',
+      title: 'Old Title',
+      publishedAt: '2026-06-20',
+      now: new Date('2026-06-20T00:00:00Z'),
+    }),
+    _rowNumber: 7,
+    last_checked_at: '2026-06-24',
+    check_count: 3,
+    current_gsc_status: 'Crawled - currently not indexed',
+    monitor_status: 'needs_attention',
+    alert_level: 'P1',
+    notes: 'human note',
+  };
+  const fresh = buildTrackingSeedRow({
+    slug: 'bruno-fernandes-zodiac-sign',
+    url: 'https://www.astrologywiki.com/en/wiki/bruno-fernandes-zodiac-sign',
+    title: 'Bruno Fernandes Zodiac Sign',
+    publishedAt: '2026-06-24',
+    now: new Date('2026-06-25T00:00:00Z'),
+    firstTrackedAt: '2026-06-24',
+    source: 'live-sitemap',
+  });
+
+  const merged = mergePublishedTrackingRow(existing, fresh);
+  assert.equal(merged.slug, 'bruno-fernandes-zodiac-sign');
+  assert.equal(merged.title, 'Bruno Fernandes Zodiac Sign');
+  assert.equal(merged.published_at, '2026-06-24');
+  assert.equal(merged.source, 'live-sitemap');
+  assert.equal(merged.first_tracked_at, '2026-06-20');
+  assert.equal(merged.last_checked_at, '2026-06-24');
+  assert.equal(merged.current_gsc_status, 'Crawled - currently not indexed');
+  assert.equal(merged.monitor_status, 'needs_attention');
+  assert.equal(merged.notes, 'human note');
 });
 
 test('sheetValuesToRow and rowToSheetValues round-trip by header order', () => {
@@ -224,6 +285,37 @@ test('runIndexMonitor sends a D+30 upgrade even after an earlier lower-level ale
   assert.match(notified, /D30 Test/);
 });
 
+test('recapRowFromTrackingRow presents latest GSC URL Inspection status in result recap fields', () => {
+  const indexed = recapRowFromTrackingRow({
+    url: 'https://www.astrologywiki.com/en/wiki/bruno-fernandes-zodiac-sign',
+    page_id: 'PG-WC-033',
+    current_gsc_status: 'Submitted and indexed',
+    gsc_verdict: 'PASS',
+    monitor_status: 'indexed',
+    diagnosis_category: 'indexed',
+    last_checked_at: '2026-06-24',
+    source: 'live-sitemap',
+  }, { now: new Date('2026-06-25T00:00:00Z') });
+
+  assert.equal(indexed.outcome_id, 'out_PG-WC-033_latest');
+  assert.equal(indexed.url, 'https://www.astrologywiki.com/en/wiki/bruno-fernandes-zodiac-sign');
+  assert.equal(indexed.day14_收录, 'Y');
+  assert.equal(indexed.索引修复状态, '已收录');
+  assert.equal(indexed.记录日期, '2026-06-25');
+  assert.match(indexed.备注, /GSC URL Inspection/);
+
+  const notIndexed = recapRowFromTrackingRow({
+    url: 'https://www.astrologywiki.com/en/wiki/luka-modric-zodiac-sign',
+    current_gsc_status: 'Crawled - currently not indexed',
+    monitor_status: 'needs_attention',
+    diagnosis_category: 'content_quality',
+    last_checked_at: '2026-06-24',
+  }, { now: new Date('2026-06-25T00:00:00Z') });
+  assert.equal(notIndexed.outcome_id, 'out_luka-modric-zodiac-sign_latest');
+  assert.equal(notIndexed.day14_收录, 'N');
+  assert.match(notIndexed.索引修复状态, /needs_attention/);
+});
+
 test('seo autopilot enqueues index tracking instead of calling article Indexing API', () => {
   const src = readFileSync(join(SCRIPTS, 'gg-seo-autopilot.mjs'), 'utf8');
   assert.match(src, /gg-index-monitor\.mjs/);
@@ -240,7 +332,9 @@ test('gengrowth article publisher does not use Google Indexing API for ordinary 
 test('launchd wrapper runs only the lightweight index monitor check', () => {
   const wrapper = readFileSync(join(SCRIPTS, 'gg-index-monitor-tick.sh'), 'utf8');
   assert.match(wrapper, /gg-index-monitor\.mjs/);
+  assert.match(wrapper, /--sync-published/);
   assert.match(wrapper, /--check-due/);
+  assert.match(wrapper, /--sync-recap/);
   assert.match(wrapper, /--write-sheet/);
   assert.match(wrapper, /--require-gsc-auth/);
   assert.match(wrapper, /rc=\$\{rc\}）。请查看 \$\{LOG\}/);
@@ -267,6 +361,98 @@ test('runIndexMonitor --ensure-tab creates the tracking sheet without GSC calls'
 
   assert.equal(code, 0);
   assert.deepEqual(ensured, { token: 'sheet-token', workbookId: 'wb-test' });
+});
+
+test('runIndexMonitor --sync-published upserts live sitemap EN URLs into the staging tab', async () => {
+  const appended = [];
+  let updated = null;
+  const code = await runIndexMonitor(['--sync-published', '--write-sheet', '--workbook', 'wb-test'], {
+    now: new Date('2026-06-25T00:00:00Z'),
+    sheetToken: 'sheet-token',
+    sitemapRows: extractEnWikiSitemapRows(`
+      <url><loc>https://www.astrologywiki.com/en/wiki/existing-live</loc><lastmod>2026-06-24</lastmod></url>
+      <url><loc>https://www.astrologywiki.com/en/wiki/new-live</loc><lastmod>2026-06-24</lastmod></url>
+      <url><loc>https://www.astrologywiki.com/zh/wiki/new-live</loc><lastmod>2026-06-24</lastmod></url>
+    `),
+    ensureIndexTrackingTab: async () => INDEX_TRACKING_TAB,
+    readTrackingRows: async () => [{
+      ...buildTrackingSeedRow({
+        slug: 'existing-live',
+        url: 'https://www.astrologywiki.com/en/wiki/existing-live',
+        title: '',
+        publishedAt: '2026-06-20',
+        now: new Date('2026-06-20T00:00:00Z'),
+      }),
+      _rowNumber: 2,
+      current_gsc_status: 'Submitted and indexed',
+      monitor_status: 'indexed',
+    }],
+    updateTrackingRow: async (token, workbookId, tabName, rowNumber, row) => {
+      updated = { token, workbookId, tabName, rowNumber, row };
+    },
+    appendTrackingRows: async (token, workbookId, tabName, rows) => {
+      appended.push(...rows);
+    },
+  });
+
+  assert.equal(code, 0);
+  assert.equal(updated.rowNumber, 2);
+  assert.equal(updated.row.current_gsc_status, 'Submitted and indexed');
+  assert.equal(updated.row.source, 'live-sitemap');
+  assert.equal(appended.length, 1);
+  assert.equal(appended[0].url, 'https://www.astrologywiki.com/en/wiki/new-live');
+});
+
+test('runIndexMonitor --sync-recap upserts final presentation rows from staging status', async () => {
+  const appended = [];
+  let updated = null;
+  const code = await runIndexMonitor(['--sync-recap', '--write-sheet', '--workbook', 'wb-test'], {
+    now: new Date('2026-06-25T00:00:00Z'),
+    sheetToken: 'sheet-token',
+    readTrackingRows: async () => [{
+      url: 'https://www.astrologywiki.com/en/wiki/existing-live',
+      page_id: 'PG-EXISTING',
+      current_gsc_status: 'Submitted and indexed',
+      gsc_verdict: 'PASS',
+      monitor_status: 'indexed',
+      last_checked_at: '2026-06-24',
+      source: 'live-sitemap',
+    }, {
+      url: 'https://www.astrologywiki.com/en/wiki/new-live',
+      page_id: '',
+      current_gsc_status: 'Crawled - currently not indexed',
+      monitor_status: 'needs_attention',
+      diagnosis_category: 'content_quality',
+      last_checked_at: '2026-06-24',
+      source: 'live-sitemap',
+    }, {
+      url: 'https://www.astrologywiki.com/zh/wiki/ignored',
+      current_gsc_status: 'Submitted and indexed',
+      monitor_status: 'indexed',
+    }],
+    readRecapRows: async () => [{
+      _rowNumber: 9,
+      outcome_id: '',
+      page_id: 'PG-EXISTING',
+      url: 'https://www.astrologywiki.com/en/wiki/existing-live',
+      备注: 'manual decision stays',
+    }],
+    updateRecapRow: async (token, workbookId, tabName, rowNumber, row) => {
+      updated = { token, workbookId, tabName, rowNumber, row };
+    },
+    appendRecapRows: async (token, workbookId, tabName, rows) => {
+      appended.push(...rows);
+    },
+  });
+
+  assert.equal(code, 0);
+  assert.equal(updated.tabName, RECAP_TAB);
+  assert.equal(updated.rowNumber, 9);
+  assert.equal(updated.row.day14_收录, 'Y');
+  assert.equal(updated.row.备注, 'manual decision stays');
+  assert.equal(appended.length, 1);
+  assert.equal(appended[0].url, 'https://www.astrologywiki.com/en/wiki/new-live');
+  assert.equal(appended[0].day14_收录, 'N');
 });
 
 test('runIndexMonitor --check-due skips GSC token when no rows are due', async () => {

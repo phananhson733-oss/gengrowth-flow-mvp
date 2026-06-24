@@ -539,6 +539,42 @@ test('runIndexMonitor --sync-recap clears stale recap indexing flags until GSC e
   assert.equal(updated.row.备注, 'manual note stays');
 });
 
+test('runIndexMonitor --sync-recap refreshes generated GSC notes while preserving manual notes', async () => {
+  let updated = null;
+  const code = await runIndexMonitor(['--sync-recap', '--write-sheet', '--workbook', 'wb-test'], {
+    now: new Date('2026-06-25T00:00:00Z'),
+    sheetToken: 'sheet-token',
+    readTrackingRows: async () => [{
+      url: 'https://www.astrologywiki.com/en/wiki/fresh-note',
+      page_id: 'PG-FRESH',
+      current_gsc_status: 'Submitted and indexed',
+      gsc_verdict: 'PASS',
+      monitor_status: 'indexed',
+      last_checked_at: '2026-06-24',
+      source: 'live-sitemap',
+    }],
+    readRecapRows: async () => [{
+      _rowNumber: 8,
+      outcome_id: 'out_PG-FRESH_latest',
+      page_id: 'PG-FRESH',
+      url: 'https://www.astrologywiki.com/en/wiki/fresh-note',
+      day14_收录: 'N',
+      索引修复状态: '待GSC检查',
+      备注: 'GSC URL Inspection | status=pending_first_check | source=live-sitemap',
+    }],
+    updateRecapRow: async (token, workbookId, tabName, rowNumber, row) => {
+      updated = { token, workbookId, tabName, rowNumber, row };
+    },
+    appendRecapRows: async () => {},
+  });
+
+  assert.equal(code, 0);
+  assert.equal(updated.row.day14_收录, 'Y');
+  assert.equal(updated.row.索引修复状态, '已收录');
+  assert.match(updated.row.备注, /Submitted and indexed/);
+  assert.match(updated.row.备注, /checked=2026-06-24/);
+});
+
 test('runIndexMonitor --check-due skips GSC token when no rows are due', async () => {
   let readArgs = null;
   const code = await runIndexMonitor(['--check-due', '--workbook', 'wb-test'], {

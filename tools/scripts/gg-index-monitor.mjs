@@ -686,6 +686,27 @@ export async function updateRecapRow(token, workbookId, tabName, rowNumber, row)
   );
 }
 
+export async function batchUpdateRecapRows(token, workbookId, tabName, updates, appends) {
+  const last = colLetter(RECAP_HEADER.length - 1);
+  const data = updates.map((item) => ({
+    range: `${tabName}!A${item.old._rowNumber}:${last}${item.old._rowNumber}`,
+    values: [recapRowToValues(item.merged)],
+  }));
+  if (data.length) {
+    await gFetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${workbookId}/values:batchUpdate`,
+      token,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ valueInputOption: 'RAW', data }),
+      },
+    );
+  }
+  if (appends.length) await appendRecapRows(token, workbookId, tabName, appends);
+  return { updatedRows: updates.length, appendedRows: appends.length };
+}
+
 export async function updateTrackingRow(token, workbookId, tabName, rowNumber, row) {
   if (!rowNumber) throw new Error('updateTrackingRow: rowNumber required');
   const last = colLetter(INDEX_TRACKING_HEADER.length - 1);
@@ -867,6 +888,7 @@ async function runSyncRecap(args, {
   readRecapRowsFn = readRecapRows,
   updateRecapRowFn = updateRecapRow,
   appendRecapRowsFn = appendRecapRows,
+  batchUpdateRecapRowsFn = null,
 }) {
   if (!workbookId) {
     process.stderr.write('error: --sync-recap requires workbook id from env or --workbook\n');
@@ -896,10 +918,14 @@ async function runSyncRecap(args, {
   }
 
   if (args.write_sheet) {
-    for (const item of toUpdate) {
-      await updateRecapRowFn(sheetToken, workbookId, RECAP_TAB, item.old._rowNumber, item.merged);
+    if (batchUpdateRecapRowsFn) {
+      await batchUpdateRecapRowsFn(sheetToken, workbookId, RECAP_TAB, toUpdate, toAppend);
+    } else {
+      for (const item of toUpdate) {
+        await updateRecapRowFn(sheetToken, workbookId, RECAP_TAB, item.old._rowNumber, item.merged);
+      }
+      await appendRecapRowsFn(sheetToken, workbookId, RECAP_TAB, toAppend);
     }
-    await appendRecapRowsFn(sheetToken, workbookId, RECAP_TAB, toAppend);
   }
 
   process.stdout.write(
@@ -1092,6 +1118,9 @@ export async function runIndexMonitor(argv, deps = {}) {
       readRecapRowsFn: deps.readRecapRows || readRecapRows,
       updateRecapRowFn: deps.updateRecapRow || updateRecapRow,
       appendRecapRowsFn: deps.appendRecapRows || appendRecapRows,
+      batchUpdateRecapRowsFn: deps.updateRecapRow || deps.appendRecapRows
+        ? deps.batchUpdateRecapRows || null
+        : deps.batchUpdateRecapRows || batchUpdateRecapRows,
     });
   }
 

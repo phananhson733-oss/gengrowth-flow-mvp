@@ -15,6 +15,7 @@ import {
   classifyInspection,
   isDueForInspection,
   rowToSheetValues,
+  runIndexMonitor,
   sheetValuesToRow,
 } from '../gg-index-monitor.mjs';
 
@@ -183,4 +184,18 @@ test('launchd wrapper runs only the lightweight index monitor check', () => {
   assert.match(plist, /com\.gengrowth\.index-monitor/);
   assert.match(plist, /gg-index-monitor-tick\.sh/);
   assert.match(plist, /StartCalendarInterval/);
+});
+
+test('runIndexMonitor --ensure-tab creates the tracking sheet without GSC calls', async () => {
+  let ensured = null;
+  const code = await runIndexMonitor(['--ensure-tab', '--workbook', 'wb-test'], {
+    sheetToken: 'sheet-token',
+    ensureIndexTrackingTab: async (token, workbookId) => {
+      ensured = { token, workbookId };
+      return INDEX_TRACKING_TAB;
+    },
+  });
+
+  assert.equal(code, 0);
+  assert.deepEqual(ensured, { token: 'sheet-token', workbookId: 'wb-test' });
 });

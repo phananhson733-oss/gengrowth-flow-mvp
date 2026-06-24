@@ -571,6 +571,7 @@ test('runIndexMonitor --check-all inspects pending rows before milestone due dat
     now: new Date('2026-06-24T09:00:00Z'),
     sheetToken: 'sheet-token',
     gscToken: 'gsc-token',
+    ensureIndexTrackingTab: async () => INDEX_TRACKING_TAB,
     readTrackingRows: async () => [{
       _rowNumber: 2,
       url: 'https://www.astrologywiki.com/en/wiki/not-yet-due',
@@ -597,7 +598,7 @@ test('runIndexMonitor --check-all inspects pending rows before milestone due dat
   assert.equal(inspected.url, 'https://www.astrologywiki.com/en/wiki/not-yet-due');
   assert.equal(updated.rowNumber, 2);
   assert.equal(updated.row.current_gsc_status, 'URL is unknown to Google');
-  assert.equal(updated.row.monitor_status, 'needs_attention');
+  assert.equal(updated.row.monitor_status, 'monitoring');
 });
 
 test('preflightGscAccess probes Search Analytics with the GSC reader SA token', async () => {

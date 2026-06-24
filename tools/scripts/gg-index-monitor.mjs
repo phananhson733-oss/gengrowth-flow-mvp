@@ -1018,7 +1018,14 @@ async function runCheckDue(args, {
     return 1;
   }
   const limit = Number(args.limit || 50) || 50;
-  const due = rows.filter((row) => isDueForInspection(row, now)).slice(0, limit);
+  const dueSource = args.check_all
+    ? rows.filter((row) =>
+      isEnWikiArticleUrl(row.url) &&
+      !['indexed', 'canonical_ok'].includes(String(row.monitor_status || 'monitoring')) &&
+      String(row.last_checked_at || '') !== isoDay(now)
+    )
+    : rows.filter((row) => isDueForInspection(row, now));
+  const due = dueSource.slice(0, limit);
   process.stderr.write(`gg-index-monitor: rows=${rows.length} due=${due.length} mode=${writeSheet ? 'write-sheet' : 'dry-run'}\n`);
   let inspectionToken = gscToken;
   const siteUrl = args.site || process.env.GG_GSC_SITE || DEFAULT_SITE;
@@ -1100,6 +1107,7 @@ export async function runIndexMonitor(argv, deps = {}) {
       '  node tools/scripts/gg-index-monitor.mjs --sync-published --write-sheet [--sitemap-url URL]',
       '  node tools/scripts/gg-index-monitor.mjs --enqueue-published --page-id PG-... --slug slug --title "Title" --published-at YYYY-MM-DD --write-sheet',
       '  node tools/scripts/gg-index-monitor.mjs --check-due --write-sheet [--limit 50]',
+      '  node tools/scripts/gg-index-monitor.mjs --check-all --write-sheet [--limit 200]',
       '  node tools/scripts/gg-index-monitor.mjs --sync-recap --write-sheet',
       '',
     ].join('\n'));
@@ -1113,7 +1121,7 @@ export async function runIndexMonitor(argv, deps = {}) {
     : resolveWorkbookId();
 
   let sheetToken = deps.sheetToken;
-  if (!sheetToken && (args.write_sheet || args.check_due || defaultCheckDue || args.ensure_tab || args.sync_published || args.sync_recap)) {
+  if (!sheetToken && (args.write_sheet || args.check_due || args.check_all || defaultCheckDue || args.ensure_tab || args.sync_published || args.sync_recap)) {
     try {
       sheetToken = await (deps.getSheetToken || getSheetAccessToken)();
     } catch (e) {
@@ -1152,7 +1160,7 @@ export async function runIndexMonitor(argv, deps = {}) {
     return runEnqueue(args, { sheetToken, workbookId, now });
   }
 
-  if (args.check_due || defaultCheckDue) {
+  if (args.check_due || args.check_all || defaultCheckDue) {
     return runCheckDue(args, {
       sheetToken,
       gscToken: deps.gscToken,
@@ -1183,7 +1191,7 @@ export async function runIndexMonitor(argv, deps = {}) {
     });
   }
 
-  process.stderr.write('error: expected --ensure-tab, --sync-published, --enqueue-published, --check-due, or --sync-recap (see --help)\n');
+  process.stderr.write('error: expected --ensure-tab, --sync-published, --enqueue-published, --check-due, --check-all, or --sync-recap (see --help)\n');
   return 1;
 }
 

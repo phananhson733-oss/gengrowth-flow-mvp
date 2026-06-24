@@ -84,6 +84,7 @@ test('extractEnWikiSitemapRows copies only live EN wiki article URLs from sitema
   assert.equal(rows.length, 1);
   assert.equal(rows[0].url, 'https://www.astrologywiki.com/en/wiki/bruno-fernandes-zodiac-sign');
   assert.equal(rows[0].slug, 'bruno-fernandes-zodiac-sign');
+  assert.equal(rows[0].title, 'Bruno Fernandes Zodiac Sign');
   assert.equal(rows[0].page_id, '');
   assert.equal(rows[0].published_at, '2026-06-24');
   assert.equal(rows[0].first_tracked_at, '2026-06-24');
@@ -382,6 +383,13 @@ test('runIndexMonitor --sync-published upserts live sitemap EN URLs into the sta
       <url><loc>https://www.astrologywiki.com/zh/wiki/new-live</loc><lastmod>2026-06-24</lastmod></url>
     `),
     ensureIndexTrackingTab: async () => INDEX_TRACKING_TAB,
+    readRecapRows: async () => [{
+      page_id: 'PG-EXISTING',
+      url: 'https://www.astrologywiki.com/en/wiki/existing-live',
+    }, {
+      page_id: 'PG-NEW',
+      url: 'https://www.astrologywiki.com/en/wiki/new-live',
+    }],
     readTrackingRows: async () => [{
       ...buildTrackingSeedRow({
         slug: 'existing-live',
@@ -404,10 +412,14 @@ test('runIndexMonitor --sync-published upserts live sitemap EN URLs into the sta
 
   assert.equal(code, 0);
   assert.equal(updated.rowNumber, 2);
+  assert.equal(updated.row.page_id, 'PG-EXISTING');
+  assert.equal(updated.row.title, 'Existing Live');
   assert.equal(updated.row.current_gsc_status, 'Submitted and indexed');
   assert.equal(updated.row.source, 'live-sitemap');
   assert.equal(appended.length, 1);
   assert.equal(appended[0].url, 'https://www.astrologywiki.com/en/wiki/new-live');
+  assert.equal(appended[0].page_id, 'PG-NEW');
+  assert.equal(appended[0].title, 'New Live');
 });
 
 test('runIndexMonitor --sync-recap upserts final presentation rows from staging status', async () => {

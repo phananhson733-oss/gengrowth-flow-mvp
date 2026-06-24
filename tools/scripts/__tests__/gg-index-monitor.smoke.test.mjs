@@ -199,3 +199,24 @@ test('runIndexMonitor --ensure-tab creates the tracking sheet without GSC calls'
   assert.equal(code, 0);
   assert.deepEqual(ensured, { token: 'sheet-token', workbookId: 'wb-test' });
 });
+
+test('runIndexMonitor --check-due skips GSC token when no rows are due', async () => {
+  let readArgs = null;
+  const code = await runIndexMonitor(['--check-due', '--workbook', 'wb-test'], {
+    sheetToken: 'sheet-token',
+    readTrackingRows: async (token, workbookId, tabName) => {
+      readArgs = { token, workbookId, tabName };
+      return [];
+    },
+    getGscToken: async () => {
+      throw new Error('GSC token should not be requested for an empty due set');
+    },
+  });
+
+  assert.equal(code, 0);
+  assert.deepEqual(readArgs, {
+    token: 'sheet-token',
+    workbookId: 'wb-test',
+    tabName: INDEX_TRACKING_TAB,
+  });
+});

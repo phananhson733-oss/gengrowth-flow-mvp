@@ -93,10 +93,12 @@ Judge ONLY astrological substance — not schema, not links.
 FAIL if there is any material astrological error or the piece is generic filler.`,
   schema: `Dimension: STRUCTURED-DATA / SCHEMA INTEGRITY.
 Judge ONLY the rendered page module's machine-readable metadata — not prose quality.
-- JSON-LD / schema.org type is appropriate (e.g. Article/FAQPage/BreadcrumbList) and well-formed.
-- title, description, headings, FAQ entries, and any structured fields are present, non-empty, and consistent with the article body.
+- Review the metadata that is EXPLICITLY present in the page module / source draft pair.
+- JSON-LD / schema.org type is appropriate (e.g. Article/FAQPage) and well-formed.
+- title, description, headings, FAQ entries, keywords, and any structured fields that are explicitly declared are present, non-empty, and consistent with the article body.
 - No duplicated, contradictory, or hallucinated metadata; dates/slugs/canonical fields look sane.
-FAIL if required structured-data is missing, malformed, or contradicts the visible content.`,
+- IMPORTANT: the downstream static-site layer may auto-generate FAQPage and BreadcrumbList JSON-LD from markdown headings/FAQ blocks. Do NOT fail ONLY because the article module itself lacks explicit FAQPage/BreadcrumbList declarations when the body merely contains FAQs or breadcrumb-like navigation.
+FAIL only when metadata explicitly present in the module/draft is missing, malformed, hallucinated, or contradicts the visible content.`,
   'links-seo': `Dimension: INTERNAL LINKING & ON-PAGE SEO.
 Judge ONLY links + SEO mechanics — not astrological accuracy.
 - Internal wiki-links resolve to plausible existing targets; the first internal link sits early (within the opening).

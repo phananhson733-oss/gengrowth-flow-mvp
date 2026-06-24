@@ -15,7 +15,6 @@ import { dirname, join } from 'node:path';
 import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { loadEnv, gFetch, resolveWorkbookId, redactNote, getAccessToken as getSaAccessToken } from './lib/gg-shared.mjs';
-import { getAccessToken as getSheetAccessToken } from './lib/_oauth-token.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const LARK_NOTIFY = join(__dirname, 'gg-lark-notify.sh');
@@ -77,11 +76,21 @@ export const RECAP_HEADER = Object.freeze([
 const DUE_MILESTONES = Object.freeze([3, 7, 14, 21, 30]);
 const DEFAULT_SITE = 'sc-domain:astrologywiki.com';
 const DEFAULT_SITE_ORIGIN = 'https://www.astrologywiki.com';
+const SHEETS_SCOPE = 'https://www.googleapis.com/auth/spreadsheets';
 const GSC_READONLY_SCOPE = 'https://www.googleapis.com/auth/webmasters.readonly';
 const DEFAULT_SITEMAP_URL = 'https://www.astrologywiki.com/sitemap.xml';
 
 function readerSaPath() {
   return process.env.GG_READER_SA_JSON || join(homedir(), '.config', 'gg', 'gg-reader-sa.json');
+}
+
+function writerSaPath() {
+  return process.env.GG_WRITER_SA_JSON || join(homedir(), '.config', 'gg', 'gg-writer-sa.json');
+}
+
+export async function getSheetAccessToken() {
+  const { token } = await getSaAccessToken(writerSaPath(), [SHEETS_SCOPE]);
+  return token;
 }
 
 export async function getGscAccessToken() {

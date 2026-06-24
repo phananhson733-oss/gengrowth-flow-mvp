@@ -1,0 +1,94 @@
+{
+  "page_id": "PG-MYTH-009",
+  "prompt_path": "/Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-MYTH-009.v8.zh-prompt.md",
+  "started_at": "2026-06-24T07:50:42.542Z",
+  "models_requested": [
+    "claude",
+    "codex",
+    "gemini"
+  ],
+  "retry": 0,
+  "diversify_on_fail": false,
+  "max_cost_usd_per_page": 5,
+  "budget_exceeded_models": [],
+  "ok_count": 2,
+  "total_cost_estimate_usd": 0.045,
+  "results": {
+    "claude": {
+      "model": "claude",
+      "active_model": "claude",
+      "diversified": false,
+      "ok": true,
+      "output_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/zh-demo/PG-MYTH-009-claude-v8.md",
+      "retries": 0,
+      "duration_s": 171.9,
+      "cost_estimate_usd": {
+        "usd": 0.0107,
+        "input_tokens_est": 2392,
+        "output_tokens_est": 238,
+        "pricing_note": "Sonnet 4.6 xhigh"
+      },
+      "cumulative_cost_usd": 0.0107,
+      "budget_exceeded": false,
+      "budget_usd": 5,
+      "attempts": [
+        {
+          "try_index": 1,
+          "model": "claude",
+          "command": "claude -p --model claude-opus-4-8 --effort high < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-MYTH-009.v8.zh-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/zh-demo/PG-MYTH-009-claude-v8.md",
+          "cost_usd": 0.0107,
+          "cumulative_cost_usd": 0.0107,
+          "ok": true,
+          "exit_code": 0,
+          "duration_s": 171.9,
+          "stderr_tail": "",
+          "stdout_bytes": 3848,
+          "sonnet_guard": {
+            "downgraded": false,
+            "bytes": 10175
+          }
+        }
+      ]
+    },
+    "codex": {
+      "model": "codex",
+      "active_model": "codex",
+      "diversified": false,
+      "ok": true,
+      "output_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/zh-demo/PG-MYTH-009-codex-v8.md",
+      "retries": 0,
+      "duration_s": 400.4,
+      "cost_estimate_usd": {
+        "usd": 0.0343,
+        "input_tokens_est": 2392,
+        "output_tokens_est": 260,
+        "pricing_note": "GPT 5.5 xhigh"
+      },
+      "cumulative_cost_usd": 0.0343,
+      "budget_exceeded": false,
+      "budget_usd": 5,
+      "attempts": [
+        {
+          "try_index": 1,
+          "model": "codex",
+          "command": "codex exec -c model=gpt-5.5 -c reasoning_effort=xhigh - < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-MYTH-009.v8.zh-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/zh-demo/PG-MYTH-009-codex-v8.md",
+          "cost_usd": 0.0343,
+          "cumulative_cost_usd": 0.0343,
+          "ok": true,
+          "exit_code": 0,
+          "duration_s": 400.4,
+          "stderr_tail": "nalytics 轻量查询预检 GSC property 权限，不再传 `{user:true}`；wrapper 失败告警从 OAuth refresh_token 过期改为提示 `GSC reader SA 权限不足`。TDD 验证：先新增测试抓到旧行为失败，再修复；最终 `gg-index-monitor` smoke 19/19、wrapper/plist lint、`gg-seo-autopilot` smoke 13/13、`lib-gg-shared` smoke 84/84 均通过。真实环境验证显示 reader SA 目前能读 Sheet，但对 `sc-domain:astrologywiki.com` 的 GSC preflight 返回 403，GA4 也返回 403；后续需要在 Search Console 将 `gg-reader-sa@aqueous-sandbox-496915-i1.iam.gserviceaccount.com` 加为 Full user，GA4 若要走 SA 则加 Viewer。\n+\n+---\n\ntokens used\n84,392",
+          "stdout_bytes": 3303
+        }
+      ]
+    },
+    "gemini": {
+      "model": "gemini",
+      "active_model": "gemini",
+      "ok": false,
+      "skipped": true,
+      "reason": "gemini not in PATH — install the CLI or remove from --models",
+      "attempts": []
+    }
+  }
+}

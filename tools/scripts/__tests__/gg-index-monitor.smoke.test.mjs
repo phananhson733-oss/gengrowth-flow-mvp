@@ -343,8 +343,10 @@ test('launchd wrapper runs only the lightweight index monitor check', () => {
   const wrapper = readFileSync(join(SCRIPTS, 'gg-index-monitor-tick.sh'), 'utf8');
   assert.match(wrapper, /gg-index-monitor\.mjs/);
   assert.match(wrapper, /--sync-published/);
+  assert.match(wrapper, /--submit-sitemap/);
   assert.match(wrapper, /--check-due/);
   assert.match(wrapper, /--sync-recap/);
+  assert.match(wrapper, /--sync-request-queue/);
   assert.match(wrapper, /--write-sheet/);
   assert.match(wrapper, /--require-gsc-auth/);
   assert.match(wrapper, /rc=\$\{rc\}）。请查看 \$\{LOG\}/);

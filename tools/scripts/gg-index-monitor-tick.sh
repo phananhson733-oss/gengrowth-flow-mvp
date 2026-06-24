@@ -3,11 +3,13 @@
 #
 # Lightweight daily job:
 #   - syncs live EN wiki URLs from the public sitemap into index-tracking
+#   - refreshes the sitemap through the official Search Console Sitemaps API
 #   - checks due URLs with Search Console URL Inspection
 #   - writes final human-facing status into 结果复盘表
+#   - writes the Phase 2 request-indexing-queue for human-confirmed Computer Use
 #   - sends Feishu alerts for overdue/problem URLs
 #
-# It intentionally does not author, publish, merge, or request indexing.
+# It intentionally does not author, publish, merge, or click Request Indexing unattended.
 
 export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$HOME/.npm-global/bin:$HOME/.local/bin:$PATH"
 
@@ -44,6 +46,7 @@ echo "$(date '+%F %T') index monitor start (pid $$, limit $LIMIT)" >> "$LOG"
 
   run_rc=0
   node "$SCRIPT_DIR/gg-index-monitor.mjs" --sync-published --write-sheet || run_rc=$?
+  node "$SCRIPT_DIR/gg-index-monitor.mjs" --submit-sitemap --notify || run_rc=$?
 
   if command -v gtimeout >/dev/null 2>&1; then
     gtimeout "$TIMEOUT" node "$SCRIPT_DIR/gg-index-monitor.mjs" --check-due --write-sheet --require-gsc-auth --limit "$LIMIT" || run_rc=$?
@@ -55,6 +58,11 @@ echo "$(date '+%F %T') index monitor start (pid $$, limit $LIMIT)" >> "$LOG"
   recap_rc=$?
   if [ "$recap_rc" -ne 0 ] && [ "$run_rc" -eq 0 ]; then
     run_rc="$recap_rc"
+  fi
+  node "$SCRIPT_DIR/gg-index-monitor.mjs" --sync-request-queue --write-sheet --notify
+  queue_rc=$?
+  if [ "$queue_rc" -ne 0 ] && [ "$run_rc" -eq 0 ]; then
+    run_rc="$queue_rc"
   fi
   exit "$run_rc"
 ) >> "$LOG" 2>&1

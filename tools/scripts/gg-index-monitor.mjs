@@ -1319,6 +1319,96 @@ async function runSyncRecap(args, {
   return 0;
 }
 
+function formatRequestQueueMessage(rows, { sitemapUrl = DEFAULT_SITEMAP_URL } = {}) {
+  const counts = rows.reduce((acc, row) => {
+    acc[row.priority] = (acc[row.priority] || 0) + 1;
+    return acc;
+  }, {});
+  const top = rows.slice(0, 5).map((row) => `${row.priority} ${row.page_id} ${row.request_reason}`).join('\n');
+  return [
+    `⚠️ Request Indexing 候选队列已更新：共 ${rows.length} 条`,
+    `优先级：P0=${counts.P0 || 0} / P1=${counts.P1 || 0} / P2=${counts.P2 || 0} / P3=${counts.P3 || 0}`,
+    `Sitemap：${sitemapUrl} 已通过官方 Sitemaps API 刷新或等待刷新结果`,
+    top ? `Top 候选：\n${top}` : '',
+    '处理方式：打开 request-indexing-queue，按优先级用 Computer Use 辅助打开 GSC；最终 Request Indexing 点击需人工确认。',
+  ].filter(Boolean).join('\n');
+}
+
+async function runSubmitSitemap(args, {
+  gscWriteToken,
+  getGscWriteToken = getGscWriteAccessToken,
+  submitSitemapFn = submitSitemap,
+  notifyFn = larkBestEffort,
+}) {
+  const siteUrl = args.site || process.env.GG_GSC_SITE || DEFAULT_SITE;
+  const sitemapUrl = args.sitemap_url || DEFAULT_SITEMAP_URL;
+  let token = gscWriteToken;
+  if (!token) {
+    try {
+      token = await getGscWriteToken();
+    } catch (e) {
+      process.stderr.write(`error: cannot mint GSC write token — ${e.message}\n`);
+      return 1;
+    }
+  }
+  try {
+    await submitSitemapFn(token, siteUrl, sitemapUrl);
+  } catch (e) {
+    const msg = `⚠️ sitemap 刷新失败：${sitemapUrl} (${redactNote(e)})`;
+    process.stderr.write(`${msg}\n`);
+    if (args.notify) notifyFn(msg);
+    return 1;
+  }
+  const msg = `sitemap-submit: site=${siteUrl} sitemap=${sitemapUrl} ok`;
+  process.stdout.write(`${msg}\n`);
+  if (args.notify) notifyFn(`✅ sitemap 已刷新：${sitemapUrl}`);
+  return 0;
+}
+
+async function runSyncRequestQueue(args, {
+  sheetToken,
+  workbookId,
+  now,
+  ensureFn = ensureRequestQueueTab,
+  readRecapRowsFn = readRecapRows,
+  readTrackingRowsFn = readTrackingRows,
+  readRequestQueueRowsFn = readRequestQueueRows,
+  replaceRowsFn = replaceRequestQueueRows,
+  formatFn = formatRequestQueueTab,
+  notifyFn = larkBestEffort,
+}) {
+  if (!workbookId) {
+    process.stderr.write('error: --sync-request-queue requires workbook id from env or --workbook\n');
+    return 1;
+  }
+  const tabName = args.write_sheet ? await ensureFn(sheetToken, workbookId) : REQUEST_INDEXING_QUEUE_TAB;
+  const recapRows = await readRecapRowsFn(sheetToken, workbookId, RECAP_TAB);
+  const trackingRows = await readTrackingRowsFn(sheetToken, workbookId, INDEX_TRACKING_TAB);
+  const existingRows = args.write_sheet ? await readRequestQueueRowsFn(sheetToken, workbookId, tabName) : [];
+  const rows = buildRequestIndexingCandidateRows({
+    recapRows,
+    trackingRows,
+    existingRows,
+    now,
+    siteUrl: args.site || process.env.GG_GSC_SITE || DEFAULT_SITE,
+  });
+  if (args.write_sheet) {
+    await replaceRowsFn(sheetToken, workbookId, tabName, rows);
+    if (formatFn) await formatFn(sheetToken, workbookId, tabName);
+  }
+  if (args.notify && rows.length) {
+    notifyFn(formatRequestQueueMessage(rows, { sitemapUrl: args.sitemap_url || DEFAULT_SITEMAP_URL }));
+  }
+  const counts = rows.reduce((acc, row) => {
+    acc[row.priority] = (acc[row.priority] || 0) + 1;
+    return acc;
+  }, {});
+  process.stdout.write(
+    `sync-request-queue: rows=${rows.length} P0=${counts.P0 || 0} P1=${counts.P1 || 0} P2=${counts.P2 || 0} P3=${counts.P3 || 0} mode=${args.write_sheet ? 'write-sheet' : 'dry-run'}\n`,
+  );
+  return 0;
+}
+
 async function runCheckDue(args, {
   sheetToken,
   gscToken,
@@ -1440,6 +1530,8 @@ export async function runIndexMonitor(argv, deps = {}) {
       '  node tools/scripts/gg-index-monitor.mjs --check-due --write-sheet [--limit 50]',
       '  node tools/scripts/gg-index-monitor.mjs --check-all --write-sheet [--limit 200]',
       '  node tools/scripts/gg-index-monitor.mjs --sync-recap --write-sheet',
+      '  node tools/scripts/gg-index-monitor.mjs --submit-sitemap [--notify]',
+      '  node tools/scripts/gg-index-monitor.mjs --sync-request-queue --write-sheet [--notify]',
       '',
     ].join('\n'));
     return 0;
@@ -1452,7 +1544,7 @@ export async function runIndexMonitor(argv, deps = {}) {
     : resolveWorkbookId();
 
   let sheetToken = deps.sheetToken;
-  if (!sheetToken && (args.write_sheet || args.check_due || args.check_all || defaultCheckDue || args.ensure_tab || args.sync_published || args.sync_recap)) {
+  if (!sheetToken && (args.write_sheet || args.check_due || args.check_all || defaultCheckDue || args.ensure_tab || args.sync_published || args.sync_recap || args.sync_request_queue)) {
     try {
       sheetToken = await (deps.getSheetToken || getSheetAccessToken)();
     } catch (e) {
@@ -1466,6 +1558,15 @@ export async function runIndexMonitor(argv, deps = {}) {
       sheetToken,
       workbookId,
       ensureFn: deps.ensureIndexTrackingTab || ensureIndexTrackingTab,
+    });
+  }
+
+  if (args.submit_sitemap) {
+    return runSubmitSitemap(args, {
+      gscWriteToken: deps.gscWriteToken,
+      getGscWriteToken: deps.getGscWriteToken || getGscWriteAccessToken,
+      submitSitemapFn: deps.submitSitemap || submitSitemap,
+      notifyFn: deps.notify || larkBestEffort,
     });
   }
 
@@ -1522,7 +1623,22 @@ export async function runIndexMonitor(argv, deps = {}) {
     });
   }
 
-  process.stderr.write('error: expected --ensure-tab, --sync-published, --enqueue-published, --check-due, --check-all, or --sync-recap (see --help)\n');
+  if (args.sync_request_queue) {
+    return runSyncRequestQueue(args, {
+      sheetToken,
+      workbookId,
+      now,
+      ensureFn: deps.ensureRequestQueueTab || ensureRequestQueueTab,
+      readRecapRowsFn: deps.readRecapRows || readRecapRows,
+      readTrackingRowsFn: deps.readTrackingRows || readTrackingRows,
+      readRequestQueueRowsFn: deps.readRequestQueueRows || readRequestQueueRows,
+      replaceRowsFn: deps.replaceRequestQueueRows || replaceRequestQueueRows,
+      formatFn: deps.formatRequestQueue || formatRequestQueueTab,
+      notifyFn: deps.notify || larkBestEffort,
+    });
+  }
+
+  process.stderr.write('error: expected --ensure-tab, --sync-published, --enqueue-published, --check-due, --check-all, --sync-recap, --submit-sitemap, or --sync-request-queue (see --help)\n');
   return 1;
 }
 

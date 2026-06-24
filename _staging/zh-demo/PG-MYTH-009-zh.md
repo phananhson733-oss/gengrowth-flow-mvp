@@ -18,8 +18,8 @@ associated_keywords:
   - rhaenyra scorpio
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-24T08:14:02.154Z
-content_sha256_short: 34b4c03fbf81cc5c
+generated_at: 2026-06-24T08:15:52.265Z
+content_sha256_short: 17558afee7760824
 phase2_checks: all-pass
 ---
 
@@ -114,7 +114,7 @@ phase2_checks: all-pass
 
 - [[<TBD-internal-link: 珀耳塞福涅女神原型>]]——另一个借原型而非生日来解读的神话人物。
 - [[<TBD-internal-link: 北交点在金牛座>]]——固定星座之争里的金牛一侧，可作对照。
-- [[<TBD-internal-link: 天蝎座的核心特质>]]——这份固定水象读法所倚靠的星座底色。
+- [[<TBD-internal-link: 北交点与南交点>]]——业力的南北交点轴线，与她天蝎—金牛式的固定之争互为映照。
 - [[<TBD-external-link: 维基百科 | 雷妮拉·坦格利安 | 本占星解读所依据的角色背景>]]——关于她全剧弧线的背景。
 
 这不是临床解读，也不是心理健康建议。

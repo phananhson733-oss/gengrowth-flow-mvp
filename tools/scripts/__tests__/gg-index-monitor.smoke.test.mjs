@@ -18,6 +18,7 @@ import {
   buildTrackingSeedRow,
   classifyInspection,
   extractEnWikiSitemapRows,
+  extractPageDiagnosticsFromHtml,
   formatAlertMessage,
   isDueForInspection,
   mergeInspectionIntoRow,
@@ -177,13 +178,35 @@ test('classifyInspection treats indexed pages as done without alerts', () => {
   assert.equal(result.first_indexed_at, '2026-06-24');
 });
 
-test('classifyInspection alerts at D+14 for discovered-not-indexed', () => {
+test('extractPageDiagnosticsFromHtml counts visible words and reads meta robots', () => {
+  const html = `
+    <html>
+      <head>
+        <meta name="robots" content="noindex, nofollow">
+        <meta name="author" content="GenGrowth">
+        <meta property="article:published_time" content="2026-06-24">
+      </head>
+      <body>
+        <script>ignored words ignored words</script>
+        <main>${'astrology '.repeat(1210)}</main>
+      </body>
+    </html>
+  `;
+  const diagnostics = extractPageDiagnosticsFromHtml(html);
+
+  assert.equal(diagnostics.meta_robots, 'noindex, nofollow');
+  assert.equal(diagnostics.has_author, true);
+  assert.equal(diagnostics.has_published_time, true);
+  assert.ok(diagnostics.word_count >= 1210);
+});
+
+test('classifyInspection keeps discovered-not-indexed quiet at D+14 and escalates at D+21', () => {
   const d7 = classifyInspection({
     verdict: 'NEUTRAL',
     coverageState: 'Discovered - currently not indexed',
   }, { daysSinceFirstTracked: 7, now: new Date('2026-06-24T09:00:00Z') });
   assert.equal(d7.monitor_status, 'monitoring');
-  assert.equal(d7.diagnosis_category, 'normal_queue');
+  assert.equal(d7.diagnosis_category, '正常排队（新站常见）');
   assert.equal(d7.alert_level, '');
   assert.equal(d7.should_alert, false);
 
@@ -191,36 +214,49 @@ test('classifyInspection alerts at D+14 for discovered-not-indexed', () => {
     verdict: 'NEUTRAL',
     coverageState: 'Discovered - currently not indexed',
   }, { daysSinceFirstTracked: 14, now: new Date('2026-06-24T09:00:00Z') });
-  assert.equal(d14.monitor_status, 'needs_attention');
-  assert.equal(d14.alert_level, 'P2');
-  assert.equal(d14.should_alert, true);
-  assert.match(d14.recommendation, /D\+14/);
+  assert.equal(d14.monitor_status, 'monitoring');
+  assert.equal(d14.alert_level, '');
+  assert.equal(d14.should_alert, false);
+  assert.match(d14.recommendation, /D\+21/);
+
+  const d21 = classifyInspection({
+    verdict: 'NEUTRAL',
+    coverageState: 'Discovered - currently not indexed',
+  }, { daysSinceFirstTracked: 21, now: new Date('2026-06-24T09:00:00Z') });
+  assert.equal(d21.monitor_status, 'needs_attention');
+  assert.equal(d21.alert_level, 'P2');
+  assert.equal(d21.should_alert, true);
 });
 
-test('classifyInspection alerts at D+14 for every non-indexed GSC coverage state', () => {
-  const states = [
-    'Crawled - currently not indexed',
-    'Discovered - currently not indexed',
-    'URL is unknown to Google',
-    'Duplicate without user-selected canonical',
-    'Alternate page with proper canonical tag',
-    'Excluded by noindex tag',
-    'Soft 404',
-    'Page with redirect',
-    'Blocked by robots.txt',
-    'Not found (404)',
+test('classifyInspection maps common GSC states to diagnosis categories and recommendations', () => {
+  const cases = [
+    ['Crawled - currently not indexed', '内容质量问题', /目标 ≥ 1,200 词|内容扩充/],
+    ['Excluded by noindex tag', '标签问题（需人工确认是否有意）', /确认是否有意设置 noindex/],
+    ['Blocked by robots.txt', '配置错误（大概率无意）', /robots\.txt 当前内容/],
+    ['Not found (404)', '技术故障', /立即处理/],
+    ['Server error (5xx)', '技术故障', /立即处理/],
+    ['Duplicate, Google chose different canonical than user', '重复内容 / canonical 问题', /canonical 标签/],
+    ['Soft 404', '索引配置问题', /HTTP 状态|页面正文/],
+    ['URL is unknown to Google', '未知状态', /分类框架/],
   ];
 
-  for (const coverageState of states) {
+  for (const [coverageState, category, recommendation] of cases) {
     const result = classifyInspection({
-      verdict: coverageState === 'Submitted and indexed' ? 'PASS' : 'NEUTRAL',
+      verdict: /404|5xx/.test(coverageState) ? 'FAIL' : 'NEUTRAL',
       coverageState,
-    }, { daysSinceFirstTracked: 14, now: new Date('2026-06-24T09:00:00Z') });
+    }, {
+      daysSinceFirstTracked: 14,
+      now: new Date('2026-06-24T09:00:00Z'),
+      pageDiagnostics: {
+        word_count: 780,
+        meta_robots: 'index, follow',
+        robots_txt: 'User-agent: *\nDisallow: /private',
+      },
+    });
 
-    assert.notEqual(result.monitor_status, 'indexed', coverageState);
-    assert.notEqual(result.monitor_status, 'canonical_ok', coverageState);
-    assert.notEqual(result.alert_level, '', coverageState);
+    assert.equal(result.diagnosis_category, category, coverageState);
     assert.equal(result.should_alert, true, coverageState);
+    assert.match(result.recommendation, recommendation, coverageState);
   }
 });
 
@@ -243,10 +279,10 @@ test('classifyInspection alerts at D+14 for crawled-not-indexed', () => {
   }, { daysSinceFirstTracked: 14, now: new Date('2026-06-24T09:00:00Z') });
 
   assert.equal(result.monitor_status, 'needs_attention');
-  assert.equal(result.diagnosis_category, 'content_quality');
+  assert.equal(result.diagnosis_category, '内容质量问题');
   assert.equal(result.alert_level, 'P1');
   assert.equal(result.should_alert, true);
-  assert.match(result.recommendation, /content quality/i);
+  assert.match(result.recommendation, /目标 ≥ 1,200 词/);
 });
 
 test('classifyInspection escalates unresolved non-indexed pages at D+30', () => {
@@ -333,17 +369,18 @@ test('formatAlertMessage uses the D+14 indexing overdue reminder format', () => 
     recommendation: 'Review content quality, internal links, duplicate overlap, metadata, and crawlable HTML.',
   }, {
     alert_level: 'P1',
-    diagnosis_category: 'content_quality',
+    diagnosis_category: '内容质量问题',
+    diagnosis_conclusion: '内容质量不足',
     recommendation: 'fallback',
   });
 
-  assert.match(message, /^⚠️ 索引超期提醒/m);
+  assert.match(message, /^🔍 索引诊断报告/m);
   assert.match(message, /页面：Lifecycle Test/);
   assert.match(message, /URL：https:\/\/www\.astrologywiki\.com\/en\/wiki\/lifecycle/);
-  assert.match(message, /发布日期：2026-06-10/);
-  assert.match(message, /已过天数：D\+14/);
-  assert.match(message, /当前 GSC 状态：Crawled - currently not indexed/);
-  assert.match(message, /建议操作：Review content quality/);
+  assert.match(message, /GSC 状态：Crawled - currently not indexed/);
+  assert.match(message, /诊断结论：内容质量不足/);
+  assert.match(message, /建议操作：\n  □ Review content quality/);
+  assert.match(message, /处理完成后：系统将自动刷新 sitemap 并进入 request-indexing-queue/);
 });
 
 test('runIndexMonitor sends a D+30 upgrade even after an earlier lower-level alert', async () => {

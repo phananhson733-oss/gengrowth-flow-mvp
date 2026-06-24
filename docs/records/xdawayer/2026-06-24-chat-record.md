@@ -1758,3 +1758,17 @@ Map the same Scorpio patterns onto your own placements: generate your free birth
 **🤖 回答：**
 
 基于 PG-MYTH-009 / `rhaenyra-targaryen-zodiac-sign` 的英文 Phase 2 成稿和本轮 H1 结构失败信息，重新产出纯 Markdown 中文正文：主关键词选为 `雷妮拉·坦格利安星座`，H1 明确存在，11 个中文 H2 顺序覆盖；保留行为匹配、固定水象、天蝎/金牛/火象取舍、常见误读、速查表、问答、反思提示、延伸阅读、中文 CTA `https://astrologywiki.com/zh/wiki/how-to-read-birth-chart` 与免责声明；并将主关键词出现次数控制在 5-8 次。
+
+---
+
+### Q18 — 16:35
+
+**🙋 提问：**
+
+```text
+需求在 Obsidian 文档与 Google Sheet；结合本地 gengrowth-flow-mvp 评估索引自动化。要求不要走 Testing-mode OAuth，要用 SA；所有文章链接应先自动复制到需求 sheet，最终只在「结果复盘表」呈现，index-tracking 仅作中转；只追踪 EN URL，不追踪 ZH；收录状态以 GSC 为准。
+```
+
+**🤖 回答：**
+
+完成 Phase 1 索引自动化落地与真实 Sheet 回填：`gg-index-monitor.mjs` 支持从 `https://www.astrologywiki.com/sitemap.xml` 抽取 live EN wiki URL，写入 `index-tracking` 中转表，并同步最终展示字段到「结果复盘表」；launchd wrapper 顺序改为 `--sync-published` → `--check-due --require-gsc-auth` → `--sync-recap`。真实写入结果：`index-tracking` 共 210 个 EN URL、0 个 ZH URL，source 全为 `live-sitemap`；「结果复盘表」共 223 条数据行、213 个 EN URL、0 个 ZH URL，其中 210 个来自当前 sitemap，原表保留 3 个不在 sitemap 中的旧 EN URL。为避免 Testing-mode refresh_token 7 天过期，index monitor 的 Sheets 写入 token 也从 `_oauth-token.mjs` 切到 writer SA `gg-writer-sa@aqueous-sandbox-496915-i1.iam.gserviceaccount.com`；真实幂等同步验证为 `appended=0 updated=0 skipped=210`。当前剩余边界：GSC reader SA 对 `sc-domain:astrologywiki.com` 仍返回 403，需要在 Search Console 给 `gg-reader-sa@aqueous-sandbox-496915-i1.iam.gserviceaccount.com` Full user 后，才能把「是否收录」更新为实时 GSC URL Inspection 结果。

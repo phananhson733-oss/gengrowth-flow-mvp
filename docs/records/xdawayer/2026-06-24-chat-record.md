@@ -14,7 +14,8 @@ tags:
 
 - 要点 1：根据 PG-WC-034 / `bukayo-saka-zodiac-sign` 的英文 Phase 2 成稿，改写为可进入中文 Phase 2 的简体中文 Markdown 正文。
 - 要点 2：中文成稿需遵守 11 个 H2 骨架、中文主关键词出现频次、内链占位符、CTA `/zh/` 路径、免责声明与参考来源约束，并修正上一稿结构漂移、禁词和 H2 不匹配问题。
-- 要点 3：开始前读取 AGENTS 规则、brainstorming 技能与提醒文件；`ai-profile/lynne-soul.md` 在当前仓库不存在。
+- 要点 3：根据 PG-WC-032 / `luka-modric-zodiac-sign` 的英文 Phase 2 成稿，改写为可进入中文 Phase 2 的简体中文 Markdown 正文。
+- 要点 4：开始前读取 AGENTS 规则、brainstorming 技能与提醒文件；`ai-profile/lynne-soul.md` 在当前仓库不存在。
 
 ---
 
@@ -520,5 +521,17 @@ This is not a clinical interpretation or mental health advice — it's a symboli
 **🤖 回答：**
 
 按最新中文 Phase 2 拦截反馈重新产出 PG-WC-034 简体中文 Markdown 正文：保留中文 11 个 H2 骨架，主关键词继续使用“萨卡的星座”并控制出现次数；第三、第四节自然补回主关键词以修复 RL4 漂移；CTA 使用完整 `https://astrologywiki.com/zh/wiki/how-to-read-birth-chart`；避开“第一”“最佳”等触发词和医疗/广告承诺表述；保留 5 条以上中文内链占位符、中文 CTA 与“不是临床解读或心理健康建议”的免责声明。
+
+---
+
+### Q4 — 14:44
+
+**🙋 提问：**
+
+要求以 AstrologyWiki 中文内容编辑身份，将 PG-WC-032 / `luka-modric-zodiac-sign` 英文 Phase 2 成稿自然改写为可直接进入中文 Phase 2 的简体中文 Markdown 正文。硬性约束包括：无 YAML、中文 H1 与 11 个中文 H2 骨架、首节加粗定义和 3 个 bullet、第二节固定标题、第三节写清相近概念取舍、第四节使用“识别”、第五至第十一节按常见误读/速查一览/常见问题/自我觉察小提示/延伸阅读/下一步行动/参考来源排列；保留至少 5 条中文内链占位符，主中文关键词控制在 5-8 次，参考来源须先在正文具名，CTA 改为 `https://astrologywiki.com/zh/wiki/how-to-read-birth-chart`，并保留“不是临床解读或心理健康建议”的中文免责声明。
+
+**🤖 回答：**
+
+产出 PG-WC-032 简体中文 Markdown 正文：主关键词选为“莫德里奇星座”，围绕处女座太阳、巨蟹座月亮、未证实上升天蝎的象征读法展开；使用 11 个中文 H2 骨架，保留 5 条以上中文内链占位符、中文 CTA 与参考来源；避免医疗和广告承诺表述，结尾包含“不是临床解读或心理健康建议”的免责声明。
 
 ---

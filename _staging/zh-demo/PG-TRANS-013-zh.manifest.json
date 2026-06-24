@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-TRANS-013",
+  "entity": "cancer season 2026 astrology",
+  "target_keyword": "cancer season 2026 astrology",
+  "template": "Definition",
+  "tier": "T1",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-06-24T08:43:12.547Z",
+  "content_sha256_short": "e07b1e1c33fca481",
+  "source_path": "/tmp/gg-repair/cancer-zh.md",
+  "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/zh-demo/PG-TRANS-013-zh.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 3203,
+      "wikilinks": 6,
+      "tbdLinks": 6
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

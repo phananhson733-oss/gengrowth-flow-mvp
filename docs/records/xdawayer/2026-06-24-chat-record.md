@@ -1,18 +1,4 @@
 ---
-
-### Q11 — 15:25
-
-**🙋 提问：**
-
-```text
-继续执行 active goal：goal 开始执行 Phase 1
-```
-
-**🤖 回答：**
-
-再次以当前工作树和外部状态审计 Phase 1：`gg-index-monitor` smoke 18/18、`gg-seo-autopilot` smoke 13/13、wrapper/plist lint 均通过；真实 Sheet `index-tracking` 已有 `PG-WC-032` 监控行；LaunchAgent `com.gengrowth.index-monitor` 已加载，每日 09:00 运行；日志显示 wrapper 已在存在 tracking 行时预检 GSC 授权并失败于同一 OAuth 过期点。`verify-gcp.mjs` 证明 reader SA 对 GSC property 也无权限，不能替代 user OAuth。因同一外部授权阻塞已连续出现 3 个 goal turn，且需要账号本人 Google consent 或授予 GSC property 权限，按 goal 规则将 active goal 标记为 blocked。
-
----
 date: 2026-06-24
 type: chat-record
 author: xdawayer
@@ -1072,5 +1058,19 @@ Generate your free birth chart to explore the Luka Modric zodiac sign and see ho
 **🤖 回答：**
 
 继续按需求文档审计 Phase 1 当前状态，并补强两个运行细节：将 `Alternate page with proper canonical tag` 归为正常 canonical，不再误报；D+30 未解决页面升级为 `needs_focus` 并刷新升级告警；定时 wrapper 增加 `--require-gsc-auth`，在已有 tracking 行但尚未 due 时也预检 GSC 授权，避免 OAuth 过期沉默到检查日。验证：`gg-index-monitor` smoke 18/18、`gg-seo-autopilot` smoke 13/13、`lib-gg-shared` smoke 84/84、wrapper/plist lint 通过；真实 Sheet 已有 `PG-WC-032` tracking 行；wrapper 手动运行明确暴露 OAuth 过期。代码经自动 `vault backup` 提交到 `4c312fe` 并同步到 `origin/main`。当前仍需账号本人运行 `node tools/scripts/oauth-init.mjs` 重新授权。
+
+---
+
+### Q11 — 15:25
+
+**🙋 提问：**
+
+```text
+继续执行 active goal：goal 开始执行 Phase 1
+```
+
+**🤖 回答：**
+
+再次以当前工作树和外部状态审计 Phase 1：`gg-index-monitor` smoke 18/18、`gg-seo-autopilot` smoke 13/13、wrapper/plist lint 均通过；真实 Sheet `index-tracking` 已有 `PG-WC-032` 监控行；LaunchAgent `com.gengrowth.index-monitor` 已加载，每日 09:00 运行；日志显示 wrapper 已在存在 tracking 行时预检 GSC 授权并失败于同一 OAuth 过期点。`verify-gcp.mjs` 证明 reader SA 对 GSC property 也无权限，不能替代 user OAuth。因同一外部授权阻塞已连续出现 3 个 goal turn，且需要账号本人 Google consent 或授予 GSC property 权限，按 goal 规则将 active goal 标记为 blocked。
 
 ---

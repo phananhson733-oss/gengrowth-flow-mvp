@@ -181,6 +181,17 @@ function slugFromEnWikiUrl(url) {
   }
 }
 
+function titleFromSlug(slug) {
+  return String(slug || '')
+    .split('-')
+    .filter(Boolean)
+    .map((part) => {
+      if (/^\d+$/.test(part)) return part;
+      return part.charAt(0).toUpperCase() + part.slice(1);
+    })
+    .join(' ');
+}
+
 function sitemapEntries(xml) {
   const entries = [];
   const blocks = String(xml || '').match(/<url\b[\s\S]*?<\/url>/gi) || [];
@@ -202,7 +213,7 @@ export function extractEnWikiSitemapRows(xml, { now = new Date() } = {}) {
       return buildTrackingSeedRow({
         slug: slugFromEnWikiUrl(url),
         url,
-        title: '',
+        title: titleFromSlug(slugFromEnWikiUrl(url)),
         publishedAt,
         firstTrackedAt: publishedAt,
         now,
@@ -311,7 +322,7 @@ export function mergePublishedTrackingRow(existing = {}, fresh = {}) {
   return {
     ...existing,
     url: fresh.url || existing.url || '',
-    page_id: existing.page_id || fresh.page_id || '',
+    page_id: fresh.page_id || existing.page_id || '',
     slug: fresh.slug || existing.slug || '',
     title: fresh.title || existing.title || '',
     published_at: fresh.published_at || existing.published_at || '',
@@ -845,6 +856,7 @@ async function runSyncPublished(args, {
   fetchSitemapRowsFn = fetchEnWikiSitemapRows,
   ensureFn = ensureIndexTrackingTab,
   readRowsFn = readTrackingRows,
+  readRecapRowsFn = readRecapRows,
   updateRowFn = updateTrackingRow,
   appendRowsFn = appendTrackingRows,
 }) {
@@ -855,6 +867,12 @@ async function runSyncPublished(args, {
   const tabName = args.write_sheet ? await ensureFn(sheetToken, workbookId) : INDEX_TRACKING_TAB;
   const rows = sitemapRows || await fetchSitemapRowsFn(args.sitemap_url || DEFAULT_SITEMAP_URL, { now });
   const existing = args.write_sheet ? await readRowsFn(sheetToken, workbookId, tabName) : [];
+  const recap = args.write_sheet && readRecapRowsFn ? await readRecapRowsFn(sheetToken, workbookId, RECAP_TAB) : [];
+  const recapByUrl = new Map(
+    recap
+      .filter((row) => row.url && row.page_id)
+      .map((row) => [normalizeUrl(row.url), row]),
+  );
   const byUrl = new Map(existing.map((row) => [normalizeUrl(row.url), row]));
   const toAppend = [];
   const toUpdate = [];
@@ -866,6 +884,8 @@ async function runSyncPublished(args, {
       skipped++;
       continue;
     }
+    const recapRow = recapByUrl.get(key);
+    if (recapRow?.page_id && !fresh.page_id) fresh.page_id = recapRow.page_id;
     const old = byUrl.get(key);
     if (!old) {
       toAppend.push(fresh);
@@ -1093,6 +1113,7 @@ export async function runIndexMonitor(argv, deps = {}) {
       fetchSitemapRowsFn: deps.fetchSitemapRows || fetchEnWikiSitemapRows,
       ensureFn: deps.ensureIndexTrackingTab || ensureIndexTrackingTab,
       readRowsFn: deps.readTrackingRows || readTrackingRows,
+      readRecapRowsFn: deps.readRecapRows || readRecapRows,
       updateRowFn: deps.updateTrackingRow || updateTrackingRow,
       appendRowsFn: deps.appendTrackingRows || appendTrackingRows,
     });

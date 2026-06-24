@@ -242,6 +242,8 @@ test('launchd wrapper runs only the lightweight index monitor check', () => {
   assert.match(wrapper, /--check-due/);
   assert.match(wrapper, /--write-sheet/);
   assert.match(wrapper, /--require-gsc-auth/);
+  assert.match(wrapper, /rc=\$\{rc\}）。请查看 \$\{LOG\}/);
+  assert.match(wrapper, /rc=\$\{rc\}）。请查看 \$\{LOG\}；/);
   assert.doesNotMatch(wrapper, /gg-seo-autopilot-tick|gg-seo-author-tick/);
 
   const plist = readFileSync(join(SCRIPTS, 'com.gengrowth.index-monitor.plist'), 'utf8');

@@ -1457,6 +1457,9 @@ function appendPublishLog(pgId, slug) {
     }
     const date = new Date().toISOString().slice(0, 10);
     const url = `https://www.astrologywiki.com/en/wiki/${slug}`;
+    // Bilingual articles (zh-backfill published) also have a live /zh page — surface it
+    // in the success notify so a zh merge isn't reported with only its /en URL.
+    const zhUrlLine = existsSync(zhDraft(pgId)) ? `\nhttps://www.astrologywiki.com/zh/wiki/${slug}` : '';
     if (!existsSync(f)) {
       mkdirSync(dirname(f), { recursive: true });
       writeFileSync(f, `---\ntitle: SEO Autopilot 发布登记\ntype: log\nupdated: ${date}\n---\n\n# 📝 SEO Autopilot 发布登记（自动维护）\n\n> autopilot 每篇文章发布到 prod 后自动追加一行并 commit+push。\n\n| 日期 | PG-id | slug | 标题 | 作者 | 线上 URL | 状态 |\n|---|---|---|---|---|---|---|\n`);
@@ -1469,7 +1472,7 @@ function appendPublishLog(pgId, slug) {
     }
     syncOpsFiles([f, latestPlan()], `chore(seo): publish ${slug}`);
     enqueueIndexTracking(pgId, slug, title, author, date);
-    larkNotify(`✅ SEO autopilot 已发布上线：${title || slug}\nhttps://www.astrologywiki.com/en/wiki/${slug}\n（作者 ${author || '?'}，已登记到 ops）`);
+    larkNotify(`✅ SEO autopilot 已发布上线：${title || slug}\n${url}${zhUrlLine}\n（作者 ${author || '?'}，已登记到 ops）`);
   } catch (e) { log(`publish-log skipped: ${errTail(e, 80)}`); }
 }
 

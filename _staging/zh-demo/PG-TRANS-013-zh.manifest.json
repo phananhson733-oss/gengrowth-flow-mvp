@@ -8,9 +8,9 @@
   "track": "量产线",
   "generated_by": "unknown",
   "prompt_version": "v8",
-  "generated_at": "2026-06-24T08:43:12.547Z",
+  "generated_at": "2026-06-24T08:45:04.009Z",
   "content_sha256_short": "e07b1e1c33fca481",
-  "source_path": "/tmp/gg-repair/cancer-zh.md",
+  "source_path": "_staging/zh-demo/PG-TRANS-013-repair-candidate.md",
   "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/zh-demo/PG-TRANS-013-zh.md",
   "phase2_checks": {
     "overall": "pass",

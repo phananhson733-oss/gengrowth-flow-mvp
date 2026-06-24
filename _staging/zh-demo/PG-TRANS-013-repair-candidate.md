@@ -1,28 +1,3 @@
----
-title: Cancer Season 2026 Astrology
-slug: cancer-season-2026-astrology
-date: 2026-06-24
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T1
-track: 量产线
-page_id: PG-TRANS-013
-author_id: "elena-vane"
-author_display_name: "Elena Vane"
-target_keyword: cancer season 2026 astrology
-associated_keywords:
-  - cancer season meaning
-  - cancer season 2026 dates
-  - cancer season horoscope 2026
-  - jupiter in cancer 2026
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-06-24T08:45:04.009Z
-content_sha256_short: e07b1e1c33fca481
-phase2_checks: all-pass
----
-
 # 2026 巨蟹座星季：为什么这一个月把每个星座的情绪都推到台前
 
 ## 2026 巨蟹座星季是什么？

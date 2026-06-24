@@ -1234,7 +1234,7 @@ Generate your free birth chart to explore the Bruno Fernandes zodiac sign, and r
 
 ---
 
-### Q12 — 15:30
+### Q13 — 15:30
 
 **🙋 提问：**
 

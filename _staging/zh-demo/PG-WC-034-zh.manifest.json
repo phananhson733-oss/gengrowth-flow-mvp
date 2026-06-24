@@ -8,9 +8,9 @@
   "track": "量产线",
   "generated_by": "unknown",
   "prompt_version": "v8",
-  "generated_at": "2026-06-24T06:19:55.131Z",
+  "generated_at": "2026-06-24T06:28:17.267Z",
   "content_sha256_short": "ee9c23284da83d88",
-  "source_path": "_staging/zh-demo/PG-WC-034-repair-candidate.md",
+  "source_path": "_staging/zh-demo/PG-WC-034-zh.md",
   "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/zh-demo/PG-WC-034-zh.md",
   "phase2_checks": {
     "overall": "pass",

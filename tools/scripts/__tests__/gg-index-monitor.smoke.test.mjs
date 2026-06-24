@@ -197,14 +197,41 @@ test('classifyInspection alerts at D+14 for discovered-not-indexed', () => {
   assert.match(d14.recommendation, /D\+14/);
 });
 
-test('classifyInspection treats alternate canonical pages as normal canonicalization', () => {
+test('classifyInspection alerts at D+14 for every non-indexed GSC coverage state', () => {
+  const states = [
+    'Crawled - currently not indexed',
+    'Discovered - currently not indexed',
+    'URL is unknown to Google',
+    'Duplicate without user-selected canonical',
+    'Alternate page with proper canonical tag',
+    'Excluded by noindex tag',
+    'Soft 404',
+    'Page with redirect',
+    'Blocked by robots.txt',
+    'Not found (404)',
+  ];
+
+  for (const coverageState of states) {
+    const result = classifyInspection({
+      verdict: coverageState === 'Submitted and indexed' ? 'PASS' : 'NEUTRAL',
+      coverageState,
+    }, { daysSinceFirstTracked: 14, now: new Date('2026-06-24T09:00:00Z') });
+
+    assert.notEqual(result.monitor_status, 'indexed', coverageState);
+    assert.notEqual(result.monitor_status, 'canonical_ok', coverageState);
+    assert.notEqual(result.alert_level, '', coverageState);
+    assert.equal(result.should_alert, true, coverageState);
+  }
+});
+
+test('classifyInspection only stops monitoring for truly indexed pages', () => {
   const result = classifyInspection({
     verdict: 'PASS',
-    coverageState: 'Alternate page with proper canonical tag',
+    coverageState: 'Submitted and indexed',
   }, { daysSinceFirstTracked: 30, now: new Date('2026-06-24T09:00:00Z') });
 
-  assert.equal(result.monitor_status, 'canonical_ok');
-  assert.equal(result.diagnosis_category, 'normal_canonical');
+  assert.equal(result.monitor_status, 'indexed');
+  assert.equal(result.diagnosis_category, 'indexed');
   assert.equal(result.alert_level, '');
   assert.equal(result.should_alert, false);
 });

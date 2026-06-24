@@ -15,7 +15,7 @@ tags:
 - 要点 1：根据 PG-WC-034 / `bukayo-saka-zodiac-sign` 的英文 Phase 2 成稿，改写为可进入中文 Phase 2 的简体中文 Markdown 正文。
 - 要点 2：中文成稿需遵守 11 个 H2 骨架、中文主关键词出现频次、内链占位符、CTA `/zh/` 路径、免责声明与参考来源约束，并修正上一稿结构漂移、禁词和 H2 不匹配问题。
 - 要点 3：根据 PG-WC-032 / `luka-modric-zodiac-sign` 的英文 Phase 2 成稿，改写为可进入中文 Phase 2 的简体中文 Markdown 正文。
-- 要点 4：执行 GenGrowth GSC Phase 1 索引监控落地：创建/校正 `index-tracking` Sheet、接入发布后入队、安装每日 launchd，并保留 GSC OAuth 刷新为上线前阻塞项。
+- 要点 4：执行 GenGrowth GSC Phase 1 索引监控落地与后续自动化运行：创建/校正 `index-tracking` Sheet、接入发布后入队、安装每日 launchd，并运行索引监控和固定行重提交 workflow。
 - 要点 5：继续修正 PG-WC-032 / PG-WC-033 中文稿，并根据 PG-MYTH-009 / `rhaenyra-targaryen-zodiac-sign` 的英文 Phase 2 成稿产出中文 Phase 2 Markdown 正文。
 
 ---
@@ -2163,3 +2163,22 @@ Run the GenGrowth fixed-row resubmission workflow. Execute `node tools/scripts/g
 **🤖 回答：**
 
 按指定顺序执行固定行重提 workflow：`--process-fixed --write-sheet --notify` 退出码 0，结果 `fixed=0`、`resubmitted=0`；`--sync-recap --write-sheet` 退出码 0，结果 `en_rows=159`、`appended=0`、`updated=0`、`skipped=159`；`--sync-request-queue --write-sheet --notify` 退出码 0，结果 `rows=16`、`P0=0`、`P1=3`、`P2=0`、`P3=13`。未使用 Google Indexing API，未无人值守点击 Search Console Request Indexing；只维护 `request-indexing-queue` 供人工最终确认。已写入自动化记忆 `$CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md`。
+
+---
+
+### Q23 — 22:43
+
+**🙋 提问：**
+
+```text
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: 2026-06-24T13:41:46.236Z (1782308506236)
+
+Run the GenGrowth fixed-row resubmission workflow. Execute `node tools/scripts/gg-index-monitor.mjs --process-fixed --write-sheet --notify`, then `node tools/scripts/gg-index-monitor.mjs --sync-recap --write-sheet`, then `node tools/scripts/gg-index-monitor.mjs --sync-request-queue --write-sheet --notify`. This handles rows where `index-tracking.fix_status` or `结果复盘表.索引修复状态` has been manually marked `已修复`: refresh the sitemap through the official Search Console Sitemaps API, update tracking/recap timestamps, and refresh request-indexing candidates. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles and do not click Search Console Request Indexing unattended; only maintain the assisted queue for human-confirmed final clicks. Summarize fixed/resubmitted counts, queue counts, and any failures.
+```
+
+**🤖 回答：**
+
+按指定顺序再次执行固定行重提 workflow：`--process-fixed --write-sheet --notify` 退出码 0，结果 `fixed=0`、`resubmitted=0`；`--sync-recap --write-sheet` 退出码 0，结果 `en_rows=159`、`appended=0`、`updated=0`、`skipped=159`；`--sync-request-queue --write-sheet --notify` 退出码 0，结果 `rows=16`、`P0=0`、`P1=3`、`P2=0`、`P3=13`。合规边界保持：未使用 Google Indexing API，未无人值守点击 Search Console Request Indexing，只维护辅助队列供人工最终确认。已写入自动化记忆 `/Users/awayer_mini/.codex/automations/gengrowth-index-repair-resubmit/memory.md`。

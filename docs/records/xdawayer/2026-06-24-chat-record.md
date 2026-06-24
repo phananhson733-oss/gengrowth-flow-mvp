@@ -1247,3 +1247,17 @@ Generate your free birth chart to explore the Bruno Fernandes zodiac sign, and r
 定位到不是 Feishu 或 OAuth 文本本身的问题，而是 bash wrapper 中未加花括号的变量紧贴中文全角标点：`$rc）。`、`$LOG；` 会在 bash 展开时破坏后续 UTF-8 字节。按 TDD 增加 wrapper 静态回归断言，先跑出失败，再将通知字符串改为 `${rc}`、`${LOG}`。验证：`node --test tools/scripts/__tests__/gg-index-monitor.smoke.test.mjs` 18/18 通过，`bash -n tools/scripts/gg-index-monitor-tick.sh` 与 plist lint 通过，字节级复现显示 `rc=1）。请查看 /tmp/index.log；` 输出完整。
 
 ---
+
+### Q14 — 15:42
+
+**🙋 提问：**
+
+```text
+用户运行 `node tools/scripts/oauth-init.mjs` 完成 Google consent，refresh_token 已保存；随后执行 `launchctl kickstart -k gui/$(id -u)/com.gengrowth.index-monitor`。
+```
+
+**🤖 回答：**
+
+检查 fresh runtime 状态：`launchctl print` 显示 `com.gengrowth.index-monitor` 已执行 1 次且 `last exit code = 0`；当天 index monitor 日志从 15:22 的 `refresh_token rejected` 变为 15:40 的 `rows=1 due=0`、`no due URLs`、`index monitor ok`。运行 `verify-gcp-oauth.mjs` 后确认 Sheets read、GSC searchAnalytics、GA4 Data API 通过，唯一失败为通用测试范围 `Test!A1` 不存在导致的 400；再直接运行 `gg-index-monitor.mjs --ensure-tab --write-sheet` 与 `--check-due --write-sheet --require-gsc-auth`，输出 `ensured index-tracking`、`rows=1 due=0 mode=write-sheet`、`no due URLs`。结论：Phase 1 当前监控入口已恢复运行；但 Google OAuth 仍处于 Testing 模式，refresh_token 7 天过期的长期边界仍需后续处理。
+
+---

@@ -1,4 +1,4 @@
-// _workbook-spec.mjs — tab schema 规格（1:1 复刻 .gs v3.3：关键词主表 29 列 + 生产候选视图）+ 6 个项目运维 tab
+// _workbook-spec.mjs — tab schema 规格（1:1 复刻 .gs v3.3：关键词主表 29 列 + 生产候选视图）+ 项目运维 tab
 //
 // SSOT: docs/spec/upstream-canon/keyword-sheet-setup.gs  (Apps Script v3.3)
 //   ⚠️ 不允许在本文件做单独偏离。如果 .gs 上游变更：
@@ -11,6 +11,8 @@
 //   green  #2e7d32 = 必填手动
 //   slate  #455a64 = 选填 / 条件字段
 //   header #37474f = 视图表 / 配置表 / 运维表表头
+
+import { INDEX_TRACKING_HEADER, INDEX_TRACKING_TAB } from '../gg-index-monitor.mjs';
 
 export const COLORS = Object.freeze({
   navy:   { red: 0.102, green: 0.137, blue: 0.494 },
@@ -602,6 +604,24 @@ export const TABS = [
       headerFontColor: 'white',
       headerBold: true,
       columnWidths: [110, 280, 80, 100, 80, 80, 80, 100, 110, 100],
+    },
+  },
+
+  {
+    name: INDEX_TRACKING_TAB,
+    type: 'standard',
+    header: [...INDEX_TRACKING_HEADER],
+    headerColorByCol: {},
+    extras: {
+      frozenRows: 1,
+      headerBgAll: 'header',
+      headerFontColor: 'white',
+      headerBold: true,
+      columnWidths: [
+        280, 120, 180, 260, 110, 120, 120, 90, 130, 220,
+        110, 140, 140, 170, 240, 240, 130, 130, 100, 150,
+        90, 120, 100, 100, 120, 90, 320, 260, 130, 130,
+      ],
     },
   },
 

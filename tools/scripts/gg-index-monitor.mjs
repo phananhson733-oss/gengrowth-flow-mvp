@@ -396,7 +396,7 @@ function isIndexedTrackingRow(row = {}) {
 
 function lifecycleFixStatus(row = {}, classification = {}) {
   const monitor = String(classification.monitor_status || row.monitor_status || '').trim();
-  if (monitor === 'indexed' || monitor === 'canonical_ok') return '✅ 已收录';
+  if (monitor === 'indexed') return '✅ 已收录';
   if (monitor === 'urgent') return '🔴 紧急问题（404/5xx）';
   if (monitor === 'needs_focus') return '需重点关注';
   if (monitor === 'needs_attention') return '⚠️ 超期未收录（触发诊断）';
@@ -722,7 +722,7 @@ export function classifyInspection(indexStatus = {}, { daysSinceFirstTracked = 0
 }
 
 export function isDueForInspection(row = {}, now = new Date()) {
-  if (!['monitoring', 'needs_attention'].includes(String(row.monitor_status || 'monitoring'))) return false;
+  if (String(row.monitor_status || 'monitoring') === 'indexed') return false;
   if (!row.first_tracked_at) return false;
   const today = isoDay(now);
   if (row.last_checked_at === today) return false;
@@ -1450,7 +1450,7 @@ async function runCheckDue(args, {
   const dueSource = args.check_all
     ? rows.filter((row) =>
       isEnWikiArticleUrl(row.url) &&
-      !['indexed', 'canonical_ok'].includes(String(row.monitor_status || 'monitoring')) &&
+      String(row.monitor_status || 'monitoring') !== 'indexed' &&
       (String(row.last_checked_at || '') !== isoDay(now) ||
         String(row.current_gsc_status || '') === 'pending_first_check')
     )

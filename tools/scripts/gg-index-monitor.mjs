@@ -957,7 +957,7 @@ async function runSyncRecap(args, {
   let skipped = 0;
 
   for (const row of tracking) {
-    if (!isEnWikiArticleUrl(row.url)) {
+    if (!isEnWikiArticleUrl(row.url) || !String(row.page_id || '').trim()) {
       skipped++;
       continue;
     }

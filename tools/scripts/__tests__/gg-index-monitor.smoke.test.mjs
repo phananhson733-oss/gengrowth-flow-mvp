@@ -457,7 +457,7 @@ test('runIndexMonitor --sync-published can batch update tracking rows', async ()
   assert.equal(batched.updates[0].merged.title, 'Existing Live');
 });
 
-test('runIndexMonitor --sync-recap upserts final presentation rows from staging status', async () => {
+test('runIndexMonitor --sync-recap upserts only page_id-backed final presentation rows', async () => {
   const appended = [];
   let updated = null;
   const code = await runIndexMonitor(['--sync-recap', '--write-sheet', '--workbook', 'wb-test'], {
@@ -504,9 +504,7 @@ test('runIndexMonitor --sync-recap upserts final presentation rows from staging 
   assert.equal(updated.rowNumber, 9);
   assert.equal(updated.row.day14_收录, 'Y');
   assert.equal(updated.row.备注, 'manual decision stays');
-  assert.equal(appended.length, 1);
-  assert.equal(appended[0].url, 'https://www.astrologywiki.com/en/wiki/new-live');
-  assert.equal(appended[0].day14_收录, 'N');
+  assert.equal(appended.length, 0);
 });
 
 test('runIndexMonitor --sync-recap clears stale recap indexing flags until GSC evidence exists', async () => {

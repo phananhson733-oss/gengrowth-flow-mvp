@@ -457,7 +457,7 @@ export function mergePublishedTrackingRow(existing = {}, fresh = {}) {
     first_tracked_at: existing.first_tracked_at || fresh.first_tracked_at || fresh.published_at || '',
     current_gsc_status: existing.current_gsc_status || fresh.current_gsc_status || 'pending_first_check',
     monitor_status: existing.monitor_status || fresh.monitor_status || 'monitoring',
-    fix_status: existing.fix_status || fresh.fix_status || '未处理',
+    fix_status: existing.fix_status || fresh.fix_status || '已提交',
     source: fresh.source || existing.source || '',
   };
 }
@@ -540,22 +540,22 @@ function requestPriority({ recap = {}, tracking = {} } = {}) {
   const status = String(tracking.current_gsc_status || '').toLowerCase();
   const age = Number(tracking.days_since_first_tracked || 0);
 
-  if (monitor === 'urgent' || /technical|robots|noindex|blocked|404|5xx/.test(`${fix} ${diagnosis} ${status}`)) return 'P0';
-  if (monitor === 'needs_focus' || /content_quality|unknown_attention/.test(`${fix} ${diagnosis}`) || age >= 21) return 'P1';
-  if (/canonical_duplicate|normal_queue|discovered|crawled - currently not indexed/.test(`${fix} ${diagnosis} ${status}`)) return 'P2';
+  if (monitor === 'urgent' || /technical|robots|noindex|blocked|404|5xx|技术故障|配置错误|标签问题/.test(`${fix} ${diagnosis} ${status}`)) return 'P0';
+  if (monitor === 'needs_focus' || /content_quality|unknown_attention|内容质量|未知状态/.test(`${fix} ${diagnosis}`) || age >= 21) return 'P1';
+  if (/canonical_duplicate|normal_queue|discovered|crawled - currently not indexed|canonical|重复内容|正常排队/.test(`${fix} ${diagnosis} ${status}`)) return 'P2';
   return 'P3';
 }
 
 function requestReason({ recap = {}, tracking = {} } = {}) {
   const status = String(tracking.current_gsc_status || '').trim();
   const diagnosis = String(tracking.diagnosis_category || '').trim();
-  if (/URL is unknown to Google/i.test(status) || diagnosis === 'unknown_attention') {
+  if (/URL is unknown to Google/i.test(status) || /unknown_attention|未知状态/.test(diagnosis)) {
     return 'Google 尚未知该 URL；已通过 sitemap/discovery 提醒，建议人工 Request Indexing。';
   }
-  if (/Crawled - currently not indexed/i.test(status) || diagnosis === 'content_quality') {
+  if (/Crawled - currently not indexed/i.test(status) || /content_quality|内容质量/.test(diagnosis)) {
     return 'Google 已抓取但暂未收录；检查内容/内链后可人工 Request Indexing。';
   }
-  if (/canonical|duplicate/i.test(status) || diagnosis === 'canonical_duplicate') {
+  if (/canonical|duplicate/i.test(status) || /canonical_duplicate|重复内容/.test(diagnosis)) {
     return 'Google 选择了不同 canonical；先确认 canonical/重复内容，再决定是否 Request Indexing。';
   }
   if (String(recap['day14_收录'] || '') === 'N') {
@@ -566,10 +566,11 @@ function requestReason({ recap = {}, tracking = {} } = {}) {
 
 function discoveryActions({ priority, tracking = {} } = {}) {
   const status = String(tracking.current_gsc_status || '');
+  const diagnosis = String(tracking.diagnosis_category || '');
   const actions = ['官方 Sitemaps API 刷新 sitemap'];
   if (/unknown/i.test(status)) actions.push('补强站内发现入口/内链');
-  if (/Crawled - currently not indexed/i.test(status)) actions.push('复查内容质量、重复覆盖和 HTML 可抓取性');
-  if (/canonical|duplicate/i.test(status)) actions.push('复查 canonical 与重复 URL 选择');
+  if (/Crawled - currently not indexed/i.test(status) || /内容质量/.test(diagnosis)) actions.push('复查内容质量、重复覆盖和 HTML 可抓取性');
+  if (/canonical|duplicate/i.test(status) || /重复内容/.test(diagnosis)) actions.push('复查 canonical 与重复 URL 选择');
   if (priority === 'P0') actions.push('先修技术阻断，再提交');
   actions.push('Computer Use 打开 GSC，最终 Request Indexing 点击需人工确认');
   return actions.join('；');
@@ -1283,10 +1284,16 @@ export async function fetchUrlInspection(token, siteUrl, inspectionUrl, language
   return body.inspectionResult?.indexStatusResult || {};
 }
 
-export function mergeInspectionIntoRow(row, indexStatus, now = new Date()) {
+function shouldFetchPageDiagnostics(indexStatus = {}) {
+  const coverageState = String(indexStatus.coverageState || '');
+  const verdict = String(indexStatus.verdict || '');
+  return !((verdict === 'PASS' || /\bindexed\b/i.test(coverageState)) && !/not indexed|canonical|duplicate/i.test(coverageState));
+}
+
+export function mergeInspectionIntoRow(row, indexStatus, now = new Date(), pageDiagnostics = {}) {
   const checkedDay = isoDay(now);
   const days = daysBetween(row.first_tracked_at, now);
-  const cls = classifyInspection(indexStatus, { daysSinceFirstTracked: days, now });
+  const cls = classifyInspection(indexStatus, { daysSinceFirstTracked: days, now, pageDiagnostics });
   const next = {
     ...row,
     last_checked_at: checkedDay,
@@ -1313,22 +1320,24 @@ export function mergeInspectionIntoRow(row, indexStatus, now = new Date()) {
 }
 
 export function formatAlertMessage(row, classification) {
-  const level = classification.alert_level || row.alert_level || 'P3';
   const title = row.title || row.slug || row.page_id || row.url;
-  const age = row.days_since_first_tracked || 0;
-  const header = level === 'P0'
-    ? '🔴 紧急索引问题'
-    : String(row.monitor_status || classification.monitor_status || '') === 'needs_focus'
-      ? '⚠️ 索引升级提醒'
-      : '⚠️ 索引超期提醒';
+  const recommendation = row.recommendation || classification.recommendation || checklist(['请人工查看 URL Inspection 原始状态。']);
+  const recommendationBlock = String(recommendation)
+    .split('\n')
+    .filter((line) => line.trim())
+    .map((line) => {
+      const s = line.trim();
+      return s.startsWith('□') ? `  ${s}` : s.startsWith('  □') ? s : `  □ ${s}`;
+    })
+    .join('\n');
   return [
-    header,
+    '🔍 索引诊断报告',
     `页面：${title}`,
     `URL：${row.url}`,
-    `发布日期：${row.published_at || row.first_tracked_at || '-'}`,
-    `已过天数：D+${age}`,
-    `当前 GSC 状态：${row.current_gsc_status || '-'}`,
-    `建议操作：${row.recommendation || classification.recommendation || '请人工查看 URL Inspection 原始状态。'}`,
+    `GSC 状态：${row.current_gsc_status || '-'}`,
+    `诊断结论：${classification.diagnosis_conclusion || row.diagnosis_category || classification.diagnosis_category || '-'}`,
+    `建议操作：\n${recommendationBlock}`,
+    '处理完成后：系统将自动刷新 sitemap 并进入 request-indexing-queue；GSC Request Indexing 最终点击需人工确认。',
   ].join('\n');
 }
 
@@ -1593,6 +1602,7 @@ async function runCheckDue(args, {
   readRowsFn = readTrackingRows,
   updateRowFn = updateTrackingRow,
   fetchInspectionFn = fetchUrlInspection,
+  fetchPageDiagnosticsFn = fetchPageDiagnostics,
   getGscToken = getGscAccessToken,
   preflightGscAccessFn = preflightGscAccess,
   notifyFn = larkBestEffort,
@@ -1651,7 +1661,15 @@ async function runCheckDue(args, {
   for (const row of due) {
     try {
       const indexStatus = await fetchInspectionFn(inspectionToken, siteUrl, row.url);
-      const merged = mergeInspectionIntoRow(row, indexStatus, now);
+      let pageDiagnostics = {};
+      if (shouldFetchPageDiagnostics(indexStatus)) {
+        try {
+          pageDiagnostics = await fetchPageDiagnosticsFn(row.url);
+        } catch (e) {
+          pageDiagnostics = { page_fetch_error: redactNote(e) };
+        }
+      }
+      const merged = mergeInspectionIntoRow(row, indexStatus, now, pageDiagnostics);
       if (merged.classification.should_alert) {
         alerts++;
         const alertChanged = String(row.alert_level || '') !== String(merged.classification.alert_level || '') ||
@@ -1777,6 +1795,7 @@ export async function runIndexMonitor(argv, deps = {}) {
       readRowsFn: deps.readTrackingRows || readTrackingRows,
       updateRowFn: deps.updateTrackingRow || updateTrackingRow,
       fetchInspectionFn: deps.fetchUrlInspection || fetchUrlInspection,
+      fetchPageDiagnosticsFn: deps.fetchPageDiagnostics || fetchPageDiagnostics,
       getGscToken: deps.getGscToken || getGscAccessToken,
       preflightGscAccessFn: deps.preflightGscAccess || preflightGscAccess,
       notifyFn: deps.notify || larkBestEffort,

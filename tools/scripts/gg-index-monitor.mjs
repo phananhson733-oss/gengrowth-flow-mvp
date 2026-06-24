@@ -178,6 +178,15 @@ export function classifyInspection(indexStatus = {}, { daysSinceFirstTracked = 0
     recommendation: 'Continue monitoring.',
   };
 
+  if (/alternate page with proper canonical tag/i.test(coverageState)) {
+    return {
+      ...base,
+      monitor_status: 'canonical_ok',
+      diagnosis_category: 'normal_canonical',
+      recommendation: 'Canonical consolidation is expected. No action needed for this alternate URL.',
+    };
+  }
+
   const looksIndexed = (verdict === 'PASS' || /\bindexed\b/i.test(coverageState)) && !/not indexed/i.test(coverageState);
   if (looksIndexed) {
     return {
@@ -223,6 +232,16 @@ export function classifyInspection(indexStatus = {}, { daysSinceFirstTracked = 0
   }
 
   if (lc.includes('crawled - currently not indexed')) {
+    if (daysSinceFirstTracked >= 30) {
+      return {
+        ...base,
+        monitor_status: 'needs_focus',
+        diagnosis_category: 'content_quality',
+        alert_level: 'P1',
+        should_alert: true,
+        recommendation: 'D+30 unresolved. Escalate as a focus URL: review content depth, internal links, duplicate overlap, metadata, and crawlable HTML.',
+      };
+    }
     const overdue = daysSinceFirstTracked >= 14;
     return {
       ...base,
@@ -237,6 +256,16 @@ export function classifyInspection(indexStatus = {}, { daysSinceFirstTracked = 0
   }
 
   if (lc.includes('discovered - currently not indexed')) {
+    if (daysSinceFirstTracked >= 30) {
+      return {
+        ...base,
+        monitor_status: 'needs_focus',
+        diagnosis_category: 'normal_queue',
+        alert_level: 'P1',
+        should_alert: true,
+        recommendation: 'D+30 unresolved. Escalate as a focus URL: improve internal links, sitemap discovery signals, and crawl priority.',
+      };
+    }
     const overdue = daysSinceFirstTracked >= 21;
     return {
       ...base,
@@ -251,6 +280,16 @@ export function classifyInspection(indexStatus = {}, { daysSinceFirstTracked = 0
   }
 
   if (/duplicate|canonical/i.test(coverageState)) {
+    if (daysSinceFirstTracked >= 30) {
+      return {
+        ...base,
+        monitor_status: 'needs_focus',
+        diagnosis_category: 'canonical_duplicate',
+        alert_level: 'P2',
+        should_alert: true,
+        recommendation: 'D+30 unresolved. Escalate canonical/duplicate review and decide whether this URL should remain monitored.',
+      };
+    }
     return {
       ...base,
       monitor_status: daysSinceFirstTracked >= 14 ? 'needs_attention' : 'monitoring',
@@ -516,6 +555,7 @@ async function runCheckDue(args, {
   updateRowFn = updateTrackingRow,
   fetchInspectionFn = fetchUrlInspection,
   getGscToken = getAccessToken,
+  notifyFn = larkBestEffort,
 }) {
   if (!workbookId) {
     process.stderr.write('error: --check-due requires workbook id from env or --workbook\n');
@@ -559,9 +599,11 @@ async function runCheckDue(args, {
       const merged = mergeInspectionIntoRow(row, indexStatus, now);
       if (merged.classification.should_alert) {
         alerts++;
-        if (writeSheet && !merged.row.alert_sent_at) {
+        const alertChanged = String(row.alert_level || '') !== String(merged.classification.alert_level || '') ||
+          String(row.monitor_status || '') !== String(merged.classification.monitor_status || '');
+        if (writeSheet && (!merged.row.alert_sent_at || alertChanged)) {
           merged.row.alert_sent_at = isoDay(now);
-          larkBestEffort(formatAlertMessage(merged.row, merged.classification));
+          notifyFn(formatAlertMessage(merged.row, merged.classification));
         }
       }
       if (writeSheet) await updateRowFn(sheetToken, workbookId, tabName, row._rowNumber, merged.row);
@@ -649,6 +691,7 @@ export async function runIndexMonitor(argv, deps = {}) {
       updateRowFn: deps.updateTrackingRow || updateTrackingRow,
       fetchInspectionFn: deps.fetchUrlInspection || fetchUrlInspection,
       getGscToken: deps.getGscToken || getAccessToken,
+      notifyFn: deps.notify || larkBestEffort,
     });
   }
 

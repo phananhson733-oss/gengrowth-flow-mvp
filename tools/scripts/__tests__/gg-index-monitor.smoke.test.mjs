@@ -122,6 +122,18 @@ test('classifyInspection waits until D+21 for discovered-not-indexed queue noise
   assert.equal(d21.should_alert, true);
 });
 
+test('classifyInspection treats alternate canonical pages as normal canonicalization', () => {
+  const result = classifyInspection({
+    verdict: 'PASS',
+    coverageState: 'Alternate page with proper canonical tag',
+  }, { daysSinceFirstTracked: 30, now: new Date('2026-06-24T09:00:00Z') });
+
+  assert.equal(result.monitor_status, 'canonical_ok');
+  assert.equal(result.diagnosis_category, 'normal_canonical');
+  assert.equal(result.alert_level, '');
+  assert.equal(result.should_alert, false);
+});
+
 test('classifyInspection alerts at D+14 for crawled-not-indexed', () => {
   const result = classifyInspection({
     verdict: 'NEUTRAL',
@@ -133,6 +145,18 @@ test('classifyInspection alerts at D+14 for crawled-not-indexed', () => {
   assert.equal(result.alert_level, 'P1');
   assert.equal(result.should_alert, true);
   assert.match(result.recommendation, /content quality/i);
+});
+
+test('classifyInspection escalates unresolved non-indexed pages at D+30', () => {
+  const result = classifyInspection({
+    verdict: 'NEUTRAL',
+    coverageState: 'Crawled - currently not indexed',
+  }, { daysSinceFirstTracked: 30, now: new Date('2026-06-24T09:00:00Z') });
+
+  assert.equal(result.monitor_status, 'needs_focus');
+  assert.equal(result.alert_level, 'P1');
+  assert.equal(result.should_alert, true);
+  assert.match(result.recommendation, /escalate|重点/i);
 });
 
 test('classifyInspection escalates hard crawl failures immediately', () => {
@@ -158,6 +182,45 @@ test('isDueForInspection checks D+3/D+7/D+14/D+21/D+30 milestones once each', ()
   assert.equal(isDueForInspection({ ...base, last_checked_at: '2026-06-13' }, new Date('2026-06-13T12:00:00Z')), false);
   assert.equal(isDueForInspection({ ...base, last_checked_at: '2026-06-13' }, new Date('2026-06-17T09:00:00Z')), true);
   assert.equal(isDueForInspection({ ...base, monitor_status: 'indexed' }, new Date('2026-06-24T09:00:00Z')), false);
+});
+
+test('runIndexMonitor sends a D+30 upgrade even after an earlier lower-level alert', async () => {
+  let updated = null;
+  let notified = null;
+  const code = await runIndexMonitor(['--check-due', '--write-sheet', '--workbook', 'wb-test'], {
+    now: new Date('2026-06-24T09:00:00Z'),
+    sheetToken: 'sheet-token',
+    gscToken: 'gsc-token',
+    ensureIndexTrackingTab: async () => INDEX_TRACKING_TAB,
+    readTrackingRows: async () => [{
+      _rowNumber: 2,
+      url: 'https://www.astrologywiki.com/en/wiki/d30-test',
+      page_id: 'PG-D30-001',
+      title: 'D30 Test',
+      first_tracked_at: '2026-05-25',
+      last_checked_at: '2026-06-15',
+      monitor_status: 'needs_attention',
+      alert_level: 'P2',
+      alert_sent_at: '2026-06-15',
+      check_count: 2,
+    }],
+    fetchUrlInspection: async () => ({
+      verdict: 'NEUTRAL',
+      coverageState: 'Crawled - currently not indexed',
+    }),
+    updateTrackingRow: async (token, workbookId, tabName, rowNumber, row) => {
+      updated = { token, workbookId, tabName, rowNumber, row };
+    },
+    notify: (message) => {
+      notified = message;
+    },
+  });
+
+  assert.equal(code, 0);
+  assert.equal(updated.row.monitor_status, 'needs_focus');
+  assert.equal(updated.row.alert_level, 'P1');
+  assert.equal(updated.row.alert_sent_at, '2026-06-24');
+  assert.match(notified, /D30 Test/);
 });
 
 test('seo autopilot enqueues index tracking instead of calling article Indexing API', () => {

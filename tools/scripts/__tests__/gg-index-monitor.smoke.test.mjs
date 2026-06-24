@@ -49,6 +49,9 @@ test('index tracking schema is a stable ASCII auto tab with Phase 1 fields', () 
   assert.ok(INDEX_TRACKING_HEADER.includes('first_indexed_at'));
   assert.ok(INDEX_TRACKING_HEADER.includes('diagnosis_category'));
   assert.ok(INDEX_TRACKING_HEADER.includes('fix_status'));
+  assert.ok(INDEX_TRACKING_HEADER.includes('fixed_detected_at'));
+  assert.ok(INDEX_TRACKING_HEADER.includes('resubmitted_at'));
+  assert.ok(INDEX_TRACKING_HEADER.includes('next_check_after'));
 });
 
 test('workbook spec declares the index-tracking auto tab', () => {
@@ -542,6 +545,7 @@ test('launchd wrapper runs only the lightweight index monitor check', () => {
   const wrapper = readFileSync(join(SCRIPTS, 'gg-index-monitor-tick.sh'), 'utf8');
   assert.match(wrapper, /gg-index-monitor\.mjs/);
   assert.match(wrapper, /--sync-published/);
+  assert.match(wrapper, /--process-fixed/);
   assert.match(wrapper, /--submit-sitemap/);
   assert.match(wrapper, /--check-due/);
   assert.match(wrapper, /--sync-recap/);
@@ -987,6 +991,84 @@ test('submitSitemap uses the official Search Console Sitemaps submit endpoint', 
   assert.match(seen.url, /\/webmasters\/v3\/sites\/sc-domain%3Aastrologywiki\.com\/sitemaps\/https%3A%2F%2Fwww\.astrologywiki\.com%2Fsitemap\.xml$/);
   assert.equal(seen.token, 'gsc-write-token');
   assert.equal(seen.init.method, 'PUT');
+});
+
+test('runIndexMonitor --process-fixed resubmits fixed rows and writes tracking timestamps', async () => {
+  const events = [];
+  let trackingUpdate = null;
+  let recapUpdate = null;
+  let notified = null;
+  const code = await runIndexMonitor(['--process-fixed', '--write-sheet', '--notify', '--workbook', 'wb-test'], {
+    now: new Date('2026-06-24T12:34:56.000Z'),
+    sheetToken: 'sheet-token',
+    gscWriteToken: 'gsc-write-token',
+    ensureIndexTrackingTab: async () => INDEX_TRACKING_TAB,
+    readTrackingRows: async () => [{
+      _rowNumber: 7,
+      url: 'https://www.astrologywiki.com/en/wiki/fixed-page',
+      page_id: 'PG-FIXED-001',
+      title: 'Fixed Page',
+      first_tracked_at: '2026-06-01',
+      last_checked_at: '2026-06-24',
+      current_gsc_status: 'Crawled - currently not indexed',
+      monitor_status: 'needs_attention',
+      alert_level: 'P1',
+      alert_sent_at: '2026-06-24',
+      fix_status: '⚠️ 超期未收录（触发诊断）',
+      retry_round: 1,
+      recommendation: 'old recommendation',
+      notes: 'old note',
+    }, {
+      _rowNumber: 8,
+      url: 'https://www.astrologywiki.com/en/wiki/not-fixed',
+      page_id: 'PG-NOT-FIXED',
+      fix_status: '监控中',
+    }],
+    readRecapRows: async () => [{
+      _rowNumber: 4,
+      page_id: 'PG-FIXED-001',
+      url: 'https://www.astrologywiki.com/en/wiki/fixed-page',
+      索引修复状态: '已修复',
+      备注: 'manual fix done',
+    }],
+    submitSitemap: async (token, siteUrl, sitemapUrl) => {
+      events.push({ type: 'submit', token, siteUrl, sitemapUrl });
+    },
+    updateTrackingRow: async (token, workbookId, tabName, rowNumber, row) => {
+      events.push({ type: 'tracking', rowNumber });
+      trackingUpdate = { token, workbookId, tabName, rowNumber, row };
+    },
+    updateRecapRow: async (token, workbookId, tabName, rowNumber, row) => {
+      events.push({ type: 'recap', rowNumber });
+      recapUpdate = { token, workbookId, tabName, rowNumber, row };
+    },
+    formatRecapStatus: async () => {
+      events.push({ type: 'format-recap' });
+    },
+    notify: (message) => {
+      notified = message;
+    },
+  });
+
+  assert.equal(code, 0);
+  assert.deepEqual(events.map((event) => event.type), ['submit', 'tracking', 'recap', 'format-recap']);
+  assert.equal(trackingUpdate.tabName, INDEX_TRACKING_TAB);
+  assert.equal(trackingUpdate.rowNumber, 7);
+  assert.equal(trackingUpdate.row.fix_status, '已重新提交');
+  assert.equal(trackingUpdate.row.fixed_detected_at, '2026-06-24T12:34:56.000Z');
+  assert.equal(trackingUpdate.row.resubmitted_at, '2026-06-24T12:34:56.000Z');
+  assert.equal(trackingUpdate.row.next_check_after, '2026-06-24');
+  assert.equal(trackingUpdate.row.retry_round, 2);
+  assert.equal(trackingUpdate.row.monitor_status, 'monitoring');
+  assert.equal(trackingUpdate.row.alert_level, '');
+  assert.equal(trackingUpdate.row.alert_sent_at, '');
+  assert.match(trackingUpdate.row.recommendation, /已重新提交 sitemap/);
+  assert.match(trackingUpdate.row.notes, /resubmitted_after_fix=2026-06-24T12:34:56.000Z/);
+  assert.equal(recapUpdate.tabName, RECAP_TAB);
+  assert.equal(recapUpdate.row.索引修复状态, '已重新提交');
+  assert.equal(recapUpdate.row.申请时间, '2026-06-24');
+  assert.equal(recapUpdate.row.记录日期, '2026-06-24');
+  assert.match(notified, /已重新提交修复 URL：1 条/);
 });
 
 test('buildRequestIndexingCandidateRows prioritizes non-indexed page_id-backed rows for assisted submission', () => {

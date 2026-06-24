@@ -12,9 +12,10 @@
 
 import { execFileSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
+import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { loadEnv, gFetch, resolveWorkbookId, redactNote } from './lib/gg-shared.mjs';
-import { getAccessToken } from './lib/_oauth-token.mjs';
+import { loadEnv, gFetch, resolveWorkbookId, redactNote, getAccessToken as getSaAccessToken } from './lib/gg-shared.mjs';
+import { getAccessToken as getSheetAccessToken } from './lib/_oauth-token.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const LARK_NOTIFY = join(__dirname, 'gg-lark-notify.sh');
@@ -56,6 +57,23 @@ export const INDEX_TRACKING_HEADER = Object.freeze([
 const DUE_MILESTONES = Object.freeze([3, 7, 14, 21, 30]);
 const DEFAULT_SITE = 'sc-domain:astrologywiki.com';
 const DEFAULT_SITE_ORIGIN = 'https://www.astrologywiki.com';
+const GSC_READONLY_SCOPE = 'https://www.googleapis.com/auth/webmasters.readonly';
+
+function readerSaPath() {
+  return process.env.GG_READER_SA_JSON || join(homedir(), '.config', 'gg', 'gg-reader-sa.json');
+}
+
+export async function getGscAccessToken() {
+  const { token } = await getSaAccessToken(readerSaPath(), [GSC_READONLY_SCOPE]);
+  return token;
+}
+
+export async function preflightGscAccess(token, siteUrl, fetcher = gFetch) {
+  return fetcher(
+    `https://www.googleapis.com/webmasters/v3/sites/${encodeURIComponent(siteUrl)}`,
+    token,
+  );
+}
 
 function parseArgs(argv) {
   const out = {};
@@ -554,7 +572,8 @@ async function runCheckDue(args, {
   readRowsFn = readTrackingRows,
   updateRowFn = updateTrackingRow,
   fetchInspectionFn = fetchUrlInspection,
-  getGscToken = getAccessToken,
+  getGscToken = getGscAccessToken,
+  preflightGscAccessFn = preflightGscAccess,
   notifyFn = larkBestEffort,
 }) {
   if (!workbookId) {
@@ -576,11 +595,20 @@ async function runCheckDue(args, {
   const due = rows.filter((row) => isDueForInspection(row, now)).slice(0, limit);
   process.stderr.write(`gg-index-monitor: rows=${rows.length} due=${due.length} mode=${writeSheet ? 'write-sheet' : 'dry-run'}\n`);
   let inspectionToken = gscToken;
+  const siteUrl = args.site || process.env.GG_GSC_SITE || DEFAULT_SITE;
   if ((due.length || (args.require_gsc_auth && rows.length)) && !inspectionToken) {
     try {
-      inspectionToken = await getGscToken({ user: true });
+      inspectionToken = await getGscToken();
     } catch (e) {
-      process.stderr.write(`error: cannot mint GSC user token — ${e.message}\n`);
+      process.stderr.write(`error: cannot mint GSC reader SA token — ${e.message}\n`);
+      return 1;
+    }
+  }
+  if (args.require_gsc_auth && rows.length) {
+    try {
+      await preflightGscAccessFn(inspectionToken, siteUrl);
+    } catch (e) {
+      process.stderr.write(`error: GSC reader SA cannot access ${siteUrl} — ${redactNote(e)}\n`);
       return 1;
     }
   }
@@ -589,7 +617,6 @@ async function runCheckDue(args, {
     return 0;
   }
 
-  const siteUrl = args.site || process.env.GG_GSC_SITE || DEFAULT_SITE;
   let failures = 0;
   let alerts = 0;
   for (const row of due) {
@@ -660,7 +687,7 @@ export async function runIndexMonitor(argv, deps = {}) {
   let sheetToken = deps.sheetToken;
   if (!sheetToken && (args.write_sheet || args.check_due || defaultCheckDue || args.ensure_tab)) {
     try {
-      sheetToken = await (deps.getSheetToken || getAccessToken)();
+      sheetToken = await (deps.getSheetToken || getSheetAccessToken)();
     } catch (e) {
       process.stderr.write(`error: cannot mint Sheets token — ${e.message}\n`);
       return 1;
@@ -689,7 +716,8 @@ export async function runIndexMonitor(argv, deps = {}) {
       readRowsFn: deps.readTrackingRows || readTrackingRows,
       updateRowFn: deps.updateTrackingRow || updateTrackingRow,
       fetchInspectionFn: deps.fetchUrlInspection || fetchUrlInspection,
-      getGscToken: deps.getGscToken || getAccessToken,
+      getGscToken: deps.getGscToken || getGscAccessToken,
+      preflightGscAccessFn: deps.preflightGscAccess || preflightGscAccess,
       notifyFn: deps.notify || larkBestEffort,
     });
   }

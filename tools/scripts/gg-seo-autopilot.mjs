@@ -1318,7 +1318,8 @@ function doMarkVerified(o) {
   return withClaimsLock(() => {
     const claims = loadClaims();
     const { pgId, claim } = claimForBranch(claims, o.branch);
-    if (!['pushed-preview', 'verified-preview'].includes(claim.status)) {
+    const retryingParkedPreview = claim.status === 'needs_human' && claim.stage === 'pushed-preview' && !!claim.retryAt;
+    if (!['pushed-preview', 'verified-preview'].includes(claim.status) && !retryingParkedPreview) {
       throw new Error(`cannot mark ${o.branch} verified from status "${claim.status}"`);
     }
     // Capture the PR head SHA NOW (immediately after the review passed) so --merge can pin to the
@@ -1338,6 +1339,8 @@ function doMarkVerified(o) {
       verifiedAt: new Date().toISOString(),
       ...(headRefOid ? { headRefOid } : {}),
     };
+    delete claims[pgId].error;
+    delete claims[pgId].failedAt;
     saveClaims(claims);
     log(`VERIFIED ${o.branch} preview=${o.previewUrl}${headRefOid ? ` head=${headRefOid.slice(0, 8)}` : ''}`);
   });

@@ -95,13 +95,14 @@ export const REQUEST_INDEXING_QUEUE_HEADER = Object.freeze([
   'notes',
 ]);
 
-const DUE_MILESTONES = Object.freeze([3, 7, 14, 30]);
+const DUE_MILESTONES = Object.freeze([3, 7, 14, 21, 30]);
 const DEFAULT_SITE = 'sc-domain:astrologywiki.com';
 const DEFAULT_SITE_ORIGIN = 'https://www.astrologywiki.com';
 const SHEETS_SCOPE = 'https://www.googleapis.com/auth/spreadsheets';
 const GSC_READONLY_SCOPE = 'https://www.googleapis.com/auth/webmasters.readonly';
 const GSC_WRITE_SCOPE = 'https://www.googleapis.com/auth/webmasters';
 const DEFAULT_SITEMAP_URL = 'https://www.astrologywiki.com/sitemap.xml';
+const DIAGNOSIS_FRAMEWORK_URL = 'obsidian://open?vault=gengrowth-ops&file=inbox%2F08-reports-and-feedback%2F01-product-feedback%2F2026-06-22-indexing-automation-requirements-v1.0';
 
 function readerSaPath() {
   return process.env.GG_READER_SA_JSON || join(homedir(), '.config', 'gg', 'gg-reader-sa.json');

@@ -309,7 +309,7 @@ test('classifyInspection escalates hard crawl failures immediately', () => {
   }
 });
 
-test('isDueForInspection checks D+3/D+7/D+14/D+30 milestones once each', () => {
+test('isDueForInspection checks D+3/D+7/D+14/D+21/D+30 milestones once each', () => {
   const base = {
     first_tracked_at: '2026-06-01',
     monitor_status: 'monitoring',
@@ -319,7 +319,7 @@ test('isDueForInspection checks D+3/D+7/D+14/D+30 milestones once each', () => {
   assert.equal(isDueForInspection(base, new Date('2026-06-04T09:00:00Z')), true);
   assert.equal(isDueForInspection({ ...base, last_checked_at: '2026-06-04' }, new Date('2026-06-04T12:00:00Z')), false);
   assert.equal(isDueForInspection({ ...base, last_checked_at: '2026-06-04' }, new Date('2026-06-08T09:00:00Z')), true);
-  assert.equal(isDueForInspection({ ...base, last_checked_at: '2026-06-15' }, new Date('2026-06-22T09:00:00Z')), false);
+  assert.equal(isDueForInspection({ ...base, last_checked_at: '2026-06-15' }, new Date('2026-06-22T09:00:00Z')), true);
   assert.equal(isDueForInspection({ ...base, last_checked_at: '2026-06-15' }, new Date('2026-07-01T09:00:00Z')), true);
   assert.equal(isDueForInspection({ ...base, monitor_status: 'indexed' }, new Date('2026-06-24T09:00:00Z')), false);
 });
@@ -381,6 +381,55 @@ test('formatAlertMessage uses the D+14 indexing overdue reminder format', () => 
   assert.match(message, /诊断结论：内容质量不足/);
   assert.match(message, /建议操作：\n  □ Review content quality/);
   assert.match(message, /处理完成后：系统将自动刷新 sitemap 并进入 request-indexing-queue/);
+});
+
+test('runIndexMonitor sends the diagnosis report during the same D+14 check', async () => {
+  let updated = null;
+  const events = [];
+  const code = await runIndexMonitor(['--check-due', '--write-sheet', '--workbook', 'wb-test'], {
+    now: new Date('2026-06-24T09:00:00Z'),
+    sheetToken: 'sheet-token',
+    gscToken: 'gsc-token',
+    ensureIndexTrackingTab: async () => INDEX_TRACKING_TAB,
+    readTrackingRows: async () => [{
+      _rowNumber: 2,
+      url: 'https://www.astrologywiki.com/en/wiki/d14-diagnosis',
+      page_id: 'PG-D14-001',
+      title: 'D14 Diagnosis',
+      published_at: '2026-06-10',
+      first_tracked_at: '2026-06-10',
+      last_checked_at: '2026-06-17',
+      monitor_status: 'monitoring',
+      check_count: 2,
+    }],
+    fetchUrlInspection: async () => ({
+      verdict: 'NEUTRAL',
+      coverageState: 'Crawled - currently not indexed',
+    }),
+    fetchPageDiagnostics: async () => ({
+      word_count: 760,
+      meta_robots: 'index, follow',
+      has_author: true,
+      has_published_time: true,
+      robots_txt: '',
+    }),
+    updateTrackingRow: async (token, workbookId, tabName, rowNumber, row) => {
+      events.push('update');
+      updated = { token, workbookId, tabName, rowNumber, row };
+    },
+    notify: (message) => {
+      events.push('notify');
+      assert.match(message, /^🔍 索引诊断报告/m);
+      assert.match(message, /GSC 状态：Crawled - currently not indexed/);
+      assert.match(message, /诊断结论：内容质量不足/);
+      assert.match(message, /□ 检查字数（当前 760，目标 ≥ 1,200 词）/);
+    },
+  });
+
+  assert.equal(code, 0);
+  assert.deepEqual(events, ['notify', 'update']);
+  assert.equal(updated.row.alert_sent_at, '2026-06-24');
+  assert.equal(updated.row.diagnosis_category, '内容质量问题');
 });
 
 test('runIndexMonitor sends a D+30 upgrade even after an earlier lower-level alert', async () => {

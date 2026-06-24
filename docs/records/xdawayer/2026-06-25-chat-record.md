@@ -602,3 +602,22 @@ Run the GenGrowth fixed-row resubmission workflow. Execute `node tools/scripts/g
 按指定顺序执行固定行重提 workflow：`--process-fixed --write-sheet --notify` 退出码 0，结果 `fixed=0`、`resubmitted=0`；`--sync-recap --write-sheet` 退出码 0，结果 `en_rows=162`、`appended=0`、`updated=0`、`skipped=162`；`--sync-request-queue --write-sheet --notify` 退出码 0，结果 `rows=19`、`P0=0`、`P1=3`、`P2=0`、`P3=16`。合规边界保持：未使用 Google Indexing API，未无人值守点击 Search Console Request Indexing，只维护辅助队列供人工最终确认；脚本证据显示 fixed-row 处理调用 Search Console Sitemaps API 并保留人工点击提示。已写入自动化记忆 `~/.codex/automations/gengrowth-index-repair-resubmit/memory.md`。
 
 ---
+
+### Q11 — 06:46
+
+**🙋 提问：**
+
+````text
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: 2026-06-24T21:45:18.047Z (1782337518047)
+
+Run the GenGrowth fixed-row resubmission workflow. Execute `node tools/scripts/gg-index-monitor.mjs --process-fixed --write-sheet --notify`, then `node tools/scripts/gg-index-monitor.mjs --sync-recap --write-sheet`, then `node tools/scripts/gg-index-monitor.mjs --sync-request-queue --write-sheet --notify`. This handles rows where `index-tracking.fix_status` or `结果复盘表.索引修复状态` has been manually marked `已修复`: refresh the sitemap through the official Search Console Sitemaps API, update tracking/recap timestamps, and refresh request-indexing candidates. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles and do not click Search Console Request Indexing unattended; only maintain the assisted queue for human-confirmed final clicks. Summarize fixed/resubmitted counts, queue counts, and any failures.
+````
+
+**🤖 回答：**
+
+按指定顺序执行固定行重提 workflow：`--process-fixed --write-sheet --notify` 退出码 0，结果 `fixed=0`、`resubmitted=0`；`--sync-recap --write-sheet` 退出码 0，结果 `en_rows=162`、`appended=0`、`updated=0`、`skipped=162`；`--sync-request-queue --write-sheet --notify` 退出码 0，结果 `rows=19`、`P0=0`、`P1=3`、`P2=0`、`P3=16`。合规边界保持：未使用 Google Indexing API，未无人值守点击 Search Console Request Indexing，只维护辅助队列供人工最终确认。当前 shell 的 `CODEX_HOME` 为空，因此读取并更新默认路径 `/Users/awayer_mini/.codex/automations/gengrowth-index-repair-resubmit/memory.md`。未发现脚本失败；`ai-profile/lynne-soul.md` 在当前工作区未找到，仅找到 `ai-profile/reminders.md`。
+
+---

@@ -55,11 +55,11 @@ case "$rc" in
     ;;
   2|124)
     echo "$(date '+%F %T') index monitor partial/timeout rc=$rc" >> "$LOG"
-    GG_LARK_NOTIFY_AT_OPS=1 "$SCRIPT_DIR/gg-lark-notify.sh" "⚠️ 索引监控部分失败或超时（rc=$rc）。请查看 $LOG"
+    GG_LARK_NOTIFY_AT_OPS=1 "$SCRIPT_DIR/gg-lark-notify.sh" "⚠️ 索引监控部分失败或超时（rc=${rc}）。请查看 ${LOG}"
     ;;
   *)
     echo "$(date '+%F %T') index monitor failed rc=$rc" >> "$LOG"
-    GG_LARK_NOTIFY_AT_OPS=1 "$SCRIPT_DIR/gg-lark-notify.sh" "⚠️ 索引监控运行失败（rc=$rc）。请查看 $LOG；常见原因是 Google OAuth refresh_token 过期，需要运行 node tools/scripts/oauth-init.mjs。"
+    GG_LARK_NOTIFY_AT_OPS=1 "$SCRIPT_DIR/gg-lark-notify.sh" "⚠️ 索引监控运行失败（rc=${rc}）。请查看 ${LOG}；常见原因是 Google OAuth refresh_token 过期，需要运行 node tools/scripts/oauth-init.mjs。"
     ;;
 esac
 

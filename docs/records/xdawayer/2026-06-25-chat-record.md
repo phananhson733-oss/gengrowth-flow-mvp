@@ -168,10 +168,10 @@ tags:
 ## Daily Summary
 
 - 要点 1：执行 GenGrowth fixed-row resubmission workflow，处理人工标记 `已修复` 的索引修复行。
-- 要点 2：多次运行三条 `gg-index-monitor.mjs` 命令均正常退出，当前无新增 fixed/resubmitted 行。
-- 要点 3：最新复盘同步新增 1 行，刷新 `request-indexing-queue` 人工辅助队列至 17 行。
+- 要点 2：多次运行三条 `gg-index-monitor.mjs` 命令均正常退出，最新固定行结果为 `fixed=0`、`resubmitted=0`。
+- 要点 3：最新复盘同步为 `en_rows=162`、`appended=0`、`updated=0`、`skipped=162`，`request-indexing-queue` 为 19 行。
 - 要点 4：保持普通文章不使用 Google Indexing API、不无人值守点击 GSC Request Indexing 的合规边界。
-- 要点 5：基于英文 Phase 2 成稿，为 AstrologyWiki `PG-MOON-003` 产出符合中文 Phase 2 骨架的简体中文 Markdown 正文。
+- 要点 5：基于英文 Phase 2 成稿，为 AstrologyWiki 中文内容产出符合中文 Phase 2 骨架的简体中文 Markdown 正文。
 
 ---
 
@@ -562,5 +562,24 @@ Ready to see where this sits in your chart? Mapping your placements shows the ex
 **🤖 回答：**
 
 重新产出一篇无 YAML frontmatter 的纯 Markdown 正文；主关键词选为“凯龙星在金牛座”，H1 为自然中文标题，正文使用 11 个中文 H2 骨架。内容保留英文稿的核心语义：价值感、安全感、身体经验与物质安全是核心，金钱只是可见入口之一；补回与“金钱伤口”、金牛座土星、天蝎座凯龙的明确取舍；在星盘识别部分覆盖宫位、相位、金星状态、第二宫/金牛主题和日常信号。完成本地自检：主关键词 8 次、H2 11 个、`[[<TBD-internal-link: ...>]]` 7 条、CTA 为指定 `/zh/` 链接、免责声明存在、禁词列表未命中。
+
+---
+
+### Q9 — 04:45
+
+**🙋 提问：**
+
+````text
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: 2026-06-24T19:43:17.575Z (1782330197575)
+
+Run the GenGrowth fixed-row resubmission workflow. Execute `node tools/scripts/gg-index-monitor.mjs --process-fixed --write-sheet --notify`, then `node tools/scripts/gg-index-monitor.mjs --sync-recap --write-sheet`, then `node tools/scripts/gg-index-monitor.mjs --sync-request-queue --write-sheet --notify`. This handles rows where `index-tracking.fix_status` or `结果复盘表.索引修复状态` has been manually marked `已修复`: refresh the sitemap through the official Search Console Sitemaps API, update tracking/recap timestamps, and refresh request-indexing candidates. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles and do not click Search Console Request Indexing unattended; only maintain the assisted queue for human-confirmed final clicks. Summarize fixed/resubmitted counts, queue counts, and any failures.
+````
+
+**🤖 回答：**
+
+按指定顺序执行固定行重提 workflow：`--process-fixed --write-sheet --notify` 退出码 0，结果 `fixed=0`、`resubmitted=0`；`--sync-recap --write-sheet` 退出码 0，结果 `en_rows=162`、`appended=0`、`updated=0`、`skipped=162`；`--sync-request-queue --write-sheet --notify` 退出码 0，结果 `rows=19`、`P0=0`、`P1=3`、`P2=0`、`P3=16`。合规边界保持：未使用 Google Indexing API，未无人值守点击 Search Console Request Indexing，只维护辅助队列供人工最终确认；`rg` 验证脚本仍使用 Search Console Sitemaps API 路径并保留人工点击提示。已写入自动化记忆 `$CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md`。
 
 ---

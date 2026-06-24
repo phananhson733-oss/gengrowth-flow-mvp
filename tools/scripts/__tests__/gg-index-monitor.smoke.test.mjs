@@ -14,6 +14,7 @@ import {
   buildTrackingSeedRow,
   classifyInspection,
   isDueForInspection,
+  preflightGscAccess,
   rowToSheetValues,
   runIndexMonitor,
   sheetValuesToRow,
@@ -287,6 +288,19 @@ test('runIndexMonitor --check-due skips GSC token when no rows are due', async (
     workbookId: 'wb-test',
     tabName: INDEX_TRACKING_TAB,
   });
+});
+
+test('preflightGscAccess probes Search Analytics with the GSC reader SA token', async () => {
+  let seen = null;
+  await preflightGscAccess('gsc-sa-token', 'sc-domain:astrologywiki.com', async (url, token, init) => {
+    seen = { url, token, init };
+    return { rows: [] };
+  });
+
+  assert.match(seen.url, /\/webmasters\/v3\/sites\/sc-domain%3Aastrologywiki\.com\/searchAnalytics\/query$/);
+  assert.equal(seen.token, 'gsc-sa-token');
+  assert.equal(seen.init.method, 'POST');
+  assert.equal(JSON.parse(seen.init.body).rowLimit, 1);
 });
 
 test('runIndexMonitor --require-gsc-auth preflights GSC service-account access when tracking rows exist', async () => {

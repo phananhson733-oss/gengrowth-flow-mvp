@@ -699,3 +699,168 @@ Generate your free birth chart to explore the Luka Modric zodiac sign and see ho
 按用户补救要求重新产出 PG-WC-032 简体中文 Markdown 正文：补入自然中文 H1，主关键词选为“莫德里奇星座”并控制出现次数；按中文 Phase 2 的 11 个 H2 骨架展开，第三、第四节自然补回主关键词以降低漂移风险；保留 5 条以上中文内链占位符、中文 CTA `https://astrologywiki.com/zh/wiki/how-to-read-birth-chart`、参考来源正文先具名和结尾免责声明；结构自检为 11 个 H2、7 条内链、主关键词 8 次，未命中用户列出的禁用承诺/医疗表述。
 
 ---
+
+### Q6 — 14:54
+
+**🙋 提问：**
+
+````text
+# Role
+你是 AstrologyWiki 的中文内容编辑。你的任务不是逐句翻译，而是基于一篇已经通过英文 Phase 2 的成稿，产出一篇可直接进入中文 Phase 2 的简体中文版本。
+
+# Hard requirements
+- 输出纯 Markdown 正文，不要 YAML frontmatter，不要解释过程。
+- 不要沿用英文 H2 文案；必须把英文语义改写进中文 Phase 2 认可的 11 个 H2 骨架。
+- H1 必须是自然中文标题；正文与 H2 全部用简体中文。
+- 第一部分必须用 `## <你选定的中文主词> 是什么？` 开头；首段里要有 1 个**加粗定义短语**，随后**紧跟正好 3 个 bullet**。
+- 第二部分 H2 必须逐字写成 `## 为什么了解它能帮助自我觉察`。
+- 第三部分 H2 必须写成 `## <你选定的中文主词> 与相近概念：运作方式 + 取舍`，每个对比都要写出明确取舍。
+- 第四部分必须用“识别”而不是“阅读/判断”作 H2 动词：星盘/宫位/行运类主题用 `## 如何在你的星盘里识别 <你选定的中文主词>`；其他主题用 `## 如何在自己身上识别 <你选定的中文主词>`。
+- 第五到第十一部分依次必须覆盖：常见误读、速查表/一览、常见问题/问答、自我觉察小提示、延伸阅读、下一步行动、参考来源。
+- `## 自我觉察小提示` 标题后第一行必须直接开始 `1.` / `2.` / `3.` 三条编号提示，不能先写引导段。
+- 至少放入 5 条 `[[<TBD-internal-link: ...>]]` 中文内链占位符；不要输出 0 条内链。
+- 主中文关键词全篇总出现次数控制在 5-8 次之间；不要在每个 H2 都机械重复，能用“它 / 这个主题 / 这张盘 / 该相位”等代词时就改写。
+- `参考来源` 里出现的权威名，正文里必须先具名提到；不要在 Sources 里新增正文没出现过的人名或条目。
+- 保留反思性 / 象征性语气，禁止诊断、治疗、治愈、改善病症等医疗承诺。
+- 明确避开广告/承诺词：不要写 承诺 / 保证 / 立刻见效 / 改命 / 改运 / 疗愈创伤 / 修复焦虑 这类表述。
+- 结尾必须保留免责声明，用中文表达“这不是临床解读或心理健康建议”。
+- 将 CTA 改写为中文，并指向 https://astrologywiki.com/zh/wiki/how-to-read-birth-chart 。
+- 如原文出现 astrologywiki.com/en/ 内链或 CTA，请改成 /zh/ 对应路径；拿不准时只保留 CTA 这一个确定链接。
+- 不要照搬英文句子；允许为中文读者做自然重写，但核心含义必须忠于英文稿。
+- 不要输出 TODO、占位符、方括号备注或英文审校说明。
+- 自行选择一个自然的中文主关键词，并在 H1 与正文主体里稳定复用，避免同义改写过度导致锚点漂移。
+
+# Metadata
+- page_id: PG-WC-032
+- slug: luka-modric-zodiac-sign
+- author_id: elena-vane
+- target_keyword_en: luka modric zodiac sign
+- entity: luka modric zodiac sign
+- template: Definition
+- tier: T2
+- track: 量产线
+- associated_keywords_en: modric zodiac, luka modric astrology, luka modric birth chart, modric virgo
+
+# Source English article (semantic source of truth, not heading template)
+
+# What the Luka Modric Zodiac Sign Reveals About Croatia's Quiet Genius at 40
+
+## What Is Luka Modric's Zodiac Sign?
+
+Luka Modric's zodiac sign is Virgo, anchored by a Sun in Virgo and a Moon in Cancer. Born on September 9, 1985, the Croatian captain falls squarely in Virgo season, and within the wider [[<TBD-internal-link: World Cup 2026 astrology prediction hub>]] his chart stands out for what it leaves unsaid — including his birth time, which has never been made public. Astrologers reading the Luka Modric zodiac sign sum it up as **a Virgo Sun paired with a Cancer Moon**, with Scorpio the rising sign most often attributed to him — though without a confirmed birth time that ascendant stays unverified, and other sources cite Cancer or Libra instead.
+
+- Virgo Sun: a pull toward craft, refinement, and doing the unglamorous work well
+- Cancer Moon: deep loyalty and emotional attachment, here poured into national identity
+- Scorpio rising (commonly attributed, though unconfirmed without a birth time): the still, hard-to-read presence many read into his highest-pressure moments
+
+Together, those three layers describe the player Croatia still leans on at 40 — not the loudest name on the team sheet, but the one the whole shape runs through.
+
+## Why It Matters for Self-Awareness
+
+Understanding the Luka Modric zodiac sign matters because the standard read gets him backwards. For years, commentators have folded his elegance on the ball into Leo-style flair — the showman, the entertainer — when the chart points somewhere quieter and far more revealing. Virgo isn't the sign of the spotlight; it's the sign of the person who makes everyone around them look better and rarely collects the credit. That gap between what Modrić actually does and how he's described is the same gap most people feel about their own chart: flattened into one loud trait, missing the part that quietly runs the show.
+
+In eight years of aura-reading and energy work — with a background in advertising and somatic therapy training — I've watched people get reduced to a single headline trait, and it almost never holds up. Reading the whole field instead of one label is the approach practitioners like Barbara Ann Brennan and Cyndi Dale built their work around, and it applies cleanly here: Modrić's Virgo precision and Cancer loyalty — plus the Scorpio composure many readers attribute to him — only make sense as a set. That fuller picture is exactly what a sign-by-sign breakdown such as the [[<TBD-internal-link: best soccer players by zodiac sign>]] is for.
+
+It also reframes the part of his story everyone is talking about now. At 40, Croatia's most-capped player ever and circling the end of his career, Modrić is still the player Croatia builds around — and most coverage treats that as a happy accident rather than the natural arc of a Virgo–Scorpio chart. According to a 2017 Pew Research Center survey, about 29% of U.S. adults said they believed in astrology, and many of them know their Sun sign and stop there. Looking past the label is where the useful self-awareness actually starts.
+
+## Virgo Sun vs Leo Sun: Why Modric Reads as Quiet, Not Flashy
+
+The easiest mix-up around the Luka Modric zodiac sign is Virgo versus Leo, because both can look graceful on the pitch. The difference is what each sign is actually organized around. Here's how the two work and where the trade-off lands:
+
+1. **Leo runs on visible impact.** A Leo Sun is built to lead the moment and be seen doing it — the decisive goal, the roar, the camera finding the face. To get that magnetism, you sacrifice some of the patient, behind-the-scenes detail work.
+2. **Virgo runs on quiet function.** A Virgo Sun is built to refine the system — the perfect first touch, the pass before the assist, the angle nobody noticed. To get that precision and repeatability, you give up the spotlight that would make the contribution obvious.
+3. **The cost cuts both ways.** Choosing Virgo's invisible service over Leo's theatrical highs gets you longevity and trust, but you lose the easy credit that flashier players collect every weekend.
+
+For Modrić specifically, that trade-off is the whole point. He chose — season after season — to be the player the system runs through rather than the one who ends up on the poster, and the reward arrives late: trust, durability, and a legacy measured in tournaments instead of viral clips. A Leo chart might have burned brighter and shorter. The Virgo read explains why he's still indispensable at an age when most playmakers have long since slowed down.
+
+## How to Read Modrić's Chart Across Sun, Moon, and Rising
+
+You don't need to know Modrić to recognize this pattern — the Luka Modric zodiac sign shows up as a set of observable habits in any chart. As the 2026 tournament unfolds and the [[<TBD-internal-link: Saturn in Aries 2026 transit>]] backdrop builds, these are the cues that separate a Virgo–Scorpio competitor from a flashier one:
+
+1. Watch for someone who fixes the small thing nobody noticed was broken, then says nothing about it afterward.
+2. Look for steadiness under pressure — a flat, unreadable expression exactly when the stakes spike (the Scorpio rising often attributed to him).
+3. Notice loyalty that runs deeper than logic: staying with a club, a country, or a cause well past the point others would walk (Cancer Moon).
+4. Check whether the person peaks late, accumulating standing through consistency rather than one explosive breakout season.
+5. Listen for how rarely they claim credit, even when the replay shows the whole move started with them.
+
+## Common Misreadings
+
+A few readings of the Luka Modric zodiac sign get repeated so often they've hardened into myth. Each one misses the same thing — the quiet engine under the grace.
+
+1. **Misread: he's a flashy Leo.** Reality: the elegance is Virgo precision, not Leo showmanship — function that happens to look like flair.
+2. **Misread: Virgo "invisibility" means he isn't really the main contributor.** Reality: the invisibility *is* the contribution; the work happens before the highlight reel starts rolling.
+3. **Misread: the Scorpio-rising "blank face" often attributed to him means he's cold or detached.** Reality: read as composure — a way of holding pressure rather than leaking it to everyone watching.
+4. **Misread: a Cancer Moon makes an athlete soft.** Reality: here it reads as the loyalty and emotional anchor that has sustained a two-decade international career.
+
+Strip those four away and the same portrait appears every time — a player whose value lives in the work nobody puts on a highlight reel.
+
+## Modrić's Birth Chart at a Glance
+
+| Placement | How It Works | Energy Center | How to Observe |
+|---|---|---|---|
+| Virgo Sun | Drives refinement of craft and function over spectacle | Earth element, ruled by Mercury | The perfect simple pass; fixing what others overlook |
+| Cancer Moon | Anchors emotional life in loyalty and belonging | Water element, ruled by the Moon | Deep attachment to country and club; playing for something larger |
+| Scorpio Rising (attributed, unconfirmed) | Filters outward presentation into stillness and control | Water element, ruled by Mars and Pluto | The unreadable face in peak-pressure moments |
+| Virgo–Scorpio axis | Builds legacy through consistency, not theatrical peaks | Earth–Water blend | Peaking later than expected; standing that compounds over years |
+
+## Common Questions About Modrić's Chart
+
+**What is Luka Modric's zodiac sign?**
+
+Luka Modrić is a Virgo, born on September 9, 1985. His wider chart pairs that Virgo Sun with a Cancer Moon; Scorpio is the rising sign most often attributed to him, though it's unconfirmed without a public birth time.
+
+**Is Luka Modrić a Virgo or a Leo?**
+
+He's a Virgo, though his on-ball grace gets him mistaken for Leo flair. The difference is that Virgo is organized around precision and service rather than spectacle.
+
+**What is Luka Modrić's moon sign?**
+
+His Moon is in Cancer, which tends to show up as deep loyalty and a strong pull toward home and national identity. Many readers see it as the anchor behind his long Croatia career.
+
+**Why does Modrić's chart point to late-career staying power?**
+
+The Virgo–Scorpio blend often correlates with people who peak later and build standing through consistency. It tends to reward quiet, repeated excellence over short bursts of brilliance.
+
+## Reflection Prompts
+
+1. Think of a recent moment when you fixed something quietly and let someone else take the credit — how did that sit with you?
+2. Recall a high-pressure situation where you stayed composed on the outside; what were you actually feeling underneath?
+3. Name a person, place, or team you've stayed loyal to far longer than logic suggested, and why.
+
+## Related Reading
+
+- [[<TBD-internal-link: Harry Kane birth chart>]] — see how a different World Cup captain's leadership style reads in a chart.
+- [[<TBD-internal-link: Cancer zodiac World Cup 2026>]] — more on the loyalty and emotional-anchor themes behind Modrić's Cancer Moon.
+- [[<TBD-internal-link: Vinicius Jr's zodiac sign>]] — another World Cup player read through his chart.
+- [[<TBD-external-link: Wikipedia | Luka Modrić | biographical background, including his September 9, 1985 birth date>]] — confirms the birth data the chart is built on.
+
+## Take Action
+
+Generate your free birth chart to explore the Luka Modric zodiac sign and see how your own Sun, Moon, and rising line up. You'll get a clear map of which sign leads your identity, which anchors your emotional life, and which face you show the world first. From there, the goal isn't to label yourself — it's to notice the quiet, Virgo-style strengths you've been overlooking in your own story.
+
+[Generate your free birth chart](https://astrologywiki.com/en/wiki/how-to-read-birth-chart)
+
+## Sources
+
+- Barbara Ann Brennan — mapped how to read the whole energetic field rather than reducing a person to a single trait
+- Cyndi Dale — systematized the layered, whole-field approach this kind of reading draws on
+
+
+## ⚠️ 上一稿被自动校验拦下 — 本稿必须逐条修掉
+- - SC8 CTA link: CTA issues (SC8): CTA URL(s) [astrologywiki.com/zh/wiki/how-to-read-birth-chart] ≠ cta_target_url
+- 《广告法》§9 禁词 "最佳" matched. context: "...正是诸如 [[<TBD-internal-link: 各星座最佳足球运动员>]] 这类逐星座拆解想要呈现的东西。 它也重新..."
+- drifted sections: "莫德里奇星座与相近概念：运作方式 + 取舍" (jaccard=0.022, shingle=0.000, target-recall=0.17); "常见误读" (jaccard=0.000, shingle=0.000, target-recall=0.00); "下一步行动" (jaccard=0.016, shingle=0.000, target-recall=0.17) (skipped 4 structural: "速查一览", "自我觉察小提示", "延伸阅读", "参考来源")
+
+补救要求：
+- 保持中文，不要回退英文标题或英文小节。
+- RL4 漂移 → 在被点名小节自然补回主中文关键词；不要只在开头堆一次。
+- RL5 堆词 → 重复过密处改成代词 / 短称 / 解释句，但别把主关键词完全丢掉。
+- RL6 / 合规 → 改成象征、反思、传统关联，不要承诺疗效或心理治疗作用。
+- 结构 FAIL → 以英文稿结构为准，小修，不整篇推倒重写。
+````
+
+**🤖 回答：**
+
+按用户补救要求重新产出 PG-WC-032 简体中文 Markdown 正文：主关键词仍选为“莫德里奇星座”，结构为 1 个 H1 与 11 个中文 H2；修正 CTA 为精确 `https://astrologywiki.com/zh/wiki/how-to-read-birth-chart`，避开“最佳”等禁词，在“相近概念”“常见误读”“下一步行动”自然补回关键词以降低漂移风险。完成本地字符串核对：H1=1、H2=11、主关键词=7、中文内链占位符=7、CTA 命中、禁用词列表未命中。
+
+---

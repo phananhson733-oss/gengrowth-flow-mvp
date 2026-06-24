@@ -171,3 +171,16 @@ test('gengrowth article publisher does not use Google Indexing API for ordinary 
   assert.doesNotMatch(src, /gsc-index-submit\.mjs/);
   assert.doesNotMatch(src, /Google Indexing API submit/);
 });
+
+test('launchd wrapper runs only the lightweight index monitor check', () => {
+  const wrapper = readFileSync(join(SCRIPTS, 'gg-index-monitor-tick.sh'), 'utf8');
+  assert.match(wrapper, /gg-index-monitor\.mjs/);
+  assert.match(wrapper, /--check-due/);
+  assert.match(wrapper, /--write-sheet/);
+  assert.doesNotMatch(wrapper, /gg-seo-autopilot-tick|gg-seo-author-tick/);
+
+  const plist = readFileSync(join(SCRIPTS, 'com.gengrowth.index-monitor.plist'), 'utf8');
+  assert.match(plist, /com\.gengrowth\.index-monitor/);
+  assert.match(plist, /gg-index-monitor-tick\.sh/);
+  assert.match(plist, /StartCalendarInterval/);
+});

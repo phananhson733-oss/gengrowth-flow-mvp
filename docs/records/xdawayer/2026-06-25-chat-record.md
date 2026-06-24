@@ -358,3 +358,20 @@ Ready to see exactly where each full moon lands in your own chart? [Generate you
 产出一篇无 YAML frontmatter 的简体中文 Markdown 正文，采用中文 Phase 2 的 11 个 H2 骨架；主关键词选为“满月灵性实践”，控制出现频次；保留释放、完成、与新月配对、与显化练习取舍、常见误读、速查表、FAQ、反思提示、延伸阅读、中文 CTA 与免责声明。CTA 指向 `https://astrologywiki.com/zh/wiki/how-to-read-birth-chart`，正文先具名 Dane Rudhyar 与 Alexander Ruperti，再在参考来源中列出。
 
 ---
+
+### Q5 — 02:45
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: 2026-06-24T17:43:47.050Z (1782323027050)
+
+Run the GenGrowth fixed-row resubmission workflow. Execute `node tools/scripts/gg-index-monitor.mjs --process-fixed --write-sheet --notify`, then `node tools/scripts/gg-index-monitor.mjs --sync-recap --write-sheet`, then `node tools/scripts/gg-index-monitor.mjs --sync-request-queue --write-sheet --notify`. This handles rows where `index-tracking.fix_status` or `结果复盘表.索引修复状态` has been manually marked `已修复`: refresh the sitemap through the official Search Console Sitemaps API, update tracking/recap timestamps, and refresh request-indexing candidates. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles and do not click Search Console Request Indexing unattended; only maintain the assisted queue for human-confirmed final clicks. Summarize fixed/resubmitted counts, queue counts, and any failures.
+
+**🤖 回答：**
+
+已按顺序执行三条 `gg-index-monitor.mjs` 命令：`--process-fixed --write-sheet --notify` 返回 `fixed=0`、`resubmitted=0`；`--sync-recap --write-sheet` 返回 `en_rows=162`、`appended=2`、`updated=0`、`skipped=160`；`--sync-request-queue --write-sheet --notify` 返回 `rows=19`、`P0=0`、`P1=3`、`P2=0`、`P3=16`。三条命令均 exit 0，无失败；已保持合规边界，仅维护 assisted queue，未使用 Google Indexing API，也未无人值守点击 Search Console Request Indexing。
+
+---

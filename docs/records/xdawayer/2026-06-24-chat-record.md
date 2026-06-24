@@ -1,4 +1,18 @@
 ---
+
+### Q11 — 15:25
+
+**🙋 提问：**
+
+```text
+继续执行 active goal：goal 开始执行 Phase 1
+```
+
+**🤖 回答：**
+
+再次以当前工作树和外部状态审计 Phase 1：`gg-index-monitor` smoke 18/18、`gg-seo-autopilot` smoke 13/13、wrapper/plist lint 均通过；真实 Sheet `index-tracking` 已有 `PG-WC-032` 监控行；LaunchAgent `com.gengrowth.index-monitor` 已加载，每日 09:00 运行；日志显示 wrapper 已在存在 tracking 行时预检 GSC 授权并失败于同一 OAuth 过期点。`verify-gcp.mjs` 证明 reader SA 对 GSC property 也无权限，不能替代 user OAuth。因同一外部授权阻塞已连续出现 3 个 goal turn，且需要账号本人 Google consent 或授予 GSC property 权限，按 goal 规则将 active goal 标记为 blocked。
+
+---
 date: 2026-06-24
 type: chat-record
 author: xdawayer

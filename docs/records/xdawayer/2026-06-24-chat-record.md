@@ -1775,6 +1775,20 @@ Map the same Scorpio patterns onto your own placements: generate your free birth
 
 ---
 
+### Q19 — 16:52
+
+**🙋 提问：**
+
+```text
+截图显示 Search Console 用户列表里 gg-reader-sa@aqueous-sandbox-496915-i1.iam.gserviceaccount.com 权限为“完整”。
+```
+
+**🤖 回答：**
+
+用本地 reader SA 重新验证后，确认 JSON 里的 `client_email` 与截图一致，但 Search Console API 的 `sites.list` 目前只返回 `sc-domain:gengrowth.ai` / `siteFullUser`，没有返回 `sc-domain:astrologywiki.com`；等待 60 秒后复测仍如此，`sc-domain:astrologywiki.com` 的 Search Analytics preflight 继续 403。因此当前问题不是 Testing-mode OAuth，也不是本地 SA JSON 不匹配，而是 GSC UI 权限尚未落到 `astrologywiki.com` 这个 API property 上。需要确认 GSC 顶部属性选择器是否为 `sc-domain:astrologywiki.com`，而不是 `gengrowth.ai`；如果确认为 astrologywiki，可尝试移除并重新添加 reader SA，等待数分钟后再跑验证。
+
+---
+
 ### Q19 — 16:16
 
 **🙋 提问：**

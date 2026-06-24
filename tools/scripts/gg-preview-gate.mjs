@@ -88,6 +88,15 @@ function resolveBin(envName, fileName) {
   return join(HERE, fileName);
 }
 
+function resolveCodexBin() {
+  if (process.env.GG_CODEX_BIN) return process.env.GG_CODEX_BIN;
+  const candidates = [
+    join(HOME, '.npm-global', 'bin', 'codex'),
+    join(HOME, '.local', 'bin', 'codex'),
+  ];
+  return candidates.find((p) => existsSync(p)) || null;
+}
+
 export function bins() {
   return {
     autopilot: resolveBin('GG_AUTOPILOT_BIN', 'gg-seo-autopilot.mjs'),
@@ -95,7 +104,7 @@ export function bins() {
     previewVerify: resolveBin('GG_PREVIEW_VERIFY_BIN', 'gg-preview-verify.mjs'),
     reviewWorker: resolveBin('GG_REVIEW_WORKER_BIN', 'gg-article-review-worker.mjs'),
     larkNotify: resolveBin('GG_LARK_NOTIFY_BIN', 'gg-lark-notify.sh'),
-    codex: process.env.GG_CODEX_BIN || null, // REQUIRED by default — absent ⇒ PARK (GG_CODEX_GATE_REQUIRED=0 ⇒ legacy SKIPPED)
+    codex: resolveCodexBin(), // REQUIRED by default — absent ⇒ PARK (GG_CODEX_GATE_REQUIRED=0 ⇒ legacy SKIPPED)
   };
 }
 

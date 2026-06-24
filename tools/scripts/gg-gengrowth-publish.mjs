@@ -10,8 +10,9 @@
 //      runs on a PR diff); a non-PASS PARKS the article (needs_human), never publishes it
 //   3. upsert the not-yet-live ones via the bridge gg-md-to-gengrowth-blog.mjs --emit rest
 //   4. verify live (Supabase row status=published)
-//   5. POST-PUBLISH — Google Indexing API submit (gsc-index-submit.mjs) + vault archive
-//      (gg-archive-to-vault.mjs) + per-article Hermes-bot notification
+//   5. POST-PUBLISH — vault archive (gg-archive-to-vault.mjs) + per-article
+//      Hermes-bot notification. Ordinary articles are not submitted through the
+//      Google article indexing API; monitoring belongs in the index tracker.
 // Idempotent; DRY-RUN by default (the factual gate + post-publish steps run only on --apply).
 //
 // "ready" = _staging/PG-<W25prefix>-NNN-<llm>-v8.md WITH a sibling .manifest.json whose
@@ -43,10 +44,9 @@ const REPO = resolve(__dirname, '..', '..');
 const HOME = process.env.HOME || '';
 const BRIDGE = join(__dirname, 'gg-md-to-gengrowth-blog.mjs');
 const LARK = join(__dirname, 'gg-lark-notify.sh');
-// Parity with Lane B (oracle): same factual reviewer, same GSC indexing submit, same
-// vault archive. Only the inputs differ (a file vs a PR; a gengrowth URL vs an oracle URL).
+// Parity with Lane B (oracle): same factual reviewer and same vault archive.
+// Only the inputs differ (a file vs a PR; a gengrowth URL vs an oracle URL).
 const CODEX_BIN = process.env.GG_CODEX_BIN || join(__dirname, 'gg-codex-pr-review.mjs');
-const GSC_SUBMIT = join(HOME, 'oracle', 'scripts', 'gsc-index-submit.mjs');
 const ARCHIVE_BIN = join(__dirname, 'gg-archive-to-vault.mjs');
 const SITE_HOST = 'https://gengrowth.ai';
 const URL_PATH = '/en/blog/';
@@ -99,23 +99,6 @@ function factualReview(mdPath) {
   const timedOut = !!(r.error && r.error.code === 'ETIMEDOUT');
   const cls = classifyCodex({ code: r.status ?? 1, stdout: r.stdout, timedOut });
   return { ...cls, required };
-}
-
-// ── Post-publish Google Indexing API submit (parity with autopilot submitGoogleIndex) ──
-// Best-effort; never throws. Runs AFTER verify-live so Google recrawls a live URL (not a 404).
-// gengrowth has no zh locale → single EN URL. SA at ~/.config/gg/google-indexing-sa.json
-// (now a verified owner of the gengrowth.ai property — confirmed 1/1 accepted 2026-06-23).
-function submitGoogleIndex(slug) {
-  if (!slug || !existsSync(GSC_SUBMIT)) return;
-  try {
-    const out = execFileSync('node', [GSC_SUBMIT, '--url', `${SITE_HOST}${URL_PATH}${slug}`], {
-      cwd: join(HOME, 'oracle'), encoding: 'utf8', timeout: 60000,
-    });
-    const last = String(out).trim().split('\n').filter(Boolean).pop();
-    if (last) console.log(`  gsc-index: ${last}`);
-  } catch (e) {
-    console.log(`  gsc-index: skipped (non-fatal: ${String(e.message || e).slice(0, 80)})`);
-  }
 }
 
 // ── Post-publish vault archive (parity with the FLOW post-deploy archive step) ──────
@@ -235,10 +218,9 @@ async function main() {
       const ok = after.known && after.exists && after.status === 'published';
       if (ok) { verified++; console.log(`  ✓ verified live: ${d.slug}`); }
       else console.log(`  ⚠️ ${d.slug} upserted but verify says: ${JSON.stringify(after)}`);
-      // ── Post-publish parity steps (mirror Lane B post-merge): submit to Google's
-      // Indexing API + archive into the wiki vault — only after verify-live succeeds.
+      // ── Post-publish parity step: archive into the wiki vault only after
+      // verify-live succeeds.
       if (ok) {
-        submitGoogleIndex(d.slug);
         archiveToVault(d.pageId, d.slug);
       }
       // Per-article notification (parity with Lane B's per-article "已发布上线" notice),

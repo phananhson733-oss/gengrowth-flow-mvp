@@ -78,6 +78,7 @@ const VERSION = process.env.GG_VERSION || 'v8';
 const STAGING = join(FLOW, '_staging');
 const CONV = join(FLOW, 'tools', 'scripts', 'gg-md-to-oracle-ts.mjs');
 const REG = join(FLOW, 'tools', 'scripts', 'gg-oracle-register-index.mjs');
+const INDEX_MONITOR = join(FLOW, 'tools', 'scripts', 'gg-index-monitor.mjs');
 
 // upstream authoring-stage scripts (used by --author when a plan task has no
 // passing draft yet): bridge → RAG → render → orchestrator → phase2.
@@ -1307,28 +1308,7 @@ function doMerge(o) {
     saveClaims(claims);
     appendPublishLog(pgId, claims[pgId].slug); // writing record → ops (self-synced)
     log(`MERGED ${o.branch} → main (prod deploy triggered)`);
-    submitGoogleIndex(claims[pgId].slug, claims[pgId].zh === true);
   });
-}
-
-// Best-effort post-merge Google Indexing API submission for the just-published
-// article URL(s). Mirrors the Bing/Yandex IndexNow channel (build-time) but for
-// Google, which IndexNow can't reach. No-op without GOOGLE_INDEXING_SA[_JSON];
-// runs against the live URL (not the sitemap) so prod-deploy lag doesn't matter —
-// Google recrawls after the notification, by which time the page is live.
-// NEVER blocks or raises (the merge already succeeded).
-function submitGoogleIndex(slug, hasZh) {
-  if (!slug) return;
-  const base = (process.env.SITE_URL || 'https://www.astrologywiki.com').replace(/\/+$/, '');
-  const args = ['scripts/gsc-index-submit.mjs', '--url', `${base}/en/wiki/${slug}`];
-  if (hasZh) args.push('--url', `${base}/zh/wiki/${slug}`);
-  try {
-    const out = sh('node', args, { cwd: ORACLE });
-    const last = String(out).trim().split('\n').filter(Boolean).pop();
-    if (last) log(`gsc-index: ${last}`);
-  } catch (e) {
-    log(`gsc-index: skipped (non-fatal: ${errTail(e, 60)})`);
-  }
 }
 
 function doMarkVerified(o) {
@@ -1441,6 +1421,29 @@ function larkNotify(msg) {
 
 function opsPublishLog() { return join(OPS, 'inbox', '06-tasks', 'seo-autopilot-publish-log.md'); }
 
+function enqueueIndexTracking(pgId, slug, title, author, date) {
+  if (process.env.GG_AUTOPILOT_NO_INDEX_TRACKING === '1') return;
+  if (!existsSync(INDEX_MONITOR)) return;
+  try {
+    const args = [
+      INDEX_MONITOR,
+      '--enqueue-published',
+      '--page-id', pgId,
+      '--slug', slug,
+      '--title', title || slug,
+      '--published-at', date,
+      '--source', 'seo-autopilot',
+      '--write-sheet',
+    ];
+    if (author) args.push('--author', author);
+    const out = sh('node', args, { cwd: FLOW, timeout: 60000 });
+    const last = String(out).trim().split('\n').filter(Boolean).pop();
+    if (last) log(`index-tracking: ${last}`);
+  } catch (e) {
+    log(`index-tracking skipped: ${errTail(e, 80)}`);
+  }
+}
+
 // Append one row per published article to the ops publish register (the "写作记录"),
 // then sync it + the plan to ops. Title/author come from the en.md frontmatter.
 function appendPublishLog(pgId, slug) {
@@ -1465,6 +1468,7 @@ function appendPublishLog(pgId, slug) {
       writeFileSync(f, src);
     }
     syncOpsFiles([f, latestPlan()], `chore(seo): publish ${slug}`);
+    enqueueIndexTracking(pgId, slug, title, author, date);
     larkNotify(`✅ SEO autopilot 已发布上线：${title || slug}\nhttps://www.astrologywiki.com/en/wiki/${slug}\n（作者 ${author || '?'}，已登记到 ops）`);
   } catch (e) { log(`publish-log skipped: ${errTail(e, 80)}`); }
 }

@@ -54,10 +54,31 @@ export const INDEX_TRACKING_HEADER = Object.freeze([
   'author',
 ]);
 
+export const RECAP_TAB = '结果复盘表';
+export const RECAP_HEADER = Object.freeze([
+  'outcome_id',
+  'page_id',
+  'cluster_id',
+  'url',
+  'day14_收录',
+  '申请时间',
+  '索引修复状态',
+  'day14_impressions',
+  '记录日期',
+  'day30_进Top50词数',
+  '当前最高排名词（排名）',
+  'day30_clicks',
+  'day60_pv',
+  'day60_目标国pv',
+  '决策',
+  '备注',
+]);
+
 const DUE_MILESTONES = Object.freeze([3, 7, 14, 21, 30]);
 const DEFAULT_SITE = 'sc-domain:astrologywiki.com';
 const DEFAULT_SITE_ORIGIN = 'https://www.astrologywiki.com';
 const GSC_READONLY_SCOPE = 'https://www.googleapis.com/auth/webmasters.readonly';
+const DEFAULT_SITEMAP_URL = 'https://www.astrologywiki.com/sitemap.xml';
 
 function readerSaPath() {
   return process.env.GG_READER_SA_JSON || join(homedir(), '.config', 'gg', 'gg-reader-sa.json');
@@ -125,6 +146,69 @@ function siteOrigin(site) {
   return String(site).replace(/\/$/, '');
 }
 
+function normalizeUrl(url) {
+  const s = String(url || '').trim();
+  return s.endsWith('/') ? s.slice(0, -1) : s;
+}
+
+function isEnWikiArticleUrl(url) {
+  try {
+    const u = new URL(url);
+    if (u.hostname !== 'www.astrologywiki.com' && u.hostname !== 'astrologywiki.com') return false;
+    const path = u.pathname.replace(/\/$/, '');
+    return /^\/en\/wiki\/[^/]+$/.test(path);
+  } catch {
+    return false;
+  }
+}
+
+function slugFromEnWikiUrl(url) {
+  try {
+    const u = new URL(url);
+    const path = u.pathname.replace(/\/$/, '');
+    return decodeURIComponent(path.slice('/en/wiki/'.length));
+  } catch {
+    return '';
+  }
+}
+
+function sitemapEntries(xml) {
+  const entries = [];
+  const blocks = String(xml || '').match(/<url\b[\s\S]*?<\/url>/gi) || [];
+  for (const block of blocks) {
+    const loc = block.match(/<loc>\s*([^<]+?)\s*<\/loc>/i)?.[1]?.trim();
+    if (!loc) continue;
+    const lastmod = block.match(/<lastmod>\s*([^<]+?)\s*<\/lastmod>/i)?.[1]?.trim() || '';
+    entries.push({ loc, lastmod: lastmod.slice(0, 10) });
+  }
+  return entries;
+}
+
+export function extractEnWikiSitemapRows(xml, { now = new Date() } = {}) {
+  return sitemapEntries(xml)
+    .filter((entry) => isEnWikiArticleUrl(entry.loc))
+    .map((entry) => {
+      const url = normalizeUrl(entry.loc);
+      const publishedAt = entry.lastmod || isoDay(now);
+      return buildTrackingSeedRow({
+        slug: slugFromEnWikiUrl(url),
+        url,
+        title: '',
+        publishedAt,
+        firstTrackedAt: publishedAt,
+        now,
+        source: 'live-sitemap',
+      });
+    });
+}
+
+export async function fetchEnWikiSitemapRows(sitemapUrl = DEFAULT_SITEMAP_URL, { fetcher = fetch, now = new Date() } = {}) {
+  const res = await fetcher(sitemapUrl);
+  if (!res.ok) throw new Error(`sitemap fetch failed (${res.status}): ${await res.text()}`);
+  const xml = await res.text();
+  return extractEnWikiSitemapRows(xml, { now });
+}
+
 export function buildTrackingSeedRow({
   pageId,
   slug,
@@ -132,21 +216,21 @@ export function buildTrackingSeedRow({
   title = '',
   author = '',
   publishedAt,
+  firstTrackedAt,
   now = new Date(),
   source = 'seo-autopilot',
   site = DEFAULT_SITE,
 } = {}) {
-  if (!pageId) throw new Error('buildTrackingSeedRow: pageId required');
-  if (!slug && !url) throw new Error('buildTrackingSeedRow: slug or url required');
+  if (!pageId && !slug && !url) throw new Error('buildTrackingSeedRow: pageId, slug, or url required');
   const day = isoDay(now);
   const finalUrl = url || `${siteOrigin(site)}/en/wiki/${slug}`;
   return {
     url: finalUrl,
-    page_id: pageId,
+    page_id: pageId || '',
     slug: slug || '',
     title: cleanCell(title),
     published_at: publishedAt || day,
-    first_tracked_at: day,
+    first_tracked_at: firstTrackedAt || day,
     last_checked_at: '',
     check_count: 0,
     days_since_first_tracked: 0,

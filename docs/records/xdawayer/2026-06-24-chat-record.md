@@ -2146,3 +2146,20 @@ Run the GenGrowth index monitoring wrapper through the existing deterministic sc
 **🤖 回答：**
 
 按指定 wrapper 执行 `bash tools/scripts/gg-index-monitor-tick.sh`，确认 wrapper 内部加载 `$HOME/.config/gg/_gg.env`，未在 wrapper 外进行写作、发布、合并、请求索引或手工编辑表格。脚本约 17 秒后以退出码 0 结束。最新日志 `$HOME/gengrowth-agents/cron-sync/index_monitor/2026-06-24.log` 显示：`sync-published` en_urls=210 appended=0 updated=0 skipped=210；`check-due` rows=159 due=0，且 no due URLs；`sync-recap` en_rows=159 appended=0 updated=0 skipped=159；本次无 GSC inspection 失败或超时。已将运行摘要写入 `/Users/awayer_mini/.codex/automations/gengrowth-index-monitor/memory.md`。
+
+---
+
+### Q22 — 21:44
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: never
+
+Run the GenGrowth fixed-row resubmission workflow. Execute `node tools/scripts/gg-index-monitor.mjs --process-fixed --write-sheet --notify`, then `node tools/scripts/gg-index-monitor.mjs --sync-recap --write-sheet`, then `node tools/scripts/gg-index-monitor.mjs --sync-request-queue --write-sheet --notify`. This handles rows where `index-tracking.fix_status` or `结果复盘表.索引修复状态` has been manually marked `已修复`: refresh the sitemap through the official Search Console Sitemaps API, update tracking/recap timestamps, and refresh request-indexing candidates. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles and do not click Search Console Request Indexing unattended; only maintain the assisted queue for human-confirmed final clicks. Summarize fixed/resubmitted counts, queue counts, and any failures.
+
+**🤖 回答：**
+
+按指定顺序执行固定行重提 workflow：`--process-fixed --write-sheet --notify` 退出码 0，结果 `fixed=0`、`resubmitted=0`；`--sync-recap --write-sheet` 退出码 0，结果 `en_rows=159`、`appended=0`、`updated=0`、`skipped=159`；`--sync-request-queue --write-sheet --notify` 退出码 0，结果 `rows=16`、`P0=0`、`P1=3`、`P2=0`、`P3=13`。未使用 Google Indexing API，未无人值守点击 Search Console Request Indexing；只维护 `request-indexing-queue` 供人工最终确认。已写入自动化记忆 `$CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md`。

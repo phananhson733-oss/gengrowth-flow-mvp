@@ -89,12 +89,12 @@ function resolveBin(envName, fileName) {
 }
 
 function resolveCodexBin() {
-  if (process.env.GG_CODEX_BIN) return process.env.GG_CODEX_BIN;
-  const candidates = [
-    join(HOME, '.npm-global', 'bin', 'codex'),
-    join(HOME, '.local', 'bin', 'codex'),
-  ];
-  return candidates.find((p) => existsSync(p)) || null;
+  const fromEnv = process.env.GG_CODEX_BIN;
+  if (fromEnv) return fromEnv;
+  const inScripts = join(SCRIPTS, 'gg-codex-pr-review.mjs');
+  if (existsSync(inScripts)) return inScripts;
+  const local = join(HERE, 'gg-codex-pr-review.mjs');
+  return existsSync(local) ? local : null;
 }
 
 export function bins() {

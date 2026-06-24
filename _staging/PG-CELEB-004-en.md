@@ -31,7 +31,7 @@ The Mariah Carey zodiac sign is **Aries, a fire sign whose drive is filtered thr
 
 - Leads with Aries Sun: vocal command, perfectionism, and a relentless competitive streak
 - Carries a Cancer Moon that keeps her emotional life intensely private
-- Anchors much of that intensity in 12th-house placements tied to self-protection
+- Channels that intensity inward through the water Moon, reading as self-protection rather than open confrontation
 
 ## Why It Matters for Self-Awareness
 

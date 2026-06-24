@@ -375,3 +375,20 @@ Run the GenGrowth fixed-row resubmission workflow. Execute `node tools/scripts/g
 已按顺序执行三条 `gg-index-monitor.mjs` 命令：`--process-fixed --write-sheet --notify` 返回 `fixed=0`、`resubmitted=0`；`--sync-recap --write-sheet` 返回 `en_rows=162`、`appended=2`、`updated=0`、`skipped=160`；`--sync-request-queue --write-sheet --notify` 返回 `rows=19`、`P0=0`、`P1=3`、`P2=0`、`P3=16`。三条命令均 exit 0，无失败；已保持合规边界，仅维护 assisted queue，未使用 Google Indexing API，也未无人值守点击 Search Console Request Indexing。
 
 ---
+
+### Q6 — 03:45
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: 2026-06-24T18:43:47.332Z (1782326627332)
+
+Run the GenGrowth fixed-row resubmission workflow. Execute `node tools/scripts/gg-index-monitor.mjs --process-fixed --write-sheet --notify`, then `node tools/scripts/gg-index-monitor.mjs --sync-recap --write-sheet`, then `node tools/scripts/gg-index-monitor.mjs --sync-request-queue --write-sheet --notify`. This handles rows where `index-tracking.fix_status` or `结果复盘表.索引修复状态` has been manually marked `已修复`: refresh the sitemap through the official Search Console Sitemaps API, update tracking/recap timestamps, and refresh request-indexing candidates. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles and do not click Search Console Request Indexing unattended; only maintain the assisted queue for human-confirmed final clicks. Summarize fixed/resubmitted counts, queue counts, and any failures.
+
+**🤖 回答：**
+
+已按顺序执行三条 `gg-index-monitor.mjs` 命令：`--process-fixed --write-sheet --notify` 返回 `fixed=0`、`resubmitted=0`；`--sync-recap --write-sheet` 返回 `en_rows=162`、`appended=0`、`updated=0`、`skipped=162`；`--sync-request-queue --write-sheet --notify` 返回 `rows=19`、`P0=0`、`P1=3`、`P2=0`、`P3=16`。三条命令均 exit 0，无失败；已验证脚本仍使用 Search Console sitemap endpoint 与 request-indexing-queue 边界，未发现 Google Indexing API 或无人值守 Request Indexing 点击。
+
+---

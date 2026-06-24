@@ -422,6 +422,41 @@ test('runIndexMonitor --sync-published upserts live sitemap EN URLs into the sta
   assert.equal(appended[0].title, 'New Live');
 });
 
+test('runIndexMonitor --sync-published can batch update tracking rows', async () => {
+  let batched = null;
+  const code = await runIndexMonitor(['--sync-published', '--write-sheet', '--workbook', 'wb-test'], {
+    now: new Date('2026-06-25T00:00:00Z'),
+    sheetToken: 'sheet-token',
+    sitemapRows: extractEnWikiSitemapRows(`
+      <url><loc>https://www.astrologywiki.com/en/wiki/existing-live</loc><lastmod>2026-06-24</lastmod></url>
+    `),
+    ensureIndexTrackingTab: async () => INDEX_TRACKING_TAB,
+    readRecapRows: async () => [],
+    readTrackingRows: async () => [{
+      ...buildTrackingSeedRow({
+        slug: 'existing-live',
+        url: 'https://www.astrologywiki.com/en/wiki/existing-live',
+        title: '',
+        publishedAt: '2026-06-20',
+        now: new Date('2026-06-20T00:00:00Z'),
+      }),
+      _rowNumber: 2,
+    }],
+    batchUpdateTrackingRows: async (token, workbookId, tabName, updates, appends) => {
+      batched = { token, workbookId, tabName, updates, appends };
+    },
+    updateTrackingRow: async () => {
+      throw new Error('per-row update should not be used when batch is available');
+    },
+  });
+
+  assert.equal(code, 0);
+  assert.equal(batched.tabName, INDEX_TRACKING_TAB);
+  assert.equal(batched.updates.length, 1);
+  assert.equal(batched.appends.length, 0);
+  assert.equal(batched.updates[0].merged.title, 'Existing Live');
+});
+
 test('runIndexMonitor --sync-recap upserts final presentation rows from staging status', async () => {
   const appended = [];
   let updated = null;

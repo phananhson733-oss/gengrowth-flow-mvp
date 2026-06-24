@@ -456,6 +456,13 @@ test('runIndexMonitor sends a D+30 upgrade even after an earlier lower-level ale
       verdict: 'NEUTRAL',
       coverageState: 'Crawled - currently not indexed',
     }),
+    fetchPageDiagnostics: async () => ({
+      word_count: 900,
+      meta_robots: 'index, follow',
+      has_author: true,
+      has_published_time: true,
+      robots_txt: '',
+    }),
     updateTrackingRow: async (token, workbookId, tabName, rowNumber, row) => {
       updated = { token, workbookId, tabName, rowNumber, row };
     },
@@ -500,6 +507,21 @@ test('recapRowFromTrackingRow presents latest GSC URL Inspection status in resul
   assert.equal(notIndexed.outcome_id, 'out_luka-modric-zodiac-sign_latest');
   assert.equal(notIndexed.day14_收录, 'N');
   assert.equal(notIndexed.索引修复状态, '⚠️ 超期未收录（触发诊断）');
+});
+
+test('recapRowFromTrackingRow does not mark canonical duplicate states as indexed', () => {
+  const row = recapRowFromTrackingRow({
+    url: 'https://www.astrologywiki.com/en/wiki/canonical-duplicate',
+    page_id: 'PG-CANON',
+    current_gsc_status: 'Alternate page with proper canonical tag',
+    gsc_verdict: 'PASS',
+    monitor_status: 'needs_attention',
+    diagnosis_category: '重复内容 / canonical 问题',
+    last_checked_at: '2026-06-24',
+  }, { now: new Date('2026-06-25T00:00:00Z') });
+
+  assert.equal(row.day14_收录, 'N');
+  assert.equal(row.索引修复状态, '⚠️ 超期未收录（触发诊断）');
 });
 
 test('seo autopilot enqueues index tracking instead of calling article Indexing API', () => {
@@ -813,6 +835,13 @@ test('runIndexMonitor --check-all inspects pending rows before milestone due dat
         coverageState: 'URL is unknown to Google',
       };
     },
+    fetchPageDiagnostics: async () => ({
+      word_count: 0,
+      meta_robots: '',
+      has_author: false,
+      has_published_time: false,
+      robots_txt: '',
+    }),
     updateTrackingRow: async (token, workbookId, tabName, rowNumber, row) => {
       updated = { token, workbookId, tabName, rowNumber, row };
     },

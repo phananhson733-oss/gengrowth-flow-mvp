@@ -473,7 +473,12 @@ function isIndexedTrackingRow(row = {}) {
   const status = String(row.current_gsc_status || '');
   const verdict = String(row.gsc_verdict || '');
   const monitor = String(row.monitor_status || '');
-  return monitor === 'indexed' || ((verdict === 'PASS' || /\bindexed\b/i.test(status)) && !/not indexed/i.test(status));
+  const canonicalDuplicate = /alternate page with proper canonical tag|duplicate|canonical/i.test(status);
+  return monitor === 'indexed' || (
+    !canonicalDuplicate &&
+    (verdict === 'PASS' || /\bindexed\b/i.test(status)) &&
+    !/not indexed/i.test(status)
+  );
 }
 
 function lifecycleFixStatus(row = {}, classification = {}) {
@@ -781,7 +786,7 @@ export function classifyInspection(indexStatus = {}, { daysSinceFirstTracked = 0
         diagnosis_conclusion: '内容质量不足',
         alert_level: 'P1',
         should_alert: true,
-        recommendation: contentQualityChecklist(pageDiagnostics),
+        recommendation: `${checklist(['D+30 仍未收录，升级为重点 URL'])}\n${contentQualityChecklist(pageDiagnostics)}`,
       };
     }
     const overdue = daysSinceFirstTracked >= 14;

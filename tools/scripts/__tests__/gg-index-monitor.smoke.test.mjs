@@ -244,6 +244,8 @@ test('launchd wrapper runs only the lightweight index monitor check', () => {
   assert.match(wrapper, /--require-gsc-auth/);
   assert.match(wrapper, /rc=\$\{rc\}）。请查看 \$\{LOG\}/);
   assert.match(wrapper, /rc=\$\{rc\}）。请查看 \$\{LOG\}；/);
+  assert.match(wrapper, /GSC reader SA 权限/);
+  assert.doesNotMatch(wrapper, /oauth-init|refresh_token|Google OAuth/);
   assert.doesNotMatch(wrapper, /gg-seo-autopilot-tick|gg-seo-author-tick/);
 
   const plist = readFileSync(join(SCRIPTS, 'com.gengrowth.index-monitor.plist'), 'utf8');
@@ -287,8 +289,9 @@ test('runIndexMonitor --check-due skips GSC token when no rows are due', async (
   });
 });
 
-test('runIndexMonitor --require-gsc-auth preflights GSC token when tracking rows exist', async () => {
-  let requestedUserToken = false;
+test('runIndexMonitor --require-gsc-auth preflights GSC service-account access when tracking rows exist', async () => {
+  let tokenOptions = 'not-called';
+  let preflight = null;
   const code = await runIndexMonitor(['--check-due', '--require-gsc-auth', '--workbook', 'wb-test'], {
     sheetToken: 'sheet-token',
     readTrackingRows: async () => [{
@@ -299,11 +302,18 @@ test('runIndexMonitor --require-gsc-auth preflights GSC token when tracking rows
       monitor_status: 'monitoring',
     }],
     getGscToken: async (opts) => {
-      requestedUserToken = opts?.user === true;
-      return 'gsc-token';
+      tokenOptions = opts;
+      return 'gsc-sa-token';
+    },
+    preflightGscAccess: async (token, siteUrl) => {
+      preflight = { token, siteUrl };
     },
   });
 
   assert.equal(code, 0);
-  assert.equal(requestedUserToken, true);
+  assert.equal(tokenOptions, undefined);
+  assert.deepEqual(preflight, {
+    token: 'gsc-sa-token',
+    siteUrl: 'sc-domain:astrologywiki.com',
+  });
 });

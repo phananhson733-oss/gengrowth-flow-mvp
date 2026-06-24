@@ -621,3 +621,15 @@ Run the GenGrowth fixed-row resubmission workflow. Execute `node tools/scripts/g
 按指定顺序执行固定行重提 workflow：`--process-fixed --write-sheet --notify` 退出码 0，结果 `fixed=0`、`resubmitted=0`；`--sync-recap --write-sheet` 退出码 0，结果 `en_rows=162`、`appended=0`、`updated=0`、`skipped=162`；`--sync-request-queue --write-sheet --notify` 退出码 0，结果 `rows=19`、`P0=0`、`P1=3`、`P2=0`、`P3=16`。合规边界保持：未使用 Google Indexing API，未无人值守点击 Search Console Request Indexing，只维护辅助队列供人工最终确认。当前 shell 的 `CODEX_HOME` 为空，因此读取并更新默认路径 `/Users/awayer_mini/.codex/automations/gengrowth-index-repair-resubmit/memory.md`。未发现脚本失败；`ai-profile/lynne-soul.md` 在当前工作区未找到，仅找到 `ai-profile/reminders.md`。
 
 ---
+
+### Q12 — 07:04
+
+**🙋 提问：**
+
+用户要求基于 `PG-NAKSH-001 / nakshatra` 英文 Phase 2 成稿，产出可直接进入中文 Phase 2 的简体中文 Markdown 正文；要求无 YAML、11 个中文 H2 骨架、第一部分定义句后紧跟 3 个 bullet、第二/三/四部分固定标题规则、至少 5 条中文内链占位符、主中文关键词出现 5-8 次、参考来源权威名需先在正文具名、避开医疗承诺与广告化词语，CTA 指向 `https://astrologywiki.com/zh/wiki/how-to-read-birth-chart`，并保留“这不是临床解读或心理健康建议”的中文免责声明。源文主题为吠陀占星中的 27 个月宿、月亮出生位置、维姆肖塔里大运、与星座/太阳星座/拉希的差异、星盘识别步骤、常见误读、速查表、FAQ、反思提示、延伸阅读、下一步行动和参考来源。
+
+**🤖 回答：**
+
+产出一篇无 YAML frontmatter 的简体中文 Markdown 正文；主关键词选为“纳克沙特拉”，正文采用中文 Phase 2 的 11 个 H2 骨架并控制关键词频次。内容保留英文稿核心语义：二十七个月宿、每宿 13°20′、月亮出生位置启动维姆肖塔里 120 年大运、与星座/太阳星座/拉希的取舍、星盘识别步骤、常见误读、四个月宿速查、FAQ、自我觉察提示、延伸阅读、中文 CTA 与免责声明。正文先具名《阿闼婆吠陀》和帕拉沙拉，再在参考来源列出；CTA 指向 `https://astrologywiki.com/zh/wiki/how-to-read-birth-chart`。
+
+---

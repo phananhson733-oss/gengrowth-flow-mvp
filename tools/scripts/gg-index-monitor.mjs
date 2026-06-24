@@ -506,18 +506,28 @@ async function runEnqueue(args, { sheetToken, workbookId, now }) {
   return 0;
 }
 
-async function runCheckDue(args, { sheetToken, gscToken, workbookId, now }) {
+async function runCheckDue(args, {
+  sheetToken,
+  gscToken,
+  workbookId,
+  now,
+  ensureFn = ensureIndexTrackingTab,
+  readRowsFn = readTrackingRows,
+  updateRowFn = updateTrackingRow,
+  fetchInspectionFn = fetchUrlInspection,
+  getGscToken = getAccessToken,
+}) {
   if (!workbookId) {
     process.stderr.write('error: --check-due requires workbook id from env or --workbook\n');
     return 1;
   }
   const writeSheet = !!args.write_sheet;
   const tabName = writeSheet
-    ? await ensureIndexTrackingTab(sheetToken, workbookId)
+    ? await ensureFn(sheetToken, workbookId)
     : INDEX_TRACKING_TAB;
   let rows;
   try {
-    rows = await readTrackingRows(sheetToken, workbookId, tabName);
+    rows = await readRowsFn(sheetToken, workbookId, tabName);
   } catch (e) {
     process.stderr.write(`error: cannot read ${tabName} — ${e.message}\n`);
     return 1;
@@ -530,12 +540,22 @@ async function runCheckDue(args, { sheetToken, gscToken, workbookId, now }) {
     return 0;
   }
 
+  let inspectionToken = gscToken;
+  if (!inspectionToken) {
+    try {
+      inspectionToken = await getGscToken({ user: true });
+    } catch (e) {
+      process.stderr.write(`error: cannot mint GSC user token — ${e.message}\n`);
+      return 1;
+    }
+  }
+
   const siteUrl = args.site || process.env.GG_GSC_SITE || DEFAULT_SITE;
   let failures = 0;
   let alerts = 0;
   for (const row of due) {
     try {
-      const indexStatus = await fetchUrlInspection(gscToken, siteUrl, row.url);
+      const indexStatus = await fetchInspectionFn(inspectionToken, siteUrl, row.url);
       const merged = mergeInspectionIntoRow(row, indexStatus, now);
       if (merged.classification.should_alert) {
         alerts++;
@@ -544,7 +564,7 @@ async function runCheckDue(args, { sheetToken, gscToken, workbookId, now }) {
           larkBestEffort(formatAlertMessage(merged.row, merged.classification));
         }
       }
-      if (writeSheet) await updateTrackingRow(sheetToken, workbookId, tabName, row._rowNumber, merged.row);
+      if (writeSheet) await updateRowFn(sheetToken, workbookId, tabName, row._rowNumber, merged.row);
       process.stdout.write(`${merged.row.page_id || merged.row.url}: ${merged.row.current_gsc_status || '(no status)'} → ${merged.row.monitor_status}\n`);
     } catch (e) {
       failures++;
@@ -557,7 +577,7 @@ async function runCheckDue(args, { sheetToken, gscToken, workbookId, now }) {
           check_count: Number(row.check_count || 0) + 1,
           notes: msg,
         };
-        try { await updateTrackingRow(sheetToken, workbookId, tabName, row._rowNumber, failed); } catch { /* keep going */ }
+        try { await updateRowFn(sheetToken, workbookId, tabName, row._rowNumber, failed); } catch { /* keep going */ }
       }
     }
   }
@@ -577,6 +597,7 @@ async function runEnsureTab({ sheetToken, workbookId, ensureFn = ensureIndexTrac
 
 export async function runIndexMonitor(argv, deps = {}) {
   const args = parseArgs(argv);
+  const defaultCheckDue = Object.keys(args).length === 0;
   if (args.help || args.h) {
     process.stdout.write([
       'gg-index-monitor.mjs — URL Inspection → index-tracking',
@@ -596,7 +617,7 @@ export async function runIndexMonitor(argv, deps = {}) {
     : resolveWorkbookId();
 
   let sheetToken = deps.sheetToken;
-  if (!sheetToken && (args.write_sheet || args.check_due || args.ensure_tab)) {
+  if (!sheetToken && (args.write_sheet || args.check_due || defaultCheckDue || args.ensure_tab)) {
     try {
       sheetToken = await (deps.getSheetToken || getAccessToken)();
     } catch (e) {
@@ -617,17 +638,18 @@ export async function runIndexMonitor(argv, deps = {}) {
     return runEnqueue(args, { sheetToken, workbookId, now });
   }
 
-  if (args.check_due || Object.keys(args).length === 0) {
-    let gscToken = deps.gscToken;
-    if (!gscToken) {
-      try {
-        gscToken = await (deps.getGscToken || getAccessToken)({ user: true });
-      } catch (e) {
-        process.stderr.write(`error: cannot mint GSC user token — ${e.message}\n`);
-        return 1;
-      }
-    }
-    return runCheckDue(args, { sheetToken, gscToken, workbookId, now });
+  if (args.check_due || defaultCheckDue) {
+    return runCheckDue(args, {
+      sheetToken,
+      gscToken: deps.gscToken,
+      workbookId,
+      now,
+      ensureFn: deps.ensureIndexTrackingTab || ensureIndexTrackingTab,
+      readRowsFn: deps.readTrackingRows || readTrackingRows,
+      updateRowFn: deps.updateTrackingRow || updateTrackingRow,
+      fetchInspectionFn: deps.fetchUrlInspection || fetchUrlInspection,
+      getGscToken: deps.getGscToken || getAccessToken,
+    });
   }
 
   process.stderr.write('error: expected --ensure-tab, --enqueue-published, or --check-due (see --help)\n');

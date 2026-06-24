@@ -15,7 +15,7 @@ tags:
 - 要点 1：根据 PG-WC-034 / `bukayo-saka-zodiac-sign` 的英文 Phase 2 成稿，改写为可进入中文 Phase 2 的简体中文 Markdown 正文。
 - 要点 2：中文成稿需遵守 11 个 H2 骨架、中文主关键词出现频次、内链占位符、CTA `/zh/` 路径、免责声明与参考来源约束，并修正上一稿结构漂移、禁词和 H2 不匹配问题。
 - 要点 3：根据 PG-WC-032 / `luka-modric-zodiac-sign` 的英文 Phase 2 成稿，改写为可进入中文 Phase 2 的简体中文 Markdown 正文。
-- 要点 4：开始前读取 AGENTS 规则、brainstorming 技能与提醒文件；`ai-profile/lynne-soul.md` 在当前仓库不存在。
+- 要点 4：执行 GenGrowth GSC Phase 1 索引监控落地：创建/校正 `index-tracking` Sheet、接入发布后入队、安装每日 launchd，并保留 GSC OAuth 刷新为上线前阻塞项。
 - 要点 5：继续修正 PG-WC-032 中文稿，并根据 PG-WC-033 / `bruno-fernandes-zodiac-sign` 的英文 Phase 2 成稿产出中文 Phase 2 Markdown 正文。
 
 ---
@@ -1010,5 +1010,23 @@ Generate your free birth chart to explore the Luka Modric zodiac sign and see ho
 **🤖 回答：**
 
 按用户补救要求重新产出 PG-WC-032 简体中文 Markdown 正文：主关键词仍选为“莫德里奇星座”，结构为 1 个 H1 与 11 个中文 H2；修正 CTA 为精确 `https://astrologywiki.com/zh/wiki/how-to-read-birth-chart`，避开“最佳”等禁词，在“相近概念”“常见误读”“下一步行动”自然补回关键词以降低漂移风险。完成本地字符串核对：H1=1、H2=11、主关键词=7、中文内链占位符=7、CTA 命中、禁用词列表未命中。
+
+---
+
+### Q8 — 15:14
+
+**🙋 提问：**
+
+```text
+需求在这里：obsidian://open?vault=gengrowth-ops&file=inbox%2F08-reports-and-feedback%2F01-product-feedback%2F2026-06-22-indexing-automation-requirements-v1.0。先评估，不急着动手
+
+可以结合我们的本地的 gengrowth-flow-mvp，以及需求 sheet 来看：https://docs.google.com/spreadsheets/d/1CkjOCgYbRfXGYc6l2FJOaxUIzxT0NBVUhUpgCjyzcQc/edit?gid=578086476#gid=578086476
+
+可以。开始执行 Phase 1
+```
+
+**🤖 回答：**
+
+完成 Phase 1 索引发现与监控自动化落地：在真实需求 Sheet 创建/校正 `index-tracking` 表头；补充 `gg-index-monitor.mjs` 的 `--ensure-tab`、发布后入队、D+3/D+7/D+14/D+21/D+30 URL Inspection 监控分类与告警逻辑；停用普通文章的 Google Indexing API 路径；安装并加载 `com.gengrowth.index-monitor` LaunchAgent，每日 09:00 运行。验证包括：`gg-index-monitor` smoke 14/14、`gg-seo-autopilot` smoke 13/13、`lib-gg-shared` smoke 84/84、wrapper `bash -n` 与 plist lint、真实 Sheet dry-run `rows=0 due=0`、wrapper 手动运行日志正常。当前上线前阻塞项：GSC user OAuth refresh token 已过期，需运行 `node tools/scripts/oauth-init.mjs` 重新授权后，未来有 due URL 时才能实际调用 URL Inspection。
 
 ---

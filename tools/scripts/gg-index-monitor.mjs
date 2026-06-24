@@ -565,12 +565,23 @@ async function runCheckDue(args, { sheetToken, gscToken, workbookId, now }) {
   return failures ? 2 : 0;
 }
 
+async function runEnsureTab({ sheetToken, workbookId, ensureFn = ensureIndexTrackingTab }) {
+  if (!workbookId) {
+    process.stderr.write('error: --ensure-tab requires workbook id from env or --workbook\n');
+    return 1;
+  }
+  await ensureFn(sheetToken, workbookId);
+  process.stdout.write(`ensured ${INDEX_TRACKING_TAB}\n`);
+  return 0;
+}
+
 export async function runIndexMonitor(argv, deps = {}) {
   const args = parseArgs(argv);
   if (args.help || args.h) {
     process.stdout.write([
       'gg-index-monitor.mjs — URL Inspection → index-tracking',
       'Usage:',
+      '  node tools/scripts/gg-index-monitor.mjs --ensure-tab [--workbook SHEET_ID]',
       '  node tools/scripts/gg-index-monitor.mjs --enqueue-published --page-id PG-... --slug slug --title "Title" --published-at YYYY-MM-DD --write-sheet',
       '  node tools/scripts/gg-index-monitor.mjs --check-due --write-sheet [--limit 50]',
       '',
@@ -585,13 +596,21 @@ export async function runIndexMonitor(argv, deps = {}) {
     : resolveWorkbookId();
 
   let sheetToken = deps.sheetToken;
-  if (!sheetToken && (args.write_sheet || args.check_due)) {
+  if (!sheetToken && (args.write_sheet || args.check_due || args.ensure_tab)) {
     try {
       sheetToken = await (deps.getSheetToken || getAccessToken)();
     } catch (e) {
       process.stderr.write(`error: cannot mint Sheets token — ${e.message}\n`);
       return 1;
     }
+  }
+
+  if (args.ensure_tab) {
+    return runEnsureTab({
+      sheetToken,
+      workbookId,
+      ensureFn: deps.ensureIndexTrackingTab || ensureIndexTrackingTab,
+    });
   }
 
   if (args.enqueue_published) {
@@ -611,7 +630,7 @@ export async function runIndexMonitor(argv, deps = {}) {
     return runCheckDue(args, { sheetToken, gscToken, workbookId, now });
   }
 
-  process.stderr.write('error: expected --enqueue-published or --check-due (see --help)\n');
+  process.stderr.write('error: expected --ensure-tab, --enqueue-published, or --check-due (see --help)\n');
   return 1;
 }
 

@@ -575,19 +575,18 @@ async function runCheckDue(args, {
   const limit = Number(args.limit || 50) || 50;
   const due = rows.filter((row) => isDueForInspection(row, now)).slice(0, limit);
   process.stderr.write(`gg-index-monitor: rows=${rows.length} due=${due.length} mode=${writeSheet ? 'write-sheet' : 'dry-run'}\n`);
-  if (!due.length) {
-    process.stdout.write('no due URLs\n');
-    return 0;
-  }
-
   let inspectionToken = gscToken;
-  if (!inspectionToken) {
+  if ((due.length || (args.require_gsc_auth && rows.length)) && !inspectionToken) {
     try {
       inspectionToken = await getGscToken({ user: true });
     } catch (e) {
       process.stderr.write(`error: cannot mint GSC user token — ${e.message}\n`);
       return 1;
     }
+  }
+  if (!due.length) {
+    process.stdout.write('no due URLs\n');
+    return 0;
   }
 
   const siteUrl = args.site || process.env.GG_GSC_SITE || DEFAULT_SITE;

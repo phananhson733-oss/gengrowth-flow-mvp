@@ -241,6 +241,7 @@ test('launchd wrapper runs only the lightweight index monitor check', () => {
   assert.match(wrapper, /gg-index-monitor\.mjs/);
   assert.match(wrapper, /--check-due/);
   assert.match(wrapper, /--write-sheet/);
+  assert.match(wrapper, /--require-gsc-auth/);
   assert.doesNotMatch(wrapper, /gg-seo-autopilot-tick|gg-seo-author-tick/);
 
   const plist = readFileSync(join(SCRIPTS, 'com.gengrowth.index-monitor.plist'), 'utf8');
@@ -282,4 +283,25 @@ test('runIndexMonitor --check-due skips GSC token when no rows are due', async (
     workbookId: 'wb-test',
     tabName: INDEX_TRACKING_TAB,
   });
+});
+
+test('runIndexMonitor --require-gsc-auth preflights GSC token when tracking rows exist', async () => {
+  let requestedUserToken = false;
+  const code = await runIndexMonitor(['--check-due', '--require-gsc-auth', '--workbook', 'wb-test'], {
+    sheetToken: 'sheet-token',
+    readTrackingRows: async () => [{
+      url: 'https://www.astrologywiki.com/en/wiki/not-due',
+      page_id: 'PG-NOT-DUE',
+      first_tracked_at: '2026-06-24',
+      last_checked_at: '',
+      monitor_status: 'monitoring',
+    }],
+    getGscToken: async (opts) => {
+      requestedUserToken = opts?.user === true;
+      return 'gsc-token';
+    },
+  });
+
+  assert.equal(code, 0);
+  assert.equal(requestedUserToken, true);
 });

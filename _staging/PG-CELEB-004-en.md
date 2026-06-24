@@ -43,7 +43,7 @@ That gap matters for anyone using a celebrity chart as a mirror. When you only s
 
 The Mariah Carey zodiac sign is most often confused at the level of the Aries Sun versus the Cancer Moon behind it, and the two pull in opposite directions. One caveat belongs up front: Carey's exact birth time has never been made public, so any house-based reading — including the 12th-house stellium some sites cite — stays commonly repeated but unconfirmed. The placements that hold without a recorded birth time are the Sun and the Moon, and they carry the whole story. Here is how each works and what it costs:
 
-1. **The Aries Sun.** It works as raw forward drive: the Sun describes a person's central project, and for Aries that project is asserting a distinct, competitive identity. On its own, it tends to read as bold and confrontational.
+1. **The Aries Sun.** It works as raw forward drive: in the person-centered tradition Dane Rudhyar shaped, the Sun describes a person's central project — a direction grown toward rather than a fixed label — and for Aries that project is asserting a distinct, competitive identity. On its own, it tends to read as bold and confrontational.
 2. **The Cancer Moon.** Widely reported as a water Moon, it works by routing that same drive into private, self-protective processing. The fire still burns, but it surfaces as guarded perfectionism and emotional reserve rather than public combat.
 3. **The trade-off.** To get the composure of that water Moon, you sacrifice the legibility of plain Aries fire — the public reads "diva" because the assertiveness is visible but the privacy that shapes it is not.
 

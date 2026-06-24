@@ -262,8 +262,11 @@ export async function verifyPage(page, navUrl, { errorBuffers }) {
     return { url: navUrl, h1: null, jsonLd: false, ok: false, failReason: `navigation failed: ${e.message}` };
   }
 
-  // Give the SPA a beat to hydrate its <h1> / JSON-LD.
-  try { await page.waitForSelector('h1', { timeout: 20000 }); } catch { /* asserted below */ }
+  // Give the SPA a beat to hydrate its <h1> / JSON-LD. Some Vercel previews land on a
+  // shell quickly at DOMContentLoaded, then finish client boot a few seconds later.
+  // Wait for a short network-idle window first, then give the heading longer to appear.
+  try { await page.waitForLoadState('networkidle', { timeout: 15000 }); } catch { /* best-effort */ }
+  try { await page.waitForSelector('h1', { timeout: 30000 }); } catch { /* asserted below */ }
 
   const status = resp ? resp.status() : 0;
   const finalUrl = page.url();

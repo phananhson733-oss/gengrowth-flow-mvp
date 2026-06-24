@@ -42,9 +42,9 @@ echo "$(date '+%F %T') index monitor start (pid $$, limit $LIMIT)" >> "$LOG"
   set +a
 
   if command -v gtimeout >/dev/null 2>&1; then
-    gtimeout "$TIMEOUT" node "$SCRIPT_DIR/gg-index-monitor.mjs" --check-due --write-sheet --limit "$LIMIT"
+    gtimeout "$TIMEOUT" node "$SCRIPT_DIR/gg-index-monitor.mjs" --check-due --write-sheet --require-gsc-auth --limit "$LIMIT"
   else
-    node "$SCRIPT_DIR/gg-index-monitor.mjs" --check-due --write-sheet --limit "$LIMIT"
+    node "$SCRIPT_DIR/gg-index-monitor.mjs" --check-due --write-sheet --require-gsc-auth --limit "$LIMIT"
   fi
 ) >> "$LOG" 2>&1
 rc=$?

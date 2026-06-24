@@ -357,18 +357,18 @@ export function recapRowFromTrackingRow(row = {}, { now = new Date() } = {}) {
     page_id: row.page_id || '',
     cluster_id: '',
     url: row.url || '',
-    day14_收录: checked ? (indexed ? 'Y' : 'N') : '',
-    申请时间: '',
-    索引修复状态: fixStatus,
+    'day14_收录': checked ? (indexed ? 'Y' : 'N') : '',
+    '申请时间': '',
+    '索引修复状态': fixStatus,
     day14_impressions: '',
-    记录日期: isoDay(now),
-    day30_进Top50词数: '',
-    当前最高排名词（排名）: '',
+    '记录日期': isoDay(now),
+    'day30_进Top50词数': '',
+    '当前最高排名词（排名）': '',
     day30_clicks: '',
     day60_pv: '',
-    day60_目标国pv: '',
-    决策: '',
-    备注: noteParts.join(' | '),
+    'day60_目标国pv': '',
+    '决策': '',
+    '备注': noteParts.join(' | '),
   };
 }
 
@@ -379,10 +379,10 @@ function mergeRecapRow(existing = {}, fresh = {}) {
     page_id: existing.page_id || fresh.page_id || '',
     cluster_id: existing.cluster_id || fresh.cluster_id || '',
     url: fresh.url || existing.url || '',
-    day14_收录: fresh.day14_收录 || existing.day14_收录 || '',
-    索引修复状态: fresh.索引修复状态 || existing.索引修复状态 || '',
-    记录日期: fresh.记录日期 || existing.记录日期 || '',
-    备注: existing.备注 || fresh.备注 || '',
+    'day14_收录': fresh['day14_收录'] || existing['day14_收录'] || '',
+    '索引修复状态': fresh['索引修复状态'] || existing['索引修复状态'] || '',
+    '记录日期': fresh['记录日期'] || existing['记录日期'] || '',
+    '备注': existing['备注'] || fresh['备注'] || '',
   };
 }
 
@@ -1016,8 +1016,10 @@ export async function runIndexMonitor(argv, deps = {}) {
       'gg-index-monitor.mjs — URL Inspection → index-tracking',
       'Usage:',
       '  node tools/scripts/gg-index-monitor.mjs --ensure-tab [--workbook SHEET_ID]',
+      '  node tools/scripts/gg-index-monitor.mjs --sync-published --write-sheet [--sitemap-url URL]',
       '  node tools/scripts/gg-index-monitor.mjs --enqueue-published --page-id PG-... --slug slug --title "Title" --published-at YYYY-MM-DD --write-sheet',
       '  node tools/scripts/gg-index-monitor.mjs --check-due --write-sheet [--limit 50]',
+      '  node tools/scripts/gg-index-monitor.mjs --sync-recap --write-sheet',
       '',
     ].join('\n'));
     return 0;
@@ -1030,7 +1032,7 @@ export async function runIndexMonitor(argv, deps = {}) {
     : resolveWorkbookId();
 
   let sheetToken = deps.sheetToken;
-  if (!sheetToken && (args.write_sheet || args.check_due || defaultCheckDue || args.ensure_tab)) {
+  if (!sheetToken && (args.write_sheet || args.check_due || defaultCheckDue || args.ensure_tab || args.sync_published || args.sync_recap)) {
     try {
       sheetToken = await (deps.getSheetToken || getSheetAccessToken)();
     } catch (e) {
@@ -1044,6 +1046,20 @@ export async function runIndexMonitor(argv, deps = {}) {
       sheetToken,
       workbookId,
       ensureFn: deps.ensureIndexTrackingTab || ensureIndexTrackingTab,
+    });
+  }
+
+  if (args.sync_published) {
+    return runSyncPublished(args, {
+      sheetToken,
+      workbookId,
+      now,
+      sitemapRows: deps.sitemapRows,
+      fetchSitemapRowsFn: deps.fetchSitemapRows || fetchEnWikiSitemapRows,
+      ensureFn: deps.ensureIndexTrackingTab || ensureIndexTrackingTab,
+      readRowsFn: deps.readTrackingRows || readTrackingRows,
+      updateRowFn: deps.updateTrackingRow || updateTrackingRow,
+      appendRowsFn: deps.appendTrackingRows || appendTrackingRows,
     });
   }
 
@@ -1067,7 +1083,19 @@ export async function runIndexMonitor(argv, deps = {}) {
     });
   }
 
-  process.stderr.write('error: expected --ensure-tab, --enqueue-published, or --check-due (see --help)\n');
+  if (args.sync_recap) {
+    return runSyncRecap(args, {
+      sheetToken,
+      workbookId,
+      now,
+      readRowsFn: deps.readTrackingRows || readTrackingRows,
+      readRecapRowsFn: deps.readRecapRows || readRecapRows,
+      updateRecapRowFn: deps.updateRecapRow || updateRecapRow,
+      appendRecapRowsFn: deps.appendRecapRows || appendRecapRows,
+    });
+  }
+
+  process.stderr.write('error: expected --ensure-tab, --sync-published, --enqueue-published, --check-due, or --sync-recap (see --help)\n');
   return 1;
 }
 

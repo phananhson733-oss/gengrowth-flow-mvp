@@ -564,6 +564,42 @@ test('runIndexMonitor --check-due skips GSC token when no rows are due', async (
   });
 });
 
+test('runIndexMonitor --check-all inspects pending rows before milestone due date', async () => {
+  let inspected = null;
+  let updated = null;
+  const code = await runIndexMonitor(['--check-all', '--write-sheet', '--workbook', 'wb-test'], {
+    now: new Date('2026-06-24T09:00:00Z'),
+    sheetToken: 'sheet-token',
+    gscToken: 'gsc-token',
+    readTrackingRows: async () => [{
+      _rowNumber: 2,
+      url: 'https://www.astrologywiki.com/en/wiki/not-yet-due',
+      page_id: 'PG-NOT-YET',
+      first_tracked_at: '2026-06-24',
+      last_checked_at: '',
+      current_gsc_status: 'pending_first_check',
+      monitor_status: 'monitoring',
+      check_count: 0,
+    }],
+    fetchUrlInspection: async (token, siteUrl, url) => {
+      inspected = { token, siteUrl, url };
+      return {
+        verdict: 'NEUTRAL',
+        coverageState: 'URL is unknown to Google',
+      };
+    },
+    updateTrackingRow: async (token, workbookId, tabName, rowNumber, row) => {
+      updated = { token, workbookId, tabName, rowNumber, row };
+    },
+  });
+
+  assert.equal(code, 0);
+  assert.equal(inspected.url, 'https://www.astrologywiki.com/en/wiki/not-yet-due');
+  assert.equal(updated.rowNumber, 2);
+  assert.equal(updated.row.current_gsc_status, 'URL is unknown to Google');
+  assert.equal(updated.row.monitor_status, 'needs_attention');
+});
+
 test('preflightGscAccess probes Search Analytics with the GSC reader SA token', async () => {
   let seen = null;
   await preflightGscAccess('gsc-sa-token', 'sc-domain:astrologywiki.com', async (url, token, init) => {

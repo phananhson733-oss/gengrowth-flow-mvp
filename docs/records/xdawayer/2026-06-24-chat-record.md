@@ -1789,6 +1789,20 @@ Map the same Scorpio patterns onto your own placements: generate your free birth
 
 ---
 
+### Q20 — 17:24
+
+**🙋 提问：**
+
+```text
+继续完成索引监控目标：最终只在「结果复盘表」呈现；index-tracking 作为中转；只追踪 EN；是否收录以 GSC 为准。
+```
+
+**🤖 回答：**
+
+GSC reader SA 权限传播后，`sites.list` 已能看到 `sc-domain:astrologywiki.com` / `siteFullUser`，Search Analytics preflight 通过。随后用 `GG_INDEX_MONITOR_NO_NOTIFY=1` 跑两批真实 URL Inspection：第一批 50 个 due URL，第二批 57 个 due URL，合计 107 个，`failures=0`；复查 `--check-due` 为 `due=0`。同步回「结果复盘表」后发现旧 `day14_收录` 历史值会残留，已新增回归测试并修复合并逻辑：tracking 覆盖到的 URL 必须以 GSC 派生值覆盖 `day14_收录` / `索引修复状态` / `记录日期`，未检查则留空，不沿用旧 Y/N。最终 Sheet 统计：`index-tracking` 210 个 EN URL、0 个 ZH URL；其中 GSC 已检查 107 个，`Submitted and indexed` 65 个、`URL is unknown to Google` 34 个、`Crawled - currently not indexed` 8 个、待未来 milestone 检查 103 个。「结果复盘表」对应 210 个 sitemap EN URL，`day14_收录` 为 `Y=65 / N=42 / 空=103`，与 tracking GSC 状态 `mismatchCount=0`。幂等验证：`--sync-published` / `--sync-recap` 再跑均为 `updated=0 skipped=210`，`--check-due` 为 `no due URLs`。
+
+---
+
 ### Q19 — 16:16
 
 **🙋 提问：**

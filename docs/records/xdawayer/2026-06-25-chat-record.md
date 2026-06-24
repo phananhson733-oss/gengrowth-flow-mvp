@@ -1,24 +1,5 @@
 ---
 
-### Q15 — 07:48
-
-**🙋 提问：**
-
-````text
-Automation: GenGrowth Index Repair Resubmit
-Automation ID: gengrowth-index-repair-resubmit
-Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
-Last run: 2026-06-24T22:45:18.268Z (1782341118268)
-
-Run the GenGrowth fixed-row resubmission workflow. Execute `node tools/scripts/gg-index-monitor.mjs --process-fixed --write-sheet --notify`, then `node tools/scripts/gg-index-monitor.mjs --sync-recap --write-sheet`, then `node tools/scripts/gg-index-monitor.mjs --sync-request-queue --write-sheet --notify`. This handles rows where `index-tracking.fix_status` or `结果复盘表.索引修复状态` has been manually marked `已修复`: refresh the sitemap through the official Search Console Sitemaps API, update tracking/recap timestamps, and refresh request-indexing candidates. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles and do not click Search Console Request Indexing unattended; only maintain the assisted queue for human-confirmed final clicks. Summarize fixed/resubmitted counts, queue counts, and any failures.
-````
-
-**🤖 回答：**
-
-按指定顺序执行固定行重提 workflow：`--process-fixed --write-sheet --notify` 退出码 0，结果 `fixed=0`、`resubmitted=0`；`--sync-recap --write-sheet` 退出码 0，结果 `en_rows=162`、`appended=0`、`updated=0`、`skipped=162`；`--sync-request-queue --write-sheet --notify` 退出码 0，结果 `rows=19`、`P0=0`、`P1=3`、`P2=0`、`P3=16`。合规边界保持：未使用 Google Indexing API，未无人值守点击 Search Console Request Indexing，只维护辅助队列供人工最终确认。已写入自动化记忆 `$CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md`；本 shell 中 `$CODEX_HOME` 为空，因此实际落盘路径按本机约定解析为 `/Users/awayer_mini/.codex/automations/gengrowth-index-repair-resubmit/memory.md`。
-
----
-
 ### Q4 — 02:08
 
 **🙋 提问：**
@@ -964,5 +945,24 @@ In Vedic interpretation, the birth station primarily governs the dasha timing se
 **🤖 回答：**
 
 产出一篇无 YAML frontmatter 的简体中文 Markdown 正文；主关键词选为“纳克沙特拉”，正文采用中文 Phase 2 的 11 个 H2 骨架，补上自然 H1，并保留英文稿核心语义：二十七个月亮驿站、每站 13°20′、月亮出生位置启动维姆肖塔里 120 年大运、与黄道星座/太阳星座/拉希的取舍、星盘识别步骤、常见误读、四个常见驿站速查、FAQ、自我觉察提示、延伸阅读、中文 CTA 与免责声明。正文避开医疗化和广告化承诺表达，参考来源中的帕拉沙拉已在正文先具名，CTA 指向 `https://astrologywiki.com/zh/wiki/how-to-read-birth-chart`。
+
+---
+
+### Q15 — 07:48
+
+**🙋 提问：**
+
+````text
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: 2026-06-24T22:45:18.268Z (1782341118268)
+
+Run the GenGrowth fixed-row resubmission workflow. Execute `node tools/scripts/gg-index-monitor.mjs --process-fixed --write-sheet --notify`, then `node tools/scripts/gg-index-monitor.mjs --sync-recap --write-sheet`, then `node tools/scripts/gg-index-monitor.mjs --sync-request-queue --write-sheet --notify`. This handles rows where `index-tracking.fix_status` or `结果复盘表.索引修复状态` has been manually marked `已修复`: refresh the sitemap through the official Search Console Sitemaps API, update tracking/recap timestamps, and refresh request-indexing candidates. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles and do not click Search Console Request Indexing unattended; only maintain the assisted queue for human-confirmed final clicks. Summarize fixed/resubmitted counts, queue counts, and any failures.
+````
+
+**🤖 回答：**
+
+按指定顺序执行固定行重提 workflow：`--process-fixed --write-sheet --notify` 退出码 0，结果 `fixed=0`、`resubmitted=0`；`--sync-recap --write-sheet` 退出码 0，结果 `en_rows=162`、`appended=0`、`updated=0`、`skipped=162`；`--sync-request-queue --write-sheet --notify` 退出码 0，结果 `rows=19`、`P0=0`、`P1=3`、`P2=0`、`P3=16`。合规边界保持：未使用 Google Indexing API，未无人值守点击 Search Console Request Indexing，只维护辅助队列供人工最终确认。已写入自动化记忆 `$CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md`；本 shell 中 `$CODEX_HOME` 为空，因此按本机默认 Codex 目录写入 `~/.codex/automations/gengrowth-index-repair-resubmit/memory.md`。
 
 ---

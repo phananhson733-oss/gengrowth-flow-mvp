@@ -18,7 +18,9 @@ import {
   buildTrackingSeedRow,
   classifyInspection,
   extractEnWikiSitemapRows,
+  formatAlertMessage,
   isDueForInspection,
+  mergeInspectionIntoRow,
   mergePublishedTrackingRow,
   preflightGscAccess,
   recapRowFromTrackingRow,
@@ -77,7 +79,7 @@ test('buildTrackingSeedRow creates an idempotent monitor row from a publish even
   assert.equal(row.published_at, '2026-06-24');
   assert.equal(row.first_tracked_at, '2026-06-24');
   assert.equal(row.monitor_status, 'monitoring');
-  assert.equal(row.fix_status, '未处理');
+  assert.equal(row.fix_status, '已提交');
   assert.equal(row.retry_round, 0);
   assert.equal(row.source, 'seo-autopilot');
 });
@@ -175,23 +177,24 @@ test('classifyInspection treats indexed pages as done without alerts', () => {
   assert.equal(result.first_indexed_at, '2026-06-24');
 });
 
-test('classifyInspection waits until D+21 for discovered-not-indexed queue noise', () => {
+test('classifyInspection alerts at D+14 for discovered-not-indexed', () => {
+  const d7 = classifyInspection({
+    verdict: 'NEUTRAL',
+    coverageState: 'Discovered - currently not indexed',
+  }, { daysSinceFirstTracked: 7, now: new Date('2026-06-24T09:00:00Z') });
+  assert.equal(d7.monitor_status, 'monitoring');
+  assert.equal(d7.diagnosis_category, 'normal_queue');
+  assert.equal(d7.alert_level, '');
+  assert.equal(d7.should_alert, false);
+
   const d14 = classifyInspection({
     verdict: 'NEUTRAL',
     coverageState: 'Discovered - currently not indexed',
   }, { daysSinceFirstTracked: 14, now: new Date('2026-06-24T09:00:00Z') });
-  assert.equal(d14.monitor_status, 'monitoring');
-  assert.equal(d14.diagnosis_category, 'normal_queue');
-  assert.equal(d14.alert_level, '');
-  assert.equal(d14.should_alert, false);
-
-  const d21 = classifyInspection({
-    verdict: 'NEUTRAL',
-    coverageState: 'Discovered - currently not indexed',
-  }, { daysSinceFirstTracked: 21, now: new Date('2026-06-24T09:00:00Z') });
-  assert.equal(d21.monitor_status, 'needs_attention');
-  assert.equal(d21.alert_level, 'P2');
-  assert.equal(d21.should_alert, true);
+  assert.equal(d14.monitor_status, 'needs_attention');
+  assert.equal(d14.alert_level, 'P2');
+  assert.equal(d14.should_alert, true);
+  assert.match(d14.recommendation, /D\+14/);
 });
 
 test('classifyInspection treats alternate canonical pages as normal canonicalization', () => {
@@ -243,17 +246,77 @@ test('classifyInspection escalates hard crawl failures immediately', () => {
   }
 });
 
-test('isDueForInspection checks D+3/D+7/D+14/D+21/D+30 milestones once each', () => {
+test('isDueForInspection checks D+3/D+7/D+14/D+30 milestones once each', () => {
   const base = {
-    first_tracked_at: '2026-06-10',
+    first_tracked_at: '2026-06-01',
     monitor_status: 'monitoring',
     last_checked_at: '',
   };
-  assert.equal(isDueForInspection(base, new Date('2026-06-12T09:00:00Z')), false);
-  assert.equal(isDueForInspection(base, new Date('2026-06-13T09:00:00Z')), true);
-  assert.equal(isDueForInspection({ ...base, last_checked_at: '2026-06-13' }, new Date('2026-06-13T12:00:00Z')), false);
-  assert.equal(isDueForInspection({ ...base, last_checked_at: '2026-06-13' }, new Date('2026-06-17T09:00:00Z')), true);
+  assert.equal(isDueForInspection(base, new Date('2026-06-03T09:00:00Z')), false);
+  assert.equal(isDueForInspection(base, new Date('2026-06-04T09:00:00Z')), true);
+  assert.equal(isDueForInspection({ ...base, last_checked_at: '2026-06-04' }, new Date('2026-06-04T12:00:00Z')), false);
+  assert.equal(isDueForInspection({ ...base, last_checked_at: '2026-06-04' }, new Date('2026-06-08T09:00:00Z')), true);
+  assert.equal(isDueForInspection({ ...base, last_checked_at: '2026-06-15' }, new Date('2026-06-22T09:00:00Z')), false);
+  assert.equal(isDueForInspection({ ...base, last_checked_at: '2026-06-15' }, new Date('2026-07-01T09:00:00Z')), true);
   assert.equal(isDueForInspection({ ...base, monitor_status: 'indexed' }, new Date('2026-06-24T09:00:00Z')), false);
+});
+
+test('mergeInspectionIntoRow writes the Chinese monitoring lifecycle status', () => {
+  const base = {
+    url: 'https://www.astrologywiki.com/en/wiki/lifecycle',
+    page_id: 'PG-LIFE',
+    title: 'Lifecycle Test',
+    first_tracked_at: '2026-06-10',
+    check_count: 0,
+  };
+
+  const overdue = mergeInspectionIntoRow(base, {
+    verdict: 'NEUTRAL',
+    coverageState: 'Crawled - currently not indexed',
+  }, new Date('2026-06-24T09:00:00Z'));
+  assert.equal(overdue.row.fix_status, '⚠️ 超期未收录（触发诊断）');
+
+  const focus = mergeInspectionIntoRow(base, {
+    verdict: 'NEUTRAL',
+    coverageState: 'Crawled - currently not indexed',
+  }, new Date('2026-07-10T09:00:00Z'));
+  assert.equal(focus.row.fix_status, '需重点关注');
+
+  const urgent = mergeInspectionIntoRow(base, {
+    verdict: 'FAIL',
+    coverageState: 'Not found (404)',
+  }, new Date('2026-06-11T09:00:00Z'));
+  assert.equal(urgent.row.fix_status, '🔴 紧急问题（404/5xx）');
+
+  const indexed = mergeInspectionIntoRow(base, {
+    verdict: 'PASS',
+    coverageState: 'Submitted and indexed',
+  }, new Date('2026-06-17T09:00:00Z'));
+  assert.equal(indexed.row.fix_status, '✅ 已收录');
+});
+
+test('formatAlertMessage uses the D+14 indexing overdue reminder format', () => {
+  const message = formatAlertMessage({
+    title: 'Lifecycle Test',
+    url: 'https://www.astrologywiki.com/en/wiki/lifecycle',
+    page_id: 'PG-LIFE',
+    published_at: '2026-06-10',
+    days_since_first_tracked: 14,
+    current_gsc_status: 'Crawled - currently not indexed',
+    recommendation: 'Review content quality, internal links, duplicate overlap, metadata, and crawlable HTML.',
+  }, {
+    alert_level: 'P1',
+    diagnosis_category: 'content_quality',
+    recommendation: 'fallback',
+  });
+
+  assert.match(message, /^⚠️ 索引超期提醒/m);
+  assert.match(message, /页面：Lifecycle Test/);
+  assert.match(message, /URL：https:\/\/www\.astrologywiki\.com\/en\/wiki\/lifecycle/);
+  assert.match(message, /发布日期：2026-06-10/);
+  assert.match(message, /已过天数：D\+14/);
+  assert.match(message, /当前 GSC 状态：Crawled - currently not indexed/);
+  assert.match(message, /建议操作：Review content quality/);
 });
 
 test('runIndexMonitor sends a D+30 upgrade even after an earlier lower-level alert', async () => {

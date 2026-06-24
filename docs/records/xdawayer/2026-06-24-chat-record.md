@@ -2323,3 +2323,22 @@ The full moon shows you what is peaking; your birth chart shows you where it lan
 **🤖 回答：**
 
 输出 PG-MOON-002 / `full-moon-energy` 的中文 Phase 2 Markdown 正文：选定主关键词 `满月能量`，按 11 个中文 H2 骨架重写英文语义，覆盖定义、自我觉察、相近概念取舍、星盘识别、常见误读、速查表、问答、提示、延伸阅读、下一步行动与参考来源。机械校验结果为 H2=11、主关键词=6 次、中文内链占位符=7 条、CTA 精确命中 `https://astrologywiki.com/zh/wiki/how-to-read-birth-chart`、禁词列表无命中；正文前置具名丹恩·鲁迪亚尔，并以“这不是临床解读或心理健康建议”免责声明收尾。
+
+---
+
+### Q25 — 23:45
+
+**🙋 提问：**
+
+```text
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: 2026-06-24T14:41:46.424Z (1782312106424)
+
+Run the GenGrowth fixed-row resubmission workflow. Execute `node tools/scripts/gg-index-monitor.mjs --process-fixed --write-sheet --notify`, then `node tools/scripts/gg-index-monitor.mjs --sync-recap --write-sheet`, then `node tools/scripts/gg-index-monitor.mjs --sync-request-queue --write-sheet --notify`. This handles rows where `index-tracking.fix_status` or `结果复盘表.索引修复状态` has been manually marked `已修复`: refresh the sitemap through the official Search Console Sitemaps API, update tracking/recap timestamps, and refresh request-indexing candidates. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles and do not click Search Console Request Indexing unattended; only maintain the assisted queue for human-confirmed final clicks. Summarize fixed/resubmitted counts, queue counts, and any failures.
+```
+
+**🤖 回答：**
+
+按指定顺序执行固定行重提 workflow：`--process-fixed --write-sheet --notify` 退出码 0，结果 `fixed=0`、`resubmitted=0`；`--sync-recap --write-sheet` 退出码 0，结果 `en_rows=159`、`appended=0`、`updated=0`、`skipped=159`；`--sync-request-queue --write-sheet --notify` 退出码 0，结果 `rows=16`、`P0=0`、`P1=3`、`P2=0`、`P3=13`。合规边界保持：未使用 Google Indexing API，未无人值守点击 Search Console Request Indexing，只维护辅助队列供人工最终确认。收尾核对发现本轮开始时存在的 `_staging` 两处改动已被 23:44 的外部 `vault backup` 提交纳入 `HEAD`，当前工作区干净；已写入自动化记忆 `/Users/awayer_mini/.codex/automations/gengrowth-index-repair-resubmit/memory.md`。

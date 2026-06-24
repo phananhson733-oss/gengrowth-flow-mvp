@@ -16,7 +16,7 @@ tags:
 - 要点 2：中文成稿需遵守 11 个 H2 骨架、中文主关键词出现频次、内链占位符、CTA `/zh/` 路径、免责声明与参考来源约束，并修正上一稿结构漂移、禁词和 H2 不匹配问题。
 - 要点 3：根据 PG-WC-032 / `luka-modric-zodiac-sign` 的英文 Phase 2 成稿，改写为可进入中文 Phase 2 的简体中文 Markdown 正文。
 - 要点 4：执行 GenGrowth GSC Phase 1 索引监控落地与后续自动化运行：创建/校正 `index-tracking` Sheet、接入发布后入队、安装每日 launchd，并运行索引监控和固定行重提交 workflow。
-- 要点 5：继续修正 PG-WC-032 / PG-WC-033 中文稿，并根据 PG-MYTH-009 / `rhaenyra-targaryen-zodiac-sign` 的英文 Phase 2 成稿产出中文 Phase 2 Markdown 正文。
+- 要点 5：继续修正 PG-WC-032 / PG-WC-033 中文稿，并根据 PG-MYTH-009 / `rhaenyra-targaryen-zodiac-sign` 与 PG-MOON-002 / `full-moon-energy` 的英文 Phase 2 成稿产出中文 Phase 2 Markdown 正文。
 
 ---
 
@@ -2182,3 +2182,144 @@ Run the GenGrowth fixed-row resubmission workflow. Execute `node tools/scripts/g
 **🤖 回答：**
 
 按指定顺序再次执行固定行重提 workflow：`--process-fixed --write-sheet --notify` 退出码 0，结果 `fixed=0`、`resubmitted=0`；`--sync-recap --write-sheet` 退出码 0，结果 `en_rows=159`、`appended=0`、`updated=0`、`skipped=159`；`--sync-request-queue --write-sheet --notify` 退出码 0，结果 `rows=16`、`P0=0`、`P1=3`、`P2=0`、`P3=13`。合规边界保持：未使用 Google Indexing API，未无人值守点击 Search Console Request Indexing，只维护辅助队列供人工最终确认。已写入自动化记忆 `/Users/awayer_mini/.codex/automations/gengrowth-index-repair-resubmit/memory.md`。
+
+---
+
+### Q24 — 23:40
+
+**🙋 提问：**
+
+````text
+# Role
+你是 AstrologyWiki 的中文内容编辑。你的任务不是逐句翻译，而是基于一篇已经通过英文 Phase 2 的成稿，产出一篇可直接进入中文 Phase 2 的简体中文版本。
+
+# Hard requirements
+- 输出纯 Markdown 正文，不要 YAML frontmatter，不要解释过程。
+- 不要沿用英文 H2 文案；必须把英文语义改写进中文 Phase 2 认可的 11 个 H2 骨架。
+- H1 必须是自然中文标题；正文与 H2 全部用简体中文。
+- 第一部分必须用 `## <你选定的中文主词> 是什么？` 开头；首段里要有 1 个**加粗定义短语**，随后**紧跟正好 3 个 bullet**。
+- 第二部分 H2 必须逐字写成 `## 为什么了解它能帮助自我觉察`。
+- 第三部分 H2 必须写成 `## <你选定的中文主词> 与相近概念：运作方式 + 取舍`，每个对比都要写出明确取舍。
+- 第四部分必须用“识别”而不是“阅读/判断”作 H2 动词：星盘/宫位/行运类主题用 `## 如何在你的星盘里识别 <你选定的中文主词>`；其他主题用 `## 如何在自己身上识别 <你选定的中文主词>`。
+- 第五到第十一部分依次必须覆盖：常见误读、速查表/一览、常见问题/问答、自我觉察小提示、延伸阅读、下一步行动、参考来源。
+- `## 自我觉察小提示` 标题后第一行必须直接开始 `1.` / `2.` / `3.` 三条编号提示，不能先写引导段。
+- 至少放入 5 条 `[[<TBD-internal-link: ...>]]` 中文内链占位符；不要输出 0 条内链。
+- 主中文关键词全篇总出现次数控制在 5-8 次之间；不要在每个 H2 都机械重复，能用“它 / 这个主题 / 这张盘 / 该相位”等代词时就改写。
+- `参考来源` 里出现的权威名，正文里必须先具名提到；不要在 Sources 里新增正文没出现过的人名或条目。
+- 保留反思性 / 象征性语气，禁止诊断、治疗、治愈、改善病症等医疗承诺。
+- 明确避开广告/承诺词：不要写 承诺 / 保证 / 立刻见效 / 改命 / 改运 / 疗愈创伤 / 修复焦虑 这类表述。
+- 结尾必须保留免责声明，用中文表达“这不是临床解读或心理健康建议”。
+- 将 CTA 改写为中文，并指向 https://astrologywiki.com/zh/wiki/how-to-read-birth-chart 。
+- 如原文出现 astrologywiki.com/en/ 内链或 CTA，请改成 /zh/ 对应路径；拿不准时只保留 CTA 这一个确定链接。
+- 不要照搬英文句子；允许为中文读者做自然重写，但核心含义必须忠于英文稿。
+- 不要输出 TODO、占位符、方括号备注或英文审校说明。
+- 自行选择一个自然的中文主关键词，并在 H1 与正文主体里稳定复用，避免同义改写过度导致锚点漂移。
+
+# Metadata
+- page_id: PG-MOON-002
+- slug: full-moon-energy
+- author_id: marcus-orion
+- target_keyword_en: full moon energy
+- entity: full moon energy
+- template: Definition
+- tier: T2
+- track: 量产线
+- associated_keywords_en: full moon meaning spiritually, full moon effects on humans, full moon ritual ideas
+
+# Source English article (semantic source of truth, not heading template)
+
+# Why Full Moon Energy Feels Amplified and How to Read It
+
+## What is full moon energy?
+
+Full moon energy is **the heightened emotional charge at the lunar cycle's brightest point**. It describes the spike in feeling, restlessness, and sudden clarity that many people notice around the full moon, when the moon sits directly opposite the sun and reflects maximum light back to Earth across the roughly 29.5-day stretch between one new moon and the next. The full moon does not so much create new feelings as turn up the volume on whatever has been building quietly since the new moon, which is why old tensions resurface and small decisions can suddenly feel loud. This sits inside the larger [[<TBD-internal-link: pillar guide to the full lunar cycle>]], which maps how each phase carries its own distinct quality.
+
+- Peaks once a month, then eases as the moon wanes toward the next new moon
+- Tends to amplify what is already unresolved rather than introduce something new
+- Often read as a window for clarity, completion, and release
+
+## Why It Matters for Self-Awareness
+
+This pattern matters because a lot of people quietly notice they feel more reactive near the full moon, then immediately talk themselves out of it. Someone snaps at a partner over nothing, lies awake replaying a conversation, or feels a wave of restlessness with no obvious source. Because secular framing often treats lunar sensitivity as coincidence or mild superstition, the reaction gets buried under a layer of embarrassment instead of being used as information. The shame is the real cost here, not the feeling itself.
+
+Reframed as a timing cue rather than a verdict on your stability, the same experience becomes practical. If your mood reliably sharpens around the same point each month, that is worth tracking — it reads more like a tide chart than a character flaw. Many people find that simply naming the pattern lowers its grip, because a reaction you can see coming rarely runs the show the way an unnamed one does. You can test this without believing anything cosmic: note the date the next time you feel oddly charged, and check it against the moon. The same logic works at the other end of the cycle, where a [[<TBD-internal-link: new moon intention-setting guide>]] sets the quiet baseline this peak later illuminates.
+
+## full moon energy vs Adjacent Concepts: How It Works + Trade-offs
+
+Full moon energy is easiest to understand next to the phases around it, building on the framework Dane Rudhyar established for reading the lunar phases as one continuous cycle rather than isolated events. Here is how each one works and what you give up by leaning into it.
+
+1. **Versus new moon energy.** The new moon is the dark, inward start of the cycle — the time for planting intentions you cannot yet see clearly. The full moon works in the opposite direction: it floods those same intentions with light so you can finally judge how they are doing. To get that clarity, you sacrifice the private, low-pressure quiet of the new moon, because at the peak everything is exposed at once.
+2. **Versus eclipse energy.** An eclipse is an intensified, higher-stakes version of a lunation that can push change along a six-to-twelve-month timeline. A regular full moon is gentler and dependable, arriving every month like clockwork. Choosing the steady monthly rhythm over eclipse intensity gets you a reliable check-in, but you lose the forced momentum an eclipse can deliver.
+3. **Versus the waning phase.** Once the peak passes, the waning moon is about releasing and integrating what the light revealed. The full moon itself holds clarity and emotional charge in the very same moment. Leaning into the peak gets you the sharpest insight of the cycle, but the cost is the intensity that the calmer waning days simply do not carry.
+4. **Versus an ordinary mood swing.** An everyday mood swing has no predictable timing and tends to fade on its own. Full-moon reactivity often clusters around the same few days each month and echoes themes that began at the last new moon. Treating it as a cycle rather than random noise gets you a usable pattern, but you give up the easy excuse that it was "just a bad day."
+
+## How to Read full moon energy in Yourself
+
+Reading this energy in yourself is mostly about tracking timing and intensity, not hunting for dramatic omens. The clues are usually small and repeatable, so it helps to watch for the same handful of signals around the nights the moon looks full and bright:
+
+1. **Sleep turns lighter.** You may notice you wake more often or feel mentally wired on the brightest nights of the month.
+2. **Old feelings resurface.** Tensions you thought were settled can flare again, often the same themes that stirred at the last new moon.
+3. **Clarity arrives uninvited.** A choice you have circled for weeks can suddenly feel obvious, sometimes with more charge than the moment calls for.
+4. **You feel "more," not different.** The peak tends to magnify your existing mood rather than hand you a brand-new one.
+5. **Endings feel timely.** You might find yourself wanting to finish, release, or close something you had been carrying for a while.
+
+## Common Misreadings
+
+Most popular write-ups get this slightly wrong in ways that feed the exact shame people are searching to escape. A few misreadings come up again and again:
+
+1. **Misreading: the moon "makes" you emotional.** In reality, the timing coincides with a spike in feeling, but the emotional content was already yours and already building beneath the surface.
+2. **Misreading: feeling reactive means you are unstable.** A repeating monthly rhythm is closer to a pattern than a flaw, and noticing it is a mark of self-awareness rather than evidence against it.
+3. **Misreading: it is only chaos to endure.** The same light that raises the charge is what lets you see clearly, so the full moon is as much a clarity window as a stress test.
+4. **Misreading: full moon energy affects everyone identically.** People differ widely — some barely register the peak while others feel it sharply — and both responses are completely normal.
+
+## The Full Moon at a Glance
+
+| Property | How It Works | Energy Center | How to Observe |
+|---|---|---|---|
+| Peak light | Maximum illumination in the 29.5-day cycle reflects built-up content back to you | The natal house and sign the full moon falls in | Notice which area of life feels suddenly "lit up" that week |
+| Amplification | Raises the volume on whatever is already present, both clarity and charge | Your natal Moon and the points this month's full moon contacts | Track whether your mood spikes around the same dates each cycle |
+| Culmination | Completes a cycle seeded at the new moon, bringing results to the surface | The chart point opposite where the new moon began | See what reaches a head or a decision near the full moon |
+| Release | Starts the turn toward the waning, letting-go stretch of the cycle | Wherever the cycle is winding down in your chart | Watch for a pull to finish, hand off, or let something go |
+
+## Questions People Ask About the Full Moon
+
+**What does the full moon mean spiritually?**
+
+Spiritually, the full moon is often read as a point of culmination and clear seeing, the moment a cycle reaches its peak. Many traditions use it to reflect on what has come to light since the new moon and what is finally ready to be released.
+
+**Do full moons actually affect humans?**
+
+Secular framing treats reported full moon reactivity as coincidence rather than proven cause, and that is a fair scientific caution to keep. Used as a symbolic timing cue instead of a claim about biology, the pattern can still support genuine self-reflection.
+
+**What are some simple full moon ritual ideas?**
+
+Common practices include journaling about what came to a head this month, naming one thing you are ready to release, and revisiting the intentions you set at the new moon. The point is structured reflection on a regular rhythm, not a fixed or elaborate formula.
+
+**Why do I feel more emotional during a full moon?**
+
+The full moon lines up with the brightest part of the cycle, which many people experience as a surge in whatever they were already carrying. Noticing the timing tends to make that intensity easier to hold rather than more alarming.
+
+## Reflection Prompts
+
+1. Think back to a recent full moon week — which feeling got suddenly louder, and when had it first started building?
+2. Recall a decision that turned clear around a full moon; what had the brighter light finally let you admit?
+3. Name one thing you brought to an end last cycle — what did finishing it free up for you?
+
+## Related Reading
+
+- [[<TBD-internal-link: monthly full moon trend series>]] — follows each month's full moon by sign so you can see how the theme shifts through the year.
+- [[<TBD-internal-link: guide to all eight moon phases>]] — places the full moon inside the wider rhythm from new moon to waning crescent.
+- [[<TBD-external-link: Wikipedia | Full moon | the astronomical phase behind the symbolic and cultural meaning>]] — plain background on what is physically happening at the full moon.
+
+## Take Action
+
+The full moon shows you what is peaking; your birth chart shows you where it lands. [Generate your free birth chart to explore full moon energy](https://astrologywiki.com/en/wiki/how-to-read-birth-chart), and you can see exactly which house each month's full moon lights up for you. Read together, they turn a vague monthly mood into a map of where your attention keeps returning — the first real step toward working with your own timing instead of being caught off guard by it.
+
+## Sources
+
+- Dane Rudhyar — pioneered the person-centered reading of the lunation cycle, including the full moon as the phase of fullest illumination
+````
+
+**🤖 回答：**
+
+输出 PG-MOON-002 / `full-moon-energy` 的中文 Phase 2 Markdown 正文：选定主关键词 `满月能量`，按 11 个中文 H2 骨架重写英文语义，覆盖定义、自我觉察、相近概念取舍、星盘识别、常见误读、速查表、问答、提示、延伸阅读、下一步行动与参考来源。机械校验结果为 H2=11、主关键词=6 次、中文内链占位符=7 条、CTA 精确命中 `https://astrologywiki.com/zh/wiki/how-to-read-birth-chart`、禁词列表无命中；正文前置具名丹恩·鲁迪亚尔，并以“这不是临床解读或心理健康建议”免责声明收尾。

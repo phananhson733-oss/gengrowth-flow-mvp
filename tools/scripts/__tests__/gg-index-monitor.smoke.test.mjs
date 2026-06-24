@@ -3,7 +3,11 @@
 // Run: node --test tools/scripts/__tests__/gg-index-monitor.smoke.test.mjs
 
 import { strict as assert } from 'node:assert';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { test } from 'node:test';
+import { fileURLToPath } from 'node:url';
+import { TABS } from '../lib/_workbook-spec.mjs';
 import {
   INDEX_TRACKING_HEADER,
   INDEX_TRACKING_TAB,
@@ -13,6 +17,9 @@ import {
   rowToSheetValues,
   sheetValuesToRow,
 } from '../gg-index-monitor.mjs';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const SCRIPTS = join(__dirname, '..');
 
 test('index tracking schema is a stable ASCII auto tab with Phase 1 fields', () => {
   assert.equal(INDEX_TRACKING_TAB, 'index-tracking');
@@ -28,6 +35,13 @@ test('index tracking schema is a stable ASCII auto tab with Phase 1 fields', () 
   assert.ok(INDEX_TRACKING_HEADER.includes('first_indexed_at'));
   assert.ok(INDEX_TRACKING_HEADER.includes('diagnosis_category'));
   assert.ok(INDEX_TRACKING_HEADER.includes('fix_status'));
+});
+
+test('workbook spec declares the index-tracking auto tab', () => {
+  const tab = TABS.find((t) => t.name === INDEX_TRACKING_TAB);
+  assert.ok(tab, 'index-tracking tab must be part of the workbook spec');
+  assert.deepEqual(tab.header, [...INDEX_TRACKING_HEADER]);
+  assert.equal(tab.type, 'standard');
 });
 
 test('buildTrackingSeedRow creates an idempotent monitor row from a publish event', () => {
@@ -143,4 +157,17 @@ test('isDueForInspection checks D+3/D+7/D+14/D+21/D+30 milestones once each', ()
   assert.equal(isDueForInspection({ ...base, last_checked_at: '2026-06-13' }, new Date('2026-06-13T12:00:00Z')), false);
   assert.equal(isDueForInspection({ ...base, last_checked_at: '2026-06-13' }, new Date('2026-06-17T09:00:00Z')), true);
   assert.equal(isDueForInspection({ ...base, monitor_status: 'indexed' }, new Date('2026-06-24T09:00:00Z')), false);
+});
+
+test('seo autopilot enqueues index tracking instead of calling article Indexing API', () => {
+  const src = readFileSync(join(SCRIPTS, 'gg-seo-autopilot.mjs'), 'utf8');
+  assert.match(src, /gg-index-monitor\.mjs/);
+  assert.match(src, /--enqueue-published/);
+  assert.doesNotMatch(src, /scripts\/gsc-index-submit\.mjs/);
+});
+
+test('gengrowth article publisher does not use Google Indexing API for ordinary articles', () => {
+  const src = readFileSync(join(SCRIPTS, 'gg-gengrowth-publish.mjs'), 'utf8');
+  assert.doesNotMatch(src, /gsc-index-submit\.mjs/);
+  assert.doesNotMatch(src, /Google Indexing API submit/);
 });

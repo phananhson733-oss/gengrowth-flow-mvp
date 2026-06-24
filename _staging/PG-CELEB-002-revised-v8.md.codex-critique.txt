@@ -1,0 +1,8 @@
+- “Greta Lee’s zodiac sign is Pisces” never states her actual birth date → Add the date, March 7, 1983, near the top so the confirmation feels concrete.
+- “Pisces is ruled by Neptune” is modern-only framing → Add that traditional astrology uses Jupiter, or phrase it as “modern ruler Neptune” to avoid a technical astrology error.
+- The Moon-sign warning is too broad for Lee specifically → Check whether her Moon actually changes signs on March 7, 1983; if it does not, revise the claim that birth time is needed to settle her Moon.
+- Acting analysis is plausible but too generic → Anchor each Pisces read to specific Greta Lee roles, especially Past Lives, Russian Doll, The Morning Show, or Sisters, instead of saying “critics keep noting” without examples.
+- “Recent breakout roles” is vague and dated → Name the breakout context, especially Past Lives and awards-season visibility, so the article feels current and specific.
+- NASA/Neptune orbit fact is accurate but editorially distracting → Either cut it or connect it more directly to why modern astrologers read Neptune symbolically; it currently feels like borrowed authority.
+- “Linked to twelfth-house themes” in the table is questionable shorthand → Change to “often associated with dreams, dissolution, imagination, and liminal states” unless the article explains the 12th-house connection.
+- SEO intent is answered, but the title delays the plain answer → Consider making the H1 or first subhead include “Greta Lee Zodiac Sign: Pisces” so searchers get the answer instantly.

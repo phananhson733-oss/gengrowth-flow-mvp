@@ -1,0 +1,94 @@
+{
+  "page_id": "PG-HEAL-004",
+  "prompt_path": "/Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-HEAL-004.v8.zh-prompt.md",
+  "started_at": "2026-06-24T20:31:33.976Z",
+  "models_requested": [
+    "claude",
+    "codex",
+    "gemini"
+  ],
+  "retry": 0,
+  "diversify_on_fail": false,
+  "max_cost_usd_per_page": 5,
+  "budget_exceeded_models": [],
+  "ok_count": 2,
+  "total_cost_estimate_usd": 0.0491,
+  "results": {
+    "claude": {
+      "model": "claude",
+      "active_model": "claude",
+      "diversified": false,
+      "ok": true,
+      "output_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/zh-demo/PG-HEAL-004-claude-v8.md",
+      "retries": 0,
+      "duration_s": 137.9,
+      "cost_estimate_usd": {
+        "usd": 0.0121,
+        "input_tokens_est": 2599,
+        "output_tokens_est": 287,
+        "pricing_note": "Sonnet 4.6 xhigh"
+      },
+      "cumulative_cost_usd": 0.0121,
+      "budget_exceeded": false,
+      "budget_usd": 5,
+      "attempts": [
+        {
+          "try_index": 1,
+          "model": "claude",
+          "command": "claude -p --model claude-opus-4-8 --effort high < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-HEAL-004.v8.zh-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/zh-demo/PG-HEAL-004-claude-v8.md",
+          "cost_usd": 0.0121,
+          "cumulative_cost_usd": 0.0121,
+          "ok": true,
+          "exit_code": 0,
+          "duration_s": 137.9,
+          "stderr_tail": "",
+          "stdout_bytes": 4139,
+          "sonnet_guard": {
+            "downgraded": false,
+            "bytes": 10711
+          }
+        }
+      ]
+    },
+    "codex": {
+      "model": "codex",
+      "active_model": "codex",
+      "diversified": false,
+      "ok": true,
+      "output_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/zh-demo/PG-HEAL-004-codex-v8.md",
+      "retries": 0,
+      "duration_s": 394.7,
+      "cost_estimate_usd": {
+        "usd": 0.037,
+        "input_tokens_est": 2599,
+        "output_tokens_est": 276,
+        "pricing_note": "GPT 5.5 xhigh"
+      },
+      "cumulative_cost_usd": 0.037,
+      "budget_exceeded": false,
+      "budget_usd": 5,
+      "attempts": [
+        {
+          "try_index": 1,
+          "model": "codex",
+          "command": "codex exec -c model=gpt-5.5 -c reasoning_effort=xhigh - < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-HEAL-004.v8.zh-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/zh-demo/PG-HEAL-004-codex-v8.md",
+          "cost_usd": 0.037,
+          "cumulative_cost_usd": 0.037,
+          "ok": true,
+          "exit_code": 0,
+          "duration_s": 394.7,
+          "stderr_tail": "Sasportas — known for depth-psychology readings of wounding and growth; the specific interpretations here are the author's own, not drawn from a single named text\n+\n+**🤖 回答：**\n+\n+产出一篇无 YAML frontmatter 的简体中文 Markdown 正文，采用中文 Phase 2 的 11 个 H2 骨架；主关键词选为“金牛座凯龙星”，控制出现频次；保留英文稿关于价值感、身体经验、物质安全、金钱误读、金星与第二宫线索、与土星/天蝎座凯龙星对比的核心语义。正文先具名 Dane Rudhyar、Liz Greene、Howard Sasportas，再在参考来源列出；CTA 指向 `https://astrologywiki.com/zh/wiki/how-to-read-birth-chart`，并保留“这不是临床解读或心理健康建议”的中文免责声明。\n+\n+---\n\ntokens used\n81,127",
+          "stdout_bytes": 3807
+        }
+      ]
+    },
+    "gemini": {
+      "model": "gemini",
+      "active_model": "gemini",
+      "ok": false,
+      "skipped": true,
+      "reason": "gemini not in PATH — install the CLI or remove from --models",
+      "attempts": []
+    }
+  }
+}

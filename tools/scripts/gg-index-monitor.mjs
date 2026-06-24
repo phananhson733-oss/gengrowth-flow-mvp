@@ -580,16 +580,10 @@ export function classifyInspection(indexStatus = {}, { daysSinceFirstTracked = 0
     recommendation: 'Continue monitoring.',
   };
 
-  if (/alternate page with proper canonical tag/i.test(coverageState)) {
-    return {
-      ...base,
-      monitor_status: 'canonical_ok',
-      diagnosis_category: 'normal_canonical',
-      recommendation: 'Canonical consolidation is expected. No action needed for this alternate URL.',
-    };
-  }
-
-  const looksIndexed = (verdict === 'PASS' || /\bindexed\b/i.test(coverageState)) && !/not indexed/i.test(coverageState);
+  const canonicalDuplicate = /alternate page with proper canonical tag|duplicate|canonical/i.test(coverageState);
+  const looksIndexed = (verdict === 'PASS' || /\bindexed\b/i.test(coverageState)) &&
+    !/not indexed/i.test(coverageState) &&
+    !canonicalDuplicate;
   if (looksIndexed) {
     return {
       ...base,
@@ -681,7 +675,7 @@ export function classifyInspection(indexStatus = {}, { daysSinceFirstTracked = 0
     };
   }
 
-  if (/duplicate|canonical/i.test(coverageState)) {
+  if (canonicalDuplicate) {
     if (daysSinceFirstTracked >= 30) {
       return {
         ...base,

@@ -6,8 +6,9 @@
 //                  将 writer SA 的 JSON 放 ~/.config/gg/gg-writer-sa.json
 //                  （或通过 GG_READER_SA_JSON / GG_WRITER_SA_JSON 环境变量给路径）
 //   2) 准备 _gg.env（与脚本同目录或项目根；可被 GG_ENV_FILE 覆盖），含：
-//        GG_SHEETS_WORKBOOK_ID=...        # 主 keyword workbook
-//        GG_SHEETS_TEST_RANGE=Test!A1     # 用于读写探针的格子（脚本只读+写回原值）
+//        GG_SHEETS_FLOW_MVP_WORKBOOK_ID=...  # Flow MVP workbook（优先）
+//        GG_SHEETS_WORKBOOK_ID=...           # legacy keyword workbook（回退）
+//        GG_SHEETS_TEST_RANGE=README!A1      # 用于读写探针的格子（脚本只读+写回原值）
 //        GG_GSC_SITE=sc-domain:astrologywiki.com
 //        GG_GA4_PROPERTY_ID=12345678
 //   3) 运行：node tools/scripts/verify-gcp.mjs
@@ -24,6 +25,7 @@ import { createSign } from 'node:crypto';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { homedir } from 'node:os';
+import { resolveWorkbookId } from './lib/gg-shared.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -52,8 +54,8 @@ function loadEnv() {
 const envPath = loadEnv();
 
 const CFG = {
-  workbookId: process.env.GG_SHEETS_WORKBOOK_ID,
-  testRange: process.env.GG_SHEETS_TEST_RANGE || 'Test!A1',
+  workbookId: resolveWorkbookId(),
+  testRange: process.env.GG_SHEETS_TEST_RANGE || 'README!A1',
   gscSite: process.env.GG_GSC_SITE,
   ga4PropertyId: process.env.GG_GA4_PROPERTY_ID,
   readerSaPath: process.env.GG_READER_SA_JSON || join(homedir(), '.config', 'gg', 'gg-reader-sa.json'),
@@ -130,7 +132,7 @@ async function gFetch(url, token, init = {}) {
 // ---------- 1. Sheets reader ----------
 async function checkSheetsReader() {
   const name = '1/4 Sheets reader SA can read workbook';
-  if (!CFG.workbookId) return recordFail(name, 'GG_SHEETS_WORKBOOK_ID missing', 'set GG_SHEETS_WORKBOOK_ID in _gg.env');
+  if (!CFG.workbookId) return recordFail(name, 'workbook id missing', 'set GG_SHEETS_FLOW_MVP_WORKBOOK_ID or GG_SHEETS_WORKBOOK_ID in _gg.env');
   try {
     const { token } = await getAccessToken(CFG.readerSaPath, ['https://www.googleapis.com/auth/spreadsheets.readonly']);
     const body = await gFetch(
@@ -140,7 +142,7 @@ async function checkSheetsReader() {
     recordPass(name, `title="${body.properties?.title || '?'}", sheets=${body.sheets?.length ?? 0}`);
   } catch (e) {
     let hint = 'share the workbook with the reader SA email as Viewer';
-    if (String(e).includes('404')) hint = 'check GG_SHEETS_WORKBOOK_ID is correct';
+    if (String(e).includes('404')) hint = 'check GG_SHEETS_FLOW_MVP_WORKBOOK_ID / GG_SHEETS_WORKBOOK_ID is correct';
     if (String(e).includes('PERMISSION_DENIED')) hint = `share workbook ${CFG.workbookId} with reader SA email (Viewer)`;
     if (String(e).includes('disabled') || String(e).includes('has not been used')) hint = 'enable Sheets API at console.cloud.google.com → APIs & Services';
     recordFail(name, e, hint);
@@ -150,7 +152,7 @@ async function checkSheetsReader() {
 // ---------- 2. Sheets writer (round-trip, RAW) ----------
 async function checkSheetsWriter() {
   const name = '2/4 Sheets writer SA can write workbook (RAW round-trip)';
-  if (!CFG.workbookId) return recordFail(name, 'GG_SHEETS_WORKBOOK_ID missing', 'set GG_SHEETS_WORKBOOK_ID');
+  if (!CFG.workbookId) return recordFail(name, 'workbook id missing', 'set GG_SHEETS_FLOW_MVP_WORKBOOK_ID or GG_SHEETS_WORKBOOK_ID');
   try {
     const { token } = await getAccessToken(CFG.writerSaPath, ['https://www.googleapis.com/auth/spreadsheets']);
     // read original
@@ -172,7 +174,7 @@ async function checkSheetsWriter() {
     recordPass(name, `range=${CFG.testRange}, updatedCells=${written.updatedCells ?? 0}`);
   } catch (e) {
     let hint = `share workbook ${CFG.workbookId} with writer SA email as Editor`;
-    if (String(e).includes('Unable to parse range')) hint = `range "${CFG.testRange}" invalid — create a sheet tab "Test" or change GG_SHEETS_TEST_RANGE`;
+    if (String(e).includes('Unable to parse range')) hint = `range "${CFG.testRange}" invalid — create the target tab or change GG_SHEETS_TEST_RANGE`;
     if (String(e).includes('PERMISSION_DENIED')) hint = `share workbook with writer SA as Editor`;
     recordFail(name, e, hint);
   }

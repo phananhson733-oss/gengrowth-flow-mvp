@@ -27,17 +27,17 @@ phase2_checks: all-pass
 
 ## What Is Sharon Osbourne's Zodiac Sign?
 
-The Sharon Osbourne zodiac sign is Libra, yet reading it as a single Sun sign misses the bigger pattern in her chart. Her placements center on **a Libra Sun wrapped in a four-planet Libra stellium**, grouping Sun, Saturn, Neptune, and Mercury in the sign of balance and negotiation. That cluster — not one lone placement — is the detail a full [[<TBD-internal-link: pillar guide to reading a birth chart>]] brings into focus. Add a Gemini Moon for fast verbal reflexes and Venus in Scorpio for fierce loyalty, and the famous mix of charm and combat starts to make sense. Most chart sites flatten her into "Libra" and stop there, which is exactly why her sharper public moments look like they contradict the sign rather than express it.
+The Sharon Osbourne zodiac sign is Libra, yet reading it as a single Sun sign misses the bigger pattern in her chart. Her placements center on **a Libra Sun wrapped in a four-planet Libra stellium**, grouping Sun, Saturn, Neptune, and Mercury in the sign of balance and negotiation. That cluster — not one lone placement — is the detail a full [[<TBD-internal-link: pillar guide to reading a birth chart>]] brings into focus. Add Mercury's sharp tongue inside that stellium and Venus in Scorpio for fierce loyalty, and the famous mix of charm and combat starts to make sense. Most chart sites flatten her into "Libra" and stop there, which is exactly why her sharper public moments look like they contradict the sign rather than express it.
 
 - Led by a Libra stellium of Sun, Saturn, Neptune, and Mercury
-- Carries a Gemini Moon behind quick, sometimes combative verbal reflexes
+- Carries Mercury and Saturn inside the stellium, behind quick, sometimes combative wording
 - Holds Venus in Scorpio, anchoring all-or-nothing loyalty over cool fairness
 
 ## Why It Matters for Self-Awareness
 
 Understanding the Sharon Osbourne zodiac sign matters because the most common search result — "she's a Libra" — quietly sets the wrong expectation. Readers picture pure harmony and easy compromise, then watch a blunt, fast-talking television personality and conclude the astrology must be broken. The mismatch sends people hunting for a single "secret" placement, usually her Rising sign, hoping one more label will explain the whole contradiction at once.
 
-That hunt is where the real friction lives. Chart sites openly disagree about her Ascendant, with some listing Cancer and others Sagittarius, so readers end up trusting whichever single placement they happen to find first. Forum threads keep circling the same narrow question — which Rising is the correct one — without ever questioning the single-placement habit that caused the confusion. The honest answer is that no one source has settled her Ascendant, and pretending otherwise overstates what the available birth data actually supports.
+That hunt is where the real friction lives. Chart sites openly disagree about her Ascendant, with some listing Cancer and others Sagittarius, so readers end up trusting whichever single placement they happen to find first. Forum threads keep circling the same narrow question — which Rising is the correct one — without ever questioning the single-placement habit that caused the confusion. The honest answer is that no one source has settled her Ascendant, and pretending otherwise overstates what the available birth data actually supports. The same caution applies to her Moon: it is widely cited as Gemini, but on her birth date the Moon sat near the Gemini–Cancer cusp, so without a confirmed birth time even that placement is not fully settled.
 
 The fix is to read the stellium rather than chase one isolated sign, the same move you would make with any [[<TBD-internal-link: spoke explainer on rising sign profiles>]] when two sources contradict each other. Seeing four planets stacked in Libra explains more of her public behavior than any lone Ascendant guess ever could. According to the Pew Research Center, about 29% of U.S. adults said they believe in astrology, which is part of why a public figure's chart gets debated this heatedly in the first place.
 
@@ -47,7 +47,7 @@ The Sharon Osbourne zodiac sign reads very differently depending on whether you 
 
 A Libra stellium works differently. Stacking Sun, Saturn, Neptune, and Mercury in one sign concentrates that diplomatic drive and then hardens it with Saturn's judgment and Mercury's sharp wording — an intensifying effect described in the person-centered tradition Dane Rudhyar shaped. The charm stays, but it arrives with an edge, and the same person who negotiates gracefully can also deliver a precise, cutting verdict. Neptune in the mix adds the media polish and image instinct that made her effective on camera for decades.
 
-The trade-off between the two readings is real and worth naming plainly. To read her as a pure Libra Sun, you sacrifice any explanation for her combative streak and end up with a tidy but incomplete "peacemaker." To read the full stellium, you gain that explanation but lose the easy label people expect from the sign. In practice the way it functions is layered: Saturn gives the diplomacy teeth, Mercury supplies the exact phrasing, and the separate Gemini Moon fires off the fast comeback that surprises viewers braced for Libra softness — the diplomat-brawler contradiction resolving itself at the chart level instead of the Sun-sign level.
+The trade-off between the two readings is real and worth naming plainly. To read her as a pure Libra Sun, you sacrifice any explanation for her combative streak and end up with a tidy but incomplete "peacemaker." To read the full stellium, you gain that explanation but lose the easy label people expect from the sign. In practice the way it functions is layered: Saturn gives the diplomacy teeth, Mercury supplies the exact phrasing, and Mercury fires off the fast, exact comeback that surprises viewers braced for Libra softness — the diplomat-brawler contradiction resolving itself at the chart level instead of the Sun-sign level.
 
 ## How to Spot a Libra Stellium Like Sharon Osbourne's in Your Chart
 
@@ -55,7 +55,7 @@ You can read this same layered pattern in any chart, including your own, using t
 
 1. Count the planets in one sign. Three or more personal planets stacked together, like the Sharon Osbourne zodiac sign shows in Libra, marks a stellium worth reading first.
 2. Check whether Saturn sits inside that cluster. Saturn adds discipline and a willingness to confront, which sharpens an otherwise gentle sign.
-3. Read the Moon's sign on its own. A Gemini Moon behind a Libra stellium points to quick verbal reflexes that can land as combative.
+3. Read Mercury, not just the Sun. Mercury inside a Libra stellium points to precise wording that can land as combative when it sits beside Saturn.
 4. Notice where Venus falls. Venus in Scorpio turns balanced affection into intense, all-or-nothing loyalty rather than detached fairness.
 5. Hold the Rising sign loosely when sources disagree, as they do between Cancer and Sagittarius here.
 
@@ -63,7 +63,7 @@ You can read this same layered pattern in any chart, including your own, using t
 
 Most quick takes on the Sharon Osbourne zodiac sign get stuck on the same few errors, and each one comes apart once you look past the Sun:
 
-1. **Libra means conflict-averse.** The stellium adds Saturn and a Gemini Moon, so the real pattern is someone who negotiates and fights inside the same conversation.
+1. **Libra means conflict-averse.** The stellium adds Saturn's judgment and Mercury's edge, so the real pattern is someone who negotiates and fights inside the same conversation.
 2. **One Rising sign is settled.** Sources split between Cancer and Sagittarius Ascendant, so any confident single claim is overstating thin evidence.
 3. **Venus in Libra explains her loyalty.** Her Venus is in Scorpio, which reads as fierce, all-or-nothing devotion rather than even-handed fairness.
 4. **The Sun sign is the whole story.** A four-planet stellium outweighs a lone Sun, which is why the diplomat-brawler contradiction only resolves at the chart level.
@@ -74,7 +74,7 @@ Most quick takes on the Sharon Osbourne zodiac sign get stuck on the same few er
 |---|---|---|---|
 | Libra Sun | Filters identity through fairness and diplomacy | Air, ruled by Venus | Charm-first public presence, instinct to mediate |
 | Libra Stellium (Sun, Saturn, Neptune, Mercury) | Concentrates and then hardens the diplomatic drive | Air, Venus-ruled | Polished talk that turns suddenly sharp |
-| Gemini Moon | Drives fast, verbal emotional reactions | Air, ruled by Mercury | Quick comebacks, combative humor under pressure |
+| Moon (commonly cited Gemini) | Read loosely — sits near the Gemini–Cancer cusp, birth-time-dependent | Unsettled without a birth time | Treat as unconfirmed, not a fixed placement |
 | Venus in Scorpio | Anchors loyalty as intense and absolute | Water, Mars/Pluto-ruled | All-or-nothing devotion to family and allies |
 | Rising sign (disputed) | Shapes first impressions, source-dependent | Cancer or Sagittarius | Read loosely; reputable sites disagree |
 

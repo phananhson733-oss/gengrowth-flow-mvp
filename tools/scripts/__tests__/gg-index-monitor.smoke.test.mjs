@@ -349,6 +349,13 @@ test('launchd wrapper runs only the lightweight index monitor check', () => {
   assert.match(plist, /StartCalendarInterval/);
 });
 
+test('index monitor automation mints Sheets tokens from service account, not testing OAuth', () => {
+  const src = readFileSync(join(SCRIPTS, 'gg-index-monitor.mjs'), 'utf8');
+  assert.doesNotMatch(src, /_oauth-token\.mjs/);
+  assert.match(src, /spreadsheets/);
+  assert.match(src, /getSaAccessToken/);
+});
+
 test('runIndexMonitor --ensure-tab creates the tracking sheet without GSC calls', async () => {
   let ensured = null;
   const code = await runIndexMonitor(['--ensure-tab', '--workbook', 'wb-test'], {

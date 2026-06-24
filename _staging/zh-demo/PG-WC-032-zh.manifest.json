@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-WC-032",
+  "entity": "luka modric zodiac sign",
+  "target_keyword": "luka modric zodiac sign",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-06-24T07:08:06.507Z",
+  "content_sha256_short": "339307938fa0e8e0",
+  "source_path": "_staging/zh-demo/PG-WC-032-repair-candidate.md",
+  "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/zh-demo/PG-WC-032-zh.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 2798,
+      "wikilinks": 7,
+      "tbdLinks": 7
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

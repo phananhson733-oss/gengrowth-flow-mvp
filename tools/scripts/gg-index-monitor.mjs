@@ -904,6 +904,10 @@ async function runSyncPublished(args, {
     const recapRow = recapByUrl.get(key);
     if (recapRow?.page_id && !fresh.page_id) fresh.page_id = recapRow.page_id;
     const old = byUrl.get(key);
+    if (!fresh.page_id && !old?.page_id) {
+      skipped++;
+      continue;
+    }
     if (!old) {
       toAppend.push(fresh);
       continue;

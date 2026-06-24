@@ -16,7 +16,7 @@ tags:
 - 要点 2：中文成稿需遵守 11 个 H2 骨架、中文主关键词出现频次、内链占位符、CTA `/zh/` 路径、免责声明与参考来源约束，并修正上一稿结构漂移、禁词和 H2 不匹配问题。
 - 要点 3：根据 PG-WC-032 / `luka-modric-zodiac-sign` 的英文 Phase 2 成稿，改写为可进入中文 Phase 2 的简体中文 Markdown 正文。
 - 要点 4：执行 GenGrowth GSC Phase 1 索引监控落地：创建/校正 `index-tracking` Sheet、接入发布后入队、安装每日 launchd，并保留 GSC OAuth 刷新为上线前阻塞项。
-- 要点 5：继续修正 PG-WC-032 中文稿，并根据 PG-WC-033 / `bruno-fernandes-zodiac-sign` 的英文 Phase 2 成稿产出中文 Phase 2 Markdown 正文。
+- 要点 5：继续修正 PG-WC-032 / PG-WC-033 中文稿，并根据 PG-MYTH-009 / `rhaenyra-targaryen-zodiac-sign` 的英文 Phase 2 成稿产出中文 Phase 2 Markdown 正文。
 
 ---
 

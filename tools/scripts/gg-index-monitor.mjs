@@ -69,9 +69,17 @@ export async function getGscAccessToken() {
 }
 
 export async function preflightGscAccess(token, siteUrl, fetcher = gFetch) {
+  const today = new Date();
+  const endDate = today.toISOString().slice(0, 10);
+  const startDate = new Date(today.getTime() - 86400000).toISOString().slice(0, 10);
   return fetcher(
-    `https://www.googleapis.com/webmasters/v3/sites/${encodeURIComponent(siteUrl)}`,
+    `https://www.googleapis.com/webmasters/v3/sites/${encodeURIComponent(siteUrl)}/searchAnalytics/query`,
     token,
+    {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ startDate, endDate, dimensions: ['date'], rowLimit: 1 }),
+    },
   );
 }
 

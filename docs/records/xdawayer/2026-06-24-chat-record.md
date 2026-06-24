@@ -2129,3 +2129,20 @@ This season works best as a mirror you hold up to your own patterns, not a forec
 **🤖 回答：**
 
 输出 PG-TRANS-013 / `cancer-season-2026-astrology` 的中文 Phase 2 Markdown 正文：选定主关键词 `2026巨蟹季占星`，按 11 个中文 H2 骨架重写英文语义；机械校验结果为 H2=11、主关键词=8 次、中文内链占位符=7 条、CTA 精确命中 `https://astrologywiki.com/zh/wiki/how-to-read-birth-chart`、禁词列表无命中。稿件保留 NASA、Barbara Ann Brennan、Cyndi Dale 的正文前置具名与参考来源，并以“这不是临床解读或心理健康建议”免责声明收尾。
+
+---
+
+### Q21 — 18:06
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Monitor
+Automation ID: gengrowth-index-monitor
+Automation memory: $CODEX_HOME/automations/gengrowth-index-monitor/memory.md
+Last run: never
+
+Run the GenGrowth index monitoring wrapper through the existing deterministic script. Load the local gg environment if the wrapper does so, then run `bash tools/scripts/gg-index-monitor-tick.sh`. After it exits, summarize whether the run succeeded, whether any GSC inspection failed or timed out, and include the latest `sync-published`, `check-due`, and `sync-recap` counts from the index monitor log. Do not author, publish, merge, request indexing, or edit sheet rows manually outside the wrapper.
+
+**🤖 回答：**
+
+按指定 wrapper 执行 `bash tools/scripts/gg-index-monitor-tick.sh`，确认 wrapper 内部加载 `$HOME/.config/gg/_gg.env`，未在 wrapper 外进行写作、发布、合并、请求索引或手工编辑表格。脚本约 17 秒后以退出码 0 结束。最新日志 `$HOME/gengrowth-agents/cron-sync/index_monitor/2026-06-24.log` 显示：`sync-published` en_urls=210 appended=0 updated=0 skipped=210；`check-due` rows=159 due=0，且 no due URLs；`sync-recap` en_rows=159 appended=0 updated=0 skipped=159；本次无 GSC inspection 失败或超时。已将运行摘要写入 `/Users/awayer_mini/.codex/automations/gengrowth-index-monitor/memory.md`。

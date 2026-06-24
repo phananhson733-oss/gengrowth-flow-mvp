@@ -197,6 +197,87 @@ function normalizeUrl(url) {
   return s.endsWith('/') ? s.slice(0, -1) : s;
 }
 
+function htmlAttr(tag, name) {
+  const m = String(tag || '').match(new RegExp(`${name}\\s*=\\s*("([^"]*)"|'([^']*)'|([^\\s>]+))`, 'i'));
+  return m ? (m[2] ?? m[3] ?? m[4] ?? '').trim() : '';
+}
+
+function decodeLightHtml(text) {
+  return String(text || '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'");
+}
+
+export function extractPageDiagnosticsFromHtml(html = '') {
+  const raw = String(html || '');
+  const withoutHidden = raw
+    .replace(/<script\b[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style\b[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<noscript\b[\s\S]*?<\/noscript>/gi, ' ');
+  const visibleText = decodeLightHtml(withoutHidden.replace(/<[^>]+>/g, ' '));
+  const words = visibleText.match(/[A-Za-z0-9][A-Za-z0-9'-]*/g) || [];
+  const metas = raw.match(/<meta\b[^>]*>/gi) || [];
+  let metaRobots = '';
+  let hasAuthor = false;
+  let hasPublishedTime = false;
+  for (const tag of metas) {
+    const name = htmlAttr(tag, 'name').toLowerCase();
+    const property = htmlAttr(tag, 'property').toLowerCase();
+    const content = htmlAttr(tag, 'content');
+    if ((name === 'robots' || name === 'googlebot') && !metaRobots) metaRobots = content;
+    if (name === 'author' || property === 'article:author') hasAuthor = !!content || hasAuthor;
+    if (
+      property === 'article:published_time' ||
+      name === 'date' ||
+      name === 'publishdate' ||
+      name === 'published_time'
+    ) hasPublishedTime = !!content || hasPublishedTime;
+  }
+  return {
+    word_count: words.length,
+    meta_robots: metaRobots,
+    has_author: hasAuthor,
+    has_published_time: hasPublishedTime,
+  };
+}
+
+function truncateText(text, max = 1200) {
+  const s = String(text || '').trim();
+  if (s.length <= max) return s;
+  return `${s.slice(0, max)}...`;
+}
+
+export async function fetchPageDiagnostics(url, { fetcher = fetch } = {}) {
+  const out = {
+    word_count: '',
+    meta_robots: '',
+    has_author: '',
+    has_published_time: '',
+    robots_txt: '',
+  };
+  try {
+    const res = await fetcher(url);
+    if (res?.ok) Object.assign(out, extractPageDiagnosticsFromHtml(await res.text()));
+    else out.page_fetch_error = `HTTP ${res?.status || 'unknown'}`;
+  } catch (e) {
+    out.page_fetch_error = redactNote(e);
+  }
+
+  try {
+    const u = new URL(url);
+    const robotsRes = await fetcher(`${u.origin}/robots.txt`);
+    if (robotsRes?.ok) out.robots_txt = truncateText(await robotsRes.text(), 1200);
+    else out.robots_txt = `(robots.txt fetch failed: HTTP ${robotsRes?.status || 'unknown'})`;
+  } catch (e) {
+    out.robots_txt = `(robots.txt fetch failed: ${redactNote(e)})`;
+  }
+  return out;
+}
+
 function isEnWikiArticleUrl(url) {
   try {
     const u = new URL(url);
@@ -565,7 +646,57 @@ function mergeRecapRow(existing = {}, fresh = {}) {
   };
 }
 
-export function classifyInspection(indexStatus = {}, { daysSinceFirstTracked = 0, now = new Date() } = {}) {
+function checklist(items = []) {
+  return items
+    .filter(Boolean)
+    .map((item) => {
+      const s = String(item).trim();
+      return s.startsWith('□') ? `  ${s}` : `  □ ${s}`;
+    })
+    .join('\n');
+}
+
+function contentQualityChecklist(pageDiagnostics = {}) {
+  const wordCount = pageDiagnostics.word_count === '' || pageDiagnostics.word_count == null
+    ? '未知'
+    : String(pageDiagnostics.word_count);
+  const meta = pageDiagnostics.meta_robots
+    ? `检查 meta robots（当前：${pageDiagnostics.meta_robots}）`
+    : '检查 meta robots 标签（当前未检测到 robots meta）';
+  const author = pageDiagnostics.has_author === true
+    ? '确认 author 字段存在'
+    : '确认 author 字段和发布日期存在';
+  const published = pageDiagnostics.has_published_time === true
+    ? '确认发布日期存在'
+    : '';
+  return checklist([
+    `检查字数（当前 ${wordCount}，目标 ≥ 1,200 词）`,
+    meta,
+    '确认至少 2 条来自已收录页面的内链',
+    '检查是否与站内其他页面内容高度重复',
+    author,
+    published,
+  ]);
+}
+
+function frameworkRecommendation(status) {
+  return checklist([
+    `查看原始 GSC 状态：${status || '-'}`,
+    `按分类框架人工判断：${DIAGNOSIS_FRAMEWORK_URL}`,
+  ]);
+}
+
+function robotsRecommendation(pageDiagnostics = {}) {
+  const robots = pageDiagnostics.robots_txt
+    ? pageDiagnostics.robots_txt
+    : '(robots.txt 内容未抓取到，请人工打开 /robots.txt 确认)';
+  return checklist([
+    '立即检查 robots.txt 是否误封 Googlebot',
+    `robots.txt 当前内容：\n${robots}`,
+  ]);
+}
+
+export function classifyInspection(indexStatus = {}, { daysSinceFirstTracked = 0, now = new Date(), pageDiagnostics = {} } = {}) {
   const coverageState = String(indexStatus.coverageState || '').trim();
   const verdict = String(indexStatus.verdict || '').trim();
   const indexingState = String(indexStatus.indexingState || '').trim();
@@ -575,10 +706,11 @@ export function classifyInspection(indexStatus = {}, { daysSinceFirstTracked = 0
   const base = {
     monitor_status: 'monitoring',
     diagnosis_category: 'monitoring',
+    diagnosis_conclusion: '监控中',
     alert_level: '',
     should_alert: false,
     first_indexed_at: '',
-    recommendation: 'Continue monitoring.',
+    recommendation: checklist(['继续监控。']),
   };
 
   const canonicalDuplicate = /alternate page with proper canonical tag|duplicate|canonical/i.test(coverageState);
@@ -590,8 +722,9 @@ export function classifyInspection(indexStatus = {}, { daysSinceFirstTracked = 0
       ...base,
       monitor_status: 'indexed',
       diagnosis_category: 'indexed',
+      diagnosis_conclusion: '已收录',
       first_indexed_at: checkedDay,
-      recommendation: 'Indexed. Stop monitoring unless the URL regresses.',
+      recommendation: checklist(['已收录，停止监控；仅在状态回退时重新进入监控。']),
     };
   }
 
@@ -599,10 +732,14 @@ export function classifyInspection(indexStatus = {}, { daysSinceFirstTracked = 0
     return {
       ...base,
       monitor_status: 'urgent',
-      diagnosis_category: 'technical_failure',
+      diagnosis_category: '技术故障',
+      diagnosis_conclusion: '技术故障',
       alert_level: 'P0',
       should_alert: true,
-      recommendation: 'Fix crawl access immediately: restore the URL, correct 4xx/5xx, or remove access blocks.',
+      recommendation: checklist([
+        '立即处理：恢复 URL、修复 404/5xx/403，或确认是否应从追踪中移除',
+        '修复后重新检查 URL Inspection，并确认页面可被 Googlebot 抓取',
+      ]),
     };
   }
 
@@ -610,10 +747,11 @@ export function classifyInspection(indexStatus = {}, { daysSinceFirstTracked = 0
     return {
       ...base,
       monitor_status: 'urgent',
-      diagnosis_category: 'robots_blocked',
+      diagnosis_category: '配置错误（大概率无意）',
+      diagnosis_conclusion: 'robots.txt 阻挡',
       alert_level: 'P0',
       should_alert: true,
-      recommendation: 'Check robots.txt and unblock Googlebot if this URL should be indexable.',
+      recommendation: robotsRecommendation(pageDiagnostics),
     };
   }
 
@@ -621,10 +759,15 @@ export function classifyInspection(indexStatus = {}, { daysSinceFirstTracked = 0
     return {
       ...base,
       monitor_status: 'needs_attention',
-      diagnosis_category: 'noindex',
+      diagnosis_category: '标签问题（需人工确认是否有意）',
+      diagnosis_conclusion: 'noindex 标签阻挡',
       alert_level: 'P1',
       should_alert: true,
-      recommendation: 'Confirm whether noindex is intentional. Remove it only after human approval.',
+      recommendation: checklist([
+        '确认是否有意设置 noindex',
+        `当前 meta robots：${pageDiagnostics.meta_robots || '未抓取到，需人工确认'}`,
+        '如非有意，修复模板或页面 head 后再进入 request-indexing-queue',
+      ]),
     };
   }
 
@@ -633,22 +776,24 @@ export function classifyInspection(indexStatus = {}, { daysSinceFirstTracked = 0
       return {
         ...base,
         monitor_status: 'needs_focus',
-        diagnosis_category: 'content_quality',
+        diagnosis_category: '内容质量问题',
+        diagnosis_conclusion: '内容质量不足',
         alert_level: 'P1',
         should_alert: true,
-        recommendation: 'D+30 unresolved. Escalate as a focus URL: review content depth, internal links, duplicate overlap, metadata, and crawlable HTML.',
+        recommendation: contentQualityChecklist(pageDiagnostics),
       };
     }
     const overdue = daysSinceFirstTracked >= 14;
     return {
       ...base,
       monitor_status: overdue ? 'needs_attention' : 'monitoring',
-      diagnosis_category: 'content_quality',
+      diagnosis_category: '内容质量问题',
+      diagnosis_conclusion: overdue ? '内容质量不足' : '观察中',
       alert_level: overdue ? 'P1' : '',
       should_alert: overdue,
       recommendation: overdue
-        ? 'Review content quality, internal links, duplicate overlap, metadata, and crawlable HTML.'
-        : 'Wait until D+14 before escalating content quality.',
+        ? contentQualityChecklist(pageDiagnostics)
+        : checklist(['D+14 前继续观察；到期后检查内容质量、内链、重复度和可抓取 HTML。']),
     };
   }
 
@@ -657,22 +802,27 @@ export function classifyInspection(indexStatus = {}, { daysSinceFirstTracked = 0
       return {
         ...base,
         monitor_status: 'needs_focus',
-        diagnosis_category: 'normal_queue',
+        diagnosis_category: '正常排队（新站常见）',
+        diagnosis_conclusion: '排队超时',
         alert_level: 'P1',
         should_alert: true,
-        recommendation: 'D+30 unresolved. Escalate as a focus URL: improve internal links, sitemap discovery signals, and crawl priority.',
+        recommendation: checklist([
+          'D+30 仍未收录，升级为重点 URL',
+          '加强来自已收录页面的内链，确认 sitemap 和页面 HTML 可抓取',
+        ]),
       };
     }
-    const overdue = daysSinceFirstTracked >= 14;
+    const overdue = daysSinceFirstTracked >= 21;
     return {
       ...base,
       monitor_status: overdue ? 'needs_attention' : 'monitoring',
-      diagnosis_category: 'normal_queue',
+      diagnosis_category: '正常排队（新站常见）',
+      diagnosis_conclusion: overdue ? '排队超时' : '正常排队，继续监控至 D+21',
       alert_level: overdue ? 'P2' : '',
       should_alert: overdue,
       recommendation: overdue
-        ? 'D+14 still discovered but not indexed. Improve internal links, sitemap discovery signals, and crawl priority.'
-        : 'Normal queue state for a new site. Continue monitoring without alert noise.',
+        ? checklist(['D+21 仍未收录，补充内链并确认 sitemap discovery 信号。'])
+        : checklist(['正常排队（新站常见），继续监控至 D+21；D+14 不推送噪音告警。']),
     };
   }
 
@@ -681,19 +831,29 @@ export function classifyInspection(indexStatus = {}, { daysSinceFirstTracked = 0
       return {
         ...base,
         monitor_status: 'needs_focus',
-        diagnosis_category: 'canonical_duplicate',
+        diagnosis_category: '重复内容 / canonical 问题',
+        diagnosis_conclusion: '重复内容或 canonical 异常',
         alert_level: 'P2',
         should_alert: true,
-        recommendation: 'D+30 unresolved. Escalate canonical/duplicate review and decide whether this URL should remain monitored.',
+        recommendation: checklist([
+          '检查 canonical 标签是否指向预期 URL',
+          '检查页面与站内其他页面的主题和正文重复度',
+          '确认 sitemap 中保留的是希望被收录的 canonical URL',
+        ]),
       };
     }
     return {
       ...base,
       monitor_status: daysSinceFirstTracked >= 14 ? 'needs_attention' : 'monitoring',
-      diagnosis_category: 'canonical_duplicate',
+      diagnosis_category: '重复内容 / canonical 问题',
+      diagnosis_conclusion: '重复内容或 canonical 异常',
       alert_level: daysSinceFirstTracked >= 14 ? 'P2' : '',
       should_alert: daysSinceFirstTracked >= 14,
-      recommendation: 'Review canonical tags, duplicate content, and sitemap URL selection.',
+      recommendation: checklist([
+        '检查 canonical 标签和页面重复度',
+        '对比 Google canonical 与 user canonical',
+        '必要时合并/改写重复内容，保留唯一目标 URL',
+      ]),
     };
   }
 
@@ -701,10 +861,14 @@ export function classifyInspection(indexStatus = {}, { daysSinceFirstTracked = 0
     return {
       ...base,
       monitor_status: 'needs_attention',
-      diagnosis_category: 'indexing_configuration',
+      diagnosis_category: '索引配置问题',
+      diagnosis_conclusion: '索引配置异常',
       alert_level: 'P2',
       should_alert: true,
-      recommendation: 'Review page body, redirects, and HTTP status semantics.',
+      recommendation: checklist([
+        '检查页面正文是否过薄或像错误页',
+        '检查 HTTP 状态、跳转链和 canonical 是否一致',
+      ]),
     };
   }
 
@@ -712,12 +876,13 @@ export function classifyInspection(indexStatus = {}, { daysSinceFirstTracked = 0
   return {
     ...base,
     monitor_status: overdue ? 'needs_attention' : 'monitoring',
-    diagnosis_category: overdue ? 'unknown_attention' : 'unknown_waiting',
+    diagnosis_category: overdue ? '未知状态' : '等待观察',
+    diagnosis_conclusion: overdue ? '未知状态，需人工判断' : '等待观察',
     alert_level: overdue ? 'P3' : '',
     should_alert: overdue,
     recommendation: overdue
-      ? 'Review raw URL Inspection status and decide manually.'
-      : 'Continue monitoring.',
+      ? frameworkRecommendation(coverageState)
+      : checklist(['继续监控。']),
     indexing_state: indexingState,
   };
 }

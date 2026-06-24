@@ -1,27 +1,3 @@
----
-title: What To Do On A Full Moon Spiritually
-slug: what-to-do-on-a-full-moon-spiritually
-date: 2026-06-24
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T2
-track: 量产线
-page_id: PG-MOON-003
-author_id: "marcus-orion"
-author_display_name: "Marcus Orion"
-target_keyword: what to do on a full moon spiritually
-associated_keywords:
-  - new moon ritual
-  - full moon manifestation
-  - full moon journal prompts
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-06-24T18:24:58.302Z
-content_sha256_short: f45d3cf6a08b2399
-phase2_checks: all-pass
----
-
 # 满月灵性:如何收束新月开启的那段循环
 
 ## 满月灵性是什么？

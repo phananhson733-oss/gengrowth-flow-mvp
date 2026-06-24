@@ -1074,3 +1074,176 @@ Generate your free birth chart to explore the Luka Modric zodiac sign and see ho
 再次以当前工作树和外部状态审计 Phase 1：`gg-index-monitor` smoke 18/18、`gg-seo-autopilot` smoke 13/13、wrapper/plist lint 均通过；真实 Sheet `index-tracking` 已有 `PG-WC-032` 监控行；LaunchAgent `com.gengrowth.index-monitor` 已加载，每日 09:00 运行；日志显示 wrapper 已在存在 tracking 行时预检 GSC 授权并失败于同一 OAuth 过期点。`verify-gcp.mjs` 证明 reader SA 对 GSC property 也无权限，不能替代 user OAuth。因同一外部授权阻塞已连续出现 3 个 goal turn，且需要账号本人 Google consent 或授予 GSC property 权限，按 goal 规则将 active goal 标记为 blocked。
 
 ---
+
+### Q12 — 15:30
+
+**🙋 提问：**
+
+````text
+# Role
+你是 AstrologyWiki 的中文内容编辑。你的任务不是逐句翻译，而是基于一篇已经通过英文 Phase 2 的成稿，产出一篇可直接进入中文 Phase 2 的简体中文版本。
+
+# Hard requirements
+- 输出纯 Markdown 正文，不要 YAML frontmatter，不要解释过程。
+- 不要沿用英文 H2 文案；必须把英文语义改写进中文 Phase 2 认可的 11 个 H2 骨架。
+- H1 必须是自然中文标题；正文与 H2 全部用简体中文。
+- 第一部分必须用 `## <你选定的中文主词> 是什么？` 开头；首段里要有 1 个**加粗定义短语**，随后**紧跟正好 3 个 bullet**。
+- 第二部分 H2 必须逐字写成 `## 为什么了解它能帮助自我觉察`。
+- 第三部分 H2 必须写成 `## <你选定的中文主词> 与相近概念：运作方式 + 取舍`，每个对比都要写出明确取舍。
+- 第四部分必须用“识别”而不是“阅读/判断”作 H2 动词：星盘/宫位/行运类主题用 `## 如何在你的星盘里识别 <你选定的中文主词>`；其他主题用 `## 如何在自己身上识别 <你选定的中文主词>`。
+- 第五到第十一部分依次必须覆盖：常见误读、速查表/一览、常见问题/问答、自我觉察小提示、延伸阅读、下一步行动、参考来源。
+- `## 自我觉察小提示` 标题后第一行必须直接开始 `1.` / `2.` / `3.` 三条编号提示，不能先写引导段。
+- 至少放入 5 条 `[[<TBD-internal-link: ...>]]` 中文内链占位符；不要输出 0 条内链。
+- 主中文关键词全篇总出现次数控制在 5-8 次之间；不要在每个 H2 都机械重复，能用“它 / 这个主题 / 这张盘 / 该相位”等代词时就改写。
+- `参考来源` 里出现的权威名，正文里必须先具名提到；不要在 Sources 里新增正文没出现过的人名或条目。
+- 保留反思性 / 象征性语气，禁止诊断、治疗、治愈、改善病症等医疗承诺。
+- 明确避开广告/承诺词：不要写 承诺 / 保证 / 立刻见效 / 改命 / 改运 / 疗愈创伤 / 修复焦虑 这类表述。
+- 结尾必须保留免责声明，用中文表达“这不是临床解读或心理健康建议”。
+- 将 CTA 改写为中文，并指向 https://astrologywiki.com/zh/wiki/how-to-read-birth-chart 。
+- 如原文出现 astrologywiki.com/en/ 内链或 CTA，请改成 /zh/ 对应路径；拿不准时只保留 CTA 这一个确定链接。
+- 不要照搬英文句子；允许为中文读者做自然重写，但核心含义必须忠于英文稿。
+- 不要输出 TODO、占位符、方括号备注或英文审校说明。
+- 自行选择一个自然的中文主关键词，并在 H1 与正文主体里稳定复用，避免同义改写过度导致锚点漂移。
+
+# Metadata
+- page_id: PG-WC-033
+- slug: bruno-fernandes-zodiac-sign
+- author_id: marcus-orion
+- target_keyword_en: bruno fernandes zodiac sign
+- entity: bruno fernandes zodiac sign
+- template: Definition
+- tier: T2
+- track: 量产线
+- associated_keywords_en: bruno fernandes star sign, bruno fernandes astrology, bruno fernandes virgo, portugal captain zodiac
+
+# Source English article (semantic source of truth, not heading template)
+
+# Why the Bruno Fernandes Zodiac Sign Points to Precision, Not Temper
+
+## What Is Bruno Fernandes's Zodiac Sign?
+
+Bruno Fernandes zodiac sign is Virgo — a Virgo Sun born on 8 September 1994 in Maia, Portugal. Chart sites also commonly list a Libra Moon and a Scorpio rising, but Fernandes has never made his birth time public, so those two placements come from an estimated noon chart and can't be confirmed. In plain terms, his core identity runs on craft, accuracy, and high personal standards, while the commonly cited Moon and rising shape how he handles feeling and how strangers first read him. This three-layer setup sits inside a broader [[<TBD-internal-link: World Cup 2026 astrology prediction hub>]] that maps the same method across other squads. Read together, the layers explain why his on-pitch frustration usually signals a standards problem rather than a hot temper. The short version most fans want: **a Virgo Sun, plus a commonly cited (though unconfirmed) Libra Moon and Scorpio rising**.
+
+- Leads with exacting standards and refined function over individual spectacle
+- Built on a Virgo Sun, with a commonly cited (unconfirmed) Libra Moon softening the social edges
+- Easily misread as fiery or volatile when the real driver is perfectionism
+
+## Why It Matters for Self-Awareness
+
+Understanding the Bruno Fernandes zodiac sign matters because the public read of him gets the cause backwards, and that misread shapes how fans, pundits, and even teammates judge his leadership. According to the Pew Research Center, about 29% of U.S. adults say they believe in astrology, so these player charts get shared and argued over far beyond niche forums. In my own data-driven analysis of chart structures, the same problem shows up again and again: a visible behavior gets pinned to the loudest-looking placement instead of the one actually driving it. That is the same person-centered approach Dane Rudhyar brought to reading a chart as a developing whole rather than a fixed label.
+
+The stakes here are practical, not abstract. Fernandes captains Manchester United, and for Portugal he plays under captain Cristiano Ronaldo — so when his frustration is filed under "bad temperament," it feeds debates about how he leads. Read accurately, the picture changes from a control problem into a standards problem — which is coached differently and judged more fairly. The confusion tends to cluster in three spots:
+
+1. **The temper misread.** Fans see arm-waving and clipped body language and file it under fire-sign heat, when the source is a Virgo standard a teammate just fell short of.
+2. **The spectacle assumption.** Virgo values refined function over flash, so his worth to Portugal shows up in service and accuracy — easy to undervalue if you only score highlight-reel moments.
+3. **The leadership label.** Critics call him difficult; the chart suggests someone holding the group to an exacting internal bar, which is a different thing to manage. The fuller picture sits alongside the other charts in our [[<TBD-internal-link: best soccer players by zodiac sign>]] breakdown.
+
+## Virgo Sun vs Scorpio Rising: Where the Volatility Read Comes From
+
+The most common mix-up in the Bruno Fernandes zodiac sign is treating the Scorpio rising commonly attributed to him as the real him, when a rising sign — even an unconfirmed one — is only the first impression. A Scorpio ascendant gives an intense, guarded surface — the unblinking stare, the sense that something is simmering under the collar. The Virgo Sun underneath works on a quieter setting: it scans for the flaw, the misplaced pass, the half-second of sloppiness, and reacts to the gap between what happened and what should have happened. The way it functions is almost the opposite of how it looks. The rising broadcasts brooding intensity; the Sun is running a precision check.
+
+Picture a familiar moment: he plays a perfect through-ball, the striker takes a heavy touch, and the camera catches him throwing both arms up. The Scorpio surface makes it look like fury. The Virgo driver is closer to "that should have been a goal." This layered read — surface versus core — follows the psychological-astrology tradition Liz Greene helped shape, where the visible packaging and the inner standard are treated as separate moving parts rather than one mood.
+
+There is a real trade-off baked into this pairing. To get that magnetic, hard-to-read Scorpio presence, he sacrifices being easily understood — the same look that reads as "leader with edge" also reads as "volatile" on a bad night. To get Virgo's relentless quality control, he sacrifices the calm, unbothered body language that keeps pundits from calling a player emotional. Choosing standards-driven reactions over a composed surface buys accuracy but costs him the benefit of the doubt.
+
+## How to Read His Virgo Placements in His Game
+
+You do not need the birth chart open to spot the Virgo pattern. It shows up in observable habits, and once you know the tells, the "temper" story falls apart:
+
+1. **Frustration aimed at the play, not the person.** His sharpest reactions tend to follow a technical error — a loose touch, a mistimed run — rather than a personal slight or a referee's call.
+2. **Instant self-correction.** Watch him right after his own misplaced pass; the same critical lens turns inward fast, often with a raised hand to claim the mistake before anyone else can.
+3. **Diplomacy once the whistle goes.** Post-match, the Libra Moon takes over and he reaches for fairness and measured words, a sharp contrast to the in-game heat.
+4. **Protective, not aggressive, drive.** His competitive push reads as covering for teammates and shielding the group rather than chasing solo glory — service over spectacle, the Virgo way.
+5. **Standards stated out loud.** He names what the team should have done, which is Virgo's service-via-craft instinct showing up as leadership rather than ego.
+
+## Common Misreadings
+
+Most quick takes on the Bruno Fernandes zodiac sign stop at the surface and get the driver wrong. Four misreads come up the most, and each one inverts cause and effect:
+
+1. **Misread: he is a hot-headed fire sign. Actual:** he is an earth-sign Virgo whose flashpoints come from precision falling short of his internal bar, not from a short fuse.
+2. **Misread: the Scorpio rising means he is secretly volatile. Actual:** the rising is the packaging; the Virgo Sun is the operator, and it is exacting rather than explosive.
+3. **Misread: his on-pitch frustration and his calm interviews contradict each other. Actual:** the Libra Moon handles the public, fairness-seeking side while the Virgo Sun handles the in-game standard, so both can be true at once.
+4. **Misread: a demanding captain is a divisive one. Actual:** holding teammates to a high, consistent standard is Virgo's way of serving the group, which is different from undermining it.
+
+## Bruno Fernandes's Birth Chart at a Glance
+
+| Placement | How It Works | Element / House Focus | How to Observe |
+| --- | --- | --- | --- |
+| Virgo Sun | Identity built through craft and exacting standards | Earth; service and refinement | Frustration tied to technical errors, fast self-correction |
+| Libra Moon (attributed, unconfirmed) | Regulates feeling through fairness and balance | Air; relationship and diplomacy | Measured, even-handed post-match interviews |
+| Sun–Moon–Rising blend | Combines an exacting Virgo identity with a measured, guarded surface | Earth–Air–Water mix | Standards-driven reactions wrapped in a composed, hard-to-read presence |
+| Scorpio Ascendant (attributed, unconfirmed) | First impression of guarded intensity | Water; depth and control | The brooding surface that gets misread as volatility |
+
+## Questions People Ask About His Zodiac Sign
+
+**What is the Bruno Fernandes zodiac sign?**
+
+He is a Virgo Sun, born on 8 September 1994. Chart sites also commonly cite a Libra Moon and a Scorpio rising, but those are unconfirmed because he has never made his birth time public. The Virgo Sun is the part most responsible for his standards-driven reactions on the pitch.
+
+**Is Bruno Fernandes's frustration a sign of a fiery temperament?**
+
+Not in the astrological read. His earth-sign Virgo points to perfectionism over fire, so the frustration usually tracks a missed standard rather than a quick temper.
+
+**Why does he seem calm in interviews but intense in games?**
+
+His Libra Moon governs the diplomatic, fairness-seeking public side, while the Virgo Sun drives the in-game quality control. The two layers handle different settings, so both can be real at the same time.
+
+**Does his zodiac sign explain his on-pitch frustration?**
+
+In the astrological read, yes — his Virgo Sun ties his sharpest reactions to missed technical standards rather than a hot temper, so the frustration usually tracks a precision lapse instead of a personal slight.
+
+## Reflection Prompts
+
+1. Think of a recent moment when you reacted sharply to a small mistake — was it really anger, or a standard not being met?
+2. Recall a time you stayed diplomatic in public but stayed frustrated inside; what were you actually balancing?
+3. Notice the last time you protected your team instead of chasing personal credit; what drove that choice?
+
+This is not a clinical interpretation or mental health advice.
+
+## Related Reading
+
+- [[<TBD-internal-link: Cancer zodiac World Cup 2026>]] — the Cancer-sign themes that run through the World Cup field.
+- [[<TBD-internal-link: Vinicius Jr's zodiac sign>]] — another World Cup attacker read through his chart.
+- [[<TBD-internal-link: Saturn in Aries 2026 transit>]] — the headline 2026 transit shaping the squad through the tournament.
+- [[<TBD-external-link: Wikipedia | Bruno Fernandes | career profile of Manchester United's captain and Portugal midfielder>]] — background on the player behind the chart.
+
+## Take Action
+
+Generate your free birth chart to explore the Bruno Fernandes zodiac sign, and run the same three-layer read on your own placements. You get a labeled map of your Sun, Moon, and rising in one view, exactly as we separated his Virgo, Libra, and Scorpio layers above. That side-by-side is usually where people stop mistaking their first impression for their real character. Begin with our [step-by-step birth chart reading guide](https://astrologywiki.com/en/wiki/how-to-read-birth-chart).
+
+## Sources
+
+- Dane Rudhyar — pioneered the person-centered, developmental reading of the birth chart this article draws on
+- Liz Greene — shaped the psychological-astrology approach behind reading surface placements against core ones
+
+
+## ⚠️ 上一稿被自动校验拦下 — 本稿必须逐条修掉
+- zh phase2 FAIL: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ | [phase2] loaded fixture: /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-WC-033.v8-fixture.json | ERROR: draft has no H1; aborting
+
+补救要求：
+- 保持中文，不要回退英文标题或英文小节。
+- RL4 漂移 → 在被点名小节自然补回主中文关键词；不要只在开头堆一次。
+- RL5 堆词 → 重复过密处改成代词 / 短称 / 解释句，但别把主关键词完全丢掉。
+- RL6 / 合规 → 改成象征、反思、传统关联，不要承诺疗效或心理治疗作用。
+- 结构 FAIL → 以英文稿结构为准，小修，不整篇推倒重写。
+````
+
+**🤖 回答：**
+
+按用户补救要求产出 PG-WC-033 / `bruno-fernandes-zodiac-sign` 的简体中文 Markdown 正文：主关键词选为 `布鲁诺费尔南德斯星座`，生成 1 个中文 H1 与 11 个中文 H2；第一节含 1 个加粗定义短语并紧跟 3 条 bullet；第二、三、四节使用指定中文 H2 骨架；保留处女座太阳、常见但未确认的天秤月亮/天蝎上升、皮尤研究中心、Dane Rudhyar、Liz Greene 等核心语义；CTA 指向 `https://astrologywiki.com/zh/wiki/how-to-read-birth-chart`；末尾保留中文免责声明。执行字符串自检：H1=1、H2=11、主关键词=8、中文内链占位符=7、CTA=1、禁用词未命中。
+
+---
+
+### Q12 — 15:30
+
+**🙋 提问：**
+
+```text
+用户贴出 Hermes 告警截图：索引监控运行失败通知中出现 mojibake，`rc=��` 与 `请查看 ��`，需要判断原因并处理。
+```
+
+**🤖 回答：**
+
+定位到不是 Feishu 或 OAuth 文本本身的问题，而是 bash wrapper 中未加花括号的变量紧贴中文全角标点：`$rc）。`、`$LOG；` 会在 bash 展开时破坏后续 UTF-8 字节。按 TDD 增加 wrapper 静态回归断言，先跑出失败，再将通知字符串改为 `${rc}`、`${LOG}`。验证：`node --test tools/scripts/__tests__/gg-index-monitor.smoke.test.mjs` 18/18 通过，`bash -n tools/scripts/gg-index-monitor-tick.sh` 与 plist lint 通过，字节级复现显示 `rc=1）。请查看 /tmp/index.log；` 输出完整。
+
+---

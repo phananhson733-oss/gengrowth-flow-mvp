@@ -1215,6 +1215,64 @@ export async function formatRequestQueueTab(token, workbookId, tabName = REQUEST
   return { formatted: true };
 }
 
+export async function formatRecapStatusTab(token, workbookId, tabName = RECAP_TAB, fetcher = gFetch) {
+  const meta = await fetcher(
+    `https://sheets.googleapis.com/v4/spreadsheets/${workbookId}?includeGridData=false&fields=sheets(properties(sheetId,title),conditionalFormats)`,
+    token,
+  );
+  const sheet = (meta.sheets || []).find((s) => s.properties?.title === tabName);
+  if (!sheet) throw new Error(`tab not found: ${tabName}`);
+  const sheetId = sheet.properties.sheetId;
+  const statusCol = RECAP_HEADER.indexOf('索引修复状态');
+  if (statusCol < 0) throw new Error('索引修复状态 column not found');
+
+  const existing = sheet.conditionalFormats || [];
+  const isStatusRule = (rule) =>
+    (rule.ranges || []).some((range) =>
+      range.sheetId === sheetId &&
+      range.startRowIndex === 1 &&
+      range.startColumnIndex === statusCol &&
+      range.endColumnIndex === statusCol + 1) &&
+    ['TEXT_CONTAINS', 'TEXT_EQ'].includes(rule.booleanRule?.condition?.type);
+
+  const requests = [];
+  existing.forEach((rule, index) => {
+    if (isStatusRule(rule)) requests.push({ deleteConditionalFormatRule: { sheetId, index } });
+  });
+  requests.sort((a, b) => b.deleteConditionalFormatRule.index - a.deleteConditionalFormatRule.index);
+
+  for (const fmt of RECAP_STATUS_CONDITIONAL_FORMATS) {
+    requests.push({
+      addConditionalFormatRule: {
+        index: 0,
+        rule: {
+          ranges: [{ sheetId, startRowIndex: 1, startColumnIndex: statusCol, endColumnIndex: statusCol + 1 }],
+          booleanRule: {
+            condition: { type: 'TEXT_CONTAINS', values: [{ userEnteredValue: fmt.textContains }] },
+            format: {
+              backgroundColorStyle: { rgbColor: fmt.bg },
+              textFormat: { foregroundColorStyle: { rgbColor: fmt.fg }, bold: !!fmt.bold },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  if (requests.length) {
+    await fetcher(
+      `https://sheets.googleapis.com/v4/spreadsheets/${workbookId}:batchUpdate`,
+      token,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ requests }),
+      },
+    );
+  }
+  return { formatted: true, rules: RECAP_STATUS_CONDITIONAL_FORMATS.length };
+}
+
 export async function batchUpdateTrackingRows(token, workbookId, tabName, updates, appends) {
   const last = colLetter(INDEX_TRACKING_HEADER.length - 1);
   const data = updates.map((item) => ({
@@ -1508,6 +1566,7 @@ async function runSyncRecap(args, {
   updateRecapRowFn = updateRecapRow,
   appendRecapRowsFn = appendRecapRows,
   batchUpdateRecapRowsFn = null,
+  formatRecapStatusFn = formatRecapStatusTab,
 }) {
   if (!workbookId) {
     process.stderr.write('error: --sync-recap requires workbook id from env or --workbook\n');
@@ -1545,6 +1604,7 @@ async function runSyncRecap(args, {
       }
       await appendRecapRowsFn(sheetToken, workbookId, RECAP_TAB, toAppend);
     }
+    if (formatRecapStatusFn) await formatRecapStatusFn(sheetToken, workbookId, RECAP_TAB);
   }
 
   process.stdout.write(
@@ -1864,6 +1924,9 @@ export async function runIndexMonitor(argv, deps = {}) {
       batchUpdateRecapRowsFn: deps.updateRecapRow || deps.appendRecapRows
         ? deps.batchUpdateRecapRows || null
         : deps.batchUpdateRecapRows || batchUpdateRecapRows,
+      formatRecapStatusFn: deps.formatRecapStatus || (deps.updateRecapRow || deps.appendRecapRows
+        ? null
+        : formatRecapStatusTab),
     });
   }
 

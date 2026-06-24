@@ -17,6 +17,7 @@ import {
   INDEX_TRACKING_TAB,
   REQUEST_INDEXING_QUEUE_HEADER,
   REQUEST_INDEXING_QUEUE_TAB,
+  RECAP_STATUS_CONDITIONAL_FORMATS,
 } from '../gg-index-monitor.mjs';
 
 export const COLORS = Object.freeze({
@@ -382,6 +383,12 @@ export const TABS = [
         // v3.3：决策下拉从 K 列移到 O 列
         { range: 'O2:O1500', list: ['继续', '调整', '暂停'] },
       ],
+      conditionalFormats: RECAP_STATUS_CONDITIONAL_FORMATS.map((fmt) => ({
+        range: 'G2:G1500',
+        textContains: fmt.textContains,
+        bg: fmt.bg,
+        bold: fmt.bold,
+      })),
       notes: {
         A1: 'outcome_id：6-ID 主键。每个页面 × 每个时点（Day 14 / 30 / 60）一行，或集群级汇总一行。手工编号如 out_001、out_clu_aura_d30。',
         B1: 'page_id：外键 → 选题登记表。页面级复盘时填。',

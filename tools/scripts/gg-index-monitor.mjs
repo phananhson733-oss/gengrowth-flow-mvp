@@ -668,6 +668,27 @@ export async function appendTrackingRows(token, workbookId, tabName, rows) {
   );
 }
 
+export async function batchUpdateTrackingRows(token, workbookId, tabName, updates, appends) {
+  const last = colLetter(INDEX_TRACKING_HEADER.length - 1);
+  const data = updates.map((item) => ({
+    range: `${tabName}!A${item.old._rowNumber}:${last}${item.old._rowNumber}`,
+    values: [rowToSheetValues(item.merged)],
+  }));
+  if (data.length) {
+    await gFetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${workbookId}/values:batchUpdate`,
+      token,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ valueInputOption: 'RAW', data }),
+      },
+    );
+  }
+  if (appends.length) await appendTrackingRows(token, workbookId, tabName, appends);
+  return { updatedRows: updates.length, appendedRows: appends.length };
+}
+
 export async function readRecapRows(token, workbookId, tabName = RECAP_TAB) {
   const last = colLetter(RECAP_HEADER.length - 1);
   const body = await gFetch(
@@ -859,6 +880,7 @@ async function runSyncPublished(args, {
   readRecapRowsFn = readRecapRows,
   updateRowFn = updateTrackingRow,
   appendRowsFn = appendTrackingRows,
+  batchUpdateRowsFn = null,
 }) {
   if (!workbookId) {
     process.stderr.write('error: --sync-published requires workbook id from env or --workbook\n');
@@ -897,10 +919,14 @@ async function runSyncPublished(args, {
   }
 
   if (args.write_sheet) {
-    for (const item of toUpdate) {
-      await updateRowFn(sheetToken, workbookId, tabName, item.old._rowNumber, item.merged);
+    if (batchUpdateRowsFn) {
+      await batchUpdateRowsFn(sheetToken, workbookId, tabName, toUpdate, toAppend);
+    } else {
+      for (const item of toUpdate) {
+        await updateRowFn(sheetToken, workbookId, tabName, item.old._rowNumber, item.merged);
+      }
+      await appendRowsFn(sheetToken, workbookId, tabName, toAppend);
     }
-    await appendRowsFn(sheetToken, workbookId, tabName, toAppend);
   }
 
   process.stdout.write(
@@ -1116,6 +1142,9 @@ export async function runIndexMonitor(argv, deps = {}) {
       readRecapRowsFn: deps.readRecapRows || readRecapRows,
       updateRowFn: deps.updateTrackingRow || updateTrackingRow,
       appendRowsFn: deps.appendTrackingRows || appendTrackingRows,
+      batchUpdateRowsFn: deps.updateTrackingRow || deps.appendTrackingRows
+        ? deps.batchUpdateTrackingRows || null
+        : deps.batchUpdateTrackingRows || batchUpdateTrackingRows,
     });
   }
 

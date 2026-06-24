@@ -20,6 +20,7 @@ import {
   extractEnWikiSitemapRows,
   extractPageDiagnosticsFromHtml,
   formatAlertMessage,
+  formatRecapStatusTab,
   isDueForInspection,
   mergeInspectionIntoRow,
   mergePublishedTrackingRow,
@@ -672,6 +673,7 @@ test('runIndexMonitor --sync-published can batch update tracking rows', async ()
 test('runIndexMonitor --sync-recap upserts only page_id-backed final presentation rows', async () => {
   const appended = [];
   let updated = null;
+  let formatted = null;
   const code = await runIndexMonitor(['--sync-recap', '--write-sheet', '--workbook', 'wb-test'], {
     now: new Date('2026-06-25T00:00:00Z'),
     sheetToken: 'sheet-token',
@@ -709,6 +711,9 @@ test('runIndexMonitor --sync-recap upserts only page_id-backed final presentatio
     appendRecapRows: async (token, workbookId, tabName, rows) => {
       appended.push(...rows);
     },
+    formatRecapStatus: async (token, workbookId, tabName) => {
+      formatted = { token, workbookId, tabName };
+    },
   });
 
   assert.equal(code, 0);
@@ -717,6 +722,50 @@ test('runIndexMonitor --sync-recap upserts only page_id-backed final presentatio
   assert.equal(updated.row.day14_收录, 'Y');
   assert.equal(updated.row.备注, 'manual decision stays');
   assert.equal(appended.length, 0);
+  assert.deepEqual(formatted, { token: 'sheet-token', workbookId: 'wb-test', tabName: RECAP_TAB });
+});
+
+test('formatRecapStatusTab colors recap repair status values in column G', async () => {
+  const calls = [];
+  await formatRecapStatusTab('sheet-token', 'wb-test', RECAP_TAB, async (url, token, init) => {
+    calls.push({ url, token, init });
+    if (!init) {
+      return {
+        sheets: [{
+          properties: { title: RECAP_TAB, sheetId: 77 },
+          conditionalFormats: [{
+            ranges: [{ sheetId: 77, startRowIndex: 1, startColumnIndex: 6, endColumnIndex: 7 }],
+            booleanRule: { condition: { type: 'TEXT_CONTAINS', values: [{ userEnteredValue: '旧规则' }] } },
+          }],
+        }],
+      };
+    }
+    return {};
+  });
+
+  const batch = calls.find((call) => call.init?.method === 'POST');
+  assert.ok(batch, 'expected a batchUpdate call');
+  const body = JSON.parse(batch.init.body);
+  assert.ok(body.requests.some((req) => req.deleteConditionalFormatRule?.sheetId === 77));
+  const rules = body.requests
+    .map((req) => req.addConditionalFormatRule?.rule?.booleanRule?.condition?.values?.[0]?.userEnteredValue)
+    .filter(Boolean);
+  assert.deepEqual(rules, [
+    '🔴 紧急问题',
+    '需重点关注',
+    '⚠️ 超期未收录',
+    '已收录',
+    '监控中',
+    '待GSC检查',
+    '已提交',
+  ]);
+  for (const req of body.requests.filter((r) => r.addConditionalFormatRule)) {
+    const range = req.addConditionalFormatRule.rule.ranges[0];
+    assert.equal(range.sheetId, 77);
+    assert.equal(range.startRowIndex, 1);
+    assert.equal(range.startColumnIndex, 6);
+    assert.equal(range.endColumnIndex, 7);
+  }
 });
 
 test('runIndexMonitor --sync-recap clears stale recap indexing flags until GSC evidence exists', async () => {

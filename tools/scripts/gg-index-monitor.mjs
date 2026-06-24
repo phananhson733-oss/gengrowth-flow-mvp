@@ -70,6 +70,51 @@ export const RECAP_HEADER = Object.freeze([
   '备注',
 ]);
 
+export const RECAP_STATUS_CONDITIONAL_FORMATS = Object.freeze([
+  {
+    textContains: '🔴 紧急问题',
+    fg: { red: 0.72, green: 0.10, blue: 0.10 },
+    bg: { red: 1.0, green: 0.82, blue: 0.82 },
+    bold: true,
+  },
+  {
+    textContains: '需重点关注',
+    fg: { red: 0.36, green: 0.22, blue: 0.66 },
+    bg: { red: 0.89, green: 0.85, blue: 0.98 },
+    bold: true,
+  },
+  {
+    textContains: '⚠️ 超期未收录',
+    fg: { red: 0.66, green: 0.31, blue: 0.00 },
+    bg: { red: 1.0, green: 0.90, blue: 0.72 },
+    bold: true,
+  },
+  {
+    textContains: '已收录',
+    fg: { red: 0.12, green: 0.45, blue: 0.20 },
+    bg: { red: 0.86, green: 0.95, blue: 0.86 },
+    bold: true,
+  },
+  {
+    textContains: '监控中',
+    fg: { red: 0.12, green: 0.32, blue: 0.60 },
+    bg: { red: 0.86, green: 0.92, blue: 1.0 },
+    bold: false,
+  },
+  {
+    textContains: '待GSC检查',
+    fg: { red: 0.28, green: 0.33, blue: 0.40 },
+    bg: { red: 0.92, green: 0.94, blue: 0.96 },
+    bold: false,
+  },
+  {
+    textContains: '已提交',
+    fg: { red: 0.12, green: 0.38, blue: 0.52 },
+    bg: { red: 0.85, green: 0.96, blue: 1.0 },
+    bold: false,
+  },
+]);
+
 export const REQUEST_INDEXING_QUEUE_TAB = 'request-indexing-queue';
 export const REQUEST_INDEXING_QUEUE_HEADER = Object.freeze([
   'candidate_id',

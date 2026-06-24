@@ -272,6 +272,120 @@ export function sheetValuesToRow(values = [], rowNumber = null) {
   return row;
 }
 
+function recapValuesToRow(values = [], rowNumber = null) {
+  const row = {};
+  RECAP_HEADER.forEach((h, i) => { row[h] = values[i] ?? ''; });
+  if (rowNumber != null) row._rowNumber = rowNumber;
+  return row;
+}
+
+function recapRowToValues(row) {
+  return RECAP_HEADER.map((h) => {
+    const v = row?.[h];
+    return v == null ? '' : v;
+  });
+}
+
+function trackingComparable(row) {
+  const copy = { ...row };
+  delete copy._rowNumber;
+  return JSON.stringify(rowToSheetValues(copy));
+}
+
+function recapComparable(row) {
+  const copy = { ...row };
+  delete copy._rowNumber;
+  return JSON.stringify(recapRowToValues(copy));
+}
+
+export function mergePublishedTrackingRow(existing = {}, fresh = {}) {
+  return {
+    ...existing,
+    url: fresh.url || existing.url || '',
+    page_id: existing.page_id || fresh.page_id || '',
+    slug: fresh.slug || existing.slug || '',
+    title: fresh.title || existing.title || '',
+    published_at: fresh.published_at || existing.published_at || '',
+    first_tracked_at: existing.first_tracked_at || fresh.first_tracked_at || fresh.published_at || '',
+    current_gsc_status: existing.current_gsc_status || fresh.current_gsc_status || 'pending_first_check',
+    monitor_status: existing.monitor_status || fresh.monitor_status || 'monitoring',
+    fix_status: existing.fix_status || fresh.fix_status || '未处理',
+    source: fresh.source || existing.source || '',
+    author: fresh.author || existing.author || '',
+  };
+}
+
+function recapOutcomeId(row = {}) {
+  const pageId = String(row.page_id || '').trim();
+  if (pageId) return `out_${pageId}_latest`;
+  const slug = slugFromEnWikiUrl(row.url);
+  return `out_${slug || 'unknown'}_latest`;
+}
+
+function isIndexedTrackingRow(row = {}) {
+  const status = String(row.current_gsc_status || '');
+  const verdict = String(row.gsc_verdict || '');
+  const monitor = String(row.monitor_status || '');
+  return monitor === 'indexed' || ((verdict === 'PASS' || /\bindexed\b/i.test(status)) && !/not indexed/i.test(status));
+}
+
+function hasInspectionEvidence(row = {}) {
+  const status = String(row.current_gsc_status || '').trim();
+  return !!status && status !== 'pending_first_check';
+}
+
+export function recapRowFromTrackingRow(row = {}, { now = new Date() } = {}) {
+  const checked = hasInspectionEvidence(row);
+  const indexed = isIndexedTrackingRow(row);
+  const status = String(row.current_gsc_status || '').trim();
+  const monitor = String(row.monitor_status || '').trim();
+  const diagnosis = String(row.diagnosis_category || '').trim();
+  const fixStatus = !checked
+    ? '待GSC检查'
+    : indexed
+      ? '已收录'
+      : `${monitor || '待处理'}${diagnosis ? `：${diagnosis}` : ''}`;
+  const noteParts = [
+    'GSC URL Inspection',
+    status ? `status=${status}` : 'status=pending',
+    row.gsc_verdict ? `verdict=${row.gsc_verdict}` : '',
+    row.last_checked_at ? `checked=${row.last_checked_at}` : '',
+    row.source ? `source=${row.source}` : '',
+  ].filter(Boolean);
+  return {
+    outcome_id: recapOutcomeId(row),
+    page_id: row.page_id || '',
+    cluster_id: '',
+    url: row.url || '',
+    day14_收录: checked ? (indexed ? 'Y' : 'N') : '',
+    申请时间: '',
+    索引修复状态: fixStatus,
+    day14_impressions: '',
+    记录日期: isoDay(now),
+    day30_进Top50词数: '',
+    当前最高排名词（排名）: '',
+    day30_clicks: '',
+    day60_pv: '',
+    day60_目标国pv: '',
+    决策: '',
+    备注: noteParts.join(' | '),
+  };
+}
+
+function mergeRecapRow(existing = {}, fresh = {}) {
+  return {
+    ...existing,
+    outcome_id: existing.outcome_id || fresh.outcome_id || '',
+    page_id: existing.page_id || fresh.page_id || '',
+    cluster_id: existing.cluster_id || fresh.cluster_id || '',
+    url: fresh.url || existing.url || '',
+    day14_收录: fresh.day14_收录 || existing.day14_收录 || '',
+    索引修复状态: fresh.索引修复状态 || existing.索引修复状态 || '',
+    记录日期: fresh.记录日期 || existing.记录日期 || '',
+    备注: existing.备注 || fresh.备注 || '',
+  };
+}
+
 export function classifyInspection(indexStatus = {}, { daysSinceFirstTracked = 0, now = new Date() } = {}) {
   const coverageState = String(indexStatus.coverageState || '').trim();
   const verdict = String(indexStatus.verdict || '').trim();
@@ -534,6 +648,44 @@ export async function appendTrackingRows(token, workbookId, tabName, rows) {
   );
 }
 
+export async function readRecapRows(token, workbookId, tabName = RECAP_TAB) {
+  const last = colLetter(RECAP_HEADER.length - 1);
+  const body = await gFetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${workbookId}/values/${encodeURIComponent(`${tabName}!A2:${last}2000`)}`,
+    token,
+  );
+  return (body.values || [])
+    .map((values, i) => recapValuesToRow(values, i + 2))
+    .filter((row) => row.url || row.page_id || row.outcome_id);
+}
+
+export async function appendRecapRows(token, workbookId, tabName, rows) {
+  if (!rows.length) return { updates: { updatedRows: 0 } };
+  return gFetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${workbookId}/values/${encodeURIComponent(`${tabName}!A1`)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+    token,
+    {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ values: rows.map(recapRowToValues) }),
+    },
+  );
+}
+
+export async function updateRecapRow(token, workbookId, tabName, rowNumber, row) {
+  if (!rowNumber) throw new Error('updateRecapRow: rowNumber required');
+  const last = colLetter(RECAP_HEADER.length - 1);
+  return gFetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${workbookId}/values/${encodeURIComponent(`${tabName}!A${rowNumber}:${last}${rowNumber}`)}?valueInputOption=RAW`,
+    token,
+    {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ values: [recapRowToValues(row)] }),
+    },
+  );
+}
+
 export async function updateTrackingRow(token, workbookId, tabName, rowNumber, row) {
   if (!rowNumber) throw new Error('updateTrackingRow: rowNumber required');
   const last = colLetter(INDEX_TRACKING_HEADER.length - 1);
@@ -652,6 +804,107 @@ async function runEnqueue(args, { sheetToken, workbookId, now }) {
   }
   const result = await appendTrackingSeed(sheetToken, workbookId, seed);
   process.stdout.write(`${result.appended ? 'enqueued' : 'already-present'} ${seed.page_id} → ${INDEX_TRACKING_TAB}\n`);
+  return 0;
+}
+
+async function runSyncPublished(args, {
+  sheetToken,
+  workbookId,
+  now,
+  sitemapRows,
+  fetchSitemapRowsFn = fetchEnWikiSitemapRows,
+  ensureFn = ensureIndexTrackingTab,
+  readRowsFn = readTrackingRows,
+  updateRowFn = updateTrackingRow,
+  appendRowsFn = appendTrackingRows,
+}) {
+  if (!workbookId) {
+    process.stderr.write('error: --sync-published requires workbook id from env or --workbook\n');
+    return 1;
+  }
+  const tabName = args.write_sheet ? await ensureFn(sheetToken, workbookId) : INDEX_TRACKING_TAB;
+  const rows = sitemapRows || await fetchSitemapRowsFn(args.sitemap_url || DEFAULT_SITEMAP_URL, { now });
+  const existing = args.write_sheet ? await readRowsFn(sheetToken, workbookId, tabName) : [];
+  const byUrl = new Map(existing.map((row) => [normalizeUrl(row.url), row]));
+  const toAppend = [];
+  const toUpdate = [];
+  let skipped = 0;
+
+  for (const fresh of rows) {
+    const key = normalizeUrl(fresh.url);
+    if (!key || !isEnWikiArticleUrl(key)) {
+      skipped++;
+      continue;
+    }
+    const old = byUrl.get(key);
+    if (!old) {
+      toAppend.push(fresh);
+      continue;
+    }
+    const merged = mergePublishedTrackingRow(old, fresh);
+    if (trackingComparable(old) !== trackingComparable(merged)) toUpdate.push({ old, merged });
+    else skipped++;
+  }
+
+  if (args.write_sheet) {
+    for (const item of toUpdate) {
+      await updateRowFn(sheetToken, workbookId, tabName, item.old._rowNumber, item.merged);
+    }
+    await appendRowsFn(sheetToken, workbookId, tabName, toAppend);
+  }
+
+  process.stdout.write(
+    `sync-published: source=live-sitemap en_urls=${rows.length} appended=${toAppend.length} updated=${toUpdate.length} skipped=${skipped} mode=${args.write_sheet ? 'write-sheet' : 'dry-run'}\n`,
+  );
+  return 0;
+}
+
+async function runSyncRecap(args, {
+  sheetToken,
+  workbookId,
+  now,
+  readRowsFn = readTrackingRows,
+  readRecapRowsFn = readRecapRows,
+  updateRecapRowFn = updateRecapRow,
+  appendRecapRowsFn = appendRecapRows,
+}) {
+  if (!workbookId) {
+    process.stderr.write('error: --sync-recap requires workbook id from env or --workbook\n');
+    return 1;
+  }
+  const tracking = await readRowsFn(sheetToken, workbookId, INDEX_TRACKING_TAB);
+  const recap = await readRecapRowsFn(sheetToken, workbookId, RECAP_TAB);
+  const byUrl = new Map(recap.map((row) => [normalizeUrl(row.url), row]));
+  const toAppend = [];
+  const toUpdate = [];
+  let skipped = 0;
+
+  for (const row of tracking) {
+    if (!isEnWikiArticleUrl(row.url)) {
+      skipped++;
+      continue;
+    }
+    const fresh = recapRowFromTrackingRow(row, { now });
+    const old = byUrl.get(normalizeUrl(row.url));
+    if (!old) {
+      toAppend.push(fresh);
+      continue;
+    }
+    const merged = mergeRecapRow(old, fresh);
+    if (recapComparable(old) !== recapComparable(merged)) toUpdate.push({ old, merged });
+    else skipped++;
+  }
+
+  if (args.write_sheet) {
+    for (const item of toUpdate) {
+      await updateRecapRowFn(sheetToken, workbookId, RECAP_TAB, item.old._rowNumber, item.merged);
+    }
+    await appendRecapRowsFn(sheetToken, workbookId, RECAP_TAB, toAppend);
+  }
+
+  process.stdout.write(
+    `sync-recap: source=${INDEX_TRACKING_TAB} en_rows=${tracking.length} appended=${toAppend.length} updated=${toUpdate.length} skipped=${skipped} mode=${args.write_sheet ? 'write-sheet' : 'dry-run'}\n`,
+  );
   return 0;
 }
 

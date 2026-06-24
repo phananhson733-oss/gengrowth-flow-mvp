@@ -105,6 +105,12 @@ export const RECAP_STATUS_CONDITIONAL_FORMATS = Object.freeze([
     bold: false,
   },
   {
+    textContains: '已重新提交',
+    fg: { red: 0.12, green: 0.38, blue: 0.52 },
+    bg: { red: 0.85, green: 0.96, blue: 1.0 },
+    bold: true,
+  },
+  {
     textContains: '待GSC检查',
     fg: { red: 0.28, green: 0.33, blue: 0.40 },
     bg: { red: 0.92, green: 0.94, blue: 0.96 },
@@ -217,6 +223,12 @@ function isoDay(value = new Date()) {
   return d.toISOString().slice(0, 10);
 }
 
+function isoTimestamp(value = new Date()) {
+  const d = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toISOString();
+}
+
 function dayNumber(dateText) {
   if (!dateText) return null;
   const d = new Date(`${String(dateText).slice(0, 10)}T00:00:00.000Z`);
@@ -243,6 +255,22 @@ function siteOrigin(site) {
 function normalizeUrl(url) {
   const s = String(url || '').trim();
   return s.endsWith('/') ? s.slice(0, -1) : s;
+}
+
+function trackingIdentity(row = {}) {
+  const pageId = String(row.page_id || '').trim();
+  return pageId || normalizeUrl(row.url);
+}
+
+function isFixedMarker(value) {
+  return String(value || '').trim() === '已修复';
+}
+
+function appendAutoNote(existing, note) {
+  const old = String(existing || '').trim();
+  if (!old) return note;
+  if (old.includes(note)) return old;
+  return `${old} | ${note}`;
 }
 
 function htmlAttr(tag, name) {
@@ -553,11 +581,15 @@ export function recapRowFromTrackingRow(row = {}, { now = new Date() } = {}) {
   const status = String(row.current_gsc_status || '').trim();
   const monitor = String(row.monitor_status || '').trim();
   const diagnosis = String(row.diagnosis_category || '').trim();
-  const fixStatus = !checked
+  const repairStatus = String(row.fix_status || '').trim();
+  const repairDisplayStatus = ['已修复', '已重新提交'].includes(repairStatus) ? repairStatus : '';
+  const fixStatus = indexed
+    ? '已收录'
+    : repairDisplayStatus
+      ? repairDisplayStatus
+      : !checked
     ? '待GSC检查'
-    : indexed
-      ? '已收录'
-      : lifecycleFixStatus(row, { monitor_status: monitor, diagnosis_category: diagnosis });
+        : lifecycleFixStatus(row, { monitor_status: monitor, diagnosis_category: diagnosis });
   const noteParts = [
     'GSC URL Inspection',
     status ? `status=${status}` : 'status=pending',
@@ -1709,6 +1741,133 @@ async function runSyncRequestQueue(args, {
   return 0;
 }
 
+function fixedResubmitTrackingRow(row = {}, now = new Date()) {
+  const ts = isoTimestamp(now);
+  const day = isoDay(now);
+  return {
+    ...row,
+    monitor_status: 'monitoring',
+    alert_level: '',
+    alert_sent_at: '',
+    fix_status: '已重新提交',
+    retry_round: Number(row.retry_round || 0) + 1,
+    fixed_detected_at: row.fixed_detected_at || ts,
+    resubmitted_at: ts,
+    next_check_after: day,
+    recommendation: '已重新提交 sitemap；已进入 request-indexing-queue 候选刷新流程；GSC Request Indexing 最终点击需人工确认。',
+    notes: appendAutoNote(row.notes, `resubmitted_after_fix=${ts}`),
+  };
+}
+
+function fixedResubmitRecapRow(row = {}, now = new Date()) {
+  const ts = isoTimestamp(now);
+  const day = isoDay(now);
+  return {
+    ...row,
+    '申请时间': day,
+    '索引修复状态': '已重新提交',
+    '记录日期': day,
+    '备注': appendAutoNote(row['备注'], `自动重新提交=${ts}`),
+  };
+}
+
+function formatFixedResubmitMessage(count, { sitemapUrl = DEFAULT_SITEMAP_URL } = {}) {
+  return [
+    `✅ 已重新提交修复 URL：${count} 条`,
+    `Sitemap：${sitemapUrl}`,
+    '下一步：追踪表已刷新，并进入 request-indexing-queue；GSC Request Indexing 最终点击需人工确认。',
+  ].join('\n');
+}
+
+async function runProcessFixed(args, {
+  sheetToken,
+  gscWriteToken,
+  workbookId,
+  now,
+  ensureFn = ensureIndexTrackingTab,
+  readRowsFn = readTrackingRows,
+  readRecapRowsFn = readRecapRows,
+  updateRowFn = updateTrackingRow,
+  updateRecapRowFn = updateRecapRow,
+  formatRecapStatusFn = formatRecapStatusTab,
+  getGscWriteToken = getGscWriteAccessToken,
+  submitSitemapFn = submitSitemap,
+  notifyFn = larkBestEffort,
+}) {
+  if (!workbookId) {
+    process.stderr.write('error: --process-fixed requires workbook id from env or --workbook\n');
+    return 1;
+  }
+
+  const tabName = args.write_sheet ? await ensureFn(sheetToken, workbookId) : INDEX_TRACKING_TAB;
+  const trackingRows = await readRowsFn(sheetToken, workbookId, tabName);
+  const recapRows = await readRecapRowsFn(sheetToken, workbookId, RECAP_TAB);
+  const fixedKeys = new Set();
+
+  for (const row of trackingRows) {
+    if (isFixedMarker(row.fix_status)) fixedKeys.add(trackingIdentity(row));
+  }
+  for (const row of recapRows) {
+    if (isFixedMarker(row['索引修复状态'])) fixedKeys.add(trackingIdentity(row));
+  }
+  fixedKeys.delete('');
+
+  const fixedTracking = trackingRows.filter((row) => {
+    const key = trackingIdentity(row);
+    if (!key || !fixedKeys.has(key)) return false;
+    if (!String(row.page_id || '').trim()) return false;
+    if (!isEnWikiArticleUrl(row.url)) return false;
+    if (String(row.fix_status || '').trim() === '已重新提交' && row.resubmitted_at) return false;
+    return true;
+  });
+
+  const fixedTrackingKeys = new Set(fixedTracking.map((row) => trackingIdentity(row)).filter(Boolean));
+  const fixedRecapRows = recapRows.filter((row) =>
+    fixedTrackingKeys.has(trackingIdentity(row)) &&
+    isFixedMarker(row['索引修复状态'])
+  );
+
+  const sitemapUrl = args.sitemap_url || DEFAULT_SITEMAP_URL;
+  const siteUrl = args.site || process.env.GG_GSC_SITE || DEFAULT_SITE;
+
+  if (args.write_sheet && fixedTracking.length) {
+    let token = gscWriteToken;
+    if (!token) {
+      try {
+        token = await getGscWriteToken();
+      } catch (e) {
+        process.stderr.write(`error: cannot mint GSC write token — ${e.message}\n`);
+        return 1;
+      }
+    }
+    try {
+      await submitSitemapFn(token, siteUrl, sitemapUrl);
+    } catch (e) {
+      const msg = `⚠️ 修复后 sitemap 重新提交失败：${sitemapUrl} (${redactNote(e)})`;
+      process.stderr.write(`${msg}\n`);
+      if (args.notify) notifyFn(msg);
+      return 1;
+    }
+
+    for (const row of fixedTracking) {
+      await updateRowFn(sheetToken, workbookId, tabName, row._rowNumber, fixedResubmitTrackingRow(row, now));
+    }
+    for (const row of fixedRecapRows) {
+      await updateRecapRowFn(sheetToken, workbookId, RECAP_TAB, row._rowNumber, fixedResubmitRecapRow(row, now));
+    }
+    if (formatRecapStatusFn) await formatRecapStatusFn(sheetToken, workbookId, RECAP_TAB);
+  }
+
+  if (args.notify && fixedTracking.length) {
+    notifyFn(formatFixedResubmitMessage(fixedTracking.length, { sitemapUrl }));
+  }
+
+  process.stdout.write(
+    `process-fixed: fixed=${fixedKeys.size} resubmitted=${fixedTracking.length} mode=${args.write_sheet ? 'write-sheet' : 'dry-run'}\n`,
+  );
+  return 0;
+}
+
 async function runCheckDue(args, {
   sheetToken,
   gscToken,
@@ -1840,6 +1999,7 @@ export async function runIndexMonitor(argv, deps = {}) {
       '  node tools/scripts/gg-index-monitor.mjs --check-all --write-sheet [--limit 200]',
       '  node tools/scripts/gg-index-monitor.mjs --sync-recap --write-sheet',
       '  node tools/scripts/gg-index-monitor.mjs --submit-sitemap [--notify]',
+      '  node tools/scripts/gg-index-monitor.mjs --process-fixed --write-sheet [--notify]',
       '  node tools/scripts/gg-index-monitor.mjs --sync-request-queue --write-sheet [--notify]',
       '',
     ].join('\n'));
@@ -1853,7 +2013,7 @@ export async function runIndexMonitor(argv, deps = {}) {
     : resolveWorkbookId();
 
   let sheetToken = deps.sheetToken;
-  if (!sheetToken && (args.write_sheet || args.check_due || args.check_all || defaultCheckDue || args.ensure_tab || args.sync_published || args.sync_recap || args.sync_request_queue)) {
+  if (!sheetToken && (args.write_sheet || args.check_due || args.check_all || defaultCheckDue || args.ensure_tab || args.sync_published || args.sync_recap || args.sync_request_queue || args.process_fixed)) {
     try {
       sheetToken = await (deps.getSheetToken || getSheetAccessToken)();
     } catch (e) {
@@ -1936,6 +2096,24 @@ export async function runIndexMonitor(argv, deps = {}) {
     });
   }
 
+  if (args.process_fixed) {
+    return runProcessFixed(args, {
+      sheetToken,
+      gscWriteToken: deps.gscWriteToken,
+      workbookId,
+      now,
+      ensureFn: deps.ensureIndexTrackingTab || ensureIndexTrackingTab,
+      readRowsFn: deps.readTrackingRows || readTrackingRows,
+      readRecapRowsFn: deps.readRecapRows || readRecapRows,
+      updateRowFn: deps.updateTrackingRow || updateTrackingRow,
+      updateRecapRowFn: deps.updateRecapRow || updateRecapRow,
+      formatRecapStatusFn: deps.formatRecapStatus || (deps.updateRecapRow ? null : formatRecapStatusTab),
+      getGscWriteToken: deps.getGscWriteToken || getGscWriteAccessToken,
+      submitSitemapFn: deps.submitSitemap || submitSitemap,
+      notifyFn: deps.notify || larkBestEffort,
+    });
+  }
+
   if (args.sync_request_queue) {
     return runSyncRequestQueue(args, {
       sheetToken,
@@ -1951,7 +2129,7 @@ export async function runIndexMonitor(argv, deps = {}) {
     });
   }
 
-  process.stderr.write('error: expected --ensure-tab, --sync-published, --enqueue-published, --check-due, --check-all, --sync-recap, --submit-sitemap, or --sync-request-queue (see --help)\n');
+  process.stderr.write('error: expected --ensure-tab, --sync-published, --enqueue-published, --check-due, --check-all, --sync-recap, --submit-sitemap, --process-fixed, or --sync-request-queue (see --help)\n');
   return 1;
 }
 

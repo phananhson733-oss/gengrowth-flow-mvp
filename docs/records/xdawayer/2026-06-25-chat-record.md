@@ -1772,3 +1772,20 @@ Generate your free birth chart to explore rohini nakshatra. In a few minutes you
 按要求产出无 YAML frontmatter 的中文 Markdown 正文；主关键词选为“罗希尼月宿”。机械检查结果：H2 数量 11，关键词出现 7 次，中文 `[[<TBD-internal-link: ...>]]` 内链占位符 9 条，CTA 使用完整 `https://astrologywiki.com/zh/wiki/how-to-read-birth-chart`，禁词列表未命中，包含“这不是临床解读或心理健康建议”免责声明，且自我觉察小提示标题后第一行直接以 `1.` 开始。已先读取可用技能与提醒文件；`ai-profile/lynne-soul.md` 在当前仓库不存在。
 
 ---
+
+### Q30 — 14:53
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: 2026-06-25T05:50:49.767Z (1782366649767)
+
+Run the GenGrowth fixed-row resubmission workflow. Execute `node tools/scripts/gg-index-monitor.mjs --process-fixed --write-sheet --notify`, then `node tools/scripts/gg-index-monitor.mjs --sync-recap --write-sheet`, then `node tools/scripts/gg-index-monitor.mjs --sync-request-queue --write-sheet`. This handles rows where `index-tracking.fix_status` or `结果复盘表.索引修复状态` has been manually marked `已修复`: refresh the sitemap through the official Search Console Sitemaps API, update tracking/recap timestamps, and refresh request-indexing candidates. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles and do not click Search Console Request Indexing unattended; only maintain the assisted queue for human-confirmed final clicks. Keep this hourly repair scan quiet by default: do not send request-indexing queue reminders from this automation. Notify only when repaired URLs were actually resubmitted or when the repair scan fails. Summarize fixed/resubmitted counts, queue counts, and any failures.
+
+**🤖 回答：**
+
+按指定顺序运行三步 fixed-row resubmission workflow：`--process-fixed --write-sheet --notify` 输出 `fixed=0 resubmitted=0 mode=write-sheet`；`--sync-recap --write-sheet` 输出 `source=index-tracking en_rows=165 appended=2 updated=0 skipped=163 mode=write-sheet`；`--sync-request-queue --write-sheet` 输出 `rows=21 P0=0 P1=2 P2=5 P3=14 mode=write-sheet`。三条命令均退出 0，无失败；保持合规边界：未使用 ordinary article Google Indexing API，未无人值守点击 Search Console Request Indexing，且本轮未发送 request-indexing queue reminder。已追加自动化 memory；发现工作区原本存在 `_staging/zh-demo/PG-NAKSH-003-*` 未提交改动，未触碰。
+
+---

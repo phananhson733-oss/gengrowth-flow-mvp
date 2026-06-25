@@ -153,6 +153,32 @@ Ready to see exactly where each full moon lands in your own chart? [Generate you
 
 ---
 
+### Q31 — 14:58
+
+**🙋 提问：**
+
+我们会处理这些问题吗，在监听 GSC 的时候：| 优先级            | GSC 显示状态（英文）                                          | 中文译名                            | 含义                                                 | 处理方向                                           |
+| -------------- | ----------------------------------------------------- | ------------------------------- | -------------------------------------------------- | ---------------------------------------------- |
+| 🔴 **P0 紧急**   | Not found (404)                                       | **未找到 (404)**                   | 页面已消失，Google 爬取时返回 404                             | 恢复页面 或 设置 301 重定向到新 URL                        |
+| 🔴 **P0 紧急**   | Server error (5xx)                                    | **服务器错误 (5xx)**                 | 服务器错误，Google 无法访问页面                                | 联系技术团队排查服务器                                    |
+| 🔴 **P0 紧急**   | Blocked due to access forbidden (403)                 | **因拒绝访问 (403) 而遭到屏蔽**           | 服务器返回 403，Google 无权访问。可能是身份验证 / IP 限制 / 误配置        | 检查服务器访问控制配置，确认 Googlebot 未被屏蔽                  |
+| 🟡 **P1 本周处理** | Crawled - currently not indexed                       | **已爬取 - 目前未编入索引**               | 已爬取但 Google 主动拒绝收录：内容质量不足（薄内容 / 重复 / 信息价值低）        | 内容扩充 / 增加内链 / 提升 E-E-A-T 信号 / 检查重复度（详见 3.3）    |
+| 🟡 **P1 本周处理** | Excluded by 'noindex' tag（非有意）                        | **已由 noindex 标记排除**（非有意）        | 页面被错误加了 noindex 标签                                 | 检查 CMS 模板或文章元数据，删除 noindex                     |
+| 🟡 **P1 本周处理** | Blocked by robots.txt（非有意）                            | **已被 robots.txt 屏蔽**（非有意）       | 页面被 robots.txt 错误屏蔽                                | 检查 robots.txt 配置，移除对应 Disallow 规则              |
+| 🟡 **P1 本周处理** | Blocked due to other 4xx issue                        | **因其他 4xx 问题而遭到屏蔽**             | 返回 401（需登录）/ 410（永久删除）等其他 4xx 错误                   | 根据具体错误码排查：401 检查权限配置；410 确认是否误删                |
+| 🟠 **P2 排期处理** | Duplicate, Google chose different canonical than user | **重复页面 - Google 选择了与用户不同的规范网址** | 用户设置了 canonical 但 Google 不认可，另选了一个版本               | 检查两个页面内容是否实质重复；排查 canonical 标签是否指向错误 URL       |
+| 🟠 **P2 排期处理** | Duplicate without user-selected canonical             | **重复页面 - 未由用户选择规范网址**           | 存在重复内容但没有设置 canonical，Google 自行选择了规范版本（可能选错）       | 为所有重复 URL 添加明确的 canonical 标签，指向你希望被收录的版本       |
+| 🟠 **P2 排期处理** | Duplicate, submitted URL not selected as canonical    | **重复页面 - 提交的网址未被选为规范网址**        | 通过 sitemap 或 GSC 提交了该 URL，但 Google 把另一个 URL 视为规范版本 | 检查 sitemap 内是否有多个 URL 指向相同内容；确认 canonical 标签一致 |
+| 🟠 **P2 排期处理** | Soft 404                                              | **软 404**                       | 页面存在但内容极少或不相关，Google 判定等同于 404                     | 补充有实质内容，或删除页面并设置 301 重定向                       |
+| 🟠 **P2 排期处理** | Page with redirect                                    | **包含重定向的页面**                    | 重定向链太长（> 3 跳）或存在重定向循环                              | 简化重定向链，确保 301 直指最终 URL                         |
+| ⬜ **P3 观察**    | Indexed, though blocked by robots.txt                 | **已编入索引（虽受 robots.txt 屏蔽）**     | 收录了但 robots.txt 有屏蔽规则，状态不一致存在风险                    | 核查 robots.txt 是否需要更新                           |
+
+**🤖 回答：**
+
+核对 `tools/scripts/gg-index-monitor.mjs` 的 `classifyInspection()` 与 smoke tests，并重新运行 `node --test tools/scripts/__tests__/gg-index-monitor.smoke.test.mjs`，结果 42/42 通过。结论：当前会“检测、分类、写表、告警/进人工队列”，不会自动修复页面、robots、canonical 或内容。已覆盖：404/5xx/403、Crawled-not-indexed、noindex、robots.txt、canonical/duplicate、Soft 404、Page with redirect、other 4xx 等；仍有边界差异：`Blocked due to other 4xx issue` 当前归入 P2 索引配置问题而非文档 P1；`Indexed, though blocked by robots.txt` 可能被当前逻辑当作 indexed 停止监控，需补 P3 特判；“proper canonical”是否应静默也需业务确认。
+
+---
+
 ### Q31 — 14:57
 
 **🙋 提问：**

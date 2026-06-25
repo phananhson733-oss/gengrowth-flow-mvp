@@ -1409,3 +1409,22 @@ Generate your free birth chart to explore rohini nakshatra. In a few minutes you
 产出一篇无 YAML frontmatter 的中文 Markdown 正文；主关键词选为“罗希尼月宿”，机械校验结果为关键词 7 次、H2 11 个、中文内链占位符 9 条，CTA 包含完整 `https://astrologywiki.com/zh/wiki/how-to-read-birth-chart`，禁词列表未命中，自我觉察小提示标题后第一行直接以 `1.` 开始。文章按中文 Phase 2 骨架重写英文稿核心语义：第四个月宿、金牛座 10°至 23°20′、月亮主宰、生主/梵天、罗哈纳生长力、月亮擢升精确点在克利提卡、与克利提卡和鹿首的取舍、星盘识别与四分段、常见误读、速查表、问答、自我觉察提示、延伸阅读、中文 CTA 与参考来源。正文先具名帕拉沙拉与丹恩·鲁迪亚，并保留“这不是临床解读或心理健康建议”的免责声明。
 
 ---
+
+### Q26 — 12:50
+
+**🙋 提问：**
+
+````text
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: 2026-06-25T03:49:19.358Z (1782359359358)
+
+Run the GenGrowth fixed-row resubmission workflow. Execute `node tools/scripts/gg-index-monitor.mjs --process-fixed --write-sheet --notify`, then `node tools/scripts/gg-index-monitor.mjs --sync-recap --write-sheet`, then `node tools/scripts/gg-index-monitor.mjs --sync-request-queue --write-sheet --notify`. This handles rows where `index-tracking.fix_status` or `结果复盘表.索引修复状态` has been manually marked `已修复`: refresh the sitemap through the official Search Console Sitemaps API, update tracking/recap timestamps, and refresh request-indexing candidates. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles and do not click Search Console Request Indexing unattended; only maintain the assisted queue for human-confirmed final clicks. Summarize fixed/resubmitted counts, queue counts, and any failures.
+````
+
+**🤖 回答：**
+
+按指定顺序执行固定行重提 workflow：`--process-fixed --write-sheet --notify` 退出码 0，结果 `fixed=0`、`resubmitted=0`；`--sync-recap --write-sheet` 退出码 0，结果 `en_rows=162`、`appended=0`、`updated=0`、`skipped=162`；`--sync-request-queue --write-sheet --notify` 退出码 0，结果 `rows=18`、`P0=0`、`P1=2`、`P2=5`、`P3=11`。合规边界保持：未使用 Google Indexing API，未无人值守点击 Search Console Request Indexing，只维护辅助队列供人工最终确认。未观察到命令失败；已追加自动化记忆 `/Users/awayer_mini/.codex/automations/gengrowth-index-repair-resubmit/memory.md`。
+
+---

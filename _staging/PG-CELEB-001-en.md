@@ -18,8 +18,8 @@ associated_keywords:
   - emma watson rising sign
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-25T06:21:43.529Z
-content_sha256_short: 29dc85fdb6f32ef6
+generated_at: 2026-06-25T06:44:10.177Z
+content_sha256_short: a2f6457aeb1544f8
 phase2_checks: all-pass
 ---
 
@@ -55,7 +55,9 @@ The Aries Sun governs her core drive — the part that takes a stand, starts thi
 
 ### What the Virgo Rising Filters
 
-One honest caveat belongs here: the Aries Sun and Sagittarius Moon are fixed by her birth date alone, but a Rising sign depends on the exact birth time, and Emma Watson's is not officially certified. A 6 p.m. Paris time is widely recorded for her across chart databases, and on that basis her Ascendant reads as Virgo — so treat the Rising as well-documented rather than absolutely proven. With that noted, the Virgo Rising governs first contact: the automatic, detail-aware way she presents before anyone meets the deeper layers. A Virgo Ascendant tends to favor accuracy, preparation, and careful wording over spontaneity, which is why interviews read as reasoned rather than reactive. Psychological astrology in the lineage of Liz Greene frames this kind of Sun-Rising tension as productive rather than contradictory: the Rising doesn't cancel the Sun, it routes it. So the Aries conviction still arrives — it just arrives composed, edited, and double-checked.
+One honest caveat belongs here: the Aries Sun and Sagittarius Moon are fixed by her birth date alone, but a Rising sign depends on the exact birth time, and Emma Watson's is not officially certified. A 6 p.m. Paris time is widely recorded for her across chart databases, so her Virgo Ascendant is best read as well-documented rather than absolutely proven.
+
+With that noted, the Virgo Rising governs first contact: the automatic, detail-aware way she presents before anyone meets the deeper layers. A Virgo Ascendant tends to favor accuracy, preparation, and careful wording over spontaneity, which is why interviews read as reasoned rather than reactive. Psychological astrology in the lineage of Liz Greene frames this kind of Sun-Rising tension as productive rather than contradictory: the Rising doesn't cancel the Sun, it routes it. So the Aries conviction still arrives — it just arrives composed, edited, and double-checked.
 
 ### Where the Trade-Off Lives
 

@@ -1,7 +1,7 @@
 ---
 title: Marcus Rashford Zodiac Sign
 slug: marcus-rashford-zodiac-sign
-date: 2026-06-24
+date: 2026-06-25
 status: ready-to-review
 type: wiki-entry
 template: Definition
@@ -18,8 +18,8 @@ associated_keywords:
   - england world cup 2026 astrology
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-24T13:56:53.550Z
-content_sha256_short: 5cd30d0a357fbd8b
+generated_at: 2026-06-25T05:10:54.439Z
+content_sha256_short: 96b1256cefb98b85
 phase2_checks: all-pass
 ---
 
@@ -27,7 +27,7 @@ phase2_checks: all-pass
 
 ## What Is Marcus Rashford's Zodiac Sign?
 
-Marcus Rashford's zodiac sign is Scorpio — he was born on October 31, 1997, placing his Sun near the close of Scorpio season. In astrology terms, that makes him **a Scorpio Sun whose public calm sits on top of deep, private intensity**. Most chart write-ups stop at the Sun, yet the more revealing detail is that several widely cited readings also put his Moon in Scorpio, doubling that depth. A disputed Capricorn Rising and a Mars in Sagittarius round out the picture people usually mean when they look up the Marcus Rashford zodiac sign. This page treats those placements as an interpretive lens, not a verdict on who he is, and it sits within the broader [[<TBD-internal-link: pillar page on World Cup 2026 player astrology>]], which maps the charts of the players in focus this cycle.
+Marcus Rashford's zodiac sign is Scorpio — he was born on October 31, 1997, placing his Sun firmly within Scorpio (about a third of the way through the sign). In astrology terms, that makes him **a Scorpio Sun whose public calm sits on top of deep, private intensity**. Most chart write-ups stop at the Sun, yet the more revealing detail is that several widely cited readings also put his Moon in Scorpio, doubling that depth. A disputed Capricorn Rising and a Mars in Sagittarius round out the picture people usually mean when they look up the Marcus Rashford zodiac sign. This page treats those placements as an interpretive lens, not a verdict on who he is, and it sits within the broader [[<TBD-internal-link: pillar page on World Cup 2026 player astrology>]], which maps the charts of the players in focus this cycle.
 
 - Scorpio Sun: a controlled surface over an intense, private core
 - An often-cited Scorpio Moon that doubles the emotional depth
@@ -85,7 +85,7 @@ The thread running through all four is the same: the popular take freezes one pl
 
 **What is Marcus Rashford's zodiac sign?**
 
-He was born on October 31, 1997, which places his Sun in Scorpio near the close of Scorpio season. Several astrology readings also put his Moon in Scorpio, giving the chart a double-Scorpio emphasis that goes well beyond the Sun alone.
+He was born on October 31, 1997, which places his Sun in Scorpio (about a third of the way into the sign, not at its end). Several astrology readings also put his Moon in Scorpio, giving the chart a double-Scorpio emphasis that goes well beyond the Sun alone.
 
 **Is Marcus Rashford really a double Scorpio?**
 

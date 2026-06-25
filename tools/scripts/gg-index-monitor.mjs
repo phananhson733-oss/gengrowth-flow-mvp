@@ -562,9 +562,11 @@ function isIndexedTrackingRow(row = {}) {
 
 function lifecycleFixStatus(row = {}, classification = {}) {
   const monitor = String(classification.monitor_status || row.monitor_status || '').trim();
+  const alert = String(classification.alert_level || row.alert_level || '').trim();
   if (monitor === 'indexed') return '✅ 已收录';
   if (monitor === 'urgent') return '🔴 紧急问题（404/5xx）';
   if (monitor === 'needs_focus') return '需重点关注';
+  if (monitor === 'needs_attention' && alert === 'P3') return 'P3 观察';
   if (monitor === 'needs_attention') return '⚠️ 超期未收录（触发诊断）';
   if (monitor === 'monitoring') return '监控中';
   return row.fix_status || '已提交';
@@ -581,15 +583,19 @@ export function recapRowFromTrackingRow(row = {}, { now = new Date() } = {}) {
   const status = String(row.current_gsc_status || '').trim();
   const monitor = String(row.monitor_status || '').trim();
   const diagnosis = String(row.diagnosis_category || '').trim();
+  const alert = String(row.alert_level || '').trim();
   const repairStatus = String(row.fix_status || '').trim();
   const repairDisplayStatus = ['已修复', '已重新提交'].includes(repairStatus) ? repairStatus : '';
-  const fixStatus = indexed
-    ? '已收录'
-    : repairDisplayStatus
+  const attention = ['urgent', 'needs_focus', 'needs_attention'].includes(monitor);
+  const fixStatus = attention
+    ? lifecycleFixStatus(row, { monitor_status: monitor, diagnosis_category: diagnosis, alert_level: alert })
+    : indexed
+      ? '已收录'
+      : repairDisplayStatus
       ? repairDisplayStatus
       : !checked
         ? '待GSC检查'
-        : lifecycleFixStatus(row, { monitor_status: monitor, diagnosis_category: diagnosis });
+        : lifecycleFixStatus(row, { monitor_status: monitor, diagnosis_category: diagnosis, alert_level: alert });
   const noteParts = [
     'GSC URL Inspection',
     status ? `status=${status}` : 'status=pending',
@@ -626,8 +632,10 @@ function requestPriority({ recap = {}, tracking = {} } = {}) {
   const diagnosis = String(tracking.diagnosis_category || '').toLowerCase();
   const monitor = String(tracking.monitor_status || '').toLowerCase();
   const status = String(tracking.current_gsc_status || '').toLowerCase();
+  const alert = String(tracking.alert_level || '').toUpperCase();
   const age = Number(tracking.days_since_first_tracked || 0);
 
+  if (/^P[0-3]$/.test(alert)) return alert;
   if (monitor === 'urgent' || /technical|robots|noindex|blocked|404|5xx|技术故障|配置错误|标签问题/.test(`${fix} ${diagnosis} ${status}`)) return 'P0';
   if (monitor === 'needs_focus' || /content_quality|unknown_attention|内容质量|未知状态/.test(`${fix} ${diagnosis}`) || age >= 21) return 'P1';
   if (/canonical_duplicate|normal_queue|discovered|crawled - currently not indexed|canonical|重复内容|正常排队/.test(`${fix} ${diagnosis} ${status}`)) return 'P2';
@@ -657,6 +665,7 @@ function discoveryActions({ priority, tracking = {} } = {}) {
   const diagnosis = String(tracking.diagnosis_category || '');
   const actions = ['官方 Sitemaps API 刷新 sitemap'];
   if (/unknown/i.test(status)) actions.push('补强站内发现入口/内链');
+  if (/other 4xx/i.test(status) || /4xx/.test(diagnosis)) actions.push('先修访问权限或 4xx 状态，再提交');
   if (/Crawled - currently not indexed/i.test(status) || /内容质量/.test(diagnosis)) actions.push('复查内容质量、重复覆盖和 HTML 可抓取性');
   if (/canonical|duplicate/i.test(status) || /重复内容/.test(diagnosis)) actions.push('复查 canonical 与重复 URL 选择');
   if (priority === 'P0') actions.push('先修技术阻断，再提交');

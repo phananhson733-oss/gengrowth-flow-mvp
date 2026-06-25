@@ -18,8 +18,8 @@ associated_keywords:
   - england world cup 2026 astrology
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-25T05:10:54.439Z
-content_sha256_short: 96b1256cefb98b85
+generated_at: 2026-06-25T05:33:52.025Z
+content_sha256_short: b1e331036193ecda
 phase2_checks: all-pass
 ---
 
@@ -27,7 +27,7 @@ phase2_checks: all-pass
 
 ## What Is Marcus Rashford's Zodiac Sign?
 
-Marcus Rashford's zodiac sign is Scorpio — he was born on October 31, 1997, placing his Sun firmly within Scorpio (about a third of the way through the sign). In astrology terms, that makes him **a Scorpio Sun whose public calm sits on top of deep, private intensity**. Most chart write-ups stop at the Sun, yet the more revealing detail is that several widely cited readings also put his Moon in Scorpio, doubling that depth. A disputed Capricorn Rising and a Mars in Sagittarius round out the picture people usually mean when they look up the Marcus Rashford zodiac sign. This page treats those placements as an interpretive lens, not a verdict on who he is, and it sits within the broader [[<TBD-internal-link: pillar page on World Cup 2026 player astrology>]], which maps the charts of the players in focus this cycle.
+Marcus Rashford's zodiac sign is Scorpio — he was born on October 31, 1997, placing his Sun firmly within Scorpio (about a third of the way through the sign). In astrology terms, that makes him **a Scorpio Sun whose public calm sits on top of deep, private intensity**. Most chart write-ups stop at the Sun, yet the more revealing detail is that several widely cited readings also put his Moon in Scorpio, doubling that depth. A disputed Capricorn Rising and a Mars in Sagittarius round out the picture people usually mean when they look up the Marcus Rashford zodiac sign. This page treats those placements as an interpretive lens, not a verdict on who he is, and it sits within the broader [[<TBD-internal-link: World Cup 2026 astrology prediction hub>]], which maps the charts of the players in focus this cycle.
 
 - Scorpio Sun: a controlled surface over an intense, private core
 - An often-cited Scorpio Moon that doubles the emotional depth
@@ -47,7 +47,7 @@ None of this is about forecasting his next season. According to a 2017 Pew Resea
 
 The place people most often mix things up in the Marcus Rashford zodiac sign discussion is the gap between a Scorpio Sun and a Scorpio Moon, since several readings put both in his chart. Here's how each works. The Sun describes the conscious identity he's growing into; in the psychological astrology tradition associated with Liz Greene and Dane Rudhyar, it reads less as a fixed label and more as a lifelong project. A Scorpio Sun points that project toward depth, control, and renewal. The Moon describes the private emotional reality underneath — what close people meet once the guard drops — and a Scorpio Moon leans hard into intensity, loyalty, and a need to feel things fully behind a composed face. The three-part Sun, Moon, and Rising framework this rests on is commonly traced to Hellenistic astrology in the early centuries CE.
 
-Reading only the Sun gets you a clean, quotable headline, but you lose the emotional underlayer the Moon adds. To gain that tidy one-line label, you sacrifice the accuracy a two-placement read provides — and the trade-off cuts both ways, since a full double-Scorpio read takes more nuance to explain even as it accounts for the exact contrast (visible calm, hidden depth) that a Sun-only summary leaves dangling. Picture him in a World Cup 2026 pressure moment: the Sun-only story expects fire, while the double-Scorpio read points to a still, almost unreadable focus with the intensity routed inward. You can see the same layering mapped across other squad members in this [[<TBD-internal-link: birth chart breakdown for another England squad player>]].
+Reading only the Sun gets you a clean, quotable headline, but you lose the emotional underlayer the Moon adds. To gain that tidy one-line label, you sacrifice the accuracy a two-placement read provides — and the trade-off cuts both ways, since a full double-Scorpio read takes more nuance to explain even as it accounts for the exact contrast (visible calm, hidden depth) that a Sun-only summary leaves dangling. Picture him in a World Cup 2026 pressure moment: the Sun-only story expects fire, while the double-Scorpio read points to a still, almost unreadable focus with the intensity routed inward. You can see the same layering mapped across other squad members in this [[<TBD-internal-link: Harry Kane birth chart>]].
 
 ## How to Read a Double Scorpio Placement in a Chart
 
@@ -109,9 +109,9 @@ This is not a clinical interpretation or mental health advice.
 
 ## Related Reading
 
-- [[<TBD-internal-link: England World Cup 2026 transit forecast>]] — how the tournament's astrological timing lines up with the squad's charts
+- [[<TBD-internal-link: England World Cup 2026 astrology>]] — how the squad's charts frame the tournament
 - [[<TBD-internal-link: guide to reading a full birth chart>]] — the step-by-step approach behind synthesizing Sun, Moon, and Rising
-- [[<TBD-internal-link: explainer on what a Scorpio Sun means>]] — a deeper look at the sign anchoring his chart
+- [[<TBD-internal-link: best soccer players by zodiac sign>]] — how other players' signs compare across the game
 
 ## Take Action
 

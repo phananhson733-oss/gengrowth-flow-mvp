@@ -153,6 +153,18 @@ Ready to see exactly where each full moon lands in your own chart? [Generate you
 
 ---
 
+### Q31 — 14:57
+
+**🙋 提问：**
+
+用户要求以 AstrologyWiki 中文内容编辑身份，基于英文 Phase 2 成稿 `PG-NAKSH-003 / rohini-nakshatra` 产出可进入中文 Phase 2 的简体中文 Markdown 正文；硬性要求包括：无 YAML、中文 H1 与 11 个中文 H2 骨架、首段 1 个加粗定义短语后紧跟 3 个 bullet、第二节标题固定为 `## 为什么了解它能帮助自我觉察`、第三节标题固定为 `<主词> 与相近概念：运作方式 + 取舍` 且每个对比写明取舍、第四节使用“识别”、第五至第十一节依次覆盖常见误读、速查表/一览、常见问题/问答、自我觉察小提示、延伸阅读、下一步行动、参考来源；至少 5 条中文 `[[<TBD-internal-link: ...>]]` 内链占位符，主中文关键词全篇 5-8 次，参考来源人物须先在正文具名，保留反思/象征语气，禁止医疗承诺和广告承诺词，CTA 改为中文并指向 `https://astrologywiki.com/zh/wiki/how-to-read-birth-chart`，结尾保留“这不是临床解读或心理健康建议”免责声明。用户补充上一稿被自动校验拦下，需修复首个正文内链过晚、RL4/RL5 关键词漂移或堆词、RL6 合规、结构 fail，并以英文稿结构为准小修，不整篇推倒重写。
+
+**🤖 回答：**
+
+按要求产出无 YAML frontmatter 的中文 Markdown 正文；主关键词选为“罗希尼月宿”。机械校验结果：H2 数量 11，关键词出现 7 次，中文 `[[<TBD-internal-link: ...>]]` 内链占位符 8 条，首个内链距正文起点 55 字，CTA 使用完整 `https://astrologywiki.com/zh/wiki/how-to-read-birth-chart`，禁词列表未命中，包含“这不是临床解读或心理健康建议”免责声明，且自我觉察小提示标题后第一行直接以 `1.` 开始。已读取 superpowers 相关技能、项目中文 Definition 模板、同类 Nakshatra 示例、提醒文件；`ai-profile/lynne-soul.md` 在当前仓库不存在。
+
+---
+
 ### Q30 — 14:50
 
 **🙋 提问：**

@@ -248,6 +248,14 @@ export const TBD_LINK_RULES = [
   { match: /transit_events\s+cluster|jupiter\s+in\s+cancer.{0,20}saturn\s+in\s+aries|saturn\s+in\s+aries(\s+2026)?(\s+transit)?/i, href: '/en/wiki/saturn-in-aries-2026' },
   { match: /world\s+cup\s+2026\s+astrology\s+(themes?\s+)?(pillar|prediction|hub|overview|guide)|world\s+cup\s+2026\s+astrology\s+themes|world\s+cup\s+2026\s+astrology\s+prediction/i, href: '/en/wiki/world-cup-2026-astrology-prediction' },
   { match: /how\s+to\s+read\s+a\s+(national|mundane)\s+(or\s+mundane\s+)?chart|(national|mundane)\s+chart\b/i, href: '/en/wiki/how-to-read-birth-chart' },
+  // --- 6/24 Celebrity zodiac cluster (PG-CELEB-001..005): cross-links among the five
+  // celeb spokes. Person-name matches are specific, so they sit safely above the generic
+  // /(natal|birth) chart/ rule. Same slugs serve EN + ZH. ---
+  { match: /emma\s+watson|艾玛.?沃森/i, href: '/en/wiki/emma-watson-zodiac-sign' },
+  { match: /greta\s+lee|格蕾塔.?李/i, href: '/en/wiki/greta-lee-zodiac-sign' },
+  { match: /kylie\s+jenner|凯莉.?詹娜/i, href: '/en/wiki/kylie-jenner-zodiac-sign' },
+  { match: /mariah\s+carey|玛丽亚.?凯莉/i, href: '/en/wiki/mariah-carey-zodiac-sign' },
+  { match: /sharon\s+osbourne|莎朗.?奥斯本/i, href: '/en/wiki/sharon-osbourne-zodiac-sign' },
   // --- 6/2 EMPATH/HSP cluster (highly-sensitive-person pillar + signs / vs-autism
   // / famous spokes). Specific spokes MUST precede the general pillar rule
   // (first-match-wins) so "HSP vs autism" / "signs of a HSP" route to their own

@@ -153,6 +153,18 @@ Ready to see exactly where each full moon lands in your own chart? [Generate you
 
 ---
 
+### Q31 — 15:05
+
+**🙋 提问：**
+
+补齐剩余部分
+
+**🤖 回答：**
+
+按 TDD 流程补齐 GSC 状态监听剩余边界：先运行新增/现有 smoke 回归用例看到 4 个预期失败，再修改 `tools/scripts/gg-index-monitor.mjs`。实现内容：`Blocked due to other 4xx issue` 归为 P1「访问权限或 4xx 问题」并给出 401/410/权限/误删排查建议；`Indexed, though blocked by robots.txt` 不再被当作普通已收录静默结束，而是 P3 观察、保留已收录证据并提示核查 robots.txt；request-indexing 队列优先尊重 `alert_level`，避免 other-4xx 被关键词误归 P0。验证：`node --test tools/scripts/__tests__/gg-index-monitor.smoke.test.mjs` 46/46 通过，`git diff --check` 通过；当前工作区仅 `tools/scripts/gg-index-monitor.mjs` 有改动。
+
+---
+
 ### Q31 — 14:58
 
 **🙋 提问：**

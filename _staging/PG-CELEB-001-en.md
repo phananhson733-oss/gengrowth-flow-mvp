@@ -27,7 +27,7 @@ phase2_checks: all-pass
 
 ## What Is Emma Watson's Zodiac Sign?
 
-Emma Watson's zodiac sign is **an Aries Sun steadied by a Virgo Rising and a Sagittarius Moon**. Most chart sites stop at the Sun and file her as a fiery, driven Aries — accurate, but only one layer of three. The Aries Sun supplies cardinal-fire drive: conviction, initiative, and a readiness to lead with a cause. Her Virgo Rising then shapes how that fire meets the public — measured, precise, and visibly self-edited. The Sagittarius Moon adds an emotional pull toward big-picture issues and lifelong study. Read together, these explain the composed-yet-assertive presence people keep noticing.
+Emma Watson's zodiac sign is **an Aries Sun steadied by a widely-recorded Virgo Rising and a Sagittarius Moon**. Most chart sites stop at the Sun and file her as a fiery, driven Aries — accurate, but only one layer of three. The Aries Sun supplies cardinal-fire drive: conviction, initiative, and a readiness to lead with a cause. Her Virgo Rising then shapes how that fire meets the public — measured, precise, and visibly self-edited. The Sagittarius Moon adds an emotional pull toward big-picture issues and lifelong study. Read together, these explain the composed-yet-assertive presence people keep noticing.
 
 The fuller emma watson zodiac sign picture is less about one label and more about how three signals interact. For the system this rests on, see [[<TBD-internal-link: pillar page on reading a full birth chart>]], which maps how Sun, Moon, and Rising stack.
 
@@ -55,7 +55,7 @@ The Aries Sun governs her core drive — the part that takes a stand, starts thi
 
 ### What the Virgo Rising Filters
 
-The Virgo Rising governs first contact: the automatic, detail-aware way she presents before anyone meets the deeper layers. A Virgo Ascendant tends to favor accuracy, preparation, and careful wording over spontaneity, which is why interviews read as reasoned rather than reactive. Psychological astrology in the lineage of Liz Greene frames this kind of Sun-Rising tension as productive rather than contradictory: the Rising doesn't cancel the Sun, it routes it. So the Aries conviction still arrives — it just arrives composed, edited, and double-checked.
+One honest caveat belongs here: the Aries Sun and Sagittarius Moon are fixed by her birth date alone, but a Rising sign depends on the exact birth time, and Emma Watson's is not officially certified. A 6 p.m. Paris time is widely recorded for her across chart databases, and on that basis her Ascendant reads as Virgo — so treat the Rising as well-documented rather than absolutely proven. With that noted, the Virgo Rising governs first contact: the automatic, detail-aware way she presents before anyone meets the deeper layers. A Virgo Ascendant tends to favor accuracy, preparation, and careful wording over spontaneity, which is why interviews read as reasoned rather than reactive. Psychological astrology in the lineage of Liz Greene frames this kind of Sun-Rising tension as productive rather than contradictory: the Rising doesn't cancel the Sun, it routes it. So the Aries conviction still arrives — it just arrives composed, edited, and double-checked.
 
 ### Where the Trade-Off Lives
 

@@ -1,7 +1,7 @@
 ---
 title: Emma Watson Zodiac Sign
 slug: emma-watson-zodiac-sign
-date: 2026-06-24
+date: 2026-06-25
 status: ready-to-review
 type: wiki-entry
 template: Definition
@@ -18,8 +18,8 @@ associated_keywords:
   - emma watson rising sign
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-24T13:56:53.144Z
-content_sha256_short: 7f3821719690c91b
+generated_at: 2026-06-25T06:21:43.529Z
+content_sha256_short: 29dc85fdb6f32ef6
 phase2_checks: all-pass
 ---
 
@@ -43,7 +43,7 @@ Understanding the Emma Watson zodiac sign breakdown matters because the calm she
 2. **The missing middle layer.** Leave the Virgo Rising out of the conversation and there's no way to explain why an assertive core reads as steady on camera.
 3. **The "passive" misfile.** Calm gets coded as passive, when in her case it's Aries drive being deliberately edited before it reaches an audience.
 
-Picture the contrast people actually run into: a fast, pointed stance on an issue (Aries) delivered in calm, exact, well-prepared language (Virgo). The Sun-only write-ups can't hold both halves at once, so the reader is left choosing between "fierce" and "composed" when the real answer is both, in sequence. A layered read is simply more useful than a one-word verdict — it treats astrology as a symbolic framework for thinking about how a public persona gets built, not a forecast of behavior. Public curiosity about charts runs wide, too; according to the Pew Research Center, about 29% of U.S. adults said they believed in astrology. This page pairs naturally with [[<TBD-internal-link: spoke page on Virgo rising sign profiles>]], which covers how a Virgo Ascendant tends to present in public.
+Picture the contrast people actually run into: a fast, pointed stance on an issue (Aries) delivered in calm, exact, well-prepared language (Virgo). The Sun-only write-ups can't hold both halves at once, so the reader is left choosing between "fierce" and "composed" when the real answer is both, in sequence. A layered read is simply more useful than a one-word verdict — it treats astrology as a symbolic framework for thinking about how a public persona gets built, not a forecast of behavior. Public curiosity about charts runs wide, too; according to the Pew Research Center, about 29% of U.S. adults said they believed in astrology. This page pairs naturally with other celebrity chart reads like [[<TBD-internal-link: Sharon Osbourne's zodiac sign>]], where the rising sign is just as central to the debate.
 
 ## Aries Sun vs Virgo Rising: What Each Actually Governs
 
@@ -114,9 +114,8 @@ Not really. The Rising routes the Sun's energy rather than canceling it, so an a
 
 ## Related Reading
 
-- [[<TBD-internal-link: guide to Aries Sun sign personality traits>]] — for the drive layer underneath her composed surface
-- [[<TBD-internal-link: explainer on the Sagittarius Moon emotional style>]] — how the Moon shapes her pull toward causes and study
-- [[<TBD-internal-link: comparison of Sun sign versus Rising sign>]] — why these two layers get confused in celebrity charts
+- [[<TBD-internal-link: Kylie Jenner's zodiac sign>]] — another public figure whose Sun-sign label hides a more strategic chart
+- [[<TBD-internal-link: Greta Lee's zodiac sign>]] — a celebrity chart where an unconfirmed birth time limits what can be claimed
 - [[<TBD-external-link: Wikipedia | Emma Watson | neutral biographical context on the public figure behind the chart>]] — background for the persona being read
 - [[<TBD-external-link: Wikipedia | Astrological sign | overview of the zodiac framework this read draws on>]] — the wider system the placements sit in
 

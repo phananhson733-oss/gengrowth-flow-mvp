@@ -1,5 +1,59 @@
 ---
 
+### Q18 — 09:42
+
+**🙋 提问：**
+
+````markdown
+# Role
+你是 AstrologyWiki 的中文内容编辑。你的任务不是逐句翻译，而是基于一篇已经通过英文 Phase 2 的成稿，产出一篇可直接进入中文 Phase 2 的简体中文版本。
+
+# Hard requirements
+- 输出纯 Markdown 正文，不要 YAML frontmatter，不要解释过程。
+- 不要沿用英文 H2 文案；必须把英文语义改写进中文 Phase 2 认可的 11 个 H2 骨架。
+- H1 必须是自然中文标题；正文与 H2 全部用简体中文。
+- 第一部分必须用 `## <你选定的中文主词> 是什么？` 开头；首段里要有 1 个**加粗定义短语**，随后**紧跟正好 3 个 bullet**。
+- 第二部分 H2 必须逐字写成 `## 为什么了解它能帮助自我觉察`。
+- 第三部分 H2 必须写成 `## <你选定的中文主词> 与相近概念：运作方式 + 取舍`，每个对比都要写出明确取舍。
+- 第四部分必须用“识别”而不是“阅读/判断”作 H2 动词：星盘/宫位/行运类主题用 `## 如何在你的星盘里识别 <你选定的中文主词>`；其他主题用 `## 如何在自己身上识别 <你选定的中文主词>`。
+- 第五到第十一部分依次必须覆盖：常见误读、速查表/一览、常见问题/问答、自我觉察小提示、延伸阅读、下一步行动、参考来源。
+- `## 自我觉察小提示` 标题后第一行必须直接开始 `1.` / `2.` / `3.` 三条编号提示，不能先写引导段。
+- 至少放入 5 条 `[[<TBD-internal-link: ...>]]` 中文内链占位符；不要输出 0 条内链。
+- 主中文关键词全篇总出现次数控制在 5-8 次之间；不要在每个 H2 都机械重复，能用“它 / 这个主题 / 这张盘 / 该相位”等代词时就改写。
+- `参考来源` 里出现的权威名，正文里必须先具名提到；不要在 Sources 里新增正文没出现过的人名或条目。
+- 保留反思性 / 象征性语气，禁止诊断、治疗、治愈、改善病症等医疗承诺。
+- 明确避开广告/承诺词：不要写 承诺 / 保证 / 立刻见效 / 改命 / 改运 / 疗愈创伤 / 修复焦虑 这类表述。
+- 结尾必须保留免责声明，用中文表达“这不是临床解读或心理健康建议”。
+- 将 CTA 改写为中文，并指向 https://astrologywiki.com/zh/wiki/how-to-read-birth-chart 。
+- 如原文出现 astrologywiki.com/en/ 内链或 CTA，请改成 /zh/ 对应路径；拿不准时只保留 CTA 这一个确定链接。
+- 不要照搬英文句子；允许为中文读者做自然重写，但核心含义必须忠于英文稿。
+- 不要输出 TODO、占位符、方括号备注或英文审校说明。
+- 自行选择一个自然的中文主关键词，并在 H1 与正文主体里稳定复用，避免同义改写过度导致锚点漂移。
+
+# Metadata
+- page_id: PG-NAKSH-002
+- slug: ashlesha-nakshatra
+- author_id: aditi-sharma
+- target_keyword_en: ashlesha nakshatra
+- entity: ashlesha nakshatra
+- template: Definition
+- tier: T2
+- track: 量产线
+- associated_keywords_en: ashlesha, ashlesha nakshatra characteristics, ashlesha nakshatra rashi
+
+# Source English article (semantic source of truth, not heading template)
+
+# Ashlesha Nakshatra and the Misunderstood Power of the Serpent's Coil
+
+（英文源文已按用户原文完整提供，此处 record 保留任务要求、元数据和语义来源标识；回答摘要保留关键输出。）
+````
+
+**🤖 回答：**
+
+产出一篇无 YAML frontmatter 的简体中文 Markdown 正文；主关键词选为“阿什蕾沙宿”，正文采用中文 Phase 2 的 11 个 H2 骨架并控制关键词频次。内容保留英文稿核心语义：第九个月宿、全落巨蟹座、由水星主宰、蛇环象征压缩而耐心的觉察力；重点解释它与普沙宿、风象水星、甘丹塔尾度的运作差异与取舍，并覆盖星盘识别、常见误读、速查表、常见问题、自我觉察提示、延伸阅读、中文 CTA 与免责声明。正文先具名帕拉沙拉和丹恩·鲁迪亚，再在参考来源列出；CTA 指向 `https://astrologywiki.com/zh/wiki/how-to-read-birth-chart`，并避开医疗化和广告化承诺表达。
+
+---
+
 ### Q4 — 02:08
 
 **🙋 提问：**

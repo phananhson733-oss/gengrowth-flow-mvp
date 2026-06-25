@@ -152,6 +152,18 @@ Ready to see exactly where each full moon lands in your own chart? [Generate you
 按中文 Phase 2 要求产出无 YAML frontmatter 的纯 Markdown 正文；主关键词选定为“满月灵性实践”，文章使用 11 个中文 H2 骨架，保留英文稿的语义重点：满月是月相周期的高峰与收获点，核心在释放、感谢、完成和清理，而不是新月式播种。补救重点包括：CTA 使用 `https://astrologywiki.com/zh/wiki/how-to-read-birth-chart`，避开“承诺”等广告法禁词和医疗化表达，在漂移小节自然补回主关键词与原文语义，并在正文先具名 Dane Rudhyar、Alexander Ruperti 后再列入参考来源。
 
 ---
+
+### Q19 — 09:47
+
+**🙋 提问：**
+
+用户要求继续基于 PG-NAKSH-002（ashlesha-nakshatra）的英文 Phase 2 成稿，产出可进入中文 Phase 2 的简体中文 Markdown 正文，并逐条修复上一稿自动校验拦截点：CTA 必须使用 `https://astrologywiki.com/zh/wiki/how-to-read-birth-chart`，避开“彻底”等广告法/承诺类禁词；被点名漂移的小节需自然补回主中文关键词，但避免堆词；结构必须使用中文 Phase 2 的 11 个 H2 骨架；保持中文，不回退英文标题或英文小节；以英文稿结构为准小修，不整篇推倒重写。用户还要求无 YAML frontmatter、无过程解释、正文简体中文、至少 5 条中文 `[[<TBD-internal-link: ...>]]` 内链占位符、关键词出现次数 5-8 次、参考来源中的权威名必须先在正文具名、保留非临床/非心理健康建议免责声明。
+
+**🤖 回答：**
+
+准备输出一篇纯 Markdown 中文正文，主关键词选为“阿什蕾沙月宿”；本地文本校验结果：H2 数量 11、主关键词出现 6 次、中文内链占位符 6 条、CTA 完整 URL 命中、禁词检查无 `承诺/保证/立刻见效/改命/改运/疗愈创伤/修复焦虑/彻底`。正文保留英文稿核心语义：第九个月宿、巨蟹座、水星主宰、蛇环象征压缩而耐心的觉察力，并覆盖普沙宿/风象水星/甘丹塔点的取舍、星盘识别、常见误读、速查表、问答、自我觉察提示、延伸阅读、下一步行动与参考来源。
+
+---
 date: 2026-06-25
 type: chat-record
 author: xdawayer
@@ -1147,5 +1159,22 @@ Ready to see where this actually lands for you? [Generate your free birth chart]
 **🤖 回答：**
 
 产出一篇无 YAML frontmatter 的简体中文 Markdown 正文；主关键词选为“阿什蕾沙宿”，正文采用中文 Phase 2 的 11 个 H2 骨架并控制关键词频次。内容保留英文稿核心语义：第九个月宿、全落巨蟹座、由水星主宰、蛇环象征压缩而耐心的觉察力；重点解释它与普沙宿、风象水星、甘丹塔尾度的运作差异与取舍，并覆盖星盘识别、常见误读、速查表、常见问题、自我觉察提示、延伸阅读、中文 CTA 与免责声明。正文先具名帕拉沙拉和丹恩·鲁迪亚，再在参考来源列出；CTA 指向 `https://astrologywiki.com/zh/wiki/how-to-read-birth-chart`，并避开医疗化和广告化承诺表达。
+
+---
+
+### Q19 — 09:49
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: 2026-06-25T00:46:48.686Z (1782348408686)
+
+Run the GenGrowth fixed-row resubmission workflow. Execute `node tools/scripts/gg-index-monitor.mjs --process-fixed --write-sheet --notify`, then `node tools/scripts/gg-index-monitor.mjs --sync-recap --write-sheet`, then `node tools/scripts/gg-index-monitor.mjs --sync-request-queue --write-sheet --notify`. This handles rows where `index-tracking.fix_status` or `结果复盘表.索引修复状态` has been manually marked `已修复`: refresh the sitemap through the official Search Console Sitemaps API, update tracking/recap timestamps, and refresh request-indexing candidates. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles and do not click Search Console Request Indexing unattended; only maintain the assisted queue for human-confirmed final clicks. Summarize fixed/resubmitted counts, queue counts, and any failures.
+
+**🤖 回答：**
+
+已按固定顺序执行 GenGrowth fixed-row repair-resubmit workflow。`--process-fixed --write-sheet --notify` 退出 0，输出 `fixed=0 resubmitted=0`；`--sync-recap --write-sheet` 退出 0，输出 `en_rows=162 appended=0 updated=0 skipped=162`；`--sync-request-queue --write-sheet --notify` 退出 0，输出 `rows=18 P0=0 P1=2 P2=5 P3=11`。本轮未使用普通文章 Google Indexing API，也未无人值守点击 Search Console Request Indexing；只维护 assisted queue。已追加自动化记忆 `/Users/awayer_mini/.codex/automations/gengrowth-index-repair-resubmit/memory.md`；本轮未观察到失败。
 
 ---

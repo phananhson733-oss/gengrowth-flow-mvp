@@ -1207,3 +1207,20 @@ Run the GenGrowth fixed-row resubmission workflow. Execute `node tools/scripts/g
 已按固定顺序执行 GenGrowth fixed-row repair-resubmit workflow。`--process-fixed --write-sheet --notify` 退出 0，输出 `fixed=0 resubmitted=0`；`--sync-recap --write-sheet` 退出 0，输出 `en_rows=162 appended=0 updated=0 skipped=162`；`--sync-request-queue --write-sheet --notify` 退出 0，输出 `rows=18 P0=0 P1=2 P2=5 P3=11`。本轮未使用普通文章 Google Indexing API，也未无人值守点击 Search Console Request Indexing；只维护 assisted queue。已追加自动化记忆 `/Users/awayer_mini/.codex/automations/gengrowth-index-repair-resubmit/memory.md` 和 daily record；本轮未观察到失败。
 
 ---
+
+### Q22 — 11:50
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: 2026-06-25T02:48:19.143Z (1782355699143)
+
+Run the GenGrowth fixed-row resubmission workflow. Execute `node tools/scripts/gg-index-monitor.mjs --process-fixed --write-sheet --notify`, then `node tools/scripts/gg-index-monitor.mjs --sync-recap --write-sheet`, then `node tools/scripts/gg-index-monitor.mjs --sync-request-queue --write-sheet --notify`. This handles rows where `index-tracking.fix_status` or `结果复盘表.索引修复状态` has been manually marked `已修复`: refresh the sitemap through the official Search Console Sitemaps API, update tracking/recap timestamps, and refresh request-indexing candidates. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles and do not click Search Console Request Indexing unattended; only maintain the assisted queue for human-confirmed final clicks. Summarize fixed/resubmitted counts, queue counts, and any failures.
+
+**🤖 回答：**
+
+已按固定顺序执行 GenGrowth fixed-row repair-resubmit workflow。`--process-fixed --write-sheet --notify` 退出 0，输出 `fixed=0 resubmitted=0`；`--sync-recap --write-sheet` 退出 0，输出 `en_rows=162 appended=0 updated=0 skipped=162`；`--sync-request-queue --write-sheet --notify` 退出 0，输出 `rows=18 P0=0 P1=2 P2=5 P3=11`。本轮未使用普通文章 Google Indexing API，也未无人值守点击 Search Console Request Indexing；只维护 assisted queue。已追加自动化记忆 `/Users/awayer_mini/.codex/automations/gengrowth-index-repair-resubmit/memory.md` 和 daily record；本轮未观察到失败。
+
+---

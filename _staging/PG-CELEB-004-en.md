@@ -37,7 +37,7 @@ The Mariah Carey zodiac sign is **Aries, a fire sign whose drive is filtered thr
 
 Understanding the Mariah Carey zodiac sign matters because most chart pages stop at "Aries Sun" and leave fans with a caricature. The friction is real: music fans attribute her diva persona solely to that Aries fire, because the sites they read omit how her Cancer Moon channels that energy inward instead of outward. So the assertiveness gets misread as combativeness, and the careful, guarded side of her never gets explained.
 
-That gap matters for anyone using a celebrity chart as a mirror. When you only see the Sun, you assume fire always looks loud, and you miss how the same drive can show up as guarded perfectionism. Treating the chart as a layered system, rather than a one-word verdict, is what turns a celebrity profile into a usable lesson about your own behavior. Reading the fuller picture sits naturally alongside [[<TBD-internal-link: spoke page on how the Moon sign shapes emotional expression>]], because the Cancer Moon is doing quiet work the Sun-only narrative never credits.
+That gap matters for anyone using a celebrity chart as a mirror. When you only see the Sun, you assume fire always looks loud, and you miss how the same drive can show up as guarded perfectionism. Treating the chart as a layered system, rather than a one-word verdict, is what turns a celebrity profile into a usable lesson about your own behavior. Reading the fuller picture sits naturally alongside other current celebrity chart reads like [[<TBD-internal-link: Greta Lee's zodiac sign>]], since the Cancer Moon is doing quiet work the Sun-only narrative never credits.
 
 ## Aries Sun vs Cancer Moon: Why the Fire Stays Private
 
@@ -104,9 +104,8 @@ This is not a clinical interpretation or mental health advice.
 
 ## Related Reading
 
-- [[<TBD-internal-link: profile of the Aries Sun sign in depth>]] — unpacks the raw fire that the 12th house here keeps private
-- [[<TBD-internal-link: guide to rising sign profiles>]] — shows how the Ascendant changes what a chart presents first
-- [[<TBD-internal-link: overview of synastry compatibility basics>]] — explains how a guarded chart like this reads in relationships
+- [[<TBD-internal-link: Kylie Jenner's zodiac sign>]] — another celebrity whose public brand outruns the one-line Sun read
+- [[<TBD-internal-link: Sharon Osbourne's zodiac sign>]] — a chart where the rising sign stays debated, much like the limits flagged here
 - [[<TBD-external-link: Wikipedia | Mariah Carey | background on the public persona this chart reading reframes>]]
 
 ## Take Action

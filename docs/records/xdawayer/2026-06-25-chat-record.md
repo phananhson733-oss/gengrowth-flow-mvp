@@ -167,10 +167,10 @@ tags:
 
 ## Daily Summary
 
-- 要点 1：执行 GenGrowth fixed-row resubmission workflow，处理人工标记 `已修复` 的索引修复行。
-- 要点 2：多次运行三条 `gg-index-monitor.mjs` 命令均正常退出，最新固定行结果为 `fixed=0`、`resubmitted=0`。
-- 要点 3：最新复盘同步为 `en_rows=162`、`appended=0`、`updated=0`、`skipped=162`，`request-indexing-queue` 为 19 行。
-- 要点 4：保持普通文章不使用 Google Indexing API、不无人值守点击 GSC Request Indexing 的合规边界。
+- 要点 1：执行多轮 GenGrowth 索引相关自动化，包括 fixed-row resubmission 与 Phase 2 index monitor wrapper。
+- 要点 2：最新 index monitor wrapper 正常退出，刷新 live sitemap、提交 sitemap、检查 9 条 due URL，并同步 `结果复盘表`。
+- 要点 3：最新队列同步为 `request-indexing-queue` 共 18 行，优先级 `P0=0`、`P1=2`、`P2=5`、`P3=11`。
+- 要点 4：索引自动化保持合规边界：不使用 Google Indexing API，不无人值守点击 Search Console Request Indexing。
 - 要点 5：基于英文 Phase 2 成稿，为 AstrologyWiki 中文内容产出符合中文 Phase 2 骨架的简体中文 Markdown 正文。
 
 ---
@@ -983,5 +983,24 @@ Run the GenGrowth fixed-row resubmission workflow. Execute `node tools/scripts/g
 **🤖 回答：**
 
 按指定顺序执行固定行重提 workflow：`--process-fixed --write-sheet --notify` 退出码 0，结果 `fixed=0`、`resubmitted=0`；`--sync-recap --write-sheet` 退出码 0，结果 `en_rows=162`、`appended=0`、`updated=162`、`skipped=0`；`--sync-request-queue --write-sheet --notify` 退出码 0，结果 `rows=19`、`P0=0`、`P1=3`、`P2=0`、`P3=16`。合规边界保持：未使用 Google Indexing API，未无人值守点击 Search Console Request Indexing，只维护辅助队列供人工最终确认。已写入自动化记忆 `$CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md`；本次未观察到失败。
+
+---
+
+### Q17 — 09:05
+
+**🙋 提问：**
+
+````text
+Automation: GenGrowth Index Monitor
+Automation ID: gengrowth-index-monitor
+Automation memory: $CODEX_HOME/automations/gengrowth-index-monitor/memory.md
+Last run: 2026-06-24T10:04:54.066Z (1782295494066)
+
+Run the GenGrowth Phase 2 indexing workflow through the existing deterministic wrapper: `bash tools/scripts/gg-index-monitor-tick.sh`. This wrapper must refresh the live sitemap through the official Search Console Sitemaps API, inspect due URLs through URL Inspection, sync the final `结果复盘表`, generate/update `request-indexing-queue` with priority colors, and send Feishu SEO技术 group reminders for actionable candidates or failures. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, and do not click Search Console Request Indexing unattended. For Computer Use submission, only assist by opening candidate GSC inspection URLs and stop for human confirmation before the final Request Indexing click. After the wrapper exits, summarize sitemap submission status, GSC check counts/failures, queue counts by priority, and any Feishu notification outcome visible in the log.
+````
+
+**🤖 回答：**
+
+执行 `bash tools/scripts/gg-index-monitor-tick.sh`，wrapper 退出码 0，日志为 `$HOME/gengrowth-agents/cron-sync/index_monitor/2026-06-25.log`，运行时间约 101 秒。日志结果：`sync-published` 为 `en_urls=213`、`appended=0`、`updated=162`、`skipped=51`；`process-fixed` 为 `fixed=0`、`resubmitted=0`；`sitemap-submit` 对 `https://www.astrologywiki.com/sitemap.xml` 返回 ok；URL Inspection 为 `rows=162`、`due=9`、`checked=9`、`alerts=0`、`failures=0`；`sync-recap` 为 `en_rows=162`、`appended=0`、`updated=162`、`skipped=0`；`sync-request-queue` 为 `rows=18`、`P0=0`、`P1=2`、`P2=5`、`P3=11`。Feishu 通知脚本为 best-effort 且不写发送回执；日志只能确认 notify-capable 步骤已执行且队列有候选，未见成功或失败回执。合规边界保持：未使用 Google Indexing API，未无人值守点击 Search Console Request Indexing。已更新自动化记忆 `$CODEX_HOME/automations/gengrowth-index-monitor/memory.md`。
 
 ---

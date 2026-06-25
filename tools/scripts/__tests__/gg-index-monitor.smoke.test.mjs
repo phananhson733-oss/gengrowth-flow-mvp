@@ -289,6 +289,36 @@ test('classifyInspection alerts at D+14 for crawled-not-indexed', () => {
   assert.match(result.recommendation, /目标 ≥ 1,200 词/);
 });
 
+test('classifyInspection routes other 4xx blocks to P1 handling', () => {
+  const result = classifyInspection({
+    verdict: 'FAIL',
+    coverageState: 'Blocked due to other 4xx issue',
+  }, { daysSinceFirstTracked: 1, now: new Date('2026-06-24T09:00:00Z') });
+
+  assert.equal(result.monitor_status, 'needs_attention');
+  assert.equal(result.diagnosis_category, '访问权限或 4xx 问题');
+  assert.equal(result.alert_level, 'P1');
+  assert.equal(result.should_alert, true);
+  assert.match(result.recommendation, /401|410|权限|误删/);
+});
+
+test('classifyInspection keeps indexed robots-blocked pages in P3 observation', () => {
+  const result = classifyInspection({
+    verdict: 'PASS',
+    coverageState: 'Indexed, though blocked by robots.txt',
+  }, {
+    daysSinceFirstTracked: 14,
+    now: new Date('2026-06-24T09:00:00Z'),
+    pageDiagnostics: { robots_txt: 'User-agent: *\nDisallow: /en/wiki/' },
+  });
+
+  assert.equal(result.monitor_status, 'needs_attention');
+  assert.equal(result.diagnosis_category, '已收录但 robots.txt 屏蔽');
+  assert.equal(result.alert_level, 'P3');
+  assert.equal(result.should_alert, true);
+  assert.match(result.recommendation, /核查 robots\.txt|已收录但 robots\.txt/);
+});
+
 test('classifyInspection escalates unresolved non-indexed pages at D+30', () => {
   const result = classifyInspection({
     verdict: 'NEUTRAL',
@@ -536,6 +566,23 @@ test('recapRowFromTrackingRow does not mark canonical duplicate states as indexe
 
   assert.equal(row.day14_收录, 'N');
   assert.equal(row.索引修复状态, '⚠️ 超期未收录（触发诊断）');
+});
+
+test('recapRowFromTrackingRow keeps indexed robots-blocked rows visible as P3 observation', () => {
+  const row = recapRowFromTrackingRow({
+    url: 'https://www.astrologywiki.com/en/wiki/indexed-robots-blocked',
+    page_id: 'PG-ROBOTS-P3',
+    current_gsc_status: 'Indexed, though blocked by robots.txt',
+    gsc_verdict: 'PASS',
+    monitor_status: 'needs_attention',
+    diagnosis_category: '已收录但 robots.txt 屏蔽',
+    alert_level: 'P3',
+    first_tracked_at: '2026-06-01',
+    last_checked_at: '2026-06-24',
+  }, { now: new Date('2026-06-25T00:00:00Z') });
+
+  assert.equal(row.day14_收录, 'Y');
+  assert.equal(row.索引修复状态, 'P3 观察');
 });
 
 test('seo autopilot enqueues index tracking instead of calling article Indexing API', () => {
@@ -1122,6 +1169,32 @@ test('buildRequestIndexingCandidateRows prioritizes non-indexed page_id-backed r
   assert.doesNotMatch(rows[0].gsc_inspection_url, /\/inspect\?|[?&]id=/);
   assert.equal(rows[0].computer_use_status, '待人工确认');
   assert.match(rows[0].computer_use_instruction, /复制本行 url 列/);
+});
+
+test('buildRequestIndexingCandidateRows keeps other 4xx blocks at P1 priority', () => {
+  const rows = buildRequestIndexingCandidateRows({
+    recapRows: [{
+      page_id: 'PG-4XX',
+      url: 'https://www.astrologywiki.com/en/wiki/blocked-other-4xx',
+      day14_收录: 'N',
+      索引修复状态: '⚠️ 超期未收录（触发诊断）',
+    }],
+    trackingRows: [{
+      page_id: 'PG-4XX',
+      url: 'https://www.astrologywiki.com/en/wiki/blocked-other-4xx',
+      title: 'Blocked 4xx',
+      current_gsc_status: 'Blocked due to other 4xx issue',
+      diagnosis_category: '访问权限或 4xx 问题',
+      monitor_status: 'needs_attention',
+      alert_level: 'P1',
+      days_since_first_tracked: 14,
+    }],
+    now: new Date('2026-06-25T00:00:00Z'),
+  });
+
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].priority, 'P1');
+  assert.match(rows[0].discovery_actions, /先修访问权限或 4xx/);
 });
 
 test('runIndexMonitor --sync-request-queue writes queue rows and sends Feishu notification', async () => {

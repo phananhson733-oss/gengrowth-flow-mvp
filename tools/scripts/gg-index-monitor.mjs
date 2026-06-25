@@ -812,6 +812,23 @@ export function classifyInspection(indexStatus = {}, { daysSinceFirstTracked = 0
   };
 
   const canonicalDuplicate = /alternate page with proper canonical tag|duplicate|canonical/i.test(coverageState);
+  if (/indexed,?\s+though blocked by robots\.txt/i.test(coverageState)) {
+    return {
+      ...base,
+      monitor_status: 'needs_attention',
+      diagnosis_category: '已收录但 robots.txt 屏蔽',
+      diagnosis_conclusion: '已收录但 robots.txt 屏蔽',
+      alert_level: 'P3',
+      should_alert: true,
+      first_indexed_at: checkedDay,
+      recommendation: checklist([
+        '已收录但 robots.txt 存在屏蔽规则，核查是否有意保留',
+        '确认 robots.txt 是否需要更新，避免后续状态不一致或回退',
+        pageDiagnostics.robots_txt ? `robots.txt 当前内容：\n${pageDiagnostics.robots_txt}` : '',
+      ]),
+    };
+  }
+
   const looksIndexed = (verdict === 'PASS' || /\bindexed\b/i.test(coverageState)) &&
     !/not indexed/i.test(coverageState) &&
     !canonicalDuplicate;
@@ -865,6 +882,22 @@ export function classifyInspection(indexStatus = {}, { daysSinceFirstTracked = 0
         '确认是否有意设置 noindex',
         `当前 meta robots：${pageDiagnostics.meta_robots || '未抓取到，需人工确认'}`,
         '如非有意，修复模板或页面 head 后再进入 request-indexing-queue',
+      ]),
+    };
+  }
+
+  if (/blocked due to other 4xx/i.test(coverageState)) {
+    return {
+      ...base,
+      monitor_status: 'needs_attention',
+      diagnosis_category: '访问权限或 4xx 问题',
+      diagnosis_conclusion: '访问权限或 4xx 问题',
+      alert_level: 'P1',
+      should_alert: true,
+      recommendation: checklist([
+        '根据实际 HTTP 状态排查：401 检查权限配置；410 确认是否误删或应移出追踪',
+        '确认未登录访问和 Googlebot 抓取路径可访问',
+        '修复后重新检查 URL Inspection，并进入 request-indexing-queue',
       ]),
     };
   }
@@ -955,7 +988,7 @@ export function classifyInspection(indexStatus = {}, { daysSinceFirstTracked = 0
     };
   }
 
-  if (/soft 404|page with redirect|blocked due to other 4xx/i.test(coverageState)) {
+  if (/soft 404|page with redirect/i.test(coverageState)) {
     return {
       ...base,
       monitor_status: 'needs_attention',

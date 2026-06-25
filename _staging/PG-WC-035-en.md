@@ -1,7 +1,7 @@
 ---
 title: Thomas Partey Zodiac Sign
 slug: thomas-partey-zodiac-sign
-date: 2026-06-24
+date: 2026-06-25
 status: ready-to-review
 type: wiki-entry
 template: Definition
@@ -18,8 +18,8 @@ associated_keywords:
   - ghana world cup 2026 astrology
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-06-24T13:56:53.485Z
-content_sha256_short: f57b7f6bed1748fe
+generated_at: 2026-06-25T05:25:55.992Z
+content_sha256_short: 6aace494f7cec6e0
 phase2_checks: all-pass
 ---
 
@@ -27,7 +27,7 @@ phase2_checks: all-pass
 
 ## What Is Thomas Partey's Zodiac Sign?
 
-Thomas Partey zodiac sign is Gemini, set by his June 13, 1993 birth date. Astrologers read this as **Gemini, a mutable air sign ruled by Mercury**, which ties the core of his chart to adaptability, information exchange, and quick thinking rather than one fixed identity. For a footballer, that symbolism lines up with a player who covers several midfield jobs instead of locking into a single position. This sits inside the broader [[<TBD-internal-link: pillar page on all twelve zodiac sun signs>]], which frames each Sun sign as a direction of growth rather than a fixed personality label. Read that way, his Gemini is a starting point for the analysis, not a verdict to check off.
+Thomas Partey zodiac sign is Gemini, set by his June 13, 1993 birth date. Astrologers read this as **Gemini, a mutable air sign ruled by Mercury**, which ties the core of his chart to adaptability, information exchange, and quick thinking rather than one fixed identity. For a footballer, that symbolism lines up with a player who covers several midfield jobs instead of locking into a single position. This sits inside the broader [[<TBD-internal-link: World Cup 2026 astrology prediction hub>]], which maps the charts of the players in focus this cycle. Read that way, his Gemini is a starting point for the analysis, not a verdict to check off.
 
 - Sun in Gemini, a mutable air sign linked to versatility and the quick exchange of information — the single placement fixed purely by his calendar date.
 - Ruled by Mercury, the planet astrology associates with communication, processing speed, and adaptive, flexible thinking.
@@ -41,7 +41,7 @@ Understanding the Thomas Partey zodiac sign matters because the way it gets publ
 2. **The fact-versus-estimate blur.** Profile sites rarely flag which placements are solid and which are guesses, so readers can't tell the Sun (certain) from the Ascendant (unknown).
 3. **The over-reading risk.** Detailed house breakdowns invite very specific personality claims that the underlying data can't actually support.
 
-This is why the person-centered tradition Dane Rudhyar helped shape treats the Sun as a developmental direction, not a fixed verdict — and why an honest read leans on what's confirmed. The cultural pull is real, too: according to the Pew Research Center, about 29% of U.S. adults said they believe in astrology, which is part of why a player's sign gets searched at all. If you want the underlying tool, an [[<TBD-internal-link: explainer on Mercury as a chart ruler>]] shows why Gemini's ruling planet carries so much weight here. The takeaway is a simple sorting rule: trust what the date alone fixes, and hold everything that needs a precise clock as provisional.
+This is why the person-centered tradition Dane Rudhyar helped shape treats the Sun as a developmental direction, not a fixed verdict — and why an honest read leans on what's confirmed. The cultural pull is real, too: according to the Pew Research Center, about 29% of U.S. adults said they believe in astrology, which is part of why a player's sign gets searched at all. If you want the underlying method, a [[<TBD-internal-link: guide to reading a full birth chart>]] shows how the Sun sits alongside the rest of the chart. The takeaway is a simple sorting rule: trust what the date alone fixes, and hold everything that needs a precise clock as provisional.
 
 ## Sun Sign vs Rising Sign: What's Confirmed and What Isn't
 
@@ -102,9 +102,9 @@ No. A sign offers a symbolic lens on style and tendencies, not a forecast of mat
 
 ## Related Reading
 
-- [[<TBD-internal-link: guide to the Gemini Sun sign>]] — a fuller look at the sign at the center of his chart.
-- [[<TBD-internal-link: explainer on the rising sign and why birth time matters>]] — why his Ascendant stays unconfirmed.
-- [[<TBD-internal-link: World Cup 2026 player astrology hub>]] — how other players' charts are read across this series.
+- [[<TBD-internal-link: best soccer players by zodiac sign>]] — how other players' signs stack up across the game.
+- [[<TBD-internal-link: Lionel Messi zodiac sign>]] — another World Cup player's chart read in the same series.
+- [[<TBD-internal-link: Christian Pulisic birth chart>]] — a fellow World Cup forward's placements.
 - [[<TBD-external-link: Wikipedia | Thomas Partey | background on the player whose chart this article reads>]] — career facts behind the birth-date sourcing.
 
 ## Take Action

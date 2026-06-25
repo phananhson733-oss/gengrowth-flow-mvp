@@ -617,8 +617,8 @@ export function recapRowFromTrackingRow(row = {}, { now = new Date() } = {}) {
   };
 }
 
-function searchConsoleInspectionUrl(url, site = DEFAULT_SITE) {
-  return `https://search.google.com/search-console/inspect?resource_id=${encodeURIComponent(site)}&id=${encodeURIComponent(url)}`;
+function searchConsoleInspectionUrl(_url, site = DEFAULT_SITE) {
+  return `https://search.google.com/search-console?resource_id=${encodeURIComponent(site)}`;
 }
 
 function requestPriority({ recap = {}, tracking = {} } = {}) {
@@ -705,7 +705,7 @@ export function buildRequestIndexingCandidateRows({
       request_reason: requestReason({ recap, tracking }),
       gsc_inspection_url: searchConsoleInspectionUrl(url, siteUrl),
       computer_use_status: existing.computer_use_status || '待人工确认',
-      computer_use_instruction: 'Computer Use 可打开 gsc_inspection_url 并粘贴 URL 检查；看到 Request Indexing 前必须停下等待人工确认。确认后再点击提交。',
+      computer_use_instruction: 'Computer Use 可打开 gsc_inspection_url，复制本行 url 列到顶部 URL Inspection 搜索框；看到 Request Indexing 前必须停下等待人工确认。',
       created_at: existing.created_at || day,
       updated_at: day,
       notes: existing.notes || '',

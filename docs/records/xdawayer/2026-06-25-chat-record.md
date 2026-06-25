@@ -1178,3 +1178,15 @@ Run the GenGrowth fixed-row resubmission workflow. Execute `node tools/scripts/g
 已按固定顺序执行 GenGrowth fixed-row repair-resubmit workflow。`--process-fixed --write-sheet --notify` 退出 0，输出 `fixed=0 resubmitted=0`；`--sync-recap --write-sheet` 退出 0，输出 `en_rows=162 appended=0 updated=0 skipped=162`；`--sync-request-queue --write-sheet --notify` 退出 0，输出 `rows=18 P0=0 P1=2 P2=5 P3=11`。本轮未使用普通文章 Google Indexing API，也未无人值守点击 Search Console Request Indexing；只维护 assisted queue。已追加自动化记忆 `/Users/awayer_mini/.codex/automations/gengrowth-index-repair-resubmit/memory.md`；本轮未观察到失败。
 
 ---
+
+### Q20 — 09:51
+
+**🙋 提问：**
+
+用户要求基于 PG-NAKSH-002（ashlesha-nakshatra）的英文 Phase 2 成稿，产出可进入中文 Phase 2 的简体中文纯 Markdown 正文，并修复上一稿自动校验拦截点：CTA 必须使用 `https://astrologywiki.com/zh/wiki/how-to-read-birth-chart`；避开广告法/承诺类禁词和医疗化表达；被点名漂移的小节需自然补回主中文关键词但避免堆词；结构必须使用中文 Phase 2 的 11 个 H2 骨架；H1、正文与 H2 全部为简体中文；至少 5 条中文 `[[<TBD-internal-link: ...>]]` 内链占位符；主关键词全篇 5-8 次；参考来源权威名必须先在正文具名；结尾保留“这不是临床解读或心理健康建议”的免责声明。
+
+**🤖 回答：**
+
+产出一篇无 YAML frontmatter 的中文 Markdown 正文；主关键词选为“阿什蕾沙宿”，全篇控制为 8 次。文章保留英文稿核心语义：第九个月宿、完整落在巨蟹座、由水星主宰、蛇环象征压缩而耐心的觉察力；按中文 Phase 2 骨架覆盖自我觉察、相近概念取舍、星盘识别、常见误读、速查表、问答、自我觉察提示、延伸阅读、下一步行动和参考来源。正文先具名帕拉沙拉与丹恩·鲁迪亚，CTA 指向 `https://astrologywiki.com/zh/wiki/how-to-read-birth-chart`，并保留非临床/非心理健康建议免责声明。
+
+---

@@ -451,15 +451,30 @@ async function gateFail(o, B, deps, pgId, claim, reason, plan) {
     plan.push(`final: SKIP mark-failed (claim status="${claim ? claim.status : 'unknown'}" already terminal — avoids mjs throw)`);
   }
 
-  // The gate owns the FAILURE notify (merge owns the success notify). Action-needed → @PM+@Ops.
-  const msg = `⚠️ SEO autopilot 发布 gate 未过 ${slug}（${o.branch}）：${reason} — PR 待人工`;
-  plan.push(`final: notify ${B.larkNotify} (@PM @Ops)`);
-  await runStep('bash', [B.larkNotify, msg], {
-    timeoutMs: o.statusTimeoutMs,
-    env: { ...process.env, GG_LARK_NOTIFY_AT_PM: '1', GG_LARK_NOTIFY_AT_OPS: '1' },
-  }, deps);
+  // Ops policy (2026-06-25): a gate park is an INTERMEDIATE state — an operator/agent
+  // very often recovers it (fix the draft / env / links and re-gate). Broadcasting every
+  // park spams the Feishu group with errors that get fixed minutes later. So by DEFAULT we
+  // do NOT notify the group on a park; we only record the reason in the ledger + this plan
+  // (whoever runs the gate sees it and can recover). A genuine ABANDONMENT — the article is
+  // given up on and will not ship — is a DELIBERATE action: the operator/agent sends the
+  // Feishu message themselves at that point. Set GG_GATE_NOTIFY_ON_PARK=1 to restore the
+  // legacy always-notify-on-park behavior.
+  const notifyOnPark = process.env.GG_GATE_NOTIFY_ON_PARK === '1';
+  if (notifyOnPark) {
+    const msg = `⚠️ SEO autopilot 发布 gate 未过 ${slug}（${o.branch}）：${reason} — PR 待人工`;
+    plan.push(`final: notify ${B.larkNotify} (@PM @Ops)`);
+    await runStep('bash', [B.larkNotify, msg], {
+      timeoutMs: o.statusTimeoutMs,
+      env: { ...process.env, GG_LARK_NOTIFY_AT_PM: '1', GG_LARK_NOTIFY_AT_OPS: '1' },
+    }, deps);
+  } else {
+    plan.push('final: park notify SUPPRESSED (intermediate state — recover & re-gate, or notify Feishu explicitly only on true abandonment; set GG_GATE_NOTIFY_ON_PARK=1 to re-enable)');
+  }
 
-  return { exitCode: EXIT.GATE_FAILED, plan, action: parkable ? 'parked + notified' : 'notified (already terminal)', reason };
+  const notedAction = notifyOnPark
+    ? (parkable ? 'parked + notified' : 'notified (already terminal)')
+    : (parkable ? 'parked (notify suppressed)' : 'already terminal (notify suppressed)');
+  return { exitCode: EXIT.GATE_FAILED, plan, action: notedAction, reason };
 }
 
 // ── small helpers ─────────────────────────────────────────────────────────────

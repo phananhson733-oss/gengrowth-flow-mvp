@@ -1118,8 +1118,10 @@ test('buildRequestIndexingCandidateRows prioritizes non-indexed page_id-backed r
   assert.equal(rows[0].priority, 'P1');
   assert.equal(rows[0].page_id, 'PG-UNKNOWN');
   assert.match(rows[0].request_reason, /Google 尚未知/);
-  assert.match(rows[0].gsc_inspection_url, /search-console\/inspect/);
+  assert.equal(rows[0].gsc_inspection_url, 'https://search.google.com/search-console?resource_id=sc-domain%3Aastrologywiki.com');
+  assert.doesNotMatch(rows[0].gsc_inspection_url, /\/inspect\?|[?&]id=/);
   assert.equal(rows[0].computer_use_status, '待人工确认');
+  assert.match(rows[0].computer_use_instruction, /复制本行 url 列/);
 });
 
 test('runIndexMonitor --sync-request-queue writes queue rows and sends Feishu notification', async () => {

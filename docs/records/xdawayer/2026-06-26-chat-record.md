@@ -47,3 +47,15 @@ aliases:
 B+C 完整落地，codex 复审 VERDICT: SHIP，1368/1372 测试通过（4 个预存失败在 gg-preview-gate，与本改动无关），+37 新测试全绿。新建 SSOT `tools/scripts/lib/preprocessor-prompt.mjs`（5 字段契约 + 5 校验器 + 占星/注入/abort/置信度/gap 护栏 + `renderPreprocessorPrompt`）；`gg-brief-suggest.mjs` 接入 SSOT 并修 :157(friction≤25词单句)/:158(logic=机制+权衡)，validateField 接校验器→needs_review。Q1=接受架构合并（手动+自动同源渲染）；Q2=Entity_Topology 折叠进 Logic 首句（不加 sheet 列，避免动线上 21 列）；Q3=修了 :157/:158。额外修 codex 抓的 HIGH（tier 长标签 `Tier 2 (标准)`→canonical 短码 T1/T2/T3，否则 --write-sheet 被 gg-content-draft:385 gate 拒）+ 3 处 col 标签错位 + 缩写句计数/占星否定假阳/gap 漏 competitors/注入提示覆盖面/normalizeTier 词边界。ops 文档：v2.0 镜像 + v1.0 墓碑 + SOP §0 更新。后续未完：SERP/friction RAG 自动注入取代人肉粘贴、SERP<5 abort 由脚本判定。
 
 ---
+
+### Q3 — 17:34 [claude]
+
+**🙋 提问：**
+
+落地 TODO 中的内容（/goal）。
+
+**🤖 回答：**
+
+把上一轮标记的 3 个 TODO 全部落地，codex 复审 VERDICT: SHIP，全套 1381 测试 / 1377 pass / 4 预存失败（gg-preview-gate 无关），零回归。`gg-brief-suggest.mjs` 新增 `loadSerpForPage`（读 .gg-cache/serp，raw.organic 优先 + 回退 legacy 顶层 snippets[]——多数存量缓存是 legacy 形）+ `loadFrictionEvidence`，buildPrompt 自动注入 SERP titles+snippet/scrubbed quote 取代人肉粘贴（每行 JSON.stringify 包成 data 容器防注入）。`serpAbort` 脚本侧强制 SERP<5→status='Needs More Evidence' + 拒写线上表（LLM 调用前早退，--allow-thin-serp 覆盖）。`gapFalsifiable` 接进 validateField('content_angle')。codex 两轮共抓 8 真 bug 全修（含 legacy snippets 误判 thin、SERP/friction 注入未转义、守卫白花 LLM 调用、serp-dir 路径逃逸）+12 测试。范围外的 col V/author 列冲突按约定未碰（需明确放行）。未提交，等放行。
+
+---

@@ -85,12 +85,25 @@ WebP / alt-text / kebab-case filename / ≤200KB — zero pipeline support. A se
 subsystem; out of this round's scope (option B).
 
 ### Variable pre-processor (§0) + SERP-gap automation
-**Priority:** P3
-No `变量预处理器` step; `content_angle` is hand-filled, not derived from a SERP
-top-5 title-gap analysis. RL3 only does plagiarism overlap, not gap validation.
+**Priority:** P3 — **partially resolved 2026-06-26** (contract + SSOT done; full
+auto-ingestion of SERP/friction RAG into the prompt still pending).
+Remaining: wire `gg-serp-snapshot.mjs` (.gg-cache/serp, already captures title+url+
+snippet) and `gg-friction-mine.mjs` into the prompt inputs so SERP_Snapshot /
+Raw_Friction stop being hand-pasted, and let the script (not the LLM) enforce the
+`SERP < 5 → Needs More Evidence` abort. content_angle gap-falsifiability is now a
+prompt rule but not yet a validator gate.
 
 ## Completed
 
+- **变量预处理器 v2.0 contract + SSOT** (P3, 2026-06-26) — new `lib/preprocessor-prompt.mjs`
+  is the single source for the content-variable contract; `gg-brief-suggest.mjs`
+  buildPrompt + validateField now import it (fixed Logic="机制+权衡" not "one-sentence
+  angle" :158, Friction=≤25-word single sentence not "3-5 sentences" :157), added
+  Entity/Entity_Topology/Logic to satisfy the T2 gate, astrology-safety + prompt-
+  injection + SERP<5 abort + falsifiable-gap guards, two-layer output (审计字段 off col S).
+  Fixed off-by-one col labels (Friction=I, Logic=J) in gg-sheet-to-brief + gg-brief-init.
+  Manual prompt regenerated from SSOT (`_gen-preprocessor-prompt.mjs` → prompts/
+  variable-preprocessor.md); ops mirror v2.0 + v1.0 tombstone. +31 smoke tests.
 - **RL7 multi-word cross-line evasion** (P2) — `checkRL7` now scans the whole body so
   a banned phrase wrapped across a line break is caught.
 - **RL7 article-wide keyword exemption** (P2) — exemption scoped to whole-word matches

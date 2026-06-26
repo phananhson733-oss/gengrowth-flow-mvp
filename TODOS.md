@@ -85,16 +85,21 @@ WebP / alt-text / kebab-case filename / ≤200KB — zero pipeline support. A se
 subsystem; out of this round's scope (option B).
 
 ### Variable pre-processor (§0) + SERP-gap automation
-**Priority:** P3 — **partially resolved 2026-06-26** (contract + SSOT done; full
-auto-ingestion of SERP/friction RAG into the prompt still pending).
-Remaining: wire `gg-serp-snapshot.mjs` (.gg-cache/serp, already captures title+url+
-snippet) and `gg-friction-mine.mjs` into the prompt inputs so SERP_Snapshot /
-Raw_Friction stop being hand-pasted, and let the script (not the LLM) enforce the
-`SERP < 5 → Needs More Evidence` abort. content_angle gap-falsifiability is now a
-prompt rule but not yet a validator gate.
+**Priority:** P3 — **RESOLVED 2026-06-26.** Contract + SSOT + RAG auto-ingestion +
+script-enforced abort all landed (see Completed). Open follow-ups (new tickets, not
+this item): SERP snapshot/friction-mine are still manual-paste *producers* (no live
+scraper); the cross-script `Tier`/`target_keyword_zh` (col V) FIELD_SPEC vs
+gg-content-draft `author` col conflict is untouched (needs explicit go).
 
 ## Completed
 
+- **变量预处理器 SERP/friction RAG auto-ingest + abort gate** (P3, 2026-06-26) —
+  `gg-brief-suggest.mjs` now loads `.gg-cache/serp/<page_id>.json`
+  (`loadSerpForPage`) + `friction-mine.rag.json` (`loadFrictionEvidence`) and injects
+  titles+snippets / scrubbed quotes into the prompt instead of hand-paste. `serpAbort`
+  enforces `< 5 distinct titles → status "Needs More Evidence"` (forces friction/logic/
+  content_angle into needs_review, refuses `--write-sheet` unless `--allow-thin-serp`).
+  `gapFalsifiable` wired into `validateField('content_angle')`. +12 smoke tests.
 - **变量预处理器 v2.0 contract + SSOT** (P3, 2026-06-26) — new `lib/preprocessor-prompt.mjs`
   is the single source for the content-variable contract; `gg-brief-suggest.mjs`
   buildPrompt + validateField now import it (fixed Logic="机制+权衡" not "one-sentence

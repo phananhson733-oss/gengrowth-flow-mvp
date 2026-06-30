@@ -248,6 +248,9 @@ export const TBD_LINK_RULES = [
   { match: /transit_events\s+cluster|jupiter\s+in\s+cancer.{0,20}saturn\s+in\s+aries|saturn\s+in\s+aries(\s+2026)?(\s+transit)?/i, href: '/en/wiki/saturn-in-aries-2026' },
   { match: /world\s+cup\s+2026\s+astrology\s+(themes?\s+)?(pillar|prediction|hub|overview|guide)|world\s+cup\s+2026\s+astrology\s+themes|world\s+cup\s+2026\s+astrology\s+prediction/i, href: '/en/wiki/world-cup-2026-astrology-prediction' },
   { match: /how\s+to\s+read\s+a\s+(national|mundane)\s+(or\s+mundane\s+)?chart|(national|mundane)\s+chart\b/i, href: '/en/wiki/how-to-read-birth-chart' },
+  // 6/26 synastry cluster (PG-SYNASTRY-001/002) — couple/synastry pieces link here.
+  { match: /composite\s+chart\s+(calculator|tool|generator)|synastry\s+calculator|calculator\s+(tool\s+)?for\s+comparing\s+two\s+(birth\s+)?charts|合盘(计算器|工具)/i, href: '/en/wiki/composite-chart-calculator' },
+  { match: /synastry\s+(chart\s+)?compatibility|pillar\s+guide\s+to\s+synastry|synastry\s+(pillar|overview|guide|reading)|synastry\s+(and\s+)?compatibility|合盘(相性|分析|指南)/i, href: '/en/wiki/synastry-chart-compatibility' },
   // --- 6/24 Celebrity zodiac cluster (PG-CELEB-001..005): cross-links among the five
   // celeb spokes. Person-name matches are specific, so they sit safely above the generic
   // /(natal|birth) chart/ rule. Same slugs serve EN + ZH. ---
@@ -256,6 +259,9 @@ export const TBD_LINK_RULES = [
   { match: /kylie\s+jenner|凯莉.?詹娜/i, href: '/en/wiki/kylie-jenner-zodiac-sign' },
   { match: /mariah\s+carey|玛丽亚.?凯莉/i, href: '/en/wiki/mariah-carey-zodiac-sign' },
   { match: /sharon\s+osbourne|莎朗.?奥斯本/i, href: '/en/wiki/sharon-osbourne-zodiac-sign' },
+  // 6/26 celebrity-couple synastry spokes (PG-CELEB-007/008).
+  { match: /taylor\s+swift\s+(and|&|x)?\s*travis\s+kelce|swift[-\s]+kelce(\s+synastry)?|泰勒.{0,4}凯尔斯/i, href: '/en/wiki/taylor-swift-and-travis-kelce' },
+  { match: /harry\s+styles\s+(and|&|x)?\s*zo[eë]?\s+kravitz|styles[-\s]+kravitz(\s+synastry)?|哈里.{0,4}克拉维茨/i, href: '/en/wiki/harry-styles-and-zo-kravitz' },
   // --- 6/2 EMPATH/HSP cluster (highly-sensitive-person pillar + signs / vs-autism
   // / famous spokes). Specific spokes MUST precede the general pillar rule
   // (first-match-wins) so "HSP vs autism" / "signs of a HSP" route to their own
@@ -344,6 +350,7 @@ export const TBD_LINK_RULES = [
   { match: /\bimum\s+coeli\b|\bIC\s+angle\b|\bthe\s+IC\b/i, href: '/en/wiki/ic-astrology' },
   { match: /\bastrology\s+terms?\b|\bglossary\b/i, href: '/en/wiki/astrology-terms' },
   { match: /\b(major|minor|chart)\s+aspects?\b|\bfive\s+major\s+aspects\b/i, href: '/en/wiki/astrology-terms' },
+  { match: /ascendant\s+meaning|rising\s+sign\s+(profile|meaning|basics|overview)|overview\s+of\s+rising\s+sign/i, href: '/en/wiki/ascendant-meaning' },
   { match: /\bascendant\b|\brising\s+sign\b/i, href: '/en/wiki/how-to-read-birth-chart' },
   { match: /\bmidheaven\b/i,      href: '/en/wiki/how-to-read-birth-chart' },
   // astrology-terms glossary + aspect/angle spokes (ZH)
@@ -373,6 +380,8 @@ export const TBD_LINK_RULES = [
   { match: /\baura\s*reading\b/i, href: '/en/wiki/aura-colors-pillar' },
   // --- Astrological houses (8/9/11/12 + pillar exist; 2/3/4/5/7/10 fall back to
   // the pillar — same cluster, keeps the link clickable instead of orphaned). ---
+  { match: /\b(sixth|6th)\s+house\b/i,     href: '/en/wiki/6th-house-astrology' },
+  { match: /\b(seventh|7th)\s+house\b/i,   href: '/en/wiki/7th-house-astrology' },
   { match: /\b(eighth|8th)\s+house\b/i,    href: '/en/wiki/8th-house-meaning' },
   { match: /\b(ninth|9th)\s+house\b/i,     href: '/en/wiki/9th-house-astrology' },
   { match: /\b(eleventh|11th)\s+house\b/i, href: '/en/wiki/11th-house' },

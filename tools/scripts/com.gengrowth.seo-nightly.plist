@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- SEO NIGHTLY lane — fully autonomous author→publish for astrologywiki (Lane B), once daily
+     at 20:00 Asia/Shanghai (machine TZ = Asia/Shanghai, so Hour 20 is local 8 PM).
+
+     Drives tools/scripts/gg-nightly-seo.sh: for each unchecked "- [ ] PG-XXX kw" item in the
+     PINNED W22 astrology plan → ensure search_volume → --author → one-row publish scan →
+     preview gate. Clean articles merge to prod; codex/links-gate rejects PARK + Lark-notify
+     (the safety net — full-auto never ships wrong facts). GG_AUTOPILOT_PLAN is pinned inside
+     the driver so latestPlan() can never default to the gengrowth W25 plan (cross-site guard).
+
+     Runs in the user (Aqua) session — authoring needs the login keychain + claude/codex/gbrain
+     CLIs, so do NOT add LimitLoadToSessionType=Background (that pins it pre-login, no keychain).
+     RunAtLoad is FALSE so bootstrapping it does not instantly publish unattended; it first fires
+     at the next 20:00.
+
+     Install / enable:
+       launchctl enable    gui/$(id -u)/com.gengrowth.seo-nightly
+       launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.gengrowth.seo-nightly.plist
+     Dry-run now (bounded):  GG_NIGHTLY_MAX=1 bash ~/gengrowth-flow-mvp/tools/scripts/gg-nightly-seo.sh
+     Disable:                launchctl bootout gui/$(id -u)/com.gengrowth.seo-nightly -->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.gengrowth.seo-nightly</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-nightly-seo.sh</string>
+  </array>
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key>
+    <integer>20</integer>
+    <key>Minute</key>
+    <integer>0</integer>
+  </dict>
+  <key>RunAtLoad</key>
+  <false/>
+  <key>StandardOutPath</key>
+  <string>/Users/awayer_mini/Library/Logs/gg-nightly-seo.launchd.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/awayer_mini/Library/Logs/gg-nightly-seo.launchd.err.log</string>
+  <key>ProcessType</key>
+  <string>Background</string>
+</dict>
+</plist>

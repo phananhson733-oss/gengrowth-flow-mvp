@@ -27,7 +27,7 @@ phase2_checks: all-pass
 
 ## What Is USA Pluto Return Astrology?
 
-USA Pluto Return Astrology is a symbolic reading of **the moment Pluto returns to its natal spot in the U.S. chart**. Because the country's founding chart places Pluto in Capricorn, and Pluto moves slowly, this alignment arrives only about once every 248 years — so the United States meets it for the first time in the 2020s. Astrologers treat it as a lens for national identity, power structures, and the themes a country tends to revisit as it matures. Building on the broader [[<TBD-internal-link: the 8th house in astrology>]], it frames the return as a season of reckoning and rebuilding rather than a fixed prediction about the future.
+USA Pluto Return Astrology is a symbolic reading of **the moment Pluto returns to its natal spot in the U.S. chart**. Because the country's founding chart places Pluto in Capricorn, and Pluto moves slowly, this alignment arrives only about once every 248 years — so the United States met it for the first time in 2022, when Pluto returned to its founding degree near 27° Capricorn in three exact passes — February 20, July 11, and December 28, 2022 — before moving on into Aquarius. Astrologers treat it as a lens for national identity, power structures, and the themes a country tends to revisit as it matures. Building on the broader [[<TBD-internal-link: the 8th house in astrology>]], it frames the return as a season of reckoning and rebuilding rather than a fixed prediction about the future.
 
 - Marks a once-per-founding-era alignment tied to the nation's birth chart
 - Read symbolically as a cycle of power, control, and reinvention
@@ -94,7 +94,7 @@ A useful test sits behind all three: if a reading names a winner, predicts a dat
 
 **When does the USA Pluto Return actually happen?**
 
-According to NASA, Pluto takes about 248 years to complete one orbit of the Sun, so a chart founded in 1776 reaches its first Pluto return in the 2020s. Astrologers usually read it as a multi-year window rather than a single fixed date.
+According to NASA, Pluto takes about 248 years to complete one orbit of the Sun, so a chart founded in 1776 reached its first Pluto return in 2022. Because Pluto stationed retrograde and then direct that year, the return came in three exact passes — February 20, July 11, and December 28, 2022 — and astrologers read its influence as a multi-year window rather than a single fixed date. Pluto has since moved into Aquarius, so the exact return is now behind us.
 
 **Is USA Pluto Return Astrology a political prediction?**
 

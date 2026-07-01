@@ -1,0 +1,8 @@
+- Cancer Ascendant is treated as firm in most sections → make every rising-sign claim conditional unless you have a verified birth time; otherwise the article overstates the chart’s accuracy.
+- “You don't need her exact birth time” is misleading → revise because Ascendant and house-based synthesis do require birth time; limit no-time reading to Sun/Moon only.
+- Sagittarius Moon is presented as reliable → verify whether the Moon stayed in Sagittarius all day on 16 April 2006; if it changed signs, add the time-dependent caveat.
+- The post-match interview example invents observable behavior → either cite a real interview pattern or reframe as a hypothetical archetype, not something “matching” her.
+- The piece barely answers celebrity-search intent → add a compact birth-data/source note near the top: date, place if known, time status, and which placements are confirmed vs. reported.
+- “Public astrology databases place…” is too vague → name the database/source or remove the authority claim.
+- Too much generic whole-chart education dilutes the Maya Joint angle → cut some self-awareness/pop-culture filler and replace with tennis-specific, chart-linked observations that stay non-predictive.
+- Sources section is weak and non-verifiable → add concrete source details for birth data and the Pew stat; Rudhyar/Greene should be tied to specific works or removed.

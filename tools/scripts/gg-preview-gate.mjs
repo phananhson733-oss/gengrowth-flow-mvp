@@ -145,7 +145,9 @@ export async function tryGateRepair({ dim, reason, articleTs, draftMd, worktree,
   try { writeFileSync(articleTs, content); } catch { log(`repair[${dim}]: write failed — abort`); return false; }
   git(['add', articleTs]);
   const cm = git(['commit', '-m', `fix(gate-repair): ${dim} — ${String((out && out.note) || 'surgical').slice(0, 72)}`]);
-  if (cm.status !== 0) { log(`repair[${dim}]: git commit failed — abort`); git(['checkout', '--', articleTs]); return false; }
+  // reset --hard HEAD (NOT `checkout -- <file>`, which restores from the index = the staged edit = a no-op):
+  // unstage + restore the worktree so a commit failure leaves a clean state (the file's invariant).
+  if (cm.status !== 0) { log(`repair[${dim}]: git commit failed — abort`); git(['reset', '--hard', 'HEAD']); return false; }
   const pu = git(['push', 'origin', branch]);
   if (pu.status !== 0) { log(`repair[${dim}]: git push failed — abort`); git(['reset', '--hard', 'HEAD~1']); return false; }
   log(`repair[${dim}]: applied ${edits.length} edit(s) + pushed — re-running ${dim}`);

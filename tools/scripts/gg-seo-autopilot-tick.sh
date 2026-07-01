@@ -75,8 +75,6 @@ CLUSTER_SYNC_LOG="$LOG_DIR/cluster-sync-$(date +%Y-%m-%d).log"
   echo "$(date '+%F %T') ── cluster-sync tick (pid $$) ──"
   set -a; . "$HOME/.config/gg/_gg.env" 2>/dev/null; set +a
   node "$SCRIPT_DIR/gg-cluster-sync.mjs" --apply
-  # keep 主题集群表.page_assets in step with 已发布 rows (append-only, idempotent)
-  node "$SCRIPT_DIR/gg-cluster-page-assets-sync.mjs" --apply
 ) >> "$CLUSTER_SYNC_LOG" 2>&1 || echo "$(date '+%F %T') cluster-sync failed (non-fatal, see cluster-sync log)" >> "$LOG"
 
 # Runtime preflight (Task 1): fail FAST on a broken Mac-mini env (missing dirs/bins) before any

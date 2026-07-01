@@ -63,6 +63,8 @@ echo "$(date '+%F %T') index monitor start (pid $$, limit $LIMIT)" >> "$LOG"
   if [ "$recap_rc" -ne 0 ] && [ "$run_rc" -eq 0 ]; then
     run_rc="$recap_rc"
   fi
+  # keep 主题集群表.page_assets in step with 已发布 rows (append-only, idempotent, non-fatal)
+  node "$SCRIPT_DIR/gg-cluster-page-assets-sync.mjs" --apply || echo "$(date '+%F %T') cluster-page-assets sync failed (non-fatal)" >> "$LOG"
   node "$SCRIPT_DIR/gg-index-monitor.mjs" --sync-request-queue --write-sheet --notify
   queue_rc=$?
   if [ "$queue_rc" -ne 0 ] && [ "$run_rc" -eq 0 ]; then

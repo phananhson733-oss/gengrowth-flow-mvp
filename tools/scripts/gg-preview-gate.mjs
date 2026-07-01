@@ -50,10 +50,10 @@
 //        [--preview-timeout-ms n] [--verify-timeout-ms n] [--review-timeout-ms n]
 //        [--codex-timeout-ms n] [--status-timeout-ms n]
 
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const HERE = (() => {

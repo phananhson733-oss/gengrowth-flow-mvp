@@ -1,15 +1,21 @@
 #!/bin/bash
 # gg-index-monitor-tick.sh — launchd entry point for Phase 1 index monitoring.
 #
-# Lightweight daily job:
-#   - syncs live EN wiki URLs from the public sitemap into index-tracking
+# Lightweight daily job, run PER PRODUCT (astrologywiki + gengrowth by default):
+#   - syncs live EN wiki/blog URLs from the site sitemap into index-tracking
 #   - syncs the full indexable URL inventory into url-inventory for coverage gap review
 #   - processes human-marked 已修复 rows by refreshing sitemap and timestamps
 #   - refreshes the sitemap through the official Search Console Sitemaps API
 #   - checks due URLs with Search Console URL Inspection
 #   - writes final human-facing status into 结果复盘表
+#   - keeps 主题集群表.page_assets in step with 已发布 rows
 #   - writes the Phase 2 request-indexing-queue for human-confirmed Computer Use
 #   - sends Feishu alerts for overdue/problem URLs
+#
+# Each product writes to ITS OWN canonical workbook via an explicit --workbook
+# (astrologywiki → 1CkjOC…, gengrowth → its own book) — NOT the legacy 1dejq and NOT
+# a single shared book. --workbook overrides resolveWorkbookId(), which otherwise
+# stays pinned to GG_SHEETS_FLOW_MVP_WORKBOOK_ID (the astrologywiki canonical book).
 #
 # It intentionally does not author, publish, merge, or click Request Indexing unattended.
 
@@ -46,30 +52,48 @@ echo "$(date '+%F %T') index monitor start (pid $$, limit $LIMIT)" >> "$LOG"
   . "$HOME/.config/gg/_gg.env" 2>/dev/null
   set +a
 
-	  run_rc=0
-	  node "$SCRIPT_DIR/gg-index-monitor.mjs" --sync-published --write-sheet || run_rc=$?
-	  node "$SCRIPT_DIR/gg-index-monitor.mjs" --sync-url-inventory --write-sheet || run_rc=$?
-	  node "$SCRIPT_DIR/gg-index-monitor.mjs" --process-fixed --write-sheet --notify || run_rc=$?
-  node "$SCRIPT_DIR/gg-index-monitor.mjs" --submit-sitemap --notify || run_rc=$?
+  run_rc=0
+  products="${GG_INDEX_MONITOR_PRODUCTS:-astrologywiki gengrowth}"
+  for product in $products; do
+    case "$product" in
+      astrologywiki|astrology)
+        wb="${GG_SHEETS_ASTROLOGY_WORKBOOK_ID:-${GG_SHEETS_FLOW_MVP_WORKBOOK_ID:-$GG_SHEETS_WORKBOOK_ID}}"
+        site="${GG_GSC_ASTROLOGY_SITE:-sc-domain:astrologywiki.com}"
+        sm="${GG_ASTROLOGY_SITEMAP_URL:-https://www.astrologywiki.com/sitemap.xml}"
+        ;;
+      gengrowth|gengrowth-ai)
+        wb="${GG_SHEETS_GENGROWTH_WORKBOOK_ID:-$GG_SHEETS_WORKBOOK_ID}"
+        site="${GG_GSC_GENGROWTH_SITE:-sc-domain:gengrowth.ai}"
+        sm="${GG_GENGROWTH_SITEMAP_URL:-https://www.gengrowth.ai/sitemap.xml}"
+        ;;
+      *)
+        echo "$(date '+%F %T') index monitor: unknown product '$product' (skip)" >> "$LOG"
+        continue
+        ;;
+    esac
+    if [ -z "$wb" ]; then
+      echo "$(date '+%F %T') index monitor: no workbook for product '$product' (skip)" >> "$LOG"
+      continue
+    fi
+    echo "$(date '+%F %T') ── index-monitor product=$product wb=…${wb: -6} site=$site ──" >> "$LOG"
+    WB=(--workbook "$wb" --site "$site" --sitemap-url "$sm")
 
-  if command -v gtimeout >/dev/null 2>&1; then
-    gtimeout "$TIMEOUT" node "$SCRIPT_DIR/gg-index-monitor.mjs" --check-due --write-sheet --require-gsc-auth --limit "$LIMIT" || run_rc=$?
-  else
-    node "$SCRIPT_DIR/gg-index-monitor.mjs" --check-due --write-sheet --require-gsc-auth --limit "$LIMIT" || run_rc=$?
-  fi
+    node "$SCRIPT_DIR/gg-index-monitor.mjs" --sync-published --write-sheet "${WB[@]}" || run_rc=$?
+    node "$SCRIPT_DIR/gg-index-monitor.mjs" --sync-url-inventory --write-sheet "${WB[@]}" || run_rc=$?
+    node "$SCRIPT_DIR/gg-index-monitor.mjs" --process-fixed --write-sheet --notify "${WB[@]}" || run_rc=$?
+    node "$SCRIPT_DIR/gg-index-monitor.mjs" --submit-sitemap --notify "${WB[@]}" || run_rc=$?
 
-  node "$SCRIPT_DIR/gg-index-monitor.mjs" --sync-recap --write-sheet
-  recap_rc=$?
-  if [ "$recap_rc" -ne 0 ] && [ "$run_rc" -eq 0 ]; then
-    run_rc="$recap_rc"
-  fi
-  # keep 主题集群表.page_assets in step with 已发布 rows (append-only, idempotent, non-fatal)
-  node "$SCRIPT_DIR/gg-cluster-page-assets-sync.mjs" --apply || echo "$(date '+%F %T') cluster-page-assets sync failed (non-fatal)" >> "$LOG"
-  node "$SCRIPT_DIR/gg-index-monitor.mjs" --sync-request-queue --write-sheet --notify
-  queue_rc=$?
-  if [ "$queue_rc" -ne 0 ] && [ "$run_rc" -eq 0 ]; then
-    run_rc="$queue_rc"
-  fi
+    if command -v gtimeout >/dev/null 2>&1; then
+      gtimeout "$TIMEOUT" node "$SCRIPT_DIR/gg-index-monitor.mjs" --check-due --write-sheet --require-gsc-auth --limit "$LIMIT" "${WB[@]}" || run_rc=$?
+    else
+      node "$SCRIPT_DIR/gg-index-monitor.mjs" --check-due --write-sheet --require-gsc-auth --limit "$LIMIT" "${WB[@]}" || run_rc=$?
+    fi
+
+    node "$SCRIPT_DIR/gg-index-monitor.mjs" --sync-recap --write-sheet "${WB[@]}" || run_rc=$?
+    # keep 主题集群表.page_assets in step with 已发布 rows (append-only, idempotent, non-fatal)
+    node "$SCRIPT_DIR/gg-cluster-page-assets-sync.mjs" --apply --workbook "$wb" || echo "$(date '+%F %T') cluster-page-assets sync failed product=$product (non-fatal)" >> "$LOG"
+    node "$SCRIPT_DIR/gg-index-monitor.mjs" --sync-request-queue --write-sheet --notify "${WB[@]}" || run_rc=$?
+  done
   exit "$run_rc"
 ) >> "$LOG" 2>&1
 rc=$?

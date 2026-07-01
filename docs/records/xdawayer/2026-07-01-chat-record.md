@@ -412,3 +412,24 @@ Last run: 2026-07-01T10:01:34.505Z (1782900094505)
 以只读 supervisor 身份在 Cowork Linux sandbox 巡检（W22/W25 勾选表在未挂载的 Mac `~/Code/gengrowth-ops`，端到端写作/发布/部署需 Mac 侧凭证）。逐路由 web_fetch 验证：**两站均 GREEN、发布积压=0**。W22 今日 10 篇（serena/jannik-sinner/teyana-taylor/ben-shelton/carlos-alcaraz/cardi-b/pride-month/total-solar-eclipse-2026/usa-pluto-return/morocco-world-cup）全部已成稿(phase2 pass)**且已上线**——含 06-30 卡住的 serena，证明 Mac author→publish 链端到端工作正常（acks/ 仍空但已非发布风险）。W25 gengrowth 稳定 ~41 篇 EN（最新 6/23）、candidates=0，无待写。**无发布缺口→本轮不写 kick**。选题登记表状态同步（10 新+06-30 的 13 条）、GSC 补提（7/1 两站配额已耗尽，待 7/2 重置手动补）、飞书通知均属 Mac 凭证通道，保持 deferred。报告追加至 `.gg-bridge/reports/2026-07-01.md`；未做任何 sandbox 侧外部写操作。
 
 ---
+
+### Q15 — 20:10
+
+**🙋 提问：**
+
+Automation: GenGrowth Topic Register
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-01T10:00:34.502Z (1782900034502)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+读取项目规则、自动化 memory 与 topic-register wrapper 报告流程后，只执行 `bash tools/scripts/gg-topic-register-tick.sh`，未传入手写 apply/repair/write flags。wrapper 退出码 `0`。
+
+最新日志为 `~/gengrowth-agents/cron-sync/topic_register/2026-07-01.log`，本次窗口 `2026-07-01 20:01:58` 到 `20:09:41`，状态 `topic-register ok`。local env 启用了 apply mode，JSON 显示 `dry_run=false`、`budget_exhausted=false`，命令为 `node .../gg-topic-register.mjs --product all --limit 10 --llm claude --discover-evidence --apply --run-budget-ms 840000`。
+
+结果：`astrologywiki` candidates=5、updates=5、new_clusters=0、page_ids=`PG-CELEB-015`, `PG-CELEB-016`, `PG-CELEB-017`, `PG-CELEB-018`, `PG-CELEB-019`、preprocessor=`ok`, `v1_fallback`, `v1_fallback`, `v1_fallback`, `v1_fallback`；evidence discovery 中 `PG-CELEB-015` 为 `ok`（3 titles / 3 domains），其余 4 条为 `insufficient`（0 titles / 0 domains）。`gengrowth` candidates=5、updates=5、new_clusters=0、selection_mode=`audit_repair`、audit_incomplete=5、page_ids=`PG-EOS-004`, `PG-EOS-005`, `PG-CMP-004`, `PG-EOS-006`, `PG-EOS-007`、preprocessor 全部 `v1_fallback`，evidence discovery 全部 `insufficient`（0 titles / 0 domains）。未见失败或 timeout；运行后无遗留 `gg-topic-register` / LLM 子进程。安全边界保持：没有手改 Sheet、没有直接编辑 task plan、没有额外 Feishu/Google Doc 报告产物。
+
+---

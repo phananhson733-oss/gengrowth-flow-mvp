@@ -16,7 +16,7 @@ associated_keywords:
   - Cardi B Birth Chart astrology
   - Cardi B Birth Chart zodiac
   - Cardi B Birth Chart interpretation
-  - emma watson zodiac sign
+  - Cardi B zodiac sign
 generated_by: unknown
 prompt_version: v8
 generated_at: 2026-07-01T03:58:18.333Z

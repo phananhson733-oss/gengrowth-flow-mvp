@@ -668,6 +668,27 @@ test('recapRowFromTrackingRow keeps indexed robots-blocked rows visible as P3 ob
   assert.equal(row.索引修复状态, 'P3 观察');
 });
 
+test('recapRowFromTrackingRow fills cluster_id from the 选题登记表 page→cluster map', () => {
+  const clusterByPage = new Map([['PG-TSE-001', 'total_solar_eclipse_2026']]);
+  // page_id present in the map → cluster_id populated (index-tracking has no cluster col)
+  const mapped = recapRowFromTrackingRow(
+    { url: 'https://www.astrologywiki.com/en/wiki/total-solar-eclipse-2026', page_id: 'PG-TSE-001' },
+    { now: new Date('2026-07-01T00:00:00Z'), clusterByPage },
+  );
+  assert.equal(mapped.cluster_id, 'total_solar_eclipse_2026');
+  // page_id absent from the map → falls back to the row's own cluster_id, else empty
+  const fallback = recapRowFromTrackingRow(
+    { url: 'https://www.astrologywiki.com/en/wiki/x', page_id: 'PG-UNKNOWN', cluster_id: 'own_cluster' },
+    { now: new Date('2026-07-01T00:00:00Z'), clusterByPage },
+  );
+  assert.equal(fallback.cluster_id, 'own_cluster');
+  const empty = recapRowFromTrackingRow(
+    { url: 'https://www.astrologywiki.com/en/wiki/y', page_id: 'PG-NONE' },
+    { now: new Date('2026-07-01T00:00:00Z') },
+  );
+  assert.equal(empty.cluster_id, '');
+});
+
 test('seo autopilot enqueues index tracking instead of calling article Indexing API', () => {
   const src = readFileSync(join(SCRIPTS, 'gg-seo-autopilot.mjs'), 'utf8');
   assert.match(src, /gg-index-monitor\.mjs/);

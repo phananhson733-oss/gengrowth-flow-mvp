@@ -1,0 +1,302 @@
+#!/usr/bin/env node
+// Run: node --test tools/scripts/__tests__/gg-topic-register.smoke.test.mjs
+
+import { strict as assert } from 'node:assert';
+import { existsSync, mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { test } from 'node:test';
+import {
+  buildTrendEvidenceCache,
+  chooseClusterForKeyword,
+  createRunBudget,
+  deterministicFrictionForPage,
+  inferNextPageId,
+  runPreprocessorForPlan,
+  scoreClusterKeyword,
+  selectCandidateRowsForPlan,
+  titleCase,
+} from '../gg-topic-register.mjs';
+import { renderPreprocessorPrompt } from '../lib/preprocessor-prompt.mjs';
+
+const clusters = [
+  {
+    cluster_id: 'vedic_astrology_basics',
+    cluster_name: 'Vedic Astrology Basics',
+    primary_entity: 'Vedic Astrology',
+    jtbd: 'Understand Indian astrology basics',
+    content_angle: 'Introduction to Jyotish and Vedic birth chart basics',
+    keywords_included: 'vedic astrology, vedic birth chart, jyotish birth chart',
+  },
+  {
+    cluster_id: 'worldcup2026_astro',
+    cluster_name: 'World Cup 2026 Astrology Trends',
+    primary_entity: 'World Cup 2026',
+    jtbd: 'Discover astrological insights about World Cup 2026 players and teams via birth charts and national chart analysis',
+    content_angle: 'Player birth charts + team national charts + zodiac-based team picks + Jupiter in Gemini 2026 transit',
+    keywords_included: 'world cup 2026 astrology, football astrology, country vs country astrology, player birth charts',
+  },
+  {
+    cluster_id: 'celebrity_zodiac_trending',
+    cluster_name: 'Celebrity Zodiac Trending',
+    primary_entity: 'Celebrity Zodiac Profiles',
+    jtbd: 'Explain trending celebrity zodiac signs, celebrity birth charts, compatibility, and pop-culture astrology',
+    content_angle: 'Celebrity zodiac profiles and birth chart breakdowns with symbolic entertainment framing',
+    keywords_included: 'celebrity zodiac sign, celebrity birth chart, pop culture astrology, athlete zodiac sign, athlete birth chart',
+  },
+];
+
+test('celebrity and non-football athlete birth-chart topics route to celebrity_zodiac_trending', () => {
+  for (const keyword of [
+    'serena williams birth chart',
+    'teyana taylor birth chart',
+    'jannik sinner zodiac sign',
+    'ben shelton zodiac sign',
+  ]) {
+    const decision = chooseClusterForKeyword(keyword, clusters);
+    assert.equal(decision.kind, 'existing', keyword);
+    assert.equal(decision.cluster_id, 'celebrity_zodiac_trending', keyword);
+    assert.ok(
+      scoreClusterKeyword(keyword, clusters[2]) > scoreClusterKeyword(keyword, clusters[0]),
+      `${keyword} should outrank Vedic basics`,
+    );
+  }
+});
+
+test('explicit World Cup country/team topics still route to worldcup2026_astro', () => {
+  const decision = chooseClusterForKeyword('morocco world cup 2026 astrology', clusters);
+  assert.equal(decision.kind, 'existing');
+  assert.equal(decision.cluster_id, 'worldcup2026_astro');
+});
+
+test('celebrity-routed pages reuse the CELEB page_id prefix when existing pages use it', () => {
+  const pageId = inferNextPageId({
+    clusterId: 'celebrity_zodiac_trending',
+    pages: [
+      { page_id: 'PG-CELEB-001', cluster_id: 'celebrity_zodiac_trending' },
+      { page_id: 'PG-CELEB-008', cluster_id: 'celebrity_zodiac_trending' },
+      { page_id: 'PG-WC-041', cluster_id: 'worldcup2026_astro' },
+    ],
+  });
+  assert.equal(pageId, 'PG-CELEB-009');
+});
+
+test('titleCase preserves names and only uppercases real acronyms', () => {
+  assert.equal(titleCase('ben shelton zodiac sign'), 'Ben Shelton Zodiac Sign');
+  assert.equal(titleCase('morocco world cup 2026 astrology'), 'Morocco World Cup 2026 Astrology');
+  assert.equal(titleCase('seo ai gsc keyword'), 'SEO AI GSC Keyword');
+});
+
+test('deterministic fallback friction does not invent SERP evidence', () => {
+  const friction = deterministicFrictionForPage({
+    targetKeyword: 'jannik sinner zodiac sign',
+    entity: 'Jannik Sinner Zodiac Sign',
+  });
+
+  assert.match(friction, /zodiac sign/i);
+  assert.doesNotMatch(friction, /SERP titles mix/i);
+  assert.doesNotMatch(friction, /definitions, tools, and broad advice/i);
+});
+
+test('evidence cache accepts three relevant distinct SERP titles', () => {
+  const cacheRoot = mkdtempSync(join(tmpdir(), 'gg-topic-register-evidence-'));
+  try {
+    const built = buildTrendEvidenceCache({
+      cacheRoot,
+      pageId: 'PG-TEST-003',
+      targetKeyword: 'jannik sinner zodiac sign',
+      query: 'jannik sinner zodiac sign astrology',
+      source: 'test',
+      organic: [
+        {
+          title: 'Jannik Sinner Zodiac Sign and Birth Chart',
+          url: 'https://example.com/one',
+          domain: 'example.com',
+          snippet: 'Jannik Sinner zodiac sign details for astrology readers.',
+        },
+        {
+          title: 'What Is Jannik Sinner Zodiac Sign?',
+          url: 'https://example.net/two',
+          domain: 'example.net',
+          snippet: 'Jannik Sinner zodiac sign context and public persona.',
+        },
+        {
+          title: 'Jannik Sinner Zodiac Sign Astrology Profile',
+          url: 'https://example.org/three',
+          domain: 'example.org',
+          snippet: 'Jannik Sinner zodiac sign profile with astrology framing.',
+        },
+      ],
+    });
+
+    assert.equal(built.ok, true);
+    assert.equal(built.distinctTitles, 3);
+    assert.equal(existsSync(join(cacheRoot, 'serp', 'PG-TEST-003.json')), true);
+    assert.equal(existsSync(join(cacheRoot, 'PG-TEST-003', 'friction-mine.rag.json')), true);
+  } finally {
+    rmSync(cacheRoot, { recursive: true, force: true });
+  }
+});
+
+test('preprocessor prompt uses the relaxed three-title evidence floor', () => {
+  const prompt = renderPreprocessorPrompt({ targetKeyword: 'jannik sinner zodiac sign' });
+
+  assert.match(prompt, /fewer than 3 distinct titles/i);
+  assert.doesNotMatch(prompt, /fewer than 5 distinct titles/i);
+  assert.doesNotMatch(prompt, /SERP < 5/i);
+});
+
+test('default candidate selection audits incomplete existing rows before generating new rows', () => {
+  const header = [
+    'Target Keyword',
+    'Associated Keywords',
+    'Intent',
+    'Tier',
+    'Template',
+    'Entity',
+    'Friction',
+    'Logic',
+    'page_id',
+    'cluster_id',
+    'page_role',
+    'content_angle',
+    'psych_safety_flag',
+  ];
+  const existingIncomplete = [
+    'jannik sinner zodiac sign',
+    'jannik sinner zodiac sign meaning',
+    'Info',
+    'T2',
+    'Case Study',
+    '',
+    '',
+    '',
+    'PG-CELEB-010',
+    'celebrity_zodiac_trending',
+    'Series',
+    '',
+    'N',
+  ];
+  const newBlank = ['new celebrity astrology topic'];
+  const selected = selectCandidateRowsForPlan([
+    header,
+    existingIncomplete,
+    newBlank,
+  ]);
+
+  assert.equal(selected.mode, 'audit_repair');
+  assert.deepEqual(selected.candidates.map((row) => row.target_keyword), ['jannik sinner zodiac sign']);
+  assert.ok(selected.candidates[0].missing.includes('Entity'));
+  assert.equal(selected.audit_incomplete, 1);
+
+  const completedExisting = [
+    'jannik sinner zodiac sign',
+    'jannik sinner zodiac sign meaning',
+    'Info',
+    'T2',
+    'Case Study',
+    'Jannik Sinner Zodiac Sign',
+    'Readers need a direct sign answer.',
+    'Logic paragraph.',
+    'PG-CELEB-010',
+    'celebrity_zodiac_trending',
+    'Series',
+    'Angle.',
+    'N',
+  ];
+  const generated = selectCandidateRowsForPlan([
+    header,
+    completedExisting,
+    newBlank,
+  ]);
+
+  assert.equal(generated.mode, 'generate');
+  assert.deepEqual(generated.candidates.map((row) => row.target_keyword), ['new celebrity astrology topic']);
+  assert.equal(generated.audit_incomplete, 0);
+});
+
+test('runPreprocessorForPlan skips LLM work with budget_exhausted status when run budget is spent', async () => {
+  const budget = createRunBudget({ budgetMs: 1, startedAtMs: 1000, now: () => 1000 });
+  const plan = {
+    updates: [
+      { pageId: 'PG-TEST-001', fields: { Entity: 'Existing Entity' } },
+      { pageId: 'PG-TEST-002', fields: { Entity: 'Second Entity' } },
+    ],
+    promptWrites: [
+      { pageId: 'PG-TEST-001', prompt: 'prompt 1' },
+      { pageId: 'PG-TEST-002', prompt: 'prompt 2' },
+    ],
+  };
+  let calls = 0;
+
+  await runPreprocessorForPlan(plan, {
+    llm: 'claude',
+    budget,
+    callLLM: async () => {
+      calls += 1;
+      return { stdout: 'SHOULD_NOT_RUN' };
+    },
+  });
+
+  assert.equal(calls, 0);
+  assert.deepEqual(plan.updates.map((u) => u.preprocessor?.status), ['budget_exhausted', 'budget_exhausted']);
+  assert.equal(plan.updates[0].fields.Entity, 'Existing Entity');
+});
+
+test('runPreprocessorForPlan falls back to v1 fields when v2 returns placeholders', async () => {
+  const plan = {
+    updates: [
+      {
+        pageId: 'PG-TEST-PLACEHOLDER',
+        fields: {
+          Entity: 'Deterministic Entity',
+          Friction: 'Deterministic friction.',
+          Logic: 'Deterministic logic.',
+          content_angle: 'Deterministic angle.',
+        },
+      },
+    ],
+    promptWrites: [
+      { pageId: 'PG-TEST-PLACEHOLDER', prompt: 'prompt' },
+    ],
+  };
+  const prompts = [];
+  const llms = [];
+
+  await runPreprocessorForPlan(plan, {
+    llm: 'claude',
+    allowFallback: true,
+    callLLM: async ({ llm, prompt }) => {
+      llms.push(llm);
+      prompts.push(prompt);
+      if (prompts.length === 1) {
+        return {
+          model: 'claude-opus-4-7',
+          stdout: [
+            'SHEET_FIELDS',
+            'Entity: — (not synthesized; insufficient input)',
+            'Friction: — (not synthesized; insufficient input)',
+            'Logic: — (not synthesized; insufficient input)',
+            'Content_Angle: — (not synthesized; insufficient input)',
+          ].join('\n'),
+        };
+      }
+      return {
+        model: 'claude',
+        stdout: [
+          'Friction: Searchers conflate the topic with broad celebrity astrology because results blur sign lookup and full-chart context.',
+          'Content_Angle: Start with the quick sign answer, then narrow the article around what the query can and cannot support.',
+        ].join('\n'),
+      };
+    },
+  });
+
+  assert.equal(prompts.length, 2);
+  assert.deepEqual(llms, ['claude', 'claude']);
+  assert.match(prompts[1], /SEO Content Variable Pre-processor \(v1\.0 fallback\)/);
+  assert.equal(plan.updates[0].preprocessor?.status, 'v1_fallback');
+  assert.equal(plan.updates[0].fields.Entity, 'Deterministic Entity');
+  assert.equal(plan.updates[0].fields.Friction, 'Searchers conflate the topic with broad celebrity astrology because results blur sign lookup and full-chart context.');
+  assert.equal(plan.updates[0].fields.Logic, 'Deterministic logic.');
+  assert.equal(plan.updates[0].fields.content_angle, 'Start with the quick sign answer, then narrow the article around what the query can and cannot support.');
+});

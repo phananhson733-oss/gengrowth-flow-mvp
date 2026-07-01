@@ -1,0 +1,10 @@
+{
+  "requestedAt": "2026-06-30T20:05:00+08:00",
+  "requestedBy": "cowork-seo-supervisor",
+  "utc8Date": "2026-06-30",
+  "action": "publish-pending",
+  "reason": "PG-CELEB-009 (serena-williams-birth-chart) authored today 11:58Z and phase2=pass in _staging (EN md + manifest, 1725 words, all RL gates green) but NOT live — sandbox web_fetch on /en/wiki/serena-williams-birth-chart returns the homepage shell (canonical '/'), confirming soft-404 / unpublished, while a known-live control (/en/wiki/mo-salah-birth-chart) returns full article meta+body. Author lane is healthy (PG-CELEB-010 jannik-sinner just authored 12:01Z), so the gap is publish, not authoring. Kicking the publish lane to push the ready draft live + run the tail reconcile.",
+  "pendingSlugs": ["serena-williams-birth-chart"],
+  "pendingPgIds": ["PG-CELEB-009"],
+  "note": "20:05 CST scheduled auto-seo-blog pass. Live unchanged vs 06-29 snapshot (astrologywiki 260 EN /126 ZH /wiki/, gengrowth 41 EN blog; newest lastmod 2026-06-29). Publish backlog = 1 (serena, ready). PG-CELEB-010 authored-not-yet-QA'd (will be next publish candidate). acks/ STILL EMPTY (0 acks ever) → Mac watcher com.gengrowth.cowork-bridge likely still not installed/acking; author launchd timer clearly runs, but please confirm the publish lane + bridge watcher are live so this draft does not sit. Also pending on the credentialed Mac lane: run `node tools/scripts/gg-reconcile-status.mjs --apply` to flip the 13 verified 选题登记表 status-drift rows (staged at .gg-bridge/reconcile/2026-06-30-status-drift.json) and decide the 2 review rows (PG-TERM-008/009). GSC index-request candidate set unchanged (deferred to Mac GSC flow, ~10/day)."
+}

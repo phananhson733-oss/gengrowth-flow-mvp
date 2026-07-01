@@ -1,0 +1,8 @@
+- 全文把“太阳合天顶”当成已确认核心，但公开资料只稳固支持 2003-05-05、El Palmar/Murcia 出生，未给可靠出生时间（见 [Wikipedia](https://en.wikipedia.org/wiki/Carlos_Alcaraz)、[ATP](https://www.atptour.com/en/players/carlos-alcaraz/a0e2/overview)）→ 将 MC/宫位/上升全部降级为“未验证 timed-chart 假设”，或移除这条主轴。
+- “angular Sun is stable because it rests on the birth date alone” 是硬伤 → 改成“太阳星座稳定；天顶、上升、宫位和太阳-天顶相位都依赖出生时间”。
+- “full-chart readings consistently place his Taurus Sun near the Midheaven” 无来源且风险高 → 要么列出具体来源及其使用的出生时间/假设，要么删掉“consistently”。
+- Moon 段落太模糊 → 写清楚 2003-05-05 月亮在双子到巨蟹之间换座，因此出生时间早晚会决定 Gemini Moon / Cancer Moon，而不是泛泛说“sources disagree”。
+- 文章几乎只反复说“grounded / persistent / steady”，缺少 Alcaraz 真实网球语境 → 加入具体可观察例子，如五盘韧性、跨硬地/草地/红土适应、爆发式移动、早成名压力下的比赛风格，避免像任意 Taurus 运动员模板。
+- 当前角度把 Alcaraz 过度简化成“慢、稳、耐久”，与他以爆发力、创造性击球、突然变线和网前手感著称的球风不完全匹配 → 平衡 Taurus 解读，说明“稳定底盘 + 高速创造力”的张力。
+- “Dane Rudhyar / Robert Hand / Howard Sasportas” 像权威名堆砌，没有具体书名、章节或对应解释 → 换成精确来源，或删除这些名字，把篇幅让给实际 chart caveat 和 Alcaraz 例证。
+- 搜索意图没有被充分满足：读者查 “Carlos Alcaraz Birth Chart” 期待先看到出生数据、确认/未确认 placements、哪些不能算 → 在前段加一张“confirmed vs unverified”速览，而不是直接进入单一 Sun-MC 论点。

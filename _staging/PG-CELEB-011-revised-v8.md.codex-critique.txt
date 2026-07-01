@@ -1,0 +1,8 @@
+- “除了太阳都不能确认”的说法过度保守且可能错误 → 用历表核对出生当天可确认的行星星座；至少把“月亮也一定依赖出生时间”改成“月亮度数/宫位依赖时间，月亮星座需按当日范围核验”。
+- 搜索意图没有被快速满足 → 开头直接给“出生日期、出生地、出生时间未知、太阳星座、可确认/不可确认项”的速览表，不要先讲大段方法论。
+- 文章几乎只写“射手火象”，像通用模板 → 加入 Teyana 具体履历锚点，如 Harlem、Beyoncé《Ring the Alarm》编舞、Kanye《Fade》、Spike Tee 导演身份、A Thousand and One，再逐一对应占星判断。
+- “Public Fire”角度太单一 → 降低“火”的绝对化表达，补入她长期训练、编舞控制感、导演/执行力等更复杂的职业气质。
+- “Why It Matters for Self-Awareness”和 Pew 数据像填充 → 删减或后移，把篇幅换成“如何在出生时间未知时诚实阅读 celebrity chart”的实用说明。
+- 表格里的“Moon sign: emotional water/earth themes”含混且不专业 → 改成具体占星字段：sign range、degree unknown、house unknown、interpretive confidence。
+- Sources 部分缺少真正支撑本文的来源 → 增加出生日期/出生地来源和历表/星盘计算来源；Rudhyar、Liz Greene 只作为方法论背景，不要当作 Teyana chart 依据。
+- Take Action 文案说“same houses and angles discussed here”有误导 → 改成“你的完整出生时间可生成 houses/angles；Teyana 的 houses/ascendant 因时间未知不应断言”。

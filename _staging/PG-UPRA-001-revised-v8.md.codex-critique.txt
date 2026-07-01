@@ -1,0 +1,8 @@
+- 未说明采用哪张“美国本命盘” → 明确写出假设盘，例如 Sibly chart：1776-07-04、5:10 PM LMT、Philadelphia、Pluto 约 27°33′ Capricorn；同时说明不同建国盘会影响宫位/时间判断。
+- “什么时候发生”回答太模糊 → 补入所用历表下的三次 exact hit 日期、度数与逆行背景，再解释为什么仍读作多年窗口。
+- “personal Pluto transit around midlife”表述不准 → 改成 Pluto square natal Pluto 通常发生在 late 30s/early 40s，避免把它泛称为 midlife 或暗示所有个人 Pluto transit 都这样。
+- 美国特异性不足，反复停留在 power/control/rebuilding → 增加 Pluto in Capricorn/2nd-house 语境：国家财富、债务、税制、货币信任、资源分配、企业/国家权力与制度合法性。
+- “如何观察”太抽象 → 加入非预测型观察例子，如债务上限争议、通胀/Fed/美元信任、法院与国会公信力、企业集中、历史性不平等与隐藏问题的曝光。
+- Rudhyar 和 Robert Hand 像空泛背书 → 要么补具体作品/观点如何支撑本文方法，要么删掉姓名；同时给 NASA/ephemeris/建国盘来源补真实引用。
+- CTA 与正文逻辑冲突且链接错位 → 文章反复说这不是个人 transit，结尾却让读者用 birth chart “meet the national story”，还指向 aura-reading；改成真实 birth-chart/transit 页面，并强调个人盘需分开解读。
+- 声音过于安全、泛化，缺少鲜明编辑角度 → 开头直接定调为“美国 Pluto return 是对权力、金钱和制度合法性的 national audit，不是 doom prediction”，后文围绕这个角度压实。

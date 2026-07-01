@@ -178,6 +178,7 @@ function parseArgs(argv) {
     else if (a === '--mark-verified') o.markVerified = true;
     else if (a === '--mark-failed') o.markFailed = true;
     else if (a === '--retry-failed') o.retryFailed = true;
+    else if (a === '--retry-author') o.retryAuthor = true;
     else if (a === '--reconcile-published') o.reconcilePublished = true;
     else if (a === '--clear-needs-hero') o.clearNeedsHero = true;
     else if (a === '--status') o.status = true;
@@ -189,7 +190,7 @@ function parseArgs(argv) {
     else if (a === '--limit') o.limit = parseInt(argv[++i], 10) || 1;
     else if (a === '--task') o.task = argv[++i];
   }
-  if (!o.scan && !o.author && !o.nextUnauthored && !o.merge && !o.markVerified && !o.markFailed && !o.retryFailed && !o.reconcilePublished && !o.status && !o.staleReport) o.scan = true;
+  if (!o.scan && !o.author && !o.nextUnauthored && !o.merge && !o.markVerified && !o.markFailed && !o.retryFailed && !o.retryAuthor && !o.reconcilePublished && !o.status && !o.staleReport) o.scan = true;
   return o;
 }
 
@@ -907,6 +908,7 @@ function doAuthor(o = {}) {
     if (!author) return park(slug, `no author for cluster_domain "${domain}" (author.map miss)`);
     entry.author = author;
     entry.author_source = usePerPage ? 'override' : 'auto';
+    if (!String(entry.search_volume ?? '').trim()) entry.search_volume = '0';
 
     // The Sheet `entity` column is sometimes a phrase-salad of angles
     // ("intentional energy work · lunar phase timing · …") instead of the entity
@@ -1390,6 +1392,27 @@ function doRetryFailed(o) {
   });
 }
 
+function doRetryAuthor(o) {
+  if (!o.task) die('--retry-author requires --task PG-...', 2);
+  return withClaimsLock(() => {
+    const claims = loadClaims();
+    const claim = claims[o.task];
+    if (!claim) {
+      log(`RETRY(author) ${o.task}: no claim to clear`);
+      return;
+    }
+    if (claim.status !== 'needs_human') {
+      throw new Error(`cannot retry authoring ${o.task} from status "${claim.status}" — expected needs_human`);
+    }
+    if (claim.stage !== 'authoring') {
+      throw new Error(`cannot retry authoring ${o.task} from stage "${claim.stage || ''}" — expected authoring`);
+    }
+    delete claims[o.task];
+    saveClaims(claims);
+    log(`RETRY(author) ${o.task}: cleared parked authoring claim (${o.reason || 'operator requested rerun'})`);
+  });
+}
+
 function checkPlanBox(pgId) {
   const plan = latestPlan();
   if (!plan) return;
@@ -1527,6 +1550,7 @@ try {
   else if (o.markVerified) doMarkVerified(o);
   else if (o.markFailed) doMarkFailed(o);
   else if (o.retryFailed) doRetryFailed(o);
+  else if (o.retryAuthor) doRetryAuthor(o);
   else if (o.reconcilePublished) doReconcilePublished(o);
   else doScan(o);
 } catch (e) {

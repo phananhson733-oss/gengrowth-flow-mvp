@@ -82,6 +82,7 @@ function initOracleWithOrigin(h) {
   git(h.oracle, ['commit', '-m', 'init']);
   git(h.oracle, ['remote', 'add', 'origin', origin]);
   git(h.oracle, ['push', '-u', 'origin', 'main']);
+  git(origin, ['symbolic-ref', 'HEAD', 'refs/heads/main']);
 }
 
 function addRemoteMainCommit(h) {
@@ -116,7 +117,7 @@ writeFileSync(out, 'export const testSlugEn = { authorId: "test-author" };\\n');
   return flow;
 }
 
-function writeStubAuthorBackfillFlow(h) {
+function writeStubAuthorBackfillFlow(h, { seedEn = true, blankSearchVolume = false, renderRequiresSearchVolume = false } = {}) {
   const flow = join(h.root, 'flow-author');
   const scripts = join(flow, 'tools', 'scripts');
   const staging = join(flow, '_staging');
@@ -124,8 +125,10 @@ function writeStubAuthorBackfillFlow(h) {
   mkdirSync(scripts, { recursive: true });
   mkdirSync(join(staging, 'zh-demo'), { recursive: true });
   mkdirSync(prompts, { recursive: true });
-  writeFileSync(join(staging, 'PG-TEST-001-en.md'), '---\nslug: test-slug\nauthor_id: test-author\n---\n# Test\n\nBody.\n');
-  writeFileSync(join(staging, 'PG-TEST-001-en.manifest.json'), JSON.stringify({ phase2_checks: { overall: 'pass' } }));
+  if (seedEn) {
+    writeFileSync(join(staging, 'PG-TEST-001-en.md'), '---\nslug: test-slug\nauthor_id: test-author\n---\n# Test\n\nBody.\n');
+    writeFileSync(join(staging, 'PG-TEST-001-en.manifest.json'), JSON.stringify({ phase2_checks: { overall: 'pass' } }));
+  }
 
   writeFileSync(join(scripts, 'gg-sheet-pull.mjs'), `#!/usr/bin/env node
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -140,7 +143,7 @@ const row = {
     target_keyword: 'test keyword',
     entity: 'test keyword',
     associated_keywords: ['test keyword meaning'],
-    search_volume: '100',
+    search_volume: '${blankSearchVolume ? '' : '100'}',
     content_angle: 'angle',
     cta_target_url: '工具页',
     template: 'Definition',
@@ -161,7 +164,7 @@ writeFileSync(out, JSON.stringify({
     target_keyword: 'test keyword',
     entity: 'test keyword',
     associated_keywords: ['test keyword meaning'],
-    search_volume: '100',
+    search_volume: '${blankSearchVolume ? '' : '100'}',
     content_angle: 'angle',
     cta_text: '工具页',
     cta_target_url: '工具页',
@@ -193,9 +196,18 @@ writeFileSync('.gg-cache/' + pageId + '/entity-passport.rag.json', JSON.stringif
 `);
 
   writeFileSync(join(scripts, 'gg-render-batch.mjs'), `#!/usr/bin/env node
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 const args = process.argv.slice(2);
 const isZh = args.includes('--language') && args[args.indexOf('--language') + 1] === 'zh';
+const overrides = args[args.indexOf('--overrides') + 1];
+if (${renderRequiresSearchVolume ? 'true' : 'false'} && overrides) {
+  const j = JSON.parse(readFileSync(overrides, 'utf8'));
+  const entry = j['PG-TEST-001'];
+  if (!entry || entry.search_volume === '') {
+    process.stdout.write('skipped — missing cfg fields: search_volume\\n');
+    process.exit(0);
+  }
+}
 mkdirSync('.gg-cache/prompts', { recursive: true });
 const suffix = isZh ? '.zh' : '';
 writeFileSync('.gg-cache/prompts/PG-TEST-001.v8' + suffix + '-prompt.md', '# prompt\\n\\nbody');
@@ -373,6 +385,39 @@ test('--retry-failed refuses non-parked claims', () => {
     const r = runAuto(h, ['--retry-failed', '--branch', 'seo/auto/2026-06-03-PG-TEST-001']);
     assert.notEqual(r.status, 0);
     assert.match(`${r.stdout}${r.stderr}`, /needs_human/);
+  } finally {
+    h.cleanup();
+  }
+});
+
+test('--retry-author clears only parked authoring claims so a fixed author bug can rerun', () => {
+  const h = makeHarness();
+  try {
+    writeClaims(h, {
+      'PG-TEST-001': {
+        status: 'needs_human',
+        stage: 'authoring',
+        slug: 'test-keyword',
+        error: 'authoring: render produced no v8 prompt',
+      },
+      'PG-TEST-002': {
+        status: 'needs_human',
+        stage: 'pushed-preview',
+        branch: 'seo/auto/PG-TEST-002',
+        error: 'preview failed',
+      },
+    });
+
+    const r = runAuto(h, ['--retry-author', '--task', 'PG-TEST-001', '--reason', 'renderer search_volume fallback fixed']);
+
+    assert.equal(r.status, 0, `${r.stdout}${r.stderr}`);
+    const claims = JSON.parse(readFileSync(h.claimsPath, 'utf8'));
+    assert.equal(claims['PG-TEST-001'], undefined);
+    assert.equal(claims['PG-TEST-002'].status, 'needs_human');
+
+    const refused = runAuto(h, ['--retry-author', '--task', 'PG-TEST-002']);
+    assert.notEqual(refused.status, 0);
+    assert.match(`${refused.stdout}${refused.stderr}`, /stage "pushed-preview"/);
   } finally {
     h.cleanup();
   }
@@ -568,6 +613,30 @@ test('--author can generate the missing zh source draft for a checked done task 
     assert.equal(existsSync(join(flow, '_staging', 'zh-demo', 'PG-TEST-001-zh.md')), true, `${r.stdout}${r.stderr}`);
     assert.equal(existsSync(join(flow, '.gg-cache', 'prompts', 'PG-TEST-001.v8.zh-prompt.md')), true);
     assert.match(`${r.stdout}${r.stderr}`, /AUTHORED ZH PG-TEST-001/);
+  } finally {
+    h.cleanup();
+  }
+});
+
+test('--author normalizes blank search_volume before render so newly registered topics do not park', () => {
+  const h = makeHarness();
+  try {
+    const flow = writeStubAuthorBackfillFlow(h, {
+      seedEn: false,
+      blankSearchVolume: true,
+      renderRequiresSearchVolume: true,
+    });
+    writeFileSync(join(h.tasks, '2026-06-03-blog-output-plan.md'), '- [ ] `PG-TEST-001` test keyword\n');
+    writeClaims(h, {});
+
+    const r = runAuto(h, ['--author'], { GG_FLOW_REPO: flow });
+
+    assert.equal(r.status, 0, `${r.stdout}${r.stderr}`);
+    assert.equal(existsSync(join(flow, '.gg-cache', 'prompts', 'PG-TEST-001.v8-prompt.md')), true, `${r.stdout}${r.stderr}`);
+    assert.equal(existsSync(join(flow, '_staging', 'PG-TEST-001-en.md')), true, `${r.stdout}${r.stderr}`);
+    const override = JSON.parse(readFileSync(join(flow, '.gg-cache', 'overrides', 'PG-TEST-001.json'), 'utf8'));
+    assert.equal(override['PG-TEST-001'].search_volume, '0');
+    assert.match(`${r.stdout}${r.stderr}`, /AUTHORED PG-TEST-001/);
   } finally {
     h.cleanup();
   }

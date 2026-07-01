@@ -1,0 +1,9 @@
+{
+  "utc8Date": "2026-06-30",
+  "generatedAt": "2026-06-30T19:30:00+0800",
+  "by": "cowork-seo-supervisor (auto-seo-blog scheduled run)",
+  "submitted": [],
+  "status": "deferred-not-performed",
+  "note": "No newly-live slugs since the 06-29 snapshot (astrologywiki newest lastmod still 2026-06-29; gengrowth blog unchanged at 41). GSC index-request candidate set is therefore identical to 2026-06-29 (same 25 EN /wiki/ deltas). Actual Search Console submission remains an external write outside this task's scope; left to the Mac GSC flow (~10/day cap).",
+  "newlyLiveCandidates": []
+}

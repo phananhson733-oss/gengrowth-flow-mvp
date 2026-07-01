@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1",
+  "generatedAt": "2026-06-30T19:30:00+08:00",
+  "by": "cowork-seo-supervisor (auto-seo-blog scheduled run)",
+  "trigger": "wzb: 选题登记表 中多行标记『待写』但文章其实已发布；如已上线则状态应改为『已发布』，并建议加入自动化流程",
+  "workbook": {
+    "title": "astrologywiki.com",
+    "fileId": "1CkjOCgYbRfXGYc6l2FJOaxUIzxT0NBVUhUpgCjyzcQc",
+    "tab": "选题登记表",
+    "statusColumn": "M",
+    "pageIdColumn": "P"
+  },
+  "detectionMethod": "live sitemap (astrologywiki.com/sitemap.xml, /en/wiki/ slug set) crossed against 选题登记表 rows whose Status ∈ {待写, 写作中}; slug derived from .gg-cache/<page_id>/entity-passport.rag.json .entity (slugify), verified present in the live EN slug set.",
+  "registrySnapshot": { "totalRows": 204, "已发布": 164, "待写": 37, "写作中": 3 },
+  "liveSnapshot": {
+    "astrologywiki_en_wiki": 260,
+    "astrologywiki_zh_wiki": 126,
+    "gengrowth_en_blog": 41,
+    "asOf": "2026-06-30 sitemap crawl (newest lastmod 2026-06-29)"
+  },
+  "confirmedFlips": [
+    { "page_id": "PG-AURA-009",   "fromStatus": "待写",   "toStatus": "已发布", "slug": "aura-reading",                                            "liveUrl": "https://www.astrologywiki.com/en/wiki/aura-reading",                                            "sheetRow": null },
+    { "page_id": "PG-NAKSH-001",  "fromStatus": "写作中", "toStatus": "已发布", "slug": "nakshatra",                                               "liveUrl": "https://www.astrologywiki.com/en/wiki/nakshatra",                                               "sheetRow": null },
+    { "page_id": "PG-NAKSH-004",  "fromStatus": "写作中", "toStatus": "已发布", "slug": "pushya-nakshatra",                                        "liveUrl": "https://www.astrologywiki.com/en/wiki/pushya-nakshatra",                                        "sheetRow": null },
+    { "page_id": "PG-AI-001",     "fromStatus": "待写",   "toStatus": "已发布", "slug": "ai-astrology-app",                                        "liveUrl": "https://www.astrologywiki.com/en/wiki/ai-astrology-app",                                        "sheetRow": null },
+    { "page_id": "PG-WC-037",     "fromStatus": "待写",   "toStatus": "已发布", "slug": "folarin-balogun-birth-chart",                             "liveUrl": "https://www.astrologywiki.com/en/wiki/folarin-balogun-birth-chart",                             "sheetRow": 203 },
+    { "page_id": "PG-WC-038",     "fromStatus": "待写",   "toStatus": "已发布", "slug": "darwin-nunez-zodiac-sign",                                "liveUrl": "https://www.astrologywiki.com/en/wiki/darwin-nunez-zodiac-sign",                                "sheetRow": 204 },
+    { "page_id": "PG-COUPLE-001", "fromStatus": "待写",   "toStatus": "已发布", "slug": "jwoww-zack-carpinello-wedding-synastry",                  "liveUrl": "https://www.astrologywiki.com/en/wiki/jwoww-zack-carpinello-wedding-synastry",                  "sheetRow": 205 },
+    { "page_id": "PG-COUPLE-002", "fromStatus": "待写",   "toStatus": "已发布", "slug": "reese-witherspoon-oliver-haarmann-compatibility-astrology", "liveUrl": "https://www.astrologywiki.com/en/wiki/reese-witherspoon-oliver-haarmann-compatibility-astrology", "sheetRow": 206 },
+    { "page_id": "PG-CELEB-006",  "fromStatus": "待写",   "toStatus": "已发布", "slug": "ricky-gervais-zodiac-sign",                               "liveUrl": "https://www.astrologywiki.com/en/wiki/ricky-gervais-zodiac-sign",                               "sheetRow": 207 },
+    { "page_id": "PG-CELEB-007",  "fromStatus": "待写",   "toStatus": "已发布", "slug": "taylor-swift-and-travis-kelce",                           "liveUrl": "https://www.astrologywiki.com/en/wiki/taylor-swift-and-travis-kelce",                           "sheetRow": 209 },
+    { "page_id": "PG-CELEB-008",  "fromStatus": "待写",   "toStatus": "已发布", "slug": "harry-styles-and-zo-kravitz",                             "liveUrl": "https://www.astrologywiki.com/en/wiki/harry-styles-and-zo-kravitz",                             "sheetRow": 210 },
+    { "page_id": "PG-WC-039",     "fromStatus": "待写",   "toStatus": "已发布", "slug": "jordan-vs-argentina",                                     "liveUrl": "https://www.astrologywiki.com/en/wiki/jordan-vs-argentina",                                     "sheetRow": 211 },
+    { "page_id": "PG-WC-040",     "fromStatus": "待写",   "toStatus": "已发布", "slug": "colombia-vs-portugal",                                    "liveUrl": "https://www.astrologywiki.com/en/wiki/colombia-vs-portugal",                                    "sheetRow": 212 }
+  ],
+  "needsHumanReview": [
+    { "page_id": "PG-TERM-008", "status": "待写", "candidateSlug": "midheaven",  "liveUrl": "https://www.astrologywiki.com/en/wiki/midheaven",  "note": "slug 'midheaven' 已上线，但 lastmod 2026-06-01（初始 glossary 迁移的核心页/可能为 stub）。该选题卡是否=已上线页面，还是计划中的重写/扩写？需人工确认后再决定是否置『已发布』。" },
+    { "page_id": "PG-TERM-009", "status": "待写", "candidateSlug": "opposition", "liveUrl": "https://www.astrologywiki.com/en/wiki/opposition", "note": "slug 'opposition' 已上线，lastmod 2026-06-01（核心页/可能 stub）。同上，需人工确认 card↔page 对应关系。" }
+  ],
+  "correctlyPending": {
+    "note": "已核验未上线，状态『待写/写作中』正确，无需改动。",
+    "authoredAwaitingPublish": [
+      { "page_id": "PG-CELEB-009", "slug": "serena-williams-birth-chart", "note": "今日 10:54Z 由 Mac author 通道生成草稿（_staging/PG-CELEB-009-claude-v8.md），尚未发布上线。" }
+    ],
+    "notYetAuthored": [
+      "PG-CELEB-010 (jannik sinner)", "PG-CELEB-011 (teyana taylor)", "PG-CELEB-012 (ben shelton)",
+      "PG-WC-041 (morocco world cup 2026)", "PG-VEDIC-002", "PG-VEDIC-003", "PG-VEDIC-004",
+      "PG-MAHADASHA-005", "PG-TRANS-006", "PG-LILITH-002", "PG-LILITH-003", "PG-TERM-007",
+      "PG-TERM-010", "PG-TERM-011", "PG-EMPATH-005", "PG-EMPATH-006", "PG-EMPATH-007",
+      "PG-CARTO-001", "PG-OPHI-001", "PG-MYTH-003", "PG-MYTH-004", "PG-MYTH-005",
+      "PG-HEAL-005", "PG-AYUR-004"
+    ]
+  }
+}

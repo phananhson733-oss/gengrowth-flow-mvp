@@ -1,0 +1,8 @@
+- 文章没有直接回答搜索意图 → 开头和“At a Glance”里明确写出：Ben Shelton reported birth date is October 9, 2002, so his Sun sign is Libra.
+- 过度回避事实 → “not a verified birth record”“reading method rather than fixed verdict”应保留给出生时间/上升/宫位，不要让读者以为太阳星座也无法确认。
+- 缺少 Ben Shelton 具体素材 → 加入可观察的网球语境：左手发球、爆发型进攻、大学网球背景、场上能量、采访气质，再对应 Libra/air-cardinal themes。
+- 表格太泛，像任何名人模板 → 把“Sun sign”行改成具体 Libra 层：air/cardinal/Venus themes，以及如何在 Shelton 的公开形象中观察。
+- “不同网站列出不同 signs”表述可疑 → 如果主流出生日期一致，就不要暗示 Sun sign 分歧；改成“traits and chart details differ because birth time is unverified.”
+- Pew、Rudhyar、Greene、Hand占比偏大 → 缩短通用 astrology theory，把篇幅让给 Shelton 本人和 Libra reading。
+- “Energy Center (Element / House)”有误导 → Sun sign不天然 linked to 5th house；除非有完整出生盘，不要把 sign 和 house 混写。
+- CTA锚文本生硬且像关键词塞入 → 改成更自然的 chart-reading CTA，不要用“explore ben shelton zodiac sign”这种不符合用户动作的措辞。

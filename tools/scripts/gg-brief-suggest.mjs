@@ -295,6 +295,14 @@ async function writeFieldsToSheet({ workbookId, token, sheetRow, fields, tab = P
 
 // ─── 5. LLM caller ────────────────────────────────────────────────────────────
 
+function llmTimeoutMs() {
+  const raw = process.env.GG_TOPIC_REGISTER_LLM_TIMEOUT_MS
+    || process.env.GG_LLM_TIMEOUT_MS
+    || '120000';
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 120000;
+}
+
 async function callLLM({ llm, prompt }) {
   const reg = LLM_REGISTRY[llm];
   if (!reg) throw new Error(`unknown llm: ${llm} (allowed: ${Object.keys(LLM_REGISTRY).join(', ')})`);
@@ -317,10 +325,29 @@ async function callLLM({ llm, prompt }) {
     const child = spawn(reg.bin, args, { cwd: REPO, env: process.env, stdio: ['pipe', 'pipe', 'pipe'] });
     let stdout = '';
     let stderr = '';
+    let timedOut = false;
+    let settled = false;
+    const timeoutMs = llmTimeoutMs();
+    const timer = setTimeout(() => {
+      timedOut = true;
+      child.kill('SIGTERM');
+      setTimeout(() => {
+        if (!settled) child.kill('SIGKILL');
+      }, 2000).unref?.();
+    }, timeoutMs);
     child.stdout.on('data', (d) => { stdout += d.toString(); });
     child.stderr.on('data', (d) => { stderr += d.toString(); });
-    child.on('error', (err) => reject(new Error(`spawn ${reg.bin} failed: ${err.code || err.message}`)));
+    child.on('error', (err) => {
+      clearTimeout(timer);
+      settled = true;
+      reject(new Error(`spawn ${reg.bin} failed: ${err.code || err.message}`));
+    });
     child.on('close', (code) => {
+      clearTimeout(timer);
+      settled = true;
+      if (timedOut) {
+        return reject(new Error(`${reg.bin} timed out after ${timeoutMs}ms`));
+      }
       if (code !== 0) {
         return reject(new Error(`${reg.bin} exited ${code}: ${stderr.slice(-300).trim()}`));
       }

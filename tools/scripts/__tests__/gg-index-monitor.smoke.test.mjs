@@ -621,6 +621,23 @@ test('launchd wrapper runs only the lightweight index monitor check', () => {
   assert.match(plist, /StartCalendarInterval/);
 });
 
+test('repair resubmit wrapper loops products without unattended request-indexing notifications', () => {
+  const wrapper = readFileSync(join(SCRIPTS, 'gg-index-repair-resubmit-tick.sh'), 'utf8');
+  assert.match(wrapper, /index_repair_resubmit/);
+  assert.match(wrapper, /GG_INDEX_MONITOR_PRODUCTS:-astrologywiki gengrowth/);
+  assert.match(wrapper, /astrologywiki\|astrology/);
+  assert.match(wrapper, /GG_SHEETS_ASTROLOGY_WORKBOOK_ID/);
+  assert.match(wrapper, /gengrowth\|gengrowth-ai/);
+  assert.match(wrapper, /GG_SHEETS_GENGROWTH_WORKBOOK_ID/);
+  assert.match(wrapper, /GG_GSC_GENGROWTH_SITE/);
+  assert.match(wrapper, /--process-fixed --write-sheet --notify/);
+  assert.match(wrapper, /--workbook "\$GG_SHEETS_WORKBOOK_ID"/);
+  assert.match(wrapper, /--sync-recap --write-sheet/);
+  assert.match(wrapper, /--sync-request-queue --write-sheet/);
+  assert.doesNotMatch(wrapper, /--sync-request-queue --write-sheet --notify/);
+  assert.doesNotMatch(wrapper, /--check-due|--sync-published|gsc-index-submit|Google Indexing API/);
+});
+
 test('index monitor automation mints Sheets tokens from service account, not testing OAuth', () => {
   const src = readFileSync(join(SCRIPTS, 'gg-index-monitor.mjs'), 'utf8');
   assert.doesNotMatch(src, /_oauth-token\.mjs/);

@@ -34,6 +34,61 @@ Last run: 2026-07-01T11:01:04.664Z (1782903664664)
 
 ---
 
+### Q17 — 22:03
+
+**🙋 提问：**
+
+Automation: GenGrowth Vault Git Auto-Heal
+Automation ID: gengrowth-vault-git-auto-heal
+Automation memory: $CODEX_HOME/automations/gengrowth-vault-git-auto-heal/memory.md
+Last run: 2026-07-01T13:01:05.060Z (1782910865060)
+
+在本机执行 GenGrowth 多仓库 Obsidian/Git 自愈同步。目标仓库固定为 `/Users/awayer_mini/gengrowth-wiki`、`/Users/awayer_mini/gengrowth-ops`、`/Users/awayer_mini/gengrowth-flow-mvp`。
+
+必须使用已验证的确定性入口，不要绕过脚本手写破坏性 git 操作：
+
+`/usr/bin/python3 /Users/awayer_mini/gengrowth-wiki/tools/scripts/obsidian-vault-git-sync.py --repo /Users/awayer_mini/gengrowth-wiki --repo /Users/awayer_mini/gengrowth-ops --repo /Users/awayer_mini/gengrowth-flow-mvp --verbose`
+
+安全边界：
+- 禁止运行 `git reset --hard`、`git checkout -- <path>`、`git clean`、`rm -rf`、`rsync --delete`，除非用户在当次对话中明确要求。
+- 不要运行 `tools/scripts/frequent-sync.sh`、`tools/scripts/gengrowth-repos-sync.sh` 或 `tools/scripts/_sync-core.sh`，因为这些路径包含镜像删除语义，本任务只做 git 自愈同步。
+- 同步脚本会先 fetch，检查未解决冲突，提交本地非敏感变更，再 rebase/push；只对白名单 JSON 冲突自动合并，其他冲突会中止并报告。不要在脚本中止后自行猜测合并内容。
+- 不打印密钥、token、邮箱密码、service account JSON、private key 或完整凭证 URL。
+
+执行后验证：
+1. 分别在三个仓库运行 `git status --branch --porcelain=v2`、`git rev-list --left-right --count HEAD...origin/main`、`git diff --name-only --diff-filter=U`、`git ls-files -u`。
+2. 回读 `/Users/awayer_mini/gengrowth-ops/.obsidian/plugins/obsidian-git/data.json` 和 `/Users/awayer_mini/gengrowth-flow-mvp/.obsidian/plugins/obsidian-git/data.json`，确认 `autoSaveInterval`、`autoPushInterval`、`autoPullInterval` 为 0，`autoPullOnBoot` 与 `pullBeforePush` 为 false。
+3. 若所有仓库都是 clean 且 ahead/behind 为 `0 0`，简短报告已同步；若脚本输出“需要关注”或存在 unmerged，报告具体仓库和文件路径，不要删除文件。
+
+**🤖 回答：**
+
+读取自动化 memory、项目约束、owner/reminders 与 completion-verification 指令后，只使用指定确定性入口执行三仓 Obsidian/Git 自愈同步；脚本退出码为 `0`，无“需要关注”输出。按要求逐仓运行 `git status --branch --porcelain=v2`、`git rev-list --left-right --count HEAD...origin/main`、`git diff --name-only --diff-filter=U`、`git ls-files -u`，三仓均 clean、ahead/behind 为 `0 0`、无 unmerged 文件。
+
+回读 `gengrowth-ops/.obsidian/plugins/obsidian-git/data.json` 与 `gengrowth-flow-mvp/.obsidian/plugins/obsidian-git/data.json` 的指定字段，确认 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。追加本轮 record 后继续通过同一确定性入口提交推送并复验；安全边界保持，未执行禁止的破坏性 git 命令、未运行镜像删除语义脚本、未打印凭证。
+
+---
+
+### Q17 — 22:03
+
+**🙋 提问：**
+
+Automation: GenGrowth Topic Register
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-01T12:01:04.851Z (1782907264851)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+读取自动化 memory、项目约束、reminders 与 `gengrowth-topic-register-wrapper-report` 技能后，只执行 `bash tools/scripts/gg-topic-register-tick.sh`，未传入手写 apply/repair/write flags。wrapper 退出码 `0`。
+
+最新日志为 `~/gengrowth-agents/cron-sync/topic_register/2026-07-01.log`，本次窗口 `2026-07-01 22:02:59` 到 `22:03:04`，状态 `topic-register ok`。local env 启用了 apply mode，JSON 显示 `dry_run=false`、`budget_exhausted=false`，命令为 `node .../gg-topic-register.mjs --product all --limit 10 --llm claude --discover-evidence --apply --run-budget-ms 840000`。
+
+结果：`astrologywiki` candidates=0、updates=0、new_clusters=0、page_ids=[]、selection_mode=`generate`、audit_incomplete=0、preprocessor=[]、evidence_discovery=[]；`gengrowth` candidates=0、updates=0、new_clusters=0、page_ids=[]、selection_mode=`generate`、audit_incomplete=0、preprocessor=[]、evidence_discovery=[]。未见失败或 timeout；安全边界保持：没有手改 Sheet、没有直接编辑 task plan、没有额外 Feishu/Google Doc 报告产物。
+
+---
+
 ### Q6 — 15:03
 
 **🙋 提问：**

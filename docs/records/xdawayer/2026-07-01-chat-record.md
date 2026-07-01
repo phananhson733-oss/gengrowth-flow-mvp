@@ -231,3 +231,17 @@ Last run: 2026-07-01T05:02:03.698Z (1782882123698)
 live sitemap 中存在 `https://www.astrologywiki.com/en/tools` 以及多个工具页 URL（如 `birth-chart-calculator`、`big-three-calculator`、`current-planets` 等），但当前 Google Sheet 的 `index-tracking`、`结果复盘表`、`request-indexing-queue` 都没有匹配这些工具页 URL。因此这属于提交计划的范围边界问题，不是本次 GSC 提交时漏点。
 
 ---
+
+### Q8 — 15:11
+
+**🙋 提问：**
+
+那么我是不是需要从 GSC 后台去检查，或者其他地方找到哪些链接没有被提交呢，然后转化为尚未提交或者索引的呢，也就是说现在光从这个表里面的数据不够了
+
+**🤖 回答：**
+
+确认当前表内数据不够，因为 `index-tracking`、`结果复盘表`、`request-indexing-queue` 都是经过 `/en/wiki/...` 过滤后的结果，只能说明“已纳入当前文章页自动化范围的 URL”状态，不能发现 sitemap/站点中存在但从未进入提交计划的工具页。
+
+建议建立独立 URL inventory：从 live sitemap、oracle/tools catalog、路由清单或抓取结果生成全量可索引 URL，再与 `index-tracking`、`结果复盘表`、`request-indexing-queue` 和 GSC URL Inspection 状态对账，分成“未纳入监控/提交计划”“已纳入但未提交”“已提交但未收录”“已收录”四类。GSC 后台适合抽查和真实提交，批量发现缺口应优先靠 sitemap/route inventory + Sheet/GSC 状态对账。
+
+---

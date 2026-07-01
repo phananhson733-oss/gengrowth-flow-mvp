@@ -149,6 +149,27 @@ export const REQUEST_INDEXING_QUEUE_HEADER = Object.freeze([
   'notes',
 ]);
 
+export const URL_INVENTORY_TAB = 'url-inventory';
+export const URL_INVENTORY_HEADER = Object.freeze([
+  'url',
+  'path_family',
+  'title',
+  'source',
+  'sitemap_lastmod',
+  'page_id',
+  'inventory_status',
+  'request_queue_allowed',
+  'tracking_status',
+  'request_queue_status',
+  'recap_status',
+  'current_gsc_status',
+  'first_tracked_at',
+  'last_checked_at',
+  'gsc_inspection_url',
+  'updated_at',
+  'notes',
+]);
+
 const DUE_MILESTONES = Object.freeze([3, 7, 14, 21, 30]);
 const DEFAULT_SITE = 'sc-domain:astrologywiki.com';
 const DEFAULT_SITE_ORIGIN = 'https://www.astrologywiki.com';
@@ -157,6 +178,25 @@ const GSC_READONLY_SCOPE = 'https://www.googleapis.com/auth/webmasters.readonly'
 const GSC_WRITE_SCOPE = 'https://www.googleapis.com/auth/webmasters';
 const DEFAULT_SITEMAP_URL = 'https://www.astrologywiki.com/sitemap.xml';
 const DIAGNOSIS_FRAMEWORK_URL = 'obsidian://open?vault=gengrowth-ops&file=inbox%2F08-reports-and-feedback%2F01-product-feedback%2F2026-06-22-indexing-automation-requirements-v1.0';
+const KNOWN_TOOL_SLUGS = Object.freeze(new Set([
+  'astrocartography',
+  'astrocartography-map-generator',
+  'big-three-calculator',
+  'birth-chart-calculator',
+  'celebrity-twins',
+  'composite-calculator',
+  'current-planets',
+  'electional-astrology',
+  'energy-timeline',
+  'ephemeris-calculator',
+  'moon-phase-calculator',
+  'moon-sign-calculator',
+  'rising-sign-calculator',
+  'rodden-rating',
+  'saturn-return-calculator',
+  'solar-return-calculator',
+  'synastry-calculator',
+]));
 
 function readerSaPath() {
   return process.env.GG_READER_SA_JSON || join(homedir(), '.config', 'gg', 'gg-reader-sa.json');
@@ -386,6 +426,44 @@ function titleFromSlug(slug) {
     .join(' ');
 }
 
+function slugFromPath(pathname) {
+  const parts = String(pathname || '').replace(/\/$/, '').split('/').filter(Boolean);
+  return decodeURIComponent(parts[parts.length - 1] || '');
+}
+
+function inventoryPathFamily(url) {
+  try {
+    const u = new URL(url);
+    if (u.hostname !== 'www.astrologywiki.com' && u.hostname !== 'astrologywiki.com') return '';
+    const path = u.pathname.replace(/\/$/, '') || '/';
+    if (path === '/en/tools') return 'en_tools_hub';
+    if (/^\/en\/wiki\/[^/]+$/.test(path)) return 'en_wiki_article';
+    if (/^\/en\/wiki\/.+\/[^/]+$/.test(path)) return 'en_wiki_nested';
+    if (path === '/en/wiki') return 'en_wiki_hub';
+    if (/^\/en\/[^/]+$/.test(path) && KNOWN_TOOL_SLUGS.has(slugFromPath(path))) return 'en_tool';
+    if (/^\/en\/[^/]+$/.test(path)) return 'en_static';
+    return '';
+  } catch {
+    return '';
+  }
+}
+
+function titleFromInventoryUrl(url) {
+  try {
+    const u = new URL(url);
+    const path = u.pathname.replace(/\/$/, '');
+    if (path === '/en/tools') return 'Tools';
+    if (path === '/en/wiki') return 'Wiki';
+    return titleFromSlug(slugFromPath(path));
+  } catch {
+    return '';
+  }
+}
+
+function requestQueueAllowedForPathFamily(pathFamily) {
+  return ['en_wiki_article', 'en_wiki_nested', 'en_tools_hub', 'en_tool'].includes(pathFamily) ? 'Y' : 'N';
+}
+
 function sitemapEntries(xml) {
   const entries = [];
   const blocks = String(xml || '').match(/<url\b[\s\S]*?<\/url>/gi) || [];
@@ -396,6 +474,45 @@ function sitemapEntries(xml) {
     entries.push({ loc, lastmod: lastmod.slice(0, 10) });
   }
   return entries;
+}
+
+export function extractIndexableSitemapInventoryRows(xml, { now = new Date() } = {}) {
+  const seen = new Set();
+  const rows = [];
+  for (const entry of sitemapEntries(xml)) {
+    const url = normalizeUrl(entry.loc);
+    if (seen.has(url)) continue;
+    const pathFamily = inventoryPathFamily(url);
+    if (!pathFamily) continue;
+    seen.add(url);
+    rows.push({
+      url,
+      path_family: pathFamily,
+      title: titleFromInventoryUrl(url),
+      source: 'live-sitemap',
+      sitemap_lastmod: entry.lastmod || isoDay(now),
+      page_id: '',
+      inventory_status: '',
+      request_queue_allowed: requestQueueAllowedForPathFamily(pathFamily),
+      tracking_status: '',
+      request_queue_status: '',
+      recap_status: '',
+      current_gsc_status: '',
+      first_tracked_at: '',
+      last_checked_at: '',
+      gsc_inspection_url: '',
+      updated_at: '',
+      notes: '',
+    });
+  }
+  return rows;
+}
+
+export async function fetchSitemapInventoryRows(sitemapUrl = DEFAULT_SITEMAP_URL, { fetcher = fetch, now = new Date() } = {}) {
+  const res = await fetcher(sitemapUrl);
+  if (!res.ok) throw new Error(`sitemap fetch failed (${res.status}): ${await res.text()}`);
+  const xml = await res.text();
+  return extractIndexableSitemapInventoryRows(xml, { now });
 }
 
 export function extractEnWikiSitemapRows(xml, { now = new Date() } = {}) {
@@ -499,6 +616,13 @@ function requestQueueValuesToRow(values = [], rowNumber = null) {
   return row;
 }
 
+function urlInventoryValuesToRow(values = [], rowNumber = null) {
+  const row = {};
+  URL_INVENTORY_HEADER.forEach((h, i) => { row[h] = values[i] ?? ''; });
+  if (rowNumber != null) row._rowNumber = rowNumber;
+  return row;
+}
+
 function recapRowToValues(row) {
   return RECAP_HEADER.map((h) => {
     const v = row?.[h];
@@ -508,6 +632,13 @@ function recapRowToValues(row) {
 
 function requestQueueRowToValues(row) {
   return REQUEST_INDEXING_QUEUE_HEADER.map((h) => {
+    const v = row?.[h];
+    return v == null ? '' : v;
+  });
+}
+
+function urlInventoryRowToValues(row) {
+  return URL_INVENTORY_HEADER.map((h) => {
     const v = row?.[h];
     return v == null ? '' : v;
   });
@@ -725,6 +856,80 @@ export function buildRequestIndexingCandidateRows({
   return rows.sort((a, b) => (rank[a.priority] ?? 9) - (rank[b.priority] ?? 9) ||
     Number(b.days_since_first_tracked || 0) - Number(a.days_since_first_tracked || 0) ||
     String(a.page_id).localeCompare(String(b.page_id)));
+}
+
+function hasRequestSubmissionEvidence({ recap = {}, tracking = {}, queue = {} } = {}) {
+  const applicationTime = String(recap['申请时间'] || '').trim();
+  const queueStatus = String(queue.computer_use_status || '').trim();
+  return (
+    (!!applicationTime && !['未申请', '待申请', '待提交', ''].includes(applicationTime)) ||
+    ['已提交', '已重新提交'].includes(queueStatus) ||
+    !!String(tracking.resubmitted_at || '').trim()
+  );
+}
+
+function hasAnyInventoryCoverage({ recap = {}, tracking = {}, queue = {} } = {}) {
+  return !!(recap.url || recap.page_id || tracking.url || tracking.page_id || queue.url || queue.page_id || queue.candidate_id);
+}
+
+export function buildUrlInventoryRows({
+  sitemapRows = [],
+  trackingRows = [],
+  recapRows = [],
+  requestQueueRows = [],
+  now = new Date(),
+  siteUrl = DEFAULT_SITE,
+} = {}) {
+  const day = isoDay(now);
+  const trackingByUrl = new Map(trackingRows.map((row) => [normalizeUrl(row.url), row]));
+  const recapByUrl = new Map(recapRows.map((row) => [normalizeUrl(row.url), row]));
+  const queueByUrl = new Map(requestQueueRows.map((row) => [normalizeUrl(row.url), row]));
+  const seen = new Set();
+  const rows = [];
+
+  for (const base of sitemapRows) {
+    const url = normalizeUrl(base.url);
+    if (!url || seen.has(url)) continue;
+    seen.add(url);
+    const tracking = trackingByUrl.get(url) || {};
+    const recap = recapByUrl.get(url) || {};
+    const queue = queueByUrl.get(url) || {};
+    const pageId = tracking.page_id || recap.page_id || queue.page_id || base.page_id || '';
+    const indexed = isIndexedTrackingRow(tracking) ||
+      String(recap['day14_收录'] || '').trim() === 'Y' ||
+      String(recap['索引修复状态'] || '').trim() === '已收录';
+    const submitted = hasRequestSubmissionEvidence({ recap, tracking, queue });
+    const covered = hasAnyInventoryCoverage({ recap, tracking, queue });
+    const inventoryStatus = indexed
+      ? '已收录'
+      : submitted
+        ? '已提交但未收录'
+        : covered
+          ? '已纳入但未提交'
+          : '未纳入监控';
+
+    rows.push({
+      url,
+      path_family: base.path_family || inventoryPathFamily(url),
+      title: tracking.title || base.title || titleFromInventoryUrl(url),
+      source: base.source || 'live-sitemap',
+      sitemap_lastmod: base.sitemap_lastmod || base.lastmod || '',
+      page_id: pageId,
+      inventory_status: inventoryStatus,
+      request_queue_allowed: base.request_queue_allowed || requestQueueAllowedForPathFamily(base.path_family || inventoryPathFamily(url)),
+      tracking_status: tracking.monitor_status || '',
+      request_queue_status: queue.computer_use_status || '',
+      recap_status: recap['索引修复状态'] || '',
+      current_gsc_status: tracking.current_gsc_status || '',
+      first_tracked_at: tracking.first_tracked_at || '',
+      last_checked_at: tracking.last_checked_at || '',
+      gsc_inspection_url: searchConsoleInspectionUrl(url, siteUrl),
+      updated_at: day,
+      notes: covered ? '' : 'sitemap存在但当前自动化未追踪；第一阶段仅对账，不自动提交',
+    });
+  }
+
+  return rows;
 }
 
 function mergeRecapRow(existing = {}, fresh = {}) {

@@ -105,7 +105,7 @@ export function renderScaffold({ pageId, entity, tier, template, childEntities, 
     internal_link_rule: `TODO: which other ${isPillar ? 'sibling Definition pages + sub-clusters' : 'pillar + sibling Definition pages + chakra/element reference'} should this article link out to. Use natural noun phrases (used inside [[<TBD-internal-link: ...>]]).`,
     cta_text: DEFAULT_CTA_TEXT,
     cta_target_url: DEFAULT_CTA_URL,
-    tier_gate_block: `## Tier Gate（${tier} ${template}）\n\n- 必读 Friction（col J）: TODO — 3 个用户搜 "${targetKeyword}" 时常见的状态/痛点，每个 1 句话\n- 必读 Logic（col K）: TODO — 主流 source 怎么写这个 entity，shade/variant 分别什么含义，为什么这是 interpretive framework 不是 measurable phenomenon\n- ${tier} = ${isPillar ? 'Hub' : '标准版'} — 字数 ${wordRange}，结构严格按 ${sectionCount}`,
+    tier_gate_block: `## Tier Gate（${tier} ${template}）\n\n- 必读 Friction（col I，真实痛点单句 ≤25 词）: TODO — 用户搜 "${targetKeyword}" 时最常见的 1 个客观第三人称痛点张力句\n- 必读 Logic（col J，机制+权衡）: TODO — 首句给实体三角拓扑「核心实体↔关联主宰↔对应特征」(§4)，再写机制 + 权衡，为什么这是 interpretive framework 不是 measurable phenomenon\n- ${tier} = ${isPillar ? 'Hub' : '标准版'} — 字数 ${wordRange}，结构严格按 ${sectionCount}`,
     rl6_hint: `TODO: 1-2 sentence reminder of what NOT to write — common framing mistakes specific to this entity (e.g. "don't reduce X to a clinical diagnosis" / "don't pathologize Y / don't write it as personality verdict").`,
     friction_themes: [
       {

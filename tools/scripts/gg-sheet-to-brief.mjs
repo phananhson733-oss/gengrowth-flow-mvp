@@ -225,12 +225,14 @@ export function buildTierGateBlock({ tier, template, entity, friction_brief, log
   const wordRange = isPillar ? '2500-3500' : '1500-1800';
   const sectionCount = isPillar ? '11 sections' : '9 sections';
   const tierLabel = tier === 'T1' ? 'Hub / 重装' : (tier === 'T3' ? '极长尾占位' : '标准版');
+  // Canonical columns (_workbook-spec 选题登记表 header): Friction=col I, Logic=col J.
+  // Earlier label said "col J"/"col K" (off-by-one) — fixed 2026-06-26.
   const frictionLine = friction_brief && friction_brief.trim()
-    ? `- 必读 Friction（col J）: ${friction_brief.trim()}`
-    : `- 必读 Friction（col J）: TODO — 3 个用户搜 "${target_keyword || entity}" 时常见的状态/痛点`;
+    ? `- 必读 Friction（col I，真实痛点单句）: ${friction_brief.trim()}`
+    : `- 必读 Friction（col I）: TODO — 3 个用户搜 "${target_keyword || entity}" 时常见的状态/痛点`;
   const logicLine = logic_brief && logic_brief.trim()
-    ? `- 必读 Logic（col K）: ${logic_brief.trim()}`
-    : `- 必读 Logic（col K）: TODO — 主流 source 怎么写 ${entity}，shade/variant 分别什么含义，为什么是 interpretive framework`;
+    ? `- 必读 Logic（col J，机制+权衡，首句写 ${entity} 的实体三角拓扑 §4）: ${logic_brief.trim()}`
+    : `- 必读 Logic（col J）: TODO — 首句给 ${entity} 的「核心实体↔关联主宰↔对应特征」三角，再写机制+权衡，为什么是 interpretive framework`;
   return [
     `## Tier Gate（${tier || 'T2'} ${template || 'Definition'}）`,
     '',

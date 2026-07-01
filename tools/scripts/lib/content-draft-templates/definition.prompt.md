@@ -267,7 +267,17 @@ capsule 用于决定**怎么解释**（措辞、对比角度、例子选择、�
 - ✅ 内联范例：`This sits alongside the broader [[<TBD-internal-link: pillar page on all aura colors>]], which maps every color's energy.`
 - **Phase 2 SC4 binary check**：正文（Related Reading 之前）内联内链数 = 0 → 整篇 fail。
 
-**self-check（提交前默念）**：正文 Related Reading 之前，是否至少 1 条 `[[<TBD-internal-link:...>]]` 内联在段落句子里？没有就把 pillar 回链织进第 1-2 段。
+**内链 description 必须指向真实存在的页（镜像外链「真实页名或省略」红线）**：每条 `[[<TBD-internal-link: description>]]` 会被下游 converter 用**固定规则表**解析成一个真实 wiki 页；description **描述不到任何真实页 → 链接被降级成普通斜体（死链感）**，而且**发布 review 会直接 park**（「锚点承诺了一个不存在的页面」）。所以 description 只许描述**已存在的通用簇概念**，禁止 invent「配套/系列/合集」页：
+
+  - ✅ 只用这些真实靶点：pillar「how to read a birth chart / 本命盘阅读指南」、「ascendant / rising sign 含义」、**已发布的具体真人星盘**（点名真人，如 `Serena Williams's birth chart`）、相位页（sextile / trine / square）、宫位页、南北交点页。
+  - ❌ **禁止 vague / 自指 description**（承诺不存在的页 → park）：
+    - `companion celebrity birth chart profile in this series`（「这个系列里的配套名人」= 没有这个页）
+    - `another athlete's / another figure's birth chart`（不点名 = 没有对应页；要链就点名一个**真实已发布**的人）
+    - `explainer on stelliums`（无独立 stellium 页）→ 改描述成 `how planet clusters work in a birth chart`（落到 pillar）
+    - `... profiles hub / cluster`（除非就是想指 ascendant/rising 页，那就直接写 `rising sign meaning`）
+  - 判定法：把 description 读成一句「这链接会打开一个关于 ___ 的页」——若那个页**你不能确信真实存在**，改成上面的真实靶点，或**直接省略这条链接**（宁缺毋滥，和外链同规矩）。
+
+**self-check（提交前默念）**：正文 Related Reading 之前，是否至少 1 条 `[[<TBD-internal-link:...>]]` 内联在段落句子里？没有就把 pillar 回链织进第 1-2 段。每条 `<TBD-internal-link:>` 的 description 是否都指向一个**你确信存在**的真实页（否则改真实靶点或删）？
 
 ## target_keyword 跨 section 分布硬要求（任一违反 = 整篇作废）
 

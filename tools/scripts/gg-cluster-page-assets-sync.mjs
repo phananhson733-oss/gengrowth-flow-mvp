@@ -22,7 +22,11 @@ import { getAccessToken } from './lib/_oauth-token.mjs';
 const args = process.argv.slice(2);
 const APPLY = args.includes('--apply');
 const dateArg = (() => { const i = args.indexOf('--date'); return i >= 0 ? args[i + 1] : ''; })();
-const WB = (process.env.GG_SHEETS_FLOW_MVP_WORKBOOK_ID || process.env.GG_SHEETS_WORKBOOK_ID || '1CkjOCgYbRfXGYc6l2FJOaxUIzxT0NBVUhUpgCjyzcQc').trim();
+// --workbook wins (per-product two-site tick passes it); else canonical astrologywiki.
+// NOTE: --workbook MUST take precedence over GG_SHEETS_FLOW_MVP_WORKBOOK_ID, which stays
+// pinned to the canonical astrologywiki book even during a gengrowth iteration.
+const wbArg = (() => { const i = args.indexOf('--workbook'); return i >= 0 ? args[i + 1] : ''; })();
+const WB = (wbArg || process.env.GG_SHEETS_FLOW_MVP_WORKBOOK_ID || process.env.GG_SHEETS_WORKBOOK_ID || '1CkjOCgYbRfXGYc6l2FJOaxUIzxT0NBVUhUpgCjyzcQc').trim();
 const TOPIC_TAB = '选题登记表';
 const CLUSTER_TAB = '主题集群表';
 const PUBLISHED = '已发布';

@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-HOUSE-014",
+  "entity": "Pride Month Astrology",
+  "target_keyword": "Pride Month Astrology",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-07-01T04:08:27.599Z",
+  "content_sha256_short": "bc18a74dea4eae9b",
+  "source_path": "_staging/PG-HOUSE-014-claude-v8.md",
+  "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-HOUSE-014-en.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 2,
+      "h4Count": 0,
+      "words": 1613,
+      "wikilinks": 7,
+      "tbdLinks": 7
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

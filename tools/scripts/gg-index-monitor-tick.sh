@@ -3,6 +3,7 @@
 #
 # Lightweight daily job:
 #   - syncs live EN wiki URLs from the public sitemap into index-tracking
+#   - syncs the full indexable URL inventory into url-inventory for coverage gap review
 #   - processes human-marked 已修复 rows by refreshing sitemap and timestamps
 #   - refreshes the sitemap through the official Search Console Sitemaps API
 #   - checks due URLs with Search Console URL Inspection
@@ -45,9 +46,10 @@ echo "$(date '+%F %T') index monitor start (pid $$, limit $LIMIT)" >> "$LOG"
   . "$HOME/.config/gg/_gg.env" 2>/dev/null
   set +a
 
-  run_rc=0
-  node "$SCRIPT_DIR/gg-index-monitor.mjs" --sync-published --write-sheet || run_rc=$?
-  node "$SCRIPT_DIR/gg-index-monitor.mjs" --process-fixed --write-sheet --notify || run_rc=$?
+	  run_rc=0
+	  node "$SCRIPT_DIR/gg-index-monitor.mjs" --sync-published --write-sheet || run_rc=$?
+	  node "$SCRIPT_DIR/gg-index-monitor.mjs" --sync-url-inventory --write-sheet || run_rc=$?
+	  node "$SCRIPT_DIR/gg-index-monitor.mjs" --process-fixed --write-sheet --notify || run_rc=$?
   node "$SCRIPT_DIR/gg-index-monitor.mjs" --submit-sitemap --notify || run_rc=$?
 
   if command -v gtimeout >/dev/null 2>&1; then

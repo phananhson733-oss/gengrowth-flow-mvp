@@ -1296,6 +1296,31 @@ async function writeRequestQueueHeader(token, workbookId, tabName = REQUEST_INDE
   );
 }
 
+async function readUrlInventoryHeader(token, workbookId, tabName = URL_INVENTORY_TAB) {
+  try {
+    const last = colLetter(URL_INVENTORY_HEADER.length - 1);
+    const body = await gFetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${workbookId}/values/${encodeURIComponent(`${tabName}!A1:${last}1`)}`,
+      token,
+    );
+    return (body.values?.[0] || []).map((h) => String(h || '').trim());
+  } catch {
+    return [];
+  }
+}
+
+async function writeUrlInventoryHeader(token, workbookId, tabName = URL_INVENTORY_TAB) {
+  return gFetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${workbookId}/values/${encodeURIComponent(`${tabName}!A1`)}?valueInputOption=RAW`,
+    token,
+    {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ values: [URL_INVENTORY_HEADER] }),
+    },
+  );
+}
+
 export async function ensureIndexTrackingTab(token, workbookId, deps = {}) {
   const fetcher = deps.gFetch || gFetch;
   const meta = await fetcher(`https://sheets.googleapis.com/v4/spreadsheets/${workbookId}?includeGridData=false`, token);
@@ -1350,6 +1375,33 @@ export async function ensureRequestQueueTab(token, workbookId, deps = {}) {
   return REQUEST_INDEXING_QUEUE_TAB;
 }
 
+export async function ensureUrlInventoryTab(token, workbookId, deps = {}) {
+  const fetcher = deps.gFetch || gFetch;
+  const meta = await fetcher(`https://sheets.googleapis.com/v4/spreadsheets/${workbookId}?includeGridData=false`, token);
+  const sheets = meta.sheets || [];
+  const has = sheets.some((s) => s.properties?.title === URL_INVENTORY_TAB);
+  if (!has) {
+    await fetcher(
+      `https://sheets.googleapis.com/v4/spreadsheets/${workbookId}:batchUpdate`,
+      token,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ requests: [{ addSheet: { properties: { title: URL_INVENTORY_TAB } } }] }),
+      },
+    );
+  }
+  const header = deps.readHeader
+    ? await deps.readHeader(token, workbookId, URL_INVENTORY_TAB)
+    : await readUrlInventoryHeader(token, workbookId, URL_INVENTORY_TAB);
+  const matches = URL_INVENTORY_HEADER.every((h, i) => header[i] === h);
+  if (!matches) {
+    if (deps.writeHeader) await deps.writeHeader(token, workbookId, URL_INVENTORY_TAB);
+    else await writeUrlInventoryHeader(token, workbookId, URL_INVENTORY_TAB);
+  }
+  return URL_INVENTORY_TAB;
+}
+
 export async function readTrackingRows(token, workbookId, tabName = INDEX_TRACKING_TAB) {
   const last = colLetter(INDEX_TRACKING_HEADER.length - 1);
   const body = await gFetch(
@@ -1372,6 +1424,17 @@ export async function readRequestQueueRows(token, workbookId, tabName = REQUEST_
     .filter((row) => row.url || row.page_id || row.candidate_id);
 }
 
+export async function readUrlInventoryRows(token, workbookId, tabName = URL_INVENTORY_TAB) {
+  const last = colLetter(URL_INVENTORY_HEADER.length - 1);
+  const body = await gFetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${workbookId}/values/${encodeURIComponent(`${tabName}!A2:${last}3000`)}`,
+    token,
+  );
+  return (body.values || [])
+    .map((values, i) => urlInventoryValuesToRow(values, i + 2))
+    .filter((row) => row.url);
+}
+
 export async function appendTrackingRows(token, workbookId, tabName, rows) {
   if (!rows.length) return { updates: { updatedRows: 0 } };
   return gFetch(
@@ -1381,6 +1444,29 @@ export async function appendTrackingRows(token, workbookId, tabName, rows) {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ values: rows.map(rowToSheetValues) }),
+    },
+  );
+}
+
+export async function replaceUrlInventoryRows(token, workbookId, tabName, rows) {
+  const last = colLetter(URL_INVENTORY_HEADER.length - 1);
+  await gFetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${workbookId}/values/${encodeURIComponent(`${tabName}!A2:${last}3000`)}:clear`,
+    token,
+    {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({}),
+    },
+  );
+  if (!rows.length) return { updatedRows: 0 };
+  return gFetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${workbookId}/values/${encodeURIComponent(`${tabName}!A2:${last}${rows.length + 1}`)}?valueInputOption=RAW`,
+    token,
+    {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ values: rows.map(urlInventoryRowToValues) }),
     },
   );
 }
@@ -1486,6 +1572,85 @@ export async function formatRequestQueueTab(token, workbookId, tabName = REQUEST
       fields: 'userEnteredFormat(textFormat,backgroundColorStyle)',
     },
   });
+  if (requests.length) {
+    await gFetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${workbookId}:batchUpdate`,
+      token,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ requests }),
+      },
+    );
+  }
+  return { formatted: true };
+}
+
+export async function formatUrlInventoryTab(token, workbookId, tabName = URL_INVENTORY_TAB) {
+  const meta = await gFetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${workbookId}?includeGridData=false&fields=sheets(properties(sheetId,title),conditionalFormats)`,
+    token,
+  );
+  const sheet = (meta.sheets || []).find((s) => s.properties?.title === tabName);
+  if (!sheet) throw new Error(`tab not found: ${tabName}`);
+  const sheetId = sheet.properties.sheetId;
+  const statusCol = URL_INVENTORY_HEADER.indexOf('inventory_status');
+  const requests = [];
+  const existing = sheet.conditionalFormats || [];
+  const isStatusRule = (rule) =>
+    (rule.ranges || []).some((range) =>
+      range.sheetId === sheetId &&
+      range.startRowIndex === 1 &&
+      range.startColumnIndex === statusCol &&
+      range.endColumnIndex === statusCol + 1) &&
+    rule.booleanRule?.condition?.type === 'TEXT_EQ';
+  existing.forEach((rule, index) => {
+    if (isStatusRule(rule)) requests.push({ deleteConditionalFormatRule: { sheetId, index } });
+  });
+  requests.sort((a, b) => b.deleteConditionalFormatRule.index - a.deleteConditionalFormatRule.index);
+
+  const formats = [
+    ['未纳入监控', { red: 0.70, green: 0.28, blue: 0.00 }, { red: 1.0, green: 0.90, blue: 0.72 }],
+    ['已纳入但未提交', { red: 0.20, green: 0.32, blue: 0.55 }, { red: 0.86, green: 0.91, blue: 1.0 }],
+    ['已提交但未收录', { red: 0.45, green: 0.35, blue: 0.00 }, { red: 1.0, green: 0.96, blue: 0.70 }],
+    ['已收录', { red: 0.12, green: 0.45, blue: 0.20 }, { red: 0.86, green: 0.95, blue: 0.86 }],
+  ];
+  for (const [value, fg, bg] of formats) {
+    requests.push({
+      addConditionalFormatRule: {
+        index: 0,
+        rule: {
+          ranges: [{ sheetId, startRowIndex: 1, startColumnIndex: statusCol, endColumnIndex: statusCol + 1 }],
+          booleanRule: {
+            condition: { type: 'TEXT_EQ', values: [{ userEnteredValue: value }] },
+            format: {
+              backgroundColorStyle: { rgbColor: bg },
+              textFormat: { foregroundColorStyle: { rgbColor: fg }, bold: true },
+            },
+          },
+        },
+      },
+    });
+  }
+  requests.push({
+    updateSheetProperties: {
+      properties: { sheetId, gridProperties: { frozenRowCount: 1 } },
+      fields: 'gridProperties.frozenRowCount',
+    },
+  });
+  requests.push({
+    repeatCell: {
+      range: { sheetId, startRowIndex: 0, endRowIndex: 1 },
+      cell: {
+        userEnteredFormat: {
+          textFormat: { bold: true, foregroundColorStyle: { rgbColor: { red: 1, green: 1, blue: 1 } } },
+          backgroundColorStyle: { rgbColor: { red: 0.216, green: 0.278, blue: 0.310 } },
+        },
+      },
+      fields: 'userEnteredFormat(textFormat,backgroundColorStyle)',
+    },
+  });
+
   if (requests.length) {
     await gFetch(
       `https://sheets.googleapis.com/v4/spreadsheets/${workbookId}:batchUpdate`,
@@ -1838,6 +2003,52 @@ async function runSyncPublished(args, {
 
   process.stdout.write(
     `sync-published: source=live-sitemap en_urls=${rows.length} appended=${toAppend.length} updated=${toUpdate.length} skipped=${skipped} mode=${args.write_sheet ? 'write-sheet' : 'dry-run'}\n`,
+  );
+  return 0;
+}
+
+async function runSyncUrlInventory(args, {
+  sheetToken,
+  workbookId,
+  now,
+  sitemapRows,
+  fetchSitemapRowsFn = fetchSitemapInventoryRows,
+  ensureFn = ensureUrlInventoryTab,
+  readTrackingRowsFn = readTrackingRows,
+  readRecapRowsFn = readRecapRows,
+  readRequestQueueRowsFn = readRequestQueueRows,
+  replaceRowsFn = replaceUrlInventoryRows,
+  formatFn = formatUrlInventoryTab,
+}) {
+  if (!workbookId) {
+    process.stderr.write('error: --sync-url-inventory requires workbook id from env or --workbook\n');
+    return 1;
+  }
+  const tabName = args.write_sheet ? await ensureFn(sheetToken, workbookId) : URL_INVENTORY_TAB;
+  const sitemapInventoryRows = sitemapRows || await fetchSitemapRowsFn(args.sitemap_url || DEFAULT_SITEMAP_URL, { now });
+  const trackingRows = args.write_sheet ? await readTrackingRowsFn(sheetToken, workbookId, INDEX_TRACKING_TAB) : [];
+  const recapRows = args.write_sheet ? await readRecapRowsFn(sheetToken, workbookId, RECAP_TAB) : [];
+  const requestQueueRows = args.write_sheet ? await readRequestQueueRowsFn(sheetToken, workbookId, REQUEST_INDEXING_QUEUE_TAB) : [];
+  const rows = buildUrlInventoryRows({
+    sitemapRows: sitemapInventoryRows,
+    trackingRows,
+    recapRows,
+    requestQueueRows,
+    now,
+    siteUrl: args.site || process.env.GG_GSC_SITE || DEFAULT_SITE,
+  });
+
+  if (args.write_sheet) {
+    await replaceRowsFn(sheetToken, workbookId, tabName, rows);
+    if (formatFn) await formatFn(sheetToken, workbookId, tabName);
+  }
+
+  const counts = rows.reduce((acc, row) => {
+    acc[row.inventory_status] = (acc[row.inventory_status] || 0) + 1;
+    return acc;
+  }, {});
+  process.stdout.write(
+    `sync-url-inventory: rows=${rows.length} untracked=${counts['未纳入监控'] || 0} included_unsubmitted=${counts['已纳入但未提交'] || 0} submitted_unindexed=${counts['已提交但未收录'] || 0} indexed=${counts['已收录'] || 0} mode=${args.write_sheet ? 'write-sheet' : 'dry-run'}\n`,
   );
   return 0;
 }
@@ -2241,6 +2452,7 @@ export async function runIndexMonitor(argv, deps = {}) {
       'Usage:',
       '  node tools/scripts/gg-index-monitor.mjs --ensure-tab [--workbook SHEET_ID]',
       '  node tools/scripts/gg-index-monitor.mjs --sync-published --write-sheet [--sitemap-url URL]',
+      '  node tools/scripts/gg-index-monitor.mjs --sync-url-inventory --write-sheet [--sitemap-url URL]',
       '  node tools/scripts/gg-index-monitor.mjs --enqueue-published --page-id PG-... --slug slug --title "Title" --published-at YYYY-MM-DD --write-sheet',
       '  node tools/scripts/gg-index-monitor.mjs --check-due --write-sheet [--limit 50]',
       '  node tools/scripts/gg-index-monitor.mjs --check-all --write-sheet [--limit 200]',
@@ -2260,7 +2472,7 @@ export async function runIndexMonitor(argv, deps = {}) {
     : resolveWorkbookId();
 
   let sheetToken = deps.sheetToken;
-  if (!sheetToken && (args.write_sheet || args.check_due || args.check_all || defaultCheckDue || args.ensure_tab || args.sync_published || args.sync_recap || args.sync_request_queue || args.process_fixed)) {
+  if (!sheetToken && (args.write_sheet || args.check_due || args.check_all || defaultCheckDue || args.ensure_tab || args.sync_published || args.sync_url_inventory || args.sync_recap || args.sync_request_queue || args.process_fixed)) {
     try {
       sheetToken = await (deps.getSheetToken || getSheetAccessToken)();
     } catch (e) {
@@ -2301,6 +2513,22 @@ export async function runIndexMonitor(argv, deps = {}) {
       batchUpdateRowsFn: deps.updateTrackingRow || deps.appendTrackingRows
         ? deps.batchUpdateTrackingRows || null
         : deps.batchUpdateTrackingRows || batchUpdateTrackingRows,
+    });
+  }
+
+  if (args.sync_url_inventory) {
+    return runSyncUrlInventory(args, {
+      sheetToken,
+      workbookId,
+      now,
+      sitemapRows: deps.sitemapInventoryRows,
+      fetchSitemapRowsFn: deps.fetchSitemapInventoryRows || fetchSitemapInventoryRows,
+      ensureFn: deps.ensureUrlInventoryTab || ensureUrlInventoryTab,
+      readTrackingRowsFn: deps.readTrackingRows || readTrackingRows,
+      readRecapRowsFn: deps.readRecapRows || readRecapRows,
+      readRequestQueueRowsFn: deps.readRequestQueueRows || readRequestQueueRows,
+      replaceRowsFn: deps.replaceUrlInventoryRows || replaceUrlInventoryRows,
+      formatFn: deps.formatUrlInventory || formatUrlInventoryTab,
     });
   }
 
@@ -2376,7 +2604,7 @@ export async function runIndexMonitor(argv, deps = {}) {
     });
   }
 
-  process.stderr.write('error: expected --ensure-tab, --sync-published, --enqueue-published, --check-due, --check-all, --sync-recap, --submit-sitemap, --process-fixed, or --sync-request-queue (see --help)\n');
+  process.stderr.write('error: expected --ensure-tab, --sync-published, --sync-url-inventory, --enqueue-published, --check-due, --check-all, --sync-recap, --submit-sitemap, --process-fixed, or --sync-request-queue (see --help)\n');
   return 1;
 }
 

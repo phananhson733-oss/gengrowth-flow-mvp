@@ -435,27 +435,6 @@ Last run: 2026-07-01T10:01:34.505Z (1782900094505)
 
 ---
 
-### Q17 — 22:03
-
-**🙋 提问：**
-
-Automation: GenGrowth Topic Register
-Automation ID: gengrowth-topic-register
-Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
-Last run: 2026-07-01T12:01:04.851Z (1782907264851)
-
-Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
-
-**🤖 回答：**
-
-读取自动化 memory、项目约束、reminders 与 `gengrowth-topic-register-wrapper-report` 技能后，只执行 `bash tools/scripts/gg-topic-register-tick.sh`，未传入手写 apply/repair/write flags。wrapper 退出码 `0`。
-
-最新日志为 `~/gengrowth-agents/cron-sync/topic_register/2026-07-01.log`，本次窗口 `2026-07-01 22:02:59` 到 `22:03:04`，状态 `topic-register ok`。local env 启用了 apply mode，JSON 显示 `dry_run=false`、`budget_exhausted=false`，命令为 `node .../gg-topic-register.mjs --product all --limit 10 --llm claude --discover-evidence --apply --run-budget-ms 840000`。
-
-结果：`astrologywiki` candidates=0、updates=0、new_clusters=0、page_ids=[]、selection_mode=`generate`、audit_incomplete=0、preprocessor=[]、evidence_discovery=[]；`gengrowth` candidates=0、updates=0、new_clusters=0、page_ids=[]、selection_mode=`generate`、audit_incomplete=0、preprocessor=[]、evidence_discovery=[]。未见失败或 timeout；安全边界保持：没有手改 Sheet、没有直接编辑 task plan、没有额外 Feishu/Google Doc 报告产物。
-
----
-
 ### Q14 — 20:06 [claude]
 
 **🙋 提问：**
@@ -520,5 +499,26 @@ Last run: 2026-07-01T12:00:34.850Z (1782907234850)
 读取自动化 memory、项目约束、owner/reminders 与相关技能指令后，只使用指定确定性入口执行三仓 Obsidian/Git 自愈同步。首轮输出显示 `gengrowth-flow-mvp: committed 1 path(s), pushed`。随后逐仓验证 `git status --branch --porcelain=v2`、`git rev-list --left-right --count HEAD...origin/main`、`git diff --name-only --diff-filter=U`、`git ls-files -u`，三仓均 clean、ahead/behind 为 `0 0`、无 unmerged 文件。
 
 回读 `gengrowth-ops/.obsidian/plugins/obsidian-git/data.json` 与 `gengrowth-flow-mvp/.obsidian/plugins/obsidian-git/data.json`，确认 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。追加本轮 record 后继续通过同一确定性入口提交推送并最终复验；安全边界保持，未执行禁止的破坏性 git 命令、未运行镜像删除语义脚本、未打印凭证。
+
+---
+
+### Q18 — 22:03
+
+**🙋 提问：**
+
+Automation: GenGrowth Topic Register
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-01T12:01:04.851Z (1782907264851)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+读取自动化 memory、项目约束、reminders 与 `gengrowth-topic-register-wrapper-report` 技能后，只执行 `bash tools/scripts/gg-topic-register-tick.sh`，未传入手写 apply/repair/write flags。wrapper 退出码 `0`。
+
+最新日志为 `~/gengrowth-agents/cron-sync/topic_register/2026-07-01.log`，本次窗口 `2026-07-01 22:02:59` 到 `22:03:04`，状态 `topic-register ok`。local env 启用了 apply mode，JSON 显示 `dry_run=false`、`budget_exhausted=false`，命令为 `node .../gg-topic-register.mjs --product all --limit 10 --llm claude --discover-evidence --apply --run-budget-ms 840000`。
+
+结果：`astrologywiki` candidates=0、updates=0、new_clusters=0、page_ids=[]、selection_mode=`generate`、audit_incomplete=0、preprocessor=[]、evidence_discovery=[]；`gengrowth` candidates=0、updates=0、new_clusters=0、page_ids=[]、selection_mode=`generate`、audit_incomplete=0、preprocessor=[]、evidence_discovery=[]。未见失败或 timeout；安全边界保持：没有手改 Sheet、没有直接编辑 task plan、没有额外 Feishu/Google Doc 报告产物。
 
 ---

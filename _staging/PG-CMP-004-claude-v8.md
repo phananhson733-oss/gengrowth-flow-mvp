@@ -17,8 +17,8 @@ associated_keywords:
   - best affordable seo software
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-07-01T16:03:39.235Z
-content_sha256_short: b4de38ee5aae4222
+generated_at: 2026-07-01T16:14:17.985Z
+content_sha256_short: b46480b6c71eadb7
 phase2_checks: all-pass
 ---
 

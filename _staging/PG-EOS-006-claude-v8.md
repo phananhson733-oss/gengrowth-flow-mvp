@@ -1,3 +1,27 @@
+---
+title: Free Seo Company
+slug: free-seo-company
+date: 2026-07-01
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-EOS-006
+target_keyword: free seo company
+associated_keywords:
+  - free seo services
+  - free seo help
+  - seo company free trial
+  - free seo audit
+  - no cost seo
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-07-01T15:59:14.696Z
+content_sha256_short: 90bcb65341da1c4e
+phase2_checks: all-pass
+---
+
 # Free SEO Company Explained: How to Vet Providers Who Actually Compound
 
 ## What Is Free SEO Company?

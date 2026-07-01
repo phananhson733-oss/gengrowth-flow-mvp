@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-EOS-007",
+  "entity": "Organic SEO Service",
+  "target_keyword": "organic seo service",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-07-01T15:59:14.764Z",
+  "content_sha256_short": "e85e9fa9ae766634",
+  "source_path": "_staging/PG-EOS-007-claude-v8.md",
+  "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-EOS-007-claude-v8.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 2,
+      "h4Count": 0,
+      "words": 1582,
+      "wikilinks": 0,
+      "tbdLinks": 0
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

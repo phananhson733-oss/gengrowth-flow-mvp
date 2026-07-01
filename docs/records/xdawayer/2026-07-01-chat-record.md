@@ -89,7 +89,7 @@ tags:
 
 - 要点 1：运行 GenGrowth Index Repair Resubmit deterministic wrapper，并按日志窗口提取 per-product counter。
 - 要点 2：运行 GenGrowth Index Monitor deterministic wrapper，确认 sitemap 提交成功、GSC URL Inspection 检查 1 条且 0 failures。
-- 要点 3：确认两次索引相关运行均保持合规边界：未使用普通文章 Google Indexing API，未无人值守点击 Search Console Request Indexing。
+- 要点 3：核查 astrologywiki oracle/tools 工具页索引流程，确认当前自动化只纳入 `/en/wiki/...`，工具页未进入 `index-tracking`、`结果复盘表` 或 `request-indexing-queue`。
 - 要点 4：运行 GenGrowth Vault Git Auto-Heal 指定脚本，确认三个仓库同步 clean、ahead/behind 均为 `0 0`、无 unmerged 文件。
 - 要点 5：确认 `gengrowth-ops` 与 `gengrowth-flow-mvp` 的 Obsidian Git 自动保存/推送/拉取配置均已禁用。
 
@@ -215,5 +215,19 @@ Last run: 2026-07-01T05:02:03.698Z (1782882123698)
 最终独立验证三个仓库：`gengrowth-wiki`、`gengrowth-ops`、`gengrowth-flow-mvp` 的 `git status --branch --porcelain=v2` 均显示 clean 且 `branch.ab +0 -0`，`git rev-list --left-right --count HEAD...origin/main` 均为 `0 0`，`git diff --name-only --diff-filter=U` 与 `git ls-files -u` 均无输出，未发现 unmerged 文件。
 
 回读 `gengrowth-ops/.obsidian/plugins/obsidian-git/data.json` 与 `gengrowth-flow-mvp/.obsidian/plugins/obsidian-git/data.json`，确认 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。安全边界已遵守：未运行禁止的破坏性命令，未运行镜像删除语义脚本，未打印凭证。
+
+---
+
+### Q7 — 15:07
+
+**🙋 提问：**
+
+我发现这个自动化流程中，有一些关于 oracle 中的 tools 中的一些链接不在提交的计划中吗
+
+**🤖 回答：**
+
+核查 `tools/scripts/gg-index-monitor.mjs`、oracle 的工具目录与 live sitemap 后，确认当前索引提交自动化只放行 `https://www.astrologywiki.com/en/wiki/...` 文章页。`extractEnWikiSitemapRows()`、`sync-published`、`sync-recap`、`buildRequestIndexingCandidateRows()` 都会通过 `isEnWikiArticleUrl()` 过滤非 wiki URL。
+
+live sitemap 中存在 `https://www.astrologywiki.com/en/tools` 以及多个工具页 URL（如 `birth-chart-calculator`、`big-three-calculator`、`current-planets` 等），但当前 Google Sheet 的 `index-tracking`、`结果复盘表`、`request-indexing-queue` 都没有匹配这些工具页 URL。因此这属于提交计划的范围边界问题，不是本次 GSC 提交时漏点。
 
 ---

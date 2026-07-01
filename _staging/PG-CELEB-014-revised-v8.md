@@ -1,29 +1,3 @@
----
-title: Cardi B Birth Chart
-slug: cardi-b-birth-chart
-date: 2026-07-01
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T2
-track: 量产线
-page_id: PG-CELEB-014
-author_id: "marcus-orion"
-author_display_name: "Marcus Orion"
-target_keyword: Cardi B Birth Chart
-associated_keywords:
-  - Cardi B Birth Chart meaning
-  - Cardi B Birth Chart astrology
-  - Cardi B Birth Chart zodiac
-  - Cardi B Birth Chart interpretation
-  - emma watson zodiac sign
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-07-01T03:58:18.333Z
-content_sha256_short: 4685e8a040268f8c
-phase2_checks: all-pass
----
-
 # What the Cardi B Birth Chart Reveals About Her Public Persona
 
 ## What Is Cardi B's Birth Chart?

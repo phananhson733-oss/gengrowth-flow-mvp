@@ -124,6 +124,89 @@ function archiveToVault(pageId, slug) {
   }
 }
 
+// ── Lane A surgical repair at the codex park boundary (opt-in GG_GATE_REPAIR=1) ──────
+// Lane B (oracle) repairs a PR .ts + git-pushes; Lane A has NO branch/PR — it edits the
+// standalone _staging/<PID>-<llm>-v8.md DRAFT in place (the publisher upserts THAT file).
+// So this: (a) calls gg-gate-repair.mjs --dimension codex to get structured old/new edits,
+// (b) applies them to the draft FILE deterministically (each old_string re-validated to be
+// UNIQUELY present, mirroring Lane B's guard), (c) RE-RUNS phase2 (GG_SITE=gengrowth) under
+// a THROWAWAY tag so a draft edit that broke SC3/keyword structure is caught WITHOUT clobbering
+// the real draft/manifest — phase2 FAIL ⇒ revert + park, (d) re-runs the codex gate ONCE —
+// PASS ⇒ publish, else revert + park. Loop-cap 1: exactly one codex-repair attempt per article
+// (this is the sole call site, so the cap is structural). No git; revert = restore the bytes we
+// snapshotted before the first write. Returns true only when BOTH re-gates pass (⇒ publish).
+function laneARepairCodex(d, reason) {
+  if (process.env.GG_GATE_REPAIR !== '1') return false;
+  if (!existsSync(GATE_REPAIR_BIN)) { console.log(`  repair[codex]: no gate-repair bin — skip`); return false; }
+  if (!existsSync(PHASE2_BIN)) { console.log(`  repair[codex]: no phase2 bin — skip`); return false; }
+  // Manifest carries the phase2 context (entity / target_keyword / template / tier / prompt_version)
+  // needed to re-validate; the per-draft fixture is long gone, so pass these explicitly as flags.
+  let mf;
+  try { mf = JSON.parse(readFileSync(d.manifestPath, 'utf8')); } catch { console.log(`  repair[codex]: manifest unreadable — skip`); return false; }
+  const tagM = d.mdPath.match(/-([a-z0-9]+-v8)\.md$/i);
+  if (!tagM) { console.log(`  repair[codex]: cannot derive tag — skip`); return false; }
+  const tag = tagM[1];
+
+  // Snapshot the original bytes BEFORE any write — this is the revert target.
+  let original;
+  try { original = readFileSync(d.mdPath, 'utf8'); } catch { console.log(`  repair[codex]: draft unreadable — skip`); return false; }
+
+  console.log(`  repair[codex]: gg-gate-repair on ${d.pageId} (reason: ${String(reason).slice(0, 80)}…)`);
+  const rr = spawnSync('node', [GATE_REPAIR_BIN, '--article', d.mdPath, '--dimension', 'codex', '--reason', String(reason)], {
+    encoding: 'utf8', timeout: Number(process.env.GG_GATE_REPAIR_TIMEOUT_MS) || 450000, maxBuffer: 64 * 1024 * 1024,
+  });
+  if ((rr.error && rr.error.code === 'ETIMEDOUT') || rr.status !== 0) {
+    console.log(`  repair[codex]: worker ${rr.error ? 'timeout' : `exit ${rr.status}`} — skip`); return false;
+  }
+  let out;
+  try {
+    const lines = String(rr.stdout || '').split('\n').map((l) => l.trim()).filter((l) => l.startsWith('{'));
+    out = JSON.parse(lines[lines.length - 1]);
+  } catch { console.log(`  repair[codex]: unparseable worker output — skip`); return false; }
+  const edits = Array.isArray(out && out.edits) ? out.edits : [];
+  if (!edits.length) { console.log(`  repair[codex]: ${(out && out.note) || 'no edits'} — skip`); return false; }
+
+  // Apply deterministically; re-validate each old_string is UNIQUELY present (defense-in-depth
+  // over the worker's own guard). Any malformed / non-unique edit ⇒ abort (draft untouched on disk).
+  let content = original;
+  for (const e of edits) {
+    if (!e || typeof e.old_string !== 'string' || typeof e.new_string !== 'string') { console.log(`  repair[codex]: malformed edit — abort`); return false; }
+    if ((content.split(e.old_string).length - 1) !== 1) { console.log(`  repair[codex]: edit not uniquely present — abort`); return false; }
+    content = content.replace(e.old_string, e.new_string);
+  }
+  try { writeFileSync(d.mdPath, content); } catch { console.log(`  repair[codex]: write failed — abort`); return false; }
+
+  // Revert helper: restore the pre-repair bytes. Used on any downstream failure.
+  const revert = () => { try { writeFileSync(d.mdPath, original); } catch { /* best-effort */ } };
+
+  // (c) RE-RUN phase2 under a THROWAWAY tag so editing the draft can't break SC3/keyword structure
+  // undetected — and so phase2's normalizing rewrite lands on a scratch file, NOT the real draft we
+  // just edited. We key ONLY on the exit code (0 = OVERALL PASS; 11 = OVERALL FAIL).
+  const scratchTag = `${tag}-repairchk`;
+  const scratchMd = join(dirname(d.mdPath), `${d.pageId}-${scratchTag}.md`);
+  const scratchManifest = scratchMd.replace(/\.md$/, '.manifest.json');
+  const p2 = spawnSync('node', [
+    PHASE2_BIN, '--source', d.mdPath, '--page-id', d.pageId, '--tag', scratchTag,
+    '--entity', String(mf.entity || ''), '--target-keyword', String(mf.target_keyword || ''),
+    '--template', String(mf.template || 'Definition'), '--tier', String(mf.tier || 'T2'),
+    '--prompt-version', String(mf.prompt_version || 'v8'), '--allow-missing-serp',
+  ], { encoding: 'utf8', env: { ...process.env, GG_SITE: 'gengrowth' }, timeout: 120000, maxBuffer: 32 * 1024 * 1024 });
+  try { rmSync(scratchMd, { force: true }); rmSync(scratchManifest, { force: true }); } catch { /* best-effort */ }
+  if (p2.status !== 0) {
+    console.log(`  repair[codex]: phase2 re-validate FAILED after edit (exit ${p2.status}) — reverting + parking`);
+    revert(); return false;
+  }
+
+  // (d) re-run the codex factual gate ONCE against the edited draft. PASS ⇒ publish; else revert + park.
+  const fr2 = factualReview(d.mdPath);
+  if (fr2.verdict !== 'PASS') {
+    console.log(`  repair[codex]: codex still ${fr2.verdict} after repair (${fr2.reason}) — reverting + parking`);
+    revert(); return false;
+  }
+  console.log(`  ✓ repair[codex]: applied ${edits.length} edit(s), phase2 + codex re-passed — publishing ${d.pageId}`);
+  return true;
+}
+
 // Ready drafts: PG-<W25>-NNN-<llm>-v8.md + sibling manifest overall==='pass'.
 function scanReady(stagingDir, pagesFilter) {
   if (!existsSync(stagingDir)) return [];
@@ -205,10 +288,17 @@ async function main() {
     if (fr.verdict !== 'PASS') {
       const block = fr.required || fr.verdict === 'FAIL';
       if (block) {
-        parked++;
-        console.log(`  ⛔ ${d.pageId.padEnd(12)} ${(d.slug || '-').padEnd(40)} PARKED by factual gate: ${fr.reason}`);
-        larkBestEffort(`⚠️ gengrowth 事实门未过（needs_human）：${d.pageId}（${d.slug}）— ${fr.reason}。已跳过发布，待人工核对后再发。`);
-        continue;
+        // Lane A surgical repair BEFORE parking — only a real factual FAIL is repairable
+        // (a SKIPPED tooling/timeout verdict has no fact to fix). GG_GATE_REPAIR=1 opt-in;
+        // on success the draft is edited in place + both re-gates passed → fall through to publish.
+        if (fr.verdict === 'FAIL' && laneARepairCodex(d, fr.reason)) {
+          // repaired: proceed to the upsert below (draft on disk now carries the surgical edits).
+        } else {
+          parked++;
+          console.log(`  ⛔ ${d.pageId.padEnd(12)} ${(d.slug || '-').padEnd(40)} PARKED by factual gate: ${fr.reason}`);
+          larkBestEffort(`⚠️ gengrowth 事实门未过（needs_human）：${d.pageId}（${d.slug}）— ${fr.reason}。已跳过发布，待人工核对后再发。`);
+          continue;
+        }
       }
       console.log(`  ⚠️ ${d.pageId} factual gate ${fr.verdict} (${fr.reason}) — GG_CODEX_GATE_REQUIRED=0, not blocking`);
     } else {

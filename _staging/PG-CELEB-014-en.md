@@ -28,7 +28,7 @@ phase2_checks: all-pass
 
 ## What Is Cardi B's Birth Chart?
 
-Cardi B's birth chart maps where the planets sat when Belcalis Almánzar was born on October 11, 1992, in New York City. The two placements that need no disputed birth time are the ones searchers actually want: a **Libra Sun** and, that same day, an **Aries Moon** — and because Libra and Aries sit opposite each other, she was born near a Full Moon, with the Sun opposing the Moon. Astrologers read that opposition as the engine of her public persona: Libra's charm, taste, and relationship strategy pulling against Aries' blunt, combative, fast-reacting instinct. It is interpretation, not proof — a character sketch that names patterns already visible in her music and her feuds, the kind of person-centered reading the astrologer Dane Rudhyar helped establish. Curious about the method? Start with a [[<TBD-internal-link: pillar guide to reading a birth chart>]] before applying it to a famous name.
+Cardi B's birth chart maps where the planets sat when Belcalis Almánzar was born on October 11, 1992, in New York City. The two placements that need no disputed birth time are the ones searchers actually want: a **Libra Sun** and, that same day, an **Aries Moon** — and because Libra and Aries sit opposite each other, she was born near a Full Moon, with the Sun opposing the Moon. Astrologers read that opposition as the engine of her public persona: Libra's charm, taste, and relationship strategy pulling against Aries' blunt, combative, fast-reacting instinct. It is interpretation, not proof — a character sketch that names patterns already visible in her music and her feuds, the kind of person-centered reading the astrologer Dane Rudhyar helped establish. Curious about the method? Start with a [guide to reading a birth chart](/en/wiki/how-to-read-birth-chart) before applying it to a famous name.
 
 - **Libra Sun** — identity built on charm, aesthetics, and public diplomacy
 - **Aries Moon** — a direct, hot, quick-to-react emotional core (widely cited; exact degree unverified without a birth time)
@@ -55,7 +55,7 @@ A Sun-sign reading takes one placement and generalizes it into a headline trait:
 
 ### The trade-off you actually make
 
-To get the speed and clarity of a Sun sign, you sacrifice nuance — everything collapses into one flattening word. To get the depth of the full chart, you have to hold several competing signals at once. A neighboring idea, the [[<TBD-internal-link: guide to Libra sun sign traits>]], is useful precisely because it isolates that single layer — just don't mistake the layer for the whole person, the way a daily horoscope column does when it treats one sign as an entire personality.
+To get the speed and clarity of a Sun sign, you sacrifice nuance — everything collapses into one flattening word. To get the depth of the full chart, you have to hold several competing signals at once. A neighboring idea, the [guide to Libra sun sign traits](/en/wiki/libra), is useful precisely because it isolates that single layer — just don't mistake the layer for the whole person, the way a daily horoscope column does when it treats one sign as an entire personality.
 
 ## How to Read a Birth Chart Like Cardi B's
 
@@ -110,9 +110,9 @@ For the Sun and Moon, no. For the Rising sign and the house placements, yes — 
 
 ## Related Reading
 
-- [[<TBD-internal-link: profile of the Libra rising sign>]] — for readers comparing her public mask with other rising signs.
-- [[<TBD-internal-link: guide to synastry and compatibility charts>]] — useful for reading how her chart interacts with a partner's.
-- [[<TBD-internal-link: overview of other celebrity zodiac profiles>]] — the same case-study method applied across pop culture.
+- [Profile of the Libra rising sign](/en/wiki/libra-rising-houses) — for readers comparing her public mask with other rising signs.
+- [Guide to synastry and compatibility charts](/en/wiki/synastry-chart-compatibility) — useful for reading how her chart interacts with a partner's.
+- [Teyana Taylor's birth chart](/en/wiki/teyana-taylor-birth-chart) — the same case-study method applied to another music-world figure.
 
 ## Take Action
 

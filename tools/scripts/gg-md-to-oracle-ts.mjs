@@ -380,6 +380,7 @@ export const TBD_LINK_RULES = [
   { match: /\baura\s*reading\b/i, href: '/en/wiki/aura-colors-pillar' },
   // --- Astrological houses (8/9/11/12 + pillar exist; 2/3/4/5/7/10 fall back to
   // the pillar — same cluster, keeps the link clickable instead of orphaned). ---
+  { match: /solar\s+return(\s+chart)?|太阳返照/i, href: '/en/wiki/solar-return-chart' },
   { match: /\b(sixth|6th)\s+house\b/i,     href: '/en/wiki/6th-house-astrology' },
   { match: /\b(seventh|7th)\s+house\b/i,   href: '/en/wiki/7th-house-astrology' },
   { match: /\b(eighth|8th)\s+house\b/i,    href: '/en/wiki/8th-house-meaning' },

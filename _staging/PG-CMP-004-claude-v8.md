@@ -54,7 +54,7 @@ Weigh refresh frequency and limits against your decision cadence: daily rank upd
 ## How to Implement It Step by Step
 
 1. **Inventory your real jobs.** Write down every recurring SEO task — rank reports, crawls, backlink checks, keyword pulls — and how often each runs. This becomes your capability requirement.
-2. **Shortlist on core-function fit.** Match affordable SEO software candidates to that job list, ignoring features no one on your team will open.
+2. **Shortlist on core-function fit.** Match your candidate tools to that job list, ignoring features no one on your team will open.
 3. **Validate on a known domain.** Load a site and keyword set you understand deeply, then confirm the tool's rankings, crawl findings, and keyword data hold up against reality.
 4. **Set up tracking and crawl schedules.** Configure your priority keyword lists, competitor domains, and a recurring crawl cadence that matches how often you actually make decisions.
 5. **Wire reporting into your workflow.** Connect exports or integrations so client and stakeholder reports assemble with minimal manual work.
@@ -87,7 +87,7 @@ No — the best fit depends on which core functions your team consumes most. A t
 
 ## Take Action
 
-If you are weighing capability against budget, the fastest way to see where an affordable tier reaches parity is to run your own domain through it. You can start a free trial with gengrowth.ai and test rank tracking, site auditing, and keyword research against work you already understand — then decide, with evidence, where premium depth is worth paying for.
+If you are weighing capability against budget, the fastest way to see where an affordable tier reaches parity is to run your own domain through it. [Start your free GenGrowth trial](https://gengrowth.ai/app) and test rank tracking, site auditing, and keyword research against work you already understand — then decide, with evidence, where premium depth is worth paying for.
 
 ## Sources
 

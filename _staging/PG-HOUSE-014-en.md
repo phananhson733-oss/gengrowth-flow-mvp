@@ -86,7 +86,7 @@ Most confusion here comes from treating a seasonal symbol as a personal fact. Th
 | Property | How It Works | Energy Center | How to Observe |
 |---|---|---|---|
 | Gemini phase | Air-sign season favoring talk, curiosity, and visibility | Early June (Sun in Gemini) | You reach out, post, and want to be seen |
-| Solstice hinge | The Sun turns north and the season changes element | Around June 20–21 | Your energy swings from outward to inward |
+| Solstice hinge | The Sun reaches its northernmost point and the season changes element | Around June 20–21 | Your energy swings from outward to inward |
 | Cancer phase | Water-sign season favoring care, home, and belonging | Late June (Sun in Cancer) | You crave rest, family, and small circles |
 | Sun–Venus tone | Expression meeting warmth and relational value | The full month | Pride in being both seen and cared for |
 

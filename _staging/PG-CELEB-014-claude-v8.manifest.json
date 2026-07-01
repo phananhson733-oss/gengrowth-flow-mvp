@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-CELEB-014",
+  "entity": "Cardi B Birth Chart",
+  "target_keyword": "Cardi B Birth Chart",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-07-01T05:35:06.558Z",
+  "content_sha256_short": "36c93bcfdd2027fc",
+  "source_path": "_staging/PG-CELEB-014-en.md",
+  "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-CELEB-014-claude-v8.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 2,
+      "h4Count": 0,
+      "words": 1619,
+      "wikilinks": 0,
+      "tbdLinks": 0
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

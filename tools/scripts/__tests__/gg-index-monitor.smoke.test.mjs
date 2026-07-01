@@ -1167,6 +1167,11 @@ test('runIndexMonitor --require-gsc-auth preflights GSC service-account access w
     preflightGscAccess: async (token, siteUrl) => {
       preflight = { token, siteUrl };
     },
+    fetchUrlInspection: async () => ({
+      coverageState: 'URL is unknown to Google',
+      verdict: 'FAIL',
+    }),
+    updateTrackingRow: async () => {},
   });
 
   assert.equal(code, 0);

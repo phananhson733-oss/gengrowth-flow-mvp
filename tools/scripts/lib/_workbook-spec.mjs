@@ -18,6 +18,8 @@ import {
   REQUEST_INDEXING_QUEUE_HEADER,
   REQUEST_INDEXING_QUEUE_TAB,
   RECAP_STATUS_CONDITIONAL_FORMATS,
+  URL_INVENTORY_HEADER,
+  URL_INVENTORY_TAB,
 } from '../gg-index-monitor.mjs';
 
 export const COLORS = Object.freeze({
@@ -532,6 +534,7 @@ export const TABS = [
       ['CTA Map', 'page_role → CTA 文案', '人工填，预填 6 行 Week-1 默认'],
       ['结果复盘表', '最终呈现；16 列（v3.3）；Day 14/30/60 GSC+GA4 数据 + 收录申请/索引修复/记录日期/最高排名词', '自动 gg-index-monitor.mjs 回填 + 人工决策'],
       ['index-tracking', 'EN URL 与 GSC URL Inspection 中转状态；不作为人工最终视图', '自动 gg-index-monitor.mjs'],
+      ['url-inventory', '从 sitemap 对账全量可索引 URL；标出未纳入监控/未提交/未收录/已收录', '自动 gg-index-monitor.mjs'],
       ['request-indexing-queue', 'Phase 2 Request Indexing 候选队列；按优先级辅助人工确认提交', '自动 gg-index-monitor.mjs + Computer Use 辅助'],
       ['生产候选', '主表 X 列（生产准入）筛 可生产/集群必需（公式自动）', '只读视图'],
       ['趋势词 / 快速胜利 / 战略词 / 长尾词', '主表 R 列分桶视图（公式自动）', '只读视图'],
@@ -635,6 +638,23 @@ export const TABS = [
         280, 120, 180, 260, 110, 120, 120, 90, 130, 220,
         110, 140, 140, 170, 240, 240, 130, 130, 100, 150,
         90, 120, 100, 100, 120, 320, 130,
+      ],
+    },
+  },
+
+  {
+    name: URL_INVENTORY_TAB,
+    type: 'standard',
+    header: [...URL_INVENTORY_HEADER],
+    headerColorByCol: {},
+    extras: {
+      frozenRows: 1,
+      headerBgAll: 'header',
+      headerFontColor: 'white',
+      headerBold: true,
+      columnWidths: [
+        320, 140, 240, 120, 120, 120, 140, 120, 140, 150,
+        160, 220, 120, 120, 300, 110, 320,
       ],
     },
   },

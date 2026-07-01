@@ -245,3 +245,17 @@ live sitemap 中存在 `https://www.astrologywiki.com/en/tools` 以及多个工�
 建议建立独立 URL inventory：从 live sitemap、oracle/tools catalog、路由清单或抓取结果生成全量可索引 URL，再与 `index-tracking`、`结果复盘表`、`request-indexing-queue` 和 GSC URL Inspection 状态对账，分成“未纳入监控/提交计划”“已纳入但未提交”“已提交但未收录”“已收录”四类。GSC 后台适合抽查和真实提交，批量发现缺口应优先靠 sitemap/route inventory + Sheet/GSC 状态对账。
 
 ---
+
+### Q9 — 15:14
+
+**🙋 提问：**
+
+这个可以补充到我们现在的自动化流程中吗
+
+**🤖 回答：**
+
+确认可以补充到现有自动化中，但建议作为独立的 URL inventory 对账层先接入，而不是直接放开现有 `/en/wiki/...` 过滤。落地方式是在 `gg-index-monitor.mjs` 中新增可索引 URL inventory：从 live sitemap、oracle/tools catalog/允许路径清单生成全量 URL，写入独立 Sheet tab，并与 `index-tracking`、`结果复盘表`、`request-indexing-queue` 和 GSC URL Inspection 状态对账。
+
+建议分两阶段实施：第一阶段只读/写 Sheet，对缺口分类为“未纳入监控”“已纳入未提交”“已提交未收录”“已收录”；第二阶段再把允许类型（如 tools hub 与工具页）按优先级转入 `request-indexing-queue`，继续由 Computer Use 走真实 GSC Request Indexing，保留不使用普通文章 Google Indexing API、最终提交需真实 GSC UI 的合规边界。
+
+---

@@ -1,0 +1,8 @@
+- “Birth Chart”核心未兑现：只写了 Libra Sun，没有给出实际星盘 → 开头补一张真实 placements 表，至少列 Sun Libra、Moon Aries、出生时间是否可靠、Rising/宫位是否可用。
+- 上升/宫位写法自相矛盾：FAQ 说需精确出生时间，但正文仍谈 Rising、First House、Fourth House → 若无可靠出生时间，删除/标注所有 Rising、house、Libra Rising 相关判断。
+- “Bodak Yellow 的 number-one debut”事实错误 → 改为“breakout single that later reached No. 1 on the Billboard Hot 100”。
+- Libra 解读太温吞，和 Cardi B 的公众形象不贴 → 用 Libra Sun + Aries Moon 的张力重写角度：魅力/审美/关系策略 vs. 直接、好斗、反应快。
+- “Major aspects”只空谈没列任何 aspect → 补真实可验证的关键相位，或删掉 aspects 行和相关泛泛表述。
+- 具体案例太少，像通用名人占星模板 → 加入更硬的 Cardi B 证据点：Love & Hip Hop、Bodak Yellow 爬榜、Invasion of Privacy、WAP/Up 争议、Offset 关系、母职/公众冲突等。
+- Sources 不合格：Rudhyar/Greene 是方法背景，不是 Cardi B 数据来源 → 增加出生资料、事业事实、Pew 数据、星盘计算来源；未证实的出生时间必须标“unverified”。
+- SEO 意图偏移：搜索者要 “Cardi B Sun/Moon/Rising/placements”，不是泛泛学 birth chart → 把“Chart at a Glance”和具体解读前移，压缩反思 prompts/方法论段落。

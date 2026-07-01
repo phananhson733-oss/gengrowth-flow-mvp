@@ -109,7 +109,7 @@ You can, but stacking single-purpose tools sometimes costs more in money and con
 
 - [Affordable SEO Tools](/en/blog/affordable-seo-tools) — a companion guide to stretching a small tooling budget without losing capability.
 - [Ethical SEO](/en/blog/ethical-seo) — why honest, transparent tools and tactics protect long-term rankings.
-- [SERankings](/en/blog/serankings) — a closer look at a dedicated rank-tracking option for lean teams.
+- [SE Ranking](/en/blog/serankings) — a closer look at a dedicated rank-tracking option for lean teams.
 - [Best White-Label SEO Tool](/en/blog/best-white-label-seo-tool) — for agencies that need client-ready reporting on a budget.
 
 ## Take Action

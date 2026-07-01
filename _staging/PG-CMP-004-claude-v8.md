@@ -99,7 +99,7 @@ No — the best fit depends on which core functions your team consumes most. A t
 - [Affordable SEO tools](/en/blog/affordable-seo-tools) — how the broader budget tooling category fits together.
 - [SEO automation](/en/blog/seo-automation) — reducing manual reporting and repetitive workflow steps.
 - [SEO audit checklist](/en/blog/seo-audit-checklist) — what a durable, repeatable audit workflow should cover.
-- [SERankings](/en/blog/serankings) — a closer look at one rank-tracking-focused platform.
+- [SE Ranking](/en/blog/serankings) — a closer look at one rank-tracking-focused platform.
 
 ## Take Action
 

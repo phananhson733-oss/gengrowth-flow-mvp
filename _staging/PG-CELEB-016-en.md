@@ -125,7 +125,3 @@ This is not a clinical interpretation or mental health advice.
 - Dane Rudhyar — pioneered the person-centered, psychological reading of the birth chart as character rather than fate
 - Liz Greene — shaped modern psychological astrology and the case for reading the whole pattern over a single sign
 - Howard Sasportas — helped popularize the modern understanding of the astrological houses referenced here
-
----
-
-**一句话总结:** `missing --entity` 是缺 fixture 导致的接线故障,已在 `.gg-cache/prompts/PG-CELEB-016.v8-fixture.json` 补回;文章本身无需任何修改,phase2 现已 `OVERALL: PASS`。

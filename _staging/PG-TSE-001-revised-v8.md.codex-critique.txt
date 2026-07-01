@@ -1,0 +1,8 @@
+- 天文路径写得过窄 → 按 [NASA/GSFC](https://eclipse.gsfc.nasa.gov/SEsearch/SEdata.php?Ecl=+20260812) 补成 Arctic/Russia → Greenland → Iceland → northern Spain/NE Portugal，并加入最大食、最长全食约 2m18s、路径宽约 294km。
+- 搜索意图没有被充分满足 → 开头加一小段“date, time, visibility, path, safety, duration”速览；否则搜 `Total Solar Eclipse 2026` 的读者会觉得这是占星随笔，不是答案页。
+- “fresh start / launch”过度泛化 → 明确这是 Leo 南交点日食，除了新月式重置，也有释放旧的表演欲、认可模式、自我证明方式的含义。
+- 读盘建议太浅 → 不只看 20° Leo，补充 1-3° orb、四轴点，以及 Aquarius/Taurus/Scorpio 固定宫硬相位；这会立刻提高专业可信度。
+- “两周影响窗口”偏窄 → 改成“事件窗口可看前后两周，但个人盘被精确触发时，主题常延展到后续数月/下一次相关食季”。
+- 太阳食 vs 月食段落太抽象 → 补明 2026-08-28 是偏月食，落在 Pisces/Virgo 轴附近，用它对照 Leo 日食，而不是只说“plant/harvest”。
+- “total/annular/partial 是不同工具”这句占星上站不稳 → 改为“天文形态影响观测和象征强度，但占星解读仍以类型、度数、星座、交点、宫位和相位为主”。
+- CTA 链接错位 → `generate your free birth chart` 不应指向 `/aura-reading`，改到真实 birth chart/calculator 页面。

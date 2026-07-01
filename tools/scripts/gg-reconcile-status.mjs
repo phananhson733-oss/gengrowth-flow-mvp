@@ -137,6 +137,10 @@ async function reconcileProduct(key, opts, token) {
   const iStatus = header.findIndex((h) => /^Status$/i.test((h || '').trim()));
   const iPage = header.findIndex((h) => /page_id/i.test((h || '').trim()));
   const iUrl = header.findIndex((h) => /^(URL|发布URL)$/i.test((h || '').trim()));
+  // Target Keyword column — used as a slug-derivation FALLBACK when the .gg-cache
+  // RAG entity is gone (older rows), so status drift is reconciled cache-free.
+  let iKw = header.findIndex((h) => /^(Target Keyword|target_keyword)$/i.test((h || '').trim()));
+  if (iKw < 0) iKw = 0; // Target Keyword is column A by convention
   if (iStatus < 0 || iPage < 0) throw new Error(`${product.label}: 选题登记表 header missing Status/page_id`);
 
   const flips = [], review = [];
@@ -145,7 +149,10 @@ async function reconcileProduct(key, opts, token) {
     const status = (row[iStatus] || '').trim();
     const pageId = (row[iPage] || '').trim();
     if (!pageId || CLOSED_STATUSES.has(status) || !OPEN_STATUSES.has(status)) continue;
-    const m = matchLive(entityForPage(pageId), live);
+    // Prefer the RAG-derived entity; fall back to the sheet's Target Keyword when the
+    // .gg-cache entry is missing (keeps reconcile working for weeks-old rows).
+    const entity = entityForPage(pageId) || (iKw >= 0 ? (row[iKw] || '').trim() : '');
+    const m = matchLive(entity, live);
     if (!m) continue;
     const rec = { pageId, sheetRow: r + 1, fromStatus: status, slug: m.slug, url: product.urlBase + m.slug };
     if (m.kind === 'exact') flips.push(rec); else review.push({ ...rec, reason: 'fuzzy-token-match (manual confirm)' });

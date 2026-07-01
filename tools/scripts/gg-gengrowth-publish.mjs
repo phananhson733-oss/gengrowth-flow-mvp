@@ -29,7 +29,7 @@
 //   ... --apply --force            # re-upsert even already-live slugs
 //   ... --pages "PG-WLS-001 PG-ART-002"   # restrict to specific page_ids
 
-import { readFileSync, existsSync, readdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, rmSync, existsSync, readdirSync } from 'node:fs';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -47,6 +47,11 @@ const LARK = join(__dirname, 'gg-lark-notify.sh');
 // Parity with Lane B (oracle): same factual reviewer and same vault archive.
 // Only the inputs differ (a file vs a PR; a gengrowth URL vs an oracle URL).
 const CODEX_BIN = process.env.GG_CODEX_BIN || join(__dirname, 'gg-codex-pr-review.mjs');
+// Lane A surgical gate-repair (opt-in GG_GATE_REPAIR=1): the SAME worker Lane B runs at its
+// park boundary. Returns structured old/new edits for the failing draft; we apply them to the
+// DRAFT FILE (no git — Lane A has no branch/PR), re-run phase2 + codex, then park or publish.
+const GATE_REPAIR_BIN = process.env.GG_GATE_REPAIR_BIN || join(__dirname, 'gg-gate-repair.mjs');
+const PHASE2_BIN = join(__dirname, '_phase2-validate.mjs');
 const ARCHIVE_BIN = join(__dirname, 'gg-archive-to-vault.mjs');
 const SITE_HOST = 'https://gengrowth.ai';
 const URL_PATH = '/en/blog/';

@@ -1,0 +1,8 @@
+- “Sun–Venus tone”被写成 Pride Month 的固定核心，但 Venus 每年位置不同 → 要么改成“有具体年份时再看 Venus”，要么删除这条全年通用结论。
+- 表格说 solstice 是“the Sun turns north”不准确 → 改为“Sun reaches its northernmost declination, then begins moving southward”。
+- “我有十二年经验/数千小时咨询”像未经验证的权威背书 → 若不是作者真实资历，删除；若是真实资历，改成可核验的署名资历。
+- Liz Greene / Richard Tarnas 引用太空泛，只是借名增信 → 补具体作品或删掉姓名，改为更直接解释 psychological/archetypal astrology 如何支撑本文判断。
+- 文章缺少 Pride-specific 实质内容，很多段落可替换成任意“June self-reflection”文章 → 增加 Pride 场景：coming out pacing、chosen family、public visibility、community events、rest after visibility。
+- “不需要 chart”与 CTA “generate your birth chart”衔接弱 → 增加一小段说明可看哪些 houses/placements，例如 3rd/4th/5th/7th/11th house 如何承接 visibility/belonging。
+- CTA 链接指向 `/aura-reading`，却承诺 free birth chart → 改到真正的 birth chart 页面，否则损害信任和转化。
+- SEO intent 还不够直接回答“Pride Month Astrology 是什么/怎么用” → 开头补一句明确答案：它不是传统分支，而是用 June Gemini-Cancer season 解释 Pride themes 的现代 symbolic framework。

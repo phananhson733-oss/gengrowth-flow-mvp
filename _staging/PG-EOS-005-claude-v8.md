@@ -1,3 +1,28 @@
+---
+title: Best Cheap Seo Tools
+slug: best-cheap-seo-tools
+date: 2026-07-01
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-EOS-005
+target_keyword: best cheap seo tools
+associated_keywords:
+  - affordable seo tools
+  - cheap seo tools
+  - budget seo tools
+  - low cost seo tools
+  - inexpensive seo software
+  - best budget seo tools
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-07-01T16:02:25.738Z
+content_sha256_short: 2b4ec788d70e3561
+phase2_checks: all-pass
+---
+
 # Best Cheap SEO Tools: How to Rank Budget Options by Real Cost-Per-Feature
 
 ## What Is Best Cheap SEO Tools?

@@ -52,6 +52,6 @@ Last run: 2026-07-01T15:02:05.454Z (1782918125454)
 
 `/usr/bin/python3 /Users/awayer_mini/gengrowth-wiki/tools/scripts/obsidian-vault-git-sync.py --repo /Users/awayer_mini/gengrowth-wiki --repo /Users/awayer_mini/gengrowth-ops --repo /Users/awayer_mini/gengrowth-flow-mvp --verbose`
 
-入口首次退出码为 0，输出显示 `gengrowth-flow-mvp: committed 1 path(s), pushed`。随后独立验证三仓库：`gengrowth-wiki` HEAD `0542fd365d745e58a8dcbb12c566fae17829e9a8`、`gengrowth-ops` HEAD `32dfed218926fb7503c930b8861cd59618910678`、`gengrowth-flow-mvp` HEAD `3e09dac131af45d733c5189f599cfd0eb2c41792`；三者均 clean、ahead/behind 为 `0 0`、无 unmerged 文件。回读两个 Obsidian Git 配置，`autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。为满足逐轮记录规则，创建并追加本 record；追加后需再次通过同一确定性入口收敛并复验。
+入口首次退出码为 0，输出显示 `gengrowth-flow-mvp: committed 1 path(s), pushed`。随后独立验证三仓库均 clean、ahead/behind 为 `0 0`、无 unmerged 文件。为满足逐轮记录规则，创建并追加本 record 后再次运行同一确定性入口，退出码为 0。最终复验结果：`gengrowth-wiki` HEAD `eb380507428015aaafd07ef98443a945743be799`、`gengrowth-ops` HEAD `32dfed218926fb7503c930b8861cd59618910678`、`gengrowth-flow-mvp` HEAD `8d0e1510521305124f8ffaf9655757c772b36407`；三者均 clean、ahead/behind 为 `0 0`、无 unmerged 文件。回读两个 Obsidian Git 配置，`autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。未使用破坏性 git 命令或旧镜像同步脚本。
 
 ---

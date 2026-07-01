@@ -8,8 +8,8 @@
   "track": "量产线",
   "generated_by": "unknown",
   "prompt_version": "v8",
-  "generated_at": "2026-07-01T03:45:00.313Z",
-  "content_sha256_short": "73d8b0721b0cfc1d",
+  "generated_at": "2026-07-01T03:46:04.247Z",
+  "content_sha256_short": "55406199e7dc55cb",
   "source_path": "_staging/PG-UPRA-001-en.md",
   "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-UPRA-001-en.md",
   "phase2_checks": {
@@ -19,7 +19,7 @@
       "h2Count": 11,
       "h3Count": 3,
       "h4Count": 0,
-      "words": 1795,
+      "words": 1796,
       "wikilinks": 5,
       "tbdLinks": 5
     },

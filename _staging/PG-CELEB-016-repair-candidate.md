@@ -1,28 +1,3 @@
----
-title: LeBron James Birth Chart
-slug: lebron-james-birth-chart
-date: 2026-07-01
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T2
-track: 量产线
-page_id: PG-CELEB-016
-author_id: "marcus-orion"
-author_display_name: "Marcus Orion"
-target_keyword: LeBron James birth chart
-associated_keywords:
-  - LeBron James birth chart meaning
-  - LeBron James birth chart astrology
-  - LeBron James birth chart zodiac
-  - LeBron James birth chart interpretation
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-07-01T13:35:02.966Z
-content_sha256_short: f9bb4c128cc4ee02
-phase2_checks: all-pass
----
-
 # What the LeBron James Birth Chart Reveals About His Drive and Legacy
 
 ## What Is the LeBron James Birth Chart?

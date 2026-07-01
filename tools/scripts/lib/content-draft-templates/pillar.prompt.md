@@ -114,7 +114,8 @@
        - Read as a spectrum and combinable, rather than discrete diagnostic categories
        ```
      - ❌ 错误：只有 2 个或 4+ 个 bullet / 写成散文而非 bullet / bullet 是空泛口号而非具体特征
-2. **Why It Matters for Self-Awareness**（H2，字面 H2 = `## Why It Matters for Self-Awareness`）— 2-3 段（350-500 词）。落到 Friction 字段提到的**集合层面**的真实痛点（不堆砌情绪形容词）：用户为什么需要先理解整个 family 再看单一 entity？
+2. **Why It Matters for Self-Awareness**（H2，字面 H2 = `## Why It Matters for Self-Awareness`）— 2-3 段（350-500 词）。写**这个主题家族本身对读者的真实意义**：用户为什么需要先理解整个 family 再看单一 entity，它帮读者理解 / 反思自己的什么，落到具体的自我认知价值（不堆砌情绪形容词）。
+   - **🚫 硬禁止 SEO / 搜索元评论填充**：绝不写关于"搜索 / SERP / 搜索结果 / 排名页面"的自我指涉句（如 `searchers conflate X with adjacent topics`、`SERP titles mix definitions, tools, and broad advice`、`top-ranking pages pull readers in different directions`、`search results feel scattered`）。Friction 字段只作背景输入，请转化成对主题的正面解释，不要把"读者被搜索结果搞晕"写进正文。
 3. **The {{entity}} at a Glance**（H2，字面 H2 = `## The {{entity}} at a Glance`）— Markdown 表格 ≥ 4 列 × ≥ {{child_count}} 行（每个 child entity 一行）。
    - **`## The {{entity}} at a Glance` 标题之后第一个非空段必须直接是 markdown 表格本身**（以 `|` 开头），不能加 prose intro / SEO 解释段，否则 Phase 2 RL4 drift 检测 fail
    - 4 列建议：`| {{child entity type}} | Core Theme | Energy Center / Domain | Common Misread |`

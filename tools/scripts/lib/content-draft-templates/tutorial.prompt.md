@@ -109,7 +109,7 @@
 1. **Quick Answer**（H2，字面 H2 = `## Quick Answer`）— ≤ 120 词，第一句直接回答 target_keyword，再 1-2 句给出 how it works（why it works this way；禁用 "mechanism"）
 2. **What {{entity}} Means in the Chart: How It Works + Trade-offs**（H2，字面 H2 = `## What {{entity}} Means in the Chart: How It Works + Trade-offs`，**禁止简写为 "What It Means..." — entity 必须保留**）— 占星运作方式{{TIER_LOGIC_HINT}}；**必须显式写出 how it works（怎么作用）+ trade-off（什么情况下倾向哪种解读）**。英文正文 **禁用 "mechanism" 一词**（RL13 硬门禁）
 3. **Patterns It May Reflect**（H2）— 不诊断、用反思语言（reflection language），落到 Friction 提到的真实痛点
-4. **Common Misreadings**（H2）— 列 2-3 条；**显式跟 SERP 头部页的主流写法对立**（如「头部页说 X，但忽略了 Y」），不要泛泛说「人们以为 X 但其实 Y」
+4. **Common Misreadings**（H2）— 列 2-3 条**关于主题本身的常见误读**，逐条纠正（误读 → 实际的占星解释），要具体到这个 entity。**🚫 禁止把纠正写成关于"搜索结果 / SERP / 头部页面"的元评论**（绝不写「头部页说 X」「SERP 排名页忽略了 Y」「search results…」这类谈搜索而非谈主题的句子）。写读者对这个主题真实持有的误解，而不是谈搜索页面怎么写。
 5. **Reflection / Journal Prompts**（H2）— 必须 3-5 条 prompts，每条 **≤ 25 词 / 1 句话**（不要治疗师式长问），满足：
    - (a) 指向**具体情境回忆**（"Think of a recent moment when..."），**不要**「How does this make you feel?」泛问
    - (b) **关联 Logic 字段主题**（如 Logic 提到 X 能量则 prompts 围绕 X 情境）

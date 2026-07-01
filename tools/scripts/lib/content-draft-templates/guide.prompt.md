@@ -181,7 +181,8 @@
        - Margin and quality control depend entirely on the handoff workflow
        ```
      - ❌ 错误：只有 2 个或 4+ 个 bullet / 写成散文而非 bullet / bullet 是空泛口号而非具体特征
-2. **Why It Matters for Your Workflow**（H2，字面 H2 = `## Why It Matters for Your Workflow`）— 1-2 段，必须落到 Friction 字段提到的真实业务痛点（决策成本 / 交付风险 / 利润，**不堆砌营销形容词**）。锚住 cluster_jtbd（读者来这页是想完成什么 job）。
+2. **Why It Matters for Your Workflow**（H2，字面 H2 = `## Why It Matters for Your Workflow`）— 1-2 段，落到真实业务痛点（决策成本 / 交付风险 / 利润，**不堆砌营销形容词**）。锚住 cluster_jtbd（读者来这页是想完成什么 job）。
+   - **🚫 硬禁止 SEO / 搜索元评论填充**：绝不写关于"搜索 / SERP / 搜索结果 / 排名页面"的自我指涉句（如 `searchers conflate X with adjacent topics`、`SERP titles mix definitions, tools, and broad advice`、`top-ranking pages pull readers in different directions`、`search results feel scattered`）。Friction 字段只作背景输入，请转化成真实的业务痛点 / job-to-be-done，不要把"读者被搜索结果搞晕"写进正文。
 3. **How {{entity}} Works in Real Agency / SaaS Scenarios**（H2，标题命名真实场景）— **标题硬规则（Phase 2 SC11 门禁）**：写一个**具体、自然**的标题，点出真实使用场景；**禁用 "Mechanism" / "engine" 等禁词**（SC11 + 禁词门禁会整篇 fail），用 "How It Works" / "How … Plays Out"。✅ `## How White-Label SEO Works in Real Agency Rollouts` / `## How a Content Audit Plays Out Week to Week`；❌ `## {{entity}} Mechanism`（禁词）/ `## How It Works`（太泛、无关键词）。正文用 **2-3 个真实 agency / SaaS 场景**说明这个 entity 在实际工作流里**怎么运作 + 在哪一步介入**。
    - **优先用 3-5 条编号列表**（每条 1-2 句、≤ 25 词，一个可操作步骤 / 一个具体场景），而不是长 prose 段——直接服务移动端密度与 GEO 抽取。
    - 扣住 Logic / cluster_jtbd 字段提到的真实场景，不空泛。

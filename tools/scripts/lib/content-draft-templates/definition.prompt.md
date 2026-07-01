@@ -175,7 +175,9 @@ capsule 用于决定**怎么解释**（措辞、对比角度、例子选择、�
        - Easily misread as cool or detached when it's really just measured
        ```
      - ❌ 错误：只有 2 个或 4+ 个 bullet / 写成散文而非 bullet / bullet 是空泛口号而非具体特征
-2. **Why It Matters for Self-Awareness**（H2，字面 H2 = `## Why It Matters for Self-Awareness`）— 1-2 段，必须落到 Friction 字段提到的真实痛点（不堆砌情绪形容词）
+2. **Why It Matters for Self-Awareness**（H2，字面 H2 = `## Why It Matters for Self-Awareness`）— 1-2 段，写**这个占星主题本身对读者的真实意义**：它能帮读者理解 / 反思自己的什么（情绪模式、关系、时机、身份、内在张力等），落到**具体的生活场景或自我认知价值**，让读者读完知道"这对我有什么用"。（不堆砌情绪形容词。）
+   - **🚫 硬禁止：SEO / 搜索元评论填充**。这一段（以及全文任何地方）**绝不**写关于"搜索 / SERP / 搜索结果 / 排名页面"的自我指涉句 —— 明令禁止这类模式：`searchers conflate X with adjacent topics`、`SERP titles mix definitions, tools, and broad advice`、`top-ranking pages pull readers in different directions`、`search results feel scattered / pull you in opposite directions`、`most pages stop at ...`、`the top results answer the wrong question`。这些是**在谈搜索行为而不是谈主题**，属于 AI-slop 填充,一旦出现视为内容出错。
+   - Friction 字段**只作为你理解读者困惑点的背景输入**,请把它**转化成对主题的正面解释 / 真实生活痛点**(例:"很多人分不清自己是在体验 X 还是 Y" ✅),**不要**把"读者被搜索结果 / SERP 搞晕"这一层直接写进正文。
 3. **对比 section（H2，标题必须命名真实的相邻概念）**— **标题硬规则（Phase 2 SC11 门禁）**：**绝不**写死成 `## {{entity}} vs Adjacent Concepts: How It Works + Trade-offs` —— "vs Adjacent Concepts" 是无意义的样板短语，命中 SC11 整篇作废。请写一个**具体、自然的对比标题，明确点出真正要对比的那个相邻概念**（从 Logic 字段挑最容易混淆的近邻实体）。✅ `## Full Moon vs New Moon Energy: What Actually Differs` / `## Blue Aura vs Green Aura: Where People Mix Them Up` / `## How Saturn Return Differs From a Saturn Square`；❌ `## {{entity}} vs Adjacent Concepts: ...`（样板）。正文 ≥ 1 段对比 + 必须显式写出每个对比的 **how it works（怎么作用）+ trade-off（什么情况下倾向哪种）**，引用 Logic 字段的「运作 + 权衡」。**禁用 "mechanism" 一词**（SOP §7 / 清单 §5.3 禁词 + RL13 硬门禁会整篇 fail），改写成 "how it works" / "the way it functions"
    - **Trade-off 表达硬要求（每个对比必须显式）**：每段对比里至少有 1 句话用「**To get A, you sacrifice B**」型表达，让 trade-off 不是抽象描述，而是**可读出的取舍**
    - ✅ 范例：`Blue aura emphasises clarity of voice; the cost is being read as cool or detached.`（取得 A=表达清晰，付出 B=被读冷淡）

@@ -16,7 +16,6 @@ associated_keywords:
   - Maya Joint birth chart astrology
   - Maya Joint birth chart zodiac
   - Maya Joint birth chart interpretation
-  - emma watson zodiac sign
 generated_by: unknown
 prompt_version: v8
 generated_at: 2026-07-01T13:01:15.008Z

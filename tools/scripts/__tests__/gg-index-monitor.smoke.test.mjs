@@ -14,10 +14,14 @@ import {
   REQUEST_INDEXING_QUEUE_HEADER,
   REQUEST_INDEXING_QUEUE_TAB,
   RECAP_TAB,
+  URL_INVENTORY_HEADER,
+  URL_INVENTORY_TAB,
+  buildUrlInventoryRows,
   buildRequestIndexingCandidateRows,
   buildTrackingSeedRow,
   classifyInspection,
   extractEnWikiSitemapRows,
+  extractIndexableSitemapInventoryRows,
   extractPageDiagnosticsFromHtml,
   formatAlertMessage,
   formatRecapStatusTab,
@@ -68,6 +72,24 @@ test('workbook spec declares the request-indexing queue tab', () => {
   assert.equal(tab.type, 'standard');
 });
 
+test('workbook spec declares the URL inventory auto tab', () => {
+  assert.equal(URL_INVENTORY_TAB, 'url-inventory');
+  assert.deepEqual(URL_INVENTORY_HEADER.slice(0, 5), [
+    'url',
+    'path_family',
+    'title',
+    'source',
+    'sitemap_lastmod',
+  ]);
+  assert.ok(URL_INVENTORY_HEADER.includes('inventory_status'));
+  assert.ok(URL_INVENTORY_HEADER.includes('request_queue_allowed'));
+
+  const tab = TABS.find((t) => t.name === URL_INVENTORY_TAB);
+  assert.ok(tab, 'url-inventory tab must be part of the workbook spec');
+  assert.deepEqual(tab.header, [...URL_INVENTORY_HEADER]);
+  assert.equal(tab.type, 'standard');
+});
+
 test('buildTrackingSeedRow creates an idempotent monitor row from a publish event', () => {
   const row = buildTrackingSeedRow({
     pageId: 'PG-TEST-001',
@@ -105,6 +127,67 @@ test('extractEnWikiSitemapRows copies only live EN wiki article URLs from sitema
   assert.equal(rows[0].published_at, '2026-06-24');
   assert.equal(rows[0].first_tracked_at, '2026-06-24');
   assert.equal(rows[0].source, 'live-sitemap');
+});
+
+test('URL inventory includes tools pages that existing EN wiki tracking intentionally skips', () => {
+  const sitemapRows = extractIndexableSitemapInventoryRows(`
+    <url><loc>https://www.astrologywiki.com/en/wiki/bruno-fernandes-zodiac-sign</loc><lastmod>2026-06-24</lastmod></url>
+    <url><loc>https://www.astrologywiki.com/en/tools</loc><lastmod>2026-06-24</lastmod></url>
+    <url><loc>https://www.astrologywiki.com/en/birth-chart-calculator</loc><lastmod>2026-06-24</lastmod></url>
+    <url><loc>https://www.astrologywiki.com/en/wiki/classics/chart-interpretation</loc><lastmod>2026-06-24</lastmod></url>
+    <url><loc>https://www.astrologywiki.com/zh/wiki/bruno-fernandes-zodiac-sign</loc><lastmod>2026-06-24</lastmod></url>
+    <url><loc>https://example.com/en/tools</loc><lastmod>2026-06-24</lastmod></url>
+  `, { now: new Date('2026-06-25T00:00:00Z') });
+
+  assert.deepEqual(sitemapRows.map((row) => row.url), [
+    'https://www.astrologywiki.com/en/wiki/bruno-fernandes-zodiac-sign',
+    'https://www.astrologywiki.com/en/tools',
+    'https://www.astrologywiki.com/en/birth-chart-calculator',
+    'https://www.astrologywiki.com/en/wiki/classics/chart-interpretation',
+  ]);
+  assert.equal(sitemapRows[1].path_family, 'en_tools_hub');
+  assert.equal(sitemapRows[2].path_family, 'en_tool');
+  assert.equal(sitemapRows[3].path_family, 'en_wiki_nested');
+
+  const rows = buildUrlInventoryRows({
+    sitemapRows,
+    trackingRows: [{
+      page_id: 'PG-WIKI-001',
+      url: 'https://www.astrologywiki.com/en/wiki/bruno-fernandes-zodiac-sign',
+      title: 'Bruno Fernandes Zodiac Sign',
+      current_gsc_status: 'Submitted and indexed',
+      monitor_status: 'indexed',
+      first_tracked_at: '2026-06-24',
+      last_checked_at: '2026-06-25',
+    }],
+    recapRows: [{
+      page_id: 'PG-WIKI-001',
+      url: 'https://www.astrologywiki.com/en/wiki/bruno-fernandes-zodiac-sign',
+      'day14_收录': 'Y',
+      '索引修复状态': '已收录',
+    }, {
+      page_id: 'PG-CLASSIC-001',
+      url: 'https://www.astrologywiki.com/en/wiki/classics/chart-interpretation',
+      'day14_收录': 'N',
+      '申请时间': '2026-06-24',
+      '索引修复状态': '监控中',
+    }],
+    requestQueueRows: [{
+      page_id: 'PG-CLASSIC-001',
+      url: 'https://www.astrologywiki.com/en/wiki/classics/chart-interpretation',
+      computer_use_status: '已提交',
+    }],
+    now: new Date('2026-06-25T00:00:00Z'),
+    siteUrl: 'sc-domain:astrologywiki.com',
+  });
+
+  const byUrl = new Map(rows.map((row) => [row.url, row]));
+  assert.equal(byUrl.get('https://www.astrologywiki.com/en/wiki/bruno-fernandes-zodiac-sign').inventory_status, '已收录');
+  assert.equal(byUrl.get('https://www.astrologywiki.com/en/tools').inventory_status, '未纳入监控');
+  assert.equal(byUrl.get('https://www.astrologywiki.com/en/tools').request_queue_allowed, 'Y');
+  assert.equal(byUrl.get('https://www.astrologywiki.com/en/birth-chart-calculator').inventory_status, '未纳入监控');
+  assert.equal(byUrl.get('https://www.astrologywiki.com/en/birth-chart-calculator').path_family, 'en_tool');
+  assert.equal(byUrl.get('https://www.astrologywiki.com/en/wiki/classics/chart-interpretation').inventory_status, '已提交但未收录');
 });
 
 test('mergePublishedTrackingRow refreshes source fields without clobbering GSC state', () => {
@@ -604,6 +687,7 @@ test('launchd wrapper runs only the lightweight index monitor check', () => {
   assert.match(wrapper, /--sync-published/);
   assert.match(wrapper, /--process-fixed/);
   assert.match(wrapper, /--submit-sitemap/);
+  assert.match(wrapper, /--sync-url-inventory --write-sheet/);
   assert.match(wrapper, /--check-due/);
   assert.match(wrapper, /--sync-recap/);
   assert.match(wrapper, /--sync-request-queue/);
@@ -746,6 +830,43 @@ test('runIndexMonitor --sync-published can batch update tracking rows', async ()
   assert.equal(batched.updates.length, 1);
   assert.equal(batched.appends.length, 0);
   assert.equal(batched.updates[0].merged.title, 'Existing Live');
+});
+
+test('runIndexMonitor --sync-url-inventory writes an independent inventory tab without GSC inspection calls', async () => {
+  let ensured = null;
+  let written = null;
+  let formatted = null;
+  const code = await runIndexMonitor(['--sync-url-inventory', '--write-sheet', '--workbook', 'wb-test'], {
+    now: new Date('2026-06-25T00:00:00Z'),
+    sheetToken: 'sheet-token',
+    sitemapInventoryRows: extractIndexableSitemapInventoryRows(`
+      <url><loc>https://www.astrologywiki.com/en/tools</loc><lastmod>2026-06-24</lastmod></url>
+      <url><loc>https://www.astrologywiki.com/en/birth-chart-calculator</loc><lastmod>2026-06-24</lastmod></url>
+    `),
+    ensureUrlInventoryTab: async (token, workbookId) => {
+      ensured = { token, workbookId };
+      return URL_INVENTORY_TAB;
+    },
+    readTrackingRows: async () => [],
+    readRecapRows: async () => [],
+    readRequestQueueRows: async () => [],
+    replaceUrlInventoryRows: async (token, workbookId, tabName, rows) => {
+      written = { token, workbookId, tabName, rows };
+    },
+    formatUrlInventory: async (token, workbookId, tabName) => {
+      formatted = { token, workbookId, tabName };
+    },
+    fetchUrlInspection: async () => {
+      throw new Error('inventory sync must not call URL Inspection');
+    },
+  });
+
+  assert.equal(code, 0);
+  assert.deepEqual(ensured, { token: 'sheet-token', workbookId: 'wb-test' });
+  assert.equal(written.tabName, URL_INVENTORY_TAB);
+  assert.deepEqual(written.rows.map((row) => row.inventory_status), ['未纳入监控', '未纳入监控']);
+  assert.deepEqual(written.rows.map((row) => row.path_family), ['en_tools_hub', 'en_tool']);
+  assert.equal(formatted.tabName, URL_INVENTORY_TAB);
 });
 
 test('runIndexMonitor --sync-recap upserts only page_id-backed final presentation rows', async () => {

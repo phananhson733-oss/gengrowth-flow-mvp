@@ -1,0 +1,159 @@
+{
+  "_purpose": "Lean-pipeline scaffold for the 5 due-2026-06-18 astrologywiki World Cup 2026 articles (plan PG-WC-020~024; internal staging PIDs PG-WC-021~025 to avoid colliding with the already-LIVE PG-WC-020 = cancer-zodiac-world-cup-2026). Each writer reads this + the gold-standard _staging/PG-WC-016-en.md (Bellingham, Definition, 11 H2) and produces _staging/<PID>-en.md, then self-validates via _phase2-validate to PASS. ZH writer reads the EN draft + _staging/zh-demo/PG-WC-016-zh.md and produces _staging/zh-demo/<PID>-zh.md, self-validates ZH.",
+  "_template_note": "ALL use template=Definition -> phase2 requires EXACTLY 11 H2 sections, mirroring PG-WC-016-en.md: (1) What Is X [bold direct-answer definition + 3 snippet bullets + symbolic-disclaimer line], (2) Why It Matters, (3) X vs <neighbour>, (4) How to Read X, (5) Common Misreadings, (6) X at a Glance [markdown table >=4 cols x >=3 rows], (7) Common Questions [>=3 FAQ], (8) Reflection Prompts, (9) Related Reading [internal link], (10) Take Action [CTA full https:// link to how-to-read-birth-chart], (11) Sources [>=1 named].",
+  "_phase2_targets": {
+    "word_range_en": [1500, 1800],
+    "word_range_zh_chars": [1500, 2000],
+    "kw_count_range": [5, 8],
+    "expected_h2": 11,
+    "SC1": "first H2 section opens with a **bolded direct-answer definition**",
+    "SC7": "exactly 3 snippet bullets right after the bolded definition in H2#1",
+    "SC2_internal_links": "T3 -> 1-2 internal [[<TBD-internal-link: ...>]] placeholders; T2 (england) -> 3",
+    "SC4": "first internal link in first ~150 words AND woven into a body paragraph (not only Related Reading)",
+    "SC8": "Take Action / 下一步行动 section has a real CTA link to https://astrologywiki.com/en|zh/wiki/how-to-read-birth-chart",
+    "SC10": "the 'at a Glance' table must be >=4 columns x >=3 rows",
+    "SC11": "no banned templated headings: no 'vs Adjacent Concepts', no 'What is <lowercase>' / 'How to Read <lowercase>' broken-casing",
+    "RL5": "exact target keyword phrase appears 5-8 times (EN target_keyword; ZH target_keyword_zh)",
+    "RL12": "NEVER cite 'a 2017 study' / unnamed studies implying astrology works -> voids the article. Citable = 'According to <named author/body>, <number/fact>' about ASTRONOMY/HISTORY only",
+    "safety": "symbolic/educational framing line in H2#1; never predict match results; no betting; 广告法-safe for ZH"
+  },
+  "_shared_astrology_facts_2026": [
+    "WC 2026 opens 11 June 2026 at Estadio Azteca, Mexico City; final is 19 July 2026 at MetLife Stadium, New Jersey. Do NOT swap opener and final venues.",
+    "Jupiter transits Cancer until ~30 June 2026, then enters Leo (~30 Jun / 1 Jul 2026) through 2027. A Cancer Sun gets the 'Jupiter in its own sign' backdrop ONLY for the group stage (Jun 11-30); the July knockouts have Jupiter in Leo.",
+    "Saturn is in Aries 2025-2028 (a cardinal sign of fresh starts / earned thresholds). Capricorn is ruled by Saturn (traditional ruler) -> a Capricorn Sun reads through Saturn's discipline/structure regardless of where Saturn currently transits.",
+    "Sun sign is NOT the chart ruler. Footballers' birth TIMES are generally unrecorded, so Moon sign, Ascendant, and house placements are UNVERIFIED -> say so explicitly and do NOT fabricate them. Anchor the reading on the Sun sign + verifiable facts.",
+    "Astrology here is strictly symbolic and educational. Never predict match results, never claim astrology determines outcomes, never give betting guidance. (Also satisfies 广告法 for the ZH pass.)",
+    "Transits time year-level themes, not fixtures. Do NOT claim a transit-to-natal aspect predicts a specific match.",
+    "GEO citability: cite only real verifiable facts (birth dates, tournament dates, astronomical ingresses, named astrology authors like Liz Greene / Robert Hand). A citable claim is 'According to <named source>, <number>'. NEVER phrase a study/number that implies astrology is empirically valid; NEVER write 'a 2017 study' (RL12 voids it)."
+  ],
+  "_qualification_facts_VERIFIED_2026": [
+    "Colombia (James Rodriguez, Luis Diaz): QUALIFIED for WC 2026 via CONMEBOL. James Rodriguez is Colombia's captain; he left Minnesota United in May 2026 to prepare with the national team.",
+    "USA (Christian Pulisic): co-host of WC 2026, automatically qualified. Pulisic (27) is the USMNT's biggest star, leading them on home soil.",
+    "England: QUALIFIED. Won all 8 of their UEFA Group K qualifiers. Manager Thomas Tuchel (appointed 1 Jan 2025). Captain Harry Kane (his 3rd World Cup).",
+    "DR Congo (Yoane Wissa): QUALIFIED via the CAF play-off (beat Nigeria on penalties) then the inter-confederation play-off (beat Jamaica 1-0 a.e.t.). Only their 2nd-ever WC appearance (first as Zaire in 1974). Wissa now plays for Newcastle United (moved from Brentford in 2025). Do NOT assert Wissa's final squad selection or minutes — frame the tournament as cautious factual backdrop."
+  ],
+  "_internal_link_pool_LIVE": [
+    "world-cup-2026-astrology-prediction (PILLAR — every article links this, in-body in first ~150 words)",
+    "world-cup-2026-june-astrology",
+    "best-soccer-players-zodiac-sign",
+    "cancer-zodiac-world-cup-2026 (LIVE — Cancer-Sun hub)",
+    "jude-bellingham-birth-chart (LIVE — England Cancer Sun)",
+    "harry-kane-birth-chart (LIVE — England captain, Leo Sun)",
+    "erling-haaland-birth-chart (LIVE)",
+    "messi-world-cup-record-astrology (LIVE)",
+    "lionel-messi-zodiac-sign (LIVE)",
+    "argentina-world-cup-2026-astrology (LIVE)",
+    "how-to-read-birth-chart (CTA target only — full https://astrologywiki.com/en|zh/wiki/how-to-read-birth-chart)"
+  ],
+  "_link_format": "Internal links MUST be [[<TBD-internal-link: description>]] placeholders (phase2 SC2/SC4 count ONLY these, NOT markdown links). Use the EXACT descriptions in each article's internal_links[] below so the converter routes them. ZH uses the ZH descriptions. The CTA in section 10 is the ONLY markdown link, pointing to how-to-read-birth-chart.",
+  "_deploy_order": ["PG-WC-021 james-rodriguez", "PG-WC-022 luis-diaz", "PG-WC-024 christian-pulisic", "PG-WC-023 yoane-wissa", "PG-WC-025 england (hub, last)"],
+  "_deploy_order_rationale": "diaz links to rodriguez (Colombia teammate); wissa links to pulisic (fellow Virgo) -> pulisic ships before wissa; england links to kane+bellingham (already live) so it can ship anytime but goes last as the team hub.",
+  "_author_red_lines": {
+    "marcus-orion": "data/factual tone; at-a-glance table 3rd column header is 'Natal Placement' (never 'Energy').",
+    "julian-thorne": "psychological-astrology tone (Liz Greene / Robert Hand lineage); no 'you will' / 'guaranteed' / deterministic promises.",
+    "elena-vane": "roundup/reflective tone; still symbolic, no predictions."
+  },
+  "articles": [
+    {
+      "page_id": "PG-WC-021",
+      "slug": "james-rodriguez-birth-chart",
+      "target_keyword": "james rodriguez birth chart",
+      "template": "Definition",
+      "tier": "T3",
+      "author": "julian-thorne",
+      "author_display_name": "Julian Thorne",
+      "entity": "the James Rodriguez Birth Chart",
+      "associated_keywords": ["james rodriguez astrology", "james rodriguez zodiac sign", "james rodriguez cancer sun", "colombia world cup 2026 astrology"],
+      "birth_data": "James Rodriguez born 12 July 1991 in Cucuta, Colombia. Sun at about 19 degrees of Cancer (cardinal water). Birth time unverified -> Moon/Ascendant/houses UNKNOWN, do not fabricate. Colombia's captain and creative attacking midfielder (the classic number 10); famous for winning the 2014 World Cup Golden Boot as the tournament's top scorer (6 goals). Colombia QUALIFIED for WC 2026. He turns 35 on 12 July 2026 — his birthday falls DURING the tournament, AFTER Jupiter has already left Cancer for Leo (~30 June).",
+      "content_angle": "Read the James Rodriguez birth chart through the psychological-astrology lens: a Cancer Sun as the heart-led, intuitive playmaker — devotion to nation, emotional vision, the number-10 who feels the game. Frame the 2014 Golden Boot as a symbolic high-water mark of that Cancer creativity, and 2026 as an open question (a 35-year-old veteran), never a prediction. Timing backdrop: Jupiter in Cancer until ~30 June gives the group stage a symbolic tailwind on his Sun sign, but his actual solar return (12 July) lands under Jupiter in Leo. Honest about the unknown birth time. Julian Thorne voice: themes not promises.",
+      "internal_links": [
+        "[[<TBD-internal-link: the World Cup 2026 astrology pillar>]] — in-body, within the first ~150 words of section 1",
+        "[[<TBD-internal-link: the Cancer zodiac World Cup 2026 lens>]] — Related Reading (he is a Cancer Sun)"
+      ],
+      "zh_keyword": "哈梅斯·罗德里格斯星盘",
+      "zh_entity": "哈梅斯·罗德里格斯星盘",
+      "zh_internal_links": ["[[<TBD-internal-link: 2026世界杯占星总览>]]", "[[<TBD-internal-link: 巨蟹座世界杯视角>]]"]
+    },
+    {
+      "page_id": "PG-WC-022",
+      "slug": "luis-diaz-birth-chart",
+      "target_keyword": "luis diaz birth chart",
+      "template": "Definition",
+      "tier": "T3",
+      "author": "marcus-orion",
+      "author_display_name": "Marcus Orion",
+      "entity": "the Luis Diaz Birth Chart",
+      "associated_keywords": ["luis diaz astrology", "luis diaz zodiac sign", "luis diaz capricorn sun", "colombia world cup 2026 astrology"],
+      "birth_data": "Luis Diaz born 13 January 1997 in Barrancas, La Guajira, Colombia. Sun at about 23 degrees of Capricorn (cardinal earth). Birth time unverified -> Moon/Ascendant/houses UNKNOWN, do not fabricate. Left winger for Bayern Munich (joined July 2025) and Colombia. Colombia QUALIFIED for WC 2026. Capricorn is traditionally ruled by Saturn; Saturn transits Aries 2025-2028.",
+      "content_angle": "Read the Luis Diaz birth chart through Marcus Orion's data-anchored lens: a Capricorn Sun as disciplined, ambitious, structured endurance — Saturn's signature of the long climb. Frame his arc from Barrancas (humble origins, La Guajira) to Bayern Munich as a symbolic Capricorn ascent, earned step by step. NO Jupiter-in-sign hook (Jupiter is not in Capricorn) — anchor instead on Capricorn's Saturn rulership and the 2025-2028 Saturn-in-Aries backdrop of earned thresholds. Contrast the earth-sign grind with the Cancer-Sun water players. Symbolic only; no result prediction. At-a-glance table 3rd column = 'Natal Placement'.",
+      "internal_links": [
+        "[[<TBD-internal-link: the World Cup 2026 astrology pillar>]] — in-body, within the first ~150 words of section 1",
+        "[[<TBD-internal-link: the James Rodriguez birth chart>]] — Related Reading (Colombia teammate; ships before this)"
+      ],
+      "zh_keyword": "路易斯·迪亚斯星盘",
+      "zh_entity": "路易斯·迪亚斯星盘",
+      "zh_internal_links": ["[[<TBD-internal-link: 2026世界杯占星总览>]]", "[[<TBD-internal-link: 哈梅斯·罗德里格斯星盘>]]"]
+    },
+    {
+      "page_id": "PG-WC-023",
+      "slug": "yoane-wissa-birth-chart",
+      "target_keyword": "yoane wissa birth chart",
+      "template": "Definition",
+      "tier": "T3",
+      "author": "marcus-orion",
+      "author_display_name": "Marcus Orion",
+      "entity": "the Yoane Wissa Birth Chart",
+      "associated_keywords": ["yoane wissa astrology", "yoane wissa zodiac sign", "yoane wissa virgo sun", "dr congo world cup 2026 astrology"],
+      "birth_data": "Yoane Wissa born 3 September 1996 in Epinay-sur-Seine, France. Sun at about 11 degrees of Virgo (mutable earth). Birth time unverified -> Moon/Ascendant/houses UNKNOWN, do not fabricate. Forward for Newcastle United (moved from Brentford in 2025) and the DR Congo national team. DR Congo QUALIFIED for WC 2026 — only their 2nd-ever appearance (first as Zaire 1974). Do NOT assert Wissa's final squad selection or minutes; treat the tournament as cautious factual backdrop. Virgo is ruled by Mercury.",
+      "content_angle": "Read the Yoane Wissa birth chart through Marcus Orion's data-anchored lens: a Virgo Sun as precision, diligence, craft and service — Mercury-ruled adaptability. Frame his journeyman climb (born in France, DR Congo international, rising through to the Premier League and Newcastle) as a symbolic Virgo arc of incremental mastery and refinement. DR Congo's historic qualification is a factual backdrop (no prediction, and no claim about his selection). Symbolic only. At-a-glance table 3rd column = 'Natal Placement'.",
+      "internal_links": [
+        "[[<TBD-internal-link: the World Cup 2026 astrology pillar>]] — in-body, within the first ~150 words of section 1",
+        "[[<TBD-internal-link: the Christian Pulisic birth chart>]] — Related Reading (fellow Virgo Sun; ships before this)"
+      ],
+      "zh_keyword": "约阿内·维萨星盘",
+      "zh_entity": "约阿内·维萨星盘",
+      "zh_internal_links": ["[[<TBD-internal-link: 2026世界杯占星总览>]]", "[[<TBD-internal-link: 普利西奇星盘>]]"]
+    },
+    {
+      "page_id": "PG-WC-024",
+      "slug": "christian-pulisic-birth-chart",
+      "target_keyword": "christian pulisic birth chart",
+      "template": "Definition",
+      "tier": "T3",
+      "author": "marcus-orion",
+      "author_display_name": "Marcus Orion",
+      "entity": "the Christian Pulisic Birth Chart",
+      "associated_keywords": ["christian pulisic astrology", "christian pulisic zodiac sign", "christian pulisic virgo sun", "usa world cup 2026 astrology"],
+      "birth_data": "Christian Pulisic born 18 September 1998 in Hershey, Pennsylvania, USA. Sun at about 25 degrees of Virgo (mutable earth). Birth time unverified -> Moon/Ascendant/houses UNKNOWN, do not fabricate. Winger / attacking midfielder / forward for AC Milan and the United States national team. USA co-hosts WC 2026 and is automatically qualified. Pulisic (27) is the USMNT's biggest star, leading them on home soil. Virgo is ruled by Mercury.",
+      "content_angle": "Read the Christian Pulisic birth chart through Marcus Orion's data-anchored lens: a Virgo Sun as precision, perfectionism and a relentless work ethic — Mercury-ruled adaptability that mirrors his shifting across winger, attacking-mid and forward roles. Frame the home-soil, host-nation narrative as factual backdrop, the Virgo craftsman under the brightest lights. Companion piece to the fellow-Virgo Yoane Wissa read. Symbolic only; no result prediction. At-a-glance table 3rd column = 'Natal Placement'.",
+      "internal_links": [
+        "[[<TBD-internal-link: the World Cup 2026 astrology pillar>]] — in-body, within the first ~150 words of section 1",
+        "[[<TBD-internal-link: the best soccer players by zodiac sign roundup>]] — Related Reading"
+      ],
+      "zh_keyword": "克里斯蒂安·普利西奇星盘",
+      "zh_entity": "克里斯蒂安·普利西奇星盘",
+      "zh_internal_links": ["[[<TBD-internal-link: 2026世界杯占星总览>]]", "[[<TBD-internal-link: 顶尖足球明星星座盘点>]]"]
+    },
+    {
+      "page_id": "PG-WC-025",
+      "slug": "england-world-cup-2026-astrology",
+      "target_keyword": "england world cup 2026 astrology",
+      "template": "Definition",
+      "tier": "T2",
+      "author": "elena-vane",
+      "author_display_name": "Elena Vane",
+      "entity": "England's World Cup 2026 Astrology",
+      "associated_keywords": ["england world cup squad astrology", "england team zodiac signs", "harry kane leo sun", "three lions astrology 2026"],
+      "birth_data": "Team-level read. England QUALIFIED for WC 2026 — won all 8 of their UEFA Group K qualifiers (a dominant campaign). Manager Thomas Tuchel (appointed 1 Jan 2025; born 29 Aug 1973 -> Virgo Sun). Captain Harry Kane (born 28 July 1993 -> Leo Sun; his 3rd World Cup, equalling Billy Wright's England record). Key squad Sun signs (verified birth DATES only; birth times unrecorded so no Moon/Asc/houses): Jude Bellingham (29 Jun 2003 -> Cancer), Declan Rice (14 Jan 1999 -> Capricorn), Bukayo Saka (5 Sep 2001 -> Virgo). Do NOT fabricate placements beyond the Sun.",
+      "content_angle": "Elena Vane's reflective roundup: the England squad read as a spread of Sun signs, and how Jupiter's shift from Cancer to Leo (~30 June 2026) maps symbolically onto the group-stage-to-knockout arc. Bellingham's Cancer Sun catches the group-stage Jupiter tailwind; Kane's Leo Sun aligns with the July knockouts when Jupiter enters Leo (a symbolic 'captain's season arrives late'). Tie it to the player pieces. Strictly symbolic/educational — names a season of themes, never predicts results or a starting eleven, no betting. As a T2 hub, weave in 3 internal links.",
+      "internal_links": [
+        "[[<TBD-internal-link: the World Cup 2026 astrology pillar>]] — in-body, within the first ~150 words of section 1",
+        "[[<TBD-internal-link: the Harry Kane birth chart>]] — in body (England captain, Leo Sun; already live)",
+        "[[<TBD-internal-link: the Jude Bellingham birth chart>]] — in body or Related Reading (England Cancer Sun; already live)"
+      ],
+      "zh_keyword": "英格兰2026世界杯占星",
+      "zh_entity": "英格兰世界杯占星视角",
+      "zh_internal_links": ["[[<TBD-internal-link: 2026世界杯占星总览>]]", "[[<TBD-internal-link: 凯恩星盘>]]", "[[<TBD-internal-link: 贝林厄姆星盘>]]"]
+    }
+  ]
+}

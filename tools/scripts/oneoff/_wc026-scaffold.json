@@ -1,0 +1,78 @@
+{
+  "_note": "6/21 batch scaffold: 5 articles (PG-WC-026/027/028, PG-TRANS-011, PG-MYTH-006). Verified facts + fixtures spec + internal-link TBD strings + deploy order. Generated fixtures via _wc026-make-fixtures.mjs.",
+  "batch_date": "2026-06-21",
+  "articles": [
+    {
+      "page_id": "PG-WC-026",
+      "slug": "spain-world-cup-2026-astrology",
+      "status": "EN-DONE-revised-validated; needs ZH",
+      "author_id": "julian-thorne",
+      "tier": "T2",
+      "entity_en": "Spain World Cup 2026 Astrology",
+      "entity_zh": "西班牙2026世界杯占星视角",
+      "target_keyword": "spain world cup 2026 astrology",
+      "target_keyword_zh": "西班牙2026世界杯占星",
+      "assoc_en": ["la roja astrology", "spain national team birth chart", "spain football zodiac 2026", "jupiter in cancer 2026"],
+      "assoc_zh": ["斗牛士军团占星", "西班牙国家队星盘", "西班牙足球星座2026", "2026木星巨蟹"],
+      "verified_facts": "Group H (Spain/Cape Verde/Saudi Arabia/Uruguay). Spain 0-0 Cape Verde June 15 (Atlanta, Cape Verde WC debut, GK Vozinha shutout). Spain vs Saudi Arabia Sun June 21 12pm Atlanta. Uruguay vs Spain June 27. RFEF founded 1913, Sun ~5 deg Libra (cardinal air, NOT Capricorn; Capricorn is symbolic only). Jupiter ~27 deg Cancer late June 2026 (leaves Cancer for Leo ~June 30). 2010: Spain lost 0-1 to Switzerland in opener then won title."
+    },
+    {
+      "page_id": "PG-WC-027",
+      "slug": "matheus-cunha-birth-chart",
+      "status": "EN-DONE-validated; needs ZH",
+      "author_id": "aditi-sharma",
+      "tier": "T1",
+      "entity_en": "the Matheus Cunha Birth Chart",
+      "entity_zh": "马特乌斯·库尼亚星盘",
+      "target_keyword": "matheus cunha birth chart",
+      "target_keyword_zh": "马特乌斯·库尼亚星盘",
+      "assoc_en": ["matheus cunha zodiac sign", "matheus cunha astrology", "matheus cunha gemini", "brazil world cup 2026 astrology"],
+      "assoc_zh": ["库尼亚星座", "库尼亚占星", "库尼亚双子座", "巴西2026世界杯占星"],
+      "verified_facts": "Born May 27, 1999, Joao Pessoa, Brazil. Gemini Sun. Brazilian forward (Manchester United). No public birth time -> no verified Moon/Asc; treat Sun-sign only. Brazil in Group C (vs Scotland/Morocco/Haiti)."
+    },
+    {
+      "page_id": "PG-WC-028",
+      "slug": "scotland-brazil-world-cup-astrology",
+      "status": "TO-WRITE",
+      "author_id": "elena-vane",
+      "tier": "T2",
+      "entity_en": "Scotland Brazil World Cup Astrology",
+      "entity_zh": "苏格兰巴西世界杯占星视角",
+      "target_keyword": "scotland brazil world cup astrology",
+      "target_keyword_zh": "苏格兰巴西世界杯占星",
+      "assoc_en": ["scotland world cup 2026 astrology", "brazil world cup 2026 astrology", "scotland vs brazil astrology", "group c world cup 2026"],
+      "assoc_zh": ["苏格兰2026世界杯占星", "巴西2026世界杯占星", "苏格兰对巴西占星", "2026世界杯C组"],
+      "verified_facts": "Group C: Brazil/Scotland/Morocco/Haiti. Scotland 1-0 Haiti (June 14, Foxborough), Scotland 0-1 Morocco (June 19, Foxborough). Scotland vs Brazil Wed June 24, Hard Rock Stadium Miami - Scotland's final group game, must WIN to guarantee Round of 32. Scotland ended 28-year WC absence by qualifying for 2026 (manager Steve Clarke). Brazil = 5-time world champions. FRAME AS FORWARD-LOOKING PREVIEW of the June 24 match (today is June 21); do NOT invent the June 24 result. Astronomy: Jupiter ~27-28 deg Cancer (leaves for Leo ~June 30); Chiron entered Taurus June 19."
+    },
+    {
+      "page_id": "PG-TRANS-011",
+      "slug": "chiron-in-taurus-2026-astrology",
+      "status": "TO-WRITE",
+      "author_id": "julian-thorne",
+      "tier": "T2",
+      "entity_en": "Chiron in Taurus 2026",
+      "entity_zh": "凯龙星入金牛座2026",
+      "target_keyword": "chiron in taurus 2026 astrology",
+      "target_keyword_zh": "凯龙星入金牛座2026占星",
+      "assoc_en": ["chiron in taurus", "chiron taurus 2026", "chiron in taurus meaning", "chiron taurus transit"],
+      "assoc_zh": ["凯龙星金牛座", "凯龙入金牛", "凯龙金牛含义", "凯龙金牛行运"],
+      "verified_facts": "Chiron first ingress into Taurus June 19, 2026 (5:18pm EST). Brief passage June 19 - Sept 17, 2026, then retrogrades back to Aries Sept 17 2026 - April 14 2027, then re-enters Taurus for the long stay through ~May 2034 (about 7-8 years). First time in Taurus since ~1976-1984 (Chiron ~50-year orbit; eccentric so dwell time varies by sign). Themes: self-worth, money/resources, body, security, pleasure, sensuality, the wounded healer learning embodied steadiness. Evergreen transit explainer; timely (ingress 2 days ago)."
+    },
+    {
+      "page_id": "PG-MYTH-006",
+      "slug": "toy-story-5-zodiac-signs",
+      "status": "TO-WRITE",
+      "author_id": "elena-vane",
+      "tier": "T2",
+      "entity_en": "Toy Story 5 Zodiac Signs",
+      "entity_zh": "玩具总动员5星座",
+      "target_keyword": "toy story 5 zodiac signs",
+      "target_keyword_zh": "玩具总动员5星座",
+      "assoc_en": ["toy story 5 characters zodiac", "toy story zodiac signs", "toy story 5 astrology", "woody buzz zodiac"],
+      "assoc_zh": ["玩具总动员5角色星座", "玩具总动员星座", "玩具总动员5占星", "胡迪巴斯星座"],
+      "verified_facts": "Toy Story 5 US theatrical release June 19, 2026 (premiere LA June 9). Cast/characters: Woody (Tom Hanks), Buzz Lightyear (Tim Allen), Jessie (Joan Cusack), Smarty Pants NEW (Conan O'Brien), Lilypad/'Lily' a frog-themed tech tablet = main ANTAGONIST (Greta Lee), Atlas a GPS hippo toy (Craig Robinson), Snappy an excitable camera toy (Shelby Rabara), Bonnie the 8-year-old kid (Scarlett Spears), Blaze an independent animal-loving 8-year-old girl (Mykal-Michelle Harris). Plot: Bonnie gets addicted to the Lily tablet and neglects her toys; toys vs technology. This is a PERSONALITY-ARCHETYPE entertainment piece: assign zodiac archetypes to characters by their established personality traits (e.g. Woody=loyal/responsible, Buzz=idealistic/brave). Make clear it is for-fun character analysis, NOT a claim about real birth data."
+    }
+  ],
+  "deploy_order": ["PG-WC-026", "PG-WC-027", "PG-TRANS-011", "PG-MYTH-006", "PG-WC-028"],
+  "deploy_order_note": "026 (today's Spain match) first = most time-sensitive. 028 (scotland-brazil, June 24 preview) last. 027/TRANS-011/MYTH-006 evergreen-ish in the middle."
+}

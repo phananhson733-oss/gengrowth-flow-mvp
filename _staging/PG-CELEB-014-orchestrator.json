@@ -1,7 +1,7 @@
 {
   "page_id": "PG-CELEB-014",
   "prompt_path": "/Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-CELEB-014.v8-prompt.md",
-  "started_at": "2026-07-01T03:45:10.334Z",
+  "started_at": "2026-07-01T03:49:37.747Z",
   "models_requested": [
     "claude"
   ],
@@ -10,7 +10,7 @@
   "max_cost_usd_per_page": 5,
   "budget_exceeded_models": [],
   "ok_count": 1,
-  "total_cost_estimate_usd": 0.0501,
+  "total_cost_estimate_usd": 0.0544,
   "results": {
     "claude": {
       "model": "claude",
@@ -19,14 +19,14 @@
       "ok": true,
       "output_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-CELEB-014-claude-v8.md",
       "retries": 0,
-      "duration_s": 127.3,
+      "duration_s": 263.7,
       "cost_estimate_usd": {
-        "usd": 0.0501,
-        "input_tokens_est": 7392,
-        "output_tokens_est": 1863,
+        "usd": 0.0544,
+        "input_tokens_est": 7401,
+        "output_tokens_est": 2144,
         "pricing_note": "Sonnet 4.6 xhigh"
       },
-      "cumulative_cost_usd": 0.0501,
+      "cumulative_cost_usd": 0.0544,
       "budget_exceeded": false,
       "budget_usd": 5,
       "attempts": [
@@ -34,16 +34,16 @@
           "try_index": 1,
           "model": "claude",
           "command": "claude -p --model claude-opus-4-8 --effort high < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-CELEB-014.v8-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-CELEB-014-claude-v8.md",
-          "cost_usd": 0.0501,
-          "cumulative_cost_usd": 0.0501,
+          "cost_usd": 0.0544,
+          "cumulative_cost_usd": 0.0544,
           "ok": true,
           "exit_code": 0,
-          "duration_s": 127.3,
+          "duration_s": 263.7,
           "stderr_tail": "",
-          "stdout_bytes": 8541,
+          "stdout_bytes": 9901,
           "sonnet_guard": {
             "downgraded": false,
-            "bytes": 8575
+            "bytes": 9949
           }
         }
       ]

@@ -1,0 +1,8 @@
+- 缺少核心事实：没有直接写出 Thylane Blondeau 的出生日期、太阳星座等已知基础信息 → 在开头或 “at a glance” 明确列出可核验信息，并标注未知出生时间限制。
+- 搜索意图未被满足：读者搜 “Thylane Blondeau birth chart” 期待看到她的具体 chart，不是通用方法论 → 增加一小节“Known Placements”区分已知、不可确认、不可推断。
+- 过度回避导致内容空泛：全文反复说“不要过度解读”，但几乎没有真正解读 Thylane 的公众形象 → 用她的模特出身、童星曝光、法式时尚形象等公开事实来做谨慎但具体的象征分析。
+- “Moon sign guess only loosely” 不够专业 → 如果有出生日期，应说明当天月亮可能落在哪个/哪些星座；不能只泛泛说月亮每 2.5 天换座。
+- “Stellium” 出现在表格里但未确认她是否有 stellium → 改成“possible chart pattern only if calculated from verified data”，或移除以免暗示她确实有该配置。
+- Dane Rudhyar / Liz Greene 段落显得像权威填充，和 Thylane 主题关联弱 → 缩短或移到方法论脚注，把篇幅让给她本人相关的 chart 信息。
+- CTA 文案不自然且 SEO 痕迹明显：“explore Thylane Blondeau birth chart” 不是用户生成自己星盘的合理动作 → 改为“generate your own birth chart”或“compare how confirmed placements are read.”
+- Sources 太弱：只列人物名，没有支撑 Thylane 出生信息或占星数据来源 → 增加出生日期来源、占星计算来源，并明确“birth time unavailable/uncorroborated”。

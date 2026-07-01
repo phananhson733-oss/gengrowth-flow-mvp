@@ -109,6 +109,47 @@ export function bins() {
   };
 }
 
+// ── gate-side surgical repair (GG_GATE_REPAIR=0 disables) ─────────────────────
+// One attempt per dimension at the park boundary. gg-gate-repair.mjs returns structured
+// old/new edits for the failing article .ts; we apply them deterministically, commit +
+// push the branch (so the re-run's review reads the fixed .ts and codex reads the fixed PR
+// diff), then signal the caller to re-run the dimension. A repair that makes things worse
+// is still caught by the re-run → park. Text-only + surgical worker; every edit's old_string
+// is re-validated unique before apply; ANY failure reverts the worktree to a clean state.
+const GATE_REPAIR_TIMEOUT_MS = parseInt(process.env.GG_GATE_REPAIR_TIMEOUT_MS || '450000', 10);
+
+async function tryGateRepair({ dim, reason, articleTs, draftMd, worktree, branch, node, B, log }) {
+  if (process.env.GG_GATE_REPAIR === '0') return false;
+  if (!B.gateRepair || !existsSync(B.gateRepair)) { log(`repair[${dim}]: no gate-repair bin — skip`); return false; }
+  if (!articleTs || !existsSync(articleTs)) { log(`repair[${dim}]: no article .ts — skip`); return false; }
+  if (!worktree || !existsSync(worktree)) { log(`repair[${dim}]: no worktree for commit — skip`); return false; }
+  log(`repair[${dim}]: gg-gate-repair on ${articleTs} (reason: ${String(reason).slice(0, 80)}…)`);
+  const args = ['--article', articleTs, '--dimension', dim, '--reason', String(reason)];
+  if (draftMd && existsSync(draftMd)) args.push('--draft', draftMd);
+  const rr = await node(B.gateRepair, args, { timeoutMs: GATE_REPAIR_TIMEOUT_MS });
+  if (rr.timedOut || rr.code !== 0) { log(`repair[${dim}]: worker ${rr.timedOut ? 'timeout' : `exit ${rr.code}`} — skip`); return false; }
+  let out;
+  try { out = JSON.parse(lastJsonLine(rr.stdout)); } catch { log(`repair[${dim}]: unparseable worker output — skip`); return false; }
+  const edits = Array.isArray(out && out.edits) ? out.edits : [];
+  if (!edits.length) { log(`repair[${dim}]: ${(out && out.note) || 'no edits'} — skip`); return false; }
+  let content;
+  try { content = readFileSync(articleTs, 'utf8'); } catch { log(`repair[${dim}]: read failed — skip`); return false; }
+  for (const e of edits) {
+    if (!e || typeof e.old_string !== 'string' || typeof e.new_string !== 'string') { log(`repair[${dim}]: malformed edit — abort`); return false; }
+    if ((content.split(e.old_string).length - 1) !== 1) { log(`repair[${dim}]: edit not uniquely present — abort`); return false; }
+    content = content.replace(e.old_string, e.new_string);
+  }
+  const git = (a) => spawnSync('git', ['-C', worktree, ...a], { encoding: 'utf8', timeout: 60000 });
+  try { writeFileSync(articleTs, content); } catch { log(`repair[${dim}]: write failed — abort`); return false; }
+  git(['add', articleTs]);
+  const cm = git(['commit', '-m', `fix(gate-repair): ${dim} — ${String((out && out.note) || 'surgical').slice(0, 72)}`]);
+  if (cm.status !== 0) { log(`repair[${dim}]: git commit failed — abort`); git(['checkout', '--', articleTs]); return false; }
+  const pu = git(['push', 'origin', branch]);
+  if (pu.status !== 0) { log(`repair[${dim}]: git push failed — abort`); git(['reset', '--hard', 'HEAD~1']); return false; }
+  log(`repair[${dim}]: applied ${edits.length} edit(s) + pushed — re-running ${dim}`);
+  return true;
+}
+
 // ── arg parsing ───────────────────────────────────────────────────────────────
 export function parseArgs(argv) {
   const o = {
@@ -297,6 +338,8 @@ export async function runGate(o, deps = {}) {
   const hasZh = claim.zh === true;
   const { articleTs, draftMd } = articlePaths(pgId, claim);
   log(`claim: pgId=${pgId} slug=${claim.slug} status=${claim.status} zh=${hasZh}`);
+  // gate-repair loop-cap: at most ONE surgical repair attempt per dimension (incl. 'codex').
+  const repaired = new Set();
 
   // (2) preview URL: reuse stored on verified-preview, else preview-wait.
   let previewUrl = null;
@@ -347,14 +390,28 @@ export async function runGate(o, deps = {}) {
   for (const dim of REVIEW_DIMENSIONS) {
     log(`review[${dim}]: node ${B.reviewWorker} --dimension ${dim} --article ${articleTs} --draft ${draftMd} --json (timeout ${o.reviewTimeoutMs}ms)`);
     if (o.dryRun) continue;
-    const rr = await node(B.reviewWorker,
+    const runReview = () => node(B.reviewWorker,
       ['--dimension', dim, '--article', articleTs, '--draft', draftMd, '--timeout-ms', String(o.reviewTimeoutMs), '--json'],
       { timeoutMs: o.reviewTimeoutMs + 5000 });
+    let rr = await runReview();
     if (rr.timedOut) {
       return gateFail(o, B, deps, pgId, claim, `review[${dim}]: hard timeout`, plan);
     }
-    const rj = safeJson(lastJsonLine(rr.stdout));
-    const verdict = rj && rj.verdict ? rj.verdict : null;
+    let rj = safeJson(lastJsonLine(rr.stdout));
+    let verdict = rj && rj.verdict ? rj.verdict : null;
+    // On a real content FAIL (NOT a SKIPPED tooling error), try ONE surgical repair then re-review.
+    if (verdict === 'FAIL' && !repaired.has(dim)) {
+      const why0 = rj && rj.blocking_reason ? rj.blocking_reason : (tail(rr.stderr) || 'FAIL');
+      if (await tryGateRepair({ dim, reason: why0, articleTs, draftMd, worktree: claim.worktree, branch: o.branch, node, B, log })) {
+        repaired.add(dim);
+        rr = await runReview();
+        if (rr.timedOut) {
+          return gateFail(o, B, deps, pgId, claim, `review[${dim}]: hard timeout (post-repair)`, plan);
+        }
+        rj = safeJson(lastJsonLine(rr.stdout));
+        verdict = rj && rj.verdict ? rj.verdict : null;
+      }
+    }
     if (verdict !== 'PASS') {
       // FAIL or SKIPPED (tooling) both block. exit-1 from the worker == SKIPPED.
       const why = rj && rj.blocking_reason ? rj.blocking_reason : (verdict || tail(rr.stderr) || `exit ${rr.code}`);
@@ -380,10 +437,17 @@ export async function runGate(o, deps = {}) {
     log('codex: SKIPPED (no GG_CODEX_BIN configured) — GG_CODEX_GATE_REQUIRED=0, not blocking');
   } else {
     log(`codex: ${B.codex} (${codexRequired ? 'REQUIRED' : 'best-effort'}, pr=${claim.pr || '?'}, timeout ${o.codexTimeoutMs}ms)`);
-    const cr = await node(B.codex, ['--repo', o.repo, '--pr', String(claim.pr || ''), '--branch', o.branch],
+    const runCodex = () => node(B.codex, ['--repo', o.repo, '--pr', String(claim.pr || ''), '--branch', o.branch],
       { timeoutMs: o.codexTimeoutMs });
-    const cls = classifyCodex(cr);
-    codexEvidence = cls.verdict === 'PASS' ? 'ran-pass'
+    let cls = classifyCodex(await runCodex());
+    // On a real factual FAIL (NOT a SKIPPED tooling error like exit-3/quota), try ONE surgical repair then re-run codex.
+    if (cls.verdict === 'FAIL' && !repaired.has('codex')) {
+      if (await tryGateRepair({ dim: 'codex', reason: cls.reason, articleTs, draftMd, worktree: claim.worktree, branch: o.branch, node, B, log })) {
+        repaired.add('codex');
+        cls = classifyCodex(await runCodex());
+      }
+    }
+    codexEvidence = cls.verdict === 'PASS' ? (repaired.has('codex') ? 'ran-pass-post-repair' : 'ran-pass')
       : cls.verdict === 'FAIL' ? 'ran-fail' : `skipped:${cls.reason}`;
     if (cls.verdict === 'FAIL') {
       return gateFail(o, B, deps, pgId, claim, `codex completed with ${cls.reason}`, plan);

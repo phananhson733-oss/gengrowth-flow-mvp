@@ -176,7 +176,7 @@ Last run: 2026-07-01T05:02:03.698Z (1782882123698)
 
 按指定确定性入口运行 `/usr/bin/python3 /Users/awayer_mini/gengrowth-wiki/tools/scripts/obsidian-vault-git-sync.py --repo /Users/awayer_mini/gengrowth-wiki --repo /Users/awayer_mini/gengrowth-ops --repo /Users/awayer_mini/gengrowth-flow-mvp --verbose`。初始运行退出码 `0`，输出 `gengrowth-flow-mvp: committed 1 path(s), pushed`；追加 record 后通过同一入口继续收敛，后续运行提交并推送 record 与 `_staging/PG-TSE-001-*` 变更，最终一次输出 `Obsidian vault git sync: clean`。
 
-最终独立验证三个仓库：`gengrowth-wiki`、`gengrowth-ops`、`gengrowth-flow-mvp` 的 `git status --branch --porcelain=v2` 均显示 clean 且 `branch.ab +0 -0`，`git rev-list --left-right --count HEAD...origin/main` 均为 `0 0`，`git diff --name-only --diff-filter=U` 与 `git ls-files -u` 均无输出，未发现 unmerged 文件。最终 HEAD 分别为 `a80dc8f6e6e278694ac7d7fad19e5aabab65de7d`、`06515301880b396fa8b5ce1e85ab285e8ad4bc16`、`b543ad3cfdd25a8ce1641a0426deabcfeeecc21a`。
+最终独立验证三个仓库：`gengrowth-wiki`、`gengrowth-ops`、`gengrowth-flow-mvp` 的 `git status --branch --porcelain=v2` 均显示 clean 且 `branch.ab +0 -0`，`git rev-list --left-right --count HEAD...origin/main` 均为 `0 0`，`git diff --name-only --diff-filter=U` 与 `git ls-files -u` 均无输出，未发现 unmerged 文件。
 
 回读 `gengrowth-ops/.obsidian/plugins/obsidian-git/data.json` 与 `gengrowth-flow-mvp/.obsidian/plugins/obsidian-git/data.json`，确认 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。安全边界已遵守：未运行禁止的破坏性命令，未运行镜像删除语义脚本，未打印凭证。
 

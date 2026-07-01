@@ -89,7 +89,7 @@ tags:
 
 - 要点 1：运行 GenGrowth Index Repair Resubmit deterministic wrapper，并按日志窗口提取 per-product counter。
 - 要点 2：运行 GenGrowth Index Monitor deterministic wrapper，确认 sitemap 提交成功、GSC URL Inspection 检查 1 条且 0 failures。
-- 要点 3：核查 astrologywiki oracle/tools 工具页索引流程，确认当前自动化只纳入 `/en/wiki/...`，工具页未进入 `index-tracking`、`结果复盘表` 或 `request-indexing-queue`。
+- 要点 3：核查并扩展 astrologywiki oracle/tools 工具页索引流程，新增 `url-inventory` 对账层，确认工具页可见但仍不自动触发 GSC Request Indexing。
 - 要点 4：运行 GenGrowth Vault Git Auto-Heal 指定脚本，确认三个仓库同步 clean、ahead/behind 均为 `0 0`、无 unmerged 文件。
 - 要点 5：确认 `gengrowth-ops` 与 `gengrowth-flow-mvp` 的 Obsidian Git 自动保存/推送/拉取配置均已禁用。
 
@@ -257,5 +257,21 @@ live sitemap 中存在 `https://www.astrologywiki.com/en/tools` 以及多个工�
 确认可以补充到现有自动化中，但建议作为独立的 URL inventory 对账层先接入，而不是直接放开现有 `/en/wiki/...` 过滤。落地方式是在 `gg-index-monitor.mjs` 中新增可索引 URL inventory：从 live sitemap、oracle/tools catalog/允许路径清单生成全量 URL，写入独立 Sheet tab，并与 `index-tracking`、`结果复盘表`、`request-indexing-queue` 和 GSC URL Inspection 状态对账。
 
 建议分两阶段实施：第一阶段只读/写 Sheet，对缺口分类为“未纳入监控”“已纳入未提交”“已提交未收录”“已收录”；第二阶段再把允许类型（如 tools hub 与工具页）按优先级转入 `request-indexing-queue`，继续由 Computer Use 走真实 GSC Request Indexing，保留不使用普通文章 Google Indexing API、最终提交需真实 GSC UI 的合规边界。
+
+---
+
+### Q10 — 15:34
+
+**🙋 提问：**
+
+可以，按照你的建议来
+
+**🤖 回答：**
+
+按 TDD 落地 URL inventory 对账层：新增 `url-inventory` 表头、sitemap inventory 抽取、tools/wiki/static 路径分类、`buildUrlInventoryRows()` 对账逻辑、Sheets ensure/replace/format、CLI `--sync-url-inventory --write-sheet`，并接入 `gg-index-monitor-tick.sh` daily wrapper；现阶段只写对账表，不把 tools 自动塞入 `request-indexing-queue`，不触发 GSC Request Indexing。
+
+更新 workbook spec 与 smoke tests，新增覆盖：tools 页面不再被 `/en/wiki/...` 过滤沉默掉、`url-inventory` 在 workbook spec 中声明、`--sync-url-inventory` 不调用 URL Inspection。验证命令 `node --test tools/scripts/__tests__/gg-index-monitor.smoke.test.mjs` 通过 `50/50`，`bash -n tools/scripts/gg-index-monitor-tick.sh` 通过。
+
+实际执行 `node tools/scripts/gg-index-monitor.mjs --sync-url-inventory --write-sheet` 写入 astrologywiki Google Sheet，输出 `rows=296 untracked=111 included_unsubmitted=14 submitted_unindexed=16 indexed=155`；抽查确认 `/en/tools` 和多个 calculator/tools 页面已落入 `url-inventory`，状态为 `未纳入监控`，`request_queue_allowed=Y`。Git 最新状态为 `main` 与 `origin/main` ahead/behind `0 0`。
 
 ---

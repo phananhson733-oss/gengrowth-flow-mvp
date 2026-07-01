@@ -105,6 +105,7 @@ export function bins() {
     reviewWorker: resolveBin('GG_REVIEW_WORKER_BIN', 'gg-article-review-worker.mjs'),
     larkNotify: resolveBin('GG_LARK_NOTIFY_BIN', 'gg-lark-notify.sh'),
     codex: resolveCodexBin(), // REQUIRED by default — absent ⇒ PARK (GG_CODEX_GATE_REQUIRED=0 ⇒ legacy SKIPPED)
+    gateRepair: resolveBin('GG_GATE_REPAIR_BIN', 'gg-gate-repair.mjs'), // surgical park-boundary repair (GG_GATE_REPAIR=0 disables)
   };
 }
 

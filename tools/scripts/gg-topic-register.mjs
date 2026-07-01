@@ -1669,7 +1669,7 @@ async function runPreprocessorV1FallbackForItem(item, {
 export async function runPreprocessorForPlan(plan, {
   llm = 'codex',
   callLLM = callBriefLLM,
-  allowFallback = false,
+  allowFallback = true,
   budget = null,
 } = {}) {
   const promptByPageId = new Map((plan.promptWrites || []).map((item) => [item.pageId, item.prompt]));
@@ -1989,7 +1989,7 @@ async function runProduct(profile, { token, args, nowDate, budget = null }) {
     const llm = args.llm === true ? 'codex' : String(args.llm);
     await runPreprocessorForPlan(plan, {
       llm,
-      allowFallback: !!args.allow_preprocessor_fallback,
+      allowFallback: !args.no_preprocessor_fallback,
       budget,
     });
   }
@@ -2112,8 +2112,9 @@ flags:
   --reassign-existing
                      ignore existing page_id/cluster_id for selected repair rows and recompute both
   --llm <name>       run pre-processor v2 through codex | claude | hermes before writing fields
-  --allow-preprocessor-fallback
-                     if v2 cannot return usable fields, fall back to v1 Friction + Content_Angle
+  --no-preprocessor-fallback
+                     disable the default behavior of falling back to v1 (Friction + Content_Angle)
+                     when v2 cannot return usable fields; by default v2 failure auto-runs v1
   --run-budget-ms N  internal graceful-stop budget; emits JSON summary before wrapper timeout
   --apply            perform writes
   --overwrite        overwrite existing writable cells (default: fill blanks only)

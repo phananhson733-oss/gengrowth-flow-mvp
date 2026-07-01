@@ -33,7 +33,8 @@ test('wrapper enables v1 fallback by default when v2 preprocessor needs evidence
 
   assert.equal(r.status, 0, `${r.stdout}${r.stderr}`);
   assert.match(r.stdout, /--llm claude/);
-  assert.match(r.stdout, /--allow-preprocessor-fallback/);
+  // v1 fallback 默认开：不应出现禁用 flag
+  assert.doesNotMatch(r.stdout, /--no-preprocessor-fallback/);
 });
 
 test('wrapper still allows explicitly selecting codex', () => {
@@ -47,7 +48,7 @@ test('wrapper still allows explicitly disabling preprocessor fallback', () => {
   const r = printCommand({ GG_TOPIC_REGISTER_ALLOW_PREPROCESSOR_FALLBACK: '0' });
 
   assert.equal(r.status, 0, `${r.stdout}${r.stderr}`);
-  assert.doesNotMatch(r.stdout, /--allow-preprocessor-fallback/);
+  assert.match(r.stdout, /--no-preprocessor-fallback/);
 });
 
 test('wrapper gives Node an internal budget before the outer timeout can kill it', () => {

@@ -145,8 +145,10 @@ build_cmd() {
   if [ "$DISCOVER_EVIDENCE" = "1" ]; then
     CMD+=(--discover-evidence)
   fi
-  if [ "$ALLOW_FALLBACK" = "1" ]; then
-    CMD+=(--allow-preprocessor-fallback)
+  # v1 fallback 默认开（gg-topic-register.mjs 默认 v2 失败即回落 v1）；
+  # 仅在显式关闭时传 --no-preprocessor-fallback。
+  if [ "$ALLOW_FALLBACK" != "1" ]; then
+    CMD+=(--no-preprocessor-fallback)
   fi
   if [ "$APPLY" = "1" ]; then
     CMD+=(--apply)

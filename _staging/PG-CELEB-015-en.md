@@ -27,7 +27,7 @@ phase2_checks: all-pass
 
 ## What Is Maya Joint's Natal Chart?
 
-Maya Joint's natal chart is the symbolic map of where the Sun, Moon, and rising point sat at her birth on 16 April 2006, read together as one interpretive picture rather than a single label. Public astrology databases place her Aries Sun alongside a Cancer Ascendant and a Sagittarius Moon. Read as a whole, the Maya Joint birth chart is best summarized as **competitive drive filtered through a protective public presentation**.
+Maya Joint's natal chart is the symbolic map of where the Sun, Moon, and rising point sat at her birth on 16 April 2006, read together as one interpretive picture rather than a single label. Only her Aries Sun is fixed by that 16 April 2006 birth date; the Cancer Ascendant and Sagittarius Moon that circulate in fan-shared charts both hinge on a birth time she has not made public, so read them as widely-repeated but unconfirmed rather than established. Read as a whole, the Maya Joint birth chart is best summarized as **competitive drive filtered through a protective public presentation**.
 
 - Leads with Aries initiative — the push to compete and go first
 - Meets the world through a Cancer Ascendant that softens and protects
@@ -107,7 +107,7 @@ Maya Joint was born on 16 April 2006, which makes her Sun sign Aries. In a full 
 
 **Is the Maya Joint birth chart accurate without a confirmed birth time?**
 
-The Sun and Moon signs are reliable from her birth date, but the Cancer Ascendant depends on birth time, which public databases report rather than verify. Treat the rising sign as reported, not confirmed.
+Only the Aries Sun is reliable from her birth date. The Cancer Ascendant depends on an exact birth time she has not made public, and the Moon can shift sign within a single day, so both the rising sign and the Sagittarius Moon are fan-circulated and unconfirmed — treat them as reported, not verified.
 
 **What does her Cancer Ascendant add to the reading?**
 

@@ -351,7 +351,16 @@ export const TBD_LINK_RULES = [
   { match: /\bastrology\s+terms?\b|\bglossary\b/i, href: '/en/wiki/astrology-terms' },
   { match: /\b(major|minor|chart)\s+aspects?\b|\bfive\s+major\s+aspects\b/i, href: '/en/wiki/astrology-terms' },
   { match: /ascendant\s+meaning|rising\s+sign\s+(profile|meaning|basics|overview)|overview\s+of\s+rising\s+sign/i, href: '/en/wiki/ascendant-meaning' },
-  { match: /\bascendant\b|\brising\s+sign\b/i, href: '/en/wiki/how-to-read-birth-chart' },
+  // Celeb-batch recurring anchors ("rising sign personality profiles", "rising sign profiles hub")
+  // want the rising/ascendant page, not the generic pillar. Above the narrowed ascendant rule.
+  { match: /rising\s+sign\s+(personality\s+)?profiles?|rising\s+sign\s+profiles?\s+(hub|cluster|overview)/i, href: '/en/wiki/ascendant-meaning' },
+  // No dedicated stellium page exists; how-to-read-birth-chart covers planet clusters — honest ONLY
+  // when the anchor describes clusters (see the per-article reword). Repoint if a stellium page ships.
+  { match: /\bstelliums?\b/i, href: '/en/wiki/how-to-read-birth-chart' },
+  // Narrowed: a BARE "ascendant" routes to the real ascendant page; a bare "rising sign" with no
+  // basics/overview/meaning/profile qualifier now falls through to the italic de-link (avoids the
+  // links-seo mismatch that force-linking vague anchors to the generic pillar caused).
+  { match: /\bascendant\b/i, href: '/en/wiki/ascendant-meaning' },
   { match: /\bmidheaven\b/i,      href: '/en/wiki/how-to-read-birth-chart' },
   // astrology-terms glossary + aspect/angle spokes (ZH)
   { match: /六分相/, href: '/en/wiki/sextile-astrology' },
@@ -402,7 +411,11 @@ export const TBD_LINK_RULES = [
   { match: /\b(lunar nodes?|nodal axis|north node|south node|north (and|&) south node)\b/i, href: '/en/wiki/north-node-vs-south-node' },
   { match: /(交点|节点)/,  href: '/en/wiki/north-node-vs-south-node' },
   // --- Birth chart fundamentals ---
-  { match: /\b(natal|birth)\s+chart\b/i, href: '/en/wiki/how-to-read-birth-chart' },
+  // Intent-gated: only link when the anchor is ABOUT how to read/understand a birth chart, so a
+  // vague "companion celebrity birth chart profile in this series" de-links instead of mis-pointing
+  // at the generic pillar (the links-seo mismatch park). Legit "guide to reading a full birth chart"
+  // still links.
+  { match: /\b(how\s+to\s+read|reading|read\s+(a|your|the)|understand\w*|basics?\s+of|guide\s+to|fundamentals?\s+of|full)\s+(a\s+|your\s+|the\s+)?(natal|birth)\s+chart\b/i, href: '/en/wiki/how-to-read-birth-chart' },
   { match: /(出生星盘|本命盘|星盘入门|星图入门)/, href: '/en/wiki/how-to-read-birth-chart' },
   // --- ZH aura cluster ---
   { match: /气场颜色|气场.*总览/, href: '/en/wiki/aura-colors-pillar' },

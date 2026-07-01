@@ -311,3 +311,24 @@ Last run: 2026-07-01T07:02:04.026Z (1782889324026)
 实际执行 `node tools/scripts/gg-index-monitor.mjs --sync-url-inventory --write-sheet` 写入 astrologywiki Google Sheet，输出 `rows=296 untracked=111 included_unsubmitted=14 submitted_unindexed=16 indexed=155`；抽查确认 `/en/tools` 和多个 calculator/tools 页面已落入 `url-inventory`，状态为 `未纳入监控`，`request_queue_allowed=Y`。Git 最新状态为 `main` 与 `origin/main` ahead/behind `0 0`。
 
 ---
+
+### Q11 — 16:02
+
+**🙋 提问：**
+
+Automation: GenGrowth Topic Register
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-06-30T14:01:30.513Z (1782828090513)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+读取自动化 memory、项目 owner/reminders 与 topic-register wrapper 报告流程后，只执行 `bash tools/scripts/gg-topic-register-tick.sh`，未传入手写 apply/repair/write flags。wrapper 退出码 `0`。
+
+最新日志为 `~/gengrowth-agents/cron-sync/topic_register/2026-07-01.log`，本次窗口 `2026-07-01 16:02:04` 到 `16:02:08`，状态 `topic-register ok`。local env 启用了 apply mode，JSON 显示 `dry_run=false`、`budget_exhausted=false`，命令为 `node .../gg-topic-register.mjs --product all --limit 10 --llm claude --discover-evidence --allow-preprocessor-fallback --apply --run-budget-ms 840000`。
+
+结果：`astrologywiki` candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]、evidence_discovery=[]、selection_mode=generate、audit_incomplete=0；`gengrowth` candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]、evidence_discovery=[]、selection_mode=generate、audit_incomplete=0。未见失败或 timeout。安全边界保持：没有手改 Sheet、没有直接编辑 task plan、没有额外 Feishu/Google Doc 报告产物。
+
+---

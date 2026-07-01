@@ -28,7 +28,7 @@ phase2_checks: all-pass
 
 ## What Is Total Solar Eclipse 2026?
 
-Total Solar Eclipse 2026 is the astrological label for the total solar eclipse of August 12, 2026, and in chart work it reads as **a symbolic marker of endings and fresh starts, not a fixed prediction**. Astronomically it is an ordinary, well-documented event: according to NASA, this eclipse reaches a magnitude of about 1.04 as the Moon fully covers the Sun along a narrow path over the far North Atlantic. Astrologers treat that alignment as an intensified New Moon — a reset point colored by the sign it lands in. Because it falls in Leo, its themes gather around visibility, creativity, and the nerve to be seen. What it can signify is a moment of emphasis and choice; what it cannot do is dictate a guaranteed outcome. It also sits inside the broader [[<TBD-internal-link: pillar page on the 2026 eclipse season>]], which frames how the year's eclipses relate to one another.
+Total Solar Eclipse 2026 is the astrological label for the total solar eclipse of August 12, 2026, and in chart work it reads as **a symbolic marker of endings and fresh starts, not a fixed prediction**. Astronomically it is an ordinary, well-documented event: according to NASA, this eclipse reaches a magnitude of about 1.04 as the Moon fully covers the Sun along a narrow path over the far North Atlantic. Astrologers treat that alignment as an intensified New Moon — a reset point colored by the sign it lands in. Because it falls in Leo, its themes gather around visibility, creativity, and the nerve to be seen. What it can signify is a moment of emphasis and choice; what it cannot do is dictate a guaranteed outcome. It also sits inside the broader [lunar-node axis behind every eclipse season](/en/wiki/north-node-vs-south-node), which frames how the year's eclipses relate to one another.
 
 - Marks a Leo-season reset tied to identity, expression, and recognition
 - Works like a supercharged New Moon rather than a routine daily transit
@@ -43,7 +43,7 @@ Understanding Total Solar Eclipse 2026 matters because eclipse points tend to li
 The practical value shows up in a few concrete ways, and none of them require believing the sky controls your life:
 
 1. **Naming a transition you already feel.** When something is ending or beginning, the eclipse offers language for it, which makes the change easier to face than leaving it vague and anxious in the back of your mind.
-2. **Timing an honest check-in.** The date becomes a natural cue to ask what you've outgrown and where you want more visibility, the way you'd use [[<TBD-internal-link: guide to how solar eclipses work in astrology>]] to structure the question rather than guess.
+2. **Timing an honest check-in.** The date becomes a natural cue to ask what you've outgrown and where you want more visibility, the way you'd use [the lunar nodes eclipses form on](/en/wiki/how-to-find-north-node) to structure the question rather than guess.
 3. **Separating symbolism from certainty.** The framework helps you reflect on your own patterns without sliding into the belief that a sky event is scripting your outcomes for you.
 
 Read this way, the eclipse works less like a prophecy and more like a well-timed mirror. It doesn't tell you what will happen; it points at where your attention and energy already sit, and asks whether that's where you actually want them. That reframe is the difference between a tool for self-awareness and a source of low-grade dread.
@@ -118,13 +118,13 @@ Astrologers usually watch a window of roughly two weeks on either side of August
 
 ## Related Reading
 
-- [[<TBD-internal-link: comparison of solar and lunar eclipses>]] — sits next to this page and sharpens the beginning-versus-ending contrast.
-- [[<TBD-internal-link: explainer on eclipse houses in the birth chart>]] — helps you locate which life area the eclipse activates.
+- [The Full Moon energy a lunar eclipse heightens](/en/wiki/full-moon-energy) — sits next to this page and sharpens the beginning-versus-ending contrast.
+- [The astrology houses](/en/wiki/astrology-houses) — helps you locate which life area the eclipse activates.
 - [[<TBD-external-link: Wikipedia | Solar eclipse of August 12, 2026 | the astronomical record behind the 2026 event>]] — the factual timeline this interpretation is anchored to.
 
 ## Take Action
 
-This is not a clinical interpretation or mental health advice — it stays a reflective framework, not a verdict on your future. Because the eclipse only becomes genuinely useful once you can see where the reset actually lands in your own chart, take the honest next step and [generate your free birth chart to explore Total Solar Eclipse 2026](https://astrologywiki.com/en/wiki/aura-reading).
+This is not a clinical interpretation or mental health advice — it stays a reflective framework, not a verdict on your future. Because the eclipse only becomes genuinely useful once you can see where the reset actually lands in your own chart, take the honest next step and [generate your free birth chart to explore Total Solar Eclipse 2026](https://astrologywiki.com/en/wiki/how-to-read-birth-chart).
 
 ## Sources
 

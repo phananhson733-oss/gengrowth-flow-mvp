@@ -708,7 +708,7 @@ function hasInspectionEvidence(row = {}) {
   return !!status && status !== 'pending_first_check';
 }
 
-export function recapRowFromTrackingRow(row = {}, { now = new Date() } = {}) {
+export function recapRowFromTrackingRow(row = {}, { now = new Date(), clusterByPage = null } = {}) {
   const checked = hasInspectionEvidence(row);
   const indexed = isIndexedTrackingRow(row);
   const status = String(row.current_gsc_status || '').trim();
@@ -737,7 +737,10 @@ export function recapRowFromTrackingRow(row = {}, { now = new Date() } = {}) {
   return {
     outcome_id: recapOutcomeId(row),
     page_id: row.page_id || '',
-    cluster_id: '',
+    cluster_id:
+      (clusterByPage && row.page_id && clusterByPage.get(row.page_id)) ||
+      row.cluster_id ||
+      '',
     url: row.url || '',
     'day14_收录': checked ? (indexed ? 'Y' : 'N') : '',
     '申请时间': '',
@@ -1413,6 +1416,33 @@ export async function readTrackingRows(token, workbookId, tabName = INDEX_TRACKI
     .filter((row) => row.url || row.page_id);
 }
 
+// page_id → cluster_id from 选题登记表, so recap seeds carry the cluster (the
+// index-tracking tab has no cluster_id column, so recap rows would otherwise
+// ship with an empty cluster_id and cluster-level rollups break). Best-effort:
+// returns an empty Map on any error / missing columns.
+export async function readTopicClusterMap(token, workbookId, tabName = '选题登记表') {
+  try {
+    const body = await gFetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${workbookId}/values/${encodeURIComponent(`${tabName}!A1:AZ2000`)}`,
+      token,
+    );
+    const rows = body.values || [];
+    const header = rows[0] || [];
+    const iPage = header.findIndex((h) => /page_id/i.test(String(h).trim()));
+    const iCluster = header.findIndex((h) => /cluster_id/i.test(String(h).trim()));
+    if (iPage < 0 || iCluster < 0) return new Map();
+    const map = new Map();
+    for (let r = 1; r < rows.length; r++) {
+      const pid = String((rows[r] || [])[iPage] || '').trim();
+      const cid = String((rows[r] || [])[iCluster] || '').trim();
+      if (pid && cid) map.set(pid, cid);
+    }
+    return map;
+  } catch {
+    return new Map();
+  }
+}
+
 export async function readRequestQueueRows(token, workbookId, tabName = REQUEST_INDEXING_QUEUE_TAB) {
   const last = colLetter(REQUEST_INDEXING_QUEUE_HEADER.length - 1);
   const body = await gFetch(
@@ -2059,6 +2089,7 @@ async function runSyncRecap(args, {
   now,
   readRowsFn = readTrackingRows,
   readRecapRowsFn = readRecapRows,
+  readTopicClusterFn = readTopicClusterMap,
   updateRecapRowFn = updateRecapRow,
   appendRecapRowsFn = appendRecapRows,
   batchUpdateRecapRowsFn = null,
@@ -2070,6 +2101,7 @@ async function runSyncRecap(args, {
   }
   const tracking = await readRowsFn(sheetToken, workbookId, INDEX_TRACKING_TAB);
   const recap = await readRecapRowsFn(sheetToken, workbookId, RECAP_TAB);
+  const clusterByPage = await readTopicClusterFn(sheetToken, workbookId);
   const byUrl = new Map(recap.map((row) => [normalizeUrl(row.url), row]));
   const toAppend = [];
   const toUpdate = [];
@@ -2080,7 +2112,7 @@ async function runSyncRecap(args, {
       skipped++;
       continue;
     }
-    const fresh = recapRowFromTrackingRow(row, { now });
+    const fresh = recapRowFromTrackingRow(row, { now, clusterByPage });
     const old = byUrl.get(normalizeUrl(row.url));
     if (!old) {
       toAppend.push(fresh);

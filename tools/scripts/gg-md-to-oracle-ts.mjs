@@ -424,11 +424,16 @@ export const TBD_LINK_RULES = [
   { match: /(生殖轮|脉轮|能量中心)/, href: '/en/wiki/chakra-system-overview' },
   // --- Planets → domicile-house page (no standalone planet pages yet; classical
   // rulership is the closest existing match). Signs without a page → ruling house. ---
-  { match: /\bjupiter\b|木星/i,   href: '/en/wiki/9th-house-astrology' },
-  { match: /\bpluto\b|冥王星/i,   href: '/en/wiki/8th-house-meaning' },
-  { match: /\bneptune\b|海王星/i,  href: '/en/wiki/12th-house-astrology' },
-  { match: /\bsagittarius\b|射手|人马/i, href: '/en/wiki/9th-house-astrology' },
-  { match: /\bpisces\b|双鱼/i,     href: '/en/wiki/12th-house-astrology' },
+  // Intent-gated (2026-07-01): these sign/planet→domicile-house fallbacks now fire ONLY when the
+  // anchor is about the HOUSE or classical rulership (has house/rule(s)/ruler/rulership/domicile —
+  // ZH 宫/守护 — near the planet/sign). A bare "Pisces Sun sign" / "Jupiter transit" de-links to
+  // italic instead of mis-pointing at a house page (the CELEB-018 links-seo mismatch class). Explicit
+  // house-number rules above run first (first-match-wins), so "9th house"/"第十二宫" are unaffected.
+  { match: /\bjupiter\b.{0,24}\b(rule|rules|ruler|rulership|domicile|house)\b|\bhouse\b.{0,16}\bjupiter\b.{0,12}\brules?\b|木星.{0,6}(宫|守护)/i,   href: '/en/wiki/9th-house-astrology' },
+  { match: /\bpluto\b.{0,24}\b(rule|rules|ruler|rulership|domicile|house)\b|\bhouse\b.{0,16}\bpluto\b.{0,12}\brules?\b|冥王星.{0,6}(宫|守护)/i,   href: '/en/wiki/8th-house-meaning' },
+  { match: /\bneptune\b.{0,24}\b(rule|rules|ruler|rulership|domicile|house)\b|\bhouse\b.{0,16}\bneptune\b.{0,12}\brules?\b|海王星.{0,6}(宫|守护)/i,  href: '/en/wiki/12th-house-astrology' },
+  { match: /\bsagittarius\b.{0,24}\b(rule|rules|ruler|rulership|domicile|house)\b|\bhouse\b.{0,16}\bsagittarius\b.{0,12}\brules?\b|(射手|人马).{0,6}(宫|守护)/i, href: '/en/wiki/9th-house-astrology' },
+  { match: /\bpisces\b.{0,24}\b(rule|rules|ruler|rulership|domicile|house)\b|\bhouse\b.{0,16}\bpisces\b.{0,12}\brules?\b|双鱼.{0,6}(宫|守护)/i,     href: '/en/wiki/12th-house-astrology' },
   // Generic "planets in the chart" overview → birth-chart fundamentals.
   { match: /行星.{0,6}(星盘|本命|含义|意义)|星盘里.{0,4}行星|planets?\s+in\s+the\s+(natal|birth)/i, href: '/en/wiki/how-to-read-birth-chart' },
   // Nodal methodology / generic nodal-sign placement → nodes pillar.

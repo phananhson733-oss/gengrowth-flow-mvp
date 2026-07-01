@@ -122,7 +122,7 @@ It speaks to collective identity rather than an individual horoscope. You might 
 
 ## Take Action
 
-[Generate your free birth chart to explore USA Pluto Return Astrology](https://astrologywiki.com/en/wiki/aura-reading). You'll get a personalized map of your own placements to hold up against these collective cycles, and seeing where your chart meets the national story can turn a distant historical theme into a clear, personal starting point for reflection.
+[Generate your free birth chart to explore USA Pluto Return Astrology](https://astrologywiki.com/en/wiki/how-to-read-birth-chart). You'll get a personalized map of your own placements to hold up against these collective cycles, and seeing where your chart meets the national story can turn a distant historical theme into a clear, personal starting point for reflection.
 
 ## Sources
 

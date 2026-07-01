@@ -28,7 +28,7 @@ phase2_checks: all-pass
 
 ## What Is Pride Month Astrology?
 
-Pride Month Astrology is a symbolic way of reading June's seasonal sky—mainly the Gemini-to-Cancer shift and the changing relationship between the Sun and Venus—as a prompt for cultural and psychological reflection, not a claim about anyone's identity. Framed honestly, it is **a symbolic reading of June's seasonal sky, not an identity label**. It borrows the season's timing to think about visibility, self-expression, and belonging, and it sits under the broader [[<TBD-internal-link: pillar page on the astrology houses>]] framework that shows where those themes live in a chart. Because June carries a strong cultural charge in the United States, this reading treats the sky as a shared backdrop for collective themes rather than a horoscope aimed at any one person.
+Pride Month Astrology is a symbolic way of reading June's seasonal sky—mainly the Gemini-to-Cancer shift and the changing relationship between the Sun and Venus—as a prompt for cultural and psychological reflection, not a claim about anyone's identity. Framed honestly, it is **a symbolic reading of June's seasonal sky, not an identity label**. It borrows the season's timing to think about visibility, self-expression, and belonging, and it sits under the broader [astrology houses](/en/wiki/astrology-houses) framework that shows where those themes live in a chart. Because June carries a strong cultural charge in the United States, this reading treats the sky as a shared backdrop for collective themes rather than a horoscope aimed at any one person.
 
 - Anchored in June's Gemini-to-Cancer seasonal transition, not in any personal placement
 - Reads the Sun–Venus relationship as a picture of expression meeting warmth
@@ -39,7 +39,7 @@ Pride Month Astrology is a symbolic way of reading June's seasonal sky—mainly 
 Understanding Pride Month Astrology matters because June's sky gives people a shared, low-stakes way to reflect on how they show up and where they feel safe. The value stays personal even though the symbolism is collective, and it tends to surface in a few concrete ways:
 
 1. **A cue for visibility.** The Gemini stretch invites you to notice where you speak openly and where you hold back. That noticing can be useful without hardening into a fixed verdict about who you are.
-2. **A cue for belonging.** As the season tips toward Cancer, many people use the moment to reflect on chosen family, home, and who they feel held by—themes the [[<TBD-internal-link: guide to the Cancer season archetype>]] treats in more depth.
+2. **A cue for belonging.** As the season tips toward Cancer, many people use the moment to reflect on chosen family, home, and who they feel held by—themes the [Cancer season archetype](/en/wiki/cancer) treats in more depth.
 3. **A cue for pacing.** Reading the season as timing rather than destiny helps you separate a passing mood from a lasting pattern, which is often where people get stuck.
 
 In my twelve years integrating psychological frameworks with evolutionary astrology—including community-counseling work and thousands of hours of chart consultation—I've found that people get the most out of these seasonal cues when they hold them as open questions instead of labels, building on the framework Liz Greene helped establish in modern psychological astrology and the archetypal, cultural reading Richard Tarnas describes. Used that way, the month becomes a mirror you can look into and then set down, rather than a script you have to follow.
@@ -111,20 +111,20 @@ Yes—your chart shows where June's themes of expression and belonging actually 
 ## Reflection Prompts
 
 1. Think of a recent June moment when you wanted to be seen—what made it feel safe or risky?
-2. Recall a time this month you chose home over going out; what were you protecting?
+2. Recall a recent time you chose home over going out; what were you protecting?
 3. Notice one conversation this week where being visible cost you something—what did it cost?
 
 ## Related Reading
 
-- [[<TBD-internal-link: guide to the Gemini season archetype>]] — expands the air-sign half of the month's symbolism.
-- [[<TBD-internal-link: overview of the Sun and Venus pairing>]] — goes deeper on the expression-meets-warmth theme.
-- [[<TBD-internal-link: explainer on the 8th house of intimacy>]] — the personal placement people most often blend with this seasonal reading.
+- [Gemini season archetype](/en/wiki/gemini) — expands the air-sign half of the month's symbolism.
+- [The Sun and Venus pairing](/en/wiki/venus) — goes deeper on the expression-meets-warmth theme.
+- [The 8th house of intimacy](/en/wiki/8th-house-meaning) — the personal placement people most often blend with this seasonal reading.
 - [[<TBD-external-link: Wikipedia | Pride Month | background on the June observance this symbolism plays off>]] — cultural context for the month itself.
 - [[<TBD-external-link: Wikipedia | Astrological sign | overview of the Gemini and Cancer signs this reading uses>]] — a plain reference for the two signs involved.
 
 ## Take Action
 
-This is not a clinical interpretation or mental health advice—read it as a reflective lens only. To make the season personal, [Generate your free birth chart to explore Pride Month Astrology](https://astrologywiki.com/en/wiki/aura-reading): you'll get a map of your own houses that shows where June's Gemini-to-Cancer themes actually land, so a passing seasonal mood becomes a clearer picture of where you seek visibility and where you seek belonging.
+This is not a clinical interpretation or mental health advice—read it as a reflective lens only. To make the season personal, [Generate your free birth chart to explore Pride Month Astrology](https://astrologywiki.com/en/wiki/how-to-read-birth-chart): you'll get a map of your own houses that shows where June's Gemini-to-Cancer themes actually land, so a passing seasonal mood becomes a clearer picture of where you seek visibility and where you seek belonging.
 
 ## Sources
 

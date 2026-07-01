@@ -32,7 +32,7 @@ Carlos Alcaraz's Taurus Sun–Midheaven conjunction is a reading in which his Ta
 
 - Places the Taurus Sun on the career axis, tying core identity to public reputation
 - Emphasizes persistence and grounded, physical presence over flash
-- Says nothing settled about his Moon or Rising, which sources still dispute
+- Says nothing settled about his Moon or Rising — both need a verified birth time that isn't public
 
 ## Why It Matters for Self-Awareness
 
@@ -65,7 +65,7 @@ Spotting this pattern in any birth-chart layout comes down to a few observable s
 A handful of misreadings show up again and again, and each one traces back to a real point of confusion:
 
 1. **"Taurus tells you everything."** This flattens him to a Sun sign; in reality the Taurus Sun only gains its public-persona meaning once you place it on the Midheaven.
-2. **"The Moon is settled."** Some pages state a Cancer Moon as fact while others argue Gemini. The honest read is that his Moon is contested and hinges on birth-time precision.
+2. **"The Moon is settled."** Any page stating his Moon sign as fact is overreaching: without a publicly confirmed birth time, the Moon can't be pinned down with confidence, so treat every specific Moon claim as provisional.
 3. **"The chart predicts his titles."** It does not. The placement describes a symbolic pattern of persistence, not a forecast of match results or rankings.
 4. **"Tropical and sidereal agree."** They can differ. Which zodiac a source uses changes some placements, which is exactly why breakdowns sometimes clash.
 
@@ -77,7 +77,7 @@ Catch these four and you avoid most of the shaky claims that circulate about his
 |---|---|---|---|
 | Taurus Sun | Sets a steady, sensory, persistence-driven core tone | Earth element, ruled by Venus | Look for patience and repeatable routines under pressure |
 | Midheaven contact | Aims that core identity at career and public image | 10th-house career axis | Career and reputation read as central, not peripheral |
-| Contested Moon | Colors emotional style as a secondary variable | Cancer or Gemini (disputed) | Note where sources disagree and flag birth-time uncertainty |
+| Unconfirmed Moon | Would color emotional style as a secondary variable | Not determinable without a verified birth time | Flag birth-time uncertainty rather than stating a Moon sign |
 | Fixed modality | Holds a course rather than shifting quickly | Fixed quality of the zodiac | Watch for consistency and slow, deliberate adjustment |
 
 ## Common Questions About Carlos Alcaraz's Birth Chart
@@ -86,9 +86,9 @@ Catch these four and you avoid most of the shaky claims that circulate about his
 
 He is a Taurus Sun, born on May 5, 2003. Some readings place that Taurus Sun near the Midheaven (his exact birth time is not publicly confirmed, so this is provisional), which is the basis for saying the Taurus label carries extra weight for his public image — but the dependable anchor is simply the Taurus Sun.
 
-**Why do sources disagree about his Moon?**
+**Can his Moon sign be stated with confidence?**
 
-A reliable Moon reading needs an accurate birth time, and Alcaraz's is not firmly public. That gap is why some Alcaraz birth-chart breakdowns list a Cancer Moon while others argue Gemini.
+No. A reliable Moon reading needs an accurate birth time, and Alcaraz's is not firmly public, so his Moon sign can't be pinned down — any specific Moon claim you see is provisional, not established fact.
 
 **Does his chart predict tennis results?**
 

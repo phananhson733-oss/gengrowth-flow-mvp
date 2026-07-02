@@ -1,29 +1,3 @@
----
-title: Vera Wang Birth Chart
-slug: vera-wang-birth-chart
-date: 2026-07-02
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T2
-track: 量产线
-page_id: PG-CELEB-022
-author_id: "marcus-orion"
-author_display_name: "Marcus Orion"
-target_keyword: Vera Wang birth chart
-associated_keywords:
-  - Vera Wang birth chart meaning
-  - Vera Wang birth chart astrology
-  - Vera Wang birth chart zodiac
-  - Vera Wang birth chart interpretation
-  - emma watson zodiac sign
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-07-02T13:18:07.844Z
-content_sha256_short: 56927df276d3a1fd
-phase2_checks: all-pass
----
-
 # What the Vera Wang Birth Chart Reveals About a Bridal-Design Icon
 
 ## What Is the Vera Wang Birth Chart?

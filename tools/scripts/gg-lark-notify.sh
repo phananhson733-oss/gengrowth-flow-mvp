@@ -59,6 +59,12 @@ if [ "$GG_LARK_NOTIFY_AT_PM" = "1" ] || [ "$GG_LARK_NOTIFY_AT_OPERATOR" = "1" ];
 fi
 [ "$GG_LARK_NOTIFY_AT_OPS" = "1" ] && AT="${AT}<at user_id=\"$OPS_OID\"></at> "
 
+# Best-effort send-audit (2026-07-03): keep a local, timestamped trace of every push so a
+# premature/wrong summary can be reconciled after the fact (this script was previously
+# fire-and-forget with zero record). Never blocks the send; failure is ignored.
+printf '%s\tchat=%s\t%s\n' "$(date '+%F %T %Z')" "$RID" "$(printf '%s' "$AT$MSG" | tr '\n' ' ')" \
+  >> "$HOME/Library/Logs/gg-lark-notify.log" 2>/dev/null || true
+
 # Authenticate as the Hermes bot and send. All escaping/JSON handled in node.
 MSG="$AT$MSG" RID="$RID" HERMES_ENV="$HERMES_ENV" node -e '
 const https=require("https"),fs=require("fs");

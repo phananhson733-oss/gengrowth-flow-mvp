@@ -44,10 +44,10 @@ function fakeClaude(editsJson) {
   return p;
 }
 
-test('happy path: valid edit is applied, committed, and pushed', async () => {
+test('happy path (default-on, GG_GATE_REPAIR unset): valid edit applied, committed, pushed', async () => {
   const { wt, ts, remote } = setupRepo('export const x = `body UNIQUE_BROKEN here`;\n');
   const fc = fakeClaude('{"edits":[{"old_string":"UNIQUE_BROKEN","new_string":"FIXED_ANCHOR"}],"note":"fixed anchor"}');
-  process.env.GG_GATE_REPAIR = '1';
+  delete process.env.GG_GATE_REPAIR; // default-on
   const r = await tryGateRepair({ dim: 'links-seo', reason: 'anchor mismatch', articleTs: ts, worktree: wt, branch: 'testbranch', node: mkNode(fc), B, log });
   assert.equal(r, true);
   const after = readFileSync(ts, 'utf8');
@@ -56,10 +56,10 @@ test('happy path: valid edit is applied, committed, and pushed', async () => {
   assert.match(head, /gate-repair.*links-seo/);
 });
 
-test('opt-out: GG_GATE_REPAIR unset → no-op, returns false', async () => {
+test('disabled (GG_GATE_REPAIR=0) → no-op, returns false', async () => {
   const { wt, ts } = setupRepo('export const x = `body UNIQUE_BROKEN here`;\n');
   const fc = fakeClaude('{"edits":[{"old_string":"UNIQUE_BROKEN","new_string":"FIXED"}],"note":"x"}');
-  delete process.env.GG_GATE_REPAIR;
+  process.env.GG_GATE_REPAIR = '0';
   const r = await tryGateRepair({ dim: 'links-seo', reason: 'x', articleTs: ts, worktree: wt, branch: 'testbranch', node: mkNode(fc), B, log });
   assert.equal(r, false);
   assert.ok(readFileSync(ts, 'utf8').includes('UNIQUE_BROKEN'));

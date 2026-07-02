@@ -1,7 +1,7 @@
 {
   "page_id": "PG-CELEB-020",
   "prompt_path": "/Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-CELEB-020.v8-prompt.md",
-  "started_at": "2026-07-02T12:34:25.851Z",
+  "started_at": "2026-07-02T12:38:02.801Z",
   "models_requested": [
     "claude"
   ],
@@ -9,24 +9,19 @@
   "diversify_on_fail": false,
   "max_cost_usd_per_page": 5,
   "budget_exceeded_models": [],
-  "ok_count": 1,
-  "total_cost_estimate_usd": 0.0516,
+  "ok_count": 0,
+  "total_cost_estimate_usd": 0,
   "results": {
     "claude": {
       "model": "claude",
       "active_model": "claude",
       "diversified": false,
-      "ok": true,
-      "output_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-CELEB-020-claude-v8.md",
+      "ok": false,
+      "output_path": null,
       "retries": 0,
-      "duration_s": 162.7,
-      "cost_estimate_usd": {
-        "usd": 0.0516,
-        "input_tokens_est": 7760,
-        "output_tokens_est": 1885,
-        "pricing_note": "Sonnet 4.6 xhigh"
-      },
-      "cumulative_cost_usd": 0.0516,
+      "duration_s": 210.1,
+      "cost_estimate_usd": null,
+      "cumulative_cost_usd": 0,
       "budget_exceeded": false,
       "budget_usd": 5,
       "attempts": [
@@ -34,17 +29,12 @@
           "try_index": 1,
           "model": "claude",
           "command": "claude -p --model claude-opus-4-8 --effort high < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-CELEB-020.v8-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-CELEB-020-claude-v8.md",
-          "cost_usd": 0.0516,
-          "cumulative_cost_usd": 0.0516,
-          "ok": true,
-          "exit_code": 0,
-          "duration_s": 162.7,
-          "stderr_tail": "",
-          "stdout_bytes": 8567,
-          "sonnet_guard": {
-            "downgraded": false,
-            "bytes": 8601
-          }
+          "cost_usd": 0,
+          "cumulative_cost_usd": 0,
+          "ok": false,
+          "exit_code": -2,
+          "duration_s": 210.1,
+          "stderr_tail": "WATCHDOG: no CPU/output progress for 180s (deadlock); group cpu=4.3s"
         }
       ]
     }

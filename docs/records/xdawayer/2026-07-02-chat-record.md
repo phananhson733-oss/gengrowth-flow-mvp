@@ -360,3 +360,20 @@ Last run: 2026-07-02T00:00:07.414Z (1782950407414)
 已读取自动化记忆、项目规则、项目 reminders、sibling vault owner profile 与 `using-superpowers`、`executing-plans`、`verification-before-completion` 技能要求；`gengrowth-flow-mvp` 本地未找到 `ai-profile/lynne-soul.md`。仅执行指定确定性入口，首次退出码为 0，输出 `Obsidian vault git sync: clean`。随后独立验证三仓库均 clean、ahead/behind 为 `0 0`、无 unmerged 文件，并回读 `gengrowth-ops` 与 `gengrowth-flow-mvp` 的 Obsidian Git 配置，确认 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。为满足逐轮记录规则，追加本条 record 后继续使用同一确定性入口提交/推送并复验。
 
 ---
+
+### Q11 — 09:05
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Monitor
+Automation ID: gengrowth-index-monitor
+Automation memory: $CODEX_HOME/automations/gengrowth-index-monitor/memory.md
+Last run: 2026-07-01T01:00:32.898Z (1782867632898)
+
+Run the GenGrowth Phase 2 indexing workflow through the existing deterministic wrapper: `bash tools/scripts/gg-index-monitor-tick.sh`. This wrapper must refresh the live sitemap through the official Search Console Sitemaps API, inspect due URLs through URL Inspection, sync the final `结果复盘表`, generate/update `request-indexing-queue` with priority colors, and send Feishu SEO技术 group reminders for actionable candidates or failures. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, and do not click Search Console Request Indexing unattended. For Computer Use submission, only assist by opening candidate GSC inspection URLs and stop for human confirmation before the final Request Indexing click. After the wrapper exits, summarize sitemap submission status, GSC check counts/failures, queue counts by priority, and any Feishu notification outcome visible in the log.
+
+**🤖 回答：**
+
+已读取项目规则、reminders、自动化 memory 与相关 superpowers 技能要求；`ai-profile/lynne-soul.md` 在当前 checkout 缺失。按要求仅执行 `bash tools/scripts/gg-index-monitor-tick.sh`，wrapper 退出码为 0。日志为 `~/gengrowth-agents/cron-sync/index_monitor/2026-07-02.log`，其中本轮窗口为 `2026-07-02 09:02:58` 至 `09:04:00 CST`，该文件另含 09:00 自动运行片段，汇总时已隔离。`astrologywiki` sitemap submit ok，`gg-index-monitor rows=189 due=0`，因此本轮 checked=0、failures=0；`sync-recap en_rows=189 appended=0 updated=0 skipped=189`；`sync-request-queue rows=28 P0=0 P1=0 P2=14 P3=14`。`gengrowth` sitemap submit ok，`gg-index-monitor rows=41 due=0`，因此 checked=0、failures=0；`sync-recap en_rows=41 appended=0 updated=0 skipped=41`；`sync-request-queue rows=0 P0=0 P1=0 P2=0 P3=0`。本轮日志未出现 Feishu/Lark 发送成功或失败回执，仅末尾 `index monitor ok`。未使用普通文章 Google Indexing API，未无人值守点击 Search Console Request Indexing。
+
+---

@@ -746,3 +746,35 @@ Last run: 2026-07-02T10:02:09.755Z (1782986529755)
 **🤖 回答：**
 
 已读取自动化 memory、项目提醒、sibling owner profile、`gstack-careful` 与 `verification-before-completion`；`gengrowth-flow-mvp/ai-profile/lynne-soul.md` 不存在，已从 `gengrowth-wiki` 读取 owner profile。仅运行指定确定性入口，脚本退出码为 0，输出 `Obsidian vault git sync: clean`，未输出“需要关注”。初步验证显示 `gengrowth-wiki`、`gengrowth-ops`、`gengrowth-flow-mvp` 均在 `main`，ahead/behind 均为 `0 0`，无 unmerged；`gengrowth-ops` 与 `gengrowth-flow-mvp` 的 Obsidian Git 自动同步字段均确认禁用。已追加本轮 record，随后继续用同一确定性入口同步 record 并做最终复验。
+
+---
+
+### Q23 — 20:03
+
+**🙋 提问：**
+
+Automation: GenGrowth Vault Git Auto-Heal
+Automation ID: gengrowth-vault-git-auto-heal
+Automation memory: $CODEX_HOME/automations/gengrowth-vault-git-auto-heal/memory.md
+Last run: 2026-07-02T11:01:41.812Z (1782990101812)
+
+在本机执行 GenGrowth 多仓库 Obsidian/Git 自愈同步。目标仓库固定为 `/Users/awayer_mini/gengrowth-wiki`、`/Users/awayer_mini/gengrowth-ops`、`/Users/awayer_mini/gengrowth-flow-mvp`。
+
+必须使用已验证的确定性入口，不要绕过脚本手写破坏性 git 操作：
+
+`/usr/bin/python3 /Users/awayer_mini/gengrowth-wiki/tools/scripts/obsidian-vault-git-sync.py --repo /Users/awayer_mini/gengrowth-wiki --repo /Users/awayer_mini/gengrowth-ops --repo /Users/awayer_mini/gengrowth-flow-mvp --verbose`
+
+安全边界：
+- 禁止运行 `git reset --hard`、`git checkout -- <path>`、`git clean`、`rm -rf`、`rsync --delete`，除非用户在当次对话中明确要求。
+- 不要运行 `tools/scripts/frequent-sync.sh`、`tools/scripts/gengrowth-repos-sync.sh` 或 `tools/scripts/_sync-core.sh`，因为这些路径包含镜像删除语义，本任务只做 git 自愈同步。
+- 同步脚本会先 fetch，检查未解决冲突，提交本地非敏感变更，再 rebase/push；只对白名单 JSON 冲突自动合并，其他冲突会中止并报告。不要在脚本中止后自行猜测合并内容。
+- 不打印密钥、token、邮箱密码、service account JSON、private key 或完整凭证 URL。
+
+执行后验证：
+1. 分别在三个仓库运行 `git status --branch --porcelain=v2`、`git rev-list --left-right --count HEAD...origin/main`、`git diff --name-only --diff-filter=U`、`git ls-files -u`。
+2. 回读 `/Users/awayer_mini/gengrowth-ops/.obsidian/plugins/obsidian-git/data.json` 和 `/Users/awayer_mini/gengrowth-flow-mvp/.obsidian/plugins/obsidian-git/data.json`，确认 `autoSaveInterval`、`autoPushInterval`、`autoPullInterval` 为 0，`autoPullOnBoot` 与 `pullBeforePush` 为 false。
+3. 若所有仓库都是 clean 且 ahead/behind 为 `0 0`，简短报告已同步；若脚本输出“需要关注”或存在 unmerged，报告具体仓库和文件路径，不要删除文件。
+
+**🤖 回答：**
+
+已读取 automation memory、AGENTS、sibling owner profile、reminders、长期 memory 与 `superpowers:executing-plans`；`gengrowth-flow-mvp/ai-profile/lynne-soul.md` 不存在，已从 `gengrowth-wiki` 读取 owner profile。仅运行指定确定性入口，脚本退出码为 0，未输出“需要关注”。初步验证显示 `gengrowth-wiki`、`gengrowth-ops`、`gengrowth-flow-mvp` 均在 `main`，ahead/behind 均为 `0 0`，无 unmerged；`gengrowth-ops` 与 `gengrowth-flow-mvp` 的 Obsidian Git 自动同步字段均确认禁用。已追加本轮 record，随后继续用同一确定性入口同步 record 并做最终复验。

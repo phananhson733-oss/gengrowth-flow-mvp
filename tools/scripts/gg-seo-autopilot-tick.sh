@@ -214,12 +214,28 @@ while [ "$cycle" -lt "$MAX_CYCLES" ]; do
     # park alert already @'d 王志彪+马博洋). A tick that starts already-idle (worked=0) stays
     # quiet, so the PM isn't re-pinged every idle poll.
     if [ "$worked" -ge 1 ]; then
-      parks=$(node "$AUTO" --status 2>/dev/null | grep -c '"needs_human"')
-      if [ "$parks" -eq 0 ]; then
+      # Completeness guard (hardened 2026-07-03): the day-complete notice asserts
+      # "全部写完并上线", so it must fire ONLY when NO claim is still non-terminal.
+      # The old guard counted only "needs_human" and so was BLIND to in-flight claims
+      # stuck at status=active/pushed-preview (held/stale lease, mid-convert) — those
+      # are neither parked nor live, so a drained loop could falsely report "all live"
+      # while an article (e.g. PG-CELEB-020) was genuinely not yet on prod. Now we also
+      # count non-terminal (status != done && != needs_human) claims and suppress if any.
+      guard=$(node -e '
+        try{
+          const c=require(process.env.HOME+"/gengrowth-ops/inbox/06-tasks/tasks/.autopilot-claims.json");
+          let p=0,i=0;
+          for(const k of Object.keys(c)){const s=(c[k]&&c[k].status)||"";
+            if(s==="needs_human")p++; else if(s!=="done")i++;}
+          process.stdout.write(p+"|"+i);
+        }catch(e){process.stdout.write("0|0");}' 2>/dev/null)
+      parks="${guard%%|*}"; inflight="${guard##*|}"
+      parks="${parks:-0}"; inflight="${inflight:-0}"
+      if [ "$parks" -eq 0 ] && [ "$inflight" -eq 0 ]; then
         pub=$(grep -cE '^\| 2026' "$HOME/gengrowth-ops/inbox/06-tasks/seo-autopilot-publish-log.md" 2>/dev/null)
-        GG_LARK_NOTIFY_AT_OPS=1 "$SCRIPT_DIR/gg-lark-notify.sh" "✅ SEO autopilot：本批计划内容已全部写完并上线（发布登记表累计 ${pub:-?} 篇），队列已清空。"
+        GG_LARK_NOTIFY_AT_OPS=1 "$SCRIPT_DIR/gg-lark-notify.sh" "✅ SEO autopilot（$(date '+%Y-%m-%d')）：本批计划内容已全部写完并上线（发布登记表累计 ${pub:-?} 篇），队列已清空。"
       else
-        echo "$(date '+%F %T') drained with $parks park(s) — not sending day-complete (parks need a human)" >> "$LOG"
+        echo "$(date '+%F %T') drained with $parks park(s) + $inflight in-flight claim(s) — not sending day-complete (batch not fully live)" >> "$LOG"
       fi
     fi
     break

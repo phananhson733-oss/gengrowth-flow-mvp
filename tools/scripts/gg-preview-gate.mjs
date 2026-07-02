@@ -105,7 +105,7 @@ export function bins() {
     reviewWorker: resolveBin('GG_REVIEW_WORKER_BIN', 'gg-article-review-worker.mjs'),
     larkNotify: resolveBin('GG_LARK_NOTIFY_BIN', 'gg-lark-notify.sh'),
     codex: resolveCodexBin(), // REQUIRED by default — absent ⇒ PARK (GG_CODEX_GATE_REQUIRED=0 ⇒ legacy SKIPPED)
-    gateRepair: resolveBin('GG_GATE_REPAIR_BIN', 'gg-gate-repair.mjs'), // surgical park-boundary repair (opt-in: GG_GATE_REPAIR=1)
+    gateRepair: resolveBin('GG_GATE_REPAIR_BIN', 'gg-gate-repair.mjs'), // surgical park-boundary repair (default-on; GG_GATE_REPAIR=0 disables)
   };
 }
 
@@ -119,9 +119,9 @@ export function bins() {
 const GATE_REPAIR_TIMEOUT_MS = parseInt(process.env.GG_GATE_REPAIR_TIMEOUT_MS || '450000', 10);
 
 export async function tryGateRepair({ dim, reason, articleTs, draftMd, worktree, branch, node, B, log }) {
-  // OPT-IN: disabled unless GG_GATE_REPAIR=1 (a first-ship default-off for an auto-edit-and-push
-  // path on the critical gate; enable once validated on real parks). GG_GATE_REPAIR=0 also disables.
-  if (process.env.GG_GATE_REPAIR !== '1') return false;
+  // DEFAULT-ON: one surgical repair attempt at the park boundary before needs_human.
+  // Set GG_GATE_REPAIR=0 to disable (roll back to park-immediately).
+  if (process.env.GG_GATE_REPAIR === '0') return false;
   if (!B.gateRepair || !existsSync(B.gateRepair)) { log(`repair[${dim}]: no gate-repair bin — skip`); return false; }
   if (!articleTs || !existsSync(articleTs)) { log(`repair[${dim}]: no article .ts — skip`); return false; }
   if (!worktree || !existsSync(worktree)) { log(`repair[${dim}]: no worktree for commit — skip`); return false; }

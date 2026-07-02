@@ -47,7 +47,7 @@ const LARK = join(__dirname, 'gg-lark-notify.sh');
 // Parity with Lane B (oracle): same factual reviewer and same vault archive.
 // Only the inputs differ (a file vs a PR; a gengrowth URL vs an oracle URL).
 const CODEX_BIN = process.env.GG_CODEX_BIN || join(__dirname, 'gg-codex-pr-review.mjs');
-// Lane A surgical gate-repair (opt-in GG_GATE_REPAIR=1): the SAME worker Lane B runs at its
+// Lane A surgical gate-repair (default-on; GG_GATE_REPAIR=0 disables): the SAME worker Lane B runs at its
 // park boundary. Returns structured old/new edits for the failing draft; we apply them to the
 // DRAFT FILE (no git — Lane A has no branch/PR), re-run phase2 + codex, then park or publish.
 const GATE_REPAIR_BIN = process.env.GG_GATE_REPAIR_BIN || join(__dirname, 'gg-gate-repair.mjs');
@@ -124,7 +124,7 @@ function archiveToVault(pageId, slug) {
   }
 }
 
-// ── Lane A surgical repair at the codex park boundary (opt-in GG_GATE_REPAIR=1) ──────
+// ── Lane A surgical repair at the codex park boundary (default-on; GG_GATE_REPAIR=0 disables) ──
 // Lane B (oracle) repairs a PR .ts + git-pushes; Lane A has NO branch/PR — it edits the
 // standalone _staging/<PID>-<llm>-v8.md DRAFT in place (the publisher upserts THAT file).
 // So this: (a) calls gg-gate-repair.mjs --dimension codex to get structured old/new edits,
@@ -136,7 +136,7 @@ function archiveToVault(pageId, slug) {
 // (this is the sole call site, so the cap is structural). No git; revert = restore the bytes we
 // snapshotted before the first write. Returns true only when BOTH re-gates pass (⇒ publish).
 function laneARepairCodex(d, reason) {
-  if (process.env.GG_GATE_REPAIR !== '1') return false;
+  if (process.env.GG_GATE_REPAIR === '0') return false; // default-on; GG_GATE_REPAIR=0 disables
   if (!existsSync(GATE_REPAIR_BIN)) { console.log(`  repair[codex]: no gate-repair bin — skip`); return false; }
   if (!existsSync(PHASE2_BIN)) { console.log(`  repair[codex]: no phase2 bin — skip`); return false; }
   // Manifest carries the phase2 context (entity / target_keyword / template / tier / prompt_version)
@@ -289,7 +289,7 @@ async function main() {
       const block = fr.required || fr.verdict === 'FAIL';
       if (block) {
         // Lane A surgical repair BEFORE parking — only a real factual FAIL is repairable
-        // (a SKIPPED tooling/timeout verdict has no fact to fix). GG_GATE_REPAIR=1 opt-in;
+        // (a SKIPPED tooling/timeout verdict has no fact to fix). Default-on (GG_GATE_REPAIR=0 disables);
         // on success the draft is edited in place + both re-gates passed → fall through to publish.
         if (fr.verdict === 'FAIL' && laneARepairCodex(d, fr.reason)) {
           // repaired: proceed to the upsert below (draft on disk now carries the surgical edits).

@@ -1,7 +1,7 @@
 {
   "page_id": "PG-CELEB-020",
   "prompt_path": "/Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-CELEB-020.v8-prompt.md",
-  "started_at": "2026-07-02T12:38:02.801Z",
+  "started_at": "2026-07-02T12:41:35.637Z",
   "models_requested": [
     "claude"
   ],
@@ -34,7 +34,7 @@
           "ok": false,
           "exit_code": -2,
           "duration_s": 210.1,
-          "stderr_tail": "WATCHDOG: no CPU/output progress for 180s (deadlock); group cpu=4.3s"
+          "stderr_tail": "WATCHDOG: no CPU/output progress for 180s (deadlock); group cpu=4.1s"
         }
       ]
     }

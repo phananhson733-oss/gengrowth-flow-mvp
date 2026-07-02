@@ -139,21 +139,45 @@ function runCodex(prompt, timeoutMs) {
   try { rmSync(outFile, { force: true }); } catch { /* fresh */ }
   // -s read-only: codex exec defaults to workspace-write + approval:never and would agentically
   // EDIT FILES; read-only blocks all writes — we only want the text verdict.
-  const r = spawnSync(CODEX, [
-    'exec', '-s', 'read-only',
-    '-c', `model=${CODEX_MODEL}`,
-    '-c', `reasoning_effort=${CODEX_EFFORT}`,
-    '--output-last-message', outFile, '-',
-  ], { input: prompt, encoding: 'utf8', timeout: timeoutMs, maxBuffer: 32 * 1024 * 1024 });
-  if (r.error) {
-    if (r.error.code === 'ETIMEDOUT') toolFail(`codex timed out after ${timeoutMs}ms`);
-    if (r.error.code === 'ENOENT') toolFail('codex CLI not found');
-    toolFail(`codex spawn failed: ${r.error.code || r.error.message}`);
-  }
-  if (r.status !== 0) toolFail(`codex exited ${r.status}: ${String(r.stderr || '').slice(-200).trim()}`);
+  // Codex CLI (v0.137.x) intermittently exits non-zero on a TRANSIENT startup flake (model-manager
+  // refresh timeout, a slow/hanging MCP plugin) that is NOT a review outcome — this is the #1 cause
+  // of "codex exited 3" needs_human parks. Retry a FAST failure a few times so one flaky exec doesn't
+  // park the article. Guards on time budget: only retry a failure that happened QUICKLY (< FAST_FAIL_MS
+  // — a startup flake), never a quota ("usage limit", needs ~30min → a scheduled re-gate handles it),
+  // never a hang/ETIMEDOUT (no budget left before the gate kills this whole process at its own timeout).
+  const MAX_ATTEMPTS = Math.max(1, parseInt(process.env.GG_CODEX_RETRIES || '3', 10));
+  const FAST_FAIL_MS = Math.max(1000, parseInt(process.env.GG_CODEX_RETRY_FASTFAIL_MS || '120000', 10));
+  const BACKOFF_S = Math.max(0, parseInt(process.env.GG_CODEX_RETRY_BACKOFF_S || '20', 10));
   let msg = '';
-  try { msg = existsSync(outFile) ? readFileSync(outFile, 'utf8').trim() : ''; } catch { msg = ''; }
-  try { rmSync(outFile, { force: true }); } catch { /* best-effort */ }
+  let lastErr = '';
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    const t0 = Date.now();
+    const r = spawnSync(CODEX, [
+      'exec', '-s', 'read-only',
+      '-c', `model=${CODEX_MODEL}`,
+      '-c', `reasoning_effort=${CODEX_EFFORT}`,
+      '--output-last-message', outFile, '-',
+    ], { input: prompt, encoding: 'utf8', timeout: timeoutMs, maxBuffer: 32 * 1024 * 1024 });
+    const elapsed = Date.now() - t0;
+    if (r.error && r.error.code === 'ENOENT') toolFail('codex CLI not found'); // never recovers
+    const isTimeout = !!(r.error && r.error.code === 'ETIMEDOUT');
+    const quota = /usage limit|rate.?limit|\bquota\b|\b429\b/i.test(`${r.stderr || ''}\n${r.stdout || ''}`);
+    if (r.error) {
+      lastErr = isTimeout ? `timed out after ${timeoutMs}ms` : `spawn failed: ${r.error.code || r.error.message}`;
+    } else if (r.status !== 0) {
+      lastErr = `exited ${r.status}: ${String(r.stderr || '').slice(-200).trim()}`;
+    } else {
+      try { msg = existsSync(outFile) ? readFileSync(outFile, 'utf8').trim() : ''; } catch { msg = ''; }
+      if (msg) { try { rmSync(outFile, { force: true }); } catch { /* best-effort */ } break; }
+      lastErr = 'empty final message';
+    }
+    try { rmSync(outFile, { force: true }); } catch { /* best-effort */ }
+    const retryable = !quota && !isTimeout && elapsed < FAST_FAIL_MS && attempt < MAX_ATTEMPTS;
+    if (!retryable) { if (quota) lastErr += ' (usage limit — not retried; a re-gate will pick it up)'; break; }
+    process.stderr.write(`[codex-pr-review] attempt ${attempt}/${MAX_ATTEMPTS} transient tooling failure (${lastErr}, ${Math.round(elapsed / 1000)}s) — retrying in ${BACKOFF_S}s\n`);
+    spawnSync('sleep', [String(BACKOFF_S)]);
+  }
+  if (!msg) toolFail(`codex ${lastErr} (after up to ${MAX_ATTEMPTS} attempt(s))`);
   // FAIL-CLOSED: do NOT fall back to raw stdout (codex exec puts only its banner there; a future CLI
   // that echoed the prompt/diff to stdout could leak a planted "VERDICT: PASS"). An empty final
   // message is a tooling failure → SKIPPED → PARK under the required gate.

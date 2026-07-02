@@ -790,3 +790,20 @@ Last run: 2026-07-02T11:01:41.812Z (1782990101812)
 跑了只读 supervisor pass（sandbox 无 Mac 凭证，按既定架构只做核查+bridge 信号，不在沙箱撰写/发布）。逐路 web_fetch 验证：W22 celeb 批（thylane-blondeau/elliot-page/bella-hadid/maya-joint）与 W25 gengrowth 批（cheap-seo/best-cheap-seo-tools/free-seo-company/organic-seo-service/affordable-seo-software，5 篇 Jul 1）全部已上线、正文/canonical/index,follow 齐全。发布积压=0，_staging 今日无新草稿（两个 plan 队列均已 drain），故未写 bridge kick（避免误路由）。写入 `.gg-bridge/reports/2026-07-02.md`；GSC 补提（7/3 结果复盘表自底向上清单）、选题登记表状态同步、飞书通知均属 Mac 凭证 lane，已在报告中标注移交。
 
 ---
+
+### Q28 — 20:11
+
+**🙋 提问：**
+
+Automation: GenGrowth Topic Register
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-02T10:00:09.754Z (1782986409754)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+已读取 AGENTS、项目 reminders、automation memory、长期 memory、`superpowers:using-superpowers`、`superpowers:verification-before-completion` 与本地 topic-register wrapper-report 流程；`gengrowth-flow-mvp/ai-profile/lynne-soul.md` 不存在。仅执行指定 wrapper `bash tools/scripts/gg-topic-register-tick.sh`，未传递手动写入、修复、覆盖或直接脚本参数。wrapper 退出码为 0；最新日志为 `~/gengrowth-agents/cron-sync/topic_register/2026-07-02.log`，本轮窗口为 `2026-07-02 20:03:09-20:10:30 CST`，最终 `topic-register ok`。本机环境启用 apply，`dry_run=false`，`budget_exhausted=false`。`astrologywiki`：candidates=5、updates=5、new_clusters=0、page_ids=`PG-CELEB-020`, `PG-CELEB-021`, `PG-CELEB-022`, `PG-CELEB-023`, `PG-CELEB-024`，preprocessor=`ok`, `v1_fallback`, `v1_fallback`, `v1_fallback`, `v1_fallback`；其中 `PG-CELEB-020` evidence status=`ok`，其余 4 个为 `insufficient`。`gengrowth`：candidates=5、updates=5、new_clusters=0、selection_mode=`audit_repair`、audit_incomplete=5、page_ids=`PG-EOS-008`, `PG-ART-004`, `PG-SFS-005`, `PG-SFS-006`, `PG-WLS-005`，preprocessor=`v1_fallback` x5，evidence 均 `insufficient`。未见失败；安全边界保持：没有手工 Sheet 写入、没有 wrapper 外 task-plan 编辑、没有额外 Feishu 或 Google Doc 报告产物。
+
+---

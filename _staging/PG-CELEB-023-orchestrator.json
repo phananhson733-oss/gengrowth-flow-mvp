@@ -1,7 +1,7 @@
 {
   "page_id": "PG-CELEB-023",
   "prompt_path": "/Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-CELEB-023.v8-prompt.md",
-  "started_at": "2026-07-02T13:43:41.571Z",
+  "started_at": "2026-07-02T13:47:15.936Z",
   "models_requested": [
     "claude"
   ],
@@ -19,7 +19,7 @@
       "ok": false,
       "output_path": null,
       "retries": 0,
-      "duration_s": 240.1,
+      "duration_s": 210.1,
       "cost_estimate_usd": null,
       "cumulative_cost_usd": 0,
       "budget_exceeded": false,
@@ -33,8 +33,8 @@
           "cumulative_cost_usd": 0,
           "ok": false,
           "exit_code": -2,
-          "duration_s": 240.1,
-          "stderr_tail": "WATCHDOG: no CPU/output progress for 210s (deadlock); group cpu=5.4s"
+          "duration_s": 210.1,
+          "stderr_tail": "WATCHDOG: no CPU/output progress for 180s (deadlock); group cpu=3.9s"
         }
       ]
     }

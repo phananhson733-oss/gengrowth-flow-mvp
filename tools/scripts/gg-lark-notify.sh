@@ -62,8 +62,14 @@ fi
 # Best-effort send-audit (2026-07-03): keep a local, timestamped trace of every push so a
 # premature/wrong summary can be reconciled after the fact (this script was previously
 # fire-and-forget with zero record). Never blocks the send; failure is ignored.
-printf '%s\tchat=%s\t%s\n' "$(date '+%F %T %Z')" "$RID" "$(printf '%s' "$AT$MSG" | tr '\n' ' ')" \
+printf '%s\tchat=%s\t%s%s\n' "$(date '+%F %T %Z')" "$RID" "$([ "$GG_LARK_NOTIFY_SILENCE" = "1" ] && echo '[SILENCED] ')" "$(printf '%s' "$AT$MSG" | tr '\n' ' ')" \
   >> "$HOME/Library/Logs/gg-lark-notify.log" 2>/dev/null || true
+
+# Silence gate (2026-07-03): a caller running a multi-item batch (e.g. publishing N articles)
+# can set GG_LARK_NOTIFY_SILENCE=1 to suppress the per-item pushes and instead fire ONE roll-up
+# summary itself (matches the "one batch summary, not per-article spam" operating rule). The
+# message is still AUDIT-LOGGED above (tagged [SILENCED]) so nothing is lost for reconciliation.
+[ "$GG_LARK_NOTIFY_SILENCE" = "1" ] && exit 0
 
 # Authenticate as the Hermes bot and send. All escaping/JSON handled in node.
 MSG="$AT$MSG" RID="$RID" HERMES_ENV="$HERMES_ENV" node -e '

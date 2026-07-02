@@ -16,7 +16,6 @@ associated_keywords:
   - John Denver birth chart astrology
   - John Denver birth chart zodiac
   - John Denver birth chart interpretation
-  - emma watson zodiac sign
 generated_by: unknown
 prompt_version: v8
 generated_at: 2026-07-02T13:51:13.540Z

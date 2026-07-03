@@ -44,6 +44,9 @@ import { notify } from './lib/gg-notify.mjs';
 // IDENTICAL across both lanes (no fork/drift): FAIL dominates, exactly-one-bare-PASS
 // passes, anything else (timeout / nonzero / no-verdict / ambiguous) → SKIPPED.
 import { classifyCodex } from './gg-preview-gate.mjs';
+// 阶段 4 回填事务：verify-live 成功后一个函数写全套账本（选题登记表 已发布+URL / plan 勾选 /
+// vault 归档），失败入 pending-writeback 由每日 gg-ledger-reconcile 重试。永不抛。
+import { backfillOnLive } from './lib/backfill-tx.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO = resolve(__dirname, '..', '..');
@@ -57,7 +60,7 @@ const CODEX_BIN = process.env.GG_CODEX_BIN || join(__dirname, 'gg-codex-pr-revie
 // DRAFT FILE (no git — Lane A has no branch/PR), re-run phase2 + codex, then park or publish.
 const GATE_REPAIR_BIN = process.env.GG_GATE_REPAIR_BIN || join(__dirname, 'gg-gate-repair.mjs');
 const PHASE2_BIN = join(__dirname, '_phase2-validate.mjs');
-const ARCHIVE_BIN = join(__dirname, 'gg-archive-to-vault.mjs');
+// vault 归档改由 lib/backfill-tx.mjs 的回填事务统一执行（阶段 4）——不再本地散调 archive。
 const SITE_HOST = 'https://gengrowth.ai';
 const URL_PATH = '/en/blog/';
 
@@ -115,22 +118,24 @@ function factualReview(mdPath) {
   return { ...cls, required };
 }
 
-// ── Post-publish vault archive (parity with the FLOW post-deploy archive step) ──────
-// COPIES the live article into the gengrowth-wiki Obsidian vault as an OFM/RAG note via
-// the SAME gg-archive-to-vault.mjs oracle uses, only with gengrowth's site-host + url-path.
-// Best-effort; never throws.
-function archiveToVault(pageId, slug) {
-  if (!existsSync(ARCHIVE_BIN)) return;
+// ── plan 定位（阶段 4 回填的 plan-勾选步骤用）──────────────────────────────────────
+// 确定性解析：扫所有 gengrowth blog-output-plan，返回真正含该 PID 的那个 basename（不是"最新"，
+// 避免跨 plan republish 勾错/漏勾）；都不含则回退最新的 gengrowth plan。找不到 → null。
+// **绝不读 GG_AUTOPILOT_PLAN**（那是 author-lane 的 ambient pin，可能指向 astrology plan → 勾错列
+// 或漏勾——评审 CONFIRMED：让正确性依赖 ambient env 违反总纲）。勾 plan box 也是 gengrowth 的
+// durable done 标记（补 3b：gengrowth 不写 claim 的幂等缺口）。
+const PLAN_DIR = process.env.GG_PLAN_DIR || join(HOME, 'gengrowth-ops', 'inbox', '06-tasks', 'tasks');
+function gengrowthPlanFor(pageId) {
+  let plans;
   try {
-    execFileSync('node', [
-      ARCHIVE_BIN, '--pages', `${pageId}:${slug}`,
-      '--site', 'gengrowth', '--site-host', SITE_HOST, '--url-path', URL_PATH,
-      '--oracle', join(HOME, 'oracle'),
-    ], { encoding: 'utf8', timeout: 60000 });
-    console.log(`  vault-archive: ${pageId}:${slug} → 内容资产/gengrowth/`);
-  } catch (e) {
-    console.log(`  vault-archive: skipped (non-fatal: ${String(e.message || e).slice(0, 80)})`);
+    plans = readdirSync(PLAN_DIR).filter((f) => /gengrowth.*blog-output-plan.*\.md$/i.test(f)).sort();
+  } catch { return null; }
+  if (!plans.length) return null;
+  const re = new RegExp(`${pageId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`);
+  for (const f of plans) {
+    try { if (re.test(readFileSync(join(PLAN_DIR, f), 'utf8'))) return f; } catch { /* skip unreadable */ }
   }
+  return plans[plans.length - 1]; // 回退最新（仍是 gengrowth plan，绝不 astrology）
 }
 
 // ── Lane A surgical repair at the codex park boundary (default-on; GG_GATE_REPAIR=0 disables) ──
@@ -323,10 +328,17 @@ async function main() {
       const ok = after.known && after.exists && after.status === 'published';
       if (ok) { verified++; console.log(`  ✓ verified live: ${d.slug}`); }
       else console.log(`  ⚠️ ${d.slug} upserted but verify says: ${JSON.stringify(after)}`);
-      // ── Post-publish parity step: archive into the wiki vault only after
-      // verify-live succeeds.
+      // ── 阶段 4 回填事务：verify-live（此处 Supabase status=published 已确认，即 ok）成功后
+      // 一个函数写全套账本 —— 选题登记表 已发布+URL / plan 勾选 / vault 归档。verifyLive 注入
+      // ()=>true（上游 Supabase 已是权威 live 信号，无需再等 sitemap）。任一步失败入
+      // pending-writeback 由每日 gg-ledger-reconcile 重试。backfillOnLive 永不抛。
       if (ok) {
-        archiveToVault(d.pageId, d.slug);
+        const bf = await backfillOnLive(
+          { pageId: d.pageId, slug: d.slug, site: 'gengrowth', url: `${SITE_HOST}${URL_PATH}${d.slug}`, planPath: gengrowthPlanFor(d.pageId) },
+          { verifyLive: async () => true },
+        );
+        if (bf.ok) console.log(`  backfill: ${d.pageId} sheet+plan+archive done`);
+        else console.log(`  backfill: ${d.pageId} ${bf.reason || (bf.failed || []).map((f) => f.step).join(',')} — queued for daily reconcile`);
       }
       // Per-article notification (parity with Lane B's per-article "已发布上线" notice),
       // instead of one aggregate ticker — one Hermes-bot message per published article.

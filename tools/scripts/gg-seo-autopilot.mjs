@@ -62,6 +62,7 @@ import { illustrate } from './lib/illustrate.mjs';
 import { keywordLiveSlug } from './lib/oracle-live.mjs';
 import { notify } from './lib/gg-notify.mjs';
 import { unionMergeIntoWorktree, looksLikeMergeConflict } from './lib/merge-union.mjs';
+import { backfillOnLive } from './lib/backfill-tx.mjs';
 
 loadEnv();
 const ACTIVE_WORKBOOK_ID = resolveWorkbookId();
@@ -1198,13 +1199,23 @@ function doMerge(o) {
     syncOracle();
     claims[pgId].status = 'done';
     claims[pgId].mergedAt = new Date().toISOString();
-    checkPlanBox(pgId);
+    checkPlanBox(pgId); // 即时勾选（锁内、本地）；下方回填事务的 plan 步骤会发现已勾=no-op。
     saveClaims(claims);
-    // writing record → ops (self-synced)；返回 promise（尾部是 published 事件通知），
-    // 由顶层 dispatcher await 收尾——claims 锁在同步部分结束时即释放，不为通知多持锁。
-    const recorded = appendPublishLog(pgId, claims[pgId].slug);
+    const slug = claims[pgId].slug;
+    // writing record → ops (self-synced)；返回 promise（尾部是 published 事件通知 + 阶段4 回填事务），
+    // 由顶层 dispatcher await 收尾——claims 锁在同步部分结束时即释放，不为通知/回填多持锁。
+    const recorded = appendPublishLog(pgId, slug);
     log(`MERGED ${o.branch} → main (prod deploy triggered)`);
-    return recorded;
+    // 阶段 4 回填事务（锁外）：merge 成功后 verify-live(sitemap) → 写全套账本
+    // （选题登记表 已发布+URL / plan 勾选 / vault 归档），失败入 pending-writeback 由每日对账重试。
+    // backfillOnLive 永不抛；deferred（尚未进 sitemap）会留队等每日 drain。不阻塞发布串行。
+    return Promise.resolve(recorded)
+      .then(() => backfillOnLive({ pageId: pgId, slug, site: 'astrologywiki', planPath: latestPlan() }))
+      .then((r) => {
+        if (r.ok) log(`backfill ${pgId}: sheet+plan+archive done`);
+        else log(`backfill ${pgId}: ${r.reason || (r.failed || []).map((f) => f.step).join(',')} — queued for daily reconcile`);
+      })
+      .catch((e) => log(`backfill ${pgId} error (non-fatal): ${e.message}`));
   });
 }
 

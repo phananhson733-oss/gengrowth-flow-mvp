@@ -35,17 +35,17 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { homedir } from 'node:os';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { getAccessToken, gFetch } from './lib/gg-shared.mjs';
 
 const REPO = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const CACHE = join(REPO, '.gg-cache');
-const PAGES_TAB = '选题登记表';
-const PUBLISHED = '已发布';
-const OPEN_STATUSES = new Set(['待写', '写作中', '已建卡', '可生产']); // eligible to be flipped if live
-const CLOSED_STATUSES = new Set(['已发布', '已刷新', '已合并', '暂停', '不写', '暂时不写']);
+export const PAGES_TAB = '选题登记表';
+export const PUBLISHED = '已发布';
+export const OPEN_STATUSES = new Set(['待写', '写作中', '已建卡', '可生产']); // eligible to be flipped if live
+export const CLOSED_STATUSES = new Set(['已发布', '已刷新', '已合并', '暂停', '不写', '暂时不写']);
 
-const PRODUCTS = {
+export const PRODUCTS = {
   astrologywiki: {
     label: 'astrologywiki.com',
     sitemap: 'https://www.astrologywiki.com/sitemap.xml',
@@ -116,15 +116,74 @@ function matchLive(entity, live) {
   return null;
 }
 
-function colA1(idx0) { // 0-based col -> A1 letters
+export function colA1(idx0) { // 0-based col -> A1 letters
   let s = '', x = idx0 + 1;
   while (x > 0) { s = String.fromCharCode(65 + ((x - 1) % 26)) + s; x = Math.floor((x - 1) / 26); }
   return s;
 }
 
-function workbookId(product) {
+export function workbookId(product) {
   for (const k of product.workbookEnv) { const v = (process.env[k] || '').trim(); if (v) return v; }
   throw new Error(`workbook id missing: set one of ${product.workbookEnv.join(' / ')}`);
+}
+
+// 选题登记表 表头定位（Status / page_id / URL 列）。缺 Status/page_id 抛错。
+function locatePagesHeader(header) {
+  const iStatus = header.findIndex((h) => /^Status$/i.test((h || '').trim()));
+  const iPage = header.findIndex((h) => /page_id/i.test((h || '').trim()));
+  const iUrl = header.findIndex((h) => /^(URL|发布URL)$/i.test((h || '').trim()));
+  if (iStatus < 0 || iPage < 0) throw new Error('选题登记表 header missing Status/page_id');
+  return { iStatus, iPage, iUrl };
+}
+
+// 纯决策核（可单测，无 IO）：给定表格 rows + entries，算出要写的 batchUpdate data 与
+// applied/skipped。规则：按 page_id 精确定位；仅 Status ∈ OPEN 才 flip→已发布；URL 列为空且
+// 传了 url 才补；CLOSED 或非 OPEN 或无行 → skip（幂等，永不降级 closed）。
+export function planPageFlips(rows, entries) {
+  const header = rows[0] || [];
+  const { iStatus, iPage, iUrl } = locatePagesHeader(header);
+  const rowByPage = new Map(); // page_id -> 0-based row index（首个命中；page_id 唯一约定）
+  for (let r = 1; r < rows.length; r++) {
+    const pid = (rows[r][iPage] || '').trim();
+    if (pid && !rowByPage.has(pid)) rowByPage.set(pid, r);
+  }
+  const data = [], applied = [], skipped = [];
+  for (const e of (entries || []).filter((x) => x && x.pageId)) {
+    const r = rowByPage.get(e.pageId);
+    if (r === undefined) { skipped.push({ pageId: e.pageId, reason: 'no-row' }); continue; }
+    const status = (rows[r][iStatus] || '').trim();
+    if (CLOSED_STATUSES.has(status) || !OPEN_STATUSES.has(status)) {
+      skipped.push({ pageId: e.pageId, reason: `status=${status || 'empty'}(not-open)` });
+      continue;
+    }
+    data.push({ range: `${PAGES_TAB}!${colA1(iStatus)}${r + 1}`, values: [[PUBLISHED]] });
+    if (iUrl >= 0 && e.url && !(rows[r][iUrl] || '').trim()) {
+      data.push({ range: `${PAGES_TAB}!${colA1(iUrl)}${r + 1}`, values: [[e.url]] });
+    }
+    applied.push({ pageId: e.pageId, fromStatus: status, url: e.url || null });
+  }
+  return { data, applied, skipped };
+}
+
+// 定向单行回填（回填事务用，阶段 4）：读表 → planPageFlips → 有变更才 batchUpdate 写回。
+// 不依赖 sitemap（发布腿在 verify-live 后已知 slug/url）——比广扫 reconcileProduct 快且精确。
+// entries: [{ pageId, url }]. 返回 { applied:[{pageId,fromStatus,url}], skipped:[{pageId,reason}] }。
+export async function flipRowsByPageId({ product, entries, token, apply }) {
+  const list = (entries || []).filter((e) => e && e.pageId);
+  if (!list.length) return { applied: [], skipped: [] };
+  const wb = workbookId(product);
+  const got = await gFetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${wb}/values/${encodeURIComponent(PAGES_TAB + '!A1:AZ')}?majorDimension=ROWS`,
+    token,
+  );
+  const { data, applied, skipped } = planPageFlips(got.values || [], list);
+  if (apply && data.length) {
+    await gFetch(`https://sheets.googleapis.com/v4/spreadsheets/${wb}/values:batchUpdate`, token, {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ valueInputOption: 'USER_ENTERED', data }),
+    });
+  }
+  return { applied, skipped };
 }
 
 async function reconcileProduct(key, opts, token) {
@@ -193,4 +252,9 @@ async function main() {
   if (opts.json) writeFileSync(opts.json, JSON.stringify({ generatedAt: new Date().toISOString(), apply: opts.apply, products: out }, null, 2));
 }
 
-main().catch((e) => { process.stderr.write(`gg-reconcile-status: ${e.stack || e.message}\n`); process.exit(1); });
+// CLI 入口守卫：仅在直接执行本文件时跑 main()；被 import（如 lib/backfill-tx.mjs 复用
+// flipRowsByPageId/PRODUCTS）时不触发 CLI 副作用。
+const invokedAsCli = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (invokedAsCli) {
+  main().catch((e) => { process.stderr.write(`gg-reconcile-status: ${e.stack || e.message}\n`); process.exit(1); });
+}

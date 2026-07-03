@@ -36,7 +36,7 @@
 //   GG_PREVIEW_WAIT_BIN     gg-preview-wait.mjs
 //   GG_PREVIEW_VERIFY_BIN   gg-preview-verify.mjs
 //   GG_REVIEW_WORKER_BIN    gg-article-review-worker.mjs
-//   GG_LARK_NOTIFY_BIN      gg-lark-notify.sh
+//   GG_NOTIFY_BIN           gg-notify.mjs（统一事件层 CLI；gate_fail 事件，@ 策略由事件表决定）
 //   GG_CODEX_BIN            codex PR factual-review wrapper (REQUIRED by default; absent ⇒ PARK,
 //                           unless GG_CODEX_GATE_REQUIRED=0 ⇒ legacy best-effort SKIPPED)
 //   GG_ORACLE_WORKTREE_ROOT / claim.worktree → <worktree>/data/articles/<slug>.ts
@@ -64,6 +64,8 @@ const FLOW = process.env.GG_FLOW_REPO || join(HOME, 'gengrowth-flow-mvp');
 const SCRIPTS = process.env.GG_SCRIPTS_DIR || join(FLOW, 'tools', 'scripts');
 
 export const DEFAULT_REPO = 'xdawayer/oracle';
+// 本 gate 只服务 oracle → astrologywiki.com 一条发布线；事件层的站点标签是字段不是品牌前缀。
+export const GATE_SITE = 'astrologywiki';
 export const EXIT = { PUBLISHED: 0, NOTHING_PENDING: 1, GATE_FAILED: 2 };
 export const REVIEW_DIMENSIONS = ['astrology', 'schema', 'links-seo'];
 const PREVIEW_STATUSES = new Set(['pushed-preview', 'verified-preview']);
@@ -103,7 +105,7 @@ export function bins() {
     previewWait: resolveBin('GG_PREVIEW_WAIT_BIN', 'gg-preview-wait.mjs'),
     previewVerify: resolveBin('GG_PREVIEW_VERIFY_BIN', 'gg-preview-verify.mjs'),
     reviewWorker: resolveBin('GG_REVIEW_WORKER_BIN', 'gg-article-review-worker.mjs'),
-    larkNotify: resolveBin('GG_LARK_NOTIFY_BIN', 'gg-lark-notify.sh'),
+    notify: resolveBin('GG_NOTIFY_BIN', 'gg-notify.mjs'), // 统一事件层 CLI（gate_fail；测试放假 bin 记 argv）
     codex: resolveCodexBin(), // REQUIRED by default — absent ⇒ PARK (GG_CODEX_GATE_REQUIRED=0 ⇒ legacy SKIPPED)
     gateRepair: resolveBin('GG_GATE_REPAIR_BIN', 'gg-gate-repair.mjs'), // surgical park-boundary repair (default-on; GG_GATE_REPAIR=0 disables)
   };
@@ -530,12 +532,16 @@ async function gateFail(o, B, deps, pgId, claim, reason, plan) {
   // legacy always-notify-on-park behavior.
   const notifyOnPark = process.env.GG_GATE_NOTIFY_ON_PARK === '1';
   if (notifyOnPark) {
-    const msg = `⚠️ SEO autopilot 发布 gate 未过 ${slug}（${o.branch}）：${reason} — PR 待人工`;
-    plan.push(`final: notify ${B.larkNotify} (@PM @Ops)`);
-    await runStep('bash', [B.larkNotify, msg], {
-      timeoutMs: o.statusTimeoutMs,
-      env: { ...process.env, GG_LARK_NOTIFY_AT_PM: '1', GG_LARK_NOTIFY_AT_OPS: '1' },
-    }, deps);
+    // 统一事件层（NOTIFY-CONTRACT.md）：gate_fail 事件 —— 调用点只传结构化字段，
+    // 模板与 @ 策略（PM+OPS）由事件表决定，不再在此拼消息／设 AT env。
+    plan.push(`final: notify gate_fail via ${B.notify}（@PM @Ops 由事件表决定）`);
+    await node(B.notify, [
+      'gate_fail',
+      '--site', GATE_SITE,
+      '--slug', String(slug),
+      '--branch', String(o.branch),
+      '--reason', String(reason),
+    ], { timeoutMs: o.statusTimeoutMs });
   } else {
     plan.push('final: park notify SUPPRESSED (intermediate state — recover & re-gate, or notify Feishu explicitly only on true abandonment; set GG_GATE_NOTIFY_ON_PARK=1 to re-enable)');
   }

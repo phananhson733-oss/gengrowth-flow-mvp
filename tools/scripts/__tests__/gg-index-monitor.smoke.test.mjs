@@ -8,6 +8,7 @@ import { dirname, join } from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { TABS } from '../lib/_workbook-spec.mjs';
+import { renderTemplate } from '../lib/gg-notify.mjs';
 import {
   INDEX_TRACKING_HEADER,
   INDEX_TRACKING_TAB,
@@ -33,6 +34,7 @@ import {
   rowToSheetValues,
   runIndexMonitor,
   sheetValuesToRow,
+  siteTagFor,
   submitSitemap,
 } from '../gg-index-monitor.mjs';
 
@@ -537,7 +539,7 @@ test('mergeInspectionIntoRow writes the Chinese monitoring lifecycle status', ()
 });
 
 test('formatAlertMessage uses the D+14 indexing overdue reminder format', () => {
-  const message = formatAlertMessage({
+  const body = formatAlertMessage({
     title: 'Lifecycle Test',
     url: 'https://www.astrologywiki.com/en/wiki/lifecycle',
     page_id: 'PG-LIFE',
@@ -552,8 +554,13 @@ test('formatAlertMessage uses the D+14 indexing overdue reminder format', () => 
     recommendation: 'fallback',
   });
 
-  assert.match(message, /^🔍 索引诊断报告/m);
-  assert.match(message, /页面：Lifecycle Test/);
+  // 正文不再自带头——头由事件层 index_diagnosis 模板统一渲染（@ 策略 PM+OPS）。
+  assert.doesNotMatch(body, /索引诊断报告/);
+  const rendered = renderTemplate('index_diagnosis', { site: 'astrologywiki', body });
+  assert.equal(rendered.atPm, true);
+  assert.equal(rendered.atOps, true);
+  const message = rendered.text;
+  assert.match(message, /^🔍 \[astrologywiki\] 索引诊断报告\n页面：Lifecycle Test/);
   assert.match(message, /URL：https:\/\/www\.astrologywiki\.com\/en\/wiki\/lifecycle/);
   assert.match(message, /GSC 状态：Crawled - currently not indexed/);
   assert.match(message, /诊断结论：内容质量不足/);
@@ -561,10 +568,18 @@ test('formatAlertMessage uses the D+14 indexing overdue reminder format', () => 
   assert.match(message, /处理完成后：系统将自动刷新 sitemap 并进入 request-indexing-queue/);
 });
 
+test('siteTagFor maps GSC site strings to unified notify site tags', () => {
+  assert.equal(siteTagFor('sc-domain:astrologywiki.com'), 'astrologywiki');
+  assert.equal(siteTagFor('sc-domain:gengrowth.ai'), 'gengrowth');
+  assert.equal(siteTagFor('https://www.gengrowth.ai/'), 'gengrowth');
+  assert.equal(siteTagFor('sc-domain:example.com'), 'example');
+  assert.equal(siteTagFor(undefined), 'astrologywiki'); // DEFAULT_SITE
+});
+
 test('runIndexMonitor sends the diagnosis report during the same D+14 check', async () => {
   let updated = null;
   const events = [];
-  const code = await runIndexMonitor(['--check-due', '--write-sheet', '--workbook', 'wb-test'], {
+  const code = await runIndexMonitor(['--check-due', '--write-sheet', '--workbook', 'wb-test', '--site', 'sc-domain:astrologywiki.com'], {
     now: new Date('2026-06-24T09:00:00Z'),
     sheetToken: 'sheet-token',
     gscToken: 'gsc-token',
@@ -595,12 +610,14 @@ test('runIndexMonitor sends the diagnosis report during the same D+14 check', as
       events.push('update');
       updated = { token, workbookId, tabName, rowNumber, row };
     },
-    notify: (message) => {
+    notify: (event, fields) => {
       events.push('notify');
-      assert.match(message, /^🔍 索引诊断报告/m);
-      assert.match(message, /GSC 状态：Crawled - currently not indexed/);
-      assert.match(message, /诊断结论：内容质量不足/);
-      assert.match(message, /□ 检查字数（当前 760，目标 ≥ 1,200 词）/);
+      assert.equal(event, 'index_diagnosis');
+      assert.equal(fields.site, 'astrologywiki');
+      assert.match(fields.body, /GSC 状态：Crawled - currently not indexed/);
+      assert.match(fields.body, /诊断结论：内容质量不足/);
+      assert.match(fields.body, /□ 检查字数（当前 760，目标 ≥ 1,200 词）/);
+      assert.match(renderTemplate(event, fields).text, /^🔍 \[astrologywiki\] 索引诊断报告\n/);
     },
   });
 
@@ -644,8 +661,8 @@ test('runIndexMonitor sends a D+30 upgrade even after an earlier lower-level ale
     updateTrackingRow: async (token, workbookId, tabName, rowNumber, row) => {
       updated = { token, workbookId, tabName, rowNumber, row };
     },
-    notify: (message) => {
-      notified = message;
+    notify: (event, fields) => {
+      notified = { event, fields };
     },
   });
 
@@ -653,7 +670,8 @@ test('runIndexMonitor sends a D+30 upgrade even after an earlier lower-level ale
   assert.equal(updated.row.monitor_status, 'needs_focus');
   assert.equal(updated.row.alert_level, 'P1');
   assert.equal(updated.row.alert_sent_at, '2026-06-24');
-  assert.match(notified, /D30 Test/);
+  assert.equal(notified.event, 'index_diagnosis');
+  assert.match(notified.fields.body, /D30 Test/);
 });
 
 test('recapRowFromTrackingRow presents latest GSC URL Inspection status in result recap fields', () => {
@@ -775,9 +793,11 @@ test('launchd wrapper runs only the lightweight index monitor check', () => {
   assert.match(wrapper, /--sync-request-queue/);
   assert.match(wrapper, /--write-sheet/);
   assert.match(wrapper, /--require-gsc-auth/);
-  assert.match(wrapper, /rc=\$\{rc\}）。请查看 \$\{LOG\}/);
-  assert.match(wrapper, /rc=\$\{rc\}）。请查看 \$\{LOG\}；/);
-  assert.match(wrapper, /GSC reader SA 权限/);
+  // 失败通知走统一事件层 CLI（index_tick_fail，@ 策略由事件表决定，不再散装 AT env）。
+  assert.match(wrapper, /gg-notify\.mjs" index_tick_fail --site flow --rc "\$rc" --log "\$LOG" --hint "部分失败或超时。"/);
+  assert.match(wrapper, /gg-notify\.mjs" index_tick_fail --site flow --rc "\$rc" --log "\$LOG" --hint "常见原因是 GSC reader SA 权限不足，需要在 Search Console 为 reader SA 添加 Full user。"/);
+  assert.doesNotMatch(wrapper, /gg-lark-notify\.sh/);
+  assert.doesNotMatch(wrapper, /GG_LARK_NOTIFY_AT_/);
   assert.doesNotMatch(wrapper, /oauth-init|refresh_token|Google OAuth/);
   assert.doesNotMatch(wrapper, /gg-seo-autopilot-tick|gg-seo-author-tick/);
 
@@ -802,6 +822,10 @@ test('repair resubmit wrapper loops products without unattended request-indexing
   assert.match(wrapper, /--sync-request-queue --write-sheet/);
   assert.doesNotMatch(wrapper, /--sync-request-queue --write-sheet --notify/);
   assert.doesNotMatch(wrapper, /--check-due|--sync-published|gsc-index-submit|Google Indexing API/);
+  // 失败通知走统一事件层 CLI（index_tick_fail，hint=修复重提；@ 策略由事件表决定）。
+  assert.match(wrapper, /gg-notify\.mjs" index_tick_fail --site flow --rc "\$rc" --log "\$LOG" --hint "修复重提 lane。"/);
+  assert.doesNotMatch(wrapper, /gg-lark-notify\.sh/);
+  assert.doesNotMatch(wrapper, /GG_LARK_NOTIFY_AT_/);
 });
 
 test('index monitor automation mints Sheets tokens from service account, not testing OAuth', () => {
@@ -809,6 +833,17 @@ test('index monitor automation mints Sheets tokens from service account, not tes
   assert.doesNotMatch(src, /_oauth-token\.mjs/);
   assert.match(src, /spreadsheets/);
   assert.match(src, /getSaAccessToken/);
+});
+
+test('index monitor notifies through the unified event layer, not the legacy lark shell', () => {
+  const src = readFileSync(join(SCRIPTS, 'gg-index-monitor.mjs'), 'utf8');
+  // 统一事件层：import lib/gg-notify.mjs，删除 execFileSync(bash gg-lark-notify.sh) 与散装 AT env。
+  assert.match(src, /from '\.\/lib\/gg-notify\.mjs'/);
+  assert.doesNotMatch(src, /gg-lark-notify\.sh/);
+  assert.doesNotMatch(src, /GG_LARK_NOTIFY_AT_/);
+  assert.doesNotMatch(src, /execFileSync/);
+  // 门控保持原位原语义。
+  assert.match(src, /GG_INDEX_MONITOR_NO_NOTIFY/);
 });
 
 test('runIndexMonitor --ensure-tab creates the tracking sheet without GSC calls', async () => {
@@ -1305,12 +1340,48 @@ test('submitSitemap uses the official Search Console Sitemaps submit endpoint', 
   assert.equal(seen.init.method, 'PUT');
 });
 
+test('runIndexMonitor --submit-sitemap notifies through unified index_sitemap_* events', async () => {
+  const sent = [];
+  const okCode = await runIndexMonitor(['--submit-sitemap', '--notify', '--site', 'sc-domain:astrologywiki.com'], {
+    gscWriteToken: 'gsc-write-token',
+    submitSitemap: async () => ({}),
+    notify: (event, fields) => { sent.push({ event, fields }); },
+  });
+  assert.equal(okCode, 0);
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].event, 'index_sitemap_ok');
+  assert.equal(sent[0].fields.site, 'astrologywiki');
+  assert.equal(
+    renderTemplate(sent[0].event, sent[0].fields).text,
+    '✅ [astrologywiki] sitemap 已刷新：https://www.astrologywiki.com/sitemap.xml',
+  );
+
+  const failCode = await runIndexMonitor([
+    '--submit-sitemap', '--notify',
+    '--site', 'sc-domain:gengrowth.ai',
+    '--sitemap-url', 'https://www.gengrowth.ai/sitemap.xml',
+  ], {
+    gscWriteToken: 'gsc-write-token',
+    submitSitemap: async () => { throw new Error('quota exceeded'); },
+    notify: (event, fields) => { sent.push({ event, fields }); },
+  });
+  assert.equal(failCode, 1);
+  assert.equal(sent.length, 2);
+  assert.equal(sent[1].event, 'index_sitemap_fail');
+  assert.equal(sent[1].fields.site, 'gengrowth');
+  assert.match(sent[1].fields.err, /quota exceeded/);
+  assert.match(
+    renderTemplate(sent[1].event, sent[1].fields).text,
+    /^⚠️ \[gengrowth\] sitemap 刷新失败：https:\/\/www\.gengrowth\.ai\/sitemap\.xml（.*quota exceeded.*）$/,
+  );
+});
+
 test('runIndexMonitor --process-fixed resubmits fixed rows and writes tracking timestamps', async () => {
   const events = [];
   let trackingUpdate = null;
   let recapUpdate = null;
   let notified = null;
-  const code = await runIndexMonitor(['--process-fixed', '--write-sheet', '--notify', '--workbook', 'wb-test'], {
+  const code = await runIndexMonitor(['--process-fixed', '--write-sheet', '--notify', '--workbook', 'wb-test', '--site', 'sc-domain:astrologywiki.com'], {
     now: new Date('2026-06-24T12:34:56.000Z'),
     sheetToken: 'sheet-token',
     gscWriteToken: 'gsc-write-token',
@@ -1357,8 +1428,8 @@ test('runIndexMonitor --process-fixed resubmits fixed rows and writes tracking t
     formatRecapStatus: async () => {
       events.push({ type: 'format-recap' });
     },
-    notify: (message) => {
-      notified = message;
+    notify: (event, fields) => {
+      notified = { event, fields };
     },
   });
 
@@ -1380,7 +1451,11 @@ test('runIndexMonitor --process-fixed resubmits fixed rows and writes tracking t
   assert.equal(recapUpdate.row.索引修复状态, '已重新提交');
   assert.equal(recapUpdate.row.申请时间, '2026-06-24');
   assert.equal(recapUpdate.row.记录日期, '2026-06-24');
-  assert.match(notified, /已重新提交修复 URL：1 条/);
+  assert.equal(notified.event, 'index_resubmit_ok');
+  assert.equal(notified.fields.site, 'astrologywiki');
+  assert.equal(notified.fields.count, 1);
+  assert.match(notified.fields.body, /request-indexing-queue；GSC Request Indexing 最终点击需人工确认/);
+  assert.match(renderTemplate(notified.event, notified.fields).text, /^✅ \[astrologywiki\] 已重新提交修复 URL：1 条\nSitemap：/);
 });
 
 test('buildRequestIndexingCandidateRows prioritizes non-indexed page_id-backed rows for assisted submission', () => {
@@ -1455,7 +1530,7 @@ test('runIndexMonitor --sync-request-queue writes queue rows and sends Feishu no
   let queued = null;
   let formatted = null;
   let notified = null;
-  const code = await runIndexMonitor(['--sync-request-queue', '--write-sheet', '--notify', '--workbook', 'wb-test'], {
+  const code = await runIndexMonitor(['--sync-request-queue', '--write-sheet', '--notify', '--workbook', 'wb-test', '--site', 'sc-domain:astrologywiki.com'], {
     now: new Date('2026-06-25T00:00:00Z'),
     sheetToken: 'sheet-token',
     ensureRequestQueueTab: async () => REQUEST_INDEXING_QUEUE_TAB,
@@ -1483,8 +1558,8 @@ test('runIndexMonitor --sync-request-queue writes queue rows and sends Feishu no
     formatRequestQueue: async () => {
       formatted = true;
     },
-    notify: (message) => {
-      notified = message;
+    notify: (event, fields) => {
+      notified = { event, fields };
     },
   });
 
@@ -1492,6 +1567,13 @@ test('runIndexMonitor --sync-request-queue writes queue rows and sends Feishu no
   assert.equal(queued.tabName, REQUEST_INDEXING_QUEUE_TAB);
   assert.equal(queued.rows.length, 1);
   assert.equal(queued.rows[0].priority, 'P1');
-  assert.match(notified, /Request Indexing 候选/);
+  assert.equal(notified.event, 'index_queue');
+  assert.equal(notified.fields.site, 'astrologywiki');
+  assert.match(notified.fields.body, /^共 1 条\n优先级：P0=0 \/ P1=1 \/ P2=0 \/ P3=0/);
+  assert.match(notified.fields.body, /Top 候选：\nP1 PG-CONTENT /);
+  assert.match(
+    renderTemplate(notified.event, notified.fields).text,
+    /^⚠️ \[astrologywiki\] Request Indexing 候选队列已更新：共 1 条\n/,
+  );
   assert.equal(formatted, true);
 });

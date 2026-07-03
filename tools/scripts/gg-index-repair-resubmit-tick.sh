@@ -93,13 +93,15 @@ echo "$(date '+%F %T') index repair-resubmit start (pid $$)" >> "$LOG"
 ) >> "$LOG" 2>&1
 rc=$?
 
+# 统一事件层（NOTIFY-CONTRACT.md）：index_tick_fail 事件（hint=修复重提），@ 策略（OPS）
+# 由事件表决定，不再散装 AT env；触发条件（rc 非 0）保持原位原语义。
 case "$rc" in
   0)
     echo "$(date '+%F %T') index repair-resubmit ok" >> "$LOG"
     ;;
   *)
     echo "$(date '+%F %T') index repair-resubmit failed rc=$rc" >> "$LOG"
-    GG_LARK_NOTIFY_AT_OPS=1 "$SCRIPT_DIR/gg-lark-notify.sh" "⚠️ 索引修复重提运行失败（rc=${rc}）。请查看 ${LOG}。"
+    node "$SCRIPT_DIR/gg-notify.mjs" index_tick_fail --site flow --rc "$rc" --log "$LOG" --hint "修复重提 lane。" >> "$LOG" 2>&1
     ;;
 esac
 

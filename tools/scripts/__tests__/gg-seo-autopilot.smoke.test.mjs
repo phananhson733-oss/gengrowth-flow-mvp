@@ -14,9 +14,10 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { createServer } from 'node:http';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SCRIPT = join(__dirname, '..', 'gg-seo-autopilot.mjs');
@@ -54,6 +55,31 @@ function runAuto(h, args, extraEnv = {}) {
       GG_AUTOPILOT_NO_NOTIFY: '1', // never send a real Feishu push from tests
       ...extraEnv,
     },
+  });
+}
+
+// 异步版 runAuto：通知用例的本地飞书 mock server 跑在测试进程里，spawnSync 会把
+// 事件循环卡死（server 无法应答 → 子进程 fetch 超时）。凡是需要 mock server 存活
+// 的用例必须用这个异步 runner。
+function runAutoAsync(h, args, extraEnv = {}) {
+  return new Promise((resolve) => {
+    const child = spawn(process.execPath, [SCRIPT, ...args], {
+      cwd: join(__dirname, '..', '..', '..'),
+      env: {
+        ...process.env,
+        PATH: `${h.bin}:${process.env.PATH}`,
+        GG_OPS_DIR: h.ops,
+        GG_ORACLE_DIR: h.oracle,
+        GG_FLOW_REPO: join(__dirname, '..', '..', '..'),
+        GG_AUTOPILOT_NO_NOTIFY: '1', // never send a real Feishu push from tests
+        ...extraEnv,
+      },
+    });
+    let stdout = '';
+    let stderr = '';
+    child.stdout.on('data', (d) => (stdout += d));
+    child.stderr.on('data', (d) => (stderr += d));
+    child.on('close', (status) => resolve({ status, stdout, stderr }));
   });
 }
 
@@ -666,6 +692,76 @@ test('--stale-report flags in-flight claims past their lease, read-only, exclude
     // READ-ONLY: the ledger must be byte-identical after a stale report.
     assert.equal(readFileSync(h.claimsPath, 'utf8'), before, '--stale-report must not mutate the ledger');
   } finally {
+    h.cleanup();
+  }
+});
+
+// 阶段 1（通知统一）：--merge 的发布通报走统一事件层（lib/gg-notify 的 published 事件），
+// 模板文案与 @ 策略由事件表决定，不再裸拼「SEO autopilot …」字符串。传输指向本地 http
+// mock（GG_LARK_API_BASE），状态目录/凭据/审计日志全部 env 覆盖——绝不碰真网络/真飞书。
+test('--merge sends the published event through the unified notify layer (contract template, no @)', async () => {
+  const h = makeHarness();
+  const requests = [];
+  const server = createServer((req, res) => {
+    let raw = '';
+    req.on('data', (c) => (raw += c));
+    req.on('end', () => {
+      let body = {};
+      try { body = raw ? JSON.parse(raw) : {}; } catch { /* keep raw-less */ }
+      requests.push({ url: req.url, body });
+      res.setHeader('content-type', 'application/json');
+      if (req.url.startsWith('/open-apis/auth/v3/tenant_access_token/internal')) {
+        res.end(JSON.stringify({ code: 0, tenant_access_token: 't-test' }));
+        return;
+      }
+      res.end(JSON.stringify({ code: 0, data: { message_id: 'om_test' } }));
+    });
+  });
+  await new Promise((r) => server.listen(0, '127.0.0.1', r));
+  try {
+    initOracleWithOrigin(h);
+    const flow = writeStubFlow(h); // _staging/PG-TEST-001-en.md：slug=test-slug、author_id=test-author、无 title
+    writeFileSync(join(h.bin, 'gh'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
+    writeFileSync(join(h.tasks, '2026-06-03-blog-output-plan.md'), '- [ ] `PG-TEST-001` test keyword\n');
+    const hermes = join(h.root, 'hermes.env');
+    writeFileSync(hermes, 'FEISHU_APP_ID=cli_test\nFEISHU_APP_SECRET=sec_test\n');
+    const emptyEnvFile = join(h.root, 'empty-gg.env'); // 屏蔽宿主机 ~/.config/gg/_gg.env，保持用例封闭
+    writeFileSync(emptyEnvFile, '');
+    writeClaims(h, {
+      'PG-TEST-001': {
+        status: 'verified-preview',
+        branch: 'seo/auto/2026-06-03-PG-TEST-001',
+        slug: 'test-slug',
+        previewUrl: 'https://example-preview.vercel.app',
+      },
+    });
+
+    const r = await runAutoAsync(h, ['--merge', '--branch', 'seo/auto/2026-06-03-PG-TEST-001'], {
+      GG_FLOW_REPO: flow,
+      GG_AUTOPILOT_NO_NOTIFY: '', // 打开通知（覆盖 harness 默认的 '1'）——传输已指向本地 mock
+      GG_ENV_FILE: emptyEnvFile,
+      GG_LARK_API_BASE: `http://127.0.0.1:${server.address().port}`,
+      GG_FLOW_STATE_DIR: join(h.root, 'flow-state'),
+      GG_LARK_AUDIT_LOG: join(h.root, 'lark-audit.log'),
+      HERMES_ENV: hermes,
+      GG_LARK_SEND_RETRIES: '0',
+      GG_LARK_NOTIFY_SILENCE: '',
+      GG_LARK_NOTIFY_CHAT_ID: 'oc_test_chat',
+    });
+
+    assert.equal(r.status, 0, `${r.stdout}${r.stderr}`);
+    const msgs = requests.filter((q) => q.url.startsWith('/open-apis/im/v1/messages'));
+    assert.equal(msgs.length, 1, `expected exactly one Feishu message, got ${msgs.length}`);
+    const text = JSON.parse(msgs[0].body.content).text;
+    // published 事件模板（NOTIFY-CONTRACT.md 逐字）：统一头 + [astrologywiki] 站点标签。
+    assert.equal(
+      text,
+      '✅ [astrologywiki] 已发布上线：test-slug\nhttps://www.astrologywiki.com/en/wiki/test-slug\n（作者 test-author，已登记到 ops）',
+    );
+    assert.doesNotMatch(text, /<at user_id=/, 'published 事件按事件表不 @ 任何人');
+    assert.equal(msgs[0].body.receive_id, 'oc_test_chat');
+  } finally {
+    server.close();
     h.cleanup();
   }
 });

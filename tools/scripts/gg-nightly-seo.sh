@@ -7,6 +7,8 @@
 # Clean articles merge to prod automatically; anything the codex fact-gate or links-seo gate
 # rejects PARKS at needs_human and fires a Lark notify (the safety net — full-auto never ships
 # wrong facts). Idempotent: skips items already live or already needs_human-parked.
+# Run end: gg-batch-summary verifies this window's ledger entries live and pushes ONE
+# batch_summary notify（统一事件层，契约见 tools/scripts/lib/NOTIFY-CONTRACT.md）.
 #
 # Anti-contamination: GG_AUTOPILOT_PLAN is PINNED to the astrology W22 plan. latestPlan() would
 # otherwise default to the later-dated gengrowth W25 plan and could sweep B2B drafts in _staging/
@@ -38,12 +40,18 @@ trap 'rmdir "$LOCK" 2>/dev/null || true' EXIT
 # full cron env (a bare cron inherits neither _gg.env nor the plist env)
 export PATH="$HOME/.local/bin:$HOME/.npm-global/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 set -a; . "$HOME/.config/gg/_gg.env" 2>/dev/null || true; set +a
+
+# 重放 outbox 里发送失败的积压通知（fail-closed 的补发闭环；无积压时零开销）。
+node "$FLOW/tools/scripts/gg-notify.mjs" replay-outbox >/dev/null 2>&1 || true
 unset GG_AUTOPILOT_MODE        # publish-only mode would refuse to author
 unset GG_SITE                  # oracle/astrology default; do NOT set to gengrowth
 export GG_CODEX_BIN="$FLOW/tools/scripts/gg-codex-pr-review.mjs"   # plist env on the other lanes
 
 cd "$FLOW" || { echo "no $FLOW"; exit 1; }
 [ -f "$PLAN" ] || { echo "plan not found: $PLAN"; exit 1; }
+
+# 批次窗口起点（开跑前记录）：结束后 gg-batch-summary --since 用它圈定本轮 ledger 条目。
+RUN_START="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
 # Collect unchecked plan items: "- [ ] `PG-XXX-NN` keyword..."  →  "PG-XXX-NN<TAB>keyword"
 ITEMS="$(grep -nE '^- \[ \] *`?PG-[A-Z]+-[0-9]+' "$PLAN" \
@@ -92,6 +100,11 @@ while IFS=$'\t' read -r pid kw; do
     && echo "$pid: MERGED → live" \
     || echo "$pid: gate parked (codex/links/verify) — needs_human + Lark notify fired"
 done <<< "$ITEMS"
+
+# 批次汇总（阶段 1 · 通知统一，契约见 tools/scripts/lib/NOTIFY-CONTRACT.md）：
+# 逐篇线上核实本窗口内 done/needs_human 的 ledger 条目并推送一条 batch_summary。
+# 全部核实通过不@；部分完成 @OPS；窗口内无条目 exit 2（不发送）。失败不影响 nightly 退出码。
+node "$FLOW/tools/scripts/gg-batch-summary.mjs" --since "$RUN_START" --site astrologywiki || true
 
 echo ""
 echo "===== nightly-seo done: attempted=$n $(date '+%F %T %Z') ====="

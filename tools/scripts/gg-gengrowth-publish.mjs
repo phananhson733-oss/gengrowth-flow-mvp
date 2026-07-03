@@ -11,8 +11,10 @@
 //   3. upsert the not-yet-live ones via the bridge gg-md-to-gengrowth-blog.mjs --emit rest
 //   4. verify live (Supabase row status=published)
 //   5. POST-PUBLISH — vault archive (gg-archive-to-vault.mjs) + per-article
-//      Hermes-bot notification. Ordinary articles are not submitted through the
-//      Google article indexing API; monitoring belongs in the index tracker.
+//      notification via the unified event layer (lib/gg-notify.mjs — templates and
+//      @ policy live in NOTIFY-CONTRACT.md, NOT here). Ordinary articles are not
+//      submitted through the Google article indexing API; monitoring belongs in the
+//      index tracker.
 // Idempotent; DRY-RUN by default (the factual gate + post-publish steps run only on --apply).
 //
 // "ready" = _staging/PG-<W25prefix>-NNN-<llm>-v8.md WITH a sibling .manifest.json whose
@@ -34,6 +36,10 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseFrontmatter } from './gg-md-to-oracle-ts.mjs';
+// 统一通知事件层（阶段 1 · 通知统一）：调用点只传结构化字段，模板与 @ 策略集中在
+// lib/gg-notify.mjs（单一事实源 NOTIFY-CONTRACT.md）。notify 永不 throw、对 caller 永远
+// best-effort（fail-closed 传输 + outbox 兜底在 lib/lark-send.mjs 内部完成）。
+import { notify } from './lib/gg-notify.mjs';
 // Reuse Lane B's authoritative codex-verdict classifier so the factual gate is
 // IDENTICAL across both lanes (no fork/drift): FAIL dominates, exactly-one-bare-PASS
 // passes, anything else (timeout / nonzero / no-verdict / ambiguous) → SKIPPED.
@@ -43,7 +49,6 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO = resolve(__dirname, '..', '..');
 const HOME = process.env.HOME || '';
 const BRIDGE = join(__dirname, 'gg-md-to-gengrowth-blog.mjs');
-const LARK = join(__dirname, 'gg-lark-notify.sh');
 // Parity with Lane B (oracle): same factual reviewer and same vault archive.
 // Only the inputs differ (a file vs a PR; a gengrowth URL vs an oracle URL).
 const CODEX_BIN = process.env.GG_CODEX_BIN || join(__dirname, 'gg-codex-pr-review.mjs');
@@ -76,10 +81,6 @@ function parseArgs(argv) {
   // Env GG_GENGROWTH_PUBLISH_LIMIT lets the cron tick set it without editing args.
   if (a.limit == null) a.limit = parseInt(process.env.GG_GENGROWTH_PUBLISH_LIMIT || '0', 10) || 0;
   return a;
-}
-
-function larkBestEffort(msg) {
-  try { execFileSync('bash', [LARK, msg], { stdio: 'ignore', timeout: 20000 }); } catch { /* never throw */ }
 }
 
 // ── Pre-publish factual gate (parity with Lane B's gg-preview-gate step 4b) ──────
@@ -249,7 +250,7 @@ async function main() {
   if (args.apply && !SB_KEY) {
     // FAIL-SAFE: never crash the cron on missing auth; alert + clean exit.
     console.error('gg-gengrowth-publish: --apply but SB_KEY missing — skipping (auth not available).');
-    larkBestEffort('⚠️ gengrowth 发布 ticker：SB_KEY 缺失（supabase 会话过期？），本轮跳过。重登：supabase login');
+    await notify('auth_missing', { site: 'gengrowth', what: 'SB_KEY', hint: 'supabase login' });
     process.exit(0);
   }
 
@@ -296,7 +297,8 @@ async function main() {
         } else {
           parked++;
           console.log(`  ⛔ ${d.pageId.padEnd(12)} ${(d.slug || '-').padEnd(40)} PARKED by factual gate: ${fr.reason}`);
-          larkBestEffort(`⚠️ gengrowth 事实门未过（needs_human）：${d.pageId}（${d.slug}）— ${fr.reason}。已跳过发布，待人工核对后再发。`);
+          // @ 策略变更（有意，见契约「迁移映射」）：Lane A 事实门未过原本零 @，统一后 PM+OPS。
+          await notify('fact_gate_fail', { site: 'gengrowth', pid: d.pageId, slug: d.slug, reason: fr.reason });
           continue;
         }
       }
@@ -322,11 +324,12 @@ async function main() {
       // instead of one aggregate ticker — one Hermes-bot message per published article.
       let title = d.slug;
       try { title = (parseFrontmatter(readFileSync(d.mdPath, 'utf8')).frontmatter.title || d.slug).toString().trim(); } catch { /* */ }
-      if (ok) larkBestEffort(`✅ SEO autopilot 已发布上线：${title}\n${SITE_HOST}${URL_PATH}${d.slug}\n（gengrowth.ai 博客）`);
+      if (ok) await notify('published', { site: 'gengrowth', title, url: `${SITE_HOST}${URL_PATH}${d.slug}`, extra: 'gengrowth.ai 博客' });
     } catch (e) {
       failed++;
       console.error(`  ✖ ${d.pageId} (${d.slug}) failed: ${e.message}`);
-      larkBestEffort(`⚠️ gengrowth 发布失败：${d.pageId} (${d.slug}) — ${e.message}`);
+      // @ 策略变更（有意，见契约「迁移映射」）：发布失败原本零 @，统一后 OPS。
+      await notify('publish_fail', { site: 'gengrowth', pid: d.pageId, slug: d.slug, msg: e.message });
     }
   }
   console.log(`\n=== done: published=${published} verified=${verified} parked=${parked} failed=${failed} ===`);
@@ -334,5 +337,10 @@ async function main() {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  main().catch((e) => { console.error(`gg-gengrowth-publish ERROR: ${e.message}`); larkBestEffort(`✖ gengrowth 发布 ticker 异常：${e.message}`); process.exit(0); });
+  // 原 Lane A 异常字形 `✖` 统一为事件层的 `⚠️`（契约：废弃 ✖）；@ 策略变更（有意）：原零 @，统一后 OPS。
+  main().catch(async (e) => {
+    console.error(`gg-gengrowth-publish ERROR: ${e.message}`);
+    await notify('ticker_error', { site: 'gengrowth', msg: e.message });
+    process.exit(0);
+  });
 }

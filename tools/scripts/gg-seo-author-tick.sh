@@ -44,6 +44,9 @@
 export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# 重放 outbox 里发送失败的积压通知（fail-closed 的补发闭环；无积压时零开销）。
+node "$SCRIPT_DIR/gg-notify.mjs" replay-outbox >/dev/null 2>&1 || true
 LOCK="/tmp/gg-seo-author.lock"
 LOG_DIR="$HOME/gengrowth-agents/cron-sync/seo_author"
 mkdir -p "$LOG_DIR"
@@ -91,7 +94,8 @@ echo "$(date '+%F %T') author tick start (pid $$, batch $BATCH, cap ${TICK_TIMEO
   set -a; . "$HOME/.config/gg/_gg.env" 2>/dev/null; set +a
   node "$SCRIPT_DIR/gg-autopilot-preflight.mjs" --skip-live-cli >> "$LOG" 2>&1
 ) || {
-  GG_LARK_NOTIFY_AT_OPS=1 "$SCRIPT_DIR/gg-lark-notify.sh" "⚠️ SEO author lane preflight failed on Mac mini — env broken (see $LOG). Skipping this fire."
+  # 统一事件层（NOTIFY-CONTRACT.md）：@ 策略由事件表决定（preflight_fail → OPS），不再散装 AT env。
+  node "$SCRIPT_DIR/gg-notify.mjs" preflight_fail --lane seo-author --log "$LOG"
   exit 2
 }
 
@@ -120,17 +124,22 @@ if [ "$_rc" -ne 0 ]; then
   # a half-baked article. (Workers are reaped by the orchestrator's SIGTERM handler on a gtimeout
   # cap-hit, or by its in-flight watchdog if it outlives the signal; see ORPHAN CLEANUP header note.)
   echo "$(date '+%F %T') author fire rc=$_rc (cap/err) — incomplete; not announcing (worker groups killed by the orchestrator SIGTERM handler)" >> "$LOG"
-  [ "$_rc" -eq 124 ] && GG_LARK_NOTIFY_AT_OPS=1 "$SCRIPT_DIR/gg-lark-notify.sh" "⚠️ SEO author lane：撰写超 ${TICK_TIMEOUT}s 被硬杀，本炮放弃（草稿可能半成品，未上报）。"
+  [ "$_rc" -eq 124 ] && node "$SCRIPT_DIR/gg-notify.mjs" lane_timeout --lane seo-author --seconds "$TICK_TIMEOUT"
 else
   # Clean exit only: Feishu on a fresh park (needs a human) or a freshly-authored draft. The
   # publish-only lane picks up an authored draft on its next fire and publishes it.
   PARK=$(printf '%s\n' "$AOUT" | grep -oE 'PARK\(author\) .*' | head -1)
   DONE=$(printf '%s\n' "$AOUT" | grep -oE 'AUTHORED PG-[A-Z0-9-]+ [^—]*' | head -1)
   if [ -n "$PARK" ]; then
-    GG_LARK_NOTIFY_AT_PM=1 GG_LARK_NOTIFY_AT_OPS=1 "$SCRIPT_DIR/gg-lark-notify.sh" "⚠️ SEO author lane 写稿暂停（needs_human）：$PARK"
+    # 统一事件层（parked → PM+OPS，由事件表决定）。驱动器输出形如「PARK(author) PG-XXX: 原因」，
+    # 解析出结构化 pid/reason；解析不出 pid 时整段作 reason（契约允许）。该行不含 slug，故不传。
+    PARK_PID=$(printf '%s\n' "$PARK" | grep -oE 'PG-[A-Z0-9-]+' | head -1)
+    PARK_REASON=$(printf '%s\n' "$PARK" | sed -E 's/^PARK\(author\) //; s/^PG-[A-Z0-9-]+:[[:space:]]*//')
+    node "$SCRIPT_DIR/gg-notify.mjs" parked --site astrologywiki --pid "$PARK_PID" --reason "$PARK_REASON"
   fi
   if [ -n "$DONE" ]; then
-    "$SCRIPT_DIR/gg-lark-notify.sh" "✍️ SEO author lane 写好一篇：$DONE— 待 publish lane 发布"
+    # 统一事件层（authored → 不@）。detail 沿用原拼接：AUTHORED 摘要 + 去向说明。
+    node "$SCRIPT_DIR/gg-notify.mjs" authored --site astrologywiki --detail "${DONE}— 待 publish lane 发布"
   fi
 fi
 

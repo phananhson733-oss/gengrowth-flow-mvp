@@ -22,6 +22,9 @@
 export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$HOME/.npm-global/bin:$HOME/.local/bin:$PATH"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# 重放 outbox 里发送失败的积压通知（fail-closed 的补发闭环；无积压时零开销）。
+node "$SCRIPT_DIR/gg-notify.mjs" replay-outbox >/dev/null 2>&1 || true
 LOG_DIR="$HOME/gengrowth-agents/cron-sync/index_monitor"
 mkdir -p "$LOG_DIR"
 LOG="$LOG_DIR/$(date +%Y-%m-%d).log"
@@ -98,17 +101,19 @@ echo "$(date '+%F %T') index monitor start (pid $$, limit $LIMIT)" >> "$LOG"
 ) >> "$LOG" 2>&1
 rc=$?
 
+# 统一事件层（NOTIFY-CONTRACT.md）：index_tick_fail 事件，@ 策略（OPS）由事件表决定，
+# 不再散装 AT env；触发条件（rc 分支）保持原位原语义。
 case "$rc" in
   0)
     echo "$(date '+%F %T') index monitor ok" >> "$LOG"
     ;;
   2|124)
     echo "$(date '+%F %T') index monitor partial/timeout rc=$rc" >> "$LOG"
-    GG_LARK_NOTIFY_AT_OPS=1 "$SCRIPT_DIR/gg-lark-notify.sh" "⚠️ 索引监控部分失败或超时（rc=${rc}）。请查看 ${LOG}"
+    node "$SCRIPT_DIR/gg-notify.mjs" index_tick_fail --site flow --rc "$rc" --log "$LOG" --hint "部分失败或超时。" >> "$LOG" 2>&1
     ;;
   *)
     echo "$(date '+%F %T') index monitor failed rc=$rc" >> "$LOG"
-    GG_LARK_NOTIFY_AT_OPS=1 "$SCRIPT_DIR/gg-lark-notify.sh" "⚠️ 索引监控运行失败（rc=${rc}）。请查看 ${LOG}；常见原因是 GSC reader SA 权限不足，需要在 Search Console 为 reader SA 添加 Full user。"
+    node "$SCRIPT_DIR/gg-notify.mjs" index_tick_fail --site flow --rc "$rc" --log "$LOG" --hint "常见原因是 GSC reader SA 权限不足，需要在 Search Console 为 reader SA 添加 Full user。" >> "$LOG" 2>&1
     ;;
 esac
 

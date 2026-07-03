@@ -21,6 +21,9 @@
 export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# 重放 outbox 里发送失败的积压通知（fail-closed 的补发闭环；无积压时零开销）。
+node "$SCRIPT_DIR/gg-notify.mjs" replay-outbox >/dev/null 2>&1 || true
 PROMPT_FILE="$SCRIPT_DIR/seo-autopilot-tick.prompt.md"
 LOCK="/tmp/gg-seo-autopilot.lock"
 LOG_DIR="$HOME/gengrowth-agents/cron-sync/seo_autopilot"
@@ -86,7 +89,8 @@ CLUSTER_SYNC_LOG="$LOG_DIR/cluster-sync-$(date +%Y-%m-%d).log"
   set -a; . "$HOME/.config/gg/_gg.env" 2>/dev/null; set +a
   node "$SCRIPT_DIR/gg-autopilot-preflight.mjs" --skip-live-cli >> "$LOG" 2>&1
 ) || {
-  GG_LARK_NOTIFY_AT_OPS=1 "$SCRIPT_DIR/gg-lark-notify.sh" "⚠️ SEO autopilot preflight failed on Mac mini — env broken (see $LOG). Skipping this fire."
+  # 统一事件层（NOTIFY-CONTRACT.md）：模板与 @ 策略（OPS）由事件表决定，不再散装 AT env。
+  node "$SCRIPT_DIR/gg-notify.mjs" preflight_fail --lane seo-autopilot --log "$LOG"
   exit 2
 }
 
@@ -184,13 +188,21 @@ run_one_cycle() {
   if [ -n "$PARK" ]; then
     PARK_COUNT=$((PARK_COUNT + 1))
     if [ "$PARK_COUNT" -eq 1 ]; then
-      GG_LARK_NOTIFY_AT_PM=1 GG_LARK_NOTIFY_AT_OPS=1 "$SCRIPT_DIR/gg-lark-notify.sh" "⚠️ SEO autopilot 写稿暂停（needs_human）：$PARK"
+      # parked 事件（@PM+OPS 由事件表决定）：$PARK 形如「PARK(author) PG-X-001: 原因」，
+      # 解析出 pid/reason；解析不出冒号时整段作 reason（契约迁移映射 :187）。
+      # 写稿期尚无 slug，留空由模板渲染为（）。
+      park_rest="${PARK#"PARK(author) "}"
+      park_pid="${park_rest%%:*}"
+      park_reason="${park_rest#*:}"
+      park_reason="${park_reason# }"
+      if [ "$park_pid" = "$park_rest" ]; then park_pid=""; park_reason="$park_rest"; fi
+      node "$SCRIPT_DIR/gg-notify.mjs" parked --site astrologywiki --pid "$park_pid" --reason "$park_reason"
     else
       PARK_REST="${PARK_REST}${PARK}"$'\n'
     fi
   fi
   if [ -n "$DONE" ]; then
-    "$SCRIPT_DIR/gg-lark-notify.sh" "✍️ SEO autopilot 写好一篇：$DONE— 立即发布中"
+    node "$SCRIPT_DIR/gg-notify.mjs" authored --site astrologywiki --detail "${DONE}— 立即发布中"
     # IMMEDIATE PUBLISH: claim+convert+preview the just-written draft, then verify+merge.
     node "$AUTO" --scan --limit 1 >> "$LOG" 2>&1
     publish_if_pending || echo "$(date '+%F %T') authored but no preview to publish (scan/convert gate?)" >> "$LOG"
@@ -233,7 +245,8 @@ while [ "$cycle" -lt "$MAX_CYCLES" ]; do
       parks="${parks:-0}"; inflight="${inflight:-0}"
       if [ "$parks" -eq 0 ] && [ "$inflight" -eq 0 ]; then
         pub=$(grep -cE '^\| 2026' "$HOME/gengrowth-ops/inbox/06-tasks/seo-autopilot-publish-log.md" 2>/dev/null)
-        GG_LARK_NOTIFY_AT_OPS=1 "$SCRIPT_DIR/gg-lark-notify.sh" "✅ SEO autopilot（$(date '+%Y-%m-%d')）：本批计划内容已全部写完并上线（发布登记表累计 ${pub:-?} 篇），队列已清空。"
+        # day_complete 事件（@OPS 由事件表决定，契约迁移映射 :236）。
+        node "$SCRIPT_DIR/gg-notify.mjs" day_complete --site astrologywiki --date "$(date '+%Y-%m-%d')" --publishedTotal "${pub:-?}"
       else
         echo "$(date '+%F %T') drained with $parks park(s) + $inflight in-flight claim(s) — not sending day-complete (batch not fully live)" >> "$LOG"
       fi
@@ -250,8 +263,8 @@ fi
 # root cause; the per-page detail still lands in $LOG and the claims ledger.
 if [ "$PARK_COUNT" -gt 1 ]; then
   echo "$(date '+%F %T') sending park roll-up ($PARK_COUNT parks this run)" >> "$LOG"
-  GG_LARK_NOTIFY_AT_PM=1 GG_LARK_NOTIFY_AT_OPS=1 "$SCRIPT_DIR/gg-lark-notify.sh" "⚠️ SEO autopilot 本轮共暂停 ${PARK_COUNT} 篇（needs_human）。首篇已单独通报，其余 $((PARK_COUNT - 1)) 篇合并通报（防刷屏）：
-${PARK_REST}处理提示：若原因均为「no row … in 选题登记表」，说明计划里新加的一批选题还没登记进 选题登记表 — 补齐登记行后，清掉 .autopilot-claims.json 里对应 needs_human 条目即可恢复写作。"
+  # park_rollup 事件（@PM+OPS 由事件表决定，契约迁移映射 :253）：rest = 2..N 的 PARK 行 + 处理提示。
+  node "$SCRIPT_DIR/gg-notify.mjs" park_rollup --site astrologywiki --count "$PARK_COUNT" --rest "${PARK_REST}处理提示：若原因均为「no row … in 选题登记表」，说明计划里新加的一批选题还没登记进 选题登记表 — 补齐登记行后，清掉 .autopilot-claims.json 里对应 needs_human 条目即可恢复写作。"
 fi
 
 echo "$(date '+%F %T') loop end" >> "$LOG"

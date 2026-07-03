@@ -10,14 +10,10 @@
 //   - request Google indexing for article URLs via API (no public API exists)
 //   - use Google's Indexing API for ordinary articles
 
-import { execFileSync } from 'node:child_process';
-import { dirname, join } from 'node:path';
+import { join } from 'node:path';
 import { homedir } from 'node:os';
-import { fileURLToPath } from 'node:url';
 import { loadEnv, gFetch, resolveWorkbookId, redactNote, getAccessToken as getSaAccessToken } from './lib/gg-shared.mjs';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const LARK_NOTIFY = join(__dirname, 'gg-lark-notify.sh');
+import { notify as notifyEvent } from './lib/gg-notify.mjs';
 
 export const INDEX_TRACKING_TAB = 'index-tracking';
 export const INDEX_TRACKING_HEADER = Object.freeze([
@@ -1949,6 +1945,8 @@ export function mergeInspectionIntoRow(row, indexStatus, now = new Date(), pageD
   return { row: next, classification: cls };
 }
 
+// 诊断报告正文（不含头）——头由事件层 index_diagnosis 模板统一渲染：
+// `🔍 [{site}] 索引诊断报告\n{body}`。
 export function formatAlertMessage(row, classification) {
   const title = row.title || row.slug || row.page_id || row.url;
   const recommendation = row.recommendation || classification.recommendation || checklist(['请人工查看 URL Inspection 原始状态。']);
@@ -1961,7 +1959,6 @@ export function formatAlertMessage(row, classification) {
     })
     .join('\n');
   return [
-    '🔍 索引诊断报告',
     `页面：${title}`,
     `URL：${row.url}`,
     `GSC 状态：${row.current_gsc_status || '-'}`,
@@ -1971,16 +1968,23 @@ export function formatAlertMessage(row, classification) {
   ].join('\n');
 }
 
-function larkBestEffort(message, env = process.env) {
+// GSC site（sc-domain:xxx / URL 前缀）→ 统一事件层的 siteTag 字段（NOTIFY-CONTRACT.md §消息头格式）。
+export function siteTagFor(siteUrl = DEFAULT_SITE) {
+  const raw = String(siteUrl || '');
+  if (/gengrowth/i.test(raw)) return 'gengrowth';
+  if (/astrologywiki/i.test(raw)) return 'astrologywiki';
+  const host = raw.replace(/^sc-domain:/, '').replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
+  return host.split('.')[0] || 'flow';
+}
+
+// 统一事件层（NOTIFY-CONTRACT.md）：调用点只传结构化字段，模板与 @ 策略由事件表决定，
+// 不再散装 AT env。GG_INDEX_MONITOR_NO_NOTIFY=1 门控保持原位原语义。
+async function notifyBestEffort(event, fields, env = process.env) {
   if (env.GG_INDEX_MONITOR_NO_NOTIFY === '1') return;
   try {
-    execFileSync('bash', [LARK_NOTIFY, message], {
-      stdio: 'ignore',
-      timeout: 30000,
-      env: { ...env, GG_LARK_NOTIFY_AT_PM: '1', GG_LARK_NOTIFY_AT_OPS: '1' },
-    });
+    await notifyEvent(event, fields);
   } catch {
-    // best-effort only
+    // best-effort only（notify 本身也永不 throw，这层兜底纯保险）
   }
 }
 
@@ -2193,6 +2197,8 @@ async function runSyncRecap(args, {
   return 0;
 }
 
+// 候选队列正文（不含头）——头由事件层 index_queue 模板统一渲染：
+// `⚠️ [{site}] Request Indexing 候选队列已更新：{body}`。
 function formatRequestQueueMessage(rows, { sitemapUrl = DEFAULT_SITEMAP_URL } = {}) {
   const counts = rows.reduce((acc, row) => {
     acc[row.priority] = (acc[row.priority] || 0) + 1;
@@ -2200,7 +2206,7 @@ function formatRequestQueueMessage(rows, { sitemapUrl = DEFAULT_SITEMAP_URL } = 
   }, {});
   const top = rows.slice(0, 5).map((row) => `${row.priority} ${row.page_id} ${row.request_reason}`).join('\n');
   return [
-    `⚠️ Request Indexing 候选队列已更新：共 ${rows.length} 条`,
+    `共 ${rows.length} 条`,
     `优先级：P0=${counts.P0 || 0} / P1=${counts.P1 || 0} / P2=${counts.P2 || 0} / P3=${counts.P3 || 0}`,
     `Sitemap：${sitemapUrl} 已通过官方 Sitemaps API 刷新或等待刷新结果`,
     top ? `Top 候选：\n${top}` : '',
@@ -2212,7 +2218,7 @@ async function runSubmitSitemap(args, {
   gscWriteToken,
   getGscWriteToken = getGscWriteAccessToken,
   submitSitemapFn = submitSitemap,
-  notifyFn = larkBestEffort,
+  notifyFn = notifyBestEffort,
 }) {
   const siteUrl = args.site || process.env.GG_GSC_SITE || DEFAULT_SITE;
   const sitemapUrl = args.sitemap_url || DEFAULT_SITEMAP_URL;
@@ -2228,14 +2234,14 @@ async function runSubmitSitemap(args, {
   try {
     await submitSitemapFn(token, siteUrl, sitemapUrl);
   } catch (e) {
-    const msg = `⚠️ sitemap 刷新失败：${sitemapUrl} (${redactNote(e)})`;
-    process.stderr.write(`${msg}\n`);
-    if (args.notify) notifyFn(msg);
+    const err = redactNote(e);
+    process.stderr.write(`⚠️ sitemap 刷新失败：${sitemapUrl} (${err})\n`);
+    if (args.notify) await notifyFn('index_sitemap_fail', { site: siteTagFor(siteUrl), url: sitemapUrl, err });
     return 1;
   }
   const msg = `sitemap-submit: site=${siteUrl} sitemap=${sitemapUrl} ok`;
   process.stdout.write(`${msg}\n`);
-  if (args.notify) notifyFn(`✅ sitemap 已刷新：${sitemapUrl}`);
+  if (args.notify) await notifyFn('index_sitemap_ok', { site: siteTagFor(siteUrl), url: sitemapUrl });
   return 0;
 }
 
@@ -2249,7 +2255,7 @@ async function runSyncRequestQueue(args, {
   readRequestQueueRowsFn = readRequestQueueRows,
   replaceRowsFn = replaceRequestQueueRows,
   formatFn = formatRequestQueueTab,
-  notifyFn = larkBestEffort,
+  notifyFn = notifyBestEffort,
 }) {
   if (!workbookId) {
     process.stderr.write('error: --sync-request-queue requires workbook id from env or --workbook\n');
@@ -2259,19 +2265,23 @@ async function runSyncRequestQueue(args, {
   const recapRows = await readRecapRowsFn(sheetToken, workbookId, RECAP_TAB);
   const trackingRows = await readTrackingRowsFn(sheetToken, workbookId, INDEX_TRACKING_TAB);
   const existingRows = args.write_sheet ? await readRequestQueueRowsFn(sheetToken, workbookId, tabName) : [];
+  const siteUrl = args.site || process.env.GG_GSC_SITE || DEFAULT_SITE;
   const rows = buildRequestIndexingCandidateRows({
     recapRows,
     trackingRows,
     existingRows,
     now,
-    siteUrl: args.site || process.env.GG_GSC_SITE || DEFAULT_SITE,
+    siteUrl,
   });
   if (args.write_sheet) {
     await replaceRowsFn(sheetToken, workbookId, tabName, rows);
     if (formatFn) await formatFn(sheetToken, workbookId, tabName);
   }
   if (args.notify && rows.length) {
-    notifyFn(formatRequestQueueMessage(rows, { sitemapUrl: args.sitemap_url || DEFAULT_SITEMAP_URL }));
+    await notifyFn('index_queue', {
+      site: siteTagFor(siteUrl),
+      body: formatRequestQueueMessage(rows, { sitemapUrl: args.sitemap_url || DEFAULT_SITEMAP_URL }),
+    });
   }
   const counts = rows.reduce((acc, row) => {
     acc[row.priority] = (acc[row.priority] || 0) + 1;
@@ -2313,9 +2323,10 @@ function fixedResubmitRecapRow(row = {}, now = new Date()) {
   };
 }
 
-function formatFixedResubmitMessage(count, { sitemapUrl = DEFAULT_SITEMAP_URL } = {}) {
+// 修复重提正文（不含头）——头由事件层 index_resubmit_ok 模板统一渲染：
+// `✅ [{site}] 已重新提交修复 URL：{count} 条\n{body}`。
+function formatFixedResubmitMessage({ sitemapUrl = DEFAULT_SITEMAP_URL } = {}) {
   return [
-    `✅ 已重新提交修复 URL：${count} 条`,
     `Sitemap：${sitemapUrl}`,
     '下一步：追踪表已刷新，并进入 request-indexing-queue；GSC Request Indexing 最终点击需人工确认。',
   ].join('\n');
@@ -2334,7 +2345,7 @@ async function runProcessFixed(args, {
   formatRecapStatusFn = formatRecapStatusTab,
   getGscWriteToken = getGscWriteAccessToken,
   submitSitemapFn = submitSitemap,
-  notifyFn = larkBestEffort,
+  notifyFn = notifyBestEffort,
 }) {
   if (!workbookId) {
     process.stderr.write('error: --process-fixed requires workbook id from env or --workbook\n');
@@ -2385,9 +2396,9 @@ async function runProcessFixed(args, {
     try {
       await submitSitemapFn(token, siteUrl, sitemapUrl);
     } catch (e) {
-      const msg = `⚠️ 修复后 sitemap 重新提交失败：${sitemapUrl} (${redactNote(e)})`;
-      process.stderr.write(`${msg}\n`);
-      if (args.notify) notifyFn(msg);
+      const err = redactNote(e);
+      process.stderr.write(`⚠️ 修复后 sitemap 重新提交失败：${sitemapUrl} (${err})\n`);
+      if (args.notify) await notifyFn('index_sitemap_fail', { site: siteTagFor(siteUrl), url: sitemapUrl, err: `修复后重新提交：${err}` });
       return 1;
     }
 
@@ -2401,7 +2412,11 @@ async function runProcessFixed(args, {
   }
 
   if (args.notify && fixedTracking.length) {
-    notifyFn(formatFixedResubmitMessage(fixedTracking.length, { sitemapUrl }));
+    await notifyFn('index_resubmit_ok', {
+      site: siteTagFor(siteUrl),
+      count: fixedTracking.length,
+      body: formatFixedResubmitMessage({ sitemapUrl }),
+    });
   }
 
   process.stdout.write(
@@ -2422,7 +2437,7 @@ async function runCheckDue(args, {
   fetchPageDiagnosticsFn = fetchPageDiagnostics,
   getGscToken = getGscAccessToken,
   preflightGscAccessFn = preflightGscAccess,
-  notifyFn = larkBestEffort,
+  notifyFn = notifyBestEffort,
 }) {
   if (!workbookId) {
     process.stderr.write('error: --check-due requires workbook id from env or --workbook\n');
@@ -2493,7 +2508,10 @@ async function runCheckDue(args, {
           String(row.monitor_status || '') !== String(merged.classification.monitor_status || '');
         if (writeSheet && (!merged.row.alert_sent_at || alertChanged)) {
           merged.row.alert_sent_at = isoDay(now);
-          notifyFn(formatAlertMessage(merged.row, merged.classification));
+          await notifyFn('index_diagnosis', {
+            site: siteTagFor(siteUrl),
+            body: formatAlertMessage(merged.row, merged.classification),
+          });
         }
       }
       if (writeSheet) await updateRowFn(sheetToken, workbookId, tabName, row._rowNumber, merged.row);
@@ -2578,7 +2596,7 @@ export async function runIndexMonitor(argv, deps = {}) {
       gscWriteToken: deps.gscWriteToken,
       getGscWriteToken: deps.getGscWriteToken || getGscWriteAccessToken,
       submitSitemapFn: deps.submitSitemap || submitSitemap,
-      notifyFn: deps.notify || larkBestEffort,
+      notifyFn: deps.notify || notifyBestEffort,
     });
   }
 
@@ -2634,7 +2652,7 @@ export async function runIndexMonitor(argv, deps = {}) {
       fetchPageDiagnosticsFn: deps.fetchPageDiagnostics || fetchPageDiagnostics,
       getGscToken: deps.getGscToken || getGscAccessToken,
       preflightGscAccessFn: deps.preflightGscAccess || preflightGscAccess,
-      notifyFn: deps.notify || larkBestEffort,
+      notifyFn: deps.notify || notifyBestEffort,
     });
   }
 
@@ -2670,7 +2688,7 @@ export async function runIndexMonitor(argv, deps = {}) {
       formatRecapStatusFn: deps.formatRecapStatus || (deps.updateRecapRow ? null : formatRecapStatusTab),
       getGscWriteToken: deps.getGscWriteToken || getGscWriteAccessToken,
       submitSitemapFn: deps.submitSitemap || submitSitemap,
-      notifyFn: deps.notify || larkBestEffort,
+      notifyFn: deps.notify || notifyBestEffort,
     });
   }
 
@@ -2685,7 +2703,7 @@ export async function runIndexMonitor(argv, deps = {}) {
       readRequestQueueRowsFn: deps.readRequestQueueRows || readRequestQueueRows,
       replaceRowsFn: deps.replaceRequestQueueRows || replaceRequestQueueRows,
       formatFn: deps.formatRequestQueue || formatRequestQueueTab,
-      notifyFn: deps.notify || larkBestEffort,
+      notifyFn: deps.notify || notifyBestEffort,
     });
   }
 

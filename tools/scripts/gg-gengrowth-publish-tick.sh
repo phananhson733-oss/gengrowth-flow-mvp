@@ -36,11 +36,16 @@ trap 'rm -rf "$LOCK" 2>/dev/null' EXIT
 echo "$(date '+%F %T') gengrowth-publish tick start (pid $$)" >> "$LOG"
 set -a; . "$HOME/.config/gg/_gg.env" 2>/dev/null; set +a
 
+# 重放 outbox 里发送失败的积压通知（fail-closed 的补发闭环；无积压时零开销）。
+node "$SCRIPT_DIR/gg-notify.mjs" replay-outbox >/dev/null 2>&1 || true
+
 # Fetch the service_role key via the authenticated supabase CLI (not stored on disk).
 SB_KEY="$(supabase projects api-keys --project-ref "$SB_PROJECT_REF" -o json 2>/dev/null | node "$SCRIPT_DIR/oneoff/_emit-sb-key.mjs" 2>/dev/null)"
 if [ -z "$SB_KEY" ]; then
   echo "$(date '+%F %T') SB_KEY unavailable (supabase session expired?) — skipping this tick" >> "$LOG"
-  GG_LARK_NOTIFY_AT_OPS=1 "$SCRIPT_DIR/gg-lark-notify.sh" "⚠️ gengrowth 发布 ticker：supabase 会话取不到 service_role，本轮跳过。重登：supabase login" >/dev/null 2>&1 || true
+  # 统一通知事件层（NOTIFY-CONTRACT.md）：模板与 @ 策略（auth_missing → OPS）由事件表决定，
+  # 不再在调用点散装 AT env / 裸拼字符串。gg-notify exit 永远 0，best-effort。
+  node "$SCRIPT_DIR/gg-notify.mjs" auth_missing --site gengrowth --what service_role --hint "supabase login" >/dev/null 2>&1 || true
   exit 0
 fi
 export SB_KEY

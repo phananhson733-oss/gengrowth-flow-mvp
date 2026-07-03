@@ -62,6 +62,7 @@ import { loadEnv, resolveWorkbookId } from './lib/gg-shared.mjs';
 import { slugifyPageId } from './gg-sheet-pull.mjs';
 import { illustrate } from './lib/illustrate.mjs';
 import { keywordLiveSlug } from './lib/oracle-live.mjs';
+import { notify } from './lib/gg-notify.mjs';
 
 loadEnv();
 const ACTIVE_WORKBOOK_ID = resolveWorkbookId();
@@ -94,7 +95,6 @@ const RENDER = join(SCRIPTS, 'gg-render-batch.mjs');
 const ORCHESTRATOR = join(SCRIPTS, 'gg-llm-orchestrator.mjs');
 // multi-party review: Codex (gpt-5.5 xhigh) critiques → Opus 4.8 revises.
 const REVIEW = join(SCRIPTS, 'gg-author-review.mjs');
-const LARK_NOTIFY = join(SCRIPTS, 'gg-lark-notify.sh'); // Feishu push (best-effort)
 const PHASE2 = join(SCRIPTS, '_phase2-validate.mjs');
 const CONFIG_SNAPSHOT = join(FLOW, '.gg-cache', 'config-snapshot.json');
 const PLAN_GLOB_DIR = join(OPS, 'inbox', '06-tasks', 'tasks');
@@ -1308,8 +1308,11 @@ function doMerge(o) {
     claims[pgId].mergedAt = new Date().toISOString();
     checkPlanBox(pgId);
     saveClaims(claims);
-    appendPublishLog(pgId, claims[pgId].slug); // writing record → ops (self-synced)
+    // writing record → ops (self-synced)；返回 promise（尾部是 published 事件通知），
+    // 由顶层 dispatcher await 收尾——claims 锁在同步部分结束时即释放，不为通知多持锁。
+    const recorded = appendPublishLog(pgId, claims[pgId].slug);
     log(`MERGED ${o.branch} → main (prod deploy triggered)`);
+    return recorded;
   });
 }
 
@@ -1440,9 +1443,12 @@ function syncOpsFiles(absPaths, msg) {
   }
 }
 
-function larkNotify(msg) {
+// 统一事件层通知（阶段 1 · NOTIFY-CONTRACT.md）：模板文案与 @ 策略集中在
+// lib/gg-notify.mjs 的事件表，这里只传结构化字段——不再裸拼字符串、不再散装 AT env。
+// GG_AUTOPILOT_NO_NOTIFY=1 的测试抑制门保持原位原语义。
+async function notifyEvent(event, fields) {
   if (process.env.GG_AUTOPILOT_NO_NOTIFY === '1') return; // suppressed in tests
-  try { sh('bash', [LARK_NOTIFY, msg]); } catch { /* best-effort; never blocks */ }
+  try { await notify(event, fields); } catch { /* best-effort; never blocks */ }
 }
 
 function opsPublishLog() { return join(OPS, 'inbox', '06-tasks', 'seo-autopilot-publish-log.md'); }
@@ -1472,7 +1478,8 @@ function enqueueIndexTracking(pgId, slug, title, author, date) {
 
 // Append one row per published article to the ops publish register (the "写作记录"),
 // then sync it + the plan to ops. Title/author come from the en.md frontmatter.
-function appendPublishLog(pgId, slug) {
+// Async because the trailing `published` event notify is awaited（caller 顶层 await 收尾）.
+async function appendPublishLog(pgId, slug) {
   try {
     const f = opsPublishLog();
     let title = '', author = '';
@@ -1498,7 +1505,14 @@ function appendPublishLog(pgId, slug) {
     }
     syncOpsFiles([f, latestPlan()], `chore(seo): publish ${slug}`);
     enqueueIndexTracking(pgId, slug, title, author, date);
-    larkNotify(`✅ SEO autopilot 已发布上线：${title || slug}\n${url}${zhUrlLine}\n（作者 ${author || '?'}，已登记到 ops）`);
+    // published 事件（NOTIFY-CONTRACT.md 迁移映射 :1501）：双语文章的 /zh URL
+    // 沿用旧行为，一并带在 url 字段里（模板按行渲染，多行 URL 原样保留）。
+    await notifyEvent('published', {
+      site: 'astrologywiki',
+      title: title || slug,
+      url: `${url}${zhUrlLine}`,
+      extra: `作者 ${author || '?'}，已登记到 ops`,
+    });
   } catch (e) { log(`publish-log skipped: ${errTail(e, 80)}`); }
 }
 
@@ -1546,7 +1560,7 @@ try {
   else if (o.staleReport) doStaleReport();
   else if (o.nextUnauthored) doNextUnauthored();
   else if (o.author) doAuthor(o);
-  else if (o.merge) doMerge(o);
+  else if (o.merge) await doMerge(o); // async 尾巴 = published 事件通知（ESM 顶层 await）
   else if (o.markVerified) doMarkVerified(o);
   else if (o.markFailed) doMarkFailed(o);
   else if (o.retryFailed) doRetryFailed(o);

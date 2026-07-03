@@ -2,15 +2,16 @@
 // gg-topic-register.mjs — 选题登记表空/缺字段行 → cluster/page_id/preprocessor-prompt/task/notify 编排器。
 //
 // Default is dry-run. Use --apply to write Google Sheets, update the matching
-// gengrowth-ops task plan, and notify the SEO 技术群 through gg-lark-notify.sh.
+// gengrowth-ops task plan, and notify the SEO 技术群 through the unified event
+// layer（lib/gg-notify.mjs 之 `topic_registered` 事件，契约见 lib/NOTIFY-CONTRACT.md）.
 
-import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { loadEnv, getAccessToken, gFetch, redactNote } from './lib/gg-shared.mjs';
+import { notify } from './lib/gg-notify.mjs';
 import {
   parsePreprocessorSheetFields,
   parsePreprocessorV1Fields,
@@ -21,7 +22,6 @@ import { defaultPsychFlag, defaultTemplate, defaultTier, callLLM as callBriefLLM
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO = join(__dirname, '..', '..');
-const LARK_NOTIFY = join(__dirname, 'gg-lark-notify.sh');
 
 export const PAGES_TAB = '选题登记表';
 export const CLUSTERS_TAB = '主题集群表';
@@ -2064,14 +2064,22 @@ async function runProduct(profile, { token, args, nowDate, budget = null }) {
   }
 
   if (!args.no_notify && plan.updates.length) {
-    const msg = [
-      `SEO 选题登记自动补齐完成：${profile.label}`,
-      `补齐 ${plan.updates.length} 行；新增 cluster ${plan.newClusters.length} 个。`,
-      `page_id: ${plan.updates.map((u) => u.pageId).join(', ')}`,
-    ].join('\n');
-    execFileSync(LARK_NOTIFY, [msg], { cwd: REPO, stdio: 'ignore' });
+    await notifyTopicRegistered({ profile, plan });
   }
   return { profile, workbookId, plan, applied: true, promptPaths };
+}
+
+// 统一事件层（NOTIFY-CONTRACT.md）：只传结构化字段，模板与 @ 策略（不@）由
+// `topic_registered` 事件表决定。notify 永不 throw（失败入 outbox 待重放），
+// 通知层故障不会把已完成的 --apply 写入搞垮。
+export async function notifyTopicRegistered({ profile, plan }) {
+  return notify('topic_registered', {
+    site: profile.key,
+    label: profile.label,
+    filled: plan.updates.length,
+    clusters: plan.newClusters.length,
+    pageIds: plan.updates.map((u) => u.pageId).join(', '),
+  });
 }
 
 export function summarizeProductResult(result, { args = {} } = {}) {

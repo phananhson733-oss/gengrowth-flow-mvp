@@ -2,10 +2,16 @@
 // Hermetic smoke tests for gg-preview-gate.mjs.
 //
 // Everything is faked via env-overridable bin paths: the autopilot (--status / --mark-verified
-// / --merge / --mark-failed), preview-wait, preview-verify, review-worker, lark-notify. Each
-// fake is a tiny shell script that (a) prints canned stdout and (b) touches a SENTINEL file so
-// the test can assert whether it was invoked. No network, no chromium, no real LLM, no real
-// gh merge, no ledger write. Mirrors the node:test + spawnSync black-box style of the sibling
+// / --merge / --mark-failed), preview-wait, preview-verify, review-worker, and the unified
+// notify CLI (GG_NOTIFY_BIN → gg-notify.mjs; the gate emits the `gate_fail` EVENT with
+// structured --site/--slug/--branch/--reason args, no raw message string). Each fake is a tiny
+// node script that (a) prints canned stdout and (b) records its argv to a SENTINEL file so the
+// test can assert whether it was invoked and with what. Park-notify gating is controlled
+// EXPLICITLY per test via fakeEnv({notifyOnPark}) — GG_GATE_NOTIFY_ON_PARK is always set or
+// cleared so a host-exported value can't leak in (default = suppressed, the prod default).
+// No network, no chromium, no real LLM, no real gh merge, no ledger write, no real Feishu
+// (GG_LARK_API_BASE/HERMES_ENV/GG_FLOW_STATE_DIR are additionally pinned to the sandbox as
+// defense-in-depth). Mirrors the node:test + spawnSync black-box style of the sibling
 // __tests__/.
 //
 // Run: node --test /tmp/gg-landing-staging/__tests__/gg-preview-gate.smoke.test.mjs
@@ -59,18 +65,6 @@ process.exit(${exit});
   return p;
 }
 
-// Write a SHELL fake bin (the gate invokes lark-notify as `bash <bin>`).
-function writeShellFake(dir, name, { sentinelName, sentinelsDir, stdout = '', exit = 0 }) {
-  const p = join(dir, name);
-  const lines = ['#!/bin/sh'];
-  if (sentinelName) lines.push(`printf '%s\\n' "$*" >> "${join(sentinelsDir, sentinelName)}"`);
-  if (stdout) lines.push(`printf '%s' '${stdout.replace(/'/g, `'\\''`)}'`);
-  lines.push(`exit ${exit}`);
-  writeFileSync(p, lines.join('\n') + '\n');
-  chmodSync(p, 0o755);
-  return p;
-}
-
 // A fake gg-seo-autopilot.mjs: it's a node script, but the gate invokes it as
 // `node <bin> --status|--mark-verified|...`. We make ONE fake node-script that
 // dispatches on the subcommand, prints the canned --status JSON, and touches a
@@ -105,7 +99,7 @@ function sentinelText(sentinelsDir, name) {
 }
 
 // Build the env that points every gate sub-bin at our fakes.
-function fakeEnv({ dir, sentinelsDir, statusJson, reviewBin, verifyExit = 0, verifyJson, waitJson, codexBin, codexRequired }) {
+function fakeEnv({ dir, sentinelsDir, statusJson, reviewBin, verifyExit = 0, verifyJson, waitJson, codexBin, codexRequired, notifyOnPark }) {
   const autopilot = writeAutopilotFake(dir, { statusJson, sentinelsDir });
   const previewWait = writeNodeFake(dir, 'fake-preview-wait.mjs', {
     sentinelName: 'preview-wait', sentinelsDir,
@@ -117,8 +111,11 @@ function fakeEnv({ dir, sentinelsDir, statusJson, reviewBin, verifyExit = 0, ver
     stdout: verifyJson || JSON.stringify({ ok: true, checked: [{ url: 'x' }], warnings: [] }),
     exit: verifyExit,
   });
-  const larkNotify = writeShellFake(dir, 'fake-lark-notify.sh', {
-    sentinelName: 'lark-notify', sentinelsDir, stdout: '', exit: 0,
+  // The unified notify CLI fake (node script, invoked as `node <bin> <event> --k v …`):
+  // records the full event argv so tests can assert the structured gate_fail fields.
+  const notifyBin = writeNodeFake(dir, 'fake-notify.mjs', {
+    sentinelName: 'notify', sentinelsDir,
+    stdout: JSON.stringify({ ok: true, silenced: false, messageId: 'om_test' }), exit: 0,
   });
   const env = {
     ...process.env,
@@ -126,8 +123,15 @@ function fakeEnv({ dir, sentinelsDir, statusJson, reviewBin, verifyExit = 0, ver
     GG_PREVIEW_WAIT_BIN: previewWait,
     GG_PREVIEW_VERIFY_BIN: previewVerify,
     GG_REVIEW_WORKER_BIN: reviewBin,
-    GG_LARK_NOTIFY_BIN: larkNotify,
+    GG_NOTIFY_BIN: notifyBin,
     VERCEL_AUTOMATION_BYPASS_SECRET: 'test-bypass',
+    // Defense-in-depth: even if a regression bypasses GG_NOTIFY_BIN and reaches the real
+    // notify layer, it must NOT touch real Feishu / real state. Dead API base, absent creds
+    // file, sandboxed state dir + audit log.
+    GG_LARK_API_BASE: 'http://127.0.0.1:9',
+    HERMES_ENV: join(dir, 'no-such-hermes.env'),
+    GG_FLOW_STATE_DIR: join(dir, 'flow-state'),
+    GG_LARK_AUDIT_LOG: join(dir, 'lark-audit.log'),
   };
   if (codexBin) env.GG_CODEX_BIN = codexBin;
   else delete env.GG_CODEX_BIN;
@@ -135,6 +139,14 @@ function fakeEnv({ dir, sentinelsDir, statusJson, reviewBin, verifyExit = 0, ver
   // codexRequired:'0'. Always set/clear explicitly so a host-exported value can't leak in.
   if (codexRequired === '0') env.GG_CODEX_GATE_REQUIRED = '0';
   else delete env.GG_CODEX_GATE_REQUIRED;
+  // Park-notify gate (unchanged semantics: suppressed unless GG_GATE_NOTIFY_ON_PARK=1).
+  // Always set/clear explicitly so a host-exported value can't leak in.
+  if (notifyOnPark === '1') env.GG_GATE_NOTIFY_ON_PARK = '1';
+  else delete env.GG_GATE_NOTIFY_ON_PARK;
+  // Never let a host GG_LARK_NOTIFY_SILENCE / legacy AT flags skew the fakes either.
+  delete env.GG_LARK_NOTIFY_SILENCE;
+  delete env.GG_LARK_NOTIFY_AT_PM;
+  delete env.GG_LARK_NOTIFY_AT_OPS;
   return env;
 }
 
@@ -210,13 +222,14 @@ test('--dry-run on verified-preview: prints plan, exits without merging, no --me
   assert.ok(!sentinelHit(sentinels, 'preview-verify'), 'no real verify in dry-run');
 });
 
-// ── (c1) one review dimension FAILs → exit 2 + mark-failed + lark-notify ───────
-test('a review dimension FAILs → exit 2, calls mark-failed + lark-notify', () => {
+// ── (c1) one review dimension FAILs → exit 2 + mark-failed + gate_fail notify ──
+test('a review dimension FAILs → exit 2, calls mark-failed + notify CLI with the gate_fail event', () => {
   const { dir, sentinels } = freshCase();
   const env = fakeEnv({
     dir, sentinelsDir: sentinels,
     statusJson: CLAIM_VERIFIED(), // verified-preview → skips preview-wait, runs verify+reviews
     reviewBin: reviewDimFailBin(dir, sentinels, 'links-seo'),
+    notifyOnPark: '1', // park notify explicitly re-enabled (default = suppressed)
   });
   const r = run(['--branch', BRANCH, '--json'], env);
   assert.equal(r.status, 2, `expected gate-failed exit 2; stderr: ${r.stderr}; stdout: ${r.stdout}`);
@@ -226,11 +239,37 @@ test('a review dimension FAILs → exit 2, calls mark-failed + lark-notify', () 
   // verify ran (PASS) then a review FAILed → park + notify.
   assert.ok(sentinelHit(sentinels, 'preview-verify'), 'verify should run');
   assert.ok(sentinelHit(sentinels, 'autopilot-mark-failed'), 'mark-failed must be called');
-  assert.ok(sentinelHit(sentinels, 'lark-notify'), 'lark-notify must be called by the gate');
-  // mark-failed carried a specific reason; lark message @PM/@Ops env is set (not asserted here).
+  assert.ok(sentinelHit(sentinels, 'notify'), 'notify CLI must be called by the gate');
+  // The notify CLI received the STRUCTURED gate_fail event — no raw pre-built message,
+  // no AT env flags (the @PM+@OPS policy lives in the event table).
+  const notified = sentinelText(sentinels, 'notify');
+  assert.match(notified, /^gate_fail /, 'first argv must be the gate_fail event');
+  assert.match(notified, /--site astrologywiki/);
+  assert.match(notified, /--slug chiron-in-7th-house/);
+  assert.match(notified, new RegExp(`--branch ${BRANCH.replace(/[/.]/g, '\\$&')}`));
+  assert.match(notified, /--reason .*links-seo/);
+  // mark-failed carried a specific reason too.
   assert.match(sentinelText(sentinels, 'autopilot-mark-failed'), /--reason/);
   // and the success path was NOT taken.
   assert.ok(!sentinelHit(sentinels, 'autopilot-merge'), '--merge must NOT be called on failure');
+});
+
+// ── (c1b) DEFAULT: park notify is SUPPRESSED (GG_GATE_NOTIFY_ON_PARK unset) ───
+test('default (no GG_GATE_NOTIFY_ON_PARK): a park still marks failed but the notify CLI is NOT invoked', () => {
+  const { dir, sentinels } = freshCase();
+  const env = fakeEnv({
+    dir, sentinelsDir: sentinels,
+    statusJson: CLAIM_VERIFIED(),
+    reviewBin: reviewDimFailBin(dir, sentinels, 'links-seo'),
+    // notifyOnPark deliberately omitted → fakeEnv clears GG_GATE_NOTIFY_ON_PARK.
+  });
+  const r = run(['--branch', BRANCH, '--json'], env);
+  assert.equal(r.status, 2, `expected gate-failed exit 2; stderr: ${r.stderr}; stdout: ${r.stdout}`);
+  const out = JSON.parse(r.stdout.trim());
+  assert.match(out.action, /notify suppressed/);
+  assert.ok(sentinelHit(sentinels, 'autopilot-mark-failed'), 'park still happens');
+  assert.ok(!sentinelHit(sentinels, 'notify'), 'suppressed park must NOT invoke the notify CLI');
+  assert.ok(!sentinelHit(sentinels, 'autopilot-merge'), 'no merge on failure');
 });
 
 // ── (c2) mark-failed is NOT called when claim already needs_human ─────────────
@@ -242,13 +281,13 @@ test('claim already needs_human: gate does NOT call mark-failed (avoids mjs thro
   const statusJson = JSON.stringify({
     'PG-009': { branch: BRANCH, slug: 's', status: 'needs_human', zh: false, worktree: '/tmp/wt' },
   });
-  const env = fakeEnv({ dir, sentinelsDir: sentinels, statusJson, reviewBin: reviewPassBin(dir, sentinels) });
+  const env = fakeEnv({ dir, sentinelsDir: sentinels, statusJson, reviewBin: reviewPassBin(dir, sentinels), notifyOnPark: '1' });
   const r = run(['--branch', BRANCH, '--json'], env);
   assert.equal(r.status, 1, `expected nothing-pending exit 1; stderr: ${r.stderr}`);
   const out = JSON.parse(r.stdout.trim());
   assert.equal(out.exitCode, 1);
   assert.ok(!sentinelHit(sentinels, 'autopilot-mark-failed'), 'mark-failed must NOT be called for an already-terminal claim');
-  assert.ok(!sentinelHit(sentinels, 'lark-notify'), 'no notify for nothing-pending');
+  assert.ok(!sentinelHit(sentinels, 'notify'), 'no notify for nothing-pending');
 });
 
 // ── (c3) DRY-RUN failure path: a verify FAIL would-park-and-notify but is dry-run guarded ──
@@ -277,6 +316,7 @@ test('all gates pass (incl. required codex PASS) → exit 0, mark-verified + mer
     statusJson: CLAIM_VERIFIED(),
     reviewBin: reviewPassBin(dir, sentinels),
     codexBin: codexPassBin(dir, sentinels), // required gate: codex must complete PASS to merge
+    notifyOnPark: '1', // even with park-notify enabled, a SUCCESS must not notify from the gate
   });
   const r = run(['--branch', BRANCH, '--json'], env);
   assert.equal(r.status, 0, `expected published exit 0; stderr: ${r.stderr}; stdout: ${r.stdout}`);
@@ -286,7 +326,7 @@ test('all gates pass (incl. required codex PASS) → exit 0, mark-verified + mer
   assert.ok(sentinelHit(sentinels, 'codex'), 'required codex review should run');
   assert.ok(sentinelHit(sentinels, 'autopilot-mark-verified'), 'mark-verified should run');
   assert.ok(sentinelHit(sentinels, 'autopilot-merge'), 'merge should run');
-  assert.ok(!sentinelHit(sentinels, 'lark-notify'), 'gate must NOT fire the success notify (merge owns it)');
+  assert.ok(!sentinelHit(sentinels, 'notify'), 'gate must NOT fire the success notify (merge owns it)');
   assert.ok(!sentinelHit(sentinels, 'autopilot-mark-failed'), 'no mark-failed on success');
 });
 
@@ -309,7 +349,7 @@ test('pushed-preview + zh claim: preview-wait runs and verify is invoked with --
 });
 
 // ── (f) preview-verify tooling/verify failure → exit 2 + park + notify ────────
-test('chrome verify fails (ok:false) → exit 2, mark-failed + lark-notify', () => {
+test('chrome verify fails (ok:false) → exit 2, mark-failed + gate_fail notify', () => {
   const { dir, sentinels } = freshCase();
   const env = fakeEnv({
     dir, sentinelsDir: sentinels,
@@ -317,13 +357,17 @@ test('chrome verify fails (ok:false) → exit 2, mark-failed + lark-notify', () 
     reviewBin: reviewPassBin(dir, sentinels),
     verifyExit: 1,
     verifyJson: JSON.stringify({ ok: false, checked: [], warnings: [], failReason: 'no <h1> on rendered page' }),
+    notifyOnPark: '1',
   });
   const r = run(['--branch', BRANCH, '--json'], env);
   assert.equal(r.status, 2, `stderr: ${r.stderr}; stdout: ${r.stdout}`);
   const out = JSON.parse(r.stdout.trim());
   assert.match(out.reason, /no <h1>/);
   assert.ok(sentinelHit(sentinels, 'autopilot-mark-failed'), 'park on verify fail');
-  assert.ok(sentinelHit(sentinels, 'lark-notify'), 'notify on verify fail');
+  const notified = sentinelText(sentinels, 'notify');
+  assert.match(notified, /^gate_fail /, 'notify on verify fail must carry the gate_fail event');
+  assert.match(notified, /--site astrologywiki/);
+  assert.match(notified, /--reason .*no <h1>/);
   assert.ok(!sentinelHit(sentinels, 'autopilot-merge'), 'no merge on verify fail');
 });
 
@@ -352,12 +396,13 @@ test('no claim for the branch → exit 1 (nothing pending), no mutations', () =>
     dir, sentinelsDir: sentinels,
     statusJson: JSON.stringify({ 'PG-X': { branch: 'some/other/branch', slug: 's', status: 'pushed-preview' } }),
     reviewBin: reviewPassBin(dir, sentinels),
+    notifyOnPark: '1',
   });
   const r = run(['--branch', BRANCH, '--json'], env);
   assert.equal(r.status, 1, `stderr: ${r.stderr}`);
   assert.ok(!sentinelHit(sentinels, 'autopilot-merge'));
   assert.ok(!sentinelHit(sentinels, 'autopilot-mark-failed'));
-  assert.ok(!sentinelHit(sentinels, 'lark-notify'));
+  assert.ok(!sentinelHit(sentinels, 'notify'));
 });
 
 // ── (i) codex is a REQUIRED gate (2026-06-21): any non-PASS parks. The escape hatch
@@ -498,7 +543,7 @@ test('LEGACY (GG_CODEX_GATE_REQUIRED=0): no GG_CODEX_BIN → exit 0, merged (bes
 // the already-needs_human race the verify flagged.
 test('--status failure (autopilot exits nonzero) → exit 2, skips mark-failed, still notifies', () => {
   const { dir, sentinels } = freshCase();
-  const env = fakeEnv({ dir, sentinelsDir: sentinels, statusJson: '{}', reviewBin: reviewPassBin(dir, sentinels) });
+  const env = fakeEnv({ dir, sentinelsDir: sentinels, statusJson: '{}', reviewBin: reviewPassBin(dir, sentinels), notifyOnPark: '1' });
   // Override the autopilot bin with one that EXITS NONZERO on --status.
   env.GG_AUTOPILOT_BIN = writeNodeFake(dir, 'fake-autopilot-statusfail.mjs', {
     sentinelName: 'autopilot-status', sentinelsDir: sentinels,
@@ -513,16 +558,20 @@ test('--status failure (autopilot exits nonzero) → exit 2, skips mark-failed, 
   assert.ok(sentinelHit(sentinels, 'autopilot-status'), '--status was attempted');
   assert.ok(!sentinelHit(sentinels, 'autopilot-mark-failed'), 'no claim to park → mark-failed must be skipped');
   assert.ok(!sentinelHit(sentinels, 'autopilot-merge'), 'no merge on status failure');
-  assert.ok(sentinelHit(sentinels, 'lark-notify'), 'gate still fires the failure notify');
+  const notified = sentinelText(sentinels, 'notify');
+  assert.match(notified, /^gate_fail /, 'gate still fires the failure notify (gate_fail event)');
+  // No claim → the slug field falls back to the branch ref.
+  assert.match(notified, /--slug seo\/auto\/2026-06-18-12345/);
+  assert.match(notified, /--reason .*status/i);
 });
 
 // ── (k) per-step hard timeout → exit 2 + park + notify (the hammer-prevention contract) ──
 // The gate SIGKILLs a child that exceeds its per-step timeout and maps timedOut → gateFail/exit 2.
 // This is what stops the cron from re-looping on a wedged preview and holding the PID lock for
 // hours. Previously every fake exited instantly, so this branch was never exercised.
-test('a sub-step that exceeds its timeout → exit 2, mark-failed + lark-notify, no merge', () => {
+test('a sub-step that exceeds its timeout → exit 2, mark-failed + gate_fail notify, no merge', () => {
   const { dir, sentinels } = freshCase();
-  const env = fakeEnv({ dir, sentinelsDir: sentinels, statusJson: CLAIM_VERIFIED(), reviewBin: reviewPassBin(dir, sentinels) });
+  const env = fakeEnv({ dir, sentinelsDir: sentinels, statusJson: CLAIM_VERIFIED(), reviewBin: reviewPassBin(dir, sentinels), notifyOnPark: '1' });
   // A verify fake that records its invocation then sleeps WAY past the injected --verify-timeout-ms.
   const slowVerify = join(dir, 'fake-verify-slow.mjs');
   writeFileSync(slowVerify, `import { appendFileSync } from 'node:fs';\nappendFileSync(${JSON.stringify(join(sentinels, 'preview-verify'))}, process.argv.slice(2).join(' ') + '\\n');\nsetTimeout(() => { process.stdout.write('{"ok":true}'); process.exit(0); }, 5000);\n`);
@@ -533,7 +582,9 @@ test('a sub-step that exceeds its timeout → exit 2, mark-failed + lark-notify,
   assert.match(JSON.parse(r.stdout.trim()).reason, /timeout/i);
   assert.ok(sentinelHit(sentinels, 'preview-verify'), 'the slow verify did run');
   assert.ok(sentinelHit(sentinels, 'autopilot-mark-failed'), 'timeout parks the claim');
-  assert.ok(sentinelHit(sentinels, 'lark-notify'), 'timeout fires the failure notify');
+  const notified = sentinelText(sentinels, 'notify');
+  assert.match(notified, /^gate_fail /, 'timeout fires the failure notify (gate_fail event)');
+  assert.match(notified, /--reason .*timeout/i);
   assert.ok(!sentinelHit(sentinels, 'autopilot-merge'), 'a timed-out gate must NOT merge');
 });
 

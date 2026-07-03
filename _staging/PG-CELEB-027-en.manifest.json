@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-CELEB-027",
+  "entity": "Travis Kelce Birth Chart",
+  "target_keyword": "Travis Kelce birth chart",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-07-03T19:41:05.319Z",
+  "content_sha256_short": "c5922b03b2c95440",
+  "source_path": "_staging/PG-CELEB-027-claude-v8.md",
+  "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-CELEB-027-en.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 4,
+      "h4Count": 0,
+      "words": 1640,
+      "wikilinks": 6,
+      "tbdLinks": 6
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

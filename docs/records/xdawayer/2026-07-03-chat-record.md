@@ -561,3 +561,34 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 按选项 1 推迟 3c（/en/blog/ canonical 基建，后续再定），先修当前 bug。核查发现所谓"/en/blog/ 坏内链"的真相是：astrocartography-map-generator SEO 内容里 4 处内链指向 astrocartography-interpretation 这篇**从不存在**的文章（无 data/articles .ts、未注册、/blog 与 /wiki 都 soft-404 到落地壳）——改 /blog→/wiki 也修不了。改法=4 处死链改指真实存在且内容正相关的 /en/astrocartography 指南，两份镜像源同步（toolSeoContent.ts SPA 源 + generate-seo-pages.mjs 静态生成源），其中同句已链该页的一处改写去掉重复死链。只提交 2 个源文件（回退 build 产生的 1112 个 stub bundle-hash churn）；npm run build 通过。oracle PR #321 已合并（823dcf6）、Vercel green、prod 验证 0 死链上线（"done means live"）。
 
 ---
+### Q25 — 21:02
+
+**🙋 提问：**
+
+Automation: GenGrowth Vault Git Auto-Heal
+Automation ID: gengrowth-vault-git-auto-heal
+Automation memory: $CODEX_HOME/automations/gengrowth-vault-git-auto-heal/memory.md
+Last run: 2026-07-03T12:01:48.431Z (1783080108431)
+
+在本机执行 GenGrowth 多仓库 Obsidian/Git 自愈同步。目标仓库固定为 `/Users/awayer_mini/gengrowth-wiki`、`/Users/awayer_mini/gengrowth-ops`、`/Users/awayer_mini/gengrowth-flow-mvp`。
+
+必须使用已验证的确定性入口，不要绕过脚本手写破坏性 git 操作：
+
+`/usr/bin/python3 /Users/awayer_mini/gengrowth-wiki/tools/scripts/obsidian-vault-git-sync.py --repo /Users/awayer_mini/gengrowth-wiki --repo /Users/awayer_mini/gengrowth-ops --repo /Users/awayer_mini/gengrowth-flow-mvp --verbose`
+
+安全边界：
+- 禁止运行 `git reset --hard`、`git checkout -- <path>`、`git clean`、`rm -rf`、`rsync --delete`，除非用户在当次对话中明确要求。
+- 不要运行 `tools/scripts/frequent-sync.sh`、`tools/scripts/gengrowth-repos-sync.sh` 或 `tools/scripts/_sync-core.sh`，因为这些路径包含镜像删除语义，本任务只做 git 自愈同步。
+- 同步脚本会先 fetch，检查未解决冲突，提交本地非敏感变更，再 rebase/push；只对白名单 JSON 冲突自动合并，其他冲突会中止并报告。不要在脚本中止后自行猜测合并内容。
+- 不打印密钥、token、邮箱密码、service account JSON、private key 或完整凭证 URL。
+
+执行后验证：
+1. 分别在三个仓库运行 `git status --branch --porcelain=v2`、`git rev-list --left-right --count HEAD...origin/main`、`git diff --name-only --diff-filter=U`、`git ls-files -u`。
+2. 回读 `/Users/awayer_mini/gengrowth-ops/.obsidian/plugins/obsidian-git/data.json` 和 `/Users/awayer_mini/gengrowth-flow-mvp/.obsidian/plugins/obsidian-git/data.json`，确认 `autoSaveInterval`、`autoPushInterval`、`autoPullInterval` 为 0，`autoPullOnBoot` 与 `pullBeforePush` 为 false。
+3. 若所有仓库都是 clean 且 ahead/behind 为 `0 0`，简短报告已同步；若脚本输出“需要关注”或存在 unmerged，报告具体仓库和文件路径，不要删除文件。
+
+**🤖 回答：**
+
+使用指定的 `obsidian-vault-git-sync.py` 三仓库入口执行自愈同步，未运行破坏性 git 或镜像删除脚本。首轮脚本输出 `Obsidian vault git sync: clean`，三仓库初始验证均 clean、`HEAD...origin/main` 均为 `0 0`、无 unmerged 文件；`gengrowth-ops` 与 `gengrowth-flow-mvp` 的 Obsidian Git 自动保存/推送/拉取相关字段保持禁用。追加本条 record 后，继续用同一入口收敛并做最终验证；自动化 memory 记录本次最终状态。
+
+---

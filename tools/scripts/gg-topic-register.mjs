@@ -1960,6 +1960,20 @@ function writePromptFiles(profile, prompts) {
 }
 
 async function runProduct(profile, { token, args, nowDate, budget = null }) {
+  // Guard (2026-07-03): refuse to --apply un-enriched rows. Without --llm the preprocessor never
+  // runs, so pageRowFields writes the template-scaffold Entity/Logic ("<x> ↔ <cluster> ↔ practical
+  // interpretation. Treat <x> as an interpretive framework…") — thin, un-SERP-grounded briefs that
+  // look enriched but are not. This was the root cause of the 2026-07 thin-brief batch. Enrich with
+  // "--discover-evidence --llm claude" (DuckDuckGo/Bing HTML SERP, no creds), or pass
+  // --allow-thin-brief to intentionally write the scaffold. The scheduled tick already passes
+  // --llm, so it is unaffected. Fails fast, before any Sheets read/write.
+  if (args.apply && !args.llm && !args.allow_thin_brief) {
+    throw new Error(
+      `${profile.key}: refusing --apply without --llm — would write template-scaffold thin briefs `
+      + `(un-SERP-grounded Entity/Logic). Add "--discover-evidence --llm claude" to enrich, or `
+      + `--allow-thin-brief to override intentionally.`,
+    );
+  }
   const workbookId = resolveWorkbook(profile);
   const [pagesRaw, clustersRaw] = await Promise.all([
     fetchValues(workbookId, `${PAGES_TAB}!A:W`, token),

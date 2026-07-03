@@ -33,11 +33,20 @@ export function loadSerpSnippets(serpDir, pageId) {
   }
   try {
     const raw = JSON.parse(readFileSync(path, 'utf8'));
-    const snippets = Array.isArray(raw.snippets)
+    const fromSnippets = Array.isArray(raw.snippets)
       ? raw.snippets
           .map((s) => (typeof s === 'string' ? s : s.snippet || s.title || ''))
           .filter((s) => typeof s === 'string' && s.length > 0)
       : [];
+    // Fallback to raw.organic[] — the shape gg-topic-register's buildTrendEvidenceCache writes
+    // (DuckDuckGo/Bing HTML SERP). Without this, topic-register-produced SERP caches are invisible
+    // to the authoring RL3 plagiarism gate even though gg-brief-suggest reads them fine. Only used
+    // when raw.snippets is absent/empty, so caches that already carry snippets are unchanged.
+    const snippets = fromSnippets.length || !Array.isArray(raw.organic)
+      ? fromSnippets
+      : raw.organic
+          .map((s) => (typeof s === 'string' ? s : (s && (s.snippet || s.title)) || ''))
+          .filter((s) => typeof s === 'string' && s.length > 0);
     return { state: 'hit', snippets, path };
   } catch (e) {
     return { state: 'error', snippets: [], path, err: e.message };

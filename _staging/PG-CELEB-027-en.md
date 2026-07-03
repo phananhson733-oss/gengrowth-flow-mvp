@@ -16,7 +16,6 @@ associated_keywords:
   - Travis Kelce birth chart astrology
   - Travis Kelce birth chart zodiac
   - Travis Kelce birth chart interpretation
-  - emma watson zodiac sign
 generated_by: unknown
 prompt_version: v8
 generated_at: 2026-07-03T19:47:31.111Z

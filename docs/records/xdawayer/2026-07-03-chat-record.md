@@ -490,3 +490,34 @@ Last run: 2026-07-03T09:01:47.794Z (1783069307794)
 落地 flow 修复阶段 3 核心（3a+3b），全部由确定性代码保证。3a 发布 merge union 自愈：oracle merge 已被 CLAIMS_LOCK 串行化，把历史上"陈旧分支撞两个 additive 注册文件→gh pr merge 冲突→park 需人手动 union-merge"下沉成代码——冲突时在新鲜 detached worktree 里 union-merge origin/main（只 union index.ts + generate-seo-pages.mjs），断言文章 .ts 与真正被评审的 commit(claim.headRefOid)逐字一致+分支 tip 严格等于该 commit+注册行未丢+build 通过，才 push+merge，任何异常响亮 park，绝不 ship 未评审内容（新 lib/merge-union.mjs + 10 单测含 4 真实 git 集成）。3b gengrowth author lane 入代码（杀漏写）：新 gg-gengrowth-author-tick.sh + plist(disabled)，复用 --author 引擎（GG_SITE=gengrowth 切契约、workbook env 切 brief 源、pin gengrowth W25 计划绕过 latestPlan 排除），产 _staging → 现有 hourly publish lane 接走；发布 handoff 用 copy(-en→-<llm>-v8，且独立于 rc 以防 review 期超时 strand 已撰写草稿)，幂等靠 ready-draft+claim 双 skip(均不吃 batch 名额)、反污染全代码。评审：merge 面对抗评审揪出 1 BLOCKING(自愈丢 head-pin→已加强为等值 pin)+1 MAJOR(已文档化)；gengrowth 面揪出 2 MAJOR(rc=124 strand + parked 项吃 batch，均已修)+3 MINOR；codex 撞额度未出评审。全量测试 1453/1455(零回归)，原子 land commit 17765c78 已推送。3c(/en/blog/ canonical)prod 核查证伪其前提(astrologywiki /en/blog/ 当前是 SPA 落地壳非文章、无 /blog/ 路由)，单列为需定方向的 SEO scope 变更。
 
 ---
+### Q22 — 20:02
+
+**🙋 提问：**
+
+Automation: GenGrowth Vault Git Auto-Heal
+Automation ID: gengrowth-vault-git-auto-heal
+Automation memory: $CODEX_HOME/automations/gengrowth-vault-git-auto-heal/memory.md
+Last run: 2026-07-03T11:01:48.175Z (1783076508175)
+
+在本机执行 GenGrowth 多仓库 Obsidian/Git 自愈同步。目标仓库固定为 `/Users/awayer_mini/gengrowth-wiki`、`/Users/awayer_mini/gengrowth-ops`、`/Users/awayer_mini/gengrowth-flow-mvp`。
+
+必须使用已验证的确定性入口，不要绕过脚本手写破坏性 git 操作：
+
+`/usr/bin/python3 /Users/awayer_mini/gengrowth-wiki/tools/scripts/obsidian-vault-git-sync.py --repo /Users/awayer_mini/gengrowth-wiki --repo /Users/awayer_mini/gengrowth-ops --repo /Users/awayer_mini/gengrowth-flow-mvp --verbose`
+
+安全边界：
+- 禁止运行 `git reset --hard`、`git checkout -- <path>`、`git clean`、`rm -rf`、`rsync --delete`，除非用户在当次对话中明确要求。
+- 不要运行 `tools/scripts/frequent-sync.sh`、`tools/scripts/gengrowth-repos-sync.sh` 或 `tools/scripts/_sync-core.sh`，因为这些路径包含镜像删除语义，本任务只做 git 自愈同步。
+- 同步脚本会先 fetch，检查未解决冲突，提交本地非敏感变更，再 rebase/push；只对白名单 JSON 冲突自动合并，其他冲突会中止并报告。不要在脚本中止后自行猜测合并内容。
+- 不打印密钥、token、邮箱密码、service account JSON、private key 或完整凭证 URL。
+
+执行后验证：
+1. 分别在三个仓库运行 `git status --branch --porcelain=v2`、`git rev-list --left-right --count HEAD...origin/main`、`git diff --name-only --diff-filter=U`、`git ls-files -u`。
+2. 回读 `/Users/awayer_mini/gengrowth-ops/.obsidian/plugins/obsidian-git/data.json` 和 `/Users/awayer_mini/gengrowth-flow-mvp/.obsidian/plugins/obsidian-git/data.json`，确认 `autoSaveInterval`、`autoPushInterval`、`autoPullInterval` 为 0，`autoPullOnBoot` 与 `pullBeforePush` 为 false。
+3. 若所有仓库都是 clean 且 ahead/behind 为 `0 0`，简短报告已同步；若脚本输出“需要关注”或存在 unmerged，报告具体仓库和文件路径，不要删除文件。
+
+**🤖 回答：**
+
+使用指定的 `obsidian-vault-git-sync.py` 三仓库入口执行自愈同步，未运行破坏性 git 或镜像删除脚本。首轮脚本输出 `Obsidian vault git sync: clean`，初始验证三仓库均 clean、`HEAD...origin/main` 均为 `0 0`、无 unmerged 文件；`gengrowth-ops` 与 `gengrowth-flow-mvp` 的 Obsidian Git 自动保存/推送/拉取相关字段保持禁用。追加本条 record 后，继续用同一入口收敛并完成最终验证；自动化 memory 也记录本次最终状态。
+
+---

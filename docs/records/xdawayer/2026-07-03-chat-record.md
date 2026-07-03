@@ -464,6 +464,6 @@ Last run: 2026-07-03T09:01:47.794Z (1783069307794)
 
 **🤖 回答：**
 
-使用指定的 `obsidian-vault-git-sync.py` 三仓库入口执行自愈同步，未运行破坏性 git 或镜像删除脚本。首轮脚本 exit 0 且无输出；独立验证显示三仓库 clean、`HEAD...origin/main` 均为 `0 0`、无 unmerged 文件，且 `gengrowth-ops` 与 `gengrowth-flow-mvp` 的 Obsidian Git 自动保存/推送/拉取相关字段保持禁用。按记录规则追加本条 record 后，将再次使用同一确定性入口收敛并复验。
+使用指定的 `obsidian-vault-git-sync.py` 三仓库入口执行自愈同步，未运行破坏性 git 或镜像删除脚本。首轮脚本 exit 0 且无输出；追加本条 record 后，同一入口提交并推送 1 个 `gengrowth-flow-mvp` 路径；随后发现 `gengrowth-wiki` 有普通 record 修改，再次同一入口提交并推送 1 个 `gengrowth-wiki` 路径。最终验证：`gengrowth-wiki` HEAD `82f59abb17d90695d8db5e2af797da5e3e59bce6`、`gengrowth-ops` HEAD `6287df8a0ff01a19060e204d18bc145d55ccceaa`、`gengrowth-flow-mvp` HEAD `4db36e7cca089e380b1fa2c150b91c7d125e3693`；三仓库 clean、`HEAD...origin/main` 均为 `0 0`、无 unmerged 文件，且 `gengrowth-ops` 与 `gengrowth-flow-mvp` 的 Obsidian Git 自动保存/推送/拉取相关字段保持禁用。
 
 ---

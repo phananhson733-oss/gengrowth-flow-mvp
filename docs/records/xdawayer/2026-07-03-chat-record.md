@@ -467,3 +467,14 @@ Last run: 2026-07-03T09:01:47.794Z (1783069307794)
 使用指定的 `obsidian-vault-git-sync.py` 三仓库入口执行自愈同步，未运行破坏性 git 或镜像删除脚本。首轮脚本 exit 0 且无输出；追加本条 record 后，同一入口提交并推送 1 个 `gengrowth-flow-mvp` 路径；随后发现 `gengrowth-wiki` 有普通 record 修改，再次同一入口提交并推送 1 个 `gengrowth-wiki` 路径。最终验证：`gengrowth-wiki` HEAD `82f59abb17d90695d8db5e2af797da5e3e59bce6`、`gengrowth-ops` HEAD `6287df8a0ff01a19060e204d18bc145d55ccceaa`、`gengrowth-flow-mvp` HEAD `4db36e7cca089e380b1fa2c150b91c7d125e3693`；三仓库 clean、`HEAD...origin/main` 均为 `0 0`、无 unmerged 文件，且 `gengrowth-ops` 与 `gengrowth-flow-mvp` 的 Obsidian Git 自动保存/推送/拉取相关字段保持禁用。
 
 ---
+### Q20 — 18:31 [claude]
+
+**🙋 提问：**
+
+继续 Phase2.同时注意这里的zh 全部删除，指的是以后不要在生成 zh 文章了，而不是删除网站中已有的中文 blog
+
+**🤖 回答：**
+
+执行并完成 flow 修复阶段 2（zh 全量移除，EN-only）：在 vault 外 worktree 删除全部产 zh 的代码路径（autopilot zh-backfill 双路径、phase2 zh 红线派发+GATE-1/GATE-4、zh 模板、zh 转换/注册、preview --zh 腿、配图中文 alt、8 个 oneoff zh 批次脚本），并确立"入口收到 zh 参数一律响亮拒绝（exit 2/throw）、绝不静默按 EN 处理"的契约；线上 129 个 /zh/ 存量页与 Sheet 列结构按用户澄清完整保留。经 codex（8 发现，6 BLOCKING 全修）+ 双 Claude 对抗评审（复活面/EN 回归面，无 BLOCKING）+ 全量测试 1440/1442（2 个既有失败）后原子 land（commit b6fa01c7，481 文件 +582/−37339，含删 _staging/zh-demo/ 435 文件，已推送）。随后废弃 7 条挂起 9 天的 zh park：关闭 PR #264/265/266/267/268/275、删远端/本地分支、移除 7 个 oracle worktree（含孤儿）、ledger 删 7 个 zh claim（现 116 条全部 done、零 needs_human），并用新事件层向飞书发废弃汇总。下一步：阶段 3（跨 lane 发布互斥 + gengrowth author lane + /en/blog/ canonical）。
+
+---

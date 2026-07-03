@@ -402,3 +402,20 @@ Last run: 2026-07-03T08:01:47.566Z (1783065707566)
 三路验证收口：全量测试 1474/1472 过（仅 2 个 pre-existing 失败，干净 HEAD 同样失败）；codex(gpt-5.5) 复审抓到 4 个真问题（SIGTERM 窗口丢消息/replayOutbox 无锁重复发送/batch-summary 忽略发送失败/PATH 空段劫持），双 Claude 对抗评审再抓 3 个 major（未知事件名产生空文本毒条目/outbox 只写不放没人重放/批次汇总被继承的 SILENCE 吞掉）——全部修复：write-ahead+rename 认领+uuid 幂等+TTL/attempts 卫生淘汰+replay 接进全部 5 个 lane tick+SILENCE 清洗，各配回归测试（通知层 51 用例全绿）。阶段 1 一次性 land 进 vault 并原子提交。
 
 ---
+
+### Q17 — 17:33
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: 2026-07-02T21:00:44.036Z (1783026044036)
+
+Run the deterministic fixed-row index repair workflow through `bash tools/scripts/gg-index-repair-resubmit-tick.sh`. The wrapper loads the local gg environment, loops the configured products (`GG_INDEX_MONITOR_PRODUCTS`, defaulting to astrologywiki and gengrowth), processes rows marked `已修复`, syncs `结果复盘表`, and refreshes `request-indexing-queue` in each product Google Sheet. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, do not click Search Console Request Indexing unattended, and do not create Feishu or Google Doc report artifacts. After the wrapper exits, summarize per-product `process-fixed`, `sync-recap`, `sync-request-queue` counts visible in the log, plus any failures.
+
+**🤖 回答：**
+
+按指定入口运行 `bash tools/scripts/gg-index-repair-resubmit-tick.sh`，wrapper 退出码为 `0`，stdout 为空，证据来自 `/Users/awayer_mini/gengrowth-agents/cron-sync/index_repair_resubmit/2026-07-03.log` 的新增窗口 `2026-07-03 17:32:10` 至 `17:32:38 CST`，最终行 `index repair-resubmit ok`。`astrologywiki`：`process-fixed fixed=0 resubmitted=0`，`sync-recap en_rows=192 appended=0 updated=0 skipped=192`，`sync-request-queue rows=25 P0=0 P1=0 P2=11 P3=14`。`gengrowth`：`process-fixed fixed=0 resubmitted=0`，`sync-recap en_rows=51 appended=0 updated=0 skipped=51`，`sync-request-queue rows=10 P0=0 P1=0 P2=0 P3=10`。失败关键词检查无命中；保持合规边界，未使用普通文章 Google Indexing API、未无人值守点击 Search Console Request Indexing、未创建飞书或 Google Doc 报告。
+
+---

@@ -419,3 +419,20 @@ Run the deterministic fixed-row index repair workflow through `bash tools/script
 按指定入口运行 `bash tools/scripts/gg-index-repair-resubmit-tick.sh`，wrapper 退出码为 `0`，stdout 为空，证据来自 `/Users/awayer_mini/gengrowth-agents/cron-sync/index_repair_resubmit/2026-07-03.log` 的新增窗口 `2026-07-03 17:32:10` 至 `17:32:38 CST`，最终行 `index repair-resubmit ok`。`astrologywiki`：`process-fixed fixed=0 resubmitted=0`，`sync-recap en_rows=192 appended=0 updated=0 skipped=192`，`sync-request-queue rows=25 P0=0 P1=0 P2=11 P3=14`。`gengrowth`：`process-fixed fixed=0 resubmitted=0`，`sync-recap en_rows=51 appended=0 updated=0 skipped=51`，`sync-request-queue rows=10 P0=0 P1=0 P2=0 P3=10`。失败关键词检查无命中；保持合规边界，未使用普通文章 Google Indexing API、未无人值守点击 Search Console Request Indexing、未创建飞书或 Google Doc 报告。
 
 ---
+
+### Q18 — 18:01
+
+**🙋 提问：**
+
+Automation: GenGrowth Topic Register
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-03T08:01:17.569Z (1783065677569)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+按指定入口执行 `bash tools/scripts/gg-topic-register-tick.sh`，未传手动写入、repair、overwrite 或直接脚本参数。日志窗口为 `2026-07-03 18:01:38-18:01:42 CST`，退出码 0，状态 `topic-register ok`；本机环境启用 apply，`dry_run=false`，`budget_exhausted=false`。`astrologywiki` 与 `gengrowth` 均为 candidates=0、updates=0、new_clusters=0、page_ids=[]、selection_mode=generate、audit_incomplete=0、preprocessor=[]、evidence_discovery=[]，无可见失败。已更新自动化 memory，未手工写 Sheet、未直接编辑任务计划，也未额外创建 Feishu/Google Doc 报告。
+
+---

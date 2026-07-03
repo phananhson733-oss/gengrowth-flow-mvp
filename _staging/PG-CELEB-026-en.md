@@ -16,7 +16,6 @@ associated_keywords:
   - Penélope Cruz birth chart astrology
   - Penélope Cruz birth chart zodiac
   - Penélope Cruz birth chart interpretation
-  - emma watson zodiac sign
 generated_by: unknown
 prompt_version: v8
 generated_at: 2026-07-03T12:56:48.924Z

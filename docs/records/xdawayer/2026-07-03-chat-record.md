@@ -15,6 +15,7 @@ tags:
 - 要点 1：执行 GenGrowth 多仓库 Obsidian/Git 自愈同步，固定使用已验证的 `obsidian-vault-git-sync.py` 入口。
 - 要点 2：同步结果为 clean，三个仓库均无 ahead/behind、无 unmerged 文件。
 - 要点 3：验证 `gengrowth-ops` 与 `gengrowth-flow-mvp` 的 Obsidian Git 自动保存、自动推送、自动拉取配置均为关闭状态。
+- 要点 4：执行 GenGrowth Index Monitor wrapper，确认 2026-07-03 09:00 运行正常结束并同步索引复盘/队列。
 
 ---
 
@@ -49,5 +50,22 @@ Last run: 2026-07-02T22:01:44.333Z (1783029704333)
 **🤖 回答：**
 
 按指定入口执行多仓库自愈同步，脚本输出 `Obsidian vault git sync: clean`。随后逐仓库验证 `git status --branch --porcelain=v2`、`git rev-list --left-right --count HEAD...origin/main`、`git diff --name-only --diff-filter=U`、`git ls-files -u`：`gengrowth-wiki`、`gengrowth-ops`、`gengrowth-flow-mvp` 均为 clean，ahead/behind 均为 `0 0`，无未合并文件。已回读 `gengrowth-ops` 与 `gengrowth-flow-mvp` 的 `.obsidian/plugins/obsidian-git/data.json`，确认 `autoSaveInterval`、`autoPushInterval`、`autoPullInterval` 均为 `0`，`autoPullOnBoot` 与 `pullBeforePush` 均为 `false`。同时写入自动化记忆文件。
+
+---
+
+### Q2 — 09:04
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Monitor
+Automation ID: gengrowth-index-monitor
+Automation memory: $CODEX_HOME/automations/gengrowth-index-monitor/memory.md
+Last run: 2026-07-02T01:02:07.676Z (1782954127676)
+
+Run the GenGrowth Phase 2 indexing workflow through the existing deterministic wrapper: `bash tools/scripts/gg-index-monitor-tick.sh`. This wrapper must refresh the live sitemap through the official Search Console Sitemaps API, inspect due URLs through URL Inspection, sync the final `结果复盘表`, generate/update `request-indexing-queue` with priority colors, and send Feishu SEO技术 group reminders for actionable candidates or failures. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, and do not click Search Console Request Indexing unattended. For Computer Use submission, only assist by opening candidate GSC inspection URLs and stop for human confirmation before the final Request Indexing click. After the wrapper exits, summarize sitemap submission status, GSC check counts/failures, queue counts by priority, and any Feishu notification outcome visible in the log.
+
+**🤖 回答：**
+
+执行指定 wrapper 时命中互斥锁，09:01:48 的手动触发记录为 `skip — previous index monitor run (pid 49584) still active`；未重复跑第二遍，改按同一 deterministic wrapper 的完整 09:00:05-09:03:02 运行窗口汇总。该窗口以 `index monitor ok` 结束：`astrologywiki` sitemap 提交成功，URL Inspection rows=192 due=12 checked=12 alerts=0 failures=0，最终 `request-indexing-queue` rows=25 P0=0 P1=0 P2=11 P3=14，`结果复盘表` en_rows=192 updated=192；`gengrowth` sitemap 提交成功，due=0 checked=0 failures=0，队列 rows=0。日志未显示 Feishu/Lark 成功或失败回执。已更新自动化记忆文件。
 
 ---

@@ -2594,6 +2594,7 @@ export async function runIndexMonitor(argv, deps = {}) {
       readRecapRowsFn: deps.readRecapRows || readRecapRows,
       updateRowFn: deps.updateTrackingRow || updateTrackingRow,
       appendRowsFn: deps.appendTrackingRows || appendTrackingRows,
+      readTopicPageIdFn: deps.readTopicPageIdByUrl || readTopicPageIdByUrl,
       batchUpdateRowsFn: deps.updateTrackingRow || deps.appendTrackingRows
         ? deps.batchUpdateTrackingRows || null
         : deps.batchUpdateTrackingRows || batchUpdateTrackingRows,

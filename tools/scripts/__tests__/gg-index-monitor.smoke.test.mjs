@@ -838,6 +838,7 @@ test('runIndexMonitor --sync-published upserts live sitemap EN URLs into the sta
       <url><loc>https://www.astrologywiki.com/zh/wiki/new-live</loc><lastmod>2026-06-24</lastmod></url>
     `),
     ensureIndexTrackingTab: async () => INDEX_TRACKING_TAB,
+    readTopicPageIdByUrl: async () => new Map(),
     readRecapRows: async () => [{
       page_id: 'PG-EXISTING',
       url: 'https://www.astrologywiki.com/en/wiki/existing-live',
@@ -878,6 +879,33 @@ test('runIndexMonitor --sync-published upserts live sitemap EN URLs into the sta
   assert.equal(appended[0].title, 'New Live');
 });
 
+test('runIndexMonitor --sync-published resolves page_id from 选题登记表 for a Lane A blog post not yet tracked', async () => {
+  const appended = [];
+  const code = await runIndexMonitor(['--sync-published', '--write-sheet', '--workbook', 'wb-gengrowth'], {
+    now: new Date('2026-07-03T00:00:00Z'),
+    sheetToken: 'sheet-token',
+    sitemapRows: extractEnWikiSitemapRows(`
+      <url><loc>https://gengrowth.ai/en/blog/ethical-seo-services</loc><lastmod>2026-07-03</lastmod></url>
+    `),
+    ensureIndexTrackingTab: async () => INDEX_TRACKING_TAB,
+    // A freshly-published Lane A post is in neither recap nor tracking yet…
+    readRecapRows: async () => [],
+    readTrackingRows: async () => [],
+    // …but 选题登记表 carries the url → page_id mapping, so it must be appended, not skipped.
+    readTopicPageIdByUrl: async () => new Map([
+      ['https://gengrowth.ai/en/blog/ethical-seo-services', 'PG-EOS-008'],
+    ]),
+    updateTrackingRow: async () => {},
+    appendTrackingRows: async (token, workbookId, tabName, rows) => { appended.push(...rows); },
+  });
+
+  assert.equal(code, 0);
+  assert.equal(appended.length, 1);
+  assert.equal(appended[0].url, 'https://gengrowth.ai/en/blog/ethical-seo-services');
+  assert.equal(appended[0].page_id, 'PG-EOS-008');
+  assert.equal(appended[0].slug, 'ethical-seo-services');
+});
+
 test('runIndexMonitor --sync-published can batch update tracking rows', async () => {
   let batched = null;
   const code = await runIndexMonitor(['--sync-published', '--write-sheet', '--workbook', 'wb-test'], {
@@ -887,6 +915,7 @@ test('runIndexMonitor --sync-published can batch update tracking rows', async ()
       <url><loc>https://www.astrologywiki.com/en/wiki/existing-live</loc><lastmod>2026-06-24</lastmod></url>
     `),
     ensureIndexTrackingTab: async () => INDEX_TRACKING_TAB,
+    readTopicPageIdByUrl: async () => new Map(),
     readRecapRows: async () => [],
     readTrackingRows: async () => [{
       ...buildTrackingSeedRow({

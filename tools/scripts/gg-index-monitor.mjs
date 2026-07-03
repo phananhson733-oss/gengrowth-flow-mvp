@@ -1456,6 +1456,35 @@ export async function readTopicClusterMap(token, workbookId, tabName = '选题�
   }
 }
 
+// normalizeUrl(url) → page_id from 选题登记表 (URL col ↔ page_id col, matched by header name).
+// Lets sync-published resolve a page_id for a freshly-published article that is in neither the
+// recap nor the tracking tab yet. This is the Lane A gengrowth case: blog posts enter via a
+// Supabase upsert and never pass through an autopilot merge that would seed index-tracking with
+// a page_id, so without this lookup they are skipped forever and never reach 结果复盘表.
+// Best-effort: returns an empty Map on any error / missing columns (→ no behavior change).
+export async function readTopicPageIdByUrl(token, workbookId, tabName = '选题登记表') {
+  try {
+    const body = await gFetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${workbookId}/values/${encodeURIComponent(`${tabName}!A1:AZ2000`)}`,
+      token,
+    );
+    const rows = body.values || [];
+    const header = rows[0] || [];
+    const iPage = header.findIndex((h) => /page_id/i.test(String(h).trim()));
+    const iUrl = header.findIndex((h) => /^url$/i.test(String(h).trim()));
+    if (iPage < 0 || iUrl < 0) return new Map();
+    const map = new Map();
+    for (let r = 1; r < rows.length; r++) {
+      const pid = String((rows[r] || [])[iPage] || '').trim();
+      const url = String((rows[r] || [])[iUrl] || '').trim();
+      if (pid && url) map.set(normalizeUrl(url), pid);
+    }
+    return map;
+  } catch {
+    return new Map();
+  }
+}
+
 export async function readRequestQueueRows(token, workbookId, tabName = REQUEST_INDEXING_QUEUE_TAB) {
   const last = colLetter(REQUEST_INDEXING_QUEUE_HEADER.length - 1);
   const body = await gFetch(
@@ -1992,6 +2021,7 @@ async function runSyncPublished(args, {
   updateRowFn = updateTrackingRow,
   appendRowsFn = appendTrackingRows,
   batchUpdateRowsFn = null,
+  readTopicPageIdFn = readTopicPageIdByUrl,
 }) {
   if (!workbookId) {
     process.stderr.write('error: --sync-published requires workbook id from env or --workbook\n');
@@ -2006,6 +2036,11 @@ async function runSyncPublished(args, {
       .filter((row) => row.url && row.page_id)
       .map((row) => [normalizeUrl(row.url), row]),
   );
+  // Fallback page_id source (url → page_id) for URLs not in recap/tracking yet — see
+  // readTopicPageIdByUrl (the Lane A gengrowth seeding gap).
+  const topicPageIdByUrl = args.write_sheet && readTopicPageIdFn
+    ? await readTopicPageIdFn(sheetToken, workbookId)
+    : new Map();
   const byUrl = new Map(existing.map((row) => [normalizeUrl(row.url), row]));
   const toAppend = [];
   const toUpdate = [];
@@ -2019,6 +2054,10 @@ async function runSyncPublished(args, {
     }
     const recapRow = recapByUrl.get(key);
     if (recapRow?.page_id && !fresh.page_id) fresh.page_id = recapRow.page_id;
+    if (!fresh.page_id) {
+      const registryPid = topicPageIdByUrl.get(key);
+      if (registryPid) fresh.page_id = registryPid;
+    }
     const old = byUrl.get(key);
     if (!fresh.page_id && !old?.page_id) {
       skipped++;

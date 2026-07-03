@@ -521,3 +521,31 @@ Last run: 2026-07-03T11:01:48.175Z (1783076508175)
 使用指定的 `obsidian-vault-git-sync.py` 三仓库入口执行自愈同步，未运行破坏性 git 或镜像删除脚本。首轮脚本输出 `Obsidian vault git sync: clean`，初始验证三仓库均 clean、`HEAD...origin/main` 均为 `0 0`、无 unmerged 文件；`gengrowth-ops` 与 `gengrowth-flow-mvp` 的 Obsidian Git 自动保存/推送/拉取相关字段保持禁用。追加本条 record 后，继续用同一入口收敛并完成最终验证；自动化 memory 也记录本次最终状态。
 
 ---
+
+### Q23 — 20:05 [claude]
+
+**🙋 提问：**
+
+（scheduled task `auto-seo-blog`）确定 W22/W25 tasks 是否需今日撰写 SEO blog；未完成的全部完成，按上海时区，最终把 blog 提交到 gengrowth 和 astrologywiki。
+
+**🤖 回答：**
+
+以只读 supervisor 身份跑了一次巡检（gengrowth-ops 任务清单与 Mac 凭证均未挂载进沙盒，故正确角色是校验+经 .gg-bridge 发信号，不在沙盒侧撰写/发布）。逐路 web_fetch 核验：W22 astrologywiki 整批 PG-CELEB-015→024 全部上线（本轮直连确认 lebron-james/angela-nikolau/john-denver 三篇正文+自规范+index,follow 齐全），W25 gengrowth 5 篇新量产线文（ethical-seo-services/integrated-seo/saas-seo-expert/manual-seo-service/b2b-saas-seo）全部上线。发布缺口=0，无 authored-but-unpublished，未写 kick（最新 kick 仍是 06-30 已处理）。写出 `.gg-bridge/reports/2026-07-03.md`。剩余仅 Mac 凭证侧动作：gengrowth glossary/use-case 页 GSC 补提（astrologywiki 已追平）、`gg-reconcile-status.mjs --apply` 翻状态、PG-TERM-008/009 两行复核、飞书通知由 Mac 发。除该报告外未做任何沙盒侧副作用写入。
+
+---
+### Q24 — 20:08
+
+**🙋 提问：**
+
+Automation: GenGrowth Topic Register
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-03T10:00:47.956Z (1783072847956)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+按指定入口执行 `bash tools/scripts/gg-topic-register-tick.sh`，未传手动写入、repair、overwrite 或直接脚本参数。日志窗口为 `2026-07-03 20:03:03-20:07:20 CST`，退出码 0，状态 `topic-register ok`；本机环境启用 apply，`dry_run=false`，`budget_exhausted=false`。`astrologywiki`：candidates=5、updates=5、new_clusters=0、page_ids=`PG-WC-042`, `PG-CELEB-025`, `PG-CELEB-026`, `PG-CELEB-027`, `PG-CELEB-028`，preprocessor=`ok`, `v1_fallback`, `v1_fallback`, `v1_fallback`, `v1_fallback`；其中 `PG-WC-042` evidence ok，其他 4 条 evidence insufficient。`gengrowth`：candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]。未见失败，退出后无残留 topic-register/LLM 进程；已更新自动化 memory，未手工写 Sheet、未直接编辑任务计划，也未额外创建 Feishu/Google Doc 报告。
+
+---

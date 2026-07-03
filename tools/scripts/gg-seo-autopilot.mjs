@@ -61,6 +61,7 @@ import { slugifyPageId } from './gg-sheet-pull.mjs';
 import { illustrate } from './lib/illustrate.mjs';
 import { keywordLiveSlug } from './lib/oracle-live.mjs';
 import { notify } from './lib/gg-notify.mjs';
+import { unionMergeIntoWorktree, looksLikeMergeConflict } from './lib/merge-union.mjs';
 
 loadEnv();
 const ACTIVE_WORKBOOK_ID = resolveWorkbookId();
@@ -1057,6 +1058,124 @@ function publishOne(o, t) {
   log(`PUSHED preview ${branch} PR=${prUrl} — awaiting codex+chrome verify, then --merge`);
 }
 
+// ── 发布 merge 的 union 自愈（阶段 3 · 串行发布强制）───────────────────────────
+// oracle merge 已被 CLAIMS_LOCK 串行化，唯一残余失败模式是"陈旧分支"：它从较旧 origin/main 切出，
+// 期间落地的 merge 追加了同样的两个注册文件（data/articles/index.ts + scripts/generate-seo-pages.mjs）
+// → `gh pr merge` 冲突 → 历史上 park 成 needs_human，靠人手动 `git merge origin/main` + union-merge 清。
+// 这里把那套手动修复编码成确定性代码：在新鲜 worktree 里把 origin/main union-merge 进 reviewed 分支、
+// 断言文章自身字节与 reviewed 一致 + 注册行未丢 + build gate 通过，才 push+merge。任何意外都 abort +
+// 抛错 → claim 响亮 park，绝不 ship 未评审内容。GG_MERGE_UNION_SELFHEAL=0 关闭（回退到旧行为：冲突即 park）。
+// 并发权衡（有意为之）：自愈里的 `npm run build` 跑在 CLAIMS_LOCK 内（doMerge 全程持锁）。这是串行发布
+// 正确性所必需——若中途放锁，另一次 merge 可推进 main → 重新冲突 → 自愈白做。代价：自愈（仅冲突时才发生，
+// 罕见）期间本机并发的 --scan/--status/--merge 会阻塞至 30s 锁超时后响亮抛错（不 ship 错内容、不损坏账本；
+// 下一 tick 自然重试）。用锁换"冲突也能确定性合并"，值得。
+const MERGE_SELFHEAL = process.env.GG_MERGE_UNION_SELFHEAL !== '0';
+
+function ghPrMergeState(branch) {
+  try {
+    const out = sh('gh', ['pr', 'view', branch, '--repo', 'xdawayer/oracle', '--json', 'mergeable,mergeStateStatus'], { cwd: ORACLE });
+    const j = JSON.parse(out);
+    return { mergeable: j.mergeable || 'UNKNOWN', state: j.mergeStateStatus || 'UNKNOWN' };
+  } catch { return { mergeable: 'UNKNOWN', state: 'UNKNOWN', error: true }; }
+}
+
+// GitHub 异步计算 mergeable：刚 push 后常是 UNKNOWN，稍等几秒会落定 MERGEABLE/CONFLICTING。
+// 只对 GitHub 的 'UNKNOWN'（仍在计算）等待；gh 本身出错不会自愈，立即返回（不空等）。
+function pollMergeable(branch, tries = 6, waitMs = 2000) {
+  let st = ghPrMergeState(branch);
+  for (let i = 0; i < tries && st.mergeable === 'UNKNOWN' && !st.error; i++) {
+    sleepSync(waitMs);
+    st = ghPrMergeState(branch);
+  }
+  return st;
+}
+
+// 在一个 detached 新 worktree（checkout 到 origin/<branch> = reviewed tip）里把 origin/main
+// union-merge 进来，断言文章自身未变 + 注册行未丢 + build 通过，push 回 <branch>，返回新 head SHA。
+// 任何断言失败都抛错（调用方 park）。完成后清理临时 worktree。
+// expectedHead = claim.headRefOid（--mark-verified 时抓的、真正被评审的 commit）。自愈路径绕过了快
+// 路径的 --match-head-commit pin，所以这里必须把它当锚点重建 union 的基座 + 完整性参照——绝不能用
+// "当前 origin/<branch> tip"（那正是可能被 verify 后 force-push 掉包的东西，且后代 tip 可在文章之外
+// 的文件夹带未评审内容，逐篇 .ts 断言挡不住）。所以：分支 tip 必须仍严格等于 expectedHead（任何移动
+// = 未评审，直接 park），并在 expectedHead 上开 worktree 重建。expectedHead 缺失（旧 claim）才退回 tip。
+function unionRebaseBranch(branch, slug, expectedHead) {
+  git(['fetch', '--quiet', '--prune', 'origin']);
+  let base = `origin/${branch}`;
+  if (expectedHead) {
+    let tip = '';
+    try { tip = git(['rev-parse', `origin/${branch}`]).trim(); } catch { tip = ''; }
+    if (tip !== expectedHead) {
+      throw new Error(`union-rebase ${branch}: origin tip ${tip.slice(0, 8) || '?'} != reviewed head ${expectedHead.slice(0, 8)} — refusing self-heal (branch moved since verify → unreviewed)`);
+    }
+    base = expectedHead; // 在真正被评审的 commit 上重建，而非仅"当前 tip"
+  }
+  const wt = worktreePath(`${branch}--merge`);
+  try { git(['worktree', 'remove', '--force', wt]); } catch { /* no stale */ }
+  try {
+    git(['worktree', 'add', '--force', '--detach', wt, base]);
+    const baselineModules = join(ORACLE, 'node_modules');
+    const wtModules = join(wt, 'node_modules');
+    if (existsSync(baselineModules) && !existsSync(wtModules)) {
+      try { symlinkSync(baselineModules, wtModules); } catch { /* build gate will surface it */ }
+    }
+    const reviewedHead = gitIn(wt, ['rev-parse', 'HEAD']).trim(); // == expectedHead（或旧 claim 的 tip）
+
+    const res = unionMergeIntoWorktree(wt, 'origin/main', { git: (w, a) => gitIn(w, a) });
+    log(`union-rebase ${branch}: merged=${res.merged} conflicted=[${res.conflicted.join(',')}]`);
+
+    // 安全断言 1：文章自身 .ts 与 reviewed head 字节一致（merge 只应带入 main 的其它文件 + 两个
+    // 注册文件的 union；文章内容绝不能变）。差异 = 评审过的内容被改动 → 拒绝发布。
+    const articleFile = `data/articles/${slug}.ts`;
+    try {
+      gitIn(wt, ['diff', '--quiet', reviewedHead, 'HEAD', '--', articleFile]);
+    } catch {
+      throw new Error(`union-rebase ${branch}: ${articleFile} differs from reviewed head — refusing to publish altered content`);
+    }
+    // 安全断言 2：union 没把本文章的注册行丢掉（防御；build gate 也兜底但更晚）。
+    for (const reg of ['data/articles/index.ts', 'scripts/generate-seo-pages.mjs']) {
+      const abs = join(wt, reg);
+      if (existsSync(abs) && !readFileSync(abs, 'utf8').includes(slug)) {
+        throw new Error(`union-rebase ${branch}: ${slug} missing from ${reg} after union — refusing to publish`);
+      }
+    }
+    // 安全断言 3：union 后的树必须编译（generate-seo-pages 静态生成 + tsc）。
+    const b = buildGate(wt);
+    if (!b.ok) throw new Error(`union-rebase ${branch}: build failed after union merge — ${b.error}`);
+
+    // 通过 → push 重建后的分支（force-with-lease：CLAIMS_LOCK 下无并发写此分支，仍防误覆盖）。
+    gitIn(wt, ['push', '--force-with-lease', 'origin', `HEAD:refs/heads/${branch}`]);
+    return gitIn(wt, ['rev-parse', 'HEAD']).trim();
+  } finally {
+    cleanupWorktree(wt);
+  }
+}
+
+// 合并一个已 verified-preview 的分支到 main。快路径：GitHub 报可干净合并时 pin reviewed head 直接合并
+// （--match-head-commit：PR head 自 --mark-verified 后若被 push 移动则拒绝合并，防 ship 未评审/被篡改
+// 代码到 prod；旧 claim 无此字段则 unpinned 合并，向后兼容）。冲突（陈旧分支撞注册文件）→ union 自愈。
+function mergeVerifiedBranch(branch, claim) {
+  const reviewedPin = claim.headRefOid ? ['--match-head-commit', claim.headRefOid] : [];
+  const conflicting = MERGE_SELFHEAL && pollMergeable(branch).mergeable === 'CONFLICTING';
+  if (!conflicting) {
+    try {
+      sh('gh', ['pr', 'merge', branch, '--repo', 'xdawayer/oracle', '--merge', '--delete-branch', ...reviewedPin], { cwd: ORACLE });
+      return;
+    } catch (e) {
+      // 只在"像冲突"且自愈开启时才自愈；auth/网络/head 漂移等原样抛出 → park 出真实原因。
+      if (!MERGE_SELFHEAL || !looksLikeMergeConflict(`${e.stdout || ''}${e.stderr || ''}${e.message || ''}`)) throw e;
+      log(`merge ${branch}: first attempt conflicted — attempting union self-heal`);
+    }
+  } else {
+    log(`merge ${branch}: GitHub reports CONFLICTING — attempting union self-heal`);
+  }
+  const newHead = unionRebaseBranch(branch, claim.slug, claim.headRefOid);
+  if (pollMergeable(branch).mergeable === 'CONFLICTING') {
+    throw new Error(`merge ${branch}: still CONFLICTING after union self-heal (rebuilt head ${newHead.slice(0, 8)})`);
+  }
+  sh('gh', ['pr', 'merge', branch, '--repo', 'xdawayer/oracle', '--merge', '--delete-branch', '--match-head-commit', newHead], { cwd: ORACLE });
+  log(`merge ${branch}: union self-heal merged rebuilt head ${newHead.slice(0, 8)}`);
+}
+
 function doMerge(o) {
   if (!o.branch) die('--merge requires --branch', 2);
   return withClaimsLock(() => {
@@ -1071,13 +1190,10 @@ function doMerge(o) {
     if (!claim.previewUrl) {
       throw new Error(`refusing merge for ${o.branch}: verified claim is missing previewUrl`);
     }
-    // Pin to the REVIEWED commit: --match-head-commit makes gh refuse the merge if the PR head
-    // moved since --mark-verified captured it. Without this, a push/force-push between verify and
-    // merge would ship unreviewed (or attacker-modified) code straight to prod. Claims verified
-    // before this field existed merge unpinned (backward-compat).
-    const matchHead = claim.headRefOid ? ['--match-head-commit', claim.headRefOid] : [];
-    // Merge via gh so the PR closes cleanly; Vercel then deploys main → prod.
-    sh('gh', ['pr', 'merge', o.branch, '--repo', 'xdawayer/oracle', '--merge', '--delete-branch', ...matchHead], { cwd: ORACLE });
+    // 串行发布 + union 自愈（阶段 3）：快路径 pin reviewed head 用 gh 合并（PR 干净关闭，Vercel
+    // 部署 main → prod）；陈旧分支撞两个注册文件时，自动 union-rebase 到最新 main、再验后合并。
+    // CLAIMS_LOCK 已保证同一时刻只有一个 merge 临界区，本函数把"碰巧不冲突"变"冲突也能确定性自愈"。
+    mergeVerifiedBranch(o.branch, claim);
     cleanupWorktree(claim.worktree);
     syncOracle();
     claims[pgId].status = 'done';

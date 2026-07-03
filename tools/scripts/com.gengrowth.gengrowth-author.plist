@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- GENGROWTH AUTHOR lane — SEPARATE from the gengrowth publish lane (com.gengrowth.gengrowth-publish).
+     This job ONLY authors gengrowth.ai drafts into flow-mvp/_staging; the hourly publish lane picks
+     them up + upserts to Supabase. Decoupled, small-batch, hard-timeboxed, parks-on-fail with a Feishu
+     human-fallback alert — the gengrowth mirror of com.gengrowth.seo-author (astrology).
+
+     DISABLED at ship (阶段 3, 2026-07-03): stays off until the Phase-5 lane watchdog is in place, then
+     the whole flow's lanes come back up together. To (re)install + turn on (supervise the FIRST run):
+       cp tools/scripts/com.gengrowth.gengrowth-author.plist ~/Library/LaunchAgents/
+       launchctl enable    gui/$(id -u)/com.gengrowth.gengrowth-author
+       launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.gengrowth.gengrowth-author.plist
+       launchctl kickstart gui/$(id -u)/com.gengrowth.gengrowth-author   # watch the first article
+     Stop:
+       launchctl bootout gui/$(id -u)/com.gengrowth.gengrowth-author
+
+     Runs in the user (Aqua) session — authoring needs the keychain + claude/codex/gbrain CLIs; do
+     NOT set LimitLoadToSessionType=Background (pins to pre-login, no keychain). RunAtLoad is FALSE
+     so loading does not instantly author unattended — kickstart the first fire by hand. -->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.gengrowth.gengrowth-author</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-gengrowth-author-tick.sh</string>
+  </array>
+  <key>StartInterval</key>
+  <integer>7200</integer>
+  <key>RunAtLoad</key>
+  <false/>
+  <key>StandardOutPath</key>
+  <string>/Users/awayer_mini/gengrowth-agents/cron-sync/gengrowth_author/launchd.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/awayer_mini/gengrowth-agents/cron-sync/gengrowth_author/launchd.err.log</string>
+  <key>ProcessType</key>
+  <string>Background</string>
+</dict>
+</plist>

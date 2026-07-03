@@ -1,29 +1,3 @@
----
-title: Travis Kelce Birth Chart
-slug: travis-kelce-birth-chart
-date: 2026-07-03
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T2
-track: 量产线
-page_id: PG-CELEB-027
-author_id: "marcus-orion"
-author_display_name: "Marcus Orion"
-target_keyword: Travis Kelce birth chart
-associated_keywords:
-  - Travis Kelce birth chart meaning
-  - Travis Kelce birth chart astrology
-  - Travis Kelce birth chart zodiac
-  - Travis Kelce birth chart interpretation
-  - emma watson zodiac sign
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-07-03T19:47:31.111Z
-content_sha256_short: 723258e75c81ca75
-phase2_checks: all-pass
----
-
 # What the Travis Kelce Birth Chart Reveals About His Public Persona
 
 ## What Is Travis Kelce's Birth Chart?

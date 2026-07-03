@@ -190,6 +190,67 @@ test('URL inventory includes tools pages that existing EN wiki tracking intentio
   assert.equal(byUrl.get('https://www.astrologywiki.com/en/wiki/classics/chart-interpretation').inventory_status, '已提交但未收录');
 });
 
+test('extractEnWikiSitemapRows seeds gengrowth /en/blog articles and excludes hub + category', () => {
+  const rows = extractEnWikiSitemapRows(`
+    <url><loc>https://gengrowth.ai/en/blog/cheap-seo</loc><lastmod>2026-07-02</lastmod></url>
+    <url><loc>https://gengrowth.ai/en/blog</loc><lastmod>2026-07-02</lastmod></url>
+    <url><loc>https://gengrowth.ai/en/blog/category/case-study</loc><lastmod>2026-07-02</lastmod></url>
+    <url><loc>https://gengrowth.ai/zh/blog/cheap-seo</loc><lastmod>2026-07-02</lastmod></url>
+    <url><loc>https://gengrowth.ai/en/features</loc><lastmod>2026-07-02</lastmod></url>
+  `, { now: new Date('2026-07-03T00:00:00Z') });
+
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].url, 'https://gengrowth.ai/en/blog/cheap-seo');
+  assert.equal(rows[0].slug, 'cheap-seo');
+  assert.equal(rows[0].title, 'Cheap Seo');
+  assert.equal(rows[0].source, 'live-sitemap');
+  assert.equal(rows[0].published_at, '2026-07-02');
+});
+
+test('URL inventory classifies gengrowth blog articles Y and drops blog hub + category', () => {
+  const sitemapRows = extractIndexableSitemapInventoryRows(`
+    <url><loc>https://gengrowth.ai/en/blog/ethical-seo-services</loc><lastmod>2026-07-03</lastmod></url>
+    <url><loc>https://gengrowth.ai/en/blog</loc><lastmod>2026-07-03</lastmod></url>
+    <url><loc>https://gengrowth.ai/en/blog/category/case-study</loc><lastmod>2026-07-03</lastmod></url>
+  `, { now: new Date('2026-07-03T00:00:00Z') });
+
+  // Only the single-segment article survives; the hub and the category listing are excluded.
+  assert.deepEqual(sitemapRows.map((row) => row.url), [
+    'https://gengrowth.ai/en/blog/ethical-seo-services',
+  ]);
+  assert.equal(sitemapRows[0].path_family, 'en_blog_article');
+
+  const rows = buildUrlInventoryRows({
+    sitemapRows,
+    trackingRows: [],
+    recapRows: [],
+    requestQueueRows: [],
+    now: new Date('2026-07-03T00:00:00Z'),
+    siteUrl: 'sc-domain:gengrowth.ai',
+  });
+  const blog = new Map(rows.map((row) => [row.url, row])).get('https://gengrowth.ai/en/blog/ethical-seo-services');
+  assert.equal(blog.path_family, 'en_blog_article');
+  assert.equal(blog.request_queue_allowed, 'Y');
+  assert.equal(blog.inventory_status, '未纳入监控');
+});
+
+test('mixed astrologywiki + gengrowth sitemap: wiki output unchanged, blog additively tracked', () => {
+  const rows = extractEnWikiSitemapRows(`
+    <url><loc>https://www.astrologywiki.com/en/wiki/bruno-fernandes-zodiac-sign</loc><lastmod>2026-06-24</lastmod></url>
+    <url><loc>https://gengrowth.ai/en/blog/integrated-seo</loc><lastmod>2026-07-03</lastmod></url>
+    <url><loc>https://www.astrologywiki.com/en/blog/future-migrated-article</loc><lastmod>2026-07-03</lastmod></url>
+  `, { now: new Date('2026-07-03T00:00:00Z') });
+  const byUrl = new Map(rows.map((row) => [row.url, row]));
+
+  // astrologywiki /en/wiki article: byte-identical to pre-change behavior.
+  assert.equal(byUrl.get('https://www.astrologywiki.com/en/wiki/bruno-fernandes-zodiac-sign').slug, 'bruno-fernandes-zodiac-sign');
+  // gengrowth /en/blog article: now tracked.
+  assert.equal(byUrl.get('https://gengrowth.ai/en/blog/integrated-seo').slug, 'integrated-seo');
+  // Intended FORWARD behavior: a future astrologywiki /en/blog (post /wiki→/blog migration) is ALSO tracked.
+  assert.equal(byUrl.get('https://www.astrologywiki.com/en/blog/future-migrated-article').slug, 'future-migrated-article');
+  assert.equal(rows.length, 3);
+});
+
 test('mergePublishedTrackingRow refreshes source fields without clobbering GSC state', () => {
   const existing = {
     ...buildTrackingSeedRow({

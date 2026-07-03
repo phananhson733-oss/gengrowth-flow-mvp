@@ -177,6 +177,13 @@ const SHEETS_SCOPE = 'https://www.googleapis.com/auth/spreadsheets';
 const GSC_READONLY_SCOPE = 'https://www.googleapis.com/auth/webmasters.readonly';
 const GSC_WRITE_SCOPE = 'https://www.googleapis.com/auth/webmasters';
 const DEFAULT_SITEMAP_URL = 'https://www.astrologywiki.com/sitemap.xml';
+// Hosts whose /en/wiki/ + /en/blog/ single-segment URLs are trackable articles. Keyed off the
+// URL's own host so the classifiers stay pure (no GG_SITE plumbing). astrologywiki output is
+// unchanged today (its sitemap has no /en/blog/), and the planned /wiki→/blog migration is
+// covered because blog articles are recognized for every article host, not just gengrowth.
+const ARTICLE_HOSTS = Object.freeze(new Set([
+  'www.astrologywiki.com', 'astrologywiki.com', 'gengrowth.ai', 'www.gengrowth.ai',
+]));
 const DIAGNOSIS_FRAMEWORK_URL = 'obsidian://open?vault=gengrowth-ops&file=inbox%2F08-reports-and-feedback%2F01-product-feedback%2F2026-06-22-indexing-automation-requirements-v1.0';
 const KNOWN_TOOL_SLUGS = Object.freeze(new Set([
   'astrocartography',
@@ -397,9 +404,10 @@ export async function fetchPageDiagnostics(url, { fetcher = fetch } = {}) {
 function isEnWikiArticleUrl(url) {
   try {
     const u = new URL(url);
-    if (u.hostname !== 'www.astrologywiki.com' && u.hostname !== 'astrologywiki.com') return false;
+    if (!ARTICLE_HOSTS.has(u.hostname)) return false;
     const path = u.pathname.replace(/\/$/, '');
-    return /^\/en\/wiki\/[^/]+$/.test(path);
+    // Single-segment only → excludes the /en/blog hub and /en/blog/category/<x> listings.
+    return /^\/en\/wiki\/[^/]+$/.test(path) || /^\/en\/blog\/[^/]+$/.test(path);
   } catch {
     return false;
   }
@@ -409,7 +417,8 @@ function slugFromEnWikiUrl(url) {
   try {
     const u = new URL(url);
     const path = u.pathname.replace(/\/$/, '');
-    return decodeURIComponent(path.slice('/en/wiki/'.length));
+    const m = path.match(/^\/en\/(?:wiki|blog)\/(.+)$/);
+    return m ? decodeURIComponent(m[1]) : '';
   } catch {
     return '';
   }
@@ -434,12 +443,15 @@ function slugFromPath(pathname) {
 function inventoryPathFamily(url) {
   try {
     const u = new URL(url);
-    if (u.hostname !== 'www.astrologywiki.com' && u.hostname !== 'astrologywiki.com') return '';
+    if (!ARTICLE_HOSTS.has(u.hostname)) return '';
     const path = u.pathname.replace(/\/$/, '') || '/';
     if (path === '/en/tools') return 'en_tools_hub';
     if (/^\/en\/wiki\/[^/]+$/.test(path)) return 'en_wiki_article';
     if (/^\/en\/wiki\/.+\/[^/]+$/.test(path)) return 'en_wiki_nested';
     if (path === '/en/wiki') return 'en_wiki_hub';
+    if (path === '/en/blog') return '';                          // blog listing hub → not an article
+    if (/^\/en\/blog\/category(\/|$)/.test(path)) return '';     // blog category listings → excluded
+    if (/^\/en\/blog\/[^/]+$/.test(path)) return 'en_blog_article';
     if (/^\/en\/[^/]+$/.test(path) && KNOWN_TOOL_SLUGS.has(slugFromPath(path))) return 'en_tool';
     if (/^\/en\/[^/]+$/.test(path)) return 'en_static';
     return '';
@@ -454,6 +466,7 @@ function titleFromInventoryUrl(url) {
     const path = u.pathname.replace(/\/$/, '');
     if (path === '/en/tools') return 'Tools';
     if (path === '/en/wiki') return 'Wiki';
+    if (path === '/en/blog') return 'Blog';
     return titleFromSlug(slugFromPath(path));
   } catch {
     return '';
@@ -461,7 +474,7 @@ function titleFromInventoryUrl(url) {
 }
 
 function requestQueueAllowedForPathFamily(pathFamily) {
-  return ['en_wiki_article', 'en_wiki_nested', 'en_tools_hub', 'en_tool'].includes(pathFamily) ? 'Y' : 'N';
+  return ['en_wiki_article', 'en_wiki_nested', 'en_tools_hub', 'en_tool', 'en_blog_article'].includes(pathFamily) ? 'Y' : 'N';
 }
 
 function sitemapEntries(xml) {

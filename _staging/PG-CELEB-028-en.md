@@ -1,3 +1,29 @@
+---
+title: Diogo Jota Birth Chart
+slug: diogo-jota-birth-chart
+date: 2026-07-03
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-CELEB-028
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: Diogo Jota birth chart
+associated_keywords:
+  - Diogo Jota birth chart meaning
+  - Diogo Jota birth chart astrology
+  - Diogo Jota birth chart zodiac
+  - Diogo Jota birth chart interpretation
+  - emma watson zodiac sign
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-07-03T20:12:29.398Z
+content_sha256_short: 47e59577ee4fc7fe
+phase2_checks: all-pass
+---
+
 # Reading Diogo Jota's Birth Chart as a Portrait, Not a Prediction
 
 ## What Is Diogo Jota's Birth Chart?

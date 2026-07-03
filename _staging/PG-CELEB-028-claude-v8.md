@@ -10,7 +10,7 @@ A Diogo Jota birth chart is a symbolic map of the sky as it looked at his birth 
 
 ## Why It Matters for Self-Awareness
 
-The reason the Diogo Jota birth chart matters is less about him and more about what a full-placement reading models for anyone curious about their own chart. After his death in July 2025 and the tributes that followed a year on, many people looked him up for the first time and reached for astrology as a familiar language for grief, admiration, and memory. That impulse is worth taking seriously. Grief tends to want structure, and a chart offers one without pretending to have the final word.
+The reason the Diogo Jota birth chart matters is less about him and more about what a full-placement reading models for anyone curious about their own chart. After his death in July 2025 and the tributes that followed a year on, many people looked him up for the first time and reached for astrology as a familiar language for grief, admiration, and memory. That impulse is worth taking seriously.
 
 Reading a public figure's chart teaches transferable habits you can turn back on yourself:
 
@@ -26,7 +26,7 @@ Most search results stop at a Sun-sign summary — "he was a Sagittarius, so he 
 
 A Sun-sign profile works by reducing a person to one of twelve archetypes, which reads fast and travels well on social media. A full-chart reading works by layering the Moon, Mercury, Venus, Mars, the aspects between them, and — when a birth time exists — the Ascendant and houses, so the picture gains texture and tension. To get the speed and shareability of a Sun-sign take, you sacrifice nuance and accuracy. To get the depth of a full chart, you lose the tidy one-word answer.
 
-The trade-off is real either way. A Sun sign tells you the headline theme; the cost is missing every counter-current. A full chart shows the counter-currents — the quiet Moon behind the loud Sun, the way a placement like the [[<TBD-internal-link: meaning of the ascendant and rising sign>]] frames how a persona lands — but the cost is that it demands data he never made public. Blending the two, as many pages do, is where readers get misled: they take a Sun-sign generalization and present it with full-chart authority. The honest move is to name which layer you are actually working from, and to keep the two clearly separate.
+The trade-off is real either way. A Sun sign tells you the headline theme; the cost is missing every counter-current. A full chart shows the counter-currents — the quiet Moon behind the loud Sun, the way a placement like the [[<TBD-internal-link: meaning of the ascendant and rising sign>]] frames how a persona lands — but the cost is that it demands data he never made public. Blending the two, as many pages do, is where readers get misled: they take a Sun-sign generalization and present it with full-chart authority.
 
 ## How to Read Diogo Jota's Birth Chart as a Cultural Profile
 
@@ -68,7 +68,7 @@ Born on December 4, 1996, he is a Sagittarius Sun, associated with directness, i
 
 **Can you read a birth chart for someone who has passed away?**
 
-Yes, and astrologers often do so as a form of reflection or tribute. The respectful approach keeps the reading symbolic and persona-focused rather than treating it as prediction. Read that way, the exercise honors the person instead of mining their life for hidden meaning.
+Yes, and astrologers often do so as a form of reflection or tribute. The respectful approach keeps the reading symbolic and persona-focused rather than treating it as prediction.
 
 **Why do fans look up the Diogo Jota birth chart now?**
 

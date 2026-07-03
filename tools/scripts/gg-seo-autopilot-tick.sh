@@ -94,6 +94,12 @@ CLUSTER_SYNC_LOG="$LOG_DIR/cluster-sync-$(date +%Y-%m-%d).log"
   exit 2
 }
 
+# 阶段 6：自愈 transient park（LLM 用量窗口造成的临时失败）。在扫描前把 transient needs_human
+# 按 CAP+backoff 自动重入队（authoring→重授 / gate→pushed-preview 重跑门），本轮循环随即接手；
+# 超 CAP 升级人工。permanent park（内容/事实/缺登记）一律不动。best-effort，绝不阻断发布。
+( set -a; . "$HOME/.config/gg/_gg.env" 2>/dev/null; set +a
+  node "$AUTO" --auto-retry-parks >> "$LOG" 2>&1 ) || echo "$(date '+%F %T') auto-retry-parks non-fatal error" >> "$LOG"
+
 # NOTE: flow-mvp (_staging drafts) and gengrowth-ops (task plan) are BOTH kept
 # current by their obsidian-git plugins (autoPullInterval=1), so the loop does NOT
 # pull them itself — that would be redundant and risk fighting the plugin for the

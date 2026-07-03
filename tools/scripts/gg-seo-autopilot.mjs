@@ -63,6 +63,8 @@ import { keywordLiveSlug } from './lib/oracle-live.mjs';
 import { notify } from './lib/gg-notify.mjs';
 import { unionMergeIntoWorktree, looksLikeMergeConflict } from './lib/merge-union.mjs';
 import { backfillOnLive } from './lib/backfill-tx.mjs';
+import { classifyPark } from './lib/park-classify.mjs';
+import { stateDir } from './lib/flow-state.mjs';
 
 loadEnv();
 const ACTIVE_WORKBOOK_ID = resolveWorkbookId();
@@ -180,6 +182,7 @@ function parseArgs(argv) {
     else if (a === '--retry-failed') o.retryFailed = true;
     else if (a === '--retry-author') o.retryAuthor = true;
     else if (a === '--reconcile-published') o.reconcilePublished = true;
+    else if (a === '--auto-retry-parks') o.autoRetryParks = true;
     else if (a === '--clear-needs-hero') o.clearNeedsHero = true;
     else if (a === '--status') o.status = true;
     else if (a === '--stale-report') o.staleReport = true;
@@ -190,7 +193,7 @@ function parseArgs(argv) {
     else if (a === '--limit') o.limit = parseInt(argv[++i], 10) || 1;
     else if (a === '--task') o.task = argv[++i];
   }
-  if (!o.scan && !o.author && !o.nextUnauthored && !o.merge && !o.markVerified && !o.markFailed && !o.retryFailed && !o.retryAuthor && !o.reconcilePublished && !o.status && !o.staleReport) o.scan = true;
+  if (!o.scan && !o.author && !o.nextUnauthored && !o.merge && !o.markVerified && !o.markFailed && !o.retryFailed && !o.retryAuthor && !o.reconcilePublished && !o.autoRetryParks && !o.status && !o.staleReport) o.scan = true;
   return o;
 }
 
@@ -1319,6 +1322,95 @@ function doRetryAuthor(o) {
   });
 }
 
+// 阶段 6：transient park 自动重试的尝试计数 sidecar（vault 外 flow-state；即便 claim 被删也存活，
+// 保证 CAP 不被"删 claim→重授→重新 park→计数归零"绕过 → 防无限重试真坏稿）。
+function parkRetryStatePath() { const d = stateDir(); return d ? join(d, 'park-autoretry.json') : null; }
+// 真·可持久化探针（评审 BLOCKING）：光有路径不够——只读/满盘目录 mkdirSync 也 no-op 成功，但真写会
+// 失败被 saveParkRetryState 吞掉 → 计数永不落盘 → 无限重试。探一次真写真删，确认能持久化才自愈。
+function parkRetryStateWritable() {
+  const p = parkRetryStatePath(); if (!p) return false;
+  try { const probe = `${p}.probe-${process.pid}`; writeFileSync(probe, '1'); rmSync(probe, { force: true }); return true; }
+  catch { return false; }
+}
+// 读 sidecar：ENOENT(首次)→{}；解析错误(损坏)→null（上层 fail-closed，绝不静默清零 CAP）。
+function loadParkRetryState() {
+  const p = parkRetryStatePath(); if (!p) return {};
+  try { return JSON.parse(readFileSync(p, 'utf8')); }
+  catch (e) { return (e && e.code === 'ENOENT') ? {} : null; }
+}
+function saveParkRetryState(m) {
+  const p = parkRetryStatePath(); if (!p) return;
+  try { const tmp = `${p}.tmp-${process.pid}`; writeFileSync(tmp, JSON.stringify(m, null, 2)); renameSync(tmp, p); } catch { /* 状态层不搞垮业务 */ }
+}
+
+// 自动重试 transient park（阶段 6 · 让 LLM 用量窗口造成的临时失败自愈）：找 needs_human 且 error
+// 判 transient 的项，按 CAP + backoff 自动重入队——authoring 阶段清 claim（作者 lane 重授）、
+// gate 阶段回 pushed-preview（门重跑）。超 CAP → 升级为真 needs_human（不再重试）+ 通知一次。
+// permanent park（内容/事实/缺登记）一律不动。永不抛。GG_PARK_AUTORETRY_CAP/BACKOFF_MS 可调。
+function doAutoRetryParks() {
+  const CAP = Number(process.env.GG_PARK_AUTORETRY_CAP || 10);                                  // ~10 次
+  const BACKOFF_MS = Number(process.env.GG_PARK_AUTORETRY_BACKOFF_MS || 35 * 60 * 1000);        // 正常节奏 ~35min（10×35min≈5.8h，覆盖多小时用量窗口）
+  const SLOW_BACKOFF_MS = Number(process.env.GG_PARK_AUTORETRY_SLOW_BACKOFF_MS || 2 * 3600 * 1000); // 升级后慢节奏 ~2h（仍自愈超长窗口）
+  const TTL_MS = Number(process.env.GG_PARK_AUTORETRY_TTL_MS || 7 * 24 * 3600 * 1000);           // 7d：远长于停机+作者 lane 周期，只回收真泄漏项
+  // fail-closed（评审 BLOCKING）：sidecar 是安全计数器；持久化不可用→CAP/backoff 全失效→无限重试。
+  // 探真写（非仅路径可算——只读/满盘目录路径仍非空但写会失败），不可写就本轮跳过、宁可不自愈。
+  if (!parkRetryStateWritable()) { log('auto-retry-parks: flow-state 不可写 — 本轮跳过（fail-closed，无法保证 CAP）'); return Promise.resolve(); }
+  const now = Date.now();
+  const escalations = [];
+  const retried = [];
+  withClaimsLock(() => {
+    const claims = loadClaims();
+    const sidecar = loadParkRetryState();
+    if (sidecar === null) { log('auto-retry-parks: sidecar 损坏 — 本轮跳过（fail-closed，不静默清零 CAP）'); return; }
+    // cleanup（评审 BLOCKING+MAJOR）：只清 done；或"claim 已彻底消失(泄漏)"的项超长 TTL 回收。
+    // **绝不清一个仍有活 claim(needs_human/pushed-preview/active…) 的计数**——否则停机>TTL 后首 tick
+    // 会把停着的 park 预算清零、还丢 escalated 标记 → CAP 归零被绕过。也绝不因"claim 暂时不在/非
+    // needs_human"就清（那是 authoring 重试删 claim / gate 转 pushed-preview 的中间态）。
+    for (const pid of Object.keys(sidecar)) {
+      const c = claims[pid];
+      if (c && c.status === 'done') { delete sidecar[pid]; continue; } // 明确成功 → 清
+      if (c) continue;                                                 // 有活 claim（任何非 done）→ 计数保留
+      if (now - (sidecar[pid].lastAt || now) > TTL_MS) delete sidecar[pid]; // 仅无 claim 的泄漏项 TTL 回收
+    }
+    for (const [pid, claim] of Object.entries(claims)) {
+      if (!claim || claim.status !== 'needs_human') continue;
+      if (classifyPark(claim) !== 'transient') continue; // permanent 不自动重试
+      const s = sidecar[pid] || { attempts: 0, lastAt: 0 };
+      const escalated = s.attempts >= CAP;
+      const backoff = escalated ? SLOW_BACKOFF_MS : BACKOFF_MS;
+      if (now - (s.lastAt || 0) < backoff) continue;     // backoff 未到，等下一轮
+      if (escalated && !s.escalated) { s.escalated = true; escalations.push({ pid, slug: claim.slug, error: claim.error, attempts: s.attempts }); }
+      if (!escalated) s.attempts += 1;                   // 未到 CAP 才增计数；升级后不再增(非终态、仍慢重试自愈)
+      s.lastAt = now; sidecar[pid] = s;
+      // 路由（评审）：只有 stage==='pushed-preview'（真推了 preview/有 PR）才回 pushed-preview 重跑门；
+      // authoring + pre-preview(worktree/convert/build-gate) 一律删 claim 从 scan 从头重跑，绝不给无 PR
+      // 的 claim 设 pushed-preview（否则门空跑幻影分支、静默搁浅）。
+      if (claim.stage === 'pushed-preview') {
+        const next = { ...claim, status: 'pushed-preview', retryEvidence: `auto-retry transient park #${s.attempts}${escalated ? '(escalated,slow)' : `/${CAP}`}: ${String(claim.error || '').slice(0, 60)}`, retryAt: new Date().toISOString() };
+        delete next.error; delete next.failedAt;
+        claims[pid] = next;
+        heartbeatClaim(claims, pid, 'pushed-preview');
+      } else {
+        delete claims[pid]; // scan 从头重跑
+      }
+      retried.push({ pid, stage: claim.stage || 'authoring', attempt: s.attempts, escalated });
+      log(`AUTO-RETRY ${pid} (${claim.stage || 'authoring'}, #${s.attempts}${escalated ? ' escalated-slow' : `/${CAP}`}): transient park re-queued`);
+    }
+    saveClaims(claims);
+    saveParkRetryState(sidecar);
+  });
+  // 升级通知（锁外，返回 promise 供顶层 await）：到 CAP 疑似非临时 → 通知人工一次；但**非终态**——
+  // 系统仍每 SLOW_BACKOFF 慢重试，长但临时的窗口最终会自愈。
+  return (async () => {
+    for (const e of escalations) {
+      log(`AUTO-RETRY ESCALATE ${e.pid} at ${e.attempts} attempts — 通知人工（仍会慢重试自愈）`);
+      try { await notifyEvent('parked', { site: 'astrologywiki', pid: e.pid, slug: e.slug || '?', reason: `自动重试 ${e.attempts} 次仍未过（疑非临时/配额问题，请人工查；系统仍会每 ${Math.round(SLOW_BACKOFF_MS / 3600000)}h 慢重试）：${String(e.error || '').slice(0, 70)}` }); } catch { /* notify 不搞垮对账 */ }
+    }
+    if (retried.length) log(`auto-retry-parks: ${retried.length} transient park(s) re-queued; ${escalations.length} escalated`);
+    else if (!escalations.length) log('auto-retry-parks: no transient parks to retry');
+  })();
+}
+
 function checkPlanBox(pgId) {
   const plan = latestPlan();
   if (!plan) return;
@@ -1465,6 +1557,7 @@ try {
   else if (o.retryFailed) doRetryFailed(o);
   else if (o.retryAuthor) doRetryAuthor(o);
   else if (o.reconcilePublished) doReconcilePublished(o);
+  else if (o.autoRetryParks) await doAutoRetryParks(); // async 尾巴 = 升级通知（ESM 顶层 await）
   else doScan(o);
 } catch (e) {
   die(e.message || String(e), 1);

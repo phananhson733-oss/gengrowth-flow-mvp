@@ -16,7 +16,6 @@ associated_keywords:
   - Tobey Maguire birth chart astrology
   - Tobey Maguire birth chart zodiac
   - Tobey Maguire birth chart interpretation
-  - emma watson zodiac sign
 generated_by: unknown
 prompt_version: v8
 generated_at: 2026-07-03T14:30:34.009Z

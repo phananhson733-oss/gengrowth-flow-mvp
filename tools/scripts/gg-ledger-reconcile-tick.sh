@@ -48,4 +48,5 @@ if [ "$rc" = "124" ]; then
   echo "$(date '+%F %T') ledger-reconcile TIMEOUT after ${TIMEOUT}s" >> "$LOG"
 fi
 echo "$(date '+%F %T') ledger-reconcile done rc=$rc" >> "$LOG"
+node "$SCRIPT_DIR/gg-notify.mjs" heartbeat com.gengrowth.ledger-reconcile >/dev/null 2>&1 || true  # 阶段5 lane 心跳
 exit 0

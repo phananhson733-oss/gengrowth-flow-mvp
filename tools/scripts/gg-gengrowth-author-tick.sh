@@ -217,3 +217,4 @@ while IFS=$'\t' read -r pid kw; do
 done <<< "$ITEMS"
 
 echo "$(date '+%F %T') gengrowth author tick end (attempted=$n)" >> "$LOG"
+node "$SCRIPT_DIR/gg-notify.mjs" heartbeat com.gengrowth.gengrowth-author >/dev/null 2>&1 || true  # 阶段5 lane 心跳

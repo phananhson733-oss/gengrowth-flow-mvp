@@ -144,3 +144,4 @@ else
 fi
 
 echo "$(date '+%F %T') author tick end (rc=$_rc)" >> "$LOG"
+node "$SCRIPT_DIR/gg-notify.mjs" heartbeat com.gengrowth.seo-author >/dev/null 2>&1 || true  # 阶段5 lane 心跳

@@ -5,12 +5,14 @@
 //   node tools/scripts/gg-notify.mjs <event> --site astrologywiki --pid PG-X --slug foo --reason "…"
 //   node tools/scripts/gg-notify.mjs raw --text "任意文本"        # back-compat 通道
 //   node tools/scripts/gg-notify.mjs replay-outbox                 # 重放 outbox
+//   node tools/scripts/gg-notify.mjs heartbeat <lane-label>        # 写 lane 心跳（阶段 5 watchdog 读）
 //
 // `--k v` 全部收进 fields（值可以以 -- 开头，如 --text "--weird"）。
 // exit 永远 0（best-effort，绝不搞垮调用方）；失败原因打 stderr，结果 JSON 打 stdout。
 
 import { notify } from './lib/gg-notify.mjs';
 import { replayOutbox } from './lib/lark-send.mjs';
+import { heartbeat } from './lib/flow-state.mjs';
 
 function parseFields(argv) {
   const fields = {};
@@ -38,6 +40,14 @@ async function main() {
     const r = await replayOutbox();
     process.stdout.write(JSON.stringify(r) + '\n');
     if (r.remaining > 0) process.stderr.write(`gg-notify: outbox 仍有 ${r.remaining} 条未重放成功\n`);
+    return;
+  }
+  if (event === 'heartbeat') {
+    // node gg-notify.mjs heartbeat <lane-label>：touch <state>/heartbeats/<lane> mtime（阶段 5）。
+    const lane = argv[1];
+    const ok = lane ? heartbeat(lane) : false;
+    process.stdout.write(JSON.stringify({ ok, lane: lane || null }) + '\n');
+    if (!ok) process.stderr.write('gg-notify: heartbeat 需要 lane 名参数\n');
     return;
   }
   const fields = parseFields(argv.slice(1));

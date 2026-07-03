@@ -268,3 +268,4 @@ if [ "$PARK_COUNT" -gt 1 ]; then
 fi
 
 echo "$(date '+%F %T') loop end" >> "$LOG"
+node "$SCRIPT_DIR/gg-notify.mjs" heartbeat com.gengrowth.seo-autopilot >/dev/null 2>&1 || true  # 阶段5 lane 心跳

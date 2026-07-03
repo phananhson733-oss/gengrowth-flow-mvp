@@ -99,8 +99,8 @@ process.exit(${autoExit});
     const f = join(sentinels, 'notify-calls');
     if (!existsSync(f)) return [];
     return readFileSync(f, 'utf8').trim().split('\n').map((l) => JSON.parse(l))
-      // tick 开头的 outbox 重放是常规噪声（fail-closed 补发闭环），事件断言只看真事件。
-      .filter((argv) => argv[0] !== 'replay-outbox');
+      // tick 开头的 outbox 重放 + 结尾的 lane 心跳都是基础设施子命令（非通知），事件断言只看真事件。
+      .filter((argv) => argv[0] !== 'replay-outbox' && argv[0] !== 'heartbeat');
   };
   return { dir, sentinels, run, notifyCalls, home };
 }

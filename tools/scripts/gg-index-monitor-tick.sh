@@ -117,4 +117,5 @@ case "$rc" in
     ;;
 esac
 
+node "$SCRIPT_DIR/gg-notify.mjs" heartbeat com.gengrowth.index-monitor >/dev/null 2>&1 || true  # 阶段5 lane 心跳
 exit "$rc"

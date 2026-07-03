@@ -108,3 +108,4 @@ node "$FLOW/tools/scripts/gg-batch-summary.mjs" --since "$RUN_START" --site astr
 
 echo ""
 echo "===== nightly-seo done: attempted=$n $(date '+%F %T %Z') ====="
+node "$FLOW/tools/scripts/gg-notify.mjs" heartbeat com.gengrowth.seo-nightly >/dev/null 2>&1 || true  # 阶段5 lane 心跳

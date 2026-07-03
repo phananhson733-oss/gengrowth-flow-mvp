@@ -54,3 +54,4 @@ export SB_KEY
 # drip-feeds instead of dumping all at once. Override via GG_GENGROWTH_PUBLISH_LIMIT.
 node "$SCRIPT_DIR/gg-gengrowth-publish.mjs" --apply --limit "${GG_GENGROWTH_PUBLISH_LIMIT:-1}" >> "$LOG" 2>&1
 echo "$(date '+%F %T') gengrowth-publish tick end (rc=$?)" >> "$LOG"
+node "$SCRIPT_DIR/gg-notify.mjs" heartbeat com.gengrowth.gengrowth-publish >/dev/null 2>&1 || true  # 阶段5 lane 心跳

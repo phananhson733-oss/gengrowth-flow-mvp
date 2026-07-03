@@ -478,3 +478,15 @@ Last run: 2026-07-03T09:01:47.794Z (1783069307794)
 执行并完成 flow 修复阶段 2（zh 全量移除，EN-only）：在 vault 外 worktree 删除全部产 zh 的代码路径（autopilot zh-backfill 双路径、phase2 zh 红线派发+GATE-1/GATE-4、zh 模板、zh 转换/注册、preview --zh 腿、配图中文 alt、8 个 oneoff zh 批次脚本），并确立"入口收到 zh 参数一律响亮拒绝（exit 2/throw）、绝不静默按 EN 处理"的契约；线上 129 个 /zh/ 存量页与 Sheet 列结构按用户澄清完整保留。经 codex（8 发现，6 BLOCKING 全修）+ 双 Claude 对抗评审（复活面/EN 回归面，无 BLOCKING）+ 全量测试 1440/1442（2 个既有失败）后原子 land（commit b6fa01c7，481 文件 +582/−37339，含删 _staging/zh-demo/ 435 文件，已推送）。随后废弃 7 条挂起 9 天的 zh park：关闭 PR #264/265/266/267/268/275、删远端/本地分支、移除 7 个 oracle worktree（含孤儿）、ledger 删 7 个 zh claim（现 116 条全部 done、零 needs_human），并用新事件层向飞书发废弃汇总。下一步：阶段 3（跨 lane 发布互斥 + gengrowth author lane + /en/blog/ canonical）。
 
 ---
+
+### Q21 — 19:40 [claude]
+
+**🙋 提问：**
+
+去落地 Phase 3 部分
+
+**🤖 回答：**
+
+落地 flow 修复阶段 3 核心（3a+3b），全部由确定性代码保证。3a 发布 merge union 自愈：oracle merge 已被 CLAIMS_LOCK 串行化，把历史上"陈旧分支撞两个 additive 注册文件→gh pr merge 冲突→park 需人手动 union-merge"下沉成代码——冲突时在新鲜 detached worktree 里 union-merge origin/main（只 union index.ts + generate-seo-pages.mjs），断言文章 .ts 与真正被评审的 commit(claim.headRefOid)逐字一致+分支 tip 严格等于该 commit+注册行未丢+build 通过，才 push+merge，任何异常响亮 park，绝不 ship 未评审内容（新 lib/merge-union.mjs + 10 单测含 4 真实 git 集成）。3b gengrowth author lane 入代码（杀漏写）：新 gg-gengrowth-author-tick.sh + plist(disabled)，复用 --author 引擎（GG_SITE=gengrowth 切契约、workbook env 切 brief 源、pin gengrowth W25 计划绕过 latestPlan 排除），产 _staging → 现有 hourly publish lane 接走；发布 handoff 用 copy(-en→-<llm>-v8，且独立于 rc 以防 review 期超时 strand 已撰写草稿)，幂等靠 ready-draft+claim 双 skip(均不吃 batch 名额)、反污染全代码。评审：merge 面对抗评审揪出 1 BLOCKING(自愈丢 head-pin→已加强为等值 pin)+1 MAJOR(已文档化)；gengrowth 面揪出 2 MAJOR(rc=124 strand + parked 项吃 batch，均已修)+3 MINOR；codex 撞额度未出评审。全量测试 1453/1455(零回归)，原子 land commit 17765c78 已推送。3c(/en/blog/ canonical)prod 核查证伪其前提(astrologywiki /en/blog/ 当前是 SPA 落地壳非文章、无 /blog/ 路由)，单列为需定方向的 SEO scope 变更。
+
+---

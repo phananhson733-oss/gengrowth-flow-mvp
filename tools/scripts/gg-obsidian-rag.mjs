@@ -803,13 +803,18 @@ async function main() {
     return EXIT.CLI;
   }
   const targetKeyword = String(args.targetKeyword || '').trim();
-  // bilingual-v9-full: ZH inputs are optional; when present they augment the
-  // matching pass so notes containing only ZH content can be ranked into the
-  // RAG output. ZH render then reads the same cache and gets relevant
-  // ZH-content snippets.
+  // Read-side zh note matching stays: --entity-zh / --target-keyword-zh augment
+  // the matching pass so vault notes containing only ZH content can be ranked
+  // into the RAG output for an EN article.
   const entityZh = args.entityZh ? String(args.entityZh).trim() : null;
   const targetKeywordZh = String(args.targetKeywordZh || '').trim();
-  const language = args.language === 'zh' ? 'zh' : 'en';
+  // EN-only (2026-07-03): a zh RAG *output* language only ever served the
+  // removed zh authoring path — reject loudly.
+  if (args.language && args.language !== 'en') {
+    console.error(`--language ${args.language} is no longer supported — the pipeline is EN-only (zh removed 2026-07-03)`);
+    return EXIT.CLI;
+  }
+  const language = 'en';
 
   const vaultRoot = args.vaultDir;
   if (!existsSync(vaultRoot)) {

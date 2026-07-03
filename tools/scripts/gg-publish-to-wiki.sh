@@ -51,23 +51,18 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-case "$LANGUAGE" in en|zh) ;; *) echo "invalid --language $LANGUAGE — expected en|zh" >&2; exit 2 ;; esac
+# EN-only (2026-07-03): zh publish was removed with the zh authoring pipeline.
+case "$LANGUAGE" in
+  en) ;;
+  *) echo "--language $LANGUAGE is no longer supported — the pipeline is EN-only (zh removed 2026-07-03)" >&2; exit 2 ;;
+esac
 
 PAGES="${PAGES:-$PAGES_DEFAULT}"
 LLMS="${LLMS:-$LLMS_DEFAULT}"
 
-# bilingual-v9: ZH source is _staging/zh-demo/<page>-<llm>-<v>.md (phase2 writes
-# there when fixture.language='zh'). EN source unchanged at _staging/<>.md.
-# ZH destination dirs get a -zh suffix so EN and ZH batches don't collide.
-if [ "$LANGUAGE" = "zh" ]; then
-  STAGING="$REPO/_staging/zh-demo"
-  PROD_DEST="$WIKI/内容资产/astrologywiki/${BATCH_DIR}-zh"
-  OBS_DEST="$WIKI/wzb-obsidian/LLM-Wiki/Writing/AstrologyWiki-${BATCH_DIR}-zh"
-else
-  STAGING="$REPO/_staging"
-  PROD_DEST="$WIKI/内容资产/astrologywiki/$BATCH_DIR"
-  OBS_DEST="$WIKI/wzb-obsidian/LLM-Wiki/Writing/AstrologyWiki-$BATCH_DIR"
-fi
+STAGING="$REPO/_staging"
+PROD_DEST="$WIKI/内容资产/astrologywiki/$BATCH_DIR"
+OBS_DEST="$WIKI/wzb-obsidian/LLM-Wiki/Writing/AstrologyWiki-$BATCH_DIR"
 
 [ -d "$WIKI" ] || { echo "wiki repo not found: $WIKI" >&2; exit 2; }
 [ -d "$STAGING" ] || { echo "staging dir not found: $STAGING" >&2; exit 2; }

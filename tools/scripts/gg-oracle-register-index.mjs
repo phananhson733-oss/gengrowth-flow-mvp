@@ -12,7 +12,11 @@
 // Usage:
 //   node tools/scripts/gg-oracle-register-index.mjs \
 //     --oracle-articles-dir /Users/<you>/oracle/data/articles \
-//     --slug blue-aura-meaning [--lang en|zh] [--dry-run]
+//     --slug blue-aura-meaning [--lang en] [--dry-run]
+//
+// EN-only (2026-07-03): --lang zh is rejected; the legacy ARTICLES_ZH array in
+// index.ts keeps serving the pre-existing bilingual back catalog but gains no
+// new entries.
 //
 // Exit codes: 0 ok (inserted or already-present), 2 usage/structure error.
 
@@ -40,10 +44,12 @@ function parseArgs(argv) {
   return out;
 }
 
-export function registerInIndex(indexSrc, { slug, lang }) {
-  const suffix = lang === 'zh' ? 'Zh' : 'En';
-  const varName = slugToCamel(slug, suffix);
-  const arrayName = lang === 'zh' ? 'ARTICLES_ZH' : 'ARTICLES_EN';
+export function registerInIndex(indexSrc, { slug, lang = 'en' }) {
+  if (String(lang).toLowerCase() !== 'en') {
+    throw new Error(`--lang ${lang} is no longer supported — the pipeline is EN-only (zh removed 2026-07-03)`);
+  }
+  const varName = slugToCamel(slug, 'En');
+  const arrayName = 'ARTICLES_EN';
   const importLine = `import { ${varName} } from "./${slug}";`;
 
   let src = indexSrc;
@@ -80,8 +86,12 @@ export function registerInIndex(indexSrc, { slug, lang }) {
 function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.help || !args.articlesDir || !args.slug) {
-    console.error('usage: --oracle-articles-dir <dir> --slug <slug> [--lang en|zh] [--dry-run]');
+    console.error('usage: --oracle-articles-dir <dir> --slug <slug> [--lang en] [--dry-run]');
     process.exit(args.help ? 0 : 2);
+  }
+  if (String(args.lang).toLowerCase() !== 'en') {
+    console.error(`--lang ${args.lang} is no longer supported — the pipeline is EN-only (zh removed 2026-07-03)`);
+    process.exit(2);
   }
   const indexPath = join(args.articlesDir, 'index.ts');
   if (!existsSync(indexPath)) {

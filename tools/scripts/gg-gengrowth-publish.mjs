@@ -76,6 +76,14 @@ function parseArgs(argv) {
     else if (k === '--pages') a.pages = argv[++i].split(/[\s,]+/).filter(Boolean);
     else if (k === '--limit') a.limit = parseInt(argv[++i], 10) || 0;
   }
+  // EN-only (2026-07-03): gengrowth blog publishing never ships zh rows. Reject
+  // at the publish entry — before any gate/IO — instead of passing zh through
+  // to the bridge.
+  a.locale = String(a.locale).toLowerCase();
+  if (a.locale !== 'en') {
+    process.stderr.write(`--locale ${a.locale} is no longer supported — the pipeline is EN-only (zh removed 2026-07-03)\n`);
+    process.exit(2);
+  }
   // Serial cadence (parity with Lane B): publish at most `limit` per run so a backlog
   // drip-feeds across the hourly cron instead of dumping all at once. 0 = unlimited.
   // Env GG_GENGROWTH_PUBLISH_LIMIT lets the cron tick set it without editing args.

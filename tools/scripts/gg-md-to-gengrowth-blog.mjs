@@ -46,7 +46,7 @@ import {
 // ── site constants ───────────────────────────────────────────────────────────
 // The gengrowth blog uses a single fixed byline (no authors table / FK); all
 // existing seeded rows use 'GenGrowth Team'.
-const AUTHOR_BY_LOCALE = { en: 'GenGrowth Team', zh: 'GenGrowth 团队' };
+const AUTHOR_BY_LOCALE = { en: 'GenGrowth Team' };
 
 // blog_posts.category is a TEXT CHECK limited to 4 content-TYPE values; the W25 SEO
 // clusters are TOPICS, none of which match. `category` collapses to a valid enum
@@ -159,12 +159,17 @@ const sqlInt = (v) => String(Math.trunc(v));
 
 // ── core: build one blog_posts row from a staged draft ────────────────────────
 function buildRow(args) {
+  // EN-only (2026-07-03): reject a zh locale loudly BEFORE any IO — the policy
+  // error must win over "source not found" so a bad caller sees the real problem.
+  if (args.locale && args.locale !== 'en') {
+    throw new Error(`--locale ${args.locale} is no longer supported — the pipeline is EN-only (zh removed 2026-07-03)`);
+  }
+  const locale = 'en';
   const sourceAbs = resolve(args.source);
   if (!existsSync(sourceAbs)) throw new Error(`source not found: ${sourceAbs}`);
   const raw = readFileSync(sourceAbs, 'utf8');
   const { frontmatter, body: rawBody } = parseFrontmatter(raw);
 
-  const locale = args.locale === 'zh' ? 'zh' : 'en';
   const pageId = args.pageId || (typeof frontmatter.page_id === 'string' ? frontmatter.page_id : '')
     || basename(sourceAbs).match(/(PG-[A-Z0-9]+-\d+)/)?.[1] || '';
   const prefix = pageId.match(/^(PG-[A-Z]+)/)?.[1] || '';
@@ -184,7 +189,7 @@ function buildRow(args) {
   const excerpt = deriveDescription(rawBody, 160);
 
   // markdown -> resolve TBD/links -> scrub cross-site -> HTML -> sanitize (render-path policy).
-  const resolvedMd = transformBody(bodyNoH1, locale);
+  const resolvedMd = transformBody(bodyNoH1);
   const { md: scrubbedMd, scrubbed } = scrubCrossSiteLinks(resolvedMd);
   const rawHtml = marked.parse(scrubbedMd, { gfm: true, async: false });
   const content = sanitizeHtml(rawHtml, {

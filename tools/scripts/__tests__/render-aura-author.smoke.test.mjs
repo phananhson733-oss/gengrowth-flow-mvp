@@ -208,14 +208,6 @@ test('Pillar + unauthored cfg → zero residual placeholders', () => {
   assert.doesNotMatch(rendered, RESIDUAL_PLACEHOLDER);
 });
 
-test('ZH Definition + unauthored cfg → zero residual placeholders', () => {
-  const cfg = baseCfg({ language: 'zh' });
-  const { replacements, wordRangeArr } = buildReplacements(cfg, RAG);
-  assert.deepEqual(wordRangeArr, [1500, 2000]); // ZH char default
-  const rendered = substitute(loadTemplate('definition.prompt.zh.md'), replacements);
-  assert.doesNotMatch(rendered, RESIDUAL_PLACEHOLDER);
-});
-
 // ---------- range derivation parity with the old inline logic ----------
 
 test('buildReplacements ranges: EN definition / EN pillar defaults', () => {
@@ -231,13 +223,10 @@ test('buildReplacements ranges: EN definition / EN pillar defaults', () => {
 // keeps the gate range (wordRangeArr); only {{WORD_RANGE}} shown to the model rises.
 test('buildReplacements: prompt aim is above the gate floor, gate range unchanged', () => {
   const def = buildReplacements(baseCfg(), RAG);
-  assert.deepEqual(def.promptAimArr, [1800, 2200]);          // EN Definition aim
+  assert.deepEqual(def.promptAimArr, [1800, 2200]);          // Definition aim
   assert.deepEqual(def.wordRangeArr, [1500, 1800]);          // gate (fixture) unchanged
   assert.equal(def.replacements['{{WORD_RANGE}}'], '1800-2200');
-  const zh = buildReplacements(baseCfg({ language: 'zh' }), RAG);
-  assert.deepEqual(zh.promptAimArr, [1800, 2400]);           // ZH Definition aim
-  assert.deepEqual(zh.wordRangeArr, [1500, 2000]);           // gate (fixture) unchanged
   const pillar = buildReplacements(baseCfg({ template: 'Pillar' }), RAG);
-  assert.deepEqual(pillar.promptAimArr, [2800, 3500]);       // EN Pillar aim
+  assert.deepEqual(pillar.promptAimArr, [2800, 3500]);       // Pillar aim
   assert.deepEqual(pillar.wordRangeArr, [2500, 3500]);       // gate (fixture) unchanged
 });

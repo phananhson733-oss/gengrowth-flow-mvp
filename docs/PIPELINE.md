@@ -70,7 +70,7 @@
 12. llm-call     prompt → claude/codex/hermes → _staging/X.md
 13. phase2       6 red lines 验证 → PASS 写 manifest
 14. publish      PASS 文章 → wiki 2 destinations cp
-14b. oracle-cv   PASS 文章 → oracle/data/articles/<slug>.ts (ZH 默认 merge 进 sibling EN)
+14b. oracle-cv   PASS 文章 → oracle/data/articles/<slug>.ts (EN-only；zh 已于 2026-07-03 移除)
 15. commit       wiki repo git commit
 16. (可选) deploy oracle 网站 Vite build → Vercel
 17. (可选) monitor GSC 点击 + GA4 行为
@@ -366,11 +366,9 @@ node tools/scripts/gg-render-batch.mjs \
 - `--auto-serp-snapshot`：render 前若 SERP cache 缺，自动调用 `gg-serp-snapshot.mjs` 取一份，免去顺序记忆负担。
 - `--check-only`：只验证 RAG / SERP / cfg 完整性，不写 prompt，CI / 预飞行用。
 
-**双语轨道 (bilingual-v9, 2026-05-25)**：
-- `--language en` (默认) | `--language zh` | `--language both`
-- ZH 用独立中文 template (`definition.prompt.zh.md` / `pillar.prompt.zh.md`)，文化重写，**非翻译**
-- `--language both` 同 page 产 2 份 prompt + 2 份 fixture，文件名带 `.zh` 中缀互不覆盖
-- 详细规范见 [BILINGUAL.md](./BILINGUAL.md)
+**双语轨道 — 已移除（2026-07-03 EN-only）**：
+- `--language zh|both` 已删除并硬拒绝（exit 2）；zh 模板文件已删。历史规范见 [BILINGUAL.md](./BILINGUAL.md)（已废弃，仅存档）。
+- 线上存量 129 个 /zh/ 页面保留不动；只是不再产新 zh 内容。
 
 ---
 
@@ -469,20 +467,12 @@ bash tools/scripts/gg-publish-to-wiki.sh --pages "page_X" --llms "codex"
 ## 阶段 14b — oracle-convert：md → oracle/data/articles/<slug>.ts
 
 ```bash
-# EN (default)：写 <slug>.ts，含 slugEn export
-node tools/scripts/gg-md-to-oracle-ts.mjs --batch --language en \
-  --oracle-articles-dir /Users/wzb/Code/oracle/data/articles
-
-# ZH：默认 merge 进 sibling EN <slug>.ts（single-file dual-export pattern）
-node tools/scripts/gg-md-to-oracle-ts.mjs --batch --language zh \
-  --oracle-articles-dir /Users/wzb/Code/oracle/data/articles
-
-# ZH，不 merge（写独立 <slug>.zh.ts，用于 dry-run / review）
-node tools/scripts/gg-md-to-oracle-ts.mjs --batch --language zh --no-merge \
+# EN-only（2026-07-03 起）：写 <slug>.ts，含 slugEn export
+node tools/scripts/gg-md-to-oracle-ts.mjs --batch \
   --oracle-articles-dir /Users/wzb/Code/oracle/data/articles
 ```
 
-详见 `docs/BILINGUAL.md §8`。merge 行为有 5 个加固（regex 终结符 / baseSlug / WikiArticle 检测 / CRLF / 原子写），smoke test 见 `tools/scripts/__tests__/gg-md-to-oracle-ts.smoke.test.mjs`。**stdout 末尾会输出 `⚠ MANDATORY follow-up` 提示** — 必须手动改 `oracle/data/articles/index.ts` 加 import + push ARTICLES_ZH，否则 ZH 页面 404。
+`--language zh` 已删除并硬拒绝（exit 2）；zh 的 mergeIntoSibling / `.zh.ts` 输出随之删除。smoke test 见 `tools/scripts/__tests__/gg-md-to-oracle-ts.smoke.test.mjs`。注册用 `gg-oracle-register-index.mjs`（只写 ARTICLES_EN）。
 
 ---
 

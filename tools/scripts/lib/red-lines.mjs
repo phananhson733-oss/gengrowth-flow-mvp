@@ -875,7 +875,7 @@ export function checkRL9(draft) {
 // we only flag a fixed set of explicit two-person CONVERSATIONAL residue
 // phrases that betray a chat turn ("as you said", "you mentioned", "your
 // logic", ...). Whole-line scan with line numbers; case-insensitive. Hit =
-// FAIL. ZH equivalent lives in red-lines.zh.mjs (checkRL10Zh).
+// FAIL.
 // ============================================================
 
 // Only phrases that unambiguously betray a chat turn. Generic second-person

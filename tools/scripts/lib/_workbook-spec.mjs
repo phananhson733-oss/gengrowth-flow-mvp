@@ -329,7 +329,7 @@ export const TABS = [
         S1: 'content_angle：精修线必填（差异化角度），量产线留空（用模板默认）。PRD v0.7 附录 C。',
         T1: 'psych_safety_flag：Y/N。Y 触发心理安全 QA——必须用反思性、非临床语言（附录 B），不做诊断/治疗承诺。默认 N。',
         U1: 'journal_prompts：仅精修线 product-led / healing 页填（如 chiron 反思 prompts）。量产线 aura/Vedic 长尾页留空。',
-        V1: 'target_keyword_zh：中文版主长尾词（bilingual-v9）。运营手填，用于 ZH 文章 phase2 RL4/RL5 keyword anchor。留空则 LLM 自动从英文 target_keyword 派生（demo 模式）。命名规范见 BILINGUAL.md §6：2-8 字、无空格、无 AI 农场尾缀。',
+        V1: 'target_keyword_zh：已废弃（2026-07-03 EN-only，zh 撰写链路全量移除）。列保留仅为兼容现有表结构，流水线无消费者——不需要再填。',
       },
     },
   },

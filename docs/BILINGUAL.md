@@ -1,5 +1,7 @@
-# bilingual-v9 — 中英双语 SEO 内容轨道
+# bilingual-v9 — 中英双语 SEO 内容轨道（已废弃）
 
+> ⚠️ **已于 2026-07-03 全量移除**（EN-only 决策，flow 修复阶段 2）：zh 模板、red-lines.zh、`--language zh|both`、zh-demo staging、oracle 双导出注册等本文档描述的全部能力已从代码中删除，入口均硬拒绝（exit 2）。本文档仅作历史存档。线上存量 /zh/ 页面保留。
+>
 > Date added: 2026-05-25 · Status: Demo verified (page_aura_color_blue) · Scope: prompt + render layer; LLM/phase2/oracle layers reuse EN pipeline with `language='zh'` fixture flag.
 
 ## 1. 设计原则（read first）

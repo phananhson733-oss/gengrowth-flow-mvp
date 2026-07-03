@@ -46,7 +46,15 @@ function parseArgs(argv) {
     else if (a === '--entity-zh') o.entityZh = argv[++i];
     else if (a === '--target-keyword-zh') o.targetKeywordZh = argv[++i];
     else if (a === '--fallback-entity') o.fallbackEntity = argv[++i];
-    else if (a === '--language') o.language = argv[++i];
+    // EN-only (2026-07-03): a zh RAG output language only ever served the removed
+    // zh authoring path — reject loudly (same contract as gg-obsidian-rag).
+    else if (a === '--language') {
+      o.language = argv[++i];
+      if (String(o.language).toLowerCase() !== 'en') {
+        console.error(`--language ${o.language} is no longer supported — the pipeline is EN-only (zh removed 2026-07-03)`);
+        process.exit(2);
+      }
+    }
     else if (a === '--limit') o.limit = parseInt(argv[++i], 10) || MAX_PAGES;
     else if (a === '--cache-dir') o.cacheDir = argv[++i];
     else if (a === '--vault-dir') o.vaultDir = argv[++i];

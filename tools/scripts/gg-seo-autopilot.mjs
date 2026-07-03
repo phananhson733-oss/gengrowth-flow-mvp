@@ -19,11 +19,9 @@
 // consistent with the kanban invisible-default direction (gate only on explicit
 // human-required conditions).
 //
-// Conversion recipe (validated Phase 0):
+// Conversion recipe (validated Phase 0; EN-only since 2026-07-03 — zh authoring/publish removed):
 //   EN: gg-md-to-oracle-ts --source _staging/<PID>-en.md      --slug S --out ART/S.ts
-//   ZH: gg-md-to-oracle-ts --source _staging/zh-demo/<PID>-zh.md --slug S --out ART/S.zh.ts --language zh
-//       (ZH out MUST differ from EN .ts so mergeSibling appends Zh into S.ts)
-//   then gg-oracle-register-index --slug S --lang en|zh
+//   then gg-oracle-register-index --slug S --lang en
 //
 // Usage:
 //   node gg-seo-autopilot.mjs [--scan] [--dry-run] [--limit 1]
@@ -359,7 +357,6 @@ function doReconcilePublished(o) {
 
 // ── per-task helpers ────────────────────────────────────────────────────────
 function enDraft(pgId) { return join(STAGING, `${pgId}-en.md`); }
-function zhDraft(pgId) { return join(STAGING, 'zh-demo', `${pgId}-zh.md`); }
 function enManifest(pgId) { return join(STAGING, `${pgId}-en.manifest.json`); }
 
 function phase2Passed(pgId) {
@@ -437,34 +434,20 @@ function articleAuthorIds(repo, slug) {
   return [...src.matchAll(/authorId:\s*"?([^",\n]*)"?/g)].map((m) => m[1].trim());
 }
 
-function zhBackfillCandidate(task, claims) {
-  const claim = claims[task.pgId] || {};
-  return Boolean(
-    task.checked &&
-    claim.status === 'done' &&
-    claim.slug &&
-    claim.zh !== true &&
-    existsSync(enDraft(task.pgId)) &&
-    phase2Passed(task.pgId) &&
-    existsSync(zhDraft(task.pgId)),
-  );
-}
-
 // A task is claimable for downstream publish iff drafts exist + pass + not done.
 function claimable(task, claims) {
-  const zhBackfill = zhBackfillCandidate(task, claims);
-  if (task.checked && !zhBackfill) return { ok: false, reason: 'already checked in plan' };
+  if (task.checked) return { ok: false, reason: 'already checked in plan' };
   const st = claimStatus(claims, task.pgId);
   if (['active', 'pushed-preview', 'verified-preview', 'needs_human'].includes(st)) {
     return { ok: false, reason: `claim=${st}` };
   }
-  if (st === 'done' && !zhBackfill) return { ok: false, reason: 'claim=done' };
+  if (st === 'done') return { ok: false, reason: 'claim=done' };
   if (!existsSync(enDraft(task.pgId))) return { ok: false, reason: 'no EN enriched draft (upstream not done)' };
   if (!phase2Passed(task.pgId)) return { ok: false, reason: 'phase2 not pass' };
-  const slug = (zhBackfill ? (claims[task.pgId] || {}).slug : null) || frontmatterSlug(enDraft(task.pgId));
+  const slug = frontmatterSlug(enDraft(task.pgId));
   if (!slug) return { ok: false, reason: 'EN draft missing frontmatter slug' };
   if (!SLUG_RE.test(slug)) return { ok: false, reason: `invalid slug "${slug}" (needs source fix)` };
-  if (st !== 'needs_human' && !zhBackfill) {
+  if (st !== 'needs_human') {
     // Skip if THIS slug — or an entity/keyword alias of it — is already live in oracle.
     // The alias check stops the autopilot from republishing a draft a human already
     // published under a renamed slug (the duplicate-content bug, e.g. signs-of- vs signs-you-re-).
@@ -483,14 +466,15 @@ function claimable(task, claims) {
 
 // Register a converted slug for STATIC SEO generation. The site's
 // scripts/generate-seo-pages.mjs uses HARDCODED allowlists — `ARTICLE_SLUGS`
-// (bilingual) and `ARTICLE_SLUGS_EN_ONLY` (EN-only) — to decide which articles
-// get crawler-visible static HTML + a sitemap entry. Discovery is NOT automatic:
-// an article merged into data/articles/ without this stays a client-only SPA
-// route, so crawlers get the empty shell and it never enters the sitemap → never
-// indexed. Insert the slug into the right array so `npm run build`
-// (→ generate-seo-pages) + the Vercel prod deploy emit its static page + sitemap
-// URL. Idempotent; non-fatal if the script/array layout changes.
-function registerSeoSlug(repo, slug, zh) {
+// (bilingual, legacy zh-era articles only) and `ARTICLE_SLUGS_EN_ONLY` — to
+// decide which articles get crawler-visible static HTML + a sitemap entry.
+// Discovery is NOT automatic: an article merged into data/articles/ without
+// this stays a client-only SPA route, so crawlers get the empty shell and it
+// never enters the sitemap → never indexed. New articles are EN-only, so
+// registration always targets ARTICLE_SLUGS_EN_ONLY (ARTICLE_SLUGS is kept
+// as-is to serve the pre-2026-07 bilingual back catalog). Idempotent;
+// non-fatal if the script/array layout changes.
+function registerSeoSlug(repo, slug) {
   const f = join(repo, 'scripts', 'generate-seo-pages.mjs');
   if (!existsSync(f)) { log(`WARN no generate-seo-pages.mjs — ${slug} won't get a static SEO page`); return; }
   let src = readFileSync(f, 'utf8');
@@ -504,19 +488,6 @@ function registerSeoSlug(repo, slug, zh) {
     src = src.replace(re, `$1  '${slug}',\n`);
     return true;
   };
-  const removeFrom = (arr) => {
-    src = src.replace(new RegExp(`^\\s*['"]${slug}['"],\\n`, 'm'), '');
-  };
-
-  if (zh) {
-    if (hasIn('ARTICLE_SLUGS')) return;
-    const wasEnOnly = hasIn('ARTICLE_SLUGS_EN_ONLY');
-    if (wasEnOnly) removeFrom('ARTICLE_SLUGS_EN_ONLY');
-    if (!insertInto('ARTICLE_SLUGS')) return;
-    writeFileSync(f, src);
-    log(`${wasEnOnly ? 'promoted' : 'registered'} ${slug} → ARTICLE_SLUGS (static SEO page + sitemap)`);
-    return;
-  }
 
   if (hasIn('ARTICLE_SLUGS') || hasIn('ARTICLE_SLUGS_EN_ONLY')) return;
   if (!insertInto('ARTICLE_SLUGS_EN_ONLY')) return;
@@ -528,14 +499,7 @@ function convert(repo, pgId, slug) {
   const art = articlesDir(repo);
   sh('node', [CONV, '--source', enDraft(pgId), '--slug', slug, '--out', join(art, `${slug}.ts`)]);
   sh('node', [REG, '--oracle-articles-dir', art, '--slug', slug, '--lang', 'en']);
-  let zh = false;
-  if (existsSync(zhDraft(pgId))) {
-    sh('node', [CONV, '--source', zhDraft(pgId), '--slug', slug, '--out', join(art, `${slug}.zh.ts`), '--language', 'zh']);
-    sh('node', [REG, '--oracle-articles-dir', art, '--slug', slug, '--lang', 'zh']);
-    zh = true;
-  }
-  registerSeoSlug(repo, slug, zh);
-  return { zh };
+  registerSeoSlug(repo, slug);
 }
 
 function buildGate(repo) {
@@ -572,29 +536,6 @@ function nextUnauthored(tasks, claims) {
     if (claimStatus(claims, t.pgId)) continue; // active/pushed/verified/needs_human/done
     if (existsSync(enDraft(t.pgId)) && phase2Passed(t.pgId)) continue; // ready → scan's job
     return t;
-  }
-  return null;
-}
-
-// Checked plan items that are already published in EN (claim=done) but still lack
-// the upstream ZH source draft. These are NOT scan-claimable yet — scan only knows
-// how to publish a zh backfill once _staging/zh-demo/<PG>-zh.md exists — so --author
-// needs a second lane that manufactures that missing source.
-function needsZhSourceBackfill(task, claims) {
-  const claim = claims[task.pgId] || {};
-  return Boolean(
-    task.checked &&
-    claim.status === 'done' &&
-    claim.zh !== true &&
-    existsSync(enDraft(task.pgId)) &&
-    phase2Passed(task.pgId) &&
-    !existsSync(zhDraft(task.pgId)),
-  );
-}
-
-function nextZhSourceBackfill(tasks, claims) {
-  for (const t of tasks) {
-    if (needsZhSourceBackfill(t, claims)) return t;
   }
   return null;
 }
@@ -701,18 +642,18 @@ function doNextUnauthored() {
 // `claude -p --allowedTools Bash/Edit/Write --dangerously-skip-permissions` rescue, replaced by
 // the text-only gg-author-repair.mjs (Task 3). Deleted to avoid inviting a re-wire of the unsafe path.
 
-// Deterministic-repair escalation (Task 3) — shared by EVERY author park boundary (EN + both zh paths).
+// Deterministic-repair escalation (Task 3) — shared by EVERY author park boundary.
 // After the feedback loop has failed every attempt, escalate ONCE to gg-author-repair.mjs: a TEXT-ONLY
 // worker (NO Bash/Edit/Write/Grep/MCP/--dangerously-skip-permissions) that reads the failed draft + the
 // phase2 failures and emits a corrected article to a SEPARATE candidate file. `validate(candidate)` runs
 // phase2 on that candidate and returns whether it passed; we adopt it ONLY on a pass — a tooling failure
 // or a still-failing candidate parks exactly as before. Centralized so a new author path can never again
-// silently ship WITHOUT the repair safety net (the divergence that parked PG-SOLAR-001's zh backfill: EN
-// had the escalation, the zh paths did not). Toggle GG_AUTHOR_REPAIR=0. Returns true iff a repaired
+// silently ship WITHOUT the repair safety net (the divergence that parked PG-SOLAR-001: one path
+// had the escalation, another did not). Toggle GG_AUTHOR_REPAIR=0. Returns true iff a repaired
 // candidate passed and was adopted (the caller then logs AUTHORED and returns).
-function tryDeterministicRepair({ pgId, draftV8, candidate, targetKeyword, author, failures, language, validate }) {
+function tryDeterministicRepair({ pgId, draftV8, candidate, targetKeyword, author, failures, validate }) {
   if (process.env.GG_AUTHOR_REPAIR === '0' || !existsSync(join(FLOW, draftV8))) return false;
-  log(`deterministic repair: feedback loop failed — calling gg-author-repair on ${draftV8}${language ? ` (${language})` : ''}`);
+  log(`deterministic repair: feedback loop failed — calling gg-author-repair on ${draftV8}`);
   const repModel = process.env.GG_AGENTIC_MODEL || 'claude-sonnet-4-6';
   const repEffort = process.env.GG_AGENTIC_EFFORT || 'high';
   const repTimeout = parseInt(process.env.GG_AUTHOR_REPAIR_TIMEOUT_MS || process.env.GG_AUTHOR_AGENTIC_TIMEOUT_MS || '1800000', 10);
@@ -722,7 +663,6 @@ function tryDeterministicRepair({ pgId, draftV8, candidate, targetKeyword, autho
       '--target-keyword', targetKeyword, '--author', author,
       '--failures', failures || '- phase2 failed',
       '--model', repModel, '--effort', repEffort];
-    if (language) args.push('--language', language);
     shFlow('node', args, repTimeout);
     // WE validate the candidate (the worker never runs phase2 itself); adopt only on PASS.
     if (validate(candidate)) return true;
@@ -739,116 +679,23 @@ function doAuthor(o = {}) {
     if (!plan) { log('no blog-output-plan found'); return; }
     const t = parseTasks(plan).find((x) => x.pgId === o.task);
     if (!t) { log(`--task ${o.task} not found in plan`); return; }
-    const zhBackfill = needsZhSourceBackfill(t, claims);
-    if (claimStatus(claims, t.pgId) && !zhBackfill) { log(`--task ${o.task} already has a claim (clear it first)`); return; }
-    sel = { plan, task: t, mode: zhBackfill ? 'zh-backfill' : 'en-author' };
+    if (claimStatus(claims, t.pgId)) { log(`--task ${o.task} already has a claim (clear it first)`); return; }
+    sel = { plan, task: t };
   } else {
     const plan = latestPlan();
     if (!plan) { log('no blog-output-plan found'); return; }
-    const tasks = parseTasks(plan);
-    const task = nextUnauthored(tasks, claims) || nextZhSourceBackfill(tasks, claims);
-    sel = task
-      ? { plan, task, mode: needsZhSourceBackfill(task, claims) ? 'zh-backfill' : 'en-author' }
-      : null;
+    const task = nextUnauthored(parseTasks(plan), claims);
+    sel = task ? { plan, task } : null;
   }
   if (!sel || !sel.task) { log('nothing to author this run'); return; }
   const { task: t } = sel;
   const pgId = t.pgId;
-  const modeZhBackfill = sel.mode === 'zh-backfill';
   const planName = basename(sel.plan);
-  log(`${modeZhBackfill ? 'zh-backfill candidate' : 'author candidate'} ${pgId} (${t.keyword || ''})`);
+  log(`author candidate ${pgId} (${t.keyword || ''})`);
   const park = (slug, reason) => parkAuthor(pgId, slug, planName, reason);
   const reconcileDone = (slug, note) => reconcileAuthorDone(pgId, slug, planName, note);
 
   try {
-    const enSourcePath = enDraft(pgId);
-    const enMeta = existsSync(enSourcePath) ? readMdFrontmatter(enSourcePath) : { attrs: {}, body: '' };
-
-    if (modeZhBackfill) {
-      const fm = enMeta.attrs || {};
-      const slug = ((claims[pgId] || {}).slug || fm.slug || (t.keyword || pgId).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')).trim();
-      const keyword = String(fm.target_keyword || t.keyword || '').trim();
-      const cleanEntity = String(fm.entity || keyword || t.keyword || '')
-        .replace(/^\s*(what\s+(is|are|to\s+do\s+(on|with|during|after))|how\s+(to|do(es)?)|why\s+(is|are|do(es)?)|when\s+(is|are|to|do(es)?))\s+(a|an|the)?\s*/i, '')
-        .replace(/[?？]+\s*$/, '').trim() || keyword;
-      const author = String(fm.author_id || fm.author || '').trim();
-      const associatedKeywords = Array.isArray(fm.associated_keywords) ? fm.associated_keywords.filter(Boolean) : [];
-      const template = String(fm.template || 'Definition').trim() || 'Definition';
-      const tier = String(fm.tier || 'T2').trim() || 'T2';
-      const track = String(fm.track || '量产线').trim() || '量产线';
-      const zhKeyword = String(fm.target_keyword_zh || '').trim();
-      const enBody = String(enMeta.body || '').trim();
-      if (!author) return park(slug, 'EN draft missing author_id for zh backfill');
-      if (!keyword) return park(slug, 'EN draft missing target_keyword for zh backfill');
-      if (!enBody) return park(slug, 'EN draft body empty — cannot synthesize zh backfill prompt');
-
-      mkdirSync(join(FLOW, '.gg-cache', 'prompts'), { recursive: true });
-      const promptPath = join('.gg-cache', 'prompts', `${pgId}.v8.zh-prompt.md`);
-      const promptAbs = join(FLOW, promptPath);
-      const promptBase = `# Role\n你是 AstrologyWiki 的中文内容编辑。你的任务不是逐句翻译，而是基于一篇已经通过英文 Phase 2 的成稿，产出一篇可直接进入中文 Phase 2 的简体中文版本。\n\n# Hard requirements\n- 输出纯 Markdown 正文，不要 YAML frontmatter，不要解释过程。\n- 不要沿用英文 H2 文案；必须把英文语义改写进中文 Phase 2 认可的 11 个 H2 骨架。\n- H1 必须是自然中文标题；正文与 H2 全部用简体中文。\n- 第一部分必须用 \`## <你选定的中文主词> 是什么？\` 开头；首段里要有 1 个**加粗定义短语**，随后**紧跟正好 3 个 bullet**。\n- 第二部分 H2 必须逐字写成 \`## 为什么了解它能帮助自我觉察\`。\n- 第三部分 H2 必须写成 \`## <你选定的中文主词> 与相近概念：运作方式 + 取舍\`，每个对比都要写出明确取舍。\n- 第四部分必须用“识别”而不是“阅读/判断”作 H2 动词：星盘/宫位/行运类主题用 \`## 如何在你的星盘里识别 <你选定的中文主词>\`；其他主题用 \`## 如何在自己身上识别 <你选定的中文主词>\`。\n- 第五到第十一部分依次必须覆盖：常见误读、速查表/一览、常见问题/问答、自我觉察小提示、延伸阅读、下一步行动、参考来源。\n- \`## 自我觉察小提示\` 标题后第一行必须直接开始 \`1.\` / \`2.\` / \`3.\` 三条编号提示，不能先写引导段。\n- 至少放入 5 条 \`[[<TBD-internal-link: ...>]]\` 中文内链占位符；不要输出 0 条内链。\n- 主中文关键词全篇总出现次数控制在 5-8 次之间；不要在每个 H2 都机械重复，能用“它 / 这个主题 / 这张盘 / 该相位”等代词时就改写。\n- \`参考来源\` 里出现的权威名，正文里必须先具名提到；不要在 Sources 里新增正文没出现过的人名或条目。\n- 保留反思性 / 象征性语气，禁止诊断、治疗、治愈、改善病症等医疗承诺。\n- 明确避开广告/承诺词：不要写 承诺 / 保证 / 立刻见效 / 改命 / 改运 / 疗愈创伤 / 修复焦虑 这类表述。\n- 结尾必须保留免责声明，用中文表达“这不是临床解读或心理健康建议”。\n- 将 CTA 改写为中文，并指向 https://astrologywiki.com/zh/wiki/how-to-read-birth-chart 。\n- 如原文出现 astrologywiki.com/en/ 内链或 CTA，请改成 /zh/ 对应路径；拿不准时只保留 CTA 这一个确定链接。\n- 不要照搬英文句子；允许为中文读者做自然重写，但核心含义必须忠于英文稿。\n- 不要输出 TODO、占位符、方括号备注或英文审校说明。\n${zhKeyword ? `- 主中文关键词固定使用：${zhKeyword} 。H1 与至少多数主体段落自然回扣它，避免换成别的说法导致锚点漂移。\n` : '- 自行选择一个自然的中文主关键词，并在 H1 与正文主体里稳定复用，避免同义改写过度导致锚点漂移。\n'}\n# Metadata\n- page_id: ${pgId}\n- slug: ${slug}\n- author_id: ${author}\n- target_keyword_en: ${keyword}\n- entity: ${cleanEntity || keyword}\n- template: ${template}\n- tier: ${tier}\n- track: ${track}\n- associated_keywords_en: ${(associatedKeywords.length ? associatedKeywords.join(', ') : '(none)')}\n\n# Source English article (semantic source of truth, not heading template)\n\n${enBody}\n`;
-      writeFileSync(promptAbs, promptBase);
-
-      const defaultDraftV8 = join('_staging', 'zh-demo', `${pgId}-${WINNER}-v8.md`);
-      const orchestratorMeta = join('_staging', 'zh-demo', `${pgId}-orchestrator.json`);
-      const zhModels = process.env.GG_ZH_BACKFILL_MODELS || process.env.GG_AUTHOR_MODELS || (WINNER === 'claude' ? 'claude,codex,gemini' : WINNER);
-      const attempts = Math.max(1, parseInt(process.env.GG_AUTHOR_GEN_ATTEMPTS || '3', 10));
-      let lastFail = '';
-      for (let i = 1; i <= attempts; i++) {
-        if (lastFail && i > 1) {
-          writeFileSync(promptAbs, `${promptBase}\n\n## ⚠️ 上一稿被自动校验拦下 — 本稿必须逐条修掉\n${lastFail}\n\n补救要求：\n- 保持中文，不要回退英文标题或英文小节。\n- RL4 漂移 → 在被点名小节自然补回主中文关键词；不要只在开头堆一次。\n- RL5 堆词 → 重复过密处改成代词 / 短称 / 解释句，但别把主关键词完全丢掉。\n- RL6 / 合规 → 改成象征、反思、传统关联，不要承诺疗效或心理治疗作用。\n- 结构 FAIL → 以英文稿结构为准，小修，不整篇推倒重写。\n`);
-        }
-        const orchTimeout = parseInt(process.env.GG_AUTHOR_ORCH_TIMEOUT_MS || '1800000', 10);
-        try { shFlow('node', [ORCHESTRATOR, '--prompt', promptPath, '--page-id', pgId, '--models', zhModels, '--out-dir', '_staging/zh-demo', '--retry', '0'], orchTimeout); }
-        catch (e) { log(`zh orchestrator exit non-zero (attempt ${i}): ${errTail(e, 80)}`); }
-        let draftV8 = defaultDraftV8;
-        if (!existsSync(join(FLOW, draftV8)) && existsSync(join(FLOW, orchestratorMeta))) {
-          try {
-            const meta = JSON.parse(readFileSync(join(FLOW, orchestratorMeta), 'utf8'));
-            const okEntry = Object.values(meta.results || {}).find((r) => r && r.ok && r.output_path);
-            if (okEntry && okEntry.output_path) draftV8 = relative(FLOW, okEntry.output_path);
-          } catch { /* best-effort */ }
-        }
-        if (!existsSync(join(FLOW, draftV8))) { lastFail = `- orchestrator produced no zh draft (models=${zhModels})`; continue; }
-        const phase2Args = ['node', [PHASE2, '--source', draftV8, '--page-id', pgId, '--tag', 'zh', '--language', 'zh', '--author', author, '--entity', cleanEntity || keyword, '--target-keyword', keyword, '--template', template, '--tier', tier, '--track', track, '--prompt-version', VERSION]];
-        if (associatedKeywords.length) phase2Args[1].push('--associated-keywords', associatedKeywords.join(', '));
-        if (zhKeyword) phase2Args[1].push('--zh-keyword', zhKeyword);
-        try { shFlow(phase2Args[0], phase2Args[1]); }
-        catch (e) {
-          const out = `${e.stdout || ''}${e.stderr || ''}`;
-          const fails = [...out.matchAll(/✗\s*(?:FAIL\s*)?([^\n]+)/g)].map((m) => `- ${m[1].trim()}`).filter((s) => s.length > 6).slice(0, 8);
-          lastFail = fails.length ? fails.join('\n') : ('- zh phase2 FAIL: ' + (out.split('\n').map((s) => s.trim()).filter(Boolean).slice(-3).join(' | ') || 'no detail captured'));
-          log(`zh phase2 attempt ${i}/${attempts} failed:\n${lastFail}${i < attempts ? '\n  → regenerating WITH feedback' : ''}`);
-          continue;
-        }
-        if (existsSync(zhDraft(pgId))) {
-          log(`AUTHORED ZH ${pgId} → ${zhDraft(pgId)} (author=${author}, attempt ${i}/${attempts}) — ready for next scan to publish bilingual backfill`);
-          return;
-        }
-        lastFail = '- zh phase2 wrote no passing draft';
-      }
-      // zh-backfill park boundary: escalate to the shared deterministic repair before parking (the
-      // gap that parked PG-SOLAR-001). Validate the repaired candidate with the SAME zh phase2 gate.
-      if (tryDeterministicRepair({
-        pgId, draftV8: defaultDraftV8, candidate: join('_staging', 'zh-demo', `${pgId}-repair-candidate.md`),
-        targetKeyword: keyword, author, failures: lastFail, language: 'zh',
-        validate: (cand) => {
-          const a = [PHASE2, '--source', cand, '--page-id', pgId, '--tag', 'zh', '--language', 'zh', '--author', author, '--entity', cleanEntity || keyword, '--target-keyword', keyword, '--template', template, '--tier', tier, '--track', track, '--prompt-version', VERSION];
-          if (associatedKeywords.length) a.push('--associated-keywords', associatedKeywords.join(', '));
-          if (zhKeyword) a.push('--zh-keyword', zhKeyword);
-          // Freshness binding (zh lacks EN's phase2Passed manifest gate): delete the canonical zh draft
-          // FIRST, so the existsSync below can only be true if THIS candidate's phase2 just (re)wrote it
-          // — phase2 throws on fail and writes the draft only on pass, so a stale file can't fake adoption.
-          rmSync(zhDraft(pgId), { force: true });
-          shFlow('node', a);
-          return existsSync(zhDraft(pgId));
-        },
-      })) {
-        log(`AUTHORED ZH ${pgId} → ${zhDraft(pgId)} (author=${author}, via deterministic repair) — ready for next scan to publish bilingual backfill`);
-        return;
-      }
-      return park(slug, `${(lastFail || 'zh phase2 failed').replace(/\n/g, ' | ')} after ${attempts} zh attempt(s) + deterministic repair`);
-    }
-
     // 1. locate the Sheet row
     let loc;
     try { loc = findSheetRow(pgId, t.keyword); }
@@ -918,20 +765,13 @@ function doAuthor(o = {}) {
     const messyEntity = /·/.test(entry.entity || '') || ((entry.entity || '').split(',').length >= 3);
     if (messyEntity && cleanEntity) entry.entity = cleanEntity;
 
-    // CTA normalization by lane:
-    // - EN authoring keeps the prior English fallback.
-    // - ZH backfill needs a native Chinese CTA; otherwise the generated Chinese draft
-    //   inherits an English CTA block, which is jarring and weakens the whole point
-    //   of the bilingual backfill.
+    // CTA normalization: a Chinese-language or empty Sheet CTA falls back to the
+    // English template (articles are EN-only).
     if (/[㐀-鿿]/.test(entry.cta_text || '') || !(entry.cta_text || '').trim()) {
       if (!/^https?:\/\//.test(entry.cta_target_url || '')) {
-        entry.cta_target_url = modeZhBackfill
-          ? 'https://astrologywiki.com/zh/wiki/how-to-read-birth-chart'
-          : 'https://astrologywiki.com/en/wiki/how-to-read-birth-chart';
+        entry.cta_target_url = 'https://astrologywiki.com/en/wiki/how-to-read-birth-chart';
       }
-      entry.cta_text = modeZhBackfill
-        ? `免费生成你的本命盘，继续了解${cleanEntity}。`
-        : `Generate your free birth chart to explore ${cleanEntity}.`;
+      entry.cta_text = `Generate your free birth chart to explore ${cleanEntity}.`;
     }
     try { writeFileSync(absOverride, JSON.stringify(ov, null, 2)); }
     catch (e) { return park(slug, `override write failed: ${errTail(e)}`); }
@@ -960,73 +800,10 @@ function doAuthor(o = {}) {
     if (!existsSync(epRag) || statSync(epRag).size < 512) return park(slug, 'entity-passport produced no RAG');
 
     // 6. render → v8 prompt + fixture (render WARNs on missing SERP cache; gate on file)
-    const renderArgs = ['node', [RENDER, '--batch', batchPath, '--overrides', overridePath]];
-    if (modeZhBackfill) renderArgs[1].push('--language', 'zh');
-    try { shFlow(renderArgs[0], renderArgs[1]); }
+    try { shFlow('node', [RENDER, '--batch', batchPath, '--overrides', overridePath]); }
     catch (e) { log(`render exit non-zero: ${errTail(e, 80)}`); }
-    const promptPath = join('.gg-cache', 'prompts', `${pgId}.v8${modeZhBackfill ? '.zh' : ''}-prompt.md`);
-    if (!existsSync(join(FLOW, promptPath))) return park(slug, `render produced no ${modeZhBackfill ? 'ZH ' : ''}v8 prompt`);
-
-    if (modeZhBackfill) {
-      const defaultDraftV8 = join('_staging', 'zh-demo', `${pgId}-${WINNER}-v8.md`);
-      const orchestratorMeta = join('_staging', 'zh-demo', `${pgId}-orchestrator.json`);
-      const promptAbs = join(FLOW, promptPath);
-      const basePrompt = readFileSync(promptAbs, 'utf8');
-      const restorePrompt = () => { try { writeFileSync(promptAbs, basePrompt); } catch { /* best-effort */ } };
-      const attemptsRaw = Number.parseInt(process.env.GG_AUTHOR_GEN_ATTEMPTS || '3', 10);
-      const attempts = Number.isFinite(attemptsRaw) && attemptsRaw > 0 ? attemptsRaw : 3;
-      const zhModels = process.env.GG_ZH_BACKFILL_MODELS || process.env.GG_AUTHOR_MODELS || (WINNER === 'claude' ? 'claude,codex,gemini' : WINNER);
-      let lastFail = '';
-      for (let i = 1; i <= attempts; i++) {
-        if (lastFail && i > 1) {
-          writeFileSync(promptAbs, `${basePrompt}\n\n## ⚠️ 上一稿被自动校验拦下 — 本稿必须逐条修掉\n${lastFail}\n\n补救要求：\n- 这是中文稿，保留中文 H2 与正文，不要退回英文。\n- RL4 漂移 → 被点名的小节里自然补回主中文关键词或对应主题短语。\n- RL5 堆词 → 过密处改成代词 / 近义表达，别机械重复。\n- RL6 / 合规 → 保留反思性、非疗效、非诊断措辞；不要写治疗、改善病症、调理体质。\n- 结构类 FAIL → 只做外科式修正，不整篇重写。\n`);
-        }
-        const orchTimeout = parseInt(process.env.GG_AUTHOR_ORCH_TIMEOUT_MS || '1800000', 10);
-        try { shFlow('node', [ORCHESTRATOR, '--prompt', promptPath, '--page-id', pgId, '--models', zhModels, '--out-dir', '_staging/zh-demo', '--retry', '0'], orchTimeout); }
-        catch (e) { log(`zh orchestrator exit non-zero (attempt ${i}): ${errTail(e, 80)}`); }
-        let draftV8 = defaultDraftV8;
-        if (!existsSync(join(FLOW, draftV8)) && existsSync(join(FLOW, orchestratorMeta))) {
-          try {
-            const meta = JSON.parse(readFileSync(join(FLOW, orchestratorMeta), 'utf8'));
-            const okEntry = Object.values(meta.results || {}).find((r) => r && r.ok && r.output_path);
-            if (okEntry && okEntry.output_path) draftV8 = relative(FLOW, okEntry.output_path);
-          } catch { /* best-effort */ }
-        }
-        if (!existsSync(join(FLOW, draftV8))) { lastFail = `- orchestrator produced no zh draft (models=${zhModels})`; continue; }
-        try { shFlow('node', [PHASE2, '--source', draftV8, '--page-id', pgId, '--tag', 'zh', '--language', 'zh', '--author', author]); }
-        catch (e) {
-          const out = `${e.stdout || ''}${e.stderr || ''}`;
-          const fails = [...out.matchAll(/✗\s*(?:FAIL\s*)?([^\n]+)/g)].map((m) => `- ${m[1].trim()}`).filter((s) => s.length > 6).slice(0, 8);
-          lastFail = fails.length ? fails.join('\n') : ('- zh phase2 FAIL: ' + (out.split('\n').map((s) => s.trim()).filter(Boolean).slice(-3).join(' | ') || 'no detail captured'));
-          log(`zh phase2 attempt ${i}/${attempts} failed:\n${lastFail}${i < attempts ? '\n  → regenerating WITH feedback' : ''}`);
-          continue;
-        }
-        if (existsSync(zhDraft(pgId))) {
-          restorePrompt();
-          log(`AUTHORED ZH ${pgId} → ${zhDraft(pgId)} (author=${author}, attempt ${i}/${attempts}) — ready for next scan to publish bilingual backfill`);
-          return;
-        }
-        lastFail = '- zh phase2 wrote no passing draft';
-      }
-      restorePrompt();
-      // zh-backfill park boundary (full-pipeline path): same shared deterministic-repair escalation
-      // before parking, validated with this path's zh phase2 gate.
-      if (tryDeterministicRepair({
-        pgId, draftV8: defaultDraftV8, candidate: join('_staging', 'zh-demo', `${pgId}-repair-candidate.md`),
-        targetKeyword: keyword, author, failures: lastFail, language: 'zh',
-        validate: (cand) => {
-          // Freshness binding (see path #1): delete the canonical zh draft first so existsSync below
-          // proves THIS candidate's phase2 just (re)wrote it, not a stale leftover.
-          rmSync(zhDraft(pgId), { force: true });
-          shFlow('node', [PHASE2, '--source', cand, '--page-id', pgId, '--tag', 'zh', '--language', 'zh', '--author', author, '--prompt-version', VERSION]);
-          return existsSync(zhDraft(pgId));
-        },
-      })) {
-        log(`AUTHORED ZH ${pgId} → ${zhDraft(pgId)} (author=${author}, via deterministic repair) — ready for next scan to publish bilingual backfill`);
-        return;
-      }
-      return park(slug, `${(lastFail || 'zh phase2 failed').replace(/\n/g, ' | ')} after ${attempts} zh attempt(s) + deterministic repair`);
-    }
+    const promptPath = join('.gg-cache', 'prompts', `${pgId}.v8-prompt.md`);
+    if (!existsSync(join(FLOW, promptPath))) return park(slug, 'render produced no v8 prompt');
 
     // 7+8. Generate (Opus) → validate (phase2 v4.4/v4.5.1), retrying on failure.
     //   phase2 trips on generation variance — esp. SC3c "section scatter" (≤3 prose
@@ -1211,9 +988,8 @@ function publishOne(o, t) {
     return;
   }
 
-  let res;
   stampClaim(t.pgId, 'convert');
-  try { res = convert(publishRepo, t.pgId, t.slug); }
+  try { convert(publishRepo, t.pgId, t.slug); }
   catch (e) { stampClaim(t.pgId, 'convert', { status: 'needs_human', error: `convert: ${e.message}` }); log(`FAIL convert ${t.pgId}`); return; }
 
   // author-known gate
@@ -1242,9 +1018,9 @@ function publishOne(o, t) {
   if (!b.ok) { stampClaim(t.pgId, 'build-gate', { status: 'needs_human', error: `build: ${b.error}` }); log(`PARK ${t.pgId}: build failed`); return; }
 
   if (o.dryRun) {
-    stampClaim(t.pgId, 'dry-run-ok', { status: 'dry-run-ok', zh: res.zh, ...heroPatch });
+    stampClaim(t.pgId, 'dry-run-ok', { status: 'dry-run-ok', ...heroPatch });
     cleanupWorktree(publishRepo);
-    log(`DRY-RUN OK ${t.pgId} (${t.slug}${res.zh ? '+zh' : ' EN-only'}) build✓ — not pushed`);
+    log(`DRY-RUN OK ${t.pgId} (${t.slug}) build✓ — not pushed`);
     return;
   }
 
@@ -1266,7 +1042,7 @@ function publishOne(o, t) {
   try {
     prUrl = sh('gh', ['pr', 'create', '--repo', 'xdawayer/oracle', '--base', 'main', '--head', branch,
       '--title', `[autopilot] publish ${t.slug}`,
-      '--body', `Automated SEO publish of \`${t.pgId}\` → \`${t.slug}\`${res.zh ? ' (EN+ZH)' : ' (EN-only)'}.\n\nAwaiting codex review + chrome MCP verification on the Vercel preview before merge.`],
+      '--body', `Automated SEO publish of \`${t.pgId}\` → \`${t.slug}\` (EN-only).\n\nAwaiting codex review + chrome MCP verification on the Vercel preview before merge.`],
       { cwd: publishRepo }).trim();
   } catch (e) {
     // Re-publish of the same date+pgId branch hits "a pull request already exists" — fine (we
@@ -1277,7 +1053,7 @@ function publishOne(o, t) {
     }
     if (!prUrl) prUrl = `(pr-create-failed: ${e.message})`;
   }
-  stampClaim(t.pgId, 'pushed-preview', { status: 'pushed-preview', pr: prUrl, zh: res.zh, ...heroPatch });
+  stampClaim(t.pgId, 'pushed-preview', { status: 'pushed-preview', pr: prUrl, ...heroPatch });
   log(`PUSHED preview ${branch} PR=${prUrl} — awaiting codex+chrome verify, then --merge`);
 }
 
@@ -1490,9 +1266,6 @@ async function appendPublishLog(pgId, slug) {
     }
     const date = new Date().toISOString().slice(0, 10);
     const url = `https://www.astrologywiki.com/en/wiki/${slug}`;
-    // Bilingual articles (zh-backfill published) also have a live /zh page — surface it
-    // in the success notify so a zh merge isn't reported with only its /en URL.
-    const zhUrlLine = existsSync(zhDraft(pgId)) ? `\nhttps://www.astrologywiki.com/zh/wiki/${slug}` : '';
     if (!existsSync(f)) {
       mkdirSync(dirname(f), { recursive: true });
       writeFileSync(f, `---\ntitle: SEO Autopilot 发布登记\ntype: log\nupdated: ${date}\n---\n\n# 📝 SEO Autopilot 发布登记（自动维护）\n\n> autopilot 每篇文章发布到 prod 后自动追加一行并 commit+push。\n\n| 日期 | PG-id | slug | 标题 | 作者 | 线上 URL | 状态 |\n|---|---|---|---|---|---|---|\n`);
@@ -1505,12 +1278,11 @@ async function appendPublishLog(pgId, slug) {
     }
     syncOpsFiles([f, latestPlan()], `chore(seo): publish ${slug}`);
     enqueueIndexTracking(pgId, slug, title, author, date);
-    // published 事件（NOTIFY-CONTRACT.md 迁移映射 :1501）：双语文章的 /zh URL
-    // 沿用旧行为，一并带在 url 字段里（模板按行渲染，多行 URL 原样保留）。
+    // published 事件（NOTIFY-CONTRACT.md 迁移映射 :1501）
     await notifyEvent('published', {
       site: 'astrologywiki',
       title: title || slug,
-      url: `${url}${zhUrlLine}`,
+      url,
       extra: `作者 ${author || '?'}，已登记到 ops`,
     });
   } catch (e) { log(`publish-log skipped: ${errTail(e, 80)}`); }

@@ -172,36 +172,26 @@ export function journalPromptsBlock(raw) {
 // authored and unauthored cfgs — the exact condition renderAuraPrompt hard-exits
 // on. ragBlocks fields default to '' so a test may omit them.
 // Internal-link CTA targets carry a /<lang>/ path segment (SPA route /:lang/wiki/:id).
-// Overrides store the EN canonical URL; rewrite the lang segment so a ZH article links
-// to the ZH page and EN to EN. URLs without an /en/|/zh/ segment (e.g. /tools/... pages)
-// pass through unchanged, so aura tool-page CTAs keep working.
-export function ctaUrlForLang(url, lang) {
+// Overrides store the EN canonical URL; a legacy /zh/ URL in an old override is
+// normalized back to /en/. URLs without an /en/|/zh/ segment (e.g. /tools/...
+// pages) pass through unchanged, so aura tool-page CTAs keep working.
+export function ctaUrlForLang(url) {
   if (!url) return url;
-  const want = lang === 'zh' ? 'zh' : 'en';
-  return url.replace(/^(https?:\/\/[^/]+)\/(?:en|zh)\//i, (_m, host) => `${host}/${want}/`);
+  return url.replace(/^(https?:\/\/[^/]+)\/(?:en|zh)\//i, (_m, host) => `${host}/en/`);
 }
 
 export function buildReplacements(cfg, ragBlocks = {}) {
-  const lang = cfg.language === 'zh' ? 'zh' : 'en';
-  // CTA target: rewrite the /<lang>/ segment so ZH articles link to ZH pages (SC8 exact-target).
-  const ctaTargetUrl = ctaUrlForLang(cfg.cta_target_url, lang);
+  const ctaTargetUrl = ctaUrlForLang(cfg.cta_target_url);
   const isPillar = /^pillar$/i.test(cfg.template || '');
-  // ZH defaults: Chinese articles measure in characters, not words. Tuned
-  // 2026-05-25 from first opus 4.7 production run (actual output 1590 chars).
-  // Chinese expression is denser; 1500-2000 chars ≈ EN 1500-1800 words depth.
-  const enWordDefault = isPillar ? [2500, 3500] : [1500, 1800];
-  const zhWordDefault = isPillar ? [3000, 4000] : [1500, 2000];
   // GATE range — written to the fixture sidecar, read by _phase2-validate as the
   // word_range_min (hard FAIL floor) and word_range_max (soft WARN ceiling).
-  const wordRangeArr = cfg.word_range || (lang === 'zh' ? zhWordDefault : enWordDefault);
+  const wordRangeArr = cfg.word_range || (isPillar ? [2500, 3500] : [1500, 1800]);
   // PROMPT AIM — what the model is told to write. Set above the gate floor so the
   // model's habitual ~15-20% undershoot still clears word_range_min. Over-max is
   // a WARN, not a FAIL, so aiming high is safe. (2026-05-27 word-count pilot.)
-  const enAim = isPillar ? [2800, 3500] : [1800, 2200];
-  const zhAim = isPillar ? [3300, 4000] : [1800, 2400];
-  const promptAimArr = cfg.word_range_aim || (lang === 'zh' ? zhAim : enAim);
+  const promptAimArr = cfg.word_range_aim || (isPillar ? [2800, 3500] : [1800, 2200]);
   const kwRangeArr = cfg.kw_count_range || (isPillar ? [8, 12] : [5, 8]);
-  const targetCountry = lang === 'zh' ? 'CN/华语圈 (简体中文)' : 'US (English)';
+  const targetCountry = 'US (English)';
   const replacements = {
     '{{TIER}}': cfg.tier || 'T2',
     '{{target_keyword}}': cfg.target_keyword,
@@ -300,10 +290,12 @@ export function renderAuraPrompt(cfg) {
   // and different word/kw defaults (2500-3500 / 8-12) — fixture carries those
   // downstream to Phase 2 validator.
   //
-  // bilingual-v9: cfg.language = 'en' (default) | 'zh' picks the language
-  // variant. ZH templates are full rewrites (not translations) tuned for
-  // cultural adaptation; EN remains the default for back-compat.
-  const lang = cfg.language === 'zh' ? 'zh' : 'en';
+  // EN-only (2026-07-03): a legacy cfg.language === 'zh' (stale override/batch
+  // data) is a hard error — the zh templates no longer exist, and silently
+  // rendering the EN template for a zh request would ship wrong content.
+  if (cfg.language && cfg.language !== 'en') {
+    throw new Error(`cfg.language "${cfg.language}" is no longer supported — the pipeline is EN-only (zh removed 2026-07-03)`);
+  }
   // gengrowth (B2B) uses the Guide template (guide.prompt.md) in place of the
   // astrology Definition — same 11-H2 structure + placeholder contract, B2B+GEO
   // prose — so it inherits Definition's section-count / tier-gate / expected_h2
@@ -312,11 +304,8 @@ export function renderAuraPrompt(cfg) {
   const _baseTemplate = /^pillar$/i.test(cfg.template || '') ? 'pillar' : 'definition';
   const templateName =
     process.env.GG_SITE === 'gengrowth' && _baseTemplate === 'definition' ? 'guide' : _baseTemplate;
-  const templateFile = lang === 'zh'
-    ? `${templateName}.prompt.zh.md`
-    : `${templateName}.prompt.md`;
   const template = readFileSync(
-    join(REPO, 'tools/scripts/lib/content-draft-templates', templateFile),
+    join(REPO, 'tools/scripts/lib/content-draft-templates', `${templateName}.prompt.md`),
     'utf8'
   );
   const passportCache = JSON.parse(
@@ -343,14 +332,11 @@ export function renderAuraPrompt(cfg) {
     prompt = prompt.split(k).join(v);
   }
 
-  // 4. Write output. ZH variants get a .zh infix so EN and ZH coexist for the
-  // same page_id without overwriting each other:
-  //   EN: <page_id>.v8-prompt.md      ZH: <page_id>.v8.zh-prompt.md
-  const langInfix = lang === 'zh' ? '.zh' : '';
-  const outPath = join(REPO, '.gg-cache', 'prompts', `${PAGE_ID}.${PROMPT_VERSION}${langInfix}-prompt.md`);
+  // 4. Write output.
+  const outPath = join(REPO, '.gg-cache', 'prompts', `${PAGE_ID}.${PROMPT_VERSION}-prompt.md`);
   mkdirSync(dirname(outPath), { recursive: true });
   writeFileSync(outPath, prompt);
-  console.log(`\n${lang.toUpperCase()} V8 PROMPT WRITTEN:`, outPath);
+  console.log(`\nEN V8 PROMPT WRITTEN:`, outPath);
   console.log('Length:', prompt.length, 'chars,', prompt.split(/\s+/).filter(Boolean).length, 'tokens (rough)');
 
   const unmatched = prompt.match(/\{\{[A-Z_a-z]+\}\}/g);
@@ -365,7 +351,7 @@ export function renderAuraPrompt(cfg) {
   // 5. Write fixture.json sidecar — Phase 2 validator can auto-load via --page-id.
   // Carries all parameters needed for downstream validation, so the operator
   // only passes --source + --tag + --llm-source at validate time.
-  const fixturePath = join(REPO, '.gg-cache', 'prompts', `${PAGE_ID}.${PROMPT_VERSION}${langInfix}-fixture.json`);
+  const fixturePath = join(REPO, '.gg-cache', 'prompts', `${PAGE_ID}.${PROMPT_VERSION}-fixture.json`);
   const fixture = {
     schema_version: '1',
     page_id: PAGE_ID,
@@ -375,7 +361,7 @@ export function renderAuraPrompt(cfg) {
     template: isPillar ? 'Pillar' : 'Definition',
     tier: cfg.tier || 'T2',
     prompt_version: PROMPT_VERSION,
-    language: lang,
+    language: 'en',
     // SC8 exact-target: the validator (_phase2-validate ctx.cta_target_url) reads this
     // back to assert the article's CTA links to exactly this URL. Omitted when absent
     // so EN fixtures without a CTA target don't carry an empty noise field.
@@ -384,10 +370,6 @@ export function renderAuraPrompt(cfg) {
     kw_count_range: kwRangeArr,
     expected_h2: cfg.expected_h2 || 11, // v4.5: Definition 9→11; Pillar already 11
     psych_safety: cfg.psych_safety_flag || 'N',
-    // bilingual-v9: ZH main long-tail (ops-filled). Carries through to phase2
-    // RL4/RL5 anchor check. Omitted when not provided so EN fixtures don't get
-    // a noise field.
-    ...(cfg.target_keyword_zh ? { target_keyword_zh: cfg.target_keyword_zh } : {}),
     ...(isPillar && cfg.child_entities ? { child_entities: cfg.child_entities, child_count: cfg.child_count || cfg.child_entities.length } : {}),
     ...authorFixtureFields(cfg),
     generated_at: new Date().toISOString(),

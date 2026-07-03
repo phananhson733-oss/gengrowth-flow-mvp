@@ -1,9 +1,12 @@
 #!/usr/bin/env node
-// Smoke test: ctaUrlForLang lang-segment rewrite + buildReplacements wiring the
+// Smoke test: ctaUrlForLang EN normalization + buildReplacements wiring the
 // derived CTA URL into both the prompt substitution map and its return value
 // (renderAuraPrompt writes that return value to the fixture as cta_target_url,
-// which _phase2-validate reads back for the SC8 exact-target check). Internal-link
-// CTAs hit the /:lang/wiki/:id SPA route, so a ZH article must link the /zh/ page.
+// which _phase2-validate reads back for the SC8 exact-target check).
+//
+// EN-only (2026-07-03): ctaUrlForLang no longer takes a lang param — a legacy
+// /zh/ URL in an old override is normalized back to /en/, and a zh cfg.language
+// is rejected by renderAuraPrompt upstream.
 //
 // Run: node --test tools/scripts/__tests__/lib-cta-url-for-lang.smoke.test.mjs
 
@@ -12,18 +15,13 @@ import { test } from 'node:test';
 
 import { ctaUrlForLang, buildReplacements } from '../lib/_render-aura-shared.mjs';
 
-test('ctaUrlForLang rewrites the /<lang>/ wiki segment to match output language', () => {
+test('ctaUrlForLang keeps /en/ and normalizes a legacy /zh/ URL back to /en/', () => {
   assert.equal(
-    ctaUrlForLang('https://astrologywiki.com/en/wiki/astrology-houses', 'zh'),
-    'https://astrologywiki.com/zh/wiki/astrology-houses'
-  );
-  assert.equal(
-    ctaUrlForLang('https://astrologywiki.com/en/wiki/astrology-houses', 'en'),
+    ctaUrlForLang('https://astrologywiki.com/en/wiki/astrology-houses'),
     'https://astrologywiki.com/en/wiki/astrology-houses'
   );
-  // symmetric: a stored /zh/ URL rendered for an EN article flips back to /en/
   assert.equal(
-    ctaUrlForLang('https://astrologywiki.com/zh/wiki/north-node-vs-south-node', 'en'),
+    ctaUrlForLang('https://astrologywiki.com/zh/wiki/north-node-vs-south-node'),
     'https://astrologywiki.com/en/wiki/north-node-vs-south-node'
   );
 });
@@ -31,33 +29,32 @@ test('ctaUrlForLang rewrites the /<lang>/ wiki segment to match output language'
 test('ctaUrlForLang leaves tool-page (no lang segment) and empty URLs unchanged', () => {
   // aura tool-page CTA has no /en/|/zh/ segment — must pass through verbatim
   assert.equal(
-    ctaUrlForLang('https://astrologywiki.com/tools/aura-reading-quiz', 'zh'),
+    ctaUrlForLang('https://astrologywiki.com/tools/aura-reading-quiz'),
     'https://astrologywiki.com/tools/aura-reading-quiz'
   );
-  assert.equal(ctaUrlForLang('', 'zh'), '');
-  assert.equal(ctaUrlForLang(undefined, 'zh'), undefined);
+  assert.equal(ctaUrlForLang(''), '');
+  assert.equal(ctaUrlForLang(undefined), undefined);
 });
 
-const cfg = (language) => ({
+const cfg = (ctaTargetUrl) => ({
   page_id: 'PG-HOUSE-002',
   entity: 'The 8th House',
   target_keyword: '8th house',
   cta_text: 'Read the full Astrological Houses guide',
-  cta_target_url: 'https://astrologywiki.com/en/wiki/astrology-houses',
+  cta_target_url: ctaTargetUrl,
   template: 'Definition',
-  language,
 });
 
-test('buildReplacements derives the ZH CTA URL into both map and return value', () => {
-  const { replacements, ctaTargetUrl } = buildReplacements(cfg('zh'));
-  const want = 'https://astrologywiki.com/zh/wiki/astrology-houses';
-  assert.equal(ctaTargetUrl, want, 'returned ctaTargetUrl (fixture source) must be /zh/');
-  assert.equal(replacements['{{cta_target_url}}'], want, 'prompt {{cta_target_url}} must be /zh/');
-});
-
-test('buildReplacements keeps the EN CTA URL for an EN render', () => {
-  const { replacements, ctaTargetUrl } = buildReplacements(cfg('en'));
+test('buildReplacements wires the EN CTA URL into both map and return value', () => {
+  const { replacements, ctaTargetUrl } = buildReplacements(cfg('https://astrologywiki.com/en/wiki/astrology-houses'));
   const want = 'https://astrologywiki.com/en/wiki/astrology-houses';
   assert.equal(ctaTargetUrl, want);
+  assert.equal(replacements['{{cta_target_url}}'], want);
+});
+
+test('buildReplacements normalizes a legacy /zh/ override CTA back to /en/', () => {
+  const { replacements, ctaTargetUrl } = buildReplacements(cfg('https://astrologywiki.com/zh/wiki/astrology-houses'));
+  const want = 'https://astrologywiki.com/en/wiki/astrology-houses';
+  assert.equal(ctaTargetUrl, want, 'legacy /zh/ CTA must normalize to /en/');
   assert.equal(replacements['{{cta_target_url}}'], want);
 });

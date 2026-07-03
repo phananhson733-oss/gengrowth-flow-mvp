@@ -15,7 +15,6 @@ import {
   parseArgs,
   validateArgs,
   buildEnUrl,
-  buildZhUrl,
   isBenignResourceUrl,
   isAppBundleUrl,
   looksLikeAuthWall,
@@ -92,10 +91,9 @@ test('validateArgs: whitespace-only treated as missing', () => {
 // ============================================================
 
 test('parseArgs: flags + defaults', () => {
-  const o = parseArgs(['--preview-url', 'https://p', '--slug', 'foo', '--zh', '--json']);
+  const o = parseArgs(['--preview-url', 'https://p', '--slug', 'foo', '--json']);
   assert.equal(o.previewUrl, 'https://p');
   assert.equal(o.slug, 'foo');
-  assert.equal(o.zh, true);
   assert.equal(o.json, true);
 });
 
@@ -136,11 +134,6 @@ test('buildEnUrl: trims trailing slash on base', () => {
 test('buildEnUrl: no bypass secret → no query string', () => {
   const u = buildEnUrl('https://preview.example.com', 'slug', '');
   assert.equal(u, 'https://preview.example.com/en/wiki/slug');
-});
-
-test('buildZhUrl: /zh/wiki/<slug>, no suffix (cookie carries over)', () => {
-  const u = buildZhUrl('https://preview.example.com/', 'slug');
-  assert.equal(u, 'https://preview.example.com/zh/wiki/slug');
 });
 
 // ============================================================
@@ -299,7 +292,6 @@ test('empty bypass secret → runVerification parks needs_human, distinct reason
   const res = await runVerification({
     previewUrl: 'https://preview.example.com',
     slug: 'slug',
-    zh: false,
     bypassSecret: '',
     oracleDir: '/nonexistent-oracle-should-never-be-touched',
     json: false,

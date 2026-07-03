@@ -8,7 +8,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 // Kebab slug matching the oracle article-slug convention (same derivation the author
-// path uses for zh-backfill: lowercase, non-alnum → '-', trim leading/trailing '-').
+// path uses: lowercase, non-alnum → hyphen, trim leading/trailing hyphens).
 export function kebabSlug(s) {
   return String(s || '')
     .toLowerCase()

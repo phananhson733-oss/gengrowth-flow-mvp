@@ -49,14 +49,6 @@ const {
   checkRL13,
 } = _EN_RL;
 import {
-  checkRL1Zh,
-  checkRL2Zh,
-  checkRL6Zh,
-  checkRL7Zh,
-  checkRL8Zh,
-  checkRL10Zh,
-} from './lib/red-lines.zh.mjs';
-import {
   checkBoldedDefinition,
   checkInternalLinkTier,
   checkParagraphLength,
@@ -72,9 +64,7 @@ import {
   checkParagraphFragmentation,
   checkBannedHeadings,
   EN_FAQ_HEADING_RE,
-  ZH_FAQ_HEADING_RE,
   EN_TABLE_HEADING_RE,
-  ZH_TABLE_HEADING_RE,
 } from './lib/structure-checks.mjs';
 // GEO citability advisory (print-only; never gates OVERALL). See header of
 // lib/structure-checks.geo.mjs for the advisory-not-gate posture on the oracle path.
@@ -163,17 +153,8 @@ const promptVersion = args.prompt_version || 'v8';
 let fixture = {};
 let fixturePath = args.fixture;
 if (!fixturePath && args.page_id) {
-  // ZH fixtures carry a .zh infix (renderer langInfix); a ZH validation must read
-  // the ZH fixture so it gets ZH word_range + the /zh/ cta_target_url. Fall back to
-  // the un-suffixed fixture when no ZH sidecar exists (single-fixture legacy path).
-  const langInfix = (args.language || '').toLowerCase() === 'zh' ? '.zh' : '';
-  const names = langInfix
-    ? [`${args.page_id}.${promptVersion}${langInfix}-fixture.json`, `${args.page_id}.${promptVersion}-fixture.json`]
-    : [`${args.page_id}.${promptVersion}-fixture.json`];
-  for (const name of names) {
-    const candidate = join(REPO, '.gg-cache', 'prompts', name);
-    if (existsSync(candidate)) { fixturePath = candidate; break; }
-  }
+  const candidate = join(REPO, '.gg-cache', 'prompts', `${args.page_id}.${promptVersion}-fixture.json`);
+  if (existsSync(candidate)) fixturePath = candidate;
 }
 if (fixturePath) {
   try {
@@ -204,25 +185,20 @@ const templateRaw = pick('template', 'template', 'Definition');
 // Normalize case: accept "Definition" / "definition" / "Pillar" / "pillar".
 const template = /^pillar$/i.test(templateRaw) ? 'Pillar' : 'Definition';
 
-// bilingual-v9: ZH defaults use Chinese character counts (≈ 1.4x EN word
-// counts) since Chinese has no whitespace word boundaries. wordCount() below
-// branches on language to count correctly.
 const templateDefaults = {
-  en: {
-    Definition: { word_range: [1500, 1800], kw_count_range: [5, 8], expected_h2: 11 },
-    Pillar: { word_range: [2500, 3500], kw_count_range: [8, 12], expected_h2: 11 },
-  },
-  zh: {
-    // ZH word_range tuned 2026-05-25 from first opus 4.7 demo run: actual
-    // production output landed at 1590 chars; Chinese expression is denser
-    // than English so 1500-2000 chars ≈ EN 1500-1800 words in info density.
-    Definition: { word_range: [1500, 2000], kw_count_range: [5, 8], expected_h2: 11 },
-    Pillar: { word_range: [3000, 4000], kw_count_range: [8, 12], expected_h2: 11 },
-  },
+  Definition: { word_range: [1500, 1800], kw_count_range: [5, 8], expected_h2: 11 },
+  Pillar: { word_range: [2500, 3500], kw_count_range: [8, 12], expected_h2: 11 },
 };
-const langRaw = (args.language || fixture.language || 'en').toLowerCase();
-const language = langRaw === 'zh' ? 'zh' : 'en';
-const tplDef = templateDefaults[language][template];
+// EN-only (2026-07-03): zh authoring was removed from the pipeline. A zh request
+// is a hard error — rejecting loudly beats silently validating a Chinese draft
+// against the English contract and shipping garbage.
+const langRaw = String(args.language || fixture.language || 'en').toLowerCase();
+if (langRaw !== 'en') {
+  process.stderr.write(`[phase2] --language ${langRaw} is no longer supported — the pipeline is EN-only (zh removed 2026-07-03)\n`);
+  process.exit(2);
+}
+const language = 'en';
+const tplDef = templateDefaults[template];
 
 const wordRange = fixture.word_range || tplDef.word_range;
 const kwRange = fixture.kw_count_range || tplDef.kw_count_range;
@@ -433,57 +409,6 @@ function buildGengrowthH2Specs(ctx) {
   ];
 }
 
-// bilingual-v9: ZH H2 spec builder. ZH templates require LLM to translate
-// {{entity}} → native Chinese, so we can't substitute the EN entity literally.
-// Instead match by stable Chinese suffix (e.g. `是什么？` / `速查表` /
-// `自我觉察小提示`) — the LLM is constrained to those exact section titles
-// (definition.prompt.zh.md `## 输出结构` section).
-//
-// Question mark is full-width `？` per ZH typographic convention; we also accept
-// half-width `?` since LLM mixing is common.
-function buildZhH2Specs(ctx) {
-  const introQuestionMark = ['？', '?'];
-  const introVariants = introQuestionMark.flatMap((q) => [
-    `## ${ctx.entity} 是什么${q}`,           // EN entity kept (fallback)
-    `## ${ctx.entity}（${ctx.entity}） 是什么${q}`, // hybrid (we discourage but accept)
-  ]);
-  // For ZH, also match any line that ends with `是什么？` or `是什么?` since the
-  // LLM may translate the entity to a native Chinese name.
-  const introSuffixMatch = (draft) => {
-    const re = /^## [^\n]+?\s*是什么[？?]/m;
-    return re.test(draft);
-  };
-  return ctx.template === 'Pillar'
-    ? [
-        { variants: introVariants, label: `## <entity 中文译名> 是什么？`, matchFn: introSuffixMatch },
-        { variants: ['## 为什么先理解整个家族再看单一颜色', '## 为什么先理解整个家族'], label: '## 为什么先理解整个家族' },
-        { variants: ['一览表'], label: '## <entity> 一览表 (substring `一览表`)' },
-        { variants: ['：速览', ': 速览', '速览'], label: '## <count> 个 <entity>：速览' },
-        { variants: ['## 色调浓淡与组合如何改变解读'], label: '## 色调浓淡与组合如何改变解读' },
-        { variants: ['## 常见误读 + 框架边界', '## 常见误读+框架边界'], label: '## 常见误读 + 框架边界' },
-        // v4.5.1 Phase C — FAQ 标题可按 entity 变体（H2 需含「问」）。
-        { variants: ['## 常见问题', '## 常見問題'], matchFn: (d) => ZH_FAQ_HEADING_RE.test(d), label: '## <entity> 常见问题 / 问答 (变体；H2 标题需含「问」)' },
-        { variants: ['## 自我觉察小提示'], label: '## 自我觉察小提示' },
-        { variants: ['## 延伸阅读'], label: '## 延伸阅读' },
-        { variants: ['## 下一步行动'], label: '## 下一步行动' },
-        { variants: ['## 参考来源', '## 參考來源', '## 参考资料'], label: '## 参考来源' },
-      ]
-    : [
-        { variants: introVariants, label: `## <entity 中文译名> 是什么？`, matchFn: introSuffixMatch },
-        { variants: ['## 为什么了解它能帮助自我觉察'], label: '## 为什么了解它能帮助自我觉察' },
-        { variants: ['## 如何在自己身上识别', '## 如何在自己身上看出', '## 如何在星盘里识别', '## 如何识别'], matchFn: (d) => /^##\s*如何(在.{0,8})?(识别|看出|读出|认出|看见)/m.test(d), label: '## 如何识别 <entity>（实操观察）' },
-        { variants: ['## 常见误读', '## 常见误读 + 框架边界', '## 常见误读+框架边界'], matchFn: (d) => /^##\s*常见误读/m.test(d), label: '## 常见误读' },
-        { variants: ['与相近概念'], label: '## <entity> 与相近概念：运作方式 + 取舍 (substring `与相近概念`)' },
-        // v4.5.1 Phase C — 表格 / FAQ 标题可按 entity 变体（保留稳定 role token）。
-        { variants: ['速查表'], matchFn: (d) => ZH_TABLE_HEADING_RE.test(d), label: '## <entity> 速查表 / 一览 (变体；需含 速查/一览/速览/概览/对照表 token)' },
-        { variants: ['## 常见问题', '## 常見問題'], matchFn: (d) => ZH_FAQ_HEADING_RE.test(d), label: '## <entity> 常见问题 / 问答 (变体；H2 标题需含「问」)' },
-        { variants: ['## 自我觉察小提示'], label: '## 自我觉察小提示' },
-        { variants: ['## 延伸阅读'], label: '## 延伸阅读' },
-        { variants: ['## 下一步行动'], label: '## 下一步行动' },
-        { variants: ['## 参考来源', '## 參考來源', '## 参考资料'], label: '## 参考来源' },
-      ];
-}
-
 function structureCheck(draft) {
   const findings = [];
   const h1Count = (draft.match(/^# /gm) || []).length;
@@ -496,39 +421,21 @@ function structureCheck(draft) {
   // (structure-checks) governs subsection quality / wall-of-text. H4 stays banned (too deep).
   if (h4Count !== 0) findings.push(`H4 count = ${h4Count}, expected 0`);
 
-  // bilingual-v9: word count branches on language. EN uses whitespace word
-  // count; ZH counts CJK characters + latin words + digit groups (close to
-  // "tokens" for a Chinese reader). Without this, ZH drafts get ~1 word from
-  // split(/\s+/) and always fail the lower bound.
-  let words;
-  if (ctx.language === 'zh') {
-    const cjk = draft.match(/[一-鿿]/g) || [];
-    const latin = draft.match(/[A-Za-z]+/g) || [];
-    const digits = draft.match(/[0-9]+/g) || [];
-    words = cjk.length + latin.length + digits.length;
-  } else {
-    words = draft.trim().split(/\s+/).filter(Boolean).length;
-  }
+  const words = draft.trim().split(/\s+/).filter(Boolean).length;
   // Under-min is a hard FAIL (thin content must not ship). Over-max is a soft
   // WARN (long-form is acceptable) — surfaced in the warnings block below so it
   // never flips `ok`. (2026-05-27, per word-count pilot: prompt aim raised to
   // 1800 to clear the 1500 floor, so habitual over-1800 must not block.)
   if (words < ctx.word_range_min) findings.push(`word count ${words} < min ${ctx.word_range_min}`);
 
-  // Required H2 list is template-aware (Definition leaf vs Pillar hub) AND
-  // language-aware (EN literal-match vs ZH substring-match — ZH entity may be
-  // translated by LLM so we match by stable Chinese suffix instead of literal
-  // {{entity}} substitution).
-  const requiredH2Specs = ctx.language === 'zh'
-    ? buildZhH2Specs(ctx)
-    : process.env.GG_SITE === 'gengrowth'
-      ? buildGengrowthH2Specs(ctx)
-      : buildEnH2Specs(ctx);
+  // Required H2 list is template-aware (Definition leaf vs Pillar hub).
+  const requiredH2Specs = process.env.GG_SITE === 'gengrowth'
+    ? buildGengrowthH2Specs(ctx)
+    : buildEnH2Specs(ctx);
 
   for (const spec of requiredH2Specs) {
-    // bilingual-v9: spec.matchFn (if present) is a regex-aware matcher used
-    // for the ZH intro H2 where the entity may be translated by the LLM. If
-    // present, prefer it; fall back to substring variants for everything else.
+    // spec.matchFn (if present) is a regex-aware matcher; fall back to
+    // substring variants for everything else.
     const found = (typeof spec.matchFn === 'function' && spec.matchFn(draft))
       || spec.variants.some((v) => draft.includes(v));
     if (!found) findings.push(`missing required H2: "${spec.label}"`);
@@ -572,9 +479,8 @@ function structureCheck(draft) {
     findings.push('trailing chatbot meta detected in last 500 chars');
   }
 
-  // SC1 — bolded direct-answer definition in first H2 section (FAIL, both langs;
-  // both templates hard-require it). EN entity is literal; ZH translates the
-  // entity but still mandates the bolded definition (definition.prompt.zh.md).
+  // SC1 — bolded direct-answer definition in first H2 section (FAIL;
+  // both templates hard-require it).
   const boldDef = checkBoldedDefinition(draft);
   if (!boldDef.pass) {
     findings.push(`SC1 bolded definition: ${boldDef.note}`);
@@ -747,79 +653,32 @@ try {
   serpCtx = { serpState: 'missing-skipped', snippets: [], escapeReason: 'no cache' };
 }
 
-// bilingual-v9: ZH dispatcher for RL1/RL2/RL6. RL3 (SERP plagiarism) shares
-// EN algorithm (n-gram overlap is language-agnostic). RL4 (anchored) and
-// RL5 (stuffing) resolve the primary Chinese long-tail keyword via 3-step
-// priority: CLI --zh-keyword > fixture.target_keyword_zh > derive from H1
-// (split on full/half-width colon, take the head segment).
-//
-// Falls back to the EN target_keyword if no ZH keyword resolves at all,
-// which lets RL5 still count occurrences (will warn density low; that's the
-// already-known v9-full follow-up).
-function deriveZhKeywordFromDraft(s) {
-  const m = s.match(/^#\s+([^\n]+?)\s*$/m);
-  if (!m) return null;
-  const h1 = m[1].trim();
-  // Split on full-width or half-width colon — H1 convention is
-  // "<主中文长尾词>：<副标题>" per definition.prompt.zh.md examples
-  const head = h1.split(/[：:]/, 1)[0].trim();
-  // Sanity: must contain CJK chars; if not, the H1 was EN — bail out.
-  if (!/[一-鿿]/.test(head)) return null;
-  return head;
-}
-
-const isZh = ctx.language === 'zh';
-let zhKeyword = null;
-if (isZh) {
-  if (args.zh_keyword && args.zh_keyword !== true) zhKeyword = String(args.zh_keyword);
-  else if (fixture.target_keyword_zh) zhKeyword = String(fixture.target_keyword_zh);
-  else zhKeyword = deriveZhKeywordFromDraft(draft);
-  if (zhKeyword) {
-    console.log(`[zh-keyword] resolved: "${zhKeyword}" (source: ${args.zh_keyword ? 'CLI' : fixture.target_keyword_zh ? 'fixture' : 'H1-derive'})`);
-  } else {
-    console.log(`[zh-keyword] could not resolve — RL4/RL5 will fall back to EN target_keyword "${ctx.target_keyword}" (low density warning expected)`);
-  }
-}
-const rl4Keyword = isZh ? (zhKeyword || ctx.target_keyword) : ctx.target_keyword;
-const rl5Keyword = isZh ? (zhKeyword || ctx.target_keyword) : ctx.target_keyword;
-
 const rlChecks = [
-  ['RL1 (clinical claims)', () => isZh ? checkRL1Zh(draft) : checkRL1(draft)],
-  ['RL2 (competitor smear)', () => isZh ? checkRL2Zh(draft) : checkRL2(draft)],
+  ['RL1 (clinical claims)', () => checkRL1(draft)],
+  ['RL2 (competitor smear)', () => checkRL2(draft)],
   ['RL3 (SERP plagiarism)', () => checkRL3(draft, serpCtx)],
-  ['RL4 (keyword anchored)', () => checkRL4(draft, { targetKeyword: rl4Keyword, entity: ctx.entity })],
-  ['RL5 (keyword stuffing)', () => checkRL5(draft, { targetKeyword: rl5Keyword, maxCount: ctx.kw_max })],
+  ['RL4 (keyword anchored)', () => checkRL4(draft, { targetKeyword: ctx.target_keyword, entity: ctx.entity })],
+  ['RL5 (keyword stuffing)', () => checkRL5(draft, { targetKeyword: ctx.target_keyword, maxCount: ctx.kw_max })],
   // targetKeyword lets RL6 exempt a blacklist word that IS the SEO keyword
   // (e.g. "Healing Your Inner Wound" → "healing"); other clinical-overreach
-  // words still fail. EN keyword is passed for both langs (ZH bodies embed the
-  // EN entity literal per RL4, so the EN keyword scopes the exemption there too).
-  ['RL6 (psych safety)', () => isZh
-    ? checkRL6Zh(draft, { effectivePsychSafety: ctx.psych_safety_flag, targetKeyword: ctx.target_keyword })
-    : checkRL6(draft, { effectivePsychSafety: ctx.psych_safety_flag, targetKeyword: ctx.target_keyword })],
-  // RL7 — per-author black words. ZH uses checkRL7Zh (CJK substring + ASCII
-  // word-boundary); empty token list → N/A pass in either language.
-  ['RL7 (author banned tokens)', () => isZh
-    ? checkRL7Zh(draft, { authorBannedTokens: ctx.authorBannedTokens, targetKeyword: ctx.target_keyword })
-    : checkRL7(draft, { authorBannedTokens: ctx.authorBannedTokens, targetKeyword: ctx.target_keyword })],
-  // RL8 — shared scientific-endorsement red line (all authors, both languages).
-  ['RL8 (scientific endorsement)', () => isZh ? checkRL8Zh(draft) : checkRL8(draft)],
-  // RL9 — atom-block scaffold-label leak (FAIL). EN-only: the label vocabulary
-  // (Topic Sentence / Process / Example) is English scaffolding; ZH drafts use a
-  // translated structure with no equivalent leak vector, so skip when isZh.
-  ...(isZh ? [] : [['RL9 (atom-label leak)', () => checkRL9(draft)]]),
-  // RL10 — de-personalization / chat residue (FAIL, both languages).
-  ['RL10 (depersonalization)', () => isZh ? checkRL10Zh(draft) : checkRL10(draft)],
+  // words still fail.
+  ['RL6 (psych safety)', () => checkRL6(draft, { effectivePsychSafety: ctx.psych_safety_flag, targetKeyword: ctx.target_keyword })],
+  // RL7 — per-author black words; empty token list → N/A pass.
+  ['RL7 (author banned tokens)', () => checkRL7(draft, { authorBannedTokens: ctx.authorBannedTokens, targetKeyword: ctx.target_keyword })],
+  // RL8 — shared scientific-endorsement red line (all authors).
+  ['RL8 (scientific endorsement)', () => checkRL8(draft)],
+  // RL9 — atom-block scaffold-label leak (FAIL).
+  ['RL9 (atom-label leak)', () => checkRL9(draft)],
+  // RL10 — de-personalization / chat residue (FAIL).
+  ['RL10 (depersonalization)', () => checkRL10(draft)],
   // RL11 — weak definitional verbs (WARN only; pass stays true, never blocks).
-  // EN-only ("is about" / "relates to" are English constructions).
-  ...(isZh ? [] : [['RL11 (weak verb)', () => checkRL11(draft)]]),
+  ['RL11 (weak verb)', () => checkRL11(draft)],
   // RL12 — citation/external-link hallucination guard. (a) bare URL / (b) fringe
   // Wikipedia title / (c) hallucinated citation markers → FAIL; (d) off-allowlist
-  // named attribution → WARN. Runs both languages: (a)(b) are language-agnostic;
-  // (c)(d) only match Latin-script citation/name shapes so ZH bodies are unaffected.
+  // named attribution → WARN.
   ['RL12 (citation/external-link)', () => checkRL12(draft, { authorityAllowlist: ctx.authorityAllowlist })],
   // RL13 — SOP §7 banned jargon + AI metaphors. HARD terms FAIL; SOFT terms WARN.
-  // EN-only: the list is English AI-slop; ZH drafts carry no equivalent vector.
-  ...(isZh ? [] : [['RL13 (banned jargon)', () => checkRL13(draft)]]),
+  ['RL13 (banned jargon)', () => checkRL13(draft)],
   // Anti-homogenization — SOP §7 batch uniqueness (WARN). Conditional on a
   // fixture-provided cluster_context; no opinion when absent. Both languages.
   ['Anti-homogenization (SOP §7)', () => checkAntiHomogenization(draft, ctx.clusterContext)],
@@ -934,13 +793,9 @@ phase2_checks: all-pass
 
 `;
 
-// bilingual-v9: ZH-language pass outputs go to _staging/zh-demo/ to match
-// orchestrator --out-dir convention and what gg-md-to-oracle-ts.mjs --language
-// zh reads. EN unchanged at _staging/.
-const stagingDirEffective = isZh ? join(STAGING_DIR, 'zh-demo') : STAGING_DIR;
-mkdirSync(stagingDirEffective, { recursive: true });
-const outMdPath = join(stagingDirEffective, `${outBasename}.md`);
-const outManifestPath = join(stagingDirEffective, `${outBasename}.manifest.json`);
+mkdirSync(STAGING_DIR, { recursive: true });
+const outMdPath = join(STAGING_DIR, `${outBasename}.md`);
+const outManifestPath = join(STAGING_DIR, `${outBasename}.manifest.json`);
 
 writeFileSync(outMdPath, frontmatter + draft);
 console.log(`\n  ✓ wrote ${outMdPath} (${(frontmatter + draft).length} bytes)`);

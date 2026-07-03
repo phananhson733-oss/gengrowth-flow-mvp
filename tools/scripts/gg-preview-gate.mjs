@@ -341,9 +341,8 @@ export async function runGate(o, deps = {}) {
     };
   }
 
-  const hasZh = claim.zh === true;
   const { articleTs, draftMd } = articlePaths(pgId, claim);
-  log(`claim: pgId=${pgId} slug=${claim.slug} status=${claim.status} zh=${hasZh}`);
+  log(`claim: pgId=${pgId} slug=${claim.slug} status=${claim.status}`);
   // gate-repair loop-cap: at most ONE surgical repair attempt per dimension (incl. 'codex').
   const repaired = new Set();
 
@@ -373,11 +372,10 @@ export async function runGate(o, deps = {}) {
     }
   }
 
-  // (3) chrome verify (en + zh when claim has zh). The bypass secret is inherited by verify from
+  // (3) chrome verify. The bypass secret is inherited by verify from
   // the ENV (it reads VERCEL_AUTOMATION_BYPASS_SECRET as its default) — NOT passed as argv, so it
   // never lands in `ps`, the gate plan, or the log.
   const verifyArgs = ['--preview-url', previewUrl, '--slug', String(claim.slug), '--json'];
-  if (hasZh) verifyArgs.push('--zh');
   log(`verify: node ${B.previewVerify} ${verifyArgs.join(' ')} (timeout ${o.verifyTimeoutMs}ms)`);
   if (!o.dryRun) {
     const vr = await node(B.previewVerify, verifyArgs, { timeoutMs: o.verifyTimeoutMs });

@@ -531,7 +531,11 @@ test('--scan updates /oracle main first, then publishes from a separate worktree
   }
 });
 
-test('--scan can backfill zh for a checked done task and promote the slug from EN-only to bilingual SEO generation', () => {
+// EN-only regression (2026-07-03): a checked done task with a leftover
+// _staging/zh-demo/ draft was previously a "zh backfill candidate" that --scan
+// re-claimed and republished bilingual. That path is deleted — the task must
+// stay skipped ("already checked in plan") and the claim untouched.
+test('--scan never re-claims a checked done task, even with a leftover zh-demo draft', () => {
   const h = makeHarness();
   try {
     initOracleWithOrigin(h);
@@ -561,13 +565,11 @@ test('--scan can backfill zh for a checked done task and promote the slug from E
     });
 
     assert.equal(r.status, 0, `${r.stdout}${r.stderr}`);
+    assert.match(`${r.stdout}${r.stderr}`, /already checked in plan/);
     const claims = JSON.parse(readFileSync(h.claimsPath, 'utf8'));
     const claim = claims['PG-TEST-001'];
-    assert.equal(claim.status, 'pushed-preview');
-    assert.equal(claim.zh, true);
-    const seo = git(h.oracle, ['show', `${claim.branch}:scripts/generate-seo-pages.mjs`]);
-    assert.match(seo, /const ARTICLE_SLUGS = \[\n  'test-slug',/);
-    assert.doesNotMatch(seo, /ARTICLE_SLUGS_EN_ONLY = \[[\s\S]*'test-slug'/);
+    assert.equal(claim.status, 'done', 'checked done task must stay done — no zh backfill re-claim');
+    assert.notEqual(claim.zh, true, 'no bilingual promotion may happen');
   } finally {
     h.cleanup();
   }
@@ -619,7 +621,10 @@ test('--scan skips a draft whose entity-derived slug is already live under a dif
   }
 });
 
-test('--author can generate the missing zh source draft for a checked done task before scan picks it up', () => {
+// EN-only regression (2026-07-03): a checked done task was previously the
+// trigger for the --author zh-source-backfill lane. That lane is deleted —
+// --author must find nothing to do and never write into _staging/zh-demo/.
+test('--author has nothing to do for a checked done task (zh backfill lane removed)', () => {
   const h = makeHarness();
   try {
     const flow = writeStubAuthorBackfillFlow(h);
@@ -636,9 +641,9 @@ test('--author can generate the missing zh source draft for a checked done task 
     const r = runAuto(h, ['--author'], { GG_FLOW_REPO: flow });
 
     assert.equal(r.status, 0, `${r.stdout}${r.stderr}`);
-    assert.equal(existsSync(join(flow, '_staging', 'zh-demo', 'PG-TEST-001-zh.md')), true, `${r.stdout}${r.stderr}`);
-    assert.equal(existsSync(join(flow, '.gg-cache', 'prompts', 'PG-TEST-001.v8.zh-prompt.md')), true);
-    assert.match(`${r.stdout}${r.stderr}`, /AUTHORED ZH PG-TEST-001/);
+    assert.match(`${r.stdout}${r.stderr}`, /nothing to author this run/);
+    assert.equal(existsSync(join(flow, '_staging', 'zh-demo', 'PG-TEST-001-zh.md')), false, 'zh source draft must NOT be generated');
+    assert.equal(existsSync(join(flow, '.gg-cache', 'prompts', 'PG-TEST-001.v8.zh-prompt.md')), false, 'zh prompt must NOT be generated');
   } finally {
     h.cleanup();
   }

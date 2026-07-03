@@ -1,5 +1,7 @@
 # GenGrowth SEO Pipeline Handbook
 
+> ⚠️ **2026-07-03 EN-only 决策**：zh（中文）撰写/发布链路已**全量移除**（wzb 指令，flow 修复阶段 2）。本文档中所有 ZH / bilingual-v9 / `--language zh` / `zh-demo` / `red-lines.zh` 相关段落均为**历史存档**，照做会得到明确报错（exit 2）。线上存量 /zh/ 页面保留不动，只是不再新增。现行为以 `docs/PIPELINE.md` 与代码为准。
+>
 > **唯一入口文档** — gengrowth-flow-mvp 的端到端流水线手册，覆盖业务流程、提示词、工具脚本、阶段 I/O。
 >
 > **本文档取代**：

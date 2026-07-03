@@ -76,12 +76,15 @@ test('emitExportBlock: no authorMeta → authorId "" (house byline no longer exp
   assert.ok(!out.includes('authorBio'));
 });
 
-test('emitExportBlock: zh + no authorMeta → authorId ""', () => {
+// EN-only (2026-07-03): emitExportBlock no longer takes a language param and
+// always emits lang:"en" — a stale language:'zh' argument is simply ignored.
+test('emitExportBlock: stale language argument is ignored, lang is always en', () => {
   const out = emitExportBlock({
     slug: 'x', title: 't', date: '2026-05-26', description: 'd',
-    keywords: ['k'], body: 'b', varName: 'xZh', language: 'zh',
+    keywords: ['k'], body: 'b', varName: 'xEn', language: 'zh',
   });
   assert.match(out, /authorId: ""/);
+  assert.match(out, /lang: "en"/);
 });
 
 // Round-trip regression (C1): the headline failure mode. content-draft's

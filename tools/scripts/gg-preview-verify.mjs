@@ -7,8 +7,6 @@
 //   - navigate <previewUrl>/en/wiki/<slug>?x-vercel-protection-bypass=<secret>&x-vercel-set-bypass-cookie=true
 //   - assert: an <h1> is present, a <script type="application/ld+json"> exists, the page
 //     is NOT the empty SPA soft-404 shell, NOT a vercel.com/login / auth wall.
-//   - --zh: also verify <previewUrl>/zh/wiki/<slug> reusing the same browser context so the
-//     bypass cookie (x-vercel-set-bypass-cookie=true) carries over.
 //   - console: FAIL only on uncaught JS exceptions / failed app-bundle loads; IGNORE benign
 //     favicon / font / analytics 404s.
 //
@@ -19,7 +17,7 @@
 // ERR_MODULE_NOT_FOUND from this flow-mvp tree. We resolve it against the oracle dir's
 // node_modules via createRequire, then import the resolved file:// URL.
 //
-// Run: node gg-preview-verify.mjs --preview-url <url> --slug <slug> [--zh] \
+// Run: node gg-preview-verify.mjs --preview-url <url> --slug <slug> \
 //        [--bypass-secret <s>] [--oracle-dir <dir>] [--json]
 
 import { createRequire } from 'node:module';
@@ -36,7 +34,6 @@ export function parseArgs(argv) {
   const out = {
     previewUrl: null,
     slug: null,
-    zh: false,
     bypassSecret: process.env.VERCEL_AUTOMATION_BYPASS_SECRET || '',
     oracleDir: process.env.GG_ORACLE_DIR || join(homedir(), 'oracle'),
     json: false,
@@ -46,7 +43,10 @@ export function parseArgs(argv) {
     switch (a) {
       case '--preview-url': out.previewUrl = argv[++i] ?? null; break;
       case '--slug': out.slug = argv[++i] ?? null; break;
-      case '--zh': out.zh = true; break;
+      // EN-only (2026-07-03): the zh verify leg was removed. Reject loudly —
+      // silently ignoring the flag would report "verified" while skipping what
+      // the caller asked for.
+      case '--zh': out.rejectZh = true; break;
       case '--bypass-secret': out.bypassSecret = argv[++i] ?? ''; break;
       case '--oracle-dir': out.oracleDir = argv[++i] ?? out.oracleDir; break;
       case '--json': out.json = true; break;
@@ -82,13 +82,6 @@ export function buildEnUrl(previewUrl, slug, bypassSecret) {
     return `${path}?${qs}`;
   }
   return path;
-}
-
-export function buildZhUrl(previewUrl, slug) {
-  // No suffix: the bypass cookie dropped by the /en navigate (set-bypass-cookie=true)
-  // carries over in the same browser context.
-  const base = String(previewUrl).replace(/\/+$/, '');
-  return `${base}/zh/wiki/${encodeURIComponent(slug)}`;
 }
 
 // A console / network failure is benign if it's a favicon, font, or analytics asset.
@@ -354,7 +347,6 @@ export async function runVerification(opts) {
   const errorBuffers = new Map();
 
   try {
-    // ONE shared context so the Vercel bypass cookie persists across en -> zh.
     const context = await browser.newContext();
     const page = await context.newPage();
     wirePageListeners(page, errorBuffers, warnings);
@@ -377,18 +369,6 @@ export async function runVerification(opts) {
       return { ok: false, checked, warnings, failReason: `[en] ${enResult.failReason}` };
     }
 
-    // --- ZH (optional, same context so bypass cookie carries over) ---
-    if (opts.zh) {
-      const zhUrl = buildZhUrl(opts.previewUrl, opts.slug);
-      seedActive(zhUrl);
-      const zhResult = await verifyPage(page, zhUrl, { errorBuffers });
-      checked.push({ url: zhResult.url, h1: zhResult.h1, jsonLd: zhResult.jsonLd });
-      if (!zhResult.ok) {
-        await context.close().catch(() => {});
-        return { ok: false, checked, warnings, failReason: `[zh] ${zhResult.failReason}` };
-      }
-    }
-
     await context.close().catch(() => {});
     return { ok: true, checked, warnings };
   } catch (e) {
@@ -405,7 +385,7 @@ export async function runVerification(opts) {
 const HELP = `gg-preview-verify.mjs — deterministic Playwright render-verification of a preview.
 
 Usage:
-  node gg-preview-verify.mjs --preview-url <url> --slug <slug> [--zh] \\
+  node gg-preview-verify.mjs --preview-url <url> --slug <slug> \\
        [--bypass-secret <s>] [--oracle-dir <dir>] [--json]
 
 Required:
@@ -413,7 +393,6 @@ Required:
   --slug <slug>         article slug (verifies /en/wiki/<slug>)
 
 Options:
-  --zh                  also verify /zh/wiki/<slug> (reuses bypass cookie)
   --bypass-secret <s>   default: $VERCEL_AUTOMATION_BYPASS_SECRET
   --oracle-dir <dir>    default: $GG_ORACLE_DIR || ~/oracle
   --json                emit JSON evidence to stdout
@@ -425,6 +404,10 @@ async function main() {
   if (opts.help) {
     process.stdout.write(HELP + '\n');
     process.exit(EXIT.OK);
+  }
+  if (opts.rejectZh) {
+    process.stderr.write('--zh is no longer supported — the pipeline is EN-only (zh removed 2026-07-03)\n');
+    process.exit(EXIT.CLI);
   }
 
   const errors = validateArgs(opts);

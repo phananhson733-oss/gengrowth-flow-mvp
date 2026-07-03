@@ -212,27 +212,10 @@ test('nonexistent --source → exit 2', () => {
   assert.match(r.stderr, /not found/);
 });
 
-test('--language zh injects the Simplified-Chinese guard into the prompt', () => {
-  const src = seedSource();
-  const out = join(TMP, `out-zh-${Math.random().toString(36).slice(2)}.md`);
-  const { bin, stdinLog } = stdinCapturingFakeBin('# 已修正\n\n正文');
-  const r = run(
-    [
-      '--source', src, '--out', out, '--page-id', 'PG-SOLAR-001',
-      '--target-keyword', 'solar return meaning', '--author', 'lynne-wang',
-      '--failures', '- RL6 合规：禁词「最佳」', '--language', 'zh',
-    ],
-    { fake: bin },
-  );
-  assert.equal(r.status, 0, `expected exit 0; stderr: ${r.stderr}`);
-  const prompt = readFileSync(stdinLog, 'utf8');
-  assert.match(prompt, /语言要求：输出必须保持简体中文/, 'zh language guard missing from prompt');
-  // The source draft + the failures are still fenced into the prompt.
-  assert.ok(prompt.includes(SOURCE_CONTENT.trim().split('\n')[0]), 'source draft missing from prompt');
-  assert.ok(prompt.includes('禁词「最佳」'), 'failures text missing from prompt');
-});
-
-test('WITHOUT --language the prompt has NO zh guard (EN prompt unchanged)', () => {
+// EN-only (2026-07-03): the --language flag and the zh prompt guard were
+// removed with the zh authoring pipeline. The repair prompt must never carry
+// the zh language guard.
+test('repair prompt has NO zh guard (EN-only)', () => {
   const src = seedSource();
   const out = join(TMP, `out-en-${Math.random().toString(36).slice(2)}.md`);
   const { bin, stdinLog } = stdinCapturingFakeBin('# Fixed\n\nBody');
@@ -245,7 +228,7 @@ test('WITHOUT --language the prompt has NO zh guard (EN prompt unchanged)', () =
   );
   assert.equal(r.status, 0, `expected exit 0; stderr: ${r.stderr}`);
   const prompt = readFileSync(stdinLog, 'utf8');
-  assert.ok(!/语言要求/.test(prompt), 'zh guard leaked into a non-zh repair prompt');
+  assert.ok(!/语言要求/.test(prompt), 'zh guard leaked into a repair prompt');
 });
 
 test('cleanup', () => {

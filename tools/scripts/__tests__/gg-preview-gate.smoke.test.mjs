@@ -330,8 +330,8 @@ test('all gates pass (incl. required codex PASS) → exit 0, mark-verified + mer
   assert.ok(!sentinelHit(sentinels, 'autopilot-mark-failed'), 'no mark-failed on success');
 });
 
-// ── (e) zh claim → verify gets --zh; pushed-preview drives preview-wait ───────
-test('pushed-preview + zh claim: preview-wait runs and verify is invoked with --zh', () => {
+// ── (e) legacy zh:true claim → verify runs EN-only (zh removed 2026-07-03) ────
+test('pushed-preview + legacy zh:true claim: preview-wait runs, verify never gets --zh', () => {
   const { dir, sentinels } = freshCase();
   const statusJson = JSON.stringify({
     'PG-003': { branch: BRANCH, slug: 's', status: 'pushed-preview', zh: true, worktree: '/tmp/wt', pr: '9' },
@@ -344,8 +344,8 @@ test('pushed-preview + zh claim: preview-wait runs and verify is invoked with --
   const r = run(['--branch', BRANCH, '--json'], env);
   assert.equal(r.status, 0, `stderr: ${r.stderr}; stdout: ${r.stdout}`);
   assert.ok(sentinelHit(sentinels, 'preview-wait'), 'pushed-preview should drive preview-wait');
-  // verify invocation argv was recorded; must include --zh for a zh claim.
-  assert.match(sentinelText(sentinels, 'preview-verify'), /--zh/);
+  // A stale zh:true claim must NOT resurrect the zh verify leg.
+  assert.doesNotMatch(sentinelText(sentinels, 'preview-verify'), /--zh/);
 });
 
 // ── (f) preview-verify tooling/verify failure → exit 2 + park + notify ────────

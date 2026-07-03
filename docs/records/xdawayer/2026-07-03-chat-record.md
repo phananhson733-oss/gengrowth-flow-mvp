@@ -549,3 +549,15 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 按指定入口执行 `bash tools/scripts/gg-topic-register-tick.sh`，未传手动写入、repair、overwrite 或直接脚本参数。日志窗口为 `2026-07-03 20:03:03-20:07:20 CST`，退出码 0，状态 `topic-register ok`；本机环境启用 apply，`dry_run=false`，`budget_exhausted=false`。`astrologywiki`：candidates=5、updates=5、new_clusters=0、page_ids=`PG-WC-042`, `PG-CELEB-025`, `PG-CELEB-026`, `PG-CELEB-027`, `PG-CELEB-028`，preprocessor=`ok`, `v1_fallback`, `v1_fallback`, `v1_fallback`, `v1_fallback`；其中 `PG-WC-042` evidence ok，其他 4 条 evidence insufficient。`gengrowth`：candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]。未见失败，退出后无残留 topic-register/LLM 进程；已更新自动化 memory，未手工写 Sheet、未直接编辑任务计划，也未额外创建 Feishu/Google Doc 报告。
 
 ---
+
+### Q22 — 20:29 [claude]
+
+**🙋 提问：**
+
+1，推迟 3c，后续再说 blog；2.3 修复 bug 先
+
+**🤖 回答：**
+
+按选项 1 推迟 3c（/en/blog/ canonical 基建，后续再定），先修当前 bug。核查发现所谓"/en/blog/ 坏内链"的真相是：astrocartography-map-generator SEO 内容里 4 处内链指向 astrocartography-interpretation 这篇**从不存在**的文章（无 data/articles .ts、未注册、/blog 与 /wiki 都 soft-404 到落地壳）——改 /blog→/wiki 也修不了。改法=4 处死链改指真实存在且内容正相关的 /en/astrocartography 指南，两份镜像源同步（toolSeoContent.ts SPA 源 + generate-seo-pages.mjs 静态生成源），其中同句已链该页的一处改写去掉重复死链。只提交 2 个源文件（回退 build 产生的 1112 个 stub bundle-hash churn）；npm run build 通过。oracle PR #321 已合并（823dcf6）、Vercel green、prod 验证 0 死链上线（"done means live"）。
+
+---

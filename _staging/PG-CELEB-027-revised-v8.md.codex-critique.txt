@@ -1,0 +1,8 @@
+- “birth chart”承诺未兑现 → 开头加一张真实数据卡：出生日期、出生地 Westlake, Ohio（见 [Wikipedia](https://en.wikipedia.org/wiki/Travis_Kelce)）、出生时间未知、可读/不可读项目；否则全文几乎只是 Libra Sun。
+- 缺少实际行星落点 → 补入无出生时间也可讨论的 placements，如 Sun/Mars Libra、Moon Sagittarius、Venus Scorpio、Jupiter Cancer、Capricorn outer-planet cluster，并标注用星历核算；不要只反复说“他是 Libra”。
+- “stellium / clusters”讲法悬空 → 明确 Kelce 是否有 Capricorn cluster/stellium，以及这是同龄人共享的 generational signature，不能直接当成个人特质强证据。
+- 具体人物 grounding 太薄 → 把“poise / leadership / spotlight”换成可识别例子：Chiefs tight end role、New Heights podcast、SNL/媒体表现、Taylor Swift public attention，再对应到具体 placement。
+- 文章角度偏“如何读名人盘”，不是“Travis Kelce birth chart” → 减少 Rudhyar/Hand 方法论段落，把篇幅转给 Kelce 本人的 chart interpretation 和 searcher 会找的 quick answer。
+- Taylor 关系 FAQ 太保守、信息量低 → 如果保留，至少点出 synastry 中最常被读的连接，如 Kelce Venus Scorpio 与 Swift Mars Scorpio、Jupiter Cancer overlap，并继续保持非定论语气。
+- “Energy Center”表格不专业 → 改成 `Placement / Sign / Confidence / Interpretation / Kelce-specific evidence`，让读者一眼拿到能用的信息。
+- CTA 文案像关键词硬塞且链接不匹配 → 把“explore Travis Kelce birth chart the same way”改成自然的个人 chart CTA，并确保链接真的是 birth chart generator 而不是泛读法页面。

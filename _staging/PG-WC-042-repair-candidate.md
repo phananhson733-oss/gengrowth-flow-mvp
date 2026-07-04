@@ -1,29 +1,3 @@
----
-title: Lamine Yamal Birth Chart
-slug: lamine-yamal-birth-chart
-date: 2026-07-04
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T2
-track: 量产线
-page_id: PG-WC-042
-author_id: "marcus-orion"
-author_display_name: "Marcus Orion"
-target_keyword: Lamine Yamal birth chart
-associated_keywords:
-  - Lamine Yamal birth chart meaning
-  - Lamine Yamal birth chart astrology
-  - Lamine Yamal birth chart zodiac
-  - Lamine Yamal birth chart interpretation
-  - world cup 2026 astrology prediction
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-07-04T12:41:21.572Z
-content_sha256_short: e1e699cd38e609b4
-phase2_checks: all-pass
----
-
 # Reading the Lamine Yamal Birth Chart Without the Guesswork
 
 ## What Is Lamine Yamal's Natal Chart?

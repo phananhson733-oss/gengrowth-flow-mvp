@@ -8,20 +8,20 @@
   "track": "量产线",
   "generated_by": "unknown",
   "prompt_version": "v8",
-  "generated_at": "2026-07-03T14:18:30.910Z",
-  "content_sha256_short": "30f932d962a00f76",
-  "source_path": "_staging/PG-WC-042-claude-v8.md",
+  "generated_at": "2026-07-04T12:41:21.572Z",
+  "content_sha256_short": "e1e699cd38e609b4",
+  "source_path": "_staging/PG-WC-042-repair-candidate.md",
   "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-WC-042-en.md",
   "phase2_checks": {
     "overall": "pass",
     "structure": {
       "h1Count": 1,
       "h2Count": 11,
-      "h3Count": 2,
+      "h3Count": 0,
       "h4Count": 0,
-      "words": 1703,
-      "wikilinks": 7,
-      "tbdLinks": 7
+      "words": 1616,
+      "wikilinks": 5,
+      "tbdLinks": 5
     },
     "rl1": true,
     "rl2": true,

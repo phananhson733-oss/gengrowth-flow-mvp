@@ -359,3 +359,20 @@ Last run: 2026-07-03T22:01:50.999Z (1783116110999)
 使用指定确定性入口 `/usr/bin/python3 /Users/awayer_mini/gengrowth-wiki/tools/scripts/obsidian-vault-git-sync.py --repo /Users/awayer_mini/gengrowth-wiki --repo /Users/awayer_mini/gengrowth-ops --repo /Users/awayer_mini/gengrowth-flow-mvp --verbose` 执行三仓库自愈同步，脚本输出 `Obsidian vault git sync: clean`。随后分别验证 `gengrowth-wiki`、`gengrowth-ops`、`gengrowth-flow-mvp` 的 `git status --branch --porcelain=v2`、`git rev-list --left-right --count HEAD...origin/main`、`git diff --name-only --diff-filter=U`、`git ls-files -u`，初次验证均为 clean、ahead/behind 为 `0 0`、无未合并路径；初次 HEAD 分别为 `gengrowth-wiki`=`58314350511825ce7f312a5586ce596cc3f76b1c`、`gengrowth-ops`=`567c3358d3d91375f205b5dff6b80dcc16717f0b`、`gengrowth-flow-mvp`=`80a4526664c1ac9851ad9b42c506dfff47a5a201`。回读 `gengrowth-ops` 与 `gengrowth-flow-mvp` 的 Obsidian Git `data.json`，确认 `autoSaveInterval`、`autoPushInterval`、`autoPullInterval` 均为 0，`autoPullOnBoot` 与 `pullBeforePush` 均为 false。未使用禁用的破坏性命令或镜像同步脚本；record 写入后使用同一确定性入口继续收敛，并以最终 fresh verification 为准。
 
 ---
+
+### Q12 — 09:03
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Monitor
+Automation ID: gengrowth-index-monitor
+Automation memory: $CODEX_HOME/automations/gengrowth-index-monitor/memory.md
+Last run: 2026-07-03T01:01:15.146Z (1783040475146)
+
+Run the GenGrowth Phase 2 indexing workflow through the existing deterministic wrapper: `bash tools/scripts/gg-index-monitor-tick.sh`. This wrapper must refresh the live sitemap through the official Search Console Sitemaps API, inspect due URLs through URL Inspection, sync the final `结果复盘表`, generate/update `request-indexing-queue` with priority colors, and send Feishu SEO技术 group reminders for actionable candidates or failures. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, and do not click Search Console Request Indexing unattended. For Computer Use submission, only assist by opening candidate GSC inspection URLs and stop for human confirmation before the final Request Indexing click. After the wrapper exits, summarize sitemap submission status, GSC check counts/failures, queue counts by priority, and any Feishu notification outcome visible in the log.
+
+**🤖 回答：**
+
+按要求只运行确定性 wrapper `bash tools/scripts/gg-index-monitor-tick.sh`，手动触发在 `09:01:10 CST` 命中互斥锁并记录 `skip — previous index monitor run (pid 73463) still active`，因此等待并汇总已在运行的同一 wrapper 窗口 `09:00:06` 至 `09:03:23 CST`；日志为 `$HOME/gengrowth-agents/cron-sync/index_monitor/2026-07-04.log`，最终 `index monitor ok`。`astrologywiki`：sitemap-submit `sc-domain:astrologywiki.com` ok；`check-due rows=200 due=11`，`checked=11 alerts=0 failures=0`；`sync-request-queue rows=25 P0=0 P1=1 P2=13 P3=11`；`sync-recap en_rows=200 appended=4 updated=196 skipped=0`。`gengrowth`：sitemap-submit `sc-domain:gengrowth.ai` ok；`check-due rows=51 due=5`，`checked=5 alerts=0 failures=0`；`sync-request-queue rows=6 P0=0 P1=1 P2=0 P3=5`；`sync-recap en_rows=51 appended=0 updated=38 skipped=13`。日志未显示 Feishu/Lark 发送成功或失败回执；合规边界保持：未使用普通文章 Google Indexing API，未无人值守点击 Search Console Request Indexing。
+
+---

@@ -225,6 +225,6 @@ Last run: 2026-07-04T20:00:59.654Z (1783195259654)
 
 **🤖 回答：**
 
-已读取 automation memory、Owner profile/reminders 与验证技能说明；当前仓库缺少 `ai-profile/lynne-soul.md`，已从 sibling `/Users/awayer_mini/gengrowth-wiki/ai-profile/lynne-soul.md` 读取。首次运行指定 `obsidian-vault-git-sync.py` 三仓库入口时，脚本提示 `gengrowth-flow-mvp` 需要关注：`.git/index.lock` 已存在；未删除锁文件，随后只读复查发现锁文件已消失，相关进程为 Cursor gitWorker。重新运行同一确定性入口后输出 `Obsidian vault git sync: clean`。本轮 record 已按项目规则追加，后续将继续只用同一入口提交并做最终复验。未使用破坏性 git/filesystem 命令或镜像删除类同步脚本。
+已读取 automation memory、Owner profile/reminders 与验证技能说明；当前仓库缺少 `ai-profile/lynne-soul.md`，已从 sibling `/Users/awayer_mini/gengrowth-wiki/ai-profile/lynne-soul.md` 读取。首次运行指定 `obsidian-vault-git-sync.py` 三仓库入口时，脚本提示 `gengrowth-flow-mvp` 需要关注：`.git/index.lock` 已存在；未删除锁文件，随后只读复查发现锁文件已消失，相关进程为 Cursor gitWorker。重新运行同一确定性入口后输出 `Obsidian vault git sync: clean`；追加本轮 record 后仍只用同一入口提交/推送。复验显示 `gengrowth-wiki`、`gengrowth-ops`、`gengrowth-flow-mvp` 均 clean，`HEAD...origin/main` 均为 `0 0`，`git diff --name-only --diff-filter=U` 与 `git ls-files -u` 均无输出；两个 Obsidian Git 配置均确认 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。未使用破坏性 git/filesystem 命令或镜像删除类同步脚本。
 
 ---

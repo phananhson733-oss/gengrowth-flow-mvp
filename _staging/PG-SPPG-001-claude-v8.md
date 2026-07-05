@@ -50,7 +50,7 @@ In practice, Sony Playstation Physical Games Strategy 2026 shows up wherever som
 
 1. **Retail stocking.** A store planner checks the confirmed first-party slate against disc-drive SKU availability before setting order quantities, rather than reacting to a disc-production headline. The strategy enters at the purchase-order step.
 2. **Reseller pricing.** A reseller weighs whether a "final physical run" claim is documented on the PlayStation Blog or only rumored, then prices accordingly. It intervenes before a listing goes live and a scarcity premium gets baked in.
-3. **Analyst forecasting.** An analyst separates the reported plan to wind down disc production later this decade — covered in mid-2026 by CNBC and the official PlayStation Blog — from the 2026 slate that still ships on disc. That distinction changes the forecast, and it enters at the point where documented moves and speculation would otherwise be averaged together.
+3. **Analyst forecasting.** An analyst separates the reported plan to wind down disc production later this decade — covered on the official PlayStation Blog — from the 2026 slate that still ships on disc. That distinction changes the forecast, and it enters at the point where documented moves and speculation would otherwise be averaged together.
 
 ## Common Implementation Misreadings
 
@@ -120,7 +120,6 @@ Build your own confirmed-versus-rumored slate table for the releases you track, 
 
 ## Sources
 
-- CNBC — mid-2026 reporting on Sony's plan to wind down physical disc production for new games later in the decade, paraphrased in the timeline discussion above
 - PlayStation Blog (official) — the on-the-record reference for disc-production and first-party release announcements cited as the documented-signal standard
 - Wikipedia (Sony Interactive Entertainment and PlayStation 5 entries) — background on console SKUs and release history referenced in the SKU discussion
 - Based on patterns GenGrowth has observed across release-cycle tracking; no third-party study is cited

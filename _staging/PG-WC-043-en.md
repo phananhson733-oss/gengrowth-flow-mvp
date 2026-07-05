@@ -1,3 +1,29 @@
+---
+title: Kylian Mbappé Birth Chart
+slug: kylian-mbapp-birth-chart
+date: 2026-07-05
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-WC-043
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: Kylian Mbappé birth chart
+associated_keywords:
+  - Kylian Mbappé birth chart meaning
+  - Kylian Mbappé birth chart astrology
+  - Kylian Mbappé birth chart zodiac
+  - Kylian Mbappé birth chart interpretation
+  - world cup 2026 astrology prediction
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-07-05T13:02:21.849Z
+content_sha256_short: 999e0dcd2c0c623a
+phase2_checks: all-pass
+---
+
 # What the Kylian Mbappé Birth Chart Reveals Through Western Astrology
 
 ## What Is Mbappé's Sagittarius Sun Natal Chart?

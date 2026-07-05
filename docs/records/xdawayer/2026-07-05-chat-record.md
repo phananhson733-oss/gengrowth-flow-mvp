@@ -645,3 +645,20 @@ Last run: 2026-07-05T08:00:04.752Z (1783238404752)
 已读取 automation memory、AGENTS、本地 reminders；当前仓库缺少 `ai-profile/lynne-soul.md`。使用指定 `obsidian-vault-git-sync.py` 三仓库入口执行同步，脚本输出 `Obsidian vault git sync: clean`。初次验证显示 `gengrowth-wiki`、`gengrowth-ops`、`gengrowth-flow-mvp` 均在 main 分支且 clean，`HEAD...origin/main` 均为 `0 0`，`git diff --name-only --diff-filter=U` 与 `git ls-files -u` 均无输出。回读两个 Obsidian Git 配置，确认 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。已按项目记录规则追加本轮 record，并继续只用同一确定性入口收敛；复验确认三个仓库均 clean、ahead/behind 均为 `0 0`、无 unmerged，两个 Obsidian Git 配置仍保持自动同步禁用。未使用破坏性 git/filesystem 命令或镜像删除类同步脚本。
 
 ---
+
+### Q21 — 17:34
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: 2026-07-04T21:00:00.068Z (1783198800068)
+
+Run the deterministic fixed-row index repair workflow through `bash tools/scripts/gg-index-repair-resubmit-tick.sh`. The wrapper loads the local gg environment, loops the configured products (`GG_INDEX_MONITOR_PRODUCTS`, defaulting to astrologywiki and gengrowth), processes rows marked `已修复`, syncs `结果复盘表`, and refreshes `request-indexing-queue` in each product Google Sheet. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, do not click Search Console Request Indexing unattended, and do not create Feishu or Google Doc report artifacts. After the wrapper exits, summarize per-product `process-fixed`, `sync-recap`, `sync-request-queue` counts visible in the log, plus any failures.
+
+**🤖 回答：**
+
+已读取 automation memory、项目记忆、reminders 与技能入口规则；当前仓库缺少 `ai-profile/lynne-soul.md`。仅执行指定 wrapper：`bash tools/scripts/gg-index-repair-resubmit-tick.sh`，wrapper exit 0。权威日志为 `/Users/awayer_mini/gengrowth-agents/cron-sync/index_repair_resubmit/2026-07-05.log`，本轮窗口为 `2026-07-05 17:32:51` 到 `17:33:22 CST`，最终行 `index repair-resubmit ok`。`astrologywiki`: `process-fixed fixed=0 resubmitted=0`; `sync-recap en_rows=200 appended=0 updated=0 skipped=200`; `sync-request-queue rows=22 P0=0 P1=1 P2=14 P3=7`。`gengrowth`: `process-fixed fixed=0 resubmitted=0`; `sync-recap en_rows=51 appended=0 updated=0 skipped=51`; `sync-request-queue rows=3 P0=0 P1=1 P2=2 P3=0`。失败关键词检查为空。合规边界保持：未使用普通文章 Google Indexing API、未无人值守点击 Search Console Request Indexing、未创建 Feishu 或 Google Doc 报告产物。
+
+---

@@ -225,6 +225,6 @@ Last run: 2026-07-05T20:02:10.050Z (1783281730050)
 
 **🤖 回答：**
 
-已读取自动化记忆、项目规则、会话 reminders 与适用技能说明；当前仓库未发现 `ai-profile/lynne-soul.md`。仅运行指定三仓库 `obsidian-vault-git-sync.py --verbose` 入口，初次输出 `Obsidian vault git sync: clean`。初次验证显示三仓 `HEAD...origin/main` 均为 `0 0`，且 `git diff --name-only --diff-filter=U` 与 `git ls-files -u` 均无输出；回读 `gengrowth-ops` 与 `gengrowth-flow-mvp` 的 Obsidian Git `data.json`，确认 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。按项目 record 规则追加本 Q&A 后，仅用同一确定性入口收敛 record 写入；最终验证显示 `gengrowth-wiki` HEAD `3ca05b1285856dccd8d98f8edf6a15e243558d77`、`gengrowth-ops` HEAD `08a3969bbbcff238c2d8b25f9817887b4f39456c`、`gengrowth-flow-mvp` HEAD `50420ef9908de4bf02e7b2a164e99d28b4159c49`，三仓均 clean 且 `HEAD...origin/main` 均为 `0 0`，无 unmerged 输出。未使用破坏性 git/filesystem 命令或镜像删除类同步脚本。
+已读取自动化记忆、项目规则、会话 reminders 与适用技能说明；当前仓库未发现 `ai-profile/lynne-soul.md`。仅运行指定三仓库 `obsidian-vault-git-sync.py --verbose` 入口，初次输出 `Obsidian vault git sync: clean`。初次验证显示三仓 `HEAD...origin/main` 均为 `0 0`，且 `git diff --name-only --diff-filter=U` 与 `git ls-files -u` 均无输出；回读 `gengrowth-ops` 与 `gengrowth-flow-mvp` 的 Obsidian Git `data.json`，确认 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。按项目 record 规则追加本 Q&A 后，仅用同一确定性入口收敛 record 写入；最终验证显示三仓均 clean 且 `HEAD...origin/main` 均为 `0 0`，无 unmerged 输出。未使用破坏性 git/filesystem 命令或镜像删除类同步脚本。
 
 ---

@@ -771,3 +771,15 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 已读取 automation memory、项目记忆、`gengrowth-topic-register-wrapper-report` 技能、verification 技能、reminders 与本地约束；当前仓库缺少 `ai-profile/lynne-soul.md`。仅执行 `bash tools/scripts/gg-topic-register-tick.sh`，未传任何写入、修复、覆盖或直接脚本参数。wrapper exit 0；最新日志为 `~/gengrowth-agents/cron-sync/topic_register/2026-07-05.log`，本轮窗口为 2026-07-05 18:02:26-18:02:29 CST，最终 `topic-register ok`。本地环境使 wrapper 进入 apply mode，`dry_run=false`，命令包含 `--llm claude --discover-evidence --apply --run-budget-ms 840000`；`budget_exhausted=false`。`astrologywiki` 与 `gengrowth` 均为 candidates=0、updates=0、new_clusters=0、page_ids=[]、selection_mode=generate、audit_incomplete=0、preprocessor=[]、evidence_discovery=[]。日志未见失败。安全边界保持：只运行 wrapper，无手工 Sheet 写入、无 wrapper 外 task-plan 编辑、无额外 Feishu/Google Doc 报告产物。
 
 ---
+
+### Q27 — 20:07 [claude]
+
+**🙋 提问：**
+
+SEO Content Variable Pre-processor (v2.0) 任务：为 Target_Keyword "Malia Obama birth chart"（T2 / Case Study，Cluster=Celebrity Zodiac Profiles (Trending)）产出 SHEET_FIELDS（Entity / Entity_Topology / Friction / Logic / Content_Angle）和 REVIEW_METADATA。Raw_Friction 为通用编辑侧 framing 声明；SERP_Snapshot 输入原文标注 "[not supplied by gg-topic-register; add SERP top 5-10 before final editorial approval]"；Draft_Angle 为 cluster-level 骨架；Entity_RAG 未提供。
+
+**🤖 回答：**
+
+按 pre-processor v2.0 硬门槛判定强制 ABORT：(a) SERP_Snapshot < 3 distinct titles（实际 0，输入明示未由 gg-topic-register 提供）；(b) Raw_Friction 为单一泛化第三人称 framing 声明，缺具名 user complaint / question，也无名域 SERP/news 标题证据。两条 hard-abort 条件同时满足 → Confidence=Low、Status=Needs More Evidence，未合成 Entity / Friction / Logic / Content_Angle。建议下一步：跑 gg-brief-suggest（SERP-grounded path，[[gengrowth-brief-gen-two-paths]]）附 ≥5 distinct titles / ≥3 domains 的 `.gg-cache/serp/<pid>.json`（含 "malia obama birth chart" + "malia obama zodiac sign" + 论坛片段），并预置 Ascendant fan-shared caveat（Carlos playbook，[[celeb-batch-schema-and-worker-footguns]]）后重跑本 pre-processor。
+
+---

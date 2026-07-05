@@ -1,3 +1,29 @@
+---
+title: Taylor Swift Wedding Brand Economics 2026
+slug: taylor-swift-wedding-brand-economics-2026
+date: 2026-07-05
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-TSWB-001
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: taylor swift wedding brand economics 2026
+associated_keywords:
+  - taylor swift wedding brand economics 2026 comparison
+  - taylor swift wedding brand economics 2026 pricing
+  - taylor swift wedding brand economics 2026 software
+  - taylor swift wedding brand economics 2026 tool
+  - taylor swift wedding brand economics 2026 workflow
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-07-05T13:06:16.507Z
+content_sha256_short: be673f1b13df5361
+phase2_checks: all-pass
+---
+
 # How Taylor Swift Wedding Brand Economics 2026 Reads as a Brand Signal — and Where It Stops
 
 ## What Is Taylor Swift Wedding Brand Economics 2026?

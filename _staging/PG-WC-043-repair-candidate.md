@@ -2,7 +2,7 @@
 
 ## What Is Mbappé's Sagittarius Sun Natal Chart?
 
-Mbappé's Sagittarius Sun natal chart is a Western tropical astrology reading anchored to the Sun's position in Sagittarius at the time of Kylian Mbappé's birth on 20 December 1998. In this tradition, the Sun sign works as a symbolic starting point rather than a full life summary — it describes a prevailing temperament, not a fixed script. Sagittarius is a mutable-fire sign, so the reading leans on expansion, long-range boldness, and forward momentum, the archetype many fans already project onto his running behind a defensive line. Moon and rising placements add texture the Sun alone cannot carry. Read plainly, the Kylian Mbappé birth chart is **a Western tropical map built around a mutable-fire Sagittarius Sun**.
+Mbappé's Sagittarius Sun natal chart is a Western tropical astrology reading anchored to the Sun's position in Sagittarius at the time of Kylian Mbappé's birth on 20 December 1998. In this tradition, the Sun sign works as a symbolic starting point rather than a full life summary — it describes a prevailing temperament, not a fixed script. Sagittarius is a mutable-fire sign, so the reading leans on expansion, long-range boldness, and forward momentum, the archetype many fans already project onto his running behind a defensive line. Moon and rising placements add texture the Sun alone cannot carry. Because Western tropical astrology fixes the zodiac to the seasons rather than the constellations, the Sun's December position lands reliably in Sagittarius year after year, which is why every reputable Western reading of his chart agrees on that anchor. What varies between interpreters is the weight they give the Sun sign — some treat it as the headline, others as one voice among many placements that shape the final read. Read plainly, the Kylian Mbappé birth chart is **a Western tropical map built around a mutable-fire Sagittarius Sun**.
 
 - Centers on a Sagittarius Sun, a symbol of expansive, long-range boldness
 - Belongs strictly to Western tropical astrology, not Purple Star or numerology
@@ -33,7 +33,7 @@ You don't need his exact birth time to recognize a Sagittarius Sun pattern in th
 3. **Comfort with risk over control.** A tendency to commit early and adjust mid-motion instead of waiting for certainty.
 4. **Long-range framing.** Thinking in seasons and legacies, not just the next task in front of you.
 
-None of these are guarantees. Read them as patterns that tend to surface, and check them against the whole chart before drawing conclusions — including the [[<TBD-internal-link: guide to what your rising sign means>]].
+The point isn't to score yourself against Mbappé, but to use his visible version of the pattern as a mirror for your own quieter one. A single strong match means little on its own; it's the cluster of them, showing up together across different areas of your life, that starts to look like a genuine Sagittarius signature. None of these are guarantees. Read them as patterns that tend to surface, and check them against the whole chart before drawing conclusions — including the [[<TBD-internal-link: guide to what your rising sign means>]].
 
 ## Common Misreadings
 

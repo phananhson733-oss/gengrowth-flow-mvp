@@ -16,7 +16,6 @@ associated_keywords:
   - Cole Palmer birth chart astrology
   - Cole Palmer birth chart zodiac
   - Cole Palmer birth chart interpretation
-  - emma watson zodiac sign
 generated_by: unknown
 prompt_version: v8
 generated_at: 2026-07-06T08:25:36.787Z

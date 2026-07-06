@@ -16,7 +16,6 @@ associated_keywords:
   - erling haaland girlfriend birth chart astrology
   - erling haaland girlfriend birth chart zodiac
   - erling haaland girlfriend birth chart interpretation
-  - emma watson zodiac sign
 generated_by: unknown
 prompt_version: v8
 generated_at: 2026-07-06T08:40:35.710Z

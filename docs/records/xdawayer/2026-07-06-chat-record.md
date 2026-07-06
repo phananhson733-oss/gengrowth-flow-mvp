@@ -895,6 +895,6 @@ Last run: 2026-07-06T11:00:59.649Z (1783335659649)
 
 **🤖 回答：**
 
-已读取自动化记忆、项目 reminders、sibling owner profile 与相关历史记忆，并使用 `superpowers:using-superpowers` 与 `verification-before-completion` 做执行/收尾约束检查。仅运行指定确定性入口，首轮脚本输出 `Obsidian vault git sync: clean`；初次独立验证三仓 `git status --branch --porcelain=v2` 均 clean，`HEAD...origin/main` 均为 `0 0`，`git diff --name-only --diff-filter=U` 与 `git ls-files -u` 均无输出。回读 `gengrowth-ops` 与 `gengrowth-flow-mvp` 的 Obsidian Git `data.json`，确认 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。未使用破坏性 git/filesystem 命令或镜像删除类同步脚本；追加本 record 后继续用同一入口收敛并复验。
+已读取自动化记忆、项目 reminders、sibling owner profile 与相关历史记忆，并使用 `superpowers:using-superpowers` 与 `verification-before-completion` 做执行/收尾约束检查。仅运行指定确定性入口，首轮脚本输出 `Obsidian vault git sync: clean`；追加本 record 后 rerun 同一入口，脚本提交并推送 `gengrowth-wiki` 1 个路径和 `gengrowth-flow-mvp` 1 个路径。post-record 独立验证三仓 `git status --branch --porcelain=v2` 均 clean，`HEAD...origin/main` 均为 `0 0`，`git diff --name-only --diff-filter=U` 与 `git ls-files -u` 均无输出。回读 `gengrowth-ops` 与 `gengrowth-flow-mvp` 的 Obsidian Git `data.json`，确认 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。未使用破坏性 git/filesystem 命令或镜像删除类同步脚本；本条摘要更新后继续用同一入口收敛。
 
 ---

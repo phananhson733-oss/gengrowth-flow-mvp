@@ -724,3 +724,15 @@ Content_Angle:
 按 v1.0 fallback 仅保守改写 `Friction` 与 `Content_Angle`，未补 Entity 或 Logic，未声称未提供 SERP 标题无法支持的 SERP gap。最终输出为：`Friction: Readers may conflate Cole Palmer birth chart interpretations with biographical proof or outcome claims.`；`Content_Angle: Frame Cole Palmer's birth chart as a symbolic celebrity profile that interprets placements through public persona and cultural interest, without treating astrology as verification.`
 
 ---
+
+### Q24 — 16:40 [claude]
+
+**🙋 提问：**
+
+自动提交一下
+
+**🤖 回答：**
+
+本机 Chrome 驱动 GSC 手动 Request Indexing 一波（账号 xdawayer）。astrologywiki 从结果复盘表底部往上 7 篇全部提交并回填申请时间=2026-07-06、状态=已重新提交，sync-recap/sync-request-queue 已同步；gengrowth glossary 提交 4 个（topical-authority/zero-click-search/referral-program/ai-citation，"已抓取-尚未编入索引"），zh/robots-txt 已收录跳过。配额在第 12 次（attribution-model）耗尽，留下次窗口。修正了系统误报日期（07-04→实际 07-06），飞书推送 1 条汇总 + 1 条日期更正（均投递成功）。gengrowth glossary 页仍不在 index-tracking（解析缺口）无法回填，已记 reminders。
+
+---

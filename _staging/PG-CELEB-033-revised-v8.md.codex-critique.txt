@@ -1,0 +1,8 @@
+- “birth chart” 实质只给了太阳星座，搜索意图未满足 → 开头补 verified data box：2002-05-06、Wythenshawe/Manchester、出生时间未公开、数据来源（如 https://en.wikipedia.org/wiki/Cole_Palmer），并列出“可确认/不可确认”的 chart 信息。
+- “Moon depends entirely on birth time / everything past Sun needs birth time” 说法过宽 → 查星历后改成：行星星座与多数行星相位可按日期估算，ASC、宫位和精确月亮度数才强依赖出生时间。
+- 稿子没有真正解读 Cole Palmer 的 chart → 增加可验证的行星落点/元素/模式/主要相位讨论；如果不算完整盘，就把标题和全文定位改成“Cole Palmer zodiac sign / Taurus Sun”。
+- “calm, unhurried on-pitch style” 太泛 → 用具体但非因果的公共 persona 证据替换，如 “Cold Palmer”形象、点球冷静、Chelsea/England attacking midfielder 语境，再明确只是象征性对读。
+- Rudhyar、Liz Greene、Pew 29% 都像装饰性权威 → 要么给具体出处并说明它如何影响本文读法，要么删除，把篇幅让给 Palmer 本人的 chart 数据和读者可用判断。
+- “public calm is a persona built for cameras” 属于无来源心理判断 → 改成“media-facing image / public football persona”，或用采访/球员档案来源支撑。
+- 文章反复强调“symbolic, not proof”导致 padding → 合并重复免责声明，保留一次清晰边界后，把后文改成具体读法、known/unknown chart limits、reader checklist。
+- CTA “Generate your free birth chart to explore Cole Palmer birth chart” 关键词堆砌且不自然 → 改成面向读者自己的 chart 行动，不再硬塞 exact-match keyword。

@@ -15,14 +15,15 @@
 //   node tools/scripts/gg-ledger-reconcile.mjs            # apply（默认；每日 cron 用）
 //   node tools/scripts/gg-ledger-reconcile.mjs --dry      # 只读：列 WAL + reconcile-status --dry，不写
 
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { loadEnv } from './lib/gg-shared.mjs';
+import { loadEnv, getAccessToken, gFetch } from './lib/gg-shared.mjs';
 import { drainPending, listWriteback } from './lib/backfill-tx.mjs';
 import { notify } from './lib/gg-notify.mjs';
+import { PRODUCTS, PAGES_TAB, PUBLISHED, workbookId } from './gg-reconcile-status.mjs';
 
 loadEnv();
 const HOME = homedir();
@@ -78,6 +79,39 @@ function sweepPlanBoxes(claims) {
   return checked;
 }
 
+// sheet 驱动的 plan 补勾（阶段 4 缺口修复）：sweepPlanBoxes 只扫 done claim，漏了「已上线但无 claim」
+// 的文章（如经非-claim 路径 merge 的，如 WC-042/044）——它们 plan box 永不被勾。这里按 sheet「已发布」
+// page_id 补勾任意 plan 里仍未勾的 box。sheet 状态是权威 live 信号（reconcile-status 已同步）。返回补勾数。
+async function sweepPlanBoxesBySheet(token) {
+  let checked = 0;
+  let planFiles;
+  try { planFiles = readdirSync(PLAN_DIR).filter((f) => /blog-output-plan.*\.md$/.test(f)).map((f) => join(PLAN_DIR, f)); }
+  catch { return 0; }
+  if (!planFiles.length) return checked;
+  for (const key of Object.keys(PRODUCTS)) {
+    let pids;
+    try {
+      const wb = workbookId(PRODUCTS[key]);
+      const got = await gFetch(`https://sheets.googleapis.com/v4/spreadsheets/${wb}/values/${encodeURIComponent(PAGES_TAB + '!A1:AZ')}?majorDimension=ROWS`, token);
+      const rows = got.values || [];
+      const h = rows[0] || [];
+      const iStatus = h.findIndex((c) => /^Status$/i.test((c || '').trim()));
+      const iPage = h.findIndex((c) => /page_id/i.test((c || '').trim()));
+      if (iStatus < 0 || iPage < 0) continue;
+      pids = rows.slice(1).filter((r) => (r[iStatus] || '').trim() === PUBLISHED).map((r) => (r[iPage] || '').trim()).filter(Boolean);
+    } catch { continue; } // 缺 workbook env / 网络 → 跳过该产品，不搞垮对账
+    for (const pid of pids) {
+      for (const p of planFiles) {
+        let src;
+        try { src = readFileSync(p, 'utf8'); } catch { continue; }
+        const out = src.replace(new RegExp(`(^\\s*-\\s*\\[) (\\]\\s*\`?${pid}\`?)`, 'm'), '$1x$2');
+        if (out !== src) { if (APPLY) writeFileSync(p, out); checked++; break; }
+      }
+    }
+  }
+  return checked;
+}
+
 async function main() {
   const t0 = Date.now();
   const summary = [];
@@ -119,6 +153,18 @@ async function main() {
   try { planChecked = sweepPlanBoxes(claims); } catch (e) { summary.push(`⚠️plan 补扫失败：${String(e.message).slice(0, 120)}`); }
   console.log(`4. plan-sweep: checked=${planChecked}${APPLY ? '' : ' (dry, not written)'}`);
   if (planChecked && APPLY) summary.push(`plan 补勾 ${planChecked} 项`);
+
+  // 4b. sheet 驱动补勾——catch「已上线但无 claim」的文章（阶段4 缺口，如 WC-042/044）。仅 APPLY、只读 scope。
+  let planCheckedSheet = 0;
+  if (APPLY) {
+    try {
+      const SA = process.env.GG_WRITER_SA_JSON || join(HOME, '.config', 'gg', 'gg-writer-sa.json');
+      const { token } = await getAccessToken(SA, ['https://www.googleapis.com/auth/spreadsheets.readonly']);
+      planCheckedSheet = await sweepPlanBoxesBySheet(token);
+    } catch (e) { summary.push(`⚠️sheet-plan 补扫失败：${String(e.message).slice(0, 100)}`); }
+  }
+  console.log(`4b. plan-sweep(sheet-driven, 无claim): checked=${planCheckedSheet}`);
+  if (planCheckedSheet) summary.push(`plan 补勾(无claim已上线) ${planCheckedSheet} 项`);
 
   // ledger 观测（不写，仅报）：needs_human 常驻数
   const needsHuman = Object.entries(claims).filter(([, c]) => c && c.status === 'needs_human').map(([k]) => k);

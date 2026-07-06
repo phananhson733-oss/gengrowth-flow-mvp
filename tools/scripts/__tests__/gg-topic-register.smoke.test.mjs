@@ -8,6 +8,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import {
+  associatedKeywordsForPage,
   buildTrendEvidenceCache,
   chooseClusterForKeyword,
   createRunBudget,
@@ -382,4 +383,25 @@ test('gg-topic-register 源码不再引用 gg-lark-notify.sh 裸字符串通道'
   assert.ok(!src.includes('gg-lark-notify.sh'), '调用点应已迁移到 lib/gg-notify.mjs 事件层');
   assert.ok(!src.includes('execFileSync'), '旧 execFileSync 通知通道应已删除');
   assert.match(src, /notify\('topic_registered'/, '应通过统一事件层发 topic_registered');
+});
+
+// 根因回归：associatedKeywordsForPage 绝不把 cluster 里别的实体的关键词塞进本文章
+// （cluster.keywords_included 累积了全簇实体词，含 "emma watson zodiac sign" 这类脏词）。
+test('associatedKeywordsForPage 不泄漏 cluster 里其它实体的关键词（emma-watson 根因）', () => {
+  const cluster = { keywords_included: 'emma watson zodiac sign, cole palmer birth chart, jannik sinner zodiac sign, celebrity astrology' };
+  for (const tk of ['Cole Palmer birth chart', 'Achraf Hakimi birth chart', 'Rayan Cherki Birth Chart']) {
+    const kw = associatedKeywordsForPage({ targetKeyword: tk, cluster, product: 'astrologywiki' });
+    assert.ok(!/emma watson/i.test(kw), `${tk} 泄漏了 emma watson: ${kw}`);
+    assert.ok(!/jannik sinner/i.test(kw), `${tk} 泄漏了 jannik sinner: ${kw}`);
+    // 仍保留本实体的关键词
+    const ent = tk.split(' ')[0].toLowerCase();
+    assert.ok(new RegExp(ent, 'i').test(kw), `${tk} 丢了自己的实体词: ${kw}`);
+  }
+});
+
+test('associatedKeywordsForPage：种子词与 target 共享实体 token 时仍保留（不误杀相关词）', () => {
+  // target 自身的簇种子（jannik sinner）应因共享实体 token 被保留（这里通过 country-vs 场景验证非本实体不加）
+  const kwOwn = associatedKeywordsForPage({ targetKeyword: 'Jannik Sinner zodiac sign', cluster: { keywords_included: 'jannik sinner grand slam, emma watson zodiac sign' }, product: 'astrologywiki' });
+  assert.ok(/jannik sinner grand slam/i.test(kwOwn), `共享实体 token 的相关种子应保留: ${kwOwn}`);
+  assert.ok(!/emma watson/i.test(kwOwn), `无关实体种子应被过滤: ${kwOwn}`);
 });

@@ -819,7 +819,11 @@ function normalizeSheetPageRole(value) {
   return SHEET_PAGE_ROLES.has(v) ? v : 'Support';
 }
 
-function associatedKeywordsForPage({ targetKeyword, cluster, product }) {
+// 通用主题词（非实体名）——用于判断 cluster 种子词是「泛用主题」还是「别的实体的具体关键词」。
+const GENERIC_KW_TOKENS = new Set(['birth', 'chart', 'zodiac', 'sign', 'signs', 'astrology', 'natal', 'horoscope', 'meaning', 'interpretation', 'compatibility', 'synastry', 'reading', 'star', 'stars', 'world', 'cup', 'match', 'team', 'prediction', 'the', 'and', 'for', 'vs', 'with']);
+const entityTokensOf = (s) => new Set(normText(s).split(/\s+/).filter((t) => t.length > 2 && !GENERIC_KW_TOKENS.has(t)));
+
+export function associatedKeywordsForPage({ targetKeyword, cluster, product }) {
   const target = compactLine(targetKeyword);
   const targetNorm = normText(target);
   if (!targetNorm) return '';
@@ -847,7 +851,15 @@ function associatedKeywordsForPage({ targetKeyword, cluster, product }) {
     for (const suffix of ['meaning', 'astrology', 'birth chart', 'zodiac', 'interpretation']) addSuffix(suffix);
   }
 
-  for (const phrase of seedPhrases(cluster || {})) add(phrase);
+  // 只 append 与 target 共享**实体 token** 的 cluster 种子词（根因修复）：cluster.keywords_included 累积了
+  // 该簇**所有实体的关键词**（如名人簇里含 "emma watson zodiac sign"），无脑 append 会把别的实体的词塞进本
+  // 文章 → review[schema] FAIL（Cole Palmer 文章被塞 emma watson）。判据：种子词的实体 token 与 target 的实体
+  // token 有交集，或种子词无实体 token（纯泛用主题、属簇级相关）才 add。
+  const targetEntity = entityTokensOf(target);
+  for (const phrase of seedPhrases(cluster || {})) {
+    const pe = entityTokensOf(phrase);
+    if (pe.size === 0 || [...pe].some((t) => targetEntity.has(t))) add(phrase);
+  }
   return out.slice(0, 5).join(', ');
 }
 

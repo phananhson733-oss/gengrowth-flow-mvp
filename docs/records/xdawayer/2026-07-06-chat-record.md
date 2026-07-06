@@ -324,3 +324,52 @@ Last run: 2026-07-05T23:00:11.419Z (1783292411419)
 已读取自动化记忆、项目规则、会话 reminders 与适用技能说明；当前仓库未发现 `ai-profile/lynne-soul.md`，`ai-profile/reminders.md` 存在未完成项但本轮继续执行自动化任务。仅运行指定三仓库 `obsidian-vault-git-sync.py --verbose` 入口，脚本退出码为 0 且无 stdout/stderr 输出。初次验证显示 `gengrowth-wiki` HEAD `a0945fa4edabb44b40cbb74f7e2d40daedb9fe3f`、`gengrowth-ops` HEAD `59b36afdbbeacd2be7b5579100dc459bca0fc3af`、`gengrowth-flow-mvp` HEAD `d3f5393e20d07502345c1f64bdab174db45dd487`；三仓 `HEAD...origin/main` 均为 `0 0`，且 `git diff --name-only --diff-filter=U` 与 `git ls-files -u` 均无输出。回读 `gengrowth-ops` 与 `gengrowth-flow-mvp` 的 Obsidian Git `data.json`，确认 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。按项目 record 规则追加本 Q&A 后，将继续只用同一确定性入口收敛并复验；未使用破坏性 git/filesystem 命令或镜像删除类同步脚本。
 
 ---
+
+### Q10 — 09:03
+
+**🙋 提问：**
+
+Automation: GenGrowth Vault Git Auto-Heal
+Automation ID: gengrowth-vault-git-auto-heal
+Automation memory: $CODEX_HOME/automations/gengrowth-vault-git-auto-heal/memory.md
+Last run: 2026-07-06T00:01:41.894Z (1783296101894)
+
+在本机执行 GenGrowth 多仓库 Obsidian/Git 自愈同步。目标仓库固定为 `/Users/awayer_mini/gengrowth-wiki`、`/Users/awayer_mini/gengrowth-ops`、`/Users/awayer_mini/gengrowth-flow-mvp`。
+
+必须使用已验证的确定性入口，不要绕过脚本手写破坏性 git 操作：
+
+`/usr/bin/python3 /Users/awayer_mini/gengrowth-wiki/tools/scripts/obsidian-vault-git-sync.py --repo /Users/awayer_mini/gengrowth-wiki --repo /Users/awayer_mini/gengrowth-ops --repo /Users/awayer_mini/gengrowth-flow-mvp --verbose`
+
+安全边界：
+- 禁止运行 `git reset --hard`、`git checkout -- <path>`、`git clean`、`rm -rf`、`rsync --delete`，除非用户在当次对话中明确要求。
+- 不要运行 `tools/scripts/frequent-sync.sh`、`tools/scripts/gengrowth-repos-sync.sh` 或 `tools/scripts/_sync-core.sh`，因为这些路径包含镜像删除语义，本任务只做 git 自愈同步。
+- 同步脚本会先 fetch，检查未解决冲突，提交本地非敏感变更，再 rebase/push；只对白名单 JSON 冲突自动合并，其他冲突会中止并报告。不要在脚本中止后自行猜测合并内容。
+- 不打印密钥、token、邮箱密码、service account JSON、private key 或完整凭证 URL。
+
+执行后验证：
+1. 分别在三个仓库运行 `git status --branch --porcelain=v2`、`git rev-list --left-right --count HEAD...origin/main`、`git diff --name-only --diff-filter=U`、`git ls-files -u`。
+2. 回读 `/Users/awayer_mini/gengrowth-ops/.obsidian/plugins/obsidian-git/data.json` 和 `/Users/awayer_mini/gengrowth-flow-mvp/.obsidian/plugins/obsidian-git/data.json`，确认 `autoSaveInterval`、`autoPushInterval`、`autoPullInterval` 为 0，`autoPullOnBoot` 与 `pullBeforePush` 为 false。
+3. 若所有仓库都是 clean 且 ahead/behind 为 `0 0`，简短报告已同步；若脚本输出“需要关注”或存在 unmerged，报告具体仓库和文件路径，不要删除文件。
+
+**🤖 回答：**
+
+已读取自动化记忆、项目规则、会话 reminders 与适用技能说明；当前仓库未发现 `ai-profile/lynne-soul.md`。仅运行指定三仓库 `obsidian-vault-git-sync.py --verbose` 入口，脚本输出 `Obsidian vault git sync: clean`。初次验证显示 `gengrowth-wiki` HEAD `a3bfba0a3437359b4308efa985f488aa4b4d63a1`、`gengrowth-ops` HEAD `59b36afdbbeacd2be7b5579100dc459bca0fc3af`、`gengrowth-flow-mvp` HEAD `e40bf9af0d390094cd7c5831dd0693950d71f3f6`；三仓 `HEAD...origin/main` 均为 `0 0`，且已确认无 unmerged 输出。按项目 record 规则在 EOF 追加本 Q&A，保留既有历史编号/排序异常不重排；随后将继续只用同一确定性入口收敛 record 写入并复验。未使用破坏性 git/filesystem 命令或镜像删除类同步脚本。
+
+---
+
+### Q10 — 09:03
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Monitor
+Automation ID: gengrowth-index-monitor
+Automation memory: $CODEX_HOME/automations/gengrowth-index-monitor/memory.md
+Last run: 2026-07-05T01:00:31.673Z (1783213231673)
+
+Run the GenGrowth Phase 2 indexing workflow through the existing deterministic wrapper: `bash tools/scripts/gg-index-monitor-tick.sh`. This wrapper must refresh the live sitemap through the official Search Console Sitemaps API, inspect due URLs through URL Inspection, sync the final `结果复盘表`, generate/update `request-indexing-queue` with priority colors, and send Feishu SEO技术 group reminders for actionable candidates or failures. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, and do not click Search Console Request Indexing unattended. For Computer Use submission, only assist by opening candidate GSC inspection URLs and stop for human confirmation before the final Request Indexing click. After the wrapper exits, summarize sitemap submission status, GSC check counts/failures, queue counts by priority, and any Feishu notification outcome visible in the log.
+
+**🤖 回答：**
+
+已读取 automation memory、项目 record 前置文件与相关历史记忆；`ai-profile/lynne-soul.md` 在当前仓库未发现，`ai-profile/reminders.md` 存在未完成项但本轮继续执行自动化任务。按要求运行 `bash tools/scripts/gg-index-monitor-tick.sh`，手动触发在 `09:02:17 CST` 命中 `/tmp/gg-index-monitor.lock`，说明 `09:00:05` 的同一 deterministic wrapper 已在执行；等待该窗口完成并以 `2026-07-06.log` 为准。有效窗口 `09:00:05` 至 `09:03:06 CST`，最终 `index monitor ok`。`astrologywiki`：sitemap submit ok，`check-due rows=201 due=12`，`checked=12 alerts=0 failures=0`，`sync-request-queue rows=20 P0=0 P1=1 P2=15 P3=4`。`gengrowth`：sitemap submit ok，`check-due rows=54 due=0`，无 due URLs，推定 checked/failures 为 0，`sync-request-queue rows=6 P0=0 P1=1 P2=2 P3=3`。日志无明确 Feishu/Lark send success/failure receipt；仅确认 notify-capable 步骤执行并最终 ok。未使用普通文章 Google Indexing API，未无人值守点击 Search Console Request Indexing。
+
+---

@@ -693,3 +693,34 @@ Abort_Reason:
 按 SEO Content Variable Pre-processor v2.0 的硬性证据门处理 `Cole Palmer birth chart`。输入中的 `SERP_Snapshot` 明示未提供，等价于 0 个 distinct titles，低于 v2.0 要求的 3 个标题下限；`Raw_Friction` 只是单一泛化 framing 声明，没有 concrete sourced user complaint/question，也没有 named-domain Case Study SERP/news title evidence。因此触发 hard abort：未合成 Entity、Entity_Topology、Friction、Logic 或 Content_Angle；输出 `Confidence: Low`、`Status: Needs More Evidence`，Abort_Reason 指向 SERP 证据和 Raw_Friction 来源不足。
 
 ---
+
+### Q22 — 16:17
+
+**🙋 提问：**
+
+# SEO Content Variable Pre-processor (v1.0 fallback)
+
+You are a senior content strategist preparing two legacy variables for an SEO article generator.
+This is a fallback path when the v2 pre-processor cannot return complete Entity / Friction / Logic / Content_Angle fields.
+Do NOT invent Entity or Logic. Only refine Friction and Content_Angle.
+
+## INPUTS
+- Target_Keyword: Cole Palmer birth chart
+- Raw_Friction: Readers need Cole Palmer Birth Chart framed as an interpretive profile, not a claim that astrology verifies biography or outcomes.
+- Draft_Angle: Celebrity birth chart breakdowns that synthesize full placements (stellium/aspect) tied to a trending news hook, beyond basic Sun-sign listicles
+- SERP_Titles: [available SERP title/snippet snapshot, if any]
+
+## RULES
+- Friction: one objective third-person tension statement, <=25 words. No I/you/we. Use "because" only when the root cause is visible in supplied inputs.
+- Content_Angle: one compact editorial angle that directly resolves Friction. Keep astrology symbolic / interpretive / cultural only.
+- If evidence is thin, stay conservative. Do not claim a SERP gap that the supplied titles do not support.
+
+## FINAL OUTPUT FORMAT
+Friction:
+Content_Angle:
+
+**🤖 回答：**
+
+按 v1.0 fallback 仅保守改写 `Friction` 与 `Content_Angle`，未补 Entity 或 Logic，未声称未提供 SERP 标题无法支持的 SERP gap。最终输出为：`Friction: Readers may conflate Cole Palmer birth chart interpretations with biographical proof or outcome claims.`；`Content_Angle: Frame Cole Palmer's birth chart as a symbolic celebrity profile that interprets placements through public persona and cultural interest, without treating astrology as verification.`
+
+---

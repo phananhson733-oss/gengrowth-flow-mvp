@@ -1,0 +1,9 @@
+- “2026 Jupiter-in-Gemini” 与 Western tropical 框架冲突；2026 世界杯期间木星应写成 Cancer → Leo（6月30日进 Leo），不是 Gemini → 删除这段，或明确改成“sidereal/Vedic 口径”并与 tropical 阅读分开。
+- 文章标题承诺 “birth chart”，正文实际几乎只有太阳星座 → 增加一个 chart-data 小节：出生日期、出生地 Paris、出生时间是否可靠、Sun/Moon/Ascendant 是否可判定；否则读者会觉得没拿到真正的 birth chart。
+- 多次提到 Moon、rising、houses，但没有给出出生时间来源 → 上升、宫位、Life Palace 都应改为“birth time needed / not reliable without verified time”，不要继续写成可读项目。
+- “Purple Star Astrology lands his profile on the Horse in the Life Palace” 可疑且无来源 → 要么给出具体农历换算、出生时辰和 Zi Wei 计算依据，要么整句删除。
+- “Western chart quiet on precise timing” 表述不专业；Western astrology 有 transits/progressions/directions → 改成“本文不做预测型 timing”，不要把系统能力说错。
+- 内容过多重复“lens / symbolism / pattern-matching”，Mbappé 具体性不足 → 用 2018 World Cup、Bondy/Paris background、France captaincy、Real Madrid move、pace/finishing/public leadership 等真实素材替换空泛段落。
+- “Sagittarius = 9th-house themes / Sun-led chart structure” 容易误导；星座不等于实际第九宫，natal chart 也不是 Sun-led → 改成“associated archetypes only”，不要写成真实宫位配置。
+- Sources 太弱：Rudhyar/Greene 只是传统背景，不是这篇的事实来源 → 加入 Mbappé 生平来源、实际星历/ephemeris 来源、任何 Zi Wei/numerology 计算来源；否则删掉未支撑的跨系统 claims。
+

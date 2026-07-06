@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-HOUSE-015",
+  "entity": "England vs Norway Astrology",
+  "target_keyword": "England vs Norway astrology",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-07-06T13:18:33.902Z",
+  "content_sha256_short": "c809675141ec5901",
+  "source_path": "_staging/PG-HOUSE-015-repair-candidate.md",
+  "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-HOUSE-015-en.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 2,
+      "h4Count": 0,
+      "words": 1815,
+      "wikilinks": 5,
+      "tbdLinks": 5
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

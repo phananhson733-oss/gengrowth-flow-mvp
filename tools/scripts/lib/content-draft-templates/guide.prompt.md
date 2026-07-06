@@ -307,6 +307,8 @@ target_keyword = **「{{target_keyword}}」**（完整短语）。**SEO + RL4 bi
 > 2. **绝不在 source 之外编造其他引用 / 作者 / 年份 / 数字 / 统计**。
 > 3. 不要在正文里输出 URL / source_id / 原文 quote — 这些只是给你做事实锚点用。
 
+{{CHART_FACTS_BLOCK}}
+
 {{ENTITY_PASSPORT_BLOCK}}
 
 {{FRICTION_MINE_BLOCK}}

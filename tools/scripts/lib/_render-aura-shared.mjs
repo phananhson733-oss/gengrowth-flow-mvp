@@ -219,6 +219,7 @@ export function buildReplacements(cfg, ragBlocks = {}) {
     '{{FRICTION_MINE_BLOCK}}': ragBlocks.frictionMine || '',
     '{{SERP_SNIPPETS_BLOCK}}': ragBlocks.serpSnippets || '',
     '{{OBSIDIAN_RAG_BLOCK}}': ragBlocks.obsidianRag || '',
+    '{{CHART_FACTS_BLOCK}}': ragBlocks.chartFacts || '', // 真星盘 ground-truth（非名人页为空串）
     // Journal_Prompts (col 20). Empty → '' so the placeholder never survives.
     '{{journal_prompts}}': journalPromptsBlock(cfg.journal_prompts),
     // Author voice capsule (Lane B) — 4 placeholders, ALWAYS present (empty-string
@@ -316,6 +317,10 @@ export function renderAuraPrompt(cfg) {
   );
   const serpPath = join(REPO, '.gg-cache', 'serp', `${PAGE_ID}.json`);
   const serpCache = existsSync(serpPath) ? JSON.parse(readFileSync(serpPath, 'utf8')) : null;
+  // chart-inject 真星盘 ground-truth（可选：仅名人 birth-chart 页有；非名人页/查不到→空串，模板 |'' 兜底）
+  const chartPath = join(REPO, '.gg-cache', PAGE_ID, 'chart-facts.json');
+  let chartFacts = '';
+  try { if (existsSync(chartPath)) chartFacts = JSON.parse(readFileSync(chartPath, 'utf8')).block || ''; } catch { chartFacts = ''; }
 
   // 3. Replacements (pure — see buildReplacements). The RAG blocks are rendered
   // here from the on-disk caches and handed in as plain strings so the map
@@ -325,6 +330,7 @@ export function renderAuraPrompt(cfg) {
     frictionMine: frictionMineBlock(frictionPayload),
     serpSnippets: serpSnippetsBlock(serpCache, TARGET_KW),
     obsidianRag: obsidianRagBlock(obsidianCache),
+    chartFacts,
   });
 
   let prompt = template;

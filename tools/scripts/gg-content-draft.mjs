@@ -691,6 +691,7 @@ function renderPrompt(template, ctx) {
     '{{FRICTION_MINE_BLOCK}}': ctx.frictionMineBlock || '',
     '{{SERP_SNIPPETS_BLOCK}}': ctx.serpSnippetsBlock || '',
     '{{OBSIDIAN_RAG_BLOCK}}': ctx.obsidianRagBlock || '',
+    '{{CHART_FACTS_BLOCK}}': '', // 手动 draft 路径不跑 chart-inject → 恒空（防裸占位符残留，评审 FSI-1）
   };
 
   for (const [k, v] of Object.entries(replacements)) {

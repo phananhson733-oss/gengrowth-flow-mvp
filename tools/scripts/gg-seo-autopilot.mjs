@@ -93,6 +93,7 @@ const BRIDGE = join(SCRIPTS, 'gg-sheet-to-brief.mjs');
 // vault walk that matched 0 notes for multi-word entities like "full moon ritual".
 const GBRAIN_RAG = join(SCRIPTS, 'gg-gbrain-rag.mjs');
 const ENTITY_PASSPORT = join(SCRIPTS, 'gg-entity-passport.mjs');
+const CHART_INJECT = join(SCRIPTS, 'gg-chart-inject.mjs');
 const RENDER = join(SCRIPTS, 'gg-render-batch.mjs');
 const ORCHESTRATOR = join(SCRIPTS, 'gg-llm-orchestrator.mjs');
 // multi-party review: Codex (gpt-5.5 xhigh) critiques → Opus 4.8 revises.
@@ -803,6 +804,12 @@ function doAuthor(o = {}) {
     catch (e) { log(`entity-passport exit non-zero (partial sources?): ${errTail(e, 80)}`); }
     const epRag = join(ragDir, 'entity-passport.rag.json');
     if (!existsSync(epRag) || statSync(epRag).size < 512) return park(slug, 'entity-passport produced no RAG');
+
+    // 5b. chart-inject（真星盘数据）：名人 birth-chart 文章 → 抓 Wikipedia 生日 + 算真盘 → 注入 v8 prompt
+    //     的 {{CHART_FACTS_BLOCK}}，让 LLM 只解读真实行星位置、不再凭空编星盘（消除 "Horse in Life Palace"
+    //     那类幻觉断言）。**fail-safe**：非名人/查不到生日/API 失败 → 不写文件、render 用空块，绝不阻塞授稿。
+    try { shFlow('node', [CHART_INJECT, '--entity', fallbackRagEntity || ragEntity, '--keyword', keyword, '--page-id', pgId, '--product', process.env.GG_SITE || 'astrologywiki', '--flow-dir', FLOW], 60000); }
+    catch (e) { log(`chart-inject exit non-zero (skipping, no chart facts): ${errTail(e, 80)}`); }
 
     // 6. render → v8 prompt + fixture (render WARNs on missing SERP cache; gate on file)
     try { shFlow('node', [RENDER, '--batch', batchPath, '--overrides', overridePath]); }

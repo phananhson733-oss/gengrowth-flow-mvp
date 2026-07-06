@@ -501,3 +501,4 @@ Last run: 2026-07-06T04:01:43.720Z (1783310503720)
 已读取自动化记忆、项目规则、会话 reminders、`gengrowth-wiki/ai-profile/lynne-soul.md`、`using-superpowers` 与 `verification-before-completion` 技能说明；当前仓库未发现 `ai-profile/lynne-soul.md`，按历史约定从 sibling vault 读取 owner profile。仅运行指定三仓库 `obsidian-vault-git-sync.py --verbose` 入口，初次输出 `Obsidian vault git sync: clean`。初次验证显示 `gengrowth-wiki` HEAD `b0ffc291579601330c6f35a868356df067f49750`、`gengrowth-ops` HEAD `2701571eff9e8d50021ec979e483255662a3f3cb`、`gengrowth-flow-mvp` HEAD `32804e4f8ad36eb3df5700a307698ce6e547486d`；三仓 `HEAD...origin/main` 均为 `0 0`，且 `git diff --name-only --diff-filter=U` 与 `git ls-files -u` 均无输出。回读 `gengrowth-ops` 与 `gengrowth-flow-mvp` 的 Obsidian Git `data.json`，确认 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。按项目 record 规则追加本 Q&A 后，将继续只用同一确定性入口收敛并复验；未使用破坏性 git/filesystem 命令或镜像删除类同步脚本。
 
 ---
+ 

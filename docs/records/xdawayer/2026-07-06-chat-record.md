@@ -944,6 +944,6 @@ Last run: 2026-07-06T12:01:29.867Z (1783339289867)
 
 **🤖 回答：**
 
-已读取自动化记忆、项目 reminders，并使用 `superpowers:using-superpowers` 做技能前置检查；当前仓库未发现 `ai-profile/lynne-soul.md`。仅运行指定确定性入口，首轮脚本输出 `Obsidian vault git sync: clean`。追加本 record 后 rerun 同一入口，脚本退出码为 0 且无 stdout。post-record 独立验证三仓 `git status --branch --porcelain=v2` 均 clean，`HEAD...origin/main` 均为 `0 0`，`git diff --name-only --diff-filter=U` 与 `git ls-files -u` 均无输出；最终 HEAD 为 `gengrowth-wiki` `be677a9975a9eacf13c33c77126da6d7a6f04d0d`、`gengrowth-ops` `d89866c0dca1d70d6221f91765e49b7d54da20b2`、`gengrowth-flow-mvp` `ab86558ff4a20ca1fcd36810c6661d7ae7cc7c86`。回读 `gengrowth-ops` 与 `gengrowth-flow-mvp` 的 Obsidian Git `data.json`，确认 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。未使用破坏性 git/filesystem 命令或镜像删除类同步脚本；本条摘要更新后继续用同一入口收敛。
+已读取自动化记忆、项目 reminders，并使用 `superpowers:using-superpowers` 做技能前置检查；当前仓库未发现 `ai-profile/lynne-soul.md`。仅运行指定确定性入口，首轮脚本输出 `Obsidian vault git sync: clean`。追加本 record 后 rerun 同一入口，脚本退出码为 0 且无 stdout。post-record 独立验证三仓 `git status --branch --porcelain=v2` 均 clean，`HEAD...origin/main` 均为 `0 0`，`git diff --name-only --diff-filter=U` 与 `git ls-files -u` 均无输出。回读 `gengrowth-ops` 与 `gengrowth-flow-mvp` 的 Obsidian Git `data.json`，确认 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。未使用破坏性 git/filesystem 命令或镜像删除类同步脚本；本条摘要更新后继续用同一入口收敛并复验。
 
 ---

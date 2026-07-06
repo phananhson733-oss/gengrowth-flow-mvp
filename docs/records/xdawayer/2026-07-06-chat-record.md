@@ -1,22 +1,5 @@
 ---
 
-### Q18 — 16:05
-
-**🙋 提问：**
-
-Automation: GenGrowth Topic Register
-Automation ID: gengrowth-topic-register
-Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
-Last run: 2026-07-06T08:00:45.439Z (1783324845439)
-
-Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
-
-**🤖 回答：**
-
-已读取项目规则、会话 reminders、automation memory、相关本地记忆和 `gengrowth-topic-register-wrapper-report` 流程说明；当前仓库未发现 `ai-profile/lynne-soul.md` 内容。仅运行指定入口 `bash tools/scripts/gg-topic-register-tick.sh`，未传入任何手动 write/repair/overwrite flag。最新日志为 `~/gengrowth-agents/cron-sync/topic_register/2026-07-06.log`，本次窗口为 `2026-07-06 16:04:37-16:04:41 CST`，退出码 0，最终状态 `topic-register ok`。本地环境启用 apply mode，日志命令含 `--apply`，但 `dry_run=false` 且两个产品均为零更新：`astrologywiki` candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]；`gengrowth` candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]。`budget_exhausted=false`，未见 failure；未手写 Sheet、未直接编辑 task plan、未创建额外 Feishu/Google Doc 报告。
-
----
-
 ### Q18 — 16:02
 
 **🙋 提问：**
@@ -629,5 +612,22 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 已读取项目规则、自动化 memory、会话 reminders 与 topic-register wrapper-report 技能说明；当前仓库未发现 `ai-profile/lynne-soul.md`。仅运行 `bash tools/scripts/gg-topic-register-tick.sh`，未传入任何手动写入、repair、overwrite 或直接脚本写标志。最新日志为 `~/gengrowth-agents/cron-sync/topic_register/2026-07-06.log`，本次窗口为 2026-07-06 16:01:31-16:02:37 CST，退出码 0，最终状态 `topic-register ok`。本地环境启用 apply mode，`dry_run=false`，命令为 `node .../gg-topic-register.mjs --product all --limit 10 --llm claude --discover-evidence --apply --run-budget-ms 840000`。`astrologywiki` candidates=1、updates=1、new_clusters=0、page_ids=`PG-CELEB-032`、preprocessor=`v1_fallback`，evidence discovery 对 `erling haaland girlfriend birth chart astrology` 判定 insufficient，distinctSerpTitles=0、distinctSerpDomains=0；`gengrowth` candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]。日志未见 wrapper 失败，`budget_exhausted=false`。后续验证时同一日志又追加了 16:04:37-16:04:41 CST 的后续窗口，疑似其他触发；该 latest window 同样为 apply mode，两个产品 candidates/updates/new_clusters 均为 0。安全边界保持：未手工写 Sheet、未直接编辑 task plan、未创建额外 Feishu/Google Doc 报告。
+
+---
+
+### Q20 — 16:05
+
+**🙋 提问：**
+
+Automation: GenGrowth Topic Register
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-06T08:00:45.439Z (1783324845439)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+已读取项目规则、会话 reminders、automation memory、相关本地记忆和 `gengrowth-topic-register-wrapper-report` 流程说明；当前仓库未发现 `ai-profile/lynne-soul.md` 内容。仅运行指定入口 `bash tools/scripts/gg-topic-register-tick.sh`，未传入任何手动 write/repair/overwrite flag。最新日志为 `~/gengrowth-agents/cron-sync/topic_register/2026-07-06.log`，本次窗口为 `2026-07-06 16:04:37-16:04:41 CST`，退出码 0，最终状态 `topic-register ok`。本地环境启用 apply mode，日志命令含 `--apply`，但 `dry_run=false` 且两个产品均为零更新：`astrologywiki` candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]；`gengrowth` candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]。`budget_exhausted=false`，未见 failure；未手写 Sheet、未直接编辑 task plan、未创建额外 Feishu/Google Doc 报告。
 
 ---

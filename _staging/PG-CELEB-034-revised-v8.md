@@ -1,28 +1,3 @@
----
-title: Jessica Pegula Birth Chart
-slug: jessica-pegula-birth-chart
-date: 2026-07-06
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T2
-track: 量产线
-page_id: PG-CELEB-034
-author_id: "marcus-orion"
-author_display_name: "Marcus Orion"
-target_keyword: Jessica Pegula birth chart
-associated_keywords:
-  - Jessica Pegula birth chart meaning
-  - Jessica Pegula birth chart astrology
-  - Jessica Pegula birth chart zodiac
-  - Jessica Pegula birth chart interpretation
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-07-06T12:47:37.059Z
-content_sha256_short: 082387ea38a4229e
-phase2_checks: all-pass
----
-
 # Reading the Jessica Pegula Birth Chart as Symbolic Narrative
 
 ## What Is the Jessica Pegula Birth Chart?

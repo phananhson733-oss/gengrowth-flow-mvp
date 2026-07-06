@@ -768,3 +768,20 @@ Content_Angle:
 本机 Chrome 驱动 GSC 手动 Request Indexing 一波（账号 xdawayer）。astrologywiki 从结果复盘表底部往上 7 篇全部提交并回填申请时间=2026-07-06、状态=已重新提交，sync-recap/sync-request-queue 已同步；gengrowth glossary 提交 4 个（topical-authority/zero-click-search/referral-program/ai-citation，"已抓取-尚未编入索引"），zh/robots-txt 已收录跳过。配额在第 12 次（attribution-model）耗尽，留下次窗口。修正了系统误报日期（07-04→实际 07-06），飞书推送 1 条汇总 + 1 条日期更正（均投递成功）。gengrowth glossary 页仍不在 index-tracking（解析缺口）无法回填，已记 reminders。
 
 ---
+
+### Q25 — 17:32
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: 2026-07-05T21:00:40.536Z (1783285240536)
+
+Run the deterministic fixed-row index repair workflow through `bash tools/scripts/gg-index-repair-resubmit-tick.sh`. The wrapper loads the local gg environment, loops the configured products (`GG_INDEX_MONITOR_PRODUCTS`, defaulting to astrologywiki and gengrowth), processes rows marked `已修复`, syncs `结果复盘表`, and refreshes `request-indexing-queue` in each product Google Sheet. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, do not click Search Console Request Indexing unattended, and do not create Feishu or Google Doc report artifacts. After the wrapper exits, summarize per-product `process-fixed`, `sync-recap`, `sync-request-queue` counts visible in the log, plus any failures.
+
+**🤖 回答：**
+
+已读取项目规则、会话 reminders、automation memory、本地历史记忆，并使用 `superpowers:using-superpowers` 与 `verification-before-completion` 做执行/收尾约束检查；当前仓库未发现 `ai-profile/lynne-soul.md`。仅运行指定入口 `bash tools/scripts/gg-index-repair-resubmit-tick.sh`，未使用普通文章 Google Indexing API、未无人值守点击 Search Console Request Indexing、未创建 Feishu 或 Google Doc 报告。wrapper 退出码为 0，日志窗口为 `2026-07-06 17:31:31-17:31:55 CST`，最终行 `index repair-resubmit ok`。日志计数：`astrologywiki` 为 `process-fixed fixed=0 resubmitted=0`、`sync-recap en_rows=201 appended=0 updated=0 skipped=201`、`sync-request-queue rows=20 P0=0 P1=1 P2=15 P3=4`；`gengrowth` 为 `process-fixed fixed=0 resubmitted=0`、`sync-recap en_rows=54 appended=0 updated=0 skipped=54`、`sync-request-queue rows=6 P0=0 P1=1 P2=2 P3=3`。本次窗口未见失败关键词或非零产品 rc，并已追加 automation memory。
+
+---

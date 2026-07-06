@@ -214,3 +214,20 @@ Last run: 2026-07-06T18:01:01.330Z (1783360861330)
 已读取自动化记忆、项目 reminders、sibling owner profile，并使用 `using-superpowers` 与 `verification-before-completion` 做技能入口和收尾校验。仅运行指定确定性三仓库入口；首轮脚本退出码为 0 且无输出，追加本 record 后重跑同一入口提交并推送 1 个 `gengrowth-flow-mvp` record 路径。一次复验发现 `gengrowth-wiki/docs/records/wzb/2026-07-07-chat-record.md` 有普通修改、无 unmerged、ahead/behind 仍为 `0 0`，继续只重跑同一入口后收敛。最终独立验证显示 `gengrowth-wiki` HEAD `f3f4c2a92b47c555bc57e1e6807b8656d1921716`、`gengrowth-ops` HEAD `b3196aa751fff613cc8ef482ab79ae23c7e2399f`、`gengrowth-flow-mvp` HEAD `0b33a4ef2516ddae8cad8d5b21f1b453e5db5790`，三仓 `HEAD...origin/main` 均为 `0 0`，`git diff --name-only --diff-filter=U` 与 `git ls-files -u` 均无输出。回读 `gengrowth-ops` 与 `gengrowth-flow-mvp` 的 Obsidian Git `data.json`，确认 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。未使用破坏性 git/filesystem 命令或镜像删除类同步脚本。
 
 ---
+
+### Q7 — 05:03
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: 2026-07-06T09:30:45.787Z (1783330245787)
+
+Run the deterministic fixed-row index repair workflow through `bash tools/scripts/gg-index-repair-resubmit-tick.sh`. The wrapper loads the local gg environment, loops the configured products (`GG_INDEX_MONITOR_PRODUCTS`, defaulting to astrologywiki and gengrowth), processes rows marked `已修复`, syncs `结果复盘表`, and refreshes `request-indexing-queue` in each product Google Sheet. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, do not click Search Console Request Indexing unattended, and do not create Feishu or Google Doc report artifacts. After the wrapper exits, summarize per-product `process-fixed`, `sync-recap`, `sync-request-queue` counts visible in the log, plus any failures.
+
+**🤖 回答：**
+
+已读取自动化记忆、项目 reminders，并使用 `using-superpowers` 与 `verification-before-completion` 做技能入口和收尾校验；当前仓库未发现 `ai-profile/lynne-soul.md`。仅运行指定 wrapper `bash tools/scripts/gg-index-repair-resubmit-tick.sh`，退出码为 0，运行窗口为 `2026-07-07 05:02:20` 至 `05:02:42 CST`，dated log 为 `/Users/awayer_mini/gengrowth-agents/cron-sync/index_repair_resubmit/2026-07-07.log`，最终行 `index repair-resubmit ok`。`astrologywiki`：`process-fixed fixed=0 resubmitted=0`；`sync-recap en_rows=205 appended=4 updated=0 skipped=201`；`sync-request-queue rows=24 P0=0 P1=1 P2=15 P3=8`。`gengrowth`：`process-fixed fixed=0 resubmitted=0`；`sync-recap en_rows=54 appended=0 updated=0 skipped=54`；`sync-request-queue rows=6 P0=0 P1=1 P2=2 P3=3`。未发现失败关键词或非零产品 rc；未使用普通文章 Google Indexing API、未无人值守点击 Search Console Request Indexing、未创建 Feishu 或 Google Doc 报告 artifacts。
+
+---

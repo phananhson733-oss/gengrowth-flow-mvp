@@ -16,7 +16,6 @@ associated_keywords:
   - Achraf Hakimi birth chart astrology
   - Achraf Hakimi birth chart zodiac
   - Achraf Hakimi birth chart interpretation
-  - emma watson zodiac sign
 generated_by: unknown
 prompt_version: v8
 generated_at: 2026-07-05T13:27:52.038Z

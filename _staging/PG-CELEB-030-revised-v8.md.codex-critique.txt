@@ -1,0 +1,8 @@
+- “Moon / rising sign are both guesses”不准确 → 查 ephemeris；若 2003-08-17 在 Lyon 全日 Moon 不换座，就应写出 Moon sign，仅把 Moon degree/house/Ascendant 标为未知。
+- 缺少基础出生数据 → 在开头明确列出 reported birth date、birthplace、no verified birth time；不要只说“mid-August 2003”。
+- 文章没有真正给出 birth chart → 增加 no-birth-time chart placements 表，至少列 Sun、Moon、Mercury、Venus、Mars、Jupiter、Saturn 等可由日期确定的行星。
+- “Major aspects… across houses”有占星概念错误 → 改为 planet-to-planet angular relationships；houses/angles 必须因无 birth time 暂不解读。
+- “Moon energy center: water/earth mood”是泛化且可能错误 → 替换为实际 Moon sign 对应元素，或删除该列。
+- 内容过度停留在“不要过度解读”的元讨论 → 缩短 Pew/self-awareness/Reflection 部分，把篇幅换成 Cherki 具体公众形象与 chart symbolism 的对应。
+- SEO intent 偏弱 → 搜索者找“Rayan Cherki birth chart”，应更快回答“他的 Sun 是什么、Moon 是否可知、哪些不能确认、为什么”。
+- Sources 太空泛 → 增加可靠人物资料来源和 ephemeris/chart source；Rudhyar/Liz Greene 只能支撑方法论，不能支撑 Cherki chart facts。

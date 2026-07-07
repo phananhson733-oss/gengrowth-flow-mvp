@@ -103,6 +103,37 @@ function pagePathFromUrl(url) {
   }
 }
 
+export function extractPageSignalsFromHtml(html = '') {
+  const raw = String(html || '');
+  return {
+    has_faq_schema: /"@type"\s*:\s*(\[[\s\S]*?["']FAQPage["']|["']FAQPage["'])/i.test(raw) ||
+      /https?:\/\/schema\.org\/FAQPage/i.test(raw),
+  };
+}
+
+export async function fetchPageSignals(url, { fetcher = fetch } = {}) {
+  try {
+    const res = await fetcher(url);
+    if (!res?.ok) return { has_faq_schema: '' };
+    return extractPageSignalsFromHtml(await res.text());
+  } catch {
+    return { has_faq_schema: '' };
+  }
+}
+
+export function detectTrendContext(row = {}, now = new Date()) {
+  const text = `${row.slug || slugFromUrl(row.url)} ${row.title || ''}`.toLowerCase();
+  const isTrendPage = /\b(world-cup|cup|vs|eclipse|championship|zodiac-sign|birth-chart|girlfriend)\b/.test(text);
+  if (!isTrendPage) return { is_trend_page: false, event_status: '' };
+  const years = [...text.matchAll(/\b(20[0-9]{2})\b/g)].map((m) => Number(m[1]));
+  const currentYear = Number(isoDay(now).slice(0, 4));
+  const ended = years.length > 0 && Math.max(...years) < currentYear;
+  return {
+    is_trend_page: true,
+    event_status: ended ? 'ended' : 'active',
+  };
+}
+
 function siteOrigin(site) {
   if (String(site || '').startsWith('sc-domain:')) return `https://${String(site).slice('sc-domain:'.length)}`;
   if (/^https?:\/\//.test(String(site || ''))) return String(site).replace(/\/$/, '');
@@ -455,6 +486,36 @@ export async function fetchGa4PageViews(token, property, url, window, {
   return { pageViews, targetCountryPageViews };
 }
 
+export async function fetchGscTrendMomentum(token, site, url, {
+  now = new Date(),
+  targetCountry = DEFAULT_TARGET_COUNTRY,
+  fetchGscUrlMetricsFn = fetchGscUrlMetrics,
+} = {}) {
+  const today = dayNumber(isoDay(now));
+  if (today == null) return { impressions_delta_pct: '' };
+  const recentEnd = addDays(isoDay(now), -1);
+  const recentStart = addDays(recentEnd, -6);
+  const previousEnd = addDays(recentStart, -1);
+  const previousStart = addDays(previousEnd, -6);
+  const previous = await fetchGscUrlMetricsFn(token, site, url, {
+    milestone: 'trend_previous_7d',
+    startDate: previousStart,
+    endDate: previousEnd,
+  }, { targetCountry });
+  const recent = await fetchGscUrlMetricsFn(token, site, url, {
+    milestone: 'trend_recent_7d',
+    startDate: recentStart,
+    endDate: recentEnd,
+  }, { targetCountry });
+  const prev = toNumber(previous.impressions, 0);
+  const cur = toNumber(recent.impressions, 0);
+  return {
+    impressions_delta_pct: prev > 0 ? (cur - prev) / prev : '',
+    trend_previous_impressions: prev,
+    trend_recent_impressions: cur,
+  };
+}
+
 function reportPathFor({ now, site, reportDir = RECAP_PERFORMANCE_REPORT_DIR }) {
   return join(reportDir, `${isoDay(now)}-${siteTag(site)}-optimization-tasks.md`);
 }
@@ -555,10 +616,33 @@ export async function runRecapPerformance(argv, deps = {}) {
     if (recapComparable(item.recap) !== recapComparable(merged)) {
       updates.push({ old: item.recap, merged });
     }
+    let pageSignals = {};
+    try {
+      pageSignals = await (deps.fetchPageSignals || fetchPageSignals)(item.url);
+    } catch {
+      pageSignals = {};
+    }
+    const trendContext = detectTrendContext(item, now);
+    let trendMomentum = {};
+    if (trendContext.is_trend_page) {
+      try {
+        trendMomentum = await (deps.fetchGscTrendMomentum || fetchGscTrendMomentum)(
+          analyticsToken,
+          site,
+          item.url,
+          { now, targetCountry },
+        );
+      } catch {
+        trendMomentum = {};
+      }
+    }
     tasks.push(...classifyOptimizationTasks({
       ...merged,
       slug: item.slug,
       title: item.title,
+      ...pageSignals,
+      ...trendContext,
+      ...trendMomentum,
     }));
   }
 

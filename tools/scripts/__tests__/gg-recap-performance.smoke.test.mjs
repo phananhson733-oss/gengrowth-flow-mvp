@@ -12,6 +12,8 @@ import {
   RECAP_PERFORMANCE_REPORT_DIR,
   buildPerformancePlan,
   classifyOptimizationTasks,
+  detectTrendContext,
+  extractPageSignalsFromHtml,
   fetchGscUrlMetrics,
   mergePerformanceIntoRecapRow,
   renderOptimizationMarkdown,
@@ -163,6 +165,36 @@ test('classifyOptimizationTasks implements the recap action rules', () => {
   assert.match(observe[0].action, /60天后再看/);
 });
 
+test('extractPageSignalsFromHtml detects FAQPage schema', () => {
+  assert.deepEqual(extractPageSignalsFromHtml(`
+    <html><head>
+      <script type="application/ld+json">
+        {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[]}
+      </script>
+    </head><body>ok</body></html>
+  `), { has_faq_schema: true });
+  assert.deepEqual(extractPageSignalsFromHtml('<html><body>No FAQ schema here</body></html>'), {
+    has_faq_schema: false,
+  });
+});
+
+test('detectTrendContext marks event and people pages without treating past-year events as active', () => {
+  assert.deepEqual(detectTrendContext({
+    slug: 'england-vs-norway-astrology',
+    title: 'England vs Norway Astrology',
+  }, new Date('2026-07-07T00:00:00Z')), {
+    is_trend_page: true,
+    event_status: 'active',
+  });
+  assert.deepEqual(detectTrendContext({
+    slug: 'world-cup-2022-astrology',
+    title: 'World Cup 2022 Astrology',
+  }, new Date('2026-07-07T00:00:00Z')), {
+    is_trend_page: true,
+    event_status: 'ended',
+  });
+});
+
 test('renderOptimizationMarkdown groups the daily action list by priority', () => {
   const markdown = renderOptimizationMarkdown([
     { bucket: '技术排查', slug: 'zero-impression', reason: '已收录但零曝光', action: '排查技术问题' },
@@ -251,6 +283,8 @@ test('runRecapPerformance updates recap rows and writes a Markdown task list wit
       calls.push(['ga4']);
       return { pageViews: 0, targetCountryPageViews: 0 };
     },
+    fetchPageSignals: async () => ({ has_faq_schema: false }),
+    fetchGscTrendMomentum: async () => ({ impressions_delta_pct: -0.5 }),
     batchUpdateRecapRows: async (token, workbookId, tabName, updates, appends) => {
       calls.push(['batchUpdate', token, workbookId, tabName, updates, appends]);
     },
@@ -269,6 +303,7 @@ test('runRecapPerformance updates recap rows and writes a Markdown task list wit
   assert.ok(write, 'expected markdown report write');
   assert.match(write[1], new RegExp(`${RECAP_PERFORMANCE_REPORT_DIR}/2026-07-07-astrologywiki-optimization-tasks.md$`));
   assert.match(write[2], /【P0 立即处理】/);
+  assert.match(write[2], /补充 FAQ schema/);
   assert.equal(calls.some((call) => /publish|author|deploy/i.test(String(call[0]))), false);
 });
 

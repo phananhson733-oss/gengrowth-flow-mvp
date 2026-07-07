@@ -602,3 +602,23 @@ goal 去落地。上下文为 Obsidian 需求文档 `2026-07-05-结果复盘表�
 按“现在手动触发一次刚接入 Codex automation 的结果复盘任务”执行，使用真实 wrapper `bash tools/scripts/gg-recap-performance-tick.sh`，不绕过脚本。第一次运行 `rc=1`，日志显示 GSC/GA4 OAuth refresh token 被 Google 拒绝（Testing-mode 7 天过期/已撤销），wrapper 已发送飞书失败告警。随后运行 `node tools/scripts/oauth-init.mjs` 重新完成本机 Google consent，新的 refresh token 写回 `~/.config/gg/_gg.env`；`verify-gcp-oauth.mjs` 中 GSC Search Analytics 与 GA4 Data API 均通过，通用 Sheets write 测试因默认 `README!A1` range 不存在失败但不影响真实复盘表写入。第二次运行 wrapper 成功：astrologywiki `rows=156 updated=156 tasks=155`，报告 `/Users/awayer_mini/gengrowth-agents/reports/recap-performance/2026-07-07-astrologywiki-optimization-tasks.md`；gengrowth `rows=41 updated=41 tasks=41`，报告 `/Users/awayer_mini/gengrowth-agents/reports/recap-performance/2026-07-07-gengrowth-optimization-tasks.md`；日志末尾为 `recap performance ok`。未执行发布、部署或 GSC Request Indexing。
 
 ---
+
+### Q22 — 15:53
+
+**🙋 提问：**
+
+跑成功了吗？我期望是可以在飞书 SEO 技术群里里面推送一条消息。消息的形式在群里有提到，而且我建议我建议使用飞书卡片来呈现
+
+我看到这里的数据，几乎都是待回填的状态？
+
+附图：
+- `/var/folders/c8/k7q0dcp13rd8590xbtxs_9n80000gn/T/codex-clipboard-3f249acc-a5ff-414b-ac11-2c7768fbddb6.png`
+- `/var/folders/c8/k7q0dcp13rd8590xbtxs_9n80000gn/T/codex-clipboard-97e460ab-eef0-451f-9c34-3f7cb31ef8e9.png`
+
+**🤖 回答：**
+
+复盘数据跑成功，但成功通知原先没有接上：wrapper 成功路径只写 `recap performance ok`，失败路径才发飞书告警。已补上 `recap_performance_ok` 事件，使用飞书 Card 2.0 interactive 卡片发送到默认 SEO 技术群，并把 `replay-outbox` 接入复盘 wrapper 开头。已补发本次成功卡片，返回 `card:true`，messageId 为 `om_x100b6bff4aca84a4b3090adce98874f`。
+
+关于表里的 `待回填`：当前不是 D14 失败。只读 sheet 后确认 astrologywiki 当前 `planRows=156`，本次执行窗口为 `day14=156、day30=0、day60=0`；成熟后的 D14 没有仍待回填的行。脚本用 `index-tracking.published_at` 作为 D30/D60 起算点，而不是 `结果复盘表.申请时间`。当前最早 `published_at` 是 2026-06-09，所以 2026-07-07 尚无 D30 到期；D30 第一批从 2026-07-09 起回填 6 行，D60 第一批从 2026-08-08 起回填。已在卡片说明中写明“当前未到期列保留 `待回填`”，避免误读为自动化失败。验证：focused smoke 33 项通过，`bash -n tools/scripts/gg-recap-performance-tick.sh` 通过。
+
+---

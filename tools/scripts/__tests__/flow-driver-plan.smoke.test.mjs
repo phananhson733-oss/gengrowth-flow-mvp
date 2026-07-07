@@ -26,3 +26,18 @@ test('planDriverActions：空/无 claims → 空数组', () => {
   assert.deepEqual(planDriverActions({}), []);
   assert.deepEqual(planDriverActions(null), []);
 });
+
+import { spawnSync } from 'node:child_process';
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
+test('gg-flow-driver CLI dry-run：读 ledger 打印计划 + 汇总，exit 0', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'flowdrv-'));
+  const ledger = join(dir, 'claims.json');
+  writeFileSync(ledger, JSON.stringify(CLAIMS));
+  const r = spawnSync('node', ['tools/scripts/gg-flow-driver.mjs', '--ledger', ledger], { encoding: 'utf8' });
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stdout, /parks=3 fix=1 retry=1 archive=1 mode=dry-run/);
+  assert.match(r.stdout, /PG-STALE.*archive/);
+});

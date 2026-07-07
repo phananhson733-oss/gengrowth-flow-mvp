@@ -493,7 +493,13 @@ export function checkRL4(draft, ctx) {
   const skippedStructural = [];
   for (const s of sections) {
     // Heuristic: take first paragraph of body (until first blank line) for anchor check.
-    const firstPara = (s.body.split(/\n\s*\n/)[0] || '').trim();
+    // 跳过打头的免责声明样板行（RL6 强制的 psych-safety 行不是本节的关键词锚；若它恰是首段，会把整节
+    // 误判为漂移——典型是以免责声明开头的 Take Action CTA 节，真正含关键词的内容在其后一段）。
+    const paras = s.body.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+    let firstPara = paras[0] || '';
+    if (/^this is not (a )?clinical interpretation or mental health advice[.。]?$/i.test(firstPara) && paras[1]) {
+      firstPara = paras[1];
+    }
     if (!firstPara) {
       drifted.push(`"${s.heading}" (empty body)`);
       continue;

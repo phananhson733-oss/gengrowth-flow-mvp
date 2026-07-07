@@ -3,7 +3,10 @@
 // Run: node --test tools/scripts/__tests__/gg-recap-performance.smoke.test.mjs
 
 import { strict as assert } from 'node:assert';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { test } from 'node:test';
+import { fileURLToPath } from 'node:url';
 
 import {
   RECAP_PERFORMANCE_REPORT_DIR,
@@ -13,6 +16,9 @@ import {
   renderOptimizationMarkdown,
   runRecapPerformance,
 } from '../gg-recap-performance.mjs';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const SCRIPTS = join(__dirname, '..');
 
 test('buildPerformancePlan selects D14/D30/D60 windows from published tracking rows', () => {
   const plan = buildPerformancePlan({
@@ -229,4 +235,16 @@ test('runRecapPerformance updates recap rows and writes a Markdown task list wit
   assert.match(write[1], new RegExp(`${RECAP_PERFORMANCE_REPORT_DIR}/2026-07-07-astrologywiki-optimization-tasks.md$`));
   assert.match(write[2], /【P0 立即处理】/);
   assert.equal(calls.some((call) => /publish|author|deploy/i.test(String(call[0]))), false);
+});
+
+test('daily wrapper loops products and only runs recap performance sync', () => {
+  const wrapper = readFileSync(join(SCRIPTS, 'gg-recap-performance-tick.sh'), 'utf8');
+  assert.match(wrapper, /GG_RECAP_PERFORMANCE_PRODUCTS:-astrologywiki gengrowth/);
+  assert.match(wrapper, /gg-recap-performance\.mjs/);
+  assert.match(wrapper, /--write-sheet --write-report/);
+  assert.match(wrapper, /GG_SHEETS_ASTROLOGY_WORKBOOK_ID/);
+  assert.match(wrapper, /GG_SHEETS_GENGROWTH_WORKBOOK_ID/);
+  assert.match(wrapper, /GG_GA4_ASTROLOGY_PROPERTY/);
+  assert.match(wrapper, /GG_GA4_GENGROWTH_PROPERTY/);
+  assert.doesNotMatch(wrapper, /gg-seo-author|gg-gengrowth-publish|Request Indexing|--submit-sitemap/);
 });

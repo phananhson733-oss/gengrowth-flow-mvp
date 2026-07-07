@@ -35,3 +35,32 @@ export function buildActionCommands(park, cfg) {
   }
   return { kind: 'unknown', commands: [], skipReason: `未知 action ${action}` };
 }
+
+// 有界编排：逐 park 派动作,side-effect 走 deps.run(cmd)→{ok,code}。maxFix/maxArchive 限爆炸半径。
+// deps = { run(cmd)->Promise<{ok,code}>, log(msg), cfg:{repo,site}, maxFix, maxArchive }。
+export async function driveApply(plan, deps) {
+  const s = { fixed: 0, fixFailed: 0, archived: 0, retryDeferred: 0, fixSkipped: 0, capped: 0 };
+  let fixCount = 0, archiveCount = 0;
+  for (const park of plan || []) {
+    const built = buildActionCommands(park, deps.cfg);
+    if (built.kind === 'retry-skip') { s.retryDeferred++; deps.log(`${park.pid} retry → 交现有 auto-retry lane`); continue; }
+    if (built.kind === 'fix-skip') { s.fixSkipped++; deps.log(`${park.pid} fix-skip: ${built.skipReason}`); continue; }
+    if (built.kind === 'archive') {
+      if (archiveCount >= deps.maxArchive) { s.capped++; deps.log(`${park.pid} archive capped(>${deps.maxArchive})`); continue; }
+      archiveCount++;
+      const r = await deps.run(built.commands[0]);
+      if (r.ok) s.archived++; else deps.log(`${park.pid} archive notify 失败 code=${r.code}`);
+      continue;
+    }
+    if (built.kind === 'fix') {
+      if (fixCount >= deps.maxFix) { s.capped++; deps.log(`${park.pid} fix capped(>${deps.maxFix},下轮再处理)`); continue; }
+      fixCount++;
+      let ok = true;
+      for (const cmd of built.commands) { const r = await deps.run(cmd); if (!r.ok) { ok = false; break; } }
+      if (ok) { s.fixed++; deps.log(`${park.pid} fix → 重过门(门做保证,PASS 才 merge)`); }
+      else { s.fixFailed++; deps.log(`${park.pid} fix 失败(门未过或工具错)——留 needs_human`); }
+      continue;
+    }
+  }
+  return s;
+}

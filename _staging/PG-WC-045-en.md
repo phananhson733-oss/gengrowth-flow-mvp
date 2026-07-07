@@ -31,7 +31,7 @@ Mexico vs England astrology prediction is **a symbolic chart reading of a match,
 
 - Treats the game as cultural symbolism rather than a settled outcome
 - Layers individual player charts over each country's national chart
-- Reads shared transits, such as Jupiter in Gemini, as background tone for both sides
+- Reads shared transits, such as Jupiter in Cancer, as background tone for both sides
 
 This kind of reading pairs naturally with the broader [[<TBD-internal-link: pillar guide on how to read a birth chart>]], which explains the moving parts a match reading borrows. Building on the cyclic approach Dane Rudhyar established, it asks what themes — pressure, flair, endurance — each squad carries into the day, then leaves the result open. The point is interpretive context, a way of talking about the meeting between two football cultures, not a claim about who lifts the trophy.
 
@@ -61,7 +61,7 @@ A Mexico vs England astrology prediction becomes readable once you know which la
 
 1. **Compare the two national Suns.** Note the core sign each foundation chart leans on, then read it as a style of play — expressive and rhythmic, or structured and disciplined.
 2. **Scan key player charts for Mars and Sun.** Strong personal drive placements often line up with the players fans already expect to set the emotional tone.
-3. **Locate the shared transit.** Track where Jupiter in Gemini sits relative to each chart to sense a common background mood over the tournament window.
+3. **Locate the shared transit.** Track where Jupiter in Cancer sits relative to each chart to sense a common background mood over the tournament window.
 4. **Watch for repeated archetypes.** When a squad's dominant zodiac flavor echoes its national chart, that repetition is the signal worth naming.
 5. **Read the contrasts, not the winner.** Where the two charts clash in element or tempo, you have the story of the match — flair against structure — without predicting the score.
 
@@ -85,9 +85,9 @@ Correcting these keeps the practice interpretive and cultural, which is exactly 
 | Player birth charts | Reads personal Sun and Mars as drive and temperament | Individual Sun / Mars placement | Spot the players expected to set the emotional tone |
 | National foundation charts | Frames each country's core style as a chart signature | National Sun sign and element | Compare the two national Suns for tempo and flavor |
 | Zodiac archetypes | Maps squad "character" onto elemental themes | Dominant element (fire, earth, air, water) | Notice which archetype the team keeps echoing |
-| Jupiter in Gemini transit | Adds a shared 2026 background tone to both sides | Current transiting sign | Track the same transit across each chart at once |
+| Jupiter in Cancer transit | Adds a shared 2026 background tone to both sides | Current transiting sign | Track the same transit across each chart at once |
 
-According to NASA, Jupiter takes about 12 years to complete one orbit of the Sun, so its pass through Gemini marks a background tone shared by every team competing in the 2026 window — context, not an edge for either side.
+According to NASA, Jupiter takes about 12 years to complete one orbit of the Sun, so its pass through Cancer marks a background tone shared by every team competing in the 2026 window — context, not an edge for either side.
 
 ## Questions People Ask About This Match Reading
 
@@ -99,7 +99,7 @@ No. This is a symbolic, cultural reading of the fixture, not a score forecast. A
 
 There is no single agreed chart for either country. Practitioners choose from several historical foundation dates, so any reading should say which chart it uses rather than present one as fact.
 
-**Does Jupiter in Gemini favor one team?**
+**Does Jupiter in Cancer favor one team?**
 
 Not really. A transit like this colors the whole tournament window for both squads. It reads as a shared mood, so it works better as context than as an advantage for one side.
 
@@ -116,7 +116,7 @@ They can suggest how a person tends to meet pressure, but they cannot forecast a
 ## Related Reading
 
 - [[<TBD-internal-link: guide to mundane and national chart astrology>]] — explains how country charts are built and why astrologers disagree on them
-- [[<TBD-internal-link: explainer on the Jupiter in Gemini transit>]] — covers the shared 2026 sky this reading leans on
+- [[<TBD-internal-link: explainer on the Jupiter in Cancer transit>]] — covers the shared 2026 sky this reading leans on
 - [[<TBD-internal-link: overview of zodiac element archetypes>]] — unpacks the fire, earth, air, and water themes squads get mapped to
 
 ## Take Action

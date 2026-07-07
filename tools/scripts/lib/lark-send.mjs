@@ -211,6 +211,77 @@ export async function sendLark(text, opts = {}) {
 }
 
 /**
+ * 发送一张飞书 Card 2.0 interactive 卡片（fail-closed）。
+ *
+ * 卡片失败不直接入 outbox：outbox 只保存稳定文本 payload，事件层会在卡片发送失败时
+ * 降级调用 sendLark(text)，由文本通道负责 write-ahead / outbox 补发闭环。
+ *
+ * @param {object} card Card 2.0 JSON（schema: "2.0"）
+ * @param {object} [opts] {chatId, auditText, msgUuid}
+ * @returns {Promise<{ok:boolean, messageId:string|null, error:string|null}>} 永不 throw。
+ */
+export async function sendLarkCard(card, opts = {}) {
+  try {
+    const { chatId = null, auditText = 'interactive card', msgUuid = null } = opts;
+    const rid = resolveChatId(chatId);
+    if (!card || typeof card !== 'object') {
+      auditLog('SEND_FAILED code=invalid-card', rid, auditText);
+      return { ok: false, messageId: null, error: 'invalid-card' };
+    }
+
+    let content = '';
+    try {
+      content = JSON.stringify(card);
+    } catch {
+      auditLog('SEND_FAILED code=invalid-card-json', rid, auditText);
+      return { ok: false, messageId: null, error: 'invalid-card-json' };
+    }
+    if (!content || content === '{}') {
+      auditLog('SEND_FAILED code=empty-card', rid, auditText);
+      return { ok: false, messageId: null, error: 'empty-card' };
+    }
+
+    const creds = readCreds();
+    if (!creds) {
+      auditLog('SEND_FAILED code=no-creds', rid, auditText);
+      return { ok: false, messageId: null, error: 'no-creds' };
+    }
+
+    const uuid = msgUuid || crypto.randomUUID();
+    const retries = Math.max(0, Number.parseInt(process.env.GG_LARK_SEND_RETRIES ?? '2', 10) || 0);
+    const baseMs = Math.max(1, Number.parseInt(process.env.GG_LARK_RETRY_BASE_MS ?? '500', 10) || 500);
+
+    let lastError = 'unknown';
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      if (attempt > 0) await sleep(baseMs * 2 ** (attempt - 1));
+      const tok = await postJson('/open-apis/auth/v3/tenant_access_token/internal', {
+        app_id: creds.appId,
+        app_secret: creds.appSecret,
+      });
+      const t = tok && tok.tenant_access_token;
+      if (!t) {
+        lastError = tok && tok.code != null ? `token:${tok.code}` : 'token-unreachable';
+        continue;
+      }
+      const resp = await postJson(
+        '/open-apis/im/v1/messages?receive_id_type=chat_id',
+        { receive_id: rid, msg_type: 'interactive', content, uuid },
+        { Authorization: 'Bearer ' + t },
+      );
+      if (resp && resp.code === 0 && resp.data && resp.data.message_id) {
+        auditLog('SENT', rid, auditText);
+        return { ok: true, messageId: resp.data.message_id, error: null };
+      }
+      lastError = resp && resp.code != null ? String(resp.code) : 'unreachable';
+    }
+    auditLog(`SEND_FAILED code=${lastError}`, rid, auditText);
+    return { ok: false, messageId: null, error: lastError };
+  } catch (e) {
+    return { ok: false, messageId: null, error: String((e && e.message) || e) };
+  }
+}
+
+/**
  * 重放 outbox：逐条「认领→重发」（_noOutbox 防递归入箱）。
  * 认领 = 原子 rename `.json`→`.json.sending`：多个重放进程并发时同一条只有一个赢家，
  * 消灭重复发送。开头先回收陈旧 `.sending`（发送方被 SIGTERM 杀死的残留，

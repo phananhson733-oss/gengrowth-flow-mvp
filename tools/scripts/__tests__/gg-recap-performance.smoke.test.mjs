@@ -316,6 +316,9 @@ test('daily wrapper loops products and only runs recap performance sync', () => 
   assert.match(wrapper, /GG_SHEETS_GENGROWTH_WORKBOOK_ID/);
   assert.match(wrapper, /GG_GA4_ASTROLOGY_PROPERTY/);
   assert.match(wrapper, /GG_GA4_GENGROWTH_PROPERTY/);
+  assert.match(wrapper, /replay-outbox/);
+  assert.match(wrapper, /gg-notify\.mjs" recap_performance_ok/);
+  assert.match(wrapper, /recap performance ok/);
   assert.doesNotMatch(wrapper, /gg-seo-author|gg-gengrowth-publish|Request Indexing|--submit-sitemap/);
 });
 

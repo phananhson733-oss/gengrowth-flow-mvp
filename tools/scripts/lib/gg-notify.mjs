@@ -9,7 +9,7 @@
 // SILENCE 语义（沿用现语义）：GG_LARK_NOTIFY_SILENCE=1 → 只写 audit（SILENCED）不发送——
 // 批次静默逐篇、由汇总统一发。
 
-import { sendLark, auditLog, resolveChatId, atPrefix } from './lark-send.mjs';
+import { sendLark, sendLarkCard, auditLog, resolveChatId, atPrefix } from './lark-send.mjs';
 
 // 字段插值兜底：缺字段渲染为空串，不渲染 "undefined"。
 const s = (x) => (x === undefined || x === null ? '' : String(x));
@@ -26,6 +26,103 @@ const atFromEnv = () => ({
 });
 
 const truthy = (v) => v === true || v === '1' || v === 'true';
+
+function splitLines(value) {
+  return String(value || '')
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
+function recapMetricColumns(body) {
+  const lines = splitLines(body);
+  const cols = (lines.length ? lines : ['结果：暂无明细']).slice(0, 3).map((line, i) => ({
+    tag: 'column',
+    width: 'weighted',
+    weight: 1,
+    background_style: 'green-50',
+    padding: '12px',
+    vertical_spacing: '2px',
+    elements: [
+      {
+        tag: 'markdown',
+        content: `**${line.replace(/：/g, '：\n')}**`,
+        text_align: 'center',
+      },
+      {
+        tag: 'markdown',
+        content: i === 0 ? '<font color="grey">结果复盘表</font>' : '<font color="grey">同步结果</font>',
+        text_align: 'center',
+        text_size: 'notation',
+      },
+    ],
+  }));
+  return cols;
+}
+
+function formatReportLines(reports) {
+  const lines = splitLines(reports);
+  if (!lines.length) return '无报告路径';
+  return lines.map((line) => `- \`${line}\``).join('\n');
+}
+
+function buildRecapPerformanceCard(fields) {
+  const date = s(fields.date);
+  const windowNote = s(fields.window_note || fields.windowNote || 'D30/D60 到期后自动补齐；当前未到期列保留 `待回填`。');
+  return {
+    schema: '2.0',
+    config: {
+      update_multi: true,
+      width_mode: 'default',
+      summary: { content: `结果复盘已同步${date ? `（${date}）` : ''}` },
+      style: {
+        text_size: {
+          body: { default: 'normal', pc: 'normal', mobile: 'normal' },
+          caption: { default: 'notation', pc: 'notation', mobile: 'notation' },
+        },
+      },
+    },
+    header: {
+      title: { tag: 'plain_text', content: '结果复盘已同步' },
+      subtitle: { tag: 'plain_text', content: date ? `${date} · SEO 技术自动化` : 'SEO 技术自动化' },
+      template: 'green',
+      icon: { tag: 'standard_icon', token: 'chart_colorful' },
+      text_tag_list: [
+        { tag: 'text_tag', text: { tag: 'plain_text', content: '已写回' }, color: 'green' },
+      ],
+    },
+    body: {
+      direction: 'vertical',
+      padding: '12px 12px 20px 12px',
+      vertical_spacing: '12px',
+      elements: [
+        {
+          tag: 'markdown',
+          content: `**结果复盘数据已写回 Sheets**\n${windowNote}`,
+        },
+        {
+          tag: 'column_set',
+          flex_mode: 'none',
+          horizontal_spacing: '12px',
+          columns: recapMetricColumns(fields.body),
+        },
+        {
+          tag: 'markdown',
+          content: '**边界**\n未发布、未部署、未请求索引；只读取 GSC/GA4，并写回结果复盘表。',
+        },
+        {
+          tag: 'markdown',
+          content: `**报告**\n${formatReportLines(fields.reports)}`,
+        },
+        {
+          tag: 'markdown',
+          text_size: 'notation',
+          content: `日志：\`${s(fields.log)}\``,
+        },
+      ],
+    },
+  };
+}
 
 /**
  * 事件表（enum → 模板 → @ 策略）。模板文案以 NOTIFY-CONTRACT.md 为单一事实源，
@@ -127,6 +224,12 @@ export const EVENTS = {
     // hint 可选：缺省时以「请查看 {log}。」收尾，不留尾巴。
     render: (f) => `⚠️ [${s(f.site)}] 索引监控运行失败（rc=${s(f.rc)}）。请查看 ${s(f.log)}。${f.hint ? s(f.hint) : ''}`,
   },
+  recap_performance_ok: {
+    at: AT_NONE,
+    render: (f) =>
+      `✅ [flow] 结果复盘已同步（${s(f.date)}）\n${s(f.body)}\n报告：\n${s(f.reports)}\n日志：${s(f.log)}`,
+    card: buildRecapPerformanceCard,
+  },
   raw: {
     at: atFromEnv,
     render: (f) => s(f.text),
@@ -178,6 +281,13 @@ export async function notify(event, fields = {}) {
     if (process.env.GG_LARK_NOTIFY_SILENCE === '1') {
       auditLog('SILENCED', rid, atPrefix(rt.atPm, rt.atOps) + rt.text);
       return { ok: true, silenced: true, messageId: null, error: null, text: rt.text };
+    }
+    const spec = known ? EVENTS[event] : null;
+    if (spec && typeof spec.card === 'function') {
+      const cardResult = await sendLarkCard(spec.card(fields), { chatId, auditText: rt.text });
+      if (cardResult.ok) return { ...cardResult, silenced: false, text: rt.text, card: true };
+      const fallback = await sendLark(rt.text, { atPm: rt.atPm, atOps: rt.atOps, chatId });
+      return { ...fallback, silenced: false, text: rt.text, card: false, cardError: cardResult.error };
     }
     const r = await sendLark(rt.text, { atPm: rt.atPm, atOps: rt.atOps, chatId });
     return { ...r, silenced: false, text: rt.text };

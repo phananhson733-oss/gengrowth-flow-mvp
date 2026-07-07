@@ -33,6 +33,7 @@ fi
 echo "$$" > "$LOCK/pid"
 trap 'rm -rf "$LOCK" 2>/dev/null' EXIT
 
+node "$SCRIPT_DIR/gg-notify.mjs" replay-outbox >/dev/null 2>&1 || true
 echo "$(date '+%F %T') recap performance start (pid $$)" >> "$LOG"
 
 (
@@ -86,6 +87,40 @@ rc=$?
 case "$rc" in
   0)
     echo "$(date '+%F %T') recap performance ok" >> "$LOG"
+    recap_notify_payload="$(
+      awk '
+        /recap performance start/ { body=""; reports=""; product=""; next }
+        /recap-performance product=astrologywiki/ { product="AstrologyWiki"; next }
+        /recap-performance product=gengrowth/ { product="GenGrowth"; next }
+        /wrote report:/ {
+          report=$0
+          sub(/^.*wrote report: /, "", report)
+          if (report != "") reports = reports report "\n"
+          next
+        }
+        /recap-performance: rows=/ {
+          line=$0
+          sub(/^.*recap-performance: /, "", line)
+          if (product != "") body = body product "：" line "\n"
+          next
+        }
+        END { printf "%s\n__REPORTS__\n%s", body, reports }
+      ' "$LOG"
+    )"
+    recap_notify_body="${recap_notify_payload%%$'\n__REPORTS__'*}"
+    recap_notify_reports="${recap_notify_payload#*$'\n__REPORTS__'$'\n'}"
+    if [ -z "$recap_notify_body" ]; then
+      recap_notify_body="详见日志：$LOG"
+    fi
+    if [ -z "$recap_notify_reports" ] || [ "$recap_notify_reports" = "$recap_notify_payload" ]; then
+      recap_notify_reports="详见日志：$LOG"
+    fi
+    node "$SCRIPT_DIR/gg-notify.mjs" recap_performance_ok \
+      --date "$(date '+%F')" \
+      --body "$recap_notify_body" \
+      --reports "$recap_notify_reports" \
+      --log "$LOG" \
+      --window_note "D30/D60 到期后自动补齐；当前未到期列保留 \`待回填\`。" >> "$LOG" 2>&1
     ;;
   2|124)
     echo "$(date '+%F %T') recap performance partial/timeout rc=$rc" >> "$LOG"

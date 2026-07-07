@@ -117,7 +117,9 @@ test('buildSummaryMessage: 回填补了 gap → 汇总带回填;收敛无变更 
   // 回填补了 gap(changedPasses>0) → 即使无 park 终态也发汇总
   assert.match(buildSummaryMessage(noTerminal, 'astrologywiki', { converged: true, changedPasses: 1, passes: 2 }), /回填补齐/);
   // 回填未收敛 → warn
-  assert.match(buildSummaryMessage(noTerminal, 'astrologywiki', { converged: false, changedPasses: 3, passes: 3 }), /回填未收敛|⚠️/);
-  // 回填收敛且无变更 + 无 park 终态 → 空串(不发)
-  assert.equal(buildSummaryMessage(noTerminal, 'astrologywiki', { converged: true, changedPasses: 0, passes: 1 }), '');
+  assert.match(buildSummaryMessage(noTerminal, 'astrologywiki', { converged: false, changedPasses: 3, passes: 3, failedSteps: [] }), /回填未收敛|⚠️/);
+  // 回填有步失败 → 具体告警(即使无 park 终态、无变更)——不静默(治 finding②)
+  assert.match(buildSummaryMessage(noTerminal, 'astrologywiki', { converged: false, changedPasses: 0, passes: 2, failedSteps: ['sync-recap'] }), /回填.*失败.*sync-recap/);
+  // 回填收敛且无变更无失败 + 无 park 终态 → 空串(不发)
+  assert.equal(buildSummaryMessage(noTerminal, 'astrologywiki', { converged: true, changedPasses: 0, passes: 1, failedSteps: [] }), '');
 });

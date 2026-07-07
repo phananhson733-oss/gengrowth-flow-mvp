@@ -69,14 +69,16 @@ export async function driveApply(plan, deps) {
 // 每轮一条终态汇总(仅有 fixed/archived/fixFailed 时);无终态→空串(tick 据此决定发不发)。
 export function buildSummaryMessage(s, site, backfill) {
   const terminal = s.fixed || s.archived || s.fixFailed;
-  const bfChanged = backfill && backfill.changedPasses > 0;   // 回填补了 gap
-  const bfWarn = backfill && backfill.converged === false;     // 回填未收敛(需人工看)
-  if (!terminal && !bfChanged && !bfWarn) return '';           // 啥都没发生 → 静默
+  const bfChanged = backfill && backfill.changedPasses > 0;                          // 回填补了 gap
+  const bfFailed = backfill && backfill.failedSteps && backfill.failedSteps.length;  // 有回填步失败(别静默)
+  const bfWarn = backfill && backfill.converged === false;                           // 回填未收敛
+  if (!terminal && !bfChanged && !bfWarn && !bfFailed) return '';                    // 啥都没发生 → 静默
   const parts = [`flow-driver [${site}]`];
   if (s.fixed) parts.push(`自修上线 ${s.fixed}(${s.fixedSlugs.join(', ')})`);
   if (s.archived) parts.push(`归档 ${s.archived}(${s.archivedSlugs.join(', ')})`);
   if (s.fixFailed) parts.push(`修失败留 needs_human ${s.fixFailed}(${s.fixFailedSlugs.join(', ')})`);
-  if (bfWarn) parts.push(`⚠️回填未收敛(${backfill.passes}轮)`);
+  if (bfFailed) parts.push(`⚠️回填 ${backfill.failedSteps.length} 步失败(${backfill.failedSteps.join(',')})`);
+  else if (bfWarn) parts.push(`⚠️回填未收敛(${backfill.passes}轮)`);
   else if (bfChanged) parts.push(`回填补齐(${backfill.changedPasses}轮变更)`);
   return parts.join('；');
 }

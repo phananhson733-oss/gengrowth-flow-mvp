@@ -16,29 +16,44 @@ export const BACKFILL_STEPS = [
   { label: 'sync-request-queue', bin: INDEX_MONITOR, args: ['--sync-request-queue', '--write-sheet'] },
 ];
 
-// 本轮有没有"真变更"：非零变更计数。**不含 rows**(request-queue 的 rows=N 是 queue 总数、每轮非零,
-// 若算作变更会永不收敛)。
-const CHANGE_RE = /(?:appended|updated|slugs_added|updatedCells|resolved|retried)=[1-9]\d*/;
+// 本轮有没有"真变更"：非零成功-变更计数,覆盖全部回填命令的成功变更词(reconcile 的 reconciled/flips
+// 易漏——漏了会过早收敛、回填不全)。**有意排除**:
+//   · rows —— request-queue 队列总数,每轮非零,含它永不收敛;
+//   · retried —— drainPending 的**重试次数**(不是成功变更)。WAL 常有未 drain 的 pending(文章已发未 live),
+//       每轮恒 retried=N resolved=0、状态在一次 fire 的几轮间不变 → 含它会永不收敛、每次误报未收敛刷飞书。
+//       真变更看 resolved(成功 drain 数),不看 retried。(评审 finding①)
+//   · checked —— plan 补勾数,是幂等 mutation,但保守排除以规避"其若为总数时破坏收敛";代价=漏报 plan补勾
+//       这一低危项(plan 幂等、无下游重读)。
+//   · stillPending/skipped —— 残留/跳过数,非变更。
+// 所含词都是幂等成功计数(补完第二轮归零)。
+const CHANGE_RE = /(?:appended|updated|slugs_added|updatedCells|resolved|reconciled|flips)=[1-9]\d*/;
 export function passHadChanges(out) { return CHANGE_RE.test(String(out || '')); }
 
 // 循环整个回填序列到某轮无真变更(收敛)或 maxPasses(默3)。deps={runCapture(cmd)->{ok,out}, log, maxPasses}。
 export async function runBackfillLoop(deps) {
-  const maxPasses = deps.maxPasses || 3;
+  const maxPasses = deps.maxPasses ?? 3;
+  if (maxPasses <= 0) return { passes: 0, converged: true, changedPasses: 0, failedSteps: [] };
   let changedPasses = 0;
+  let lastFailed = [];
   for (let pass = 1; pass <= maxPasses; pass++) {
     let combined = '';
+    const failed = [];
     for (const step of BACKFILL_STEPS) {
       const r = await deps.runCapture(step);
       combined += `\n${step.label}: ${(r && r.out) || ''}`;
-      if (r && !r.ok) deps.log(`回填 ${step.label} 非零退出(继续,幂等下轮补)`);
+      if (!r || !r.ok) { failed.push(step.label); deps.log(`回填 ${step.label} 失败(非零/超时,下轮重试)`); }
     }
-    if (!passHadChanges(combined)) {
-      deps.log(`回填第 ${pass} 轮无变更 → 收敛`);
-      return { passes: pass, converged: true, changedPasses };
+    lastFailed = failed;
+    const changed = passHadChanges(combined);
+    // 干净收敛 = 本轮既无变更、又无失败。有失败不收敛(可能 transient,下轮重试;持续失败到 maxPasses→告警)——
+    // 否则整体失败(无变更词输出)会被当成干净收敛、静默,架空 P2 保证回填真跑完的目的。(评审 finding②)
+    if (!changed && failed.length === 0) {
+      deps.log(`回填第 ${pass} 轮无变更、无失败 → 收敛`);
+      return { passes: pass, converged: true, changedPasses, failedSteps: [] };
     }
-    changedPasses++;
-    deps.log(`回填第 ${pass} 轮有变更,继续`);
+    if (changed) changedPasses++;
+    deps.log(`回填第 ${pass} 轮${changed ? '有变更' : ''}${failed.length ? ` ${failed.length}步失败` : ''},继续`);
   }
-  deps.log(`回填 ${maxPasses} 轮仍有变更 → 未收敛(⚠️需人工看)`);
-  return { passes: maxPasses, converged: false, changedPasses };
+  deps.log(`回填 ${maxPasses} 轮未干净收敛(变更或失败仍在)→ ⚠️需人工看`);
+  return { passes: maxPasses, converged: false, changedPasses, failedSteps: lastFailed };
 }

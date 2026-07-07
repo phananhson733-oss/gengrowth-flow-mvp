@@ -59,13 +59,16 @@ async function main() {
   // P2：处理完 park 后跑 loop-until-clean 回填(治"publish 后不管";只 --apply,幂等,有界)。
   // maxPasses=0 可跳过回填(测试/紧急用)。
   const bfPasses = Number(process.env.GG_FLOW_DRIVER_BACKFILL_PASSES ?? 3);
+  const bfCmdTimeout = Number(process.env.GG_FLOW_DRIVER_BACKFILL_CMD_TIMEOUT_MS || 120000);
   const backfill = bfPasses > 0
     ? await runBackfillLoop({
-        runCapture: async (cmd) => { const r = spawnSync('node', [cmd.bin, ...cmd.args], { encoding: 'utf8' }); return { ok: r.status === 0, out: `${r.stdout || ''}${r.stderr || ''}` }; },
+        // per-命令超时：某回填命令挂 → status=null+error → ok=false(变 failedStep,不把整轮拖到 tick gtimeout
+        // 杀 node、丢掉已成功的 park 通知)。maxBuffer 防大 stdout 截断。
+        runCapture: async (cmd) => { const r = spawnSync('node', [cmd.bin, ...cmd.args], { encoding: 'utf8', timeout: bfCmdTimeout, maxBuffer: 8 * 1024 * 1024 }); return { ok: r.status === 0 && !r.error, out: `${r.stdout || ''}${r.stderr || ''}` }; },
         log: (m) => console.log(`  · ${m}`),
         maxPasses: bfPasses,
       })
-    : { passes: 0, converged: true, changedPasses: 0 };
+    : { passes: 0, converged: true, changedPasses: 0, failedSteps: [] };
   console.log(`flow-driver: parks=${plan.length} fixed=${s.fixed} fixFailed=${s.fixFailed} archived=${s.archived} archiveSkipped=${s.archiveSkipped} retryDeferred=${s.retryDeferred} fixSkipped=${s.fixSkipped} capped=${s.capped} backfillPasses=${backfill.passes} backfillConverged=${backfill.converged} mode=apply`);
   // 一条终态汇总(park 有终态 或 回填补了 gap/未收敛 时);tick grep relay 飞书,否则静默。
   const summaryMsg = buildSummaryMessage(s, SITE, backfill);

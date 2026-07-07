@@ -7,8 +7,14 @@ test('passHadChanges: 非零变更计数→true;全零/仅 rows→false', () => 
   assert.equal(passHadChanges('sync-published: updated=7 appended=0'), true);
   assert.equal(passHadChanges('cluster: slugs_added=3'), true);
   assert.equal(passHadChanges('reconcile: resolved=2'), true);
-  assert.equal(passHadChanges('updated=0 appended=0 slugs_added=0'), false); // 全零→收敛
+  // reconcile 的 reconciled=/flips= 也是变更词(易漏,漏了会过早收敛)
+  assert.equal(passHadChanges('2. reconcile-published: ok reconciled=5'), true);
+  assert.equal(passHadChanges('3. reconcile-status: ok flips=3'), true);
+  assert.equal(passHadChanges('updated=0 appended=0 slugs_added=0 reconciled=0 flips=0'), false); // 全零→收敛
   assert.equal(passHadChanges('request-queue: rows=25'), false);             // rows 是总数,不算变更
+  // retried=重试次数(非成功变更):WAL 常有未 drain 的 pending 每轮恒 retried=N resolved=0,含它永不收敛(finding①)
+  assert.equal(passHadChanges('drainPending: retried=3 resolved=0'), false);
+  assert.equal(passHadChanges('plan-sweep: checked=12 stillPending=3'), false); // checked(有意排除)/stillPending 不计
   assert.equal(passHadChanges('no counts here'), false);
 });
 
@@ -52,4 +58,22 @@ test('runBackfillLoop: 每轮都有变更 → maxPasses 封顶、converged=false
   const r = await runBackfillLoop(deps);
   assert.equal(r.converged, false);
   assert.equal(r.passes, 3); // maxPasses
+});
+
+test('runBackfillLoop: 某步持续失败(无变更) → 不误判干净收敛、failedSteps 记录、maxPasses 后 converged=false(治 finding②)', async () => {
+  const deps = {
+    runCapture: async (step) => ({ ok: step.label !== 'sync-recap', out: 'updated=0' }),
+    log: () => {},
+    maxPasses: 2,
+  };
+  const r = await runBackfillLoop(deps);
+  assert.equal(r.converged, false);                 // 有失败 → 不干净收敛(否则整体失败=静默收敛)
+  assert.deepEqual(r.failedSteps, ['sync-recap']);  // 记录失败步供汇总告警
+});
+
+test('runBackfillLoop: maxPasses=0 → 立即 converged(不跑)、failedSteps 空', async () => {
+  const deps = { runCapture: async () => ({ ok: true, out: '' }), log: () => {}, maxPasses: 0 };
+  const r = await runBackfillLoop(deps);
+  assert.equal(r.passes, 0);
+  assert.equal(r.converged, true);
 });

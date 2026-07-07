@@ -168,14 +168,14 @@ function replaceGeneratedNote(existing, generated) {
 function countryExpression(country) {
   const code = String(country || '').trim().toUpperCase();
   const map = {
-    US: 'usa',
-    GB: 'gbr',
-    UK: 'gbr',
-    CA: 'can',
-    AU: 'aus',
-    IN: 'ind',
+    US: 'USA',
+    GB: 'GBR',
+    UK: 'GBR',
+    CA: 'CAN',
+    AU: 'AUS',
+    IN: 'IND',
   };
-  return map[code] || code.toLowerCase();
+  return map[code] || code;
 }
 
 function countryName(country) {

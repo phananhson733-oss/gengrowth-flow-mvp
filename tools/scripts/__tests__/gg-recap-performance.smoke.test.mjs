@@ -12,6 +12,7 @@ import {
   RECAP_PERFORMANCE_REPORT_DIR,
   buildPerformancePlan,
   classifyOptimizationTasks,
+  fetchGscUrlMetrics,
   mergePerformanceIntoRecapRow,
   renderOptimizationMarkdown,
   runRecapPerformance,
@@ -175,6 +176,40 @@ test('renderOptimizationMarkdown groups the daily action list by priority', () =
   assert.match(markdown, /【P0 立即处理】/);
   assert.match(markdown, /【P1 本周处理】/);
   assert.match(markdown, /bing-hastert-birth-chart：曝光 7,281 次，CTR 仅 0.4%，改 title \+ meta description/);
+});
+
+test('fetchGscUrlMetrics filters target country with ISO alpha-3 code', async () => {
+  let requestBody = null;
+  const metrics = await fetchGscUrlMetrics(
+    'analytics-token',
+    'sc-domain:astrologywiki.com',
+    'https://www.astrologywiki.com/en/wiki/bing-hastert-birth-chart',
+    { startDate: '2026-06-01', endDate: '2026-06-14' },
+    {
+      targetCountry: 'US',
+      fetcher: async (_url, _token, init) => {
+        requestBody = JSON.parse(init.body);
+        return {
+          rows: [{
+            keys: ['bing hastert birth chart'],
+            clicks: 4,
+            impressions: 100,
+            ctr: 0.04,
+            position: 8.2,
+          }],
+        };
+      },
+    },
+  );
+
+  const filters = requestBody.dimensionFilterGroups[0].filters;
+  assert.deepEqual(filters.find((f) => f.dimension === 'country'), {
+    dimension: 'country',
+    operator: 'equals',
+    expression: 'USA',
+  });
+  assert.equal(metrics.impressions, 100);
+  assert.equal(metrics.bestPosition, 8.2);
 });
 
 test('runRecapPerformance updates recap rows and writes a Markdown task list without publish side effects', async () => {

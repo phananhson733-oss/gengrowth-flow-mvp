@@ -1364,6 +1364,7 @@ function doAutoRetryParks() {
   if (!parkRetryStateWritable()) { log('auto-retry-parks: flow-state 不可写 — 本轮跳过（fail-closed，无法保证 CAP）'); return Promise.resolve(); }
   const now = Date.now();
   const escalations = [];
+  const permParks = [];
   const retried = [];
   withClaimsLock(() => {
     const claims = loadClaims();
@@ -1381,7 +1382,13 @@ function doAutoRetryParks() {
     }
     for (const [pid, claim] of Object.entries(claims)) {
       if (!claim || claim.status !== 'needs_human') continue;
-      if (classifyPark(claim) !== 'transient') continue; // permanent 不自动重试
+      if (classifyPark(claim) !== 'transient') {
+        // 永久 park（不会自动重试）= 彻底停止、需人工。去重发**一次**终态通知（sidecar.permNotified），
+        // 不在例行 park 时反复发中间态（wzb 指令：只发成功/彻底停止，别老发中间态）。
+        const sp = sidecar[pid] || { attempts: 0, lastAt: 0 };
+        if (!sp.permNotified) { sp.permNotified = true; sidecar[pid] = sp; permParks.push({ pid, slug: claim.slug, error: claim.error }); }
+        continue;
+      }
       const s = sidecar[pid] || { attempts: 0, lastAt: 0 };
       const escalated = s.attempts >= CAP;
       const backoff = escalated ? SLOW_BACKOFF_MS : BACKOFF_MS;
@@ -1413,7 +1420,11 @@ function doAutoRetryParks() {
       log(`AUTO-RETRY ESCALATE ${e.pid} at ${e.attempts} attempts — 通知人工（仍会慢重试自愈）`);
       try { await notifyEvent('parked', { site: 'astrologywiki', pid: e.pid, slug: e.slug || '?', reason: `自动重试 ${e.attempts} 次仍未过（疑非临时/配额问题，请人工查；系统仍会每 ${Math.round(SLOW_BACKOFF_MS / 3600000)}h 慢重试）：${String(e.error || '').slice(0, 70)}` }); } catch { /* notify 不搞垮对账 */ }
     }
-    if (retried.length) log(`auto-retry-parks: ${retried.length} transient park(s) re-queued; ${escalations.length} escalated`);
+    for (const p of permParks) {
+      log(`PERMANENT PARK ${p.pid} — 彻底停止,去重通知人工(不会自动重试)`);
+      try { await notifyEvent('parked', { site: 'astrologywiki', pid: p.pid, slug: p.slug || '?', reason: `彻底停止,需人工（内容/结构问题,不会自动重试）：${String(p.error || '').slice(0, 80)}` }); } catch { /* notify 不搞垮对账 */ }
+    }
+    if (retried.length) log(`auto-retry-parks: ${retried.length} transient park(s) re-queued; ${escalations.length} escalated; ${permParks.length} permanent-notified`);
     else if (!escalations.length) log('auto-retry-parks: no transient parks to retry');
   })();
 }

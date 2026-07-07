@@ -143,3 +143,17 @@ test('cleanup：done 的 sidecar 项被清；needs_human 的不清', () => {
   assert.equal(side['PG-DONE'], undefined, 'done → sidecar 清');
   assert.ok(side['PG-NH'], 'needs_human → sidecar 保留');
 });
+
+test('永久 park：标 permNotified 去重(只发一次终态通知)；transient 不标(走重试/escalation)', () => {
+  const { ops, state } = setup({
+    'PG-PERM': { status: 'needs_human', stage: 'authoring', error: 'drifted sections jaccard=0.000, target-recall=0.00', slug: 'perm' }, // 永久(内容漂移)
+    'PG-TRANS': { status: 'needs_human', stage: 'pushed-preview', branch: 'b', error: 'codex exited 3', slug: 'trans' }, // transient
+  });
+  run(ops, state, { GG_PARK_AUTORETRY_BACKOFF_MS: '0' });
+  const side = readJson(join(state, 'park-autoretry.json'));
+  assert.equal(side['PG-PERM']?.permNotified, true, '永久 park 应标 permNotified(去重)');
+  assert.ok(!side['PG-TRANS']?.permNotified, 'transient 不标 permNotified');
+  // 再跑一次：permNotified 仍 true(不会重复加进 permParks 通知列表)
+  run(ops, state, { GG_PARK_AUTORETRY_BACKOFF_MS: '0' });
+  assert.equal(readJson(join(state, 'park-autoretry.json'))['PG-PERM']?.permNotified, true, '再跑仍去重');
+});

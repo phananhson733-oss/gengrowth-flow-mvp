@@ -95,10 +95,12 @@ while IFS=$'\t' read -r pid kw; do
   branch="$(grep -oE 'seo/auto/[0-9]{4}-[0-9]{2}-[0-9]{2}-'"$pid" "$scanlog" | head -1)"
   if [ -z "$branch" ]; then echo "$pid: publish scan produced no branch — skip gate"; continue; fi
 
-  # 3. preview gate: wait → verify → 3-dim review → codex fact gate → merge (or PARK + Lark notify)
-  GG_GATE_NOTIFY_ON_PARK=1 node tools/scripts/gg-preview-gate.mjs --branch "$branch" \
+  # 3. preview gate: wait → verify → 3-dim review → codex fact gate → merge (or PARK)
+  # 例行 gate park 默认不即时通知（wzb: 只发成功/彻底停止）——park 记进 ledger，publish lane 的
+  # auto-retry 会对永久 park 去重发一次终态通知、对 transient 重试到 CAP 才升级。GG_NOTIFY_ON_PARK=1 恢复即时。
+  node tools/scripts/gg-preview-gate.mjs --branch "$branch" \
     && echo "$pid: MERGED → live" \
-    || echo "$pid: gate parked (codex/links/verify) — needs_human + Lark notify fired"
+    || echo "$pid: gate parked (codex/links/verify) — needs_human (通知交 auto-retry 终态去重)"
 done <<< "$ITEMS"
 
 # 批次汇总（阶段 1 · 通知统一，契约见 tools/scripts/lib/NOTIFY-CONTRACT.md）：

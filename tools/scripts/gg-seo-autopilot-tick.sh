@@ -202,7 +202,8 @@ run_one_cycle() {
       park_reason="${park_rest#*:}"
       park_reason="${park_reason# }"
       if [ "$park_pid" = "$park_rest" ]; then park_pid=""; park_reason="$park_rest"; fi
-      node "$SCRIPT_DIR/gg-notify.mjs" parked --site astrologywiki --pid "$park_pid" --reason "$park_reason"
+      # 例行 park 默认不即时通知（wzb: 只发成功/彻底停止）——auto-retry 会对永久 park 去重发终态通知。
+      [ "$GG_NOTIFY_ON_PARK" = "1" ] && node "$SCRIPT_DIR/gg-notify.mjs" parked --site astrologywiki --pid "$park_pid" --reason "$park_reason" || true
     else
       PARK_REST="${PARK_REST}${PARK}"$'\n'
     fi

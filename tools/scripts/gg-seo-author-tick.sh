@@ -135,7 +135,9 @@ else
     # 解析出结构化 pid/reason；解析不出 pid 时整段作 reason（契约允许）。该行不含 slug，故不传。
     PARK_PID=$(printf '%s\n' "$PARK" | grep -oE 'PG-[A-Z0-9-]+' | head -1)
     PARK_REASON=$(printf '%s\n' "$PARK" | sed -E 's/^PARK\(author\) //; s/^PG-[A-Z0-9-]+:[[:space:]]*//')
-    node "$SCRIPT_DIR/gg-notify.mjs" parked --site astrologywiki --pid "$PARK_PID" --reason "$PARK_REASON"
+    # 例行 authoring park 默认不即时通知（wzb 指令：只发成功/彻底停止，别老发中间态）——park 已记进
+    # ledger，publish lane 的 auto-retry 会对永久 park 去重发一次终态通知。GG_NOTIFY_ON_PARK=1 恢复即时。
+    [ "$GG_NOTIFY_ON_PARK" = "1" ] && node "$SCRIPT_DIR/gg-notify.mjs" parked --site astrologywiki --pid "$PARK_PID" --reason "$PARK_REASON" || true
   fi
   if [ -n "$DONE" ]; then
     # 统一事件层（authored → 不@）。detail 沿用原拼接：AUTHORED 摘要 + 去向说明。

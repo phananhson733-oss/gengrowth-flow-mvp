@@ -41,7 +41,7 @@ chmodSync(join(FALLBACK_BIN, 'gtimeout'), 0o755);
 
 let caseSeq = 0;
 // 搭一个用例沙箱：复制 tick 脚本（锁路径改写进沙箱），放好三个假脚本，返回 run()。
-function setupCase({ preflightExit = 0, autoStdout = '', autoExit = 0 } = {}) {
+function setupCase({ preflightExit = 0, autoStdout = '', autoExit = 0, env = {} } = {}) {
   const dir = join(ROOT, `case-${caseSeq++}`);
   const scripts = join(dir, 'scripts');
   const home = join(dir, 'home');
@@ -92,6 +92,7 @@ process.exit(${autoExit});
         // DONE 的 grep 用 [^—]*（多字节负字符类），必须 UTF-8 locale（launchd 生产环境同样依赖）。
         LC_ALL: 'en_US.UTF-8',
         PATH: `${process.env.PATH}:${FALLBACK_BIN}`,
+        ...env,
       },
     });
 
@@ -163,11 +164,23 @@ test('non-124 error rc → no notification at all (incomplete fire, silent park 
   assert.deepEqual(c.notifyCalls(), [], '非 124 的失败 rc 不该发通知（沿用原语义）');
 });
 
-test('clean exit + PARK line → parked(site=astrologywiki) with pid/reason parsed from the driver line', () => {
+test('clean exit + PARK line → 默认**抑制**例行 parked 通知（wzb: 只发成功/彻底停止,别老发中间态）', () => {
   const c = setupCase({
     preflightExit: 0,
     autoStdout: 'noise line\nPARK(author) PG-TEST-001: zh 红线未过，需人工复核\nmore noise\n',
     autoExit: 0,
+  });
+  const r = c.run();
+  assert.equal(r.status, 0);
+  assert.equal(c.notifyCalls().length, 0, '默认不发例行 authoring park 通知（终态通知交 publish lane auto-retry 去重）');
+});
+
+test('clean exit + PARK line + GG_NOTIFY_ON_PARK=1 → 发 parked（pid/reason 从 driver 行解析）', () => {
+  const c = setupCase({
+    preflightExit: 0,
+    autoStdout: 'noise line\nPARK(author) PG-TEST-001: zh 红线未过，需人工复核\nmore noise\n',
+    autoExit: 0,
+    env: { GG_NOTIFY_ON_PARK: '1' },
   });
   const r = c.run();
   assert.equal(r.status, 0);

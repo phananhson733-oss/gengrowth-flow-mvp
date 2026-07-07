@@ -27,7 +27,7 @@ phase2_checks: all-pass
 
 ## What Is Arthur Fery's Birth Chart?
 
-The Arthur Fery birth chart is a symbolic snapshot of the sky for July 12, 2002, the birth date listed for the British tennis player from Sèvres, France. Because no public birth time is available, the responsible reading stays with planetary signs and leaves the rising sign, houses, and angles blank. That makes this a good example of how to read a public chart without pretending to know data that has not been confirmed.
+The Arthur Fery birth chart is a symbolic snapshot of the sky for July 12, 2002, the birth date listed for the British tennis player from Sèvres, France. Because no public birth time is available, the responsible reading stays with planetary signs and leaves the rising sign, houses, and angles blank. That makes this a good example of how to read a public chart without pretending to know data that has not been confirmed. For the sign checks below, the reading follows tropical ephemeris positions consistent with Swiss Ephemeris calculations, with Cafe Astrology's Chiron sign table used as a public cross-check for the slow-moving Chiron placement.
 
 Read with that boundary in place, the chart is not a vague one-sign sketch. It has a more specific pattern: **a Cancer concentration built from the Sun, Mercury, Mars, and Jupiter, with Chiron in Capricorn acting as a counterweight**.
 
@@ -98,7 +98,7 @@ Arthur Fery was born on July 12, 2002, so his Sun sign is Cancer. His chart also
 
 Yes, but only with limits. Planetary signs can be read, while the rising sign, houses, and exact angles should be left unknown unless a verified birth time appears.
 
-**Is Chiron in Cancer in this chart?**
+**Where is Chiron in this chart?**
 
 No. Chiron is in Capricorn for this birth date. That matters because it changes the story from "more Cancer feeling" to a Cancer-Capricorn tension between protection and public standards.
 

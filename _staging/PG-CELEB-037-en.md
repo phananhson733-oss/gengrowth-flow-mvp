@@ -27,7 +27,9 @@ phase2_checks: all-pass
 
 ## What Is Arthur Fery's Birth Chart?
 
-The Arthur Fery birth chart is a symbolic snapshot of the sky for July 12, 2002, the birth date listed for the British tennis player from Sèvres, France. Because no public birth time is available, the responsible reading stays with planetary signs and leaves the rising sign, houses, and angles blank. That makes this a good example of how to read a public chart without pretending to know data that has not been confirmed. For the sign checks below, the reading follows tropical ephemeris positions consistent with Swiss Ephemeris calculations, with Cafe Astrology's Chiron sign table used as a public cross-check for the slow-moving Chiron placement.
+The Arthur Fery birth chart is a symbolic snapshot of the sky for July 12, 2002, the birth date the ATP Tour lists for the British tennis player from Sèvres, France. Because no public birth time is available, the responsible reading stays with planetary signs and leaves the rising sign, houses, and angles blank. That makes this a good example of how to read a public chart without pretending to know data that has not been confirmed.
+
+For the sign checks below, the reading follows tropical ephemeris positions consistent with Astrodienst's Swiss Ephemeris calculations, with Cafe Astrology's Chiron sign table used as a public cross-check for the slow-moving Chiron placement. A midday UT check for July 12, 2002 gives the Sun near 20° Cancer, Mercury near 10° Cancer, Mars near 29° Cancer, Jupiter near 25° Cancer, the Moon in Leo, Venus in early Virgo, and Saturn plus the True Node in Gemini. Signs By Stars' July 2002 monthly ephemeris also shows Mars moving from Cancer toward Leo during the month and Jupiter remaining in Cancer across the month, which is why this reading treats Mars and Jupiter as Cancer placements rather than Gemini ones.
 
 Read with that boundary in place, the chart is not a vague one-sign sketch. It has a more specific pattern: **a Cancer concentration built from the Sun, Mercury, Mars, and Jupiter, with Chiron in Capricorn acting as a counterweight**.
 
@@ -100,7 +102,7 @@ Yes, but only with limits. Planetary signs can be read, while the rising sign, h
 
 **Where is Chiron in this chart?**
 
-No. Chiron is in Capricorn for this birth date. That matters because it changes the story from "more Cancer feeling" to a Cancer-Capricorn tension between protection and public standards.
+Chiron is in Capricorn for this birth date. That matters because it changes the story from "more Cancer feeling" to a Cancer-Capricorn tension between protection and public standards.
 
 **Does the chart say anything about tennis results?**
 
@@ -114,7 +116,7 @@ No. Astrology here works best as symbolic self-reflection, not sports prediction
 
 ## Related Reading
 
-- [[<TBD-internal-link: overview of the Cancer zodiac sign>]] - unpacks the sign that anchors the chart.
+- [Cancer zodiac sign](/en/wiki/cancer) - unpacks the sign that anchors the chart.
 - [[<TBD-internal-link: guide to the lunar nodes in a birth chart>]] - gives more context for the Gemini nodal axis.
 - [[<TBD-internal-link: guide to synastry compatibility>]] - shows how individual placements can be compared in a two-person chart.
 - [Arthur Fery ATP profile](https://www.atptour.com/en/players/arthur-fery/f0dm/overview) - confirms the public birth date and birthplace used here.
@@ -127,4 +129,5 @@ Ready to read your own chart with the same level of care? [Generate your free bi
 
 - [ATP Tour player profile for Arthur Fery](https://www.atptour.com/en/players/arthur-fery/f0dm/overview) - public biographical data for date and birthplace.
 - [Astrodienst Swiss Ephemeris overview](https://www.astro.com/swisseph/swepha_e.htm) - reference for planetary ephemeris methodology.
+- [Signs By Stars July 2002 ephemeris](https://www.signsbystars.com/ephemeris/2002/7) - public monthly cross-check for Mars and Jupiter sign movement.
 - [Cafe Astrology Chiron sign tables](https://cafeastrology.com/chironsignstables.html) - Chiron in Capricorn date-range check for 2002.

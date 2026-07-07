@@ -12,9 +12,11 @@ import {
   RECAP_PERFORMANCE_REPORT_DIR,
   buildPerformancePlan,
   classifyOptimizationTasks,
+  dedupeOptimizationTasks,
   detectTrendContext,
   extractPageSignalsFromHtml,
   fetchGscUrlMetrics,
+  mergeOptimizationRecommendationIntoRecapRow,
   mergePerformanceIntoRecapRow,
   renderOptimizationMarkdown,
   runRecapPerformance,
@@ -289,8 +291,8 @@ test('classifyOptimizationTasks implements the recap action rules', () => {
     has_faq_schema: false,
   });
 
-  assert.ok(tasks.some((task) => task.bucket === 'P0' && /title/.test(task.action)));
-  assert.ok(tasks.some((task) => task.bucket === 'P1' && /FAQ schema/.test(task.action)));
+  assert.ok(tasks.some((task) => task.bucket === 'P0' && /Title tag \+ Meta description \+ FAQ schema/.test(task.action)));
+  assert.ok(tasks.some((task) => task.bucket === 'P3' && /FAQPage/.test(task.action)));
   assert.ok(tasks.some((task) => task.bucket === 'P2' && /目标英语区/.test(task.reason)));
 
   const technical = classifyOptimizationTasks({
@@ -321,8 +323,53 @@ test('classifyOptimizationTasks implements the recap action rules', () => {
     day14_收录: 'Y',
     day14_impressions: 7,
   });
-  assert.equal(observe[0].bucket, 'P2');
+  assert.equal(observe[0].bucket, '观察');
   assert.match(observe[0].action, /60天后再看/);
+});
+
+test('dedupeOptimizationTasks merges duplicate URL reasons under the highest priority bucket', () => {
+  const deduped = dedupeOptimizationTasks([
+    {
+      bucket: 'P0',
+      slug: 'erling-haaland-birth-chart',
+      url: 'https://www.astrologywiki.com/en/wiki/erling-haaland-birth-chart',
+      reason: '曝光 1,000 次，CTR 仅 0.9%',
+      action: 'Title tag + Meta description + FAQ schema',
+    },
+    {
+      bucket: 'P0',
+      slug: 'erling-haaland-birth-chart',
+      url: 'https://www.astrologywiki.com/en/wiki/erling-haaland-birth-chart',
+      reason: '最高排名 P6.3，CTR 仅 0.9%',
+      action: 'Title tag + Meta description + FAQ schema',
+    },
+  ]);
+
+  assert.equal(deduped.length, 1);
+  assert.equal(deduped[0].bucket, 'P0');
+  assert.match(deduped[0].reason, /曝光 1,000/);
+  assert.match(deduped[0].reason, /最高排名 P6\.3/);
+});
+
+test('mergeOptimizationRecommendationIntoRecapRow writes spec-backed decision and generated note', () => {
+  const merged = mergeOptimizationRecommendationIntoRecapRow({
+    outcome_id: 'out_PG-P0_latest',
+    page_id: 'PG-P0',
+    url: 'https://www.astrologywiki.com/en/wiki/bing-hastert-birth-chart',
+    决策: '待决策',
+    备注: 'manual context',
+  }, [{
+    bucket: 'P0',
+    slug: 'bing-hastert-birth-chart',
+    url: 'https://www.astrologywiki.com/en/wiki/bing-hastert-birth-chart',
+    reason: '曝光 7,281 次，CTR 仅 0.4%',
+    action: 'Title tag + Meta description + FAQ schema',
+  }]);
+
+  assert.equal(merged.决策, '调整');
+  assert.match(merged.备注, /manual context/);
+  assert.match(merged.备注, /Blog优化规范v1\.0: P0/);
+  assert.match(merged.备注, /不改URL\/H1\/已有核心段落/);
 });
 
 test('extractPageSignalsFromHtml detects FAQPage schema', () => {
@@ -358,7 +405,7 @@ test('detectTrendContext marks event and people pages without treating past-year
 test('renderOptimizationMarkdown groups the daily action list by priority', () => {
   const markdown = renderOptimizationMarkdown([
     { bucket: '技术排查', slug: 'zero-impression', reason: '已收录但零曝光', action: '排查技术问题' },
-    { bucket: 'P0', slug: 'bing-hastert-birth-chart', reason: '曝光 7,281 次，CTR 仅 0.4%', action: '改 title + meta description' },
+    { bucket: 'P0', slug: 'bing-hastert-birth-chart', reason: '曝光 7,281 次，CTR 仅 0.4%', action: 'Title tag + Meta description + FAQ schema' },
     { bucket: 'P1', slug: 'harry-kane-birth-chart', reason: '排名 P18', action: '加内链 + 确认 FAQ schema' },
   ], { generatedAt: new Date('2026-07-07T00:00:00Z'), siteName: 'AstrologyWiki' });
 
@@ -367,7 +414,7 @@ test('renderOptimizationMarkdown groups the daily action list by priority', () =
   assert.match(markdown, /【技术排查】/);
   assert.match(markdown, /【P0 立即处理】/);
   assert.match(markdown, /【P1 本周处理】/);
-  assert.match(markdown, /bing-hastert-birth-chart：曝光 7,281 次，CTR 仅 0.4%，改 title \+ meta description/);
+  assert.match(markdown, /bing-hastert-birth-chart：曝光 7,281 次，CTR 仅 0.4%，Title tag \+ Meta description \+ FAQ schema/);
 });
 
 test('fetchGscUrlMetrics filters target country with ISO alpha-3 code', async () => {
@@ -409,6 +456,7 @@ test('runRecapPerformance updates recap rows and writes a Markdown task list wit
   const code = await runRecapPerformance([
     '--write-sheet',
     '--write-report',
+    '--write-recommendations',
     '--workbook', 'wb-test',
     '--site', 'sc-domain:astrologywiki.com',
     '--ga4-property', 'properties/123',
@@ -459,11 +507,13 @@ test('runRecapPerformance updates recap rows and writes a Markdown task list wit
   assert.equal(batch[4].length, 1);
   assert.equal(batch[4][0].merged.day14_impressions, 7281);
   assert.equal(batch[4][0].merged.day30_clicks, 41);
+  assert.equal(batch[4][0].merged.决策, '调整');
+  assert.match(batch[4][0].merged.备注, /Blog优化规范v1\.0/);
   const write = calls.find((call) => call[0] === 'writeFile');
   assert.ok(write, 'expected markdown report write');
   assert.match(write[1], new RegExp(`${RECAP_PERFORMANCE_REPORT_DIR}/2026-07-07-astrologywiki-optimization-tasks.md$`));
   assert.match(write[2], /【P0 立即处理】/);
-  assert.match(write[2], /补充 FAQ schema/);
+  assert.match(write[2], /FAQ schema/);
   assert.equal(calls.some((call) => /publish|author|deploy/i.test(String(call[0]))), false);
 });
 
@@ -471,7 +521,8 @@ test('daily wrapper loops products and only runs recap performance sync', () => 
   const wrapper = readFileSync(join(SCRIPTS, 'gg-recap-performance-tick.sh'), 'utf8');
   assert.match(wrapper, /GG_RECAP_PERFORMANCE_PRODUCTS:-astrologywiki gengrowth/);
   assert.match(wrapper, /gg-recap-performance\.mjs/);
-  assert.match(wrapper, /--write-sheet --write-report/);
+  assert.match(wrapper, /--write-sheet --write-report --write-recommendations/);
+  assert.match(wrapper, /GG_RECAP_PERFORMANCE_VERIFY_ZERO/);
   assert.match(wrapper, /GG_SHEETS_ASTROLOGY_WORKBOOK_ID/);
   assert.match(wrapper, /GG_SHEETS_GENGROWTH_WORKBOOK_ID/);
   assert.match(wrapper, /GG_GA4_ASTROLOGY_PROPERTY/);

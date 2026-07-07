@@ -26,7 +26,10 @@ const DEFAULT_TARGET_COUNTRY = 'US';
 const HIGH_IMPRESSIONS = 100;
 const LOW_CTR = 0.01;
 const TOP10_LOW_CTR = 0.02;
+const SPEC_P0_IMPRESSIONS = 1000;
+const SPEC_P1_IMPRESSIONS = 500;
 const TARGET_COUNTRY_SHARE_MIN = 0.5;
+const BLOG_UPDATE_SPEC_NOTE_PREFIX = 'Blog优化规范v1.0';
 
 export const RECAP_PERFORMANCE_REPORT_DIR = join(homedir(), 'gengrowth-agents', 'reports', 'recap-performance');
 
@@ -239,6 +242,89 @@ function replaceGeneratedNote(existing, generated) {
   return parts.join(' | ');
 }
 
+function replaceGeneratedOptimizationNote(existing, generated) {
+  const parts = String(existing || '')
+    .split('|')
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .filter((p) => !p.startsWith(BLOG_UPDATE_SPEC_NOTE_PREFIX));
+  parts.push(generated);
+  return parts.join(' | ');
+}
+
+function uniqueText(values) {
+  return [...new Set(values.map((v) => String(v || '').trim()).filter(Boolean))];
+}
+
+function taskPriority(bucket) {
+  const order = {
+    P0: 0,
+    技术排查: 1,
+    P1: 2,
+    P2: 3,
+    P3: 4,
+    观察: 5,
+  };
+  return order[bucket] ?? 99;
+}
+
+export function dedupeOptimizationTasks(tasks = []) {
+  const groups = new Map();
+  for (const task of tasks) {
+    const key = normalizeUrl(task.url) || task.slug || task.page_id || task.title;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(task);
+  }
+  const out = [];
+  for (const group of groups.values()) {
+    const sorted = [...group].sort((a, b) => taskPriority(a.bucket) - taskPriority(b.bucket));
+    const primary = sorted[0];
+    out.push({
+      ...primary,
+      reason: uniqueText(sorted.map((t) => t.reason)).join('；'),
+      action: uniqueText(sorted.map((t) => t.action)).join('；'),
+      buckets: uniqueText(sorted.map((t) => t.bucket)),
+    });
+  }
+  return out.sort((a, b) => {
+    const byPriority = taskPriority(a.bucket) - taskPriority(b.bucket);
+    if (byPriority) return byPriority;
+    return String(a.slug || '').localeCompare(String(b.slug || ''));
+  });
+}
+
+function recommendedDecisionForTask(task = {}) {
+  if (task.bucket === '观察') return '继续';
+  if (task.bucket === '技术排查') return '待决策';
+  if (/不再投入|暂停/.test(String(task.action || ''))) return '暂停';
+  return task.bucket ? '调整' : '';
+}
+
+export function mergeOptimizationRecommendationIntoRecapRow(row = {}, tasks = [], {
+  force = false,
+} = {}) {
+  const deduped = dedupeOptimizationTasks(tasks);
+  if (!deduped.length) return row;
+  const primary = deduped[0];
+  const decision = recommendedDecisionForTask(primary);
+  const generated = [
+    `${BLOG_UPDATE_SPEC_NOTE_PREFIX}: ${primary.bucket}`,
+    primary.reason ? `原因=${primary.reason}` : '',
+    primary.action ? `动作=${primary.action}` : '',
+    '边界=不改URL/H1/已有核心段落',
+  ].filter(Boolean).join(' ');
+  const merged = {
+    ...row,
+    备注: replaceGeneratedOptimizationNote(row.备注, generated),
+  };
+  const existingDecision = String(row.决策 || '').trim();
+  const existingHasAutoRecommendation = String(row.备注 || '').includes(BLOG_UPDATE_SPEC_NOTE_PREFIX);
+  if (decision && (force || !existingDecision || existingDecision === '待决策' || existingHasAutoRecommendation)) {
+    merged.决策 = decision;
+  }
+  return merged;
+}
+
 function countryExpression(country) {
   const code = String(country || '').trim().toUpperCase();
   const map = {
@@ -427,33 +513,37 @@ export function classifyOptimizationTasks(row = {}) {
   const push = (bucket, reason, action) => tasks.push({ bucket, slug, title, url: row.url || '', reason, action });
 
   if (indexed && impressions === 0) {
-    push('技术排查', '已收录但零曝光', '排查技术问题，检查 URL、canonical、noindex、sitemap 与页面渲染');
+    push('技术排查', '已收录但零曝光', '分桶排查 URL、canonical、noindex、sitemap、静态 stub、首字节渲染、FAQ schema 与内链入链；0 必须来自 GSC/GA4 实查');
     return tasks;
   }
   if (indexed && impressions > 0 && impressions < 10) {
-    push('P2', `曝光仅 ${fmtInt(impressions)} 次`, '标记观察，60天后再看');
+    push('观察', `曝光仅 ${fmtInt(impressions)} 次`, '标记观察，60天后再看');
     return tasks;
   }
-  if (impressions >= HIGH_IMPRESSIONS && ctr < LOW_CTR) {
-    push('P0', `曝光 ${fmtInt(impressions)} 次，CTR 仅 ${fmtPct(ctr)}`, '改 title + meta description');
+  if (impressions >= SPEC_P0_IMPRESSIONS && ctr <= LOW_CTR) {
+    push('P0', `曝光 ${fmtInt(impressions)} 次，CTR 仅 ${fmtPct(ctr)}`, 'Title tag + Meta description + FAQ schema');
+  } else if (impressions >= SPEC_P1_IMPRESSIONS && ctr <= TOP10_LOW_CTR) {
+    push('P1', `曝光 ${fmtInt(impressions)} 次，CTR 仅 ${fmtPct(ctr)}`, 'Title tag + Meta description');
+  } else if (impressions >= HIGH_IMPRESSIONS && ctr < LOW_CTR) {
+    push('P1', `曝光 ${fmtInt(impressions)} 次，CTR 仅 ${fmtPct(ctr)}`, 'Title tag + Meta description');
   }
   if (bestPosition != null && bestPosition <= 10 && ctr < TOP10_LOW_CTR) {
-    push('P0', `最高排名 P${fmtPosition(bestPosition)}，CTR 仅 ${fmtPct(ctr)}`, '重点优化 title 和描述，争取提升 CTR');
+    push('P0', `最高排名 P${fmtPosition(bestPosition)}，CTR 仅 ${fmtPct(ctr)}`, 'Title tag + Meta description + FAQ schema');
   }
   if (bestPosition != null && bestPosition > 10 && bestPosition <= 30) {
     push('P1', `最高排名 P${fmtPosition(bestPosition)}`, '加内链 + 确认 FAQ schema');
   }
   if (impressions >= HIGH_IMPRESSIONS && row.has_faq_schema === false) {
-    push('P1', `曝光 ${fmtInt(impressions)} 次但未检测到 FAQ schema`, '补充 FAQ schema');
+    push('P3', `曝光 ${fmtInt(impressions)} 次但未检测到 FAQ schema`, '补充 4-6 个可见正文 FAQ，并确保服务端 HTML 输出 FAQPage');
   }
   if (top50 === 0 && impressions >= 10) {
-    push('P1', '上线一个月仍无关键词进 Top50', '检查内容结构，重新对齐搜索意图');
+    push('P1', '上线一个月仍无关键词进 Top50', '只做加法补强内容结构，重新对齐搜索意图，不改 URL/H1/已有核心段落');
   }
   if (pageViews >= 20 && targetPv / pageViews < TARGET_COUNTRY_SHARE_MIN) {
     push('P2', `目标英语区 PV ${fmtInt(targetPv)} / 总 PV ${fmtInt(pageViews)}`, '检查关键词设置和语言定向');
   }
   if (row.is_trend_page && row.event_status !== 'ended' && toNumber(row.impressions_delta_pct, 0) <= -0.4) {
-    push('P1', `趋势词曝光快速下滑 ${fmtPct(Math.abs(toNumber(row.impressions_delta_pct, 0)))}`, '事件未结束，追加内容更新');
+    push('P2', `趋势词曝光快速下滑 ${fmtPct(Math.abs(toNumber(row.impressions_delta_pct, 0)))}`, '追加 Update 段落 + 更新 Last Updated + 在 FAQ 末尾追加新问答');
   }
   if (row.is_trend_page && row.event_status === 'ended' && toNumber(row.impressions_delta_pct, 0) < 0) {
     push('P2', '事件已结束且曝光衰退', '不再投入，保留观察');
@@ -466,11 +556,14 @@ export function renderOptimizationMarkdown(tasks = [], {
   siteName = DEFAULT_SITE_NAME,
 } = {}) {
   const titles = [
-    ['技术排查', '【技术排查】'],
     ['P0', '【P0 立即处理】'],
+    ['技术排查', '【技术排查】'],
     ['P1', '【P1 本周处理】'],
-    ['P2', '【P2 下周处理】'],
+    ['P2', '【P2 趋势更新】'],
+    ['P3', '【P3 FAQ 补强】'],
+    ['观察', '【观察】'],
   ];
+  const dedupedTasks = dedupeOptimizationTasks(tasks);
   const lines = [
     `# ${siteName} 博客优化任务清单`,
     '',
@@ -478,7 +571,7 @@ export function renderOptimizationMarkdown(tasks = [], {
     '',
   ];
   for (const [bucket, heading] of titles) {
-    const rows = tasks.filter((task) => task.bucket === bucket);
+    const rows = dedupedTasks.filter((task) => task.bucket === bucket);
     if (!rows.length) continue;
     lines.push(heading);
     for (const task of rows) {
@@ -486,7 +579,7 @@ export function renderOptimizationMarkdown(tasks = [], {
     }
     lines.push('');
   }
-  if (!tasks.length) {
+  if (!dedupedTasks.length) {
     lines.push('今日无需要处理的优化任务。', '');
   }
   return `${lines.join('\n').trimEnd()}\n`;
@@ -641,7 +734,7 @@ export async function runRecapPerformance(argv, deps = {}) {
       'Usage:',
       '  node tools/scripts/gg-recap-performance.mjs --write-sheet --write-report [--workbook SHEET_ID] [--site sc-domain:DOMAIN] [--ga4-property properties/ID]',
       '  node tools/scripts/gg-recap-performance.mjs --dry-run [--workbook SHEET_ID]',
-      '  node tools/scripts/gg-recap-performance.mjs --fill-pending --verify-zero-metrics --write-sheet',
+      '  node tools/scripts/gg-recap-performance.mjs --fill-pending --verify-zero-metrics --write-recommendations --write-sheet',
       '',
     ].join('\n'));
     return 0;
@@ -661,6 +754,8 @@ export async function runRecapPerformance(argv, deps = {}) {
   const writeReport = !!args.write_report;
   const verifyZeroMetrics = !!args.verify_zero_metrics;
   const fillPending = !!args.fill_pending || verifyZeroMetrics;
+  const writeRecommendations = !!args.write_recommendations;
+  const forceRecommendations = !!args.force_recommendations;
   const reportDir = args.report_dir && args.report_dir !== true ? String(args.report_dir) : RECAP_PERFORMANCE_REPORT_DIR;
 
   if (!workbookId) {
@@ -693,10 +788,20 @@ export async function runRecapPerformance(argv, deps = {}) {
   const recapRows = await readRecapRowsFn(sheetToken, workbookId, RECAP_TAB);
   const plan = buildPerformancePlan({ trackingRows, recapRows, now, fillPending, verifyZeroMetrics });
 
-  const updates = [];
+  const updatesByRow = new Map();
   const tasks = [];
   let failures = 0;
+  const plannedRows = new Set();
+  const latestRowsByRowNumber = new Map();
+  const queueUpdate = (oldRow, mergedRow) => {
+    if (!oldRow?._rowNumber) return;
+    latestRowsByRowNumber.set(oldRow._rowNumber, mergedRow);
+    if (recapComparable(oldRow) !== recapComparable(mergedRow)) {
+      updatesByRow.set(oldRow._rowNumber, { old: oldRow, merged: mergedRow });
+    }
+  };
   for (const item of plan) {
+    if (item.recap?._rowNumber) plannedRows.add(item.recap._rowNumber);
     const performance = {};
     for (const window of item.windows) {
       try {
@@ -731,9 +836,6 @@ export async function runRecapPerformance(argv, deps = {}) {
       fillPendingOnly: fillPending,
       verifyZeroMetrics,
     });
-    if (recapComparable(item.recap) !== recapComparable(merged)) {
-      updates.push({ old: item.recap, merged });
-    }
     let pageSignals = {};
     try {
       pageSignals = await (deps.fetchPageSignals || fetchPageSignals)(item.url);
@@ -754,16 +856,37 @@ export async function runRecapPerformance(argv, deps = {}) {
         trendMomentum = {};
       }
     }
-    tasks.push(...classifyOptimizationTasks({
+    const itemTasks = classifyOptimizationTasks({
       ...merged,
       slug: item.slug,
       title: item.title,
       ...pageSignals,
       ...trendContext,
       ...trendMomentum,
-    }));
+    });
+    tasks.push(...itemTasks);
+    const finalMerged = writeRecommendations
+      ? mergeOptimizationRecommendationIntoRecapRow(merged, itemTasks, { force: forceRecommendations })
+      : merged;
+    queueUpdate(item.recap, finalMerged);
   }
 
+  if (writeRecommendations) {
+    for (const row of recapRows) {
+      if (!row?._rowNumber || plannedRows.has(row._rowNumber)) continue;
+      const base = latestRowsByRowNumber.get(row._rowNumber) || row;
+      const rowTasks = classifyOptimizationTasks({
+        ...base,
+        slug: slugFromUrl(base.url),
+        ...detectTrendContext(base, now),
+      });
+      tasks.push(...rowTasks);
+      const merged = mergeOptimizationRecommendationIntoRecapRow(base, rowTasks, { force: forceRecommendations });
+      queueUpdate(row, merged);
+    }
+  }
+
+  const updates = [...updatesByRow.values()];
   if (writeSheet && updates.length) {
     await (deps.batchUpdateRecapRows || batchUpdateRecapRows)(sheetToken, workbookId, RECAP_TAB, updates, []);
   }
@@ -782,7 +905,7 @@ export async function runRecapPerformance(argv, deps = {}) {
   }
 
   process.stdout.write(
-    `recap-performance: rows=${plan.length} updated=${updates.length} tasks=${tasks.length} mode=${writeSheet ? 'write-sheet' : 'dry-run'}${fillPending ? ' fill_pending=1' : ''}${verifyZeroMetrics ? ' verify_zero_metrics=1' : ''}\n`,
+    `recap-performance: rows=${plan.length} updated=${updates.length} tasks=${dedupeOptimizationTasks(tasks).length} mode=${writeSheet ? 'write-sheet' : 'dry-run'}${fillPending ? ' fill_pending=1' : ''}${verifyZeroMetrics ? ' verify_zero_metrics=1' : ''}${writeRecommendations ? ' write_recommendations=1' : ''}\n`,
   );
   return failures ? 2 : 0;
 }

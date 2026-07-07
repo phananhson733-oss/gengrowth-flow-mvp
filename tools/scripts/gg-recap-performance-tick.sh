@@ -69,7 +69,10 @@ echo "$(date '+%F %T') recap performance start (pid $$)" >> "$LOG"
     fi
 
     echo "$(date '+%F %T') ── recap-performance product=$product wb=…${wb: -6} site=$site ga4=${ga4:-none} ──"
-    CMD=(node "$SCRIPT_DIR/gg-recap-performance.mjs" --write-sheet --write-report --workbook "$wb" --site "$site" --site-name "$site_name")
+    CMD=(node "$SCRIPT_DIR/gg-recap-performance.mjs" --write-sheet --write-report --write-recommendations --workbook "$wb" --site "$site" --site-name "$site_name")
+    if [ "${GG_RECAP_PERFORMANCE_VERIFY_ZERO:-0}" = "1" ]; then
+      CMD+=(--verify-zero-metrics)
+    fi
     if [ -n "$ga4" ]; then
       CMD+=(--ga4-property "$ga4")
     fi

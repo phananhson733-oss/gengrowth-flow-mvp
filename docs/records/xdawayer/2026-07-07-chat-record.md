@@ -472,3 +472,15 @@ Last run: 2026-07-07T03:01:33.692Z (1783393293692)
 已读取自动化记忆、项目 reminders，并使用 `using-superpowers` 与 `verification-before-completion` 作为技能入口和收尾验证门槛；当前仓库未发现 `ai-profile/lynne-soul.md`。仅运行指定确定性三仓库入口，脚本退出码为 0 且无输出。首轮独立验证显示 `gengrowth-wiki`、`gengrowth-ops`、`gengrowth-flow-mvp` 均在 `main` 且 `HEAD...origin/main` 均为 `0 0`，`git diff --name-only --diff-filter=U` 与 `git ls-files -u` 均无输出。回读 `gengrowth-ops` 与 `gengrowth-flow-mvp` 的 Obsidian Git `data.json`，确认 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。追加本 record 后继续只用同一入口收敛并复验；未使用破坏性 git/filesystem 命令或镜像删除类同步脚本。
 
 ---
+
+### Q16 — 12:29 [claude]
+
+**🙋 提问：**
+
+自动 gsc index
+
+**🤖 回答：**
+
+本机 Chrome 驱动 GSC 手动补提。今日 worklist：astrologywiki 4 篇新上线（england-vs-norway/jessica-pegula/cole-palmer/erling-haaland-girlfriend）+ gengrowth 2 个（attribution-model/en-robots-txt）。但**首条试探即"超出了配额"**——昨日 07-06 ~16:40 提交的 11 条仍在账号级 ~24h 滚动窗口内（今仅过 ~20h），按 SOP「超配额就停」未硬试，今日 0 提交。已更新 reminders 记 worklist，并排一次性自动重试 gsc-index-submit-retry-0707 到今日 17:35（窗口滑出后）。确认今日实际日期=2026-07-07。
+
+---

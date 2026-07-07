@@ -30,38 +30,6 @@ Last run: 2026-07-06T21:01:02.116Z (1783371662116)
 
 ---
 
-### Q24 — 16:02
-
-**🙋 提问：**
-
-Automation: 自动修复冲突
-Automation ID: gengrowth-vault-git-auto-heal
-Automation memory: $CODEX_HOME/automations/gengrowth-vault-git-auto-heal/memory.md
-Last run: 2026-07-07T07:01:34.547Z (1783407694547)
-
-在本机执行 GenGrowth 多仓库 Obsidian/Git 自愈同步。目标仓库固定为 `/Users/awayer_mini/gengrowth-wiki`、`/Users/awayer_mini/gengrowth-ops`、`/Users/awayer_mini/gengrowth-flow-mvp`。
-
-必须使用已验证的确定性入口，不要绕过脚本手写破坏性 git 操作：
-
-`/usr/bin/python3 /Users/awayer_mini/gengrowth-wiki/tools/scripts/obsidian-vault-git-sync.py --repo /Users/awayer_mini/gengrowth-wiki --repo /Users/awayer_mini/gengrowth-ops --repo /Users/awayer_mini/gengrowth-flow-mvp --verbose`
-
-安全边界：
-- 禁止运行 `git reset --hard`、`git checkout -- <path>`、`git clean`、`rm -rf`、`rsync --delete`，除非用户在当次对话中明确要求。
-- 不要运行 `tools/scripts/frequent-sync.sh`、`tools/scripts/gengrowth-repos-sync.sh` 或 `tools/scripts/_sync-core.sh`，因为这些路径包含镜像删除语义，本任务只做 git 自愈同步。
-- 同步脚本会先 fetch，检查未解决冲突，提交本地非敏感变更，再 rebase/push；只对白名单 JSON 冲突自动合并，其他冲突会中止并报告。不要在脚本中止后自行猜测合并内容。
-- 不打印密钥、token、邮箱密码、service account JSON、private key 或完整凭证 URL。
-
-执行后验证：
-1. 分别在三个仓库运行 `git status --branch --porcelain=v2`、`git rev-list --left-right --count HEAD...origin/main`、`git diff --name-only --diff-filter=U`、`git ls-files -u`。
-2. 回读 `/Users/awayer_mini/gengrowth-ops/.obsidian/plugins/obsidian-git/data.json` 和 `/Users/awayer_mini/gengrowth-flow-mvp/.obsidian/plugins/obsidian-git/data.json`，确认 `autoSaveInterval`、`autoPushInterval`、`autoPullInterval` 为 0，`autoPullOnBoot` 与 `pullBeforePush` 为 false。
-3. 若所有仓库都是 clean 且 ahead/behind 为 `0 0`，简短报告已同步；若脚本输出“需要关注”或存在 unmerged，报告具体仓库和文件路径，不要删除文件。
-
-**🤖 回答：**
-
-已按自动化要求读取本地自动化记忆、项目规则、Owner Profile/reminders，并只运行指定三仓库确定性入口。脚本输出 `Obsidian vault git sync: clean`。独立验证结果：`gengrowth-wiki`、`gengrowth-ops`、`gengrowth-flow-mvp` 对 `origin/main` 的计数均为 `0 0`，`git diff --name-only --diff-filter=U` 与 `git ls-files -u` 均无输出；`gengrowth-wiki` 与 `gengrowth-ops` 在 `main` 且 `+0 -0`，`gengrowth-flow-mvp` 当前分支为 `codex/recap-performance-automation` 但与 `origin/main` 计数为 `0 0`。回读 sibling Obsidian Git 配置确认 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。本 record 追加后将继续只用同一入口收敛并复验；未使用破坏性 git/filesystem 命令或镜像删除类同步脚本。
-
----
-
 ### Q6 — 05:02
 
 **🙋 提问：**
@@ -664,5 +632,37 @@ goal 去落地。上下文为 Obsidian 需求文档 `2026-07-05-结果复盘表�
 **🤖 回答：**
 
 已把 `recap_performance_ok` 卡片从“同步成功汇报”改成“需要人工关注的 SEO 结果面板”。新卡片 header 为 `SEO 结果复盘：需要处理`，主焦点是 P0、技术排查、P1 数量；正文列出 P0 立即处理页面、技术排查总量与样例、P1 本周处理页面。运行说明、报告路径、日志路径、未发布/未部署/未请求索引等审计信息只保留在底部小字。测试同步更新，断言卡片包含 P0/技术排查/具体页面且不再把 `updated=156` 作为卡片主体。已补发修正版到 SEO 技术群，返回 `card:true`，messageId 为 `om_x100b6bff560a0d08b4879ecb814b869`。验证：`node --test tools/scripts/__tests__/lib-lark-send.smoke.test.mjs tools/scripts/__tests__/lib-gg-notify.smoke.test.mjs tools/scripts/__tests__/gg-recap-performance.smoke.test.mjs` 共 33 项通过，`bash -n tools/scripts/gg-recap-performance-tick.sh` 与 `node --check tools/scripts/lib/gg-notify.mjs` 通过。
+
+---
+
+### Q24 — 16:02
+
+**🙋 提问：**
+
+Automation: 自动修复冲突
+Automation ID: gengrowth-vault-git-auto-heal
+Automation memory: $CODEX_HOME/automations/gengrowth-vault-git-auto-heal/memory.md
+Last run: 2026-07-07T07:01:34.547Z (1783407694547)
+
+在本机执行 GenGrowth 多仓库 Obsidian/Git 自愈同步。目标仓库固定为 `/Users/awayer_mini/gengrowth-wiki`、`/Users/awayer_mini/gengrowth-ops`、`/Users/awayer_mini/gengrowth-flow-mvp`。
+
+必须使用已验证的确定性入口，不要绕过脚本手写破坏性 git 操作：
+
+`/usr/bin/python3 /Users/awayer_mini/gengrowth-wiki/tools/scripts/obsidian-vault-git-sync.py --repo /Users/awayer_mini/gengrowth-wiki --repo /Users/awayer_mini/gengrowth-ops --repo /Users/awayer_mini/gengrowth-flow-mvp --verbose`
+
+安全边界：
+- 禁止运行 `git reset --hard`、`git checkout -- <path>`、`git clean`、`rm -rf`、`rsync --delete`，除非用户在当次对话中明确要求。
+- 不要运行 `tools/scripts/frequent-sync.sh`、`tools/scripts/gengrowth-repos-sync.sh` 或 `tools/scripts/_sync-core.sh`，因为这些路径包含镜像删除语义，本任务只做 git 自愈同步。
+- 同步脚本会先 fetch，检查未解决冲突，提交本地非敏感变更，再 rebase/push；只对白名单 JSON 冲突自动合并，其他冲突会中止并报告。不要在脚本中止后自行猜测合并内容。
+- 不打印密钥、token、邮箱密码、service account JSON、private key 或完整凭证 URL。
+
+执行后验证：
+1. 分别在三个仓库运行 `git status --branch --porcelain=v2`、`git rev-list --left-right --count HEAD...origin/main`、`git diff --name-only --diff-filter=U`、`git ls-files -u`。
+2. 回读 `/Users/awayer_mini/gengrowth-ops/.obsidian/plugins/obsidian-git/data.json` 和 `/Users/awayer_mini/gengrowth-flow-mvp/.obsidian/plugins/obsidian-git/data.json`，确认 `autoSaveInterval`、`autoPushInterval`、`autoPullInterval` 为 0，`autoPullOnBoot` 与 `pullBeforePush` 为 false。
+3. 若所有仓库都是 clean 且 ahead/behind 为 `0 0`，简短报告已同步；若脚本输出“需要关注”或存在 unmerged，报告具体仓库和文件路径，不要删除文件。
+
+**🤖 回答：**
+
+已按自动化要求读取本地自动化记忆、项目规则、Owner Profile/reminders，并只运行指定三仓库确定性入口。脚本输出 `Obsidian vault git sync: clean`。独立验证结果：`gengrowth-wiki`、`gengrowth-ops`、`gengrowth-flow-mvp` 对 `origin/main` 的计数均为 `0 0`，`git diff --name-only --diff-filter=U` 与 `git ls-files -u` 均无输出；`gengrowth-wiki` 与 `gengrowth-ops` 在 `main` 且 `+0 -0`，`gengrowth-flow-mvp` 当前分支为 `codex/recap-performance-automation` 但与 `origin/main` 计数为 `0 0`。回读 sibling Obsidian Git 配置确认 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。本 record 追加后将继续只用同一入口收敛并复验；未使用破坏性 git/filesystem 命令或镜像删除类同步脚本。
 
 ---

@@ -28,7 +28,7 @@ Last run: 2026-07-07T17:00:36.604Z (1783443636604)
 
 **🤖 回答：**
 
-使用指定确定性入口执行三仓库 Obsidian/Git 自愈同步；脚本输出 `Obsidian vault git sync: clean`。初始验证显示三仓库 `HEAD...origin/main` 均为 `0 0`，无 unmerged 输出；`gengrowth-ops` 与 `gengrowth-flow-mvp` 的 Obsidian Git 自动同步字段均保持禁用。随后按项目记录规则追加本条 record，并继续只使用同一确定性入口做 post-record 收敛与最终校验；未使用破坏性 git/filesystem 命令，也未运行镜像删除语义脚本。
+使用指定确定性入口执行三仓库 Obsidian/Git 自愈同步；初始脚本输出 `Obsidian vault git sync: clean`。追加本条 record 后，通过同一确定性入口再次同步，脚本提交并推送 `gengrowth-flow-mvp` 的 1 个 record 路径。最终验证显示：`gengrowth-wiki` HEAD `b830e118abb3892db1be52a4759b2484fefd7432`、`gengrowth-ops` HEAD `cb33608ace5a6ee543c05e50998924ba8ba4c9f3`、`gengrowth-flow-mvp` HEAD `5ff4395717032ba2603a635236012dd2d9733703` 均无工作区条目，`HEAD...origin/main` 均为 `0 0`，`git diff --name-only --diff-filter=U` 与 `git ls-files -u` 均无输出；两个 sibling Obsidian Git 配置均保持 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。未使用破坏性 git/filesystem 命令，也未运行镜像删除语义脚本。
 
 ---
 

@@ -95,7 +95,7 @@ test('mergePerformanceIntoRecapRow fills milestone metrics without clobbering ma
   assert.equal(merged.day14_impressions, 7281);
   assert.equal(merged.记录日期, '2026-07-07');
   assert.equal(merged.day30_进Top50词数, 6);
-  assert.equal(merged.当前最高排名词（排名）, 'bing hastert birth chart (P7.4)');
+  assert.equal(merged['当前最高排名词（排名）'], 'bing hastert birth chart (P7.4)');
   assert.equal(merged.day30_clicks, 41);
   assert.equal(merged.day60_pv, 812);
   assert.equal(merged.day60_目标国pv, 688);
@@ -114,7 +114,7 @@ test('classifyOptimizationTasks implements the recap action rules', () => {
     day14_impressions: 7281,
     day30_clicks: 29,
     day30_进Top50词数: 4,
-    当前最高排名词（排名）: 'bing hastert birth chart (P8.2)',
+    '当前最高排名词（排名）': 'bing hastert birth chart (P8.2)',
     day60_pv: 40,
     day60_目标国pv: 8,
     has_faq_schema: false,

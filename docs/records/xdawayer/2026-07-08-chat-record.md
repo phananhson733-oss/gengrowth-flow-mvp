@@ -289,6 +289,6 @@ Last run: 2026-07-07T22:02:07.929Z (1783461727929)
 
 **🤖 回答：**
 
-使用指定确定性入口执行三仓库 Obsidian/Git 自愈同步；初始脚本输出 `Obsidian vault git sync: clean`。初始验证显示三个仓库均无未合并输出，`HEAD...origin/main` 均为 `0 0`；两个 sibling Obsidian Git 配置均保持 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。追加本条 record 后，继续仅用同一确定性入口做 post-record 收敛，并以最终三仓库 git/config 验证作为完成依据。未使用破坏性 git/filesystem 命令，也未运行镜像删除语义脚本。
+使用指定确定性入口执行三仓库 Obsidian/Git 自愈同步；初始脚本输出 `Obsidian vault git sync: clean`。初始验证显示三个仓库均无未合并输出，`HEAD...origin/main` 均为 `0 0`；两个 sibling Obsidian Git 配置均保持 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。追加本条 record 后，继续仅用同一确定性入口做 post-record 收敛。最终验证显示三个仓库均无工作区条目，`HEAD...origin/main` 均为 `0 0`，`git diff --name-only --diff-filter=U` 与 `git ls-files -u` 均无输出；两个 sibling Obsidian Git 配置仍保持上述禁用值。未使用破坏性 git/filesystem 命令，也未运行镜像删除语义脚本。
 
 ---

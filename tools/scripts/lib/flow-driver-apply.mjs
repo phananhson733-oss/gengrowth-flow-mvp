@@ -5,7 +5,6 @@ import { join } from 'node:path';
 const SCRIPTS = new URL('.', import.meta.url).pathname.replace(/\/lib\/$/, '');
 const AUTOPILOT = join(SCRIPTS, 'gg-seo-autopilot.mjs');
 const PREVIEW_GATE = join(SCRIPTS, 'gg-preview-gate.mjs');
-const NOTIFY = join(SCRIPTS, 'gg-notify.mjs');
 
 // gate 阶段(有 PR/branch,可重过门自修) vs authoring 阶段(无门)。
 const GATE_STAGES = new Set(['pushed-preview', 'verified-preview']);
@@ -16,10 +15,8 @@ export function buildActionCommands(park, cfg) {
     return { kind: 'retry-skip', commands: [], skipReason: 'transient — 现有 --auto-retry-parks lane owns' };
   }
   if (action === 'archive') {
-    return {
-      kind: 'archive',
-      commands: [{ bin: NOTIFY, args: ['parked', '--site', cfg.site, '--pid', pid, '--slug', slug, '--reason', reason || 'archived: unfixable(时效死/不该发)'] }],
-    };
+    // sidecar-only：不再 per-park 派 gg-notify(避免刷屏)——archive 只记 sidecar,终态进每轮一条汇总。
+    return { kind: 'archive', commands: [] };
   }
   if (action === 'fix') {
     if (!branch || !GATE_STAGES.has(stage)) {
@@ -39,7 +36,7 @@ export function buildActionCommands(park, cfg) {
 // 有界编排：逐 park 派动作,side-effect 走 deps.run(cmd)→{ok,code}。maxFix/maxArchive 限爆炸半径。
 // deps = { run(cmd)->Promise<{ok,code}>, log(msg), cfg:{repo,site}, maxFix, maxArchive }。
 export async function driveApply(plan, deps) {
-  const s = { fixed: 0, fixFailed: 0, archived: 0, archiveSkipped: 0, retryDeferred: 0, fixSkipped: 0, capped: 0 };
+  const s = { fixed: 0, fixFailed: 0, archived: 0, archiveSkipped: 0, retryDeferred: 0, fixSkipped: 0, capped: 0, archivedSlugs: [], fixedSlugs: [], fixFailedSlugs: [] };
   let fixCount = 0, archiveCount = 0;
   for (const park of plan || []) {
     const built = buildActionCommands(park, deps.cfg);
@@ -50,9 +47,10 @@ export async function driveApply(plan, deps) {
       if (deps.isArchived && deps.isArchived(park.pid)) { s.archiveSkipped++; deps.log(`${park.pid} 已归档过 → 跳过(幂等)`); continue; }
       if (archiveCount >= deps.maxArchive) { s.capped++; deps.log(`${park.pid} archive capped(>${deps.maxArchive})`); continue; }
       archiveCount++;
-      const r = await deps.run(built.commands[0]);
-      if (r.ok) { s.archived++; if (deps.markArchived) deps.markArchived(park.pid); }
-      else deps.log(`${park.pid} archive notify 失败 code=${r.code}`);
+      // sidecar-only：不 spawn 通知,只记 sidecar(退出 driver 队列)+进本轮汇总。
+      if (deps.markArchived) deps.markArchived(park.pid);
+      s.archived++; s.archivedSlugs.push(park.slug || park.pid);
+      deps.log(`${park.pid} archived(记 sidecar,退出队列)`);
       continue;
     }
     if (built.kind === 'fix') {
@@ -60,10 +58,20 @@ export async function driveApply(plan, deps) {
       fixCount++;
       let ok = true;
       for (const cmd of built.commands) { const r = await deps.run(cmd); if (!r.ok) { ok = false; break; } }
-      if (ok) { s.fixed++; deps.log(`${park.pid} fix → 重过门(门做保证,PASS 才 merge)`); }
-      else { s.fixFailed++; deps.log(`${park.pid} fix 失败(门未过或工具错)——留 needs_human`); }
+      if (ok) { s.fixed++; s.fixedSlugs.push(park.slug || park.pid); deps.log(`${park.pid} fix → 重过门(门做保证,PASS 才 merge)`); }
+      else { s.fixFailed++; s.fixFailedSlugs.push(park.slug || park.pid); deps.log(`${park.pid} fix 失败(门未过或工具错)——留 needs_human`); }
       continue;
     }
   }
   return s;
+}
+
+// 每轮一条终态汇总(仅有 fixed/archived/fixFailed 时);无终态→空串(tick 据此决定发不发)。
+export function buildSummaryMessage(s, site) {
+  if (!(s.fixed || s.archived || s.fixFailed)) return '';
+  const parts = [`flow-driver [${site}]`];
+  if (s.fixed) parts.push(`自修上线 ${s.fixed}(${s.fixedSlugs.join(', ')})`);
+  if (s.archived) parts.push(`归档 ${s.archived}(${s.archivedSlugs.join(', ')})`);
+  if (s.fixFailed) parts.push(`修失败留 needs_human ${s.fixFailed}(${s.fixFailedSlugs.join(', ')})`);
+  return parts.join('；');
 }

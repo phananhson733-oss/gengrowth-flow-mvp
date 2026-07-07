@@ -5,13 +5,10 @@ import { buildActionCommands } from '../lib/flow-driver-apply.mjs';
 
 const CFG = { repo: 'xdawayer/oracle', site: 'astrologywiki' };
 
-test('buildActionCommands: archive → 一条 gg-notify parked', () => {
+test('buildActionCommands: archive → sidecar-only(不再 per-park 派通知,终态进每轮一条汇总)', () => {
   const r = buildActionCommands({ pid: 'PG-X', action: 'archive', slug: 'foo', stage: 'pushed-preview', branch: 'seo/auto/x', reason: '死选题' }, CFG);
   assert.equal(r.kind, 'archive');
-  assert.equal(r.commands.length, 1);
-  assert.match(r.commands[0].bin, /gg-notify\.mjs$/);
-  assert.deepEqual(r.commands[0].args.slice(0, 2), ['parked', '--site']);
-  assert.ok(r.commands[0].args.includes('astrologywiki') && r.commands[0].args.includes('PG-X'));
+  assert.equal(r.commands.length, 0); // 不派 gg-notify——archive 只记 sidecar
 });
 
 test('buildActionCommands: fix(gate 阶段有 branch) → retry-failed + preview-gate 两条', () => {
@@ -54,19 +51,21 @@ function mkDeps(overrides = {}) {
   };
 }
 
-test('driveApply: archive 派 notify、retry 跳过、fix 派两条门命令、汇总正确', async () => {
+test('driveApply: archive 只记 sidecar(不 spawn)、retry 跳过、fix 派两条、汇总带 slugs', async () => {
   const deps = mkDeps();
   const plan = [
-    { pid: 'PG-A', action: 'archive', slug: 'a', stage: 'pushed-preview', branch: 'b/a' },
+    { pid: 'PG-A', action: 'archive', slug: 'aa', stage: 'pushed-preview', branch: 'b/a' },
     { pid: 'PG-T', action: 'retry', slug: 't', stage: 'pushed-preview', branch: 'b/t' },
-    { pid: 'PG-F', action: 'fix', slug: 'f', stage: 'pushed-preview', branch: 'b/f' },
+    { pid: 'PG-F', action: 'fix', slug: 'ff', stage: 'pushed-preview', branch: 'b/f' },
   ];
   const s = await driveApply(plan, deps);
   assert.equal(s.archived, 1);
   assert.equal(s.retryDeferred, 1);
   assert.equal(s.fixed, 1);
-  // fix 派了 2 条(retry-failed + preview-gate)、archive 1 条 notify = 3 条真跑
-  assert.equal(deps.ran.length, 3);
+  assert.deepEqual(s.archivedSlugs, ['aa']);
+  assert.deepEqual(s.fixedSlugs, ['ff']);
+  assert.equal(deps.ran.length, 2); // 只 fix 的 2 条,archive 不 spawn
+  assert.ok(deps.archived.has('PG-A')); // archive 仍记 sidecar
 });
 
 test('driveApply: maxFix=1 时第二个 fix 被 cap、不执行', async () => {
@@ -100,4 +99,15 @@ test('driveApply: archive 幂等——已归档过的 pid 第二轮跳过、不�
   assert.equal(s2.archived, 0);
   assert.equal(s2.archiveSkipped, 1);
   assert.equal(deps2.ran.length, 0); // 第二轮没再 spawn notify
+});
+
+import { buildSummaryMessage } from '../lib/flow-driver-apply.mjs';
+
+test('buildSummaryMessage: 有终态 → 一行中文汇总(含 slugs);无终态 → 空串', () => {
+  assert.equal(buildSummaryMessage({ fixed: 0, archived: 0, fixFailed: 0, archivedSlugs: [], fixedSlugs: [], fixFailedSlugs: [] }, 'astrologywiki'), '');
+  const msg = buildSummaryMessage({ fixed: 1, archived: 1, fixFailed: 1, fixedSlugs: ['x'], archivedSlugs: ['wc-045'], fixFailedSlugs: ['z'] }, 'astrologywiki');
+  assert.match(msg, /astrologywiki/);
+  assert.match(msg, /自修上线 1.*x/);
+  assert.match(msg, /归档 1.*wc-045/);
+  assert.match(msg, /修失败.*1.*z/);
 });

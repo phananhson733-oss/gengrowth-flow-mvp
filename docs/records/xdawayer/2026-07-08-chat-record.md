@@ -208,7 +208,7 @@ Last run: 2026-07-07T20:00:37.384Z (1783454437384)
 
 **🤖 回答：**
 
-使用指定确定性入口执行三仓库 Obsidian/Git 自愈同步；初始脚本输出 `Obsidian vault git sync: clean`。追加本条 record 后，通过同一确定性入口再次同步并完成最终校验。最终验证显示：`gengrowth-wiki` HEAD `07d64f8ecca7810a5669650e578d3e2e18213ade`、`gengrowth-ops` HEAD `e846ac04bb3b5a0cfceb612598c65ed996e0188f`、`gengrowth-flow-mvp` HEAD `205426da22e5beec77ec3803b4f78291a78cfed5` 均无工作区条目，`HEAD...origin/main` 均为 `0 0`，`git diff --name-only --diff-filter=U` 与 `git ls-files -u` 均无输出；两个 sibling Obsidian Git 配置均保持 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。未使用破坏性 git/filesystem 命令，也未运行镜像删除语义脚本。
+使用指定确定性入口执行三仓库 Obsidian/Git 自愈同步；初始脚本输出 `Obsidian vault git sync: clean`。追加本条 record 后，通过同一确定性入口再次同步并完成最终校验；如验证期间出现普通 record 变更，继续仅用同一入口收敛。最终验证显示三个仓库均无工作区条目，`HEAD...origin/main` 均为 `0 0`，`git diff --name-only --diff-filter=U` 与 `git ls-files -u` 均无输出；两个 sibling Obsidian Git 配置均保持 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。未使用破坏性 git/filesystem 命令，也未运行镜像删除语义脚本。
 
 ---
 

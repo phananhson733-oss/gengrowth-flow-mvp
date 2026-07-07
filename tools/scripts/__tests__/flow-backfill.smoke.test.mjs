@@ -98,13 +98,13 @@ test('runBackfillLoop: 每轮都有变更 → maxPasses 封顶、converged=false
 
 test('runBackfillLoop: 某步持续失败(无变更) → 不误判干净收敛、failedSteps 记录、maxPasses 后 converged=false(治 finding②)', async () => {
   const deps = {
-    runCapture: async (step) => ({ ok: step.label !== 'sync-recap', out: 'updated=0' }),
+    runCapture: async (step) => ({ ok: !step.label.endsWith(':sync-recap'), out: 'updated=0' }),
     log: () => {},
     maxPasses: 2,
   };
   const r = await runBackfillLoop(deps);
   assert.equal(r.converged, false);                 // 有失败 → 不干净收敛(否则整体失败=静默收敛)
-  assert.deepEqual(r.failedSteps, ['sync-recap']);  // 记录失败步供汇总告警
+  assert.deepEqual(r.failedSteps, ['astrologywiki:sync-recap', 'gengrowth:sync-recap']);  // 记录失败步供汇总告警
 });
 
 test('runBackfillLoop: maxPasses=0 → 立即 converged(不跑)、failedSteps 空', async () => {

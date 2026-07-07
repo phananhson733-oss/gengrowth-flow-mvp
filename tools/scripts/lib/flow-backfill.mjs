@@ -7,14 +7,64 @@ const SCRIPTS = new URL('.', import.meta.url).pathname.replace(/\/lib\/$/, '');
 const LEDGER_RECONCILE = join(SCRIPTS, 'gg-ledger-reconcile.mjs');
 const INDEX_MONITOR = join(SCRIPTS, 'gg-index-monitor.mjs');
 const CLUSTER_SYNC = join(SCRIPTS, 'gg-cluster-page-assets-sync.mjs');
+const MISSING_WORKBOOK = '__MISSING_WORKBOOK_ID__';
 
-export const BACKFILL_STEPS = [
-  { label: 'reconcile', bin: LEDGER_RECONCILE, args: ['--apply'] },
-  { label: 'sync-published', bin: INDEX_MONITOR, args: ['--sync-published', '--write-sheet'] },
-  { label: 'sync-recap', bin: INDEX_MONITOR, args: ['--sync-recap', '--write-sheet'] },
-  { label: 'cluster-page-assets', bin: CLUSTER_SYNC, args: ['--apply'] },
-  { label: 'sync-request-queue', bin: INDEX_MONITOR, args: ['--sync-request-queue', '--write-sheet'] },
-];
+function productList(env) {
+  return String(env.GG_INDEX_MONITOR_PRODUCTS || 'astrologywiki gengrowth').split(/\s+/).map((s) => s.trim()).filter(Boolean);
+}
+
+function productConfig(product, env) {
+  if (/^astrology(wiki)?$/i.test(product)) {
+    return {
+      label: 'astrologywiki',
+      workbook: env.GG_SHEETS_ASTROLOGY_WORKBOOK_ID || env.GG_SHEETS_FLOW_MVP_WORKBOOK_ID || env.GG_SHEETS_WORKBOOK_ID || MISSING_WORKBOOK,
+      site: env.GG_GSC_ASTROLOGY_SITE || 'sc-domain:astrologywiki.com',
+      sitemap: env.GG_ASTROLOGY_SITEMAP_URL || 'https://www.astrologywiki.com/sitemap.xml',
+    };
+  }
+  if (/^gengrowth(-ai)?$/i.test(product)) {
+    return {
+      label: 'gengrowth',
+      workbook: env.GG_SHEETS_GENGROWTH_WORKBOOK_ID || env.GG_SHEETS_WORKBOOK_ID || MISSING_WORKBOOK,
+      site: env.GG_GSC_GENGROWTH_SITE || 'sc-domain:gengrowth.ai',
+      sitemap: env.GG_GENGROWTH_SITEMAP_URL || 'https://www.gengrowth.ai/sitemap.xml',
+    };
+  }
+  const upper = product.replace(/-/g, '_').toUpperCase();
+  return {
+    label: product,
+    workbook: env[`GG_SHEETS_${upper}_WORKBOOK_ID`] || env.GG_SHEETS_WORKBOOK_ID || MISSING_WORKBOOK,
+    site: env[`GG_GSC_${upper}_SITE`] || env.GG_GSC_SITE || `sc-domain:${product}`,
+    sitemap: env[`GG_${upper}_SITEMAP_URL`] || '',
+  };
+}
+
+function indexStep(cfg, label, flag) {
+  return {
+    label: `${cfg.label}:${label}`,
+    bin: INDEX_MONITOR,
+    args: [flag, '--write-sheet', '--workbook', cfg.workbook, '--site', cfg.site, '--sitemap-url', cfg.sitemap],
+  };
+}
+
+function productSteps(cfg) {
+  return [
+    indexStep(cfg, 'sync-published', '--sync-published'),
+    indexStep(cfg, 'sync-url-inventory', '--sync-url-inventory'),
+    indexStep(cfg, 'sync-recap', '--sync-recap'),
+    { label: `${cfg.label}:cluster-page-assets`, bin: CLUSTER_SYNC, args: ['--apply', '--workbook', cfg.workbook] },
+    indexStep(cfg, 'sync-request-queue', '--sync-request-queue'),
+  ];
+}
+
+export function buildBackfillSteps({ env = process.env } = {}) {
+  return [
+    { label: 'reconcile', bin: LEDGER_RECONCILE, args: ['--apply'] },
+    ...productList(env).flatMap((product) => productSteps(productConfig(product, env))),
+  ];
+}
+
+export const BACKFILL_STEPS = buildBackfillSteps();
 
 // 本轮有没有"真变更"：非零成功-变更计数,覆盖全部回填命令的成功变更词(reconcile 的 reconciled/flips
 // 易漏——漏了会过早收敛、回填不全)。**有意排除**:
@@ -33,12 +83,13 @@ export function passHadChanges(out) { return CHANGE_RE.test(String(out || '')); 
 export async function runBackfillLoop(deps) {
   const maxPasses = deps.maxPasses ?? 3;
   if (maxPasses <= 0) return { passes: 0, converged: true, changedPasses: 0, failedSteps: [] };
+  const steps = deps.steps || BACKFILL_STEPS;
   let changedPasses = 0;
   let lastFailed = [];
   for (let pass = 1; pass <= maxPasses; pass++) {
     let combined = '';
     const failed = [];
-    for (const step of BACKFILL_STEPS) {
+    for (const step of steps) {
       const r = await deps.runCapture(step);
       combined += `\n${step.label}: ${(r && r.out) || ''}`;
       if (!r || !r.ok) { failed.push(step.label); deps.log(`回填 ${step.label} 失败(非零/超时,下轮重试)`); }

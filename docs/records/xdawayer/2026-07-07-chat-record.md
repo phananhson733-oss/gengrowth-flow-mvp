@@ -1,17 +1,3 @@
----
-
-### Q20 — 15:20
-
-**🙋 提问：**
-
-goal 去落地。上下文为 Obsidian 需求文档 `2026-07-05-结果复盘表自动化系统-需求文档` 与 astrologywiki Google Sheet，目标是落地结果复盘表自动化系统：自动回填 D14/D30/D60 GSC/GA4 数据，生成优化任务清单，不自动修改页面内容或发布。
-
-**🤖 回答：**
-
-已在 `codex/recap-performance-automation` 分支落地 `gg-recap-performance.mjs`：从 `index-tracking` 与 `结果复盘表` 生成 D14/D30/D60 计划，拉 GSC Search Analytics 与 GA4 Data API 指标，回填 `day14_impressions`、`day30_进Top50词数`、`当前最高排名词（排名）`、`day30_clicks`、`day60_pv`、`day60_目标国pv`，并渲染 Markdown 优化任务清单。新增 `gg-recap-performance-tick.sh` wrapper 与 `com.gengrowth.recap-performance.plist`，按 `astrologywiki/gengrowth` 分产品读取 workbook/site/GA4 配置，每天 10:00 运行；已复制到 `~/Library/LaunchAgents/` 并 `launchctl bootstrap/enable`，状态为 `not running`、`runs=0`、触发时间 10:00。更新 `OPS_OVERVIEW.md` 与 workbook README 说明。验证：`node --test tools/scripts/__tests__/gg-recap-performance.smoke.test.mjs tools/scripts/__tests__/gg-index-monitor.smoke.test.mjs` 共 66 项通过；`bash -n tools/scripts/gg-recap-performance-tick.sh`、`plutil -lint tools/scripts/com.gengrowth.recap-performance.plist`、`git diff --check` 通过。Search Console country filter 已按官方文档使用 ISO 3166-1 alpha-3（如 `USA`）。未调用 author/publish/deploy 或索引提交路径。
-
----
-
 ### Q8 — 06:02
 
 **🙋 提问：**
@@ -590,5 +576,17 @@ Last run: 2026-07-07T06:01:34.364Z (1783404094364)
 **🤖 回答：**
 
 已读取自动化记忆、项目规则、sibling Owner Profile 与 reminders，并使用 `using-superpowers` 和 `verification-before-completion` 作为技能入口和收尾验证门槛。仅运行指定确定性三仓库入口，脚本输出 `Obsidian vault git sync: clean`。首轮独立验证显示 `gengrowth-wiki`、`gengrowth-ops`、`gengrowth-flow-mvp` 均在 `main` 且 `HEAD...origin/main` 均为 `0 0`，`git diff --name-only --diff-filter=U` 与 `git ls-files -u` 均无输出。回读 `gengrowth-ops` 与 `gengrowth-flow-mvp` 的 Obsidian Git `data.json`，确认 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。追加本 record 后继续只用同一入口收敛并复验；未使用破坏性 git/filesystem 命令或镜像删除类同步脚本。
+
+---
+
+### Q20 — 15:20
+
+**🙋 提问：**
+
+goal 去落地。上下文为 Obsidian 需求文档 `2026-07-05-结果复盘表自动化系统-需求文档` 与 astrologywiki Google Sheet，目标是落地结果复盘表自动化系统：自动回填 D14/D30/D60 GSC/GA4 数据，生成优化任务清单，不自动修改页面内容或发布。
+
+**🤖 回答：**
+
+已在 `codex/recap-performance-automation` 分支落地 `gg-recap-performance.mjs`：从 `index-tracking` 与 `结果复盘表` 生成 D14/D30/D60 计划，拉 GSC Search Analytics 与 GA4 Data API 指标，回填 `day14_impressions`、`day30_进Top50词数`、`当前最高排名词（排名）`、`day30_clicks`、`day60_pv`、`day60_目标国pv`，并渲染 Markdown 优化任务清单。新增 `gg-recap-performance-tick.sh` wrapper 与 `com.gengrowth.recap-performance.plist`，按 `astrologywiki/gengrowth` 分产品读取 workbook/site/GA4 配置，每天 10:00 运行；已复制到 `~/Library/LaunchAgents/` 并 `launchctl bootstrap/enable`，状态为 `not running`、`runs=0`、触发时间 10:00。更新 `OPS_OVERVIEW.md` 与 workbook README 说明。验证：`node --test tools/scripts/__tests__/gg-recap-performance.smoke.test.mjs tools/scripts/__tests__/gg-index-monitor.smoke.test.mjs` 共 66 项通过；`bash -n tools/scripts/gg-recap-performance-tick.sh`、`plutil -lint tools/scripts/com.gengrowth.recap-performance.plist`、`git diff --check` 通过。Search Console country filter 已按官方文档使用 ISO 3166-1 alpha-3（如 `USA`）。未调用 author/publish/deploy 或索引提交路径。
 
 ---

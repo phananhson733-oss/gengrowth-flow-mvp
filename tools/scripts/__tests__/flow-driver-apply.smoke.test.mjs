@@ -111,3 +111,13 @@ test('buildSummaryMessage: 有终态 → 一行中文汇总(含 slugs);无终态
   assert.match(msg, /归档 1.*wc-045/);
   assert.match(msg, /修失败.*1.*z/);
 });
+
+test('buildSummaryMessage: 回填补了 gap → 汇总带回填;收敛无变更 → 不提回填', () => {
+  const noTerminal = { fixed: 0, archived: 0, fixFailed: 0, archivedSlugs: [], fixedSlugs: [], fixFailedSlugs: [] };
+  // 回填补了 gap(changedPasses>0) → 即使无 park 终态也发汇总
+  assert.match(buildSummaryMessage(noTerminal, 'astrologywiki', { converged: true, changedPasses: 1, passes: 2 }), /回填补齐/);
+  // 回填未收敛 → warn
+  assert.match(buildSummaryMessage(noTerminal, 'astrologywiki', { converged: false, changedPasses: 3, passes: 3 }), /回填未收敛|⚠️/);
+  // 回填收敛且无变更 + 无 park 终态 → 空串(不发)
+  assert.equal(buildSummaryMessage(noTerminal, 'astrologywiki', { converged: true, changedPasses: 0, passes: 1 }), '');
+});

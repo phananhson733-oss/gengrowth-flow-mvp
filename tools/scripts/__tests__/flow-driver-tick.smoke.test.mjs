@@ -25,6 +25,7 @@ function runTick(ops, extraEnv = {}) {
       GG_FLOW_DRIVER_LOG_DIR: logDir,
       GG_LARK_NOTIFY_SILENCE: '1',
       GG_FLOW_DRIVER_TICK_TIMEOUT: '120',
+      GG_FLOW_DRIVER_BACKFILL_PASSES: '0', // 跳过 P2 回填(否则 --apply 会真 spawn 回填命令打真 sheet)
       ...extraEnv,
     },
   });

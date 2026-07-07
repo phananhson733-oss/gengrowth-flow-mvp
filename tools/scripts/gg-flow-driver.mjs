@@ -9,6 +9,7 @@ import { join } from 'node:path';
 import { homedir } from 'node:os';
 import { planDriverActions } from './lib/flow-driver.mjs';
 import { driveApply, buildSummaryMessage } from './lib/flow-driver-apply.mjs';
+import { runBackfillLoop } from './lib/flow-backfill.mjs';
 
 const argv = process.argv.slice(2);
 const getArg = (name) => { const i = argv.indexOf(name); return i >= 0 ? argv[i + 1] : ''; };
@@ -55,9 +56,19 @@ async function main() {
     markArchived: (pid) => { archivedSet.add(pid); try { writeFileSync(ARCHIVED_SIDECAR, JSON.stringify([...archivedSet])); } catch { /* 写失败不阻塞 */ } },
   };
   const s = await driveApply(plan, deps);
-  console.log(`flow-driver: parks=${plan.length} fixed=${s.fixed} fixFailed=${s.fixFailed} archived=${s.archived} archiveSkipped=${s.archiveSkipped} retryDeferred=${s.retryDeferred} fixSkipped=${s.fixSkipped} capped=${s.capped} mode=apply`);
-  // 每轮一条终态汇总(仅有 fixed/archived/fixFailed 时);tick grep 这行 relay 飞书,无终态则静默。
-  const summaryMsg = buildSummaryMessage(s, SITE);
+  // P2：处理完 park 后跑 loop-until-clean 回填(治"publish 后不管";只 --apply,幂等,有界)。
+  // maxPasses=0 可跳过回填(测试/紧急用)。
+  const bfPasses = Number(process.env.GG_FLOW_DRIVER_BACKFILL_PASSES ?? 3);
+  const backfill = bfPasses > 0
+    ? await runBackfillLoop({
+        runCapture: async (cmd) => { const r = spawnSync('node', [cmd.bin, ...cmd.args], { encoding: 'utf8' }); return { ok: r.status === 0, out: `${r.stdout || ''}${r.stderr || ''}` }; },
+        log: (m) => console.log(`  · ${m}`),
+        maxPasses: bfPasses,
+      })
+    : { passes: 0, converged: true, changedPasses: 0 };
+  console.log(`flow-driver: parks=${plan.length} fixed=${s.fixed} fixFailed=${s.fixFailed} archived=${s.archived} archiveSkipped=${s.archiveSkipped} retryDeferred=${s.retryDeferred} fixSkipped=${s.fixSkipped} capped=${s.capped} backfillPasses=${backfill.passes} backfillConverged=${backfill.converged} mode=apply`);
+  // 一条终态汇总(park 有终态 或 回填补了 gap/未收敛 时);tick grep relay 飞书,否则静默。
+  const summaryMsg = buildSummaryMessage(s, SITE, backfill);
   if (summaryMsg) console.log(`FLOW_DRIVER_SUMMARY: ${summaryMsg}`);
   process.exit(0);
 }

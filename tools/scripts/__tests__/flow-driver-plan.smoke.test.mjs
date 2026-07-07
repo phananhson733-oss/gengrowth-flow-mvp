@@ -71,8 +71,9 @@ test('gg-flow-driver --apply（只 archive 的 ledger）：跑出 mode=apply 汇
   const dir = mkdtempSync(join(tmpdir(), 'flowdrv-apply-'));
   const ledger = join(dir, 'claims.json');
   writeFileSync(ledger, JSON.stringify({ 'PG-S': { status: 'needs_human', stage: 'pushed-preview', slug: 's', branch: 'seo/auto/s', error: 'review[codex] FAIL: stale topic, do not publish' } }));
-  // GG_OPS_DIR=temp 隔离 archive sidecar(否则写真 OPS_DIR、污染状态 + 二次跑 archived=0)
-  const r = spawnSync('node', ['tools/scripts/gg-flow-driver.mjs', '--ledger', ledger, '--apply'], { encoding: 'utf8', env: { ...process.env, GG_LARK_NOTIFY_SILENCE: '1', GG_OPS_DIR: dir } });
+  // GG_OPS_DIR=temp 隔离 archive sidecar(否则写真 OPS_DIR、污染状态 + 二次跑 archived=0);
+  // GG_FLOW_DRIVER_BACKFILL_PASSES=0 跳过 P2 回填(否则会真 spawn 回填命令打真 sheet、慢/失败)。
+  const r = spawnSync('node', ['tools/scripts/gg-flow-driver.mjs', '--ledger', ledger, '--apply'], { encoding: 'utf8', env: { ...process.env, GG_LARK_NOTIFY_SILENCE: '1', GG_OPS_DIR: dir, GG_FLOW_DRIVER_BACKFILL_PASSES: '0' } });
   assert.equal(r.status, 0, r.stderr);
   assert.match(r.stdout, /mode=apply/);
   assert.match(r.stdout, /archived=1/);

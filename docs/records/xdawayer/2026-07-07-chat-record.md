@@ -710,6 +710,18 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 
 ---
 
+### Q28 — 16:40
+
+**🙋 提问：**
+
+重新推一次结果卡片看看
+
+**🤖 回答：**
+
+已通过 `node tools/scripts/gg-notify.mjs recap_performance_ok` 重新推送飞书 Card 2.0 结果卡片到默认 SEO 技术群。卡片主体继续呈现需要人工关注的结果：P0=12、技术排查=80、P1=14；底部说明更新为“首次清账已完成：待回填=0；0/无 已逐项复核 GSC/GA4，API 错误=0，mismatch=0。”发送返回 `ok=true`、`card=true`，messageId=`om_x100b6bf87af4b50cb1f79b3c41ece81`。
+
+---
+
 ### Q28 — 17:03
 
 **🙋 提问：**

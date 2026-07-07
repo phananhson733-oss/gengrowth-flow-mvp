@@ -303,7 +303,7 @@ test('classifyOptimizationTasks implements the recap action rules', () => {
     day14_impressions: 0,
   });
   assert.equal(technical[0].bucket, '技术排查');
-  assert.match(technical[0].action, /技术问题/);
+  assert.match(technical[0].action, /分桶排查/);
 
   const intent = classifyOptimizationTasks({
     page_id: 'PG-INTENT',

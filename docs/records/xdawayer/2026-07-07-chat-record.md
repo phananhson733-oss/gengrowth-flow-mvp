@@ -753,3 +753,20 @@ Last run: 2026-07-07T08:01:04.689Z (1783411264689)
 已读取自动化记忆、项目规则、Owner Profile/reminders 与安全技能说明；仅运行指定三仓库确定性入口，未使用破坏性 git/filesystem 命令或镜像删除类同步脚本。同步入口退出 0 且无输出；独立验证显示 `gengrowth-wiki`、`gengrowth-ops`、`gengrowth-flow-mvp` 对 `origin/main` 的计数均为 `0 0`，`git diff --name-only --diff-filter=U` 与 `git ls-files -u` 均无输出。回读 sibling Obsidian Git 配置确认 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。本 record 追加后继续只用同一入口收敛并复验。
 
 ---
+
+### Q29 — 17:31
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: 2026-07-06T21:01:32.113Z (1783371692113)
+
+Run the deterministic fixed-row index repair workflow through `bash tools/scripts/gg-index-repair-resubmit-tick.sh`. The wrapper loads the local gg environment, loops the configured products (`GG_INDEX_MONITOR_PRODUCTS`, defaulting to astrologywiki and gengrowth), processes rows marked `已修复`, syncs `结果复盘表`, and refreshes `request-indexing-queue` in each product Google Sheet. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, do not click Search Console Request Indexing unattended, and do not create Feishu or Google Doc report artifacts. After the wrapper exits, summarize per-product `process-fixed`, `sync-recap`, `sync-request-queue` counts visible in the log, plus any failures.
+
+**🤖 回答：**
+
+已读取自动化记忆、项目规则、reminders 与 repair-resubmit 历史约束；使用 `superpowers:verification-before-completion` 做完成前校验。仅运行指定入口 `bash tools/scripts/gg-index-repair-resubmit-tick.sh`，未使用 Google Indexing API，未无人值守点击 Search Console Request Indexing，未创建 Feishu 或 Google Doc report artifacts。Wrapper 退出 `0`；本次日志窗口为 `/Users/awayer_mini/gengrowth-agents/cron-sync/index_repair_resubmit/2026-07-07.log` 的 `17:30:57-17:31:23 CST`，最终行 `index repair-resubmit ok`。`astrologywiki`: `process-fixed fixed=0 resubmitted=0`; `sync-recap en_rows=208 appended=0 updated=208 skipped=0`; `sync-request-queue rows=25 P0=0 P1=1 P2=13 P3=11`。`gengrowth`: `process-fixed fixed=0 resubmitted=0`; `sync-recap en_rows=54 appended=0 updated=28 skipped=26`; `sync-request-queue rows=6 P0=0 P1=1 P2=2 P3=3`。失败关键词检查无输出，未见 `failed/error/exception/timeout/rc!=0` 等失败信号；已追加自动化 memory。
+
+---

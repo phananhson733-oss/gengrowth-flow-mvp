@@ -109,6 +109,42 @@ test('buildPerformancePlan fillPending pulls pending cells with trailing windows
   }]);
 });
 
+test('buildPerformancePlan verifyZeroMetrics rechecks existing zero and no-query cells', () => {
+  const plan = buildPerformancePlan({
+    now: new Date('2026-07-07T00:00:00Z'),
+    fillPending: true,
+    verifyZeroMetrics: true,
+    trackingRows: [{
+      page_id: 'PG-ZERO',
+      url: 'https://www.astrologywiki.com/en/wiki/zero-metrics',
+      published_at: '2026-06-01',
+    }],
+    recapRows: [{
+      _rowNumber: 4,
+      page_id: 'PG-ZERO',
+      url: 'https://www.astrologywiki.com/en/wiki/zero-metrics',
+      day14_impressions: 0,
+      day30_进Top50词数: 0,
+      '当前最高排名词（排名）': '无',
+      day30_clicks: 0,
+      day60_pv: 0,
+      day60_目标国pv: 8,
+    }],
+  });
+
+  assert.deepEqual(plan.map((item) => ({
+    page_id: item.page_id,
+    windows: item.windows.map((w) => `${w.milestone}:${w.startDate}..${w.endDate}:${w.source}`),
+  })), [{
+    page_id: 'PG-ZERO',
+    windows: [
+      'day14:2026-06-23..2026-07-06:pending-or-zero-metric',
+      'day30:2026-06-07..2026-07-06:pending-or-zero-metric',
+      'day60:2026-05-08..2026-07-06:pending-or-zero-metric',
+    ],
+  }]);
+});
+
 test('buildPerformancePlan fillPending includes recap-only rows when URL has pending metrics', () => {
   const plan = buildPerformancePlan({
     now: new Date('2026-07-07T00:00:00Z'),
@@ -203,6 +239,37 @@ test('mergePerformanceIntoRecapRow fillPendingOnly fills pending metrics without
   assert.equal(merged['当前最高排名词（排名）'], 'existing query (P12)');
   assert.equal(merged.day30_clicks, 3);
   assert.equal(merged.day60_pv, 22);
+  assert.equal(merged.day60_目标国pv, 5);
+});
+
+test('mergePerformanceIntoRecapRow verifyZeroMetrics refreshes zero cells but preserves nonzero metrics', () => {
+  const merged = mergePerformanceIntoRecapRow({
+    old: {
+      outcome_id: 'out_PG-ZERO_latest',
+      page_id: 'PG-ZERO',
+      url: 'https://www.astrologywiki.com/en/wiki/zero-metrics',
+      day14_impressions: 0,
+      day30_进Top50词数: 0,
+      '当前最高排名词（排名）': '无',
+      day30_clicks: '0',
+      day60_pv: 0,
+      day60_目标国pv: 5,
+    },
+    performance: {
+      day14: { impressions: 4 },
+      day30: { clicks: 1, top50Count: 2, bestQuery: 'zero metrics', bestPosition: 42 },
+      day60: { pageViews: 9, targetCountryPageViews: 7 },
+    },
+    fillPendingOnly: true,
+    verifyZeroMetrics: true,
+    now: new Date('2026-07-07T00:00:00Z'),
+  });
+
+  assert.equal(merged.day14_impressions, 4);
+  assert.equal(merged.day30_进Top50词数, 2);
+  assert.equal(merged['当前最高排名词（排名）'], 'zero metrics (P42)');
+  assert.equal(merged.day30_clicks, 1);
+  assert.equal(merged.day60_pv, 9);
   assert.equal(merged.day60_目标国pv, 5);
 });
 

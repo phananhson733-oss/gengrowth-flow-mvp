@@ -195,16 +195,32 @@ function isPendingMetric(value) {
   return text === '' || text === '待回填';
 }
 
-function needsMetricWindow(recap = {}, milestone) {
-  if (milestone === 'day14') return isPendingMetric(recap.day14_impressions);
+function isZeroMetric(value) {
+  const text = String(value ?? '').trim().replace(/,/g, '');
+  return text !== '' && Number(text) === 0;
+}
+
+function isNoQueryMetric(value) {
+  return String(value ?? '').trim() === '无';
+}
+
+function shouldFillMetric(value, { verifyZeroMetrics = false, allowNoQuery = false } = {}) {
+  return isPendingMetric(value) ||
+    (verifyZeroMetrics && (isZeroMetric(value) || (allowNoQuery && isNoQueryMetric(value))));
+}
+
+function needsMetricWindow(recap = {}, milestone, { verifyZeroMetrics = false } = {}) {
+  if (milestone === 'day14') {
+    return shouldFillMetric(recap.day14_impressions, { verifyZeroMetrics });
+  }
   if (milestone === 'day30') {
-    return isPendingMetric(recap.day30_进Top50词数) ||
-      isPendingMetric(recap['当前最高排名词（排名）']) ||
-      isPendingMetric(recap.day30_clicks);
+    return shouldFillMetric(recap.day30_进Top50词数, { verifyZeroMetrics }) ||
+      shouldFillMetric(recap['当前最高排名词（排名）'], { verifyZeroMetrics, allowNoQuery: true }) ||
+      shouldFillMetric(recap.day30_clicks, { verifyZeroMetrics });
   }
   if (milestone === 'day60') {
-    return isPendingMetric(recap.day60_pv) ||
-      isPendingMetric(recap.day60_目标国pv);
+    return shouldFillMetric(recap.day60_pv, { verifyZeroMetrics }) ||
+      shouldFillMetric(recap.day60_目标国pv, { verifyZeroMetrics });
   }
   return false;
 }
@@ -249,7 +265,13 @@ function countryName(country) {
   return map[code] || code;
 }
 
-export function buildPerformancePlan({ trackingRows = [], recapRows = [], now = new Date(), fillPending = false } = {}) {
+export function buildPerformancePlan({
+  trackingRows = [],
+  recapRows = [],
+  now = new Date(),
+  fillPending = false,
+  verifyZeroMetrics = false,
+} = {}) {
   const recapByUrl = new Map(recapRows.filter((row) => row.url).map((row) => [normalizeUrl(row.url), row]));
   const recapByPage = new Map(recapRows.filter((row) => row.page_id).map((row) => [String(row.page_id).trim(), row]));
   const plan = [];
@@ -265,12 +287,12 @@ export function buildPerformancePlan({ trackingRows = [], recapRows = [], now = 
     const windows = [];
     for (const [milestone, days] of [['day14', 14], ['day30', 30], ['day60', 60]]) {
       if (fillPending) {
-        if (!needsMetricWindow(recap, milestone)) continue;
+        if (!needsMetricWindow(recap, milestone, { verifyZeroMetrics })) continue;
         windows.push({
           milestone,
           days,
           ...trailingWindow(days, now),
-          source: 'pending-metric',
+          source: verifyZeroMetrics ? 'pending-or-zero-metric' : 'pending-metric',
         });
         continue;
       }
@@ -302,12 +324,12 @@ export function buildPerformancePlan({ trackingRows = [], recapRows = [], now = 
       if (!url || !isEnglishArticleUrl(url)) continue;
       const windows = [];
       for (const [milestone, days] of [['day14', 14], ['day30', 30], ['day60', 60]]) {
-        if (!needsMetricWindow(recap, milestone)) continue;
+        if (!needsMetricWindow(recap, milestone, { verifyZeroMetrics })) continue;
         windows.push({
           milestone,
           days,
           ...trailingWindow(days, now),
-          source: 'pending-metric-recap-only',
+          source: verifyZeroMetrics ? 'pending-or-zero-metric-recap-only' : 'pending-metric-recap-only',
         });
       }
       if (!windows.length) continue;
@@ -337,36 +359,41 @@ export function mergePerformanceIntoRecapRow({
   performance = {},
   now = new Date(),
   fillPendingOnly = false,
+  verifyZeroMetrics = false,
 } = {}) {
   const merged = { ...old };
+  const shouldWrite = (value, options = {}) => !fillPendingOnly || shouldFillMetric(value, {
+    ...options,
+    verifyZeroMetrics,
+  });
   merged.outcome_id = merged.outcome_id || (tracking.page_id ? `out_${tracking.page_id}_latest` : '');
   merged.page_id = merged.page_id || tracking.page_id || '';
   merged.url = merged.url || tracking.url || '';
   merged.记录日期 = isoDay(now);
 
   if (performance.day14) {
-    if (!fillPendingOnly || isPendingMetric(merged.day14_impressions)) {
+    if (shouldWrite(merged.day14_impressions)) {
       merged.day14_impressions = performance.day14.impressions ?? 0;
     }
   }
   if (performance.day30) {
-    if (!fillPendingOnly || isPendingMetric(merged.day30_进Top50词数)) {
+    if (shouldWrite(merged.day30_进Top50词数)) {
       merged.day30_进Top50词数 = performance.day30.top50Count ?? 0;
     }
-    if (!fillPendingOnly || isPendingMetric(merged.day30_clicks)) {
+    if (shouldWrite(merged.day30_clicks)) {
       merged.day30_clicks = performance.day30.clicks ?? 0;
     }
-    if (!fillPendingOnly || isPendingMetric(merged['当前最高排名词（排名）'])) {
+    if (shouldWrite(merged['当前最高排名词（排名）'], { allowNoQuery: true })) {
       merged['当前最高排名词（排名）'] = performance.day30.bestQuery && performance.day30.bestPosition
         ? `${performance.day30.bestQuery} (P${fmtPosition(performance.day30.bestPosition)})`
         : '无';
     }
   }
   if (performance.day60) {
-    if (!fillPendingOnly || isPendingMetric(merged.day60_pv)) {
+    if (shouldWrite(merged.day60_pv)) {
       merged.day60_pv = performance.day60.pageViews ?? 0;
     }
-    if (!fillPendingOnly || isPendingMetric(merged.day60_目标国pv)) {
+    if (shouldWrite(merged.day60_目标国pv)) {
       merged.day60_目标国pv = performance.day60.targetCountryPageViews ?? 0;
     }
   }
@@ -614,6 +641,7 @@ export async function runRecapPerformance(argv, deps = {}) {
       'Usage:',
       '  node tools/scripts/gg-recap-performance.mjs --write-sheet --write-report [--workbook SHEET_ID] [--site sc-domain:DOMAIN] [--ga4-property properties/ID]',
       '  node tools/scripts/gg-recap-performance.mjs --dry-run [--workbook SHEET_ID]',
+      '  node tools/scripts/gg-recap-performance.mjs --fill-pending --verify-zero-metrics --write-sheet',
       '',
     ].join('\n'));
     return 0;
@@ -631,7 +659,8 @@ export async function runRecapPerformance(argv, deps = {}) {
     : (process.env.GG_TARGET_COUNTRY || DEFAULT_TARGET_COUNTRY);
   const writeSheet = !!args.write_sheet;
   const writeReport = !!args.write_report;
-  const fillPending = !!args.fill_pending;
+  const verifyZeroMetrics = !!args.verify_zero_metrics;
+  const fillPending = !!args.fill_pending || verifyZeroMetrics;
   const reportDir = args.report_dir && args.report_dir !== true ? String(args.report_dir) : RECAP_PERFORMANCE_REPORT_DIR;
 
   if (!workbookId) {
@@ -662,7 +691,7 @@ export async function runRecapPerformance(argv, deps = {}) {
   const readRecapRowsFn = deps.readRecapRows || readRecapRows;
   const trackingRows = await readTrackingRowsFn(sheetToken, workbookId, INDEX_TRACKING_TAB);
   const recapRows = await readRecapRowsFn(sheetToken, workbookId, RECAP_TAB);
-  const plan = buildPerformancePlan({ trackingRows, recapRows, now, fillPending });
+  const plan = buildPerformancePlan({ trackingRows, recapRows, now, fillPending, verifyZeroMetrics });
 
   const updates = [];
   const tasks = [];
@@ -700,6 +729,7 @@ export async function runRecapPerformance(argv, deps = {}) {
       performance,
       now,
       fillPendingOnly: fillPending,
+      verifyZeroMetrics,
     });
     if (recapComparable(item.recap) !== recapComparable(merged)) {
       updates.push({ old: item.recap, merged });
@@ -752,7 +782,7 @@ export async function runRecapPerformance(argv, deps = {}) {
   }
 
   process.stdout.write(
-    `recap-performance: rows=${plan.length} updated=${updates.length} tasks=${tasks.length} mode=${writeSheet ? 'write-sheet' : 'dry-run'}${fillPending ? ' fill_pending=1' : ''}\n`,
+    `recap-performance: rows=${plan.length} updated=${updates.length} tasks=${tasks.length} mode=${writeSheet ? 'write-sheet' : 'dry-run'}${fillPending ? ' fill_pending=1' : ''}${verifyZeroMetrics ? ' verify_zero_metrics=1' : ''}\n`,
   );
   return failures ? 2 : 0;
 }

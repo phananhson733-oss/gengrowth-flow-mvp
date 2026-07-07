@@ -193,11 +193,23 @@ test('clean exit + PARK line + GG_NOTIFY_ON_PARK=1 → 发 parked（pid/reason �
   assert.equal(args[args.indexOf('--reason') + 1], 'zh 红线未过，需人工复核');
 });
 
-test('clean exit + AUTHORED line → authored(site=astrologywiki, detail=…— 待 publish lane 发布)', () => {
+test('clean exit + AUTHORED line → 默认**抑制** authored 通知（中间态,未上线；wzb: 只发成功/彻底停止）', () => {
   const c = setupCase({
     preflightExit: 0,
     autoStdout: 'AUTHORED PG-TEST-002 → _staging/pg-test-002.md (author=claude, attempt 1/2) — ready for next scan to publish\n',
     autoExit: 0,
+  });
+  const r = c.run();
+  assert.equal(r.status, 0);
+  assert.equal(c.notifyCalls().length, 0, '默认不发 authored（草稿写好待发≠上线）');
+});
+
+test('clean exit + AUTHORED line + GG_NOTIFY_ON_PARK=1 → 发 authored（opt-in）', () => {
+  const c = setupCase({
+    preflightExit: 0,
+    autoStdout: 'AUTHORED PG-TEST-002 → _staging/pg-test-002.md (author=claude, attempt 1/2) — ready for next scan to publish\n',
+    autoExit: 0,
+    env: { GG_NOTIFY_ON_PARK: '1' },
   });
   const r = c.run();
   assert.equal(r.status, 0);

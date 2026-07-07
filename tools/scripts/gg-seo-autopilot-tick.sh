@@ -209,7 +209,8 @@ run_one_cycle() {
     fi
   fi
   if [ -n "$DONE" ]; then
-    node "$SCRIPT_DIR/gg-notify.mjs" authored --site astrologywiki --detail "${DONE}— 立即发布中"
+    # authored 是中间态（马上要发布，但还没上线）——默认不通知（wzb: 只发成功/彻底停止）。
+    [ "$GG_NOTIFY_ON_PARK" = "1" ] && node "$SCRIPT_DIR/gg-notify.mjs" authored --site astrologywiki --detail "${DONE}— 立即发布中" || true
     # IMMEDIATE PUBLISH: claim+convert+preview the just-written draft, then verify+merge.
     node "$AUTO" --scan --limit 1 >> "$LOG" 2>&1
     publish_if_pending || echo "$(date '+%F %T') authored but no preview to publish (scan/convert gate?)" >> "$LOG"

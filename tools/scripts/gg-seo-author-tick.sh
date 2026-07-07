@@ -140,8 +140,9 @@ else
     [ "$GG_NOTIFY_ON_PARK" = "1" ] && node "$SCRIPT_DIR/gg-notify.mjs" parked --site astrologywiki --pid "$PARK_PID" --reason "$PARK_REASON" || true
   fi
   if [ -n "$DONE" ]; then
-    # 统一事件层（authored → 不@）。detail 沿用原拼接：AUTHORED 摘要 + 去向说明。
-    node "$SCRIPT_DIR/gg-notify.mjs" authored --site astrologywiki --detail "${DONE}— 待 publish lane 发布"
+    # authored（草稿写好、待发布）是**中间态**（还没上线）——默认不通知（wzb: 只发成功/彻底停止）。
+    # 真正上线由 publish lane 发 published(✅已发布上线) 成功通知。GG_NOTIFY_ON_PARK=1 恢复中间态通知。
+    [ "$GG_NOTIFY_ON_PARK" = "1" ] && node "$SCRIPT_DIR/gg-notify.mjs" authored --site astrologywiki --detail "${DONE}— 待 publish lane 发布" || true
   fi
 fi
 

@@ -55,3 +55,24 @@ test('gg-flow-driver CLI fail-safe：autopilot 并发半写的截断/非法 JSON
   const r = spawnSync('node', ['tools/scripts/gg-flow-driver.mjs', '--ledger', ledger], { encoding: 'utf8' });
   assert.equal(r.status, 0, r.stderr);
 });
+
+test('gg-flow-driver 无 --apply：仍是 dry-run,绝不执行(exit 0,只打印计划)', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'flowdrv-noapply-'));
+  const ledger = join(dir, 'claims.json');
+  writeFileSync(ledger, JSON.stringify(CLAIMS));
+  const r = spawnSync('node', ['tools/scripts/gg-flow-driver.mjs', '--ledger', ledger], { encoding: 'utf8' });
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stdout, /mode=dry-run/);
+  assert.doesNotMatch(r.stdout, /mode=apply/);
+});
+
+test('gg-flow-driver --apply（只 archive 的 ledger）：跑出 mode=apply 汇总,archived=1,exit 0', () => {
+  // 只放一个 unfixable(archive)——不触发 fix(不会真 merge),测 apply 路径安全;GG_LARK_NOTIFY_SILENCE=1 不真发飞书
+  const dir = mkdtempSync(join(tmpdir(), 'flowdrv-apply-'));
+  const ledger = join(dir, 'claims.json');
+  writeFileSync(ledger, JSON.stringify({ 'PG-S': { status: 'needs_human', stage: 'pushed-preview', slug: 's', branch: 'seo/auto/s', error: 'review[codex] FAIL: stale topic, do not publish' } }));
+  const r = spawnSync('node', ['tools/scripts/gg-flow-driver.mjs', '--ledger', ledger, '--apply'], { encoding: 'utf8', env: { ...process.env, GG_LARK_NOTIFY_SILENCE: '1' } });
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stdout, /mode=apply/);
+  assert.match(r.stdout, /archived=1/);
+});

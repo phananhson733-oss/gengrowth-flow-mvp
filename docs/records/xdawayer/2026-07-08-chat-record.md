@@ -114,25 +114,6 @@ tags:
 - 要点 1：执行 GenGrowth 三仓库 Obsidian/Git 自愈同步，使用确定性入口并完成验证。
 - 要点 2：执行 GenGrowth Index Repair Resubmit 确定性 wrapper，完成双产品 fixed-row repair 计数同步。
 
----
-
-### Q6 — 05:03
-
-**🙋 提问：**
-
-Automation: GenGrowth Index Repair Resubmit
-Automation ID: gengrowth-index-repair-resubmit
-Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
-Last run: 2026-07-07T09:30:05.012Z (1783416605012)
-
-Run the deterministic fixed-row index repair workflow through `bash tools/scripts/gg-index-repair-resubmit-tick.sh`. The wrapper loads the local gg environment, loops the configured products (`GG_INDEX_MONITOR_PRODUCTS`, defaulting to astrologywiki and gengrowth), processes rows marked `已修复`, syncs `结果复盘表`, and refreshes `request-indexing-queue` in each product Google Sheet. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, do not click Search Console Request Indexing unattended, and do not create Feishu or Google Doc report artifacts. After the wrapper exits, summarize per-product `process-fixed`, `sync-recap`, `sync-request-queue` counts visible in the log, plus any failures.
-
-**🤖 回答：**
-
-执行 `bash tools/scripts/gg-index-repair-resubmit-tick.sh`，wrapper exit 0 且 stdout 为空；日志窗口为 `2026-07-08 05:02:11` 到 `2026-07-08 05:02:34 CST`，最终行为 `index repair-resubmit ok`。`astrologywiki`：`process-fixed fixed=0 resubmitted=0`，`sync-recap en_rows=214 appended=0 updated=0 skipped=214`，`sync-request-queue rows=31 P0=0 P1=1 P2=13 P3=17`。`gengrowth`：`process-fixed fixed=0 resubmitted=0`，`sync-recap en_rows=54 appended=0 updated=0 skipped=54`，`sync-request-queue rows=6 P0=0 P1=1 P2=2 P3=3`。失败关键词扫描为空；未使用普通文章 Google Indexing API、未无人值守点击 Search Console Request Indexing、未创建飞书或 Google Doc 报告。
-
----
-
 ## 对话记录
 
 ### Q1 — 00:02
@@ -228,5 +209,22 @@ Last run: 2026-07-07T20:00:37.384Z (1783454437384)
 **🤖 回答：**
 
 使用指定确定性入口执行三仓库 Obsidian/Git 自愈同步；初始脚本输出 `Obsidian vault git sync: clean`。追加本条 record 后，通过同一确定性入口再次同步并完成最终校验。最终验证显示：`gengrowth-wiki` HEAD `07d64f8ecca7810a5669650e578d3e2e18213ade`、`gengrowth-ops` HEAD `e846ac04bb3b5a0cfceb612598c65ed996e0188f`、`gengrowth-flow-mvp` HEAD `205426da22e5beec77ec3803b4f78291a78cfed5` 均无工作区条目，`HEAD...origin/main` 均为 `0 0`，`git diff --name-only --diff-filter=U` 与 `git ls-files -u` 均无输出；两个 sibling Obsidian Git 配置均保持 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。未使用破坏性 git/filesystem 命令，也未运行镜像删除语义脚本。
+
+---
+
+### Q6 — 05:03
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: 2026-07-07T09:30:05.012Z (1783416605012)
+
+Run the deterministic fixed-row index repair workflow through `bash tools/scripts/gg-index-repair-resubmit-tick.sh`. The wrapper loads the local gg environment, loops the configured products (`GG_INDEX_MONITOR_PRODUCTS`, defaulting to astrologywiki and gengrowth), processes rows marked `已修复`, syncs `结果复盘表`, and refreshes `request-indexing-queue` in each product Google Sheet. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, do not click Search Console Request Indexing unattended, and do not create Feishu or Google Doc report artifacts. After the wrapper exits, summarize per-product `process-fixed`, `sync-recap`, `sync-request-queue` counts visible in the log, plus any failures.
+
+**🤖 回答：**
+
+执行 `bash tools/scripts/gg-index-repair-resubmit-tick.sh`，wrapper exit 0 且 stdout 为空；日志窗口为 `2026-07-08 05:02:11` 到 `2026-07-08 05:02:34 CST`，最终行为 `index repair-resubmit ok`。`astrologywiki`：`process-fixed fixed=0 resubmitted=0`，`sync-recap en_rows=214 appended=0 updated=0 skipped=214`，`sync-request-queue rows=31 P0=0 P1=1 P2=13 P3=17`。`gengrowth`：`process-fixed fixed=0 resubmitted=0`，`sync-recap en_rows=54 appended=0 updated=0 skipped=54`，`sync-request-queue rows=6 P0=0 P1=1 P2=2 P3=3`。失败关键词扫描为空；未使用普通文章 Google Indexing API、未无人值守点击 Search Console Request Indexing、未创建飞书或 Google Doc 报告。
 
 ---

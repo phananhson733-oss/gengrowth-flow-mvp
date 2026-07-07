@@ -1,0 +1,8 @@
+- Moon/Rising 处理有事实硬伤：不要写“Moon 是 Libra 或 Sagittarius disputed”；Moon 基本应按 Libra 处理，真正不稳的是 Rising/house（常见 9:00 AM 数据也只是 Rodden C）→ 改成“Moon in Libra likely; Ascendant/houses tentative”，并按 [Astro-Charts](https://astro-charts.com/persons/chart/anne-hathaway/) 核对。
+- “four personal planets”不准确：Jupiter 不是 personal planet → 改成“Sun, Mercury, Venus plus Jupiter in Scorpio”或“four Scorpio placements”。
+- 缺少读者最想要的 birth-chart 快照 → 增加一段事实框：出生日期/地点、出生时间可信度、Sun/Mercury/Venus/Jupiter 的 Scorpio 度数、Moon/ASC 处理原则。
+- 只讲 Scorpio sign，没讲真正有料的结构 → 加入 Sun-Venus-Jupiter 紧密合相、Mercury 参与同一簇的解释，否则“stellium”读起来像泛泛星座文。
+- “stellium personality sacrifices range / rarely gets outvoted”过度决定论 → 改成倾向性表述，并加入 Libra Moon、Capricorn Mars、Libra Saturn/Pluto 等可能的平衡因素。
+- 职业/角色判断太泛：如“high-stakes role choices”“comedies/dramas/interviews 都同一 intensity”缺证据 → 换成 2-3 个具体作品或公开采访例子，并说明对应哪一个 Scorpio placement。
+- Dane Rudhyar、Liz Greene 目前只是权威名词装饰 → 要么补具体书名/观点和它如何支持本文读法，要么删掉，避免显得硬蹭学派。
+- CTA 锚文本很生硬：“explore anne hathaway birth chart”像关键词堆砌 → 改成自然动作锚点，如“generate your free birth chart”。

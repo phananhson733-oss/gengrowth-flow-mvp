@@ -30,20 +30,6 @@ Last run: 2026-07-06T21:01:02.116Z (1783371662116)
 
 ---
 
-### Q36 — 21:07
-
-**🙋 提问：**
-
-/goal 去落地新的SEO blog 需求，注意 publish 后续的内容不要有遗漏
-
-我是让你写 seo 文章
-
-**🤖 回答：**
-
-已按 SEO 写作/发布链路处理：先错误跑偏到 flow-driver 后被纠正，随后切回 `gg-seo-author-tick.sh` author wrapper 与 publish wrapper。成功写出 `PG-CELEB-035`（keyword: `kevin de bruyne birth chart`），草稿 `_staging/PG-CELEB-035-en.md` 标题为 `What the Kevin De Bruyne Birth Chart Reveals About His Playmaker Mind`，约 1763 words。清理旧 authoring `needs_human` claim 后，用 `GG_AUTOPILOT_MODE=publish-only bash tools/scripts/gg-seo-autopilot-tick.sh` 接上发布后续：PR `https://github.com/xdawayer/oracle/pull/337` 已 merge，ledger 中 `PG-CELEB-035` 为 `done`，计划 `2026-05-27-W22-blog-output-plan.md` 已勾选，发布日志已写 `seo-autopilot-publish-log.md`，线上 canonical `https://www.astrologywiki.com/en/wiki/kevin-de-bruyne-birth-chart` 返回 200，页面标题/description/schema 与 sitemap 条目均已验证。发现 `gg-nightly-seo.sh` 正在继续处理下一篇 `PG-CELEB-036`（`anne hathaway birth chart`），当前为 active/build-gate，未误报为完成。
-
----
-
 ### Q6 — 05:02
 
 **🙋 提问：**
@@ -961,5 +947,19 @@ Last run: 2026-07-07T12:01:35.494Z (1783425695494)
 **🤖 回答：**
 
 已读取自动化记忆、项目规则、sibling Owner Profile/reminders、相关历史记忆与 `using-superpowers` / `gstack-careful` / `verification-before-completion` 技能说明；仅运行指定三仓库确定性入口，未使用破坏性 git/filesystem 命令或镜像删除类同步脚本。初始同步入口退出 0 且无 stdout；初步独立验证显示三仓 `HEAD...origin/main` 均为 `0 0`，未解决冲突输出为空，sibling Obsidian Git 配置均为禁用自动同步。追加本 Q35 record 后继续只用同一入口收敛，提交并推送 1 个 `gengrowth-flow-mvp` record 路径；随后发现 `gengrowth-ops/inbox/06-tasks/tasks/.autopilot-claims.json.lock/owner` 普通删除但无 unmerged，再次只 rerun 同一入口提交并推送 1 个 `gengrowth-ops` 路径。最终复验三仓均 clean 且 `HEAD...origin/main=0 0`，`git diff --name-only --diff-filter=U` 与 `git ls-files -u` 均无输出，两个 Obsidian Git 配置文件仍为禁用自动同步。
+
+---
+
+### Q36 — 21:07
+
+**🙋 提问：**
+
+/goal 去落地新的SEO blog 需求，注意 publish 后续的内容不要有遗漏
+
+我是让你写 seo 文章
+
+**🤖 回答：**
+
+已按 SEO 写作/发布链路处理：先错误跑偏到 flow-driver 后被纠正，随后切回 `gg-seo-author-tick.sh` author wrapper 与 publish wrapper。成功写出 `PG-CELEB-035`（keyword: `kevin de bruyne birth chart`），草稿 `_staging/PG-CELEB-035-en.md` 标题为 `What the Kevin De Bruyne Birth Chart Reveals About His Playmaker Mind`，约 1763 words。清理旧 authoring `needs_human` claim 后，用 `GG_AUTOPILOT_MODE=publish-only bash tools/scripts/gg-seo-autopilot-tick.sh` 接上发布后续：PR `https://github.com/xdawayer/oracle/pull/337` 已 merge，ledger 中 `PG-CELEB-035` 为 `done`，计划 `2026-05-27-W22-blog-output-plan.md` 已勾选，发布日志已写 `seo-autopilot-publish-log.md`，线上 canonical `https://www.astrologywiki.com/en/wiki/kevin-de-bruyne-birth-chart` 返回 200，页面标题/description/schema 与 sitemap 条目均已验证。发现 `gg-nightly-seo.sh` 正在继续处理下一篇 `PG-CELEB-036`（`anne hathaway birth chart`），当前为 active/build-gate，未误报为完成。
 
 ---

@@ -50,3 +50,28 @@ export function classifyPark(claimOrError) {
 }
 
 export const isTransientPark = (claimOrError) => classifyPark(claimOrError) === 'transient';
+
+// unfixable：改稿救不了的——选题时效过期 / 事件已发生 / 前提根本错。改稿无法挽回 → 应归档带原因，
+// 绝不空烧自修（WC-045：Mexico vs England 比赛已踢，赛前预测稿改不活）。
+// 保守：只认无歧义的"死"信号；模糊情况留给 fixable（试着修，修不好 N 次后 park 交人工，安全）。
+export const UNFIXABLE_RE = new RegExp([
+  'already (?:played|happened|occurred|passed|took place|over)',
+  'match (?:was|is) (?:played|over)', 'was (?:played|held) (?:on|already)',
+  '(?:event|match|game|fixture|deadline|date) (?:has )?(?:passed|expired|elapsed)',
+  'no longer (?:upcoming|relevant|scheduled)',
+  '\\bstale topic\\b', '\\bexpired\\b',
+  'premise (?:is )?(?:false|wrong|invalid|flawed)',
+  'never (?:happened|took place|scheduled|existed)',
+].join('|'), 'i');
+
+// 三分诊（driver 用）：transient(工具没跑成→retry) / unfixable(时效死→archive) / fixable(可改稿→自修)。
+// 顺序：先 transient(工具层)，再 unfixable(内容死)，其余判决类 FAIL 归 fixable。无 error → unfixable(交人工)。
+export function triagePark(claimOrError) {
+  const err = typeof claimOrError === 'string'
+    ? claimOrError
+    : String((claimOrError && claimOrError.error) || '');
+  if (!err.trim()) return 'unfixable';
+  if (classifyPark(err) === 'transient') return 'transient';
+  if (UNFIXABLE_RE.test(err)) return 'unfixable';
+  return 'fixable';
+}

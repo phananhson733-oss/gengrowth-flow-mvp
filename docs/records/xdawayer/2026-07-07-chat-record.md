@@ -697,3 +697,15 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 已按“首次初始化”语义新增 `--fill-pending` 模式：只处理 `结果复盘表` 中 `待回填` 或空值的指标列，使用截至昨日的近 14/30/60 天真实 GSC/GA4 数据补齐；已有人工值不覆盖，GSC 无 query 时最高排名词写 `无`，数值为 0 时写 `0`。第一轮真实写回 astrologywiki：`rows=208 updated=208 tasks=182 mode=write-sheet fill_pending=1`；复验后发现 3 个 recap-only/重复 URL 行未纳入 `index-tracking`，补充 recap-only 逻辑后第二轮写回：`rows=3 updated=3 tasks=2 mode=write-sheet fill_pending=1`。最终 live sheet 复验显示 `day14_impressions`、`day30_进Top50词数`、`当前最高排名词（排名）`、`day30_clicks`、`day60_pv`、`day60_目标国pv` 的 `待回填`/空值计数全部为 0。抽样确认 row 2 `PG-AURA-001` 写入 top50=0、best=`how to read aura colors (P99)`、clicks=0、pv=38、targetPv=38；row 55 clicks=1、pv=4；row 80 best=`无`、pv=1。验证：`node --test tools/scripts/__tests__/gg-recap-performance.smoke.test.mjs tools/scripts/__tests__/lib-gg-notify.smoke.test.mjs tools/scripts/__tests__/lib-lark-send.smoke.test.mjs` 共 36 项通过，`bash -n tools/scripts/gg-recap-performance-tick.sh`、`node --check tools/scripts/gg-recap-performance.mjs`、`node --check tools/scripts/lib/gg-notify.mjs` 均通过。
 
 ---
+
+### Q27 — 16:33
+
+**🙋 提问：**
+
+[$gstack-review](/Users/awayer_mini/.gstack/repos/gstack/.agents/skills/gstack-review/SKILL.md) 验收一下是否已经全部完成：obsidian://open?vault=gengrowth-ops&file=inbox%2F08-reports-and-feedback%2F01-product-feedback%2F2026-07-05-%E7%BB%93%E6%9E%9C%E5%A4%8D%E7%9B%98%E8%A1%A8%E8%87%AA%E5%8A%A8%E5%8C%96%E7%B3%BB%E7%BB%9F-%E9%9C%80%E6%B1%82%E6%96%87%E6%A1%A3 同时这类的 0 是否是真实数据，而不是没查到所以写了 0.。0 和没查到不是同一个含义
+
+**🤖 回答：**
+
+按 `gstack-review` 做了需求文档、当前实现和 live sheet 三层验收。首次复查发现 `待回填` 已清零，但既有 0 里有 4 个 `day14_impressions=0` 不是当前真实值：row 61、104、124、133 在 GSC 分别返回 4、1、1、2，根因是此前 `--fill-pending` 只补 `待回填`/空白，没有复核既有 0。已新增显式 `--verify-zero-metrics` 模式：首次验收时会把既有 0/`无` 也重新查 GSC/GA4，API 成功才覆盖；日常保守回填仍只补待回填。实跑 `--fill-pending --verify-zero-metrics --write-sheet --write-report` 后更新 209 行，二次原始 API 复查结果为 `pendingRows=0`、`apiErrors=0`、`mismatchRows=0`。之前 4 个假 0 已改为真实 GSC impressions：row 61=4、row 104=1、row 124=1、row 133=2。验证：focused smoke tests 38 项通过，`node --check tools/scripts/gg-recap-performance.mjs` 与 `bash -n tools/scripts/gg-recap-performance-tick.sh` 均通过。
+
+---

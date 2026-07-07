@@ -622,3 +622,15 @@ goal 去落地。上下文为 Obsidian 需求文档 `2026-07-05-结果复盘表�
 关于表里的 `待回填`：当前不是 D14 失败。只读 sheet 后确认 astrologywiki 当前 `planRows=156`，本次执行窗口为 `day14=156、day30=0、day60=0`；成熟后的 D14 没有仍待回填的行。脚本用 `index-tracking.published_at` 作为 D30/D60 起算点，而不是 `结果复盘表.申请时间`。当前最早 `published_at` 是 2026-06-09，所以 2026-07-07 尚无 D30 到期；D30 第一批从 2026-07-09 起回填 6 行，D60 第一批从 2026-08-08 起回填。已在卡片说明中写明“当前未到期列保留 `待回填`”，避免误读为自动化失败。验证：focused smoke 33 项通过，`bash -n tools/scripts/gg-recap-performance-tick.sh` 通过。
 
 ---
+
+### Q23 — 15:58
+
+**🙋 提问：**
+
+卡片是要呈现结果，即需要人为去关注的部分，而不是告诉人，你做了什么
+
+**🤖 回答：**
+
+已把 `recap_performance_ok` 卡片从“同步成功汇报”改成“需要人工关注的 SEO 结果面板”。新卡片 header 为 `SEO 结果复盘：需要处理`，主焦点是 P0、技术排查、P1 数量；正文列出 P0 立即处理页面、技术排查总量与样例、P1 本周处理页面。运行说明、报告路径、日志路径、未发布/未部署/未请求索引等审计信息只保留在底部小字。测试同步更新，断言卡片包含 P0/技术排查/具体页面且不再把 `updated=156` 作为卡片主体。已补发修正版到 SEO 技术群，返回 `card:true`，messageId 为 `om_x100b6bff560a0d08b4879ecb814b869`。验证：`node --test tools/scripts/__tests__/lib-lark-send.smoke.test.mjs tools/scripts/__tests__/lib-gg-notify.smoke.test.mjs tools/scripts/__tests__/gg-recap-performance.smoke.test.mjs` 共 33 项通过，`bash -n tools/scripts/gg-recap-performance-tick.sh` 与 `node --check tools/scripts/lib/gg-notify.mjs` 通过。
+
+---

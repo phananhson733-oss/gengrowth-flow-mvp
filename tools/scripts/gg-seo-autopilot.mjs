@@ -403,10 +403,11 @@ function readMdFrontmatter(mdPath) {
   return { attrs, body: m[2] };
 }
 // Slug the same way the publishing pipeline derives them (_phase2-validate.mjs and
-// this script's own keyword fallback): lowercase, non-alphanumeric runs collapse to a
-// single hyphen, trim leading/trailing hyphens.
+// this script's own keyword fallback): fold diacritics (é→e) so accented names like
+// "Kylian Mbappé" don't truncate to "mbapp", lowercase, non-alphanumeric runs collapse
+// to a single hyphen, trim leading/trailing hyphens.
 function slugify(s) {
-  return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  return String(s || '').normalize('NFKD').replace(/\p{M}+/gu, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 }
 // Every slug a draft could ALREADY be live under: its own frontmatter slug, plus slugs
 // derived from `entity` and `target_keyword`. A human sometimes publishes a draft under a
@@ -740,7 +741,7 @@ function doAuthor(o = {}) {
       entry = ov[key];
       keyword = (entry.target_keyword || t.keyword || '').trim();
       domain = entry.cluster_domain || '';
-      slug = (keyword || pgId).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+      slug = slugify(keyword || pgId);
     } catch (e) { return park(null, `override unreadable: ${errTail(e)}`); }
 
     // Clean entity: strip leading interrogatives so we have the topic noun, not the

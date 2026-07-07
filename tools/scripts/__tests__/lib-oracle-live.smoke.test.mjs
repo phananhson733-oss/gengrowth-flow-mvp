@@ -7,7 +7,19 @@ import { test } from 'node:test';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { keywordLiveSlug } from '../lib/oracle-live.mjs';
+import { keywordLiveSlug, kebabSlug } from '../lib/oracle-live.mjs';
+
+// Regression: accented names must FOLD diacritics (é→e), not drop the char and
+// truncate. Before the fix, "Kylian Mbappé birth chart" slugified to
+// "kylian-mbapp-birth-chart" (the é became a separator), producing a malformed
+// slug + a near-duplicate of the existing mbappe-birth-chart. See investigate
+// 2026-07-07: SITEMAP_MISSING_IS_DEPLOY_LAG (secondary finding).
+test('kebabSlug folds diacritics instead of truncating (Mbappé → mbappe)', () => {
+  assert.equal(kebabSlug('Kylian Mbappé birth chart'), 'kylian-mbappe-birth-chart');
+  assert.equal(kebabSlug('Rúben Días'), 'ruben-dias');
+  assert.equal(kebabSlug('Anthony Elanga'), 'anthony-elanga'); // plain ASCII unchanged
+  assert.equal(kebabSlug('Achraf Hakimi'), 'achraf-hakimi');
+});
 
 function fixtureOracle(slugs) {
   const root = mkdtempSync(join(tmpdir(), 'oracle-live-'));

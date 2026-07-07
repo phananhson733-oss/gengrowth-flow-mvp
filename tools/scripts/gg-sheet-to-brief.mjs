@@ -342,7 +342,7 @@ export function composeOverride(row, { clusterMap, ctaMap, repo, skipNonV8 = fal
     'a', 'an', 'the', 'of', 'to', 'for', 'in', 'on', 'and', 'or', 'is', 'are', 'be',
     'you', 'your', 're', 's', 'my', 'i', 'it', 'its', 'this', 'that', 'what', 'how', 'why', 'when',
   ]);
-  const ekSlugify = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  const ekSlugify = (s) => String(s || '').normalize('NFKD').replace(/\p{M}+/gu, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
   const ekContentTokens = (s) => ekSlugify(s).split('-').filter((t) => t && !ENTITY_KW_STOPWORDS.has(t)).sort();
   const entitySlug = ekSlugify(brief.entity);
   const keywordSlug = ekSlugify(brief.target_keyword);

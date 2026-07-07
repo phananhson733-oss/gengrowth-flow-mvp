@@ -773,7 +773,7 @@ const authorLines = ctx.author
   : '';
 const frontmatter = `---
 title: ${titleCased}
-slug: ${ctx.target_keyword.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}
+slug: ${ctx.target_keyword.normalize('NFKD').replace(/\p{M}+/gu, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}
 date: ${generatedAt.slice(0, 10)}
 status: ready-to-review
 type: wiki-entry

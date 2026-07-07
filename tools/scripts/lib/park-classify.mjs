@@ -57,8 +57,10 @@ export const isTransientPark = (claimOrError) => classifyPark(claimOrError) === 
 // 区分（"you say the match already occurred June 3, but it's July 20 — fix the tense" 会被误判 archive
 // →P2 接侧效后静默丢掉一篇只需改个日期的可发稿）。
 // 安全方向：默认一律 fixable（误修不可修稿 = 空跑几次门后 park 交人工；误 archive 可修稿 = 静默丢稿，更坏）。
-// 非显式标记的真 stale（如 "match played July 6, before-kickoff false" 无 "stale topic" 字样）留给
-// P1.5 的 LLM stale 判断在自修前拦截（spec §4.2 的设计：正则只做显式快路径，判断交 LLM）。
+// 非显式标记的真 stale（如 "match played July 6, before-kickoff false" 无 "stale topic" 字样）会落到
+// fixable → 送回门自修。**当前(P1.5)对这类的 staleness 兜底 = 门里的 codex 事实核**（codex 会抓出
+// 时态/日期过期并 FAIL，稿不会 merge）；代价 = 空跑一轮门(~10min)。**LLM stale 预判(自修前拦截、省这轮门)
+// 是 P1.6 的增强，尚未实现**（spec §4.2：正则只做显式快路径,深判交 LLM——P1.6 落地）。
 // WC-045 真 error 含 "stale topic" + "prediction expired" + "DO NOT PUBLISH" → 三重命中，稳判 archive。
 export const UNFIXABLE_RE = new RegExp([
   '\\bstale topic\\b', 'topic (?:is )?(?:stale|expired|dead)',

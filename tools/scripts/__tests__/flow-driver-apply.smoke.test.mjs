@@ -40,13 +40,17 @@ import { driveApply } from '../lib/flow-driver-apply.mjs';
 
 function mkDeps(overrides = {}) {
   const ran = [];
+  const archived = overrides.archived instanceof Set ? overrides.archived : new Set();
   return {
     ran,
+    archived,
     run: async (cmd) => { ran.push(cmd); return { ok: overrides.fail ? false : true, code: overrides.fail ? 1 : 0 }; },
     log: () => {},
     cfg: CFG,
     maxFix: overrides.maxFix ?? 1,
     maxArchive: overrides.maxArchive ?? 5,
+    isArchived: (pid) => archived.has(pid),
+    markArchived: (pid) => archived.add(pid),
   };
 }
 
@@ -83,4 +87,17 @@ test('driveApply: fix 命令失败 → fixFailed 计数、不误报 fixed', asyn
   const s = await driveApply(plan, deps);
   assert.equal(s.fixed, 0);
   assert.equal(s.fixFailed, 1);
+});
+
+test('driveApply: archive 幂等——已归档过的 pid 第二轮跳过、不重复 notify(治评审 finding②)', async () => {
+  const archived = new Set();
+  const plan = [{ pid: 'PG-D', action: 'archive', slug: 'd', stage: 'pushed-preview', branch: 'b/d' }];
+  const s1 = await driveApply(plan, mkDeps({ archived }));
+  assert.equal(s1.archived, 1);
+  assert.ok(archived.has('PG-D')); // markArchived 记住
+  const deps2 = mkDeps({ archived });
+  const s2 = await driveApply(plan, deps2);
+  assert.equal(s2.archived, 0);
+  assert.equal(s2.archiveSkipped, 1);
+  assert.equal(deps2.ran.length, 0); // 第二轮没再 spawn notify
 });

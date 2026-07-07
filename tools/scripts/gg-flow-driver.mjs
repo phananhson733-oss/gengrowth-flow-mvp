@@ -3,7 +3,7 @@
 // 无 --apply = dry-run(只打印计划,P1 行为不变)。--apply = 接侧效执行(P1.5)：archive→一条 parked 通知 +
 // 保持 needs_human(移出活跃队列) / fix→重过门(门内建 codex 事实核=保证,PASS 才 merge) / retry→交现有
 // auto-retry lane。fail-safe：任何错都 exit 0，绝不阻塞。有界：GG_FLOW_DRIVER_MAX_FIX(默认1)/MAX_ARCHIVE(默认5)。
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
@@ -39,15 +39,23 @@ async function main() {
     process.exit(0);
   }
 
-  // --apply：接真 deps。fix 重过门→PASS 才 merge(门做保证);archive 发一条 parked 通知。
+  // archive 幂等：driver-local sidecar 记已归档 pid(vault 外、不碰 claim 锁),避免每轮 --apply 重复通知
+  // 同一死选题、也让死选题真退出 driver 队列。首次/坏文件 → 空集(不阻塞)。
+  const ARCHIVED_SIDECAR = join(OPS_DIR, 'inbox/06-tasks/tasks/.flow-driver-archived.json');
+  let archivedSet = new Set();
+  try { archivedSet = new Set(JSON.parse(readFileSync(ARCHIVED_SIDECAR, 'utf8'))); } catch { /* 首次/坏文件 → 空 */ }
+
+  // --apply：接真 deps。fix 重过门→PASS 才 merge(门做保证);archive 发一条 parked 通知 + 记 sidecar。
   const deps = {
     run: async (cmd) => { const r = spawnSync('node', [cmd.bin, ...cmd.args], { stdio: 'inherit' }); return { ok: r.status === 0, code: r.status }; },
     log: (m) => console.log(`  · ${m}`),
     cfg: { repo: REPO, site: SITE },
     maxFix: MAX_FIX, maxArchive: MAX_ARCHIVE,
+    isArchived: (pid) => archivedSet.has(pid),
+    markArchived: (pid) => { archivedSet.add(pid); try { writeFileSync(ARCHIVED_SIDECAR, JSON.stringify([...archivedSet])); } catch { /* 写失败不阻塞 */ } },
   };
   const s = await driveApply(plan, deps);
-  console.log(`flow-driver: parks=${plan.length} fixed=${s.fixed} fixFailed=${s.fixFailed} archived=${s.archived} retryDeferred=${s.retryDeferred} fixSkipped=${s.fixSkipped} capped=${s.capped} mode=apply`);
+  console.log(`flow-driver: parks=${plan.length} fixed=${s.fixed} fixFailed=${s.fixFailed} archived=${s.archived} archiveSkipped=${s.archiveSkipped} retryDeferred=${s.retryDeferred} fixSkipped=${s.fixSkipped} capped=${s.capped} mode=apply`);
   process.exit(0);
 }
 

@@ -39,17 +39,20 @@ export function buildActionCommands(park, cfg) {
 // 有界编排：逐 park 派动作,side-effect 走 deps.run(cmd)→{ok,code}。maxFix/maxArchive 限爆炸半径。
 // deps = { run(cmd)->Promise<{ok,code}>, log(msg), cfg:{repo,site}, maxFix, maxArchive }。
 export async function driveApply(plan, deps) {
-  const s = { fixed: 0, fixFailed: 0, archived: 0, retryDeferred: 0, fixSkipped: 0, capped: 0 };
+  const s = { fixed: 0, fixFailed: 0, archived: 0, archiveSkipped: 0, retryDeferred: 0, fixSkipped: 0, capped: 0 };
   let fixCount = 0, archiveCount = 0;
   for (const park of plan || []) {
     const built = buildActionCommands(park, deps.cfg);
     if (built.kind === 'retry-skip') { s.retryDeferred++; deps.log(`${park.pid} retry → 交现有 auto-retry lane`); continue; }
     if (built.kind === 'fix-skip') { s.fixSkipped++; deps.log(`${park.pid} fix-skip: ${built.skipReason}`); continue; }
     if (built.kind === 'archive') {
+      // 幂等：已归档过的 park 不重复通知(否则每次 --apply 都重挑同一 needs_human→飞书刷屏、死选题永不退休)。
+      if (deps.isArchived && deps.isArchived(park.pid)) { s.archiveSkipped++; deps.log(`${park.pid} 已归档过 → 跳过(幂等)`); continue; }
       if (archiveCount >= deps.maxArchive) { s.capped++; deps.log(`${park.pid} archive capped(>${deps.maxArchive})`); continue; }
       archiveCount++;
       const r = await deps.run(built.commands[0]);
-      if (r.ok) s.archived++; else deps.log(`${park.pid} archive notify 失败 code=${r.code}`);
+      if (r.ok) { s.archived++; if (deps.markArchived) deps.markArchived(park.pid); }
+      else deps.log(`${park.pid} archive notify 失败 code=${r.code}`);
       continue;
     }
     if (built.kind === 'fix') {

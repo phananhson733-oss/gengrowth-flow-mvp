@@ -1,7 +1,7 @@
 {
   "page_id": "PG-CELEB-038",
   "prompt_path": "/Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-CELEB-038.v8-prompt.md",
-  "started_at": "2026-07-07T13:55:45.764Z",
+  "started_at": "2026-07-07T14:18:01.103Z",
   "models_requested": [
     "claude"
   ],
@@ -9,19 +9,24 @@
   "diversify_on_fail": false,
   "max_cost_usd_per_page": 5,
   "budget_exceeded_models": [],
-  "ok_count": 0,
-  "total_cost_estimate_usd": 0,
+  "ok_count": 1,
+  "total_cost_estimate_usd": 0.0498,
   "results": {
     "claude": {
       "model": "claude",
       "active_model": "claude",
       "diversified": false,
-      "ok": false,
-      "output_path": null,
+      "ok": true,
+      "output_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-CELEB-038-claude-v8.md",
       "retries": 0,
-      "duration_s": 210.1,
-      "cost_estimate_usd": null,
-      "cumulative_cost_usd": 0,
+      "duration_s": 121.6,
+      "cost_estimate_usd": {
+        "usd": 0.0498,
+        "input_tokens_est": 7454,
+        "output_tokens_est": 1832,
+        "pricing_note": "Sonnet 4.6 xhigh"
+      },
+      "cumulative_cost_usd": 0.0498,
       "budget_exceeded": false,
       "budget_usd": 5,
       "attempts": [
@@ -29,12 +34,17 @@
           "try_index": 1,
           "model": "claude",
           "command": "claude -p --model claude-opus-4-8 --effort high < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-CELEB-038.v8-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-CELEB-038-claude-v8.md",
-          "cost_usd": 0,
-          "cumulative_cost_usd": 0,
-          "ok": false,
-          "exit_code": -2,
-          "duration_s": 210.1,
-          "stderr_tail": "WATCHDOG: no CPU/output progress for 180s (deadlock); group cpu=4.4s"
+          "cost_usd": 0.0498,
+          "cumulative_cost_usd": 0.0498,
+          "ok": true,
+          "exit_code": 0,
+          "duration_s": 121.6,
+          "stderr_tail": "",
+          "stdout_bytes": 8460,
+          "sonnet_guard": {
+            "downgraded": false,
+            "bytes": 8468
+          }
         }
       ]
     }

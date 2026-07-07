@@ -1,0 +1,8 @@
+- “Jupiter in Gemini 2026” 是硬伤 → 改成明确体系：热带黄道下世界杯期间木星先在巨蟹、6月30日进狮子；若用恒星黄道，需说明体系和日期，并全篇同步修正。([people.com](https://people.com/what-jupiter-in-leo-means-for-your-zodiac-sign-12009767))
+- 文章几乎没有“埃及”实质内容 → 加一段真正的 Egypt-specific reading：萨拉赫、马尔穆什、主教练/核心球员、埃及国家队当前叙事，而不是只讲“球队/国家情绪”。
+- 当前赛事语境缺失 → 截至 2026-07-07，埃及已进 16 强并对阵阿根廷；加入带日期的上下文框，否则文章像赛前模板文。([theguardian.com](https://www.theguardian.com/football/2026/jul/07/lionel-messi-mo-salah-egypt-argentina-world-cup))
+- “chart ruler” 用法不稳 → 多数球员没有可靠出生时间，不能谈上升或命主星；改为只读可验证的太阳、火星、水星等无时辰也能成立的因素。
+- “Egypt’s national chart” 太含糊 → 选定一个国家盘版本（如共和国成立、独立、宪法节点等），说明为什么选它，并列出实际触发的相位；否则删掉具体国家盘承诺。
+- 反预测立场写过头 → “no serious astrologer maps planets to final scores” 太绝对；改成“本文不做比分/投注预测，体育占星预测存在但不作为可靠证据”。
+- 可操作性不足 → 把泛泛的 reflection prompts 缩短，换成读者能做的步骤：核对比赛日期、用球员 noon chart、标注无出生时辰限制、观察对应主题。
+- Sources 太弱 → Rudhyar/Hand 只列名字不够；补具体书目/页面，并增加 FIFA/赛事资料、星历来源、球员出生资料来源。

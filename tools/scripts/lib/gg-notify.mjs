@@ -9,6 +9,7 @@
 // SILENCE 语义（沿用现语义）：GG_LARK_NOTIFY_SILENCE=1 → 只写 audit（SILENCED）不发送——
 // 批次静默逐篇、由汇总统一发。
 
+import { readFileSync } from 'node:fs';
 import { sendLark, sendLarkCard, auditLog, resolveChatId, atPrefix } from './lark-send.mjs';
 
 // 字段插值兜底：缺字段渲染为空串，不渲染 "undefined"。
@@ -34,30 +35,100 @@ function splitLines(value) {
     .filter(Boolean);
 }
 
-function recapMetricColumns(body) {
-  const lines = splitLines(body);
-  const cols = (lines.length ? lines : ['结果：暂无明细']).slice(0, 3).map((line, i) => ({
+function reportPaths(reports) {
+  return splitLines(reports).filter((line) => line.startsWith('/'));
+}
+
+function cleanTaskLine(line) {
+  return String(line || '').replace(/^-\s+/, '').trim();
+}
+
+function parseReportSection(text, section) {
+  const escaped = section.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = new RegExp(`【${escaped}】\\n([\\s\\S]*?)(?=\\n【|$)`);
+  const m = String(text || '').match(re);
+  if (!m) return [];
+  return m[1].split(/\r?\n/).filter((line) => /^-\s+/.test(line)).map(cleanTaskLine);
+}
+
+function parseOptimizationReport(text, fallbackSite = '站点') {
+  const site = (String(text || '').match(/^#\s+(.+?)\s+博客优化任务清单/m) || [])[1] || fallbackSite;
+  return {
+    site,
+    tech: parseReportSection(text, '技术排查'),
+    p0: parseReportSection(text, 'P0 立即处理'),
+    p1: parseReportSection(text, 'P1 本周处理'),
+    p2: parseReportSection(text, 'P2 下周处理'),
+  };
+}
+
+function readOptimizationReports(reports) {
+  return reportPaths(reports).map((path) => {
+    try {
+      return parseOptimizationReport(readFileSync(path, 'utf8'), path.split('/').pop() || '报告');
+    } catch {
+      return null;
+    }
+  }).filter(Boolean);
+}
+
+function attentionSummary(fields) {
+  const reports = readOptimizationReports(fields.reports);
+  const totals = reports.reduce((acc, report) => {
+    acc.tech += report.tech.length;
+    acc.p0 += report.p0.length;
+    acc.p1 += report.p1.length;
+    acc.p2 += report.p2.length;
+    return acc;
+  }, { tech: 0, p0: 0, p1: 0, p2: 0 });
+  return { reports, totals };
+}
+
+function attentionMetricColumns(summary) {
+  const metrics = [
+    { label: 'P0 立即处理', value: summary.totals.p0, color: summary.totals.p0 ? 'red' : 'grey' },
+    { label: '技术排查', value: summary.totals.tech, color: summary.totals.tech ? 'orange' : 'grey' },
+    { label: 'P1 本周处理', value: summary.totals.p1, color: summary.totals.p1 ? 'orange' : 'grey' },
+  ];
+  return metrics.map((metric) => ({
     tag: 'column',
     width: 'weighted',
     weight: 1,
-    background_style: 'green-50',
+    background_style: metric.color === 'red' ? 'red-50' : metric.color === 'orange' ? 'orange-50' : 'grey-50',
     padding: '12px',
     vertical_spacing: '2px',
     elements: [
       {
         tag: 'markdown',
-        content: `**${line.replace(/：/g, '：\n')}**`,
+        content: `## <font color='${metric.color}'>${metric.value}</font>`,
         text_align: 'center',
       },
       {
         tag: 'markdown',
-        content: i === 0 ? '<font color="grey">结果复盘表</font>' : '<font color="grey">同步结果</font>',
+        content: `<font color='grey'>${metric.label}</font>`,
         text_align: 'center',
         text_size: 'notation',
       },
     ],
   }));
-  return cols;
+}
+
+function listTasksBySite(reports, key, limit = 6) {
+  const lines = [];
+  for (const report of reports) {
+    const items = report[key] || [];
+    for (const item of items.slice(0, Math.max(0, limit - lines.length))) {
+      lines.push(`- **${report.site}**：${item}`);
+      if (lines.length >= limit) break;
+    }
+    if (lines.length >= limit) break;
+  }
+  return lines.length ? lines.join('\n') : '- 暂无';
+}
+
+function siteCountLines(reports, key) {
+  const lines = reports.map((report) => `- ${report.site}：${(report[key] || []).length} 个`);
+  return lines.length ? lines.join('\n') : '- 暂无报告明细';
 }
 
 function formatReportLines(reports) {
@@ -68,13 +139,15 @@ function formatReportLines(reports) {
 
 function buildRecapPerformanceCard(fields) {
   const date = s(fields.date);
+  const summary = attentionSummary(fields);
   const windowNote = s(fields.window_note || fields.windowNote || 'D30/D60 到期后自动补齐；当前未到期列保留 `待回填`。');
+  const hasActions = summary.totals.p0 + summary.totals.tech + summary.totals.p1 > 0;
   return {
     schema: '2.0',
     config: {
       update_multi: true,
       width_mode: 'default',
-      summary: { content: `结果复盘已同步${date ? `（${date}）` : ''}` },
+      summary: { content: `SEO 结果复盘：${hasActions ? '有需要处理的页面' : '暂无优先处理项'}` },
       style: {
         text_size: {
           body: { default: 'normal', pc: 'normal', mobile: 'normal' },
@@ -83,12 +156,13 @@ function buildRecapPerformanceCard(fields) {
       },
     },
     header: {
-      title: { tag: 'plain_text', content: '结果复盘已同步' },
-      subtitle: { tag: 'plain_text', content: date ? `${date} · SEO 技术自动化` : 'SEO 技术自动化' },
-      template: 'green',
-      icon: { tag: 'standard_icon', token: 'chart_colorful' },
+      title: { tag: 'plain_text', content: 'SEO 结果复盘：需要处理' },
+      subtitle: { tag: 'plain_text', content: date ? `${date} · 按优先级看结果` : '按优先级看结果' },
+      template: hasActions ? 'red' : 'green',
+      icon: { tag: 'standard_icon', token: hasActions ? 'warning_colorful' : 'chart_colorful' },
       text_tag_list: [
-        { tag: 'text_tag', text: { tag: 'plain_text', content: '已写回' }, color: 'green' },
+        { tag: 'text_tag', text: { tag: 'plain_text', content: `P0 ${summary.totals.p0}` }, color: summary.totals.p0 ? 'red' : 'neutral' },
+        { tag: 'text_tag', text: { tag: 'plain_text', content: `技术排查 ${summary.totals.tech}` }, color: summary.totals.tech ? 'orange' : 'neutral' },
       ],
     },
     body: {
@@ -98,26 +172,32 @@ function buildRecapPerformanceCard(fields) {
       elements: [
         {
           tag: 'markdown',
-          content: `**结果复盘数据已写回 Sheets**\n${windowNote}`,
+          content: hasActions
+            ? '**先看这些需要人工判断/处理的页面。**\n底层数据已写回表格，但群里只展示要处理的结果。'
+            : `**本轮没有 P0/P1/技术排查项。**\n${windowNote}`,
         },
         {
           tag: 'column_set',
           flex_mode: 'none',
           horizontal_spacing: '12px',
-          columns: recapMetricColumns(fields.body),
+          columns: attentionMetricColumns(summary),
         },
         {
           tag: 'markdown',
-          content: '**边界**\n未发布、未部署、未请求索引；只读取 GSC/GA4，并写回结果复盘表。',
+          content: `**P0 立即处理**\n${listTasksBySite(summary.reports, 'p0', 4)}`,
         },
         {
           tag: 'markdown',
-          content: `**报告**\n${formatReportLines(fields.reports)}`,
+          content: `**技术排查（已收录但零曝光）**\n${siteCountLines(summary.reports, 'tech')}\n\n**抽样**\n${listTasksBySite(summary.reports, 'tech', 4)}`,
+        },
+        {
+          tag: 'markdown',
+          content: `**P1 本周处理**\n${listTasksBySite(summary.reports, 'p1', 5)}`,
         },
         {
           tag: 'markdown',
           text_size: 'notation',
-          content: `日志：\`${s(fields.log)}\``,
+          content: `说明：${windowNote}\n报告：${formatReportLines(fields.reports)}\n审计：未发布、未部署、未请求索引；日志 \`${s(fields.log)}\``,
         },
       ],
     },

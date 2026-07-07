@@ -316,11 +316,37 @@ test('notify(parked) → 发出的文本前缀为 @PM @OPS，然后是模板正�
 });
 
 test('notify(recap_performance_ok) → 发送 Card 2.0 interactive 卡片', async () => {
-  caseEnv('recap-card');
+  const dir = caseEnv('recap-card');
+  const astrologyReport = join(dir, 'astrology-report.md');
+  const gengrowthReport = join(dir, 'gengrowth-report.md');
+  writeFileSync(astrologyReport, `# AstrologyWiki 博客优化任务清单
+
+生成时间：2026-07-07
+
+【技术排查】
+- rahu-mahadasha：已收录但零曝光，排查技术问题
+- saturn-mahadasha：已收录但零曝光，排查技术问题
+
+【P0 立即处理】
+- erling-haaland-birth-chart：曝光 997 次，CTR 仅 0.0%，改 title + meta description
+
+【P1 本周处理】
+- cristiano-ronaldo-zodiac-sign：趋势词曝光快速下滑 100%，事件未结束，追加内容更新
+`);
+  writeFileSync(gengrowthReport, `# GenGrowth 博客优化任务清单
+
+生成时间：2026-07-07
+
+【技术排查】
+- social-first-probe-week-1：已收录但零曝光，排查技术问题
+
+【P1 本周处理】
+- seo-diagrams：上线一个月仍无关键词进 Top50，检查内容结构
+`);
   const r = await notify('recap_performance_ok', {
     date: '2026-07-07',
     body: 'AstrologyWiki：rows=156 updated=156 tasks=155\nGenGrowth：rows=41 updated=41 tasks=41',
-    reports: '/Users/awayer_mini/gengrowth-agents/reports/recap-performance/2026-07-07-astrologywiki-optimization-tasks.md\n/Users/awayer_mini/gengrowth-agents/reports/recap-performance/2026-07-07-gengrowth-optimization-tasks.md',
+    reports: `${astrologyReport}\n${gengrowthReport}`,
     log: '/Users/awayer_mini/gengrowth-agents/cron-sync/recap_performance/2026-07-07.log',
   });
   assert.equal(r.ok, true);
@@ -329,10 +355,14 @@ test('notify(recap_performance_ok) → 发送 Card 2.0 interactive 卡片', asyn
   assert.equal(reqs[0].body.msg_type, 'interactive');
   const card = JSON.parse(reqs[0].body.content);
   assert.equal(card.schema, '2.0');
-  assert.equal(card.header.template, 'green');
-  assert.match(card.header.title.content, /结果复盘已同步/);
+  assert.equal(card.header.template, 'red');
+  assert.match(card.header.title.content, /需要处理/);
   assert.match(JSON.stringify(card), /AstrologyWiki/);
-  assert.match(JSON.stringify(card), /updated=156/);
+  assert.match(JSON.stringify(card), /P0 立即处理/);
+  assert.match(JSON.stringify(card), /技术排查/);
+  assert.match(JSON.stringify(card), /erling-haaland-birth-chart/);
+  assert.match(JSON.stringify(card), /rahu-mahadasha/);
+  assert.doesNotMatch(JSON.stringify(card), /updated=156/);
   assert.match(JSON.stringify(card), /未发布、未部署、未请求索引/);
 });
 

@@ -1059,3 +1059,15 @@ Last run: 2026-07-07T14:00:35.850Z (1783432835850)
 已按“写 SEO 文章并推进发布后续”执行到闭环：当日 SEO 批次中 `PG-CELEB-035`、`PG-CELEB-036`、`PG-CELEB-037`、`PG-CELEB-038`、`PG-CELEB-039`、`PG-WC-046` 均完成写作、预览、三维审核、Codex gate、合并发布与线上核验；其中 `PG-CELEB-037` 手工重写并修正 Arthur Fery 星盘事实后重新过 gate，`PG-WC-046` 修正 Jupiter in Cancer 2026 framing 与 draft/source 不一致后重新过 gate，`PG-CELEB-038` 对 transient Codex factual review exit 进行重试并通过。6 篇对应 PR #337-#342 全部 MERGED，计划文件相关条目已勾选，publish log 已追加 6 条，线上 URL 均返回 200，canonical、Article schema 与 sitemap 均核验通过；无 SEO autopilot/nightly/gate 残留进程。
 
 ---
+
+### Q41 — 23:28
+
+**🙋 提问：**
+
+写完记得 publish 后续的工作不要有遗漏
+
+**🤖 回答：**
+
+已确认会按 SEO 文章写作完成后的完整发布后续执行，不遗漏 preview/gate、PR merge、publish log、计划勾选、线上 URL、canonical、Article schema、sitemap 与残留进程核验。
+
+---

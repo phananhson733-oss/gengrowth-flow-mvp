@@ -22,6 +22,15 @@ test('fixable：判决类 FAIL 但可改稿 → fix 类（Jupiter 事实错 / RL
   assert.equal(triagePark({ error: 'review[schema] FAIL: assoc_keywords stray keyword' }), 'fixable');
 });
 
+test('fixable（F1 收紧防误判）：含 premise/never/expired/date-passed/relevant 但实为可改稿事实错 → 不误 archive', () => {
+  // 这些是评审给的 false-positive：自然措辞撞旧宽正则，但改稿能修，绝不能 archive 掉
+  assert.equal(triagePark('codex FAIL: the core premise is wrong: Mercury is not retrograde'), 'fixable');
+  assert.equal(triagePark('review[astrology] FAIL: this claim never happened in the transit'), 'fixable');
+  assert.equal(triagePark('review FAIL: the promo code shown has expired in the example table'), 'fixable');
+  assert.equal(triagePark('review[schema] FAIL: publish date passed to frontmatter is 2026-13-01'), 'fixable');
+  assert.equal(triagePark('review[content] FAIL: this section is no longer relevant, remove it'), 'fixable');
+});
+
 test('无 error → unfixable（保守交人工看，不自动改）', () => {
   assert.equal(triagePark(''), 'unfixable');
   assert.equal(triagePark({ error: '' }), 'unfixable');

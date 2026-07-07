@@ -9,7 +9,10 @@ import { planDriverActions } from './lib/flow-driver.mjs';
 
 const argv = process.argv.slice(2);
 const getArg = (name) => { const i = argv.indexOf(name); return i >= 0 ? argv[i + 1] : ''; };
-const DEFAULT_LEDGER = join(homedir(), 'gengrowth-ops/inbox/06-tasks/tasks/.autopilot-claims.json');
+// ledger 路径走 GG_OPS_DIR 单一事实源（与 gg-seo-autopilot / gg-ledger-reconcile 一致），
+// 别自己复制 homedir 路径——否则 GG_OPS_DIR 沙箱下 autopilot 写 A 处、driver 读 B 处。
+const OPS_DIR = process.env.GG_OPS_DIR || join(homedir(), 'gengrowth-ops');
+const DEFAULT_LEDGER = join(OPS_DIR, 'inbox/06-tasks/tasks/.autopilot-claims.json');
 const ledgerPath = getArg('--ledger') || DEFAULT_LEDGER;
 
 function main() {
@@ -24,4 +27,7 @@ function main() {
   console.log(`flow-driver: parks=${plan.length} fix=${n('fix')} retry=${n('retry')} archive=${n('archive')} mode=dry-run`);
   process.exit(0);
 }
-main();
+
+// 结构化兜底：头注承诺"任何错都 exit 0，绝不阻塞"——不靠 Object.entries/String 恰好不抛的巧合。
+try { main(); }
+catch (e) { console.error(`flow-driver: 未预期错误 ${String((e && e.message) || e).slice(0, 80)} — 兜底 exit 0`); process.exit(0); }

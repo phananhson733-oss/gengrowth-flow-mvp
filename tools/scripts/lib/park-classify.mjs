@@ -51,17 +51,23 @@ export function classifyPark(claimOrError) {
 
 export const isTransientPark = (claimOrError) => classifyPark(claimOrError) === 'transient';
 
-// unfixable：改稿救不了的——选题时效过期 / 事件已发生 / 前提根本错。改稿无法挽回 → 应归档带原因，
+// unfixable：改稿救不了的——选题时效死（事件已发生/已结束）。改稿无法挽回 → 应归档带原因，
 // 绝不空烧自修（WC-045：Mexico vs England 比赛已踢，赛前预测稿改不活）。
-// 保守：只认无歧义的"死"信号；模糊情况留给 fixable（试着修，修不好 N 次后 park 交人工，安全）。
+// 关键：**锚定到事件名词**（match/event/game/…），只认"事件本身死"的无歧义信号；绝不用裸词
+// premise/never/expired/date-passed/relevant——那些恰是评审对单条事实错的自然措辞（"premise is
+// wrong: Mercury not retrograde"、"this claim never happened"、"no longer relevant, remove it"），
+// 属可改稿 fixable。模糊一律留给 fixable（试着修，修不好 N 次后 park 交人工，安全）。
 export const UNFIXABLE_RE = new RegExp([
-  'already (?:played|happened|occurred|passed|took place|over)',
-  'match (?:was|is) (?:played|over)', 'was (?:played|held) (?:on|already)',
-  '(?:event|match|game|fixture|deadline|date) (?:has )?(?:passed|expired|elapsed)',
-  'no longer (?:upcoming|relevant|scheduled)',
-  '\\bstale topic\\b', '\\bexpired\\b',
-  'premise (?:is )?(?:false|wrong|invalid|flawed)',
-  'never (?:happened|took place|scheduled|existed)',
+  // 事件已发生/已结束——赛前预测稿改不活
+  'already (?:played|happened|occurred|took place)',
+  'match (?:was|is) (?:played|over)', '(?:was|were) (?:played|held) already',
+  '(?:event|match|game|fixture|kickoff|tournament) (?:has |had )?(?:passed|ended|concluded|elapsed)',
+  '(?:match|event|game|fixture|kickoff) date (?:has )?(?:passed|elapsed)',
+  'no longer (?:upcoming|scheduled)',
+  // 选题本身死
+  '\\bstale topic\\b', 'topic (?:is )?(?:stale|expired|dead)',
+  // 事件根本没发生（锚定事件名词，不撞"这条声明 never happened"式可修 FAIL）
+  '(?:event|match|game|fixture) (?:was )?never (?:scheduled|held|took place)',
 ].join('|'), 'i');
 
 // 三分诊（driver 用）：transient(工具没跑成→retry) / unfixable(时效死→archive) / fixable(可改稿→自修)。

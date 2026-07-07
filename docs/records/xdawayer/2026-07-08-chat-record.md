@@ -257,6 +257,6 @@ Last run: 2026-07-07T21:00:37.654Z (1783458037654)
 
 **🤖 回答：**
 
-使用指定确定性入口执行三仓库 Obsidian/Git 自愈同步；初始脚本 exit 0 且无输出。初始验证显示三个仓库均无 unmerged，`HEAD...origin/main` 均为 `0 0`；两个 sibling Obsidian Git 配置均保持 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。追加本条 record 后，继续仅用同一确定性入口做 post-record 收敛，并再次执行完整验证。未使用破坏性 git/filesystem 命令，也未运行镜像删除语义脚本。
+使用指定确定性入口执行三仓库 Obsidian/Git 自愈同步；初始脚本 exit 0 且无输出。追加本条 record 后，继续仅用同一确定性入口做 post-record 收敛，脚本提交并推送 `gengrowth-flow-mvp` 的 1 个 record 路径。最终验证显示：`gengrowth-wiki`、`gengrowth-ops`、`gengrowth-flow-mvp` 均无工作区条目，`HEAD...origin/main` 均为 `0 0`，`git diff --name-only --diff-filter=U` 与 `git ls-files -u` 均无输出；两个 sibling Obsidian Git 配置均保持 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。未使用破坏性 git/filesystem 命令，也未运行镜像删除语义脚本。
 
 ---

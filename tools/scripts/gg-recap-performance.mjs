@@ -62,6 +62,14 @@ function addDays(dateText, days) {
   return isoDay(d);
 }
 
+function trailingWindow(days, now = new Date()) {
+  const endDate = addDays(isoDay(now), -1);
+  return {
+    startDate: addDays(endDate, -(days - 1)),
+    endDate,
+  };
+}
+
 function daysSince(dateText, now = new Date()) {
   const start = dayNumber(dateText);
   const end = dayNumber(isoDay(now));
@@ -182,6 +190,25 @@ function parsePosition(value) {
   return m ? Number(m[1]) : null;
 }
 
+function isPendingMetric(value) {
+  const text = String(value ?? '').trim();
+  return text === '' || text === '待回填';
+}
+
+function needsMetricWindow(recap = {}, milestone) {
+  if (milestone === 'day14') return isPendingMetric(recap.day14_impressions);
+  if (milestone === 'day30') {
+    return isPendingMetric(recap.day30_进Top50词数) ||
+      isPendingMetric(recap['当前最高排名词（排名）']) ||
+      isPendingMetric(recap.day30_clicks);
+  }
+  if (milestone === 'day60') {
+    return isPendingMetric(recap.day60_pv) ||
+      isPendingMetric(recap.day60_目标国pv);
+  }
+  return false;
+}
+
 function recapComparable(row) {
   return JSON.stringify(RECAP_HEADER.map((h) => row?.[h] ?? ''));
 }
@@ -222,7 +249,7 @@ function countryName(country) {
   return map[code] || code;
 }
 
-export function buildPerformancePlan({ trackingRows = [], recapRows = [], now = new Date() } = {}) {
+export function buildPerformancePlan({ trackingRows = [], recapRows = [], now = new Date(), fillPending = false } = {}) {
   const recapByUrl = new Map(recapRows.filter((row) => row.url).map((row) => [normalizeUrl(row.url), row]));
   const recapByPage = new Map(recapRows.filter((row) => row.page_id).map((row) => [String(row.page_id).trim(), row]));
   const plan = [];
@@ -236,12 +263,23 @@ export function buildPerformancePlan({ trackingRows = [], recapRows = [], now = 
     const age = daysSince(published, now);
     const windows = [];
     for (const [milestone, days] of [['day14', 14], ['day30', 30], ['day60', 60]]) {
+      if (fillPending) {
+        if (!needsMetricWindow(recap, milestone)) continue;
+        windows.push({
+          milestone,
+          days,
+          ...trailingWindow(days, now),
+          source: 'pending-metric',
+        });
+        continue;
+      }
       if (age < days) continue;
       windows.push({
         milestone,
         days,
         startDate: published,
         endDate: addDays(published, days - 1),
+        source: 'scheduled-milestone',
       });
     }
     if (!windows.length) continue;
@@ -263,6 +301,7 @@ export function mergePerformanceIntoRecapRow({
   tracking = {},
   performance = {},
   now = new Date(),
+  fillPendingOnly = false,
 } = {}) {
   const merged = { ...old };
   merged.outcome_id = merged.outcome_id || (tracking.page_id ? `out_${tracking.page_id}_latest` : '');
@@ -271,18 +310,30 @@ export function mergePerformanceIntoRecapRow({
   merged.记录日期 = isoDay(now);
 
   if (performance.day14) {
-    merged.day14_impressions = performance.day14.impressions ?? merged.day14_impressions ?? '';
+    if (!fillPendingOnly || isPendingMetric(merged.day14_impressions)) {
+      merged.day14_impressions = performance.day14.impressions ?? 0;
+    }
   }
   if (performance.day30) {
-    merged.day30_进Top50词数 = performance.day30.top50Count ?? merged.day30_进Top50词数 ?? '';
-    merged.day30_clicks = performance.day30.clicks ?? merged.day30_clicks ?? '';
-    if (performance.day30.bestQuery && performance.day30.bestPosition) {
-      merged['当前最高排名词（排名）'] = `${performance.day30.bestQuery} (P${fmtPosition(performance.day30.bestPosition)})`;
+    if (!fillPendingOnly || isPendingMetric(merged.day30_进Top50词数)) {
+      merged.day30_进Top50词数 = performance.day30.top50Count ?? 0;
+    }
+    if (!fillPendingOnly || isPendingMetric(merged.day30_clicks)) {
+      merged.day30_clicks = performance.day30.clicks ?? 0;
+    }
+    if (!fillPendingOnly || isPendingMetric(merged['当前最高排名词（排名）'])) {
+      merged['当前最高排名词（排名）'] = performance.day30.bestQuery && performance.day30.bestPosition
+        ? `${performance.day30.bestQuery} (P${fmtPosition(performance.day30.bestPosition)})`
+        : '无';
     }
   }
   if (performance.day60) {
-    merged.day60_pv = performance.day60.pageViews ?? merged.day60_pv ?? '';
-    merged.day60_目标国pv = performance.day60.targetCountryPageViews ?? merged.day60_目标国pv ?? '';
+    if (!fillPendingOnly || isPendingMetric(merged.day60_pv)) {
+      merged.day60_pv = performance.day60.pageViews ?? 0;
+    }
+    if (!fillPendingOnly || isPendingMetric(merged.day60_目标国pv)) {
+      merged.day60_目标国pv = performance.day60.targetCountryPageViews ?? 0;
+    }
   }
 
   const noteBits = [

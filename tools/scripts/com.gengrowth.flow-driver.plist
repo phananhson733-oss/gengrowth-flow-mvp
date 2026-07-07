@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- flow-driver overlay lane (P1.6). 默认安全，两层护栏，落地 != 自动发布：
+       (1) RunAtLoad false — 加载不立即跑；
+       (2) tick 默认 dry-run — 只有 ~/.config/gg/_gg.env 里 GG_FLOW_DRIVER_APPLY=1 才接侧效(archive/fix→可能 merge)。
+     这个 lane 是 SEO 自动化 overlay 的"大脑"：扫 needs_human park，分诊自修(fix→重过门,门=保证)/归档
+     stale(archive 记 sidecar 幂等)/transient 交现有 auto-retry lane。每轮只发一条飞书汇总(无终态静默)。
+
+     灰度启用(人工，监督第一轮)：
+       cp tools/scripts/com.gengrowth.flow-driver.plist ~/Library/LaunchAgents/
+       launchctl enable    gui/$(id -u)/com.gengrowth.flow-driver
+       launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.gengrowth.flow-driver.plist
+       launchctl kickstart gui/$(id -u)/com.gengrowth.flow-driver   # 先 dry-run,看 cron-sync/flow_driver 日志的计划
+     确认 dry-run 计划无误后，在 ~/.config/gg/_gg.env 加一行 GG_FLOW_DRIVER_APPLY=1 → 再 kickstart 上线接侧效。
+     停：launchctl bootout gui/$(id -u)/com.gengrowth.flow-driver
+
+     跑在 user(Aqua) session — fix 要 keychain 跑 gh/claude/codex；**不要**设 LimitLoadToSessionType=Background
+     (会 pin 到 pre-login、无 keychain)。RunAtLoad false 所以 load 不无监督乱跑——手动 kickstart 第一次。 -->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.gengrowth.flow-driver</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-flow-driver-tick.sh</string>
+  </array>
+  <key>StartInterval</key>
+  <integer>7200</integer>
+  <key>RunAtLoad</key>
+  <false/>
+  <key>StandardOutPath</key>
+  <string>/Users/awayer_mini/gengrowth-agents/cron-sync/flow_driver/launchd.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/awayer_mini/gengrowth-agents/cron-sync/flow_driver/launchd.err.log</string>
+  <key>ProcessType</key>
+  <string>Background</string>
+</dict>
+</plist>

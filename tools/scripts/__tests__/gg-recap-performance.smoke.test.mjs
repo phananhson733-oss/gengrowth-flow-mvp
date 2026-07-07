@@ -74,6 +74,41 @@ test('buildPerformancePlan selects D14/D30/D60 windows from published tracking r
   }]);
 });
 
+test('buildPerformancePlan fillPending pulls pending cells with trailing windows', () => {
+  const plan = buildPerformancePlan({
+    now: new Date('2026-07-07T00:00:00Z'),
+    fillPending: true,
+    trackingRows: [{
+      page_id: 'PG-PENDING',
+      url: 'https://www.astrologywiki.com/en/wiki/pending-metrics',
+      published_at: '2026-07-07',
+      monitor_status: 'indexed',
+    }],
+    recapRows: [{
+      _rowNumber: 3,
+      page_id: 'PG-PENDING',
+      url: 'https://www.astrologywiki.com/en/wiki/pending-metrics',
+      day14_impressions: 4,
+      day30_进Top50词数: '待回填',
+      '当前最高排名词（排名）': '待回填',
+      day30_clicks: '待回填',
+      day60_pv: '待回填',
+      day60_目标国pv: '待回填',
+    }],
+  });
+
+  assert.deepEqual(plan.map((item) => ({
+    page_id: item.page_id,
+    windows: item.windows.map((w) => `${w.milestone}:${w.startDate}..${w.endDate}:${w.source}`),
+  })), [{
+    page_id: 'PG-PENDING',
+    windows: [
+      'day30:2026-06-07..2026-07-06:pending-metric',
+      'day60:2026-05-08..2026-07-06:pending-metric',
+    ],
+  }]);
+});
+
 test('mergePerformanceIntoRecapRow fills milestone metrics without clobbering manual fields', () => {
   const merged = mergePerformanceIntoRecapRow({
     old: {
@@ -111,6 +146,36 @@ test('mergePerformanceIntoRecapRow fills milestone metrics without clobbering ma
   assert.equal(merged.决策, '继续');
   assert.match(merged.备注, /manual note stays/);
   assert.match(merged.备注, /Performance recap/);
+});
+
+test('mergePerformanceIntoRecapRow fillPendingOnly fills pending metrics without overwriting existing values', () => {
+  const merged = mergePerformanceIntoRecapRow({
+    old: {
+      outcome_id: 'out_PG-PENDING_latest',
+      page_id: 'PG-PENDING',
+      url: 'https://www.astrologywiki.com/en/wiki/pending-metrics',
+      day14_impressions: 7,
+      day30_进Top50词数: 1,
+      '当前最高排名词（排名）': 'existing query (P12)',
+      day30_clicks: '待回填',
+      day60_pv: '待回填',
+      day60_目标国pv: 5,
+    },
+    performance: {
+      day14: { impressions: 999 },
+      day30: { clicks: 3, top50Count: 9, bestQuery: '', bestPosition: null },
+      day60: { pageViews: 22, targetCountryPageViews: 11 },
+    },
+    fillPendingOnly: true,
+    now: new Date('2026-07-07T00:00:00Z'),
+  });
+
+  assert.equal(merged.day14_impressions, 7);
+  assert.equal(merged.day30_进Top50词数, 1);
+  assert.equal(merged['当前最高排名词（排名）'], 'existing query (P12)');
+  assert.equal(merged.day30_clicks, 3);
+  assert.equal(merged.day60_pv, 22);
+  assert.equal(merged.day60_目标国pv, 5);
 });
 
 test('classifyOptimizationTasks implements the recap action rules', () => {

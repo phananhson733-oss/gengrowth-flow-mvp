@@ -596,6 +596,7 @@ export async function runRecapPerformance(argv, deps = {}) {
     : (process.env.GG_TARGET_COUNTRY || DEFAULT_TARGET_COUNTRY);
   const writeSheet = !!args.write_sheet;
   const writeReport = !!args.write_report;
+  const fillPending = !!args.fill_pending;
   const reportDir = args.report_dir && args.report_dir !== true ? String(args.report_dir) : RECAP_PERFORMANCE_REPORT_DIR;
 
   if (!workbookId) {
@@ -626,7 +627,7 @@ export async function runRecapPerformance(argv, deps = {}) {
   const readRecapRowsFn = deps.readRecapRows || readRecapRows;
   const trackingRows = await readTrackingRowsFn(sheetToken, workbookId, INDEX_TRACKING_TAB);
   const recapRows = await readRecapRowsFn(sheetToken, workbookId, RECAP_TAB);
-  const plan = buildPerformancePlan({ trackingRows, recapRows, now });
+  const plan = buildPerformancePlan({ trackingRows, recapRows, now, fillPending });
 
   const updates = [];
   const tasks = [];
@@ -663,6 +664,7 @@ export async function runRecapPerformance(argv, deps = {}) {
       tracking: item.tracking,
       performance,
       now,
+      fillPendingOnly: fillPending,
     });
     if (recapComparable(item.recap) !== recapComparable(merged)) {
       updates.push({ old: item.recap, merged });
@@ -715,7 +717,7 @@ export async function runRecapPerformance(argv, deps = {}) {
   }
 
   process.stdout.write(
-    `recap-performance: rows=${plan.length} updated=${updates.length} tasks=${tasks.length} mode=${writeSheet ? 'write-sheet' : 'dry-run'}\n`,
+    `recap-performance: rows=${plan.length} updated=${updates.length} tasks=${tasks.length} mode=${writeSheet ? 'write-sheet' : 'dry-run'}${fillPending ? ' fill_pending=1' : ''}\n`,
   );
   return failures ? 2 : 0;
 }

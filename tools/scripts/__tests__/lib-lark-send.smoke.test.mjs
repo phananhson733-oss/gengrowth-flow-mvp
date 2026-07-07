@@ -14,7 +14,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { createServer } from 'node:http';
 
-import { sendLark, replayOutbox, PM_OPEN_ID, OPS_OPEN_ID } from '../lib/lark-send.mjs';
+import { sendLark, sendLarkCard, replayOutbox, PM_OPEN_ID, OPS_OPEN_ID } from '../lib/lark-send.mjs';
 import { outboxWrite, outboxList, heartbeat } from '../lib/flow-state.mjs';
 
 const ROOT = join(tmpdir(), `lib-lark-send-test-${process.pid}`);
@@ -130,6 +130,34 @@ test('code=0 且有 message_id → ok:true + audit SENT + outbox 为空', async 
   const content = JSON.parse(reqs[0].body.content);
   assert.equal(content.text, `<at user_id="${PM_OPEN_ID}"></at> 你好，发送成功样例`);
   assert.match(audit(), /\tchat=oc_test_chat\tSENT\t/);
+  assert.equal(outboxFiles(dir).length, 0, '成功不得入 outbox');
+});
+
+// ── (a2) 卡片成功路径：interactive 消息，content 是原始 card JSON ──
+test('sendLarkCard → msg_type interactive + content 为 Card JSON + audit SENT', async () => {
+  const dir = caseEnv('card-ok');
+  mock.tokenOk = true;
+  mock.msgCode = 0;
+  const card = {
+    schema: '2.0',
+    header: {
+      title: { tag: 'plain_text', content: '结果复盘已同步' },
+      template: 'green',
+    },
+    body: {
+      direction: 'vertical',
+      elements: [{ tag: 'markdown', content: '**AstrologyWiki** updated=156' }],
+    },
+  };
+  const r = await sendLarkCard(card, { auditText: '结果复盘卡片样例' });
+  assert.equal(r.ok, true);
+  assert.equal(r.messageId, 'om_test_1');
+  const reqs = msgRequests();
+  assert.equal(reqs.length, 1, '成功时只应发一次卡片');
+  assert.equal(reqs[0].body.receive_id, 'oc_test_chat');
+  assert.equal(reqs[0].body.msg_type, 'interactive');
+  assert.deepEqual(JSON.parse(reqs[0].body.content), card);
+  assert.match(audit(), /\tchat=oc_test_chat\tSENT\t结果复盘卡片样例/);
   assert.equal(outboxFiles(dir).length, 0, '成功不得入 outbox');
 });
 

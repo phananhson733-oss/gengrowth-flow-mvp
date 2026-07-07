@@ -77,6 +77,10 @@ function sentTexts() {
     .map((q) => JSON.parse(q.body.content).text);
 }
 
+function sentMessageRequests() {
+  return mock.requests.filter((q) => q.url.startsWith('/open-apis/im/v1/messages'));
+}
+
 // ── (a) 事件表全量：模板文案（全角标点逐字对齐契约）+ @ 策略 ──
 // 每行：[event, fields, 期望文本, 期望 atPm, 期望 atOps]
 const CASES = [
@@ -234,6 +238,18 @@ const CASES = [
     false,
     true,
   ],
+  [
+    'recap_performance_ok',
+    {
+      date: '2026-07-07',
+      body: 'AstrologyWiki：rows=156 updated=156 tasks=155\nGenGrowth：rows=41 updated=41 tasks=41',
+      log: '/tmp/recap.log',
+      reports: '/tmp/astrology.md\n/tmp/gengrowth.md',
+    },
+    '✅ [flow] 结果复盘已同步（2026-07-07）\nAstrologyWiki：rows=156 updated=156 tasks=155\nGenGrowth：rows=41 updated=41 tasks=41\n报告：\n/tmp/astrology.md\n/tmp/gengrowth.md\n日志：/tmp/recap.log',
+    false,
+    false,
+  ],
   ['raw', { text: '原样文本' }, '原样文本', false, false],
   ['batch_summary', { text: '✅ [flow] 批次汇总 2026-07-03：上线 2 篇（已逐篇线上核实）' }, '✅ [flow] 批次汇总 2026-07-03：上线 2 篇（已逐篇线上核实）', false, false],
   ['batch_summary', { text: '⚠️ [flow] 批次汇总 2026-07-03：1/2 篇已上线核实', partial: '1' }, '⚠️ [flow] 批次汇总 2026-07-03：1/2 篇已上线核实', false, true],
@@ -297,6 +313,27 @@ test('notify(parked) → 发出的文本前缀为 @PM @OPS，然后是模板正�
     texts[0],
     `<at user_id="${PM_OPEN_ID}"></at> <at user_id="${OPS_OPEN_ID}"></at> ⚠️ [astrologywiki] 暂停待人工（needs_human）：PG-1（foo）— 原因`,
   );
+});
+
+test('notify(recap_performance_ok) → 发送 Card 2.0 interactive 卡片', async () => {
+  caseEnv('recap-card');
+  const r = await notify('recap_performance_ok', {
+    date: '2026-07-07',
+    body: 'AstrologyWiki：rows=156 updated=156 tasks=155\nGenGrowth：rows=41 updated=41 tasks=41',
+    reports: '/Users/awayer_mini/gengrowth-agents/reports/recap-performance/2026-07-07-astrologywiki-optimization-tasks.md\n/Users/awayer_mini/gengrowth-agents/reports/recap-performance/2026-07-07-gengrowth-optimization-tasks.md',
+    log: '/Users/awayer_mini/gengrowth-agents/cron-sync/recap_performance/2026-07-07.log',
+  });
+  assert.equal(r.ok, true);
+  const reqs = sentMessageRequests();
+  assert.equal(reqs.length, 1);
+  assert.equal(reqs[0].body.msg_type, 'interactive');
+  const card = JSON.parse(reqs[0].body.content);
+  assert.equal(card.schema, '2.0');
+  assert.equal(card.header.template, 'green');
+  assert.match(card.header.title.content, /结果复盘已同步/);
+  assert.match(JSON.stringify(card), /AstrologyWiki/);
+  assert.match(JSON.stringify(card), /updated=156/);
+  assert.match(JSON.stringify(card), /未发布、未部署、未请求索引/);
 });
 
 // ── (d) 未知 event → 自描述兜底：event 名 + 全部字段序列化进正文，@OPS，绝不发空文本 ──

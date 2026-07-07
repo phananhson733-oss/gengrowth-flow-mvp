@@ -30,18 +30,6 @@ Last run: 2026-07-06T21:01:02.116Z (1783371662116)
 
 ---
 
-### Q21 — 15:36
-
-**🙋 提问：**
-
-现在推一次试试
-
-**🤖 回答：**
-
-按“现在手动触发一次刚接入 Codex automation 的结果复盘任务”执行，使用真实 wrapper `bash tools/scripts/gg-recap-performance-tick.sh`，不绕过脚本。第一次运行 `rc=1`，日志显示 GSC/GA4 OAuth refresh token 被 Google 拒绝（Testing-mode 7 天过期/已撤销），wrapper 已发送飞书失败告警。随后运行 `node tools/scripts/oauth-init.mjs` 重新完成本机 Google consent，新的 refresh token 写回 `~/.config/gg/_gg.env`；`verify-gcp-oauth.mjs` 中 GSC Search Analytics 与 GA4 Data API 均通过，通用 Sheets write 测试因默认 `README!A1` range 不存在失败但不影响真实复盘表写入。第二次运行 wrapper 成功：astrologywiki `rows=156 updated=156 tasks=155`，报告 `/Users/awayer_mini/gengrowth-agents/reports/recap-performance/2026-07-07-astrologywiki-optimization-tasks.md`；gengrowth `rows=41 updated=41 tasks=41`，报告 `/Users/awayer_mini/gengrowth-agents/reports/recap-performance/2026-07-07-gengrowth-optimization-tasks.md`；日志末尾为 `recap performance ok`。未执行发布、部署或 GSC Request Indexing。
-
----
-
 ### Q6 — 05:02
 
 **🙋 提问：**
@@ -600,5 +588,17 @@ goal 去落地。上下文为 Obsidian 需求文档 `2026-07-05-结果复盘表�
 **🤖 回答：**
 
 已在 `codex/recap-performance-automation` 分支落地 `gg-recap-performance.mjs`：从 `index-tracking` 与 `结果复盘表` 生成 D14/D30/D60 计划，拉 GSC Search Analytics 与 GA4 Data API 指标，回填 `day14_impressions`、`day30_进Top50词数`、`当前最高排名词（排名）`、`day30_clicks`、`day60_pv`、`day60_目标国pv`，检测 FAQPage schema，计算趋势页最近 7 天 vs 前 7 天曝光动量，并渲染 Markdown 优化任务清单。新增 `gg-recap-performance-tick.sh` wrapper 与 `com.gengrowth.recap-performance.plist`，按 `astrologywiki/gengrowth` 分产品读取 workbook/site/GA4 配置，每天 10:00 运行；已复制到 `~/Library/LaunchAgents/` 并 `launchctl bootstrap/enable`，状态为 `not running`、`runs=0`、触发时间 10:00。更新 `OPS_OVERVIEW.md` 与 workbook README 说明。验证：`node --test tools/scripts/__tests__/gg-recap-performance.smoke.test.mjs tools/scripts/__tests__/gg-index-monitor.smoke.test.mjs` 共 68 项通过；`bash -n tools/scripts/gg-recap-performance-tick.sh`、`plutil -lint tools/scripts/com.gengrowth.recap-performance.plist`、`git diff --check` 通过。Search Console country filter 已按官方文档使用 ISO 3166-1 alpha-3（如 `USA`）。未调用 author/publish/deploy 或索引提交路径。
+
+---
+
+### Q21 — 15:36
+
+**🙋 提问：**
+
+现在推一次试试
+
+**🤖 回答：**
+
+按“现在手动触发一次刚接入 Codex automation 的结果复盘任务”执行，使用真实 wrapper `bash tools/scripts/gg-recap-performance-tick.sh`，不绕过脚本。第一次运行 `rc=1`，日志显示 GSC/GA4 OAuth refresh token 被 Google 拒绝（Testing-mode 7 天过期/已撤销），wrapper 已发送飞书失败告警。随后运行 `node tools/scripts/oauth-init.mjs` 重新完成本机 Google consent，新的 refresh token 写回 `~/.config/gg/_gg.env`；`verify-gcp-oauth.mjs` 中 GSC Search Analytics 与 GA4 Data API 均通过，通用 Sheets write 测试因默认 `README!A1` range 不存在失败但不影响真实复盘表写入。第二次运行 wrapper 成功：astrologywiki `rows=156 updated=156 tasks=155`，报告 `/Users/awayer_mini/gengrowth-agents/reports/recap-performance/2026-07-07-astrologywiki-optimization-tasks.md`；gengrowth `rows=41 updated=41 tasks=41`，报告 `/Users/awayer_mini/gengrowth-agents/reports/recap-performance/2026-07-07-gengrowth-optimization-tasks.md`；日志末尾为 `recap performance ok`。未执行发布、部署或 GSC Request Indexing。
 
 ---

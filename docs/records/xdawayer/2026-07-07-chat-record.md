@@ -683,3 +683,17 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 已读取自动化记忆、项目规则、reminders 与 topic-register wrapper report 流程；仅运行指定入口 `bash tools/scripts/gg-topic-register-tick.sh`，未传手工写入、repair、overwrite 或 direct script flags。最新日志 `~/gengrowth-agents/cron-sync/topic_register/2026-07-07.log` 的本次窗口为 16:03:01-16:03:04 CST，exit 0，最终状态 `topic-register ok`。本地环境启用 apply mode，`dry_run=false`，`budget_exhausted=false`；`astrologywiki` 与 `gengrowth` 均为 candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]、evidence_discovery=[]，无可见失败。安全边界保持：未手工写 Google Sheet，未直接编辑 task plan，未创建额外 Feishu/Google Doc report artifacts。
 
 ---
+
+### Q26 — 16:09
+
+**🙋 提问：**
+
+这里的待回填的部分，我需要你一个一个去 gsc/ga4 上找到数据回填，应该是有数据的
+
+因为这是首次，所以我想让你在首次把数据都填好，后续可以按照字段含义来定义
+
+**🤖 回答：**
+
+已按“首次初始化”语义新增 `--fill-pending` 模式：只处理 `结果复盘表` 中 `待回填` 或空值的指标列，使用截至昨日的近 14/30/60 天真实 GSC/GA4 数据补齐；已有人工值不覆盖，GSC 无 query 时最高排名词写 `无`，数值为 0 时写 `0`。第一轮真实写回 astrologywiki：`rows=208 updated=208 tasks=182 mode=write-sheet fill_pending=1`；复验后发现 3 个 recap-only/重复 URL 行未纳入 `index-tracking`，补充 recap-only 逻辑后第二轮写回：`rows=3 updated=3 tasks=2 mode=write-sheet fill_pending=1`。最终 live sheet 复验显示 `day14_impressions`、`day30_进Top50词数`、`当前最高排名词（排名）`、`day30_clicks`、`day60_pv`、`day60_目标国pv` 的 `待回填`/空值计数全部为 0。抽样确认 row 2 `PG-AURA-001` 写入 top50=0、best=`how to read aura colors (P99)`、clicks=0、pv=38、targetPv=38；row 55 clicks=1、pv=4；row 80 best=`无`、pv=1。验证：`node --test tools/scripts/__tests__/gg-recap-performance.smoke.test.mjs tools/scripts/__tests__/lib-gg-notify.smoke.test.mjs tools/scripts/__tests__/lib-lark-send.smoke.test.mjs` 共 36 项通过，`bash -n tools/scripts/gg-recap-performance-tick.sh`、`node --check tools/scripts/gg-recap-performance.mjs`、`node --check tools/scripts/lib/gg-notify.mjs` 均通过。
+
+---

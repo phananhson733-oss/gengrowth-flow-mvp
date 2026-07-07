@@ -51,23 +51,20 @@ export function classifyPark(claimOrError) {
 
 export const isTransientPark = (claimOrError) => classifyPark(claimOrError) === 'transient';
 
-// unfixable：改稿救不了的——选题时效死（事件已发生/已结束）。改稿无法挽回 → 应归档带原因，
-// 绝不空烧自修（WC-045：Mexico vs England 比赛已踢，赛前预测稿改不活）。
-// 关键：**锚定到事件名词**（match/event/game/…），只认"事件本身死"的无歧义信号；绝不用裸词
-// premise/never/expired/date-passed/relevant——那些恰是评审对单条事实错的自然措辞（"premise is
-// wrong: Mercury not retrograde"、"this claim never happened"、"no longer relevant, remove it"），
-// 属可改稿 fixable。模糊一律留给 fixable（试着修，修不好 N 次后 park 交人工，安全）。
+// unfixable：改稿救不了的死选题。**只认评审/codex 明确写下的"这个选题不该发"的元判决**——
+// 绝不认对事件状态的描述（already played / event passed / match is over / no longer upcoming / event
+// date passed …）。因为对抗评审证实：那些与"你把事件的时态/日期写错了"式**可改稿** FAIL 用正则无法
+// 区分（"you say the match already occurred June 3, but it's July 20 — fix the tense" 会被误判 archive
+// →P2 接侧效后静默丢掉一篇只需改个日期的可发稿）。
+// 安全方向：默认一律 fixable（误修不可修稿 = 空跑几次门后 park 交人工；误 archive 可修稿 = 静默丢稿，更坏）。
+// 非显式标记的真 stale（如 "match played July 6, before-kickoff false" 无 "stale topic" 字样）留给
+// P1.5 的 LLM stale 判断在自修前拦截（spec §4.2 的设计：正则只做显式快路径，判断交 LLM）。
+// WC-045 真 error 含 "stale topic" + "prediction expired" + "DO NOT PUBLISH" → 三重命中，稳判 archive。
 export const UNFIXABLE_RE = new RegExp([
-  // 事件已发生/已结束——赛前预测稿改不活
-  'already (?:played|happened|occurred|took place)',
-  'match (?:was|is) (?:played|over)', '(?:was|were) (?:played|held) already',
-  '(?:event|match|game|fixture|kickoff|tournament) (?:has |had )?(?:passed|ended|concluded|elapsed)',
-  '(?:match|event|game|fixture|kickoff) date (?:has )?(?:passed|elapsed)',
-  'no longer (?:upcoming|scheduled)',
-  // 选题本身死
   '\\bstale topic\\b', 'topic (?:is )?(?:stale|expired|dead)',
-  // 事件根本没发生（锚定事件名词，不撞"这条声明 never happened"式可修 FAIL）
-  '(?:event|match|game|fixture) (?:was )?never (?:scheduled|held|took place)',
+  'do not publish', "don['’]?t publish", 'must not (?:be )?publish', '(?:not|no longer) worth publishing',
+  '(?:prediction|forecast|preview|selection) (?:is |has )?expired', 'expired (?:prediction|forecast|preview)',
+  'already published (?:elsewhere|before)',
 ].join('|'), 'i');
 
 // 三分诊（driver 用）：transient(工具没跑成→retry) / unfixable(时效死→archive) / fixable(可改稿→自修)。

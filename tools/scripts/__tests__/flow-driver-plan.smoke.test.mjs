@@ -41,3 +41,17 @@ test('gg-flow-driver CLI dry-run：读 ledger 打印计划 + 汇总，exit 0', (
   assert.match(r.stdout, /parks=3 fix=1 retry=1 archive=1 mode=dry-run/);
   assert.match(r.stdout, /PG-STALE.*archive/);
 });
+
+test('gg-flow-driver CLI fail-safe：缺 ledger 文件 → exit 0 不崩、无 plan 行', () => {
+  const r = spawnSync('node', ['tools/scripts/gg-flow-driver.mjs', '--ledger', '/nonexistent/definitely-not-here.json'], { encoding: 'utf8' });
+  assert.equal(r.status, 0, r.stderr);
+  assert.doesNotMatch(r.stdout, /→/); // 无 plan 行
+});
+
+test('gg-flow-driver CLI fail-safe：autopilot 并发半写的截断/非法 JSON → exit 0 不崩', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'flowdrv-bad-'));
+  const ledger = join(dir, 'claims.json');
+  writeFileSync(ledger, '{"PG-A":'); // 截断（ledger 由 autopilot 并发写，driver 可能读到半写）
+  const r = spawnSync('node', ['tools/scripts/gg-flow-driver.mjs', '--ledger', ledger], { encoding: 'utf8' });
+  assert.equal(r.status, 0, r.stderr);
+});

@@ -9,11 +9,11 @@ test('transient：工具没跑成 → retry 类', () => {
   assert.equal(triagePark({ error: 'chrome verify failed: HTTP 503' }), 'transient');
 });
 
-test('unfixable：时效过期/事件已发生/前提死 → archive 类（改稿救不了）', () => {
-  // WC-045 真实 error：review FAIL + stale-match，应判 unfixable（不是白烧自修）
-  assert.equal(triagePark('review[codex] FAIL: stale topic — Mexico vs England match already played 2026-07-06'), 'unfixable');
-  assert.equal(triagePark('codex FAIL: the event has passed'), 'unfixable');
-  assert.equal(triagePark({ error: 'review[astrology] FAIL: premise is false — the match was never scheduled' }), 'unfixable');
+test('unfixable：只认"这个选题不该发"的显式元判决 → archive（改稿救不了）', () => {
+  // WC-045 真实 error：三重命中 stale topic + prediction expired + DO NOT PUBLISH
+  assert.equal(triagePark('review[codex] FAIL: stale topic — Mexico vs England match already played 2026-07-06, pre-match prediction expired; DO NOT PUBLISH'), 'unfixable');
+  assert.equal(triagePark('codex FAIL: this forecast has expired, do not publish'), 'unfixable');
+  assert.equal(triagePark({ error: 'review[content] FAIL: topic is dead, no longer worth publishing' }), 'unfixable');
 });
 
 test('fixable：判决类 FAIL 但可改稿 → fix 类（Jupiter 事实错 / RL4 漂移 / 缺关键词）', () => {
@@ -29,6 +29,16 @@ test('fixable（F1 收紧防误判）：含 premise/never/expired/date-passed/re
   assert.equal(triagePark('review FAIL: the promo code shown has expired in the example table'), 'fixable');
   assert.equal(triagePark('review[schema] FAIL: publish date passed to frontmatter is 2026-13-01'), 'fixable');
   assert.equal(triagePark('review[content] FAIL: this section is no longer relevant, remove it'), 'fixable');
+});
+
+test('fixable（对抗评审揪出的碰撞）：描述事件时态/日期/语气错的措辞不该误判 archive → fixable', () => {
+  // review Workflow 确认的 4 条：event/match/played/passed 出现在"你把时态/日期写错了"语境里，改稿能修
+  assert.equal(triagePark('review[astrology] FAIL: The article claims the Mercury-Mars conjunction already occurred on June 3, but it actually occurs on July 20 - correct the date and tense.'), 'fixable');
+  assert.equal(triagePark('review[codex] FAIL: you say the match is over but kickoff is next Saturday - fix.'), 'fixable');
+  assert.equal(triagePark('review[content] FAIL: the transit is framed as upcoming but it is active now; it is no longer upcoming - reframe.'), 'fixable');
+  assert.equal(triagePark('review[schema] FAIL: event date passed to frontmatter is malformed (2026-13-01)'), 'fixable');
+  assert.equal(triagePark('review[astrology] FAIL: the match was over-hyped in the intro'), 'fixable');
+  assert.equal(triagePark('review[codex] FAIL: the game was held already? no — fix the tense, event is upcoming'), 'fixable');
 });
 
 test('无 error → unfixable（保守交人工看，不自动改）', () => {

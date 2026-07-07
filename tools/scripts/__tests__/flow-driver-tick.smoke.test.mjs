@@ -1,8 +1,9 @@
-// flow-driver-tick.smoke.test.mjs — tick 默认 dry-run、GG_FLOW_DRIVER_APPLY 才 apply、无终态不发通知。
+// flow-driver-tick.smoke.test.mjs — tick 默认 dry-run、_gg.env 里 GG_FLOW_DRIVER_APPLY=1 才 apply、
+// 无终态不发通知。用 GG_FLOW_DRIVER_LOG_DIR/GG_ENV_FILE override 做隔离 + 真验日志。
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, writeFileSync, mkdirSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, mkdirSync, readdirSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -12,23 +13,45 @@ function mkOps(claims) {
   writeFileSync(join(ops, 'inbox/06-tasks/tasks/.autopilot-claims.json'), JSON.stringify(claims));
   return ops;
 }
-function runTick(ops) {
-  return spawnSync('bash', ['tools/scripts/gg-flow-driver-tick.sh'], {
+function runTick(ops, extraEnv = {}) {
+  const logDir = mkdtempSync(join(tmpdir(), 'tick-log-'));
+  const r = spawnSync('bash', ['tools/scripts/gg-flow-driver-tick.sh'], {
     encoding: 'utf8',
-    env: { ...process.env, GG_OPS_DIR: ops, GG_FLOW_DRIVER_LOCK: join(ops, 'lock'), GG_LARK_NOTIFY_SILENCE: '1', GG_FLOW_DRIVER_TICK_TIMEOUT: '120' },
+    env: {
+      ...process.env,
+      GG_OPS_DIR: ops,
+      GG_ENV_FILE: '/dev/null',                 // 默认不 source 真 _gg.env(隔离)
+      GG_FLOW_DRIVER_LOCK: join(ops, 'lock'),
+      GG_FLOW_DRIVER_LOG_DIR: logDir,
+      GG_LARK_NOTIFY_SILENCE: '1',
+      GG_FLOW_DRIVER_TICK_TIMEOUT: '120',
+      ...extraEnv,
+    },
   });
+  const log = readdirSync(logDir).filter((f) => f.endsWith('.log')).map((f) => readFileSync(join(logDir, f), 'utf8')).join('\n');
+  return { r, log };
 }
 const STALE = { 'PG-S': { status: 'needs_human', stage: 'pushed-preview', slug: 's', branch: 'b/s', error: 'review[codex] FAIL: stale topic, do not publish' } };
 
-test('tick 默认 dry-run(无 GG_FLOW_DRIVER_APPLY)：跑 driver 不 --apply,exit 0', () => {
-  const r = runTick(mkOps(STALE));
+test('tick 默认 dry-run(无 GG_FLOW_DRIVER_APPLY)：日志 dry-run + 计划,不 apply', () => {
+  const { r, log } = runTick(mkOps(STALE));
   assert.equal(r.status, 0, r.stderr);
-  const all = r.stdout + r.stderr;
-  // dry-run 不接侧效——日志里应无 mode=apply(默认安全)
-  assert.doesNotMatch(all, /mode=apply/);
+  assert.match(log, /dry-run/);
+  assert.match(log, /→ archive/);
+  assert.doesNotMatch(log, /mode=apply/);
 });
 
-test('tick 空 ledger：exit 0,不崩', () => {
-  const r = runTick(mkOps({}));
+test('tick 启用路径：_gg.env 里 GG_FLOW_DRIVER_APPLY=1 → 真 --apply(治评审 finding①,防死启用路径)', () => {
+  // 写临时 _gg.env(仿真实启用);空 ledger(--apply 无终态→不发飞书,安全)
+  const envDir = mkdtempSync(join(tmpdir(), 'tick-env-'));
+  const envFile = join(envDir, '_gg.env');
+  writeFileSync(envFile, 'GG_FLOW_DRIVER_APPLY=1\n');
+  const { r, log } = runTick(mkOps({}), { GG_ENV_FILE: envFile });
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(log, /--apply|mode=apply/); // 证明 _gg.env 的 flag 到了 APPLY_FLAG(不是死路径)
+});
+
+test('tick 空 ledger dry-run：exit 0 不崩', () => {
+  const { r } = runTick(mkOps({}));
   assert.equal(r.status, 0, r.stderr);
 });

@@ -6,18 +6,30 @@
 #
 # 灰度(见 com.gengrowth.flow-driver.plist 头注)：load 后先 dry-run 观察一轮 → 确认计划无误 →
 # 在 ~/.config/gg/_gg.env 加 GG_FLOW_DRIVER_APPLY=1 → kickstart 上线。
+# （_gg.env 在下方**早于** APPLY 判断 source——否则文档的启用路径失效、lane 永久 dry-run。评审 finding①。）
 #
 # Knobs: GG_FLOW_DRIVER_APPLY(=1 接侧效,默认 dry-run) · GG_FLOW_DRIVER_MAX_FIX(默1)/MAX_ARCHIVE(默5) ·
-#        GG_FLOW_DRIVER_TICK_TIMEOUT(默1800s) · GG_FLOW_DRIVER_LOCK(默 /tmp/gg-flow-driver.lock)。
+#        GG_FLOW_DRIVER_TICK_TIMEOUT(默1800s) · GG_FLOW_DRIVER_LOCK · GG_FLOW_DRIVER_LOG_DIR · GG_ENV_FILE。
 
-export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$HOME/.local/bin:$HOME/.npm-global/bin:$PATH"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+GG_ENV_FILE="${GG_ENV_FILE:-$HOME/.config/gg/_gg.env}"
+# _gg.env 里是 30 个 bare KEY=(无 export)——必须 set -a 才对判断+子进程可见(gh/codex 密钥、启用旗标)。
+# **早加载**(在 APPLY_FLAG 之前)：这样文档教的"改 _gg.env 加 GG_FLOW_DRIVER_APPLY=1"才真能启用。
+set -a; . "$GG_ENV_FILE" 2>/dev/null; set +a
+# 我的 PATH 压过 _gg.env 里可能的 PATH,保证 gtimeout/node/gh/claude 找得到。
+export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$HOME/.local/bin:$HOME/.npm-global/bin:$PATH"
+
 LOCK="${GG_FLOW_DRIVER_LOCK:-/tmp/gg-flow-driver.lock}"
-LOG_DIR="$HOME/gengrowth-agents/cron-sync/flow_driver"; mkdir -p "$LOG_DIR" 2>/dev/null
+LOG_DIR="${GG_FLOW_DRIVER_LOG_DIR:-$HOME/gengrowth-agents/cron-sync/flow_driver}"; mkdir -p "$LOG_DIR" 2>/dev/null
 LOG="$LOG_DIR/$(date +%Y-%m-%d).log"
 TICK_TIMEOUT="${GG_FLOW_DRIVER_TICK_TIMEOUT:-1800}"
 case "$TICK_TIMEOUT" in ''|*[!0-9]*) TICK_TIMEOUT=1800 ;; esac
 [ "$TICK_TIMEOUT" -ge 30 ] 2>/dev/null || TICK_TIMEOUT=1800
+
+# gtimeout 预检(仿 author tick)：缺则可诊断地跳过,不静默 no-op。
+if ! command -v gtimeout >/dev/null 2>&1; then
+  echo "$(date '+%F %T') skip — gtimeout 不在 PATH(brew install coreutils)" >> "$LOG"; exit 0
+fi
 
 # mkdir 互斥 + pid/lstart identity cookie + stale-takeover(仿 author tick,防并发 + PID 复用)
 if [ -d "$LOCK" ]; then
@@ -36,14 +48,12 @@ echo "$$" > "$LOCK/pid"; ps -o lstart= -p $$ 2>/dev/null | tr -s ' ' > "$LOCK/st
 APPLY_FLAG=""; [ "$GG_FLOW_DRIVER_APPLY" = "1" ] && APPLY_FLAG="--apply"
 echo "$(date '+%F %T') flow-driver tick start (pid $$, ${APPLY_FLAG:-dry-run})" >> "$LOG"
 
-# _gg.env 里是 30 个 bare KEY=(无 export)——必须 set -a 才对子进程可见(gh/codex 密钥)。
-OUT=$( ( set -a; . "$HOME/.config/gg/_gg.env" 2>/dev/null; set +a
-  gtimeout "$TICK_TIMEOUT" node "$SCRIPT_DIR/gg-flow-driver.mjs" $APPLY_FLAG ) 2>&1 )
+OUT=$( gtimeout "$TICK_TIMEOUT" node "$SCRIPT_DIR/gg-flow-driver.mjs" $APPLY_FLAG 2>&1 )
 printf '%s\n' "$OUT" >> "$LOG"
 
-# relay 一条终态汇总(仅 --apply 且有 fixed/archived/fixFailed 时 driver 才打 FLOW_DRIVER_SUMMARY);
-# 无该行 → 静默不发。
-SUMMARY=$(printf '%s\n' "$OUT" | sed -n 's/^FLOW_DRIVER_SUMMARY: //p' | head -1)
+# relay 一条终态汇总。用 tail -1：真 FLOW_DRIVER_SUMMARY 永远最后一行(plan 列表里 reason 若含伪造
+# FLOW_DRIVER_SUMMARY 行也在其之前)——防 reason 注入顶替真汇总(评审 finding②)。无该行 → 静默不发。
+SUMMARY=$(printf '%s\n' "$OUT" | sed -n 's/^FLOW_DRIVER_SUMMARY: //p' | tail -1)
 if [ -n "$SUMMARY" ] && [ -x "$SCRIPT_DIR/gg-lark-notify.sh" ]; then
   "$SCRIPT_DIR/gg-lark-notify.sh" "$SUMMARY" >> "$LOG" 2>&1 || true
 fi

@@ -8,7 +8,7 @@ import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
 import { planDriverActions } from './lib/flow-driver.mjs';
-import { driveApply } from './lib/flow-driver-apply.mjs';
+import { driveApply, buildSummaryMessage } from './lib/flow-driver-apply.mjs';
 
 const argv = process.argv.slice(2);
 const getArg = (name) => { const i = argv.indexOf(name); return i >= 0 ? argv[i + 1] : ''; };
@@ -56,6 +56,9 @@ async function main() {
   };
   const s = await driveApply(plan, deps);
   console.log(`flow-driver: parks=${plan.length} fixed=${s.fixed} fixFailed=${s.fixFailed} archived=${s.archived} archiveSkipped=${s.archiveSkipped} retryDeferred=${s.retryDeferred} fixSkipped=${s.fixSkipped} capped=${s.capped} mode=apply`);
+  // 每轮一条终态汇总(仅有 fixed/archived/fixFailed 时);tick grep 这行 relay 飞书,无终态则静默。
+  const summaryMsg = buildSummaryMessage(s, SITE);
+  if (summaryMsg) console.log(`FLOW_DRIVER_SUMMARY: ${summaryMsg}`);
   process.exit(0);
 }
 

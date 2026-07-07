@@ -76,4 +76,5 @@ test('gg-flow-driver --apply（只 archive 的 ledger）：跑出 mode=apply 汇
   assert.equal(r.status, 0, r.stderr);
   assert.match(r.stdout, /mode=apply/);
   assert.match(r.stdout, /archived=1/);
+  assert.match(r.stdout, /FLOW_DRIVER_SUMMARY: flow-driver \[astrologywiki\].*归档 1/);
 });

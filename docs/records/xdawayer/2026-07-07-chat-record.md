@@ -963,3 +963,35 @@ Last run: 2026-07-07T12:01:35.494Z (1783425695494)
 已按 SEO 写作/发布链路处理：先错误跑偏到 flow-driver 后被纠正，随后切回 `gg-seo-author-tick.sh` author wrapper 与 publish wrapper。成功写出 `PG-CELEB-035`（keyword: `kevin de bruyne birth chart`），草稿 `_staging/PG-CELEB-035-en.md` 标题为 `What the Kevin De Bruyne Birth Chart Reveals About His Playmaker Mind`，约 1763 words。清理旧 authoring `needs_human` claim 后，用 `GG_AUTOPILOT_MODE=publish-only bash tools/scripts/gg-seo-autopilot-tick.sh` 接上发布后续：PR `https://github.com/xdawayer/oracle/pull/337` 已 merge，ledger 中 `PG-CELEB-035` 为 `done`，计划 `2026-05-27-W22-blog-output-plan.md` 已勾选，发布日志已写 `seo-autopilot-publish-log.md`，线上 canonical `https://www.astrologywiki.com/en/wiki/kevin-de-bruyne-birth-chart` 返回 200，页面标题/description/schema 与 sitemap 条目均已验证。发现 `gg-nightly-seo.sh` 正在继续处理下一篇 `PG-CELEB-036`（`anne hathaway birth chart`），已推到 preview PR `https://github.com/xdawayer/oracle/pull/338`，当前为 `pushed-preview`，未误报为完成。
 
 ---
+
+### Q37 — 22:02
+
+**🙋 提问：**
+
+Automation: 自动修复冲突
+Automation ID: gengrowth-vault-git-auto-heal
+Automation memory: $CODEX_HOME/automations/gengrowth-vault-git-auto-heal/memory.md
+Last run: 2026-07-07T13:00:35.680Z (1783429235680)
+
+在本机执行 GenGrowth 多仓库 Obsidian/Git 自愈同步。目标仓库固定为 `/Users/awayer_mini/gengrowth-wiki`、`/Users/awayer_mini/gengrowth-ops`、`/Users/awayer_mini/gengrowth-flow-mvp`。
+
+必须使用已验证的确定性入口，不要绕过脚本手写破坏性 git 操作：
+
+`/usr/bin/python3 /Users/awayer_mini/gengrowth-wiki/tools/scripts/obsidian-vault-git-sync.py --repo /Users/awayer_mini/gengrowth-wiki --repo /Users/awayer_mini/gengrowth-ops --repo /Users/awayer_mini/gengrowth-flow-mvp --verbose`
+
+安全边界：
+- 禁止运行 `git reset --hard`、`git checkout -- <path>`、`git clean`、`rm -rf`、`rsync --delete`，除非用户在当次对话中明确要求。
+- 不要运行 `tools/scripts/frequent-sync.sh`、`tools/scripts/gengrowth-repos-sync.sh` 或 `tools/scripts/_sync-core.sh`，因为这些路径包含镜像删除语义，本任务只做 git 自愈同步。
+- 同步脚本会先 fetch，检查未解决冲突，提交本地非敏感变更，再 rebase/push；只对白名单 JSON 冲突自动合并，其他冲突会中止并报告。不要在脚本中止后自行猜测合并内容。
+- 不打印密钥、token、邮箱密码、service account JSON、private key 或完整凭证 URL。
+
+执行后验证：
+1. 分别在三个仓库运行 `git status --branch --porcelain=v2`、`git rev-list --left-right --count HEAD...origin/main`、`git diff --name-only --diff-filter=U`、`git ls-files -u`。
+2. 回读 `/Users/awayer_mini/gengrowth-ops/.obsidian/plugins/obsidian-git/data.json` 和 `/Users/awayer_mini/gengrowth-flow-mvp/.obsidian/plugins/obsidian-git/data.json`，确认 `autoSaveInterval`、`autoPushInterval`、`autoPullInterval` 为 0，`autoPullOnBoot` 与 `pullBeforePush` 为 false。
+3. 若所有仓库都是 clean 且 ahead/behind 为 `0 0`，简短报告已同步；若脚本输出“需要关注”或存在 unmerged，报告具体仓库和文件路径，不要删除文件。
+
+**🤖 回答：**
+
+已读取自动化记忆、项目规则、sibling Owner Profile/reminders、`gstack-careful` 与 `verification-before-completion` 技能说明；仅运行指定三仓库确定性入口，未使用破坏性 git/filesystem 命令或镜像删除类同步脚本。初始入口退出 0 且无输出；第一次独立验证发现 `gengrowth-ops/inbox/06-tasks/tasks/.autopilot-claims.json` 有普通本地修改、无 unmerged 且三仓 `HEAD...origin/main` 均为 `0 0`，随后只 rerun 同一入口并收敛。复验显示三仓无未提交条目、`HEAD...origin/main=0 0`、`git diff --name-only --diff-filter=U` 与 `git ls-files -u` 均无输出，两个 Obsidian Git 配置文件仍为禁用自动同步。本 record 追加后继续只用同一入口收敛并复验。
+
+---

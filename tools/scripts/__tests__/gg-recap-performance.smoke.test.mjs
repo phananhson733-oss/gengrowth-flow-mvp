@@ -248,3 +248,13 @@ test('daily wrapper loops products and only runs recap performance sync', () => 
   assert.match(wrapper, /GG_GA4_GENGROWTH_PROPERTY/);
   assert.doesNotMatch(wrapper, /gg-seo-author|gg-gengrowth-publish|Request Indexing|--submit-sitemap/);
 });
+
+test('launchd plist schedules the recap performance wrapper daily', () => {
+  const plist = readFileSync(join(SCRIPTS, 'com.gengrowth.recap-performance.plist'), 'utf8');
+  assert.match(plist, /com\.gengrowth\.recap-performance/);
+  assert.match(plist, /gg-recap-performance-tick\.sh/);
+  assert.match(plist, /StartCalendarInterval/);
+  assert.match(plist, /<key>Hour<\/key>\s*<integer>10<\/integer>/);
+  assert.match(plist, /recap_performance\/launchd\.out\.log/);
+  assert.match(plist, /recap_performance\/launchd\.err\.log/);
+});

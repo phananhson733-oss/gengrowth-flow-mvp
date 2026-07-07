@@ -532,7 +532,7 @@ export const TABS = [
       ['主题集群表', 'cluster_id / track / us_share 等', '人工填'],
       ['选题登记表', '21 列 v2.1（v2.0 15 列 + 新 6 列）', 'promote 写 A；人工补 B-U'],
       ['CTA Map', 'page_role → CTA 文案', '人工填，预填 6 行 Week-1 默认'],
-      ['结果复盘表', '最终呈现；16 列（v3.3）；Day 14/30/60 GSC+GA4 数据 + 收录申请/索引修复/记录日期/最高排名词', '自动 gg-index-monitor.mjs 回填 + 人工决策'],
+      ['结果复盘表', '最终呈现；16 列（v3.3）；Day 14/30/60 GSC+GA4 数据 + 收录申请/索引修复/记录日期/最高排名词', '自动 gg-index-monitor.mjs + gg-recap-performance.mjs 回填；人工决策'],
       ['index-tracking', 'EN URL 与 GSC URL Inspection 中转状态；不作为人工最终视图', '自动 gg-index-monitor.mjs'],
       ['url-inventory', '从 sitemap 对账全量可索引 URL；标出未纳入监控/未提交/未收录/已收录', '自动 gg-index-monitor.mjs'],
       ['request-indexing-queue', 'Phase 2 Request Indexing 候选队列；按优先级辅助人工确认提交', '自动 gg-index-monitor.mjs + Computer Use 辅助'],

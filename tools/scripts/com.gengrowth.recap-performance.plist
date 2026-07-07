@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Recap performance lane — daily GSC/GA4 milestone metrics and optimization task list.
+
+     Runs at 10:00 Asia/Shanghai, after the 09:00 index monitor lane has refreshed
+     index-tracking and 结果复盘表 indexing status.
+
+     Install / enable:
+       cp ~/gengrowth-flow-mvp/tools/scripts/com.gengrowth.recap-performance.plist ~/Library/LaunchAgents/
+       launchctl enable    gui/$(id -u)/com.gengrowth.recap-performance
+       launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.gengrowth.recap-performance.plist
+
+     Run once now:
+       launchctl kickstart -k gui/$(id -u)/com.gengrowth.recap-performance
+
+     Disable:
+       launchctl bootout gui/$(id -u)/com.gengrowth.recap-performance -->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.gengrowth.recap-performance</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-recap-performance-tick.sh</string>
+  </array>
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key>
+    <integer>10</integer>
+    <key>Minute</key>
+    <integer>0</integer>
+  </dict>
+  <key>RunAtLoad</key>
+  <false/>
+  <key>StandardOutPath</key>
+  <string>/Users/awayer_mini/gengrowth-agents/cron-sync/recap_performance/launchd.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/awayer_mini/gengrowth-agents/cron-sync/recap_performance/launchd.err.log</string>
+  <key>ProcessType</key>
+  <string>Background</string>
+</dict>
+</plist>

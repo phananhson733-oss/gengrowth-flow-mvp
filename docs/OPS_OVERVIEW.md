@@ -121,6 +121,7 @@ node tools/scripts/gg-status.mjs --md | head -40
 | `quality-metrics` | phase2 每次跑的明细 | `gg-status.mjs --sheet` append |
 | `cost-tracking` | LLM token / API call 计数 | `gg-llm-orchestrator.mjs` + `gg-keyword-mine.mjs` 自动 append（2026-05-23 接入）|
 | `monitor-auto` | GSC + GA4 自动回填（清单 vs 人填的 `内容追踪`） | `gg-monitor.mjs --write-sheet` |
+| `结果复盘表` | Day 14/30/60 GSC+GA4 复盘指标 + 优化任务清单来源 | `gg-index-monitor.mjs --sync-recap` + `gg-recap-performance.mjs --write-sheet --write-report` |
 | `config` | 阈值与门控（mine.* / phase2.* / tier*.word_*）| 人改 → `gg-config-sync.mjs` 拉到 `.gg-cache/config-snapshot.json` |
 
 > **2026-05-23 命名更新**：原 8 个 emoji 前缀 tab（⚙️配置 / 🚀趋势词 / ⚡快速胜利 / 🎯战略词 / 📌长尾词 / 📋分桶规则 / 📊内容追踪 / 📈来源分析）已全部 rename 去 emoji，便于 grep 与 IDE 搜索。原 PRD 文档仍保留 emoji 表述（SSOT），sheet 与代码已统一到无 emoji。

@@ -253,6 +253,7 @@ export function buildPerformancePlan({ trackingRows = [], recapRows = [], now = 
   const recapByUrl = new Map(recapRows.filter((row) => row.url).map((row) => [normalizeUrl(row.url), row]));
   const recapByPage = new Map(recapRows.filter((row) => row.page_id).map((row) => [String(row.page_id).trim(), row]));
   const plan = [];
+  const plannedRecapRows = new Set();
   for (const tracking of trackingRows) {
     const url = normalizeUrl(tracking.url);
     if (!url || !isEnglishArticleUrl(url)) continue;
@@ -283,6 +284,7 @@ export function buildPerformancePlan({ trackingRows = [], recapRows = [], now = 
       });
     }
     if (!windows.length) continue;
+    if (recap._rowNumber != null) plannedRecapRows.add(recap._rowNumber);
     plan.push({
       page_id: tracking.page_id || recap.page_id || '',
       url,
@@ -292,6 +294,39 @@ export function buildPerformancePlan({ trackingRows = [], recapRows = [], now = 
       recap,
       windows,
     });
+  }
+  if (fillPending) {
+    for (const recap of recapRows) {
+      if (recap._rowNumber != null && plannedRecapRows.has(recap._rowNumber)) continue;
+      const url = normalizeUrl(recap.url);
+      if (!url || !isEnglishArticleUrl(url)) continue;
+      const windows = [];
+      for (const [milestone, days] of [['day14', 14], ['day30', 30], ['day60', 60]]) {
+        if (!needsMetricWindow(recap, milestone)) continue;
+        windows.push({
+          milestone,
+          days,
+          ...trailingWindow(days, now),
+          source: 'pending-metric-recap-only',
+        });
+      }
+      if (!windows.length) continue;
+      plan.push({
+        page_id: recap.page_id || '',
+        url,
+        slug: slugFromUrl(url),
+        title: '',
+        tracking: {
+          page_id: recap.page_id || '',
+          url,
+          slug: slugFromUrl(url),
+          published_at: isoDay(recap.申请时间),
+          source: 'recap-only',
+        },
+        recap,
+        windows,
+      });
+    }
   }
   return plan;
 }

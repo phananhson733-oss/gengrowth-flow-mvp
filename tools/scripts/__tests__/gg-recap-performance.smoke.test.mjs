@@ -109,6 +109,34 @@ test('buildPerformancePlan fillPending pulls pending cells with trailing windows
   }]);
 });
 
+test('buildPerformancePlan fillPending includes recap-only rows when URL has pending metrics', () => {
+  const plan = buildPerformancePlan({
+    now: new Date('2026-07-07T00:00:00Z'),
+    fillPending: true,
+    trackingRows: [],
+    recapRows: [{
+      _rowNumber: 2,
+      page_id: 'PG-RECAP-ONLY',
+      url: 'https://www.astrologywiki.com/en/wiki/recap-only',
+      申请时间: '2026/5/22',
+      day14_impressions: 11,
+      day30_进Top50词数: '待回填',
+      '当前最高排名词（排名）': '待回填',
+      day30_clicks: '待回填',
+      day60_pv: '待回填',
+      day60_目标国pv: '待回填',
+    }],
+  });
+
+  assert.equal(plan.length, 1);
+  assert.equal(plan[0].page_id, 'PG-RECAP-ONLY');
+  assert.equal(plan[0].tracking.source, 'recap-only');
+  assert.deepEqual(plan[0].windows.map((w) => `${w.milestone}:${w.source}`), [
+    'day30:pending-metric-recap-only',
+    'day60:pending-metric-recap-only',
+  ]);
+});
+
 test('mergePerformanceIntoRecapRow fills milestone metrics without clobbering manual fields', () => {
   const merged = mergePerformanceIntoRecapRow({
     old: {

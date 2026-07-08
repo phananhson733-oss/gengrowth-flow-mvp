@@ -50,6 +50,7 @@ tags:
 - 要点 1：解释 `PG-CELEB-041` / `coco-gauff-zodiac-sign` 的出生地事实冲突，结论是可解决但需要先确定来源口径。
 - 要点 2：按用户确认落地修复并发布 `PG-CELEB-041`，完成 PR #346 merge、生产验证与回填清队。
 - 要点 3：核对 Coco Gauff 两个 SEO 条目，确认 `coco-gauff-birth-chart` 与 `coco-gauff-zodiac-sign` 均已发布且线上可访问。
+- 要点 4：纠正核对对象为 Gengrowth 内容，并完成 `PG-ART-005` / `PG-ART-006` 发布、线上验证与 W25 plan 回填。
 
 ---
 
@@ -88,5 +89,17 @@ tags:
 **🤖 回答：**
 
 核对 ledger、W22 plan、publish log 和两个生产 URL 后确认：不是另一个没写。`PG-CELEB-024` / `coco-gauff-birth-chart` 已在 2026-07-02 合并发布（PR #316），W22 plan 已勾选、publish log 有记录，线上 URL 返回 200、canonical 正确并有 Article JSON-LD；`PG-CELEB-041` / `coco-gauff-zodiac-sign` 也已在本轮修复后发布（PR #346），线上验证通过。结论：两个 Coco Gauff 条目都已完成，上一轮只是第二个 zodiac-sign 条目因 birthplace gate 卡住。
+
+---
+
+### Q4 — 00:31
+
+**🙋 提问：**
+
+我指的是 gengrowth 的内容
+
+**🤖 回答：**
+
+重新按 Gengrowth 内容链路核对并落地：确认 `PG-ART-005` / `generative-engine-optimization` 与 `PG-ART-006` / `ai-search-visibility` 不是没写，二者在 2026-07-08 22:49-23:17 CST 已 author 完成且 phase2 `overall=pass`。真正卡点是 2026-07-09 00:21 CST Gengrowth publish tick 在 `PG-ART-005` 的 factual gate 出现 transient tooling failure（`codex exited 3`），导致 `PG-ART-006` 被串行节奏延后。直接 source factual gate 复核两篇均 PASS 后，使用既有 `gg-gengrowth-publish-tick.sh` 将 publish limit 设为 2 重跑；`PG-ART-005` 与 `PG-ART-006` 均已发布，线上 URL 200、canonical/title/H1/Article JSON-LD/sitemap 验证通过，并完成 sheet、W25 plan、vault archive 回填。剩余 `PG-WLS-006`、`PG-GJ2U-001`、`PG-AIS-005`、`PG-WHS-001` 因原 author tick 达到 `BATCH=2` 尚未 author，本轮未在 00:30 后主动开启新的写作轮次。
 
 ---

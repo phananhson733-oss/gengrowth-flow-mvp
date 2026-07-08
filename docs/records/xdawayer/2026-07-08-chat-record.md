@@ -1123,3 +1123,20 @@ Last run: 2026-07-08T13:01:48.461Z (1783515708461)
 按自动化边界执行：读取本轮 automation memory、项目规则、owner profile、reminders、相关记忆索引，并使用 `using-superpowers` 与 `verification-before-completion` 做技能检查和收尾核验。仅运行指定三仓库确定性入口 `/usr/bin/python3 /Users/awayer_mini/gengrowth-wiki/tools/scripts/obsidian-vault-git-sync.py --repo /Users/awayer_mini/gengrowth-wiki --repo /Users/awayer_mini/gengrowth-ops --repo /Users/awayer_mini/gengrowth-flow-mvp --verbose`；入口返回 `Obsidian vault git sync: clean`。按要求验证三仓库 `git status --branch --porcelain=v2`、`git rev-list --left-right --count HEAD...origin/main`、`git diff --name-only --diff-filter=U`、`git ls-files -u`，并回读两个 sibling Obsidian Git `data.json` 指定字段；验证显示三仓库 clean，`HEAD...origin/main` 均为 `0 0`，未合并检查为空，Obsidian Git 自动同步字段均为 disabled。按项目记录规则追加本条 record 后，仅用同一确定性入口做 post-record 收敛；未使用破坏性 git/filesystem 命令，也未运行镜像删除语义脚本。
 
 ---
+
+### Q36 — 22:08
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-08T12:53:21.842Z (1783515201842)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+使用指定 wrapper `bash tools/scripts/gg-topic-register-tick.sh` 执行 topic registration；未传入手工写入、repair、overwrite 或直接脚本参数。最新日志为 `~/gengrowth-agents/cron-sync/topic_register/2026-07-08.log`，运行窗口 2026-07-08 22:01:15-22:07:48 CST，exit code 0，最终状态 `topic-register ok`。本地环境开启 apply mode，日志中 `dry_run=false`，命令为 `node .../gg-topic-register.mjs --product all --limit 10 --llm claude --discover-evidence --apply --run-budget-ms 840000`。`astrologywiki` 为 candidates=0、updates=0、new_clusters=0、page_ids=[]、selection_mode=generate、audit_incomplete=0、preprocessor=[]、evidence_discovery=[]。`gengrowth` 为 candidates=6、updates=6、new_clusters=2、page_ids=`PG-ART-005`, `PG-ART-006`, `PG-WLS-006`, `PG-GJ2U-001`, `PG-AIS-005`, `PG-WHS-001`、selection_mode=generate、audit_incomplete=0、preprocessor=`v1_fallback` x6；6 条 evidence_discovery 均为 insufficient，distinct SERP titles / domains 均为 0/0。未见失败，`budget_exhausted=false`。安全边界保持：仅运行 wrapper，未手工写 Sheet、未直接编辑 task plan、未创建额外 Feishu/Google Doc 报告。已写入 `/Users/awayer_mini/.codex/automations/gengrowth-topic-register/memory.md`。
+
+---

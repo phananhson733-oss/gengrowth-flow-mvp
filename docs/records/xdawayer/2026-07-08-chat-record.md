@@ -698,3 +698,20 @@ Last run: 2026-07-08T08:00:47.672Z (1783497647672)
 使用指定确定性入口执行三仓库 Obsidian/Git 自愈同步，脚本输出 `Obsidian vault git sync: clean`。验证显示：`gengrowth-wiki`、`gengrowth-ops`、`gengrowth-flow-mvp` 均无未合并输出，`HEAD...origin/main` 均为 `0 0`；两个 sibling Obsidian Git 配置均为 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。追加本条 record 后继续仅用同一确定性入口做 post-record 收敛并复验；未使用破坏性 git/filesystem 命令，也未运行镜像删除语义脚本。
 
 ---
+
+### Q22 — 17:33
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: 2026-07-07T21:01:07.661Z (1783458067661)
+
+Run the deterministic fixed-row index repair workflow through `bash tools/scripts/gg-index-repair-resubmit-tick.sh`. The wrapper loads the local gg environment, loops the configured products (`GG_INDEX_MONITOR_PRODUCTS`, defaulting to astrologywiki and gengrowth), processes rows marked `已修复`, syncs `结果复盘表`, and refreshes `request-indexing-queue` in each product Google Sheet. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, do not click Search Console Request Indexing unattended, and do not create Feishu or Google Doc report artifacts. After the wrapper exits, summarize per-product `process-fixed`, `sync-recap`, `sync-request-queue` counts visible in the log, plus any failures.
+
+**🤖 回答：**
+
+使用指定 wrapper `bash tools/scripts/gg-index-repair-resubmit-tick.sh` 执行 deterministic fixed-row index repair workflow。wrapper exit code 为 `0`，本轮日志窗口为 `2026-07-08 17:32:12` 至 `17:32:34 CST`，日志文件 `/Users/awayer_mini/gengrowth-agents/cron-sync/index_repair_resubmit/2026-07-08.log`，最终行 `index repair-resubmit ok`。`astrologywiki`：`process-fixed fixed=0 resubmitted=0`，`sync-recap en_rows=214 appended=0 updated=0 skipped=214`，`sync-request-queue rows=29 P0=0 P1=1 P2=12 P3=16`。`gengrowth`：`process-fixed fixed=0 resubmitted=0`，`sync-recap en_rows=54 appended=0 updated=0 skipped=54`，`sync-request-queue rows=2 P0=0 P1=0 P2=2 P3=0`。本轮失败关键词检查为空；保持合规边界，未使用普通文章 Google Indexing API，未无人值守点击 Search Console Request Indexing，未创建 Feishu 或 Google Doc 报告 artifacts。
+
+---

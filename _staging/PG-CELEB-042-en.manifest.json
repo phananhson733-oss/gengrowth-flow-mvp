@@ -8,9 +8,9 @@
   "track": "量产线",
   "generated_by": "unknown",
   "prompt_version": "v8",
-  "generated_at": "2026-07-08T15:19:21.554Z",
-  "content_sha256_short": "e42488eb2d758e0b",
-  "source_path": "_staging/PG-CELEB-042-claude-v8.md",
+  "generated_at": "2026-07-08T15:26:08.347Z",
+  "content_sha256_short": "6cc6e9cfd9820043",
+  "source_path": "_staging/PG-CELEB-042-revised-v8.md",
   "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-CELEB-042-en.md",
   "phase2_checks": {
     "overall": "pass",
@@ -19,7 +19,7 @@
       "h2Count": 11,
       "h3Count": 0,
       "h4Count": 0,
-      "words": 1510,
+      "words": 1654,
       "wikilinks": 7,
       "tbdLinks": 7
     },

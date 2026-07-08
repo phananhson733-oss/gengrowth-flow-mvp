@@ -1,28 +1,3 @@
----
-title: Mo Salah Zodiac Sign
-slug: mo-salah-zodiac-sign
-date: 2026-07-08
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T2
-track: 量产线
-page_id: PG-CELEB-042
-author_id: "marcus-orion"
-author_display_name: "Marcus Orion"
-target_keyword: mo salah zodiac sign
-associated_keywords:
-  - mo salah zodiac sign meaning
-  - mo salah zodiac sign astrology
-  - mo salah zodiac sign birth chart
-  - mo salah zodiac sign interpretation
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-07-08T15:26:08.347Z
-content_sha256_short: 6cc6e9cfd9820043
-phase2_checks: all-pass
----
-
 # What Mo Salah's Zodiac Sign Reveals About Football's Quiet Superstar
 
 ## What Is Mo Salah's Zodiac Sign?

@@ -1,0 +1,8 @@
+- “three-planet cluster” 把 Vesta 当 planet，术语不严谨 → 改成 “Sun and Venus in Gemini, with asteroid Vesta also in Gemini” 或 “Gemini emphasis”，不要叫三颗行星。
+- Mars in Taurus / Jupiter in Virgo 被写成 “approximate” → 复核星历后明确：只有 Moon/Ascendant/houses 受出生时间影响；慢行星落座别乱加 caveat。
+- 文章几乎没有 Mo Salah 的具体素材 → 加入 2-3 个可核实的足球语境例子，如 Liverpool 右路内切、Egypt captaincy、assist/pressing/transition reading，用来支撑 Gemini “adaptability/quick read”。
+- Rudhyar、Hand、Greene 目前像空泛背书 → 要么引用具体著作/观点，要么删掉，改用清楚的占星方法说明。
+- Pew 29% U.S. astrology stat 与 Mo Salah 搜索意图弱相关 → 删除，换成“celebrity chart reading needs birth-time caveats”这类更贴题的价值。
+- “quiet superstar” 没有被正文证明 → 要么补充他公开形象/采访风格的具体依据，要么改成更稳的角度如 “Liverpool and Egypt star”。
+- Reflection Prompts 太通用，像任何 Gemini 文都能用 → 改成具体小练习：读者如何确认自己的 Sun/Moon/rising、哪些信息需要出生时间、如何避免把 Sun sign 当全人格。
+- CTA 文案 “explore mo salah zodiac sign” 明显关键词堆砌 → 改成自然动作导向，如 “Generate your free birth chart and compare your own Sun, Moon, and rising.”

@@ -145,6 +145,7 @@ tags:
 
 - 要点 1：执行 GenGrowth 三仓库 Obsidian/Git 自愈同步，使用确定性入口并完成验证。
 - 要点 2：执行 GenGrowth Index Repair Resubmit 确定性 wrapper，完成双产品 fixed-row repair 计数同步。
+- 要点 3：创建 Codex 自动化 `gengrowth-seo-blog`，每天 18:30 至 21:30 每小时检测并执行 SEO Blog 撰写、发布与 publish 后回填验证闭环。
 
 ## 对话记录
 
@@ -559,5 +560,17 @@ Last run: 2026-07-08T05:02:09.722Z (1783486929722)
 **🤖 回答：**
 
 使用指定确定性入口执行三仓库 Obsidian/Git 自愈同步，初始脚本输出 `Obsidian vault git sync: clean`。初始验证显示：`gengrowth-wiki`、`gengrowth-ops`、`gengrowth-flow-mvp` 均无未合并输出，`HEAD...origin/main` 均为 `0 0`；两个 sibling Obsidian Git 配置均为 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。追加本条 record 后继续仅用同一确定性入口做 post-record 收敛并复验；未使用破坏性 git/filesystem 命令，也未运行镜像删除语义脚本。
+
+---
+
+### Q16 — 14:30
+
+**🙋 提问：**
+
+我期望将这个全流程写入到我们的 codex 中的 automatic 中。可以从18:30 开始（东八区），每隔 1h 进行检测，直到每天的 22:00 结束。启动了以后，自动将需要的文档进行自动落地和撰写上线，以及 publish 以后的所有内容也要落地完成（回填等）
+
+**🤖 回答：**
+
+已创建 Codex cron 自动化 `gengrowth-seo-blog`，名称为 `GenGrowth SEO Blog 全流程发布`，状态 `ACTIVE`，工作目录 `/Users/awayer_mini/gengrowth-flow-mvp`，运行窗口为每天东八区 18:30、19:30、20:30、21:30。自动化提示词要求通过 `bash tools/scripts/gg-nightly-seo.sh` 执行完整 SEO Blog 流程，覆盖待处理队列检测、文档落地、文章撰写、preview gate、publish / merge、live URL 验证、计划与 publish log / Sheet / ledger 回填、batch summary、needs_human 有界修复与最终通知边界；同时禁止中间态通知、破坏性 git 命令、手工乱改 Sheet、普通文章 Google Indexing API 或无人值守 GSC Request Indexing。已回读 `/Users/awayer_mini/.codex/automations/gengrowth-seo-blog/automation.toml` 验证配置持久化。
 
 ---

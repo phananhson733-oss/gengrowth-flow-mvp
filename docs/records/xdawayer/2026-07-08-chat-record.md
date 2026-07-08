@@ -1091,3 +1091,35 @@ Last run: 2026-07-08T12:31:18.370Z (1783513878370)
 按故障排查路径检查了 5 个 `_staging/*-claude-v8.md` 和对应 repair stdout。结论：不是正常文章缺少 H1，而是 author 上游 `claude` CLI 未登录，实际 draft 内容只有 `Not logged in · Please run /login`；因此 phase2 看到一个 35 字节的非文章文件，自然报 `draft has no H1`。deterministic repair 已经被 wrapper 调起，但 repair worker 也调用同一个未登录的 `claude`，对应 stdout 同样是 `Not logged in · Please run /login`，所以没有可验证的修复稿。安全策略正确地 park 为 `needs_human`，而不是手工补一个 H1 或发布错误内容。下一步应先恢复/验证 Claude CLI 登录态，再用既有 retry 路径重跑这 5 个 authoring claim；不应手工改 Sheet 或直接拼文章。
 
 ---
+
+### Q35 — 22:03
+
+**🙋 提问：**
+
+Automation: 自动修复冲突
+Automation ID: gengrowth-vault-git-auto-heal
+Automation memory: $CODEX_HOME/automations/gengrowth-vault-git-auto-heal/memory.md
+Last run: 2026-07-08T13:01:48.461Z (1783515708461)
+
+在本机执行 GenGrowth 多仓库 Obsidian/Git 自愈同步。目标仓库固定为 `/Users/awayer_mini/gengrowth-wiki`、`/Users/awayer_mini/gengrowth-ops`、`/Users/awayer_mini/gengrowth-flow-mvp`。
+
+必须使用已验证的确定性入口，不要绕过脚本手写破坏性 git 操作：
+
+`/usr/bin/python3 /Users/awayer_mini/gengrowth-wiki/tools/scripts/obsidian-vault-git-sync.py --repo /Users/awayer_mini/gengrowth-wiki --repo /Users/awayer_mini/gengrowth-ops --repo /Users/awayer_mini/gengrowth-flow-mvp --verbose`
+
+安全边界：
+- 禁止运行 `git reset --hard`、`git checkout -- <path>`、`git clean`、`rm -rf`、`rsync --delete`，除非用户在当次对话中明确要求。
+- 不要运行 `tools/scripts/frequent-sync.sh`、`tools/scripts/gengrowth-repos-sync.sh` 或 `tools/scripts/_sync-core.sh`，因为这些路径包含镜像删除语义，本任务只做 git 自愈同步。
+- 同步脚本会先 fetch，检查未解决冲突，提交本地非敏感变更，再 rebase/push；只对白名单 JSON 冲突自动合并，其他冲突会中止并报告。不要在脚本中止后自行猜测合并内容。
+- 不打印密钥、token、邮箱密码、service account JSON、private key 或完整凭证 URL。
+
+执行后验证：
+1. 分别在三个仓库运行 `git status --branch --porcelain=v2`、`git rev-list --left-right --count HEAD...origin/main`、`git diff --name-only --diff-filter=U`、`git ls-files -u`。
+2. 回读 `/Users/awayer_mini/gengrowth-ops/.obsidian/plugins/obsidian-git/data.json` 和 `/Users/awayer_mini/gengrowth-flow-mvp/.obsidian/plugins/obsidian-git/data.json`，确认 `autoSaveInterval`、`autoPushInterval`、`autoPullInterval` 为 0，`autoPullOnBoot` 与 `pullBeforePush` 为 false。
+3. 若所有仓库都是 clean 且 ahead/behind 为 `0 0`，简短报告已同步；若脚本输出“需要关注”或存在 unmerged，报告具体仓库和文件路径，不要删除文件。
+
+**🤖 回答：**
+
+按自动化边界执行：读取本轮 automation memory、项目规则、owner profile、reminders、相关记忆索引，并使用 `using-superpowers` 与 `verification-before-completion` 做技能检查和收尾核验。仅运行指定三仓库确定性入口 `/usr/bin/python3 /Users/awayer_mini/gengrowth-wiki/tools/scripts/obsidian-vault-git-sync.py --repo /Users/awayer_mini/gengrowth-wiki --repo /Users/awayer_mini/gengrowth-ops --repo /Users/awayer_mini/gengrowth-flow-mvp --verbose`；入口返回 `Obsidian vault git sync: clean`。按要求验证三仓库 `git status --branch --porcelain=v2`、`git rev-list --left-right --count HEAD...origin/main`、`git diff --name-only --diff-filter=U`、`git ls-files -u`，并回读两个 sibling Obsidian Git `data.json` 指定字段；验证显示三仓库 clean，`HEAD...origin/main` 均为 `0 0`，未合并检查为空，Obsidian Git 自动同步字段均为 disabled。按项目记录规则追加本条 record 后，仅用同一确定性入口做 post-record 收敛；未使用破坏性 git/filesystem 命令，也未运行镜像删除语义脚本。
+
+---

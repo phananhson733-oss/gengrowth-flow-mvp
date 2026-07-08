@@ -51,6 +51,7 @@ tags:
 - 要点 2：按用户确认落地修复并发布 `PG-CELEB-041`，完成 PR #346 merge、生产验证与回填清队。
 - 要点 3：核对 Coco Gauff 两个 SEO 条目，确认 `coco-gauff-birth-chart` 与 `coco-gauff-zodiac-sign` 均已发布且线上可访问。
 - 要点 4：纠正核对对象为 Gengrowth 内容，并完成 `PG-ART-005` / `PG-ART-006` 发布、线上验证与 W25 plan 回填。
+- 要点 5：将 `gengrowth-seo-blog` 自动化触发调整为 18:30-21:30 区间内每 30 分钟一次，保持起止时间不变。
 
 ---
 
@@ -101,5 +102,17 @@ tags:
 **🤖 回答：**
 
 重新按 Gengrowth 内容链路核对并落地：确认 `PG-ART-005` / `generative-engine-optimization` 与 `PG-ART-006` / `ai-search-visibility` 不是没写，二者在 2026-07-08 22:49-23:17 CST 已 author 完成且 phase2 `overall=pass`。真正卡点是 2026-07-09 00:21 CST Gengrowth publish tick 在 `PG-ART-005` 的 factual gate 出现 transient tooling failure（`codex exited 3`），导致 `PG-ART-006` 被串行节奏延后。直接 source factual gate 复核两篇均 PASS 后，使用既有 `gg-gengrowth-publish-tick.sh` 将 publish limit 设为 2 重跑；`PG-ART-005` 与 `PG-ART-006` 均已发布，线上 URL 200、canonical/title/H1/Article JSON-LD/sitemap 验证通过，并完成 sheet、W25 plan、vault archive 回填。剩余 `PG-WLS-006`、`PG-GJ2U-001`、`PG-AIS-005`、`PG-WHS-001` 因原 author tick 达到 `BATCH=2` 尚未 author，本轮未在 00:30 后主动开启新的写作轮次。
+
+---
+
+### Q5 — 00:34
+
+**🙋 提问：**
+
+后续把触发的间隔时间调整为 30 分钟。启动时间和结束时间不变，只修改中间的检测时间
+
+**🤖 回答：**
+
+按要求只修改 `gengrowth-seo-blog` 自动化触发时间，不启动发布 wrapper。原触发为每天 `18:30、19:30、20:30、21:30`；已更新为每天 `18:30、19:00、19:30、20:00、20:30、21:00、21:30`，保持起始 18:30 与结束 21:30 不变。保存后的 RRULE 为 `FREQ=DAILY;BYHOUR=18,19,20,21;BYMINUTE=0,30;BYSECOND=0;BYSETPOS=2,3,4,5,6,7,8`，并同步更新 automation prompt 的触发时间文字；已从 automation 配置文件回读验证。
 
 ---

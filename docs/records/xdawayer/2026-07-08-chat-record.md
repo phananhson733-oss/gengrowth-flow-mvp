@@ -937,3 +937,49 @@ Last run: 2026-07-08T11:01:48.126Z (1783508508126)
 按自动化边界执行：读取自动化记忆、项目档案和待办，使用指定三仓库确定性入口完成初始同步；入口 exit code 0 且无输出。追加本条 record 时发现并发 topic-register 已占用 `Q28`，因此将本轮记录改为 `Q29` 并放到 EOF；随后仅用同一入口做 post-record 收敛，返回 `Obsidian vault git sync: clean`。最终验证显示：`gengrowth-wiki` clean on `main`，HEAD `ac1f680479aec31158a17f94869b8dbe2d8494ed`，`HEAD...origin/main = 0 0`；`gengrowth-ops` clean on `main`，HEAD `e828e2450b86b2b120837efff6a12667136846c6`，`HEAD...origin/main = 0 0`；`gengrowth-flow-mvp` clean on `codex/recap-performance-automation`，HEAD `ef38186143d15a899e897de6afe7ea95ff9f9070`，`HEAD...origin/main = 0 0`。三仓库 `git diff --name-only --diff-filter=U` 与 `git ls-files -u` 均为空。两个 Obsidian Git 配置文件的 `autoSaveInterval`、`autoPushInterval`、`autoPullInterval` 均为 0，`autoPullOnBoot` 与 `pullBeforePush` 均为 false。未使用破坏性 git/filesystem 命令，也未运行镜像删除语义脚本。
 
 ---
+
+### Q30 — 20:35
+
+**🙋 提问：**
+
+Automation: GenGrowth SEO Blog 全流程发布
+Automation ID: gengrowth-seo-blog
+Automation memory: $CODEX_HOME/automations/gengrowth-seo-blog/memory.md
+Last run: 2026-07-08T11:31:18.170Z (1783510278170)
+
+你是 GenGrowth SEO Blog 全流程发布自动化。工作目录固定为 `/Users/awayer_mini/gengrowth-flow-mvp`，时区按 Asia/Shanghai / UTC+8 理解。本自动化每天 18:30、19:30、20:30、21:30 触发；不要在 22:00 之后主动启动新一轮发布工作。
+
+目标：自动检测 astrologywiki SEO blog 待处理队列，完成需要的文档落地、文章撰写、预览、上线发布，以及 publish 之后的所有收尾回填与验证。不要只做计划或停在中间态。
+
+单执行器边界：Codex automation 是 SEO Blog 流程的唯一调度入口。本机 legacy launchd/local cron 已停用；每次运行前快速确认 `com.gengrowth.seo-nightly`、`com.gengrowth.seo-author`、`com.gengrowth.seo-autopilot`、`com.gengrowth.seo-author-kicker`、`com.gengrowth.flow-driver`、`com.gengrowth.lane-watchdog`、`com.gengrowth.ledger-reconcile`、`com.gengrowth.index-monitor` 没有正在运行。若发现这些 legacy job 正在跑，先不要启动新的 SEO 发布流程，记录冲突 job、PID / run window 和日志路径，避免同时进行。
+
+主入口：优先且默认只运行确定性 wrapper：`bash tools/scripts/gg-nightly-seo.sh`。不要绕过 wrapper 直接调用底层 Node 脚本，除非是在 wrapper 失败后做只读诊断或执行 wrapper 文档明确要求的可恢复步骤。不要手动加写入 flags；由本地环境和 wrapper 决定 apply / publish 边界。wrapper 自带锁；如果命中锁，读取日志确认已有运行仍在执行并报告为 skip，不要强制解锁。
+
+正式执行流程：
+1. 先读取 `AGENTS.md`、`ai-profile/lynne-soul.md`、`ai-profile/reminders.md`，遵守项目记录与安全规则；如有未完成 reminders，仅在最终结果中极简提及，禁止输出冗长中间态。
+2. 执行单执行器检查，确认 legacy launchd/local cron 没有正在运行同一条 SEO/flow 链路。
+3. 运行 `bash tools/scripts/gg-nightly-seo.sh`。
+4. wrapper 结束后，读取 `~/Library/Logs/gg-nightly-seo.log`，按本次 start / finish 时间隔离当前运行窗口，确认 author、preview gate、merge / publish、batch summary、live check 等阶段是否完成。
+5. 如果 wrapper 明确生成了可安全修复的内容或结构失败，进行一次有界自动修复：只修复日志指出的具体问题，不编造事实，不大改主题；修复后运行对应文章 review / preview gate / publish 重试入口。若无法基于可靠证据修复，保留 needs_human 并输出准确原因。
+6. 如果存在 preview 已通过但 publish / merge / live check 未完成的 pending 状态，继续完成 publish_if_pending、merge、部署传播等待、live URL 验证和批次 summary；不要停在 authored、preview pushed、waiting publish 之类中间态。
+7. publish 后必须完成回填与验证：检查 W22 blog output plan 条目状态、`seo-autopilot-publish-log.md` 追加、相关 Google Sheet / ledger 回填、生产 URL 200、canonical、title、Article JSON-LD、sitemap 收录、batch summary 通知状态。必要时短轮询等待部署传播，但不要无限等待。
+8. 验证没有遗留本轮应继续的进程或 pending publish：用 `ps` / ledger / wrapper status 确认；如仍有其他合法后台运行，说明其 run window 和锁状态。
+9. 按 AGENTS 规则追加当天 record，只记录最终摘要和关键路径，不展开 record 明细；如自动化 memory 文件存在，也只追加最终 verified 状态、发布时间窗、slug、失败原因或 needs_human 原因。
+
+通知与输出边界：
+- 不发送 authored、preview pushed、review running 等中间态消息。
+- 只在真正发布完成、整批结束、彻底失败或 needs_human 时保留最终通知；优先让 wrapper / unified notify 发送，避免重复 Feishu 消息。
+- 如果 wrapper 漏发了真正的最终失败告警，才用现有 `gg-notify` / lark 工具补一条短告警，包含失败步骤、slug、日志路径和下一步。
+- 最终汇报必须包含：本次 run window、是否触发 wrapper、发布 slug / live URL、回填项是否完成、publish 后验证结果、needs_human 或失败原因、日志路径。
+
+安全边界：
+- 不使用 `git reset --hard`、`git checkout --`、`git clean`、`rm -rf`、`rsync --delete` 等破坏性命令。
+- 不手工乱改 Google Sheet；需要写 Sheet 时使用既有 wrapper / connector 路径。
+- 不使用 Google Indexing API 处理普通文章，不无人值守点击 GSC Request Indexing。
+- 不泄露 secrets / tokens。
+
+**🤖 回答：**
+
+按 SEO Blog 自动化边界运行：读取项目规则、reminders、automation memory，并使用 `executing-plans` 与 `verification-before-completion` 做执行和收尾核验；`ai-profile/lynne-soul.md` 在当前 checkout 未找到。20:32 CST 未超过 22:00，单执行器检查未发现指定 legacy launchd/local cron SEO/flow/index 链路正在运行，于是通过唯一入口 `bash tools/scripts/gg-nightly-seo.sh` 启动 wrapper。日志窗口为 `2026-07-08 20:32:44-20:32:46 CST`，wrapper 只遇到唯一未勾选计划项 `PG-WC-045` / `mexico-vs-england-astrology-prediction`，因 claim 已是 `needs_human` 而跳过，`attempted=0`，batch summary 显示窗口内无条目、不发送。只读验证确认原因仍是 `review[codex] FAIL: stale topic — Mexico vs England match already played 2026-07-06, pre-match prediction expired; DO NOT publish`；W22 plan 行未勾选，publish log 无该条，PR #334 已关闭未合并，线上 URL 返回 200 但 canonical/title/H1 均为首页内容、无 Article JSON-LD、无 slug 命中，sitemap 命中数为 0。claim ledger 没有 `active` / `pushed-preview` / `verified-preview` pending，`--stale-report` 为 `inflight=[]`、`staleCount=0`，相关锁已释放且无残留匹配进程。已写入 `/Users/awayer_mini/.codex/automations/gengrowth-seo-blog/memory.md`。
+
+---

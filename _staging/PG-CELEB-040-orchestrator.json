@@ -1,7 +1,7 @@
 {
   "page_id": "PG-CELEB-040",
   "prompt_path": "/Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-CELEB-040.v8-prompt.md",
-  "started_at": "2026-07-08T13:04:41.161Z",
+  "started_at": "2026-07-08T13:04:46.996Z",
   "models_requested": [
     "claude"
   ],
@@ -21,7 +21,7 @@
       "retries": 0,
       "duration_s": 1.1,
       "cost_estimate_usd": null,
-      "cumulative_cost_usd": 0.0226,
+      "cumulative_cost_usd": 0.023,
       "budget_exceeded": false,
       "budget_usd": 5,
       "attempts": [
@@ -29,8 +29,8 @@
           "try_index": 1,
           "model": "claude",
           "command": "claude -p --model claude-opus-4-8 --effort high < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-CELEB-040.v8-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-CELEB-040-claude-v8.md",
-          "cost_usd": 0.0226,
-          "cumulative_cost_usd": 0.0226,
+          "cost_usd": 0.023,
+          "cumulative_cost_usd": 0.023,
           "ok": false,
           "exit_code": 1,
           "duration_s": 1.1,

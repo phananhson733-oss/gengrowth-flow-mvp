@@ -761,6 +761,6 @@ Last run: 2026-07-08T09:01:47.849Z (1783501307849)
 
 **🤖 回答：**
 
-使用指定确定性入口执行三仓库 Obsidian/Git 自愈同步；入口首次 exit code 为 `0` 且无输出。初始验证显示 `gengrowth-wiki`、`gengrowth-ops`、`gengrowth-flow-mvp` 均无未合并输出，`HEAD...origin/main` 均为 `0 0`；两个 sibling Obsidian Git 配置均为 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。按项目记录规则追加本条 record 后，仅用同一确定性入口继续 post-record 收敛并复验；未使用破坏性 git/filesystem 命令，也未运行镜像删除语义脚本。
+使用指定确定性入口执行三仓库 Obsidian/Git 自愈同步；入口首次与多次 post-record 收敛均 exit code 0。追加本条 record 时遇到并发 `Q23` 编号碰撞，已保留 topic-register 为 `Q23`、将本条 auto-heal 修正为 `Q24`，并通过同一入口提交/推送。最终验证：`gengrowth-wiki` HEAD `ba34a7e058ee5cc1d3d670e63fec62831c14791a` clean、`gengrowth-ops` HEAD `5a464b74f4d06b43cebf7f8d5eaccc2627f2aa89` clean、`gengrowth-flow-mvp` HEAD `30263f289dedd5bc95417e4a1c8385edec432184` clean，三者 `HEAD...origin/main` 均为 `0 0`，`git diff --name-only --diff-filter=U` 与 `git ls-files -u` 均为空；两个 sibling Obsidian Git 配置均为 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。未使用破坏性 git/filesystem 命令，也未运行镜像删除语义脚本。
 
 ---

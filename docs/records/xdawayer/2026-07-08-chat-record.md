@@ -1078,3 +1078,16 @@ Last run: 2026-07-08T12:31:18.370Z (1783513878370)
 按 SEO Blog 自动化边界执行：读取 `AGENTS.md`、`ai-profile/reminders.md`、automation memory 和相关记忆索引；`ai-profile/lynne-soul.md` 在当前 checkout 不存在。21:00 CST 未超过 22:00，单执行器检查显示指定 launchd label 均未加载或 disabled，crontab 无 SEO/flow 链路，未发现相关锁，于是通过唯一入口 `bash tools/scripts/gg-nightly-seo.sh` 启动 wrapper。日志窗口为 `2026-07-08 21:01:28-21:06:58 CST`；旧项 `PG-WC-045` 仍因赛后 stale topic `needs_human` 被跳过，新处理 5 项：`PG-WC-047` / `lamine-yamal-zodiac-sign`、`PG-WC-048` / `kylian-mbappe-birth-chart`、`PG-CELEB-040` / `novak-djokovic-zodiac-sign`、`PG-CELEB-041` / `coco-gauff-zodiac-sign`、`PG-CELEB-042` / `mo-salah-zodiac-sign`。5 项均在 author 阶段失败并 park 为 `needs_human`，共同原因是 phase2 fixture 检测到 draft 无 H1，三次反馈重试和 deterministic repair 后仍未得到 passing draft；没有文章进入 preview gate / merge / publish。wrapper batch summary 显示上线 0 篇、暂停待人工 5 篇。验证结果：W22 plan 对应行仍未勾选；claim ledger 5 项均为 `status=needs_human`、`stage=authoring`；publish log 无 5 个 slug；5 个生产 URL 均返回首页 canonical，无 Article JSON-LD、无 slug 命中且不在 sitemap；`node tools/scripts/gg-seo-autopilot.mjs --stale-report` 返回 `inflight=[]`、`staleCount=0`；相关锁与残留 SEO/flow/index 进程为空。已追加 automation memory；未手工写 Sheet，除 wrapper 的 search_volume 写回和 ledger park 外未做额外写入。
 
 ---
+
+### Q34 — 21:13
+
+**🙋 提问：**
+
+ [flow] 批次汇总 2026-07-08：上线 0 篇（已逐篇线上核实）
+暂停待人工 5 篇：PG-WC-047（authoring: - phase2 FAIL: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ | [phase2] loaded fixture: /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-WC-047.v8-fixture.json | ERROR: draft has no H1; aborting after 3 attempt(s) + deterministic repair）、PG-WC-048（authoring: - phase2 FAIL: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ | [phase2] loaded fixture: /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-WC-048.v8-fixture.json | ERROR: draft has no H1; aborting after 3 attempt(s) + deterministic repair）、PG-CELEB-040（authoring: - phase2 FAIL: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ | [phase2] loaded fixture: /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-CELEB-040.v8-fixture.json | ERROR: draft has no H1; aborting after 3 attempt(s) + deterministic repair）、PG-CELEB-041（authoring: - phase2 FAIL: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ | [phase2] loaded fixture: /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-CELEB-041.v8-fixture.json | ERROR: draft has no H1; aborting after 3 attempt(s) + deterministic repair）、PG-CELEB-042（authoring: - phase2 FAIL: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ | [phase2] loaded fixture: /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-CELEB-042.v8-fixture.json | ERROR: draft has no H1; aborting after 3 attempt(s) + deterministic repair） 这是什么意思哎，为什么不修复吗？ draft 因为没 H1，是生成的缘故吗
+
+**🤖 回答：**
+
+按故障排查路径检查了 5 个 `_staging/*-claude-v8.md` 和对应 repair stdout。结论：不是正常文章缺少 H1，而是 author 上游 `claude` CLI 未登录，实际 draft 内容只有 `Not logged in · Please run /login`；因此 phase2 看到一个 35 字节的非文章文件，自然报 `draft has no H1`。deterministic repair 已经被 wrapper 调起，但 repair worker 也调用同一个未登录的 `claude`，对应 stdout 同样是 `Not logged in · Please run /login`，所以没有可验证的修复稿。安全策略正确地 park 为 `needs_human`，而不是手工补一个 H1 或发布错误内容。下一步应先恢复/验证 Claude CLI 登录态，再用既有 retry 路径重跑这 5 个 authoring claim；不应手工改 Sheet 或直接拼文章。
+
+---

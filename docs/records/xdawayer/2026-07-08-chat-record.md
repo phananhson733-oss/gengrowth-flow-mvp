@@ -528,7 +528,7 @@ Last run: 2026-07-08T04:01:09.482Z (1783483269482)
 
 **🤖 回答：**
 
-使用指定确定性入口执行三仓库 Obsidian/Git 自愈同步，初始脚本输出 `Obsidian vault git sync: clean`。初始验证显示：`gengrowth-wiki`、`gengrowth-ops`、`gengrowth-flow-mvp` 均无未合并输出，`HEAD...origin/main` 均为 `0 0`；两个 sibling Obsidian Git 配置均为 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。追加本条 record 后继续仅用同一确定性入口做 post-record 收敛并复验；未使用破坏性 git/filesystem 命令，也未运行镜像删除语义脚本。
+使用指定确定性入口执行三仓库 Obsidian/Git 自愈同步，初始脚本输出 `Obsidian vault git sync: clean`。初始验证显示：`gengrowth-wiki`、`gengrowth-ops`、`gengrowth-flow-mvp` 均无未合并输出，`HEAD...origin/main` 均为 `0 0`；两个 sibling Obsidian Git 配置均为 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。追加本条 record 后仅用同一确定性入口做 post-record 收敛，脚本提交并推送 1 个 `gengrowth-flow-mvp` record 路径；复验三仓库均 clean，`HEAD...origin/main` 均为 `0 0`，`git diff --name-only --diff-filter=U` 与 `git ls-files -u` 均无输出。未使用破坏性 git/filesystem 命令，也未运行镜像删除语义脚本。
 
 ---
 

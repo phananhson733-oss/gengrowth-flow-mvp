@@ -1,3 +1,29 @@
+---
+title: Website Health Score
+slug: website-health-score
+date: 2026-07-08
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-WHS-001
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: website health score
+associated_keywords:
+  - website health score comparison
+  - website health score pricing
+  - website health score software
+  - website health score tool
+  - website health score workflow
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-07-08T19:45:18.810Z
+content_sha256_short: 70d8e85f9bde4aa2
+phase2_checks: all-pass
+---
+
 # What a Website Health Score Actually Tells You About a Site
 
 ## What Is a Website Health Score?

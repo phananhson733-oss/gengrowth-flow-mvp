@@ -116,3 +116,15 @@ tags:
 按要求只修改 `gengrowth-seo-blog` 自动化触发时间，不启动发布 wrapper。原触发为每天 `18:30、19:30、20:30、21:30`；已更新为每天 `18:30、19:00、19:30、20:00、20:30、21:00、21:30`，保持起始 18:30 与结束 21:30 不变。保存后的 RRULE 为 `FREQ=DAILY;BYHOUR=18,19,20,21;BYMINUTE=0,30;BYSECOND=0;BYSETPOS=2,3,4,5,6,7,8`，并同步更新 automation prompt 的触发时间文字；已从 automation 配置文件回读验证。
 
 ---
+
+### Q7 — 00:56 [claude]
+
+**🙋 提问：**
+
+合并。同时自动执行以下 gsc index
+
+**🤖 回答：**
+
+合并两个修复：oracle canonical收口分支→main 已推送（Vercel 部署成功，prod kylian stub canonical 已验证→mbappe-birth-chart）；flow-mvp slugify NFKD 修复经 vault 自动同步已在 origin/main（4 文件+回归确认）。GSC 补提：astrologywiki 6 篇全提交（配额充足）kai-cenat/egypt-wc/alexander-zverev/arthur-fery/anne-hathaway/kevin-de-bruyne，回填申请时间=2026-07-09+同步+飞书。过程中补掉 generate-seo-pages writeArticle 漏传 stub canonical 的坑（第二次 oracle 部署 04a1ed3），并查清 oracle 有两个 sitemap 生成器（generate-sitemap.cjs legacy 不看 seo.sitemap）。sitemap 排除随边缘缓存清除跟上。
+
+---

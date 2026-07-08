@@ -716,7 +716,7 @@ Run the deterministic fixed-row index repair workflow through `bash tools/script
 
 ---
 
-### Q23 — 18:02
+### Q24 — 18:02
 
 **🙋 提问：**
 

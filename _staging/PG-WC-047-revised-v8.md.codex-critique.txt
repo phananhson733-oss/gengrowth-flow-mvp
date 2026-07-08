@@ -1,0 +1,8 @@
+- “Moon/Mercury/Mars/Jupiter/Venus/Saturn/nodes” claims lack sourcing → cite an ephemeris and label which placements are date-based vs. birth-time-dependent; don’t state Cancer Moon as definitive unless verified for the full birth date/location window.
+- The article says “reliable anchor stays his Sun,” then repeatedly reads other planets → tighten the caveat or add a short “date-only placements we can still use” note so the logic is consistent.
+- Too generic on Lamine himself → add 2-3 restrained public-context references, e.g. Barcelona/Spain breakout under teenage pressure, without claiming astrology caused talent.
+- World Cup 2026 transit paragraph feels opportunistic and off-intent → cut it or reduce to one sentence; searchers mainly want his sign, not speculative tournament astrology.
+- “Sources” are authority-name drops, not usable sources → add actual sources for birth date and planetary positions; keep Rudhyar/Greene only if tied to specific interpretive claims.
+- CTA is mismatched: “Generate your free birth chart to explore the lamine yamal zodiac sign” → reframe as “check your own Cancer placements/full chart” so it serves the reader instead of sounding keyword-stuffed.
+- Several sections repeat the same Cancer traits (“protective, instinct, emotional memory”) → consolidate repetition and replace one section with a sharper quick-reference answer: date, sign, element, ruler, known/unknown chart data.
+- Placeholder links (`TBD`) weaken trust in an otherwise factual answer → replace before publish or remove until the linked pillar pages exist.

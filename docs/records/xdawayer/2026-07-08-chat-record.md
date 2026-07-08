@@ -324,3 +324,20 @@ Last run: 2026-07-07T23:01:08.185Z (1783465268185)
 使用指定确定性入口执行三仓库 Obsidian/Git 自愈同步；初始脚本输出 `Obsidian vault git sync: clean`。追加本条 record 后继续仅用同一确定性入口做 post-record 收敛，脚本提交并推送 `gengrowth-flow-mvp` 的 1 个 record 路径。最终验证显示：`gengrowth-wiki`、`gengrowth-ops`、`gengrowth-flow-mvp` 均无工作区条目，`HEAD...origin/main` 均为 `0 0`，`git diff --name-only --diff-filter=U` 与 `git ls-files -u` 均无输出；两个 sibling Obsidian Git 配置均保持 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。未使用破坏性 git/filesystem 命令，也未运行镜像删除语义脚本。
 
 ---
+
+### Q10 — 09:04
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Monitor
+Automation ID: gengrowth-index-monitor
+Automation memory: $CODEX_HOME/automations/gengrowth-index-monitor/memory.md
+Last run: 2026-07-07T01:01:03.161Z (1783386063161)
+
+Run the GenGrowth Phase 2 indexing workflow through the existing deterministic wrapper: `bash tools/scripts/gg-index-monitor-tick.sh`. This wrapper must refresh the live sitemap through the official Search Console Sitemaps API, inspect due URLs through URL Inspection, sync the final `结果复盘表`, generate/update `request-indexing-queue` with priority colors, and send Feishu SEO技术 group reminders for actionable candidates or failures. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, and do not click Search Console Request Indexing unattended. For Computer Use submission, only assist by opening candidate GSC inspection URLs and stop for human confirmation before the final Request Indexing click. After the wrapper exits, summarize sitemap submission status, GSC check counts/failures, queue counts by priority, and any Feishu notification outcome visible in the log.
+
+**🤖 回答：**
+
+执行 `bash tools/scripts/gg-index-monitor-tick.sh`，wrapper exit 0 且 stdout 为空；日志窗口为 `2026-07-08 09:02:23` 到 `2026-07-08 09:03:36 CST`，最终行为 `index monitor ok`。同日日志中 `09:00:05-09:02:16 CST` 的定时窗口刚先完成 due 检查，因此本次手动窗口两产品均 `due=0`。本次手动窗口中，`astrologywiki` sitemap submit ok，`rows=214 due=0`，检查 0、失败 0，`sync-request-queue rows=29 P0=0 P1=1 P2=12 P3=16`；`gengrowth` sitemap submit ok，`rows=54 due=0`，检查 0、失败 0，`sync-request-queue rows=2 P0=0 P1=0 P2=2 P3=0`；合计队列 `rows=31 P0=0 P1=1 P2=14 P3=16`。前一 09:00 窗口的日内检查上下文为 astrologywiki 检查 3、失败 0，gengrowth 检查 4、失败 0。日志未显示明确 Feishu/Lark/notify 成功或失败回执。未使用普通文章 Google Indexing API，未无人值守点击 Search Console Request Indexing。
+
+---

@@ -983,3 +983,20 @@ Last run: 2026-07-08T11:31:18.170Z (1783510278170)
 按 SEO Blog 自动化边界运行：读取项目规则、reminders、automation memory，并使用 `executing-plans` 与 `verification-before-completion` 做执行和收尾核验；`ai-profile/lynne-soul.md` 在当前 checkout 未找到。20:32 CST 未超过 22:00，单执行器检查未发现指定 legacy launchd/local cron SEO/flow/index 链路正在运行，于是通过唯一入口 `bash tools/scripts/gg-nightly-seo.sh` 启动 wrapper。日志窗口为 `2026-07-08 20:32:44-20:32:46 CST`，wrapper 只遇到唯一未勾选计划项 `PG-WC-045` / `mexico-vs-england-astrology-prediction`，因 claim 已是 `needs_human` 而跳过，`attempted=0`，batch summary 显示窗口内无条目、不发送。只读验证确认原因仍是 `review[codex] FAIL: stale topic — Mexico vs England match already played 2026-07-06, pre-match prediction expired; DO NOT publish`；W22 plan 行未勾选，publish log 无该条，PR #334 已关闭未合并，线上 URL 返回 200 但 canonical/title/H1 均为首页内容、无 Article JSON-LD、无 slug 命中，sitemap 命中数为 0。claim ledger 没有 `active` / `pushed-preview` / `verified-preview` pending，`--stale-report` 为 `inflight=[]`、`staleCount=0`，相关锁已释放且无残留匹配进程。已写入 `/Users/awayer_mini/.codex/automations/gengrowth-seo-blog/memory.md`。
 
 ---
+
+### Q31 — 20:55
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-08T12:00:48.233Z (1783512048233)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+使用指定 wrapper `bash tools/scripts/gg-topic-register-tick.sh` 执行 topic registration；未传入手工写入、repair、overwrite 或直接脚本参数。最新日志为 `~/gengrowth-agents/cron-sync/topic_register/2026-07-08.log`，运行窗口 2026-07-08 20:54:23-20:54:58 CST，exit code 0，最终状态 `topic-register ok`。本地环境开启 apply mode，日志中 `dry_run=false`，命令为 `node .../gg-topic-register.mjs --product all --limit 10 --llm claude --discover-evidence --apply --run-budget-ms 840000`。`astrologywiki` 为 candidates=5、updates=5、new_clusters=0、page_ids=`PG-WC-047`, `PG-WC-048`, `PG-CELEB-040`, `PG-CELEB-041`, `PG-CELEB-042`、selection_mode=generate、audit_incomplete=0、preprocessor=`v1_deterministic_fallback` x5；其中 `PG-WC-047` evidence_discovery=ok，10 个 distinct SERP titles / 10 domains，其余 4 条 insufficient（分别为 1/1 或 0/0）。`gengrowth` 为 candidates=0、updates=0、new_clusters=0、page_ids=[]、selection_mode=generate、audit_incomplete=0、preprocessor=[]、evidence_discovery=[]；未见失败，`budget_exhausted=false`。安全边界保持：仅运行 wrapper，未手工写 Sheet、未直接编辑 task plan、未创建额外 Feishu/Google Doc 报告。已写入 `/Users/awayer_mini/.codex/automations/gengrowth-topic-register/memory.md`。
+
+---

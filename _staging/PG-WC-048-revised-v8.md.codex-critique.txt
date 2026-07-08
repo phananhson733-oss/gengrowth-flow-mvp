@@ -1,0 +1,8 @@
+- “2026 Jupiter in Gemini”是硬伤 → 改为 2026 年木星主要在巨蟹座，年中后进入狮子座，或删除这段 transit 例子。
+- 文章几乎没有真正的“birth chart” → 增加一张基于出生日期/地点的核心行星表，至少列 Sun、Moon、Mercury、Venus、Mars、Jupiter、Saturn，并标注哪些不受出生时刻影响、哪些需谨慎。
+- 对 Moon 过度回避 → 用星历核实 1998-12-20 的月亮星座/度数范围；若整日稳定，就明确写出“Moon likely in X”，只把宫位和精确度数留作不确定。
+- “Look for Mars”太空泛 → 直接写出 Mbappé 的 Mars 落座和可读含义，把运动员竞争风格的分析落到具体配置上。
+- “Sagittarius = speed / biggest stage”像通用性格文案 → 改成更贴合 Mbappé的具体观察：爆发式推进、边路冲刺、早熟成名、世界杯高压表现等，再说明只是象征对应不是因果证明。
+- Dane Rudhyar / Liz Greene 的引用显得像权威装饰 → 要么加一句他们的方法如何具体改变本文读法，要么删减，腾出篇幅给 Mbappé 本人的实际配置。
+- SEO 意图回答不足 → 开头 150 字内直接回答“他的星座是什么、出生时间是否可靠、能确定哪些 placements、不能确定哪些”，再进入解释。
+- CTA 文案尴尬且关键词硬塞 → 把“explore kylian mbappe birth chart”改为自然动作，如“生成你的免费出生星盘，按同样步骤读自己的配置”。

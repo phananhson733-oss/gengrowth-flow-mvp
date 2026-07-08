@@ -1,3 +1,29 @@
+---
+title: Ai Search Visibility
+slug: ai-search-visibility
+date: 2026-07-08
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-ART-006
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: ai search visibility
+associated_keywords:
+  - ai search visibility comparison
+  - ai search visibility pricing
+  - ai search visibility software
+  - ai search visibility tool
+  - ai search visibility workflow
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-07-08T15:12:39.697Z
+content_sha256_short: 089921c109174b78
+phase2_checks: all-pass
+---
+
 # Where AI Search Visibility Starts and Stops for Agency Teams
 
 ## What Is AI Search Visibility?

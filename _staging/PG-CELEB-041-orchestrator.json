@@ -1,7 +1,7 @@
 {
   "page_id": "PG-CELEB-041",
   "prompt_path": "/Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-CELEB-041.v8-prompt.md",
-  "started_at": "2026-07-08T13:05:53.062Z",
+  "started_at": "2026-07-08T14:47:18.108Z",
   "models_requested": [
     "claude"
   ],
@@ -9,19 +9,24 @@
   "diversify_on_fail": false,
   "max_cost_usd_per_page": 5,
   "budget_exceeded_models": [],
-  "ok_count": 0,
-  "total_cost_estimate_usd": 0,
+  "ok_count": 1,
+  "total_cost_estimate_usd": 0.052,
   "results": {
     "claude": {
       "model": "claude",
       "active_model": "claude",
       "diversified": false,
-      "ok": false,
-      "output_path": null,
+      "ok": true,
+      "output_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-CELEB-041-claude-v8.md",
       "retries": 0,
-      "duration_s": 1.1,
-      "cost_estimate_usd": null,
-      "cumulative_cost_usd": 0.0229,
+      "duration_s": 144.4,
+      "cost_estimate_usd": {
+        "usd": 0.052,
+        "input_tokens_est": 7488,
+        "output_tokens_est": 1970,
+        "pricing_note": "Sonnet 4.6 xhigh"
+      },
+      "cumulative_cost_usd": 0.052,
       "budget_exceeded": false,
       "budget_usd": 5,
       "attempts": [
@@ -29,13 +34,17 @@
           "try_index": 1,
           "model": "claude",
           "command": "claude -p --model claude-opus-4-8 --effort high < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-CELEB-041.v8-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-CELEB-041-claude-v8.md",
-          "cost_usd": 0.0229,
-          "cumulative_cost_usd": 0.0229,
-          "ok": false,
-          "exit_code": 1,
-          "duration_s": 1.1,
+          "cost_usd": 0.052,
+          "cumulative_cost_usd": 0.052,
+          "ok": true,
+          "exit_code": 0,
+          "duration_s": 144.4,
           "stderr_tail": "",
-          "stdout_bytes": 34
+          "stdout_bytes": 9059,
+          "sonnet_guard": {
+            "downgraded": false,
+            "bytes": 9089
+          }
         }
       ]
     }

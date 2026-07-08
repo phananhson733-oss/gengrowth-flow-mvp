@@ -146,6 +146,7 @@ tags:
 - 要点 1：执行 GenGrowth 三仓库 Obsidian/Git 自愈同步，使用确定性入口并完成验证。
 - 要点 2：执行 GenGrowth Index Repair Resubmit 确定性 wrapper，完成双产品 fixed-row repair 计数同步。
 - 要点 3：创建 Codex 自动化 `gengrowth-seo-blog`，每天 18:30 至 21:30 每小时检测并执行 SEO Blog 撰写、发布与 publish 后回填验证闭环。
+- 要点 4：停用会与 Codex SEO Blog 自动化重叠的本地 launchd/local cron，并在 Codex 自动化中加入单执行器检查，避免并发运行。
 
 ## 对话记录
 
@@ -572,5 +573,17 @@ Last run: 2026-07-08T05:02:09.722Z (1783486929722)
 **🤖 回答：**
 
 已创建 Codex cron 自动化 `gengrowth-seo-blog`，名称为 `GenGrowth SEO Blog 全流程发布`，状态 `ACTIVE`，工作目录 `/Users/awayer_mini/gengrowth-flow-mvp`，运行窗口为每天东八区 18:30、19:30、20:30、21:30。自动化提示词要求通过 `bash tools/scripts/gg-nightly-seo.sh` 执行完整 SEO Blog 流程，覆盖待处理队列检测、文档落地、文章撰写、preview gate、publish / merge、live URL 验证、计划与 publish log / Sheet / ledger 回填、batch summary、needs_human 有界修复与最终通知边界；同时禁止中间态通知、破坏性 git 命令、手工乱改 Sheet、普通文章 Google Indexing API 或无人值守 GSC Request Indexing。已回读 `/Users/awayer_mini/.codex/automations/gengrowth-seo-blog/automation.toml` 验证配置持久化。
+
+---
+
+### Q17 — 14:41
+
+**🙋 提问：**
+
+本地的 cron 是不是可以停掉了，我们整个 cron 串起来就好了，不要同时进行
+
+**🤖 回答：**
+
+已停用并卸载会与 Codex SEO Blog 自动化重叠的本地 launchd/local cron：`com.gengrowth.seo-nightly`、`com.gengrowth.seo-author`、`com.gengrowth.seo-autopilot`、`com.gengrowth.seo-author-kicker`、`com.gengrowth.flow-driver`、`com.gengrowth.lane-watchdog`、`com.gengrowth.ledger-reconcile`、`com.gengrowth.index-monitor`。验证结果显示这些服务在 `gui/501` 下均已不存在，相关 `gg-nightly-seo` / `gg-seo-author` / `gg-seo-autopilot` / `gg-flow-driver` / `gg-lane-watchdog` / `gg-ledger-reconcile` / `gg-index-monitor` 进程也无残留。同时已更新 Codex 自动化 `gengrowth-seo-blog`，加入单执行器边界：每轮启动前检查 legacy local cron 不在运行，若发现冲突则不启动新发布流程。
 
 ---

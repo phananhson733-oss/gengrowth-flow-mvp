@@ -1,0 +1,8 @@
+- “authority/backlink” 被写成通用组成项 → 改成“不同工具权重不同；多数 site health 分数偏技术 crawl/on-page，authority 未必纳入”。
+- “website health score” 搜索意图偏工具解释/怎么查/多少算好 → 增加一句可操作基准：用同一工具看趋势、优先修复 critical crawl/indexing/security/performance 问题，不跨工具比 0–100。
+- “白标 rollouts 我们审计过”缺少可信细节 → 加入具体但不泄密的观察维度，如客户类型、站点规模区间、最常见误判，而不是泛称经验。
+- “红黄绿让非技术 stakeholder 秒懂”过于顺滑 → 补充风险：绿分不能代表 Core Web Vitals、转化、内容质量、Google 可见性都健康。
+- “blocked sitemap 是 quiet emergency”表达不准确 → 改为更具体问题，如“robots.txt 阻断重要目录、noindex 模板误发、canonical 指向错误版本”。
+- Step-by-step 第 3 条“ignore the headline figure”过激 → 改成“headline 只做告警入口，实际按 category/URL/severity/traffic impact 排序”。
+- 表格里的预算 `$2k/month` 和“priced work order”很 agency 内部化 → 若目标读者是普通站长，改成“低维护站点/多站点团队/客户报告”等更普适分层。
+- Sources 太笼统，且没有具体支持“分数如何计算” → 增加 1–2 个真实工具文档来源，说明各工具 health score 口径不同。

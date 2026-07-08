@@ -49,6 +49,7 @@ tags:
 
 - 要点 1：解释 `PG-CELEB-041` / `coco-gauff-zodiac-sign` 的出生地事实冲突，结论是可解决但需要先确定来源口径。
 - 要点 2：按用户确认落地修复并发布 `PG-CELEB-041`，完成 PR #346 merge、生产验证与回填清队。
+- 要点 3：核对 Coco Gauff 两个 SEO 条目，确认 `coco-gauff-birth-chart` 与 `coco-gauff-zodiac-sign` 均已发布且线上可访问。
 
 ---
 
@@ -75,5 +76,17 @@ tags:
 **🤖 回答：**
 
 按 `PG-CELEB-041` / `coco-gauff-zodiac-sign` 的发布修复执行：复核 PR #346、claim ledger 和失败原因，确认上一轮 gate-repair 将 birthplace 从 Boca Raton 改为 Delray Beach 方向错误。仅修改 `data/articles/coco-gauff-zodiac-sign.ts`，恢复 Boca Raton 为 birth-location，并保留 Delray Beach 为 family / tennis context。完成最小回归检查、目标单测、`npm run build`、Playwright preview 验证和三维内联 review；Codex review 因本机 Codex CLI 缺失按 tooling skipped 记录。推送 commit `2e62643803236ea4d4e9692255ab94209ba141a8` 后，通过 `gg-seo-autopilot.mjs --retry-failed`、`--mark-verified` 和 `--merge` 走既有发布入口；merge 阶段触发并完成 union self-heal，PR #346 合并到 oracle main merge commit `0d9dda6beaf5fa3f5ef1285250d36953e1cf8bb5`。生产 URL `https://www.astrologywiki.com/en/wiki/coco-gauff-zodiac-sign` 最终通过 200、canonical、title、H1、Article JSON-LD、Boca Raton 文案、sitemap 收录验证；publish log、W22 plan、ledger 和 pending-writeback 均完成回填/清队。未使用 Google Indexing API、未无人值守点击 GSC Request Indexing、未执行破坏性 git/filesystem 命令。
+
+---
+
+### Q3 — 00:19
+
+**🙋 提问：**
+
+是不是另外一个没写啊
+
+**🤖 回答：**
+
+核对 ledger、W22 plan、publish log 和两个生产 URL 后确认：不是另一个没写。`PG-CELEB-024` / `coco-gauff-birth-chart` 已在 2026-07-02 合并发布（PR #316），W22 plan 已勾选、publish log 有记录，线上 URL 返回 200、canonical 正确并有 Article JSON-LD；`PG-CELEB-041` / `coco-gauff-zodiac-sign` 也已在本轮修复后发布（PR #346），线上验证通过。结论：两个 Coco Gauff 条目都已完成，上一轮只是第二个 zodiac-sign 条目因 birthplace gate 卡住。
 
 ---

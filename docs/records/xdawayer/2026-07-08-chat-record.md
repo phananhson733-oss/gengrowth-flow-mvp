@@ -353,7 +353,7 @@ Last run: 2026-07-08T00:00:38.440Z (1783468838440)
 
 **🤖 回答：**
 
-使用指定确定性入口执行三仓库 Obsidian/Git 自愈同步；初始脚本 exit 0 且无 stdout。初始验证显示：`gengrowth-wiki`、`gengrowth-ops`、`gengrowth-flow-mvp` 均无工作区条目，`HEAD...origin/main` 均为 `0 0`，`git diff --name-only --diff-filter=U` 与 `git ls-files -u` 均无输出；两个 sibling Obsidian Git 配置均保持 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。追加本条 record 后继续仅用同一确定性入口做 post-record 收敛并复验；未使用破坏性 git/filesystem 命令，也未运行镜像删除语义脚本。
+使用指定确定性入口执行三仓库 Obsidian/Git 自愈同步；初始脚本 exit 0 且无 stdout。初始验证显示：`gengrowth-wiki`、`gengrowth-ops`、`gengrowth-flow-mvp` 均无工作区条目，`HEAD...origin/main` 均为 `0 0`，`git diff --name-only --diff-filter=U` 与 `git ls-files -u` 均无输出；两个 sibling Obsidian Git 配置均保持 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。追加本条 record 后继续仅用同一确定性入口做 post-record 收敛；复验期间出现一个短暂 `gengrowth-ops` lock 目录和一个普通 `gengrowth-wiki` 早报文件，均未手工清理，继续只用同一入口收敛。最终验证显示三个仓库均无工作区条目，`HEAD...origin/main` 均为 `0 0`，未合并输出为空；未使用破坏性 git/filesystem 命令，也未运行镜像删除语义脚本。
 
 ---
 

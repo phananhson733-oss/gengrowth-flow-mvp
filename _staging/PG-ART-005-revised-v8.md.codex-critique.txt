@@ -1,0 +1,8 @@
+- “Google's 2026 documentation…” is an over-specific factual claim with a TBD source → either cite the exact Google Search Central page/date or soften to “Google frames AI features as part of Search/SEO guidance.”
+- “Google's AI Overviews” and ChatGPT/Perplexity are treated as one citation system → separate Google AI Overview optimization from independent LLM answer engines, because crawl/index, citation behavior, and reporting access differ.
+- Claim that “most signal comes from prompting engines directly” is too loose → add caveat that manual prompting is a baseline check, but results vary by account, location, personalization, query wording, and time.
+- The article says pages with “plain phrasing” get quoted more often as if proven → reframe as an editorial best practice, or support it with a cited study/tool dataset.
+- “If impressions hold but clicks fall, an answer engine is likely intercepting the click” overstates causality → change to “investigate AI answers, SERP features, ranking mix, seasonality, and intent shifts.”
+- The agency/SaaS angle is useful but crowds out the basic search intent for “generative engine optimization” → add a tighter early distinction between GEO, SEO, AEO, and LLMO before moving into reporting workflows.
+- “Valid schema” is mentioned generically → specify the relevant schema/entity work: Organization, Person, Article, Product/Service, sameAs, author/reviewer, about/mentions, and consistent brand/entity references.
+- The piece needs one concrete audit example → add a small before/after workflow showing one query, current AI answer, cited competitors, page change, and the metric tracked after 30 days.

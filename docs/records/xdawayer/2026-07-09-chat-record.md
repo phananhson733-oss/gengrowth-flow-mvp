@@ -954,3 +954,15 @@ Last run: 2026-07-09T05:01:22.168Z (1783573282168)
 执行 Gengrowth 内容上线闭环：未触发 astrologywiki nightly wrapper，改用 Gengrowth lane 的确定性 author/publish wrapper。完成 `PG-WLS-006` / `gpt-5-6-seo`、`PG-WHS-001` / `website-health-score`、`PG-GJ2U-001` / `google-july-2026-update`、`PG-AIS-005` / `ai-seo-audit` 发布；其中 `PG-GJ2U-001` 修正为“官方未确认 July 2026 update，应先核验”的事实安全口径后通过 phase2 与 Codex factual gate，`PG-AIS-005` 通过 `--retry-author --task PG-AIS-005` 从 authoring park 恢复并发布。W25 Gengrowth 六项均已勾选；线上 6 个 URL 均验证 200、自 canonical、title/H1、Article JSON-LD、sitemap 收录；wiki 归档确认在 `gengrowth-wiki/内容资产/gengrowth/2026-07-08/` 与 `2026-07-09/`。相关 tests 通过，`gg-ledger-reconcile` 无漂移，最终无相关进程/锁残留；未使用破坏性命令、未手工改 Sheet、未使用 Google Indexing API。
 
 ---
+
+### Q31 — 15:00
+
+**🙋 提问：**
+
+碰到 need-human 的问题，自己做决策上线
+
+**🤖 回答：**
+
+已将该偏好写入 `gengrowth-seo-blog` automation memory：后续 Gengrowth 内容遇到 `needs_human` 时，默认不把它当终点，而是自主分诊；若属于 transient/tooling、parser gap、authoring no-draft retry、或能基于可靠证据修复的事实/结构问题，则使用现有 retry/repair wrapper 做有界修复，重新跑 phase2/review/factual gate，通过后上线并完成 live 验证和回填。安全边界仍保留：过期、事实不可靠、无法证实或会误导的内容不硬发，继续保留 `needs_human` 并写清原因。
+
+---

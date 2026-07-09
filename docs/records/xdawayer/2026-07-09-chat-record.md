@@ -1312,3 +1312,52 @@ Last run: 2026-07-09T12:00:53.525Z (1783598453525)
 按 vault git auto-heal 自动化边界执行：读取 automation memory、项目 `AGENTS.md`、sibling owner profile、reminders、相关记忆与适用安全/验证技能；当前 checkout 缺少 `ai-profile/lynne-soul.md`，已回读 sibling vault 版本，sibling reminders 无待完成项，本地 reminders 有未完成项但本轮未修改。仅运行指定三仓确定性入口，没有使用破坏性 git/filesystem 命令或镜像删除脚本；首轮入口返回 `Obsidian vault git sync: clean`。按记录规则将本轮追加为 Q45 后，只使用同一确定性入口再次收敛；期间发现 `gengrowth-wiki` 有普通未跟踪路径 `参考资料/AI前沿动态/2026-07-09 AI前沿动态-晚报.md`，未手工处理，由同一入口提交并推送。最终复验显示 `gengrowth-wiki`、`gengrowth-ops`、`gengrowth-flow-mvp` 均无未解决冲突，三个仓库 `HEAD...origin/main = 0 0`；`gengrowth-ops` 与 `gengrowth-flow-mvp` 的 Obsidian Git 配置均为 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。
 
 ---
+
+### Q46 — 22:04
+
+**🙋 提问：**
+
+Automation: 自动修复冲突
+Automation ID: gengrowth-vault-git-auto-heal
+Automation memory: $CODEX_HOME/automations/gengrowth-vault-git-auto-heal/memory.md
+Last run: 2026-07-09T13:01:23.763Z (1783602083763)
+
+在本机执行 GenGrowth 多仓库 Obsidian/Git 自愈同步。目标仓库固定为 `/Users/awayer_mini/gengrowth-wiki`、`/Users/awayer_mini/gengrowth-ops`、`/Users/awayer_mini/gengrowth-flow-mvp`。
+
+必须使用已验证的确定性入口，不要绕过脚本手写破坏性 git 操作：
+
+`/usr/bin/python3 /Users/awayer_mini/gengrowth-wiki/tools/scripts/obsidian-vault-git-sync.py --repo /Users/awayer_mini/gengrowth-wiki --repo /Users/awayer_mini/gengrowth-ops --repo /Users/awayer_mini/gengrowth-flow-mvp --verbose`
+
+安全边界：
+- 禁止运行 `git reset --hard`、`git checkout -- <path>`、`git clean`、`rm -rf`、`rsync --delete`，除非用户在当次对话中明确要求。
+- 不要运行 `tools/scripts/frequent-sync.sh`、`tools/scripts/gengrowth-repos-sync.sh` 或 `tools/scripts/_sync-core.sh`，因为这些路径包含镜像删除语义，本任务只做 git 自愈同步。
+- 同步脚本会先 fetch，检查未解决冲突，提交本地非敏感变更，再 rebase/push；只对白名单 JSON 冲突自动合并，其他冲突会中止并报告。不要在脚本中止后自行猜测合并内容。
+- 不打印密钥、token、邮箱密码、service account JSON、private key 或完整凭证 URL。
+
+执行后验证：
+1. 分别在三个仓库运行 `git status --branch --porcelain=v2`、`git rev-list --left-right --count HEAD...origin/main`、`git diff --name-only --diff-filter=U`、`git ls-files -u`。
+2. 回读 `/Users/awayer_mini/gengrowth-ops/.obsidian/plugins/obsidian-git/data.json` 和 `/Users/awayer_mini/gengrowth-flow-mvp/.obsidian/plugins/obsidian-git/data.json`，确认 `autoSaveInterval`、`autoPushInterval`、`autoPullInterval` 为 0，`autoPullOnBoot` 与 `pullBeforePush` 为 false。
+3. 若所有仓库都是 clean 且 ahead/behind 为 `0 0`，简短报告已同步；若脚本输出“需要关注”或存在 unmerged，报告具体仓库和文件路径，不要删除文件。
+
+**🤖 回答：**
+
+按 vault git auto-heal 自动化边界执行：读取 automation memory、项目 `AGENTS.md`、相关历史记忆、owner/reminders 文件与适用安全/验证技能；当前 checkout 缺少 `ai-profile/lynne-soul.md`，本地 reminders 有未完成项但本轮未修改。仅运行指定三仓确定性入口，没有使用破坏性 git/filesystem 命令或镜像删除脚本；入口返回 `gengrowth-wiki: clean, rebased`。追加本轮记录前的复验显示三个仓库均无未解决冲突，三个仓库 `HEAD...origin/main = 0 0`；`gengrowth-ops` 与 `gengrowth-flow-mvp` 的 Obsidian Git 配置均为 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。本轮 record 追加后继续只用同一确定性入口同步并做最终复验。
+
+---
+
+### Q46 — 22:03
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-09T12:25:46.164Z (1783599946164)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+按 topic-register 自动化边界执行：读取 automation memory、项目 `AGENTS.md`、`ai-profile/reminders.md`、sibling owner profile、相关历史记忆与本地 `gengrowth-topic-register-wrapper-report` 流程；当前 checkout 未发现 `ai-profile/lynne-soul.md`，已回读 sibling vault 版本。仅运行 `bash tools/scripts/gg-topic-register-tick.sh`，没有传入手工写入、repair、overwrite 或直接脚本参数。wrapper 退出码为 0，stdout 为空；日志为 `~/gengrowth-agents/cron-sync/topic_register/2026-07-09.log`，本次窗口 `2026-07-09 22:02:36-22:02:39 CST`，最终 `topic-register ok`。本地环境启用 apply mode，`dry_run=false`，`budget_exhausted=false`。`astrologywiki`: candidates=0, updates=0, new_clusters=0, page_ids=[], selection_mode=generate, audit_incomplete=0, preprocessor=[], evidence_discovery=[]。`gengrowth`: candidates=0, updates=0, new_clusters=0, page_ids=[], selection_mode=generate, audit_incomplete=0, preprocessor=[], evidence_discovery=[]。本次窗口未见失败；未手工改 Sheet、未直接改 task plan、未额外创建 Feishu/Google Doc 报告产物。automation memory 已追加本轮运行摘要。
+
+---

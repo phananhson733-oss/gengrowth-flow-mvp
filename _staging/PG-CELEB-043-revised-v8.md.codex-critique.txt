@@ -1,0 +1,8 @@
+- “late/final degrees of Pisces”是硬伤 → 改为“early Pisces, just after the Aquarius–Pisces ingress”，并把“Pisces–Aquarius cusp”统一成更常见的“Aquarius–Pisces cusp”。
+- 搜索意图没有被直接满足 → 开头加 quick-answer 数据框：出生日期、出生地、出生时间未知、太阳星座/大致度数、哪些 chart 信息可读/不可读。
+- “Sun-house resonance”不可靠 → 无出生时间不能谈宫位、上升或角度，改成只讨论太阳、行星星座和非时间敏感的主题。
+- 全文过度围绕 cusp，几乎不像 Verlander 专属 → 加入具体职业锚点，如投手控制力、长期巅峰、伤后回归、季后赛压力表现，并谨慎连接到解读。
+- “cusp = core signature”说得太绝对 → 改成“interpretive lens”，同时说明传统占星中太阳仍完全在双鱼，cusp 不是正式独立配置。
+- Dane Rudhyar / Liz Greene 引用显得装饰性 → 要么删掉，要么明确说明他们的方法如何支持这篇具体判断。
+- “Life Path 7”段落偏离 astrology intent → 换成更相关的误读：把 cusp 当半个水瓶、用未知出生时间编上升/宫位、把性格解读当运动成绩预测。
+- CTA 太像泛用模板 → 先给读者一个完整 Verlander chart takeaway，再引导对比自己的出生盘。

@@ -27,10 +27,10 @@ phase2_checks: all-pass
 
 ## What Is the Safest Reading of Justin Verlander's Birth Chart?
 
-The safest Justin Verlander birth chart reading starts with a narrow, verifiable fact: he was born on February 20, 1983, in Manakin Sabot, Virginia, and his Sun is in the opening degrees of [[<TBD-internal-link: guide to the Pisces zodiac sign>]]. Because a verified birth time is not part of the public record, this article does not claim his Ascendant, houses, Midheaven, or exact Moon degree. It reads the chart the way a responsible astrologer would read any public figure with partial data: use stable date-based placements, keep symbolic interpretation separate from biography, and avoid turning astrology into a claim about wins, awards, or future performance.
+The safest Justin Verlander birth chart reading starts with a narrow, verifiable fact: he was born on February 20, 1983, in Manakin Sabot, Virginia, and his Sun is in the opening degrees of Pisces. Because a verified birth time is not part of the public record, this article does not claim his Ascendant, houses, Midheaven, or exact Moon degree. For a broader sign baseline, start with the [Pisces guide](/en/wiki/pisces), then read this chart the way a responsible astrologer would read any public figure with partial data: use stable date-based placements, keep symbolic interpretation separate from biography, and avoid turning astrology into a claim about wins, awards, or future performance.
 
 - **Reliable anchor:** early Pisces Sun, born February 20, 1983
-- **Useful supporting layer:** date-based placements such as Mercury in Aquarius and Venus in Pisces
+- **Useful supporting layer:** date-based Mercury in Aquarius, used only as a thinking-style theme
 - **Do not overstate:** no confirmed rising sign, house pattern, or birth-time-sensitive angles
 
 Used as an interpretive lens, this chart points toward a Pisces signature shaped by rhythm, intuition, endurance, and recovery. That does not mean the chart "explains" his career. It means the chart gives readers a symbolic language for thinking about pressure, focus, and the private emotional discipline behind a very public athletic persona.
@@ -61,7 +61,6 @@ The strongest version of this reading is useful because it names limits. Public 
 | --- | --- | --- |
 | Sun in Pisces | Yes | Core symbolic identity: rhythm, adaptability, intuition, recovery |
 | Mercury in Aquarius | Yes | Pattern recognition, independent thinking, tactical distance |
-| Venus in Pisces | Yes | Emotional style, loyalty, idealism, tenderness in private values |
 | Moon sign/degree | Limited | Do not state exact emotional profile without confirming the day-specific range |
 | Ascendant and houses | No | Birth time required; leave unclaimed |
 
@@ -104,7 +103,6 @@ For a Mercury-in-Aquarius layer, add one more question: where does distance help
 | --- | --- | --- |
 | Early Pisces Sun | Adaptive identity, intuitive rhythm, resilience, emotional depth | Treating Pisces as vague or weak |
 | Mercury in Aquarius | Strategic distance, pattern thinking, independent analysis | Calling this a second Sun sign |
-| Venus in Pisces | Tender values, loyalty, idealism, aesthetic sensitivity | Turning private values into biography |
 | Unknown birth time | Keeps the reading honest and limited | Inventing rising sign, houses, or exact Moon details |
 
 ## Common Questions About Justin Verlander's Chart
@@ -123,7 +121,7 @@ No. Astrology should not be used as proof of performance, awards, or outcomes. T
 
 **What is the main takeaway from this Justin Verlander birth chart?**
 
-The clean takeaway is an early Pisces Sun supported by analytical Mercury-in-Aquarius thinking and a strong Pisces tone in Venus. It is a chart to read through rhythm and resilience, not through unsupported boundary-sign mythology.
+The clean takeaway is an early Pisces Sun supported by analytical Mercury-in-Aquarius thinking. It is a chart to read through rhythm and resilience, not through unsupported boundary-sign mythology.
 
 ## Reflection Prompts
 
@@ -133,15 +131,15 @@ The clean takeaway is an early Pisces Sun supported by analytical Mercury-in-Aqu
 
 ## Related Reading
 
-- [[<TBD-internal-link: guide to the Pisces zodiac sign>]] — the Sun sign that anchors this reading.
-- [[<TBD-internal-link: guide to Mercury in astrology>]] — how thinking style can differ from Sun-sign identity.
+- [Pisces guide](/en/wiki/pisces) — the Sun sign that anchors this reading.
+- [Mercury in astrology](/en/wiki/mercury) — how thinking style can differ from Sun-sign identity.
 - [[<TBD-internal-link: pillar guide to reading a birth chart>]] — how to separate confirmed placements from birth-time-sensitive guesses.
 
 ## Take Action
 
-Generate your free birth chart to compare this method with your own placements. Start with the confirmed pieces first: Sun, Mercury, Venus, and any placements that do not depend on a missing birth time. Then add Ascendant and house detail only when your birth time is known.
+Generate your free birth chart to compare this method with your own placements. Start with the confirmed pieces first: Sun, Mercury, and any placements that do not depend on a missing birth time. Then add Ascendant and house detail only when your birth time is known.
 
-[Generate your free birth chart](https://astrologywiki.com/en/wiki/how-to-read-birth-chart)
+[Generate your free birth chart](/en/wiki/how-to-read-birth-chart)
 
 ## Sources
 

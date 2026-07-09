@@ -1,0 +1,8 @@
+- Virgo Rising 是最大风险点：文中未给出生时间来源，Ascendant 不能凭日期确定 → 增加“birth time/source confidence”说明；若无可靠出生时间，删除 Virgo Rising 及所有上升/宫位判断。
+- “birth chart”实际只讲 Sun-Moon-Rising，不像完整命盘 → 加入出生资料、行星落座/度数、关键相位与是否可计算宫位的简表。
+- Kate Upton 具体素材太少，读起来像任意 Gemini 名人模板 → 用她的真实公开履历锚定解读，如 SI Swimsuit 封面、Vogue/Vanity Fair、高级时尚转型、病毒舞蹈视频、马术背景。
+- “quietly disciplined”“careful self-editing”“fast topic shifts”等判断缺少证据 → 改成“可观察到的公众形象可能支持/不支持哪些象征读法”，避免把符号读法写成事实。
+- Pew 29% astrology 数据偏离搜索意图 → 删除或大幅压缩，换成读者真正需要的 chart-data caveat：出生时间缺失会影响 Rising、houses、angles。
+- Vedic/Kundli 段落过长且泛泛，还可能引发“哪套更准”的无关争论 → 简化为一两句，说明 tropical 与 sidereal 使用不同 zodiac；不要说 Vedic 必然“trade away”心理解读。
+- Sources 太弱，只列 Rudhyar/Greene 名字，不支撑 Kate Upton 的出生资料或命盘 → 补充可核验来源：出生日期/地点来源、所用星历或 chart calculator、出生时间来源或“unknown time”说明。
+- CTA “explore kate upton birth chart”是硬塞关键词 → 改成自然行动语：“Generate your own birth chart, then compare your Sun, Moon, and Rising with this case study.”

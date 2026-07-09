@@ -1189,3 +1189,28 @@ Last run: 2026-07-09T10:01:53.118Z (1783591313118)
 按 vault git auto-heal 自动化边界执行：读取 automation memory、相关历史记忆、sibling owner profile、本地 reminders，并使用 `superpowers:using-superpowers` 与 `superpowers:verification-before-completion` 指导入口选择和完成前核验；当前 checkout 缺少 `ai-profile/lynne-soul.md`，已按历史做法回读 sibling vault 版本，`ai-profile/reminders.md` 有未完成项但本轮未修改。仅运行指定三仓确定性入口，没有使用破坏性 git/filesystem 命令或镜像删除脚本；首轮入口退出 0 且无 stdout/stderr。首轮验证显示三个仓库均无未解决冲突，`HEAD...origin/main = 0 0`；`gengrowth-ops` 与 `gengrowth-flow-mvp` 的 Obsidian Git 配置项均已关闭：`autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。本轮 record 追加后继续只用同一确定性入口同步并做最终复验。
 
 ---
+
+### Q41 — 19:31
+
+**🙋 提问：**
+
+Automation: GenGrowth SEO Blog 全流程发布
+Automation ID: gengrowth-seo-blog
+Automation memory: $CODEX_HOME/automations/gengrowth-seo-blog/memory.md
+Last run: 2026-07-08T21:30:20.399Z (1783546220399)
+
+你是 GenGrowth SEO Blog 全流程发布自动化。工作目录固定为 `/Users/awayer_mini/gengrowth-flow-mvp`，时区按 Asia/Shanghai / UTC+8 理解。本自动化每天 18:30、19:00、19:30、20:00、20:30、21:00、21:30 触发；不要在 22:00 之后主动启动新一轮发布工作。
+
+目标：自动检测 astrologywiki SEO blog 待处理队列，完成需要的文档落地、文章撰写、预览、上线发布，以及 publish 之后的所有收尾回填与验证。不要只做计划或停在中间态。
+
+这里的 automatic 流程要优化一下：不要人工介入！！！不要人工介入！！！不要人工介入！！！理论上如果碰到你觉得是需要 need human。那么你们可以多方（codex 和 Claude）讨论一下给出一个最合理最适合的方案继续推进，最终让文档上线，并完成后续的内容
+
+**🤖 回答：**
+
+按 SEO Blog 自动化边界执行：读取 automation memory、项目约束与 reminders；当前 checkout 仍缺少 `ai-profile/lynne-soul.md`。先做单执行器检查，未发现指定 legacy SEO/flow/index launchd/local cron 正在运行，随后运行 `bash tools/scripts/gg-nightly-seo.sh`。本次 wrapper 窗口为 2026-07-09 18:08:03-19:05:48 CST，日志在 `~/Library/Logs/gg-nightly-seo.log`：`PG-CELEB-044` 直接通过 preview/review/codex gate 并发布；`PG-CELEB-043` 先被 astrology review 以错误 cusp 框架停在 `needs_human`。
+
+根据用户“不要人工介入”的新指令，将 `PG-CELEB-043` 当作可恢复事实/结构门禁失败处理：用 Claude 与 Codex 做只读复核，确认替代方案为 early Pisces Sun、出生时间未知的保守解读；重写 staging 与 PR article TS，去掉 unsupported cusp / water-air / Mars/Venus 风险点，补明确内部链接和可核验 sources；本地红线、三维 review、Codex factual review、preview verify 与 build 均通过。通过 `--retry-failed` 恢复 claim，重跑 `gg-preview-gate.mjs`，PR #349 merge 发布。
+
+最终发布与回填：`PG-CELEB-043` / `justin-verlander-birth-chart` 与 `PG-CELEB-044` / `jack-antonoff-birth-chart` 均已 done、W22 plan 勾选、publish log 追加、Sheet reconcile `flip=0 review=0`、batch summary 已发。生产验证均为 200、自 canonical、title/H1、Article JSON-LD、sitemap count 1。`PG-WC-045` 仍保留 `needs_human`，原因是 2026-07-06 比赛已发生，pre-match prediction 已过期，不能安全发布。最终 stale-report 为 `inflight=[] staleCount=0`，无本轮应继续的进程或锁。automation memory 已追加新策略：事实/结构/链接类 `needs_human` 不默认终止，优先多方自治复核与最小安全修复；只有 stale/过期、证据不足或需要编造事实时才保留 `needs_human`。
+
+---

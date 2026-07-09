@@ -17,7 +17,7 @@ tags:
 - 要点 1：执行 GenGrowth 三仓库 Obsidian/Git 自愈同步，严格使用指定 `obsidian-vault-git-sync.py` 入口，并完成三仓库 clean / `HEAD...origin/main = 0 0` / 无 unmerged 验证。
 - 要点 2：回读 `gengrowth-ops` 与 `gengrowth-flow-mvp` 的 Obsidian Git 配置，确认自动同步字段保持禁用。
 - 要点 3：按 SEO Blog 自动化边界在 22:00 后不启动新 wrapper，只做单执行器、日志、ledger、回填、生产 URL、sitemap 与进程/锁验证。
-- 要点 4：确认 7月9日 astrologywiki 批次中 Justin、Jack、Kate、Ayo、Zendaya 均已上线并完成 publish log / W22 plan / Sheet reconcile 回填；旧 Mexico 赛前预测继续保留 `needs_human`。
+- 要点 4：确认 7月9日 astrologywiki 批次中 Justin、Jack、Kate、Ayo、Zendaya 均已上线，并完成 publish log / W22 plan / Sheet reconcile / pending-writeback WAL 回填；旧 Mexico 赛前预测继续保留 `needs_human`。
 
 ---
 

@@ -42,10 +42,10 @@ To read a Zendaya birth chart the way this page suggests, treat every placement 
 
 ## Common Misreadings
 
-The popular versions of a Zendaya birth chart go wrong in a few predictable ways, and each one blurs symbolic reading with biographical claim. Here are the Zendaya birth chart misreadings worth correcting:
+The popular versions of a Zendaya birth chart go wrong in a few predictable ways, and each one blurs symbolic reading with biographical claim. Here are the Zendaya birth chart mistakes worth correcting:
 
 1. **Misreading: a Zendaya birth chart explains her fame.** Reality: astrology describes symbolic tendencies and cannot account for talent, timing, or opportunity.
-2. **Misreading: the placements in a Zendaya birth chart are confirmed fact.** Reality: with no public birth time, the ascendant and houses are educated guesses at best.
+2. **Misreading: her placements are confirmed fact.** Reality: with no public birth time, the ascendant and houses in a Zendaya birth chart are educated guesses at best.
 3. **Misreading: the Western and Vedic versions of a Zendaya birth chart should agree.** Reality: they use different zodiacs and often name different signs, which is expected rather than an error.
 4. **Misreading: a "difficult" placement predicts trouble.** Reality: classical Jyotish frames hard placements as areas of growth, not as sentences to be served.
 
@@ -54,7 +54,7 @@ The popular versions of a Zendaya birth chart go wrong in a few predictable ways
 | Property | How It Works | Energy Center | How to Observe |
 | --- | --- | --- | --- |
 | Sun placement (Virgo, tropical) | Anchors core identity and style of expression | Earth element, mutable quality | Look for themes of craft, precision, and service |
-| Moon sign | Colors emotional needs and private instincts | Fast-moving, highly time-sensitive | Needs an accurate birth time to place reliably |
+| Moon placement | Colors emotional needs and private instincts | Fast-moving, highly time-sensitive | Needs an accurate birth time to place reliably |
 | Ascendant / lagna | Sets the whole house layout and first impression | Unknown without a confirmed birth time | Treat as open, not as a fixed placement |
 | Chart ruler | Ties the chart together through the ascendant | Depends entirely on the lagna | Only meaningful once the birth time is known |
 
@@ -89,11 +89,11 @@ These pages go deeper on ideas a Zendaya birth chart reading only touches:
 - [[<TBD-internal-link: guide to the lunar nodes in a birth chart>]] — covers the karmic axis a fuller Zendaya birth chart reading would add.
 - [[<TBD-internal-link: Serena Williams's birth chart profile>]] — another real birth chart read for archetypal themes, a useful comparison for a Zendaya birth chart.
 - [[<TBD-external-link: Wikipedia | Zendaya | background on the public figure this chart profile is built around>]] — for the biographical facts a Zendaya birth chart does not cover.
-- [[<TBD-external-link: Wikipedia | Hindu astrology | overview of the Vedic system behind the sidereal reading>]] — context on the Jyotish tradition behind a sidereal Zendaya birth chart.
+- [[<TBD-external-link: Wikipedia | Hindu astrology | overview of the Vedic system behind the sidereal Zendaya birth chart reading>]] — context on the Jyotish tradition referenced above.
 
 ## Take Action
 
-Reading a Zendaya birth chart like this is a mirror for reflection, not a diagnosis. This is not a clinical interpretation or mental health advice.
+Astrology like this is a mirror for reflection, not a diagnosis. This Zendaya birth chart is not a clinical interpretation or mental health advice.
 
 Generate your free birth chart to explore how the same symbolic method applies to you — the output is a full placement map of your own Sun, Moon, and ascendant, laid out the same tendency-first way, and reading yours beside a familiar Zendaya birth chart is often where you first notice which patterns you want to lean into and which you would rather rework. Start with the [free astrology birth chart calculator](https://astrologywiki.com/en/wiki/aura-reading).
 

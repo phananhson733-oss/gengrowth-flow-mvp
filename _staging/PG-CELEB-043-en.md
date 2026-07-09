@@ -27,13 +27,13 @@ phase2_checks: all-pass
 
 ## What Is the Safest Reading of Justin Verlander's Birth Chart?
 
-The safest Justin Verlander birth chart reading starts with a narrow, verifiable fact: he was born on February 20, 1983, in Manakin Sabot, Virginia, and his Sun is in the opening degrees of Pisces. Because a verified birth time is not part of the public record, this article does not claim his Ascendant, houses, Midheaven, or exact Moon degree. It reads the chart the way a responsible astrologer would read any public figure with partial data: use stable date-based placements, keep symbolic interpretation separate from biography, and avoid turning astrology into a claim about wins, awards, or future performance.
+The safest Justin Verlander birth chart reading starts with a narrow, verifiable fact: he was born on February 20, 1983, in Manakin Sabot, Virginia, and his Sun is in the opening degrees of [[<TBD-internal-link: guide to the Pisces zodiac sign>]]. Because a verified birth time is not part of the public record, this article does not claim his Ascendant, houses, Midheaven, or exact Moon degree. It reads the chart the way a responsible astrologer would read any public figure with partial data: use stable date-based placements, keep symbolic interpretation separate from biography, and avoid turning astrology into a claim about wins, awards, or future performance.
 
 - **Reliable anchor:** early Pisces Sun, born February 20, 1983
-- **Useful supporting layer:** date-based placements such as Mercury in Aquarius and Venus/Mars in Pisces
+- **Useful supporting layer:** date-based placements such as Mercury in Aquarius and Venus in Pisces
 - **Do not overstate:** no confirmed rising sign, house pattern, or birth-time-sensitive angles
 
-Used as an interpretive lens, the Justin Verlander birth chart points toward a Pisces signature shaped by rhythm, intuition, endurance, and recovery. That does not mean the chart "explains" his career. It means the chart gives readers a symbolic language for thinking about pressure, focus, and the private emotional discipline behind a very public athletic persona.
+Used as an interpretive lens, this chart points toward a Pisces signature shaped by rhythm, intuition, endurance, and recovery. That does not mean the chart "explains" his career. It means the chart gives readers a symbolic language for thinking about pressure, focus, and the private emotional discipline behind a very public athletic persona.
 
 ## Why an Early Pisces Sun Matters
 
@@ -43,7 +43,7 @@ For Verlander, the useful question is not "which label sounds most dramatic?" It
 
 ### The public-persona lens
 
-A celebrity or athlete chart is always a public-persona reading unless the birth time and personal context are verified. That matters here. Without a birth time, a Justin Verlander birth chart interpretation should stay away from house-based claims like "career house" or "relationship house." It can still discuss the Sun as a broad identity symbol and the sign-based pattern of other planets on that date.
+A celebrity or athlete chart is always a public-persona reading unless the birth time and personal context are verified. That matters here. Without a birth time, this interpretation should stay away from house-based claims like "career house" or "relationship house." It can still discuss the Sun as a broad identity symbol and the sign-based pattern of other planets on that date.
 
 The early Pisces Sun gives the article its center: a competitive figure whose symbolism is not simply hard-edged ambition, but a blend of sensitivity, stamina, and adaptive focus. Pisces can look quiet from the outside because so much of its work happens internally. The sign absorbs feedback, recalibrates, and tries again. That is a cleaner symbolic fit than forcing a dramatic boundary-sign story that the date does not support.
 
@@ -55,14 +55,13 @@ That distinction keeps the reading honest. The Sun stays Pisces. Mercury in Aqua
 
 ## What This Chart Can and Cannot Say
 
-The strongest version of this Justin Verlander birth chart reading is useful because it names limits. Public astrology often fails when it treats missing data as an invitation to invent. A better reading draws a bright line between what the date supports and what it does not.
+The strongest version of this reading is useful because it names limits. Public astrology often fails when it treats missing data as an invitation to invent. A better reading draws a bright line between what the date supports and what it does not.
 
 | Chart Layer | Can We Use It? | Responsible Reading |
 | --- | --- | --- |
 | Sun in Pisces | Yes | Core symbolic identity: rhythm, adaptability, intuition, recovery |
 | Mercury in Aquarius | Yes | Pattern recognition, independent thinking, tactical distance |
 | Venus in Pisces | Yes | Emotional style, loyalty, idealism, tenderness in private values |
-| Mars in Pisces | Yes | Indirect drive, endurance, instinctive timing, effort that comes in waves |
 | Moon sign/degree | Limited | Do not state exact emotional profile without confirming the day-specific range |
 | Ascendant and houses | No | Birth time required; leave unclaimed |
 
@@ -70,7 +69,7 @@ This boundary also protects the reader. If you are using the article to understa
 
 ## How the Pisces Emphasis Shows Up Symbolically
 
-Pisces does not always look passive. In a high-performance context, it can look like elastic concentration: the ability to bend without losing the thread. That is why the Pisces emphasis in the Justin Verlander birth chart is more interesting than a simple "sensitive sign" label.
+Pisces does not always look passive. In a high-performance context, it can look like elastic concentration: the ability to bend without losing the thread. That is why the Pisces emphasis here is more interesting than a simple "sensitive sign" label.
 
 First, Pisces is a rhythm sign. It notices tempo, fatigue, and atmosphere. Symbolically, this can be read as the ability to work with the flow of a game rather than against it. The pitcher does not need to overpower every moment in the same way; the read changes as the inning changes.
 
@@ -80,7 +79,7 @@ Third, Pisces often carries a private emotional register. Public composure does 
 
 ## Common Misreadings
 
-The Justin Verlander birth chart is easy to overcomplicate because February 20 sits near a sign change in many popular calendars. A precise reading should avoid these shortcuts:
+This chart is easy to overcomplicate because February 20 sits near a sign change in many popular calendars. A precise reading should avoid these shortcuts:
 
 1. **"He is half one sign and half another."** The Sun is in Pisces. Boundary myths are not a substitute for an ephemeris-based reading.
 2. **"A missing birth time means there is nothing to say."** There is still a useful Sun-sign and date-based planet reading; it just needs tighter limits.
@@ -106,7 +105,6 @@ For a Mercury-in-Aquarius layer, add one more question: where does distance help
 | Early Pisces Sun | Adaptive identity, intuitive rhythm, resilience, emotional depth | Treating Pisces as vague or weak |
 | Mercury in Aquarius | Strategic distance, pattern thinking, independent analysis | Calling this a second Sun sign |
 | Venus in Pisces | Tender values, loyalty, idealism, aesthetic sensitivity | Turning private values into biography |
-| Mars in Pisces | Instinctive drive, endurance, indirect but persistent effort | Claiming it guarantees athletic results |
 | Unknown birth time | Keeps the reading honest and limited | Inventing rising sign, houses, or exact Moon details |
 
 ## Common Questions About Justin Verlander's Chart
@@ -117,7 +115,7 @@ Justin Verlander's Sun is in Pisces. He was born on February 20, 1983, and a res
 
 **Can you read his birth chart without a birth time?**
 
-Yes, but only within limits. The Sun and several date-based placements can be interpreted, while the Ascendant, houses, Midheaven, and exact birth-time-sensitive details should remain unclaimed.
+Yes, but only within limits. The Sun and some date-based placements can be interpreted, while the Ascendant, houses, Midheaven, and exact birth-time-sensitive details should remain unclaimed.
 
 **Does his chart explain his baseball career?**
 
@@ -125,7 +123,7 @@ No. Astrology should not be used as proof of performance, awards, or outcomes. T
 
 **What is the main takeaway from this Justin Verlander birth chart?**
 
-The clean takeaway is an early Pisces Sun supported by analytical Mercury-in-Aquarius thinking and a strong Pisces tone in personal planets. It is a chart to read through rhythm and resilience, not through unsupported boundary-sign mythology.
+The clean takeaway is an early Pisces Sun supported by analytical Mercury-in-Aquarius thinking and a strong Pisces tone in Venus. It is a chart to read through rhythm and resilience, not through unsupported boundary-sign mythology.
 
 ## Reflection Prompts
 
@@ -141,7 +139,7 @@ The clean takeaway is an early Pisces Sun supported by analytical Mercury-in-Aqu
 
 ## Take Action
 
-Generate your free birth chart to compare the Justin Verlander birth chart method with your own placements. Start with the confirmed pieces first: Sun, Mercury, Venus, Mars, and any placements that do not depend on a missing birth time. Then add Ascendant and house detail only when your birth time is known.
+Generate your free birth chart to compare this method with your own placements. Start with the confirmed pieces first: Sun, Mercury, Venus, and any placements that do not depend on a missing birth time. Then add Ascendant and house detail only when your birth time is known.
 
 [Generate your free birth chart](https://astrologywiki.com/en/wiki/how-to-read-birth-chart)
 

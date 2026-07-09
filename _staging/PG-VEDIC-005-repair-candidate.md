@@ -16,7 +16,7 @@ The payoff for your own reflection is practical. According to a 2017 Pew Researc
 
 ## Tropical vs Sidereal: Reading the Same Chart Two Ways
 
-A Zendaya birth chart looks genuinely different depending on which zodiac you use, and this is where most online confusion starts.
+The chart looks genuinely different depending on which zodiac you use, and this is where most online confusion starts.
 
 ### How the two systems work
 
@@ -44,9 +44,9 @@ To read a Zendaya birth chart the way this page suggests, treat every placement 
 
 The popular versions of a Zendaya birth chart go wrong in a few predictable ways, and each one blurs symbolic reading with biographical claim. Here are the Zendaya birth chart mistakes worth correcting:
 
-1. **Misreading: a Zendaya birth chart explains her fame.** Reality: astrology describes symbolic tendencies and cannot account for talent, timing, or opportunity.
+1. **Misreading: this chart explains her fame.** Reality: astrology describes symbolic tendencies and cannot account for talent, timing, or opportunity.
 2. **Misreading: her placements are confirmed fact.** Reality: with no public birth time, the ascendant and houses in a Zendaya birth chart are educated guesses at best.
-3. **Misreading: the Western and Vedic versions of a Zendaya birth chart should agree.** Reality: they use different zodiacs and often name different signs, which is expected rather than an error.
+3. **Misreading: the Western and Vedic versions of this chart should agree.** Reality: they use different zodiacs and often name different signs, which is expected rather than an error.
 4. **Misreading: a "difficult" placement predicts trouble.** Reality: classical Jyotish frames hard placements as areas of growth, not as sentences to be served.
 
 ## Zendaya's Birth Chart at a Glance

@@ -998,3 +998,15 @@ Last run: 2026-07-09T06:00:22.391Z (1783576822391)
 按 vault git auto-heal 自动化边界执行：读取 automation memory、项目约束、sibling owner profile/reminders、相关记忆索引，并使用 `superpowers:using-superpowers` 与 `superpowers:verification-before-completion` 指导入口选择和完成前核验；当前 checkout 缺少 `ai-profile/lynne-soul.md`，已按历史做法回读 sibling vault 版本，`ai-profile/reminders.md` 有未完成项但本轮未修改。仅运行指定三仓确定性入口，没有使用破坏性 git/filesystem 命令或镜像删除脚本；首轮入口返回 `Obsidian vault git sync: clean`。首轮验证显示三个仓库均 `HEAD...origin/main = 0 0`、未合并检查无输出，`gengrowth-ops` 与 `gengrowth-flow-mvp` 的 Obsidian Git 配置项均已关闭：`autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。本轮 record 追加后继续只用同一确定性入口收敛，并以最终复验结果作为完成依据。
 
 ---
+
+### Q33 — 15:13
+
+**🙋 提问：**
+
+写完以后的 publish 的工作后续也没做完啊
+
+**🤖 回答：**
+
+按 Gengrowth post-author publish 缺口做系统排查和修复。确认根因是 `tools/scripts/gg-gengrowth-author-tick.sh` 在 author handoff 后只记录“publish lane will pick up”，依赖另一个定时 publish lane，导致 publish-ready draft 可能停在中间态。已改为在成功 handoff 或发现已有 publish-ready draft 后，立即通过既有 `gg-gengrowth-publish-tick.sh` wrapper 做 bounded publish follow-up，不绕过 publisher 和锁；新增 `GG_GENGROWTH_AUTHOR_AUTOPUBLISH=0` 可关闭该行为。新增 `gengrowth-invariants` 回归测试锁定 author tick 必须知道 publish wrapper、保留 opt-out、统计 handoff 并调用 publish wrapper。验证通过：`bash -n`、`gengrowth-invariants` 9/9、`gg-gengrowth-author-handoff` + `gg-gengrowth-publish-notify` 12/12；Gengrowth W25 六篇当前 live 验证 200、自 canonical、H1、Article JSON-LD、sitemap 收录，`gg-ledger-reconcile --dry` 无漂移，无相关进程或锁残留。`gengrowth-seo-blog` automation 当前已是 18:30-21:30 每 30 分钟触发，无需改 schedule。
+
+---

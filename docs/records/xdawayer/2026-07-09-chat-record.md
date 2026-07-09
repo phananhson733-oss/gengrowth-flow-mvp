@@ -910,3 +910,35 @@ Last run: 2026-07-09T04:00:21.922Z (1783569621922)
 只读核对当前状态和日志后确认：有未通过或未放行条目。astrologywiki 当前仍有 `PG-WC-045` / `mexico-vs-england-astrology-prediction` 为 `needs_human`，原因是 `review[codex] FAIL`：比赛已在 2026-07-06 结束，赛前预测过期，明确 `DO NOT publish`；之前 `PG-CELEB-041` 的审核 blocker 已修复并发布。Gengrowth 当前有 `PG-AIS-005` / `ai-seo-audit` authoring 失败，原因是 orchestrator 3 次尝试加 deterministic repair 后仍未产出草稿；`PG-WLS-006` / `gpt-5-6-seo` 有 publish-ready 草稿，但多次 publish tick 卡在 factual gate 的 `codex exited 3`，属于工具 gate 未跑通而非日志中明确的内容事实 FAIL。`PG-WHS-001` 有 publish-ready 草稿但尚未轮到 publish，`PG-GJ2U-001` 尚未见 author/review 失败记录。最终进程/锁检查无相关 Gengrowth/SEO author/publish 残留。
 
 ---
+
+### Q29 — 14:01
+
+**🙋 提问：**
+
+Automation: 自动修复冲突
+Automation ID: gengrowth-vault-git-auto-heal
+Automation memory: $CODEX_HOME/automations/gengrowth-vault-git-auto-heal/memory.md
+Last run: 2026-07-09T05:01:22.168Z (1783573282168)
+
+在本机执行 GenGrowth 多仓库 Obsidian/Git 自愈同步。目标仓库固定为 `/Users/awayer_mini/gengrowth-wiki`、`/Users/awayer_mini/gengrowth-ops`、`/Users/awayer_mini/gengrowth-flow-mvp`。
+
+必须使用已验证的确定性入口，不要绕过脚本手写破坏性 git 操作：
+
+`/usr/bin/python3 /Users/awayer_mini/gengrowth-wiki/tools/scripts/obsidian-vault-git-sync.py --repo /Users/awayer_mini/gengrowth-wiki --repo /Users/awayer_mini/gengrowth-ops --repo /Users/awayer_mini/gengrowth-flow-mvp --verbose`
+
+安全边界：
+- 禁止运行 `git reset --hard`、`git checkout -- <path>`、`git clean`、`rm -rf`、`rsync --delete`，除非用户在当次对话中明确要求。
+- 不要运行 `tools/scripts/frequent-sync.sh`、`tools/scripts/gengrowth-repos-sync.sh` 或 `tools/scripts/_sync-core.sh`，因为这些路径包含镜像删除语义，本任务只做 git 自愈同步。
+- 同步脚本会先 fetch，检查未解决冲突，提交本地非敏感变更，再 rebase/push；只对白名单 JSON 冲突自动合并，其他冲突会中止并报告。不要在脚本中止后自行猜测合并内容。
+- 不打印密钥、token、邮箱密码、service account JSON、private key 或完整凭证 URL。
+
+执行后验证：
+1. 分别在三个仓库运行 `git status --branch --porcelain=v2`、`git rev-list --left-right --count HEAD...origin/main`、`git diff --name-only --diff-filter=U`、`git ls-files -u`。
+2. 回读 `/Users/awayer_mini/gengrowth-ops/.obsidian/plugins/obsidian-git/data.json` 和 `/Users/awayer_mini/gengrowth-flow-mvp/.obsidian/plugins/obsidian-git/data.json`，确认 `autoSaveInterval`、`autoPushInterval`、`autoPullInterval` 为 0，`autoPullOnBoot` 与 `pullBeforePush` 为 false。
+3. 若所有仓库都是 clean 且 ahead/behind 为 `0 0`，简短报告已同步；若脚本输出“需要关注”或存在 unmerged，报告具体仓库和文件路径，不要删除文件。
+
+**🤖 回答：**
+
+按 vault git auto-heal 自动化边界执行：读取 automation memory、项目约束、sibling owner profile/reminders、相关记忆索引，并使用 `superpowers:using-superpowers`、`superpowers:executing-plans`、`superpowers:verification-before-completion` 指导入口选择和完成前核验；当前 checkout 缺少 `ai-profile/lynne-soul.md`，已按历史做法回读 sibling vault 版本，`ai-profile/reminders.md` 有未完成项但本轮未修改。仅运行指定三仓确定性入口，没有使用破坏性 git/filesystem 命令或镜像删除脚本；入口退出码为 0 且无 stdout/stderr。首轮验证显示三个仓库均 `HEAD...origin/main = 0 0`、未合并检查无输出，`gengrowth-ops` 与 `gengrowth-flow-mvp` 的 Obsidian Git 配置项均已关闭：`autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。本轮 record 追加后继续只用同一确定性入口收敛，并以最终复验结果作为完成依据。
+
+---

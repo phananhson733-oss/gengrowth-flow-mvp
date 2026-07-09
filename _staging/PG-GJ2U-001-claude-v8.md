@@ -1,3 +1,29 @@
+---
+title: Google July 2026 Update
+slug: google-july-2026-update
+date: 2026-07-09
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-GJ2U-001
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: google july 2026 update
+associated_keywords:
+  - google july 2026 update comparison
+  - google july 2026 update pricing
+  - google july 2026 update software
+  - google july 2026 update tool
+  - google july 2026 update workflow
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-07-09T06:15:58.142Z
+content_sha256_short: 16e42f8dfc566d4c
+phase2_checks: all-pass
+---
+
 # What the Google July 2026 Update Actually Changes for Your Content Workflow
 
 ## What Is the Google July 2026 Update?

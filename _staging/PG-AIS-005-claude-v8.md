@@ -1,3 +1,29 @@
+---
+title: Ai Seo Audit
+slug: ai-seo-audit
+date: 2026-07-09
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-AIS-005
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: ai seo audit
+associated_keywords:
+  - ai seo audit comparison
+  - ai seo audit pricing
+  - ai seo audit software
+  - ai seo audit tool
+  - ai seo audit workflow
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-07-09T06:41:08.346Z
+content_sha256_short: 8148289cec1e88b3
+phase2_checks: all-pass
+---
+
 # Where an AI SEO Audit Ends and Your Judgment Begins
 
 ## What Is an AI SEO Audit?

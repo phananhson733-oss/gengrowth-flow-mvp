@@ -8,8 +8,8 @@
   "track": "量产线",
   "generated_by": "unknown",
   "prompt_version": "v8",
-  "generated_at": "2026-07-09T16:02:22.163Z",
-  "content_sha256_short": "80b90f01072051c0",
+  "generated_at": "2026-07-09T16:29:41.685Z",
+  "content_sha256_short": "fceafb9feb97b3da",
   "source_path": "_staging/PG-VEDIC-005-repair-candidate.md",
   "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-VEDIC-005-en.md",
   "phase2_checks": {
@@ -19,7 +19,7 @@
       "h2Count": 11,
       "h3Count": 2,
       "h4Count": 0,
-      "words": 1570,
+      "words": 1609,
       "wikilinks": 6,
       "tbdLinks": 6
     },

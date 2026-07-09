@@ -147,7 +147,7 @@ Generate your free birth chart to compare the Justin Verlander birth chart metho
 
 ## Sources
 
-- MLB.com player bio — confirms Justin Verlander's birth date and birthplace.
-- Astro-Charts ephemeris profile — cross-checks the date-based planetary signs used here.
+- [MLB.com player bio](https://www.mlb.com/tigers/player/justin-verlander-434378) — confirms Justin Verlander's birth date and birthplace.
+- [Astro-Charts ephemeris profile](https://astro-charts.com/persons/chart/justin-verlander/) — cross-checks the date-based planetary signs used here.
 - Dane Rudhyar — pioneered person-centered, psychological chart interpretation.
 - Liz Greene — deepened modern psychological astrology and Sun-sign interpretation.

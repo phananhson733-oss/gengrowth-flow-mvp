@@ -142,6 +142,31 @@ test('invariant 1: author tick plan parser recognizes alphanumeric W25 prefixes'
   assert.equal(m[1], 'PG-GJ2U-001');
 });
 
+test('invariant 1: author tick immediately runs gengrowth publish follow-up after handoff', () => {
+  const src = readFileSync(AUTHOR_TICK_SRC_PATH, 'utf8');
+
+  assert.match(
+    src,
+    /PUBLISH_TICK=.*gg-gengrowth-publish-tick\.sh/,
+    'gg-gengrowth-author-tick.sh must know the deterministic publish wrapper path',
+  );
+  assert.match(
+    src,
+    /GG_GENGROWTH_AUTHOR_AUTOPUBLISH/,
+    'author tick must expose an opt-out knob while defaulting to publish follow-up',
+  );
+  assert.match(
+    src,
+    /HANDOFFS=\$\(\(HANDOFFS \+ 1\)\)/,
+    'author tick must count successful handoffs so publish follow-up only runs after authored drafts',
+  );
+  assert.match(
+    src,
+    /bash "\$PUBLISH_TICK"/,
+    'author tick must run the existing publish tick wrapper instead of bypassing it',
+  );
+});
+
 test('invariant 1: the autopilot <pageId>-<model>-v8.md convention agrees on the same pageId', () => {
   const src = readFileSync(AUTOPILOT_SRC_PATH, 'utf8');
   const AUTOPILOT_PGID_RE = loadRealAutopilotPgIdRe(src);

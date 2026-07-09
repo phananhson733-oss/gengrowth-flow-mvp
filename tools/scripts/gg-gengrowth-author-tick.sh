@@ -8,8 +8,9 @@
 #   · reuse the SAME author engine (gg-seo-autopilot.mjs --author), which is site-agnostic where it
 #     matters — brief source (workbook id env), phase2 contract (GG_SITE=gengrowth), CTA, and the
 #     claude -p worker cwd-isolation are all switchable via env (verified 2026-07-03).
-#   · ONLY authors drafts into flow-mvp/_staging; the existing hourly gg-gengrowth-publish lane
-#     (Lane A) picks up ready drafts and upserts them to Supabase. Fully decoupled from publishing.
+#   · ONLY authors drafts into flow-mvp/_staging; publishing still goes through the existing
+#     gg-gengrowth-publish lane (Lane A), and this tick triggers that wrapper after a handoff so
+#     authored drafts do not sit in a "ready but not published" gap until the next timer fire.
 #
 # PUBLISH HANDOFF (the one gengrowth-specific step): the author engine emits `_staging/<PID>-en.md`
 # (+ `-en.manifest.json`, phase2 overall=pass), but the gengrowth publisher's scanReady only consumes
@@ -33,7 +34,8 @@
 # Stop:  launchctl bootout gui/$(id -u)/com.gengrowth.gengrowth-author
 #
 # Knobs: GG_GENGROWTH_AUTHOR_BATCH (default 2, max articles per fire), GG_GENGROWTH_AUTHOR_TIMEOUT
-# (default 1800s per-article hard cap), GG_WINNER_LLM (default claude → `<PID>-claude-v8` handoff tag).
+# (default 1800s per-article hard cap), GG_WINNER_LLM (default claude → `<PID>-claude-v8` handoff tag),
+# GG_GENGROWTH_AUTHOR_AUTOPUBLISH=0 to opt out of immediate publish follow-up.
 set -uo pipefail
 
 export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
@@ -48,6 +50,7 @@ mkdir -p "$LOG_DIR"
 LOG="$LOG_DIR/$(date +%Y-%m-%d).log"
 AUTO="$SCRIPT_DIR/gg-seo-autopilot.mjs"
 NOTIFY="$SCRIPT_DIR/gg-notify.mjs"
+PUBLISH_TICK="$SCRIPT_DIR/gg-gengrowth-publish-tick.sh"
 CLAIMS="$OPS/.autopilot-claims.json"
 
 # ── PID-liveness mutex (macOS has no flock; same robust pattern as gg-seo-author-tick) ──
@@ -154,6 +157,8 @@ has_claim() {
 }
 
 n=0
+HANDOFFS=0
+PUBLISH_FOLLOWUP_ITEMS=0
 while IFS=$'\t' read -r pid kw; do
   [ -z "${pid:-}" ] && continue
   if [ "$n" -ge "$BATCH" ]; then echo "$(date '+%F %T') reached BATCH=$BATCH — remaining items wait for next fire" >> "$LOG"; break; fi
@@ -171,6 +176,7 @@ while IFS=$'\t' read -r pid kw; do
   #     would no-op anyway. Only genuinely fresh items reach authoring.
   if [ -f "$READY_MD" ] && manifest_pass "$READY_MANIFEST"; then
     echo "$(date '+%F %T') $pid ($kw): already has a publish-ready draft — skip (no budget spent)" >> "$LOG"
+    PUBLISH_FOLLOWUP_ITEMS=$((PUBLISH_FOLLOWUP_ITEMS + 1))
     continue
   fi
   if has_claim "$pid"; then
@@ -196,8 +202,10 @@ while IFS=$'\t' read -r pid kw; do
   if [ -f "$EN_MD" ] && manifest_pass "$EN_MANIFEST" && draft_sane "$EN_MD"; then
     cp -f "$EN_MD" "$READY_MD"
     cp -f "$EN_MANIFEST" "$READY_MANIFEST"
+    HANDOFFS=$((HANDOFFS + 1))
+    PUBLISH_FOLLOWUP_ITEMS=$((PUBLISH_FOLLOWUP_ITEMS + 1))
     cut=""; [ "$_rc" -eq 124 ] && cut=" (review cut by ${TICK_TIMEOUT}s cap — draft is phase2-passing, shipped as-is)"
-    echo "$(date '+%F %T') $pid: AUTHORED + handoff → ${pid}-${TAG}.md${cut} — publish lane will pick up" >> "$LOG"
+    echo "$(date '+%F %T') $pid: AUTHORED + handoff → ${pid}-${TAG}.md${cut} — publish follow-up scheduled" >> "$LOG"
     node "$NOTIFY" authored --site gengrowth --detail "$pid $kw — 待 gengrowth publish lane 发布" >/dev/null 2>&1 || true
   elif [ "$_rc" -eq 124 ]; then
     # capped with NO passing draft = genuinely incomplete (killed mid-generation). Alert WITH the pid
@@ -215,6 +223,27 @@ while IFS=$'\t' read -r pid kw; do
     fi
   fi
 done <<< "$ITEMS"
+
+if [ "${GG_GENGROWTH_AUTHOR_AUTOPUBLISH:-1}" != "0" ] && [ "${PUBLISH_FOLLOWUP_ITEMS:-0}" -gt 0 ]; then
+  if [ -f "$PUBLISH_TICK" ]; then
+    PUBLISH_LIMIT="${GG_GENGROWTH_AUTHOR_PUBLISH_LIMIT:-$PUBLISH_FOLLOWUP_ITEMS}"
+    case "$PUBLISH_LIMIT" in ''|*[!0-9]*) PUBLISH_LIMIT="$PUBLISH_FOLLOWUP_ITEMS" ;; esac
+    [ "$PUBLISH_LIMIT" -ge 1 ] 2>/dev/null || PUBLISH_LIMIT=1
+    [ "$PUBLISH_LIMIT" -le 10 ] 2>/dev/null || PUBLISH_LIMIT=10
+
+    echo "$(date '+%F %T') publish follow-up: starting gg-gengrowth-publish-tick.sh (handoffs=$HANDOFFS, ready_items=$PUBLISH_FOLLOWUP_ITEMS, limit=$PUBLISH_LIMIT)" >> "$LOG"
+    if GG_GENGROWTH_PUBLISH_LIMIT="$PUBLISH_LIMIT" bash "$PUBLISH_TICK"; then
+      echo "$(date '+%F %T') publish follow-up: completed via gg-gengrowth-publish-tick.sh" >> "$LOG"
+    else
+      rc=$?
+      echo "$(date '+%F %T') publish follow-up: gg-gengrowth-publish-tick.sh exited rc=$rc — see $HOME/gengrowth-agents/cron-sync/gengrowth-publish/$(date +%Y-%m-%d).log" >> "$LOG"
+      node "$NOTIFY" preflight_fail --lane gengrowth-publish --log "$LOG" >/dev/null 2>&1 || true
+    fi
+  else
+    echo "$(date '+%F %T') publish follow-up: missing $PUBLISH_TICK — cannot close publish loop" >> "$LOG"
+    node "$NOTIFY" preflight_fail --lane gengrowth-publish --log "$LOG" >/dev/null 2>&1 || true
+  fi
+fi
 
 echo "$(date '+%F %T') gengrowth author tick end (attempted=$n)" >> "$LOG"
 node "$SCRIPT_DIR/gg-notify.mjs" heartbeat com.gengrowth.gengrowth-author >/dev/null 2>&1 || true  # 阶段5 lane 心跳

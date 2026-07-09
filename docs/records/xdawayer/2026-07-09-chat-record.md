@@ -1,37 +1,5 @@
 ---
 
-### Q45 — 21:02
-
-**🙋 提问：**
-
-Automation: 自动修复冲突
-Automation ID: gengrowth-vault-git-auto-heal
-Automation memory: $CODEX_HOME/automations/gengrowth-vault-git-auto-heal/memory.md
-Last run: 2026-07-09T12:00:53.525Z (1783598453525)
-
-在本机执行 GenGrowth 多仓库 Obsidian/Git 自愈同步。目标仓库固定为 `/Users/awayer_mini/gengrowth-wiki`、`/Users/awayer_mini/gengrowth-ops`、`/Users/awayer_mini/gengrowth-flow-mvp`。
-
-必须使用已验证的确定性入口，不要绕过脚本手写破坏性 git 操作：
-
-`/usr/bin/python3 /Users/awayer_mini/gengrowth-wiki/tools/scripts/obsidian-vault-git-sync.py --repo /Users/awayer_mini/gengrowth-wiki --repo /Users/awayer_mini/gengrowth-ops --repo /Users/awayer_mini/gengrowth-flow-mvp --verbose`
-
-安全边界：
-- 禁止运行 `git reset --hard`、`git checkout -- <path>`、`git clean`、`rm -rf`、`rsync --delete`，除非用户在当次对话中明确要求。
-- 不要运行 `tools/scripts/frequent-sync.sh`、`tools/scripts/gengrowth-repos-sync.sh` 或 `tools/scripts/_sync-core.sh`，因为这些路径包含镜像删除语义，本任务只做 git 自愈同步。
-- 同步脚本会先 fetch，检查未解决冲突，提交本地非敏感变更，再 rebase/push；只对白名单 JSON 冲突自动合并，其他冲突会中止并报告。不要在脚本中止后自行猜测合并内容。
-- 不打印密钥、token、邮箱密码、service account JSON、private key 或完整凭证 URL。
-
-执行后验证：
-1. 分别在三个仓库运行 `git status --branch --porcelain=v2`、`git rev-list --left-right --count HEAD...origin/main`、`git diff --name-only --diff-filter=U`、`git ls-files -u`。
-2. 回读 `/Users/awayer_mini/gengrowth-ops/.obsidian/plugins/obsidian-git/data.json` 和 `/Users/awayer_mini/gengrowth-flow-mvp/.obsidian/plugins/obsidian-git/data.json`，确认 `autoSaveInterval`、`autoPushInterval`、`autoPullInterval` 为 0，`autoPullOnBoot` 与 `pullBeforePush` 为 false。
-3. 若所有仓库都是 clean 且 ahead/behind 为 `0 0`，简短报告已同步；若脚本输出“需要关注”或存在 unmerged，报告具体仓库和文件路径，不要删除文件。
-
-**🤖 回答：**
-
-按 vault git auto-heal 自动化边界执行：读取 automation memory、项目 `AGENTS.md`、sibling owner profile、reminders、相关记忆与适用安全/验证技能；当前 checkout 缺少 `ai-profile/lynne-soul.md`，已回读 sibling vault 版本，sibling reminders 无待完成项，本地 reminders 有未完成项但本轮未修改。仅运行指定三仓确定性入口，没有使用破坏性 git/filesystem 命令或镜像删除脚本；入口返回 `Obsidian vault git sync: clean`。初始验证显示三个仓库无未解决冲突，三个仓库 `HEAD...origin/main = 0 0`；`gengrowth-ops` 与 `gengrowth-flow-mvp` 的 Obsidian Git 配置均为 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。按记录规则将本轮追加为 Q45，随后只使用同一确定性入口继续收敛并复验。
-
----
-
 ### Q21 — 08:02
 
 **🙋 提问：**

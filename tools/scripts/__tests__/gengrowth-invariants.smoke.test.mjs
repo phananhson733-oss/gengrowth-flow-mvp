@@ -80,8 +80,15 @@ function loadRealDraftRe(src) {
 }
 
 // The autopilot's own pgId / task convention (parseTasks) — the <pageId> half of
-// <pageId>-<model>-v8.md. Mirrors gg-seo-autopilot.mjs parseTasks line.
-const AUTOPILOT_PGID_RE = /(PG-[A-Z]+-\d+)/;
+// <pageId>-<model>-v8.md. Loaded below from the gg-seo-autopilot.mjs parseTasks literal.
+function loadRealAutopilotPgIdRe(src) {
+  const literal = '`?(PG-[A-Z0-9]+-\\d+)`?';
+  assert.ok(
+    src.includes(literal),
+    'gg-seo-autopilot.mjs parseTasks must allow numeric characters in W25 prefixes',
+  );
+  return /(PG-[A-Z0-9]+-\d+)/;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -136,6 +143,9 @@ test('invariant 1: author tick plan parser recognizes alphanumeric W25 prefixes'
 });
 
 test('invariant 1: the autopilot <pageId>-<model>-v8.md convention agrees on the same pageId', () => {
+  const src = readFileSync(AUTOPILOT_SRC_PATH, 'utf8');
+  const AUTOPILOT_PGID_RE = loadRealAutopilotPgIdRe(src);
+
   // The autopilot's parseTasks extracts PG-<PREFIX>-NNN; the worker output is named
   // <pageId>-<model>-v8.md. Assert the canonical filename decomposes consistently:
   // pageId (autopilot side) + '-' + model + '-v8.md' (publisher side).
@@ -147,6 +157,10 @@ test('invariant 1: the autopilot <pageId>-<model>-v8.md convention agrees on the
   // Reconstruct <pageId>-<model>-v8.md and confirm it is exactly the canonical name.
   const model = 'claude';
   assert.equal(`${pageId}-${model}-v8.md`, CANONICAL_NAME, 'naming convention drift between the two files');
+
+  const alphanumericM = '- [ ] `PG-GJ2U-001` google july 2026 update'.match(AUTOPILOT_PGID_RE);
+  assert.ok(alphanumericM, 'autopilot parseTasks must recognize PG-GJ2U-001');
+  assert.equal(alphanumericM[1], 'PG-GJ2U-001');
 });
 
 test('invariant 1: a mangled filename (missing -v8) does NOT match DRAFT_RE', () => {

@@ -221,7 +221,7 @@ function parseTasks(planPath) {
   const tasks = [];
   for (const line of readFileSync(planPath, 'utf8').split('\n')) {
     // - [ ] PG-EMPATH-001 sensitive person   |   - [x] `PG-HOUSE-006` ...
-    const m = line.match(/^\s*-\s*\[( |x)\]\s*`?(PG-[A-Z]+-\d+)`?\s*(.*)$/);
+    const m = line.match(/^\s*-\s*\[( |x)\]\s*`?(PG-[A-Z0-9]+-\d+)`?\s*(.*)$/);
     if (m) tasks.push({ checked: m[1] === 'x', pgId: m[2], keyword: m[3].trim() });
   }
   return tasks;

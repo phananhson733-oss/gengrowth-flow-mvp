@@ -1,17 +1,5 @@
 ---
 
-### Q30 — 14:57
-
-**🙋 提问：**
-
-把 gengrowth 的内容推进上线啊
-
-**🤖 回答：**
-
-执行 Gengrowth 内容上线闭环：未触发 astrologywiki nightly wrapper，改用 Gengrowth lane 的确定性 author/publish wrapper。完成 `PG-WLS-006` / `gpt-5-6-seo`、`PG-WHS-001` / `website-health-score`、`PG-GJ2U-001` / `google-july-2026-update`、`PG-AIS-005` / `ai-seo-audit` 发布；其中 `PG-GJ2U-001` 修正为“官方未确认 July 2026 update，应先核验”的事实安全口径后通过 phase2 与 Codex factual gate，`PG-AIS-005` 通过 `--retry-author --task PG-AIS-005` 从 authoring park 恢复并发布。W25 Gengrowth 六项均已勾选；线上 6 个 URL 均验证 200、自 canonical、title/H1、Article JSON-LD、sitemap 收录；wiki 归档确认在 `gengrowth-wiki/内容资产/gengrowth/2026-07-08/` 与 `2026-07-09/`。相关 tests 通过，`gg-ledger-reconcile` 无漂移，最终无相关进程/锁残留；未使用破坏性命令、未手工改 Sheet、未使用 Google Indexing API。
-
----
-
 ### Q21 — 08:02
 
 **🙋 提问：**
@@ -952,5 +940,17 @@ Last run: 2026-07-09T05:01:22.168Z (1783573282168)
 **🤖 回答：**
 
 按 vault git auto-heal 自动化边界执行：读取 automation memory、项目约束、sibling owner profile/reminders、相关记忆索引，并使用 `superpowers:using-superpowers`、`superpowers:executing-plans`、`superpowers:verification-before-completion` 指导入口选择和完成前核验；当前 checkout 缺少 `ai-profile/lynne-soul.md`，已按历史做法回读 sibling vault 版本，`ai-profile/reminders.md` 有未完成项但本轮未修改。仅运行指定三仓确定性入口，没有使用破坏性 git/filesystem 命令或镜像删除脚本；入口退出码为 0 且无 stdout/stderr。首轮验证显示三个仓库均 `HEAD...origin/main = 0 0`、未合并检查无输出，`gengrowth-ops` 与 `gengrowth-flow-mvp` 的 Obsidian Git 配置项均已关闭：`autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。本轮 record 追加后继续只用同一确定性入口收敛，并以最终复验结果作为完成依据。
+
+---
+
+### Q30 — 14:57
+
+**🙋 提问：**
+
+把 gengrowth 的内容推进上线啊
+
+**🤖 回答：**
+
+执行 Gengrowth 内容上线闭环：未触发 astrologywiki nightly wrapper，改用 Gengrowth lane 的确定性 author/publish wrapper。完成 `PG-WLS-006` / `gpt-5-6-seo`、`PG-WHS-001` / `website-health-score`、`PG-GJ2U-001` / `google-july-2026-update`、`PG-AIS-005` / `ai-seo-audit` 发布；其中 `PG-GJ2U-001` 修正为“官方未确认 July 2026 update，应先核验”的事实安全口径后通过 phase2 与 Codex factual gate，`PG-AIS-005` 通过 `--retry-author --task PG-AIS-005` 从 authoring park 恢复并发布。W25 Gengrowth 六项均已勾选；线上 6 个 URL 均验证 200、自 canonical、title/H1、Article JSON-LD、sitemap 收录；wiki 归档确认在 `gengrowth-wiki/内容资产/gengrowth/2026-07-08/` 与 `2026-07-09/`。相关 tests 通过，`gg-ledger-reconcile` 无漂移，最终无相关进程/锁残留；未使用破坏性命令、未手工改 Sheet、未使用 Google Indexing API。
 
 ---

@@ -105,6 +105,20 @@ test('invariant 1: canonical staging filename matches the real gengrowth DRAFT_R
   assert.equal(m[1], 'PG-WLS-001', 'DRAFT_RE capture group must isolate the pageId');
 });
 
+test('invariant 1: all current W25 gengrowth plan prefixes match the publisher DRAFT_RE', () => {
+  const src = readFileSync(PUBLISH_SRC_PATH, 'utf8');
+  const DRAFT_RE = loadRealDraftRe(src);
+  const names = [
+    'PG-WLS-006-claude-v8.md',
+    'PG-GJ2U-001-claude-v8.md',
+    'PG-AIS-005-claude-v8.md',
+    'PG-WHS-001-claude-v8.md',
+  ];
+  for (const name of names) {
+    assert.ok(DRAFT_RE.test(name), `${name} must be publishable by the gengrowth publisher`);
+  }
+});
+
 test('invariant 1: the autopilot <pageId>-<model>-v8.md convention agrees on the same pageId', () => {
   // The autopilot's parseTasks extracts PG-<PREFIX>-NNN; the worker output is named
   // <pageId>-<model>-v8.md. Assert the canonical filename decomposes consistently:

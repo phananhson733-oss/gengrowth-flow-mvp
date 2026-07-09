@@ -65,7 +65,7 @@ const SITE_HOST = 'https://gengrowth.ai';
 const URL_PATH = '/en/blog/';
 
 // W25+ gengrowth SEO page-id prefixes (see 2026-06-16-W25-gengrowth-blog-output-plan.md).
-const W25_PREFIXES = ['WLS', 'ART', 'SFS', 'EOS', 'AIS', 'TAS', 'SDS', 'B2B', 'CMP', 'SLB', 'SMS', 'BBDM', 'TSWB', 'SPPG', 'AEWG'];
+const W25_PREFIXES = ['WLS', 'ART', 'SFS', 'EOS', 'AIS', 'TAS', 'SDS', 'B2B', 'CMP', 'SLB', 'SMS', 'BBDM', 'TSWB', 'SPPG', 'AEWG', 'GJ2U', 'WHS'];
 const DRAFT_RE = new RegExp(`^(PG-(?:${W25_PREFIXES.join('|')})-\\d+)-[a-z0-9]+-v8\\.md$`, 'i');
 
 function parseArgs(argv) {

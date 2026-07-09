@@ -8,8 +8,6 @@ template: Definition
 tier: T2
 track: 量产线
 page_id: PG-GJ2U-001
-author_id: "marcus-orion"
-author_display_name: "Marcus Orion"
 target_keyword: google july 2026 update
 associated_keywords:
   - google july 2026 update comparison
@@ -19,14 +17,14 @@ associated_keywords:
   - google july 2026 update workflow
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-07-09T06:15:58.142Z
-content_sha256_short: 16e42f8dfc566d4c
+generated_at: 2026-07-09T06:32:54.604Z
+content_sha256_short: 006c1077f07819f9
 phase2_checks: all-pass
 ---
 
 # What to Verify Before Blaming the Google July 2026 Update
 
-## What Is This July Update Question?
+## What Is This July Update Label?
 
 As of July 9, 2026, the phrase **Google July 2026 update** is best treated as a search query and working label, not as a confirmed Google ranking release. Use a repeatable [[<TBD-internal-link: guide to SEO volatility triage>]] before naming a cause. Google's public Search Status Dashboard does not list a July 2026 ranking update in its Ranking history at the time of writing. The latest listed ranking release in that official view is the June 2026 spam update, which began on June 24, 2026 and lasted a little over two days.
 
@@ -77,7 +75,7 @@ When rankings move in July, use a process that works whether or not Google has n
 
 This process keeps the Google July 2026 update question useful without letting it become a guess.
 
-## What Not to Say in a Client Report
+## Common Implementation Misreadings
 
 The biggest risk is over-certainty. Do not tell a client that the Google July 2026 update penalized their site unless Google has confirmed the update and the site's data lines up with the rollout window.
 

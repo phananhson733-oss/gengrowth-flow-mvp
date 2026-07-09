@@ -1214,3 +1214,20 @@ Last run: 2026-07-08T21:30:20.399Z (1783546220399)
 最终发布与回填：`PG-CELEB-043` / `justin-verlander-birth-chart` 与 `PG-CELEB-044` / `jack-antonoff-birth-chart` 均已 done、W22 plan 勾选、publish log 追加、Sheet reconcile `flip=0 review=0`、batch summary 已发。生产验证均为 200、自 canonical、title/H1、Article JSON-LD、sitemap count 1。`PG-WC-045` 仍保留 `needs_human`，原因是 2026-07-06 比赛已发生，pre-match prediction 已过期，不能安全发布。最终 stale-report 为 `inflight=[] staleCount=0`，无本轮应继续的进程或锁。automation memory 已追加新策略：事实/结构/链接类 `needs_human` 不默认终止，优先多方自治复核与最小安全修复；只有 stale/过期、证据不足或需要编造事实时才保留 `needs_human`。
 
 ---
+
+### Q42 — 20:02
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-09T10:00:23.113Z (1783591223113)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+按 topic-register 自动化边界执行：读取 automation memory、项目 `AGENTS.md`、`ai-profile/reminders.md`、相关历史记忆与本地 `gengrowth-topic-register-wrapper-report` 流程；当前 checkout 缺少 `ai-profile/lynne-soul.md`。仅运行 `bash tools/scripts/gg-topic-register-tick.sh`，没有传入手工写入、repair、overwrite 或直接脚本参数。wrapper 退出码为 0，stdout 为空；日志为 `~/gengrowth-agents/cron-sync/topic_register/2026-07-09.log`，本次窗口 `2026-07-09 20:01:42-20:01:46 CST`，最终 `topic-register ok`。本地环境启用 apply mode，`dry_run=false`，`budget_exhausted=false`。`astrologywiki`: candidates=0, updates=0, new_clusters=0, page_ids=[], preprocessor=[], evidence_discovery=[]。`gengrowth`: candidates=0, updates=0, new_clusters=0, page_ids=[], preprocessor=[], evidence_discovery=[]。本次窗口未见失败；未手工改 Sheet、未直接改 task plan、未额外创建 Feishu/Google Doc 报告产物。
+
+---

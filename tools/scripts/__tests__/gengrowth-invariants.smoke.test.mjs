@@ -45,6 +45,7 @@ function findRepoRoot() {
 const REPO = findRepoRoot();
 const PUBLISH_SRC_PATH = REPO && resolve(REPO, 'tools', 'scripts', 'gg-gengrowth-publish.mjs');
 const AUTOPILOT_SRC_PATH = REPO && resolve(REPO, 'tools', 'scripts', 'gg-seo-autopilot.mjs');
+const AUTHOR_TICK_SRC_PATH = REPO && resolve(REPO, 'tools', 'scripts', 'gg-gengrowth-author-tick.sh');
 
 // ── Canonical fixtures ───────────────────────────────────────────────────────
 // A canonical staging filename that MUST match DRAFT_RE: <pageId>-<model>-v8.md where
@@ -88,6 +89,7 @@ test('repo root + shared source files are discoverable', () => {
   assert.ok(REPO, 'could not locate repo root (set GG_REPO_ROOT to the checkout for hermetic runs)');
   assert.ok(existsSync(PUBLISH_SRC_PATH), `missing ${PUBLISH_SRC_PATH}`);
   assert.ok(existsSync(AUTOPILOT_SRC_PATH), `missing ${AUTOPILOT_SRC_PATH}`);
+  assert.ok(existsSync(AUTHOR_TICK_SRC_PATH), `missing ${AUTHOR_TICK_SRC_PATH}`);
 });
 
 test('invariant 1: canonical staging filename matches the real gengrowth DRAFT_RE', () => {
@@ -117,6 +119,20 @@ test('invariant 1: all current W25 gengrowth plan prefixes match the publisher D
   for (const name of names) {
     assert.ok(DRAFT_RE.test(name), `${name} must be publishable by the gengrowth publisher`);
   }
+});
+
+test('invariant 1: author tick plan parser recognizes alphanumeric W25 prefixes', () => {
+  const src = readFileSync(AUTHOR_TICK_SRC_PATH, 'utf8');
+  const literalMatches = src.match(/PG-\[A-Z0-9\]\+-\[0-9\]\+/g) ?? [];
+  assert.ok(
+    literalMatches.length >= 2,
+    'gg-gengrowth-author-tick.sh must allow numeric characters in W25 prefixes while grepping and extracting unchecked plan items',
+  );
+
+  const line = '- [ ] `PG-GJ2U-001` google july 2026 update';
+  const m = line.match(/^- \[ \] *`?(PG-[A-Z0-9]+-[0-9]+)`? *(.*)$/);
+  assert.ok(m, 'PG-GJ2U-001 must parse from a normal unchecked W25 plan row');
+  assert.equal(m[1], 'PG-GJ2U-001');
 });
 
 test('invariant 1: the autopilot <pageId>-<model>-v8.md convention agrees on the same pageId', () => {

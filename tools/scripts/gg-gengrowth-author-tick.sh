@@ -133,8 +133,8 @@ WINNER="${GG_WINNER_LLM:-claude}"
 TAG="${WINNER}-v8"                                                    # publisher consumes <PID>-<llm>-v8.md
 
 # Collect unchecked plan items: "- [ ] `PG-<W25>-NN` keyword..."  →  "PG-<W25>-NN<TAB>keyword"
-ITEMS="$(grep -nE '^- \[ \] *`?PG-[A-Z]+-[0-9]+' "$PLAN" \
-  | sed -E 's/^[0-9]+:- \[ \] *`?(PG-[A-Z]+-[0-9]+)`? *(.*)$/\1\t\2/' \
+ITEMS="$(grep -nE '^- \[ \] *`?PG-[A-Z0-9]+-[0-9]+' "$PLAN" \
+  | sed -E 's/^[0-9]+:- \[ \] *`?(PG-[A-Z0-9]+-[0-9]+)`? *(.*)$/\1\t\2/' \
   | sed -E 's/[[:space:]]*->.*$//; s/`//g')"
 if [ -z "$ITEMS" ]; then echo "$(date '+%F %T') no unchecked gengrowth items — nothing to author" >> "$LOG"; exit 0; fi
 

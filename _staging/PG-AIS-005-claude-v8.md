@@ -36,7 +36,7 @@ An AI SEO audit is **an automated scan that checks a site's technical and on-pag
 
 ## Why It Matters for Your Workflow
 
-An AI SEO audit matters because it decides which repetitive checks you can hand to software and which ones still cost a person's attention — and that split quietly sets how far a small team can scale content before quality slips. This work sits inside the broader [[<TBD-internal-link: pillar guide to scaling SEO delivery without added headcount>]], which maps every task worth automating. Across the agency and SaaS rollouts we've audited, we've found the deciding factor isn't the tool's feature list — it's whether the team knows which findings to act on directly and which to route to a human.
+An AI SEO audit matters because it decides which repetitive checks you can hand to software and which ones still cost a person's attention — and that split quietly sets how far a small team can scale content before quality slips. This work sits inside the broader [[<TBD-internal-link: pillar guide to scaling SEO delivery without added headcount>]], which maps every task worth automating. In practice, the deciding factor isn't the tool's feature list — it's whether the team knows which findings to act on directly and which to route to a human.
 
 Treat the report as a triage layer. It clears the tedious crawl-and-flag work so your specialists spend their hours on intent, positioning, and the calls that actually move revenue. Get the boundary wrong and you tip one of two ways: you drown engineering in low-value tickets, or you trust a machine on decisions it was never built to make. Teams that run this well use the audit to protect throughput, not to outsource thinking.
 
@@ -118,4 +118,4 @@ Run one site through GenGrowth and let it sort your issues into machine-owned fi
 
 - Google Search Central documentation — the reference for how bots crawl and index the pages an audit checks
 - Schema.org specification — defines the structured-data types an audit validates against
-- Based on patterns GenGrowth has observed across agency and SaaS rollouts; no third-party study is cited
+- Based on widely documented SEO auditing best practices; no third-party study is cited

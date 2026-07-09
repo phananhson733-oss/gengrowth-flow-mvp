@@ -898,3 +898,15 @@ Last run: 2026-07-09T04:00:21.922Z (1783569621922)
 按 vault git auto-heal 自动化边界执行：读取 automation memory、项目 `AGENTS.md`、owner profile/reminders，并使用 `superpowers:using-superpowers`、`superpowers:executing-plans`、`superpowers:verification-before-completion` 指导入口选择和完成前核验；`ai-profile/lynne-soul.md` 在当前 checkout 未找到，`ai-profile/reminders.md` 有未完成项但本轮未修改。仅运行指定三仓确定性入口，没有使用破坏性 git/filesystem 命令或镜像删除脚本；入口退出码为 0 且无 stdout/stderr。验证显示三个仓库均 clean，`HEAD...origin/main = 0 0`，未合并检查无输出；`gengrowth-ops` 与 `gengrowth-flow-mvp` 的 Obsidian Git 配置项均已关闭：`autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。本轮 record 追加后继续只用同一确定性入口收敛，并以最终复验结果作为完成依据。
 
 ---
+
+### Q28 — 13:32
+
+**🙋 提问：**
+
+有文章没审核通过吗
+
+**🤖 回答：**
+
+只读核对当前状态和日志后确认：有未通过或未放行条目。astrologywiki 当前仍有 `PG-WC-045` / `mexico-vs-england-astrology-prediction` 为 `needs_human`，原因是 `review[codex] FAIL`：比赛已在 2026-07-06 结束，赛前预测过期，明确 `DO NOT publish`；之前 `PG-CELEB-041` 的审核 blocker 已修复并发布。Gengrowth 当前有 `PG-AIS-005` / `ai-seo-audit` authoring 失败，原因是 orchestrator 3 次尝试加 deterministic repair 后仍未产出草稿；`PG-WLS-006` / `gpt-5-6-seo` 有 publish-ready 草稿，但多次 publish tick 卡在 factual gate 的 `codex exited 3`，属于工具 gate 未跑通而非日志中明确的内容事实 FAIL。`PG-WHS-001` 有 publish-ready 草稿但尚未轮到 publish，`PG-GJ2U-001` 尚未见 author/review 失败记录。最终进程/锁检查无相关 Gengrowth/SEO author/publish 残留。
+
+---

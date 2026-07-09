@@ -45,7 +45,7 @@ The chart looks genuinely different depending on which zodiac you use, and this 
 
 ### How the two systems work
 
-Western astrology reads the chart in the tropical zodiac, which is tied to the seasons and anchored to the spring equinox. That system places her Sun in Virgo. Vedic astrology — *Jyotish*, literally the "science of light" — uses the sidereal zodiac, tied to the fixed stars, and its offset of roughly 24 degrees often shifts a late-Virgo Sun back into Leo. Same person, same sky, two different named signs. Neither is wrong; they simply measure from different starting points.
+Western astrology reads the chart in the tropical zodiac, which is tied to the seasons and anchored to the spring equinox. That system places her Sun in Virgo. Vedic astrology — *Jyotish*, literally the "science of light" — uses the sidereal zodiac, tied to the fixed stars, and its offset of roughly 24 degrees often shifts an early-Virgo Sun back into Leo. Same person, same sky, two different named signs. Neither is wrong; they simply measure from different starting points.
 
 Building on the framework Parashara established and later carried into modern practice by B. V. Raman, the sidereal system also adds timing tools like the *dasha* — planetary periods that divide a life into chapters ruled by different planets. In my own work as a second-generation Jyotish practitioner, I treat neither chart as the "true" one; each is a distinct lens, and quietly blending them is what produces the contradictory placements you see quoted around the web.
 

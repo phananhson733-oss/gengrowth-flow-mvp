@@ -9,6 +9,8 @@ import {
   classifyHeroTheme,
   buildTemplateHeroPrompt,
   buildHeroPlanningRules,
+  buildHeroImageSizingRules,
+  buildIllustrationRunEnv,
 } from '../lib/illustrate.mjs';
 
 test('celebrity birth-chart topics use stylized portrait guidance', () => {
@@ -52,4 +54,37 @@ test('LLM planning rules require specific subject classification before abstract
   assert.match(rules, /relationship-scene/i);
   assert.match(rules, /sports-matchup/i);
   assert.match(rules, /only use abstract-atmospheric/i);
+});
+
+test('image sizing rules document hero and Google structured-data variants', () => {
+  const rules = buildHeroImageSizingRules();
+  assert.match(rules, /1200.x.675/i);
+  assert.match(rules, /1200.x.630/i);
+  assert.match(rules, /1200.x.1200/i);
+  assert.match(rules, /1200.x.900/i);
+  assert.match(rules, /Article JSON-LD/i);
+});
+
+test('flow defaults hero generation to Hermes image2 while allowing overrides', () => {
+  const exists = (p) => p.endsWith('/hermes-agent/.venv/bin/python');
+  const env = buildIllustrationRunEnv({
+    env: { HOME: '/Users/tester' },
+    exists,
+  });
+  assert.equal(env.GG_HERO_PROVIDER, 'hermes-image2');
+  assert.equal(env.GG_HERMES_AGENT_DIR, '/Users/tester/hermes-agent');
+  assert.equal(env.GG_HERMES_PYTHON, '/Users/tester/hermes-agent/.venv/bin/python');
+
+  const override = buildIllustrationRunEnv({
+    env: {
+      HOME: '/Users/tester',
+      GG_HERO_PROVIDER: 'gemini',
+      GG_HERMES_AGENT_DIR: '/custom/hermes',
+      GG_HERMES_PYTHON: '/custom/python',
+    },
+    exists,
+  });
+  assert.equal(override.GG_HERO_PROVIDER, 'gemini');
+  assert.equal(override.GG_HERMES_AGENT_DIR, '/custom/hermes');
+  assert.equal(override.GG_HERMES_PYTHON, '/custom/python');
 });

@@ -239,15 +239,11 @@ test('父环境 GG_LARK_NOTIFY_SILENCE=1 被清洗：批尾汇总绝不能被批
   assert.equal(calls[0].silence, '', '子进程环境里 SILENCE 必须已被清洗');
 });
 
-test('parseParked 容错：冒号开头条目不抛 TypeError、汇总照发', () => {
+test('only parked items stay silent: parseParked remains tolerant but sends no zero-publish summary', () => {
   const c = freshCase({});
   const r = run(['--since', SINCE, '--date', DATE, '--parked', ':needs_human,PG-Y-2:no row'], c);
-  assert.equal(r.status, 0, r.stderr);
-  const calls = notifyCalls(c);
-  assert.equal(calls.length, 1, '有 parked 条目就该发汇总（上线 0 篇 + 暂停清单）');
-  const text = sentText(calls[0]);
-  assert.match(text, /needs_human/);
-  assert.match(text, /PG-Y-2（no row）/);
+  assert.equal(r.status, 2, r.stderr);
+  assert.equal(notifyCalls(c).length, 0, '仅 parked 不得发送“上线 0 篇”中间状态');
 });
 
 test('notify bin 失效（ENOENT）→ exit 3 + 渲染文本直接入 outbox 兜底', () => {

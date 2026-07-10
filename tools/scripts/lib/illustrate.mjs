@@ -7,8 +7,8 @@
 // Hard design rule: illustration is BEST-EFFORT ENRICHMENT and must NEVER block
 // the text publish. Every failure path degrades gracefully —
 //   - LLM planner unavailable/invalid  → deterministic template hero, no inline
-//   - gemini session dead / hero fails  → publish text (+inline) with NO hero,
-//                                          mark needs_hero, set a session cooldown
+//   - hero provider dead / hero fails   → publish text (+inline) with NO hero,
+//                                          mark needs_hero, set a provider cooldown
 //   - hero looks like a diptych         → regenerate once; if still suspect, KEEP
 //                                          the hero and log a warn (never auto-strip
 //                                          a good central-subject hero)
@@ -25,11 +25,29 @@ const ABSTRACT_STYLE = `${BASE_STYLE}, no human faces`;
 
 const IMAGES_SUBDIR = 'public/images/blog';   // single dir for cron-generated assets
 const URL_BASE = '/images/blog';
+const HERO_OPTIMIZE = { heroWidth: 1200, heroHeight: 675, quality: 82 };
+const SEARCH_IMAGE_VARIANTS = [
+  { label: 'social og:image', width: 1200, height: 630, path: 'public/og/articles/<slug>.png' },
+  { label: 'Article JSON-LD square', width: 1200, height: 1200, path: 'public/og/articles/<slug>.1x1.png' },
+  { label: 'Article JSON-LD 4:3', width: 1200, height: 900, path: 'public/og/articles/<slug>.4x3.png' },
+];
 
 function geminiSkillPath() {
   // Same skill the manual backfill used; overridable for the keyed fallback.
   return process.env.GG_GEMINI_SKILL
     || join(process.env.HOME, '.openclaw', 'workspace', 'skills', 'baoyu-danger-gemini-web', 'scripts', 'main.ts');
+}
+
+export function buildIllustrationRunEnv({ env = process.env, exists = existsSync } = {}) {
+  const home = env.HOME || process.env.HOME || '';
+  const hermesAgentDir = env.GG_HERMES_AGENT_DIR || (home ? join(home, 'hermes-agent') : 'hermes-agent');
+  const hermesVenvPython = join(hermesAgentDir, '.venv', 'bin', 'python');
+  return {
+    ...env,
+    GG_HERO_PROVIDER: env.GG_HERO_PROVIDER || 'hermes-image2',
+    GG_HERMES_AGENT_DIR: hermesAgentDir,
+    GG_HERMES_PYTHON: env.GG_HERMES_PYTHON || (exists(hermesVenvPython) ? hermesVenvPython : 'python3'),
+  };
 }
 
 export function classifyHeroTheme({ slug = '', title = '', content = '' } = {}) {
@@ -56,8 +74,17 @@ export function buildHeroPlanningRules() {
     `- country-astrology: clear country, national event, eclipse, or calendar themes. Use a concrete symbolic national/event scene, not a generic nebula.`,
     `- abstract-atmospheric: only use abstract-atmospheric when the article has no concrete person, couple, country, event, or matchup.`,
     `For every non-abstract theme, keep the specific subject matter visible. Never collapse a clear subject into a generic celestial landscape.`,
+    `Use the article brief and converted article content as the source of truth for prompt design; do not reuse a generic abstract prompt when the brief names a concrete person, couple, country, match, event, product, or comparison.`,
     `House style base clause for non-abstract themes: "${BASE_STYLE}"`,
     `House style clause for abstract-atmospheric only: "${ABSTRACT_STYLE}"`,
+  ].join('\n');
+}
+
+export function buildHeroImageSizingRules() {
+  return [
+    `Hero image size contract: generate and wire the article hero as ${HERO_OPTIMIZE.heroWidth} x ${HERO_OPTIMIZE.heroHeight} (16:9), JPEG quality ${HERO_OPTIMIZE.quality}.`,
+    `Search/social image contract is handled by oracle build: keep og:image wide at ${SEARCH_IMAGE_VARIANTS[0].width} x ${SEARCH_IMAGE_VARIANTS[0].height}, and expose Article JSON-LD image variants at ${SEARCH_IMAGE_VARIANTS[1].width} x ${SEARCH_IMAGE_VARIANTS[1].height} plus ${SEARCH_IMAGE_VARIANTS[2].width} x ${SEARCH_IMAGE_VARIANTS[2].height}.`,
+    `Compose hero prompts with square-crop safety: place the main subject inside the central safe area so Google's square preview does not cut away the face, couple, team/matchup, or key symbol.`,
   ].join('\n');
 }
 
@@ -78,7 +105,7 @@ export function buildTemplateHeroPrompt({ title, slug = '', content = '' }) {
   return `An atmospheric painterly editorial scene evoking the theme of "${title}": a serene natural landscape — a still lake, open plain, or misty horizon — under a vast night sky, the subject suggested through soft glowing celestial forms woven into the scene, ${ABSTRACT_STYLE}`;
 }
 
-// ── session cooldown (avoid burning ~90s/tick re-trying a dead Google session) ──
+// ── provider cooldown (avoid burning time re-trying a dead image provider) ──
 function cooldownPath(flowDir) { return join(flowDir, '.gg-cache', 'illustrate-cooldown.json'); }
 function inCooldown(flowDir, now) {
   try {
@@ -110,7 +137,7 @@ function planPromptFor(repo, slug) {
     `  "urlBase": "${URL_BASE}",`,
     `  "articlesDir": "data/articles",`,
     `  "geminiSkill": ${JSON.stringify(geminiSkillPath())},`,
-    `  "optimize": { "heroWidth": 1200, "heroHeight": 675, "quality": 82 },`,
+    `  "optimize": ${JSON.stringify(HERO_OPTIMIZE)},`,
     `  "articles": { "${slug}": { "hero": {...}, "inline": [...] } }`,
     `}`,
     `The article object holds (EN-only since 2026-07-03 — do NOT emit any *Zh keys):`,
@@ -125,6 +152,7 @@ function planPromptFor(repo, slug) {
     ``,
     `HERO PROMPT RULES — the hero must match the article's concrete subject and the site's house style:`,
     buildHeroPlanningRules(),
+    buildHeroImageSizingRules(),
     `Derive a UNIQUE visual idea from what THIS article argues. For clear person/couple/matchup/event topics, keep that subject visible in the scene. Never a chart wheel, never a centred diagram/emblem, never text.`,
     ``,
     `INLINE RULES — include inline ONLY for genuinely data-bearing sections (an enumeration, a comparison, a time-ordered process). Definition/short articles often need 0-1; pillar/guide 2-3. ALL data (names, years, orderings) MUST be faithfully extracted from the article text. afterHeadingEn MUST be a verbatim "## " H2 heading line that exists in the EN content — VERIFY each with: grep -nF '## <heading>' ${join(repo, artRel)}. Drop any anchor you cannot verify.`,
@@ -148,7 +176,7 @@ function templatePlan(repo, slug) {
   } catch { /* use slug */ }
   return {
     imagesDir: IMAGES_SUBDIR, urlBase: URL_BASE, articlesDir: 'data/articles',
-    geminiSkill: geminiSkillPath(), optimize: { heroWidth: 1200, heroHeight: 675, quality: 82 },
+    geminiSkill: geminiSkillPath(), optimize: { ...HERO_OPTIMIZE },
     articles: { [slug]: { hero: {
       prompt: buildTemplateHeroPrompt({ title, slug, content }),
       altEn: `An atmospheric celestial landscape evoking ${title}.`,
@@ -183,6 +211,7 @@ export function illustrate(opts) {
   if (process.env.GG_AUTOPILOT_ILLUSTRATE === '0') { result.note = 'disabled'; return result; }
 
   const run = (cmd, args, o = {}) => execFileSync(cmd, args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], cwd: repo, ...o });
+  const illustrationEnv = buildIllustrationRunEnv();
   const planAbs = join(repo, `scripts/plans/auto-${slug}.json`);
   const planRel = `scripts/plans/auto-${slug}.json`;
   const ILL = join(repo, 'scripts', 'illustrate-article.mjs');
@@ -218,14 +247,14 @@ export function illustrate(opts) {
       catch (e) { log(`illustrate: gen-infographic failed (${String(e.message).slice(0, 80)})`); }
     }
 
-    // 3. hero + wiring. Skip the gemini call if we're in a session cooldown — but
+    // 3. hero + wiring. Skip the hero provider call if we're in a session cooldown — but
     //    STILL wire inline (no network needed) by running with a hero-less plan.
     const attemptHero = !sessionCooled;
-    if (!attemptHero) log('illustrate: gemini session in cooldown → inline-only, hero deferred');
+    if (!attemptHero) log('illustrate: hero provider in cooldown → inline-only, hero deferred');
     const planForRun = attemptHero ? plan : stripHero(plan, slug);
     if (!attemptHero) writeFileSync(planAbs, JSON.stringify(planForRun, null, 2) + '\n');
 
-    try { run('node', [ILL, '--plan', planRel, '--slug', slug]); }
+    try { run('node', [ILL, '--plan', planRel, '--slug', slug], { env: illustrationEnv }); }
     catch (e) { log(`illustrate: illustrate-article exit nonzero (${String(e.message).slice(0, 80)})`); }
 
     // did inline wire?
@@ -251,7 +280,7 @@ export function illustrate(opts) {
         // exists & is the right size: a persistent "seam" is most likely a central
         // subject (false positive), so keep it and flag for human review.
         log(`illustrate: hero QA flagged (${qa.reason}) → regenerating once`);
-        try { run('node', [ILL, '--plan', planRel, '--slug', slug]); } catch { /* keep prior */ }
+        try { run('node', [ILL, '--plan', planRel, '--slug', slug], { env: illustrationEnv }); } catch { /* keep prior */ }
         const qa2 = (existsSync(heroJpg) && statSync(heroJpg).size > 20000) ? heroQa(QA, repo, heroJpg, log) : { ok: false, reason: 'gone' };
         result.hero = existsSync(heroJpg) && statSync(heroJpg).size > 20000;
         result.qaWarn = !qa2.ok;

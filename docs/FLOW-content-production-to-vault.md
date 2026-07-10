@@ -1,6 +1,7 @@
 ---
 title: 内容生产 → 部署 → 收录 → 归档 全流程 Runbook
 date: 2026-06-16
+updated: 2026-07-10
 type: runbook
 status: canonical
 tags:
@@ -54,8 +55,10 @@ astrologywiki.com SEO 文章从选题到上线、收录推送、知识库归档�
 
 ## 阶段 4 — 配图（hero + 内联）
 
-- `lib/illustrate.mjs` `illustrate({repo, slug, flowDir})`，需 `GG_GEMINI_SKILL=~/.claude/skills/baoyu-danger-gemini-web/scripts/main.ts` + 清 `.gg-cache/illustrate-cooldown.json`。
-- hero 1200×675 经 gemini-web 逆向会话（靠 cookie，会话死需用户重导 cookie）；内联 SVG 由 `<oracle>/scripts/gen-infographic.mjs`（sequence/compare/timeline）数据驱动。
+- `lib/illustrate.mjs` `illustrate({repo, slug, flowDir})`，默认把 oracle hero 生成子进程设为 `GG_HERO_PROVIDER=hermes-image2`，通过 Hermes `openai-codex` image provider（`gpt-image-2`）生图；可用 `GG_HERO_PROVIDER=gemini|flux` 显式覆盖。
+- hero 统一 `1200×675`（16:9）写入 `public/images/blog/<slug>.jpg`；oracle build 另外生成搜索/社交图：`1200×630` 宽图用于 `og:image`，`1200×1200` + `1200×900` 用于 Article JSON-LD，避免 Google 方形预览裁切掉主体。
+- 生图 prompt 必须按 brief/正文单独设计：名人 birth chart 用风格化非写真人像，婚礼/合盘用双人关系场景，足球/国家对抗用比赛/国家对抗场景；只有无明确人/关系/国家/事件/对抗题材时才退回抽象星空。
+- 内联 SVG 由 `<oracle>/scripts/gen-infographic.mjs`（sequence/compare/timeline）数据驱动。
 - 计划缓存在 `<oracle>/scripts/plans/auto-<slug>.json`；改了 gen-infographic 后可 `node scripts/gen-infographic.mjs --plan scripts/plans/auto-<slug>.json` **确定性重生成同名 SVG**（不动 hero）。
 - **compare 卡片样式**：金色 accent bar 在卡片**左侧竖条**（非顶部横条）；name 顶部居中。
 

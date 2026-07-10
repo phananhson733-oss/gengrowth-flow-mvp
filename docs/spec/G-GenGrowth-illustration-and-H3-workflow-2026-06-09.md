@@ -1,6 +1,7 @@
 ---
 title: 配图工作流 + H3 叙述墙规则（2026-06-09 沉淀）
 date: 2026-06-09
+updated: 2026-07-10
 type: spec
 status: active
 tags: [workflow, illustration, structure, h3, sop]
@@ -25,13 +26,15 @@ tags: [workflow, illustration, structure, h3, sop]
   - **内联图数量可变**（0/1/2/3…，哪里需要就配），从可渲染类型里选：`sequence` / `compare` / `timeline`；
   - 输出结构化 JSON plan（**双语 afterHeading 锚点 + 双语标签**），年限/数据须核对原文。
 - **② 执行层**：
-  - **hero / 场景图** → `baoyu-danger-gemini-web`（**免 API key**，骑已登录 Google 会话；偶发 "No image returned" 内置 3 次重试）；
+  - **hero / 场景图** → 默认 `GG_HERO_PROVIDER=hermes-image2`，通过本机 Hermes `openai-codex` image provider（`gpt-image-2`）生成；需要时可显式覆盖到 `gemini` / `flux`；
   - **内联信息图** → `scripts/gen-infographic.mjs`（**数据驱动 SVG**，纯形状不依赖系统字形 → 文字 100% 可靠，终端浏览器不缺字）；
   - **wire** → `scripts/illustrate-article.mjs`（hero 双语本地化 alt；内联按 `<slug>-i<idx>-<lang>.svg` 确定性命名插到章节末；hero 失败不跳过 inline）。
 
 ### 硬标准（今天定）
 
 - **hero 比例统一 `1200×675` (16:9)**：`optimize()` 用 cover-resample + center-crop（不失真），被抓取/社交不变形。
+- **搜索缩略图多比例**：oracle build 为每篇文章生成 `1200×630` 宽图（`og:image`）、`1200×1200` 方图与 `1200×900` 4:3 图（Article JSON-LD `image` 数组）。hero prompt 要把主体放在中央安全区，防止 Google 方形预览裁掉人脸/双人关系/球队对抗主体。
+- **brief 专属 hero prompt**：规划层必须先按 brief/正文判题材。名人 birth chart / zodiac-sign 用风格化非写真人像；婚礼、合盘、compatibility 用双人关系场景；足球、World Cup、国家 vs 国家用比赛/国家对抗场景；国家/事件/日历用具体符号场景。只有没有明确主体时，才使用抽象星空/自然隐喻。
 - **内联图手机优先**：SVG 是固定图不能 reflow，超宽横版缩到手机宽（~340px）字会糊到 3-4px。故内联图用**竖版**（左侧 spine + 每项满宽 + 放大字号），手机满宽下主标 ~10-11px 可读。
 - **视觉系统**：深靛蓝星空 panel + 星云辉光 + 金箔奖章节点 + sparkle 装饰 + 双金边（celestial editorial，与 hero 绘画感同调）。
 - **QA gate（不可跳）**：生成后用本地 `python3 -m http.server` + Chrome MCP 截图**逐张视觉验收**（含手机 360px 模拟）；hero 逐张看（diffusion 会出双联拼接等坑，需重生成）。

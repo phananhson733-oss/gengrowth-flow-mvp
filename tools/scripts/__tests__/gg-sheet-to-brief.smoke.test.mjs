@@ -15,6 +15,7 @@ import {
   buildClusterMap,
   buildCtaMap,
   lookupCta,
+  resolveCtaTargetUrl,
   buildTierGateBlock,
   fallbackFrictionThemes,
   composeOverride,
@@ -120,6 +121,42 @@ test('buildCtaMap returns {map, dupes} and keys by "page_role||track"', () => {
   assert.equal(dupes.length, 0);
   assert.ok(map.has('Pillar||量产线'));
   assert.ok(map.has('Series||精修线'));
+});
+
+test('buildCtaMap indexes URL-registry rows by cta_id', () => {
+  const built = buildCtaMap([
+    CTA_HEADER,
+    [
+      'url_tool_birth_chart',
+      'Tool_Page',
+      'Birth Chart Calculator — 所有 CTA 的主目标 URL',
+      'https://astrologywiki.com/en/birth-chart-calculator',
+      'page_view',
+      'url_registry',
+    ],
+  ]);
+  assert.equal(
+    built.registry.get('url_tool_birth_chart').target_url,
+    'https://astrologywiki.com/en/birth-chart-calculator',
+  );
+});
+
+test('resolveCtaTargetUrl resolves Sheet alias "星盘页" through url_tool_birth_chart', () => {
+  const { registry } = buildCtaMap([
+    CTA_HEADER,
+    [
+      'url_tool_birth_chart',
+      'Tool_Page',
+      'Birth Chart Calculator',
+      'https://astrologywiki.com/en/birth-chart-calculator',
+      'page_view',
+      'url_registry',
+    ],
+  ]);
+  assert.equal(
+    resolveCtaTargetUrl('星盘页', registry),
+    'https://astrologywiki.com/en/birth-chart-calculator',
+  );
 });
 
 test('buildCtaMap: first row wins on duplicate (page_role, track), records dupe', () => {
@@ -459,6 +496,25 @@ test('composeOverride: missing CTA emits warning, blanks cta fields', () => {
   const { entry, warnings } = withGgSite(undefined, () => composeOverride(row, makeCtx()));
   assert.equal(entry.cta_text, '');
   assert.ok(warnings.some((w) => w.includes('Wiki')));
+});
+
+test('composeOverride: explicit "星盘页" resolves through CTA URL registry without a missing-role failure', () => {
+  const row = makeRow({ page_role: 'Series', cta_target_url: '星盘页' });
+  const built = buildCtaMap([
+    CTA_HEADER,
+    [
+      'url_tool_birth_chart',
+      'Tool_Page',
+      'Birth Chart Calculator',
+      'https://astrologywiki.com/en/birth-chart-calculator',
+      'page_view',
+      'url_registry',
+    ],
+  ]);
+  const ctx = makeCtx({ ctaMap: built.map, ctaRegistry: built.registry });
+  const { entry, joinFailures } = withGgSite(undefined, () => composeOverride(row, ctx));
+  assert.equal(entry.cta_target_url, 'https://astrologywiki.com/en/birth-chart-calculator');
+  assert.equal(joinFailures.some((failure) => failure.kind === 'page_role'), false);
 });
 
 test('composeOverride: GG_SITE=gengrowth substitutes product CTA for off-host workbook CTA', () => {

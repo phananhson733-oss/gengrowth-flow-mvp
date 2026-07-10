@@ -63,6 +63,25 @@ test('SC8: banned anchor text "click here" → FAIL', () => {
   assert.ok(r.violations.some((v) => /anchor/i.test(`${v.text} ${v.hint}`)));
 });
 
+test('SC8: action CTA pointing at the tutorial → FAIL even when the brief repeats the wrong target', () => {
+  const tutorial = 'https://astrologywiki.com/en/wiki/how-to-read-birth-chart';
+  const r = checkCtaUrl(
+    CTA(`[Generate your free birth chart](${tutorial}) to explore your placements.`),
+    { cta_target_url: tutorial },
+  );
+  assert.equal(r.pass, false);
+  assert.ok(r.violations.some((v) => /birth-chart-calculator/.test(`${v.text} ${v.hint}`)));
+});
+
+test('SC8: instructional CTA may still point at the tutorial', () => {
+  const tutorial = 'https://astrologywiki.com/en/wiki/how-to-read-birth-chart';
+  const r = checkCtaUrl(
+    CTA(`[Read the guide to interpreting your chart](${tutorial}).`),
+    { cta_target_url: tutorial },
+  );
+  assert.equal(r.pass, true, r.note);
+});
+
 test('SC8: no cta_target_url given → backward-compatible (any real URL passes)', () => {
   const r = checkCtaUrl(CTA('Go to https://astrologywiki.com/anything.'));
   assert.equal(r.pass, true, r.note);

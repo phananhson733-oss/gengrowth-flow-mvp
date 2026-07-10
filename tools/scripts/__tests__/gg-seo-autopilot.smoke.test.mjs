@@ -667,6 +667,10 @@ test('--author normalizes blank search_volume before render so newly registered 
     assert.equal(existsSync(join(flow, '_staging', 'PG-TEST-001-en.md')), true, `${r.stdout}${r.stderr}`);
     const override = JSON.parse(readFileSync(join(flow, '.gg-cache', 'overrides', 'PG-TEST-001.json'), 'utf8'));
     assert.equal(override['PG-TEST-001'].search_volume, '0');
+    assert.equal(
+      override['PG-TEST-001'].cta_target_url,
+      'https://astrologywiki.com/en/birth-chart-calculator',
+    );
     assert.match(`${r.stdout}${r.stderr}`, /AUTHORED PG-TEST-001/);
   } finally {
     h.cleanup();

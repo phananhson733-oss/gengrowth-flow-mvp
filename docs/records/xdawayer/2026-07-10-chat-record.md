@@ -856,3 +856,15 @@ Last run: 2026-07-10T08:01:55.095Z (1783670515095)
 **🤖 回答：**
 
 按固定确定性入口执行三仓库 Obsidian/Git 自愈同步；首轮脚本输出 `gengrowth-wiki: clean, rebased`，`gengrowth-flow-mvp: committed 1 path(s), pushed`。首轮验证显示三个仓库无未解决冲突，`HEAD...origin/main = 0 0`，ops 与 flow-mvp 的 Obsidian Git 自动同步字段均为禁用值。追加本 record 后，将继续用同一入口收敛并执行最终验证；全程未运行禁止的破坏性 git/filesystem 命令或镜像删除 wrapper。
+
+---
+
+### Q26 — 17:13
+
+**🙋 提问：**
+
+可以。按照你的建议来。但是这里的名人 birth chart 这个其实是一个特例。我建议在做 brief 或者在做非常明确 d 主题时候的，需要重新来设计这里的 prompt，而不是统一用一个非常抽象 图片。比如说之前的两人结婚，比如说国家的对抗（足球），这些都是非常明确的题材，我们的 promtp 在设计 hero 的时候一定要一直。同时我们的 blog 可以调用 image2 吗，我看我们本地的 hemes 是一个拉起生成 image2 的，可以借用吗
+
+**🤖 回答：**
+
+按 TDD 改造 blog/SEO 图片链路：oracle 新增 `article-image-variants.mjs`，让 `og:image` 保持宽图而 Article JSON-LD 输出 `1x1`、`4x3` 与正文 hero 图数组；`generate-og-images.mjs` 新增 1200×1200 与 1200×900 变体；`illustrate-article.mjs` 新增可选 `GG_HERO_PROVIDER=hermes-image2`，通过 Hermes OpenAI Codex image provider 生成临时 PNG，失败回退 gemini。flow 的 `tools/scripts/lib/illustrate.mjs` 已按题材分类 hero prompt：名人 birth chart 使用风格化肖像，婚礼/合盘使用关系场景，足球/国家对抗使用比赛场景，只有不明确主题才退回抽象星空。验证：oracle Vitest 3 文件 10 测试通过，flow node smoke 3 测试通过，`node scripts/generate-og-images.mjs` 跑通 1050 jobs，并用 `arthur-fery-birth-chart` 样例确认 JSON-LD 图片数组为 `1x1 + 4x3 + hero`。

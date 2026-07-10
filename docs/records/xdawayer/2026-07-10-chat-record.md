@@ -779,3 +779,20 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 GSC 补提一轮：查 9 个候选（跳过重复的 kylian-mbappe），8 个 Google 已自然收录（表状态严重滞后）、仅 novak-djokovic-zodiac-sign 真未收录→已请求编入索引+回填申请时间=2026-07-10+同步+飞书。发现 Mbappé 第 3 个重复页 kylian-mbappe-birth-chart（正确 slug，slugify 修复后 autopilot 07-08 重授）；按 wzb 选择"一致收口→旧 mbappe"，给它加 canonicalPath+sitemap:false 并合并部署（oracle 7624bf9）。三页现全归 mbappe-birth-chart。prod 已验证早先 kylian-mbapp 收口生效（canonical→mbappe+移出sitemap）。根因=选题表同主题多 PID 致复发，已记 memory 待去重。
+
+---
+
+### Q22 — 16:53
+
+**🙋 提问：**
+
+# Files mentioned by the user:
+
+## codex-clipboard-56d1566f-8bdd-473d-a881-2e4a4bb135fb.png: /var/folders/c8/k7q0dcp13rd8590xbtxs_9n80000gn/T/codex-clipboard-56d1566f-8bdd-473d-a881-2e4a4bb135fb.png
+
+## My request for Codex:
+这里的 blog 的图片有问题，在右侧预览的时候，只能看到一半，因为我们的是一个长方形的预览图，而 Google 显示了正方形图。同时我们在做很多的名人的 birth chart 的时候，在做 hero 的时候，可以生成名人的人像。我们可以做一个的风格化（防止我们做不出来真人的效果）
+
+**🤖 回答：**
+
+按项目规则读取 reminders、owner profile fallback、相关 superpowers 技能与记忆索引；检查 flow 配图管线和 oracle 静态 SEO 生成。定位到当前 hero 为 `1200x675` 宽图，oracle 的 `generate-og-images.mjs` 生成 `1200x630` OG 图，`generate-seo-pages.mjs` 将同一宽图用于 `og:image`、`twitter:image` 与 Article JSON-LD `image`；官方 Google Article 结构化数据示例建议同时提供 `1x1`、`4x3`、`16x9` 图片。提出三个方案：只改宽图安全构图、为每篇文章新增方图并让 Article JSON-LD 暴露多比例图、或将名人 birth chart hero 迁移到风格化人像并同步方图；推荐先做“站内 16:9 hero + 1:1 搜索缩略图 + 名人风格化人像 prompt/QA”的小闭环，待用户确认后再按 TDD 改代码并验证。

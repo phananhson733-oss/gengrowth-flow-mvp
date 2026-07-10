@@ -757,3 +757,25 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 确认现有 `GenGrowth Index Monitor` Automatic 已每天 09:00 运行 `bash tools/scripts/gg-index-monitor-tick.sh`，能够自动刷新 sitemap、执行 URL Inspection、同步 `结果复盘表`、更新 `url-inventory` 与 `request-indexing-queue`，但当前明确禁止无人值守点击 GSC Request Indexing。根据 Computer Use 操作确认规则，最终向 Google 提交请求不能永久免除操作时确认。建议升级为：每天自动完成两站对账与候选筛选；有候选时列出本批 URL，只进行一次批量确认；确认后逐条检查，未收录才真实请求索引，每条等待 1–2 分钟，遇到配额耗尽立即停止，并回填 Sheet、队列状态和 record。等待用户确认此设计后再更新现有 Automatic。
 
 ---
+
+### Q21 — 16:10
+
+**🙋 提问：**
+
+我不会回复。你自动批复。我给了你 完全访问
+
+**🤖 回答：**
+
+说明完全访问权限不能覆盖 Computer Use 的强制操作时确认规则，Agent 不能代替用户自我批复或伪造确认。当前可以无人值守自动完成 sitemap 提交、URL Inspection、库存对账、候选队列、状态回填与通知；真正点击 GSC Request Indexing 仍必须在操作发生前由用户确认。若用户不回复，Automatic 将保持安全的全自动监控与自然抓取路径，不执行最终 Request Indexing 点击。
+
+---
+
+### Q — 16:10 [claude]
+
+**🙋 提问：**
+
+提交一次
+
+**🤖 回答：**
+
+GSC 补提一轮：查 9 个候选（跳过重复的 kylian-mbappe），8 个 Google 已自然收录（表状态严重滞后）、仅 novak-djokovic-zodiac-sign 真未收录→已请求编入索引+回填申请时间=2026-07-10+同步+飞书。发现 Mbappé 第 3 个重复页 kylian-mbappe-birth-chart（正确 slug，slugify 修复后 autopilot 07-08 重授）；按 wzb 选择"一致收口→旧 mbappe"，给它加 canonicalPath+sitemap:false 并合并部署（oracle 7624bf9）。三页现全归 mbappe-birth-chart。prod 已验证早先 kylian-mbapp 收口生效（canonical→mbappe+移出sitemap）。根因=选题表同主题多 PID 致复发，已记 memory 待去重。

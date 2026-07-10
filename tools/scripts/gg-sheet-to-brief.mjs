@@ -173,26 +173,42 @@ export function buildCtaMap(rows) {
   // 顺序依赖导致同 Sheet 在不同时间产出不同 CTA。Sheet 维护方应该确保每对 (role, track)
   // 只有一行，否则我们用第一行 + warning。
   const out = new Map();
+  const registry = new Map();
   const dupes = [];
-  if (!rows.length) return { map: out, dupes };
+  if (!rows.length) return { map: out, dupes, registry };
   const idx = indexByHeader(rows[0], CTA_HEADER_MAP);
   for (let i = 1; i < rows.length; i++) {
     const r = rows[i] || [];
     const role = idx.page_role != null ? String(r[idx.page_role] || '').trim() : '';
     const track = idx.track != null ? String(r[idx.track] || '').trim() : '';
-    if (!role) continue;
-    const key = `${role}||${track || '量产线'}`;
     const obj = {};
     for (const [field, colIdx] of Object.entries(idx)) {
       obj[field] = String(r[colIdx] || '').trim();
     }
+    if (obj.cta_id && !registry.has(obj.cta_id)) registry.set(obj.cta_id, obj);
+    if (!role) continue;
+    const key = `${role}||${track || '量产线'}`;
     if (out.has(key)) {
       dupes.push({ key, row: i + 1 });
       continue;
     }
     out.set(key, obj);
   }
-  return { map: out, dupes };
+  return { map: out, dupes, registry };
+}
+
+export function resolveCtaTargetUrl(raw, registry = new Map()) {
+  const value = String(raw || '').trim();
+  if (!value) return '';
+  if (/^https?:\/\//i.test(value)) return value;
+  const aliases = new Map([
+    ['星盘页', 'url_tool_birth_chart'],
+    ['工具页', 'url_tool_birth_chart'],
+    ['birth chart calculator', 'url_tool_birth_chart'],
+  ]);
+  const registryKey = aliases.get(value) || aliases.get(value.toLowerCase()) || value;
+  const found = registry && typeof registry.get === 'function' ? registry.get(registryKey) : null;
+  return found && isCtaUsable(found) ? found.target_url : value;
 }
 
 // CTA 主键查找。优先级（明确，不依赖 Map 迭代顺序）：
@@ -278,7 +294,7 @@ export function loadFrictionThemes(repo, pageId, brief) {
 
 // 单个 row → override entry（核心派生逻辑）
 // 返回 { entry: ... , warnings: [...] } 或 { skip: true, reason: '...' }。
-export function composeOverride(row, { clusterMap, ctaMap, repo, skipNonV8 = false, authorMap = new Map() }) {
+export function composeOverride(row, { clusterMap, ctaMap, ctaRegistry = new Map(), repo, skipNonV8 = false, authorMap = new Map() }) {
   const brief = row.brief || {};
   const pageId = row.page_id;
   if (!pageId) return { skip: true, reason: 'no page_id (sheet col 16 empty and target_keyword blank)' };
@@ -294,6 +310,7 @@ export function composeOverride(row, { clusterMap, ctaMap, repo, skipNonV8 = fal
   const pageRole = String(brief.page_role || '').trim();
   const track = cluster ? cluster.track : '';
   const cta = lookupCta(ctaMap, pageRole, track);
+  const explicitCtaUrl = resolveCtaTargetUrl(brief.cta_target_url, ctaRegistry);
 
   // psych_safety = page OR cluster (codex review: cluster-level psych flag must not be silently dropped).
   // 任一 Y 都 → Y。空 / N / 无效都视作 N。
@@ -325,7 +342,9 @@ export function composeOverride(row, { clusterMap, ctaMap, repo, skipNonV8 = fal
   }
   if (pageRole && !cta) {
     warnings.push(`page_role "${pageRole}" (track=${track || '?'}) not found in CTA Map`);
-    joinFailures.push({ kind: 'page_role', missing: pageRole, track });
+    if (!explicitCtaUrl && !defaultCta()) {
+      joinFailures.push({ kind: 'page_role', missing: pageRole, track });
+    }
   }
   if (template && !/^pillar$|^definition$/i.test(template) && !skipNonV8) {
     warnings.push(`template "${template}" not yet supported by v8 — will fall back to Definition`);
@@ -370,7 +389,7 @@ export function composeOverride(row, { clusterMap, ctaMap, repo, skipNonV8 = fal
   // gengrowth workbook still carries the oracle astrologywiki CTA. When the
   // looked-up URL is missing or off-host, fall back to the site product CTA.
   let ctaText = cta ? cta.cta_text : '';
-  let ctaUrl = cta ? cta.target_url : (brief.cta_target_url || '');
+  let ctaUrl = cta ? cta.target_url : (explicitCtaUrl || brief.cta_target_url || '');
   const _ctaHost = siteCtaHost();
   const _siteCta = defaultCta();
   if (_ctaHost && _siteCta && !(typeof ctaUrl === 'string' && ctaUrl.includes(_ctaHost))) {
@@ -630,6 +649,7 @@ flags:
   for (const w of authorMapWarnings) console.error(`warn: ${w}`);
   const ctaBuildResult = buildCtaMap(ctaRaw);
   const ctaMap = ctaBuildResult.map;
+  const ctaRegistry = ctaBuildResult.registry;
   if (ctaBuildResult.dupes && ctaBuildResult.dupes.length) {
     console.error(`warn: CTA Map has ${ctaBuildResult.dupes.length} duplicate (page_role, track) pairs — first row wins:`);
     for (const d of ctaBuildResult.dupes) console.error(`  - row ${d.row}: ${d.key}`);
@@ -665,6 +685,7 @@ flags:
     const result = composeOverride(rowObj, {
       clusterMap,
       ctaMap,
+      ctaRegistry,
       repo: REPO,
       skipNonV8: !!args.skip_non_v8,
       authorMap,

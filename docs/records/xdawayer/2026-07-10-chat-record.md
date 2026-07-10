@@ -47,7 +47,7 @@ tags:
 > 【本区域在每天最后一次对话结束时生成/更新】
 
 - 要点 1：执行 GenGrowth 三仓库 Obsidian/Git 自愈同步，严格使用指定 `obsidian-vault-git-sync.py` 入口，完成仓库收敛验证，并确认两仓库 Obsidian Git 自动同步字段保持禁用。
-- 要点 2：评估 AstrologyWiki 内容转化需求，确认方向成立但 PRD 范围失控、数据基线过时；定位到量产链默认 CTA 目标仍指向教程页，导致 `oracle/data/articles` 中 132 个文件、187 条动作型 CTA 链接错位，建议先修上游并回填，再做单变量 CTA 实验。
+- 要点 2：评估并完成 AstrologyWiki 内容转化 P0：将 CTA Map 的 `url_tool_birth_chart` 作为主目标，修复量产链回退和语义校验，回填 135 篇文章中的 190 个动作型 CTA；新增导航、Wiki 顶部与滚动 Sticky CTA，并保留名人文章教程次级链接。
 - 要点 3：按 SEO Blog 自动化边界在 22:00 后不启动新 wrapper，只做单执行器、日志、ledger、回填、生产 URL、sitemap 与进程/锁验证。
 - 要点 4：确认 7月9日 astrologywiki 批次中 Justin、Jack、Kate、Ayo、Zendaya 均已上线，并完成 publish log / W22 plan / Sheet reconcile / pending-writeback WAL 回填；旧 Mexico 赛前预测继续保留 `needs_human`。
 - 要点 5：执行并优化 `结果复盘表更新` automatic：`gg-recap-performance` 改为仅在 D14/D30/D60 节点日抓取已收录 URL 的快照，非节点日与已填节点不再每日刷新；同时确认 GSC 索引 Automatic 采用“自动对账与排队 + 每批一次操作时确认 + 逐条真实提交并回填”的设计边界。
@@ -1043,3 +1043,27 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 确认节点应以首次确认收录日为 Day 0。核查发现 `index-tracking` 已维护 `first_indexed_at`：索引监控在首次确认 GSC 已收录时写入且不再覆盖；但当前结果复盘计划仍错误以 `published_at` 计算。建议把日常 D14/D30/D60 严格改为 `first_indexed_at + 14/30/60 天`，缺少该日期则跳过，不回退到发布时间；待用户确认后按测试驱动方式实施并更新 automatic 说明。
+
+---
+
+### Q38 — 21:31
+
+**🙋 提问：**
+
+修复 P0 的问题。同时网站里面涉及到的大部分的工具类或者功能类（非 blog）的 cta 我基本放在 Google sheet 中了：[https://docs.google.com/spreadsheets/d/1CkjOCgYbRfXGYc6l2FJOaxUIzxT0NBVUhUpgCjyzcQc/edit?gid=1120149476#gid=1120149476](https://docs.google.com/spreadsheets/d/1CkjOCgYbRfXGYc6l2FJOaxUIzxT0NBVUhUpgCjyzcQc/edit?gid=1120149476#gid=1120149476)
+
+**🤖 回答：**
+
+以 CTA Map 的 `url_tool_birth_chart` 为事实来源完成 P0：flow 的 CTA registry 现在可将“星盘页”等别名解析到出生星盘计算器；`gg-seo-autopilot` 的中文/空 CTA 回退改为 `https://astrologywiki.com/en/birth-chart-calculator`；结构校验器禁止 Generate/Calculate/Try/生成/计算/试试 等动作型锚文本指向教程页。oracle 新增共享 CTA 链接组件，接入桌面和移动导航、Wiki 文章顶部卡与 400px 显示/100px 收起的 Sticky CTA，名人页保留教程次级链接；GA4 页面分类可识别带语言前缀的工具路由。已精准回填 135 篇文章、190 个错误动作 CTA，保留教学型教程链接。验证：flow 83 条测试通过，oracle P0 14 条测试通过，`npx vite build` 通过，浏览器确认名人文章、移动端和计算器真实渲染。
+
+---
+
+### Q39 — 21:31
+
+**🙋 提问：**
+
+continue
+
+**🤖 回答：**
+
+完成 P0 收尾：更新 OpenSpec 任务和测试目录索引，`git diff --check` 在 flow 与 oracle 均无输出；动作型 CTA 到教程的全量扫描无匹配。未提交或清理 oracle 工作区中与本次无关的既有 OG 图片改动；本地预览服务保留在 `http://127.0.0.1:5173` 供验收。生产构建仅提示既有 `world-cup-2026-astrology-prediction.ts` 重复 `image_alt` 和 bundle 体积警告，不阻断构建。

@@ -900,3 +900,15 @@ image2/Codex provider 可用，默认模型是 gpt-image-2-medium
 **🤖 回答：**
 
 复核 Hermes 本机状态：`./.venv/bin/hermes auth status openai-codex` 返回 `openai-codex: logged in`，而 `./.venv/bin/hermes auth status codex` 返回 `codex: logged out`。修正上一轮判断：image2 adapter 与认证状态应按 `openai-codex` provider id 判断；当前 adapter/单测 OK，未证明的只剩真实 image generation smoke。后续若加 preflight，应检查 `openai-codex` 而不是 `codex`。
+
+---
+
+### Q29 — 17:24
+
+**🙋 提问：**
+
+那么我们的生图，可以使用 image2 吗，比方说接Hermes 呢？
+
+**🤖 回答：**
+
+确认可以使用 image2 接 Hermes：oracle 已有 `GG_HERO_PROVIDER=hermes-image2` provider，调用本地 Hermes `plugins/image_gen/openai-codex` provider；本轮进一步把默认 Python 从普通 `python3` 改为优先 `/Users/awayer_mini/hermes-agent/.venv/bin/python`，避免 cron 环境绕开 Hermes venv，同时保留 `GG_HERMES_PYTHON` 覆盖。验证 `openai-codex` auth 为 logged in，`resolveHermesPythonBin('/Users/awayer_mini/hermes-agent')` 指向 Hermes venv；相关 Vitest 1 文件 5 测试通过。尚未执行真实 image generation smoke，避免未经确认消耗生成额度。

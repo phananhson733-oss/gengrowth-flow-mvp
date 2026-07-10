@@ -1186,3 +1186,28 @@ Last run: 2026-07-09T21:31:55.935Z (1783632715935)
 **🤖 回答：**
 
 在 oracle 分支 `codex/wiki-content-conversion-p1-p2` 完成 P1/P2：新增文章中段 `article_inline` 出生星盘 CTA（复用 CTA Map 本地化计算器路径与归因）、作者与 Updated 编辑信号、真实 H2/H3 派生的稳定锚点和页内目录（排除 FAQ/Sources）；SPA 与静态 SEO 生成器共用文章结构模型并重生成 467 URL。未为 SEO 虚构 H3 或 FAQ，复用 flow 的长叙述 H3、真实 PAA FAQ 与 FAQ 内禁 H3 质量门槛。验证：oracle 定向 Vitest 57/57、flow 结构守卫 60/60、`npx vite build` 与 `git diff --check` 通过；静态扫描 350 篇文章均含目录与中段 CTA，动作 CTA 指向教程=0；390px 移动端确认目录/CTA 同宽、链接 `/en/birth-chart-calculator` 与 Updated 信号正常。
+
+---
+
+### Q44 — 22:39
+
+**🙋 提问：**
+
+[flow] 批次汇总 2026-07-10：上线 0 篇（已逐篇线上核实）
+暂停待人工 5 篇：PG-CELEB-047（authoring: CTA Map gap — CTA Map has 37 duplicate (page_role, track) pairs — first row wins:）、PG-CELEB-048（authoring: CTA Map gap — CTA Map has 37 duplicate (page_role, track) pairs — first row wins:）、PG-VEDIC-006（authoring: CTA Map gap — CTA Map has 37 duplicate (page_role, track) pairs — first row wins:）、PG-CELEB-049（authoring: CTA Map gap — CTA Map has 37 duplicate (page_role, track) pairs — first row wins:）、PG-CELEB-050（authoring: CTA Map gap — CTA Map has 37 duplicate (page_role, track) pairs — first row wins:） 不需要这种中间状态
+
+**🤖 回答：**
+
+定位到 `gg-batch-summary` 会把仅 `needs_human` 的窗口渲染为“上线 0 篇”通知；开始调整通知边界，但随后收到要求优先完成修复与上线，因此未把静默通知当作独立终点。
+
+---
+
+### Q45 — 22:41
+
+**🙋 提问：**
+
+你的目标是要上线啊，为什么会直接结束了呢？？？？有问题要修复啊
+
+**🤖 回答：**
+
+确认正确目标是修复后继续发布，而不是仅隐藏中间状态。根因：nightly wrapper 未先调用已有的 `--auto-retry-parks`，且 CTA Map 的“duplicate / first row wins”桥接告警被归为永久人工项，导致后续运行跳过。已修改 `tools/scripts/lib/park-classify.mjs` 将该精确桥接告警归入有 CAP/backoff 的 transient；`tools/scripts/gg-nightly-seo.sh` 在任务扫描前调用 `--auto-retry-parks`；`tools/scripts/gg-batch-summary.mjs` 对无上线 URL 的窗口静默，永久 park 由 auto-retry 单独去重发终态告警。验证：park 分类/重试 16/16、CTA bridge 55/55、仅 parked CLI 退出 2 且不发送、wrapper `bash -n` 通过。未启动新 wrapper，因为修改时已过 22:00；当前待发布草稿仍被 `/Users/awayer_mini/oracle` 的 2,770 项 tracked local changes 安全拦截，未执行破坏性清理。

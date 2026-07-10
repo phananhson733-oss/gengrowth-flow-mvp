@@ -936,3 +936,20 @@ image2/Codex provider 可用，默认模型是 gpt-image-2-medium
 **🤖 回答：**
 
 已将图片与生图策略写入 flow：`tools/scripts/lib/illustrate.mjs` 新增 hero 尺寸合同 `1200×675`、搜索/结构化数据图尺寸规则 `1200×630` / `1200×1200` / `1200×900`，并把 brief/正文题材化 prompt 规则写入 planner；flow 调 oracle `illustrate-article.mjs` 时默认注入 `GG_HERO_PROVIDER=hermes-image2`、`GG_HERMES_AGENT_DIR` 与 Hermes venv Python，仍允许 env 显式覆盖到 gemini/flux。同步更新 `docs/FLOW-content-production-to-vault.md` 与 `docs/spec/G-GenGrowth-illustration-and-H3-workflow-2026-06-09.md`，说明 image2 默认、图片尺寸、多比例搜索图和 brief 专属 hero prompt。验证：`node --test tools/scripts/__tests__/lib-illustrate.smoke.test.mjs` 5 tests 全通过，`git diff --check` 无输出。
+
+---
+
+### Q32 — 17:33
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: 2026-07-09T21:01:55.793Z (1783630915793)
+
+Run the deterministic fixed-row index repair workflow through `bash tools/scripts/gg-index-repair-resubmit-tick.sh`. The wrapper loads the local gg environment, loops the configured products (`GG_INDEX_MONITOR_PRODUCTS`, defaulting to astrologywiki and gengrowth), processes rows marked `已修复`, syncs `结果复盘表`, and refreshes `request-indexing-queue` in each product Google Sheet. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, do not click Search Console Request Indexing unattended, and do not create Feishu or Google Doc report artifacts. After the wrapper exits, summarize per-product `process-fixed`, `sync-recap`, `sync-request-queue` counts visible in the log, plus any failures.
+
+**🤖 回答：**
+
+执行确定性入口 `bash tools/scripts/gg-index-repair-resubmit-tick.sh`，wrapper exit `0` 且 stdout 为空；本次 dated log 为 `/Users/awayer_mini/gengrowth-agents/cron-sync/index_repair_resubmit/2026-07-10.log`，窗口 `2026-07-10 17:32:23` 至 `17:32:51 CST`，最终行为 `index repair-resubmit ok`。日志计数：`astrologywiki` 为 `process-fixed fixed=0 resubmitted=0`、`sync-recap en_rows=224 appended=0 updated=0 skipped=224`、`sync-request-queue rows=17 P0=0 P1=1 P2=6 P3=10`；`gengrowth` 为 `process-fixed fixed=0 resubmitted=0`、`sync-recap en_rows=60 appended=0 updated=41 skipped=19`、`sync-request-queue rows=6 P0=0 P1=0 P2=0 P3=6`。failure keyword 检查无 `failed/failure/error/exception/invalid/unauthorized/forbidden/timeout/traceback/nonzero rc` 命中；未使用普通文章 Google Indexing API、未无人值守点击 GSC Request Indexing、未创建 Feishu 或 Google Doc 报告产物。已追加 automation memory。

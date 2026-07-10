@@ -776,7 +776,7 @@ function doAuthor(o = {}) {
     // English template (articles are EN-only).
     if (/[㐀-鿿]/.test(entry.cta_text || '') || !(entry.cta_text || '').trim()) {
       if (!/^https?:\/\//.test(entry.cta_target_url || '')) {
-        entry.cta_target_url = 'https://astrologywiki.com/en/wiki/how-to-read-birth-chart';
+        entry.cta_target_url = 'https://astrologywiki.com/en/birth-chart-calculator';
       }
       entry.cta_text = `Generate your free birth chart to explore ${cleanEntity}.`;
     }

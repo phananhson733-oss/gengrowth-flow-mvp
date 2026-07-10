@@ -877,6 +877,8 @@ const CTA_URL_GLOBAL_REGEX = /https?:\/\/[^\s)\]]+/gi;
 // "read more". Match a markdown link whose anchor IS one of these.
 const CTA_BANNED_ANCHORS = ['here', 'click here', 'read more', 'this link', '点击这里', '这里', '阅读更多', '了解更多', '点这里'];
 const MD_LINK_REGEX = /\[([^\]]+)\]\(([^)]+)\)/g;
+const CTA_TOOL_ACTION_ANCHOR_REGEX = /^(?:(?:generate|calculate|try|create|build|get)\b|生成|计算|试试)/i;
+const BIRTH_CHART_TUTORIAL_PATH_REGEX = /\/(?:en|zh)\/wiki\/how-to-read-birth-chart\/?$/i;
 
 // Canonical URL for comparison: lowercase, drop scheme/protocol-relative noise,
 // strip trailing slash + a trailing #fragment. Conservative — only normalizes
@@ -943,6 +945,16 @@ export function checkCtaUrl(draft, ctx = {}) {
           line: l.n,
           text: `banned CTA anchor "${m[1].trim()}"`,
           hint: 'CTA 锚文本禁用 "here"/"click here"/"read more"/"这里" 等空泛词（SOP §9），改用描述目标的语义锚文本',
+        });
+      }
+      if (
+        CTA_TOOL_ACTION_ANCHOR_REGEX.test(m[1].trim()) &&
+        BIRTH_CHART_TUTORIAL_PATH_REGEX.test(m[2].trim())
+      ) {
+        violations.push({
+          line: l.n,
+          text: `action CTA anchor "${m[1].trim()}" points at the birth-chart tutorial`,
+          hint: 'Generate / Calculate / Try 等动作型 CTA 必须指向 /birth-chart-calculator；教程页只可用于“Read the guide”类说明链接（工具落地页 SOP §2.4）',
         });
       }
     }

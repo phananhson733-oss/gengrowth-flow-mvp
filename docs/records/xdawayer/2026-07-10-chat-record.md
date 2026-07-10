@@ -50,7 +50,7 @@ tags:
 - 要点 2：评估 AstrologyWiki 内容转化需求，确认方向成立但 PRD 范围失控、数据基线过时；定位到量产链默认 CTA 目标仍指向教程页，导致 `oracle/data/articles` 中 132 个文件、187 条动作型 CTA 链接错位，建议先修上游并回填，再做单变量 CTA 实验。
 - 要点 3：按 SEO Blog 自动化边界在 22:00 后不启动新 wrapper，只做单执行器、日志、ledger、回填、生产 URL、sitemap 与进程/锁验证。
 - 要点 4：确认 7月9日 astrologywiki 批次中 Justin、Jack、Kate、Ayo、Zendaya 均已上线，并完成 publish log / W22 plan / Sheet reconcile / pending-writeback WAL 回填；旧 Mexico 赛前预测继续保留 `needs_human`。
-- 要点 5：执行 `gg-recap-performance-tick.sh` 更新结果复盘表；同时确认 GSC 索引 Automatic 采用“自动对账与排队 + 每批一次操作时确认 + 逐条真实提交并回填”的设计边界。
+- 要点 5：执行并优化 `结果复盘表更新` automatic：`gg-recap-performance` 改为仅在 D14/D30/D60 节点日抓取已收录 URL 的快照，非节点日与已填节点不再每日刷新；同时确认 GSC 索引 Automatic 采用“自动对账与排队 + 每批一次操作时确认 + 逐条真实提交并回填”的设计边界。
 
 ---
 
@@ -1019,3 +1019,15 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 按确定性入口执行 `bash tools/scripts/gg-topic-register-tick.sh`，未传手动写入、repair、overwrite 或直接脚本 flags。读取并隔离 `/Users/awayer_mini/gengrowth-agents/cron-sync/topic_register/2026-07-10.log` 的本次窗口 `2026-07-10 21:06:56-21:12:10 CST`，wrapper exit `0`，最终 `topic-register ok`。本地环境启用 apply，日志命令为 `node .../gg-topic-register.mjs --product all --limit 10 --llm claude --discover-evidence --apply --run-budget-ms 840000`，`dry_run=false`、`budget_exhausted=false`。`astrologywiki` 为 candidates=5、updates=5、new_clusters=0、page_ids=`PG-CELEB-047`, `PG-CELEB-048`, `PG-VEDIC-006`, `PG-CELEB-049`, `PG-CELEB-050`，preprocessor statuses=`ok`, `v1_fallback`, `v1_fallback`, `v1_fallback`, `v1_fallback`；evidence_discovery 中 `PG-CELEB-047` 为 ok（7 titles / 6 domains），其余 4 个为 insufficient（0 / 0）。`gengrowth` 为 candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]、evidence_discovery=[]。未见失败；仅运行 wrapper，未手改 Google Sheet，未直接编辑任务计划，未额外创建 Feishu 或 Google Doc 报告产物。已追加 automation memory。
+
+---
+
+### Q36 — 21:19
+
+**🙋 提问：**
+
+这个结果复盘表更新这里，需要优化一下：理论上我们在 14/30/60 天的时候有收录的数据了以后，就不需要再更新了，因为这个只需要记录 瞬时的数据，即记录 14/30/60 天（收录以后）当天的数据。所以这里应该也不要去每天更新，而是根据当前天数然后去反馈对应哪些被收录的 url 是距离 14/30/60 天的节点，然后去爬取这些 url 的数据记录即可，有没有 疑问。优化这个 automatic：结果复盘表 的自动化
+
+**🤖 回答：**
+
+确认没有业务疑问，按“节点日快照”优化结果复盘表 automatic。`tools/scripts/gg-recap-performance.mjs` 的计划逻辑已落地为：日常模式只处理 `age === 14/30/60`、已收录、且对应节点指标仍待填的 URL；非节点行、未收录行、已填节点不再每日刷新。显式补漏/复核仍保留在 wrapper 的 `--fill-pending` / `--verify-zero-metrics` 模式中。同步更新 `gg-recap-performance-tick.sh` 的注释与通知文案，并用 `automation_update` 更新 Codex automatic `gengrowth-recap-performance` prompt，明确 daily job 只抓 D14/D30/D60 节点快照。相关 vault backup 提交为 `0b3cd8d0`（核心逻辑与测试）和 `77324d56`（说明/通知/测试修正）。验证通过：`node --test tools/scripts/__tests__/gg-recap-performance.smoke.test.mjs tools/scripts/__tests__/lib-gg-notify.smoke.test.mjs` 共 26 项通过；`node --check tools/scripts/gg-recap-performance.mjs`、`bash -n tools/scripts/gg-recap-performance-tick.sh`、`git diff --check` 均通过。

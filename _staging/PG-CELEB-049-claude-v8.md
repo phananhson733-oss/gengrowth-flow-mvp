@@ -1,28 +1,3 @@
----
-title: Antoine Griezmann Birth Chart
-slug: antoine-griezmann-birth-chart
-date: 2026-07-10
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T2
-track: 量产线
-page_id: PG-CELEB-049
-author_id: "marcus-orion"
-author_display_name: "Marcus Orion"
-target_keyword: Antoine Griezmann birth chart
-associated_keywords:
-  - Antoine Griezmann birth chart meaning
-  - Antoine Griezmann birth chart astrology
-  - Antoine Griezmann birth chart zodiac
-  - Antoine Griezmann birth chart interpretation
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-07-10T15:31:20.147Z
-content_sha256_short: 2d8051adaf4f53ee
-phase2_checks: all-pass
----
-
 # Reading the Antoine Griezmann Birth Chart Beyond the Sun-Sign Label
 
 ## What Is the Antoine Griezmann Birth Chart?

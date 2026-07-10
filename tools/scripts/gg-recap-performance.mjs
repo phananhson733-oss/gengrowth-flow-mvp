@@ -228,6 +228,26 @@ function needsMetricWindow(recap = {}, milestone, { verifyZeroMetrics = false } 
   return false;
 }
 
+function looksIndexed(row = {}) {
+  const status = String(row.current_gsc_status || row['索引修复状态'] || row.fix_status || '').trim();
+  const verdict = String(row.gsc_verdict || '').trim();
+  const monitor = String(row.monitor_status || '').trim();
+  const day14Indexed = String(row.day14_收录 || row['day14_收录'] || '').trim().toUpperCase() === 'Y';
+  const canonicalDuplicate = /alternate page with proper canonical tag|duplicate|canonical/i.test(status);
+  return day14Indexed ||
+    monitor === 'indexed' ||
+    (/已收录/.test(status) && !/未收录/.test(status)) ||
+    (
+      !canonicalDuplicate &&
+      (verdict === 'PASS' || /\bindexed\b/i.test(status)) &&
+      !/not indexed/i.test(status)
+    );
+}
+
+function isIndexedPerformanceTarget(tracking = {}, recap = {}) {
+  return looksIndexed(tracking) || looksIndexed(recap);
+}
+
 function recapComparable(row) {
   return JSON.stringify(RECAP_HEADER.map((h) => row?.[h] ?? ''));
 }
@@ -382,7 +402,9 @@ export function buildPerformancePlan({
         });
         continue;
       }
-      if (age < days) continue;
+      if (age !== days) continue;
+      if (!isIndexedPerformanceTarget(tracking, recap)) continue;
+      if (!needsMetricWindow(recap, milestone)) continue;
       windows.push({
         milestone,
         days,

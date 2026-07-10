@@ -25,23 +25,38 @@ import {
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SCRIPTS = join(__dirname, '..');
 
-test('buildPerformancePlan selects D14/D30/D60 windows from published tracking rows', () => {
+test('buildPerformancePlan selects only exact indexed D14/D30/D60 milestone windows', () => {
   const plan = buildPerformancePlan({
-    now: new Date('2026-07-07T00:00:00Z'),
+    now: new Date('2026-07-15T00:00:00Z'),
     trackingRows: [{
-      page_id: 'PG-D36',
-      url: 'https://www.astrologywiki.com/en/wiki/bing-hastert-birth-chart',
-      published_at: '2026-06-01',
+      page_id: 'PG-D14',
+      url: 'https://www.astrologywiki.com/en/wiki/day-14-indexed',
+      published_at: '2026-07-01',
       monitor_status: 'indexed',
     }, {
-      page_id: 'PG-D12',
-      url: 'https://www.astrologywiki.com/en/wiki/too-new',
-      published_at: '2026-06-25',
+      page_id: 'PG-D30',
+      url: 'https://www.astrologywiki.com/en/wiki/day-30-indexed',
+      published_at: '2026-06-15',
       monitor_status: 'indexed',
     }, {
-      page_id: 'PG-D66',
-      url: 'https://www.astrologywiki.com/en/wiki/old-page',
-      published_at: '2026-05-01',
+      page_id: 'PG-D60',
+      url: 'https://www.astrologywiki.com/en/wiki/day-60-indexed',
+      published_at: '2026-05-16',
+      monitor_status: 'indexed',
+    }, {
+      page_id: 'PG-D31',
+      url: 'https://www.astrologywiki.com/en/wiki/not-a-node-today',
+      published_at: '2026-06-14',
+      monitor_status: 'indexed',
+    }, {
+      page_id: 'PG-D14-NOT-INDEXED',
+      url: 'https://www.astrologywiki.com/en/wiki/day-14-not-indexed',
+      published_at: '2026-07-01',
+      monitor_status: 'monitoring',
+    }, {
+      page_id: 'PG-D14-FILLED',
+      url: 'https://www.astrologywiki.com/en/wiki/day-14-already-filled',
+      published_at: '2026-07-01',
       monitor_status: 'indexed',
     }, {
       page_id: 'PG-ZH',
@@ -51,12 +66,35 @@ test('buildPerformancePlan selects D14/D30/D60 windows from published tracking r
     }],
     recapRows: [{
       _rowNumber: 9,
-      page_id: 'PG-D36',
-      url: 'https://www.astrologywiki.com/en/wiki/bing-hastert-birth-chart',
+      page_id: 'PG-D14',
+      url: 'https://www.astrologywiki.com/en/wiki/day-14-indexed',
+      day14_收录: 'Y',
     }, {
       _rowNumber: 10,
-      page_id: 'PG-D66',
-      url: 'https://www.astrologywiki.com/en/wiki/old-page',
+      page_id: 'PG-D30',
+      url: 'https://www.astrologywiki.com/en/wiki/day-30-indexed',
+      day14_收录: 'Y',
+    }, {
+      _rowNumber: 11,
+      page_id: 'PG-D60',
+      url: 'https://www.astrologywiki.com/en/wiki/day-60-indexed',
+      day14_收录: 'Y',
+    }, {
+      _rowNumber: 12,
+      page_id: 'PG-D31',
+      url: 'https://www.astrologywiki.com/en/wiki/not-a-node-today',
+      day14_收录: 'Y',
+    }, {
+      _rowNumber: 13,
+      page_id: 'PG-D14-NOT-INDEXED',
+      url: 'https://www.astrologywiki.com/en/wiki/day-14-not-indexed',
+      day14_收录: 'N',
+    }, {
+      _rowNumber: 14,
+      page_id: 'PG-D14-FILLED',
+      url: 'https://www.astrologywiki.com/en/wiki/day-14-already-filled',
+      day14_收录: 'Y',
+      day14_impressions: 8,
     }],
   });
 
@@ -64,21 +102,20 @@ test('buildPerformancePlan selects D14/D30/D60 windows from published tracking r
     page_id: item.page_id,
     windows: item.windows.map((w) => `${w.milestone}:${w.startDate}..${w.endDate}`),
   })), [{
-    page_id: 'PG-D36',
-    windows: ['day14:2026-06-01..2026-06-14', 'day30:2026-06-01..2026-06-30'],
+    page_id: 'PG-D14',
+    windows: ['day14:2026-07-01..2026-07-14'],
   }, {
-    page_id: 'PG-D66',
-    windows: [
-      'day14:2026-05-01..2026-05-14',
-      'day30:2026-05-01..2026-05-30',
-      'day60:2026-05-01..2026-06-29',
-    ],
+    page_id: 'PG-D30',
+    windows: ['day30:2026-06-15..2026-07-14'],
+  }, {
+    page_id: 'PG-D60',
+    windows: ['day60:2026-05-16..2026-07-14'],
   }]);
 });
 
 test('buildPerformancePlan fillPending pulls pending cells with trailing windows', () => {
   const plan = buildPerformancePlan({
-    now: new Date('2026-07-07T00:00:00Z'),
+    now: new Date('2026-07-01T00:00:00Z'),
     fillPending: true,
     trackingRows: [{
       page_id: 'PG-PENDING',
@@ -479,13 +516,13 @@ test('runRecapPerformance updates recap rows and writes a Markdown task list wit
       url: 'https://www.astrologywiki.com/en/wiki/bing-hastert-birth-chart',
       day14_收录: 'Y',
       索引修复状态: '已收录',
+      day14_impressions: 7281,
       备注: 'manual',
     }],
     fetchGscUrlMetrics: async (token, site, url, window) => {
       calls.push(['gsc', token, site, url, window.milestone]);
-      return window.milestone === 'day14'
-        ? { impressions: 7281, clicks: 29, ctr: 0.004, bestQuery: 'bing hastert birth chart', bestPosition: 8.2, top50Count: 4 }
-        : { impressions: 9130, clicks: 41, ctr: 0.0045, bestQuery: 'bing hastert birth chart', bestPosition: 7.4, top50Count: 6 };
+      assert.equal(window.milestone, 'day30');
+      return { impressions: 9130, clicks: 41, ctr: 0.0045, bestQuery: 'bing hastert birth chart', bestPosition: 7.4, top50Count: 6 };
     },
     fetchGa4PageViews: async () => {
       calls.push(['ga4']);
@@ -507,11 +544,12 @@ test('runRecapPerformance updates recap rows and writes a Markdown task list wit
   assert.equal(batch[4].length, 1);
   assert.equal(batch[4][0].merged.day14_impressions, 7281);
   assert.equal(batch[4][0].merged.day30_clicks, 41);
+  assert.deepEqual(calls.filter((call) => call[0] === 'gsc').map((call) => call[4]), ['day30']);
   assert.equal(batch[4][0].merged.决策, '调整');
   assert.match(batch[4][0].merged.备注, /Blog优化规范v1\.0/);
   const write = calls.find((call) => call[0] === 'writeFile');
   assert.ok(write, 'expected markdown report write');
-  assert.match(write[1], new RegExp(`${RECAP_PERFORMANCE_REPORT_DIR}/2026-07-07-astrologywiki-optimization-tasks.md$`));
+  assert.match(write[1], new RegExp(`${RECAP_PERFORMANCE_REPORT_DIR}/2026-07-01-astrologywiki-optimization-tasks.md$`));
   assert.match(write[2], /【P0 立即处理】/);
   assert.match(write[2], /FAQ schema/);
   assert.equal(calls.some((call) => /publish|author|deploy/i.test(String(call[0]))), false);

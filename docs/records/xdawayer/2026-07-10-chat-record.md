@@ -1211,3 +1211,35 @@ Last run: 2026-07-09T21:31:55.935Z (1783632715935)
 **🤖 回答：**
 
 确认正确目标是修复后继续发布，而不是仅隐藏中间状态。根因：nightly wrapper 未先调用已有的 `--auto-retry-parks`，且 CTA Map 的“duplicate / first row wins”桥接告警被归为永久人工项，导致后续运行跳过。已修改 `tools/scripts/lib/park-classify.mjs` 将该精确桥接告警归入有 CAP/backoff 的 transient；`tools/scripts/gg-nightly-seo.sh` 在任务扫描前调用 `--auto-retry-parks`；`tools/scripts/gg-batch-summary.mjs` 对无上线 URL 的窗口静默，永久 park 由 auto-retry 单独去重发终态告警。验证：park 分类/重试 16/16、CTA bridge 55/55、仅 parked CLI 退出 2 且不发送、wrapper `bash -n` 通过。未启动新 wrapper，因为修改时已过 22:00；当前待发布草稿仍被 `/Users/awayer_mini/oracle` 的 2,770 项 tracked local changes 安全拦截，未执行破坏性清理。
+
+---
+
+### Q46 — 23:03
+
+**🙋 提问：**
+
+Automation: 自动修复冲突
+Automation ID: gengrowth-vault-git-auto-heal-8655c84281d6
+Automation memory: $CODEX_HOME/automations/gengrowth-vault-git-auto-heal-8655c84281d6/memory.md
+Last run: 2026-07-10T14:01:56.198Z (1783692116198)
+
+在本机执行 GenGrowth 多仓库 Obsidian/Git 自愈同步。目标仓库固定为 `/Users/awayer_mini/gengrowth-wiki`、`/Users/awayer_mini/gengrowth-ops`、`/Users/awayer_mini/gengrowth-flow-mvp`。
+
+必须使用已验证的确定性入口，不要绕过脚本手写破坏性 git 操作：
+
+`/usr/bin/python3 /Users/awayer_mini/gengrowth-wiki/tools/scripts/obsidian-vault-git-sync.py --repo /Users/awayer_mini/gengrowth-wiki --repo /Users/awayer_mini/gengrowth-ops --repo /Users/awayer_mini/gengrowth-flow-mvp --verbose`
+
+安全边界：
+- 禁止运行 `git reset --hard`、`git checkout -- <path>`、`git clean`、`rm -rf`、`rsync --delete`，除非用户在当次对话中明确要求。
+- 不要运行 `tools/scripts/frequent-sync.sh`、`tools/scripts/gengrowth-repos-sync.sh` 或 `tools/scripts/_sync-core.sh`，因为这些路径包含镜像删除语义，本任务只做 git 自愈同步。
+- 同步脚本会先 fetch，检查未解决冲突，提交本地非敏感变更，再 rebase/push；只对白名单 JSON 冲突自动合并，其他冲突会中止并报告。不要在脚本中止后自行猜测合并内容。
+- 不打印密钥、token、邮箱密码、service account JSON、private key 或完整凭证 URL。
+
+执行后验证：
+1. 分别在三个仓库运行 `git status --branch --porcelain=v2`、`git rev-list --left-right --count HEAD...origin/main`、`git diff --name-only --diff-filter=U`、`git ls-files -u`。
+2. 回读 `/Users/awayer_mini/gengrowth-ops/.obsidian/plugins/obsidian-git/data.json` 和 `/Users/awayer_mini/gengrowth-flow-mvp/.obsidian/plugins/obsidian-git/data.json`，确认 `autoSaveInterval`、`autoPushInterval`、`autoPullInterval` 为 0，`autoPullOnBoot` 与 `pullBeforePush` 为 false。
+3. 若所有仓库都是 clean 且 ahead/behind 为 `0 0`，简短报告已同步；若脚本输出“需要关注”或存在 unmerged，报告具体仓库和文件路径，不要删除文件。
+
+**🤖 回答：**
+
+读取本自动化记忆、项目约束与可用的同仓/兄弟仓 owner profile 后，仅执行批准的三仓库自愈同步入口。脚本输出 `Obsidian vault git sync: clean`。初步验证显示：三个仓库均无工作区或未合并路径，`HEAD...origin/main` 均为 `0 0`；ops 与 flow-mvp 的 Obsidian Git 配置均为 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。追加本条 record 后会再次运行同一入口并作最终验证；未运行任何禁止的破坏性或镜像删除命令。

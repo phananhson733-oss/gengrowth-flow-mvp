@@ -452,3 +452,22 @@ Last run: 2026-07-09T22:01:56.076Z (1783634516076)
 验证结果：`gengrowth-wiki` 无 unmerged，`HEAD...origin/main = 0 0`，但有普通未提交修改 `docs/records/wzb/2026-07-10-chat-record.md`、`wzb-obsidian/LLM-Wiki/Notes/Clippings/jinchenma_ai-(notext).md`、`wzb-obsidian/LLM-Wiki/log.md`；`gengrowth-ops` clean 且 `HEAD...origin/main = 0 0`；`gengrowth-flow-mvp` 初始无 unmerged 且 `HEAD...origin/main = 0 0`，追加本条 record 后存在普通 record 本地修改，待锁释放后通过同一确定性入口收敛。已回读 `gengrowth-ops` 与 `gengrowth-flow-mvp` 的 Obsidian Git 配置，确认 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。
 
 ---
+
+### Q12 — 09:06
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Monitor
+Automation ID: gengrowth-index-monitor
+Automation memory: $CODEX_HOME/automations/gengrowth-index-monitor/memory.md
+Last run: 2026-07-09T01:00:51.207Z (1783558851207)
+
+Run the GenGrowth Phase 2 indexing workflow through the existing deterministic wrapper: `bash tools/scripts/gg-index-monitor-tick.sh`. This wrapper must refresh the live sitemap through the official Search Console Sitemaps API, inspect due URLs through URL Inspection, sync the final `结果复盘表`, generate/update `request-indexing-queue` with priority colors, and send Feishu SEO技术 group reminders for actionable candidates or failures. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, and do not click Search Console Request Indexing unattended. For Computer Use submission, only assist by opening candidate GSC inspection URLs and stop for human confirmation before the final Request Indexing click. After the wrapper exits, summarize sitemap submission status, GSC check counts/failures, queue counts by priority, and any Feishu notification outcome visible in the log.
+
+**🤖 回答：**
+
+按 GenGrowth Index Monitor 自动化边界执行：读取 automation memory、项目 `AGENTS.md`、本仓库 reminders、相关记忆索引与适用的 superpowers 执行/验证指引；本仓库缺 `ai-profile/lynne-soul.md`，reminders 有未完成项但本轮未修改。确认 `tools/scripts/gg-index-monitor-tick.sh` 会自行加载 `$HOME/.config/gg/_gg.env`，按产品循环执行 live sitemap 同步、url-inventory、process-fixed、Search Console Sitemaps API 提交、URL Inspection due 检查、`结果复盘表` 同步、cluster page assets 同步和 `request-indexing-queue` 同步。
+
+实际运行 `bash tools/scripts/gg-index-monitor-tick.sh`，wrapper stdout 为空、退出码 0；权威日志窗口为 `$HOME/gengrowth-agents/cron-sync/index_monitor/2026-07-10.log` 的 `09:02:57`-`09:06:10 CST`，结束行是 `index monitor ok`。`astrologywiki` sitemap 提交 ok，`check-due` rows=224 due=16，checked=16 alerts=0 failures=0，16 个 URL 转为 indexed，`sync-request-queue` rows=17 P0=0 P1=1 P2=6 P3=10。`gengrowth` sitemap 提交 ok，`check-due` rows=60 due=0 且 `no due URLs`，`sync-request-queue` rows=6 P0=0 P1=0 P2=0 P3=6。合计队列 rows=23 P0=0 P1=1 P2=6 P3=16。日志窗口内没有显式 Feishu/Lark/notify 发送成功或失败回执；本轮只运行确定性 wrapper，未使用普通文章 Google Indexing API，未无人值守点击 GSC Request Indexing。
+
+---

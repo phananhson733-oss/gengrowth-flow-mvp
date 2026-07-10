@@ -1,28 +1,3 @@
----
-title: Quinta Brunson Birth Chart
-slug: quinta-brunson-birth-chart
-date: 2026-07-10
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T2
-track: 量产线
-page_id: PG-CELEB-050
-author_id: "marcus-orion"
-author_display_name: "Marcus Orion"
-target_keyword: Quinta Brunson birth chart
-associated_keywords:
-  - Quinta Brunson birth chart meaning
-  - Quinta Brunson birth chart astrology
-  - Quinta Brunson birth chart zodiac
-  - Quinta Brunson birth chart interpretation
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-07-10T15:44:30.436Z
-content_sha256_short: 23b4b03d82c67f1a
-phase2_checks: all-pass
----
-
 # What the Quinta Brunson Birth Chart Reveals About Her Comic Voice
 
 ## What Is Quinta Brunson's Birth Chart?

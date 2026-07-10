@@ -912,3 +912,15 @@ image2/Codex provider 可用，默认模型是 gpt-image-2-medium
 **🤖 回答：**
 
 确认可以使用 image2 接 Hermes：oracle 已有 `GG_HERO_PROVIDER=hermes-image2` provider，调用本地 Hermes `plugins/image_gen/openai-codex` provider；本轮进一步把默认 Python 从普通 `python3` 改为优先 `/Users/awayer_mini/hermes-agent/.venv/bin/python`，避免 cron 环境绕开 Hermes venv，同时保留 `GG_HERMES_PYTHON` 覆盖。验证 `openai-codex` auth 为 logged in，`resolveHermesPythonBin('/Users/awayer_mini/hermes-agent')` 指向 Hermes venv；相关 Vitest 1 文件 5 测试通过。尚未执行真实 image generation smoke，避免未经确认消耗生成额度。
+
+---
+
+### Q30 — 17:26
+
+**🙋 提问：**
+
+真实跑一边试试
+
+**🤖 回答：**
+
+执行一次真实 Hermes image2 smoke：通过 oracle 的 `generateHermesImage2` 直接调用 Hermes `openai-codex` image provider，输出到 `/tmp/gengrowth-hermes-image2-smoke.png`，未写入文章或生产目录。命令返回 `ok: true`，文件大小 `2705796` bytes；`file`/`sips` 验证为 PNG，尺寸 `1672 x 941`。结论：真实 image2 生图链路已跑通。

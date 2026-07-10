@@ -50,7 +50,7 @@ tags:
 - 要点 2：回读 `gengrowth-ops` 与 `gengrowth-flow-mvp` 的 Obsidian Git 配置，确认自动同步字段保持禁用。
 - 要点 3：按 SEO Blog 自动化边界在 22:00 后不启动新 wrapper，只做单执行器、日志、ledger、回填、生产 URL、sitemap 与进程/锁验证。
 - 要点 4：确认 7月9日 astrologywiki 批次中 Justin、Jack、Kate、Ayo、Zendaya 均已上线，并完成 publish log / W22 plan / Sheet reconcile / pending-writeback WAL 回填；旧 Mexico 赛前预测继续保留 `needs_human`。
-- 要点 5：执行 `gg-recap-performance-tick.sh` 更新结果复盘表，生成 7月10日 astrologywiki / gengrowth 优化任务报告，并完成 D14/D30/D60 覆盖与任务分桶核验。
+- 要点 5：执行 `gg-recap-performance-tick.sh` 更新结果复盘表；同时确认 GSC 索引 Automatic 采用“自动对账与排队 + 每批一次操作时确认 + 逐条真实提交并回填”的设计边界。
 
 ---
 
@@ -743,5 +743,17 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 按 topic-register 自动化边界执行：读取 `/Users/awayer_mini/.codex/automations/gengrowth-topic-register/memory.md`、本仓库 reminders，并尝试读取 `ai-profile/lynne-soul.md`（本仓库缺失）。仅运行 `bash tools/scripts/gg-topic-register-tick.sh`，未传入手工 write/repair/overwrite/direct flags。最新日志为 `~/gengrowth-agents/cron-sync/topic_register/2026-07-10.log`，窗口 2026-07-10 16:02:35-16:02:39 CST，exit 0，最终状态 `topic-register ok`。本地环境启用 apply，`dry_run=false`，命令为 `node .../gg-topic-register.mjs --product all --limit 10 --llm claude --discover-evidence --apply --run-budget-ms 840000`。`astrologywiki` 与 `gengrowth` 均为 candidates=0、updates=0、new_clusters=0、page_ids=[]、selection_mode=generate、audit_incomplete=0、preprocessor=[]、evidence_discovery=[]；`budget_exhausted=false`，未见失败。已更新 automation memory；未手工写 Sheet、未直接改任务计划、未创建额外 Feishu 或 Google Doc 报告。
+
+---
+
+### Q20 — 16:08
+
+**🙋 提问：**
+
+这里的自动提交 GSC  index 可以做成 automatic 吗
+
+**🤖 回答：**
+
+确认现有 `GenGrowth Index Monitor` Automatic 已每天 09:00 运行 `bash tools/scripts/gg-index-monitor-tick.sh`，能够自动刷新 sitemap、执行 URL Inspection、同步 `结果复盘表`、更新 `url-inventory` 与 `request-indexing-queue`，但当前明确禁止无人值守点击 GSC Request Indexing。根据 Computer Use 操作确认规则，最终向 Google 提交请求不能永久免除操作时确认。建议升级为：每天自动完成两站对账与候选筛选；有候选时列出本批 URL，只进行一次批量确认；确认后逐条检查，未收录才真实请求索引，每条等待 1–2 分钟，遇到配额耗尽立即停止，并回填 Sheet、队列状态和 record。等待用户确认此设计后再更新现有 Automatic。
 
 ---

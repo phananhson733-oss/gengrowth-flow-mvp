@@ -924,3 +924,15 @@ image2/Codex provider 可用，默认模型是 gpt-image-2-medium
 **🤖 回答：**
 
 执行一次真实 Hermes image2 smoke：通过 oracle 的 `generateHermesImage2` 直接调用 Hermes `openai-codex` image provider，输出到 `/tmp/gengrowth-hermes-image2-smoke.png`，未写入文章或生产目录。命令返回 `ok: true`，文件大小 `2705796` bytes；`file`/`sips` 验证为 PNG，尺寸 `1672 x 941`。结论：真实 image2 生图链路已跑通。
+
+---
+
+### Q31 — 17:31
+
+**🙋 提问：**
+
+将刚才的修改，包括图片大小，以及根据 brief 单独做生图 prompt，以及使用 image2 来生图的逻辑写入到我们flow 中
+
+**🤖 回答：**
+
+已将图片与生图策略写入 flow：`tools/scripts/lib/illustrate.mjs` 新增 hero 尺寸合同 `1200×675`、搜索/结构化数据图尺寸规则 `1200×630` / `1200×1200` / `1200×900`，并把 brief/正文题材化 prompt 规则写入 planner；flow 调 oracle `illustrate-article.mjs` 时默认注入 `GG_HERO_PROVIDER=hermes-image2`、`GG_HERMES_AGENT_DIR` 与 Hermes venv Python，仍允许 env 显式覆盖到 gemini/flux。同步更新 `docs/FLOW-content-production-to-vault.md` 与 `docs/spec/G-GenGrowth-illustration-and-H3-workflow-2026-06-09.md`，说明 image2 默认、图片尺寸、多比例搜索图和 brief 专属 hero prompt。验证：`node --test tools/scripts/__tests__/lib-illustrate.smoke.test.mjs` 5 tests 全通过，`git diff --check` 无输出。

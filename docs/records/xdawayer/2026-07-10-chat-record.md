@@ -953,3 +953,20 @@ Run the deterministic fixed-row index repair workflow through `bash tools/script
 **🤖 回答：**
 
 执行确定性入口 `bash tools/scripts/gg-index-repair-resubmit-tick.sh`，wrapper exit `0` 且 stdout 为空；本次 dated log 为 `/Users/awayer_mini/gengrowth-agents/cron-sync/index_repair_resubmit/2026-07-10.log`，窗口 `2026-07-10 17:32:23` 至 `17:32:51 CST`，最终行为 `index repair-resubmit ok`。日志计数：`astrologywiki` 为 `process-fixed fixed=0 resubmitted=0`、`sync-recap en_rows=224 appended=0 updated=0 skipped=224`、`sync-request-queue rows=17 P0=0 P1=1 P2=6 P3=10`；`gengrowth` 为 `process-fixed fixed=0 resubmitted=0`、`sync-recap en_rows=60 appended=0 updated=41 skipped=19`、`sync-request-queue rows=6 P0=0 P1=0 P2=0 P3=6`。failure keyword 检查无 `failed/failure/error/exception/invalid/unauthorized/forbidden/timeout/traceback/nonzero rc` 命中；未使用普通文章 Google Indexing API、未无人值守点击 GSC Request Indexing、未创建 Feishu 或 Google Doc 报告产物。已追加 automation memory。
+
+---
+
+### Q33 — 18:03
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-10T08:01:25.094Z (1783670485094)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+按确定性入口执行 `bash tools/scripts/gg-topic-register-tick.sh`，未传手动写入、repair、overwrite 或直接脚本 flags。读取并隔离 `/Users/awayer_mini/gengrowth-agents/cron-sync/topic_register/2026-07-10.log` 的本次窗口 `2026-07-10 18:01:48-18:01:52 CST`，wrapper exit `0`，最终 `topic-register ok`。本地环境启用 apply，日志命令为 `node .../gg-topic-register.mjs --product all --limit 10 --llm claude --discover-evidence --apply --run-budget-ms 840000`，`dry_run=false`、`budget_exhausted=false`。`astrologywiki` 与 `gengrowth` 均为 candidates=0、updates=0、new_clusters=0、page_ids=[]、selection_mode=generate、audit_incomplete=0、preprocessor=[]、evidence_discovery=[]；failure keyword 检查未见错误。安全边界保持：仅运行 wrapper，未手改 Google Sheet，未直接编辑任务计划，未额外创建 Feishu 或 Google Doc 报告产物。

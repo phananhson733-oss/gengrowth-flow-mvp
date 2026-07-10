@@ -880,3 +880,23 @@ image2d 调用通过了吗
 **🤖 回答：**
 
 确认本机 `hermes auth status codex` 当前返回 `codex: logged out`，所以真实 image2 生成调用尚未通过；已通过的是 oracle 中 `GG_HERO_PROVIDER=hermes-image2` adapter 的解析/桥接单测，以及主流程的失败回退逻辑。需要先让 Hermes/Codex OAuth 登录后，再做一次真实生成 smoke test。
+
+---
+
+### Q28 — 17:22
+
+**🙋 提问：**
+
+目前看：**Hermes 的 image2 adapter 本身不像有问题**。真正的问题是你用的检查命令有个别名坑。
+我本地验证到：
+./.venv/bin/hermes auth status codex 返回：codex: logged out
+但 ./.venv/bin/hermes auth status openai-codex 返回：openai-codex: logged in
+直接查 get_codex_auth_status() 也显示已登录，来源是 pool:default-codex
+image2/Codex provider 可用，默认模型是 gpt-image-2-medium
+相关目标测试通过：40 passed
+所以判断是：**image2 adapter 代码和单测目前 OK；codex 这个 auth status alias 没有规范化到 openai-codex，导致误报 logged out。**
+剩下还没证明的是“真实生成 smoke”：因为我没有擅自消耗一次真实 image generation。要验证真实链路，应使用 openai-codex 这个 provider id 跑 smoke，而不是先被 hermes auth status codex 误导。
+
+**🤖 回答：**
+
+复核 Hermes 本机状态：`./.venv/bin/hermes auth status openai-codex` 返回 `openai-codex: logged in`，而 `./.venv/bin/hermes auth status codex` 返回 `codex: logged out`。修正上一轮判断：image2 adapter 与认证状态应按 `openai-codex` provider id 判断；当前 adapter/单测 OK，未证明的只剩真实 image generation smoke。后续若加 preflight，应检查 `openai-codex` 而不是 `codex`。

@@ -19,6 +19,7 @@ tags:
 - 在 03:31-03:34 CST 的 22:00 后检查中保持不启动 wrapper，确认 Sheet/ledger 无漂移且无可继续的 pending publish。
 - 使用确定性入口完成 04:02 CST 三仓库自愈同步，最终状态 clean、与 origin/main 同步且无未合并文件。
 - 在 04:32-05:05 CST 的 22:00 后 SEO 检查中未启动 wrapper，确认无 pending publish/回填；随后 05:02 运行索引修复重提 wrapper，两个产品均成功且无失败。
+- 使用确定性入口完成 06:01 CST 三仓库 Obsidian/Git 自愈同步；记录写入后将以同一入口重新收敛，并以最终 Git 与配置验证为准。
 
 ---
 
@@ -410,5 +411,37 @@ Last run: 2026-07-10T20:31:27.669Z (1783715487669)
 **🤖 回答：**
 
 本轮窗口为 05:03-05:05 CST，处于 22:00 后的新启动禁区，故未启动 `bash tools/scripts/gg-nightly-seo.sh`，没有新发布 slug 或 live URL。八个指定 legacy 执行器、SEO/flow cron 链路、相关锁及外部匹配进程均为空；`gg-seo-autopilot --stale-report` 返回 `inflight=[]`、`staleCount=0`。最新 wrapper 日志窗口为 2026-07-10 22:53:56-23:48:47 CST，`attempted=4`、发布 0，batch summary 因无上线条目而抑制通知。`gg-ledger-reconcile --dry` 返回 `stillPending=0`、`flips=0`、`plan-sweep=0`；Sheet dry-run 为 astrologywiki `live=273 flip=0 review=0`，因此没有 preview/merge/live-check 或回填待续。W22 六项当前均未勾选且无对应发布日志；六个目标 URL 都是 HTTP 200 的主页 canonical、无 Article JSON-LD、sitemap 命中为 0。主要阻塞是 `/Users/awayer_mini/oracle` 有 2,770 条状态变更及 841 个文件 diffstat，发布器安全拒绝重置基线，致使已成稿的 `PG-CELEB-048`、`PG-CELEB-049`、`PG-CELEB-050` 没有 branch/PR。仍需人工处理：过期的 `PG-WC-045`、1,316 词的 `PG-CELEB-047`、以及 1,479 词且有禁词的 `PG-VEDIC-006`。未执行 Oracle 清理、强制基线、手工 Sheet 操作、Google Indexing API、无人值守 GSC 请求或重复通知；当前 checkout 缺少 `ai-profile/lynne-soul.md`，既有 reminders 未改。
+
+---
+
+### Q11 — 06:01
+
+**🙋 提问：**
+
+Automation: 自动修复冲突
+Automation ID: gengrowth-vault-git-auto-heal-8655c84281d6
+Automation memory: $CODEX_HOME/automations/gengrowth-vault-git-auto-heal-8655c84281d6/memory.md
+Last run: 2026-07-10T21:00:27.774Z (1783717227774)
+
+在本机执行 GenGrowth 多仓库 Obsidian/Git 自愈同步。目标仓库固定为 `/Users/awayer_mini/gengrowth-wiki`、`/Users/awayer_mini/gengrowth-ops`、`/Users/awayer_mini/gengrowth-flow-mvp`。
+
+必须使用已验证的确定性入口，不要绕过脚本手写破坏性 git 操作：
+
+`/usr/bin/python3 /Users/awayer_mini/gengrowth-wiki/tools/scripts/obsidian-vault-git-sync.py --repo /Users/awayer_mini/gengrowth-wiki --repo /Users/awayer_mini/gengrowth-ops --repo /Users/awayer_mini/gengrowth-flow-mvp --verbose`
+
+安全边界：
+- 禁止运行 `git reset --hard`、`git checkout -- <path>`、`git clean`、`rm -rf`、`rsync --delete`，除非用户在当次对话中明确要求。
+- 不要运行 `tools/scripts/frequent-sync.sh`、`tools/scripts/gengrowth-repos-sync.sh` 或 `tools/scripts/_sync-core.sh`，因为这些路径包含镜像删除语义，本任务只做 git 自愈同步。
+- 同步脚本会先 fetch，检查未解决冲突，提交本地非敏感变更，再 rebase/push；只对白名单 JSON 冲突自动合并，其他冲突会中止并报告。不要在脚本中止后自行猜测合并内容。
+- 不打印密钥、token、邮箱密码、service account JSON、private key 或完整凭证 URL。
+
+执行后验证：
+1. 分别在三个仓库运行 `git status --branch --porcelain=v2`、`git rev-list --left-right --count HEAD...origin/main`、`git diff --name-only --diff-filter=U`、`git ls-files -u`。
+2. 回读 `/Users/awayer_mini/gengrowth-ops/.obsidian/plugins/obsidian-git/data.json` 和 `/Users/awayer_mini/gengrowth-flow-mvp/.obsidian/plugins/obsidian-git/data.json`，确认 `autoSaveInterval`、`autoPushInterval`、`autoPullInterval` 为 0，`autoPullOnBoot` 与 `pullBeforePush` 为 false。
+3. 若所有仓库都是 clean 且 ahead/behind 为 `0 0`，简短报告已同步；若脚本输出“需要关注”或存在 unmerged，报告具体仓库和文件路径，不要删除文件。
+
+**🤖 回答：**
+
+已只运行指定的三仓确定性入口；首轮输出为 `Obsidian vault git sync: clean`。首轮验证三个仓库均 clean、`HEAD...origin/main=0 0`、两类未合并检查为空；两个 Obsidian Git 配置均为 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。记录写入后将仅重跑同一入口并以最终验证结果收敛；未使用破坏性 Git/文件系统命令或镜像删除脚本。
 
 ---

@@ -19,7 +19,7 @@ tags:
 - 在 03:31-03:34 CST 的 22:00 后检查中保持不启动 wrapper，确认 Sheet/ledger 无漂移且无可继续的 pending publish。
 - 使用确定性入口完成 04:02 CST 三仓库自愈同步，最终状态 clean、与 origin/main 同步且无未合并文件。
 - 在 04:32-05:05 CST 的 22:00 后 SEO 检查中未启动 wrapper，确认无 pending publish/回填；随后 05:02 运行索引修复重提 wrapper，两个产品均成功且无失败。
-- 使用确定性入口完成 06:01 CST 三仓库 Obsidian/Git 自愈同步；记录写入后将以同一入口重新收敛，并以最终 Git 与配置验证为准。
+- 使用确定性入口完成 06:01 CST 三仓库 Obsidian/Git 自愈同步；记录和并发 wiki 记录变更均经同一入口收敛，最终 clean、`HEAD...origin/main=0 0` 且无未合并文件。
 
 ---
 
@@ -442,6 +442,6 @@ Last run: 2026-07-10T21:00:27.774Z (1783717227774)
 
 **🤖 回答：**
 
-已只运行指定的三仓确定性入口；首轮输出为 `Obsidian vault git sync: clean`。首轮验证三个仓库均 clean、`HEAD...origin/main=0 0`、两类未合并检查为空；两个 Obsidian Git 配置均为 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。记录写入后将仅重跑同一入口并以最终验证结果收敛；未使用破坏性 Git/文件系统命令或镜像删除脚本。
+已仅运行指定的三仓确定性入口。首轮输出为 `Obsidian vault git sync: clean`；记录写入后发现 wiki 并发记录变更和暂时 ahead `1 0`，均只通过同一入口再次收敛。最终三个仓库均 clean、`HEAD...origin/main=0 0`、两类未合并检查为空；两个 Obsidian Git 配置均为 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。未使用破坏性 Git/文件系统命令或镜像删除脚本。
 
 ---

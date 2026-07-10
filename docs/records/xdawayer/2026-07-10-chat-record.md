@@ -1002,3 +1002,20 @@ Last run: 2026-07-10T09:00:25.272Z (1783674025272)
 **🤖 回答：**
 
 按固定确定性入口执行三仓库 Obsidian/Git 自愈同步，首轮脚本输出 `Obsidian vault git sync: clean`。首轮验证显示 `gengrowth-wiki`、`gengrowth-ops`、`gengrowth-flow-mvp` 均无未解决冲突，`HEAD...origin/main = 0 0`；ops 与 flow-mvp 的 Obsidian Git 自动同步字段均为禁用值。追加本 record 与 automation memory 后，将继续用同一入口收敛并执行最终验证；全程未运行禁止的破坏性 git/filesystem 命令或镜像删除 wrapper。
+
+---
+
+### Q35 — 21:12
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-10T12:00:55.854Z (1783684855854)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+按确定性入口执行 `bash tools/scripts/gg-topic-register-tick.sh`，未传手动写入、repair、overwrite 或直接脚本 flags。读取并隔离 `/Users/awayer_mini/gengrowth-agents/cron-sync/topic_register/2026-07-10.log` 的本次窗口 `2026-07-10 21:06:56-21:12:10 CST`，wrapper exit `0`，最终 `topic-register ok`。本地环境启用 apply，日志命令为 `node .../gg-topic-register.mjs --product all --limit 10 --llm claude --discover-evidence --apply --run-budget-ms 840000`，`dry_run=false`、`budget_exhausted=false`。`astrologywiki` 为 candidates=5、updates=5、new_clusters=0、page_ids=`PG-CELEB-047`, `PG-CELEB-048`, `PG-VEDIC-006`, `PG-CELEB-049`, `PG-CELEB-050`，preprocessor statuses=`ok`, `v1_fallback`, `v1_fallback`, `v1_fallback`, `v1_fallback`；evidence_discovery 中 `PG-CELEB-047` 为 ok（7 titles / 6 domains），其余 4 个为 insufficient（0 / 0）。`gengrowth` 为 candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]、evidence_discovery=[]。未见失败；仅运行 wrapper，未手改 Google Sheet，未直接编辑任务计划，未额外创建 Feishu 或 Google Doc 报告产物。已追加 automation memory。

@@ -1174,3 +1174,15 @@ Last run: 2026-07-09T21:31:55.935Z (1783632715935)
 **🤖 回答：**
 
 读取 `AGENTS.md`、`ai-profile/reminders.md` 和本自动化 memory；`ai-profile/lynne-soul.md` 在当前 checkout 中仍缺失。单执行器检查未发现指定 SEO/flow/index legacy launchd、cron、进程或锁在运行。先运行 `bash tools/scripts/gg-nightly-seo.sh`，窗口 `2026-07-10 21:15:38-21:16:24 CST`，5 篇因 CTA Map gap 停在 authoring。随后对 CTA bridge 做有界修复/验证：`gg-sheet-to-brief` 单测 55/55 通过，rows 275-279 dry-run 为 `ready=5`，五个 CTA 均解析到 birth-chart calculator；按支持的 retry-author 入口清理 5 个 authoring claim。第二次 wrapper 窗口 `2026-07-10 21:19:47-22:35:58 CST`，未在 22:00 后启动新 wrapper；该轮上线 0 篇。`PG-CELEB-048`、`PG-VEDIC-006`、`PG-CELEB-049`、`PG-CELEB-050` 已生成 `_staging/*-en.md` 草稿，但 publish scan 因 `/Users/awayer_mini/oracle` 有大量 tracked local changes 拒绝 reset，未创建 branch/preview/publish；`PG-CELEB-047` 保持 needs_human，原因是 `word count 1316 < min 1500 after 3 attempt(s) + deterministic repair`；既有 `PG-WC-045` 因 2026-07-06 赛后过期仍跳过。最终验证：`seo-autopilot --stale-report` 返回 `inflight=[]`、`staleCount=0`；无相关遗留进程/锁；`seo-autopilot-publish-log.md` 无本轮 page_id 记录；无 live URL、W22 勾选、Sheet/ledger 回填或生产 200/canonical/title/Article JSON-LD/sitemap 验证适用。已追加 `/Users/awayer_mini/.codex/automations/gengrowth-seo-blog/memory.md`，未手改 Sheet，未用 Google Indexing API/GSC 无人点击，未执行破坏性 git/filesystem 命令。
+
+---
+
+### Q43 — 22:39
+
+**🙋 提问：**
+
+可以全部去落地，尤其是 1 和 3
+
+**🤖 回答：**
+
+在 oracle 分支 `codex/wiki-content-conversion-p1-p2` 完成 P1/P2：新增文章中段 `article_inline` 出生星盘 CTA（复用 CTA Map 本地化计算器路径与归因）、作者与 Updated 编辑信号、真实 H2/H3 派生的稳定锚点和页内目录（排除 FAQ/Sources）；SPA 与静态 SEO 生成器共用文章结构模型并重生成 467 URL。未为 SEO 虚构 H3 或 FAQ，复用 flow 的长叙述 H3、真实 PAA FAQ 与 FAQ 内禁 H3 质量门槛。验证：oracle 定向 Vitest 57/57、flow 结构守卫 60/60、`npx vite build` 与 `git diff --check` 通过；静态扫描 350 篇文章均含目录与中段 CTA，动作 CTA 指向教程=0；390px 移动端确认目录/CTA 同宽、链接 `/en/birth-chart-calculator` 与 Updated 信号正常。

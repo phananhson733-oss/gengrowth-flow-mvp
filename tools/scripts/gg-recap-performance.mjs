@@ -2,8 +2,9 @@
 // gg-recap-performance.mjs — GSC/GA4 milestone metrics → 结果复盘表 + Markdown action list.
 //
 // It reads page identity/publish dates from index-tracking, updates only the
-// performance columns in 结果复盘表, and writes a human action list. It does not
-// author, edit, publish, deploy, or request indexing for any page.
+// exact D14/D30/D60 milestone snapshots for indexed URLs in 结果复盘表, and writes
+// a human action list. It does not author, edit, publish, deploy, or request
+// indexing for any page.
 
 import { mkdir, writeFile as fsWriteFile } from 'node:fs/promises';
 import { join } from 'node:path';

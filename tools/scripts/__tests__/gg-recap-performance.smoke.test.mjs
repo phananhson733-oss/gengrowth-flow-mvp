@@ -115,7 +115,7 @@ test('buildPerformancePlan selects only exact indexed D14/D30/D60 milestone wind
 
 test('buildPerformancePlan fillPending pulls pending cells with trailing windows', () => {
   const plan = buildPerformancePlan({
-    now: new Date('2026-07-01T00:00:00Z'),
+    now: new Date('2026-07-07T00:00:00Z'),
     fillPending: true,
     trackingRows: [{
       page_id: 'PG-PENDING',
@@ -498,7 +498,7 @@ test('runRecapPerformance updates recap rows and writes a Markdown task list wit
     '--site', 'sc-domain:astrologywiki.com',
     '--ga4-property', 'properties/123',
   ], {
-    now: new Date('2026-07-07T00:00:00Z'),
+    now: new Date('2026-07-01T00:00:00Z'),
     sheetToken: 'sheet-token',
     analyticsToken: 'analytics-token',
     readTrackingRows: async () => [{
@@ -568,6 +568,7 @@ test('daily wrapper loops products and only runs recap performance sync', () => 
   assert.match(wrapper, /replay-outbox/);
   assert.match(wrapper, /gg-notify\.mjs" recap_performance_ok/);
   assert.match(wrapper, /recap performance ok/);
+  assert.match(wrapper, /仅在 D14\/D30\/D60 节点日抓取已收录 URL 的快照/);
   assert.doesNotMatch(wrapper, /gg-seo-author|gg-gengrowth-publish|Request Indexing|--submit-sitemap/);
 });
 

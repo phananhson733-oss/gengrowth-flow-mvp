@@ -3,7 +3,7 @@
 #
 # Per product:
 #   - reads index-tracking + 结果复盘表
-#   - fills D14/D30/D60 performance columns
+#   - fills only exact D14/D30/D60 performance snapshot columns for indexed URLs
 #   - writes a Markdown optimization task list
 #
 # This wrapper intentionally does not author, publish, deploy, or submit URLs.
@@ -123,7 +123,7 @@ case "$rc" in
       --body "$recap_notify_body" \
       --reports "$recap_notify_reports" \
       --log "$LOG" \
-      --window_note "D30/D60 到期后自动补齐；当前未到期列保留 \`待回填\`。" >> "$LOG" 2>&1
+      --window_note "仅在 D14/D30/D60 节点日抓取已收录 URL 的快照；非节点日与已填节点保留原值。" >> "$LOG" 2>&1
     ;;
   2|124)
     echo "$(date '+%F %T') recap performance partial/timeout rc=$rc" >> "$LOG"

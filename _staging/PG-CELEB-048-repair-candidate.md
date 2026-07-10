@@ -1,28 +1,3 @@
----
-title: Priyanka Chopra Birth Chart
-slug: priyanka-chopra-birth-chart
-date: 2026-07-10
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T2
-track: 量产线
-page_id: PG-CELEB-048
-author_id: "marcus-orion"
-author_display_name: "Marcus Orion"
-target_keyword: Priyanka Chopra birth chart
-associated_keywords:
-  - Priyanka Chopra birth chart meaning
-  - Priyanka Chopra birth chart astrology
-  - Priyanka Chopra birth chart zodiac
-  - Priyanka Chopra birth chart interpretation
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-07-10T15:07:27.534Z
-content_sha256_short: a2a793243d4d30df
-phase2_checks: all-pass
----
-
 # What Priyanka Chopra's Birth Chart Reveals About Her Public Persona
 
 ## What Is Priyanka Chopra's Birth Chart?

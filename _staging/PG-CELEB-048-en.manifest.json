@@ -8,20 +8,20 @@
   "track": "量产线",
   "generated_by": "unknown",
   "prompt_version": "v8",
-  "generated_at": "2026-07-10T13:40:27.044Z",
-  "content_sha256_short": "407d2fb53b128c3b",
-  "source_path": "_staging/PG-CELEB-048-claude-v8.md",
+  "generated_at": "2026-07-10T15:07:27.534Z",
+  "content_sha256_short": "a2a793243d4d30df",
+  "source_path": "_staging/PG-CELEB-048-repair-candidate.md",
   "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-CELEB-048-en.md",
   "phase2_checks": {
     "overall": "pass",
     "structure": {
       "h1Count": 1,
       "h2Count": 11,
-      "h3Count": 3,
+      "h3Count": 0,
       "h4Count": 0,
-      "words": 1628,
-      "wikilinks": 6,
-      "tbdLinks": 6
+      "words": 1541,
+      "wikilinks": 7,
+      "tbdLinks": 7
     },
     "rl1": true,
     "rl2": true,

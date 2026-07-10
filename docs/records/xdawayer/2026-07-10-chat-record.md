@@ -46,8 +46,8 @@ tags:
 
 > 【本区域在每天最后一次对话结束时生成/更新】
 
-- 要点 1：执行 GenGrowth 三仓库 Obsidian/Git 自愈同步，严格使用指定 `obsidian-vault-git-sync.py` 入口，并完成三仓库 clean / `HEAD...origin/main = 0 0` / 无 unmerged 验证。
-- 要点 2：回读 `gengrowth-ops` 与 `gengrowth-flow-mvp` 的 Obsidian Git 配置，确认自动同步字段保持禁用。
+- 要点 1：执行 GenGrowth 三仓库 Obsidian/Git 自愈同步，严格使用指定 `obsidian-vault-git-sync.py` 入口，完成仓库收敛验证，并确认两仓库 Obsidian Git 自动同步字段保持禁用。
+- 要点 2：评估 AstrologyWiki 内容转化需求，确认方向成立但 PRD 范围失控、数据基线过时；定位到量产链默认 CTA 目标仍指向教程页，导致 `oracle/data/articles` 中 132 个文件、187 条动作型 CTA 链接错位，建议先修上游并回填，再做单变量 CTA 实验。
 - 要点 3：按 SEO Blog 自动化边界在 22:00 后不启动新 wrapper，只做单执行器、日志、ledger、回填、生产 URL、sitemap 与进程/锁验证。
 - 要点 4：确认 7月9日 astrologywiki 批次中 Justin、Jack、Kate、Ayo、Zendaya 均已上线，并完成 publish log / W22 plan / Sheet reconcile / pending-writeback WAL 回填；旧 Mexico 赛前预测继续保留 `needs_human`。
 - 要点 5：执行 `gg-recap-performance-tick.sh` 更新结果复盘表；同时确认 GSC 索引 Automatic 采用“自动对账与排队 + 每批一次操作时确认 + 逐条真实提交并回填”的设计边界。
@@ -796,3 +796,31 @@ GSC 补提一轮：查 9 个候选（跳过重复的 kylian-mbappe），8 个 Go
 **🤖 回答：**
 
 按项目规则读取 reminders、owner profile fallback、相关 superpowers 技能与记忆索引；检查 flow 配图管线和 oracle 静态 SEO 生成。定位到当前 hero 为 `1200x675` 宽图，oracle 的 `generate-og-images.mjs` 生成 `1200x630` OG 图，`generate-seo-pages.mjs` 将同一宽图用于 `og:image`、`twitter:image` 与 Article JSON-LD `image`；官方 Google Article 结构化数据示例建议同时提供 `1x1`、`4x3`、`16x9` 图片。提出三个方案：只改宽图安全构图、为每篇文章新增方图并让 Article JSON-LD 暴露多比例图、或将名人 birth chart hero 迁移到风格化人像并同步方图；推荐先做“站内 16:9 hero + 1:1 搜索缩略图 + 名人风格化人像 prompt/QA”的小闭环，待用户确认后再按 TDD 改代码并验证。
+
+---
+
+### Q23 — 16:55
+
+**🙋 提问：**
+
+评估一下这个需求：inbox/00-inbox/2026-07-09-工具站内容转化设计洞察。对应在 gengrowth-ops 中的
+
+**🤖 回答：**
+
+对 `gengrowth-ops/inbox/00-inbox/2026-07-09-工具站内容转化设计洞察.md` 及其下游 `2026-07-09-astrologywiki-cta架构优化需求.md`、`2026-07-09-工具落地页设计规范-sop-v1.0.md` 做只读评估，并交叉核对 W26/W27 周报、Q3 目标及 `oracle` 当前主分支。结论是业务方向成立，但 CTA PRD 暂不具备直接开发条件：文档宣称 6 个模块，实际扩展到 A-K 11 个模块；工具页 10-16 秒基线与 W27 calculator 66 秒数据冲突；P-1 渲染问题已在 W26 标记修复；现有代码已具备独立 calculator 路由、Tools 导航、Wiki 底部 CTA、点击及计算完成事件。
+
+进一步定位到真正 P0 根因：W28 五篇实验文章的动作型 CTA 仍指向 `how-to-read-birth-chart` 教程页；全量扫描发现 `oracle/data/articles` 中 132 个文件、187 条同类错链。上游 `tools/scripts/gg-seo-autopilot.mjs` 的 CTA fallback 仍把“Generate your free birth chart”目标写成教程页，且校验器会按错误 brief 继续放行。建议将需求收缩为：先修 CTA Map/autopilot 默认目标并批量回填；统一 canonical 目标为 `/en/birth-chart-calculator`；修复并验证 GA4 `page_view`，补齐 placement/variant 级 impression、click 与现有 `birth_chart_calculated` 漏斗；仅在 W28 cohort 上增加一个上下文内联 CTA，当前流量只做埋点烟测，不做统计显著性结论。Nav/Sticky/侧栏/TOC/Newsletter/Ask AI 等拆成 P1/P2 独立需求。
+
+同时按 Google 当前官方规范校正 SOP：保留 `WebApplication`/`BreadcrumbList`；取消把 `FAQPage`、`HowTo` 当作 Google 富结果硬门槛；取消 2000-3500 词、15-25 个 H3、8-10 个 FAQ 等排名配方，改为按真实用户意图和页面任务验收。本轮未修改需求正文或产品代码。
+
+---
+
+### Q24 — 16:55
+
+**🙋 提问：**
+
+continue
+
+**🤖 回答：**
+
+继续并完成上述需求评估，补充核对线上页面、`oracle` 路由/CTA/埋点现状、错误 CTA 全量范围和 flow-mvp 上游生成根因，最终给出范围收缩、P0 实验方案、验收指标及 SOP 校正建议；未修改需求正文或产品代码。

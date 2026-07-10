@@ -222,6 +222,6 @@ Last run: 2026-07-10T19:00:57.281Z (1783710057281)
 
 **🤖 回答：**
 
-已仅运行指定的 `obsidian-vault-git-sync.py` 三仓库确定性入口，输出为 `Obsidian vault git sync: clean`。首次验证显示三个仓库均 clean、`HEAD...origin/main=0 0`，且 `git diff --name-only --diff-filter=U` 与 `git ls-files -u` 均为空；两个 Obsidian Git 配置均为 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。追加本记录后将只重跑同一入口并重复验证，未执行破坏性 Git/文件系统命令或镜像删除脚本。
+已仅运行指定的 `obsidian-vault-git-sync.py` 三仓库确定性入口；首次输出为 `Obsidian vault git sync: clean`，记录写入后的复跑已提交并推送该记录。最终验证显示三个仓库均 clean、`HEAD...origin/main=0 0`，且 `git diff --name-only --diff-filter=U` 与 `git ls-files -u` 均为空；两个 Obsidian Git 配置均为 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。未执行破坏性 Git/文件系统命令或镜像删除脚本。
 
 ---

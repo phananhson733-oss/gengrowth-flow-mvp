@@ -33,6 +33,8 @@ const TRANSIENT_RE = new RegExp([
   '(?:session|usage)\\s*limit', 'hit your (?:usage|session)',
   'SKIPPED:\\s*tooling', 'worker exited \\d',
   'produced no draft',                  // 编排器无产出(非对稿判错)
+  // CTA Map 重复键在 bridge 中有 first-row-wins 契约；不涉及内容事实，交给有上限的重试。
+  'CTA Map has \\d+ duplicate \\(page_role, track\\) pairs[^\\n]*first row wins',
   '\\bdeadlock\\b', 'no CPU/output progress',
   '\\btimed out\\b', '\\btimeout\\b', 'ETIMEDOUT', 'preview-wait[^\\n]*timeout',
   '\\bquota\\b', 'rate.?limit', 'HTTP\\s*50[234]\\b', 'ECONNRESET', 'ENETUNREACH', 'socket hang up',

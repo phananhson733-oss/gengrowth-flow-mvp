@@ -22,7 +22,7 @@
 // --dry-run 只打印渲染文本，不发送。
 //
 // 退出码：0＝已发送或已入 gg-notify 的 outbox（无论完成／部分；--dry-run 同为 0）；
-//         2＝窗口内无任何条目（不发送）；1＝用法错误；
+//         2＝窗口内无上线 URL（仅 parked 也不发送）；1＝用法错误；
 //         3＝notify 调用本身失败（ENOENT／超时／崩溃）——渲染文本已由本层直接入箱兜底。
 //         其余异常尽量吞掉并走 exit 0（通知层永不搞垮调用方）。
 //
@@ -224,9 +224,10 @@ async function main() {
     for (const u of o.urls) targets.push(resolveUrlArg(u));
   }
 
-  // 空窗口：没有可核实条目也没有 parked → 不发送，exit 2
-  if (targets.length === 0 && parked.length === 0) {
-    process.stderr.write(`gg-batch-summary：窗口内（since=${o.since}）无任何条目，不发送\n`);
+  // 仅 parked 是恢复中的作者/门状态，不渲染“上线 0 篇”中间消息；真正永久 park
+  // 由 auto-retry 入口去重发送终态告警。没有上线 URL 一律静默。
+  if (targets.length === 0) {
+    process.stderr.write(`gg-batch-summary：窗口内（since=${o.since}）无上线条目，不发送\n`);
     process.exit(2);
   }
 

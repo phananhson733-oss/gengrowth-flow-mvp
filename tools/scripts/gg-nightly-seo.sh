@@ -53,6 +53,9 @@ cd "$FLOW" || { echo "no $FLOW"; exit 1; }
 # 批次窗口起点（开跑前记录）：结束后 gg-batch-summary --since 用它圈定本轮 ledger 条目。
 RUN_START="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
+# 先恢复明确属于工具/桥接层的临时 authoring park；持久化 CAP/backoff 防止无限重试。
+node "$FLOW/tools/scripts/gg-seo-autopilot.mjs" --auto-retry-parks || true
+
 # Collect unchecked plan items: "- [ ] `PG-XXX-NN` keyword..."  →  "PG-XXX-NN<TAB>keyword"
 ITEMS="$(grep -nE '^- \[ \] *`?PG-[A-Z]+-[0-9]+' "$PLAN" \
   | sed -E 's/^[0-9]+:- \[ \] *`?(PG-[A-Z]+-[0-9]+)`? *(.*)$/\1\t\2/' \
@@ -104,8 +107,9 @@ while IFS=$'\t' read -r pid kw; do
 done <<< "$ITEMS"
 
 # 批次汇总（阶段 1 · 通知统一，契约见 tools/scripts/lib/NOTIFY-CONTRACT.md）：
-# 逐篇线上核实本窗口内 done/needs_human 的 ledger 条目并推送一条 batch_summary。
-# 全部核实通过不@；部分完成 @OPS；窗口内无条目 exit 2（不发送）。失败不影响 nightly 退出码。
+# 逐篇线上核实本窗口内 done 条目并推送一条 batch_summary。
+# 没有上线 URL 时静默；永久 park 由上面的 auto-retry 去重发送一次终态告警。
+# 全部核实通过不@；部分完成 @OPS；空窗口 exit 2（不发送）。失败不影响 nightly 退出码。
 node "$FLOW/tools/scripts/gg-batch-summary.mjs" --since "$RUN_START" --site astrologywiki || true
 
 echo ""

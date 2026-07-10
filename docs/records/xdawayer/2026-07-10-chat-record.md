@@ -1031,3 +1031,15 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 确认没有业务疑问，按“节点日快照”优化结果复盘表 automatic。`tools/scripts/gg-recap-performance.mjs` 的计划逻辑已落地为：日常模式只处理 `age === 14/30/60`、已收录、且对应节点指标仍待填的 URL；非节点行、未收录行、已填节点不再每日刷新。显式补漏/复核仍保留在 wrapper 的 `--fill-pending` / `--verify-zero-metrics` 模式中。同步更新 `gg-recap-performance-tick.sh` 的注释与通知文案，并用 `automation_update` 更新 Codex automatic `gengrowth-recap-performance` prompt，明确 daily job 只抓 D14/D30/D60 节点快照。相关 vault backup 提交为 `0b3cd8d0`（核心逻辑与测试）和 `77324d56`（说明/通知/测试修正）。验证通过：`node --test tools/scripts/__tests__/gg-recap-performance.smoke.test.mjs tools/scripts/__tests__/lib-gg-notify.smoke.test.mjs` 共 26 项通过；`node --check tools/scripts/gg-recap-performance.mjs`、`bash -n tools/scripts/gg-recap-performance-tick.sh`、`git diff --check` 均通过。
+
+---
+
+### Q37 — 21:25
+
+**🙋 提问：**
+
+这个节点应该是以开始收录为起始点吧
+
+**🤖 回答：**
+
+确认节点应以首次确认收录日为 Day 0。核查发现 `index-tracking` 已维护 `first_indexed_at`：索引监控在首次确认 GSC 已收录时写入且不再覆盖；但当前结果复盘计划仍错误以 `published_at` 计算。建议把日常 D14/D30/D60 严格改为 `first_indexed_at + 14/30/60 天`，缺少该日期则跳过，不回退到发布时间；待用户确认后按测试驱动方式实施并更新 automatic 说明。

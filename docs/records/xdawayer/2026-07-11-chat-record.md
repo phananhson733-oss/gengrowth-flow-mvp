@@ -49,6 +49,6 @@ Last run: 2026-07-10T17:00:56.730Z (1783702856730)
 
 **🤖 回答：**
 
-已仅运行指定的 `obsidian-vault-git-sync.py` 三仓库确定性入口，初次输出为 `Obsidian vault git sync: clean`。随后执行要求的 Git 取证：三个仓库均无工作区变更和未合并文件，`HEAD...origin/main` 均为 `0 0`；`gengrowth-ops` 与 `gengrowth-flow-mvp` 的 Obsidian Git 自动保存、推送、拉取间隔均为 `0`，启动拉取及推送前拉取均为 `false`。未执行任何破坏性 Git/文件系统命令或镜像删除脚本；追加本记录后将再次仅运行相同入口并进行最终验证。
+已仅运行指定的 `obsidian-vault-git-sync.py` 三仓库确定性入口；首次输出为 `Obsidian vault git sync: clean`，追加本记录后的复跑以退出码 `0` 完成。最终取证显示三个仓库均无工作区变更和未合并文件；`gengrowth-wiki`、`gengrowth-ops` 的 `HEAD...origin/main` 为 `0 0`，`gengrowth-flow-mvp` 当前特性分支为 `1 0`，即相对 `origin/main` 超前一个本轮记录提交。两个仓库的 Obsidian Git 自动保存、推送、拉取间隔均为 `0`，启动拉取及推送前拉取均为 `false`。未执行任何破坏性 Git/文件系统命令或镜像删除脚本；不手工改写分支历史。
 
 ---

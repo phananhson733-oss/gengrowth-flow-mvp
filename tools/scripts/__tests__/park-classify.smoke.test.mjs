@@ -16,6 +16,8 @@ const TRANSIENT = [
   'preview-wait: hard timeout after 300s',
   'build gate: npm run build failed — socket hang up',
   'HTTP 503 from upstream',
+  // CTA Map 的重复键警告不涉及内容事实；桥接器已定义 first-row-wins，可有界重试。
+  'authoring: CTA Map gap — CTA Map has 37 duplicate (page_role, track) pairs — first row wins:',
   // 对抗复审回归：schema 是 3 个常驻评审维度之一，review[schema] SKIPPED 是真 transient 工具崩，
   // 绝不能因维度标签/崩溃栈里的 "schema" 字样被冻成 permanent（旧裸 \bschema\b 的 bug）。
   'review[schema] SKIPPED: tooling: worker exited 1',

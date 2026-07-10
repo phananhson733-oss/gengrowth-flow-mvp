@@ -33,12 +33,14 @@ const sidecarOf = (state, pid) => readJson(join(state, 'park-autoretry.json'))[p
 test('transient authoring park → 清 claim（作者 lane 重授）；permanent 与 done 不动', () => {
   const { ops, state, ledgerPath } = setup({
     'PG-T-1': { status: 'needs_human', stage: 'authoring', error: 'orchestrator produced no draft after 3 attempt(s)', slug: 't1' },
+    'PG-CTA-1': { status: 'needs_human', stage: 'authoring', error: 'authoring: CTA Map gap — CTA Map has 37 duplicate (page_role, track) pairs — first row wins:', slug: 'cta1' },
     'PG-P-1': { status: 'needs_human', stage: 'authoring', error: 'phase2 FAIL: missing pillars', slug: 'p1' },
     'PG-D-1': { status: 'done', slug: 'd1' },
   });
   run(ops, state, { GG_PARK_AUTORETRY_BACKOFF_MS: '0' });
   const led = readJson(ledgerPath);
   assert.equal(led['PG-T-1'], undefined, 'transient authoring park 应被清（重授）');
+  assert.equal(led['PG-CTA-1'], undefined, 'CTA duplicate bridge park 应被清（重授）');
   assert.equal(led['PG-P-1']?.status, 'needs_human', 'permanent(phase2 FAIL:missing pillars) 原样保留');
   assert.equal(led['PG-D-1']?.status, 'done', 'done 不动');
 });

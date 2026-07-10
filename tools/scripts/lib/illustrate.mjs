@@ -20,7 +20,8 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync, statSync, mkdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 
-const STYLE = 'deep indigo-to-near-black palette (#16112c fading to #0b0a1b), soft gold accents (#d4af6a), teal-and-gold nebula wash, painterly editorial illustration, full-bleed wide 16:9 composition that fills the entire frame, ONE single continuous landscape scene, no split screen, no diptych, no two panels, no diagram, no chart wheel, no central framed card, no text or letters or numerals, no human faces';
+const BASE_STYLE = 'deep indigo-to-near-black palette (#16112c fading to #0b0a1b), soft gold accents (#d4af6a), teal-and-gold nebula wash, painterly editorial illustration, full-bleed wide 16:9 composition that fills the entire frame, ONE single continuous scene, no split screen, no diptych, no two panels, no diagram, no chart wheel, no central framed card, no text or letters or numerals';
+const ABSTRACT_STYLE = `${BASE_STYLE}, no human faces`;
 
 const IMAGES_SUBDIR = 'public/images/blog';   // single dir for cron-generated assets
 const URL_BASE = '/images/blog';
@@ -29,6 +30,52 @@ function geminiSkillPath() {
   // Same skill the manual backfill used; overridable for the keyed fallback.
   return process.env.GG_GEMINI_SKILL
     || join(process.env.HOME, '.openclaw', 'workspace', 'skills', 'baoyu-danger-gemini-web', 'scripts', 'main.ts');
+}
+
+export function classifyHeroTheme({ slug = '', title = '', content = '' } = {}) {
+  const text = `${slug} ${title} ${content}`.toLowerCase();
+  const relationship = /\b(wedding|synastry|compatibility|relationship|couple|girlfriend|boyfriend|marriage)\b/.test(text)
+    || /-[a-z]+-and-[a-z]+-/.test(`-${slug}-`);
+  if (relationship) return 'relationship-scene';
+
+  const sports = /\b(world cup|football|soccer|national team|matchup|fixture|tournament)\b/.test(text)
+    || (/\b(vs|versus)\b/.test(text) && /\b(country|nation|team|cup|football|soccer|argentina|brazil|portugal|colombia|jordan|scotland|norway|england|morocco|egypt)\b/.test(text));
+  if (sports) return 'sports-matchup';
+
+  if (/\b(birth chart|birth-chart|zodiac sign|zodiac-sign)\b/.test(text)) return 'celebrity-portrait';
+  if (/\b(country|nation|national|pluto return|eclipse|astrology calendar)\b/.test(text)) return 'country-astrology';
+  return 'abstract-atmospheric';
+}
+
+export function buildHeroPlanningRules() {
+  return [
+    `Before writing hero.prompt, classify the article into exactly one hero theme:`,
+    `- celebrity-portrait: named-person birth chart or zodiac-sign articles. Use a stylized editorial portrait or character-study scene inspired by the public figure, with recognizable career/context cues, non-photoreal, not a literal photo. Do not include "no human faces".`,
+    `- relationship-scene: wedding, synastry, compatibility, dating, or named-couple articles. Use two stylized figures and relationship geometry in one continuous scene, not a split-screen comparison.`,
+    `- sports-matchup: football/soccer, World Cup, country-vs-country, or national-team matchup articles. Use a stadium or pitch scene with two teams/countries expressed through color, motion, banners without text, and celestial tension.`,
+    `- country-astrology: clear country, national event, eclipse, or calendar themes. Use a concrete symbolic national/event scene, not a generic nebula.`,
+    `- abstract-atmospheric: only use abstract-atmospheric when the article has no concrete person, couple, country, event, or matchup.`,
+    `For every non-abstract theme, keep the specific subject matter visible. Never collapse a clear subject into a generic celestial landscape.`,
+    `House style base clause for non-abstract themes: "${BASE_STYLE}"`,
+    `House style clause for abstract-atmospheric only: "${ABSTRACT_STYLE}"`,
+  ].join('\n');
+}
+
+export function buildTemplateHeroPrompt({ title, slug = '', content = '' }) {
+  const theme = classifyHeroTheme({ slug, title, content });
+  if (theme === 'celebrity-portrait') {
+    return `A stylized editorial portrait inspired by "${title}": a public figure rendered as an elegant non-photoreal character study, subtle career and era cues woven into clothing, posture, and background symbols, soft celestial light shaping the face and shoulders without imitating a photograph, ${BASE_STYLE}`;
+  }
+  if (theme === 'relationship-scene') {
+    return `A cinematic relationship astrology scene evoking "${title}": two stylized figures sharing one continuous environment, warm and cool celestial currents meeting between them, subtle wedding or compatibility symbolism integrated into the landscape, ${BASE_STYLE}`;
+  }
+  if (theme === 'sports-matchup') {
+    return `A cinematic football astrology scene evoking "${title}": a night stadium and pitch under a charged sky, two countries or teams expressed through opposing color currents and motion, distant athletic silhouettes and banners without readable text, ${BASE_STYLE}`;
+  }
+  if (theme === 'country-astrology') {
+    return `A concrete editorial astrology scene evoking "${title}": a symbolic national or event landscape under a vast night sky, recognizable civic or seasonal motifs transformed into celestial light, ${BASE_STYLE}`;
+  }
+  return `An atmospheric painterly editorial scene evoking the theme of "${title}": a serene natural landscape — a still lake, open plain, or misty horizon — under a vast night sky, the subject suggested through soft glowing celestial forms woven into the scene, ${ABSTRACT_STYLE}`;
 }
 
 // ── session cooldown (avoid burning ~90s/tick re-trying a dead Google session) ──
@@ -67,7 +114,7 @@ function planPromptFor(repo, slug) {
     `  "articles": { "${slug}": { "hero": {...}, "inline": [...] } }`,
     `}`,
     `The article object holds (EN-only since 2026-07-03 — do NOT emit any *Zh keys):`,
-    `- "hero": { "prompt": <atmospheric scene prompt string>, "altEn": <=140 char string }`,
+    `- "hero": { "prompt": <topic-specific hero prompt string>, "altEn": <=140 char string }`,
     `- "inline": an array of 0 to 3 objects, ONLY where a data-bearing section warrants it. Each object:`,
     `  - common keys: "kind" (one of "sequence","compare","timeline"), "afterHeadingEn" (verbatim EN "## " H2 heading), "titleEn", "altEn"`,
     `  - kind "sequence": add "items": array of 3-7 objects {"nameEn","subEn"}`,
@@ -76,9 +123,9 @@ function planPromptFor(repo, slug) {
     ``,
     `STRICT JSON: double-quoted keys/strings, NO comments, NO trailing commas, NO code fences.`,
     ``,
-    `HERO PROMPT RULES — the hero must match the site's house style. End the prompt with this exact clause verbatim:`,
-    `"${STYLE}"`,
-    `Derive a UNIQUE atmospheric landscape metaphor from what THIS article argues (e.g. a comparison → two distinct glowing forms in dialogue across one sky; a "point/mechanism" → a single luminous motif in a landscape). Never a chart wheel, never a centred diagram/emblem, never text.`,
+    `HERO PROMPT RULES — the hero must match the article's concrete subject and the site's house style:`,
+    buildHeroPlanningRules(),
+    `Derive a UNIQUE visual idea from what THIS article argues. For clear person/couple/matchup/event topics, keep that subject visible in the scene. Never a chart wheel, never a centred diagram/emblem, never text.`,
     ``,
     `INLINE RULES — include inline ONLY for genuinely data-bearing sections (an enumeration, a comparison, a time-ordered process). Definition/short articles often need 0-1; pillar/guide 2-3. ALL data (names, years, orderings) MUST be faithfully extracted from the article text. afterHeadingEn MUST be a verbatim "## " H2 heading line that exists in the EN content — VERIFY each with: grep -nF '## <heading>' ${join(repo, artRel)}. Drop any anchor you cannot verify.`,
     ``,
@@ -91,16 +138,19 @@ function templatePlan(repo, slug) {
   // Deterministic fallback when the LLM planner is unavailable/invalid: a single
   // atmospheric hero derived from the article title, no inline.
   let title = slug.replace(/-/g, ' ');
+  let content = '';
   try {
     const ts = readFileSync(join(repo, `data/articles/${slug}.ts`), 'utf8');
     const m = ts.match(/title:\s*['"]([^'"]+)['"]/);
     if (m) title = m[1];
+    const cm = ts.match(/content:\s*`([\s\S]*?)`/);
+    if (cm) content = cm[1].slice(0, 1200);
   } catch { /* use slug */ }
   return {
     imagesDir: IMAGES_SUBDIR, urlBase: URL_BASE, articlesDir: 'data/articles',
     geminiSkill: geminiSkillPath(), optimize: { heroWidth: 1200, heroHeight: 675, quality: 82 },
     articles: { [slug]: { hero: {
-      prompt: `An atmospheric painterly editorial scene evoking the theme of "${title}": a serene natural landscape — a still lake, open plain, or misty horizon — under a vast night sky, the subject suggested through soft glowing celestial forms woven into the scene, ${STYLE}`,
+      prompt: buildTemplateHeroPrompt({ title, slug, content }),
       altEn: `An atmospheric celestial landscape evoking ${title}.`,
     } } },
   };

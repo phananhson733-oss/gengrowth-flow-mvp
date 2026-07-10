@@ -18,6 +18,7 @@ tags:
 - 要点 2：回读 `gengrowth-ops` 与 `gengrowth-flow-mvp` 的 Obsidian Git 配置，确认自动同步字段保持禁用。
 - 要点 3：按 SEO Blog 自动化边界在 22:00 后不启动新 wrapper，只做单执行器、日志、ledger、回填、生产 URL、sitemap 与进程/锁验证。
 - 要点 4：确认 7月9日 astrologywiki 批次中 Justin、Jack、Kate、Ayo、Zendaya 均已上线，并完成 publish log / W22 plan / Sheet reconcile / pending-writeback WAL 回填；旧 Mexico 赛前预测继续保留 `needs_human`。
+- 要点 5：执行 `gg-recap-performance-tick.sh` 更新结果复盘表，生成 7月10日 astrologywiki / gengrowth 优化任务报告，并完成 D14/D30/D60 覆盖与任务分桶核验。
 
 ---
 
@@ -501,5 +502,37 @@ Last run: 2026-07-10T01:01:26.892Z (1783645286892)
 **🤖 回答：**
 
 按自动修复冲突自动化边界执行：读取 automation memory、项目 reminders、sibling owner profile 与适用的 `superpowers:using-superpowers`、`superpowers:verification-before-completion`、`gstack-careful` 指引；本仓库缺 `ai-profile/lynne-soul.md`，已使用 `gengrowth-wiki/ai-profile/lynne-soul.md` 兜底，reminders 有未完成项但本轮未修改。仅运行指定三仓库 `obsidian-vault-git-sync.py --verbose` 入口；入口返回 `Obsidian vault git sync: clean`。随后逐仓库执行 `git status --branch --porcelain=v2`、`git rev-list --left-right --count HEAD...origin/main`、`git diff --name-only --diff-filter=U`、`git ls-files -u`，确认三个仓库均无 unmerged 输出且 `HEAD...origin/main = 0 0`。回读 `gengrowth-ops` 与 `gengrowth-flow-mvp` 的 Obsidian Git `data.json`，确认 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。追加本条 record 后继续使用同一确定性入口同步并做最终验证；未运行破坏性 git/filesystem 命令或镜像删除脚本。
+
+---
+
+### Q14 — 10:02
+
+**🙋 提问：**
+
+Automation: 结果复盘表更新
+Automation ID: gengrowth-recap-performance
+Automation memory: $CODEX_HOME/automations/gengrowth-recap-performance/memory.md
+Last run: 2026-07-09T02:00:51.462Z (1783562451462)
+
+Run the deterministic GenGrowth results-recap performance workflow through `bash tools/scripts/gg-recap-performance-tick.sh`.
+
+The wrapper loads the local gg environment, scans the configured products (`GG_RECAP_PERFORMANCE_PRODUCTS`, defaulting to astrologywiki and gengrowth), reads `index-tracking` and `结果复盘表`, fetches D14/D30/D60 GSC and GA4 metrics, preserves manual recap decisions/notes, writes generated performance fields back to the Sheet, and writes the optimization task report under `~/gengrowth-agents/reports/recap-performance/`.
+
+Safety boundary:
+- Do not bypass the wrapper or pass ad-hoc write flags directly to the Node script.
+- Do not hand-edit Google Sheets outside the wrapper.
+- Do not publish content, deploy sites, modify page source, submit GSC Request Indexing, or use the Google Indexing API.
+- Do not overwrite manual fields such as `决策` or human notes; only the wrapper-owned generated recap segment may be refreshed.
+- Do not create extra Feishu/Google Doc artifacts unless the wrapper already does so.
+
+After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/recap_performance/` and summarize per-product workbook/site/property, updated recap row counts, generated report path, D14/D30/D60 coverage, optimization task counts by priority, skipped rows, and any failures. If the wrapper fails or required credentials/properties are missing, report the exact missing boundary from the log without attempting a manual replacement workflow.
+
+**🤖 回答：**
+
+按结果复盘表更新自动化边界执行：先读取 automation memory、`AGENTS.md`、reminders、适用技能与相关记忆索引；本仓库缺 `ai-profile/lynne-soul.md`，本轮未修改 reminders。仅运行 `bash tools/scripts/gg-recap-performance-tick.sh`，wrapper stdout 为空、退出码 0；权威日志为 `/Users/awayer_mini/gengrowth-agents/cron-sync/recap_performance/2026-07-10.log`，窗口 `10:02:37`-`10:05:43 CST`，结束行为 `recap performance ok`。
+
+日志显示 astrologywiki workbook `1CkjOCgYbRfXGYc6l2FJOaxUIzxT0NBVUhUpgCjyzcQc`、site `sc-domain:astrologywiki.com`、GA4 `properties/524765570`，`rows=168 updated=212 tasks=203 mode=write-sheet write_recommendations=1`，报告 `/Users/awayer_mini/gengrowth-agents/reports/recap-performance/2026-07-10-astrologywiki-optimization-tasks.md`；只读覆盖检查为 D14 `168/168`、D30 `15/15`、D60 `0/0`，tracking rows `224`、recap rows `227`、未满 D14 自然跳过 `56`、tracking-to-recap 缺口 `0`，任务分桶 P0 `11`、技术排查 `106`、P1 `9`、P2 `2`、P3 `0`、观察 `75`。
+
+日志显示 gengrowth workbook `1RRxsyFmdWgtd6tojjze_8lxwSUTTZKm4TqU4gZTIRA8`、site `sc-domain:gengrowth.ai`、GA4 `properties/524765570`，`rows=41 updated=54 tasks=54 mode=write-sheet write_recommendations=1`，报告 `/Users/awayer_mini/gengrowth-agents/reports/recap-performance/2026-07-10-gengrowth-optimization-tasks.md`；只读覆盖检查为 D14 `41/41`、D30 `10/10`、D60 `2/2`，tracking rows `60`、recap rows `60`、未满 D14 自然跳过 `19`、tracking-to-recap 缺口 `0`，任务分桶 P0 `0`、技术排查 `44`、P1 `5`、P2 `0`、P3 `0`、观察 `5`。日志/报告 failure 搜索没有 `warn/error/fatal/failed/partial/timeout/skip`，wrapper 已发送 `recap_performance_ok`，message id `om_x100b6a317959248cb3433716d36aaa4`；未绕过 wrapper、未手工编辑 Sheet、未发布/部署/提交索引。
 
 ---

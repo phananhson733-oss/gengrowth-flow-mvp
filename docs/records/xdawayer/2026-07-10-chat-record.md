@@ -868,3 +868,15 @@ Last run: 2026-07-10T08:01:55.095Z (1783670515095)
 **🤖 回答：**
 
 按 TDD 改造 blog/SEO 图片链路：oracle 新增 `article-image-variants.mjs`，让 `og:image` 保持宽图而 Article JSON-LD 输出 `1x1`、`4x3` 与正文 hero 图数组；`generate-og-images.mjs` 新增 1200×1200 与 1200×900 变体；`illustrate-article.mjs` 新增可选 `GG_HERO_PROVIDER=hermes-image2`，通过 Hermes OpenAI Codex image provider 生成临时 PNG，失败回退 gemini。flow 的 `tools/scripts/lib/illustrate.mjs` 已按题材分类 hero prompt：名人 birth chart 使用风格化肖像，婚礼/合盘使用关系场景，足球/国家对抗使用比赛场景，只有不明确主题才退回抽象星空。验证：oracle Vitest 3 文件 10 测试通过，flow node smoke 3 测试通过，`node scripts/generate-og-images.mjs` 跑通 1050 jobs，并用 `arthur-fery-birth-chart` 样例确认 JSON-LD 图片数组为 `1x1 + 4x3 + hero`。
+
+---
+
+### Q27 — 17:18
+
+**🙋 提问：**
+
+image2d 调用通过了吗
+
+**🤖 回答：**
+
+确认本机 `hermes auth status codex` 当前返回 `codex: logged out`，所以真实 image2 生成调用尚未通过；已通过的是 oracle 中 `GG_HERO_PROVIDER=hermes-image2` adapter 的解析/桥接单测，以及主流程的失败回退逻辑。需要先让 Hermes/Codex OAuth 登录后，再做一次真实生成 smoke test。

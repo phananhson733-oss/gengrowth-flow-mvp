@@ -1243,3 +1243,27 @@ Last run: 2026-07-10T14:01:56.198Z (1783692116198)
 **🤖 回答：**
 
 读取本自动化记忆、项目约束与可用的同仓/兄弟仓 owner profile 后，仅执行批准的三仓库自愈同步入口。脚本输出 `Obsidian vault git sync: clean`。初步验证显示：三个仓库均无工作区或未合并路径，`HEAD...origin/main` 均为 `0 0`；ops 与 flow-mvp 的 Obsidian Git 配置均为 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。追加本条 record 后会再次运行同一入口并作最终验证；未运行任何禁止的破坏性或镜像删除命令。
+
+---
+
+### Q47 — 22:53
+
+**🙋 提问：**
+
+发布 SEO blog
+
+**🤖 回答：**
+
+用户直接要求发布，先完成单执行器检查后运行确定性入口 `bash tools/scripts/gg-nightly-seo.sh`，窗口 `2026-07-10 22:53:56-23:48:47 CST`。CTA 旧 park 已不再阻断 048/049/050 的作者链路：`PG-CELEB-048`、`PG-CELEB-049`、`PG-CELEB-050` 生成合格 `_staging/*-en.md` 草稿；`PG-VEDIC-006` 在三次 phase2 后因字数 1479 和禁用词 `sun sign`/`rising sign`，且 deterministic repair 缺 fixture，保持 needs_human；`PG-CELEB-047` 保持 needs_human（字数 1316）；`PG-WC-045` 仍因过期赛前预测跳过。所有四次 publish scan 都安全拒绝重置 `/Users/awayer_mini/oracle` 的 tracked local changes，因此无 branch、preview、PR、merge、live URL、W22 勾选、发布日志、Sheet/ledger 回填或生产验证。最终 `--stale-report` 为 `inflight=[]`、`staleCount=0`，无相关锁或进程。未使用强制清理或破坏性命令。
+
+---
+
+### Q48 — 22:56
+
+**🙋 提问：**
+
+这个 automatic 的持续时间一直持续检测凌晨 6 点，如果有任务没有完成的话，继续输出
+
+**🤖 回答：**
+
+更新 `/Users/awayer_mini/.codex/automations/gengrowth-seo-blog/automation.toml` 的 RRULE：保留晚间 18:30 起的半小时节奏，并新增 22:00 至次日 06:00 的半小时检查点，最后检查点为 06:00。既有 22:00 后不主动新启 wrapper 的安全边界保留；夜间触发用于追踪已有运行、ledger/pending、发布传播和终态，不放宽发布、事实或脏工作区保护。

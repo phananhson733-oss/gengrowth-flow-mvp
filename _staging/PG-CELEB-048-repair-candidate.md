@@ -14,7 +14,7 @@ This profile builds on the wider method in [[<TBD-internal-link: pillar guide on
 
 Understanding the Priyanka Chopra birth chart matters because it offers a way to separate a carefully built public image from the inner pattern underneath it. A globally famous figure gets flattened into a single label — "the Bollywood star," "the Hollywood crossover" — and a full chart pushes back on that shorthand. It shows tension a headline never captures: a Cancer need for home and roots pulling against a Gemini appetite for movement and reinvention. According to NASA, the Moon's orbital nodes complete a full cycle roughly every 18.6 years, which is why her North Node in Cancer reads as a slow, long-arc direction of growth rather than a fixed personality trait.
 
-For a reader, the real value is less about Priyanka and more about the lens. Watching how a Cancer stellium can coexist with a Libra drive for partnership models something most of us carry — competing needs that don't cancel each other out. The same lens applies to any chart; see [[<TBD-internal-link: guide to the meaning of a Cancer Sun>]] for how that single placement behaves on its own. Used this way, the chart becomes a mirror for your own contradictions rather than a set of predictions about a celebrity. That reframing is the whole point of studying any public figure's chart: the aim isn't to diagnose Priyanka Chopra, but to practice holding two true things at once. Once you can see how her Cancer roots and her Gemini restlessness share the same map, noticing the same kind of overlap in your own placements gets a good deal easier.
+For a reader, the real value is less about Priyanka and more about the lens. Watching how a Cancer stellium can coexist with a Libra drive for partnership models something most of us carry — competing needs that don't cancel each other out. The same lens applies to any chart; see [guide to the meaning of a Cancer Sun](/en/wiki/cancer) for how that single placement behaves on its own. Used this way, the chart becomes a mirror for your own contradictions rather than a set of predictions about a celebrity. That reframing is the whole point of studying any public figure's chart: the aim isn't to diagnose Priyanka Chopra, but to practice holding two true things at once. Once you can see how her Cancer roots and her Gemini restlessness share the same map, noticing the same kind of overlap in your own placements gets a good deal easier.
 
 ## A Full Natal Chart vs a Celebrity Sun-Sign Snapshot
 
@@ -82,8 +82,8 @@ This is not a clinical interpretation or mental health advice.
 ## Related Reading
 
 - [[<TBD-internal-link: guide to rising sign meaning>]] — why her missing birth time leaves the ascendant an open question
-- [[<TBD-internal-link: profile of Serena Williams's birth chart>]] — another public figure read through the whole natal map rather than one sign
-- [[<TBD-internal-link: explainer on the north and south nodes>]] — the Cancer–Capricorn axis running through her chart
+- [profile of Serena Williams's birth chart](/en/wiki/serena-williams-birth-chart) — another public figure read through the whole natal map rather than one sign
+- [explainer on the north and south nodes](/en/wiki/north-node-vs-south-node) — the Cancer–Capricorn axis running through her chart
 - [[<TBD-external-link: Wikipedia | Priyanka Chopra | biographical background on the public figure behind this chart>]]
 - [[<TBD-external-link: Wikipedia | Cancer (astrology) | overview of the Cancer Sun sign that anchors this chart>]]
 

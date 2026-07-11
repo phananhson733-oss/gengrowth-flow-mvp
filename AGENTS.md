@@ -187,6 +187,7 @@ Agent 在每次对话完成时，应执行以下步骤（每轮 Q&A 结束即触
 | -------------- | -------------- | --------------------------- |
 | `wzb`          | `wzb/`         | 当前所有者                   |
 | `awayer_mini`  | `wzb/`         | ⬆ 同一人，wzb 的 Mac mini    |
+| `xdawayer`     | `wzb/`         | ⬆ 同一人，本机 Git 配置别名   |
 | `Lynne Wang`   | `lynne-wang/`  | 团队成员                     |
 | `Lynne`        | `lynne-wang/`  | ⬆ 同一人，不同设备的 git 配置 |
 

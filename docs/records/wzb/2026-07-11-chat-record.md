@@ -19,7 +19,7 @@ aliases:
 > 【本区域在每天最后一次对话结束时生成/更新】
 > 用 3-5 个要点概括当天所有对话的核心内容、关键决策和产出成果。
 
-- 使用确定性入口完成两轮多仓 Obsidian/Git 自愈同步；最终三仓 clean、无未合并项且与 origin/main 同步，Obsidian Git 自动同步保持禁用。
+- 使用确定性入口完成多轮多仓 Obsidian/Git 自愈同步；最终三仓 clean、无未合并项且与 origin/main 同步，Obsidian Git 自动同步保持禁用。
 - 多次在 SEO Blog 发布启动窗外完成只读核验，未启动新的 nightly wrapper；Oracle 脏基线与遗留执行器仍阻止安全接管。
 - legacy `com.gengrowth.seo-autopilot` 与 `com.gengrowth.seo-author` 仍被加载；遗留执行产生的 PR #355 被 links-seo gate 停放，PR #356 仍为 pushed-preview。
 - 16:02 仅通过 `gg-topic-register-tick.sh` 执行选题登记：本地环境为 apply 模式，但 astrologywiki 与 gengrowth 均无候选、无更新、无失败。
@@ -481,7 +481,7 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 
 ---
 
-### Q12 — 16:02
+### Q13 — 16:02
 
 **🙋 提问：**
 
@@ -509,6 +509,6 @@ Last run: 2026-07-11T07:00:30.441Z (1783753230441)
 
 **🤖 回答：**
 
-已运行指定三仓确定性入口，初轮返回 `Obsidian vault git sync: clean`。初轮复核中，三仓工作区均 clean，`HEAD...origin/main` 均为 `0 0`，未检测到 unmerged；两份 Obsidian Git 配置均保持禁用自动同步。写入本条记录后，将仅用同一入口再次收敛并以最终复核结果更新本摘要。
+仅运行指定的三仓 `obsidian-vault-git-sync.py` 确定性入口。初轮返回 `Obsidian vault git sync: clean`；追加本条 record 后，同一入口再次执行。最终复核显示 `gengrowth-wiki`、`gengrowth-ops` 与 `gengrowth-flow-mvp` 工作区均 clean，`HEAD...origin/main` 均为 `0 0`，`git diff --name-only --diff-filter=U` 与 `git ls-files -u` 均为空。两份 Obsidian Git 配置均为 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。未执行破坏性 Git/文件命令或镜像删除脚本。
 
 ---

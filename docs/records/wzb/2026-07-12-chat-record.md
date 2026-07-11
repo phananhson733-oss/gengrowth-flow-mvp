@@ -606,6 +606,6 @@ Last run: 2026-07-11T21:01:04.094Z (1783803664094)
 
 **🤖 回答：**
 
-已使用唯一允许的三仓确定性入口同步，初次输出为 `Obsidian vault git sync: clean`。初验显示三个仓库均 clean，`HEAD...origin/main` 均为 `0 0`，无未合并路径或索引条目；两份 Obsidian Git 配置的三个自动同步间隔均为 `0`，`autoPullOnBoot=false`、`pullBeforePush=false`。本记录追加后将只通过同一入口再次收敛并复验；未执行禁止的破坏性 Git/文件命令或镜像删除脚本。
+已使用唯一允许的三仓确定性入口同步，初次输出为 `Obsidian vault git sync: clean`。record 追加后的同入口调用因现存锁静默退出；未解锁或手工补 Git 操作。最终完整复验显示三个仓库均 clean，`HEAD...origin/main` 均为 `0 0`，无未合并路径或索引条目；两份 Obsidian Git 配置的三个自动同步间隔均为 `0`，`autoPullOnBoot=false`、`pullBeforePush=false`。未执行禁止的破坏性 Git/文件命令或镜像删除脚本。
 
 ---

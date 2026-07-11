@@ -383,6 +383,6 @@ Last run: 2026-07-11T05:00:59.922Z (1783746059922)
 
 **🤖 回答：**
 
-仅运行指定的三仓 `obsidian-vault-git-sync.py` 确定性入口，退出码为 0。首次验证显示 `gengrowth-wiki`、`gengrowth-ops` 和 `gengrowth-flow-mvp` 工作区均 clean，`HEAD...origin/main` 均为 `0 0`，`git diff --name-only --diff-filter=U` 与 `git ls-files -u` 均为空。`gengrowth-ops` 和 `gengrowth-flow-mvp` 的 Obsidian Git 配置均保持 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。本条 record 追加后将再次运行同一入口并复核最终状态；未运行破坏性 Git/文件命令或镜像删除脚本。
+仅运行指定的三仓 `obsidian-vault-git-sync.py` 确定性入口。初始同步退出码为 0；追加本条 record 后，同一入口提交并推送了 `gengrowth-wiki` 与 `gengrowth-flow-mvp` 各 1 个普通记录路径。最终验证显示 `gengrowth-wiki`、`gengrowth-ops` 和 `gengrowth-flow-mvp` 工作区均 clean，`HEAD...origin/main` 均为 `0 0`，`git diff --name-only --diff-filter=U` 与 `git ls-files -u` 均为空。`gengrowth-ops` 和 `gengrowth-flow-mvp` 的 Obsidian Git 配置均保持 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。未运行破坏性 Git/文件命令或镜像删除脚本。
 
 ---

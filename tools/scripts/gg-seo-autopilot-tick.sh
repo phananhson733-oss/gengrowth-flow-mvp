@@ -30,6 +30,9 @@ load_runtime_env() {
   set -a; . "$HOME/.config/gg/_gg.env" 2>/dev/null; set +a
   [ -n "$AUTOMATION_ORACLE_DIR" ] && export GG_ORACLE_DIR="$AUTOMATION_ORACLE_DIR"
 }
+# --scan/--status run outside the source-loading subshells below, so pin the
+# baseline in the parent process as well.
+[ -n "$AUTOMATION_ORACLE_DIR" ] && export GG_ORACLE_DIR="$AUTOMATION_ORACLE_DIR"
 
 # 重放 outbox 里发送失败的积压通知（fail-closed 的补发闭环；无积压时零开销）。
 node "$SCRIPT_DIR/gg-notify.mjs" replay-outbox >/dev/null 2>&1 || true

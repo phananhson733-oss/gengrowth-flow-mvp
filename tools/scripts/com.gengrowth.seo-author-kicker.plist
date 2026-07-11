@@ -20,7 +20,7 @@
   <array>
     <string>/bin/bash</string>
     <string>-lc</string>
-    <string>uid=$(id -u); /bin/launchctl asuser "$uid" /bin/launchctl kickstart -k gui/$uid/com.gengrowth.seo-author</string>
+    <string>uid=$(id -u); /bin/launchctl kickstart -k gui/$uid/com.gengrowth.seo-author</string>
   </array>
   <key>StartInterval</key>
   <integer>7200</integer>

@@ -19,12 +19,11 @@ aliases:
 > 【本区域在每天最后一次对话结束时生成/更新】
 > 用 3-5 个要点概括当天所有对话的核心内容、关键决策和产出成果。
 
-- 执行三仓 Obsidian/Git 自愈同步，并完成最终状态与 Obsidian Git 配置核验。
-- 执行最新一轮三仓 Obsidian/Git 自愈同步；仅使用确定性入口处理并发 record 追加，并复核仓库收敛状态。
-- 在 22:00 后执行 SEO Blog 只读闭环核验；未启动新 wrapper，确认无遗留发布或回填，并记录 Oracle 基线脏状态阻断。
-- 在发布窗口开始前复核 SEO Blog 队列；未启动 wrapper，确认执行器、回填与待发布状态均无新增进展。
-- 在 18:30 发布启动窗口前完成 SEO Blog 只读复核；无执行器、回填或发布状态新增，Oracle 脏基线仍阻止分支创建。
-- 在发布窗口前再次完成 SEO Blog 闭环核验；无待续 preview、merge 或回填，Oracle 脏基线仍是唯一发布阻塞。
+- 使用确定性入口完成多仓 Obsidian/Git 自愈同步，并复核三仓状态与 Obsidian Git 配置。
+- 多次在 SEO Blog 发布启动窗外执行只读闭环核验，未启动新的 nightly wrapper。
+- 确认上一 SEO wrapper 未发布新文章，Oracle 脏基线仍阻止已撰写草稿创建发布分支。
+- 当前发现 legacy `com.gengrowth.seo-autopilot` 与 `com.gengrowth.seo-author` 仍被加载，其中 autopilot 正在处理 `PG-CELEB-048`。
+- 因单执行器冲突跳过本轮发布、账本与线上回填核验，等待通过批准路径收敛 legacy 执行器。
 
 ---
 

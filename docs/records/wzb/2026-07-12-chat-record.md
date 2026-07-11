@@ -19,7 +19,7 @@ tags:
 - `gengrowth-ops` 与 `gengrowth-flow-mvp` 的 Obsidian Git 自动同步设置均复核为关闭状态。
 - 04:02 本轮同步与完整核验均通过；本条记录追加后将再次使用同一入口收敛并复验。
 - 02:31–03:35 SEO Blog 自动化未在窗口外启动新发布；通过既有账本 wrapper 补齐九条回填并复核九篇线上页面，后续 dry-run 保持无待处理项；legacy 发布器调度与发布后 gate 状态机异常待人工处理。
-- 04:02–04:06 SEO Blog 自动化保持窗口外只读；五篇 7 月 11 日发布文章的线上闭环与账本回填均已验证，仍需人工停用已加载且 enabled 的 legacy author/autopilot 调度。
+- 04:02–04:11 SEO Blog 自动化保持窗口外只读；五篇 7 月 11 日发布文章的线上闭环与账本回填均已验证，仍需人工停用已加载且 enabled 的 legacy author/autopilot 调度。
 
 ---
 
@@ -369,7 +369,7 @@ Last run: 2026-07-11T19:31:33.698Z (1783798293698)
 
 **🤖 回答：**
 
-本轮为 04:02–04:06 CST 的窗口外只读核验，未启动 `bash tools/scripts/gg-nightly-seo.sh`，没有本轮新增 slug、发布或通知。`com.gengrowth.seo-author` 与 `com.gengrowth.seo-autopilot` 已加载但为 `not running`；`com.gengrowth.seo-author-kicker` 也仍 enabled 但未加载。未发现实际 SEO wrapper/gate 进程、local cron 条目或 `/tmp/gg-nightly-seo.lock`；其余五个指定 legacy label 均未加载。
+本轮为 04:02–04:11 CST 的窗口外只读核验，未启动 `bash tools/scripts/gg-nightly-seo.sh`，没有本轮新增 slug、发布或通知。`com.gengrowth.seo-author` 与 `com.gengrowth.seo-autopilot` 已加载但为 `not running`；`com.gengrowth.seo-author-kicker` 也仍 enabled 但未加载。未发现实际 SEO wrapper/gate 进程、local cron 条目或 `/tmp/gg-nightly-seo.lock`；其余五个指定 legacy label 均未加载。
 
 只读状态为 `inflight=[]`、`staleCount=0`；ledger dry-run 为 `stillPending=0`、`flips=0`、`needs_human=0`，Sheet dry reconcile 为 astrologywiki `live=282 flip=0 review=0`。W22 计划无未勾选项，相关 5 项均已勾选；发布日志确认 PG-CELEB-047/048/049/050 与 PG-VEDIC-006 于 2026-07-11 已 published。五个生产 URL 均为 HTTP 200、自 canonical、含 Article JSON-LD 且在 sitemap 中。Oracle 基线仍脏（2770 状态条目；841 tracked、1932 untracked），本轮未改动它。
 

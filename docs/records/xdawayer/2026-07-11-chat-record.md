@@ -25,7 +25,7 @@ aliases:
 - 多轮 SEO Blog 核验均处于发布窗口外，未启动新 wrapper；无执行器冲突、残留发布、待回填或可继续的 pending publish。
 - W22 六项仍未上线且无 publish-log；六个目标 URL 均只返回首页 canonical、无 Article JSON-LD、无 sitemap 条目。
 - Oracle 脏基线持续安全阻断 048、049、050 建分支；`PG-WC-045`、`PG-CELEB-047`、`PG-VEDIC-006` 保持 needs_human。
-- 12:01 使用确定性入口完成最新一轮三仓 Obsidian/Git 自愈同步；初始验证为 clean、`0 0`、无未合并项，且两个 Obsidian Git 自动同步配置保持禁用。
+- 12:01 与 22:03 均使用确定性入口完成三仓 Obsidian/Git 自愈同步；最新一轮初始验证为 clean、`0 0`、无未合并项，且两个 Obsidian Git 自动同步配置保持禁用。
 
 ---
 

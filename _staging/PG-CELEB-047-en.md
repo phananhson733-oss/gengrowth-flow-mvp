@@ -1,3 +1,28 @@
+---
+title: Karolína Muchová Birth Chart
+slug: karolina-muchova-birth-chart
+date: 2026-07-11
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-CELEB-047
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: Karolína Muchová birth chart
+associated_keywords:
+  - Karolína Muchová birth chart meaning
+  - Karolína Muchová birth chart astrology
+  - Karolína Muchová birth chart zodiac
+  - Karolína Muchová birth chart interpretation
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-07-11T08:51:09.660Z
+content_sha256_short: 6cb2079c16661eb4
+phase2_checks: all-pass
+---
+
 # What the Karolína Muchová Birth Chart Reveals Beneath a Leo Surface
 
 ## What Is the Karolína Muchová Birth Chart?

@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-CELEB-047",
+  "entity": "Karolína Muchová birth chart",
+  "target_keyword": "Karolína Muchová birth chart",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-07-11T08:51:09.660Z",
+  "content_sha256_short": "6cb2079c16661eb4",
+  "source_path": "_staging/PG-CELEB-047-repair-candidate.md",
+  "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-CELEB-047-en.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 1,
+      "h4Count": 0,
+      "words": 1813,
+      "wikilinks": 6,
+      "tbdLinks": 6
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

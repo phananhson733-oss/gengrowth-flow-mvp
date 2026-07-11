@@ -22,7 +22,13 @@ Using a public figure's chart as a study case is a well-established method in ps
 
 ## A Leo Sun-Sign Label vs the Full Birth Chart
 
-Reduced to a Sun sign, Karolína Muchová reads as pure Leo: bold, expressive, built for the spotlight. The full Karolína Muchová birth chart complicates that, because the reported Scorpio Moon and Ascendant pull the same drive inward. Here is how the two readings differ in practice. A Sun-sign label works by sorting a person into one headline trait, which is fast and memorable; the trade-off is flatness — to get an easy summary, you sacrifice the contradictions that make someone legible. The whole-chart reading works the other way: the Scorpio water layer, read in the depth-focused style associated with Liz Greene, turns the fire strategic rather than loud, so both sides stay in the same frame. To get that depth, you give up the tidy one-word answer. For a public competitor, the whole-chart version explains the composure better — the Leo wants the win visible, while the Scorpio manages what gets shown along the way. The reported Ascendant here leans on her [[<TBD-internal-link: rising sign meaning explainer>]], which needs an exact birth time this chart doesn't have.
+Reduced to a Sun sign, Karolína Muchová reads as pure Leo: bold, expressive, built for the spotlight. The full Karolína Muchová birth chart complicates that, because the reported Scorpio Moon and Ascendant pull the same drive inward. Here is how the two readings differ in practice.
+
+A Sun-sign label works by sorting a person into one headline trait, which is fast and memorable; the trade-off is flatness — to get an easy summary, you sacrifice the contradictions that make someone legible. The whole-chart reading works the other way: the Scorpio water layer, read in the depth-focused style associated with Liz Greene, turns the fire strategic rather than loud, so both sides stay in the same frame.
+
+To get that depth, you give up the tidy one-word answer. For a public competitor, the whole-chart version explains the composure better — the Leo wants the win visible, while the Scorpio manages what gets shown along the way.
+
+The reported Ascendant here leans on her [[<TBD-internal-link: Ascendant meaning explainer>]], which needs an exact birth time this chart doesn't have.
 
 It is worth noting that the August 21 birth date sits at a pivotal moment within Leo season. The Sun enters Leo around July 22 and exits around August 22, placing an August 21 birthday near the very end of the sign. Late-degree Leo placements are sometimes described in traditional astrology as carrying an awareness of the sign's themes that early-degree placements do not yet hold — though that is an interpretive convention, not a mechanical rule. More importantly for this chart, being born near a sign boundary underscores why the full picture matters more than the Sun sign alone.
 

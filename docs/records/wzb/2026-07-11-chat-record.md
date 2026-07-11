@@ -23,7 +23,7 @@ aliases:
 - 多次在 SEO Blog 发布启动窗外完成只读核验，未启动新的 nightly wrapper；Oracle 脏基线与遗留执行器仍阻止安全接管。
 - legacy `com.gengrowth.seo-autopilot` 与 `com.gengrowth.seo-author` 仍被加载；遗留执行产生的 PR #355 被 links-seo gate 停放，PR #356 仍为 pushed-preview。
 - 16:02 仅通过 `gg-topic-register-tick.sh` 执行选题登记：本地环境为 apply 模式，但 astrologywiki 与 gengrowth 均无候选、无更新、无失败。
-- 17:00 使用指定确定性入口完成三仓 Obsidian/Git 自愈同步；最终核验三仓 clean、无未合并项、与 origin/main 为 `0 0`，Obsidian Git 自动同步保持禁用。
+- 17:00 使用指定确定性入口完成三仓 Obsidian/Git 自愈同步；17:32 通过 `gg-index-repair-resubmit-tick.sh` 完成两个产品的固定行修复扫描，均无重提且无失败。
 
 ---
 
@@ -543,5 +543,22 @@ Last run: 2026-07-11T08:01:30.683Z (1783756890683)
 **🤖 回答：**
 
 仅运行指定的三仓 `obsidian-vault-git-sync.py` 确定性入口。初始运行返回 `Obsidian vault git sync: clean`；追加本条 record 后，同一入口提交并推送 1 个 `gengrowth-flow-mvp` record 路径。最终独立验证显示三个仓库无工作区变更或未解决冲突，`HEAD...origin/main` 均为 `0 0`。两份 Obsidian Git 配置的自动保存、推送、拉取间隔均为 `0`，且 `autoPullOnBoot`、`pullBeforePush` 均为 `false`。未运行破坏性 Git/文件命令或镜像删除脚本。
+
+---
+
+### Q16 — 17:33
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: 2026-07-10T21:01:57.780Z (1783717317780)
+
+Run the deterministic fixed-row index repair workflow through `bash tools/scripts/gg-index-repair-resubmit-tick.sh`. The wrapper loads the local gg environment, loops the configured products (`GG_INDEX_MONITOR_PRODUCTS`, defaulting to astrologywiki and gengrowth), processes rows marked `已修复`, syncs `结果复盘表`, and refreshes `request-indexing-queue` in each product Google Sheet. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, do not click Search Console Request Indexing unattended, and do not create Feishu or Google Doc report artifacts. After the wrapper exits, summarize per-product `process-fixed`, `sync-recap`, `sync-request-queue` counts visible in the log, plus any failures.
+
+**🤖 回答：**
+
+执行指定的 `bash tools/scripts/gg-index-repair-resubmit-tick.sh`，wrapper 退出码为 0；精确日志窗口为 2026-07-11 17:32:32–17:33:02 CST，最终 `index repair-resubmit ok`。astrologywiki：fixed=0、resubmitted=0，recap en_rows=226 / appended=2 / updated=207 / skipped=17，queue rows=11（P0=0、P1=3、P2=6、P3=2）。gengrowth：fixed=0、resubmitted=0，recap en_rows=60 / appended=0 / updated=45 / skipped=15，queue rows=2（P0=0、P1=0、P2=0、P3=2）。精确新增日志窗口内未见失败关键词；未使用普通文章 Google Indexing API、未进行无人值守 Search Console Request Indexing 点击，且未创建 Feishu 或 Google Doc 报告。
 
 ---

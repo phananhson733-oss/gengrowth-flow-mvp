@@ -20,6 +20,7 @@ tags:
 - `gengrowth-ops` 与 `gengrowth-flow-mvp` 的 Obsidian Git 自动同步设置均已复核为禁用状态。
 - 最新一次运行由入口在 `gengrowth-ops` 提交并推送 1 个路径，三仓随后再次收敛。
 - 02:01 再次通过相同入口完成三仓同步；最终逐仓状态与插件配置复核均保持合规。
+- 02:31 SEO Blog 自动化保持窗口外只读，核实九篇已上线但 Sheet/ledger 有九条回填漂移，并定位到错误 rrule 与仍启用的 legacy 发布器会在深夜继续运行。
 
 ---
 
@@ -118,5 +119,51 @@ Last run: 2026-07-11T17:01:03.036Z (1783789263036)
 **🤖 回答：**
 
 读取自动化记忆后，使用唯一允许的 `obsidian-vault-git-sync.py` 三仓入口，脚本返回 `Obsidian vault git sync: clean`。随后逐仓运行指定的 Git 验证：`gengrowth-wiki`、`gengrowth-ops`、`gengrowth-flow-mvp` 均 clean，`HEAD...origin/main` 均为 `0 0`，无未合并路径及索引条目。已回读两份 Obsidian Git 配置，三个自动间隔均为 `0`，`autoPullOnBoot=false`、`pullBeforePush=false`。未运行任何禁止的破坏性或镜像删除命令；record 追加后将再次使用相同入口提交、推送并收敛，自动化记忆随后更新为最终状态。
+
+---
+
+### Q4 — 02:31
+
+**🙋 提问：**
+
+Automation: GenGrowth SEO Blog 全流程发布
+Automation ID: gengrowth-seo-blog
+Automation memory: $CODEX_HOME/automations/gengrowth-seo-blog/memory.md
+Last run: 2026-07-11T06:01:30.186Z (1783749690186)
+
+你是 GenGrowth SEO Blog 全流程发布自动化。工作目录固定为 `/Users/awayer_mini/gengrowth-flow-mvp`，时区按 Asia/Shanghai / UTC+8 理解。本自动化每天 18:30、19:00、19:30、20:00、20:30、21:00、21:30 触发；不要在 22:00 之后主动启动新一轮发布工作。
+
+目标：自动检测 astrologywiki SEO blog 待处理队列，完成需要的文档落地、文章撰写、预览、上线发布，以及 publish 之后的所有收尾回填与验证。不要只做计划或停在中间态。
+
+单执行器边界：Codex automation 是 SEO Blog 流程的唯一调度入口。本机 legacy launchd/local cron 已停用；每次运行前快速确认 `com.gengrowth.seo-nightly`、`com.gengrowth.seo-author`、`com.gengrowth.seo-autopilot`、`com.gengrowth.seo-author-kicker`、`com.gengrowth.flow-driver`、`com.gengrowth.lane-watchdog`、`com.gengrowth.ledger-reconcile`、`com.gengrowth.index-monitor` 没有正在运行。若发现这些 legacy job 正在跑，先不要启动新的 SEO 发布流程，记录冲突 job、PID / run window 和日志路径，避免同时进行。
+
+主入口：优先且默认只运行确定性 wrapper：`bash tools/scripts/gg-nightly-seo.sh`。不要绕过 wrapper 直接调用底层 Node 脚本，除非是在 wrapper 失败后做只读诊断或执行 wrapper 文档明确要求的可恢复步骤。不要手动加写入 flags；由本地环境和 wrapper 决定 apply / publish 边界。wrapper 自带锁；如果命中锁，读取日志确认已有运行仍在执行并报告为 skip，不要强制解锁。
+
+正式执行流程：
+1. 先读取 `AGENTS.md`、`ai-profile/lynne-soul.md`、`ai-profile/reminders.md`，遵守项目记录与安全规则；如有未完成 reminders，仅在最终结果中极简提及，禁止输出冗长中间态。
+2. 执行单执行器检查，确认 legacy launchd/local cron 没有正在运行同一条 SEO/flow 链路。
+3. 运行 `bash tools/scripts/gg-nightly-seo.sh`。
+4. wrapper 结束后，读取 `~/Library/Logs/gg-nightly-seo.log`，按本次 start / finish 时间隔离当前运行窗口，确认 author、preview gate、merge / publish、batch summary、live check 等阶段是否完成。
+5. 如果 wrapper 明确生成了可安全修复的内容或结构失败，进行一次有界自动修复：只修复日志指出的具体问题，不编造事实，不大改主题；修复后运行对应文章 review / preview gate / publish 重试入口。若无法基于可靠证据修复，保留 needs_human 并输出准确原因。
+6. 如果存在 preview 已通过但 publish / merge / live check 未完成的 pending 状态，继续完成 publish_if_pending、merge、部署传播等待、live URL 验证和批次 summary；不要停在 authored、preview pushed、waiting publish 之类中间态。
+7. publish 后必须完成回填与验证：检查 W22 blog output plan 条目状态、`seo-autopilot-publish-log.md` 追加、相关 Google Sheet / ledger 回填、生产 URL 200、canonical、title、Article JSON-LD、sitemap 收录、batch summary 通知状态。必要时短轮询等待部署传播，但不要无限等待。
+8. 验证没有遗留本轮应继续的进程或 pending publish：用 `ps` / ledger / wrapper status 确认；如仍有其他合法后台运行，说明其 run window 和锁状态。
+9. 按 AGENTS 规则追加当天 record，只记录最终摘要和关键路径，不展开 record 明细；如自动化 memory 文件存在，也只追加最终 verified 状态、发布时间窗、slug、失败原因或 needs_human 原因。
+
+通知与输出边界：
+- 不发送 authored、preview pushed、review running 等中间态消息。
+- 只在真正发布完成、整批结束、彻底失败或 needs_human 时保留最终通知；优先让 wrapper / unified notify 发送，避免重复 Feishu 消息。
+- 如果 wrapper 漏发了真正的最终失败告警，才用现有 `gg-notify` / lark 工具补一条短告警，包含失败步骤、slug、日志路径和下一步。
+- 最终汇报必须包含：本次 run window、是否触发 wrapper、发布 slug / live URL、回填项是否完成、publish 后验证结果、needs_human 或失败原因、日志路径。
+
+安全边界：
+- 不使用 `git reset --hard`、`git checkout --`、`git clean`、`rm -rf`、`rsync --delete` 等破坏性命令。
+- 不手工乱改 Google Sheet；需要写 Sheet 时使用既有 wrapper / connector 路径。
+- 不使用 Google Indexing API 处理普通文章，不无人值守点击 GSC Request Indexing。
+- 不泄露 secrets / tokens。
+
+**🤖 回答：**
+
+本轮运行窗口为 02:31–02:36 CST，超过 22:00 后新启动边界，故未运行 `bash tools/scripts/gg-nightly-seo.sh`，未产生本轮新 slug 或 live URL。自动化配置实际包含 00:00–06:30 的半小时触发；`com.gengrowth.seo-author` 与 `com.gengrowth.seo-autopilot` 都已加载且 enabled，尽管结束时无活动进程或锁。其日志显示作者 lane 于 01:17、发布 lane 于 02:16 仍在运行；tick 脚本没有上海发布窗口守卫。2026-07-11 的九个 PR（#355–#363）均已 merge，九个对应文章生产页均通过 HTTP 200、自 canonical、title、Article JSON-LD 和 sitemap 核验；W22 计划均勾选，`seo-autopilot-publish-log.md` 已追加九行。未完成项是 Google Sheet / ledger：只读对账显示 `stillPending=9`、`flips=9` 与 `live=282 flip=9 review=0`。legacy 日志还记录已 merge/done 分支发生 required gate 失败，并出现 `cannot park ... from status "done"`；无 2026-07-11 批次汇总通知的日志证据。根因是调度与单执行器配置漂移，而非本轮部署传播；需在获得状态变更授权后先恢复 18:30–21:30 触发并禁用/卸载两项 legacy LaunchAgent，再在允许窗口经确定性 wrapper 回填九条并调查 merge 后 gate 状态错位。未手工改 Sheet、未回滚已发布内容、未执行破坏性命令或重复通知；自动化 memory 已更新为终态。
 
 ---

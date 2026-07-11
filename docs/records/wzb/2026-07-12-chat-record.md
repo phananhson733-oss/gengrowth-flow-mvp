@@ -20,6 +20,7 @@ tags:
 - 04:02 本轮同步与完整核验均通过；本条记录追加后将再次使用同一入口收敛并复验。
 - 02:31–03:35 SEO Blog 自动化未在窗口外启动新发布；通过既有账本 wrapper 补齐九条回填并复核九篇线上页面，后续 dry-run 保持无待处理项；legacy 发布器调度与发布后 gate 状态机异常待人工处理。
 - 04:32–04:44 SEO Blog 自动化保持窗口外收尾；九篇 7 月 11 日发布文章与账本状态重新核验通过，并已禁用/卸载三个遗留 SEO LaunchAgent。官方调度更新接口未响应，错误 rrule 的服务端写回仍待恢复。
+- 05:01 本轮仅使用指定的三仓 Obsidian/Git 自愈同步入口；最终状态均 clean、相对 `origin/main` 为 `0 0`、无未合并条目，且两份 Obsidian Git 自动同步配置继续关闭。
 
 ---
 
@@ -424,5 +425,37 @@ Last run: 2026-07-11T20:01:03.826Z (1783800063826)
 收敛验证：`gg-seo-autopilot.mjs --stale-report` 为 `inflight=[]`、`staleCount=0`；ledger dry-run 为 `stillPending=0`、`flips=0`、`needs_human=0`；Sheet dry reconcile 为 astrologywiki `live=282 flip=0 review=0`。2026-07-11 的 9 个 W22 claim 与发布日志均为完成；`priyanka-chopra-birth-chart`、`rodri-birth-chart`、`quinta-brunson-birth-chart`、`karolina-muchova-birth-chart`、`antoine-griezmann-birth-chart`、`mexico-vs-england-astrology-prediction`、`sinner-vs-zverev-wimbledon-final-astrology`、`spain-vs-france-world-cup-2026-astrology`、`mikel-merino-birth-chart` 全部通过 HTTP 200、自 canonical、title、H1、Article JSON-LD 与 sitemap 核验。
 
 诊断到自动化本地 rrule 错误包含 00:00–06:30 及 22:00–23:30 触发，正是本次 04:32 唤醒的根因。已两次调用官方 automation 更新接口以改为七个指定晚间时点，但服务在 60 秒内无响应；未直接编辑 `automation.toml` 或建立替代 cron。该调度服务写回是唯一外部阻塞。最新 nightly 日志仍为 `~/Library/Logs/gg-nightly-seo.log` 的 2026-07-10 23:48:47 CST 边界；既有 reminders 未改。
+
+---
+
+### Q11 — 05:01
+
+**🙋 提问：**
+
+Automation: 自动修复冲突
+Automation ID: gengrowth-vault-git-auto-heal-8655c84281d6
+Automation memory: $CODEX_HOME/automations/gengrowth-vault-git-auto-heal-8655c84281d6/memory.md
+Last run: 2026-07-11T20:01:33.828Z (1783800093828)
+
+在本机执行 GenGrowth 多仓库 Obsidian/Git 自愈同步。目标仓库固定为 `/Users/awayer_mini/gengrowth-wiki`、`/Users/awayer_mini/gengrowth-ops`、`/Users/awayer_mini/gengrowth-flow-mvp`。
+
+必须使用已验证的确定性入口，不要绕过脚本手写破坏性 git 操作：
+
+`/usr/bin/python3 /Users/awayer_mini/gengrowth-wiki/tools/scripts/obsidian-vault-git-sync.py --repo /Users/awayer_mini/gengrowth-wiki --repo /Users/awayer_mini/gengrowth-ops --repo /Users/awayer_mini/gengrowth-flow-mvp --verbose`
+
+安全边界：
+- 禁止运行 `git reset --hard`、`git checkout -- <path>`、`git clean`、`rm -rf`、`rsync --delete`，除非用户在当次对话中明确要求。
+- 不要运行 `tools/scripts/frequent-sync.sh`、`tools/scripts/gengrowth-repos-sync.sh` 或 `tools/scripts/_sync-core.sh`，因为这些路径包含镜像删除语义，本任务只做 git 自愈同步。
+- 同步脚本会先 fetch，检查未解决冲突，提交本地非敏感变更，再 rebase/push；只对白名单 JSON 冲突自动合并，其他冲突会中止并报告。不要在脚本中止后自行猜测合并内容。
+- 不打印密钥、token、邮箱密码、service account JSON、private key 或完整凭证 URL。
+
+执行后验证：
+1. 分别在三个仓库运行 `git status --branch --porcelain=v2`、`git rev-list --left-right --count HEAD...origin/main`、`git diff --name-only --diff-filter=U`、`git ls-files -u`。
+2. 回读 `/Users/awayer_mini/gengrowth-ops/.obsidian/plugins/obsidian-git/data.json` 和 `/Users/awayer_mini/gengrowth-flow-mvp/.obsidian/plugins/obsidian-git/data.json`，确认 `autoSaveInterval`、`autoPushInterval`、`autoPullInterval` 为 0，`autoPullOnBoot` 与 `pullBeforePush` 为 false。
+3. 若所有仓库都是 clean 且 ahead/behind 为 `0 0`，简短报告已同步；若脚本输出“需要关注”或存在 unmerged，报告具体仓库和文件路径，不要删除文件。
+
+**🤖 回答：**
+
+读取自动化记忆后，按唯一允许的三仓确定性入口执行同步，输出为 `Obsidian vault git sync: clean`。逐仓验收：`gengrowth-wiki`、`gengrowth-ops`、`gengrowth-flow-mvp` 均 clean，`HEAD...origin/main` 均为 `0 0`，未发现未合并路径或索引条目；两个 Obsidian Git 配置的三个自动同步间隔均为 `0`，`autoPullOnBoot=false`、`pullBeforePush=false`。未执行禁止的破坏性 Git/文件命令或镜像删除脚本；本记录追加后将再次通过同一入口收敛并复验。
 
 ---

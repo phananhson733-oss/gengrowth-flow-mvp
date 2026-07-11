@@ -45,6 +45,14 @@ export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PAT
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Keep unattended automation on its clean Oracle baseline even though _gg.env
+# remains shared with the developer checkout at ~/oracle.
+AUTOMATION_ORACLE_DIR="${GG_AUTOMATION_ORACLE_DIR:-}"
+load_runtime_env() {
+  set -a; . "$HOME/.config/gg/_gg.env" 2>/dev/null; set +a
+  [ -n "$AUTOMATION_ORACLE_DIR" ] && export GG_ORACLE_DIR="$AUTOMATION_ORACLE_DIR"
+}
+
 # 重放 outbox 里发送失败的积压通知（fail-closed 的补发闭环；无积压时零开销）。
 node "$SCRIPT_DIR/gg-notify.mjs" replay-outbox >/dev/null 2>&1 || true
 LOCK="/tmp/gg-seo-author.lock"
@@ -91,7 +99,7 @@ echo "$(date '+%F %T') author tick start (pid $$, batch $BATCH, cap ${TICK_TIMEO
 # Preflight — fail fast on a broken host (missing dirs/bins) with a Feishu alert, before spending
 # any LLM budget. --skip-live-cli: the live claude smoke is slow/flaky unattended.
 (
-  set -a; . "$HOME/.config/gg/_gg.env" 2>/dev/null; set +a
+  load_runtime_env
   node "$SCRIPT_DIR/gg-autopilot-preflight.mjs" --skip-live-cli >> "$LOG" 2>&1
 ) || {
   # 统一事件层（NOTIFY-CONTRACT.md）：@ 策略由事件表决定（preflight_fail → OPS），不再散装 AT env。
@@ -105,7 +113,7 @@ echo "$(date '+%F %T') author tick start (pid $$, batch $BATCH, cap ${TICK_TIMEO
 # detached worker groups before exiting (see ORPHAN CLEANUP note) — so this tick never kills groups.
 # NOTE: GG_AUTOPILOT_MODE must NOT be publish-only here (the driver refuses --author in publish-only),
 # so it's unset; this lane never publishes (no --scan/--merge anywhere in this script).
-AOUT=$( ( set -a; . "$HOME/.config/gg/_gg.env" 2>/dev/null; set +a
+AOUT=$( ( load_runtime_env
   unset GG_AUTOPILOT_MODE
   export GG_SHEETS_WORKBOOK_ID="${GG_SHEETS_FLOW_MVP_WORKBOOK_ID:-$GG_SHEETS_WORKBOOK_ID}"
   # gbrain (~/.local/bin, RAG) + codex (~/.npm-global/bin, multi-party review) on PATH for authoring.

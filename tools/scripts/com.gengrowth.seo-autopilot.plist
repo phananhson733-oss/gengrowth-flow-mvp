@@ -29,6 +29,10 @@
          an alert if it is not). Set GG_CODEX_GATE_REQUIRED=0 here only for an emergency codex-less run. -->
     <key>GG_CODEX_BIN</key>
     <string>/Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-codex-pr-review.mjs</string>
+    <!-- Keep automation off the interactive /Users/awayer_mini/oracle checkout,
+         which can contain active developer changes. -->
+    <key>GG_AUTOMATION_ORACLE_DIR</key>
+    <string>/Users/awayer_mini/oracle-autopilot</string>
   </dict>
   <key>StartInterval</key>
   <integer>1500</integer>

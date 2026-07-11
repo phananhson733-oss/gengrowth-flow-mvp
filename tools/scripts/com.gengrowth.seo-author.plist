@@ -24,6 +24,11 @@
     <string>/bin/bash</string>
     <string>/Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-seo-author-tick.sh</string>
   </array>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>GG_AUTOMATION_ORACLE_DIR</key>
+    <string>/Users/awayer_mini/oracle-autopilot</string>
+  </dict>
   <key>StartInterval</key>
   <integer>7200</integer>
   <key>RunAtLoad</key>

@@ -22,6 +22,15 @@ export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PAT
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Launchd may pin a clean, automation-only Oracle baseline.  _gg.env is shared
+# with interactive development and points at ~/oracle, which can legitimately
+# be dirty; never let sourcing it redirect this unattended lane onto that tree.
+AUTOMATION_ORACLE_DIR="${GG_AUTOMATION_ORACLE_DIR:-}"
+load_runtime_env() {
+  set -a; . "$HOME/.config/gg/_gg.env" 2>/dev/null; set +a
+  [ -n "$AUTOMATION_ORACLE_DIR" ] && export GG_ORACLE_DIR="$AUTOMATION_ORACLE_DIR"
+}
+
 # 重放 outbox 里发送失败的积压通知（fail-closed 的补发闭环；无积压时零开销）。
 node "$SCRIPT_DIR/gg-notify.mjs" replay-outbox >/dev/null 2>&1 || true
 PROMPT_FILE="$SCRIPT_DIR/seo-autopilot-tick.prompt.md"
@@ -76,7 +85,7 @@ echo "$(date '+%F %T') loop start (pid $$, max $MAX_CYCLES cycles)" >> "$LOG"
 CLUSTER_SYNC_LOG="$LOG_DIR/cluster-sync-$(date +%Y-%m-%d).log"
 (
   echo "$(date '+%F %T') ── cluster-sync tick (pid $$) ──"
-  set -a; . "$HOME/.config/gg/_gg.env" 2>/dev/null; set +a
+  load_runtime_env
   node "$SCRIPT_DIR/gg-cluster-sync.mjs" --apply
 ) >> "$CLUSTER_SYNC_LOG" 2>&1 || echo "$(date '+%F %T') cluster-sync failed (non-fatal, see cluster-sync log)" >> "$LOG"
 
@@ -86,7 +95,7 @@ CLUSTER_SYNC_LOG="$LOG_DIR/cluster-sync-$(date +%Y-%m-%d).log"
 # presence + required-dir check is enough here. Verified ok:true on awayer_mini (defaults
 # ~/oracle + ~/gengrowth-ops), so this cannot false-trip and take down the working cron.
 (
-  set -a; . "$HOME/.config/gg/_gg.env" 2>/dev/null; set +a
+  load_runtime_env
   node "$SCRIPT_DIR/gg-autopilot-preflight.mjs" --skip-live-cli >> "$LOG" 2>&1
 ) || {
   # 统一事件层（NOTIFY-CONTRACT.md）：模板与 @ 策略（OPS）由事件表决定，不再散装 AT env。
@@ -97,7 +106,7 @@ CLUSTER_SYNC_LOG="$LOG_DIR/cluster-sync-$(date +%Y-%m-%d).log"
 # 阶段 6：自愈 transient park（LLM 用量窗口造成的临时失败）。在扫描前把 transient needs_human
 # 按 CAP+backoff 自动重入队（authoring→重授 / gate→pushed-preview 重跑门），本轮循环随即接手；
 # 超 CAP 升级人工。permanent park（内容/事实/缺登记）一律不动。best-effort，绝不阻断发布。
-( set -a; . "$HOME/.config/gg/_gg.env" 2>/dev/null; set +a
+( load_runtime_env
   node "$AUTO" --auto-retry-parks >> "$LOG" 2>&1 ) || echo "$(date '+%F %T') auto-retry-parks non-fatal error" >> "$LOG"
 
 # NOTE: flow-mvp (_staging drafts) and gengrowth-ops (task plan) are BOTH kept
@@ -140,7 +149,7 @@ process.exit(1);
   # any path overrides. gg-preview-gate.mjs self-enforces per-step hard timeouts and maps any
   # timeout→exit 2; gtimeout is a wall-clock BACKSTOP set above the gate's summed per-step ceilings
   # (~3560s, so 4500 leaves real headroom). Exit contract maps 1:1: 0=published, 1=nothing, 2=failed.
-  ( set -a; . "$HOME/.config/gg/_gg.env" 2>/dev/null; set +a
+  ( load_runtime_env
     gtimeout "${GG_PREVIEW_GATE_TIMEOUT:-4500}" node "$SCRIPT_DIR/gg-preview-gate.mjs" --branch "$BRANCH" ) >> "$LOG" 2>&1
   _rc=$?
   case "$_rc" in
@@ -176,7 +185,7 @@ run_one_cycle() {
 
   echo "$(date '+%F %T') authoring next unwritten task" >> "$LOG"
   local AOUT
-  AOUT=$( ( set -a; . "$HOME/.config/gg/_gg.env" 2>/dev/null; set +a
+  AOUT=$( ( load_runtime_env
     export GG_SHEETS_WORKBOOK_ID="${GG_SHEETS_FLOW_MVP_WORKBOOK_ID:-$GG_SHEETS_WORKBOOK_ID}"
     # gbrain (~/.local/bin, RAG) + codex (~/.npm-global/bin, multi-party review).
     export PATH="$HOME/.local/bin:$HOME/.npm-global/bin:$PATH"

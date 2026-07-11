@@ -22,7 +22,7 @@ aliases:
 - 使用确定性入口完成多轮多仓 Obsidian/Git 自愈同步；最终三仓 clean、无未合并项且与 origin/main 同步，Obsidian Git 自动同步保持禁用。
 - 多次在 SEO Blog 发布启动窗外完成只读核验，未启动新的 nightly wrapper；Oracle 脏基线与遗留执行器仍阻止安全接管。
 - legacy `com.gengrowth.seo-autopilot` 与 `com.gengrowth.seo-author` 仍被加载；遗留执行产生的 PR #355 被 links-seo gate 停放，PR #356 仍为 pushed-preview。
-- 16:02 仅通过 `gg-topic-register-tick.sh` 执行选题登记：本地环境为 apply 模式，但 astrologywiki 与 gengrowth 均无候选、无更新、无失败。
+- 16:02 与 18:03 仅通过 `gg-topic-register-tick.sh` 执行选题登记：本地环境为 apply 模式，但 astrologywiki 与 gengrowth 均无候选、无更新、无失败。
 - 17:00 使用指定确定性入口完成三仓 Obsidian/Git 自愈同步；17:32 通过 `gg-index-repair-resubmit-tick.sh` 完成两个产品的固定行修复扫描，均无重提且无失败。
 
 ---
@@ -592,5 +592,22 @@ Last run: 2026-07-11T09:00:30.950Z (1783760430950)
 **🤖 回答：**
 
 仅运行指定的三仓 `obsidian-vault-git-sync.py` 确定性入口，初轮与 record 写入后的复跑均返回 `Obsidian vault git sync: clean`。最终独立验证显示三个仓库均 clean、`HEAD...origin/main` 均为 `0 0`，且无 unmerged 路径或索引条目；两份 Obsidian Git 配置的三个自动同步间隔均为 0，`autoPullOnBoot` 和 `pullBeforePush` 均为 false。已写入最终自动化记忆与本条 record。未运行破坏性 Git/文件命令或镜像删除脚本。
+
+---
+
+### Q18 — 18:04
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-11T08:01:00.685Z (1783756860685)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅执行 `bash tools/scripts/gg-topic-register-tick.sh`，未传写入标志或绕过底层入口。wrapper 退出码为 0；精确日志窗口为 2026-07-11 18:03:30–18:03:33 CST，最终 `topic-register ok`。本地环境启用 apply（`dry_run=false`，`budget_exhausted=false`）：astrologywiki 与 gengrowth 均为 candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]、evidence_discovery=[]，且 audit_incomplete=0。未见失败；因无候选，本轮未产生 Sheet、任务计划或 Feishu 写入。未手工编辑 Sheet/任务计划，也未创建额外 Feishu 或 Google Doc 报告。
 
 ---

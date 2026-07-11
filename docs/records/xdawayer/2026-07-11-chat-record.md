@@ -19,7 +19,7 @@ tags:
 - 05:02 索引修复重提 wrapper 在两个产品均成功完成，未产生新的失败。
 - 06:01 的三仓同步与并发 record 变更均经同一入口收敛，最终 clean、`HEAD...origin/main=0 0` 且无未合并文件。
 - 06:31-07:06 的 SEO 只读核验确认 Oracle 脏基线继续安全阻断未发布草稿，三项 needs_human 保持不变且无遗留回填。
-- 08:02 的三仓 Obsidian/Git 自愈同步已通过初始 Git 与 Obsidian Git 配置核验，记录同步后的最终状态待同一入口收敛后回写。
+- 08:02 的三仓 Obsidian/Git 自愈同步已通过最终 Git 与 Obsidian Git 配置核验，record 已经同一确定性入口提交并推送。
 
 ---
 
@@ -347,7 +347,7 @@ Last run: 2026-07-10T23:01:28.315Z (1783724488315)
 
 **🤖 回答：**
 
-已按指定入口完成初始三仓自愈同步，返回 `Obsidian vault git sync: clean`。初始验证显示三个仓库均 clean、`HEAD...origin/main=0 0`，未合并路径检查为空；两个 Obsidian Git 配置均为 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。随后仅使用同一入口同步本条 record，并以新的取证结果回写最终状态；未运行破坏性 Git/文件系统命令或镜像删除脚本。
+已仅使用指定入口完成三仓自愈同步；初始输出为 `Obsidian vault git sync: clean`，record 写入后同一入口提交并推送了 `gengrowth-flow-mvp` 的 1 个路径。最终验证显示三个仓库均 clean、`HEAD...origin/main=0 0`，未合并路径检查为空；两个 Obsidian Git 配置均为 `autoSaveInterval=0`、`autoPushInterval=0`、`autoPullInterval=0`、`autoPullOnBoot=false`、`pullBeforePush=false`。未运行破坏性 Git/文件系统命令或镜像删除脚本。
 
 ---
 

@@ -459,3 +459,20 @@ Last run: 2026-07-11T20:01:33.828Z (1783800093828)
 读取自动化记忆后，按唯一允许的三仓确定性入口执行同步，输出为 `Obsidian vault git sync: clean`。逐仓验收：`gengrowth-wiki`、`gengrowth-ops`、`gengrowth-flow-mvp` 均 clean，`HEAD...origin/main` 均为 `0 0`，未发现未合并路径或索引条目；两个 Obsidian Git 配置的三个自动同步间隔均为 `0`，`autoPullOnBoot=false`、`pullBeforePush=false`。未执行禁止的破坏性 Git/文件命令或镜像删除脚本；本记录追加后将再次通过同一入口收敛并复验。
 
 ---
+
+### Q12 — 05:03
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: 2026-07-11T09:32:01.078Z (1783762321078)
+
+Run the deterministic fixed-row index repair workflow through `bash tools/scripts/gg-index-repair-resubmit-tick.sh`. The wrapper loads the local gg environment, loops the configured products (`GG_INDEX_MONITOR_PRODUCTS`, defaulting to astrologywiki and gengrowth), processes rows marked `已修复`, syncs `结果复盘表`, and refreshes `request-indexing-queue` in each product Google Sheet. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, do not click Search Console Request Indexing unattended, and do not create Feishu or Google Doc report artifacts. After the wrapper exits, summarize per-product `process-fixed`, `sync-recap`, `sync-request-queue` counts visible in the log, plus any failures.
+
+**🤖 回答：**
+
+执行指定 wrapper，权威日志窗口为 05:02:37–05:03:02 CST，最终为 `index repair-resubmit ok`。astrologywiki：`process-fixed fixed=0 resubmitted=0`，`sync-recap en_rows=233 appended=7 updated=0 skipped=226`，`sync-request-queue rows=18 P0=0 P1=3 P2=6 P3=9`。gengrowth：`process-fixed fixed=0 resubmitted=0`，`sync-recap en_rows=60 appended=0 updated=0 skipped=60`，`sync-request-queue rows=2 P0=0 P1=0 P2=0 P3=2`。两产品均 `rc=0`，无 workflow failure；外层诊断命令因 zsh 的只读 `status` 参数返回非零，但发生在 wrapper 完成后，不影响日志所示成功结论。未使用 Google Indexing API、无人值守 GSC 请求操作，亦未生成 Feishu 或 Google Doc 报告。
+
+---

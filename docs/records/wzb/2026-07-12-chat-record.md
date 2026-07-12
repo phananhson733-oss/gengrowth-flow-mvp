@@ -1003,6 +1003,6 @@ Last run: 2026-07-12T00:00:34.911Z (1783814434911)
 
 **🤖 回答：**
 
-使用指定三仓确定性入口完成同步，脚本返回 `Obsidian vault git sync: clean`。首次逐仓核验显示三个仓库均 clean、`HEAD...origin/main=0 0`、无未合并路径和索引条目；ops 与 flow-mvp 的 Obsidian Git 自动保存、推送、拉取间隔均为 0，启动自动拉取和推送前拉取均为 false。已追加本记录及自动化记忆，随后将通过相同入口复跑并进行最终核验；未使用任何禁止的破坏性或镜像删除路径。
+使用指定三仓确定性入口完成同步，脚本最终返回 `Obsidian vault git sync: clean`。record 与自动化记忆写入后复跑并逐仓最终核验：三个仓库均 clean、`HEAD...origin/main=0 0`、无未合并路径和索引条目；ops 与 flow-mvp 的 Obsidian Git 自动保存、推送、拉取间隔均为 0，启动自动拉取和推送前拉取均为 false。未使用任何禁止的破坏性或镜像删除路径。
 
 ---

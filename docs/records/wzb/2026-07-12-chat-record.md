@@ -13,7 +13,7 @@ tags:
 > 用 3-5 个要点概括当天所有对话的核心内容、关键决策和产出成果。
 
 - 多次使用指定的三仓 Obsidian/Git 自愈入口完成同步和记录收敛；所有最终核验均保持 clean、相对 `origin/main` 为 `0 0`，且未使用破坏性或镜像删除路径。
-- 02:31–08:34 的 SEO Blog 自动化均处于窗口外，因此未启动新的 `gg-nightly-seo.sh`；W22、claim ledger 与 Sheet 状态已收敛，无 in-flight、待回填或待发布项。
+- 02:31–08:40 的 SEO Blog 自动化均处于窗口外，因此未启动新的 `gg-nightly-seo.sh`；W22、claim ledger 与 Sheet 状态已收敛，无 in-flight、待回填或待发布项。
 - 7 月 11 日九篇 astrologywiki 文章均有 published 记录，且持续通过 HTTP 200、自 canonical、标题、Article JSON-LD 与 sitemap 线上核验。
 - 旧 SEO LaunchAgent 已禁用/卸载，当前无 legacy SEO/flow 执行器或锁；未执行手工 Sheet 写入、索引 API/GSC 操作或重复通知。
 - 自动化 rrule 仍含凌晨和 22:00 后时段，必须待官方自动化服务恢复后修正；Oracle 工作区仍有用户改动，未强制清理。
@@ -971,6 +971,6 @@ Last run: 2026-07-12T00:00:34.914Z (1783814434914)
 
 闭环验证：`gg-seo-autopilot.mjs --stale-report` 返回 `inflight=[]`、`staleCount=0`；ledger dry-run 返回 `stillPending=0`、`flips=0`、`needs_human=0`；Sheet dry reconcile 为 astrologywiki `live=282 flip=0 review=0`；W22 无未勾选项，153 条 claim 均为 `done`。2026-07-11 的九篇 published 文章均通过 HTTP 200、自 canonical、标题/H1、Article JSON-LD 与 sitemap 验证。
 
-需要人工处理的仅是自动化持久 rrule 仍包含凌晨及 22:00 后的非法时段；应只通过官方自动化服务修正，不直接编辑 TOML。Oracle 仍有 2,770 条用户脏改动，未强制清理；既有 reminders 未改。
+需要人工处理的仅是自动化持久 rrule 仍包含凌晨及 22:00 后的非法时段；已通过官方自动化服务发起读取/修正请求，但 60 秒未返回而安全终止，因此未直接编辑 TOML。Oracle 仍有 2,770 条用户脏改动，未强制清理；既有 reminders 未改。
 
 ---

@@ -17,6 +17,7 @@ tags:
 - 7 月 11 日九篇 astrologywiki 文章均有 published 记录，且持续通过 HTTP 200、自 canonical、标题、Article JSON-LD 与 sitemap 线上核验。
 - 旧 SEO LaunchAgent 已禁用/卸载，当前无 legacy SEO/flow 执行器或锁；未执行手工 Sheet 写入、索引 API/GSC 操作或重复通知。
 - 自动化 rrule 仍含凌晨和 22:00 后时段，必须待官方自动化服务恢复后修正；Oracle 工作区仍有用户改动，未强制清理。
+- 09:02–09:04 完成 GenGrowth Phase 2 索引监控：两个站点的官方 Sitemap API 提交均成功，gengrowth 检查 2 条 URL 且无失败；最终候选队列合计 18 条（P1=3、P2=6、P3=9），日志未见飞书发送回执。
 
 ---
 
@@ -1004,5 +1005,22 @@ Last run: 2026-07-12T00:00:34.911Z (1783814434911)
 **🤖 回答：**
 
 使用指定三仓确定性入口完成同步，脚本最终返回 `Obsidian vault git sync: clean`。record 与自动化记忆写入后复跑并逐仓最终核验：三个仓库均 clean、`HEAD...origin/main=0 0`、无未合并路径和索引条目；ops 与 flow-mvp 的 Obsidian Git 自动保存、推送、拉取间隔均为 0，启动自动拉取和推送前拉取均为 false。未使用任何禁止的破坏性或镜像删除路径。
+
+---
+
+### Q25 — 09:04
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Monitor
+Automation ID: gengrowth-index-monitor
+Automation memory: $CODEX_HOME/automations/gengrowth-index-monitor/memory.md
+Last run: 2026-07-11T01:00:28.842Z (1783731628842)
+
+Run the GenGrowth Phase 2 indexing workflow through the existing deterministic wrapper: `bash tools/scripts/gg-index-monitor-tick.sh`. This wrapper must refresh the live sitemap through the official Search Console Sitemaps API, inspect due URLs through URL Inspection, sync the final `结果复盘表`, generate/update `request-indexing-queue` with priority colors, and send Feishu SEO技术 group reminders for actionable candidates or failures. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, and do not click Search Console Request Indexing unattended. For Computer Use submission, only assist by opening candidate GSC inspection URLs and stop for human confirmation before the final Request Indexing click. After the wrapper exits, summarize sitemap submission status, GSC check counts/failures, queue counts by priority, and any Feishu notification outcome visible in the log.
+
+**🤖 回答：**
+
+09:02:45–09:04:06 CST 通过指定 wrapper 完成 Phase 2 索引流程，exit=0，日志末行 `index monitor ok`。两个站点均通过官方 Search Console Sitemap API 提交成功。astrologywiki 到期 0 条；gengrowth 到期并检查 2 条，`alerts=0 failures=0`，两条均转为 indexed。结果复盘表已同步（astrologywiki `en_rows=233 updated=233`；gengrowth `en_rows=60 updated=47 skipped=13`）。请求索引队列：astrologywiki 18 条（P0=0、P1=3、P2=6、P3=9），gengrowth 0 条，合计 18 条（P0=0、P1=3、P2=6、P3=9）。日志未显示飞书发送成功或失败回执；未调用普通文章 Google Indexing API，亦未执行无人值守的 Request Indexing 点击。
 
 ---

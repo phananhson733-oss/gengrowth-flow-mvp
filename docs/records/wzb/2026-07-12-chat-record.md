@@ -13,7 +13,7 @@ tags:
 > 用 3-5 个要点概括当天所有对话的核心内容、关键决策和产出成果。
 
 - 多次使用指定的三仓 Obsidian/Git 自愈入口完成同步和记录收敛；所有最终核验均保持 clean、相对 `origin/main` 为 `0 0`，且未使用破坏性或镜像删除路径。
-- 02:31–09:40 的 SEO Blog 自动化均处于窗口外，因此未启动新的 `gg-nightly-seo.sh`；W22、claim ledger 与 Sheet 状态已收敛，无 in-flight、待回填或待发布项。
+- 02:31–09:37 的 SEO Blog 自动化均处于窗口外，因此未启动新的 `gg-nightly-seo.sh`；W22、claim ledger 与 Sheet 状态已收敛，无 in-flight、待回填或待发布项。
 - 7 月 11 日九篇 astrologywiki 文章均有 published 记录，且持续通过 HTTP 200、自 canonical、标题、Article JSON-LD 与 sitemap 线上核验。
 - 旧 SEO LaunchAgent 已禁用/卸载，当前无 legacy SEO/flow 执行器或锁；未执行手工 Sheet 写入、索引 API/GSC 操作或重复通知。
 - 自动化 rrule 仍含凌晨和 22:00 后时段，必须待官方自动化服务恢复后修正；Oracle 工作区仍有用户改动，未强制清理。

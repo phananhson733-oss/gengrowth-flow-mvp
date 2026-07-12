@@ -509,3 +509,49 @@ Last run: 2026-07-12T20:31:10.363Z (1783888270363)
 本轮窗口为 05:02–05:07 CST，处于允许发布时段之外，未启动 `bash tools/scripts/gg-nightly-seo.sh`，故没有新 slug、生产 URL、回填、批次通知或重复告警。八个 legacy 标签均未加载，未见匹配 SEO/flow 进程或锁。W22 的 225 个 PG 条目全部勾选；`--stale-report` 为 `inflight=[]`、`staleCount=0`，ledger dry 为 `stillPending=0`、`flips=0`、`needs_human=0`，Sheet dry 为 astrologywiki `live=282 flip=0 review=0` 与 gengrowth `live=60 flip=0 review=0`。发布日志的九篇 2026-07-11 文章重新通过 HTTP 200、自 canonical、标题、Article JSON-LD 和 sitemap；最新 wrapper 日志为 `~/Library/Logs/gg-nightly-seo.log` 的 2026-07-12 12:32:36 CST no-queue 退出。needs_human：持久化 rrule 仍含凌晨及 22:00 后时段；官方 `automation_update` view 约 100 秒无响应后中止，未手改 TOML、cron 或替代调度。Oracle 工作树仍有用户已跟踪与未跟踪变更，正式发布窗口前需先处理该基线；未执行手工 Sheet/GSC、Indexing API、破坏性操作或重复通知。
 
 ---
+
+### Q14 — 05:36
+
+**🙋 提问：**
+
+Automation: GenGrowth SEO Blog 全流程发布
+Automation ID: gengrowth-seo-blog
+Automation memory: $CODEX_HOME/automations/gengrowth-seo-blog/memory.md
+Last run: 2026-07-12T21:01:40.501Z (1783890100501)
+
+你是 GenGrowth SEO Blog 全流程发布自动化。工作目录固定为 `/Users/awayer_mini/gengrowth-flow-mvp`，时区按 Asia/Shanghai / UTC+8 理解。本自动化每天 18:30、19:00、19:30、20:00、20:30、21:00、21:30 触发；不要在 22:00 之后主动启动新一轮发布工作。
+
+目标：自动检测 astrologywiki SEO blog 待处理队列，完成需要的文档落地、文章撰写、预览、上线发布，以及 publish 之后的所有收尾回填与验证。不要只做计划或停在中间态。
+
+单执行器边界：Codex automation 是 SEO Blog 流程的唯一调度入口。本机 legacy launchd/local cron 已停用；每次运行前快速确认 `com.gengrowth.seo-nightly`、`com.gengrowth.seo-author`、`com.gengrowth.seo-autopilot`、`com.gengrowth.seo-author-kicker`、`com.gengrowth.flow-driver`、`com.gengrowth.lane-watchdog`、`com.gengrowth.ledger-reconcile`、`com.gengrowth.index-monitor` 没有正在运行。若发现这些 legacy job 正在跑，先不要启动新的 SEO 发布流程，记录冲突 job、PID / run window 和日志路径，避免同时进行。
+
+主入口：优先且默认只运行确定性 wrapper：`bash tools/scripts/gg-nightly-seo.sh`。不要绕过 wrapper 直接调用底层 Node 脚本，除非是在 wrapper 失败后做只读诊断或执行 wrapper 文档明确要求的可恢复步骤。不要手动加写入 flags；由本地环境和 wrapper 决定 apply / publish 边界。wrapper 自带锁；如果命中锁，读取日志确认已有运行仍在执行并报告为 skip，不要强制解锁。
+
+正式执行流程：
+1. 先读取 `AGENTS.md`、`ai-profile/lynne-soul.md`、`ai-profile/reminders.md`，遵守项目记录与安全规则；如有未完成 reminders，仅在最终结果中极简提及，禁止输出冗长中间态。
+2. 执行单执行器检查，确认 legacy launchd/local cron 没有正在运行同一条 SEO/flow 链路。
+3. 运行 `bash tools/scripts/gg-nightly-seo.sh`。
+4. wrapper 结束后，读取 `~/Library/Logs/gg-nightly-seo.log`，按本次 start / finish 时间隔离当前运行窗口，确认 author、preview gate、merge / publish、batch summary、live check 等阶段是否完成。
+5. 如果 wrapper 明确生成了可安全修复的内容或结构失败，进行一次有界自动修复：只修复日志指出的具体问题，不编造事实，不大改主题；修复后运行对应文章 review / preview gate / publish 重试入口。若无法基于可靠证据修复，保留 needs_human 并输出准确原因。
+6. 如果存在 preview 已通过但 publish / merge / live check 未完成的 pending 状态，继续完成 publish_if_pending、merge、部署传播等待、live URL 验证和批次 summary；不要停在 authored、preview pushed、waiting publish 之类中间态。
+7. publish 后必须完成回填与验证：检查 W22 blog output plan 条目状态、`seo-autopilot-publish-log.md` 追加、相关 Google Sheet / ledger 回填、生产 URL 200、canonical、title、Article JSON-LD、sitemap 收录、batch summary 通知状态。必要时短轮询等待部署传播，但不要无限等待。
+8. 验证没有遗留本轮应继续的进程或 pending publish：用 `ps` / ledger / wrapper status 确认；如仍有其他合法后台运行，说明其 run window 和锁状态。
+9. 按 AGENTS 规则追加当天 record，只记录最终摘要和关键路径，不展开 record 明细；如自动化 memory 文件存在，也只追加最终 verified 状态、发布时间窗、slug、失败原因或 needs_human 原因。
+
+通知与输出边界：
+- 不发送 authored、preview pushed、review running 等中间态消息。
+- 只在真正发布完成、整批结束、彻底失败或 needs_human 时保留最终通知；优先让 wrapper / unified notify 发送，避免重复 Feishu 消息。
+- 如果 wrapper 漏发了真正的最终失败告警，才用现有 `gg-notify` / lark 工具补一条短告警，包含失败步骤、slug、日志路径和下一步。
+- 最终汇报必须包含：本次 run window、是否触发 wrapper、发布 slug / live URL、回填项是否完成、publish 后验证结果、needs_human 或失败原因、日志路径。
+
+安全边界：
+- 不使用 `git reset --hard`、`git checkout --`、`git clean`、`rm -rf`、`rsync --delete` 等破坏性命令。
+- 不手工乱改 Google Sheet；需要写 Sheet 时使用既有 wrapper / connector 路径。
+- 不使用 Google Indexing API 处理普通文章，不无人值守点击 GSC Request Indexing。
+- 不泄露 secrets / tokens。
+
+**🤖 回答：**
+
+本轮窗口为 05:32–05:36 CST，属于声明的发布触发时段之外，未启动 `bash tools/scripts/gg-nightly-seo.sh`，没有本轮新 slug、上线、回填写入或通知。八个 legacy label 均未加载，最终没有符合条件的 Node/Bash 发布进程或 `gg-*.lock`。只读状态为 `inflight=[]`、`staleCount=0`；ledger dry-run 为 `stillPending=0`、`flips=0`、`needs_human=0`。W22 的 225 个 PG 条目均勾选，发布日志中 PG-WC-045、PG-CELEB-047/048/049/050、PG-VEDIC-006 均为 `published`；六个对应生产 URL 全部新鲜通过 HTTP 200、自 canonical、title、Article JSON-LD 与 sitemap 核验。当前无 batch，因此未重复发送通知。最新 wrapper 日志是 `~/Library/Logs/gg-nightly-seo.log` 的 2026-07-12 12:32:36 CST no-queue 退出。needs_human：05:32 的本次唤醒本身已偏离声明的 18:30–21:30 节奏，且 `/Users/awayer_mini/oracle` 有用户已跟踪变更；应修复官方自动化调度并在未来正式发布前处理工作树基线，勿 reset/clean/强制发布。未手工写 Sheet、使用 GSC/Indexing API、执行破坏性命令或发送重复通知。
+
+---

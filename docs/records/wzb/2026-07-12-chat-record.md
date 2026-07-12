@@ -2076,6 +2076,6 @@ Last run: 2026-07-12T12:01:08.134Z (1783857668134)
 
 **🤖 回答：**
 
-使用唯一指定的三仓 `obsidian-vault-git-sync.py` 入口，初次同步返回 `Obsidian vault git sync: clean`。独立核验显示三个仓库当时均无工作区变更、`HEAD...origin/main` 为 `0 0`、未发现未合并路径或索引冲突；ops 与 flow-mvp 的 Obsidian Git 配置均保持三个间隔 `0`、`autoPullOnBoot=false`、`pullBeforePush=false`。本条 record 追加后将用相同入口再次收敛并完成最终复核；未执行禁止的破坏性或镜像删除命令。
+使用唯一指定的三仓 `obsidian-vault-git-sync.py` 入口，初次同步返回 `Obsidian vault git sync: clean`；record 追加后以同一入口再次收敛，脚本自动提交并推送 1 个记录路径。最终逐仓核验显示三个仓库均 clean、`HEAD...origin/main` 均为 `0 0`、无未合并路径或索引冲突；ops 与 flow-mvp 的 Obsidian Git 配置均保持三个间隔 `0`、`autoPullOnBoot=false`、`pullBeforePush=false`。未执行禁止的破坏性或镜像删除命令。
 
 ---

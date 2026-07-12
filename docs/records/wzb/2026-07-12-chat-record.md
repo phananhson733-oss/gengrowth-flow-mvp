@@ -32,6 +32,7 @@ tags:
 - 16:03 完成三仓 Obsidian/Git 自愈同步：指定入口与记录写入后的再次收敛均返回 clean；三仓相对 `origin/main` 为 `0 0`、无未合并项，两个 Obsidian Git 配置继续禁用自动同步。
 - 17:01 完成三仓 Obsidian/Git 自愈同步：指定入口返回 clean；逐仓验证为 clean、相对 `origin/main` 为 `0 0`、无未合并项，两个 Obsidian Git 配置继续禁用自动同步。
 - 17:32 完成 Index Repair Resubmit：指定 wrapper 在 astrologywiki 与 gengrowth 均无“已修复”行；结果复盘和请求索引队列按 wrapper 同步，日志无失败，未使用普通文章 Indexing API 或无人值守 GSC 请求操作。
+- 18:02 通过唯一允许的 topic-register wrapper 执行本地 apply 扫描；两个产品均无候选，未产生 Sheet、任务计划或 Feishu 写入，日志无失败。
 
 ---
 
@@ -1912,5 +1913,22 @@ Run the deterministic fixed-row index repair workflow through `bash tools/script
 **🤖 回答：**
 
 仅运行指定的 `bash tools/scripts/gg-index-repair-resubmit-tick.sh`。本次日志窗口为 17:32:04–17:32:31 CST，最终为 `index repair-resubmit ok`，无失败。astrologywiki：`process-fixed fixed=0 resubmitted=0`，`sync-recap en_rows=233 appended=0 updated=207 skipped=26`，`sync-request-queue rows=18 (P0=0, P1=3, P2=6, P3=9)`；gengrowth：`process-fixed fixed=0 resubmitted=0`，`sync-recap en_rows=60 appended=0 updated=47 skipped=13`，`sync-request-queue rows=0 (P0=0, P1=0, P2=0, P3=0)`。未绕过 wrapper、未使用普通文章 Google Indexing API、未进行无人值守 Search Console Request Indexing，亦未创建 Feishu 或 Google Doc 报告。权威日志：`~/gengrowth-agents/cron-sync/index_repair_resubmit/2026-07-12.log`。
+
+---
+
+### Q48 — 18:02
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-12T08:01:37.052Z (1783843297052)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行指定的 `bash tools/scripts/gg-topic-register-tick.sh`，未传入手动写入、repair、overwrite 或底层脚本参数。权威日志 `~/gengrowth-agents/cron-sync/topic_register/2026-07-12.log` 的本次精确窗口为 18:02:08–18:02:14 CST：wrapper 退出码 0，最终 `topic-register ok`；本地环境启用 apply（`dry_run=false`、`budget_exhausted=false`）。`astrologywiki` 与 `gengrowth` 均为 candidates=0、updates=0、new_clusters=0、page_ids=[]、selection_mode=generate、audit_incomplete=0、preprocessor=[]、evidence_discovery=[]。日志未见失败；因无候选，未产生 Sheet、任务计划或 Feishu 变更。未手工编辑 Sheet、未直接编辑任务计划，亦未创建额外 Feishu 或 Google Doc 报告。
 
 ---

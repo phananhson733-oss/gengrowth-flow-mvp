@@ -23,6 +23,8 @@ aliases:
 - 03:01 的 SEO Blog 自动化继续按越窗规则只读核验：九篇既有文章线上正常，发现运行时 claims 账本已被有意取消跟踪且当前缺失，未在凌晨擅自恢复。
 - 03:31 的 SEO Blog 自动化再次越窗只读核验：无待发布或回填漂移；官方调度接口无响应，越窗 RRULE 仍需人工经官方服务修复。
 - 04:01 与 04:31 的 SEO Blog 自动化均因越窗而只读核验：W22、Sheet、线上与回填已收敛；持久排程仍错误唤醒，官方服务读取超时，且 Oracle 用户脏工作区阻断未来发布。
+- 05:02 的 Index Repair Resubmit 自动化通过既定 wrapper 完成：两产品均无“已修复”行，结果复盘表与人工确认用的 Request Indexing 队列已刷新，无失败。
+- 05:03 的三仓 Obsidian/Git 自愈同步已按指定入口完成初次核验；记录落盘后将以同一入口再次收敛并做最终复核。
 
 ## 对话记录
 
@@ -412,5 +414,54 @@ Last run: 2026-07-12T20:00:40.231Z (1783886440231)
 **🤖 回答：**
 
 本轮 04:31–04:35 CST 为越窗唤醒，故未启动 `bash tools/scripts/gg-nightly-seo.sh`，没有新 slug、生产 URL、回填、批次通知或重复告警。八个指定 legacy 标签均未加载，未见匹配 SEO/flow 执行器或锁。W22 已全部勾选；`--stale-report` 返回 `inflight=[]`、`staleCount=0`，ledger dry 返回 `stillPending=0`、`flips=0`、`needs_human=0`，Sheet dry 为 astrologywiki `live=282 flip=0 review=0`，无 pending writeback。九篇 2026-07-11 既有文章新鲜通过 HTTP 200、自 canonical、标题、Article JSON-LD、slug 内容与 sitemap 收录：`priyanka-chopra-birth-chart`、`rodri-birth-chart`、`quinta-brunson-birth-chart`、`karolina-muchova-birth-chart`、`antoine-griezmann-birth-chart`、`mexico-vs-england-astrology-prediction`、`sinner-vs-zverev-wimbledon-final-astrology`、`spain-vs-france-world-cup-2026-astrology`、`mikel-merino-birth-chart`。最新 wrapper 日志是 `~/Library/Logs/gg-nightly-seo.log` 的 2026-07-12 12:32:36 CST no-queue 退出。needs_human：持久化 rrule 仍含 00:00–06:30 及 22:00–23:30 越窗时段，须仅经官方自动化服务修复；`/Users/awayer_mini/oracle` 仍有 2,770 项用户脏改动，未来正式发布不得强制清理。owner profile 缺失、reminders 未改；未进行手工 Sheet/GSC、Indexing API、破坏性操作或重复通知。
+
+---
+
+### Q11 — 05:02
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: 2026-07-12T09:31:37.460Z (1783848697460)
+
+Run the deterministic fixed-row index repair workflow through `bash tools/scripts/gg-index-repair-resubmit-tick.sh`. The wrapper loads the local gg environment, loops the configured products (`GG_INDEX_MONITOR_PRODUCTS`, defaulting to astrologywiki and gengrowth), processes rows marked `已修复`, syncs `结果复盘表`, and refreshes `request-indexing-queue` in each product Google Sheet. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, do not click Search Console Request Indexing unattended, and do not create Feishu or Google Doc report artifacts. After the wrapper exits, summarize per-product `process-fixed`, `sync-recap`, `sync-request-queue` counts visible in the log, plus any failures.
+
+**🤖 回答：**
+
+于 05:02:10–05:02:34 CST 仅运行指定的 `bash tools/scripts/gg-index-repair-resubmit-tick.sh`，退出码 0；当天日志以 `index repair-resubmit ok` 结束，无失败。astrologywiki：`process-fixed fixed=0 resubmitted=0`，`sync-recap en_rows=233 appended=0 updated=0 skipped=233`，`sync-request-queue rows=18 P0=0 P1=3 P2=6 P3=9`。gengrowth：`process-fixed fixed=0 resubmitted=0`，`sync-recap en_rows=60 appended=0 updated=0 skipped=60`，`sync-request-queue rows=0 P0=0 P1=0 P2=0 P3=0`。未使用普通文章 Google Indexing API、未无人值守点击 GSC Request Indexing，且未创建 Feishu 或 Google Doc 报告。
+
+---
+
+### Q12 — 05:03
+
+**🙋 提问：**
+
+Automation: 自动修复冲突
+Automation ID: gengrowth-vault-git-auto-heal-8655c84281d6
+Automation memory: $CODEX_HOME/automations/gengrowth-vault-git-auto-heal-8655c84281d6/memory.md
+Last run: 2026-07-12T20:02:10.231Z (1783886530231)
+
+在本机执行 GenGrowth 多仓库 Obsidian/Git 自愈同步。目标仓库固定为 `/Users/awayer_mini/gengrowth-wiki`、`/Users/awayer_mini/gengrowth-ops`、`/Users/awayer_mini/gengrowth-flow-mvp`。
+
+必须使用已验证的确定性入口，不要绕过脚本手写破坏性 git 操作：
+
+`/usr/bin/python3 /Users/awayer_mini/gengrowth-wiki/tools/scripts/obsidian-vault-git-sync.py --repo /Users/awayer_mini/gengrowth-wiki --repo /Users/awayer_mini/gengrowth-ops --repo /Users/awayer_mini/gengrowth-flow-mvp --verbose`
+
+安全边界：
+- 禁止运行 `git reset --hard`、`git checkout -- <path>`、`git clean`、`rm -rf`、`rsync --delete`，除非用户在当次对话中明确要求。
+- 不要运行 `tools/scripts/frequent-sync.sh`、`tools/scripts/gengrowth-repos-sync.sh` 或 `tools/scripts/_sync-core.sh`，因为这些路径包含镜像删除语义，本任务只做 git 自愈同步。
+- 同步脚本会先 fetch，检查未解决冲突，提交本地非敏感变更，再 rebase/push；只对白名单 JSON 冲突自动合并，其他冲突会中止并报告。不要在脚本中止后自行猜测合并内容。
+- 不打印密钥、token、邮箱密码、service account JSON、private key 或完整凭证 URL。
+
+执行后验证：
+1. 分别在三个仓库运行 `git status --branch --porcelain=v2`、`git rev-list --left-right --count HEAD...origin/main`、`git diff --name-only --diff-filter=U`、`git ls-files -u`。
+2. 回读 `/Users/awayer_mini/gengrowth-ops/.obsidian/plugins/obsidian-git/data.json` 和 `/Users/awayer_mini/gengrowth-flow-mvp/.obsidian/plugins/obsidian-git/data.json`，确认 `autoSaveInterval`、`autoPushInterval`、`autoPullInterval` 为 0，`autoPullOnBoot` 与 `pullBeforePush` 为 false。
+3. 若所有仓库都是 clean 且 ahead/behind 为 `0 0`，简短报告已同步；若脚本输出“需要关注”或存在 unmerged，报告具体仓库和文件路径，不要删除文件。
+
+**🤖 回答：**
+
+已仅运行指定的三仓自愈同步入口，初次脚本退出码为 0。初次逐仓核验显示三个仓库无工作区改动或未合并路径，`HEAD...origin/main` 均为 `0 0`；ops 与 flow-mvp 的插件配置均为三个 interval=0、`autoPullOnBoot=false`、`pullBeforePush=false`。本记录追加后将仅以同一入口再次收敛，并以新鲜核验结果更新最终状态；未运行禁止的破坏性或镜像删除命令。
 
 ---

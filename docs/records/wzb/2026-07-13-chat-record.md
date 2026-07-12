@@ -24,7 +24,7 @@ aliases:
 - 03:31 的 SEO Blog 自动化再次越窗只读核验：无待发布或回填漂移；官方调度接口无响应，越窗 RRULE 仍需人工经官方服务修复。
 - 04:01 与 04:31 的 SEO Blog 自动化均因越窗而只读核验：W22、Sheet、线上与回填已收敛；持久排程仍错误唤醒，官方服务读取超时，且 Oracle 用户脏工作区阻断未来发布。
 - 05:02 的 Index Repair Resubmit 自动化通过既定 wrapper 完成：两产品均无“已修复”行，结果复盘表与人工确认用的 Request Indexing 队列已刷新，无失败。
-- 05:03 的三仓 Obsidian/Git 自愈同步已按指定入口完成初次核验；记录落盘后将以同一入口再次收敛并做最终复核。
+- 05:03 的三仓 Obsidian/Git 自愈同步在记录落盘后以同一指定入口再次收敛，最终 Git 状态与插件配置均已复核。
 
 ## 对话记录
 
@@ -462,6 +462,6 @@ Last run: 2026-07-12T20:02:10.231Z (1783886530231)
 
 **🤖 回答：**
 
-已仅运行指定的三仓自愈同步入口，初次脚本退出码为 0。初次逐仓核验显示三个仓库无工作区改动或未合并路径，`HEAD...origin/main` 均为 `0 0`；ops 与 flow-mvp 的插件配置均为三个 interval=0、`autoPullOnBoot=false`、`pullBeforePush=false`。本记录追加后将仅以同一入口再次收敛，并以新鲜核验结果更新最终状态；未运行禁止的破坏性或镜像删除命令。
+已仅运行指定的三仓自愈同步入口。记录追加后以同一入口再次收敛，最终独立核验显示 `gengrowth-wiki`、`gengrowth-ops`、`gengrowth-flow-mvp` 均无工作区改动或未合并路径，`HEAD...origin/main` 均为 `0 0`；ops 与 flow-mvp 的插件配置均为三个 interval=0、`autoPullOnBoot=false`、`pullBeforePush=false`。未运行禁止的破坏性或镜像删除命令。
 
 ---

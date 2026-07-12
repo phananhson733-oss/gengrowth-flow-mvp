@@ -84,6 +84,6 @@ Last run: 2026-07-12T16:00:39.184Z (1783872039184)
 
 **🤖 回答：**
 
-仅运行指定的三仓自愈脚本，返回 `Obsidian vault git sync: clean`。首次独立核验显示三仓 clean、`HEAD...origin/main` 均为 `0 0`、无未合并路径或索引条目；ops 与 flow-mvp 的插件配置均符合 interval=0、`autoPullOnBoot=false`、`pullBeforePush=false`。本 record 与自动化记忆写入后将使用同一入口再次收敛并进行最终复核；未运行任何禁止的破坏性或镜像删除命令。
+仅运行指定的三仓自愈脚本。record 与自动化记忆写入后，以同一入口自动提交并推送该记录；最终独立核验确认三仓 clean、`HEAD...origin/main` 均为 `0 0`、无未合并路径或索引条目。ops 与 flow-mvp 的插件配置均符合 interval=0、`autoPullOnBoot=false`、`pullBeforePush=false`；未运行任何禁止的破坏性或镜像删除命令。
 
 ---

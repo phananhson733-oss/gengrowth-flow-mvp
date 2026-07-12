@@ -116,6 +116,6 @@ Last run: 2026-07-12T17:02:09.457Z (1783875729457)
 
 **🤖 回答：**
 
-初次仅运行指定的三仓自愈入口，返回 `Obsidian vault git sync: clean`。独立复核显示三个仓库 clean、`HEAD...origin/main` 均为 `0 0`，无未合并路径或索引条目；ops 与 flow-mvp 的插件配置均为三个 interval=0、`autoPullOnBoot=false`、`pullBeforePush=false`。本 record 追加后将以相同入口再次收敛，再进行最终核验；未运行禁止的破坏性或镜像删除命令。
+仅运行指定的三仓自愈入口。初次返回 `Obsidian vault git sync: clean`；record 追加后以相同入口再次收敛，自动提交并推送 wiki 与 flow-mvp 各 1 个普通记录路径。最终独立核验显示三个仓库 clean、`HEAD...origin/main` 均为 `0 0`，无未合并路径或索引条目；ops 与 flow-mvp 的插件配置均为三个 interval=0、`autoPullOnBoot=false`、`pullBeforePush=false`。未运行禁止的破坏性或镜像删除命令。
 
 ---

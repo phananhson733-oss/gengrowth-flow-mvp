@@ -21,7 +21,7 @@ aliases:
 - wrapper 的确定性 repair 产出 1568 词 Phase 2 PASS 稿；默认 Oracle 因 841 个 tracked 与 1,929 个 untracked 既有路径拒绝 reset，随后使用 driver 已文档化的干净 `/Users/awayer_mini/oracle-autopilot` 基线完成定向 scan、PR #364、preview verify、三维 review、Codex 事实门和 merge，`sam-neill-birth-chart` 于 20:55 发布。
 - 发布后核验为 HTTP 200、canonical 精确、title 正常、Article JSON-LD 存在、sitemap 命中；W22 已勾选、publish log 已追加，账本最终 `stillPending=0`、`flips=0`、`needs_human=0`，Sheet 的 index-tracking row 235、结果复盘表 row 238、request-indexing-queue row 14 均已同步，未执行 GSC Request Indexing。
 - unified batch summary 于 20:59 成功发送并确认上线 1 篇；本轮无残留进程、wrapper/claims lock 或 pending publish。内容发布已闭环，但 Codex automation 仍为 `PAUSED`，持久化 rrule 仍含 00:00–06:30 与 22:00–23:30 的窗口外唤醒，保留为独立调度 `needs_human`。
-- 指定的索引修复与三仓 Obsidian/Git 自愈流程均使用既定入口完成复核；19:03 与 20:01 的最终自愈同步均在 record 写后再次收敛，wiki、ops、flow-mvp 相对 `origin/main` 均为 `0 0`、无未合并条目，两份 Obsidian Git 配置保持禁用自动拉推。选题登记 wrapper 的 16:02、18:01 与 20:02 apply 均无候选；19:44–19:46 的 apply 仅更新 astrologywiki `PG-CELEB-052`（预处理和证据发现均为 `ok`），gengrowth 无候选或更新。17:32 固定行修复 wrapper 也成功结束，astrologywiki 队列为 16 条、gengrowth 为 0 条，均无修复重提或失败。
+- 指定的索引修复与三仓 Obsidian/Git 自愈流程均使用既定入口完成复核；19:03、20:01 与 21:02 的最终自愈同步均在 record 写后再次收敛，wiki、ops、flow-mvp 相对 `origin/main` 均为 `0 0`、无未合并条目，两份 Obsidian Git 配置保持禁用自动拉推。选题登记 wrapper 的 16:02、18:01 与 20:02 apply 均无候选；19:44–19:46 的 apply 仅更新 astrologywiki `PG-CELEB-052`（预处理和证据发现均为 `ok`），gengrowth 无候选或更新。17:32 固定行修复 wrapper 也成功结束，astrologywiki 队列为 16 条、gengrowth 为 0 条，均无修复重提或失败。
 
 ## 对话记录
 

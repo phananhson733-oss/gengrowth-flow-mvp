@@ -881,3 +881,49 @@ Last run: 2026-07-12T23:31:11.178Z (1783899071178)
 本轮为 08:02–08:07 CST，处于 18:30–21:30 发布窗外，未启动 `bash tools/scripts/gg-nightly-seo.sh`，没有新 slug、生产 URL、回填写入或通知。八个指定 legacy label 均 disabled/未加载，无相关进程或 `/tmp/gg-nightly-seo.lock`；crontab 无 SEO/flow 链路。只读核验：`--stale-report` 为 `inflight=[]`、`staleCount=0`；ledger dry 为 `stillPending=0`、`flips=0`、`needs_human=0`；状态对账为 astrologywiki `live=282 flip=0 review=0`、gengrowth `live=60 flip=0 review=0`。W22 的 225 个 PG 条目全部勾选，发布日志尾部的 2026-07-11 九条均为 `published`，故无 preview/publish、Sheet 回填或线上验收批次待续。最新 wrapper 日志仍是 `~/Library/Logs/gg-nightly-seo.log` 的 2026-07-12 12:32:36 CST no-queue 退出。needs_human：持久化调度仍含窗口外唤醒；唯一允许的官方 automation service 查询约 70 秒无响应，未手改 TOML/cron 或创建替代调度。当前 checkout 缺 `ai-profile/lynne-soul.md`，已读取共享档案来源；reminders 仍有既有未完成项，未改动。未手工写 Sheet、使用 GSC/Indexing API、执行破坏性操作或发送重复通知。
 
 ---
+
+### Q23 — 08:34
+
+**🙋 提问：**
+
+Automation: GenGrowth SEO Blog 全流程发布
+Automation ID: gengrowth-seo-blog
+Automation memory: $CODEX_HOME/automations/gengrowth-seo-blog/memory.md
+Last run: 2026-07-13T00:01:11.314Z (1783900871314)
+
+你是 GenGrowth SEO Blog 全流程发布自动化。工作目录固定为 `/Users/awayer_mini/gengrowth-flow-mvp`，时区按 Asia/Shanghai / UTC+8 理解。本自动化每天 18:30、19:00、19:30、20:00、20:30、21:00、21:30 触发；不要在 22:00 之后主动启动新一轮发布工作。
+
+目标：自动检测 astrologywiki SEO blog 待处理队列，完成需要的文档落地、文章撰写、预览、上线发布，以及 publish 之后的所有收尾回填与验证。不要只做计划或停在中间态。
+
+单执行器边界：Codex automation 是 SEO Blog 流程的唯一调度入口。本机 legacy launchd/local cron 已停用；每次运行前快速确认 `com.gengrowth.seo-nightly`、`com.gengrowth.seo-author`、`com.gengrowth.seo-autopilot`、`com.gengrowth.seo-author-kicker`、`com.gengrowth.flow-driver`、`com.gengrowth.lane-watchdog`、`com.gengrowth.ledger-reconcile`、`com.gengrowth.index-monitor` 没有正在运行。若发现这些 legacy job 正在跑，先不要启动新的 SEO 发布流程，记录冲突 job、PID / run window 和日志路径，避免同时进行。
+
+主入口：优先且默认只运行确定性 wrapper：`bash tools/scripts/gg-nightly-seo.sh`。不要绕过 wrapper 直接调用底层 Node 脚本，除非是在 wrapper 失败后做只读诊断或执行 wrapper 文档明确要求的可恢复步骤。不要手动加写入 flags；由本地环境和 wrapper 决定 apply / publish 边界。wrapper 自带锁；如果命中锁，读取日志确认已有运行仍在执行并报告为 skip，不要强制解锁。
+
+正式执行流程：
+1. 先读取 `AGENTS.md`、`ai-profile/lynne-soul.md`、`ai-profile/reminders.md`，遵守项目记录与安全规则；如有未完成 reminders，仅在最终结果中极简提及，禁止输出冗长中间态。
+2. 执行单执行器检查，确认 legacy launchd/local cron 没有正在运行同一条 SEO/flow 链路。
+3. 运行 `bash tools/scripts/gg-nightly-seo.sh`。
+4. wrapper 结束后，读取 `~/Library/Logs/gg-nightly-seo.log`，按本次 start / finish 时间隔离当前运行窗口，确认 author、preview gate、merge / publish、batch summary、live check 等阶段是否完成。
+5. 如果 wrapper 明确生成了可安全修复的内容或结构失败，进行一次有界自动修复：只修复日志指出的具体问题，不编造事实，不大改主题；修复后运行对应文章 review / preview gate / publish 重试入口。若无法基于可靠证据修复，保留 needs_human 并输出准确原因。
+6. 如果存在 preview 已通过但 publish / merge / live check 未完成的 pending 状态，继续完成 publish_if_pending、merge、部署传播等待、live URL 验证和批次 summary；不要停在 authored、preview pushed、waiting publish 之类中间态。
+7. publish 后必须完成回填与验证：检查 W22 blog output plan 条目状态、`seo-autopilot-publish-log.md` 追加、相关 Google Sheet / ledger 回填、生产 URL 200、canonical、title、Article JSON-LD、sitemap 收录、batch summary 通知状态。必要时短轮询等待部署传播，但不要无限等待。
+8. 验证没有遗留本轮应继续的进程或 pending publish：用 `ps` / ledger / wrapper status 确认；如仍有其他合法后台运行，说明其 run window 和锁状态。
+9. 按 AGENTS 规则追加当天 record，只记录最终摘要和关键路径，不展开 record 明细；如自动化 memory 文件存在，也只追加最终 verified 状态、发布时间窗、slug、失败原因或 needs_human 原因。
+
+通知与输出边界：
+- 不发送 authored、preview pushed、review running 等中间态消息。
+- 只在真正发布完成、整批结束、彻底失败或 needs_human 时保留最终通知；优先让 wrapper / unified notify 发送，避免重复 Feishu 消息。
+- 如果 wrapper 漏发了真正的最终失败告警，才用现有 `gg-notify` / lark 工具补一条短告警，包含失败步骤、slug、日志路径和下一步。
+- 最终汇报必须包含：本次 run window、是否触发 wrapper、发布 slug / live URL、回填项是否完成、publish 后验证结果、needs_human 或失败原因、日志路径。
+
+安全边界：
+- 不使用 `git reset --hard`、`git checkout --`、`git clean`、`rm -rf`、`rsync --delete` 等破坏性命令。
+- 不手工乱改 Google Sheet；需要写 Sheet 时使用既有 wrapper / connector 路径。
+- 不使用 Google Indexing API 处理普通文章，不无人值守点击 GSC Request Indexing。
+- 不泄露 secrets / tokens。
+
+**🤖 回答：**
+
+本轮为 08:31–08:34 CST，处于声明的 18:30–21:30 发布窗外，未启动 `bash tools/scripts/gg-nightly-seo.sh`，没有新 slug、生产 URL、回填写入或通知。八个 legacy label 均未加载，排除自检父进程后无 SEO/flow 运行进程，三把相关锁均不存在；crontab 无 SEO/flow 链路。W22 现无未勾选项目，相关六项均为 `[x]`；最新 wrapper EOF 是 `~/Library/Logs/gg-nightly-seo.log` 的 2026-07-12 12:32:36 CST no-queue 退出。claims 文件不存在时程序按空账本处理，`--stale-report` 返回 `inflight=[]`、`staleCount=0`，故没有 pending preview/publish；本轮无须执行 Sheet、发布日志或线上 URL 回填/验收。needs_human：`/Users/awayer_mini/oracle` 保留 2,770 项改动（其中 1,929 项 untracked），新队列到来时 publish scan 会安全中止，不能用强制清理绕过。reminders 仍有 14 项既有未完成事项，未改动。未手工写 Sheet、使用 GSC/Indexing API、执行破坏性操作或发送重复通知。
+
+---

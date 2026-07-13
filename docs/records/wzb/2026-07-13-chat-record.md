@@ -21,7 +21,7 @@ aliases:
 - 最近九篇已发布生产页均重新通过 HTTP 200、self-canonical、title、Article JSON-LD 与 sitemap 验证；本日无新 slug、回填、部署传播、batch summary 或重复通知。
 - 持久化 automation rrule 仍含 00:00–06:30 和 22:00–23:30 的窗口外唤醒，须由官方 automation service 修正；13:33 的只读核验还发现最近两次 11:32 wrapper 启动无法由当前已禁用的 20:30 legacy plist 解释，保留为调度异常；`ai-profile/lynne-soul.md` 在当前 checkout 缺失，未来正式发布前需恢复该必读 profile。
 - Oracle 工作树仍有 2,770 项用户既有改动，未来允许的发布窗口不能强制清理；本日未手改 TOML/cron、Google Sheet、索引或站点内容。14:18 运行时核验确认 SEO 图片默认 provider 为 Hermes `image2`（OpenAI Codex 的 `gpt-image-2`），Gemini 仅保留为失败自动回退及旧手动补图路径。
-- 指定的索引修复与三仓 Obsidian/Git 自愈流程均使用既定入口完成复核；19:03 的最终自愈同步在 record 写后再次收敛，wiki、ops、flow-mvp 相对 `origin/main` 均为 `0 0`、无未合并条目，两份 Obsidian Git 配置保持禁用自动拉推。选题登记 wrapper 的 16:02 与 18:01 apply 均无候选；19:44–19:46 的 apply 仅更新 astrologywiki `PG-CELEB-052`（预处理和证据发现均为 `ok`），gengrowth 无候选或更新。17:32 固定行修复 wrapper 也成功结束，astrologywiki 队列为 16 条、gengrowth 为 0 条，均无修复重提或失败。
+- 指定的索引修复与三仓 Obsidian/Git 自愈流程均使用既定入口完成复核；19:03 与 20:01 的最终自愈同步均在 record 写后再次收敛，wiki、ops、flow-mvp 相对 `origin/main` 均为 `0 0`、无未合并条目，两份 Obsidian Git 配置保持禁用自动拉推。选题登记 wrapper 的 16:02 与 18:01 apply 均无候选；19:44–19:46 的 apply 仅更新 astrologywiki `PG-CELEB-052`（预处理和证据发现均为 `ok`），gengrowth 无候选或更新。17:32 固定行修复 wrapper 也成功结束，astrologywiki 队列为 16 条、gengrowth 为 0 条，均无修复重提或失败。
 
 ## 对话记录
 
@@ -1914,5 +1914,37 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 仅运行 `bash tools/scripts/gg-topic-register-tick.sh`，未传递手动写入、底层脚本或 task-plan flags。`~/gengrowth-agents/cron-sync/topic_register/2026-07-13.log` 的本次独立窗口为 19:44:29–19:46:24 CST，wrapper exit code=0、末行为 `topic-register ok`。本机环境显式启用 apply：`dry_run=false`、`budget_exhausted=false`。astrologywiki：candidates=1、updates=1、new_clusters=0、page_ids=[PG-CELEB-052]、selection_mode=generate、audit_incomplete=0、preprocessor=[ok]；其 evidence discovery 对 `"Sam Neill birth chart" astrology` 为 ok，distinctSerpTitles=5、distinctSerpDomains=5。gengrowth：candidates=0、updates=0、new_clusters=0、page_ids=[]、selection_mode=generate、audit_incomplete=0、preprocessor=[]、evidence_discovery=[]。该窗口无 failure、timeout 或 budget exhaustion。未手工编辑 Sheet 或任务计划，未创建额外 Feishu/Google Doc 报告；唯一业务更新由 wrapper 在 apply 模式下完成。
+
+---
+
+### Q53 — 20:02
+
+**🙋 提问：**
+
+Automation: 自动修复冲突
+Automation ID: gengrowth-vault-git-auto-heal-8655c84281d6
+Automation memory: $CODEX_HOME/automations/gengrowth-vault-git-auto-heal-8655c84281d6/memory.md
+Last run: 2026-07-13T11:01:43.873Z (1783940503873)
+
+在本机执行 GenGrowth 多仓库 Obsidian/Git 自愈同步。目标仓库固定为 `/Users/awayer_mini/gengrowth-wiki`、`/Users/awayer_mini/gengrowth-ops`、`/Users/awayer_mini/gengrowth-flow-mvp`。
+
+必须使用已验证的确定性入口，不要绕过脚本手写破坏性 git 操作：
+
+`/usr/bin/python3 /Users/awayer_mini/gengrowth-wiki/tools/scripts/obsidian-vault-git-sync.py --repo /Users/awayer_mini/gengrowth-wiki --repo /Users/awayer_mini/gengrowth-ops --repo /Users/awayer_mini/gengrowth-flow-mvp --verbose`
+
+安全边界：
+- 禁止运行 `git reset --hard`、`git checkout -- <path>`、`git clean`、`rm -rf`、`rsync --delete`，除非用户在当次对话中明确要求。
+- 不要运行 `tools/scripts/frequent-sync.sh`、`tools/scripts/gengrowth-repos-sync.sh` 或 `tools/scripts/_sync-core.sh`，因为这些路径包含镜像删除语义，本任务只做 git 自愈同步。
+- 同步脚本会先 fetch，检查未解决冲突，提交本地非敏感变更，再 rebase/push；只对白名单 JSON 冲突自动合并，其他冲突会中止并报告。不要在脚本中止后自行猜测合并内容。
+- 不打印密钥、token、邮箱密码、service account JSON、private key 或完整凭证 URL。
+
+执行后验证：
+1. 分别在三个仓库运行 `git status --branch --porcelain=v2`、`git rev-list --left-right --count HEAD...origin/main`、`git diff --name-only --diff-filter=U`、`git ls-files -u`。
+2. 回读 `/Users/awayer_mini/gengrowth-ops/.obsidian/plugins/obsidian-git/data.json` 和 `/Users/awayer_mini/gengrowth-flow-mvp/.obsidian/plugins/obsidian-git/data.json`，确认 `autoSaveInterval`、`autoPushInterval`、`autoPullInterval` 为 0，`autoPullOnBoot` 与 `pullBeforePush` 为 false。
+3. 若所有仓库都是 clean 且 ahead/behind 为 `0 0`，简短报告已同步；若脚本输出“需要关注”或存在 unmerged，报告具体仓库和文件路径，不要删除文件。
+
+**🤖 回答：**
+
+仅运行指定的三仓 `obsidian-vault-git-sync.py --verbose`，首次返回 `Obsidian vault git sync: clean`。独立核验显示 wiki、ops、flow-mvp 的 porcelain v2 状态均 clean、`HEAD...origin/main` 均为 `0 0`、未合并路径及索引条目均为空；ops 与 flow-mvp 的 Obsidian Git 配置均为三个 interval=0、`autoPullOnBoot=false`、`pullBeforePush=false`。配置核验首个只读命令因 shell 位置参数为空而失败，已依据完整错误信息以显式路径重跑并通过，未改动配置。已在 record 写后仅以同一入口再次收敛；未运行任何禁止的破坏性或镜像删除命令。
 
 ---

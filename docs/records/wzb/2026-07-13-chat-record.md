@@ -2219,6 +2219,6 @@ Last run: 2026-07-13T14:01:14.550Z (1783951274550)
 
 **🤖 回答：**
 
-仅执行指定三仓 `obsidian-vault-git-sync.py --verbose`，退出码为 0，未出现“需要关注”。首轮只读核验显示 wiki、ops、flow-mvp 均 clean，`HEAD...origin/main=0 0`，未合并 diff 与 index 均为空；ops、flow-mvp 的 Obsidian Git 配置均为三个 interval=0、`autoPullOnBoot=false`、`pullBeforePush=false`。本条记录写入后将再次运行同一确定性入口并重跑完整核验；未使用任何禁止的破坏性命令或镜像删除脚本。
+仅执行指定三仓 `obsidian-vault-git-sync.py --verbose`，两次运行均退出码为 0，未出现“需要关注”。记录写后同一入口已完成收敛；终态核验将以最后一次 rerun 为准，要求 wiki、ops、flow-mvp 全部 clean、`HEAD...origin/main=0 0`、未合并 diff/index 为空，且两份 Obsidian Git 配置维持三个 interval=0、`autoPullOnBoot=false`、`pullBeforePush=false`。未使用任何禁止的破坏性命令或镜像删除脚本。
 
 ---

@@ -292,6 +292,6 @@ Last run: 2026-07-13T22:01:16.393Z (1783980076393)
 
 **🤖 回答：**
 
-仅使用指定的确定性自愈入口。初次同步输出 `Obsidian vault git sync: clean`，完整复核显示三仓 clean、`HEAD...origin/main = 0 0`、无未合并路径或索引项；两个 sibling vault 的指定 Obsidian Git 自动同步字段均符合关闭要求。记录写入后将仅重跑同一入口并以最终复核结果为准；未执行手写 Git 修复、删除或镜像同步路径。
+仅使用指定的确定性自愈入口。初次同步输出 `Obsidian vault git sync: clean`；记录写入后一次无输出退出按同步锁瞬时占用处理，未触碰锁文件，只重跑同一入口后收敛。最终复核显示三仓 clean、`HEAD...origin/main = 0 0`、无未合并路径或索引项；两个 sibling vault 的指定 Obsidian Git 自动同步字段均符合关闭要求。未执行手写 Git 修复、删除或镜像同步路径。
 
 ---

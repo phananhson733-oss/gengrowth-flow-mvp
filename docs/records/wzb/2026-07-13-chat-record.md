@@ -2049,3 +2049,35 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 `sam-neill-birth-chart` 已发布到 `https://www.astrologywiki.com/en/wiki/sam-neill-birth-chart`。生产核验为 HTTP 200、canonical 精确、title 正常、Article JSON-LD 存在、sitemap 命中；W22 已勾选，publish log 已追加。传播延迟留下 1 条 pending-writeback，已用 `gg-ledger-reconcile-tick.sh` 收敛；最终 dry 为 `stillPending=0`、`flips=0`、`needs_human=0`。Sheet 回填为 index-tracking row 235、结果复盘表 row 238、request-indexing-queue row 14；未执行 GSC Request Indexing。统一 batch summary 于 20:59:42–20:59:47 成功发送并确认上线 1 篇。无遗留发布进程、lock 或 pending publish。独立调度 `needs_human` 仍存在：automation.toml 为 `PAUSED`，rrule 仍含 00:00–06:30 与 22:00–23:30 的越窗触发。权威日志为 `~/Library/Logs/gg-nightly-seo.log`。
 
 ---
+
+### Q57 — 21:02
+
+**🙋 提问：**
+
+Automation: 自动修复冲突
+Automation ID: gengrowth-vault-git-auto-heal-8655c84281d6
+Automation memory: $CODEX_HOME/automations/gengrowth-vault-git-auto-heal-8655c84281d6/memory.md
+Last run: 2026-07-13T12:00:44.083Z (1783944044083)
+
+在本机执行 GenGrowth 多仓库 Obsidian/Git 自愈同步。目标仓库固定为 `/Users/awayer_mini/gengrowth-wiki`、`/Users/awayer_mini/gengrowth-ops`、`/Users/awayer_mini/gengrowth-flow-mvp`。
+
+必须使用已验证的确定性入口，不要绕过脚本手写破坏性 git 操作：
+
+`/usr/bin/python3 /Users/awayer_mini/gengrowth-wiki/tools/scripts/obsidian-vault-git-sync.py --repo /Users/awayer_mini/gengrowth-wiki --repo /Users/awayer_mini/gengrowth-ops --repo /Users/awayer_mini/gengrowth-flow-mvp --verbose`
+
+安全边界：
+- 禁止运行 `git reset --hard`、`git checkout -- <path>`、`git clean`、`rm -rf`、`rsync --delete`，除非用户在当次对话中明确要求。
+- 不要运行 `tools/scripts/frequent-sync.sh`、`tools/scripts/gengrowth-repos-sync.sh` 或 `tools/scripts/_sync-core.sh`，因为这些路径包含镜像删除语义，本任务只做 git 自愈同步。
+- 同步脚本会先 fetch，检查未解决冲突，提交本地非敏感变更，再 rebase/push；只对白名单 JSON 冲突自动合并，其他冲突会中止并报告。不要在脚本中止后自行猜测合并内容。
+- 不打印密钥、token、邮箱密码、service account JSON、private key 或完整凭证 URL。
+
+执行后验证：
+1. 分别在三个仓库运行 `git status --branch --porcelain=v2`、`git rev-list --left-right --count HEAD...origin/main`、`git diff --name-only --diff-filter=U`、`git ls-files -u`。
+2. 回读 `/Users/awayer_mini/gengrowth-ops/.obsidian/plugins/obsidian-git/data.json` 和 `/Users/awayer_mini/gengrowth-flow-mvp/.obsidian/plugins/obsidian-git/data.json`，确认 `autoSaveInterval`、`autoPushInterval`、`autoPullInterval` 为 0，`autoPullOnBoot` 与 `pullBeforePush` 为 false。
+3. 若所有仓库都是 clean 且 ahead/behind 为 `0 0`，简短报告已同步；若脚本输出“需要关注”或存在 unmerged，报告具体仓库和文件路径，不要删除文件。
+
+**🤖 回答：**
+
+仅运行指定的三仓 `obsidian-vault-git-sync.py --verbose`。首次与独立复核均未出现“需要关注”；wiki、ops、flow-mvp 均 clean、`HEAD...origin/main=0 0`，未合并路径和索引条目为空。ops 与 flow-mvp 的 Obsidian Git 配置均为三个 interval=0、`autoPullOnBoot=false`、`pullBeforePush=false`。本记录与自动化记忆写入后将再次使用同一入口收敛并复核；未运行任何禁止的破坏性或镜像删除命令。
+
+---

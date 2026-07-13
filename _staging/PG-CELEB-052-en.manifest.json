@@ -8,8 +8,8 @@
   "track": "量产线",
   "generated_by": "unknown",
   "prompt_version": "v8",
-  "generated_at": "2026-07-13T12:14:21.505Z",
-  "content_sha256_short": "b58edc7d8001f580",
+  "generated_at": "2026-07-13T12:42:03.320Z",
+  "content_sha256_short": "274a07b2ceac1d59",
   "source_path": "_staging/PG-CELEB-052-repair-candidate.md",
   "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-CELEB-052-en.md",
   "phase2_checks": {
@@ -19,9 +19,9 @@
       "h2Count": 11,
       "h3Count": 0,
       "h4Count": 0,
-      "words": 1546,
-      "wikilinks": 6,
-      "tbdLinks": 6
+      "words": 1568,
+      "wikilinks": 7,
+      "tbdLinks": 7
     },
     "rl1": true,
     "rl2": true,

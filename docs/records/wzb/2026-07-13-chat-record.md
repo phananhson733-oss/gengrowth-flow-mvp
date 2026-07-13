@@ -20,7 +20,7 @@ aliases:
 - 本日多轮 SEO Blog 自动化均处于声明发布窗外，均未启动 `tools/scripts/gg-nightly-seo.sh`；13:01–13:05 及 14:00–14:03 的最终核验确认无 legacy SEO/flow 进程或 nightly 锁，W22 的 225 项全勾选、claims/ledger/Sheet 均无待处理或漂移。
 - 最近九篇已发布生产页均重新通过 HTTP 200、self-canonical、title、Article JSON-LD 与 sitemap 验证；本日无新 slug、回填、部署传播、batch summary 或重复通知。
 - 持久化 automation rrule 仍含 00:00–06:30 和 22:00–23:30 的窗口外唤醒，须由官方 automation service 修正；13:33 的只读核验还发现最近两次 11:32 wrapper 启动无法由当前已禁用的 20:30 legacy plist 解释，保留为调度异常；`ai-profile/lynne-soul.md` 在当前 checkout 缺失，未来正式发布前需恢复该必读 profile。
-- Oracle 工作树仍有 2,770 项用户既有改动，未来允许的发布窗口不能强制清理；本日未手改 TOML/cron、Google Sheet、索引或站点内容。
+- Oracle 工作树仍有 2,770 项用户既有改动，未来允许的发布窗口不能强制清理；本日未手改 TOML/cron、Google Sheet、索引或站点内容。14:18 运行时核验确认 SEO 图片默认 provider 为 Hermes `image2`（OpenAI Codex 的 `gpt-image-2`），Gemini 仅保留为失败自动回退及旧手动补图路径。
 - 指定的索引修复与三仓 Obsidian/Git 自愈流程均使用既定入口完成复核；三仓均 clean、相对 `origin/main` 为 `0 0`、无未合并条目，两份 Obsidian Git 配置保持禁用自动拉推。
 
 ## 对话记录
@@ -1669,5 +1669,22 @@ Last run: 2026-07-13T05:00:42.581Z (1783918842581)
 **🤖 回答：**
 
 仅使用指定的三仓 `obsidian-vault-git-sync.py --verbose` 入口。首次运行提交并推送 wiki 的 1 个普通路径；记录及并发的普通记录写入后，均通过同一入口再次收敛。最终核验显示 wiki、ops、flow-mvp 均无未合并路径或索引条目，`HEAD...origin/main` 均为 `0 0`；ops 与 flow-mvp 的 Obsidian Git 配置均为三个 interval=0、`autoPullOnBoot=false`、`pullBeforePush=false`。未运行任何禁止的破坏性或镜像删除命令。
+
+---
+
+### Q43 — 14:18
+
+**🙋 提问：**
+
+# Files mentioned by the user:
+
+## codex-clipboard-8ed2040d-979e-4200-a765-646c99ddb879.png: /var/folders/c8/k7q0dcp13rd8590xbtxs_9n80000gn/T/codex-clipboard-8ed2040d-979e-4200-a765-646c99ddb879.png
+
+## My request for Codex:
+我们本地的流程还是使用的 gemini 的生图方式吗？还是说 本地的 cron 用的是 gemini。我记得之前说要用 image2
+
+**🤖 回答：**
+
+当前 astrologywiki SEO 正式图片链路默认不是 Gemini：运行时 `buildIllustrationRunEnv()` 解析为 `GG_HERO_PROVIDER=hermes-image2`，且未设置 Gemini 覆盖。autopilot 会将该环境传给 Oracle 的 `illustrate-article.mjs`，由本机 Hermes 的 OpenAI Codex provider 使用 `gpt-image-2` 生成 hero。Gemini web 代码和会话仍保留，但仅在 image2 调用失败时自动 fallback，以及供旧的手动补图工具使用；因此不能把它描述为完全移除。当前启用的 gengrowth author/publish launchd 仅负责撰写与 Supabase 发布，不运行图片生成；本地 astrology SEO legacy cron 均 disabled。未改动 provider、回退策略或凭证；现有日志没有可归因到某一篇历史图片的 provider 成功记录。
 
 ---

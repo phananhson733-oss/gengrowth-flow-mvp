@@ -146,6 +146,6 @@ Last run: 2026-07-13T18:00:45.452Z (1783965645452)
 
 **🤖 回答：**
 
-按指定确定性入口完成同步；脚本提交并推送了 `gengrowth-wiki` 的 1 个常规路径。首次验证显示三仓均 clean、`HEAD...origin/main = 0 0`、没有未合并路径或索引项；两个 sibling vault 的五项 Obsidian Git 自动同步字段均符合关闭要求。记录与自动化记忆写入后，按约定用同一入口再次收敛并复核最终状态。
+只运行指定的确定性入口，脚本先提交并推送 `gengrowth-wiki` 的 1 个常规路径，再在记录写入后提交并推送 `gengrowth-flow-mvp` 的 1 个记录路径。最终新鲜复核显示三个仓库均 clean、`HEAD...origin/main = 0 0`，没有未合并路径或索引项；两个 sibling vault 的五项 Obsidian Git 自动同步字段均符合关闭要求。未执行手写 Git 修复或删除操作。
 
 ---

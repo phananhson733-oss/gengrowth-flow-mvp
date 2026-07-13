@@ -21,7 +21,7 @@ aliases:
 - 最近九篇已发布生产页均重新通过 HTTP 200、self-canonical、title、Article JSON-LD 与 sitemap 验证；本日无新 slug、回填、部署传播、batch summary 或重复通知。
 - 持久化 automation rrule 仍含 00:00–06:30 和 22:00–23:30 的窗口外唤醒，须由官方 automation service 修正；13:33 的只读核验还发现最近两次 11:32 wrapper 启动无法由当前已禁用的 20:30 legacy plist 解释，保留为调度异常；`ai-profile/lynne-soul.md` 在当前 checkout 缺失，未来正式发布前需恢复该必读 profile。
 - Oracle 工作树仍有 2,770 项用户既有改动，未来允许的发布窗口不能强制清理；本日未手改 TOML/cron、Google Sheet、索引或站点内容。14:18 运行时核验确认 SEO 图片默认 provider 为 Hermes `image2`（OpenAI Codex 的 `gpt-image-2`），Gemini 仅保留为失败自动回退及旧手动补图路径。
-- 指定的索引修复与三仓 Obsidian/Git 自愈流程均使用既定入口完成复核；17:01 的自愈同步后，三仓均 clean、相对 `origin/main` 为 `0 0`、无未合并条目，两份 Obsidian Git 配置保持禁用自动拉推。16:02 选题登记 wrapper 由本地环境授权 apply 模式运行，两产品均无候选或更新，未产生额外写入。
+- 指定的索引修复与三仓 Obsidian/Git 自愈流程均使用既定入口完成复核；17:01 的自愈同步后，三仓均 clean、相对 `origin/main` 为 `0 0`、无未合并条目，两份 Obsidian Git 配置保持禁用自动拉推。16:02 选题登记 wrapper 由本地环境授权 apply 模式运行，两产品均无候选或更新；17:32 固定行修复 wrapper 也成功结束，astrologywiki 队列为 16 条、gengrowth 为 0 条，均无修复重提或失败。
 
 ## 对话记录
 
@@ -1799,5 +1799,22 @@ Last run: 2026-07-13T08:00:13.220Z (1783929613220)
 **🤖 回答：**
 
 仅运行指定三仓 `obsidian-vault-git-sync.py --verbose`；脚本正常返回。record 追加后再次仅用同一确定性入口收敛；最终独立核验确认 `gengrowth-wiki`、`gengrowth-ops`、`gengrowth-flow-mvp` 均 clean，`HEAD...origin/main` 均为 `0 0`，无未合并路径或索引条目。ops 与 flow-mvp 的 Obsidian Git 配置均为三个 interval=0、`autoPullOnBoot=false`、`pullBeforePush=false`；未运行禁止的破坏性或镜像删除命令。
+
+---
+
+### Q48 — 17:33
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: 2026-07-12T21:01:40.503Z (1783890100503)
+
+Run the deterministic fixed-row index repair workflow through `bash tools/scripts/gg-index-repair-resubmit-tick.sh`. The wrapper loads the local gg environment, loops the configured products (`GG_INDEX_MONITOR_PRODUCTS`, defaulting to astrologywiki and gengrowth), processes rows marked `已修复`, syncs `结果复盘表`, and refreshes `request-indexing-queue` in each product Google Sheet. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, do not click Search Console Request Indexing unattended, and do not create Feishu or Google Doc report artifacts. After the wrapper exits, summarize per-product `process-fixed`, `sync-recap`, `sync-request-queue` counts visible in the log, plus any failures.
+
+**🤖 回答：**
+
+运行指定 wrapper，退出码为 0、stdout 为空。权威日志为 `~/gengrowth-agents/cron-sync/index_repair_resubmit/2026-07-13.log`，本次独立窗口 17:32:11–17:32:35 CST，末行为 `index repair-resubmit ok`。astrologywiki：`process-fixed fixed=0 resubmitted=0`，`sync-recap en_rows=233 appended=0 updated=0 skipped=233`，`sync-request-queue rows=16 P0=0 P1=3 P2=3 P3=10`。gengrowth：`process-fixed fixed=0 resubmitted=0`，`sync-recap en_rows=60 appended=0 updated=47 skipped=13`，`sync-request-queue rows=0 P0=0 P1=0 P2=0 P3=0`。窗口内 failure/error/exception/auth/timeout/nonzero-rc 检查无命中；未使用普通文章 Google Indexing API、未无人值守点击 GSC Request Indexing，亦未创建 Feishu 或 Google Doc 报告。自动化 memory 已创建并记录终态。
 
 ---

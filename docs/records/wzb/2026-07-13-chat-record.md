@@ -21,7 +21,7 @@ aliases:
 - W22 的 225 条 PG 项目均已勾选；发布日志尾部均为 `published`。本轮 `inflight=[]`、`staleCount=0`，ledger 无 pending，状态对账为 astrologywiki live=282、gengrowth live=60。
 - 持久化调度仍含窗口外唤醒，官方 automation service 查询持续超时；所有本日 SEO 轮次均未手改 TOML/cron 或创建替代调度。
 - Oracle 工作树仍有 2,770 项改动、1,929 项 untracked 用户文件；未来允许的正式发布窗口不能强制清理，需先处理基线。
-- 指定的索引修复与三仓 Obsidian/Git 自愈流程均在本日使用既定入口完成并复核；09:00–09:02 的 Index Monitor 成功同步两站 Sitemap API 与请求队列。
+- 指定的索引修复与三仓 Obsidian/Git 自愈流程均在本日使用既定入口完成并复核；09:00–09:02 的 Index Monitor 成功同步两站 Sitemap API 与请求队列，10:02 的结果复盘封装脚本也完成两站建议字段与任务报告刷新。
 
 ## 对话记录
 
@@ -1065,6 +1065,36 @@ Last run: 2026-07-13T01:00:11.593Z (1783904411593)
 **🤖 回答：**
 
 本轮为 09:31–09:38 CST，处于声明的 18:30–21:30 发布窗外，未启动 `bash tools/scripts/gg-nightly-seo.sh`，没有新 slug、生产 URL、回填写入或通知。八个 legacy label 均 disabled/未加载，相关 crontab 无 SEO/flow 链路，最终无实际 SEO/flow 进程或相关锁。只读核验：`--stale-report` 为 `inflight=[]`、`staleCount=0`；ledger dry 为 `stillPending=0`、`flips=0`、`needs_human=0`；状态对账为 astrologywiki `live=282 flip=0 review=0`、gengrowth `live=60 flip=0 review=0`。W22 清单为 225 checked、0 unchecked，发布日志尾部均为 `published`，故无 preview/publish、Sheet 回填或线上验收批次待续。最新 wrapper 日志仍是 `~/Library/Logs/gg-nightly-seo.log` 的 2026-07-12 12:32:36 CST no-queue 退出。needs_human：持久化调度仍越过声明发布窗口，官方 automation service 的只读查询约 61 秒无响应；`/Users/awayer_mini/oracle` 仍有 2,770 项改动（1,929 项 untracked），正式窗口有新队列时 publish scan 会安全中止。未手改 TOML/cron、Sheet 或 Oracle 基线，未使用 GSC/Indexing API 或执行破坏性命令；reminders 保持既有未完成项。
+
+---
+
+### Q28 — 10:03
+
+**🙋 提问：**
+
+Automation: 结果复盘表更新
+Automation ID: gengrowth-recap-performance
+Automation memory: $CODEX_HOME/automations/gengrowth-recap-performance/memory.md
+Last run: 2026-07-12T02:00:35.420Z (1783821635420)
+
+Run the deterministic GenGrowth results-recap performance workflow through `bash tools/scripts/gg-recap-performance-tick.sh`.
+
+The wrapper loads the local gg environment, scans the configured products (`GG_RECAP_PERFORMANCE_PRODUCTS`, defaulting to astrologywiki and gengrowth), reads `index-tracking` and `结果复盘表`, and only fetches D14/D30/D60 GSC/GA4 snapshot metrics for indexed URLs whose current age is exactly at one of those milestones. Non-milestone rows and already-filled milestone cells must keep their existing values; historical repair/backfill is only allowed through the wrapper's explicit repair modes such as `--fill-pending` / `--verify-zero-metrics`, not by ad-hoc daily refresh.
+
+The wrapper preserves manual recap decisions/notes, writes wrapper-owned generated performance fields back to the Sheet, and writes the optimization task report under `~/gengrowth-agents/reports/recap-performance/`.
+
+Safety boundary:
+- Do not bypass the wrapper or pass ad-hoc write flags directly to the Node script.
+- Do not hand-edit Google Sheets outside the wrapper.
+- Do not publish content, deploy sites, modify page source, submit GSC Request Indexing, or use the Google Indexing API.
+- Do not overwrite manual fields such as `决策` or human notes; only the wrapper-owned generated recap segment may be refreshed.
+- Do not create extra Feishu/Google Doc artifacts unless the wrapper already does so.
+
+After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/recap_performance/` and summarize per-product workbook/site/property, exact-milestone rows processed, updated recap row counts, generated report path, D14/D30/D60 coverage for due indexed rows, optimization task counts by priority, skipped/non-due rows, and any failures. If the wrapper fails or required credentials/properties are missing, report the exact missing boundary from the log without attempting a manual replacement workflow.
+
+**🤖 回答：**
+
+于 10:02:02–10:02:11 CST 仅运行 `bash tools/scripts/gg-recap-performance-tick.sh`，终端 exit 0，日志以 `recap performance ok` 结束。AstrologyWiki 使用 workbook 尾号 `jyzcQc`、`sc-domain:astrologywiki.com`、GA4 `properties/524765570`：精确里程碑处理 `rows=0`（D14/D30/D60 均 0/0）、生成字段更新 209 行，任务 211（P0=11、技术排查=116、P1=9、P2=0、P3=0、观察=75），报告为 `~/gengrowth-agents/reports/recap-performance/2026-07-13-astrologywiki-optimization-tasks.md`。GenGrowth 使用 workbook 尾号 `ZTIRA8`、`sc-domain:gengrowth.ai`、同一 GA4 property：`rows=0`（三节点均 0/0）、更新 47 行，任务 60（P0=0、技术排查=50、P1=5、P2=0、P3=0、观察=5），报告为 `~/gengrowth-agents/reports/recap-performance/2026-07-13-gengrowth-optimization-tasks.md`。日志未提供可分拆的 skipped 计数；`rows=0` 是本轮无到期且待填的已收录 URL，其他行保持非到期/已填指标不变；无失败或凭证/属性缺失。未手改 Sheet、未运行补历史模式、未发布/部署/提交索引，也未额外创建外部文档。
 
 ---
 

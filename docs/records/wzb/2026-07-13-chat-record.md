@@ -21,7 +21,7 @@ aliases:
 - wrapper 的确定性 repair 产出 1568 词 Phase 2 PASS 稿；默认 Oracle 因 841 个 tracked 与 1,929 个 untracked 既有路径拒绝 reset，随后使用 driver 已文档化的干净 `/Users/awayer_mini/oracle-autopilot` 基线完成定向 scan、PR #364、preview verify、三维 review、Codex 事实门和 merge，`sam-neill-birth-chart` 于 20:55 发布。
 - 发布后核验为 HTTP 200、canonical 精确、title 正常、Article JSON-LD 存在、sitemap 命中；W22 已勾选、publish log 已追加，账本最终 `stillPending=0`、`flips=0`、`needs_human=0`，Sheet 的 index-tracking row 235、结果复盘表 row 238、request-indexing-queue row 14 均已同步，未执行 GSC Request Indexing。
 - unified batch summary 于 20:59 成功发送并确认上线 1 篇；本轮无残留进程、wrapper/claims lock 或 pending publish。内容发布已闭环，但 Codex automation 仍为 `PAUSED`，持久化 rrule 仍含 00:00–06:30 与 22:00–23:30 的窗口外唤醒，保留为独立调度 `needs_human`。
-- 指定的索引修复与三仓 Obsidian/Git 自愈流程均使用既定入口完成复核；19:03、20:01 与 21:02 的最终自愈同步均在 record 写后再次收敛，wiki、ops、flow-mvp 相对 `origin/main` 均为 `0 0`、无未合并条目，两份 Obsidian Git 配置保持禁用自动拉推。选题登记 wrapper 的 16:02、18:01 与 20:02 apply 均无候选；19:44–19:46 的 apply 仅更新 astrologywiki `PG-CELEB-052`（预处理和证据发现均为 `ok`），gengrowth 无候选或更新。17:32 固定行修复 wrapper 也成功结束，astrologywiki 队列为 16 条、gengrowth 为 0 条，均无修复重提或失败。
+- 指定的索引修复与三仓 Obsidian/Git 自愈流程均使用既定入口完成复核；19:03、20:01 与 21:02 的最终自愈同步均在 record 写后再次收敛，wiki、ops、flow-mvp 相对 `origin/main` 均为 `0 0`、无未合并条目，两份 Obsidian Git 配置保持禁用自动拉推。选题登记 wrapper 的 16:02、18:01 与 20:02 apply 均无候选；19:44–19:46 的 apply 仅更新 astrologywiki `PG-CELEB-052`（预处理和证据发现均为 `ok`），21:08–21:12 再更新 `PG-CELEB-053`、`PG-CELEB-054`、`PG-WC-050`、`PG-WC-051`（1 个 `ok`、3 个 `v1_fallback`，后 3 个证据不足），gengrowth 均无候选或更新。17:32 固定行修复 wrapper 也成功结束，astrologywiki 队列为 16 条、gengrowth 为 0 条，均无修复重提或失败。
 
 ## 对话记录
 
@@ -2079,5 +2079,22 @@ Last run: 2026-07-13T12:00:44.083Z (1783944044083)
 **🤖 回答：**
 
 仅运行指定的三仓 `obsidian-vault-git-sync.py --verbose`。首次与独立复核均未出现“需要关注”；wiki、ops、flow-mvp 均 clean、`HEAD...origin/main=0 0`，未合并路径和索引条目为空。ops 与 flow-mvp 的 Obsidian Git 配置均为三个 interval=0、`autoPullOnBoot=false`、`pullBeforePush=false`。本记录与自动化记忆写入后将再次使用同一入口收敛并复核；未运行任何禁止的破坏性或镜像删除命令。
+
+---
+
+### Q58 — 21:12
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-13T12:02:14.087Z (1783944134087)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行指定入口 `bash tools/scripts/gg-topic-register-tick.sh`，退出码 0。权威日志窗口为 2026-07-13 21:08:08–21:12:21 CST，环境启用 apply（`dry_run=false`、`budget_exhausted=false`）。astrologywiki：candidates=4、updates=4、new_clusters=0、page_ids=[PG-CELEB-053, PG-CELEB-054, PG-WC-050, PG-WC-051]、preprocessor=[ok, v1_fallback, v1_fallback, v1_fallback]；证据发现为 1 个 ok 与 3 个 insufficient。gengrowth：candidates=0、updates=0、new_clusters=0，page_ids、preprocessor、evidence_discovery 均为空。日志未见 failures。未手工写 Sheet、未直接编辑任务计划，也未新增 Feishu/Google Doc 报告；自动化 memory 已在真实 EOF 追加最终状态。
 
 ---

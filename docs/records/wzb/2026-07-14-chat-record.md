@@ -49,6 +49,7 @@ tags:
 - 运行固定的三仓 Obsidian/Git 自愈同步入口，不使用手写破坏性 Git 操作。
 - 复核每仓分支状态、与 `origin/main` 的分叉计数及未合并索引。
 - 确认两个 sibling vault 的 Obsidian Git 自动同步配置保持关闭。
+- 运行固定的索引修复重提入口，两个产品均完成 sheet 同步且无失败。
 
 ---
 
@@ -179,6 +180,23 @@ Last run: 2026-07-13T19:01:45.677Z (1783969305677)
 **🤖 回答：**
 
 按唯一批准入口完成本轮同步，脚本输出 `Obsidian vault git sync: clean`。首次完整验证显示三个仓库均 clean、`HEAD...origin/main = 0 0`，无未合并路径或索引项；两个 sibling vault 的指定 Obsidian Git 自动同步字段均处于关闭状态。随后已按记录规则写入本次交互，并将使用同一入口再次收敛与复验；未执行手写 Git 修复、删除或镜像同步路径。
+
+---
+
+### Q6 — 05:02
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: 2026-07-13T09:31:43.609Z (1783935103609)
+
+Run the deterministic fixed-row index repair workflow through `bash tools/scripts/gg-index-repair-resubmit-tick.sh`. The wrapper loads the local gg environment, loops the configured products (`GG_INDEX_MONITOR_PRODUCTS`, defaulting to astrologywiki and gengrowth), processes rows marked `已修复`, syncs `结果复盘表`, and refreshes `request-indexing-queue` in each product Google Sheet. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, do not click Search Console Request Indexing unattended, and do not create Feishu or Google Doc report artifacts. After the wrapper exits, summarize per-product `process-fixed`, `sync-recap`, `sync-request-queue` counts visible in the log, plus any failures.
+
+**🤖 回答：**
+
+仅执行指定确定性入口，退出码为 0，日志以 `index repair-resubmit ok` 结束。astrologywiki：`process-fixed fixed=0 resubmitted=0`，`sync-recap en_rows=234 appended=0 updated=0 skipped=234`，`sync-request-queue rows=17 P0=0 P1=3 P2=3 P3=11`。gengrowth：`process-fixed fixed=0 resubmitted=0`，`sync-recap en_rows=60 appended=0 updated=0 skipped=60`，`sync-request-queue rows=0 P0=0 P1=0 P2=0 P3=0`。本次 05:01:38–05:02:03 CST 日志窗口无失败、错误、异常、认证、超时或非零返回码；未使用普通文章 Google Indexing API、未进行无人值守 Search Console 点击、未创建飞书或 Google Doc 报告。
 
 ---
 

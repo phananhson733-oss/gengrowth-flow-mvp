@@ -1505,6 +1505,6 @@ Last run: 2026-07-13T04:01:42.333Z (1783915302333)
 
 **🤖 回答：**
 
-仅使用指定的三仓 `obsidian-vault-git-sync.py --verbose` 入口。首次脚本输出为 `Obsidian vault git sync: clean`；逐仓核验显示 wiki、ops、flow-mvp 均 clean，`HEAD...origin/main` 均为 `0 0`，无未合并路径或索引条目。ops 与 flow-mvp 的 Obsidian Git 配置均为三个 interval=0、`autoPullOnBoot=false`、`pullBeforePush=false`。本记录写入后将再次以同一入口收敛并重新核验；未运行任何禁止的破坏性或镜像删除命令。
+仅使用指定的三仓 `obsidian-vault-git-sync.py --verbose` 入口。首次与记录写入后的重跑均输出 `Obsidian vault git sync: clean`；逐仓核验显示 wiki、ops、flow-mvp 均 clean，`HEAD...origin/main` 均为 `0 0`，无未合并路径或索引条目。ops 与 flow-mvp 的 Obsidian Git 配置均为三个 interval=0、`autoPullOnBoot=false`、`pullBeforePush=false`。未运行任何禁止的破坏性或镜像删除命令。
 
 ---

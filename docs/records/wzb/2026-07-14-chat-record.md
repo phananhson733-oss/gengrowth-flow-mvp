@@ -114,6 +114,6 @@ Last run: 2026-07-13T17:00:15.233Z (1783962015233)
 
 **🤖 回答：**
 
-只运行指定的确定性入口，退出码为 0，未输出“需要关注”。首次读回显示 `gengrowth-wiki`、`gengrowth-ops`、`gengrowth-flow-mvp` 均 clean，`HEAD...origin/main = 0 0`，没有未合并路径或索引项；两个 sibling vault 的五项 Obsidian Git 自动同步字段均符合关闭要求。初始化本自动化实例的 memory 后，记录写入将由后续同一入口的写后收敛验证覆盖。
+只运行指定的确定性入口，最终写后重跑输出 `Obsidian vault git sync: clean` 且退出码为 0，未输出“需要关注”。`gengrowth-wiki`、`gengrowth-ops`、`gengrowth-flow-mvp` 均 clean，`HEAD...origin/main = 0 0`，没有未合并路径或索引项；两个 sibling vault 的五项 Obsidian Git 自动同步字段均符合关闭要求。自动化 memory 已初始化并仅记录该最终状态。
 
 ---

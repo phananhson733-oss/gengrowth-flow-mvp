@@ -1,0 +1,8 @@
+- Major astrology error: “Jupiter in Gemini 2026” is wrong for this match → update to the actual July 14 semi-final sky: Jupiter in Leo after June 30, 2026, or explain the Cancer-to-Leo tournament transition.
+- Search intent mismatch: the article promises a “prediction” but refuses to give even a symbolic lean → add a clear non-betting astrological read on which side has the edge and under what match scenario.
+- Missing real match grounding → name it as the France vs Spain 2026 World Cup semi-final at AT&T Stadium on July 14, and connect the astrology to the stage, venue, pressure, and current form.
+- National charts are asserted but never shown → specify which France and Spain mundane charts are being used, why those inception dates matter, and the actual placements/aspects driving the interpretation.
+- Player archetypes are generic filler → use named players with known birth data, e.g. Mbappe, Dembele, Lamine Yamal, Pedri, and tie their archetypes to concrete tactical roles.
+- The “how to read” and table sections are procedural padding → replace with specific tensions: France’s pace/star-power attack vs Spain’s midfield control, youth, rhythm, and late-game resilience.
+- Self-awareness/CTA material dilutes the keyword intent → cut it heavily and prioritize the reader’s likely question: “What does astrology suggest for France vs Spain?”
+- Sources are too philosophical and not evidence-bearing → add ephemeris, fixture, national-chart, and player-birthdate sources; keep Rudhyar/Greene only as interpretive background.

@@ -23,6 +23,7 @@ aliases:
 - 05:02–07:35 持续发现持久化 rrule 错误包含凌晨及 22:00 后时段；官方 automation service 在本轮约 58 秒无响应，各轮均只读核验、未手改 TOML 或创建替代 cron。
 - Oracle 工作树仍有 2,770 项改动、1,929 项 untracked 用户文件；未来允许的正式发布窗口不能强制清理，需先处理基线。
 - 指定的索引修复与三仓 Obsidian/Git 自愈流程均在本日使用既定入口完成并复核；09:01 的三仓自愈同步在记录写入后再次通过同一入口收敛，最终 clean、无未合并项且分支差异为 0 0。
+- 09:00–09:02 的 GenGrowth Index Monitor 既定 wrapper 成功完成两站 Sitemap API 刷新与结果复盘表/请求队列同步；astrologywiki 检查 6 条并出现 4 条需关注，合计队列为 P0=0、P1=3、P2=3、P3=10。
 
 ## 对话记录
 
@@ -957,5 +958,22 @@ Last run: 2026-07-13T00:01:41.320Z (1783900901320)
 **🤖 回答：**
 
 于 09:00–09:02 CST 仅运行指定的三仓 `obsidian-vault-git-sync.py --verbose`。首次独立核验及 record 追加后的同一入口收敛均成功；最终 wiki、ops、flow-mvp 均 clean、`HEAD...origin/main=0 0`，无未合并路径或索引条目。ops 与 flow-mvp 的插件配置均为三个 interval=0、`autoPullOnBoot=false`、`pullBeforePush=false`；未运行任何禁止的破坏性或镜像删除命令。
+
+---
+
+### Q25 — 09:03
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Monitor
+Automation ID: gengrowth-index-monitor
+Automation memory: $CODEX_HOME/automations/gengrowth-index-monitor/memory.md
+Last run: 2026-07-12T01:02:05.195Z (1783818125195)
+
+Run the GenGrowth Phase 2 indexing workflow through the existing deterministic wrapper: `bash tools/scripts/gg-index-monitor-tick.sh`. This wrapper must refresh the live sitemap through the official Search Console Sitemaps API, inspect due URLs through URL Inspection, sync the final `结果复盘表`, generate/update `request-indexing-queue` with priority colors, and send Feishu SEO技术 group reminders for actionable candidates or failures. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, and do not click Search Console Request Indexing unattended. For Computer Use submission, only assist by opening candidate GSC inspection URLs and stop for human confirmation before the final Request Indexing click. After the wrapper exits, summarize sitemap submission status, GSC check counts/failures, queue counts by priority, and any Feishu notification outcome visible in the log.
+
+**🤖 回答：**
+
+于 09:00:45–09:02:47 CST 运行指定 wrapper，终端 exit 0 且日志以 `index monitor ok` 收尾。官方 Search Console Sitemap API 对 astrologywiki 与 gengrowth 均为 `ok`；astrologywiki URL Inspection 为 checked=6、alerts=4、failures=0（两条已收录、四条进入 needs_attention），gengrowth due=0、无检查。结果复盘表和 request-indexing-queue 已由 wrapper 同步：astrologywiki rows=16（P0=0、P1=3、P2=3、P3=10），gengrowth rows=0（各优先级均 0），合计 rows=16（P0=0、P1=3、P2=3、P3=10）。精确日志窗口没有 Feishu/Lark 发送成功或失败回执，未额外发送通知；未使用普通文章 Google Indexing API，也没有无人值守点击 Request Indexing。
 
 ---

@@ -11,6 +11,10 @@ export TZ="Asia/Shanghai"
 FLOW="$HOME/gengrowth-flow-mvp"
 AUTOMATION="$HOME/.codex/automations/gengrowth-seo-blog/automation.toml"
 CODEX_BIN="${GG_CODEX_BIN:-$HOME/.local/bin/codex}"
+# Keep unattended publishing off the interactive ~/oracle worktree.  That tree
+# may legitimately hold uncommitted product work; this baseline is a clean clone
+# of the same remote used only for sync + per-article publish worktrees.
+ORACLE_BASELINE="${GG_AUTOMATION_ORACLE_DIR:-$HOME/oracle-autopilot}"
 LOCK="/tmp/gg-seo-blog-launchd.lock"
 LOG="$HOME/Library/Logs/gg-seo-blog-launchd.out.log"
 ERR_LOG="$HOME/Library/Logs/gg-seo-blog-launchd.err.log"
@@ -37,6 +41,9 @@ trap 'rmdir "$LOCK" 2>/dev/null || true' EXIT
 [[ -x "$CODEX_BIN" ]] || { echo "codex executable unavailable: $CODEX_BIN"; exit 1; }
 [[ -f "$AUTOMATION" ]] || { echo "persisted automation unavailable: $AUTOMATION"; exit 1; }
 [[ -x "$FLOW/tools/scripts/gg-nightly-seo.sh" ]] || { echo "nightly wrapper unavailable"; exit 1; }
+[[ -d "$ORACLE_BASELINE/.git" ]] || { echo "clean Oracle baseline unavailable: $ORACLE_BASELINE"; exit 1; }
+export GG_AUTOMATION_ORACLE_DIR="$ORACLE_BASELINE"
+export GG_ORACLE_DIR="$ORACLE_BASELINE"
 
 uid="$(id -u)"
 legacy_labels=(

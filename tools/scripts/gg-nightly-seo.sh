@@ -39,7 +39,12 @@ trap 'rmdir "$LOCK" 2>/dev/null || true' EXIT
 
 # full cron env (a bare cron inherits neither _gg.env nor the plist env)
 export PATH="$HOME/.local/bin:$HOME/.npm-global/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+# The interactive ~/oracle checkout may contain uncommitted product work.  When
+# launchd pins a clean publishing baseline, preserve it across the shared env
+# file so syncOracle() never resets the interactive checkout.
+AUTOMATION_ORACLE_DIR="${GG_AUTOMATION_ORACLE_DIR:-}"
 set -a; . "$HOME/.config/gg/_gg.env" 2>/dev/null || true; set +a
+[ -n "$AUTOMATION_ORACLE_DIR" ] && export GG_ORACLE_DIR="$AUTOMATION_ORACLE_DIR"
 
 # 重放 outbox 里发送失败的积压通知（fail-closed 的补发闭环；无积压时零开销）。
 node "$FLOW/tools/scripts/gg-notify.mjs" replay-outbox >/dev/null 2>&1 || true

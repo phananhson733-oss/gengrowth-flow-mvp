@@ -1126,6 +1126,6 @@ Last run: 2026-07-13T01:00:11.594Z (1783904411594)
 
 **🤖 回答：**
 
-于 10:00–10:02 CST 仅运行指定的三仓 `obsidian-vault-git-sync.py --verbose`。首次同步返回 clean；首次完整核验显示 wiki、ops、flow-mvp 均 clean，`HEAD...origin/main=0 0`，且无未合并路径或索引条目。ops 与 flow-mvp 插件配置均为三个 interval=0、`autoPullOnBoot=false`、`pullBeforePush=false`。本条 record 追加后将再运行同一确定性入口并复核，未运行禁止的破坏性或镜像删除命令。
+于 10:00–10:04 CST 仅运行指定的三仓 `obsidian-vault-git-sync.py --verbose`。首次同步返回 clean；记录追加与并发记录更新后均只重跑同一入口，最终 wiki、ops、flow-mvp 均 clean，`HEAD...origin/main=0 0`，且无未合并路径或索引条目。ops 与 flow-mvp 插件配置均为三个 interval=0、`autoPullOnBoot=false`、`pullBeforePush=false`；未运行禁止的破坏性或镜像删除命令。
 
 ---

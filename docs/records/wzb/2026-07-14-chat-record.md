@@ -28,7 +28,7 @@ Last run: 2026-07-13T16:01:45.019Z (1783958505019)
 
 **🤖 回答：**
 
-运行指定同步入口，输出 `Obsidian vault git sync: clean`。初次验证中，三个仓库均 clean、`HEAD...origin/main = 0 0`、无未合并路径或索引项；两个 sibling vault 的 Obsidian Git 自动同步间隔均为 0，启动自动拉取和推送前拉取均为 false。随后已追加本轮记录，并将再次只使用同一入口收敛记录变更。
+仅运行指定同步入口，最终输出 `Obsidian vault git sync: clean`。三个仓库均 clean、`HEAD...origin/main = 0 0`、无未合并路径或索引项；两个 sibling vault 的 Obsidian Git 自动同步间隔均为 0，启动自动拉取和推送前拉取均为 false。本轮记录已追加并通过同一入口完成收敛。
 
 ---
 date: 2026-07-14

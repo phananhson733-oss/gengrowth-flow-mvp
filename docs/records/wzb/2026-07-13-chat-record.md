@@ -21,7 +21,7 @@ aliases:
 - 最近九篇已发布生产页均重新通过 HTTP 200、self-canonical、title、Article JSON-LD 与 sitemap 验证；本日无新 slug、回填、部署传播、batch summary 或重复通知。
 - 持久化 automation rrule 仍含 00:00–06:30 和 22:00–23:30 的窗口外唤醒，须由官方 automation service 修正；13:33 的只读核验还发现最近两次 11:32 wrapper 启动无法由当前已禁用的 20:30 legacy plist 解释，保留为调度异常；`ai-profile/lynne-soul.md` 在当前 checkout 缺失，未来正式发布前需恢复该必读 profile。
 - Oracle 工作树仍有 2,770 项用户既有改动，未来允许的发布窗口不能强制清理；本日未手改 TOML/cron、Google Sheet、索引或站点内容。14:18 运行时核验确认 SEO 图片默认 provider 为 Hermes `image2`（OpenAI Codex 的 `gpt-image-2`），Gemini 仅保留为失败自动回退及旧手动补图路径。
-- 指定的索引修复与三仓 Obsidian/Git 自愈流程均使用既定入口完成复核；15:01 的自愈同步后，三仓均 clean、相对 `origin/main` 为 `0 0`、无未合并条目，两份 Obsidian Git 配置保持禁用自动拉推。
+- 指定的索引修复与三仓 Obsidian/Git 自愈流程均使用既定入口完成复核；15:01 的自愈同步后，三仓均 clean、相对 `origin/main` 为 `0 0`、无未合并条目，两份 Obsidian Git 配置保持禁用自动拉推。16:02 选题登记 wrapper 由本地环境授权 apply 模式运行，两产品均无候选或更新，未产生额外写入。
 
 ## 对话记录
 
@@ -1750,5 +1750,22 @@ Last run: 2026-07-13T07:00:12.991Z (1783926012991)
 **🤖 回答：**
 
 仅运行指定的三仓 `obsidian-vault-git-sync.py --verbose`。初始核验显示三仓均 clean、`HEAD...origin/main` 为 `0 0`，且无未合并路径或索引条目；两份 Obsidian Git 配置均符合禁用自动同步的要求。已按记录规则追加本条记录，随后会再次仅用同一确定性入口收敛并复核最终状态；未运行任何禁止的破坏性或镜像删除命令。
+
+---
+
+### Q46 — 16:03
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-12T14:01:08.656Z (1783864868656)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行 `bash tools/scripts/gg-topic-register-tick.sh`，未传递手动写入、修复或底层脚本 flags。`~/gengrowth-agents/cron-sync/topic_register/2026-07-13.log` 的本轮窗口为 16:02:50–16:02:54 CST，wrapper exit code=0、最终为 `topic-register ok`。本地环境显式授权 apply，故 `dry_run=false`、`budget_exhausted=false`。`astrologywiki` 与 `gengrowth` 均为 candidates=0、updates=0、new_clusters=0、page_ids=[]、selection_mode=generate、audit_incomplete=0、preprocessor=[]、evidence_discovery=[]；日志未见失败。零候选意味着本轮没有经 wrapper 写入 Sheet、任务计划或飞书；未手工编辑 Sheet/任务计划，亦未创建额外飞书或 Google Doc 报告。
 
 ---

@@ -1798,6 +1798,6 @@ Last run: 2026-07-13T08:00:13.220Z (1783929613220)
 
 **🤖 回答：**
 
-仅运行指定三仓 `obsidian-vault-git-sync.py --verbose`；脚本正常返回。独立核验确认 `gengrowth-wiki`、`gengrowth-ops`、`gengrowth-flow-mvp` 均 clean，`HEAD...origin/main` 均为 `0 0`，无未合并路径或索引条目。ops 与 flow-mvp 的 Obsidian Git 配置均为三个 interval=0、`autoPullOnBoot=false`、`pullBeforePush=false`。已追加本条 record 与 automation memory，随后会再次仅用同一确定性入口收敛并复核最终状态；未运行禁止的破坏性或镜像删除命令。
+仅运行指定三仓 `obsidian-vault-git-sync.py --verbose`；脚本正常返回。record 追加后再次仅用同一确定性入口收敛；最终独立核验确认 `gengrowth-wiki`、`gengrowth-ops`、`gengrowth-flow-mvp` 均 clean，`HEAD...origin/main` 均为 `0 0`，无未合并路径或索引条目。ops 与 flow-mvp 的 Obsidian Git 配置均为三个 interval=0、`autoPullOnBoot=false`、`pullBeforePush=false`；未运行禁止的破坏性或镜像删除命令。
 
 ---

@@ -21,7 +21,7 @@ aliases:
 - 最近九篇已发布生产页均重新通过 HTTP 200、self-canonical、title、Article JSON-LD 与 sitemap 验证；本日无新 slug、回填、部署传播、batch summary 或重复通知。
 - 持久化 automation rrule 仍含 00:00–06:30 和 22:00–23:30 的窗口外唤醒，须由官方 automation service 修正；13:33 的只读核验还发现最近两次 11:32 wrapper 启动无法由当前已禁用的 20:30 legacy plist 解释，保留为调度异常；`ai-profile/lynne-soul.md` 在当前 checkout 缺失，未来正式发布前需恢复该必读 profile。
 - Oracle 工作树仍有 2,770 项用户既有改动，未来允许的发布窗口不能强制清理；本日未手改 TOML/cron、Google Sheet、索引或站点内容。14:18 运行时核验确认 SEO 图片默认 provider 为 Hermes `image2`（OpenAI Codex 的 `gpt-image-2`），Gemini 仅保留为失败自动回退及旧手动补图路径。
-- 指定的索引修复与三仓 Obsidian/Git 自愈流程均使用既定入口完成复核；18:02 的首轮同步后 wiki 曾暂时 ahead 1，重复使用同一入口后始终保持相对 `origin/main` 为 `0 0`、无未合并条目。其后 wiki 有并发 Obsidian 写入，持续出现内容 diff 为空、blob ID 相同的 `.M` stat 标记；不丢弃或猜测合并，两份 Obsidian Git 配置保持禁用自动拉推。16:02 与 18:01 的选题登记 wrapper 均由本地环境授权 apply 模式运行，两产品均无候选或更新；17:32 固定行修复 wrapper 也成功结束，astrologywiki 队列为 16 条、gengrowth 为 0 条，均无修复重提或失败。
+- 指定的索引修复与三仓 Obsidian/Git 自愈流程均使用既定入口完成复核；19:03 的最终自愈同步在 record 写后再次收敛，wiki、ops、flow-mvp 相对 `origin/main` 均为 `0 0`、无未合并条目，两份 Obsidian Git 配置保持禁用自动拉推。16:02 与 18:01 的选题登记 wrapper 均由本地环境授权 apply 模式运行，两产品均无候选或更新；17:32 固定行修复 wrapper 也成功结束，astrologywiki 队列为 16 条、gengrowth 为 0 条，均无修复重提或失败。
 
 ## 对话记录
 

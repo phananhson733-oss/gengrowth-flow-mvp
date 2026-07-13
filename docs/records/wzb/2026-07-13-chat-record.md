@@ -49,10 +49,10 @@ Last run: 2026-07-13T13:02:14.320Z (1783947734320)
 
 > 【本区域在每天最后一次对话结束时生成/更新】
 
-- 本日 13:01–14:03 的 SEO Blog 唤醒均处于发布窗外并保持只读；20:00 首轮发布因 Oracle 脏基线停住后，20:31:39–20:42:05 CST 在无 legacy executor 的前提下再次运行固定 `tools/scripts/gg-nightly-seo.sh`，处理 `PG-CELEB-052`。
-- wrapper 的确定性 repair 产出 1568 词 Phase 2 PASS 稿；默认 Oracle 因 841 个 tracked 与 1,929 个 untracked 既有路径拒绝 reset，随后使用 driver 已文档化的干净 `/Users/awayer_mini/oracle-autopilot` 基线完成定向 scan、PR #364、preview verify、三维 review、Codex 事实门和 merge，`sam-neill-birth-chart` 于 20:55 发布。
-- 发布后核验为 HTTP 200、canonical 精确、title 正常、Article JSON-LD 存在、sitemap 命中；W22 已勾选、publish log 已追加，账本最终 `stillPending=0`、`flips=0`、`needs_human=0`，Sheet 的 index-tracking row 235、结果复盘表 row 238、request-indexing-queue row 14 均已同步，未执行 GSC Request Indexing。
-- unified batch summary 于 20:59 成功发送并确认上线 1 篇；本轮无残留进程、wrapper/claims lock 或 pending publish。内容发布已闭环，但 Codex automation 仍为 `PAUSED`，持久化 rrule 仍含 00:00–06:30 与 22:00–23:30 的窗口外唤醒，保留为独立调度 `needs_human`。
+- 本日 13:01–14:03 的 SEO Blog 唤醒均处于发布窗外并保持只读；20:00 首轮发布因 Oracle 脏基线停住后，20:31:39–20:42:05 CST 在无 legacy executor 的前提下再次运行固定 `tools/scripts/gg-nightly-seo.sh`，完成 `PG-CELEB-052` 发布。
+- `sam-neill-birth-chart` 通过干净 `~/oracle-autopilot` 基线完成定向 scan、PR #364、preview verify、三维 review、Codex 事实门与 merge；20:55 上线后确认 HTTP 200、canonical、title、Article JSON-LD、sitemap、W22、publish log 与 Sheet/ledger 回填全部闭环，20:59 unified batch summary 已发送。
+- 21:32:12–22:39:08 CST 再运行同一 wrapper，attempted=4；`PG-CELEB-053`、`PG-CELEB-054`、`PG-WC-050`、`PG-WC-051` 均完成 Phase 2 PASS author，但 `~/oracle` 的 841 个 tracked 与 1,929 个 untracked 既有路径使每次 publish scan 在 branch/preview 前 fail-closed，W22 四项仍未勾选，publish log 与 Sheet 回填均无新增。
+- 四个候选生产 URL 均为首页 fallback（HTTP 200 但 root canonical、首页 title、无 Article JSON-LD、sitemap 未命中）；最终 `inflight=[]`、`staleCount=0`、`stillPending=0`、`flips=0`、`needs_human=0`，无残留 SEO 进程或 lock。wrapper 未发空批失败告警，已补发统一终态告警；诊断时误把 `gg-notify --help` 当帮助命令，产生一条已明确更正的 unknown-event 噪音通知。
 - 指定的索引修复与三仓 Obsidian/Git 自愈流程均使用既定入口完成复核；19:03、20:01 与 21:02 的最终自愈同步均在 record 写后再次收敛，wiki、ops、flow-mvp 相对 `origin/main` 均为 `0 0`、无未合并条目，两份 Obsidian Git 配置保持禁用自动拉推。选题登记 wrapper 的 16:02、18:01 与 20:02 apply 均无候选；19:44–19:46 的 apply 仅更新 astrologywiki `PG-CELEB-052`（预处理和证据发现均为 `ok`），21:08–21:12 再更新 `PG-CELEB-053`、`PG-CELEB-054`、`PG-WC-050`、`PG-WC-051`（1 个 `ok`、3 个 `v1_fallback`，后 3 个证据不足），gengrowth 均无候选或更新。17:32 固定行修复 wrapper 也成功结束，astrologywiki 队列为 16 条、gengrowth 为 0 条，均无修复重提或失败。
 
 ## 对话记录
@@ -2145,5 +2145,48 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 仅运行指定入口 `bash tools/scripts/gg-topic-register-tick.sh`，退出码 0。权威日志窗口为 2026-07-13 22:01:32–22:01:36 CST，环境启用 apply（`dry_run=false`、`budget_exhausted=false`）。astrologywiki 与 gengrowth 均为 candidates=0、updates=0、new_clusters=0，page_ids、preprocessor、evidence_discovery 均为空；日志未见 failures。未手工写 Sheet、未直接编辑任务计划，也未新增 Feishu/Google Doc 报告；自动化 memory 已在真实 EOF 追加最终状态。
+
+---
+
+### Q61 — 22:43
+
+**🙋 提问：**
+
+你是 GenGrowth SEO Blog 全流程发布自动化。工作目录固定为 `/Users/awayer_mini/gengrowth-flow-mvp`，时区按 Asia/Shanghai / UTC+8 理解。本自动化每天 18:30、19:00、19:30、20:00、20:30、21:00、21:30 触发；不要在 22:00 之后主动启动新一轮发布工作。
+
+目标：自动检测 astrologywiki SEO blog 待处理队列，完成需要的文档落地、文章撰写、预览、上线发布，以及 publish 之后的所有收尾回填与验证。不要只做计划或停在中间态。
+
+单执行器边界：Codex automation 是 SEO Blog 流程的唯一调度入口。本机 legacy launchd/local cron 已停用；每次运行前快速确认 `com.gengrowth.seo-nightly`、`com.gengrowth.seo-author`、`com.gengrowth.seo-autopilot`、`com.gengrowth.seo-author-kicker`、`com.gengrowth.flow-driver`、`com.gengrowth.lane-watchdog`、`com.gengrowth.ledger-reconcile`、`com.gengrowth.index-monitor` 没有正在运行。若发现这些 legacy job 正在跑，先不要启动新的 SEO 发布流程，记录冲突 job、PID / run window 和日志路径，避免同时进行。
+
+主入口：优先且默认只运行确定性 wrapper：`bash tools/scripts/gg-nightly-seo.sh`。不要绕过 wrapper 直接调用底层 Node 脚本，除非是在 wrapper 失败后做只读诊断或执行 wrapper 文档明确要求的可恢复步骤。不要手动加写入 flags；由本地环境和 wrapper 决定 apply / publish 边界。wrapper 自带锁；如果命中锁，读取日志确认已有运行仍在执行并报告为 skip，不要强制解锁。
+
+正式执行流程：
+1. 先读取 `AGENTS.md`、`ai-profile/lynne-soul.md`、`ai-profile/reminders.md`，遵守项目记录与安全规则；如有未完成 reminders，仅在最终结果中极简提及，禁止输出冗长中间态。
+2. 执行单执行器检查，确认 legacy launchd/local cron 没有正在运行同一条 SEO/flow 链路。
+3. 运行 `bash tools/scripts/gg-nightly-seo.sh`。
+4. wrapper 结束后，读取 `~/Library/Logs/gg-nightly-seo.log`，按本次 start / finish 时间隔离当前运行窗口，确认 author、preview gate、merge / publish、batch summary、live check 等阶段是否完成。
+5. 如果 wrapper 明确生成了可安全修复的内容或结构失败，进行一次有界自动修复：只修复日志指出的具体问题，不编造事实，不大改主题；修复后运行对应文章 review / preview gate / publish 重试入口。若无法基于可靠证据修复，保留 needs_human 并输出准确原因。
+6. 如果存在 preview 已通过但 publish / merge / live check 未完成的 pending 状态，继续完成 publish_if_pending、merge、部署传播等待、live URL 验证和批次 summary；不要停在 authored、preview pushed、waiting publish 之类中间态。
+7. publish 后必须完成回填与验证：检查 W22 blog output plan 条目状态、`seo-autopilot-publish-log.md` 追加、相关 Google Sheet / ledger 回填、生产 URL 200、canonical、title、Article JSON-LD、sitemap 收录、batch summary 通知状态。必要时短轮询等待部署传播，但不要无限等待。
+8. 验证没有遗留本轮应继续的进程或 pending publish：用 `ps` / ledger / wrapper status 确认；如仍有其他合法后台运行，说明其 run window 和锁状态。
+9. 按 AGENTS 规则追加当天 record，只记录最终摘要和关键路径，不展开 record 明细；如自动化 memory 文件存在，也只追加最终 verified 状态、发布时间窗、slug、失败原因或 needs_human 原因。
+
+通知与输出边界：
+- 不发送 authored、preview pushed、review running 等中间态消息。
+- 只在真正发布完成、整批结束、彻底失败或 needs_human 时保留最终通知；优先让 wrapper / unified notify 发送，避免重复 Feishu 消息。
+- 如果 wrapper 漏发了真正的最终失败告警，才用现有 `gg-notify` / lark 工具补一条短告警，包含失败步骤、slug、日志路径和下一步。
+- 最终汇报必须包含：本次 run window、是否触发 wrapper、发布 slug / live URL、回填项是否完成、publish 后验证结果、needs_human 或失败原因、日志路径。
+
+安全边界：
+- 不使用 `git reset --hard`、`git checkout --`、`git clean`、`rm -rf`、`rsync --delete` 等破坏性命令。
+- 不手工乱改 Google Sheet；需要写 Sheet 时使用既有 wrapper / connector 路径。
+- 不使用 Google Indexing API 处理普通文章，不无人值守点击 GSC Request Indexing。
+- 不泄露 secrets / tokens。
+
+**🤖 回答：**
+
+21:31 CST 单执行器检查确认 8 个 legacy launchd label 均 unloaded，ps 与 crontab 无匹配；21:32 启动唯一入口 `bash tools/scripts/gg-nightly-seo.sh`，权威日志窗口为 21:32:12–22:39:08 CST，wrapper exit 0、attempted=4。`PG-CELEB-053`、`PG-CELEB-054`、`PG-WC-050`、`PG-WC-051` 均经 wrapper 自带反馈重写、事实保护或 deterministic repair 形成 Phase 2 PASS 的 ready-to-review 草稿，但每次 publish scan 都因 `~/oracle` 工作树存在 841 个 tracked 与 1,929 个 untracked 既有路径而在 branch/preview 前 fail-closed；未使用 reset、stash、force clean 或手工 Sheet 写入。
+
+四个 slug 均未发布：`jeff-bezos-birth-chart`、`paige-bueckers-birth-chart`、`france-vs-spain-world-cup-2026-astrology-prediction`、`england-vs-argentina-world-cup-2026-astrology-prediction`。生产 URL 虽返回 HTTP 200，但 canonical 指向根站、title 为首页、无 Article JSON-LD、sitemap 未命中；W22 四项仍未勾选，publish log 与 Sheet/ledger 回填无新增。最终 `inflight=[]`、`staleCount=0`、`stillPending=0`、`flips=0`、`needs_human=0`，无残留 wrapper/gate 进程、wrapper/claims lock、legacy job 或 notify outbox。wrapper 的空批 summary 未发送，已用统一 raw 通道补发 @Ops 终态失败告警；诊断时误执行 `gg-notify --help`，产生一条 unknown-event 噪音通知，后续正确告警已明确更正。下一步需人工保全并收口 Oracle 工作树，再于下一个允许窗口重跑固定 wrapper。权威日志：`~/Library/Logs/gg-nightly-seo.log`。
 
 ---

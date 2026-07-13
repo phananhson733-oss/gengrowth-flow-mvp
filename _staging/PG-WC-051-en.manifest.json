@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-WC-051",
+  "entity": "England vs Argentina World Cup 2026 Astrology Prediction",
+  "target_keyword": "england vs argentina world cup 2026 astrology prediction",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-07-13T14:39:06.734Z",
+  "content_sha256_short": "c2c3e9c987c4d51a",
+  "source_path": "_staging/PG-WC-051-repair-candidate.md",
+  "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-WC-051-en.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 1539,
+      "wikilinks": 6,
+      "tbdLinks": 6
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

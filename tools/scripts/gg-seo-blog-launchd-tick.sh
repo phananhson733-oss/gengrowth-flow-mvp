@@ -67,7 +67,6 @@ fi
 echo "single-executor preflight passed; starting persisted Codex SEO automation prompt"
 python3 - "$AUTOMATION" <<'PY' | "$CODEX_BIN" exec \
   --sandbox danger-full-access \
-  --ask-for-approval never \
   -C "$FLOW" \
   --add-dir "$HOME/gengrowth-ops" \
   --add-dir "$HOME/gengrowth-wiki" \

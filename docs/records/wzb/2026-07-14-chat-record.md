@@ -961,3 +961,39 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 仅运行 `bash tools/scripts/gg-topic-register-tick.sh`，退出码为 0。精确日志窗口为 2026-07-14 20:03:23–20:10:48 CST，`dry_run=false`、`budget_exhausted=false`，本地环境启用 apply。astrologywiki：candidates=7、updates=7、new_clusters=3、page_ids=[PG-WDIA-001, PG-WAIA-001, PG-WAIA-002, PG-NODE-012, PG-WDIF-001, PG-CELEB-055, PG-NODE-013]、preprocessor=[ok, v1_fallback×6]、evidence_discovery=[ok×1, insufficient×6]；gengrowth 所有计数为 0、数组为空。无失败或超时；未手工写入 Sheet、任务计划或额外 Feishu/Google Doc 产物。
 
 ---
+
+### Q32 — 20:52
+
+**🙋 提问：**
+
+可以按照这个需求去落地
+
+**🤖 回答：**
+
+确认按“结构化 CTA 候选池 + 确定性语义选择器”实施：文章关键词、实体、关联关键词和内容角度从 CTA Map 中选择当前产品的合格 CTA；Blog_Article、导航、外部链接不进入主 CTA 候选池；无匹配时仅使用每个工作簿唯一的 `*` 兜底，否则阻断发布。
+
+---
+
+### Q33 — 20:52
+
+**🙋 提问：**
+
+需要在 cta map 这个 Google sheet 中新增字段吧。注意包括 gengrowth 和 astrologywiki 两个 Google sheet
+
+**🤖 回答：**
+
+范围扩展为两个 Google Sheet。两表均新增并填写 `desc`、`cta_kind`、`match_keywords`、`blog_eligible`、`priority`；AstrologyWiki 保留既有 URL registry 并启用 9 个站内工具/功能/Hub 候选，GenGrowth 将 7 条跨产品历史行标为不可用并新增 app、pricing、features、use cases 四条站内候选。
+
+---
+
+### Q34 — 20:52
+
+**🙋 提问：**
+
+如果之前有 blog 之间的互联的要求/需求。当然需要保留‘
+
+**🤖 回答：**
+
+已保留 blog-to-blog 互联：未修改 `internal_link_rule`、Related Reading 或 Blog_Article URL；AstrologyWiki 的 20 条 Blog_Article 均保留并设为 `cta_kind=blog`、`blog_eligible=FALSE`，因此只继续用于内部互链，永不作为 SEO blog 主 CTA。
+
+---

@@ -48,6 +48,7 @@ tags:
 - 复核每仓分支状态、与 `origin/main` 的分叉计数及未合并索引。
 - 确认两个 sibling vault 的 Obsidian Git 自动同步配置保持关闭。
 - 运行固定的索引修复重提入口，两个产品均完成 sheet 同步且无失败。
+- 运行固定的 Phase 2 索引监控入口，两个产品的 Sitemap API 刷新成功，并完成 URL Inspection、复盘表与候选队列同步。
 
 ---
 
@@ -355,5 +356,22 @@ Last run: 2026-07-14T00:00:46.864Z (1783987246864)
 **🤖 回答：**
 
 仅使用指定的确定性入口。初次运行提交并推送 `gengrowth-wiki` 的 1 个路径；随后核验发现 `gengrowth-wiki` 的 `docs/records/wzb/2026-07-14-chat-record.md` 出现未提交修改，且无未合并项。已追加本轮记录，接下来只会重跑相同入口并基于最后一次验证报告，未执行手写 Git 修复、删除或镜像同步路径。
+
+---
+
+### Q10 — 09:01
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Monitor
+Automation ID: gengrowth-index-monitor
+Automation memory: $CODEX_HOME/automations/gengrowth-index-monitor/memory.md
+Last run: 2026-07-13T01:00:11.591Z (1783904411591)
+
+Run the GenGrowth Phase 2 indexing workflow through the existing deterministic wrapper: `bash tools/scripts/gg-index-monitor-tick.sh`. This wrapper must refresh the live sitemap through the official Search Console Sitemaps API, inspect due URLs through URL Inspection, sync the final `结果复盘表`, generate/update `request-indexing-queue` with priority colors, and send Feishu SEO技术 group reminders for actionable candidates or failures. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, and do not click Search Console Request Indexing unattended. For Computer Use submission, only assist by opening candidate GSC inspection URLs and stop for human confirmation before the final Request Indexing click. After the wrapper exits, summarize sitemap submission status, GSC check counts/failures, queue counts by priority, and any Feishu notification outcome visible in the log.
+
+**🤖 回答：**
+
+仅运行指定确定性入口，精确日志窗口为 09:01:37–09:04:08 CST，结束行 `index monitor ok`。astrologywiki 与 gengrowth 的官方 Search Console Sitemap API 提交均为 `ok`。astrologywiki 检查 9 条到期 URL，`checked=9 alerts=0 failures=0`，均变为已收录；gengrowth `due=0`，无检查。最终队列：astrologywiki `P0=0 P1=3 P2=3 P3=2`，gengrowth 全为 0，合计 `rows=8 P0=0 P1=3 P2=3 P3=2`。该精确时间窗没有可见的 Feishu/Lark 发送成功或失败回执；通知能力步骤已运行。未使用普通文章 Google Indexing API，且未执行无人值守的 Request Indexing 点击。
 
 ---

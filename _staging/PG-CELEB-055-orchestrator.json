@@ -1,0 +1,48 @@
+{
+  "page_id": "PG-CELEB-055",
+  "prompt_path": "/Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-CELEB-055.v8-prompt.md",
+  "started_at": "2026-07-14T13:57:52.377Z",
+  "models_requested": [
+    "claude"
+  ],
+  "retry": 0,
+  "diversify_on_fail": false,
+  "max_cost_usd_per_page": 5,
+  "budget_exceeded_models": [],
+  "ok_count": 0,
+  "total_cost_estimate_usd": 0,
+  "results": {
+    "claude": {
+      "model": "claude",
+      "active_model": "claude",
+      "diversified": false,
+      "ok": false,
+      "output_path": null,
+      "retries": 0,
+      "duration_s": 57,
+      "cost_estimate_usd": null,
+      "cumulative_cost_usd": 0.0239,
+      "budget_exceeded": false,
+      "budget_usd": 5,
+      "attempts": [
+        {
+          "try_index": 1,
+          "model": "claude",
+          "command": "claude -p --model claude-opus-4-8 --effort high < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-CELEB-055.v8-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-CELEB-055-claude-v8.md",
+          "cost_usd": 0.0239,
+          "cumulative_cost_usd": 0.0239,
+          "ok": false,
+          "exit_code": 0,
+          "duration_s": 57,
+          "stderr_tail": "claude output is 2573B (< 3000B) — generation failed/truncated or CLI ignored --model. Verify CLI honored --model claude-opus-4-8 --effort high (run `claude --version` and check ~/.claude/settings.json for a default model override). Re-run after fixing.",
+          "stdout_bytes": 1193,
+          "sonnet_guard": {
+            "downgraded": true,
+            "bytes": 2573,
+            "message": "claude output is 2573B (< 3000B) — generation failed/truncated or CLI ignored --model. Verify CLI honored --model claude-opus-4-8 --effort high (run `claude --version` and check ~/.claude/settings.json for a default model override). Re-run after fixing."
+          }
+        }
+      ]
+    }
+  }
+}

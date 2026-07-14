@@ -49,6 +49,7 @@ tags:
 - 确认两个 sibling vault 的 Obsidian Git 自动同步配置保持关闭。
 - 运行固定的索引修复重提入口，两个产品均完成 sheet 同步且无失败。
 - 运行固定的 Phase 2 索引监控入口，两个产品的 Sitemap API 刷新成功，并完成 URL Inspection、复盘表与候选队列同步。
+- 运行固定的结果复盘性能入口；本轮无 D14/D30/D60 到期已收录 URL，已刷新生成字段并产出两份优化任务报告。
 
 ---
 
@@ -405,5 +406,35 @@ Last run: 2026-07-14T01:01:47.082Z (1783990907082)
 **🤖 回答：**
 
 仅使用指定的确定性入口。初次运行输出 `Obsidian vault git sync: clean`；随后完整验证显示三个仓库均 clean、`HEAD...origin/main = 0 0`、无未合并 diff 或索引项，两个 sibling vault 的五项 Obsidian Git 自动同步字段均符合关闭要求。已按记录规则追加本轮交互，接下来只会用同一入口收敛并以最终新鲜验证为准；未执行手写 Git 修复、删除或镜像同步路径。
+
+---
+
+### Q12 — 10:03
+
+**🙋 提问：**
+
+Automation: 结果复盘表更新
+Automation ID: gengrowth-recap-performance
+Automation memory: $CODEX_HOME/automations/gengrowth-recap-performance/memory.md
+Last run: 2026-07-13T02:01:41.831Z (1783908101831)
+
+Run the deterministic GenGrowth results-recap performance workflow through `bash tools/scripts/gg-recap-performance-tick.sh`.
+
+The wrapper loads the local gg environment, scans the configured products (`GG_RECAP_PERFORMANCE_PRODUCTS`, defaulting to astrologywiki and gengrowth), reads `index-tracking` and `结果复盘表`, and only fetches D14/D30/D60 GSC/GA4 snapshot metrics for indexed URLs whose current age is exactly at one of those milestones. Non-milestone rows and already-filled milestone cells must keep their existing values; historical repair/backfill is only allowed through the wrapper's explicit repair modes such as `--fill-pending` / `--verify-zero-metrics`, not by ad-hoc daily refresh.
+
+The wrapper preserves manual recap decisions/notes, writes wrapper-owned generated performance fields back to the Sheet, and writes the optimization task report under `~/gengrowth-agents/reports/recap-performance/`.
+
+Safety boundary:
+- Do not bypass the wrapper or pass ad-hoc write flags directly to the Node script.
+- Do not hand-edit Google Sheets outside the wrapper.
+- Do not publish content, deploy sites, modify page source, submit GSC Request Indexing, or use the Google Indexing API.
+- Do not overwrite manual fields such as `决策` or human notes; only the wrapper-owned generated recap segment may be refreshed.
+- Do not create extra Feishu/Google Doc artifacts unless the wrapper already does so.
+
+After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/recap_performance/` and summarize per-product workbook/site/property, exact-milestone rows processed, updated recap row counts, generated report path, D14/D30/D60 coverage for due indexed rows, optimization task counts by priority, skipped/non-due rows, and any failures. If the wrapper fails or required credentials/properties are missing, report the exact missing boundary from the log without attempting a manual replacement workflow.
+
+**🤖 回答：**
+
+仅运行 `bash tools/scripts/gg-recap-performance-tick.sh`。精确日志窗口为 10:02:37–10:02:44 CST，结束行 `recap performance ok`。astrologywiki（wb=…jyzcQc、`sc-domain:astrologywiki.com`、GA4 `properties/524765570`）处理精确节点行 0、刷新 218 行，生成报告 `~/gengrowth-agents/reports/recap-performance/2026-07-14-astrologywiki-optimization-tasks.md`；任务分级 P0=11、技术=125、P1=9、观察=75。gengrowth（wb=…ZTIRA8、`sc-domain:gengrowth.ai`、同一 GA4 property）处理精确节点行 0、刷新 47 行，生成报告 `~/gengrowth-agents/reports/recap-performance/2026-07-14-gengrowth-optimization-tasks.md`；任务分级 P0=0、技术=50、P1=5、观察=5。两站 D14/D30/D60 到期已收录 URL 覆盖均为 0/0；日志未单列非节点跳过行数。无失败、凭据或 property 缺失边界。未手写 Sheet、未使用 repair/backfill 标志、未发布/部署/改源或提交索引。
 
 ---

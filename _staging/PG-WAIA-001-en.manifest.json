@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-WAIA-001",
+  "entity": "Why Am I Afraid of Commitment",
+  "target_keyword": "why am i afraid of commitment",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-07-14T17:48:42.057Z",
+  "content_sha256_short": "b2c310b7e2c0966b",
+  "source_path": "_staging/PG-WAIA-001-repair3-candidate.md",
+  "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-WAIA-001-en.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 1523,
+      "wikilinks": 5,
+      "tbdLinks": 5
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

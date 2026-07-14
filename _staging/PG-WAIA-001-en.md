@@ -1,3 +1,29 @@
+---
+title: Why Am I Afraid Of Commitment
+slug: why-am-i-afraid-of-commitment
+date: 2026-07-14
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-WAIA-001
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: why am i afraid of commitment
+associated_keywords:
+  - why am i afraid of commitment meaning
+  - why am i afraid of commitment astrology
+  - why am i afraid of commitment birth chart
+  - why am i afraid of commitment zodiac
+  - why am i afraid of commitment interpretation
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-07-14T17:48:42.057Z
+content_sha256_short: b2c310b7e2c0966b
+phase2_checks: all-pass
+---
+
 # Why Am I Afraid of Commitment? Reading the Fear Through Your Birth Chart
 
 ## What Is the Astrology Behind Commitment Fear?

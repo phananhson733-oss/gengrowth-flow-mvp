@@ -1,7 +1,7 @@
 {
   "page_id": "PG-WAIA-002",
   "prompt_path": "/Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-WAIA-002.v8-prompt.md",
-  "started_at": "2026-07-14T15:38:53.541Z",
+  "started_at": "2026-07-14T15:41:31.517Z",
   "models_requested": [
     "claude"
   ],
@@ -19,11 +19,11 @@
       "ok": true,
       "output_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-WAIA-002-claude-v8.md",
       "retries": 0,
-      "duration_s": 282.8,
+      "duration_s": 155,
       "cost_estimate_usd": {
         "usd": 0.0504,
-        "input_tokens_est": 7636,
-        "output_tokens_est": 1834,
+        "input_tokens_est": 7610,
+        "output_tokens_est": 1838,
         "pricing_note": "Sonnet 4.6 xhigh"
       },
       "cumulative_cost_usd": 0.0504,
@@ -38,12 +38,12 @@
           "cumulative_cost_usd": 0.0504,
           "ok": true,
           "exit_code": 0,
-          "duration_s": 282.8,
+          "duration_s": 155,
           "stderr_tail": "",
-          "stdout_bytes": 8560,
+          "stdout_bytes": 8537,
           "sonnet_guard": {
             "downgraded": false,
-            "bytes": 8594
+            "bytes": 8561
           }
         }
       ]

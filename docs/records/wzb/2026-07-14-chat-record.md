@@ -970,7 +970,7 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 
 **🤖 回答：**
 
-确认按“结构化 CTA 候选池 + 确定性语义选择器”实施：文章关键词、实体、关联关键词和内容角度从 CTA Map 中选择当前产品的合格 CTA；Blog_Article、导航、外部链接不进入主 CTA 候选池；无匹配时仅使用每个工作簿唯一的 `*` 兜底，否则阻断发布。
+确认并完成“结构化 CTA 候选池 + 确定性语义选择器”实施：文章关键词、实体、关联关键词和内容角度从 CTA Map 中选择当前产品的合格 CTA；Blog_Article、导航、外部链接不进入主 CTA 候选池；无匹配时仅使用每个工作簿唯一的 `*` 兜底，否则阻断发布。共享选择器已接入 bridge、`gg-content-draft` 与 `gg-seo-autopilot`；autopilot 不再合成 Birth Chart 兜底。定向回归 273/273 通过，双工作簿 dry-run 分别验证 Tools Hub 兜底和 GenGrowth Features 语义命中；代码提交为 `cfa8d57d`。
 
 ---
 

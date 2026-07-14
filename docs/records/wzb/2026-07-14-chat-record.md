@@ -850,3 +850,15 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 只读核验确认：live `CTA Map` 已有 `desc` 表头，但现有 47 条数据均未填写；多数行仅作为 URL registry，当前桥接器只按 `(page_role, track)` 选一行且完全不读取 `desc`。页面中的“工具页/星盘页”别名又统一解析到 birth-chart calculator，autopilot 对空/中文 CTA 文案执行统一英文兜底，最终造成 CTA 目标高度同质化。建议把改动定义为“结构化候选 CTA 数据模型 + 语义选择器”，明确排除 `Blog_Article` 内链；继续设计前需确认本次范围是仅 astrologywiki，还是同时覆盖 gengrowth.ai。
 
 ---
+
+### Q28 — 19:15 [codex]
+
+**🙋 提问：**
+
+我不知道你后台在优化什么？但是我们需要优化我们 SEO blog 中的 cta。现在基本上所有的 SEO blog 的cta 都是指向了同一个 cta。这个明显是不对，正常应该根据需要的链接，在 Google sheet 中的 cta map 中找到合适的正确的链接，是不是可以参考skill 的desc 的方式，给每个 cta 做一个描述字段，或者其他的方案，关键词也可以，然后在写 blog 中如果需要 cta。就在这个 cta map 中根据关键词/desc 等手段找到合适的 cta（不包括 blog 之间的互联或者其他）。
+
+**🤖 回答：**
+
+按 `superpowers:brainstorming` 与 Google Sheets 工作流完成只读核验，暂未修改代码或 Sheet。live `CTA Map!A1:G60` 已有 `desc` 字段，但 47 条数据的 desc 全为空；20 条 `Blog_Article` 应从主 CTA 候选池硬排除。当前 `gg-sheet-to-brief.mjs` 不读取 desc，只按 `(page_role, track)` 单行选择；选题登记表中的“工具页/星盘页”又统一解析到 birth-chart calculator；`gg-seo-autopilot.mjs` 对空或中文 CTA 文案进一步使用统一 birth-chart 英文兜底，因此 CTA 高度同质化。建议采用“结构化候选池 + 确定性语义打分”，保留 desc，并补充关键词/候选类型等结构化字段；下一步先确认仅修 astrologywiki，还是同时覆盖 gengrowth.ai，推荐先完成 astrologywiki 最小闭环。
+
+---

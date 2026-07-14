@@ -78,9 +78,9 @@ tags:
 
 - 运行固定的三仓 Obsidian/Git 自愈同步入口；多轮写后均重新收敛，并复核分支、远端分叉、未合并索引与 Obsidian Git 配置。
 - 运行固定的选题登记、索引监控、索引修复重提与结果复盘性能包装器；20:03–20:10 的选题登记在 apply 模式为 astrologywiki 更新 7 条（3 个新 cluster），gengrowth 无候选；22:02 再次 apply 为双产品零候选，无手工 Sheet 写入。
-- 18:31、19:02、19:31 CST 三次运行 SEO Blog 唯一 wrapper；W22 已 230/230，均无新文章或待发布状态。
-- SEO ledger 与 Sheet 状态零漂移、无 needs_human；当前 5 个终态文章均通过生产 200、canonical、title、Article JSON-LD 与 sitemap 验证。
-- SEO legacy executor、相关进程、锁与通知 outbox 均为空；持久化 automation 仍为 PAUSED；另确认“修复 blog CTA 映射”任务仍处于进行中并已重新打开。
+- SEO Blog 唯一 wrapper 在 20:32:47–22:06:46 CST 完成一次有效发布：上线 `why-do-i-attract-toxic-people` 与 `what-is-my-life-purpose`；4 条进入明确的 needs_human，另 1 条因六项上限留待下一发布窗口。
+- 两篇文章的 W22、publish log、claims、ledger、index-tracking 与结果复盘表回填完成，生产 200、canonical、title、Article JSON-LD、sitemap 与最终批次通知均验证通过；无残留业务进程或锁。
+- 完成双产品 CTA Map 结构化字段与确定性语义选择器落地，保留 blog-to-blog 互链并排除博客主 CTA；定向回归 273/273 通过。
 
 ---
 
@@ -1024,5 +1024,46 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 仅运行 `bash tools/scripts/gg-topic-register-tick.sh`，退出码 0。日志窗口为 2026-07-14 22:02:07–22:02:10 CST，`dry_run=false`、`budget_exhausted=false`，由本地环境启用 apply。astrologywiki 与 gengrowth 均为 candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]、evidence_discovery=[]；无失败或超时。未手工写入 Google Sheet、任务计划、Feishu 或 Google Doc 产物；权威日志为 `~/gengrowth-agents/cron-sync/topic_register/2026-07-14.log`。
+
+---
+
+### Q37 — 22:15
+
+**🙋 提问：**
+
+你是 GenGrowth SEO Blog 全流程发布自动化。工作目录固定为 `/Users/awayer_mini/gengrowth-flow-mvp`，时区按 Asia/Shanghai / UTC+8 理解。本自动化每天 18:30、19:00、19:30、20:00、20:30、21:00、21:30 触发；不要在 22:00 之后主动启动新一轮发布工作。
+
+目标：自动检测 astrologywiki SEO blog 待处理队列，完成需要的文档落地、文章撰写、预览、上线发布，以及 publish 之后的所有收尾回填与验证。不要只做计划或停在中间态。
+
+单执行器边界：Codex automation 是 SEO Blog 流程的唯一调度入口。本机 legacy launchd/local cron 已停用；每次运行前快速确认 `com.gengrowth.seo-nightly`、`com.gengrowth.seo-author`、`com.gengrowth.seo-autopilot`、`com.gengrowth.seo-author-kicker`、`com.gengrowth.flow-driver`、`com.gengrowth.lane-watchdog`、`com.gengrowth.ledger-reconcile`、`com.gengrowth.index-monitor` 没有正在运行。若发现这些 legacy job 正在跑，先不要启动新的 SEO 发布流程，记录冲突 job、PID / run window 和日志路径，避免同时进行。
+
+主入口：优先且默认只运行确定性 wrapper：`bash tools/scripts/gg-nightly-seo.sh`。不要绕过 wrapper 直接调用底层 Node 脚本，除非是在 wrapper 失败后做只读诊断或执行 wrapper 文档明确要求的可恢复步骤。不要手动加写入 flags；由本地环境和 wrapper 决定 apply / publish 边界。wrapper 自带锁；如果命中锁，读取日志确认已有运行仍在执行并报告为 skip，不要强制解锁。
+
+正式执行流程：
+1. 先读取 `AGENTS.md`、`ai-profile/lynne-soul.md`、`ai-profile/reminders.md`，遵守项目记录与安全规则；如有未完成 reminders，仅在最终结果中极简提及，禁止输出冗长中间态。
+2. 执行单执行器检查，确认 legacy launchd/local cron 没有正在运行同一条 SEO/flow 链路。
+3. 运行 `bash tools/scripts/gg-nightly-seo.sh`。
+4. wrapper 结束后，读取 `~/Library/Logs/gg-nightly-seo.log`，按本次 start / finish 时间隔离当前运行窗口，确认 author、preview gate、merge / publish、batch summary、live check 等阶段是否完成。
+5. 如果 wrapper 明确生成了可安全修复的内容或结构失败，进行一次有界自动修复：只修复日志指出的具体问题，不编造事实，不大改主题；修复后运行对应文章 review / preview gate / publish 重试入口。若无法基于可靠证据修复，保留 needs_human 并输出准确原因。
+6. 如果存在 preview 已通过但 publish / merge / live check 未完成的 pending 状态，继续完成 publish_if_pending、merge、部署传播等待、live URL 验证和批次 summary；不要停在 authored、preview pushed、waiting publish 之类中间态。
+7. publish 后必须完成回填与验证：检查 W22 blog output plan 条目状态、`seo-autopilot-publish-log.md` 追加、相关 Google Sheet / ledger 回填、生产 URL 200、canonical、title、Article JSON-LD、sitemap 收录、batch summary 通知状态。必要时短轮询等待部署传播，但不要无限等待。
+8. 验证没有遗留本轮应继续的进程或 pending publish：用 `ps` / ledger / wrapper status 确认；如仍有其他合法后台运行，说明其 run window 和锁状态。
+9. 按 AGENTS 规则追加当天 record，只记录最终摘要和关键路径，不展开 record 明细；如自动化 memory 文件存在，也只追加最终 verified 状态、发布时间窗、slug、失败原因或 needs_human 原因。
+
+通知与输出边界：
+- 不发送 authored、preview pushed、review running 等中间态消息。
+- 只在真正发布完成、整批结束、彻底失败或 needs_human 时保留最终通知；优先让 wrapper / unified notify 发送，避免重复 Feishu 消息。
+- 如果 wrapper 漏发了真正的最终失败告警，才用现有 `gg-notify` / lark 工具补一条短告警，包含失败步骤、slug、日志路径和下一步。
+- 最终汇报必须包含：本次 run window、是否触发 wrapper、发布 slug / live URL、回填项是否完成、publish 后验证结果、needs_human 或失败原因、日志路径。
+
+安全边界：
+- 不使用 `git reset --hard`、`git checkout --`、`git clean`、`rm -rf`、`rsync --delete` 等破坏性命令。
+- 不手工乱改 Google Sheet；需要写 Sheet 时使用既有 wrapper / connector 路径。
+- 不使用 Google Indexing API 处理普通文章，不无人值守点击 GSC Request Indexing。
+- 不泄露 secrets / tokens。
+
+**🤖 回答：**
+
+在 2026-07-14 20:32:47–22:06:46 CST 运行唯一确定性入口 `bash tools/scripts/gg-nightly-seo.sh` 一次，退出码 0；启动前 8 个 legacy label、相关进程、cron 与锁均无冲突，22:00 后未新启 SEO wrapper。成功上线 `PG-WDIA-001 / why-do-i-attract-toxic-people`（PR #369）和 `PG-NODE-012 / what-is-my-life-purpose`（PR #370）；两篇均通过 preview/review/Codex gate、merge、HTTP 200、精确 canonical、title、Article JSON-LD 与 sitemap 验证。`PG-WAIA-001`、`PG-WAIA-002`、`PG-WDIF-001` 在 3 次尝试及确定性修复后仍无 draft；`PG-CELEB-055` 仍为 1421 词且目标关键词 10 次（上限 9），均保留 needs_human；`PG-NODE-013` 因 wrapper 六项上限留待下一允许窗口。W22 为 232 checked / 5 unchecked，publish log、claims、ledger、index-tracking 与结果复盘表均已回填，2 条 pending writeback 已通过既有 ledger wrapper 清零；未使用普通文章 Indexing API 或无人值守 GSC Request Indexing。最终批次通知于 22:06:46 CST 审计为 SENT，outbox 为空；无 stale inflight、pending publish、SEO 业务进程或业务锁，当前 launchd/Codex 父进程与 launchd lock 仅属于本轮调度并将在结束时释放。权威日志为 `~/Library/Logs/gg-nightly-seo.log`、`~/gengrowth-agents/cron-sync/ledger_reconcile/2026-07-14.log`、`~/gengrowth-agents/cron-sync/index_monitor/2026-07-14.log`。
 
 ---

@@ -997,3 +997,15 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 已保留 blog-to-blog 互联：未修改 `internal_link_rule`、Related Reading 或 Blog_Article URL；AstrologyWiki 的 20 条 Blog_Article 均保留并设为 `cta_kind=blog`、`blog_eligible=FALSE`，因此只继续用于内部互链，永不作为 SEO blog 主 CTA。
 
 ---
+
+### Q35 — 20:57
+
+**🙋 提问：**
+
+按照 goal 模式去推进去落地这个 CTA
+
+**🤖 回答：**
+
+按目标模式完成最终审计：两份线上 CTA Map 均为 A:K 结构，所有 CTA 都有 `desc`，每表各有一个启用的 `*` 兜底，且没有不合规的启用候选。AstrologyWiki 的 21 条博客互链行均保留 URL、均不可作为主 CTA；`internal_link_rule` 在两个 dry-run override 中保持输出。共享选择器、bridge、写稿入口和 autopilot 已执行确定性选路与缺失阻断，定向测试 273/273 通过，工作区干净，未触发发布。
+
+---

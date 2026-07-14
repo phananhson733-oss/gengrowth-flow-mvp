@@ -1,0 +1,8 @@
+- 出生资料太含糊 → 明确写出 Linda Nosková 出生日期为 2004-11-17、出生地 Vsetín/Czechia，并加可靠来源；不要只写 “mid-November 2004”。
+- “birth chart” 实际只讲了太阳星座 → 补入不依赖出生时间的行星位置/相位，或把标题改成 “Scorpio Sun profile”；否则搜索者会觉得没拿到 birth chart。
+- “everything past the Sun…not fact” 不准确 → 改成：上升、宫位和精确月亮位置可能受出生时间影响，但多数行星星座可用出生日期计算。
+- 网球 grounding 太泛 → 用具体战绩/节点替换 “steady baseline game / comeback story” 这类空话，例如青少年法网冠军、2024 澳网击败 Świątek、Monterrey 首冠等。
+- 文章过度变成“如何批判性看待名人占星” → 压缩 Pew/Rudhyar/Greene 段落，把篇幅让给 Nosková 的实际盘面、可确认信息和不确定边界。
+- 表格的 “Energy Center / How It Works” 太虚 → 改成 “Placement / Confidence / Interpretation / Tennis evidence”，让读者能直接看懂哪些是事实、哪些是解读。
+- FAQ 没完全命中搜索意图 → 增加 “What is Linda Nosková’s Moon sign?” “What birth time is missing?” “What placements can be read without birth time?” 这类更直接的问题。
+- 来源区不够支撑事实 → 除占星理论人物外，加入 WTA/ITF 或权威体育资料来源；否则体育履历和出生资料显得无根。

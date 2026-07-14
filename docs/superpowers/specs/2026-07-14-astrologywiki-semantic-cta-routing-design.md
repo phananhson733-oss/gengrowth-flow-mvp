@@ -1,5 +1,5 @@
 ---
-title: AstrologyWiki 语义 CTA 路由设计
+title: 双产品语义 CTA 路由设计
 date: 2026-07-14
 updated: 2026-07-14
 type: plan
@@ -7,26 +7,28 @@ version: v1.0
 status: approved
 owner: awayer_mini
 tags:
-  - astrologywiki
+  - gengrowth
   - seo
   - cta
   - google-sheets
 aliases:
   - semantic CTA routing
   - CTA Map 语义选择
+  - 双产品 CTA 路由
 ---
 
-# AstrologyWiki 语义 CTA 路由设计
+# 双产品语义 CTA 路由设计
 
 ## 目标
 
-让 AstrologyWiki 英文 SEO blog 在生成时从 Google Sheet 的 `CTA Map` 选择与文章主题匹配的站内产品或功能 CTA，而不是把“工具页”或“星盘页”统一解析为 Birth Chart Calculator。
+让 AstrologyWiki 与 GenGrowth 的英文 SEO blog 在生成时，从各自 Google Sheet 的 `CTA Map` 选择与文章主题匹配的站内产品或功能 CTA；不再把“工具页”或“星盘页”统一解析为 Birth Chart Calculator，也不再让 GenGrowth 使用 AstrologyWiki 的旧 CTA Map 数据。
 
 ## 范围
 
-- 仅覆盖 AstrologyWiki 英文 SEO blog；GenGrowth B2B blog 不在本次改动范围内。
-- CTA Map 仍是 CTA 文案、目标 URL 与 GA4 事件的唯一事实源。
-- `Blog_Article` 行仅供文章内链登记，永远不能作为文章主 CTA 候选。
+- 覆盖 AstrologyWiki 与 GenGrowth 的英文 SEO blog；两个 workbook 使用相同 schema、各自独立维护候选池与站内 URL。
+- CTA Map 仍是 CTA 文案、目标 URL 与 GA4 事件的唯一事实源；代码不再用站外或跨产品的默认 CTA 覆盖它。
+- `Blog_Article` 行仅供文章内链登记，永远不能作为文章主 CTA 候选；保留其现有 URL、内容及任何既有互链需求。
+- `internal_link_rule`、Related Reading 与内链数量/可达性检查保持原状；本次不迁移、不重写、不降低任何内链规则。
 - 不批量改写已发布文章；新生成或重新生成的文章使用新选择器。
 
 ## 候选方案与决策
@@ -55,7 +57,9 @@ aliases:
 | J | `blog_eligible` | `TRUE` 才能参加 blog 主 CTA 选择。 |
 | K | `priority` | 正整数；同分候选先按较高值，再按 `cta_id` 升序决胜。 |
 
-本次启用六个已验证工具候选和一个工具总览兜底候选。`Blog_Article`、导航、外部 AI 链接、未确认的 Compatibility Calculator 与其他非产品链接均设为不可选。
+AstrologyWiki 本次启用已验证的主题工具和一个工具总览兜底候选。`Blog_Article`、导航、外部 AI 链接、未确认的 Compatibility Calculator 与其他非产品链接均设为不可选。
+
+GenGrowth 保留原有 7 条错误的 AstrologyWiki 历史行，但全部设为 `blog_eligible=FALSE`；另新增 GenGrowth 自己的 app、pricing、features 与 use cases 候选。它们分别覆盖试用/高意图、价格比较、功能/自动化能力和行业场景意图；不再依赖代码硬编码的 `https://gengrowth.ai/app` 兜底。
 
 ## 选择规则
 
@@ -70,15 +74,16 @@ aliases:
 
 ## 生成链路与安全边界
 
-新共享选择器由 `gg-sheet-to-brief.mjs` 与 `gg-content-draft.mjs` 共用，避免两个写作入口各自退化。Autopilot 收到已选择 CTA 后必须保留它的文案与 URL；不再因文案含中文或为空而改成统一的 Birth Chart 文案。缺失或不合规的选择结果应 park 当前文章，而不是生成错误链接。
+新共享选择器由 `gg-sheet-to-brief.mjs` 与 `gg-content-draft.mjs` 共用，避免两个写作入口各自退化。它从 active workbook 读取候选池，并只接受该产品允许的站内域名：AstrologyWiki 为 `astrologywiki.com`，GenGrowth 为 `gengrowth.ai`。Autopilot 收到已选择 CTA 后必须保留它的文案与 URL；不再因文案含中文或为空而改成统一的 Birth Chart 文案。缺失或不合规的选择结果应 park 当前文章，而不是生成错误链接。
 
-选择器只消费结构化字段，不将 `desc` 当作写作模型指令。CTA URL 必须为 `https://astrologywiki.com` 或 `https://www.astrologywiki.com` 的真实 URL，且不得是占位符。
+选择器只消费结构化字段，不将 `desc` 当作写作模型指令。CTA URL 必须是 active workbook 对应产品的真实 HTTPS 站内 URL，且不得是占位符或 blog article URL。
 
 ## 验收标准
 
-1. “rising sign”“moon sign”“Saturn return”“Chinese zodiac”等文章分别命中对应工具 CTA。
-2. `Blog_Article`、外部 AI、导航和 `blog_eligible=FALSE` 的行无法被选为主 CTA。
-3. 没有特定工具命中的文章使用唯一的工具总览兜底，而不是 Birth Chart Calculator。
-4. 同一输入重复选择的结果、理由与排序完全一致。
-5. override 保留选定的 CTA 文案与 URL，autopilot 不再把它改写为统一 Birth Chart CTA。
-6. bridge、content-draft 与 autopilot 相关 Node 测试通过；live Sheet 的候选行、字段、URL 和实际生成的 dry-run override 复核一致。
+1. AstrologyWiki 的“rising sign”“moon sign”“Saturn return”“Chinese zodiac”等文章分别命中对应工具 CTA。
+2. GenGrowth 的价格、功能/自动化、行业场景与试用意图分别命中 pricing、features、use cases 与 app CTA。
+3. `Blog_Article`、外部 AI、导航和 `blog_eligible=FALSE` 的行无法被选为主 CTA，且现有内链规则保持不变。
+4. 没有特定候选命中的文章仅使用各自产品唯一的通用兜底候选，不使用跨产品或隐式 Birth Chart 兜底。
+5. 同一输入重复选择的结果、理由与排序完全一致。
+6. override 保留选定的 CTA 文案与 URL，autopilot 不再把它改写为统一 CTA。
+7. bridge、content-draft 与 autopilot 相关 Node 测试通过；两个 live Sheet 的候选行、字段、URL 和实际生成的 dry-run override 复核一致。

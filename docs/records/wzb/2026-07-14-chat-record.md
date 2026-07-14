@@ -80,7 +80,7 @@ tags:
 - 运行固定的选题登记、索引监控、索引修复重提与结果复盘性能包装器；两个产品均按既有边界完成同步或产出，未手工写 Sheet。
 - 18:31:40–18:31:41 CST 运行 SEO Blog 唯一 wrapper；W22 已 230/230，无新文章或待发布状态。
 - SEO ledger 与 Sheet 状态零漂移、无 needs_human；当前 5 个终态文章均通过生产 200、canonical、title、Article JSON-LD 与 sitemap 验证。
-- SEO legacy executor、相关进程、锁与通知 outbox 均为空；持久化 automation 仍为 PAUSED 且 rrule 含窗口外时段，保留为调度层人工项。
+- SEO legacy executor、相关进程、锁与通知 outbox 均为空；持久化 automation 仍为 PAUSED；另确认“修复 blog CTA 映射”任务仍处于进行中并已重新打开。
 
 ---
 
@@ -824,5 +824,29 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 在 2026-07-14 19:02:02 CST 运行唯一确定性入口 `bash tools/scripts/gg-nightly-seo.sh`，退出码 0。8 个 legacy label 均 disabled/unloaded，无同链路进程、cron 或锁；本次日志窗口只有 `auto-retry-parks: no transient parks to retry` 与 `no unchecked items in plan — nothing to do`，因此无新增 slug、author、preview、merge、publish、部署等待或回填写入。W22 为 230 checked / 0 unchecked，5 条 claims 全部 done；stale report 为 0，ledger dry 为 `stillPending=0`、`flips=0`、`needs_human=0`，Sheet dry 为 astrologywiki `live=228 flip=0 review=0`。发布日志现有 5 条近期终态记录对应的 URL 全部通过 HTTP 200、自 canonical、有效 title、Article JSON-LD 与 sitemap 核验；本轮 batch summary 按空窗口契约不发送，通知 outbox 为 0。最终无 pending publish、残留进程或锁。调度层仍 needs_human：automation 状态为 PAUSED，rrule 仍含窗口外时段；未直接修改 automation 文件。权威日志：`~/Library/Logs/gg-nightly-seo.log`。
+
+---
+
+### Q26 — 19:10
+
+**🙋 提问：**
+
+我们在优化 cta map 吗，怎么不见这个 session 了
+
+**🤖 回答：**
+
+已在 Codex 任务列表中找到“修复 blog CTA 映射”（thread `019f604c-bc95-77d2-ba14-f0cef04efd4b`）。任务未丢失、未归档，当前仍为 active / inProgress；最新进度已定位 CTA Map 的单行选择与 autopilot 统一兜底两层，已将 Codex 界面导航回该任务。
+
+---
+
+### Q27 — 19:11 [codex]
+
+**🙋 提问：**
+
+我们的 blog 中有一个问题。就是现在的所有blog 的 cta 都链接到了同一个链接了，这个明显是错的。现在我们在 Google sheet 中有一个 CTA map。对我们可以用到的所有的 网站CTA（不包括 blog 之间的互联/内联）。我们可以在这个 tab 页中，增加一个 desc 的字段（类似 skill 中的 desc的描述字段），当我们在写写 SEO blog 的过程中，如果需要 cta。那么可以在这个 cta map 中根据需要，根据 desc（或者你可以提供其他的方案），我们去挑选一个更加合适的 CTA
+
+**🤖 回答：**
+
+只读核验确认：live `CTA Map` 已有 `desc` 表头，但现有 47 条数据均未填写；多数行仅作为 URL registry，当前桥接器只按 `(page_role, track)` 选一行且完全不读取 `desc`。页面中的“工具页/星盘页”别名又统一解析到 birth-chart calculator，autopilot 对空/中文 CTA 文案执行统一英文兜底，最终造成 CTA 目标高度同质化。建议把改动定义为“结构化候选 CTA 数据模型 + 语义选择器”，明确排除 `Blog_Article` 内链；继续设计前需确认本次范围是仅 astrologywiki，还是同时覆盖 gengrowth.ai。
 
 ---

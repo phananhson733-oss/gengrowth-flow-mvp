@@ -1,3 +1,29 @@
+---
+title: Why Do I Feel Stuck In My Career
+slug: why-do-i-feel-stuck-in-my-career
+date: 2026-07-14
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-WDIF-001
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: why do i feel stuck in my career
+associated_keywords:
+  - why do i feel stuck in my career meaning
+  - why do i feel stuck in my career astrology
+  - why do i feel stuck in my career birth chart
+  - why do i feel stuck in my career zodiac
+  - why do i feel stuck in my career interpretation
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-07-14T18:00:04.168Z
+content_sha256_short: 2c64b2296c05774b
+phase2_checks: all-pass
+---
+
 # Why Do I Feel Stuck in My Career, Read Through Your Birth Chart
 
 ## What Is Why Do I Feel Stuck in My Career?

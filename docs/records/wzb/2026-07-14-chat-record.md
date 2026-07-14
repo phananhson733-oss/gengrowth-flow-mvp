@@ -604,23 +604,6 @@ Last run: 2026-07-14T06:00:19.624Z (1784008819624)
 
 **🙋 提问：**
 
-Automation: 根据关键词补充 brief
-Automation ID: gengrowth-topic-register
-Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
-Last run: 2026-07-13T14:00:44.548Z (1783951244548)
-
-Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
-
-**🤖 回答：**
-
-仅运行 `bash tools/scripts/gg-topic-register-tick.sh`，退出码为 0。精确日志窗口为 2026-07-14 16:01:38–16:01:42 CST，`dry_run=false`、`budget_exhausted=false`，本地环境启用 apply。astrologywiki 与 gengrowth 均为 candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]、evidence_discovery=[]；无失败或超时。未手工写入 Sheet、任务计划或额外 Feishu/Google Doc 产物。
-
----
-
-### Q18 — 16:02
-
-**🙋 提问：**
-
 Automation: 自动修复冲突
 Automation ID: gengrowth-vault-git-auto-heal-8655c84281d6
 Automation memory: $CODEX_HOME/automations/gengrowth-vault-git-auto-heal-8655c84281d6/memory.md
@@ -646,5 +629,22 @@ Last run: 2026-07-14T07:00:49.828Z (1784012449828)
 **🤖 回答：**
 
 仅使用指定的确定性入口，首次执行输出 `Obsidian vault git sync: clean`。写入记录前的完整验证显示三个仓库均 clean、`HEAD...origin/main = 0 0`、无未合并 diff 或索引项；两个 sibling vault 的五项 Obsidian Git 自动同步字段均符合关闭要求。记录写入后仅复跑同一入口并以最终新鲜验证为准；未执行手写 Git 修复、删除或镜像同步路径。
+
+---
+
+### Q19 — 16:02
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-13T14:00:44.548Z (1783951244548)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行 `bash tools/scripts/gg-topic-register-tick.sh`，退出码为 0。精确日志窗口为 2026-07-14 16:01:38–16:01:42 CST，`dry_run=false`、`budget_exhausted=false`，本地环境启用 apply。astrologywiki 与 gengrowth 均为 candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]、evidence_discovery=[]；无失败或超时。未手工写入 Sheet、任务计划或额外 Feishu/Google Doc 产物。
 
 ---

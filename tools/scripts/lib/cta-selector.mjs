@@ -82,7 +82,9 @@ function scoreCandidate(candidate, context) {
     score += points;
     reasons.push(`${field}:${hit}`);
   }
-  if (normalized(context.preferred_kind) && normalized(candidate.cta_kind) === normalized(context.preferred_kind)) {
+  // A legacy preference is only a tie-breaker for an already semantic match.
+  // It must never manufacture a match (e.g. "工具页" → arbitrary Birth Chart).
+  if (score > 0 && normalized(context.preferred_kind) && normalized(candidate.cta_kind) === normalized(context.preferred_kind)) {
     score += 5;
     reasons.push(`preferred_kind:${normalized(candidate.cta_kind)}`);
   }

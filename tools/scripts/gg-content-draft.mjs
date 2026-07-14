@@ -71,6 +71,8 @@ import { buildReworkPrompt, MAX_REWORK_ITERATIONS } from './lib/content-rework.m
 // 清单 v4.0 §2/§3 structure validators (shared with _phase2-validate.mjs): atomic
 // paragraph length (SC3) + internal-link distribution (SC4). Both FAIL-level.
 import { checkParagraphLength, checkLinkDistribution } from './lib/structure-checks.mjs';
+import { selectCta } from './lib/cta-selector.mjs';
+import { siteCtaHost } from './lib/site-profile.mjs';
 
 // ============================================================
 // constants
@@ -156,6 +158,11 @@ const CTA_COLS = Object.freeze({
   target_url: 3,
   ga4_event_name: 4,
   track: 5,
+  desc: 6,
+  cta_kind: 7,
+  match_keywords: 8,
+  blog_eligible: 9,
+  priority: 10,
 });
 
 const PAGE_SHEET = '选题登记表';
@@ -165,7 +172,7 @@ const CTA_SHEET = 'CTA Map';
 // Sheet ranges (read-only).
 const PAGE_RANGE = `${PAGE_SHEET}!A2:W300`;
 const CLUSTER_RANGE = `${CLUSTER_SHEET}!A2:T200`;
-const CTA_RANGE = `${CTA_SHEET}!A2:F500`;
+const CTA_RANGE = `${CTA_SHEET}!A2:K500`;
 
 // Placeholder detection for newsletter target_url (spec §2.2 H2).
 const PLACEHOLDER_REGEX = /(待搭建|占位|TODO|PLACEHOLDER|（[^）]*URL[^）]*）)/i;
@@ -477,91 +484,35 @@ function gateCheckCluster(clusterRow, clusterId) {
 // ============================================================
 
 function resolveCta(pageRow, clusterRow, ctaRows) {
-  // 1. If page CTA cell is already filled (column 11), use it directly as a free-text CTA.
+  // An explicit page CTA is only valid if it points to an eligible CTA Map row.
+  // Legacy "工具页"/"星盘页" is a soft tool intent, never a birth-chart URL alias.
   const pageCta = String(pageRow[PAGE_COLS.cta] || '').trim();
-  if (pageCta) {
-    return {
-      cta_id: 'cta_inline_page',
-      text: pageCta,
-      target_url: '',
-      ga4_event_name: '',
-      source: 'page_cell_inline',
-      fallback_note: null,
-    };
-  }
-
-  const pageRole = String(pageRow[PAGE_COLS.page_role] || '').trim();
-  const track = String(clusterRow[CLUSTER_COLS.track] || '').trim();
-  const ctaPrimary = String(clusterRow[CLUSTER_COLS.cta_primary] || '').trim();
-
-  // 2. Match by (page_role, track).
-  const candidates = ctaRows.filter((r) => {
-    const role = String(r[CTA_COLS.page_role] || '').trim();
-    const trk = String(r[CTA_COLS.track] || '').trim();
-    return role === pageRole && trk === track;
+  const legacyTool = /^(工具页|星盘页|birth chart calculator)$/i.test(pageCta);
+  const candidates = ctaRows.map((row) => Object.fromEntries(
+    Object.entries(CTA_COLS).map(([field, index]) => [field, String(row[index] || '').trim()]),
+  ));
+  const selected = selectCta({
+    candidates,
+    context: {
+      target_keyword: pageRow[PAGE_COLS.target_keyword],
+      entity: pageRow[PAGE_COLS.entity],
+      associated_keywords: pageRow[PAGE_COLS.associated_keywords],
+      content_angle: pageRow[PAGE_COLS.content_angle] || clusterRow[CLUSTER_COLS.content_angle],
+      explicit_cta: legacyTool ? '' : pageCta,
+      preferred_kind: legacyTool ? 'tool' : '',
+    },
+    allowedHost: siteCtaHost(),
   });
-
-  if (candidates.length === 0) {
-    return {
-      cta_id: null,
-      text: '',
-      target_url: '',
-      ga4_event_name: '',
-      source: 'no_match',
-      fallback_note: `no CTA Map row for (page_role="${pageRole}", track="${track}")`,
-    };
+  if (!selected.ok) {
+    return { cta_id: null, text: '', target_url: '', ga4_event_name: '', source: 'no_eligible_semantic_match', fallback_note: selected.reason };
   }
-
-  // 3. Prefer cta_tool_* by default.
-  const tool = candidates.find((r) => String(r[CTA_COLS.cta_id] || '').startsWith('cta_tool_'));
-  const news = candidates.find((r) => String(r[CTA_COLS.cta_id] || '').startsWith('cta_news_'));
-
-  // 4. Newsletter gatekeeper: only when cluster.cta_primary === 'Newsletter' AND track === 精修线
-  //    AND target_url not a placeholder.
-  if (news && ctaPrimary === 'Newsletter' && track === '精修线') {
-    const url = String(news[CTA_COLS.target_url] || '').trim();
-    if (!PLACEHOLDER_REGEX.test(url)) {
-      return {
-        cta_id: String(news[CTA_COLS.cta_id] || ''),
-        text: safeField(news[CTA_COLS.cta_text]),
-        target_url: url,
-        ga4_event_name: String(news[CTA_COLS.ga4_event_name] || ''),
-        source: 'cta_map_newsletter_passed_gate',
-        fallback_note: null,
-      };
-    }
-    // Downgraded: log fallback note.
-    if (tool) {
-      return {
-        cta_id: String(tool[CTA_COLS.cta_id] || ''),
-        text: safeField(tool[CTA_COLS.cta_text]),
-        target_url: String(tool[CTA_COLS.target_url] || ''),
-        ga4_event_name: String(tool[CTA_COLS.ga4_event_name] || ''),
-        source: 'cta_map_fallback_downgraded',
-        fallback_note: `downgraded from ${news[CTA_COLS.cta_id]}: target_url placeholder (${url})`,
-      };
-    }
-  }
-
-  if (tool) {
-    return {
-      cta_id: String(tool[CTA_COLS.cta_id] || ''),
-      text: safeField(tool[CTA_COLS.cta_text]),
-      target_url: String(tool[CTA_COLS.target_url] || ''),
-      ga4_event_name: String(tool[CTA_COLS.ga4_event_name] || ''),
-      source: 'cta_map_fallback_tool_preference',
-      fallback_note: null,
-    };
-  }
-
-  // Last resort: first candidate.
-  const c = candidates[0];
   return {
-    cta_id: String(c[CTA_COLS.cta_id] || ''),
-    text: safeField(c[CTA_COLS.cta_text]),
-    target_url: String(c[CTA_COLS.target_url] || ''),
-    ga4_event_name: String(c[CTA_COLS.ga4_event_name] || ''),
-    source: 'cta_map_first_candidate',
+    cta_id: selected.cta_id,
+    text: safeField(selected.cta_text),
+    target_url: selected.target_url,
+    ga4_event_name: selected.ga4_event_name,
+    source: 'cta_map_semantic',
+    cta_selection_reason: selected.cta_selection_reason,
     fallback_note: null,
   };
 }
@@ -920,10 +871,10 @@ async function runPhase1(args, env) {
   const ctaRows = await readSheetRange(workbookId, token, CTA_RANGE);
   const cta = resolveCta(pageRow, clusterRow, ctaRows);
   if (cta.fallback_note) {
-    recordWarn('CTA fallback', cta.fallback_note);
-  } else {
-    recordPass('CTA resolve', `${cta.cta_id} (${cta.source})`);
+    recordFail('CTA resolve', new Error(cta.fallback_note), '在 CTA Map 中补充当前产品可用的语义 CTA 后重试');
+    return EXIT.GATE;
   }
+  recordPass('CTA resolve', `${cta.cta_id} (${cta.source})`);
 
   // 5. Effective psych_safety = page OR cluster.
   const pageSafety = String(pageRow[PAGE_COLS.psych_safety_flag] || '').trim().toUpperCase();

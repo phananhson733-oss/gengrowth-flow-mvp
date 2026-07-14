@@ -213,7 +213,7 @@ dry-run 输出会列：本周拟入队词表 + 「未归集群」词（提示补
 | O | cta_primary | 主推 CTA 的 page_role（匹配 CTA Map B 列） |
 | P | psych_safety_flag | cluster 级 Y/N（page 级 OR cluster 级 → 任一 Y 即触发 RL6） |
 
-**CTA Map（6 列）**，关键字段：
+**CTA Map（11 列）**，主 CTA 按文章语义选择，不按 `page_role + track` 固定映射；blog-to-blog 内链仍由 `internal_link_rule` / Related Reading 独立处理：
 
 | 列 | 字段 | 解释 |
 |---|------|------|
@@ -222,6 +222,11 @@ dry-run 输出会列：本周拟入队词表 + 「未归集群」词（提示补
 | C | cta_文案 | 显示给用户的文案 |
 | D | target_url | 落地页 URL |
 | E | ga4_event_name | 用于 GA4 事件追踪 |
+| G | desc | CTA 用途、受众与适用意图的可审阅描述 |
+| H | cta_kind | `tool` / `feature` / `hub` / `product` / `navigation` / `blog` / `external` |
+| I | match_keywords | 分号分隔的匹配关键词；每个工作簿只允许一个启用的 `*` 兜底 |
+| J | blog_eligible | 只有 `TRUE` 能成为 SEO blog 主 CTA；Blog_Article 必须为 `FALSE` |
+| K | priority | 语义得分相同后的稳定排序优先级 |
 
 **Schema 在代码哪**：`tools/scripts/gg-sheet-to-brief.mjs:77 CLUSTER_HEADER_MAP` + `:102 CTA_HEADER_MAP`。
 

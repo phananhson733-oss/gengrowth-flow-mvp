@@ -11,7 +11,7 @@
 //   content_angle  ← page.content_angle || cluster.content_angle
 //   cluster_jtbd   ← cluster_table[cluster_id].jtbd
 //   internal_link_rule  ← cluster_table[cluster_id].internal_link_rule
-//   cta_text + cta_target_url  ← CTA Map[(page_role, track)]
+//   cta_text + cta_target_url  ← CTA Map semantic selector (keywords / desc / eligibility)
 //   tier_gate_block  ← 模板化拼接(tier, template, friction_brief, logic_brief, entity)
 //   rl6_hint  ← psych_safety_flag === 'Y' ? PSYCH_SAFETY_RL6_HINT : STANDARD_RL6_HINT
 //   friction_themes  ← 优先读 .gg-cache/<page_id>/friction-mine.rag.json
@@ -41,7 +41,8 @@ import {
 import { getAllConfig } from './lib/_config.mjs';
 import { buildAuthorMap, resolveAuthor } from './lib/author-routing.mjs';
 import { TABS } from './lib/_workbook-spec.mjs';
-import { defaultCta, siteCtaHost } from './lib/site-profile.mjs';
+import { siteCtaHost } from './lib/site-profile.mjs';
+import { selectCta } from './lib/cta-selector.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO = join(__dirname, '..', '..');
@@ -119,6 +120,11 @@ const CTA_HEADER_MAP = {
   target_url: 'target_url',
   ga4_event_name: 'ga4_event_name',
   track: 'track',
+  desc: 'desc',
+  cta_kind: 'cta_kind',
+  match_keywords: 'match_keywords',
+  blog_eligible: 'blog_eligible',
+  priority: 'priority',
 };
 
 function indexByHeader(headerRow, mapping) {
@@ -175,7 +181,8 @@ export function buildCtaMap(rows) {
   const out = new Map();
   const registry = new Map();
   const dupes = [];
-  if (!rows.length) return { map: out, dupes, registry };
+  const candidates = [];
+  if (!rows.length) return { map: out, dupes, registry, candidates };
   const idx = indexByHeader(rows[0], CTA_HEADER_MAP);
   for (let i = 1; i < rows.length; i++) {
     const r = rows[i] || [];
@@ -185,6 +192,7 @@ export function buildCtaMap(rows) {
     for (const [field, colIdx] of Object.entries(idx)) {
       obj[field] = String(r[colIdx] || '').trim();
     }
+    if (obj.cta_id) candidates.push(obj);
     if (obj.cta_id && !registry.has(obj.cta_id)) registry.set(obj.cta_id, obj);
     if (!role) continue;
     const key = `${role}||${track || '量产线'}`;
@@ -194,21 +202,26 @@ export function buildCtaMap(rows) {
     }
     out.set(key, obj);
   }
-  return { map: out, dupes, registry };
+  return { map: out, dupes, registry, candidates };
 }
 
 export function resolveCtaTargetUrl(raw, registry = new Map()) {
   const value = String(raw || '').trim();
   if (!value) return '';
   if (/^https?:\/\//i.test(value)) return value;
-  const aliases = new Map([
-    ['星盘页', 'url_tool_birth_chart'],
-    ['工具页', 'url_tool_birth_chart'],
-    ['birth chart calculator', 'url_tool_birth_chart'],
-  ]);
-  const registryKey = aliases.get(value) || aliases.get(value.toLowerCase()) || value;
-  const found = registry && typeof registry.get === 'function' ? registry.get(registryKey) : null;
+  const found = registry && typeof registry.get === 'function' ? registry.get(value) : null;
   return found && isCtaUsable(found) ? found.target_url : value;
+}
+
+function ctaSelectorCandidates(ctaMap, registry) {
+  if (ctaMap && Array.isArray(ctaMap.candidates)) return ctaMap.candidates;
+  if (registry && typeof registry.values === 'function') return Array.from(registry.values());
+  if (ctaMap instanceof Map) return Array.from(ctaMap.values());
+  return [];
+}
+
+function legacyToolIntent(value) {
+  return /^(工具页|星盘页|birth chart calculator)$/i.test(String(value || '').trim());
 }
 
 // CTA 主键查找。优先级（明确，不依赖 Map 迭代顺序）：
@@ -309,8 +322,19 @@ export function composeOverride(row, { clusterMap, ctaMap, ctaRegistry = new Map
 
   const pageRole = String(brief.page_role || '').trim();
   const track = cluster ? cluster.track : '';
-  const cta = lookupCta(ctaMap, pageRole, track);
-  const explicitCtaUrl = resolveCtaTargetUrl(brief.cta_target_url, ctaRegistry);
+  const explicitCtaRaw = String(brief.cta_target_url || '').trim();
+  const ctaChoice = selectCta({
+    candidates: ctaSelectorCandidates(ctaMap, ctaRegistry),
+    context: {
+      target_keyword: brief.target_keyword,
+      entity: brief.entity,
+      associated_keywords: Array.isArray(brief.associated_keywords) ? brief.associated_keywords.join(';') : brief.associated_keywords,
+      content_angle: brief.content_angle || (cluster ? cluster.content_angle : ''),
+      explicit_cta: legacyToolIntent(explicitCtaRaw) ? '' : resolveCtaTargetUrl(explicitCtaRaw, ctaRegistry),
+      preferred_kind: legacyToolIntent(explicitCtaRaw) ? 'tool' : '',
+    },
+    allowedHost: siteCtaHost(),
+  });
 
   // psych_safety = page OR cluster (codex review: cluster-level psych flag must not be silently dropped).
   // 任一 Y 都 → Y。空 / N / 无效都视作 N。
@@ -340,11 +364,9 @@ export function composeOverride(row, { clusterMap, ctaMap, ctaRegistry = new Map
     warnings.push(`cluster_id "${clusterId}" not found in 主题集群表`);
     joinFailures.push({ kind: 'cluster_id', missing: clusterId });
   }
-  if (pageRole && !cta) {
-    warnings.push(`page_role "${pageRole}" (track=${track || '?'}) not found in CTA Map`);
-    if (!explicitCtaUrl && !defaultCta()) {
-      joinFailures.push({ kind: 'page_role', missing: pageRole, track });
-    }
+  if (!ctaChoice.ok) {
+    warnings.push(`no eligible semantic CTA for page_role "${pageRole}" (track=${track || '?'})`);
+    joinFailures.push({ kind: 'cta', missing: pageRole, track, reason: ctaChoice.reason });
   }
   if (template && !/^pillar$|^definition$/i.test(template) && !skipNonV8) {
     warnings.push(`template "${template}" not yet supported by v8 — will fall back to Definition`);
@@ -384,19 +406,6 @@ export function composeOverride(row, { clusterMap, ctaMap, ctaRegistry = new Map
     target_keyword: brief.target_keyword,
   });
 
-  // Resolve CTA, then enforce per-site host: a recognized non-default site (e.g.
-  // gengrowth) must not inherit the workbook CTA Map's cross-site URL — the
-  // gengrowth workbook still carries the oracle astrologywiki CTA. When the
-  // looked-up URL is missing or off-host, fall back to the site product CTA.
-  let ctaText = cta ? cta.cta_text : '';
-  let ctaUrl = cta ? cta.target_url : (explicitCtaUrl || brief.cta_target_url || '');
-  const _ctaHost = siteCtaHost();
-  const _siteCta = defaultCta();
-  if (_ctaHost && _siteCta && !(typeof ctaUrl === 'string' && ctaUrl.includes(_ctaHost))) {
-    ctaText = _siteCta.cta_text;
-    ctaUrl = _siteCta.cta_target_url;
-  }
-
   const entry = {
     page_id: pageId,
     entity: brief.entity || null,
@@ -406,8 +415,11 @@ export function composeOverride(row, { clusterMap, ctaMap, ctaRegistry = new Map
     cluster_jtbd: cluster ? cluster.jtbd : '',
     content_angle: brief.content_angle || (cluster ? cluster.content_angle : ''),
     internal_link_rule: cluster ? cluster.internal_link_rule : '',
-    cta_text: ctaText,
-    cta_target_url: ctaUrl,
+    cta_id: ctaChoice.ok ? ctaChoice.cta_id : '',
+    cta_text: ctaChoice.ok ? ctaChoice.cta_text : '',
+    cta_target_url: ctaChoice.ok ? ctaChoice.target_url : '',
+    cta_ga4_event_name: ctaChoice.ok ? ctaChoice.ga4_event_name : '',
+    cta_selection_reason: ctaChoice.ok ? ctaChoice.cta_selection_reason : '',
     tier_gate_block: tierGateBlock,
     rl6_hint: rl6Hint,
     friction_themes: loadFrictionThemes(repo, pageId, brief),
@@ -650,10 +662,8 @@ flags:
   const ctaBuildResult = buildCtaMap(ctaRaw);
   const ctaMap = ctaBuildResult.map;
   const ctaRegistry = ctaBuildResult.registry;
-  if (ctaBuildResult.dupes && ctaBuildResult.dupes.length) {
-    console.error(`warn: CTA Map has ${ctaBuildResult.dupes.length} duplicate (page_role, track) pairs — first row wins:`);
-    for (const d of ctaBuildResult.dupes) console.error(`  - row ${d.row}: ${d.key}`);
-  }
+  // page_role + track is retained as legacy metadata, so duplicate pairs are
+  // expected and do not affect semantic selection.
 
   const header = pagesRaw[0];
   const dataRows = pagesRaw.slice(1);
@@ -684,7 +694,7 @@ flags:
     const rowObj = { source_row: sheetRow, page_id: pageId, brief };
     const result = composeOverride(rowObj, {
       clusterMap,
-      ctaMap,
+      ctaMap: ctaBuildResult,
       ctaRegistry,
       repo: REPO,
       skipNonV8: !!args.skip_non_v8,
@@ -714,7 +724,7 @@ flags:
   // Fuzzy-suggestion FATAL: any join failure not explicitly allowed becomes a hard fail with
   // top-3 candidates. Lists are small (~24 clusters, ~10 CTA roles) so levenshtein is sub-ms.
   const clusterFailures = joinFailures.filter((f) => f.kind === 'cluster_id');
-  const ctaFailures = joinFailures.filter((f) => f.kind === 'page_role');
+  const ctaFailures = joinFailures.filter((f) => f.kind === 'page_role' || f.kind === 'cta');
   const blockingFailures = [];
   if (clusterFailures.length && !args.allow_missing_cluster) blockingFailures.push(...clusterFailures);
   if (ctaFailures.length && !args.allow_missing_cta) blockingFailures.push(...ctaFailures);

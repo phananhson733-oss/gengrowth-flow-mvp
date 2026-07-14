@@ -192,8 +192,10 @@ writeFileSync(out, JSON.stringify({
     associated_keywords: ['test keyword meaning'],
     search_volume: '${blankSearchVolume ? '' : '100'}',
     content_angle: 'angle',
-    cta_text: '工具页',
-    cta_target_url: '工具页',
+    cta_id: 'cta_tools_hub',
+    cta_text: 'Explore astrology tools',
+    cta_target_url: 'https://astrologywiki.com/en/tools',
+    cta_selection_reason: 'wildcard_fallback:cta_tools_hub',
     cluster_domain: 'mystic',
     cluster_jtbd: 'jtbd',
     internal_link_rule: 'link naturally',
@@ -669,7 +671,7 @@ test('--author normalizes blank search_volume before render so newly registered 
     assert.equal(override['PG-TEST-001'].search_volume, '0');
     assert.equal(
       override['PG-TEST-001'].cta_target_url,
-      'https://astrologywiki.com/en/birth-chart-calculator',
+      'https://astrologywiki.com/en/tools',
     );
     assert.match(`${r.stdout}${r.stderr}`, /AUTHORED PG-TEST-001/);
   } finally {

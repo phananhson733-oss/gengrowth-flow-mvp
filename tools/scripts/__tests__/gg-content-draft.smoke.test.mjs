@@ -131,23 +131,39 @@ function makeClusterRow(overrides = {}) {
   return row;
 }
 
-function makeCtaRow({ cta_id, page_role, track, cta_text = 'click me', target_url = 'https://astrologywiki.com/tools/x', ga4 = 'tool_click' } = {}) {
-  const row = new Array(6).fill('');
+function makeCtaRow({
+  cta_id,
+  page_role,
+  track,
+  cta_text = 'click me',
+  target_url = 'https://astrologywiki.com/tools/x',
+  ga4 = 'tool_click',
+  desc = 'test CTA',
+  cta_kind = 'tool',
+  match_keywords = 'chiron',
+  blog_eligible = 'TRUE',
+  priority = '100',
+} = {}) {
+  const row = new Array(11).fill('');
   row[CTA_COLS.cta_id] = cta_id;
   row[CTA_COLS.page_role] = page_role;
   row[CTA_COLS.cta_text] = cta_text;
   row[CTA_COLS.target_url] = target_url;
   row[CTA_COLS.ga4_event_name] = ga4;
   row[CTA_COLS.track] = track;
+  row[CTA_COLS.desc] = desc;
+  row[CTA_COLS.cta_kind] = cta_kind;
+  row[CTA_COLS.match_keywords] = match_keywords;
+  row[CTA_COLS.blog_eligible] = blog_eligible;
+  row[CTA_COLS.priority] = priority;
   return row;
 }
 
 const DEFAULT_CTAS = [
-  makeCtaRow({ cta_id: 'cta_tool_pillar', page_role: 'Pillar', track: '量产线', cta_text: '探索你的星盘', target_url: 'https://astrologywiki.com/tools/birth-chart' }),
-  makeCtaRow({ cta_id: 'cta_tool_series', page_role: 'Series', track: '量产线', cta_text: '查你的对应落座', target_url: 'https://astrologywiki.com/tools/birth-chart' }),
-  makeCtaRow({ cta_id: 'cta_tool_series', page_role: 'Series', track: '精修线', cta_text: '查你的对应落座', target_url: 'https://astrologywiki.com/tools/birth-chart' }),
-  makeCtaRow({ cta_id: 'cta_news_b', page_role: 'Series', track: '精修线', cta_text: '订阅 prompts', target_url: '（newsletter URL，待搭建）', ga4: 'newsletter_signup' }),
-  makeCtaRow({ cta_id: 'cta_tool_wiki', page_role: 'Wiki', track: '量产线', cta_text: '测一测你的 aura', target_url: 'https://astrologywiki.com/tools/aura-test' }),
+  makeCtaRow({ cta_id: 'cta_tool_pillar', page_role: 'Pillar', track: '量产线', cta_text: 'Explore aura tools', target_url: 'https://astrologywiki.com/tools/aura', match_keywords: 'aura' }),
+  makeCtaRow({ cta_id: 'cta_tool_series', page_role: 'Series', track: '量产线', cta_text: 'Explore Chiron', target_url: 'https://astrologywiki.com/tools/chiron', match_keywords: 'chiron;relationship' }),
+  makeCtaRow({ cta_id: 'cta_tool_wiki', page_role: 'Wiki', track: '量产线', cta_text: 'Explore astrology tools', target_url: 'https://astrologywiki.com/tools', cta_kind: 'hub', match_keywords: '*', priority: '1' }),
+  makeCtaRow({ cta_id: 'cta_blog_article', page_role: 'Blog_Article', track: '量产线', cta_text: 'Read related post', target_url: 'https://astrologywiki.com/en/blog/chiron', cta_kind: 'blog', match_keywords: 'chiron', blog_eligible: 'FALSE', priority: '999' }),
 ];
 
 // ============================================================
@@ -250,46 +266,45 @@ test('gate: cluster row null → reject', () => {
 // CTA fallback (H2)
 // ============================================================
 
-test('CTA: page CTA cell filled → use as inline', () => {
-  const page = makePageRow({ cta: 'Read more here' });
+test('CTA: explicit page CTA uses only an eligible catalog row', () => {
+  const page = makePageRow({ cta: 'cta_tool_wiki' });
   const cluster = makeClusterRow();
   const r = resolveCta(page, cluster, DEFAULT_CTAS);
-  assert.equal(r.source, 'page_cell_inline');
-  assert.equal(r.text, 'Read more here');
+  assert.equal(r.source, 'cta_map_semantic');
+  assert.equal(r.cta_id, 'cta_tool_wiki');
+  assert.match(r.cta_selection_reason, /explicit/i);
 });
 
-test('CTA: empty + Series + 量产线 → cta_tool_series', () => {
+test('CTA: target keyword selects semantic CTA rather than page role', () => {
   const page = makePageRow({ cta: '', page_role: 'Series' });
   const cluster = makeClusterRow({ track: '量产线', cta_primary: '工具页' });
   const r = resolveCta(page, cluster, DEFAULT_CTAS);
   assert.equal(r.cta_id, 'cta_tool_series');
-  assert.equal(r.source, 'cta_map_fallback_tool_preference');
+  assert.equal(r.source, 'cta_map_semantic');
+  assert.match(r.cta_selection_reason, /target_keyword|entity/i);
 });
 
-test('CTA: empty + Wiki + 量产线 → cta_tool_wiki', () => {
-  const page = makePageRow({ cta: '', page_role: 'Wiki' });
+test('CTA: legacy 工具页 is a soft tool intent, not a fixed birth-chart URL', () => {
+  const page = makePageRow({
+    cta: '工具页',
+    target_keyword: 'unrelated topic',
+    entity: 'unrelated topic',
+    associated_keywords: '',
+    content_angle: 'unrelated context',
+  });
   const cluster = makeClusterRow({ track: '量产线', cta_primary: '工具页' });
   const r = resolveCta(page, cluster, DEFAULT_CTAS);
   assert.equal(r.cta_id, 'cta_tool_wiki');
+  assert.notEqual(r.target_url, 'https://astrologywiki.com/en/birth-chart-calculator');
+  assert.match(r.cta_selection_reason, /wildcard/i);
 });
 
-test('CTA: 精修线 + Series + cta_primary=Newsletter + placeholder URL → downgrade to tool', () => {
-  const page = makePageRow({ cta: '', page_role: 'Series' });
-  const cluster = makeClusterRow({ track: '精修线', cta_primary: 'Newsletter' });
+test('CTA: Blog_Article is never selected as a primary CTA', () => {
+  const page = makePageRow({ cta: '', target_keyword: 'chiron' });
+  const cluster = makeClusterRow();
   const r = resolveCta(page, cluster, DEFAULT_CTAS);
   assert.equal(r.cta_id, 'cta_tool_series');
-  assert.equal(r.source, 'cta_map_fallback_downgraded');
-  assert.match(r.fallback_note, /downgraded from cta_news_b/);
-});
-
-test('CTA: 精修线 + cta_primary=Newsletter + real URL → newsletter passes gate', () => {
-  const ctas = [...DEFAULT_CTAS];
-  ctas[3] = makeCtaRow({ cta_id: 'cta_news_b', page_role: 'Series', track: '精修线', cta_text: 'subscribe', target_url: 'https://news.astrologywiki.com/signup', ga4: 'newsletter_signup' });
-  const page = makePageRow({ cta: '', page_role: 'Series' });
-  const cluster = makeClusterRow({ track: '精修线', cta_primary: 'Newsletter' });
-  const r = resolveCta(page, cluster, ctas);
-  assert.equal(r.cta_id, 'cta_news_b');
-  assert.equal(r.source, 'cta_map_newsletter_passed_gate');
+  assert.notEqual(r.cta_id, 'cta_blog_article');
 });
 
 test('PLACEHOLDER_REGEX catches 待搭建, TODO, placeholder, 占位', () => {

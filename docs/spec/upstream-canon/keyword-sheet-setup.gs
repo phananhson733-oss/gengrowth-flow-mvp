@@ -514,46 +514,51 @@ function createGenGrowthKeywordSheet() {
   [180, 220, 80, 55, 80, 55, 110, 110, 150, 150, 90, 140, 70, 200, 90, 130, 150, 80, 180, 100, 200]
     .forEach(function(w, i) { pageSh.setColumnWidth(i + 1, w); });
 
-  // SHEET: CTA Map（cta_id）— v3.1 加列颜色与字段注释
+  // SHEET: CTA Map（cta_id）— semantic CTA routing columns
   var ctaSh = ss.insertSheet('CTA Map');
-  ctaSh.getRange(1, 1, 1, 6)
-    .setValues([['cta_id', 'page_role', 'cta_文案', 'target_url', 'ga4_event_name', 'track']])
+  ctaSh.getRange(1, 1, 1, 11)
+    .setValues([['cta_id', 'page_role', 'cta_文案', 'target_url', 'ga4_event_name', 'track', 'desc', 'cta_kind', 'match_keywords', 'blog_eligible', 'priority']])
     .setFontColor('#ffffff').setFontWeight('bold').setFontSize(11);
   ctaSh.setFrozenRows(1);
 
   // 表头颜色：深绿=必填手动 / 深灰=选填（GA4 上线后填）
-  var ctaGreen = [1, 2, 3, 4, 6];
-  var ctaSlate = [5];
+  var ctaGreen = [1, 3, 4, 7, 8, 9, 10, 11];
+  var ctaSlate = [2, 5, 6];
   ctaGreen.forEach(function(c) { ctaSh.getRange(1, c).setBackground('#2e7d32'); });
   ctaSlate.forEach(function(c) { ctaSh.getRange(1, c).setBackground('#455a64'); });
 
-  // 预填 Week-1 默认（工具页优先，PRD v0.7 §10）
-  ctaSh.getRange(2, 1, 6, 6).setValues([
-    ['cta_tool_pillar', 'Pillar', '探索你的星盘 / aura', '（工具页 URL）', 'tool_click', '量产线'],
-    ['cta_tool_series', 'Series', '查你的对应落座', '（工具页 URL）', 'tool_click', '量产线'],
-    ['cta_tool_support', 'Support', '用工具验证', '（工具页 URL）', 'tool_click', '量产线'],
-    ['cta_tool_use', 'Tool', '输入信息生成结果', '（工具页自身）', 'tool_use', '量产线'],
-    ['cta_tool_wiki', 'Wiki', '测一测你的 aura', '（aura test URL）', 'tool_click', '量产线'],
-    ['cta_news_b', 'Series', '订阅获取每周 journal prompts', '（newsletter URL，待搭建）', 'newsletter_signup', '精修线']
+  // 预填 semantic CTA 示例；每个工作簿仅一个 blog_eligible=TRUE 的 * 兜底。
+  ctaSh.getRange(2, 1, 4, 11).setValues([
+    ['cta_tool_birth_chart', 'Tool_Page', 'Generate Your Free Birth Chart', '（birth chart URL）', 'tool_click', '量产线', 'Generate a birth chart from birth details.', 'tool', 'birth chart;natal chart', 'TRUE', '100'],
+    ['cta_tool_rising_sign', 'Tool_Page', 'Calculate Your Rising Sign', '（rising sign URL）', 'tool_click', '量产线', 'Calculate the ascendant from birth details.', 'tool', 'rising sign;ascendant', 'TRUE', '100'],
+    ['cta_tools_hub', 'Tool_Hub', 'Explore Astrology Tools', '（tools hub URL）', 'tool_click', '量产线', 'Generic same-site fallback for articles without a more specific match.', 'hub', '*', 'TRUE', '1'],
+    ['cta_blog_example', 'Blog_Article', 'Read related article', '（blog URL）', '', '量产线', 'Blog-to-blog internal link only; never a primary CTA.', 'blog', 'related reading', 'FALSE', '0']
   ]);
 
   ctaSh.getRange('B2:B500').setDataValidation(dv().requireValueInList(['Pillar', 'Series', 'Support', 'Tool', 'Wiki', 'Strategic'], true).build());
   ctaSh.getRange('F2:F500').setDataValidation(dv().requireValueInList(['量产线', '精修线'], true).build());
+  ctaSh.getRange('H2:H500').setDataValidation(dv().requireValueInList(['tool', 'feature', 'hub', 'product', 'navigation', 'blog', 'external'], true).build());
+  ctaSh.getRange('J2:J500').setDataValidation(dv().requireValueInList(['TRUE', 'FALSE'], true).build());
 
   // 字段注释
   var ctaNotes = {
-    1: 'cta_id：手工编号，如 cta_tool_pillar。页面生产卡按 page_role + track 引用对应 CTA。预填 6 行是 Week-1 默认（工具页优先，PRD v0.7 §10）。',
-    2: 'page_role：Pillar / Series / Support / Tool / Wiki / Strategic。这条 CTA 适用于哪种页面角色。',
+    1: 'cta_id：稳定主键。选题登记表可显式引用它；同一 ID 不可重复。',
+    2: 'page_role：历史兼容/运营分类字段；主 CTA 不再按 page_role + track 直接匹配。',
     3: 'cta_文案：用户在页面看到的 CTA 按钮/链接文字。简短行动指令。',
-    4: 'target_url：点击 CTA 跳转的 URL（工具页 URL / newsletter 注册页 URL 等）。',
-    5: 'ga4_event_name：与 GA4 配置的事件名一一对应（如 tool_click、newsletter_signup）。GA4 上线后填实。',
-    6: 'track：量产线 / 精修线。Week-1 默认：量产线→工具页；精修线→newsletter（待搭建）。阶段策略见 PRD v0.7 §10。'
+    4: 'target_url：点击 CTA 跳转的 HTTPS URL，必须属于当前产品域名；占位 URL 不可启用。',
+    5: 'ga4_event_name：已配置的 GA4 事件名；未配置时留空，不虚构事件。',
+    6: 'track：历史兼容/运营分类字段，不参与语义主 CTA 的强制匹配。',
+    7: 'desc：CTA 的用途和适用读者/意图，用于人工审阅与语义选择审计。',
+    8: 'cta_kind：tool / feature / hub / product / navigation / blog / external。blog、navigation、external 永不作为主 CTA。',
+    9: 'match_keywords：以分号分隔的英文关键词或短语。每个工作簿仅允许一个已启用的 * 通配兜底。',
+    10: 'blog_eligible：TRUE 才能作为 SEO blog 主 CTA；Blog_Article 内链必须为 FALSE。',
+    11: 'priority：语义得分相同时的正整数优先级；仍相同则按 cta_id 稳定排序。'
   };
   Object.keys(ctaNotes).forEach(function(col) {
     ctaSh.getRange(1, parseInt(col)).setNote(ctaNotes[col]);
   });
 
-  [150, 90, 220, 200, 150, 80].forEach(function(w, i) { ctaSh.setColumnWidth(i + 1, w); });
+  [160, 100, 220, 240, 150, 90, 300, 120, 260, 110, 90].forEach(function(w, i) { ctaSh.setColumnWidth(i + 1, w); });
 
   // SHEET: 结果复盘表（outcome_id）— v3.1 加列颜色与字段注释
   var outcomeSh = ss.insertSheet('结果复盘表');

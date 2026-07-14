@@ -24,7 +24,6 @@ import {
   PAGES_FIX_COL,
 } from '../gg-sheet-to-brief.mjs';
 import { TABS } from '../lib/_workbook-spec.mjs';
-import { defaultCta } from '../lib/site-profile.mjs';
 
 // composeOverride's CTA composition reads GG_SITE from the environment: a
 // recognized non-default site (gengrowth) substitutes its product CTA for any
@@ -108,7 +107,7 @@ test('buildClusterMap returns empty Map on empty input', () => {
 });
 
 // ---------- buildCtaMap + lookupCta ----------
-const CTA_HEADER = ['cta_id', 'page_role', 'cta_文案', 'target_url', 'ga4_event_name', 'track'];
+const CTA_HEADER = ['cta_id', 'page_role', 'cta_文案', 'target_url', 'ga4_event_name', 'track', 'desc', 'cta_kind', 'match_keywords', 'blog_eligible', 'priority'];
 
 test('buildCtaMap returns {map, dupes} and keys by "page_role||track"', () => {
   const rows = [
@@ -141,7 +140,7 @@ test('buildCtaMap indexes URL-registry rows by cta_id', () => {
   );
 });
 
-test('resolveCtaTargetUrl resolves Sheet alias "星盘页" through url_tool_birth_chart', () => {
+test('resolveCtaTargetUrl leaves legacy Sheet alias "星盘页" unresolved for semantic routing', () => {
   const { registry } = buildCtaMap([
     CTA_HEADER,
     [
@@ -153,10 +152,7 @@ test('resolveCtaTargetUrl resolves Sheet alias "星盘页" through url_tool_birt
       'url_registry',
     ],
   ]);
-  assert.equal(
-    resolveCtaTargetUrl('星盘页', registry),
-    'https://astrologywiki.com/en/birth-chart-calculator',
-  );
+  assert.equal(resolveCtaTargetUrl('星盘页', registry), '星盘页');
 });
 
 test('buildCtaMap: first row wins on duplicate (page_role, track), records dupe', () => {
@@ -326,17 +322,22 @@ function makeCtx(overrides = {}) {
       },
     ],
   ]);
-  const ctaMap = new Map([
+  const ctaMap = buildCtaMap([
+    CTA_HEADER,
     [
-      'Series||量产线',
-      {
-        cta_id: 'cta_tool_series',
-        page_role: 'Series',
-        cta_text: '查你的对应落座',
-        target_url: 'https://astrologywiki.com/tools/aura-quiz',
-        ga4_event_name: 'tool_click',
-        track: '量产线',
-      },
+      'cta_tool_series', 'Series', 'Explore your aura tools',
+      'https://astrologywiki.com/tools/aura-quiz', 'tool_click', '量产线',
+      'Aura-tool CTA', 'tool', 'orange aura;aura', 'TRUE', '100',
+    ],
+    [
+      'cta_tools_hub', 'Tool_Hub', 'Explore astrology tools',
+      'https://astrologywiki.com/tools', 'tool_click', '量产线',
+      'Generic fallback', 'hub', '*', 'TRUE', '1',
+    ],
+    [
+      'cta_blog_aura', 'Blog_Article', 'Read related article',
+      'https://astrologywiki.com/en/blog/orange-aura', '', '量产线',
+      'Blog internal link only', 'blog', 'orange aura', 'FALSE', '999',
     ],
   ]);
   return { clusterMap, ctaMap, repo: '/tmp/__nonexistent_repo_for_test', ...overrides };
@@ -354,7 +355,7 @@ test('composeOverride produces all 13 cfg fields for a full Sheet row', () => {
   assert.equal(entry.cluster_jtbd, 'understand my aura color');
   assert.equal(entry.content_angle, 'creative/playful angle');
   assert.equal(entry.internal_link_rule, 'Pillar↔Series');
-  assert.equal(entry.cta_text, '查你的对应落座');
+  assert.equal(entry.cta_text, 'Explore your aura tools');
   assert.equal(entry.cta_target_url, 'https://astrologywiki.com/tools/aura-quiz');
   assert.match(entry.tier_gate_block, /T2 Definition/);
   assert.equal(entry.rl6_hint, STANDARD_RL6_HINT);
@@ -493,12 +494,16 @@ test('composeOverride: missing cluster emits warning, blanks cluster fields', ()
 
 test('composeOverride: missing CTA emits warning, blanks cta fields', () => {
   const row = makeRow({ page_role: 'Wiki' }); // not in our test CTA map
-  const { entry, warnings } = withGgSite(undefined, () => composeOverride(row, makeCtx()));
+  const onlyIneligible = buildCtaMap([
+    CTA_HEADER,
+    ['cta_blog_only', 'Blog_Article', 'Read more', 'https://astrologywiki.com/en/blog/x', '', '', 'blog only', 'blog', '*', 'FALSE', '999'],
+  ]);
+  const { entry, warnings } = withGgSite(undefined, () => composeOverride(row, makeCtx({ ctaMap: onlyIneligible })));
   assert.equal(entry.cta_text, '');
   assert.ok(warnings.some((w) => w.includes('Wiki')));
 });
 
-test('composeOverride: explicit "星盘页" resolves through CTA URL registry without a missing-role failure', () => {
+test('composeOverride: explicit "星盘页" is a soft tool preference, not a fixed birth-chart alias', () => {
   const row = makeRow({ page_role: 'Series', cta_target_url: '星盘页' });
   const built = buildCtaMap([
     CTA_HEADER,
@@ -509,26 +514,38 @@ test('composeOverride: explicit "星盘页" resolves through CTA URL registry wi
       'https://astrologywiki.com/en/birth-chart-calculator',
       'page_view',
       'url_registry',
+      'A proper tool candidate',
+      'tool',
+      'orange aura',
+      'TRUE',
+      '100',
     ],
   ]);
-  const ctx = makeCtx({ ctaMap: built.map, ctaRegistry: built.registry });
+  const ctx = makeCtx({ ctaMap: built, ctaRegistry: built.registry });
   const { entry, joinFailures } = withGgSite(undefined, () => composeOverride(row, ctx));
   assert.equal(entry.cta_target_url, 'https://astrologywiki.com/en/birth-chart-calculator');
-  assert.equal(joinFailures.some((failure) => failure.kind === 'page_role'), false);
+  assert.match(entry.cta_selection_reason, /semantic|wildcard/i);
+  assert.equal(joinFailures.some((failure) => failure.kind === 'cta'), false);
 });
 
-test('composeOverride: GG_SITE=gengrowth substitutes product CTA for off-host workbook CTA', () => {
-  const row = makeRow(); // ctaMap resolves to the oracle astrologywiki CTA
-  const { entry } = withGgSite('gengrowth', () => composeOverride(row, makeCtx()));
-  const dft = defaultCta({ GG_SITE: 'gengrowth' });
-  assert.equal(entry.cta_target_url, dft.cta_target_url); // gengrowth.ai/app, not astrologywiki
-  assert.equal(entry.cta_text, dft.cta_text);
+test('composeOverride: GG_SITE=gengrowth selects its own semantic CTA instead of an off-host row', () => {
+  const row = makeRow({ target_keyword: 'gengrowth pricing', entity: 'pricing' });
+  const ggMap = buildCtaMap([
+    CTA_HEADER,
+    ['cta_foreign', 'Series', 'Foreign', 'https://astrologywiki.com/en/birth-chart-calculator', '', '', 'foreign', 'tool', 'pricing', 'TRUE', '999'],
+    ['cta_gengrowth_pricing', 'Product', 'Explore GenGrowth plans', 'https://gengrowth.ai/en/pricing', '', 'semantic', 'pricing', 'product', 'pricing;price;plan', 'TRUE', '100'],
+    ['cta_gengrowth_app', 'Product', 'Start your free trial', 'https://gengrowth.ai/app', '', 'semantic', 'fallback', 'product', '*', 'TRUE', '1'],
+  ]);
+  const { entry } = withGgSite('gengrowth', () => composeOverride(row, makeCtx({ ctaMap: ggMap })));
+  assert.equal(entry.cta_target_url, 'https://gengrowth.ai/en/pricing');
+  assert.equal(entry.cta_id, 'cta_gengrowth_pricing');
 });
 
-test('composeOverride: GG_SITE=gengrowth missing-CTA page still gets product default (not blank)', () => {
+test('composeOverride: GG_SITE=gengrowth with no eligible candidate fails closed', () => {
   const row = makeRow({ page_role: 'Wiki' }); // not in CTA map
-  const { entry } = withGgSite('gengrowth', () => composeOverride(row, makeCtx()));
-  assert.equal(entry.cta_target_url, 'https://gengrowth.ai/app');
+  const { entry, joinFailures } = withGgSite('gengrowth', () => composeOverride(row, makeCtx()));
+  assert.equal(entry.cta_target_url, '');
+  assert.ok(joinFailures.some((failure) => failure.kind === 'cta'));
 });
 
 test('composeOverride: page.content_angle wins over cluster.content_angle', () => {

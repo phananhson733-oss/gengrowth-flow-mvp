@@ -772,13 +772,14 @@ function doAuthor(o = {}) {
     const messyEntity = /·/.test(entry.entity || '') || ((entry.entity || '').split(',').length >= 3);
     if (messyEntity && cleanEntity) entry.entity = cleanEntity;
 
-    // CTA normalization: a Chinese-language or empty Sheet CTA falls back to the
-    // English template (articles are EN-only).
-    if (/[㐀-鿿]/.test(entry.cta_text || '') || !(entry.cta_text || '').trim()) {
-      if (!/^https?:\/\//.test(entry.cta_target_url || '')) {
-        entry.cta_target_url = 'https://astrologywiki.com/en/birth-chart-calculator';
-      }
-      entry.cta_text = `Generate your free birth chart to explore ${cleanEntity}.`;
+    // CTA is selected upstream from the product's CTA Map. Do not manufacture a
+    // Birth Chart (or any other) fallback here: an untraceable CTA must park for
+    // Sheet repair instead of being silently published with the wrong destination.
+    if (!String(entry.cta_id || '').trim()
+      || !String(entry.cta_text || '').trim()
+      || !/^https:\/\//.test(String(entry.cta_target_url || '').trim())
+      || !String(entry.cta_selection_reason || '').trim()) {
+      return park(slug, 'missing eligible semantic CTA; repair CTA Map and rerun bridge');
     }
     try { writeFileSync(absOverride, JSON.stringify(ov, null, 2)); }
     catch (e) { return park(slug, `override write failed: ${errTail(e)}`); }

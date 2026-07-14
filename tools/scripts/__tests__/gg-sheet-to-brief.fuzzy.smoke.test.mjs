@@ -204,15 +204,15 @@ test('composeOverride: missing cluster_id surfaces joinFailures with kind=cluste
   assert.equal(clusterFail.missing, 'fam-Aura');
 });
 
-test('composeOverride: missing page_role surfaces joinFailures with kind=page_role', () => {
+test('composeOverride: no eligible semantic CTA surfaces joinFailures with kind=cta', () => {
   const clusterMap = buildClusterMap([
     ['cluster_id', 'cluster_name', 'track'],
     ['fam-aura', 'Aura', '量产线'],
   ]);
   const ctaMap = buildCtaMap([
-    ['cta_id', 'page_role', 'cta_文案', 'target_url', 'ga4_event_name', 'track'],
-    ['c1', 'Pillar', 'pillar cta', 'https://x/1', 'e1', '量产线'],
-  ]).map;
+    ['cta_id', 'page_role', 'cta_文案', 'target_url', 'ga4_event_name', 'track', 'desc', 'cta_kind', 'match_keywords', 'blog_eligible', 'priority'],
+    ['c1', 'Pillar', 'pillar cta', 'https://astrologywiki.com/tools/1', 'e1', '量产线', 'ineligible blog', 'blog', '*', 'FALSE', '1'],
+  ]);
   const row = {
     source_row: 14,
     page_id: 'page_y',
@@ -222,9 +222,9 @@ test('composeOverride: missing page_role surfaces joinFailures with kind=page_ro
     },
   };
   const result = composeOverride(row, { clusterMap, ctaMap, repo: '/tmp/x' });
-  const roleFail = result.joinFailures.find((j) => j.kind === 'page_role');
-  assert.ok(roleFail, 'must surface page_role join failure');
-  assert.equal(roleFail.missing, 'Seris');
+  const ctaFail = result.joinFailures.find((j) => j.kind === 'cta');
+  assert.ok(ctaFail, 'must surface semantic CTA join failure');
+  assert.equal(ctaFail.missing, 'Seris');
 });
 
 // ---------- end-to-end: integration of all pieces ----------

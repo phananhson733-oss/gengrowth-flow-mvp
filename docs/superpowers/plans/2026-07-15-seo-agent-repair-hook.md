@@ -375,7 +375,7 @@ git commit -m "feat(seo): invoke one-shot Codex only for repair targets"
 - Runner calls: `bash "$NIGHTLY"` then `node "$REPAIR_HOOK" --run-start ... --run-exit ... --log-file ... --log-offset ... --claims ... --plan ...`
 - Test overrides: `GG_SEO_LAUNCHD_FLOW`, `GG_SEO_NIGHTLY_BIN`, `GG_SEO_REPAIR_HOOK_BIN`, `GG_SEO_NIGHTLY_LOG`, `GG_SEO_LAUNCHD_LOG`, `GG_SEO_LAUNCHD_ERR_LOG`, `GG_SEO_LAUNCHD_LOCK`, `GG_SEO_SKIP_LEGACY_CHECK`.
 
-- [ ] **Step 1: Replace old static expectation with failing clean/error runner tests**
+- [x] **Step 1: Replace old static expectation with failing clean/error runner tests**
 
 The static test must assert no `automation.toml`, no `tomllib`, no unconditional `codex exec`, and direct nightly before hook. Hermetic tests use fake nightly/hook binaries:
 
@@ -396,17 +396,17 @@ test('nightly nonzero is passed to hook and hook terminal code owns final exit',
 });
 ```
 
-- [ ] **Step 2: Run runner test and verify RED**
+- [x] **Step 2: Run runner test and verify RED**
 
 Run: `node --test tools/scripts/__tests__/gg-seo-blog-launchd-tick.smoke.test.mjs`
 
 Expected: FAIL because current runner reads Automation TOML and always invokes Codex.
 
-- [ ] **Step 3: Implement direct runner**
+- [x] **Step 3: Implement direct runner**
 
 Remove `AUTOMATION` and Python/TOML prompt piping. Source `_gg.env` with `set -a` before reading hook flags, but preserve `GG_AUTOMATION_ORACLE_DIR`. Check Codex only inside the hook. Capture nightly log size before execution, retain `set +e` around nightly, then invoke hook even when nightly exits nonzero. Keep the existing outer lock and legacy executor conflict checks. If hook exits 0, runner exits 0; if hook exits nonzero, runner returns that code and logs both nightly/hook results.
 
-- [ ] **Step 4: Run shell/static tests and verify GREEN**
+- [x] **Step 4: Run shell/static tests and verify GREEN**
 
 Run:
 
@@ -418,7 +418,7 @@ plutil -lint tools/launchd/com.gengrowth.seo-blog.plist
 
 Expected: shell/plist valid and all tests pass.
 
-- [ ] **Step 5: Commit Task 4**
+- [x] **Step 5: Commit Task 4**
 
 ```bash
 git add tools/scripts/gg-seo-blog-launchd-tick.sh tools/scripts/__tests__/gg-seo-blog-launchd-tick.smoke.test.mjs

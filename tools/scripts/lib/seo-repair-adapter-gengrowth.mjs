@@ -4,6 +4,7 @@ import { dirname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { classifyCodex } from '../gg-preview-gate.mjs';
+import { invokeTargetRepairAgent } from './seo-repair-controller.mjs';
 
 const LIB_DIR = dirname(fileURLToPath(import.meta.url));
 const DEFAULT_SCRIPTS = resolve(LIB_DIR, '..');
@@ -111,6 +112,8 @@ export function createGengrowthRepairAdapter(deps = {}) {
   const resolveTarget = deps.resolveTarget || ((event) => defaultResolveTarget(event, { flow }));
   const verifyTerminal = deps.verifyTerminal
     || ((event, target) => defaultVerifyTerminal(event, target, { runCommand, scriptsDir }));
+  const invokeAgent = deps.invokeAgent
+    || ((target, context) => invokeTargetRepairAgent({ target, ...context }));
 
   return {
     async execute({ record, strategy }) {
@@ -121,6 +124,29 @@ export function createGengrowthRepairAdapter(deps = {}) {
         pageId: event.pageId,
         mdPath: target.mdPath,
       };
+      if (['agent_content_asset_link', 'agent_diagnosis', 'agent_code_environment'].includes(strategy)) {
+        const repaired = await invokeAgent({
+          site: 'gengrowth',
+          pageId: event.pageId,
+          slug: target.slug,
+          articleFile: target.mdPath,
+          changedFiles: [target.mdPath, target.manifestPath].filter(Boolean),
+          assetFiles: [],
+          verifiedLinkCandidates: [],
+          gateEvidence: [event.summary, event.stderr].filter(Boolean).join('\n'),
+          allowedActions: [
+            ['node', join(scriptsDir, 'gg-codex-pr-review.mjs'), '--source', target.mdPath],
+            ['node', join(scriptsDir, 'gg-gengrowth-publish.mjs'), '--apply', '--pages', event.pageId, '--limit', '1'],
+          ],
+          terminalVerifier: [
+            'node', join(scriptsDir, 'gg-seo-repair-verify.mjs'), '--site', 'gengrowth',
+            '--page-id', event.pageId, '--slug', target.slug, '--json',
+          ],
+        }, { record, strategy });
+        if (repaired?.ok !== true) {
+          return { ok: false, evidence: repaired?.evidence || { type: 'agent_repair_failed' } };
+        }
+      }
       const reviewerArgv = [
         'node',
         join(scriptsDir, 'gg-codex-pr-review.mjs'),

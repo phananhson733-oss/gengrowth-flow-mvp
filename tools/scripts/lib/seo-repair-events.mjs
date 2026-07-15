@@ -185,7 +185,7 @@ export async function listRepairRecords({ queueDir } = {}) {
   return (await readQueueRecords(queueDir)).map(({ record }) => record);
 }
 
-function initialRecord(event, fingerprint) {
+function initialRecord(event, fingerprint, parentFingerprints = []) {
   return {
     event,
     latestEvent: event,
@@ -196,9 +196,16 @@ function initialRecord(event, fingerprint) {
     strategyAttempts: {},
     nextEligibleAt: null,
     lease: null,
-    parentFingerprints: [],
+    parentFingerprints,
     terminalNotificationKey: null,
-    history: [{ status: 'queued', at: event.createdAt, evidence: { eventId: event.eventId } }],
+    history: [{
+      status: 'queued',
+      at: event.createdAt,
+      evidence: {
+        eventId: event.eventId,
+        ...(parentFingerprints[0] ? { parentFingerprint: parentFingerprints[0] } : {}),
+      },
+    }],
     updatedAt: event.createdAt,
   };
 }
@@ -210,7 +217,8 @@ export async function enqueueRepairEvent(value, {
   if (!queueDir) throw new TypeError('queueDir is required');
   const event = validateRepairEvent(value);
   const fingerprint = repairEventFingerprint(event);
-  const existing = (await readQueueRecords(queueDir)).find(({ record }) => (
+  const queueRecords = await readQueueRecords(queueDir);
+  const existing = queueRecords.find(({ record }) => (
     record.fingerprint === fingerprint && ACTIVE_STATUSES.has(record.status)
   ));
 
@@ -229,7 +237,18 @@ export async function enqueueRepairEvent(value, {
     return merged;
   }
 
-  const record = initialRecord(event, fingerprint);
+  const parentFingerprints = queueRecords
+    .map(({ record }) => record)
+    .filter((record) => (
+      ACTIVE_STATUSES.has(record.status)
+      && record.fingerprint !== fingerprint
+      && record.event.site === event.site
+      && record.event.pageId === event.pageId
+      && record.event.stage === event.stage
+    ))
+    .sort((a, b) => String(a.updatedAt || '').localeCompare(String(b.updatedAt || '')))
+    .map((record) => record.fingerprint);
+  const record = initialRecord(event, fingerprint, parentFingerprints);
   await atomicWriteJson(join(queueDir, `${event.eventId}.json`), record, randomUUID);
   return record;
 }

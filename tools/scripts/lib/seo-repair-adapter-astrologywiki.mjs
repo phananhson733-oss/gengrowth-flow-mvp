@@ -3,6 +3,7 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { invokeTargetRepairAgent } from './seo-repair-controller.mjs';
 
 const LIB_DIR = dirname(fileURLToPath(import.meta.url));
 const DEFAULT_SCRIPTS = resolve(LIB_DIR, '..');
@@ -30,6 +31,7 @@ export async function buildAstrologyRepairTarget(event, context) {
     linkCandidates: context.linkCandidates || [],
     gateEvidence: [event.summary, event.stderr].filter(Boolean).join('\n'),
     allowedActions: context.allowedActions || [],
+    terminalVerifier: context.terminalVerifier || [],
   };
 }
 
@@ -132,6 +134,10 @@ async function defaultResolveContext(event) {
       ['node', join(DEFAULT_SCRIPTS, 'gg-seo-autopilot.mjs'), '--retry-failed', '--branch', claim.branch],
       ['node', join(DEFAULT_SCRIPTS, 'gg-preview-gate.mjs'), '--branch', claim.branch],
     ],
+    terminalVerifier: [
+      'node', join(DEFAULT_SCRIPTS, 'gg-seo-repair-verify.mjs'),
+      '--site', 'astrologywiki', '--page-id', event.pageId, '--slug', claim.slug || event.slug, '--json',
+    ],
   };
 }
 
@@ -152,11 +158,8 @@ async function defaultRegate(target) {
   ], { cwd: DEFAULT_FLOW, timeout: 45 * 60 * 1000 });
 }
 
-async function defaultInvokeAgent() {
-  return {
-    ok: false,
-    evidence: { type: 'agent_runtime_not_configured' },
-  };
+async function defaultInvokeAgent(target, { record, strategy }) {
+  return invokeTargetRepairAgent({ target, record, strategy });
 }
 
 async function defaultVerifyTerminal(event, target, { scriptsDir, runCommand }) {

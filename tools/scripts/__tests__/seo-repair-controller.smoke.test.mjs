@@ -5,8 +5,10 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import {
+  buildRepairAgentPrompt,
   classifyRepairEvent,
   drainRepairQueue,
+  invokeTargetRepairAgent,
   isNondelegableEvidence,
   nextRepairStrategy,
   terminalNotificationKey,
@@ -249,4 +251,72 @@ test('controller rejects adapter human_only without nondelegable evidence', asyn
     now: new Date('2026-07-15T14:02:00.000Z'),
   });
   assert.notEqual(record.status, 'human_only');
+});
+
+test('target Agent prompt contains exact evidence and safety boundaries without secrets or batch wrappers', () => {
+  const prompt = buildRepairAgentPrompt({
+    template: 'Repair exactly one target. Return JSON.',
+    record: {
+      fingerprint: 'abc123',
+      event: event({
+        site: 'astrologywiki',
+        pageId: 'PG-TRANS-016',
+        slug: 'saturn-return-age-29',
+        errorKind: 'asset_fail',
+        summary: 'SVG says age 14',
+        stderr: 'codex factual FAIL',
+        canonicalRetry: ['node', 'tools/scripts/gg-preview-gate.mjs', '--branch', 'seo/auto/PG-TRANS-016'],
+      }),
+    },
+    strategy: 'agent_content_asset_link',
+    target: {
+      site: 'astrologywiki',
+      pageId: 'PG-TRANS-016',
+      articleFile: '/worktree/data/articles/saturn-return-age-29.ts',
+      assetFiles: ['/worktree/public/images/blog/saturn-return-age-29-i0-en.svg'],
+      verifiedLinkCandidates: [{ slug: 'saturn-return-guide' }],
+      allowedActions: [['node', 'tools/scripts/gg-preview-gate.mjs', '--branch', 'seo/auto/PG-TRANS-016']],
+      terminalVerifier: ['node', 'tools/scripts/gg-seo-repair-verify.mjs', '--site', 'astrologywiki', '--page-id', 'PG-TRANS-016'],
+    },
+  });
+  assert.match(prompt, /PG-TRANS-016/);
+  assert.match(prompt, /saturn-return-age-29-i0-en\.svg/);
+  assert.match(prompt, /saturn-return-guide/);
+  assert.match(prompt, /authoritativeLogWindow/);
+  assert.match(prompt, /isolated.*worktree/i);
+  assert.doesNotMatch(prompt, /gg-nightly-seo\.sh/);
+  assert.doesNotMatch(prompt, /lynne-soul|api[_-]?key|secret-value/i);
+});
+
+test('target Agent timeout becomes repair evidence and never a terminal self-report', async () => {
+  const result = await invokeTargetRepairAgent({
+    record: { fingerprint: 'abc123', event: event() },
+    strategy: 'agent_diagnosis',
+    target: { site: 'gengrowth', pageId: 'PG-WLS-007', allowedActions: [] },
+  }, {
+    template: 'Repair exactly one target.',
+    runAgent: async () => ({ code: 124, stdout: '', stderr: 'timed out', timedOut: true }),
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.evidence.type, 'agent_timeout');
+  assert.equal(result.terminal, undefined);
+});
+
+test('target Agent exit zero only authorizes deterministic regating, not publish success', async () => {
+  const result = await invokeTargetRepairAgent({
+    record: { fingerprint: 'abc123', event: event() },
+    strategy: 'agent_content_asset_link',
+    target: { site: 'gengrowth', pageId: 'PG-WLS-007', allowedActions: [] },
+  }, {
+    template: 'Repair exactly one target.',
+    runAgent: async ({ prompt }) => ({
+      code: 0,
+      stdout: JSON.stringify({ claimedTerminal: 'published', changedFiles: ['draft.md'] }),
+      stderr: '',
+      prompt,
+    }),
+  });
+  assert.equal(result.ok, true);
+  assert.equal(result.terminal, undefined);
+  assert.match(result.evidence.stdout, /claimedTerminal/);
 });

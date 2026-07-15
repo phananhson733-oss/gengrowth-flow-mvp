@@ -96,6 +96,21 @@ test('same active fingerprint merges observations into one atomically visible re
   assert.equal(JSON.parse(await readFile(join(queueDir, `${UUID_A}.json`), 'utf8')).observations, 2);
 });
 
+test('changed failure fingerprint starts a child diagnosis generation with parent evidence', async (t) => {
+  const { queueDir } = await fixture(t);
+  const parent = await enqueueRepairEvent(event(), { queueDir });
+  const child = await enqueueRepairEvent(event({
+    eventId: UUID_B,
+    errorKind: 'gate_fail',
+    summary: 'reviewer now returns a real factual FAIL',
+    stderr: 'unsupported source claim',
+    createdAt: '2026-07-15T13:31:00.000Z',
+  }), { queueDir });
+  assert.notEqual(child.fingerprint, parent.fingerprint);
+  assert.deepEqual(child.parentFingerprints, [parent.fingerprint]);
+  assert.equal(child.history[0].evidence.parentFingerprint, parent.fingerprint);
+});
+
 test('priority ordering prefers later stages and aging prevents starvation', async (t) => {
   const { queueDir } = await fixture(t);
   await enqueueRepairEvent(event({

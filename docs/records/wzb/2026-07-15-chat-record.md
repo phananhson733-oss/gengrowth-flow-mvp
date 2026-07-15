@@ -802,3 +802,15 @@ PG-TRANS-018: gate parked (codex/links/verify) — needs_human (通知交 auto-r
 确认最终交付必须包含真实代码修复和现有故障闭环，不止设计文档。执行状态机设计为 `detected → queued → repairing → regating → published+backfilled / archived / human_only`。controller 先定向重跑瞬时工具故障，再处理机械性修复；仍失败则启动目标 Agent，允许跨文章正文、SVG/图片文字、已验证站内链接、pipeline code 与发布/回填步骤修复。pipeline code 只能在隔离分支/worktree 中按 TDD 修复并通过定向与回归测试，不能直接改活跃运行。每次修复后必须回到原阶段重过 gate；并发保持 1，但队列按发布阻塞程度、失败时间和 aging 公平顺序持续排空。单次策略到达尝试上限只进入慢速 `repair_pending` 或升级更深诊断，不得自动变成 `human_only`；只有不可委托的登录、验证码、审批、权限或缺失权威来源才可进入 `human_only`，stale/错误前提主题才可归档。
 
 ---
+
+### Q33 — 21:47
+
+**🙋 提问：**
+
+确认，继续
+
+**🤖 回答：**
+
+架构与状态机确认后进入最后设计部分。异常事件使用 vault 外逐事件 JSON spool，以临时文件加原子 rename 入队；两个现有 scheduler 均可入队，但单一全局 repair lock 只允许一个 controller drain，崩溃中的 repairing lease 超时后自动重排。错误分类拆为 transient、deterministic-fixable、agent-fixable、nondelegable 与 unpublishable，禁止把 no-blind-retry 映射为 human-only。只有 controller 拥有 Feishu 终态通知权；legacy lane 在 v2 开关启用时只写 `repair_pending`，不发中间态或重复人工告警。TDD 验收必须覆盖截图中的三个目标、队列公平性、raw stderr、通知去重、崩溃恢复、clean path 零 Agent、两站 adapter 终态 verifier；生产验收必须真实修复并上线回填 `PG-WLS-007`、`PG-TRANS-016`、`PG-TRANS-018`，确认无重复 Feishu、残留锁或 pending。v2 通过单一功能开关原子切换 controller 与旧通知所有权，关闭即可回退。
+
+---

@@ -1,0 +1,8 @@
+- `Moon in Taurus` 说法前后不稳 → 先核实 2002-01-22 月亮是否整日都在金牛；若不会跨宫，就删除“near a sign boundary / could sit in neighboring sign”的警告。
+- 星盘缺少实际来源 → 增加出生数据依据：日期、地点、未知出生时间，以及行星表来自哪套历表/计算器；否则读者无法信任这些 placement。
+- “breakout year / rookie-year narrative”太空泛 → 具体点名她 2024 WNBA 新秀赛季、NCAA 得分纪录、远距离投篮/助攻视野等公开事实，再连接 Aquarius/Mars 象征。
+- Aquarius stellium 解读偏泛 → 补一两句更贴合 Clark 的“空间感、节奏控制、超远射程改变防守结构”，避免只说 independent、unconventional。
+- Saturn in Gemini 的“messaging”牵强 → 改成更可观察的篮球语言：传球读取、战术学习、媒体压力下的表达训练。
+- “Why It Matters for Self-Awareness”偏离搜索意图 → 前半应先满足“她的星盘是什么/有哪些配置/不知道什么”，自我反思内容后置或压缩。
+- Sources 太弱且不支持事实 → 加入 Caitlin Clark 基本资料来源和星历/出生图来源；Rudhyar、Greene只适合解释方法论，不足以支撑本文核心事实。
+- 标题承诺“breakout year”但正文没有真正分析年份 → 要么改标题为 birth chart profile，要么加入 2024 过境/年度主题分析，并明确因出生时间未知只能做有限解读。

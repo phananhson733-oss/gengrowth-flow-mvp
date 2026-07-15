@@ -20,8 +20,8 @@ aliases:
 
 - 统一 SEO repair controller v2 已启用并完成真实故障收敛；正常写作/发布继续由 macOS `launchd` 拉起，只有异常队列触发定向 Agent，不恢复 Codex Automation，也不绕过事实门。
 - `PG-WLS-007`、`PG-TRANS-016`、`PG-TRANS-018` 均达到 `published`；AstrologyWiki 两篇的 PR #379/#381 已合并，生产部署、sitemap、plan、publish log、Sheet、vault/CTA 与 writeback 全部验证通过，`PG-TRANS-016` 的 SVG 已统一为 29/59/88。
-- 修复了真实运行暴露的控制器缺口：目标资产/计划白名单、安全合并续跑、recent evidence、`pushed-preview`/`done` regate、合并后 WAL 与 publish log 前置、缺失日志对账，以及运行时测试环境隔离。
-- repair 专项 74/74、全量脚本测试 1684/1684；三个本次目标无 lease、无 pending writeback，controller/outbox/锁/进程均干净。新出现的 `PG-AIS-006`、`PG-SDS-004` 队列项按“其他暂不纳入”边界未处理。
+- 修复了真实运行暴露的控制器缺口：目标资产/计划白名单、安全合并续跑、recent evidence、`pushed-preview`/`done` regate、合并后 WAL 与 publish log 前置、缺失日志对账、v2 顶层异常绕过，以及终态通知幂等键到 Feishu `msgUuid` 的贯通。
+- 最终 focused 验收 148/148、全量脚本测试 1686/1686；三个本次目标无 active fingerprint、lease 或 pending writeback，controller/outbox/锁/进程均干净。新出现的 `PG-AIS-006`、`PG-SDS-004` 队列项按“其他暂不纳入”边界未处理。
 
 ---
 
@@ -36,5 +36,17 @@ aliases:
 **🤖 回答：**
 
 继续完成统一自动修复方案的实现、真实故障修复与终态验证。`PG-WLS-007 / chatgpt-seo`、`PG-TRANS-016 / saturn-return-age-29`、`PG-TRANS-018 / saturn-return-in-capricorn` 均通过实时 verifier 并进入 `published`；PR #379/#381 已合并，Vercel 生产 alias 已收敛，plan、publish log、Sheet、vault/CTA 与 pending writeback 全部回填。补齐 `tools/scripts/gg-seo-autopilot.mjs` 的合并后 WAL/publish-log 耐故障语义、`tools/scripts/lib/seo-repair-adapter-astrologywiki.mjs` 的 `done` 终态识别，以及相关回归测试；repair 专项 74/74、全量 1684/1684。运行时 `GG_SEO_REPAIR_HOOK_ENABLED=1`、`GG_SEO_REPAIR_CONTROLLER_V2_ENABLED=1`，macOS `launchd` 调度链有效；本次目标无锁、无残留进程、outbox 为 0。
+
+---
+
+### Q2 — 01:24
+
+**🙋 提问：**
+
+全部确认，去落地执行吧
+
+**🤖 回答：**
+
+完成正式设计和实施计划的逐项终态验收，并补齐审计中发现的两个真实缺口：`tools/scripts/gg-gengrowth-publish.mjs` 的 v2 顶层 `ticker_error` 改为进入 durable repair queue，`tools/scripts/gg-gengrowth-author-tick.sh` 的 publish follow-up 异常改为直接拉起统一 controller；`tools/scripts/lib/seo-repair-controller.mjs` 生成稳定终态消息 UUID，`tools/scripts/gg-seo-repair-controller.mjs` 与 `tools/scripts/lib/gg-notify.mjs` 将其贯通到 Feishu 发送层。新增红绿回归后，focused 148/148、全量 1686/1686、shell/Node/plist/安全扫描全部通过。三个指定目标再次通过实时 verifier；各自只有一条成功终态通知，目标 active queue=0、outbox=0、pending writeback=0，相关 controller/lane 锁和残留进程均为 0。Codex Automation 保持 `PAUSED`，macOS launchd 三个自然唤醒入口有效，项目不存在 `ai-profile/lynne-soul.md`，个人 soul 未进入修复 prompt 或项目级运行上下文。
 
 ---

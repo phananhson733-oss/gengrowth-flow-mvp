@@ -1,5 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { verifyRepairTarget } from '../gg-seo-repair-verify.mjs';
 
 const TARGET = { pageId: 'PG-A-001', slug: 'alpha', stage: 'authoring' };
@@ -89,4 +93,36 @@ test('explicit archived terminal is accepted without calling live dependencies',
   assert.equal(result.ok, true);
   assert.equal(result.terminal, 'archived');
   assert.equal(calls, 0);
+});
+
+test('CLI JSON keeps pageId and slug attached to each verifier result', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'repair-verify-cli-'));
+  const targets = join(dir, 'targets.json');
+  const claims = join(dir, 'claims.json');
+  const plan = join(dir, 'plan.md');
+  writeFileSync(targets, JSON.stringify([{
+    pageId: 'PG-S-001',
+    slug: 'stale-topic',
+    terminal: 'archived',
+    terminalReason: 'stale topic — do not publish',
+  }]));
+  writeFileSync(claims, '{}');
+  writeFileSync(plan, '- [ ] `PG-S-001` stale topic\n');
+
+  const result = spawnSync('node', [
+    'tools/scripts/gg-seo-repair-verify.mjs',
+    '--targets', targets,
+    '--claims', claims,
+    '--plan', plan,
+    '--json',
+  ], {
+    cwd: process.cwd(),
+    encoding: 'utf8',
+    env: { ...process.env, GG_FLOW_STATE_DIR: join(dir, 'state') },
+  });
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+  const output = JSON.parse(result.stdout);
+  assert.equal(output.results[0].pageId, 'PG-S-001');
+  assert.equal(output.results[0].slug, 'stale-topic');
+  assert.equal(output.results[0].terminal, 'archived');
 });

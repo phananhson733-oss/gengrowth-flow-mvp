@@ -183,7 +183,7 @@ git commit -m "feat(seo): add repair hook selector and attempt state"
 - CLI consumes: `--targets <json-file> --claims <ledger> --plan <plan-file> [--sheet-fixture <json-file>] --json`
 - CLI outputs: `{ ok, results:[...] }` and exits 0 only when every target is published or archived.
 
-- [ ] **Step 1: Write failing verifier tests**
+- [x] **Step 1: Write failing verifier tests**
 
 ```js
 import { test } from 'node:test';
@@ -223,13 +223,13 @@ for (const missing of ['claim', 'planText', 'publishLogText', 'sheetRow', 'pendi
 }
 ```
 
-- [ ] **Step 2: Run tests and verify RED**
+- [x] **Step 2: Run tests and verify RED**
 
 Run: `node --test tools/scripts/__tests__/gg-seo-repair-verify.smoke.test.mjs`
 
 Expected: FAIL with `ERR_MODULE_NOT_FOUND`.
 
-- [ ] **Step 3: Implement verifier and fixture-capable CLI**
+- [x] **Step 3: Implement verifier and fixture-capable CLI**
 
 The implementation must build named checks for `ledger_done`, `branch_and_merge`, `http_200`, `canonical`, `article_jsonld`, `sitemap`, `plan_checked`, `publish_log`, `sheet_published`, and `writeback_clear`. `fetchText` must use a 15-second `AbortSignal.timeout`; any exception becomes a failed check. Sheet production lookup must run `gg-sheet-pull.mjs --rows 2-1600 --limit 1700 --out <cache>` and match by page ID/target keyword; tests pass `--sheet-fixture` to avoid network.
 
@@ -255,13 +255,13 @@ export async function verifyRepairTarget(target, deps) {
 }
 ```
 
-- [ ] **Step 4: Run verifier tests and verify GREEN**
+- [x] **Step 4: Run verifier tests and verify GREEN**
 
 Run: `node --test tools/scripts/__tests__/gg-seo-repair-verify.smoke.test.mjs`
 
 Expected: all verifier tests pass and no network is called.
 
-- [ ] **Step 5: Commit Task 2**
+- [x] **Step 5: Commit Task 2**
 
 ```bash
 git add tools/scripts/gg-seo-repair-verify.mjs tools/scripts/__tests__/gg-seo-repair-verify.smoke.test.mjs

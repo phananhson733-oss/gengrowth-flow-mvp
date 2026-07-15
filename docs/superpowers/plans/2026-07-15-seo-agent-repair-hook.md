@@ -146,7 +146,7 @@ export function normalizeRepairError(value) {
     .replace(/\b\d{4}-\d\d-\d\d(?:[T ]\d\d:\d\d(?::\d\d(?:\.\d+)?)?Z?)?\b/g, '<time>')
     .replace(/\bpid\s+\d+\b/gi, 'pid <n>')
     .replace(/\/tmp\/[^\s]+/g, '/tmp/<path>')
-    .replace(/https:\/\/[^\s/]*vercel\.app/gi, 'https://<preview>.vercel.app')
+    .replace(/(?:https:\/\/)?[a-z0-9.-]+\.vercel\.app/gi, '<preview>.vercel.app')
     .replace(/\s+/g, ' ').trim().toLowerCase();
 }
 
@@ -524,10 +524,14 @@ Expected: all targeted tests pass.
 
 - [ ] **Step 2: Run CTA/backfill regression**
 
-Run the exact CTA test set discovered in the repository plus:
-
 ```bash
-node --test tools/scripts/__tests__/flow-backfill.smoke.test.mjs tools/scripts/__tests__/backfill-tx.smoke.test.mjs tools/scripts/__tests__/gg-batch-summary.smoke.test.mjs
+node --test \
+  tools/scripts/__tests__/lib-cta-selector.smoke.test.mjs \
+  tools/scripts/__tests__/gg-sheet-to-brief.smoke.test.mjs \
+  tools/scripts/__tests__/gg-content-draft.smoke.test.mjs \
+  tools/scripts/__tests__/flow-backfill.smoke.test.mjs \
+  tools/scripts/__tests__/backfill-tx.smoke.test.mjs \
+  tools/scripts/__tests__/gg-batch-summary.smoke.test.mjs
 ```
 
 Expected: all selected tests pass; no Sheet write occurs because fixtures/env sandbox all external effects.
@@ -575,4 +579,3 @@ Also confirm the launchd lock is gone, no orphan `codex exec`/nightly process re
 - [ ] **Step 7: Final completion audit**
 
 Check every numbered requirement in `docs/superpowers/specs/2026-07-15-seo-agent-repair-hook-design.md` against code, tests, runtime status and logs. Update spec frontmatter `status: final` only after all required evidence exists. Run `git diff --check`, append the terminal state to the daily record, and commit repository-owned final documentation without staging unrelated user changes.
-

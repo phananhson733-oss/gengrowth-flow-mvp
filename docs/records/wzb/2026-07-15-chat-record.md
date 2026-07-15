@@ -18,13 +18,11 @@ aliases:
 
 > 【本区域在每天最后一次对话结束时生成/更新】
 
-- 运行固定的索引修复重提 wrapper；两产品均无人工标记为“已修复”的待重提行，结果复盘表与请求索引候选队列已刷新。
-- 运行 Phase 2 索引监控 wrapper；两站官方 Sitemap API 提交成功，astrologywiki 完成 3 条 URL Inspection，gengrowth 无到期检查项。
-- 请求索引候选队列已按优先级刷新；未执行普通文章 Google Indexing API 或无人值守 GSC Request Indexing 点击，日志未给出飞书发送回执。
-- 运行结果复盘性能包装器失败：两个产品的 GSC/GA4 OAuth refresh token 均已过期或被撤销；未扫描、未写表、未生成当日报告，需完成 OAuth 重新授权后仅重跑同一包装器。
-- CTA Map 已在 AstrologyWiki 与 GenGrowth 两份 Google Sheet 同步新增 `intent_tags` 字段；选择器据目标词、实体、内容角度识别意图，批量通用关联词不再强制导向 Birth Chart。
-- 已按新规则重处理最近 7 篇线上 AstrologyWiki 文章：6 篇本命盘意图保留 Birth Chart，`north-node-in-aquarius-2026` 唯一切换至 Forecast，Related Reading/blog 内链均保持不变。
-- 两项改动已经 flow PR #2 与 Oracle PR #376 合并；Vercel production 部署成功，并通过线上 7 篇逐页抓取验证最终 CTA 对应关系。
+- 索引修复重提与 Phase 2 索引监控均经固定 wrapper 完成；两站 Sitemap API 成功，astrologywiki 完成 3 条 URL Inspection，请求索引候选队列已刷新，未越过普通文章 GSC 合规边界。
+- 结果复盘性能 wrapper 因两产品 GSC/GA4 OAuth refresh token 过期或被撤销而在扫描前停止；未写表、未生成报告，需重新授权后只重跑原 wrapper。
+- 双产品 CTA Map 已新增 `intent_tags`；语义选择器、两份 live Sheet 与 Codex automation 规则均按目标词、实体、内容角度识别意图，批量通用关联词不再强制导向 Birth Chart。
+- 最近 7 篇 AstrologyWiki 文章已按新 CTA 逻辑重新处理并上线：6 篇保留 Birth Chart，`north-node-in-aquarius-2026` 切换 Forecast；flow PR #2、Oracle PR #376 已合并，线上 CTA、canonical 与 Article JSON-LD 已复验。
+- 复核现有 agentic repair：author repair、gate surgical repair、transient auto-retry、flow-driver 与回填 loop 均已存在，但当前 flow-driver 被禁用、Codex automation 为 PAUSED，nightly wrapper 又会跳过既有 `needs_human`；建议把有界 recovery controller 串入唯一 wrapper，而不是新增并行调度器或自动绕过发布门。
 
 ---
 
@@ -187,5 +185,21 @@ After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-s
 **🤖 回答：**
 
 已通过 Codex automation 更新现有唯一 SEO cron 自动化 `gengrowth-seo-blog`，未创建重复任务，保留原计划与 `PAUSED` 状态。提示中新增强制 CTA 意图路由：先以 `target_keyword`、`entity`、`content_angle` 与 CTA Map 的 `intent_tags` 匹配；批量 `associated_keywords` 通用词不可单独导向 Birth Chart；个人本命盘、明确双人合盘、forecast/timing 分别按对应意图选择；缺少合规 CTA 或审计字段必须 `needs_human`；Related Reading/Blog_Article/pillar/sibling 内链继续与商业 CTA 完全隔离。已读取回 `/Users/awayer_mini/.codex/automations/gengrowth-seo-blog/automation.toml`，确认规则、状态和计划均已持久化。
+
+---
+
+### Q12 — 16:08
+
+**🙋 提问：**
+
+有个几问题。1.刚刚优化了 SEO blog 的 cta 逻辑，确认一下是否OK。2.我们每次都会出现卡死，need-human。但是最终实际上都是通过llm/agent 自动解决解决，用户介入的其实也就是强制 publish。那么出现卡死需要用户或者其他问题时，是不是强制（hook）拉起一个 agent，来充当用户的角色，强制流程上限，最终达到 publish 和回填的目标，设置一个 agent，用来修复问题，最终达到上线的问题。其实之前是有一个 agentic repair 的我记得
+
+**🤖 回答：**
+
+确认 CTA 新逻辑当前有效：flow PR #2 与 Oracle PR #376 已合并；CTA 相关测试 92/92 通过；live Sheet 第 291–297 行 dry-run 为 7 条 ready，其中 6 条 `natal-self` 选择 Birth Chart、`PG-NODE-013` 以 `forecast-transit` 选择 Forecast。线上 7 个 URL 均返回 200，canonical、Article JSON-LD 和 CTA 对应关系正确。旁支 warning 是 `PG-CELEB-055` 的 `Case Study` 模板会回退为 Definition，不属于 CTA 失败。
+
+确认此前确有 agentic repair：`tools/scripts/gg-author-repair.mjs`、`tools/scripts/gg-gate-repair.mjs`、`--auto-retry-parks`、`tools/scripts/gg-flow-driver.mjs` 与 backfill loop 均存在；flow-driver/preview gate 相关测试 57/57、park triage/auto-retry 测试 17/17 通过。但当前 `com.gengrowth.flow-driver` 已禁用且未加载，唯一 Codex automation 状态为 `PAUSED`；当前 ledger 虽为干净终态，`tools/scripts/gg-nightly-seo.sh` 对已存在的 `needs_human` 明确执行 skip，只在开跑前自动恢复 transient park，且 flow-driver 对 authoring fix 仍是 `fix-skip`。这就是“代码有 repair，但运行时仍等人”的根因。
+
+建议不新增一个可绕过 gate、模拟用户强制发布的自由 Agent，也不重新启用并行 flow-driver cron；应在唯一 nightly wrapper 内、batch summary 前加入同步且有界的 recovery controller：分诊 transient / authoring 可修 / preview 可修 / stale；复用 retry-author、author repair、retry-failed、preview gate 与 backfill loop；每篇和整批均设次数、时间与预算上限；只有所有确定性门通过才允许 merge/publish，过期或错误前提自动归档，权限/凭据/安全门失败才保留真正 human-only。待用户确认该设计后再按 TDD 实现，本轮未修改业务代码。
 
 ---

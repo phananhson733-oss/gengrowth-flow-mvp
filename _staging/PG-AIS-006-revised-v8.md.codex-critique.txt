@@ -1,0 +1,8 @@
+- 标题/开头语法生硬（“What Is AI Agents for Sales?”、“AI agents for sales is”）→ 改成自然搜索表达，如 “What Are AI Agents for Sales?” 并统一复数谓语。
+- “Across the sales-automation rollouts we've audited” 属于强事实背书但无证据 → 补具体样本范围/类型，或改成更谨慎的编辑判断。
+- 内容几乎没有真实工具或工作流细节 → 加入可识别的销售栈场景，如 Salesforce/HubSpot、Apollo/ZoomInfo、Gong/Outreach、Calendly 的读写边界。
+- “RPA breaks the moment a screen changes” 过度绝对化 → 改为“传统 RPA 更依赖固定界面和规则，维护成本更高”，避免被懂行读者质疑。
+- 读者购买意图回答还不够完整 → 增加“适合/不适合购买”的判断标准，如 ACV、线索量、CRM 数据质量、合规要求、审批链复杂度。
+- 成本段太泛泛，没有可操作模型 → 加一个简单 ROI 公式：月成本 ÷ 每月节省小时数 / 增量 pipeline，提醒把错误修复和监督时间算进去。
+- 风险写得对但不够具体 → 补销售场景下的高风险动作清单：未经批准发折扣、联系禁触达账号、覆盖 CRM 字段、误用客户敏感信息。
+- 结尾 CTA 跳到 GenGrowth 功能页太突然 → 前面先建立 GenGrowth 与 sales agent/use case 的具体关联，否则像硬塞的转化模块。

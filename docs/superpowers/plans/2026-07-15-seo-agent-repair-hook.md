@@ -485,7 +485,7 @@ rg -n '^status = "PAUSED"$' ~/.codex/automations/gengrowth-seo-blog/automation.t
 
 Expected: test passes; first `rg` has no matches; status check has exactly one match.
 
-- [ ] **Step 6: Commit repository-owned Task 5 files**
+- [x] **Step 6: Commit repository-owned Task 5 files**
 
 ```bash
 git add AGENTS.md tools/scripts/__tests__/project-instruction-scope.smoke.test.mjs

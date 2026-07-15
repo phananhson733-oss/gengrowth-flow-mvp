@@ -117,6 +117,20 @@ test('run error creates one synthetic target and maxTargets preserves plan order
   assert.equal(synthetic.targets[0].stage, 'run');
 });
 
+test('run error does not duplicate a concrete parked article as a synthetic RUN target', () => {
+  const out = selectRepairTargets({
+    claims: {
+      'PG-A-001': { status: 'needs_human', stage: 'authoring', error: 'phase2 FAIL: A' },
+    },
+    planIds: new Set(['PG-A-001']),
+    state: {},
+    archivedIds: new Set(),
+    runError: 'PARK(author) PG-A-001: phase2 FAIL: A',
+    maxTargets: 2,
+  });
+  assert.deepEqual(out.targets.map((target) => target.pageId), ['PG-A-001']);
+});
+
 test('beginRepairAttempts increments and persists inflight before spawn without mutating input', () => {
   const target = {
     pageId: 'PG-A-001', stage: 'authoring', error: 'phase2 FAIL', fingerprint: 'fp-a',

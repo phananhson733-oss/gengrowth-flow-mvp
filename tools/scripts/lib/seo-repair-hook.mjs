@@ -78,7 +78,7 @@ export function selectRepairTargets({
     targets.push(target);
   }
 
-  if (runError && targets.length < maxTargets) {
+  if (runError && targets.length === 0 && maxTargets > 0) {
     const pageId = 'RUN';
     const stage = 'run';
     const error = String(runError);

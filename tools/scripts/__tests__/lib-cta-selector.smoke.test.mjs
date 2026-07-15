@@ -234,5 +234,6 @@ test('generic associated boilerplate falls back to Tools Hub instead of Birth Ch
     allowedHost: 'astrologywiki.com',
   });
   assert.equal(selected.cta_id, 'url_page_tools_hub');
+  assert.equal(selected.cta_intent_tags, 'tool-hub');
   assert.match(selected.cta_selection_reason, /wildcard/i);
 });

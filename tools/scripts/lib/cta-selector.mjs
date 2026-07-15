@@ -178,7 +178,13 @@ export function selectCta({ candidates, context = {}, allowedHost }) {
   const wildcard = valid
     .filter((candidate) => keywordList(candidate.match_keywords).includes('*'))
     .sort((a, b) => priority(b) - priority(a) || clean(a.cta_id).localeCompare(clean(b.cta_id)));
-  if (wildcard.length === 1) return selection(wildcard[0], `wildcard_fallback:${wildcard[0].cta_id}`);
+  if (wildcard.length === 1) {
+    return selection(
+      wildcard[0],
+      `wildcard_fallback:${wildcard[0].cta_id}`,
+      intentTags(wildcard[0]).join(';'),
+    );
+  }
   return { ok: false, reason: 'no_eligible_cta_match' };
 }
 

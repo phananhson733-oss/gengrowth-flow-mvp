@@ -388,6 +388,44 @@ async function loadGengrowthDeps(args, target) {
   };
 }
 
+function findAstrologyPlanText(pageId, planPath) {
+  if (planPath && existsSync(planPath)) return readFileSync(planPath, 'utf8');
+  const tasksDir = join(OPS, 'inbox/06-tasks/tasks');
+  try {
+    const plans = readdirSync(tasksDir)
+      .filter((name) => /blog-output-plan.*\.md$/i.test(name) && !/gengrowth/i.test(name))
+      .sort()
+      .reverse();
+    return plans
+      .map((name) => readFileSync(join(tasksDir, name), 'utf8'))
+      .find((text) => text.includes(pageId)) || '';
+  } catch { return ''; }
+}
+
+async function loadAstrologyDeps(args, target) {
+  if (args['astrology-fixture']) {
+    const fixture = readJson(args['astrology-fixture'], {});
+    return {
+      ...fixture,
+      fetchDocument: async (url) => url.endsWith('/sitemap.xml')
+        ? { ok: true, status: 200, text: fixture.sitemapText || '' }
+        : { ok: true, status: 200, text: fixture.pageHtml || '' },
+    };
+  }
+  const claims = readJson(args.claims || DEFAULT_CLAIMS, {});
+  const publishLogPath = args['publish-log'] || DEFAULT_PUBLISH_LOG;
+  const sheetContext = await loadSheetContext(args, [target]);
+  return {
+    claim: claims[target.pageId],
+    planText: findAstrologyPlanText(target.pageId, args.plan),
+    publishLogText: existsSync(publishLogPath) ? readFileSync(publishLogPath, 'utf8') : '',
+    sheetRow: findSheetRow(target, sheetContext.rows),
+    ctaAudit: sheetContext.ctaAudits[target.pageId],
+    pendingWriteback: pendingWriteback(target.pageId),
+    fetchDocument,
+  };
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.site === 'gengrowth') {
@@ -397,6 +435,17 @@ async function main() {
     }
     const target = { pageId: args['page-id'], slug: args.slug };
     const verified = await verifyGengrowthRepairTarget(target, await loadGengrowthDeps(args, target));
+    const output = { ok: verified.ok, results: [{ ...target, ...verified }] };
+    process.stdout.write(`${JSON.stringify(output)}\n`);
+    process.exit(output.ok ? 0 : 2);
+  }
+  if (args.site === 'astrologywiki') {
+    if (!args['page-id'] || !args.slug) {
+      process.stderr.write('gg-seo-repair-verify: --site astrologywiki requires --page-id and --slug\n');
+      process.exit(2);
+    }
+    const target = { pageId: args['page-id'], slug: args.slug };
+    const verified = await verifyRepairTarget(target, await loadAstrologyDeps(args, target));
     const output = { ok: verified.ok, results: [{ ...target, ...verified }] };
     process.stdout.write(`${JSON.stringify(output)}\n`);
     process.exit(output.ok ? 0 : 2);

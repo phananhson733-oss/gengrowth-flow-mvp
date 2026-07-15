@@ -204,6 +204,37 @@ test('gengrowth verifier CLI accepts one exact page and emits named terminal che
   assert.equal(Object.values(output.results[0].checks).every(Boolean), true);
 });
 
+test('astrology verifier CLI accepts one exact page without a targets sidecar', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'astrology-repair-verify-cli-'));
+  const fixture = join(dir, 'fixture.json');
+  writeFileSync(fixture, JSON.stringify({
+    claim: goodDeps().claim,
+    planText: goodDeps().planText,
+    publishLogText: goodDeps().publishLogText,
+    sheetRow: goodDeps().sheetRow,
+    ctaAudit: goodDeps().ctaAudit,
+    pendingWriteback: null,
+    pageHtml: `<link rel="canonical" href="${URL}"><script type="application/ld+json">{"@type":"Article"}</script><a href="/en/birth-chart-calculator">CTA</a>`,
+    sitemapText: `<loc>${URL}</loc>`,
+  }));
+  const result = spawnSync('node', [
+    'tools/scripts/gg-seo-repair-verify.mjs',
+    '--site', 'astrologywiki',
+    '--page-id', 'PG-A-001',
+    '--slug', 'alpha',
+    '--astrology-fixture', fixture,
+    '--json',
+  ], {
+    cwd: process.cwd(),
+    encoding: 'utf8',
+    env: { ...process.env, GG_FLOW_STATE_DIR: join(dir, 'state') },
+  });
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+  const output = JSON.parse(result.stdout);
+  assert.equal(output.results[0].pageId, 'PG-A-001');
+  assert.equal(output.results[0].terminal, 'published');
+});
+
 test('CLI JSON keeps pageId and slug attached to each verifier result', () => {
   const dir = mkdtempSync(join(tmpdir(), 'repair-verify-cli-'));
   const targets = join(dir, 'targets.json');

@@ -5,6 +5,11 @@ import {
   createGengrowthRepairAdapter,
   isAllowedGengrowthAction,
 } from '../lib/seo-repair-adapter-gengrowth.mjs';
+import {
+  buildAstrologyRepairTarget,
+  createAstrologyWikiRepairAdapter,
+  verifyInternalLinkCandidate,
+} from '../lib/seo-repair-adapter-astrologywiki.mjs';
 
 function record(overrides = {}) {
   return {
@@ -105,4 +110,139 @@ test('gengrowth adapter action whitelist rejects top-level wrappers and arbitrar
   assert.equal(isAllowedGengrowthAction([
     'node', '/repo/tools/scripts/gg-codex-pr-review.mjs', '--source', '/tmp/other.md',
   ], context), false);
+});
+
+test('astrology target includes the factual SVG and complete changed-file evidence', async () => {
+  const target = await buildAstrologyRepairTarget({
+    site: 'astrologywiki',
+    pageId: 'PG-TRANS-016',
+    slug: 'saturn-return-age-29',
+    stage: 'preview_fact_gate',
+    summary: 'SVG says Saturn Square occurs around age 14',
+    stderr: 'codex FAIL on public/images/blog/saturn-return-age-29-i0-en.svg',
+  }, {
+    branch: 'seo/auto/2026-07-15-PG-TRANS-016',
+    worktree: '/oracle-worktrees/pg-trans-016',
+    articleFile: '/oracle-worktrees/pg-trans-016/data/articles/saturn-return-age-29.ts',
+    changedFiles: [
+      'data/articles/saturn-return-age-29.ts',
+      'public/images/blog/saturn-return-age-29-i0-en.svg',
+      'data/articles/index.ts',
+    ],
+    linkCandidates: [],
+  });
+  assert.equal(target.articleFile.endsWith('saturn-return-age-29.ts'), true);
+  assert.deepEqual(target.assetFiles, [
+    '/oracle-worktrees/pg-trans-016/public/images/blog/saturn-return-age-29-i0-en.svg',
+  ]);
+  assert.deepEqual(target.changedFiles, [
+    '/oracle-worktrees/pg-trans-016/data/articles/saturn-return-age-29.ts',
+    '/oracle-worktrees/pg-trans-016/public/images/blog/saturn-return-age-29-i0-en.svg',
+    '/oracle-worktrees/pg-trans-016/data/articles/index.ts',
+  ]);
+  assert.match(target.gateEvidence, /Saturn Square.*age 14/);
+});
+
+test('internal-link candidates require an existing route or sitemap entry plus HTTP 200', async () => {
+  const deps = {
+    routeExists: async (slug) => slug === 'saturn-return-guide',
+    sitemapContains: async (slug) => slug === 'saturn-return-in-scorpio',
+    fetchDocument: async (url) => ({ ok: !url.includes('fabricated'), status: url.includes('fabricated') ? 404 : 200 }),
+  };
+  assert.equal(await verifyInternalLinkCandidate('saturn-return-guide', deps), true);
+  assert.equal(await verifyInternalLinkCandidate('saturn-return-in-scorpio', deps), true);
+  assert.equal(await verifyInternalLinkCandidate('fabricated-saturn-page', deps), false);
+  assert.equal(await verifyInternalLinkCandidate('../unsafe', deps), false);
+});
+
+test('astrology adapter repairs one target, reruns the complete gate, and accepts only deterministic terminal proof', async () => {
+  const calls = [];
+  const adapter = createAstrologyWikiRepairAdapter({
+    resolveContext: async () => ({
+      branch: 'seo/auto/2026-07-15-PG-TRANS-018',
+      worktree: '/oracle-worktrees/pg-trans-018',
+      articleFile: '/oracle-worktrees/pg-trans-018/data/articles/saturn-return-in-capricorn.ts',
+      changedFiles: ['data/articles/saturn-return-in-capricorn.ts'],
+      linkCandidates: [
+        { slug: 'saturn-return-guide', anchorIntent: 'Saturn return guide' },
+        { slug: 'fabricated-saturn-page', anchorIntent: 'bad' },
+      ],
+    }),
+    verifyLinkCandidate: async (slug) => slug === 'saturn-return-guide',
+    invokeAgent: async (target) => {
+      calls.push(['agent', target]);
+      assert.deepEqual(target.verifiedLinkCandidates.map((candidate) => candidate.slug), ['saturn-return-guide']);
+      return { ok: true, evidence: { filesChanged: [target.articleFile] } };
+    },
+    regate: async (target) => { calls.push(['regate', target.branch]); return { ok: true }; },
+    publish: async (target) => { calls.push(['publish', target.branch]); return { ok: true }; },
+    verifyTerminal: async () => ({
+      ok: true,
+      terminal: 'published',
+      checks: { reviewed_head: true, production_200: true, writeback_clear: true },
+    }),
+  });
+  const result = await adapter.execute({
+    record: {
+      fingerprint: 'fp-trans-018',
+      event: {
+        site: 'astrologywiki',
+        pageId: 'PG-TRANS-018',
+        slug: 'saturn-return-in-capricorn',
+        stage: 'links_seo_review',
+        errorKind: 'link_fail',
+        summary: 'intended internal links render as italic text',
+        stderr: 'review[links-seo] FAIL',
+      },
+    },
+    classification: 'agent_fixable',
+    strategy: 'agent_content_asset_link',
+  });
+  assert.equal(result.terminal, 'published');
+  assert.deepEqual(calls.map(([name]) => name), ['agent', 'regate', 'publish']);
+});
+
+test('astrology adapter default terminal verifier is scoped to one page and site', async () => {
+  const verifierCalls = [];
+  const adapter = createAstrologyWikiRepairAdapter({
+    scriptsDir: '/repo/tools/scripts',
+    resolveContext: async () => ({
+      branch: 'seo/auto/PG-TRANS-016',
+      worktree: '/oracle-worktrees/pg-trans-016',
+      articleFile: '/oracle-worktrees/pg-trans-016/data/articles/saturn-return-age-29.ts',
+      changedFiles: ['data/articles/saturn-return-age-29.ts'],
+      linkCandidates: [],
+    }),
+    invokeAgent: async () => ({ ok: true }),
+    regate: async () => ({ ok: true }),
+    publish: async () => ({ ok: true }),
+    runCommand: async (argv) => {
+      verifierCalls.push(argv);
+      return {
+        code: 0,
+        stdout: JSON.stringify({
+          ok: true,
+          results: [{ pageId: 'PG-TRANS-016', slug: 'saturn-return-age-29', ok: true, terminal: 'published', checks: { live: true } }],
+        }),
+        stderr: '',
+      };
+    },
+  });
+  const result = await adapter.execute({
+    record: {
+      event: {
+        site: 'astrologywiki', pageId: 'PG-TRANS-016', slug: 'saturn-return-age-29',
+        stage: 'preview_fact_gate', errorKind: 'asset_fail', summary: 'SVG age 14', stderr: 'FAIL',
+      },
+    },
+    strategy: 'agent_content_asset_link',
+  });
+  assert.equal(result.terminal, 'published');
+  assert.deepEqual(verifierCalls[0], [
+    'node', '/repo/tools/scripts/gg-seo-repair-verify.mjs',
+    '--site', 'astrologywiki',
+    '--page-id', 'PG-TRANS-016',
+    '--slug', 'saturn-return-age-29',
+    '--json',
+  ]);
 });

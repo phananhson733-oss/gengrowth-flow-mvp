@@ -69,7 +69,14 @@ process.stdin.on('end', () => {
 }
 
 function run(args, { gh, codex, capture }) {
-  const env = { ...process.env, GG_CODEX_REVIEW_GH_BIN: gh, GG_CODEX_REVIEW_CODEX_BIN: codex };
+  const env = {
+    ...process.env,
+    GG_CODEX_REVIEW_GH_BIN: gh,
+    GG_CODEX_REVIEW_CODEX_BIN: codex,
+    // Exercise all retry attempts without letting production's 20s backoff
+    // exceed this hermetic harness's 30s process timeout.
+    GG_CODEX_RETRY_BACKOFF_S: '0',
+  };
   if (capture) env.GG_CODEX_REVIEW_CAPTURE = capture;
   return spawnSync(process.execPath, [SCRIPT, ...args], { encoding: 'utf8', timeout: 30000, env });
 }
@@ -148,7 +155,7 @@ test('codex exits 0 but writes NO final message → exit 3 (fail-closed, no stdo
   const r = run(['--repo', 'xdawayer/oracle', '--pr', '196'],
     { gh: ghFake(dir, 'ok'), codex: codexFake(dir, { writeMessage: false }) });
   assert.equal(r.status, 3, `stderr: ${r.stderr}; stdout: ${r.stdout}`);
-  assert.match(r.stderr, /no final message/i);
+  assert.match(r.stderr, /empty final message/i);
 });
 
 test('full diff is fact-checked: article prose AND inline-svg label hunks reach the prompt', () => {

@@ -241,3 +241,15 @@ After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-s
 已纠正设计边界：macOS `launchd` 应直接启动正常写作/发布 wrapper；正常成功时不启动 Agent；只有检测到异常、报错或新增 `needs_human` 时，repair hook 才拉起一次性 Agent 接管修复；修复仍必须通过 preview/review/codex gate 后才能 merge/publish。确认当前 `gg-seo-blog-launchd-tick.sh` 每个 tick 都先执行 `codex exec`，与目标相反，需要改为“主链直跑、异常才拉 Agent”。在实现前按 brainstorming 硬门确认 hook 是否使用一次性的本机 `codex exec`，而不恢复 Codex Automation 定时调度。
 
 ---
+
+### Q16 — 16:24
+
+**🙋 提问：**
+
+正确。继续
+
+**🤖 回答：**
+
+确认 hook 使用一次性本机 `codex exec`，Codex Automation 始终保持暂停。提出三种方案并推荐事件触发式单次 Agent：LaunchAgent 直接运行 `gg-nightly-seo.sh`；wrapper 非零、日志异常或当前计划存在未耗尽尝试上限的 `needs_human` 时，按 `page_id + stage + error fingerprint` 触发 repair hook；hook 使用独立锁、单轮/单篇/同错误指纹上限，将精确日志窗口和 ledger 条目传给 Codex；Agent 复用 `retry-author`、author repair、`retry-failed`、preview gate、merge 与 backfill，任何发布仍须通过既有质量门。完成后由确定性 verifier 检查 ledger、生产 URL、canonical、Article JSON-LD、sitemap、plan、publish-log 与 Sheet 回填；成功为 done，不可修或权限/凭据问题进入去重终态。方案同时移除 macOS 主入口对暂停 automation prompt 的依赖，并清理 flow `AGENTS.md`/暂停 automation prompt 中 Lynne 专属 soul 的错误引用。等待用户批准该设计后写 spec 和实现计划。
+
+---

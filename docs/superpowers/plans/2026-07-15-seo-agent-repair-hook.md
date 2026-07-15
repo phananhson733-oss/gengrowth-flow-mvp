@@ -50,6 +50,8 @@ aliases:
 - `tools/scripts/gg-seo-repair-hook.mjs` — read run window、persist attempt、invoke Codex、invoke verifier、emit terminal summary。
 - `tools/scripts/prompts/gg-seo-repair-hook.txt` — one-shot Agent contract。
 - `tools/scripts/__tests__/gg-seo-repair-hook.smoke.test.mjs` — fake Codex/fake verifier E2E。
+- `tools/scripts/gg-backfill-one.mjs` — resolve exactly one selected pending-writeback sidecar without sweeping the ledger。
+- `tools/scripts/__tests__/gg-backfill-one.smoke.test.mjs` — scoped backfill target/no-op/failure coverage。
 - `tools/scripts/__tests__/project-instruction-scope.smoke.test.mjs` — flow project identity and no-Lynne-profile invariant。
 
 ### Modified files
@@ -180,6 +182,7 @@ git commit -m "feat(seo): add repair hook selector and attempt state"
 
 **Interfaces:**
 - Produces: `verifyRepairTarget(target, deps): Promise<{ ok, terminal, checks, reason }>`
+- Produces: `deriveCtaAudits(targets, tabs): Record<pageId, ctaAudit>` from the current pages/cluster/CTA Map tabs, including rows already marked published.
 - CLI consumes: `--targets <json-file> --claims <ledger> --plan <plan-file> [--sheet-fixture <json-file>] --json`
 - CLI outputs: `{ ok, results:[...] }` and exits 0 only when every target is published or archived.
 
@@ -195,11 +198,17 @@ const goodDeps = {
   claim: { status: 'done', slug: 'alpha', branch: 'seo/auto/a', mergedAt: '2026-07-15T10:00:00Z' },
   planText: '- [x] `PG-A-001` alpha\n',
   publishLogText: 'PG-A-001 alpha https://www.astrologywiki.com/en/wiki/alpha\n',
-  sheetRow: { status: '已发布', published_url: 'https://www.astrologywiki.com/en/wiki/alpha' },
+  sheetRow: { status: '已发布', publish_url: 'https://www.astrologywiki.com/en/wiki/alpha' },
+  ctaAudit: {
+    cta_id: 'url_tool_birth_chart',
+    cta_target_url: 'https://astrologywiki.com/en/birth-chart-calculator',
+    cta_intent_tags: 'natal-self',
+    cta_selection_reason: 'semantic_match:intent_tags:natal-self',
+  },
   pendingWriteback: null,
-  fetchText: async (url) => url.endsWith('sitemap.xml')
-    ? '<loc>https://www.astrologywiki.com/en/wiki/alpha</loc>'
-    : '<link rel="canonical" href="https://www.astrologywiki.com/en/wiki/alpha"><script type="application/ld+json">{"@type":"Article"}</script>',
+  fetchDocument: async (url) => url.endsWith('sitemap.xml')
+    ? { ok: true, status: 200, text: '<loc>https://www.astrologywiki.com/en/wiki/alpha</loc>' }
+    : { ok: true, status: 200, text: '<link rel="canonical" href="https://www.astrologywiki.com/en/wiki/alpha"><script type="application/ld+json">{"@type":"Article"}</script><a href="/en/birth-chart-calculator">CTA</a>' },
 };
 
 test('all deterministic checks pass', async () => {
@@ -214,10 +223,10 @@ for (const missing of ['claim', 'planText', 'publishLogText', 'sheetRow', 'pendi
     if (missing === 'claim') deps.claim = { status: 'needs_human' };
     if (missing === 'planText') deps.planText = '- [ ] `PG-A-001` alpha\n';
     if (missing === 'publishLogText') deps.publishLogText = '';
-    if (missing === 'sheetRow') deps.sheetRow = { status: '待写', published_url: '' };
+    if (missing === 'sheetRow') deps.sheetRow = { status: '待写', publish_url: '' };
     if (missing === 'pendingWriteback') deps.pendingWriteback = { pageId: 'PG-A-001' };
-    if (missing === 'page') deps.fetchText = async (url) => url.endsWith('sitemap.xml') ? '<loc>.../alpha</loc>' : '<html></html>';
-    if (missing === 'sitemap') deps.fetchText = async (url) => url.endsWith('sitemap.xml') ? '<urlset></urlset>' : goodDeps.fetchText(url);
+    if (missing === 'page') deps.fetchDocument = async (url) => url.endsWith('sitemap.xml') ? { ok: true, status: 200, text: '<loc>.../alpha</loc>' } : { ok: true, status: 200, text: '<html></html>' };
+    if (missing === 'sitemap') deps.fetchDocument = async (url) => url.endsWith('sitemap.xml') ? { ok: true, status: 200, text: '<urlset></urlset>' } : goodDeps.fetchDocument(url);
     assert.equal((await verifyRepairTarget(target, deps)).ok, false);
   });
 }
@@ -231,7 +240,7 @@ Expected: FAIL with `ERR_MODULE_NOT_FOUND`.
 
 - [x] **Step 3: Implement verifier and fixture-capable CLI**
 
-The implementation must build named checks for `ledger_done`, `branch_and_merge`, `http_200`, `canonical`, `article_jsonld`, `sitemap`, `plan_checked`, `publish_log`, `sheet_published`, and `writeback_clear`. `fetchText` must use a 15-second `AbortSignal.timeout`; any exception becomes a failed check. Sheet production lookup must run `gg-sheet-pull.mjs --rows 2-1600 --limit 1700 --out <cache>` and match by page ID/target keyword; tests pass `--sheet-fixture` to avoid network.
+The implementation must build named checks for `ledger_done`, `branch_and_merge`, `http_200`, `canonical`, `article_jsonld`, `sitemap`, `plan_checked`, `publish_log`, `sheet_published`, `cta_audit`, `cta_matches_map`, and `writeback_clear`. Live fetches use a 15-second `AbortSignal.timeout`; any exception becomes a failed check. Production verification fetches the current `选题登记表`、`主题集群表` and `CTA Map`, matches the target by page ID/keyword/slug, and calls the same `composeOverride` semantic selector even when the row is already published. `cta_audit` requires non-empty `cta_id`、`cta_target_url`、`cta_intent_tags` and `cta_selection_reason`; `cta_matches_map` requires an exact normalized link on the live page. Tests pass `--sheet-fixture` to avoid network.
 
 ```js
 export async function verifyRepairTarget(target, deps) {
@@ -239,16 +248,18 @@ export async function verifyRepairTarget(target, deps) {
   const checks = {};
   checks.ledger_done = deps.claim?.status === 'done';
   checks.branch_and_merge = Boolean(deps.claim?.branch && deps.claim?.mergedAt);
-  let page = '', sitemap = '';
-  try { page = await deps.fetchText(url); } catch {}
-  try { sitemap = await deps.fetchText('https://www.astrologywiki.com/sitemap.xml'); } catch {}
-  checks.http_200 = Boolean(page);
-  checks.canonical = new RegExp(`<link[^>]+rel=["']canonical["'][^>]+href=["']${url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["']`, 'i').test(page);
-  checks.article_jsonld = /application\/ld\+json[\s\S]*"@type"\s*:\s*"Article"/i.test(page);
-  checks.sitemap = sitemap.includes(url);
+  let page = { ok: false, status: 0, text: '' }, sitemap = { ok: false, status: 0, text: '' };
+  try { page = await deps.fetchDocument(url); } catch {}
+  try { sitemap = await deps.fetchDocument('https://www.astrologywiki.com/sitemap.xml'); } catch {}
+  checks.http_200 = page.ok === true && page.status === 200;
+  checks.canonical = canonicalHref(page.text) === url;
+  checks.article_jsonld = hasArticleJsonLd(page.text);
+  checks.sitemap = sitemap.ok === true && sitemap.status === 200 && sitemap.text.includes(url);
   checks.plan_checked = new RegExp(`^\\s*-\\s*\\[x\\]\\s*\`?${target.pageId}\`?`, 'm').test(deps.planText || '');
   checks.publish_log = String(deps.publishLogText || '').includes(target.pageId) && String(deps.publishLogText || '').includes(target.slug);
-  checks.sheet_published = deps.sheetRow?.status === '已发布' && String(deps.sheetRow?.published_url || deps.sheetRow?.url || '').includes(target.slug);
+  checks.sheet_published = deps.sheetRow?.status === '已发布' && String(deps.sheetRow?.publish_url || deps.sheetRow?.url || '').includes(target.slug);
+  checks.cta_audit = Boolean(deps.ctaAudit?.cta_id && deps.ctaAudit?.cta_target_url && deps.ctaAudit?.cta_intent_tags && deps.ctaAudit?.cta_selection_reason);
+  checks.cta_matches_map = checks.http_200 && checks.cta_audit && pageLinksTo(page.text, deps.ctaAudit.cta_target_url, url);
   checks.writeback_clear = !deps.pendingWriteback;
   const failed = Object.entries(checks).filter(([, ok]) => !ok).map(([name]) => name);
   return { ok: failed.length === 0, terminal: failed.length ? 'pending' : 'published', checks, reason: failed.join(',') };
@@ -332,7 +343,7 @@ You are the one-shot GenGrowth SEO exception repair agent. Process only TARGETS_
 Do not run gg-nightly-seo.sh. Do not bypass preview verify, three-dimension review, Codex fact gate, or merge guards.
 For authoring parks use the pinned plan with --retry-author/--author, then create a one-row targeted scan and run gg-preview-gate.
 For preview parks use --retry-failed and rerun gg-preview-gate. For verified pending work continue merge/live/backfill only from the verified state.
-Run the existing backfill loop and deterministic verifier. Never edit ledger status to verified-preview or done by hand.
+For a backfill target run only `node tools/scripts/gg-backfill-one.mjs --page-id <page_id>`; never sweep unrelated ledger entries. The outer hook runs the deterministic verifier. Never edit ledger status to verified-preview or done by hand.
 Do not use Google Indexing API or click GSC Request Indexing. Do not load ai-profile/lynne-soul.md or any sibling-repo personal profile.
 End only after each target is published+verified, explicitly archived as stale with evidence, or left needs_human with the exact non-bypassable blocker.
 ```
@@ -531,6 +542,7 @@ node --test \
   tools/scripts/__tests__/gg-content-draft.smoke.test.mjs \
   tools/scripts/__tests__/flow-backfill.smoke.test.mjs \
   tools/scripts/__tests__/backfill-tx.smoke.test.mjs \
+  tools/scripts/__tests__/gg-backfill-one.smoke.test.mjs \
   tools/scripts/__tests__/gg-batch-summary.smoke.test.mjs
 ```
 

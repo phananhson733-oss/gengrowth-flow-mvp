@@ -21,7 +21,7 @@ aliases:
 - 索引修复重提与 Phase 2 索引监控均经固定 wrapper 完成；两站 Sitemap API 成功，astrologywiki 完成 3 条 URL Inspection，请求索引候选队列已刷新，未越过普通文章 GSC 合规边界。
 - 结果复盘性能 wrapper 因两产品 GSC/GA4 OAuth refresh token 过期或被撤销而在扫描前停止；未写表、未生成报告，需重新授权后只重跑原 wrapper。
 - 双产品 CTA Map 已新增 `intent_tags`，最近 7 篇 AstrologyWiki 文章已按新逻辑重新处理并上线；flow PR #2、Oracle PR #376 已合并，线上 CTA、canonical 与 Article JSON-LD 已复验。
-- 复核现有 agentic repair：author repair、gate surgical repair、transient auto-retry、flow-driver 与回填 loop 均已存在，但当前 flow-driver 被禁用、Codex automation 为 PAUSED，nightly wrapper 又会跳过既有 `needs_human`；建议把有界 recovery controller 串入唯一 wrapper，而不是新增并行调度器或自动绕过发布门。
+- 复核现有 agentic repair 后明确新调度边界：Codex Automation 保持暂停；macOS `launchd` 直接拉起正常写作/发布，只有异常、报错或 `needs_human` 才通过 hook 启动一次性 Agent 修复，且不得绕过现有发布门。
 - 确认 flow 仓库的 `AGENTS.md` 是 5 月 21 日从 gengrowth-wiki 原样切仓带入，误留 `GenGrowth Wiki` 项目名及 Lynne 专属 soul 的硬编码引用；flow 历史从未包含该 soul 文件，错误引用还进入了当前 SEO Codex automation，尚未修改。
 
 ---
@@ -215,5 +215,29 @@ After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-s
 确认这是切仓遗留的指令污染，不是合理的项目级声明。初始提交 `fe53434d` 明确为 `init: carve gengrowth-flow-mvp from gengrowth-wiki`，其中 `AGENTS.md` 与当时 wiki 的文件 blob 完全相同；因此 flow 文件连项目名仍写成 `GenGrowth Wiki`，并原样保留了 `ai-profile/lynne-soul.md` 的唯一来源声明。flow 仓库全部历史从未包含该 soul 文件；真实文件由 Lynne Wang 于 2026-04-29 在 sibling gengrowth-wiki 创建，内容确为 Lynne 个人档案。flow 仅在 2026-06-10 后加入 `ai-profile/reminders.md`。
 
 进一步确认当前 SEO Codex automation 的 prompt 也复制了“读取 `ai-profile/lynne-soul.md`”步骤；其状态目前为 `PAUSED`，没有正在执行这条错误读取。上一轮在 flow 本地文件缺失后跨仓读取 sibling wiki profile，是对错误声明做了不当兜底，扩大了个人规则污染；正确行为应是不跨仓加载 Lynne profile。建议后续修正 flow 的项目名称、删除 Lynne soul 的项目级硬编码，并同步移除 automation prompt 中的错误读取；本轮只完成诊断，未修改这些配置。
+
+---
+
+### Q14 — 16:18
+
+**🙋 提问：**
+
+1.我预期要是做自动修复的逻辑，同时我们故意停掉了 codex  的 automatic，现在的启动使用 macOS 的 cron，要靠这个来拉起 hook
+
+**🤖 回答：**
+
+先确认当前机器的实际调度状态：Unix `crontab` 为空，用户所称 macOS cron 的实际执行器是已加载的 LaunchAgent `com.gengrowth.seo-blog`，18:30–21:30 每半小时运行一次；Codex Automation `gengrowth-seo-blog` 保持 `PAUSED`，旧 SEO/flow-driver launchd 标签保持禁用。初步将边界理解为由同一 macOS 调度入口串联修复、不恢复 Codex Automation 或新增并行调度器；随后用户进一步澄清正常写作与异常 hook 必须分离。
+
+---
+
+### Q15 — 16:20
+
+**🙋 提问：**
+
+不是。cron 自动来拉起写作，异常/报错，需要人干预是应该自动拉起 hook 修复
+
+**🤖 回答：**
+
+已纠正设计边界：macOS `launchd` 应直接启动正常写作/发布 wrapper；正常成功时不启动 Agent；只有检测到异常、报错或新增 `needs_human` 时，repair hook 才拉起一次性 Agent 接管修复；修复仍必须通过 preview/review/codex gate 后才能 merge/publish。确认当前 `gg-seo-blog-launchd-tick.sh` 每个 tick 都先执行 `codex exec`，与目标相反，需要改为“主链直跑、异常才拉 Agent”。在实现前按 brainstorming 硬门确认 hook 是否使用一次性的本机 `codex exec`，而不恢复 Codex Automation 定时调度。
 
 ---

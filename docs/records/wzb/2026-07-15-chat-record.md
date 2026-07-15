@@ -277,3 +277,15 @@ After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-s
 已按设计完成代码与配置落地：新增 repair selector/state、确定性 publish/backfill verifier、一次性 `codex exec` hook；`tools/scripts/gg-seo-blog-launchd-tick.sh` 已改为 direct nightly 后调用条件 hook，nightly 非零也会交给 hook 收敛，正常路径不由 runner 启动 Agent。`AGENTS.md` 已修正为 GenGrowth Flow MVP 并移除 Lynne 个人档案项目级绑定；暂停中的 Codex Automation 已通过 Automation API 同步新边界并保持 `PAUSED`。repair/driver/preview 93 项、CTA/回填 266 项及全量测试均通过；旧 8 个调度 job 均 disabled/unloaded，唯一 LaunchAgent 已加载并指向新 runner。已在 `~/.config/gg/_gg.env` 开启首窗灰度（每轮 1 个目标、同指纹 2 次、2700 秒），启用前 selector 预检为 0 个目标；已设置当前任务于 18:40 回醒，等待 18:30 自然窗口后完成日志、锁、孤儿进程、state 与最终需求审计，不手动触发发布。
 
 ---
+
+### Q19 — 17:28
+
+**🙋 提问：**
+
+ A
+
+**🤖 回答：**
+
+已按 A 方案继续：将 repair verifier 的 CTA 验收从工作簿原始别名改为基于实时「选题登记表 + 主题集群表 + CTA Map」重新推导语义审计，强制检查 `cta_id`、`cta_target_url`、`cta_intent_tags`、`cta_selection_reason`，并核对线上页面实际链接。定向测试 43/43、全量测试退出码 0；生产只读预检确认 `PG-WAIA-001`、`PG-WAIA-002`、`PG-WDIF-001`、`PG-CELEB-055` 为 `natal-self → Birth Chart`，`PG-NODE-013` 为 `forecast-transit → Forecast`。当前等待 18:30 自然 LaunchAgent 窗口完成异常 hook、Agent、回填与终态审计，未手动触发发布。
+
+---

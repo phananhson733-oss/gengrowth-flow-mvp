@@ -56,6 +56,49 @@ const CTAS = [
 
 const CONTEXT = { target_keyword: 'gengrowth pricing', entity: 'pricing' };
 
+const ASTRO_CTAS = [
+  {
+    cta_id: 'url_tool_birth_chart',
+    cta_text: 'Generate Your Free Birth Chart',
+    target_url: 'https://astrologywiki.com/en/birth-chart-calculator',
+    cta_kind: 'tool',
+    match_keywords: 'birth chart;natal chart;descendant;seventh house;venus;why am i still single',
+    intent_tags: 'natal-self',
+    blog_eligible: 'TRUE',
+    priority: '100',
+  },
+  {
+    cta_id: 'url_tool_compatibility',
+    cta_text: 'Explore Compatibility',
+    target_url: 'https://astrologywiki.com/en/compatibility-calculator',
+    cta_kind: 'tool',
+    match_keywords: 'compatibility;synastry;two charts;compare charts;partner chart',
+    intent_tags: 'two-person',
+    blog_eligible: 'TRUE',
+    priority: '100',
+  },
+  {
+    cta_id: 'url_page_forecast',
+    cta_text: 'Explore Astrology Forecasts',
+    target_url: 'https://astrologywiki.com/en/astrology-forecast',
+    cta_kind: 'hub',
+    match_keywords: 'forecast;transit;horoscope;astrology forecast;north node in aquarius 2026;north node transit',
+    intent_tags: 'forecast-transit',
+    blog_eligible: 'TRUE',
+    priority: '90',
+  },
+  {
+    cta_id: 'url_page_tools_hub',
+    cta_text: 'Explore Astrology Tools',
+    target_url: 'https://astrologywiki.com/en/astrology-tools',
+    cta_kind: 'hub',
+    match_keywords: '*',
+    intent_tags: 'tool-hub',
+    blog_eligible: 'TRUE',
+    priority: '1',
+  },
+];
+
 test('target keyword selects the matching eligible CTA instead of higher-priority blog or foreign rows', () => {
   const selected = selectCta({ candidates: CTAS, context: CONTEXT, allowedHost: 'gengrowth.ai' });
   assert.equal(selected.ok, true);
@@ -118,4 +161,79 @@ test('returns a publish-blocking result when there is no semantic or wildcard ma
     allowedHost: 'gengrowth.ai',
   });
   assert.deepEqual(selected, { ok: false, reason: 'no_eligible_cta_match' });
+});
+
+test('specific Map intent beats boilerplate birth-chart associated keywords', () => {
+  const selected = selectCta({
+    candidates: ASTRO_CTAS,
+    context: {
+      target_keyword: 'north node in aquarius 2026',
+      entity: 'North Node in Aquarius 2026',
+      associated_keywords: 'north node in aquarius 2026 birth chart; astrology; zodiac',
+      content_angle: 'A 2026 North Node transit reading',
+    },
+    allowedHost: 'astrologywiki.com',
+  });
+  assert.equal(selected.cta_id, 'url_page_forecast');
+  assert.equal(selected.cta_intent_tags, 'forecast-transit');
+  assert.match(selected.cta_selection_reason, /intent_tags:forecast-transit/);
+});
+
+test('personal natal cues choose Birth Chart without drifting to Compatibility', () => {
+  const selected = selectCta({
+    candidates: ASTRO_CTAS,
+    context: {
+      target_keyword: 'why do i attract toxic people',
+      entity: 'Descendant Shadow-Attraction Signature',
+      content_angle: 'Map the seventh house sign and Venus contacts as a personal natal reflection.',
+      associated_keywords: 'why do i attract toxic people birth chart; astrology',
+    },
+    allowedHost: 'astrologywiki.com',
+  });
+  assert.equal(selected.cta_id, 'url_tool_birth_chart');
+  assert.equal(selected.cta_intent_tags, 'natal-self');
+});
+
+test('single-person relationship content does not select Compatibility', () => {
+  const selected = selectCta({
+    candidates: ASTRO_CTAS,
+    context: {
+      target_keyword: 'why am i still single',
+      entity: 'Why Am I Still Single',
+      content_angle: 'A personal symbolic astrology reflection that avoids compatibility topics.',
+      associated_keywords: 'why am i still single birth chart; astrology',
+    },
+    allowedHost: 'astrologywiki.com',
+  });
+  assert.equal(selected.cta_id, 'url_tool_birth_chart');
+  assert.notEqual(selected.cta_id, 'url_tool_compatibility');
+});
+
+test('explicit two-chart synastry intent selects Compatibility', () => {
+  const selected = selectCta({
+    candidates: ASTRO_CTAS,
+    context: {
+      target_keyword: 'synastry compatibility between two charts',
+      entity: 'Synastry',
+      content_angle: 'Compare two charts with a partner.',
+    },
+    allowedHost: 'astrologywiki.com',
+  });
+  assert.equal(selected.cta_id, 'url_tool_compatibility');
+  assert.equal(selected.cta_intent_tags, 'two-person');
+});
+
+test('generic associated boilerplate falls back to Tools Hub instead of Birth Chart', () => {
+  const selected = selectCta({
+    candidates: ASTRO_CTAS,
+    context: {
+      target_keyword: 'symbolic archetype guide',
+      entity: 'Symbolic Archetype Guide',
+      associated_keywords: 'symbolic archetype guide birth chart; astrology; zodiac; meaning; interpretation',
+    },
+    allowedHost: 'astrologywiki.com',
+  });
+  assert.equal(selected.cta_id, 'url_page_tools_hub');
+  assert.equal(selected.cta_intent_tags, 'tool-hub');
+  assert.match(selected.cta_selection_reason, /wildcard/i);
 });

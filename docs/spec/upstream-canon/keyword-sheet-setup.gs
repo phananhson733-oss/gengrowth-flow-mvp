@@ -516,23 +516,23 @@ function createGenGrowthKeywordSheet() {
 
   // SHEET: CTA Map（cta_id）— semantic CTA routing columns
   var ctaSh = ss.insertSheet('CTA Map');
-  ctaSh.getRange(1, 1, 1, 11)
-    .setValues([['cta_id', 'page_role', 'cta_文案', 'target_url', 'ga4_event_name', 'track', 'desc', 'cta_kind', 'match_keywords', 'blog_eligible', 'priority']])
+  ctaSh.getRange(1, 1, 1, 12)
+    .setValues([['cta_id', 'page_role', 'cta_文案', 'target_url', 'ga4_event_name', 'track', 'desc', 'cta_kind', 'match_keywords', 'blog_eligible', 'priority', 'intent_tags']])
     .setFontColor('#ffffff').setFontWeight('bold').setFontSize(11);
   ctaSh.setFrozenRows(1);
 
   // 表头颜色：深绿=必填手动 / 深灰=选填（GA4 上线后填）
-  var ctaGreen = [1, 3, 4, 7, 8, 9, 10, 11];
+  var ctaGreen = [1, 3, 4, 7, 8, 9, 10, 11, 12];
   var ctaSlate = [2, 5, 6];
   ctaGreen.forEach(function(c) { ctaSh.getRange(1, c).setBackground('#2e7d32'); });
   ctaSlate.forEach(function(c) { ctaSh.getRange(1, c).setBackground('#455a64'); });
 
   // 预填 semantic CTA 示例；每个工作簿仅一个 blog_eligible=TRUE 的 * 兜底。
-  ctaSh.getRange(2, 1, 4, 11).setValues([
-    ['cta_tool_birth_chart', 'Tool_Page', 'Generate Your Free Birth Chart', '（birth chart URL）', 'tool_click', '量产线', 'Generate a birth chart from birth details.', 'tool', 'birth chart;natal chart', 'TRUE', '100'],
-    ['cta_tool_rising_sign', 'Tool_Page', 'Calculate Your Rising Sign', '（rising sign URL）', 'tool_click', '量产线', 'Calculate the ascendant from birth details.', 'tool', 'rising sign;ascendant', 'TRUE', '100'],
-    ['cta_tools_hub', 'Tool_Hub', 'Explore Astrology Tools', '（tools hub URL）', 'tool_click', '量产线', 'Generic same-site fallback for articles without a more specific match.', 'hub', '*', 'TRUE', '1'],
-    ['cta_blog_example', 'Blog_Article', 'Read related article', '（blog URL）', '', '量产线', 'Blog-to-blog internal link only; never a primary CTA.', 'blog', 'related reading', 'FALSE', '0']
+  ctaSh.getRange(2, 1, 4, 12).setValues([
+    ['cta_tool_birth_chart', 'Tool_Page', 'Generate Your Free Birth Chart', '（birth chart URL）', 'tool_click', '量产线', 'Generate a birth chart from birth details.', 'tool', 'birth chart;natal chart', 'TRUE', '100', 'natal-self'],
+    ['cta_tool_rising_sign', 'Tool_Page', 'Calculate Your Rising Sign', '（rising sign URL）', 'tool_click', '量产线', 'Calculate the ascendant from birth details.', 'tool', 'rising sign;ascendant', 'TRUE', '100', 'rising-sign'],
+    ['cta_tools_hub', 'Tool_Hub', 'Explore Astrology Tools', '（tools hub URL）', 'tool_click', '量产线', 'Generic same-site fallback for articles without a more specific match.', 'hub', '*', 'TRUE', '1', 'tool-hub'],
+    ['cta_blog_example', 'Blog_Article', 'Read related article', '（blog URL）', '', '量产线', 'Blog-to-blog internal link only; never a primary CTA.', 'blog', 'related reading', 'FALSE', '0', 'blog-article']
   ]);
 
   ctaSh.getRange('B2:B500').setDataValidation(dv().requireValueInList(['Pillar', 'Series', 'Support', 'Tool', 'Wiki', 'Strategic'], true).build());
@@ -552,13 +552,14 @@ function createGenGrowthKeywordSheet() {
     8: 'cta_kind：tool / feature / hub / product / navigation / blog / external。blog、navigation、external 永不作为主 CTA。',
     9: 'match_keywords：以分号分隔的英文关键词或短语。每个工作簿仅允许一个已启用的 * 通配兜底。',
     10: 'blog_eligible：TRUE 才能作为 SEO blog 主 CTA；Blog_Article 内链必须为 FALSE。',
-    11: 'priority：语义得分相同时的正整数优先级；仍相同则按 cta_id 稳定排序。'
+    11: 'priority：语义得分相同时的正整数优先级；仍相同则按 cta_id 稳定排序。',
+    12: 'intent_tags：分号分隔的候选意图类别；选择器先按目标关键词、实体和内容角度识别标签，再在同标签候选中选择。'
   };
   Object.keys(ctaNotes).forEach(function(col) {
     ctaSh.getRange(1, parseInt(col)).setNote(ctaNotes[col]);
   });
 
-  [160, 100, 220, 240, 150, 90, 300, 120, 260, 110, 90].forEach(function(w, i) { ctaSh.setColumnWidth(i + 1, w); });
+  [160, 100, 220, 240, 150, 90, 300, 120, 260, 110, 90, 180].forEach(function(w, i) { ctaSh.setColumnWidth(i + 1, w); });
 
   // SHEET: 结果复盘表（outcome_id）— v3.1 加列颜色与字段注释
   var outcomeSh = ss.insertSheet('结果复盘表');

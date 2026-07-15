@@ -125,6 +125,7 @@ const CTA_HEADER_MAP = {
   match_keywords: 'match_keywords',
   blog_eligible: 'blog_eligible',
   priority: 'priority',
+  intent_tags: 'intent_tags',
 };
 
 function indexByHeader(headerRow, mapping) {
@@ -419,6 +420,7 @@ export function composeOverride(row, { clusterMap, ctaMap, ctaRegistry = new Map
     cta_text: ctaChoice.ok ? ctaChoice.cta_text : '',
     cta_target_url: ctaChoice.ok ? ctaChoice.target_url : '',
     cta_ga4_event_name: ctaChoice.ok ? ctaChoice.ga4_event_name : '',
+    cta_intent_tags: ctaChoice.ok ? (ctaChoice.cta_intent_tags || '') : '',
     cta_selection_reason: ctaChoice.ok ? ctaChoice.cta_selection_reason : '',
     tier_gate_block: tierGateBlock,
     rl6_hint: rl6Hint,

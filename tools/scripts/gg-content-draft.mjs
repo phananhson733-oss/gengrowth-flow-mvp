@@ -163,6 +163,7 @@ const CTA_COLS = Object.freeze({
   match_keywords: 8,
   blog_eligible: 9,
   priority: 10,
+  intent_tags: 11,
 });
 
 const PAGE_SHEET = '选题登记表';
@@ -172,7 +173,7 @@ const CTA_SHEET = 'CTA Map';
 // Sheet ranges (read-only).
 const PAGE_RANGE = `${PAGE_SHEET}!A2:W300`;
 const CLUSTER_RANGE = `${CLUSTER_SHEET}!A2:T200`;
-const CTA_RANGE = `${CTA_SHEET}!A2:K500`;
+const CTA_RANGE = `${CTA_SHEET}!A2:L500`;
 
 // Placeholder detection for newsletter target_url (spec §2.2 H2).
 const PLACEHOLDER_REGEX = /(待搭建|占位|TODO|PLACEHOLDER|（[^）]*URL[^）]*）)/i;
@@ -504,13 +505,14 @@ function resolveCta(pageRow, clusterRow, ctaRows) {
     allowedHost: siteCtaHost(),
   });
   if (!selected.ok) {
-    return { cta_id: null, text: '', target_url: '', ga4_event_name: '', source: 'no_eligible_semantic_match', fallback_note: selected.reason };
+    return { cta_id: null, text: '', target_url: '', ga4_event_name: '', cta_intent_tags: '', source: 'no_eligible_semantic_match', fallback_note: selected.reason };
   }
   return {
     cta_id: selected.cta_id,
     text: safeField(selected.cta_text),
     target_url: selected.target_url,
     ga4_event_name: selected.ga4_event_name,
+    cta_intent_tags: selected.cta_intent_tags || '',
     source: 'cta_map_semantic',
     cta_selection_reason: selected.cta_selection_reason,
     fallback_note: null,

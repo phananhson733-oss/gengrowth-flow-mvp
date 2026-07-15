@@ -45,6 +45,11 @@ function harness(options = {}) {
   if (options.archived) writeFileSync(join(tasks, '.flow-driver-archived.json'), JSON.stringify(options.archived));
   if (options.stateRaw !== undefined) writeFileSync(statePath, options.stateRaw);
   else if (options.state) writeFileSync(statePath, JSON.stringify(options.state));
+  if (options.pendingWriteback) {
+    const pendingDir = join(stateDir, 'pending-writeback');
+    mkdirSync(pendingDir, { recursive: true });
+    writeFileSync(join(pendingDir, `${options.pendingWriteback}.json`), JSON.stringify({ pageId: options.pendingWriteback }));
+  }
 
   const timeoutBin = executable(join(bin, 'gtimeout'), '#!/bin/sh\nshift\nexec "$@"\n');
   const codexBin = executable(join(bin, 'codex'), [
@@ -163,9 +168,33 @@ test('eligible park persists attempt, invokes Codex once, and verifies the exact
   assert.match(h.prompt(), /TARGETS_JSON/);
   assert.match(h.prompt(), /PG-A-001/);
   assert.doesNotMatch(h.prompt(), /PG-OTHER-001/);
+  assert.match(h.prompt(), /"attempt": 1/);
   const entry = Object.values(h.state())[0];
   assert.equal(entry.attempts, 1);
   assert.equal(entry.status, 'published');
+  const output = JSON.parse(result.stdout.replace(/^SEO_REPAIR_HOOK_RESULT: /, ''));
+  assert.equal(output.agent.timeoutSeconds, 30);
+  assert.equal(Number.isInteger(output.agent.pid), true);
+  assert.deepEqual(output.agent.attempts, [{ pageId: 'PG-A-001', attempt: 1 }]);
+});
+
+test('done claim with pending writeback is selected for one-shot repair', () => {
+  const h = harness({
+    claims: {
+      'PG-A-001': {
+        status: 'done',
+        stage: 'published',
+        slug: 'alpha',
+        branch: 'seo/alpha',
+        mergedAt: '2026-07-15T10:00:00Z',
+      },
+    },
+    pendingWriteback: 'PG-A-001',
+  });
+  const result = h.run();
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+  assert.equal(h.codexCalls(), 1);
+  assert.match(h.prompt(), /"stage": "backfill"/);
 });
 
 test('disabled hook with an eligible target never increments or invokes Codex', () => {

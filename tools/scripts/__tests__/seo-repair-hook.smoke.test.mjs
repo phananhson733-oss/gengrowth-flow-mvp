@@ -41,6 +41,26 @@ test('clean plan has no target and a pre-existing eligible park is selected', ()
   assert.equal(out.targets[0].triage, 'fixable');
 });
 
+test('stranded preview/merge states and pending writeback are repair targets', () => {
+  const planIds = new Set(['PG-P-001', 'PG-M-001', 'PG-B-001']);
+  const out = selectRepairTargets({
+    claims: {
+      'PG-P-001': { status: 'pushed-preview', stage: 'pushed-preview', slug: 'preview', branch: 'seo/preview' },
+      'PG-M-001': { status: 'verified-preview', stage: 'verified-preview', slug: 'merge', branch: 'seo/merge' },
+      'PG-B-001': { status: 'done', stage: 'published', slug: 'backfill', branch: 'seo/backfill', mergedAt: '2026-07-15T10:00:00Z' },
+    },
+    planIds,
+    state: {},
+    archivedIds: new Set(),
+    pendingWritebackIds: new Set(['PG-B-001']),
+  });
+  assert.deepEqual(out.targets.map(({ pageId, stage, triage }) => ({ pageId, stage, triage })), [
+    { pageId: 'PG-P-001', stage: 'pushed-preview', triage: 'fixable' },
+    { pageId: 'PG-M-001', stage: 'verified-preview', triage: 'fixable' },
+    { pageId: 'PG-B-001', stage: 'backfill', triage: 'fixable' },
+  ]);
+});
+
 test('fingerprint removes runtime noise but changes for a real error change', () => {
   const noisyA = '2026-07-15 18:31 pid 123 /tmp/x https://preview-a.vercel.app timed out';
   const noisyB = '2026-07-15 18:32 pid 999 /tmp/y preview-b.vercel.app timed out';

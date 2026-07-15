@@ -135,6 +135,25 @@ test('clean state exits zero without invoking Codex or verifier', () => {
   assert.equal(JSON.parse(result.stdout.replace(/^SEO_REPAIR_HOOK_RESULT: /, '')).terminal, 'clean');
 });
 
+test('recovered phase2 and Codex review failures do not trigger a synthetic RUN repair', () => {
+  const h = harness({
+    log: [
+      '[autopilot] phase2 attempt 1/3 failed:',
+      '- word count 1490 < min 1500',
+      '[autopilot] AUTHORED PG-A-001 → draft',
+      'codex: FAIL — author claim unsupported',
+      'repair[codex]: applied 1 edit(s) + pushed — re-running codex',
+      'codex: PASS — PASS',
+      'PG-A-001: MERGED → live',
+      '===== nightly-seo done =====',
+    ].join('\n'),
+  });
+  const result = h.run();
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+  assert.equal(h.codexCalls(), 0);
+  assert.match(result.stdout, /"terminal":"clean"/);
+});
+
 test('eligible park persists attempt, invokes Codex once, and verifies the exact target', () => {
   const h = harness({ claims: FIXABLE });
   const result = h.run();

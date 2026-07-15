@@ -246,11 +246,11 @@ if [ "${GG_GENGROWTH_AUTHOR_AUTOPUBLISH:-1}" != "0" ] && [ "${PUBLISH_FOLLOWUP_I
     else
       rc=$?
       echo "$(date '+%F %T') publish follow-up: gg-gengrowth-publish-tick.sh exited rc=$rc — see $HOME/gengrowth-agents/cron-sync/gengrowth-publish/$(date +%Y-%m-%d).log" >> "$LOG"
-      node "$NOTIFY" preflight_fail --lane gengrowth-publish --log "$LOG" >/dev/null 2>&1 || true
+      if [ "${GG_SEO_REPAIR_CONTROLLER_V2_ENABLED:-0}" = "1" ]; then run_repair_controller "$rc"; else node "$NOTIFY" preflight_fail --lane gengrowth-publish --log "$LOG" >/dev/null 2>&1 || true; fi
     fi
   else
     echo "$(date '+%F %T') publish follow-up: missing $PUBLISH_TICK — cannot close publish loop" >> "$LOG"
-    node "$NOTIFY" preflight_fail --lane gengrowth-publish --log "$LOG" >/dev/null 2>&1 || true
+    if [ "${GG_SEO_REPAIR_CONTROLLER_V2_ENABLED:-0}" = "1" ]; then run_repair_controller 2; else node "$NOTIFY" preflight_fail --lane gengrowth-publish --log "$LOG" >/dev/null 2>&1 || true; fi
   fi
 fi
 

@@ -290,6 +290,24 @@ test('ticker_error: 参数解析抛错 → 模板前缀（⚠️ 非 ✖）+ OPS
   assert.ok(!mock.larkMsgs[0].includes('✖'), '废弃字形 ✖ 不得再出现在通知里');
 });
 
+test('v2 ticker_error: 入 durable repair queue 且不再直接发人工告警', async () => {
+  const { env } = caseEnv('ticker-error-v2');
+  env.GG_SEO_REPAIR_CONTROLLER_V2_ENABLED = '1';
+  const r = await runPublisher(['--pages'], env);
+  assert.equal(r.status, 0, 'ticker 异常仍保持 wrapper-safe exit 0');
+  assert.match(r.stderr, /gg-gengrowth-publish ERROR:/);
+  assert.deepEqual(mock.larkMsgs, [], 'v2 repairable run error 必须由 controller 独占终态通知');
+  const queueDir = join(env.GG_FLOW_STATE_DIR, 'seo-repair-queue');
+  const files = readdirSync(queueDir).filter((name) => name.endsWith('.json'));
+  assert.equal(files.length, 1);
+  const record = JSON.parse(readFileSync(join(queueDir, files[0]), 'utf8'));
+  assert.equal(record.event.site, 'gengrowth');
+  assert.equal(record.event.pageId, 'RUN');
+  assert.equal(record.event.stage, 'run');
+  assert.equal(record.event.errorKind, 'tool_exit');
+  assert.match(record.event.summary, /Cannot read properties|undefined|split/);
+});
+
 // ── (6) SILENCE 门控原位原语义：GG_LARK_NOTIFY_SILENCE=1 → 只 audit 不发送 ──
 test('GG_LARK_NOTIFY_SILENCE=1: 事件只写 audit（SILENCED），mock 收不到消息', async () => {
   const { dir, staging, env } = caseEnv('silence', { sbKey: '' });

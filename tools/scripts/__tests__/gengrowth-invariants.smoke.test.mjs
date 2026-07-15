@@ -170,6 +170,16 @@ test('invariant 1: author tick immediately runs gengrowth publish follow-up afte
     /gg-seo-repair-controller\.mjs" import-v1 --site gengrowth/,
     'v2 author failures must enter the shared repair controller through the natural wrapper',
   );
+  assert.match(
+    src,
+    /publish follow-up:[\s\S]*GG_SEO_REPAIR_CONTROLLER_V2_ENABLED[\s\S]*run_repair_controller "\$rc"/,
+    'v2 publish follow-up failures must call the repair controller instead of notifying people directly',
+  );
+  assert.match(
+    src,
+    /missing \$PUBLISH_TICK[\s\S]*GG_SEO_REPAIR_CONTROLLER_V2_ENABLED[\s\S]*run_repair_controller 2/,
+    'v2 missing publish wrapper must enter the repair controller instead of notifying people directly',
+  );
 });
 
 test('invariant 1: the autopilot <pageId>-<model>-v8.md convention agrees on the same pageId', () => {

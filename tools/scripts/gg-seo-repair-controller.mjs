@@ -90,7 +90,9 @@ async function loadTerminalNotifier() {
   return async (payload) => {
     if (process.env.GG_SEO_REPAIR_NO_NOTIFY === '1') return;
     const text = `SEO repair controller: ${payload.terminal} — ${payload.site}/${payload.pageId}${payload.slug ? ` (${payload.slug})` : ''}`;
-    const result = spawnSync('node', [NOTIFY_BIN, 'raw', '--text', text], {
+    const result = spawnSync('node', [
+      NOTIFY_BIN, 'raw', '--text', text, '--msgUuid', payload.messageUuid,
+    ], {
       cwd: FLOW,
       env: process.env,
       encoding: 'utf8',

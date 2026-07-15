@@ -189,6 +189,7 @@ test('controller notifies a terminal once and a second drain does not repeat it'
   await drainRepairQueue(options);
   assert.equal(notified.length, 1);
   assert.equal(notified[0].idempotencyKey, `published:gengrowth:PG-WLS-007:${queued.fingerprint}`);
+  assert.match(notified[0].messageUuid, /^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
   const terminal = await readRepairRecord(join(queueDir, `${UUID_A}.json`));
   assert.equal(terminal.status, 'published');
   assert.equal(terminal.terminalNotificationKey, notified[0].idempotencyKey);

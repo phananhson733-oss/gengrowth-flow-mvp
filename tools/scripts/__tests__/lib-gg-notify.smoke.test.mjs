@@ -315,6 +315,16 @@ test('notify(parked) → 发出的文本前缀为 @PM @OPS，然后是模板正�
   );
 });
 
+test('notify(raw) 将 controller 提供的稳定 msgUuid 原样传给飞书发送层', async () => {
+  caseEnv('controller-msg-uuid');
+  const msgUuid = '6d99342b-f890-5ee1-b650-a9de0a64705a';
+  const r = await notify('raw', { text: 'SEO repair controller terminal', msgUuid });
+  assert.equal(r.ok, true);
+  const reqs = sentMessageRequests();
+  assert.equal(reqs.length, 1);
+  assert.equal(reqs[0].body.uuid, msgUuid);
+});
+
 test('notify(recap_performance_ok) → 发送 Card 2.0 interactive 卡片', async () => {
   const dir = caseEnv('recap-card');
   const astrologyReport = join(dir, 'astrology-report.md');

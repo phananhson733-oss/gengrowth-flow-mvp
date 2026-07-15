@@ -364,12 +364,12 @@ export async function notify(event, fields = {}) {
     }
     const spec = known ? EVENTS[event] : null;
     if (spec && typeof spec.card === 'function') {
-      const cardResult = await sendLarkCard(spec.card(fields), { chatId, auditText: rt.text });
+      const cardResult = await sendLarkCard(spec.card(fields), { chatId, auditText: rt.text, msgUuid: fields.msgUuid || null });
       if (cardResult.ok) return { ...cardResult, silenced: false, text: rt.text, card: true };
-      const fallback = await sendLark(rt.text, { atPm: rt.atPm, atOps: rt.atOps, chatId });
+      const fallback = await sendLark(rt.text, { atPm: rt.atPm, atOps: rt.atOps, chatId, msgUuid: fields.msgUuid || null });
       return { ...fallback, silenced: false, text: rt.text, card: false, cardError: cardResult.error };
     }
-    const r = await sendLark(rt.text, { atPm: rt.atPm, atOps: rt.atOps, chatId });
+    const r = await sendLark(rt.text, { atPm: rt.atPm, atOps: rt.atOps, chatId, msgUuid: fields.msgUuid || null });
     return { ...r, silenced: false, text: rt.text };
   } catch (e) {
     return { ok: false, silenced: false, messageId: null, error: String((e && e.message) || e), text: '' };

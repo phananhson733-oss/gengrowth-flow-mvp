@@ -1,4 +1,5 @@
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
@@ -252,6 +253,14 @@ export function terminalNotificationKey(record, terminal) {
   return `${terminal}:${record.event.site}:${record.event.pageId}:${record.fingerprint}`;
 }
 
+export function terminalMessageUuid(idempotencyKey) {
+  const hex = createHash('sha256').update(String(idempotencyKey || '')).digest('hex').slice(0, 32).split('');
+  hex[12] = '5';
+  hex[16] = ((Number.parseInt(hex[16], 16) & 0x3) | 0x8).toString(16);
+  const value = hex.join('');
+  return `${value.slice(0, 8)}-${value.slice(8, 12)}-${value.slice(12, 16)}-${value.slice(16, 20)}-${value.slice(20)}`;
+}
+
 function initialStrategy(classification) {
   return chainFor(classification)[0];
 }
@@ -364,6 +373,7 @@ export async function drainRepairQueue({
         fingerprint: terminalRecord.fingerprint,
         evidence: result.evidence,
         idempotencyKey,
+        messageUuid: terminalMessageUuid(idempotencyKey),
       });
       terminals.push({ pageId: terminalRecord.event.pageId, terminal, idempotencyKey });
       continue;

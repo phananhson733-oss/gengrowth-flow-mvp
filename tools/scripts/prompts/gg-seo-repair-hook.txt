@@ -12,6 +12,7 @@ Required repair behavior
 - After a passing draft, create a one-row targeted plan for that page_id, run the normal scan, capture its branch, and run gg-preview-gate.mjs on that branch.
 - Preview park: use gg-seo-autopilot.mjs --retry-failed --branch <branch>, then rerun gg-preview-gate.mjs.
 - Verified pending merge/live/backfill: continue only from the verified state through merge, deployment propagation, live verification, ledger reconciliation and existing backfill commands.
+- Backfill target: run `node tools/scripts/gg-backfill-one.mjs --page-id <page_id>` for that exact target. Never run the unscoped all-ledger reconcile job from a target repair.
 - Stale or false-premise topic: do not publish. Leave exact evidence in the claim/error so the outer hook can archive it safely.
 
 Hard safety boundaries

@@ -22,7 +22,7 @@ aliases:
 - 结果复盘性能 wrapper 因两产品 GSC/GA4 OAuth refresh token 过期或被撤销而在扫描前停止；未写表、未生成报告，需重新授权后只重跑原 wrapper。
 - 双产品 CTA Map 已新增 `intent_tags`，最近 7 篇 AstrologyWiki 文章已按新逻辑重新处理并上线；flow PR #2、Oracle PR #376 已合并，线上 CTA、canonical 与 Article JSON-LD 已复验。
 - 复核现有 agentic repair 后明确新调度边界：Codex Automation 保持暂停；macOS `launchd` 直接拉起正常写作/发布，只有异常、报错或 `needs_human` 才通过 hook 启动一次性 Agent 修复，且不得绕过现有发布门。
-- 方案 A 已进入生产灰度：LaunchAgent 改为 direct nightly + 条件 repair hook，新增错误指纹/attempt 状态、一次性 Agent 与确定性 publish/backfill verifier；Lynne soul 项目级误引用已清理，Codex Automation 保持暂停，等待 18:30 首个自然窗口完成终态验收。
+- 方案 A 已通过 18:30 自然窗口的异常修复实单：`PG-WAIA-001` 因早先 sitemap 传播延迟留下 pending writeback，一次性 Agent 仅运行定向 `gg-backfill-one` 即完成 Sheet、plan、vault 三步回填；pending 队列清空，PR、线上 canonical、Article JSON-LD、sitemap 与归档资产均复验通过。
 
 ---
 
@@ -338,5 +338,76 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 仅执行固定入口 `bash tools/scripts/gg-topic-register-tick.sh`；退出码为 0。以 18:26:29–18:32:29 CST 的成对日志窗口取数：本地环境明确启用 apply（`dry_run=false`、`budget_exhausted=false`）。astrologywiki：`candidates=5`、`updates=5`、`new_clusters=0`、`page_ids=[PG-TRANS-014, PG-TRANS-015, PG-TRANS-016, PG-TRANS-017, PG-TRANS-018]`、`preprocessor=[ok, ok, v1_fallback, v1_fallback, v1_fallback]`；证据发现前两条为 `ok`（10/10、10/9 标题/域名），其余三条为 `insufficient`。gengrowth：`candidates=0`、`updates=0`、`new_clusters=0`、`page_ids=[]`、`preprocessor=[]`、`evidence_discovery=[]`。日志以 `topic-register ok` 结束，未见失败或超时。未执行手工 Google Sheet/任务计划写入，亦未创建额外 Feishu 或 Google Doc 报告产物；自动化记忆已于 18:33 CST 追加本次终态。
+
+---
+
+### Q23 — 18:35
+
+**🙋 提问：**
+
+You are the one-shot GenGrowth SEO exception repair agent launched by the macOS scheduler.
+
+Scope
+- Process only the articles listed under TARGETS_JSON. Do not sweep unrelated plan items.
+- Work in the provided FLOW directory and use the pinned PLAN path from RUN_CONTEXT_JSON.
+- Read the flow repository AGENTS.md, but never load ai-profile/lynne-soul.md or any sibling-repository personal profile.
+- Do not start gg-nightly-seo.sh: the outer scheduler already ran it and owns the batch lock.
+
+Required repair behavior
+- Diagnose from the exact claim and LOG_WINDOW; do not guess a different failure.
+- Authoring park: use GG_AUTOPILOT_PLAN=<pinned plan> with gg-seo-autopilot.mjs --retry-author --task <page_id>, then --author --task <page_id> --limit 1. If content still fails, repair only the cited defect and rerun phase2.
+- After a passing draft, create a one-row targeted plan for that page_id, run the normal scan, capture its branch, and run gg-preview-gate.mjs on that branch.
+- Preview park: use gg-seo-autopilot.mjs --retry-failed --branch <branch>, then rerun gg-preview-gate.mjs.
+- Verified pending merge/live/backfill: continue only from the verified state through merge, deployment propagation, live verification, ledger reconciliation and existing backfill commands.
+- Backfill target: run `node tools/scripts/gg-backfill-one.mjs --page-id <page_id>` for that exact target. Never run the unscoped all-ledger reconcile job from a target repair.
+- Stale or false-premise topic: do not publish. Leave exact evidence in the claim/error so the outer hook can archive it safely.
+
+Hard safety boundaries
+- Never hand-edit ledger status to verified-preview or done.
+- Never bypass preview verify, three-dimension review, Codex fact gate, reviewed-head merge guard, CTA Map intent routing, or post-publish verification.
+- Never remove CTA audit fields or Related Reading merely to pass a gate.
+- Never call Google Indexing API for ordinary articles and never click GSC Request Indexing unattended.
+- Never use destructive git/filesystem commands and never overwrite an interactive dirty worktree.
+- A publish is successful only when the existing workflow produces it; your prose is not proof. The outer deterministic verifier makes the final decision.
+
+Finish each target in one of three evidence-backed states: published and fully backfilled; explicitly stale/unpublishable; or still needs_human with the exact non-bypassable credential, permission, source-data, or safety blocker.
+
+RUN_CONTEXT_JSON:
+{
+  "runStart": "2026-07-15T10:30:05Z",
+  "runExit": 0,
+  "flow": "/Users/awayer_mini/gengrowth-flow-mvp",
+  "ops": "/Users/awayer_mini/gengrowth-ops",
+  "plan": "/Users/awayer_mini/gengrowth-ops/inbox/06-tasks/tasks/2026-05-27-W22-blog-output-plan.md",
+  "claims": "/Users/awayer_mini/gengrowth-ops/inbox/06-tasks/tasks/.autopilot-claims.json",
+  "oracleBaseline": "/Users/awayer_mini/oracle-autopilot",
+  "maxAttempts": 2,
+  "timeoutSeconds": 2700
+}
+
+TARGETS_JSON:
+[
+  {
+    "pageId": "PG-WAIA-001",
+    "stage": "backfill",
+    "slug": "why-am-i-afraid-of-commitment",
+    "branch": "seo/auto/2026-07-14-PG-WAIA-001",
+    "error": "pending writeback remains after nightly completion",
+    "triage": "fixable",
+    "fingerprint": "6d75e277ef335154dd446485f82b9c69fceda5e0d4f4d82abd5783d296095c28",
+    "keyword": "why am i afraid of commitment",
+    "attempt": 1
+  }
+]
+
+LOG_WINDOW:
+
+===== nightly-seo run 2026-07-15 18:30:05 CST (max=6) =====
+[autopilot] auto-retry-parks: no transient parks to retry
+no unchecked items in plan — nothing to do
+
+**🤖 回答：**
+
+严格限定 `PG-WAIA-001`，未启动 `gg-nightly-seo.sh`、未运行全账本 reconcile、未修改 claim/ledger。根因证据为 pending writeback 首次执行时 `verify-live pending`，当前 sitemap 已包含目标 slug 且线上返回 200。使用固定 plan、FLOW/OPS 与 `oracle-autopilot` 路径运行 `node tools/scripts/gg-backfill-one.mjs --page-id PG-WAIA-001`，退出码 0，返回 `terminal=resolved`，`sheet`、`plan`、`archive` 三步全部完成且无失败。新鲜验证确认：pending 文件已消失；Sheet 目标行状态为「已发布」且 URL 正确；固定计划仍为 `[x]`；claim 为 `done` 并保留 preview、三维评审/Codex 证据；PR #374 为 MERGED；生产 canonical、标题、Article JSON-LD 与 sitemap 均正确；vault note 与 hero/两张内联图已归档并由 vault sync 提交。目标终态为 published and fully backfilled。
 
 ---

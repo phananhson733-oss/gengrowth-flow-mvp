@@ -50,8 +50,12 @@ function harness(options = {}) {
     mkdirSync(pendingDir, { recursive: true });
     writeFileSync(join(pendingDir, `${options.pendingWriteback}.json`), JSON.stringify({ pageId: options.pendingWriteback }));
   }
+  if (options.stateUnwritable) chmodSync(stateDir, 0o500);
 
-  const timeoutBin = executable(join(bin, 'gtimeout'), '#!/bin/sh\nshift\nexec "$@"\n');
+  const timeoutBin = executable(
+    join(bin, 'gtimeout'),
+    options.timeoutExit ? '#!/bin/sh\nexit 124\n' : '#!/bin/sh\nshift\nexec "$@"\n',
+  );
   const codexBin = executable(join(bin, 'codex'), [
     '#!/bin/sh',
     'printf "call\\n" >> "$GG_TEST_CODEX_CALLS"',
@@ -214,6 +218,14 @@ test('corrupt state fails closed before invoking Codex', () => {
   assert.match(result.stdout, /state_unavailable/);
 });
 
+test('unwritable state fails closed before invoking Codex', () => {
+  const h = harness({ claims: FIXABLE, stateUnwritable: true });
+  const result = h.run();
+  assert.equal(result.status, 2);
+  assert.equal(h.codexCalls(), 0);
+  assert.match(result.stdout, /state_unavailable/);
+});
+
 test('attempt cap produces human_only and third identical fire never invokes Codex', () => {
   const claim = FIXABLE['PG-A-001'];
   const fingerprint = repairFingerprint({ pageId: 'PG-A-001', stage: claim.stage, error: claim.error });
@@ -244,6 +256,17 @@ test('Agent nonzero consumes one attempt, skips verifier, and remains pending', 
   assert.equal(entry.attempts, 1);
   assert.equal(entry.status, 'pending');
   assert.match(entry.lastError, /codex.*9/i);
+});
+
+test('gtimeout exit 124 consumes one attempt and never invokes the verifier', () => {
+  const h = harness({ claims: FIXABLE, timeoutExit: true });
+  const result = h.run();
+  assert.equal(result.status, 2);
+  assert.equal(h.verifierCalls(), 0);
+  const entry = Object.values(h.state())[0];
+  assert.equal(entry.attempts, 1);
+  assert.equal(entry.status, 'pending');
+  assert.match(entry.lastError, /124/);
 });
 
 test('stale unfixable park is archived without invoking Codex', () => {

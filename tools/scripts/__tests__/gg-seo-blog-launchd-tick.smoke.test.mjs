@@ -33,7 +33,7 @@ function executable(path, source) {
   return path;
 }
 
-function runnerHarness({ nightlyExit = 0, hookExit = 0 } = {}) {
+function runnerHarness({ nightlyExit = 0, hookExit = 0, lockHeld = false } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'seo-launchd-runner-'));
   const flow = join(root, 'flow');
   const oracle = join(root, 'oracle');
@@ -51,6 +51,8 @@ function runnerHarness({ nightlyExit = 0, hookExit = 0 } = {}) {
   writeFileSync(plan, '- [ ] `PG-A-001` alpha\n');
   writeFileSync(claims, '{}');
   writeFileSync(nightlyLog, 'existing bytes\n');
+  const lock = join(root, 'launchd.lock');
+  if (lockHeld) mkdirSync(lock);
 
   const nightly = executable(join(root, 'nightly.sh'), [
     '#!/bin/sh',
@@ -84,7 +86,7 @@ function runnerHarness({ nightlyExit = 0, hookExit = 0 } = {}) {
       GG_SEO_NIGHTLY_LOG: nightlyLog,
       GG_SEO_LAUNCHD_LOG: launchdLog,
       GG_SEO_LAUNCHD_ERR_LOG: launchdErr,
-      GG_SEO_LAUNCHD_LOCK: join(root, 'launchd.lock'),
+      GG_SEO_LAUNCHD_LOCK: lock,
       GG_SEO_PLAN: plan,
       GG_SEO_CLAIMS: claims,
       GG_TEST_EVENTS: events,
@@ -122,6 +124,14 @@ test('hook nonzero is returned by the launchd runner', () => {
   const h = runnerHarness({ nightlyExit: 0, hookExit: 2 });
   const result = h.run();
   assert.equal(result.status, 2, `${result.stdout}\n${result.stderr}\n${h.log()}`);
+});
+
+test('outer lock makes a concurrent tick skip before nightly or hook', () => {
+  const h = runnerHarness({ lockHeld: true });
+  const result = h.run();
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}\n${h.log()}`);
+  assert.deepEqual(h.events(), []);
+  assert.match(h.log(), /another SEO launchd run holds/);
 });
 
 test('SEO plist schedules only the approved evening window and never runs at load', () => {

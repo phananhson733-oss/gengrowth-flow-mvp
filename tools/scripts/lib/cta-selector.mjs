@@ -6,6 +6,12 @@
 
 const PLACEHOLDER_RE = /(待搭建|占位|TODO|TBD|PLACEHOLDER)/i;
 const DISALLOWED_KINDS = new Set(['blog', 'external', 'navigation']);
+const DIRECT_INTENT_FIELDS = [
+  ['target_keyword', 1000],
+  ['entity', 800],
+  ['content_angle', 40],
+];
+const GENERIC_ASSOCIATION_TERMS = new Set(['birth chart', 'astrology', 'zodiac', 'meaning', 'interpretation']);
 
 function clean(value) {
   return String(value ?? '').trim();
@@ -58,6 +64,10 @@ function keywordList(value) {
     .filter(Boolean);
 }
 
+function intentTags(candidate) {
+  return keywordList(candidate.intent_tags).filter((tag) => tag !== '*');
+}
+
 function phraseMatches(phrase, value) {
   const p = normalized(phrase);
   const v = normalized(value);
@@ -66,21 +76,23 @@ function phraseMatches(phrase, value) {
 
 function scoreCandidate(candidate, context) {
   const keywords = keywordList(candidate.match_keywords).filter((keyword) => keyword !== '*');
-  const fields = [
-    ['target_keyword', 1000],
-    ['entity', 800],
-    ['associated_keywords', 100],
-    ['content_angle', 40],
-  ];
   let score = 0;
   const reasons = [];
-  for (const [field, points] of fields) {
+  for (const [field, points] of DIRECT_INTENT_FIELDS) {
     const value = context[field];
     if (!value) continue;
     const hit = keywords.find((keyword) => phraseMatches(keyword, value));
     if (!hit) continue;
     score += points;
     reasons.push(`${field}:${hit}`);
+  }
+  const associatedKeywords = keywordList(context.associated_keywords).filter((keyword) => !GENERIC_ASSOCIATION_TERMS.has(keyword));
+  const associatedHit = keywords
+    .filter((keyword) => !GENERIC_ASSOCIATION_TERMS.has(keyword))
+    .find((keyword) => associatedKeywords.some((value) => phraseMatches(keyword, value)));
+  if (associatedHit) {
+    score += 100;
+    reasons.push(`associated_keywords:${associatedHit}`);
   }
   // A legacy preference is only a tie-breaker for an already semantic match.
   // It must never manufacture a match (e.g. "工具页" → arbitrary Birth Chart).
@@ -91,13 +103,38 @@ function scoreCandidate(candidate, context) {
   return { score, reasons };
 }
 
+function inferIntentTag(candidates, context) {
+  const matches = [];
+  for (const candidate of candidates) {
+    const tags = intentTags(candidate);
+    if (!tags.length) continue;
+    const keywords = keywordList(candidate.match_keywords).filter((keyword) => keyword !== '*');
+    let score = 0;
+    const reasons = [];
+    for (const [field, points] of DIRECT_INTENT_FIELDS) {
+      const value = context[field];
+      if (!value) continue;
+      const hit = keywords.find((keyword) => phraseMatches(keyword, value));
+      if (!hit) continue;
+      score += points;
+      reasons.push(`${field}:${hit}`);
+    }
+    if (score === 0) continue;
+    for (const tag of tags) {
+      matches.push({ tag, score, reasons, candidate });
+    }
+  }
+  matches.sort((a, b) => b.score - a.score || priority(b.candidate) - priority(a.candidate) || a.tag.localeCompare(b.tag) || clean(a.candidate.cta_id).localeCompare(clean(b.candidate.cta_id)));
+  return matches[0] || null;
+}
+
 function priority(candidate) {
   const numeric = Number(candidate.priority);
   return Number.isFinite(numeric) ? numeric : 0;
 }
 
-function selection(candidate, reason) {
-  return {
+function selection(candidate, reason, ctaIntentTags = '') {
+  const result = {
     ok: true,
     cta_id: clean(candidate.cta_id),
     cta_text: clean(candidate.cta_text),
@@ -105,6 +142,8 @@ function selection(candidate, reason) {
     ga4_event_name: clean(candidate.ga4_event_name),
     cta_selection_reason: reason,
   };
+  if (ctaIntentTags) result.cta_intent_tags = ctaIntentTags;
+  return result;
 }
 
 /**
@@ -119,16 +158,21 @@ export function selectCta({ candidates, context = {}, allowedHost }) {
   const explicit = clean(context.explicit_cta);
   if (explicit) {
     const exact = valid.find((candidate) => candidate.cta_id === explicit || candidate.target_url === explicit);
-    if (exact) return selection(exact, `explicit_catalog_cta:${exact.cta_id}`);
+    if (exact) return selection(exact, `explicit_catalog_cta:${exact.cta_id}`, intentTags(exact).join(';'));
   }
 
-  const scored = valid
+  const inferredIntent = inferIntentTag(valid, context);
+  const intentScoped = inferredIntent
+    ? valid.filter((candidate) => intentTags(candidate).includes(inferredIntent.tag))
+    : valid;
+  const scored = intentScoped
     .map((candidate) => ({ candidate, ...scoreCandidate(candidate, context) }))
     .filter((result) => result.score > 0)
     .sort((a, b) => b.score - a.score || priority(b.candidate) - priority(a.candidate) || clean(a.candidate.cta_id).localeCompare(clean(b.candidate.cta_id)));
   if (scored.length) {
     const winner = scored[0];
-    return selection(winner.candidate, `semantic_match:${winner.reasons.join(',')}`);
+    const intentReason = inferredIntent ? `intent_tags:${inferredIntent.tag},` : '';
+    return selection(winner.candidate, `semantic_match:${intentReason}${winner.reasons.join(',')}`, inferredIntent?.tag || '');
   }
 
   const wildcard = valid

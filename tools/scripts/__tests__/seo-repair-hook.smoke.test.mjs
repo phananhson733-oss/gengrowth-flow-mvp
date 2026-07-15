@@ -3,18 +3,21 @@ import assert from 'node:assert/strict';
 import {
   beginRepairAttempts,
   normalizeRepairError,
+  parsePlanIds,
   parseUncheckedPlanIds,
   repairFingerprint,
   selectRepairTargets,
 } from '../lib/seo-repair-hook.mjs';
 
 test('parseUncheckedPlanIds returns only unchecked page IDs in plan order', () => {
-  const ids = parseUncheckedPlanIds([
+  const plan = [
     '- [ ] `PG-A-001` alpha',
     '- [x] `PG-B-001` beta',
     '- [ ] PG-C-001 gamma',
-  ].join('\n'));
+  ].join('\n');
+  const ids = parseUncheckedPlanIds(plan);
   assert.deepEqual([...ids], ['PG-A-001', 'PG-C-001']);
+  assert.deepEqual([...parsePlanIds(plan)], ['PG-A-001', 'PG-B-001', 'PG-C-001']);
 });
 
 test('clean plan has no target and a pre-existing eligible park is selected', () => {
@@ -50,6 +53,7 @@ test('stranded preview/merge states and pending writeback are repair targets', (
       'PG-B-001': { status: 'done', stage: 'published', slug: 'backfill', branch: 'seo/backfill', mergedAt: '2026-07-15T10:00:00Z' },
     },
     planIds,
+    uncheckedPlanIds: new Set(['PG-P-001', 'PG-M-001']),
     state: {},
     archivedIds: new Set(),
     pendingWritebackIds: new Set(['PG-B-001']),

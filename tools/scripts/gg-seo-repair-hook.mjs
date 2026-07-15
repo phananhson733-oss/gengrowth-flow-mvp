@@ -16,6 +16,7 @@ import { fileURLToPath } from 'node:url';
 import { stateDir } from './lib/flow-state.mjs';
 import {
   beginRepairAttempts,
+  parsePlanIds,
   parseUncheckedPlanIds,
   selectRepairTargets,
 } from './lib/seo-repair-hook.mjs';
@@ -85,7 +86,7 @@ function deriveRunError(exitCode, logWindow) {
 
 function planKeywords(planText) {
   const map = new Map();
-  for (const match of String(planText || '').matchAll(/^\s*-\s*\[ \]\s*`?(PG-[A-Z0-9]+-\d+)`?\s*(.*)$/gm)) {
+  for (const match of String(planText || '').matchAll(/^\s*-\s*\[[ xX]\]\s*`?(PG-[A-Z0-9]+-\d+)`?\s*(.*)$/gm)) {
     map.set(match[1], match[2].trim());
   }
   return map;
@@ -182,7 +183,8 @@ async function main() {
   const maxAttempts = numberValue(process.env.GG_SEO_REPAIR_MAX_ATTEMPTS, 2, 1);
   const timeoutSeconds = numberValue(process.env.GG_SEO_REPAIR_TIMEOUT_SECONDS, 2700, 1);
   const nowIso = new Date().toISOString();
-  const planIds = parseUncheckedPlanIds(planText);
+  const planIds = parsePlanIds(planText);
+  const uncheckedPlanIds = parseUncheckedPlanIds(planText);
   const pendingWritebackIds = new Set([...planIds].filter((pageId) => {
     const safe = String(pageId).replace(/[^A-Za-z0-9._-]/g, '_');
     return existsSync(join(baseState, 'pending-writeback', `${safe}.json`));
@@ -190,6 +192,7 @@ async function main() {
   const selected = selectRepairTargets({
     claims,
     planIds,
+    uncheckedPlanIds,
     state: loaded.state,
     archivedIds: archiveIds(),
     pendingWritebackIds,

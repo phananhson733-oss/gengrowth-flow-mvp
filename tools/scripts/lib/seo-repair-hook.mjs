@@ -1,6 +1,13 @@
 import { createHash } from 'node:crypto';
 import { triagePark } from './park-classify.mjs';
 
+export function parsePlanIds(text) {
+  return new Set(
+    [...String(text || '').matchAll(/^\s*-\s*\[[ xX]\]\s*`?(PG-[A-Z0-9]+-\d+)`?/gm)]
+      .map((match) => match[1]),
+  );
+}
+
 export function parseUncheckedPlanIds(text) {
   return new Set(
     [...String(text || '').matchAll(/^\s*-\s*\[ \]\s*`?(PG-[A-Z0-9]+-\d+)`?/gm)]
@@ -36,6 +43,7 @@ function terminalUpdate(target, terminal, reason = '') {
 export function selectRepairTargets({
   claims = {},
   planIds = new Set(),
+  uncheckedPlanIds = planIds,
   state = {},
   archivedIds = new Set(),
   pendingWritebackIds = new Set(),
@@ -51,6 +59,8 @@ export function selectRepairTargets({
   for (const pageId of planIds || []) {
     const claim = claims?.[pageId];
     if (!claim || archivedIds?.has(pageId)) continue;
+    const hasPendingWriteback = claim.status === 'done' && pendingWritebackIds?.has(pageId);
+    if (!hasPendingWriteback && !uncheckedPlanIds?.has(pageId)) continue;
 
     let stage;
     let error;
@@ -65,7 +75,7 @@ export function selectRepairTargets({
         ? 'nightly ended with pushed-preview pending preview gate'
         : 'nightly ended with verified-preview pending merge/live/backfill';
       triage = 'fixable';
-    } else if (claim.status === 'done' && pendingWritebackIds?.has(pageId)) {
+    } else if (hasPendingWriteback) {
       stage = 'backfill';
       error = 'pending writeback remains after nightly completion';
       triage = 'fixable';

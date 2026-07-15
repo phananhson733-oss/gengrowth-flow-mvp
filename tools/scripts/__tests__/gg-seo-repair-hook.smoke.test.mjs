@@ -184,6 +184,7 @@ test('eligible park persists attempt, invokes Codex once, and verifies the exact
 
 test('done claim with pending writeback is selected for one-shot repair', () => {
   const h = harness({
+    plan: '- [x] `PG-A-001` alpha\n',
     claims: {
       'PG-A-001': {
         status: 'done',

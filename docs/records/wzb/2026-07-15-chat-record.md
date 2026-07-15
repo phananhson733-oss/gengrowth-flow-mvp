@@ -165,3 +165,15 @@ After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-s
 继续完成发布与线上验收：已推送并合并两条变更分支，确认 Vercel 的生产部署状态为 success；线上 `north-node-in-aquarius-2026` 已呈现 `Explore Astrology Forecasts`，其余六篇仍呈现 Birth Chart 目标。GitHub Actions 的 flow PR 检查因账户付款/额度限制而在测试步骤开始前被平台拦截，但同一 CI 测试命令已在本地成功执行；该平台状态未阻止合并。
 
 ---
+
+### Q10 — 15:36
+
+**🙋 提问：**
+
+继续去落地
+
+**🤖 回答：**
+
+已再次核验生产环境：`why-do-i-attract-toxic-people`、`why-am-i-afraid-of-commitment`、`why-am-i-still-single`、`what-is-my-life-purpose`、`why-do-i-feel-stuck-in-my-career`、`linda-noskova-birth-chart` 均为 Birth Chart CTA；`north-node-in-aquarius-2026` 为 Forecast CTA。flow PR #2 与 Oracle PR #376 均为 MERGED，因此本次 CTA Map 意图分类、文章内容更新与生产部署均已实际落地，无待执行发布步骤。
+
+---

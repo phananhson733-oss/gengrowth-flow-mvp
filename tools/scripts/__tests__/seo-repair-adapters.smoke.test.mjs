@@ -192,6 +192,7 @@ test('astrology merge integration is accepted only for current main and target-o
     mergeHead: 'main-commit',
     originMain: 'main-commit',
     unmergedFiles: [],
+    unstagedFiles: [],
     diffAgainstMain: [
       'data/articles/saturn-return-age-29.ts',
       'public/images/blog/saturn-return-age-29-i0-en.svg',

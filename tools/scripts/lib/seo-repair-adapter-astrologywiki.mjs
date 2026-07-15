@@ -48,6 +48,18 @@ export function editableAstrologyFiles(target) {
     .filter((file) => file && file !== '..' && !file.startsWith(`..${sep}`) && !isAbsolute(file)))];
 }
 
+export function isSafeAstrologyMergeIndex(target, state) {
+  const editable = new Set(editableAstrologyFiles(target));
+  return Boolean(state?.mergeHead)
+    && state.mergeHead === state.originMain
+    && Array.isArray(state.unmergedFiles)
+    && state.unmergedFiles.length === 0
+    && Array.isArray(state.unstagedFiles)
+    && state.unstagedFiles.length === 0
+    && Array.isArray(state.diffAgainstMain)
+    && state.diffAgainstMain.every((file) => editable.has(file));
+}
+
 export async function verifyInternalLinkCandidate(slug, deps = {}) {
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(String(slug || ''))) return false;
   let hasRoute = false;
@@ -265,11 +277,50 @@ async function defaultPersistRepair(target) {
   ], { cwd: target.worktree, timeout: 60_000 });
   if (!status.ok) return { ...status, ok: false };
   const dirty = parseGitStatusPaths(status.stdout);
-  const forbidden = dirty.filter((file) => !editable.has(file));
-  if (forbidden.length) {
-    return { ok: false, stderr: `Agent changed files outside target allowlist: ${forbidden.join(', ')}` };
+  const mergeHeadResult = run([
+    'git', '-C', target.worktree, 'rev-parse', '-q', '--verify', 'MERGE_HEAD',
+  ], { cwd: target.worktree, timeout: 60_000 });
+  const mergeInProgress = mergeHeadResult.ok && mergeHeadResult.stdout.trim() !== '';
+  if (mergeInProgress) {
+    const originMain = run([
+      'git', '-C', target.worktree, 'rev-parse', 'origin/main',
+    ], { cwd: target.worktree, timeout: 60_000 });
+    const unmerged = run([
+      'git', '-C', target.worktree, 'diff', '--name-only', '--diff-filter=U',
+    ], { cwd: target.worktree, timeout: 60_000 });
+    const unstaged = run([
+      'git', '-C', target.worktree, 'diff', '--name-only',
+    ], { cwd: target.worktree, timeout: 60_000 });
+    const diffAgainstMain = run([
+      'git', '-C', target.worktree, 'diff', '--cached', '--name-only', 'origin/main',
+    ], { cwd: target.worktree, timeout: 60_000 });
+    if (!originMain.ok || !unmerged.ok || !unstaged.ok || !diffAgainstMain.ok) {
+      return { ok: false, stderr: 'cannot validate staged astrology merge index' };
+    }
+    const mergeState = {
+      mergeHead: mergeHeadResult.stdout.trim(),
+      originMain: originMain.stdout.trim(),
+      unmergedFiles: unmerged.stdout.trim().split('\n').filter(Boolean),
+      unstagedFiles: unstaged.stdout.trim().split('\n').filter(Boolean),
+      diffAgainstMain: diffAgainstMain.stdout.trim().split('\n').filter(Boolean),
+    };
+    if (!isSafeAstrologyMergeIndex(target, mergeState)) {
+      return {
+        ok: false,
+        stderr: `unsafe astrology merge index: ${JSON.stringify(mergeState)}`,
+      };
+    }
+    const committed = run([
+      'git', '-C', target.worktree, 'commit', '-m', `fix(seo-repair): ${target.pageId} merge current main`,
+    ], { cwd: target.worktree, timeout: 180_000 });
+    if (!committed.ok) return { ...committed, ok: false };
+  } else {
+    const forbidden = dirty.filter((file) => !editable.has(file));
+    if (forbidden.length) {
+      return { ok: false, stderr: `Agent changed files outside target allowlist: ${forbidden.join(', ')}` };
+    }
   }
-  if (dirty.length > 0) {
+  if (!mergeInProgress && dirty.length > 0) {
     const staged = run(['git', '-C', target.worktree, 'add', '--', ...dirty], { cwd: target.worktree, timeout: 60_000 });
     if (!staged.ok) return { ...staged, ok: false };
     const committed = run([

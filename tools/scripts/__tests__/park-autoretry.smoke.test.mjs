@@ -22,8 +22,18 @@ function setup(ledger, sidecar) {
   return { ops, state, ledgerPath };
 }
 function run(ops, state, extraEnv = {}) {
+  const emptyEnvFile = join(ops, 'empty-gg.env');
+  writeFileSync(emptyEnvFile, '');
   execFileSync('node', [AUTOPILOT, '--auto-retry-parks'], {
-    env: { ...process.env, GG_OPS_DIR: ops, GG_FLOW_STATE_DIR: state, GG_LARK_NOTIFY_SILENCE: '1', GG_AUTOPILOT_NO_NOTIFY: '1', ...extraEnv },
+    env: {
+      ...process.env,
+      GG_ENV_FILE: emptyEnvFile,
+      GG_OPS_DIR: ops,
+      GG_FLOW_STATE_DIR: state,
+      GG_LARK_NOTIFY_SILENCE: '1',
+      GG_AUTOPILOT_NO_NOTIFY: '1',
+      ...extraEnv,
+    },
     encoding: 'utf8', timeout: 60000, stdio: ['ignore', 'pipe', 'pipe'],
   });
 }

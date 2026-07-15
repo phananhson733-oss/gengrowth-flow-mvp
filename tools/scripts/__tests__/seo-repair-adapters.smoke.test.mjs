@@ -11,6 +11,7 @@ import {
   editableAstrologyFiles,
   isSafeAstrologyMergeIndex,
   isSafeAstrologyTargetPath,
+  isAlreadyRegatableRetryFailure,
   parseGitStatusPaths,
   selectAstrologyChangedFiles,
   verifyInternalLinkCandidate,
@@ -216,6 +217,18 @@ test('astrology merge integration is accepted only for current main and target-o
     ...safe,
     diffAgainstMain: [...safe.diffAgainstMain, 'scripts/generate-seo-pages.mjs'],
   }), false);
+});
+
+test('astrology regate skips reset only when the exact claim is already pushed-preview', () => {
+  assert.equal(isAlreadyRegatableRetryFailure({
+    ok: false,
+    stderr: '[autopilot] ERROR: cannot retry seo/auto/x from status "pushed-preview" — expected needs_human',
+  }), true);
+  assert.equal(isAlreadyRegatableRetryFailure({
+    ok: false,
+    stderr: '[autopilot] ERROR: cannot retry seo/auto/x from status "done" — expected needs_human',
+  }), false);
+  assert.equal(isAlreadyRegatableRetryFailure({ ok: false, stderr: 'auth failed' }), false);
 });
 
 test('internal-link candidates require an existing route or sitemap entry plus HTTP 200', async () => {

@@ -302,13 +302,19 @@ async function defaultRegate(target) {
     '--branch',
     target.branch,
   ], { cwd: DEFAULT_FLOW, timeout: 180_000 });
-  if (!reset.ok) return reset;
+  if (!reset.ok && !isAlreadyRegatableRetryFailure(reset)) return reset;
   return run([
     'node',
     join(DEFAULT_SCRIPTS, 'gg-preview-gate.mjs'),
     '--branch',
     target.branch,
   ], { cwd: DEFAULT_FLOW, timeout: 45 * 60 * 1000 });
+}
+
+export function isAlreadyRegatableRetryFailure(result) {
+  if (result?.ok === true) return false;
+  return /cannot retry\s+\S+\s+from status "pushed-preview"\s+[^\n]*expected needs_human/i
+    .test(`${result?.stdout || ''}\n${result?.stderr || ''}`);
 }
 
 async function defaultInvokeAgent(target, { record, strategy }) {

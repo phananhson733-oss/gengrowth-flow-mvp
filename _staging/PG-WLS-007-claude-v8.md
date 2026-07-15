@@ -1,3 +1,29 @@
+---
+title: Chatgpt Seo
+slug: chatgpt-seo
+date: 2026-07-15
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-WLS-007
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: chatgpt seo
+associated_keywords:
+  - chatgpt seo comparison
+  - chatgpt seo pricing
+  - chatgpt seo software
+  - chatgpt seo tool
+  - chatgpt seo workflow
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-07-15T11:56:14.935Z
+content_sha256_short: 0a843831c80fd6ca
+phase2_checks: all-pass
+---
+
 # How to Tell Which ChatGPT SEO Approach Your Team Actually Needs
 
 ## What Is ChatGPT SEO?

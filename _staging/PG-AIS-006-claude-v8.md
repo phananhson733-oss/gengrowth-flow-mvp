@@ -1,3 +1,29 @@
+---
+title: AI Agents For Sales
+slug: ai-agents-for-sales
+date: 2026-07-15
+status: ready-to-review
+type: wiki-entry
+template: Definition
+tier: T2
+track: 量产线
+page_id: PG-AIS-006
+author_id: "marcus-orion"
+author_display_name: "Marcus Orion"
+target_keyword: AI agents for sales
+associated_keywords:
+  - AI agents for sales comparison
+  - AI agents for sales pricing
+  - AI agents for sales software
+  - AI agents for sales tool
+  - AI agents for sales workflow
+generated_by: unknown
+prompt_version: v8
+generated_at: 2026-07-15T16:37:40.336Z
+content_sha256_short: dcf404b92c25304a
+phase2_checks: all-pass
+---
+
 # Where AI Agents for Sales Actually Replace the Rep — and Where They Can't
 
 ## What Is AI Agents for Sales?

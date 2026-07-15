@@ -253,10 +253,10 @@ git commit -m "feat(seo): add universal repair state machine"
 **CLI contract:**
 
 ```text
-node tools/scripts/gg-seo-repair-controller.mjs enqueue --event-json <path>
+node tools/scripts/gg-seo-repair-controller.mjs enqueue --event-json /tmp/seo-repair-event.json
 node tools/scripts/gg-seo-repair-controller.mjs drain [--max-targets N] [--budget-seconds N]
-node tools/scripts/gg-seo-repair-controller.mjs import-v1 --targets-json <path>
-node tools/scripts/gg-seo-repair-controller.mjs inspect [--page-id PG-...]
+node tools/scripts/gg-seo-repair-controller.mjs import-v1 --targets-json /tmp/seo-repair-targets.json
+node tools/scripts/gg-seo-repair-controller.mjs inspect [--page-id PG-WLS-007]
 ```
 
 - [ ] **Step 1: Write RED CLI and lock tests**
@@ -305,8 +305,8 @@ git commit -m "feat(seo): add unified repair controller cli"
 **Adapter contract:**
 - `createGengrowthRepairAdapter(deps)` returns `{ recover, repair, regate, publish, verifyTerminal }`.
 - The adapter may invoke only exact argv prefixes registered in `allowedActions`.
-- Fact reviewer retry: `node tools/scripts/gg-codex-pr-review.mjs --source <absolute staging source>`.
-- Publish retry: `node tools/scripts/gg-gengrowth-publish.mjs --apply --pages <pageId> --limit 1`.
+- Fact reviewer retry: `node tools/scripts/gg-codex-pr-review.mjs --source ABSOLUTE_STAGING_SOURCE`，其中 adapter 用 manifest 解析并替换 `ABSOLUTE_STAGING_SOURCE`，不接受事件自由传入路径。
+- Publish retry: `node tools/scripts/gg-gengrowth-publish.mjs --apply --pages PG-WLS-007 --limit 1`；实际 page ID 必须来自已解析的 manifest 目标。
 
 - [ ] **Step 1: Write RED `PG-WLS-007` regression**
 
@@ -406,7 +406,7 @@ Expected: target-contract assertions fail before prompt wiring.
 
 - [ ] **Step 3: Write prompt contract and spawn adapter**
 
-The prompt requires: inspect exact failure layer; make the minimum target change; for pipeline code create/reuse an isolated `codex/seo-repair-<pageId-lower>-<fingerprint8>` worktree; write a failing regression before code; run targeted tests; call only adapter-provided actions; return structured outcome/evidence. Controller treats the response as diagnostics only and always calls `regate` plus `verifyTerminal` itself.
+The prompt requires: inspect exact failure layer; make the minimum target change; for pipeline code create/reuse an isolated branch named from the concrete page ID and first eight fingerprint characters, for example `codex/seo-repair-pg-wls-007-a1b2c3d4`; write a failing regression before code; run targeted tests; call only adapter-provided actions; return structured outcome/evidence. Controller treats the response as diagnostics only and always calls `regate` plus `verifyTerminal` itself.
 
 - [ ] **Step 4: Add crash/timeout/new-fingerprint E2E**
 
@@ -523,12 +523,7 @@ Expected: no active old SEO/publish/repair process and no owned lock. Do not mer
 
 - [ ] **Step 5: Commit regression-only corrections**
 
-```bash
-git add <only files changed by proven regression fixes>
-git commit -m "test(seo): harden universal repair controller rollout"
-```
-
-Skip the commit if no file changed.
+Run `git status --short` and stage only the exact implementation/test paths changed by a reproduced regression, then run `git commit -m "test(seo): harden universal repair controller rollout"`. Skip the commit if no file changed.
 
 ---
 
@@ -624,4 +619,3 @@ Stage only reviewed implementation/target/evidence files that belong to this tas
 - [ ] `PG-WLS-007`, `PG-TRANS-016`, `PG-TRANS-018` are all live and backfilled with deterministic evidence.
 - [ ] Queue, leases, locks, Agents, publisher and writeback processes are fully converged.
 - [ ] Focused v2 suite and full script regression pass.
-

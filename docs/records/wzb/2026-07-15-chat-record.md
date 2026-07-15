@@ -177,3 +177,15 @@ After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-s
 已再次核验生产环境：`why-do-i-attract-toxic-people`、`why-am-i-afraid-of-commitment`、`why-am-i-still-single`、`what-is-my-life-purpose`、`why-do-i-feel-stuck-in-my-career`、`linda-noskova-birth-chart` 均为 Birth Chart CTA；`north-node-in-aquarius-2026` 为 Forecast CTA。flow PR #2 与 Oracle PR #376 均为 MERGED，因此本次 CTA Map 意图分类、文章内容更新与生产部署均已实际落地，无待执行发布步骤。
 
 ---
+
+### Q11 — 15:58
+
+**🙋 提问：**
+
+将这个规则，写入到 cron 中
+
+**🤖 回答：**
+
+已通过 Codex automation 更新现有唯一 SEO cron 自动化 `gengrowth-seo-blog`，未创建重复任务，保留原计划与 `PAUSED` 状态。提示中新增强制 CTA 意图路由：先以 `target_keyword`、`entity`、`content_angle` 与 CTA Map 的 `intent_tags` 匹配；批量 `associated_keywords` 通用词不可单独导向 Birth Chart；个人本命盘、明确双人合盘、forecast/timing 分别按对应意图选择；缺少合规 CTA 或审计字段必须 `needs_human`；Related Reading/Blog_Article/pillar/sibling 内链继续与商业 CTA 完全隔离。已读取回 `/Users/awayer_mini/.codex/automations/gengrowth-seo-blog/automation.toml`，确认规则、状态和计划均已持久化。
+
+---

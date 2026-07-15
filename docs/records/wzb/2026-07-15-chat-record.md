@@ -22,7 +22,7 @@ aliases:
 - 运行 Phase 2 索引监控 wrapper；两站官方 Sitemap API 提交成功，astrologywiki 完成 3 条 URL Inspection，gengrowth 无到期检查项。
 - 请求索引候选队列已按优先级刷新；未执行普通文章 Google Indexing API 或无人值守 GSC Request Indexing 点击，日志未给出飞书发送回执。
 - 运行结果复盘性能包装器失败：两个产品的 GSC/GA4 OAuth refresh token 均已过期或被撤销；未扫描、未写表、未生成当日报告，需完成 OAuth 重新授权后仅重跑同一包装器。
-- 审计 7 月 14 日晚至 15 日凌晨连续发布的 7 篇 AstrologyWiki 文章 CTA；发现批量 `associated_keywords` 中的通用词使选择器错误地将全部需求归为 Birth Chart，已暂停未推送分支，待重构为按需求分类的 Map 驱动路由。
+- 审计 7 月 14 日晚至 15 日凌晨连续发布的 7 篇 AstrologyWiki 文章 CTA；发现批量 `associated_keywords` 中的通用词使选择器错误地将全部需求归为 Birth Chart，已暂停未推送分支。用户授权由 Agent 对文章进行意图识别，后续将重构为按需求分类的 Map 驱动路由。
 
 ---
 
@@ -113,5 +113,17 @@ After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-s
 **🤖 回答：**
 
 确认当前结果不符合需求。根因是选题表 `associated_keywords` 中批量添加的 `birth chart`、`astrology`、`zodiac`、`meaning`、`interpretation` 被选择器作为强匹配信号；CTA Map 又没有区分个人本命盘、双人合盘、年度趋势和工具总览等语义类别，导致 7 篇文章都落到 Birth Chart。已停止未推送的锚文本修复分支，未部署。下一步待确认关系主题但没有第二个人出生信息时的 CTA 归类策略；随后按“先分类需求，再从 CTA Map 选择候选”的确定性方案重构，并保留 Blog_Article 内链规则。
+
+---
+
+### Q6 — 13:35
+
+**🙋 提问：**
+
+这个分类可以由你来做意图识别
+
+**🤖 回答：**
+
+确认由 Agent 依据文章实际搜索意图与正文语境完成分类，而非以通用关联词直接匹配。已明确将 `birth chart` 等批量通用词降为低权重信号，并保持现有未推送分支冻结、未上线；下一步将提交“先识别意图类别、再在 CTA Map 同类候选中选择”的具体路由设计供确认，Blog_Article 内链规则继续保留。
 
 ---

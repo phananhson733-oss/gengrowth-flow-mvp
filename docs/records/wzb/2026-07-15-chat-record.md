@@ -253,3 +253,15 @@ After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-s
 确认 hook 使用一次性本机 `codex exec`，Codex Automation 始终保持暂停。提出三种方案并推荐事件触发式单次 Agent：LaunchAgent 直接运行 `gg-nightly-seo.sh`；wrapper 非零、日志异常或当前计划存在未耗尽尝试上限的 `needs_human` 时，按 `page_id + stage + error fingerprint` 触发 repair hook；hook 使用独立锁、单轮/单篇/同错误指纹上限，将精确日志窗口和 ledger 条目传给 Codex；Agent 复用 `retry-author`、author repair、`retry-failed`、preview gate、merge 与 backfill，任何发布仍须通过既有质量门。完成后由确定性 verifier 检查 ledger、生产 URL、canonical、Article JSON-LD、sitemap、plan、publish-log 与 Sheet 回填；成功为 done，不可修或权限/凭据问题进入去重终态。方案同时移除 macOS 主入口对暂停 automation prompt 的依赖，并清理 flow `AGENTS.md`/暂停 automation prompt 中 Lynne 专属 soul 的错误引用。等待用户批准该设计后写 spec 和实现计划。
 
 ---
+
+### Q17 — 16:30
+
+**🙋 提问：**
+
+ A
+
+**🤖 回答：**
+
+已按方案 A 写入正式设计文档 `docs/superpowers/specs/2026-07-15-seo-agent-repair-hook-design.md`，包含唯一 LaunchAgent 直跑 nightly、异常 selector、一次性 `codex exec`、错误指纹与 attempt cap、确定性终态 verifier、回填、通知、Lynne soul 污染清理、测试和灰度回退。自检未发现 TBD/TODO、内部矛盾或范围漂移；补齐了具体模块路径、`GG_SEO_REPAIR_HOOK_ENABLED` 等环境开关、默认上限和原子 sidecar 写入边界。文档已提交为 `7efb9ba0 docs(seo): design exception-triggered repair hook`；尚未修改运行代码、LaunchAgent 或启用配置，等待用户审阅书面 spec 后进入实现计划。
+
+---

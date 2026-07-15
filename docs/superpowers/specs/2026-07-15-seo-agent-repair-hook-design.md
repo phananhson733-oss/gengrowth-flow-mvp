@@ -4,7 +4,7 @@ date: 2026-07-15
 updated: 2026-07-15
 type: plan
 version: v1.0
-status: review
+status: final
 owner: wzb
 tags:
   - seo
@@ -245,3 +245,12 @@ repair hook 上线前必须同步清理直接影响其运行的错误项目指�
 - 不自动处理 GSC Request Indexing 点击；
 - 不重写 CTA 路由、author repair、preview gate 或 backfill 的已验证核心逻辑；
 - 不保证事实错误或缺失凭据一定能发布，目标是自动推进到安全、可审计的终态。
+
+## 12. 实现验收
+
+- 2026-07-15 18:30:04–18:36:55 CST 的首个自然 LaunchAgent 窗口完成真实异常闭环：`gg-nightly-seo.sh` 直接空跑退出 0，selector 仅选择 `PG-WAIA-001/backfill`，一次性 Codex Agent 仅执行定向 `gg-backfill-one`。
+- attempt 在 Agent spawn 前以 fingerprint `6d75e277...095c28` 原子记录为 `inflight`；最终 state 为 `attempts=1 / status=published / lastError=null`，Agent PID `20693`、timeout `2700s` 均进入日志。
+- 外层确定性 verifier 的 `ledger_done`、`branch_and_merge`、`http_200`、`canonical`、`article_jsonld`、`sitemap`、`plan_checked`、`publish_log`、`sheet_published`、`cta_audit`、`cta_matches_map`、`writeback_clear` 全部为 true。
+- launchd `runs=14 / last exit code=0`；launchd/nightly 锁均释放，无残留 nightly、repair hook、`codex exec` 或 backfill 进程。终态通知于 18:36:55 审计为 `SENT`，outbox 为空。
+- Codex Automation 保持 `PAUSED`，旧八个 launchd 标签均 disabled/unloaded，Unix crontab 无 SEO 执行项；回退仍只需关闭 `GG_SEO_REPAIR_HOOK_ENABLED`。
+- 定向 repair/backfill 回归为 43/43；完整 `tools/scripts/__tests__/*.test.mjs` 新鲜运行退出码 0；生产 verifier 复跑仍为 `published` 且 12 项全真。

@@ -4,7 +4,7 @@ date: 2026-07-15
 updated: 2026-07-15
 type: plan
 version: v1.0
-status: approved
+status: final
 owner: wzb
 tags:
   - seo
@@ -579,7 +579,7 @@ GG_SEO_REPAIR_TIMEOUT_SECONDS=2700
 
 Read back only these four keys. Do not print the whole environment file.
 
-- [ ] **Step 6: Verify the natural launchd window**
+- [x] **Step 6: Verify the natural launchd window**
 
 After the next natural 18:30–21:30 trigger, isolate the exact `seo-blog launchd tick` window and prove one of:
 
@@ -588,6 +588,10 @@ After the next natural 18:30–21:30 trigger, isolate the exact `seo-blog launch
 
 Also confirm the launchd lock is gone, no orphan `codex exec`/nightly process remains, and `seo-repair-hook.json` matches the logged attempt/result.
 
-- [ ] **Step 7: Final completion audit**
+Evidence: the natural 2026-07-15 18:30:04–18:36:55 CST window ran direct nightly (`exit=0`), selected only `PG-WAIA-001/backfill`, spawned one Agent (`PID=20693`, attempt 1, timeout 2700s), and ended `published` with every named verifier check true. launchd ended `last exit code=0`; both locks and all relevant processes were absent afterward; the persisted fingerprint/state exactly matches the launchd result.
+
+- [x] **Step 7: Final completion audit**
 
 Check every numbered requirement in `docs/superpowers/specs/2026-07-15-seo-agent-repair-hook-design.md` against code, tests, runtime status and logs. Update spec frontmatter `status: final` only after all required evidence exists. Run `git diff --check`, append the terminal state to the daily record, and commit repository-owned final documentation without staging unrelated user changes.
+
+Audit result: scheduler ownership、clean/exception trigger contracts、fingerprint/cap/single-flight、Agent safety boundaries、published/archived/human-only state handling、live/Sheet/CTA/backfill verifier、final-only notification、Lynne soul cleanup and rollback switch all have direct code/test/runtime evidence. Targeted tests pass 43/43, the full suite exits 0, `git diff --check` passes, and the spec is now `final`.

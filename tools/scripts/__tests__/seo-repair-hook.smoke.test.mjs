@@ -94,6 +94,32 @@ test('cap, archived sidecar, and inflight state suppress duplicate Agent targets
   }).targets, []);
 });
 
+test('stale inflight can use the remaining attempt while a fresh inflight stays single-flight', () => {
+  const claim = {
+    status: 'needs_human', stage: 'authoring', slug: 'alpha', error: 'phase2 FAIL: drifted sections',
+  };
+  const fingerprint = repairFingerprint({ pageId: 'PG-A-001', stage: claim.stage, error: claim.error });
+  const base = {
+    claims: { 'PG-A-001': claim },
+    planIds: new Set(['PG-A-001']),
+    archivedIds: new Set(),
+    maxAttempts: 2,
+    nowMs: Date.parse('2026-07-15T12:00:00Z'),
+    inflightTtlMs: 60 * 60 * 1000,
+  };
+  const fresh = selectRepairTargets({
+    ...base,
+    state: { [fingerprint]: { attempts: 1, status: 'inflight', startedAt: '2026-07-15T11:30:00Z' } },
+  });
+  assert.deepEqual(fresh.targets, []);
+
+  const stale = selectRepairTargets({
+    ...base,
+    state: { [fingerprint]: { attempts: 1, status: 'inflight', startedAt: '2026-07-15T10:00:00Z' } },
+  });
+  assert.deepEqual(stale.targets.map((target) => target.pageId), ['PG-A-001']);
+});
+
 test('run error creates one synthetic target and maxTargets preserves plan order', () => {
   const claims = {
     'PG-A-001': { status: 'needs_human', stage: 'authoring', error: 'phase2 FAIL: A' },

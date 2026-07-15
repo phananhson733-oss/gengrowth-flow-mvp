@@ -41,6 +41,8 @@ export function selectRepairTargets({
   runError = '',
   maxTargets = 2,
   maxAttempts = 2,
+  nowMs = Date.now(),
+  inflightTtlMs = 60 * 60 * 1000,
 } = {}) {
   const targets = [];
   const terminalUpdates = [];
@@ -69,7 +71,11 @@ export function selectRepairTargets({
     }
 
     const attempt = state?.[fingerprint] || {};
-    if (attempt.status === 'inflight') continue;
+    if (attempt.status === 'inflight') {
+      const startedAt = Date.parse(attempt.startedAt || '');
+      const staleInflight = Number.isFinite(startedAt) && nowMs - startedAt >= inflightTtlMs;
+      if (!staleInflight) continue;
+    }
     if (['published', 'archived', 'human_only'].includes(attempt.status)) continue;
     if (Number(attempt.attempts || 0) >= maxAttempts) {
       terminalUpdates.push(terminalUpdate(target, 'human_only', 'repair attempt cap reached'));

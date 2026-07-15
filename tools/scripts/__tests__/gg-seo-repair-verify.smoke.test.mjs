@@ -4,7 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { verifyRepairTarget } from '../gg-seo-repair-verify.mjs';
+import { deriveCtaAudits, verifyRepairTarget } from '../gg-seo-repair-verify.mjs';
 
 const TARGET = { pageId: 'PG-A-001', slug: 'alpha', stage: 'authoring' };
 const URL = 'https://www.astrologywiki.com/en/wiki/alpha';
@@ -97,6 +97,24 @@ test('canonical parser accepts rel/href attributes in either order', async () =>
     ? { ok: true, status: 200, text: `<loc>${URL}</loc>` }
     : { ok: true, status: 200, text: `<link href="${URL}" data-x="1" rel="canonical"><script type="application/ld+json">{"@type":"Article"}</script>` };
   assert.equal((await verifyRepairTarget(TARGET, deps)).checks.canonical, true);
+});
+
+test('CTA audit is re-derived from the current pages row and CTA Map', () => {
+  const pagesRaw = [
+    ['Target Keyword', 'Status', 'URL', 'page_id', 'CTA', 'Entity'],
+    ['why am I afraid of commitment', '已发布', URL, 'PG-A-001', 'https://astrologywiki.com/en/birth-chart-calculator', 'commitment patterns'],
+  ];
+  const ctaRaw = [
+    ['cta_id', 'page_role', 'cta_文案', 'target_url', 'cta_kind', 'blog_eligible', 'priority', 'intent_tags'],
+    ['url_tool_birth_chart', 'article', 'Read Your Birth Chart', 'https://astrologywiki.com/en/birth-chart-calculator', 'tool', 'Y', '10', 'natal-self'],
+  ];
+  const audits = deriveCtaAudits([TARGET], { pagesRaw, clustersRaw: [], ctaRaw });
+  assert.deepEqual(audits['PG-A-001'], {
+    cta_id: 'url_tool_birth_chart',
+    cta_target_url: 'https://astrologywiki.com/en/birth-chart-calculator',
+    cta_intent_tags: 'natal-self',
+    cta_selection_reason: 'explicit_catalog_cta:url_tool_birth_chart',
+  });
 });
 
 test('explicit archived terminal is accepted without calling live dependencies', async () => {

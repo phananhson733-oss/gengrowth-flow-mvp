@@ -1,10 +1,24 @@
 #!/usr/bin/env node
 import { existsSync, readFileSync } from 'node:fs';
-import { spawnSync } from 'node:child_process';
 import { dirname, join, resolve } from 'node:path';
 import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { stateDir } from './lib/flow-state.mjs';
+import { getAccessToken } from './lib/_oauth-token.mjs';
+import {
+  fetchTab,
+  loadEnv,
+  mapRowToBrief,
+  resolvePageId,
+} from './gg-sheet-pull.mjs';
+import {
+  buildClusterMap,
+  buildCtaMap,
+  composeOverride,
+  CLUSTERS_TAB,
+  CTA_TAB,
+  PAGES_TAB,
+} from './gg-sheet-to-brief.mjs';
 
 const SCRIPT = fileURLToPath(import.meta.url);
 const SCRIPTS = dirname(SCRIPT);
@@ -12,7 +26,6 @@ const FLOW = resolve(SCRIPTS, '../..');
 const OPS = process.env.GG_OPS_DIR || join(homedir(), 'gengrowth-ops');
 const DEFAULT_CLAIMS = join(OPS, 'inbox/06-tasks/tasks/.autopilot-claims.json');
 const DEFAULT_PUBLISH_LOG = join(OPS, 'inbox/06-tasks/seo-autopilot-publish-log.md');
-const SHEET_PULL = join(SCRIPTS, 'gg-sheet-pull.mjs');
 const LIVE_BASE = 'https://www.astrologywiki.com/en/wiki/';
 const SITEMAP = 'https://www.astrologywiki.com/sitemap.xml';
 
@@ -98,8 +111,14 @@ export async function verifyRepairTarget(target, deps = {}) {
     && String(deps.publishLogText || '').includes(slug);
   const sheetUrl = deps.sheetRow?.publish_url || deps.sheetRow?.published_url || deps.sheetRow?.url || '';
   checks.sheet_published = deps.sheetRow?.status === '已发布' && String(sheetUrl).includes(slug);
-  checks.cta_matches_sheet = checks.http_200
-    && pageLinksTo(page.text, deps.sheetRow?.cta_target_url, url);
+  checks.cta_audit = Boolean(
+    deps.ctaAudit?.cta_id
+    && deps.ctaAudit?.cta_target_url
+    && deps.ctaAudit?.cta_intent_tags
+    && deps.ctaAudit?.cta_selection_reason,
+  );
+  checks.cta_matches_map = checks.http_200 && checks.cta_audit
+    && pageLinksTo(page.text, deps.ctaAudit.cta_target_url, url);
   checks.writeback_clear = !deps.pendingWriteback;
 
   const failed = Object.entries(checks).filter(([, ok]) => !ok).map(([name]) => name);
@@ -152,21 +171,77 @@ function findSheetRow(target, rows) {
   ) || null;
 }
 
-function loadSheetRows(args) {
+function sheetRowsFromRaw(pagesRaw) {
+  if (!Array.isArray(pagesRaw) || pagesRaw.length < 2) return [];
+  const header = pagesRaw[0];
+  return pagesRaw.slice(1).map((row) => {
+    const { brief } = mapRowToBrief(header, row || []);
+    return { page_id: resolvePageId(brief, true), brief };
+  });
+}
+
+function matchesTarget(target, row) {
+  const targetKeyword = String(target.keyword || '').trim().toLowerCase();
+  const rowKeyword = String(row?.brief?.target_keyword || '').trim().toLowerCase();
+  return row?.page_id === target.pageId
+    || (targetKeyword && targetKeyword === rowKeyword)
+    || (target.slug && String(row?.brief?.publish_url || '').includes(target.slug));
+}
+
+export function deriveCtaAudits(targets, { pagesRaw, clustersRaw, ctaRaw, repo = FLOW }) {
+  const clusterMap = buildClusterMap(clustersRaw || []);
+  const ctaBuild = buildCtaMap(ctaRaw || []);
+  const audits = {};
+  for (const target of targets || []) {
+    const row = sheetRowsFromRaw(pagesRaw).find((candidate) => matchesTarget(target, candidate));
+    if (!row) continue;
+    const result = composeOverride(row, {
+      clusterMap,
+      ctaMap: ctaBuild,
+      ctaRegistry: ctaBuild.registry,
+      repo,
+      authorMap: new Map(),
+    });
+    if (!result.entry) continue;
+    audits[target.pageId] = {
+      cta_id: result.entry.cta_id,
+      cta_target_url: result.entry.cta_target_url,
+      cta_intent_tags: result.entry.cta_intent_tags,
+      cta_selection_reason: result.entry.cta_selection_reason,
+    };
+  }
+  return audits;
+}
+
+async function loadSheetContext(args, targets) {
   if (args['sheet-fixture']) {
     const fixture = readJson(args['sheet-fixture'], []);
-    return fixture.rows || fixture;
+    return {
+      rows: fixture.rows || fixture,
+      ctaAudits: fixture.ctaAudits || {},
+    };
   }
-  const out = '.gg-cache/batches/seo-repair-verify-sheet.json';
-  const result = spawnSync('node', [SHEET_PULL, '--rows', '2-1600', '--limit', '1700', '--out', out], {
-    cwd: FLOW,
-    encoding: 'utf8',
-    timeout: 120000,
-    maxBuffer: 16 * 1024 * 1024,
-  });
-  if (result.status !== 0) return [];
-  const parsed = readJson(join(FLOW, out), []);
-  return parsed.rows || parsed;
+  try {
+    loadEnv();
+    const workbookId = String(
+      process.env.GG_SHEETS_FLOW_MVP_WORKBOOK_ID
+      || process.env.GG_SHEETS_WORKBOOK_ID
+      || '',
+    ).trim();
+    if (!workbookId) return { rows: [], ctaAudits: {} };
+    const token = await getAccessToken();
+    const [pagesRaw, clustersRaw, ctaRaw] = await Promise.all([
+      fetchTab(workbookId, PAGES_TAB, token),
+      fetchTab(workbookId, CLUSTERS_TAB, token),
+      fetchTab(workbookId, CTA_TAB, token),
+    ]);
+    return {
+      rows: sheetRowsFromRaw(pagesRaw),
+      ctaAudits: deriveCtaAudits(targets, { pagesRaw, clustersRaw, ctaRaw }),
+    };
+  } catch {
+    return { rows: [], ctaAudits: {} };
+  }
 }
 
 async function fetchDocument(url) {
@@ -198,14 +273,18 @@ async function main() {
   const publishLogText = existsSync(args['publish-log'] || DEFAULT_PUBLISH_LOG)
     ? readFileSync(args['publish-log'] || DEFAULT_PUBLISH_LOG, 'utf8')
     : '';
-  const sheetRows = targets.some((target) => target.terminal !== 'archived') ? loadSheetRows(args) : [];
+  const activeTargets = targets.filter((target) => target.terminal !== 'archived');
+  const sheetContext = activeTargets.length
+    ? await loadSheetContext(args, activeTargets)
+    : { rows: [], ctaAudits: {} };
   const results = [];
   for (const target of targets) {
     const verified = await verifyRepairTarget(target, {
       claim: claims[target.pageId],
       planText,
       publishLogText,
-      sheetRow: findSheetRow(target, sheetRows),
+      sheetRow: findSheetRow(target, sheetContext.rows),
+      ctaAudit: sheetContext.ctaAudits[target.pageId],
       pendingWriteback: pendingWriteback(target.pageId),
       fetchDocument,
     });

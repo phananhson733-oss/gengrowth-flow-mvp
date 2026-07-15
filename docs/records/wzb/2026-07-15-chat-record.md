@@ -21,7 +21,7 @@ aliases:
 - 索引修复重提、Phase 2 索引监控与选题登记均经固定 wrapper 完成；两站 Sitemap API 成功，astrologywiki 完成 3 条 URL Inspection，请求索引候选队列已刷新；三次选题登记均为 apply：新增 gengrowth `PG-WLS-007`、astrologywiki `PG-TRANS-014`–`PG-TRANS-018`，以及最新 astrologywiki `PG-CELEB-056`–`PG-CELEB-058` 与 gengrowth `PG-SDS-004`、`PG-ART-007`、`PG-AIS-006`；未越过既定外部写入边界。
 - 结果复盘性能 wrapper 因两产品 GSC/GA4 OAuth refresh token 过期或被撤销而在扫描前停止；未写表、未生成报告，需重新授权后只重跑原 wrapper。
 - 双产品 CTA Map 已新增 `intent_tags`，最近 7 篇 AstrologyWiki 文章已按新逻辑重新处理并上线；flow PR #2、Oracle PR #376 已合并，线上 CTA、canonical 与 Article JSON-LD 已复验。
-- 复核现有 agentic repair 后明确新调度边界：Codex Automation 保持暂停；macOS `launchd` 直接拉起正常写作/发布，只有异常、报错或 `needs_human` 才通过 hook 启动一次性 Agent 修复，且不得绕过现有发布门；后续实测发现该 hook 当前只覆盖 astrologywiki/W22，Gengrowth W25 发布通道尚未接入，用户进一步确认目标应升级为跨站点、跨阶段的全流程统一修复控制器，并批准采用“已有安全授权可自动使用、不可委托的登录/验证码/审批才 human-only”的边界。
+- 复核现有 agentic repair 后明确新调度边界：Codex Automation 保持暂停；macOS `launchd` 直接拉起正常写作/发布，只有异常、报错或 `needs_human` 才通过 hook 启动一次性 Agent 修复，且不得绕过现有发布门；后续实测发现该 hook 当前只覆盖 astrologywiki/W22，Gengrowth W25 发布通道尚未接入，用户进一步确认目标应升级为跨站点、跨阶段的全流程统一修复控制器，第一版只覆盖 AstrologyWiki 与 Gengrowth SEO 内容链路，并采用“已有安全授权可自动使用、不可委托的登录/验证码/审批才 human-only”的边界。
 - 方案 A 已通过 18:30 自然窗口的异常修复实单：`PG-WAIA-001` 因早先 sitemap 传播延迟留下 pending writeback，一次性 Agent 仅运行定向 `gg-backfill-one` 即完成 Sheet、plan、vault 三步回填；pending 队列清空，PR、线上 canonical、Article JSON-LD、sitemap 与归档资产均复验通过。
 
 ---
@@ -462,5 +462,17 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 确认采用推荐边界：repair agent 可使用现有凭据、权限和安全授权流程自动推进，但不得冒充用户绕过验证码、人工审批或必须由账号所有者确认的授权；缺失权威来源时也不得猜测。这些不可委托动作是唯一允许进入真正 `human_only` 的类别。继续按设计流程确认统一控制器的产品范围，再提出可落地架构方案。
+
+---
+
+### Q28 — 20:49
+
+**🙋 提问：**
+
+可以。其他的暂不纳入
+
+**🤖 回答：**
+
+确认第一版只覆盖本仓库两站 SEO 内容生产闭环：AstrologyWiki 与 Gengrowth，从选题/写作到发布、线上验证和回填；索引监控、报销、趋势雷达等其他自动化暂不纳入，仅保留未来 adapter 扩展接口。下一步比较三种架构：推荐“统一结构化异常事件 + 单一 repair controller + 两站 adapter”，备选为两条 lane 分别嵌入 hook，或新增中央轮询 supervisor；推荐方案避免重复调度和逻辑漂移，同时复用现有 gate、publish 与 verifier。
 
 ---

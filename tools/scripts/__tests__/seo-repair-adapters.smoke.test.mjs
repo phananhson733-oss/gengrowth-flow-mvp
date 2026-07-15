@@ -9,6 +9,8 @@ import {
   buildAstrologyRepairTarget,
   createAstrologyWikiRepairAdapter,
   editableAstrologyFiles,
+  isSafeAstrologyTargetPath,
+  parseGitStatusPaths,
   verifyInternalLinkCandidate,
 } from '../lib/seo-repair-adapter-astrologywiki.mjs';
 
@@ -152,6 +154,30 @@ test('astrology target includes the factual SVG and complete changed-file eviden
     'scripts/plans/auto-saturn-return-age-29.json',
   ]);
   assert.match(target.gateEvidence, /Saturn Square.*age 14/);
+});
+
+test('astrology interrupted repair preserves porcelain first path and resumes only exact target files', () => {
+  assert.deepEqual(parseGitStatusPaths([
+    ' M public/images/blog/saturn-return-age-29-i0-en.svg',
+    ' M scripts/plans/auto-saturn-return-age-29.json',
+    '',
+  ].join('\n')), [
+    'public/images/blog/saturn-return-age-29-i0-en.svg',
+    'scripts/plans/auto-saturn-return-age-29.json',
+  ]);
+  assert.equal(isSafeAstrologyTargetPath(
+    'public/images/blog/saturn-return-age-29-i0-en.svg',
+    'saturn-return-age-29',
+  ), true);
+  assert.equal(isSafeAstrologyTargetPath(
+    'scripts/plans/auto-saturn-return-age-29.json',
+    'saturn-return-age-29',
+  ), true);
+  assert.equal(isSafeAstrologyTargetPath('data/articles/index.ts', 'saturn-return-age-29'), false);
+  assert.equal(isSafeAstrologyTargetPath(
+    'public/images/blog/saturn-return-in-capricorn-i0-en.svg',
+    'saturn-return-age-29',
+  ), false);
 });
 
 test('internal-link candidates require an existing route or sitemap entry plus HTTP 200', async () => {

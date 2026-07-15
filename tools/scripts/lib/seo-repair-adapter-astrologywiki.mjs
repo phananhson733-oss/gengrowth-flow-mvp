@@ -84,6 +84,33 @@ function worktreeDiff(worktree) {
   return diff.stdout.trim().split('\n').filter(Boolean);
 }
 
+export function parseGitStatusPaths(output) {
+  return String(output || '').split(/\r?\n/)
+    .filter((line) => line.length >= 4)
+    .map(statusPath);
+}
+
+export function isSafeAstrologyTargetPath(file, slug) {
+  const targetSlug = String(slug || '');
+  const path = String(file || '');
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(targetSlug)) return false;
+  if (!path || isAbsolute(path) || path.split('/').includes('..')) return false;
+  if (path === `data/articles/${targetSlug}.ts`) return true;
+  if (path === `scripts/plans/auto-${targetSlug}.json`) return true;
+  const assetPrefix = `public/images/blog/${targetSlug}`;
+  if (!path.startsWith(assetPrefix) || !ASSET_RE.test(path)) return false;
+  const suffix = path.slice(assetPrefix.length);
+  return suffix.startsWith('.') || suffix.startsWith('-');
+}
+
+function worktreeDirtyPaths(worktree) {
+  const status = run([
+    'git', '-C', worktree, 'status', '--porcelain=v1', '--untracked-files=all',
+  ], { cwd: worktree, timeout: 60_000 });
+  if (!status.ok) throw new Error(`cannot inspect repair worktree: ${status.stderr || status.code}`);
+  return parseGitStatusPaths(status.stdout);
+}
+
 function repairWorktreeName(event) {
   const id = String(event.eventId || 'event').replace(/[^A-Za-z0-9]/g, '').slice(0, 12) || 'event';
   return `${String(event.pageId).replace(/[^A-Za-z0-9._-]/g, '_')}-${id}`;
@@ -100,9 +127,12 @@ function prepareRepairWorktree(event, claim, originalWorktree) {
     ], { cwd: originalWorktree, timeout: 180_000 });
     if (!added.ok) throw new Error(`cannot create clean repair worktree: ${added.stderr || added.code}`);
   }
-  const status = run(['git', '-C', worktree, 'status', '--porcelain'], { cwd: worktree, timeout: 60_000 });
-  if (!status.ok) throw new Error(`cannot inspect repair worktree: ${status.stderr || status.code}`);
-  if (status.stdout.trim()) throw new Error(`repair worktree is not clean: ${worktree}`);
+  const dirtyPaths = worktreeDirtyPaths(worktree);
+  const targetSlug = claim.slug || event.slug;
+  const unsafePaths = dirtyPaths.filter((file) => !isSafeAstrologyTargetPath(file, targetSlug));
+  if (unsafePaths.length) {
+    throw new Error(`repair worktree has non-target changes: ${unsafePaths.join(', ')}`);
+  }
   const sourceHead = run(['git', '-C', originalWorktree, 'rev-parse', 'HEAD'], { cwd: originalWorktree, timeout: 60_000 });
   const repairHead = run(['git', '-C', worktree, 'rev-parse', 'HEAD'], { cwd: worktree, timeout: 60_000 });
   if (!sourceHead.ok || !repairHead.ok) throw new Error(`cannot resolve repair branch head for ${event.pageId}`);
@@ -175,13 +205,17 @@ async function defaultResolveContext(event) {
   const worktree = prepareRepairWorktree(event, claim, originalWorktree);
   const articleFile = join(worktree, 'data', 'articles', `${claim.slug || event.slug}.ts`);
   if (!existsSync(articleFile)) throw new Error(`astrology article missing: ${articleFile}`);
+  const changedFiles = [...new Set([
+    ...worktreeDiff(worktree),
+    ...worktreeDirtyPaths(worktree),
+  ])];
   return {
     claim,
     branch: claim.branch,
     worktree,
     originalWorktree,
     articleFile,
-    changedFiles: worktreeDiff(worktree),
+    changedFiles,
     linkCandidates: await collectLinkCandidates(worktree, claim.slug || event.slug),
     allowedActions: [
       ['node', join(DEFAULT_SCRIPTS, 'gg-seo-autopilot.mjs'), '--retry-failed', '--branch', claim.branch],
@@ -230,7 +264,7 @@ async function defaultPersistRepair(target) {
     'git', '-C', target.worktree, 'status', '--porcelain=v1', '--untracked-files=all',
   ], { cwd: target.worktree, timeout: 60_000 });
   if (!status.ok) return { ...status, ok: false };
-  const dirty = status.stdout.trim().split('\n').filter(Boolean).map(statusPath);
+  const dirty = parseGitStatusPaths(status.stdout);
   const forbidden = dirty.filter((file) => !editable.has(file));
   if (forbidden.length) {
     return { ok: false, stderr: `Agent changed files outside target allowlist: ${forbidden.join(', ')}` };

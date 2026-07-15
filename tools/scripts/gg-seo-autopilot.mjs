@@ -62,7 +62,7 @@ import { illustrate } from './lib/illustrate.mjs';
 import { keywordLiveSlug } from './lib/oracle-live.mjs';
 import { notify } from './lib/gg-notify.mjs';
 import { unionMergeIntoWorktree, looksLikeMergeConflict } from './lib/merge-union.mjs';
-import { backfillOnLive } from './lib/backfill-tx.mjs';
+import { backfillOnLive, enqueueWriteback } from './lib/backfill-tx.mjs';
 import { classifyPark } from './lib/park-classify.mjs';
 import { stateDir } from './lib/flow-state.mjs';
 
@@ -1207,13 +1207,20 @@ function doMerge(o) {
     // 部署 main → prod）；陈旧分支撞两个注册文件时，自动 union-rebase 到最新 main、再验后合并。
     // CLAIMS_LOCK 已保证同一时刻只有一个 merge 临界区，本函数把"碰巧不冲突"变"冲突也能确定性自愈"。
     mergeVerifiedBranch(o.branch, claim);
+    // GitHub merge 是不可逆的发布语义点。必须在任何本地 cleanup/sync 之前先落回填 WAL；否则
+    // baseline 含用户改动而拒绝 sync 时，会出现“线上已发布，但 Sheet/plan/vault 没有续跑入口”。
+    const slug = claim.slug;
+    const planPath = latestPlan();
+    const wal = enqueueWriteback({ pageId: pgId, slug, site: 'astrologywiki', planPath, done: [] });
+    if (!wal) {
+      throw new Error(`merge succeeded for ${pgId}, but failed to create the backfill WAL`);
+    }
     cleanupWorktree(claim.worktree);
     syncOracle();
     claims[pgId].status = 'done';
     claims[pgId].mergedAt = new Date().toISOString();
     checkPlanBox(pgId); // 即时勾选（锁内、本地）；下方回填事务的 plan 步骤会发现已勾=no-op。
     saveClaims(claims);
-    const slug = claims[pgId].slug;
     // writing record → ops (self-synced)；返回 promise（尾部是 published 事件通知 + 阶段4 回填事务），
     // 由顶层 dispatcher await 收尾——claims 锁在同步部分结束时即释放，不为通知/回填多持锁。
     const recorded = appendPublishLog(pgId, slug);
@@ -1222,7 +1229,7 @@ function doMerge(o) {
     // （选题登记表 已发布+URL / plan 勾选 / vault 归档），失败入 pending-writeback 由每日对账重试。
     // backfillOnLive 永不抛；deferred（尚未进 sitemap）会留队等每日 drain。不阻塞发布串行。
     return Promise.resolve(recorded)
-      .then(() => backfillOnLive({ pageId: pgId, slug, site: 'astrologywiki', planPath: latestPlan() }))
+      .then(() => backfillOnLive({ pageId: pgId, slug, site: 'astrologywiki', planPath }))
       .then((r) => {
         if (r.ok) log(`backfill ${pgId}: sheet+plan+archive done`);
         else log(`backfill ${pgId}: ${r.reason || (r.failed || []).map((f) => f.step).join(',')} — queued for daily reconcile`);

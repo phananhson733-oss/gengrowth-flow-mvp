@@ -777,6 +777,43 @@ test('--merge sends the published event through the unified notify layer (contra
   }
 });
 
+test('--merge creates the backfill WAL before a post-merge oracle sync failure', () => {
+  const h = makeHarness();
+  try {
+    initOracleWithOrigin(h);
+    writeFileSync(join(h.bin, 'gh'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
+    const plan = join(h.tasks, '2026-06-03-blog-output-plan.md');
+    writeFileSync(plan, '- [ ] `PG-TEST-001` test keyword\n');
+    writeClaims(h, {
+      'PG-TEST-001': {
+        status: 'verified-preview',
+        branch: 'seo/auto/2026-06-03-PG-TEST-001',
+        slug: 'test-slug',
+        previewUrl: 'https://example-preview.vercel.app',
+      },
+    });
+    // Simulate the production incident: GitHub merge succeeds, then the local
+    // baseline refuses sync because it contains tracked user changes.
+    writeFileSync(join(h.oracle, 'README.md'), 'user change\n');
+    const state = join(h.root, 'flow-state');
+
+    const r = runAuto(h, ['--merge', '--branch', 'seo/auto/2026-06-03-PG-TEST-001'], {
+      GG_FLOW_STATE_DIR: state,
+    });
+
+    assert.notEqual(r.status, 0, 'dirty baseline must still stop the post-merge sync');
+    assert.match(`${r.stdout}${r.stderr}`, /tracked local changes/);
+    const wal = JSON.parse(readFileSync(join(state, 'pending-writeback', 'PG-TEST-001.json'), 'utf8'));
+    assert.equal(wal.pageId, 'PG-TEST-001');
+    assert.equal(wal.slug, 'test-slug');
+    assert.equal(wal.site, 'astrologywiki');
+    assert.equal(wal.planPath, plan);
+    assert.deepEqual(wal.done, []);
+  } finally {
+    h.cleanup();
+  }
+});
+
 test('--reconcile-published marks parked claims done when oracle already has the article registered', () => {
   const h = makeHarness();
   try {

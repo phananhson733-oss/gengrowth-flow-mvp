@@ -22,7 +22,7 @@ aliases:
 - 结果复盘性能 wrapper 因两产品 GSC/GA4 OAuth refresh token 过期或被撤销而在扫描前停止；未写表、未生成报告，需重新授权后只重跑原 wrapper。
 - 双产品 CTA Map 已新增 `intent_tags`，最近 7 篇 AstrologyWiki 文章已按新逻辑重新处理并上线；flow PR #2、Oracle PR #376 已合并，线上 CTA、canonical 与 Article JSON-LD 已复验。
 - 复核现有 agentic repair 后明确新调度边界：Codex Automation 保持暂停；macOS `launchd` 直接拉起正常写作/发布，只有异常、报错或 `needs_human` 才通过 hook 启动一次性 Agent 修复，且不得绕过现有发布门；后续实测发现该 hook 当前只覆盖 astrologywiki/W22，Gengrowth W25 发布通道尚未接入，用户进一步确认目标应升级为跨站点、跨阶段的全流程统一修复控制器，第一版只覆盖 AstrologyWiki 与 Gengrowth SEO 内容链路，并采用“已有安全授权可自动使用、不可委托的登录/验证码/审批才 human-only”的边界。
-- 方案 A 已通过 18:30 自然窗口的异常修复实单：`PG-WAIA-001` 因早先 sitemap 传播延迟留下 pending writeback，一次性 Agent 仅运行定向 `gg-backfill-one` 即完成 Sheet、plan、vault 三步回填；pending 队列清空，PR、线上 canonical、Article JSON-LD、sitemap 与归档资产均复验通过。
+- 方案 A 已通过 18:30 与 21:05 自然窗口的两次异常修复实单：`PG-WAIA-001`、`PG-WAIA-002` 均因早先 sitemap 传播延迟留下 pending writeback；一次性 Agent 各自只运行定向 `gg-backfill-one`，完成 Sheet、plan、vault 三步回填，且 pending 队列、PR、线上 canonical、Article JSON-LD、sitemap 与归档资产均复验通过。
 
 ---
 
@@ -474,5 +474,289 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 确认第一版只覆盖本仓库两站 SEO 内容生产闭环：AstrologyWiki 与 Gengrowth，从选题/写作到发布、线上验证和回填；索引监控、报销、趋势雷达等其他自动化暂不纳入，仅保留未来 adapter 扩展接口。下一步比较三种架构：推荐“统一结构化异常事件 + 单一 repair controller + 两站 adapter”，备选为两条 lane 分别嵌入 hook，或新增中央轮询 supervisor；推荐方案避免重复调度和逻辑漂移，同时复用现有 gate、publish 与 verifier。
+
+---
+
+### Q29 — 21:09
+
+**🙋 提问：**
+
+You are the one-shot GenGrowth SEO exception repair agent launched by the macOS scheduler.
+
+Scope
+- Process only the articles listed under TARGETS_JSON. Do not sweep unrelated plan items.
+- Work in the provided FLOW directory and use the pinned PLAN path from RUN_CONTEXT_JSON.
+- Read the flow repository AGENTS.md, but never load ai-profile/lynne-soul.md or any sibling-repository personal profile.
+- Do not start gg-nightly-seo.sh: the outer scheduler already ran it and owns the batch lock.
+
+Required repair behavior
+- Diagnose from the exact claim and LOG_WINDOW; do not guess a different failure.
+- Authoring park: use GG_AUTOPILOT_PLAN=<pinned plan> with gg-seo-autopilot.mjs --retry-author --task <page_id>, then --author --task <page_id> --limit 1. If content still fails, repair only the cited defect and rerun phase2.
+- After a passing draft, create a one-row targeted plan for that page_id, run the normal scan, capture its branch, and run gg-preview-gate.mjs on that branch.
+- Preview park: use gg-seo-autopilot.mjs --retry-failed --branch <branch>, then rerun gg-preview-gate.mjs.
+- Verified pending merge/live/backfill: continue only from the verified state through merge, deployment propagation, live verification, ledger reconciliation and existing backfill commands.
+- Backfill target: run `node tools/scripts/gg-backfill-one.mjs --page-id <page_id>` for that exact target. Never run the unscoped all-ledger reconcile job from a target repair.
+- Stale or false-premise topic: do not publish. Leave exact evidence in the claim/error so the outer hook can archive it safely.
+
+Hard safety boundaries
+- Never hand-edit ledger status to verified-preview or done.
+- Never bypass preview verify, three-dimension review, Codex fact gate, reviewed-head merge guard, CTA Map intent routing, or post-publish verification.
+- Never remove CTA audit fields or Related Reading merely to pass a gate.
+- Never call Google Indexing API for ordinary articles and never click GSC Request Indexing unattended.
+- Never use destructive git/filesystem commands and never overwrite an interactive dirty worktree.
+- A publish is successful only when the existing workflow produces it; your prose is not proof. The outer deterministic verifier makes the final decision.
+
+Finish each target in one of three evidence-backed states: published and fully backfilled; explicitly stale/unpublishable; or still needs_human with the exact non-bypassable credential, permission, source-data, or safety blocker.
+
+RUN_CONTEXT_JSON:
+{
+  "runStart": "2026-07-15T11:00:05Z",
+  "runExit": 0,
+  "flow": "/Users/awayer_mini/gengrowth-flow-mvp",
+  "ops": "/Users/awayer_mini/gengrowth-ops",
+  "plan": "/Users/awayer_mini/gengrowth-ops/inbox/06-tasks/tasks/2026-05-27-W22-blog-output-plan.md",
+  "claims": "/Users/awayer_mini/gengrowth-ops/inbox/06-tasks/tasks/.autopilot-claims.json",
+  "oracleBaseline": "/Users/awayer_mini/oracle-autopilot",
+  "maxAttempts": 2,
+  "timeoutSeconds": 2700
+}
+
+TARGETS_JSON:
+[
+  {
+    "pageId": "PG-WAIA-002",
+    "stage": "backfill",
+    "slug": "why-am-i-still-single",
+    "branch": "seo/auto/2026-07-14-PG-WAIA-002",
+    "error": "pending writeback remains after nightly completion",
+    "triage": "fixable",
+    "fingerprint": "738b644de4c9b5378d136a8b7d2be9cfb6a5ba668e9ec3ca5efc527fe27a09d0",
+    "keyword": "why am i still single",
+    "attempt": 1
+  }
+]
+
+LOG_WINDOW:
+---- 18 checks — 9 warn (partial sources / placeholder)
+[autopilot] phase2 attempt 1/3 failed:
+- - word count 1497 < min 1500
+- author banned token(s) matched: "energy"
+  → regenerating WITH feedback
+[autopilot] phase2 attempt 2/3 failed:
+- - missing required H2: "## <entity> vs <real adjacent concept> (comparison section; no "Adjacent Concepts" boilerplate)"
+  → regenerating WITH feedback
+[autopilot] phase2 attempt 3/3 failed:
+- - missing required H2: "## <entity> vs <real adjacent concept> (comparison section; no "Adjacent Concepts" boilerplate)"
+- author banned token(s) matched: "energy"
+[autopilot] deterministic repair: feedback loop failed — calling gg-author-repair on _staging/PG-TRANS-014-claude-v8.md
+[autopilot] AUTHORED PG-TRANS-014 → /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-TRANS-014-en.md (author=marcus-orion, via deterministic repair) — ready for next scan to publish
+[autopilot] plan: nightly-plan-PG-TRANS-014.md
+[autopilot] synced oracle → origin/main @ f6e3cd9d
+[autopilot] claim PG-TRANS-014 → saturn-return-guide
+[autopilot] worktree seo/auto/2026-07-15-PG-TRANS-014 → /Users/awayer_mini/oracle-worktrees/seo-autopilot/seo__auto__2026-07-15-PG-TRANS-014
+[autopilot] registered saturn-return-guide → ARTICLE_SLUGS_EN_ONLY (static SEO page + sitemap)
+[autopilot] illustrate PG-TRANS-014: hero=true inline=3
+[autopilot] PUSHED preview seo/auto/2026-07-15-PG-TRANS-014 PR=https://github.com/xdawayer/oracle/pull/377 — awaiting codex+chrome verify, then --merge
+  status: node /Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-seo-autopilot.mjs --status (find claim for branch seo/auto/2026-07-15-PG-TRANS-014)
+  claim: pgId=PG-TRANS-014 slug=saturn-return-guide status=pushed-preview
+  preview: node /Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-preview-wait.mjs --branch seo/auto/2026-07-15-PG-TRANS-014 --repo xdawayer/oracle --json (timeout 600000ms)
+  preview: resolved previewUrl https://oracle-git-seo-auto2026-07-15-pg-268320-wzbs-projects-39a68c1d.vercel.app
+  verify: node /Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-preview-verify.mjs --preview-url https://oracle-git-seo-auto2026-07-15-pg-268320-wzbs-projects-39a68c1d.vercel.app --slug saturn-return-guide --json (timeout 180000ms)
+  verify: PASS (1 url(s))
+  review[astrology]: node /Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-article-review-worker.mjs --dimension astrology --article /Users/awayer_mini/oracle-worktrees/seo-autopilot/seo__auto__2026-07-15-PG-TRANS-014/data/articles/saturn-return-guide.ts --draft /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-TRANS-014-en.md --json (timeout 780000ms)
+  review[astrology]: PASS
+  review[schema]: node /Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-article-review-worker.mjs --dimension schema --article /Users/awayer_mini/oracle-worktrees/seo-autopilot/seo__auto__2026-07-15-PG-TRANS-014/data/articles/saturn-return-guide.ts --draft /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-TRANS-014-en.md --json (timeout 780000ms)
+  review[schema]: PASS
+  review[links-seo]: node /Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-article-review-worker.mjs --dimension links-seo --article /Users/awayer_mini/oracle-worktrees/seo-autopilot/seo__auto__2026-07-15-PG-TRANS-014/data/articles/saturn-return-guide.ts --draft /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-TRANS-014-en.md --json (timeout 780000ms)
+  review[links-seo]: PASS
+  codex: /Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-codex-pr-review.mjs (REQUIRED, pr=https://github.com/xdawayer/oracle/pull/377, timeout 600000ms)
+  codex: PASS — PASS
+  final: mark-verified --branch seo/auto/2026-07-15-PG-TRANS-014 --preview-url https://oracle-git-seo-auto2026-07-15-pg-268320-wzbs-projects-39a68c1d.vercel.app --evidence "chrome preview + 3-dimension review panel passed (codex: ran-pass)"
+  final: merge --branch seo/auto/2026-07-15-PG-TRANS-014 (deploys prod; --merge owns success notify)
+  final: MERGED → published
+==> exit 0 (merged)
+PG-TRANS-014: MERGED → live
+
+--- PG-TRANS-015 :: saturn return in scorpio ---
+ensure-search-volume: set 选题登记表!C300 = "0" (updatedCells=1)
+[autopilot] author candidate PG-TRANS-015 (saturn return in scorpio)
+[autopilot] entity-passport exit non-zero (partial sources?): ----------------------------- 18 checks — 9 warn (partial sources / placeholder)
+[autopilot] phase2 attempt 1/3 failed:
+- - missing required H2: "## <entity> vs <real adjacent concept> (comparison section; no "Adjacent Concepts" boilerplate)"
+- author banned token(s) matched: "energy"
+  → regenerating WITH feedback
+[autopilot] review: revised (16 issue(s) from codex+opus)
+[autopilot] review: revised draft failed phase2 — kept original
+[autopilot] AUTHORED PG-TRANS-015 → /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-TRANS-015-en.md (author=marcus-orion, attempt 2/3) — ready for next scan to publish
+[autopilot] plan: nightly-plan-PG-TRANS-015.md
+[autopilot] synced oracle → origin/main @ 7156b62b
+[autopilot] claim PG-TRANS-015 → saturn-return-in-scorpio
+[autopilot] worktree seo/auto/2026-07-15-PG-TRANS-015 → /Users/awayer_mini/oracle-worktrees/seo-autopilot/seo__auto__2026-07-15-PG-TRANS-015
+[autopilot] registered saturn-return-in-scorpio → ARTICLE_SLUGS_EN_ONLY (static SEO page + sitemap)
+[autopilot] illustrate PG-TRANS-015: hero=true inline=3
+[autopilot] PUSHED preview seo/auto/2026-07-15-PG-TRANS-015 PR=https://github.com/xdawayer/oracle/pull/378 — awaiting codex+chrome verify, then --merge
+  status: node /Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-seo-autopilot.mjs --status (find claim for branch seo/auto/2026-07-15-PG-TRANS-015)
+  claim: pgId=PG-TRANS-015 slug=saturn-return-in-scorpio status=pushed-preview
+  preview: node /Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-preview-wait.mjs --branch seo/auto/2026-07-15-PG-TRANS-015 --repo xdawayer/oracle --json (timeout 600000ms)
+  preview: resolved previewUrl https://oracle-git-seo-auto2026-07-15-pg-601c3c-wzbs-projects-39a68c1d.vercel.app
+  verify: node /Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-preview-verify.mjs --preview-url https://oracle-git-seo-auto2026-07-15-pg-601c3c-wzbs-projects-39a68c1d.vercel.app --slug saturn-return-in-scorpio --json (timeout 180000ms)
+  verify: PASS (1 url(s))
+  review[astrology]: node /Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-article-review-worker.mjs --dimension astrology --article /Users/awayer_mini/oracle-worktrees/seo-autopilot/seo__auto__2026-07-15-PG-TRANS-015/data/articles/saturn-return-in-scorpio.ts --draft /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-TRANS-015-en.md --json (timeout 780000ms)
+  review[astrology]: PASS
+  review[schema]: node /Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-article-review-worker.mjs --dimension schema --article /Users/awayer_mini/oracle-worktrees/seo-autopilot/seo__auto__2026-07-15-PG-TRANS-015/data/articles/saturn-return-in-scorpio.ts --draft /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-TRANS-015-en.md --json (timeout 780000ms)
+  review[schema]: PASS
+  review[links-seo]: node /Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-article-review-worker.mjs --dimension links-seo --article /Users/awayer_mini/oracle-worktrees/seo-autopilot/seo__auto__2026-07-15-PG-TRANS-015/data/articles/saturn-return-in-scorpio.ts --draft /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-TRANS-015-en.md --json (timeout 780000ms)
+  review[links-seo]: PASS
+  codex: /Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-codex-pr-review.mjs (REQUIRED, pr=https://github.com/xdawayer/oracle/pull/378, timeout 600000ms)
+  codex: PASS — PASS
+  final: mark-verified --branch seo/auto/2026-07-15-PG-TRANS-015 --preview-url https://oracle-git-seo-auto2026-07-15-pg-601c3c-wzbs-projects-39a68c1d.vercel.app --evidence "chrome preview + 3-dimension review panel passed (codex: ran-pass)"
+  final: merge --branch seo/auto/2026-07-15-PG-TRANS-015 (deploys prod; --merge owns success notify)
+  final: MERGED → published
+==> exit 0 (merged)
+PG-TRANS-015: MERGED → live
+
+--- PG-TRANS-016 :: saturn return age 29 ---
+ensure-search-volume: set 选题登记表!C301 = "0" (updatedCells=1)
+[autopilot] author candidate PG-TRANS-016 (saturn return age 29)
+[autopilot] entity-passport exit non-zero (partial sources?): ----------------------------- 18 checks — 9 warn (partial sources / placeholder)
+[autopilot] phase2 attempt 1/3 failed:
+- - missing required H2: "## <entity> vs <real adjacent concept> (comparison section; no "Adjacent Concepts" boilerplate)"
+  → regenerating WITH feedback
+[autopilot] phase2 attempt 2/3 failed:
+- - word count 1459 < min 1500
+- target_keyword count = 11 (limit 10)
+- author banned token(s) matched: "energy"
+  → regenerating WITH feedback
+[autopilot] phase2 attempt 3/3 failed:
+- - missing required H2: "## <entity> vs <real adjacent concept> (comparison section; no "Adjacent Concepts" boilerplate)"
+[autopilot] deterministic repair: feedback loop failed — calling gg-author-repair on _staging/PG-TRANS-016-claude-v8.md
+[autopilot] AUTHORED PG-TRANS-016 → /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-TRANS-016-en.md (author=marcus-orion, via deterministic repair) — ready for next scan to publish
+[autopilot] plan: nightly-plan-PG-TRANS-016.md
+[autopilot] synced oracle → origin/main @ e7a2d089
+[autopilot] claim PG-TRANS-016 → saturn-return-age-29
+[autopilot] worktree seo/auto/2026-07-15-PG-TRANS-016 → /Users/awayer_mini/oracle-worktrees/seo-autopilot/seo__auto__2026-07-15-PG-TRANS-016
+[autopilot] registered saturn-return-age-29 → ARTICLE_SLUGS_EN_ONLY (static SEO page + sitemap)
+[autopilot] illustrate PG-TRANS-016: hero=true inline=2
+[autopilot] PUSHED preview seo/auto/2026-07-15-PG-TRANS-016 PR=https://github.com/xdawayer/oracle/pull/379 — awaiting codex+chrome verify, then --merge
+  status: node /Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-seo-autopilot.mjs --status (find claim for branch seo/auto/2026-07-15-PG-TRANS-016)
+  claim: pgId=PG-TRANS-016 slug=saturn-return-age-29 status=pushed-preview
+  preview: node /Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-preview-wait.mjs --branch seo/auto/2026-07-15-PG-TRANS-016 --repo xdawayer/oracle --json (timeout 600000ms)
+  preview: resolved previewUrl https://oracle-git-seo-auto2026-07-15-pg-3e3eb9-wzbs-projects-39a68c1d.vercel.app
+  verify: node /Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-preview-verify.mjs --preview-url https://oracle-git-seo-auto2026-07-15-pg-3e3eb9-wzbs-projects-39a68c1d.vercel.app --slug saturn-return-age-29 --json (timeout 180000ms)
+  verify: PASS (1 url(s))
+  review[astrology]: node /Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-article-review-worker.mjs --dimension astrology --article /Users/awayer_mini/oracle-worktrees/seo-autopilot/seo__auto__2026-07-15-PG-TRANS-016/data/articles/saturn-return-age-29.ts --draft /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-TRANS-016-en.md --json (timeout 780000ms)
+  repair[astrology]: gg-gate-repair on /Users/awayer_mini/oracle-worktrees/seo-autopilot/seo__auto__2026-07-15-PG-TRANS-016/data/articles/saturn-return-age-29.ts (reason: In the section defining a Saturn square, age 14 is listed as a square when it is…)
+  repair[astrology]: applied 1 edit(s) + pushed — re-running astrology
+  review[astrology]: PASS
+  review[schema]: node /Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-article-review-worker.mjs --dimension schema --article /Users/awayer_mini/oracle-worktrees/seo-autopilot/seo__auto__2026-07-15-PG-TRANS-016/data/articles/saturn-return-age-29.ts --draft /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-TRANS-016-en.md --json (timeout 780000ms)
+  review[schema]: PASS
+  review[links-seo]: node /Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-article-review-worker.mjs --dimension links-seo --article /Users/awayer_mini/oracle-worktrees/seo-autopilot/seo__auto__2026-07-15-PG-TRANS-016/data/articles/saturn-return-age-29.ts --draft /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-TRANS-016-en.md --json (timeout 780000ms)
+  review[links-seo]: PASS
+  codex: /Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-codex-pr-review.mjs (REQUIRED, pr=https://github.com/xdawayer/oracle/pull/379, timeout 600000ms)
+  repair[codex]: gg-gate-repair on /Users/awayer_mini/oracle-worktrees/seo-autopilot/seo__auto__2026-07-15-PG-TRANS-016/data/articles/saturn-return-age-29.ts (reason: codex FAIL —the SVG wrongly says Saturn Square occurs around age 14…)
+  repair[codex]: cannot-repair: the wrong 'age 14' fact lives in the external SVG asset (saturn-return-age-29-i0-en.svg), which is not part of this article's editable text; the article body already correctly lists Saturn square ages as 7, 21, and 36 with no age 14 — skip
+  FAIL reason: codex completed with codex FAIL —the SVG wrongly says Saturn Square occurs around age 14
+  final: mark-failed --branch seo/auto/2026-07-15-PG-TRANS-016 --reason "codex completed with codex FAIL —the SVG wrongly says Saturn Square occurs around age 14"
+  final: park notify SUPPRESSED (intermediate state — recover & re-gate, or notify Feishu explicitly only on true abandonment; set GG_GATE_NOTIFY_ON_PARK=1 to re-enable)
+==> exit 2 (parked (notify suppressed))
+PG-TRANS-016: gate parked (codex/links/verify) — needs_human (通知交 auto-retry 终态去重)
+
+--- PG-TRANS-017 :: second saturn return ---
+ensure-search-volume: set 选题登记表!C302 = "0" (updatedCells=1)
+[autopilot] author candidate PG-TRANS-017 (second saturn return)
+[autopilot] entity-passport exit non-zero (partial sources?): ----------------------------- 18 checks — 9 warn (partial sources / placeholder)
+[autopilot] phase2 attempt 1/3 failed:
+- - missing required H2: "## <entity> vs <real adjacent concept> (comparison section; no "Adjacent Concepts" boilerplate)"
+- author banned token(s) matched: "energy"
+  → regenerating WITH feedback
+[autopilot] phase2 attempt 2/3 failed:
+- - missing required H2: "## <entity> vs <real adjacent concept> (comparison section; no "Adjacent Concepts" boilerplate)"
+  → regenerating WITH feedback
+[autopilot] phase2 attempt 3/3 failed:
+- - missing required H2: "## <entity> vs <real adjacent concept> (comparison section; no "Adjacent Concepts" boilerplate)"
+- author banned token(s) matched: "energy"
+[autopilot] deterministic repair: feedback loop failed — calling gg-author-repair on _staging/PG-TRANS-017-claude-v8.md
+[autopilot] AUTHORED PG-TRANS-017 → /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-TRANS-017-en.md (author=marcus-orion, via deterministic repair) — ready for next scan to publish
+[autopilot] plan: nightly-plan-PG-TRANS-017.md
+[autopilot] synced oracle → origin/main @ e7a2d089
+[autopilot] claim PG-TRANS-017 → second-saturn-return
+[autopilot] worktree seo/auto/2026-07-15-PG-TRANS-017 → /Users/awayer_mini/oracle-worktrees/seo-autopilot/seo__auto__2026-07-15-PG-TRANS-017
+[autopilot] registered second-saturn-return → ARTICLE_SLUGS_EN_ONLY (static SEO page + sitemap)
+[autopilot] illustrate PG-TRANS-017: hero=true inline=2
+[autopilot] PUSHED preview seo/auto/2026-07-15-PG-TRANS-017 PR=https://github.com/xdawayer/oracle/pull/380 — awaiting codex+chrome verify, then --merge
+  status: node /Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-seo-autopilot.mjs --status (find claim for branch seo/auto/2026-07-15-PG-TRANS-017)
+  claim: pgId=PG-TRANS-017 slug=second-saturn-return status=pushed-preview
+  preview: node /Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-preview-wait.mjs --branch seo/auto/2026-07-15-PG-TRANS-017 --repo xdawayer/oracle --json (timeout 600000ms)
+  preview: resolved previewUrl https://oracle-git-seo-auto2026-07-15-pg-019b2f-wzbs-projects-39a68c1d.vercel.app
+  verify: node /Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-preview-verify.mjs --preview-url https://oracle-git-seo-auto2026-07-15-pg-019b2f-wzbs-projects-39a68c1d.vercel.app --slug second-saturn-return --json (timeout 180000ms)
+  verify: PASS (1 url(s))
+  review[astrology]: node /Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-article-review-worker.mjs --dimension astrology --article /Users/awayer_mini/oracle-worktrees/seo-autopilot/seo__auto__2026-07-15-PG-TRANS-017/data/articles/second-saturn-return.ts --draft /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-TRANS-017-en.md --json (timeout 780000ms)
+  review[astrology]: PASS
+  review[schema]: node /Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-article-review-worker.mjs --dimension schema --article /Users/awayer_mini/oracle-worktrees/seo-autopilot/seo__auto__2026-07-15-PG-TRANS-017/data/articles/second-saturn-return.ts --draft /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-TRANS-017-en.md --json (timeout 780000ms)
+  review[schema]: PASS
+  review[links-seo]: node /Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-article-review-worker.mjs --dimension links-seo --article /Users/awayer_mini/oracle-worktrees/seo-autopilot/seo__auto__2026-07-15-PG-TRANS-017/data/articles/second-saturn-return.ts --draft /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-TRANS-017-en.md --json (timeout 780000ms)
+  review[links-seo]: PASS
+  codex: /Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-codex-pr-review.mjs (REQUIRED, pr=https://github.com/xdawayer/oracle/pull/380, timeout 600000ms)
+  repair[codex]: gg-gate-repair on /Users/awayer_mini/oracle-worktrees/seo-autopilot/seo__auto__2026-07-15-PG-TRANS-017/data/articles/second-saturn-return.ts (reason: codex FAIL —unverifiable claim of five years applying pattern-recognition framew…)
+  repair[codex]: applied 1 edit(s) + pushed — re-running codex
+  codex: PASS — PASS
+  final: mark-verified --branch seo/auto/2026-07-15-PG-TRANS-017 --preview-url https://oracle-git-seo-auto2026-07-15-pg-019b2f-wzbs-projects-39a68c1d.vercel.app --evidence "chrome preview + 3-dimension review panel passed (codex: ran-pass-post-repair)"
+  final: merge --branch seo/auto/2026-07-15-PG-TRANS-017 (deploys prod; --merge owns success notify)
+  final: MERGED → published
+==> exit 0 (merged)
+PG-TRANS-017: MERGED → live
+
+--- PG-TRANS-018 :: saturn return in capricorn ---
+ensure-search-volume: set 选题登记表!C303 = "0" (updatedCells=1)
+[autopilot] author candidate PG-TRANS-018 (saturn return in capricorn)
+[autopilot] entity-passport exit non-zero (partial sources?): ----------------------------- 18 checks — 9 warn (partial sources / placeholder)
+[autopilot] phase2 attempt 1/3 failed:
+- - word count 1482 < min 1500
+- target_keyword count = 13 (limit 10)
+- author banned token(s) matched: "energy"
+  → regenerating WITH feedback
+[autopilot] phase2 attempt 2/3 failed:
+- - word count 1272 < min 1500
+- drifted sections: "How to Read This Return in Your Timing" (jaccard=0.000, shingle=0.000, target-recall=0.25); "Common Misreadings" (jaccard=0.000, shingle=0.000, target-recall=0.00); "Common Questions About This Transit" (jaccard=0.000, shingle=0.000, target-recall=0.00) (skipped 4 structural: "Saturn Return in Capricorn at a Glance", "Reflection Prompts", "Related Reading", "Sources")
+  → regenerating WITH feedback
+[autopilot] phase2 attempt 3/3 failed:
+- - missing required H2: "## <entity> vs <real adjacent concept> (comparison section; no "Adjacent Concepts" boilerplate)"
+- author banned token(s) matched: "energy"
+[autopilot] deterministic repair: feedback loop failed — calling gg-author-repair on _staging/PG-TRANS-018-claude-v8.md
+[autopilot] AUTHORED PG-TRANS-018 → /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-TRANS-018-en.md (author=marcus-orion, via deterministic repair) — ready for next scan to publish
+[autopilot] plan: nightly-plan-PG-TRANS-018.md
+[autopilot] synced oracle → origin/main @ 304f4219
+[autopilot] claim PG-TRANS-018 → saturn-return-in-capricorn
+[autopilot] worktree seo/auto/2026-07-15-PG-TRANS-018 → /Users/awayer_mini/oracle-worktrees/seo-autopilot/seo__auto__2026-07-15-PG-TRANS-018
+[autopilot] registered saturn-return-in-capricorn → ARTICLE_SLUGS_EN_ONLY (static SEO page + sitemap)
+[autopilot] illustrate PG-TRANS-018: hero=true inline=3
+[autopilot] PUSHED preview seo/auto/2026-07-15-PG-TRANS-018 PR=https://github.com/xdawayer/oracle/pull/381 — awaiting codex+chrome verify, then --merge
+  status: node /Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-seo-autopilot.mjs --status (find claim for branch seo/auto/2026-07-15-PG-TRANS-018)
+  claim: pgId=PG-TRANS-018 slug=saturn-return-in-capricorn status=pushed-preview
+  preview: node /Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-preview-wait.mjs --branch seo/auto/2026-07-15-PG-TRANS-018 --repo xdawayer/oracle --json (timeout 600000ms)
+  preview: resolved previewUrl https://oracle-git-seo-auto2026-07-15-pg-f92837-wzbs-projects-39a68c1d.vercel.app
+  verify: node /Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-preview-verify.mjs --preview-url https://oracle-git-seo-auto2026-07-15-pg-f92837-wzbs-projects-39a68c1d.vercel.app --slug saturn-return-in-capricorn --json (timeout 180000ms)
+  verify: PASS (1 url(s))
+  review[astrology]: node /Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-article-review-worker.mjs --dimension astrology --article /Users/awayer_mini/oracle-worktrees/seo-autopilot/seo__auto__2026-07-15-PG-TRANS-018/data/articles/saturn-return-in-capricorn.ts --draft /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-TRANS-018-en.md --json (timeout 780000ms)
+  review[astrology]: PASS
+  review[schema]: node /Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-article-review-worker.mjs --dimension schema --article /Users/awayer_mini/oracle-worktrees/seo-autopilot/seo__auto__2026-07-15-PG-TRANS-018/data/articles/saturn-return-in-capricorn.ts --draft /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-TRANS-018-en.md --json (timeout 780000ms)
+  review[schema]: PASS
+  review[links-seo]: node /Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-article-review-worker.mjs --dimension links-seo --article /Users/awayer_mini/oracle-worktrees/seo-autopilot/seo__auto__2026-07-15-PG-TRANS-018/data/articles/saturn-return-in-capricorn.ts --draft /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-TRANS-018-en.md --json (timeout 780000ms)
+  repair[links-seo]: gg-gate-repair on /Users/awayer_mini/oracle-worktrees/seo-autopilot/seo__auto__2026-07-15-PG-TRANS-018/data/articles/saturn-return-in-capricorn.ts (reason: Three intended internal links render as plain italic text instead of resolving, …)
+  repair[links-seo]: cannot-repair: only verified real internal slug is /en/wiki/square-astrology (already correctly linked to the Saturn-square anchor); no allowed-links list was supplied with honest targets for the pillar-guide, Capricorn-sign, or birth-chart anchors, and inventing slugs is prohibited. — skip
+  FAIL reason: review[links-seo] FAIL: Three intended internal links render as plain italic text instead of resolving, leaving no internal link in the opening and the first real internal link buried at the bottom in Related Reading.
+  final: mark-failed --branch seo/auto/2026-07-15-PG-TRANS-018 --reason "review[links-seo] FAIL: Three intended internal links render as plain italic text instead of resolving, leaving no internal link in the opening and the first real internal link buried at the bottom in Related Reading."
+  final: park notify SUPPRESSED (intermediate state — recover & re-gate, or notify Feishu explicitly only on true abandonment; set GG_GATE_NOTIFY_ON_PARK=1 to re-enable)
+==> exit 2 (parked (notify suppressed))
+PG-TRANS-018: gate parked (codex/links/verify) — needs_human (通知交 auto-retry 终态去重)
+✅ [flow] 批次汇总 2026-07-15：上线 3 篇（已逐篇线上核实）
+[astrologywiki] saturn-return-guide、saturn-return-in-scorpio、second-saturn-return
+暂停待人工 2 篇：PG-TRANS-016（codex completed with codex FAIL —the SVG wrongly says Saturn Square occurs around age 14）、PG-TRANS-018（review[links-seo] FAIL: Three intended internal links render as plain italic text instead of resolving, leaving no internal link in the opening and the first real internal link buried at the bottom in Related Reading.）
+
+===== nightly-seo done: attempted=5 2026-07-15 21:05:51 CST =====
+
+**🤖 回答：**
+
+严格限定 `PG-WAIA-002`，未启动 `gg-nightly-seo.sh`、未运行全账本 reconcile、未修改 claim/ledger，也未处理 LOG_WINDOW 中其他 page_id。实时 claim 显示目标已通过 preview、三维评审与 Codex gate，PR #371 已合并，异常仅为 pending writeback。运行固定入口 `node tools/scripts/gg-backfill-one.mjs --page-id PG-WAIA-002`，退出码 0，返回 `terminal=resolved`，`sheet`、`plan`、`archive` 三步全部完成且无失败；再次运行返回 `terminal=clean`。新鲜验证确认：Sheet 精确行状态为「已发布」；固定计划仍为 `[x]`；claim 为 `done`；PR #371 为 MERGED；生产页与 sitemap 均为 HTTP 200，canonical 精确匹配，Article JSON-LD 存在；vault 归档 note 为 `status: published`。目标终态为 published and fully backfilled。
 
 ---

@@ -107,7 +107,7 @@ test('buildClusterMap returns empty Map on empty input', () => {
 });
 
 // ---------- buildCtaMap + lookupCta ----------
-const CTA_HEADER = ['cta_id', 'page_role', 'cta_文案', 'target_url', 'ga4_event_name', 'track', 'desc', 'cta_kind', 'match_keywords', 'blog_eligible', 'priority'];
+const CTA_HEADER = ['cta_id', 'page_role', 'cta_文案', 'target_url', 'ga4_event_name', 'track', 'desc', 'cta_kind', 'match_keywords', 'blog_eligible', 'priority', 'intent_tags'];
 
 test('buildCtaMap returns {map, dupes} and keys by "page_role||track"', () => {
   const rows = [
@@ -138,6 +138,14 @@ test('buildCtaMap indexes URL-registry rows by cta_id', () => {
     built.registry.get('url_tool_birth_chart').target_url,
     'https://astrologywiki.com/en/birth-chart-calculator',
   );
+});
+
+test('buildCtaMap carries CTA Map intent_tags into selector candidates', () => {
+  const built = buildCtaMap([
+    CTA_HEADER,
+    ['url_page_forecast', 'Tool_Hub', 'Forecasts', 'https://astrologywiki.com/en/astrology-forecast', 'page_view', '量产线', 'Forecast hub', 'hub', 'forecast;transit', 'TRUE', '90', 'forecast-transit'],
+  ]);
+  assert.equal(built.candidates[0].intent_tags, 'forecast-transit');
 });
 
 test('resolveCtaTargetUrl leaves legacy Sheet alias "星盘页" unresolved for semantic routing', () => {
@@ -327,17 +335,17 @@ function makeCtx(overrides = {}) {
     [
       'cta_tool_series', 'Series', 'Explore your aura tools',
       'https://astrologywiki.com/tools/aura-quiz', 'tool_click', '量产线',
-      'Aura-tool CTA', 'tool', 'orange aura;aura', 'TRUE', '100',
+      'Aura-tool CTA', 'tool', 'orange aura;aura', 'TRUE', '100', 'aura-tool',
     ],
     [
       'cta_tools_hub', 'Tool_Hub', 'Explore astrology tools',
       'https://astrologywiki.com/tools', 'tool_click', '量产线',
-      'Generic fallback', 'hub', '*', 'TRUE', '1',
+      'Generic fallback', 'hub', '*', 'TRUE', '1', 'tool-hub',
     ],
     [
       'cta_blog_aura', 'Blog_Article', 'Read related article',
       'https://astrologywiki.com/en/blog/orange-aura', '', '量产线',
-      'Blog internal link only', 'blog', 'orange aura', 'FALSE', '999',
+      'Blog internal link only', 'blog', 'orange aura', 'FALSE', '999', 'blog-article',
     ],
   ]);
   return { clusterMap, ctaMap, repo: '/tmp/__nonexistent_repo_for_test', ...overrides };
@@ -357,6 +365,7 @@ test('composeOverride produces all 13 cfg fields for a full Sheet row', () => {
   assert.equal(entry.internal_link_rule, 'Pillar↔Series');
   assert.equal(entry.cta_text, 'Explore your aura tools');
   assert.equal(entry.cta_target_url, 'https://astrologywiki.com/tools/aura-quiz');
+  assert.equal(entry.cta_intent_tags, 'aura-tool');
   assert.match(entry.tier_gate_block, /T2 Definition/);
   assert.equal(entry.rl6_hint, STANDARD_RL6_HINT);
   assert.equal(entry.friction_themes.length, 3);

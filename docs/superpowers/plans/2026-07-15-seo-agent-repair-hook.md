@@ -505,7 +505,7 @@ git commit -m "fix(project): remove Lynne profile from flow instructions"
 - First real window: `GG_SEO_REPAIR_MAX_TARGETS=1`
 - Rollback: set `GG_SEO_REPAIR_HOOK_ENABLED=0`; do not restore any other scheduler.
 
-- [ ] **Step 1: Run targeted repair suite**
+- [x] **Step 1: Run targeted repair suite**
 
 ```bash
 node --test \
@@ -522,7 +522,7 @@ node --test \
 
 Expected: all targeted tests pass.
 
-- [ ] **Step 2: Run CTA/backfill regression**
+- [x] **Step 2: Run CTA/backfill regression**
 
 ```bash
 node --test \
@@ -536,13 +536,13 @@ node --test \
 
 Expected: all selected tests pass; no Sheet write occurs because fixtures/env sandbox all external effects.
 
-- [ ] **Step 3: Run full test suite and classify only pre-existing failures**
+- [x] **Step 3: Run full test suite and classify only pre-existing failures**
 
 Run: `node --test tools/scripts/__tests__/*.test.mjs`
 
 Expected: no new failure in changed or dependent modules. Any unrelated existing failure must be rerun individually and recorded with exact command/output before proceeding.
 
-- [ ] **Step 4: Verify scheduler exclusivity and paused Automation**
+- [x] **Step 4: Verify scheduler exclusivity and paused Automation**
 
 ```bash
 crontab -l
@@ -554,7 +554,7 @@ rg -n '^status = "PAUSED"$' ~/.codex/automations/gengrowth-seo-blog/automation.t
 
 Expected: `com.gengrowth.seo-blog` loaded; old eight labels disabled/unloaded; Automation paused; no Unix crontab SEO entry.
 
-- [ ] **Step 5: Enable hook with first-window cap**
+- [x] **Step 5: Enable hook with first-window cap**
 
 Use a precise append/update that preserves all existing secret values:
 

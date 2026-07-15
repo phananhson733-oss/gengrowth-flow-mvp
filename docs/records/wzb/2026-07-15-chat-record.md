@@ -22,7 +22,7 @@ aliases:
 - 结果复盘性能 wrapper 因两产品 GSC/GA4 OAuth refresh token 过期或被撤销而在扫描前停止；未写表、未生成报告，需重新授权后只重跑原 wrapper。
 - 双产品 CTA Map 已新增 `intent_tags`，最近 7 篇 AstrologyWiki 文章已按新逻辑重新处理并上线；flow PR #2、Oracle PR #376 已合并，线上 CTA、canonical 与 Article JSON-LD 已复验。
 - 复核现有 agentic repair 后明确新调度边界：Codex Automation 保持暂停；macOS `launchd` 直接拉起正常写作/发布，只有异常、报错或 `needs_human` 才通过 hook 启动一次性 Agent 修复，且不得绕过现有发布门。
-- 确认 flow 仓库的 `AGENTS.md` 是 5 月 21 日从 gengrowth-wiki 原样切仓带入，误留 `GenGrowth Wiki` 项目名及 Lynne 专属 soul 的硬编码引用；flow 历史从未包含该 soul 文件，错误引用还进入了当前 SEO Codex automation，尚未修改。
+- 方案 A 已进入生产灰度：LaunchAgent 改为 direct nightly + 条件 repair hook，新增错误指纹/attempt 状态、一次性 Agent 与确定性 publish/backfill verifier；Lynne soul 项目级误引用已清理，Codex Automation 保持暂停，等待 18:30 首个自然窗口完成终态验收。
 
 ---
 
@@ -263,5 +263,17 @@ After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-s
 **🤖 回答：**
 
 已按方案 A 写入正式设计文档 `docs/superpowers/specs/2026-07-15-seo-agent-repair-hook-design.md`，包含唯一 LaunchAgent 直跑 nightly、异常 selector、一次性 `codex exec`、错误指纹与 attempt cap、确定性终态 verifier、回填、通知、Lynne soul 污染清理、测试和灰度回退。自检未发现 TBD/TODO、内部矛盾或范围漂移；补齐了具体模块路径、`GG_SEO_REPAIR_HOOK_ENABLED` 等环境开关、默认上限和原子 sidecar 写入边界。文档已提交为 `7efb9ba0 docs(seo): design exception-triggered repair hook`；尚未修改运行代码、LaunchAgent 或启用配置，等待用户审阅书面 spec 后进入实现计划。
+
+---
+
+### Q18 — 17:01
+
+**🙋 提问：**
+
+去落地，按照计划设计稿
+
+**🤖 回答：**
+
+已按设计完成代码与配置落地：新增 repair selector/state、确定性 publish/backfill verifier、一次性 `codex exec` hook；`tools/scripts/gg-seo-blog-launchd-tick.sh` 已改为 direct nightly 后调用条件 hook，nightly 非零也会交给 hook 收敛，正常路径不由 runner 启动 Agent。`AGENTS.md` 已修正为 GenGrowth Flow MVP 并移除 Lynne 个人档案项目级绑定；暂停中的 Codex Automation 已通过 Automation API 同步新边界并保持 `PAUSED`。repair/driver/preview 93 项、CTA/回填 266 项及全量测试均通过；旧 8 个调度 job 均 disabled/unloaded，唯一 LaunchAgent 已加载并指向新 runner。已在 `~/.config/gg/_gg.env` 开启首窗灰度（每轮 1 个目标、同指纹 2 次、2700 秒），启用前 selector 预检为 0 个目标；已设置当前任务于 18:40 回醒，等待 18:30 自然窗口后完成日志、锁、孤儿进程、state 与最终需求审计，不手动触发发布。
 
 ---

@@ -267,6 +267,17 @@ test('target Agent prompt contains exact evidence and safety boundaries without 
         stderr: 'codex factual FAIL',
         canonicalRetry: ['node', 'tools/scripts/gg-preview-gate.mjs', '--branch', 'seo/auto/PG-TRANS-016'],
       }),
+      history: [{
+        status: 'queued',
+        at: '2026-07-15T15:28:57.453Z',
+        evidence: {
+          type: 'regate_failed',
+          result: {
+            stdout: 'infographic says Saturn return happens only near ages 29 and 58 despite a third near 88',
+            stderr: 'token=secret-value',
+          },
+        },
+      }],
     },
     strategy: 'agent_content_asset_link',
     target: {
@@ -283,6 +294,8 @@ test('target Agent prompt contains exact evidence and safety boundaries without 
   assert.match(prompt, /saturn-return-age-29-i0-en\.svg/);
   assert.match(prompt, /saturn-return-guide/);
   assert.match(prompt, /authoritativeLogWindow/);
+  assert.match(prompt, /recentRepairEvidence/);
+  assert.match(prompt, /third near 88/);
   assert.match(prompt, /isolated.*worktree/i);
   assert.doesNotMatch(prompt, /gg-nightly-seo\.sh/);
   assert.doesNotMatch(prompt, /lynne-soul|api[_-]?key|secret-value/i);

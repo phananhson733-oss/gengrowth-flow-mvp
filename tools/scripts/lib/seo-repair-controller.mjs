@@ -46,6 +46,16 @@ function clockValue(now) {
   return asDate(typeof now === 'function' ? now() : (now || new Date()));
 }
 
+function boundedRepairEvidence(value) {
+  let text;
+  try { text = JSON.stringify(value); }
+  catch { text = String(value || ''); }
+  const redacted = text
+    .replace(/\b(bearer)\s+[a-z0-9._~+/=-]+/gi, '$1 [REDACTED]')
+    .replace(/\b(token|password|secret|api[_-]?key)\s*[:=]\s*[^\\"\s,}]+/gi, '$1=[REDACTED]');
+  return redacted.length <= 12_000 ? redacted : redacted.slice(-12_000);
+}
+
 export function buildRepairAgentPrompt({ template, record, strategy, target }) {
   const safeEvent = {
     schemaVersion: record?.event?.schemaVersion,
@@ -74,6 +84,14 @@ export function buildRepairAgentPrompt({ template, record, strategy, target }) {
       offsetEnd: safeEvent.logOffsetEnd,
       stderr: safeEvent.stderr,
     },
+    recentRepairEvidence: (record?.history || [])
+      .filter((entry) => entry?.evidence)
+      .slice(-3)
+      .map((entry) => ({
+        status: entry.status,
+        at: entry.at,
+        evidence: boundedRepairEvidence(entry.evidence),
+      })),
     target,
   };
   return [

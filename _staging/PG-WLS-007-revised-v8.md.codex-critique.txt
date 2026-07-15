@@ -1,0 +1,8 @@
+- 受众定位跑偏 → 文章标题像泛 SEO 教程，但正文多次转向“白标/代理商转售/SaaS 团队”；要么把标题和开头改成面向 agencies/resellers，要么减少白标语境，覆盖一般搜索者想知道的 ChatGPT SEO 方法。
+- “ChatGPT SEO = shaping how AI answer systems retrieve and cite web content” 定义过窄且有争议 → 改成区分 “SEO for ChatGPT visibility” 和 “using ChatGPT for SEO workflows”，避免把整个关键词直接定义为 GEO。
+- “machine-readable authority signals rather than link graphs alone” 说法太笼统 → 补具体信号，如实体一致性、schema、作者/品牌信息、引用来源、页面结构、可抓取性，并说明这些是影响因素而非确定机制。
+- 缺少实际操作示例 → 在 citation-side 部分加入一个具体 before/after，例如服务页 FAQ、实体信息块、来源引用、schema、query 测试方式。
+- “white-label rollouts we’ve audited” 听起来像证据但无量化 → 要么补样本范围/观察口径，要么降调为“in our client work”，避免像未经支持的权威背书。
+- SEO 意图覆盖不全 → 增加搜索者最常见需求：如何用 ChatGPT 做 keyword research、briefs、on-page edits、technical audit triage、content refresh，并标明哪些步骤必须人工验证。
+- 评估方法还不够可执行 → 把“check the model’s answers”具体化为固定查询集、无登录/登录环境、日期记录、截图或导出、每周复测、记录是否引用品牌/URL。
+- 结尾 CTA 跳得太快 → 先给一个可手动完成的 10 分钟诊断清单，再引到 GenGrowth Features，否则像从教育内容突然转销售。

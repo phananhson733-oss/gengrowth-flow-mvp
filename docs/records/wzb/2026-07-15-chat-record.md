@@ -22,6 +22,7 @@ aliases:
 - 运行 Phase 2 索引监控 wrapper；两站官方 Sitemap API 提交成功，astrologywiki 完成 3 条 URL Inspection，gengrowth 无到期检查项。
 - 请求索引候选队列已按优先级刷新；未执行普通文章 Google Indexing API 或无人值守 GSC Request Indexing 点击，日志未给出飞书发送回执。
 - 运行结果复盘性能包装器失败：两个产品的 GSC/GA4 OAuth refresh token 均已过期或被撤销；未扫描、未写表、未生成当日报告，需完成 OAuth 重新授权后仅重跑同一包装器。
+- 审计 7 月 14 日晚至 15 日凌晨连续发布的 7 篇 AstrologyWiki 文章 CTA；全部指向 CTA Map 的 Birth Chart Calculator，唯一锚文本偏差已在隔离 Oracle 分支修复并通过 CTA 单测，待选择集成方式。
 
 ---
 
@@ -88,5 +89,17 @@ After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-s
 **🤖 回答：**
 
 已仅运行指定入口 `bash tools/scripts/gg-recap-performance-tick.sh`；10:01:05–10:01:07 CST 退出码为 1。astrologywiki（工作簿尾号 `jyzcQc`、`sc-domain:astrologywiki.com`、GA4 `properties/524765570`）与 gengrowth（工作簿尾号 `ZTIRA8`、`sc-domain:gengrowth.ai`、同一 GA4 property）均在扫描前因同一错误停止：`cannot mint GSC/GA4 user token — refresh_token rejected (Token has been expired or revoked.)`。因此两产品 D14/D30/D60 到期行处理数、复盘行更新数、覆盖率、任务优先级数及跳过/非到期数均未产生；未生成 2026-07-15 优化报告。日志记录失败通知已由包装器发送（messageId `om_x100b6a5ad0afe4acb1b322099f32328`）。所需边界是通过 `node tools/scripts/oauth-init.mjs` 恢复 OAuth 后重跑同一包装器；未手工改 Sheet、未绕过包装器、未发布/部署/提交索引或调用 Google Indexing API。
+
+---
+
+### Q4 — 12:44
+
+**🙋 提问：**
+
+最近发布的几篇文章的 CTA，按照规则优化一下
+
+**🤖 回答：**
+
+按 CTA Map 语义选择器复核 7 月 14 日晚至 15 日凌晨连续发布的 7 篇 AstrologyWiki 文章：全部选择 `url_tool_birth_chart`，URL 均为 `https://astrologywiki.com/en/birth-chart-calculator`。其中 6 篇锚文本已与 `cta_文案` 一致；仅 `why-do-i-attract-toxic-people` 使用旧的上下文化锚文本，已在隔离 Oracle worktree 的 `data/articles/why-do-i-attract-toxic-people.ts` 对齐为 `Generate Your Free Birth Chart`，未改目标 URL、正文结构、Related Reading 或 blog-to-blog 内链。CTA 单测 12/12 通过，源码断言确认 7/7 均与 Map 精确一致；提交为 `94f20e3`，分支 `codex/cta-recent-articles-20260715` 已 rebase 到 `origin/main` 的 `031fc5a`，待选择推送 PR、保留分支或其他集成方式。
 
 ---

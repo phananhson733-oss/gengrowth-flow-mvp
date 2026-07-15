@@ -53,6 +53,7 @@ function runAuto(h, args, extraEnv = {}) {
       GG_ORACLE_DIR: h.oracle,
       GG_FLOW_REPO: join(__dirname, '..', '..', '..'),
       GG_AUTOPILOT_NO_NOTIFY: '1', // never send a real Feishu push from tests
+      GG_AUTOPILOT_NO_INDEX_TRACKING: '1',
       ...extraEnv,
     },
   });
@@ -72,6 +73,7 @@ function runAutoAsync(h, args, extraEnv = {}) {
         GG_ORACLE_DIR: h.oracle,
         GG_FLOW_REPO: join(__dirname, '..', '..', '..'),
         GG_AUTOPILOT_NO_NOTIFY: '1', // never send a real Feishu push from tests
+        GG_AUTOPILOT_NO_INDEX_TRACKING: '1',
         ...extraEnv,
       },
     });
@@ -809,6 +811,11 @@ test('--merge creates the backfill WAL before a post-merge oracle sync failure',
     assert.equal(wal.site, 'astrologywiki');
     assert.equal(wal.planPath, plan);
     assert.deepEqual(wal.done, []);
+    assert.match(
+      readFileSync(join(h.tasks, '..', 'seo-autopilot-publish-log.md'), 'utf8'),
+      /\| PG-TEST-001 \| test-slug \|/,
+      'the publish register must be durable before local oracle sync',
+    );
   } finally {
     h.cleanup();
   }
@@ -847,6 +854,11 @@ test('--reconcile-published marks parked claims done when oracle already has the
     assert.equal(claims['PG-LIVE'].status, 'done');
     assert.equal(claims['PG-LIVE'].reconciliationNote, 'auto-reconciled from oracle main article registration');
     assert.match(claims['PG-LIVE'].mergedAt, /^\d{4}-\d{2}-\d{2}T/);
+    assert.match(
+      readFileSync(join(h.tasks, '..', 'seo-autopilot-publish-log.md'), 'utf8'),
+      /\| PG-LIVE \| already-live \|/,
+      'reconciliation must restore a missing publish-register row',
+    );
   } finally {
     h.cleanup();
   }

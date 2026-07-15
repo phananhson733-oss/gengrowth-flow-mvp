@@ -335,30 +335,39 @@ function articleRegisteredInOracle(slug) {
   return src.includes(`from "./${slug}"`) || src.includes(`from './${slug}'`);
 }
 
-function doReconcilePublished(o) {
-  return withClaimsLock(() => {
+async function doReconcilePublished(o) {
+  const missingPublishRecords = withClaimsLock(() => {
     syncOracle();
     const claims = loadClaims();
+    const publishLogText = existsSync(opsPublishLog()) ? readFileSync(opsPublishLog(), 'utf8') : '';
+    const toRecord = [];
     let changed = false;
     for (const [pgId, claim] of Object.entries(claims)) {
       if (o.task && pgId !== o.task) continue;
-      if (!claim || claim.status === 'done') continue;
+      if (!claim) continue;
       const slug = claim.slug;
       if (!articleRegisteredInOracle(slug)) continue;
-      claims[pgId] = {
-        ...claim,
-        status: 'done',
-        mergedAt: claim.mergedAt || new Date().toISOString(),
-        reconciliationNote: claim.reconciliationNote || 'auto-reconciled from oracle main article registration',
-      };
-      delete claims[pgId].error;
-      delete claims[pgId].failedAt;
-      log(`PUBLISHED ${pgId} ${slug}`);
-      changed = true;
+      if (claim.status !== 'done') {
+        claims[pgId] = {
+          ...claim,
+          status: 'done',
+          mergedAt: claim.mergedAt || new Date().toISOString(),
+          reconciliationNote: claim.reconciliationNote || 'auto-reconciled from oracle main article registration',
+        };
+        delete claims[pgId].error;
+        delete claims[pgId].failedAt;
+        log(`PUBLISHED ${pgId} ${slug}`);
+        changed = true;
+      }
+      if (!publishLogText.includes(`| ${pgId} |`)) toRecord.push({ pgId, slug });
     }
     if (changed) saveClaims(claims);
-    else log('reconcile-published: no published claims found');
+    else if (!toRecord.length) log('reconcile-published: no published claims found');
+    return toRecord;
   });
+  for (const { pgId, slug } of missingPublishRecords) {
+    await appendPublishLog(pgId, slug, { notifyPublished: false });
+  }
 }
 
 // ── per-task helpers ────────────────────────────────────────────────────────
@@ -1215,6 +1224,7 @@ function doMerge(o) {
     if (!wal) {
       throw new Error(`merge succeeded for ${pgId}, but failed to create the backfill WAL`);
     }
+    const recorded = appendPublishLog(pgId, slug);
     cleanupWorktree(claim.worktree);
     syncOracle();
     claims[pgId].status = 'done';
@@ -1223,7 +1233,6 @@ function doMerge(o) {
     saveClaims(claims);
     // writing record → ops (self-synced)；返回 promise（尾部是 published 事件通知 + 阶段4 回填事务），
     // 由顶层 dispatcher await 收尾——claims 锁在同步部分结束时即释放，不为通知/回填多持锁。
-    const recorded = appendPublishLog(pgId, slug);
     log(`MERGED ${o.branch} → main (prod deploy triggered)`);
     // 阶段 4 回填事务（锁外）：merge 成功后 verify-live(sitemap) → 写全套账本
     // （选题登记表 已发布+URL / plan 勾选 / vault 归档），失败入 pending-writeback 由每日对账重试。
@@ -1513,7 +1522,7 @@ function enqueueIndexTracking(pgId, slug, title, author, date) {
 // Append one row per published article to the ops publish register (the "写作记录"),
 // then sync it + the plan to ops. Title/author come from the en.md frontmatter.
 // Async because the trailing `published` event notify is awaited（caller 顶层 await 收尾）.
-async function appendPublishLog(pgId, slug) {
+async function appendPublishLog(pgId, slug, { notifyPublished = true } = {}) {
   try {
     const f = opsPublishLog();
     let title = '', author = '';
@@ -1529,21 +1538,30 @@ async function appendPublishLog(pgId, slug) {
       writeFileSync(f, `---\ntitle: SEO Autopilot 发布登记\ntype: log\nupdated: ${date}\n---\n\n# 📝 SEO Autopilot 发布登记（自动维护）\n\n> autopilot 每篇文章发布到 prod 后自动追加一行并 commit+push。\n\n| 日期 | PG-id | slug | 标题 | 作者 | 线上 URL | 状态 |\n|---|---|---|---|---|---|---|\n`);
     }
     let src = readFileSync(f, 'utf8');
+    let inserted = false;
     if (!src.includes(`| ${pgId} |`)) {
       src = src.replace(/\nupdated:\s*[\d-]+/, `\nupdated: ${date}`) +
         `| ${date} | ${pgId} | ${slug} | ${title.replace(/\|/g, '/')} | ${author} | ${url} | published |\n`;
       writeFileSync(f, src);
+      inserted = true;
     }
     syncOpsFiles([f, latestPlan()], `chore(seo): publish ${slug}`);
+    if (!inserted) return { ok: true, inserted: false };
     enqueueIndexTracking(pgId, slug, title, author, date);
     // published 事件（NOTIFY-CONTRACT.md 迁移映射 :1501）
-    await notifyEvent('published', {
-      site: 'astrologywiki',
-      title: title || slug,
-      url,
-      extra: `作者 ${author || '?'}，已登记到 ops`,
-    });
-  } catch (e) { log(`publish-log skipped: ${errTail(e, 80)}`); }
+    if (notifyPublished) {
+      await notifyEvent('published', {
+        site: 'astrologywiki',
+        title: title || slug,
+        url,
+        extra: `作者 ${author || '?'}，已登记到 ops`,
+      });
+    }
+    return { ok: true, inserted: true };
+  } catch (e) {
+    log(`publish-log skipped: ${errTail(e, 80)}`);
+    return { ok: false, inserted: false };
+  }
 }
 
 function doStatus() {
@@ -1595,7 +1613,7 @@ try {
   else if (o.markFailed) doMarkFailed(o);
   else if (o.retryFailed) doRetryFailed(o);
   else if (o.retryAuthor) doRetryAuthor(o);
-  else if (o.reconcilePublished) doReconcilePublished(o);
+  else if (o.reconcilePublished) await doReconcilePublished(o);
   else if (o.autoRetryParks) await doAutoRetryParks(); // async 尾巴 = 升级通知（ESM 顶层 await）
   else doScan(o);
 } catch (e) {

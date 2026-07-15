@@ -16,10 +16,12 @@ function absoluteWorktreeFile(worktree, file) {
 
 export async function buildAstrologyRepairTarget(event, context) {
   const changedFiles = (context.changedFiles || []).map((file) => absoluteWorktreeFile(context.worktree, file));
+  const slug = event.slug || '';
+  const supportPlan = resolve(context.worktree, 'scripts', 'plans', `auto-${slug}.json`);
   return {
     site: 'astrologywiki',
     pageId: event.pageId,
-    slug: event.slug || '',
+    slug,
     stage: event.stage,
     errorKind: event.errorKind,
     branch: context.branch,
@@ -28,12 +30,22 @@ export async function buildAstrologyRepairTarget(event, context) {
     articleFile: absoluteWorktreeFile(context.worktree, context.articleFile),
     changedFiles,
     assetFiles: changedFiles.filter((file) => ASSET_RE.test(file)),
+    supportFiles: changedFiles.filter((file) => file === supportPlan),
     verifiedLinkCandidates: context.verifiedLinkCandidates || [],
     linkCandidates: context.linkCandidates || [],
     gateEvidence: [event.summary, event.stderr].filter(Boolean).join('\n'),
     allowedActions: context.allowedActions || [],
     terminalVerifier: context.terminalVerifier || [],
   };
+}
+
+export function editableAstrologyFiles(target) {
+  return [...new Set([
+    target.articleFile,
+    ...(target.assetFiles || []),
+    ...(target.supportFiles || []),
+  ].map((file) => relative(target.worktree, file))
+    .filter((file) => file && file !== '..' && !file.startsWith(`..${sep}`) && !isAbsolute(file)))];
 }
 
 export async function verifyInternalLinkCandidate(slug, deps = {}) {
@@ -213,9 +225,7 @@ async function defaultPersistRepair(target) {
   if (!/^seo\/auto\/[A-Za-z0-9._/-]+$/.test(String(target.branch || ''))) {
     return { ok: false, stderr: `unsafe astrology branch: ${target.branch || ''}` };
   }
-  const editable = new Set([target.articleFile, ...(target.assetFiles || [])]
-    .map((file) => relative(target.worktree, file))
-    .filter((file) => file && file !== '..' && !file.startsWith(`..${sep}`) && !isAbsolute(file)));
+  const editable = new Set(editableAstrologyFiles(target));
   const status = run([
     'git', '-C', target.worktree, 'status', '--porcelain=v1', '--untracked-files=all',
   ], { cwd: target.worktree, timeout: 60_000 });

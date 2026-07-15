@@ -8,6 +8,7 @@ import {
 import {
   buildAstrologyRepairTarget,
   createAstrologyWikiRepairAdapter,
+  editableAstrologyFiles,
   verifyInternalLinkCandidate,
 } from '../lib/seo-repair-adapter-astrologywiki.mjs';
 
@@ -127,6 +128,7 @@ test('astrology target includes the factual SVG and complete changed-file eviden
     changedFiles: [
       'data/articles/saturn-return-age-29.ts',
       'public/images/blog/saturn-return-age-29-i0-en.svg',
+      'scripts/plans/auto-saturn-return-age-29.json',
       'data/articles/index.ts',
     ],
     linkCandidates: [],
@@ -138,7 +140,16 @@ test('astrology target includes the factual SVG and complete changed-file eviden
   assert.deepEqual(target.changedFiles, [
     '/oracle-worktrees/pg-trans-016/data/articles/saturn-return-age-29.ts',
     '/oracle-worktrees/pg-trans-016/public/images/blog/saturn-return-age-29-i0-en.svg',
+    '/oracle-worktrees/pg-trans-016/scripts/plans/auto-saturn-return-age-29.json',
     '/oracle-worktrees/pg-trans-016/data/articles/index.ts',
+  ]);
+  assert.deepEqual(target.supportFiles, [
+    '/oracle-worktrees/pg-trans-016/scripts/plans/auto-saturn-return-age-29.json',
+  ]);
+  assert.deepEqual(editableAstrologyFiles(target), [
+    'data/articles/saturn-return-age-29.ts',
+    'public/images/blog/saturn-return-age-29-i0-en.svg',
+    'scripts/plans/auto-saturn-return-age-29.json',
   ]);
   assert.match(target.gateEvidence, /Saturn Square.*age 14/);
 });

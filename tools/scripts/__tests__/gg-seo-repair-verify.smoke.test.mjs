@@ -19,14 +19,18 @@ function goodDeps() {
     },
     planText: '- [x] `PG-A-001` alpha\n',
     publishLogText: `| 2026-07-15 | PG-A-001 | alpha | ${URL} |\n`,
-    sheetRow: { status: '已发布', publish_url: URL },
+    sheetRow: {
+      status: '已发布',
+      publish_url: URL,
+      cta_target_url: 'https://astrologywiki.com/en/birth-chart-calculator',
+    },
     pendingWriteback: null,
     fetchDocument: async (url) => url.endsWith('/sitemap.xml')
       ? { ok: true, status: 200, text: `<url><loc>${URL}</loc></url>` }
       : {
           ok: true,
           status: 200,
-          text: `<html><head><link href="${URL}" rel="canonical"><script type="application/ld+json">{"@context":"https://schema.org","@type":"Article"}</script></head></html>`,
+          text: `<html><head><link href="${URL}" rel="canonical"><script type="application/ld+json">{"@context":"https://schema.org","@type":"Article"}</script></head><body><a href="/en/birth-chart-calculator">Take Action</a></body></html>`,
         },
   };
 }
@@ -61,6 +65,9 @@ const failures = [
   ['plan_checked', (d) => { d.planText = '- [ ] `PG-A-001` alpha\n'; }],
   ['publish_log', (d) => { d.publishLogText = ''; }],
   ['sheet_published', (d) => { d.sheetRow = { status: '待写', publish_url: '' }; }],
+  ['cta_matches_sheet', (d) => {
+    d.sheetRow.cta_target_url = 'https://astrologywiki.com/forecast';
+  }],
   ['writeback_clear', (d) => { d.pendingWriteback = { pageId: 'PG-A-001', done: ['sheet'] }; }],
 ];
 

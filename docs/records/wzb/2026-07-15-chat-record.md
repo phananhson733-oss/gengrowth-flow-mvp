@@ -20,9 +20,9 @@ aliases:
 
 - 索引修复重提与 Phase 2 索引监控均经固定 wrapper 完成；两站 Sitemap API 成功，astrologywiki 完成 3 条 URL Inspection，请求索引候选队列已刷新，未越过普通文章 GSC 合规边界。
 - 结果复盘性能 wrapper 因两产品 GSC/GA4 OAuth refresh token 过期或被撤销而在扫描前停止；未写表、未生成报告，需重新授权后只重跑原 wrapper。
-- 双产品 CTA Map 已新增 `intent_tags`；语义选择器、两份 live Sheet 与 Codex automation 规则均按目标词、实体、内容角度识别意图，批量通用关联词不再强制导向 Birth Chart。
-- 最近 7 篇 AstrologyWiki 文章已按新 CTA 逻辑重新处理并上线：6 篇保留 Birth Chart，`north-node-in-aquarius-2026` 切换 Forecast；flow PR #2、Oracle PR #376 已合并，线上 CTA、canonical 与 Article JSON-LD 已复验。
+- 双产品 CTA Map 已新增 `intent_tags`，最近 7 篇 AstrologyWiki 文章已按新逻辑重新处理并上线；flow PR #2、Oracle PR #376 已合并，线上 CTA、canonical 与 Article JSON-LD 已复验。
 - 复核现有 agentic repair：author repair、gate surgical repair、transient auto-retry、flow-driver 与回填 loop 均已存在，但当前 flow-driver 被禁用、Codex automation 为 PAUSED，nightly wrapper 又会跳过既有 `needs_human`；建议把有界 recovery controller 串入唯一 wrapper，而不是新增并行调度器或自动绕过发布门。
+- 确认 flow 仓库的 `AGENTS.md` 是 5 月 21 日从 gengrowth-wiki 原样切仓带入，误留 `GenGrowth Wiki` 项目名及 Lynne 专属 soul 的硬编码引用；flow 历史从未包含该 soul 文件，错误引用还进入了当前 SEO Codex automation，尚未修改。
 
 ---
 
@@ -201,5 +201,19 @@ After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-s
 确认此前确有 agentic repair：`tools/scripts/gg-author-repair.mjs`、`tools/scripts/gg-gate-repair.mjs`、`--auto-retry-parks`、`tools/scripts/gg-flow-driver.mjs` 与 backfill loop 均存在；flow-driver/preview gate 相关测试 57/57、park triage/auto-retry 测试 17/17 通过。但当前 `com.gengrowth.flow-driver` 已禁用且未加载，唯一 Codex automation 状态为 `PAUSED`；当前 ledger 虽为干净终态，`tools/scripts/gg-nightly-seo.sh` 对已存在的 `needs_human` 明确执行 skip，只在开跑前自动恢复 transient park，且 flow-driver 对 authoring fix 仍是 `fix-skip`。这就是“代码有 repair，但运行时仍等人”的根因。
 
 建议不新增一个可绕过 gate、模拟用户强制发布的自由 Agent，也不重新启用并行 flow-driver cron；应在唯一 nightly wrapper 内、batch summary 前加入同步且有界的 recovery controller：分诊 transient / authoring 可修 / preview 可修 / stale；复用 retry-author、author repair、retry-failed、preview gate 与 backfill loop；每篇和整批均设次数、时间与预算上限；只有所有确定性门通过才允许 merge/publish，过期或错误前提自动归档，权限/凭据/安全门失败才保留真正 human-only。待用户确认该设计后再按 TDD 实现，本轮未修改业务代码。
+
+---
+
+### Q13 — 16:13
+
+**🙋 提问：**
+
+这里有一个奇怪的问题，为什么会 ai-profile/Lynne-soul。这里看起来是王玲 Lynne 的专属的 soul.。现在怎么作为了项目声明了呢
+
+**🤖 回答：**
+
+确认这是切仓遗留的指令污染，不是合理的项目级声明。初始提交 `fe53434d` 明确为 `init: carve gengrowth-flow-mvp from gengrowth-wiki`，其中 `AGENTS.md` 与当时 wiki 的文件 blob 完全相同；因此 flow 文件连项目名仍写成 `GenGrowth Wiki`，并原样保留了 `ai-profile/lynne-soul.md` 的唯一来源声明。flow 仓库全部历史从未包含该 soul 文件；真实文件由 Lynne Wang 于 2026-04-29 在 sibling gengrowth-wiki 创建，内容确为 Lynne 个人档案。flow 仅在 2026-06-10 后加入 `ai-profile/reminders.md`。
+
+进一步确认当前 SEO Codex automation 的 prompt 也复制了“读取 `ai-profile/lynne-soul.md`”步骤；其状态目前为 `PAUSED`，没有正在执行这条错误读取。上一轮在 flow 本地文件缺失后跨仓读取 sibling wiki profile，是对错误声明做了不当兜底，扩大了个人规则污染；正确行为应是不跨仓加载 Lynne profile。建议后续修正 flow 的项目名称、删除 Lynne soul 的项目级硬编码，并同步移除 automation prompt 中的错误读取；本轮只完成诊断，未修改这些配置。
 
 ---

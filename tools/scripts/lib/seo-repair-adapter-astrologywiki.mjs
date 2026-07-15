@@ -1,7 +1,7 @@
 import { spawnSync } from 'node:child_process';
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { dirname, isAbsolute, join, resolve } from 'node:path';
+import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { invokeTargetRepairAgent } from './seo-repair-controller.mjs';
 
@@ -24,6 +24,7 @@ export async function buildAstrologyRepairTarget(event, context) {
     errorKind: event.errorKind,
     branch: context.branch,
     worktree: context.worktree,
+    originalWorktree: context.originalWorktree || null,
     articleFile: absoluteWorktreeFile(context.worktree, context.articleFile),
     changedFiles,
     assetFiles: changedFiles.filter((file) => ASSET_RE.test(file)),
@@ -66,12 +67,51 @@ function run(argv, { cwd, env = process.env, timeout = 600_000 } = {}) {
 }
 
 function worktreeDiff(worktree) {
-  const dirty = run(['git', '-C', worktree, 'status', '--porcelain'], { cwd: worktree, timeout: 60_000 });
-  if (!dirty.ok) throw new Error(`cannot inspect astrology worktree: ${dirty.stderr || dirty.code}`);
-  if (dirty.stdout.trim()) throw new Error(`refusing dirty astrology worktree: ${worktree}`);
   const diff = run(['git', '-C', worktree, 'diff', '--name-only', 'origin/main...HEAD'], { cwd: worktree, timeout: 60_000 });
   if (!diff.ok) throw new Error(`cannot inspect reviewed diff: ${diff.stderr || diff.code}`);
   return diff.stdout.trim().split('\n').filter(Boolean);
+}
+
+function repairWorktreeName(event) {
+  const id = String(event.eventId || 'event').replace(/[^A-Za-z0-9]/g, '').slice(0, 12) || 'event';
+  return `${String(event.pageId).replace(/[^A-Za-z0-9._-]/g, '_')}-${id}`;
+}
+
+function prepareRepairWorktree(event, claim, originalWorktree) {
+  const oracle = resolve(process.env.GG_ORACLE_DIR || join(homedir(), 'oracle'));
+  const root = resolve(process.env.GG_SEO_REPAIR_ORACLE_WORKTREE_ROOT
+    || join(homedir(), 'oracle-worktrees', 'seo-repair-controller'));
+  const worktree = join(root, repairWorktreeName(event));
+  if (!existsSync(worktree)) {
+    mkdirSync(root, { recursive: true });
+    const added = run([
+      'git', '-C', oracle, 'worktree', 'add', '--detach', worktree, claim.branch,
+    ], { cwd: oracle, timeout: 180_000 });
+    if (!added.ok) throw new Error(`cannot create clean repair worktree: ${added.stderr || added.code}`);
+  }
+  const status = run(['git', '-C', worktree, 'status', '--porcelain'], { cwd: worktree, timeout: 60_000 });
+  if (!status.ok) throw new Error(`cannot inspect repair worktree: ${status.stderr || status.code}`);
+  if (status.stdout.trim()) throw new Error(`repair worktree is not clean: ${worktree}`);
+  const sourceHead = run(['git', '-C', originalWorktree, 'rev-parse', 'HEAD'], { cwd: originalWorktree, timeout: 60_000 });
+  const repairHead = run(['git', '-C', worktree, 'rev-parse', 'HEAD'], { cwd: worktree, timeout: 60_000 });
+  if (!sourceHead.ok || !repairHead.ok) throw new Error(`cannot resolve repair branch head for ${event.pageId}`);
+  if (sourceHead.stdout.trim() !== repairHead.stdout.trim()) {
+    const sourceContainsRepair = run([
+      'git', '-C', worktree, 'merge-base', '--is-ancestor', repairHead.stdout.trim(), sourceHead.stdout.trim(),
+    ], { cwd: worktree, timeout: 60_000 });
+    if (sourceContainsRepair.code === 0) {
+      const advanced = run([
+        'git', '-C', worktree, 'merge', '--ff-only', sourceHead.stdout.trim(),
+      ], { cwd: worktree, timeout: 60_000 });
+      if (!advanced.ok) throw new Error(`cannot advance clean repair worktree: ${advanced.stderr || advanced.code}`);
+    } else {
+      const repairContainsSource = run([
+        'git', '-C', worktree, 'merge-base', '--is-ancestor', sourceHead.stdout.trim(), repairHead.stdout.trim(),
+      ], { cwd: worktree, timeout: 60_000 });
+      if (repairContainsSource.code !== 0) throw new Error(`repair worktree diverged for ${event.pageId}`);
+    }
+  }
+  return worktree;
 }
 
 async function fetchText(url) {
@@ -118,15 +158,17 @@ async function defaultResolveContext(event) {
   if (!claim?.branch) throw new Error(`claim branch missing for ${event.pageId}`);
   const worktreeRoot = process.env.GG_ORACLE_WORKTREE_ROOT
     || join(homedir(), 'oracle-worktrees', 'seo-autopilot');
-  const worktree = claim.worktree
+  const originalWorktree = claim.worktree
     || join(worktreeRoot, String(claim.branch).replace(/[^A-Za-z0-9._-]+/g, '__'));
-  if (!existsSync(worktree)) throw new Error(`astrology worktree missing: ${worktree}`);
+  if (!existsSync(originalWorktree)) throw new Error(`astrology worktree missing: ${originalWorktree}`);
+  const worktree = prepareRepairWorktree(event, claim, originalWorktree);
   const articleFile = join(worktree, 'data', 'articles', `${claim.slug || event.slug}.ts`);
   if (!existsSync(articleFile)) throw new Error(`astrology article missing: ${articleFile}`);
   return {
     claim,
     branch: claim.branch,
     worktree,
+    originalWorktree,
     articleFile,
     changedFiles: worktreeDiff(worktree),
     linkCandidates: await collectLinkCandidates(worktree, claim.slug || event.slug),
@@ -162,6 +204,52 @@ async function defaultInvokeAgent(target, { record, strategy }) {
   return invokeTargetRepairAgent({ target, record, strategy });
 }
 
+function statusPath(line) {
+  const raw = String(line || '').slice(3);
+  const path = raw.includes(' -> ') ? raw.split(' -> ').at(-1) : raw;
+  return path.replace(/^"|"$/g, '');
+}
+
+async function defaultPersistRepair(target) {
+  if (!/^seo\/auto\/[A-Za-z0-9._/-]+$/.test(String(target.branch || ''))) {
+    return { ok: false, stderr: `unsafe astrology branch: ${target.branch || ''}` };
+  }
+  const editable = new Set([target.articleFile, ...(target.assetFiles || [])]
+    .map((file) => relative(target.worktree, file))
+    .filter((file) => file && file !== '..' && !file.startsWith(`..${sep}`) && !isAbsolute(file)));
+  const status = run([
+    'git', '-C', target.worktree, 'status', '--porcelain=v1', '--untracked-files=all',
+  ], { cwd: target.worktree, timeout: 60_000 });
+  if (!status.ok) return { ...status, ok: false };
+  const dirty = status.stdout.trim().split('\n').filter(Boolean).map(statusPath);
+  const forbidden = dirty.filter((file) => !editable.has(file));
+  if (forbidden.length) {
+    return { ok: false, stderr: `Agent changed files outside target allowlist: ${forbidden.join(', ')}` };
+  }
+  if (dirty.length > 0) {
+    const staged = run(['git', '-C', target.worktree, 'add', '--', ...dirty], { cwd: target.worktree, timeout: 60_000 });
+    if (!staged.ok) return { ...staged, ok: false };
+    const committed = run([
+      'git', '-C', target.worktree, 'commit', '-m', `fix(seo-repair): ${target.pageId} target gate`,
+    ], { cwd: target.worktree, timeout: 180_000 });
+    if (!committed.ok) return { ...committed, ok: false };
+  }
+  const head = run(['git', '-C', target.worktree, 'rev-parse', 'HEAD'], { cwd: target.worktree, timeout: 60_000 });
+  if (!head.ok) return { ...head, ok: false };
+  const commit = head.stdout.trim();
+  const pushed = run([
+    'git', '-C', target.worktree, 'push', 'origin', `HEAD:refs/heads/${target.branch}`,
+  ], { cwd: target.worktree, timeout: 180_000 });
+  if (!pushed.ok) return { ...pushed, ok: false, commit };
+  if (target.originalWorktree) {
+    const advanced = run([
+      'git', '-C', target.originalWorktree, 'merge', '--ff-only', commit,
+    ], { cwd: target.originalWorktree, timeout: 180_000 });
+    if (!advanced.ok) return { ...advanced, ok: false, commit };
+  }
+  return { ok: true, noChanges: dirty.length === 0, commit, changedFiles: dirty };
+}
+
 async function defaultVerifyTerminal(event, target, { scriptsDir, runCommand }) {
   const result = await runCommand([
     'node',
@@ -189,6 +277,7 @@ export function createAstrologyWikiRepairAdapter(deps = {}) {
     return known === true;
   });
   const invokeAgent = deps.invokeAgent || defaultInvokeAgent;
+  const persistRepair = deps.persistRepair || defaultPersistRepair;
   const regate = deps.regate || defaultRegate;
   const publish = deps.publish || (async () => ({ ok: true, ownedByRegate: true }));
   const verifyTerminal = deps.verifyTerminal
@@ -221,6 +310,13 @@ export function createAstrologyWikiRepairAdapter(deps = {}) {
           return {
             ok: false,
             evidence: repaired?.evidence || { type: 'agent_repair_failed' },
+          };
+        }
+        const persisted = await persistRepair(target, { record, strategy, repaired });
+        if (persisted?.ok !== true) {
+          return {
+            ok: false,
+            evidence: { type: 'persist_repair_failed', result: persisted || null },
           };
         }
       }

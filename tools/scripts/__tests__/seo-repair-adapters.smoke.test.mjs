@@ -174,6 +174,10 @@ test('astrology adapter repairs one target, reruns the complete gate, and accept
       assert.deepEqual(target.verifiedLinkCandidates.map((candidate) => candidate.slug), ['saturn-return-guide']);
       return { ok: true, evidence: { filesChanged: [target.articleFile] } };
     },
+    persistRepair: async (target) => {
+      calls.push(['persist', target.branch]);
+      return { ok: true, commit: 'abc123' };
+    },
     regate: async (target) => { calls.push(['regate', target.branch]); return { ok: true }; },
     publish: async (target) => { calls.push(['publish', target.branch]); return { ok: true }; },
     verifyTerminal: async () => ({
@@ -199,7 +203,41 @@ test('astrology adapter repairs one target, reruns the complete gate, and accept
     strategy: 'agent_content_asset_link',
   });
   assert.equal(result.terminal, 'published');
-  assert.deepEqual(calls.map(([name]) => name), ['agent', 'regate', 'publish']);
+  assert.deepEqual(calls.map(([name]) => name), ['agent', 'persist', 'regate', 'publish']);
+});
+
+test('astrology adapter never regates an Agent edit that was not committed and pushed', async () => {
+  const calls = [];
+  const adapter = createAstrologyWikiRepairAdapter({
+    resolveContext: async () => ({
+      branch: 'seo/auto/2026-07-15-PG-TRANS-016',
+      worktree: '/oracle-worktrees/seo-repair/pg-trans-016',
+      originalWorktree: '/oracle-worktrees/seo-autopilot/pg-trans-016',
+      articleFile: '/oracle-worktrees/seo-repair/pg-trans-016/data/articles/saturn-return-age-29.ts',
+      changedFiles: [
+        'data/articles/saturn-return-age-29.ts',
+        'public/images/blog/saturn-return-age-29-i0-en.svg',
+      ],
+      linkCandidates: [],
+    }),
+    invokeAgent: async () => ({ ok: true, evidence: { filesChanged: ['asset.svg'] } }),
+    persistRepair: async () => ({ ok: false, stderr: 'push rejected' }),
+    regate: async () => { calls.push('regate'); return { ok: true }; },
+    publish: async () => { calls.push('publish'); return { ok: true }; },
+  });
+  const result = await adapter.execute({
+    record: {
+      fingerprint: 'fp-trans-016',
+      event: {
+        site: 'astrologywiki', pageId: 'PG-TRANS-016', slug: 'saturn-return-age-29',
+        stage: 'preview_fact_gate', errorKind: 'asset_fail', summary: 'SVG age 14', stderr: 'FAIL',
+      },
+    },
+    strategy: 'agent_content_asset_link',
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.evidence.type, 'persist_repair_failed');
+  assert.deepEqual(calls, []);
 });
 
 test('astrology adapter default terminal verifier is scoped to one page and site', async () => {
@@ -214,6 +252,7 @@ test('astrology adapter default terminal verifier is scoped to one page and site
       linkCandidates: [],
     }),
     invokeAgent: async () => ({ ok: true }),
+    persistRepair: async () => ({ ok: true, commit: 'abc123' }),
     regate: async () => ({ ok: true }),
     publish: async () => ({ ok: true }),
     runCommand: async (argv) => {

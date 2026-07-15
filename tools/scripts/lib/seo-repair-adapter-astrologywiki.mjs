@@ -302,6 +302,9 @@ async function defaultRegate(target) {
     '--branch',
     target.branch,
   ], { cwd: DEFAULT_FLOW, timeout: 180_000 });
+  if (!reset.ok && isAlreadyPublishedRetryFailure(reset)) {
+    return { ok: true, alreadyPublished: true, reset };
+  }
   if (!reset.ok && !isAlreadyRegatableRetryFailure(reset)) return reset;
   return run([
     'node',
@@ -314,6 +317,12 @@ async function defaultRegate(target) {
 export function isAlreadyRegatableRetryFailure(result) {
   if (result?.ok === true) return false;
   return /cannot retry\s+\S+\s+from status "pushed-preview"\s+[^\n]*expected needs_human/i
+    .test(`${result?.stdout || ''}\n${result?.stderr || ''}`);
+}
+
+export function isAlreadyPublishedRetryFailure(result) {
+  if (result?.ok === true) return false;
+  return /cannot retry\s+\S+\s+from status "done"\s+[^\n]*expected needs_human/i
     .test(`${result?.stdout || ''}\n${result?.stderr || ''}`);
 }
 

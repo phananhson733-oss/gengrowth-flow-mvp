@@ -12,6 +12,7 @@ import {
   isSafeAstrologyMergeIndex,
   isSafeAstrologyTargetPath,
   isAlreadyRegatableRetryFailure,
+  isAlreadyPublishedRetryFailure,
   parseGitStatusPaths,
   selectAstrologyChangedFiles,
   verifyInternalLinkCandidate,
@@ -229,6 +230,14 @@ test('astrology regate skips reset only when the exact claim is already pushed-p
     stderr: '[autopilot] ERROR: cannot retry seo/auto/x from status "done" — expected needs_human',
   }), false);
   assert.equal(isAlreadyRegatableRetryFailure({ ok: false, stderr: 'auth failed' }), false);
+  assert.equal(isAlreadyPublishedRetryFailure({
+    ok: false,
+    stderr: '[autopilot] ERROR: cannot retry seo/auto/x from status "done" — expected needs_human',
+  }), true);
+  assert.equal(isAlreadyPublishedRetryFailure({
+    ok: false,
+    stderr: '[autopilot] ERROR: cannot retry seo/auto/x from status "pushed-preview" — expected needs_human',
+  }), false);
 });
 
 test('internal-link candidates require an existing route or sitemap entry plus HTTP 200', async () => {

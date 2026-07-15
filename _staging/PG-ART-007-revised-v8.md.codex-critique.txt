@@ -1,0 +1,8 @@
+- “Google’s own 2026 documentation” claim is too brittle and unsourced → verify the exact Google doc title/date/URL, or soften/remove “2026 official statement.”
+- The article says “across client rollouts we’ve audited / accounts we run” but gives no evidence → add one concrete anonymized mini-example with prompt, cited competitor, page fix, and observed citation change.
+- GEO tactics stay generic (“clear, self-contained answers,” “named entities”) → add a practical page checklist: direct answer block, cited sources, expert/author signals, updated dates, entity definitions, comparison tables, and schema where relevant.
+- It treats ChatGPT, Perplexity, and AI Overviews as one citation surface → distinguish that each uses different retrieval/citation behavior and that results vary by model, prompt, location, and time.
+- The agency/SaaS angle narrows the search intent too early → either state upfront that this is GEO for agencies/SaaS teams, or broaden examples for brand/content-site readers searching the keyword.
+- “Re-check after a few weeks” implies predictable causality → frame this as monitoring correlation, not guaranteed lift, and define a reporting cadence plus volatility caveat.
+- The astrology/content vertical is missing despite GenGrowth context → add one real astrology-style example query cluster showing how a birth-chart or zodiac article would be made more citeable.
+- The CTA is vague product marketing → specify what the “citation snapshot” contains: assistant, prompt, cited URL, competitor cited, date checked, and recommended next page action.

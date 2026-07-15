@@ -9,6 +9,7 @@ import {
   buildAstrologyRepairTarget,
   createAstrologyWikiRepairAdapter,
   editableAstrologyFiles,
+  isSafeAstrologyMergeIndex,
   isSafeAstrologyTargetPath,
   parseGitStatusPaths,
   verifyInternalLinkCandidate,
@@ -178,6 +179,32 @@ test('astrology interrupted repair preserves porcelain first path and resumes on
     'public/images/blog/saturn-return-in-capricorn-i0-en.svg',
     'saturn-return-age-29',
   ), false);
+});
+
+test('astrology merge integration is accepted only for current main and target-only final delta', () => {
+  const target = {
+    worktree: '/oracle-worktrees/pg-trans-016',
+    articleFile: '/oracle-worktrees/pg-trans-016/data/articles/saturn-return-age-29.ts',
+    assetFiles: ['/oracle-worktrees/pg-trans-016/public/images/blog/saturn-return-age-29-i0-en.svg'],
+    supportFiles: ['/oracle-worktrees/pg-trans-016/scripts/plans/auto-saturn-return-age-29.json'],
+  };
+  const safe = {
+    mergeHead: 'main-commit',
+    originMain: 'main-commit',
+    unmergedFiles: [],
+    diffAgainstMain: [
+      'data/articles/saturn-return-age-29.ts',
+      'public/images/blog/saturn-return-age-29-i0-en.svg',
+      'scripts/plans/auto-saturn-return-age-29.json',
+    ],
+  };
+  assert.equal(isSafeAstrologyMergeIndex(target, safe), true);
+  assert.equal(isSafeAstrologyMergeIndex(target, { ...safe, mergeHead: 'stale-main' }), false);
+  assert.equal(isSafeAstrologyMergeIndex(target, { ...safe, unmergedFiles: ['data/articles/index.ts'] }), false);
+  assert.equal(isSafeAstrologyMergeIndex(target, {
+    ...safe,
+    diffAgainstMain: [...safe.diffAgainstMain, 'scripts/generate-seo-pages.mjs'],
+  }), false);
 });
 
 test('internal-link candidates require an existing route or sitemap entry plus HTTP 200', async () => {

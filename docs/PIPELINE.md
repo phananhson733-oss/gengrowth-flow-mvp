@@ -213,7 +213,7 @@ dry-run 输出会列：本周拟入队词表 + 「未归集群」词（提示补
 | O | cta_primary | 主推 CTA 的 page_role（匹配 CTA Map B 列） |
 | P | psych_safety_flag | cluster 级 Y/N（page 级 OR cluster 级 → 任一 Y 即触发 RL6） |
 
-**CTA Map（11 列）**，主 CTA 按文章语义选择，不按 `page_role + track` 固定映射；blog-to-blog 内链仍由 `internal_link_rule` / Related Reading 独立处理：
+**CTA Map（12 列）**，主 CTA 先按文章意图分类、再从同类候选中选择，不按 `page_role + track` 固定映射；blog-to-blog 内链仍由 `internal_link_rule` / Related Reading 独立处理：
 
 | 列 | 字段 | 解释 |
 |---|------|------|
@@ -227,6 +227,9 @@ dry-run 输出会列：本周拟入队词表 + 「未归集群」词（提示补
 | I | match_keywords | 分号分隔的匹配关键词；每个工作簿只允许一个启用的 `*` 兜底 |
 | J | blog_eligible | 只有 `TRUE` 能成为 SEO blog 主 CTA；Blog_Article 必须为 `FALSE` |
 | K | priority | 语义得分相同后的稳定排序优先级 |
+| L | intent_tags | 分号分隔的候选意图类别；选择器先用目标关键词、实体与内容角度识别标签，再在同标签候选中选 CTA |
+
+`associated_keywords` 只能作为同一意图内的弱补充信号；批量模板词 `birth chart`、`astrology`、`zodiac`、`meaning`、`interpretation` 不能单独决定类别或把页面路由到 Birth Chart。Compatibility 仅用于明确的双人比较（如 `synastry`、`two charts`、`partner chart`）；没有第二人出生信息的关系主题按个人本命盘或工具兜底处理。
 
 **Schema 在代码哪**：`tools/scripts/gg-sheet-to-brief.mjs:77 CLUSTER_HEADER_MAP` + `:102 CTA_HEADER_MAP`。
 

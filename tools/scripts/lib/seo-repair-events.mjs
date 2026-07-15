@@ -180,6 +180,11 @@ async function readQueueRecords(queueDir, { quarantineCorrupt = true } = {}) {
   return records;
 }
 
+export async function listRepairRecords({ queueDir } = {}) {
+  if (!queueDir) throw new TypeError('queueDir is required');
+  return (await readQueueRecords(queueDir)).map(({ record }) => record);
+}
+
 function initialRecord(event, fingerprint) {
   return {
     event,

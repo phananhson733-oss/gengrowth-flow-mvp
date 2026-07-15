@@ -38,6 +38,7 @@ function harness(options = {}) {
   const calls = join(root, 'codex-calls.log');
   const prompt = join(root, 'prompt.txt');
   const verifierCalls = join(root, 'verifier-calls.log');
+  const controllerCalls = join(root, 'controller-calls.log');
   const statePath = join(stateDir, 'seo-repair-hook.json');
   writeFileSync(plan, options.plan || '- [ ] `PG-A-001` alpha\n- [ ] `PG-OTHER-001` other\n');
   writeFileSync(claims, JSON.stringify(options.claims || {}));
@@ -77,6 +78,13 @@ function harness(options = {}) {
     "process.exit(ok ? 0 : 2);",
     '',
   ].join('\n'));
+  const controller = join(root, 'fake-controller.mjs');
+  writeFileSync(controller, [
+    "import { appendFileSync } from 'node:fs';",
+    "appendFileSync(process.env.GG_TEST_CONTROLLER_CALLS, JSON.stringify(process.argv.slice(2)) + '\\n');",
+    "process.stdout.write(JSON.stringify({ ok: true, command: process.argv[2], imported: 1, processed: 1 }) + '\\n');",
+    '',
+  ].join('\n'));
 
   const run = () => spawnSync('node', [
     HOOK,
@@ -96,6 +104,8 @@ function harness(options = {}) {
       GG_FLOW_STATE_DIR: stateDir,
       GG_AUTOMATION_ORACLE_DIR: oracle,
       GG_SEO_REPAIR_HOOK_ENABLED: options.enabled === false ? '0' : '1',
+      GG_SEO_REPAIR_CONTROLLER_V2_ENABLED: options.v2 ? '1' : '0',
+      GG_SEO_REPAIR_CONTROLLER_BIN: controller,
       GG_SEO_REPAIR_CODEX_BIN: codexBin,
       GG_SEO_REPAIR_TIMEOUT_BIN: timeoutBin,
       GG_SEO_REPAIR_TIMEOUT_SECONDS: '30',
@@ -109,6 +119,7 @@ function harness(options = {}) {
       GG_TEST_CODEX_EXIT: String(options.codexExit ?? 0),
       GG_TEST_VERIFY_TERMINAL: options.verifyTerminal || 'published',
       GG_TEST_VERIFIER_CALLS: verifierCalls,
+      GG_TEST_CONTROLLER_CALLS: controllerCalls,
     },
   });
 
@@ -119,6 +130,7 @@ function harness(options = {}) {
     run,
     codexCalls: () => readMaybe(calls).trim().split('\n').filter(Boolean).length,
     verifierCalls: () => readMaybe(verifierCalls).trim().split('\n').filter(Boolean).length,
+    controllerCalls: () => readMaybe(controllerCalls).trim().split('\n').filter(Boolean).map((line) => JSON.parse(line)),
     prompt: () => readMaybe(prompt),
     state: () => JSON.parse(readMaybe(statePath, '{}')),
   };
@@ -132,6 +144,18 @@ const FIXABLE = {
     error: 'phase2 FAIL: drifted sections',
   },
 };
+
+test('v2 flag delegates the legacy hook arguments to the universal controller', () => {
+  const h = harness({ claims: FIXABLE, v2: true });
+  const result = h.run();
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+  assert.equal(h.codexCalls(), 0);
+  assert.equal(h.verifierCalls(), 0);
+  assert.equal(h.controllerCalls().length, 1);
+  assert.equal(h.controllerCalls()[0][0], 'import-v1');
+  assert.ok(h.controllerCalls()[0].includes('--claims'));
+  assert.match(result.stdout, /"processed":1/);
+});
 
 test('clean state exits zero without invoking Codex or verifier', () => {
   const h = harness();

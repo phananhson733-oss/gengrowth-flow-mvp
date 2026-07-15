@@ -438,7 +438,7 @@ git commit -m "fix(seo): run nightly directly and hook only on exceptions"
 - Invariant: flow project instructions contain no `lynne-soul` or cross-repo personal-profile fallback.
 - Invariant: Automation status remains `PAUSED` and prompt no longer claims Codex Automation is the scheduler.
 
-- [ ] **Step 1: Write failing instruction-scope test**
+- [x] **Step 1: Write failing instruction-scope test**
 
 ```js
 import test from 'node:test';
@@ -453,17 +453,17 @@ test('flow AGENTS identifies Flow MVP and never requires Lynne personal soul', (
 });
 ```
 
-- [ ] **Step 2: Run test and verify RED**
+- [x] **Step 2: Run test and verify RED**
 
 Run: `node --test tools/scripts/__tests__/project-instruction-scope.smoke.test.mjs`
 
 Expected: FAIL because AGENTS still says `GenGrowth Wiki` and requires `ai-profile/lynne-soul.md`.
 
-- [ ] **Step 3: Correct AGENTS with a precise patch**
+- [x] **Step 3: Correct AGENTS with a precise patch**
 
 Change project name to `GenGrowth Flow MVP`. Remove section 6’s personal soul source and replace it with a project-level statement that personal profiles from sibling repositories are not project instructions. Keep reminders, records, safety and all unrelated rules unchanged.
 
-- [ ] **Step 4: Update paused Automation through the Automation update API**
+- [x] **Step 4: Update paused Automation through the Automation update API**
 
 Read the current automation, update only its prompt to remove:
 
@@ -473,7 +473,7 @@ Read the current automation, update only its prompt to remove:
 
 Replace with: macOS `com.gengrowth.seo-blog` directly runs nightly; the Automation remains a paused reference and must not schedule. Preserve CTA intent rules and every safety boundary. Preserve `status = "PAUSED"`.
 
-- [ ] **Step 5: Verify instruction cleanup**
+- [x] **Step 5: Verify instruction cleanup**
 
 Run:
 

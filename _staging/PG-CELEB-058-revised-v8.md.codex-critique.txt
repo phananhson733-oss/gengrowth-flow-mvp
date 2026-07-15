@@ -1,0 +1,8 @@
+- “出生时间未公开”很可能不准 → 先核对 Astro-Databank 等数据源；若采用 6:31 AM CST，就补上上升、MC、宫位，并删掉“不能确认”的整套 caveat。
+- “Moon near a sign boundary / strongly Capricorn-leaning”表述太含糊 → 按采用的出生时间给出明确 Moon sign；若不用出生时间，就说明当天月亮可能跨宫/跨星座的具体范围。
+- 搜索意图没有被充分满足 → 在开头加一张完整 chart data 表：日期、地点、时间来源、黄道系统、行星星座与度数、上升/MC 是否采用。
+- “Capricorn stellium 比太阳更影响工作风格”是断言 → 用具体公开事实支撑，如 Plan B 制片长期布局、职业转型、建筑/设计兴趣；否则改成更谨慎的“can be read as”。
+- 全文反复讲“freedom vs discipline”，角度单一 → 压缩重复段落，增加 1-2 个经核实的细节角度，例如个人星群、元素/模式分布或主要相位。
+- “Saturn in Aquarius structures identity”占星表达不严谨 → 改成 Saturn 作为社会/纪律/系统层面的背景，别把它写成身份核心，除非有上升或宫位依据。
+- Uranus/Pluto retrograde 突然出现且“shared by millions born in the same years”说法粗糙 → 要么把 Uranus/Pluto 加进数据表并准确说明 retrograde 窗口，要么删掉这条误读。
+- Sources 太像装饰性名人引用 → 为出生数据、行星位置、Brad Pitt 公开履历、NASA Neptune 周期分别补真实来源；Rudhyar/Greene 只保留为方法论背景。

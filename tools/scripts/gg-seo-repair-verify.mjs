@@ -29,6 +29,28 @@ function canonicalHref(html) {
   return '';
 }
 
+function normalizedLink(value, base) {
+  try {
+    const parsed = new URL(String(value || '').replace(/&amp;/gi, '&'), base);
+    parsed.hash = '';
+    parsed.hostname = parsed.hostname.toLowerCase().replace(/^www\./, '');
+    parsed.pathname = parsed.pathname.replace(/\/+$/, '') || '/';
+    return parsed.toString();
+  } catch {
+    return '';
+  }
+}
+
+function pageLinksTo(html, expected, base) {
+  const target = normalizedLink(expected, base);
+  if (!target) return false;
+  for (const tag of String(html || '').match(/<a\b[^>]*>/gi) || []) {
+    const href = tag.match(/\bhref\s*=\s*["']([^"']+)["']/i)?.[1] || '';
+    if (normalizedLink(href, base) === target) return true;
+  }
+  return false;
+}
+
 function containsArticleType(value) {
   if (Array.isArray(value)) return value.some(containsArticleType);
   if (!value || typeof value !== 'object') return false;
@@ -76,6 +98,8 @@ export async function verifyRepairTarget(target, deps = {}) {
     && String(deps.publishLogText || '').includes(slug);
   const sheetUrl = deps.sheetRow?.publish_url || deps.sheetRow?.published_url || deps.sheetRow?.url || '';
   checks.sheet_published = deps.sheetRow?.status === '已发布' && String(sheetUrl).includes(slug);
+  checks.cta_matches_sheet = checks.http_200
+    && pageLinksTo(page.text, deps.sheetRow?.cta_target_url, url);
   checks.writeback_clear = !deps.pendingWriteback;
 
   const failed = Object.entries(checks).filter(([, ok]) => !ok).map(([name]) => name);
@@ -115,6 +139,7 @@ function normalizeSheetRow(row) {
     target_keyword: brief.target_keyword || row?.target_keyword || '',
     status: brief.status || row?.status || '',
     publish_url: brief.publish_url || row?.publish_url || brief.published_url || row?.published_url || '',
+    cta_target_url: brief.cta_target_url || row?.cta_target_url || '',
   };
 }
 

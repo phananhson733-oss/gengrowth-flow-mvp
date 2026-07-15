@@ -18,7 +18,7 @@ aliases:
 
 > 【本区域在每天最后一次对话结束时生成/更新】
 
-- 索引修复重提、Phase 2 索引监控与选题登记均经固定 wrapper 完成；两站 Sitemap API 成功，astrologywiki 完成 3 条 URL Inspection，请求索引候选队列已刷新；三次选题登记均为 apply：新增 gengrowth `PG-WLS-007`、astrologywiki `PG-TRANS-014`–`PG-TRANS-018`，以及最新 astrologywiki `PG-CELEB-056`–`PG-CELEB-058` 与 gengrowth `PG-SDS-004`、`PG-ART-007`、`PG-AIS-006`；未越过既定外部写入边界。
+- 索引修复重提、Phase 2 索引监控与选题登记均经固定 wrapper 完成；两站 Sitemap API 成功，astrologywiki 完成 3 条 URL Inspection，请求索引候选队列已刷新；四次选题登记均为 apply：新增 gengrowth `PG-WLS-007`、astrologywiki `PG-TRANS-014`–`PG-TRANS-018`、astrologywiki `PG-CELEB-056`–`PG-CELEB-058` 与 gengrowth `PG-SDS-004`、`PG-ART-007`、`PG-AIS-006`；22:02 的最新运行两产品均为零候选 no-op；未越过既定外部写入边界。
 - 结果复盘性能 wrapper 因两产品 GSC/GA4 OAuth refresh token 过期或被撤销而在扫描前停止；未写表、未生成报告，需重新授权后只重跑原 wrapper。
 - 双产品 CTA Map 已新增 `intent_tags`，最近 7 篇 AstrologyWiki 文章已按新逻辑重新处理并上线；flow PR #2、Oracle PR #376 已合并，线上 CTA、canonical 与 Article JSON-LD 已复验。
 - 复核现有 agentic repair 后明确新调度边界：Codex Automation 保持暂停；macOS `launchd` 直接拉起正常写作/发布，只有异常、报错或 `needs_human` 才通过 hook 启动一次性 Agent 修复，且不得绕过现有发布门；后续实测与飞书截图确认当前 hook 仅覆盖 astrologywiki/W22、Gengrowth 未接入，且旧 auto-retry/publisher 会在 controller 前抢先发送“彻底停止”或重复人工告警；用户确认目标升级为两站 SEO 全流程统一修复控制器，采用安全授权边界与“结构化异常事件 + 单一 controller + 两站 adapter”架构，并强调必须实际修复现有故障而非止于设计。
@@ -812,5 +812,22 @@ PG-TRANS-018: gate parked (codex/links/verify) — needs_human (通知交 auto-r
 **🤖 回答：**
 
 架构与状态机确认后进入最后设计部分。异常事件使用 vault 外逐事件 JSON spool，以临时文件加原子 rename 入队；两个现有 scheduler 均可入队，但单一全局 repair lock 只允许一个 controller drain，崩溃中的 repairing lease 超时后自动重排。错误分类拆为 transient、deterministic-fixable、agent-fixable、nondelegable 与 unpublishable，禁止把 no-blind-retry 映射为 human-only。只有 controller 拥有 Feishu 终态通知权；legacy lane 在 v2 开关启用时只写 `repair_pending`，不发中间态或重复人工告警。TDD 验收必须覆盖截图中的三个目标、队列公平性、raw stderr、通知去重、崩溃恢复、clean path 零 Agent、两站 adapter 终态 verifier；生产验收必须真实修复并上线回填 `PG-WLS-007`、`PG-TRANS-016`、`PG-TRANS-018`，确认无重复 Feishu、残留锁或 pending。v2 通过单一功能开关原子切换 controller 与旧通知所有权，关闭即可回退。
+
+---
+
+### Q34 — 22:03
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-15T12:00:55.914Z (1784116855914)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行固定入口 `bash tools/scripts/gg-topic-register-tick.sh`，退出码 0。精确日志窗口为 2026-07-15 22:02:35–22:02:43 CST，`dry_run=false`、`applied=true`、`budget_exhausted=false`。astrologywiki：`candidates=0`、`updates=0`、`new_clusters=0`、`page_ids=[]`、`preprocessor=[]`、`evidence_discovery=[]`；gengrowth 同为全零空数组。窗口以 `topic-register ok` 结束，未见失败、超时或跳过。未在 wrapper 外手改 Google Sheet 或 task plan，未额外创建 Feishu/Google Doc 报告产物。
 
 ---

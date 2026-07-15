@@ -78,15 +78,14 @@ function repairWorktreeName(event) {
 }
 
 function prepareRepairWorktree(event, claim, originalWorktree) {
-  const oracle = resolve(process.env.GG_ORACLE_DIR || join(homedir(), 'oracle'));
   const root = resolve(process.env.GG_SEO_REPAIR_ORACLE_WORKTREE_ROOT
     || join(homedir(), 'oracle-worktrees', 'seo-repair-controller'));
   const worktree = join(root, repairWorktreeName(event));
   if (!existsSync(worktree)) {
     mkdirSync(root, { recursive: true });
     const added = run([
-      'git', '-C', oracle, 'worktree', 'add', '--detach', worktree, claim.branch,
-    ], { cwd: oracle, timeout: 180_000 });
+      'git', '-C', originalWorktree, 'worktree', 'add', '--detach', worktree, 'HEAD',
+    ], { cwd: originalWorktree, timeout: 180_000 });
     if (!added.ok) throw new Error(`cannot create clean repair worktree: ${added.stderr || added.code}`);
   }
   const status = run(['git', '-C', worktree, 'status', '--porcelain'], { cwd: worktree, timeout: 60_000 });

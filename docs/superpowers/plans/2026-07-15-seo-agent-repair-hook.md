@@ -282,7 +282,7 @@ git commit -m "feat(seo): add deterministic repair terminal verifier"
 - Environment: `GG_SEO_REPAIR_HOOK_ENABLED`, `GG_SEO_REPAIR_CODEX_BIN`, `GG_SEO_REPAIR_TIMEOUT_SECONDS`, `GG_SEO_REPAIR_MAX_TARGETS`, `GG_SEO_REPAIR_MAX_ATTEMPTS`, `GG_FLOW_STATE_DIR`, `GG_REPAIR_VERIFY_BIN`.
 - Output: exactly one machine-readable terminal line prefixed `SEO_REPAIR_HOOK_RESULT: `.
 
-- [ ] **Step 1: Write fake-Codex failing E2E tests**
+- [x] **Step 1: Write fake-Codex failing E2E tests**
 
 Build a temporary plan/ledger/state/log and fake executables. Assert these cases:
 
@@ -317,13 +317,13 @@ test('third identical fire is capped and never invokes Codex', () => {
 
 Also cover: disabled+target exits 2, corrupt/unwritable state exits 2 before spawn, run-level nonzero without claim produces one synthetic target, Agent timeout/nonzero consumes an attempt, and archived stale target does not invoke Codex.
 
-- [ ] **Step 2: Run tests and verify RED**
+- [x] **Step 2: Run tests and verify RED**
 
 Run: `node --test tools/scripts/__tests__/gg-seo-repair-hook.smoke.test.mjs`
 
 Expected: FAIL because hook CLI and prompt template do not exist.
 
-- [ ] **Step 3: Write the prompt contract**
+- [x] **Step 3: Write the prompt contract**
 
 `tools/scripts/prompts/gg-seo-repair-hook.txt` must say:
 
@@ -337,7 +337,7 @@ Do not use Google Indexing API or click GSC Request Indexing. Do not load ai-pro
 End only after each target is published+verified, explicitly archived as stale with evidence, or left needs_human with the exact non-bypassable blocker.
 ```
 
-- [ ] **Step 4: Implement hook CLI**
+- [x] **Step 4: Implement hook CLI**
 
 Implementation requirements:
 
@@ -350,13 +350,13 @@ Implementation requirements:
 7. Invoke `gg-seo-repair-verify.mjs` after Codex and update each state entry to `published`, `pending`, `archived`, or `human_only`; never trust Codex prose alone.
 8. Emit one `SEO_REPAIR_HOOK_RESULT` JSON line and use existing `gg-notify.mjs raw` only for published/archived/human-only terminal summaries.
 
-- [ ] **Step 5: Run hook tests and verify GREEN**
+- [x] **Step 5: Run hook tests and verify GREEN**
 
 Run: `node --test tools/scripts/__tests__/seo-repair-hook.smoke.test.mjs tools/scripts/__tests__/gg-seo-repair-verify.smoke.test.mjs tools/scripts/__tests__/gg-seo-repair-hook.smoke.test.mjs`
 
 Expected: all tests pass; fake Codex count proves 0 on clean and 1 on eligible park.
 
-- [ ] **Step 6: Commit Task 3**
+- [x] **Step 6: Commit Task 3**
 
 ```bash
 git add tools/scripts/gg-seo-repair-hook.mjs tools/scripts/prompts/gg-seo-repair-hook.txt tools/scripts/__tests__/gg-seo-repair-hook.smoke.test.mjs

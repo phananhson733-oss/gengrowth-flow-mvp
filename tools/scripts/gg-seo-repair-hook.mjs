@@ -78,7 +78,7 @@ function readLogWindow(path, offset) {
 
 function deriveRunError(exitCode, logWindow) {
   const lines = String(logWindow || '').split('\n').map((line) => line.trim()).filter(Boolean);
-  const explicit = lines.filter((line) => /PARK|no passing en draft|publish scan produced no branch|gate parked|\bFAIL\b|fatal|exception/i.test(line));
+  const explicit = lines.filter((line) => /PARK(?:\(|ED\b)|no passing en draft|publish scan produced no branch|gate parked|\bfatal\b|uncaught|exception/i.test(line));
   if (exitCode !== 0) return `nightly exited ${exitCode}: ${(explicit.length ? explicit : lines).slice(-8).join(' | ') || 'no diagnostic output'}`;
   return explicit.slice(-8).join(' | ');
 }

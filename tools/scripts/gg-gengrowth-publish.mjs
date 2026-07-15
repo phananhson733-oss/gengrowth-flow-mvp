@@ -31,8 +31,9 @@
 //   ... --apply --force            # re-upsert even already-live slugs
 //   ... --pages "PG-WLS-001 PG-ART-002"   # restrict to specific page_ids
 
-import { readFileSync, writeFileSync, rmSync, existsSync, readdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, rmSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { execFileSync, spawnSync } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseFrontmatter } from './gg-md-to-oracle-ts.mjs';
@@ -47,6 +48,8 @@ import { classifyCodex } from './gg-preview-gate.mjs';
 // 阶段 4 回填事务：verify-live 成功后一个函数写全套账本（选题登记表 已发布+URL / plan 勾选 /
 // vault 归档），失败入 pending-writeback 由每日 gg-ledger-reconcile 重试。永不抛。
 import { backfillOnLive } from './lib/backfill-tx.mjs';
+import { stateDir } from './lib/flow-state.mjs';
+import { enqueueRepairEvent } from './lib/seo-repair-events.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO = resolve(__dirname, '..', '..');
@@ -114,8 +117,92 @@ function factualReview(mdPath) {
     encoding: 'utf8', timeout: timeoutMs, maxBuffer: 32 * 1024 * 1024,
   });
   const timedOut = !!(r.error && r.error.code === 'ETIMEDOUT');
-  const cls = classifyCodex({ code: r.status ?? 1, stdout: r.stdout, timedOut });
-  return { ...cls, required };
+  const code = r.status ?? 1;
+  const cls = classifyCodex({ code, stdout: r.stdout, timedOut });
+  return {
+    ...cls,
+    required,
+    code,
+    stdout: String(r.stdout || ''),
+    stderr: String(r.stderr || r.error?.message || ''),
+    timedOut,
+  };
+}
+
+async function enqueueFactualGateFailure(draft, review) {
+  const base = stateDir();
+  if (!base) return false;
+  const queueDir = process.env.GG_SEO_REPAIR_QUEUE_DIR || join(base, 'seo-repair-queue');
+  const logFile = process.env.GG_GENGROWTH_PUBLISH_LOG_FILE
+    || join(HOME, 'gengrowth-agents', 'cron-sync', 'gengrowth-publish', `${new Date().toISOString().slice(0, 10)}.log`);
+  let logOffsetEnd = 0;
+  try { logOffsetEnd = statSync(logFile).size; } catch {}
+  const errorKind = review.timedOut
+    ? 'timeout'
+    : review.verdict === 'FAIL'
+      ? 'gate_fail'
+      : 'tool_exit';
+  try {
+    await enqueueRepairEvent({
+      schemaVersion: 2,
+      eventId: randomUUID(),
+      runId: `gengrowth-publish-${new Date().toISOString().replace(/[^0-9]/g, '').slice(0, 14)}`,
+      site: 'gengrowth',
+      lane: 'publish',
+      pageId: draft.pageId,
+      slug: draft.slug || '',
+      stage: 'fact_gate',
+      errorKind,
+      summary: review.reason || `codex exited ${review.code}`,
+      stderr: review.stderr || '',
+      logFile,
+      logOffsetStart: 0,
+      logOffsetEnd,
+      canonicalRetry: ['node', CODEX_BIN, '--source', draft.mdPath],
+      createdAt: new Date().toISOString(),
+    }, { queueDir });
+    return true;
+  } catch (error) {
+    console.error(`  repair queue enqueue failed for ${draft.pageId}: ${error.message}`);
+    return false;
+  }
+}
+
+async function enqueuePublishFailure(draft, error) {
+  const base = stateDir();
+  if (!base) return false;
+  const queueDir = process.env.GG_SEO_REPAIR_QUEUE_DIR || join(base, 'seo-repair-queue');
+  const logFile = process.env.GG_GENGROWTH_PUBLISH_LOG_FILE
+    || join(HOME, 'gengrowth-agents', 'cron-sync', 'gengrowth-publish', `${new Date().toISOString().slice(0, 10)}.log`);
+  let logOffsetEnd = 0;
+  try { logOffsetEnd = statSync(logFile).size; } catch {}
+  try {
+    await enqueueRepairEvent({
+      schemaVersion: 2,
+      eventId: randomUUID(),
+      runId: `gengrowth-publish-${new Date().toISOString().replace(/[^0-9]/g, '').slice(0, 14)}`,
+      site: 'gengrowth',
+      lane: 'publish',
+      pageId: draft.pageId,
+      slug: draft.slug || '',
+      stage: 'publish',
+      errorKind: 'publish_fail',
+      summary: error instanceof Error ? error.message : String(error),
+      stderr: error instanceof Error ? (error.stderr || error.stack || error.message) : String(error),
+      logFile,
+      logOffsetStart: 0,
+      logOffsetEnd,
+      canonicalRetry: [
+        'node', join(__dirname, 'gg-gengrowth-publish.mjs'), '--apply',
+        '--pages', draft.pageId, '--limit', '1',
+      ],
+      createdAt: new Date().toISOString(),
+    }, { queueDir });
+    return true;
+  } catch (queueError) {
+    console.error(`  repair queue enqueue failed for ${draft.pageId}: ${queueError.message}`);
+    return false;
+  }
 }
 
 // ── plan 定位（阶段 4 回填的 plan-勾选步骤用）──────────────────────────────────────
@@ -310,8 +397,12 @@ async function main() {
         } else {
           parked++;
           console.log(`  ⛔ ${d.pageId.padEnd(12)} ${(d.slug || '-').padEnd(40)} PARKED by factual gate: ${fr.reason}`);
-          // @ 策略变更（有意，见契约「迁移映射」）：Lane A 事实门未过原本零 @，统一后 PM+OPS。
-          await notify('fact_gate_fail', { site: 'gengrowth', pid: d.pageId, slug: d.slug, reason: fr.reason });
+          if (process.env.GG_SEO_REPAIR_CONTROLLER_V2_ENABLED === '1') {
+            await enqueueFactualGateFailure(d, fr);
+          } else {
+            // v1 rollback path: keep the existing PM+OPS needs_human notification.
+            await notify('fact_gate_fail', { site: 'gengrowth', pid: d.pageId, slug: d.slug, reason: fr.reason });
+          }
           continue;
         }
       }
@@ -344,12 +435,18 @@ async function main() {
       // instead of one aggregate ticker — one Hermes-bot message per published article.
       let title = d.slug;
       try { title = (parseFrontmatter(readFileSync(d.mdPath, 'utf8')).frontmatter.title || d.slug).toString().trim(); } catch { /* */ }
-      if (ok) await notify('published', { site: 'gengrowth', title, url: `${SITE_HOST}${URL_PATH}${d.slug}`, extra: 'gengrowth.ai 博客' });
+      if (ok && process.env.GG_SEO_REPAIR_CONTROLLER_V2_ENABLED !== '1') {
+        await notify('published', { site: 'gengrowth', title, url: `${SITE_HOST}${URL_PATH}${d.slug}`, extra: 'gengrowth.ai 博客' });
+      }
     } catch (e) {
       failed++;
       console.error(`  ✖ ${d.pageId} (${d.slug}) failed: ${e.message}`);
-      // @ 策略变更（有意，见契约「迁移映射」）：发布失败原本零 @，统一后 OPS。
-      await notify('publish_fail', { site: 'gengrowth', pid: d.pageId, slug: d.slug, msg: e.message });
+      if (process.env.GG_SEO_REPAIR_CONTROLLER_V2_ENABLED === '1') {
+        await enqueuePublishFailure(d, e);
+      } else {
+        // v1 rollback path: keep the existing direct OPS notification.
+        await notify('publish_fail', { site: 'gengrowth', pid: d.pageId, slug: d.slug, msg: e.message });
+      }
     }
   }
   console.log(`\n=== done: published=${published} verified=${verified} parked=${parked} failed=${failed} ===`);

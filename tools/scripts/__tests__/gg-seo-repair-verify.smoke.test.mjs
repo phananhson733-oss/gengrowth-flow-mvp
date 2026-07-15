@@ -4,7 +4,11 @@ import { spawnSync } from 'node:child_process';
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { deriveCtaAudits, verifyRepairTarget } from '../gg-seo-repair-verify.mjs';
+import {
+  deriveCtaAudits,
+  verifyGengrowthRepairTarget,
+  verifyRepairTarget,
+} from '../gg-seo-repair-verify.mjs';
 
 const TARGET = { pageId: 'PG-A-001', slug: 'alpha', stage: 'authoring' };
 const URL = 'https://www.astrologywiki.com/en/wiki/alpha';
@@ -126,6 +130,109 @@ test('explicit archived terminal is accepted without calling live dependencies',
   assert.equal(result.ok, true);
   assert.equal(result.terminal, 'archived');
   assert.equal(calls, 0);
+});
+
+test('gengrowth verifier requires Supabase, live page, W25 plan, Sheet, vault, and clear writeback', async () => {
+  const target = { pageId: 'PG-WLS-007', slug: 'chatgpt-seo' };
+  const url = 'https://gengrowth.ai/en/blog/chatgpt-seo';
+  const deps = {
+    supabaseRow: { status: 'published', slug: 'chatgpt-seo', locale: 'en' },
+    manifest: { phase2_checks: { overall: 'pass' } },
+    planText: '- [x] `PG-WLS-007` chatgpt seo\n',
+    sheetRow: { status: '已发布', publish_url: url },
+    vaultArchived: true,
+    pendingWriteback: null,
+    fetchDocument: async (requested) => requested.endsWith('/sitemap.xml')
+      ? { ok: true, status: 200, text: `<loc>${url}</loc>` }
+      : {
+          ok: true,
+          status: 200,
+          text: `<link rel="canonical" href="${url}"><script type="application/ld+json">{"@type":"Article"}</script>`,
+        },
+  };
+  const result = await verifyGengrowthRepairTarget(target, deps);
+  assert.equal(result.ok, true);
+  assert.equal(result.terminal, 'published');
+  assert.equal(Object.values(result.checks).every(Boolean), true);
+
+  for (const [check, mutate] of [
+    ['supabase_published', (copy) => { copy.supabaseRow = { status: 'draft' }; }],
+    ['staging_manifest', (copy) => { copy.manifest = { phase2_checks: { overall: 'fail' } }; }],
+    ['plan_checked', (copy) => { copy.planText = '- [ ] `PG-WLS-007` chatgpt seo\n'; }],
+    ['sheet_published', (copy) => { copy.sheetRow = { status: '待发布', publish_url: '' }; }],
+    ['vault_archived', (copy) => { copy.vaultArchived = false; }],
+    ['writeback_clear', (copy) => { copy.pendingWriteback = { pageId: 'PG-WLS-007' }; }],
+  ]) {
+    const copy = { ...deps };
+    mutate(copy);
+    const failed = await verifyGengrowthRepairTarget(target, copy);
+    assert.equal(failed.ok, false, check);
+    assert.equal(failed.checks[check], false, check);
+  }
+});
+
+test('gengrowth verifier CLI accepts one exact page and emits named terminal checks', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'gengrowth-repair-verify-cli-'));
+  const fixture = join(dir, 'fixture.json');
+  const url = 'https://gengrowth.ai/en/blog/chatgpt-seo';
+  writeFileSync(fixture, JSON.stringify({
+    supabaseRow: { status: 'published', slug: 'chatgpt-seo', locale: 'en' },
+    manifest: { phase2_checks: { overall: 'pass' } },
+    planText: '- [x] `PG-WLS-007` chatgpt seo\n',
+    sheetRow: { status: '已发布', publish_url: url },
+    vaultArchived: true,
+    pendingWriteback: null,
+    pageHtml: `<link rel="canonical" href="${url}"><script type="application/ld+json">{"@type":"Article"}</script>`,
+    sitemapText: `<loc>${url}</loc>`,
+  }));
+  const result = spawnSync('node', [
+    'tools/scripts/gg-seo-repair-verify.mjs',
+    '--site', 'gengrowth',
+    '--page-id', 'PG-WLS-007',
+    '--slug', 'chatgpt-seo',
+    '--gengrowth-fixture', fixture,
+    '--json',
+  ], {
+    cwd: process.cwd(),
+    encoding: 'utf8',
+    env: { ...process.env, GG_FLOW_STATE_DIR: join(dir, 'state') },
+  });
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+  const output = JSON.parse(result.stdout);
+  assert.equal(output.results[0].pageId, 'PG-WLS-007');
+  assert.equal(output.results[0].terminal, 'published');
+  assert.equal(Object.values(output.results[0].checks).every(Boolean), true);
+});
+
+test('astrology verifier CLI accepts one exact page without a targets sidecar', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'astrology-repair-verify-cli-'));
+  const fixture = join(dir, 'fixture.json');
+  writeFileSync(fixture, JSON.stringify({
+    claim: goodDeps().claim,
+    planText: goodDeps().planText,
+    publishLogText: goodDeps().publishLogText,
+    sheetRow: goodDeps().sheetRow,
+    ctaAudit: goodDeps().ctaAudit,
+    pendingWriteback: null,
+    pageHtml: `<link rel="canonical" href="${URL}"><script type="application/ld+json">{"@type":"Article"}</script><a href="/en/birth-chart-calculator">CTA</a>`,
+    sitemapText: `<loc>${URL}</loc>`,
+  }));
+  const result = spawnSync('node', [
+    'tools/scripts/gg-seo-repair-verify.mjs',
+    '--site', 'astrologywiki',
+    '--page-id', 'PG-A-001',
+    '--slug', 'alpha',
+    '--astrology-fixture', fixture,
+    '--json',
+  ], {
+    cwd: process.cwd(),
+    encoding: 'utf8',
+    env: { ...process.env, GG_FLOW_STATE_DIR: join(dir, 'state') },
+  });
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+  const output = JSON.parse(result.stdout);
+  assert.equal(output.results[0].pageId, 'PG-A-001');
+  assert.equal(output.results[0].terminal, 'published');
 });
 
 test('CLI JSON keeps pageId and slug attached to each verifier result', () => {

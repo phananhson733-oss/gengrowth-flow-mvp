@@ -147,8 +147,9 @@ function render({ date, results, parked }) {
   const badList = results.filter((r) => !r.ok);
   const n = results.length;
   const k = parked.length;
+  const repairControllerOwnsTerminal = process.env.GG_SEO_REPAIR_CONTROLLER_V2_ENABLED === '1';
   const parkedLine = k > 0
-    ? `暂停待人工 ${k} 篇：${parked.map((p) => `${p.pid}（${p.reason}）`).join('、')}`
+    ? `${repairControllerOwnsTerminal ? '自动修复队列' : '暂停待人工'} ${k} 篇：${parked.map((p) => `${p.pid}（${p.reason}）`).join('、')}`
     : null; // k=0 时省略此行
   if (badList.length === 0) {
     const lines = [`✅ [flow] 批次汇总 ${date}：上线 ${n} 篇（已逐篇线上核实）`];

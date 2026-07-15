@@ -1,0 +1,287 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+
+import {
+  createGengrowthRepairAdapter,
+  isAllowedGengrowthAction,
+} from '../lib/seo-repair-adapter-gengrowth.mjs';
+import {
+  buildAstrologyRepairTarget,
+  createAstrologyWikiRepairAdapter,
+  verifyInternalLinkCandidate,
+} from '../lib/seo-repair-adapter-astrologywiki.mjs';
+
+function record(overrides = {}) {
+  return {
+    fingerprint: 'fp-wls-007',
+    event: {
+      schemaVersion: 2,
+      eventId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      runId: 'gengrowth-publish-20260715',
+      site: 'gengrowth',
+      lane: 'publish',
+      pageId: 'PG-WLS-007',
+      slug: 'chatgpt-seo',
+      stage: 'fact_gate',
+      errorKind: 'tool_exit',
+      summary: 'codex exited 3',
+      stderr: 'provider stream reset',
+      logFile: '/tmp/gengrowth-publish.log',
+      logOffsetStart: 0,
+      logOffsetEnd: 100,
+      canonicalRetry: ['node', '/repo/tools/scripts/gg-codex-pr-review.mjs', '--source', '/repo/_staging/PG-WLS-007-codex-v8.md'],
+      createdAt: '2026-07-15T14:00:00.000Z',
+    },
+    ...overrides,
+  };
+}
+
+test('gengrowth adapter retries the exact reviewer, publishes one page, and trusts only terminal verification', async () => {
+  const calls = [];
+  const adapter = createGengrowthRepairAdapter({
+    scriptsDir: '/repo/tools/scripts',
+    resolveTarget: async () => ({
+      mdPath: '/repo/_staging/PG-WLS-007-codex-v8.md',
+      manifestPath: '/repo/_staging/PG-WLS-007-codex-v8.manifest.json',
+      slug: 'chatgpt-seo',
+    }),
+    runCommand: async (argv) => {
+      calls.push(argv);
+      if (argv[1].endsWith('gg-codex-pr-review.mjs')) {
+        return { code: 0, stdout: 'VERDICT: PASS\n', stderr: '', timedOut: false };
+      }
+      return { code: 0, stdout: 'published=1 verified=1\n', stderr: '', timedOut: false };
+    },
+    verifyTerminal: async () => ({
+      ok: true,
+      terminal: 'published',
+      checks: { supabase_published: true, production_200: true, writeback_clear: true },
+    }),
+  });
+
+  const result = await adapter.execute({
+    record: record(),
+    classification: 'transient',
+    strategy: 'deterministic_retry',
+  });
+  assert.equal(result.terminal, 'published');
+  assert.deepEqual(calls, [
+    ['node', '/repo/tools/scripts/gg-codex-pr-review.mjs', '--source', '/repo/_staging/PG-WLS-007-codex-v8.md'],
+    ['node', '/repo/tools/scripts/gg-gengrowth-publish.mjs', '--apply', '--pages', 'PG-WLS-007', '--limit', '1'],
+  ]);
+});
+
+test('gengrowth adapter does not publish when a targeted reviewer returns a real FAIL', async () => {
+  const calls = [];
+  const adapter = createGengrowthRepairAdapter({
+    scriptsDir: '/repo/tools/scripts',
+    resolveTarget: async () => ({ mdPath: '/repo/_staging/PG-WLS-007-codex-v8.md', slug: 'chatgpt-seo' }),
+    runCommand: async (argv) => {
+      calls.push(argv);
+      return { code: 0, stdout: 'VERDICT: FAIL\nUnsupported claim', stderr: 'review evidence', timedOut: false };
+    },
+    verifyTerminal: async () => { throw new Error('must not verify or publish after FAIL'); },
+  });
+  const result = await adapter.execute({
+    record: record(),
+    classification: 'transient',
+    strategy: 'deterministic_retry',
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.evidence.type, 'fact_gate_fail');
+  assert.match(result.evidence.stdout, /VERDICT: FAIL/);
+  assert.match(result.evidence.stderr, /review evidence/);
+  assert.equal(calls.length, 1);
+});
+
+test('gengrowth adapter action whitelist rejects top-level wrappers and arbitrary sources', () => {
+  const context = {
+    scriptsDir: '/repo/tools/scripts',
+    pageId: 'PG-WLS-007',
+    mdPath: '/repo/_staging/PG-WLS-007-codex-v8.md',
+  };
+  assert.equal(isAllowedGengrowthAction([
+    'node', '/repo/tools/scripts/gg-codex-pr-review.mjs', '--source', context.mdPath,
+  ], context), true);
+  assert.equal(isAllowedGengrowthAction([
+    'node', '/repo/tools/scripts/gg-gengrowth-publish.mjs', '--apply', '--pages', 'PG-WLS-007', '--limit', '1',
+  ], context), true);
+  assert.equal(isAllowedGengrowthAction(['bash', '/repo/tools/scripts/gg-nightly-seo.sh'], context), false);
+  assert.equal(isAllowedGengrowthAction([
+    'node', '/repo/tools/scripts/gg-codex-pr-review.mjs', '--source', '/tmp/other.md',
+  ], context), false);
+});
+
+test('astrology target includes the factual SVG and complete changed-file evidence', async () => {
+  const target = await buildAstrologyRepairTarget({
+    site: 'astrologywiki',
+    pageId: 'PG-TRANS-016',
+    slug: 'saturn-return-age-29',
+    stage: 'preview_fact_gate',
+    summary: 'SVG says Saturn Square occurs around age 14',
+    stderr: 'codex FAIL on public/images/blog/saturn-return-age-29-i0-en.svg',
+  }, {
+    branch: 'seo/auto/2026-07-15-PG-TRANS-016',
+    worktree: '/oracle-worktrees/pg-trans-016',
+    articleFile: '/oracle-worktrees/pg-trans-016/data/articles/saturn-return-age-29.ts',
+    changedFiles: [
+      'data/articles/saturn-return-age-29.ts',
+      'public/images/blog/saturn-return-age-29-i0-en.svg',
+      'data/articles/index.ts',
+    ],
+    linkCandidates: [],
+  });
+  assert.equal(target.articleFile.endsWith('saturn-return-age-29.ts'), true);
+  assert.deepEqual(target.assetFiles, [
+    '/oracle-worktrees/pg-trans-016/public/images/blog/saturn-return-age-29-i0-en.svg',
+  ]);
+  assert.deepEqual(target.changedFiles, [
+    '/oracle-worktrees/pg-trans-016/data/articles/saturn-return-age-29.ts',
+    '/oracle-worktrees/pg-trans-016/public/images/blog/saturn-return-age-29-i0-en.svg',
+    '/oracle-worktrees/pg-trans-016/data/articles/index.ts',
+  ]);
+  assert.match(target.gateEvidence, /Saturn Square.*age 14/);
+});
+
+test('internal-link candidates require an existing route or sitemap entry plus HTTP 200', async () => {
+  const deps = {
+    routeExists: async (slug) => slug === 'saturn-return-guide',
+    sitemapContains: async (slug) => slug === 'saturn-return-in-scorpio',
+    fetchDocument: async (url) => ({ ok: !url.includes('fabricated'), status: url.includes('fabricated') ? 404 : 200 }),
+  };
+  assert.equal(await verifyInternalLinkCandidate('saturn-return-guide', deps), true);
+  assert.equal(await verifyInternalLinkCandidate('saturn-return-in-scorpio', deps), true);
+  assert.equal(await verifyInternalLinkCandidate('fabricated-saturn-page', deps), false);
+  assert.equal(await verifyInternalLinkCandidate('../unsafe', deps), false);
+});
+
+test('astrology adapter repairs one target, reruns the complete gate, and accepts only deterministic terminal proof', async () => {
+  const calls = [];
+  const adapter = createAstrologyWikiRepairAdapter({
+    resolveContext: async () => ({
+      branch: 'seo/auto/2026-07-15-PG-TRANS-018',
+      worktree: '/oracle-worktrees/pg-trans-018',
+      articleFile: '/oracle-worktrees/pg-trans-018/data/articles/saturn-return-in-capricorn.ts',
+      changedFiles: ['data/articles/saturn-return-in-capricorn.ts'],
+      linkCandidates: [
+        { slug: 'saturn-return-guide', anchorIntent: 'Saturn return guide' },
+        { slug: 'fabricated-saturn-page', anchorIntent: 'bad' },
+      ],
+    }),
+    verifyLinkCandidate: async (slug) => slug === 'saturn-return-guide',
+    invokeAgent: async (target) => {
+      calls.push(['agent', target]);
+      assert.deepEqual(target.verifiedLinkCandidates.map((candidate) => candidate.slug), ['saturn-return-guide']);
+      return { ok: true, evidence: { filesChanged: [target.articleFile] } };
+    },
+    persistRepair: async (target) => {
+      calls.push(['persist', target.branch]);
+      return { ok: true, commit: 'abc123' };
+    },
+    regate: async (target) => { calls.push(['regate', target.branch]); return { ok: true }; },
+    publish: async (target) => { calls.push(['publish', target.branch]); return { ok: true }; },
+    verifyTerminal: async () => ({
+      ok: true,
+      terminal: 'published',
+      checks: { reviewed_head: true, production_200: true, writeback_clear: true },
+    }),
+  });
+  const result = await adapter.execute({
+    record: {
+      fingerprint: 'fp-trans-018',
+      event: {
+        site: 'astrologywiki',
+        pageId: 'PG-TRANS-018',
+        slug: 'saturn-return-in-capricorn',
+        stage: 'links_seo_review',
+        errorKind: 'link_fail',
+        summary: 'intended internal links render as italic text',
+        stderr: 'review[links-seo] FAIL',
+      },
+    },
+    classification: 'agent_fixable',
+    strategy: 'agent_content_asset_link',
+  });
+  assert.equal(result.terminal, 'published');
+  assert.deepEqual(calls.map(([name]) => name), ['agent', 'persist', 'regate', 'publish']);
+});
+
+test('astrology adapter never regates an Agent edit that was not committed and pushed', async () => {
+  const calls = [];
+  const adapter = createAstrologyWikiRepairAdapter({
+    resolveContext: async () => ({
+      branch: 'seo/auto/2026-07-15-PG-TRANS-016',
+      worktree: '/oracle-worktrees/seo-repair/pg-trans-016',
+      originalWorktree: '/oracle-worktrees/seo-autopilot/pg-trans-016',
+      articleFile: '/oracle-worktrees/seo-repair/pg-trans-016/data/articles/saturn-return-age-29.ts',
+      changedFiles: [
+        'data/articles/saturn-return-age-29.ts',
+        'public/images/blog/saturn-return-age-29-i0-en.svg',
+      ],
+      linkCandidates: [],
+    }),
+    invokeAgent: async () => ({ ok: true, evidence: { filesChanged: ['asset.svg'] } }),
+    persistRepair: async () => ({ ok: false, stderr: 'push rejected' }),
+    regate: async () => { calls.push('regate'); return { ok: true }; },
+    publish: async () => { calls.push('publish'); return { ok: true }; },
+  });
+  const result = await adapter.execute({
+    record: {
+      fingerprint: 'fp-trans-016',
+      event: {
+        site: 'astrologywiki', pageId: 'PG-TRANS-016', slug: 'saturn-return-age-29',
+        stage: 'preview_fact_gate', errorKind: 'asset_fail', summary: 'SVG age 14', stderr: 'FAIL',
+      },
+    },
+    strategy: 'agent_content_asset_link',
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.evidence.type, 'persist_repair_failed');
+  assert.deepEqual(calls, []);
+});
+
+test('astrology adapter default terminal verifier is scoped to one page and site', async () => {
+  const verifierCalls = [];
+  const adapter = createAstrologyWikiRepairAdapter({
+    scriptsDir: '/repo/tools/scripts',
+    resolveContext: async () => ({
+      branch: 'seo/auto/PG-TRANS-016',
+      worktree: '/oracle-worktrees/pg-trans-016',
+      articleFile: '/oracle-worktrees/pg-trans-016/data/articles/saturn-return-age-29.ts',
+      changedFiles: ['data/articles/saturn-return-age-29.ts'],
+      linkCandidates: [],
+    }),
+    invokeAgent: async () => ({ ok: true }),
+    persistRepair: async () => ({ ok: true, commit: 'abc123' }),
+    regate: async () => ({ ok: true }),
+    publish: async () => ({ ok: true }),
+    runCommand: async (argv) => {
+      verifierCalls.push(argv);
+      return {
+        code: 0,
+        stdout: JSON.stringify({
+          ok: true,
+          results: [{ pageId: 'PG-TRANS-016', slug: 'saturn-return-age-29', ok: true, terminal: 'published', checks: { live: true } }],
+        }),
+        stderr: '',
+      };
+    },
+  });
+  const result = await adapter.execute({
+    record: {
+      event: {
+        site: 'astrologywiki', pageId: 'PG-TRANS-016', slug: 'saturn-return-age-29',
+        stage: 'preview_fact_gate', errorKind: 'asset_fail', summary: 'SVG age 14', stderr: 'FAIL',
+      },
+    },
+    strategy: 'agent_content_asset_link',
+  });
+  assert.equal(result.terminal, 'published');
+  assert.deepEqual(verifierCalls[0], [
+    'node', '/repo/tools/scripts/gg-seo-repair-verify.mjs',
+    '--site', 'astrologywiki',
+    '--page-id', 'PG-TRANS-016',
+    '--slug', 'saturn-return-age-29',
+    '--json',
+  ]);
+});

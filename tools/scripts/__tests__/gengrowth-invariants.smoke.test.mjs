@@ -165,6 +165,11 @@ test('invariant 1: author tick immediately runs gengrowth publish follow-up afte
     /bash "\$PUBLISH_TICK"/,
     'author tick must run the existing publish tick wrapper instead of bypassing it',
   );
+  assert.match(
+    src,
+    /gg-seo-repair-controller\.mjs" import-v1 --site gengrowth/,
+    'v2 author failures must enter the shared repair controller through the natural wrapper',
+  );
 });
 
 test('invariant 1: the autopilot <pageId>-<model>-v8.md convention agrees on the same pageId', () => {

@@ -146,6 +146,29 @@ function parseVerifierOutput(stdout) {
 }
 
 async function main() {
+  if (process.env.GG_SEO_REPAIR_CONTROLLER_V2_ENABLED === '1') {
+    const controllerBin = process.env.GG_SEO_REPAIR_CONTROLLER_BIN
+      || join(SCRIPTS, 'gg-seo-repair-controller.mjs');
+    const delegated = spawnSync('node', [
+      controllerBin,
+      'import-v1',
+      ...process.argv.slice(2),
+    ], {
+      cwd: FLOW,
+      env: process.env,
+      encoding: 'utf8',
+      timeout: (numberValue(process.env.GG_SEO_REPAIR_TIMEOUT_SECONDS, 2700, 1) + 60) * 1000,
+      maxBuffer: 32 * 1024 * 1024,
+    });
+    if (delegated.stdout) process.stdout.write(delegated.stdout);
+    if (delegated.stderr) process.stderr.write(delegated.stderr);
+    if (delegated.error) {
+      process.stderr.write(`SEO repair controller delegation failed: ${delegated.error.message}\n`);
+      process.exit(2);
+    }
+    process.exit(Number.isInteger(delegated.status) ? delegated.status : 2);
+  }
+
   const args = parseArgs(process.argv.slice(2));
   const claimsPath = args.claims;
   const planPath = args.plan;

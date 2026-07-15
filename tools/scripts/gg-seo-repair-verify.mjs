@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -119,6 +119,41 @@ export async function verifyRepairTarget(target, deps = {}) {
   );
   checks.cta_matches_map = checks.http_200 && checks.cta_audit
     && pageLinksTo(page.text, deps.ctaAudit.cta_target_url, url);
+  checks.writeback_clear = !deps.pendingWriteback;
+
+  const failed = Object.entries(checks).filter(([, ok]) => !ok).map(([name]) => name);
+  return {
+    ok: failed.length === 0,
+    terminal: failed.length ? 'pending' : 'published',
+    checks,
+    reason: failed.join(','),
+  };
+}
+
+export async function verifyGengrowthRepairTarget(target, deps = {}) {
+  const slug = String(target?.slug || deps.supabaseRow?.slug || '');
+  const url = `https://gengrowth.ai/en/blog/${slug}`;
+  const checks = {};
+  checks.supabase_published = deps.supabaseRow?.status === 'published'
+    && (!deps.supabaseRow?.slug || deps.supabaseRow.slug === slug)
+    && (!deps.supabaseRow?.locale || deps.supabaseRow.locale === 'en');
+  checks.staging_manifest = deps.manifest?.phase2_checks?.overall === 'pass';
+
+  let page = { ok: false, status: 0, text: '' };
+  let sitemap = { ok: false, status: 0, text: '' };
+  try { page = await deps.fetchDocument(url); } catch { /* fail closed below */ }
+  try { sitemap = await deps.fetchDocument('https://gengrowth.ai/sitemap.xml'); } catch { /* fail closed below */ }
+  checks.http_200 = page?.ok === true && page?.status === 200;
+  checks.canonical = checks.http_200 && canonicalHref(page.text) === url;
+  checks.article_jsonld = checks.http_200 && hasArticleJsonLd(page.text);
+  checks.sitemap = sitemap?.ok === true && sitemap?.status === 200
+    && new RegExp(`<loc>\\s*${escapeRegex(url)}\\s*</loc>`, 'i').test(sitemap.text || '');
+  checks.plan_checked = new RegExp(`^\\s*-\\s*\\[x\\]\\s*\`?${escapeRegex(target.pageId)}\`?`, 'm')
+    .test(deps.planText || '');
+  const sheetUrl = deps.sheetRow?.publish_url || deps.sheetRow?.published_url || deps.sheetRow?.url || '';
+  checks.sheet_published = ['已发布', 'published'].includes(String(deps.sheetRow?.status || '').toLowerCase())
+    && normalizedLink(sheetUrl, url) === normalizedLink(url, url);
+  checks.vault_archived = deps.vaultArchived === true;
   checks.writeback_clear = !deps.pendingWriteback;
 
   const failed = Object.entries(checks).filter(([, ok]) => !ok).map(([name]) => name);
@@ -257,8 +292,164 @@ async function fetchDocument(url) {
   }
 }
 
+function findGengrowthManifest(pageId, slug, stagingDir = join(FLOW, '_staging')) {
+  try {
+    const candidates = readdirSync(stagingDir)
+      .filter((name) => name.startsWith(`${pageId}-`) && name.endsWith('.manifest.json'))
+      .sort()
+      .reverse();
+    for (const name of candidates) {
+      const manifest = readJson(join(stagingDir, name), null);
+      if (!manifest) continue;
+      const mdPath = join(stagingDir, name.replace(/\.manifest\.json$/, '.md'));
+      if (!existsSync(mdPath)) continue;
+      if (slug && !readFileSync(mdPath, 'utf8').includes(`slug: ${slug}`)) continue;
+      return manifest;
+    }
+  } catch {}
+  return null;
+}
+
+function findGengrowthPlanText(pageId, planPath) {
+  if (planPath && existsSync(planPath)) return readFileSync(planPath, 'utf8');
+  const tasksDir = join(OPS, 'inbox/06-tasks/tasks');
+  try {
+    const plans = readdirSync(tasksDir)
+      .filter((name) => /gengrowth.*blog-output-plan.*\.md$/i.test(name))
+      .sort()
+      .reverse();
+    return plans
+      .map((name) => readFileSync(join(tasksDir, name), 'utf8'))
+      .find((text) => text.includes(pageId)) || '';
+  } catch { return ''; }
+}
+
+function vaultContainsGengrowthPage(pageId, slug) {
+  const root = process.env.GG_VAULT_DIR || join(homedir(), 'gengrowth-wiki');
+  const siteDir = join(root, '内容资产', 'gengrowth');
+  try {
+    for (const dateEntry of readdirSync(siteDir, { withFileTypes: true })) {
+      if (!dateEntry.isDirectory() || dateEntry.name === 'attachments') continue;
+      const dateDir = join(siteDir, dateEntry.name);
+      for (const file of readdirSync(dateDir)) {
+        if (!file.endsWith('.md')) continue;
+        const text = readFileSync(join(dateDir, file), 'utf8');
+        if (text.includes(`page_id: ${pageId}`) && text.includes(`slug: ${slug}`)) return true;
+      }
+    }
+  } catch {}
+  return false;
+}
+
+async function fetchGengrowthSupabaseRow(slug) {
+  const base = String(process.env.SB_URL || '').replace(/\/$/, '');
+  const key = process.env.SB_KEY || '';
+  if (!base || !key || !slug) return null;
+  try {
+    const response = await fetch(`${base}/rest/v1/blog_posts?slug=eq.${encodeURIComponent(slug)}&locale=eq.en&select=slug,locale,status`, {
+      headers: { apikey: key, Authorization: `Bearer ${key}` },
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!response.ok) return null;
+    return (await response.json())[0] || null;
+  } catch { return null; }
+}
+
+async function findGengrowthSheetRow(target) {
+  try {
+    loadEnv();
+    const workbookId = String(process.env.GG_SHEETS_GENGROWTH_WORKBOOK_ID || '').trim();
+    if (!workbookId) return null;
+    const token = await getAccessToken();
+    const pagesRaw = await fetchTab(workbookId, PAGES_TAB, token);
+    return findSheetRow(target, sheetRowsFromRaw(pagesRaw));
+  } catch { return null; }
+}
+
+async function loadGengrowthDeps(args, target) {
+  if (args['gengrowth-fixture']) {
+    const fixture = readJson(args['gengrowth-fixture'], {});
+    return {
+      ...fixture,
+      fetchDocument: async (url) => url.endsWith('/sitemap.xml')
+        ? { ok: true, status: 200, text: fixture.sitemapText || '' }
+        : { ok: true, status: 200, text: fixture.pageHtml || '' },
+    };
+  }
+  loadEnv();
+  return {
+    supabaseRow: await fetchGengrowthSupabaseRow(target.slug),
+    manifest: findGengrowthManifest(target.pageId, target.slug, args['staging-dir'] || join(FLOW, '_staging')),
+    planText: findGengrowthPlanText(target.pageId, args.plan),
+    sheetRow: await findGengrowthSheetRow(target),
+    vaultArchived: vaultContainsGengrowthPage(target.pageId, target.slug),
+    pendingWriteback: pendingWriteback(target.pageId),
+    fetchDocument,
+  };
+}
+
+function findAstrologyPlanText(pageId, planPath) {
+  if (planPath && existsSync(planPath)) return readFileSync(planPath, 'utf8');
+  const tasksDir = join(OPS, 'inbox/06-tasks/tasks');
+  try {
+    const plans = readdirSync(tasksDir)
+      .filter((name) => /blog-output-plan.*\.md$/i.test(name) && !/gengrowth/i.test(name))
+      .sort()
+      .reverse();
+    return plans
+      .map((name) => readFileSync(join(tasksDir, name), 'utf8'))
+      .find((text) => text.includes(pageId)) || '';
+  } catch { return ''; }
+}
+
+async function loadAstrologyDeps(args, target) {
+  if (args['astrology-fixture']) {
+    const fixture = readJson(args['astrology-fixture'], {});
+    return {
+      ...fixture,
+      fetchDocument: async (url) => url.endsWith('/sitemap.xml')
+        ? { ok: true, status: 200, text: fixture.sitemapText || '' }
+        : { ok: true, status: 200, text: fixture.pageHtml || '' },
+    };
+  }
+  const claims = readJson(args.claims || DEFAULT_CLAIMS, {});
+  const publishLogPath = args['publish-log'] || DEFAULT_PUBLISH_LOG;
+  const sheetContext = await loadSheetContext(args, [target]);
+  return {
+    claim: claims[target.pageId],
+    planText: findAstrologyPlanText(target.pageId, args.plan),
+    publishLogText: existsSync(publishLogPath) ? readFileSync(publishLogPath, 'utf8') : '',
+    sheetRow: findSheetRow(target, sheetContext.rows),
+    ctaAudit: sheetContext.ctaAudits[target.pageId],
+    pendingWriteback: pendingWriteback(target.pageId),
+    fetchDocument,
+  };
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
+  if (args.site === 'gengrowth') {
+    if (!args['page-id'] || !args.slug) {
+      process.stderr.write('gg-seo-repair-verify: --site gengrowth requires --page-id and --slug\n');
+      process.exit(2);
+    }
+    const target = { pageId: args['page-id'], slug: args.slug };
+    const verified = await verifyGengrowthRepairTarget(target, await loadGengrowthDeps(args, target));
+    const output = { ok: verified.ok, results: [{ ...target, ...verified }] };
+    process.stdout.write(`${JSON.stringify(output)}\n`);
+    process.exit(output.ok ? 0 : 2);
+  }
+  if (args.site === 'astrologywiki') {
+    if (!args['page-id'] || !args.slug) {
+      process.stderr.write('gg-seo-repair-verify: --site astrologywiki requires --page-id and --slug\n');
+      process.exit(2);
+    }
+    const target = { pageId: args['page-id'], slug: args.slug };
+    const verified = await verifyRepairTarget(target, await loadAstrologyDeps(args, target));
+    const output = { ok: verified.ok, results: [{ ...target, ...verified }] };
+    process.stdout.write(`${JSON.stringify(output)}\n`);
+    process.exit(output.ok ? 0 : 2);
+  }
   if (!args.targets || !args.plan) {
     process.stderr.write('gg-seo-repair-verify: --targets and --plan are required\n');
     process.exit(2);

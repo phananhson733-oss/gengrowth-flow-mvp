@@ -81,6 +81,15 @@ ps -o lstart= -p $$ 2>/dev/null | tr -s ' ' > "$LOCK/start"
 # read here with only plist/caller env visible → silently ignored).
 set -a; . "$HOME/.config/gg/_gg.env" 2>/dev/null || true; set +a
 
+run_repair_controller() {
+  [ "${GG_SEO_REPAIR_CONTROLLER_V2_ENABLED:-0}" = "1" ] || return 0
+  [ -f "$CLAIMS" ] && [ -f "$PLAN" ] || return 0
+  node "$SCRIPT_DIR/gg-seo-repair-controller.mjs" import-v1 --site gengrowth \
+    --claims "$CLAIMS" --plan "$PLAN" --log-file "$LOG" --log-offset 0 \
+    --run-exit "${1:-0}" --max-targets "${GG_SEO_REPAIR_MAX_TARGETS:-2}" \
+    --budget-seconds "${GG_SEO_REPAIR_BUDGET_SECONDS:-900}" >> "$LOG" 2>&1 || true
+}
+
 # per-item hard cap DEFAULT 3600s: the author chain = orchestrator (≤30min) + multi-party review
 # (~10-15min), and phase2 writes the passing -en.md BEFORE review runs. A cap below that sum SIGKILLs
 # during review — see the rc-independent handoff below (a passing -en.md is salvaged regardless of rc,
@@ -105,13 +114,13 @@ node "$NOTIFY" replay-outbox >/dev/null 2>&1 || true
 # author with no cap (or fail rc=127 → no draft → silent no-op). Fail loud instead of silently idling.
 if ! command -v gtimeout >/dev/null 2>&1; then
   echo "$(date '+%F %T') gtimeout not on PATH — cannot cap authoring; skipping fire" >> "$LOG"
-  node "$NOTIFY" preflight_fail --lane gengrowth-author --log "$LOG" >/dev/null 2>&1 || true
+  if [ "${GG_SEO_REPAIR_CONTROLLER_V2_ENABLED:-0}" = "1" ]; then run_repair_controller 2; else node "$NOTIFY" preflight_fail --lane gengrowth-author --log "$LOG" >/dev/null 2>&1 || true; fi
   exit 2
 fi
 
 # Preflight — fail fast on a broken host before spending LLM budget (skip the slow live CLI smoke).
 if ! node "$SCRIPT_DIR/gg-autopilot-preflight.mjs" --skip-live-cli >> "$LOG" 2>&1; then
-  node "$NOTIFY" preflight_fail --lane gengrowth-author --log "$LOG"
+  if [ "${GG_SEO_REPAIR_CONTROLLER_V2_ENABLED:-0}" = "1" ]; then run_repair_controller 2; else node "$NOTIFY" preflight_fail --lane gengrowth-author --log "$LOG"; fi
   exit 2
 fi
 
@@ -128,7 +137,7 @@ export GG_REVIEW_REVISER_TIMEOUT_MS="${GG_REVIEW_REVISER_TIMEOUT_MS:-420000}"
 
 if [ -z "${GG_SHEETS_GENGROWTH_WORKBOOK_ID:-}" ]; then
   echo "$(date '+%F %T') GG_SHEETS_GENGROWTH_WORKBOOK_ID unset in _gg.env — cannot pull gengrowth briefs; skip" >> "$LOG"
-  node "$NOTIFY" preflight_fail --lane gengrowth-author --log "$LOG" >/dev/null 2>&1 || true
+  if [ "${GG_SEO_REPAIR_CONTROLLER_V2_ENABLED:-0}" = "1" ]; then run_repair_controller 2; else node "$NOTIFY" preflight_fail --lane gengrowth-author --log "$LOG" >/dev/null 2>&1 || true; fi
   exit 2
 fi
 
@@ -206,18 +215,18 @@ while IFS=$'\t' read -r pid kw; do
     PUBLISH_FOLLOWUP_ITEMS=$((PUBLISH_FOLLOWUP_ITEMS + 1))
     cut=""; [ "$_rc" -eq 124 ] && cut=" (review cut by ${TICK_TIMEOUT}s cap — draft is phase2-passing, shipped as-is)"
     echo "$(date '+%F %T') $pid: AUTHORED + handoff → ${pid}-${TAG}.md${cut} — publish follow-up scheduled" >> "$LOG"
-    node "$NOTIFY" authored --site gengrowth --detail "$pid $kw — 待 gengrowth publish lane 发布" >/dev/null 2>&1 || true
+    if [ "${GG_SEO_REPAIR_CONTROLLER_V2_ENABLED:-0}" != "1" ]; then node "$NOTIFY" authored --site gengrowth --detail "$pid $kw — 待 gengrowth publish lane 发布" >/dev/null 2>&1 || true; fi
   elif [ "$_rc" -eq 124 ]; then
     # capped with NO passing draft = genuinely incomplete (killed mid-generation). Alert WITH the pid
     # so the strand isn't silent; next fire re-authors (bounded by the higher default cap).
     echo "$(date '+%F %T') $pid: hit ${TICK_TIMEOUT}s cap with no passing draft — incomplete" >> "$LOG"
-    node "$NOTIFY" lane_timeout --lane "gengrowth-author ($pid)" --seconds "$TICK_TIMEOUT" >/dev/null 2>&1 || true
+    if [ "${GG_SEO_REPAIR_CONTROLLER_V2_ENABLED:-0}" != "1" ]; then node "$NOTIFY" lane_timeout --lane "gengrowth-author ($pid)" --seconds "$TICK_TIMEOUT" >/dev/null 2>&1 || true; fi
   else
     # No passing draft, clean exit = parked (needs_human). Announce a fresh park (@PM+OPS).
     PARK="$(printf '%s\n' "$AOUT" | grep -oE 'PARK\(author\) .*' | head -1)"
     if [ -n "$PARK" ]; then
       PARK_REASON="$(printf '%s\n' "$PARK" | sed -E 's/^PARK\(author\) //; s/^PG-[A-Z0-9-]+:[[:space:]]*//')"
-      node "$NOTIFY" parked --site gengrowth --pid "$pid" --reason "$PARK_REASON" >/dev/null 2>&1 || true
+      if [ "${GG_SEO_REPAIR_CONTROLLER_V2_ENABLED:-0}" != "1" ]; then node "$NOTIFY" parked --site gengrowth --pid "$pid" --reason "$PARK_REASON" >/dev/null 2>&1 || true; fi
     else
       echo "$(date '+%F %T') $pid: no passing draft and no fresh park (unexpected) — see log" >> "$LOG"
     fi
@@ -244,6 +253,8 @@ if [ "${GG_GENGROWTH_AUTHOR_AUTOPUBLISH:-1}" != "0" ] && [ "${PUBLISH_FOLLOWUP_I
     node "$NOTIFY" preflight_fail --lane gengrowth-publish --log "$LOG" >/dev/null 2>&1 || true
   fi
 fi
+
+run_repair_controller 0
 
 echo "$(date '+%F %T') gengrowth author tick end (attempted=$n)" >> "$LOG"
 node "$SCRIPT_DIR/gg-notify.mjs" heartbeat com.gengrowth.gengrowth-author >/dev/null 2>&1 || true  # 阶段5 lane 心跳

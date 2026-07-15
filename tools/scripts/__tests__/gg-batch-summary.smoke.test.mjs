@@ -189,6 +189,22 @@ test('parked line merges ledger needs_human (failedAt ≥ since) with --parked',
   assert.equal(calls[0].atOps, '', '完成模板即使有 parked 也不 @（parked 事件本身已单独 @ 过）');
 });
 
+test('v2 parked line reports automatic repair queue instead of human intervention', () => {
+  const c = freshCase({
+    'PG-A-001': { status: 'done', slug: 'slug-a', mergedAt: IN_WINDOW },
+    'PG-P-002': { status: 'needs_human', slug: 'sp', failedAt: IN_WINDOW, error: 'zh 门未过' },
+  });
+  const r = run(
+    ['--since', SINCE, '--date', DATE, '--parked', 'GG-X-001:凭据缺失'],
+    c,
+    { GG_SEO_REPAIR_CONTROLLER_V2_ENABLED: '1' },
+  );
+  assert.equal(r.status, 0, `stderr: ${r.stderr}`);
+  const text = sentText(notifyCalls(c)[0]);
+  assert.match(text, /自动修复队列 2 篇：/);
+  assert.doesNotMatch(text, /暂停待人工/);
+});
+
 // ── (f) gengrowth 侧 --urls 与 oracle 侧合并分组渲染；/flaky 验证 HEAD→GET 容错 ──
 test('--urls merges gengrowth URLs; flaky endpoint recovers via GET fallback', () => {
   const c = freshCase({

@@ -18,6 +18,7 @@ LOCK="/tmp/gg-gengrowth-publish.lock"
 LOG_DIR="$HOME/gengrowth-agents/cron-sync/gengrowth-publish"
 mkdir -p "$LOG_DIR"
 LOG="$LOG_DIR/$(date +%Y-%m-%d).log"
+export GG_GENGROWTH_PUBLISH_LOG_FILE="$LOG"
 SB_PROJECT_REF="qeeocwurjslqppjxlsbk"
 export SB_URL="https://${SB_PROJECT_REF}.supabase.co"
 
@@ -53,5 +54,11 @@ export SB_KEY
 # Serial cadence (parity with Lane B): publish at most N per hourly tick so a backlog
 # drip-feeds instead of dumping all at once. Override via GG_GENGROWTH_PUBLISH_LIMIT.
 node "$SCRIPT_DIR/gg-gengrowth-publish.mjs" --apply --limit "${GG_GENGROWTH_PUBLISH_LIMIT:-1}" >> "$LOG" 2>&1
-echo "$(date '+%F %T') gengrowth-publish tick end (rc=$?)" >> "$LOG"
+PUBLISH_RC=$?
+if [ "${GG_SEO_REPAIR_CONTROLLER_V2_ENABLED:-0}" = "1" ]; then
+  node "$SCRIPT_DIR/gg-seo-repair-controller.mjs" drain \
+    --max-targets "${GG_SEO_REPAIR_MAX_TARGETS:-2}" \
+    --budget-seconds "${GG_SEO_REPAIR_BUDGET_SECONDS:-900}" >> "$LOG" 2>&1 || true
+fi
+echo "$(date '+%F %T') gengrowth-publish tick end (rc=$PUBLISH_RC)" >> "$LOG"
 node "$SCRIPT_DIR/gg-notify.mjs" heartbeat com.gengrowth.gengrowth-publish >/dev/null 2>&1 || true  # 阶段5 lane 心跳

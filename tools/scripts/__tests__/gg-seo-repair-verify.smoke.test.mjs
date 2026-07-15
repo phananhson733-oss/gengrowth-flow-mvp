@@ -22,7 +22,12 @@ function goodDeps() {
     sheetRow: {
       status: '已发布',
       publish_url: URL,
+    },
+    ctaAudit: {
+      cta_id: 'url_tool_birth_chart',
       cta_target_url: 'https://astrologywiki.com/en/birth-chart-calculator',
+      cta_intent_tags: 'natal-self',
+      cta_selection_reason: 'semantic_match:intent_tags:natal-self',
     },
     pendingWriteback: null,
     fetchDocument: async (url) => url.endsWith('/sitemap.xml')
@@ -65,8 +70,11 @@ const failures = [
   ['plan_checked', (d) => { d.planText = '- [ ] `PG-A-001` alpha\n'; }],
   ['publish_log', (d) => { d.publishLogText = ''; }],
   ['sheet_published', (d) => { d.sheetRow = { status: '待写', publish_url: '' }; }],
-  ['cta_matches_sheet', (d) => {
-    d.sheetRow.cta_target_url = 'https://astrologywiki.com/forecast';
+  ['cta_audit', (d) => {
+    d.ctaAudit.cta_intent_tags = '';
+  }],
+  ['cta_matches_map', (d) => {
+    d.ctaAudit.cta_target_url = 'https://astrologywiki.com/forecast';
   }],
   ['writeback_clear', (d) => { d.pendingWriteback = { pageId: 'PG-A-001', done: ['sheet'] }; }],
 ];

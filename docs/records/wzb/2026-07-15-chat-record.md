@@ -22,7 +22,7 @@ aliases:
 - 运行 Phase 2 索引监控 wrapper；两站官方 Sitemap API 提交成功，astrologywiki 完成 3 条 URL Inspection，gengrowth 无到期检查项。
 - 请求索引候选队列已按优先级刷新；未执行普通文章 Google Indexing API 或无人值守 GSC Request Indexing 点击，日志未给出飞书发送回执。
 - 运行结果复盘性能包装器失败：两个产品的 GSC/GA4 OAuth refresh token 均已过期或被撤销；未扫描、未写表、未生成当日报告，需完成 OAuth 重新授权后仅重跑同一包装器。
-- 审计 7 月 14 日晚至 15 日凌晨连续发布的 7 篇 AstrologyWiki 文章 CTA；全部指向 CTA Map 的 Birth Chart Calculator，唯一锚文本偏差已在隔离 Oracle 分支修复并通过 CTA 单测，待选择集成方式。
+- 审计 7 月 14 日晚至 15 日凌晨连续发布的 7 篇 AstrologyWiki 文章 CTA；发现批量 `associated_keywords` 中的通用词使选择器错误地将全部需求归为 Birth Chart，已暂停未推送分支，待重构为按需求分类的 Map 驱动路由。
 
 ---
 
@@ -101,5 +101,17 @@ After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-s
 **🤖 回答：**
 
 按 CTA Map 语义选择器复核 7 月 14 日晚至 15 日凌晨连续发布的 7 篇 AstrologyWiki 文章：全部选择 `url_tool_birth_chart`，URL 均为 `https://astrologywiki.com/en/birth-chart-calculator`。其中 6 篇锚文本已与 `cta_文案` 一致；仅 `why-do-i-attract-toxic-people` 使用旧的上下文化锚文本，已在隔离 Oracle worktree 的 `data/articles/why-do-i-attract-toxic-people.ts` 对齐为 `Generate Your Free Birth Chart`，未改目标 URL、正文结构、Related Reading 或 blog-to-blog 内链。CTA 单测 12/12 通过，源码断言确认 7/7 均与 Map 精确一致；提交为 `94f20e3`，分支 `codex/cta-recent-articles-20260715` 已 rebase 到 `origin/main` 的 `031fc5a`，待选择推送 PR、保留分支或其他集成方式。
+
+---
+
+### Q5 — 12:58
+
+**🙋 提问：**
+
+我们预期不是要全部命中 birth chart cta 啊。我们应该是根据需求自动找cta map 中去分类定位啊
+
+**🤖 回答：**
+
+确认当前结果不符合需求。根因是选题表 `associated_keywords` 中批量添加的 `birth chart`、`astrology`、`zodiac`、`meaning`、`interpretation` 被选择器作为强匹配信号；CTA Map 又没有区分个人本命盘、双人合盘、年度趋势和工具总览等语义类别，导致 7 篇文章都落到 Birth Chart。已停止未推送的锚文本修复分支，未部署。下一步待确认关系主题但没有第二个人出生信息时的 CTA 归类策略；随后按“先分类需求，再从 CTA Map 选择候选”的确定性方案重构，并保留 Blog_Article 内链规则。
 
 ---

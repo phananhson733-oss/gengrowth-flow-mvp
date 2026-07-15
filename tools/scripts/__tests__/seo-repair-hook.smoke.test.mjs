@@ -93,6 +93,20 @@ test('unfixable park becomes archived terminal and never becomes an Agent target
   assert.equal(out.terminalUpdates[0].terminal, 'archived');
 });
 
+test('needs_human without error is diagnosed by the bounded Agent, never silently archived', () => {
+  const out = selectRepairTargets({
+    claims: {
+      'PG-U-001': { status: 'needs_human', stage: 'authoring', slug: 'unknown' },
+    },
+    planIds: new Set(['PG-U-001']),
+    state: {},
+    archivedIds: new Set(),
+  });
+  assert.deepEqual(out.terminalUpdates, []);
+  assert.equal(out.targets.length, 1);
+  assert.equal(out.targets[0].triage, 'fixable');
+});
+
 test('cap, archived sidecar, and inflight state suppress duplicate Agent targets', () => {
   const claim = {
     status: 'needs_human', stage: 'authoring', slug: 'alpha', error: 'phase2 FAIL: drifted sections',

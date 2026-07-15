@@ -58,7 +58,7 @@ export function selectRepairTargets({
     if (claim.status === 'needs_human') {
       stage = claim.stage || 'unknown';
       error = String(claim.error || 'needs_human without an error');
-      triage = triagePark(claim);
+      triage = triagePark(error);
     } else if (claim.status === 'pushed-preview' || claim.status === 'verified-preview') {
       stage = claim.status;
       error = claim.status === 'pushed-preview'

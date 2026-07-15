@@ -21,7 +21,7 @@ aliases:
 - 索引修复重提、Phase 2 索引监控与选题登记均经固定 wrapper 完成；两站 Sitemap API 成功，astrologywiki 完成 3 条 URL Inspection，请求索引候选队列已刷新；三次选题登记均为 apply：新增 gengrowth `PG-WLS-007`、astrologywiki `PG-TRANS-014`–`PG-TRANS-018`，以及最新 astrologywiki `PG-CELEB-056`–`PG-CELEB-058` 与 gengrowth `PG-SDS-004`、`PG-ART-007`、`PG-AIS-006`；未越过既定外部写入边界。
 - 结果复盘性能 wrapper 因两产品 GSC/GA4 OAuth refresh token 过期或被撤销而在扫描前停止；未写表、未生成报告，需重新授权后只重跑原 wrapper。
 - 双产品 CTA Map 已新增 `intent_tags`，最近 7 篇 AstrologyWiki 文章已按新逻辑重新处理并上线；flow PR #2、Oracle PR #376 已合并，线上 CTA、canonical 与 Article JSON-LD 已复验。
-- 复核现有 agentic repair 后明确新调度边界：Codex Automation 保持暂停；macOS `launchd` 直接拉起正常写作/发布，只有异常、报错或 `needs_human` 才通过 hook 启动一次性 Agent 修复，且不得绕过现有发布门；后续实测与飞书截图确认当前 hook 仅覆盖 astrologywiki/W22、Gengrowth 未接入，且旧 auto-retry/publisher 会在 controller 前抢先发送“彻底停止”或重复人工告警；用户确认目标升级为两站 SEO 全流程统一修复控制器，采用安全授权边界与“结构化异常事件 + 单一 controller + 两站 adapter”架构。
+- 复核现有 agentic repair 后明确新调度边界：Codex Automation 保持暂停；macOS `launchd` 直接拉起正常写作/发布，只有异常、报错或 `needs_human` 才通过 hook 启动一次性 Agent 修复，且不得绕过现有发布门；后续实测与飞书截图确认当前 hook 仅覆盖 astrologywiki/W22、Gengrowth 未接入，且旧 auto-retry/publisher 会在 controller 前抢先发送“彻底停止”或重复人工告警；用户确认目标升级为两站 SEO 全流程统一修复控制器，采用安全授权边界与“结构化异常事件 + 单一 controller + 两站 adapter”架构，并强调必须实际修复现有故障而非止于设计。
 - 方案 A 已通过 18:30 与 21:05 自然窗口的两次异常修复实单：`PG-WAIA-001`、`PG-WAIA-002` 均因早先 sitemap 传播延迟留下 pending writeback；一次性 Agent 各自只运行定向 `gg-backfill-one`，完成 Sheet、plan、vault 三步回填，且 pending 队列、PR、线上 canonical、Article JSON-LD、sitemap 与归档资产均复验通过。
 
 ---
@@ -788,5 +788,17 @@ PG-TRANS-018: gate parked (codex/links/verify) — needs_human (通知交 auto-r
 **🤖 回答：**
 
 对照截图、21:05/21:30 日志、claims、repair sidecar 与通知审计后确认：截图准确暴露了三类架构缺口。21:05 hook 因灰度配置 `GG_SEO_REPAIR_MAX_TARGETS=1` 且 selector 按 W22 plan 顺序选目标，只处理了更靠前的 `PG-WAIA-002/backfill`，`PG-TRANS-016` 与 `PG-TRANS-018` 尚未进入 Agent attempt；21:30 的旧 `auto-retry-parks` 把“禁止盲目重试的真实 FAIL”错误等同为“无法由 Agent 修复”，抢先发送了“彻底停止”通知；Gengrowth publisher 未接 controller，继续每小时重复发送 `PG-WLS-007/codex exited 3`。两篇 AstrologyWiki park 实际仍属 Agent-fixable：016 的错误位于 SVG 资产而非文章正文，018 需要检索并验证真实内部链接目标。设计需新增单一终态通知所有权、区分 `no_blind_retry` 与 `human_only`、公平/优先级队列及跨正文/资产/链接的修复能力；在 controller 得出终态前，旧 lane 只能记录 `repair_pending`，不得通知人工。
+
+---
+
+### Q32 — 21:44
+
+**🙋 提问：**
+
+确认，注意要修复啊
+
+**🤖 回答：**
+
+确认最终交付必须包含真实代码修复和现有故障闭环，不止设计文档。执行状态机设计为 `detected → queued → repairing → regating → published+backfilled / archived / human_only`。controller 先定向重跑瞬时工具故障，再处理机械性修复；仍失败则启动目标 Agent，允许跨文章正文、SVG/图片文字、已验证站内链接、pipeline code 与发布/回填步骤修复。pipeline code 只能在隔离分支/worktree 中按 TDD 修复并通过定向与回归测试，不能直接改活跃运行。每次修复后必须回到原阶段重过 gate；并发保持 1，但队列按发布阻塞程度、失败时间和 aging 公平顺序持续排空。单次策略到达尝试上限只进入慢速 `repair_pending` 或升级更深诊断，不得自动变成 `human_only`；只有不可委托的登录、验证码、审批、权限或缺失权威来源才可进入 `human_only`，stale/错误前提主题才可归档。
 
 ---

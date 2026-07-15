@@ -12,6 +12,7 @@ import {
   isSafeAstrologyMergeIndex,
   isSafeAstrologyTargetPath,
   parseGitStatusPaths,
+  selectAstrologyChangedFiles,
   verifyInternalLinkCandidate,
 } from '../lib/seo-repair-adapter-astrologywiki.mjs';
 
@@ -200,6 +201,15 @@ test('astrology merge integration is accepted only for current main and target-o
     ],
   };
   assert.equal(isSafeAstrologyMergeIndex(target, safe), true);
+  assert.deepEqual(selectAstrologyChangedFiles({
+    reviewedFiles: ['data/articles/saturn-return-age-29.ts'],
+    dirtyFiles: [
+      'data/articles/cody-bellinger-birth-chart.ts',
+      'data/articles/saturn-return-in-capricorn.ts',
+      ...safe.diffAgainstMain,
+    ],
+    mergeState: safe,
+  }), safe.diffAgainstMain);
   assert.equal(isSafeAstrologyMergeIndex(target, { ...safe, mergeHead: 'stale-main' }), false);
   assert.equal(isSafeAstrologyMergeIndex(target, { ...safe, unmergedFiles: ['data/articles/index.ts'] }), false);
   assert.equal(isSafeAstrologyMergeIndex(target, {

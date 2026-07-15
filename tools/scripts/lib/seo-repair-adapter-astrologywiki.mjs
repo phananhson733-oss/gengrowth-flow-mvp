@@ -60,6 +60,13 @@ export function isSafeAstrologyMergeIndex(target, state) {
     && state.diffAgainstMain.every((file) => editable.has(file));
 }
 
+export function selectAstrologyChangedFiles({ reviewedFiles = [], dirtyFiles = [], mergeState = null } = {}) {
+  if (mergeState?.mergeHead && Array.isArray(mergeState.diffAgainstMain)) {
+    return [...new Set(mergeState.diffAgainstMain)];
+  }
+  return [...new Set([...reviewedFiles, ...dirtyFiles])];
+}
+
 export async function verifyInternalLinkCandidate(slug, deps = {}) {
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(String(slug || ''))) return false;
   let hasRoute = false;
@@ -123,6 +130,35 @@ function worktreeDirtyPaths(worktree) {
   return parseGitStatusPaths(status.stdout);
 }
 
+function inspectAstrologyMergeState(worktree) {
+  const mergeHead = run([
+    'git', '-C', worktree, 'rev-parse', '-q', '--verify', 'MERGE_HEAD',
+  ], { cwd: worktree, timeout: 60_000 });
+  if (!mergeHead.ok || !mergeHead.stdout.trim()) return null;
+  const originMain = run([
+    'git', '-C', worktree, 'rev-parse', 'origin/main',
+  ], { cwd: worktree, timeout: 60_000 });
+  const unmerged = run([
+    'git', '-C', worktree, 'diff', '--name-only', '--diff-filter=U',
+  ], { cwd: worktree, timeout: 60_000 });
+  const unstaged = run([
+    'git', '-C', worktree, 'diff', '--name-only',
+  ], { cwd: worktree, timeout: 60_000 });
+  const diffAgainstMain = run([
+    'git', '-C', worktree, 'diff', '--cached', '--name-only', 'origin/main',
+  ], { cwd: worktree, timeout: 60_000 });
+  if (!originMain.ok || !unmerged.ok || !unstaged.ok || !diffAgainstMain.ok) {
+    throw new Error('cannot inspect staged astrology merge index');
+  }
+  return {
+    mergeHead: mergeHead.stdout.trim(),
+    originMain: originMain.stdout.trim(),
+    unmergedFiles: unmerged.stdout.trim().split('\n').filter(Boolean),
+    unstagedFiles: unstaged.stdout.trim().split('\n').filter(Boolean),
+    diffAgainstMain: diffAgainstMain.stdout.trim().split('\n').filter(Boolean),
+  };
+}
+
 function repairWorktreeName(event) {
   const id = String(event.eventId || 'event').replace(/[^A-Za-z0-9]/g, '').slice(0, 12) || 'event';
   return `${String(event.pageId).replace(/[^A-Za-z0-9._-]/g, '_')}-${id}`;
@@ -141,9 +177,26 @@ function prepareRepairWorktree(event, claim, originalWorktree) {
   }
   const dirtyPaths = worktreeDirtyPaths(worktree);
   const targetSlug = claim.slug || event.slug;
-  const unsafePaths = dirtyPaths.filter((file) => !isSafeAstrologyTargetPath(file, targetSlug));
-  if (unsafePaths.length) {
-    throw new Error(`repair worktree has non-target changes: ${unsafePaths.join(', ')}`);
+  const mergeState = inspectAstrologyMergeState(worktree);
+  if (mergeState) {
+    const provisionalTarget = {
+      worktree,
+      articleFile: join(worktree, 'data', 'articles', `${targetSlug}.ts`),
+      assetFiles: mergeState.diffAgainstMain
+        .filter((file) => isSafeAstrologyTargetPath(file, targetSlug) && ASSET_RE.test(file))
+        .map((file) => join(worktree, file)),
+      supportFiles: mergeState.diffAgainstMain
+        .filter((file) => file === `scripts/plans/auto-${targetSlug}.json`)
+        .map((file) => join(worktree, file)),
+    };
+    if (!isSafeAstrologyMergeIndex(provisionalTarget, mergeState)) {
+      throw new Error(`repair worktree has unsafe staged merge: ${worktree}`);
+    }
+  } else {
+    const unsafePaths = dirtyPaths.filter((file) => !isSafeAstrologyTargetPath(file, targetSlug));
+    if (unsafePaths.length) {
+      throw new Error(`repair worktree has non-target changes: ${unsafePaths.join(', ')}`);
+    }
   }
   const sourceHead = run(['git', '-C', originalWorktree, 'rev-parse', 'HEAD'], { cwd: originalWorktree, timeout: 60_000 });
   const repairHead = run(['git', '-C', worktree, 'rev-parse', 'HEAD'], { cwd: worktree, timeout: 60_000 });
@@ -217,10 +270,11 @@ async function defaultResolveContext(event) {
   const worktree = prepareRepairWorktree(event, claim, originalWorktree);
   const articleFile = join(worktree, 'data', 'articles', `${claim.slug || event.slug}.ts`);
   if (!existsSync(articleFile)) throw new Error(`astrology article missing: ${articleFile}`);
-  const changedFiles = [...new Set([
-    ...worktreeDiff(worktree),
-    ...worktreeDirtyPaths(worktree),
-  ])];
+  const changedFiles = selectAstrologyChangedFiles({
+    reviewedFiles: worktreeDiff(worktree),
+    dirtyFiles: worktreeDirtyPaths(worktree),
+    mergeState: inspectAstrologyMergeState(worktree),
+  });
   return {
     claim,
     branch: claim.branch,

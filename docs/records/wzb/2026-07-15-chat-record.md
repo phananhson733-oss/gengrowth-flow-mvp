@@ -22,7 +22,9 @@ aliases:
 - 运行 Phase 2 索引监控 wrapper；两站官方 Sitemap API 提交成功，astrologywiki 完成 3 条 URL Inspection，gengrowth 无到期检查项。
 - 请求索引候选队列已按优先级刷新；未执行普通文章 Google Indexing API 或无人值守 GSC Request Indexing 点击，日志未给出飞书发送回执。
 - 运行结果复盘性能包装器失败：两个产品的 GSC/GA4 OAuth refresh token 均已过期或被撤销；未扫描、未写表、未生成当日报告，需完成 OAuth 重新授权后仅重跑同一包装器。
-- 复核 7 月 14 日晚至 15 日凌晨连续发布的 7 篇 AstrologyWiki 文章 CTA：当前线上及 live Sheet dry-run 仍全部为 Birth Chart。选择器尚未新增意图分类字段或新的路由规则；用户已授权由 Agent 进行意图识别，后续将重构为按需求分类的 Map 驱动路由。
+- CTA Map 已在 AstrologyWiki 与 GenGrowth 两份 Google Sheet 同步新增 `intent_tags` 字段；选择器据目标词、实体、内容角度识别意图，批量通用关联词不再强制导向 Birth Chart。
+- 已按新规则重处理最近 7 篇线上 AstrologyWiki 文章：6 篇本命盘意图保留 Birth Chart，`north-node-in-aquarius-2026` 唯一切换至 Forecast，Related Reading/blog 内链均保持不变。
+- 两项改动已经 flow PR #2 与 Oracle PR #376 合并；Vercel production 部署成功，并通过线上 7 篇逐页抓取验证最终 CTA 对应关系。
 
 ---
 
@@ -137,5 +139,29 @@ After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-s
 **🤖 回答：**
 
 没有。只读复核当前 live Sheet 的 `选题登记表` 第 291–297 行和线上 7 篇对应文章：7/7 仍选择并呈现 `url_tool_birth_chart`，选择理由均为批量 `associated_keywords` 命中 `birth chart`（Linda Noskova 页面另有目标关键词和实体的直接命中）。代码中的 CTA Map 仍只读取到 `priority`，没有 `intent_tags` 或 `cta_category`；选择器仍将 `associated_keywords` 计入匹配分数。因此新的“先识别意图、再在同类 CTA 候选中选择”的规则尚未落地、也尚未重新处理这些已发布文章；未进行发布或内容改写。
+
+---
+
+### Q8 — 15:13
+
+**🙋 提问：**
+
+优化最近线上的 7 篇文章，按照最新的逻辑来匹配优化
+
+**🤖 回答：**
+
+已按新逻辑完成并上线。两份 CTA Map（AstrologyWiki、GenGrowth）均新增第 L 列 `intent_tags`，选择器改为先按 `target_keyword`、`entity`、`content_angle` 识别意图，再在同标签候选中选择；`birth chart`、`astrology`、`zodiac`、`meaning`、`interpretation` 等批量通用关联词不再主导匹配。实时 dry-run 的 7 篇结果为 6 篇 `natal-self → https://astrologywiki.com/en/birth-chart-calculator`，仅 `north-node-in-aquarius-2026` 为 `forecast-transit → https://astrologywiki.com/forecast`。Oracle 仅改写该篇的 Take Action CTA，保留所有 Related Reading/blog 内链；此前 `why-do-i-attract-toxic-people` 的 Birth Chart 锚文本已对齐。相关变更已合并至 flow PR #2 与 Oracle PR #376，Oracle Vercel production 部署成功；线上逐页抓取确认最终为 6 个 Birth Chart、1 个 Forecast。验证：flow 相关 smoke 66/66 通过；Oracle 在项目要求的 Node 20 下 79 文件、574 测试全部通过。
+
+---
+
+### Q9 — 15:13
+
+**🙋 提问：**
+
+继续
+
+**🤖 回答：**
+
+继续完成发布与线上验收：已推送并合并两条变更分支，确认 Vercel 的生产部署状态为 success；线上 `north-node-in-aquarius-2026` 已呈现 `Explore Astrology Forecasts`，其余六篇仍呈现 Birth Chart 目标。GitHub Actions 的 flow PR 检查因账户付款/额度限制而在测试步骤开始前被平台拦截，但同一 CI 测试命令已在本地成功执行；该平台状态未阻止合并。
 
 ---

@@ -21,7 +21,7 @@ aliases:
 - 索引修复重提、Phase 2 索引监控与选题登记均经固定 wrapper 完成；两站 Sitemap API 成功，astrologywiki 完成 3 条 URL Inspection，请求索引候选队列已刷新；三次选题登记均为 apply：新增 gengrowth `PG-WLS-007`、astrologywiki `PG-TRANS-014`–`PG-TRANS-018`，以及最新 astrologywiki `PG-CELEB-056`–`PG-CELEB-058` 与 gengrowth `PG-SDS-004`、`PG-ART-007`、`PG-AIS-006`；未越过既定外部写入边界。
 - 结果复盘性能 wrapper 因两产品 GSC/GA4 OAuth refresh token 过期或被撤销而在扫描前停止；未写表、未生成报告，需重新授权后只重跑原 wrapper。
 - 双产品 CTA Map 已新增 `intent_tags`，最近 7 篇 AstrologyWiki 文章已按新逻辑重新处理并上线；flow PR #2、Oracle PR #376 已合并，线上 CTA、canonical 与 Article JSON-LD 已复验。
-- 复核现有 agentic repair 后明确新调度边界：Codex Automation 保持暂停；macOS `launchd` 直接拉起正常写作/发布，只有异常、报错或 `needs_human` 才通过 hook 启动一次性 Agent 修复，且不得绕过现有发布门；后续实测发现该 hook 当前只覆盖 astrologywiki/W22，Gengrowth W25 发布通道尚未接入，用户进一步确认目标应升级为跨站点、跨阶段的全流程统一修复控制器，第一版只覆盖 AstrologyWiki 与 Gengrowth SEO 内容链路，并采用“已有安全授权可自动使用、不可委托的登录/验证码/审批才 human-only”的边界。
+- 复核现有 agentic repair 后明确新调度边界：Codex Automation 保持暂停；macOS `launchd` 直接拉起正常写作/发布，只有异常、报错或 `needs_human` 才通过 hook 启动一次性 Agent 修复，且不得绕过现有发布门；后续实测发现该 hook 当前只覆盖 astrologywiki/W22，Gengrowth W25 发布通道尚未接入，用户进一步确认目标应升级为跨站点、跨阶段的全流程统一修复控制器，第一版只覆盖 AstrologyWiki 与 Gengrowth SEO 内容链路，采用“已有安全授权可自动使用、不可委托的登录/验证码/审批才 human-only”的边界，并选择“统一结构化异常事件 + 单一 controller + 两站 adapter”架构。
 - 方案 A 已通过 18:30 与 21:05 自然窗口的两次异常修复实单：`PG-WAIA-001`、`PG-WAIA-002` 均因早先 sitemap 传播延迟留下 pending writeback；一次性 Agent 各自只运行定向 `gg-backfill-one`，完成 Sheet、plan、vault 三步回填，且 pending 队列、PR、线上 canonical、Article JSON-LD、sitemap 与归档资产均复验通过。
 
 ---
@@ -758,5 +758,17 @@ PG-TRANS-018: gate parked (codex/links/verify) — needs_human (通知交 auto-r
 **🤖 回答：**
 
 严格限定 `PG-WAIA-002`，未启动 `gg-nightly-seo.sh`、未运行全账本 reconcile、未修改 claim/ledger，也未处理 LOG_WINDOW 中其他 page_id。实时 claim 显示目标已通过 preview、三维评审与 Codex gate，PR #371 已合并，异常仅为 pending writeback。运行固定入口 `node tools/scripts/gg-backfill-one.mjs --page-id PG-WAIA-002`，退出码 0，返回 `terminal=resolved`，`sheet`、`plan`、`archive` 三步全部完成且无失败；再次运行返回 `terminal=clean`。新鲜验证确认：Sheet 精确行状态为「已发布」；固定计划仍为 `[x]`；claim 为 `done`；PR #371 为 MERGED；生产页与 sitemap 均为 HTTP 200，canonical 精确匹配，Article JSON-LD 存在；vault 归档 note 为 `status: published`。目标终态为 published and fully backfilled。
+
+---
+
+### Q30 — 21:37
+
+**🙋 提问：**
+
+ A
+
+**🤖 回答：**
+
+确认采用方案 A。统一架构保持现有 macOS 调度入口和正常业务 wrapper 不变，不新增 scheduler；各阶段以统一结构化事件报告异常，事件包含站点、lane、page_id、stage、错误分类、原始 stderr/日志窗口、run_id 与幂等键。现有 `gg-seo-repair-hook` 演进为站点无关的单一 repair controller，通用状态键改为 `site + page_id + stage + fingerprint`；AstrologyWiki adapter 负责 claim/plan/Oracle PR，Gengrowth adapter 负责 staging/manifest/W25 plan/Supabase。controller 先执行确定性恢复，再按需启动只处理精确目标的一次性 Agent；所有修复必须回到原 gate、publish 和 verifier，最终只能进入 published、archived 或不可委托外部阻塞的 human-only。clean path 不调用 Agent，外层现有锁覆盖正常流程与 repair。
 
 ---

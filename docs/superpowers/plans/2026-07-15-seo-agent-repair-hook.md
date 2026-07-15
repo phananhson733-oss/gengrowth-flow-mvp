@@ -76,7 +76,7 @@ aliases:
 - Produces: `beginRepairAttempts(state, targets, nowIso): object`
 - Consumes: existing `triagePark(claim)` from `tools/scripts/lib/park-classify.mjs`
 
-- [ ] **Step 1: Write selector/fingerprint failing tests**
+- [x] **Step 1: Write selector/fingerprint failing tests**
 
 ```js
 import { test } from 'node:test';
@@ -125,13 +125,13 @@ test('attempt cap and unfixable archive are terminal, spawn state is written fir
 });
 ```
 
-- [ ] **Step 2: Run tests and verify RED**
+- [x] **Step 2: Run tests and verify RED**
 
 Run: `node --test tools/scripts/__tests__/seo-repair-hook.smoke.test.mjs`
 
 Expected: FAIL with `ERR_MODULE_NOT_FOUND` for `lib/seo-repair-hook.mjs`.
 
-- [ ] **Step 3: Implement pure selector/state**
+- [x] **Step 3: Implement pure selector/state**
 
 ```js
 import { createHash } from 'node:crypto';
@@ -157,13 +157,13 @@ export function repairFingerprint({ pageId = 'run', stage = 'run', error = '' })
 
 Implement `selectRepairTargets` so it only considers unchecked plan IDs, maps `triagePark(...)=unfixable` to `terminalUpdates: archived`, skips archived/capped/inflight fingerprints, adds a synthetic `RUN` target for a non-empty `runError`, sorts by plan order, and slices to `maxTargets`. Implement `beginRepairAttempts` as a pure immutable update that writes `{ pageId, stage, error, attempts, status:'inflight', startedAt }` by fingerprint.
 
-- [ ] **Step 4: Run tests and verify GREEN**
+- [x] **Step 4: Run tests and verify GREEN**
 
 Run: `node --test tools/scripts/__tests__/seo-repair-hook.smoke.test.mjs`
 
 Expected: all selector/fingerprint/state tests pass.
 
-- [ ] **Step 5: Commit Task 1**
+- [x] **Step 5: Commit Task 1**
 
 ```bash
 git add tools/scripts/lib/seo-repair-hook.mjs tools/scripts/__tests__/seo-repair-hook.smoke.test.mjs

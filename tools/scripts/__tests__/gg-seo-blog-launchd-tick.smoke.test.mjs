@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join, resolve } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
@@ -11,17 +13,115 @@ const runner = resolve(flow, 'tools/scripts/gg-seo-blog-launchd-tick.sh');
 const seoPlist = resolve(flow, 'tools/launchd/com.gengrowth.seo-blog.plist');
 const notesPlist = resolve(wiki, 'tools/launchd/com.gengrowth.wiki-notes-digest.plist');
 
-test('SEO launchd runner keeps the persisted Codex automation prompt and single-flight guard', () => {
+test('SEO launchd runner directly runs nightly before the conditional hook', () => {
   assert.equal(existsSync(runner), true, `missing runner: ${runner}`);
   const source = readFileSync(runner, 'utf8');
 
   assert.match(source, /gg-seo-blog-launchd\.lock/);
   assert.match(source, /GG_SEO_LAUNCHD_ALLOW_OUTSIDE_WINDOW/);
-  assert.match(source, /tomllib\.load/);
-  assert.match(source, /gengrowth-seo-blog\/automation\.toml/);
-  assert.match(source, /codex.*exec/s);
   assert.match(source, /com\.gengrowth\.seo-nightly/);
   assert.match(source, /gg-nightly-seo\.sh/);
+  assert.match(source, /gg-seo-repair-hook\.mjs/);
+  assert.doesNotMatch(source, /tomllib|automation\.toml/i);
+  assert.doesNotMatch(source, /codex.*exec/is);
+  assert.ok(source.indexOf('"$NIGHTLY"') < source.indexOf('"$REPAIR_HOOK"'));
+});
+
+function executable(path, source) {
+  writeFileSync(path, source);
+  chmodSync(path, 0o755);
+  return path;
+}
+
+function runnerHarness({ nightlyExit = 0, hookExit = 0 } = {}) {
+  const root = mkdtempSync(join(tmpdir(), 'seo-launchd-runner-'));
+  const flow = join(root, 'flow');
+  const oracle = join(root, 'oracle');
+  const opsTasks = join(root, 'ops/inbox/06-tasks/tasks');
+  mkdirSync(flow, { recursive: true });
+  mkdirSync(join(oracle, '.git'), { recursive: true });
+  mkdirSync(opsTasks, { recursive: true });
+  const events = join(root, 'events.log');
+  const hookArgs = join(root, 'hook-args.json');
+  const nightlyLog = join(root, 'nightly.log');
+  const launchdLog = join(root, 'launchd.log');
+  const launchdErr = join(root, 'launchd.err.log');
+  const plan = join(opsTasks, 'plan.md');
+  const claims = join(opsTasks, '.autopilot-claims.json');
+  writeFileSync(plan, '- [ ] `PG-A-001` alpha\n');
+  writeFileSync(claims, '{}');
+  writeFileSync(nightlyLog, 'existing bytes\n');
+
+  const nightly = executable(join(root, 'nightly.sh'), [
+    '#!/bin/sh',
+    'printf "nightly\\n" >> "$GG_TEST_EVENTS"',
+    'printf "nightly body\\n" >> "$GG_SEO_NIGHTLY_LOG"',
+    `exit ${nightlyExit}`,
+    '',
+  ].join('\n'));
+  const hook = join(root, 'hook.mjs');
+  writeFileSync(hook, [
+    "import { appendFileSync, writeFileSync } from 'node:fs';",
+    "appendFileSync(process.env.GG_TEST_EVENTS, 'hook\\n');",
+    "writeFileSync(process.env.GG_TEST_HOOK_ARGS, JSON.stringify(process.argv.slice(2)));",
+    `process.exit(${hookExit});`,
+    '',
+  ].join('\n'));
+
+  const run = () => spawnSync('bash', [runner], {
+    cwd: flow,
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      HOME: root,
+      GG_ENV_FILE: '/dev/null',
+      GG_SEO_LAUNCHD_ALLOW_OUTSIDE_WINDOW: '1',
+      GG_SEO_SKIP_LEGACY_CHECK: '1',
+      GG_SEO_LAUNCHD_FLOW: flow,
+      GG_AUTOMATION_ORACLE_DIR: oracle,
+      GG_SEO_NIGHTLY_BIN: nightly,
+      GG_SEO_REPAIR_HOOK_BIN: hook,
+      GG_SEO_NIGHTLY_LOG: nightlyLog,
+      GG_SEO_LAUNCHD_LOG: launchdLog,
+      GG_SEO_LAUNCHD_ERR_LOG: launchdErr,
+      GG_SEO_LAUNCHD_LOCK: join(root, 'launchd.lock'),
+      GG_SEO_PLAN: plan,
+      GG_SEO_CLAIMS: claims,
+      GG_TEST_EVENTS: events,
+      GG_TEST_HOOK_ARGS: hookArgs,
+    },
+  });
+  const readMaybe = (path) => { try { return readFileSync(path, 'utf8'); } catch { return ''; } };
+  return {
+    run,
+    events: () => readMaybe(events).trim().split('\n').filter(Boolean),
+    hookArgs: () => JSON.parse(readMaybe(hookArgs) || '[]'),
+    log: () => readMaybe(launchdLog),
+  };
+}
+
+test('clean runner calls nightly then selector hook', () => {
+  const h = runnerHarness({ nightlyExit: 0, hookExit: 0 });
+  const result = h.run();
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}\n${h.log()}`);
+  assert.deepEqual(h.events(), ['nightly', 'hook']);
+  const args = h.hookArgs();
+  assert.equal(args[args.indexOf('--run-exit') + 1], '0');
+});
+
+test('nightly nonzero is passed to hook and hook terminal code owns final exit', () => {
+  const h = runnerHarness({ nightlyExit: 7, hookExit: 0 });
+  const result = h.run();
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}\n${h.log()}`);
+  assert.deepEqual(h.events(), ['nightly', 'hook']);
+  const args = h.hookArgs();
+  assert.equal(args[args.indexOf('--run-exit') + 1], '7');
+});
+
+test('hook nonzero is returned by the launchd runner', () => {
+  const h = runnerHarness({ nightlyExit: 0, hookExit: 2 });
+  const result = h.run();
+  assert.equal(result.status, 2, `${result.stdout}\n${result.stderr}\n${h.log()}`);
 });
 
 test('SEO plist schedules only the approved evening window and never runs at load', () => {

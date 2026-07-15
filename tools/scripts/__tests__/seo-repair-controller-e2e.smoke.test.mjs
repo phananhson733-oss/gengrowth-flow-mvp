@@ -197,3 +197,29 @@ test('import-v1 converts all repairable claims without applying the v1 attempt c
   assert.deepEqual(records.map((record) => record.event.pageId).sort(), ['PG-TRANS-016', 'PG-TRANS-018']);
   assert.deepEqual(records.map((record) => record.event.errorKind).sort(), ['asset_fail', 'link_fail']);
 });
+
+test('import-v1 --site gengrowth preserves site ownership and exact author retry', (t) => {
+  const h = harness(t);
+  const claims = join(h.root, 'claims.json');
+  const plan = join(h.root, 'plan.md');
+  const log = join(h.root, 'author.log');
+  writeFileSync(claims, JSON.stringify({
+    'PG-WLS-007': {
+      status: 'needs_human',
+      stage: 'authoring',
+      slug: 'chatgpt-seo',
+      error: 'codex exited 3',
+    },
+  }));
+  writeFileSync(plan, '- [ ] `PG-WLS-007` chatgpt seo\n');
+  writeFileSync(log, 'PARK(author) PG-WLS-007: codex exited 3\n');
+  const imported = h.run([
+    'import-v1', '--site', 'gengrowth', '--claims', claims, '--plan', plan,
+    '--log-file', log, '--no-drain', '1',
+  ]);
+  assert.equal(imported.status, 0, `${imported.stdout}\n${imported.stderr}`);
+  const [record] = h.json(h.run(['inspect'])).records;
+  assert.equal(record.event.site, 'gengrowth');
+  assert.equal(record.event.pageId, 'PG-WLS-007');
+  assert.deepEqual(record.event.canonicalRetry.slice(-3), ['--retry-author', '--task', 'PG-WLS-007']);
+});

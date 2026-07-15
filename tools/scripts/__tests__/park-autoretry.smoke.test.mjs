@@ -159,3 +159,16 @@ test('永久 park：标 permNotified 去重(只发一次终态通知)；transien
   run(ops, state, { GG_PARK_AUTORETRY_BACKOFF_MS: '0' });
   assert.equal(readJson(join(state, 'park-autoretry.json'))['PG-PERM']?.permNotified, true, '再跑仍去重');
 });
+
+test('v2 controller 接管终态：永久 park 不再标 permNotified，改标 repairQueued', () => {
+  const { ops, state } = setup({
+    'PG-PERM-V2': { status: 'needs_human', stage: 'authoring', error: 'drifted sections jaccard=0.000', slug: 'perm-v2' },
+  });
+  run(ops, state, {
+    GG_PARK_AUTORETRY_BACKOFF_MS: '0',
+    GG_SEO_REPAIR_CONTROLLER_V2_ENABLED: '1',
+  });
+  const side = readJson(join(state, 'park-autoretry.json'))['PG-PERM-V2'];
+  assert.equal(side?.permNotified, undefined, 'v2 下旧 needs_human 通知不能抢占 controller 的终态通知');
+  assert.equal(side?.repairQueued, true, 'v2 下保留已交给统一修复队列的审计标记');
+});

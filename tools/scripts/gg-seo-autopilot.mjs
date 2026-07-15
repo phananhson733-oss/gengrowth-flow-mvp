@@ -1361,6 +1361,7 @@ function doAutoRetryParks() {
   const BACKOFF_MS = Number(process.env.GG_PARK_AUTORETRY_BACKOFF_MS || 35 * 60 * 1000);        // 正常节奏 ~35min（10×35min≈5.8h，覆盖多小时用量窗口）
   const SLOW_BACKOFF_MS = Number(process.env.GG_PARK_AUTORETRY_SLOW_BACKOFF_MS || 2 * 3600 * 1000); // 升级后慢节奏 ~2h（仍自愈超长窗口）
   const TTL_MS = Number(process.env.GG_PARK_AUTORETRY_TTL_MS || 7 * 24 * 3600 * 1000);           // 7d：远长于停机+作者 lane 周期，只回收真泄漏项
+  const repairControllerOwnsTerminal = process.env.GG_SEO_REPAIR_CONTROLLER_V2_ENABLED === '1';
   // fail-closed（评审 BLOCKING）：sidecar 是安全计数器；持久化不可用→CAP/backoff 全失效→无限重试。
   // 探真写（非仅路径可算——只读/满盘目录路径仍非空但写会失败），不可写就本轮跳过、宁可不自愈。
   if (!parkRetryStateWritable()) { log('auto-retry-parks: flow-state 不可写 — 本轮跳过（fail-closed，无法保证 CAP）'); return Promise.resolve(); }
@@ -1385,10 +1386,17 @@ function doAutoRetryParks() {
     for (const [pid, claim] of Object.entries(claims)) {
       if (!claim || claim.status !== 'needs_human') continue;
       if (classifyPark(claim) !== 'transient') {
-        // 永久 park（不会自动重试）= 彻底停止、需人工。去重发**一次**终态通知（sidecar.permNotified），
-        // 不在例行 park 时反复发中间态（wzb 指令：只发成功/彻底停止，别老发中间态）。
+        // v1：永久 park 去重发一次终态通知。v2：只做队列交接审计，终态完全归 controller；
+        // 外层自然 wrapper 紧接着 import-v1 + drain，不允许旧 needs_human 抢跑。
         const sp = sidecar[pid] || { attempts: 0, lastAt: 0 };
-        if (!sp.permNotified) { sp.permNotified = true; sidecar[pid] = sp; permParks.push({ pid, slug: claim.slug, error: claim.error }); }
+        if (repairControllerOwnsTerminal) {
+          sp.repairQueued = true;
+          sidecar[pid] = sp;
+        } else if (!sp.permNotified) {
+          sp.permNotified = true;
+          sidecar[pid] = sp;
+          permParks.push({ pid, slug: claim.slug, error: claim.error });
+        }
         continue;
       }
       const s = sidecar[pid] || { attempts: 0, lastAt: 0 };
@@ -1419,8 +1427,12 @@ function doAutoRetryParks() {
   // 系统仍每 SLOW_BACKOFF 慢重试，长但临时的窗口最终会自愈。
   return (async () => {
     for (const e of escalations) {
-      log(`AUTO-RETRY ESCALATE ${e.pid} at ${e.attempts} attempts — 通知人工（仍会慢重试自愈）`);
-      try { await notifyEvent('parked', { site: 'astrologywiki', pid: e.pid, slug: e.slug || '?', reason: `自动重试 ${e.attempts} 次仍未过（疑非临时/配额问题，请人工查；系统仍会每 ${Math.round(SLOW_BACKOFF_MS / 3600000)}h 慢重试）：${String(e.error || '').slice(0, 70)}` }); } catch { /* notify 不搞垮对账 */ }
+      if (repairControllerOwnsTerminal) {
+        log(`AUTO-RETRY ESCALATE ${e.pid} at ${e.attempts} attempts — controller 接管，继续慢重试`);
+      } else {
+        log(`AUTO-RETRY ESCALATE ${e.pid} at ${e.attempts} attempts — 通知人工（仍会慢重试自愈）`);
+        try { await notifyEvent('parked', { site: 'astrologywiki', pid: e.pid, slug: e.slug || '?', reason: `自动重试 ${e.attempts} 次仍未过（疑非临时/配额问题，请人工查；系统仍会每 ${Math.round(SLOW_BACKOFF_MS / 3600000)}h 慢重试）：${String(e.error || '').slice(0, 70)}` }); } catch { /* notify 不搞垮对账 */ }
+      }
     }
     for (const p of permParks) {
       log(`PERMANENT PARK ${p.pid} — 彻底停止,去重通知人工(不会自动重试)`);

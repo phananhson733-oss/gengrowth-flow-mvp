@@ -168,6 +168,43 @@ async function enqueueFactualGateFailure(draft, review) {
   }
 }
 
+async function enqueuePublishFailure(draft, error) {
+  const base = stateDir();
+  if (!base) return false;
+  const queueDir = process.env.GG_SEO_REPAIR_QUEUE_DIR || join(base, 'seo-repair-queue');
+  const logFile = process.env.GG_GENGROWTH_PUBLISH_LOG_FILE
+    || join(HOME, 'gengrowth-agents', 'cron-sync', 'gengrowth-publish', `${new Date().toISOString().slice(0, 10)}.log`);
+  let logOffsetEnd = 0;
+  try { logOffsetEnd = statSync(logFile).size; } catch {}
+  try {
+    await enqueueRepairEvent({
+      schemaVersion: 2,
+      eventId: randomUUID(),
+      runId: `gengrowth-publish-${new Date().toISOString().replace(/[^0-9]/g, '').slice(0, 14)}`,
+      site: 'gengrowth',
+      lane: 'publish',
+      pageId: draft.pageId,
+      slug: draft.slug || '',
+      stage: 'publish',
+      errorKind: 'publish_fail',
+      summary: error instanceof Error ? error.message : String(error),
+      stderr: error instanceof Error ? (error.stderr || error.stack || error.message) : String(error),
+      logFile,
+      logOffsetStart: 0,
+      logOffsetEnd,
+      canonicalRetry: [
+        'node', join(__dirname, 'gg-gengrowth-publish.mjs'), '--apply',
+        '--pages', draft.pageId, '--limit', '1',
+      ],
+      createdAt: new Date().toISOString(),
+    }, { queueDir });
+    return true;
+  } catch (queueError) {
+    console.error(`  repair queue enqueue failed for ${draft.pageId}: ${queueError.message}`);
+    return false;
+  }
+}
+
 // ── plan 定位（阶段 4 回填的 plan-勾选步骤用）──────────────────────────────────────
 // 确定性解析：扫所有 gengrowth blog-output-plan，返回真正含该 PID 的那个 basename（不是"最新"，
 // 避免跨 plan republish 勾错/漏勾）；都不含则回退最新的 gengrowth plan。找不到 → null。
@@ -398,12 +435,18 @@ async function main() {
       // instead of one aggregate ticker — one Hermes-bot message per published article.
       let title = d.slug;
       try { title = (parseFrontmatter(readFileSync(d.mdPath, 'utf8')).frontmatter.title || d.slug).toString().trim(); } catch { /* */ }
-      if (ok) await notify('published', { site: 'gengrowth', title, url: `${SITE_HOST}${URL_PATH}${d.slug}`, extra: 'gengrowth.ai 博客' });
+      if (ok && process.env.GG_SEO_REPAIR_CONTROLLER_V2_ENABLED !== '1') {
+        await notify('published', { site: 'gengrowth', title, url: `${SITE_HOST}${URL_PATH}${d.slug}`, extra: 'gengrowth.ai 博客' });
+      }
     } catch (e) {
       failed++;
       console.error(`  ✖ ${d.pageId} (${d.slug}) failed: ${e.message}`);
-      // @ 策略变更（有意，见契约「迁移映射」）：发布失败原本零 @，统一后 OPS。
-      await notify('publish_fail', { site: 'gengrowth', pid: d.pageId, slug: d.slug, msg: e.message });
+      if (process.env.GG_SEO_REPAIR_CONTROLLER_V2_ENABLED === '1') {
+        await enqueuePublishFailure(d, e);
+      } else {
+        // v1 rollback path: keep the existing direct OPS notification.
+        await notify('publish_fail', { site: 'gengrowth', pid: d.pageId, slug: d.slug, msg: e.message });
+      }
     }
   }
   console.log(`\n=== done: published=${published} verified=${verified} parked=${parked} failed=${failed} ===`);

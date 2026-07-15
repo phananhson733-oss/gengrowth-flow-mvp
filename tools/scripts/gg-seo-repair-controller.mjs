@@ -258,7 +258,9 @@ async function importLegacy(args, targetQueueDir) {
   try { logOffsetEnd = statSync(logFile).size; } catch {}
   const logWindow = readLogWindow(logFile, logOffsetStart);
   const createdAt = new Date().toISOString();
-  const runId = `astrologywiki-v1-${createdAt.replace(/[^0-9]/g, '').slice(0, 14)}`;
+  const site = args.site || 'astrologywiki';
+  if (!['astrologywiki', 'gengrowth'].includes(site)) throw new TypeError(`unsupported legacy site: ${site}`);
+  const runId = `${site}-v1-${createdAt.replace(/[^0-9]/g, '').slice(0, 14)}`;
   const records = [];
 
   for (const pageId of planIds) {
@@ -269,7 +271,7 @@ async function importLegacy(args, targetQueueDir) {
       schemaVersion: 2,
       eventId: randomUUID(),
       runId,
-      site: 'astrologywiki',
+      site,
       lane: legacyLane(claim),
       pageId,
       slug: String(claim.slug || ''),
@@ -291,18 +293,20 @@ async function importLegacy(args, targetQueueDir) {
       schemaVersion: 2,
       eventId: randomUUID(),
       runId,
-      site: 'astrologywiki',
+      site,
       lane: 'run',
       pageId: 'RUN',
       slug: '',
       stage: 'run',
       errorKind: 'tool_exit',
-      summary: `nightly exited ${runExit}`,
+      summary: `${site === 'gengrowth' ? 'gengrowth author' : 'nightly'} exited ${runExit}`,
       stderr: logWindow.slice(-8_192),
       logFile,
       logOffsetStart,
       logOffsetEnd,
-      canonicalRetry: ['bash', 'tools/scripts/gg-nightly-seo.sh'],
+      canonicalRetry: site === 'gengrowth'
+        ? ['bash', 'tools/scripts/gg-gengrowth-author-tick.sh']
+        : ['bash', 'tools/scripts/gg-nightly-seo.sh'],
       createdAt,
     }, { queueDir: targetQueueDir }));
   }

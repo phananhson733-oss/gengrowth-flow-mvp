@@ -16,7 +16,7 @@
 
 import { test, before, after } from 'node:test';
 import { strict as assert } from 'node:assert';
-import { mkdirSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { createServer } from 'node:http';
@@ -97,6 +97,12 @@ after(() => {
 function writeFakeCodex(dir, verdict) {
   const p = join(dir, `fake-codex-${verdict.toLowerCase()}.mjs`);
   writeFileSync(p, `process.stdout.write('VERDICT: ${verdict}\\n');\n`);
+  return p;
+}
+
+function writeFakeCodexExit3(dir) {
+  const p = join(dir, 'fake-codex-exit-3.mjs');
+  writeFileSync(p, "process.stderr.write('provider stream reset: retryable reviewer failure\\n'); process.exit(3);\n");
   return p;
 }
 
@@ -187,6 +193,27 @@ test('fact_gate_fail: codex FAIL → 逐字模板 + PM+OPS @，bridge 未被调�
   assert.deepEqual(mock.larkMsgs, [
     `${AT_PM}${AT_OPS}⚠️ [gengrowth] 事实门未过（needs_human）：PG-WLS-902（test-fact-gate-fail）— codex FAIL。已跳过发布，待人工核对。`,
   ]);
+});
+
+test('v2: codex exit 3 preserves raw stderr in the repair queue and sends no direct needs_human alert', async () => {
+  const { dir, staging, env } = caseEnv('fact-gate-exit3-v2');
+  writeReadyDraft(staging, 'PG-WLS-907', 'test-fact-gate-exit3', '事实门工具故障测试');
+  env.GG_CODEX_BIN = writeFakeCodexExit3(dir);
+  env.GG_SEO_REPAIR_CONTROLLER_V2_ENABLED = '1';
+  env.GG_GENGROWTH_PUBLISH_LOG_FILE = join(dir, 'publisher.log');
+  const r = await runPublisher(['--apply', '--staging-dir', staging], env);
+  assert.equal(r.status, 0, `${r.stdout}\n${r.stderr}`);
+  assert.match(r.stdout, /PARKED by factual gate/);
+  assert.equal(mock.restPosts.length, 0, '事实门未过绝不能触发 REST upsert');
+  assert.deepEqual(mock.larkMsgs, [], 'v2 repairable failure 由 controller 独占终态通知');
+  const queueDir = join(env.GG_FLOW_STATE_DIR, 'seo-repair-queue');
+  const files = readdirSync(queueDir).filter((name) => name.endsWith('.json'));
+  assert.equal(files.length, 1);
+  const record = JSON.parse(readFileSync(join(queueDir, files[0]), 'utf8'));
+  assert.equal(record.event.pageId, 'PG-WLS-907');
+  assert.equal(record.event.errorKind, 'tool_exit');
+  assert.match(record.event.stderr, /provider stream reset/);
+  assert.deepEqual(record.event.canonicalRetry.slice(-2), ['--source', join(staging, 'PG-WLS-907-claude-v8.md')]);
 });
 
 // ── (3) published（.mjs :325）：gate PASS + upsert + verify-live → published，不 @ ──

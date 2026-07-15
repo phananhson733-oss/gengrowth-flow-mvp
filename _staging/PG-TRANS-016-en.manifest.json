@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-TRANS-016",
+  "entity": "Saturn Return Age 29",
+  "target_keyword": "saturn return age 29",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-07-15T11:59:34.346Z",
+  "content_sha256_short": "d4ce7d01395d253d",
+  "source_path": "_staging/PG-TRANS-016-repair-candidate.md",
+  "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-TRANS-016-en.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 2,
+      "h4Count": 0,
+      "words": 1596,
+      "wikilinks": 5,
+      "tbdLinks": 5
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

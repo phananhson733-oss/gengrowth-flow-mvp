@@ -21,7 +21,7 @@ aliases:
 - 索引修复重提、Phase 2 索引监控与选题登记均经固定 wrapper 完成；两站 Sitemap API 成功，astrologywiki 完成 3 条 URL Inspection，请求索引候选队列已刷新；三次选题登记均为 apply：新增 gengrowth `PG-WLS-007`、astrologywiki `PG-TRANS-014`–`PG-TRANS-018`，以及最新 astrologywiki `PG-CELEB-056`–`PG-CELEB-058` 与 gengrowth `PG-SDS-004`、`PG-ART-007`、`PG-AIS-006`；未越过既定外部写入边界。
 - 结果复盘性能 wrapper 因两产品 GSC/GA4 OAuth refresh token 过期或被撤销而在扫描前停止；未写表、未生成报告，需重新授权后只重跑原 wrapper。
 - 双产品 CTA Map 已新增 `intent_tags`，最近 7 篇 AstrologyWiki 文章已按新逻辑重新处理并上线；flow PR #2、Oracle PR #376 已合并，线上 CTA、canonical 与 Article JSON-LD 已复验。
-- 复核现有 agentic repair 后明确新调度边界：Codex Automation 保持暂停；macOS `launchd` 直接拉起正常写作/发布，只有异常、报错或 `needs_human` 才通过 hook 启动一次性 Agent 修复，且不得绕过现有发布门。
+- 复核现有 agentic repair 后明确新调度边界：Codex Automation 保持暂停；macOS `launchd` 直接拉起正常写作/发布，只有异常、报错或 `needs_human` 才通过 hook 启动一次性 Agent 修复，且不得绕过现有发布门；后续实测发现该 hook 当前只覆盖 astrologywiki/W22，Gengrowth W25 发布通道尚未接入。
 - 方案 A 已通过 18:30 自然窗口的异常修复实单：`PG-WAIA-001` 因早先 sitemap 传播延迟留下 pending writeback，一次性 Agent 仅运行定向 `gg-backfill-one` 即完成 Sheet、plan、vault 三步回填；pending 队列清空，PR、线上 canonical、Article JSON-LD、sitemap 与归档资产均复验通过。
 
 ---
@@ -426,5 +426,17 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 仅执行固定入口 `bash tools/scripts/gg-topic-register-tick.sh`；退出码为 0。以 20:01:38–20:07:37 CST 的成对日志窗口取数：本地环境明确启用 apply（`dry_run=false`、`budget_exhausted=false`）。astrologywiki：`candidates=3`、`updates=3`、`new_clusters=0`、`page_ids=[PG-CELEB-056, PG-CELEB-057, PG-CELEB-058]`、`preprocessor=[v1_fallback, v1_fallback, v1_fallback]`、三条 `evidence_discovery=insufficient`。gengrowth：`candidates=3`、`updates=3`、`new_clusters=0`、`page_ids=[PG-SDS-004, PG-ART-007, PG-AIS-006]`、`preprocessor=[v1_fallback, v1_fallback, v1_fallback]`、三条 `evidence_discovery=insufficient`。日志以 `topic-register ok` 结束，未见失败或超时。未执行手工 Google Sheet/任务计划写入，亦未创建额外 Feishu 或 Google Doc 报告产物；自动化记忆已于 20:07 CST 追加本次终态。
+
+---
+
+### Q25 — 20:35
+
+**🙋 提问：**
+
+@王志彪 @马博洋 ⚠️ [gengrowth] 事实门未过（needs_human）：PG-WLS-007（chatgpt-seo）— codex exited 3。已跳过发布，待人工核对。 这种 but 没办法修复吗
+
+**🤖 回答：**
+
+系统化排查确认该问题可以自动修复，且不应被当作文章事实错误。20:02 与 20:34 两次 Gengrowth publish tick 都把 `PG-WLS-007` 停在 `codex exited 3`，但只读定向复跑同一 `gg-codex-pr-review.mjs --source` 后得到 `VERDICT: PASS`，证明这是 Codex reviewer 的瞬时工具故障，不需要改稿或绕过事实门。当前缺口有三层：`gg-gengrowth-publish.mjs` 捕获但丢弃 reviewer stderr，告警只剩泛化 exit code；Lane A 的 `laneARepairCodex` 只处理真实 `FAIL`，不会处理 `SKIPPED/codex exited 3`；新建的 `gg-seo-repair-hook` 仅接在 astrologywiki/W22 的 `gg-seo-blog-launchd-tick.sh`，Gengrowth 的 `gg-gengrowth-publish-tick.sh` 未接 hook，且 park 最终仍返回 rc=0。现有 launchd 会按小时重扫，但不是立即、限次、可观测的 agentic repair。建议把 Gengrowth 通道接入同类定向 hook：先限次重跑原事实门；PASS 后继续既有 publish、live verify 与回填；真实 FAIL 才调用现有改稿 repair；工具故障超过上限才升级人工，并保留原始 stderr。诊断过程中未触发发布、未改稿、未绕过任何门。
 
 ---

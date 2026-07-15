@@ -1,0 +1,8 @@
+- CTA 有事实错误：只用出生日期不能确定 natal Saturn 所在宫位 → 改成“出生日期可查土星星座/回归窗口；宫位需要出生时间、出生地点和采用的宫位制”。
+- 缺少人群与时间定位 → 加一小段说明“谁会有 Saturn Return in Scorpio”，包括 natal Saturn in Scorpio 的出生批次，以及对应第一次/第二次回归的大致年份窗口。
+- 忽略第三次 Saturn return → 把“near ages 29 and 58 / two return points”改成“常见关注第一、第二次约 29、58 岁，第三次约 87 岁也存在”。
+- “Saturn square 是 shorter, single-hit tension”不严谨 → 改成“Saturn square 是周期中的张力阶段，可能因逆行有多次精确触发，但不是完整回归”。
+- Scorpio 主题太窄，反复只写 shared money / intimacy / hidden material → 扩展到控制、信任、性与脆弱、债务/税务/遗产、心理阴影、权力交换等更 Scorpio 的细分场景。
+- “找 natal house”后没有给读者可用的解释 → 加 3-5 个宫位例子，比如 2宫、7宫、8宫、10宫里的 Saturn in Scorpio 分别会审查什么。
+- “audit / structural review / debt”隐喻过度重复，声音偏企业化 → 保留核心角度，但加入一个具体生活场景或小案例，让文章不像模板化占星 SEO 文。
+- Sources 不支撑正文里的 NASA 引用 → 在 Sources 加入 NASA/Saturn orbit 来源，或把正文改成不点名 NASA。

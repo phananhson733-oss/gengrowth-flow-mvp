@@ -38,6 +38,7 @@ export function selectRepairTargets({
   planIds = new Set(),
   state = {},
   archivedIds = new Set(),
+  pendingWritebackIds = new Set(),
   runError = '',
   maxTargets = 2,
   maxAttempts = 2,
@@ -49,11 +50,28 @@ export function selectRepairTargets({
 
   for (const pageId of planIds || []) {
     const claim = claims?.[pageId];
-    if (!claim || claim.status !== 'needs_human' || archivedIds?.has(pageId)) continue;
+    if (!claim || archivedIds?.has(pageId)) continue;
 
-    const stage = claim.stage || 'unknown';
-    const error = String(claim.error || 'needs_human without an error');
-    const triage = triagePark(claim);
+    let stage;
+    let error;
+    let triage;
+    if (claim.status === 'needs_human') {
+      stage = claim.stage || 'unknown';
+      error = String(claim.error || 'needs_human without an error');
+      triage = triagePark(claim);
+    } else if (claim.status === 'pushed-preview' || claim.status === 'verified-preview') {
+      stage = claim.status;
+      error = claim.status === 'pushed-preview'
+        ? 'nightly ended with pushed-preview pending preview gate'
+        : 'nightly ended with verified-preview pending merge/live/backfill';
+      triage = 'fixable';
+    } else if (claim.status === 'done' && pendingWritebackIds?.has(pageId)) {
+      stage = 'backfill';
+      error = 'pending writeback remains after nightly completion';
+      triage = 'fixable';
+    } else {
+      continue;
+    }
     const fingerprint = repairFingerprint({ pageId, stage, error });
     const target = {
       pageId,

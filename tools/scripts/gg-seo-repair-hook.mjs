@@ -182,18 +182,28 @@ async function main() {
   const maxAttempts = numberValue(process.env.GG_SEO_REPAIR_MAX_ATTEMPTS, 2, 1);
   const timeoutSeconds = numberValue(process.env.GG_SEO_REPAIR_TIMEOUT_SECONDS, 2700, 1);
   const nowIso = new Date().toISOString();
+  const planIds = parseUncheckedPlanIds(planText);
+  const pendingWritebackIds = new Set([...planIds].filter((pageId) => {
+    const safe = String(pageId).replace(/[^A-Za-z0-9._-]/g, '_');
+    return existsSync(join(baseState, 'pending-writeback', `${safe}.json`));
+  }));
   const selected = selectRepairTargets({
     claims,
-    planIds: parseUncheckedPlanIds(planText),
+    planIds,
     state: loaded.state,
     archivedIds: archiveIds(),
+    pendingWritebackIds,
     runError,
     maxTargets,
     maxAttempts,
     inflightTtlMs: (timeoutSeconds + 900) * 1000,
   });
   const keywords = planKeywords(planText);
-  const targets = selected.targets.map((target) => ({ ...target, keyword: keywords.get(target.pageId) || '' }));
+  const targets = selected.targets.map((target) => ({
+    ...target,
+    keyword: keywords.get(target.pageId) || '',
+    attempt: Number(loaded.state[target.fingerprint]?.attempts || 0) + 1,
+  }));
   let state = saveTerminalUpdates(loaded.state, selected.terminalUpdates, nowIso);
   if (selected.terminalUpdates.length) writeState(statePath, state);
 
@@ -242,6 +252,8 @@ async function main() {
     plan: planPath,
     claims: claimsPath,
     oracleBaseline: process.env.GG_AUTOMATION_ORACLE_DIR || join(homedir(), 'oracle-autopilot'),
+    maxAttempts,
+    timeoutSeconds,
   };
   const prompt = `${readFileSync(PROMPT_FILE, 'utf8').trim()}\n\nRUN_CONTEXT_JSON:\n${JSON.stringify(context, null, 2)}\n\nTARGETS_JSON:\n${JSON.stringify(targets, null, 2)}\n\nLOG_WINDOW:\n${logWindow.slice(-24000)}\n`;
   const agent = spawnSync(timeoutBin, [
@@ -261,7 +273,12 @@ async function main() {
     timeout: (timeoutSeconds + 30) * 1000,
     maxBuffer: 32 * 1024 * 1024,
   });
-  appendRunLog(`agent targets=${targets.map((target) => target.pageId).join(',')} status=${agent.status}\n${agent.stdout || ''}\n${agent.stderr || ''}`);
+  const agentMeta = {
+    pid: Number.isInteger(agent.pid) ? agent.pid : null,
+    timeoutSeconds,
+    attempts: targets.map((target) => ({ pageId: target.pageId, attempt: target.attempt })),
+  };
+  appendRunLog(`agent pid=${agentMeta.pid ?? 'unknown'} targets=${targets.map((target) => `${target.pageId}#${target.attempt}`).join(',')} timeout=${timeoutSeconds}s status=${agent.status}\n${agent.stdout || ''}\n${agent.stderr || ''}`);
 
   if (agent.status !== 0 || agent.error) {
     const detail = agent.error?.code === 'ETIMEDOUT' ? 'timeout' : String(agent.status ?? 'signal');
@@ -274,7 +291,7 @@ async function main() {
       };
     }
     writeState(statePath, state);
-    const result = { triggered: true, terminal: 'pending', targets, reason: `codex exit ${detail}` };
+    const result = { triggered: true, terminal: 'pending', targets, agent: agentMeta, reason: `codex exit ${detail}` };
     resultLine(result);
     process.exit(2);
   }
@@ -327,6 +344,7 @@ async function main() {
     triggered: true,
     terminal,
     results,
+    agent: agentMeta,
     reason: results.filter((item) => !item.ok).map((item) => `${item.pageId}:${item.reason}`).join(';'),
   };
   appendRunLog(`verifier status=${verified.status} ${JSON.stringify(result)}`);

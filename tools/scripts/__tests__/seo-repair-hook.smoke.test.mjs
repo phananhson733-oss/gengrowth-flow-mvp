@@ -53,6 +53,7 @@ test('stranded preview/merge states and pending writeback are repair targets', (
     state: {},
     archivedIds: new Set(),
     pendingWritebackIds: new Set(['PG-B-001']),
+    maxTargets: 3,
   });
   assert.deepEqual(out.targets.map(({ pageId, stage, triage }) => ({ pageId, stage, triage })), [
     { pageId: 'PG-P-001', stage: 'pushed-preview', triage: 'fixable' },

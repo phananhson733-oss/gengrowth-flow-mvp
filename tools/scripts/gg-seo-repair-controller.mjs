@@ -22,8 +22,12 @@ import { drainRepairQueue } from './lib/seo-repair-controller.mjs';
 import {
   compactRepairIncident,
   enqueueRepairEvent,
+  isActiveRepairStatus,
   listRepairRecords,
+  repairEventFingerprint,
+  repairIncidentId,
 } from './lib/seo-repair-events.mjs';
+import { eventFromClaim } from './lib/seo-repair-producer.mjs';
 
 const SCRIPT = fileURLToPath(import.meta.url);
 const SCRIPTS = dirname(SCRIPT);
@@ -191,6 +195,27 @@ function parsePlanIds(text) {
   return new Set([...String(text || '').matchAll(/^\s*-\s*\[[ xX]\]\s*`?(PG-[A-Z0-9]+-\d+)`?/gm)].map((match) => match[1]));
 }
 
+function explicitRunId(value, fallback) {
+  if (value === undefined || value === null || value === '') return fallback;
+  const runId = String(value);
+  if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{2,127}$/.test(runId)) {
+    throw new TypeError('run-id must be 3-128 safe identifier characters');
+  }
+  return runId;
+}
+
+function activeRunAlreadyRepresented(records, event) {
+  const incidentId = repairIncidentId(event);
+  const fingerprint = repairEventFingerprint(event);
+  return records.some((record) => {
+    if (!isActiveRepairStatus(record.status)) return false;
+    const recordIncidentId = record.incidentId || repairIncidentId(record.event);
+    if (recordIncidentId !== incidentId || record.fingerprint !== fingerprint) return false;
+    return (record.sourceEvents || [record.latestEvent || record.event])
+      .some((source) => source.runId === event.runId);
+  });
+}
+
 function legacyErrorKind(claim, summary) {
   const text = `${claim?.stage || ''} ${summary || ''}`.toLowerCase();
   if (/stale|duplicate|do not publish|错误前提|过时/.test(text)) return 'stale';
@@ -263,36 +288,38 @@ async function importLegacy(args, targetQueueDir) {
   const createdAt = new Date().toISOString();
   const site = args.site || 'astrologywiki';
   if (!['astrologywiki', 'gengrowth'].includes(site)) throw new TypeError(`unsupported legacy site: ${site}`);
-  const runId = `${site}-v1-${createdAt.replace(/[^0-9]/g, '').slice(0, 14)}`;
+  const runId = explicitRunId(
+    args['run-id'],
+    `${site}-v1-${createdAt.replace(/[^0-9]/g, '').slice(0, 14)}`,
+  );
   const records = [];
+  const activeRecords = await listRepairRecords({ queueDir: targetQueueDir });
+  let represented = 0;
 
   for (const pageId of planIds) {
     const claim = claims?.[pageId];
     if (!eligibleLegacyClaim(claim, pageId, baseState)) continue;
-    const summary = String(claim.error || `${claim.status || 'unknown'} at ${claim.stage || 'unknown'}`);
-    records.push(await enqueueRepairEvent({
-      schemaVersion: 2,
-      eventId: randomUUID(),
-      runId,
+    const event = eventFromClaim({
       site,
-      lane: legacyLane(claim),
+      runId,
       pageId,
-      slug: String(claim.slug || ''),
-      stage: String(claim.stage || claim.status || 'run'),
-      errorKind: legacyErrorKind(claim, summary),
-      summary,
-      stderr: logWindow.slice(-8_192),
+      claim,
       logFile,
-      logOffsetStart,
-      logOffsetEnd,
-      canonicalRetry: legacyRetry(claim, pageId),
-      createdAt,
-    }, { queueDir: targetQueueDir }));
+      offsets: { start: logOffsetStart, end: logOffsetEnd },
+      createdAt: claim.failedAt || claim.updatedAt || claim.mergedAt || createdAt,
+    });
+    if (activeRunAlreadyRepresented(activeRecords, event)) {
+      represented += 1;
+      continue;
+    }
+    const record = await enqueueRepairEvent(event, { queueDir: targetQueueDir });
+    records.push(record);
+    activeRecords.push(record);
   }
 
   const runExit = Number(args['run-exit'] || 0);
-  if (runExit !== 0 && records.length === 0) {
-    records.push(await enqueueRepairEvent({
+  if (runExit !== 0 && records.length === 0 && represented === 0) {
+    const runEvent = {
       schemaVersion: 2,
       eventId: randomUUID(),
       runId,
@@ -311,7 +338,10 @@ async function importLegacy(args, targetQueueDir) {
         ? ['bash', 'tools/scripts/gg-gengrowth-author-tick.sh']
         : ['bash', 'tools/scripts/gg-nightly-seo.sh'],
       createdAt,
-    }, { queueDir: targetQueueDir }));
+    };
+    if (!activeRunAlreadyRepresented(activeRecords, runEvent)) {
+      records.push(await enqueueRepairEvent(runEvent, { queueDir: targetQueueDir }));
+    }
   }
   return records;
 }

@@ -40,7 +40,7 @@
 //   GG_WINNER_LLM  default claude
 //   GG_VERSION     default v8
 
-import { execFileSync } from 'node:child_process';
+import { execFile, execFileSync } from 'node:child_process';
 import {
   existsSync,
   mkdirSync,
@@ -54,6 +54,7 @@ import {
 } from 'node:fs';
 import { join, dirname, basename, relative } from 'node:path';
 import { homedir } from 'node:os';
+import { promisify } from 'node:util';
 import { buildAuthorMap, resolveAuthor, isValidAuthorId, normalizeAuthorId } from './lib/author-routing.mjs';
 import { detectProtectedFactDrift, summarizeProtectedFactDrift } from './lib/review-fact-guard.mjs';
 import { loadEnv, resolveWorkbookId } from './lib/gg-shared.mjs';
@@ -65,6 +66,10 @@ import { unionMergeIntoWorktree, looksLikeMergeConflict } from './lib/merge-unio
 import { backfillOnLive, enqueueWriteback } from './lib/backfill-tx.mjs';
 import { classifyPark } from './lib/park-classify.mjs';
 import { stateDir } from './lib/flow-state.mjs';
+import {
+  eventFromClaim,
+  persistRepairAndDrain,
+} from './lib/seo-repair-producer.mjs';
 
 loadEnv();
 const ACTIVE_WORKBOOK_ID = resolveWorkbookId();
@@ -106,6 +111,7 @@ const CLAIMS_LOCK = `${CLAIMS_PATH}.lock`;
 const CLAIMS_LOCK_TIMEOUT_MS = parseInt(process.env.GG_AUTOPILOT_LOCK_TIMEOUT_MS || '30000', 10);
 const CLAIMS_LOCK_STALE_MS = parseInt(process.env.GG_AUTOPILOT_LOCK_STALE_MS || String(2 * 60 * 60 * 1000), 10);
 const SLUG_RE = /^[a-z0-9][a-z0-9-]*$/;
+const execFileAsync = promisify(execFile);
 
 function sh(cmd, args, opts = {}) {
   return execFileSync(cmd, args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], ...opts });
@@ -287,6 +293,86 @@ function withClaimsLock(fn) {
   const release = acquireClaimsLock();
   try { return fn(); }
   finally { release(); }
+}
+
+function repairQueueDir() {
+  if (process.env.GG_SEO_REPAIR_QUEUE_DIR) return process.env.GG_SEO_REPAIR_QUEUE_DIR;
+  const base = stateDir();
+  if (!base) throw new Error('flow-state directory unavailable');
+  return join(base, 'seo-repair-queue');
+}
+
+function lastJsonLine(text) {
+  const lines = String(text || '').trim().split('\n').filter(Boolean);
+  for (let index = lines.length - 1; index >= 0; index -= 1) {
+    try { return JSON.parse(lines[index]); } catch { /* inspect an earlier line */ }
+  }
+  return null;
+}
+
+async function drainRepairController(queueDir) {
+  const controller = process.env.GG_SEO_REPAIR_CONTROLLER_BIN
+    || join(SCRIPTS, 'gg-seo-repair-controller.mjs');
+  const args = [
+    controller,
+    'drain',
+    '--max-targets',
+    String(process.env.GG_SEO_REPAIR_MAX_TARGETS || 2),
+    '--budget-seconds',
+    String(process.env.GG_SEO_REPAIR_BUDGET_SECONDS || 1500),
+  ];
+  try {
+    const result = await execFileAsync(process.execPath, args, {
+      cwd: FLOW,
+      env: {
+        ...process.env,
+        GG_SEO_REPAIR_QUEUE_DIR: queueDir,
+      },
+      encoding: 'utf8',
+      maxBuffer: 32 * 1024 * 1024,
+      timeout: (parseInt(process.env.GG_SEO_REPAIR_BUDGET_SECONDS || '1500', 10) + 60) * 1000,
+    });
+    const payload = lastJsonLine(result.stdout);
+    if (!payload || payload.ok === false) {
+      throw new Error(payload?.error || 'repair controller returned no valid result');
+    }
+    return payload;
+  } catch (error) {
+    if (error?.killed || error?.signal) {
+      throw new Error(`repair controller terminated by ${error.signal || 'timeout'}`);
+    }
+    const code = Number(error?.code);
+    if (Number.isInteger(code)) {
+      throw new Error(`repair controller exited ${code}`);
+    }
+    throw error;
+  }
+}
+
+async function persistClaimRepair(pageId, claim) {
+  if (process.env.GG_SEO_REPAIR_CONTROLLER_V2_ENABLED !== '1') return { skipped: true };
+  const queueDir = repairQueueDir();
+  const createdAt = claim.failedAt || claim.updatedAt || new Date().toISOString();
+  const runId = process.env.GG_SEO_REPAIR_RUN_ID
+    || `astrologywiki-producer-${createdAt.replace(/[^0-9]/g, '').slice(0, 14)}-${process.pid}`;
+  const logFile = process.env.GG_SEO_REPAIR_LOG_FILE || CLAIMS_PATH;
+  const offsetStart = Math.max(0, Number(process.env.GG_SEO_REPAIR_LOG_OFFSET_START) || 0);
+  const offsetEnd = Math.max(offsetStart, Number(process.env.GG_SEO_REPAIR_LOG_OFFSET_END) || offsetStart);
+  const event = eventFromClaim({
+    site: 'astrologywiki',
+    runId,
+    pageId,
+    claim,
+    logFile,
+    offsets: { start: offsetStart, end: offsetEnd },
+    createdAt,
+  });
+  return persistRepairAndDrain({
+    event,
+    queueDir,
+    drain: async () => drainRepairController(queueDir),
+    strict: true,
+  });
 }
 function claimForBranch(claims, branch) {
   const matches = Object.entries(claims).filter(([, c]) => c?.branch === branch);
@@ -612,8 +698,8 @@ function findSheetRow(pgId, keyword = '') {
   return r ? { row: String(r.source_row), brief: r.brief || {} } : null;
 }
 
-function parkAuthor(pgId, slug, plan, reason) {
-  withClaimsLock(() => {
+async function parkAuthor(pgId, slug, plan, reason) {
+  const parked = withClaimsLock(() => {
     const claims = loadClaims();
     claims[pgId] = {
       ...(claims[pgId] || {}),
@@ -621,8 +707,10 @@ function parkAuthor(pgId, slug, plan, reason) {
       stage: 'authoring', plan, error: `authoring: ${reason}`, failedAt: new Date().toISOString(),
     };
     saveClaims(claims);
+    return claims[pgId];
   });
   log(`PARK(author) ${pgId}: ${reason}`);
+  await persistClaimRepair(pgId, parked);
 }
 
 // Mark an authoring claim done because its topic is already published (mirrors
@@ -687,7 +775,7 @@ function tryDeterministicRepair({ pgId, draftV8, candidate, targetKeyword, autho
   return false;
 }
 
-function doAuthor(o = {}) {
+async function doAuthor(o = {}) {
   let sel;
   const claims = loadClaims();
   if (o.task) {
@@ -932,7 +1020,7 @@ function doAuthor(o = {}) {
 
     return park(slug, `${(lastFail || 'phase2 failed').replace(/\n/g, ' | ')} after ${attempts} attempt(s) + deterministic repair`);
   } catch (e) {
-    park(null, `unexpected: ${errTail(e)}`);
+    return park(null, `unexpected: ${errTail(e)}`);
   }
 }
 
@@ -1282,10 +1370,10 @@ function doMarkVerified(o) {
   });
 }
 
-function doMarkFailed(o) {
+async function doMarkFailed(o) {
   if (!o.branch) die('--mark-failed requires --branch', 2);
   if (!o.reason) die('--mark-failed requires --reason', 2);
-  return withClaimsLock(() => {
+  const parked = withClaimsLock(() => {
     const claims = loadClaims();
     const { pgId, claim } = claimForBranch(claims, o.branch);
     if (!['active', 'pushed-preview', 'verified-preview'].includes(claim.status)) {
@@ -1299,7 +1387,9 @@ function doMarkFailed(o) {
     };
     saveClaims(claims);
     log(`PARKED ${o.branch}: ${o.reason}`);
+    return { pageId: pgId, claim: claims[pgId] };
   });
+  await persistClaimRepair(parked.pageId, parked.claim);
 }
 
 function doRetryFailed(o) {
@@ -1607,10 +1697,10 @@ try {
   if (o.status) doStatus();
   else if (o.staleReport) doStaleReport();
   else if (o.nextUnauthored) doNextUnauthored();
-  else if (o.author) doAuthor(o);
+  else if (o.author) await doAuthor(o);
   else if (o.merge) await doMerge(o); // async 尾巴 = published 事件通知（ESM 顶层 await）
   else if (o.markVerified) doMarkVerified(o);
-  else if (o.markFailed) doMarkFailed(o);
+  else if (o.markFailed) await doMarkFailed(o);
   else if (o.retryFailed) doRetryFailed(o);
   else if (o.retryAuthor) doRetryAuthor(o);
   else if (o.reconcilePublished) await doReconcilePublished(o);

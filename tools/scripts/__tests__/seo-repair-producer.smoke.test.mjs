@@ -162,11 +162,11 @@ test('a killed producer leaves work that a later drain consumes without rerunnin
   ].join('\n'));
 
   const status = await new Promise((resolveStatus) => {
-    const process = spawn(process.execPath, [child], {
+    const childProcess = spawn(globalThis.process.execPath, [child], {
       env: { ...globalThis.process.env, QUEUE_DIR: queueDir, OUTER_CALLS: outerCalls },
       stdio: 'ignore',
     });
-    process.on('close', (code, signal) => resolveStatus({ code, signal }));
+    childProcess.on('close', (code, signal) => resolveStatus({ code, signal }));
   });
   assert.equal(status.signal, 'SIGTERM');
   assert.equal(readFileSync(outerCalls, 'utf8'), 'nightly\n');

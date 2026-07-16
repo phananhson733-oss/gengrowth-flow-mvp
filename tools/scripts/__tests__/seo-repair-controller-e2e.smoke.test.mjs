@@ -172,6 +172,23 @@ test('compact requires explicit exact-credit adoption for an existing blocking t
     `${JSON.stringify(terminal, null, 2)}\n`,
   );
 
+  const beforeExplicitAdoption = readFileSync(
+    join(h.queueDir, `${queued.event.eventId}.json`),
+    'utf8',
+  );
+  const implicit = h.run([
+    'compact',
+    '--site', 'gengrowth',
+    '--page-id', 'PG-SDS-004',
+    '--verification-credit', '1',
+  ]);
+  assert.equal(implicit.status, 2);
+  assert.match(h.json(implicit).error, /no active repair incident/i);
+  assert.equal(
+    readFileSync(join(h.queueDir, `${queued.event.eventId}.json`), 'utf8'),
+    beforeExplicitAdoption,
+  );
+
   for (const credit of ['0', '2']) {
     const before = readFileSync(join(h.queueDir, `${queued.event.eventId}.json`), 'utf8');
     const rejected = h.run([

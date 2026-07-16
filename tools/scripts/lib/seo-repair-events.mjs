@@ -1383,6 +1383,18 @@ export async function compactRepairIncident({
       })));
     sourceRecordHashes.sort((left, right) => left.filename.localeCompare(right.filename));
     const historyAccounting = historyAttemptAccounting(records);
+    const recordedStrategyAttempts = sumStrategyAttempts(records);
+    const strategyAttempts = { ...recordedStrategyAttempts };
+    for (const [strategy, attempts] of Object.entries(historyAccounting.strategyAttempts)) {
+      strategyAttempts[strategy] = Math.max(
+        Number(strategyAttempts[strategy] || 0),
+        Number(attempts || 0),
+      );
+    }
+    const recordedTotalAttempts = records
+      .reduce((sum, record) => sum + Number(record.totalAttempts || 0), 0);
+    const recordedAgentMutationAttempts = records
+      .reduce((sum, record) => sum + Number(record.agentMutationAttempts || 0), 0);
     const latest = [...records].sort((a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')))[0];
     const createdAt = new Date().toISOString();
     const canonicalEventId = `migration-${incidentId}`;
@@ -1414,12 +1426,11 @@ export async function compactRepairIncident({
       generation: Math.max(...records.map((record) => Number(record.generation || 1)))
         + (adoptingTerminal ? 1 : 0),
       budgetEpoch: Math.max(...records.map((record) => Number(record.budgetEpoch || 1))),
-      totalAttempts: historyAccounting.totalAttempts > 0
-        ? historyAccounting.totalAttempts
-        : records.reduce((sum, record) => sum + Number(record.totalAttempts || 0), 0),
-      agentMutationAttempts: historyAccounting.mutationMarkers > 0
-        ? historyAccounting.agentMutationAttempts
-        : records.reduce((sum, record) => sum + Number(record.agentMutationAttempts || 0), 0),
+      totalAttempts: Math.max(recordedTotalAttempts, historyAccounting.totalAttempts),
+      agentMutationAttempts: Math.max(
+        recordedAgentMutationAttempts,
+        historyAccounting.agentMutationAttempts,
+      ),
       firstDetectedAt: records
         .map((record) => record.firstDetectedAt || record.event.createdAt)
         .sort()[0],
@@ -1439,9 +1450,7 @@ export async function compactRepairIncident({
       revision: 1,
       observations: records.reduce((sum, record) => sum + Number(record.observations || 1), 0),
       strategy: 'migration_hold',
-      strategyAttempts: historyAccounting.totalAttempts > 0
-        ? historyAccounting.strategyAttempts
-        : sumStrategyAttempts(records),
+      strategyAttempts,
       nextEligibleAt: null,
       lease: null,
       parentFingerprints: sourceFingerprints,

@@ -208,7 +208,7 @@ export async function tryGateRepair({
     };
   }
   log(`repair[${dim}]: applied ${edits.length} edit(s) + pushed ${newHead.slice(0, 8)} — starting a new full gate round`);
-  return { applied: true, headRefOid: newHead };
+  return true;
 }
 
 // ── arg parsing ───────────────────────────────────────────────────────────────

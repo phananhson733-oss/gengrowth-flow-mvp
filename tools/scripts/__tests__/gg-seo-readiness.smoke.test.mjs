@@ -213,11 +213,13 @@ for (const status of ['quarantined', 'human_only', 'archived', 'published']) {
           site: 'astrologywiki',
           status: 'needs_human',
           error: 'gate failed',
+          failedAt: '2026-07-16T10:00:00.000Z',
         },
       },
       queue: [{
         status,
         event: { site: 'astrologywiki', pageId: 'PG-A-001', runId: 'run-1' },
+        updatedAt: '2026-07-16T11:00:00.000Z',
       }],
     });
     assert.equal(out.status, 0, `${out.stdout}\n${out.stderr}`);
@@ -261,4 +263,24 @@ test('corrupt terminal owner cannot hide a matching needs-human claim', () => {
   assert.equal(out.status, 2, `${out.stdout}\n${out.stderr}`);
   assert.equal(out.json.eligibleNeedsHumanAfter, 1);
   assert.match(out.json.errors.join('\n'), /owner/i);
+});
+
+test('terminal record older than a newer scoped claim failure cannot unblock readiness', () => {
+  const out = readinessFixture({
+    claims: {
+      'PG-A-001': {
+        site: 'astrologywiki',
+        status: 'needs_human',
+        error: 'new gate failed',
+        failedAt: '2026-07-16T11:00:00.000Z',
+      },
+    },
+    queue: [{
+      status: 'published',
+      event: { site: 'astrologywiki', pageId: 'PG-A-001', runId: 'old-run' },
+      updatedAt: '2026-07-16T10:00:00.000Z',
+    }],
+  });
+  assert.equal(out.status, 2, `${out.stdout}\n${out.stderr}`);
+  assert.equal(out.json.eligibleNeedsHumanAfter, 1);
 });

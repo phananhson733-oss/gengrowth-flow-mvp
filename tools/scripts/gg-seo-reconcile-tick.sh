@@ -101,25 +101,29 @@ trap release_lock EXIT
 
 RUN_ID="seo-reconcile-$(date -u '+%Y%m%dT%H%M%SZ')-$$"
 NOW_HM="${GG_SEO_RECONCILE_NOW_HM:-$(date +%H%M)}"
+controller_rc=0
 
 if (( 10#$NOW_HM >= 1830 && 10#$NOW_HM <= 2200 )); then
   set +e
   node "$CONTROLLER" drain --budget-seconds "$BUDGET_SECONDS"
   controller_rc=$?
   set -e
-  if [[ "$controller_rc" -ne 0 ]]; then exit "$controller_rc"; fi
 fi
 
 set +e
 STRICT_JSON="$(GG_LARK_NOTIFY_SILENCE=1 node "$RECONCILE" --strict --json)"
 reconcile_rc=$?
 set -e
+if [[ -z "$STRICT_JSON" ]]; then
+  STRICT_JSON='{"ok":false,"pendingWritebackAfter":1,"sheetFlipsAfter":1,"planUncheckedAfter":1,"activeRepairAfter":1,"expiredLeasesAfter":1,"eligibleNeedsHumanAfter":1,"errors":["strict reconcile produced no JSON"]}'
+fi
 printf '%s\n' "$STRICT_JSON"
-if [[ "$reconcile_rc" -ne 0 ]]; then exit "$reconcile_rc"; fi
 
 set +e
 GG_LARK_NOTIFY_SILENCE=1 GG_SEO_STRICT_RESULT_JSON="$STRICT_JSON" \
   node "$READINESS" --site "$SITE" --plan "$PLAN" --run-id "$RUN_ID" --json
 readiness_rc=$?
 set -e
+if [[ "$controller_rc" -ne 0 ]]; then exit "$controller_rc"; fi
+if [[ "$reconcile_rc" -ne 0 ]]; then exit "$reconcile_rc"; fi
 exit "$readiness_rc"

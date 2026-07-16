@@ -21,6 +21,7 @@ import { createServer } from 'node:http';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SCRIPT = join(__dirname, '..', 'gg-seo-autopilot.mjs');
+const REVIEWED_HEAD = 'a'.repeat(40);
 
 function makeHarness() {
   const root = mkdtempSync(join(tmpdir(), 'gg-seo-autopilot-'));
@@ -328,7 +329,11 @@ test('--mark-verified records preview evidence and allows the subsequent merge c
   const h = makeHarness();
   try {
     const marker = join(h.root, 'gh-called');
-    writeFileSync(join(h.bin, 'gh'), `#!/bin/sh\ntouch "${marker}"\nexit 0\n`, { mode: 0o755 });
+    writeFileSync(
+      join(h.bin, 'gh'),
+      `#!/bin/sh\ntouch "${marker}"\nprintf '%s' "${REVIEWED_HEAD}"\nexit 0\n`,
+      { mode: 0o755 },
+    );
     writeClaims(h, {
       'PG-TEST-001': {
         status: 'pushed-preview',
@@ -346,12 +351,15 @@ test('--mark-verified records preview evidence and allows the subsequent merge c
       'https://example-preview.vercel.app',
       '--evidence',
       'codex+chrome manual pass',
+      '--head-ref-oid',
+      REVIEWED_HEAD,
     ]);
     assert.equal(marked.status, 0, `${marked.stdout}${marked.stderr}`);
     const claims = JSON.parse(readFileSync(h.claimsPath, 'utf8'));
     assert.equal(claims['PG-TEST-001'].status, 'verified-preview');
     assert.equal(claims['PG-TEST-001'].previewUrl, 'https://example-preview.vercel.app');
     assert.match(claims['PG-TEST-001'].verifiedAt, /^\d{4}-\d{2}-\d{2}T/);
+    assert.equal(claims['PG-TEST-001'].headRefOid, REVIEWED_HEAD);
 
     const merged = runAuto(h, ['--merge', '--branch', 'seo/auto/2026-06-03-PG-TEST-001']);
     assert.equal(existsSync(marker), true, `${merged.stdout}${merged.stderr}`);
@@ -940,7 +948,11 @@ test('--merge sends the published event through the unified notify layer (contra
   try {
     initOracleWithOrigin(h);
     const flow = writeStubFlow(h); // _staging/PG-TEST-001-en.md：slug=test-slug、author_id=test-author、无 title
-    writeFileSync(join(h.bin, 'gh'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
+    writeFileSync(
+      join(h.bin, 'gh'),
+      `#!/bin/sh\nprintf '%s' "${REVIEWED_HEAD}"\nexit 0\n`,
+      { mode: 0o755 },
+    );
     writeFileSync(join(h.tasks, '2026-06-03-blog-output-plan.md'), '- [ ] `PG-TEST-001` test keyword\n');
     const hermes = join(h.root, 'hermes.env');
     writeFileSync(hermes, 'FEISHU_APP_ID=cli_test\nFEISHU_APP_SECRET=sec_test\n');
@@ -952,6 +964,7 @@ test('--merge sends the published event through the unified notify layer (contra
         branch: 'seo/auto/2026-06-03-PG-TEST-001',
         slug: 'test-slug',
         previewUrl: 'https://example-preview.vercel.app',
+        headRefOid: REVIEWED_HEAD,
       },
     });
 
@@ -989,7 +1002,11 @@ test('--merge creates the backfill WAL before a post-merge oracle sync failure',
   const h = makeHarness();
   try {
     initOracleWithOrigin(h);
-    writeFileSync(join(h.bin, 'gh'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
+    writeFileSync(
+      join(h.bin, 'gh'),
+      `#!/bin/sh\nprintf '%s' "${REVIEWED_HEAD}"\nexit 0\n`,
+      { mode: 0o755 },
+    );
     const plan = join(h.tasks, '2026-06-03-blog-output-plan.md');
     writeFileSync(plan, '- [ ] `PG-TEST-001` test keyword\n');
     writeClaims(h, {
@@ -998,6 +1015,7 @@ test('--merge creates the backfill WAL before a post-merge oracle sync failure',
         branch: 'seo/auto/2026-06-03-PG-TEST-001',
         slug: 'test-slug',
         previewUrl: 'https://example-preview.vercel.app',
+        headRefOid: REVIEWED_HEAD,
       },
     });
     // Simulate the production incident: GitHub merge succeeds, then the local

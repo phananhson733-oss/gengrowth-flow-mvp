@@ -10,7 +10,6 @@ import { homedir } from 'node:os';
 import { basename, dirname, isAbsolute, join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { stateDir as defaultStateDir } from './lib/flow-state.mjs';
 
 const SCRIPT = fileURLToPath(import.meta.url);
 const FLOW = resolve(dirname(SCRIPT), '../..');
@@ -74,7 +73,20 @@ function claimMatchesSite(claim, site) {
 }
 
 function recordSource(record) {
-  return record.latestEvent || record.event;
+  const event = record.event;
+  const latest = record.latestEvent;
+  if (!event || typeof event !== 'object' || Array.isArray(event)) {
+    throw new TypeError('repair event owner required');
+  }
+  if (!latest) return event;
+  if (typeof latest !== 'object' || Array.isArray(latest)
+    || !latest.site || !latest.pageId || !latest.runId) {
+    throw new TypeError('latestEvent owner and runId required');
+  }
+  if (latest.site !== event.site || latest.pageId !== event.pageId) {
+    throw new TypeError('latestEvent owner conflicts with event owner');
+  }
+  return latest;
 }
 
 function inspectQueue({ queueDir, site, planIds, now, errors }) {
@@ -184,8 +196,10 @@ export async function evaluateSeoReadiness({
   const errors = [];
   const now = deps.now instanceof Date ? deps.now : new Date();
   const plan = parsePlan(planPath);
-  const base = deps.stateDir || defaultStateDir();
-  if (!base) throw new Error('flow-state directory unavailable');
+  const base = deps.stateDir
+    || process.env.GG_FLOW_STATE_DIR
+    || join(homedir(), 'gengrowth-agents', 'flow-state');
+  if (!existsSync(base)) throw new Error(`flow-state directory unavailable: ${base}`);
   const claimsPath = deps.claimsPath
     || process.env.GG_SEO_CLAIMS
     || join(
@@ -278,4 +292,3 @@ if (process.argv[1] && resolve(process.argv[1]) === SCRIPT) {
     process.exit(2);
   });
 }
-

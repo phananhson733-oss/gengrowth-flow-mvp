@@ -157,3 +157,14 @@ test('strict verification drift is carried into readiness and blocks it', () => 
   assert.equal(out.json.sheetFlipsAfter, 2);
 });
 
+test('conflicting latestEvent owner cannot hide an active repair from the selected site', () => {
+  const out = readinessFixture({
+    queue: [{
+      status: 'repair_pending',
+      event: { site: 'astrologywiki', pageId: 'PG-A-001', runId: 'old-run' },
+      latestEvent: { site: 'gengrowth', pageId: 'PG-SDS-004', runId: 'run-1' },
+    }],
+  });
+  assert.equal(out.status, 2, `${out.stdout}\n${out.stderr}`);
+  assert.match(out.json.errors.join('\n'), /owner/i);
+});

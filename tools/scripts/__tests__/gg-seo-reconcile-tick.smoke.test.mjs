@@ -135,9 +135,19 @@ test('expired lease is recovered in the same tick', () => {
   assert.equal(h.lines.length, 2);
 });
 
-test('controller failure prevents reconcile/readiness and owns exit', () => {
+test('controller failure still runs strict reconcile/readiness and owns exit', () => {
   const h = harness({ hm: '1900', drainExit: 7 });
   assert.equal(h.result.status, 7, `${h.result.stdout}\n${h.result.stderr}`);
-  assert.equal(h.lines.length, 1);
+  assert.equal(h.lines.length, 3);
+  assert.match(h.lines[0], /^drain /);
+  assert.match(h.lines[1], /^reconcile /);
+  assert.match(h.lines[2], /^readiness /);
 });
 
+test('strict reconcile failure still runs readiness with its machine result', () => {
+  const h = harness({ reconcileExit: 5 });
+  assert.equal(h.result.status, 5, `${h.result.stdout}\n${h.result.stderr}`);
+  assert.equal(h.lines.length, 2);
+  assert.match(h.lines[0], /^reconcile /);
+  assert.match(h.lines[1], /^readiness /);
+});

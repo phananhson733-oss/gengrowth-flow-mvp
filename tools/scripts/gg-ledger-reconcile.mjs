@@ -12,8 +12,7 @@ import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { drainPending, listWriteback, writebackDir } from './lib/backfill-tx.mjs';
-import { stateDir } from './lib/flow-state.mjs';
+import { drainPending, listWriteback } from './lib/backfill-tx.mjs';
 import { getAccessToken, gFetch, loadEnv } from './lib/gg-shared.mjs';
 import { notify } from './lib/gg-notify.mjs';
 import { PRODUCTS, PAGES_TAB, PUBLISHED, workbookId } from './gg-reconcile-status.mjs';
@@ -65,7 +64,11 @@ function strictObject(value, label) {
 
 function loadClaimsStrict(path = CLAIMS_PATH) {
   if (!existsSync(path)) return {};
-  return strictObject(JSON.parse(readFileSync(path, 'utf8')), 'claims');
+  const claims = strictObject(JSON.parse(readFileSync(path, 'utf8')), 'claims');
+  for (const [pageId, claim] of Object.entries(claims)) {
+    strictObject(claim, `claim ${pageId}`);
+  }
+  return claims;
 }
 
 function planPath(name) {
@@ -168,9 +171,13 @@ async function sweepPlanBoxesBySheet(token, apply) {
   return checked;
 }
 
-function inspectWriteback(errors) {
-  const dir = writebackDir();
-  if (!dir || !existsSync(dir)) return 0;
+function flowStateRoot() {
+  return process.env.GG_FLOW_STATE_DIR || join(HOME, 'gengrowth-agents', 'flow-state');
+}
+
+function inspectWriteback(errors, base) {
+  const dir = join(base, 'pending-writeback');
+  if (!existsSync(dir)) return 0;
   let count = 0;
   for (const name of readdirSync(dir)) {
     if (!name.endsWith('.json') || name.includes('.tmp-')) continue;
@@ -185,12 +192,11 @@ function inspectWriteback(errors) {
   return count;
 }
 
-function inspectRepairState(claims, errors, now = new Date()) {
+function inspectRepairState(claims, errors, base, now = new Date()) {
   let activeRepairAfter = 0;
   let expiredLeasesAfter = 0;
-  const base = stateDir();
   const queue = process.env.GG_SEO_REPAIR_QUEUE_DIR
-    || (base ? join(base, 'seo-repair-queue') : null);
+    || join(base, 'seo-repair-queue');
   if (queue && existsSync(queue)) {
     for (const name of readdirSync(queue)) {
       if (!name.endsWith('.json')) continue;
@@ -204,9 +210,15 @@ function inspectRepairState(claims, errors, now = new Date()) {
         }
         if (ACTIVE_REPAIR.has(record.status)) {
           activeRepairAfter += 1;
-          if (record.lease?.expiresAt
-            && Date.parse(record.lease.expiresAt) <= now.getTime()) {
-            expiredLeasesAfter += 1;
+          if (record.lease !== null && record.lease !== undefined) {
+            if (!record.lease || typeof record.lease !== 'object'
+              || !record.lease.expiresAt
+              || !Number.isFinite(Date.parse(record.lease.expiresAt))) {
+              errors.push(`repair ${name}: lease missing or invalid`);
+              expiredLeasesAfter += 1;
+            } else if (Date.parse(record.lease.expiresAt) <= now.getTime()) {
+              expiredLeasesAfter += 1;
+            }
           }
         }
       } catch (error) {
@@ -217,10 +229,13 @@ function inspectRepairState(claims, errors, now = new Date()) {
   }
   for (const claim of Object.values(claims)) {
     if (!claim || typeof claim !== 'object') continue;
-    if (ACTIVE_CLAIMS.has(claim.status)
-      && claim.leaseUntil
-      && Date.parse(claim.leaseUntil) <= now.getTime()) {
-      expiredLeasesAfter += 1;
+    if (ACTIVE_CLAIMS.has(claim.status) && claim.leaseUntil) {
+      if (!Number.isFinite(Date.parse(claim.leaseUntil))) {
+        errors.push('claim lease missing or invalid');
+        expiredLeasesAfter += 1;
+      } else if (Date.parse(claim.leaseUntil) <= now.getTime()) {
+        expiredLeasesAfter += 1;
+      }
     }
   }
   return { activeRepairAfter, expiredLeasesAfter };
@@ -288,6 +303,8 @@ async function defaultApply({ apply, log }) {
 
 async function defaultVerify({ log }) {
   const errors = [];
+  const base = flowStateRoot();
+  if (!existsSync(base)) errors.push(`flow-state missing: ${base}`);
   let claims = {};
   try { claims = loadClaimsStrict(); }
   catch (error) { errors.push(`claims: ${error.message}`); }
@@ -299,9 +316,9 @@ async function defaultVerify({ log }) {
   ]);
   const sheetFlipsAfter = (status.out.match(/^\s*FLIP\s+/gim) || []).length;
   if (!status.ok) errors.push(`reconcile-status verify: ${status.error}`);
-  const repair = inspectRepairState(claims, errors);
+  const repair = inspectRepairState(claims, errors, base);
   const result = {
-    pendingWritebackAfter: inspectWriteback(errors),
+    pendingWritebackAfter: inspectWriteback(errors, base),
     sheetFlipsAfter,
     planUncheckedAfter: uncheckedDoneClaims(claims),
     activeRepairAfter: repair.activeRepairAfter,

@@ -434,7 +434,9 @@ async function defaultPersistRepair(target, {
     ], 180_000);
     if (!committed.ok) return { ...committed, ok: false };
   } else {
-    const forbidden = dirty.filter((file) => !editable.has(file));
+    const forbidden = dirty.filter((file) => (
+      !editable.has(file) && !isSafeAstrologyTargetPath(file, target.slug)
+    ));
     if (forbidden.length) {
       return { ok: false, stderr: `Agent changed files outside target allowlist: ${forbidden.join(', ')}` };
     }
@@ -500,6 +502,7 @@ function astrologyArtifactSha(target) {
   const measured = candidates
     .map((file) => ({ file, path: relative(worktree, file) }))
     .filter(({ path }) => path && path !== '..' && !path.startsWith(`..${sep}`) && !isAbsolute(path))
+    .filter(({ path }) => isSafeAstrologyTargetPath(path, target.slug))
     .sort((left, right) => left.path.localeCompare(right.path));
   const hash = createHash('sha256');
   let files = 0;
@@ -629,6 +632,9 @@ export function createAstrologyWikiRepairAdapter(deps = {}) {
             attemptDeadlineAt,
           });
           if (persisted?.ok !== true) {
+            if (persisted?.deadlineExhausted === true) {
+              return deadlineFailure(agentMutationInvoked, target);
+            }
             return failure({ type: 'persist_repair_failed', result: persisted || null });
           }
           const persistedChangedFiles = Array.isArray(persisted.changedFiles)
@@ -661,6 +667,9 @@ export function createAstrologyWikiRepairAdapter(deps = {}) {
           attemptDeadlineAt,
         });
         if (gated?.ok !== true) {
+          if (gated?.deadlineExhausted === true) {
+            return deadlineFailure(agentMutationInvoked, target);
+          }
           return failure({ type: 'regate_failed', result: gated || null });
         }
         const publishTimeoutMs = remainingTimeout(4 * 60 * 1000);

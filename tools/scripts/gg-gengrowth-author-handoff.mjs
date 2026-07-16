@@ -1,7 +1,18 @@
 #!/usr/bin/env node
 
 import { randomUUID } from 'node:crypto';
-import { copyFile, lstat, open, readFile, rename, rm } from 'node:fs/promises';
+import {
+  copyFile,
+  lstat,
+  mkdir,
+  open,
+  readFile,
+  readdir,
+  rename,
+  rm,
+  stat,
+  writeFile,
+} from 'node:fs/promises';
 import { dirname, join, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -64,6 +75,156 @@ async function fsyncDirectory(path) {
   } catch {}
 }
 
+function pidIsAlive(pid) {
+  if (!Number.isInteger(pid) || pid <= 0) return false;
+  try { process.kill(pid, 0); return true; } catch { return false; }
+}
+
+async function readJson(path) {
+  try { return JSON.parse(await readFile(path, 'utf8')); } catch { return null; }
+}
+
+async function acquireHandoffLock(path) {
+  const token = randomUUID();
+  const ownerPath = join(path, 'owner.json');
+  const create = async () => {
+    await mkdir(path);
+    await writeFile(ownerPath, `${JSON.stringify({ pid: process.pid, token })}\n`, {
+      mode: 0o600,
+    });
+    await fsyncDirectory(path);
+  };
+  try {
+    await create();
+    return { path, ownerPath, token };
+  } catch (error) {
+    if (error?.code !== 'EEXIST') throw error;
+    const owner = await readJson(ownerPath);
+    if (owner && pidIsAlive(Number(owner.pid))) {
+      throw new HandoffError('handoff_busy', 'another handoff process owns the target pair', 2);
+    }
+    if (!owner) {
+      try {
+        const ageMs = Date.now() - (await stat(path)).mtimeMs;
+        if (ageMs < 5_000) {
+          throw new HandoffError('handoff_busy', 'handoff lock owner is still being written', 2);
+        }
+      } catch (failure) {
+        if (failure instanceof HandoffError) throw failure;
+      }
+    }
+    const stalePath = `${path}.stale-${process.pid}-${Date.now()}`;
+    try {
+      await rename(path, stalePath);
+      await rm(stalePath, { recursive: true, force: true });
+      await create();
+      return { path, ownerPath, token };
+    } catch (failure) {
+      if (failure?.code === 'EEXIST' || failure?.code === 'ENOENT') {
+        throw new HandoffError('handoff_busy', 'handoff lock changed during recovery', 2);
+      }
+      throw failure;
+    }
+  }
+}
+
+async function releaseHandoffLock(lock) {
+  const owner = await readJson(lock?.ownerPath);
+  if (owner?.token !== lock?.token || Number(owner?.pid) !== process.pid) return;
+  await rm(lock.path, { recursive: true, force: true });
+}
+
+function transactionPattern(pageId, winner) {
+  return new RegExp(
+    `^\\.handoff-${pageId}-${winner}-([A-Za-z0-9-]+)\\.(md\\.tmp|manifest\\.tmp|md\\.bak|manifest\\.bak)$`,
+  );
+}
+
+async function recoverInterruptedHandoff({
+  stagingDir,
+  pageId,
+  winner,
+  targetMd,
+  targetManifest,
+}) {
+  const pattern = transactionPattern(pageId, winner);
+  const transactions = new Map();
+  for (const name of await readdir(stagingDir)) {
+    const match = name.match(pattern);
+    if (!match) continue;
+    const transaction = transactions.get(match[1]) || {};
+    transaction[match[2]] = join(stagingDir, name);
+    transactions.set(match[1], transaction);
+  }
+  if (transactions.size === 0) return;
+  if (transactions.size > 1) {
+    throw new HandoffError(
+      'handoff_recovery_ambiguous',
+      `multiple interrupted handoffs require inspection: ${[...transactions.keys()].join(', ')}`,
+      2,
+    );
+  }
+  const [[transactionId, files]] = transactions;
+  for (const path of Object.values(files)) {
+    if (!(await regularFile(path))) {
+      throw new HandoffError(
+        'handoff_recovery_unsafe',
+        `interrupted handoff contains a non-regular file: ${path}`,
+        2,
+      );
+    }
+  }
+  if (!(await destinationIsSafe(targetMd)) || !(await destinationIsSafe(targetManifest))) {
+    throw new HandoffError(
+      'handoff_recovery_unsafe',
+      'interrupted handoff target is not a regular file or absent',
+      2,
+    );
+  }
+
+  const backupMd = files['md.bak'];
+  const backupManifest = files['manifest.bak'];
+  const hasBackupMd = Boolean(backupMd);
+  const hasBackupManifest = Boolean(backupManifest);
+  try {
+    if (hasBackupMd || hasBackupManifest) {
+      if (hasBackupMd && hasBackupManifest) {
+        await rm(targetManifest, { force: true });
+        await rm(targetMd, { force: true });
+        await rename(backupMd, targetMd);
+        await fsyncFile(targetMd);
+        await rename(backupManifest, targetManifest);
+        await fsyncFile(targetManifest);
+      } else if (!hasBackupMd
+        && hasBackupManifest
+        && await regularFile(targetMd)
+        && !(await fileExists(targetManifest))) {
+        await rename(backupManifest, targetManifest);
+        await fsyncFile(targetManifest);
+      } else {
+        throw new HandoffError(
+          'handoff_recovery_ambiguous',
+          `interrupted handoff ${transactionId} has an incomplete backup pair`,
+          2,
+        );
+      }
+    } else {
+      // No old pair existed. Remove any partially visible new pair and rebuild from source.
+      await rm(targetManifest, { force: true });
+      await rm(targetMd, { force: true });
+    }
+    await fsyncDirectory(stagingDir);
+    for (const path of Object.values(files)) await rm(path, { force: true });
+    await fsyncDirectory(stagingDir);
+  } catch (error) {
+    if (error instanceof HandoffError) throw error;
+    throw new HandoffError(
+      'handoff_recovery_failed',
+      `interrupted handoff ${transactionId} could not be recovered: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+}
+
 export async function handoffGengrowthAuthor({
   pageId,
   stagingDir = process.env.GG_GENGROWTH_STAGING_DIR || join(FLOW_DIR, '_staging'),
@@ -86,11 +247,13 @@ export async function handoffGengrowthAuthor({
   const sourceManifest = resolve(stagingDir, `${pageId}-en.manifest.json`);
   const targetMd = resolve(stagingDir, `${pageId}-${winner}-v8.md`);
   const targetManifest = resolve(stagingDir, `${pageId}-${winner}-v8.manifest.json`);
-  const prefix = `.handoff-${pageId}-${String(transactionId).replace(/[^a-zA-Z0-9-]/g, '')}`;
+  const transactionToken = String(transactionId).replace(/[^a-zA-Z0-9-]/g, '') || randomUUID();
+  const prefix = `.handoff-${pageId}-${winner}-${transactionToken}`;
   const tempMd = join(stagingDir, `${prefix}.md.tmp`);
   const tempManifest = join(stagingDir, `${prefix}.manifest.tmp`);
   const backupMd = join(stagingDir, `${prefix}.md.bak`);
   const backupManifest = join(stagingDir, `${prefix}.manifest.bak`);
+  const lockDir = join(stagingDir, `.handoff-lock-${pageId}-${winner}`);
   const paths = [
     sourceMd,
     sourceManifest,
@@ -100,10 +263,20 @@ export async function handoffGengrowthAuthor({
     tempManifest,
     backupMd,
     backupManifest,
+    lockDir,
   ];
   if (paths.some((path) => !path.startsWith(`${stagingDir}${sep}`))) {
     throw new HandoffError('unsafe_path', 'handoff path escaped staging directory', 2);
   }
+  const lock = await acquireHandoffLock(lockDir);
+  try {
+    await recoverInterruptedHandoff({
+      stagingDir,
+      pageId,
+      winner,
+      targetMd,
+      targetManifest,
+    });
   if (!(await regularFile(sourceManifest))) {
     throw new HandoffError('manifest_not_pass');
   }
@@ -212,6 +385,9 @@ export async function handoffGengrowthAuthor({
       await rm(backupMd, { force: true });
       await rm(backupManifest, { force: true });
     }
+  }
+  } finally {
+    await releaseHandoffLock(lock);
   }
 }
 

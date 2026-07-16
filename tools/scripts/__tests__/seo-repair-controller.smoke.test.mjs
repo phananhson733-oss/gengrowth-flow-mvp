@@ -591,6 +591,61 @@ test('controller lease outlives the shared 25-minute attempt deadline', async (t
   );
 });
 
+test('a live first adapter cannot overlap a second controller after 26 minutes of logical time', async (t) => {
+  const { queueDir } = await fixture(t);
+  await enqueueRepairEvent(event(), { queueDir });
+  let logicalNow = new Date('2026-07-15T14:02:00.000Z');
+  let releaseFirst;
+  let firstEntered;
+  const entered = new Promise((resolve) => { firstEntered = resolve; });
+  const firstDrain = drainRepairQueue({
+    queueDir,
+    adapters: {
+      gengrowth: {
+        execute: async () => {
+          firstEntered();
+          await new Promise((resolve) => { releaseFirst = resolve; });
+          return {
+            terminal: 'published',
+            agentMutationInvoked: false,
+            evidence: { checks: { production_200: true, backfilled: true } },
+          };
+        },
+      },
+    },
+    owner: 'first-controller',
+    now: () => logicalNow,
+    maxTargets: 1,
+  });
+  await entered;
+
+  logicalNow = new Date(logicalNow.getTime() + (26 * 60 * 1000));
+  let secondCalls = 0;
+  const second = await drainRepairQueue({
+    queueDir,
+    adapters: {
+      gengrowth: {
+        execute: async () => {
+          secondCalls += 1;
+          return {
+            terminal: 'published',
+            evidence: { checks: { production_200: true, backfilled: true } },
+          };
+        },
+      },
+    },
+    owner: 'second-controller',
+    now: () => logicalNow,
+    maxTargets: 1,
+  });
+  assert.equal(second.processed, 0);
+  assert.equal(secondCalls, 0);
+
+  releaseFirst();
+  const first = await firstDrain;
+  assert.equal(first.processed, 1);
+});
+
 test('failed repair enters a new strategy without a human notification', async (t) => {
   const { queueDir } = await fixture(t);
   await enqueueRepairEvent(event({

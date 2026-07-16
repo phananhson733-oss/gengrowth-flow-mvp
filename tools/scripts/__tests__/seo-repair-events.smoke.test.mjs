@@ -580,6 +580,38 @@ async function writeLegacyTransaction(queueDir, filename, intent) {
   await writeFile(join(directory, filename), `${JSON.stringify(intent, null, 2)}\n`, 'utf8');
 }
 
+function transactionHead(record) {
+  return {
+    eventId: record.event.eventId,
+    generation: Number(record.generation || 1),
+    revision: Number(record.revision || 0),
+    fingerprint: record.fingerprint,
+  };
+}
+
+function preparedIntentV2({
+  transactionId,
+  incidentId,
+  causalRevision,
+  expectedHead,
+  resultHead,
+  writes,
+  operation = 'replace_generation',
+}) {
+  return {
+    schemaVersion: 2,
+    transactionId,
+    incidentId,
+    causalRevision,
+    operation,
+    phase: 'prepared',
+    createdAt: '2026-07-15T14:03:00.000Z',
+    expectedHead,
+    resultHead,
+    writes,
+  };
+}
+
 test('prepared transaction recovery quarantines a path traversal without writing outside the queue', async (t) => {
   const { root, queueDir } = await fixture(t);
   const queued = await enqueueRepairEvent(event({ eventId: 'path-owner' }), { queueDir });
@@ -630,6 +662,45 @@ test('corrupt prepared transaction is quarantined once, holds its inferred incid
   assert.match(await readFile(join(transactionDirectory, 'holds', holds[0]), 'utf8'), /corrupt transaction intent/i);
 });
 
+test('an intent locked to one incident cannot overwrite a record owned by another incident', async (t) => {
+  const { queueDir } = await fixture(t);
+  const owner = await enqueueRepairEvent(event({
+    eventId: 'incident-a-owner',
+    pageId: 'PG-INCIDENT-A',
+  }), { queueDir });
+  const victim = await enqueueRepairEvent(event({
+    eventId: 'incident-b-victim',
+    pageId: 'PG-INCIDENT-B',
+  }), { queueDir });
+  const incidentId = repairIncidentId(owner.event);
+  const transactionId = `${incidentId}-cross-incident`;
+  const overwritten = {
+    ...victim,
+    status: 'superseded',
+    revision: Number(victim.revision) + 1,
+    supersededBy: owner.event.eventId,
+    updatedAt: '2026-07-15T14:03:00.000Z',
+  };
+  await writeLegacyTransaction(queueDir, `${transactionId}.json`, preparedIntentV2({
+    transactionId,
+    incidentId,
+    causalRevision: 1,
+    expectedHead: transactionHead(owner),
+    resultHead: transactionHead(owner),
+    writes: [{
+      filename: `${victim.event.eventId}.json`,
+      expectedRevision: victim.revision,
+      record: overwritten,
+    }],
+  }));
+
+  await listRepairRecords({ queueDir });
+
+  assert.deepEqual(await readRepairRecord(join(queueDir, `${victim.event.eventId}.json`)), victim);
+  const quarantine = await readdir(join(queueDir, '.incident-transactions', 'quarantine'));
+  assert.equal(quarantine.some((name) => name.includes('cross-incident')), true);
+});
+
 test('committed transaction history is archived outside the hot scan and ordinary reads never parse the archive', async (t) => {
   const { queueDir } = await fixture(t);
   const queued = await enqueueRepairEvent(event({ eventId: 'archive-owner' }), { queueDir });
@@ -653,4 +724,96 @@ test('committed transaction history is archived outside the hot scan and ordinar
   instrumentation.committedReads = 0;
   await listRepairRecords({ queueDir, transactionInstrumentation: instrumentation });
   assert.deepEqual(instrumentation, { pendingReads: 0, committedReads: 0 });
+});
+
+test('an older random-filename intent cannot overwrite a newer committed causal revision', async (t) => {
+  const { queueDir } = await fixture(t);
+  const original = await enqueueRepairEvent(event({
+    eventId: 'causal-original',
+    summary: 'old failure',
+  }), { queueDir });
+  const head = await enqueueRepairEvent(event({
+    eventId: 'causal-new-head',
+    summary: 'new failure',
+    createdAt: '2026-07-15T14:05:00.000Z',
+  }), { queueDir });
+  const incidentId = repairIncidentId(original.event);
+  const transactionDirectory = join(queueDir, '.incident-transactions');
+  const [generatedTransactionName] = (await readdir(transactionDirectory))
+    .filter((name) => name.endsWith('.json'));
+  const generatedTransactionId = generatedTransactionName.slice(0, -'.json'.length);
+  const committedOriginal = await readRepairRecord(join(queueDir, `${original.event.eventId}.json`));
+  await writeFile(join(transactionDirectory, generatedTransactionName), `${JSON.stringify({
+    ...preparedIntentV2({
+      transactionId: generatedTransactionId,
+      incidentId,
+      causalRevision: 2,
+      expectedHead: transactionHead(original),
+      resultHead: transactionHead(head),
+      writes: [
+        {
+          filename: `${original.event.eventId}.json`,
+          expectedRevision: original.revision,
+          record: committedOriginal,
+        },
+        {
+          filename: `${head.event.eventId}.json`,
+          expectedRevision: 0,
+          record: head,
+        },
+      ],
+    }),
+    phase: 'committed',
+    committedAt: '2026-07-15T14:05:01.000Z',
+  }, null, 2)}\n`, 'utf8');
+
+  const staleHeadEvent = event({
+    eventId: 'causal-stale-head',
+    summary: 'stale failure',
+    createdAt: '2026-07-15T14:04:00.000Z',
+  });
+  const staleHead = {
+    ...original,
+    event: staleHeadEvent,
+    latestEvent: staleHeadEvent,
+    fingerprint: repairEventFingerprint(staleHeadEvent),
+    generation: 2,
+    revision: 1,
+    parentGenerationId: original.event.eventId,
+    updatedAt: staleHeadEvent.createdAt,
+  };
+  const staleSource = {
+    ...original,
+    status: 'superseded',
+    revision: Number(original.revision) + 1,
+    supersededBy: staleHead.event.eventId,
+    updatedAt: staleHead.event.createdAt,
+  };
+  const staleTransactionId = `${incidentId}-zzzz-older`;
+  await writeLegacyTransaction(queueDir, `${staleTransactionId}.json`, preparedIntentV2({
+    transactionId: staleTransactionId,
+    incidentId,
+    causalRevision: 1,
+    expectedHead: transactionHead(original),
+    resultHead: transactionHead(staleHead),
+    writes: [
+      {
+        filename: `${original.event.eventId}.json`,
+        expectedRevision: original.revision,
+        record: staleSource,
+      },
+      {
+        filename: `${staleHead.event.eventId}.json`,
+        expectedRevision: 0,
+        record: staleHead,
+      },
+    ],
+  }));
+
+  const records = await listRepairRecords({ queueDir });
+
+  assert.equal(records.find((record) => record.event.eventId === head.event.eventId).status, 'queued');
+  assert.equal(records.some((record) => record.event.eventId === staleHead.event.eventId), false);
+  assert.equal((await readdir(join(transactionDirectory, 'quarantine')))
+    .some((name) => name.includes('zzzz-older')), true);
 });

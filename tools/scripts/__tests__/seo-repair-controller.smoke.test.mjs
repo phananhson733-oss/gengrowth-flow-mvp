@@ -55,9 +55,9 @@ async function fixture(t) {
 async function budgetFixture(t, recordOverrides = {}, adapterResult = {
   ok: false,
   evidence: { type: 'still_broken', artifactSha: 'sha-same' },
-}) {
+}, eventOverrides = {}) {
   const { queueDir } = await fixture(t);
-  const queued = await enqueueRepairEvent(event(), { queueDir });
+  const queued = await enqueueRepairEvent(event(eventOverrides), { queueDir });
   const seeded = await transitionRepairEvent(queued, {
     status: 'queued',
     ...recordOverrides,
@@ -278,7 +278,7 @@ test('pre-exhausted or no-progress incidents quarantine before adapter execution
       classification: 'agent_fixable',
       strategy: 'agent_content_asset_link',
       agentMutationAttempts: 2,
-    });
+    }, undefined, { errorKind: 'asset_fail' });
     const out = await drainRepairQueue({
       ...built.args,
       maxAgentMutationAttempts: 2,
@@ -298,7 +298,7 @@ test('Agent mutation budget increments only when the adapter actually invokes an
       ok: false,
       agentMutationInvoked: false,
       evidence: { type: 'target_not_ready' },
-    });
+    }, { errorKind: 'asset_fail' });
     await drainRepairQueue({ ...built.args, maxTargets: 1 });
     assert.equal((await readRepairRecord(built.recordPath)).agentMutationAttempts, 0);
   });
@@ -310,7 +310,7 @@ test('Agent mutation budget increments only when the adapter actually invokes an
       ok: false,
       agentMutationInvoked: true,
       evidence: { type: 'agent_exit' },
-    });
+    }, { errorKind: 'asset_fail' });
     await drainRepairQueue({ ...built.args, maxTargets: 1 });
     assert.equal((await readRepairRecord(built.recordPath)).agentMutationAttempts, 1);
   });

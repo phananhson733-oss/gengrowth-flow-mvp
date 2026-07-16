@@ -137,6 +137,35 @@ export async function tryGateRepair({
   if (!B.gateRepair || !existsSync(B.gateRepair)) { log(`repair[${dim}]: no gate-repair bin — skip`); return false; }
   if (!articleTs || !existsSync(articleTs)) { log(`repair[${dim}]: no article .ts — skip`); return false; }
   if (!worktree || !existsSync(worktree)) { log(`repair[${dim}]: no worktree for commit — skip`); return false; }
+  const git = (args) => spawnSync('git', ['-C', worktree, ...args], {
+    encoding: 'utf8',
+    timeout: 60000,
+  });
+  const inspectRepairWorktree = () => {
+    const head = git(['rev-parse', 'HEAD']);
+    const headRefOid = String(head.stdout || '').trim();
+    if (head.status !== 0 || !HEAD_REF_OID_RE.test(headRefOid)
+      || (expectedHead && headRefOid !== expectedHead)) {
+      return {
+        ok: false,
+        reason: `repair worktree head ${headRefOid || '?'} does not match reviewed head ${expectedHead || '?'}`,
+      };
+    }
+    const status = git(['status', '--porcelain=v1', '--untracked-files=normal']);
+    if (status.status !== 0) {
+      return {
+        ok: false,
+        reason: `repair worktree status unavailable: ${tail(status.stderr) || `exit ${status.status}`}`,
+      };
+    }
+    if (String(status.stdout || '').trim()) {
+      return { ok: false, reason: 'repair worktree has uncommitted changes; refusing mutation' };
+    }
+    return { ok: true, headRefOid };
+  };
+  const beforeWorker = inspectRepairWorktree();
+  if (!beforeWorker.ok) return { applied: false, reason: beforeWorker.reason };
+
   log(`repair[${dim}]: gg-gate-repair on ${articleTs} (reason: ${String(reason).slice(0, 80)}…)`);
   const args = ['--article', articleTs, '--dimension', dim, '--reason', String(reason)];
   if (draftMd && existsSync(draftMd)) args.push('--draft', draftMd);
@@ -146,21 +175,8 @@ export async function tryGateRepair({
   try { out = JSON.parse(lastJsonLine(rr.stdout)); } catch { log(`repair[${dim}]: unparseable worker output — skip`); return false; }
   const edits = Array.isArray(out && out.edits) ? out.edits : [];
   if (!edits.length) { log(`repair[${dim}]: ${(out && out.note) || 'no edits'} — skip`); return false; }
-  const git = (args) => spawnSync('git', ['-C', worktree, ...args], {
-    encoding: 'utf8',
-    timeout: 60000,
-  });
-  const beforeHead = String(git(['rev-parse', 'HEAD']).stdout || '').trim();
-  if (!HEAD_REF_OID_RE.test(beforeHead) || (expectedHead && beforeHead !== expectedHead)) {
-    return {
-      applied: false,
-      reason: `repair worktree head ${beforeHead || '?'} does not match reviewed head ${expectedHead || '?'}`,
-    };
-  }
-  const dirty = String(git(['status', '--porcelain=v1', '--untracked-files=normal']).stdout || '').trim();
-  if (dirty) {
-    return { applied: false, reason: 'repair worktree has uncommitted changes; refusing mutation' };
-  }
+  const afterWorker = inspectRepairWorktree();
+  if (!afterWorker.ok) return { applied: false, reason: afterWorker.reason };
   let content;
   try { content = readFileSync(articleTs, 'utf8'); } catch { log(`repair[${dim}]: read failed — skip`); return false; }
   const originalContent = content;
@@ -435,35 +451,24 @@ export async function verifyPreviewBinding({
   const statusResult = await gh(['api', `repos/${repo}/commits/${reviewedHeadRefOid}/status`]);
   const statusJson = statusResult.code === 0 ? safeJson(statusResult.stdout) : null;
   const statuses = Array.isArray(statusJson?.statuses) ? statusJson.statuses : [];
-  const vercelReady = statuses.some((status) => (
+  const boundStatus = statuses.find((status) => (
     String(status?.context || '').toLowerCase().includes('vercel')
     && String(status?.state || '').toLowerCase() === 'success'
+    && [status?.target_url, status?.details_url, status?.environment_url]
+      .map(normalizePreviewUrl)
+      .includes(targetUrl)
   ));
-  if (!vercelReady) {
+  if (!boundStatus) {
     return {
       ok: false,
-      reason: `reviewed head ${reviewedHeadRefOid} has no successful Vercel commit status`,
+      reason: `preview URL is not exactly bound by a successful Vercel status on reviewed head ${reviewedHeadRefOid}`,
     };
   }
-  const pullsResult = await gh(['api', `repos/${repo}/commits/${reviewedHeadRefOid}/pulls`]);
-  const pulls = pullsResult.code === 0 ? safeJson(pullsResult.stdout) : null;
-  const prNumber = Array.isArray(pulls) ? pulls.find((pr) => pr?.number)?.number : null;
-  if (!prNumber) {
-    return { ok: false, reason: `reviewed head ${reviewedHeadRefOid} has no PR for preview binding` };
-  }
-  const commentsResult = await gh(['api', `repos/${repo}/issues/${prNumber}/comments`, '--paginate']);
-  const comments = commentsResult.code === 0 ? safeJson(commentsResult.stdout) : null;
-  const vercelComment = Array.isArray(comments) && comments.some((comment) => (
-    /vercel/i.test(String(comment?.user?.login || ''))
-    && String(comment?.body || '').includes(previewUrl)
-  ));
-  if (!vercelComment) {
-    return {
-      ok: false,
-      reason: `preview URL is not evidenced by Vercel for reviewed head ${reviewedHeadRefOid}`,
-    };
-  }
-  return { ok: true, method: 'vercel-commit-status-and-comment', prNumber };
+  return {
+    ok: true,
+    method: 'vercel-commit-status-url',
+    context: String(boundStatus.context || ''),
+  };
 }
 
 async function runFullGateRound({
@@ -772,12 +777,17 @@ export async function runGate(o, deps = {}) {
     if (!outcome.failure?.repairable || repairRound === maxRepairRounds) {
       return gateFail(o, B, deps, pgId, claim, outcome.failure?.reason || 'gate round failed', plan);
     }
+    const beforeRepairState = await inspectWorktree(worktree, reviewedHeadRefOid);
+    if (!beforeRepairState?.ok) {
+      return gateFail(o, B, deps, pgId, claim,
+        beforeRepairState?.reason || 'review worktree became unsafe before repair', plan);
+    }
     const repairResult = await repair({
       dim: outcome.failure.dim,
       reason: outcome.failure.reason,
       articleTs,
       draftMd,
-      worktree: claim.worktree,
+      worktree,
       branch: o.branch,
       expectedHead: reviewedHeadRefOid,
       node,

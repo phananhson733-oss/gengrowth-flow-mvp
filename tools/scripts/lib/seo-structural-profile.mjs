@@ -42,9 +42,9 @@ function validatedRange(value, name, fallback = undefined) {
   if (!rule || !Array.isArray(candidate) || candidate.length !== 2) {
     throw new TypeError(`${name} is invalid; expected a bounded [min, max] range`);
   }
-  const lower = Number(candidate[0]);
+  const lower = candidate[0];
   const nullableUpper = name === 'h3_range' || name === 'internal_link_range';
-  const upper = candidate[1] === null && nullableUpper ? null : Number(candidate[1]);
+  const upper = candidate[1] === null && nullableUpper ? null : candidate[1];
   if (!finiteInteger(lower) || lower < rule.min || lower > rule.max
     || (upper !== null && (
       !finiteInteger(upper) || upper < rule.min || upper > rule.max || lower > upper
@@ -128,15 +128,15 @@ function rangeOverrides(base, overrides) {
   const wordRange = overrides.wordMinimum === undefined && overrides.wordMaximum === undefined
     ? base.wordRange
     : validatedRange([
-        overrides.wordMinimum ?? base.wordRange[0],
-        overrides.wordMaximum ?? base.wordRange[1],
+        overrides.wordMinimum === undefined ? base.wordRange[0] : overrides.wordMinimum,
+        overrides.wordMaximum === undefined ? base.wordRange[1] : overrides.wordMaximum,
       ], 'word_range');
   const keywordRange = overrides.keywordMinimum === undefined
     && overrides.keywordMaximum === undefined
     ? base.keywordRange
     : validatedRange([
-        overrides.keywordMinimum ?? base.keywordRange[0],
-        overrides.keywordMaximum ?? base.keywordRange[1],
+        overrides.keywordMinimum === undefined ? base.keywordRange[0] : overrides.keywordMinimum,
+        overrides.keywordMaximum === undefined ? base.keywordRange[1] : overrides.keywordMaximum,
       ], 'keyword_range');
   return { h2Range, wordRange, keywordRange };
 }
@@ -174,8 +174,10 @@ export function validateStructuralProfile(profile) {
   const expectedEffectiveWordRange = effectiveWordRange(wordRange);
   if (!Array.isArray(profile.effectiveWordRange)
     || profile.effectiveWordRange.length !== 2
-    || Number(profile.effectiveWordRange[0]) !== expectedEffectiveWordRange[0]
-    || Number(profile.effectiveWordRange[1]) !== expectedEffectiveWordRange[1]) {
+    || !finiteInteger(profile.effectiveWordRange[0])
+    || !finiteInteger(profile.effectiveWordRange[1])
+    || profile.effectiveWordRange[0] !== expectedEffectiveWordRange[0]
+    || profile.effectiveWordRange[1] !== expectedEffectiveWordRange[1]) {
     throw new TypeError('structural profile effectiveWordRange is invalid');
   }
   const keywordRange = validatedRange(profile.keywordRange, 'keyword_range');

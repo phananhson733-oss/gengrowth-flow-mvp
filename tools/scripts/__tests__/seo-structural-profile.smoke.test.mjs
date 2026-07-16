@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { resolveStructuralProfile } from '../lib/seo-structural-profile.mjs';
+import {
+  resolveStructuralProfile,
+  validateStructuralProfile,
+} from '../lib/seo-structural-profile.mjs';
 
 test('legacy manifest keeps exact legacy Definition T2 structural behavior', () => {
   const profile = resolveStructuralProfile({
@@ -99,4 +102,22 @@ test('inverted or excessive explicit ranges fail closed', () => {
       },
     },
   }), /h2_range.*bounded|h2_range.*invalid|invalid.*h2_range/i);
+});
+
+test('pre-resolved profiles reject coercible non-integer range values', () => {
+  const profile = resolveStructuralProfile({
+    template: 'Definition',
+    contentTier: 'T2',
+    manifest: {},
+  });
+
+  assert.throws(() => validateStructuralProfile({
+    ...profile,
+    keywordRange: [null, 100],
+  }), /keyword_range.*invalid|invalid.*keyword_range/i);
+
+  assert.throws(() => validateStructuralProfile({
+    ...profile,
+    effectiveWordRange: ['1485', 1800],
+  }), /effectiveWordRange.*invalid|invalid.*effectiveWordRange/i);
 });

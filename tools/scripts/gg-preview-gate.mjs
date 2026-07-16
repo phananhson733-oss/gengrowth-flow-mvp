@@ -51,6 +51,7 @@
 //        [--codex-timeout-ms n] [--status-timeout-ms n]
 
 import { spawn, spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { join, relative } from 'node:path';
 import { homedir } from 'node:os';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
@@ -405,6 +406,39 @@ export async function inspectReviewedWorktree(worktree, reviewedHeadRefOid, deps
   return { ok: true, headRefOid, dirty: false };
 }
 
+export async function inspectDraftSnapshot(draftMd, deps = {}) {
+  if (typeof deps.inspectDraftSnapshot === 'function') {
+    return deps.inspectDraftSnapshot(draftMd);
+  }
+  if (!draftMd || !existsSync(draftMd)) {
+    return { ok: true, exists: false, bytes: 0, sha256: null };
+  }
+  try {
+    const bytes = readFileSync(draftMd);
+    return {
+      ok: true,
+      exists: true,
+      bytes: bytes.length,
+      sha256: createHash('sha256').update(bytes).digest('hex'),
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      exists: null,
+      bytes: null,
+      sha256: null,
+      reason: `draft snapshot unavailable: ${error?.message || String(error)}`,
+    };
+  }
+}
+
+function sameDraftSnapshot(left, right) {
+  return Boolean(left?.ok && right?.ok)
+    && left.exists === right.exists
+    && left.bytes === right.bytes
+    && left.sha256 === right.sha256;
+}
+
 function normalizePreviewUrl(value) {
   return String(value || '').replace(/\/+$/, '');
 }
@@ -480,12 +514,14 @@ async function runFullGateRound({
   draftMd,
   previewUrl,
   previewBinding,
+  draftSnapshot,
   reviewedHeadRefOid,
   repairRound,
   log,
 }) {
   const checks = {
     preview_binding: previewBinding,
+    draft_snapshot: draftSnapshot,
   };
   let failure = null;
   const noteFailure = (candidate) => {
@@ -607,6 +643,9 @@ export async function runGate(o, deps = {}) {
   const bindPreview = deps.verifyPreviewBinding
     ? ((input) => deps.verifyPreviewBinding(input))
     : ((input) => verifyPreviewBinding(input, deps));
+  const inspectDraft = deps.inspectDraftSnapshot
+    ? ((draftMd) => deps.inspectDraftSnapshot(draftMd))
+    : ((draftMd) => inspectDraftSnapshot(draftMd, deps));
   const plan = [];
   const log = (line) => plan.push(line);
 
@@ -678,6 +717,14 @@ export async function runGate(o, deps = {}) {
       return gateFail(o, B, deps, pgId, claim,
         worktreeState?.reason || 'review worktree is not pinned and clean', plan);
     }
+    const draftSnapshot = await inspectDraft(draftMd);
+    if (!draftSnapshot?.ok) {
+      return gateFail(o, B, deps, pgId, claim,
+        draftSnapshot?.reason || 'draft snapshot unavailable before gate round', plan);
+    }
+    log(`round[${repairRound}] draft: ${draftSnapshot.exists
+      ? `${draftSnapshot.sha256.slice(0, 12)} (${draftSnapshot.bytes} bytes)`
+      : 'missing'}`);
 
     let previewUrl = null;
     const canReuseStoredPreview = repairRound === 0
@@ -726,6 +773,7 @@ export async function runGate(o, deps = {}) {
       draftMd,
       previewUrl,
       previewBinding,
+      draftSnapshot,
       reviewedHeadRefOid,
       repairRound,
       log,
@@ -745,6 +793,20 @@ export async function runGate(o, deps = {}) {
         return gateFail(o, B, deps, pgId, claim,
           `head drift ${reviewedHeadRefOid} -> ${currentHead}`, plan);
       }
+      const finalWorktreeState = await inspectWorktree(worktree, reviewedHeadRefOid);
+      if (!finalWorktreeState?.ok) {
+        return gateFail(o, B, deps, pgId, claim,
+          finalWorktreeState?.reason
+          || 'review worktree changed after local checks; refusing mark-verified', plan);
+      }
+      log(`round[${repairRound}]: final local worktree recheck PASS for ${reviewedHeadRefOid.slice(0, 8)}`);
+      const finalDraftSnapshot = await inspectDraft(draftMd);
+      if (!sameDraftSnapshot(draftSnapshot, finalDraftSnapshot)) {
+        return gateFail(o, B, deps, pgId, claim,
+          finalDraftSnapshot?.reason
+          || 'draft bytes changed after local checks; refusing mark-verified', plan);
+      }
+      log(`round[${repairRound}]: final draft snapshot recheck PASS`);
 
       const evidence = JSON.stringify({
         reviewedHeadRefOid,

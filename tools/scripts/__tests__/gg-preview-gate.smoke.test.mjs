@@ -771,8 +771,88 @@ test('a repair invalidates every earlier gate result and reruns all checks on th
     );
   }
   assert.deepEqual(fixture.callsFor('codex').map((call) => call.head), [HEAD_A, HEAD_B]);
-  assert.match(fixture.markVerifiedCalls()[0].args.join(' '), new RegExp(`--head-ref-oid ${HEAD_B}`));
+  const markArgs = fixture.markVerifiedCalls()[0].args;
+  assert.match(markArgs.join(' '), new RegExp(`--head-ref-oid ${HEAD_B}`));
+  const evidence = JSON.parse(markArgs[markArgs.indexOf('--evidence') + 1]);
+  assert.deepEqual(
+    evidence.checks.draft_snapshot,
+    { ok: true, exists: false, bytes: 0, sha256: null },
+    'missing draft is recorded as an explicit immutable round state',
+  );
   assert.equal(fixture.mergeCalls().length, 1);
+});
+
+for (const localMutation of [
+  {
+    name: 'dirty worktree',
+    inspection: {
+      ok: false,
+      headRefOid: HEAD_A,
+      dirty: true,
+      reason: 'review worktree has uncommitted changes after local review',
+    },
+  },
+  {
+    name: 'local HEAD drift',
+    inspection: {
+      ok: false,
+      headRefOid: HEAD_B,
+      dirty: false,
+      reason: `review worktree HEAD mismatch: ${HEAD_B} != ${HEAD_A}`,
+    },
+  },
+]) {
+  test(`${localMutation.name} during a reviewer blocks mark and merge after all checks pass`, async () => {
+    const fixture = gateRoundFixture({ heads: [HEAD_A, HEAD_A] });
+    let mutatedDuringReview = false;
+    const originalNode = fixture.deps.node;
+    fixture.deps.node = async (bin, args, opts) => {
+      const result = await originalNode(bin, args, opts);
+      if (bin === 'review' && args.includes('schema')) mutatedDuringReview = true;
+      return result;
+    };
+    fixture.deps.inspectReviewedWorktree = async (_worktree, reviewedHeadRefOid) => (
+      mutatedDuringReview
+        ? localMutation.inspection
+        : { ok: true, headRefOid: reviewedHeadRefOid, dirty: false }
+    );
+
+    const result = await runGate(fixture.options, fixture.deps);
+
+    assert.equal(result.exitCode, 2);
+    assert.match(result.reason, /worktree.*(uncommitted|mismatch|dirty)/i);
+    assert.equal(fixture.callsFor('chrome').length, 1);
+    assert.equal(fixture.callsFor('review').length, 3);
+    assert.equal(fixture.callsFor('codex').length, 1);
+    assert.equal(fixture.markVerifiedCalls().length, 0);
+    assert.equal(fixture.mergeCalls().length, 0);
+  });
+}
+
+test('draft bytes changing during a reviewer block mark and merge after all checks pass', async () => {
+  const fixture = gateRoundFixture({ heads: [HEAD_A, HEAD_A] });
+  let draftMutatedDuringReview = false;
+  const originalNode = fixture.deps.node;
+  fixture.deps.node = async (bin, args, opts) => {
+    const result = await originalNode(bin, args, opts);
+    if (bin === 'review' && args.includes('schema')) draftMutatedDuringReview = true;
+    return result;
+  };
+  fixture.deps.inspectDraftSnapshot = async () => (
+    draftMutatedDuringReview
+      ? { ok: true, exists: true, bytes: 12, sha256: '2'.repeat(64) }
+      : { ok: true, exists: true, bytes: 12, sha256: '1'.repeat(64) }
+  );
+
+  const result = await runGate(fixture.options, fixture.deps);
+
+  assert.equal(result.exitCode, 2);
+  assert.match(result.reason, /draft.*(changed|drift|digest)/i);
+  assert.equal(fixture.callsFor('chrome').length, 1);
+  assert.equal(fixture.callsFor('review').length, 3);
+  assert.equal(fixture.callsFor('codex').length, 1);
+  assert.equal(fixture.markVerifiedCalls().length, 0);
+  assert.equal(fixture.mergeCalls().length, 0);
 });
 
 test('branch head drift during a gate round blocks verification', async () => {

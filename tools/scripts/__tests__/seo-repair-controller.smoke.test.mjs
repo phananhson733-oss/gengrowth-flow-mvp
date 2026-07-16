@@ -366,6 +366,19 @@ test('a successful migration verification credit reaches terminal success and ca
   assert.equal(terminal.totalAttempts, 21);
   assert.equal(terminal.verificationCreditRemaining, 0);
 
+  const repeatedRelease = await repairEventsModule.releaseMigrationHold({
+    queueDir: built.queueDir,
+    site: terminal.event.site,
+    pageId: terminal.event.pageId,
+    codeSha: terminal.verificationCreditRelease.codeSha,
+    reason: terminal.verificationCreditRelease.reason,
+    now: new Date('2026-07-16T08:05:00.000Z'),
+  });
+  assert.equal(repeatedRelease.status, 'published');
+  assert.equal(repeatedRelease.budgetEpoch, terminal.budgetEpoch);
+  assert.equal(repeatedRelease.verificationCreditRemaining, 0);
+  assert.equal(repeatedRelease.verificationCreditConsumedAt, terminal.verificationCreditConsumedAt);
+
   const second = await drainRepairQueue(built.args);
   assert.equal(second.processed, 0);
   assert.equal(built.calls.length, 1);

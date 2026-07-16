@@ -58,6 +58,8 @@ const TRANSACTION_FAULT_POINTS = new Set([
   'after-supersede-before-head-write',
   'after-canonical-before-source-supersede',
 ]);
+const BLOCKING_PAGE_TERMINALS = new Set(['quarantined', 'human_only']);
+const CODE_SHA_PATTERN = /^[a-f0-9]{40}$/;
 
 function requireString(value, field, { optional = false } = {}) {
   if (optional && (value === undefined || value === null || value === '')) return '';
@@ -980,6 +982,91 @@ function authoritativeHead(records, incidentId) {
       || String(b.event?.eventId || '').localeCompare(String(a.event?.eventId || '')))[0] || null;
 }
 
+function blockingPageTerminal(records, incidentId) {
+  return records
+    .filter(({ record }) => recordIncidentId(record) === incidentId
+      && record.event?.pageId !== 'RUN'
+      && (BLOCKING_PAGE_TERMINALS.has(record.status)
+        || (record.compaction?.canonical === true
+          && (record.status === 'migration_hold' || ACTIVE_STATUSES.has(record.status)))))
+    .sort((left, right) => {
+      const leftCanonical = left.record.status === 'migration_hold'
+        && left.record.compaction?.canonical === true ? 1 : 0;
+      const rightCanonical = right.record.status === 'migration_hold'
+        && right.record.compaction?.canonical === true ? 1 : 0;
+      return rightCanonical - leftCanonical
+        || Number(right.record.generation || 1) - Number(left.record.generation || 1)
+        || String(right.record.updatedAt || '').localeCompare(String(left.record.updatedAt || ''))
+        || String(right.record.event?.eventId || '').localeCompare(String(left.record.event?.eventId || ''));
+    })[0] || null;
+}
+
+function mergeObservedEvent(record, event, fingerprint, incidentId, {
+  preserveUpdatedAt = false,
+  preserveLatestEvent = false,
+} = {}) {
+  const existingSourceEvents = record.sourceEvents || [record.event];
+  const currentLatestEvent = record.latestEvent || record.event;
+  const existingSourceEventIds = new Set(
+    record.sourceEventIds || existingSourceEvents.map((source) => source.eventId),
+  );
+  const currentGenerationRunIds = new Set(existingSourceEvents.map((source) => source.runId));
+  const sourceEventIds = [...existingSourceEventIds, event.eventId];
+  const sourceEvents = existingSourceEventIds.has(event.eventId)
+    ? existingSourceEvents
+    : [...existingSourceEvents, event];
+  return {
+    ...record,
+    incidentId,
+    latestEvent: preserveLatestEvent
+      && String(currentLatestEvent?.createdAt || '') > event.createdAt
+      ? currentLatestEvent
+      : event,
+    revision: Number(record.revision || 0) + 1,
+    observations: Number(record.observations || 1) + 1,
+    firstDetectedAt: record.firstDetectedAt || record.event.createdAt,
+    windowCount: Number(record.windowCount || currentGenerationRunIds.size || 1)
+      + (currentGenerationRunIds.has(event.runId) ? 0 : 1),
+    lastArtifactSha: record.lastArtifactSha || null,
+    noProgressCount: Number(record.noProgressCount || 0),
+    sourceEventIds,
+    sourceEvents,
+    sourceFingerprints: [...new Set([
+      ...(record.sourceFingerprints || [record.fingerprint]),
+      fingerprint,
+    ])],
+    updatedAt: preserveUpdatedAt && String(record.updatedAt || '') > event.createdAt
+      ? record.updatedAt
+      : event.createdAt,
+    history: [
+      ...(record.history || []),
+      {
+        status: record.status,
+        at: event.createdAt,
+        evidence: {
+          observedEventId: event.eventId,
+          observedFingerprint: fingerprint,
+        },
+      },
+    ],
+  };
+}
+
+export function hasAvailableVerificationCredit(record) {
+  const release = record?.verificationCreditRelease;
+  return Boolean(
+    record?.compaction?.canonical === true
+    && record.verificationCredit === 1
+    && record.verificationCreditRemaining === 1
+    && record.verificationCreditConsumedAt == null
+    && release
+    && CODE_SHA_PATTERN.test(String(release.codeSha || ''))
+    && typeof release.reason === 'string'
+    && release.reason.trim() !== ''
+    && release.budgetEpoch === record.budgetEpoch,
+  );
+}
+
 function sameRecordSnapshot(snapshot, current) {
   if (!snapshot || !current) return false;
   if (snapshot.event?.eventId !== current.event?.eventId
@@ -1031,6 +1118,16 @@ export async function enqueueRepairEvent(value, {
         .sort((a, b) => Number(b.generation || 1) - Number(a.generation || 1)
           || String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')))[0];
     }
+    const blocking = blockingPageTerminal(queueRecords, incidentId);
+    if (blocking) {
+      const merged = mergeObservedEvent(blocking.record, event, fingerprint, incidentId, {
+        preserveUpdatedAt: true,
+        preserveLatestEvent: true,
+      });
+      await assertOwner();
+      await atomicWriteJson(blocking.path, merged, randomUUID);
+      return merged;
+    }
     const active = queueRecords
       .filter(({ record }) => ACTIVE_STATUSES.has(record.status)
         && recordIncidentId(record) === incidentId)
@@ -1039,36 +1136,7 @@ export async function enqueueRepairEvent(value, {
     const existing = active.find(({ record }) => record.fingerprint === fingerprint);
 
     if (existing) {
-      const sourceEventIds = [...new Set([
-        ...(existing.record.sourceEventIds || [existing.record.event.eventId]),
-        event.eventId,
-      ])];
-      const sourceEvents = [
-        ...(existing.record.sourceEvents || [existing.record.event]),
-        ...(!sourceEventIds.slice(0, -1).includes(event.eventId) ? [event] : []),
-      ];
-      const currentGenerationRunIds = new Set(
-        (existing.record.sourceEvents || [existing.record.event]).map((source) => source.runId),
-      );
-      const merged = {
-        ...existing.record,
-        incidentId,
-        latestEvent: event,
-        revision: Number(existing.record.revision || 0) + 1,
-        observations: Number(existing.record.observations || 1) + 1,
-        firstDetectedAt: existing.record.firstDetectedAt || existing.record.event.createdAt,
-        windowCount: Number(existing.record.windowCount || currentGenerationRunIds.size || 1)
-          + (currentGenerationRunIds.has(event.runId) ? 0 : 1),
-        lastArtifactSha: existing.record.lastArtifactSha || null,
-        noProgressCount: Number(existing.record.noProgressCount || 0),
-        sourceEventIds,
-        sourceEvents,
-        updatedAt: event.createdAt,
-        history: [
-          ...(existing.record.history || []),
-          { status: existing.record.status, at: event.createdAt, evidence: { observedEventId: event.eventId } },
-        ],
-      };
+      const merged = mergeObservedEvent(existing.record, event, fingerprint, incidentId);
       await assertOwner();
       await atomicWriteJson(existing.path, merged, randomUUID);
       return merged;
@@ -1330,6 +1398,94 @@ export async function compactRepairIncident({
   }, { faultInjector });
 }
 
+export async function releaseMigrationHold({
+  queueDir,
+  site,
+  pageId,
+  codeSha,
+  reason,
+  now = new Date(),
+  randomUUID = defaultRandomUUID,
+} = {}) {
+  if (!queueDir) throw new TypeError('queueDir is required');
+  const ownerSite = requireString(site, 'site');
+  if (!ALLOWED_SITES.has(ownerSite)) throw new TypeError('site must be astrologywiki or gengrowth');
+  const ownerPageId = requireString(pageId, 'pageId');
+  if (ownerPageId === 'RUN') throw new TypeError('release-hold requires a page-level incident');
+  const normalizedSha = requireString(codeSha, 'codeSha').toLowerCase();
+  if (!CODE_SHA_PATTERN.test(normalizedSha)) {
+    throw new TypeError('codeSha must be a 40-hex commit SHA');
+  }
+  const releaseReason = requireString(reason, 'reason');
+  const releasedAt = iso(now, 'release time');
+  const incidentId = incidentIdForOwner(ownerSite, ownerPageId);
+
+  return withIncidentLock(queueDir, incidentId, async ({ assertOwner }) => {
+    await recoverIncidentTransactionsLocked(queueDir, incidentId, { randomUUID, assertOwner });
+    const queueRecords = await readQueueRecords(queueDir);
+    const canonicalEntries = queueRecords
+      .filter(({ record }) => recordIncidentId(record) === incidentId
+        && record.event.site === ownerSite
+        && record.event.pageId === ownerPageId
+        && record.compaction?.canonical === true)
+      .sort((left, right) => Number(right.record.generation || 1) - Number(left.record.generation || 1)
+        || String(right.record.updatedAt || '').localeCompare(String(left.record.updatedAt || '')));
+    const canonical = canonicalEntries[0];
+    if (!canonical) {
+      throw new Error(`canonical migration hold not found for owner ${ownerSite}/${ownerPageId}`);
+    }
+    const existingRelease = canonical.record.verificationCreditRelease;
+    if (existingRelease) {
+      if (existingRelease.codeSha === normalizedSha && existingRelease.reason === releaseReason) {
+        return canonical.record;
+      }
+      throw new Error(`migration verification credit already released for ${ownerSite}/${ownerPageId}`);
+    }
+    if (canonical.record.status !== 'migration_hold') {
+      throw new Error(`canonical record is not a migration_hold for ${ownerSite}/${ownerPageId}`);
+    }
+    if (canonical.record.verificationCredit !== 1) {
+      throw new Error('migration_hold requires verificationCredit exactly 1');
+    }
+    const budgetEpoch = Number(canonical.record.budgetEpoch || 1) + 1;
+    const verificationCreditRelease = {
+      codeSha: normalizedSha,
+      reason: releaseReason,
+      releasedAt,
+      budgetEpoch,
+    };
+    const released = {
+      ...canonical.record,
+      status: 'queued',
+      revision: Number(canonical.record.revision || 0) + 1,
+      budgetEpoch,
+      strategy: 'deterministic_retry',
+      nextEligibleAt: null,
+      lease: null,
+      hold: false,
+      verificationCreditRemaining: 1,
+      verificationCreditRelease,
+      verificationCreditConsumedAt: null,
+      verificationCreditConsumedBy: null,
+      updatedAt: releasedAt,
+      history: [
+        ...(canonical.record.history || []),
+        {
+          status: 'queued',
+          at: releasedAt,
+          evidence: {
+            type: 'migration_verification_credit_released',
+            ...verificationCreditRelease,
+          },
+        },
+      ],
+    };
+    await assertOwner();
+    await atomicWriteJson(canonical.path, released, randomUUID);
+    return released;
+  });
+}
+
 function laneWeight(record) {
   const lane = String(record.event?.lane || '').toLowerCase();
   const stage = String(record.event?.stage || '').toLowerCase();
@@ -1416,20 +1572,38 @@ export async function acquireRepairLease(record, {
     if (['repairing', 'regating'].includes(current.status) && currentExpiry > nowDate.getTime()) return null;
     if (!['queued', 'repair_pending', 'repairing', 'regating'].includes(current.status)) return null;
 
+    const verificationCreditConsumed = hasAvailableVerificationCredit(current);
     const leased = {
       ...current,
       status: 'repairing',
       revision: Number(current.revision || 0) + 1,
+      ...(verificationCreditConsumed ? {
+        verificationCreditRemaining: 0,
+        verificationCreditConsumedAt: nowDate.toISOString(),
+        verificationCreditConsumedBy: requireString(owner, 'lease owner'),
+      } : {}),
       lease: {
         owner: requireString(owner, 'lease owner'),
         fencingToken: defaultRandomUUID(),
         startedAt: nowDate.toISOString(),
         expiresAt: new Date(nowDate.getTime() + Math.max(1, Number(leaseMs))).toISOString(),
+        ...(verificationCreditConsumed ? { verificationCreditConsumed: true } : {}),
       },
       updatedAt: nowDate.toISOString(),
       history: [
         ...(current.history || []),
-        { status: 'repairing', at: nowDate.toISOString(), evidence: { owner } },
+        {
+          status: 'repairing',
+          at: nowDate.toISOString(),
+          evidence: {
+            owner,
+            ...(verificationCreditConsumed ? {
+              type: 'migration_verification_credit_consumed',
+              verificationCreditConsumed: true,
+              budgetEpoch: Number(current.budgetEpoch || 1),
+            } : {}),
+          },
+        },
       ],
     };
     await assertOwner();

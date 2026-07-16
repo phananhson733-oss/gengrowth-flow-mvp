@@ -24,6 +24,7 @@ import {
   enqueueRepairEvent,
   isActiveRepairStatus,
   listRepairRecords,
+  releaseMigrationHold,
   repairEventFingerprint,
   repairIncidentId,
 } from './lib/seo-repair-events.mjs';
@@ -367,6 +368,21 @@ async function main() {
     output({ ok: true, command, record });
     return;
   }
+  if (command === 'release-hold') {
+    if (!args.site || !args['page-id'] || !args['code-sha']
+      || !args.reason || args.reason === '1') {
+      throw new TypeError('release-hold requires --site, --page-id, --code-sha, and --reason');
+    }
+    const record = await releaseMigrationHold({
+      queueDir: targetQueueDir,
+      site: args.site,
+      pageId: args['page-id'],
+      codeSha: args['code-sha'],
+      reason: args.reason,
+    });
+    output({ ok: true, command, record });
+    return;
+  }
   if (command === 'drain') {
     output({ command, ...(await drainWithLock(args, targetQueueDir)) });
     return;
@@ -384,7 +400,7 @@ async function main() {
     });
     return;
   }
-  throw new TypeError('usage: gg-seo-repair-controller.mjs enqueue|drain|import-v1|inspect|compact');
+  throw new TypeError('usage: gg-seo-repair-controller.mjs enqueue|drain|import-v1|inspect|compact|release-hold');
 }
 
 try {

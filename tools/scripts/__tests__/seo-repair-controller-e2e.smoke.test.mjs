@@ -239,6 +239,27 @@ test('release-hold malformed, missing, wrong-owner, non-hold, and zero-credit re
   assert.equal(zeroCredit.status, 2);
   assert.match(h.json(zeroCredit).error, /positive.*verification.*credit|verification.*credit/i);
   assert.deepEqual(h.json(h.run(['inspect', '--page-id', 'PG-ZERO-001'])).records, zeroBefore);
+
+  const excessivePath = join(h.root, 'excessive-event.json');
+  writeFileSync(excessivePath, JSON.stringify(event({
+    eventId: 'excessive-hold-source',
+    pageId: 'PG-EXCESSIVE-001',
+  })));
+  assert.equal(h.run(['enqueue', '--event-json', excessivePath]).status, 0);
+  assert.equal(h.run([
+    'compact', '--site', 'gengrowth', '--page-id', 'PG-EXCESSIVE-001', '--verification-credit', '2',
+  ]).status, 0);
+  const excessiveBefore = h.json(h.run(['inspect', '--page-id', 'PG-EXCESSIVE-001'])).records;
+  const excessiveCredit = h.run([
+    'release-hold', '--site', 'gengrowth', '--page-id', 'PG-EXCESSIVE-001',
+    '--code-sha', '0123456789abcdef0123456789abcdef01234567', '--reason', 'valid reason',
+  ]);
+  assert.equal(excessiveCredit.status, 2);
+  assert.match(h.json(excessiveCredit).error, /exactly.*one|verification.*credit.*1/i);
+  assert.deepEqual(
+    h.json(h.run(['inspect', '--page-id', 'PG-EXCESSIVE-001'])).records,
+    excessiveBefore,
+  );
 });
 
 test('live global lock makes a concurrent drain return busy without an adapter call', (t) => {

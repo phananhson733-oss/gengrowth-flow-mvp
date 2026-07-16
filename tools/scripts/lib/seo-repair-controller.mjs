@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 
 import {
   acquireRepairLease,
+  hasAvailableVerificationCredit,
   listEligibleRepairEvents,
   recoverExpiredLeases,
   transitionRepairEvent,
@@ -402,12 +403,14 @@ export async function drainRepairQueue({
     const candidateStrategy = chainFor(candidateClassification).includes(candidate.strategy)
       ? candidate.strategy
       : initialStrategy(candidateClassification);
-    const exhausted = preAttemptQuarantineEvidence(candidate, candidateStrategy, clockValue(now), {
-      maxTotalAttempts: totalAttemptLimit,
-      maxAgentMutationAttempts: agentMutationLimit,
-      maxWindowCount: windowLimit,
-      maxIncidentAgeMs: incidentAgeLimit,
-    });
+    const exhausted = hasAvailableVerificationCredit(candidate)
+      ? null
+      : preAttemptQuarantineEvidence(candidate, candidateStrategy, clockValue(now), {
+          maxTotalAttempts: totalAttemptLimit,
+          maxAgentMutationAttempts: agentMutationLimit,
+          maxWindowCount: windowLimit,
+          maxIncidentAgeMs: incidentAgeLimit,
+        });
     if (exhausted) {
       processed += 1;
       try {
@@ -432,6 +435,7 @@ export async function drainRepairQueue({
     });
     if (!leased) continue;
     processed += 1;
+    const verificationCreditAttempt = leased.lease?.verificationCreditConsumed === true;
 
     const classification = classifyRepairEvent(leased.event, leased.classificationEvidence);
     const strategy = chainFor(classification).includes(leased.strategy)
@@ -447,7 +451,12 @@ export async function drainRepairQueue({
       strategy,
       strategyAttempts,
       totalAttempts: Number(leased.totalAttempts || 0) + 1,
-      evidence: { classification, strategy, attempt: strategyAttempts[strategy] },
+      evidence: {
+        classification,
+        strategy,
+        attempt: strategyAttempts[strategy],
+        ...(verificationCreditAttempt ? { verificationCreditAttempt: true } : {}),
+      },
     }, {
       queueDir,
       now: clockValue(now),
@@ -499,6 +508,13 @@ export async function drainRepairQueue({
     }
     if (terminal) {
       await transitionToTerminal(active, terminal, result.evidence);
+      continue;
+    }
+    if (verificationCreditAttempt) {
+      await transitionToTerminal(active, 'quarantined', {
+        type: 'verification_credit_failed',
+        result: result?.evidence || { type: 'repair_failed_without_evidence' },
+      });
       continue;
     }
 

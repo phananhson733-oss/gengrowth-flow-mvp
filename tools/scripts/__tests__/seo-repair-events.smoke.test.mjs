@@ -506,6 +506,22 @@ test('blocking page terminals absorb same and changed observations without reset
         queueDir,
         now: new Date('2026-07-15T14:30:00.000Z'),
       }), []);
+
+      const latestEventId = authoritative.latestEvent.eventId;
+      const latestUpdatedAt = authoritative.updatedAt;
+      await enqueueRepairEvent(event({
+        eventId: `${terminalStatus}-delayed-old`,
+        pageId: terminal.event.pageId,
+        runId: 'blocking-terminal-delayed-window',
+        summary: 'a delayed older observation',
+        createdAt: '2026-07-15T13:00:00.000Z',
+      }), { queueDir });
+      const afterDelayed = (await listRepairRecords({ queueDir }))
+        .find((record) => record.event.eventId === terminal.event.eventId);
+      assert.equal(afterDelayed.observations, 4);
+      assert.equal(afterDelayed.latestEvent.eventId, latestEventId);
+      assert.equal(afterDelayed.updatedAt, latestUpdatedAt);
+      assert.equal(afterDelayed.sourceEventIds.includes(`${terminalStatus}-delayed-old`), true);
     });
   }
 });
@@ -574,6 +590,52 @@ test('a compacted migration hold releases exactly one versioned verification cre
     now: new Date('2026-07-16T08:01:00.000Z'),
   });
   assert.deepEqual(repeated, released);
+});
+
+test('a released canonical migration record absorbs observations until its credit is consumed', async (t) => {
+  const { queueDir } = await fixture(t);
+  const source = await enqueueRepairEvent(event({
+    eventId: 'released-observation-source',
+    pageId: 'PG-SDS-004',
+  }), { queueDir });
+  const seeded = await transitionRepairEvent(source, {
+    status: 'repair_pending',
+    totalAttempts: 20,
+    evidence: { historicalAttempts: 20 },
+  }, { queueDir });
+  const hold = await compactRepairIncident({
+    queueDir,
+    site: seeded.event.site,
+    pageId: seeded.event.pageId,
+    verificationCredit: 1,
+  });
+  const released = await repairEventsModule.releaseMigrationHold({
+    queueDir,
+    site: seeded.event.site,
+    pageId: seeded.event.pageId,
+    codeSha: '0123456789abcdef0123456789abcdef01234567',
+    reason: 'one rollout verification attempt',
+    now: new Date('2026-07-16T08:00:00.000Z'),
+  });
+
+  const observed = await enqueueRepairEvent(event({
+    eventId: 'released-observation-new',
+    pageId: seeded.event.pageId,
+    runId: 'released-observation-window',
+    summary: 'changed failure observed before the verification drain',
+    createdAt: '2026-07-16T08:00:30.000Z',
+  }), { queueDir });
+
+  assert.equal(observed.event.eventId, hold.event.eventId);
+  assert.equal(observed.status, 'queued');
+  assert.equal(observed.totalAttempts, 20);
+  assert.equal(observed.budgetEpoch, released.budgetEpoch);
+  assert.equal(observed.verificationCreditRemaining, 1);
+  assert.equal(observed.verificationCreditRelease.codeSha, released.verificationCreditRelease.codeSha);
+  assert.deepEqual((await listEligibleRepairEvents({
+    queueDir,
+    now: new Date('2026-07-16T08:01:00.000Z'),
+  })).map((record) => record.event.eventId), [hold.event.eventId]);
 });
 
 test('eligible reads finish a compact transaction after canonical write crash', async (t) => {

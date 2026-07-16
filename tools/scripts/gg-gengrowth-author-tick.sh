@@ -98,8 +98,11 @@ finalize_repair() {
   [ "$FINALIZED" -eq 0 ] || return "$rc"
   FINALIZED=1
   trap - EXIT INT TERM
-  if [ "${GG_SEO_REPAIR_CONTROLLER_V2_ENABLED:-0}" = "1" ] && [ -f "$CLAIMS" ] && [ -f "$PLAN" ]; then
-    if ! node "$REPAIR_CONTROLLER" import-v1 --site gengrowth \
+  if [ "${GG_SEO_REPAIR_CONTROLLER_V2_ENABLED:-0}" = "1" ]; then
+    if [ ! -f "$CLAIMS" ] || [ ! -f "$PLAN" ]; then
+      echo "$(date '+%F %T') repair import unavailable for run $RUN_ID (claims/plan missing; original rc=$rc)" >> "$LOG"
+      [ "$rc" -ne 0 ] || final_rc=2
+    elif ! node "$REPAIR_CONTROLLER" import-v1 --site gengrowth \
       --claims "$CLAIMS" --plan "$PLAN" --log-file "$LOG" --log-offset "$LOG_OFFSET_START" \
       --run-id "$RUN_ID" --run-exit "$rc" --max-targets "${GG_SEO_REPAIR_MAX_TARGETS:-2}" \
       --budget-seconds "${GG_SEO_REPAIR_BUDGET_SECONDS:-1500}" >> "$LOG" 2>&1; then

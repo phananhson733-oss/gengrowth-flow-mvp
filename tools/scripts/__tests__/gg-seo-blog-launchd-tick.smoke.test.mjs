@@ -135,7 +135,7 @@ test('outer lock makes a concurrent tick skip before nightly or hook', () => {
   assert.match(h.log(), /another SEO launchd run holds/);
 });
 
-function authorFinalizerHarness({ preflightExit = 0, controllerExit = 0 } = {}) {
+function authorFinalizerHarness({ preflightExit = 0, controllerExit = 0, planExists = true } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'gengrowth-author-finalizer-'));
   const tasks = join(root, 'tasks');
   const logs = join(root, 'logs');
@@ -144,17 +144,30 @@ function authorFinalizerHarness({ preflightExit = 0, controllerExit = 0 } = {}) 
   const plan = join(tasks, 'plan.md');
   const claims = join(tasks, 'claims.json');
   const calls = join(root, 'controller-calls.log');
+  const window = join(root, 'controller-window.log');
   const lock = join(root, 'author.lock');
-  writeFileSync(plan, '- [x] `PG-WLS-001` already done\n');
+  if (planExists) writeFileSync(plan, '- [x] `PG-WLS-001` already done\n');
   writeFileSync(claims, '{}\n');
-  const preflight = executable(join(root, 'preflight.mjs'), `process.exit(${preflightExit});\n`);
+  const preflight = executable(join(root, 'preflight.mjs'), [
+    "process.stderr.write('CURRENT FIRE PREFLIGHT ERROR\\n');",
+    `process.exit(${preflightExit});`,
+    '',
+  ].join('\n'));
   const timeout = executable(join(root, 'gtimeout'), '#!/bin/sh\nshift\nexec "$@"\n');
   const controller = executable(join(root, 'controller.mjs'), [
-    "import { appendFileSync } from 'node:fs';",
-    "appendFileSync(process.env.GG_TEST_CONTROLLER_CALLS, JSON.stringify(process.argv.slice(2)) + '\\n');",
+    "import { appendFileSync, readFileSync, writeFileSync } from 'node:fs';",
+    'const args = process.argv.slice(2);',
+    "appendFileSync(process.env.GG_TEST_CONTROLLER_CALLS, JSON.stringify(args) + '\\n');",
+    "const get = (name) => args[args.indexOf(name) + 1];",
+    "const bytes = readFileSync(get('--log-file'));",
+    "writeFileSync(process.env.GG_TEST_CONTROLLER_WINDOW, bytes.subarray(Number(get('--log-offset')) || 0));",
     `process.exit(${controllerExit});`,
     '',
   ].join('\n'));
+  const day = new Date().toISOString().slice(0, 10);
+  const logFile = join(logs, `${day}.log`);
+  const oldLog = 'OLD FIRE SHOULD STAY OUT\n';
+  writeFileSync(logFile, oldLog);
   const result = spawnSync('bash', [authorTick], {
     cwd: flow,
     encoding: 'utf8',
@@ -173,13 +186,20 @@ function authorFinalizerHarness({ preflightExit = 0, controllerExit = 0 } = {}) 
       GG_SEO_REPAIR_CONTROLLER_V2_ENABLED: '1',
       GG_SHEETS_GENGROWTH_WORKBOOK_ID: 'test-workbook',
       GG_TEST_CONTROLLER_CALLS: calls,
+      GG_TEST_CONTROLLER_WINDOW: window,
     },
   });
   const callLines = existsSync(calls)
     ? readFileSync(calls, 'utf8').trim().split('\n').filter(Boolean).map((line) => JSON.parse(line))
     : [];
-  const logFile = join(logs, `${new Date().toISOString().slice(0, 10)}.log`);
-  return { root, result, callLines, log: existsSync(logFile) ? readFileSync(logFile, 'utf8') : '' };
+  return {
+    root,
+    result,
+    callLines,
+    oldLog,
+    window: existsSync(window) ? readFileSync(window, 'utf8') : '',
+    log: existsSync(logFile) ? readFileSync(logFile, 'utf8') : '',
+  };
 }
 
 test('Gengrowth author finalizer imports exactly once with one fire-local run id and preserves nonzero rc', () => {
@@ -190,9 +210,22 @@ test('Gengrowth author finalizer imports exactly once with one fire-local run id
     const args = h.callLines[0];
     assert.equal(args[0], 'import-v1');
     assert.equal(args[args.indexOf('--run-exit') + 1], '2');
-    assert.equal(args[args.indexOf('--log-offset') + 1], '0');
+    assert.equal(args[args.indexOf('--log-offset') + 1], String(Buffer.byteLength(h.oldLog)));
     assert.match(args[args.indexOf('--run-id') + 1], /^gengrowth-author-\d{8}T\d{6}Z-\d+$/);
     assert.equal(args[args.indexOf('--budget-seconds') + 1], '1500');
+    assert.match(h.window, /CURRENT FIRE PREFLIGHT ERROR/);
+    assert.doesNotMatch(h.window, /OLD FIRE SHOULD STAY OUT/);
+  } finally {
+    rmSync(h.root, { recursive: true, force: true });
+  }
+});
+
+test('Gengrowth author finalizer fails closed when v2 inputs are unavailable', () => {
+  const h = authorFinalizerHarness({ planExists: false });
+  try {
+    assert.equal(h.result.status, 2, `${h.result.stdout}\n${h.result.stderr}\n${h.log}`);
+    assert.equal(h.callLines.length, 0);
+    assert.match(h.log, /repair import unavailable/);
   } finally {
     rmSync(h.root, { recursive: true, force: true });
   }

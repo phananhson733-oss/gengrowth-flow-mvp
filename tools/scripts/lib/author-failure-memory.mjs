@@ -2,6 +2,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 
 function normalizedFailureLines(value) {
+  if (Array.isArray(value)) return value.flatMap((item) => normalizedFailureLines(item));
   return String(value || '')
     .split(/\r?\n/)
     .map((line) => line.trim().replace(/^[-*]\s+/, ''))

@@ -24,7 +24,7 @@ aliases:
 - `PG-WLS-007`、`PG-TRANS-016`、`PG-TRANS-018` 均达到 `published`；AstrologyWiki 两篇的 PR #379/#381 已合并，生产部署、sitemap、plan、publish log、Sheet、vault/CTA 与 writeback 全部验证通过，`PG-TRANS-016` 的 SVG 已统一为 29/59/88。
 - 修复了真实运行暴露的控制器缺口：目标资产/计划白名单、安全合并续跑、recent evidence、`pushed-preview`/`done` regate、合并后 WAL 与 publish log 前置、缺失日志对账、v2 顶层异常绕过，以及终态通知幂等键到 Feishu `msgUuid` 的贯通。
 - 最终 focused 验收 148/148、全量脚本测试 1686/1686；三个本次目标无 active fingerprint、lease 或 pending writeback，controller/outbox/锁/进程均干净。新出现的 `PG-AIS-006`、`PG-SDS-004` 队列项按“其他暂不纳入”边界未处理。
-- 执行固定的 Index Repair Resubmit wrapper：astrologywiki 与 gengrowth 均以 `rc=0` 收束；本轮没有人工 Search Console 提交或失败。
+- 执行固定的 Index Repair Resubmit wrapper：astrologywiki 与 gengrowth 均以 `rc=0` 收束；本轮没有人工 Search Console 提交或失败。结果复盘性能 wrapper 随后因 GSC/GA4 OAuth refresh token 过期或撤销而在两个产品扫描前停止，未写回数据或生成报告；仅允许完成 OAuth 重新授权后重跑同一 wrapper。
 
 ---
 
@@ -85,5 +85,35 @@ Run the GenGrowth Phase 2 indexing workflow through the existing deterministic w
 **🤖 回答：**
 
 执行 `bash tools/scripts/gg-index-monitor-tick.sh`，退出码为 0；隔离日志窗口为 09:01:20–09:02:46 CST，末行 `index monitor ok`。官方 Search Console Sitemap API：astrologywiki 与 gengrowth 均成功。URL Inspection：astrologywiki `due=1`、`checked=1`、`alerts=0`、`failures=0`，该 URL 进入 monitoring；gengrowth `due=0`，无检查。结果复盘表已同步；最终 `request-indexing-queue` 为 astrologywiki `rows=23 P0=0 P1=1 P2=4 P3=18`、gengrowth `rows=2 P0=0 P1=0 P2=0 P3=2`，合计 25（P0=0、P1=1、P2=4、P3=20）。包装器执行了通知能力步骤，但精确日志窗口没有 Feishu/Lark 明确发送成功或失败回执。未使用普通文章 Google Indexing API，未执行无人值守 Request Indexing 点击。
+
+---
+
+### Q5 — 10:02
+
+**🙋 提问：**
+
+Automation: 结果复盘表更新
+Automation ID: gengrowth-recap-performance
+Automation memory: $CODEX_HOME/automations/gengrowth-recap-performance/memory.md
+Last run: 2026-07-15T02:00:23.925Z (1784080823925)
+
+Run the deterministic GenGrowth results-recap performance workflow through `bash tools/scripts/gg-recap-performance-tick.sh`.
+
+The wrapper loads the local gg environment, scans the configured products (`GG_RECAP_PERFORMANCE_PRODUCTS`, defaulting to astrologywiki and gengrowth), reads `index-tracking` and `结果复盘表`, and only fetches D14/D30/D60 GSC/GA4 snapshot metrics for indexed URLs whose current age is exactly at one of those milestones. Non-milestone rows and already-filled milestone cells must keep their existing values; historical repair/backfill is only allowed through the wrapper's explicit repair modes such as `--fill-pending` / `--verify-zero-metrics`, not by ad-hoc daily refresh.
+
+The wrapper preserves manual recap decisions/notes, writes wrapper-owned generated performance fields back to the Sheet, and writes the optimization task report under `~/gengrowth-agents/reports/recap-performance/`.
+
+Safety boundary:
+- Do not bypass the wrapper or pass ad-hoc write flags directly to the Node script.
+- Do not hand-edit Google Sheets outside the wrapper.
+- Do not publish content, deploy sites, modify page source, submit GSC Request Indexing, or use the Google Indexing API.
+- Do not overwrite manual fields such as `决策` or human notes; only the wrapper-owned generated recap segment may be refreshed.
+- Do not create extra Feishu/Google Doc artifacts unless the wrapper already does so.
+
+After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/recap_performance/` and summarize per-product workbook/site/property, exact-milestone rows processed, updated recap row counts, generated report path, D14/D30/D60 coverage for due indexed rows, optimization task counts by priority, skipped/non-due rows, and any failures. If the wrapper fails or required credentials/properties are missing, report the exact missing boundary from the log without attempting a manual replacement workflow.
+
+**🤖 回答：**
+
+仅执行 `bash tools/scripts/gg-recap-performance-tick.sh`，退出码为 1。最新日志窗口为 10:01:59–10:02:01 CST：astrologywiki（`wb=…jyzcQc`、`sc-domain:astrologywiki.com`、GA4 `properties/524765570`）与 gengrowth（`wb=…ZTIRA8`、`sc-domain:gengrowth.ai`、同一 GA4 property）均在扫描前停止，原因是 GSC/GA4 OAuth refresh token 被拒绝（已过期或撤销）。因此没有精确里程碑处理行、recap 更新行、D14/D30/D60 覆盖率、优化任务优先级计数、跳过/非到期计数，也没有 2026-07-16 优化报告。wrapper 自行发送失败通知（`messageId=om_x100b6ab7f771cca0b11c9f9077cc981`）。唯一允许的补救边界是先运行 `node tools/scripts/oauth-init.mjs` 完成重新授权，再重跑同一 wrapper；未手工编辑 Sheets、未使用替代流程，也未发布、部署或提交索引。
 
 ---

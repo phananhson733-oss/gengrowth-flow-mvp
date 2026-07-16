@@ -69,6 +69,13 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import {
+  artifactShaForEvidence,
+  artifactShaFromFiles,
+  failureFingerprintFor,
+  sitemapUrlsFromXml,
+  verifyRenderedArtifacts,
+} from './lib/seo-final-artifacts.mjs';
 
 const HERE = (() => {
   try { return fileURLToPath(new URL('.', import.meta.url)); } catch { return process.cwd(); }
@@ -84,6 +91,9 @@ export const EXIT = { PUBLISHED: 0, NOTHING_PENDING: 1, GATE_FAILED: 2 };
 export const REVIEW_DIMENSIONS = ['astrology', 'schema', 'links-seo'];
 const PREVIEW_STATUSES = new Set(['pushed-preview', 'verified-preview']);
 const HEAD_REF_OID_RE = /^[0-9a-f]{40}$/i;
+const SHA256_RE = /^[0-9a-f]{64}$/i;
+const LIVE_ORIGIN = 'https://www.astrologywiki.com';
+const LIVE_SITEMAP = `${LIVE_ORIGIN}/sitemap.xml`;
 
 // Default per-step hard timeouts (ms). Each sub-process is killed if it exceeds these and the
 // step is classified as a gate failure. Conservative relative to the sub-scripts' own caps.
@@ -141,6 +151,7 @@ export async function tryGateRepair({
   worktree,
   branch,
   expectedHead,
+  slug,
   node,
   B,
   log,
@@ -194,12 +205,31 @@ export async function tryGateRepair({
   let content;
   try { content = readFileSync(articleTs, 'utf8'); } catch { log(`repair[${dim}]: read failed — skip`); return false; }
   const originalContent = content;
+  const artifactShaBefore = artifactShaFromFiles({
+    worktree,
+    articlePath: articleTs,
+    slug: String(slug || ''),
+  });
   for (const e of edits) {
     if (!e || typeof e.old_string !== 'string' || typeof e.new_string !== 'string') { log(`repair[${dim}]: malformed edit — abort`); return false; }
     if ((content.split(e.old_string).length - 1) !== 1) { log(`repair[${dim}]: edit not uniquely present — abort`); return false; }
     content = content.replace(e.old_string, e.new_string);
   }
   try { writeFileSync(articleTs, content); } catch { log(`repair[${dim}]: write failed — abort`); return false; }
+  const artifactShaAfter = artifactShaFromFiles({
+    worktree,
+    articlePath: articleTs,
+    slug: String(slug || ''),
+  });
+  if (artifactShaAfter === artifactShaBefore) {
+    try { writeFileSync(articleTs, originalContent); } catch {}
+    return {
+      applied: false,
+      artifactShaBefore,
+      artifactShaAfter,
+      reason: 'repair produced no article/asset byte progress',
+    };
+  }
   const articlePathspec = relative(worktree, articleTs);
   git(['add', '--', articlePathspec]);
   const cm = git(['commit', '-m', `fix(gate-repair): ${dim} — ${String((out && out.note) || 'surgical').slice(0, 72)}`]);
@@ -222,7 +252,12 @@ export async function tryGateRepair({
     };
   }
   log(`repair[${dim}]: applied ${edits.length} edit(s) + pushed ${newHead.slice(0, 8)} — starting a new full gate round`);
-  return true;
+  return {
+    applied: true,
+    headRefOid: newHead,
+    artifactShaBefore,
+    artifactShaAfter,
+  };
 }
 
 // ── arg parsing ───────────────────────────────────────────────────────────────
@@ -636,6 +671,125 @@ function normalizePreviewUrl(value) {
   return String(value || '').replace(/\/+$/, '');
 }
 
+function failedArtifactEvidence(kind, reason) {
+  return {
+    ok: false,
+    checked: [],
+    failed: [{ reason }],
+    ignored: [],
+    kind,
+  };
+}
+
+export async function verifyPreviewFinalArtifacts({
+  previewUrl,
+  slug,
+  reviewBundle,
+  reviewedHeadRefOid,
+  previewEvidence,
+}, deps = {}) {
+  if (previewEvidence?.final_links && previewEvidence?.final_assets) {
+    const final_links = previewEvidence.final_links;
+    const final_assets = previewEvidence.final_assets;
+    const ok = final_links?.ok === true && final_assets?.ok === true;
+    return {
+      ok,
+      reviewedHeadRefOid,
+      artifactSha: artifactShaForEvidence({
+        articleSha: reviewBundle.article.sha256,
+        finalAssets: final_assets,
+      }),
+      failureFingerprint: ok ? null : failureFingerprintFor({
+        final_links: final_links?.failed || [],
+        final_assets: final_assets?.failed || [],
+      }),
+      final_links,
+      final_assets,
+    };
+  }
+
+  const rawFetch = deps.fetchFinalArtifact || globalThis.fetch?.bind(globalThis);
+  if (typeof rawFetch !== 'function') {
+    const reason = 'final artifact fetch implementation unavailable';
+    const final_links = failedArtifactEvidence('final_links', reason);
+    const final_assets = failedArtifactEvidence('final_assets', reason);
+    return {
+      ok: false,
+      reviewedHeadRefOid,
+      artifactSha: artifactShaForEvidence({
+        articleSha: reviewBundle.article.sha256,
+        finalAssets: final_assets,
+      }),
+      failureFingerprint: failureFingerprintFor({ final_links: final_links.failed, final_assets: final_assets.failed }),
+      final_links,
+      final_assets,
+    };
+  }
+  const boundedFetch = (url, init = {}) => rawFetch(url, {
+    ...init,
+    signal: init.signal || AbortSignal.timeout(30_000),
+  });
+  const previewPageUrl = new URL(`/en/wiki/${slug}`, `${normalizePreviewUrl(previewUrl)}/`).toString();
+  const livePageUrl = `${LIVE_ORIGIN}/en/wiki/${slug}`;
+  const previewHeaders = {
+    'user-agent': 'gg-preview-final-artifacts/1',
+    ...(process.env.VERCEL_AUTOMATION_BYPASS_SECRET
+      ? { 'x-vercel-protection-bypass': process.env.VERCEL_AUTOMATION_BYPASS_SECRET }
+      : {}),
+  };
+
+  let pageHtml = '';
+  let sitemapText = '';
+  try {
+    const [page, liveSitemap] = await Promise.all([
+      boundedFetch(previewPageUrl, { redirect: 'follow', headers: previewHeaders }),
+      boundedFetch(LIVE_SITEMAP, {
+        redirect: 'follow',
+        headers: { 'user-agent': 'gg-preview-final-artifacts/1' },
+      }),
+    ]);
+    if (Number(page?.status || 0) !== 200) {
+      throw new Error(`preview article HTTP ${Number(page?.status || 0)}`);
+    }
+    if (Number(liveSitemap?.status || 0) !== 200) {
+      throw new Error(`live sitemap HTTP ${Number(liveSitemap?.status || 0)}`);
+    }
+    [pageHtml, sitemapText] = await Promise.all([page.text(), liveSitemap.text()]);
+  } catch (error) {
+    const reason = `final artifact input unavailable: ${error?.message || String(error)}`;
+    const final_links = failedArtifactEvidence('final_links', reason);
+    const final_assets = failedArtifactEvidence('final_assets', reason);
+    return {
+      ok: false,
+      reviewedHeadRefOid,
+      artifactSha: artifactShaForEvidence({
+        articleSha: reviewBundle.article.sha256,
+        finalAssets: final_assets,
+      }),
+      failureFingerprint: failureFingerprintFor({ final_links: final_links.failed, final_assets: final_assets.failed }),
+      final_links,
+      final_assets,
+    };
+  }
+  const sitemapUrls = sitemapUrlsFromXml(sitemapText);
+  const allowedRoutes = new Set(
+    [...sitemapUrls].map((entry) => {
+      try { return new URL(entry).pathname; } catch { return ''; }
+    }).filter(Boolean),
+  );
+  return verifyRenderedArtifacts({
+    html: pageHtml,
+    pageUrl: livePageUrl,
+    assetBaseUrl: previewPageUrl,
+    allowedRoutes,
+    sitemapUrls,
+    fetch: boundedFetch,
+    decodeImage: deps.decodeImage,
+    articleSha: reviewBundle.article.sha256,
+    reviewedHeadRefOid,
+  });
+}
+
 export async function verifyPreviewBinding({
   previewUrl,
   branch,
@@ -710,6 +864,7 @@ async function runFullGateRound({
   draftSnapshot,
   reviewBundle,
   verifyReviewInputs,
+  verifyFinalArtifacts,
   reviewedHeadRefOid,
   repairRound,
   log,
@@ -724,6 +879,7 @@ async function runFullGateRound({
     if (!failure) failure = candidate;
   };
   const pinnedArgs = ['--head-ref-oid', reviewedHeadRefOid];
+  let previewEvidence = null;
 
   const verifyArgs = [
     '--preview-url', previewUrl,
@@ -744,6 +900,7 @@ async function runFullGateRound({
       noteFailure({ reason: `chrome verify failed: ${reason}`, repairable: false, dim: 'chrome' });
     } else {
       checks.chrome = { status: 'PASS', checked: (vj.checked || []).length };
+      previewEvidence = vj;
       log(`round[${repairRound}] verify: PASS (${(vj.checked || []).length} url(s))`);
     }
   }
@@ -858,12 +1015,82 @@ async function runFullGateRound({
     }
   }
 
+  let finalArtifacts;
+  try {
+    finalArtifacts = await verifyFinalArtifacts({
+      previewUrl,
+      slug: String(claim.slug),
+      articleTs,
+      draftMd,
+      reviewBundle,
+      reviewedHeadRefOid,
+      repairRound,
+      previewEvidence,
+    });
+  } catch (error) {
+    const reason = `final artifact verifier crashed: ${error?.message || String(error)}`;
+    finalArtifacts = {
+      ok: false,
+      reviewedHeadRefOid,
+      artifactSha: artifactShaForEvidence({
+        articleSha: reviewBundle.article.sha256,
+        finalAssets: { checked: [], failed: [] },
+      }),
+      failureFingerprint: failureFingerprintFor({ reason }),
+      final_links: failedArtifactEvidence('final_links', reason),
+      final_assets: failedArtifactEvidence('final_assets', reason),
+    };
+  }
+  const artifactEvidenceHeadOk = finalArtifacts?.reviewedHeadRefOid === reviewedHeadRefOid;
+  checks.final_links = finalArtifacts?.final_links || failedArtifactEvidence(
+    'final_links',
+    'structured final_links evidence missing',
+  );
+  checks.final_assets = finalArtifacts?.final_assets || failedArtifactEvidence(
+    'final_assets',
+    'structured final_assets evidence missing',
+  );
+  if (!artifactEvidenceHeadOk) {
+    noteFailure({
+      reason: 'final artifact evidence does not bind the reviewed head',
+      repairable: false,
+      dim: 'final_artifacts',
+    });
+  } else if (checks.final_links.ok !== true) {
+    noteFailure({
+      reason: `final_links failed: ${checks.final_links.failed?.[0]?.reason || 'unknown link failure'}`,
+      repairable: true,
+      dim: 'final_links',
+      repairDim: 'links-seo',
+    });
+  } else if (checks.final_assets.ok !== true) {
+    noteFailure({
+      reason: `final_assets failed: ${checks.final_assets.failed?.[0]?.reason || 'unknown asset failure'}`,
+      repairable: false,
+      dim: 'final_assets',
+    });
+  } else {
+    log(`round[${repairRound}] final artifacts: PASS links=${checks.final_links.checked?.length || 0} assets=${checks.final_assets.checked?.length || 0}`);
+  }
+
+  const failureFingerprint = failure
+    ? failureFingerprintFor({
+        dim: failure.dim,
+        reason: failure.reason,
+        check: checks[failure.dim] || null,
+      })
+    : null;
   return {
     pass: failure === null,
     failure,
     checks,
     reviewedHeadRefOid,
     repairRound,
+    artifactSha: finalArtifacts?.artifactSha || artifactShaForEvidence({
+      articleSha: reviewBundle.article.sha256,
+      finalAssets: checks.final_assets,
+    }),
+    failureFingerprint,
   };
 }
 
@@ -897,6 +1124,9 @@ export async function runGate(o, deps = {}) {
   const verifyReviewInputs = deps.verifyReviewBundle
     ? ((bundle) => deps.verifyReviewBundle(bundle))
     : ((bundle) => verifyReviewBundle(bundle));
+  const verifyFinalArtifacts = deps.verifyFinalArtifacts
+    ? ((input) => deps.verifyFinalArtifacts(input))
+    : ((input) => verifyPreviewFinalArtifacts(input, deps));
   const plan = [];
   const log = (line) => plan.push(line);
 
@@ -944,9 +1174,17 @@ export async function runGate(o, deps = {}) {
   }
 
   const configuredRounds = Number(process.env.GG_GATE_REPAIR_MAX_ROUNDS ?? 2);
-  const maxRepairRounds = Math.min(3, Math.max(0,
+  const maxRepairRounds = Math.min(3, Math.max(1,
     Number.isFinite(configuredRounds) ? Math.floor(configuredRounds) : 2));
+  const configuredTotalBudget = Number(process.env.GG_GATE_REPAIR_TOTAL_BUDGET ?? 3);
+  const totalRepairBudget = Math.min(3, Math.max(1,
+    Number.isFinite(configuredTotalBudget) ? Math.floor(configuredTotalBudget) : 3));
+  const perDimensionBudget = 2;
   let previousFailedHead = null;
+  let previousFailurePair = null;
+  let noProgressCount = 0;
+  let totalRepairEdits = 0;
+  const repairEditsByDimension = {};
 
   for (let repairRound = 0; repairRound <= maxRepairRounds; repairRound += 1) {
     const reviewedHeadRefOid = await resolveHead(o.branch, o.repo);
@@ -1046,6 +1284,7 @@ export async function runGate(o, deps = {}) {
       draftSnapshot,
       reviewBundle,
       verifyReviewInputs,
+      verifyFinalArtifacts,
       reviewedHeadRefOid,
       repairRound,
       log,
@@ -1091,6 +1330,11 @@ export async function runGate(o, deps = {}) {
         reviewedHeadRefOid,
         repairRound,
         checks: outcome.checks,
+        artifactSha: outcome.artifactSha,
+        failureFingerprint: outcome.failureFingerprint,
+        noProgressCount,
+        totalRepairEdits,
+        repairEditsByDimension,
       });
       log(`final: mark-verified --branch ${o.branch} --preview-url ${previewUrl} --head-ref-oid ${reviewedHeadRefOid}`);
       const mv = await node(B.autopilot, [
@@ -1115,8 +1359,28 @@ export async function runGate(o, deps = {}) {
       return { exitCode: EXIT.PUBLISHED, plan, action: 'merged', reason: 'all required gates passed' };
     }
 
+    if (!SHA256_RE.test(outcome.artifactSha || '') || !SHA256_RE.test(outcome.failureFingerprint || '')) {
+      return gateFail(o, B, deps, pgId, claim,
+        `${outcome.failure?.reason || 'gate round failed'}; artifact progress evidence missing`, plan);
+    }
+    const failurePair = `${outcome.artifactSha}:${outcome.failureFingerprint}`;
+    noProgressCount = failurePair === previousFailurePair ? noProgressCount + 1 : 0;
+    previousFailurePair = failurePair;
+    if (noProgressCount >= 2) {
+      return gateFail(o, B, deps, pgId, claim,
+        `no_progress artifactSha=${outcome.artifactSha} failureFingerprint=${outcome.failureFingerprint}`, plan);
+    }
     if (!outcome.failure?.repairable || repairRound === maxRepairRounds) {
       return gateFail(o, B, deps, pgId, claim, outcome.failure?.reason || 'gate round failed', plan);
+    }
+    const budgetDimension = outcome.failure.dim || 'unknown';
+    if (totalRepairEdits >= totalRepairBudget) {
+      return gateFail(o, B, deps, pgId, claim,
+        `total repair edit budget exhausted (${totalRepairBudget})`, plan);
+    }
+    if ((repairEditsByDimension[budgetDimension] || 0) >= perDimensionBudget) {
+      return gateFail(o, B, deps, pgId, claim,
+        `repair edit budget exhausted for ${budgetDimension} (${perDimensionBudget})`, plan);
     }
     const beforeRepairState = await inspectWorktree(worktree, reviewedHeadRefOid);
     if (!beforeRepairState?.ok) {
@@ -1124,13 +1388,18 @@ export async function runGate(o, deps = {}) {
         beforeRepairState?.reason || 'review worktree became unsafe before repair', plan);
     }
     const repairResult = await repair({
-      dim: outcome.failure.dim,
+      dim: outcome.failure.repairDim || outcome.failure.dim,
       reason: outcome.failure.reason,
       articleTs,
       draftMd,
       worktree,
       branch: o.branch,
       expectedHead: reviewedHeadRefOid,
+      slug: claim.slug,
+      artifactSha: outcome.artifactSha,
+      failureFingerprint: outcome.failureFingerprint,
+      totalRepairEdits,
+      repairEditsByDimension: { ...repairEditsByDimension },
       node,
       B,
       log,
@@ -1144,6 +1413,18 @@ export async function runGate(o, deps = {}) {
       return gateFail(o, B, deps, pgId, claim,
         `repair made no commit progress; head remained ${reviewedHeadRefOid}`, plan);
     }
+    if (!SHA256_RE.test(repairResult?.artifactShaBefore || '')
+      || !SHA256_RE.test(repairResult?.artifactShaAfter || '')) {
+      return gateFail(o, B, deps, pgId, claim,
+        'repair artifact hash evidence missing; refusing unaccounted edit', plan);
+    }
+    if (repairResult.artifactShaAfter !== repairResult.artifactShaBefore) {
+      totalRepairEdits += 1;
+      repairEditsByDimension[budgetDimension] = (repairEditsByDimension[budgetDimension] || 0) + 1;
+      log(`repair budget: total=${totalRepairEdits}/${totalRepairBudget} ${budgetDimension}=${repairEditsByDimension[budgetDimension]}/${perDimensionBudget}`);
+    } else {
+      log(`repair budget: unchanged artifact bytes — edit not counted (${budgetDimension})`);
+    }
     previousFailedHead = reviewedHeadRefOid;
   }
 
@@ -1156,7 +1437,7 @@ export async function runGate(o, deps = {}) {
 // claim's CURRENT status is needs_human/done to avoid that throw. We still notify.
 // In --dry-run we do NEITHER — just record the intended action.
 async function gateFail(o, B, deps, pgId, claim, reason, plan) {
-  const node = (binPath, args, opts) => runNode(binPath, args, opts, deps);
+  const node = deps.node || ((binPath, args, opts) => runNode(binPath, args, opts, deps));
   const parkable = claim && ['active', 'pushed-preview', 'verified-preview'].includes(claim.status);
   const slug = (claim && claim.slug) || (pgId ? `pg:${pgId}` : o.branch);
 

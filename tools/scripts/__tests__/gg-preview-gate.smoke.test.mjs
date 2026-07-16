@@ -136,7 +136,13 @@ function fakeEnv({
   });
   const previewVerify = writeNodeFake(dir, 'fake-preview-verify.mjs', {
     sentinelName: 'preview-verify', sentinelsDir,
-    stdout: verifyJson || JSON.stringify({ ok: true, checked: [{ url: 'x' }], warnings: [] }),
+    stdout: verifyJson || JSON.stringify({
+      ok: true,
+      checked: [{ url: 'x' }],
+      warnings: [],
+      final_links: { ok: true, checked: [], failed: [], ignored: [] },
+      final_assets: { ok: true, checked: [], failed: [], ignored: [] },
+    }),
     exit: verifyExit,
   });
   // The unified notify CLI fake (node script, invoked as `node <bin> <event> --k v …`):
@@ -289,7 +295,11 @@ function run(args, env) {
 function gateRoundFixture({
   heads,
   reviewVerdicts = {},
-  repairResult = { applied: true },
+  repairResult = {
+    applied: true,
+    artifactShaBefore: '4'.repeat(64),
+    artifactShaAfter: '5'.repeat(64),
+  },
   worktreeInspection,
   worktreeInspections,
   previewBinding,
@@ -948,7 +958,7 @@ test('a repair invalidates every earlier gate result and reruns all checks on th
 });
 
 test('the second consecutive identical artifact and failure fingerprint stops before a third edit', async () => {
-  const sameArtifacts = [HEAD_A, HEAD_B].map((head) => ({
+  const sameArtifacts = [HEAD_A, HEAD_B, HEAD_C].map((head) => ({
     ok: false,
     reviewedHeadRefOid: head,
     artifactSha: '9'.repeat(64),
@@ -962,21 +972,21 @@ test('the second consecutive identical artifact and failure fingerprint stops be
     final_assets: { ok: true, checked: [], failed: [], ignored: [] },
   }));
   const fixture = gateRoundFixture({
-    heads: [HEAD_A, HEAD_B],
+    heads: [HEAD_A, HEAD_B, HEAD_C],
     finalArtifactResults: sameArtifacts,
-    repairResult: {
+    repairResult: (_input, count) => ({
       applied: true,
-      headRefOid: HEAD_B,
-      artifactShaBefore: '1'.repeat(64),
-      artifactShaAfter: '2'.repeat(64),
-    },
+      headRefOid: count === 1 ? HEAD_B : HEAD_C,
+      artifactShaBefore: `${count}`.repeat(64),
+      artifactShaAfter: `${count + 1}`.repeat(64),
+    }),
   });
 
   const result = await runGate(fixture.options, fixture.deps);
 
   assert.equal(result.exitCode, 2);
   assert.match(result.reason, /no_progress/i);
-  assert.equal(fixture.repairCalls.length, 1, 'the repeated pair must stop before a second local edit');
+  assert.equal(fixture.repairCalls.length, 2, 'two bounded edits are allowed; the third must not start');
   assert.equal(fixture.markVerifiedCalls().length, 0);
   assert.equal(fixture.mergeCalls().length, 0);
   const markFailed = fixture.calls.find(
@@ -1029,7 +1039,7 @@ test('changed artifact bytes with the same failure fingerprint reset no-progress
   );
   assert.equal(evidence.totalRepairEdits, 2);
   assert.deepEqual(evidence.repairEditsByDimension, { final_links: 2 });
-  assert.equal(evidence.noProgressCount, 1);
+  assert.equal(evidence.noProgressCount, 0);
 });
 
 test('global total repair edit budget is clamped and exhausted before another edit', async () => {

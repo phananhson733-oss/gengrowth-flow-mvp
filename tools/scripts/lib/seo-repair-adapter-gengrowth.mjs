@@ -168,7 +168,15 @@ export async function recoverGengrowthAuthoring(event, deps = {}) {
         evidence: { type: 'repair_deadline_exhausted', results },
       };
     }
-    const timeoutMs = Math.max(1, Math.min(command.timeoutMs, remainingMs));
+    const reservedMs = command.role === 'author' ? 60 * 1000 : 0;
+    if (remainingMs <= reservedMs) {
+      return {
+        target: null,
+        agentMutationInvoked,
+        evidence: { type: 'repair_deadline_exhausted', results },
+      };
+    }
+    const timeoutMs = Math.max(1, Math.min(command.timeoutMs, remainingMs - reservedMs));
     let result;
     try {
       result = await runCommand(command.argv, {
@@ -259,7 +267,7 @@ export function createGengrowthRepairAdapter(deps = {}) {
         ? Date.parse(attemptDeadlineAt)
         : nowMs() + (25 * 60 * 1000);
       const remainingTimeout = (capMs) => Math.max(
-        1,
+        0,
         Math.min(capMs, deadlineMs - nowMs()),
       );
       let target;
@@ -311,7 +319,13 @@ export function createGengrowthRepairAdapter(deps = {}) {
       const needsAgent = ['agent_content_asset_link', 'agent_diagnosis', 'agent_code_environment']
         .includes(strategy);
       const mutationInvoked = () => needsAgent || authorMutationInvoked;
+      const deadlineFailure = () => ({
+        ok: false,
+        agentMutationInvoked: mutationInvoked(),
+        evidence: withAuthorRecovery({ type: 'repair_deadline_exhausted' }),
+      });
       if (needsAgent) {
+        if (remainingTimeout(1) <= 0) return deadlineFailure();
         const repaired = await invokeAgent({
           site: 'gengrowth',
           pageId: event.pageId,
@@ -351,6 +365,7 @@ export function createGengrowthRepairAdapter(deps = {}) {
       if (!isAllowedGengrowthAction(reviewerArgv, context)) {
         throw new Error('reviewer action rejected by Gengrowth adapter whitelist');
       }
+      if (remainingTimeout(1) <= 0) return deadlineFailure();
       const reviewed = await runCommand(reviewerArgv, {
         cwd: flow,
         env: process.env,
@@ -393,6 +408,7 @@ export function createGengrowthRepairAdapter(deps = {}) {
       if (!isAllowedGengrowthAction(publishArgv, context)) {
         throw new Error('publisher action rejected by Gengrowth adapter whitelist');
       }
+      if (remainingTimeout(1) <= 0) return deadlineFailure();
       const published = await runCommand(publishArgv, {
         cwd: flow,
         env: process.env,
@@ -416,6 +432,7 @@ export function createGengrowthRepairAdapter(deps = {}) {
         };
       }
 
+      if (remainingTimeout(1) <= 0) return deadlineFailure();
       const verified = await verifyTerminal(event, target, {
         timeoutMs: remainingTimeout(2 * 60 * 1000),
       });

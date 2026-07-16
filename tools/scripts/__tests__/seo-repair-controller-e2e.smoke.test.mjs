@@ -163,13 +163,14 @@ test('a newly-created lock without owner metadata is treated as busy during its 
 
 test('maxTargets=1 processes one event and leaves the second queued', (t) => {
   const h = harness(t);
+  const fresh = Date.now();
   for (const value of [
-    event(),
+    event({ createdAt: new Date(fresh - 1_000).toISOString() }),
     event({
       eventId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
       pageId: 'PG-WLS-008',
       slug: 'seo-agents',
-      createdAt: '2026-07-15T14:01:00.000Z',
+      createdAt: new Date(fresh).toISOString(),
     }),
   ]) {
     const path = join(h.root, `${value.pageId}.json`);

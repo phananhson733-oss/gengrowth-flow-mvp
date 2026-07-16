@@ -9,6 +9,7 @@ import { dirname, join } from 'node:path';
 import {
   createGengrowthRepairAdapter,
   isAllowedGengrowthAction,
+  recoverGengrowthAuthoring,
 } from '../lib/seo-repair-adapter-gengrowth.mjs';
 import {
   buildAstrologyRepairTarget,
@@ -305,6 +306,53 @@ test('gengrowth authoring repair salvages a passing handoff after author timeout
   assert.equal(result.agentMutationInvoked, true);
   assert.equal(result.evidence.authorRecovery.authorCut, true);
   assert.equal(result.evidence.authorRecovery.results[1].code, 124);
+});
+
+test('author timeout allocation always reserves enough deadline for handoff salvage', async () => {
+  let clock = 0;
+  const calls = [];
+  const result = await recoverGengrowthAuthoring(authoringRecord().event, {
+    scriptsDir: '/repo/tools/scripts',
+    flow: '/repo',
+    deadlineMs: 13 * 60 * 1000,
+    nowMs: () => clock,
+    runCommand: async (argv, options) => {
+      calls.push(argv);
+      clock += options.timeoutMs;
+      if (argv.includes('--author')) {
+        return { code: 124, stdout: 'passing draft exists', stderr: 'review cut', timedOut: true };
+      }
+      return { code: 0, stdout: '{}', stderr: '', timedOut: false };
+    },
+    resolveAuthoredTarget: async () => ({
+      mdPath: '/repo/_staging/PG-SDS-004-claude-v8.md',
+      manifestPath: '/repo/_staging/PG-SDS-004-claude-v8.manifest.json',
+      slug: 'software-development-services',
+    }),
+  });
+  assert.equal(calls.some((argv) => argv[1].endsWith('gg-gengrowth-author-handoff.mjs')), true);
+  assert.equal(result.target.slug, 'software-development-services');
+  assert.equal(result.evidence.authorCut, true);
+});
+
+test('gengrowth adapter stops explicitly when its shared attempt deadline is exhausted', async () => {
+  let calls = 0;
+  const adapter = createGengrowthRepairAdapter({
+    nowMs: () => 1,
+    resolveTarget: async () => ({ mdPath: '/repo/_staging/PG-WLS-007-codex-v8.md', slug: 'chatgpt-seo' }),
+    runCommand: async () => {
+      calls += 1;
+      return { code: 0, stdout: 'VERDICT: PASS\n', stderr: '', timedOut: false };
+    },
+  });
+  const result = await adapter.execute({
+    record: record(),
+    strategy: 'deterministic_retry',
+    attemptDeadlineAt: new Date(0).toISOString(),
+  });
+  assert.equal(calls, 0);
+  assert.equal(result.ok, false);
+  assert.equal(result.evidence.type, 'repair_deadline_exhausted');
 });
 
 test('gengrowth adapter action whitelist rejects top-level wrappers and arbitrary sources', () => {

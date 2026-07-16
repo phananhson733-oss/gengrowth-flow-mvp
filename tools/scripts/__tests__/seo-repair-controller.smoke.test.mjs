@@ -387,6 +387,7 @@ test('real Gengrowth article SHA drives no-progress quarantine across two failed
   await enqueueRepairEvent(event(), { queueDir });
   let reviewerCalls = 0;
   const adapter = createGengrowthRepairAdapter({
+    nowMs: () => Date.parse('2026-07-15T14:02:00.000Z'),
     resolveTarget: async () => ({ mdPath, slug: 'chatgpt-seo' }),
     runCommand: async () => {
       reviewerCalls += 1;

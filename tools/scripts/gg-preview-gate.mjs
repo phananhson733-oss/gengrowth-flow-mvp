@@ -762,6 +762,7 @@ export async function verifyPreviewFinalArtifacts({
     const ok = final_links?.ok === true && final_assets?.ok === true;
     return {
       ok,
+      inputAvailable: previewEvidence.inputAvailable !== false,
       reviewedHeadRefOid,
       artifactSha: artifactShaForEvidence({
         articleSha: reviewBundle.article.sha256,
@@ -783,6 +784,7 @@ export async function verifyPreviewFinalArtifacts({
     const final_assets = failedArtifactEvidence('final_assets', reason);
     return {
       ok: false,
+      inputAvailable: false,
       reviewedHeadRefOid,
       artifactSha: artifactShaForEvidence({
         articleSha: reviewBundle.article.sha256,
@@ -806,7 +808,6 @@ export async function verifyPreviewFinalArtifacts({
     ...(bypassSecret
       ? {
         'x-vercel-protection-bypass': bypassSecret,
-        'x-vercel-set-bypass-cookie': 'true',
       }
       : {}),
   };
@@ -815,11 +816,14 @@ export async function verifyPreviewFinalArtifacts({
     const headers = { ...(init.headers || {}) };
     if (bypassSecret && targetOrigin === previewOrigin) {
       headers['x-vercel-protection-bypass'] = bypassSecret;
-      headers['x-vercel-set-bypass-cookie'] = 'true';
     } else {
       delete headers['x-vercel-protection-bypass'];
-      delete headers['x-vercel-set-bypass-cookie'];
     }
+    // `x-vercel-set-bypass-cookie` is for browser navigation. Direct fetches
+    // authenticate every preview-origin request with the bypass header itself;
+    // asking Vercel to set a cookie here produces a 307 that a stateless fetch
+    // cannot use and must never be mistaken for broken article content.
+    delete headers['x-vercel-set-bypass-cookie'];
     return boundedFetch(url, { ...init, headers });
   };
 
@@ -846,6 +850,7 @@ export async function verifyPreviewFinalArtifacts({
     const final_assets = failedArtifactEvidence('final_assets', reason);
     return {
       ok: false,
+      inputAvailable: false,
       reviewedHeadRefOid,
       artifactSha: artifactShaForEvidence({
         articleSha: reviewBundle.article.sha256,
@@ -862,7 +867,7 @@ export async function verifyPreviewFinalArtifacts({
       try { return new URL(entry).pathname; } catch { return ''; }
     }).filter(Boolean),
   );
-  return verifyRenderedArtifacts({
+  const verified = await verifyRenderedArtifacts({
     html: pageHtml,
     pageUrl: livePageUrl,
     assetBaseUrl: previewPageUrl,
@@ -875,6 +880,7 @@ export async function verifyPreviewFinalArtifacts({
     articleSha: reviewBundle.article.sha256,
     reviewedHeadRefOid,
   });
+  return { ...verified, inputAvailable: true };
 }
 
 export async function verifyPreviewBinding({
@@ -1158,6 +1164,7 @@ async function runFullGateRound({
     const reason = `final artifact verifier crashed: ${error?.message || String(error)}`;
     finalArtifacts = {
       ok: false,
+      inputAvailable: false,
       reviewedHeadRefOid,
       artifactSha: artifactShaForEvidence({
         articleSha: reviewBundle.article.sha256,
@@ -1180,6 +1187,14 @@ async function runFullGateRound({
   if (!artifactEvidenceHeadOk) {
     noteFailure({
       reason: 'final artifact evidence does not bind the reviewed head',
+      repairable: false,
+      dim: 'final_artifacts',
+    });
+  } else if (finalArtifacts?.inputAvailable === false) {
+    noteFailure({
+      reason: checks.final_links.failed?.[0]?.reason
+        || checks.final_assets.failed?.[0]?.reason
+        || 'final artifact input unavailable',
       repairable: false,
       dim: 'final_artifacts',
     });

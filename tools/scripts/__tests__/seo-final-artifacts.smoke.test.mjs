@@ -324,6 +324,73 @@ test('inline use fragment must belong to the same structurally valid inline SVG'
   }
 });
 
+for (const tag of [
+  'clipPath',
+  'defs',
+  'filter',
+  'linearGradient',
+  'marker',
+  'mask',
+  'pattern',
+  'radialGradient',
+  'stop',
+  'textPath',
+  'tspan',
+  'view',
+  'feGaussianBlur',
+]) {
+  test(`inline use rejects non-rendering SVG target <${tag}>`, async () => {
+    const result = await verifyAssets({
+      html: `<svg><${tag} id="moon"/><use href="#moon"/></svg>`,
+      pageUrl: PAGE_URL,
+      fetch: async () => { throw new Error('inline SVG must not fetch'); },
+    });
+    assert.equal(result.ok, false, JSON.stringify(result));
+    assert.match(result.failed[0].reason, new RegExp(`target tag <${tag.toLowerCase()}>`, 'i'));
+  });
+}
+
+for (const tag of [
+  'a',
+  'circle',
+  'ellipse',
+  'foreignObject',
+  'g',
+  'image',
+  'line',
+  'path',
+  'polygon',
+  'polyline',
+  'rect',
+  'svg',
+  'switch',
+  'symbol',
+  'text',
+  'use',
+]) {
+  test(`inline use accepts renderable SVG target <${tag}>`, async () => {
+    const result = await verifyAssets({
+      html: `<svg><${tag} id="moon"/><use href="#moon"/></svg>`,
+      pageUrl: PAGE_URL,
+      fetch: async () => { throw new Error('inline SVG must not fetch'); },
+    });
+    assert.equal(result.ok, true, JSON.stringify(result.failed));
+  });
+}
+
+for (const tag of ['image', 'svg', 'symbol']) {
+  test(`inline image fragment fails closed for target <${tag}>`, async () => {
+    const result = await verifyAssets({
+      html: `<svg><${tag} id="moon"/><image href="#moon"/></svg>`,
+      pageUrl: PAGE_URL,
+      fetch: async () => { throw new Error('inline SVG must not fetch'); },
+    });
+    assert.equal(result.ok, false, JSON.stringify(result));
+    assert.match(result.failed[0].reason, new RegExp(`target tag <${tag}>`, 'i'));
+    assert.match(result.failed[0].reason, /image/i);
+  });
+}
+
 test('external SVG use validates the parser and referenced fragment', async () => {
   const result = await verifyAssets({
     html: '<svg aria-hidden="true"><use href="/images/icons.svg#moon"></use></svg>',

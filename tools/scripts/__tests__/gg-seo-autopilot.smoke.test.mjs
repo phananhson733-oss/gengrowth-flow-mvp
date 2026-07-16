@@ -923,6 +923,27 @@ test('--author has nothing to do for a checked done task (zh backfill lane remov
   }
 });
 
+test('--author --task preserves an existing Phase 2 PASS draft for the same-tick publish scan', () => {
+  const h = makeHarness();
+  try {
+    const flow = writeStubFlow(h);
+    writeFileSync(join(h.tasks, '2026-06-03-blog-output-plan.md'), '- [ ] `PG-TEST-001` test keyword\n');
+    writeClaims(h, {});
+    const draftBefore = readFileSync(join(flow, '_staging', 'PG-TEST-001-en.md'), 'utf8');
+    const manifestBefore = readFileSync(join(flow, '_staging', 'PG-TEST-001-en.manifest.json'), 'utf8');
+
+    const r = runAuto(h, ['--author', '--task', 'PG-TEST-001'], { GG_FLOW_REPO: flow });
+
+    assert.equal(r.status, 0, `${r.stdout}${r.stderr}`);
+    assert.match(`${r.stdout}${r.stderr}`, /already has a Phase 2 PASS draft.*scan/i);
+    assert.equal(readFileSync(join(flow, '_staging', 'PG-TEST-001-en.md'), 'utf8'), draftBefore);
+    assert.equal(readFileSync(join(flow, '_staging', 'PG-TEST-001-en.manifest.json'), 'utf8'), manifestBefore);
+    assert.deepEqual(JSON.parse(readFileSync(h.claimsPath, 'utf8')), {});
+  } finally {
+    h.cleanup();
+  }
+});
+
 test('--author normalizes blank search_volume before render so newly registered topics do not park', () => {
   const h = makeHarness();
   try {

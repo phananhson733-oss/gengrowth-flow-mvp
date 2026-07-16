@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readdir, readFile, rm, utimes, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -121,6 +121,16 @@ test('concurrent producers create one active incident head', async (t) => {
   const active = (await listRepairRecords({ queueDir })).filter((record) => isActiveRepairStatus(record.status));
   assert.equal(active.length, 1);
   assert.equal(active[0].observations, 8);
+});
+
+test('an abandoned incident lock without owner metadata is recovered after its grace period', async (t) => {
+  const { queueDir } = await fixture(t);
+  const lockDir = join(queueDir, '.incident-locks', repairIncidentId(event()));
+  await mkdir(lockDir, { recursive: true });
+  const stale = new Date(Date.now() - 60_000);
+  await utimes(lockDir, stale, stale);
+  const queued = await enqueueRepairEvent(event(), { queueDir });
+  assert.equal(queued.status, 'queued');
 });
 
 test('same active fingerprint merges observations into one atomically visible record', async (t) => {

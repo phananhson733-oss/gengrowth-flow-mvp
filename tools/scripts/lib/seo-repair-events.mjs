@@ -6,6 +6,7 @@ import {
   readFile,
   rename,
   rm,
+  stat,
 } from 'node:fs/promises';
 import { basename, dirname, join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
@@ -42,6 +43,7 @@ const MAX_SUMMARY_LENGTH = 2_048;
 const INCIDENT_LOCK_LEASE_MS = 30_000;
 const INCIDENT_LOCK_TIMEOUT_MS = 10_000;
 const INCIDENT_LOCK_RETRY_MS = 10;
+const INCIDENT_LOCK_METADATA_GRACE_MS = 1_000;
 
 function requireString(value, field, { optional = false } = {}) {
   if (optional && (value === undefined || value === null || value === '')) return '';
@@ -206,9 +208,18 @@ async function withIncidentLock(queueDir, incidentId, fn) {
       const current = await readJson(ownerPath);
       const live = current && pidIsAlive(Number(current.pid));
       const unexpired = current && Date.parse(current.expiresAt || 0) > Date.now();
-      if (current && (!live || !unexpired)) {
+      let reclaimable = Boolean(current && (!live || !unexpired));
+      if (!current) {
+        try {
+          reclaimable = Date.now() - (await stat(path)).mtimeMs > INCIDENT_LOCK_METADATA_GRACE_MS;
+        } catch {}
+      }
+      if (reclaimable) {
         const confirmed = await readJson(ownerPath);
-        if (confirmed?.token === current.token && Number(confirmed?.pid) === Number(current.pid)) {
+        const unchanged = current
+          ? confirmed?.token === current.token && Number(confirmed?.pid) === Number(current.pid)
+          : confirmed === null;
+        if (unchanged) {
           const stalePath = `${path}.stale-${process.pid}-${defaultRandomUUID()}`;
           try {
             await rename(path, stalePath);

@@ -20,9 +20,8 @@ aliases:
 
 - 统一 SEO repair controller v2 已启用并完成真实故障收敛；正常写作/发布继续由 macOS `launchd` 拉起，只有异常队列触发定向 Agent，不恢复 Codex Automation，也不绕过事实门。
 - Index Repair Resubmit、Index Monitor 与 Topic Register 固定 wrapper 均成功；两个站点 Sitemap API 成功，最终索引候选队列共 25 条（P0=0、P1=1、P2=4、P3=20）。Topic Register 于 20:02 与 22:03 均为 applied no-op，两个产品均无候选；此前 18:01 run 曾为 astrologywiki 写入 5 个 brief（1 个新 cluster），gengrowth 无候选；没有无人值守 Request Indexing。
-- Index Repair Resubmit、Index Monitor 与 Topic Register 固定 wrapper 均成功；两个站点 Sitemap API 成功，最终索引候选队列共 25 条（P0=0、P1=1、P2=4、P3=20）。Topic Register 20:02 applied no-op，两个产品均无候选；此前 18:01 run 曾为 astrologywiki 写入 5 个 brief（1 个新 cluster），gengrowth 无候选；没有无人值守 Request Indexing。
 - 结果复盘性能 wrapper 因 GSC/GA4 OAuth refresh token 过期或撤销而在扫描前停止，未写回数据或生成报告；需重新授权后重跑同一 wrapper。
-- SEO blog 零人值守验收不通过：事实、图片与链接门禁近期拦截合理，主要缺陷在批尾修复易被 SIGTERM 截断、同一失败因不稳定 fingerprint 形成 6 条 active repair、混站点批次汇总污染，以及上线后仍有 8 个 pending writeback、2 个状态 flip；聚焦复核 90/90 通过但未覆盖这些生产故障。
+- SEO blog 零人值守链路已修复同模型回退、作者修复超时、完整失败摘要、跨产品作者锁、FAQ/对比标题误报、Preview env/baseline、合并后终态、单分支 regate fetch，以及计划积压误判整批失败等漏洞；`PG-CELEB-057/058` 已上线并完成 plan/vault/writeback，`PG-TRANS-021` 已自动生成 Phase 2 PASS 稿，相关回归 209/209 通过。仍需后续正式发布窗口接管待发布稿，并以连续自然 cron 证明最终零人值守稳定性。
 
 ---
 
@@ -210,5 +209,19 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 仅执行 `bash tools/scripts/gg-topic-register-tick.sh`，退出码为 0。隔离日志窗口为 2026-07-16 22:03:22–22:03:25 CST，`dry_run=false`、`budget_exhausted=false`，因此是本机环境启用的 applied run。astrologywiki 与 gengrowth 均为零候选 no-op：`candidates=0`、`updates=0`、`new_clusters=0`、`page_ids=[]`、`preprocessor=[]`、`evidence_discovery=[]`。末行 `topic-register ok`，没有失败或超时。未进行 wrapper 外 Google Sheets 或 task-plan 编辑，未创建额外 Feishu/Google Doc 报告。
+
+---
+
+### Q12 — 22:09
+
+**🙋 提问：**
+
+按照建议去修复这些问题，达到 0人值守的标准
+
+**🤖 回答：**
+
+按 TDD 修复 SEO blog 零人值守链路中的生产漏洞：Claude 主/备模型改为真正不同模型并有界回退；作者修复设定四分钟单次上限；Phase 2 反馈完整提取全部失败；增加跨产品全局作者锁；修正比较标题与 FAQ 标题误报；Preview Gate 直接加载严格环境并固定无人值守 Oracle baseline；合并成功后先持久化终态与 writeback WAL，后续本地同步降级为非阻断；regate 显式抓取目标分支；LaunchAgent 与 reconciler 仅允许正常未来计划积压，不再把长期计划未清空误判成整批失败，同时仍严格阻断 needs_human、pending writeback、活动修复和过期租约。
+
+真实恢复 `PG-CELEB-057` 与 `PG-CELEB-058`：两篇均 HTTP 200、进入 sitemap、plan 已勾选、Vault 已归档，pending writeback 清零；`PG-TRANS-021` 在第二轮自动生成 Phase 2 PASS 稿，评审改稿若回归失败会自动保留原合格稿。完成前新鲜验证为 209/209 回归通过，Shell/Node 语法与 `git diff --check` 通过，SEO reconciler LaunchAgent 最近退出码为 0，作者锁已释放。因 22:00 后不启动新发布批次，`PG-TRANS-021` 留给下一次正式 cron 扫描发布；`PG-WDIF-002`、`PG-WDIN-001` 与连续自然 cron 稳定性证明仍待后续窗口完成，本轮未强制 publish 或绕过门禁。
 
 ---

@@ -577,7 +577,10 @@ test('已有同名 dropped 证据不得被覆盖，新终态使用 no-clobber �
   );
   const files = readdirSync(droppedDir).filter((name) => name.endsWith('.json')).sort();
   assert.equal(files.length, 2);
-  assert.match(files[1], /^PG-WDIF-003--[0-9a-f]+\.json$/);
+  assert.match(
+    files.find((name) => name !== 'PG-WDIF-003.json'),
+    /^PG-WDIF-003--[0-9a-f]+\.json$/,
+  );
   assert.equal(readWriteback('PG-WDIF-003'), null);
 });
 

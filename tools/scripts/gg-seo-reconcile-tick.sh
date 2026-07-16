@@ -15,6 +15,8 @@ if [[ -f "$ENV_FILE" ]]; then
   set +a
 fi
 
+export GG_WRITEBACK_LOCK_DIR="${GG_WRITEBACK_LOCK_DIR:-${GG_FLOW_STATE_DIR:-$HOME/gengrowth-agents/flow-state}/writeback-ledger.lock}"
+
 FLOW="${GG_SEO_RECONCILE_FLOW:-$HOME/gengrowth-flow-mvp}"
 LOCK="${GG_SEO_RECONCILE_LOCK:-/tmp/gg-seo-reconcile.lock}"
 LOG="${GG_SEO_RECONCILE_LOG:-$HOME/Library/Logs/gg-seo-reconcile.out.log}"

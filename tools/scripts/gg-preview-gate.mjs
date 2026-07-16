@@ -76,6 +76,10 @@ import {
   sitemapUrlsFromXml,
   verifyRenderedArtifacts,
 } from './lib/seo-final-artifacts.mjs';
+import {
+  inspectBoundRepairDraft,
+  inspectBoundRepairWorktree,
+} from './lib/seo-repair-bindings.mjs';
 
 const HERE = (() => {
   try { return fileURLToPath(new URL('.', import.meta.url)); } catch { return process.cwd(); }
@@ -367,16 +371,16 @@ export function findClaimForBranch(statusJson, branch) {
 }
 
 // Derive the published-artifact .ts path + the EN source draft .md path from a claim.
-export function articlePaths(pgId, claim) {
+export function articlePaths(pgId, claim, binding = null) {
   // Fallback mirrors gg-seo-autopilot.mjs worktreePath(): WORKTREE_ROOT + sanitized BRANCH
   // (env-overridable root, branch-keyed — NOT pgId). In practice claim.worktree is always set
   // before a claim can reach a preview status, so this fallback is defensive-only; it just must
   // not point somewhere different from the real worktree if it is ever hit.
   const worktreeRoot = process.env.GG_ORACLE_WORKTREE_ROOT || join(HOME, 'oracle-worktrees', 'seo-autopilot');
-  const worktree = claim.worktree
+  const worktree = binding?.worktree || claim.worktree
     || join(worktreeRoot, String(claim.branch || '').replace(/[^A-Za-z0-9._-]+/g, '__'));
   const articleTs = join(worktree, 'data', 'articles', `${claim.slug}.ts`);
-  const draftMd = join(FLOW, '_staging', `${pgId}-en.md`);
+  const draftMd = binding?.draft || join(FLOW, '_staging', `${pgId}-en.md`);
   return { worktree, articleTs, draftMd };
 }
 
@@ -1150,8 +1154,43 @@ export async function runGate(o, deps = {}) {
   const verifyFinalArtifacts = deps.verifyFinalArtifacts
     ? ((input) => deps.verifyFinalArtifacts(input))
     : ((input) => verifyPreviewFinalArtifacts(input, deps));
+  const inspectRepairWorktree = deps.inspectBoundRepairWorktree
+    ? ((input) => deps.inspectBoundRepairWorktree(input))
+    : ((input) => inspectBoundRepairWorktree(input));
+  const inspectRepairDraft = deps.inspectBoundRepairDraft
+    ? ((input) => deps.inspectBoundRepairDraft(input))
+    : ((input) => inspectBoundRepairDraft(input));
   const plan = [];
   const log = (line) => plan.push(line);
+  const repairBindingValues = [o.worktree, o.headRefOid, o.draft, o.draftSha256];
+  const explicitRepairBinding = repairBindingValues.some((value) => value != null && value !== '');
+  if (explicitRepairBinding) {
+    if (repairBindingValues.some((value) => value == null || value === '')) {
+      const reason = 'complete repair binding requires --worktree, --head-ref-oid, --draft, and --draft-sha256';
+      log(`FAIL reason: ${reason}`);
+      return { exitCode: EXIT.GATE_FAILED, plan, action: 'invalid repair binding', reason };
+    }
+    if (!isAbsolute(o.worktree)) {
+      const reason = '--worktree repair binding must be an absolute path';
+      log(`FAIL reason: ${reason}`);
+      return { exitCode: EXIT.GATE_FAILED, plan, action: 'invalid repair binding', reason };
+    }
+    if (!HEAD_REF_OID_RE.test(o.headRefOid)) {
+      const reason = '--head-ref-oid repair binding must be a 40-hex SHA';
+      log(`FAIL reason: ${reason}`);
+      return { exitCode: EXIT.GATE_FAILED, plan, action: 'invalid repair binding', reason };
+    }
+    if (!isAbsolute(o.draft)) {
+      const reason = '--draft repair binding must be an absolute path';
+      log(`FAIL reason: ${reason}`);
+      return { exitCode: EXIT.GATE_FAILED, plan, action: 'invalid repair binding', reason };
+    }
+    if (!SHA256_RE.test(o.draftSha256)) {
+      const reason = '--draft-sha256 repair binding must be 64 hex characters';
+      log(`FAIL reason: ${reason}`);
+      return { exitCode: EXIT.GATE_FAILED, plan, action: 'invalid repair binding', reason };
+    }
+  }
 
   // (1) load the claim for --branch (read-only).
   log(`status: node ${B.autopilot} --status (find claim for branch ${o.branch})`);
@@ -1186,7 +1225,10 @@ export async function runGate(o, deps = {}) {
     };
   }
 
-  const { worktree, articleTs, draftMd } = resolveArticlePaths(pgId, claim);
+  const repairInputBinding = explicitRepairBinding
+    ? { worktree: o.worktree, draft: o.draft }
+    : null;
+  const { worktree, articleTs, draftMd } = resolveArticlePaths(pgId, claim, repairInputBinding);
   log(`claim: pgId=${pgId} slug=${claim.slug} status=${claim.status}`);
 
   if (o.dryRun) {
@@ -1210,7 +1252,12 @@ export async function runGate(o, deps = {}) {
   const repairEditsByDimension = {};
 
   for (let repairRound = 0; repairRound <= maxRepairRounds; repairRound += 1) {
-    const reviewedHeadRefOid = await resolveHead(o.branch, o.repo);
+    const remoteHeadRefOid = await resolveHead(o.branch, o.repo);
+    if (explicitRepairBinding && remoteHeadRefOid !== o.headRefOid) {
+      return gateFail(o, B, deps, pgId, claim,
+        `remote PR head ${remoteHeadRefOid || '?'} does not match expected repair head ${o.headRefOid}`, plan);
+    }
+    const reviewedHeadRefOid = explicitRepairBinding ? o.headRefOid : remoteHeadRefOid;
     if (!reviewedHeadRefOid) {
       return gateFail(o, B, deps, pgId, claim, 'headRefOid required before gate round', plan);
     }
@@ -1224,10 +1271,26 @@ export async function runGate(o, deps = {}) {
     }
     log(`round[${repairRound}]: pinned head ${reviewedHeadRefOid}`);
 
-    const worktreeState = await inspectWorktree(worktree, reviewedHeadRefOid);
+    const worktreeState = explicitRepairBinding
+      ? await inspectRepairWorktree({
+          worktree,
+          expectedHead: reviewedHeadRefOid,
+          remoteHead: remoteHeadRefOid,
+        })
+      : await inspectWorktree(worktree, reviewedHeadRefOid);
     if (!worktreeState?.ok) {
       return gateFail(o, B, deps, pgId, claim,
         worktreeState?.reason || 'review worktree is not pinned and clean', plan);
+    }
+    const boundDraftState = explicitRepairBinding
+      ? await inspectRepairDraft({
+          draftFile: draftMd,
+          expectedSha256: o.draftSha256,
+        })
+      : null;
+    if (explicitRepairBinding && !boundDraftState?.ok) {
+      return gateFail(o, B, deps, pgId, claim,
+        boundDraftState?.reason || 'repair draft is not bound to the expected digest', plan);
     }
     const reviewBundle = await materializeInputs({
       worktree,
@@ -1246,12 +1309,19 @@ export async function runGate(o, deps = {}) {
       return gateFail(o, B, deps, pgId, claim,
         initialBundleIntegrity?.reason || 'review snapshot integrity failed before gate round', plan);
     }
-    const draftSnapshot = {
-      ok: true,
-      exists: true,
-      bytes: reviewBundle.draft.bytes,
-      sha256: reviewBundle.draft.sha256,
-    };
+    const draftSnapshot = explicitRepairBinding
+      ? {
+          ok: true,
+          exists: true,
+          bytes: boundDraftState.bytes,
+          sha256: boundDraftState.sha256,
+        }
+      : {
+          ok: true,
+          exists: true,
+          bytes: reviewBundle.draft.bytes,
+          sha256: reviewBundle.draft.sha256,
+        };
     log(`round[${repairRound}] draft: ${draftSnapshot.exists
       ? `${draftSnapshot.sha256.slice(0, 12)} (${draftSnapshot.bytes} bytes)`
       : 'missing'}`);
@@ -1327,7 +1397,13 @@ export async function runGate(o, deps = {}) {
         return gateFail(o, B, deps, pgId, claim,
           `head drift ${reviewedHeadRefOid} -> ${currentHead}`, plan);
       }
-      const finalWorktreeState = await inspectWorktree(worktree, reviewedHeadRefOid);
+      const finalWorktreeState = explicitRepairBinding
+        ? await inspectRepairWorktree({
+            worktree,
+            expectedHead: reviewedHeadRefOid,
+            remoteHead: currentHead,
+          })
+        : await inspectWorktree(worktree, reviewedHeadRefOid);
       if (!finalWorktreeState?.ok) {
         return gateFail(o, B, deps, pgId, claim,
           finalWorktreeState?.reason
@@ -1341,7 +1417,12 @@ export async function runGate(o, deps = {}) {
           || 'review snapshot integrity changed after local checks; refusing mark-verified', plan);
       }
       log(`round[${repairRound}]: final review snapshot integrity PASS`);
-      const finalDraftSnapshot = await inspectDraft(draftMd);
+      const finalDraftSnapshot = explicitRepairBinding
+        ? await inspectRepairDraft({
+            draftFile: draftMd,
+            expectedSha256: o.draftSha256,
+          })
+        : await inspectDraft(draftMd);
       if (!sameDraftSnapshot(draftSnapshot, finalDraftSnapshot)) {
         return gateFail(o, B, deps, pgId, claim,
           finalDraftSnapshot?.reason
@@ -1366,6 +1447,13 @@ export async function runGate(o, deps = {}) {
         '--preview-url', previewUrl,
         '--evidence', evidence,
         '--head-ref-oid', reviewedHeadRefOid,
+        ...(explicitRepairBinding
+          ? [
+              '--worktree', worktree,
+              '--draft', draftMd,
+              '--draft-sha256', o.draftSha256,
+            ]
+          : []),
       ], { timeoutMs: o.statusTimeoutMs });
       if (mv.timedOut || mv.code !== 0) {
         return gateFail(o, B, deps, pgId, claim,
@@ -1405,7 +1493,13 @@ export async function runGate(o, deps = {}) {
       return gateFail(o, B, deps, pgId, claim,
         `repair edit budget exhausted for ${budgetDimension} (${perDimensionBudget})`, plan);
     }
-    const beforeRepairState = await inspectWorktree(worktree, reviewedHeadRefOid);
+    const beforeRepairState = explicitRepairBinding
+      ? await inspectRepairWorktree({
+          worktree,
+          expectedHead: reviewedHeadRefOid,
+          remoteHead: remoteHeadRefOid,
+        })
+      : await inspectWorktree(worktree, reviewedHeadRefOid);
     if (!beforeRepairState?.ok) {
       return gateFail(o, B, deps, pgId, claim,
         beforeRepairState?.reason || 'review worktree became unsafe before repair', plan);

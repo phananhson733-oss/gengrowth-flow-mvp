@@ -1535,6 +1535,128 @@ test('a gate round rejects a dirty or wrong-head local review worktree before Ch
   }
 });
 
+test('explicit controller repair bindings drive review inputs and are persisted by mark-verified', async () => {
+  const repairWorktree = '/controller/repair-root/PG-001-event';
+  const repairDraft = '/controller/state/seo-repair-drafts/astrologywiki/PG-001/event.md';
+  const draftSha256 = '9'.repeat(64);
+  const fixture = gateRoundFixture({ heads: [HEAD_A, HEAD_A] });
+  fixture.options.worktree = repairWorktree;
+  fixture.options.headRefOid = HEAD_A;
+  fixture.options.draft = repairDraft;
+  fixture.options.draftSha256 = draftSha256;
+  const worktreeBindings = [];
+  const draftBindings = [];
+  let pathBinding = null;
+  fixture.deps.articlePaths = (_pgId, _claim, binding) => {
+    pathBinding = binding;
+    return {
+      worktree: binding.worktree,
+      articleTs: `${binding.worktree}/data/articles/chiron-in-7th-house.ts`,
+      draftMd: binding.draft,
+    };
+  };
+  fixture.deps.inspectBoundRepairWorktree = async (input) => {
+    worktreeBindings.push(input);
+    return { ok: true, realpath: input.worktree, headRefOid: input.expectedHead, dirty: false };
+  };
+  fixture.deps.inspectBoundRepairDraft = async (input) => {
+    draftBindings.push(input);
+    return {
+      ok: true,
+      exists: true,
+      realpath: input.draftFile,
+      bytes: 12,
+      sha256: input.expectedSha256,
+    };
+  };
+  fixture.deps.materializeReviewBundle = async ({
+    reviewedHeadRefOid,
+    repairRound,
+    worktree,
+    draftMd,
+  }) => ({
+    ok: true,
+    snapshotId: `fixture-${reviewedHeadRefOid.slice(0, 8)}-r${repairRound}`,
+    reviewedHeadRefOid,
+    article: {
+      path: '/tmp/review-snapshot/article.ts',
+      gitObject: `${reviewedHeadRefOid}:data/articles/chiron-in-7th-house.ts`,
+      bytes: 12,
+      sha256: '1'.repeat(64),
+    },
+    draft: {
+      path: '/tmp/review-snapshot/draft.md',
+      sourcePath: draftMd,
+      bytes: 12,
+      sha256: draftSha256,
+    },
+    source: { worktree },
+  });
+
+  const result = await runGate(fixture.options, fixture.deps);
+
+  assert.equal(result.exitCode, 0, result.reason);
+  assert.deepEqual(pathBinding, {
+    worktree: repairWorktree,
+    draft: repairDraft,
+  });
+  assert.ok(worktreeBindings.length >= 2);
+  assert.ok(worktreeBindings.every((binding) => (
+    binding.worktree === repairWorktree
+    && binding.expectedHead === HEAD_A
+    && binding.remoteHead === HEAD_A
+  )));
+  assert.ok(draftBindings.length >= 2);
+  assert.ok(draftBindings.every((binding) => (
+    binding.draftFile === repairDraft
+    && binding.expectedSha256 === draftSha256
+  )));
+  const mark = fixture.markVerifiedCalls()[0];
+  assert.ok(mark.args.includes('--worktree'));
+  assert.equal(mark.args[mark.args.indexOf('--worktree') + 1], repairWorktree);
+  assert.ok(mark.args.includes('--draft'));
+  assert.equal(mark.args[mark.args.indexOf('--draft') + 1], repairDraft);
+  assert.equal(mark.args[mark.args.indexOf('--draft-sha256') + 1], draftSha256);
+});
+
+test('explicit controller repair binding fails closed when the remote PR head differs from expected', async () => {
+  const fixture = gateRoundFixture({ heads: [HEAD_B] });
+  fixture.options.worktree = '/controller/repair-root/PG-001-event';
+  fixture.options.headRefOid = HEAD_A;
+  fixture.options.draft = '/controller/state/seo-repair-drafts/astrologywiki/PG-001/event.md';
+  fixture.options.draftSha256 = '9'.repeat(64);
+
+  const result = await runGate(fixture.options, fixture.deps);
+
+  assert.equal(result.exitCode, 2);
+  assert.match(result.reason, /remote|head.*expected|expected.*head/i);
+  assert.equal(fixture.callsFor('chrome').length, 0);
+  assert.equal(fixture.markVerifiedCalls().length, 0);
+  assert.equal(fixture.mergeCalls().length, 0);
+});
+
+test('partial controller repair override never falls back to claim worktree or live staging draft', async () => {
+  const fixture = gateRoundFixture({ heads: [HEAD_A] });
+  fixture.options.worktree = '/controller/repair-root/PG-001-event';
+  fixture.options.headRefOid = HEAD_A;
+  let pathsCalled = false;
+  fixture.deps.articlePaths = () => {
+    pathsCalled = true;
+    return {
+      worktree: '/tmp/wt',
+      articleTs: '/tmp/wt/data/articles/chiron-in-7th-house.ts',
+      draftMd: '/tmp/live-staging.md',
+    };
+  };
+
+  const result = await runGate(fixture.options, fixture.deps);
+
+  assert.equal(result.exitCode, 2);
+  assert.match(result.reason, /repair binding|draft.*required|complete.*override/i);
+  assert.equal(pathsCalled, false);
+  assert.equal(fixture.callsFor('chrome').length, 0);
+});
+
 test('a preview without deployment evidence for the reviewed SHA fails closed before Chrome', async () => {
   const fixture = gateRoundFixture({
     heads: [HEAD_A, HEAD_B],

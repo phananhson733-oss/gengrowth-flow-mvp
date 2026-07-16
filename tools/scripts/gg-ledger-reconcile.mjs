@@ -8,7 +8,6 @@ import {
   readdirSync,
   writeFileSync,
 } from 'node:fs';
-import { createHash } from 'node:crypto';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -17,6 +16,10 @@ import {
   BACKFILL_STEPS,
   drainPending,
   listWriteback,
+  listPendingWritebackNotifications,
+  markWritebackNotificationSent,
+  persistWritebackNotification,
+  recordWritebackNotificationFailure,
 } from './lib/backfill-tx.mjs';
 import { getAccessToken, gFetch, loadEnv } from './lib/gg-shared.mjs';
 import { notify } from './lib/gg-notify.mjs';
@@ -528,14 +531,6 @@ function normalizeResult(value, inheritedErrors = []) {
   };
 }
 
-function notificationUuid(key) {
-  const hex = createHash('sha256').update(String(key || '')).digest('hex').slice(0, 32).split('');
-  hex[12] = '5';
-  hex[16] = ((Number.parseInt(hex[16], 16) & 0x3) | 0x8).toString(16);
-  const value = hex.join('');
-  return `${value.slice(0, 8)}-${value.slice(8, 12)}-${value.slice(12, 16)}-${value.slice(16, 20)}-${value.slice(20)}`;
-}
-
 function terminalNotificationText(item) {
   return [
     '⚠️ [flow] 回填进入长期失败终态',
@@ -545,6 +540,58 @@ function terminalNotificationText(item) {
     `firstAt=${item.firstAt || 'unknown'}`,
     `lastError=${item.lastError || 'unknown'}`,
   ].join('；');
+}
+
+function writebackNotificationText(record) {
+  const fields = record?.fields || {};
+  if (record?.kind === 'writeback_schedule_anomaly') {
+    return [
+      '⚠️ [flow] 回填调度时间异常已自动规范化',
+      `pageId=${fields.pageId || 'unknown'}`,
+      `reasons=${(fields.reasons || []).join(',') || 'unknown'}`,
+      `observedAt=${fields.observedAt || 'unknown'}`,
+    ].join('；');
+  }
+  if (record?.kind === 'writeback_test_contamination') {
+    return [
+      '⚠️ [flow] 测试形态回填已隔离',
+      `pageId=${fields.pageId || 'unknown'}`,
+      `reason=${fields.reason || 'test-contamination'}`,
+      `terminalAt=${fields.terminalAt || 'unknown'}`,
+    ].join('；');
+  }
+  return terminalNotificationText(fields);
+}
+
+async function replayWritebackNotifications(deps = {}) {
+  if (process.env.GG_LARK_NOTIFY_SILENCE === '1') return;
+  const send = deps.notify || notify;
+  for (const item of listPendingWritebackNotifications()) {
+    const { name, record } = item;
+    if (record?.sentAt) {
+      markWritebackNotificationSent(name, record, deps);
+      continue;
+    }
+    try {
+      const result = await send('batch_summary', {
+        text: writebackNotificationText(record),
+        partial: true,
+        msgUuid: record.msgUuid,
+      });
+      if (result?.ok === true && result?.silenced !== true) {
+        markWritebackNotificationSent(name, record, deps);
+      } else {
+        recordWritebackNotificationFailure(
+          name,
+          record,
+          result?.error || (result?.silenced ? 'notification silenced' : 'notification send failed'),
+          deps,
+        );
+      }
+    } catch (error) {
+      recordWritebackNotificationFailure(name, record, error, deps);
+    }
+  }
 }
 
 export async function runLedgerReconcile({
@@ -574,7 +621,6 @@ export async function runLedgerReconcile({
     ? applied.terminalNotifications
     : [];
   if (apply && terminalNotifications.length > 0) {
-    const send = deps.notify || notify;
     const unique = new Map();
     for (const item of terminalNotifications) {
       const key = item?.notificationKey
@@ -582,15 +628,10 @@ export async function runLedgerReconcile({
       if (!unique.has(key)) unique.set(key, item);
     }
     for (const [key, item] of unique) {
-      try {
-        await send('batch_summary', {
-          text: terminalNotificationText(item),
-          partial: true,
-          msgUuid: notificationUuid(key),
-        });
-      } catch {}
+      persistWritebackNotification('writeback_terminal', item, key, deps);
     }
   }
+  if (apply) await replayWritebackNotifications(deps);
   if (!strict && apply && Array.isArray(applied?.summary) && applied.summary.length > 0) {
     const send = deps.notify || notify;
     try {

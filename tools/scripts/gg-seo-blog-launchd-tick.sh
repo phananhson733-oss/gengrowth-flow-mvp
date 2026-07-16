@@ -17,6 +17,8 @@ if [[ -f "$ENV_FILE" ]]; then
   set +a
 fi
 
+export GG_WRITEBACK_LOCK_DIR="${GG_WRITEBACK_LOCK_DIR:-${GG_FLOW_STATE_DIR:-$HOME/gengrowth-agents/flow-state}/writeback-ledger.lock}"
+
 FLOW="${GG_SEO_LAUNCHD_FLOW:-$HOME/gengrowth-flow-mvp}"
 ORACLE_BASELINE="$PINNED_ORACLE"
 LOCK="${GG_SEO_LAUNCHD_LOCK:-/tmp/gg-seo-blog-launchd.lock}"

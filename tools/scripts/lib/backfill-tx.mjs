@@ -101,6 +101,17 @@ function directEnqueueWriteback(entry, timestamp = Date.now()) {
   } catch { return null; }
 }
 
+function directReplaceWriteback(entry) {
+  const dir = writebackDir(); if (!dir || !entry?.pageId) return null;
+  try {
+    const path = join(dir, `${safeId(entry.pageId)}.json`);
+    atomicWriteJson(path, entry);
+    return entry;
+  } catch {
+    return null;
+  }
+}
+
 function lockDir() {
   try {
     const base = stateDir();
@@ -472,6 +483,9 @@ async function runSteps(entry, token, deps = {}) {
 
 // token 获取（写 scope）。deps.token 优先（测试注入，可为 null 模拟无 auth）。失败返回 null。
 async function acquireToken(deps = {}) {
+  if (deps.acquireToken) {
+    try { return await deps.acquireToken(); } catch { return null; }
+  }
   if (deps.token !== undefined) return deps.token;
   try {
     const SA = process.env.GG_WRITER_SA_JSON || SA_DEFAULT;
@@ -514,6 +528,7 @@ function recordFailure(entry, {
   done,
   lastError,
   deps = {},
+  lockToken = null,
 } = {}) {
   const attempts = Math.max(0, Number(entry?.attempts) || 0) + 1;
   const timestamp = nowMs(deps);
@@ -523,7 +538,7 @@ function recordFailure(entry, {
     attempts,
     lastError,
     nextEligibleAt: new Date(timestamp + backoffMs(attempts, deps)).toISOString(),
-  });
+  }, { ...deps, lockToken });
 }
 
 function terminalReason({ attemptsExceeded, ttlExceeded }) {
@@ -547,6 +562,140 @@ function terminalNotification(entry, now, reason) {
   };
 }
 
+function testContaminationNotification(entry, now) {
+  const firstAt = entry.firstAt || new Date(now).toISOString();
+  return {
+    pageId: entry.pageId,
+    stuckSteps: BACKFILL_STEPS.filter((step) => !(entry.done || []).includes(step)),
+    attempts: Math.max(0, Number(entry.attempts) || 0),
+    firstAt,
+    lastError: 'test-shaped pageId blocked before writeback side effects',
+    terminalAt: new Date(now).toISOString(),
+    reason: 'test-contamination',
+    notificationKey: `writeback-test-contamination:${entry.pageId}:${firstAt}`,
+  };
+}
+
+function isTestPageId(pageId) {
+  return TEST_PAGE_ID_RE.test(String(pageId || '').toUpperCase());
+}
+
+function quarantineWriteback(entry, deps = {}, lockToken = null) {
+  const now = nowMs(deps);
+  const notification = testContaminationNotification(entry, now);
+  const sidecar = persistWritebackNotification(
+    'writeback_test_contamination',
+    notification,
+    notification.notificationKey,
+    deps,
+  );
+  if (!sidecar) {
+    return {
+      ok: false,
+      error: 'failed to persist test-contamination notification',
+      notification,
+    };
+  }
+  const prepared = enqueueWriteback({
+    ...entry,
+    pageId: entry.pageId,
+    firstAt: notification.firstAt,
+    lastError: notification.lastError,
+    terminalNotification: notification,
+  }, { ...deps, lockToken });
+  if (!prepared || prepared.queuedInbox) {
+    return {
+      ok: false,
+      error: 'failed to persist test-contamination WAL',
+      notification,
+    };
+  }
+  const archived = dropWriteback(entry.pageId, deps, 'quarantined');
+  return {
+    ok: archived?.ok === true,
+    error: archived?.error || null,
+    notification,
+    archived,
+  };
+}
+
+function normalizeSchedule(entry, now, deps = {}, lockToken = null) {
+  const reasons = [];
+  const original = {
+    firstAt: Object.hasOwn(entry, 'firstAt') ? entry.firstAt : null,
+    nextEligibleAt: Object.hasOwn(entry, 'nextEligibleAt') ? entry.nextEligibleAt : null,
+  };
+  const normalized = { ...entry };
+  const firstAt = Date.parse(entry.firstAt || '');
+  if (!entry.firstAt) {
+    normalized.firstAt = new Date(now).toISOString();
+  } else if (!Number.isFinite(firstAt)) {
+    reasons.push('firstAt-invalid');
+    normalized.firstAt = new Date(now).toISOString();
+  } else if (firstAt > now + CLOCK_SKEW_TOLERANCE_MS) {
+    reasons.push('firstAt-future');
+    normalized.firstAt = new Date(now).toISOString();
+  }
+
+  const nextEligibleAt = Date.parse(entry.nextEligibleAt || '');
+  const maxFuture = now + positiveMs(
+    deps.backoffMaxMs
+      ?? (Number(process.env.GG_WRITEBACK_BACKOFF_MAX_SECONDS) * 1000),
+    DEFAULT_BACKOFF_MAX_MS,
+  ) + CLOCK_SKEW_TOLERANCE_MS;
+  if (!entry.nextEligibleAt) {
+    normalized.nextEligibleAt = null;
+  } else if (!Number.isFinite(nextEligibleAt)) {
+    reasons.push('nextEligibleAt-invalid');
+    normalized.nextEligibleAt = null;
+  } else if (nextEligibleAt > maxFuture) {
+    reasons.push('nextEligibleAt-too-far');
+    normalized.nextEligibleAt = null;
+  }
+
+  if (reasons.length === 0 && normalized.firstAt === entry.firstAt
+    && normalized.nextEligibleAt === entry.nextEligibleAt) {
+    return { entry, reasons: [] };
+  }
+
+  if (reasons.length > 0) {
+    const anomaly = {
+      pageId: entry.pageId,
+      reasons,
+      original,
+      normalized: {
+        firstAt: normalized.firstAt,
+        nextEligibleAt: normalized.nextEligibleAt,
+      },
+      observedAt: new Date(now).toISOString(),
+      notificationKey: `writeback-schedule-anomaly:${entry.pageId}:${createHash('sha256')
+        .update(JSON.stringify(original))
+        .digest('hex')
+        .slice(0, 16)}`,
+    };
+    const sidecar = persistWritebackNotification(
+      'writeback_schedule_anomaly',
+      anomaly,
+      anomaly.notificationKey,
+      deps,
+    );
+    if (!sidecar) return { entry, reasons, error: 'failed to persist schedule anomaly notification' };
+    normalized.scheduleAnomaly = {
+      reasons,
+      original,
+      normalized: anomaly.normalized,
+      observedAt: anomaly.observedAt,
+    };
+  }
+  const persisted = lockToken
+    ? directReplaceWriteback(normalized)
+    : enqueueWriteback(normalized, deps);
+  if (!persisted || persisted.queuedInbox) {
+    return { entry, reasons, error: 'failed to persist normalized writeback schedule' };
+  }
+  return { entry: persisted, reasons };
+}
+
 // ── 事务主入口（发布腿在 verify-live 语义点调用）──────────────────────────────────
 // 入参：{ pageId, slug, site, url?, planPath? }。返回 { ok, done, failed, deferred, reason }。永不抛。
 export async function backfillOnLive(input, deps = {}) {
@@ -554,36 +703,66 @@ export async function backfillOnLive(input, deps = {}) {
   if (!pageId || !slug || !site || !PRODUCTS[site]) {
     return { ok: false, reason: `invalid backfill input: pageId=${pageId} slug=${slug} site=${site}` };
   }
-  // write-ahead：先落队，进程崩溃也能被每日 drain 续上。
-  enqueueWriteback({
+  const entry = {
     pageId, slug, site,
     url: input.url || (PRODUCTS[site].urlBase + slug),
     planPath: input.planPath || null,
     done: [],
-  });
+  };
+  const lock = acquireWritebackLock(deps);
+  if (!lock.ok) {
+    const queued = enqueueInbox(entry, nowMs(deps));
+    return {
+      ok: false,
+      deferred: true,
+      reason: queued
+        ? 'writeback ledger busy — queued in durable inbox'
+        : 'writeback ledger busy and inbox unavailable',
+    };
+  }
   try {
+    mergeInbox();
+    // 测试形态 ID 在最入口进入隔离区；不得触发 token/network/Sheet/plan/archive。
+    if (isTestPageId(pageId)) {
+      const quarantined = quarantineWriteback(entry, deps, lock.token);
+      return {
+        ok: false,
+        quarantined: quarantined.ok,
+        reason: quarantined.ok
+          ? 'test-shaped pageId quarantined before side effects'
+          : quarantined.error,
+      };
+    }
+    // write-ahead：先落队，进程崩溃也能被 drain 续上。
+    enqueueWriteback(entry, { ...deps, lockToken: lock.token });
     const token = await acquireToken(deps);
     if (token === null) {
-      recordFailure(readWriteback(pageId) || { pageId }, { lastError: 'no-token', deps });
+      recordFailure(readWriteback(pageId) || { pageId }, {
+        lastError: 'no-token',
+        deps,
+        lockToken: lock.token,
+      });
       return { ok: false, deferred: true, reason: 'sheet auth unavailable — left in pending-writeback' };
     }
     if (!(await verifyLive(site, slug, deps))) {
       recordFailure(readWriteback(pageId) || { pageId }, {
         lastError: 'verify-live pending',
         deps,
+        lockToken: lock.token,
       });
       return { ok: false, deferred: true, reason: 'not live in sitemap yet — left in pending-writeback' };
     }
     const cur = readWriteback(pageId) || {};
     const { done, failed } = await runSteps(cur, token, deps);
     if (failed.length === 0) {
-      resolveWriteback(pageId);
+      resolveWriteback(pageId, { ...deps, lockToken: lock.token });
       return { ok: true, done, failed: [] };
     }
     recordFailure(cur, {
       done,
       lastError: failed.map((f) => `${f.step}:${f.err}`).join('; '),
       deps,
+      lockToken: lock.token,
     });
     return { ok: false, done, failed };
   } catch (e) {
@@ -591,95 +770,155 @@ export async function backfillOnLive(input, deps = {}) {
       recordFailure(readWriteback(pageId) || { pageId }, {
         lastError: `unexpected:${e.message}`,
         deps,
+        lockToken: lock.token,
       });
     } catch { /* 状态层不搞垮业务 */ }
     return { ok: false, reason: `backfill error (queued): ${e.message}` };
+  } finally {
+    mergeInbox();
+    releaseWritebackLock(lock);
   }
 }
 
 // ── drainPending：每日 gg-ledger-reconcile 调用，重试全部待回填。──────────────────
 // 返回 { retried, skipped, resolved, stillPending, dropped, dropErrors }。永不抛。
 export async function drainPending(deps = {}) {
-  const entries = listWriteback();
   const out = {
+    busy: false,
     retried: 0,
     skipped: 0,
     resolved: 0,
     stillPending: 0,
     dropped: [],
+    quarantined: [],
     dropErrors: [],
   };
-  if (!entries.length) return out;
+  const lock = acquireWritebackLock(deps);
+  if (!lock.ok) return { ...out, busy: true, stillPending: listWriteback().length };
+  mergeInbox();
+  const entries = listWriteback();
+  if (!entries.length) {
+    releaseWritebackLock(lock);
+    return out;
+  }
   const now = nowMs(deps);
   let token;
   let tokenLoaded = false;
-  for (const e of entries) {
-    // 淘汰毒记录（超 attempts 或 TTL）→ 移入 dropped/ 保留（不静默删）+ 计入告警。
-    // sheet/plan 步有每日对账兜底；archive 步无 → 保留记录让人工可查/补归档。
-    const ageMs = now - new Date(e.firstAt || now).getTime();
-    const attemptsExceeded = (e.attempts || 0) >= MAX_ATTEMPTS;
-    const ttlExceeded = ageMs >= TTL_MS;
-    if (attemptsExceeded || ttlExceeded) {
-      const notification = terminalNotification(
-        e,
-        now,
-        terminalReason({ attemptsExceeded, ttlExceeded }),
-      );
-      const prepared = enqueueWriteback({
-        pageId: e.pageId,
-        terminalNotification: notification,
-      });
-      if (!prepared) {
+  try {
+    for (const original of entries) {
+      if (isTestPageId(original.pageId)) {
+        const quarantined = quarantineWriteback(original, deps, lock.token);
+        if (quarantined.ok) out.quarantined.push(quarantined.notification);
+        else {
+          out.stillPending += 1;
+          out.dropErrors.push({
+            pageId: original.pageId,
+            error: quarantined.error || 'writeback quarantine failed',
+          });
+        }
+        continue;
+      }
+
+      const normalized = normalizeSchedule(original, now, deps, lock.token);
+      if (normalized.error) {
         out.stillPending += 1;
         out.dropErrors.push({
-          pageId: e.pageId,
-          error: 'failed to persist terminal notification evidence',
+          pageId: original.pageId,
+          error: normalized.error,
         });
         continue;
       }
-      const archived = dropWriteback(e.pageId, deps);
-      if (!archived?.ok) {
-        out.stillPending += 1;
-        out.dropErrors.push({
+      const e = normalized.entry;
+      // 淘汰毒记录（超 attempts 或 TTL）→ 移入 dropped/ 保留（不静默删）+ durable 告警。
+      const ageMs = now - Date.parse(e.firstAt);
+      const attemptsExceeded = (e.attempts || 0) >= MAX_ATTEMPTS;
+      const ttlExceeded = ageMs >= TTL_MS;
+      if (attemptsExceeded || ttlExceeded) {
+        const notification = terminalNotification(
+          e,
+          now,
+          terminalReason({ attemptsExceeded, ttlExceeded }),
+        );
+        const sidecar = persistWritebackNotification(
+          'writeback_terminal',
+          notification,
+          notification.notificationKey,
+          deps,
+        );
+        if (!sidecar) {
+          out.stillPending += 1;
+          out.dropErrors.push({
+            pageId: e.pageId,
+            error: 'failed to persist terminal notification sidecar',
+          });
+          continue;
+        }
+        const prepared = enqueueWriteback({
           pageId: e.pageId,
-          error: archived?.error || 'writeback archive rename failed',
+          terminalNotification: notification,
+        }, { ...deps, lockToken: lock.token });
+        if (!prepared || prepared.queuedInbox) {
+          out.stillPending += 1;
+          out.dropErrors.push({
+            pageId: e.pageId,
+            error: 'failed to persist terminal notification evidence',
+          });
+          continue;
+        }
+        const archived = dropWriteback(e.pageId, deps);
+        if (!archived?.ok) {
+          out.stillPending += 1;
+          out.dropErrors.push({
+            pageId: e.pageId,
+            error: archived?.error || 'writeback archive rename failed',
+          });
+          continue;
+        }
+        out.dropped.push(notification);
+        continue;
+      }
+      const nextEligibleAt = Date.parse(e.nextEligibleAt || '');
+      if (Number.isFinite(nextEligibleAt) && nextEligibleAt > now) {
+        out.skipped += 1;
+        out.stillPending += 1;
+        continue;
+      }
+      out.retried++;
+      if (!tokenLoaded) {
+        token = await acquireToken(deps);
+        tokenLoaded = true;
+      }
+      if (token === null) {
+        out.stillPending++;
+        recordFailure(e, { lastError: 'no-token', deps, lockToken: lock.token });
+        continue;
+      }
+      if (!(await verifyLive(e.site, e.slug, deps))) {
+        out.stillPending++;
+        recordFailure(e, {
+          lastError: 'verify-live pending',
+          deps,
+          lockToken: lock.token,
         });
         continue;
       }
-      out.dropped.push(notification);
-      continue;
+      const { done, failed } = await runSteps(e, token, deps);
+      if (failed.length === 0) {
+        resolveWriteback(e.pageId, { ...deps, lockToken: lock.token });
+        out.resolved++;
+      } else {
+        out.stillPending++;
+        recordFailure(e, {
+          done,
+          lastError: failed.map((f) => `${f.step}:${f.err}`).join('; '),
+          deps,
+          lockToken: lock.token,
+        });
+      }
     }
-    const nextEligibleAt = Date.parse(e.nextEligibleAt || '');
-    if (Number.isFinite(nextEligibleAt) && nextEligibleAt > now) {
-      out.skipped += 1;
-      out.stillPending += 1;
-      continue;
-    }
-    out.retried++;
-    if (!tokenLoaded) {
-      token = await acquireToken(deps);
-      tokenLoaded = true;
-    }
-    if (token === null) {
-      out.stillPending++;
-      recordFailure(e, { lastError: 'no-token', deps });
-      continue;
-    }
-    if (!(await verifyLive(e.site, e.slug, deps))) {
-      out.stillPending++;
-      recordFailure(e, { lastError: 'verify-live pending', deps });
-      continue;
-    }
-    const { done, failed } = await runSteps(e, token, deps);
-    if (failed.length === 0) { resolveWriteback(e.pageId); out.resolved++; }
-    else {
-      out.stillPending++;
-      recordFailure(e, {
-        done,
-        lastError: failed.map((f) => `${f.step}:${f.err}`).join('; '),
-        deps,
-      });
-    }
+  } finally {
+    mergeInbox();
+    releaseWritebackLock(lock);
   }
   return out;
 }

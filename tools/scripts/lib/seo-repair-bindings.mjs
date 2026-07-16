@@ -134,6 +134,7 @@ export function inspectBoundRepairDraft({
     }
     return {
       ok: true,
+      exists: true,
       realpath: pathRealpath,
       bytes: bytes.length,
       sha256,

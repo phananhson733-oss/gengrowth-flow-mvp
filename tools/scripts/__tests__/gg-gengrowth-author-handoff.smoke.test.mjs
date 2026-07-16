@@ -1,86 +1,89 @@
-#!/usr/bin/env node
-// Smoke test for the gengrowth author lane's PUBLISH HANDOFF invariant (阶段 3 · 杀"漏写").
-// gg-gengrowth-author-tick.sh authors `_staging/<PID>-en.md` (+ passing manifest) then COPIES that
-// pair to the `<PID>-<llm>-v8` names the gengrowth publisher consumes. This locks in that contract:
-// a copied `-en` pair MUST be reported READY by the real gg-gengrowth-publish scanReady — so a future
-// change to DRAFT_RE / the manifest field / frontmatter parsing can't silently strand authored drafts.
-// Run: node --test tools/scripts/__tests__/gg-gengrowth-author-handoff.smoke.test.mjs
-
-import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
-import { execFileSync } from 'node:child_process';
-import { mkdtempSync, writeFileSync, copyFileSync, rmSync } from 'node:fs';
+import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const PUBLISH = join(__dirname, '..', 'gg-gengrowth-publish.mjs');
+const TEST_DIR = dirname(fileURLToPath(import.meta.url));
+const SCRIPTS_DIR = resolve(TEST_DIR, '..');
+const HELPER = join(SCRIPTS_DIR, 'gg-gengrowth-author-handoff.mjs');
+const TICK = join(SCRIPTS_DIR, 'gg-gengrowth-author-tick.sh');
 
-// A minimal but realistic passing gengrowth `-en` draft pair, as the author engine leaves it.
-function writeEnPair(dir, pid, slug) {
-  const md = [
-    '---',
-    `page_id: ${pid}`,
-    `slug: ${slug}`,
-    'title: Example B2B SEO Guide',
-    'locale: en',
-    'author_id: gg-editorial',
-    '---',
-    '',
-    '# Example B2B SEO Guide',
-    '',
-    'Body content for the publisher to upsert.',
-    '',
-  ].join('\n');
-  const manifest = JSON.stringify({ page_id: pid, slug, phase2_checks: { overall: 'pass' } }, null, 2);
-  writeFileSync(join(dir, `${pid}-en.md`), md);
-  writeFileSync(join(dir, `${pid}-en.manifest.json`), manifest);
-}
-// The tick's copy-handoff: `-en` pair → `-<llm>-v8` names the publisher scans for.
-function copyHandoff(dir, pid, tag) {
-  copyFileSync(join(dir, `${pid}-en.md`), join(dir, `${pid}-${tag}.md`));
-  copyFileSync(join(dir, `${pid}-en.manifest.json`), join(dir, `${pid}-${tag}.manifest.json`));
-}
-function publisherDryRun(stagingDir, pid) {
-  // no --apply → dry-run scanReady listing; no SB_KEY / network needed.
-  return execFileSync('node', [PUBLISH, '--staging-dir', stagingDir, '--pages', pid], { encoding: 'utf8' });
+function validDraft(slug = 'software-development-services') {
+  return `---\nslug: ${slug}\ntitle: Test\n---\n\n# Test\n\n${'valid body '.repeat(50)}\n`;
 }
 
-test('copy-handoff of a passing -en pair → publisher reports it READY', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'gg-handoff-'));
-  try {
-    const pid = 'PG-ART-004';
-    const slug = 'manual-seo-service';
-    writeEnPair(dir, pid, slug);
-    copyHandoff(dir, pid, 'claude-v8');
-    const out = publisherDryRun(dir, pid);
-    assert.match(out, /1 ready draft/, 'publisher counts the copied draft as ready');
-    assert.match(out, new RegExp(pid), 'lists the page id');
-    assert.match(out, new RegExp(slug), 'reads the slug from frontmatter');
-  } finally { rmSync(dir, { recursive: true, force: true }); }
+async function handoffFixture(t) {
+  const stagingDir = await mkdtemp(join(tmpdir(), 'gg-author-handoff-'));
+  t.after(async () => rm(stagingDir, { recursive: true, force: true }));
+  const pageId = 'PG-SDS-004';
+  const sourceMd = join(stagingDir, `${pageId}-en.md`);
+  const sourceManifest = join(stagingDir, `${pageId}-en.manifest.json`);
+  await writeFile(sourceMd, validDraft(), 'utf8');
+  await writeFile(sourceManifest, `${JSON.stringify({ phase2_checks: { overall: 'pass' } })}\n`, 'utf8');
+  return { stagingDir, pageId, sourceMd, sourceManifest };
+}
+
+function runHelper(args, stagingDir) {
+  return spawnSync(process.execPath, [HELPER, ...args], {
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      GG_GENGROWTH_STAGING_DIR: stagingDir,
+      GG_WINNER_LLM: 'claude',
+    },
+  });
+}
+
+test('author handoff copies one sane passing PID pair byte-for-byte and emits one JSON result', async (t) => {
+  const built = await handoffFixture(t);
+  const result = runHelper(['--page-id', built.pageId], built.stagingDir);
+  assert.equal(result.status, 0, result.stderr);
+  const lines = result.stdout.trim().split('\n');
+  assert.equal(lines.length, 1);
+  const output = JSON.parse(lines[0]);
+  assert.deepEqual(output, {
+    ok: true,
+    handedOff: true,
+    pageId: built.pageId,
+    winner: 'claude',
+    draft: `${built.pageId}-claude-v8.md`,
+    manifest: `${built.pageId}-claude-v8.manifest.json`,
+  });
+  assert.deepEqual(
+    await readFile(join(built.stagingDir, `${built.pageId}-claude-v8.md`)),
+    await readFile(built.sourceMd),
+  );
+  assert.deepEqual(
+    await readFile(join(built.stagingDir, `${built.pageId}-claude-v8.manifest.json`)),
+    await readFile(built.sourceManifest),
+  );
 });
 
-test('non-default winner tag (opus-v8) is also publisher-consumable (DRAFT_RE = -<llm>-v8)', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'gg-handoff-'));
-  try {
-    const pid = 'PG-EOS-008';
-    const slug = 'ethical-seo-services';
-    writeEnPair(dir, pid, slug);
-    copyHandoff(dir, pid, 'opus-v8');
-    const out = publisherDryRun(dir, pid);
-    assert.match(out, /1 ready draft/);
-    assert.match(out, new RegExp(slug));
-  } finally { rmSync(dir, { recursive: true, force: true }); }
+test('author handoff rejects path-like IDs and refuses bad manifests or truncated drafts', async (t) => {
+  const built = await handoffFixture(t);
+  const pathResult = runHelper(['--page-id', '../PG-SDS-004'], built.stagingDir);
+  assert.notEqual(pathResult.status, 0);
+  assert.equal(JSON.parse(pathResult.stdout.trim()).ok, false);
+
+  await writeFile(built.sourceManifest, `${JSON.stringify({ phase2_checks: { overall: 'fail' } })}\n`, 'utf8');
+  const badManifest = runHelper(['--page-id', built.pageId], built.stagingDir);
+  assert.notEqual(badManifest.status, 0);
+  assert.equal(JSON.parse(badManifest.stdout.trim()).reason, 'manifest_not_pass');
+
+  await writeFile(built.sourceManifest, `${JSON.stringify({ phase2_checks: { overall: 'pass' } })}\n`, 'utf8');
+  await writeFile(built.sourceMd, '---\nslug: x\n---\nshort\n', 'utf8');
+  const truncated = runHelper(['--page-id', built.pageId], built.stagingDir);
+  assert.notEqual(truncated.status, 0);
+  assert.equal(JSON.parse(truncated.stdout.trim()).reason, 'draft_not_sane');
 });
 
-test('a raw draft WITHOUT a passing manifest is NOT ready (idempotency guard is real)', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'gg-handoff-'));
-  try {
-    const pid = 'PG-SFS-005';
-    // raw orchestrator-style draft: right filename, but manifest missing → must not publish
-    writeFileSync(join(dir, `${pid}-claude-v8.md`), '# no frontmatter, raw\n');
-    const out = publisherDryRun(dir, pid);
-    assert.doesNotMatch(out, /1 ready draft/, 'a manifest-less raw draft is never ready');
-  } finally { rmSync(dir, { recursive: true, force: true }); }
+test('author tick delegates handoff validation and copying to the shared helper', async () => {
+  const source = await readFile(TICK, 'utf8');
+  assert.match(source, /gg-gengrowth-author-handoff\.mjs/);
+  assert.doesNotMatch(source, /^manifest_pass\(\)/m);
+  assert.doesNotMatch(source, /^draft_sane\(\)/m);
+  assert.doesNotMatch(source, /cp -f "\$EN_MD"/);
 });

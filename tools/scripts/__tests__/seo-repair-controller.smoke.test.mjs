@@ -17,6 +17,7 @@ import {
   enqueueRepairEvent,
   listEligibleRepairEvents,
   readRepairRecord,
+  transitionRepairEvent,
 } from '../lib/seo-repair-events.mjs';
 
 const UUID_A = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
@@ -49,6 +50,42 @@ async function fixture(t) {
   const queueDir = join(root, 'queue');
   t.after(async () => rm(root, { recursive: true, force: true }));
   return { queueDir };
+}
+
+async function budgetFixture(t, recordOverrides = {}, adapterResult = {
+  ok: false,
+  evidence: { type: 'still_broken', artifactSha: 'sha-same' },
+}) {
+  const { queueDir } = await fixture(t);
+  const queued = await enqueueRepairEvent(event(), { queueDir });
+  const seeded = await transitionRepairEvent(queued, {
+    status: 'queued',
+    ...recordOverrides,
+    evidence: { type: 'seed_budget' },
+  }, {
+    queueDir,
+    now: new Date('2026-07-15T14:01:00.000Z'),
+  });
+  let calls = 0;
+  return {
+    queueDir,
+    recordPath: join(queueDir, `${seeded.event.eventId}.json`),
+    adapterCalls: () => calls,
+    args: {
+      queueDir,
+      adapters: {
+        gengrowth: {
+          execute: async () => {
+            calls += 1;
+            return adapterResult;
+          },
+        },
+      },
+      owner: 'budget-controller-test',
+      now: () => new Date('2026-07-15T14:02:00.000Z'),
+      maxTargets: 1,
+    },
+  };
 }
 
 test('classifies exit 3 as transient and factual asset or link failures as agent_fixable', () => {
@@ -124,6 +161,100 @@ test('terminal notification key is stable and includes the terminal owner tuple'
     fingerprint: 'abc123',
   };
   assert.equal(terminalNotificationKey(record, 'published'), 'published:gengrowth:PG-WLS-007:abc123');
+});
+
+test('repair records initialize and count the natural-window progress fields', async (t) => {
+  const { queueDir } = await fixture(t);
+  const first = await enqueueRepairEvent(event(), { queueDir });
+  assert.equal(first.totalAttempts, 0);
+  assert.equal(first.agentMutationAttempts, 0);
+  assert.equal(first.firstDetectedAt, '2026-07-15T14:00:00.000Z');
+  assert.equal(first.windowCount, 1);
+  assert.equal(first.lastArtifactSha, null);
+  assert.equal(first.noProgressCount, 0);
+
+  const observed = await enqueueRepairEvent(event({
+    eventId: UUID_B,
+    runId: 'run-20260715-window-2',
+    logOffsetStart: 100,
+    logOffsetEnd: 200,
+    createdAt: '2026-07-15T14:30:00.000Z',
+  }), { queueDir });
+  assert.equal(observed.firstDetectedAt, first.firstDetectedAt);
+  assert.equal(observed.windowCount, 2);
+  assert.equal(observed.totalAttempts, 0);
+});
+
+test('third total attempt quarantines and a rerun cannot call the adapter again', async (t) => {
+  const built = await budgetFixture(t, { totalAttempts: 2 });
+  const out = await drainRepairQueue({
+    ...built.args,
+    maxTotalAttempts: 3,
+  });
+  assert.equal(built.adapterCalls(), 1);
+  assert.equal(out.terminals[0].terminal, 'quarantined');
+  const terminal = await readRepairRecord(built.recordPath);
+  assert.equal(terminal.status, 'quarantined');
+  assert.equal(terminal.totalAttempts, 3);
+  assert.equal(
+    terminal.terminalNotificationKey,
+    `quarantined:${terminal.incidentId}:${terminal.budgetEpoch}`,
+  );
+
+  const rerun = await drainRepairQueue({
+    ...built.args,
+    maxTotalAttempts: 3,
+  });
+  assert.equal(rerun.processed, 0);
+  assert.equal(built.adapterCalls(), 1);
+});
+
+test('pre-exhausted or no-progress incidents quarantine before adapter execution', async (t) => {
+  await t.test('total budget already exhausted', async (tt) => {
+    const built = await budgetFixture(tt, { totalAttempts: 3 });
+    const out = await drainRepairQueue({ ...built.args, maxTotalAttempts: 3 });
+    assert.equal(built.adapterCalls(), 0);
+    assert.equal(out.terminals[0].terminal, 'quarantined');
+    assert.equal((await readRepairRecord(built.recordPath)).history.at(-1).evidence.type, 'repair_budget_exhausted');
+  });
+  await t.test('same artifact made no progress twice', async (tt) => {
+    const built = await budgetFixture(tt, {
+      totalAttempts: 1,
+      lastArtifactSha: 'sha-same',
+      noProgressCount: 2,
+    });
+    const out = await drainRepairQueue({ ...built.args, maxTotalAttempts: 3 });
+    assert.equal(built.adapterCalls(), 0);
+    assert.equal(out.terminals[0].terminal, 'quarantined');
+    assert.equal((await readRepairRecord(built.recordPath)).history.at(-1).evidence.type, 'no_progress');
+  });
+});
+
+test('Agent mutation budget increments only when the adapter actually invokes an Agent', async (t) => {
+  await t.test('skipped invocation does not consume mutation budget', async (tt) => {
+    const built = await budgetFixture(tt, {
+      classification: 'agent_fixable',
+      strategy: 'agent_content_asset_link',
+    }, {
+      ok: false,
+      agentMutationInvoked: false,
+      evidence: { type: 'target_not_ready' },
+    });
+    await drainRepairQueue({ ...built.args, maxTargets: 1 });
+    assert.equal((await readRepairRecord(built.recordPath)).agentMutationAttempts, 0);
+  });
+  await t.test('real invocation consumes one mutation attempt', async (tt) => {
+    const built = await budgetFixture(tt, {
+      classification: 'agent_fixable',
+      strategy: 'agent_content_asset_link',
+    }, {
+      ok: false,
+      agentMutationInvoked: true,
+      evidence: { type: 'agent_exit' },
+    });
+    await drainRepairQueue({ ...built.args, maxTargets: 1 });
+    assert.equal((await readRepairRecord(built.recordPath)).agentMutationAttempts, 1);
+  });
 });
 
 test('maxTargets limits execution only and leaves later work queued', async (t) => {

@@ -43,6 +43,20 @@ function record(overrides = {}) {
   };
 }
 
+function authoringRecord(pageId = 'PG-SDS-004') {
+  return record({
+    event: {
+      ...record().event,
+      pageId,
+      slug: '',
+      lane: 'gengrowth-author',
+      stage: 'authoring',
+      errorKind: 'tool_exit',
+      summary: 'authoring exited before publish-ready handoff',
+    },
+  });
+}
+
 test('gengrowth adapter retries the exact reviewer, publishes one page, and trusts only terminal verification', async () => {
   const calls = [];
   const adapter = createGengrowthRepairAdapter({
@@ -99,6 +113,70 @@ test('gengrowth adapter does not publish when a targeted reviewer returns a real
   assert.match(result.evidence.stdout, /VERDICT: FAIL/);
   assert.match(result.evidence.stderr, /review evidence/);
   assert.equal(calls.length, 1);
+});
+
+test('gengrowth authoring repair recovers one target before resolving a publish-ready draft', async () => {
+  const calls = [];
+  const ready = {
+    mdPath: '/repo/_staging/PG-SDS-004-claude-v8.md',
+    manifestPath: '/repo/_staging/PG-SDS-004-claude-v8.manifest.json',
+    slug: 'software-development-services',
+  };
+  const adapter = createGengrowthRepairAdapter({
+    scriptsDir: '/repo/tools/scripts',
+    resolveTarget: async () => {
+      throw new Error('must not resolve before author recovery');
+    },
+    resolveAuthoredTarget: async () => ready,
+    runCommand: async (argv) => {
+      calls.push(argv);
+      if (argv[1].endsWith('gg-codex-pr-review.mjs')) {
+        return { code: 0, stdout: 'VERDICT: PASS\n', stderr: '', timedOut: false };
+      }
+      return { code: 0, stdout: JSON.stringify({ ok: true, pageId: 'PG-SDS-004' }), stderr: '', timedOut: false };
+    },
+    verifyTerminal: async () => ({
+      ok: true,
+      terminal: 'published',
+      checks: { supabase_published: true, production_200: true, writeback_clear: true },
+    }),
+  });
+
+  const result = await adapter.execute({
+    record: authoringRecord(),
+    classification: 'transient',
+    strategy: 'deterministic_repair',
+  });
+
+  assert.deepEqual(calls.slice(0, 3), [
+    ['node', '/repo/tools/scripts/gg-seo-autopilot.mjs', '--retry-author', '--task', 'PG-SDS-004'],
+    ['node', '/repo/tools/scripts/gg-seo-autopilot.mjs', '--author', '--task', 'PG-SDS-004', '--limit', '1'],
+    ['node', '/repo/tools/scripts/gg-gengrowth-author-handoff.mjs', '--page-id', 'PG-SDS-004'],
+  ]);
+  assert.equal(result.terminal, 'published');
+});
+
+test('gengrowth authoring repair stops at the first failed scoped recovery command', async () => {
+  const calls = [];
+  const adapter = createGengrowthRepairAdapter({
+    scriptsDir: '/repo/tools/scripts',
+    resolveTarget: async () => { throw new Error('must not resolve authoring target'); },
+    resolveAuthoredTarget: async () => { throw new Error('must not resolve after a failed author retry'); },
+    runCommand: async (argv) => {
+      calls.push(argv);
+      return { code: 2, stdout: '', stderr: 'retry failed', timedOut: false };
+    },
+  });
+  const result = await adapter.execute({
+    record: authoringRecord(),
+    classification: 'transient',
+    strategy: 'deterministic_repair',
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.evidence.type, 'author_recovery_failed');
+  assert.deepEqual(calls, [
+    ['node', '/repo/tools/scripts/gg-seo-autopilot.mjs', '--retry-author', '--task', 'PG-SDS-004'],
+  ]);
 });
 
 test('gengrowth adapter action whitelist rejects top-level wrappers and arbitrary sources', () => {

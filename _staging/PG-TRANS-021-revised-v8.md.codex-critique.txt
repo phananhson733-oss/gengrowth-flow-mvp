@@ -1,0 +1,8 @@
+- “two to three years”与“within a few degrees”混在一起 → 明确分成三层：Saturn in natal sign≈2.5年、within orb≈数月到一年多、exact hit=1到3次日期。
+- 起止时间说得偏模糊且可能偏晚 → 补一句 first return can begin around 27–28 by sign, with exact hits usually around 29–30 depending on natal degree.
+- Saturn square 对比不够准 → 改成“Saturn square to natal Saturn”，并说明它也可能因 retrograde 持续数月/反复触发，不要说只是“few weeks”或必然浅。
+- “tenth house is Saturn’s home ground”不严谨 → 改为“10th house is career/public-life territory; Saturn only lights it up if natal Saturn or the transit emphasis is there.”
+- 文章抽象词太多：rebuild, structure, maturity, pressure 反复出现 → 加 2–3 个具体例子，如 4th house=home/family duty, 7th=commitment boundaries, 10th=career authority.
+- 人名引用像装饰性背书 → 给 Greene/Arroyo/Rudhyar 各自对应的具体观点或作品；否则删掉，避免“name-dropping without evidence”。
+- “In my years moving from commercial data analysis…”像未证实的 AI 资历 → 换成品牌/编辑可真实承担的方法论，比如“we time this by natal Saturn degree, house, and retrograde passes.”
+- 关键词塞得不自然，尤其“H2: What Is How Long Does Saturn Return Last?” → 改成自然搜索标题，如“What Does ‘Saturn Return Duration’ Actually Mean?” 保留关键词但别牺牲可读性。

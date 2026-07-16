@@ -94,6 +94,7 @@ FINALIZED=0
 
 finalize_repair() {
   local rc="${1:-0}"
+  local final_rc="$rc"
   [ "$FINALIZED" -eq 0 ] || return "$rc"
   FINALIZED=1
   trap - EXIT INT TERM
@@ -103,16 +104,18 @@ finalize_repair() {
       --run-id "$RUN_ID" --run-exit "$rc" --max-targets "${GG_SEO_REPAIR_MAX_TARGETS:-2}" \
       --budget-seconds "${GG_SEO_REPAIR_BUDGET_SECONDS:-1500}" >> "$LOG" 2>&1; then
       echo "$(date '+%F %T') repair import/drain failed for run $RUN_ID (original rc=$rc)" >> "$LOG"
+      [ "$rc" -ne 0 ] || final_rc=2
     fi
   fi
   rm -rf "$LOCK" 2>/dev/null
-  return "$rc"
+  return "$final_rc"
 }
 
 on_exit() {
   local rc=$?
   finalize_repair "$rc"
-  exit "$rc"
+  local final_rc=$?
+  exit "$final_rc"
 }
 
 trap 'on_exit' EXIT

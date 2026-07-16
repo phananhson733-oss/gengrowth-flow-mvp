@@ -517,6 +517,35 @@ test('--author park uses the active Gengrowth site and invokes repair only after
   }
 });
 
+test('--author awaits the repair tail so controller failure reaches the fatal handler', async () => {
+  const h = makeHarness();
+  try {
+    const repair = writeFakeRepairController(h, { exitCode: 2 });
+    const flow = writeStubAuthorParkFlow(h);
+    const planName = '2026-07-16-gengrowth-blog-output-plan.md';
+    writeFileSync(join(h.tasks, planName), '- [ ] `PG-GJ2U-001` google july 2026 update\n');
+    writeClaims(h, {});
+
+    const parked = await runAutoAsync(h, ['--author', '--task', 'PG-GJ2U-001'], {
+      GG_FLOW_REPO: flow,
+      GG_AUTOPILOT_PLAN: planName,
+      GG_SITE: 'gengrowth',
+      GG_FLOW_STATE_DIR: join(h.root, 'state'),
+      GG_SEO_REPAIR_CONTROLLER_V2_ENABLED: '1',
+      GG_SEO_REPAIR_CONTROLLER_BIN: repair.file,
+      GG_TEST_REPAIR_CALLS: repair.calls,
+      GG_TEST_CLAIMS_LOCK: `${h.claimsPath}.lock`,
+    });
+
+    assert.equal(parked.status, 1, `${parked.stdout}${parked.stderr}`);
+    assert.match(parked.stderr, /repair controller exited 2/);
+    const claim = JSON.parse(readFileSync(h.claimsPath, 'utf8'))['PG-GJ2U-001'];
+    assert.equal(claim.status, 'needs_human');
+  } finally {
+    h.cleanup();
+  }
+});
+
 test('repair controller child timeout includes the five-minute persistence and unlock margin', () => {
   const source = readFileSync(SCRIPT, 'utf8');
   assert.match(

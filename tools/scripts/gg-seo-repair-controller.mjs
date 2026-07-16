@@ -214,45 +214,6 @@ function activeRunAlreadyRepresented(records, event) {
   });
 }
 
-function legacyErrorKind(claim, summary) {
-  const text = `${claim?.stage || ''} ${summary || ''}`.toLowerCase();
-  if (/stale|duplicate|do not publish|错误前提|过时/.test(text)) return 'stale';
-  if (/svg|image|asset|图片|图像/.test(text)) return 'asset_fail';
-  if (/links-seo|internal links?|italic text|站内链接/.test(text)) return 'link_fail';
-  if (/timeout|timed out|超时/.test(text)) return 'timeout';
-  if (/exited?\s+\d+|tool exit|codex exited/.test(text)) return 'tool_exit';
-  if (/backfill|writeback|回填/.test(text)) return 'backfill_fail';
-  if (/review|gate|fail|fact|phase2|事实/.test(text)) return 'gate_fail';
-  return 'state_fail';
-}
-
-function legacyRetry(claim, pageId) {
-  if (claim?.branch) {
-    return [
-      'node',
-      'tools/scripts/gg-seo-autopilot.mjs',
-      '--retry-failed',
-      '--branch',
-      String(claim.branch),
-    ];
-  }
-  return [
-    'node',
-    'tools/scripts/gg-seo-autopilot.mjs',
-    '--retry-author',
-    '--task',
-    pageId,
-  ];
-}
-
-function legacyLane(claim) {
-  const stage = String(claim?.stage || claim?.status || '').toLowerCase();
-  if (/backfill|writeback|published|done/.test(stage)) return 'backfill';
-  if (/verified|merge|live/.test(stage)) return 'merge';
-  if (/preview|review|gate|push/.test(stage)) return 'preview';
-  return 'author';
-}
-
 function eligibleLegacyClaim(claim, pageId, baseState) {
   if (!claim || typeof claim !== 'object') return false;
   if (['needs_human', 'pushed-preview', 'verified-preview', 'active', 'authored'].includes(claim.status)) return true;

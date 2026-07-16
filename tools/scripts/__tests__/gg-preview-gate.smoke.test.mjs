@@ -254,6 +254,16 @@ test('a review dimension FAILs → exit 2, calls mark-failed + notify CLI with t
   assert.ok(!sentinelHit(sentinels, 'autopilot-merge'), '--merge must NOT be called on failure');
 });
 
+test('preview gate delegates failure persistence only to --mark-failed', () => {
+  const source = readFileSync(SCRIPT, 'utf8');
+  assert.match(source, /\['--mark-failed', '--branch'/);
+  assert.doesNotMatch(
+    source,
+    /seo-repair-producer|enqueueRepairEvent|persistRepairAndDrain/,
+    'preview gate must not enqueue a second copy of a failure owned by --mark-failed',
+  );
+});
+
 // ── (c1b) DEFAULT: park notify is SUPPRESSED (GG_GATE_NOTIFY_ON_PARK unset) ───
 test('default (no GG_GATE_NOTIFY_ON_PARK): a park still marks failed but the notify CLI is NOT invoked', () => {
   const { dir, sentinels } = freshCase();

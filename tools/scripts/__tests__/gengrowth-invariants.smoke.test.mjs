@@ -167,11 +167,11 @@ test('invariant 1: author tick immediately runs gengrowth publish follow-up afte
   );
   assert.match(
     src,
-    /gg-seo-repair-controller\.mjs" import-v1 --site gengrowth/,
+    /node "\$REPAIR_CONTROLLER" import-v1 --site gengrowth/,
     'v2 author failures must enter the shared repair controller through the natural wrapper',
   );
   assert.equal(
-    (src.match(/gg-seo-repair-controller\.mjs" import-v1 --site gengrowth/g) || []).length,
+    (src.match(/node "\$REPAIR_CONTROLLER" import-v1 --site gengrowth/g) || []).length,
     1,
     'author tick must have exactly one compatibility import call',
   );
@@ -207,13 +207,13 @@ test('invariant 1: author tick immediately runs gengrowth publish follow-up afte
   );
   assert.match(
     src,
-    /publish follow-up:[\s\S]*GG_SEO_REPAIR_CONTROLLER_V2_ENABLED[\s\S]*run_repair_controller "\$rc"/,
-    'v2 publish follow-up failures must call the repair controller instead of notifying people directly',
+    /publish follow-up:[\s\S]*GG_SEO_REPAIR_CONTROLLER_V2_ENABLED:-0\}" != "1"/,
+    'publish follow-up failures must retain direct notifications only in legacy mode',
   );
   assert.match(
     src,
-    /missing \$PUBLISH_TICK[\s\S]*GG_SEO_REPAIR_CONTROLLER_V2_ENABLED[\s\S]*run_repair_controller 2/,
-    'v2 missing publish wrapper must enter the repair controller instead of notifying people directly',
+    /missing \$PUBLISH_TICK[\s\S]*GG_SEO_REPAIR_CONTROLLER_V2_ENABLED:-0\}" != "1"/,
+    'missing publish wrapper must rely on the one finalizer in v2 and notify only in legacy mode',
   );
 });
 

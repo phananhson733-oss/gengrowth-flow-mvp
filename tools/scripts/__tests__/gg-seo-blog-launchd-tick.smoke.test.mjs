@@ -50,6 +50,10 @@ function runnerHarness({
   hookExit = 0,
   controllerExit = 0,
   reconcileExit = 0,
+  preReconcileExit = reconcileExit,
+  postReconcileExit = reconcileExit,
+  preReconcileJson = null,
+  postReconcileJson = null,
   readinessExit = 0,
   summaryExit = 0,
   lockHeld = false,
@@ -68,6 +72,7 @@ function runnerHarness({
   const summaryArgs = join(root, 'summary-args.json');
   const nightlyEnv = join(root, 'nightly-env.json');
   const reconcileEnv = join(root, 'reconcile-env.json');
+  const reconcileCount = join(root, 'reconcile-count.txt');
   const readinessArgs = join(root, 'readiness-args.json');
   const nightlyLog = join(root, 'nightly.log');
   const launchdLog = join(root, 'launchd.log');
@@ -107,12 +112,18 @@ function runnerHarness({
   ].join('\n'));
   const reconcile = join(root, 'reconcile.mjs');
   writeFileSync(reconcile, [
-    "import { appendFileSync } from 'node:fs';",
+    "import { appendFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs';",
     "const notifyOnly = process.argv.includes('--notify-only');",
     "appendFileSync(process.env.GG_TEST_EVENTS, notifyOnly ? 'notify\\n' : 'reconcile\\n');",
     "appendFileSync(process.env.GG_TEST_RECONCILE_ENV, JSON.stringify({ notifyOnly, silence: process.env.GG_LARK_NOTIFY_SILENCE || null }) + '\\n');",
     "if (notifyOnly) process.exit(0);",
-    `process.exit(${reconcileExit});`,
+    "const previous = existsSync(process.env.GG_TEST_RECONCILE_COUNT) ? Number(readFileSync(process.env.GG_TEST_RECONCILE_COUNT, 'utf8')) || 0 : 0;",
+    "const call = previous + 1;",
+    "writeFileSync(process.env.GG_TEST_RECONCILE_COUNT, String(call));",
+    `const exits = ${JSON.stringify([preReconcileExit, postReconcileExit])};`,
+    `const json = ${JSON.stringify([preReconcileJson, postReconcileJson])};`,
+    "if (json[Math.min(call - 1, 1)] !== null) process.stdout.write(JSON.stringify(json[Math.min(call - 1, 1)]) + '\\n');",
+    "process.exit(exits[Math.min(call - 1, 1)]);",
     '',
   ].join('\n'));
   const readiness = join(root, 'readiness.mjs');
@@ -181,6 +192,7 @@ function runnerHarness({
       GG_TEST_SUMMARY_ARGS: summaryArgs,
       GG_TEST_NIGHTLY_ENV: nightlyEnv,
       GG_TEST_RECONCILE_ENV: reconcileEnv,
+      GG_TEST_RECONCILE_COUNT: reconcileCount,
       GG_TEST_READINESS_ARGS: readinessArgs,
     },
   });
@@ -262,6 +274,60 @@ test('pre-reconcile failure flushes durable writeback notifications before early
   const result = h.run();
   assert.equal(result.status, 4, `${result.stdout}\n${result.stderr}\n${h.log()}`);
   assert.deepEqual(h.events(), ['drain', 'reconcile', 'notify']);
+});
+
+test('pre-fire reconcile tolerates only plan and needs-human drift so the natural run can repair it', () => {
+  const h = runnerHarness({
+    preReconcileExit: 2,
+    postReconcileExit: 0,
+    preReconcileJson: {
+      ok: false,
+      pendingWritebackAfter: 0,
+      droppedWritebackAfter: 0,
+      sheetFlipsAfter: 0,
+      planUncheckedAfter: 15,
+      activeRepairAfter: 0,
+      expiredLeasesAfter: 0,
+      eligibleNeedsHumanAfter: 3,
+      errors: [],
+    },
+    postReconcileJson: {
+      ok: true,
+      pendingWritebackAfter: 0,
+      droppedWritebackAfter: 0,
+      sheetFlipsAfter: 0,
+      planUncheckedAfter: 0,
+      activeRepairAfter: 0,
+      expiredLeasesAfter: 0,
+      eligibleNeedsHumanAfter: 0,
+      errors: [],
+    },
+  });
+  const result = h.run();
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}\n${h.log()}`);
+  assert.deepEqual(h.events(), ['drain', 'reconcile', 'notify', 'nightly', 'hook', 'drain', 'reconcile', 'notify', 'readiness', 'summary']);
+  assert.match(h.log(), /pre-fire reconcile has repairable plan\/needs-human drift; continue/);
+});
+
+test('pre-fire reconcile still blocks real ledger, repair, or verification drift', () => {
+  const h = runnerHarness({
+    preReconcileExit: 2,
+    preReconcileJson: {
+      ok: false,
+      pendingWritebackAfter: 1,
+      droppedWritebackAfter: 0,
+      sheetFlipsAfter: 0,
+      planUncheckedAfter: 15,
+      activeRepairAfter: 0,
+      expiredLeasesAfter: 0,
+      eligibleNeedsHumanAfter: 3,
+      errors: [],
+    },
+  });
+  const result = h.run();
+  assert.equal(result.status, 2, `${result.stdout}\n${result.stderr}\n${h.log()}`);
+  assert.deepEqual(h.events(), ['drain', 'reconcile', 'notify']);
+  assert.match(h.log(), /pre-fire strict reconcile failed/);
 });
 
 test('readiness failure is returned and cannot emit a false-success terminal summary', () => {

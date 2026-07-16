@@ -35,11 +35,13 @@ function harness({
   const root = mkdtempSync(join(tmpdir(), 'seo-reconcile-tick-'));
   const state = join(root, 'state');
   const queue = join(state, 'seo-repair-queue');
+  const oracle = join(root, 'oracle-autopilot');
   const lock = join(root, 'tick.lock');
   const events = join(root, 'events.log');
   const plan = join(root, 'plan.md');
   const envFile = join(root, 'gg.env');
   mkdirSync(queue, { recursive: true });
+  mkdirSync(join(oracle, '.git'), { recursive: true });
   writeFileSync(plan, '- [x] `PG-A-001` alpha\n');
   if (owner) {
     mkdirSync(lock);
@@ -56,6 +58,7 @@ function harness({
     '#!/usr/bin/env node',
     "const fs = await import('node:fs');",
     "fs.appendFileSync(process.env.GG_TEST_EVENTS, `reconcile ${process.argv.slice(2).join(' ')} silence=${process.env.GG_LARK_NOTIFY_SILENCE || ''}\\n`);",
+    "fs.writeFileSync(process.env.GG_TEST_RECONCILE_ORACLE, process.env.GG_ORACLE_DIR || '');",
     `process.exit(${reconcileExit});`,
     '',
   ].join('\n'));
@@ -73,6 +76,8 @@ function harness({
       `GG_SEO_READINESS_BIN='${readiness}'`,
       `GG_SEO_PLAN='${plan}'`,
       "GG_SEO_SITE='gengrowth'",
+      "GG_ORACLE_DIR='/unsafe/interactive-oracle'",
+      "GG_AUTOMATION_ORACLE_DIR='/unsafe/env-file-oracle'",
       '',
     ].join('\n'));
   }
@@ -90,6 +95,7 @@ function harness({
       ...process.env,
       HOME: root,
       GG_FLOW_STATE_DIR: state,
+      GG_AUTOMATION_ORACLE_DIR: oracle,
       GG_ENV_FILE: useEnvFile ? envFile : '/dev/null',
       GG_SEO_RECONCILE_NOW_HM: hm,
       GG_SEO_RECONCILE_LOCK: lock,
@@ -98,12 +104,22 @@ function harness({
       GG_SEO_REPAIR_QUEUE_DIR: queue,
       ...directBins,
       GG_TEST_EVENTS: events,
+      GG_TEST_RECONCILE_ORACLE: join(root, 'reconcile-oracle.txt'),
     },
   });
   const lines = (() => {
     try { return readFileSync(events, 'utf8').trim().split('\n').filter(Boolean); } catch { return []; }
   })();
-  return { result, lines, root, lock };
+  return {
+    result,
+    lines,
+    root,
+    lock,
+    oracle,
+    reconcileOracle: existsSync(join(root, 'reconcile-oracle.txt'))
+      ? readFileSync(join(root, 'reconcile-oracle.txt'), 'utf8')
+      : '',
+  };
 }
 
 test('reconciler source contains no nightly, author, scan, or producer path', () => {
@@ -192,4 +208,5 @@ test('environment file is sourced before deriving bins, plan, and site', () => {
   assert.equal(h.result.status, 0, `${h.result.stdout}\n${h.result.stderr}`);
   assert.equal(h.lines.length, 3);
   assert.match(h.lines[2], /--site gengrowth/);
+  assert.equal(h.reconcileOracle, h.oracle);
 });

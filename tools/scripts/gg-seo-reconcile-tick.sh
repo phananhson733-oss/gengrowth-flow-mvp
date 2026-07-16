@@ -7,6 +7,7 @@ export PATH="$HOME/.local/bin:$HOME/.npm-global/bin:/opt/homebrew/bin:/usr/local
 export TZ="Asia/Shanghai"
 
 ENV_FILE="${GG_ENV_FILE:-$HOME/.config/gg/_gg.env}"
+PINNED_ORACLE="${GG_AUTOMATION_ORACLE_DIR:-$HOME/oracle-autopilot}"
 
 if [[ -f "$ENV_FILE" ]]; then
   set -a
@@ -16,6 +17,8 @@ if [[ -f "$ENV_FILE" ]]; then
 fi
 
 export GG_WRITEBACK_LOCK_DIR="${GG_WRITEBACK_LOCK_DIR:-${GG_FLOW_STATE_DIR:-$HOME/gengrowth-agents/flow-state}/writeback-ledger.lock}"
+export GG_AUTOMATION_ORACLE_DIR="$PINNED_ORACLE"
+export GG_ORACLE_DIR="$PINNED_ORACLE"
 
 FLOW="${GG_SEO_RECONCILE_FLOW:-$HOME/gengrowth-flow-mvp}"
 LOCK="${GG_SEO_RECONCILE_LOCK:-/tmp/gg-seo-reconcile.lock}"
@@ -36,6 +39,7 @@ exec >>"$LOG" 2>>"$ERR_LOG"
 [[ -f "$CONTROLLER" ]] || { echo "controller unavailable: $CONTROLLER"; exit 1; }
 [[ -f "$RECONCILE" ]] || { echo "reconcile unavailable: $RECONCILE"; exit 1; }
 [[ -f "$READINESS" ]] || { echo "readiness unavailable: $READINESS"; exit 1; }
+[[ -d "$PINNED_ORACLE/.git" ]] || { echo "clean Oracle baseline unavailable: $PINNED_ORACLE"; exit 1; }
 [[ -f "$PLAN" ]] || { echo "plan unavailable: $PLAN"; exit 1; }
 if [[ "$PLAN" != /* ]]; then
   PLAN="$(cd "$(dirname "$PLAN")" && pwd -P)/$(basename "$PLAN")"

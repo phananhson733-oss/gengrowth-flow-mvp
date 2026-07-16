@@ -83,6 +83,30 @@ flush_writeback_notifications() {
   fi
 }
 
+pre_fire_reconcile_allows_repairable_drift() {
+  local strict_json="$1"
+  node -e '
+    const raw = process.argv[1];
+    let value;
+    try { value = JSON.parse(raw); } catch { process.exit(1); }
+    if (!value || typeof value !== "object" || Array.isArray(value)) process.exit(1);
+    const requiredZero = [
+      "pendingWritebackAfter",
+      "droppedWritebackAfter",
+      "sheetFlipsAfter",
+      "activeRepairAfter",
+      "expiredLeasesAfter",
+    ];
+    const repairable = ["planUncheckedAfter", "eligibleNeedsHumanAfter"];
+    const zero = requiredZero.every((field) => Number.isInteger(value[field]) && value[field] === 0);
+    const validRepairable = repairable.every(
+      (field) => Number.isInteger(value[field]) && value[field] >= 0,
+    );
+    const noErrors = Array.isArray(value.errors) && value.errors.length === 0;
+    process.exit(zero && validRepairable && noErrors ? 0 : 1);
+  ' "$strict_json"
+}
+
 if [[ "${GG_SEO_SKIP_LEGACY_CHECK:-0}" != "1" ]]; then
   uid="$(id -u)"
   legacy_labels=(
@@ -140,8 +164,13 @@ set -e
 printf '%s\n' "$PRE_STRICT_JSON"
 flush_writeback_notifications
 if [[ "$PRE_RECONCILE_RC" -ne 0 ]]; then
-  echo "pre-fire strict reconcile failed; abort before nightly"
-  exit "$PRE_RECONCILE_RC"
+  if [[ "$PRE_RECONCILE_RC" -eq 2 ]] \
+    && pre_fire_reconcile_allows_repairable_drift "$PRE_STRICT_JSON"; then
+    echo "pre-fire reconcile has repairable plan/needs-human drift; continue"
+  else
+    echo "pre-fire strict reconcile failed; abort before nightly"
+    exit "$PRE_RECONCILE_RC"
+  fi
 fi
 
 echo "single-executor preflight passed; starting deterministic SEO nightly"

@@ -28,7 +28,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, rmSync } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 
 const HOME = homedir();
 // codex lives in ~/.npm-global/bin on the publish node (matches gg-author-review.mjs); some hosts
@@ -58,6 +58,7 @@ function parseArgs(argv) {
     else if (a === '--pr') o.pr = String(argv[++i] ?? '').trim();
     else if (a === '--branch') o.branch = String(argv[++i] ?? '').trim();
     else if (a === '--source') o.source = String(argv[++i] ?? '').trim();
+    else if (a === '--head-ref-oid') o.headRefOid = String(argv[++i] ?? '').trim();
     else if (a === '--timeout-ms') o.timeoutMs = Number(argv[++i]);
   }
   return o;
@@ -80,15 +81,52 @@ function resolveRef(o) {
   return '';
 }
 
-function fetchDiff(ref, repo) {
-  const r = spawnSync(GH, ['pr', 'diff', ref, '--repo', repo], {
+function runGh(args, label) {
+  const r = spawnSync(GH, args, {
     encoding: 'utf8', timeout: 60000, maxBuffer: 64 * 1024 * 1024,
   });
-  if (r.error) toolFail(`gh pr diff spawn failed: ${r.error.code || r.error.message}`);
-  if (r.status !== 0) toolFail(`gh pr diff exited ${r.status}: ${String(r.stderr || '').slice(-200).trim()}`);
-  const diff = String(r.stdout || '');
-  if (!diff.trim()) toolFail('empty PR diff');
-  return diff;
+  if (r.error) toolFail(`${label} spawn failed: ${r.error.code || r.error.message}`);
+  if (r.status !== 0) toolFail(`${label} exited ${r.status}: ${String(r.stderr || '').slice(-200).trim()}`);
+  return String(r.stdout || '');
+}
+
+function fetchPinnedDiff(ref, repo, expectedHeadRefOid) {
+  if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repo)) {
+    toolFail(`invalid --repo "${repo}"`);
+  }
+  const viewText = runGh([
+    'pr', 'view', ref,
+    '--repo', repo,
+    '--json', 'baseRefOid,headRefOid',
+  ], 'gh pr view');
+  let view;
+  try {
+    view = JSON.parse(viewText);
+  } catch (error) {
+    toolFail(`gh pr view returned invalid JSON: ${error.message}`);
+  }
+  const baseRefOid = String(view?.baseRefOid || '').trim();
+  const currentHeadRefOid = String(view?.headRefOid || '').trim();
+  if (!/^[0-9a-f]{40}$/i.test(baseRefOid)) {
+    toolFail(`PR baseRefOid unavailable or malformed: "${baseRefOid}"`);
+  }
+  if (!/^[0-9a-f]{40}$/i.test(currentHeadRefOid)) {
+    toolFail(`PR headRefOid unavailable or malformed: "${currentHeadRefOid}"`);
+  }
+  if (currentHeadRefOid.toLowerCase() !== expectedHeadRefOid.toLowerCase()) {
+    toolFail(`PR head mismatch: expected ${expectedHeadRefOid}, got ${currentHeadRefOid}`);
+  }
+  const comparePath = `repos/${repo}/compare/${baseRefOid}...${expectedHeadRefOid}`;
+  const diff = runGh([
+    'api', comparePath,
+    '-H', 'Accept: application/vnd.github.v3.diff',
+  ], `gh api ${comparePath}`);
+  if (!diff.trim()) toolFail('empty immutable PR compare diff');
+  return {
+    diff,
+    baseRefOid: baseRefOid.toLowerCase(),
+    reviewedHeadRefOid: expectedHeadRefOid.toLowerCase(),
+  };
 }
 
 // Return only the per-file hunks that touch data/articles/. Used as the SANITY GATE that the PR is
@@ -212,12 +250,16 @@ function main() {
 
   const ref = resolveRef(o);
   if (!ref) toolFail(`no usable PR ref (--pr "${o.pr}", --branch "${o.branch}")`);
+  if (!/^[0-9a-f]{40}$/i.test(o.headRefOid || '')) {
+    toolFail('--head-ref-oid with one explicit 40-hex expected PR head is required in PR mode');
+  }
   // Arg-injection guard: spawnSync avoids a shell, but a ref beginning with "-" would be parsed by
   // `gh` as a FLAG (e.g. "-R other/repo"), redirecting the diff. A valid branch/URL/number never
   // starts with "-", so reject it outright (tooling failure → PARK under the required gate).
   if (ref.startsWith('-')) toolFail(`refusing ref starting with '-' (arg-injection guard): ${ref}`);
 
-  const fullDiff = fetchDiff(ref, o.repo);
+  const pinned = fetchPinnedDiff(ref, o.repo, o.headRefOid);
+  const fullDiff = pinned.diff;
   // A real article publish ALWAYS touches data/articles/. If it doesn't, this isn't an article
   // publish and there's nothing to fact-check → fail-closed.
   if (!filterArticleHunks(fullDiff).trim()) toolFail('PR diff has no data/articles/ changes to fact-check');
@@ -242,6 +284,12 @@ function main() {
 
   // Relay codex's final message (with the VERDICT line(s)) to stdout for the gate to classify.
   process.stdout.write(msg.endsWith('\n') ? msg : msg + '\n');
+  process.stdout.write(`GG_CODEX_INPUT_EVIDENCE=${JSON.stringify({
+    reviewedHeadRefOid: pinned.reviewedHeadRefOid,
+    baseRefOid: pinned.baseRefOid,
+    inputSha256: createHash('sha256').update(fullDiff).digest('hex'),
+    bytes: Buffer.byteLength(fullDiff),
+  })}\n`);
   process.exit(0);
 }
 

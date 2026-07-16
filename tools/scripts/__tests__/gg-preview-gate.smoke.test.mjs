@@ -1002,6 +1002,44 @@ test('tampered review snapshot fails closed before reviewers, mark, or merge', a
   assert.equal(fixture.mergeCalls().length, 0);
 });
 
+test('Codex PASS evidence must bind the same reviewed SHA before mark or merge', async () => {
+  const input = committedReviewInputs('codex-evidence-mismatch');
+  const fixture = gateRoundFixture({
+    heads: [input.reviewedHeadRefOid, input.reviewedHeadRefOid],
+  });
+  fixture.deps.articlePaths = () => ({
+    worktree: input.worktree,
+    articleTs: input.articleTs,
+    draftMd: input.draftMd,
+  });
+  fixture.deps.reviewSnapshotRoot = input.snapshotRoot;
+  const originalNode = fixture.deps.node;
+  fixture.deps.node = async (bin, args, opts) => {
+    if (bin !== 'codex') return originalNode(bin, args, opts);
+    return {
+      code: 0,
+      stdout: [
+        'VERDICT: PASS',
+        `GG_CODEX_INPUT_EVIDENCE=${JSON.stringify({
+          reviewedHeadRefOid: HEAD_B,
+          baseRefOid: 'd'.repeat(40),
+          inputSha256: 'c'.repeat(64),
+          bytes: 128,
+        })}`,
+      ].join('\n'),
+      stderr: '',
+      timedOut: false,
+    };
+  };
+
+  const result = await runGate(fixture.options, fixture.deps);
+
+  assert.equal(result.exitCode, 2);
+  assert.match(result.reason, /codex.*evidence.*head|reviewed.*head/i);
+  assert.equal(fixture.markVerifiedCalls().length, 0);
+  assert.equal(fixture.mergeCalls().length, 0);
+});
+
 for (const localMutation of [
   {
     name: 'dirty worktree',

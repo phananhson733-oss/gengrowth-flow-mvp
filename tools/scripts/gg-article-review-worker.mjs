@@ -30,6 +30,7 @@
 //   2  → CLI/usage error (bad/missing args).
 
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 
 // Exported so the gate (gg-preview-gate.mjs REVIEW_DIMENSIONS) can be regression-checked against
@@ -52,6 +53,9 @@ function parseArgs(argv) {
     else if (a === '--model') o.model = argv[++i];
     else if (a === '--effort') o.effort = argv[++i];
     else if (a === '--timeout-ms') o.timeoutMs = argv[++i];
+    else if (a === '--head-ref-oid') o.headRefOid = String(argv[++i] ?? '').trim();
+    else if (a === '--article-sha256') o.articleSha256 = String(argv[++i] ?? '').trim();
+    else if (a === '--draft-sha256') o.draftSha256 = String(argv[++i] ?? '').trim();
     else if (a === '--json') o.json = true;
   }
   return o;
@@ -67,6 +71,19 @@ function validate(o) {
   else if (!existsSync(o.article)) errors.push(`article file not found: ${o.article}`);
   if (!o.draft) errors.push('--draft <source .md path> is required');
   else if (!existsSync(o.draft)) errors.push(`draft file not found: ${o.draft}`);
+  const bindingValues = [o.headRefOid, o.articleSha256, o.draftSha256].filter(Boolean);
+  if (bindingValues.length > 0 && bindingValues.length !== 3) {
+    errors.push('--head-ref-oid, --article-sha256, and --draft-sha256 must be supplied together');
+  }
+  if (o.headRefOid && !/^[0-9a-f]{40}$/i.test(o.headRefOid)) {
+    errors.push('--head-ref-oid must be a 40-hex SHA');
+  }
+  if (o.articleSha256 && !/^[0-9a-f]{64}$/i.test(o.articleSha256)) {
+    errors.push('--article-sha256 must be a 64-hex SHA-256 digest');
+  }
+  if (o.draftSha256 && !/^[0-9a-f]{64}$/i.test(o.draftSha256)) {
+    errors.push('--draft-sha256 must be a 64-hex SHA-256 digest');
+  }
 
   // NOTE: --effort is intentionally NOT enum-validated here. The sibling
   // tools/scripts/gg-author-review.mjs doesn't validate it either, so an
@@ -262,18 +279,34 @@ function main() {
   // file) passes that check but then readFileSync throws EISDIR/EACCES and would
   // dump a raw stack. Guard both reads → clean structured SKIPPED (exit 1) instead
   // of an unhandled crash, so a bad path is a tooling failure, never a silent pass.
-  let articleTs;
-  let draftMd;
+  let articleBytes;
+  let draftBytes;
   try {
-    articleTs = readFileSync(o.article, 'utf8');
+    articleBytes = readFileSync(o.article);
   } catch (e) {
     return skipped(`tooling: cannot read article: ${e.code || e.message}`);
   }
   try {
-    draftMd = readFileSync(o.draft, 'utf8');
+    draftBytes = readFileSync(o.draft);
   } catch (e) {
     return skipped(`tooling: cannot read draft: ${e.code || e.message}`);
   }
+  const inputSha256 = {
+    article: createHash('sha256').update(articleBytes).digest('hex'),
+    draft: createHash('sha256').update(draftBytes).digest('hex'),
+  };
+  if (o.articleSha256 && inputSha256.article !== o.articleSha256.toLowerCase()) {
+    return skipped(
+      `tooling: article snapshot digest mismatch (${inputSha256.article} != ${o.articleSha256.toLowerCase()})`,
+    );
+  }
+  if (o.draftSha256 && inputSha256.draft !== o.draftSha256.toLowerCase()) {
+    return skipped(
+      `tooling: draft snapshot digest mismatch (${inputSha256.draft} != ${o.draftSha256.toLowerCase()})`,
+    );
+  }
+  const articleTs = articleBytes.toString('utf8');
+  const draftMd = draftBytes.toString('utf8');
   const prompt = buildPrompt(o.dimension, articleTs, draftMd);
 
   const res = runWorker({ model, effort, prompt, timeoutMs });
@@ -293,7 +326,12 @@ function main() {
   const verdict = extractFirstJsonObject(res.stdout || '');
   if (!verdict) return skipped('tooling: no parseable JSON verdict');
 
-  const result = { dimension: o.dimension, ...verdict };
+  const result = {
+    dimension: o.dimension,
+    ...verdict,
+    reviewedHeadRefOid: o.headRefOid || null,
+    inputSha256,
+  };
   emit(result, o.json);
   process.exit(0);
 }

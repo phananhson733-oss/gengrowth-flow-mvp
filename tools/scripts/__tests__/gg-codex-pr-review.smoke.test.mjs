@@ -8,6 +8,7 @@
 import { test } from 'node:test';
 import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { mkdirSync, writeFileSync, chmodSync, rmSync, existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -17,6 +18,10 @@ import { filterArticleHunks } from '../gg-codex-pr-review.mjs';
 const SCRIPT = fileURLToPath(new URL('../gg-codex-pr-review.mjs', import.meta.url));
 const ROOT = join(tmpdir(), `gg-codex-pr-review-test-${process.pid}`);
 mkdirSync(ROOT, { recursive: true });
+const HEAD_A = 'a'.repeat(40);
+const HEAD_B = 'b'.repeat(40);
+const BASE_A = 'd'.repeat(40);
+const sha256 = (value) => createHash('sha256').update(value).digest('hex');
 
 let seq = 0;
 function caseDir() { const d = join(ROOT, `c${seq++}`); mkdirSync(d, { recursive: true }); return d; }
@@ -38,9 +43,36 @@ function ghFake(dir, mode = 'ok') {
   }
   return ghWithDiff(dir, ARTICLE_HUNK);
 }
-function ghWithDiff(dir, diffText) {
-  // Flush via the write callback before exit — process.exit() truncates a large pending stdout write.
-  return writeBin(dir, 'fake-gh.mjs', `process.stdout.write(${JSON.stringify(diffText)}, () => process.exit(0));`);
+function ghWithDiff(dir, diffText, {
+  headRefOid = HEAD_A,
+  baseRefOid = BASE_A,
+  mutableBranchDiff = diffText,
+  capture = '',
+} = {}) {
+  // Supports both the legacy mutable `gh pr diff <branch>` path and the required
+  // immutable `gh pr view` + `gh api .../compare/<base>...<head>` path so RED
+  // tests can prove which one the wrapper actually used.
+  return writeBin(dir, 'fake-gh.mjs', `import { appendFileSync } from 'node:fs';
+const argv = process.argv.slice(2);
+if (${JSON.stringify(capture)}) {
+  try { appendFileSync(${JSON.stringify(capture)}, argv.join(' ') + '\\n'); } catch {}
+}
+let out = '';
+if (argv[0] === 'pr' && argv[1] === 'view') {
+  out = JSON.stringify({
+    baseRefOid: ${JSON.stringify(baseRefOid)},
+    headRefOid: ${JSON.stringify(headRefOid)},
+  });
+} else if (argv[0] === 'api' && argv.some((x) => String(x).includes('/compare/'))) {
+  out = ${JSON.stringify(diffText)};
+} else if (argv[0] === 'pr' && argv[1] === 'diff') {
+  out = ${JSON.stringify(mutableBranchDiff)};
+} else {
+  process.stderr.write('unexpected gh argv: ' + argv.join(' ') + '\\n');
+  process.exit(9);
+}
+process.stdout.write(out, () => process.exit(0));
+`);
 }
 
 // Fake `codex`: parse `--output-last-message <file>`, drain stdin (optionally capturing the prompt
@@ -68,7 +100,12 @@ process.stdin.on('end', () => {
 `);
 }
 
-function run(args, { gh, codex, capture }) {
+function run(args, {
+  gh,
+  codex,
+  capture,
+  omitHead = false,
+}) {
   const env = {
     ...process.env,
     GG_CODEX_REVIEW_GH_BIN: gh,
@@ -78,7 +115,20 @@ function run(args, { gh, codex, capture }) {
     GG_CODEX_RETRY_BACKOFF_S: '0',
   };
   if (capture) env.GG_CODEX_REVIEW_CAPTURE = capture;
-  return spawnSync(process.execPath, [SCRIPT, ...args], { encoding: 'utf8', timeout: 30000, env });
+  const effectiveArgs = !omitHead && !args.includes('--source') && !args.includes('--head-ref-oid')
+    ? [...args, '--head-ref-oid', HEAD_A]
+    : args;
+  return spawnSync(process.execPath, [SCRIPT, ...effectiveArgs], {
+    encoding: 'utf8',
+    timeout: 30000,
+    env,
+  });
+}
+
+function parseInputEvidence(stdout) {
+  const line = String(stdout || '').split(/\r?\n/)
+    .find((row) => row.startsWith('GG_CODEX_INPUT_EVIDENCE='));
+  return line ? JSON.parse(line.slice('GG_CODEX_INPUT_EVIDENCE='.length)) : null;
 }
 
 test('codex PASS → exit 0, relays VERDICT: PASS to stdout', () => {
@@ -87,6 +137,89 @@ test('codex PASS → exit 0, relays VERDICT: PASS to stdout', () => {
     { gh: ghFake(dir, 'ok'), codex: codexFake(dir, { verdict: 'PASS' }) });
   assert.equal(r.status, 0, `stderr: ${r.stderr}; stdout: ${r.stdout}`);
   assert.match(r.stdout, /VERDICT:\s*PASS/);
+});
+
+test('PR mode pins Codex input to baseRefOid...expectedHead and emits verifiable input evidence', () => {
+  const dir = caseDir();
+  const ghCapture = join(dir, 'gh-argv.log');
+  const promptCapture = join(dir, 'prompt.txt');
+  const gh = ghWithDiff(dir, ARTICLE_HUNK + SVG_HUNK, { capture: ghCapture });
+  const r = run(
+    ['--repo', 'xdawayer/oracle', '--pr', '196', '--branch', 'seo/auto/x'],
+    { gh, codex: codexFake(dir, { verdict: 'PASS' }), capture: promptCapture },
+  );
+
+  assert.equal(r.status, 0, `stderr: ${r.stderr}; stdout: ${r.stdout}`);
+  const calls = readFileSync(ghCapture, 'utf8');
+  assert.match(calls, /pr view seo\/auto\/x .*baseRefOid,headRefOid/);
+  assert.match(calls, new RegExp(`/compare/${BASE_A}\\.\\.\\.${HEAD_A}`));
+  assert.doesNotMatch(calls, /pr diff /, 'mutable branch diff must not be used');
+  const evidence = parseInputEvidence(r.stdout);
+  assert.deepEqual(evidence, {
+    reviewedHeadRefOid: HEAD_A,
+    baseRefOid: BASE_A,
+    inputSha256: sha256(ARTICLE_HUNK + SVG_HUNK),
+    bytes: Buffer.byteLength(ARTICLE_HUNK + SVG_HUNK),
+  });
+});
+
+test('PR head mismatch against expected reviewed SHA fails before compare or Codex', () => {
+  const dir = caseDir();
+  const ghCapture = join(dir, 'gh-argv.log');
+  const codexCapture = join(dir, 'prompt.txt');
+  const gh = ghWithDiff(dir, ARTICLE_HUNK, {
+    headRefOid: HEAD_B,
+    capture: ghCapture,
+  });
+  const r = run(
+    ['--repo', 'xdawayer/oracle', '--pr', '196', '--branch', 'seo/auto/x'],
+    { gh, codex: codexFake(dir, { verdict: 'PASS' }), capture: codexCapture },
+  );
+
+  assert.equal(r.status, 3, `stderr: ${r.stderr}; stdout: ${r.stdout}`);
+  assert.match(r.stderr, /head.*mismatch|expected.*head/i);
+  assert.doesNotMatch(readFileSync(ghCapture, 'utf8'), /\/compare\//);
+  assert.equal(existsSync(codexCapture), false, 'Codex must not receive a mismatched PR head');
+  assert.doesNotMatch(r.stdout || '', /VERDICT:/);
+});
+
+test('remote branch A-to-B-to-A cannot substitute a mutable branch diff for the expected SHA compare', () => {
+  const dir = caseDir();
+  const promptCapture = join(dir, 'prompt.txt');
+  const immutableA = ARTICLE_HUNK.replace('Group H', 'immutable Group A');
+  const transientB = ARTICLE_HUNK.replace('Group H', 'transient Group B');
+  const gh = ghWithDiff(dir, immutableA, {
+    headRefOid: HEAD_A,
+    baseRefOid: BASE_A,
+    mutableBranchDiff: transientB,
+  });
+  const r = run(
+    ['--repo', 'xdawayer/oracle', '--pr', '196', '--branch', 'seo/auto/x'],
+    { gh, codex: codexFake(dir, { verdict: 'PASS' }), capture: promptCapture },
+  );
+
+  assert.equal(r.status, 0, `stderr: ${r.stderr}; stdout: ${r.stdout}`);
+  const prompt = readFileSync(promptCapture, 'utf8');
+  assert.match(prompt, /immutable Group A/);
+  assert.doesNotMatch(prompt, /transient Group B/);
+  assert.equal(parseInputEvidence(r.stdout).reviewedHeadRefOid, HEAD_A);
+});
+
+test('PR mode requires one explicit well-formed 40-hex expected head before any gh call', () => {
+  for (const supplied of [null, 'not-a-sha']) {
+    const dir = caseDir();
+    const ghCapture = join(dir, 'gh-argv.log');
+    const args = ['--repo', 'xdawayer/oracle', '--pr', '196'];
+    if (supplied !== null) args.push('--head-ref-oid', supplied);
+    const r = run(args, {
+      gh: ghWithDiff(dir, ARTICLE_HUNK, { capture: ghCapture }),
+      codex: codexFake(dir, { verdict: 'PASS' }),
+      omitHead: true,
+    });
+    assert.equal(r.status, 3, `supplied=${supplied}; stderr: ${r.stderr}`);
+    assert.match(r.stderr, /head-ref-oid.*40-hex|required/i);
+    assert.equal(existsSync(ghCapture), false, 'invalid expected head must fail before gh');
+  }
 });
 
 test('codex FAIL → exit 0, relays VERDICT: FAIL (gate classifies FAIL → park)', () => {

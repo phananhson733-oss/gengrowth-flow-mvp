@@ -31,6 +31,7 @@ function harness({
   reconcileExit = 0,
   readinessExit = 0,
   useEnvFile = false,
+  collidePinnedOracle = false,
 } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'seo-reconcile-tick-'));
   const state = join(root, 'state');
@@ -78,6 +79,7 @@ function harness({
       "GG_SEO_SITE='gengrowth'",
       "GG_ORACLE_DIR='/unsafe/interactive-oracle'",
       "GG_AUTOMATION_ORACLE_DIR='/unsafe/env-file-oracle'",
+      ...(collidePinnedOracle ? ["PINNED_ORACLE='/unsafe/internal-collision'"] : []),
       '',
     ].join('\n'));
   }
@@ -209,4 +211,11 @@ test('environment file is sourced before deriving bins, plan, and site', () => {
   assert.equal(h.lines.length, 3);
   assert.match(h.lines[2], /--site gengrowth/);
   assert.equal(h.reconcileOracle, h.oracle);
+});
+
+test('environment file cannot overwrite the reconciler internal pinned Oracle snapshot', () => {
+  const h = harness({ hm: '1900', useEnvFile: true, collidePinnedOracle: true });
+  assert.notEqual(h.result.status, 0, `${h.result.stdout}\n${h.result.stderr}`);
+  assert.deepEqual(h.lines, []);
+  assert.match(h.result.stderr, /readonly variable|PINNED_ORACLE/i);
 });

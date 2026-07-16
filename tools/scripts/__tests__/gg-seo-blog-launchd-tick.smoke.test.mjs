@@ -58,6 +58,7 @@ function runnerHarness({
   summaryExit = 0,
   lockHeld = false,
   useEnvFile = false,
+  collidePinnedOracle = false,
 } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'seo-launchd-runner-'));
   const flow = join(root, 'flow');
@@ -154,6 +155,7 @@ function runnerHarness({
       `GG_SEO_PLAN=${JSON.stringify(plan)}`,
       `GG_SEO_CLAIMS=${JSON.stringify(claims)}`,
       `GG_AUTOMATION_ORACLE_DIR=${JSON.stringify(join(root, 'interactive-oracle'))}`,
+      ...(collidePinnedOracle ? ['PINNED_ORACLE="/unsafe/internal-collision"'] : []),
       '',
     ].join('\n'));
   }
@@ -289,6 +291,7 @@ test('pre-fire reconcile tolerates only plan and needs-human drift so the natura
       activeRepairAfter: 0,
       expiredLeasesAfter: 0,
       eligibleNeedsHumanAfter: 3,
+      droppedWritebackEvidence: [],
       errors: [],
     },
     postReconcileJson: {
@@ -300,6 +303,7 @@ test('pre-fire reconcile tolerates only plan and needs-human drift so the natura
       activeRepairAfter: 0,
       expiredLeasesAfter: 0,
       eligibleNeedsHumanAfter: 0,
+      droppedWritebackEvidence: [],
       errors: [],
     },
   });
@@ -321,6 +325,7 @@ test('pre-fire reconcile still blocks real ledger, repair, or verification drift
       activeRepairAfter: 0,
       expiredLeasesAfter: 0,
       eligibleNeedsHumanAfter: 3,
+      droppedWritebackEvidence: [],
       errors: [],
     },
   });
@@ -329,6 +334,42 @@ test('pre-fire reconcile still blocks real ledger, repair, or verification drift
   assert.deepEqual(h.events(), ['drain', 'reconcile', 'notify']);
   assert.match(h.log(), /pre-fire strict reconcile failed/);
 });
+
+for (const [name, mutate] of [
+  ['unknown counter', (value) => ({ ...value, archiveBacklogAfter: 1 })],
+  ['dropped evidence mismatch', (value) => ({
+    ...value,
+    droppedWritebackEvidence: [{ pageId: 'PG-BAD-001' }],
+  })],
+  ['all-zero rc2', (value) => ({
+    ...value,
+    planUncheckedAfter: 0,
+    eligibleNeedsHumanAfter: 0,
+  })],
+  ['ok true with drift', (value) => ({ ...value, ok: true })],
+]) {
+  test(`pre-fire reconcile rejects adversarial rc=2 JSON: ${name}`, () => {
+    const base = {
+      ok: false,
+      pendingWritebackAfter: 0,
+      droppedWritebackAfter: 0,
+      sheetFlipsAfter: 0,
+      planUncheckedAfter: 15,
+      activeRepairAfter: 0,
+      expiredLeasesAfter: 0,
+      eligibleNeedsHumanAfter: 3,
+      droppedWritebackEvidence: [],
+      errors: [],
+    };
+    const h = runnerHarness({
+      preReconcileExit: 2,
+      preReconcileJson: mutate(base),
+    });
+    const result = h.run();
+    assert.equal(result.status, 2, `${result.stdout}\n${result.stderr}\n${h.log()}`);
+    assert.deepEqual(h.events(), ['drain', 'reconcile', 'notify']);
+  });
+}
 
 test('readiness failure is returned and cannot emit a false-success terminal summary', () => {
   const h = runnerHarness({ readinessExit: 6 });
@@ -357,6 +398,14 @@ test('outer lock makes a concurrent tick skip before nightly or hook', () => {
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}\n${h.log()}`);
   assert.deepEqual(h.events(), []);
   assert.match(h.log(), /another SEO launchd run holds/);
+});
+
+test('environment file cannot overwrite the internal pinned Oracle snapshot', () => {
+  const h = runnerHarness({ useEnvFile: true, collidePinnedOracle: true });
+  const result = h.run();
+  assert.notEqual(result.status, 0, `${result.stdout}\n${result.stderr}\n${h.log()}`);
+  assert.deepEqual(h.events(), []);
+  assert.match(result.stderr, /readonly variable|PINNED_ORACLE/i);
 });
 
 function authorFinalizerHarness({ preflightExit = 0, controllerExit = 0, planExists = true } = {}) {

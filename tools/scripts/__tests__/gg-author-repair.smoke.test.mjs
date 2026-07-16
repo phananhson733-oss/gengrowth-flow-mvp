@@ -170,12 +170,12 @@ test('transient Opus repair failure falls back once to distinct Sonnet and write
 test('timed-out repair attempt uses the same bounded distinct-model fallback', () => {
   const src = seedSource();
   const out = join(TMP, `out-timeout-fallback-${Math.random().toString(36).slice(2)}.md`);
-  const { bin, calls } = fallbackFakeBin({ primarySleepSeconds: 2 });
+  const { bin, calls } = fallbackFakeBin({ primarySleepSeconds: 3 });
   const r = run(
     [
       '--source', src, '--out', out, '--page-id', 'PG-X',
       '--target-keyword', 'kw', '--author', 'a', '--failures', '- x',
-      '--model', 'claude-opus-4-8', '--timeout-ms', '500',
+      '--model', 'claude-opus-4-8', '--timeout-ms', '1000',
     ],
     {
       fake: bin,

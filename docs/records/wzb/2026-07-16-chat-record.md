@@ -16,15 +16,13 @@ aliases:
 
 ## Daily Summary
 
-- 执行固定的 Index Monitor wrapper：两个站点 Sitemap API 提交成功，AstrologyWiki 检查 1 条到期 URL 且无失败；最终候选队列共 25 条（P0=0、P1=1、P2=4、P3=20），日志未显示 Feishu 发送回执。
-
 > 【本区域在每天最后一次对话结束时生成/更新】
 
 - 统一 SEO repair controller v2 已启用并完成真实故障收敛；正常写作/发布继续由 macOS `launchd` 拉起，只有异常队列触发定向 Agent，不恢复 Codex Automation，也不绕过事实门。
-- `PG-WLS-007`、`PG-TRANS-016`、`PG-TRANS-018` 均达到 `published`；AstrologyWiki 两篇的 PR #379/#381 已合并，生产部署、sitemap、plan、publish log、Sheet、vault/CTA 与 writeback 全部验证通过，`PG-TRANS-016` 的 SVG 已统一为 29/59/88。
-- 修复了真实运行暴露的控制器缺口：目标资产/计划白名单、安全合并续跑、recent evidence、`pushed-preview`/`done` regate、合并后 WAL 与 publish log 前置、缺失日志对账、v2 顶层异常绕过，以及终态通知幂等键到 Feishu `msgUuid` 的贯通。
-- 最终 focused 验收 148/148、全量脚本测试 1686/1686；三个本次目标无 active fingerprint、lease 或 pending writeback，controller/outbox/锁/进程均干净。新出现的 `PG-AIS-006`、`PG-SDS-004` 队列项按“其他暂不纳入”边界未处理。
-- 执行固定的 Index Repair Resubmit wrapper：astrologywiki 与 gengrowth 均以 `rc=0` 收束；本轮没有人工 Search Console 提交或失败。结果复盘性能 wrapper 随后因 GSC/GA4 OAuth refresh token 过期或撤销而在两个产品扫描前停止，未写回数据或生成报告；仅允许完成 OAuth 重新授权后重跑同一 wrapper。
+- `PG-WLS-007`、`PG-TRANS-016`、`PG-TRANS-018` 均达到 `published`，相关生产、sitemap、plan、Sheet、vault/CTA 与 writeback 已验证；focused 148/148、全量 1686/1686。
+- Index Repair Resubmit 与 Index Monitor 固定 wrapper 均成功；两个站点 Sitemap API 成功，最终索引候选队列共 25 条（P0=0、P1=1、P2=4、P3=20），没有无人值守 Request Indexing。
+- 结果复盘性能 wrapper 因 GSC/GA4 OAuth refresh token 过期或撤销而在扫描前停止，未写回数据或生成报告；需重新授权后重跑同一 wrapper。
+- SEO blog 零人值守验收不通过：事实、图片与链接门禁近期拦截合理，主要缺陷在批尾修复易被 SIGTERM 截断、同一失败因不稳定 fingerprint 形成 6 条 active repair、混站点批次汇总污染，以及上线后仍有 8 个 pending writeback、2 个状态 flip；聚焦复核 90/90 通过但未覆盖这些生产故障。
 
 ---
 
@@ -115,5 +113,17 @@ After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-s
 **🤖 回答：**
 
 仅执行 `bash tools/scripts/gg-recap-performance-tick.sh`，退出码为 1。最新日志窗口为 10:01:59–10:02:01 CST：astrologywiki（`wb=…jyzcQc`、`sc-domain:astrologywiki.com`、GA4 `properties/524765570`）与 gengrowth（`wb=…ZTIRA8`、`sc-domain:gengrowth.ai`、同一 GA4 property）均在扫描前停止，原因是 GSC/GA4 OAuth refresh token 被拒绝（已过期或撤销）。因此没有精确里程碑处理行、recap 更新行、D14/D30/D60 覆盖率、优化任务优先级计数、跳过/非到期计数，也没有 2026-07-16 优化报告。wrapper 自行发送失败通知（`messageId=om_x100b6ab7f771cca0b11c9f9077cc981`）。唯一允许的补救边界是先运行 `node tools/scripts/oauth-init.mjs` 完成重新授权，再重跑同一 wrapper；未手工编辑 Sheets、未使用替代流程，也未发布、部署或提交索引。
+
+---
+
+### Q6 — 11:49
+
+**🙋 提问：**
+
+我需要验收和评估审计一下，最近的 SEO blog 的文章一直经常性的错误。我意图是期望可以到了 cron 的时间点，触发了以后，自动全部上线，0 人看守就好了，但是你可以看看最近的文章一直被打回被打回，需要人手动去强制 publish 上线，需要提醒人去进行回填。先找出来问题，是不是太严苛，是不是有漏洞
+
+**🤖 回答：**
+
+完成只读验收审计，结论为当前 SEO blog 不满足 cron 触发后零人值守上线与回填闭环。近期真实批次首次自主成功率约为 2/6、3/5、1/3；事实、SVG/图片一致性和内部链接门禁拦截的内容风险属实，不应靠强制 publish 绕过。主要问题是运行闭环漏洞：`com.gengrowth.seo-blog` 最近一次以 SIGTERM 结束，夜间子任务完成后没有执行批尾 repair hook；`gg-nightly-seo.sh` 对 parked 项使用 `|| true`，使批次退出码无法代表健康；Gengrowth author tick 固定从日志 offset 0 重导入，同一 `PG-SDS-004` 因增长日志参与 fingerprint 生成而累积 6 条 active repair；批次汇总读取全局 claims 时未按站点过滤；完整回填 reconciler 未由当前顶层调度强制执行，实时 dry-run 仍显示 `stillPending=8`、`flips=2`，而 stale report 错误呈现 `staleCount=0`。结构质量阈值中的 1500 字、精确关键词次数等可改为按主题配置并做确定性归一化，但安全门禁不宜放松。隔离状态目录重跑 8 个聚焦测试文件共 90/90 通过，说明现有测试未覆盖上述生产故障。建议修复 durable failure event、稳定语义 fingerprint、站点隔离、终态 reconcile 与多轮有界 repair 后，再用至少 3 个连续自然 cron 窗口验收；本轮未发布文章、未修改业务逻辑或 Sheet。
 
 ---

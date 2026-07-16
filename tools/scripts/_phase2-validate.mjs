@@ -76,7 +76,6 @@ import { authorityNamesFor } from './lib/authority-allowlist.mjs';
 import { loadPersona } from './lib/author-personas/loader.mjs';
 import {
   resolveStructuralProfile,
-  structuralWordFloor,
 } from './lib/seo-structural-profile.mjs';
 import { normalizeStructuralMarkdown } from './lib/seo-structural-normalizer.mjs';
 
@@ -200,38 +199,44 @@ if (langRaw !== 'en') {
 }
 const language = 'en';
 const tier = pick('tier', 'tier', 'T2');
-const structuralProfile = resolveStructuralProfile({
-  site: process.env.GG_SITE || 'astrologywiki',
-  locale: language,
-  template,
-  intent: fixture.intent || '',
-  contentTier: tier,
-  manifest: fixture,
-});
-const cliWordMin = Number.parseInt(args.word_min, 10);
-const cliWordMax = Number.parseInt(args.word_max, 10);
-const cliKeywordMin = Number.parseInt(args.kw_min, 10);
-const cliKeywordMax = Number.parseInt(args.kw_max, 10);
-const cliExpectedH2 = Number.parseInt(args.expected_h2, 10);
-const h2Range = Number.isInteger(cliExpectedH2) && cliExpectedH2 > 0
-  ? [cliExpectedH2, cliExpectedH2]
-  : structuralProfile.h2Range;
-const effectiveWordRange = [
-  Number.isInteger(cliWordMin) && cliWordMin > 0
-    ? structuralWordFloor(cliWordMin)
-    : structuralProfile.effectiveWordRange[0],
-  Number.isInteger(cliWordMax) && cliWordMax > 0
-    ? cliWordMax
-    : structuralProfile.effectiveWordRange[1],
-];
-const keywordRange = [
-  Number.isInteger(cliKeywordMin) && cliKeywordMin >= 0
-    ? cliKeywordMin
-    : structuralProfile.keywordRange[0],
-  Number.isInteger(cliKeywordMax) && cliKeywordMax >= 0
-    ? cliKeywordMax
-    : structuralProfile.keywordRange[1],
-];
+
+function optionalCliInteger(name) {
+  const raw = args[name];
+  if (raw === undefined) return undefined;
+  if (raw === true || !/^\d+$/.test(String(raw))) {
+    throw new TypeError(`--${name.replace(/_/g, '-')} must be an integer`);
+  }
+  const value = Number(raw);
+  if (!Number.isSafeInteger(value)) {
+    throw new TypeError(`--${name.replace(/_/g, '-')} must be a safe integer`);
+  }
+  return value;
+}
+
+let structuralProfile;
+try {
+  structuralProfile = resolveStructuralProfile({
+    site: process.env.GG_SITE || 'astrologywiki',
+    locale: language,
+    template,
+    intent: fixture.intent || '',
+    contentTier: tier,
+    manifest: fixture,
+    overrides: {
+      wordMinimum: optionalCliInteger('word_min'),
+      wordMaximum: optionalCliInteger('word_max'),
+      keywordMinimum: optionalCliInteger('kw_min'),
+      keywordMaximum: optionalCliInteger('kw_max'),
+      h2Count: optionalCliInteger('expected_h2'),
+    },
+  });
+} catch (err) {
+  process.stderr.write(`[phase2] structural profile invalid: ${err.message}\n`);
+  process.exit(2);
+}
+const h2Range = structuralProfile.h2Range;
+const effectiveWordRange = structuralProfile.effectiveWordRange;
+const keywordRange = structuralProfile.keywordRange;
 
 const ctx = {
   source: req('source'),

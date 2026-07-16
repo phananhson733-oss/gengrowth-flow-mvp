@@ -36,6 +36,7 @@ const COUNTER_FIELDS = [
 ];
 const ACTIVE_REPAIR = new Set(['queued', 'repairing', 'regating', 'repair_pending']);
 const ACTIVE_CLAIMS = new Set(['active', 'pushed-preview', 'verified-preview', 'authored']);
+const CLAIM_TERMINALS = new Set(['quarantined', 'human_only', 'archived', 'published']);
 
 function runNode(bin, argv, timeoutMs = 300_000) {
   const result = spawnSync('node', [bin, ...argv], {
@@ -199,6 +200,8 @@ function inspectWriteback(errors, base) {
 function inspectRepairState(claims, errors, base, now = new Date()) {
   let activeRepairAfter = 0;
   let expiredLeasesAfter = 0;
+  const terminalPageIds = new Set();
+  const terminalOwners = new Set();
   const queue = process.env.GG_SEO_REPAIR_QUEUE_DIR
     || join(base, 'seo-repair-queue');
   if (queue && existsSync(queue)) {
@@ -211,6 +214,24 @@ function inspectRepairState(claims, errors, base, now = new Date()) {
         );
         if (!record.event || typeof record.event !== 'object' || !record.status) {
           throw new TypeError('event/status required');
+        }
+        const source = record.latestEvent || record.event;
+        if (!source || typeof source !== 'object' || Array.isArray(source)
+          || !source.site || !source.pageId) {
+          throw new TypeError('repair event owner required');
+        }
+        if (record.latestEvent) {
+          if (!record.latestEvent.runId) {
+            throw new TypeError('latestEvent owner and runId required');
+          }
+          if (record.latestEvent.site !== record.event.site
+            || record.latestEvent.pageId !== record.event.pageId) {
+            throw new TypeError('latestEvent owner conflicts with event owner');
+          }
+        }
+        if (CLAIM_TERMINALS.has(record.status)) {
+          terminalPageIds.add(source.pageId);
+          terminalOwners.add(`${source.site}\u0000${source.pageId}`);
         }
         if (ACTIVE_REPAIR.has(record.status)) {
           activeRepairAfter += 1;
@@ -242,7 +263,12 @@ function inspectRepairState(claims, errors, base, now = new Date()) {
       }
     }
   }
-  return { activeRepairAfter, expiredLeasesAfter };
+  return {
+    activeRepairAfter,
+    expiredLeasesAfter,
+    terminalPageIds,
+    terminalOwners,
+  };
 }
 
 async function defaultApply({ apply, log }) {
@@ -341,8 +367,12 @@ async function defaultVerify({ log }) {
     planUncheckedAfter: uncheckedDoneClaims(claims) + sheetPlanUncheckedAfter,
     activeRepairAfter: repair.activeRepairAfter,
     expiredLeasesAfter: repair.expiredLeasesAfter,
-    eligibleNeedsHumanAfter: Object.values(claims)
-      .filter((claim) => claim && claim.status === 'needs_human').length,
+    eligibleNeedsHumanAfter: Object.entries(claims)
+      .filter(([pageId, claim]) => claim
+        && claim.status === 'needs_human'
+        && !(claim.site
+          ? repair.terminalOwners.has(`${claim.site}\u0000${pageId}`)
+          : repair.terminalPageIds.has(pageId))).length,
     errors,
   };
   log(`verify: ${COUNTER_FIELDS.map((field) => `${field}=${result[field]}`).join(' ')} errors=${errors.length}`);

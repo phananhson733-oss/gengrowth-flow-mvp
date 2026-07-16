@@ -21,7 +21,10 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-import { resolveStructuralProfile } from './seo-structural-profile.mjs';
+import {
+  resolveStructuralProfile,
+  validateStructuralProfile,
+} from './seo-structural-profile.mjs';
 import { normalizeStructuralMarkdown } from './seo-structural-normalizer.mjs';
 
 // ============================================================
@@ -94,8 +97,8 @@ function firstSentenceAfterH1(md) {
 }
 
 function structuralProfileFor(spec = {}) {
-  if (spec.structuralProfile?.version === 'seo-structure-v1') {
-    return spec.structuralProfile;
+  if (spec.structuralProfile !== undefined) {
+    return validateStructuralProfile(spec.structuralProfile);
   }
   return resolveStructuralProfile({
     site: spec.site || 'astrologywiki',

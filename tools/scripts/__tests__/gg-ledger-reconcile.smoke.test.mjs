@@ -272,3 +272,45 @@ test('migration_hold is not terminal eligibility and keeps needs-human fail clos
   const json = JSON.parse(out.stdout);
   assert.equal(json.eligibleNeedsHumanAfter, 1);
 });
+
+test('terminal status from another site cannot hide a needs-human claim', () => {
+  const fixture = defaultCliFixture({
+    claims: {
+      'PG-A-001': {
+        site: 'astrologywiki',
+        status: 'needs_human',
+        error: 'gate failed',
+      },
+    },
+    queue: [{
+      status: 'quarantined',
+      event: { site: 'gengrowth', pageId: 'PG-A-001', runId: 'run-1' },
+    }],
+  });
+  const out = fixture.run();
+  assert.equal(out.status, 2, `${out.stdout}\n${out.stderr}`);
+  const json = JSON.parse(out.stdout);
+  assert.equal(json.eligibleNeedsHumanAfter, 1);
+});
+
+test('corrupt terminal owner remains fail closed and cannot hide needs-human', () => {
+  const fixture = defaultCliFixture({
+    claims: {
+      'PG-A-001': {
+        site: 'astrologywiki',
+        status: 'needs_human',
+        error: 'gate failed',
+      },
+    },
+    queue: [{
+      status: 'quarantined',
+      event: { site: 'astrologywiki', pageId: 'PG-A-001', runId: 'old-run' },
+      latestEvent: { site: 'gengrowth', pageId: 'PG-SDS-004', runId: 'run-1' },
+    }],
+  });
+  const out = fixture.run();
+  assert.equal(out.status, 2, `${out.stdout}\n${out.stderr}`);
+  const json = JSON.parse(out.stdout);
+  assert.equal(json.eligibleNeedsHumanAfter, 1);
+  assert.match(json.errors.join('\n'), /owner/i);
+});

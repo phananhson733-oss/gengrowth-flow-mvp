@@ -15,6 +15,7 @@ const SCRIPT = fileURLToPath(import.meta.url);
 const FLOW = resolve(dirname(SCRIPT), '../..');
 const ACTIVE_REPAIR = new Set(['queued', 'repairing', 'regating', 'repair_pending']);
 const ACTIVE_CLAIMS = new Set(['active', 'pushed-preview', 'verified-preview', 'authored']);
+const CLAIM_TERMINALS = new Set(['quarantined', 'human_only', 'archived', 'published']);
 const SAFE_RUN_ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{2,127}$/;
 const TEST_ID = /\bPG-(?:TEST|FAKE|FIXTURE|SMOKE)[A-Z0-9-]*\b/g;
 const STRICT_FIELDS = [
@@ -92,7 +93,10 @@ function recordSource(record) {
 function inspectQueue({ queueDir, site, planIds, now, errors }) {
   let activeRepairAfter = 0;
   let expiredLeasesAfter = 0;
-  if (!queueDir || !existsSync(queueDir)) return { activeRepairAfter, expiredLeasesAfter };
+  const terminalPageIds = new Set();
+  if (!queueDir || !existsSync(queueDir)) {
+    return { activeRepairAfter, expiredLeasesAfter, terminalPageIds };
+  }
   for (const name of readdirSync(queueDir)) {
     if (!name.endsWith('.json')) continue;
     try {
@@ -103,6 +107,9 @@ function inspectQueue({ queueDir, site, planIds, now, errors }) {
       }
       if (source.site !== site) continue;
       if (source.pageId !== 'RUN' && !planIds.has(source.pageId)) continue;
+      if (CLAIM_TERMINALS.has(record.status) && source.pageId !== 'RUN') {
+        terminalPageIds.add(source.pageId);
+      }
       if (ACTIVE_REPAIR.has(record.status)) {
         activeRepairAfter += 1;
         if (record.lease?.expiresAt
@@ -115,7 +122,7 @@ function inspectQueue({ queueDir, site, planIds, now, errors }) {
       activeRepairAfter += 1;
     }
   }
-  return { activeRepairAfter, expiredLeasesAfter };
+  return { activeRepairAfter, expiredLeasesAfter, terminalPageIds };
 }
 
 function collectContamination(paths) {
@@ -217,6 +224,7 @@ export async function evaluateSeoReadiness({
     claims = readJson(claimsPath, 'claims');
   }
   catch (error) { errors.push(`claims: ${error.message}`); }
+  const queue = inspectQueue({ queueDir, site, planIds: plan.ids, now, errors });
   let eligibleNeedsHumanAfter = 0;
   let activeClaimAfter = 0;
   let expiredClaimLeases = 0;
@@ -224,7 +232,9 @@ export async function evaluateSeoReadiness({
     try {
       plainObject(claim, `claim ${pageId}`);
       if (!plan.ids.has(pageId) || !claimMatchesSite(claim, site)) continue;
-      if (claim.status === 'needs_human') eligibleNeedsHumanAfter += 1;
+      if (claim.status === 'needs_human' && !queue.terminalPageIds.has(pageId)) {
+        eligibleNeedsHumanAfter += 1;
+      }
       if (ACTIVE_CLAIMS.has(claim.status)) {
         activeClaimAfter += 1;
         if (claim.leaseUntil) {
@@ -241,7 +251,6 @@ export async function evaluateSeoReadiness({
       eligibleNeedsHumanAfter += 1;
     }
   }
-  const queue = inspectQueue({ queueDir, site, planIds: plan.ids, now, errors });
   const staleReport = Array.isArray(deps.staleReport)
     ? deps.staleReport
     : Object.entries(claims)

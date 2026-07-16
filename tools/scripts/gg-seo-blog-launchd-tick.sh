@@ -8,9 +8,17 @@ export HOME="${HOME:-/Users/awayer_mini}"
 export PATH="$HOME/.local/bin:$HOME/.npm-global/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 export TZ="Asia/Shanghai"
 
-FLOW="${GG_SEO_LAUNCHD_FLOW:-$HOME/gengrowth-flow-mvp}"
 ENV_FILE="${GG_ENV_FILE:-$HOME/.config/gg/_gg.env}"
-ORACLE_BASELINE="${GG_AUTOMATION_ORACLE_DIR:-$HOME/oracle-autopilot}"
+PINNED_ORACLE="${GG_AUTOMATION_ORACLE_DIR:-$HOME/oracle-autopilot}"
+if [[ -f "$ENV_FILE" ]]; then
+  set -a
+  # shellcheck disable=SC1090
+  . "$ENV_FILE"
+  set +a
+fi
+
+FLOW="${GG_SEO_LAUNCHD_FLOW:-$HOME/gengrowth-flow-mvp}"
+ORACLE_BASELINE="$PINNED_ORACLE"
 LOCK="${GG_SEO_LAUNCHD_LOCK:-/tmp/gg-seo-blog-launchd.lock}"
 LOG="${GG_SEO_LAUNCHD_LOG:-$HOME/Library/Logs/gg-seo-blog-launchd.out.log}"
 ERR_LOG="${GG_SEO_LAUNCHD_ERR_LOG:-$HOME/Library/Logs/gg-seo-blog-launchd.err.log}"
@@ -46,14 +54,6 @@ trap 'rmdir "$LOCK" 2>/dev/null || true' EXIT
 
 # Preserve the dedicated unattended baseline even when the shared environment
 # file contains an interactive Oracle checkout.
-PINNED_ORACLE="$ORACLE_BASELINE"
-if [[ -f "$ENV_FILE" ]]; then
-  set -a
-  # shellcheck disable=SC1090
-  . "$ENV_FILE"
-  set +a
-fi
-ORACLE_BASELINE="$PINNED_ORACLE"
 export GG_AUTOMATION_ORACLE_DIR="$ORACLE_BASELINE"
 export GG_ORACLE_DIR="$ORACLE_BASELINE"
 

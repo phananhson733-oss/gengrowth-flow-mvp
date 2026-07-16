@@ -103,7 +103,19 @@ function sentinelText(sentinelsDir, name) {
 }
 
 // Build the env that points every gate sub-bin at our fakes.
-function fakeEnv({ dir, sentinelsDir, statusJson, reviewBin, verifyExit = 0, verifyJson, waitJson, codexBin, codexRequired, notifyOnPark }) {
+function fakeEnv({
+  dir,
+  sentinelsDir,
+  statusJson,
+  reviewBin,
+  verifyExit = 0,
+  verifyJson,
+  waitJson,
+  codexBin,
+  codexRequired,
+  notifyOnPark,
+  ghDispatch,
+}) {
   const autopilot = writeAutopilotFake(dir, { statusJson, sentinelsDir });
   const previewWait = writeNodeFake(dir, 'fake-preview-wait.mjs', {
     sentinelName: 'preview-wait', sentinelsDir,
@@ -123,7 +135,7 @@ function fakeEnv({ dir, sentinelsDir, statusJson, reviewBin, verifyExit = 0, ver
   });
   writeNodeFake(dir, 'gh', {
     sentinelName: 'branch-head', sentinelsDir,
-    dispatch: [
+    dispatch: ghDispatch || [
       {
         match: 'api repos/xdawayer/oracle/deployments?ref=',
         stdout: JSON.stringify([{ id: 1, sha: HEAD_A }]),
@@ -220,10 +232,13 @@ function gateRoundFixture({
   reviewVerdicts = {},
   repairResult = { applied: true },
   worktreeInspection,
+  worktreeInspections,
   previewBinding,
 } = {}) {
   const calls = [];
+  const repairCalls = [];
   const headQueue = [...heads];
+  const worktreeInspectionQueue = worktreeInspections ? [...worktreeInspections] : null;
   const verdictQueues = Object.fromEntries(
     Object.entries(reviewVerdicts).map(([dimension, verdicts]) => [dimension, [...verdicts]]),
   );
@@ -280,6 +295,7 @@ function gateRoundFixture({
   };
   return {
     calls,
+    repairCalls,
     callsFor(bin) {
       return calls.filter((call) => call.bin === bin);
     },
@@ -305,12 +321,17 @@ function gateRoundFixture({
       node,
       resolveBranchHead: async () => headQueue.shift() ?? null,
       inspectReviewedWorktree: async (_worktree, reviewedHeadRefOid) => (
-        worktreeInspection || { ok: true, headRefOid: reviewedHeadRefOid, dirty: false }
+        worktreeInspectionQueue?.shift()
+        || worktreeInspection
+        || { ok: true, headRefOid: reviewedHeadRefOid, dirty: false }
       ),
       verifyPreviewBinding: async () => (
         previewBinding || { ok: true, method: 'fixture-deployment-binding' }
       ),
-      tryGateRepair: async () => repairResult,
+      tryGateRepair: async (input) => {
+        repairCalls.push(input);
+        return repairResult;
+      },
     },
   };
 }
@@ -338,6 +359,7 @@ test('--dry-run on verified-preview: prints plan, exits without merging, no --me
     dir, sentinelsDir: sentinels,
     statusJson: CLAIM_VERIFIED(),
     reviewBin: reviewPassBin(dir, sentinels),
+    codexBin: codexPassBin(dir, sentinels),
   });
   const r = run(['--branch', BRANCH, '--dry-run', '--json'], env);
   assert.equal(r.status, 0, `stderr: ${r.stderr}`);
@@ -345,8 +367,10 @@ test('--dry-run on verified-preview: prints plan, exits without merging, no --me
   assert.equal(out.dryRun, true);
   assert.equal(out.exitCode, 0);
   assert.match(out.action, /WOULD mark-verified \+ merge/);
-  // A verified-preview claim must REUSE the stored previewUrl (skip preview-wait).
-  assert.ok(out.plan.some((l) => /REUSE stored previewUrl/.test(l)), 'should reuse stored previewUrl');
+  assert.ok(
+    out.plan.some((l) => /sha-bound-preview/.test(l)),
+    'dry-run must describe an immutable SHA-bound preview without trusting stale claim state',
+  );
   // --status IS read (read-only parse), but NO mutating subcommand fired.
   assert.ok(sentinelHit(sentinels, 'autopilot-status'), '--status should be read');
   assert.ok(!sentinelHit(sentinels, 'autopilot-merge'), '--merge must NOT be called in dry-run');
@@ -801,13 +825,78 @@ test('a gate round rejects a dirty or wrong-head local review worktree before Ch
 
 test('a preview without deployment evidence for the reviewed SHA fails closed before Chrome', async () => {
   const fixture = gateRoundFixture({
-    heads: [HEAD_A],
+    heads: [HEAD_A, HEAD_B],
     previewBinding: { ok: false, reason: 'preview URL is not bound to reviewed head' },
   });
   const result = await runGate(fixture.options, fixture.deps);
   assert.equal(result.exitCode, 2);
   assert.match(result.reason, /preview.*(bound|head|sha)/i);
   assert.equal(fixture.callsFor('chrome').length, 0);
+  assert.equal(fixture.markVerifiedCalls().length, 0);
+  assert.equal(fixture.mergeCalls().length, 0);
+});
+
+test('a stale Vercel PR comment cannot bind an old preview URL to the reviewed SHA', () => {
+  const { dir, sentinels } = freshCase();
+  const env = fakeEnv({
+    dir,
+    sentinelsDir: sentinels,
+    statusJson: CLAIM_VERIFIED(),
+    reviewBin: reviewPassBin(dir, sentinels),
+    codexBin: codexPassBin(dir, sentinels),
+    ghDispatch: [
+      {
+        match: 'api repos/xdawayer/oracle/deployments?ref=',
+        stdout: JSON.stringify([]),
+        exit: 0,
+      },
+      {
+        match: `api repos/xdawayer/oracle/commits/${HEAD_A}/status`,
+        stdout: JSON.stringify({
+          statuses: [{
+            context: 'Vercel',
+            state: 'success',
+            target_url: 'https://old-preview.example.test',
+          }],
+        }),
+        exit: 0,
+      },
+      {
+        match: `api repos/xdawayer/oracle/commits/${HEAD_A}/pulls`,
+        stdout: JSON.stringify([{ number: 123 }]),
+        exit: 0,
+      },
+      {
+        match: 'api repos/xdawayer/oracle/issues/123/comments',
+        stdout: JSON.stringify([{
+          user: { login: 'vercel[bot]' },
+          body: 'Deployment ready: https://stored-preview.example.test',
+        }]),
+        exit: 0,
+      },
+    ],
+  });
+  const r = run(['--branch', BRANCH, '--json'], env);
+  assert.equal(r.status, 2, `expected stale comment to fail closed; stderr: ${r.stderr}; stdout: ${r.stdout}`);
+  const out = JSON.parse(r.stdout.trim());
+  assert.match(out.reason, /preview.*(bound|url|sha|head)/i);
+  assert.ok(!sentinelHit(sentinels, 'preview-verify'), 'Chrome must not run on an unbound preview');
+  assert.ok(!sentinelHit(sentinels, 'autopilot-merge'), 'merge must not run on an unbound preview');
+});
+
+test('repair rechecks worktree HEAD and cleanliness before starting the repair worker', async () => {
+  const fixture = gateRoundFixture({
+    heads: [HEAD_A, HEAD_B],
+    reviewVerdicts: { schema: ['FAIL'] },
+    worktreeInspections: [
+      { ok: true, headRefOid: HEAD_A, dirty: false },
+      { ok: false, headRefOid: HEAD_A, dirty: true, reason: 'worktree became dirty before repair' },
+    ],
+  });
+  const result = await runGate(fixture.options, fixture.deps);
+  assert.equal(result.exitCode, 2);
+  assert.match(result.reason, /dirty.*before repair|worktree.*dirty/i);
+  assert.equal(fixture.repairCalls.length, 0, 'repair worker must not start on a dirty worktree');
   assert.equal(fixture.markVerifiedCalls().length, 0);
   assert.equal(fixture.mergeCalls().length, 0);
 });

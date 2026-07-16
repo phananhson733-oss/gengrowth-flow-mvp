@@ -509,13 +509,42 @@ function validateTransactionIntent(intent, path, queueDir) {
     throw new TypeError('transaction writes must be a non-empty array');
   }
   const writes = intent.writes.map((write) => validateTransactionWrite(write, incidentId, queueDir));
+  if (new Set(writes.map((write) => write.filename)).size !== writes.length) {
+    throw new TypeError('transaction writes must target unique record filenames');
+  }
   const resultWrite = writes.find((write) => sameTransactionHead(transactionHead(write.record), resultHead));
   if (intent.operation === 'finish_compaction') {
     if (!sameTransactionHead(expectedHead, resultHead)) {
       throw new TypeError('finish_compaction must preserve its authoritative head');
     }
+    if (writes.some((write) => write.record.status !== 'superseded'
+      || write.record.supersededBy !== resultHead.eventId)) {
+      throw new TypeError('finish_compaction may only supersede sources into its authoritative head');
+    }
   } else if (!resultWrite) {
     throw new TypeError('transaction resultHead must match one of its writes');
+  } else {
+    const expectedWrite = writes.find((write) => write.record.event.eventId === expectedHead.eventId
+      && write.expectedRevision === expectedHead.revision
+      && Number(write.record.generation || 1) === expectedHead.generation
+      && write.record.fingerprint === expectedHead.fingerprint);
+    if (!expectedWrite) throw new TypeError('transaction expectedHead must be revision-fenced by a write');
+    if (intent.operation === 'replace_generation') {
+      if (!ACTIVE_STATUSES.has(resultWrite.record.status)
+        || writes.some((write) => write !== resultWrite
+          && (write.record.status !== 'superseded'
+            || write.record.supersededBy !== resultHead.eventId))) {
+        throw new TypeError('replace_generation must install one active head and supersede its sources');
+      }
+    } else if (intent.operation === 'compact_incident') {
+      if (resultWrite.record.status !== 'migration_hold'
+        || resultWrite.record.compaction?.canonical !== true
+        || writes.some((write) => write !== resultWrite
+          && (write.record.status !== 'superseded'
+            || write.record.supersededBy !== resultHead.eventId))) {
+        throw new TypeError('compact_incident must install one canonical hold and supersede its sources');
+      }
+    }
   }
   return {
     ...intent,
@@ -590,37 +619,54 @@ async function quarantineTransactionIntent(queueDir, path, error, parsed = null,
 async function archiveCommittedIntent(queueDir, path, randomUUID = defaultRandomUUID) {
   const directory = committedTransactionDirectory(queueDir);
   await mkdir(directory, { recursive: true });
-  let destination = join(directory, basename(path));
+  const destination = join(
+    directory,
+    `${basename(path)}.${Date.now()}.${randomUUID()}.committed`,
+  );
   try {
     await rename(path, destination);
   } catch (error) {
-    if (error?.code === 'EEXIST') {
-      destination = join(directory, `${basename(path)}.${Date.now()}.${randomUUID()}`);
-      await rename(path, destination);
-    } else if (error?.code !== 'ENOENT') {
-      throw error;
-    }
+    if (error?.code !== 'ENOENT') throw error;
   }
   return destination;
 }
 
 async function readTransactionCausalHead(queueDir, incidentId) {
-  return readJson(join(transactionHeadDirectory(queueDir), `${incidentId}.json`));
+  let names;
+  try {
+    names = await readdir(transactionHeadDirectory(queueDir));
+  } catch (error) {
+    if (error?.code === 'ENOENT') return null;
+    throw error;
+  }
+  const heads = [];
+  for (const name of names.filter((entry) => entry.startsWith(`${incidentId}-`) && entry.endsWith('.json'))) {
+    const head = await readJson(join(transactionHeadDirectory(queueDir), name));
+    if (head?.incidentId === incidentId && Number.isInteger(head.causalRevision)) heads.push(head);
+  }
+  return heads.sort((left, right) => right.causalRevision - left.causalRevision
+    || String(right.committedAt || '').localeCompare(String(left.committedAt || '')))[0] || null;
 }
 
 async function advanceTransactionCausalHead(queueDir, intent, randomUUID = defaultRandomUUID) {
   if (!Number.isInteger(intent.causalRevision)) return;
-  const path = join(transactionHeadDirectory(queueDir), `${intent.incidentId}.json`);
-  const current = await readJson(path);
-  if (Number(current?.causalRevision || 0) >= intent.causalRevision) return;
-  await atomicWriteJson(path, {
-    schemaVersion: 1,
-    incidentId: intent.incidentId,
-    causalRevision: intent.causalRevision,
-    resultHead: intent.resultHead,
-    transactionId: intent.transactionId,
-    committedAt: intent.committedAt || new Date().toISOString(),
-  }, randomUUID);
+  const transactionKey = createHash('sha256').update(intent.transactionId).digest('hex').slice(0, 16);
+  const path = join(
+    transactionHeadDirectory(queueDir),
+    `${intent.incidentId}-${String(intent.causalRevision).padStart(12, '0')}-${transactionKey}.json`,
+  );
+  try {
+    await writeNewJson(path, {
+      schemaVersion: 1,
+      incidentId: intent.incidentId,
+      causalRevision: intent.causalRevision,
+      resultHead: intent.resultHead,
+      transactionId: intent.transactionId,
+      committedAt: intent.committedAt || new Date().toISOString(),
+    });
+  } catch (error) {
+    if (error?.code !== 'EEXIST') throw error;
+  }
 }
 
 async function listHeldIncidentIds(queueDir) {
@@ -732,8 +778,10 @@ async function applyPreparedTransaction(queueDir, path, intent, {
     throw new Error(`repair transaction changed unexpectedly: ${intent.transactionId}`);
   }
   const causalHead = await readTransactionCausalHead(queueDir, latest.incidentId);
-  if (Number(causalHead?.causalRevision || 0) >= latest.causalRevision
-    && !sameTransactionHead(causalHead?.resultHead, latest.resultHead)) {
+  if (Number(causalHead?.causalRevision || 0) > latest.causalRevision
+    || (Number(causalHead?.causalRevision || 0) === latest.causalRevision
+      && (causalHead?.transactionId !== latest.transactionId
+        || !sameTransactionHead(causalHead?.resultHead, latest.resultHead)))) {
     throw new Error(`stale causal repair transaction: ${latest.transactionId}`);
   }
   const queueRecords = await readQueueRecords(queueDir);

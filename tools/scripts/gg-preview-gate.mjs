@@ -80,6 +80,7 @@ import {
   inspectBoundRepairDraft,
   inspectBoundRepairWorktree,
 } from './lib/seo-repair-bindings.mjs';
+import { loadEnv } from './lib/gg-shared.mjs';
 
 const HERE = (() => {
   try { return fileURLToPath(new URL('.', import.meta.url)); } catch { return process.cwd(); }
@@ -1805,6 +1806,10 @@ function lastJsonLine(s) {
 function safeJson(s) { try { return JSON.parse(s); } catch { return null; } }
 
 // ── main ────────────────────────────────────────────────────────────────────
+export function loadPreviewGateEnv() {
+  return loadEnv({ strict: true, requireMode: 0o600 });
+}
+
 export async function main(argv) {
   const o = parseArgs(argv);
   if (!o.branch) {
@@ -1820,6 +1825,7 @@ export async function main(argv) {
 
   let result;
   try {
+    loadPreviewGateEnv();
     result = await runGate(o);
   } catch (e) {
     // Last-resort: never let a stack escape. An unexpected internal fault is a gate failure.

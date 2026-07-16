@@ -549,6 +549,27 @@ test('missing --branch → nonzero exit + stderr "--branch is required"', () => 
   assert.match(r.stderr, /--branch is required/);
 });
 
+test('direct preview-gate invocation loads the strict mode-600 shared env', () => {
+  const { dir } = freshCase();
+  const envFile = join(dir, '_gg.env');
+  writeFileSync(envFile, 'VERCEL_AUTOMATION_BYPASS_SECRET=loaded-by-preview-gate\n');
+  chmodSync(envFile, 0o600);
+  const oldEnvFile = process.env.GG_ENV_FILE;
+  const oldBypass = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+  try {
+    process.env.GG_ENV_FILE = envFile;
+    delete process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+    assert.equal(typeof previewGate.loadPreviewGateEnv, 'function');
+    assert.equal(previewGate.loadPreviewGateEnv(), envFile);
+    assert.equal(process.env.VERCEL_AUTOMATION_BYPASS_SECRET, 'loaded-by-preview-gate');
+  } finally {
+    if (oldEnvFile === undefined) delete process.env.GG_ENV_FILE;
+    else process.env.GG_ENV_FILE = oldEnvFile;
+    if (oldBypass === undefined) delete process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+    else process.env.VERCEL_AUTOMATION_BYPASS_SECRET = oldBypass;
+  }
+});
+
 // ── (b) --dry-run with a verified-preview claim → plan, no merge ───────────────
 test('--dry-run on verified-preview: prints plan, exits without merging, no --merge call', () => {
   const { dir, sentinels } = freshCase();

@@ -202,11 +202,29 @@ export async function verifyFinalLinks({
     }
     try {
       const response = await fetchTarget(url, {
-        redirect: 'follow',
+        redirect: 'manual',
         headers: { 'user-agent': 'gg-seo-final-links/1' },
       });
       const status = Number(response?.status || 0);
       const finalUrl = normalizedUrl(response?.url || url, pageUrl);
+      if (status >= 300 && status < 400) {
+        const location = headerValue(response, 'location');
+        failed.push({
+          href,
+          url,
+          path,
+          allowedBy,
+          status,
+          finalUrl,
+          redirected: true,
+          canonical: '',
+          location,
+          reason: location
+            ? `redirect HTTP ${status} is forbidden: ${location}`
+            : `redirect HTTP ${status} is missing Location`,
+        });
+        continue;
+      }
       const body = await responseText(response);
       const canonical = normalizedUrl(canonicalHref(body), url);
       const reasons = [];
@@ -253,6 +271,41 @@ function srcsetCandidates(value) {
   return String(value || '')
     .split(',')
     .map((part) => part.trim().split(/\s+/)[0]);
+}
+
+const SVG_FRAGMENT_TARGET_TAGS = new Set([
+  'a',
+  'circle',
+  'clippath',
+  'defs',
+  'ellipse',
+  'filter',
+  'foreignobject',
+  'g',
+  'image',
+  'line',
+  'lineargradient',
+  'marker',
+  'mask',
+  'path',
+  'pattern',
+  'polygon',
+  'polyline',
+  'radialgradient',
+  'rect',
+  'stop',
+  'svg',
+  'switch',
+  'symbol',
+  'text',
+  'textpath',
+  'tspan',
+  'use',
+  'view',
+]);
+
+function isSvgFragmentTargetTag(name) {
+  return SVG_FRAGMENT_TARGET_TAGS.has(name) || /^fe[a-z]+$/.test(name);
 }
 
 function parseInlineSvgReferences(html) {
@@ -310,7 +363,7 @@ function parseInlineSvgReferences(html) {
           stack: selfClosing ? [] : ['svg'],
           malformed: false,
         };
-        if (attributes.id) context.ids.add(attributes.id);
+        if (attributes.id && isSvgFragmentTargetTag(name)) context.ids.add(attributes.id);
         if (selfClosing) finalize();
       } else if ((name === 'use' || name === 'image')) {
         const hasHref = Object.hasOwn(attributes, 'href')
@@ -332,7 +385,7 @@ function parseInlineSvgReferences(html) {
       continue;
     }
 
-    if (attributes.id) context.ids.add(attributes.id);
+    if (attributes.id && isSvgFragmentTargetTag(name)) context.ids.add(attributes.id);
     if (name === 'use' || name === 'image') {
       const hasHref = Object.hasOwn(attributes, 'href')
         || Object.hasOwn(attributes, 'xlink:href');
@@ -360,19 +413,29 @@ function renderedAssetReferences(html) {
   const references = [];
   for (const tag of htmlTags(html)) {
     if (tag.name === 'img') {
-      if (Object.hasOwn(tag.attributes, 'src')) {
+      const hasSrc = Object.hasOwn(tag.attributes, 'src');
+      const hasSrcset = Object.hasOwn(tag.attributes, 'srcset');
+      if (!hasSrc && !hasSrcset) {
+        references.push({ tag: 'img', attribute: 'src/srcset', value: '' });
+      }
+      if (hasSrc) {
         references.push({ tag: 'img', attribute: 'src', value: tag.attributes.src });
       }
-      if (Object.hasOwn(tag.attributes, 'srcset')) {
+      if (hasSrcset) {
         for (const value of srcsetCandidates(tag.attributes.srcset)) {
           references.push({ tag: 'img', attribute: 'srcset', value });
         }
       }
     } else if (tag.name === 'source') {
-      if (Object.hasOwn(tag.attributes, 'src')) {
+      const hasSrc = Object.hasOwn(tag.attributes, 'src');
+      const hasSrcset = Object.hasOwn(tag.attributes, 'srcset');
+      if (!hasSrc && !hasSrcset) {
+        references.push({ tag: 'source', attribute: 'src/srcset', value: '' });
+      }
+      if (hasSrc) {
         references.push({ tag: 'source', attribute: 'src', value: tag.attributes.src });
       }
-      if (Object.hasOwn(tag.attributes, 'srcset')) {
+      if (hasSrcset) {
         for (const value of srcsetCandidates(tag.attributes.srcset)) {
           references.push({ tag: 'source', attribute: 'srcset', value });
         }
@@ -574,25 +637,24 @@ function unsafeIp(address) {
     || /^ff/.test(value);
 }
 
-function configuredAssetHosts(values) {
+function configuredAssetOrigins(values) {
   const configured = [
     ...values || [],
     ...String(process.env.GG_SEO_ASSET_CDN_ALLOWLIST || '').split(','),
   ];
-  const hosts = new Set();
+  const origins = new Set();
   for (const value of configured) {
     const raw = String(value || '').trim();
     if (!raw) continue;
     try {
-      hosts.add(normalizedHostname(new URL(raw.includes('://') ? raw : `https://${raw}`).hostname));
+      origins.add(new URL(raw.includes('://') ? raw : `https://${raw}`).origin);
     } catch {}
   }
-  return hosts;
+  return origins;
 }
 
 async function validateAssetUrl(url, {
-  trustedHosts,
-  configuredHosts,
+  trustedOrigins,
   resolveHost,
 }) {
   let parsed;
@@ -603,15 +665,14 @@ async function validateAssetUrl(url, {
   if (parsed.username || parsed.password) {
     return { ok: false, reason: 'unsafe asset URL credentials are forbidden' };
   }
-  const host = normalizedHostname(parsed.hostname);
-  if (!trustedHosts.has(host)) {
-    return { ok: false, reason: `asset host is not trusted: ${parsed.hostname}` };
+  if (!trustedOrigins.has(parsed.origin)) {
+    return { ok: false, reason: `asset origin is not trusted: ${parsed.origin}` };
   }
   const literal = stripIpBrackets(parsed.hostname);
   if (isIP(literal) && unsafeIp(literal)) {
     return { ok: false, reason: `unsafe private/loopback asset IP: ${literal}` };
   }
-  if (configuredHosts.has(host) && !isIP(literal)) {
+  if (!isIP(literal)) {
     const resolver = resolveHost || (async (hostname) => dnsLookup(hostname, {
       all: true,
       verbatim: true,
@@ -632,13 +693,12 @@ async function validateAssetUrl(url, {
     }
   }
   parsed.hash = '';
-  return { ok: true, url: parsed.toString(), host };
+  return { ok: true, url: parsed.toString(), origin: parsed.origin };
 }
 
 async function fetchSafeAsset(initialUrl, {
   fetchTarget,
-  trustedHosts,
-  configuredHosts,
+  trustedOrigins,
   resolveHost,
   headers,
   maxRedirects = 5,
@@ -646,8 +706,7 @@ async function fetchSafeAsset(initialUrl, {
   let current = initialUrl;
   for (let redirectCount = 0; redirectCount <= maxRedirects; redirectCount += 1) {
     const safe = await validateAssetUrl(current, {
-      trustedHosts,
-      configuredHosts,
+      trustedOrigins,
       resolveHost,
     });
     if (!safe.ok) throw new Error(safe.reason);
@@ -665,8 +724,7 @@ async function fetchSafeAsset(initialUrl, {
     }
     const finalUrl = response?.url || safe.url;
     const finalSafe = await validateAssetUrl(finalUrl, {
-      trustedHosts,
-      configuredHosts,
+      trustedOrigins,
       resolveHost,
     });
     if (!finalSafe.ok) throw new Error(`unsafe asset final URL: ${finalSafe.reason}`);
@@ -691,11 +749,11 @@ export async function verifyFinalAssets({
   const failed = [];
   const ignored = [];
   const fetchTarget = fetchFunction(fetchImpl);
-  const configuredHosts = configuredAssetHosts(allowedAssetHosts);
-  const trustedHosts = new Set([
-    normalizedHostname(new URL(pageUrl).hostname),
-    normalizedHostname(new URL(assetBaseUrl).hostname),
-    ...configuredHosts,
+  const configuredOrigins = configuredAssetOrigins(allowedAssetHosts);
+  const trustedOrigins = new Set([
+    new URL(pageUrl).origin,
+    new URL(assetBaseUrl).origin,
+    ...configuredOrigins,
   ]);
   const references = renderedAssetReferences(html);
   for (const reference of references) {
@@ -753,8 +811,7 @@ export async function verifyFinalAssets({
     try {
       const fetched = await fetchSafeAsset(url, {
         fetchTarget,
-        trustedHosts,
-        configuredHosts,
+        trustedOrigins,
         resolveHost,
         headers: { 'user-agent': 'gg-seo-final-assets/1' },
       });

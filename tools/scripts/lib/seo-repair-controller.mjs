@@ -398,6 +398,7 @@ export async function drainRepairQueue({
   );
   const recovered = await recoverExpiredLeases({ queueDir, now: clockValue(now) });
   const terminals = [];
+  const released = [];
   const failures = [];
   let processed = 0;
 
@@ -533,6 +534,23 @@ export async function drainRepairQueue({
       };
     }
 
+    if (result?.released === true) {
+      const releaseEvidence = result?.evidence || { type: 'retry_released' };
+      const releaseRecord = await transitionRepairEvent(active, {
+        status: 'retry_released',
+        evidence: releaseEvidence,
+      }, {
+        queueDir,
+        now: clockValue(now),
+      });
+      released.push({
+        pageId: releaseRecord.event.pageId,
+        status: releaseRecord.status,
+        evidence: releaseEvidence,
+      });
+      continue;
+    }
+
     const terminal = acceptedTerminal(result);
     const mutationInvoked = result?.agentMutationInvoked === true;
     const artifactSha = terminal ? '' : String(result?.evidence?.artifactSha || '').trim();
@@ -611,6 +629,7 @@ export async function drainRepairQueue({
     remaining,
     recovered,
     terminals,
+    released,
     failures,
   };
 }

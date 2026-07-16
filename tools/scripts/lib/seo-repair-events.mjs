@@ -18,6 +18,7 @@ const TERMINAL_STATUSES = new Set([
   'quarantined',
   'superseded',
   'migration_hold',
+  'retry_released',
 ]);
 const ACTIVE_STATUSES = new Set(['queued', 'repairing', 'regating', 'repair_pending']);
 const ALLOWED_SITES = new Set(['astrologywiki', 'gengrowth']);

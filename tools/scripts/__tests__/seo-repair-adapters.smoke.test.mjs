@@ -15,6 +15,7 @@ import {
   buildAstrologyRepairTarget,
   createAstrologyWikiRepairAdapter,
   editableAstrologyFiles,
+  isAllowedAstrologyAuthorRetry,
   isSafeAstrologyMergeIndex,
   isSafeAstrologyTargetPath,
   isAlreadyRegatableRetryFailure,
@@ -67,6 +68,28 @@ function authoringRecord(pageId = 'PG-SDS-004') {
       stage: 'authoring',
       errorKind: 'tool_exit',
       summary: 'authoring exited before publish-ready handoff',
+    },
+  });
+}
+
+function astrologyAuthoringRecord(pageId = 'PG-WDIF-002') {
+  return record({
+    event: {
+      ...record().event,
+      site: 'astrologywiki',
+      pageId,
+      slug: 'what-is-my-love-language',
+      lane: 'author',
+      stage: 'authoring',
+      errorKind: 'state_fail',
+      summary: 'authoring: orchestrator produced no draft',
+      canonicalRetry: [
+        'node',
+        'tools/scripts/gg-seo-autopilot.mjs',
+        '--retry-author',
+        '--task',
+        pageId,
+      ],
     },
   });
 }
@@ -176,6 +199,67 @@ test('gengrowth target-resolution failure explicitly records that no Agent mutat
   assert.equal(result.ok, false);
   assert.equal(result.agentMutationInvoked, false);
   assert.equal(result.evidence.type, 'target_resolution_failed');
+});
+
+test('astrology authoring park releases only the exact canonical retry without resolving a PR branch', async () => {
+  const calls = [];
+  const recordValue = astrologyAuthoringRecord();
+  assert.equal(isAllowedAstrologyAuthorRetry(recordValue.event, {
+    flow: '/repo',
+    scriptsDir: '/repo/tools/scripts',
+  }), true);
+  const adapter = createAstrologyWikiRepairAdapter({
+    flow: '/repo',
+    scriptsDir: '/repo/tools/scripts',
+    resolveContext: async () => {
+      throw new Error('author release must not resolve a preview branch');
+    },
+    runCommand: async (argv) => {
+      calls.push(argv);
+      return { code: 0, stdout: '[autopilot] author retry released PG-WDIF-002\n', stderr: '', timedOut: false };
+    },
+    authorRetryReleased: async () => true,
+  });
+
+  const result = await adapter.execute({
+    record: recordValue,
+    classification: 'deterministic_fixable',
+    strategy: 'deterministic_repair',
+  });
+
+  assert.equal(result.released, true);
+  assert.equal(result.agentMutationInvoked, false);
+  assert.equal(result.evidence.type, 'author_retry_released');
+  assert.deepEqual(calls, [recordValue.event.canonicalRetry]);
+});
+
+test('astrology authoring park rejects a canonical retry for a different task', async () => {
+  const recordValue = astrologyAuthoringRecord();
+  recordValue.event.canonicalRetry = [
+    'node',
+    'tools/scripts/gg-seo-autopilot.mjs',
+    '--retry-author',
+    '--task',
+    'PG-OTHER-999',
+  ];
+  assert.equal(isAllowedAstrologyAuthorRetry(recordValue.event, {
+    flow: '/repo',
+    scriptsDir: '/repo/tools/scripts',
+  }), false);
+  const adapter = createAstrologyWikiRepairAdapter({
+    flow: '/repo',
+    scriptsDir: '/repo/tools/scripts',
+    runCommand: async () => {
+      throw new Error('unsafe retry must not execute');
+    },
+  });
+  const result = await adapter.execute({
+    record: recordValue,
+    classification: 'deterministic_fixable',
+    strategy: 'deterministic_repair',
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.evidence.type, 'unsafe_author_retry');
 });
 
 test('gengrowth Agent failure carries the current article SHA and a true invocation marker', async (t) => {

@@ -247,6 +247,42 @@ function run(argv, { cwd, env = process.env, timeout = 600_000 } = {}) {
   };
 }
 
+function isAstrologyAuthoringEvent(event) {
+  if (event?.site !== 'astrologywiki') return false;
+  return [event?.lane, event?.stage]
+    .some((value) => String(value || '').toLowerCase().includes('author'));
+}
+
+export function isAllowedAstrologyAuthorRetry(event, {
+  flow = DEFAULT_FLOW,
+  scriptsDir = DEFAULT_SCRIPTS,
+} = {}) {
+  if (!isAstrologyAuthoringEvent(event)) return false;
+  const argv = event?.canonicalRetry;
+  if (!Array.isArray(argv) || argv.length !== 5) return false;
+  if (argv[0] !== 'node'
+    || argv[2] !== '--retry-author'
+    || argv[3] !== '--task'
+    || argv[4] !== event.pageId) {
+    return false;
+  }
+  const requestedScript = isAbsolute(argv[1])
+    ? resolve(argv[1])
+    : resolve(flow, argv[1]);
+  return requestedScript === resolve(scriptsDir, 'gg-seo-autopilot.mjs');
+}
+
+function defaultAuthorRetryReleased(event) {
+  const ops = process.env.GG_OPS_DIR || join(homedir(), 'gengrowth-ops');
+  const claimsPath = process.env.GG_AUTOPILOT_CLAIMS
+    || join(ops, 'inbox/06-tasks/tasks/.autopilot-claims.json');
+  let claims;
+  try { claims = JSON.parse(readFileSync(claimsPath, 'utf8')); }
+  catch { return false; }
+  const claim = claims?.[event.pageId];
+  return !claim || claim.status !== 'needs_human' || claim.stage !== 'authoring';
+}
+
 function worktreeDiff(worktree) {
   const diff = run(['git', '-C', worktree, 'diff', '--name-only', 'origin/main...HEAD'], { cwd: worktree, timeout: 60_000 });
   if (!diff.ok) throw new Error(`cannot inspect reviewed diff: ${diff.stderr || diff.code}`);
@@ -822,11 +858,13 @@ function astrologyArtifactSha(target) {
 }
 
 export function createAstrologyWikiRepairAdapter(deps = {}) {
+  const flow = resolve(deps.flow || DEFAULT_FLOW);
   const scriptsDir = resolve(deps.scriptsDir || DEFAULT_SCRIPTS);
   const runCommand = deps.runCommand || (async (argv, { timeoutMs = 180_000 } = {}) => (
-    run(argv, { cwd: DEFAULT_FLOW, timeout: timeoutMs })
+    run(argv, { cwd: flow, timeout: timeoutMs })
   ));
   const resolveContext = deps.resolveContext || defaultResolveContext;
+  const authorRetryReleased = deps.authorRetryReleased || defaultAuthorRetryReleased;
   const verifyLinkCandidate = deps.verifyLinkCandidate || (async (slug, context) => {
     const known = context.linkCandidates?.some((candidate) => candidate.slug === slug);
     return known === true;
@@ -890,6 +928,57 @@ export function createAstrologyWikiRepairAdapter(deps = {}) {
           terminal: 'archived',
           agentMutationInvoked: false,
           evidence: { type: 'unpublishable', summary: event.summary, logFile: event.logFile },
+        };
+      }
+      if (isAstrologyAuthoringEvent(event)) {
+        if (!isAllowedAstrologyAuthorRetry(event, { flow, scriptsDir })) {
+          return {
+            ok: false,
+            agentMutationInvoked: false,
+            evidence: {
+              type: 'unsafe_author_retry',
+              canonicalRetry: event.canonicalRetry || null,
+            },
+          };
+        }
+        const retryTimeoutMs = remainingTimeout(3 * 60 * 1000);
+        if (retryTimeoutMs <= 0) return deadlineFailure();
+        const retried = await runCommand([...event.canonicalRetry], {
+          timeoutMs: retryTimeoutMs,
+        });
+        const retryOk = retried?.ok === true
+          || (retried?.code === 0 && retried?.timedOut !== true);
+        if (!retryOk) {
+          return {
+            ok: false,
+            agentMutationInvoked: false,
+            evidence: {
+              type: 'author_retry_failed',
+              code: retried?.code ?? null,
+              timedOut: retried?.timedOut === true,
+              stdout: String(retried?.stdout || '').slice(-8_192),
+              stderr: String(retried?.stderr || '').slice(-8_192),
+            },
+          };
+        }
+        if (await authorRetryReleased(event) !== true) {
+          return {
+            ok: false,
+            agentMutationInvoked: false,
+            evidence: {
+              type: 'author_retry_not_released',
+              pageId: event.pageId,
+            },
+          };
+        }
+        return {
+          released: true,
+          agentMutationInvoked: false,
+          evidence: {
+            type: 'author_retry_released',
+            pageId: event.pageId,
+            canonicalRetry: [...event.canonicalRetry],
+          },
         };
       }
       if (remainingTimeout(1) <= 0) return deadlineFailure();

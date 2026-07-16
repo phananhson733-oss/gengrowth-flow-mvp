@@ -576,6 +576,66 @@ test('deterministic author-stage recovery consumes one Agent mutation when --aut
   assert.equal((await readRepairRecord(built.recordPath)).agentMutationAttempts, 1);
 });
 
+test('released author retry becomes a quiet retry_released terminal and cannot drain twice', async (t) => {
+  const { queueDir } = await fixture(t);
+  const queued = await enqueueRepairEvent(event({
+    site: 'astrologywiki',
+    lane: 'author',
+    pageId: 'PG-WDIF-002',
+    slug: 'what-is-my-love-language',
+    stage: 'authoring',
+    errorKind: 'state_fail',
+    summary: 'authoring: orchestrator produced no draft',
+    createdAt: '2026-07-16T12:39:00.000Z',
+    canonicalRetry: [
+      'node',
+      'tools/scripts/gg-seo-autopilot.mjs',
+      '--retry-author',
+      '--task',
+      'PG-WDIF-002',
+    ],
+  }), { queueDir });
+  let calls = 0;
+  let notifications = 0;
+  const args = {
+    queueDir,
+    adapters: {
+      astrologywiki: {
+        execute: async () => {
+          calls += 1;
+          return {
+            released: true,
+            agentMutationInvoked: false,
+            evidence: { type: 'author_retry_released', pageId: 'PG-WDIF-002' },
+          };
+        },
+      },
+    },
+    notifyTerminal: async () => {
+      notifications += 1;
+    },
+    owner: 'author-retry-release-test',
+    now: () => new Date('2026-07-16T12:40:00.000Z'),
+    maxTargets: 1,
+  };
+
+  const first = await drainRepairQueue(args);
+  assert.equal(first.processed, 1);
+  assert.equal(calls, 1);
+  assert.equal(notifications, 0);
+  const released = await readRepairRecord(join(queueDir, `${queued.event.eventId}.json`));
+  assert.equal(released.status, 'retry_released');
+  assert.equal(released.history.at(-1).evidence.type, 'author_retry_released');
+  assert.equal((await listEligibleRepairEvents({
+    queueDir,
+    now: new Date('2026-07-16T12:41:00.000Z'),
+  })).length, 0);
+
+  const second = await drainRepairQueue(args);
+  assert.equal(second.processed, 0);
+  assert.equal(calls, 1);
+});
+
 test('artifact evidence counts consecutive no-progress attempts and quarantines the second repeat', async (t) => {
   const built = await budgetFixture(t, {}, {
     ok: false,

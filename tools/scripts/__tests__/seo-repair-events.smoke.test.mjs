@@ -427,6 +427,151 @@ test('compaction is append-only, preserves source evidence, and is idempotent', 
   assert.equal(records.every((record) => record.status !== 'superseded' || record.supersededBy === first.event.eventId), true);
 });
 
+test('explicit terminal adoption preserves production-shaped sources and derives all 23 historical attempts', async (t) => {
+  const { queueDir } = await fixture(t);
+  await mkdir(queueDir, { recursive: true });
+  const attemptCounts = [7, 6, 6, 2, 2, 0, 0];
+  const observationCounts = [3, 2, 4, 1, 1, 2, 1];
+  const sourceNames = [];
+  const expectedEventIds = [];
+  const expectedFingerprints = [];
+  let expectedObservations = 0;
+
+  for (let index = 0; index < attemptCounts.length; index += 1) {
+    const sourceEvent = event({
+      eventId: `production-terminal-source-${index + 1}`,
+      pageId: 'PG-SDS-004',
+      runId: `production-window-${index + 1}`,
+      summary: `production terminal failure ${index + 1}`,
+      createdAt: `2026-07-15T${String(10 + index).padStart(2, '0')}:00:00.000Z`,
+    });
+    const fingerprint = repairEventFingerprint(sourceEvent);
+    const observations = Array.from({ length: observationCounts[index] }, (_, observationIndex) => (
+      observationIndex === 0
+        ? sourceEvent
+        : event({
+            ...sourceEvent,
+            eventId: `${sourceEvent.eventId}-observation-${observationIndex + 1}`,
+            runId: `${sourceEvent.runId}-observation-${observationIndex + 1}`,
+            createdAt: `2026-07-15T${String(10 + index).padStart(2, '0')}:${String(observationIndex).padStart(2, '0')}:00.000Z`,
+          })
+    ));
+    const history = Array.from({ length: attemptCounts[index] }, (_, attemptIndex) => ({
+      status: 'repairing',
+      at: `2026-07-15T${String(10 + index).padStart(2, '0')}:${String(attemptIndex).padStart(2, '0')}:30.000Z`,
+      evidence: {
+        classification: 'agent_fixable',
+        strategy: 'agent_content_asset_link',
+        attempt: attemptIndex + 1,
+      },
+    }));
+    history.push({
+      status: index === attemptCounts.length - 1 ? 'quarantined' : 'superseded',
+      at: `2026-07-15T${String(10 + index).padStart(2, '0')}:59:00.000Z`,
+      evidence: { sourceIndex: index },
+    });
+    const record = {
+      event: sourceEvent,
+      latestEvent: observations.at(-1),
+      fingerprint,
+      sourceFingerprints: [fingerprint, `legacy-fingerprint-${index + 1}`],
+      incidentId: repairIncidentId(sourceEvent),
+      generation: index + 1,
+      budgetEpoch: 3,
+      ...(index % 2 === 0 ? { totalAttempts: 0 } : {}),
+      agentMutationAttempts: 0,
+      firstDetectedAt: sourceEvent.createdAt,
+      windowCount: observations.length,
+      lastArtifactSha: `artifact-${index + 1}`,
+      noProgressCount: index === attemptCounts.length - 1 ? 2 : 0,
+      sourceEventIds: observations.map((item) => item.eventId),
+      sourceEvents: observations,
+      parentGenerationId: index > 0 ? `production-terminal-source-${index}` : null,
+      status: index === attemptCounts.length - 1 ? 'quarantined' : 'superseded',
+      revision: 10 + index,
+      observations: observations.length,
+      strategy: 'agent_content_asset_link',
+      strategyAttempts: {},
+      nextEligibleAt: null,
+      lease: null,
+      terminalNotificationKey: index === attemptCounts.length - 1
+        ? 'quarantined:production-owner:3'
+        : null,
+      history,
+      updatedAt: history.at(-1).at,
+      ...(index === attemptCounts.length - 1
+        ? {}
+        : { supersededBy: `production-terminal-source-${attemptCounts.length}` }),
+    };
+    const name = `${sourceEvent.eventId}.json`;
+    sourceNames.push(name);
+    expectedEventIds.push(...record.sourceEventIds);
+    expectedFingerprints.push(...record.sourceFingerprints);
+    expectedObservations += record.observations;
+    await writeFile(join(queueDir, name), `${JSON.stringify(record, null, 2)}\n`, 'utf8');
+  }
+
+  const before = new Map(await Promise.all(sourceNames.map(async (name) => (
+    [name, await readFile(join(queueDir, name), 'utf8')]
+  ))));
+
+  const adopted = await compactRepairIncident({
+    queueDir,
+    site: 'gengrowth',
+    pageId: 'PG-SDS-004',
+    verificationCredit: 1,
+    adoptBlockingTerminal: true,
+  });
+
+  assert.equal(adopted.status, 'migration_hold');
+  assert.equal(adopted.totalAttempts, 23);
+  assert.equal(adopted.observations, expectedObservations);
+  assert.equal(adopted.generation, attemptCounts.length + 1);
+  assert.deepEqual(adopted.sourceEventIds.slice().sort(), expectedEventIds.slice().sort());
+  assert.deepEqual(adopted.sourceFingerprints.slice().sort(), [...new Set(expectedFingerprints)].sort());
+  assert.equal(adopted.sourceHistories.length, attemptCounts.length);
+  assert.equal(adopted.verificationCredit, 1);
+
+  for (const name of sourceNames) {
+    assert.equal(await readFile(join(queueDir, name), 'utf8'), before.get(name));
+  }
+  const records = await listRepairRecords({ queueDir });
+  assert.equal(records.length, attemptCounts.length + 1);
+  assert.equal(records.filter((record) => record.status === 'superseded').length, 6);
+  assert.equal(records.filter((record) => record.status === 'quarantined').length, 1);
+  assert.equal(records.filter((record) => record.status === 'migration_hold').length, 1);
+
+  const repeated = await compactRepairIncident({
+    queueDir,
+    site: 'gengrowth',
+    pageId: 'PG-SDS-004',
+    verificationCredit: 1,
+    adoptBlockingTerminal: true,
+  });
+  assert.deepEqual(repeated, adopted);
+
+  const released = await repairEventsModule.releaseMigrationHold({
+    queueDir,
+    site: 'gengrowth',
+    pageId: 'PG-SDS-004',
+    codeSha: '0123456789abcdef0123456789abcdef01234567',
+    reason: 'verify the production terminal adoption once',
+    now: new Date('2026-07-16T08:00:00.000Z'),
+  });
+  assert.equal(released.totalAttempts, 23);
+  assert.equal(released.budgetEpoch, adopted.budgetEpoch + 1);
+  assert.equal(released.verificationCreditRemaining, 1);
+
+  const repeatedAfterRelease = await compactRepairIncident({
+    queueDir,
+    site: 'gengrowth',
+    pageId: 'PG-SDS-004',
+    verificationCredit: 1,
+    adoptBlockingTerminal: true,
+  });
+  assert.deepEqual(repeatedAfterRelease, released);
+});
+
 test('blocking page terminals absorb same and changed observations without resetting lifecycle budgets', async (t) => {
   for (const terminalStatus of ['quarantined', 'human_only', 'migration_hold']) {
     await t.test(terminalStatus, async (tt) => {

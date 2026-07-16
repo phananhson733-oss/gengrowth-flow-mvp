@@ -491,6 +491,7 @@ function initialRecord(event, fingerprint, {
     sourceEvents: [event],
     parentGenerationId,
     status: 'queued',
+    revision: 1,
     observations: 1,
     strategy: 'deterministic_retry',
     strategyAttempts: {},
@@ -510,19 +511,98 @@ function initialRecord(event, fingerprint, {
   };
 }
 
+function eventIdentity(value) {
+  return createHash('sha256')
+    .update(JSON.stringify(validateRepairEvent(value)))
+    .digest('hex');
+}
+
+function matchingSourceEvents(record, eventId) {
+  return [
+    record.event,
+    record.latestEvent,
+    ...(record.sourceEvents || []),
+  ].filter((candidate) => candidate?.eventId === eventId);
+}
+
+function recordIncidentId(record) {
+  return record.incidentId || repairIncidentId(record.event);
+}
+
+function supersededRecord(record, {
+  supersededBy,
+  at,
+} = {}) {
+  return {
+    ...record,
+    status: 'superseded',
+    revision: Number(record.revision || 0) + 1,
+    lease: null,
+    supersededBy,
+    updatedAt: at,
+    history: [
+      ...(record.history || []),
+      { status: 'superseded', at, evidence: { supersededBy } },
+    ],
+  };
+}
+
+function authoritativeHead(records, incidentId) {
+  const owned = records
+    .map(({ record }) => record)
+    .filter((record) => recordIncidentId(record) === incidentId);
+  const hold = owned
+    .filter((record) => record.status === 'migration_hold' && record.compaction?.canonical === true)
+    .sort((a, b) => Number(b.generation || 1) - Number(a.generation || 1)
+      || String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')))[0];
+  if (hold) return hold;
+  return owned
+    .filter((record) => ACTIVE_STATUSES.has(record.status))
+    .sort((a, b) => Number(b.generation || 1) - Number(a.generation || 1)
+      || String(b.updatedAt || '').localeCompare(String(a.updatedAt || ''))
+      || String(b.event?.eventId || '').localeCompare(String(a.event?.eventId || '')))[0] || null;
+}
+
+function sameRecordSnapshot(snapshot, current) {
+  if (!snapshot || !current) return false;
+  if (snapshot.event?.eventId !== current.event?.eventId
+    || snapshot.fingerprint !== current.fingerprint
+    || Number(snapshot.generation || 1) !== Number(current.generation || 1)) {
+    return false;
+  }
+  if (snapshot.revision !== undefined || current.revision !== undefined) {
+    return Number(snapshot.revision || 0) === Number(current.revision || 0);
+  }
+  return snapshot.status === current.status && snapshot.updatedAt === current.updatedAt;
+}
+
 export async function enqueueRepairEvent(value, {
   queueDir,
   randomUUID = defaultRandomUUID,
+  faultInjector,
 } = {}) {
   if (!queueDir) throw new TypeError('queueDir is required');
   const event = validateRepairEvent(value);
   const fingerprint = repairEventFingerprint(event);
   const incidentId = repairIncidentId(event);
-  return withIncidentLock(queueDir, incidentId, async () => {
+  return withIncidentLock(queueDir, incidentId, async ({ assertOwner }) => {
+    await recoverIncidentTransactionsLocked(queueDir, incidentId, { randomUUID, assertOwner });
     const queueRecords = await readQueueRecords(queueDir);
+    const matches = queueRecords.flatMap(({ record }) => (
+      matchingSourceEvents(record, event.eventId).map((sourceEvent) => ({ record, sourceEvent }))
+    ));
+    if (matches.some(({ sourceEvent }) => eventIdentity(sourceEvent) !== eventIdentity(event))) {
+      throw new Error(`eventId identity collision: ${event.eventId}`);
+    }
+    if (matches.length > 0) {
+      return matches
+        .map(({ record }) => record)
+        .sort((a, b) => Number(b.generation || 1) - Number(a.generation || 1)
+          || String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')))[0];
+    }
     const active = queueRecords
       .filter(({ record }) => ACTIVE_STATUSES.has(record.status)
-        && (record.incidentId || repairIncidentId(record.event)) === incidentId)
+        && recordIncidentId(record) === incidentId)
       .sort((a, b) => Number(b.record.generation || 1) - Number(a.record.generation || 1)
         || String(b.record.updatedAt || '').localeCompare(String(a.record.updatedAt || '')));
     const existing = active.find(({ record }) => record.fingerprint === fingerprint);
@@ -540,6 +620,7 @@ export async function enqueueRepairEvent(value, {
         ...existing.record,
         incidentId,
         latestEvent: event,
+        revision: Number(existing.record.revision || 0) + 1,
         observations: Number(existing.record.observations || 1) + 1,
         sourceEventIds,
         sourceEvents,
@@ -549,26 +630,12 @@ export async function enqueueRepairEvent(value, {
           { status: existing.record.status, at: event.createdAt, evidence: { observedEventId: event.eventId } },
         ],
       };
+      await assertOwner();
       await atomicWriteJson(existing.path, merged, randomUUID);
       return merged;
     }
 
     const previous = active[0]?.record || null;
-    for (const source of active) {
-      const superseded = {
-        ...source.record,
-        status: 'superseded',
-        lease: null,
-        supersededBy: event.eventId,
-        updatedAt: event.createdAt,
-        history: [
-          ...(source.record.history || []),
-          { status: 'superseded', at: event.createdAt, evidence: { supersededBy: event.eventId } },
-        ],
-      };
-      await atomicWriteJson(source.path, superseded, randomUUID);
-    }
-
     const parentFingerprints = active.map(({ record }) => record.fingerprint);
     const record = initialRecord(event, fingerprint, {
       incidentId,
@@ -579,9 +646,35 @@ export async function enqueueRepairEvent(value, {
       parentGenerationId: previous?.event?.eventId || null,
       parentFingerprints,
     });
-    await atomicWriteJson(join(queueDir, `${event.eventId}.json`), record, randomUUID);
+    if (active.length === 0) {
+      await assertOwner();
+      await atomicWriteJson(join(queueDir, `${event.eventId}.json`), record, randomUUID);
+      return record;
+    }
+    const writes = active.map(({ path, record: source }, index) => transactionWrite(
+      basename(path),
+      supersededRecord(source, {
+        supersededBy: event.eventId,
+        at: event.createdAt,
+      }),
+      index === active.length - 1
+        ? { faultPointAfter: 'after-supersede-before-head-write' }
+        : {},
+    ));
+    writes.push(transactionWrite(`${event.eventId}.json`, record));
+    const prepared = await prepareTransaction(queueDir, {
+      incidentId,
+      operation: 'replace_generation',
+      writes,
+      createdAt: event.createdAt,
+    }, { randomUUID, assertOwner });
+    await applyPreparedTransaction(queueDir, prepared.path, prepared.intent, {
+      randomUUID,
+      faultInjector,
+      assertOwner,
+    });
     return record;
-  });
+  }, { faultInjector });
 }
 
 function sumStrategyAttempts(records) {
@@ -608,29 +701,14 @@ function uniqueEvents(records) {
   return [...events.values()];
 }
 
-async function supersedeRecords(records, canonicalEventId, at, randomUUID = defaultRandomUUID) {
-  for (const { path, record } of records) {
-    if (!ACTIVE_STATUSES.has(record.status)) continue;
-    await atomicWriteJson(path, {
-      ...record,
-      status: 'superseded',
-      lease: null,
-      supersededBy: canonicalEventId,
-      updatedAt: at,
-      history: [
-        ...(record.history || []),
-        { status: 'superseded', at, evidence: { supersededBy: canonicalEventId } },
-      ],
-    }, randomUUID);
-  }
-}
-
 export async function compactRepairIncident({
   queueDir,
   site,
   pageId,
   hold = true,
   verificationCredit = 0,
+  faultInjector,
+  randomUUID = defaultRandomUUID,
 } = {}) {
   if (!queueDir) throw new TypeError('queueDir is required');
   const ownerSite = requireString(site, 'site');
@@ -653,7 +731,8 @@ export async function compactRepairIncident({
     incidentId = incidentIdForOwner(ownerSite, ownerPageId);
   }
 
-  return withIncidentLock(queueDir, incidentId, async () => {
+  return withIncidentLock(queueDir, incidentId, async ({ assertOwner }) => {
+    await recoverIncidentTransactionsLocked(queueDir, incidentId, { randomUUID, assertOwner });
     const queueRecords = await readQueueRecords(queueDir);
     const belongsToIncident = (record) => record.event.site === ownerSite
       && record.event.pageId === ownerPageId
@@ -667,7 +746,25 @@ export async function compactRepairIncident({
       && ACTIVE_STATUSES.has(record.status));
 
     if (existing) {
-      await supersedeRecords(active, existing.record.event.eventId, existing.record.updatedAt);
+      if (active.length > 0) {
+        const prepared = await prepareTransaction(queueDir, {
+          incidentId,
+          operation: 'finish_compaction',
+          createdAt: existing.record.updatedAt,
+          writes: active.map(({ path, record }) => transactionWrite(
+            basename(path),
+            supersededRecord(record, {
+              supersededBy: existing.record.event.eventId,
+              at: existing.record.updatedAt,
+            }),
+          )),
+        }, { randomUUID, assertOwner });
+        await applyPreparedTransaction(queueDir, prepared.path, prepared.intent, {
+          randomUUID,
+          faultInjector,
+          assertOwner,
+        });
+      }
       return existing.record;
     }
     if (active.length === 0) throw new Error(`no active repair incident for ${ownerSite}/${ownerPageId}`);
@@ -720,6 +817,7 @@ export async function compactRepairIncident({
       sourceHistories,
       parentGenerationId: latest.event.eventId,
       status: 'migration_hold',
+      revision: 1,
       observations: records.reduce((sum, record) => sum + Number(record.observations || 1), 0),
       strategy: 'migration_hold',
       strategyAttempts: sumStrategyAttempts(records),
@@ -733,10 +831,31 @@ export async function compactRepairIncident({
       history,
       updatedAt: createdAt,
     };
-    await atomicWriteJson(join(queueDir, `${canonicalEventId}.json`), canonical);
-    await supersedeRecords(active, canonicalEventId, createdAt);
+    const writes = [
+      transactionWrite(`${canonicalEventId}.json`, canonical, {
+        faultPointAfter: 'after-canonical-before-source-supersede',
+      }),
+      ...active.map(({ path, record }) => transactionWrite(
+        basename(path),
+        supersededRecord(record, {
+          supersededBy: canonicalEventId,
+          at: createdAt,
+        }),
+      )),
+    ];
+    const prepared = await prepareTransaction(queueDir, {
+      incidentId,
+      operation: 'compact_incident',
+      writes,
+      createdAt,
+    }, { randomUUID, assertOwner });
+    await applyPreparedTransaction(queueDir, prepared.path, prepared.intent, {
+      randomUUID,
+      faultInjector,
+      assertOwner,
+    });
     return canonical;
-  });
+  }, { faultInjector });
 }
 
 function laneWeight(record) {
@@ -760,11 +879,22 @@ export async function listEligibleRepairEvents({
   agingMs = DEFAULT_AGING_MS,
 } = {}) {
   if (!queueDir) throw new TypeError('queueDir is required');
+  await recoverPreparedTransactions(queueDir);
   const nowMs = (now instanceof Date ? now : new Date(now)).getTime();
   const divisor = Math.max(1, Number(agingMs) || DEFAULT_AGING_MS);
-  const eligible = (await readQueueRecords(queueDir))
+  const queueRecords = await readQueueRecords(queueDir);
+  const heads = new Map();
+  for (const entry of queueRecords) {
+    const incidentId = recordIncidentId(entry.record);
+    if (!heads.has(incidentId)) {
+      heads.set(incidentId, authoritativeHead(queueRecords, incidentId));
+    }
+  }
+  const eligible = queueRecords
     .map(({ record }) => record)
     .filter((record) => {
+      const head = heads.get(recordIncidentId(record));
+      if (head?.event?.eventId !== record.event?.eventId) return false;
       if (!['queued', 'repair_pending'].includes(record.status)) return false;
       if (!record.nextEligibleAt) return true;
       return Date.parse(record.nextEligibleAt) <= nowMs;
@@ -789,32 +919,48 @@ export async function acquireRepairLease(record, {
   now = new Date(),
   leaseMs = 15 * 60 * 1000,
   randomUUID = defaultRandomUUID,
+  faultInjector,
 } = {}) {
   if (!queueDir) throw new TypeError('queueDir is required');
-  const path = recordPath(queueDir, record);
-  let current;
-  try { current = await readRepairRecord(path); } catch { return null; }
-  const nowDate = now instanceof Date ? now : new Date(now);
-  const currentExpiry = Date.parse(current.lease?.expiresAt || 0);
-  if (['repairing', 'regating'].includes(current.status) && currentExpiry > nowDate.getTime()) return null;
-  if (!['queued', 'repair_pending', 'repairing', 'regating'].includes(current.status)) return null;
+  await injectFault(faultInjector, 'before-incident-lock', {
+    incidentId: recordIncidentId(record),
+  });
+  const incidentId = recordIncidentId(record);
+  return withIncidentLock(queueDir, incidentId, async ({ assertOwner }) => {
+    await recoverIncidentTransactionsLocked(queueDir, incidentId, { randomUUID, assertOwner });
+    const path = recordPath(queueDir, record);
+    let current;
+    try { current = await readRepairRecord(path); } catch { return null; }
+    const queueRecords = await readQueueRecords(queueDir);
+    const head = authoritativeHead(queueRecords, incidentId);
+    if (head?.event?.eventId !== current.event?.eventId
+      || !sameRecordSnapshot(record, current)) {
+      return null;
+    }
+    const nowDate = now instanceof Date ? now : new Date(now);
+    const currentExpiry = Date.parse(current.lease?.expiresAt || 0);
+    if (['repairing', 'regating'].includes(current.status) && currentExpiry > nowDate.getTime()) return null;
+    if (!['queued', 'repair_pending', 'repairing', 'regating'].includes(current.status)) return null;
 
-  const leased = {
-    ...current,
-    status: 'repairing',
-    lease: {
-      owner: requireString(owner, 'lease owner'),
-      startedAt: nowDate.toISOString(),
-      expiresAt: new Date(nowDate.getTime() + Math.max(1, Number(leaseMs))).toISOString(),
-    },
-    updatedAt: nowDate.toISOString(),
-    history: [
-      ...(current.history || []),
-      { status: 'repairing', at: nowDate.toISOString(), evidence: { owner } },
-    ],
-  };
-  await atomicWriteJson(path, leased, randomUUID);
-  return leased;
+    const leased = {
+      ...current,
+      status: 'repairing',
+      revision: Number(current.revision || 0) + 1,
+      lease: {
+        owner: requireString(owner, 'lease owner'),
+        startedAt: nowDate.toISOString(),
+        expiresAt: new Date(nowDate.getTime() + Math.max(1, Number(leaseMs))).toISOString(),
+      },
+      updatedAt: nowDate.toISOString(),
+      history: [
+        ...(current.history || []),
+        { status: 'repairing', at: nowDate.toISOString(), evidence: { owner } },
+      ],
+    };
+    await assertOwner();
+    await atomicWriteJson(path, leased, randomUUID);
+    return leased;
+  }, { faultInjector });
 }
 
 export async function transitionRepairEvent(record, transition, {
@@ -827,20 +973,40 @@ export async function transitionRepairEvent(record, transition, {
   if (!ACTIVE_STATUSES.has(status) && !TERMINAL_STATUSES.has(status)) {
     throw new TypeError(`unsupported transition status: ${status}`);
   }
-  const nowIso = iso(now, 'transition time');
-  const next = {
-    ...record,
-    ...transition,
-    status,
-    lease: ['repairing', 'regating'].includes(status) ? (transition.lease || record.lease) : null,
-    updatedAt: nowIso,
-    history: [
-      ...(record.history || []),
-      { status, at: nowIso, evidence: transition.evidence || null },
-    ],
-  };
-  await atomicWriteJson(recordPath(queueDir, record), next, randomUUID);
-  return next;
+  const incidentId = recordIncidentId(record);
+  return withIncidentLock(queueDir, incidentId, async ({ assertOwner }) => {
+    await recoverIncidentTransactionsLocked(queueDir, incidentId, { randomUUID, assertOwner });
+    const path = recordPath(queueDir, record);
+    let current;
+    try {
+      current = await readRepairRecord(path);
+    } catch {
+      throw new Error(`stale repair transition: missing record ${record.event?.eventId || ''}`);
+    }
+    const queueRecords = await readQueueRecords(queueDir);
+    const head = authoritativeHead(queueRecords, incidentId);
+    if (head?.event?.eventId !== current.event?.eventId
+      || !sameRecordSnapshot(record, current)
+      || !ACTIVE_STATUSES.has(current.status)) {
+      throw new Error(`stale repair transition: ${record.event?.eventId || ''} is not authoritative`);
+    }
+    const nowIso = iso(now, 'transition time');
+    const next = {
+      ...current,
+      ...transition,
+      status,
+      revision: Number(current.revision || 0) + 1,
+      lease: ['repairing', 'regating'].includes(status) ? (transition.lease || current.lease) : null,
+      updatedAt: nowIso,
+      history: [
+        ...(current.history || []),
+        { status, at: nowIso, evidence: transition.evidence || null },
+      ],
+    };
+    await assertOwner();
+    await atomicWriteJson(path, next, randomUUID);
+    return next;
+  });
 }
 
 export async function recoverExpiredLeases({
@@ -850,22 +1016,39 @@ export async function recoverExpiredLeases({
 } = {}) {
   if (!queueDir) throw new TypeError('queueDir is required');
   const nowDate = now instanceof Date ? now : new Date(now);
+  await recoverPreparedTransactions(queueDir, { randomUUID });
   let count = 0;
-  for (const { path, record } of await readQueueRecords(queueDir)) {
+  const candidates = await readQueueRecords(queueDir);
+  for (const { path, record } of candidates) {
     if (!['repairing', 'regating'].includes(record.status)) continue;
     if (Date.parse(record.lease?.expiresAt || 0) > nowDate.getTime()) continue;
-    const recovered = {
-      ...record,
-      status: 'queued',
-      lease: null,
-      updatedAt: nowDate.toISOString(),
-      history: [
-        ...(record.history || []),
-        { status: 'queued', at: nowDate.toISOString(), evidence: { recoveredExpiredLease: true } },
-      ],
-    };
-    await atomicWriteJson(path, recovered, randomUUID);
-    count += 1;
+    const incidentId = recordIncidentId(record);
+    count += await withIncidentLock(queueDir, incidentId, async ({ assertOwner }) => {
+      await recoverIncidentTransactionsLocked(queueDir, incidentId, { randomUUID, assertOwner });
+      let current;
+      try { current = await readRepairRecord(path); } catch { return 0; }
+      const queueRecords = await readQueueRecords(queueDir);
+      const head = authoritativeHead(queueRecords, incidentId);
+      if (head?.event?.eventId !== current.event?.eventId
+        || !['repairing', 'regating'].includes(current.status)
+        || Date.parse(current.lease?.expiresAt || 0) > nowDate.getTime()) {
+        return 0;
+      }
+      const recovered = {
+        ...current,
+        status: 'queued',
+        revision: Number(current.revision || 0) + 1,
+        lease: null,
+        updatedAt: nowDate.toISOString(),
+        history: [
+          ...(current.history || []),
+          { status: 'queued', at: nowDate.toISOString(), evidence: { recoveredExpiredLease: true } },
+        ],
+      };
+      await assertOwner();
+      await atomicWriteJson(path, recovered, randomUUID);
+      return 1;
+    });
   }
   return count;
 }

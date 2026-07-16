@@ -28,6 +28,7 @@
 //   node gg-seo-autopilot.mjs --mark-verified --branch seo/auto/<date>-<PID> --preview-url https://...
 //   node gg-seo-autopilot.mjs --mark-failed --branch seo/auto/<date>-<PID> --reason "..."
 //   node gg-seo-autopilot.mjs --retry-failed --branch seo/auto/<date>-<PID> --evidence "fixed ..."
+//   node gg-seo-autopilot.mjs --prepare-regate --branch seo/auto/<date>-<PID>
 //   node gg-seo-autopilot.mjs --reconcile-published [--task <PID>]
 //   node gg-seo-autopilot.mjs --merge --branch seo/auto/<date>-<PID>
 //   node gg-seo-autopilot.mjs --status
@@ -193,6 +194,7 @@ function parseArgs(argv) {
     else if (a === '--mark-failed') o.markFailed = true;
     else if (a === '--retry-failed') o.retryFailed = true;
     else if (a === '--retry-author') o.retryAuthor = true;
+    else if (a === '--prepare-regate') o.prepareRegate = true;
     else if (a === '--reconcile-published') o.reconcilePublished = true;
     else if (a === '--auto-retry-parks') o.autoRetryParks = true;
     else if (a === '--clear-needs-hero') o.clearNeedsHero = true;
@@ -209,7 +211,7 @@ function parseArgs(argv) {
     else if (a === '--limit') o.limit = parseInt(argv[++i], 10) || 1;
     else if (a === '--task') o.task = argv[++i];
   }
-  if (!o.scan && !o.author && !o.nextUnauthored && !o.merge && !o.markVerified && !o.markFailed && !o.retryFailed && !o.retryAuthor && !o.reconcilePublished && !o.autoRetryParks && !o.status && !o.staleReport) o.scan = true;
+  if (!o.scan && !o.author && !o.nextUnauthored && !o.merge && !o.markVerified && !o.markFailed && !o.retryFailed && !o.retryAuthor && !o.prepareRegate && !o.reconcilePublished && !o.autoRetryParks && !o.status && !o.staleReport) o.scan = true;
   return o;
 }
 
@@ -1287,12 +1289,167 @@ function unionRebaseBranch(branch, slug, expectedHead) {
     const b = buildGate(wt);
     if (!b.ok) throw new Error(`union-rebase ${branch}: build failed after union merge — ${b.error}`);
 
-    // 通过 → push 重建后的分支（force-with-lease：CLAIMS_LOCK 下无并发写此分支，仍防误覆盖）。
-    gitIn(wt, ['push', '--force-with-lease', 'origin', `HEAD:refs/heads/${branch}`]);
-    return gitIn(wt, ['rev-parse', 'HEAD']).trim();
+    // 通过 → 新 merge commit 必须是 reviewed head 的后代，所以普通 fast-forward push 就足够；
+    // 禁止 force。随后用 ls-remote 做远端 CAS 回读，确保 Gate 看到的就是这个新 SHA。
+    const newHead = gitIn(wt, ['rev-parse', 'HEAD']).trim();
+    if (newHead === reviewedHead) {
+      throw new Error(`union-rebase ${branch}: merge produced no new head`);
+    }
+    gitIn(wt, ['push', 'origin', `HEAD:refs/heads/${branch}`]);
+    const remoteHead = gitIn(wt, ['ls-remote', 'origin', `refs/heads/${branch}`])
+      .trim().split(/\s+/)[0] || '';
+    if (remoteHead !== newHead) {
+      throw new Error(
+        `union-rebase ${branch}: remote head ${remoteHead.slice(0, 8) || '?'} `
+        + `!= prepared head ${newHead.slice(0, 8)}`,
+      );
+    }
+    return newHead;
   } finally {
     cleanupWorktree(wt);
   }
+}
+
+function inspectVerifiedRegateWorktree(claim, expectedHead) {
+  const worktree = String(claim.worktree || '');
+  if (!worktree) throw new Error('prepare-regate requires the verified claim worktree');
+  const hasRepairBinding = !!claim.draftFile || !!claim.draftSha256 || !!claim.originalWorktree;
+  if (hasRepairBinding) {
+    if (!claim.draftFile || !claim.draftSha256) {
+      throw new Error('prepare-regate controller claim is missing its draft binding');
+    }
+    const bound = inspectBoundRepairWorktree({
+      worktree,
+      expectedHead,
+      remoteHead: expectedHead,
+    });
+    if (!bound.ok) throw new Error(bound.reason);
+    const draft = inspectBoundRepairDraft({
+      draftFile: claim.draftFile,
+      expectedSha256: claim.draftSha256,
+    });
+    if (!draft.ok) throw new Error(draft.reason);
+    return {
+      worktree: bound.realpath,
+      draftFile: draft.realpath,
+      draftSha256: draft.sha256,
+      root: dirname(bound.realpath),
+    };
+  }
+  const rel = relative(WORKTREE_ROOT, worktree);
+  if (!rel || rel === '..' || rel.startsWith('../') || rel.startsWith(`..${process.platform === 'win32' ? '\\' : '/'}`)) {
+    throw new Error(`prepare-regate worktree must be below ${WORKTREE_ROOT}`);
+  }
+  const head = gitIn(worktree, ['rev-parse', 'HEAD']).trim();
+  if (head !== expectedHead) {
+    throw new Error(`prepare-regate worktree head ${head.slice(0, 8) || '?'} != reviewed head ${expectedHead.slice(0, 8)}`);
+  }
+  const dirty = gitIn(worktree, ['status', '--porcelain=v1', '--untracked-files=all']).trim();
+  if (dirty) throw new Error(`prepare-regate worktree has uncommitted changes: ${dirty.split('\n')[0]}`);
+  return { worktree, draftFile: null, draftSha256: null, root: WORKTREE_ROOT };
+}
+
+function materializeRegateWorktree({ branch, pgId, previousWorktree, root, newHead }) {
+  mkdirSync(root, { recursive: true });
+  const suffix = `regate-${newHead.slice(0, 12)}`;
+  const stem = basename(previousWorktree || branch).replace(/[^A-Za-z0-9._-]+/g, '__');
+  const worktree = join(root, `${stem}--${suffix}`);
+  if (!existsSync(worktree)) {
+    git(['worktree', 'add', '--force', '--detach', worktree, newHead]);
+  }
+  const actualHead = gitIn(worktree, ['rev-parse', 'HEAD']).trim();
+  if (actualHead !== newHead) {
+    throw new Error(
+      `prepare-regate persistent worktree ${pgId} head ${actualHead.slice(0, 8) || '?'} `
+      + `!= ${newHead.slice(0, 8)}`,
+    );
+  }
+  const dirty = gitIn(worktree, ['status', '--porcelain=v1', '--untracked-files=all']).trim();
+  if (dirty) {
+    throw new Error(`prepare-regate persistent worktree ${pgId} is dirty: ${dirty.split('\n')[0]}`);
+  }
+  const baselineModules = join(ORACLE, 'node_modules');
+  const wtModules = join(worktree, 'node_modules');
+  if (existsSync(baselineModules) && !existsSync(wtModules)) {
+    try { symlinkSync(baselineModules, wtModules); } catch { /* Gate surfaces missing deps later */ }
+  }
+  return worktree;
+}
+
+function doPrepareRegate(o) {
+  if (!o.branch) die('--prepare-regate requires --branch', 2);
+  return withClaimsLock(() => {
+    const claims = loadClaims();
+    const { pgId, claim } = claimForBranch(claims, o.branch);
+    if (claim.status !== 'verified-preview') {
+      throw new Error(
+        `cannot prepare regate for ${o.branch} from status "${claim.status}" — expected verified-preview`,
+      );
+    }
+    if (!HEAD_REF_OID_RE.test(String(claim.headRefOid || ''))) {
+      throw new Error(`prepare-regate ${o.branch}: verified claim is missing a valid reviewed head`);
+    }
+    const oldHeadRefOid = claim.headRefOid;
+    const currentHead = currentPrHead(o.branch);
+    if (currentHead !== oldHeadRefOid) {
+      throw new Error(
+        `prepare-regate ${o.branch}: current PR head ${currentHead} `
+        + `does not match reviewed head ${oldHeadRefOid}`,
+      );
+    }
+    const mergeState = pollMergeable(o.branch);
+    if (mergeState.mergeable !== 'CONFLICTING') {
+      throw new Error(
+        `prepare-regate ${o.branch}: PR is ${mergeState.mergeable}/${mergeState.state}, expected CONFLICTING`,
+      );
+    }
+    const binding = inspectVerifiedRegateWorktree(claim, oldHeadRefOid);
+    const newHeadRefOid = unionRebaseBranch(o.branch, claim.slug, oldHeadRefOid);
+    const worktree = materializeRegateWorktree({
+      branch: o.branch,
+      pgId,
+      previousWorktree: binding.worktree,
+      root: binding.root,
+      newHead: newHeadRefOid,
+    });
+    const next = {
+      ...claim,
+      status: 'pushed-preview',
+      stage: 'pushed-preview',
+      worktree,
+      headRefOid: newHeadRefOid,
+      regateFromHeadRefOid: oldHeadRefOid,
+      regatePreparedAt: new Date().toISOString(),
+      regateReason: 'additive-only main conflict resolved; complete preview gate required on new head',
+    };
+    for (const key of [
+      'previewUrl',
+      'verificationEvidence',
+      'verifiedAt',
+      'reviewedAt',
+      'error',
+      'failedAt',
+      'retryAt',
+    ]) delete next[key];
+    claims[pgId] = next;
+    heartbeatClaim(claims, pgId, 'pushed-preview');
+    saveClaims(claims);
+    const result = {
+      ok: true,
+      pageId: pgId,
+      branch: o.branch,
+      oldHeadRefOid,
+      newHeadRefOid,
+      worktree,
+      draftFile: binding.draftFile,
+      draftSha256: binding.draftSha256,
+    };
+    process.stdout.write(`${JSON.stringify(result)}\n`);
+    log(
+      `REGATE PREPARED ${o.branch}: ${oldHeadRefOid.slice(0, 8)} -> `
+      + `${newHeadRefOid.slice(0, 8)} worktree=${worktree}`,
+    );
+  });
 }
 
 // 合并一个已 verified-preview 的分支到 main。当前 PR head 必须仍等于 reviewed head，
@@ -1770,6 +1927,7 @@ try {
   else if (o.markFailed) await doMarkFailed(o);
   else if (o.retryFailed) doRetryFailed(o);
   else if (o.retryAuthor) doRetryAuthor(o);
+  else if (o.prepareRegate) doPrepareRegate(o);
   else if (o.reconcilePublished) await doReconcilePublished(o);
   else if (o.autoRetryParks) await doAutoRetryParks(); // async 尾巴 = 升级通知（ESM 顶层 await）
   else doScan(o);

@@ -55,6 +55,139 @@ async function fixture(t) {
   return { root, queueDir };
 }
 
+async function transactionArtifacts(queueDir, section) {
+  try {
+    return (await readdir(join(queueDir, '.incident-transactions', section))).sort();
+  } catch (error) {
+    if (error?.code === 'ENOENT') return [];
+    throw error;
+  }
+}
+
+async function productionPgSdsLegacyFixture(t) {
+  const { queueDir } = await fixture(t);
+  await mkdir(queueDir, { recursive: true });
+  const sources = [
+    { eventId: '3102ecc3-1dd1-4959-9cad-b5515269fffd', attempts: 2, classification: true },
+    { eventId: '4a0d79ae-0abc-4f5e-a9e6-1a95a2ce44b9', attempts: 7, classification: true },
+    { eventId: '8c97c07f-21b5-48f0-8a46-c38d733da8b5', attempts: 0, classification: false },
+    { eventId: '8cd8551d-9da7-42c1-b843-929425213cf6', attempts: 6, classification: true },
+    { eventId: '9b1c8754-b4c7-48d5-a9c8-b2dac1f2cf5a', attempts: 2, terminal: true },
+    { eventId: 'aa98c2a7-3c43-42b6-be20-13a3a11e088c', attempts: 0, classification: false },
+    { eventId: 'fda5716f-2d15-4075-9d46-583ea9a6ab51', attempts: 6, classification: true },
+  ];
+  const sourceRecords = new Map();
+  const sourceHashes = {};
+  const expectedEventIds = [];
+  for (const [index, source] of sources.entries()) {
+    const sourceEvent = event({
+      eventId: source.eventId,
+      pageId: 'PG-SDS-004',
+      runId: `production-pg-sds-window-${index + 1}`,
+      summary: `redacted production PG-SDS-004 failure ${index + 1}`,
+      stderr: 'redacted production evidence',
+      createdAt: `2026-07-15T${String(10 + index).padStart(2, '0')}:00:00.000Z`,
+    });
+    const observedEvents = source.terminal
+      ? [
+          sourceEvent,
+          event({
+            ...sourceEvent,
+            eventId: `${source.eventId}-observation-2`,
+            runId: 'production-pg-sds-window-8',
+            createdAt: '2026-07-15T17:00:00.000Z',
+          }),
+          event({
+            ...sourceEvent,
+            eventId: `${source.eventId}-observation-3`,
+            runId: 'production-pg-sds-window-9',
+            createdAt: '2026-07-15T17:30:00.000Z',
+          }),
+        ]
+      : [sourceEvent];
+    expectedEventIds.push(...observedEvents.map((item) => item.eventId));
+    const history = Array.from({ length: source.attempts }, (_, attemptIndex) => ({
+      status: 'repairing',
+      at: `2026-07-15T${String(10 + index).padStart(2, '0')}:${String(attemptIndex).padStart(2, '0')}:30.000Z`,
+      evidence: {
+        classification: 'agent_fixable',
+        strategy: 'agent_content_asset_link',
+        attempt: attemptIndex + 1,
+      },
+    }));
+    history.push({
+      status: source.terminal ? 'quarantined' : 'superseded',
+      at: `2026-07-15T${String(10 + index).padStart(2, '0')}:59:00.000Z`,
+      evidence: source.terminal
+        ? { type: 'repair_budget_exhausted' }
+        : { supersededBy: sources[4].eventId },
+    });
+    const fingerprint = repairEventFingerprint(sourceEvent);
+    const shared = {
+      event: sourceEvent,
+      latestEvent: observedEvents.at(-1),
+      fingerprint,
+      history,
+      lease: null,
+      nextEligibleAt: null,
+      observations: observedEvents.length,
+      parentFingerprints: [],
+      status: source.terminal ? 'quarantined' : 'superseded',
+      strategy: 'agent_content_asset_link',
+      strategyAttempts: {},
+      terminalNotificationKey: source.terminal
+        ? `quarantined:${repairIncidentId(sourceEvent)}:3`
+        : null,
+      updatedAt: history.at(-1).at,
+      ...(source.terminal ? {} : { supersededBy: sources[4].eventId }),
+    };
+    const record = source.terminal
+      ? {
+          ...shared,
+          incidentId: repairIncidentId(sourceEvent),
+          generation: 7,
+          revision: 12,
+          budgetEpoch: 3,
+          totalAttempts: 0,
+          agentMutationAttempts: 0,
+          firstDetectedAt: sources[0]
+            ? '2026-07-15T10:00:00.000Z'
+            : sourceEvent.createdAt,
+          windowCount: 7,
+          lastArtifactSha: 'redacted-production-artifact',
+          noProgressCount: 2,
+          sourceEventIds: observedEvents.map((item) => item.eventId),
+          sourceEvents: observedEvents,
+          sourceFingerprints: [fingerprint],
+          parentGenerationId: sources[3].eventId,
+        }
+      : {
+          ...shared,
+          ...(source.classification
+            ? {
+                classification: 'agent_fixable',
+                evidence: { redacted: true },
+              }
+            : {}),
+        };
+    const filename = `${source.eventId}.json`;
+    const raw = `${JSON.stringify(record, null, 2)}\n`;
+    await writeFile(join(queueDir, filename), raw, 'utf8');
+    sourceRecords.set(filename, record);
+    sourceHashes[filename] = createHash('sha256').update(raw).digest('hex');
+  }
+  return {
+    queueDir,
+    sources,
+    expectedEventIds,
+    sourceRecords,
+    sourceHashes,
+    canonicalEventId: `migration-${repairIncidentId(event({
+      pageId: 'PG-SDS-004',
+    }))}`,
+  };
+}
+
 test('validates argv retry, bounds raw evidence, and redacts common secrets', () => {
   const raw = event({
     stderr: `token=secret-value\n${'x'.repeat(20_000)}`,
@@ -429,92 +562,13 @@ test('compaction is append-only, preserves source evidence, and is idempotent', 
 });
 
 test('explicit terminal adoption preserves production-shaped sources and derives all 23 historical attempts', async (t) => {
-  const { queueDir } = await fixture(t);
-  await mkdir(queueDir, { recursive: true });
-  const attemptCounts = [7, 6, 6, 2, 2, 0, 0];
-  const observationCounts = [3, 2, 4, 1, 1, 2, 1];
-  const sourceNames = [];
-  const expectedEventIds = [];
-  const expectedFingerprints = [];
-  let expectedObservations = 0;
-
-  for (let index = 0; index < attemptCounts.length; index += 1) {
-    const sourceEvent = event({
-      eventId: `production-terminal-source-${index + 1}`,
-      pageId: 'PG-SDS-004',
-      runId: `production-window-${index + 1}`,
-      summary: `production terminal failure ${index + 1}`,
-      createdAt: `2026-07-15T${String(10 + index).padStart(2, '0')}:00:00.000Z`,
-    });
-    const fingerprint = repairEventFingerprint(sourceEvent);
-    const observations = Array.from({ length: observationCounts[index] }, (_, observationIndex) => (
-      observationIndex === 0
-        ? sourceEvent
-        : event({
-            ...sourceEvent,
-            eventId: `${sourceEvent.eventId}-observation-${observationIndex + 1}`,
-            runId: `${sourceEvent.runId}-observation-${observationIndex + 1}`,
-            createdAt: `2026-07-15T${String(10 + index).padStart(2, '0')}:${String(observationIndex).padStart(2, '0')}:00.000Z`,
-          })
-    ));
-    const history = Array.from({ length: attemptCounts[index] }, (_, attemptIndex) => ({
-      status: 'repairing',
-      at: `2026-07-15T${String(10 + index).padStart(2, '0')}:${String(attemptIndex).padStart(2, '0')}:30.000Z`,
-      evidence: {
-        classification: 'agent_fixable',
-        strategy: 'agent_content_asset_link',
-        attempt: attemptIndex + 1,
-      },
-    }));
-    history.push({
-      status: index === attemptCounts.length - 1 ? 'quarantined' : 'superseded',
-      at: `2026-07-15T${String(10 + index).padStart(2, '0')}:59:00.000Z`,
-      evidence: { sourceIndex: index },
-    });
-    const record = {
-      event: sourceEvent,
-      latestEvent: observations.at(-1),
-      fingerprint,
-      sourceFingerprints: [fingerprint, `legacy-fingerprint-${index + 1}`],
-      incidentId: repairIncidentId(sourceEvent),
-      generation: index + 1,
-      budgetEpoch: 3,
-      ...(index % 2 === 0 ? { totalAttempts: 0 } : {}),
-      agentMutationAttempts: 0,
-      firstDetectedAt: sourceEvent.createdAt,
-      windowCount: observations.length,
-      lastArtifactSha: `artifact-${index + 1}`,
-      noProgressCount: index === attemptCounts.length - 1 ? 2 : 0,
-      sourceEventIds: observations.map((item) => item.eventId),
-      sourceEvents: observations,
-      parentGenerationId: index > 0 ? `production-terminal-source-${index}` : null,
-      status: index === attemptCounts.length - 1 ? 'quarantined' : 'superseded',
-      revision: 10 + index,
-      observations: observations.length,
-      strategy: 'agent_content_asset_link',
-      strategyAttempts: {},
-      nextEligibleAt: null,
-      lease: null,
-      terminalNotificationKey: index === attemptCounts.length - 1
-        ? 'quarantined:production-owner:3'
-        : null,
-      history,
-      updatedAt: history.at(-1).at,
-      ...(index === attemptCounts.length - 1
-        ? {}
-        : { supersededBy: `production-terminal-source-${attemptCounts.length}` }),
-    };
-    const name = `${sourceEvent.eventId}.json`;
-    sourceNames.push(name);
-    expectedEventIds.push(...record.sourceEventIds);
-    expectedFingerprints.push(...record.sourceFingerprints);
-    expectedObservations += record.observations;
-    await writeFile(join(queueDir, name), `${JSON.stringify(record, null, 2)}\n`, 'utf8');
-  }
-
-  const sourceRecordHashes = Object.fromEntries(await Promise.all(sourceNames.map(async (name) => (
-    [name, createHash('sha256').update(await readFile(join(queueDir, name))).digest('hex')]
-  ))));
+  const {
+    queueDir,
+    sources,
+    expectedEventIds,
+    sourceRecords,
+    sourceHashes,
+  } = await productionPgSdsLegacyFixture(t);
 
   const adopted = await compactRepairIncident({
     queueDir,
@@ -526,18 +580,20 @@ test('explicit terminal adoption preserves production-shaped sources and derives
 
   assert.equal(adopted.status, 'migration_hold');
   assert.equal(adopted.totalAttempts, 23);
-  assert.equal(adopted.observations, expectedObservations);
-  assert.equal(adopted.generation, attemptCounts.length + 1);
-  assert.deepEqual(adopted.sourceEventIds.slice().sort(), expectedEventIds.slice().sort());
-  assert.deepEqual(adopted.sourceFingerprints.slice().sort(), [...new Set(expectedFingerprints)].sort());
-  assert.equal(adopted.sourceHistories.length, attemptCounts.length);
+  assert.equal(adopted.observations, 9);
+  assert.equal(adopted.generation, 8);
+  assert.deepEqual(
+    adopted.sourceEventIds.slice().sort(),
+    expectedEventIds.slice().sort(),
+  );
+  assert.equal(adopted.sourceHistories.length, sources.length);
   assert.equal(adopted.verificationCredit, 1);
   assert.deepEqual(
     Object.fromEntries(adopted.sourceRecordHashes.map((item) => [item.filename, item.sha256])),
-    sourceRecordHashes,
+    sourceHashes,
   );
   const records = await listRepairRecords({ queueDir });
-  assert.equal(records.length, attemptCounts.length + 1);
+  assert.equal(records.length, sources.length + 1);
   assert.equal(records.filter((record) => record.status === 'superseded').length, 7);
   assert.equal(records.filter((record) => record.status === 'quarantined').length, 0);
   assert.equal(records.filter((record) => record.status === 'migration_hold').length, 1);
@@ -547,6 +603,21 @@ test('explicit terminal adoption preserves production-shaped sources and derives
       .every((record) => record.supersededBy === adopted.event.eventId),
     true,
   );
+  for (const record of records.filter((item) => item.status === 'superseded')) {
+    const filename = `${record.event.eventId}.json`;
+    const original = sourceRecords.get(filename);
+    assert.ok(original);
+    assert.equal(record.incidentId, adopted.incidentId);
+    assert.equal(Number.isInteger(record.generation) && record.generation >= 1, true);
+    assert.equal(Number.isInteger(record.revision) && record.revision >= 1, true);
+    assert.deepEqual(record.event, original.event);
+    assert.deepEqual(
+      record.history.slice(0, original.history.length),
+      original.history,
+    );
+  }
+  assert.deepEqual(await transactionArtifacts(queueDir, 'pending'), []);
+  assert.deepEqual(await transactionArtifacts(queueDir, 'holds'), []);
 
   const repeated = await compactRepairIncident({
     queueDir,
@@ -556,6 +627,8 @@ test('explicit terminal adoption preserves production-shaped sources and derives
     adoptBlockingTerminal: true,
   });
   assert.deepEqual(repeated, adopted);
+  assert.deepEqual(await transactionArtifacts(queueDir, 'pending'), []);
+  assert.deepEqual(await transactionArtifacts(queueDir, 'holds'), []);
 
   const released = await repairEventsModule.releaseMigrationHold({
     queueDir,
@@ -577,6 +650,46 @@ test('explicit terminal adoption preserves production-shaped sources and derives
     adoptBlockingTerminal: true,
   });
   assert.deepEqual(repeatedAfterRelease, released);
+  assert.deepEqual(await transactionArtifacts(queueDir, 'pending'), []);
+  assert.deepEqual(await transactionArtifacts(queueDir, 'holds'), []);
+});
+
+test('legacy adoption snapshot conflict aborts its intent without creating a recovery hold', async (t) => {
+  const {
+    queueDir,
+    sources,
+  } = await productionPgSdsLegacyFixture(t);
+  const conflictedPath = join(queueDir, `${sources[0].eventId}.json`);
+
+  await assert.rejects(
+    compactRepairIncident({
+      queueDir,
+      site: 'gengrowth',
+      pageId: 'PG-SDS-004',
+      verificationCredit: 1,
+      adoptBlockingTerminal: true,
+      async faultInjector(point) {
+        if (point !== 'after-transaction-prepare') return;
+        const current = JSON.parse(await readFile(conflictedPath, 'utf8'));
+        await writeFile(conflictedPath, `${JSON.stringify({
+          ...current,
+          concurrentObservation: 'must fence the prepared transaction',
+        }, null, 2)}\n`, 'utf8');
+      },
+    }),
+    /snapshot|stale transaction/i,
+  );
+
+  assert.deepEqual(await transactionArtifacts(queueDir, 'pending'), []);
+  assert.deepEqual(await transactionArtifacts(queueDir, 'holds'), []);
+  const records = await listRepairRecords({ queueDir });
+  assert.equal(records.filter((record) => record.status === 'migration_hold').length, 0);
+  assert.equal(records.filter((record) => record.status === 'quarantined').length, 1);
+  await listEligibleRepairEvents({
+    queueDir,
+    now: new Date('2026-07-16T08:00:00.000Z'),
+  });
+  assert.deepEqual(await transactionArtifacts(queueDir, 'holds'), []);
 });
 
 test('terminal adoption transaction recovers after the canonical write without leaving two authoritative heads', async (t) => {

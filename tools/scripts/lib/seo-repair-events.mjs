@@ -310,11 +310,20 @@ async function withIncidentLock(queueDir, incidentId, fn, { faultInjector } = {}
 }
 
 export async function readRepairRecord(path) {
-  const parsed = JSON.parse(await readFile(path, 'utf8'));
+  return (await readRepairRecordSnapshot(path)).record;
+}
+
+async function readRepairRecordSnapshot(path) {
+  const raw = await readFile(path, 'utf8');
+  const parsed = JSON.parse(raw);
   if (!parsed || typeof parsed !== 'object' || !parsed.event || !parsed.fingerprint) {
     throw new TypeError(`invalid repair record: ${path}`);
   }
-  return parsed;
+  return {
+    record: parsed,
+    raw,
+    recordHash: createHash('sha256').update(raw).digest('hex'),
+  };
 }
 
 async function quarantineRecord(path, queueDir) {
@@ -337,7 +346,7 @@ async function readQueueRecords(queueDir, { quarantineCorrupt = true } = {}) {
   const records = [];
   for (const path of await listRecordPaths(queueDir)) {
     try {
-      records.push({ path, record: await readRepairRecord(path) });
+      records.push({ path, ...(await readRepairRecordSnapshot(path)) });
     } catch (error) {
       if (!quarantineCorrupt) throw error;
       await quarantineRecord(path, queueDir);

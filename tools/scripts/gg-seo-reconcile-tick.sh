@@ -7,7 +7,7 @@ export PATH="$HOME/.local/bin:$HOME/.npm-global/bin:/opt/homebrew/bin:/usr/local
 export TZ="Asia/Shanghai"
 
 ENV_FILE="${GG_ENV_FILE:-$HOME/.config/gg/_gg.env}"
-PINNED_ORACLE="${GG_AUTOMATION_ORACLE_DIR:-$HOME/oracle-autopilot}"
+readonly PINNED_ORACLE="${GG_AUTOMATION_ORACLE_DIR:-$HOME/oracle-autopilot}"
 
 if [[ -f "$ENV_FILE" ]]; then
   set -a

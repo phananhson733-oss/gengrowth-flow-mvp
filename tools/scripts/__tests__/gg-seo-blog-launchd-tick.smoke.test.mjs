@@ -63,9 +63,11 @@ function runnerHarness({
   const root = mkdtempSync(join(tmpdir(), 'seo-launchd-runner-'));
   const flow = join(root, 'flow');
   const oracle = join(root, 'oracle');
+  const dirtyOracle = join(root, 'dirty-oracle');
   const opsTasks = join(root, 'ops/inbox/06-tasks/tasks');
   mkdirSync(flow, { recursive: true });
   mkdirSync(join(oracle, '.git'), { recursive: true });
+  mkdirSync(join(dirtyOracle, '.git'), { recursive: true });
   mkdirSync(opsTasks, { recursive: true });
   const events = join(root, 'events.log');
   const hookArgs = join(root, 'hook-args.json');
@@ -155,7 +157,7 @@ function runnerHarness({
       `GG_SEO_PLAN=${JSON.stringify(plan)}`,
       `GG_SEO_CLAIMS=${JSON.stringify(claims)}`,
       `GG_AUTOMATION_ORACLE_DIR=${JSON.stringify(join(root, 'interactive-oracle'))}`,
-      ...(collidePinnedOracle ? ['PINNED_ORACLE="/unsafe/internal-collision"'] : []),
+      ...(collidePinnedOracle ? [`PINNED_ORACLE=${JSON.stringify(dirtyOracle)}`] : []),
       '',
     ].join('\n'));
   }

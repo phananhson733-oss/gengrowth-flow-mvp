@@ -37,12 +37,14 @@ function harness({
   const state = join(root, 'state');
   const queue = join(state, 'seo-repair-queue');
   const oracle = join(root, 'oracle-autopilot');
+  const dirtyOracle = join(root, 'dirty-oracle');
   const lock = join(root, 'tick.lock');
   const events = join(root, 'events.log');
   const plan = join(root, 'plan.md');
   const envFile = join(root, 'gg.env');
   mkdirSync(queue, { recursive: true });
   mkdirSync(join(oracle, '.git'), { recursive: true });
+  mkdirSync(join(dirtyOracle, '.git'), { recursive: true });
   writeFileSync(plan, '- [x] `PG-A-001` alpha\n');
   if (owner) {
     mkdirSync(lock);
@@ -79,7 +81,7 @@ function harness({
       "GG_SEO_SITE='gengrowth'",
       "GG_ORACLE_DIR='/unsafe/interactive-oracle'",
       "GG_AUTOMATION_ORACLE_DIR='/unsafe/env-file-oracle'",
-      ...(collidePinnedOracle ? ["PINNED_ORACLE='/unsafe/internal-collision'"] : []),
+      ...(collidePinnedOracle ? [`PINNED_ORACLE='${dirtyOracle}'`] : []),
       '',
     ].join('\n'));
   }

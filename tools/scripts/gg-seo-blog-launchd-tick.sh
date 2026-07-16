@@ -9,7 +9,7 @@ export PATH="$HOME/.local/bin:$HOME/.npm-global/bin:/opt/homebrew/bin:/usr/local
 export TZ="Asia/Shanghai"
 
 ENV_FILE="${GG_ENV_FILE:-$HOME/.config/gg/_gg.env}"
-PINNED_ORACLE="${GG_AUTOMATION_ORACLE_DIR:-$HOME/oracle-autopilot}"
+readonly PINNED_ORACLE="${GG_AUTOMATION_ORACLE_DIR:-$HOME/oracle-autopilot}"
 if [[ -f "$ENV_FILE" ]]; then
   set -a
   # shellcheck disable=SC1090
@@ -90,6 +90,29 @@ pre_fire_reconcile_allows_repairable_drift() {
     let value;
     try { value = JSON.parse(raw); } catch { process.exit(1); }
     if (!value || typeof value !== "object" || Array.isArray(value)) process.exit(1);
+    const counters = [
+      "pendingWritebackAfter",
+      "droppedWritebackAfter",
+      "sheetFlipsAfter",
+      "planUncheckedAfter",
+      "activeRepairAfter",
+      "expiredLeasesAfter",
+      "eligibleNeedsHumanAfter",
+    ];
+    const allowedKeys = new Set([
+      "ok",
+      ...counters,
+      "droppedWritebackEvidence",
+      "errors",
+    ]);
+    const keys = Object.keys(value);
+    if (keys.length !== allowedKeys.size || keys.some((key) => !allowedKeys.has(key))) {
+      process.exit(1);
+    }
+    if (value.ok !== false) process.exit(1);
+    if (!counters.every((field) => Number.isInteger(value[field]) && value[field] >= 0)) {
+      process.exit(1);
+    }
     const requiredZero = [
       "pendingWritebackAfter",
       "droppedWritebackAfter",
@@ -98,12 +121,12 @@ pre_fire_reconcile_allows_repairable_drift() {
       "expiredLeasesAfter",
     ];
     const repairable = ["planUncheckedAfter", "eligibleNeedsHumanAfter"];
-    const zero = requiredZero.every((field) => Number.isInteger(value[field]) && value[field] === 0);
-    const validRepairable = repairable.every(
-      (field) => Number.isInteger(value[field]) && value[field] >= 0,
-    );
+    const zero = requiredZero.every((field) => value[field] === 0);
+    const hasRepairableDrift = repairable.some((field) => value[field] > 0);
+    const validDroppedEvidence = Array.isArray(value.droppedWritebackEvidence)
+      && value.droppedWritebackEvidence.length === value.droppedWritebackAfter;
     const noErrors = Array.isArray(value.errors) && value.errors.length === 0;
-    process.exit(zero && validRepairable && noErrors ? 0 : 1);
+    process.exit(zero && hasRepairableDrift && validDroppedEvidence && noErrors ? 0 : 1);
   ' "$strict_json"
 }
 

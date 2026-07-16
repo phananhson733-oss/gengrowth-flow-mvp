@@ -8,8 +8,9 @@ import {
   rm,
 } from 'node:fs/promises';
 import { basename, dirname, join } from 'node:path';
+import { setTimeout as delay } from 'node:timers/promises';
 
-const TERMINAL_STATUSES = new Set(['published', 'archived', 'human_only']);
+const TERMINAL_STATUSES = new Set(['published', 'archived', 'human_only', 'superseded', 'migration_hold']);
 const ACTIVE_STATUSES = new Set(['queued', 'repairing', 'regating', 'repair_pending']);
 const ALLOWED_SITES = new Set(['astrologywiki', 'gengrowth']);
 const ALLOWED_ERROR_KINDS = new Set([
@@ -38,6 +39,9 @@ const LANE_WEIGHTS = {
 const DEFAULT_AGING_MS = 60 * 60 * 1000;
 const MAX_STDERR_LENGTH = 8_192;
 const MAX_SUMMARY_LENGTH = 2_048;
+const INCIDENT_LOCK_LEASE_MS = 30_000;
+const INCIDENT_LOCK_TIMEOUT_MS = 10_000;
+const INCIDENT_LOCK_RETRY_MS = 10;
 
 function requireString(value, field, { optional = false } = {}) {
   if (optional && (value === undefined || value === null || value === '')) return '';
@@ -113,8 +117,10 @@ export function normalizeRepairEvidence(value) {
     .toLowerCase();
 }
 
-export function repairIncidentId() {
-  throw new Error('repairIncidentId not implemented');
+export function repairIncidentId(value) {
+  const event = validateRepairEvent(value);
+  const owner = event.pageId === 'RUN' ? `${event.site}:${event.lane}:RUN` : `${event.site}:${event.pageId}`;
+  return createHash('sha256').update(owner).digest('hex');
 }
 
 export function isActiveRepairStatus(status) {
@@ -123,9 +129,9 @@ export function isActiveRepairStatus(status) {
 
 export function repairEventFingerprint(value) {
   const event = validateRepairEvent(value);
-  const evidence = normalizeRepairEvidence(`${event.summary}\n${event.stderr}`);
+  const stable = normalizeRepairEvidence(event.summary);
   return createHash('sha256')
-    .update(`${event.site}\n${event.pageId}\n${event.stage}\n${evidence}`)
+    .update(`${event.site}\n${event.pageId}\n${event.stage}\n${event.errorKind}\n${stable}`)
     .digest('hex');
 }
 
@@ -148,6 +154,79 @@ async function atomicWriteJson(path, value, randomUUID = defaultRandomUUID) {
   } catch (error) {
     await rm(tempPath, { force: true });
     throw error;
+  }
+}
+
+function pidIsAlive(pid) {
+  if (!Number.isInteger(pid) || pid <= 0) return false;
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    return error?.code === 'EPERM';
+  }
+}
+
+async function readJson(path) {
+  try { return JSON.parse(await readFile(path, 'utf8')); } catch { return null; }
+}
+
+async function withIncidentLock(queueDir, incidentId, fn) {
+  const locksDir = join(queueDir, '.incident-locks');
+  const path = join(locksDir, incidentId);
+  const ownerPath = join(path, 'owner.json');
+  const token = defaultRandomUUID();
+  const deadline = Date.now() + INCIDENT_LOCK_TIMEOUT_MS;
+  await mkdir(locksDir, { recursive: true });
+
+  while (true) {
+    const acquiredAt = new Date();
+    const metadata = {
+      pid: process.pid,
+      token,
+      incidentId,
+      acquiredAt: acquiredAt.toISOString(),
+      expiresAt: new Date(acquiredAt.getTime() + INCIDENT_LOCK_LEASE_MS).toISOString(),
+    };
+    try {
+      await mkdir(path);
+      try {
+        await atomicWriteJson(ownerPath, metadata);
+      } catch (error) {
+        await rm(path, { recursive: true, force: true });
+        throw error;
+      }
+      break;
+    } catch (error) {
+      if (error?.code !== 'EEXIST') throw error;
+      const current = await readJson(ownerPath);
+      const live = current && pidIsAlive(Number(current.pid));
+      const unexpired = current && Date.parse(current.expiresAt || 0) > Date.now();
+      if (current && (!live || !unexpired)) {
+        const confirmed = await readJson(ownerPath);
+        if (confirmed?.token === current.token && Number(confirmed?.pid) === Number(current.pid)) {
+          const stalePath = `${path}.stale-${process.pid}-${defaultRandomUUID()}`;
+          try {
+            await rename(path, stalePath);
+            await rm(stalePath, { recursive: true, force: true });
+            continue;
+          } catch (reclaimError) {
+            if (!['EEXIST', 'ENOENT'].includes(reclaimError?.code)) throw reclaimError;
+          }
+        }
+      }
+      if (Date.now() >= deadline) throw new Error(`incident lock timeout: ${incidentId}`);
+      await delay(INCIDENT_LOCK_RETRY_MS);
+    }
+  }
+
+  try {
+    return await fn();
+  } finally {
+    const current = await readJson(ownerPath);
+    if (current?.token === token && Number(current.pid) === process.pid) {
+      await rm(path, { recursive: true, force: true });
+    }
   }
 }
 
@@ -193,15 +272,27 @@ export async function listRepairRecords({ queueDir } = {}) {
   return (await readQueueRecords(queueDir)).map(({ record }) => record);
 }
 
-export async function compactRepairIncident() {
-  throw new Error('compactRepairIncident not implemented');
-}
-
-function initialRecord(event, fingerprint, parentFingerprints = []) {
+function initialRecord(event, fingerprint, {
+  incidentId,
+  generation = 1,
+  budgetEpoch = 1,
+  totalAttempts = 0,
+  agentMutationAttempts = 0,
+  parentGenerationId = null,
+  parentFingerprints = [],
+} = {}) {
   return {
     event,
     latestEvent: event,
     fingerprint,
+    incidentId,
+    generation,
+    budgetEpoch,
+    totalAttempts,
+    agentMutationAttempts,
+    sourceEventIds: [event.eventId],
+    sourceEvents: [event],
+    parentGenerationId,
     status: 'queued',
     observations: 1,
     strategy: 'deterministic_retry',
@@ -229,40 +320,71 @@ export async function enqueueRepairEvent(value, {
   if (!queueDir) throw new TypeError('queueDir is required');
   const event = validateRepairEvent(value);
   const fingerprint = repairEventFingerprint(event);
-  const queueRecords = await readQueueRecords(queueDir);
-  const existing = queueRecords.find(({ record }) => (
-    record.fingerprint === fingerprint && ACTIVE_STATUSES.has(record.status)
-  ));
+  const incidentId = repairIncidentId(event);
+  return withIncidentLock(queueDir, incidentId, async () => {
+    const queueRecords = await readQueueRecords(queueDir);
+    const active = queueRecords
+      .filter(({ record }) => ACTIVE_STATUSES.has(record.status)
+        && (record.incidentId || repairIncidentId(record.event)) === incidentId)
+      .sort((a, b) => Number(b.record.generation || 1) - Number(a.record.generation || 1)
+        || String(b.record.updatedAt || '').localeCompare(String(a.record.updatedAt || '')));
+    const existing = active.find(({ record }) => record.fingerprint === fingerprint);
 
-  if (existing) {
-    const merged = {
-      ...existing.record,
-      latestEvent: event,
-      observations: Number(existing.record.observations || 1) + 1,
-      updatedAt: event.createdAt,
-      history: [
-        ...(existing.record.history || []),
-        { status: existing.record.status, at: event.createdAt, evidence: { observedEventId: event.eventId } },
-      ],
-    };
-    await atomicWriteJson(existing.path, merged, randomUUID);
-    return merged;
-  }
+    if (existing) {
+      const sourceEventIds = [...new Set([
+        ...(existing.record.sourceEventIds || [existing.record.event.eventId]),
+        event.eventId,
+      ])];
+      const sourceEvents = [
+        ...(existing.record.sourceEvents || [existing.record.event]),
+        ...(!sourceEventIds.slice(0, -1).includes(event.eventId) ? [event] : []),
+      ];
+      const merged = {
+        ...existing.record,
+        incidentId,
+        latestEvent: event,
+        observations: Number(existing.record.observations || 1) + 1,
+        sourceEventIds,
+        sourceEvents,
+        updatedAt: event.createdAt,
+        history: [
+          ...(existing.record.history || []),
+          { status: existing.record.status, at: event.createdAt, evidence: { observedEventId: event.eventId } },
+        ],
+      };
+      await atomicWriteJson(existing.path, merged, randomUUID);
+      return merged;
+    }
 
-  const parentFingerprints = queueRecords
-    .map(({ record }) => record)
-    .filter((record) => (
-      ACTIVE_STATUSES.has(record.status)
-      && record.fingerprint !== fingerprint
-      && record.event.site === event.site
-      && record.event.pageId === event.pageId
-      && record.event.stage === event.stage
-    ))
-    .sort((a, b) => String(a.updatedAt || '').localeCompare(String(b.updatedAt || '')))
-    .map((record) => record.fingerprint);
-  const record = initialRecord(event, fingerprint, parentFingerprints);
-  await atomicWriteJson(join(queueDir, `${event.eventId}.json`), record, randomUUID);
-  return record;
+    const previous = active[0]?.record || null;
+    for (const source of active) {
+      const superseded = {
+        ...source.record,
+        status: 'superseded',
+        lease: null,
+        supersededBy: event.eventId,
+        updatedAt: event.createdAt,
+        history: [
+          ...(source.record.history || []),
+          { status: 'superseded', at: event.createdAt, evidence: { supersededBy: event.eventId } },
+        ],
+      };
+      await atomicWriteJson(source.path, superseded, randomUUID);
+    }
+
+    const parentFingerprints = active.map(({ record }) => record.fingerprint);
+    const record = initialRecord(event, fingerprint, {
+      incidentId,
+      generation: Number(previous?.generation || 0) + 1,
+      budgetEpoch: Number(previous?.budgetEpoch || 1),
+      totalAttempts: Number(previous?.totalAttempts || 0),
+      agentMutationAttempts: Number(previous?.agentMutationAttempts || 0),
+      parentGenerationId: previous?.event?.eventId || null,
+      parentFingerprints,
+    });
+    await atomicWriteJson(join(queueDir, `${event.eventId}.json`), record, randomUUID);
+    return record;
+  });
 }
 
 function laneWeight(record) {

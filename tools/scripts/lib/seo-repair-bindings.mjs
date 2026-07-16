@@ -124,7 +124,7 @@ export function inspectBoundRepairDraft({
       throw new Error('repair draft expected SHA-256 must be 64 hex characters');
     }
     const { pathRealpath } = containedRealpath(draftFile, root, 'repair draft');
-    if (!statSync(pathRealpath).isFile()) {
+    if (!lstatSync(resolve(draftFile)).isFile() || !statSync(pathRealpath).isFile()) {
       throw new Error('repair draft must be a regular file');
     }
     const bytes = readFileSync(pathRealpath);

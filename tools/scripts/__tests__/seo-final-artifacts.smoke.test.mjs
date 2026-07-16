@@ -306,6 +306,12 @@ test('inline use fragment must belong to the same structurally valid inline SVG'
   assert.equal((await verify(
     '<svg><symbol id="moon"><path d="M0 0"/></symbol><use href="#moon"></use></svg>',
   )).ok, true);
+  assert.equal((await verify(
+    '<svg><svg><symbol id="moon"><path d="M0 0"/></symbol></svg><use href="#moon"></use></svg>',
+  )).ok, true);
+  assert.equal((await verify(
+    '<svg><svg><symbol id="moon"><path d="M0 0"/></symbol><use href="#moon"></use></svg></svg>',
+  )).ok, true);
 
   for (const html of [
     '<div id="moon"></div><svg><use href="#moon"></use></svg>',

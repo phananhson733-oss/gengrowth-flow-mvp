@@ -346,14 +346,9 @@ function parseInlineSvgReferences(html) {
     if (close) {
       const name = close[1].toLowerCase();
       if (!context) continue;
-      if (name === 'svg') {
-        if (context.stack.length !== 1 || context.stack[0] !== 'svg') context.malformed = true;
-        context.stack = [];
-        finalize();
-        continue;
-      }
       const expected = context.stack.pop();
       if (!expected || expected !== name) context.malformed = true;
+      if (context.stack.length === 0) finalize();
       continue;
     }
 

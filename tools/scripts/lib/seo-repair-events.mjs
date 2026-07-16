@@ -1047,6 +1047,9 @@ export async function enqueueRepairEvent(value, {
         ...(existing.record.sourceEvents || [existing.record.event]),
         ...(!sourceEventIds.slice(0, -1).includes(event.eventId) ? [event] : []),
       ];
+      const currentGenerationRunIds = new Set(
+        (existing.record.sourceEvents || [existing.record.event]).map((source) => source.runId),
+      );
       const merged = {
         ...existing.record,
         incidentId,
@@ -1054,7 +1057,8 @@ export async function enqueueRepairEvent(value, {
         revision: Number(existing.record.revision || 0) + 1,
         observations: Number(existing.record.observations || 1) + 1,
         firstDetectedAt: existing.record.firstDetectedAt || existing.record.event.createdAt,
-        windowCount: new Set(sourceEvents.map((source) => source.runId)).size,
+        windowCount: Number(existing.record.windowCount || currentGenerationRunIds.size || 1)
+          + (currentGenerationRunIds.has(event.runId) ? 0 : 1),
         lastArtifactSha: existing.record.lastArtifactSha || null,
         noProgressCount: Number(existing.record.noProgressCount || 0),
         sourceEventIds,
@@ -1072,12 +1076,16 @@ export async function enqueueRepairEvent(value, {
 
     const previous = active[0]?.record || null;
     const parentFingerprints = active.map(({ record }) => record.fingerprint);
-    const incidentSourceEvents = [
-      ...active.flatMap(({ record: source }) => (
-        source.sourceEvents || [source.latestEvent || source.event]
-      )),
-      event,
-    ];
+    const inheritedRunIds = new Set(active.flatMap(({ record: source }) => (
+      source.sourceEvents || [source.latestEvent || source.event]
+    )).map((source) => source.runId));
+    const inheritedWindowCount = active.length > 0
+      ? Math.max(...active.map(({ record: source }) => (
+        Number(source.windowCount || new Set(
+          (source.sourceEvents || [source.event]).map((item) => item.runId),
+        ).size || 1)
+      )))
+      : 0;
     const firstDetectedAt = active
       .map(({ record: source }) => source.firstDetectedAt || source.event.createdAt)
       .concat(event.createdAt)
@@ -1089,7 +1097,7 @@ export async function enqueueRepairEvent(value, {
       totalAttempts: Number(previous?.totalAttempts || 0),
       agentMutationAttempts: Number(previous?.agentMutationAttempts || 0),
       firstDetectedAt,
-      windowCount: new Set(incidentSourceEvents.map((source) => source.runId)).size,
+      windowCount: Math.max(1, inheritedWindowCount + (inheritedRunIds.has(event.runId) ? 0 : 1)),
       lastArtifactSha: null,
       noProgressCount: 0,
       parentGenerationId: previous?.event?.eventId || null,
@@ -1267,7 +1275,10 @@ export async function compactRepairIncident({
       firstDetectedAt: records
         .map((record) => record.firstDetectedAt || record.event.createdAt)
         .sort()[0],
-      windowCount: new Set(sourceEvents.map((event) => event.runId)).size,
+      windowCount: Math.max(
+        new Set(sourceEvents.map((event) => event.runId)).size,
+        ...records.map((record) => Number(record.windowCount || 1)),
+      ),
       lastArtifactSha: latest.lastArtifactSha || null,
       noProgressCount: Number(latest.noProgressCount || 0),
       sourceEventIds,

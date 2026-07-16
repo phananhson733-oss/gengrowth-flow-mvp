@@ -28,7 +28,12 @@ const NONDELEGABLE_TYPES = new Set([
   'permission_denied',
   'missing_authoritative_source',
 ]);
-const TERMINALS = new Set(['published', 'archived', 'human_only']);
+const TERMINALS = new Set(['published', 'archived', 'human_only', 'quarantined']);
+const AGENT_STRATEGIES = new Set([
+  'agent_content_asset_link',
+  'agent_diagnosis',
+  'agent_code_environment',
+]);
 const STRATEGY_CHAINS = {
   transient: ['deterministic_retry', 'agent_diagnosis', 'agent_code_environment'],
   deterministic_fixable: ['deterministic_repair', 'agent_diagnosis', 'agent_code_environment'],
@@ -250,6 +255,9 @@ export function nextRepairStrategy(record, outcome, {
 
 export function terminalNotificationKey(record, terminal) {
   if (!TERMINALS.has(terminal)) throw new TypeError(`unsupported terminal: ${terminal}`);
+  if (terminal === 'quarantined') {
+    return `quarantined:${record.incidentId}:${Number(record.budgetEpoch || 1)}`;
+  }
   return `${terminal}:${record.event.site}:${record.event.pageId}:${record.fingerprint}`;
 }
 
@@ -271,7 +279,40 @@ function acceptedTerminal(result) {
   if (terminal === 'human_only' && !isNondelegableEvidence(result.evidence)) return null;
   if (terminal === 'archived' && !result?.evidence) return null;
   if (terminal === 'published' && !result?.evidence) return null;
+  if (terminal === 'quarantined' && !result?.evidence) return null;
   return terminal;
+}
+
+function isAgentStrategy(strategy) {
+  return AGENT_STRATEGIES.has(strategy);
+}
+
+function incidentAgeMs(record, now) {
+  const detectedAt = Date.parse(record.firstDetectedAt || record.event?.createdAt || 0);
+  return Number.isFinite(detectedAt) ? Math.max(0, now.getTime() - detectedAt) : 0;
+}
+
+function preAttemptQuarantineEvidence(record, strategy, now, {
+  maxTotalAttempts,
+  maxAgentMutationAttempts,
+  maxWindowCount,
+  maxIncidentAgeMs,
+}) {
+  if (Number(record.noProgressCount || 0) >= 2) return { type: 'no_progress' };
+  if (Number(record.windowCount || 1) > maxWindowCount
+    || incidentAgeMs(record, now) > maxIncidentAgeMs) {
+    return {
+      type: 'repair_window_exhausted',
+      windowCount: Number(record.windowCount || 1),
+      ageMs: incidentAgeMs(record, now),
+    };
+  }
+  if (Number(record.totalAttempts || 0) >= maxTotalAttempts
+    || (isAgentStrategy(strategy)
+      && Number(record.agentMutationAttempts || 0) >= maxAgentMutationAttempts)) {
+    return { type: 'repair_budget_exhausted' };
+  }
+  return null;
 }
 
 export async function drainRepairQueue({
@@ -284,6 +325,10 @@ export async function drainRepairQueue({
   budgetMs = 15 * 60 * 1000,
   leaseMs = 20 * 60 * 1000,
   maxStrategyAttempts = 2,
+  maxTotalAttempts = 3,
+  maxAgentMutationAttempts = 2,
+  maxWindowCount = 3,
+  maxIncidentAgeMs = 90 * 60 * 1000,
   backoffMs = 6 * 60 * 60 * 1000,
   agingMs,
 } = {}) {
@@ -293,10 +338,38 @@ export async function drainRepairQueue({
   const hardMax = Number.isFinite(Number(maxTargets))
     ? Math.max(0, Math.floor(Number(maxTargets)))
     : Number.POSITIVE_INFINITY;
+  const totalAttemptLimit = Math.max(1, Number(maxTotalAttempts) || 3);
+  const agentMutationLimit = Math.max(1, Number(maxAgentMutationAttempts) || 2);
+  const windowLimit = Math.max(1, Number(maxWindowCount) || 3);
+  const incidentAgeLimit = Math.max(1, Number(maxIncidentAgeMs) || (90 * 60 * 1000));
   const recovered = await recoverExpiredLeases({ queueDir, now: clockValue(now) });
   const terminals = [];
   const failures = [];
   let processed = 0;
+
+  const transitionToTerminal = async (record, terminal, evidence) => {
+    const idempotencyKey = terminalNotificationKey(record, terminal);
+    const terminalRecord = await transitionRepairEvent(record, {
+      status: terminal,
+      evidence,
+      terminalNotificationKey: idempotencyKey,
+    }, {
+      queueDir,
+      now: clockValue(now),
+    });
+    await notifyTerminal({
+      terminal,
+      site: terminalRecord.event.site,
+      pageId: terminalRecord.event.pageId,
+      slug: terminalRecord.event.slug,
+      fingerprint: terminalRecord.fingerprint,
+      evidence,
+      idempotencyKey,
+      messageUuid: terminalMessageUuid(idempotencyKey),
+    });
+    terminals.push({ pageId: terminalRecord.event.pageId, terminal, idempotencyKey });
+    return terminalRecord;
+  };
 
   while (processed < hardMax && Date.now() - startedWallMs < Math.max(1, Number(budgetMs) || 1)) {
     const eligible = await listEligibleRepairEvents({
@@ -305,6 +378,34 @@ export async function drainRepairQueue({
       ...(agingMs === undefined ? {} : { agingMs }),
     });
     if (eligible.length === 0) break;
+    const candidate = eligible[0];
+    const candidateClassification = classifyRepairEvent(
+      candidate.event,
+      candidate.classificationEvidence,
+    );
+    const candidateStrategy = chainFor(candidateClassification).includes(candidate.strategy)
+      ? candidate.strategy
+      : initialStrategy(candidateClassification);
+    const exhausted = preAttemptQuarantineEvidence(candidate, candidateStrategy, clockValue(now), {
+      maxTotalAttempts: totalAttemptLimit,
+      maxAgentMutationAttempts: agentMutationLimit,
+      maxWindowCount: windowLimit,
+      maxIncidentAgeMs: incidentAgeLimit,
+    });
+    if (exhausted) {
+      processed += 1;
+      try {
+        await transitionToTerminal(candidate, 'quarantined', exhausted);
+      } catch (error) {
+        failures.push({
+          pageId: candidate.event.pageId,
+          status: candidate.status,
+          strategy: candidateStrategy,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+      continue;
+    }
     const leased = await acquireRepairLease(eligible[0], {
       queueDir,
       owner,
@@ -322,11 +423,12 @@ export async function drainRepairQueue({
       ...(leased.strategyAttempts || {}),
       [strategy]: Number(leased.strategyAttempts?.[strategy] || 0) + 1,
     };
-    const active = await transitionRepairEvent(leased, {
+    let active = await transitionRepairEvent(leased, {
       status: 'repairing',
       classification,
       strategy,
       strategyAttempts,
+      totalAttempts: Number(leased.totalAttempts || 0) + 1,
       evidence: { classification, strategy, attempt: strategyAttempts[strategy] },
     }, {
       queueDir,
@@ -355,27 +457,43 @@ export async function drainRepairQueue({
     }
 
     const terminal = acceptedTerminal(result);
-    if (terminal) {
-      const idempotencyKey = terminalNotificationKey(active, terminal);
-      const terminalRecord = await transitionRepairEvent(active, {
-        status: terminal,
-        evidence: result.evidence,
-        terminalNotificationKey: idempotencyKey,
+    const mutationInvoked = isAgentStrategy(strategy)
+      && result?.agentMutationInvoked !== false
+      && result?.evidence?.type !== 'controller_or_adapter_error';
+    const artifactSha = terminal ? '' : String(result?.evidence?.artifactSha || '').trim();
+    if (mutationInvoked || artifactSha) {
+      const sameArtifact = artifactSha && artifactSha === active.lastArtifactSha;
+      active = await transitionRepairEvent(active, {
+        status: 'repairing',
+        agentMutationAttempts: Number(active.agentMutationAttempts || 0) + (mutationInvoked ? 1 : 0),
+        ...(artifactSha ? {
+          lastArtifactSha: artifactSha,
+          noProgressCount: sameArtifact ? Number(active.noProgressCount || 0) + 1 : 1,
+        } : {}),
+        evidence: {
+          type: 'attempt_accounting',
+          agentMutationInvoked: mutationInvoked,
+          ...(artifactSha ? { artifactSha } : {}),
+        },
       }, {
         queueDir,
         now: clockValue(now),
       });
-      await notifyTerminal({
-        terminal,
-        site: terminalRecord.event.site,
-        pageId: terminalRecord.event.pageId,
-        slug: terminalRecord.event.slug,
-        fingerprint: terminalRecord.fingerprint,
-        evidence: result.evidence,
-        idempotencyKey,
-        messageUuid: terminalMessageUuid(idempotencyKey),
-      });
-      terminals.push({ pageId: terminalRecord.event.pageId, terminal, idempotencyKey });
+    }
+    if (terminal) {
+      await transitionToTerminal(active, terminal, result.evidence);
+      continue;
+    }
+
+    const postAttemptExhausted = Number(active.noProgressCount || 0) >= 2
+      ? { type: 'no_progress', artifactSha: active.lastArtifactSha || null }
+      : (Number(active.totalAttempts || 0) >= totalAttemptLimit
+        || (isAgentStrategy(strategy)
+          && Number(active.agentMutationAttempts || 0) >= agentMutationLimit))
+        ? { type: 'repair_budget_exhausted' }
+        : null;
+    if (postAttemptExhausted) {
+      await transitionToTerminal(active, 'quarantined', postAttemptExhausted);
       continue;
     }
 

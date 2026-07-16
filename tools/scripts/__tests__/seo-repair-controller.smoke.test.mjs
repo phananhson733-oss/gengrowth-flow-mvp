@@ -193,6 +193,43 @@ test('repair records initialize and count the natural-window progress fields', a
   assert.equal(observed.totalAttempts, 0);
 });
 
+test('windowCount survives fingerprint generations and advances only for a new runId', async (t) => {
+  const { queueDir } = await fixture(t);
+  const first = await enqueueRepairEvent(event({
+    runId: 'window-run-1',
+  }), { queueDir });
+  assert.equal(first.windowCount, 1);
+
+  const generationTwo = await enqueueRepairEvent(event({
+    eventId: UUID_B,
+    runId: 'window-run-2',
+    summary: 'codex exited 3 with a stable changed failure',
+    createdAt: '2026-07-15T14:30:00.000Z',
+  }), { queueDir });
+  assert.equal(generationTwo.generation, 2);
+  assert.equal(generationTwo.windowCount, 2);
+
+  const sameRunObservation = await enqueueRepairEvent(event({
+    eventId: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+    runId: 'window-run-2',
+    summary: 'codex exited 3 with a stable changed failure',
+    logOffsetStart: 100,
+    logOffsetEnd: 200,
+    createdAt: '2026-07-15T14:35:00.000Z',
+  }), { queueDir });
+  assert.equal(sameRunObservation.windowCount, 2);
+
+  const nextRunObservation = await enqueueRepairEvent(event({
+    eventId: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd',
+    runId: 'window-run-3',
+    summary: 'codex exited 3 with a stable changed failure',
+    logOffsetStart: 200,
+    logOffsetEnd: 300,
+    createdAt: '2026-07-15T15:00:00.000Z',
+  }), { queueDir });
+  assert.equal(nextRunObservation.windowCount, 3);
+});
+
 test('third total attempt quarantines and a rerun cannot call the adapter again', async (t) => {
   const built = await budgetFixture(t, { totalAttempts: 2 });
   const out = await drainRepairQueue({

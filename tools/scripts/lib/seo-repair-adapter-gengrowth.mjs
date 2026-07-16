@@ -105,11 +105,79 @@ export function isAllowedGengrowthAction(argv, context) {
   ));
 }
 
+function isAuthoringEvent(event) {
+  return [event?.stage, event?.lane]
+    .some((value) => String(value || '').toLowerCase().includes('author'));
+}
+
+export async function recoverGengrowthAuthoring(event, deps = {}) {
+  const scriptsDir = resolve(deps.scriptsDir || DEFAULT_SCRIPTS);
+  const flow = resolve(deps.flow || DEFAULT_FLOW);
+  const runCommand = deps.runCommand || defaultRunCommand;
+  const resolveAuthoredTarget = deps.resolveAuthoredTarget
+    || ((value) => defaultResolveTarget(value, { flow }));
+  const pageId = String(event?.pageId || '');
+  if (!/^PG-[A-Z0-9]+-[0-9]+$/.test(pageId)) {
+    return {
+      target: null,
+      evidence: { type: 'author_recovery_failed', reason: 'invalid_page_id', pageId },
+    };
+  }
+  const commands = [
+    ['node', join(scriptsDir, 'gg-seo-autopilot.mjs'), '--retry-author', '--task', pageId],
+    ['node', join(scriptsDir, 'gg-seo-autopilot.mjs'), '--author', '--task', pageId, '--limit', '1'],
+    ['node', join(scriptsDir, 'gg-gengrowth-author-handoff.mjs'), '--page-id', pageId],
+  ];
+  const results = [];
+  for (const argv of commands) {
+    const result = await runCommand(argv, {
+      cwd: flow,
+      env: process.env,
+      timeoutMs: Number(process.env.GG_GENGROWTH_AUTHOR_RECOVERY_TIMEOUT_MS) || 3_900_000,
+    });
+    results.push({
+      argv,
+      code: result?.code ?? 1,
+      timedOut: result?.timedOut === true,
+      stdout: String(result?.stdout || '').slice(-4_096),
+      stderr: String(result?.stderr || '').slice(-4_096),
+    });
+    if (result?.code !== 0 || result?.timedOut) {
+      return {
+        target: null,
+        evidence: {
+          type: 'author_recovery_failed',
+          failedCommand: argv,
+          results,
+        },
+      };
+    }
+  }
+  try {
+    const target = await resolveAuthoredTarget(event);
+    return {
+      target,
+      evidence: { type: 'author_recovered_and_handed_off', results },
+    };
+  } catch (error) {
+    return {
+      target: null,
+      evidence: {
+        type: 'author_recovery_failed',
+        reason: 'publish_ready_target_missing_after_handoff',
+        message: error instanceof Error ? error.message : String(error),
+        results,
+      },
+    };
+  }
+}
+
 export function createGengrowthRepairAdapter(deps = {}) {
   const scriptsDir = resolve(deps.scriptsDir || DEFAULT_SCRIPTS);
   const flow = resolve(deps.flow || DEFAULT_FLOW);
   const runCommand = deps.runCommand || defaultRunCommand;
   const resolveTarget = deps.resolveTarget || ((event) => defaultResolveTarget(event, { flow }));
+  const resolveAuthoredTarget = deps.resolveAuthoredTarget || resolveTarget;
   const verifyTerminal = deps.verifyTerminal
     || ((event, target) => defaultVerifyTerminal(event, target, { runCommand, scriptsDir }));
   const invokeAgent = deps.invokeAgent
@@ -118,13 +186,29 @@ export function createGengrowthRepairAdapter(deps = {}) {
   return {
     async execute({ record, strategy }) {
       const event = record.event;
-      const target = await resolveTarget(event);
+      let target;
+      if (isAuthoringEvent(event)) {
+        const recovered = await recoverGengrowthAuthoring(event, {
+          scriptsDir,
+          flow,
+          runCommand,
+          resolveAuthoredTarget,
+        });
+        if (!recovered.target) {
+          return { ok: false, agentMutationInvoked: false, evidence: recovered.evidence };
+        }
+        target = recovered.target;
+      } else {
+        target = await resolveTarget(event);
+      }
       const context = {
         scriptsDir,
         pageId: event.pageId,
         mdPath: target.mdPath,
       };
-      if (['agent_content_asset_link', 'agent_diagnosis', 'agent_code_environment'].includes(strategy)) {
+      const needsAgent = ['agent_content_asset_link', 'agent_diagnosis', 'agent_code_environment']
+        .includes(strategy);
+      if (needsAgent) {
         const repaired = await invokeAgent({
           site: 'gengrowth',
           pageId: event.pageId,
@@ -144,7 +228,11 @@ export function createGengrowthRepairAdapter(deps = {}) {
           ],
         }, { record, strategy });
         if (repaired?.ok !== true) {
-          return { ok: false, evidence: repaired?.evidence || { type: 'agent_repair_failed' } };
+          return {
+            ok: false,
+            agentMutationInvoked: true,
+            evidence: repaired?.evidence || { type: 'agent_repair_failed' },
+          };
         }
       }
       const reviewerArgv = [
@@ -169,6 +257,7 @@ export function createGengrowthRepairAdapter(deps = {}) {
       if (verdict.verdict !== 'PASS') {
         return {
           ok: false,
+          agentMutationInvoked: needsAgent,
           evidence: {
             type: verdict.verdict === 'FAIL' ? 'fact_gate_fail' : 'reviewer_tool_failure',
             strategy,
@@ -202,6 +291,7 @@ export function createGengrowthRepairAdapter(deps = {}) {
       if (published.code !== 0 || published.timedOut) {
         return {
           ok: false,
+          agentMutationInvoked: needsAgent,
           evidence: {
             type: 'publish_fail',
             strategy,
@@ -215,10 +305,11 @@ export function createGengrowthRepairAdapter(deps = {}) {
 
       const verified = await verifyTerminal(event, target);
       if (verified?.ok === true && verified?.terminal === 'published') {
-        return { terminal: 'published', evidence: verified };
+        return { terminal: 'published', agentMutationInvoked: needsAgent, evidence: verified };
       }
       return {
         ok: false,
+        agentMutationInvoked: needsAgent,
         evidence: {
           type: 'terminal_verifier_failed',
           strategy,

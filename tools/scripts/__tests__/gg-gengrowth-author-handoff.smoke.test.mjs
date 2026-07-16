@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtemp, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, readdir, rename, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -181,6 +181,39 @@ test('official author handoff automatically recovers after a real child SIGKILL 
   );
 });
 
+test('official author handoff rebuilds a new pair after SIGKILL when no prior target existed', async (t) => {
+  const built = await handoffFixture(t);
+  const targetMd = join(built.stagingDir, `${built.pageId}-claude-v8.md`);
+  const targetManifest = join(built.stagingDir, `${built.pageId}-claude-v8.manifest.json`);
+  const helperUrl = pathToFileURL(HELPER).href;
+  const killed = spawnSync(process.execPath, [
+    '--input-type=module',
+    '--eval',
+    [
+      `import { handoffGengrowthAuthor } from ${JSON.stringify(helperUrl)};`,
+      `await handoffGengrowthAuthor(${JSON.stringify({
+        pageId: built.pageId,
+        stagingDir: built.stagingDir,
+        winner: 'claude',
+      })}, {`,
+      "  transactionId: 'sigkill-new-pair',",
+      "  faultInjector: async (point) => { if (point === 'after-draft-before-manifest') process.kill(process.pid, 'SIGKILL'); },",
+      '});',
+    ].join('\n'),
+  ], { encoding: 'utf8' });
+  assert.equal(killed.signal, 'SIGKILL', `${killed.stdout}\n${killed.stderr}`);
+  assert.equal((await readdir(built.stagingDir)).some((name) => name.endsWith('.bak')), false);
+
+  const recovered = runHelper(['--page-id', built.pageId], built.stagingDir);
+  assert.equal(recovered.status, 0, `${recovered.stdout}\n${recovered.stderr}`);
+  assert.deepEqual(await readFile(targetMd), await readFile(built.sourceMd));
+  assert.deepEqual(await readFile(targetManifest), await readFile(built.sourceManifest));
+  assert.deepEqual(
+    (await readdir(built.stagingDir)).filter((name) => name.startsWith('.handoff-')),
+    [],
+  );
+});
+
 test('official author handoff cleans a committed transaction after SIGKILL interrupts backup cleanup', async (t) => {
   const built = await handoffFixture(t);
   const targetMd = join(built.stagingDir, `${built.pageId}-claude-v8.md`);
@@ -263,6 +296,25 @@ test('author handoff refuses an incomplete pre-existing target pair', async (t) 
     stagingDir: built.stagingDir,
     winner: 'claude',
   }), /incomplete existing target/i);
+});
+
+test('author handoff rejects ambiguous or symlinked interrupted transaction evidence', async (t) => {
+  const built = await handoffFixture(t);
+  const first = join(built.stagingDir, `.handoff-${built.pageId}-claude-first.manifest.tmp`);
+  const second = join(built.stagingDir, `.handoff-${built.pageId}-claude-second.manifest.tmp`);
+  await writeFile(first, '{}\n', 'utf8');
+  await writeFile(second, '{}\n', 'utf8');
+  const ambiguous = runHelper(['--page-id', built.pageId], built.stagingDir);
+  assert.equal(ambiguous.status, 2);
+  assert.equal(JSON.parse(ambiguous.stdout.trim()).reason, 'handoff_recovery_ambiguous');
+
+  await rm(first);
+  await rm(second);
+  const unsafe = join(built.stagingDir, `.handoff-${built.pageId}-claude-unsafe.manifest.tmp`);
+  await symlink(built.sourceManifest, unsafe);
+  const symlinked = runHelper(['--page-id', built.pageId], built.stagingDir);
+  assert.equal(symlinked.status, 2);
+  assert.equal(JSON.parse(symlinked.stdout.trim()).reason, 'handoff_recovery_unsafe');
 });
 
 test('author tick delegates handoff validation and copying to the shared helper', async () => {

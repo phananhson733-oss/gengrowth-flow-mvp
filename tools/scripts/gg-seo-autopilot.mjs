@@ -637,6 +637,24 @@ function buildGate(repo) {
   }
 }
 
+function buildCommittedGate(repo, branch) {
+  const head = gitIn(repo, ['rev-parse', 'HEAD']).trim();
+  const buildWorktree = worktreePath(`${branch}--build-${head.slice(0, 12)}-${process.pid}`);
+  mkdirSync(WORKTREE_ROOT, { recursive: true });
+  try { git(['worktree', 'remove', '--force', buildWorktree]); } catch { /* no stale build worktree */ }
+  try {
+    git(['worktree', 'add', '--force', '--detach', buildWorktree, head]);
+    const baselineModules = join(ORACLE, 'node_modules');
+    const wtModules = join(buildWorktree, 'node_modules');
+    if (existsSync(baselineModules) && !existsSync(wtModules)) {
+      try { symlinkSync(baselineModules, wtModules); } catch { /* build gate surfaces missing deps */ }
+    }
+    return buildGate(buildWorktree);
+  } finally {
+    cleanupWorktree(buildWorktree);
+  }
+}
+
 // ── authoring (upstream) ─────────────────────────────────────────────────────
 // When a plan task has no passing draft yet, run the deterministic authoring
 // chain so the next --scan can publish it: bridge → RAG → render → orchestrator
@@ -1147,19 +1165,11 @@ function publishOne(o, t) {
   } catch (e) { log(`illustrate ${t.pgId}: caught ${errTail(e, 80)} — publishing without images`); }
   const heroPatch = ill.needsHero ? { needs_hero: true } : {};
 
-  // build gate
-  stampClaim(t.pgId, 'build-gate');
-  const b = buildGate(publishRepo);
-  if (!b.ok) { stampClaim(t.pgId, 'build-gate', { status: 'needs_human', error: `build: ${b.error}` }); log(`PARK ${t.pgId}: build failed`); return; }
-
-  if (o.dryRun) {
-    stampClaim(t.pgId, 'dry-run-ok', { status: 'dry-run-ok', ...heroPatch });
-    cleanupWorktree(publishRepo);
-    log(`DRY-RUN OK ${t.pgId} (${t.slug}) build✓ — not pushed`);
-    return;
-  }
-
-  stampClaim(t.pgId, 'push');
+  // Commit only the intended article/registry/assets first. The production build mutates many
+  // generated public/ and OG files; running it in the review worktree used to leave unrelated
+  // tracked/untracked output behind, so the later immutable Gate correctly parked every article
+  // as "worktree dirty". Validate the exact committed tree in a disposable detached worktree
+  // instead, keeping the PR/review worktree byte-clean from its first preview onward.
   const addPaths = ['data/articles'];
   if (existsSync(join(publishRepo, 'scripts', 'generate-seo-pages.mjs'))) addPaths.push('scripts/generate-seo-pages.mjs');
   // Commit the generated illustration assets (hero jpg + inline svgs) + the per-article plan.
@@ -1169,6 +1179,23 @@ function publishOne(o, t) {
   }
   gitIn(publishRepo, ['add', ...addPaths]);
   gitIn(publishRepo, ['commit', '-q', '-m', `feat(articles): publish ${t.slug} (${WINNER} ${VERSION}) [autopilot]`]);
+
+  stampClaim(t.pgId, 'build-gate');
+  const b = buildCommittedGate(publishRepo, worktreeBranch);
+  if (!b.ok) {
+    stampClaim(t.pgId, 'build-gate', { status: 'needs_human', error: `build: ${b.error}` });
+    log(`PARK ${t.pgId}: build failed`);
+    return;
+  }
+
+  if (o.dryRun) {
+    stampClaim(t.pgId, 'dry-run-ok', { status: 'dry-run-ok', ...heroPatch });
+    cleanupWorktree(publishRepo);
+    log(`DRY-RUN OK ${t.pgId} (${t.slug}) build✓ — not pushed`);
+    return;
+  }
+
+  stampClaim(t.pgId, 'push');
   // --force: these seo/auto/<date>-<pgid> branches are disposable & autopilot-owned; a re-publish
   // (or a stale remote branch off an older main) otherwise rejects as non-fast-forward.
   gitIn(publishRepo, ['push', '-u', '--force', 'origin', branch]);

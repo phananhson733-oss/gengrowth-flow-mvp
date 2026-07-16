@@ -728,7 +728,14 @@ test('--scan updates /oracle main first, then publishes from a separate worktree
     addRemoteMainCommit(h);
     const flow = writeStubFlow(h);
     const worktreeRoot = join(h.root, 'oracle-worktrees');
-    writeFileSync(join(h.bin, 'npm'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
+    writeFileSync(join(h.bin, 'npm'), [
+      '#!/bin/sh',
+      'mkdir -p public/og/articles',
+      'printf "build-only\\n" > public/og/articles/build-only.png',
+      'printf "build mutated tracked output\\n" > README.md',
+      'exit 0',
+      '',
+    ].join('\n'), { mode: 0o755 });
     writeFileSync(join(h.bin, 'gh'), '#!/bin/sh\nprintf "https://github.com/xdawayer/oracle/pull/123\\n"\n', { mode: 0o755 });
     writeFileSync(join(h.tasks, '2026-06-03-blog-output-plan.md'), '- [ ] `PG-TEST-001` test keyword\n');
 
@@ -754,6 +761,16 @@ test('--scan updates /oracle main first, then publishes from a separate worktree
     assert.ok(claim.worktree && claim.worktree.startsWith(worktreeRoot), `unexpected worktree: ${claim.worktree}`);
     assert.notEqual(claim.worktree, h.oracle);
     assert.match(git(h.oracle, ['show', `${claim.branch}:data/articles/test-slug.ts`]), /authorId: "test-author"/);
+    assert.equal(
+      git(claim.worktree, ['status', '--porcelain=v1', '--untracked-files=all']).trim(),
+      '',
+      'build-generated files must stay inside an isolated validation worktree',
+    );
+    assert.equal(
+      existsSync(join(claim.worktree, 'public', 'og', 'articles', 'build-only.png')),
+      false,
+      'build-only output must not leak into the review worktree',
+    );
   } finally {
     h.cleanup();
   }

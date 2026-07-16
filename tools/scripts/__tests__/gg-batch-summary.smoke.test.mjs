@@ -17,6 +17,7 @@ import { mkdirSync, writeFileSync, chmodSync, rmSync, existsSync, readFileSync, 
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
+import { terminalMessageUuid } from '../lib/seo-repair-controller.mjs';
 
 const SCRIPT = fileURLToPath(new URL('../gg-batch-summary.mjs', import.meta.url));
 const ROOT = join(tmpdir(), `gg-batch-summary-test-${process.pid}`);
@@ -31,6 +32,9 @@ const routes = {
   '/en/wiki/slug-a': 200,
   '/en/wiki/slug-b': 200,
   '/en/wiki/slug-missing': 404,
+  '/en/wiki/astro-only': 200,
+  '/en/wiki/legacy-in-plan': 200,
+  '/en/wiki/legacy-terminal': 200,
   '/en/blog/geng-ok': 200,
 };
 let flakyHits = 0;
@@ -59,8 +63,18 @@ let caseSeq = 0;
 function freshCase(claims = {}) {
   const dir = join(ROOT, `case-${caseSeq++}`);
   const tasksDir = join(dir, 'ops', 'inbox', '06-tasks', 'tasks');
+  const stateDir = join(dir, 'flow-state');
+  const queueDir = join(stateDir, 'seo-repair-queue');
   mkdirSync(tasksDir, { recursive: true });
+  mkdirSync(queueDir, { recursive: true });
   writeFileSync(join(tasksDir, '.autopilot-claims.json'), JSON.stringify(claims));
+  const plan = join(tasksDir, 'plan.md');
+  writeFileSync(plan, [
+    '# summary fixture',
+    '',
+    ...Object.keys(claims).map((pageId) => `- [ ] \`${pageId}\` fixture`),
+    '',
+  ].join('\n'));
   const sentinel = join(dir, 'notify-calls.jsonl');
   const notifyBin = join(dir, 'fake-notify.mjs');
   writeFileSync(notifyBin, `#!/usr/bin/env node
@@ -74,13 +88,28 @@ appendFileSync(${JSON.stringify(sentinel)}, JSON.stringify({
 process.exit(0);
 `);
   chmodSync(notifyBin, 0o755);
-  return { dir, opsDir: join(dir, 'ops'), sentinel, notifyBin };
+  return {
+    dir,
+    opsDir: join(dir, 'ops'),
+    stateDir,
+    queueDir,
+    plan,
+    sentinel,
+    notifyBin,
+  };
 }
 
 function run(args, c, extraEnv = {}) {
+  const boundedArgs = [...args];
+  if (boundedArgs.includes('--since')) {
+    if (!boundedArgs.includes('--plan')) boundedArgs.push('--plan', c.plan);
+    if (!boundedArgs.includes('--run-id')) boundedArgs.push('--run-id', 'test-run-1');
+  }
   const env = {
     ...process.env,
     GG_OPS_DIR: c.opsDir,
+    GG_FLOW_STATE_DIR: c.stateDir,
+    GG_SEO_REPAIR_QUEUE_DIR: c.queueDir,
     GG_BATCH_SUMMARY_BASE_ASTRO: BASE,
     GG_BATCH_SUMMARY_BASE_GENG: BASE,
     GG_BATCH_SUMMARY_TIMEOUT_MS: '3000',
@@ -90,7 +119,7 @@ function run(args, c, extraEnv = {}) {
   // 父环境的 @ 开关绝不能漏进断言（脚本自己也会清，但测试侧同样兜底）。
   delete env.GG_LARK_NOTIFY_AT_OPS;
   delete env.GG_LARK_NOTIFY_AT_PM;
-  return spawnSync(process.execPath, [SCRIPT, ...args], { encoding: 'utf8', timeout: 60000, env });
+  return spawnSync(process.execPath, [SCRIPT, ...boundedArgs], { encoding: 'utf8', timeout: 60000, env });
 }
 
 function notifyCalls(c) {
@@ -102,6 +131,10 @@ function notifyCalls(c) {
 function sentText(call) {
   const i = call.argv.indexOf('--text');
   return i >= 0 ? call.argv[i + 1] : '';
+}
+
+function writeQueueRecord(c, name, record) {
+  writeFileSync(join(c.queueDir, `${name}.json`), JSON.stringify(record));
 }
 
 const SINCE = '2026-07-03T00:00:00Z';
@@ -279,6 +312,197 @@ test('notify bin 失效（ENOENT）→ exit 3 + 渲染文本直接入 outbox 兜
   const payload = JSON.parse(readFileSync(join(outbox, files[0]), 'utf8'));
   assert.match(payload.text, /批次汇总 2026-07-03/);
   assert.match(payload.lastError, /notify-(spawn|exit)/);
+});
+
+test('mixed claims ledger is scoped to the selected site and pinned plan', () => {
+  const c = freshCase({
+    'PG-CELEB-058': {
+      site: 'astrologywiki',
+      status: 'done',
+      slug: 'astro-only',
+      mergedAt: IN_WINDOW,
+    },
+    'PG-SDS-004': {
+      site: 'gengrowth',
+      status: 'done',
+      slug: 'geng-ok',
+      mergedAt: IN_WINDOW,
+    },
+    'PG-MISMATCH-001': {
+      site: 'gengrowth',
+      status: 'done',
+      slug: 'slug-b',
+      mergedAt: IN_WINDOW,
+    },
+    'PG-LEGACY-001': {
+      status: 'done',
+      slug: 'legacy-in-plan',
+      mergedAt: IN_WINDOW,
+    },
+    'PG-LEGACY-OUT': {
+      status: 'done',
+      slug: 'legacy-out-of-plan',
+      mergedAt: IN_WINDOW,
+    },
+  });
+  writeFileSync(c.plan, [
+    '# W22 fixture',
+    '',
+    '- [ ] `PG-CELEB-058` astrology target',
+    '- [ ] `PG-MISMATCH-001` explicit mismatched site must still stay out',
+    '- [ ] `PG-LEGACY-001` legacy target in selected plan',
+    '',
+  ].join('\n'));
+
+  const r = run([
+    '--since', SINCE,
+    '--date', DATE,
+    '--site', 'astrologywiki',
+    '--plan', c.plan,
+    '--run-id', 'run-1',
+    '--dry-run',
+  ], c);
+  assert.equal(r.status, 0, `${r.stdout}\n${r.stderr}`);
+  assert.match(r.stdout, /\[astrologywiki\] astro-only、legacy-in-plan/);
+  assert.doesNotMatch(r.stdout, /geng-ok/);
+  assert.doesNotMatch(r.stdout, /slug-b/);
+  assert.doesNotMatch(r.stdout, /legacy-out-of-plan/);
+});
+
+test('controller terminal records are filtered by selected site and current run while active records stay silent', () => {
+  const c = freshCase({});
+  writeFileSync(c.plan, [
+    '# W22 fixture',
+    '',
+    '- [ ] `PG-CELEB-058` published this fire',
+    '- [ ] `PG-CELEB-059` active this fire',
+    '- [ ] `PG-CELEB-060` terminal stop this fire',
+    '- [ ] `PG-CELEB-061` legacy terminal this fire',
+    '',
+  ].join('\n'));
+  writeQueueRecord(c, 'published-current', {
+    status: 'published',
+    event: {
+      site: 'astrologywiki',
+      runId: 'older-run',
+      pageId: 'PG-CELEB-058',
+      slug: 'astro-only',
+      createdAt: IN_WINDOW,
+    },
+    latestEvent: {
+      site: 'astrologywiki',
+      runId: 'run-1',
+      pageId: 'PG-CELEB-058',
+      slug: 'astro-only',
+      createdAt: IN_WINDOW,
+    },
+    updatedAt: IN_WINDOW,
+  });
+  writeQueueRecord(c, 'published-other-run', {
+    status: 'published',
+    event: {
+      site: 'astrologywiki',
+      runId: 'run-2',
+      pageId: 'PG-CELEB-099',
+      slug: 'slug-b',
+      createdAt: IN_WINDOW,
+    },
+    updatedAt: IN_WINDOW,
+  });
+  writeQueueRecord(c, 'active-current', {
+    status: 'repairing',
+    event: {
+      site: 'astrologywiki',
+      runId: 'run-1',
+      pageId: 'PG-CELEB-059',
+      slug: 'slug-b',
+      createdAt: IN_WINDOW,
+    },
+    updatedAt: IN_WINDOW,
+  });
+  writeQueueRecord(c, 'other-site-current', {
+    status: 'published',
+    event: {
+      site: 'gengrowth',
+      runId: 'run-1',
+      pageId: 'PG-SDS-004',
+      slug: 'geng-ok',
+      createdAt: IN_WINDOW,
+    },
+    updatedAt: IN_WINDOW,
+  });
+  writeQueueRecord(c, 'terminal-current', {
+    status: 'quarantined',
+    event: {
+      site: 'astrologywiki',
+      runId: 'run-1',
+      pageId: 'PG-CELEB-060',
+      slug: 'terminal-stop',
+      createdAt: IN_WINDOW,
+    },
+    updatedAt: IN_WINDOW,
+  });
+  writeQueueRecord(c, 'legacy-terminal-current', {
+    status: 'archived',
+    event: {
+      site: 'astrologywiki',
+      pageId: 'PG-CELEB-061',
+      slug: 'legacy-terminal',
+      createdAt: IN_WINDOW,
+    },
+    updatedAt: IN_WINDOW,
+  });
+  writeQueueRecord(c, 'legacy-terminal-out-of-plan', {
+    status: 'archived',
+    event: {
+      site: 'astrologywiki',
+      pageId: 'PG-CELEB-062',
+      slug: 'slug-b',
+      createdAt: IN_WINDOW,
+    },
+    updatedAt: IN_WINDOW,
+  });
+
+  const r = run([
+    '--since', SINCE,
+    '--date', DATE,
+    '--site', 'astrologywiki',
+    '--plan', c.plan,
+    '--run-id', 'run-1',
+    '--dry-run',
+  ], c);
+  assert.equal(r.status, 0, `${r.stdout}\n${r.stderr}`);
+  assert.match(r.stdout, /\[astrologywiki\] astro-only/);
+  assert.match(r.stdout, /PG-CELEB-060/);
+  assert.match(r.stdout, /PG-CELEB-061/);
+  assert.doesNotMatch(r.stdout, /slug-b/);
+  assert.doesNotMatch(r.stdout, /geng-ok/);
+  assert.doesNotMatch(r.stdout, /PG-CELEB-059/);
+  assert.doesNotMatch(r.stdout, /PG-CELEB-062/);
+});
+
+test('final notification reuses deterministic batch-terminal run UUID across repeated finalizer ticks', () => {
+  const c = freshCase({
+    'PG-A-001': { site: 'astrologywiki', status: 'done', slug: 'slug-a', mergedAt: IN_WINDOW },
+  });
+  const args = [
+    '--since', SINCE,
+    '--date', DATE,
+    '--site', 'astrologywiki',
+    '--plan', c.plan,
+    '--run-id', 'run-1',
+  ];
+  const first = run(args, c);
+  const second = run(args, c);
+  assert.equal(first.status, 0, first.stderr);
+  assert.equal(second.status, 0, second.stderr);
+  const calls = notifyCalls(c);
+  assert.equal(calls.length, 2);
+  const uuidAt = calls.map((call) => call.argv[call.argv.indexOf('--msgUuid') + 1]);
+  assert.deepEqual(uuidAt, [
+    terminalMessageUuid('batch-terminal:run-1'),
+    terminalMessageUuid('batch-terminal:run-1'),
+  ]);
 });
 
 test('cleanup', () => {

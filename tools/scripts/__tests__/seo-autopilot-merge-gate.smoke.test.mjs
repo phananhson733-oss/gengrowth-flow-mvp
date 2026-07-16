@@ -143,6 +143,17 @@ test('--merge rejects missing or malformed reviewed SHA before gh pr merge', (t)
   }
 });
 
+test('--merge blocks current PR head drift before gh pr merge', (t) => {
+  const h = fixture(t, { status: 'verified-preview', headRefOid: HEAD_A });
+  const result = h.run(
+    ['--merge', '--branch', BRANCH],
+    { GG_TEST_GH_HEAD: HEAD_B },
+  );
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /current PR head .* does not match reviewed head/i);
+  assert.doesNotMatch(h.ghText(), /pr merge/);
+});
+
 test('--merge always pins gh pr merge to the reviewed SHA', (t) => {
   const h = fixture(t, { status: 'verified-preview', headRefOid: HEAD_A });
   const result = h.run(['--merge', '--branch', BRANCH]);

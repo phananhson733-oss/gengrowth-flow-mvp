@@ -16,14 +16,18 @@ const here = dirname(fileURLToPath(import.meta.url));
 const flow = resolve(here, '../../..');
 const reconcileUrl = pathToFileURL(resolve(flow, 'tools/scripts/gg-ledger-reconcile.mjs')).href;
 
-function runStrictFixture(verification, { applyResult = {}, strict = true } = {}) {
+function runStrictFixture(verification, {
+  applyResult = {},
+  strict = true,
+  apply = true,
+} = {}) {
   const source = `
     import { runLedgerReconcile } from ${JSON.stringify(reconcileUrl)};
     const verification = JSON.parse(process.env.GG_TEST_VERIFICATION);
     const applyResult = JSON.parse(process.env.GG_TEST_APPLY_RESULT);
     const phases = [];
     const result = await runLedgerReconcile({
-      apply: true,
+      apply: ${apply ? 'true' : 'false'},
       strict: ${strict ? 'true' : 'false'},
       deps: {
         apply: async () => { phases.push('apply'); return applyResult; },
@@ -62,7 +66,7 @@ function zero(overrides = {}) {
   };
 }
 
-function defaultCliFixture({ claims = {}, queue = [] } = {}) {
+function defaultCliFixture({ claims = {}, queue = [], sheetPlan = false } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'ledger-reconcile-default-'));
   const fakeFlow = join(root, 'flow');
   const scripts = join(fakeFlow, 'tools/scripts');
@@ -74,6 +78,12 @@ function defaultCliFixture({ claims = {}, queue = [] } = {}) {
   writeFileSync(status, '#!/usr/bin/env node\nprocess.exit(0);\n');
   chmodSync(status, 0o755);
   writeFileSync(join(opsTasks, '.autopilot-claims.json'), `${JSON.stringify(claims)}\n`);
+  if (sheetPlan) {
+    writeFileSync(
+      join(opsTasks, '2026-07-16-blog-output-plan-test.md'),
+      '- [ ] `PG-A-001` alpha\n',
+    );
+  }
   if (queue.length > 0) {
     mkdirSync(join(state, 'seo-repair-queue'), { recursive: true });
     queue.forEach((record, index) => {
@@ -99,6 +109,7 @@ function defaultCliFixture({ claims = {}, queue = [] } = {}) {
         GG_OPS_DIR: join(root, 'ops'),
         GG_FLOW_STATE_DIR: state,
         GG_SEO_REPAIR_QUEUE_DIR: join(state, 'seo-repair-queue'),
+        GG_WRITER_SA_JSON: join(root, 'missing-service-account.json'),
         GG_LARK_NOTIFY_SILENCE: '1',
       },
     });
@@ -160,6 +171,12 @@ test('strict path never sends an intermediate notification', () => {
   assert.deepEqual(out.json.phases, ['apply', 'verify']);
 });
 
+test('legacy dry invocation preserves the best-effort apply pass before verification', () => {
+  const out = runStrictFixture(zero(), { strict: false, apply: false });
+  assert.equal(out.status, 0, `${out.stdout}\n${out.stderr}`);
+  assert.deepEqual(out.json.phases, ['apply', 'verify']);
+});
+
 test('strict dry verification fails closed without creating a missing state root', () => {
   const fixture = defaultCliFixture();
   const out = fixture.run({ createState: false });
@@ -189,4 +206,12 @@ test('active repair with an invalid lease timestamp fails closed', () => {
   assert.equal(out.status, 2, `${out.stdout}\n${out.stderr}`);
   const json = JSON.parse(out.stdout);
   assert.match(json.errors.join('\n'), /lease/i);
+});
+
+test('strict verification fails closed when sheet-driven plan source auth is unavailable', () => {
+  const fixture = defaultCliFixture({ sheetPlan: true });
+  const out = fixture.run();
+  assert.equal(out.status, 2, `${out.stdout}\n${out.stderr}`);
+  const json = JSON.parse(out.stdout);
+  assert.match(json.errors.join('\n'), /sheet-plan verify/i);
 });

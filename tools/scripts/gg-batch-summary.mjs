@@ -134,6 +134,10 @@ function readClaims() {
     if (!isPlainObject(parsed)) throw new TypeError('claims ledger 根结构无效');
     for (const [pageId, claim] of Object.entries(parsed)) {
       if (!isPlainObject(claim)) throw new TypeError(`claims ledger 条目 ${pageId} 结构无效`);
+      if (Object.hasOwn(claim, 'site')
+        && (typeof claim.site !== 'string' || !['astrologywiki', 'gengrowth'].includes(claim.site))) {
+        throw new TypeError(`claims ledger 条目 ${pageId} site 无效`);
+      }
     }
     return parsed;
   } catch (e) {
@@ -167,8 +171,22 @@ function validateRepairRecord(value, name) {
   if (value.event.runId !== undefined && (typeof value.event.runId !== 'string' || !SAFE_RUN_ID.test(value.event.runId))) {
     throw new TypeError(`repair record ${name} runId 无效`);
   }
-  if (value.latestEvent !== undefined && !isPlainObject(value.latestEvent)) {
-    throw new TypeError(`repair record ${name} latestEvent 无效`);
+  if (value.latestEvent !== undefined) {
+    if (!isPlainObject(value.latestEvent)) {
+      throw new TypeError(`repair record ${name} latestEvent 结构无效`);
+    }
+    if (typeof value.latestEvent.pageId !== 'string' || !value.latestEvent.pageId.trim()) {
+      throw new TypeError(`repair record ${name} latestEvent pageId 无效`);
+    }
+    if (!['astrologywiki', 'gengrowth'].includes(value.latestEvent.site)) {
+      throw new TypeError(`repair record ${name} latestEvent site 无效`);
+    }
+    if (typeof value.latestEvent.runId !== 'string' || !SAFE_RUN_ID.test(value.latestEvent.runId)) {
+      throw new TypeError(`repair record ${name} latestEvent runId 无效`);
+    }
+    if (value.latestEvent.pageId !== value.event.pageId || value.latestEvent.site !== value.event.site) {
+      throw new TypeError(`repair record ${name} latestEvent owner 无效`);
+    }
   }
   if (value.history !== undefined && !Array.isArray(value.history)) {
     throw new TypeError(`repair record ${name} history 无效`);

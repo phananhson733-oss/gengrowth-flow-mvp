@@ -434,6 +434,27 @@ for (const [label, invalidClaims] of [
   });
 }
 
+for (const [label, invalidSite] of [
+  ['numeric', 7],
+  ['array', ['gengrowth']],
+  ['unknown string', 'other-site'],
+]) {
+  test(`claim with ${label} explicit site fails closed instead of becoming legacy no-site`, () => {
+    const c = freshCase({
+      'PG-A-001': {
+        site: invalidSite,
+        status: 'done',
+        slug: 'slug-a',
+        mergedAt: IN_WINDOW,
+      },
+    });
+    const r = run(['--since', SINCE, '--site', 'astrologywiki'], c);
+    assert.equal(r.status, 4, `${r.stdout}\n${r.stderr}`);
+    assert.match(r.stderr, /claims ledger 条目 PG-A-001 site 无效/);
+    assert.equal(notifyCalls(c).length, 0);
+  });
+}
+
 test('corrupt repair queue record fails closed instead of emitting a partial false terminal summary', () => {
   const c = freshCase({
     'PG-A-001': { site: 'astrologywiki', status: 'done', slug: 'slug-a', mergedAt: IN_WINDOW },
@@ -460,6 +481,38 @@ for (const [label, invalidRecord] of [
     const r = run(['--since', SINCE, '--site', 'astrologywiki'], c);
     assert.equal(r.status, 4, `${r.stdout}\n${r.stderr}`);
     assert.match(r.stderr, /repair record invalid\.json .*无效/);
+    assert.equal(notifyCalls(c).length, 0);
+  });
+}
+
+for (const [label, latestEvent] of [
+  ['run-only latestEvent', { runId: 'run-1' }],
+  ['conflicting page owner', { site: 'astrologywiki', pageId: 'PG-OTHER-777', runId: 'run-1' }],
+  ['conflicting site owner', { site: 'gengrowth', pageId: 'PG-A-001', runId: 'run-1' }],
+]) {
+  test(`${label} fails closed instead of rebinding an old terminal to the current fire`, () => {
+    const c = freshCase({});
+    writeFileSync(c.plan, '- [ ] `PG-A-001` intended target\n');
+    writeQueueRecord(c, 'invalid-latest.json', {
+      status: 'human_only',
+      event: {
+        site: 'astrologywiki',
+        runId: 'old-run',
+        pageId: 'PG-A-001',
+        createdAt: OLD,
+      },
+      latestEvent,
+      updatedAt: OLD,
+    });
+    const r = run([
+      '--since', SINCE,
+      '--site', 'astrologywiki',
+      '--plan', c.plan,
+      '--run-id', 'run-1',
+      '--dry-run',
+    ], c);
+    assert.equal(r.status, 4, `${r.stdout}\n${r.stderr}`);
+    assert.match(r.stderr, /repair record invalid-latest\.json latestEvent .*无效/);
     assert.equal(notifyCalls(c).length, 0);
   });
 }

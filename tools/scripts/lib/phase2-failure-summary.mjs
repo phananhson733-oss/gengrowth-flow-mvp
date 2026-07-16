@@ -5,11 +5,24 @@ export function summarizePhase2Failure(error, { limit = 8 } = {}) {
   const failures = [];
   const seen = new Set();
 
-  for (const match of combined.matchAll(/✗\s*(?:FAIL\s*)?([^\n]+)/g)) {
-    const detail = String(match[1] || '').trim();
-    if (!detail || seen.has(detail)) continue;
+  const pushFailure = (raw) => {
+    const detail = String(raw || '').trim().replace(/^-\s+/, '');
+    if (!detail || seen.has(detail)) return;
     seen.add(detail);
     failures.push(`- ${detail}`);
+  };
+
+  let inFailBlock = false;
+  for (const line of combined.split('\n')) {
+    const failStart = line.match(/^\s*✗\s*(?:FAIL\b\s*)?(.*)$/);
+    if (failStart) {
+      inFailBlock = true;
+      pushFailure(failStart[1]);
+    } else if (inFailBlock) {
+      const bullet = line.match(/^\s*-\s+(.+)$/);
+      if (bullet) pushFailure(bullet[1]);
+      else if (/^\s*(?:▸|[✓⚠ⓘ✗]|━)/.test(line)) inFailBlock = false;
+    }
     if (failures.length >= limit) break;
   }
   if (failures.length) return failures.join('\n');

@@ -51,6 +51,7 @@ LOG="$LOG_DIR/$(date +%Y-%m-%d).log"
 AUTO="$SCRIPT_DIR/gg-seo-autopilot.mjs"
 NOTIFY="$SCRIPT_DIR/gg-notify.mjs"
 PUBLISH_TICK="$SCRIPT_DIR/gg-gengrowth-publish-tick.sh"
+AUTHOR_HANDOFF="$SCRIPT_DIR/gg-gengrowth-author-handoff.mjs"
 CLAIMS="$OPS/.autopilot-claims.json"
 
 # ── PID-liveness mutex (macOS has no flock; same robust pattern as gg-seo-author-tick) ──
@@ -150,16 +151,6 @@ ITEMS="$(grep -nE '^- \[ \] *`?PG-[A-Z0-9]+-[0-9]+' "$PLAN" \
   | sed -E 's/[[:space:]]*->.*$//; s/`//g')"
 if [ -z "$ITEMS" ]; then echo "$(date '+%F %T') no unchecked gengrowth items — nothing to author" >> "$LOG"; exit 0; fi
 
-# node helpers (node is always present; avoids coreutils dependency for these checks).
-# manifest overall=pass?  usage: manifest_pass <manifest.json>
-manifest_pass() {
-  node -e 'try{process.exit(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"))?.phase2_checks?.overall==="pass"?0:1)}catch(e){process.exit(1)}' "$1" 2>/dev/null
-}
-# -en.md is a COMPLETE, non-truncated draft (frontmatter open + slug + non-trivial body). Guards the
-# sub-ms window where a SIGKILL mid-write leaves a truncated md next to a stale passing manifest.
-draft_sane() {
-  node -e 'try{const t=require("fs").readFileSync(process.argv[1],"utf8");process.exit(t.startsWith("---\n")&&/^slug:\s*\S/m.test(t)&&t.length>400?0:1)}catch(e){process.exit(1)}' "$1" 2>/dev/null
-}
 # PID already has a claim in the ledger (done / needs_human / in-flight) → --author --task will no-op.
 has_claim() {
   node -e 'try{const c=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));process.exit(Object.keys(c).some(x=>x.includes(process.argv[2]))?0:1)}catch(e){process.exit(1)}' "$CLAIMS" "$1" 2>/dev/null
@@ -175,15 +166,13 @@ while IFS=$'\t' read -r pid kw; do
 
   READY_MD="$FLOW/_staging/${pid}-${TAG}.md"
   READY_MANIFEST="$FLOW/_staging/${pid}-${TAG}.manifest.json"
-  EN_MD="$FLOW/_staging/${pid}-en.md"
-  EN_MANIFEST="$FLOW/_staging/${pid}-en.manifest.json"
 
   # Idempotency (code, not the mutable plan checkbox) — both skips are BEFORE n++, so a skipped item
   # never consumes the BATCH budget (else parked/live head items starve authorable items below them).
   # (1) a publish-ready draft already exists (already-authored/already-live; publish lane is the
   #     durable check). (2) the PID already has a claim (done/needs_human/in-flight) → --author --task
   #     would no-op anyway. Only genuinely fresh items reach authoring.
-  if [ -f "$READY_MD" ] && manifest_pass "$READY_MANIFEST"; then
+  if [ -f "$READY_MD" ] && node -e 'try{process.exit(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"))?.phase2_checks?.overall==="pass"?0:1)}catch(e){process.exit(1)}' "$READY_MANIFEST" 2>/dev/null; then
     echo "$(date '+%F %T') $pid ($kw): already has a publish-ready draft — skip (no budget spent)" >> "$LOG"
     PUBLISH_FOLLOWUP_ITEMS=$((PUBLISH_FOLLOWUP_ITEMS + 1))
     continue
@@ -203,14 +192,11 @@ while IFS=$'\t' read -r pid kw; do
   AOUT="$(gtimeout "$TICK_TIMEOUT" node "$AUTO" --author --task "$pid" --limit 1 2>&1)"; _rc=$?
   printf '%s\n' "$AOUT" >> "$LOG"
 
-  # Handoff is FILESYSTEM-driven and INDEPENDENT of rc. phase2 writes the passing -en.md BEFORE the
-  # best-effort multi-party review; a cap-hit (rc=124) DURING review must still salvage that valid
-  # draft — otherwise the publisher (which only scans <PID>-<llm>-v8.md) never sees it and it is
-  # STRANDED forever, re-authored+re-stranded every fire (the exact 漏发 this lane exists to kill).
-  # Require manifest_pass AND draft_sane so a kill mid-write can't hand off a truncated md.
-  if [ -f "$EN_MD" ] && manifest_pass "$EN_MANIFEST" && draft_sane "$EN_MD"; then
-    cp -f "$EN_MD" "$READY_MD"
-    cp -f "$EN_MANIFEST" "$READY_MANIFEST"
+  # Handoff is filesystem-driven and rc-independent. The shared helper owns the exact manifest-pass,
+  # draft-sanity, path-safety and byte-copy contract used by both this production tick and repair.
+  HOUT="$(GG_GENGROWTH_STAGING_DIR="$FLOW/_staging" node "$AUTHOR_HANDOFF" --page-id "$pid" 2>&1)"; _handoff_rc=$?
+  printf '%s\n' "$HOUT" >> "$LOG"
+  if [ "$_handoff_rc" -eq 0 ]; then
     HANDOFFS=$((HANDOFFS + 1))
     PUBLISH_FOLLOWUP_ITEMS=$((PUBLISH_FOLLOWUP_ITEMS + 1))
     cut=""; [ "$_rc" -eq 124 ] && cut=" (review cut by ${TICK_TIMEOUT}s cap — draft is phase2-passing, shipped as-is)"

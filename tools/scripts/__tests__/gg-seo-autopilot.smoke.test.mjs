@@ -475,6 +475,10 @@ test('--author park uses the active Gengrowth site and invokes repair only after
     const repair = writeFakeRepairController(h);
     const flow = writeStubAuthorParkFlow(h);
     const planName = '2026-07-16-gengrowth-blog-output-plan.md';
+    const repairLog = join(h.root, 'gengrowth-author.log');
+    const oldLog = 'OLD FIRE EVIDENCE\n';
+    const currentLog = 'CURRENT FIRE AUTHORING FAILURE\n';
+    writeFileSync(repairLog, `${oldLog}${currentLog}`);
     writeFileSync(join(h.tasks, planName), '- [ ] `PG-GJ2U-001` google july 2026 update\n');
     writeClaims(h, {});
 
@@ -488,6 +492,9 @@ test('--author park uses the active Gengrowth site and invokes repair only after
       GG_FLOW_REPO: flow,
       GG_AUTOPILOT_PLAN: planName,
       GG_SITE: 'gengrowth',
+      GG_SEO_REPAIR_RUN_ID: 'gengrowth-author-natural-fire',
+      GG_SEO_REPAIR_LOG_FILE: repairLog,
+      GG_SEO_REPAIR_LOG_OFFSET_START: String(Buffer.byteLength(oldLog)),
       GG_FLOW_STATE_DIR: join(h.root, 'state'),
       GG_SEO_REPAIR_CONTROLLER_V2_ENABLED: '1',
       GG_SEO_REPAIR_CONTROLLER_BIN: repair.file,
@@ -505,7 +512,10 @@ test('--author park uses the active Gengrowth site and invokes repair only after
     const [record] = records;
     assert.equal(record.event.site, 'gengrowth');
     assert.equal(record.event.lane, 'author');
-    assert.match(record.event.runId, /^gengrowth-producer-/);
+    assert.equal(record.event.runId, 'gengrowth-author-natural-fire');
+    assert.equal(record.event.stderr, currentLog);
+    assert.equal(record.event.logOffsetStart, Buffer.byteLength(oldLog));
+    assert.equal(record.event.logOffsetEnd, Buffer.byteLength(oldLog + currentLog));
     assert.deepEqual(record.event.canonicalRetry.slice(-3), [
       '--retry-author',
       '--task',

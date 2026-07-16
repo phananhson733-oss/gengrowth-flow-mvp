@@ -145,10 +145,17 @@ function authorFinalizerHarness({ preflightExit = 0, controllerExit = 0, planExi
   const claims = join(tasks, 'claims.json');
   const calls = join(root, 'controller-calls.log');
   const window = join(root, 'controller-window.log');
+  const preflightEnv = join(root, 'preflight-env.json');
   const lock = join(root, 'author.lock');
   if (planExists) writeFileSync(plan, '- [x] `PG-WLS-001` already done\n');
   writeFileSync(claims, '{}\n');
   const preflight = executable(join(root, 'preflight.mjs'), [
+    "import { writeFileSync } from 'node:fs';",
+    "writeFileSync(process.env.GG_TEST_PREFLIGHT_ENV, JSON.stringify({",
+    '  runId: process.env.GG_SEO_REPAIR_RUN_ID || null,',
+    '  logFile: process.env.GG_SEO_REPAIR_LOG_FILE || null,',
+    '  offsetStart: process.env.GG_SEO_REPAIR_LOG_OFFSET_START || null,',
+    '}));',
     "process.stderr.write('CURRENT FIRE PREFLIGHT ERROR\\n');",
     `process.exit(${preflightExit});`,
     '',
@@ -187,6 +194,7 @@ function authorFinalizerHarness({ preflightExit = 0, controllerExit = 0, planExi
       GG_SHEETS_GENGROWTH_WORKBOOK_ID: 'test-workbook',
       GG_TEST_CONTROLLER_CALLS: calls,
       GG_TEST_CONTROLLER_WINDOW: window,
+      GG_TEST_PREFLIGHT_ENV: preflightEnv,
     },
   });
   const callLines = existsSync(calls)
@@ -197,6 +205,7 @@ function authorFinalizerHarness({ preflightExit = 0, controllerExit = 0, planExi
     result,
     callLines,
     oldLog,
+    preflightEnv: existsSync(preflightEnv) ? JSON.parse(readFileSync(preflightEnv, 'utf8')) : null,
     window: existsSync(window) ? readFileSync(window, 'utf8') : '',
     log: existsSync(logFile) ? readFileSync(logFile, 'utf8') : '',
   };
@@ -213,6 +222,9 @@ test('Gengrowth author finalizer imports exactly once with one fire-local run id
     assert.equal(args[args.indexOf('--log-offset') + 1], String(Buffer.byteLength(h.oldLog)));
     assert.match(args[args.indexOf('--run-id') + 1], /^gengrowth-author-\d{8}T\d{6}Z-\d+$/);
     assert.equal(args[args.indexOf('--budget-seconds') + 1], '1500');
+    assert.equal(h.preflightEnv.runId, args[args.indexOf('--run-id') + 1]);
+    assert.equal(h.preflightEnv.logFile, args[args.indexOf('--log-file') + 1]);
+    assert.equal(h.preflightEnv.offsetStart, args[args.indexOf('--log-offset') + 1]);
     assert.match(h.window, /CURRENT FIRE PREFLIGHT ERROR/);
     assert.doesNotMatch(h.window, /OLD FIRE SHOULD STAY OUT/);
   } finally {

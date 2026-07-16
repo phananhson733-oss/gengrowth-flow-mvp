@@ -365,7 +365,12 @@ async function persistClaimRepair(pageId, claim) {
     || `${site}-producer-${createdAt.replace(/[^0-9]/g, '').slice(0, 14)}-${process.pid}`;
   const logFile = process.env.GG_SEO_REPAIR_LOG_FILE || CLAIMS_PATH;
   const offsetStart = Math.max(0, Number(process.env.GG_SEO_REPAIR_LOG_OFFSET_START) || 0);
-  const offsetEnd = Math.max(offsetStart, Number(process.env.GG_SEO_REPAIR_LOG_OFFSET_END) || offsetStart);
+  let currentLogEnd = offsetStart;
+  try { currentLogEnd = Math.max(offsetStart, statSync(logFile).size); } catch {}
+  const explicitOffsetEnd = Number(process.env.GG_SEO_REPAIR_LOG_OFFSET_END);
+  const offsetEnd = Number.isInteger(explicitOffsetEnd) && explicitOffsetEnd >= offsetStart
+    ? Math.min(currentLogEnd, explicitOffsetEnd)
+    : currentLogEnd;
   const event = eventFromClaim({
     site,
     runId,

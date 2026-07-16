@@ -23,6 +23,14 @@ import {
   selectAstrologyChangedFiles,
   verifyInternalLinkCandidate,
 } from '../lib/seo-repair-adapter-astrologywiki.mjs';
+import {
+  enqueueRepairEvent,
+  listRepairRecords,
+} from '../lib/seo-repair-events.mjs';
+import {
+  eventFromClaim,
+  persistRepairAndDrain,
+} from '../lib/seo-repair-producer.mjs';
 
 function record(overrides = {}) {
   return {
@@ -333,6 +341,87 @@ test('author timeout allocation always reserves enough deadline for handoff salv
   assert.equal(calls.some((argv) => argv[1].endsWith('gg-gengrowth-author-handoff.mjs')), true);
   assert.equal(result.target.slug, 'software-development-services');
   assert.equal(result.evidence.authorCut, true);
+});
+
+test('recursive Gengrowth author producer inherits one natural fire identity and evidence window', async (t) => {
+  const root = await mkdtemp(join(tmpdir(), 'seo-natural-fire-'));
+  t.after(async () => rm(root, { recursive: true, force: true }));
+  const queueDir = join(root, 'queue');
+  const logFile = join(root, 'author.log');
+  const oldLog = 'OLD FIRE MUST NOT LEAK\n';
+  const currentLog = 'CURRENT FIRE PHASE2 FAILURE\n';
+  await writeFile(logFile, `${oldLog}${currentLog}`, 'utf8');
+  const outerEvent = {
+    ...authoringRecord('PG-WLS-007').event,
+    eventId: 'outer-natural-fire',
+    runId: 'gengrowth-author-natural-fire',
+    errorKind: 'gate_fail',
+    summary: 'authoring: phase2 failed',
+    logFile,
+    logOffsetStart: Buffer.byteLength(oldLog),
+    logOffsetEnd: Buffer.byteLength(oldLog + currentLog),
+    createdAt: '2026-07-16T10:00:00.000Z',
+  };
+  const outerRecord = await enqueueRepairEvent(outerEvent, { queueDir });
+  let authorEnv = null;
+  const adapter = createGengrowthRepairAdapter({
+    scriptsDir: '/repo/tools/scripts',
+    flow: '/repo',
+    runCommand: async (argv, options) => {
+      if (argv.includes('--author')) {
+        authorEnv = options.env;
+        const inner = eventFromClaim({
+          site: 'gengrowth',
+          runId: options.env.GG_SEO_REPAIR_RUN_ID,
+          pageId: outerEvent.pageId,
+          claim: {
+            status: 'needs_human',
+            stage: 'authoring',
+            error: outerEvent.summary,
+          },
+          logFile: options.env.GG_SEO_REPAIR_LOG_FILE,
+          offsets: {
+            start: Number(options.env.GG_SEO_REPAIR_LOG_OFFSET_START),
+            end: Number(options.env.GG_SEO_REPAIR_LOG_OFFSET_END),
+          },
+          createdAt: '2026-07-16T10:00:01.000Z',
+        });
+        await persistRepairAndDrain({
+          event: inner,
+          queueDir,
+          drain: async () => ({ ok: true, busy: true }),
+          strict: true,
+        });
+        return { code: 1, stdout: '', stderr: 'phase2 failed', timedOut: false };
+      }
+      if (argv.includes('--retry-author')) {
+        return { code: 0, stdout: '', stderr: '', timedOut: false };
+      }
+      return { code: 1, stdout: '', stderr: 'handoff unavailable', timedOut: false };
+    },
+  });
+
+  const result = await adapter.execute({
+    record: outerRecord,
+    strategy: 'deterministic_retry',
+    attemptDeadlineAt: new Date(Date.now() + 25 * 60 * 1000).toISOString(),
+  });
+  assert.equal(result.ok, false);
+  assert.equal(authorEnv.GG_SEO_REPAIR_RUN_ID, outerEvent.runId);
+  assert.equal(authorEnv.GG_SEO_REPAIR_LOG_FILE, logFile);
+  assert.equal(authorEnv.GG_SEO_REPAIR_LOG_OFFSET_START, String(outerEvent.logOffsetStart));
+  assert.equal(authorEnv.GG_SEO_REPAIR_LOG_OFFSET_END, String(outerEvent.logOffsetEnd));
+
+  const [active] = (await listRepairRecords({ queueDir }))
+    .filter((record) => ['queued', 'repair_pending', 'repairing', 'regating'].includes(record.status));
+  assert.equal(active.windowCount, 1);
+  assert.equal(active.observations, 2);
+  assert.deepEqual(active.sourceEvents.map((event) => event.runId), [
+    outerEvent.runId,
+    outerEvent.runId,
+  ]);
+  assert.equal(active.latestEvent.stderr, currentLog);
+  assert.doesNotMatch(active.latestEvent.stderr, /OLD FIRE/);
 });
 
 test('gengrowth adapter stops explicitly when its shared attempt deadline is exhausted', async () => {

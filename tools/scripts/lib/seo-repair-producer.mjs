@@ -22,7 +22,7 @@ function claimErrorKind(claim) {
   if (/timeout|timed out|超时/.test(text)) return 'timeout';
   if (/backfill|writeback|回填/.test(text)) return 'backfill_fail';
   if (/publish|merge|deploy/.test(text)) return 'publish_fail';
-  if (/auth|credential|permission|unauthorized/.test(text)) return 'auth';
+  if (/\b(?:auth(?:entication|orization)?|credentials?|permissions?|unauthorized|forbidden)\b/.test(text)) return 'auth';
   if (/source|sheet|workbook|row missing/.test(text)) return 'source';
   if (/exited?\s+\d+|tool exit/.test(text)) return 'tool_exit';
   if (/review|gate|fail|fact|phase2|事实/.test(text)) return 'gate_fail';

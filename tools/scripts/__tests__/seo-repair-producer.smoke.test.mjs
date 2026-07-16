@@ -137,6 +137,32 @@ test('eventFromClaim maps a parked claim into one bounded schema-v2 producer eve
   ]);
 });
 
+test('eventFromClaim classifies authoring failures without matching auth inside authoring', () => {
+  const cases = [
+    { error: 'authoring: phase2 failed', expected: 'gate_fail' },
+    { error: 'no row for PG-WLS-007 in workbook', expected: 'source' },
+    { error: 'authoring timed out after 1200 seconds', expected: 'timeout' },
+    { error: 'unauthorized: credential expired', expected: 'auth' },
+    { error: 'authentication failed for provider', expected: 'auth' },
+  ];
+  for (const [index, fixture] of cases.entries()) {
+    const event = eventFromClaim({
+      site: 'gengrowth',
+      runId: `gengrowth-author-classification-${index}`,
+      pageId: 'PG-WLS-007',
+      claim: {
+        status: 'needs_human',
+        stage: 'authoring',
+        error: fixture.error,
+      },
+      logFile: '/tmp/no-log',
+      offsets: { start: 0, end: 0 },
+      createdAt: '2026-07-16T10:00:00.000Z',
+    });
+    assert.equal(event.errorKind, fixture.expected, fixture.error);
+  }
+});
+
 test('a killed producer leaves work that a later drain consumes without rerunning the outer job', async (t) => {
   const root = tempRoot(t);
   const queueDir = join(root, 'queue');

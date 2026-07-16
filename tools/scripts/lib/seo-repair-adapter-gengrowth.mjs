@@ -131,6 +131,19 @@ export async function recoverGengrowthAuthoring(event, deps = {}) {
     ? Number(deps.deadlineMs)
     : nowMs() + (25 * 60 * 1000);
   const pageId = String(event?.pageId || '');
+  const sourceEvent = deps.sourceEvent || event;
+  const commandEnv = {
+    ...process.env,
+    GG_SITE: String(event?.site || 'gengrowth'),
+    GG_SEO_REPAIR_RUN_ID: String(sourceEvent?.runId || event?.runId || ''),
+    GG_SEO_REPAIR_LOG_FILE: String(sourceEvent?.logFile || event?.logFile || ''),
+    GG_SEO_REPAIR_LOG_OFFSET_START: String(
+      sourceEvent?.logOffsetStart ?? event?.logOffsetStart ?? 0,
+    ),
+    GG_SEO_REPAIR_LOG_OFFSET_END: String(
+      sourceEvent?.logOffsetEnd ?? event?.logOffsetEnd ?? 0,
+    ),
+  };
   if (!/^PG-[A-Z0-9]+-[0-9]+$/.test(pageId)) {
     return {
       target: null,
@@ -181,7 +194,7 @@ export async function recoverGengrowthAuthoring(event, deps = {}) {
     try {
       result = await runCommand(command.argv, {
         cwd: flow,
-        env: process.env,
+        env: commandEnv,
         timeoutMs,
       });
     } catch (error) {
@@ -274,6 +287,7 @@ export function createGengrowthRepairAdapter(deps = {}) {
       let authorRecoveryEvidence = null;
       let authorMutationInvoked = false;
       if (isAuthoringEvent(event)) {
+        const sourceEvent = record.latestEvent || record.event;
         const recovered = await recoverGengrowthAuthoring(event, {
           scriptsDir,
           flow,
@@ -281,6 +295,7 @@ export function createGengrowthRepairAdapter(deps = {}) {
           resolveAuthoredTarget,
           deadlineMs,
           nowMs,
+          sourceEvent,
         });
         if (!recovered.target) {
           return {

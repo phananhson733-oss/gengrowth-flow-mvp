@@ -90,6 +90,10 @@ LOG_OFFSET_START=0
 if [ -f "$LOG" ]; then
   LOG_OFFSET_START="$(wc -c < "$LOG" | tr -d ' ')"
 fi
+export GG_SEO_REPAIR_RUN_ID="$RUN_ID"
+export GG_SEO_REPAIR_LOG_FILE="$LOG"
+export GG_SEO_REPAIR_LOG_OFFSET_START="$LOG_OFFSET_START"
+unset GG_SEO_REPAIR_LOG_OFFSET_END
 FINALIZED=0
 
 finalize_repair() {

@@ -681,17 +681,19 @@ export async function verifyFinalAssets({
     normalizedHostname(new URL(assetBaseUrl).hostname),
     ...configuredHosts,
   ]);
+  const references = renderedAssetReferences(html);
+  for (const reference of references) {
+    if (String(reference.value || '').trim()) continue;
+    failed.push({
+      ...reference,
+      url: '',
+      reason: `rendered ${reference.tag}/${reference.attribute} asset reference is empty or missing`,
+    });
+  }
+  if (failed.length > 0) return { ok: false, checked, failed, ignored };
 
-  for (const reference of renderedAssetReferences(html)) {
+  for (const reference of references) {
     const raw = String(reference.value || '').trim();
-    if (!raw) {
-      failed.push({
-        ...reference,
-        url: '',
-        reason: `rendered ${reference.tag}/${reference.attribute} asset reference is empty or missing`,
-      });
-      continue;
-    }
     if (raw.startsWith('#')) {
       const fragment = raw.slice(1);
       if (reference.inlineValidation?.ok === true) {

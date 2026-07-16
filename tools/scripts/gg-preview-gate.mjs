@@ -730,12 +730,29 @@ export async function verifyPreviewFinalArtifacts({
     signal: init.signal || AbortSignal.timeout(30_000),
   });
   const previewPageUrl = new URL(`/en/wiki/${slug}`, `${normalizePreviewUrl(previewUrl)}/`).toString();
+  const previewOrigin = new URL(previewPageUrl).origin;
   const livePageUrl = `${LIVE_ORIGIN}/en/wiki/${slug}`;
+  const bypassSecret = process.env.VERCEL_AUTOMATION_BYPASS_SECRET || '';
   const previewHeaders = {
     'user-agent': 'gg-preview-final-artifacts/1',
-    ...(process.env.VERCEL_AUTOMATION_BYPASS_SECRET
-      ? { 'x-vercel-protection-bypass': process.env.VERCEL_AUTOMATION_BYPASS_SECRET }
+    ...(bypassSecret
+      ? {
+        'x-vercel-protection-bypass': bypassSecret,
+        'x-vercel-set-bypass-cookie': 'true',
+      }
       : {}),
+  };
+  const finalArtifactFetch = (url, init = {}) => {
+    const targetOrigin = new URL(url).origin;
+    const headers = { ...(init.headers || {}) };
+    if (bypassSecret && targetOrigin === previewOrigin) {
+      headers['x-vercel-protection-bypass'] = bypassSecret;
+      headers['x-vercel-set-bypass-cookie'] = 'true';
+    } else {
+      delete headers['x-vercel-protection-bypass'];
+      delete headers['x-vercel-set-bypass-cookie'];
+    }
+    return boundedFetch(url, { ...init, headers });
   };
 
   let pageHtml = '';
@@ -783,8 +800,10 @@ export async function verifyPreviewFinalArtifacts({
     assetBaseUrl: previewPageUrl,
     allowedRoutes,
     sitemapUrls,
-    fetch: boundedFetch,
+    fetch: finalArtifactFetch,
     decodeImage: deps.decodeImage,
+    allowedAssetHosts: deps.allowedAssetHosts,
+    resolveAssetHost: deps.resolveAssetHost,
     articleSha: reviewBundle.article.sha256,
     reviewedHeadRefOid,
   });

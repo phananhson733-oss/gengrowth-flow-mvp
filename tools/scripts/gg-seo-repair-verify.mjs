@@ -138,6 +138,8 @@ export async function verifyRepairTarget(target, deps = {}) {
     sitemapUrls,
     fetch: deps.fetchArtifact || deps.fetchDocument,
     decodeImage: deps.decodeImage,
+    allowedAssetHosts: deps.allowedAssetHosts,
+    resolveAssetHost: deps.resolveAssetHost,
     articleSha: createHash('sha256').update(String(page.text || '')).digest('hex'),
   });
   checks.final_links = finalArtifacts.final_links;
@@ -192,6 +194,8 @@ export async function verifyGengrowthRepairTarget(target, deps = {}) {
     sitemapUrls,
     fetch: deps.fetchArtifact || deps.fetchDocument,
     decodeImage: deps.decodeImage,
+    allowedAssetHosts: deps.allowedAssetHosts,
+    resolveAssetHost: deps.resolveAssetHost,
     articleSha: createHash('sha256').update(String(page.text || '')).digest('hex'),
   });
   checks.final_links = finalArtifacts.final_links;

@@ -140,6 +140,7 @@ test('eventFromClaim maps a parked claim into one bounded schema-v2 producer eve
 test('eventFromClaim classifies authoring failures without matching auth inside authoring', () => {
   const cases = [
     { error: 'authoring: phase2 failed', expected: 'gate_fail' },
+    { error: 'authoring: phase2 failed: Sources section missing required citations', expected: 'gate_fail' },
     { error: 'no row for PG-WLS-007 in workbook', expected: 'source' },
     { error: 'authoring timed out after 1200 seconds', expected: 'timeout' },
     { error: 'unauthorized: credential expired', expected: 'auth' },

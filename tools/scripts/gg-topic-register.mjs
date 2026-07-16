@@ -211,6 +211,13 @@ function normText(value) {
     .trim();
 }
 
+function entityFromTargetKeyword(value) {
+  const normalized = normText(value)
+    .replace(/^(?:what|who)\s+(?:is|are)\s+/, '')
+    .trim();
+  return titleCase(normalized || value);
+}
+
 function words(value, { keepStopwords = false } = {}) {
   return normText(value)
     .split(/\s+/)
@@ -665,7 +672,7 @@ export function deterministicFrictionForPage({ targetKeyword, entity }) {
 }
 
 function pageRowFields({ targetKeyword, pageId, cluster, product, sourceValues = {} }) {
-  const entity = titleCase(targetKeyword);
+  const entity = entityFromTargetKeyword(targetKeyword);
   const rawTemplate = defaultTemplate(targetKeyword, entity);
   const taxonomy = decideSheetTaxonomy({
     targetKeyword,
@@ -1756,10 +1763,13 @@ function clusterRowToValues(row) {
 export function valuesBatchForPageRow({ tab, rowNumber, header, fields, existingValues = {}, overwrite = false, taxonomyOnly = false }) {
   const idx = headerIndex(header);
   const writable = taxonomyOnly ? PAGE_TAXONOMY_WRITABLE_FIELDS : PAGE_WRITABLE_FIELDS;
+  const forceOverwriteFields = arguments[0]?.forceOverwriteFields instanceof Set
+    ? arguments[0].forceOverwriteFields
+    : new Set(arguments[0]?.forceOverwriteFields || []);
   const data = [];
   for (const field of writable) {
     if (!Object.hasOwn(fields, field)) continue;
-    if (!overwrite && String(existingValues[field] || '').trim()) continue;
+    if (!overwrite && !forceOverwriteFields.has(field) && String(existingValues[field] || '').trim()) continue;
     const c = idx[field];
     if (c == null) continue;
     data.push({
@@ -1858,13 +1868,42 @@ function planRows({
   const clusterHeader = clustersRaw[0] || [];
   const clusters = rowsToObjects(clusterHeader, clustersRaw.slice(1));
   const pages = rowsToObjects(pageHeader, pagesRaw.slice(1));
-  const selected = selectCandidateRowsForPlan(pagesRaw, {
+  let selected = selectCandidateRowsForPlan(pagesRaw, {
     includeIncomplete,
     onlyPageIds: repairPageIds,
     onlyKeywords: repairKeywords,
     excludePageIds: completedPageIds,
     limit,
   });
+  if (!includeIncomplete && repairPageIds.size === 0 && repairKeywords.size === 0 && selected.mode === 'generate') {
+    const semanticMismatchPageIds = new Set();
+    for (const page of pages) {
+      const pageId = String(page.page_id || '').trim();
+      const targetKeyword = String(page['Target Keyword'] || page['关键词'] || '').trim();
+      const clusterId = String(page.cluster_id || '').trim();
+      const status = String(page.Status || '').trim();
+      if (!pageId || !targetKeyword || !clusterId || completedPageIds.has(pageId) || CLOSED_PAGE_STATUSES.has(status)) continue;
+      const currentCluster = clusters.find((item) => item.cluster_id === clusterId);
+      if (!currentCluster || scoreClusterKeyword(targetKeyword, currentCluster) >= 0.3) continue;
+      const alternative = chooseClusterForKeyword(targetKeyword, clusters);
+      if (alternative.kind === 'existing'
+        && alternative.cluster_id !== clusterId
+        && alternative.score >= 0.55) {
+        semanticMismatchPageIds.add(pageId);
+      }
+    }
+    if (semanticMismatchPageIds.size) {
+      const candidates = findCandidateRows(pagesRaw, {
+        onlyPageIds: semanticMismatchPageIds,
+        excludePageIds: completedPageIds,
+      }).slice(0, limit || undefined);
+      selected = {
+        mode: 'semantic_repair',
+        candidates,
+        audit_incomplete: 0,
+      };
+    }
+  }
   const candidates = selected.candidates;
   const newClusters = new Map();
   const updates = [];
@@ -1875,6 +1914,21 @@ function planRows({
     const existingClusterId = reassignExisting ? '' : candidate.values.cluster_id;
     let cluster = existingClusterId ? clusters.find((c) => c.cluster_id === existingClusterId) : null;
     let clusterDecision = null;
+    let semanticClusterRepair = false;
+    if (cluster && scoreClusterKeyword(candidate.target_keyword, cluster) < 0.3) {
+      const alternative = chooseClusterForKeyword(candidate.target_keyword, clusters);
+      if (alternative.kind === 'existing'
+        && alternative.cluster_id !== cluster.cluster_id
+        && alternative.score >= 0.55) {
+        clusterDecision = {
+          ...alternative,
+          kind: 'semantic-repair',
+          previous_cluster_id: cluster.cluster_id,
+        };
+        cluster = alternative.cluster;
+        semanticClusterRepair = true;
+      }
+    }
     if (!cluster) {
       clusterDecision = chooseClusterForKeyword(candidate.target_keyword, [...clusters, ...newClusters.values()]);
       if (clusterDecision.kind === 'existing') {
@@ -1935,6 +1989,12 @@ function planRows({
       clusterDecision: clusterDecision || { kind: 'existing-present', cluster_id: cluster.cluster_id, score: 1 },
       fields,
       existingValues: candidate.values,
+      forceOverwriteFields: semanticClusterRepair
+        ? new Set([
+          'Associated Keywords', 'Intent', 'Tier', 'Template', 'Entity', 'Friction',
+          'Logic', 'CTA', 'cluster_id', 'page_role', 'content_angle', 'psych_safety_flag',
+        ])
+        : new Set(),
       missing: candidate.missing,
       preprocessorEvidence,
     });
@@ -2049,6 +2109,7 @@ async function runProduct(profile, { token, args, nowDate, budget = null }) {
       header: plan.pageHeader,
       fields: item.fields,
       existingValues: item.existingValues,
+      forceOverwriteFields: item.forceOverwriteFields,
       overwrite: !!args.overwrite,
       taxonomyOnly: !!args.taxonomy_only,
     }));

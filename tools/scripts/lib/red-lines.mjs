@@ -492,6 +492,10 @@ export function checkRL4(draft, ctx) {
   const drifted = [];
   const skippedStructural = [];
   for (const s of sections) {
+    if (/^(?:Take Action|Related Reading|Sources)$/i.test(String(s.heading || '').trim())) {
+      skippedStructural.push(s.heading);
+      continue;
+    }
     // Heuristic: take first paragraph of body (until first blank line) for anchor check.
     // 跳过打头的免责声明样板行（RL6 强制的 psych-safety 行不是本节的关键词锚；若它恰是首段，会把整节
     // 误判为漂移——典型是以免责声明开头的 Take Action CTA 节，真正含关键词的内容在其后一段）。

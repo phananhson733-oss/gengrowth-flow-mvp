@@ -70,6 +70,11 @@ function parseArgs(argv) {
     else if (a === '--failures') o.failures = argv[++i];
     else if (a === '--model') o.model = argv[++i];
     else if (a === '--effort') o.effort = argv[++i];
+    else if (a === '--word-min') o.wordMin = argv[++i];
+    else if (a === '--word-max') o.wordMax = argv[++i];
+    else if (a === '--keyword-min') o.keywordMin = argv[++i];
+    else if (a === '--keyword-max') o.keywordMax = argv[++i];
+    else if (a === '--max-sentences-per-paragraph') o.maxSentencesPerParagraph = argv[++i];
     // EN-only (2026-07-03): the zh repair leg was removed. Reject the legacy
     // flag loudly instead of silently repairing a zh draft with EN instructions.
     else if (a === '--language') {
@@ -93,6 +98,20 @@ function validate(o) {
   if (!o.targetKeyword) errors.push('--target-keyword is required');
   if (!o.author) errors.push('--author is required');
   if (!o.failures) errors.push('--failures <phase2 failure text or file path> is required');
+  for (const [field, flag] of [
+    ['wordMin', '--word-min'],
+    ['wordMax', '--word-max'],
+    ['keywordMin', '--keyword-min'],
+    ['keywordMax', '--keyword-max'],
+    ['maxSentencesPerParagraph', '--max-sentences-per-paragraph'],
+  ]) {
+    if (o[field] === undefined) continue;
+    const value = Number.parseInt(o[field], 10);
+    if (!Number.isFinite(value) || value <= 0) errors.push(`${flag} must be a positive integer`);
+    else o[field] = value;
+  }
+  if (o.wordMin && o.wordMax && o.wordMin > o.wordMax) errors.push('--word-min cannot exceed --word-max');
+  if (o.keywordMin && o.keywordMax && o.keywordMin > o.keywordMax) errors.push('--keyword-min cannot exceed --keyword-max');
 
   // --effort intentionally NOT enum-validated (matches gg-author-review.mjs and
   // gg-article-review-worker.mjs) — left to the worker CLI to reject.
@@ -124,7 +143,7 @@ function resolveFailures(failures) {
 // fix the named phase2 failures without a full rewrite), but the model returns the
 // corrected ARTICLE as text — it does not run tools or self-check. The contract
 // line is verbatim from the Task 3 spec.
-function buildPrompt({ source, targetKeyword, author, failures }) {
+function buildPrompt({ source, targetKeyword, author, failures, constraints = {} }) {
   const lines = [
     'You are repairing a single SEO article draft that failed an automated QA pass.',
     'Apply the smallest changes that fix the listed failures — surgical edits, not a rewrite.',
@@ -136,6 +155,18 @@ function buildPrompt({ source, targetKeyword, author, failures }) {
     '',
     'The automated QA (phase2) flagged the following failures — fix each one:',
     failures,
+    '',
+    'Hard non-regression budget — satisfy every applicable bound while making the named fixes:',
+    constraints.wordMin && constraints.wordMax
+      ? `- Keep the body word count within ${constraints.wordMin}-${constraints.wordMax} words.`
+      : '- Preserve the current article length unless the failure explicitly requires a word-count change.',
+    constraints.keywordMin && constraints.keywordMax
+      ? `- Use the exact target_keyword phrase ${constraints.keywordMin}-${constraints.keywordMax} times total, case-insensitive; count before output.`
+      : '- Do not add unnecessary exact-keyword repetitions.',
+    constraints.maxSentencesPerParagraph
+      ? `- No prose paragraph may exceed ${constraints.maxSentencesPerParagraph} sentences.`
+      : '- Preserve readable paragraph boundaries.',
+    '- Do not regress checks that already pass: preserve valid frontmatter, links, CTA URL, sources, disclaimers, tables, lists, and required headings.',
     '',
     'Output the complete corrected article only. Keep the exact H1/H2 structure unless a failure says a section is missing. Do not add tools, commands, or meta commentary.',
     '',
@@ -212,7 +243,8 @@ function main() {
     for (const e of errors) process.stderr.write(`[author-repair] ERROR: ${e}\n`);
     process.stderr.write(
       'usage: --source <draft.md> --out <candidate.md> --page-id <id> --target-keyword "<phrase>" '
-      + '--author <id> --failures "<text|path>" [--model <m>] [--effort <e>] [--timeout-ms <n>]\n',
+      + '--author <id> --failures "<text|path>" [--model <m>] [--effort <e>] [--timeout-ms <n>] '
+      + '[--word-min <n> --word-max <n> --keyword-min <n> --keyword-max <n> --max-sentences-per-paragraph <n>]\n',
     );
     process.exit(2);
   }
@@ -230,7 +262,19 @@ function main() {
   }
 
   const failures = resolveFailures(o.failures);
-  const prompt = buildPrompt({ source, targetKeyword: o.targetKeyword, author: o.author, failures });
+  const prompt = buildPrompt({
+    source,
+    targetKeyword: o.targetKeyword,
+    author: o.author,
+    failures,
+    constraints: {
+      wordMin: o.wordMin,
+      wordMax: o.wordMax,
+      keywordMin: o.keywordMin,
+      keywordMax: o.keywordMax,
+      maxSentencesPerParagraph: o.maxSentencesPerParagraph,
+    },
+  });
 
   let usedModel = model;
   let usedEffort = effort;

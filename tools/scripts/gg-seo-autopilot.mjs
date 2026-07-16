@@ -69,6 +69,12 @@ import { classifyPark } from './lib/park-classify.mjs';
 import { stateDir } from './lib/flow-state.mjs';
 import { summarizePhase2Failure } from './lib/phase2-failure-summary.mjs';
 import {
+  authorFailureText,
+  mergeAuthorFailures,
+  readAuthorFailureMemory,
+  writeAuthorFailureMemory,
+} from './lib/author-failure-memory.mjs';
+import {
   eventFromClaim,
   persistRepairAndDrain,
 } from './lib/seo-repair-producer.mjs';
@@ -885,7 +891,16 @@ function doNextUnauthored() {
 // had the escalation, another did not). Toggle GG_AUTHOR_REPAIR=0. Returns a
 // structured result so the caller can park with the repaired candidate's exact
 // remaining failures instead of the stale pre-repair failure list.
-function tryDeterministicRepair({ pgId, draftV8, candidate, targetKeyword, author, failures, validate }) {
+function tryDeterministicRepair({
+  pgId,
+  draftV8,
+  candidate,
+  targetKeyword,
+  author,
+  failures,
+  constraints = {},
+  validate,
+}) {
   if (process.env.GG_AUTHOR_REPAIR === '0' || !existsSync(join(FLOW, draftV8))) {
     return { passed: false, attempted: false, failure: '' };
   }
@@ -897,30 +912,69 @@ function tryDeterministicRepair({ pgId, draftV8, candidate, targetKeyword, autho
   // allowance covers two bounded attempts plus startup/cleanup — never the old
   // 30-minute inherited agentic ceiling.
   const repTimeout = (repAttemptTimeout * 2) + 60000;
-  let workerFinished = false;
   let repairFailure = '';
-  try {
+  const maxAttempts = Math.max(1, Math.min(2, parseInt(process.env.GG_AUTHOR_REPAIR_ATTEMPTS || '2', 10)));
+  let source = draftV8;
+  let currentFailures = failures || '- phase2 failed';
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const attemptCandidate = attempt === 1
+      ? candidate
+      : candidate.replace(/(\.md)?$/, `-attempt-${attempt}.md`);
+    let workerFinished = false;
+    try {
     const args = [join(SCRIPTS, 'gg-author-repair.mjs'),
-      '--source', draftV8, '--out', candidate, '--page-id', pgId,
+      '--source', source, '--out', attemptCandidate, '--page-id', pgId,
       '--target-keyword', targetKeyword, '--author', author,
-      '--failures', failures || '- phase2 failed',
+      '--failures', currentFailures,
       '--model', repModel, '--effort', repEffort,
       '--timeout-ms', String(repAttemptTimeout)];
+    if (constraints.wordMin) args.push('--word-min', String(constraints.wordMin));
+    if (constraints.wordMax) args.push('--word-max', String(constraints.wordMax));
+    if (constraints.keywordMin) args.push('--keyword-min', String(constraints.keywordMin));
+    if (constraints.keywordMax) args.push('--keyword-max', String(constraints.keywordMax));
+    if (constraints.maxSentencesPerParagraph) {
+      args.push('--max-sentences-per-paragraph', String(constraints.maxSentencesPerParagraph));
+    }
     shFlow('node', args, repTimeout);
     workerFinished = true;
     // WE validate the candidate (the worker never runs phase2 itself); adopt only on PASS.
-    if (validate(candidate)) return { passed: true, attempted: true, failure: '' };
-  } catch (e) {
-    if (workerFinished) {
-      repairFailure = summarizePhase2Failure(e);
-      log(`deterministic repair candidate failed phase2:\n${repairFailure}`);
-    } else {
-      repairFailure = `- deterministic repair tooling failure: ${errTail(e, 200)}`;
-      log(repairFailure.slice(2));
+    if (validate(attemptCandidate)) return { passed: true, attempted: true, attempts: attempt, failure: '' };
+    repairFailure = '- deterministic repair candidate did not produce a passing phase2 manifest';
+    } catch (e) {
+      if (workerFinished) {
+        repairFailure = summarizePhase2Failure(e);
+        log(`deterministic repair candidate ${attempt}/${maxAttempts} failed phase2:\n${repairFailure}`);
+      } else {
+        repairFailure = `- deterministic repair tooling failure: ${errTail(e, 200)}`;
+        log(repairFailure.slice(2));
+      }
     }
-  }
+    if (!workerFinished || attempt >= maxAttempts || !existsSync(join(FLOW, attemptCandidate))) break;
+    currentFailures = authorFailureText(mergeAuthorFailures(
+      mergeAuthorFailures([], currentFailures),
+      repairFailure,
+    ));
+    source = attemptCandidate;
+    log(`deterministic repair: retrying candidate once with new exact failures (${attempt + 1}/${maxAttempts})`);
+    }
   log('deterministic repair did not yield a passing draft — parking');
-  return { passed: false, attempted: true, failure: repairFailure };
+  return { passed: false, attempted: true, attempts: maxAttempts, failure: repairFailure };
+}
+
+function authorRepairConstraints(pgId) {
+  const fixturePath = join(FLOW, '.gg-cache', 'prompts', `${pgId}.${VERSION}-fixture.json`);
+  try {
+    const fixture = JSON.parse(readFileSync(fixturePath, 'utf8'));
+    return {
+      wordMin: Number(fixture.word_range?.[0]) || 0,
+      wordMax: Number(fixture.word_range?.[1]) || 0,
+      keywordMin: Number(fixture.kw_count_range?.[0]) || 0,
+      keywordMax: Number(fixture.kw_count_range?.[1]) || 0,
+      maxSentencesPerParagraph: 7,
+    };
+  } catch {
+    return { maxSentencesPerParagraph: 7 };
+  }
 }
 
 async function doAuthorUnlocked(o = {}) {
@@ -1075,6 +1129,8 @@ async function doAuthorUnlocked(o = {}) {
     //   sampling) before parking. orchestrator overwrites the draft each attempt;
     //   phase2 writes _staging/<pid>-en.md + manifest ONLY on PASS (exit 11 on fail).
     const draftV8 = join('_staging', `${pgId}-${WINNER}-v8.md`);
+    const lastFailingDraft = join('_staging', `${pgId}-last-failing-v8.md`);
+    const failureMemoryPath = join(FLOW, '_staging', `${pgId}-author-failures.json`);
     const promptAbs = join(FLOW, promptPath);
     const basePrompt = readFileSync(promptAbs, 'utf8');
     const restorePrompt = () => { try { writeFileSync(promptAbs, basePrompt); } catch { /* best-effort */ } };
@@ -1084,14 +1140,16 @@ async function doAuthorUnlocked(o = {}) {
     // — so 3 cuts ~24 min of waste off each hard/parking task at negligible loss.
     // Override via GG_AUTHOR_GEN_ATTEMPTS.
     const attempts = Math.max(1, parseInt(process.env.GG_AUTHOR_GEN_ATTEMPTS || '3', 10));
-    let lastFail = '';
+    let cumulativeFailures = readAuthorFailureMemory(failureMemoryPath, { pageId: pgId });
+    let lastOperationalFailure = '';
     for (let i = 1; i <= attempts; i++) {
       // FEEDBACK-DRIVEN retry: hard topics (Vedic/nakshatra/healing) hit a DIFFERENT
       // phase2 check each blind attempt (RL1 clinical, RL5 keyword-stuffing, SC
       // scatter…), so plain regeneration rarely converges. Feed the previous
       // attempt's EXACT failures back into the prompt so the model fixes those.
-      if (lastFail && i > 1) {
-        writeFileSync(promptAbs, `${basePrompt}\n\n## ⚠️ 上一稿被自动校验拦下 — 本稿必须修掉以下每一条（否则整篇作废）\n${lastFail}\n\n继续遵守上面所有硬规则，同时**对照下表逐条修正**（命中哪条改哪条）：\n- 临床/医疗主张（RL1：heal/treat/cure/diagnose + 焦虑/抑郁/创伤/疾病/疼痛/失眠等病症名）→ 改成象征/反思措辞（"a reflective lens for" / "some people explore this theme" / "is traditionally associated with"）。\n- target_keyword 堆词（RL5：count 超 8）→ 完整短语全文**只出现 5–8 次**，多余的用代词/短形/同义改写替换。\n- drifted sections（RL4）→ 在被点名的**每个** H2 小节里，让 target_keyword 完整短语自然出现至少 1 次（实质回扣主题，别泛泛）。\n- 缺免责声明（RL6 / disclaimer，psych-safety 主题必需）→ 在正文结尾**逐字加入这一行**：This is not a clinical interpretation or mental health advice.\n- section scatter（SC3c）→ 被空行散成多段的小节改成「引子句 + 编号列表（\`1. **标签。** 说明\`）」。\n- link distribution（SC4）→ 至少 1 条内链自然内联织进正文前段句子里（首链优先），别全堆结尾。\n`);
+      const feedback = authorFailureText(cumulativeFailures);
+      if (feedback) {
+        writeFileSync(promptAbs, `${basePrompt}\n\n## ⚠️ 之前稿件被自动校验拦下 — 本稿必须同时修掉以下全部未解决约束（否则整篇作废）\n${feedback}\n\n继续遵守上面所有硬规则，同时**对照下表逐条修正**（命中哪条改哪条）：\n- 临床/医疗主张（RL1：heal/treat/cure/diagnose + 焦虑/抑郁/创伤/疾病/疼痛/失眠等病症名）→ 改成象征/反思措辞（"a reflective lens for" / "some people explore this theme" / "is traditionally associated with"）。\n- target_keyword 堆词（RL5：count 超上限）→ 以 fixture 的 kw_count_range 为准；删去多余完整短语，用代词/短形/同义改写替换。\n- drifted sections（RL4）→ 只修被点名的实质 prose H2；Take Action / Related Reading / Sources 由各自结构门禁负责，不要为它们硬塞关键词。\n- 缺免责声明（RL6 / disclaimer，psych-safety 主题必需）→ 在正文结尾**逐字加入这一行**：This is not a clinical interpretation or mental health advice.\n- section scatter（SC3c）→ 被空行散成多段的小节改成「引子句 + 编号列表（\`1. **标签。** 说明\`）」。\n- link distribution（SC4）→ 至少 1 条内链自然内联织进正文前段句子里（首链优先），别全堆结尾。\n`);
       }
       // Sonnet 4.6 xhigh is SLOW (~10 min/generation, measured 585s; ~3× Opus), and
       // the feedback-retry prompt (longer) pushes it longer still. The old 15-min
@@ -1108,14 +1166,25 @@ async function doAuthorUnlocked(o = {}) {
       const orchTimeout = parseInt(process.env.GG_AUTHOR_ORCH_TIMEOUT_MS || '1800000', 10);
       try { shFlow('node', [ORCHESTRATOR, '--prompt', promptPath, '--page-id', pgId, '--models', WINNER, '--out-dir', '_staging', '--retry', '0'], orchTimeout); }
       catch (e) { log(`orchestrator exit non-zero (attempt ${i}): ${errTail(e, 80)}`); }
-      if (!existsSync(join(FLOW, draftV8))) { lastFail = '- orchestrator produced no draft'; continue; }
+      if (!existsSync(join(FLOW, draftV8))) {
+        lastOperationalFailure = '- orchestrator produced no draft';
+        continue;
+      }
       try { shFlow('node', [PHASE2, '--source', draftV8, '--page-id', pgId, '--tag', 'en', '--author', author]); }
       catch (e) {
-        lastFail = summarizePhase2Failure(e);
-        log(`phase2 attempt ${i}/${attempts} failed:\n${lastFail}${i < attempts ? '\n  → regenerating WITH feedback' : ''}`);
+        const currentFailure = summarizePhase2Failure(e);
+        cumulativeFailures = mergeAuthorFailures(cumulativeFailures, currentFailure);
+        writeAuthorFailureMemory(failureMemoryPath, {
+          pageId: pgId,
+          status: 'failed',
+          failures: cumulativeFailures,
+        });
+        try { writeFileSync(join(FLOW, lastFailingDraft), readFileSync(join(FLOW, draftV8), 'utf8')); } catch { /* best-effort */ }
+        log(`phase2 attempt ${i}/${attempts} failed:\n${currentFailure}${i < attempts ? '\n  → regenerating WITH cumulative feedback' : ''}`);
         continue;
       }
       if (existsSync(enDraft(pgId)) && phase2Passed(pgId)) {
+        writeAuthorFailureMemory(failureMemoryPath, { pageId: pgId, status: 'passed', failures: [] });
         restorePrompt(); // drop the transient feedback addendum now that a draft passed
         // multi-party review (user-approved 2026-06-03): Codex critiques the
         // phase2-passing draft → Opus revises → re-validate. Adopt the revision
@@ -1147,7 +1216,12 @@ async function doAuthorUnlocked(o = {}) {
         log(`AUTHORED ${pgId} → ${enDraft(pgId)} (author=${author}, attempt ${i}/${attempts}) — ready for next scan to publish`);
         return;
       }
-      lastFail = '- phase2 wrote no passing manifest';
+      cumulativeFailures = mergeAuthorFailures(cumulativeFailures, '- phase2 wrote no passing manifest');
+      writeAuthorFailureMemory(failureMemoryPath, {
+        pageId: pgId,
+        status: 'failed',
+        failures: cumulativeFailures,
+      });
     }
     restorePrompt();
 
@@ -1156,21 +1230,30 @@ async function doAuthorUnlocked(o = {}) {
     // model won't anchor the literal keyword in every section). Escalate ONCE to the shared text-only
     // gg-author-repair worker (NO tools / NO --dangerously-skip-permissions), validating the candidate
     // with the EN phase2 gate; adopt only on PASS. Only fires at the park boundary. Toggle GG_AUTHOR_REPAIR=0.
+    const repairSource = existsSync(join(FLOW, draftV8)) ? draftV8 : lastFailingDraft;
+    const cumulativeFailureText = authorFailureText(cumulativeFailures);
     const repairResult = tryDeterministicRepair({
-      pgId, draftV8, candidate: join('_staging', `${pgId}-repair-candidate.md`),
-      targetKeyword: keyword, author, failures: lastFail,
+      pgId, draftV8: repairSource, candidate: join('_staging', `${pgId}-repair-candidate.md`),
+      targetKeyword: keyword,
+      author,
+      failures: cumulativeFailureText || lastOperationalFailure || '- phase2 failed',
+      constraints: authorRepairConstraints(pgId),
       validate: (cand) => {
         shFlow('node', [PHASE2, '--source', cand, '--page-id', pgId, '--tag', 'en', '--author', author, '--prompt-version', VERSION]);
         return existsSync(enDraft(pgId)) && phase2Passed(pgId);
       },
     });
     if (repairResult.passed) {
+      writeAuthorFailureMemory(failureMemoryPath, { pageId: pgId, status: 'passed', failures: [] });
       log(`AUTHORED ${pgId} → ${enDraft(pgId)} (author=${author}, via deterministic repair) — ready for next scan to publish`);
       return;
     }
 
-    const finalFailure = repairResult.failure || lastFail || '- phase2 failed';
-    return park(slug, `${finalFailure.replace(/\n/g, ' | ')} after ${attempts} attempt(s) + deterministic repair`);
+    const finalFailure = repairResult.failure || cumulativeFailureText || lastOperationalFailure || '- phase2 failed';
+    const repairSuffix = repairResult.attempted
+      ? ` + ${repairResult.attempts || 1} deterministic repair attempt(s)`
+      : ' + deterministic repair not attempted';
+    return park(slug, `${finalFailure.replace(/\n/g, ' | ')} after ${attempts} generation attempt(s)${repairSuffix}`);
   } catch (e) {
     return park(null, `unexpected: ${errTail(e)}`);
   }

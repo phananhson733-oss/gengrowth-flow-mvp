@@ -41,3 +41,21 @@ Sit with the tension you feel and notice which side you instinctively defend; th
   assert.equal(r.pass, false, '2 个真缺关键词的通用 section 应超容差 FAIL');
   assert.match(r.note || '', /Why It Matters|How to Reflect/);
 });
+
+test('RL4：Take Action 是由 SC8 单独校验的结构节，不要求重复 target keyword', () => {
+  const draft = `## What Is a Mexico vs England Astrology Prediction?
+
+A Mexico vs England astrology prediction reads the fixture's symbolic backdrop through a low-stakes interpretive lens.
+
+## Common Misreadings
+
+People often treat the practice as a score forecast, even though it is better understood as symbolic reflection.
+
+## Take Action
+
+Explore your own chart at https://astrologywiki.com/en/tools and compare the same houses and transits in a personal context.
+`;
+  const r = checkRL4(draft, CTX);
+  assert.equal(r.pass, true, `Take Action 不应成为第二个漂移节: ${r.note}`);
+  assert.doesNotMatch(r.note || '', /Take Action.*jaccard/);
+});

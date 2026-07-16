@@ -308,6 +308,30 @@ test('repair prompt has NO zh guard (EN-only)', () => {
   assert.ok(!/语言要求/.test(prompt), 'zh guard leaked into a repair prompt');
 });
 
+test('repair prompt carries exact word, keyword, and paragraph budgets plus a non-regression contract', () => {
+  const src = seedSource();
+  const out = join(TMP, `out-budget-${Math.random().toString(36).slice(2)}.md`);
+  const { bin, stdinLog } = stdinCapturingFakeBin('# Fixed\n\nBody');
+  const r = run(
+    [
+      '--source', src, '--out', out, '--page-id', 'PG-WDIN-001',
+      '--target-keyword', 'what do i need to let go of', '--author', 'a',
+      '--failures', '- RL4 drifted sections: Common Misreadings',
+      '--word-min', '1500', '--word-max', '1800',
+      '--keyword-min', '5', '--keyword-max', '8',
+      '--max-sentences-per-paragraph', '7',
+    ],
+    { fake: bin },
+  );
+
+  assert.equal(r.status, 0, `expected exit 0; stderr: ${r.stderr}`);
+  const prompt = readFileSync(stdinLog, 'utf8');
+  assert.match(prompt, /body word count.*1500.*1800/i);
+  assert.match(prompt, /exact target_keyword.*5.*8/i);
+  assert.match(prompt, /no prose paragraph may exceed 7 sentences/i);
+  assert.match(prompt, /do not regress checks that already pass/i);
+});
+
 test('cleanup', () => {
   rmSync(TMP, { recursive: true, force: true });
 });

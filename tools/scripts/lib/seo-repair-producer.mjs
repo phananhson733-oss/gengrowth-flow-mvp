@@ -23,9 +23,10 @@ function claimErrorKind(claim) {
   if (/backfill|writeback|回填/.test(text)) return 'backfill_fail';
   if (/publish|merge|deploy/.test(text)) return 'publish_fail';
   if (/\b(?:auth(?:entication|orization)?|credentials?|permissions?|unauthorized|forbidden)\b/.test(text)) return 'auth';
+  if (/review|gate|fact|phase2|事实/.test(text)) return 'gate_fail';
   if (/source|sheet|workbook|row missing/.test(text)) return 'source';
   if (/exited?\s+\d+|tool exit/.test(text)) return 'tool_exit';
-  if (/review|gate|fail|fact|phase2|事实/.test(text)) return 'gate_fail';
+  if (/fail/.test(text)) return 'gate_fail';
   return 'state_fail';
 }
 

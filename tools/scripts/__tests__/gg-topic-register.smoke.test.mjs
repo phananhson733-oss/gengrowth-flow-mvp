@@ -10,15 +10,20 @@ import { test } from 'node:test';
 import {
   associatedKeywordsForPage,
   buildTrendEvidenceCache,
+  CLUSTER_FIELDS,
   chooseClusterForKeyword,
   createRunBudget,
   deterministicFrictionForPage,
   inferNextPageId,
   notifyTopicRegistered,
+  PAGE_REQUIRED_FIELDS,
+  planRows,
+  PRODUCT_PROFILES,
   runPreprocessorForPlan,
   scoreClusterKeyword,
   selectCandidateRowsForPlan,
   titleCase,
+  valuesBatchForPageRow,
 } from '../gg-topic-register.mjs';
 import { renderPreprocessorPrompt } from '../lib/preprocessor-prompt.mjs';
 
@@ -216,6 +221,81 @@ test('default candidate selection audits incomplete existing rows before generat
   assert.equal(generated.mode, 'generate');
   assert.deepEqual(generated.candidates.map((row) => row.target_keyword), ['new celebrity astrology topic']);
   assert.equal(generated.audit_incomplete, 0);
+});
+
+test('planRows automatically repairs a complete unpublished row whose existing cluster is semantically unrelated', () => {
+  const pageHeader = ['Target Keyword', ...PAGE_REQUIRED_FIELDS, 'CTA', 'Status'];
+  const completeWrongRow = [
+    'what is my love language',
+    'what is my love language meaning',
+    'Info',
+    'T2',
+    'Definition',
+    'What Is My Love Language',
+    'Readers need a direct explanation.',
+    'What Is My Love Language ↔ Why Do I Feel Stuck in My Career ↔ practical interpretation.',
+    'PG-WDIF-002',
+    'why_do_i_feel_stuck_in_my_career',
+    'Wiki',
+    'Frame career stagnation as a symbolic guide.',
+    'N',
+    '星盘页',
+    '待写',
+  ];
+  const blankNewRow = ['new blank topic', ...Array(PAGE_REQUIRED_FIELDS.length + 2).fill('')];
+  const cluster = (overrides) => CLUSTER_FIELDS.map((field) => overrides[field] || '');
+  const clustersRaw = [
+    CLUSTER_FIELDS,
+    cluster({
+      cluster_id: 'why_do_i_feel_stuck_in_my_career',
+      cluster_name: 'Why Do I Feel Stuck in My Career',
+      primary_entity: 'Career Stagnation',
+      jtbd: 'Understand career stagnation',
+      content_angle: 'Career reflection',
+      keywords_included: 'career stagnation, feeling stuck at work',
+    }),
+    cluster({
+      cluster_id: 'love_relationships',
+      cluster_name: 'Love and Relationships',
+      primary_entity: 'Relationship Patterns',
+      jtbd: 'Understand love languages and relationship patterns',
+      content_angle: 'Explain love language patterns with clear boundaries',
+      keywords_included: 'love language, relationship compatibility, attachment patterns',
+      cta_primary: '星盘页',
+    }),
+  ];
+
+  const plan = planRows({
+    profile: PRODUCT_PROFILES.astrologywiki,
+    pagesRaw: [pageHeader, completeWrongRow, blankNewRow],
+    clustersRaw,
+    limit: 10,
+  });
+
+  assert.equal(plan.selectionMode, 'semantic_repair');
+  assert.deepEqual(plan.updates.map((item) => item.pageId), ['PG-WDIF-002']);
+  assert.equal(plan.updates[0].cluster.cluster_id, 'love_relationships');
+  assert.equal(plan.updates[0].fields.cluster_id, 'love_relationships');
+  assert.equal(plan.updates[0].fields.Entity, 'My Love Language');
+  assert.match(plan.updates[0].fields.Logic, /Relationship Patterns/);
+  assert.doesNotMatch(plan.updates[0].fields.Logic, /Career/);
+
+  const writes = valuesBatchForPageRow({
+    tab: '选题登记表',
+    rowNumber: plan.updates[0].row,
+    header: pageHeader,
+    fields: plan.updates[0].fields,
+    existingValues: plan.updates[0].existingValues,
+    forceOverwriteFields: plan.updates[0].forceOverwriteFields,
+  });
+  const writtenColumns = new Set(writes.map((item) => item.range.match(/!([A-Z]+)/)?.[1]));
+  const clusterColumn = pageHeader.indexOf('cluster_id');
+  const logicColumn = pageHeader.indexOf('Logic');
+  const entityColumn = pageHeader.indexOf('Entity');
+  assert.ok(writtenColumns.has(String.fromCharCode(65 + clusterColumn)), 'cluster_id must be overwritten');
+  assert.ok(writtenColumns.has(String.fromCharCode(65 + logicColumn)), 'Logic must be overwritten');
+  assert.ok(writtenColumns.has(String.fromCharCode(65 + entityColumn)), 'Entity must be normalized');
+  assert.equal(plan.taskLines.length, 0, 'semantic repair must preserve the existing page id and task line');
 });
 
 test('runPreprocessorForPlan skips LLM work with budget_exhausted status when run budget is spent', async () => {

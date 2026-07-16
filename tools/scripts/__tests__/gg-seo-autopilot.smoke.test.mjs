@@ -270,20 +270,32 @@ writeFileSync('.gg-cache/prompts/PG-TEST-001.v8' + suffix + '-fixture.json', JSO
 `);
 
   writeFileSync(join(scripts, 'gg-llm-orchestrator.mjs'), `#!/usr/bin/env node
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 const args = process.argv.slice(2);
 const outDir = args[args.indexOf('--out-dir') + 1];
 const pageId = args[args.indexOf('--page-id') + 1];
+const prompt = args[args.indexOf('--prompt') + 1];
+if (process.env.GG_TEST_AUTHOR_PROMPT_LOG) {
+  appendFileSync(process.env.GG_TEST_AUTHOR_PROMPT_LOG, '\\n===PROMPT===\\n' + readFileSync(prompt, 'utf8'));
+}
 mkdirSync(outDir, { recursive: true });
 writeFileSync(outDir + '/' + pageId + '-claude-v8.md', '# 中文稿\\n\\n这里是中文正文。');
 `);
 
   writeFileSync(join(scripts, '_phase2-validate.mjs'), `#!/usr/bin/env node
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 const args = process.argv.slice(2);
 const pageId = args[args.indexOf('--page-id') + 1];
 const tag = args[args.indexOf('--tag') + 1];
 const lang = args.includes('--language') ? args[args.indexOf('--language') + 1] : 'en';
+const failures = JSON.parse(process.env.GG_TEST_PHASE2_FAILURES || '[]');
+const statePath = process.env.GG_TEST_PHASE2_STATE || '';
+const attempt = statePath && existsSync(statePath) ? Number(readFileSync(statePath, 'utf8')) : 0;
+if (statePath) writeFileSync(statePath, String(attempt + 1));
+if (attempt < failures.length) {
+  process.stderr.write(failures[attempt] + '\\n');
+  process.exit(11);
+}
 const dir = lang === 'zh' ? '_staging/zh-demo' : '_staging';
 mkdirSync(dir, { recursive: true });
 writeFileSync(dir + '/' + pageId + '-' + tag + '.md', '---\\nslug: test-slug\\nauthor_id: test-author\\n---\\n# 成稿\\n\\n正文。\\n');
@@ -967,6 +979,64 @@ test('--author normalizes blank search_volume before render so newly registered 
       'https://astrologywiki.com/en/tools',
     );
     assert.match(`${r.stdout}${r.stderr}`, /AUTHORED PG-TEST-001/);
+  } finally {
+    h.cleanup();
+  }
+});
+
+test('--author accumulates and persists distinct Phase 2 constraints across attempts and cron retries', () => {
+  const h = makeHarness();
+  try {
+    const flow = writeStubAuthorBackfillFlow(h, { seedEn: false });
+    writeFileSync(join(h.tasks, '2026-06-03-blog-output-plan.md'), '- [ ] `PG-TEST-001` test keyword\n');
+    writeClaims(h, {});
+    const promptLog = join(h.root, 'author-prompts.log');
+    const phase2State = join(h.root, 'phase2-state');
+    const failures = [
+      '✗ FAIL word count 1406 outside [1500, 1800]\\n  - RL4 drifted sections: Common Misreadings; Take Action',
+      '✗ FAIL RL5 keyword count 11 outside [5, 8]\\n  - SC5 FAQ questions found: 0',
+    ];
+
+    const first = runAuto(h, ['--author', '--task', 'PG-TEST-001'], {
+      GG_FLOW_REPO: flow,
+      GG_AUTHOR_GEN_ATTEMPTS: '2',
+      GG_AUTHOR_REPAIR: '0',
+      GG_TEST_AUTHOR_PROMPT_LOG: promptLog,
+      GG_TEST_PHASE2_STATE: phase2State,
+      GG_TEST_PHASE2_FAILURES: JSON.stringify(failures),
+    });
+
+    assert.equal(first.status, 0, `${first.stdout}${first.stderr}`);
+    const prompts = readFileSync(promptLog, 'utf8').split('\n===PROMPT===\n').filter(Boolean);
+    assert.equal(prompts.length, 2);
+    assert.match(prompts[1], /word count 1406 outside/);
+    assert.match(prompts[1], /Common Misreadings/);
+    const memoryPath = join(flow, '_staging', 'PG-TEST-001-author-failures.json');
+    const memory = JSON.parse(readFileSync(memoryPath, 'utf8'));
+    assert.equal(memory.status, 'failed');
+    assert.match(memory.failures.join('\n'), /word count 1406 outside/);
+    assert.match(memory.failures.join('\n'), /RL5 keyword count 11 outside/);
+    assert.equal(existsSync(join(flow, '_staging', 'PG-TEST-001-last-failing-v8.md')), true);
+
+    writeClaims(h, {});
+    writeFileSync(promptLog, '');
+    writeFileSync(phase2State, '0');
+    const second = runAuto(h, ['--author', '--task', 'PG-TEST-001'], {
+      GG_FLOW_REPO: flow,
+      GG_AUTHOR_GEN_ATTEMPTS: '1',
+      GG_AUTHOR_REPAIR: '0',
+      GG_TEST_AUTHOR_PROMPT_LOG: promptLog,
+      GG_TEST_PHASE2_STATE: phase2State,
+      GG_TEST_PHASE2_FAILURES: '[]',
+    });
+
+    assert.equal(second.status, 0, `${second.stdout}${second.stderr}`);
+    const retryPrompt = readFileSync(promptLog, 'utf8');
+    assert.match(retryPrompt, /word count 1406 outside/);
+    assert.match(retryPrompt, /RL5 keyword count 11 outside/);
+    const passedMemory = JSON.parse(readFileSync(memoryPath, 'utf8'));
+    assert.equal(passedMemory.status, 'passed');
+    assert.deepEqual(passedMemory.failures, []);
   } finally {
     h.cleanup();
   }

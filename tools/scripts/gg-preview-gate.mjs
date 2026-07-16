@@ -51,10 +51,23 @@
 //        [--codex-timeout-ms n] [--status-timeout-ms n]
 
 import { spawn, spawnSync } from 'node:child_process';
-import { createHash } from 'node:crypto';
-import { join, relative } from 'node:path';
-import { homedir } from 'node:os';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { createHash, randomUUID } from 'node:crypto';
+import {
+  isAbsolute,
+  join,
+  relative,
+  resolve,
+  sep,
+} from 'node:path';
+import { homedir, tmpdir } from 'node:os';
+import {
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const HERE = (() => {
@@ -432,11 +445,191 @@ export async function inspectDraftSnapshot(draftMd, deps = {}) {
   }
 }
 
+function sha256Bytes(bytes) {
+  return createHash('sha256').update(bytes).digest('hex');
+}
+
+function safeArticlePathspec(worktree, articleTs) {
+  const pathspec = relative(worktree, articleTs).replaceAll('\\', '/');
+  if (!pathspec || pathspec === '.' || pathspec.startsWith('../') || isAbsolute(pathspec)) {
+    throw new Error(`article path is outside review worktree: ${articleTs}`);
+  }
+  return pathspec;
+}
+
+function defaultSnapshotRoot() {
+  const stateRoot = process.env.GG_FLOW_STATE_DIR
+    || join(tmpdir(), 'gengrowth-flow-state');
+  return join(stateRoot, 'preview-gate-review-snapshots');
+}
+
+export async function materializeReviewBundle({
+  worktree,
+  articleTs,
+  draftMd,
+  reviewedHeadRefOid,
+  pgId,
+  repairRound,
+  snapshotRoot,
+}, deps = {}) {
+  try {
+    if (!HEAD_REF_OID_RE.test(reviewedHeadRefOid || '')) {
+      throw new Error(`reviewed head must be a 40-hex SHA, got "${reviewedHeadRefOid || ''}"`);
+    }
+    const articlePathspec = safeArticlePathspec(worktree, articleTs);
+    const root = resolve(snapshotRoot || deps.snapshotRoot || defaultSnapshotRoot());
+    const liveWorktree = resolve(worktree);
+    if (root === liveWorktree || root.startsWith(`${liveWorktree}${sep}`)) {
+      throw new Error('review snapshot root must be independent of the live worktree');
+    }
+
+    let articleBytes;
+    if (typeof deps.readArticleAtHead === 'function') {
+      articleBytes = Buffer.from(await deps.readArticleAtHead({
+        worktree,
+        reviewedHeadRefOid,
+        articlePathspec,
+      }));
+    } else {
+      const object = `${reviewedHeadRefOid}:${articlePathspec}`;
+      const shown = spawnSync('git', ['-C', worktree, 'show', object], {
+        encoding: null,
+        timeout: DEFAULTS.statusTimeoutMs,
+        maxBuffer: 32 * 1024 * 1024,
+      });
+      if (shown.error || shown.status !== 0) {
+        const stderr = Buffer.isBuffer(shown.stderr)
+          ? shown.stderr.toString('utf8')
+          : String(shown.stderr || '');
+        throw new Error(
+          `git object unavailable ${object}: ${shown.error?.message || tail(stderr) || `exit ${shown.status}`}`,
+        );
+      }
+      articleBytes = Buffer.from(shown.stdout || Buffer.alloc(0));
+    }
+    if (articleBytes.length === 0) throw new Error('review article snapshot is empty');
+
+    if (!draftMd || !existsSync(draftMd)) {
+      throw new Error(`review draft unavailable: ${draftMd || '<missing path>'}`);
+    }
+    const draftBytes = readFileSync(draftMd);
+    if (draftBytes.length === 0) throw new Error('review draft snapshot is empty');
+
+    mkdirSync(root, { recursive: true, mode: 0o700 });
+    const snapshotId = [
+      String(pgId || 'unknown').replace(/[^A-Za-z0-9._-]+/g, '_'),
+      reviewedHeadRefOid.slice(0, 12),
+      `r${Number.isInteger(repairRound) ? repairRound : 0}`,
+      randomUUID(),
+    ].join('-');
+    const directory = join(root, snapshotId);
+    mkdirSync(directory, { recursive: false, mode: 0o700 });
+    const articlePath = join(directory, 'article.ts');
+    const draftPath = join(directory, 'draft.md');
+    writeFileSync(articlePath, articleBytes, { flag: 'wx', mode: 0o400 });
+    writeFileSync(draftPath, draftBytes, { flag: 'wx', mode: 0o400 });
+    chmodSync(articlePath, 0o444);
+    chmodSync(draftPath, 0o444);
+    chmodSync(directory, 0o555);
+
+    const bundle = {
+      ok: true,
+      snapshotId,
+      directory,
+      reviewedHeadRefOid: reviewedHeadRefOid.toLowerCase(),
+      article: {
+        path: articlePath,
+        gitObject: `${reviewedHeadRefOid.toLowerCase()}:${articlePathspec}`,
+        bytes: articleBytes.length,
+        sha256: sha256Bytes(articleBytes),
+      },
+      draft: {
+        path: draftPath,
+        sourcePath: draftMd,
+        bytes: draftBytes.length,
+        sha256: sha256Bytes(draftBytes),
+      },
+    };
+    const verified = await verifyReviewBundle(bundle);
+    if (!verified.ok) return verified;
+    return bundle;
+  } catch (error) {
+    return {
+      ok: false,
+      reason: `review snapshot materialization failed: ${error?.message || String(error)}`,
+    };
+  }
+}
+
+export async function verifyReviewBundle(bundle, deps = {}) {
+  if (typeof deps.verifyReviewBundle === 'function') {
+    return deps.verifyReviewBundle(bundle);
+  }
+  try {
+    if (!bundle?.ok || !HEAD_REF_OID_RE.test(bundle.reviewedHeadRefOid || '')) {
+      throw new Error('review snapshot metadata is invalid');
+    }
+    for (const [label, input] of Object.entries({
+      article: bundle.article,
+      draft: bundle.draft,
+    })) {
+      if (!input?.path || !/^[0-9a-f]{64}$/i.test(input.sha256 || '')) {
+        throw new Error(`${label} snapshot metadata is invalid`);
+      }
+      const bytes = readFileSync(input.path);
+      const actualSha256 = sha256Bytes(bytes);
+      if (bytes.length !== input.bytes) {
+        throw new Error(`${label} snapshot byte length mismatch (${bytes.length} != ${input.bytes})`);
+      }
+      if (actualSha256 !== input.sha256) {
+        throw new Error(`${label} snapshot digest mismatch (${actualSha256} != ${input.sha256})`);
+      }
+      if ((statSync(input.path).mode & 0o222) !== 0) {
+        throw new Error(`${label} snapshot is writable`);
+      }
+    }
+    return { ok: true };
+  } catch (error) {
+    return {
+      ok: false,
+      reason: `review snapshot integrity failed: ${error?.message || String(error)}`,
+    };
+  }
+}
+
+function reviewBundleEvidence(bundle) {
+  return {
+    reviewedHeadRefOid: bundle.reviewedHeadRefOid,
+    snapshotId: bundle.snapshotId,
+    article: {
+      gitObject: bundle.article.gitObject,
+      bytes: bundle.article.bytes,
+      sha256: bundle.article.sha256,
+    },
+    draft: {
+      bytes: bundle.draft.bytes,
+      sha256: bundle.draft.sha256,
+    },
+  };
+}
+
 function sameDraftSnapshot(left, right) {
   return Boolean(left?.ok && right?.ok)
     && left.exists === right.exists
     && left.bytes === right.bytes
     && left.sha256 === right.sha256;
+}
+
+function parseCodexInputEvidence(stdout) {
+  const prefix = 'GG_CODEX_INPUT_EVIDENCE=';
+  const lines = String(stdout || '').replace(/\r\n?/g, '\n').split('\n');
+  const line = [...lines].reverse().find((row) => row.startsWith(prefix));
+  if (!line) return null;
+  try {
+    return JSON.parse(line.slice(prefix.length));
+  } catch {
+    return null;
+  }
 }
 
 function normalizePreviewUrl(value) {
@@ -515,6 +708,8 @@ async function runFullGateRound({
   previewUrl,
   previewBinding,
   draftSnapshot,
+  reviewBundle,
+  verifyReviewInputs,
   reviewedHeadRefOid,
   repairRound,
   log,
@@ -522,6 +717,7 @@ async function runFullGateRound({
   const checks = {
     preview_binding: previewBinding,
     draft_snapshot: draftSnapshot,
+    review_inputs: reviewBundleEvidence(reviewBundle),
   };
   let failure = null;
   const noteFailure = (candidate) => {
@@ -553,12 +749,25 @@ async function runFullGateRound({
   }
 
   for (const dim of REVIEW_DIMENSIONS) {
+    const bundleIntegrity = await verifyReviewInputs(reviewBundle);
+    if (!bundleIntegrity?.ok) {
+      const reason = bundleIntegrity?.reason || 'review snapshot integrity unavailable';
+      checks[dim] = { status: 'SKIPPED', reason };
+      noteFailure({
+        reason: `review[${dim}] snapshot integrity failed: ${reason}`,
+        repairable: false,
+        dim,
+      });
+      continue;
+    }
     const args = [
       '--dimension', dim,
-      '--article', articleTs,
-      '--draft', draftMd,
+      '--article', reviewBundle.article.path,
+      '--draft', reviewBundle.draft.path,
       '--timeout-ms', String(o.reviewTimeoutMs),
       ...pinnedArgs,
+      '--article-sha256', reviewBundle.article.sha256,
+      '--draft-sha256', reviewBundle.draft.sha256,
       '--json',
     ];
     log(`round[${repairRound}] review[${dim}]@${reviewedHeadRefOid.slice(0, 8)}: node ${B.reviewWorker}`);
@@ -569,6 +778,19 @@ async function runFullGateRound({
       continue;
     }
     const rj = safeJson(lastJsonLine(rr.stdout));
+    const inputEvidenceOk = rj?.reviewedHeadRefOid === reviewedHeadRefOid
+      && rj?.inputSha256?.article === reviewBundle.article.sha256
+      && rj?.inputSha256?.draft === reviewBundle.draft.sha256;
+    if (!inputEvidenceOk) {
+      const reason = 'review worker input evidence does not match immutable snapshot bundle';
+      checks[dim] = { status: 'SKIPPED', reason };
+      noteFailure({
+        reason: `review[${dim}] ${reason}`,
+        repairable: false,
+        dim,
+      });
+      continue;
+    }
     const verdict = rj && rj.verdict ? rj.verdict : null;
     const reason = rj && rj.blocking_reason
       ? rj.blocking_reason
@@ -598,9 +820,28 @@ async function runFullGateRound({
       ...pinnedArgs,
     ];
     log(`round[${repairRound}] codex@${reviewedHeadRefOid.slice(0, 8)}: ${B.codex}`);
-    const cls = classifyCodex(await node(B.codex, codexArgs, { timeoutMs: o.codexTimeoutMs }));
-    checks.codex = { status: cls.verdict, reason: cls.reason };
-    if (cls.verdict === 'FAIL') {
+    const codexResult = await node(B.codex, codexArgs, { timeoutMs: o.codexTimeoutMs });
+    const cls = classifyCodex(codexResult);
+    const codexEvidence = parseCodexInputEvidence(codexResult.stdout);
+    const codexEvidenceOk = codexEvidence?.reviewedHeadRefOid === reviewedHeadRefOid
+      && HEAD_REF_OID_RE.test(codexEvidence?.baseRefOid || '')
+      && /^[0-9a-f]{64}$/i.test(codexEvidence?.inputSha256 || '')
+      && Number.isInteger(codexEvidence?.bytes)
+      && codexEvidence.bytes > 0;
+    checks.codex = {
+      status: cls.verdict,
+      reason: cls.reason,
+      input: codexEvidence,
+    };
+    if (cls.verdict === 'PASS' && !codexEvidenceOk) {
+      const reason = 'codex input evidence does not bind the reviewed head';
+      checks.codex = { status: 'SKIPPED', reason, input: codexEvidence };
+      noteFailure({
+        reason: `codex ${reason}`,
+        repairable: false,
+        dim: 'codex',
+      });
+    } else if (cls.verdict === 'FAIL') {
       noteFailure({
         reason: `codex completed with ${cls.reason}`,
         repairable: true,
@@ -646,6 +887,16 @@ export async function runGate(o, deps = {}) {
   const inspectDraft = deps.inspectDraftSnapshot
     ? ((draftMd) => deps.inspectDraftSnapshot(draftMd))
     : ((draftMd) => inspectDraftSnapshot(draftMd, deps));
+  const resolveArticlePaths = deps.articlePaths || articlePaths;
+  const materializeInputs = deps.materializeReviewBundle
+    ? ((input) => deps.materializeReviewBundle(input))
+    : ((input) => materializeReviewBundle({
+      ...input,
+      snapshotRoot: deps.reviewSnapshotRoot,
+    }));
+  const verifyReviewInputs = deps.verifyReviewBundle
+    ? ((bundle) => deps.verifyReviewBundle(bundle))
+    : ((bundle) => verifyReviewBundle(bundle));
   const plan = [];
   const log = (line) => plan.push(line);
 
@@ -682,7 +933,7 @@ export async function runGate(o, deps = {}) {
     };
   }
 
-  const { worktree, articleTs, draftMd } = articlePaths(pgId, claim);
+  const { worktree, articleTs, draftMd } = resolveArticlePaths(pgId, claim);
   log(`claim: pgId=${pgId} slug=${claim.slug} status=${claim.status}`);
 
   if (o.dryRun) {
@@ -717,14 +968,33 @@ export async function runGate(o, deps = {}) {
       return gateFail(o, B, deps, pgId, claim,
         worktreeState?.reason || 'review worktree is not pinned and clean', plan);
     }
-    const draftSnapshot = await inspectDraft(draftMd);
-    if (!draftSnapshot?.ok) {
+    const reviewBundle = await materializeInputs({
+      worktree,
+      articleTs,
+      draftMd,
+      reviewedHeadRefOid,
+      pgId,
+      repairRound,
+    });
+    if (!reviewBundle?.ok) {
       return gateFail(o, B, deps, pgId, claim,
-        draftSnapshot?.reason || 'draft snapshot unavailable before gate round', plan);
+        reviewBundle?.reason || 'review snapshot materialization failed before gate round', plan);
     }
+    const initialBundleIntegrity = await verifyReviewInputs(reviewBundle);
+    if (!initialBundleIntegrity?.ok) {
+      return gateFail(o, B, deps, pgId, claim,
+        initialBundleIntegrity?.reason || 'review snapshot integrity failed before gate round', plan);
+    }
+    const draftSnapshot = {
+      ok: true,
+      exists: true,
+      bytes: reviewBundle.draft.bytes,
+      sha256: reviewBundle.draft.sha256,
+    };
     log(`round[${repairRound}] draft: ${draftSnapshot.exists
       ? `${draftSnapshot.sha256.slice(0, 12)} (${draftSnapshot.bytes} bytes)`
       : 'missing'}`);
+    log(`round[${repairRound}] review snapshot: ${reviewBundle.snapshotId || 'materialized'} article=${reviewBundle.article.sha256.slice(0, 12)}`);
 
     let previewUrl = null;
     const canReuseStoredPreview = repairRound === 0
@@ -774,6 +1044,8 @@ export async function runGate(o, deps = {}) {
       previewUrl,
       previewBinding,
       draftSnapshot,
+      reviewBundle,
+      verifyReviewInputs,
       reviewedHeadRefOid,
       repairRound,
       log,
@@ -800,6 +1072,13 @@ export async function runGate(o, deps = {}) {
           || 'review worktree changed after local checks; refusing mark-verified', plan);
       }
       log(`round[${repairRound}]: final local worktree recheck PASS for ${reviewedHeadRefOid.slice(0, 8)}`);
+      const finalBundleIntegrity = await verifyReviewInputs(reviewBundle);
+      if (!finalBundleIntegrity?.ok) {
+        return gateFail(o, B, deps, pgId, claim,
+          finalBundleIntegrity?.reason
+          || 'review snapshot integrity changed after local checks; refusing mark-verified', plan);
+      }
+      log(`round[${repairRound}]: final review snapshot integrity PASS`);
       const finalDraftSnapshot = await inspectDraft(draftMd);
       if (!sameDraftSnapshot(draftSnapshot, finalDraftSnapshot)) {
         return gateFail(o, B, deps, pgId, claim,

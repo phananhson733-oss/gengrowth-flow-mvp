@@ -38,6 +38,7 @@ function makeHarness() {
     tasks,
     oracle,
     bin,
+    state: join(root, 'flow-state'),
     claimsPath: join(tasks, '.autopilot-claims.json'),
     cleanup: () => rmSync(root, { recursive: true, force: true }),
   };
@@ -53,6 +54,8 @@ function runAuto(h, args, extraEnv = {}) {
       GG_OPS_DIR: h.ops,
       GG_ORACLE_DIR: h.oracle,
       GG_FLOW_REPO: join(__dirname, '..', '..', '..'),
+      GG_FLOW_STATE_DIR: h.state,
+      GG_SEO_REPAIR_CONTROLLER_V2_ENABLED: '0',
       GG_AUTOPILOT_NO_NOTIFY: '1', // never send a real Feishu push from tests
       GG_AUTOPILOT_NO_INDEX_TRACKING: '1',
       ...extraEnv,
@@ -73,6 +76,8 @@ function runAutoAsync(h, args, extraEnv = {}) {
         GG_OPS_DIR: h.ops,
         GG_ORACLE_DIR: h.oracle,
         GG_FLOW_REPO: join(__dirname, '..', '..', '..'),
+        GG_FLOW_STATE_DIR: h.state,
+        GG_SEO_REPAIR_CONTROLLER_V2_ENABLED: '0',
         GG_AUTOPILOT_NO_NOTIFY: '1', // never send a real Feishu push from tests
         GG_AUTOPILOT_NO_INDEX_TRACKING: '1',
         ...extraEnv,
@@ -394,6 +399,11 @@ test('--mark-failed parks a pushed preview with a required failure reason', () =
     const claims = JSON.parse(readFileSync(h.claimsPath, 'utf8'));
     assert.equal(claims['PG-TEST-001'].status, 'needs_human');
     assert.equal(claims['PG-TEST-001'].error, 'preview rendered soft 404');
+    assert.equal(
+      existsSync(join(h.state, 'seo-repair-queue')),
+      false,
+      'default smoke harness must keep the production repair controller disabled',
+    );
   } finally {
     h.cleanup();
   }

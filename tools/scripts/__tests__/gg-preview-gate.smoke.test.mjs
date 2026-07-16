@@ -392,6 +392,32 @@ function gateRoundFixture({
         || worktreeInspection
         || { ok: true, headRefOid: reviewedHeadRefOid, dirty: false }
       ),
+      inspectDraftSnapshot: async () => ({
+        ok: true,
+        exists: true,
+        bytes: 12,
+        sha256: '2'.repeat(64),
+      }),
+      materializeReviewBundle: async ({
+        reviewedHeadRefOid,
+        repairRound,
+      }) => ({
+        ok: true,
+        snapshotId: `fixture-${reviewedHeadRefOid.slice(0, 8)}-r${repairRound}`,
+        reviewedHeadRefOid,
+        article: {
+          path: '/tmp/review-snapshot/article.ts',
+          gitObject: `${reviewedHeadRefOid}:data/articles/chiron-in-7th-house.ts`,
+          bytes: 12,
+          sha256: '1'.repeat(64),
+        },
+        draft: {
+          path: '/tmp/review-snapshot/draft.md',
+          bytes: 12,
+          sha256: '2'.repeat(64),
+        },
+      }),
+      verifyReviewBundle: async () => ({ ok: true }),
       verifyPreviewBinding: async () => (
         previewBinding || { ok: true, method: 'fixture-deployment-binding' }
       ),
@@ -874,9 +900,12 @@ test('a repair invalidates every earlier gate result and reruns all checks on th
   const evidence = JSON.parse(markArgs[markArgs.indexOf('--evidence') + 1]);
   assert.deepEqual(
     evidence.checks.draft_snapshot,
-    { ok: true, exists: false, bytes: 0, sha256: null },
-    'missing draft is recorded as an explicit immutable round state',
+    { ok: true, exists: true, bytes: 12, sha256: '2'.repeat(64) },
+    'the immutable draft snapshot digest is recorded in round evidence',
   );
+  assert.equal(evidence.checks.review_inputs.reviewedHeadRefOid, HEAD_B);
+  assert.equal(evidence.checks.review_inputs.article.sha256, '1'.repeat(64));
+  assert.equal(evidence.checks.review_inputs.draft.sha256, '2'.repeat(64));
   assert.equal(fixture.mergeCalls().length, 1);
 });
 
@@ -915,7 +944,12 @@ test('reviewer-time A-to-B-to-A on live inputs cannot change the immutable bytes
     articleTs: input.articleTs,
     draftMd: input.draftMd,
   });
-  fixture.deps.reviewSnapshotRoot = input.snapshotRoot;
+  fixture.deps.materializeReviewBundle = (args) => previewGate.materializeReviewBundle({
+    ...args,
+    snapshotRoot: input.snapshotRoot,
+  });
+  fixture.deps.verifyReviewBundle = (bundle) => previewGate.verifyReviewBundle(bundle);
+  fixture.deps.inspectDraftSnapshot = () => previewGate.inspectDraftSnapshot(input.draftMd);
   const reviewerReads = [];
   const originalNode = fixture.deps.node;
   fixture.deps.node = async (bin, args, opts) => {

@@ -63,6 +63,22 @@ async function fileExists(path) {
   try { await lstat(path); return true; } catch { return false; }
 }
 
+async function passingReadyPair(draftPath, manifestPath) {
+  if (!(await regularFile(draftPath)) || !(await regularFile(manifestPath))) return false;
+  let manifest;
+  let draft;
+  try {
+    manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+    draft = await readFile(draftPath, 'utf8');
+  } catch {
+    return false;
+  }
+  return manifest?.phase2_checks?.overall === 'pass'
+    && draft.startsWith('---\n')
+    && /^slug:\s*\S/m.test(draft)
+    && draft.length > 400;
+}
+
 async function fsyncFile(path) {
   const handle = await open(path, 'r');
   try { await handle.sync(); } finally { await handle.close(); }
@@ -180,6 +196,11 @@ async function recoverInterruptedHandoff({
       'interrupted handoff target is not a regular file or absent',
       2,
     );
+  }
+  if (await passingReadyPair(targetMd, targetManifest)) {
+    for (const path of Object.values(files)) await rm(path, { force: true });
+    await fsyncDirectory(stagingDir);
+    return;
   }
 
   const backupMd = files['md.bak'];
@@ -383,6 +404,13 @@ export async function handoffGengrowthAuthor({
     await rm(tempManifest, { force: true });
     if (!preserveBackups && (transactionCommitted || rollbackComplete)) {
       await rm(backupMd, { force: true });
+      if (transactionCommitted && typeof faultInjector === 'function') {
+        await faultInjector('after-backup-draft-cleanup', {
+          pageId,
+          targetMd,
+          targetManifest,
+        });
+      }
       await rm(backupManifest, { force: true });
     }
   }

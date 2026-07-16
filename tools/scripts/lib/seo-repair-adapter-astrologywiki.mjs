@@ -88,6 +88,33 @@ function verifiedControllerDirectory(path, root, label) {
   return { rootRealpath, pathRealpath };
 }
 
+function ensureControllerSubdirectory(parent, segment, root, label) {
+  const resolvedParent = resolve(parent);
+  const resolvedRoot = resolve(root);
+  const rootStat = lstatSync(resolvedRoot);
+  if (rootStat.isSymbolicLink()) throw new Error(`${label} root must not be a symlink`);
+  if (!rootStat.isDirectory()) throw new Error(`${label} root must be a directory`);
+  const rootRealpath = realpathSync(resolvedRoot);
+  const parentStat = lstatSync(resolvedParent);
+  if (parentStat.isSymbolicLink()) throw new Error(`${label} parent must not be a symlink`);
+  if (!parentStat.isDirectory()) throw new Error(`${label} parent must be a directory`);
+  const parentRealpath = realpathSync(resolvedParent);
+  const parentRel = relative(rootRealpath, parentRealpath);
+  if (parentRel === '..' || parentRel.startsWith(`..${sep}`) || isAbsolute(parentRel)) {
+    throw new Error(`${label} parent realpath is outside its controller root`);
+  }
+
+  const directory = join(resolvedParent, segment);
+  if (existsSync(directory)) {
+    const directoryStat = lstatSync(directory);
+    if (directoryStat.isSymbolicLink()) throw new Error(`${label} path must not be a symlink`);
+    if (!directoryStat.isDirectory()) throw new Error(`${label} path must be a directory`);
+  } else {
+    mkdirSync(directory, { mode: 0o700 });
+  }
+  return verifiedControllerDirectory(directory, resolvedRoot, label).pathRealpath;
+}
+
 export function ensureAstrologyRepairDraft({
   sourceFile,
   draftRoot = repairDraftRoot(),
@@ -109,13 +136,18 @@ export function ensureAstrologyRepairDraft({
     if (!statSync(resolvedDraftRoot).isDirectory()) {
       throw new Error('repair draft root must be a directory');
     }
-    const directory = join(
+    const siteDirectory = ensureControllerSubdirectory(
       resolvedDraftRoot,
       safeDraftSegment(site, 'astrologywiki'),
-      safeDraftSegment(pageId, 'unknown-page'),
+      resolvedDraftRoot,
+      'repair draft',
     );
-    mkdirSync(directory, { recursive: true, mode: 0o700 });
-    verifiedControllerDirectory(directory, resolvedDraftRoot, 'repair draft');
+    const directory = ensureControllerSubdirectory(
+      siteDirectory,
+      safeDraftSegment(pageId, 'unknown-page'),
+      resolvedDraftRoot,
+      'repair draft',
+    );
     const draftFile = join(directory, `${safeDraftSegment(attemptId, 'attempt')}.md`);
     if (existsSync(draftFile) && lstatSync(draftFile).isSymbolicLink()) {
       throw new Error('controller repair draft must not be a symlink');

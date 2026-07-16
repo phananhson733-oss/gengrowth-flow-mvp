@@ -6,6 +6,7 @@ import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  readdirSync,
   realpathSync,
   rmSync,
   symlinkSync,
@@ -261,6 +262,31 @@ test('controller draft materialization rejects a pre-existing symlink before any
   assert.equal(result.ok, false);
   assert.match(result.reason, /symlink|outside|regular file/i);
   assert.equal(readFileSync(outsideTarget, 'utf8'), '# outside target\n');
+});
+
+test('controller draft materialization rejects a symlinked parent without creating anything outside', (t) => {
+  const root = mkdtempSync(join(tmpdir(), 'seo-repair-draft-parent-'));
+  const outside = mkdtempSync(join(tmpdir(), 'seo-repair-draft-parent-outside-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  t.after(() => rmSync(outside, { recursive: true, force: true }));
+  const source = join(root, 'PG-CELEB-057-en.md');
+  const draftRoot = join(root, 'state', 'seo-repair-drafts');
+  mkdirSync(draftRoot, { recursive: true });
+  writeFileSync(source, '# source draft\n');
+  symlinkSync(outside, join(draftRoot, 'astrologywiki'), 'dir');
+
+  const before = readdirSync(outside);
+  const result = astrologyAdapter.ensureAstrologyRepairDraft({
+    sourceFile: source,
+    draftRoot,
+    site: 'astrologywiki',
+    pageId: 'PG-CELEB-057',
+    attemptId: 'event-057',
+  });
+
+  assert.equal(result.ok, false);
+  assert.match(result.reason, /symlink|outside|escape/i);
+  assert.deepEqual(readdirSync(outside), before);
 });
 
 test('controller draft snapshot is durable per attempt and never overwritten by later live staging drift', (t) => {

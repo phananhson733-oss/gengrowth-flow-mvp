@@ -51,7 +51,7 @@
 //        [--codex-timeout-ms n] [--status-timeout-ms n]
 
 import { spawn, spawnSync } from 'node:child_process';
-import { join } from 'node:path';
+import { join, relative } from 'node:path';
 import { homedir } from 'node:os';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -113,15 +113,24 @@ export function bins() {
 }
 
 // ── gate-side surgical repair (GG_GATE_REPAIR=0 disables) ─────────────────────
-// One attempt per dimension at the park boundary. gg-gate-repair.mjs returns structured
-// old/new edits for the failing article .ts; we apply them deterministically, commit +
-// push the branch (so the re-run's review reads the fixed .ts and codex reads the fixed PR
-// diff), then signal the caller to re-run the dimension. A repair that makes things worse
-// is still caught by the re-run → park. Text-only + surgical worker; every edit's old_string
-// is re-validated unique before apply; ANY failure reverts the worktree to a clean state.
+// gg-gate-repair.mjs returns structured old/new edits for the failing article .ts; we apply
+// them deterministically, commit + push, then invalidate the entire previous gate round.
+// Cleanup is scoped to the one controlled article file. A failed push keeps the local commit
+// as evidence and fails closed; this function never rewrites history or uses reset --hard.
 const GATE_REPAIR_TIMEOUT_MS = parseInt(process.env.GG_GATE_REPAIR_TIMEOUT_MS || '450000', 10);
 
-export async function tryGateRepair({ dim, reason, articleTs, draftMd, worktree, branch, node, B, log }) {
+export async function tryGateRepair({
+  dim,
+  reason,
+  articleTs,
+  draftMd,
+  worktree,
+  branch,
+  expectedHead,
+  node,
+  B,
+  log,
+}) {
   // DEFAULT-ON: one surgical repair attempt at the park boundary before needs_human.
   // Set GG_GATE_REPAIR=0 to disable (roll back to park-immediately).
   if (process.env.GG_GATE_REPAIR === '0') return false;
@@ -137,24 +146,53 @@ export async function tryGateRepair({ dim, reason, articleTs, draftMd, worktree,
   try { out = JSON.parse(lastJsonLine(rr.stdout)); } catch { log(`repair[${dim}]: unparseable worker output — skip`); return false; }
   const edits = Array.isArray(out && out.edits) ? out.edits : [];
   if (!edits.length) { log(`repair[${dim}]: ${(out && out.note) || 'no edits'} — skip`); return false; }
+  const git = (args) => spawnSync('git', ['-C', worktree, ...args], {
+    encoding: 'utf8',
+    timeout: 60000,
+  });
+  const beforeHead = String(git(['rev-parse', 'HEAD']).stdout || '').trim();
+  if (!HEAD_REF_OID_RE.test(beforeHead) || (expectedHead && beforeHead !== expectedHead)) {
+    return {
+      applied: false,
+      reason: `repair worktree head ${beforeHead || '?'} does not match reviewed head ${expectedHead || '?'}`,
+    };
+  }
+  const dirty = String(git(['status', '--porcelain=v1', '--untracked-files=normal']).stdout || '').trim();
+  if (dirty) {
+    return { applied: false, reason: 'repair worktree has uncommitted changes; refusing mutation' };
+  }
   let content;
   try { content = readFileSync(articleTs, 'utf8'); } catch { log(`repair[${dim}]: read failed — skip`); return false; }
+  const originalContent = content;
   for (const e of edits) {
     if (!e || typeof e.old_string !== 'string' || typeof e.new_string !== 'string') { log(`repair[${dim}]: malformed edit — abort`); return false; }
     if ((content.split(e.old_string).length - 1) !== 1) { log(`repair[${dim}]: edit not uniquely present — abort`); return false; }
     content = content.replace(e.old_string, e.new_string);
   }
-  const git = (a) => spawnSync('git', ['-C', worktree, ...a], { encoding: 'utf8', timeout: 60000 });
   try { writeFileSync(articleTs, content); } catch { log(`repair[${dim}]: write failed — abort`); return false; }
-  git(['add', articleTs]);
+  const articlePathspec = relative(worktree, articleTs);
+  git(['add', '--', articlePathspec]);
   const cm = git(['commit', '-m', `fix(gate-repair): ${dim} — ${String((out && out.note) || 'surgical').slice(0, 72)}`]);
-  // reset --hard HEAD (NOT `checkout -- <file>`, which restores from the index = the staged edit = a no-op):
-  // unstage + restore the worktree so a commit failure leaves a clean state (the file's invariant).
-  if (cm.status !== 0) { log(`repair[${dim}]: git commit failed — abort`); git(['reset', '--hard', 'HEAD']); return false; }
+  if (cm.status !== 0) {
+    log(`repair[${dim}]: git commit failed — restoring only ${articlePathspec}`);
+    const unstage = git(['restore', '--staged', '--', articlePathspec]);
+    if (unstage.status === 0) {
+      try { writeFileSync(articleTs, originalContent); } catch {}
+    }
+    return { applied: false, reason: `repair commit failed: ${tail(cm.stderr) || `exit ${cm.status}`}` };
+  }
+  const newHead = String(git(['rev-parse', 'HEAD']).stdout || '').trim();
   const pu = git(['push', 'origin', branch]);
-  if (pu.status !== 0) { log(`repair[${dim}]: git push failed — abort`); git(['reset', '--hard', 'HEAD~1']); return false; }
-  log(`repair[${dim}]: applied ${edits.length} edit(s) + pushed — re-running ${dim}`);
-  return true;
+  if (pu.status !== 0) {
+    log(`repair[${dim}]: git push failed — local commit ${newHead.slice(0, 8)} retained as evidence`);
+    return {
+      applied: false,
+      headRefOid: newHead,
+      reason: `repair push failed; local commit ${newHead} retained: ${tail(pu.stderr) || `exit ${pu.status}`}`,
+    };
+  }
+  log(`repair[${dim}]: applied ${edits.length} edit(s) + pushed ${newHead.slice(0, 8)} — starting a new full gate round`);
+  return { applied: true, headRefOid: newHead };
 }
 
 // ── arg parsing ───────────────────────────────────────────────────────────────
@@ -270,7 +308,7 @@ export function articlePaths(pgId, claim) {
     || join(worktreeRoot, String(claim.branch || '').replace(/[^A-Za-z0-9._-]+/g, '__'));
   const articleTs = join(worktree, 'data', 'articles', `${claim.slug}.ts`);
   const draftMd = join(FLOW, '_staging', `${pgId}-en.md`);
-  return { articleTs, draftMd };
+  return { worktree, articleTs, draftMd };
 }
 
 // Codex verdict classifier. Best-effort: only a COMPLETED run that prints `VERDICT: FAIL`
@@ -314,6 +352,120 @@ export async function resolveBranchHead(branch, repo, deps = {}) {
   return headRefOid || null;
 }
 
+export async function inspectReviewedWorktree(worktree, reviewedHeadRefOid, deps = {}) {
+  if (typeof deps.inspectReviewedWorktree === 'function') {
+    return deps.inspectReviewedWorktree(worktree, reviewedHeadRefOid);
+  }
+  if (!worktree) return { ok: false, reason: 'review worktree is required' };
+  const git = (args) => spawnSync('git', ['-C', worktree, ...args], {
+    encoding: 'utf8',
+    timeout: DEFAULTS.statusTimeoutMs,
+  });
+  const head = git(['rev-parse', 'HEAD']);
+  if (head.status !== 0) {
+    return { ok: false, reason: `review worktree HEAD unavailable: ${tail(head.stderr) || `exit ${head.status}`}` };
+  }
+  const headRefOid = String(head.stdout || '').trim();
+  if (headRefOid !== reviewedHeadRefOid) {
+    return {
+      ok: false,
+      headRefOid,
+      reason: `review worktree HEAD mismatch: ${headRefOid || '?'} != ${reviewedHeadRefOid}`,
+    };
+  }
+  const status = git(['status', '--porcelain=v1', '--untracked-files=normal']);
+  if (status.status !== 0) {
+    return { ok: false, headRefOid, reason: `review worktree status unavailable: ${tail(status.stderr)}` };
+  }
+  const porcelain = String(status.stdout || '').trim();
+  if (porcelain) {
+    return {
+      ok: false,
+      headRefOid,
+      dirty: true,
+      reason: `review worktree has uncommitted changes: ${porcelain.split('\n')[0]}`,
+    };
+  }
+  return { ok: true, headRefOid, dirty: false };
+}
+
+function normalizePreviewUrl(value) {
+  return String(value || '').replace(/\/+$/, '');
+}
+
+export async function verifyPreviewBinding({
+  previewUrl,
+  branch,
+  repo,
+  reviewedHeadRefOid,
+}, deps = {}) {
+  if (typeof deps.verifyPreviewBinding === 'function') {
+    return deps.verifyPreviewBinding({ previewUrl, branch, repo, reviewedHeadRefOid });
+  }
+  const gh = async (args) => runStep('gh', args, {
+    timeoutMs: DEFAULTS.statusTimeoutMs,
+  }, deps);
+  const targetUrl = normalizePreviewUrl(previewUrl);
+  const deployments = await gh(['api', `repos/${repo}/deployments?ref=${encodeURIComponent(branch)}`]);
+  if (deployments.code === 0) {
+    const rows = safeJson(deployments.stdout);
+    if (Array.isArray(rows)) {
+      const matching = rows.filter((row) => String(row?.sha || '') === reviewedHeadRefOid);
+      for (const deployment of matching) {
+        const statuses = await gh(['api', `repos/${repo}/deployments/${deployment.id}/statuses`]);
+        const statusRows = statuses.code === 0 ? safeJson(statuses.stdout) : null;
+        if (Array.isArray(statusRows) && statusRows.some((status) => (
+          String(status?.state || '').toLowerCase() === 'success'
+          && [status?.environment_url, status?.target_url]
+            .map(normalizePreviewUrl)
+            .includes(targetUrl)
+        ))) {
+          return { ok: true, method: 'github-deployment', deploymentId: deployment.id };
+        }
+      }
+      if (rows.length > 0) {
+        return {
+          ok: false,
+          reason: `preview deployment is not bound to reviewed head ${reviewedHeadRefOid}`,
+        };
+      }
+    }
+  }
+
+  const statusResult = await gh(['api', `repos/${repo}/commits/${reviewedHeadRefOid}/status`]);
+  const statusJson = statusResult.code === 0 ? safeJson(statusResult.stdout) : null;
+  const statuses = Array.isArray(statusJson?.statuses) ? statusJson.statuses : [];
+  const vercelReady = statuses.some((status) => (
+    String(status?.context || '').toLowerCase().includes('vercel')
+    && String(status?.state || '').toLowerCase() === 'success'
+  ));
+  if (!vercelReady) {
+    return {
+      ok: false,
+      reason: `reviewed head ${reviewedHeadRefOid} has no successful Vercel commit status`,
+    };
+  }
+  const pullsResult = await gh(['api', `repos/${repo}/commits/${reviewedHeadRefOid}/pulls`]);
+  const pulls = pullsResult.code === 0 ? safeJson(pullsResult.stdout) : null;
+  const prNumber = Array.isArray(pulls) ? pulls.find((pr) => pr?.number)?.number : null;
+  if (!prNumber) {
+    return { ok: false, reason: `reviewed head ${reviewedHeadRefOid} has no PR for preview binding` };
+  }
+  const commentsResult = await gh(['api', `repos/${repo}/issues/${prNumber}/comments`, '--paginate']);
+  const comments = commentsResult.code === 0 ? safeJson(commentsResult.stdout) : null;
+  const vercelComment = Array.isArray(comments) && comments.some((comment) => (
+    /vercel/i.test(String(comment?.user?.login || ''))
+    && String(comment?.body || '').includes(previewUrl)
+  ));
+  if (!vercelComment) {
+    return {
+      ok: false,
+      reason: `preview URL is not evidenced by Vercel for reviewed head ${reviewedHeadRefOid}`,
+    };
+  }
+  return { ok: true, method: 'vercel-commit-status-and-comment', prNumber };
+}
+
 async function runFullGateRound({
   o,
   B,
@@ -322,11 +474,14 @@ async function runFullGateRound({
   articleTs,
   draftMd,
   previewUrl,
+  previewBinding,
   reviewedHeadRefOid,
   repairRound,
   log,
 }) {
-  const checks = {};
+  const checks = {
+    preview_binding: previewBinding,
+  };
   let failure = null;
   const noteFailure = (candidate) => {
     if (!failure) failure = candidate;
@@ -441,6 +596,12 @@ export async function runGate(o, deps = {}) {
     ? ((branch, repo) => deps.resolveBranchHead(branch, repo))
     : ((branch, repo) => resolveBranchHead(branch, repo, deps));
   const repair = deps.tryGateRepair || tryGateRepair;
+  const inspectWorktree = deps.inspectReviewedWorktree
+    ? ((worktree, head) => deps.inspectReviewedWorktree(worktree, head))
+    : ((worktree, head) => inspectReviewedWorktree(worktree, head, deps));
+  const bindPreview = deps.verifyPreviewBinding
+    ? ((input) => deps.verifyPreviewBinding(input))
+    : ((input) => verifyPreviewBinding(input, deps));
   const plan = [];
   const log = (line) => plan.push(line);
 
@@ -477,38 +638,12 @@ export async function runGate(o, deps = {}) {
     };
   }
 
-  const { articleTs, draftMd } = articlePaths(pgId, claim);
+  const { worktree, articleTs, draftMd } = articlePaths(pgId, claim);
   log(`claim: pgId=${pgId} slug=${claim.slug} status=${claim.status}`);
-
-  // (2) preview URL: reuse stored on verified-preview, else preview-wait.
-  let previewUrl = null;
-  if (claim.status === 'verified-preview' && claim.previewUrl) {
-    previewUrl = claim.previewUrl;
-    log(`preview: status=verified-preview → REUSE stored previewUrl ${previewUrl} (skip preview-wait)`);
-  } else {
-    log(`preview: node ${B.previewWait} --branch ${o.branch} --repo ${o.repo} --json (timeout ${o.previewTimeoutMs}ms)`);
-    if (!o.dryRun) {
-      const wr = await node(B.previewWait,
-        ['--branch', o.branch, '--repo', o.repo, '--timeout-ms', String(o.previewTimeoutMs), '--json'],
-        { timeoutMs: o.previewTimeoutMs + 5000 });
-      if (wr.timedOut) {
-        return gateFail(o, B, deps, pgId, claim, 'preview-wait: hard timeout', plan);
-      }
-      const parsed = safeJson(lastJsonLine(wr.stdout));
-      if (wr.code !== 0 || !parsed || !parsed.ok || !parsed.previewUrl) {
-        const reason = parsed && parsed.reason ? parsed.reason : tail(wr.stderr) || `exit ${wr.code}`;
-        return gateFail(o, B, deps, pgId, claim, `preview-wait failed: ${reason}`, plan);
-      }
-      previewUrl = parsed.previewUrl;
-      log(`preview: resolved previewUrl ${previewUrl}`);
-    } else {
-      previewUrl = '<resolved-by-preview-wait>';
-    }
-  }
 
   if (o.dryRun) {
     log('round[dry-run]: WOULD resolve immutable PR head and run chrome + all reviewers + codex on that SHA');
-    log(`final: WOULD mark-verified --branch ${o.branch} --preview-url ${previewUrl} --head-ref-oid <reviewed-sha>`);
+    log(`final: WOULD mark-verified --branch ${o.branch} --preview-url <sha-bound-preview> --head-ref-oid <reviewed-sha>`);
     log(`final: WOULD merge --branch ${o.branch}`);
     return { exitCode: EXIT.PUBLISHED, plan, action: 'WOULD mark-verified + merge', reason: 'dry-run' };
   }
@@ -533,6 +668,50 @@ export async function runGate(o, deps = {}) {
     }
     log(`round[${repairRound}]: pinned head ${reviewedHeadRefOid}`);
 
+    const worktreeState = await inspectWorktree(worktree, reviewedHeadRefOid);
+    if (!worktreeState?.ok) {
+      return gateFail(o, B, deps, pgId, claim,
+        worktreeState?.reason || 'review worktree is not pinned and clean', plan);
+    }
+
+    let previewUrl = null;
+    const canReuseStoredPreview = repairRound === 0
+      && claim.status === 'verified-preview'
+      && claim.previewUrl
+      && claim.headRefOid === reviewedHeadRefOid;
+    if (canReuseStoredPreview) {
+      previewUrl = claim.previewUrl;
+      log(`round[${repairRound}] preview: reuse stored URL bound to claim head ${reviewedHeadRefOid.slice(0, 8)}`);
+    } else {
+      log(`round[${repairRound}] preview: wait for deployment of ${reviewedHeadRefOid.slice(0, 8)}`);
+      const wr = await node(B.previewWait, [
+        '--branch', o.branch,
+        '--repo', o.repo,
+        '--timeout-ms', String(o.previewTimeoutMs),
+        '--head-ref-oid', reviewedHeadRefOid,
+        '--json',
+      ], { timeoutMs: o.previewTimeoutMs + 5000 });
+      if (wr.timedOut) {
+        return gateFail(o, B, deps, pgId, claim, 'preview-wait: hard timeout', plan);
+      }
+      const parsed = safeJson(lastJsonLine(wr.stdout));
+      if (wr.code !== 0 || !parsed || !parsed.ok || !parsed.previewUrl) {
+        const reason = parsed && parsed.reason ? parsed.reason : tail(wr.stderr) || `exit ${wr.code}`;
+        return gateFail(o, B, deps, pgId, claim, `preview-wait failed: ${reason}`, plan);
+      }
+      previewUrl = parsed.previewUrl;
+    }
+    const previewBinding = await bindPreview({
+      previewUrl,
+      branch: o.branch,
+      repo: o.repo,
+      reviewedHeadRefOid,
+    });
+    if (!previewBinding?.ok) {
+      return gateFail(o, B, deps, pgId, claim,
+        previewBinding?.reason || `preview URL is not bound to reviewed head ${reviewedHeadRefOid}`, plan);
+    }
+
     const outcome = await runFullGateRound({
       o,
       B,
@@ -541,6 +720,7 @@ export async function runGate(o, deps = {}) {
       articleTs,
       draftMd,
       previewUrl,
+      previewBinding,
       reviewedHeadRefOid,
       repairRound,
       log,

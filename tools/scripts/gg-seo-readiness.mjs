@@ -218,16 +218,23 @@ export async function evaluateSeoReadiness({
   }
   catch (error) { errors.push(`claims: ${error.message}`); }
   let eligibleNeedsHumanAfter = 0;
+  let activeClaimAfter = 0;
   let expiredClaimLeases = 0;
   for (const [pageId, claim] of Object.entries(claims)) {
     try {
       plainObject(claim, `claim ${pageId}`);
       if (!plan.ids.has(pageId) || !claimMatchesSite(claim, site)) continue;
       if (claim.status === 'needs_human') eligibleNeedsHumanAfter += 1;
-      if (ACTIVE_CLAIMS.has(claim.status)
-        && claim.leaseUntil
-        && Date.parse(claim.leaseUntil) <= now.getTime()) {
-        expiredClaimLeases += 1;
+      if (ACTIVE_CLAIMS.has(claim.status)) {
+        activeClaimAfter += 1;
+        if (claim.leaseUntil) {
+          if (!Number.isFinite(Date.parse(claim.leaseUntil))) {
+            errors.push(`claim ${pageId}: lease timestamp invalid`);
+            expiredClaimLeases += 1;
+          } else if (Date.parse(claim.leaseUntil) <= now.getTime()) {
+            expiredClaimLeases += 1;
+          }
+        }
       }
     } catch (error) {
       errors.push(`claim ${pageId}: ${error.message}`);
@@ -254,7 +261,10 @@ export async function evaluateSeoReadiness({
     runId,
     ...strict,
     planUncheckedAfter: Math.max(strict.planUncheckedAfter, plan.unchecked.size),
-    activeRepairAfter: Math.max(strict.activeRepairAfter, queue.activeRepairAfter),
+    activeRepairAfter: Math.max(
+      strict.activeRepairAfter,
+      queue.activeRepairAfter + activeClaimAfter,
+    ),
     expiredLeasesAfter: Math.max(
       strict.expiredLeasesAfter,
       queue.expiredLeasesAfter + expiredClaimLeases,

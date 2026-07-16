@@ -288,7 +288,7 @@ async function defaultApply({ apply, log }) {
   if (planChecked && apply) summary.push(`plan 补勾 ${planChecked} 项`);
 
   let sheetChecked = 0;
-  if (apply) {
+  if (apply && blogPlanFiles().length > 0) {
     try {
       const serviceAccount = process.env.GG_WRITER_SA_JSON
         || join(HOME, '.config', 'gg', 'gg-writer-sa.json');
@@ -302,6 +302,7 @@ async function defaultApply({ apply, log }) {
   }
   log(`4b. plan-sweep(sheet-driven): checked=${sheetChecked}`);
   if (sheetChecked) summary.push(`plan 补勾(无claim已上线) ${sheetChecked} 项`);
+  for (const error of errors) summary.push(`⚠️${error}`);
   return { errors, summary, claims };
 }
 

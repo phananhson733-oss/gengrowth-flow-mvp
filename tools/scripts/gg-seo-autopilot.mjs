@@ -62,7 +62,7 @@ import { slugifyPageId } from './gg-sheet-pull.mjs';
 import { illustrate } from './lib/illustrate.mjs';
 import { keywordLiveSlug } from './lib/oracle-live.mjs';
 import { notify } from './lib/gg-notify.mjs';
-import { unionMergeIntoWorktree, looksLikeMergeConflict } from './lib/merge-union.mjs';
+import { unionMergeIntoWorktree } from './lib/merge-union.mjs';
 import { backfillOnLive, enqueueWriteback } from './lib/backfill-tx.mjs';
 import { classifyPark } from './lib/park-classify.mjs';
 import { stateDir } from './lib/flow-state.mjs';
@@ -1183,7 +1183,7 @@ function publishOne(o, t) {
   log(`PUSHED preview ${branch} PR=${prUrl} — awaiting codex+chrome verify, then --merge`);
 }
 
-// ── 发布 merge 的 union 自愈（阶段 3 · 串行发布强制）───────────────────────────
+// ── Legacy union helper (not callable from a verified merge) ─────────────────
 // oracle merge 已被 CLAIMS_LOCK 串行化，唯一残余失败模式是"陈旧分支"：它从较旧 origin/main 切出，
 // 期间落地的 merge 追加了同样的两个注册文件（data/articles/index.ts + scripts/generate-seo-pages.mjs）
 // → `gh pr merge` 冲突 → 历史上 park 成 needs_human，靠人手动 `git merge origin/main` + union-merge 清。
@@ -1288,9 +1288,9 @@ function unionRebaseBranch(branch, slug, expectedHead) {
   }
 }
 
-// 合并一个已 verified-preview 的分支到 main。快路径：GitHub 报可干净合并时 pin reviewed head 直接合并
-// （--match-head-commit：PR head 自 --mark-verified 后若被 push 移动则拒绝合并，防 ship 未评审/被篡改
-// 代码到 prod；旧 claim 无此字段则 unpinned 合并，向后兼容）。冲突（陈旧分支撞注册文件）→ union 自愈。
+// 合并一个已 verified-preview 的分支到 main。当前 PR head 必须仍等于 reviewed head，
+// 且 gh merge 永远携带 --match-head-commit。任何冲突/rebase 都会产生新 commit，因此这里
+// fail closed；调用方必须先修复并在新 SHA 上重跑完整 gate，禁止 verified 后 union self-heal。
 function mergeVerifiedBranch(branch, claim) {
   if (!HEAD_REF_OID_RE.test(String(claim.headRefOid || ''))) {
     throw new Error(`refusing merge for ${branch}: verified claim is missing a valid 40-hex headRefOid`);
@@ -1332,9 +1332,8 @@ function doMerge(o) {
     if (!HEAD_REF_OID_RE.test(String(claim.headRefOid || ''))) {
       throw new Error(`refusing merge for ${o.branch}: verified claim is missing a valid 40-hex headRefOid`);
     }
-    // 串行发布 + union 自愈（阶段 3）：快路径 pin reviewed head 用 gh 合并（PR 干净关闭，Vercel
-    // 部署 main → prod）；陈旧分支撞两个注册文件时，自动 union-rebase 到最新 main、再验后合并。
-    // CLAIMS_LOCK 已保证同一时刻只有一个 merge 临界区，本函数把"碰巧不冲突"变"冲突也能确定性自愈"。
+    // 串行发布：只允许当前 PR head 与 reviewed head 完全一致，并使用 GitHub CAS pin 合并。
+    // 冲突处理会产生新 SHA，必须退出后重新走完整 gate，不能在 verified 状态内自愈。
     mergeVerifiedBranch(o.branch, claim);
     // GitHub merge 是不可逆的发布语义点。必须在任何本地 cleanup/sync 之前先落回填 WAL；否则
     // baseline 含用户改动而拒绝 sync 时，会出现“线上已发布，但 Sheet/plan/vault 没有续跑入口”。

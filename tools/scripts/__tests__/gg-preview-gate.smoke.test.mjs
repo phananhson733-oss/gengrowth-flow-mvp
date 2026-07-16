@@ -123,6 +123,28 @@ function fakeEnv({ dir, sentinelsDir, statusJson, reviewBin, verifyExit = 0, ver
   });
   writeNodeFake(dir, 'gh', {
     sentinelName: 'branch-head', sentinelsDir,
+    dispatch: [
+      {
+        match: 'api repos/xdawayer/oracle/deployments?ref=',
+        stdout: JSON.stringify([{ id: 1, sha: HEAD_A }]),
+        exit: 0,
+      },
+      {
+        match: 'api repos/xdawayer/oracle/deployments/1/statuses',
+        stdout: JSON.stringify([
+          { state: 'success', environment_url: 'https://stored-preview.example.test' },
+          { state: 'success', environment_url: 'https://preview.example.test' },
+        ]),
+        exit: 0,
+      },
+    ],
+    stdout: HEAD_A, exit: 0,
+  });
+  writeNodeFake(dir, 'git', {
+    sentinelName: 'review-worktree', sentinelsDir,
+    dispatch: [
+      { match: 'status --porcelain=v1 --untracked-files=normal', stdout: '', exit: 0 },
+    ],
     stdout: HEAD_A, exit: 0,
   });
   const env = {
@@ -197,13 +219,15 @@ function gateRoundFixture({
   heads,
   reviewVerdicts = {},
   repairResult = { applied: true },
+  worktreeInspection,
+  previewBinding,
 } = {}) {
   const calls = [];
   const headQueue = [...heads];
   const verdictQueues = Object.fromEntries(
     Object.entries(reviewVerdicts).map(([dimension, verdicts]) => [dimension, [...verdicts]]),
   );
-  const statusJson = CLAIM_VERIFIED();
+  const statusJson = CLAIM_VERIFIED({ headRefOid: HEAD_A });
   const bins = {
     autopilot: 'autopilot',
     previewWait: 'preview-wait',
@@ -280,6 +304,12 @@ function gateRoundFixture({
       bins,
       node,
       resolveBranchHead: async () => headQueue.shift() ?? null,
+      inspectReviewedWorktree: async (_worktree, reviewedHeadRefOid) => (
+        worktreeInspection || { ok: true, headRefOid: reviewedHeadRefOid, dirty: false }
+      ),
+      verifyPreviewBinding: async () => (
+        previewBinding || { ok: true, method: 'fixture-deployment-binding' }
+      ),
       tryGateRepair: async () => repairResult,
     },
   };
@@ -288,7 +318,8 @@ function gateRoundFixture({
 const CLAIM_VERIFIED = (extra = {}) => JSON.stringify({
   'PG-001': {
     branch: BRANCH, slug: 'chiron-in-7th-house', status: 'verified-preview',
-    previewUrl: 'https://stored-preview.example.test', zh: false, worktree: '/tmp/wt', pr: '123',
+    previewUrl: 'https://stored-preview.example.test', headRefOid: HEAD_A,
+    zh: false, worktree: '/tmp/wt', pr: '123',
     ...extra,
   },
 });
@@ -751,6 +782,39 @@ test('a repair that reports success without changing branch head stops as no pro
   assert.equal(fixture.callsFor('chrome').length, 1);
   assert.equal(fixture.markVerifiedCalls().length, 0);
   assert.equal(fixture.mergeCalls().length, 0);
+});
+
+test('a gate round rejects a dirty or wrong-head local review worktree before Chrome', async () => {
+  for (const worktreeInspection of [
+    { ok: false, headRefOid: HEAD_B, dirty: false, reason: 'worktree HEAD mismatch' },
+    { ok: false, headRefOid: HEAD_A, dirty: true, reason: 'worktree has uncommitted changes' },
+  ]) {
+    const fixture = gateRoundFixture({ heads: [HEAD_A], worktreeInspection });
+    const result = await runGate(fixture.options, fixture.deps);
+    assert.equal(result.exitCode, 2);
+    assert.match(result.reason, /worktree.*(mismatch|uncommitted|dirty)/i);
+    assert.equal(fixture.callsFor('chrome').length, 0);
+    assert.equal(fixture.markVerifiedCalls().length, 0);
+    assert.equal(fixture.mergeCalls().length, 0);
+  }
+});
+
+test('a preview without deployment evidence for the reviewed SHA fails closed before Chrome', async () => {
+  const fixture = gateRoundFixture({
+    heads: [HEAD_A],
+    previewBinding: { ok: false, reason: 'preview URL is not bound to reviewed head' },
+  });
+  const result = await runGate(fixture.options, fixture.deps);
+  assert.equal(result.exitCode, 2);
+  assert.match(result.reason, /preview.*(bound|head|sha)/i);
+  assert.equal(fixture.callsFor('chrome').length, 0);
+  assert.equal(fixture.markVerifiedCalls().length, 0);
+  assert.equal(fixture.mergeCalls().length, 0);
+});
+
+test('gate repair cleanup never uses destructive git reset --hard', () => {
+  const source = readFileSync(SCRIPT, 'utf8');
+  assert.doesNotMatch(source, /git\(\['reset', '--hard'/);
 });
 
 test('cleanup', () => {

@@ -274,15 +274,19 @@ test('import-v1 validates explicit run ids and keeps unchanged same-run legacy c
   assert.equal(invalid.status, 2);
   assert.match(h.json(invalid).error, /run-id/i);
 
-  const args = [
+  const firstArgs = [
     'import-v1', '--site', 'gengrowth', '--claims', claims, '--plan', plan,
     '--log-file', log, '--log-offset', '7', '--run-id', 'gengrowth-author-20260716T100000Z-7',
     '--no-drain',
   ];
-  const first = h.run(args);
+  const first = h.run(firstArgs);
   assert.equal(first.status, 0, `${first.stdout}\n${first.stderr}`);
   assert.equal(h.json(first).imported, 1);
-  const second = h.run(args);
+  const second = h.run([
+    'import-v1', '--site', 'gengrowth', '--claims', claims, '--plan', plan,
+    '--log-file', log, '--log-offset', '7', '--run-id', 'gengrowth-author-20260716T103000Z-8',
+    '--run-exit', '2', '--no-drain',
+  ]);
   assert.equal(second.status, 0, `${second.stdout}\n${second.stderr}`);
   assert.equal(h.json(second).imported, 0);
 
@@ -290,6 +294,7 @@ test('import-v1 validates explicit run ids and keeps unchanged same-run legacy c
   assert.equal(records.length, 1);
   assert.equal(records[0].event.pageId, 'PG-WLS-007');
   assert.equal(records[0].observations, 1);
+  assert.equal(records[0].windowCount, 1);
   assert.equal(records[0].event.runId, 'gengrowth-author-20260716T100000Z-7');
   assert.equal(records[0].event.logOffsetStart, 7);
 });

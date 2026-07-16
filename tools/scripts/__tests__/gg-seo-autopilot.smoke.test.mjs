@@ -255,6 +255,21 @@ if (${renderRequiresSearchVolume ? 'true' : 'false'} && overrides) {
     process.exit(0);
   }
 }
+
+function writeStubAuthorParkFlow(h) {
+  const flow = join(h.root, 'flow-author-park');
+  const scripts = join(flow, 'tools', 'scripts');
+  mkdirSync(scripts, { recursive: true });
+  writeFileSync(join(scripts, 'gg-sheet-pull.mjs'), `#!/usr/bin/env node
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { dirname } from 'node:path';
+const args = process.argv.slice(2);
+const out = args[args.indexOf('--out') + 1];
+mkdirSync(dirname(out), { recursive: true });
+writeFileSync(out, JSON.stringify({ rows: [] }));
+`);
+  return flow;
+}
 mkdirSync('.gg-cache/prompts', { recursive: true });
 const suffix = isZh ? '.zh' : '';
 writeFileSync('.gg-cache/prompts/PG-TEST-001.v8' + suffix + '-prompt.md', '# prompt\\n\\nbody');
@@ -449,6 +464,54 @@ test('--mark-failed async controller rejection reaches the fatal handler after d
     const queue = join(h.root, 'state', 'seo-repair-queue');
     const files = await (await import('node:fs/promises')).readdir(queue);
     assert.equal(files.filter((name) => name.endsWith('.json')).length, 1);
+  } finally {
+    h.cleanup();
+  }
+});
+
+test('--author park uses the active Gengrowth site and invokes repair only after releasing claims lock', async () => {
+  const h = makeHarness();
+  try {
+    const repair = writeFakeRepairController(h);
+    const flow = writeStubAuthorParkFlow(h);
+    const planName = '2026-07-16-gengrowth-blog-output-plan.md';
+    writeFileSync(join(h.tasks, planName), '- [ ] `PG-GJ2U-001` google july 2026 update\n');
+    writeClaims(h, {});
+
+    const parked = await runAutoAsync(h, [
+      '--author',
+      '--task',
+      'PG-GJ2U-001',
+      '--limit',
+      '1',
+    ], {
+      GG_FLOW_REPO: flow,
+      GG_AUTOPILOT_PLAN: planName,
+      GG_SITE: 'gengrowth',
+      GG_FLOW_STATE_DIR: join(h.root, 'state'),
+      GG_SEO_REPAIR_CONTROLLER_V2_ENABLED: '1',
+      GG_SEO_REPAIR_CONTROLLER_BIN: repair.file,
+      GG_TEST_REPAIR_CALLS: repair.calls,
+      GG_TEST_CLAIMS_LOCK: `${h.claimsPath}.lock`,
+    });
+
+    assert.equal(parked.status, 0, `${parked.stdout}${parked.stderr}`);
+    const queue = join(h.root, 'state', 'seo-repair-queue');
+    const names = await (await import('node:fs/promises')).readdir(queue);
+    const records = names
+      .filter((name) => name.endsWith('.json'))
+      .map((name) => JSON.parse(readFileSync(join(queue, name), 'utf8')));
+    assert.equal(records.length, 1);
+    const [record] = records;
+    assert.equal(record.event.site, 'gengrowth');
+    assert.equal(record.event.lane, 'author');
+    assert.match(record.event.runId, /^gengrowth-producer-/);
+    assert.deepEqual(record.event.canonicalRetry.slice(-3), [
+      '--retry-author',
+      '--task',
+      'PG-GJ2U-001',
+    ]);
+    assert.equal(readFileSync(repair.calls, 'utf8').trim().split('\n').length, 1);
   } finally {
     h.cleanup();
   }

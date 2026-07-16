@@ -41,18 +41,21 @@ set -uo pipefail
 export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FLOW="$(cd "$SCRIPT_DIR/../.." && pwd)"
-OPS="$HOME/gengrowth-ops/inbox/06-tasks/tasks"
-PLAN_NAME="2026-06-16-W25-gengrowth-blog-output-plan.md"
-PLAN="$OPS/$PLAN_NAME"
-LOCK="/tmp/gg-gengrowth-author.lock"
-LOG_DIR="$HOME/gengrowth-agents/cron-sync/gengrowth_author"
+OPS="${GG_GENGROWTH_OPS_TASKS_DIR:-$HOME/gengrowth-ops/inbox/06-tasks/tasks}"
+PLAN_NAME="${GG_GENGROWTH_PLAN_NAME:-2026-06-16-W25-gengrowth-blog-output-plan.md}"
+PLAN="${GG_GENGROWTH_PLAN:-$OPS/$PLAN_NAME}"
+LOCK="${GG_GENGROWTH_AUTHOR_LOCK:-/tmp/gg-gengrowth-author.lock}"
+LOG_DIR="${GG_GENGROWTH_AUTHOR_LOG_DIR:-$HOME/gengrowth-agents/cron-sync/gengrowth_author}"
 mkdir -p "$LOG_DIR"
 LOG="$LOG_DIR/$(date +%Y-%m-%d).log"
 AUTO="$SCRIPT_DIR/gg-seo-autopilot.mjs"
 NOTIFY="$SCRIPT_DIR/gg-notify.mjs"
 PUBLISH_TICK="$SCRIPT_DIR/gg-gengrowth-publish-tick.sh"
 AUTHOR_HANDOFF="$SCRIPT_DIR/gg-gengrowth-author-handoff.mjs"
-CLAIMS="$OPS/.autopilot-claims.json"
+CLAIMS="${GG_GENGROWTH_CLAIMS:-$OPS/.autopilot-claims.json}"
+PREFLIGHT="${GG_GENGROWTH_AUTHOR_PREFLIGHT_BIN:-$SCRIPT_DIR/gg-autopilot-preflight.mjs}"
+TIMEOUT_BIN="${GG_GENGROWTH_AUTHOR_TIMEOUT_BIN:-gtimeout}"
+REPAIR_CONTROLLER="${GG_SEO_REPAIR_CONTROLLER_BIN:-$SCRIPT_DIR/gg-seo-repair-controller.mjs}"
 
 # ── PID-liveness mutex (macOS has no flock; same robust pattern as gg-seo-author-tick) ──
 # Active only if the stored pid is alive AND its start-time matches — a RECYCLED pid can't wedge
@@ -82,14 +85,39 @@ ps -o lstart= -p $$ 2>/dev/null | tr -s ' ' > "$LOCK/start"
 # read here with only plist/caller env visible → silently ignored).
 set -a; . "$HOME/.config/gg/_gg.env" 2>/dev/null || true; set +a
 
-run_repair_controller() {
-  [ "${GG_SEO_REPAIR_CONTROLLER_V2_ENABLED:-0}" = "1" ] || return 0
-  [ -f "$CLAIMS" ] && [ -f "$PLAN" ] || return 0
-  node "$SCRIPT_DIR/gg-seo-repair-controller.mjs" import-v1 --site gengrowth \
-    --claims "$CLAIMS" --plan "$PLAN" --log-file "$LOG" --log-offset 0 \
-    --run-exit "${1:-0}" --max-targets "${GG_SEO_REPAIR_MAX_TARGETS:-2}" \
-    --budget-seconds "${GG_SEO_REPAIR_BUDGET_SECONDS:-900}" >> "$LOG" 2>&1 || true
+RUN_ID="gengrowth-author-$(date -u '+%Y%m%dT%H%M%SZ')-$$"
+LOG_OFFSET_START=0
+if [ -f "$LOG" ]; then
+  LOG_OFFSET_START="$(wc -c < "$LOG" | tr -d ' ')"
+fi
+FINALIZED=0
+
+finalize_repair() {
+  local rc="${1:-0}"
+  [ "$FINALIZED" -eq 0 ] || return "$rc"
+  FINALIZED=1
+  trap - EXIT INT TERM
+  if [ "${GG_SEO_REPAIR_CONTROLLER_V2_ENABLED:-0}" = "1" ] && [ -f "$CLAIMS" ] && [ -f "$PLAN" ]; then
+    if ! node "$REPAIR_CONTROLLER" import-v1 --site gengrowth \
+      --claims "$CLAIMS" --plan "$PLAN" --log-file "$LOG" --log-offset "$LOG_OFFSET_START" \
+      --run-id "$RUN_ID" --run-exit "$rc" --max-targets "${GG_SEO_REPAIR_MAX_TARGETS:-2}" \
+      --budget-seconds "${GG_SEO_REPAIR_BUDGET_SECONDS:-1500}" >> "$LOG" 2>&1; then
+      echo "$(date '+%F %T') repair import/drain failed for run $RUN_ID (original rc=$rc)" >> "$LOG"
+    fi
+  fi
+  rm -rf "$LOCK" 2>/dev/null
+  return "$rc"
 }
+
+on_exit() {
+  local rc=$?
+  finalize_repair "$rc"
+  exit "$rc"
+}
+
+trap 'on_exit' EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 # per-item hard cap DEFAULT 3600s: the author chain = orchestrator (≤30min) + multi-party review
 # (~10-15min), and phase2 writes the passing -en.md BEFORE review runs. A cap below that sum SIGKILLs
@@ -113,15 +141,15 @@ node "$NOTIFY" replay-outbox >/dev/null 2>&1 || true
 
 # gtimeout (coreutils) is REQUIRED — it's the per-item wall-clock cap. If absent, every fire would
 # author with no cap (or fail rc=127 → no draft → silent no-op). Fail loud instead of silently idling.
-if ! command -v gtimeout >/dev/null 2>&1; then
+if ! command -v "$TIMEOUT_BIN" >/dev/null 2>&1; then
   echo "$(date '+%F %T') gtimeout not on PATH — cannot cap authoring; skipping fire" >> "$LOG"
-  if [ "${GG_SEO_REPAIR_CONTROLLER_V2_ENABLED:-0}" = "1" ]; then run_repair_controller 2; else node "$NOTIFY" preflight_fail --lane gengrowth-author --log "$LOG" >/dev/null 2>&1 || true; fi
+  if [ "${GG_SEO_REPAIR_CONTROLLER_V2_ENABLED:-0}" != "1" ]; then node "$NOTIFY" preflight_fail --lane gengrowth-author --log "$LOG" >/dev/null 2>&1 || true; fi
   exit 2
 fi
 
 # Preflight — fail fast on a broken host before spending LLM budget (skip the slow live CLI smoke).
-if ! node "$SCRIPT_DIR/gg-autopilot-preflight.mjs" --skip-live-cli >> "$LOG" 2>&1; then
-  if [ "${GG_SEO_REPAIR_CONTROLLER_V2_ENABLED:-0}" = "1" ]; then run_repair_controller 2; else node "$NOTIFY" preflight_fail --lane gengrowth-author --log "$LOG"; fi
+if ! node "$PREFLIGHT" --skip-live-cli >> "$LOG" 2>&1; then
+  if [ "${GG_SEO_REPAIR_CONTROLLER_V2_ENABLED:-0}" != "1" ]; then node "$NOTIFY" preflight_fail --lane gengrowth-author --log "$LOG"; fi
   exit 2
 fi
 
@@ -138,7 +166,7 @@ export GG_REVIEW_REVISER_TIMEOUT_MS="${GG_REVIEW_REVISER_TIMEOUT_MS:-420000}"
 
 if [ -z "${GG_SHEETS_GENGROWTH_WORKBOOK_ID:-}" ]; then
   echo "$(date '+%F %T') GG_SHEETS_GENGROWTH_WORKBOOK_ID unset in _gg.env — cannot pull gengrowth briefs; skip" >> "$LOG"
-  if [ "${GG_SEO_REPAIR_CONTROLLER_V2_ENABLED:-0}" = "1" ]; then run_repair_controller 2; else node "$NOTIFY" preflight_fail --lane gengrowth-author --log "$LOG" >/dev/null 2>&1 || true; fi
+  if [ "${GG_SEO_REPAIR_CONTROLLER_V2_ENABLED:-0}" != "1" ]; then node "$NOTIFY" preflight_fail --lane gengrowth-author --log "$LOG" >/dev/null 2>&1 || true; fi
   exit 2
 fi
 
@@ -189,7 +217,7 @@ while IFS=$'\t' read -r pid kw; do
   node "$SCRIPT_DIR/gg-ensure-search-volume.mjs" --keyword "$kw" >> "$LOG" 2>&1 || true
 
   # author (Opus orchestrator, cwd-isolated worker). Leaves _staging/<pid>-en.md on PASS; parks on fail.
-  AOUT="$(gtimeout "$TICK_TIMEOUT" node "$AUTO" --author --task "$pid" --limit 1 2>&1)"; _rc=$?
+  AOUT="$("$TIMEOUT_BIN" "$TICK_TIMEOUT" node "$AUTO" --author --task "$pid" --limit 1 2>&1)"; _rc=$?
   printf '%s\n' "$AOUT" >> "$LOG"
 
   # Handoff is filesystem-driven and rc-independent. The shared helper owns the exact manifest-pass,
@@ -232,15 +260,13 @@ if [ "${GG_GENGROWTH_AUTHOR_AUTOPUBLISH:-1}" != "0" ] && [ "${PUBLISH_FOLLOWUP_I
     else
       rc=$?
       echo "$(date '+%F %T') publish follow-up: gg-gengrowth-publish-tick.sh exited rc=$rc — see $HOME/gengrowth-agents/cron-sync/gengrowth-publish/$(date +%Y-%m-%d).log" >> "$LOG"
-      if [ "${GG_SEO_REPAIR_CONTROLLER_V2_ENABLED:-0}" = "1" ]; then run_repair_controller "$rc"; else node "$NOTIFY" preflight_fail --lane gengrowth-publish --log "$LOG" >/dev/null 2>&1 || true; fi
+      if [ "${GG_SEO_REPAIR_CONTROLLER_V2_ENABLED:-0}" != "1" ]; then node "$NOTIFY" preflight_fail --lane gengrowth-publish --log "$LOG" >/dev/null 2>&1 || true; fi
     fi
   else
     echo "$(date '+%F %T') publish follow-up: missing $PUBLISH_TICK — cannot close publish loop" >> "$LOG"
-    if [ "${GG_SEO_REPAIR_CONTROLLER_V2_ENABLED:-0}" = "1" ]; then run_repair_controller 2; else node "$NOTIFY" preflight_fail --lane gengrowth-publish --log "$LOG" >/dev/null 2>&1 || true; fi
+    if [ "${GG_SEO_REPAIR_CONTROLLER_V2_ENABLED:-0}" != "1" ]; then node "$NOTIFY" preflight_fail --lane gengrowth-publish --log "$LOG" >/dev/null 2>&1 || true; fi
   fi
 fi
-
-run_repair_controller 0
 
 echo "$(date '+%F %T') gengrowth author tick end (attempted=$n)" >> "$LOG"
 node "$SCRIPT_DIR/gg-notify.mjs" heartbeat com.gengrowth.gengrowth-author >/dev/null 2>&1 || true  # 阶段5 lane 心跳

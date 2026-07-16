@@ -74,6 +74,7 @@ import { checkAntiHomogenization } from './lib/anti-homogenization.mjs';
 import { isValidAuthorId, normalizeAuthorId } from './lib/author-routing.mjs';
 import { authorityNamesFor } from './lib/authority-allowlist.mjs';
 import { loadPersona } from './lib/author-personas/loader.mjs';
+import { hasEnComparisonHeading } from './lib/phase2-heading-roles.mjs';
 import {
   resolveStructuralProfile,
 } from './lib/seo-structural-profile.mjs';
@@ -334,8 +335,7 @@ function buildEnH2Specs(ctx) {
   // matches presence so SC11 owns the casing verdict, not a double "missing H2").
   const introMatch = (d) => /^##\s+What\s+(Is|Are|is|are)\b/m.test(d);
   // Comparison: a real "X vs Y" / "X versus Y" / "How X Differs From Y" heading.
-  const comparisonMatch = (d) =>
-    /^##\s+[^\n]*\b(vs\.?|versus)\b/im.test(d) || /^##\s+How\s+[^\n]*\bDiffer/i.test(d);
+  const comparisonMatch = hasEnComparisonHeading;
   const introVariants = ctx.template === 'Pillar'
     ? [
         `## What Are ${ctx.entity}?`,

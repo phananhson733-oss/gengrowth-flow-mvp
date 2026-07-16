@@ -6,11 +6,15 @@ import { join } from 'node:path';
 
 import {
   acquireRepairLease,
+  compactRepairIncident,
   enqueueRepairEvent,
+  isActiveRepairStatus,
   listEligibleRepairEvents,
+  listRepairRecords,
   normalizeRepairEvidence,
   readRepairRecord,
   recoverExpiredLeases,
+  repairIncidentId,
   repairEventFingerprint,
   transitionRepairEvent,
   validateRepairEvent,
@@ -77,6 +81,48 @@ test('normalizes runtime noise while preserving stable factual evidence', () => 
   );
 });
 
+test('incident identity is stable for pages and lane-scoped for run failures', () => {
+  assert.equal(
+    repairIncidentId(event({ stage: 'authoring', lane: 'author' })),
+    repairIncidentId(event({ stage: 'backfill', lane: 'backfill' })),
+  );
+  assert.notEqual(
+    repairIncidentId(event({ pageId: 'RUN', lane: 'author' })),
+    repairIncidentId(event({ pageId: 'RUN', lane: 'publish' })),
+  );
+});
+
+test('growing cumulative stderr remains one active incident', async (t) => {
+  const { queueDir } = await fixture(t);
+  const first = event({ eventId: 'e1', stderr: 'authoring failed\n' });
+  const second = event({
+    eventId: 'e2',
+    stderr: 'authoring failed\nnew unrelated tick output\n',
+    createdAt: '2026-07-15T13:31:00.000Z',
+  });
+  assert.equal(repairEventFingerprint(first), repairEventFingerprint(second));
+  await enqueueRepairEvent(first, { queueDir });
+  await enqueueRepairEvent(second, { queueDir });
+  const active = (await listRepairRecords({ queueDir })).filter((record) => isActiveRepairStatus(record.status));
+  assert.equal(active.length, 1);
+  assert.equal(active[0].observations, 2);
+  assert.deepEqual(active[0].sourceEventIds.sort(), ['e1', 'e2']);
+});
+
+test('concurrent producers create one active incident head', async (t) => {
+  const { queueDir } = await fixture(t);
+  await Promise.all(Array.from({ length: 8 }, (_, index) => enqueueRepairEvent(
+    event({
+      eventId: `e${index}`,
+      createdAt: new Date(Date.UTC(2026, 6, 16, 4, 0, index)).toISOString(),
+    }),
+    { queueDir },
+  )));
+  const active = (await listRepairRecords({ queueDir })).filter((record) => isActiveRepairStatus(record.status));
+  assert.equal(active.length, 1);
+  assert.equal(active[0].observations, 8);
+});
+
 test('same active fingerprint merges observations into one atomically visible record', async (t) => {
   const { queueDir } = await fixture(t);
   const first = await enqueueRepairEvent(event(), { queueDir });
@@ -96,19 +142,77 @@ test('same active fingerprint merges observations into one atomically visible re
   assert.equal(JSON.parse(await readFile(join(queueDir, `${UUID_A}.json`), 'utf8')).observations, 2);
 });
 
-test('changed failure fingerprint starts a child diagnosis generation with parent evidence', async (t) => {
+test('changed stable error supersedes the previous generation and preserves budget', async (t) => {
   const { queueDir } = await fixture(t);
-  const parent = await enqueueRepairEvent(event(), { queueDir });
-  const child = await enqueueRepairEvent(event({
+  const old = await enqueueRepairEvent(event({ eventId: 'old', summary: 'missing draft' }), { queueDir });
+  await transitionRepairEvent(old, {
+    status: 'repair_pending',
+    totalAttempts: 2,
+    agentMutationAttempts: 1,
+  }, { queueDir });
+  const next = await enqueueRepairEvent(event({
     eventId: UUID_B,
-    errorKind: 'gate_fail',
-    summary: 'reviewer now returns a real factual FAIL',
-    stderr: 'unsupported source claim',
+    summary: 'fact gate failed',
     createdAt: '2026-07-15T13:31:00.000Z',
   }), { queueDir });
-  assert.notEqual(child.fingerprint, parent.fingerprint);
-  assert.deepEqual(child.parentFingerprints, [parent.fingerprint]);
-  assert.equal(child.history[0].evidence.parentFingerprint, parent.fingerprint);
+  const records = await listRepairRecords({ queueDir });
+  assert.equal(records.find((record) => record.event.eventId === 'old').status, 'superseded');
+  assert.equal(next.generation, 2);
+  assert.equal(next.totalAttempts, 2);
+  assert.equal(next.agentMutationAttempts, 1);
+  assert.equal(next.parentGenerationId, 'old');
+  assert.equal(records.filter((record) => isActiveRepairStatus(record.status)).length, 1);
+});
+
+test('compaction is append-only, preserves source evidence, and is idempotent', async (t) => {
+  const { queueDir } = await fixture(t);
+  const source = await enqueueRepairEvent(event({ eventId: 'source-a' }), { queueDir });
+  await transitionRepairEvent(source, {
+    status: 'repair_pending',
+    strategyAttempts: { deterministic_retry: 2 },
+    totalAttempts: 2,
+  }, { queueDir });
+  const legacy = {
+    ...source,
+    event: event({ eventId: 'source-b', createdAt: '2026-07-15T13:31:00.000Z' }),
+    latestEvent: event({ eventId: 'source-b', createdAt: '2026-07-15T13:31:00.000Z' }),
+    fingerprint: 'legacy-fingerprint',
+    status: 'repair_pending',
+    observations: 1,
+    strategyAttempts: { deterministic_retry: 1, agent_content_asset_link: 2 },
+    totalAttempts: 3,
+    sourceEventIds: ['source-b'],
+    history: [{ status: 'queued', at: '2026-07-15T13:31:00.000Z', evidence: { eventId: 'source-b' } }],
+  };
+  await writeFile(join(queueDir, 'source-b.json'), `${JSON.stringify(legacy, null, 2)}\n`, 'utf8');
+
+  const first = await compactRepairIncident({
+    queueDir,
+    site: 'gengrowth',
+    pageId: 'PG-WLS-007',
+    hold: 'migration-review',
+    verificationCredit: 1,
+  });
+  assert.equal(first.status, 'migration_hold');
+  assert.deepEqual(first.strategyAttempts, { deterministic_retry: 3, agent_content_asset_link: 2 });
+  assert.deepEqual(first.sourceEventIds.sort(), ['source-a', 'source-b']);
+  assert.deepEqual(first.sourceFingerprints.sort(), [source.fingerprint, 'legacy-fingerprint'].sort());
+  assert.equal(first.sourceHistories.length, 2);
+  assert.equal(first.hold, 'migration-review');
+  assert.equal(first.verificationCredit, 1);
+
+  const again = await compactRepairIncident({
+    queueDir,
+    site: 'gengrowth',
+    pageId: 'PG-WLS-007',
+    hold: 'migration-review',
+    verificationCredit: 1,
+  });
+  assert.deepEqual(again, first);
+  const records = await listRepairRecords({ queueDir });
+  assert.equal(records.filter((record) => record.status === 'migration_hold').length, 1);
+  assert.equal(records.filter((record) => record.status === 'superseded').length, 2);
+  assert.equal(records.every((record) => record.status !== 'superseded' || record.supersededBy === first.event.eventId), true);
 });
 
 test('priority ordering prefers later stages and aging prevents starvation', async (t) => {

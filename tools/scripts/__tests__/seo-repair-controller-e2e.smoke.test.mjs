@@ -109,6 +109,34 @@ test('malformed enqueue exits 2 without creating executable work', (t) => {
   assert.deepEqual(h.json(inspected).records, []);
 });
 
+test('compact requires incident ownership arguments and emits one canonical JSON record', (t) => {
+  const h = harness(t);
+  const missing = h.run(['compact', '--site', 'gengrowth']);
+  assert.equal(missing.status, 2);
+  assert.match(h.json(missing).error, /--site.*--page-id|--page-id/i);
+
+  const path = join(h.root, 'compact-event.json');
+  writeFileSync(path, JSON.stringify(event({ eventId: 'compact-source' })));
+  const enqueued = h.run(['enqueue', '--event-json', path]);
+  assert.equal(enqueued.status, 0, `${enqueued.stdout}\n${enqueued.stderr}`);
+  const compacted = h.run([
+    'compact', '--site', 'gengrowth', '--page-id', 'PG-WLS-007', '--verification-credit', '1',
+  ]);
+  assert.equal(compacted.status, 0, `${compacted.stdout}\n${compacted.stderr}`);
+  const payload = h.json(compacted);
+  assert.equal(payload.ok, true);
+  assert.equal(payload.command, 'compact');
+  assert.equal(payload.record.status, 'migration_hold');
+  assert.equal(payload.record.verificationCredit, 1);
+
+  const again = h.json(h.run([
+    'compact', '--site', 'gengrowth', '--page-id', 'PG-WLS-007', '--verification-credit', '1',
+  ]));
+  assert.equal(again.record.event.eventId, payload.record.event.eventId);
+  const records = h.json(h.run(['inspect', '--page-id', 'PG-WLS-007'])).records;
+  assert.equal(records.filter((record) => record.status === 'migration_hold').length, 1);
+});
+
 test('live global lock makes a concurrent drain return busy without an adapter call', (t) => {
   const h = harness(t);
   mkdirSync(h.lockDir, { recursive: true });

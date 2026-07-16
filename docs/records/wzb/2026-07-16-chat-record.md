@@ -20,7 +20,7 @@ aliases:
 
 - 统一 SEO repair controller v2 已启用并完成真实故障收敛；正常写作/发布继续由 macOS `launchd` 拉起，只有异常队列触发定向 Agent，不恢复 Codex Automation，也不绕过事实门。
 - `PG-WLS-007`、`PG-TRANS-016`、`PG-TRANS-018` 均达到 `published`，相关生产、sitemap、plan、Sheet、vault/CTA 与 writeback 已验证；focused 148/148、全量 1686/1686。
-- Index Repair Resubmit、Index Monitor 与 Topic Register 固定 wrapper 均成功；两个站点 Sitemap API 成功，最终索引候选队列共 25 条（P0=0、P1=1、P2=4、P3=20），Topic Register 16:02 applied 无候选、无更新，没有无人值守 Request Indexing。
+- Index Repair Resubmit、Index Monitor 与 Topic Register 固定 wrapper 均成功；两个站点 Sitemap API 成功，最终索引候选队列共 25 条（P0=0、P1=1、P2=4、P3=20）。Topic Register 最近一次 18:01 applied，astrologywiki 写入 5 个 brief（1 个新 cluster），gengrowth 无候选；没有无人值守 Request Indexing。
 - 结果复盘性能 wrapper 因 GSC/GA4 OAuth refresh token 过期或撤销而在扫描前停止，未写回数据或生成报告；需重新授权后重跑同一 wrapper。
 - SEO blog 零人值守验收不通过：事实、图片与链接门禁近期拦截合理，主要缺陷在批尾修复易被 SIGTERM 截断、同一失败因不稳定 fingerprint 形成 6 条 active repair、混站点批次汇总污染，以及上线后仍有 8 个 pending writeback、2 个状态 flip；聚焦复核 90/90 通过但未覆盖这些生产故障。
 
@@ -159,5 +159,22 @@ Run the deterministic fixed-row index repair workflow through `bash tools/script
 **🤖 回答：**
 
 执行 `bash tools/scripts/gg-index-repair-resubmit-tick.sh`，退出码为 0；隔离日志窗口为 17:30:53–17:31:22 CST，末行 `index repair-resubmit ok`。astrologywiki：`process-fixed fixed=0 resubmitted=0`；`sync-recap en_rows=251 appended=0 updated=220 skipped=31`；`sync-request-queue rows=23 P0=0 P1=1 P2=4 P3=18`。gengrowth：`process-fixed fixed=0 resubmitted=0`；`sync-recap en_rows=62 appended=0 updated=47 skipped=15`；`sync-request-queue rows=2 P0=0 P1=0 P2=0 P3=2`。窗口内未出现 failure/error/exception/auth/timeout/nonzero-rc 关键词；未使用普通文章 Google Indexing API、未执行无人值守 Request Indexing 点击，也未创建 Feishu/Google Doc 报告。
+
+---
+
+### Q9 — 18:03
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-16T08:01:23.550Z (1784188883550)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅执行 `bash tools/scripts/gg-topic-register-tick.sh`，退出码为 0。隔离日志窗口为 2026-07-16 18:01:54–18:02:44 CST，`dry_run=false`、`budget_exhausted=false`，因此是本机环境启用的 applied run。astrologywiki：`candidates=5`、`updates=5`、`new_clusters=1`、`page_ids=[PG-TRANS-019, PG-TRANS-020, PG-WDIF-002, PG-TRANS-021, PG-WDIN-001]`、preprocessor 均为 `v1_deterministic_fallback`；evidence discovery 为 2 个 `ok`（对应 `PG-TRANS-019`、`PG-TRANS-020`）和 3 个 `insufficient`。gengrowth：`candidates=0`、`updates=0`、`new_clusters=0`、`page_ids=[]`、`preprocessor=[]`。末行 `topic-register ok`，窗口内未发现失败。未进行 wrapper 外 Sheet/task-plan 编辑，未创建额外 Feishu/Google Doc 报告。
 
 ---

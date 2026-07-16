@@ -337,6 +337,53 @@ test('pre-fire reconcile still blocks real ledger, repair, or verification drift
   assert.match(h.log(), /pre-fire strict reconcile failed/);
 });
 
+test('post-fire reconcile allows only future plan backlog and still emits the terminal summary', () => {
+  const h = runnerHarness({
+    preReconcileExit: 0,
+    postReconcileExit: 2,
+    postReconcileJson: {
+      ok: false,
+      pendingWritebackAfter: 0,
+      droppedWritebackAfter: 0,
+      sheetFlipsAfter: 0,
+      planUncheckedAfter: 15,
+      activeRepairAfter: 0,
+      expiredLeasesAfter: 0,
+      eligibleNeedsHumanAfter: 0,
+      droppedWritebackEvidence: [],
+      errors: [],
+    },
+  });
+  const result = h.run();
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}\n${h.log()}`);
+  assert.deepEqual(h.events(), ['drain', 'reconcile', 'notify', 'nightly', 'hook', 'drain', 'reconcile', 'notify', 'readiness', 'summary']);
+  assert.match(h.log(), /post-fire reconcile has future plan backlog; continue/);
+  assert.ok(h.readinessArgs().includes('--allow-plan-backlog'));
+});
+
+test('post-fire reconcile does not excuse remaining needs-human work', () => {
+  const h = runnerHarness({
+    preReconcileExit: 0,
+    postReconcileExit: 2,
+    postReconcileJson: {
+      ok: false,
+      pendingWritebackAfter: 0,
+      droppedWritebackAfter: 0,
+      sheetFlipsAfter: 0,
+      planUncheckedAfter: 15,
+      activeRepairAfter: 0,
+      expiredLeasesAfter: 0,
+      eligibleNeedsHumanAfter: 1,
+      droppedWritebackEvidence: [],
+      errors: [],
+    },
+  });
+  const result = h.run();
+  assert.equal(result.status, 2, `${result.stdout}\n${result.stderr}\n${h.log()}`);
+  assert.deepEqual(h.events(), ['drain', 'reconcile', 'notify', 'nightly', 'hook', 'drain', 'reconcile', 'notify']);
+  assert.match(h.log(), /strict ledger reconcile failed/);
+});
+
 for (const [name, mutate] of [
   ['unknown counter', (value) => ({ ...value, archiveBacklogAfter: 1 })],
   ['dropped evidence mismatch', (value) => ({

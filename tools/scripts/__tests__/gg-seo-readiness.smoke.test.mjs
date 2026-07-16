@@ -39,6 +39,7 @@ function readinessFixture({
   droppedWritebacks = [],
   quarantinedWritebacks = [],
   missingClaims = false,
+  allowPlanBacklog = false,
   now = '2026-07-16T11:00:00.000Z',
 } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'seo-readiness-'));
@@ -98,6 +99,7 @@ function readinessFixture({
       site: 'astrologywiki',
       planPath: process.env.GG_TEST_PLAN,
       runId: 'run-1',
+      allowPlanBacklog: process.env.GG_TEST_ALLOW_PLAN_BACKLOG === '1',
       deps: {
         stateDir: process.env.GG_TEST_STATE,
         claimsPath: process.env.GG_TEST_CLAIMS,
@@ -123,6 +125,7 @@ function readinessFixture({
       GG_TEST_STRICT: JSON.stringify(strictResult),
       GG_TEST_STALE: JSON.stringify(staleReport),
       GG_TEST_NOW: now,
+      GG_TEST_ALLOW_PLAN_BACKLOG: allowPlanBacklog ? '1' : '0',
     },
   });
   let json = null;
@@ -141,6 +144,42 @@ test('unchecked plan item independently blocks readiness', () => {
   const out = readinessFixture({ plan: '- [ ] `PG-A-001` alpha\n' });
   assert.equal(out.status, 2, `${out.stdout}\n${out.stderr}`);
   assert.equal(out.json.planUncheckedAfter, 1);
+});
+
+test('explicit batch mode allows only future plan backlog', () => {
+  const out = readinessFixture({
+    plan: '- [ ] `PG-A-001` alpha\n',
+    strictResult: strictZero({
+      ok: false,
+      planUncheckedAfter: 1,
+    }),
+    allowPlanBacklog: true,
+  });
+  assert.equal(out.status, 0, `${out.stdout}\n${out.stderr}`);
+  assert.equal(out.json.ok, true);
+  assert.equal(out.json.planUncheckedAfter, 1);
+});
+
+test('explicit batch mode does not excuse needs-human backlog', () => {
+  const out = readinessFixture({
+    plan: '- [ ] `PG-A-001` alpha\n',
+    claims: {
+      'PG-A-001': {
+        site: 'astrologywiki',
+        status: 'needs_human',
+        error: 'gate failed',
+      },
+    },
+    strictResult: strictZero({
+      ok: false,
+      planUncheckedAfter: 1,
+      eligibleNeedsHumanAfter: 1,
+    }),
+    allowPlanBacklog: true,
+  });
+  assert.equal(out.status, 2, `${out.stdout}\n${out.stderr}`);
+  assert.equal(out.json.ok, false);
+  assert.equal(out.json.eligibleNeedsHumanAfter, 1);
 });
 
 test('active repair independently blocks readiness', () => {

@@ -130,6 +130,52 @@ pre_fire_reconcile_allows_repairable_drift() {
   ' "$strict_json"
 }
 
+post_fire_reconcile_allows_plan_backlog() {
+  local strict_json="$1"
+  node -e '
+    const raw = process.argv[1];
+    let value;
+    try { value = JSON.parse(raw); } catch { process.exit(1); }
+    if (!value || typeof value !== "object" || Array.isArray(value)) process.exit(1);
+    const counters = [
+      "pendingWritebackAfter",
+      "droppedWritebackAfter",
+      "sheetFlipsAfter",
+      "planUncheckedAfter",
+      "activeRepairAfter",
+      "expiredLeasesAfter",
+      "eligibleNeedsHumanAfter",
+    ];
+    const allowedKeys = new Set([
+      "ok",
+      ...counters,
+      "droppedWritebackEvidence",
+      "errors",
+    ]);
+    const keys = Object.keys(value);
+    if (keys.length !== allowedKeys.size || keys.some((key) => !allowedKeys.has(key))) {
+      process.exit(1);
+    }
+    if (value.ok !== false) process.exit(1);
+    if (!counters.every((field) => Number.isInteger(value[field]) && value[field] >= 0)) {
+      process.exit(1);
+    }
+    const requiredZero = [
+      "pendingWritebackAfter",
+      "droppedWritebackAfter",
+      "sheetFlipsAfter",
+      "activeRepairAfter",
+      "expiredLeasesAfter",
+      "eligibleNeedsHumanAfter",
+    ];
+    const zero = requiredZero.every((field) => value[field] === 0);
+    const validDroppedEvidence = Array.isArray(value.droppedWritebackEvidence)
+      && value.droppedWritebackEvidence.length === 0;
+    const noErrors = Array.isArray(value.errors) && value.errors.length === 0;
+    process.exit(zero && value.planUncheckedAfter > 0 && validDroppedEvidence && noErrors ? 0 : 1);
+  ' "$strict_json"
+}
+
 if [[ "${GG_SEO_SKIP_LEGACY_CHECK:-0}" != "1" ]]; then
   uid="$(id -u)"
   legacy_labels=(
@@ -240,9 +286,14 @@ printf '%s\n' "$STRICT_JSON"
 flush_writeback_notifications
 
 if [[ "$RECONCILE_RC" -ne 0 ]]; then
-  echo "strict ledger reconcile failed; skip readiness and terminal summary"
-  echo "===== seo-blog launchd tick complete nightly=$NIGHTLY_RC hook=$HOOK_RC reconcile=$RECONCILE_RC $(date '+%F %T %Z') ====="
-  exit "$RECONCILE_RC"
+  if [[ "$RECONCILE_RC" -eq 2 ]] \
+    && post_fire_reconcile_allows_plan_backlog "$STRICT_JSON"; then
+    echo "post-fire reconcile has future plan backlog; continue"
+  else
+    echo "strict ledger reconcile failed; skip readiness and terminal summary"
+    echo "===== seo-blog launchd tick complete nightly=$NIGHTLY_RC hook=$HOOK_RC reconcile=$RECONCILE_RC $(date '+%F %T %Z') ====="
+    exit "$RECONCILE_RC"
+  fi
 fi
 
 echo "strict reconcile complete; evaluating terminal readiness"
@@ -252,6 +303,7 @@ GG_LARK_NOTIFY_SILENCE=1 GG_SEO_STRICT_RESULT_JSON="$STRICT_JSON" \
   --site astrologywiki \
   --plan "$PLAN" \
   --run-id "$RUN_ID" \
+  --allow-plan-backlog \
   --json
 READINESS_RC=$?
 set -e

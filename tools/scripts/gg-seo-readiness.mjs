@@ -251,7 +251,7 @@ function inspectTerminalWriteback(base, errors) {
   return evidence;
 }
 
-function normalizeStrict(value, errors) {
+function normalizeStrict(value, errors, { allowPlanBacklog = false } = {}) {
   const result = {};
   for (const field of STRICT_FIELDS) {
     const count = Number(value?.[field]);
@@ -277,7 +277,19 @@ function normalizeStrict(value, errors) {
   }
   if (!Array.isArray(value?.errors)) errors.push('strict errors missing or invalid');
   else errors.push(...value.errors.map((error) => `strict: ${String(error)}`));
-  if (value?.ok !== true) errors.push('strict reconcile not converged');
+  const planBacklogOnly = allowPlanBacklog
+    && value?.ok === false
+    && result.pendingWritebackAfter === 0
+    && result.droppedWritebackAfter === 0
+    && result.sheetFlipsAfter === 0
+    && result.planUncheckedAfter > 0
+    && result.activeRepairAfter === 0
+    && result.expiredLeasesAfter === 0
+    && result.eligibleNeedsHumanAfter === 0
+    && result.droppedWritebackEvidence.length === 0
+    && Array.isArray(value?.errors)
+    && value.errors.length === 0;
+  if (value?.ok !== true && !planBacklogOnly) errors.push('strict reconcile not converged');
   return result;
 }
 
@@ -314,6 +326,7 @@ export async function evaluateSeoReadiness({
   site,
   planPath,
   runId,
+  allowPlanBacklog = false,
   deps = {},
 } = {}) {
   if (!['astrologywiki', 'gengrowth'].includes(site)) throw new TypeError('site must be astrologywiki or gengrowth');
@@ -381,7 +394,7 @@ export async function evaluateSeoReadiness({
       }));
   const staleReportAfter = staleReport.filter((row) => row?.stale).length;
   const strictResult = deps.strictResult || strictFromEnvironment();
-  const strict = normalizeStrict(strictResult, errors);
+  const strict = normalizeStrict(strictResult, errors, { allowPlanBacklog });
   const localPendingWriteback = inspectPendingWriteback(base, errors);
   const localTerminalWriteback = inspectTerminalWriteback(base, errors);
   const terminalEvidence = new Map();
@@ -424,7 +437,10 @@ export async function evaluateSeoReadiness({
     testContamination,
     errors,
   };
-  result.ok = STRICT_FIELDS.every((field) => result[field] === 0)
+  const blockingFields = allowPlanBacklog
+    ? STRICT_FIELDS.filter((field) => field !== 'planUncheckedAfter')
+    : STRICT_FIELDS;
+  result.ok = blockingFields.every((field) => result[field] === 0)
     && result.staleReportAfter === 0
     && result.testContamination.length === 0
     && result.errors.length === 0;
@@ -440,6 +456,7 @@ async function main() {
     site: args.site,
     planPath: resolve(args.plan),
     runId: args['run-id'],
+    allowPlanBacklog: Boolean(args['allow-plan-backlog']),
   });
   if (args.json) process.stdout.write(`${JSON.stringify(result)}\n`);
   else process.stdout.write(`SEO readiness: ${result.ok ? 'ready' : 'blocked'}\n`);

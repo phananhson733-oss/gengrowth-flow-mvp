@@ -295,24 +295,50 @@ async function defaultResolveContext(event) {
   };
 }
 
-async function defaultRegate(target) {
-  const reset = run([
+function runBeforeDeadline(argv, {
+  cwd,
+  capMs,
+  deadlineMs = Number.POSITIVE_INFINITY,
+  nowMs = Date.now,
+} = {}) {
+  const remainingMs = deadlineMs - nowMs();
+  if (remainingMs <= 0) {
+    return {
+      ok: false,
+      code: 124,
+      stdout: '',
+      stderr: 'repair deadline exhausted',
+      timedOut: true,
+      deadlineExhausted: true,
+    };
+  }
+  return run(argv, {
+    cwd,
+    timeout: Math.max(1, Math.min(capMs, remainingMs)),
+  });
+}
+
+async function defaultRegate(target, {
+  deadlineMs = Number.POSITIVE_INFINITY,
+  nowMs = Date.now,
+} = {}) {
+  const reset = runBeforeDeadline([
     'node',
     join(DEFAULT_SCRIPTS, 'gg-seo-autopilot.mjs'),
     '--retry-failed',
     '--branch',
     target.branch,
-  ], { cwd: DEFAULT_FLOW, timeout: 180_000 });
+  ], { cwd: DEFAULT_FLOW, capMs: 180_000, deadlineMs, nowMs });
   if (!reset.ok && isAlreadyPublishedRetryFailure(reset)) {
     return { ok: true, alreadyPublished: true, reset };
   }
   if (!reset.ok && !isAlreadyRegatableRetryFailure(reset)) return reset;
-  return run([
+  return runBeforeDeadline([
     'node',
     join(DEFAULT_SCRIPTS, 'gg-preview-gate.mjs'),
     '--branch',
     target.branch,
-  ], { cwd: DEFAULT_FLOW, timeout: 45 * 60 * 1000 });
+  ], { cwd: DEFAULT_FLOW, capMs: 45 * 60 * 1000, deadlineMs, nowMs });
 }
 
 export function isAlreadyRegatableRetryFailure(result) {
@@ -327,8 +353,22 @@ export function isAlreadyPublishedRetryFailure(result) {
     .test(`${result?.stdout || ''}\n${result?.stderr || ''}`);
 }
 
-async function defaultInvokeAgent(target, { record, strategy }) {
-  return invokeTargetRepairAgent({ target, record, strategy });
+async function defaultInvokeAgent(target, {
+  record,
+  strategy,
+  timeoutMs = 12 * 60 * 1000,
+}) {
+  const timeoutSeconds = Math.floor((timeoutMs - 30_000) / 1000);
+  if (timeoutSeconds < 1) {
+    return {
+      ok: false,
+      evidence: { type: 'repair_deadline_exhausted' },
+    };
+  }
+  return invokeTargetRepairAgent(
+    { target, record, strategy },
+    { timeoutSeconds },
+  );
 }
 
 function statusPath(line) {
@@ -337,33 +377,42 @@ function statusPath(line) {
   return path.replace(/^"|"$/g, '');
 }
 
-async function defaultPersistRepair(target) {
+async function defaultPersistRepair(target, {
+  deadlineMs = Number.POSITIVE_INFINITY,
+  nowMs = Date.now,
+} = {}) {
+  const execute = (argv, capMs, cwd = target.worktree) => runBeforeDeadline(argv, {
+    cwd,
+    capMs,
+    deadlineMs,
+    nowMs,
+  });
   if (!/^seo\/auto\/[A-Za-z0-9._/-]+$/.test(String(target.branch || ''))) {
     return { ok: false, stderr: `unsafe astrology branch: ${target.branch || ''}` };
   }
   const editable = new Set(editableAstrologyFiles(target));
-  const status = run([
+  const status = execute([
     'git', '-C', target.worktree, 'status', '--porcelain=v1', '--untracked-files=all',
-  ], { cwd: target.worktree, timeout: 60_000 });
+  ], 60_000);
   if (!status.ok) return { ...status, ok: false };
   const dirty = parseGitStatusPaths(status.stdout);
-  const mergeHeadResult = run([
+  const mergeHeadResult = execute([
     'git', '-C', target.worktree, 'rev-parse', '-q', '--verify', 'MERGE_HEAD',
-  ], { cwd: target.worktree, timeout: 60_000 });
+  ], 60_000);
   const mergeInProgress = mergeHeadResult.ok && mergeHeadResult.stdout.trim() !== '';
   if (mergeInProgress) {
-    const originMain = run([
+    const originMain = execute([
       'git', '-C', target.worktree, 'rev-parse', 'origin/main',
-    ], { cwd: target.worktree, timeout: 60_000 });
-    const unmerged = run([
+    ], 60_000);
+    const unmerged = execute([
       'git', '-C', target.worktree, 'diff', '--name-only', '--diff-filter=U',
-    ], { cwd: target.worktree, timeout: 60_000 });
-    const unstaged = run([
+    ], 60_000);
+    const unstaged = execute([
       'git', '-C', target.worktree, 'diff', '--name-only',
-    ], { cwd: target.worktree, timeout: 60_000 });
-    const diffAgainstMain = run([
+    ], 60_000);
+    const diffAgainstMain = execute([
       'git', '-C', target.worktree, 'diff', '--cached', '--name-only', 'origin/main',
-    ], { cwd: target.worktree, timeout: 60_000 });
+    ], 60_000);
     if (!originMain.ok || !unmerged.ok || !unstaged.ok || !diffAgainstMain.ok) {
       return { ok: false, stderr: 'cannot validate staged astrology merge index' };
     }
@@ -380,9 +429,9 @@ async function defaultPersistRepair(target) {
         stderr: `unsafe astrology merge index: ${JSON.stringify(mergeState)}`,
       };
     }
-    const committed = run([
+    const committed = execute([
       'git', '-C', target.worktree, 'commit', '-m', `fix(seo-repair): ${target.pageId} merge current main`,
-    ], { cwd: target.worktree, timeout: 180_000 });
+    ], 180_000);
     if (!committed.ok) return { ...committed, ok: false };
   } else {
     const forbidden = dirty.filter((file) => !editable.has(file));
@@ -391,30 +440,34 @@ async function defaultPersistRepair(target) {
     }
   }
   if (!mergeInProgress && dirty.length > 0) {
-    const staged = run(['git', '-C', target.worktree, 'add', '--', ...dirty], { cwd: target.worktree, timeout: 60_000 });
+    const staged = execute(['git', '-C', target.worktree, 'add', '--', ...dirty], 60_000);
     if (!staged.ok) return { ...staged, ok: false };
-    const committed = run([
+    const committed = execute([
       'git', '-C', target.worktree, 'commit', '-m', `fix(seo-repair): ${target.pageId} target gate`,
-    ], { cwd: target.worktree, timeout: 180_000 });
+    ], 180_000);
     if (!committed.ok) return { ...committed, ok: false };
   }
-  const head = run(['git', '-C', target.worktree, 'rev-parse', 'HEAD'], { cwd: target.worktree, timeout: 60_000 });
+  const head = execute(['git', '-C', target.worktree, 'rev-parse', 'HEAD'], 60_000);
   if (!head.ok) return { ...head, ok: false };
   const commit = head.stdout.trim();
-  const pushed = run([
+  const pushed = execute([
     'git', '-C', target.worktree, 'push', 'origin', `HEAD:refs/heads/${target.branch}`,
-  ], { cwd: target.worktree, timeout: 180_000 });
+  ], 180_000);
   if (!pushed.ok) return { ...pushed, ok: false, commit };
   if (target.originalWorktree) {
-    const advanced = run([
+    const advanced = execute([
       'git', '-C', target.originalWorktree, 'merge', '--ff-only', commit,
-    ], { cwd: target.originalWorktree, timeout: 180_000 });
+    ], 180_000, target.originalWorktree);
     if (!advanced.ok) return { ...advanced, ok: false, commit };
   }
   return { ok: true, noChanges: dirty.length === 0, commit, changedFiles: dirty };
 }
 
-async function defaultVerifyTerminal(event, target, { scriptsDir, runCommand }) {
+async function defaultVerifyTerminal(event, target, {
+  scriptsDir,
+  runCommand,
+  timeoutMs = 120_000,
+}) {
   const result = await runCommand([
     'node',
     join(scriptsDir, 'gg-seo-repair-verify.mjs'),
@@ -422,7 +475,7 @@ async function defaultVerifyTerminal(event, target, { scriptsDir, runCommand }) 
     '--page-id', event.pageId,
     '--slug', target.slug,
     '--json',
-  ]);
+  ], { timeoutMs });
   for (const line of String(result.stdout || '').trim().split('\n').reverse()) {
     try {
       const output = JSON.parse(line);
@@ -467,7 +520,9 @@ function astrologyArtifactSha(target) {
 
 export function createAstrologyWikiRepairAdapter(deps = {}) {
   const scriptsDir = resolve(deps.scriptsDir || DEFAULT_SCRIPTS);
-  const runCommand = deps.runCommand || (async (argv) => run(argv, { cwd: DEFAULT_FLOW, timeout: 180_000 }));
+  const runCommand = deps.runCommand || (async (argv, { timeoutMs = 180_000 } = {}) => (
+    run(argv, { cwd: DEFAULT_FLOW, timeout: timeoutMs })
+  ));
   const resolveContext = deps.resolveContext || defaultResolveContext;
   const verifyLinkCandidate = deps.verifyLinkCandidate || (async (slug, context) => {
     const known = context.linkCandidates?.some((candidate) => candidate.slug === slug);
@@ -478,11 +533,31 @@ export function createAstrologyWikiRepairAdapter(deps = {}) {
   const regate = deps.regate || defaultRegate;
   const publish = deps.publish || (async () => ({ ok: true, ownedByRegate: true }));
   const verifyTerminal = deps.verifyTerminal
-    || ((event, target) => defaultVerifyTerminal(event, target, { scriptsDir, runCommand }));
+    || ((event, target, options = {}) => defaultVerifyTerminal(event, target, {
+      scriptsDir,
+      runCommand,
+      timeoutMs: options.timeoutMs,
+    }));
+  const nowMs = deps.nowMs || Date.now;
 
   return {
-    async execute({ record, strategy }) {
+    async execute({ record, strategy, attemptDeadlineAt }) {
       const event = record.event;
+      const deadlineMs = Number.isFinite(Date.parse(attemptDeadlineAt || ''))
+        ? Date.parse(attemptDeadlineAt)
+        : nowMs() + (25 * 60 * 1000);
+      const remainingTimeout = (capMs) => Math.max(0, Math.min(capMs, deadlineMs - nowMs()));
+      const deadlineFailure = (agentMutationInvoked = false, target = null) => {
+        const artifactSha = target ? astrologyArtifactSha(target) : null;
+        return {
+          ok: false,
+          agentMutationInvoked,
+          evidence: {
+            type: 'repair_deadline_exhausted',
+            ...(artifactSha ? { artifactSha } : {}),
+          },
+        };
+      };
       if (event.errorKind === 'stale') {
         return {
           terminal: 'archived',
@@ -490,11 +565,13 @@ export function createAstrologyWikiRepairAdapter(deps = {}) {
           evidence: { type: 'unpublishable', summary: event.summary, logFile: event.logFile },
         };
       }
+      if (remainingTimeout(1) <= 0) return deadlineFailure();
       let target;
       try {
         const context = await resolveContext(event);
         const verifiedLinkCandidates = [];
         for (const candidate of context.linkCandidates || []) {
+          if (remainingTimeout(1) <= 0) return deadlineFailure();
           if (await verifyLinkCandidate(candidate.slug, context)) verifiedLinkCandidates.push(candidate);
         }
         target = await buildAstrologyRepairTarget(event, {
@@ -528,26 +605,81 @@ export function createAstrologyWikiRepairAdapter(deps = {}) {
       };
       try {
         if (needsAgent) {
+          const agentTimeoutMs = remainingTimeout(12 * 60 * 1000);
+          if (agentTimeoutMs <= 30_000) return deadlineFailure(false, target);
           agentMutationInvoked = true;
-          const repaired = await invokeAgent(target, { record, strategy });
+          const repaired = await invokeAgent(target, {
+            record,
+            strategy,
+            timeoutMs: agentTimeoutMs,
+            attemptDeadlineAt,
+          });
           if (repaired?.ok !== true) {
             return failure(repaired?.evidence || { type: 'agent_repair_failed' });
           }
-          const persisted = await persistRepair(target, { record, strategy, repaired });
+          const persistTimeoutMs = remainingTimeout(6 * 60 * 1000);
+          if (persistTimeoutMs <= 0) return deadlineFailure(agentMutationInvoked, target);
+          const persisted = await persistRepair(target, {
+            record,
+            strategy,
+            repaired,
+            timeoutMs: persistTimeoutMs,
+            deadlineMs,
+            nowMs,
+            attemptDeadlineAt,
+          });
           if (persisted?.ok !== true) {
             return failure({ type: 'persist_repair_failed', result: persisted || null });
           }
+          const persistedChangedFiles = Array.isArray(persisted.changedFiles)
+            ? persisted.changedFiles.map(String)
+            : [];
+          const unsafePersistedFiles = persistedChangedFiles
+            .filter((file) => !isSafeAstrologyTargetPath(file, target.slug));
+          if (unsafePersistedFiles.length > 0) {
+            return failure({
+              type: 'persist_repair_failed',
+              reason: 'unsafe_persisted_target_files',
+              files: unsafePersistedFiles,
+            });
+          }
+          target.changedFiles = [...new Set([
+            ...(target.changedFiles || []),
+            ...persistedChangedFiles.map((file) => absoluteWorktreeFile(target.worktree, file)),
+          ])];
+          target.assetFiles = target.changedFiles.filter((file) => ASSET_RE.test(file));
         }
 
-        const gated = await regate(target, { record, strategy });
+        const regateTimeoutMs = remainingTimeout(8 * 60 * 1000);
+        if (regateTimeoutMs <= 0) return deadlineFailure(agentMutationInvoked, target);
+        const gated = await regate(target, {
+          record,
+          strategy,
+          timeoutMs: regateTimeoutMs,
+          deadlineMs,
+          nowMs,
+          attemptDeadlineAt,
+        });
         if (gated?.ok !== true) {
           return failure({ type: 'regate_failed', result: gated || null });
         }
-        const published = await publish(target, { record, strategy });
+        const publishTimeoutMs = remainingTimeout(4 * 60 * 1000);
+        if (publishTimeoutMs <= 0) return deadlineFailure(agentMutationInvoked, target);
+        const published = await publish(target, {
+          record,
+          strategy,
+          timeoutMs: publishTimeoutMs,
+          attemptDeadlineAt,
+        });
         if (published?.ok !== true) {
           return failure({ type: 'publish_failed', result: published || null });
         }
-        const verified = await verifyTerminal(event, target);
+        const verifierTimeoutMs = remainingTimeout(2 * 60 * 1000);
+        if (verifierTimeoutMs <= 0) return deadlineFailure(agentMutationInvoked, target);
+        const verified = await verifyTerminal(event, target, {
+          timeoutMs: verifierTimeoutMs,
+          attemptDeadlineAt,
+        });
         if (verified?.ok === true && verified?.terminal === 'published') {
           return {
             terminal: 'published',

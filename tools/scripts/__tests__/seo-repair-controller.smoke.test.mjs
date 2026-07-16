@@ -585,7 +585,10 @@ test('controller lease outlives the shared 25-minute attempt deadline', async (t
     maxTargets: 1,
   });
   assert.equal(Date.parse(timing.attemptDeadlineAt) - now.getTime(), 25 * 60 * 1000);
-  assert.equal(Date.parse(timing.leaseExpiresAt) >= Date.parse(timing.attemptDeadlineAt), true);
+  assert.equal(
+    Date.parse(timing.leaseExpiresAt) >= Date.parse(timing.attemptDeadlineAt) + (5 * 60 * 1000),
+    true,
+  );
 });
 
 test('failed repair enters a new strategy without a human notification', async (t) => {

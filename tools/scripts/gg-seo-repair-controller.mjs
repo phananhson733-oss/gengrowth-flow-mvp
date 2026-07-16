@@ -318,10 +318,10 @@ async function importLegacy(args, targetQueueDir) {
 
 async function drainWithLock(args, targetQueueDir) {
   const maxTargets = numberArg(args['max-targets'], numberArg(process.env.GG_SEO_REPAIR_MAX_TARGETS, 2, 1), 1);
-  const budgetSeconds = numberArg(args['budget-seconds'], 900, 1);
+  const budgetSeconds = numberArg(args['budget-seconds'], 1500, 1);
   const lock = acquireControllerLock({
     owner: `seo-repair-controller:${process.pid}`,
-    leaseMs: (budgetSeconds + 120) * 1000,
+    leaseMs: (budgetSeconds + 300) * 1000,
   });
   if (!lock.acquired) return { ok: true, busy: true, lockOwner: lock.owner || null };
   const release = () => releaseControllerLock(lock);
@@ -338,7 +338,7 @@ async function drainWithLock(args, targetQueueDir) {
       owner: lock.metadata.owner,
       maxTargets,
       budgetMs: budgetSeconds * 1000,
-      leaseMs: (budgetSeconds + 60) * 1000,
+      leaseMs: (budgetSeconds + 300) * 1000,
       attemptBudgetMs: budgetSeconds * 1000,
     });
   } finally {

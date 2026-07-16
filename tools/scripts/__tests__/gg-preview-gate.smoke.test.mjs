@@ -1771,6 +1771,70 @@ test('a stale Vercel PR comment cannot bind an old preview URL to the reviewed S
   assert.ok(!sentinelHit(sentinels, 'autopilot-merge'), 'merge must not run on an unbound preview');
 });
 
+test('a trusted Vercel comment binds its branch alias through the reviewed-head inspector status', () => {
+  const { dir, sentinels } = freshCase();
+  const previewUrl = 'https://oracle-git-seo-auto-pg-057.vercel.app';
+  const deploymentUrl = 'https://oracle-deployment-pg-057.vercel.app';
+  const inspectorUrl = 'https://vercel.com/team/oracle/deployment-pg-057';
+  const metadata = Buffer.from(JSON.stringify({
+    projects: [{
+      name: 'oracle',
+      previewUrl: previewUrl.replace(/^https:\/\//, ''),
+      inspectorUrl,
+      nextCommitStatus: 'DEPLOYED',
+    }],
+  })).toString('base64');
+  const env = fakeEnv({
+    dir,
+    sentinelsDir: sentinels,
+    statusJson: CLAIM_VERIFIED({ previewUrl }),
+    reviewBin: reviewPassBin(dir, sentinels),
+    codexBin: codexPassBin(dir, sentinels),
+    ghDispatch: [
+      {
+        match: 'api repos/xdawayer/oracle/deployments?ref=',
+        stdout: JSON.stringify([{ id: 57, sha: HEAD_A }]),
+        exit: 0,
+      },
+      {
+        match: 'api repos/xdawayer/oracle/deployments/57/statuses',
+        stdout: JSON.stringify([{ state: 'success', environment_url: deploymentUrl }]),
+        exit: 0,
+      },
+      {
+        match: `api repos/xdawayer/oracle/commits/${HEAD_A}/status`,
+        stdout: JSON.stringify({
+          statuses: [{ context: 'Vercel', state: 'success', target_url: inspectorUrl }],
+        }),
+        exit: 0,
+      },
+      {
+        match: `api repos/xdawayer/oracle/commits/${HEAD_A}/pulls`,
+        stdout: JSON.stringify([{
+          number: 384,
+          state: 'open',
+          head: { sha: HEAD_A },
+        }]),
+        exit: 0,
+      },
+      {
+        match: 'api repos/xdawayer/oracle/issues/384/comments',
+        stdout: JSON.stringify([{
+          user: { login: 'vercel[bot]' },
+          body: `[vc]: #deployment-pg-057:${metadata}`,
+        }]),
+        exit: 0,
+      },
+    ],
+  });
+
+  const r = run(['--branch', BRANCH, '--json'], env);
+
+  assert.equal(r.status, 0, `expected trusted alias binding; stderr: ${r.stderr}; stdout: ${r.stdout}`);
+  assert.ok(sentinelHit(sentinels, 'preview-verify'), 'Chrome should run after alias binding');
+  assert.ok(sentinelHit(sentinels, 'autopilot-merge'), 'merge should run after all gates pass');
+});
+
 test('an exact normalized Vercel commit-status URL binds the preview without PR comments', () => {
   const { dir, sentinels } = freshCase();
   const env = fakeEnv({

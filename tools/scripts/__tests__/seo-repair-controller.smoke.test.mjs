@@ -1,8 +1,15 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import {
+  chmod,
+  mkdir,
+  mkdtemp,
+  readFile,
+  rm,
+  writeFile,
+} from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 
 import {
   buildRepairAgentPrompt,
@@ -1005,9 +1012,71 @@ test('target Agent prompt contains exact evidence and safety boundaries without 
   assert.match(prompt, /authoritativeLogWindow/);
   assert.match(prompt, /recentRepairEvidence/);
   assert.match(prompt, /third near 88/);
-  assert.match(prompt, /isolated.*worktree/i);
+  assert.match(prompt, /only edit.*articleFile.*assetFiles.*supportFiles.*draftFile/is);
+  assert.match(prompt, /do not create.*worktree|never create.*worktree/i);
+  assert.doesNotMatch(prompt, /pipeline code.*repairable|for pipeline code.*create/is);
   assert.doesNotMatch(prompt, /gg-nightly-seo\.sh/);
   assert.doesNotMatch(prompt, /lynne-soul|api[_-]?key|secret-value/i);
+});
+
+test('target Agent runs in workspace-write with only the bound target and draft roots writable', async (t) => {
+  const root = await mkdtemp(join(tmpdir(), 'seo-repair-agent-sandbox-'));
+  const worktree = join(root, 'oracle-repair-worktree');
+  const draftFile = join(root, 'state', 'drafts', 'PG-TRANS-016.md');
+  const codexBin = join(root, 'fake-codex');
+  const argsFile = join(root, 'codex-args.txt');
+  await mkdir(worktree, { recursive: true });
+  await mkdir(dirname(draftFile), { recursive: true });
+  await writeFile(draftFile, '# bound repair draft\n');
+  await writeFile(codexBin, [
+    '#!/bin/sh',
+    'printf "%s\\n" "$@" > "$GG_TEST_CODEX_ARGS"',
+    'exit 0',
+    '',
+  ].join('\n'));
+  await chmod(codexBin, 0o755);
+
+  const previous = {
+    codex: process.env.GG_SEO_REPAIR_CODEX_BIN,
+    timeout: process.env.GG_SEO_REPAIR_TIMEOUT_BIN,
+    capture: process.env.GG_TEST_CODEX_ARGS,
+  };
+  process.env.GG_SEO_REPAIR_CODEX_BIN = codexBin;
+  process.env.GG_SEO_REPAIR_TIMEOUT_BIN = join(root, 'missing-timeout-bin');
+  process.env.GG_TEST_CODEX_ARGS = argsFile;
+  t.after(async () => {
+    if (previous.codex === undefined) delete process.env.GG_SEO_REPAIR_CODEX_BIN;
+    else process.env.GG_SEO_REPAIR_CODEX_BIN = previous.codex;
+    if (previous.timeout === undefined) delete process.env.GG_SEO_REPAIR_TIMEOUT_BIN;
+    else process.env.GG_SEO_REPAIR_TIMEOUT_BIN = previous.timeout;
+    if (previous.capture === undefined) delete process.env.GG_TEST_CODEX_ARGS;
+    else process.env.GG_TEST_CODEX_ARGS = previous.capture;
+    await rm(root, { recursive: true, force: true });
+  });
+
+  const result = await invokeTargetRepairAgent({
+    record: { fingerprint: 'abc123', event: event() },
+    strategy: 'agent_content_asset_link',
+    target: {
+      site: 'astrologywiki',
+      pageId: 'PG-TRANS-016',
+      worktree,
+      articleFile: join(worktree, 'data', 'articles', 'saturn-return-age-29.ts'),
+      draftFile,
+      allowedActions: [],
+    },
+  }, {
+    template: 'Repair exactly one target.',
+    timeoutSeconds: 30,
+  });
+
+  assert.equal(result.ok, true);
+  const argv = (await readFile(argsFile, 'utf8')).trim().split('\n');
+  assert.deepEqual(argv.slice(0, 4), ['exec', '--ignore-user-config', '--ephemeral', '--sandbox']);
+  assert.equal(argv[4], 'workspace-write');
+  assert.equal(argv.includes('danger-full-access'), false);
+  assert.equal(argv[argv.indexOf('-C') + 1], worktree);
+  assert.equal(argv[argv.indexOf('--add-dir') + 1], dirname(draftFile));
 });
 
 test('target Agent timeout becomes repair evidence and never a terminal self-report', async () => {

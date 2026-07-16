@@ -21,7 +21,7 @@ aliases:
 - 统一 SEO repair controller v2 已启用并完成真实故障收敛；正常写作/发布继续由 macOS `launchd` 拉起，只有异常队列触发定向 Agent，不恢复 Codex Automation，也不绕过事实门。
 - Index Repair Resubmit、Index Monitor 与 Topic Register 固定 wrapper 均成功；两个站点 Sitemap API 成功，最终索引候选队列共 25 条（P0=0、P1=1、P2=4、P3=20）。Topic Register 于 20:02 与 22:03 均为 applied no-op，两个产品均无候选；此前 18:01 run 曾为 astrologywiki 写入 5 个 brief（1 个新 cluster），gengrowth 无候选；没有无人值守 Request Indexing。
 - 结果复盘性能 wrapper 因 GSC/GA4 OAuth refresh token 过期或撤销而在扫描前停止，未写回数据或生成报告；需重新授权后重跑同一 wrapper。
-- SEO blog 零人值守链路已修复同模型回退、作者修复超时、完整失败摘要、跨产品作者锁、FAQ/对比标题误报、Preview env/baseline、合并后终态、单分支 regate fetch、计划积压误判、跨 cron 失败记忆、失败稿保留、精确修复预算与二次有界修复；Topic Register 也会只对当前未完成计划项执行语义 cluster 修复。另消除已发布 claim 的临时 per-item plan 缺失造成的永久假 backlog：第 45 次自然 reconciler 已显示 strict 全零、readiness 仅保留真实 3 项。`PG-CELEB-057/058` 已上线并完成 plan/vault/writeback，`PG-TRANS-021` 已自动生成 Phase 2 PASS 稿，最终相关回归 444/444 通过。仍需后续正式发布窗口接管 3 个待发布项，并以连续 3 个自然 cron 证明最终零人值守稳定性。
+- SEO blog 零人值守链路已修复同模型回退、作者修复超时、完整失败摘要、跨产品作者锁、FAQ/对比标题误报、Preview env/baseline、合并后终态、单分支 regate fetch、计划积压误判、跨 cron 失败记忆、失败稿保留、精确修复预算与二次有界修复；Topic Register 也会只对当前未完成计划项执行语义 cluster 修复。另消除已发布 claim 的临时 per-item plan 缺失造成的永久假 backlog：第 45 次自然 reconciler 已显示 strict 全零、readiness 仅保留真实 3 项。继续审计发现 SEO 18:30 仍依赖独立 Topic Register Automation 先修好 brief，已完成 targeted repair-only 只读演练并形成将确定性语义修复纳入同一 fire 的设计，等待设计确认后实施。`PG-CELEB-057/058` 已上线并完成 plan/vault/writeback，`PG-TRANS-021` 已自动生成 Phase 2 PASS 稿，当前相关回归 444/444 通过。
 
 ---
 
@@ -231,5 +231,7 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 继续预运行审计时发现 reconciler 的 `planUncheckedAfter=19` 并非当前 W22 的真实未完成项，而是 19 个已发布 claim 引用的临时 `nightly-plan-*` / `independent-publish-*` 文件已按设计不再存在，旧逻辑却把“临时文件不存在”计为正式计划未勾选。先加入失败测试，确认缺失的 per-item plan 会错误产生 backlog；随后仅修改根因：不存在的 claim 临时 plan 不再计数，正式 blog plan 仍由 Sheet 驱动扫描，readiness 仍直接读取固定 W22。同步隔离终态通知测试的 flow-state，避免真实 sent 去重键污染回归。扩大回归覆盖 17 个相关测试文件，444/444 通过；Node/Shell 语法与 diff 检查全绿。
 
 调度依赖也已核实：`gengrowth-topic-register` Automation 为 ACTIVE，每天 16:00、18:00、20:00、22:00 运行且本地 `GG_TOPIC_REGISTER_APPLY=1`，16:00 和 18:00 均先于 SEO LaunchAgent 的 18:30 首轮，因此 `PG-WDIF-002` 的 cluster 修复可自然先行。22:42:46 CST，第 45 次 SEO reconciler 由 LaunchAgent 自然唤醒并使用新代码：strict 为 `pendingWritebackAfter=0 / droppedWritebackAfter=0 / sheetFlipsAfter=0 / planUncheckedAfter=0 / activeRepairAfter=0 / expiredLeasesAfter=0 / eligibleNeedsHumanAfter=0`，readiness 为 `ok=true` 且只显示当前固定计划的真实 `planUncheckedAfter=3`，last exit=0；永久假 backlog 已从生产控制面消失。
+
+进一步审计确认单一 fire 仍有时序依赖：SEO LaunchAgent 不会自行修复 active brief，只是假设独立的 Topic Register Automation 已在 18:00 成功；若该 Agent 任务延迟、失败或仍持锁，18:30 仍可能读取旧 brief。22:46:30–22:46:32 CST 通过固定 Topic Register wrapper 做 targeted repair-only 只读演练，显式限定 `PG-WDIF-002,PG-TRANS-021,PG-WDIN-001`：只选中这 3 个既有 page_id、不生成新 page_id，只有 `PG-WDIF-002` 需要从错误职业 cluster 修复到 `what_is_my_love_language` 并创建 1 个单例 cluster，另外两项无 cluster repair。建议将“仅对固定计划未勾选 page_id 做确定性 semantic repair、禁止生成新选题、禁止通知、锁忙则本 fire 失败后由下一 cron 重试”纳入 SEO LaunchAgent pre-fire；设计需确认后再实施。
 
 ---

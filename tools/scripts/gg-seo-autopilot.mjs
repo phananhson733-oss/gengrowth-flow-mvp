@@ -67,6 +67,7 @@ import { unionMergeIntoWorktree } from './lib/merge-union.mjs';
 import { backfillOnLive, enqueueWriteback } from './lib/backfill-tx.mjs';
 import { classifyPark } from './lib/park-classify.mjs';
 import { stateDir } from './lib/flow-state.mjs';
+import { summarizePhase2Failure } from './lib/phase2-failure-summary.mjs';
 import {
   eventFromClaim,
   persistRepairAndDrain,
@@ -795,10 +796,13 @@ function doNextUnauthored() {
 // phase2 on that candidate and returns whether it passed; we adopt it ONLY on a pass — a tooling failure
 // or a still-failing candidate parks exactly as before. Centralized so a new author path can never again
 // silently ship WITHOUT the repair safety net (the divergence that parked PG-SOLAR-001: one path
-// had the escalation, another did not). Toggle GG_AUTHOR_REPAIR=0. Returns true iff a repaired
-// candidate passed and was adopted (the caller then logs AUTHORED and returns).
+// had the escalation, another did not). Toggle GG_AUTHOR_REPAIR=0. Returns a
+// structured result so the caller can park with the repaired candidate's exact
+// remaining failures instead of the stale pre-repair failure list.
 function tryDeterministicRepair({ pgId, draftV8, candidate, targetKeyword, author, failures, validate }) {
-  if (process.env.GG_AUTHOR_REPAIR === '0' || !existsSync(join(FLOW, draftV8))) return false;
+  if (process.env.GG_AUTHOR_REPAIR === '0' || !existsSync(join(FLOW, draftV8))) {
+    return { passed: false, attempted: false, failure: '' };
+  }
   log(`deterministic repair: feedback loop failed — calling gg-author-repair on ${draftV8}`);
   const repModel = process.env.GG_AGENTIC_MODEL || 'claude-sonnet-4-6';
   const repEffort = process.env.GG_AGENTIC_EFFORT || 'high';
@@ -807,6 +811,8 @@ function tryDeterministicRepair({ pgId, draftV8, candidate, targetKeyword, autho
   // allowance covers two bounded attempts plus startup/cleanup — never the old
   // 30-minute inherited agentic ceiling.
   const repTimeout = (repAttemptTimeout * 2) + 60000;
+  let workerFinished = false;
+  let repairFailure = '';
   try {
     const args = [join(SCRIPTS, 'gg-author-repair.mjs'),
       '--source', draftV8, '--out', candidate, '--page-id', pgId,
@@ -815,11 +821,20 @@ function tryDeterministicRepair({ pgId, draftV8, candidate, targetKeyword, autho
       '--model', repModel, '--effort', repEffort,
       '--timeout-ms', String(repAttemptTimeout)];
     shFlow('node', args, repTimeout);
+    workerFinished = true;
     // WE validate the candidate (the worker never runs phase2 itself); adopt only on PASS.
-    if (validate(candidate)) return true;
-  } catch (e) { log(`deterministic repair errored: ${errTail(e, 80)}`); }
+    if (validate(candidate)) return { passed: true, attempted: true, failure: '' };
+  } catch (e) {
+    if (workerFinished) {
+      repairFailure = summarizePhase2Failure(e);
+      log(`deterministic repair candidate failed phase2:\n${repairFailure}`);
+    } else {
+      repairFailure = `- deterministic repair tooling failure: ${errTail(e, 200)}`;
+      log(repairFailure.slice(2));
+    }
+  }
   log('deterministic repair did not yield a passing draft — parking');
-  return false;
+  return { passed: false, attempted: true, failure: repairFailure };
 }
 
 async function doAuthor(o = {}) {
@@ -1006,9 +1021,7 @@ async function doAuthor(o = {}) {
       if (!existsSync(join(FLOW, draftV8))) { lastFail = '- orchestrator produced no draft'; continue; }
       try { shFlow('node', [PHASE2, '--source', draftV8, '--page-id', pgId, '--tag', 'en', '--author', author]); }
       catch (e) {
-        const out = `${e.stdout || ''}${e.stderr || ''}`;
-        const fails = [...out.matchAll(/✗\s*(?:FAIL\s*)?([^\n]+)/g)].map((m) => `- ${m[1].trim()}`).filter((s) => s.length > 6).slice(0, 8);
-        lastFail = fails.length ? fails.join('\n') : ('- phase2 FAIL: ' + (out.split('\n').map((s) => s.trim()).filter(Boolean).slice(-3).join(' | ') || 'no detail captured'));
+        lastFail = summarizePhase2Failure(e);
         log(`phase2 attempt ${i}/${attempts} failed:\n${lastFail}${i < attempts ? '\n  → regenerating WITH feedback' : ''}`);
         continue;
       }
@@ -1053,19 +1066,21 @@ async function doAuthor(o = {}) {
     // model won't anchor the literal keyword in every section). Escalate ONCE to the shared text-only
     // gg-author-repair worker (NO tools / NO --dangerously-skip-permissions), validating the candidate
     // with the EN phase2 gate; adopt only on PASS. Only fires at the park boundary. Toggle GG_AUTHOR_REPAIR=0.
-    if (tryDeterministicRepair({
+    const repairResult = tryDeterministicRepair({
       pgId, draftV8, candidate: join('_staging', `${pgId}-repair-candidate.md`),
       targetKeyword: keyword, author, failures: lastFail,
       validate: (cand) => {
         shFlow('node', [PHASE2, '--source', cand, '--page-id', pgId, '--tag', 'en', '--author', author, '--prompt-version', VERSION]);
         return existsSync(enDraft(pgId)) && phase2Passed(pgId);
       },
-    })) {
+    });
+    if (repairResult.passed) {
       log(`AUTHORED ${pgId} → ${enDraft(pgId)} (author=${author}, via deterministic repair) — ready for next scan to publish`);
       return;
     }
 
-    return park(slug, `${(lastFail || 'phase2 failed').replace(/\n/g, ' | ')} after ${attempts} attempt(s) + deterministic repair`);
+    const finalFailure = repairResult.failure || lastFail || '- phase2 failed';
+    return park(slug, `${finalFailure.replace(/\n/g, ' | ')} after ${attempts} attempt(s) + deterministic repair`);
   } catch (e) {
     return park(null, `unexpected: ${errTail(e)}`);
   }

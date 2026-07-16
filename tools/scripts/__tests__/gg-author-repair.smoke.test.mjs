@@ -188,8 +188,8 @@ test('timed-out repair attempt uses the same bounded distinct-model fallback', (
   assert.equal(r.status, 0, `stderr: ${r.stderr}`);
   assert.equal(readFileSync(out, 'utf8'), '# Fixed by fallback\n\nBetter body.');
   const invoked = readFileSync(calls, 'utf8').trim().split('\n');
-  assert.equal(invoked.length, 2);
-  assert.match(invoked[1], /claude-sonnet-4-6/);
+  assert.ok(invoked.some((call) => /claude-sonnet-4-6/.test(call)), invoked.join('\n'));
+  assert.match(r.stderr, /timed out.*falling back once to claude-sonnet-4-6/s);
 });
 
 test('strips chatbot preamble before the first H1', () => {

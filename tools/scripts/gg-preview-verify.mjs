@@ -24,6 +24,7 @@ import { createRequire } from 'node:module';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
 import { pathToFileURL } from 'node:url';
+import { loadEnv } from './lib/gg-shared.mjs';
 
 const EXIT = { OK: 0, CLI: 2, VERIFY_FAIL: 1, TOOLING: 3 };
 
@@ -400,6 +401,12 @@ Options:
 Exit codes: 0 pass, 1 verification fail, 2 CLI error, 3 tooling error (fail-closed).`;
 
 async function main() {
+  // Make the verifier independently unattended-safe. Callers normally source
+  // ~/.config/gg/_gg.env, but direct repair/controller invocations must not
+  // misclassify an existing bypass secret as missing merely because an upstream
+  // shell forgot to export it. Strict mode prevents cwd/repo secret pickup, and
+  // mode 600 keeps the canonical env file private.
+  loadEnv({ strict: true, requireMode: 0o600 });
   const opts = parseArgs(process.argv.slice(2));
   if (opts.help) {
     process.stdout.write(HELP + '\n');

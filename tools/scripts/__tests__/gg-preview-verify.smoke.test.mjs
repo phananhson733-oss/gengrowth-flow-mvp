@@ -10,6 +10,9 @@ import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { EventEmitter } from 'node:events';
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 import {
   parseArgs,
@@ -333,6 +336,30 @@ test('--json: empty-secret park emits failReason + tooling=false + park in JSON'
   assert.match(obj.failReason, /no VERCEL_AUTOMATION_BYPASS_SECRET/);
   assert.ok(Array.isArray(obj.checked));
   assert.ok(Array.isArray(obj.warnings));
+});
+
+test('CLI loads bypass secret from GG_ENV_FILE before parsing defaults', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'gg-preview-verify-env-'));
+  const envFile = join(dir, '_gg.env');
+  writeFileSync(envFile, 'VERCEL_AUTOMATION_BYPASS_SECRET=test-only-bypass-secret\n', { mode: 0o600 });
+
+  const r = runCli([
+    '--preview-url', 'https://preview.example.com',
+    '--slug', 'slug',
+    '--oracle-dir', '/nonexistent-oracle-proves-env-loaded',
+    '--json',
+  ], {
+    GG_ENV_FILE: envFile,
+  });
+
+  // If the CLI failed to load GG_ENV_FILE before parseArgs, it would short-circuit
+  // as a needs_human missing-secret failure (exit 1). Reaching the intentionally
+  // invalid oracle-dir proves the secret was loaded and the real tooling path began.
+  assert.equal(r.status, EXIT.TOOLING);
+  const obj = JSON.parse(r.stdout.trim().split('\n').filter(Boolean).pop());
+  assert.equal(obj.tooling, true);
+  assert.doesNotMatch(obj.failReason, /no VERCEL_AUTOMATION_BYPASS_SECRET/);
+  assert.match(obj.failReason, /playwright resolve failed/);
 });
 
 // ============================================================

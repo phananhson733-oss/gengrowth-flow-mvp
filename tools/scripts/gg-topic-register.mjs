@@ -649,6 +649,14 @@ export function checkedTaskPageIds(markdown) {
   return ids;
 }
 
+export function uncheckedTaskPageIds(markdown) {
+  const ids = new Set();
+  const re = /^\s*-\s+\[\s\]\s+`?(PG-[A-Z0-9]+-\d+)`?/gm;
+  let match;
+  while ((match = re.exec(String(markdown || '')))) ids.add(match[1]);
+  return ids;
+}
+
 function escapeRegExp(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -1851,6 +1859,13 @@ function csvSet(value, { normalize = false } = {}) {
     .filter(Boolean));
 }
 
+function isDeterministicScaffoldPage(page) {
+  const logic = String(page?.Logic || '').trim();
+  const friction = String(page?.Friction || '').trim();
+  return /^Readers need\b/i.test(friction)
+    && /↔\s*practical interpretation\.\s*Treat\b/i.test(logic);
+}
+
 function planRows({
   profile,
   pagesRaw,
@@ -1861,6 +1876,7 @@ function planRows({
   repairKeywords = new Set(),
   reassignExisting = false,
   completedPageIds = new Set(),
+  activePageIds = new Set(),
   preprocessorOutputsByKeyword = new Map(),
   preprocessorOutputsByPageId = new Map(),
   cacheRoot = join(REPO, '.gg-cache'),
@@ -1884,12 +1900,17 @@ function planRows({
       const clusterId = String(page.cluster_id || '').trim();
       const status = String(page.Status || '').trim();
       if (!pageId || !targetKeyword || !clusterId || completedPageIds.has(pageId) || CLOSED_PAGE_STATUSES.has(status)) continue;
+      if (activePageIds.size > 0 && !activePageIds.has(pageId)) continue;
       const currentCluster = clusters.find((item) => item.cluster_id === clusterId);
       if (!currentCluster || scoreClusterKeyword(targetKeyword, currentCluster) >= 0.3) continue;
       const alternative = chooseClusterForKeyword(targetKeyword, clusters);
       if (alternative.kind === 'existing'
         && alternative.cluster_id !== clusterId
         && alternative.score >= 0.55) {
+        semanticMismatchPageIds.add(pageId);
+      } else if (alternative.kind === 'new'
+        && scoreClusterKeyword(targetKeyword, currentCluster) === 0
+        && isDeterministicScaffoldPage(page)) {
         semanticMismatchPageIds.add(pageId);
       }
     }
@@ -1928,12 +1949,23 @@ function planRows({
         };
         cluster = alternative.cluster;
         semanticClusterRepair = true;
+      } else if (alternative.kind === 'new'
+        && scoreClusterKeyword(candidate.target_keyword, cluster) === 0
+        && isDeterministicScaffoldPage(candidate.values)) {
+        clusterDecision = {
+          ...alternative,
+          kind: 'semantic-repair-new',
+          previous_cluster_id: cluster.cluster_id,
+        };
+        cluster = null;
+        semanticClusterRepair = true;
       }
     }
     if (!cluster) {
-      clusterDecision = chooseClusterForKeyword(candidate.target_keyword, [...clusters, ...newClusters.values()]);
-      if (clusterDecision.kind === 'existing') {
-        cluster = clusterDecision.cluster;
+      const nextDecision = chooseClusterForKeyword(candidate.target_keyword, [...clusters, ...newClusters.values()]);
+      clusterDecision = clusterDecision || nextDecision;
+      if (nextDecision.kind === 'existing') {
+        cluster = nextDecision.cluster;
       } else {
         cluster = buildNewClusterRow({
           product: profile.key,
@@ -2055,9 +2087,11 @@ async function runProduct(profile, { token, args, nowDate, budget = null }) {
   if (!pagesRaw.length) throw new Error(`${profile.key}: ${PAGES_TAB} empty`);
   if (!clustersRaw.length) throw new Error(`${profile.key}: ${CLUSTERS_TAB} empty`);
   const limit = args.limit ? Number(args.limit) : 0;
-  const completedPageIds = profile.taskPlan && existsSync(profile.taskPlan)
-    ? checkedTaskPageIds(readFileSync(profile.taskPlan, 'utf8'))
-    : new Set();
+  const taskPlanMarkdown = profile.taskPlan && existsSync(profile.taskPlan)
+    ? readFileSync(profile.taskPlan, 'utf8')
+    : '';
+  const completedPageIds = checkedTaskPageIds(taskPlanMarkdown);
+  const activePageIds = uncheckedTaskPageIds(taskPlanMarkdown);
   const plan = planRows({
     profile,
     pagesRaw,
@@ -2068,6 +2102,7 @@ async function runProduct(profile, { token, args, nowDate, budget = null }) {
     repairKeywords: csvSet(args.repair_keywords, { normalize: true }),
     reassignExisting: !!args.reassign_existing,
     completedPageIds,
+    activePageIds,
   });
   if (args.discover_evidence) {
     await discoverPreprocessorEvidenceForPlan(plan, { budget });
@@ -2174,6 +2209,14 @@ export function summarizeProductResult(result, { args = {} } = {}) {
     updates: updates.length,
     new_clusters: Array.isArray(plan.newClusters) ? plan.newClusters.length : 0,
     page_ids: updates.map((u) => u.pageId),
+    cluster_repairs: updates
+      .filter((u) => /^semantic-repair/.test(String(u.clusterDecision?.kind || '')))
+      .map((u) => ({
+        page_id: u.pageId,
+        from: u.clusterDecision.previous_cluster_id,
+        to: u.cluster.cluster_id,
+        score: u.clusterDecision.score,
+      })),
     ...(plan.selectionMode ? { selection_mode: plan.selectionMode } : {}),
     ...(Number.isFinite(plan.auditIncomplete) ? { audit_incomplete: plan.auditIncomplete } : {}),
     preprocessor,

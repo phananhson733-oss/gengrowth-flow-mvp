@@ -270,6 +270,7 @@ test('planRows automatically repairs a complete unpublished row whose existing c
     pagesRaw: [pageHeader, completeWrongRow, blankNewRow],
     clustersRaw,
     limit: 10,
+    activePageIds: new Set(['PG-WDIF-002']),
   });
 
   assert.equal(plan.selectionMode, 'semantic_repair');
@@ -296,6 +297,54 @@ test('planRows automatically repairs a complete unpublished row whose existing c
   assert.ok(writtenColumns.has(String.fromCharCode(65 + logicColumn)), 'Logic must be overwritten');
   assert.ok(writtenColumns.has(String.fromCharCode(65 + entityColumn)), 'Entity must be normalized');
   assert.equal(plan.taskLines.length, 0, 'semantic repair must preserve the existing page id and task line');
+});
+
+test('planRows creates a singleton cluster only for a zero-score deterministic scaffold with no relevant existing cluster', () => {
+  const pageHeader = ['Target Keyword', ...PAGE_REQUIRED_FIELDS, 'CTA', 'Status'];
+  const row = [
+    'what is my love language',
+    'what is my love language meaning',
+    'Info',
+    'T2',
+    'Definition',
+    'What Is My Love Language',
+    'Readers need What Is My Love Language explained with clear interpretive boundaries instead of broad claims.',
+    'What Is My Love Language ↔ Why Do I Feel Stuck in My Career ↔ practical interpretation. Treat What Is My Love Language as an interpretive framework rather than a deterministic claim.',
+    'PG-WDIF-002',
+    'why_do_i_feel_stuck_in_my_career',
+    'Wiki',
+    'Frame Why Do I Feel Stuck in My Career as a symbolic, interpretive guide.',
+    'N',
+    '星盘页',
+    '待写',
+  ];
+  const cluster = (overrides) => CLUSTER_FIELDS.map((field) => overrides[field] || '');
+  const plan = planRows({
+    profile: PRODUCT_PROFILES.astrologywiki,
+    pagesRaw: [pageHeader, row],
+    clustersRaw: [
+      CLUSTER_FIELDS,
+      cluster({
+        cluster_id: 'why_do_i_feel_stuck_in_my_career',
+        cluster_name: 'Why Do I Feel Stuck in My Career',
+        primary_entity: 'Career Stagnation',
+        jtbd: 'Understand career stagnation',
+        content_angle: 'Career reflection',
+        keywords_included: 'career stagnation, feeling stuck at work',
+      }),
+    ],
+    limit: 10,
+    activePageIds: new Set(['PG-WDIF-002']),
+  });
+
+  assert.equal(plan.selectionMode, 'semantic_repair');
+  assert.equal(plan.newClusters.length, 1);
+  assert.equal(plan.updates[0].pageId, 'PG-WDIF-002');
+  assert.equal(plan.updates[0].clusterDecision.kind, 'semantic-repair-new');
+  assert.equal(plan.updates[0].clusterDecision.previous_cluster_id, 'why_do_i_feel_stuck_in_my_career');
+  assert.equal(plan.updates[0].fields.cluster_id, 'what_is_my_love_language');
+  assert.equal(plan.updates[0].fields.Entity, 'My Love Language');
+  assert.doesNotMatch(plan.updates[0].fields.Logic, /Career/);
 });
 
 test('runPreprocessorForPlan skips LLM work with budget_exhausted status when run budget is spent', async () => {

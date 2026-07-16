@@ -1394,6 +1394,15 @@ function pollMergeable(branch, tries = 6, waitMs = 2000) {
 // = 未评审，直接 park），并在 expectedHead 上开 worktree 重建。expectedHead 缺失（旧 claim）才退回 tip。
 function unionRebaseBranch(branch, slug, expectedHead) {
   git(['fetch', '--quiet', '--prune', 'origin']);
+  // The unattended baseline is intentionally allowed to be a single-branch
+  // clone that tracks only main. Fetch the reviewed SEO branch into its exact
+  // remote-tracking ref so rev-parse/CAS never depends on the clone's refspec.
+  git([
+    'fetch',
+    '--quiet',
+    'origin',
+    `+refs/heads/${branch}:refs/remotes/origin/${branch}`,
+  ]);
   let base = `origin/${branch}`;
   if (expectedHead) {
     let tip = '';

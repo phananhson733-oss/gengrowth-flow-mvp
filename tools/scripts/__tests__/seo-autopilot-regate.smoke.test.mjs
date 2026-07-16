@@ -42,7 +42,10 @@ function frontInsert(repo, file, line) {
   writeFileSync(path, readFileSync(path, 'utf8').replace('[\n', `[\n${line}\n`));
 }
 
-function fixture(t, { nonAdditiveConflict = false } = {}) {
+function fixture(t, {
+  nonAdditiveConflict = false,
+  singleBranchBaseline = false,
+} = {}) {
   const root = mkdtempSync(join(tmpdir(), 'seo-autopilot-regate-'));
   const remote = join(root, 'remote.git');
   const oracle = join(root, 'oracle');
@@ -91,6 +94,15 @@ function fixture(t, { nonAdditiveConflict = false } = {}) {
   git(oracle, 'commit', '-qm', 'main advances');
   git(oracle, 'push', '-q', 'origin', 'main');
   git(oracle, 'fetch', '-q', 'origin');
+  if (singleBranchBaseline) {
+    git(
+      oracle,
+      'config',
+      'remote.origin.fetch',
+      '+refs/heads/main:refs/remotes/origin/main',
+    );
+    git(oracle, 'update-ref', '-d', `refs/remotes/origin/${BRANCH}`);
+  }
 
   mkdirSync(repairRoot, { recursive: true });
   const repairWorktree = join(repairRoot, `${PAGE_ID}-event`);
@@ -172,7 +184,7 @@ process.exit(0);
 }
 
 test('--prepare-regate unions only additive registries, pushes a new head, and persists a clean binding', (t) => {
-  const h = fixture(t);
+  const h = fixture(t, { singleBranchBaseline: true });
   const result = h.runAutopilot(['--prepare-regate', '--branch', BRANCH]);
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
   const prepared = JSON.parse(result.stdout.trim().split('\n').at(-1));

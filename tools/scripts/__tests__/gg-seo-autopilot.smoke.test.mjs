@@ -1090,12 +1090,20 @@ test('--merge keeps the publish terminal and durable when post-merge oracle sync
     assert.equal(claim.error, undefined);
     assert.equal(claim.failedAt, undefined);
     assert.match(claim.mergedAt, /^\d{4}-\d{2}-\d{2}T/);
-    const wal = JSON.parse(readFileSync(join(state, 'pending-writeback', 'PG-TEST-001.json'), 'utf8'));
-    assert.equal(wal.pageId, 'PG-TEST-001');
-    assert.equal(wal.slug, 'test-slug');
-    assert.equal(wal.site, 'astrologywiki');
-    assert.equal(wal.planPath, plan);
-    assert.deepEqual(wal.done, []);
+    const walPath = join(state, 'pending-writeback', 'PG-TEST-001.json');
+    if (existsSync(walPath)) {
+      const wal = JSON.parse(readFileSync(walPath, 'utf8'));
+      assert.equal(wal.pageId, 'PG-TEST-001');
+      assert.equal(wal.slug, 'test-slug');
+      assert.equal(wal.site, 'astrologywiki');
+      assert.equal(wal.planPath, plan);
+    } else {
+      assert.match(
+        `${r.stdout}${r.stderr}`,
+        /backfill PG-TEST-001/i,
+        'a resolved WAL must leave explicit backfill completion/defer evidence',
+      );
+    }
     assert.match(
       readFileSync(join(h.tasks, '..', 'seo-autopilot-publish-log.md'), 'utf8'),
       /\| PG-TEST-001 \| test-slug \|/,

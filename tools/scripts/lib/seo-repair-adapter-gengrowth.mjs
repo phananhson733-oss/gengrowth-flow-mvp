@@ -153,6 +153,7 @@ export async function recoverGengrowthAuthoring(event, deps = {}) {
     },
   ];
   const results = [];
+  let agentMutationInvoked = false;
   for (const command of commands) {
     let result;
     try {
@@ -169,6 +170,7 @@ export async function recoverGengrowthAuthoring(event, deps = {}) {
         timedOut: false,
       };
     }
+    if (command.role === 'author') agentMutationInvoked = true;
     results.push({
       role: command.role,
       argv: command.argv,
@@ -181,6 +183,7 @@ export async function recoverGengrowthAuthoring(event, deps = {}) {
     if (failed && command.role !== 'author') {
       return {
         target: null,
+        agentMutationInvoked,
         evidence: {
           type: 'author_recovery_failed',
           failedCommand: command.argv,
@@ -193,6 +196,7 @@ export async function recoverGengrowthAuthoring(event, deps = {}) {
     const target = await resolveAuthoredTarget(event);
     return {
       target,
+      agentMutationInvoked,
       evidence: {
         type: 'author_recovered_and_handed_off',
         authorCut: results.find((result) => result.role === 'author')?.code !== 0
@@ -203,6 +207,7 @@ export async function recoverGengrowthAuthoring(event, deps = {}) {
   } catch (error) {
     return {
       target: null,
+      agentMutationInvoked,
       evidence: {
         type: 'author_recovery_failed',
         reason: 'publish_ready_target_missing_after_handoff',
@@ -229,6 +234,7 @@ export function createGengrowthRepairAdapter(deps = {}) {
       const event = record.event;
       let target;
       let authorRecoveryEvidence = null;
+      let authorMutationInvoked = false;
       if (isAuthoringEvent(event)) {
         const recovered = await recoverGengrowthAuthoring(event, {
           scriptsDir,
@@ -237,10 +243,15 @@ export function createGengrowthRepairAdapter(deps = {}) {
           resolveAuthoredTarget,
         });
         if (!recovered.target) {
-          return { ok: false, agentMutationInvoked: false, evidence: recovered.evidence };
+          return {
+            ok: false,
+            agentMutationInvoked: recovered.agentMutationInvoked === true,
+            evidence: recovered.evidence,
+          };
         }
         target = recovered.target;
         authorRecoveryEvidence = recovered.evidence;
+        authorMutationInvoked = recovered.agentMutationInvoked === true;
       } else {
         try {
           target = await resolveTarget(event);
@@ -267,6 +278,7 @@ export function createGengrowthRepairAdapter(deps = {}) {
       };
       const needsAgent = ['agent_content_asset_link', 'agent_diagnosis', 'agent_code_environment']
         .includes(strategy);
+      const mutationInvoked = () => needsAgent || authorMutationInvoked;
       if (needsAgent) {
         const repaired = await invokeAgent({
           site: 'gengrowth',
@@ -316,7 +328,7 @@ export function createGengrowthRepairAdapter(deps = {}) {
       if (verdict.verdict !== 'PASS') {
         return {
           ok: false,
-          agentMutationInvoked: needsAgent,
+          agentMutationInvoked: mutationInvoked(),
           evidence: withAuthorRecovery({
             type: verdict.verdict === 'FAIL' ? 'fact_gate_fail' : 'reviewer_tool_failure',
             strategy,
@@ -350,7 +362,7 @@ export function createGengrowthRepairAdapter(deps = {}) {
       if (published.code !== 0 || published.timedOut) {
         return {
           ok: false,
-          agentMutationInvoked: needsAgent,
+          agentMutationInvoked: mutationInvoked(),
           evidence: withAuthorRecovery({
             type: 'publish_fail',
             strategy,
@@ -366,13 +378,13 @@ export function createGengrowthRepairAdapter(deps = {}) {
       if (verified?.ok === true && verified?.terminal === 'published') {
         return {
           terminal: 'published',
-          agentMutationInvoked: needsAgent,
+          agentMutationInvoked: mutationInvoked(),
           evidence: withAuthorRecovery(verified),
         };
       }
       return {
         ok: false,
-        agentMutationInvoked: needsAgent,
+        agentMutationInvoked: mutationInvoked(),
         evidence: withAuthorRecovery({
           type: 'terminal_verifier_failed',
           strategy,

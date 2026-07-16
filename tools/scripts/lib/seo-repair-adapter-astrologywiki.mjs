@@ -434,9 +434,15 @@ async function defaultVerifyTerminal(event, target, { scriptsDir, runCommand }) 
 
 function astrologyArtifactSha(target) {
   const worktree = resolve(target.worktree);
+  let dirtyTargetFiles = [];
+  try {
+    dirtyTargetFiles = worktreeDirtyPaths(worktree)
+      .filter((file) => isSafeAstrologyTargetPath(file, target.slug));
+  } catch {}
   const candidates = [...new Set([
     target.articleFile,
     ...(target.changedFiles || []),
+    ...dirtyTargetFiles,
   ].filter(Boolean).map((file) => absoluteWorktreeFile(worktree, file)))];
   const measured = candidates
     .map((file) => ({ file, path: relative(worktree, file) }))

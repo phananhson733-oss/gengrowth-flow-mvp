@@ -287,6 +287,21 @@ test('pre-exhausted or no-progress incidents quarantine before adapter execution
     assert.equal(out.terminals[0].terminal, 'quarantined');
     assert.equal((await readRepairRecord(built.recordPath)).history.at(-1).evidence.type, 'repair_budget_exhausted');
   });
+  await t.test('author-stage Agent budget already exhausted', async (tt) => {
+    const built = await budgetFixture(tt, {
+      agentMutationAttempts: 2,
+    }, undefined, {
+      lane: 'gengrowth-author',
+      stage: 'authoring',
+    });
+    const out = await drainRepairQueue({
+      ...built.args,
+      maxAgentMutationAttempts: 2,
+    });
+    assert.equal(built.adapterCalls(), 0);
+    assert.equal(out.terminals[0].terminal, 'quarantined');
+    assert.equal((await readRepairRecord(built.recordPath)).history.at(-1).evidence.type, 'repair_budget_exhausted');
+  });
 });
 
 test('Agent mutation budget increments only when the adapter actually invokes an Agent', async (t) => {
@@ -314,6 +329,24 @@ test('Agent mutation budget increments only when the adapter actually invokes an
     await drainRepairQueue({ ...built.args, maxTargets: 1 });
     assert.equal((await readRepairRecord(built.recordPath)).agentMutationAttempts, 1);
   });
+});
+
+test('deterministic author-stage recovery consumes one Agent mutation when --author ran', async (t) => {
+  const built = await budgetFixture(t, {}, {
+    ok: false,
+    agentMutationInvoked: true,
+    evidence: { type: 'author_recovery_failed' },
+  }, {
+    lane: 'gengrowth-author',
+    stage: 'authoring',
+  });
+  await drainRepairQueue({
+    ...built.args,
+    maxTargets: 1,
+    maxAgentMutationAttempts: 2,
+  });
+  assert.equal(built.adapterCalls(), 1);
+  assert.equal((await readRepairRecord(built.recordPath)).agentMutationAttempts, 1);
 });
 
 test('artifact evidence counts consecutive no-progress attempts and quarantines the second repeat', async (t) => {

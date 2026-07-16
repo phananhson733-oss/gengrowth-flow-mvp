@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -227,6 +228,7 @@ test('gengrowth authoring repair recovers one target before resolving a publish-
     ['node', '/repo/tools/scripts/gg-gengrowth-author-handoff.mjs', '--page-id', 'PG-SDS-004'],
   ]);
   assert.equal(result.terminal, 'published');
+  assert.equal(result.agentMutationInvoked, true);
 });
 
 test('gengrowth authoring repair stops at the first failed scoped recovery command', async () => {
@@ -247,6 +249,7 @@ test('gengrowth authoring repair stops at the first failed scoped recovery comma
   });
   assert.equal(result.ok, false);
   assert.equal(result.evidence.type, 'author_recovery_failed');
+  assert.equal(result.agentMutationInvoked, false);
   assert.deepEqual(calls, [
     ['node', '/repo/tools/scripts/gg-seo-autopilot.mjs', '--retry-author', '--task', 'PG-SDS-004'],
   ]);
@@ -294,6 +297,7 @@ test('gengrowth authoring repair salvages a passing handoff after author timeout
   ]);
   assert.equal(Math.max(...timeouts.slice(0, 3)) <= 20 * 60 * 1000, true);
   assert.equal(result.terminal, 'published');
+  assert.equal(result.agentMutationInvoked, true);
   assert.equal(result.evidence.authorRecovery.authorCut, true);
   assert.equal(result.evidence.authorRecovery.results[1].code, 124);
 });
@@ -561,6 +565,52 @@ test('astrology context failure explicitly records that no Agent mutation ran', 
   assert.equal(result.ok, false);
   assert.equal(result.agentMutationInvoked, false);
   assert.equal(result.evidence.type, 'target_resolution_failed');
+});
+
+test('astrology Agent failure fingerprints a newly created dirty target asset', async (t) => {
+  const artifact = await tempArtifact(
+    t,
+    'data/articles/saturn-return-age-29.ts',
+    'export const article = { title: "stable article" };\n',
+  );
+  execFileSync('git', ['init', '-q'], { cwd: artifact.root });
+  execFileSync('git', ['config', 'user.name', 'seo-repair-test'], { cwd: artifact.root });
+  execFileSync('git', ['config', 'user.email', 'seo-repair-test@example.invalid'], { cwd: artifact.root });
+  execFileSync('git', ['add', '.'], { cwd: artifact.root });
+  execFileSync('git', ['commit', '-qm', 'fixture'], { cwd: artifact.root });
+  const assetPath = join(artifact.root, 'public/images/blog/saturn-return-age-29-i0-en.svg');
+  await mkdir(dirname(assetPath), { recursive: true });
+  let invocation = 0;
+  const adapter = createAstrologyWikiRepairAdapter({
+    resolveContext: async () => ({
+      branch: 'seo/auto/PG-TRANS-016',
+      worktree: artifact.root,
+      articleFile: artifact.path,
+      changedFiles: ['data/articles/saturn-return-age-29.ts'],
+      linkCandidates: [],
+    }),
+    invokeAgent: async () => {
+      invocation += 1;
+      await writeFile(assetPath, `<svg><text>attempt ${invocation}</text></svg>\n`, 'utf8');
+      return { ok: false, evidence: { type: 'agent_exit', code: 7 } };
+    },
+  });
+  const input = {
+    record: {
+      fingerprint: 'fp-trans-016',
+      event: {
+        site: 'astrologywiki', pageId: 'PG-TRANS-016', slug: 'saturn-return-age-29',
+        stage: 'preview_fact_gate', errorKind: 'asset_fail', summary: 'SVG age 14', stderr: 'FAIL',
+      },
+    },
+    strategy: 'agent_content_asset_link',
+  };
+  const first = await adapter.execute(input);
+  const second = await adapter.execute(input);
+  assert.equal(first.agentMutationInvoked, true);
+  assert.equal(second.agentMutationInvoked, true);
+  assert.match(first.evidence.artifactSha, /^[a-f0-9]{64}$/);
+  assert.notEqual(second.evidence.artifactSha, first.evidence.artifactSha);
 });
 
 test('astrology adapter never regates an Agent edit that was not committed and pushed', async () => {

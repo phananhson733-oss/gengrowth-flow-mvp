@@ -287,6 +287,16 @@ function isAgentStrategy(strategy) {
   return AGENT_STRATEGIES.has(strategy);
 }
 
+function isAuthoringAgentAttempt(record) {
+  if (record?.event?.site !== 'gengrowth') return false;
+  return [record.event?.stage, record.event?.lane]
+    .some((value) => String(value || '').toLowerCase().includes('author'));
+}
+
+function attemptMayInvokeAgent(record, strategy) {
+  return isAgentStrategy(strategy) || isAuthoringAgentAttempt(record);
+}
+
 function incidentAgeMs(record, now) {
   const detectedAt = Date.parse(record.firstDetectedAt || record.event?.createdAt || 0);
   return Number.isFinite(detectedAt) ? Math.max(0, now.getTime() - detectedAt) : 0;
@@ -308,7 +318,7 @@ function preAttemptQuarantineEvidence(record, strategy, now, {
     };
   }
   if (Number(record.totalAttempts || 0) >= maxTotalAttempts
-    || (isAgentStrategy(strategy)
+    || (attemptMayInvokeAgent(record, strategy)
       && Number(record.agentMutationAttempts || 0) >= maxAgentMutationAttempts)) {
     return { type: 'repair_budget_exhausted' };
   }
@@ -457,9 +467,7 @@ export async function drainRepairQueue({
     }
 
     const terminal = acceptedTerminal(result);
-    const mutationInvoked = isAgentStrategy(strategy)
-      && result?.agentMutationInvoked !== false
-      && result?.evidence?.type !== 'controller_or_adapter_error';
+    const mutationInvoked = result?.agentMutationInvoked === true;
     const artifactSha = terminal ? '' : String(result?.evidence?.artifactSha || '').trim();
     if (mutationInvoked || artifactSha) {
       const sameArtifact = artifactSha && artifactSha === active.lastArtifactSha;
@@ -488,7 +496,7 @@ export async function drainRepairQueue({
     const postAttemptExhausted = Number(active.noProgressCount || 0) >= 2
       ? { type: 'no_progress', artifactSha: active.lastArtifactSha || null }
       : (Number(active.totalAttempts || 0) >= totalAttemptLimit
-        || (isAgentStrategy(strategy)
+        || (attemptMayInvokeAgent(active, strategy)
           && Number(active.agentMutationAttempts || 0) >= agentMutationLimit))
         ? { type: 'repair_budget_exhausted' }
         : null;

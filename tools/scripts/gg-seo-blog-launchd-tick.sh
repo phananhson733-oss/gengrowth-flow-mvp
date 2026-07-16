@@ -16,6 +16,8 @@ LOG="${GG_SEO_LAUNCHD_LOG:-$HOME/Library/Logs/gg-seo-blog-launchd.out.log}"
 ERR_LOG="${GG_SEO_LAUNCHD_ERR_LOG:-$HOME/Library/Logs/gg-seo-blog-launchd.err.log}"
 NIGHTLY="${GG_SEO_NIGHTLY_BIN:-$FLOW/tools/scripts/gg-nightly-seo.sh}"
 REPAIR_HOOK="${GG_SEO_REPAIR_HOOK_BIN:-$FLOW/tools/scripts/gg-seo-repair-hook.mjs}"
+RECONCILE="${GG_SEO_RECONCILE_BIN:-$FLOW/tools/scripts/gg-ledger-reconcile.mjs}"
+BATCH_SUMMARY="${GG_SEO_BATCH_SUMMARY_BIN:-$FLOW/tools/scripts/gg-batch-summary.mjs}"
 NIGHTLY_LOG="${GG_SEO_NIGHTLY_LOG:-$HOME/Library/Logs/gg-nightly-seo.log}"
 OPS="${GG_OPS_DIR:-$HOME/gengrowth-ops}"
 PLAN="${GG_SEO_PLAN:-$OPS/inbox/06-tasks/tasks/2026-05-27-W22-blog-output-plan.md}"
@@ -55,9 +57,14 @@ export GG_ORACLE_DIR="$ORACLE_BASELINE"
 
 [[ -x "$NIGHTLY" ]] || { echo "nightly wrapper unavailable: $NIGHTLY"; exit 1; }
 [[ -f "$REPAIR_HOOK" ]] || { echo "repair hook unavailable: $REPAIR_HOOK"; exit 1; }
+[[ -f "$RECONCILE" ]] || { echo "ledger reconcile unavailable: $RECONCILE"; exit 1; }
+[[ -f "$BATCH_SUMMARY" ]] || { echo "batch summary unavailable: $BATCH_SUMMARY"; exit 1; }
 [[ -d "$ORACLE_BASELINE/.git" ]] || { echo "clean Oracle baseline unavailable: $ORACLE_BASELINE"; exit 1; }
 [[ -f "$PLAN" ]] || { echo "pinned SEO plan unavailable: $PLAN"; exit 1; }
 [[ -f "$CLAIMS" ]] || { echo "SEO claims ledger unavailable: $CLAIMS"; exit 1; }
+if [[ "$PLAN" != /* ]]; then
+  PLAN="$(cd "$(dirname "$PLAN")" && pwd -P)/$(basename "$PLAN")"
+fi
 
 if [[ "${GG_SEO_SKIP_LEGACY_CHECK:-0}" != "1" ]]; then
   uid="$(id -u)"
@@ -88,6 +95,7 @@ if [[ "${GG_SEO_SKIP_LEGACY_CHECK:-0}" != "1" ]]; then
 fi
 
 RUN_START="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+RUN_ID="seo-blog-$(date -u '+%Y%m%dT%H%M%SZ')-$$"
 LOG_OFFSET=0
 if [[ -f "$NIGHTLY_LOG" ]]; then
   LOG_OFFSET="$(wc -c < "$NIGHTLY_LOG" | tr -d ' ')"
@@ -102,6 +110,7 @@ set -e
 echo "nightly exit=$NIGHTLY_RC; running conditional repair selector"
 set +e
 node "$REPAIR_HOOK" \
+  --run-id "$RUN_ID" \
   --run-start "$RUN_START" \
   --run-exit "$NIGHTLY_RC" \
   --log-file "$NIGHTLY_LOG" \
@@ -111,5 +120,37 @@ node "$REPAIR_HOOK" \
 HOOK_RC=$?
 set -e
 
-echo "===== seo-blog launchd tick complete nightly=$NIGHTLY_RC hook=$HOOK_RC $(date '+%F %T %Z') ====="
-exit "$HOOK_RC"
+if [[ "$HOOK_RC" -ne 0 ]]; then
+  echo "repair hook failed; skip reconcile and terminal summary"
+  echo "===== seo-blog launchd tick complete nightly=$NIGHTLY_RC hook=$HOOK_RC $(date '+%F %T %Z') ====="
+  exit "$HOOK_RC"
+fi
+
+echo "repair hook complete; running ledger reconcile"
+set +e
+node "$RECONCILE"
+RECONCILE_RC=$?
+set -e
+
+if [[ "$RECONCILE_RC" -ne 0 ]]; then
+  echo "ledger reconcile failed; skip terminal summary"
+  echo "===== seo-blog launchd tick complete nightly=$NIGHTLY_RC hook=$HOOK_RC reconcile=$RECONCILE_RC $(date '+%F %T %Z') ====="
+  exit "$RECONCILE_RC"
+fi
+
+echo "ledger reconcile complete; emitting one terminal batch summary"
+set +e
+node "$BATCH_SUMMARY" \
+  --since "$RUN_START" \
+  --site astrologywiki \
+  --plan "$PLAN" \
+  --run-id "$RUN_ID"
+SUMMARY_RC=$?
+set -e
+
+# exit 2 is the documented silent empty/in-flight-only terminal window.
+FINAL_RC="$SUMMARY_RC"
+if [[ "$SUMMARY_RC" -eq 2 ]]; then FINAL_RC=0; fi
+
+echo "===== seo-blog launchd tick complete nightly=$NIGHTLY_RC hook=$HOOK_RC reconcile=$RECONCILE_RC summary=$SUMMARY_RC $(date '+%F %T %Z') ====="
+exit "$FINAL_RC"

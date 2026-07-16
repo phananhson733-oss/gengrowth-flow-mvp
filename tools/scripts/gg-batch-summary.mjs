@@ -4,7 +4,8 @@
 // 契约（单一事实源）：tools/scripts/lib/NOTIFY-CONTRACT.md 之 `gg-batch-summary` 一节。
 //
 // 用法：
-//   node tools/scripts/gg-batch-summary.mjs --since <ISO> [--site both|astrologywiki|gengrowth]
+//   node tools/scripts/gg-batch-summary.mjs --since <ISO> --plan <absolute-plan>
+//        --run-id <safe-run-id> [--site both|astrologywiki|gengrowth]
 //        [--urls url1,url2] [--parked "PID:原因,PID2:原因2"] [--date YYYY-MM-DD] [--dry-run]
 //
 // 数据源：
@@ -34,12 +35,13 @@
 //   GG_NOTIFY_BIN                   gg-notify CLI 路径（测试放假 bin 记 argv）
 // 已知限制：--parked 用半角逗号分隔条目，reason 含逗号请改用全角逗号或经 ledger 侧传入。
 
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
-import { join, dirname } from 'node:path';
+import { join, dirname, isAbsolute } from 'node:path';
 import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { outboxWrite } from './lib/flow-state.mjs';
+import { outboxWrite, stateDir } from './lib/flow-state.mjs';
+import { terminalMessageUuid } from './lib/seo-repair-controller.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -53,7 +55,9 @@ const BASE_GENG = (process.env.GG_BATCH_SUMMARY_BASE_GENG || 'https://gengrowth.
 const TIMEOUT_MS = Number(process.env.GG_BATCH_SUMMARY_TIMEOUT_MS || 10000);
 const SITES = ['both', 'astrologywiki', 'gengrowth'];
 
-const USAGE = `用法：gg-batch-summary.mjs --since <ISO> [--site both|astrologywiki|gengrowth] [--urls u1,u2] [--parked "PID:原因,…"] [--date YYYY-MM-DD] [--dry-run]`;
+const TERMINAL_STATUSES = new Set(['published', 'archived', 'quarantined', 'human_only']);
+const SAFE_RUN_ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{2,127}$/;
+const USAGE = `用法：gg-batch-summary.mjs --since <ISO> --plan <absolute-plan> --run-id <safe-run-id> [--site both|astrologywiki|gengrowth] [--urls u1,u2] [--parked "PID:原因,…"] [--date YYYY-MM-DD] [--dry-run]`;
 
 function usageExit(msg) {
   process.stderr.write(`${msg}\n${USAGE}\n`);
@@ -62,11 +66,22 @@ function usageExit(msg) {
 
 // ── CLI 解析 ──────────────────────────────────────────────────────────────────
 function parseArgs(argv) {
-  const o = { since: null, site: 'both', urls: [], parked: [], date: null, dryRun: false };
+  const o = {
+    since: null,
+    site: 'both',
+    plan: null,
+    runId: null,
+    urls: [],
+    parked: [],
+    date: null,
+    dryRun: false,
+  };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--since') o.since = argv[++i];
     else if (a === '--site') o.site = argv[++i];
+    else if (a === '--plan') o.plan = argv[++i];
+    else if (a === '--run-id') o.runId = argv[++i];
     else if (a === '--urls') o.urls = String(argv[++i] || '').split(',').map((s) => s.trim()).filter(Boolean);
     else if (a === '--parked') o.parked = parseParked(argv[++i]);
     else if (a === '--date') o.date = argv[++i];
@@ -75,6 +90,8 @@ function parseArgs(argv) {
   }
   if (!o.since || Number.isNaN(Date.parse(o.since))) usageExit('--since <ISO> 必填且需为合法时间戳');
   if (!SITES.includes(o.site)) usageExit(`--site 只接受 ${SITES.join('|')}`);
+  if (!o.plan || !isAbsolute(o.plan) || !existsSync(o.plan)) usageExit('--plan 必填且必须是存在的绝对路径');
+  if (!o.runId || !SAFE_RUN_ID.test(o.runId)) usageExit('--run-id 必填且必须是安全 run id');
   if (!o.date) o.date = localDate();
   return o;
 }
@@ -109,6 +126,70 @@ function readClaims() {
     process.stderr.write(`gg-batch-summary：claims ledger 解析失败（${e.message}），按空账本处理\n`);
     return {};
   }
+}
+
+function readPlanIds(plan) {
+  const source = readFileSync(plan, 'utf8');
+  return new Set(source.match(/\bPG-[A-Z0-9]+(?:-[A-Z0-9]+)+\b/g) || []);
+}
+
+function repairQueueDir() {
+  if (process.env.GG_SEO_REPAIR_QUEUE_DIR) return process.env.GG_SEO_REPAIR_QUEUE_DIR;
+  const base = stateDir();
+  return base ? join(base, 'seo-repair-queue') : null;
+}
+
+function readRepairRecords() {
+  const dir = repairQueueDir();
+  if (!dir || !existsSync(dir)) return [];
+  const records = [];
+  for (const name of readdirSync(dir)) {
+    if (!name.endsWith('.json') || name.startsWith('.')) continue;
+    try {
+      const value = JSON.parse(readFileSync(join(dir, name), 'utf8'));
+      if (value && typeof value === 'object') records.push(value);
+    } catch (e) {
+      process.stderr.write(`gg-batch-summary：repair record ${name} 解析失败（${e.message}），跳过\n`);
+    }
+  }
+  return records;
+}
+
+function selectedSite(site, selected) {
+  return selected === 'both' || site === selected;
+}
+
+function claimSiteAllowed(pid, claim, selected, planIds) {
+  const explicit = typeof claim.site === 'string' && claim.site.trim() ? claim.site.trim() : null;
+  if (explicit && !selectedSite(explicit, selected)) return false;
+  if (!explicit && !planIds.has(pid)) return false;
+  return true;
+}
+
+function recordSource(record) {
+  if (record?.latestEvent?.runId) return record.latestEvent;
+  return record?.event || record?.latestEvent || {};
+}
+
+function recordTimestamp(record, source) {
+  return record?.updatedAt
+    || record?.history?.at?.(-1)?.at
+    || source?.createdAt
+    || null;
+}
+
+function scopedTerminalRecords(records, { site, runId, planIds, sinceMs }) {
+  return records.filter((record) => {
+    if (!TERMINAL_STATUSES.has(record?.status)) return false;
+    const source = recordSource(record);
+    const ownerSite = record?.event?.site || source?.site || null;
+    const pageId = source?.pageId || record?.event?.pageId || '';
+    if (ownerSite && !selectedSite(ownerSite, site)) return false;
+    if (!ownerSite && !planIds.has(pageId)) return false;
+    if (source?.runId) return source.runId === runId;
+    const timestamp = Date.parse(recordTimestamp(record, source) || '');
+    return planIds.has(pageId) && Number.isFinite(timestamp) && timestamp >= sinceMs;
+  });
 }
 
 // ── 目标 URL 归一：--urls 支持完整 URL 或裸 slug（裸值按 gengrowth 博客拼） ──────
@@ -146,12 +227,17 @@ function render({ date, results, parked }) {
   const okList = results.filter((r) => r.ok);
   const badList = results.filter((r) => !r.ok);
   const n = results.length;
-  const k = parked.length;
+  const terminalStops = parked.filter((item) => item.terminal);
+  const recoveryParks = parked.filter((item) => !item.terminal);
+  const k = recoveryParks.length;
   const repairControllerOwnsTerminal = process.env.GG_SEO_REPAIR_CONTROLLER_V2_ENABLED === '1';
   const parkedLine = k > 0
-    ? `${repairControllerOwnsTerminal ? '自动修复队列' : '暂停待人工'} ${k} 篇：${parked.map((p) => `${p.pid}（${p.reason}）`).join('、')}`
+    ? `${repairControllerOwnsTerminal ? '自动修复队列' : '暂停待人工'} ${k} 篇：${recoveryParks.map((p) => `${p.pid}（${p.reason}）`).join('、')}`
     : null; // k=0 时省略此行
-  if (badList.length === 0) {
+  const terminalLine = terminalStops.length > 0
+    ? `终态停止 ${terminalStops.length} 篇：${terminalStops.map((p) => `${p.pid}（${p.reason}）`).join('、')}`
+    : null;
+  if (badList.length === 0 && terminalStops.length === 0) {
     const lines = [`✅ [flow] 批次汇总 ${date}：上线 ${n} 篇（已逐篇线上核实）`];
     for (const site of ['astrologywiki', 'gengrowth']) {
       const slugs = okList.filter((r) => r.site === site).map((r) => r.slug);
@@ -160,9 +246,16 @@ function render({ date, results, parked }) {
     if (parkedLine) lines.push(parkedLine);
     return { text: lines.join('\n'), partial: false };
   }
-  const lines = [`⚠️ [flow] 批次汇总 ${date}：${okList.length}/${n} 篇已上线核实，以下未核实到线上：`];
+  const lines = badList.length > 0
+    ? [`⚠️ [flow] 批次汇总 ${date}：${okList.length}/${n} 篇已上线核实，以下未核实到线上：`]
+    : [`⚠️ [flow] 批次汇总 ${date}：上线 ${okList.length} 篇，另有终态停止`];
+  for (const site of ['astrologywiki', 'gengrowth']) {
+    const slugs = okList.filter((r) => r.site === site).map((r) => r.slug);
+    if (slugs.length) lines.push(`[${site}] ${slugs.join('、')}`);
+  }
   for (const r of badList) lines.push(`${r.site}/${r.slug}（HTTP ${r.code}）`);
   if (parkedLine) lines.push(parkedLine);
+  if (terminalLine) lines.push(terminalLine);
   return { text: lines.join('\n'), partial: true };
 }
 
@@ -170,7 +263,7 @@ function render({ date, results, parked }) {
 // gg-notify 自身 fail-closed（发送失败会入 outbox），所以 spawn 成功 + exit 0 即视为
 // 「已送达或已入箱」。只有 spawn 本身失败（bin 配错 ENOENT／超时被杀／进程崩溃）时消息
 // 才会真正丢——此时本层直接把渲染文本写进 outbox 兜底，main 以 exit 3 报告。
-function send(text, partial) {
+function send(text, partial, msgUuid, idempotencyKey) {
   const bin = process.env.GG_NOTIFY_BIN || join(__dirname, 'gg-notify.mjs');
   const env = { ...process.env };
   // 完成模板不 @；先清掉父环境可能泄漏的 @ 开关，部分完成再显式设 OPS。
@@ -181,7 +274,11 @@ function send(text, partial) {
   // 汇总是唯一不该被静默的消息——不清会把整批的最后一条也吞掉（评审实测复现）。
   delete env.GG_LARK_NOTIFY_SILENCE;
   if (partial) env.GG_LARK_NOTIFY_AT_OPS = '1';
-  const r = spawnSync(process.execPath, [bin, 'raw', '--text', text], { encoding: 'utf8', env, timeout: 120000 });
+  const r = spawnSync(process.execPath, [bin, 'raw', '--text', text, '--msgUuid', msgUuid], {
+    encoding: 'utf8',
+    env,
+    timeout: 120000,
+  });
   if (r.error || r.status !== 0) {
     process.stderr.write(`gg-batch-summary：notify 调用异常（${r.error ? r.error.message : `exit ${r.status}`}），渲染文本已直接写入 outbox 待重放\n`);
     if (r.stderr) process.stderr.write(r.stderr);
@@ -190,6 +287,8 @@ function send(text, partial) {
       atPm: false,
       atOps: !!partial,
       chatId: null,
+      msgUuid,
+      idempotencyKey,
       createdAt: new Date().toISOString(),
       attempts: 0,
       lastError: r.error ? `notify-spawn:${r.error.message}` : `notify-exit:${r.status}`,
@@ -203,6 +302,14 @@ function send(text, partial) {
 async function main() {
   const o = parseArgs(process.argv.slice(2));
   const sinceMs = Date.parse(o.since);
+  const planIds = readPlanIds(o.plan);
+  const repairRecords = readRepairRecords();
+  const terminalRecords = scopedTerminalRecords(repairRecords, {
+    site: o.site,
+    runId: o.runId,
+    planIds,
+    sinceMs,
+  });
 
   const targets = []; // {site, slug, url}
   const parked = [...o.parked]; // {pid, reason}
@@ -212,9 +319,20 @@ async function main() {
     const claims = readClaims();
     for (const [pid, c] of Object.entries(claims)) {
       if (!c || typeof c !== 'object') continue;
+      if (!claimSiteAllowed(pid, c, o.site, planIds)) continue;
       if (c.status === 'done' && c.slug && c.mergedAt && Date.parse(c.mergedAt) >= sinceMs) {
-        targets.push({ site: 'astrologywiki', slug: c.slug, url: `${BASE_ASTRO}${ASTRO_ARTICLE_PATH}${c.slug}` });
-      } else if (c.status === 'needs_human' && c.failedAt && Date.parse(c.failedAt) >= sinceMs) {
+        const targetSite = c.site === 'gengrowth' ? 'gengrowth' : 'astrologywiki';
+        targets.push({
+          site: targetSite,
+          slug: c.slug,
+          url: targetSite === 'gengrowth'
+            ? `${BASE_GENG}/en/blog/${c.slug}`
+            : `${BASE_ASTRO}${ASTRO_ARTICLE_PATH}${c.slug}`,
+        });
+      } else if (repairRecords.length === 0
+        && c.status === 'needs_human'
+        && c.failedAt
+        && Date.parse(c.failedAt) >= sinceMs) {
         parked.push({ pid, reason: c.error || 'needs_human' });
       }
     }
@@ -225,20 +343,42 @@ async function main() {
     for (const u of o.urls) targets.push(resolveUrlArg(u));
   }
 
+  for (const record of terminalRecords) {
+    const source = recordSource(record);
+    const pageId = source.pageId || record.event?.pageId || '?';
+    const terminalSite = record.event?.site || source.site || o.site;
+    const slug = source.slug || record.event?.slug || '';
+    if (record.status === 'published' && slug) {
+      targets.push({
+        site: terminalSite,
+        slug,
+        url: terminalSite === 'gengrowth'
+          ? `${BASE_GENG}/en/blog/${slug}`
+          : `${BASE_ASTRO}${ASTRO_ARTICLE_PATH}${slug}`,
+      });
+    } else {
+      parked.push({ pid: pageId, reason: record.status, terminal: true });
+    }
+  }
+
+  const uniqueTargets = [...new Map(targets.map((target) => [`${target.site}:${target.slug}`, target])).values()];
+  const uniqueParked = [...new Map(parked.map((item) => [`${item.pid}:${item.reason}:${item.terminal ? 'terminal' : 'recovery'}`, item])).values()];
+  const hasTerminalStop = uniqueParked.some((item) => item.terminal);
+
   // 仅 parked 是恢复中的作者/门状态，不渲染“上线 0 篇”中间消息；真正永久 park
   // 由 auto-retry 入口去重发送终态告警。没有上线 URL 一律静默。
-  if (targets.length === 0) {
+  if (uniqueTargets.length === 0 && !hasTerminalStop) {
     process.stderr.write(`gg-batch-summary：窗口内（since=${o.since}）无上线条目，不发送\n`);
     process.exit(2);
   }
 
   const results = [];
-  for (const t of targets) {
+  for (const t of uniqueTargets) {
     const { ok, code } = await checkUrl(t.url);
     results.push({ ...t, ok, code });
   }
 
-  const { text, partial } = render({ date: o.date, results, parked });
+  const { text, partial } = render({ date: o.date, results, parked: uniqueParked });
   process.stdout.write(text + '\n');
 
   if (o.dryRun) {
@@ -246,7 +386,8 @@ async function main() {
     process.exit(0);
   }
 
-  const sent = send(text, partial);
+  const idempotencyKey = `batch-terminal:${o.runId}`;
+  const sent = send(text, partial, terminalMessageUuid(idempotencyKey), idempotencyKey);
   // 0＝已送达或已入 gg-notify 的 outbox；3＝notify 调用本身失败（文本已由本层入箱兜底）。
   // 调用方（nightly 等）对本命令 `|| true`，exit 3 不会搞垮 cron，只是让失败可观测。
   process.exit(sent ? 0 : 3);

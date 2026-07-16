@@ -38,14 +38,29 @@ const PAGE_ID_REGEX = /^[A-Za-z0-9_-]{1,64}$/;
 // `--effort` accepts low|medium|high|xhigh|max (claude CLI). Opus 4.8 stays the
 // cross-validation escalation ceiling (see DIVERSIFY_ESCALATION) and the reviewer.
 const CLAUDE_MODEL = process.env.GG_CLAUDE_MODEL || 'claude-sonnet-4-6';
-// Rate-limit fallback: if Sonnet 4.6 hits a quota/429/overloaded error, retry the
-// SAME generation once on Opus (4.8 'high' by default; set GG_CLAUDE_FALLBACK_MODEL
-// to claude-opus-4-7 if preferred). Keeps authoring flowing when Sonnet is throttled.
+// Bounded infrastructure fallback: if Sonnet 4.6 hits a quota/429/overloaded error
+// OR its worker watchdog detects a deadlock/timeout/network failure, retry the SAME
+// generation once on Opus (4.8 'high' by default; set GG_CLAUDE_FALLBACK_MODEL to
+// claude-opus-4-7 if preferred). This is still text-only and preserves every
+// downstream phase2/review gate; it only prevents provider/worker stalls from
+// becoming human authoring parks.
 const CLAUDE_FALLBACK_MODEL = process.env.GG_CLAUDE_FALLBACK_MODEL || 'claude-opus-4-8';
 const CLAUDE_FALLBACK_EFFORT = process.env.GG_CLAUDE_FALLBACK_EFFORT || 'high';
 // Detect a rate-limit / quota / overload signal in a failed attempt's stderr.
 function isRateLimited(stderr) {
   return /rate.?limit|\b429\b|overloaded|over capacity|quota|usage limit|too many requests|insufficient_quota/i.test(String(stderr || ''));
+}
+function claudeFallbackReason(attempt) {
+  const stderr = String(attempt?.stderr_tail || '').trim();
+  if (isRateLimited(stderr)) return { kind: 'rate_limit', reason: stderr || 'rate limited' };
+  if (
+    attempt?.exit_code === -2
+    || /WATCHDOG:\s*(?:no CPU\/output progress|exceeded hard ceiling)/i.test(stderr)
+    || /\b(?:ETIMEDOUT|ECONNRESET|ECONNREFUSED|EAI_AGAIN|ENETUNREACH)\b|socket hang up|network error|\btimed?\s*out\b/i.test(stderr)
+  ) {
+    return { kind: 'transient_failure', reason: stderr || `worker exit ${attempt?.exit_code}` };
+  }
+  return null;
 }
 // Writing effort: 'high' (not 'xhigh'). Measured: Sonnet 4.6 xhigh = ~585s/gen
 // (~10 min, ~3× Opus) → the 5-attempt feedback loop made each article take hours.
@@ -522,12 +537,18 @@ async function driveModel({ model, promptPath, outDir, pageId, retry, diversifyO
     }
   }
 
-  // RATE-LIMIT FALLBACK: Sonnet 4.6 throttled (429 / overloaded / quota) → retry the
-  // SAME generation once on Opus (4.8 high). Writes to the SAME outputPath so the
-  // caller transparently picks up the Opus draft as `<pageId>-claude-v8.md`.
-  if (!lastResult?.ok && model === 'claude' && isRateLimited(lastResult?.stderr_tail) && !budgetExceeded) {
+  // BOUNDED CLAUDE INFRASTRUCTURE FALLBACK: Sonnet throttling, watchdog deadlock,
+  // hard timeout, or a recognized network failure → retry the SAME generation once
+  // on Opus (4.8 high). Writes to the SAME outputPath so the caller transparently
+  // picks up the Opus draft as `<pageId>-claude-v8.md`. Content failures still flow
+  // through the normal feedback loop; this does not weaken phase2 or review.
+  const fallback = !lastResult?.ok && model === 'claude' && !budgetExceeded
+    ? claudeFallbackReason(lastResult)
+    : null;
+  if (fallback) {
     process.stderr.write(
-      `[orchestrator] claude (${CLAUDE_MODEL}) rate-limited — falling back to ${CLAUDE_FALLBACK_MODEL} ${CLAUDE_FALLBACK_EFFORT}\n`,
+      `[orchestrator] claude (${CLAUDE_MODEL}) ${fallback.kind.replace('_', ' ')} — ` +
+        `falling back once to ${CLAUDE_FALLBACK_MODEL} ${CLAUDE_FALLBACK_EFFORT}\n`,
     );
     const fbOpts = { claudeModel: CLAUDE_FALLBACK_MODEL, claudeEffort: CLAUDE_FALLBACK_EFFORT };
     const cmd = buildCommand('claude', promptPath, outputPath, fbOpts);
@@ -537,7 +558,10 @@ async function driveModel({ model, promptPath, outDir, pageId, retry, diversifyO
     attempts.push({
       try_index: attempts.length + 1,
       model: activeModel,
-      rate_limit_fallback_to: CLAUDE_FALLBACK_MODEL,
+      ...(fallback.kind === 'rate_limit'
+        ? { rate_limit_fallback_to: CLAUDE_FALLBACK_MODEL }
+        : { transient_failure_fallback_to: CLAUDE_FALLBACK_MODEL }),
+      fallback_reason: fallback.reason,
       command: renderShell(cmd),
       cost_usd: Number(attemptCost.toFixed(4)),
       cumulative_cost_usd: Number(cumulativeCostUsd.toFixed(4)),

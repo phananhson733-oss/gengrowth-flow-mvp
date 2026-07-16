@@ -28,6 +28,7 @@ test('SEO launchd runner owns pre/post drain, strict reconcile, readiness, then 
   assert.match(source, /gg-ledger-reconcile\.mjs/);
   assert.match(source, /gg-seo-readiness\.mjs/);
   assert.match(source, /gg-batch-summary\.mjs/);
+  assert.match(source, /GG_WRITEBACK_LOCK_DIR/);
   assert.doesNotMatch(source, /tomllib|automation\.toml/i);
   assert.doesNotMatch(source, /codex.*exec/is);
   assert.ok(source.indexOf('node "$REPAIR_CONTROLLER" drain') < source.indexOf('bash "$NIGHTLY"'));

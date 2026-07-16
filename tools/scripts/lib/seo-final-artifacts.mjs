@@ -273,39 +273,45 @@ function srcsetCandidates(value) {
     .map((part) => part.trim().split(/\s+/)[0]);
 }
 
-const SVG_FRAGMENT_TARGET_TAGS = new Set([
+const SVG_USE_FRAGMENT_TARGET_TAGS = new Set([
   'a',
   'circle',
-  'clippath',
-  'defs',
   'ellipse',
-  'filter',
   'foreignobject',
   'g',
   'image',
   'line',
-  'lineargradient',
-  'marker',
-  'mask',
   'path',
-  'pattern',
   'polygon',
   'polyline',
-  'radialgradient',
   'rect',
-  'stop',
   'svg',
   'switch',
   'symbol',
   'text',
-  'textpath',
-  'tspan',
   'use',
-  'view',
 ]);
 
-function isSvgFragmentTargetTag(name) {
-  return SVG_FRAGMENT_TARGET_TAGS.has(name) || /^fe[a-z]+$/.test(name);
+function validateInlineSvgFragmentTarget(reference, fragment, targetTag) {
+  if (!targetTag) {
+    return {
+      ok: false,
+      reason: `inline SVG fragment #${fragment} is missing from the same SVG`,
+    };
+  }
+  if (reference.tag === 'use' && SVG_USE_FRAGMENT_TARGET_TAGS.has(targetTag)) {
+    return { ok: true, reason: '' };
+  }
+  if (reference.tag === 'image') {
+    return {
+      ok: false,
+      reason: `inline SVG <image> fragment #${fragment} target tag <${targetTag}> is not independently verifiable`,
+    };
+  }
+  return {
+    ok: false,
+    reason: `inline SVG <${reference.tag}> fragment #${fragment} target tag <${targetTag}> is not renderable`,
+  };
 }
 
 function parseInlineSvgReferences(html) {
@@ -319,14 +325,15 @@ function parseInlineSvgReferences(html) {
     const structurallyValid = context.malformed !== true && context.stack.length === 0;
     for (const reference of context.references) {
       const fragment = String(reference.value || '').slice(1);
-      const fragmentPresent = context.ids.has(fragment);
+      const targetTag = context.ids.get(fragment) || '';
+      const targetValidation = validateInlineSvgFragmentTarget(reference, fragment, targetTag);
       references.push({
         ...reference,
         inlineValidation: {
-          ok: structurallyValid && fragmentPresent,
+          ok: structurallyValid && targetValidation.ok,
           reason: !structurallyValid
             ? 'inline SVG parser rejected malformed or unclosed structure'
-            : `inline SVG fragment #${fragment} is missing from the same SVG`,
+            : targetValidation.reason,
         },
       });
     }
@@ -358,12 +365,12 @@ function parseInlineSvgReferences(html) {
     if (!context) {
       if (name === 'svg') {
         context = {
-          ids: new Set(),
+          ids: new Map(),
           references: [],
           stack: selfClosing ? [] : ['svg'],
           malformed: false,
         };
-        if (attributes.id && isSvgFragmentTargetTag(name)) context.ids.add(attributes.id);
+        if (attributes.id) context.ids.set(attributes.id, name);
         if (selfClosing) finalize();
       } else if ((name === 'use' || name === 'image')) {
         const hasHref = Object.hasOwn(attributes, 'href')
@@ -385,7 +392,7 @@ function parseInlineSvgReferences(html) {
       continue;
     }
 
-    if (attributes.id && isSvgFragmentTargetTag(name)) context.ids.add(attributes.id);
+    if (attributes.id && !context.ids.has(attributes.id)) context.ids.set(attributes.id, name);
     if (name === 'use' || name === 'image') {
       const hasHref = Object.hasOwn(attributes, 'href')
         || Object.hasOwn(attributes, 'xlink:href');

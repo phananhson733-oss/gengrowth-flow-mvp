@@ -111,6 +111,7 @@ test('reconciler source contains no nightly, author, scan, or producer path', ()
   assert.doesNotMatch(source, /gg-nightly-seo\.sh|--author|\bscan\b|producer/i);
   assert.doesNotMatch(source, /rm\s+-rf/);
   assert.match(source, /droppedWritebackAfter/);
+  assert.match(source, /GG_WRITEBACK_LOCK_DIR/);
 });
 
 test('23:00 tick runs strict reconcile/readiness without draining content repair', () => {

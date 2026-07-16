@@ -5,16 +5,47 @@ import {
   existsSync,
   mkdirSync,
   mkdtempSync,
+  readFileSync,
+  readdirSync,
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { runLedgerReconcile } from '../gg-ledger-reconcile.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const flow = resolve(here, '../../..');
 const reconcileUrl = pathToFileURL(resolve(flow, 'tools/scripts/gg-ledger-reconcile.mjs')).href;
+
+function writeNotificationSidecar(state, overrides = {}) {
+  const dir = join(state, 'writeback-notifications', 'pending');
+  mkdirSync(dir, { recursive: true });
+  const record = {
+    schemaVersion: 1,
+    kind: 'writeback_terminal',
+    notificationKey: 'writeback-terminal:PG-CELEB-055:2026-07-09T10:00:00.000Z:8',
+    msgUuid: '6d99342b-f890-5ee1-b650-a9de0a64705a',
+    createdAt: '2026-07-16T10:00:00.000Z',
+    attempts: 0,
+    lastAttemptAt: null,
+    lastError: null,
+    fields: {
+      pageId: 'PG-CELEB-055',
+      stuckSteps: ['archive'],
+      attempts: 8,
+      firstAt: '2026-07-09T10:00:00.000Z',
+      lastError: 'archive:vault unavailable',
+      terminalAt: '2026-07-16T10:00:00.000Z',
+      reason: 'max-attempts',
+    },
+    ...overrides,
+  };
+  const path = join(dir, 'notice.json');
+  writeFileSync(path, `${JSON.stringify(record, null, 2)}\n`);
+  return { dir, path, record };
+}
 
 function runStrictFixture(verification, {
   applyResult = {},
@@ -85,8 +116,11 @@ function defaultCliFixture({
   mkdirSync(scripts, { recursive: true });
   mkdirSync(opsTasks, { recursive: true });
   const status = join(scripts, 'gg-reconcile-status.mjs');
+  const autopilot = join(scripts, 'gg-seo-autopilot.mjs');
   writeFileSync(status, '#!/usr/bin/env node\nprocess.exit(0);\n');
+  writeFileSync(autopilot, '#!/usr/bin/env node\nprocess.exit(0);\n');
   chmodSync(status, 0o755);
+  chmodSync(autopilot, 0o755);
   if (!missingClaims) {
     writeFileSync(join(opsTasks, '.autopilot-claims.json'), `${JSON.stringify(claims)}\n`);
   }
@@ -127,11 +161,11 @@ function defaultCliFixture({
       );
     });
   }
-  const run = ({ createState = true } = {}) => {
+  const run = ({ createState = true, dry = true } = {}) => {
     if (createState) mkdirSync(state, { recursive: true });
     return spawnSync('node', [
       resolve(flow, 'tools/scripts/gg-ledger-reconcile.mjs'),
-      '--dry',
+      ...(dry ? ['--dry'] : []),
       '--strict',
       '--json',
     ], {
@@ -289,6 +323,98 @@ test('new terminal writeback emits one complete deduplicated notification', () =
   assert.match(sent.fields.msgUuid, /^[0-9a-f-]{36}$/);
 });
 
+test('silent strict terminal failure keeps durable notification; next unsilenced tick sends exactly once', async () => {
+  const state = mkdtempSync(join(tmpdir(), 'writeback-notify-silent-'));
+  const sidecar = writeNotificationSidecar(state);
+  const previousState = process.env.GG_FLOW_STATE_DIR;
+  const previousSilence = process.env.GG_LARK_NOTIFY_SILENCE;
+  process.env.GG_FLOW_STATE_DIR = state;
+  process.env.GG_LARK_NOTIFY_SILENCE = '1';
+  let calls = 0;
+  const deps = {
+    apply: async () => ({ errors: [], summary: [] }),
+    verify: async () => zero({
+      droppedWritebackAfter: 1,
+      droppedWritebackEvidence: [{
+        ...sidecar.record.fields,
+        state: 'dropped',
+        notificationKey: sidecar.record.notificationKey,
+      }],
+    }),
+    notify: async () => {
+      calls += 1;
+      return { ok: true, silenced: false, messageId: 'm1' };
+    },
+    log: () => {},
+  };
+  try {
+    const silent = await runLedgerReconcile({ apply: true, strict: true, deps });
+    assert.equal(silent.ok, false, 'strict rc2 equivalent must not erase the notification');
+    assert.equal(calls, 0);
+    assert.equal(readdirSync(sidecar.dir).filter((name) => name.endsWith('.json')).length, 1);
+
+    delete process.env.GG_LARK_NOTIFY_SILENCE;
+    await runLedgerReconcile({ apply: true, strict: true, deps });
+    assert.equal(calls, 1);
+    assert.equal(readdirSync(sidecar.dir).filter((name) => name.endsWith('.json')).length, 0);
+    const sentDir = join(state, 'writeback-notifications', 'sent');
+    assert.equal(readdirSync(sentDir).filter((name) => name.endsWith('.json')).length, 1);
+
+    await runLedgerReconcile({ apply: true, strict: true, deps });
+    assert.equal(calls, 1, 'sent sidecar must not be replayed');
+  } finally {
+    if (previousState === undefined) delete process.env.GG_FLOW_STATE_DIR;
+    else process.env.GG_FLOW_STATE_DIR = previousState;
+    if (previousSilence === undefined) delete process.env.GG_LARK_NOTIFY_SILENCE;
+    else process.env.GG_LARK_NOTIFY_SILENCE = previousSilence;
+  }
+});
+
+test('terminal notification send failure remains pending and retries with the same msgUuid', async () => {
+  const state = mkdtempSync(join(tmpdir(), 'writeback-notify-retry-'));
+  const sidecar = writeNotificationSidecar(state);
+  const previousState = process.env.GG_FLOW_STATE_DIR;
+  const previousSilence = process.env.GG_LARK_NOTIFY_SILENCE;
+  process.env.GG_FLOW_STATE_DIR = state;
+  delete process.env.GG_LARK_NOTIFY_SILENCE;
+  const uuids = [];
+  let fail = true;
+  const deps = {
+    apply: async () => ({ errors: [], summary: [] }),
+    verify: async () => zero({
+      droppedWritebackAfter: 1,
+      droppedWritebackEvidence: [{
+        ...sidecar.record.fields,
+        state: 'dropped',
+        notificationKey: sidecar.record.notificationKey,
+      }],
+    }),
+    notify: async (_event, fields) => {
+      uuids.push(fields.msgUuid);
+      if (fail) return { ok: false, silenced: false, error: 'network-down' };
+      return { ok: true, silenced: false, messageId: 'm2' };
+    },
+    log: () => {},
+  };
+  try {
+    await runLedgerReconcile({ apply: true, strict: true, deps });
+    const failed = JSON.parse(readFileSync(sidecar.path, 'utf8'));
+    assert.equal(failed.attempts, 1);
+    assert.equal(failed.lastError, 'network-down');
+    fail = false;
+    await runLedgerReconcile({ apply: true, strict: true, deps });
+    assert.deepEqual(uuids, [sidecar.record.msgUuid, sidecar.record.msgUuid]);
+    assert.equal(existsSync(sidecar.path), false);
+    await runLedgerReconcile({ apply: true, strict: true, deps });
+    assert.equal(uuids.length, 2);
+  } finally {
+    if (previousState === undefined) delete process.env.GG_FLOW_STATE_DIR;
+    else process.env.GG_FLOW_STATE_DIR = previousState;
+    if (previousSilence === undefined) delete process.env.GG_LARK_NOTIFY_SILENCE;
+    else process.env.GG_LARK_NOTIFY_SILENCE = previousSilence;
+  }
+});
+
 test('legacy dry invocation preserves the best-effort apply pass before verification', () => {
   const out = runStrictFixture(zero(), { strict: false, apply: false });
   assert.equal(out.status, 0, `${out.stdout}\n${out.stderr}`);
@@ -332,6 +458,29 @@ test('production-shaped dropped/quarantined directories remain visible to strict
       ['PG-CELEB-055', 'dropped'],
       ['PG-CELEB-056', 'quarantined'],
     ],
+  );
+});
+
+test('strict apply quarantines PG-TEST WAL before any real backfill and remains nonzero', () => {
+  const fixture = defaultCliFixture({
+    claims: {},
+    pendingWritebacks: [{
+      pageId: 'PG-TEST-001',
+      slug: 'test-001',
+      site: 'astrologywiki',
+      firstAt: '2026-07-16T10:00:00.000Z',
+      attempts: 0,
+      done: [],
+    }],
+  });
+  const out = fixture.run({ dry: false });
+  assert.equal(out.status, 2, `${out.stdout}\n${out.stderr}`);
+  const json = JSON.parse(out.stdout);
+  assert.equal(json.pendingWritebackAfter, 0);
+  assert.equal(json.droppedWritebackAfter, 1);
+  assert.equal(
+    existsSync(join(fixture.state, 'pending-writeback', 'quarantined', 'PG-TEST-001.json')),
+    true,
   );
 });
 

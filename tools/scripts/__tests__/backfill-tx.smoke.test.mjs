@@ -3,8 +3,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   existsSync,
+  mkdirSync,
   mkdtempSync,
   readFileSync,
+  readdirSync,
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -31,6 +33,19 @@ function okDeps(over = {}) {
     archive: () => {},
     ...over,
   };
+}
+
+function pendingNotificationFiles(state) {
+  const dir = join(state, 'writeback-notifications', 'pending');
+  return existsSync(dir)
+    ? readdirSync(dir).filter((name) => name.endsWith('.json')).sort()
+    : [];
+}
+
+function writeRawWal(state, pageId, record) {
+  const dir = join(state, 'pending-writeback');
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, `${pageId}.json`), `${JSON.stringify(record, null, 2)}\n`);
 }
 
 test('WAL: enqueue 合并 done 并集、保留字段、resolve 删除', () => {
@@ -239,6 +254,229 @@ test('nextEligibleAt 跨进程持久化：未到期只 skip，不增 attempts', 
   assert.equal(readWriteback('PG-TRANS-014').attempts, 4);
 });
 
+test('2036 firstAt + 2999 nextEligibleAt 会被原子规范化并立即尝试，不会永久 skip', async () => {
+  const state = freshState();
+  writeRawWal(state, 'PG-TRANS-015', {
+    pageId: 'PG-TRANS-015',
+    slug: 'trans-015',
+    site: 'astrologywiki',
+    firstAt: '2036-01-01T00:00:00.000Z',
+    nextEligibleAt: '2999-01-01T00:00:00.000Z',
+    attempts: 2,
+    done: [],
+  });
+  let verifies = 0;
+  const out = await drainPending(okDeps({
+    now: new Date('2026-07-16T10:00:00.000Z'),
+    verifyLive: async () => {
+      verifies += 1;
+      return false;
+    },
+  }));
+  assert.equal(out.retried, 1);
+  assert.equal(out.skipped, 0);
+  assert.equal(verifies, 1);
+  const wal = readWriteback('PG-TRANS-015');
+  assert.equal(wal.firstAt, '2026-07-16T10:00:00.000Z');
+  assert.equal(wal.attempts, 3);
+  assert.match(wal.scheduleAnomaly.reasons.join(','), /firstAt-future/);
+  assert.match(wal.scheduleAnomaly.reasons.join(','), /nextEligibleAt-too-far/);
+  assert.equal(pendingNotificationFiles(state).length, 1);
+  const notice = JSON.parse(readFileSync(
+    join(state, 'writeback-notifications', 'pending', pendingNotificationFiles(state)[0]),
+    'utf8',
+  ));
+  assert.equal(notice.kind, 'writeback_schedule_anomaly');
+  assert.equal(notice.fields.pageId, 'PG-TRANS-015');
+});
+
+test('非法时间戳与 legacy 缺字段均 fail-safe 为立即尝试并写回合法调度', async () => {
+  const state = freshState();
+  writeRawWal(state, 'PG-TRANS-016', {
+    pageId: 'PG-TRANS-016',
+    slug: 'trans-016',
+    site: 'astrologywiki',
+    firstAt: 'not-a-time',
+    nextEligibleAt: 'also-not-a-time',
+    attempts: 0,
+    done: [],
+  });
+  writeRawWal(state, 'PG-NODE-014', {
+    pageId: 'PG-NODE-014',
+    slug: 'node-014',
+    site: 'astrologywiki',
+    done: [],
+  });
+  const seen = [];
+  const out = await drainPending(okDeps({
+    now: new Date('2026-07-16T10:00:00.000Z'),
+    verifyLive: async (_site, slug) => {
+      seen.push(slug);
+      return false;
+    },
+  }));
+  assert.equal(out.retried, 2);
+  assert.equal(out.skipped, 0);
+  assert.deepEqual(seen.sort(), ['node-014', 'trans-016']);
+  for (const pageId of ['PG-TRANS-016', 'PG-NODE-014']) {
+    const wal = readWriteback(pageId);
+    assert.equal(wal.firstAt, '2026-07-16T10:00:00.000Z');
+    assert.equal(Number.isFinite(Date.parse(wal.nextEligibleAt)), true);
+  }
+  assert.equal(pendingNotificationFiles(state).length, 1);
+});
+
+test('小幅 clock rollback 在容差内继续遵守 durable nextEligibleAt，不增 attempts', async () => {
+  freshState();
+  enqueueWriteback({
+    pageId: 'PG-WDIF-002',
+    slug: 'wdif-002',
+    site: 'astrologywiki',
+    firstAt: '2026-07-16T10:00:00.000Z',
+    nextEligibleAt: '2026-07-16T10:15:00.000Z',
+    attempts: 1,
+    done: [],
+  });
+  let calls = 0;
+  const out = await drainPending(okDeps({
+    now: new Date('2026-07-16T09:58:00.000Z'),
+    verifyLive: async () => {
+      calls += 1;
+      return false;
+    },
+  }));
+  assert.equal(out.skipped, 1);
+  assert.equal(out.retried, 0);
+  assert.equal(calls, 0);
+  assert.equal(readWriteback('PG-WDIF-002').attempts, 1);
+});
+
+for (const pageId of ['PG-TEST-001', 'PG-FAKE-002', 'PG-FIXTURE-003', 'PG-SMOKE-004']) {
+  test(`${pageId} 在 backfill 最入口隔离，所有副作用调用为 0`, async () => {
+    const state = freshState();
+    const calls = { token: 0, verify: 0, flip: 0, plan: 0, archive: 0 };
+    const result = await backfillOnLive(
+      { pageId, slug: pageId.toLowerCase(), site: 'astrologywiki' },
+      {
+        acquireToken: async () => { calls.token += 1; return 'tok'; },
+        verifyLive: async () => { calls.verify += 1; return true; },
+        flipRowsByPageId: async () => { calls.flip += 1; },
+        checkPlanBoxFile: () => { calls.plan += 1; },
+        archive: () => { calls.archive += 1; },
+      },
+    );
+    assert.equal(result.ok, false);
+    assert.equal(result.quarantined, true);
+    assert.deepEqual(calls, { token: 0, verify: 0, flip: 0, plan: 0, archive: 0 });
+    assert.equal(readWriteback(pageId), null);
+    assert.equal(
+      existsSync(join(state, 'pending-writeback', 'quarantined', `${pageId}.json`)),
+      true,
+    );
+    assert.equal(pendingNotificationFiles(state).length, 1);
+  });
+}
+
+test('drain 在任何 token/network/Sheet/plan/archive 前隔离 test-shaped WAL', async () => {
+  const state = freshState();
+  writeRawWal(state, 'PG-TEST-009', {
+    pageId: 'PG-TEST-009',
+    slug: 'test-009',
+    site: 'astrologywiki',
+    firstAt: '2026-07-16T10:00:00.000Z',
+    attempts: 0,
+    done: [],
+  });
+  const calls = { verify: 0, flip: 0, plan: 0, archive: 0 };
+  const out = await drainPending(okDeps({
+    now: new Date('2026-07-16T10:05:00.000Z'),
+    verifyLive: async () => { calls.verify += 1; return true; },
+    flipRowsByPageId: async () => { calls.flip += 1; },
+    checkPlanBoxFile: () => { calls.plan += 1; },
+    archive: () => { calls.archive += 1; },
+  }));
+  assert.equal(out.quarantined.length, 1);
+  assert.deepEqual(calls, { verify: 0, flip: 0, plan: 0, archive: 0 });
+  assert.equal(readWriteback('PG-TEST-009'), null);
+  assert.equal(
+    existsSync(join(state, 'pending-writeback', 'quarantined', 'PG-TEST-009.json')),
+    true,
+  );
+});
+
+test('并发 drain 只有一个 owner 执行副作用，另一个返回 busy', async () => {
+  freshState();
+  enqueueWriteback({
+    pageId: 'PG-CONCUR-001',
+    slug: 'concur-001',
+    site: 'astrologywiki',
+    done: [],
+  });
+  let releaseVerify;
+  let startedVerify;
+  const started = new Promise((resolve) => { startedVerify = resolve; });
+  const released = new Promise((resolve) => { releaseVerify = resolve; });
+  const calls = { verify: 0, flip: 0, plan: 0, archive: 0 };
+  const deps = okDeps({
+    verifyLive: async () => {
+      calls.verify += 1;
+      startedVerify();
+      await released;
+      return true;
+    },
+    flipRowsByPageId: async () => { calls.flip += 1; },
+    checkPlanBoxFile: () => { calls.plan += 1; },
+    archive: () => { calls.archive += 1; },
+  });
+  const first = drainPending(deps);
+  await started;
+  const second = drainPending(deps);
+  releaseVerify();
+  const results = await Promise.all([first, second]);
+  assert.equal(results.filter((result) => result.busy === true).length, 1);
+  assert.deepEqual(calls, { verify: 1, flip: 1, plan: 1, archive: 1 });
+});
+
+test('drain 持锁期间的新 enqueue 进入 durable inbox，结束后不会被 resolve 丢失', async () => {
+  const state = freshState();
+  enqueueWriteback({
+    pageId: 'PG-CONCUR-002',
+    slug: 'old-slug',
+    site: 'astrologywiki',
+    done: [],
+  });
+  let releaseVerify;
+  let startedVerify;
+  const started = new Promise((resolve) => { startedVerify = resolve; });
+  const released = new Promise((resolve) => { releaseVerify = resolve; });
+  const draining = drainPending(okDeps({
+    verifyLive: async () => {
+      startedVerify();
+      await released;
+      return true;
+    },
+  }));
+  await started;
+  const queued = enqueueWriteback({
+    pageId: 'PG-CONCUR-002',
+    slug: 'new-slug',
+    site: 'astrologywiki',
+    planPath: 'new-plan.md',
+    done: [],
+  });
+  assert.ok(queued);
+  assert.equal(
+    readdirSync(join(state, 'pending-writeback-inbox')).some((name) => name.endsWith('.json')),
+    true,
+  );
+  releaseVerify();
+  await draining;
+  const wal = readWriteback('PG-CONCUR-002');
+  assert.ok(wal);
+  assert.equal(wal.slug, 'new-slug');
+  assert.equal(wal.planPath, 'new-plan.md');
+});
+
 test('drop rename 失败时保留原 pending WAL，并返回结构化错误', async () => {
   const state = freshState();
   enqueueWriteback({
@@ -299,10 +537,48 @@ test('drainPending：超 MAX_ATTEMPTS 的毒记录原子移入 dropped/，终态
   assert.ok(existsSync(droppedPath));
   const archived = JSON.parse(readFileSync(droppedPath, 'utf8'));
   assert.deepEqual(archived.terminalNotification, out.dropped[0]);
+  assert.equal(pendingNotificationFiles(state).length, 1);
   // 再 drain 一次：dropped/ 里的记录不被重扫
   const out2 = await drainPending(okDeps());
   assert.equal(out2.retried, 0);
   assert.equal(out2.dropped.length, 0);
+});
+
+test('已有同名 dropped 证据不得被覆盖，新终态使用 no-clobber 文件保留双方', async () => {
+  const state = freshState();
+  const droppedDir = join(state, 'pending-writeback', 'dropped');
+  mkdirSync(droppedDir, { recursive: true });
+  const old = {
+    pageId: 'PG-WDIF-003',
+    attempts: 8,
+    firstAt: '2026-07-01T00:00:00.000Z',
+    lastError: 'old evidence',
+  };
+  writeFileSync(
+    join(droppedDir, 'PG-WDIF-003.json'),
+    `${JSON.stringify(old, null, 2)}\n`,
+  );
+  enqueueWriteback({
+    pageId: 'PG-WDIF-003',
+    slug: 'wdif-003',
+    site: 'astrologywiki',
+    attempts: 8,
+    firstAt: '2026-07-09T00:00:00.000Z',
+    lastError: 'new evidence',
+    done: [],
+  });
+  const out = await drainPending(okDeps({
+    now: new Date('2026-07-16T10:00:00.000Z'),
+  }));
+  assert.equal(out.dropped.length, 1);
+  assert.deepEqual(
+    JSON.parse(readFileSync(join(droppedDir, 'PG-WDIF-003.json'), 'utf8')),
+    old,
+  );
+  const files = readdirSync(droppedDir).filter((name) => name.endsWith('.json')).sort();
+  assert.equal(files.length, 2);
+  assert.match(files[1], /^PG-WDIF-003--[0-9a-f]+\.json$/);
+  assert.equal(readWriteback('PG-WDIF-003'), null);
 });
 
 test('成功回填后 WAL 幂等清零，重复 drain 不重复执行任何步骤', async () => {
@@ -327,11 +603,13 @@ test('成功回填后 WAL 幂等清零，重复 drain 不重复执行任何步�
   const second = await drainPending(deps);
   assert.equal(first.resolved, 1);
   assert.deepEqual(second, {
+    busy: false,
     retried: 0,
     skipped: 0,
     resolved: 0,
     stillPending: 0,
     dropped: [],
+    quarantined: [],
     dropErrors: [],
   });
   assert.deepEqual(calls, { verify: 1, flip: 1, plan: 1, archive: 1 });

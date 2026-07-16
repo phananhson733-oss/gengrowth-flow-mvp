@@ -19,3 +19,13 @@ test('fact-check prompt keeps mundane real-world facts (birth/sports/event dates
   assert.match(p, /birth date|sports|schedule|result/i);
   assert.match(p, /must FAIL|in scope/i);
 });
+
+test('birth-time provenance or rating is not guessed without authoritative evidence in the diff', () => {
+  const p = buildPrompt(
+    'diff --git a/data/articles/x.ts b/data/articles/x.ts\n'
+    + '+A 6:31 AM birth time circulates online but is not reliably verified.',
+  );
+  assert.match(p, /birth.time.*provenance|provenance.*birth.time/i);
+  assert.match(p, /do not fail|out of scope/i);
+  assert.match(p, /authoritative.*source.*diff|diff.*authoritative.*source/i);
+});

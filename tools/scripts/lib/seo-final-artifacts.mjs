@@ -204,6 +204,9 @@ export async function verifyFinalLinks({
       const canonical = normalizedUrl(canonicalHref(body), url);
       const reasons = [];
       if (status !== 200) reasons.push(`HTTP ${status || 0}`);
+      if (response?.redirected === true || finalUrl !== url) {
+        reasons.push(`redirect target drift ${finalUrl || '<missing>'} != ${url}`);
+      }
       if (!canonical) reasons.push('canonical missing');
       else if (canonical !== url) reasons.push(`canonical mismatch ${canonical} != ${url}`);
       const entry = {
@@ -285,35 +288,90 @@ function mimeMatches(actual, expected) {
   return mime === expected;
 }
 
-function hasRasterSignature(bytes, mime) {
+function parseRaster(bytes, mime) {
   const type = String(mime || '').toLowerCase();
   if (type === 'image/png') {
-    return bytes.length >= 24
-      && bytes.subarray(0, 8).equals(Buffer.from('89504e470d0a1a0a', 'hex'))
-      && bytes.subarray(12, 16).toString('ascii') === 'IHDR';
+    if (bytes.length < 33 || !bytes.subarray(0, 8).equals(Buffer.from('89504e470d0a1a0a', 'hex'))) {
+      return { ok: false, reason: 'PNG signature/header is invalid' };
+    }
+    let offset = 8;
+    let first = true;
+    let ended = false;
+    while (offset + 12 <= bytes.length) {
+      const length = bytes.readUInt32BE(offset);
+      const typeName = bytes.subarray(offset + 4, offset + 8).toString('ascii');
+      const next = offset + 12 + length;
+      if (next > bytes.length) return { ok: false, reason: `PNG ${typeName} chunk is truncated` };
+      if (first) {
+        if (typeName !== 'IHDR' || length !== 13) return { ok: false, reason: 'PNG must start with IHDR' };
+        if (bytes.readUInt32BE(offset + 8) === 0 || bytes.readUInt32BE(offset + 12) === 0) {
+          return { ok: false, reason: 'PNG dimensions are invalid' };
+        }
+        first = false;
+      }
+      offset = next;
+      if (typeName === 'IEND') {
+        ended = length === 0 && offset === bytes.length;
+        break;
+      }
+    }
+    return ended ? { ok: true } : { ok: false, reason: 'PNG parser did not reach a valid IEND' };
   }
   if (type === 'image/jpeg') {
-    return bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+    if (bytes.length < 8 || bytes[0] !== 0xff || bytes[1] !== 0xd8
+      || bytes.at(-2) !== 0xff || bytes.at(-1) !== 0xd9) {
+      return { ok: false, reason: 'JPEG SOI/EOI markers are invalid' };
+    }
+    let offset = 2;
+    let dimensions = false;
+    while (offset + 4 <= bytes.length - 2) {
+      while (offset < bytes.length && bytes[offset] !== 0xff) offset += 1;
+      while (offset < bytes.length && bytes[offset] === 0xff) offset += 1;
+      const marker = bytes[offset++];
+      if (marker === 0xd9 || marker === 0xda) break;
+      if (marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) continue;
+      if (offset + 2 > bytes.length) break;
+      const length = bytes.readUInt16BE(offset);
+      if (length < 2 || offset + length > bytes.length) return { ok: false, reason: 'JPEG segment is truncated' };
+      if ([0xc0, 0xc1, 0xc2, 0xc3, 0xc5, 0xc6, 0xc7, 0xc9, 0xca, 0xcb, 0xcd, 0xce, 0xcf].includes(marker)) {
+        if (length < 7 || bytes.readUInt16BE(offset + 3) === 0 || bytes.readUInt16BE(offset + 5) === 0) {
+          return { ok: false, reason: 'JPEG dimensions are invalid' };
+        }
+        dimensions = true;
+      }
+      offset += length;
+    }
+    return dimensions ? { ok: true } : { ok: false, reason: 'JPEG parser found no frame dimensions' };
   }
   if (type === 'image/gif') {
-    return bytes.length >= 6 && ['GIF87a', 'GIF89a'].includes(bytes.subarray(0, 6).toString('ascii'));
+    const valid = bytes.length >= 14
+      && ['GIF87a', 'GIF89a'].includes(bytes.subarray(0, 6).toString('ascii'))
+      && bytes.readUInt16LE(6) > 0
+      && bytes.readUInt16LE(8) > 0
+      && bytes.at(-1) === 0x3b;
+    return valid ? { ok: true } : { ok: false, reason: 'GIF parser rejected header, dimensions, or trailer' };
   }
   if (type === 'image/webp') {
-    return bytes.length >= 12
+    const valid = bytes.length >= 20
       && bytes.subarray(0, 4).toString('ascii') === 'RIFF'
-      && bytes.subarray(8, 12).toString('ascii') === 'WEBP';
+      && bytes.subarray(8, 12).toString('ascii') === 'WEBP'
+      && bytes.readUInt32LE(4) + 8 <= bytes.length
+      && ['VP8 ', 'VP8L', 'VP8X'].includes(bytes.subarray(12, 16).toString('ascii'));
+    return valid ? { ok: true } : { ok: false, reason: 'WebP RIFF/chunk parser failed' };
   }
   if (type === 'image/avif') {
-    return bytes.length >= 12
+    const valid = bytes.length >= 16
       && bytes.subarray(4, 8).toString('ascii') === 'ftyp'
-      && /avif|avis/.test(bytes.subarray(8, 24).toString('ascii'));
+      && /avif|avis/.test(bytes.subarray(8, Math.min(bytes.length, 40)).toString('ascii'));
+    return valid ? { ok: true } : { ok: false, reason: 'AVIF box parser failed' };
   }
-  return bytes.length > 0;
+  return { ok: false, reason: `unsupported image parser for ${type || '<missing MIME>'}` };
 }
 
 function parseSvg(bytes, fragment = '') {
   const source = Buffer.from(bytes).toString('utf8').trim();
-  if (!source || !/<svg\b/i.test(source) || !/<\/svg\s*>/i.test(source)) {
+  if (!source || !/<svg\b/i.test(source)
+    || (!/<\/svg\s*>/i.test(source) && !/<svg\b[^>]*\/\s*>/i.test(source))) {
     return { ok: false, reason: 'SVG parser rejected empty or missing svg root' };
   }
   const stack = [];
@@ -343,7 +401,7 @@ function parseSvg(bytes, fragment = '') {
 
 async function defaultDecodeImage({ bytes, mime, fragment }) {
   if (mime === 'image/svg+xml') return parseSvg(bytes, fragment);
-  return { ok: hasRasterSignature(bytes, mime) };
+  return parseRaster(bytes, mime);
 }
 
 function inlineIdExists(html, fragment) {
@@ -424,19 +482,30 @@ export async function verifyFinalAssets({
         failed.push({ ...base, reason: `HTTP ${status || 0}` });
         continue;
       }
+      const bytes = await responseBytes(response);
+      const sha256 = createHash('sha256').update(bytes).digest('hex');
       if (!mimeMatches(mime, expectedMime)) {
-        failed.push({ ...base, reason: `MIME mismatch ${mime || '<missing>'} != ${expectedMime}` });
+        failed.push({
+          ...base,
+          bytes: bytes.length,
+          sha256,
+          reason: `MIME mismatch ${mime || '<missing>'} != ${expectedMime}`,
+        });
         continue;
       }
-      const bytes = await responseBytes(response);
       if (bytes.length === 0) {
-        failed.push({ ...base, bytes: 0, reason: 'asset body is empty' });
+        failed.push({ ...base, bytes: 0, sha256, reason: 'asset body is empty' });
         continue;
       }
       if (mime === 'image/svg+xml') {
         const parsedSvg = parseSvg(bytes, fragment);
         if (!parsedSvg.ok) {
-          failed.push({ ...base, bytes: bytes.length, reason: parsedSvg.reason });
+          failed.push({
+            ...base,
+            bytes: bytes.length,
+            sha256,
+            reason: parsedSvg.reason,
+          });
           continue;
         }
       }
@@ -446,6 +515,7 @@ export async function verifyFinalAssets({
         failed.push({
           ...base,
           bytes: bytes.length,
+          sha256,
           reason: decoded?.reason || 'image decode/parser failed',
         });
         continue;
@@ -453,7 +523,7 @@ export async function verifyFinalAssets({
       checked.push({
         ...base,
         bytes: bytes.length,
-        sha256: createHash('sha256').update(bytes).digest('hex'),
+        sha256,
       });
     } catch (error) {
       failed.push({

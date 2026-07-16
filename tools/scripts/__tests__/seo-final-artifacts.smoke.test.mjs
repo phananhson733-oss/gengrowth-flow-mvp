@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import {
+  artifactShaForEvidence,
   artifactShaFromFiles,
   failureFingerprintFor,
   verifyFinalAssets,
@@ -13,8 +14,8 @@ import {
 
 const PAGE_URL = 'https://www.astrologywiki.com/en/wiki/source';
 const PNG = Buffer.from(
-  '89504e470d0a1a0a0000000d4948445200000001000000010806000000',
-  'hex',
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+  'base64',
 );
 
 function response({
@@ -103,6 +104,23 @@ test('a redirect whose rendered document has the wrong canonical fails closed', 
   assert.match(result.failed[0].reason, /redirect|canonical/i);
 });
 
+test('a redirect target drift fails even if the redirected page claims the original canonical', async () => {
+  const requested = 'https://www.astrologywiki.com/en/wiki/real';
+  const result = await verifyFinalLinks({
+    html: '<a href="/en/wiki/real">real</a>',
+    pageUrl: PAGE_URL,
+    allowedRoutes: new Set(['/en/wiki/real']),
+    sitemapUrls: new Set(),
+    fetch: async () => response({
+      url: 'https://www.astrologywiki.com/en/wiki/other',
+      canonical: requested,
+      redirected: true,
+    }),
+  });
+  assert.equal(result.ok, false);
+  assert.match(result.failed[0].reason, /redirect target drift/i);
+});
+
 for (const mode of ['404', 'wrong-mime', 'empty', 'decode-fail']) {
   test(`referenced image ${mode} blocks publish`, async () => {
     const decodeCalls = [];
@@ -122,6 +140,7 @@ for (const mode of ['404', 'wrong-mime', 'empty', 'decode-fail']) {
     });
     assert.equal(result.ok, false);
     assert.equal(result.failed.length, 1);
+    if (mode !== '404') assert.match(result.failed[0].sha256, /^[0-9a-f]{64}$/);
     if (mode === 'wrong-mime') assert.equal(decodeCalls.length, 0);
   });
 }
@@ -268,4 +287,26 @@ test('failure fingerprints are deterministic and change with structured failures
   });
   assert.equal(a, b);
   assert.notEqual(a, c);
+});
+
+test('failed fetched asset bytes participate in artifact SHA and reset no-progress when they change', () => {
+  const failedAsset = (sha256) => ({
+    ok: false,
+    checked: [],
+    failed: [{
+      url: 'https://www.astrologywiki.com/images/hero.png',
+      reason: 'MIME mismatch',
+      sha256,
+    }],
+    ignored: [],
+  });
+  const first = artifactShaForEvidence({
+    articleSha: 'a'.repeat(64),
+    finalAssets: failedAsset('1'.repeat(64)),
+  });
+  const changed = artifactShaForEvidence({
+    articleSha: 'a'.repeat(64),
+    finalAssets: failedAsset('2'.repeat(64)),
+  });
+  assert.notEqual(first, changed);
 });

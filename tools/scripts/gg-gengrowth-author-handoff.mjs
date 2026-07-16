@@ -1,13 +1,22 @@
 #!/usr/bin/env node
 
-import { copyFile, lstat, readFile } from 'node:fs/promises';
+import { randomUUID } from 'node:crypto';
+import { copyFile, lstat, open, readFile, rename, rm } from 'node:fs/promises';
 import { dirname, join, resolve, sep } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const FLOW_DIR = resolve(SCRIPT_DIR, '../..');
 const PAGE_ID_RE = /^PG-[A-Z0-9]+-[0-9]+$/;
 const WINNER_RE = /^[a-z0-9]+$/;
+
+class HandoffError extends Error {
+  constructor(reason, message, code = 1) {
+    super(message || reason);
+    this.reason = reason;
+    this.exitCode = code;
+  }
+}
 
 function output(value, code) {
   process.stdout.write(`${JSON.stringify(value)}\n`);
@@ -39,6 +48,131 @@ async function destinationIsSafe(path) {
   }
 }
 
+async function fileExists(path) {
+  try { await lstat(path); return true; } catch { return false; }
+}
+
+async function fsyncFile(path) {
+  const handle = await open(path, 'r');
+  try { await handle.sync(); } finally { await handle.close(); }
+}
+
+async function fsyncDirectory(path) {
+  try {
+    const handle = await open(path, 'r');
+    try { await handle.sync(); } finally { await handle.close(); }
+  } catch {}
+}
+
+export async function handoffGengrowthAuthor({
+  pageId,
+  stagingDir = process.env.GG_GENGROWTH_STAGING_DIR || join(FLOW_DIR, '_staging'),
+  winner = process.env.GG_WINNER_LLM || 'claude',
+} = {}, {
+  faultInjector,
+  transactionId = randomUUID(),
+} = {}) {
+  pageId = String(pageId || '');
+  winner = String(winner || '').toLowerCase();
+  if (!PAGE_ID_RE.test(pageId)) {
+    throw new HandoffError('invalid_page_id', `invalid page id: ${pageId}`, 2);
+  }
+  if (!WINNER_RE.test(winner)) {
+    throw new HandoffError('invalid_winner', `invalid winner: ${winner}`, 2);
+  }
+  stagingDir = resolve(stagingDir);
+  const sourceMd = resolve(stagingDir, `${pageId}-en.md`);
+  const sourceManifest = resolve(stagingDir, `${pageId}-en.manifest.json`);
+  const targetMd = resolve(stagingDir, `${pageId}-${winner}-v8.md`);
+  const targetManifest = resolve(stagingDir, `${pageId}-${winner}-v8.manifest.json`);
+  const prefix = `.handoff-${pageId}-${String(transactionId).replace(/[^a-zA-Z0-9-]/g, '')}`;
+  const tempMd = join(stagingDir, `${prefix}.md.tmp`);
+  const tempManifest = join(stagingDir, `${prefix}.manifest.tmp`);
+  const backupMd = join(stagingDir, `${prefix}.md.bak`);
+  const backupManifest = join(stagingDir, `${prefix}.manifest.bak`);
+  const paths = [
+    sourceMd,
+    sourceManifest,
+    targetMd,
+    targetManifest,
+    tempMd,
+    tempManifest,
+    backupMd,
+    backupManifest,
+  ];
+  if (paths.some((path) => !path.startsWith(`${stagingDir}${sep}`))) {
+    throw new HandoffError('unsafe_path', 'handoff path escaped staging directory', 2);
+  }
+  if (!(await regularFile(sourceManifest))) {
+    throw new HandoffError('manifest_not_pass');
+  }
+  let manifest;
+  try { manifest = JSON.parse(await readFile(sourceManifest, 'utf8')); } catch { manifest = null; }
+  if (manifest?.phase2_checks?.overall !== 'pass') {
+    throw new HandoffError('manifest_not_pass');
+  }
+  if (!(await regularFile(sourceMd))) {
+    throw new HandoffError('draft_not_sane');
+  }
+  let draft = '';
+  try { draft = await readFile(sourceMd, 'utf8'); } catch {}
+  if (!draft.startsWith('---\n') || !/^slug:\s*\S/m.test(draft) || draft.length <= 400) {
+    throw new HandoffError('draft_not_sane');
+  }
+  if (!(await destinationIsSafe(targetMd)) || !(await destinationIsSafe(targetManifest))) {
+    throw new HandoffError('unsafe_destination', 'target must be absent or a regular non-symlink file', 2);
+  }
+
+  const hadTargetMd = await regularFile(targetMd);
+  const hadTargetManifest = await regularFile(targetManifest);
+  let draftCommitted = false;
+  let manifestCommitted = false;
+  try {
+    await copyFile(sourceMd, tempMd);
+    await copyFile(sourceManifest, tempManifest);
+    await fsyncFile(tempMd);
+    await fsyncFile(tempManifest);
+    await fsyncDirectory(stagingDir);
+
+    // Hide the passing manifest first, so the publisher cannot consume a mixed pair.
+    if (hadTargetManifest) await rename(targetManifest, backupManifest);
+    if (hadTargetMd) await rename(targetMd, backupMd);
+    await rename(tempMd, targetMd);
+    draftCommitted = true;
+    if (typeof faultInjector === 'function') {
+      await faultInjector('after-draft-before-manifest', { pageId, targetMd, targetManifest });
+    }
+    await rename(tempManifest, targetManifest);
+    manifestCommitted = true;
+    await fsyncDirectory(stagingDir);
+    await rm(backupMd, { force: true });
+    await rm(backupManifest, { force: true });
+    return {
+      ok: true,
+      handedOff: true,
+      pageId,
+      winner,
+      draft: `${pageId}-${winner}-v8.md`,
+      manifest: `${pageId}-${winner}-v8.manifest.json`,
+    };
+  } catch (error) {
+    if (manifestCommitted) await rm(targetManifest, { force: true });
+    if (draftCommitted) await rm(targetMd, { force: true });
+    if (hadTargetMd && await fileExists(backupMd)) await rename(backupMd, targetMd);
+    // Restore the old passing manifest last, after its matching draft is back in place.
+    if (hadTargetManifest && await fileExists(backupManifest)) {
+      await rename(backupManifest, targetManifest);
+    }
+    await fsyncDirectory(stagingDir);
+    throw error;
+  } finally {
+    await rm(tempMd, { force: true });
+    await rm(tempManifest, { force: true });
+    await rm(backupMd, { force: true });
+    await rm(backupManifest, { force: true });
+  }
+}
+
 async function main() {
   let pageId;
   try {
@@ -47,70 +181,28 @@ async function main() {
     output({ ok: false, handedOff: false, reason: 'invalid_arguments', message: error.message }, 2);
     return;
   }
-  if (!PAGE_ID_RE.test(pageId)) {
-    output({ ok: false, handedOff: false, reason: 'invalid_page_id', pageId }, 2);
-    return;
-  }
   const winner = String(process.env.GG_WINNER_LLM || 'claude').toLowerCase();
-  if (!WINNER_RE.test(winner)) {
-    output({ ok: false, handedOff: false, reason: 'invalid_winner', pageId }, 2);
-    return;
-  }
   const stagingDir = resolve(process.env.GG_GENGROWTH_STAGING_DIR || join(FLOW_DIR, '_staging'));
-  const sourceMd = resolve(stagingDir, `${pageId}-en.md`);
-  const sourceManifest = resolve(stagingDir, `${pageId}-en.manifest.json`);
-  const targetMd = resolve(stagingDir, `${pageId}-${winner}-v8.md`);
-  const targetManifest = resolve(stagingDir, `${pageId}-${winner}-v8.manifest.json`);
-  const paths = [sourceMd, sourceManifest, targetMd, targetManifest];
-  if (paths.some((path) => !path.startsWith(`${stagingDir}${sep}`))) {
-    output({ ok: false, handedOff: false, reason: 'unsafe_path', pageId }, 2);
-    return;
-  }
-  if (!(await regularFile(sourceManifest))) {
-    output({ ok: false, handedOff: false, reason: 'manifest_not_pass', pageId }, 1);
-    return;
-  }
-  let manifest;
   try {
-    manifest = JSON.parse(await readFile(sourceManifest, 'utf8'));
-  } catch {
-    manifest = null;
+    output(await handoffGengrowthAuthor({ pageId, stagingDir, winner }), 0);
+  } catch (error) {
+    output({
+      ok: false,
+      handedOff: false,
+      reason: error?.reason || 'handoff_error',
+      pageId,
+      message: error instanceof Error ? error.message : String(error),
+    }, Number(error?.exitCode || 1));
   }
-  if (manifest?.phase2_checks?.overall !== 'pass') {
-    output({ ok: false, handedOff: false, reason: 'manifest_not_pass', pageId }, 1);
-    return;
-  }
-  if (!(await regularFile(sourceMd))) {
-    output({ ok: false, handedOff: false, reason: 'draft_not_sane', pageId }, 1);
-    return;
-  }
-  let draft = '';
-  try { draft = await readFile(sourceMd, 'utf8'); } catch {}
-  if (!draft.startsWith('---\n') || !/^slug:\s*\S/m.test(draft) || draft.length <= 400) {
-    output({ ok: false, handedOff: false, reason: 'draft_not_sane', pageId }, 1);
-    return;
-  }
-  if (!(await destinationIsSafe(targetMd)) || !(await destinationIsSafe(targetManifest))) {
-    output({ ok: false, handedOff: false, reason: 'unsafe_destination', pageId }, 2);
-    return;
-  }
-  await copyFile(sourceMd, targetMd);
-  await copyFile(sourceManifest, targetManifest);
-  output({
-    ok: true,
-    handedOff: true,
-    pageId,
-    winner,
-    draft: `${pageId}-${winner}-v8.md`,
-    manifest: `${pageId}-${winner}-v8.manifest.json`,
-  }, 0);
 }
 
-main().catch((error) => {
-  output({
-    ok: false,
-    handedOff: false,
-    reason: 'handoff_error',
-    message: error instanceof Error ? error.message : String(error),
-  }, 1);
-});
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
+  main().catch((error) => {
+    output({
+      ok: false,
+      handedOff: false,
+      reason: 'handoff_error',
+      message: error instanceof Error ? error.message : String(error),
+    }, 1);
+  });
+}

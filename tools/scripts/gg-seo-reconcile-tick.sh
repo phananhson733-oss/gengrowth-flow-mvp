@@ -130,9 +130,11 @@ printf '%s\n' "$STRICT_JSON"
 
 set +e
 GG_LARK_NOTIFY_SILENCE=1 GG_SEO_STRICT_RESULT_JSON="$STRICT_JSON" \
-  node "$READINESS" --site "$SITE" --plan "$PLAN" --run-id "$RUN_ID" --json
+  node "$READINESS" --site "$SITE" --plan "$PLAN" --run-id "$RUN_ID" --allow-plan-backlog --json
 readiness_rc=$?
 set -e
 if [[ "$controller_rc" -ne 0 ]]; then exit "$controller_rc"; fi
-if [[ "$reconcile_rc" -ne 0 ]]; then exit "$reconcile_rc"; fi
+if [[ "$reconcile_rc" -ne 0 && ! ( "$reconcile_rc" -eq 2 && "$readiness_rc" -eq 0 ) ]]; then
+  exit "$reconcile_rc"
+fi
 exit "$readiness_rc"

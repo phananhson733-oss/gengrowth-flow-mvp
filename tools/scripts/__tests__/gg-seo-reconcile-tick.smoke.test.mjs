@@ -139,7 +139,7 @@ test('23:00 tick runs strict reconcile/readiness without draining content repair
   assert.equal(h.result.status, 0, `${h.result.stdout}\n${h.result.stderr}`);
   assert.equal(h.lines.length, 2);
   assert.match(h.lines[0], /^reconcile --strict --json silence=0$/);
-  assert.match(h.lines[1], /^readiness .*--json .*silence=1$/);
+  assert.match(h.lines[1], /^readiness .*--allow-plan-backlog .*--json .*silence=1$/);
 });
 
 test('19:00 tick drains existing queue before strict reconcile/readiness', () => {
@@ -147,7 +147,7 @@ test('19:00 tick drains existing queue before strict reconcile/readiness', () =>
   assert.equal(h.result.status, 0, `${h.result.stdout}\n${h.result.stderr}`);
   assert.match(h.lines[0], /^drain drain /);
   assert.match(h.lines[1], /^reconcile --strict --json silence=0$/);
-  assert.match(h.lines[2], /^readiness .*--json .*silence=1$/);
+  assert.match(h.lines[2], /^readiness .*--allow-plan-backlog .*--json .*silence=1$/);
 });
 
 test('live unexpired owner returns a clean busy result', () => {
@@ -205,6 +205,19 @@ test('strict reconcile failure still runs readiness with its machine result', ()
   assert.equal(h.lines.length, 2);
   assert.match(h.lines[0], /^reconcile /);
   assert.match(h.lines[1], /^readiness /);
+});
+
+test('strict rc2 is cleared only when readiness confirms an allowed plan backlog', () => {
+  const h = harness({ reconcileExit: 2, readinessExit: 0 });
+  assert.equal(h.result.status, 0, `${h.result.stdout}\n${h.result.stderr}`);
+  assert.equal(h.lines.length, 2);
+  assert.match(h.lines[1], /--allow-plan-backlog/);
+});
+
+test('strict rc2 remains nonzero when readiness finds a real blocker', () => {
+  const h = harness({ reconcileExit: 2, readinessExit: 2 });
+  assert.equal(h.result.status, 2, `${h.result.stdout}\n${h.result.stderr}`);
+  assert.equal(h.lines.length, 2);
 });
 
 test('environment file is sourced before deriving bins, plan, and site', () => {

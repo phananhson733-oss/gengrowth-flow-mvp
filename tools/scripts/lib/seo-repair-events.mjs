@@ -113,6 +113,14 @@ export function normalizeRepairEvidence(value) {
     .toLowerCase();
 }
 
+export function repairIncidentId() {
+  throw new Error('repairIncidentId not implemented');
+}
+
+export function isActiveRepairStatus(status) {
+  return ACTIVE_STATUSES.has(status);
+}
+
 export function repairEventFingerprint(value) {
   const event = validateRepairEvent(value);
   const evidence = normalizeRepairEvidence(`${event.summary}\n${event.stderr}`);
@@ -183,6 +191,10 @@ async function readQueueRecords(queueDir, { quarantineCorrupt = true } = {}) {
 export async function listRepairRecords({ queueDir } = {}) {
   if (!queueDir) throw new TypeError('queueDir is required');
   return (await readQueueRecords(queueDir)).map(({ record }) => record);
+}
+
+export async function compactRepairIncident() {
+  throw new Error('compactRepairIncident not implemented');
 }
 
 function initialRecord(event, fingerprint, parentFingerprints = []) {

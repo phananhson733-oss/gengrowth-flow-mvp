@@ -20,6 +20,7 @@ import { outboxWrite, stateDir } from './lib/flow-state.mjs';
 import { loadEnv } from './lib/gg-shared.mjs';
 import { drainRepairQueue } from './lib/seo-repair-controller.mjs';
 import {
+  compactRepairIncident,
   enqueueRepairEvent,
   listRepairRecords,
 } from './lib/seo-repair-events.mjs';
@@ -365,6 +366,17 @@ async function main() {
     output({ ok: true, command, records });
     return;
   }
+  if (command === 'compact') {
+    if (!args.site || !args['page-id']) throw new TypeError('compact requires --site and --page-id');
+    const record = await compactRepairIncident({
+      queueDir: targetQueueDir,
+      site: args.site,
+      pageId: args['page-id'],
+      verificationCredit: numberArg(args['verification-credit'], 0, 0),
+    });
+    output({ ok: true, command, record });
+    return;
+  }
   if (command === 'drain') {
     output({ command, ...(await drainWithLock(args, targetQueueDir)) });
     return;
@@ -382,7 +394,7 @@ async function main() {
     });
     return;
   }
-  throw new TypeError('usage: gg-seo-repair-controller.mjs enqueue|drain|import-v1|inspect');
+  throw new TypeError('usage: gg-seo-repair-controller.mjs enqueue|drain|import-v1|inspect|compact');
 }
 
 try {

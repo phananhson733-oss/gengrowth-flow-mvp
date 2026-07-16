@@ -195,6 +195,18 @@ test('repair draft binding requires a regular exact-hash real file below the con
   });
   assert.equal(escaped.ok, false);
   assert.match(escaped.reason, /symlink|outside|escape/i);
+
+  const insideTarget = join(root, 'astrologywiki', 'PG-CELEB-057', 'inside-target.md');
+  const insideLink = join(root, 'astrologywiki', 'PG-CELEB-057', 'inside-link.md');
+  writeFileSync(insideTarget, '# inside regular target\n');
+  symlinkSync(insideTarget, insideLink);
+  const linkedRegular = bindings.inspectBoundRepairDraft({
+    draftFile: insideLink,
+    expectedSha256: sha256('# inside regular target\n'),
+    root,
+  });
+  assert.equal(linkedRegular.ok, false);
+  assert.match(linkedRegular.reason, /regular file|symlink/i);
 });
 
 test('controller draft snapshot is durable per attempt and never overwritten by later live staging drift', (t) => {

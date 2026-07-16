@@ -38,13 +38,20 @@ const PAGE_ID_REGEX = /^[A-Za-z0-9_-]{1,64}$/;
 // `--effort` accepts low|medium|high|xhigh|max (claude CLI). Opus 4.8 stays the
 // cross-validation escalation ceiling (see DIVERSIFY_ESCALATION) and the reviewer.
 const CLAUDE_MODEL = process.env.GG_CLAUDE_MODEL || 'claude-sonnet-4-6';
-// Bounded infrastructure fallback: if Sonnet 4.6 hits a quota/429/overloaded error
-// OR its worker watchdog detects a deadlock/timeout/network failure, retry the SAME
-// generation once on Opus (4.8 'high' by default; set GG_CLAUDE_FALLBACK_MODEL to
-// claude-opus-4-7 if preferred). This is still text-only and preserves every
-// downstream phase2/review gate; it only prevents provider/worker stalls from
-// becoming human authoring parks.
-const CLAUDE_FALLBACK_MODEL = process.env.GG_CLAUDE_FALLBACK_MODEL || 'claude-opus-4-8';
+// Bounded infrastructure fallback: quota/429/overload, watchdog deadlock,
+// timeout, or a recognized network failure retries the SAME generation once on
+// a DISTINCT Claude tier. Production can choose Opus as the primary; a fixed
+// Opus default here would then retry the identical failure domain and provide no
+// real fallback. An unset or accidentally identical override therefore flips to
+// the opposite supported tier.
+const DEFAULT_DISTINCT_CLAUDE_FALLBACK = /opus/i.test(CLAUDE_MODEL)
+  ? 'claude-sonnet-4-6'
+  : 'claude-opus-4-8';
+const CONFIGURED_CLAUDE_FALLBACK = String(process.env.GG_CLAUDE_FALLBACK_MODEL || '').trim();
+const CLAUDE_FALLBACK_MODEL = CONFIGURED_CLAUDE_FALLBACK
+  && CONFIGURED_CLAUDE_FALLBACK !== CLAUDE_MODEL
+  ? CONFIGURED_CLAUDE_FALLBACK
+  : DEFAULT_DISTINCT_CLAUDE_FALLBACK;
 const CLAUDE_FALLBACK_EFFORT = process.env.GG_CLAUDE_FALLBACK_EFFORT || 'high';
 // Detect a rate-limit / quota / overload signal in a failed attempt's stderr.
 function isRateLimited(stderr) {

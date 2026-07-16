@@ -85,6 +85,23 @@ function runAutoAsync(h, args, extraEnv = {}) {
   });
 }
 
+function writeFakeRepairController(h, { exitCode = 0 } = {}) {
+  const file = join(h.root, 'fake-repair-controller.mjs');
+  const calls = join(h.root, 'repair-controller-calls.log');
+  writeFileSync(file, [
+    "import { appendFileSync, existsSync } from 'node:fs';",
+    "if (existsSync(process.env.GG_TEST_CLAIMS_LOCK)) {",
+    "  process.stderr.write('controller invoked while claims lock held\\n');",
+    '  process.exit(19);',
+    '}',
+    "appendFileSync(process.env.GG_TEST_REPAIR_CALLS, JSON.stringify(process.argv.slice(2)) + '\\n');",
+    `process.stdout.write(JSON.stringify({ ok: ${exitCode === 0}, command: 'drain', busy: false }) + '\\n');`,
+    `process.exit(${exitCode});`,
+    '',
+  ].join('\n'));
+  return { file, calls };
+}
+
 function writeClaims(h, claims) {
   writeFileSync(h.claimsPath, JSON.stringify(claims, null, 2) + '\n');
 }
@@ -354,6 +371,84 @@ test('--mark-failed parks a pushed preview with a required failure reason', () =
     const claims = JSON.parse(readFileSync(h.claimsPath, 'utf8'));
     assert.equal(claims['PG-TEST-001'].status, 'needs_human');
     assert.equal(claims['PG-TEST-001'].error, 'preview rendered soft 404');
+  } finally {
+    h.cleanup();
+  }
+});
+
+test('--mark-failed persists repair work after releasing the claims lock', async () => {
+  const h = makeHarness();
+  try {
+    const repair = writeFakeRepairController(h);
+    writeClaims(h, {
+      'PG-TEST-001': {
+        status: 'pushed-preview',
+        stage: 'pushed-preview',
+        branch: 'seo/auto/2026-06-03-PG-TEST-001',
+        slug: 'test-slug',
+      },
+    });
+
+    const failed = await runAutoAsync(h, [
+      '--mark-failed',
+      '--branch',
+      'seo/auto/2026-06-03-PG-TEST-001',
+      '--reason',
+      'preview rendered soft 404',
+    ], {
+      GG_FLOW_STATE_DIR: join(h.root, 'state'),
+      GG_SEO_REPAIR_CONTROLLER_V2_ENABLED: '1',
+      GG_SEO_REPAIR_CONTROLLER_BIN: repair.file,
+      GG_TEST_REPAIR_CALLS: repair.calls,
+      GG_TEST_CLAIMS_LOCK: `${h.claimsPath}.lock`,
+    });
+
+    assert.equal(failed.status, 0, `${failed.stdout}${failed.stderr}`);
+    const calls = readFileSync(repair.calls, 'utf8').trim().split('\n').map((line) => JSON.parse(line));
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0][0], 'drain');
+    const queue = join(h.root, 'state', 'seo-repair-queue');
+    const files = (await import('node:fs/promises')).readdir(queue);
+    assert.equal((await files).filter((name) => name.endsWith('.json')).length, 1);
+  } finally {
+    h.cleanup();
+  }
+});
+
+test('--mark-failed async controller rejection reaches the fatal handler after durable enqueue', async () => {
+  const h = makeHarness();
+  try {
+    const repair = writeFakeRepairController(h, { exitCode: 2 });
+    writeClaims(h, {
+      'PG-TEST-001': {
+        status: 'pushed-preview',
+        stage: 'pushed-preview',
+        branch: 'seo/auto/2026-06-03-PG-TEST-001',
+        slug: 'test-slug',
+      },
+    });
+
+    const failed = await runAutoAsync(h, [
+      '--mark-failed',
+      '--branch',
+      'seo/auto/2026-06-03-PG-TEST-001',
+      '--reason',
+      'schema review failed',
+    ], {
+      GG_FLOW_STATE_DIR: join(h.root, 'state'),
+      GG_SEO_REPAIR_CONTROLLER_V2_ENABLED: '1',
+      GG_SEO_REPAIR_CONTROLLER_BIN: repair.file,
+      GG_TEST_REPAIR_CALLS: repair.calls,
+      GG_TEST_CLAIMS_LOCK: `${h.claimsPath}.lock`,
+    });
+
+    assert.equal(failed.status, 1, `${failed.stdout}${failed.stderr}`);
+    assert.match(failed.stderr, /repair controller exited 2/);
+    const claims = JSON.parse(readFileSync(h.claimsPath, 'utf8'));
+    assert.equal(claims['PG-TEST-001'].status, 'needs_human');
+    const queue = join(h.root, 'state', 'seo-repair-queue');
+    const files = await (await import('node:fs/promises')).readdir(queue);
+    assert.equal(files.filter((name) => name.endsWith('.json')).length, 1);
   } finally {
     h.cleanup();
   }

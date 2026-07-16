@@ -170,6 +170,41 @@ test('invariant 1: author tick immediately runs gengrowth publish follow-up afte
     /gg-seo-repair-controller\.mjs" import-v1 --site gengrowth/,
     'v2 author failures must enter the shared repair controller through the natural wrapper',
   );
+  assert.equal(
+    (src.match(/gg-seo-repair-controller\.mjs" import-v1 --site gengrowth/g) || []).length,
+    1,
+    'author tick must have exactly one compatibility import call',
+  );
+  assert.doesNotMatch(
+    src,
+    /--log-offset 0/,
+    'author tick must never import the whole cumulative log',
+  );
+  assert.match(
+    src,
+    /--log-offset "\$LOG_OFFSET_START"/,
+    'author tick must import only the fire-local log window',
+  );
+  assert.match(
+    src,
+    /--run-id "\$RUN_ID"/,
+    'author tick must pass one explicit run id to import-v1',
+  );
+  assert.match(
+    src,
+    /GG_SEO_REPAIR_BUDGET_SECONDS:-1500/,
+    'author tick default repair budget must be 25 minutes',
+  );
+  assert.match(
+    src,
+    /trap ['"]?on_exit['"]? EXIT/,
+    'all normal and explicit exits must converge through one EXIT finalizer',
+  );
+  assert.doesNotMatch(
+    src,
+    /if \[ "\$\{GG_SEO_REPAIR_CONTROLLER_V2_ENABLED:-0\}" = "1" \]; then run_repair_controller/,
+    'per-error compatibility imports must be removed',
+  );
   assert.match(
     src,
     /publish follow-up:[\s\S]*GG_SEO_REPAIR_CONTROLLER_V2_ENABLED[\s\S]*run_repair_controller "\$rc"/,

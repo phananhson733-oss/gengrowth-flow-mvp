@@ -243,6 +243,57 @@ test('import-v1 converts all repairable claims without applying the v1 attempt c
   assert.deepEqual(records.map((record) => record.event.errorKind).sort(), ['asset_fail', 'link_fail']);
 });
 
+test('import-v1 validates explicit run ids and keeps unchanged same-run legacy claims idempotent', (t) => {
+  const h = harness(t);
+  const claims = join(h.root, 'claims.json');
+  const plan = join(h.root, 'plan.md');
+  const log = join(h.root, 'author.log');
+  writeFileSync(claims, JSON.stringify({
+    'PG-WLS-007': {
+      status: 'needs_human',
+      stage: 'authoring',
+      slug: 'chatgpt-seo',
+      error: 'phase2 failed',
+      failedAt: '2026-07-16T10:00:00.000Z',
+    },
+    'PG-OTHER-999': {
+      status: 'needs_human',
+      stage: 'authoring',
+      slug: 'outside-plan',
+      error: 'must not import',
+      failedAt: '2026-07-16T10:00:00.000Z',
+    },
+  }));
+  writeFileSync(plan, '- [ ] `PG-WLS-007` chatgpt seo\n');
+  writeFileSync(log, 'before\nphase2 failed\n');
+
+  const invalid = h.run([
+    'import-v1', '--site', 'gengrowth', '--claims', claims, '--plan', plan,
+    '--log-file', log, '--log-offset', '7', '--run-id', '../bad run', '--no-drain',
+  ]);
+  assert.equal(invalid.status, 2);
+  assert.match(h.json(invalid).error, /run-id/i);
+
+  const args = [
+    'import-v1', '--site', 'gengrowth', '--claims', claims, '--plan', plan,
+    '--log-file', log, '--log-offset', '7', '--run-id', 'gengrowth-author-20260716T100000Z-7',
+    '--no-drain',
+  ];
+  const first = h.run(args);
+  assert.equal(first.status, 0, `${first.stdout}\n${first.stderr}`);
+  assert.equal(h.json(first).imported, 1);
+  const second = h.run(args);
+  assert.equal(second.status, 0, `${second.stdout}\n${second.stderr}`);
+  assert.equal(h.json(second).imported, 0);
+
+  const records = h.json(h.run(['inspect'])).records;
+  assert.equal(records.length, 1);
+  assert.equal(records[0].event.pageId, 'PG-WLS-007');
+  assert.equal(records[0].observations, 1);
+  assert.equal(records[0].event.runId, 'gengrowth-author-20260716T100000Z-7');
+  assert.equal(records[0].event.logOffsetStart, 7);
+});
+
 test('import-v1 --site gengrowth preserves site ownership and exact author retry', (t) => {
   const h = harness(t);
   const claims = join(h.root, 'claims.json');

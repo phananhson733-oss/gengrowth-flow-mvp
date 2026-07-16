@@ -122,7 +122,11 @@ function fakeEnv({
 }) {
   const stagingDir = join(dir, '_staging');
   mkdirSync(stagingDir, { recursive: true });
-  writeFileSync(join(stagingDir, 'PG-001-en.md'), '# immutable fixture draft A\n');
+  let statusClaims = {};
+  try { statusClaims = JSON.parse(statusJson); } catch {}
+  for (const pgId of Object.keys(statusClaims || {})) {
+    writeFileSync(join(stagingDir, `${pgId}-en.md`), `# immutable fixture draft ${pgId}\n`);
+  }
   const autopilot = writeAutopilotFake(dir, { statusJson, sentinelsDir });
   const previewWait = writeNodeFake(dir, 'fake-preview-wait.mjs', {
     sentinelName: 'preview-wait', sentinelsDir,
@@ -205,6 +209,9 @@ function writeReviewFake(dir, name, {
   sentinelsDir,
   failDimension = null,
   failReason = 'broken internal link',
+  fixedVerdict = null,
+  fixedReason = '',
+  exit = 0,
 }) {
   const p = join(dir, name);
   const src = `#!/usr/bin/env node
@@ -217,9 +224,12 @@ const value = (flag) => {
 try { appendFileSync(${JSON.stringify(join(sentinelsDir, 'review-worker'))}, argv.join(' ') + '\\n'); } catch {}
 const dimension = value('--dimension');
 const fail = dimension === ${JSON.stringify(failDimension)};
+const verdict = ${JSON.stringify(fixedVerdict)} || (fail ? 'FAIL' : 'PASS');
 process.stdout.write(JSON.stringify({
-  verdict: fail ? 'FAIL' : 'PASS',
-  blocking_reason: fail ? ${JSON.stringify(failReason)} : '',
+  verdict,
+  blocking_reason: ${JSON.stringify(fixedVerdict)}
+    ? ${JSON.stringify(fixedReason)}
+    : (fail ? ${JSON.stringify(failReason)} : ''),
   notes: [],
   reviewedHeadRefOid: value('--head-ref-oid'),
   inputSha256: {
@@ -227,7 +237,7 @@ process.stdout.write(JSON.stringify({
     draft: value('--draft-sha256'),
   },
 }));
-process.exit(0);
+process.exit(${exit});
 `;
   writeFileSync(p, src);
   chmodSync(p, 0o755);
@@ -665,9 +675,10 @@ test('chrome verify fails (ok:false) → exit 2, mark-failed + gate_fail notify'
 test('a SKIPPED review (tooling failure) blocks the gate → exit 2', () => {
   const { dir, sentinels } = freshCase();
   // review fake emits SKIPPED with exit 1 (the worker's tooling-failure contract).
-  const reviewBin = writeNodeFake(dir, 'fake-review-skip.mjs', {
-    sentinelName: 'review-worker', sentinelsDir: sentinels,
-    stdout: JSON.stringify({ dimension: 'schema', verdict: 'SKIPPED', blocking_reason: 'tooling: no parseable JSON verdict', notes: [] }),
+  const reviewBin = writeReviewFake(dir, 'fake-review-skip.mjs', {
+    sentinelsDir: sentinels,
+    fixedVerdict: 'SKIPPED',
+    fixedReason: 'tooling: no parseable JSON verdict',
     exit: 1,
   });
   const env = fakeEnv({ dir, sentinelsDir: sentinels, statusJson: CLAIM_VERIFIED(), reviewBin });
@@ -1132,8 +1143,8 @@ test('draft bytes changing during a reviewer block mark and merge after all chec
   };
   fixture.deps.inspectDraftSnapshot = async () => (
     draftMutatedDuringReview
-      ? { ok: true, exists: true, bytes: 12, sha256: '2'.repeat(64) }
-      : { ok: true, exists: true, bytes: 12, sha256: '1'.repeat(64) }
+      ? { ok: true, exists: true, bytes: 12, sha256: '3'.repeat(64) }
+      : { ok: true, exists: true, bytes: 12, sha256: '2'.repeat(64) }
   );
 
   const result = await runGate(fixture.options, fixture.deps);
@@ -1314,5 +1325,6 @@ test('gate repair cleanup never uses destructive git reset --hard', () => {
 });
 
 test('cleanup', () => {
+  spawnSync('chmod', ['-R', 'u+w', ROOT]);
   rmSync(ROOT, { recursive: true, force: true });
 });

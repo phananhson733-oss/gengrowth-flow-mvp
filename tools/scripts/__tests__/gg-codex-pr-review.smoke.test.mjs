@@ -231,13 +231,13 @@ test('codex FAIL → exit 0, relays VERDICT: FAIL (gate classifies FAIL → park
   assert.match(r.stdout, /Group H/);
 });
 
-test('gh pr diff fails → exit 3 tooling failure, no VERDICT line', () => {
+test('gh PR metadata lookup fails → exit 3 tooling failure, no VERDICT line', () => {
   const dir = caseDir();
   const r = run(['--repo', 'xdawayer/oracle', '--pr', '196'],
     { gh: ghFake(dir, 'fail'), codex: codexFake(dir, { verdict: 'PASS' }) });
   assert.equal(r.status, 3, `stderr: ${r.stderr}`);
   assert.doesNotMatch(r.stdout || '', /VERDICT:/);
-  assert.match(r.stderr, /gh pr diff/i);
+  assert.match(r.stderr, /gh pr view/i);
 });
 
 test('codex produces no VERDICT line → exit 3 tooling failure', () => {

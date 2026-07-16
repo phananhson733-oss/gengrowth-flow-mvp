@@ -91,7 +91,9 @@ async function budgetFixture(t, recordOverrides = {}, adapterResult = {
   };
 }
 
-async function creditedFixture(t, adapterResult) {
+async function creditedFixture(t, adapterResult, {
+  totalAttempts = 20,
+} = {}) {
   const { queueDir } = await fixture(t);
   const queued = await enqueueRepairEvent(event({
     eventId: 'verification-credit-source',
@@ -103,7 +105,7 @@ async function creditedFixture(t, adapterResult) {
   const seeded = await transitionRepairEvent(queued, {
     status: 'repair_pending',
     budgetEpoch: 6,
-    totalAttempts: 20,
+    totalAttempts,
     agentMutationAttempts: 9,
     windowCount: 8,
     firstDetectedAt: '2026-07-15T10:00:00.000Z',
@@ -342,6 +344,30 @@ test('one migration verification credit bypasses historical caps, is consumed at
     terminal.terminalNotificationKey,
     `quarantined:${terminal.incidentId}:${terminal.budgetEpoch}`,
   );
+
+  const second = await drainRepairQueue(built.args);
+  assert.equal(second.processed, 0);
+  assert.equal(built.calls.length, 1);
+});
+
+test('a production-shaped 23-attempt hold consumes one credit as attempt 24 and never invokes twice', async (t) => {
+  const built = await creditedFixture(t, {
+    ok: false,
+    evidence: { type: 'production_verification_failed' },
+  }, {
+    totalAttempts: 23,
+  });
+
+  const first = await drainRepairQueue(built.args);
+  assert.equal(first.terminals[0].terminal, 'quarantined');
+  assert.equal(built.calls.length, 1);
+  assert.equal(built.calls[0].record.totalAttempts, 24);
+  const terminal = await readRepairRecord(join(
+    built.queueDir,
+    `${built.released.event.eventId}.json`,
+  ));
+  assert.equal(terminal.totalAttempts, 24);
+  assert.equal(terminal.verificationCreditRemaining, 0);
 
   const second = await drainRepairQueue(built.args);
   assert.equal(second.processed, 0);

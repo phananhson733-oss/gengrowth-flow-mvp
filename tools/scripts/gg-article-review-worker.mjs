@@ -14,6 +14,7 @@
 // Usage:
 //   node gg-article-review-worker.mjs --dimension astrology|schema|links-seo \
 //     --article <oracle .ts path> --draft <source .md path> \
+//     [--head-ref-oid <40-hex-sha> --article-sha256 <64-hex> --draft-sha256 <64-hex>] \
 //     [--model <claude model>] [--effort <low|medium|high|xhigh|max>] \
 //     [--timeout-ms <n>] [--json]
 //

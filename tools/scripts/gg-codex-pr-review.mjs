@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // gg-codex-pr-review.mjs — the GG_CODEX_BIN target for the autopilot publish gate
-// (gg-preview-gate.mjs step 4b). Cross-model FACTUAL review of a pending PR's article diff via
+// (gg-preview-gate.mjs step 4b). Cross-model FACTUAL review of a pending PR's immutable SHA diff via
 // `codex exec` (GPT-5.5), emitting the `VERDICT: PASS|FAIL` line that the gate's classifyCodex()
 // parses from THIS script's stdout.
 //
@@ -11,8 +11,9 @@
 // reviewer closes exactly that hole: an independent model checks ONLY checkable real-world facts.
 //
 // INVOCATION (by the gate): node gg-codex-pr-review.mjs --repo <owner/name> --pr <ref> [--branch <b>]
-//   --pr accepts a PR number, URL, or branch (whatever `gh pr diff` accepts); --branch is a
-//   fallback when --pr is empty/garbage (the ledger stores the PR *URL*, and pr-create can fail).
+//   --head-ref-oid <40-hex-sha>
+//   The wrapper resolves the PR's exact base/head pair, requires head==--head-ref-oid, then fetches
+//   the immutable baseRefOid...headRefOid compare diff. It never reviews a mutable branch diff.
 //
 // OUTPUT CONTRACT (consumed by gg-preview-gate.mjs classifyCodex):
 //   exit 0 + a `VERDICT: PASS` / `VERDICT: FAIL — <why>` line on stdout → gate reads PASS/FAIL.
@@ -71,7 +72,7 @@ function toolFail(reason) {
   process.exit(3);
 }
 
-// The PR ref `gh pr diff` should resolve. Prefer the BRANCH: it is unambiguous with --repo and tied
+// The PR ref `gh pr view` should resolve. Prefer the BRANCH: it is unambiguous with --repo and tied
 // to THIS claim. The ledger stores claim.pr as a full PR URL, and `gh` can let a URL's own owner/repo
 // win over --repo — so diffing by URL risks fact-checking a DIFFERENT PR/repo than the one merging.
 // Fall back to the PR ref only when no branch was passed (and never the pr-create-failed sentinel).
@@ -132,7 +133,8 @@ function fetchPinnedDiff(ref, repo, expectedHeadRefOid) {
 // Return only the per-file hunks that touch data/articles/. Used as the SANITY GATE that the PR is
 // really an article publish (a non-empty result) — NOT as the content fed to codex, which gets the
 // FULL diff so asset hunks (inline-infographic SVG <text> labels, plan JSON) are fact-checked too.
-// `gh pr diff` emits one `diff --git a/… b/…` block per file; we split on that boundary, filter by
+// The immutable compare diff emits one `diff --git a/… b/…` block per file; we split on that
+// boundary and filter by
 // path. The b/-side check also catches a rename INTO data/articles/.
 export function filterArticleHunks(diff) {
   const sections = String(diff || '').split(/(?=^diff --git )/m);
@@ -266,7 +268,7 @@ function main() {
   // Fact-check the FULL diff: the article prose AND the inline-infographic SVG <text> labels +
   // scripts/plans JSON all carry checkable real-world facts (dates, team names, orderings), so a
   // fact error living only in an asset hunk must NOT escape review. Hero images are binary, so
-  // `gh pr diff` emits no content for them (no budget impact). Fail-closed if oversize — never PASS
+  // the compare diff emits no content for them (no budget impact). Fail-closed if oversize — never PASS
   // on a truncated fact-check.
   if (fullDiff.length > DIFF_BUDGET) {
     toolFail(`PR diff ${fullDiff.length}B exceeds review budget ${DIFF_BUDGET}B (fail-closed; would truncate the fact-check)`);

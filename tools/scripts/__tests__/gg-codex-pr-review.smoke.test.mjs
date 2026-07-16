@@ -1,7 +1,8 @@
 // Hermetic smoke tests for gg-codex-pr-review.mjs (the GG_CODEX_BIN factual-review wrapper).
 //
-// Fakes are injected via the wrapper's env overrides: GG_CODEX_REVIEW_GH_BIN (the `gh pr diff`
-// source) and GG_CODEX_REVIEW_CODEX_BIN (the `codex exec ... --output-last-message <f> -` worker).
+// Fakes are injected via the wrapper's env overrides: GG_CODEX_REVIEW_GH_BIN (the immutable
+// `gh pr view` + SHA compare source) and GG_CODEX_REVIEW_CODEX_BIN (the
+// `codex exec ... --output-last-message <f> -` worker).
 // No network, no real gh, no real codex. Asserts the VERDICT relay + the tooling-failure contract
 // (nonzero exit + no VERDICT line ⇒ the gate classifies SKIPPED ⇒ PARK under the required gate).
 

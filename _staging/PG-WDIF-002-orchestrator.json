@@ -1,0 +1,52 @@
+{
+  "page_id": "PG-WDIF-002",
+  "prompt_path": "/Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-WDIF-002.v8-prompt.md",
+  "started_at": "2026-07-16T12:18:13.875Z",
+  "models_requested": [
+    "claude"
+  ],
+  "retry": 0,
+  "diversify_on_fail": false,
+  "max_cost_usd_per_page": 5,
+  "budget_exceeded_models": [],
+  "ok_count": 1,
+  "total_cost_estimate_usd": 0.0522,
+  "results": {
+    "claude": {
+      "model": "claude",
+      "active_model": "claude",
+      "diversified": false,
+      "ok": true,
+      "output_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-WDIF-002-claude-v8.md",
+      "retries": 0,
+      "duration_s": 258.6,
+      "cost_estimate_usd": {
+        "usd": 0.0522,
+        "input_tokens_est": 7448,
+        "output_tokens_est": 1993,
+        "pricing_note": "Sonnet 4.6 xhigh"
+      },
+      "cumulative_cost_usd": 0.0522,
+      "budget_exceeded": false,
+      "budget_usd": 5,
+      "attempts": [
+        {
+          "try_index": 1,
+          "model": "claude",
+          "command": "claude -p --model claude-opus-4-8 --effort high < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-WDIF-002.v8-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-WDIF-002-claude-v8.md",
+          "cost_usd": 0.0522,
+          "cumulative_cost_usd": 0.0522,
+          "ok": true,
+          "exit_code": 0,
+          "duration_s": 258.6,
+          "stderr_tail": "",
+          "stdout_bytes": 9049,
+          "sonnet_guard": {
+            "downgraded": false,
+            "bytes": 9081
+          }
+        }
+      ]
+    }
+  }
+}

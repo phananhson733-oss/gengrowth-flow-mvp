@@ -419,6 +419,21 @@ test('existing corrupt claims ledger fails closed instead of claiming an empty o
   assert.equal(notifyCalls(c).length, 0);
 });
 
+for (const [label, invalidClaims] of [
+  ['array', '[]'],
+  ['scalar', '"not-a-ledger"'],
+  ['invalid claim value', '{"PG-A-001":"not-a-claim"}'],
+]) {
+  test(`parseable ${label} claims ledger fails closed`, () => {
+    const c = freshCase({});
+    writeFileSync(join(c.opsDir, 'inbox', '06-tasks', 'tasks', '.autopilot-claims.json'), invalidClaims);
+    const r = run(['--since', SINCE, '--site', 'astrologywiki'], c);
+    assert.equal(r.status, 4, `${r.stdout}\n${r.stderr}`);
+    assert.match(r.stderr, /claims ledger .*无效/);
+    assert.equal(notifyCalls(c).length, 0);
+  });
+}
+
 test('corrupt repair queue record fails closed instead of emitting a partial false terminal summary', () => {
   const c = freshCase({
     'PG-A-001': { site: 'astrologywiki', status: 'done', slug: 'slug-a', mergedAt: IN_WINDOW },
@@ -429,6 +444,25 @@ test('corrupt repair queue record fails closed instead of emitting a partial fal
   assert.match(r.stderr, /repair record corrupt\.json 解析失败/);
   assert.equal(notifyCalls(c).length, 0);
 });
+
+for (const [label, invalidRecord] of [
+  ['array', []],
+  ['scalar', 'not-a-record'],
+  ['missing status', { event: { site: 'astrologywiki', pageId: 'PG-A-001' } }],
+  ['missing event', { status: 'archived' }],
+  ['missing pageId', { status: 'archived', event: { site: 'astrologywiki' } }],
+]) {
+  test(`parseable queue record ${label} fails closed`, () => {
+    const c = freshCase({
+      'PG-A-001': { site: 'astrologywiki', status: 'done', slug: 'slug-a', mergedAt: IN_WINDOW },
+    });
+    writeFileSync(join(c.queueDir, 'invalid.json'), JSON.stringify(invalidRecord));
+    const r = run(['--since', SINCE, '--site', 'astrologywiki'], c);
+    assert.equal(r.status, 4, `${r.stdout}\n${r.stderr}`);
+    assert.match(r.stderr, /repair record invalid\.json .*无效/);
+    assert.equal(notifyCalls(c).length, 0);
+  });
+}
 
 test('controller terminal records are filtered by selected site and current run while active records stay silent', () => {
   const c = freshCase({});
@@ -492,6 +526,17 @@ test('controller terminal records are filtered by selected site and current run 
     },
     updatedAt: IN_WINDOW,
   });
+  writeQueueRecord(c, 'same-site-current-out-of-plan', {
+    status: 'human_only',
+    event: {
+      site: 'astrologywiki',
+      runId: 'run-1',
+      pageId: 'PG-OTHER-777',
+      slug: 'other-plan',
+      createdAt: IN_WINDOW,
+    },
+    updatedAt: IN_WINDOW,
+  });
   writeQueueRecord(c, 'terminal-current', {
     status: 'quarantined',
     event: {
@@ -540,6 +585,36 @@ test('controller terminal records are filtered by selected site and current run 
   assert.doesNotMatch(r.stdout, /geng-ok/);
   assert.doesNotMatch(r.stdout, /PG-CELEB-059/);
   assert.doesNotMatch(r.stdout, /PG-CELEB-062/);
+  assert.doesNotMatch(r.stdout, /PG-OTHER-777|other-plan/);
+});
+
+test('legacy terminal uses matching terminal history time before stale updatedAt', () => {
+  const c = freshCase({});
+  writeFileSync(c.plan, '- [ ] `PG-LEGACY-061` legacy terminal\n');
+  writeQueueRecord(c, 'legacy-terminal-history', {
+    status: 'archived',
+    event: {
+      site: 'astrologywiki',
+      pageId: 'PG-LEGACY-061',
+      slug: 'legacy-terminal',
+      createdAt: OLD,
+    },
+    updatedAt: OLD,
+    history: [
+      { status: 'queued', at: OLD },
+      { status: 'archived', at: IN_WINDOW },
+    ],
+  });
+
+  const r = run([
+    '--since', SINCE,
+    '--site', 'astrologywiki',
+    '--plan', c.plan,
+    '--run-id', 'run-1',
+    '--dry-run',
+  ], c);
+  assert.equal(r.status, 0, `${r.stdout}\n${r.stderr}`);
+  assert.match(r.stdout, /PG-LEGACY-061（archived）/);
 });
 
 test('final notification reuses deterministic batch-terminal run UUID across repeated finalizer ticks', () => {

@@ -173,10 +173,18 @@ test('repair records initialize and count the natural-window progress fields', a
   assert.equal(first.lastArtifactSha, null);
   assert.equal(first.noProgressCount, 0);
 
-  const observed = await enqueueRepairEvent(event({
+  const sameWindow = await enqueueRepairEvent(event({
     eventId: UUID_B,
-    runId: 'run-20260715-window-2',
     logOffsetStart: 100,
+    logOffsetEnd: 150,
+    createdAt: '2026-07-15T14:05:00.000Z',
+  }), { queueDir });
+  assert.equal(sameWindow.windowCount, 1);
+
+  const observed = await enqueueRepairEvent(event({
+    eventId: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+    runId: 'run-20260715-window-2',
+    logOffsetStart: 150,
     logOffsetEnd: 200,
     createdAt: '2026-07-15T14:30:00.000Z',
   }), { queueDir });
@@ -228,6 +236,20 @@ test('pre-exhausted or no-progress incidents quarantine before adapter execution
     assert.equal(out.terminals[0].terminal, 'quarantined');
     assert.equal((await readRepairRecord(built.recordPath)).history.at(-1).evidence.type, 'no_progress');
   });
+  await t.test('Agent mutation budget already exhausted', async (tt) => {
+    const built = await budgetFixture(tt, {
+      classification: 'agent_fixable',
+      strategy: 'agent_content_asset_link',
+      agentMutationAttempts: 2,
+    });
+    const out = await drainRepairQueue({
+      ...built.args,
+      maxAgentMutationAttempts: 2,
+    });
+    assert.equal(built.adapterCalls(), 0);
+    assert.equal(out.terminals[0].terminal, 'quarantined');
+    assert.equal((await readRepairRecord(built.recordPath)).history.at(-1).evidence.type, 'repair_budget_exhausted');
+  });
 });
 
 test('Agent mutation budget increments only when the adapter actually invokes an Agent', async (t) => {
@@ -254,6 +276,106 @@ test('Agent mutation budget increments only when the adapter actually invokes an
     });
     await drainRepairQueue({ ...built.args, maxTargets: 1 });
     assert.equal((await readRepairRecord(built.recordPath)).agentMutationAttempts, 1);
+  });
+});
+
+test('artifact evidence counts consecutive no-progress attempts and quarantines the second repeat', async (t) => {
+  const built = await budgetFixture(t, {}, {
+    ok: false,
+    evidence: { type: 'regate_failed', artifactSha: 'sha-repeat' },
+  });
+  const first = await drainRepairQueue({
+    ...built.args,
+    maxTargets: 1,
+    maxStrategyAttempts: 3,
+  });
+  assert.equal(first.terminals.length, 0);
+  const afterFirst = await readRepairRecord(built.recordPath);
+  assert.equal(afterFirst.lastArtifactSha, 'sha-repeat');
+  assert.equal(afterFirst.noProgressCount, 1);
+
+  const second = await drainRepairQueue({
+    ...built.args,
+    maxTargets: 1,
+    maxStrategyAttempts: 3,
+  });
+  assert.equal(built.adapterCalls(), 2);
+  assert.equal(second.terminals[0].terminal, 'quarantined');
+  const terminal = await readRepairRecord(built.recordPath);
+  assert.equal(terminal.lastArtifactSha, 'sha-repeat');
+  assert.equal(terminal.noProgressCount, 2);
+  assert.equal(terminal.history.at(-1).evidence.type, 'no_progress');
+});
+
+test('a changed artifact SHA resets the consecutive no-progress count to one', async (t) => {
+  let calls = 0;
+  const { queueDir } = await fixture(t);
+  const queued = await enqueueRepairEvent(event(), { queueDir });
+  const path = join(queueDir, `${queued.event.eventId}.json`);
+  const args = {
+    queueDir,
+    adapters: {
+      gengrowth: {
+        execute: async () => ({
+          ok: false,
+          evidence: {
+            type: 'regate_failed',
+            artifactSha: calls++ === 0 ? 'sha-before' : 'sha-after',
+          },
+        }),
+      },
+    },
+    owner: 'artifact-change-test',
+    now: () => new Date('2026-07-15T14:02:00.000Z'),
+    maxTargets: 1,
+    maxStrategyAttempts: 3,
+  };
+  await drainRepairQueue(args);
+  await drainRepairQueue(args);
+  const current = await readRepairRecord(path);
+  assert.equal(current.status, 'queued');
+  assert.equal(current.lastArtifactSha, 'sha-after');
+  assert.equal(current.noProgressCount, 1);
+});
+
+test('incidents over the natural-window or 90-minute limit quarantine before execution', async (t) => {
+  await t.test('four distinct run windows exceed maxWindowCount=3', async (tt) => {
+    const { queueDir } = await fixture(tt);
+    const runIds = ['run-window-1', 'run-window-2', 'run-window-3', 'run-window-4'];
+    let head;
+    for (let index = 0; index < runIds.length; index += 1) {
+      head = await enqueueRepairEvent(event({
+        eventId: `${String(index + 1).repeat(8)}-${String(index + 1).repeat(4)}-4${String(index + 1).repeat(3)}-8${String(index + 1).repeat(3)}-${String(index + 1).repeat(12)}`,
+        runId: runIds[index],
+        logOffsetStart: index * 100,
+        logOffsetEnd: (index + 1) * 100,
+        createdAt: `2026-07-15T14:${String(index).padStart(2, '0')}:00.000Z`,
+      }), { queueDir });
+    }
+    assert.equal(head.windowCount, 4);
+    let calls = 0;
+    const out = await drainRepairQueue({
+      queueDir,
+      adapters: { gengrowth: { execute: async () => { calls += 1; return { ok: false }; } } },
+      now: () => new Date('2026-07-15T14:10:00.000Z'),
+      maxTargets: 1,
+      maxWindowCount: 3,
+    });
+    assert.equal(calls, 0);
+    assert.equal(out.terminals[0].terminal, 'quarantined');
+    assert.equal((await readRepairRecord(join(queueDir, `${head.event.eventId}.json`))).history.at(-1).evidence.type, 'repair_window_exhausted');
+  });
+
+  await t.test('incident age over 90 minutes exceeds maxIncidentAgeMs', async (tt) => {
+    const built = await budgetFixture(tt);
+    const out = await drainRepairQueue({
+      ...built.args,
+      now: () => new Date('2026-07-15T15:30:00.001Z'),
+      maxIncidentAgeMs: 90 * 60 * 1000,
+    });
+    assert.equal(built.adapterCalls(), 0);
+    assert.equal(out.terminals[0].terminal, 'quarantined');
+    assert.equal((await readRepairRecord(built.recordPath)).history.at(-1).evidence.type, 'repair_window_exhausted');
   });
 });
 

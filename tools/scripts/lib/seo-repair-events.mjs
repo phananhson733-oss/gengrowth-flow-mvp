@@ -11,7 +11,14 @@ import {
 import { basename, dirname, join, resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 
-const TERMINAL_STATUSES = new Set(['published', 'archived', 'human_only', 'superseded', 'migration_hold']);
+const TERMINAL_STATUSES = new Set([
+  'published',
+  'archived',
+  'human_only',
+  'quarantined',
+  'superseded',
+  'migration_hold',
+]);
 const ACTIVE_STATUSES = new Set(['queued', 'repairing', 'regating', 'repair_pending']);
 const ALLOWED_SITES = new Set(['astrologywiki', 'gengrowth']);
 const ALLOWED_ERROR_KINDS = new Set([
@@ -877,6 +884,10 @@ function initialRecord(event, fingerprint, {
   budgetEpoch = 1,
   totalAttempts = 0,
   agentMutationAttempts = 0,
+  firstDetectedAt = event.createdAt,
+  windowCount = 1,
+  lastArtifactSha = null,
+  noProgressCount = 0,
   parentGenerationId = null,
   parentFingerprints = [],
 } = {}) {
@@ -889,6 +900,10 @@ function initialRecord(event, fingerprint, {
     budgetEpoch,
     totalAttempts,
     agentMutationAttempts,
+    firstDetectedAt,
+    windowCount,
+    lastArtifactSha,
+    noProgressCount,
     sourceEventIds: [event.eventId],
     sourceEvents: [event],
     parentGenerationId,
@@ -1038,6 +1053,10 @@ export async function enqueueRepairEvent(value, {
         latestEvent: event,
         revision: Number(existing.record.revision || 0) + 1,
         observations: Number(existing.record.observations || 1) + 1,
+        firstDetectedAt: existing.record.firstDetectedAt || existing.record.event.createdAt,
+        windowCount: new Set(sourceEvents.map((source) => source.runId)).size,
+        lastArtifactSha: existing.record.lastArtifactSha || null,
+        noProgressCount: Number(existing.record.noProgressCount || 0),
         sourceEventIds,
         sourceEvents,
         updatedAt: event.createdAt,
@@ -1053,12 +1072,26 @@ export async function enqueueRepairEvent(value, {
 
     const previous = active[0]?.record || null;
     const parentFingerprints = active.map(({ record }) => record.fingerprint);
+    const incidentSourceEvents = [
+      ...active.flatMap(({ record: source }) => (
+        source.sourceEvents || [source.latestEvent || source.event]
+      )),
+      event,
+    ];
+    const firstDetectedAt = active
+      .map(({ record: source }) => source.firstDetectedAt || source.event.createdAt)
+      .concat(event.createdAt)
+      .sort()[0];
     const record = initialRecord(event, fingerprint, {
       incidentId,
       generation: Number(previous?.generation || 0) + 1,
       budgetEpoch: Number(previous?.budgetEpoch || 1),
       totalAttempts: Number(previous?.totalAttempts || 0),
       agentMutationAttempts: Number(previous?.agentMutationAttempts || 0),
+      firstDetectedAt,
+      windowCount: new Set(incidentSourceEvents.map((source) => source.runId)).size,
+      lastArtifactSha: null,
+      noProgressCount: 0,
       parentGenerationId: previous?.event?.eventId || null,
       parentFingerprints,
     });
@@ -1231,6 +1264,12 @@ export async function compactRepairIncident({
       budgetEpoch: Math.max(...records.map((record) => Number(record.budgetEpoch || 1))),
       totalAttempts: records.reduce((sum, record) => sum + Number(record.totalAttempts || 0), 0),
       agentMutationAttempts: records.reduce((sum, record) => sum + Number(record.agentMutationAttempts || 0), 0),
+      firstDetectedAt: records
+        .map((record) => record.firstDetectedAt || record.event.createdAt)
+        .sort()[0],
+      windowCount: new Set(sourceEvents.map((event) => event.runId)).size,
+      lastArtifactSha: latest.lastArtifactSha || null,
+      noProgressCount: Number(latest.noProgressCount || 0),
       sourceEventIds,
       sourceEvents,
       sourceFingerprints,

@@ -26,13 +26,13 @@ async function handoffFixture(t) {
   return { stagingDir, pageId, sourceMd, sourceManifest };
 }
 
-function runHelper(args, stagingDir) {
+function runHelper(args, stagingDir, winner = 'claude') {
   return spawnSync(process.execPath, [HELPER, ...args], {
     encoding: 'utf8',
     env: {
       ...process.env,
       GG_GENGROWTH_STAGING_DIR: stagingDir,
-      GG_WINNER_LLM: 'claude',
+      GG_WINNER_LLM: winner,
     },
   });
 }
@@ -60,6 +60,30 @@ test('author handoff copies one sane passing PID pair byte-for-byte and emits on
     await readFile(join(built.stagingDir, `${built.pageId}-claude-v8.manifest.json`)),
     await readFile(built.sourceManifest),
   );
+});
+
+test('a non-default safe winner remains consumable by the real publisher scanner', async (t) => {
+  const built = await handoffFixture(t);
+  const result = runHelper(['--page-id', built.pageId], built.stagingDir, 'codex');
+  assert.equal(result.status, 0, result.stderr);
+  const output = JSON.parse(result.stdout.trim());
+  assert.equal(output.draft, `${built.pageId}-codex-v8.md`);
+
+  const publisher = spawnSync(process.execPath, [
+    join(SCRIPTS_DIR, 'gg-gengrowth-publish.mjs'),
+    '--staging-dir', built.stagingDir,
+    '--pages', built.pageId,
+  ], {
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      SB_URL: 'http://127.0.0.1:9',
+      SB_KEY: '',
+    },
+  });
+  assert.equal(publisher.status, 0, publisher.stderr);
+  assert.match(publisher.stdout, /1 ready draft\(s\)/);
+  assert.match(publisher.stdout, new RegExp(`${built.pageId}\\s+software-development-services\\s+PUBLISH\\?`));
 });
 
 test('author handoff rejects path-like IDs and refuses bad manifests or truncated drafts', async (t) => {

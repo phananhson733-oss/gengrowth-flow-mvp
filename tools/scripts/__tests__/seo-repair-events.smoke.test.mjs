@@ -719,6 +719,11 @@ test('committed transaction history is archived outside the hot scan and ordinar
   const committedDirectory = join(queueDir, '.incident-transactions', 'committed');
   assert.equal((await readdir(committedDirectory)).length, 1);
   assert.equal((await readdir(join(queueDir, '.incident-transactions'))).some((name) => name.endsWith('.json')), false);
+  await Promise.all(Array.from({ length: 452 }, (_, index) => writeFile(
+    join(committedDirectory, `historical-${String(index).padStart(3, '0')}.json`),
+    '{deliberately-not-a-hot-intent',
+    'utf8',
+  )));
 
   instrumentation.pendingReads = 0;
   instrumentation.committedReads = 0;

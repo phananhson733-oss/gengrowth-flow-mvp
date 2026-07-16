@@ -364,6 +364,7 @@ async function main() {
       site: args.site,
       pageId: args['page-id'],
       verificationCredit: numberArg(args['verification-credit'], 0, 0),
+      adoptBlockingTerminal: args['adopt-blocking-terminal'] === '1',
     });
     output({ ok: true, command, record });
     return;

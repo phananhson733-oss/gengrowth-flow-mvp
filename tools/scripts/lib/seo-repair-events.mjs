@@ -975,8 +975,15 @@ function authoritativeHead(records, incidentId) {
     .sort((a, b) => Number(b.generation || 1) - Number(a.generation || 1)
       || String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')))[0];
   if (hold) return hold;
-  return owned
+  const active = owned
     .filter((record) => ACTIVE_STATUSES.has(record.status))
+    .sort((a, b) => Number(b.generation || 1) - Number(a.generation || 1)
+      || String(b.updatedAt || '').localeCompare(String(a.updatedAt || ''))
+      || String(b.event?.eventId || '').localeCompare(String(a.event?.eventId || '')))[0];
+  if (active) return active;
+  return owned
+    .filter((record) => record.event?.pageId !== 'RUN'
+      && BLOCKING_PAGE_TERMINALS.has(record.status))
     .sort((a, b) => Number(b.generation || 1) - Number(a.generation || 1)
       || String(b.updatedAt || '').localeCompare(String(a.updatedAt || ''))
       || String(b.event?.eventId || '').localeCompare(String(a.event?.eventId || '')))[0] || null;
@@ -1214,6 +1221,35 @@ function sumStrategyAttempts(records) {
   return result;
 }
 
+function historyAttemptAccounting(records) {
+  const strategyAttempts = {};
+  let totalAttempts = 0;
+  let mutationMarkers = 0;
+  let agentMutationAttempts = 0;
+  for (const record of records) {
+    for (const entry of record.history || []) {
+      const attempt = Number(entry?.evidence?.attempt);
+      if (Number.isInteger(attempt) && attempt > 0) {
+        totalAttempts += 1;
+        const strategy = String(entry?.evidence?.strategy || '').trim();
+        if (strategy) {
+          strategyAttempts[strategy] = Number(strategyAttempts[strategy] || 0) + 1;
+        }
+      }
+      if (typeof entry?.evidence?.agentMutationInvoked === 'boolean') {
+        mutationMarkers += 1;
+        if (entry.evidence.agentMutationInvoked) agentMutationAttempts += 1;
+      }
+    }
+  }
+  return {
+    totalAttempts,
+    strategyAttempts,
+    mutationMarkers,
+    agentMutationAttempts,
+  };
+}
+
 function uniqueEvents(records) {
   const events = new Map();
   for (const record of records) {
@@ -1234,6 +1270,7 @@ export async function compactRepairIncident({
   pageId,
   hold = true,
   verificationCredit = 0,
+  adoptBlockingTerminal = false,
   faultInjector,
   randomUUID = defaultRandomUUID,
 } = {}) {
@@ -1264,23 +1301,26 @@ export async function compactRepairIncident({
     const belongsToIncident = (record) => record.event.site === ownerSite
       && record.event.pageId === ownerPageId
       && (record.incidentId || repairIncidentId(record.event)) === incidentId;
-    const existing = queueRecords.find(({ record }) => (
-      belongsToIncident(record)
-      && record.status === 'migration_hold'
-      && record.compaction?.canonical === true
-    ));
+    const owned = queueRecords.filter(({ record }) => belongsToIncident(record));
+    const existing = owned
+      .filter(({ record }) => record.compaction?.canonical === true)
+      .sort((left, right) => Number(right.record.generation || 1) - Number(left.record.generation || 1)
+        || String(right.record.updatedAt || '').localeCompare(String(left.record.updatedAt || '')))[0];
     const active = queueRecords.filter(({ record }) => belongsToIncident(record)
       && ACTIVE_STATUSES.has(record.status));
 
     if (existing) {
-      if (active.length > 0) {
+      if (existing.record.status !== 'migration_hold') return existing.record;
+      const incompleteSources = owned.filter(({ path, record }) => path !== existing.path
+        && (ACTIVE_STATUSES.has(record.status) || BLOCKING_PAGE_TERMINALS.has(record.status)));
+      if (incompleteSources.length > 0) {
         const prepared = await prepareTransaction(queueDir, {
           incidentId,
           operation: 'finish_compaction',
           createdAt: existing.record.updatedAt,
           expectedHead: transactionHead(existing.record),
           resultHead: transactionHead(existing.record),
-          writes: active.map(({ path, record }) => transactionWrite(
+          writes: incompleteSources.map(({ path, record }) => transactionWrite(
             basename(path),
             supersededRecord(record, {
               supersededBy: existing.record.event.eventId,
@@ -1296,18 +1336,53 @@ export async function compactRepairIncident({
       }
       return existing.record;
     }
-    if (active.length === 0) throw new Error(`no active repair incident for ${ownerSite}/${ownerPageId}`);
+    let sourceEntries = active;
+    let adoptingTerminal = false;
+    if (sourceEntries.length === 0) {
+      if (adoptBlockingTerminal !== true) {
+        throw new Error(`no active repair incident for ${ownerSite}/${ownerPageId}`);
+      }
+      if (ownerPageId === 'RUN') {
+        throw new Error('blocking terminal adoption requires a page-level incident');
+      }
+      if (credit !== 1) {
+        throw new Error('blocking terminal adoption requires verificationCredit exactly 1');
+      }
+      const blocking = owned.filter(({ record }) => BLOCKING_PAGE_TERMINALS.has(record.status));
+      if (blocking.length === 0) {
+        throw new Error(`no blocking terminal repair incident for ${ownerSite}/${ownerPageId}`);
+      }
+      const unsupported = owned.filter(({ record }) => (
+        !BLOCKING_PAGE_TERMINALS.has(record.status) && record.status !== 'superseded'
+      ));
+      if (unsupported.length > 0) {
+        throw new Error(`blocking terminal adoption found unsupported incident state for ${ownerSite}/${ownerPageId}`);
+      }
+      sourceEntries = owned;
+      adoptingTerminal = true;
+    }
 
-    const records = active.map(({ record }) => record);
+    const records = sourceEntries.map(({ record }) => record);
     const sourceEvents = uniqueEvents(records);
     const sourceEventIds = [...new Set(records.flatMap((record) => (
       record.sourceEventIds || [record.event.eventId]
     )).concat(sourceEvents.map((event) => event.eventId)))];
-    const sourceFingerprints = [...new Set(records.map((record) => record.fingerprint))];
+    const sourceFingerprints = [...new Set(records.flatMap((record) => (
+      record.sourceFingerprints || [record.fingerprint]
+    )).concat(records.map((record) => record.fingerprint)))];
     const sourceHistories = records.map((record) => ({
       eventId: record.event.eventId,
       history: record.history || [],
+      ...(record.sourceHistories ? { sourceHistories: record.sourceHistories } : {}),
     }));
+    const sourceRecordHashes = await Promise.all(sourceEntries
+      .map(async ({ path, record }) => ({
+        eventId: record.event.eventId,
+        filename: basename(path),
+        sha256: createHash('sha256').update(await readFile(path)).digest('hex'),
+      })));
+    sourceRecordHashes.sort((left, right) => left.filename.localeCompare(right.filename));
+    const historyAccounting = historyAttemptAccounting(records);
     const latest = [...records].sort((a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')))[0];
     const createdAt = new Date().toISOString();
     const canonicalEventId = `migration-${incidentId}`;
@@ -1336,10 +1411,15 @@ export async function compactRepairIncident({
       latestEvent: latest.latestEvent || latest.event,
       fingerprint: createHash('sha256').update(`migration\n${incidentId}`).digest('hex'),
       incidentId,
-      generation: Math.max(...records.map((record) => Number(record.generation || 1))),
+      generation: Math.max(...records.map((record) => Number(record.generation || 1)))
+        + (adoptingTerminal ? 1 : 0),
       budgetEpoch: Math.max(...records.map((record) => Number(record.budgetEpoch || 1))),
-      totalAttempts: records.reduce((sum, record) => sum + Number(record.totalAttempts || 0), 0),
-      agentMutationAttempts: records.reduce((sum, record) => sum + Number(record.agentMutationAttempts || 0), 0),
+      totalAttempts: historyAccounting.totalAttempts > 0
+        ? historyAccounting.totalAttempts
+        : records.reduce((sum, record) => sum + Number(record.totalAttempts || 0), 0),
+      agentMutationAttempts: historyAccounting.mutationMarkers > 0
+        ? historyAccounting.agentMutationAttempts
+        : records.reduce((sum, record) => sum + Number(record.agentMutationAttempts || 0), 0),
       firstDetectedAt: records
         .map((record) => record.firstDetectedAt || record.event.createdAt)
         .sort()[0],
@@ -1353,19 +1433,25 @@ export async function compactRepairIncident({
       sourceEvents,
       sourceFingerprints,
       sourceHistories,
+      sourceRecordHashes,
       parentGenerationId: latest.event.eventId,
       status: 'migration_hold',
       revision: 1,
       observations: records.reduce((sum, record) => sum + Number(record.observations || 1), 0),
       strategy: 'migration_hold',
-      strategyAttempts: sumStrategyAttempts(records),
+      strategyAttempts: historyAccounting.totalAttempts > 0
+        ? historyAccounting.strategyAttempts
+        : sumStrategyAttempts(records),
       nextEligibleAt: null,
       lease: null,
       parentFingerprints: sourceFingerprints,
       terminalNotificationKey: null,
       hold,
       verificationCredit: credit,
-      compaction: { canonical: true },
+      compaction: {
+        canonical: true,
+        ...(adoptingTerminal ? { adoptedBlockingTerminal: true } : {}),
+      },
       history,
       updatedAt: createdAt,
     };
@@ -1373,7 +1459,7 @@ export async function compactRepairIncident({
       transactionWrite(`${canonicalEventId}.json`, canonical, {
         faultPointAfter: 'after-canonical-before-source-supersede',
       }),
-      ...active.map(({ path, record }) => transactionWrite(
+      ...sourceEntries.map(({ path, record }) => transactionWrite(
         basename(path),
         supersededRecord(record, {
           supersededBy: canonicalEventId,

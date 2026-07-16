@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { mkdir, mkdtemp, readdir, readFile, rm, utimes, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -511,8 +512,8 @@ test('explicit terminal adoption preserves production-shaped sources and derives
     await writeFile(join(queueDir, name), `${JSON.stringify(record, null, 2)}\n`, 'utf8');
   }
 
-  const before = new Map(await Promise.all(sourceNames.map(async (name) => (
-    [name, await readFile(join(queueDir, name), 'utf8')]
+  const sourceRecordHashes = Object.fromEntries(await Promise.all(sourceNames.map(async (name) => (
+    [name, createHash('sha256').update(await readFile(join(queueDir, name))).digest('hex')]
   ))));
 
   const adopted = await compactRepairIncident({
@@ -531,15 +532,21 @@ test('explicit terminal adoption preserves production-shaped sources and derives
   assert.deepEqual(adopted.sourceFingerprints.slice().sort(), [...new Set(expectedFingerprints)].sort());
   assert.equal(adopted.sourceHistories.length, attemptCounts.length);
   assert.equal(adopted.verificationCredit, 1);
-
-  for (const name of sourceNames) {
-    assert.equal(await readFile(join(queueDir, name), 'utf8'), before.get(name));
-  }
+  assert.deepEqual(
+    Object.fromEntries(adopted.sourceRecordHashes.map((item) => [item.filename, item.sha256])),
+    sourceRecordHashes,
+  );
   const records = await listRepairRecords({ queueDir });
   assert.equal(records.length, attemptCounts.length + 1);
-  assert.equal(records.filter((record) => record.status === 'superseded').length, 6);
-  assert.equal(records.filter((record) => record.status === 'quarantined').length, 1);
+  assert.equal(records.filter((record) => record.status === 'superseded').length, 7);
+  assert.equal(records.filter((record) => record.status === 'quarantined').length, 0);
   assert.equal(records.filter((record) => record.status === 'migration_hold').length, 1);
+  assert.equal(
+    records
+      .filter((record) => record.status === 'superseded')
+      .every((record) => record.supersededBy === adopted.event.eventId),
+    true,
+  );
 
   const repeated = await compactRepairIncident({
     queueDir,
@@ -570,6 +577,49 @@ test('explicit terminal adoption preserves production-shaped sources and derives
     adoptBlockingTerminal: true,
   });
   assert.deepEqual(repeatedAfterRelease, released);
+});
+
+test('terminal adoption transaction recovers after the canonical write without leaving two authoritative heads', async (t) => {
+  const { queueDir } = await fixture(t);
+  const queued = await enqueueRepairEvent(event({
+    eventId: 'terminal-adoption-crash-source',
+    pageId: 'PG-SDS-004',
+  }), { queueDir });
+  await transitionRepairEvent(queued, {
+    status: 'quarantined',
+    evidence: { type: 'repair_budget_exhausted' },
+  }, { queueDir });
+
+  await assert.rejects(
+    compactRepairIncident({
+      queueDir,
+      site: 'gengrowth',
+      pageId: 'PG-SDS-004',
+      verificationCredit: 1,
+      adoptBlockingTerminal: true,
+      faultInjector(point) {
+        if (point === 'after-canonical-before-source-supersede') {
+          throw new Error('injected terminal adoption crash');
+        }
+      },
+    }),
+    /injected terminal adoption crash/,
+  );
+
+  await listEligibleRepairEvents({
+    queueDir,
+    now: new Date('2026-07-16T08:01:00.000Z'),
+  });
+  const records = await listRepairRecords({ queueDir });
+  const canonical = records.find((record) => record.status === 'migration_hold');
+  assert.ok(canonical);
+  assert.equal(records.filter((record) => record.status === 'migration_hold').length, 1);
+  assert.equal(records.filter((record) => record.status === 'quarantined').length, 0);
+  assert.equal(records.filter((record) => record.status === 'superseded').length, 1);
+  assert.equal(
+    records.find((record) => record.status === 'superseded').supersededBy,
+    canonical.event.eventId,
+  );
 });
 
 test('blocking page terminals absorb same and changed observations without resetting lifecycle budgets', async (t) => {

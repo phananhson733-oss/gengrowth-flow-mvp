@@ -137,6 +137,70 @@ test('compact requires incident ownership arguments and emits one canonical JSON
   assert.equal(records.filter((record) => record.status === 'migration_hold').length, 1);
 });
 
+test('compact requires explicit exact-credit adoption for an existing blocking terminal', (t) => {
+  const h = harness(t);
+  const path = join(h.root, 'terminal-adoption-event.json');
+  writeFileSync(path, JSON.stringify(event({
+    eventId: 'terminal-adoption-source',
+    pageId: 'PG-SDS-004',
+  })));
+  const enqueued = h.run(['enqueue', '--event-json', path]);
+  assert.equal(enqueued.status, 0, `${enqueued.stdout}\n${enqueued.stderr}`);
+  const queued = h.json(enqueued).record;
+  const terminal = {
+    ...queued,
+    status: 'quarantined',
+    revision: queued.revision + 1,
+    totalAttempts: 0,
+    history: [
+      ...queued.history,
+      {
+        status: 'repairing',
+        at: '2026-07-15T14:01:00.000Z',
+        evidence: { strategy: 'agent_content_asset_link', attempt: 1 },
+      },
+      {
+        status: 'quarantined',
+        at: '2026-07-15T14:02:00.000Z',
+        evidence: { type: 'repair_budget_exhausted' },
+      },
+    ],
+    updatedAt: '2026-07-15T14:02:00.000Z',
+  };
+  writeFileSync(
+    join(h.queueDir, `${queued.event.eventId}.json`),
+    `${JSON.stringify(terminal, null, 2)}\n`,
+  );
+
+  for (const credit of ['0', '2']) {
+    const before = readFileSync(join(h.queueDir, `${queued.event.eventId}.json`), 'utf8');
+    const rejected = h.run([
+      'compact',
+      '--site', 'gengrowth',
+      '--page-id', 'PG-SDS-004',
+      '--verification-credit', credit,
+      '--adopt-blocking-terminal',
+    ]);
+    assert.equal(rejected.status, 2);
+    assert.match(h.json(rejected).error, /exactly.*one|verification.*credit.*1/i);
+    assert.equal(readFileSync(join(h.queueDir, `${queued.event.eventId}.json`), 'utf8'), before);
+  }
+
+  const adopted = h.run([
+    'compact',
+    '--site', 'gengrowth',
+    '--page-id', 'PG-SDS-004',
+    '--verification-credit', '1',
+    '--adopt-blocking-terminal',
+  ]);
+  assert.equal(adopted.status, 0, `${adopted.stdout}\n${adopted.stderr}`);
+  assert.equal(h.json(adopted).record.status, 'migration_hold');
+  assert.equal(h.json(adopted).record.totalAttempts, 1);
+  const records = h.json(h.run(['inspect', '--page-id', 'PG-SDS-004'])).records;
+  assert.equal(records.filter((record) => record.status === 'quarantined').length, 0);
+  assert.equal(records.filter((record) => record.status === 'superseded').length, 1);
+});
+
 test('release-hold grants one idempotent verification credit with code and reason evidence', (t) => {
   const h = harness(t);
   const path = join(h.root, 'release-event.json');

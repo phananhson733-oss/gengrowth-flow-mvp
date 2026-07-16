@@ -513,6 +513,21 @@ test('legacy dry invocation preserves the best-effort apply pass before verifica
   assert.deepEqual(out.json.phases, ['apply', 'verify']);
 });
 
+test('a published claim whose ephemeral per-item plan is no longer present is not plan backlog', () => {
+  const fixture = defaultCliFixture({
+    claims: {
+      'PG-A-001': {
+        status: 'done',
+        plan: 'nightly-plan-PG-A-001.md',
+      },
+    },
+  });
+  const out = fixture.run();
+  assert.equal(out.status, 0, `${out.stdout}\n${out.stderr}`);
+  const json = JSON.parse(out.stdout);
+  assert.equal(json.planUncheckedAfter, 0);
+});
+
 test('strict dry verification fails closed without creating a missing state root', () => {
   const fixture = defaultCliFixture();
   const out = fixture.run({ createState: false });

@@ -236,4 +236,6 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 
 方案 A 的实现设计已进一步收敛：在 `gg-seo-blog-launchd-tick.sh` 取得唯一 SEO fire 锁、完成 legacy 检查后，并在 author/nightly 前调用一个独立的 deterministic brief preflight。preflight 只从固定 W22 plan 解析当前未勾选 page_id，调用既有 Topic Register wrapper 的 explicit repair 模式，并强制 `astrologywiki / apply=1 / llm=none / discover-evidence=0 / no-notify=1 / limit=未完成项数量`；禁止 generate 模式、新 page_id、普通 incomplete-row 扫描和跨产品写入。返回结果必须证明输出 page_id 是未完成集合的子集，`new_clusters` 仅允许由 `semantic-repair-new` 产生；锁忙、JSON 缺失、目标外写入或 wrapper 非零均在 nightly 前 fail closed，由下一个 30 分钟 SEO cron 自然重试。Topic Register 独立 Automation 可保留用于日常选题生成，但不再是 SEO 发布正确性的前置依赖。测试需覆盖命令边界、只处理固定未完成项、零候选 no-op、锁忙/异常阻断 nightly、成功后才进入 reconcile/nightly，以及不发送重复通知。等待用户明确批准此设计后进入 TDD 实现。
 
+由于 `superpowers:brainstorming` 对调度行为变更设有“先设计、获用户明确批准、再实施”的硬门，且连续三个 goal turn 均未收到方案 A 的明确确认，当前无法在不违反项目技能规则的前提下继续修改代码。目标已按 blocked audit 标记为等待用户确认；用户回复“确认方案 A”后即可恢复，先写设计文档与实现计划，再进入 TDD 落地和自然 cron 验收。
+
 ---

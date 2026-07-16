@@ -932,6 +932,10 @@ async function doAuthorUnlocked(o = {}) {
     const t = parseTasks(plan).find((x) => x.pgId === o.task);
     if (!t) { log(`--task ${o.task} not found in plan`); return; }
     if (claimStatus(claims, t.pgId)) { log(`--task ${o.task} already has a claim (clear it first)`); return; }
+    if (existsSync(enDraft(t.pgId)) && phase2Passed(t.pgId)) {
+      log(`--task ${o.task} already has a Phase 2 PASS draft — preserving it for the publish scan`);
+      return;
+    }
     sel = { plan, task: t };
   } else {
     const plan = latestPlan();

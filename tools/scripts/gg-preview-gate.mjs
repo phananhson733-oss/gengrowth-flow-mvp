@@ -759,7 +759,7 @@ export async function verifyPreviewFinalArtifacts({
   let sitemapText = '';
   try {
     const [page, liveSitemap] = await Promise.all([
-      boundedFetch(previewPageUrl, { redirect: 'follow', headers: previewHeaders }),
+      boundedFetch(previewPageUrl, { redirect: 'manual', headers: previewHeaders }),
       boundedFetch(LIVE_SITEMAP, {
         redirect: 'follow',
         headers: { 'user-agent': 'gg-preview-final-artifacts/1' },

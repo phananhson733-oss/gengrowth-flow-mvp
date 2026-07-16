@@ -545,16 +545,32 @@ function unsafeIpv4(address) {
 }
 
 function unsafeIp(address) {
-  const value = stripIpBrackets(address).toLowerCase();
+  let value = stripIpBrackets(address).toLowerCase();
   const family = isIP(value);
   if (family === 4) return unsafeIpv4(value);
   if (family !== 6) return true;
-  const mapped = value.match(/::ffff:(\d+\.\d+\.\d+\.\d+)$/);
-  if (mapped) return unsafeIpv4(mapped[1]);
+  try {
+    value = stripIpBrackets(new URL(`http://[${value}]/`).hostname).toLowerCase();
+  } catch {
+    return true;
+  }
+  const mappedDecimal = value.match(/::ffff:(\d+\.\d+\.\d+\.\d+)$/);
+  if (mappedDecimal) return unsafeIpv4(mappedDecimal[1]);
+  const mappedHex = value.match(/::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/);
+  if (mappedHex) {
+    const high = Number.parseInt(mappedHex[1], 16);
+    const low = Number.parseInt(mappedHex[2], 16);
+    return unsafeIpv4([
+      high >> 8,
+      high & 0xff,
+      low >> 8,
+      low & 0xff,
+    ].join('.'));
+  }
   return value === '::'
     || value === '::1'
     || /^f[cd]/.test(value)
-    || /^fe[89ab]/.test(value)
+    || /^fe[89a-f]/.test(value)
     || /^ff/.test(value);
 }
 

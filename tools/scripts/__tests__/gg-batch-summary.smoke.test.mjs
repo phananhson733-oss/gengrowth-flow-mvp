@@ -493,7 +493,7 @@ for (const [label, latestEvent] of [
   test(`${label} fails closed instead of rebinding an old terminal to the current fire`, () => {
     const c = freshCase({});
     writeFileSync(c.plan, '- [ ] `PG-A-001` intended target\n');
-    writeQueueRecord(c, 'invalid-latest.json', {
+    writeQueueRecord(c, 'invalid-latest', {
       status: 'human_only',
       event: {
         site: 'astrologywiki',

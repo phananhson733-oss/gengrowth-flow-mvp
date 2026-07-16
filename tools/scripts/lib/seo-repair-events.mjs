@@ -117,10 +117,14 @@ export function normalizeRepairEvidence(value) {
     .toLowerCase();
 }
 
+function incidentIdForOwner(site, pageId, lane = '') {
+  const owner = pageId === 'RUN' ? `${site}:${lane}:RUN` : `${site}:${pageId}`;
+  return createHash('sha256').update(owner).digest('hex');
+}
+
 export function repairIncidentId(value) {
   const event = validateRepairEvent(value);
-  const owner = event.pageId === 'RUN' ? `${event.site}:${event.lane}:RUN` : `${event.site}:${event.pageId}`;
-  return createHash('sha256').update(owner).digest('hex');
+  return incidentIdForOwner(event.site, event.pageId, event.lane);
 }
 
 export function isActiveRepairStatus(status) {
@@ -384,6 +388,161 @@ export async function enqueueRepairEvent(value, {
     });
     await atomicWriteJson(join(queueDir, `${event.eventId}.json`), record, randomUUID);
     return record;
+  });
+}
+
+function sumStrategyAttempts(records) {
+  const result = {};
+  for (const record of records) {
+    for (const [strategy, attempts] of Object.entries(record.strategyAttempts || {})) {
+      result[strategy] = Number(result[strategy] || 0) + Number(attempts || 0);
+    }
+  }
+  return result;
+}
+
+function uniqueEvents(records) {
+  const events = new Map();
+  for (const record of records) {
+    for (const event of [
+      ...(record.sourceEvents || []),
+      record.event,
+      record.latestEvent,
+    ]) {
+      if (event?.eventId && !events.has(event.eventId)) events.set(event.eventId, event);
+    }
+  }
+  return [...events.values()];
+}
+
+async function supersedeRecords(records, canonicalEventId, at, randomUUID = defaultRandomUUID) {
+  for (const { path, record } of records) {
+    if (!ACTIVE_STATUSES.has(record.status)) continue;
+    await atomicWriteJson(path, {
+      ...record,
+      status: 'superseded',
+      lease: null,
+      supersededBy: canonicalEventId,
+      updatedAt: at,
+      history: [
+        ...(record.history || []),
+        { status: 'superseded', at, evidence: { supersededBy: canonicalEventId } },
+      ],
+    }, randomUUID);
+  }
+}
+
+export async function compactRepairIncident({
+  queueDir,
+  site,
+  pageId,
+  hold = true,
+  verificationCredit = 0,
+} = {}) {
+  if (!queueDir) throw new TypeError('queueDir is required');
+  const ownerSite = requireString(site, 'site');
+  if (!ALLOWED_SITES.has(ownerSite)) throw new TypeError('site must be astrologywiki or gengrowth');
+  const ownerPageId = requireString(pageId, 'pageId');
+  const credit = Number(verificationCredit);
+  if (!Number.isFinite(credit) || credit < 0) throw new TypeError('verificationCredit must be non-negative');
+
+  let incidentId;
+  if (ownerPageId === 'RUN') {
+    const candidates = (await readQueueRecords(queueDir))
+      .map(({ record }) => record)
+      .filter((record) => record.event.site === ownerSite
+        && record.event.pageId === ownerPageId
+        && ACTIVE_STATUSES.has(record.status));
+    const incidentIds = [...new Set(candidates.map((record) => record.incidentId || repairIncidentId(record.event)))];
+    if (incidentIds.length !== 1) throw new Error('RUN compaction requires exactly one active lane incident');
+    [incidentId] = incidentIds;
+  } else {
+    incidentId = incidentIdForOwner(ownerSite, ownerPageId);
+  }
+
+  return withIncidentLock(queueDir, incidentId, async () => {
+    const queueRecords = await readQueueRecords(queueDir);
+    const belongsToIncident = (record) => record.event.site === ownerSite
+      && record.event.pageId === ownerPageId
+      && (record.incidentId || repairIncidentId(record.event)) === incidentId;
+    const existing = queueRecords.find(({ record }) => (
+      belongsToIncident(record)
+      && record.status === 'migration_hold'
+      && record.compaction?.canonical === true
+    ));
+    const active = queueRecords.filter(({ record }) => belongsToIncident(record)
+      && ACTIVE_STATUSES.has(record.status));
+
+    if (existing) {
+      await supersedeRecords(active, existing.record.event.eventId, existing.record.updatedAt);
+      return existing.record;
+    }
+    if (active.length === 0) throw new Error(`no active repair incident for ${ownerSite}/${ownerPageId}`);
+
+    const records = active.map(({ record }) => record);
+    const sourceEvents = uniqueEvents(records);
+    const sourceEventIds = [...new Set(records.flatMap((record) => (
+      record.sourceEventIds || [record.event.eventId]
+    )).concat(sourceEvents.map((event) => event.eventId)))];
+    const sourceFingerprints = [...new Set(records.map((record) => record.fingerprint))];
+    const sourceHistories = records.map((record) => ({
+      eventId: record.event.eventId,
+      history: record.history || [],
+    }));
+    const latest = [...records].sort((a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')))[0];
+    const createdAt = new Date().toISOString();
+    const canonicalEventId = `migration-${incidentId}`;
+    const canonicalEvent = {
+      ...latest.event,
+      eventId: canonicalEventId,
+      runId: `migration-${latest.event.runId}`,
+      summary: `migration hold for ${ownerSite}/${ownerPageId}`,
+      stderr: '',
+      createdAt,
+    };
+    const history = records.flatMap((record) => (record.history || []).map((entry) => ({
+      ...entry,
+      evidence: {
+        ...(entry.evidence || {}),
+        sourceEventId: record.event.eventId,
+      },
+    })));
+    history.push({
+      status: 'migration_hold',
+      at: createdAt,
+      evidence: { sourceEventIds, verificationCredit: credit },
+    });
+    const canonical = {
+      event: canonicalEvent,
+      latestEvent: latest.latestEvent || latest.event,
+      fingerprint: createHash('sha256').update(`migration\n${incidentId}`).digest('hex'),
+      incidentId,
+      generation: Math.max(...records.map((record) => Number(record.generation || 1))),
+      budgetEpoch: Math.max(...records.map((record) => Number(record.budgetEpoch || 1))),
+      totalAttempts: records.reduce((sum, record) => sum + Number(record.totalAttempts || 0), 0),
+      agentMutationAttempts: records.reduce((sum, record) => sum + Number(record.agentMutationAttempts || 0), 0),
+      sourceEventIds,
+      sourceEvents,
+      sourceFingerprints,
+      sourceHistories,
+      parentGenerationId: latest.event.eventId,
+      status: 'migration_hold',
+      observations: records.reduce((sum, record) => sum + Number(record.observations || 1), 0),
+      strategy: 'migration_hold',
+      strategyAttempts: sumStrategyAttempts(records),
+      nextEligibleAt: null,
+      lease: null,
+      parentFingerprints: sourceFingerprints,
+      terminalNotificationKey: null,
+      hold,
+      verificationCredit: credit,
+      compaction: { canonical: true },
+      history,
+      updatedAt: createdAt,
+    };
+    await atomicWriteJson(join(queueDir, `${canonicalEventId}.json`), canonical);
+    await supersedeRecords(active, canonicalEventId, createdAt);
+    return canonical;
   });
 }
 

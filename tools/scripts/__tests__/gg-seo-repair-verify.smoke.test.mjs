@@ -34,6 +34,7 @@ function goodDeps() {
       cta_selection_reason: 'semantic_match:intent_tags:natal-self',
     },
     pendingWriteback: null,
+    resolveAssetHost: async () => [{ address: '93.184.216.34', family: 4 }],
     fetchDocument: async (url) => url.endsWith('/sitemap.xml')
       ? {
           ok: true,

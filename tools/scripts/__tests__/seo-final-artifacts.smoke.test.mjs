@@ -547,18 +547,33 @@ test('asset trust uses exact origins and never treats www, apex, scheme, or port
   }
 });
 
-test('page and asset-base origins are DNS checked before fetch just like configured CDNs', async () => {
-  for (const address of ['127.0.0.1', '169.254.169.254', '::1', 'fe80::1']) {
+test('page and preview asset-base origins are DNS checked before fetch just like configured CDNs', async () => {
+  for (const { address, assetBaseUrl, expectedHost } of [
+    { address: '127.0.0.1', expectedHost: 'www.astrologywiki.com' },
+    {
+      address: '169.254.169.254',
+      assetBaseUrl: 'https://preview.example.test/en/wiki/source',
+      expectedHost: 'preview.example.test',
+    },
+    { address: '::1', expectedHost: 'www.astrologywiki.com' },
+    { address: 'fe80::1', expectedHost: 'www.astrologywiki.com' },
+  ]) {
     let fetched = 0;
+    const resolved = [];
     const result = await verifyAssets({
       html: '<img src="/images/hero.png">',
       pageUrl: PAGE_URL,
-      resolveHost: async () => [{ address }],
+      assetBaseUrl,
+      resolveHost: async (hostname) => {
+        resolved.push(hostname);
+        return [{ address }];
+      },
       fetch: async () => { fetched++; throw new Error('must not fetch'); },
     });
     assert.equal(result.ok, false, address);
     assert.match(result.failed[0].reason, /DNS|private|loopback|link-local|unsafe/i, address);
     assert.equal(fetched, 0, address);
+    assert.deepEqual(resolved, [expectedHost], address);
   }
 });
 

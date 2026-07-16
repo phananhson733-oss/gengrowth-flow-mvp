@@ -365,6 +365,24 @@ test('--merge always pins gh pr merge to the reviewed SHA', (t) => {
   assert.match(h.ghText(), new RegExp(`pr merge .*--match-head-commit ${HEAD_A}`));
 });
 
+test('--merge records a completed publish even when post-merge local baseline sync fails', (t) => {
+  const h = fixture(t, { status: 'verified-preview', headRefOid: HEAD_A });
+  const result = h.run(
+    ['--merge', '--branch', BRANCH],
+    {
+      GG_TEST_GH_HEAD: HEAD_A,
+      GG_TEST_GH_MERGE_EXIT: '0',
+    },
+  );
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+  assert.match(h.ghText(), new RegExp(`pr merge .*--match-head-commit ${HEAD_A}`));
+  const claim = h.claims()['PG-001'];
+  assert.equal(claim.status, 'done');
+  assert.match(claim.mergedAt, /^\d{4}-\d{2}-\d{2}T/);
+  assert.equal(claim.error, undefined);
+  assert.equal(claim.failedAt, undefined);
+});
+
 test('--merge emits an exact regate sentinel for a conflicting PR and never attempts gh merge', (t) => {
   const h = fixture(t, { status: 'verified-preview', headRefOid: HEAD_A });
   const result = h.run(

@@ -1807,7 +1807,16 @@ function safeJson(s) { try { return JSON.parse(s); } catch { return null; } }
 
 // ── main ────────────────────────────────────────────────────────────────────
 export function loadPreviewGateEnv() {
-  return loadEnv({ strict: true, requireMode: 0o600 });
+  const envPath = loadEnv({ strict: true, requireMode: 0o600 });
+  const automationOracle = process.env.GG_AUTOMATION_ORACLE_DIR
+    || join(HOME, 'oracle-autopilot');
+  if (existsSync(join(automationOracle, '.git'))) {
+    // Preview Gate owns an unattended publish/merge path. Never let a shared
+    // _gg.env point its autopilot children back at the user's interactive,
+    // potentially dirty Oracle checkout.
+    process.env.GG_ORACLE_DIR = automationOracle;
+  }
+  return envPath;
 }
 
 export async function main(argv) {

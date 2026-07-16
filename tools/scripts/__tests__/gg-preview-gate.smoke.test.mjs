@@ -552,21 +552,44 @@ test('missing --branch → nonzero exit + stderr "--branch is required"', () => 
 test('direct preview-gate invocation loads the strict mode-600 shared env', () => {
   const { dir } = freshCase();
   const envFile = join(dir, '_gg.env');
-  writeFileSync(envFile, 'VERCEL_AUTOMATION_BYPASS_SECRET=loaded-by-preview-gate\n');
+  const interactiveOracle = join(dir, 'interactive-oracle');
+  const automationOracle = join(dir, 'oracle-autopilot');
+  mkdirSync(join(automationOracle, '.git'), { recursive: true });
+  writeFileSync(
+    envFile,
+    [
+      'VERCEL_AUTOMATION_BYPASS_SECRET=loaded-by-preview-gate',
+      `GG_ORACLE_DIR=${interactiveOracle}`,
+      '',
+    ].join('\n'),
+  );
   chmodSync(envFile, 0o600);
   const oldEnvFile = process.env.GG_ENV_FILE;
   const oldBypass = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+  const oldOracle = process.env.GG_ORACLE_DIR;
+  const oldAutomationOracle = process.env.GG_AUTOMATION_ORACLE_DIR;
   try {
     process.env.GG_ENV_FILE = envFile;
+    process.env.GG_AUTOMATION_ORACLE_DIR = automationOracle;
     delete process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+    delete process.env.GG_ORACLE_DIR;
     assert.equal(typeof previewGate.loadPreviewGateEnv, 'function');
     assert.equal(previewGate.loadPreviewGateEnv(), envFile);
     assert.equal(process.env.VERCEL_AUTOMATION_BYPASS_SECRET, 'loaded-by-preview-gate');
+    assert.equal(
+      process.env.GG_ORACLE_DIR,
+      automationOracle,
+      'the gate must pin autopilot children to the unattended baseline, not the interactive checkout from _gg.env',
+    );
   } finally {
     if (oldEnvFile === undefined) delete process.env.GG_ENV_FILE;
     else process.env.GG_ENV_FILE = oldEnvFile;
     if (oldBypass === undefined) delete process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
     else process.env.VERCEL_AUTOMATION_BYPASS_SECRET = oldBypass;
+    if (oldOracle === undefined) delete process.env.GG_ORACLE_DIR;
+    else process.env.GG_ORACLE_DIR = oldOracle;
+    if (oldAutomationOracle === undefined) delete process.env.GG_AUTOMATION_ORACLE_DIR;
+    else process.env.GG_AUTOMATION_ORACLE_DIR = oldAutomationOracle;
   }
 });
 

@@ -576,6 +576,20 @@ function sameRecordSnapshot(snapshot, current) {
   return snapshot.status === current.status && snapshot.updatedAt === current.updatedAt;
 }
 
+function sameTransitionAuthority(snapshot, current) {
+  if (!snapshot || !current
+    || snapshot.event?.eventId !== current.event?.eventId
+    || snapshot.fingerprint !== current.fingerprint
+    || Number(snapshot.generation || 1) !== Number(current.generation || 1)) {
+    return false;
+  }
+  const snapshotFence = snapshot.lease?.fencingToken;
+  if (snapshotFence) {
+    return snapshotFence === current.lease?.fencingToken;
+  }
+  return sameRecordSnapshot(snapshot, current);
+}
+
 export async function enqueueRepairEvent(value, {
   queueDir,
   randomUUID = defaultRandomUUID,
@@ -948,6 +962,7 @@ export async function acquireRepairLease(record, {
       revision: Number(current.revision || 0) + 1,
       lease: {
         owner: requireString(owner, 'lease owner'),
+        fencingToken: defaultRandomUUID(),
         startedAt: nowDate.toISOString(),
         expiresAt: new Date(nowDate.getTime() + Math.max(1, Number(leaseMs))).toISOString(),
       },
@@ -986,7 +1001,7 @@ export async function transitionRepairEvent(record, transition, {
     const queueRecords = await readQueueRecords(queueDir);
     const head = authoritativeHead(queueRecords, incidentId);
     if (head?.event?.eventId !== current.event?.eventId
-      || !sameRecordSnapshot(record, current)
+      || !sameTransitionAuthority(record, current)
       || !ACTIVE_STATUSES.has(current.status)) {
       throw new Error(`stale repair transition: ${record.event?.eventId || ''} is not authoritative`);
     }

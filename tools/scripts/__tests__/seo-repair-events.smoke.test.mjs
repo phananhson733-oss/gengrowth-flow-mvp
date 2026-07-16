@@ -255,6 +255,32 @@ test('stale transition cannot revive a superseded generation', async (t) => {
   assert.deepEqual(eligible.map((record) => record.event.eventId), [head.event.eventId]);
 });
 
+test('leased transition preserves same-generation observations added during repair', async (t) => {
+  const { queueDir } = await fixture(t);
+  const queued = await enqueueRepairEvent(event({ eventId: 'leased-observation-a' }), { queueDir });
+  const leased = await acquireRepairLease(queued, {
+    queueDir,
+    owner: 'controller-a',
+    now: new Date('2026-07-15T14:00:00.000Z'),
+  });
+  await enqueueRepairEvent(event({
+    eventId: 'leased-observation-b',
+    createdAt: '2026-07-15T14:00:10.000Z',
+  }), { queueDir });
+
+  const pending = await transitionRepairEvent(leased, {
+    status: 'repair_pending',
+    evidence: { retryFailed: true },
+  }, {
+    queueDir,
+    now: new Date('2026-07-15T14:00:20.000Z'),
+  });
+
+  assert.equal(pending.observations, 2);
+  assert.deepEqual(pending.sourceEventIds.sort(), ['leased-observation-a', 'leased-observation-b']);
+  assert.equal(pending.status, 'repair_pending');
+});
+
 test('replaying an eventId is idempotent and rejects identity collisions', async (t) => {
   const { queueDir } = await fixture(t);
   const original = event({ eventId: 'event-replay' });
@@ -315,6 +341,7 @@ test('enqueue recovers a durable generation transaction after an injected crash'
   assert.equal(recovered[0].agentMutationAttempts, 1);
   assert.equal(recovered[0].parentGenerationId, old.event.eventId);
   assert.deepEqual(recovered[0].sourceEventIds, [changed.eventId]);
+  assert.deepEqual(recovered[0].sourceEvents, [validateRepairEvent(changed)]);
 });
 
 test('stale acquire is fenced when a producer installs a newer generation first', async (t) => {

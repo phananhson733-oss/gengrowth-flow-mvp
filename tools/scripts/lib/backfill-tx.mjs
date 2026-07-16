@@ -27,8 +27,12 @@ const SA_DEFAULT = join(homedir(), '.config', 'gg', 'gg-writer-sa.json');
 const PLAN_DIR = process.env.GG_PLAN_DIR || join(homedir(), 'gengrowth-ops', 'inbox', '06-tasks', 'tasks');
 
 // 每步失败上限：超过则从队列淘汰并告警（防无限重试毒记录）。TTL 7 天兜底。
+// 5 分钟 reconciler 不能把每个 tick 都算成一次失败：失败后持久化 nextEligibleAt，
+// 默认 15m 起步指数退避（15m/30m/1h/.../24h cap），重启后继续遵守。
 const MAX_ATTEMPTS = 8;
 const TTL_MS = 7 * 24 * 3600 * 1000;
+const DEFAULT_BACKOFF_BASE_MS = 15 * 60 * 1000;
+const DEFAULT_BACKOFF_MAX_MS = 24 * 60 * 60 * 1000;
 
 // 各站点 archive 调用参数（gengrowth 需覆盖 host + /en/blog/；两站都需 --oracle，否则 archive
 // 默认 /Users/wzb/Code/oracle 本机不存在 → 找不到 hero/inline 图。与 gg-gengrowth-publish 一致）。
@@ -83,15 +87,23 @@ export function resolveWriteback(pageId) {
 }
 
 // 淘汰（超 attempts/TTL）：**不静默删**，移入 dropped/ 保留供审计/人工补救（评审 CONFIRMED：
-// archive 步无对账兜底，若干净删除=该篇静默缺出 RAG）。移动失败退化为删除以免卡队列。
-export function dropWriteback(pageId) {
+// archive 步无对账兜底，若干净删除=该篇静默缺出 RAG）。移动失败必须保留原 WAL。
+export function dropWriteback(pageId, deps = {}) {
   const dir = writebackDir(); if (!dir) return false;
   try {
     const droppedDir = join(dir, 'dropped');
     mkdirSync(droppedDir, { recursive: true });
-    renameSync(join(dir, `${safeId(pageId)}.json`), join(droppedDir, `${safeId(pageId)}.json`));
-    return true;
-  } catch { return resolveWriteback(pageId); }
+    const source = join(dir, `${safeId(pageId)}.json`);
+    const destination = join(droppedDir, `${safeId(pageId)}.json`);
+    const rename = deps.renameWriteback || renameSync;
+    rename(source, destination);
+    return { ok: true, source, destination };
+  } catch (error) {
+    return {
+      ok: false,
+      error: String(error?.message || error || 'writeback archive rename failed'),
+    };
+  }
 }
 
 export function listWriteback() {
@@ -173,6 +185,73 @@ async function acquireToken(deps = {}) {
   } catch { return null; }
 }
 
+function nowMs(deps = {}) {
+  const value = deps.now;
+  if (value instanceof Date) return value.getTime();
+  if (value !== undefined && value !== null) {
+    const parsed = typeof value === 'number' ? value : Date.parse(String(value));
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return Date.now();
+}
+
+function positiveMs(value, fallback) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
+}
+
+function backoffMs(attempts, deps = {}) {
+  const base = positiveMs(
+    deps.backoffBaseMs
+      ?? (Number(process.env.GG_WRITEBACK_BACKOFF_BASE_SECONDS) * 1000),
+    DEFAULT_BACKOFF_BASE_MS,
+  );
+  const max = Math.max(base, positiveMs(
+    deps.backoffMaxMs
+      ?? (Number(process.env.GG_WRITEBACK_BACKOFF_MAX_SECONDS) * 1000),
+    DEFAULT_BACKOFF_MAX_MS,
+  ));
+  const exponent = Math.max(0, Math.min(30, Number(attempts || 1) - 1));
+  return Math.min(max, base * (2 ** exponent));
+}
+
+function recordFailure(entry, {
+  done,
+  lastError,
+  deps = {},
+} = {}) {
+  const attempts = Math.max(0, Number(entry?.attempts) || 0) + 1;
+  const timestamp = nowMs(deps);
+  return enqueueWriteback({
+    pageId: entry.pageId,
+    ...(done ? { done } : {}),
+    attempts,
+    lastError,
+    nextEligibleAt: new Date(timestamp + backoffMs(attempts, deps)).toISOString(),
+  });
+}
+
+function terminalReason({ attemptsExceeded, ttlExceeded }) {
+  if (attemptsExceeded && ttlExceeded) return 'max-attempts-and-ttl';
+  if (attemptsExceeded) return 'max-attempts';
+  return 'ttl';
+}
+
+function terminalNotification(entry, now, reason) {
+  const attempts = Math.max(0, Number(entry.attempts) || 0);
+  const firstAt = entry.firstAt || new Date(now).toISOString();
+  return {
+    pageId: entry.pageId,
+    stuckSteps: BACKFILL_STEPS.filter((step) => !(entry.done || []).includes(step)),
+    attempts,
+    firstAt,
+    lastError: entry.lastError || null,
+    terminalAt: new Date(now).toISOString(),
+    reason,
+    notificationKey: `writeback-terminal:${entry.pageId}:${firstAt}:${attempts}`,
+  };
+}
+
 // ── 事务主入口（发布腿在 verify-live 语义点调用）──────────────────────────────────
 // 入参：{ pageId, slug, site, url?, planPath? }。返回 { ok, done, failed, deferred, reason }。永不抛。
 export async function backfillOnLive(input, deps = {}) {
@@ -190,11 +269,14 @@ export async function backfillOnLive(input, deps = {}) {
   try {
     const token = await acquireToken(deps);
     if (token === null) {
-      enqueueWriteback({ pageId, lastError: 'no-token', attempts: (readWriteback(pageId)?.attempts || 0) + 1 });
+      recordFailure(readWriteback(pageId) || { pageId }, { lastError: 'no-token', deps });
       return { ok: false, deferred: true, reason: 'sheet auth unavailable — left in pending-writeback' };
     }
     if (!(await verifyLive(site, slug, deps))) {
-      enqueueWriteback({ pageId, lastError: 'verify-live pending', attempts: (readWriteback(pageId)?.attempts || 0) + 1 });
+      recordFailure(readWriteback(pageId) || { pageId }, {
+        lastError: 'verify-live pending',
+        deps,
+      });
       return { ok: false, deferred: true, reason: 'not live in sitemap yet — left in pending-writeback' };
     }
     const cur = readWriteback(pageId) || {};
@@ -203,40 +285,106 @@ export async function backfillOnLive(input, deps = {}) {
       resolveWriteback(pageId);
       return { ok: true, done, failed: [] };
     }
-    enqueueWriteback({ pageId, done, attempts: (cur.attempts || 0) + 1, lastError: failed.map((f) => `${f.step}:${f.err}`).join('; ') });
+    recordFailure(cur, {
+      done,
+      lastError: failed.map((f) => `${f.step}:${f.err}`).join('; '),
+      deps,
+    });
     return { ok: false, done, failed };
   } catch (e) {
-    try { enqueueWriteback({ pageId, lastError: `unexpected:${e.message}`, attempts: (readWriteback(pageId)?.attempts || 0) + 1 }); } catch { /* 状态层不搞垮业务 */ }
+    try {
+      recordFailure(readWriteback(pageId) || { pageId }, {
+        lastError: `unexpected:${e.message}`,
+        deps,
+      });
+    } catch { /* 状态层不搞垮业务 */ }
     return { ok: false, reason: `backfill error (queued): ${e.message}` };
   }
 }
 
 // ── drainPending：每日 gg-ledger-reconcile 调用，重试全部待回填。──────────────────
-// 返回 { retried, resolved, stillPending, dropped:[{pageId,attempts,lastError}] }。永不抛。
+// 返回 { retried, skipped, resolved, stillPending, dropped, dropErrors }。永不抛。
 export async function drainPending(deps = {}) {
   const entries = listWriteback();
-  const out = { retried: 0, resolved: 0, stillPending: 0, dropped: [] };
+  const out = {
+    retried: 0,
+    skipped: 0,
+    resolved: 0,
+    stillPending: 0,
+    dropped: [],
+    dropErrors: [],
+  };
   if (!entries.length) return out;
-  const token = await acquireToken(deps);
-  const now = deps.now || Date.now();
+  const now = nowMs(deps);
+  let token;
+  let tokenLoaded = false;
   for (const e of entries) {
     // 淘汰毒记录（超 attempts 或 TTL）→ 移入 dropped/ 保留（不静默删）+ 计入告警。
     // sheet/plan 步有每日对账兜底；archive 步无 → 保留记录让人工可查/补归档。
     const ageMs = now - new Date(e.firstAt || now).getTime();
-    if ((e.attempts || 0) >= MAX_ATTEMPTS || ageMs > TTL_MS) {
-      const stuck = BACKFILL_STEPS.filter((s) => !(e.done || []).includes(s));
-      dropWriteback(e.pageId);
-      out.dropped.push({ pageId: e.pageId, attempts: e.attempts || 0, stuck, lastError: e.lastError || null });
+    const attemptsExceeded = (e.attempts || 0) >= MAX_ATTEMPTS;
+    const ttlExceeded = ageMs >= TTL_MS;
+    if (attemptsExceeded || ttlExceeded) {
+      const notification = terminalNotification(
+        e,
+        now,
+        terminalReason({ attemptsExceeded, ttlExceeded }),
+      );
+      const prepared = enqueueWriteback({
+        pageId: e.pageId,
+        terminalNotification: notification,
+      });
+      if (!prepared) {
+        out.stillPending += 1;
+        out.dropErrors.push({
+          pageId: e.pageId,
+          error: 'failed to persist terminal notification evidence',
+        });
+        continue;
+      }
+      const archived = dropWriteback(e.pageId, deps);
+      if (!archived?.ok) {
+        out.stillPending += 1;
+        out.dropErrors.push({
+          pageId: e.pageId,
+          error: archived?.error || 'writeback archive rename failed',
+        });
+        continue;
+      }
+      out.dropped.push(notification);
+      continue;
+    }
+    const nextEligibleAt = Date.parse(e.nextEligibleAt || '');
+    if (Number.isFinite(nextEligibleAt) && nextEligibleAt > now) {
+      out.skipped += 1;
+      out.stillPending += 1;
       continue;
     }
     out.retried++;
-    if (token === null) { out.stillPending++; enqueueWriteback({ pageId: e.pageId, lastError: 'no-token', attempts: (e.attempts || 0) + 1 }); continue; }
+    if (!tokenLoaded) {
+      token = await acquireToken(deps);
+      tokenLoaded = true;
+    }
+    if (token === null) {
+      out.stillPending++;
+      recordFailure(e, { lastError: 'no-token', deps });
+      continue;
+    }
     if (!(await verifyLive(e.site, e.slug, deps))) {
-      out.stillPending++; enqueueWriteback({ pageId: e.pageId, lastError: 'verify-live pending', attempts: (e.attempts || 0) + 1 }); continue;
+      out.stillPending++;
+      recordFailure(e, { lastError: 'verify-live pending', deps });
+      continue;
     }
     const { done, failed } = await runSteps(e, token, deps);
     if (failed.length === 0) { resolveWriteback(e.pageId); out.resolved++; }
-    else { out.stillPending++; enqueueWriteback({ pageId: e.pageId, done, attempts: (e.attempts || 0) + 1, lastError: failed.map((f) => `${f.step}:${f.err}`).join('; ') }); }
+    else {
+      out.stillPending++;
+      recordFailure(e, {
+        done,
+        lastError: failed.map((f) => `${f.step}:${f.err}`).join('; '),
+        deps,
+      });
+    }
   }
   return out;
 }

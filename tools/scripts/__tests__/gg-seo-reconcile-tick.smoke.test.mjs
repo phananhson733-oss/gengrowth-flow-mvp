@@ -117,7 +117,7 @@ test('23:00 tick runs strict reconcile/readiness without draining content repair
   const h = harness({ hm: '2300' });
   assert.equal(h.result.status, 0, `${h.result.stdout}\n${h.result.stderr}`);
   assert.equal(h.lines.length, 2);
-  assert.match(h.lines[0], /^reconcile --strict --json silence=1$/);
+  assert.match(h.lines[0], /^reconcile --strict --json silence=0$/);
   assert.match(h.lines[1], /^readiness .*--json .*silence=1$/);
 });
 
@@ -125,7 +125,7 @@ test('19:00 tick drains existing queue before strict reconcile/readiness', () =>
   const h = harness({ hm: '1900' });
   assert.equal(h.result.status, 0, `${h.result.stdout}\n${h.result.stderr}`);
   assert.match(h.lines[0], /^drain drain /);
-  assert.match(h.lines[1], /^reconcile --strict --json silence=1$/);
+  assert.match(h.lines[1], /^reconcile --strict --json silence=0$/);
   assert.match(h.lines[2], /^readiness .*--json .*silence=1$/);
 });
 

@@ -20,12 +20,14 @@ const SAFE_RUN_ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{2,127}$/;
 const TEST_ID = /\bPG-(?:TEST|FAKE|FIXTURE|SMOKE)[A-Z0-9-]*\b/g;
 const STRICT_FIELDS = [
   'pendingWritebackAfter',
+  'droppedWritebackAfter',
   'sheetFlipsAfter',
   'planUncheckedAfter',
   'activeRepairAfter',
   'expiredLeasesAfter',
   'eligibleNeedsHumanAfter',
 ];
+const BACKFILL_STEPS = ['sheet', 'plan', 'archive'];
 
 function parseArgs(argv) {
   const out = {};
@@ -182,6 +184,52 @@ function collectContamination(paths) {
   return [...found].sort();
 }
 
+function terminalWritebackEvidence(record, state, name) {
+  const terminal = record.terminalNotification;
+  const evidence = terminal && typeof terminal === 'object' && !Array.isArray(terminal)
+    ? terminal
+    : {};
+  return {
+    pageId: String(evidence.pageId || record.pageId || name.replace(/\.json$/i, '')),
+    state,
+    stuckSteps: Array.isArray(evidence.stuckSteps)
+      ? evidence.stuckSteps.map(String)
+      : BACKFILL_STEPS.filter((step) => !(record.done || []).includes(step)),
+    attempts: Math.max(0, Number(evidence.attempts ?? record.attempts) || 0),
+    firstAt: evidence.firstAt || record.firstAt || null,
+    lastError: evidence.lastError ?? record.lastError ?? null,
+    ...(evidence.terminalAt ? { terminalAt: evidence.terminalAt } : {}),
+    ...(evidence.reason ? { reason: evidence.reason } : {}),
+    ...(evidence.notificationKey ? { notificationKey: evidence.notificationKey } : {}),
+  };
+}
+
+function inspectTerminalWriteback(base, errors) {
+  const evidence = [];
+  const root = join(base, 'pending-writeback');
+  for (const state of ['dropped', 'quarantined']) {
+    const dir = join(root, state);
+    if (!existsSync(dir)) continue;
+    for (const name of readdirSync(dir).filter((item) => item.endsWith('.json')).sort()) {
+      try {
+        const record = readJson(join(dir, name), `${state} writeback ${name}`);
+        evidence.push(terminalWritebackEvidence(record, state, name));
+      } catch (error) {
+        errors.push(`${state} writeback ${name}: ${error.message}`);
+        evidence.push({
+          pageId: name.replace(/\.json$/i, ''),
+          state,
+          stuckSteps: [...BACKFILL_STEPS],
+          attempts: 0,
+          firstAt: null,
+          lastError: `unreadable terminal writeback: ${error.message}`,
+        });
+      }
+    }
+  }
+  return evidence;
+}
+
 function normalizeStrict(value, errors) {
   const result = {};
   for (const field of STRICT_FIELDS) {
@@ -192,6 +240,19 @@ function normalizeStrict(value, errors) {
     } else {
       result[field] = count;
     }
+  }
+  if (!Array.isArray(value?.droppedWritebackEvidence)) {
+    errors.push('strict droppedWritebackEvidence missing or invalid');
+    result.droppedWritebackEvidence = [];
+  } else {
+    result.droppedWritebackEvidence = value.droppedWritebackEvidence;
+  }
+  if (result.droppedWritebackAfter !== result.droppedWritebackEvidence.length) {
+    errors.push('strict droppedWritebackAfter does not match evidence');
+    result.droppedWritebackAfter = Math.max(
+      result.droppedWritebackAfter,
+      result.droppedWritebackEvidence.length,
+    );
   }
   if (!Array.isArray(value?.errors)) errors.push('strict errors missing or invalid');
   else errors.push(...value.errors.map((error) => `strict: ${String(error)}`));
@@ -300,6 +361,13 @@ export async function evaluateSeoReadiness({
   const staleReportAfter = staleReport.filter((row) => row?.stale).length;
   const strictResult = deps.strictResult || strictFromEnvironment();
   const strict = normalizeStrict(strictResult, errors);
+  const localTerminalWriteback = inspectTerminalWriteback(base, errors);
+  const terminalEvidence = new Map();
+  for (const row of [...strict.droppedWritebackEvidence, ...localTerminalWriteback]) {
+    const key = `${row?.state || 'unknown'}:${row?.pageId || JSON.stringify(row)}`;
+    if (!terminalEvidence.has(key)) terminalEvidence.set(key, row);
+  }
+  const droppedWritebackEvidence = [...terminalEvidence.values()];
   const testContamination = collectContamination([base, claimsPath, queueDir]);
   const result = {
     ok: false,
@@ -307,6 +375,12 @@ export async function evaluateSeoReadiness({
     plan: planPath,
     runId,
     ...strict,
+    droppedWritebackAfter: Math.max(
+      strict.droppedWritebackAfter,
+      localTerminalWriteback.length,
+      droppedWritebackEvidence.length,
+    ),
+    droppedWritebackEvidence,
     planUncheckedAfter: Math.max(strict.planUncheckedAfter, plan.unchecked.size),
     activeRepairAfter: Math.max(
       strict.activeRepairAfter,

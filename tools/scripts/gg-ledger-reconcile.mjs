@@ -8,11 +8,16 @@ import {
   readdirSync,
   writeFileSync,
 } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { drainPending, listWriteback } from './lib/backfill-tx.mjs';
+import {
+  BACKFILL_STEPS,
+  drainPending,
+  listWriteback,
+} from './lib/backfill-tx.mjs';
 import { getAccessToken, gFetch, loadEnv } from './lib/gg-shared.mjs';
 import { notify } from './lib/gg-notify.mjs';
 import { PRODUCTS, PAGES_TAB, PUBLISHED, workbookId } from './gg-reconcile-status.mjs';
@@ -28,6 +33,7 @@ const AUTOPILOT = join(SCRIPTS, 'gg-seo-autopilot.mjs');
 const RECONCILE_STATUS = join(SCRIPTS, 'gg-reconcile-status.mjs');
 const COUNTER_FIELDS = [
   'pendingWritebackAfter',
+  'droppedWritebackAfter',
   'sheetFlipsAfter',
   'planUncheckedAfter',
   'activeRepairAfter',
@@ -197,6 +203,55 @@ function inspectWriteback(errors, base) {
   return count;
 }
 
+function writebackTerminalEvidence(record, state, name) {
+  const terminal = record.terminalNotification;
+  const evidence = terminal && typeof terminal === 'object' && !Array.isArray(terminal)
+    ? terminal
+    : {};
+  return {
+    pageId: String(evidence.pageId || record.pageId || name.replace(/\.json$/i, '')),
+    state,
+    stuckSteps: Array.isArray(evidence.stuckSteps)
+      ? evidence.stuckSteps.map(String)
+      : BACKFILL_STEPS.filter((step) => !(record.done || []).includes(step)),
+    attempts: Math.max(0, Number(evidence.attempts ?? record.attempts) || 0),
+    firstAt: evidence.firstAt || record.firstAt || null,
+    lastError: evidence.lastError ?? record.lastError ?? null,
+    ...(evidence.terminalAt ? { terminalAt: evidence.terminalAt } : {}),
+    ...(evidence.reason ? { reason: evidence.reason } : {}),
+    ...(evidence.notificationKey ? { notificationKey: evidence.notificationKey } : {}),
+  };
+}
+
+function inspectTerminalWriteback(errors, base) {
+  const root = join(base, 'pending-writeback');
+  const evidence = [];
+  for (const state of ['dropped', 'quarantined']) {
+    const dir = join(root, state);
+    if (!existsSync(dir)) continue;
+    for (const name of readdirSync(dir).filter((item) => item.endsWith('.json')).sort()) {
+      try {
+        const record = strictObject(
+          JSON.parse(readFileSync(join(dir, name), 'utf8')),
+          `${state} writeback ${name}`,
+        );
+        evidence.push(writebackTerminalEvidence(record, state, name));
+      } catch (error) {
+        errors.push(`${state} writeback ${name}: ${error.message}`);
+        evidence.push({
+          pageId: name.replace(/\.json$/i, ''),
+          state,
+          stuckSteps: [...BACKFILL_STEPS],
+          attempts: 0,
+          firstAt: null,
+          lastError: `unreadable terminal writeback: ${error.message}`,
+        });
+      }
+    }
+  }
+  return { count: evidence.length, evidence };
+}
+
 function inspectRepairState(claims, errors, base, now = new Date()) {
   let activeRepairAfter = 0;
   let expiredLeasesAfter = 0;
@@ -315,15 +370,27 @@ function terminalCoversClaim(repair, pageId, claim, errors) {
 async function defaultApply({ apply, log }) {
   const errors = [];
   const summary = [];
-  let drain = { retried: 0, resolved: 0, stillPending: listWriteback().length, dropped: [] };
+  let drain = {
+    retried: 0,
+    skipped: 0,
+    resolved: 0,
+    stillPending: listWriteback().length,
+    dropped: [],
+    dropErrors: [],
+  };
   if (apply) {
     try { drain = await drainPending(); }
     catch (error) { errors.push(`drainPending: ${error.message}`); }
   }
-  log(`1. drainPending: retried=${drain.retried || 0} resolved=${drain.resolved || 0} stillPending=${drain.stillPending || 0} dropped=${drain.dropped?.length || 0}`);
+  log(`1. drainPending: retried=${drain.retried || 0} skipped=${drain.skipped || 0} resolved=${drain.resolved || 0} stillPending=${drain.stillPending || 0} dropped=${drain.dropped?.length || 0} dropErrors=${drain.dropErrors?.length || 0}`);
   if (drain.resolved) summary.push(`回填补写 ${drain.resolved} 篇`);
   if (drain.dropped?.length) {
     summary.push(`⚠️回填淘汰 ${drain.dropped.length} 篇`);
+  }
+  if (drain.dropErrors?.length) {
+    for (const item of drain.dropErrors) {
+      errors.push(`dropWriteback ${item.pageId}: ${item.error}`);
+    }
   }
 
   let reconciled = 0;
@@ -370,7 +437,12 @@ async function defaultApply({ apply, log }) {
   log(`4b. plan-sweep(sheet-driven): checked=${sheetChecked}`);
   if (sheetChecked) summary.push(`plan 补勾(无claim已上线) ${sheetChecked} 项`);
   for (const error of errors) summary.push(`⚠️${error}`);
-  return { errors, summary, claims };
+  return {
+    errors,
+    summary,
+    claims,
+    terminalNotifications: drain.dropped || [],
+  };
 }
 
 async function defaultVerify({ log }) {
@@ -402,8 +474,11 @@ async function defaultVerify({ log }) {
     }
   }
   const repair = inspectRepairState(claims, errors, base);
+  const terminalWriteback = inspectTerminalWriteback(errors, base);
   const result = {
     pendingWritebackAfter: inspectWriteback(errors, base),
+    droppedWritebackAfter: terminalWriteback.count,
+    droppedWritebackEvidence: terminalWriteback.evidence,
     sheetFlipsAfter,
     planUncheckedAfter: uncheckedDoneClaims(claims) + sheetPlanUncheckedAfter,
     activeRepairAfter: repair.activeRepairAfter,
@@ -430,13 +505,46 @@ function normalizeResult(value, inheritedErrors = []) {
       result[field] = number;
     }
   }
+  let droppedWritebackEvidence = [];
+  if (!Array.isArray(value?.droppedWritebackEvidence)) {
+    errors.push('droppedWritebackEvidence missing or invalid');
+  } else {
+    droppedWritebackEvidence = value.droppedWritebackEvidence;
+  }
+  if (result.droppedWritebackAfter !== droppedWritebackEvidence.length) {
+    errors.push('droppedWritebackAfter does not match droppedWritebackEvidence');
+    result.droppedWritebackAfter = Math.max(
+      result.droppedWritebackAfter,
+      droppedWritebackEvidence.length,
+    );
+  }
   if (!Array.isArray(value?.errors)) errors.push('errors missing or invalid');
   else errors.push(...value.errors.map((error) => String(error)));
   return {
     ok: COUNTER_FIELDS.every((field) => result[field] === 0) && errors.length === 0,
     ...result,
+    droppedWritebackEvidence,
     errors,
   };
+}
+
+function notificationUuid(key) {
+  const hex = createHash('sha256').update(String(key || '')).digest('hex').slice(0, 32).split('');
+  hex[12] = '5';
+  hex[16] = ((Number.parseInt(hex[16], 16) & 0x3) | 0x8).toString(16);
+  const value = hex.join('');
+  return `${value.slice(0, 8)}-${value.slice(8, 12)}-${value.slice(12, 16)}-${value.slice(16, 20)}-${value.slice(20)}`;
+}
+
+function terminalNotificationText(item) {
+  return [
+    '⚠️ [flow] 回填进入长期失败终态',
+    `pageId=${item.pageId}`,
+    `stuck=${(item.stuckSteps || []).join(',') || 'unknown'}`,
+    `attempts=${Number(item.attempts || 0)}`,
+    `firstAt=${item.firstAt || 'unknown'}`,
+    `lastError=${item.lastError || 'unknown'}`,
+  ].join('；');
 }
 
 export async function runLedgerReconcile({
@@ -462,6 +570,27 @@ export async function runLedgerReconcile({
     inheritedErrors.push(`verify: ${error.message}`);
   }
   const result = normalizeResult(verified, inheritedErrors);
+  const terminalNotifications = Array.isArray(applied?.terminalNotifications)
+    ? applied.terminalNotifications
+    : [];
+  if (apply && terminalNotifications.length > 0) {
+    const send = deps.notify || notify;
+    const unique = new Map();
+    for (const item of terminalNotifications) {
+      const key = item?.notificationKey
+        || `writeback-terminal:${item?.pageId}:${item?.firstAt}:${item?.attempts}`;
+      if (!unique.has(key)) unique.set(key, item);
+    }
+    for (const [key, item] of unique) {
+      try {
+        await send('batch_summary', {
+          text: terminalNotificationText(item),
+          partial: true,
+          msgUuid: notificationUuid(key),
+        });
+      } catch {}
+    }
+  }
   if (!strict && apply && Array.isArray(applied?.summary) && applied.summary.length > 0) {
     const send = deps.notify || notify;
     try {

@@ -177,6 +177,32 @@ test('pending writeback remains => strict exit 2 and pendingWritebackAfter=1', (
   assert.equal(out.json.result.pendingWritebackAfter, 1);
 });
 
+test('a pending WAL retained after archive rename failure remains strict nonzero', () => {
+  const fixture = defaultCliFixture({
+    pendingWritebacks: [{
+      pageId: 'PG-NODE-013',
+      slug: 'node-013',
+      site: 'astrologywiki',
+      attempts: 8,
+      firstAt: '2026-07-16T10:00:00.000Z',
+      done: ['sheet', 'plan'],
+      lastError: 'archive rename failed: simulated rename failure',
+      terminalNotification: {
+        pageId: 'PG-NODE-013',
+        stuckSteps: ['archive'],
+        attempts: 8,
+        firstAt: '2026-07-16T10:00:00.000Z',
+        lastError: 'archive:disk unavailable',
+      },
+    }],
+  });
+  const out = fixture.run();
+  assert.equal(out.status, 2, `${out.stdout}\n${out.stderr}`);
+  const json = JSON.parse(out.stdout);
+  assert.equal(json.pendingWritebackAfter, 1);
+  assert.equal(json.droppedWritebackAfter, 0);
+});
+
 test('dropped writeback independently blocks strict convergence with structured evidence', () => {
   const evidence = [{
     pageId: 'PG-CELEB-055',
@@ -240,12 +266,18 @@ test('new terminal writeback emits one complete deduplicated notification', () =
     droppedWritebackAfter: 1,
     droppedWritebackEvidence: [{ ...terminal, state: 'dropped' }],
   }), {
-    applyResult: { terminalNotifications: [terminal] },
+    applyResult: {
+      terminalNotifications: [
+        terminal,
+        { ...terminal, lastError: 'duplicate delivery must be coalesced' },
+      ],
+    },
   });
   assert.equal(out.status, 2, `${out.stdout}\n${out.stderr}`);
   assert.equal(out.json.phases[0], 'apply');
   assert.equal(out.json.phases[1], 'verify');
   assert.equal(out.json.phases[2], 'notify');
+  assert.equal(out.json.phases.filter((phase) => phase === 'notify').length, 1);
   const sent = out.json.phases[3];
   assert.equal(sent.event, 'batch_summary');
   assert.equal(sent.fields.partial, true);

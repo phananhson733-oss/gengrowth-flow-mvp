@@ -114,11 +114,11 @@ if (( 10#$NOW_HM >= 1830 && 10#$NOW_HM <= 2200 )); then
 fi
 
 set +e
-STRICT_JSON="$(GG_LARK_NOTIFY_SILENCE=1 node "$RECONCILE" --strict --json)"
+STRICT_JSON="$(GG_LARK_NOTIFY_SILENCE="${GG_SEO_RECONCILE_TERMINAL_NOTIFY_SILENCE:-0}" node "$RECONCILE" --strict --json)"
 reconcile_rc=$?
 set -e
 if [[ -z "$STRICT_JSON" ]]; then
-  STRICT_JSON='{"ok":false,"pendingWritebackAfter":1,"sheetFlipsAfter":1,"planUncheckedAfter":1,"activeRepairAfter":1,"expiredLeasesAfter":1,"eligibleNeedsHumanAfter":1,"errors":["strict reconcile produced no JSON"]}'
+  STRICT_JSON='{"ok":false,"pendingWritebackAfter":1,"droppedWritebackAfter":1,"droppedWritebackEvidence":[{"pageId":"UNKNOWN","state":"unknown","stuckSteps":["sheet","plan","archive"],"attempts":0,"firstAt":null,"lastError":"strict reconcile produced no JSON"}],"sheetFlipsAfter":1,"planUncheckedAfter":1,"activeRepairAfter":1,"expiredLeasesAfter":1,"eligibleNeedsHumanAfter":1,"errors":["strict reconcile produced no JSON"]}'
 fi
 printf '%s\n' "$STRICT_JSON"
 

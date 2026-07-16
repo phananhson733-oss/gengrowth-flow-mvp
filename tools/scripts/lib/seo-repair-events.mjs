@@ -683,20 +683,15 @@ async function archiveAbortedIntent(queueDir, path, error, randomUUID = defaultR
     directory,
     `${basename(path)}.${Date.now()}.${randomUUID()}.aborted`,
   );
-  const intent = await readJson(path);
-  if (intent) {
-    await atomicWriteJson(path, {
-      ...intent,
-      phase: 'aborted',
-      abortedAt: new Date().toISOString(),
-      abortReason: error instanceof Error ? error.message : String(error),
-    }, randomUUID);
-  }
   try {
     await rename(path, destination);
   } catch (renameError) {
     if (renameError?.code !== 'ENOENT') throw renameError;
   }
+  await atomicWriteJson(`${destination}.metadata.json`, {
+    abortedAt: new Date().toISOString(),
+    abortReason: error instanceof Error ? error.message : String(error),
+  }, randomUUID);
   return destination;
 }
 
@@ -814,7 +809,8 @@ async function prepareTransaction(queueDir, {
 } = {}) {
   const currentCausalHead = await readTransactionCausalHead(queueDir, incidentId);
   const causalRevision = Number(currentCausalHead?.causalRevision || 0) + 1;
-  const transactionId = `${incidentId}-${defaultRandomUUID()}`;
+  const transactionId = `${incidentId}-${randomUUID()}`;
+  const path = transactionPath(queueDir, transactionId);
   const intent = {
     schemaVersion: TRANSACTION_SCHEMA_VERSION,
     transactionId,
@@ -827,10 +823,14 @@ async function prepareTransaction(queueDir, {
     resultHead: validateTransactionHead(resultHead, 'resultHead'),
     writes,
   };
+  const validated = validateTransactionIntent(intent, path, queueDir);
+  const serializable = {
+    ...validated,
+    writes: validated.writes.map(({ destination, ...write }) => write),
+  };
   if (assertOwner) await assertOwner();
-  const path = transactionPath(queueDir, transactionId);
-  await atomicWriteJson(path, intent, randomUUID);
-  return { path, intent };
+  await atomicWriteJson(path, serializable, randomUUID);
+  return { path, intent: serializable };
 }
 
 async function applyPreparedTransaction(queueDir, path, intent, {
@@ -850,19 +850,24 @@ async function applyPreparedTransaction(queueDir, path, intent, {
     || latest.phase !== 'prepared') {
     throw new Error(`repair transaction changed unexpectedly: ${intent.transactionId}`);
   }
+  const preflightError = (message, cause = undefined) => {
+    const error = new Error(message, cause ? { cause } : undefined);
+    error.repairTransactionPreflight = true;
+    return error;
+  };
   const causalHead = await readTransactionCausalHead(queueDir, latest.incidentId);
   if (Number(causalHead?.causalRevision || 0) > latest.causalRevision
     || (Number(causalHead?.causalRevision || 0) === latest.causalRevision
       && (causalHead?.transactionId !== latest.transactionId
         || !sameTransactionHead(causalHead?.resultHead, latest.resultHead)))) {
-    throw new Error(`stale causal repair transaction: ${latest.transactionId}`);
+    throw preflightError(`stale causal repair transaction: ${latest.transactionId}`);
   }
   const queueRecords = await readQueueRecords(queueDir);
   const currentHead = authoritativeHead(queueRecords, latest.incidentId);
   if (currentHead
     && !sameTransactionHead(transactionHead(currentHead), latest.expectedHead)
     && !sameTransactionHead(transactionHead(currentHead), latest.resultHead)) {
-    throw new Error(`stale authoritative head for repair transaction: ${latest.transactionId}`);
+    throw preflightError(`stale authoritative head for repair transaction: ${latest.transactionId}`);
   }
   const snapshots = [];
   for (const write of latest.writes) {
@@ -871,16 +876,13 @@ async function applyPreparedTransaction(queueDir, path, intent, {
     try {
       current = await readRepairRecordSnapshot(write.destination);
     } catch (error) {
-      if (error?.code !== 'ENOENT') throw error;
+      if (error?.code !== 'ENOENT') {
+        throw preflightError(`invalid transaction snapshot: ${write.filename}`, error);
+      }
     }
     const alreadyApplied = current
       && JSON.stringify(current.record) === JSON.stringify(write.record);
     if (!alreadyApplied) {
-      const preflightError = (message) => {
-        const error = new Error(message);
-        error.repairTransactionPreflight = true;
-        return error;
-      };
       if (!write.expectedExists) {
         if (current !== null) {
           throw preflightError(`stale new-record transaction snapshot: ${write.filename}`);
@@ -1060,9 +1062,13 @@ function recordIncidentId(record) {
 function supersededRecord(record, {
   supersededBy,
   at,
+  incidentId = recordIncidentId(record),
+  generation = Number(record.generation || 1),
 } = {}) {
   return {
     ...record,
+    incidentId,
+    generation,
     status: 'superseded',
     revision: Number(record.revision || 0) + 1,
     lease: null,
@@ -1295,17 +1301,27 @@ export async function enqueueRepairEvent(value, {
       await atomicWriteJson(join(queueDir, `${event.eventId}.json`), record, randomUUID);
       return record;
     }
-    const writes = active.map(({ path, record: source }, index) => transactionWrite(
+    const writes = active.map(({ path, record: source, recordHash }, index) => transactionWrite(
       basename(path),
       supersededRecord(source, {
         supersededBy: event.eventId,
         at: event.createdAt,
+        incidentId,
+        generation: Number(source.generation || 1),
       }),
-      index === active.length - 1
-        ? { faultPointAfter: 'after-supersede-before-head-write' }
-        : {},
+      {
+        expectedRevision: Number(source.revision || 0),
+        expectedExists: true,
+        expectedRecordHash: recordHash,
+        ...(index === active.length - 1
+          ? { faultPointAfter: 'after-supersede-before-head-write' }
+          : {}),
+      },
     ));
-    writes.push(transactionWrite(`${event.eventId}.json`, record));
+    writes.push(transactionWrite(`${event.eventId}.json`, record, {
+      expectedRevision: 0,
+      expectedExists: false,
+    }));
     const prepared = await prepareTransaction(queueDir, {
       incidentId,
       operation: 'replace_generation',
@@ -1314,7 +1330,7 @@ export async function enqueueRepairEvent(value, {
       expectedHead: transactionHead(previous),
       resultHead: transactionHead(record),
     }, { randomUUID, assertOwner });
-    await applyPreparedTransaction(queueDir, prepared.path, prepared.intent, {
+    await applyPreparedTransactionOrAbort(queueDir, prepared, {
       randomUUID,
       faultInjector,
       assertOwner,
@@ -1432,15 +1448,22 @@ export async function compactRepairIncident({
           createdAt: existing.record.updatedAt,
           expectedHead: transactionHead(existing.record),
           resultHead: transactionHead(existing.record),
-          writes: incompleteSources.map(({ path, record }) => transactionWrite(
+          writes: incompleteSources.map(({ path, record, recordHash }) => transactionWrite(
             basename(path),
             supersededRecord(record, {
               supersededBy: existing.record.event.eventId,
               at: existing.record.updatedAt,
+              incidentId,
+              generation: Number(record.generation || 1),
             }),
+            {
+              expectedRevision: Number(record.revision || 0),
+              expectedExists: true,
+              expectedRecordHash: recordHash,
+            },
           )),
         }, { randomUUID, assertOwner });
-        await applyPreparedTransaction(queueDir, prepared.path, prepared.intent, {
+        await applyPreparedTransactionOrAbort(queueDir, prepared, {
           randomUUID,
           faultInjector,
           assertOwner,
@@ -1487,12 +1510,12 @@ export async function compactRepairIncident({
       history: record.history || [],
       ...(record.sourceHistories ? { sourceHistories: record.sourceHistories } : {}),
     }));
-    const sourceRecordHashes = await Promise.all(sourceEntries
-      .map(async ({ path, record }) => ({
+    const sourceRecordHashes = sourceEntries
+      .map(({ path, record, recordHash }) => ({
         eventId: record.event.eventId,
         filename: basename(path),
-        sha256: createHash('sha256').update(await readFile(path)).digest('hex'),
-      })));
+        sha256: recordHash,
+      }));
     sourceRecordHashes.sort((left, right) => left.filename.localeCompare(right.filename));
     const historyAccounting = historyAttemptAccounting(records);
     const recordedStrategyAttempts = sumStrategyAttempts(records);
@@ -1578,14 +1601,23 @@ export async function compactRepairIncident({
     };
     const writes = [
       transactionWrite(`${canonicalEventId}.json`, canonical, {
+        expectedRevision: 0,
+        expectedExists: false,
         faultPointAfter: 'after-canonical-before-source-supersede',
       }),
-      ...sourceEntries.map(({ path, record }) => transactionWrite(
+      ...sourceEntries.map(({ path, record, recordHash }) => transactionWrite(
         basename(path),
         supersededRecord(record, {
           supersededBy: canonicalEventId,
           at: createdAt,
+          incidentId,
+          generation: Number(record.generation || 1),
         }),
+        {
+          expectedRevision: Number(record.revision || 0),
+          expectedExists: true,
+          expectedRecordHash: recordHash,
+        },
       )),
     ];
     const prepared = await prepareTransaction(queueDir, {
@@ -1596,7 +1628,7 @@ export async function compactRepairIncident({
       expectedHead: transactionHead(authoritativeHead(queueRecords, incidentId)),
       resultHead: transactionHead(canonical),
     }, { randomUUID, assertOwner });
-    await applyPreparedTransaction(queueDir, prepared.path, prepared.intent, {
+    await applyPreparedTransactionOrAbort(queueDir, prepared, {
       randomUUID,
       faultInjector,
       assertOwner,

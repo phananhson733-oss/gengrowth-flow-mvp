@@ -692,16 +692,12 @@ test('legacy adoption snapshot conflict aborts its intent without creating a rec
   assert.deepEqual(await transactionArtifacts(queueDir, 'holds'), []);
 });
 
-test('terminal adoption transaction recovers after the canonical write without leaving two authoritative heads', async (t) => {
-  const { queueDir } = await fixture(t);
-  const queued = await enqueueRepairEvent(event({
-    eventId: 'terminal-adoption-crash-source',
-    pageId: 'PG-SDS-004',
-  }), { queueDir });
-  await transitionRepairEvent(queued, {
-    status: 'quarantined',
-    evidence: { type: 'repair_budget_exhausted' },
-  }, { queueDir });
+test('seven-file legacy adoption recovers after the canonical write without leaving two authoritative heads', async (t) => {
+  const {
+    queueDir,
+    sources,
+    sourceHashes,
+  } = await productionPgSdsLegacyFixture(t);
 
   await assert.rejects(
     compactRepairIncident({
@@ -718,6 +714,8 @@ test('terminal adoption transaction recovers after the canonical write without l
     }),
     /injected terminal adoption crash/,
   );
+  assert.equal((await transactionArtifacts(queueDir, 'pending')).length, 1);
+  assert.deepEqual(await transactionArtifacts(queueDir, 'holds'), []);
 
   await listEligibleRepairEvents({
     queueDir,
@@ -726,13 +724,22 @@ test('terminal adoption transaction recovers after the canonical write without l
   const records = await listRepairRecords({ queueDir });
   const canonical = records.find((record) => record.status === 'migration_hold');
   assert.ok(canonical);
+  assert.equal(canonical.totalAttempts, 23);
+  assert.deepEqual(
+    Object.fromEntries(canonical.sourceRecordHashes.map((item) => [item.filename, item.sha256])),
+    sourceHashes,
+  );
   assert.equal(records.filter((record) => record.status === 'migration_hold').length, 1);
   assert.equal(records.filter((record) => record.status === 'quarantined').length, 0);
-  assert.equal(records.filter((record) => record.status === 'superseded').length, 1);
+  assert.equal(records.filter((record) => record.status === 'superseded').length, sources.length);
   assert.equal(
-    records.find((record) => record.status === 'superseded').supersededBy,
-    canonical.event.eventId,
+    records
+      .filter((record) => record.status === 'superseded')
+      .every((record) => record.supersededBy === canonical.event.eventId),
+    true,
   );
+  assert.deepEqual(await transactionArtifacts(queueDir, 'pending'), []);
+  assert.deepEqual(await transactionArtifacts(queueDir, 'holds'), []);
 });
 
 test('blocking page terminals absorb same and changed observations without resetting lifecycle budgets', async (t) => {

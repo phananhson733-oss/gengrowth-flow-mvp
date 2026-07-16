@@ -230,3 +230,45 @@ test('strict verification fails closed when the claims ledger is missing', () =>
   const json = JSON.parse(out.stdout);
   assert.match(json.errors.join('\n'), /claims.*missing/i);
 });
+
+for (const status of ['quarantined', 'human_only', 'archived', 'published']) {
+  test(`terminal controller status ${status} excludes the matching needs-human claim`, () => {
+    const fixture = defaultCliFixture({
+      claims: {
+        'PG-A-001': {
+          site: 'astrologywiki',
+          status: 'needs_human',
+          error: 'gate failed',
+        },
+      },
+      queue: [{
+        status,
+        event: { site: 'astrologywiki', pageId: 'PG-A-001', runId: 'run-1' },
+      }],
+    });
+    const out = fixture.run();
+    assert.equal(out.status, 0, `${out.stdout}\n${out.stderr}`);
+    const json = JSON.parse(out.stdout);
+    assert.equal(json.eligibleNeedsHumanAfter, 0);
+  });
+}
+
+test('migration_hold is not terminal eligibility and keeps needs-human fail closed', () => {
+  const fixture = defaultCliFixture({
+    claims: {
+      'PG-A-001': {
+        site: 'astrologywiki',
+        status: 'needs_human',
+        error: 'migration pending',
+      },
+    },
+    queue: [{
+      status: 'migration_hold',
+      event: { site: 'astrologywiki', pageId: 'PG-A-001', runId: 'run-1' },
+    }],
+  });
+  const out = fixture.run();
+  assert.equal(out.status, 2, `${out.stdout}\n${out.stderr}`);
+  const json = JSON.parse(out.stdout);
+  assert.equal(json.eligibleNeedsHumanAfter, 1);
+});

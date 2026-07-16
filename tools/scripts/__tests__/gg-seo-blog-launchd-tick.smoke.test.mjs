@@ -51,6 +51,7 @@ function runnerHarness({
   readinessExit = 0,
   summaryExit = 0,
   lockHeld = false,
+  useEnvFile = false,
 } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'seo-launchd-runner-'));
   const flow = join(root, 'flow');
@@ -69,6 +70,7 @@ function runnerHarness({
   const nightlyLog = join(root, 'nightly.log');
   const launchdLog = join(root, 'launchd.log');
   const launchdErr = join(root, 'launchd.err.log');
+  const envFile = join(root, '_gg.env');
   const plan = join(opsTasks, 'plan.md');
   const claims = join(opsTasks, '.autopilot-claims.json');
   writeFileSync(plan, '- [ ] `PG-A-001` alpha\n');
@@ -80,7 +82,7 @@ function runnerHarness({
   const nightly = executable(join(root, 'nightly.sh'), [
     '#!/bin/sh',
     'printf "nightly\\n" >> "$GG_TEST_EVENTS"',
-    'node -e \'require("node:fs").writeFileSync(process.env.GG_TEST_NIGHTLY_ENV, JSON.stringify({ runId: process.env.GG_SEO_REPAIR_RUN_ID || null, logFile: process.env.GG_SEO_REPAIR_LOG_FILE || null, offsetStart: process.env.GG_SEO_REPAIR_LOG_OFFSET_START || null, offsetEnd: process.env.GG_SEO_REPAIR_LOG_OFFSET_END || null }))\'',
+    'node -e \'require("node:fs").writeFileSync(process.env.GG_TEST_NIGHTLY_ENV, JSON.stringify({ runId: process.env.GG_SEO_REPAIR_RUN_ID || null, logFile: process.env.GG_SEO_REPAIR_LOG_FILE || null, offsetStart: process.env.GG_SEO_REPAIR_LOG_OFFSET_START || null, offsetEnd: process.env.GG_SEO_REPAIR_LOG_OFFSET_END || null, oracle: process.env.GG_AUTOMATION_ORACLE_DIR || null }))\'',
     'printf "nightly body\\n" >> "$GG_SEO_NIGHTLY_LOG"',
     `exit ${nightlyExit}`,
     '',
@@ -126,29 +128,49 @@ function runnerHarness({
     '',
   ].join('\n'));
 
-  const run = () => spawnSync('bash', [runner], {
-    cwd: flow,
-    encoding: 'utf8',
-    env: {
-      ...process.env,
-      HOME: root,
-      GG_ENV_FILE: '/dev/null',
-      GG_SEO_LAUNCHD_ALLOW_OUTSIDE_WINDOW: '1',
-      GG_SEO_SKIP_LEGACY_CHECK: '1',
-      GG_SEO_LAUNCHD_FLOW: flow,
-      GG_AUTOMATION_ORACLE_DIR: oracle,
+  if (useEnvFile) {
+    writeFileSync(envFile, [
+      `GG_SEO_NIGHTLY_BIN=${JSON.stringify(nightly)}`,
+      `GG_SEO_REPAIR_HOOK_BIN=${JSON.stringify(hook)}`,
+      `GG_SEO_REPAIR_CONTROLLER_BIN=${JSON.stringify(controller)}`,
+      `GG_SEO_RECONCILE_BIN=${JSON.stringify(reconcile)}`,
+      `GG_SEO_READINESS_BIN=${JSON.stringify(readiness)}`,
+      `GG_SEO_BATCH_SUMMARY_BIN=${JSON.stringify(summary)}`,
+      `GG_SEO_PLAN=${JSON.stringify(plan)}`,
+      `GG_SEO_CLAIMS=${JSON.stringify(claims)}`,
+      `GG_AUTOMATION_ORACLE_DIR=${JSON.stringify(join(root, 'interactive-oracle'))}`,
+      '',
+    ].join('\n'));
+  }
+
+  const configuredPaths = useEnvFile
+    ? {}
+    : {
       GG_SEO_NIGHTLY_BIN: nightly,
       GG_SEO_REPAIR_HOOK_BIN: hook,
       GG_SEO_REPAIR_CONTROLLER_BIN: controller,
       GG_SEO_RECONCILE_BIN: reconcile,
       GG_SEO_READINESS_BIN: readiness,
       GG_SEO_BATCH_SUMMARY_BIN: summary,
+      GG_SEO_PLAN: plan,
+      GG_SEO_CLAIMS: claims,
+    };
+  const run = () => spawnSync('bash', [runner], {
+    cwd: flow,
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      HOME: root,
+      GG_ENV_FILE: useEnvFile ? envFile : '/dev/null',
+      GG_SEO_LAUNCHD_ALLOW_OUTSIDE_WINDOW: '1',
+      GG_SEO_SKIP_LEGACY_CHECK: '1',
+      GG_SEO_LAUNCHD_FLOW: flow,
+      GG_AUTOMATION_ORACLE_DIR: oracle,
+      ...configuredPaths,
       GG_SEO_NIGHTLY_LOG: nightlyLog,
       GG_SEO_LAUNCHD_LOG: launchdLog,
       GG_SEO_LAUNCHD_ERR_LOG: launchdErr,
       GG_SEO_LAUNCHD_LOCK: lock,
-      GG_SEO_PLAN: plan,
-      GG_SEO_CLAIMS: claims,
       GG_TEST_EVENTS: events,
       GG_TEST_HOOK_ARGS: hookArgs,
       GG_TEST_CONTROLLER_ARGS: controllerArgs,
@@ -171,6 +193,7 @@ function runnerHarness({
     log: () => readMaybe(launchdLog),
     plan,
     nightlyLog,
+    oracle,
   };
 }
 
@@ -198,6 +221,16 @@ test('clean runner orders pre/post drain, strict reconcile, readiness, summary a
   const readinessArgs = h.readinessArgs();
   assert.equal(readinessArgs[readinessArgs.indexOf('--run-id') + 1], runId);
   assert.equal(readinessArgs[readinessArgs.indexOf('--plan') + 1], h.plan);
+});
+
+test('runner sources migration config before deriving tools and plan while retaining the pinned Oracle baseline', () => {
+  const h = runnerHarness({ useEnvFile: true });
+  const result = h.run();
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}\n${h.log()}`);
+  assert.deepEqual(h.events(), ['drain', 'reconcile', 'nightly', 'hook', 'drain', 'reconcile', 'readiness', 'summary']);
+  assert.equal(h.nightlyEnv().oracle, h.oracle);
+  assert.equal(h.hookArgs()[h.hookArgs().indexOf('--plan') + 1], h.plan);
+  assert.equal(h.readinessArgs()[h.readinessArgs().indexOf('--plan') + 1], h.plan);
 });
 
 test('nightly nonzero is passed to hook and a recovered fire still reaches reconcile and summary', () => {

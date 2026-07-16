@@ -204,3 +204,61 @@ test('active scoped claim with an invalid lease timestamp fails closed', () => {
   assert.equal(out.json.expiredLeasesAfter, 1);
   assert.match(out.json.errors.join('\n'), /lease/i);
 });
+
+for (const status of ['quarantined', 'human_only', 'archived', 'published']) {
+  test(`terminal scoped controller status ${status} excludes matching needs-human eligibility`, () => {
+    const out = readinessFixture({
+      claims: {
+        'PG-A-001': {
+          site: 'astrologywiki',
+          status: 'needs_human',
+          error: 'gate failed',
+        },
+      },
+      queue: [{
+        status,
+        event: { site: 'astrologywiki', pageId: 'PG-A-001', runId: 'run-1' },
+      }],
+    });
+    assert.equal(out.status, 0, `${out.stdout}\n${out.stderr}`);
+    assert.equal(out.json.eligibleNeedsHumanAfter, 0);
+  });
+}
+
+test('migration_hold remains eligible needs-human and blocks readiness', () => {
+  const out = readinessFixture({
+    claims: {
+      'PG-A-001': {
+        site: 'astrologywiki',
+        status: 'needs_human',
+        error: 'migration pending',
+      },
+    },
+    queue: [{
+      status: 'migration_hold',
+      event: { site: 'astrologywiki', pageId: 'PG-A-001', runId: 'run-1' },
+    }],
+  });
+  assert.equal(out.status, 2, `${out.stdout}\n${out.stderr}`);
+  assert.equal(out.json.eligibleNeedsHumanAfter, 1);
+});
+
+test('corrupt terminal owner cannot hide a matching needs-human claim', () => {
+  const out = readinessFixture({
+    claims: {
+      'PG-A-001': {
+        site: 'astrologywiki',
+        status: 'needs_human',
+        error: 'gate failed',
+      },
+    },
+    queue: [{
+      status: 'quarantined',
+      event: { site: 'astrologywiki', pageId: 'PG-A-001', runId: 'old-run' },
+      latestEvent: { site: 'gengrowth', pageId: 'PG-SDS-004', runId: 'run-1' },
+    }],
+  });
+  assert.equal(out.status, 2, `${out.stdout}\n${out.stderr}`);
+  assert.equal(out.json.eligibleNeedsHumanAfter, 1);
+  assert.match(out.json.errors.join('\n'), /owner/i);
+});

@@ -212,7 +212,10 @@ export async function evaluateSeoReadiness({
     || join(base, 'seo-repair-queue');
 
   let claims = {};
-  try { claims = existsSync(claimsPath) ? readJson(claimsPath, 'claims') : {}; }
+  try {
+    if (!existsSync(claimsPath)) throw new Error(`claims ledger missing: ${claimsPath}`);
+    claims = readJson(claimsPath, 'claims');
+  }
   catch (error) { errors.push(`claims: ${error.message}`); }
   let eligibleNeedsHumanAfter = 0;
   let expiredClaimLeases = 0;

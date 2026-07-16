@@ -6,8 +6,16 @@ export HOME="${HOME:-/Users/awayer_mini}"
 export PATH="$HOME/.local/bin:$HOME/.npm-global/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 export TZ="Asia/Shanghai"
 
-FLOW="${GG_SEO_RECONCILE_FLOW:-$HOME/gengrowth-flow-mvp}"
 ENV_FILE="${GG_ENV_FILE:-$HOME/.config/gg/_gg.env}"
+
+if [[ -f "$ENV_FILE" ]]; then
+  set -a
+  # shellcheck disable=SC1090
+  . "$ENV_FILE"
+  set +a
+fi
+
+FLOW="${GG_SEO_RECONCILE_FLOW:-$HOME/gengrowth-flow-mvp}"
 LOCK="${GG_SEO_RECONCILE_LOCK:-/tmp/gg-seo-reconcile.lock}"
 LOG="${GG_SEO_RECONCILE_LOG:-$HOME/Library/Logs/gg-seo-reconcile.out.log}"
 ERR_LOG="${GG_SEO_RECONCILE_ERR_LOG:-$HOME/Library/Logs/gg-seo-reconcile.err.log}"
@@ -22,13 +30,6 @@ BUDGET_SECONDS="${GG_SEO_REPAIR_BUDGET_SECONDS:-240}"
 
 mkdir -p "$(dirname "$LOG")" "$(dirname "$ERR_LOG")"
 exec >>"$LOG" 2>>"$ERR_LOG"
-
-if [[ -f "$ENV_FILE" ]]; then
-  set -a
-  # shellcheck disable=SC1090
-  . "$ENV_FILE"
-  set +a
-fi
 
 [[ -f "$CONTROLLER" ]] || { echo "controller unavailable: $CONTROLLER"; exit 1; }
 [[ -f "$RECONCILE" ]] || { echo "reconcile unavailable: $RECONCILE"; exit 1; }
@@ -72,7 +73,6 @@ acquire_lock() {
       echo "busy: lock changed during recovery"
       return 1
     fi
-    rm -rf "$stale"
     mkdir "$LOCK"
   fi
   node -e '
@@ -93,7 +93,10 @@ release_lock() {
     const fs = require("node:fs");
     try { process.stdout.write(JSON.parse(fs.readFileSync(process.argv[1], "utf8")).token || ""); } catch {}
   ' "$LOCK/owner.json")"
-  if [[ "$current_token" == "$TOKEN" ]]; then rm -rf "$LOCK"; fi
+  if [[ "$current_token" == "$TOKEN" ]]; then
+    rm -f "$LOCK/owner.json"
+    rmdir "$LOCK" 2>/dev/null || true
+  fi
 }
 
 if ! acquire_lock; then exit 0; fi

@@ -66,7 +66,12 @@ function zero(overrides = {}) {
   };
 }
 
-function defaultCliFixture({ claims = {}, queue = [], sheetPlan = false } = {}) {
+function defaultCliFixture({
+  claims = {},
+  queue = [],
+  sheetPlan = false,
+  missingClaims = false,
+} = {}) {
   const root = mkdtempSync(join(tmpdir(), 'ledger-reconcile-default-'));
   const fakeFlow = join(root, 'flow');
   const scripts = join(fakeFlow, 'tools/scripts');
@@ -77,7 +82,9 @@ function defaultCliFixture({ claims = {}, queue = [], sheetPlan = false } = {}) 
   const status = join(scripts, 'gg-reconcile-status.mjs');
   writeFileSync(status, '#!/usr/bin/env node\nprocess.exit(0);\n');
   chmodSync(status, 0o755);
-  writeFileSync(join(opsTasks, '.autopilot-claims.json'), `${JSON.stringify(claims)}\n`);
+  if (!missingClaims) {
+    writeFileSync(join(opsTasks, '.autopilot-claims.json'), `${JSON.stringify(claims)}\n`);
+  }
   if (sheetPlan) {
     writeFileSync(
       join(opsTasks, '2026-07-16-blog-output-plan-test.md'),
@@ -214,4 +221,12 @@ test('strict verification fails closed when sheet-driven plan source auth is una
   assert.equal(out.status, 2, `${out.stdout}\n${out.stderr}`);
   const json = JSON.parse(out.stdout);
   assert.match(json.errors.join('\n'), /sheet-plan verify/i);
+});
+
+test('strict verification fails closed when the claims ledger is missing', () => {
+  const fixture = defaultCliFixture({ missingClaims: true });
+  const out = fixture.run();
+  assert.equal(out.status, 2, `${out.stdout}\n${out.stderr}`);
+  const json = JSON.parse(out.stdout);
+  assert.match(json.errors.join('\n'), /claims.*missing/i);
 });

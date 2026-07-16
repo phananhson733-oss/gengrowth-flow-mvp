@@ -31,6 +31,7 @@ function readinessFixture({
   strictResult = strictZero(),
   staleReport = [],
   contamination = [],
+  missingClaims = false,
   now = '2026-07-16T11:00:00.000Z',
 } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'seo-readiness-'));
@@ -40,7 +41,7 @@ function readinessFixture({
   const planPath = join(root, 'plan.md');
   const claimsPath = join(root, 'claims.json');
   writeFileSync(planPath, plan);
-  writeFileSync(claimsPath, `${JSON.stringify(claims, null, 2)}\n`);
+  if (!missingClaims) writeFileSync(claimsPath, `${JSON.stringify(claims, null, 2)}\n`);
   queue.forEach((record, index) => {
     writeFileSync(join(queueDir, `record-${index}.json`), `${JSON.stringify(record, null, 2)}\n`);
   });
@@ -109,6 +110,20 @@ test('active repair independently blocks readiness', () => {
   assert.equal(out.json.activeRepairAfter, 1);
 });
 
+test('active scoped claim independently blocks readiness even with a future lease', () => {
+  const out = readinessFixture({
+    claims: {
+      'PG-A-001': {
+        site: 'astrologywiki',
+        status: 'active',
+        leaseUntil: '2026-07-16T12:00:00.000Z',
+      },
+    },
+  });
+  assert.equal(out.status, 2, `${out.stdout}\n${out.stderr}`);
+  assert.equal(out.json.activeRepairAfter, 1);
+});
+
 test('expired lease independently blocks readiness', () => {
   const out = readinessFixture({
     queue: [{
@@ -167,4 +182,25 @@ test('conflicting latestEvent owner cannot hide an active repair from the select
   });
   assert.equal(out.status, 2, `${out.stdout}\n${out.stderr}`);
   assert.match(out.json.errors.join('\n'), /owner/i);
+});
+
+test('missing claims ledger fails closed instead of becoming an empty ledger', () => {
+  const out = readinessFixture({ missingClaims: true });
+  assert.equal(out.status, 2, `${out.stdout}\n${out.stderr}`);
+  assert.match(out.json.errors.join('\n'), /claims.*missing/i);
+});
+
+test('active scoped claim with an invalid lease timestamp fails closed', () => {
+  const out = readinessFixture({
+    claims: {
+      'PG-A-001': {
+        site: 'astrologywiki',
+        status: 'active',
+        leaseUntil: 'not-a-date',
+      },
+    },
+  });
+  assert.equal(out.status, 2, `${out.stdout}\n${out.stderr}`);
+  assert.equal(out.json.expiredLeasesAfter, 1);
+  assert.match(out.json.errors.join('\n'), /lease/i);
 });

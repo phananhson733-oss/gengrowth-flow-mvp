@@ -63,7 +63,7 @@ function strictObject(value, label) {
 }
 
 function loadClaimsStrict(path = CLAIMS_PATH) {
-  if (!existsSync(path)) return {};
+  if (!existsSync(path)) throw new Error(`claims ledger missing: ${path}`);
   const claims = strictObject(JSON.parse(readFileSync(path, 'utf8')), 'claims');
   for (const [pageId, claim] of Object.entries(claims)) {
     strictObject(claim, `claim ${pageId}`);
@@ -120,16 +120,19 @@ function sweepPlanBoxes(claims, apply) {
   return checked;
 }
 
-async function sweepPlanBoxesBySheet(token, apply) {
-  let checked = 0;
-  let files = [];
+function blogPlanFiles() {
   try {
-    files = readdirSync(PLAN_DIR)
+    return readdirSync(PLAN_DIR)
       .filter((name) => /blog-output-plan.*\.md$/.test(name))
       .map((name) => join(PLAN_DIR, name));
   } catch {
-    return 0;
+    return [];
   }
+}
+
+async function sweepPlanBoxesBySheet(token, apply, strict = false) {
+  let checked = 0;
+  const files = blogPlanFiles();
   if (files.length === 0) return 0;
   for (const key of Object.keys(PRODUCTS)) {
     let pageIds = [];
@@ -149,7 +152,8 @@ async function sweepPlanBoxesBySheet(token, apply) {
         .filter((row) => String(row[statusIndex] || '').trim() === PUBLISHED)
         .map((row) => String(row[pageIndex] || '').trim())
         .filter(Boolean);
-    } catch {
+    } catch (error) {
+      if (strict) throw new Error(`${key}: ${error.message}`);
       continue;
     }
     for (const pageId of pageIds) {
@@ -291,7 +295,7 @@ async function defaultApply({ apply, log }) {
       const { token } = await getAccessToken(serviceAccount, [
         'https://www.googleapis.com/auth/spreadsheets.readonly',
       ]);
-      sheetChecked = await sweepPlanBoxesBySheet(token, true);
+      sheetChecked = await sweepPlanBoxesBySheet(token, true, false);
     } catch (error) {
       errors.push(`sheet-plan: ${error.message}`);
     }
@@ -316,11 +320,24 @@ async function defaultVerify({ log }) {
   ]);
   const sheetFlipsAfter = (status.out.match(/^\s*FLIP\s+/gim) || []).length;
   if (!status.ok) errors.push(`reconcile-status verify: ${status.error}`);
+  let sheetPlanUncheckedAfter = 0;
+  if (blogPlanFiles().length > 0) {
+    try {
+      const serviceAccount = process.env.GG_WRITER_SA_JSON
+        || join(HOME, '.config', 'gg', 'gg-writer-sa.json');
+      const { token } = await getAccessToken(serviceAccount, [
+        'https://www.googleapis.com/auth/spreadsheets.readonly',
+      ]);
+      sheetPlanUncheckedAfter = await sweepPlanBoxesBySheet(token, false, true);
+    } catch (error) {
+      errors.push(`sheet-plan verify: ${error.message}`);
+    }
+  }
   const repair = inspectRepairState(claims, errors, base);
   const result = {
     pendingWritebackAfter: inspectWriteback(errors, base),
     sheetFlipsAfter,
-    planUncheckedAfter: uncheckedDoneClaims(claims),
+    planUncheckedAfter: uncheckedDoneClaims(claims) + sheetPlanUncheckedAfter,
     activeRepairAfter: repair.activeRepairAfter,
     expiredLeasesAfter: repair.expiredLeasesAfter,
     eligibleNeedsHumanAfter: Object.values(claims)
@@ -362,8 +379,8 @@ export async function runLedgerReconcile({
   const verifyPass = deps.verify || defaultVerify;
   const inheritedErrors = [];
   let applied = { errors: [], summary: [] };
-  if (apply) {
-    try { applied = await applyPass({ apply: true, log }); }
+  if (apply || !strict) {
+    try { applied = await applyPass({ apply, log }); }
     catch (error) { inheritedErrors.push(`apply: ${error.message}`); }
   }
   if (Array.isArray(applied?.errors)) inheritedErrors.push(...applied.errors.map(String));

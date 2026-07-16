@@ -1,5 +1,13 @@
 import assert from 'node:assert/strict';
-import { chmodSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import {
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -16,13 +24,21 @@ function executable(path, source) {
   return path;
 }
 
-function harness({ hm = '2300', owner = null, drainExit = 0, reconcileExit = 0, readinessExit = 0 } = {}) {
+function harness({
+  hm = '2300',
+  owner = null,
+  drainExit = 0,
+  reconcileExit = 0,
+  readinessExit = 0,
+  useEnvFile = false,
+} = {}) {
   const root = mkdtempSync(join(tmpdir(), 'seo-reconcile-tick-'));
   const state = join(root, 'state');
   const queue = join(state, 'seo-repair-queue');
   const lock = join(root, 'tick.lock');
   const events = join(root, 'events.log');
   const plan = join(root, 'plan.md');
+  const envFile = join(root, 'gg.env');
   mkdirSync(queue, { recursive: true });
   writeFileSync(plan, '- [x] `PG-A-001` alpha\n');
   if (owner) {
@@ -50,6 +66,23 @@ function harness({ hm = '2300', owner = null, drainExit = 0, reconcileExit = 0, 
     `process.exit(${readinessExit});`,
     '',
   ].join('\n'));
+  if (useEnvFile) {
+    writeFileSync(envFile, [
+      `GG_SEO_REPAIR_CONTROLLER_BIN='${controller}'`,
+      `GG_SEO_RECONCILE_BIN='${reconcile}'`,
+      `GG_SEO_READINESS_BIN='${readiness}'`,
+      `GG_SEO_PLAN='${plan}'`,
+      "GG_SEO_SITE='gengrowth'",
+      '',
+    ].join('\n'));
+  }
+  const directBins = useEnvFile ? {} : {
+    GG_SEO_REPAIR_CONTROLLER_BIN: controller,
+    GG_SEO_RECONCILE_BIN: reconcile,
+    GG_SEO_READINESS_BIN: readiness,
+    GG_SEO_PLAN: plan,
+    GG_SEO_SITE: 'astrologywiki',
+  };
   const result = spawnSync('bash', [tick], {
     cwd: flow,
     encoding: 'utf8',
@@ -57,17 +90,13 @@ function harness({ hm = '2300', owner = null, drainExit = 0, reconcileExit = 0, 
       ...process.env,
       HOME: root,
       GG_FLOW_STATE_DIR: state,
-      GG_ENV_FILE: '/dev/null',
+      GG_ENV_FILE: useEnvFile ? envFile : '/dev/null',
       GG_SEO_RECONCILE_NOW_HM: hm,
       GG_SEO_RECONCILE_LOCK: lock,
       GG_SEO_RECONCILE_LOG: join(root, 'out.log'),
       GG_SEO_RECONCILE_ERR_LOG: join(root, 'err.log'),
       GG_SEO_REPAIR_QUEUE_DIR: queue,
-      GG_SEO_REPAIR_CONTROLLER_BIN: controller,
-      GG_SEO_RECONCILE_BIN: reconcile,
-      GG_SEO_READINESS_BIN: readiness,
-      GG_SEO_PLAN: plan,
-      GG_SEO_SITE: 'astrologywiki',
+      ...directBins,
       GG_TEST_EVENTS: events,
     },
   });
@@ -80,6 +109,7 @@ function harness({ hm = '2300', owner = null, drainExit = 0, reconcileExit = 0, 
 test('reconciler source contains no nightly, author, scan, or producer path', () => {
   const source = readFileSync(tick, 'utf8');
   assert.doesNotMatch(source, /gg-nightly-seo\.sh|--author|\bscan\b|producer/i);
+  assert.doesNotMatch(source, /rm\s+-rf/);
 });
 
 test('23:00 tick runs strict reconcile/readiness without draining content repair', () => {
@@ -133,6 +163,9 @@ test('expired lease is recovered in the same tick', () => {
   });
   assert.equal(h.result.status, 0, `${h.result.stdout}\n${h.result.stderr}`);
   assert.equal(h.lines.length, 2);
+  const archives = readdirSync(h.root).filter((name) => name.startsWith('tick.lock.stale-'));
+  assert.equal(archives.length, 1);
+  assert.equal(existsSync(join(h.root, archives[0], 'owner.json')), true);
 });
 
 test('controller failure still runs strict reconcile/readiness and owns exit', () => {
@@ -150,4 +183,11 @@ test('strict reconcile failure still runs readiness with its machine result', ()
   assert.equal(h.lines.length, 2);
   assert.match(h.lines[0], /^reconcile /);
   assert.match(h.lines[1], /^readiness /);
+});
+
+test('environment file is sourced before deriving bins, plan, and site', () => {
+  const h = harness({ hm: '1900', useEnvFile: true });
+  assert.equal(h.result.status, 0, `${h.result.stdout}\n${h.result.stderr}`);
+  assert.equal(h.lines.length, 3);
+  assert.match(h.lines[2], /--site gengrowth/);
 });

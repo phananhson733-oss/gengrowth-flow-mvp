@@ -574,6 +574,33 @@ test('--author awaits the repair tail so controller failure reaches the fatal ha
   }
 });
 
+test('--author skips safely when another product owns the global author executor', () => {
+  const h = makeHarness();
+  try {
+    const lock = join(h.root, 'global-author.lock');
+    mkdirSync(lock, { recursive: true });
+    const start = execFileSync('ps', ['-o', 'lstart=', '-p', String(process.pid)], { encoding: 'utf8' }).trim();
+    writeFileSync(join(lock, 'owner.json'), JSON.stringify({
+      pid: process.pid,
+      start,
+      token: 'test-owner',
+      lane: 'other-product',
+    }));
+
+    const r = runAuto(
+      h,
+      ['--author', '--task', 'PG-TEST-001'],
+      { GG_AUTHOR_GLOBAL_LOCK: lock },
+    );
+
+    assert.equal(r.status, 0, `${r.stdout}${r.stderr}`);
+    assert.match(r.stderr, /author executor busy.*other-product/i);
+    assert.equal(existsSync(h.claimsPath), false, 'busy author must not mutate claims');
+  } finally {
+    h.cleanup();
+  }
+});
+
 test('repair controller child timeout includes the five-minute persistence and unlock margin', () => {
   const source = readFileSync(SCRIPT, 'utf8');
   assert.match(

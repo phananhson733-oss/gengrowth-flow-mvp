@@ -171,6 +171,7 @@ const DEFAULT_SITE = 'sc-domain:astrologywiki.com';
 const DEFAULT_SITE_ORIGIN = 'https://www.astrologywiki.com';
 const SHEETS_SCOPE = 'https://www.googleapis.com/auth/spreadsheets';
 const GSC_READONLY_SCOPE = 'https://www.googleapis.com/auth/webmasters.readonly';
+const GA4_READONLY_SCOPE = 'https://www.googleapis.com/auth/analytics.readonly';
 const GSC_WRITE_SCOPE = 'https://www.googleapis.com/auth/webmasters';
 const DEFAULT_SITEMAP_URL = 'https://www.astrologywiki.com/sitemap.xml';
 // Hosts whose /en/wiki/ + /en/blog/ single-segment URLs are trackable articles. Keyed off the
@@ -201,8 +202,8 @@ const KNOWN_TOOL_SLUGS = Object.freeze(new Set([
   'synastry-calculator',
 ]));
 
-function readerSaPath() {
-  return process.env.GG_READER_SA_JSON || join(homedir(), '.config', 'gg', 'gg-reader-sa.json');
+function readerSaPath(env = process.env, home = homedir()) {
+  return env.GG_READER_SA_JSON || join(home, '.config', 'gg', 'gg-reader-sa.json');
 }
 
 function writerSaPath() {
@@ -216,6 +217,18 @@ export async function getSheetAccessToken() {
 
 export async function getGscAccessToken() {
   const { token } = await getSaAccessToken(readerSaPath(), [GSC_READONLY_SCOPE]);
+  return token;
+}
+
+export async function getReportingAccessToken({
+  env = process.env,
+  home = homedir(),
+  tokenProvider = getSaAccessToken,
+} = {}) {
+  const { token } = await tokenProvider(
+    readerSaPath(env, home),
+    [GSC_READONLY_SCOPE, GA4_READONLY_SCOPE],
+  );
   return token;
 }
 

@@ -9,13 +9,13 @@
 import { mkdir, writeFile as fsWriteFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
-import { getAccessToken as getUserAccessToken } from './lib/_oauth-token.mjs';
 import { gFetch, loadEnv, resolveWorkbookId } from './lib/gg-shared.mjs';
 import {
   INDEX_TRACKING_TAB,
   RECAP_HEADER,
   RECAP_TAB,
   batchUpdateRecapRows,
+  getReportingAccessToken,
   getSheetAccessToken,
   readRecapRows,
   readTrackingRows,
@@ -798,9 +798,9 @@ export async function runRecapPerformance(argv, deps = {}) {
   let analyticsToken = deps.analyticsToken;
   if (!analyticsToken) {
     try {
-      analyticsToken = await (deps.getAnalyticsToken || getUserAccessToken)({ user: true });
+      analyticsToken = await (deps.getAnalyticsToken || getReportingAccessToken)();
     } catch (e) {
-      process.stderr.write(`error: cannot mint GSC/GA4 user token — ${e.message}\n`);
+      process.stderr.write(`error: cannot mint GSC/GA4 reader SA token — ${e.message}\n`);
       return 1;
     }
   }

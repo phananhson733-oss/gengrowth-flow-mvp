@@ -558,6 +558,43 @@ test('astrology adapter repairs one target, reruns the complete gate, and accept
   assert.deepEqual(calls.map(([name]) => name), ['agent', 'persist', 'regate', 'publish']);
 });
 
+test('astrology adapter stops before every repair side effect when the shared deadline is exhausted', async () => {
+  const calls = [];
+  const adapter = createAstrologyWikiRepairAdapter({
+    nowMs: () => 1,
+    resolveContext: async () => ({
+      branch: 'seo/auto/PG-TRANS-016',
+      worktree: '/oracle-worktrees/pg-trans-016',
+      articleFile: '/oracle-worktrees/pg-trans-016/data/articles/saturn-return-age-29.ts',
+      changedFiles: ['data/articles/saturn-return-age-29.ts'],
+      linkCandidates: [],
+    }),
+    invokeAgent: async () => { calls.push('agent'); return { ok: true }; },
+    persistRepair: async () => { calls.push('persist'); return { ok: true }; },
+    regate: async () => { calls.push('regate'); return { ok: true }; },
+    publish: async () => { calls.push('publish'); return { ok: true }; },
+    verifyTerminal: async () => {
+      calls.push('verify');
+      return { ok: true, terminal: 'published' };
+    },
+  });
+  const result = await adapter.execute({
+    record: {
+      fingerprint: 'fp-trans-016',
+      event: {
+        site: 'astrologywiki', pageId: 'PG-TRANS-016', slug: 'saturn-return-age-29',
+        stage: 'preview_fact_gate', errorKind: 'asset_fail', summary: 'SVG age 14', stderr: 'FAIL',
+      },
+    },
+    strategy: 'agent_content_asset_link',
+    attemptDeadlineAt: new Date(0).toISOString(),
+  });
+  assert.deepEqual(calls, []);
+  assert.equal(result.ok, false);
+  assert.equal(result.agentMutationInvoked, false);
+  assert.equal(result.evidence.type, 'repair_deadline_exhausted');
+});
+
 test('astrology deterministic failure fingerprints worktree content and never claims Agent mutation', async (t) => {
   const artifact = await tempArtifact(
     t,
@@ -663,6 +700,60 @@ test('astrology Agent failure fingerprints a newly created dirty target asset', 
   assert.equal(first.agentMutationInvoked, true);
   assert.equal(second.agentMutationInvoked, true);
   assert.match(first.evidence.artifactSha, /^[a-f0-9]{64}$/);
+  assert.notEqual(second.evidence.artifactSha, first.evidence.artifactSha);
+});
+
+test('astrology failure SHA retains a newly persisted target asset after the worktree becomes clean', async (t) => {
+  const artifact = await tempArtifact(
+    t,
+    'data/articles/saturn-return-age-29.ts',
+    'export const article = { title: "stable article" };\n',
+  );
+  execFileSync('git', ['init', '-q'], { cwd: artifact.root });
+  execFileSync('git', ['config', 'user.name', 'seo-repair-test'], { cwd: artifact.root });
+  execFileSync('git', ['config', 'user.email', 'seo-repair-test@example.invalid'], { cwd: artifact.root });
+  execFileSync('git', ['add', '.'], { cwd: artifact.root });
+  execFileSync('git', ['commit', '-qm', 'fixture'], { cwd: artifact.root });
+  const assetRelative = 'public/images/blog/saturn-return-age-29-i0-en.svg';
+  const assetPath = join(artifact.root, assetRelative);
+  await mkdir(dirname(assetPath), { recursive: true });
+  let attempt = 0;
+  const adapter = createAstrologyWikiRepairAdapter({
+    resolveContext: async () => ({
+      branch: 'seo/auto/PG-TRANS-016',
+      worktree: artifact.root,
+      articleFile: artifact.path,
+      changedFiles: ['data/articles/saturn-return-age-29.ts'],
+      linkCandidates: [],
+    }),
+    invokeAgent: async () => ({ ok: true }),
+    persistRepair: async () => {
+      attempt += 1;
+      await writeFile(assetPath, `<svg><text>persisted attempt ${attempt}</text></svg>\n`, 'utf8');
+      execFileSync('git', ['add', '--', assetRelative], { cwd: artifact.root });
+      execFileSync('git', ['commit', '-qm', `persisted asset ${attempt}`], { cwd: artifact.root });
+      return { ok: true, changedFiles: [assetRelative] };
+    },
+    regate: async () => ({ ok: false, reason: 'gate still fails' }),
+  });
+  const input = {
+    record: {
+      fingerprint: 'fp-trans-016',
+      event: {
+        site: 'astrologywiki', pageId: 'PG-TRANS-016', slug: 'saturn-return-age-29',
+        stage: 'preview_fact_gate', errorKind: 'asset_fail', summary: 'SVG age 14', stderr: 'FAIL',
+      },
+    },
+    strategy: 'agent_content_asset_link',
+  };
+  const first = await adapter.execute(input);
+  const second = await adapter.execute(input);
+  assert.equal(execFileSync('git', ['status', '--porcelain'], {
+    cwd: artifact.root,
+    encoding: 'utf8',
+  }), '');
+  assert.match(first.evidence.artifactSha, /^[a-f0-9]{64}$/);
+  assert.match(second.evidence.artifactSha, /^[a-f0-9]{64}$/);
   assert.notEqual(second.evidence.artifactSha, first.evidence.artifactSha);
 });
 

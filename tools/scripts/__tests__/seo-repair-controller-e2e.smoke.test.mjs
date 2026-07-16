@@ -45,8 +45,8 @@ function harness(t) {
   const notifyModule = join(root, 'fake-notify.mjs');
   writeFileSync(adapterModule, [
     "import { appendFileSync } from 'node:fs';",
-    "const execute = async ({ record, strategy }) => {",
-    "  appendFileSync(process.env.GG_TEST_ADAPTER_CALLS, JSON.stringify({ pageId: record.event.pageId, strategy }) + '\\n');",
+    "const execute = async ({ record, strategy, attemptDeadlineAt }) => {",
+    "  appendFileSync(process.env.GG_TEST_ADAPTER_CALLS, JSON.stringify({ pageId: record.event.pageId, strategy, attemptDeadlineAt }) + '\\n');",
     "  return { terminal: 'published', evidence: { checks: { production_200: true, backfilled: true } } };",
     "};",
     "export default { gengrowth: { execute }, astrologywiki: { execute } };",
@@ -186,6 +186,22 @@ test('maxTargets=1 processes one event and leaves the second queued', (t) => {
   assert.equal(h.lines(h.notifyCalls).length, 1);
   const records = h.json(h.run(['inspect'])).records;
   assert.deepEqual(records.map((record) => record.status).sort(), ['published', 'queued']);
+});
+
+test('default CLI drain grants one 25-minute attempt deadline', (t) => {
+  const h = harness(t);
+  const path = join(h.root, 'event.json');
+  writeFileSync(path, JSON.stringify(event({ createdAt: new Date().toISOString() })));
+  const enqueued = h.run(['enqueue', '--event-json', path]);
+  assert.equal(enqueued.status, 0, `${enqueued.stdout}\n${enqueued.stderr}`);
+  const before = Date.now();
+  const drained = h.run(['drain', '--max-targets', '1']);
+  const after = Date.now();
+  assert.equal(drained.status, 0, `${drained.stdout}\n${drained.stderr}`);
+  const [call] = h.lines(h.adapterCalls);
+  const deadline = Date.parse(call.attemptDeadlineAt);
+  assert.equal(deadline >= before + 25 * 60 * 1000, true);
+  assert.equal(deadline <= after + 25 * 60 * 1000, true);
 });
 
 test('import-v1 converts all repairable claims without applying the v1 attempt cap', (t) => {

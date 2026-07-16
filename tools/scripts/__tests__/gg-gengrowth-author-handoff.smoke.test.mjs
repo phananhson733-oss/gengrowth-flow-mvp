@@ -4,7 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { mkdtemp, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { handoffGengrowthAuthor } from '../gg-gengrowth-author-handoff.mjs';
 
@@ -140,6 +140,45 @@ test('author handoff restores an existing ready pair when replacement fails befo
   assert.equal(output.handedOff, true);
   assert.deepEqual(await readFile(targetMd), await readFile(built.sourceMd));
   assert.deepEqual(await readFile(targetManifest), await readFile(built.sourceManifest));
+});
+
+test('official author handoff automatically recovers after a real child SIGKILL between draft and manifest', async (t) => {
+  const built = await handoffFixture(t);
+  const targetMd = join(built.stagingDir, `${built.pageId}-claude-v8.md`);
+  const targetManifest = join(built.stagingDir, `${built.pageId}-claude-v8.manifest.json`);
+  await writeFile(targetMd, validDraft('old-live-slug'), 'utf8');
+  await writeFile(
+    targetManifest,
+    `${JSON.stringify({ phase2_checks: { overall: 'pass' }, version: 'old' })}\n`,
+    'utf8',
+  );
+  const helperUrl = pathToFileURL(HELPER).href;
+  const killed = spawnSync(process.execPath, [
+    '--input-type=module',
+    '--eval',
+    [
+      `import { handoffGengrowthAuthor } from ${JSON.stringify(helperUrl)};`,
+      `await handoffGengrowthAuthor(${JSON.stringify({
+        pageId: built.pageId,
+        stagingDir: built.stagingDir,
+        winner: 'claude',
+      })}, {`,
+      "  transactionId: 'sigkill-cut',",
+      "  faultInjector: async (point) => { if (point === 'after-draft-before-manifest') process.kill(process.pid, 'SIGKILL'); },",
+      '});',
+    ].join('\n'),
+  ], { encoding: 'utf8' });
+  assert.equal(killed.signal, 'SIGKILL', `${killed.stdout}\n${killed.stderr}`);
+  assert.equal((await readdir(built.stagingDir)).some((name) => name.endsWith('.bak')), true);
+
+  const recovered = runHelper(['--page-id', built.pageId], built.stagingDir);
+  assert.equal(recovered.status, 0, `${recovered.stdout}\n${recovered.stderr}`);
+  assert.deepEqual(await readFile(targetMd), await readFile(built.sourceMd));
+  assert.deepEqual(await readFile(targetManifest), await readFile(built.sourceManifest));
+  assert.deepEqual(
+    (await readdir(built.stagingDir)).filter((name) => name.startsWith('.handoff-')),
+    [],
+  );
 });
 
 test('author handoff preserves rollback backups when restoring the old pair itself fails', async (t) => {

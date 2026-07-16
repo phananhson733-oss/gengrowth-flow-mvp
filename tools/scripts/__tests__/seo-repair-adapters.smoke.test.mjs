@@ -179,6 +179,52 @@ test('gengrowth authoring repair stops at the first failed scoped recovery comma
   ]);
 });
 
+test('gengrowth authoring repair salvages a passing handoff after author timeout', async () => {
+  const calls = [];
+  const timeouts = [];
+  const ready = {
+    mdPath: '/repo/_staging/PG-SDS-004-claude-v8.md',
+    manifestPath: '/repo/_staging/PG-SDS-004-claude-v8.manifest.json',
+    slug: 'software-development-services',
+  };
+  const adapter = createGengrowthRepairAdapter({
+    scriptsDir: '/repo/tools/scripts',
+    resolveTarget: async () => { throw new Error('must not resolve original author target'); },
+    resolveAuthoredTarget: async () => ready,
+    runCommand: async (argv, options) => {
+      calls.push(argv);
+      timeouts.push(options.timeoutMs);
+      if (argv.includes('--author')) {
+        return { code: 124, stdout: 'phase2 draft already passed', stderr: 'review cut', timedOut: true };
+      }
+      if (argv[1].endsWith('gg-codex-pr-review.mjs')) {
+        return { code: 0, stdout: 'VERDICT: PASS\n', stderr: '', timedOut: false };
+      }
+      return { code: 0, stdout: JSON.stringify({ ok: true, handedOff: true }), stderr: '', timedOut: false };
+    },
+    verifyTerminal: async () => ({
+      ok: true,
+      terminal: 'published',
+      checks: { supabase_published: true, production_200: true, writeback_clear: true },
+    }),
+  });
+
+  const result = await adapter.execute({
+    record: authoringRecord(),
+    classification: 'transient',
+    strategy: 'deterministic_repair',
+  });
+  assert.deepEqual(calls.slice(0, 3), [
+    ['node', '/repo/tools/scripts/gg-seo-autopilot.mjs', '--retry-author', '--task', 'PG-SDS-004'],
+    ['node', '/repo/tools/scripts/gg-seo-autopilot.mjs', '--author', '--task', 'PG-SDS-004', '--limit', '1'],
+    ['node', '/repo/tools/scripts/gg-gengrowth-author-handoff.mjs', '--page-id', 'PG-SDS-004'],
+  ]);
+  assert.equal(Math.max(...timeouts.slice(0, 3)) <= 20 * 60 * 1000, true);
+  assert.equal(result.terminal, 'published');
+  assert.equal(result.evidence.authorRecovery.authorCut, true);
+  assert.equal(result.evidence.authorRecovery.results[1].code, 124);
+});
+
 test('gengrowth adapter action whitelist rejects top-level wrappers and arbitrary sources', () => {
   const context = {
     scriptsDir: '/repo/tools/scripts',

@@ -1,10 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+import { handoffGengrowthAuthor } from '../gg-gengrowth-author-handoff.mjs';
 
 const TEST_DIR = dirname(fileURLToPath(import.meta.url));
 const SCRIPTS_DIR = resolve(TEST_DIR, '..');
@@ -102,6 +104,42 @@ test('author handoff rejects path-like IDs and refuses bad manifests or truncate
   const truncated = runHelper(['--page-id', built.pageId], built.stagingDir);
   assert.notEqual(truncated.status, 0);
   assert.equal(JSON.parse(truncated.stdout.trim()).reason, 'draft_not_sane');
+});
+
+test('author handoff restores an existing ready pair when replacement fails before manifest commit', async (t) => {
+  const built = await handoffFixture(t);
+  const targetMd = join(built.stagingDir, `${built.pageId}-claude-v8.md`);
+  const targetManifest = join(built.stagingDir, `${built.pageId}-claude-v8.manifest.json`);
+  const oldDraft = validDraft('old-live-slug');
+  const oldManifest = `${JSON.stringify({ phase2_checks: { overall: 'pass' }, version: 'old' })}\n`;
+  await writeFile(targetMd, oldDraft, 'utf8');
+  await writeFile(targetManifest, oldManifest, 'utf8');
+
+  await assert.rejects(() => handoffGengrowthAuthor({
+    pageId: built.pageId,
+    stagingDir: built.stagingDir,
+    winner: 'claude',
+  }, {
+    faultInjector: async (point) => {
+      if (point === 'after-draft-before-manifest') throw new Error('simulated handoff cut');
+    },
+  }), /simulated handoff cut/);
+
+  assert.equal(await readFile(targetMd, 'utf8'), oldDraft);
+  assert.equal(await readFile(targetManifest, 'utf8'), oldManifest);
+  assert.deepEqual(
+    (await readdir(built.stagingDir)).filter((name) => name.startsWith('.handoff-')),
+    [],
+  );
+
+  const output = await handoffGengrowthAuthor({
+    pageId: built.pageId,
+    stagingDir: built.stagingDir,
+    winner: 'claude',
+  });
+  assert.equal(output.handedOff, true);
+  assert.deepEqual(await readFile(targetMd), await readFile(built.sourceMd));
+  assert.deepEqual(await readFile(targetManifest), await readFile(built.sourceManifest));
 });
 
 test('author tick delegates handoff validation and copying to the shared helper', async () => {

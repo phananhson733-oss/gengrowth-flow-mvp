@@ -124,30 +124,57 @@ export async function recoverGengrowthAuthoring(event, deps = {}) {
     };
   }
   const commands = [
-    ['node', join(scriptsDir, 'gg-seo-autopilot.mjs'), '--retry-author', '--task', pageId],
-    ['node', join(scriptsDir, 'gg-seo-autopilot.mjs'), '--author', '--task', pageId, '--limit', '1'],
-    ['node', join(scriptsDir, 'gg-gengrowth-author-handoff.mjs'), '--page-id', pageId],
+    {
+      role: 'retry_author',
+      argv: ['node', join(scriptsDir, 'gg-seo-autopilot.mjs'), '--retry-author', '--task', pageId],
+      timeoutMs: 2 * 60 * 1000,
+    },
+    {
+      role: 'author',
+      argv: ['node', join(scriptsDir, 'gg-seo-autopilot.mjs'), '--author', '--task', pageId, '--limit', '1'],
+      timeoutMs: Math.min(
+        20 * 60 * 1000,
+        Math.max(1, Number(process.env.GG_GENGROWTH_AUTHOR_RECOVERY_TIMEOUT_MS) || (20 * 60 * 1000)),
+      ),
+    },
+    {
+      role: 'handoff',
+      argv: ['node', join(scriptsDir, 'gg-gengrowth-author-handoff.mjs'), '--page-id', pageId],
+      timeoutMs: 60 * 1000,
+    },
   ];
   const results = [];
-  for (const argv of commands) {
-    const result = await runCommand(argv, {
-      cwd: flow,
-      env: process.env,
-      timeoutMs: Number(process.env.GG_GENGROWTH_AUTHOR_RECOVERY_TIMEOUT_MS) || 3_900_000,
-    });
+  for (const command of commands) {
+    let result;
+    try {
+      result = await runCommand(command.argv, {
+        cwd: flow,
+        env: process.env,
+        timeoutMs: command.timeoutMs,
+      });
+    } catch (error) {
+      result = {
+        code: 1,
+        stdout: '',
+        stderr: error instanceof Error ? error.message : String(error),
+        timedOut: false,
+      };
+    }
     results.push({
-      argv,
+      role: command.role,
+      argv: command.argv,
       code: result?.code ?? 1,
       timedOut: result?.timedOut === true,
       stdout: String(result?.stdout || '').slice(-4_096),
       stderr: String(result?.stderr || '').slice(-4_096),
     });
-    if (result?.code !== 0 || result?.timedOut) {
+    const failed = result?.code !== 0 || result?.timedOut;
+    if (failed && command.role !== 'author') {
       return {
         target: null,
         evidence: {
           type: 'author_recovery_failed',
-          failedCommand: argv,
+          failedCommand: command.argv,
           results,
         },
       };
@@ -157,7 +184,12 @@ export async function recoverGengrowthAuthoring(event, deps = {}) {
     const target = await resolveAuthoredTarget(event);
     return {
       target,
-      evidence: { type: 'author_recovered_and_handed_off', results },
+      evidence: {
+        type: 'author_recovered_and_handed_off',
+        authorCut: results.find((result) => result.role === 'author')?.code !== 0
+          || results.find((result) => result.role === 'author')?.timedOut === true,
+        results,
+      },
     };
   } catch (error) {
     return {
@@ -187,6 +219,7 @@ export function createGengrowthRepairAdapter(deps = {}) {
     async execute({ record, strategy }) {
       const event = record.event;
       let target;
+      let authorRecoveryEvidence = null;
       if (isAuthoringEvent(event)) {
         const recovered = await recoverGengrowthAuthoring(event, {
           scriptsDir,
@@ -198,9 +231,14 @@ export function createGengrowthRepairAdapter(deps = {}) {
           return { ok: false, agentMutationInvoked: false, evidence: recovered.evidence };
         }
         target = recovered.target;
+        authorRecoveryEvidence = recovered.evidence;
       } else {
         target = await resolveTarget(event);
       }
+      const withAuthorRecovery = (evidence) => ({
+        ...(evidence || {}),
+        ...(authorRecoveryEvidence ? { authorRecovery: authorRecoveryEvidence } : {}),
+      });
       const context = {
         scriptsDir,
         pageId: event.pageId,
@@ -231,7 +269,7 @@ export function createGengrowthRepairAdapter(deps = {}) {
           return {
             ok: false,
             agentMutationInvoked: true,
-            evidence: repaired?.evidence || { type: 'agent_repair_failed' },
+            evidence: withAuthorRecovery(repaired?.evidence || { type: 'agent_repair_failed' }),
           };
         }
       }
@@ -258,7 +296,7 @@ export function createGengrowthRepairAdapter(deps = {}) {
         return {
           ok: false,
           agentMutationInvoked: needsAgent,
-          evidence: {
+          evidence: withAuthorRecovery({
             type: verdict.verdict === 'FAIL' ? 'fact_gate_fail' : 'reviewer_tool_failure',
             strategy,
             verdict: verdict.verdict,
@@ -267,7 +305,7 @@ export function createGengrowthRepairAdapter(deps = {}) {
             stdout: reviewed.stdout,
             stderr: reviewed.stderr,
             timedOut: reviewed.timedOut,
-          },
+          }),
         };
       }
 
@@ -292,29 +330,33 @@ export function createGengrowthRepairAdapter(deps = {}) {
         return {
           ok: false,
           agentMutationInvoked: needsAgent,
-          evidence: {
+          evidence: withAuthorRecovery({
             type: 'publish_fail',
             strategy,
             code: published.code,
             stdout: published.stdout,
             stderr: published.stderr,
             timedOut: published.timedOut,
-          },
+          }),
         };
       }
 
       const verified = await verifyTerminal(event, target);
       if (verified?.ok === true && verified?.terminal === 'published') {
-        return { terminal: 'published', agentMutationInvoked: needsAgent, evidence: verified };
+        return {
+          terminal: 'published',
+          agentMutationInvoked: needsAgent,
+          evidence: withAuthorRecovery(verified),
+        };
       }
       return {
         ok: false,
         agentMutationInvoked: needsAgent,
-        evidence: {
+        evidence: withAuthorRecovery({
           type: 'terminal_verifier_failed',
           strategy,
           verification: verified || null,
-        },
+        }),
       };
     },
   };

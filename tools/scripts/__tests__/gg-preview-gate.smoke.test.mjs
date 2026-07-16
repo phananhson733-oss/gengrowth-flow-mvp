@@ -35,6 +35,37 @@ const HEAD_A = 'a'.repeat(40);
 const HEAD_B = 'b'.repeat(40);
 const HEAD_C = 'c'.repeat(40);
 const sha256 = (value) => createHash('sha256').update(value).digest('hex');
+const PNG = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+  'base64',
+);
+const publicResolver = async () => [{ address: '93.184.216.34', family: 4 }];
+
+function response({
+  status = 200,
+  url,
+  contentType = 'text/html; charset=utf-8',
+  body = '',
+  extraHeaders = {},
+} = {}) {
+  const bytes = Buffer.isBuffer(body) ? body : Buffer.from(body);
+  const headers = Object.fromEntries(
+    Object.entries(extraHeaders).map(([name, value]) => [name.toLowerCase(), value]),
+  );
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    url,
+    redirected: false,
+    headers: {
+      get: (name) => name.toLowerCase() === 'content-type'
+        ? contentType
+        : (headers[name.toLowerCase()] || null),
+    },
+    text: async () => bytes.toString('utf8'),
+    arrayBuffer: async () => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength),
+  };
+}
 
 // A fresh sandbox per test run (pid-scoped); each test gets its own bin dir + sentinel dir.
 const ROOT = join(tmpdir(), `gg-preview-gate-test-${process.pid}`);
@@ -955,6 +986,55 @@ test('a repair invalidates every earlier gate result and reruns all checks on th
   });
   assert.equal(evidence.artifactSha, '1'.repeat(64));
   assert.equal(fixture.mergeCalls().length, 1);
+});
+
+test('preview-origin final assets receive bypass headers without leaking the secret to live or CDN origins', async () => {
+  const oldSecret = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+  process.env.VERCEL_AUTOMATION_BYPASS_SECRET = 'preview-only-secret';
+  const calls = [];
+  try {
+    const result = await previewGate.verifyPreviewFinalArtifacts({
+      previewUrl: 'https://preview.example.test',
+      slug: 'source',
+      reviewedHeadRefOid: HEAD_A,
+      reviewBundle: {
+        article: { sha256: '1'.repeat(64) },
+      },
+    }, {
+      allowedAssetHosts: new Set(['cdn.example']),
+      resolveAssetHost: publicResolver,
+      decodeImage: async () => true,
+      fetchFinalArtifact: async (url, init = {}) => {
+        calls.push({ url, headers: { ...(init.headers || {}) } });
+        if (url === 'https://preview.example.test/en/wiki/source') {
+          return response({
+            url,
+            body: '<img src="/images/hero.png"><img src="https://cdn.example/hero.png">',
+          });
+        }
+        if (url === 'https://www.astrologywiki.com/sitemap.xml') {
+          return response({ url, body: '<urlset></urlset>' });
+        }
+        return response({ url, contentType: 'image/png', body: PNG });
+      },
+    });
+    assert.equal(result.ok, true, JSON.stringify(result));
+    const previewCalls = calls.filter((call) => new URL(call.url).origin === 'https://preview.example.test');
+    assert.equal(previewCalls.length, 2);
+    assert.equal(previewCalls.every(
+      (call) => call.headers['x-vercel-protection-bypass'] === 'preview-only-secret',
+    ), true);
+    assert.equal(previewCalls.every(
+      (call) => call.headers['x-vercel-set-bypass-cookie'] === 'true',
+    ), true);
+    for (const call of calls.filter((entry) => new URL(entry.url).origin !== 'https://preview.example.test')) {
+      assert.equal(call.headers['x-vercel-protection-bypass'], undefined, call.url);
+      assert.equal(call.headers['x-vercel-set-bypass-cookie'], undefined, call.url);
+    }
+  } finally {
+    if (oldSecret === undefined) delete process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+    else process.env.VERCEL_AUTOMATION_BYPASS_SECRET = oldSecret;
+  }
 });
 
 test('the second consecutive identical artifact and failure fingerprint stops before a third edit', async () => {

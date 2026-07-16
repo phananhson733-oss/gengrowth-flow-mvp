@@ -25,20 +25,30 @@ function response({
   contentType = 'text/html; charset=utf-8',
   body = '',
   redirected = false,
+  extraHeaders = {},
 } = {}) {
   const bytes = Buffer.isBuffer(body) ? body : Buffer.from(body);
+  const normalizedHeaders = Object.fromEntries(
+    Object.entries(extraHeaders).map(([key, value]) => [key.toLowerCase(), value]),
+  );
   return {
     ok: status >= 200 && status < 300,
     status,
     url,
     redirected,
-    headers: { get: (name) => name.toLowerCase() === 'content-type' ? contentType : null },
+    headers: {
+      get: (name) => name.toLowerCase() === 'content-type'
+        ? contentType
+        : (normalizedHeaders[name.toLowerCase()] || null),
+    },
     text: async () => canonical == null
       ? bytes.toString('utf8')
       : `<html><head><link rel="canonical" href="${canonical}"></head></html>`,
     arrayBuffer: async () => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength),
   };
 }
+
+const publicResolver = async () => [{ address: '93.184.216.34', family: 4 }];
 
 test('every rendered internal link must be route-or-sitemap verified, 200, and canonical', async () => {
   const result = await verifyFinalLinks({
@@ -121,6 +131,26 @@ test('a redirect target drift fails even if the redirected page claims the origi
   assert.match(result.failed[0].reason, /redirect target drift/i);
 });
 
+test('javascript and other unsafe non-http link protocols fail instead of being ignored as external', async () => {
+  let fetched = 0;
+  const result = await verifyFinalLinks({
+    html: [
+      '<a href="javascript:alert(1)">js</a>',
+      '<a href="data:text/html,bad">data</a>',
+      '<a href="file:///etc/passwd">file</a>',
+    ].join(''),
+    pageUrl: PAGE_URL,
+    allowedRoutes: new Set(),
+    sitemapUrls: new Set(),
+    fetch: async () => { fetched++; throw new Error('must not fetch'); },
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.failed.length, 3);
+  assert.equal(result.ignored.length, 0);
+  assert.equal(fetched, 0);
+  assert.equal(result.failed.every((entry) => /unsafe|protocol|invalid/i.test(entry.reason)), true);
+});
+
 for (const mode of ['404', 'wrong-mime', 'empty', 'decode-fail']) {
   test(`referenced image ${mode} blocks publish`, async () => {
     const decodeCalls = [];
@@ -186,6 +216,48 @@ test('the default raster parser accepts a complete PNG and rejects a truncated s
   const truncated = await verify(PNG.subarray(0, 24));
   assert.equal(truncated.ok, false);
   assert.match(truncated.failed[0].reason, /PNG/i);
+});
+
+test('empty img/source src and empty srcset candidates fail closed without fetching', async () => {
+  for (const html of [
+    '<img src="">',
+    '<picture><source src=""></picture>',
+    '<picture><source srcset=""></picture>',
+    '<picture><source srcset="/images/a.png 1x, "></picture>',
+  ]) {
+    let fetched = 0;
+    const result = await verifyFinalAssets({
+      html,
+      pageUrl: PAGE_URL,
+      fetch: async () => { fetched++; throw new Error('must not fetch'); },
+    });
+    assert.equal(result.ok, false, html);
+    assert.match(result.failed[0].reason, /empty|missing/i, html);
+    assert.equal(fetched, 0, html);
+  }
+});
+
+test('inline use fragment must belong to the same structurally valid inline SVG', async () => {
+  const verify = (html) => verifyFinalAssets({
+    html,
+    pageUrl: PAGE_URL,
+    fetch: async () => { throw new Error('inline SVG must not fetch'); },
+  });
+
+  assert.equal((await verify(
+    '<svg><symbol id="moon"><path d="M0 0"/></symbol><use href="#moon"></use></svg>',
+  )).ok, true);
+
+  for (const html of [
+    '<div id="moon"></div><svg><use href="#moon"></use></svg>',
+    '<svg><symbol id="moon"></symbol></svg><svg><use href="#moon"></use></svg>',
+    '<svg><symbol id="moon"><use href="#moon"></svg>',
+    '<use href="#moon"></use><svg><symbol id="moon"/></svg>',
+  ]) {
+    const result = await verify(html);
+    assert.equal(result.ok, false, html);
+    assert.match(result.failed[0].reason, /inline SVG|fragment|parser|structure/i, html);
+  }
 });
 
 test('external SVG use validates the parser and referenced fragment', async () => {
@@ -321,4 +393,112 @@ test('failed fetched asset bytes participate in artifact SHA and reset no-progre
     finalAssets: failedAsset('2'.repeat(64)),
   });
   assert.notEqual(first, changed);
+});
+
+test('404 response bodies retain bytes and sha256 and alter artifact SHA when the body changes', async () => {
+  const verify = (body) => verifyFinalAssets({
+    html: '<img src="/images/missing.png">',
+    pageUrl: PAGE_URL,
+    fetch: async (url) => response({
+      status: 404,
+      url,
+      contentType: 'image/png',
+      body,
+    }),
+    resolveHost: publicResolver,
+  });
+  const first = await verify(Buffer.from('missing-a'));
+  const second = await verify(Buffer.from('missing-b'));
+  assert.equal(first.ok, false);
+  assert.equal(first.failed[0].bytes, 9);
+  assert.match(first.failed[0].sha256, /^[0-9a-f]{64}$/);
+  const firstSha = artifactShaForEvidence({ articleSha: 'a'.repeat(64), finalAssets: first });
+  const secondSha = artifactShaForEvidence({ articleSha: 'a'.repeat(64), finalAssets: second });
+  assert.notEqual(firstSha, secondSha);
+});
+
+test('asset fetch blocks unsafe protocols, untrusted hosts, and private IP literals before fetch', async () => {
+  const cases = [
+    'file:///etc/passwd',
+    'http://127.0.0.1/private.png',
+    'http://169.254.169.254/latest/meta-data.png',
+    'http://10.0.0.8/private.png',
+    'https://evil.example/asset.png',
+  ];
+  for (const src of cases) {
+    let fetched = 0;
+    const result = await verifyFinalAssets({
+      html: `<img src="${src}">`,
+      pageUrl: PAGE_URL,
+      fetch: async () => { fetched++; throw new Error('must not fetch'); },
+      resolveHost: publicResolver,
+    });
+    assert.equal(result.ok, false, src);
+    assert.match(result.failed[0].reason, /unsafe|trusted|private|loopback|protocol|host/i, src);
+    assert.equal(fetched, 0, src);
+  }
+});
+
+test('an explicitly allowed CDN still fails before fetch when DNS resolves private', async () => {
+  let fetched = 0;
+  const result = await verifyFinalAssets({
+    html: '<img src="https://cdn.example/hero.png">',
+    pageUrl: PAGE_URL,
+    allowedAssetHosts: new Set(['cdn.example']),
+    resolveHost: async () => [{ address: '127.0.0.1', family: 4 }],
+    fetch: async () => { fetched++; throw new Error('must not fetch'); },
+  });
+  assert.equal(result.ok, false);
+  assert.match(result.failed[0].reason, /private|loopback|unsafe|DNS/i);
+  assert.equal(fetched, 0);
+});
+
+test('an explicitly allowed public CDN can be verified hermetically', async () => {
+  const result = await verifyFinalAssets({
+    html: '<img src="https://cdn.example/hero.png">',
+    pageUrl: PAGE_URL,
+    allowedAssetHosts: new Set(['cdn.example']),
+    resolveHost: publicResolver,
+    fetch: async (url) => response({ url, contentType: 'image/png', body: PNG }),
+  });
+  assert.equal(result.ok, true, JSON.stringify(result.failed));
+});
+
+test('asset redirects are manually revalidated and cannot hop to a private or untrusted host', async () => {
+  const calls = [];
+  const result = await verifyFinalAssets({
+    html: '<img src="/images/hero.png">',
+    pageUrl: PAGE_URL,
+    resolveHost: publicResolver,
+    fetch: async (url, init) => {
+      calls.push({ url, redirect: init.redirect });
+      return response({
+        status: 302,
+        url,
+        contentType: 'text/html',
+        extraHeaders: { location: 'http://169.254.169.254/latest/meta-data' },
+      });
+    },
+  });
+  assert.equal(result.ok, false);
+  assert.match(result.failed[0].reason, /redirect|private|trusted|unsafe/i);
+  assert.deepEqual(calls, [{
+    url: 'https://www.astrologywiki.com/images/hero.png',
+    redirect: 'manual',
+  }]);
+});
+
+test('a response final URL outside the trusted host set fails closed even without a redirect status', async () => {
+  const result = await verifyFinalAssets({
+    html: '<img src="/images/hero.png">',
+    pageUrl: PAGE_URL,
+    resolveHost: publicResolver,
+    fetch: async () => response({
+      url: 'https://evil.example/hero.png',
+      contentType: 'image/png',
+      body: PNG,
+    }),
+  });
+  assert.equal(result.ok, false);
+  assert.match(result.failed[0].reason, /final|trusted|host|drift/i);
 });

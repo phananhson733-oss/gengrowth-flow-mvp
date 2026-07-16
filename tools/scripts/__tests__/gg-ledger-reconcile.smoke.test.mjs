@@ -106,6 +106,8 @@ function defaultCliFixture({
   sheetPlan = false,
   missingClaims = false,
   pendingWritebacks = [],
+  inboxWritebacks = [],
+  corruptInboxWritebacks = [],
   droppedWritebacks = [],
   quarantinedWritebacks = [],
 } = {}) {
@@ -146,6 +148,21 @@ function defaultCliFixture({
       writeFileSync(
         join(state, 'pending-writeback', `${record.pageId || `pending-${index}`}.json`),
         `${JSON.stringify(record)}\n`,
+      );
+    });
+  }
+  if (inboxWritebacks.length > 0 || corruptInboxWritebacks.length > 0) {
+    mkdirSync(join(state, 'pending-writeback-inbox'), { recursive: true });
+    inboxWritebacks.forEach((record, index) => {
+      writeFileSync(
+        join(state, 'pending-writeback-inbox', `${record.pageId || `inbox-${index}`}.json`),
+        `${JSON.stringify(record)}\n`,
+      );
+    });
+    corruptInboxWritebacks.forEach((source, index) => {
+      writeFileSync(
+        join(state, 'pending-writeback-inbox', `corrupt-${index}.json`),
+        String(source),
       );
     });
   }
@@ -236,6 +253,36 @@ test('a pending WAL retained after archive rename failure remains strict nonzero
   const json = JSON.parse(out.stdout);
   assert.equal(json.pendingWritebackAfter, 1);
   assert.equal(json.droppedWritebackAfter, 0);
+});
+
+test('a late durable inbox enqueue blocks strict convergence after the final drain merge', () => {
+  const fixture = defaultCliFixture({
+    inboxWritebacks: [{
+      pageId: 'PG-CELEB-055',
+      slug: 'late-enqueue',
+      site: 'astrologywiki',
+      attempts: 1,
+      firstAt: '2026-07-16T10:00:00.000Z',
+      done: [],
+    }],
+  });
+  const out = fixture.run();
+  assert.equal(out.status, 2, `${out.stdout}\n${out.stderr}`);
+  const json = JSON.parse(out.stdout);
+  assert.equal(json.ok, false);
+  assert.equal(json.pendingWritebackAfter, 1);
+});
+
+test('a corrupt durable inbox record fails strict convergence closed', () => {
+  const fixture = defaultCliFixture({
+    corruptInboxWritebacks: ['{"pageId":"PG-CELEB-055"'],
+  });
+  const out = fixture.run();
+  assert.equal(out.status, 2, `${out.stdout}\n${out.stderr}`);
+  const json = JSON.parse(out.stdout);
+  assert.equal(json.ok, false);
+  assert.equal(json.pendingWritebackAfter, 1);
+  assert.match(json.errors.join('\n'), /inbox|writeback/i);
 });
 
 test('dropped writeback independently blocks strict convergence with structured evidence', () => {

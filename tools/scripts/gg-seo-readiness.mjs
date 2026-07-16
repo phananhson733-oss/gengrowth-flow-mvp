@@ -204,6 +204,27 @@ function terminalWritebackEvidence(record, state, name) {
   };
 }
 
+function inspectPendingWriteback(base, errors) {
+  let count = 0;
+  for (const [directory, label] of [
+    ['pending-writeback', 'writeback'],
+    ['pending-writeback-inbox', 'writeback inbox'],
+  ]) {
+    const dir = join(base, directory);
+    if (!existsSync(dir)) continue;
+    for (const name of readdirSync(dir)) {
+      if (!name.endsWith('.json') || name.includes('.tmp-')) continue;
+      try {
+        readJson(join(dir, name), `${label} ${name}`);
+      } catch (error) {
+        errors.push(`${label} ${name}: ${error.message}`);
+      }
+      count += 1;
+    }
+  }
+  return count;
+}
+
 function inspectTerminalWriteback(base, errors) {
   const evidence = [];
   const root = join(base, 'pending-writeback');
@@ -361,6 +382,7 @@ export async function evaluateSeoReadiness({
   const staleReportAfter = staleReport.filter((row) => row?.stale).length;
   const strictResult = deps.strictResult || strictFromEnvironment();
   const strict = normalizeStrict(strictResult, errors);
+  const localPendingWriteback = inspectPendingWriteback(base, errors);
   const localTerminalWriteback = inspectTerminalWriteback(base, errors);
   const terminalEvidence = new Map();
   for (const row of [...strict.droppedWritebackEvidence, ...localTerminalWriteback]) {
@@ -375,6 +397,10 @@ export async function evaluateSeoReadiness({
     plan: planPath,
     runId,
     ...strict,
+    pendingWritebackAfter: Math.max(
+      strict.pendingWritebackAfter,
+      localPendingWriteback,
+    ),
     droppedWritebackAfter: Math.max(
       strict.droppedWritebackAfter,
       localTerminalWriteback.length,

@@ -33,6 +33,9 @@ function readinessFixture({
   strictResult = strictZero(),
   staleReport = [],
   contamination = [],
+  pendingWritebacks = [],
+  inboxWritebacks = [],
+  corruptInboxWritebacks = [],
   droppedWritebacks = [],
   quarantinedWritebacks = [],
   missingClaims = false,
@@ -52,6 +55,29 @@ function readinessFixture({
   contamination.forEach((name) => {
     writeFileSync(join(state, `${name}.json`), `${JSON.stringify({ pageId: name })}\n`);
   });
+  if (pendingWritebacks.length > 0) {
+    const target = join(state, 'pending-writeback');
+    mkdirSync(target, { recursive: true });
+    pendingWritebacks.forEach((record, index) => {
+      writeFileSync(
+        join(target, `${record.pageId || `pending-${index}`}.json`),
+        `${JSON.stringify(record, null, 2)}\n`,
+      );
+    });
+  }
+  if (inboxWritebacks.length > 0 || corruptInboxWritebacks.length > 0) {
+    const target = join(state, 'pending-writeback-inbox');
+    mkdirSync(target, { recursive: true });
+    inboxWritebacks.forEach((record, index) => {
+      writeFileSync(
+        join(target, `${record.pageId || `inbox-${index}`}.json`),
+        `${JSON.stringify(record, null, 2)}\n`,
+      );
+    });
+    corruptInboxWritebacks.forEach((source, index) => {
+      writeFileSync(join(target, `corrupt-${index}.json`), String(source));
+    });
+  }
   for (const [directory, records] of [
     ['dropped', droppedWritebacks],
     ['quarantined', quarantinedWritebacks],
@@ -188,6 +214,32 @@ test('strict verification drift is carried into readiness and blocks it', () => 
   });
   assert.equal(out.status, 2, `${out.stdout}\n${out.stderr}`);
   assert.equal(out.json.sheetFlipsAfter, 2);
+});
+
+test('a late durable inbox enqueue independently blocks readiness despite strict zero', () => {
+  const out = readinessFixture({
+    inboxWritebacks: [{
+      pageId: 'PG-CELEB-055',
+      slug: 'late-enqueue',
+      site: 'astrologywiki',
+      attempts: 1,
+      firstAt: '2026-07-16T10:00:00.000Z',
+      done: [],
+    }],
+  });
+  assert.equal(out.status, 2, `${out.stdout}\n${out.stderr}`);
+  assert.equal(out.json.ok, false);
+  assert.equal(out.json.pendingWritebackAfter, 1);
+});
+
+test('a corrupt durable inbox record independently fails readiness closed', () => {
+  const out = readinessFixture({
+    corruptInboxWritebacks: ['{"pageId":"PG-CELEB-055"'],
+  });
+  assert.equal(out.status, 2, `${out.stdout}\n${out.stderr}`);
+  assert.equal(out.json.ok, false);
+  assert.equal(out.json.pendingWritebackAfter, 1);
+  assert.match(out.json.errors.join('\n'), /inbox|writeback/i);
 });
 
 test('dropped/quarantined writeback directories block readiness even if injected strict counters claim zero', () => {

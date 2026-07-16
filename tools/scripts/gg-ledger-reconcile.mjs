@@ -190,17 +190,22 @@ function flowStateRoot() {
 }
 
 function inspectWriteback(errors, base) {
-  const dir = join(base, 'pending-writeback');
-  if (!existsSync(dir)) return 0;
   let count = 0;
-  for (const name of readdirSync(dir)) {
-    if (!name.endsWith('.json') || name.includes('.tmp-')) continue;
-    try {
-      strictObject(JSON.parse(readFileSync(join(dir, name), 'utf8')), `writeback ${name}`);
-      count += 1;
-    } catch (error) {
-      errors.push(`writeback ${name}: ${error.message}`);
-      count += 1;
+  for (const [directory, label] of [
+    ['pending-writeback', 'writeback'],
+    ['pending-writeback-inbox', 'writeback inbox'],
+  ]) {
+    const dir = join(base, directory);
+    if (!existsSync(dir)) continue;
+    for (const name of readdirSync(dir)) {
+      if (!name.endsWith('.json') || name.includes('.tmp-')) continue;
+      try {
+        strictObject(JSON.parse(readFileSync(join(dir, name), 'utf8')), `${label} ${name}`);
+        count += 1;
+      } catch (error) {
+        errors.push(`${label} ${name}: ${error.message}`);
+        count += 1;
+      }
     }
   }
   return count;

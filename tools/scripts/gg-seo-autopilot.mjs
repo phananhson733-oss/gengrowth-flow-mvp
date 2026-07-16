@@ -116,6 +116,7 @@ const CLAIMS_PATH = join(PLAN_GLOB_DIR, '.autopilot-claims.json');
 const CLAIMS_LOCK = `${CLAIMS_PATH}.lock`;
 const CLAIMS_LOCK_TIMEOUT_MS = parseInt(process.env.GG_AUTOPILOT_LOCK_TIMEOUT_MS || '30000', 10);
 const CLAIMS_LOCK_STALE_MS = parseInt(process.env.GG_AUTOPILOT_LOCK_STALE_MS || String(2 * 60 * 60 * 1000), 10);
+const AUTHOR_GLOBAL_LOCK = process.env.GG_AUTHOR_GLOBAL_LOCK || '/tmp/gg-seo-author-global.lock';
 const SLUG_RE = /^[a-z0-9][a-z0-9-]*$/;
 const HEAD_REF_OID_RE = /^[0-9a-f]{40}$/i;
 const execFileAsync = promisify(execFile);
@@ -305,6 +306,80 @@ function withClaimsLock(fn) {
   const release = acquireClaimsLock();
   try { return fn(); }
   finally { release(); }
+}
+
+function processStartMarker(pid) {
+  try {
+    return sh('ps', ['-o', 'lstart=', '-p', String(pid)]).trim().replace(/\s+/g, ' ');
+  } catch {
+    return '';
+  }
+}
+
+function readAuthorLockOwner() {
+  try {
+    return JSON.parse(readFileSync(join(AUTHOR_GLOBAL_LOCK, 'owner.json'), 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
+function authorLockOwnerIsLive(owner) {
+  const pid = Number(owner?.pid);
+  if (!Number.isSafeInteger(pid) || pid <= 0 || !owner?.start) return false;
+  try {
+    process.kill(pid, 0);
+  } catch {
+    return false;
+  }
+  return processStartMarker(pid) === String(owner.start).trim().replace(/\s+/g, ' ');
+}
+
+function acquireGlobalAuthorLock(taskId = '') {
+  mkdirSync(dirname(AUTHOR_GLOBAL_LOCK), { recursive: true });
+  const token = `${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const owner = {
+    pid: process.pid,
+    start: processStartMarker(process.pid),
+    token,
+    lane: process.env.GG_SITE || 'astrologywiki',
+    taskId,
+    acquiredAt: new Date().toISOString(),
+  };
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      mkdirSync(AUTHOR_GLOBAL_LOCK);
+      writeFileSync(join(AUTHOR_GLOBAL_LOCK, 'owner.json'), JSON.stringify(owner, null, 2));
+      return {
+        acquired: true,
+        owner,
+        release() {
+          const current = readAuthorLockOwner();
+          if (current?.token === token) rmSync(AUTHOR_GLOBAL_LOCK, { recursive: true, force: true });
+        },
+      };
+    } catch (error) {
+      if (error?.code !== 'EEXIST') throw error;
+      const current = readAuthorLockOwner();
+      if (authorLockOwnerIsLive(current)) return { acquired: false, owner: current };
+
+      // A creator may be between mkdir() and owner.json. Give that tiny window a
+      // grace period; otherwise atomically rename the stale directory before
+      // removing it so a competing process can never delete a newly acquired lock.
+      let ageMs = 0;
+      try { ageMs = Date.now() - statSync(AUTHOR_GLOBAL_LOCK).mtimeMs; } catch { continue; }
+      if (!current && ageMs < 5000) return { acquired: false, owner: { lane: 'unknown', pid: '?' } };
+      const stalePath = `${AUTHOR_GLOBAL_LOCK}.stale-${token}-${attempt}`;
+      try {
+        renameSync(AUTHOR_GLOBAL_LOCK, stalePath);
+        rmSync(stalePath, { recursive: true, force: true });
+      } catch (renameError) {
+        if (renameError?.code !== 'ENOENT') log(`author lock stale recovery deferred: ${renameError.code || renameError.message}`);
+      }
+    }
+  }
+  return { acquired: false, owner: readAuthorLockOwner() || { lane: 'unknown', pid: '?' } };
 }
 
 function repairQueueDir() {
@@ -837,7 +912,7 @@ function tryDeterministicRepair({ pgId, draftV8, candidate, targetKeyword, autho
   return { passed: false, attempted: true, failure: repairFailure };
 }
 
-async function doAuthor(o = {}) {
+async function doAuthorUnlocked(o = {}) {
   let sel;
   const claims = loadClaims();
   if (o.task) {
@@ -1083,6 +1158,20 @@ async function doAuthor(o = {}) {
     return park(slug, `${finalFailure.replace(/\n/g, ' | ')} after ${attempts} attempt(s) + deterministic repair`);
   } catch (e) {
     return park(null, `unexpected: ${errTail(e)}`);
+  }
+}
+
+async function doAuthor(o = {}) {
+  const authorLock = acquireGlobalAuthorLock(o.task || '');
+  if (!authorLock.acquired) {
+    const owner = authorLock.owner || {};
+    log(`author executor busy: lane=${owner.lane || 'unknown'} pid=${owner.pid || '?'} task=${owner.taskId || '?'} — skip safely`);
+    return;
+  }
+  try {
+    return await doAuthorUnlocked(o);
+  } finally {
+    authorLock.release();
   }
 }
 

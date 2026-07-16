@@ -55,6 +55,7 @@ function runAuto(h, args, extraEnv = {}) {
       GG_ORACLE_DIR: h.oracle,
       GG_FLOW_REPO: join(__dirname, '..', '..', '..'),
       GG_FLOW_STATE_DIR: h.state,
+      GG_AUTHOR_GLOBAL_LOCK: join(h.root, 'global-author.lock'),
       GG_SEO_REPAIR_CONTROLLER_V2_ENABLED: '0',
       GG_AUTOPILOT_NO_NOTIFY: '1', // never send a real Feishu push from tests
       GG_AUTOPILOT_NO_INDEX_TRACKING: '1',
@@ -77,6 +78,7 @@ function runAutoAsync(h, args, extraEnv = {}) {
         GG_ORACLE_DIR: h.oracle,
         GG_FLOW_REPO: join(__dirname, '..', '..', '..'),
         GG_FLOW_STATE_DIR: h.state,
+        GG_AUTHOR_GLOBAL_LOCK: join(h.root, 'global-author.lock'),
         GG_SEO_REPAIR_CONTROLLER_V2_ENABLED: '0',
         GG_AUTOPILOT_NO_NOTIFY: '1', // never send a real Feishu push from tests
         GG_AUTOPILOT_NO_INDEX_TRACKING: '1',

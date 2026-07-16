@@ -28,11 +28,19 @@ import {
 } from '../gg-preview-verify.mjs';
 
 const TOOL_PATH = fileURLToPath(new URL('../gg-preview-verify.mjs', import.meta.url));
+const EMPTY_ENV_DIR = mkdtempSync(join(tmpdir(), 'gg-preview-verify-empty-env-'));
+const EMPTY_ENV_FILE = join(EMPTY_ENV_DIR, '_gg.env');
+writeFileSync(EMPTY_ENV_FILE, '', { mode: 0o600 });
 
 function runCli(args, extraEnv = {}) {
-  // Strip the default-bypass env so it cannot leak into arg defaults.
+  // Strip the default-bypass env and pin an empty env file unless a test
+  // explicitly supplies one, so the host's canonical _gg.env cannot leak into
+  // hermetic CLI assertions.
   const env = { ...process.env, ...extraEnv };
   delete env.VERCEL_AUTOMATION_BYPASS_SECRET;
+  if (!Object.prototype.hasOwnProperty.call(extraEnv, 'GG_ENV_FILE')) {
+    env.GG_ENV_FILE = EMPTY_ENV_FILE;
+  }
   return spawnSync(process.execPath, [TOOL_PATH, ...args], { encoding: 'utf8', env, timeout: 30000 });
 }
 

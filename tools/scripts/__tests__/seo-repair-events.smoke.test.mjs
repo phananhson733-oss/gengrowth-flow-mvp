@@ -739,13 +739,11 @@ test('an older random-filename intent cannot overwrite a newer committed causal 
   }), { queueDir });
   const incidentId = repairIncidentId(original.event);
   const transactionDirectory = join(queueDir, '.incident-transactions');
-  const [generatedTransactionName] = (await readdir(transactionDirectory))
-    .filter((name) => name.endsWith('.json'));
-  const generatedTransactionId = generatedTransactionName.slice(0, -'.json'.length);
   const committedOriginal = await readRepairRecord(join(queueDir, `${original.event.eventId}.json`));
-  await writeFile(join(transactionDirectory, generatedTransactionName), `${JSON.stringify({
+  const committedTransactionId = `${incidentId}-newer-committed`;
+  await writeFile(join(transactionDirectory, `${committedTransactionId}.json`), `${JSON.stringify({
     ...preparedIntentV2({
-      transactionId: generatedTransactionId,
+      transactionId: committedTransactionId,
       incidentId,
       causalRevision: 2,
       expectedHead: transactionHead(original),

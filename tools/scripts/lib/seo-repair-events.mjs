@@ -341,36 +341,335 @@ function transactionDirectory(queueDir) {
   return join(queueDir, '.incident-transactions');
 }
 
-function transactionPath(queueDir, transactionId) {
-  return join(transactionDirectory(queueDir), `${transactionId}.json`);
+function pendingTransactionDirectory(queueDir) {
+  return join(transactionDirectory(queueDir), 'pending');
 }
 
-async function listTransactionIntents(queueDir) {
+function committedTransactionDirectory(queueDir) {
+  return join(transactionDirectory(queueDir), 'committed');
+}
+
+function quarantinedTransactionDirectory(queueDir) {
+  return join(transactionDirectory(queueDir), 'quarantine');
+}
+
+function transactionHoldDirectory(queueDir) {
+  return join(transactionDirectory(queueDir), 'holds');
+}
+
+function transactionHeadDirectory(queueDir) {
+  return join(transactionDirectory(queueDir), 'heads');
+}
+
+function transactionPath(queueDir, transactionId) {
+  return join(pendingTransactionDirectory(queueDir), `${transactionId}.json`);
+}
+
+function isPlainObject(value) {
+  return Boolean(value && typeof value === 'object' && !Array.isArray(value));
+}
+
+function assertExactKeys(value, allowed, label) {
+  if (!isPlainObject(value)) throw new TypeError(`${label} must be an object`);
+  const unexpected = Object.keys(value).filter((key) => !allowed.has(key));
+  if (unexpected.length > 0) throw new TypeError(`${label} has unsupported fields: ${unexpected.join(', ')}`);
+}
+
+function transactionHead(record) {
+  return {
+    eventId: record.event.eventId,
+    generation: Number(record.generation || 1),
+    revision: Number(record.revision || 0),
+    fingerprint: record.fingerprint,
+  };
+}
+
+function validateTransactionHead(value, label) {
+  assertExactKeys(value, new Set(['eventId', 'generation', 'revision', 'fingerprint']), label);
+  const eventId = requireString(value.eventId, `${label}.eventId`);
+  const fingerprint = requireString(value.fingerprint, `${label}.fingerprint`);
+  const generation = Number(value.generation);
+  const revision = Number(value.revision);
+  if (!Number.isInteger(generation) || generation < 1) {
+    throw new TypeError(`${label}.generation must be a positive integer`);
+  }
+  if (!Number.isInteger(revision) || revision < 1) {
+    throw new TypeError(`${label}.revision must be a positive integer`);
+  }
+  return { eventId, generation, revision, fingerprint };
+}
+
+function sameTransactionHead(left, right) {
+  return Boolean(left && right
+    && left.eventId === right.eventId
+    && Number(left.generation) === Number(right.generation)
+    && Number(left.revision) === Number(right.revision)
+    && left.fingerprint === right.fingerprint);
+}
+
+function resolveTransactionWritePath(queueDir, filename) {
+  if (typeof filename !== 'string' || filename.length === 0 || !filename.endsWith('.json')) {
+    throw new TypeError(`invalid transaction record path: ${filename}`);
+  }
+  const root = resolve(queueDir);
+  const destination = resolve(root, filename);
+  if (dirname(destination) !== root) {
+    throw new TypeError(`transaction write escapes queue: ${filename}`);
+  }
+  return destination;
+}
+
+function validateTransactionWrite(write, incidentId, queueDir) {
+  assertExactKeys(
+    write,
+    new Set(['filename', 'record', 'expectedRevision', 'faultPointAfter']),
+    'transaction write',
+  );
+  const destination = resolveTransactionWritePath(queueDir, write.filename);
+  const expectedRevision = Number(write.expectedRevision);
+  if (!Number.isInteger(expectedRevision) || expectedRevision < 0) {
+    throw new TypeError('transaction write expectedRevision must be a non-negative integer');
+  }
+  if (!isPlainObject(write.record)) throw new TypeError('transaction write record must be an object');
+  const event = validateRepairEvent(write.record.event);
+  if (`${event.eventId}.json` !== write.filename) {
+    throw new TypeError('transaction write filename must match record eventId');
+  }
+  if (recordIncidentId(write.record) !== incidentId || write.record.incidentId !== incidentId) {
+    throw new TypeError('transaction write crosses incident ownership');
+  }
+  if (typeof write.record.fingerprint !== 'string' || write.record.fingerprint.length === 0) {
+    throw new TypeError('transaction write record fingerprint is required');
+  }
+  const revision = Number(write.record.revision);
+  if (!Number.isInteger(revision) || revision !== expectedRevision + 1) {
+    throw new TypeError('transaction write revision must immediately follow expectedRevision');
+  }
+  if (write.faultPointAfter !== undefined && !TRANSACTION_FAULT_POINTS.has(write.faultPointAfter)) {
+    throw new TypeError(`unsupported transaction fault point: ${write.faultPointAfter}`);
+  }
+  return {
+    filename: write.filename,
+    destination,
+    record: write.record,
+    expectedRevision,
+    ...(write.faultPointAfter ? { faultPointAfter: write.faultPointAfter } : {}),
+  };
+}
+
+function validateTransactionIntent(intent, path, queueDir) {
+  const filename = basename(path);
+  if (!filename.endsWith('.json')) throw new TypeError('transaction intent filename must end in .json');
+  const transactionIdFromFilename = filename.slice(0, -'.json'.length);
+  if (intent?.schemaVersion === 1 && intent?.phase === 'committed') {
+    assertExactKeys(intent, new Set([
+      'schemaVersion', 'transactionId', 'incidentId', 'operation', 'phase',
+      'createdAt', 'committedAt', 'writes',
+    ]), 'legacy committed transaction');
+    if (requireString(intent.transactionId, 'transactionId') !== transactionIdFromFilename) {
+      throw new TypeError('transactionId must match intent filename');
+    }
+    if (!INCIDENT_ID_PATTERN.test(requireString(intent.incidentId, 'incidentId'))) {
+      throw new TypeError('incidentId must be a repair incident hash');
+    }
+    if (!TRANSACTION_OPERATIONS.has(intent.operation)) throw new TypeError('unsupported transaction operation');
+    if (!Array.isArray(intent.writes)) throw new TypeError('transaction writes must be an array');
+    iso(intent.createdAt, 'transaction createdAt');
+    iso(intent.committedAt, 'transaction committedAt');
+    return { ...intent, legacyCommitted: true };
+  }
+
+  assertExactKeys(intent, new Set([
+    'schemaVersion', 'transactionId', 'incidentId', 'causalRevision', 'operation',
+    'phase', 'createdAt', 'committedAt', 'expectedHead', 'resultHead', 'writes',
+  ]), 'repair transaction');
+  if (intent.schemaVersion !== TRANSACTION_SCHEMA_VERSION) {
+    throw new TypeError(`unsupported repair transaction schema: ${intent.schemaVersion}`);
+  }
+  const transactionId = requireString(intent.transactionId, 'transactionId');
+  if (transactionId !== transactionIdFromFilename) {
+    throw new TypeError('transactionId must match intent filename');
+  }
+  const incidentId = requireString(intent.incidentId, 'incidentId');
+  if (!INCIDENT_ID_PATTERN.test(incidentId)) throw new TypeError('incidentId must be a repair incident hash');
+  if (!TRANSACTION_OPERATIONS.has(intent.operation)) throw new TypeError('unsupported transaction operation');
+  if (!['prepared', 'committed'].includes(intent.phase)) throw new TypeError('unsupported transaction phase');
+  if (intent.phase === 'prepared' && intent.committedAt !== undefined) {
+    throw new TypeError('prepared transaction cannot have committedAt');
+  }
+  if (intent.phase === 'committed') iso(intent.committedAt, 'transaction committedAt');
+  const causalRevision = Number(intent.causalRevision);
+  if (!Number.isInteger(causalRevision) || causalRevision < 1) {
+    throw new TypeError('causalRevision must be a positive integer');
+  }
+  const expectedHead = validateTransactionHead(intent.expectedHead, 'expectedHead');
+  const resultHead = validateTransactionHead(intent.resultHead, 'resultHead');
+  iso(intent.createdAt, 'transaction createdAt');
+  if (!Array.isArray(intent.writes) || intent.writes.length === 0) {
+    throw new TypeError('transaction writes must be a non-empty array');
+  }
+  const writes = intent.writes.map((write) => validateTransactionWrite(write, incidentId, queueDir));
+  const resultWrite = writes.find((write) => sameTransactionHead(transactionHead(write.record), resultHead));
+  if (intent.operation === 'finish_compaction') {
+    if (!sameTransactionHead(expectedHead, resultHead)) {
+      throw new TypeError('finish_compaction must preserve its authoritative head');
+    }
+  } else if (!resultWrite) {
+    throw new TypeError('transaction resultHead must match one of its writes');
+  }
+  return {
+    ...intent,
+    transactionId,
+    incidentId,
+    causalRevision,
+    expectedHead,
+    resultHead,
+    writes,
+  };
+}
+
+function inferIncidentId(path, parsed = null) {
+  if (INCIDENT_ID_PATTERN.test(String(parsed?.incidentId || ''))) return parsed.incidentId;
+  const match = basename(path).match(/^([a-f0-9]{64})(?:-|\.)/);
+  return match?.[1] || null;
+}
+
+async function transactionPendingPaths(queueDir) {
   const directory = transactionDirectory(queueDir);
-  let names;
+  const paths = [];
   try {
-    names = await readdir(directory);
+    const entries = await readdir(directory, { withFileTypes: true });
+    paths.push(...entries
+      .filter((entry) => entry.isFile() && entry.name.endsWith('.json'))
+      .map((entry) => join(directory, entry.name)));
   } catch (error) {
     if (error?.code === 'ENOENT') return [];
     throw error;
   }
-  const intents = [];
-  for (const name of names.filter((entry) => entry.endsWith('.json')).sort()) {
-    const path = join(directory, name);
-    const intent = JSON.parse(await readFile(path, 'utf8'));
-    if (intent?.schemaVersion !== TRANSACTION_SCHEMA_VERSION
-      || typeof intent.transactionId !== 'string'
-      || typeof intent.incidentId !== 'string'
-      || !Array.isArray(intent.writes)) {
-      throw new TypeError(`invalid repair transaction: ${path}`);
-    }
-    intents.push({ path, intent });
+  try {
+    const names = await readdir(pendingTransactionDirectory(queueDir));
+    paths.push(...names
+      .filter((name) => name.endsWith('.json'))
+      .map((name) => join(pendingTransactionDirectory(queueDir), name)));
+  } catch (error) {
+    if (error?.code !== 'ENOENT') throw error;
   }
-  return intents;
+  return paths.sort();
+}
+
+async function appendTransactionHold(queueDir, path, reason, incidentId, randomUUID = defaultRandomUUID) {
+  const directory = transactionHoldDirectory(queueDir);
+  await mkdir(directory, { recursive: true });
+  const artifact = {
+    schemaVersion: 1,
+    status: 'recovery_hold',
+    incidentId,
+    transactionFile: basename(path),
+    summary: `corrupt transaction intent: ${reason}`,
+    createdAt: new Date().toISOString(),
+  };
+  const destination = join(directory, `${Date.now()}-${randomUUID()}.json`);
+  await writeNewJson(destination, artifact);
+  return artifact;
+}
+
+async function quarantineTransactionIntent(queueDir, path, error, parsed = null, randomUUID = defaultRandomUUID) {
+  const incidentId = inferIncidentId(path, parsed);
+  const directory = quarantinedTransactionDirectory(queueDir);
+  await mkdir(directory, { recursive: true });
+  const destination = join(directory, `${basename(path)}.${Date.now()}.${randomUUID()}.corrupt`);
+  try {
+    await rename(path, destination);
+  } catch (renameError) {
+    if (renameError?.code !== 'ENOENT') throw renameError;
+  }
+  await appendTransactionHold(queueDir, path, error?.message || String(error), incidentId, randomUUID);
+  return incidentId;
+}
+
+async function archiveCommittedIntent(queueDir, path, randomUUID = defaultRandomUUID) {
+  const directory = committedTransactionDirectory(queueDir);
+  await mkdir(directory, { recursive: true });
+  let destination = join(directory, basename(path));
+  try {
+    await rename(path, destination);
+  } catch (error) {
+    if (error?.code === 'EEXIST') {
+      destination = join(directory, `${basename(path)}.${Date.now()}.${randomUUID()}`);
+      await rename(path, destination);
+    } else if (error?.code !== 'ENOENT') {
+      throw error;
+    }
+  }
+  return destination;
+}
+
+async function readTransactionCausalHead(queueDir, incidentId) {
+  return readJson(join(transactionHeadDirectory(queueDir), `${incidentId}.json`));
+}
+
+async function advanceTransactionCausalHead(queueDir, intent, randomUUID = defaultRandomUUID) {
+  if (!Number.isInteger(intent.causalRevision)) return;
+  const path = join(transactionHeadDirectory(queueDir), `${intent.incidentId}.json`);
+  const current = await readJson(path);
+  if (Number(current?.causalRevision || 0) >= intent.causalRevision) return;
+  await atomicWriteJson(path, {
+    schemaVersion: 1,
+    incidentId: intent.incidentId,
+    causalRevision: intent.causalRevision,
+    resultHead: intent.resultHead,
+    transactionId: intent.transactionId,
+    committedAt: intent.committedAt || new Date().toISOString(),
+  }, randomUUID);
+}
+
+async function listHeldIncidentIds(queueDir) {
+  let names;
+  try {
+    names = await readdir(transactionHoldDirectory(queueDir));
+  } catch (error) {
+    if (error?.code === 'ENOENT') return new Set();
+    throw error;
+  }
+  const held = new Set();
+  for (const name of names.filter((entry) => entry.endsWith('.json')).sort()) {
+    const artifact = await readJson(join(transactionHoldDirectory(queueDir), name));
+    if (INCIDENT_ID_PATTERN.test(String(artifact?.incidentId || ''))) held.add(artifact.incidentId);
+  }
+  return held;
+}
+
+async function listTransactionIntents(queueDir, {
+  randomUUID = defaultRandomUUID,
+  transactionInstrumentation,
+} = {}) {
+  const intents = [];
+  for (const path of await transactionPendingPaths(queueDir)) {
+    if (transactionInstrumentation) {
+      transactionInstrumentation.pendingReads = Number(transactionInstrumentation.pendingReads || 0) + 1;
+    }
+    let parsed = null;
+    try {
+      parsed = JSON.parse(await readFile(path, 'utf8'));
+      const intent = validateTransactionIntent(parsed, path, queueDir);
+      if (intent.phase === 'committed') {
+        await advanceTransactionCausalHead(queueDir, intent, randomUUID);
+        await archiveCommittedIntent(queueDir, path, randomUUID);
+        continue;
+      }
+      intents.push({ path, intent });
+    } catch (error) {
+      await quarantineTransactionIntent(queueDir, path, error, parsed, randomUUID);
+    }
+  }
+  return intents.sort((left, right) => left.intent.causalRevision - right.intent.causalRevision
+    || left.intent.createdAt.localeCompare(right.intent.createdAt)
+    || left.intent.transactionId.localeCompare(right.intent.transactionId));
 }
 
 function transactionWrite(filename, record, {
   faultPointAfter = null,
+  expectedRevision = Math.max(0, Number(record?.revision || 1) - 1),
 } = {}) {
   if (basename(filename) !== filename || !filename.endsWith('.json')) {
     throw new TypeError(`invalid transaction record path: ${filename}`);
@@ -378,6 +677,7 @@ function transactionWrite(filename, record, {
   return {
     filename,
     record,
+    expectedRevision,
     ...(faultPointAfter ? { faultPointAfter } : {}),
   };
 }
@@ -387,18 +687,25 @@ async function prepareTransaction(queueDir, {
   operation,
   writes,
   createdAt,
+  expectedHead,
+  resultHead,
 }, {
   randomUUID = defaultRandomUUID,
   assertOwner,
 } = {}) {
+  const currentCausalHead = await readTransactionCausalHead(queueDir, incidentId);
+  const causalRevision = Number(currentCausalHead?.causalRevision || 0) + 1;
   const transactionId = `${incidentId}-${defaultRandomUUID()}`;
   const intent = {
     schemaVersion: TRANSACTION_SCHEMA_VERSION,
     transactionId,
     incidentId,
+    causalRevision,
     operation,
     phase: 'prepared',
     createdAt,
+    expectedHead: validateTransactionHead(expectedHead, 'expectedHead'),
+    resultHead: validateTransactionHead(resultHead, 'resultHead'),
     writes,
   };
   if (assertOwner) await assertOwner();
@@ -412,16 +719,44 @@ async function applyPreparedTransaction(queueDir, path, intent, {
   faultInjector,
   assertOwner,
 } = {}) {
-  const latest = JSON.parse(await readFile(path, 'utf8'));
-  if (latest.phase === 'committed') return latest;
+  const latest = validateTransactionIntent(JSON.parse(await readFile(path, 'utf8')), path, queueDir);
+  if (latest.phase === 'committed') {
+    await advanceTransactionCausalHead(queueDir, latest, randomUUID);
+    await archiveCommittedIntent(queueDir, path, randomUUID);
+    return latest;
+  }
   if (latest.transactionId !== intent.transactionId
     || latest.incidentId !== intent.incidentId
+    || latest.causalRevision !== intent.causalRevision
     || latest.phase !== 'prepared') {
     throw new Error(`repair transaction changed unexpectedly: ${intent.transactionId}`);
   }
+  const causalHead = await readTransactionCausalHead(queueDir, latest.incidentId);
+  if (Number(causalHead?.causalRevision || 0) >= latest.causalRevision
+    && !sameTransactionHead(causalHead?.resultHead, latest.resultHead)) {
+    throw new Error(`stale causal repair transaction: ${latest.transactionId}`);
+  }
+  const queueRecords = await readQueueRecords(queueDir);
+  const currentHead = authoritativeHead(queueRecords, latest.incidentId);
+  if (currentHead
+    && !sameTransactionHead(transactionHead(currentHead), latest.expectedHead)
+    && !sameTransactionHead(transactionHead(currentHead), latest.resultHead)) {
+    throw new Error(`stale authoritative head for repair transaction: ${latest.transactionId}`);
+  }
   for (const write of latest.writes) {
     if (assertOwner) await assertOwner();
-    await atomicWriteJson(join(queueDir, write.filename), write.record, randomUUID);
+    const current = await readJson(write.destination);
+    if (JSON.stringify(current) !== JSON.stringify(write.record)) {
+      if (write.expectedRevision === 0) {
+        if (current !== null) throw new Error(`stale new-record write: ${write.filename}`);
+      } else if (!current
+        || recordIncidentId(current) !== latest.incidentId
+        || current.event?.eventId !== write.record.event?.eventId
+        || Number(current.revision) !== write.expectedRevision) {
+        throw new Error(`stale record revision for transaction write: ${write.filename}`);
+      }
+      await atomicWriteJson(write.destination, write.record, randomUUID);
+    }
     if (write.faultPointAfter) {
       await injectFault(faultInjector, write.faultPointAfter, {
         incidentId: latest.incidentId,
@@ -431,11 +766,14 @@ async function applyPreparedTransaction(queueDir, path, intent, {
   }
   const committed = {
     ...latest,
+    writes: latest.writes.map(({ destination, ...write }) => write),
     phase: 'committed',
     committedAt: new Date().toISOString(),
   };
   if (assertOwner) await assertOwner();
   await atomicWriteJson(path, committed, randomUUID);
+  await advanceTransactionCausalHead(queueDir, committed, randomUUID);
+  await archiveCommittedIntent(queueDir, path, randomUUID);
   return committed;
 }
 
@@ -444,20 +782,29 @@ async function recoverIncidentTransactionsLocked(queueDir, incidentId, {
   assertOwner,
 } = {}) {
   let recovered = 0;
-  for (const { path, intent } of await listTransactionIntents(queueDir)) {
-    if (intent.incidentId !== incidentId || intent.phase === 'committed') continue;
-    await applyPreparedTransaction(queueDir, path, intent, { randomUUID, assertOwner });
-    recovered += 1;
+  const held = await listHeldIncidentIds(queueDir);
+  if (held.has(incidentId)) throw new Error(`repair transaction recovery hold: ${incidentId}`);
+  for (const { path, intent } of await listTransactionIntents(queueDir, { randomUUID })) {
+    if (intent.incidentId !== incidentId) continue;
+    try {
+      await applyPreparedTransaction(queueDir, path, intent, { randomUUID, assertOwner });
+      recovered += 1;
+    } catch (error) {
+      await quarantineTransactionIntent(queueDir, path, error, intent, randomUUID);
+    }
   }
   return recovered;
 }
 
 async function recoverPreparedTransactions(queueDir, {
   randomUUID = defaultRandomUUID,
+  transactionInstrumentation,
 } = {}) {
+  const intents = await listTransactionIntents(queueDir, { randomUUID, transactionInstrumentation });
+  const held = await listHeldIncidentIds(queueDir);
   const incidentIds = [...new Set(
-    (await listTransactionIntents(queueDir))
-      .filter(({ intent }) => intent.phase !== 'committed')
+    intents
+      .filter(({ intent }) => !held.has(intent.incidentId))
       .map(({ intent }) => intent.incidentId),
   )].sort();
   let recovered = 0;
@@ -469,9 +816,9 @@ async function recoverPreparedTransactions(queueDir, {
   return recovered;
 }
 
-export async function listRepairRecords({ queueDir } = {}) {
+export async function listRepairRecords({ queueDir, transactionInstrumentation } = {}) {
   if (!queueDir) throw new TypeError('queueDir is required');
-  await recoverPreparedTransactions(queueDir);
+  await recoverPreparedTransactions(queueDir, { transactionInstrumentation });
   return (await readQueueRecords(queueDir)).map(({ record }) => record);
 }
 
@@ -687,6 +1034,8 @@ export async function enqueueRepairEvent(value, {
       operation: 'replace_generation',
       writes,
       createdAt: event.createdAt,
+      expectedHead: transactionHead(previous),
+      resultHead: transactionHead(record),
     }, { randomUUID, assertOwner });
     await applyPreparedTransaction(queueDir, prepared.path, prepared.intent, {
       randomUUID,
@@ -771,6 +1120,8 @@ export async function compactRepairIncident({
           incidentId,
           operation: 'finish_compaction',
           createdAt: existing.record.updatedAt,
+          expectedHead: transactionHead(existing.record),
+          resultHead: transactionHead(existing.record),
           writes: active.map(({ path, record }) => transactionWrite(
             basename(path),
             supersededRecord(record, {
@@ -868,6 +1219,8 @@ export async function compactRepairIncident({
       operation: 'compact_incident',
       writes,
       createdAt,
+      expectedHead: transactionHead(authoritativeHead(queueRecords, incidentId)),
+      resultHead: transactionHead(canonical),
     }, { randomUUID, assertOwner });
     await applyPreparedTransaction(queueDir, prepared.path, prepared.intent, {
       randomUUID,
@@ -903,6 +1256,7 @@ export async function listEligibleRepairEvents({
   const nowMs = (now instanceof Date ? now : new Date(now)).getTime();
   const divisor = Math.max(1, Number(agingMs) || DEFAULT_AGING_MS);
   const queueRecords = await readQueueRecords(queueDir);
+  const heldIncidents = await listHeldIncidentIds(queueDir);
   const heads = new Map();
   for (const entry of queueRecords) {
     const incidentId = recordIncidentId(entry.record);
@@ -913,6 +1267,7 @@ export async function listEligibleRepairEvents({
   const eligible = queueRecords
     .map(({ record }) => record)
     .filter((record) => {
+      if (heldIncidents.has(recordIncidentId(record))) return false;
       const head = heads.get(recordIncidentId(record));
       if (head?.event?.eventId !== record.event?.eventId) return false;
       if (!['queued', 'repair_pending'].includes(record.status)) return false;

@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { lookup as dnsLookup } from 'node:dns/promises';
 import {
   existsSync,
   readFileSync,
@@ -11,6 +12,7 @@ import {
   resolve,
   sep,
 } from 'node:path';
+import { isIP } from 'node:net';
 
 const IMAGE_EXT_RE = /\.(?:avif|gif|jpe?g|png|svg|webp)$/i;
 
@@ -176,7 +178,12 @@ export async function verifyFinalLinks({
       continue;
     }
     if (!['http:', 'https:'].includes(parsed.protocol)) {
-      ignored.push({ href, reason: 'external' });
+      failed.push({
+        href,
+        url: '',
+        path: '',
+        reason: `unsafe link protocol ${parsed.protocol || '<missing>'}`,
+      });
       continue;
     }
     if (normalizedHostname(parsed.hostname) !== pageHost) {
@@ -245,29 +252,141 @@ export async function verifyFinalLinks({
 function srcsetCandidates(value) {
   return String(value || '')
     .split(',')
-    .map((part) => part.trim().split(/\s+/)[0])
-    .filter(Boolean);
+    .map((part) => part.trim().split(/\s+/)[0]);
+}
+
+function parseInlineSvgReferences(html) {
+  const references = [];
+  let context = null;
+  const tokens = String(html || '').match(
+    /<!--[\s\S]*?-->|<\?[\s\S]*?\?>|<![^>]*>|<\/?[A-Za-z][^>]*>/g,
+  ) || [];
+  const finalize = () => {
+    if (!context) return;
+    const structurallyValid = context.malformed !== true && context.stack.length === 0;
+    for (const reference of context.references) {
+      const fragment = String(reference.value || '').slice(1);
+      const fragmentPresent = context.ids.has(fragment);
+      references.push({
+        ...reference,
+        inlineValidation: {
+          ok: structurallyValid && fragmentPresent,
+          reason: !structurallyValid
+            ? 'inline SVG parser rejected malformed or unclosed structure'
+            : `inline SVG fragment #${fragment} is missing from the same SVG`,
+        },
+      });
+    }
+    context = null;
+  };
+
+  for (const raw of tokens) {
+    if (/^<!--|^<\?|^<!/.test(raw)) continue;
+    const close = raw.match(/^<\/\s*([A-Za-z][\w:.-]*)\s*>$/);
+    if (close) {
+      const name = close[1].toLowerCase();
+      if (!context) continue;
+      if (name === 'svg') {
+        if (context.stack.length !== 1 || context.stack[0] !== 'svg') context.malformed = true;
+        context.stack = [];
+        finalize();
+        continue;
+      }
+      const expected = context.stack.pop();
+      if (!expected || expected !== name) context.malformed = true;
+      continue;
+    }
+
+    const open = raw.match(/^<\s*([A-Za-z][\w:.-]*)\b([\s\S]*?)\/?\s*>$/);
+    if (!open) continue;
+    const name = open[1].toLowerCase();
+    const attributes = parseAttributes(open[2] || '');
+    const selfClosing = /\/\s*>$/.test(raw);
+    if (!context) {
+      if (name === 'svg') {
+        context = {
+          ids: new Set(),
+          references: [],
+          stack: selfClosing ? [] : ['svg'],
+          malformed: false,
+        };
+        if (attributes.id) context.ids.add(attributes.id);
+        if (selfClosing) finalize();
+      } else if ((name === 'use' || name === 'image')) {
+        const hasHref = Object.hasOwn(attributes, 'href')
+          || Object.hasOwn(attributes, 'xlink:href');
+        const value = attributes.href ?? attributes['xlink:href'] ?? '';
+        if (hasHref && String(value).startsWith('#')) {
+          references.push({
+            tag: name,
+            attribute: 'href',
+            value,
+            svgReference: true,
+            inlineValidation: {
+              ok: false,
+              reason: 'inline SVG reference is outside an inline SVG root',
+            },
+          });
+        }
+      }
+      continue;
+    }
+
+    if (attributes.id) context.ids.add(attributes.id);
+    if (name === 'use' || name === 'image') {
+      const hasHref = Object.hasOwn(attributes, 'href')
+        || Object.hasOwn(attributes, 'xlink:href');
+      const value = attributes.href ?? attributes['xlink:href'] ?? '';
+      if (hasHref && String(value).startsWith('#')) {
+        context.references.push({
+          tag: name,
+          attribute: 'href',
+          value,
+          svgReference: true,
+        });
+      }
+    }
+    if (!selfClosing) context.stack.push(name);
+  }
+  if (context) {
+    context.malformed = true;
+    context.stack = [];
+    finalize();
+  }
+  return references;
 }
 
 function renderedAssetReferences(html) {
   const references = [];
   for (const tag of htmlTags(html)) {
     if (tag.name === 'img') {
-      if (tag.attributes.src) references.push({ tag: 'img', attribute: 'src', value: tag.attributes.src });
-      for (const value of srcsetCandidates(tag.attributes.srcset)) {
-        references.push({ tag: 'img', attribute: 'srcset', value });
+      if (Object.hasOwn(tag.attributes, 'src')) {
+        references.push({ tag: 'img', attribute: 'src', value: tag.attributes.src });
+      }
+      if (Object.hasOwn(tag.attributes, 'srcset')) {
+        for (const value of srcsetCandidates(tag.attributes.srcset)) {
+          references.push({ tag: 'img', attribute: 'srcset', value });
+        }
       }
     } else if (tag.name === 'source') {
-      if (tag.attributes.src) references.push({ tag: 'source', attribute: 'src', value: tag.attributes.src });
-      for (const value of srcsetCandidates(tag.attributes.srcset)) {
-        references.push({ tag: 'source', attribute: 'srcset', value });
+      if (Object.hasOwn(tag.attributes, 'src')) {
+        references.push({ tag: 'source', attribute: 'src', value: tag.attributes.src });
+      }
+      if (Object.hasOwn(tag.attributes, 'srcset')) {
+        for (const value of srcsetCandidates(tag.attributes.srcset)) {
+          references.push({ tag: 'source', attribute: 'srcset', value });
+        }
       }
     } else if (tag.name === 'use' || tag.name === 'image') {
-      const value = tag.attributes.href || tag.attributes['xlink:href'];
-      if (value) references.push({ tag: tag.name, attribute: 'href', value, svgReference: true });
+      const hasHref = Object.hasOwn(tag.attributes, 'href')
+        || Object.hasOwn(tag.attributes, 'xlink:href');
+      const value = tag.attributes.href ?? tag.attributes['xlink:href'] ?? '';
+      if (hasHref && !String(value).startsWith('#')) {
+        references.push({ tag: tag.name, attribute: 'href', value, svgReference: true });
+      }
     }
   }
-  return references;
+  return [...references, ...parseInlineSvgReferences(html)];
 }
 
 function expectedMimeFor(url, reference) {
@@ -404,9 +523,143 @@ async function defaultDecodeImage({ bytes, mime, fragment }) {
   return parseRaster(bytes, mime);
 }
 
-function inlineIdExists(html, fragment) {
-  const escaped = String(fragment || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  return Boolean(fragment) && new RegExp(`\\bid\\s*=\\s*["']${escaped}["']`, 'i').test(String(html || ''));
+function stripIpBrackets(hostname) {
+  return String(hostname || '').replace(/^\[|\]$/g, '');
+}
+
+function unsafeIpv4(address) {
+  const parts = String(address || '').split('.').map(Number);
+  if (parts.length !== 4 || parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) {
+    return true;
+  }
+  const [a, b] = parts;
+  return a === 0
+    || a === 10
+    || a === 127
+    || (a === 100 && b >= 64 && b <= 127)
+    || (a === 169 && b === 254)
+    || (a === 172 && b >= 16 && b <= 31)
+    || (a === 192 && (b === 0 || b === 168))
+    || (a === 198 && (b === 18 || b === 19))
+    || a >= 224;
+}
+
+function unsafeIp(address) {
+  const value = stripIpBrackets(address).toLowerCase();
+  const family = isIP(value);
+  if (family === 4) return unsafeIpv4(value);
+  if (family !== 6) return true;
+  const mapped = value.match(/::ffff:(\d+\.\d+\.\d+\.\d+)$/);
+  if (mapped) return unsafeIpv4(mapped[1]);
+  return value === '::'
+    || value === '::1'
+    || /^f[cd]/.test(value)
+    || /^fe[89ab]/.test(value)
+    || /^ff/.test(value);
+}
+
+function configuredAssetHosts(values) {
+  const configured = [
+    ...values || [],
+    ...String(process.env.GG_SEO_ASSET_CDN_ALLOWLIST || '').split(','),
+  ];
+  const hosts = new Set();
+  for (const value of configured) {
+    const raw = String(value || '').trim();
+    if (!raw) continue;
+    try {
+      hosts.add(normalizedHostname(new URL(raw.includes('://') ? raw : `https://${raw}`).hostname));
+    } catch {}
+  }
+  return hosts;
+}
+
+async function validateAssetUrl(url, {
+  trustedHosts,
+  configuredHosts,
+  resolveHost,
+}) {
+  let parsed;
+  try { parsed = new URL(url); } catch { return { ok: false, reason: 'invalid asset URL' }; }
+  if (!['http:', 'https:'].includes(parsed.protocol)) {
+    return { ok: false, reason: `unsafe asset protocol ${parsed.protocol || '<missing>'}` };
+  }
+  if (parsed.username || parsed.password) {
+    return { ok: false, reason: 'unsafe asset URL credentials are forbidden' };
+  }
+  const host = normalizedHostname(parsed.hostname);
+  if (!trustedHosts.has(host)) {
+    return { ok: false, reason: `asset host is not trusted: ${parsed.hostname}` };
+  }
+  const literal = stripIpBrackets(parsed.hostname);
+  if (isIP(literal) && unsafeIp(literal)) {
+    return { ok: false, reason: `unsafe private/loopback asset IP: ${literal}` };
+  }
+  if (configuredHosts.has(host) && !isIP(literal)) {
+    const resolver = resolveHost || (async (hostname) => dnsLookup(hostname, {
+      all: true,
+      verbatim: true,
+    }));
+    let addresses;
+    try { addresses = await resolver(literal); } catch (error) {
+      return { ok: false, reason: `asset DNS resolution failed: ${error?.message || String(error)}` };
+    }
+    if (!Array.isArray(addresses) || addresses.length === 0) {
+      return { ok: false, reason: 'asset DNS resolution returned no addresses' };
+    }
+    const unsafe = addresses.find((entry) => unsafeIp(entry?.address || entry));
+    if (unsafe) {
+      return {
+        ok: false,
+        reason: `asset DNS resolved private/loopback address: ${unsafe.address || unsafe}`,
+      };
+    }
+  }
+  parsed.hash = '';
+  return { ok: true, url: parsed.toString(), host };
+}
+
+async function fetchSafeAsset(initialUrl, {
+  fetchTarget,
+  trustedHosts,
+  configuredHosts,
+  resolveHost,
+  headers,
+  maxRedirects = 5,
+}) {
+  let current = initialUrl;
+  for (let redirectCount = 0; redirectCount <= maxRedirects; redirectCount += 1) {
+    const safe = await validateAssetUrl(current, {
+      trustedHosts,
+      configuredHosts,
+      resolveHost,
+    });
+    if (!safe.ok) throw new Error(safe.reason);
+    const response = await fetchTarget(safe.url, {
+      redirect: 'manual',
+      headers,
+    });
+    const status = Number(response?.status || 0);
+    if (status >= 300 && status < 400) {
+      if (redirectCount === maxRedirects) throw new Error('asset redirect limit exceeded');
+      const location = headerValue(response, 'location');
+      if (!location) throw new Error(`asset redirect HTTP ${status} is missing Location`);
+      current = new URL(location, safe.url).toString();
+      continue;
+    }
+    const finalUrl = response?.url || safe.url;
+    const finalSafe = await validateAssetUrl(finalUrl, {
+      trustedHosts,
+      configuredHosts,
+      resolveHost,
+    });
+    if (!finalSafe.ok) throw new Error(`unsafe asset final URL: ${finalSafe.reason}`);
+    if (response?.redirected === true || finalSafe.url !== safe.url) {
+      throw new Error(`asset final URL drift ${finalSafe.url} != ${safe.url}`);
+    }
+    return { response, url: safe.url };
+  }
+  throw new Error('asset redirect limit exceeded');
 }
 
 export async function verifyFinalAssets({
@@ -415,18 +668,33 @@ export async function verifyFinalAssets({
   assetBaseUrl = pageUrl,
   fetch: fetchImpl,
   decodeImage = defaultDecodeImage,
+  allowedAssetHosts = new Set(),
+  resolveHost,
 }) {
   const checked = [];
   const failed = [];
   const ignored = [];
   const fetchTarget = fetchFunction(fetchImpl);
+  const configuredHosts = configuredAssetHosts(allowedAssetHosts);
+  const trustedHosts = new Set([
+    normalizedHostname(new URL(pageUrl).hostname),
+    normalizedHostname(new URL(assetBaseUrl).hostname),
+    ...configuredHosts,
+  ]);
 
   for (const reference of renderedAssetReferences(html)) {
     const raw = String(reference.value || '').trim();
-    if (!raw) continue;
+    if (!raw) {
+      failed.push({
+        ...reference,
+        url: '',
+        reason: `rendered ${reference.tag}/${reference.attribute} asset reference is empty or missing`,
+      });
+      continue;
+    }
     if (raw.startsWith('#')) {
       const fragment = raw.slice(1);
-      if (inlineIdExists(html, fragment)) {
+      if (reference.inlineValidation?.ok === true) {
         checked.push({
           ...reference,
           url: pageUrl,
@@ -443,7 +711,8 @@ export async function verifyFinalAssets({
           url: pageUrl,
           fragment,
           inline: true,
-          reason: `inline SVG fragment #${fragment} is missing`,
+          reason: reference.inlineValidation?.reason
+            || `inline SVG fragment #${fragment} is missing`,
         });
       }
       continue;
@@ -464,37 +733,41 @@ export async function verifyFinalAssets({
     const url = parsed.toString();
     const expectedMime = expectedMimeFor(url, reference);
     try {
-      const response = await fetchTarget(url, {
-        redirect: 'follow',
+      const fetched = await fetchSafeAsset(url, {
+        fetchTarget,
+        trustedHosts,
+        configuredHosts,
+        resolveHost,
         headers: { 'user-agent': 'gg-seo-final-assets/1' },
       });
+      const { response } = fetched;
       const status = Number(response?.status || 0);
       const mime = String(headerValue(response, 'content-type') || '').split(';')[0].trim().toLowerCase();
+      const bytes = await responseBytes(response);
+      const sha256 = createHash('sha256').update(bytes).digest('hex');
       const base = {
         ...reference,
-        url,
+        url: fetched.url,
         fragment,
         status,
         mime,
         expectedMime,
+        bytes: bytes.length,
+        sha256,
       };
       if (status !== 200) {
         failed.push({ ...base, reason: `HTTP ${status || 0}` });
         continue;
       }
-      const bytes = await responseBytes(response);
-      const sha256 = createHash('sha256').update(bytes).digest('hex');
       if (!mimeMatches(mime, expectedMime)) {
         failed.push({
           ...base,
-          bytes: bytes.length,
-          sha256,
           reason: `MIME mismatch ${mime || '<missing>'} != ${expectedMime}`,
         });
         continue;
       }
       if (bytes.length === 0) {
-        failed.push({ ...base, bytes: 0, sha256, reason: 'asset body is empty' });
+        failed.push({ ...base, reason: 'asset body is empty' });
         continue;
       }
       if (mime === 'image/svg+xml') {
@@ -502,8 +775,6 @@ export async function verifyFinalAssets({
         if (!parsedSvg.ok) {
           failed.push({
             ...base,
-            bytes: bytes.length,
-            sha256,
             reason: parsedSvg.reason,
           });
           continue;
@@ -514,16 +785,12 @@ export async function verifyFinalAssets({
       if (!decodeOk) {
         failed.push({
           ...base,
-          bytes: bytes.length,
-          sha256,
           reason: decoded?.reason || 'image decode/parser failed',
         });
         continue;
       }
       checked.push({
         ...base,
-        bytes: bytes.length,
-        sha256,
       });
     } catch (error) {
       failed.push({
@@ -646,6 +913,8 @@ export async function verifyRenderedArtifacts({
   sitemapUrls,
   fetch: fetchImpl,
   decodeImage,
+  allowedAssetHosts,
+  resolveAssetHost,
   articleSha,
   reviewedHeadRefOid,
 }) {
@@ -662,6 +931,8 @@ export async function verifyRenderedArtifacts({
     assetBaseUrl,
     fetch: fetchImpl,
     decodeImage,
+    allowedAssetHosts,
+    resolveHost: resolveAssetHost,
   });
   const artifactSha = artifactShaForEvidence({ articleSha, finalAssets: final_assets });
   const failureFingerprint = (final_links.ok && final_assets.ok)

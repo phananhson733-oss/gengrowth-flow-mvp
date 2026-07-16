@@ -882,11 +882,12 @@ function doNextUnauthored() {
 // the text-only gg-author-repair.mjs (Task 3). Deleted to avoid inviting a re-wire of the unsafe path.
 
 // Deterministic-repair escalation (Task 3) — shared by EVERY author park boundary.
-// After the feedback loop has failed every attempt, escalate ONCE to gg-author-repair.mjs: a TEXT-ONLY
+// After the feedback loop has failed every attempt, escalate to gg-author-repair.mjs: a TEXT-ONLY
 // worker (NO Bash/Edit/Write/Grep/MCP/--dangerously-skip-permissions) that reads the failed draft + the
 // phase2 failures and emits a corrected article to a SEPARATE candidate file. `validate(candidate)` runs
-// phase2 on that candidate and returns whether it passed; we adopt it ONLY on a pass — a tooling failure
-// or a still-failing candidate parks exactly as before. Centralized so a new author path can never again
+// phase2 on that candidate and returns whether it passed; we adopt it ONLY on a pass. One bounded second
+// repair is allowed when the first candidate reveals a new exact failure; tooling failures still park.
+// Centralized so a new author path can never again
 // silently ship WITHOUT the repair safety net (the divergence that parked PG-SOLAR-001: one path
 // had the escalation, another did not). Toggle GG_AUTHOR_REPAIR=0. Returns a
 // structured result so the caller can park with the repaired candidate's exact
@@ -916,30 +917,32 @@ function tryDeterministicRepair({
   const maxAttempts = Math.max(1, Math.min(2, parseInt(process.env.GG_AUTHOR_REPAIR_ATTEMPTS || '2', 10)));
   let source = draftV8;
   let currentFailures = failures || '- phase2 failed';
+  let attemptsUsed = 0;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    attemptsUsed = attempt;
     const attemptCandidate = attempt === 1
       ? candidate
       : candidate.replace(/(\.md)?$/, `-attempt-${attempt}.md`);
     let workerFinished = false;
     try {
-    const args = [join(SCRIPTS, 'gg-author-repair.mjs'),
-      '--source', source, '--out', attemptCandidate, '--page-id', pgId,
-      '--target-keyword', targetKeyword, '--author', author,
-      '--failures', currentFailures,
-      '--model', repModel, '--effort', repEffort,
-      '--timeout-ms', String(repAttemptTimeout)];
-    if (constraints.wordMin) args.push('--word-min', String(constraints.wordMin));
-    if (constraints.wordMax) args.push('--word-max', String(constraints.wordMax));
-    if (constraints.keywordMin) args.push('--keyword-min', String(constraints.keywordMin));
-    if (constraints.keywordMax) args.push('--keyword-max', String(constraints.keywordMax));
-    if (constraints.maxSentencesPerParagraph) {
-      args.push('--max-sentences-per-paragraph', String(constraints.maxSentencesPerParagraph));
-    }
-    shFlow('node', args, repTimeout);
-    workerFinished = true;
-    // WE validate the candidate (the worker never runs phase2 itself); adopt only on PASS.
-    if (validate(attemptCandidate)) return { passed: true, attempted: true, attempts: attempt, failure: '' };
-    repairFailure = '- deterministic repair candidate did not produce a passing phase2 manifest';
+      const args = [join(SCRIPTS, 'gg-author-repair.mjs'),
+        '--source', source, '--out', attemptCandidate, '--page-id', pgId,
+        '--target-keyword', targetKeyword, '--author', author,
+        '--failures', currentFailures,
+        '--model', repModel, '--effort', repEffort,
+        '--timeout-ms', String(repAttemptTimeout)];
+      if (constraints.wordMin) args.push('--word-min', String(constraints.wordMin));
+      if (constraints.wordMax) args.push('--word-max', String(constraints.wordMax));
+      if (constraints.keywordMin) args.push('--keyword-min', String(constraints.keywordMin));
+      if (constraints.keywordMax) args.push('--keyword-max', String(constraints.keywordMax));
+      if (constraints.maxSentencesPerParagraph) {
+        args.push('--max-sentences-per-paragraph', String(constraints.maxSentencesPerParagraph));
+      }
+      shFlow('node', args, repTimeout);
+      workerFinished = true;
+      // WE validate the candidate (the worker never runs phase2 itself); adopt only on PASS.
+      if (validate(attemptCandidate)) return { passed: true, attempted: true, attempts: attempt, failure: '' };
+      repairFailure = '- deterministic repair candidate did not produce a passing phase2 manifest';
     } catch (e) {
       if (workerFinished) {
         repairFailure = summarizePhase2Failure(e);
@@ -956,9 +959,9 @@ function tryDeterministicRepair({
     ));
     source = attemptCandidate;
     log(`deterministic repair: retrying candidate once with new exact failures (${attempt + 1}/${maxAttempts})`);
-    }
+  }
   log('deterministic repair did not yield a passing draft — parking');
-  return { passed: false, attempted: true, attempts: maxAttempts, failure: repairFailure };
+  return { passed: false, attempted: true, attempts: attemptsUsed, failure: repairFailure };
 }
 
 function authorRepairConstraints(pgId) {

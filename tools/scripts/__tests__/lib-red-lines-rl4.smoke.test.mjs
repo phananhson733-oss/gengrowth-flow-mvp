@@ -20,7 +20,7 @@ Start by generating your free birth chart — the same houses and transits a Mex
 test('RL4：section 以免责声明开头时，锚点用其后实质段落（不误判漂移）', () => {
   const r = checkRL4(WITH_DISCLAIMER, CTX);
   assert.equal(r.pass, true, `不应因免责声明首段漂移: ${r.note}`);
-  assert.ok(!/Take Action/.test(r.note || ''), `Take Action 不该被列为漂移: ${r.note}`);
+  assert.doesNotMatch(r.note || '', /drifted sections:.*Take Action/, `Take Action 不该被列为漂移: ${r.note}`);
 });
 
 test('RL4：真正缺关键词的 prose section 仍判漂移（修复不放水，容差=2 处才 FAIL）', () => {

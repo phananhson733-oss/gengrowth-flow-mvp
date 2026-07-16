@@ -270,7 +270,7 @@ writeFileSync('.gg-cache/prompts/PG-TEST-001.v8' + suffix + '-fixture.json', JSO
 `);
 
   writeFileSync(join(scripts, 'gg-llm-orchestrator.mjs'), `#!/usr/bin/env node
-import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 const args = process.argv.slice(2);
 const outDir = args[args.indexOf('--out-dir') + 1];
 const pageId = args[args.indexOf('--page-id') + 1];
@@ -279,6 +279,14 @@ if (process.env.GG_TEST_AUTHOR_PROMPT_LOG) {
   appendFileSync(process.env.GG_TEST_AUTHOR_PROMPT_LOG, '\\n===PROMPT===\\n' + readFileSync(prompt, 'utf8'));
 }
 mkdirSync(outDir, { recursive: true });
+const statePath = process.env.GG_TEST_ORCHESTRATOR_STATE || '';
+const attempt = statePath && existsSync(statePath) ? Number(readFileSync(statePath, 'utf8')) : 0;
+if (statePath) writeFileSync(statePath, String(attempt + 1));
+if (Number(process.env.GG_TEST_ORCHESTRATOR_NO_DRAFT_AT || 0) === attempt + 1) {
+  rmSync(outDir + '/' + pageId + '-claude-v8.md', { force: true });
+  process.stderr.write('simulated watchdog with no draft\\n');
+  process.exit(2);
+}
 writeFileSync(outDir + '/' + pageId + '-claude-v8.md', '# 中文稿\\n\\n这里是中文正文。');
 `);
 
@@ -303,6 +311,16 @@ writeFileSync(dir + '/' + pageId + '-' + tag + '.manifest.json', JSON.stringify(
 `);
 
   writeFileSync(join(scripts, 'gg-author-review.mjs'), 'process.exit(0);\n');
+  writeFileSync(join(scripts, 'gg-author-repair.mjs'), `#!/usr/bin/env node
+import { appendFileSync, readFileSync, writeFileSync } from 'node:fs';
+const args = process.argv.slice(2);
+const source = args[args.indexOf('--source') + 1];
+const out = args[args.indexOf('--out') + 1];
+if (process.env.GG_TEST_REPAIR_WORKER_CALLS) {
+  appendFileSync(process.env.GG_TEST_REPAIR_WORKER_CALLS, JSON.stringify(args) + '\\n');
+}
+writeFileSync(out, readFileSync(source, 'utf8') + '\\n\\nRepair pass.');
+`);
   return flow;
 }
 
@@ -1037,6 +1055,76 @@ test('--author accumulates and persists distinct Phase 2 constraints across atte
     const passedMemory = JSON.parse(readFileSync(memoryPath, 'utf8'));
     assert.equal(passedMemory.status, 'passed');
     assert.deepEqual(passedMemory.failures, []);
+  } finally {
+    h.cleanup();
+  }
+});
+
+test('--author gives a failed repair candidate one bounded second repair with the new exact failures', () => {
+  const h = makeHarness();
+  try {
+    const flow = writeStubAuthorBackfillFlow(h, { seedEn: false });
+    writeFileSync(join(h.tasks, '2026-06-03-blog-output-plan.md'), '- [ ] `PG-TEST-001` test keyword\n');
+    writeClaims(h, {});
+    const phase2State = join(h.root, 'repair-phase2-state');
+    const repairCalls = join(h.root, 'repair-worker-calls.log');
+    const failures = [
+      '✗ FAIL RL4 drifted sections: Common Misreadings',
+      '✗ FAIL RL5 keyword count 11 outside [5, 8]\\n  - SC3 paragraph has 8 sentences',
+    ];
+
+    const r = runAuto(h, ['--author', '--task', 'PG-TEST-001'], {
+      GG_FLOW_REPO: flow,
+      GG_AUTHOR_GEN_ATTEMPTS: '1',
+      GG_AUTHOR_REPAIR_ATTEMPTS: '2',
+      GG_AUTHOR_REPAIR_TIMEOUT_MS: '1000',
+      GG_TEST_PHASE2_STATE: phase2State,
+      GG_TEST_PHASE2_FAILURES: JSON.stringify(failures),
+      GG_TEST_REPAIR_WORKER_CALLS: repairCalls,
+    });
+
+    assert.equal(r.status, 0, `${r.stdout}${r.stderr}`);
+    assert.match(`${r.stdout}${r.stderr}`, /retrying candidate once with new exact failures/);
+    assert.match(`${r.stdout}${r.stderr}`, /AUTHORED PG-TEST-001.*deterministic repair/);
+    const calls = readFileSync(repairCalls, 'utf8').trim().split('\n').map((line) => JSON.parse(line));
+    assert.equal(calls.length, 2);
+    assert.match(calls[1][calls[1].indexOf('--failures') + 1], /RL5 keyword count 11/);
+    assert.match(calls[1][calls[1].indexOf('--failures') + 1], /SC3 paragraph has 8 sentences/);
+    assert.equal(existsSync(join(flow, '_staging', 'PG-TEST-001-repair-candidate-attempt-2.md')), true);
+    assert.equal(existsSync(join(flow, '_staging', 'PG-TEST-001-en.md')), true);
+  } finally {
+    h.cleanup();
+  }
+});
+
+test('--author preserves the last failing draft for repair when the final orchestrator attempt produces no draft', () => {
+  const h = makeHarness();
+  try {
+    const flow = writeStubAuthorBackfillFlow(h, { seedEn: false });
+    writeFileSync(join(h.tasks, '2026-06-03-blog-output-plan.md'), '- [ ] `PG-TEST-001` test keyword\n');
+    writeClaims(h, {});
+    const phase2State = join(h.root, 'snapshot-phase2-state');
+    const orchState = join(h.root, 'snapshot-orchestrator-state');
+    const repairCalls = join(h.root, 'snapshot-repair-calls.log');
+
+    const r = runAuto(h, ['--author', '--task', 'PG-TEST-001'], {
+      GG_FLOW_REPO: flow,
+      GG_AUTHOR_GEN_ATTEMPTS: '2',
+      GG_AUTHOR_REPAIR_ATTEMPTS: '1',
+      GG_AUTHOR_REPAIR_TIMEOUT_MS: '1000',
+      GG_TEST_PHASE2_STATE: phase2State,
+      GG_TEST_PHASE2_FAILURES: JSON.stringify(['✗ FAIL RL4 drifted sections: Common Misreadings']),
+      GG_TEST_ORCHESTRATOR_STATE: orchState,
+      GG_TEST_ORCHESTRATOR_NO_DRAFT_AT: '2',
+      GG_TEST_REPAIR_WORKER_CALLS: repairCalls,
+    });
+
+    assert.equal(r.status, 0, `${r.stdout}${r.stderr}`);
+    assert.match(`${r.stdout}${r.stderr}`, /orchestrator produced no draft|simulated watchdog/);
+    assert.match(`${r.stdout}${r.stderr}`, /AUTHORED PG-TEST-001.*deterministic repair/);
+    const calls = readFileSync(repairCalls, 'utf8').trim().split('\n').map((line) => JSON.parse(line));
+    assert.equal(calls.length, 1);
+    assert.match(calls[0][calls[0].indexOf('--source') + 1], /PG-TEST-001-last-failing-v8\.md$/);
   } finally {
     h.cleanup();
   }

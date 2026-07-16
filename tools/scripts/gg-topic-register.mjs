@@ -88,6 +88,7 @@ const STOPWORDS = new Set([
   'a', 'an', 'the', 'and', 'or', 'of', 'for', 'to', 'in', 'on', 'with', 'without',
   'what', 'why', 'how', 'is', 'are', 'best', 'free', 'online', 'guide', 'meaning',
   'definition', 'services', 'service',
+  'my', 'your', 'yours', 'our', 'ours',
   'vs', 'versus',
 ]);
 

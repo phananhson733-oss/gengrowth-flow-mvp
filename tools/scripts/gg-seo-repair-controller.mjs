@@ -210,9 +210,7 @@ function activeRunAlreadyRepresented(records, event) {
   return records.some((record) => {
     if (!isActiveRepairStatus(record.status)) return false;
     const recordIncidentId = record.incidentId || repairIncidentId(record.event);
-    if (recordIncidentId !== incidentId || record.fingerprint !== fingerprint) return false;
-    return (record.sourceEvents || [record.latestEvent || record.event])
-      .some((source) => source.runId === event.runId);
+    return recordIncidentId === incidentId && record.fingerprint === fingerprint;
   });
 }
 

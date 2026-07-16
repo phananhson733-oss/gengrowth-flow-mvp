@@ -255,21 +255,6 @@ if (${renderRequiresSearchVolume ? 'true' : 'false'} && overrides) {
     process.exit(0);
   }
 }
-
-function writeStubAuthorParkFlow(h) {
-  const flow = join(h.root, 'flow-author-park');
-  const scripts = join(flow, 'tools', 'scripts');
-  mkdirSync(scripts, { recursive: true });
-  writeFileSync(join(scripts, 'gg-sheet-pull.mjs'), `#!/usr/bin/env node
-import { mkdirSync, writeFileSync } from 'node:fs';
-import { dirname } from 'node:path';
-const args = process.argv.slice(2);
-const out = args[args.indexOf('--out') + 1];
-mkdirSync(dirname(out), { recursive: true });
-writeFileSync(out, JSON.stringify({ rows: [] }));
-`);
-  return flow;
-}
 mkdirSync('.gg-cache/prompts', { recursive: true });
 const suffix = isZh ? '.zh' : '';
 writeFileSync('.gg-cache/prompts/PG-TEST-001.v8' + suffix + '-prompt.md', '# prompt\\n\\nbody');
@@ -298,6 +283,21 @@ writeFileSync(dir + '/' + pageId + '-' + tag + '.manifest.json', JSON.stringify(
 `);
 
   writeFileSync(join(scripts, 'gg-author-review.mjs'), 'process.exit(0);\n');
+  return flow;
+}
+
+function writeStubAuthorParkFlow(h) {
+  const flow = join(h.root, 'flow-author-park');
+  const scripts = join(flow, 'tools', 'scripts');
+  mkdirSync(scripts, { recursive: true });
+  writeFileSync(join(scripts, 'gg-sheet-pull.mjs'), `#!/usr/bin/env node
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { dirname } from 'node:path';
+const args = process.argv.slice(2);
+const out = args[args.indexOf('--out') + 1];
+mkdirSync(dirname(out), { recursive: true });
+writeFileSync(out, JSON.stringify({ rows: [] }));
+`);
   return flow;
 }
 
@@ -515,6 +515,15 @@ test('--author park uses the active Gengrowth site and invokes repair only after
   } finally {
     h.cleanup();
   }
+});
+
+test('repair controller child timeout includes the five-minute persistence and unlock margin', () => {
+  const source = readFileSync(SCRIPT, 'utf8');
+  assert.match(
+    source,
+    /repairControllerBudgetSeconds\(\)[\s\S]*budgetSeconds \+ 300\) \* 1000/,
+    'producer must not kill the controller before its budget plus five-minute safe cleanup margin',
+  );
 });
 
 test('--retry-failed restores a human-fixed parked preview without bypassing verification', () => {

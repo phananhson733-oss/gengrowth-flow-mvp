@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import test from 'node:test';
@@ -10,6 +10,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const flow = resolve(here, '../../..');
 const wiki = '/Users/awayer_mini/gengrowth-wiki';
 const runner = resolve(flow, 'tools/scripts/gg-seo-blog-launchd-tick.sh');
+const authorTick = resolve(flow, 'tools/scripts/gg-gengrowth-author-tick.sh');
 const seoPlist = resolve(flow, 'tools/launchd/com.gengrowth.seo-blog.plist');
 const notesPlist = resolve(wiki, 'tools/launchd/com.gengrowth.wiki-notes-digest.plist');
 
@@ -132,6 +133,81 @@ test('outer lock makes a concurrent tick skip before nightly or hook', () => {
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}\n${h.log()}`);
   assert.deepEqual(h.events(), []);
   assert.match(h.log(), /another SEO launchd run holds/);
+});
+
+function authorFinalizerHarness({ preflightExit = 0, controllerExit = 0 } = {}) {
+  const root = mkdtempSync(join(tmpdir(), 'gengrowth-author-finalizer-'));
+  const tasks = join(root, 'tasks');
+  const logs = join(root, 'logs');
+  mkdirSync(tasks, { recursive: true });
+  mkdirSync(logs, { recursive: true });
+  const plan = join(tasks, 'plan.md');
+  const claims = join(tasks, 'claims.json');
+  const calls = join(root, 'controller-calls.log');
+  const lock = join(root, 'author.lock');
+  writeFileSync(plan, '- [x] `PG-WLS-001` already done\n');
+  writeFileSync(claims, '{}\n');
+  const preflight = executable(join(root, 'preflight.mjs'), `process.exit(${preflightExit});\n`);
+  const timeout = executable(join(root, 'gtimeout'), '#!/bin/sh\nshift\nexec "$@"\n');
+  const controller = executable(join(root, 'controller.mjs'), [
+    "import { appendFileSync } from 'node:fs';",
+    "appendFileSync(process.env.GG_TEST_CONTROLLER_CALLS, JSON.stringify(process.argv.slice(2)) + '\\n');",
+    `process.exit(${controllerExit});`,
+    '',
+  ].join('\n'));
+  const result = spawnSync('bash', [authorTick], {
+    cwd: flow,
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      HOME: root,
+      GG_GENGROWTH_OPS_TASKS_DIR: tasks,
+      GG_GENGROWTH_PLAN: plan,
+      GG_GENGROWTH_PLAN_NAME: 'plan.md',
+      GG_GENGROWTH_CLAIMS: claims,
+      GG_GENGROWTH_AUTHOR_LOCK: lock,
+      GG_GENGROWTH_AUTHOR_LOG_DIR: logs,
+      GG_GENGROWTH_AUTHOR_PREFLIGHT_BIN: preflight,
+      GG_GENGROWTH_AUTHOR_TIMEOUT_BIN: timeout,
+      GG_SEO_REPAIR_CONTROLLER_BIN: controller,
+      GG_SEO_REPAIR_CONTROLLER_V2_ENABLED: '1',
+      GG_SHEETS_GENGROWTH_WORKBOOK_ID: 'test-workbook',
+      GG_TEST_CONTROLLER_CALLS: calls,
+    },
+  });
+  const callLines = existsSync(calls)
+    ? readFileSync(calls, 'utf8').trim().split('\n').filter(Boolean).map((line) => JSON.parse(line))
+    : [];
+  const logFile = join(logs, `${new Date().toISOString().slice(0, 10)}.log`);
+  return { root, result, callLines, log: existsSync(logFile) ? readFileSync(logFile, 'utf8') : '' };
+}
+
+test('Gengrowth author finalizer imports exactly once with one fire-local run id and preserves nonzero rc', () => {
+  const h = authorFinalizerHarness({ preflightExit: 1, controllerExit: 0 });
+  try {
+    assert.equal(h.result.status, 2, `${h.result.stdout}\n${h.result.stderr}\n${h.log}`);
+    assert.equal(h.callLines.length, 1);
+    const args = h.callLines[0];
+    assert.equal(args[0], 'import-v1');
+    assert.equal(args[args.indexOf('--run-exit') + 1], '2');
+    assert.equal(args[args.indexOf('--log-offset') + 1], '0');
+    assert.match(args[args.indexOf('--run-id') + 1], /^gengrowth-author-\d{8}T\d{6}Z-\d+$/);
+    assert.equal(args[args.indexOf('--budget-seconds') + 1], '1500');
+  } finally {
+    rmSync(h.root, { recursive: true, force: true });
+  }
+});
+
+test('Gengrowth author finalizer fails closed when an otherwise clean fire cannot enqueue/import', () => {
+  const h = authorFinalizerHarness({ preflightExit: 0, controllerExit: 2 });
+  try {
+    assert.equal(h.result.status, 2, `${h.result.stdout}\n${h.result.stderr}\n${h.log}`);
+    assert.equal(h.callLines.length, 1);
+    assert.equal(h.callLines[0][h.callLines[0].indexOf('--run-exit') + 1], '0');
+    assert.match(h.log, /repair import\/drain failed/);
+  } finally {
+    rmSync(h.root, { recursive: true, force: true });
+  }
 });
 
 test('SEO plist schedules only the approved evening window and never runs at load', () => {

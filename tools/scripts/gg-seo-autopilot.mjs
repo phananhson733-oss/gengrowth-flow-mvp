@@ -310,16 +310,23 @@ function lastJsonLine(text) {
   return null;
 }
 
+function repairControllerBudgetSeconds() {
+  const parsed = Number(process.env.GG_SEO_REPAIR_BUDGET_SECONDS || 1500);
+  if (!Number.isFinite(parsed) || parsed < 1) return 1500;
+  return Math.min(86_400, Math.max(1, Math.floor(parsed)));
+}
+
 async function drainRepairController(queueDir) {
   const controller = process.env.GG_SEO_REPAIR_CONTROLLER_BIN
     || join(SCRIPTS, 'gg-seo-repair-controller.mjs');
+  const budgetSeconds = repairControllerBudgetSeconds();
   const args = [
     controller,
     'drain',
     '--max-targets',
     String(process.env.GG_SEO_REPAIR_MAX_TARGETS || 2),
     '--budget-seconds',
-    String(process.env.GG_SEO_REPAIR_BUDGET_SECONDS || 1500),
+    String(budgetSeconds),
   ];
   try {
     const result = await execFileAsync(process.execPath, args, {
@@ -330,7 +337,7 @@ async function drainRepairController(queueDir) {
       },
       encoding: 'utf8',
       maxBuffer: 32 * 1024 * 1024,
-      timeout: (parseInt(process.env.GG_SEO_REPAIR_BUDGET_SECONDS || '1500', 10) + 60) * 1000,
+      timeout: (budgetSeconds + 300) * 1000,
     });
     const payload = lastJsonLine(result.stdout);
     if (!payload || payload.ok === false) {
@@ -352,14 +359,15 @@ async function drainRepairController(queueDir) {
 async function persistClaimRepair(pageId, claim) {
   if (process.env.GG_SEO_REPAIR_CONTROLLER_V2_ENABLED !== '1') return { skipped: true };
   const queueDir = repairQueueDir();
+  const site = String(claim.site || process.env.GG_SITE || 'astrologywiki');
   const createdAt = claim.failedAt || claim.updatedAt || new Date().toISOString();
   const runId = process.env.GG_SEO_REPAIR_RUN_ID
-    || `astrologywiki-producer-${createdAt.replace(/[^0-9]/g, '').slice(0, 14)}-${process.pid}`;
+    || `${site}-producer-${createdAt.replace(/[^0-9]/g, '').slice(0, 14)}-${process.pid}`;
   const logFile = process.env.GG_SEO_REPAIR_LOG_FILE || CLAIMS_PATH;
   const offsetStart = Math.max(0, Number(process.env.GG_SEO_REPAIR_LOG_OFFSET_START) || 0);
   const offsetEnd = Math.max(offsetStart, Number(process.env.GG_SEO_REPAIR_LOG_OFFSET_END) || offsetStart);
   const event = eventFromClaim({
-    site: 'astrologywiki',
+    site,
     runId,
     pageId,
     claim,

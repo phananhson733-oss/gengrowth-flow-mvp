@@ -226,6 +226,6 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 
 审计确认 `PG-WDIF-002` 的上游 brief 被错误绑定到职业困境 cluster，并生成过 `What Is What Is My Love Language?`。Topic Register 已规范化已有 `what is` 实体，并只审计当前计划中未勾选的活跃 page_id；对语义分数为 0 且属于确定性 scaffold 的行，可自动创建单例 cluster 并同步依赖字段。22:26:37–22:26:39 CST 通过固定 wrapper 做 verification-only dry-run，只选中 `PG-WDIF-002`，计划将 cluster 从 `why_do_i_feel_stuck_in_my_career` 修复为 `what_is_my_love_language`，`score=0`、`new_clusters=1`，没有写 Sheet、计划或启动 author/publish。
 
-真实恢复 `PG-CELEB-057` 与 `PG-CELEB-058`：两篇均 HTTP 200、进入 sitemap、plan 已勾选、Vault 已归档，pending writeback 清零；`PG-TRANS-021` 已有 1512 词的 Phase 2 `overall=pass` 稿。最终新鲜回归覆盖 16 个相关测试文件，412/412 通过；Node/Shell 语法与 `git diff --check` 全部通过。当前 W22 只剩 `PG-WDIF-002`、`PG-TRANS-021`、`PG-WDIN-001` 三项未勾选，claims 无非 `done` 记录，active repair=0、needs_human=0、通知 outbox=0、作者全局锁不存在，SEO reconciler 最近 42 次运行且 last exit=0；工作区干净，HEAD 与 `origin/main` 一致。因 22:00 后不启动新发布批次，三项留给下一次正式 cron 自然接管；最终零人值守验收仍需三项自然发布/回填完成，并取得连续 3 个自然 cron 窗口的收敛证据，本轮未强制 publish 或绕过门禁。
+真实恢复 `PG-CELEB-057` 与 `PG-CELEB-058`：两篇均 HTTP 200、进入 sitemap、plan 已勾选、Vault 已归档，pending writeback 清零；`PG-TRANS-021` 已有 1512 词的 Phase 2 `overall=pass` 稿。最终新鲜回归覆盖 16 个相关测试文件，412/412 通过；Node/Shell 语法与 `git diff --check` 全部通过。当前 W22 只剩 `PG-WDIF-002`、`PG-TRANS-021`、`PG-WDIN-001` 三项未勾选，claims 无非 `done` 记录，active repair=0、needs_human=0、通知 outbox=0、作者全局锁不存在，SEO reconciler 最近 43 次运行且 last exit=0；工作区干净，HEAD 与 `origin/main` 一致。因 22:00 后不启动新发布批次，三项留给下一次正式 cron 自然接管；最终零人值守验收仍需三项自然发布/回填完成，并取得连续 3 个自然 cron 窗口的收敛证据，本轮未强制 publish 或绕过门禁。
 
 ---

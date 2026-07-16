@@ -367,6 +367,10 @@ function committedTransactionDirectory(queueDir) {
   return join(transactionDirectory(queueDir), 'committed');
 }
 
+function abortedTransactionDirectory(queueDir) {
+  return join(transactionDirectory(queueDir), 'aborted');
+}
+
 function quarantinedTransactionDirectory(queueDir) {
   return join(transactionDirectory(queueDir), 'quarantine');
 }
@@ -440,13 +444,34 @@ function resolveTransactionWritePath(queueDir, filename) {
 function validateTransactionWrite(write, incidentId, queueDir) {
   assertExactKeys(
     write,
-    new Set(['filename', 'record', 'expectedRevision', 'faultPointAfter']),
+    new Set([
+      'filename',
+      'record',
+      'expectedRevision',
+      'expectedExists',
+      'expectedRecordHash',
+      'faultPointAfter',
+    ]),
     'transaction write',
   );
   const destination = resolveTransactionWritePath(queueDir, write.filename);
   const expectedRevision = Number(write.expectedRevision);
   if (!Number.isInteger(expectedRevision) || expectedRevision < 0) {
     throw new TypeError('transaction write expectedRevision must be a non-negative integer');
+  }
+  const hasExpectedExists = Object.hasOwn(write, 'expectedExists');
+  if (hasExpectedExists && typeof write.expectedExists !== 'boolean') {
+    throw new TypeError('transaction write expectedExists must be boolean');
+  }
+  const expectedExists = hasExpectedExists ? write.expectedExists : expectedRevision > 0;
+  const expectedRecordHash = write.expectedRecordHash === undefined
+    ? null
+    : requireString(write.expectedRecordHash, 'transaction write expectedRecordHash');
+  if (expectedRecordHash !== null && !/^[a-f0-9]{64}$/.test(expectedRecordHash)) {
+    throw new TypeError('transaction write expectedRecordHash must be a SHA-256');
+  }
+  if (!expectedExists && (expectedRevision !== 0 || expectedRecordHash !== null)) {
+    throw new TypeError('new transaction write cannot carry an existing record snapshot');
   }
   if (!isPlainObject(write.record)) throw new TypeError('transaction write record must be an object');
   const event = validateRepairEvent(write.record.event);
@@ -471,6 +496,8 @@ function validateTransactionWrite(write, incidentId, queueDir) {
     destination,
     record: write.record,
     expectedRevision,
+    expectedExists,
+    ...(expectedRecordHash ? { expectedRecordHash } : {}),
     ...(write.faultPointAfter ? { faultPointAfter: write.faultPointAfter } : {}),
   };
 }
@@ -649,6 +676,30 @@ async function archiveCommittedIntent(queueDir, path, randomUUID = defaultRandom
   return destination;
 }
 
+async function archiveAbortedIntent(queueDir, path, error, randomUUID = defaultRandomUUID) {
+  const directory = abortedTransactionDirectory(queueDir);
+  await mkdir(directory, { recursive: true });
+  const destination = join(
+    directory,
+    `${basename(path)}.${Date.now()}.${randomUUID()}.aborted`,
+  );
+  const intent = await readJson(path);
+  if (intent) {
+    await atomicWriteJson(path, {
+      ...intent,
+      phase: 'aborted',
+      abortedAt: new Date().toISOString(),
+      abortReason: error instanceof Error ? error.message : String(error),
+    }, randomUUID);
+  }
+  try {
+    await rename(path, destination);
+  } catch (renameError) {
+    if (renameError?.code !== 'ENOENT') throw renameError;
+  }
+  return destination;
+}
+
 async function readTransactionCausalHead(queueDir, incidentId) {
   let names;
   try {
@@ -734,6 +785,8 @@ async function listTransactionIntents(queueDir, {
 function transactionWrite(filename, record, {
   faultPointAfter = null,
   expectedRevision = Math.max(0, Number(record?.revision || 1) - 1),
+  expectedExists = expectedRevision > 0,
+  expectedRecordHash = null,
 } = {}) {
   if (basename(filename) !== filename || !filename.endsWith('.json')) {
     throw new TypeError(`invalid transaction record path: ${filename}`);
@@ -742,6 +795,8 @@ function transactionWrite(filename, record, {
     filename,
     record,
     expectedRevision,
+    expectedExists,
+    ...(expectedRecordHash ? { expectedRecordHash } : {}),
     ...(faultPointAfter ? { faultPointAfter } : {}),
   };
 }
@@ -809,20 +864,42 @@ async function applyPreparedTransaction(queueDir, path, intent, {
     && !sameTransactionHead(transactionHead(currentHead), latest.resultHead)) {
     throw new Error(`stale authoritative head for repair transaction: ${latest.transactionId}`);
   }
+  const snapshots = [];
   for (const write of latest.writes) {
     if (assertOwner) await assertOwner();
-    const current = await readJson(write.destination);
-    if (JSON.stringify(current) !== JSON.stringify(write.record)) {
-      if (write.expectedRevision === 0) {
-        if (current !== null) throw new Error(`stale new-record write: ${write.filename}`);
-      } else if (!current
-        || recordIncidentId(current) !== latest.incidentId
-        || current.event?.eventId !== write.record.event?.eventId
-        || Number(current.revision) !== write.expectedRevision) {
-        throw new Error(`stale record revision for transaction write: ${write.filename}`);
-      }
-      await atomicWriteJson(write.destination, write.record, randomUUID);
+    let current = null;
+    try {
+      current = await readRepairRecordSnapshot(write.destination);
+    } catch (error) {
+      if (error?.code !== 'ENOENT') throw error;
     }
+    const alreadyApplied = current
+      && JSON.stringify(current.record) === JSON.stringify(write.record);
+    if (!alreadyApplied) {
+      const preflightError = (message) => {
+        const error = new Error(message);
+        error.repairTransactionPreflight = true;
+        return error;
+      };
+      if (!write.expectedExists) {
+        if (current !== null) {
+          throw preflightError(`stale new-record transaction snapshot: ${write.filename}`);
+        }
+      } else if (!current
+        || recordIncidentId(current.record) !== latest.incidentId
+        || current.record.event?.eventId !== write.record.event?.eventId) {
+        throw preflightError(`stale existing-record transaction snapshot: ${write.filename}`);
+      } else if (write.expectedRecordHash
+        ? current.recordHash !== write.expectedRecordHash
+        : Number(current.record.revision || 0) !== write.expectedRevision) {
+        throw preflightError(`stale transaction snapshot: ${write.filename}`);
+      }
+    }
+    snapshots.push({ write, alreadyApplied });
+  }
+  for (const { write, alreadyApplied } of snapshots) {
+    if (assertOwner) await assertOwner();
+    if (!alreadyApplied) await atomicWriteJson(write.destination, write.record, randomUUID);
     if (write.faultPointAfter) {
       await injectFault(faultInjector, write.faultPointAfter, {
         incidentId: latest.incidentId,
@@ -841,6 +918,29 @@ async function applyPreparedTransaction(queueDir, path, intent, {
   await advanceTransactionCausalHead(queueDir, committed, randomUUID);
   await archiveCommittedIntent(queueDir, path, randomUUID);
   return committed;
+}
+
+async function applyPreparedTransactionOrAbort(queueDir, prepared, {
+  randomUUID = defaultRandomUUID,
+  faultInjector,
+  assertOwner,
+} = {}) {
+  await injectFault(faultInjector, 'after-transaction-prepare', {
+    incidentId: prepared.intent.incidentId,
+    transactionId: prepared.intent.transactionId,
+  });
+  try {
+    return await applyPreparedTransaction(queueDir, prepared.path, prepared.intent, {
+      randomUUID,
+      faultInjector,
+      assertOwner,
+    });
+  } catch (error) {
+    if (error?.repairTransactionPreflight === true) {
+      await archiveAbortedIntent(queueDir, prepared.path, error, randomUUID);
+    }
+    throw error;
+  }
 }
 
 async function recoverIncidentTransactionsLocked(queueDir, incidentId, {

@@ -1310,7 +1310,7 @@ function mergeVerifiedBranch(branch, claim) {
   }
   if (MERGE_SELFHEAL && pollMergeable(branch).mergeable === 'CONFLICTING') {
     throw new Error(
-      `refusing merge for ${branch}: PR is conflicting; rebase/repair creates a new head and requires a full gate round`,
+      `MERGE_REGATE_REQUIRED ${branch}: PR is conflicting; additive-only repair may create a new head, then requires a full gate round`,
     );
   }
   sh('gh', [

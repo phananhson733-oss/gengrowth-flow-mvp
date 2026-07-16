@@ -1606,6 +1606,122 @@ test('branch head drift during a gate round blocks verification', async () => {
   assert.equal(fixture.mergeCalls().length, 0);
 });
 
+test('additive merge conflict prepares a new head and reruns the complete gate before merge', async () => {
+  const repairWorktreeA = '/controller/repair-root/PG-001-event';
+  const repairWorktreeC = '/controller/repair-root/PG-001-regate-c';
+  const repairDraft = '/controller/state/seo-repair-drafts/astrologywiki/PG-001/event.md';
+  const draftSha256 = '9'.repeat(64);
+  const fixture = gateRoundFixture({
+    heads: [HEAD_A, HEAD_A, HEAD_C, HEAD_C],
+  });
+  fixture.options.worktree = repairWorktreeA;
+  fixture.options.headRefOid = HEAD_A;
+  fixture.options.draft = repairDraft;
+  fixture.options.draftSha256 = draftSha256;
+  fixture.deps.inspectBoundRepairWorktree = async ({ worktree, expectedHead, remoteHead }) => ({
+    ok: true,
+    realpath: worktree,
+    headRefOid: expectedHead,
+    remoteHead,
+    dirty: false,
+  });
+  fixture.deps.inspectBoundRepairDraft = async ({ draftFile, expectedSha256 }) => ({
+    ok: true,
+    exists: true,
+    realpath: draftFile,
+    bytes: 12,
+    sha256: expectedSha256,
+  });
+  const pathBindings = [];
+  fixture.deps.articlePaths = (_pgId, _claim, binding) => {
+    pathBindings.push(binding);
+    return {
+      worktree: binding.worktree,
+      articleTs: `${binding.worktree}/data/articles/chiron-in-7th-house.ts`,
+      draftMd: binding.draft,
+    };
+  };
+  const originalNode = fixture.deps.node;
+  let mergeCount = 0;
+  fixture.deps.node = async (bin, args, opts) => {
+    if (bin === 'autopilot' && args.includes('--merge')) {
+      fixture.calls.push({ bin, args: [...args], head: null });
+      mergeCount += 1;
+      return mergeCount === 1
+        ? {
+            code: 42,
+            stdout: '',
+            stderr: '[autopilot] MERGE_REGATE_REQUIRED branch is additive-only conflicting',
+            timedOut: false,
+          }
+        : { code: 0, stdout: '', stderr: '', timedOut: false };
+    }
+    if (bin === 'autopilot' && args.includes('--prepare-regate')) {
+      fixture.calls.push({ bin, args: [...args], head: null });
+      return {
+        code: 0,
+        stdout: JSON.stringify({
+          ok: true,
+          oldHeadRefOid: HEAD_A,
+          newHeadRefOid: HEAD_C,
+          worktree: repairWorktreeC,
+          draftFile: repairDraft,
+          draftSha256,
+        }),
+        stderr: '',
+        timedOut: false,
+      };
+    }
+    return originalNode(bin, args, opts);
+  };
+
+  const result = await runGate(fixture.options, fixture.deps);
+
+  assert.equal(result.exitCode, 0, result.reason);
+  assert.equal(fixture.mergeCalls().length, 2, 'the merge must retry only after a second full gate');
+  assert.equal(fixture.markVerifiedCalls().length, 2, 'both the old and new SHA require exact verification');
+  assert.equal(
+    fixture.calls.filter((call) => call.bin === 'autopilot' && call.args.includes('--prepare-regate')).length,
+    1,
+  );
+  assert.equal(fixture.callsFor('chrome').length, 2);
+  assert.equal(fixture.callsFor('review').length, 6);
+  assert.equal(fixture.callsFor('codex').length, 2);
+  assert.deepEqual(pathBindings, [
+    { worktree: repairWorktreeA, draft: repairDraft },
+    { worktree: repairWorktreeC, draft: repairDraft },
+  ]);
+  const secondMark = fixture.markVerifiedCalls()[1];
+  assert.equal(secondMark.args[secondMark.args.indexOf('--head-ref-oid') + 1], HEAD_C);
+  assert.ok(secondMark.args.includes(repairWorktreeC));
+});
+
+test('ordinary merge failure never invokes additive regate preparation', async () => {
+  const fixture = gateRoundFixture({ heads: [HEAD_A, HEAD_A] });
+  const originalNode = fixture.deps.node;
+  fixture.deps.node = async (bin, args, opts) => {
+    if (bin === 'autopilot' && args.includes('--merge')) {
+      fixture.calls.push({ bin, args: [...args], head: null });
+      return {
+        code: 1,
+        stdout: '',
+        stderr: '[autopilot] ERROR: authentication required',
+        timedOut: false,
+      };
+    }
+    return originalNode(bin, args, opts);
+  };
+
+  const result = await runGate(fixture.options, fixture.deps);
+
+  assert.equal(result.exitCode, 2);
+  assert.match(result.reason, /merge failed.*authentication required/i);
+  assert.equal(
+    fixture.calls.filter((call) => call.bin === 'autopilot' && call.args.includes('--prepare-regate')).length,
+    0,
+  );
+});
+
 test('required mode cannot verify when branch head is unavailable or malformed', async () => {
   for (const head of [null, 'not-a-sha']) {
     const fixture = gateRoundFixture({ heads: [head] });

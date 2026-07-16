@@ -56,7 +56,10 @@ if (args.includes('view') && args.includes('headRefOid')) {
   process.exit(0);
 }
 if (args.includes('view') && args.includes('mergeable,mergeStateStatus')) {
-  process.stdout.write(JSON.stringify({ mergeable: 'MERGEABLE', mergeStateStatus: 'CLEAN' }));
+  process.stdout.write(JSON.stringify({
+    mergeable: process.env.GG_TEST_GH_MERGEABLE || 'MERGEABLE',
+    mergeStateStatus: process.env.GG_TEST_GH_MERGE_STATE || 'CLEAN',
+  }));
   process.exit(0);
 }
 if (args.includes('merge')) process.exit(Number(process.env.GG_TEST_GH_MERGE_EXIT || 7));
@@ -360,4 +363,19 @@ test('--merge always pins gh pr merge to the reviewed SHA', (t) => {
   const result = h.run(['--merge', '--branch', BRANCH]);
   assert.notEqual(result.status, 0, 'fake gh stops immediately after recording merge argv');
   assert.match(h.ghText(), new RegExp(`pr merge .*--match-head-commit ${HEAD_A}`));
+});
+
+test('--merge emits an exact regate sentinel for a conflicting PR and never attempts gh merge', (t) => {
+  const h = fixture(t, { status: 'verified-preview', headRefOid: HEAD_A });
+  const result = h.run(
+    ['--merge', '--branch', BRANCH],
+    {
+      GG_TEST_GH_MERGEABLE: 'CONFLICTING',
+      GG_TEST_GH_MERGE_STATE: 'DIRTY',
+    },
+  );
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /MERGE_REGATE_REQUIRED/);
+  assert.match(result.stderr, /new head|full gate|regate/i);
+  assert.doesNotMatch(h.ghText(), /pr merge/);
 });

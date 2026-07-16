@@ -1579,8 +1579,77 @@ export async function runGate(o, deps = {}) {
       const mergeTimeoutMs = Number(process.env.GG_GATE_MERGE_TIMEOUT_MS) || 300000;
       const mg = await node(B.autopilot, ['--merge', '--branch', o.branch], { timeoutMs: mergeTimeoutMs });
       if (mg.timedOut || mg.code !== 0) {
+        const mergeError = tail(mg.stderr);
+        const mergeRegateAttempt = Number.isInteger(o._mergeRegateAttempt)
+          ? o._mergeRegateAttempt
+          : 0;
+        const configuredMergeRegates = Number(process.env.GG_GATE_MERGE_REGATE_MAX ?? 2);
+        const maxMergeRegates = Math.min(3, Math.max(0,
+          Number.isFinite(configuredMergeRegates) ? Math.floor(configuredMergeRegates) : 2));
+        const requiresRegate = !mg.timedOut
+          && /(?:^|\s)MERGE_REGATE_REQUIRED(?:\s|:|$)/.test(String(mg.stderr || ''));
+        if (requiresRegate && mergeRegateAttempt < maxMergeRegates) {
+          log(
+            `merge: additive-only conflict requires a new SHA; prepare regate `
+            + `${mergeRegateAttempt + 1}/${maxMergeRegates}`,
+          );
+          const prepared = await node(B.autopilot, [
+            '--prepare-regate',
+            '--branch', o.branch,
+          ], { timeoutMs: mergeTimeoutMs });
+          const preparedJson = safeJson(lastJsonLine(prepared.stdout));
+          if (prepared.timedOut || prepared.code !== 0 || !preparedJson?.ok) {
+            return gateFail(o, B, deps, pgId, claim,
+              `prepare-regate failed: ${
+                prepared.timedOut
+                  ? 'timeout'
+                  : preparedJson?.reason || tail(prepared.stderr) || `exit ${prepared.code}`
+              }`, plan);
+          }
+          const newHeadRefOid = String(preparedJson.newHeadRefOid || '');
+          if (!HEAD_REF_OID_RE.test(newHeadRefOid)) {
+            return gateFail(o, B, deps, pgId, claim,
+              `prepare-regate returned invalid new head "${newHeadRefOid}"`, plan);
+          }
+          if (newHeadRefOid === reviewedHeadRefOid) {
+            return gateFail(o, B, deps, pgId, claim,
+              `prepare-regate made no commit progress; head remained ${reviewedHeadRefOid}`, plan);
+          }
+          const nextOptions = {
+            ...o,
+            _mergeRegateAttempt: mergeRegateAttempt + 1,
+          };
+          if (explicitRepairBinding) {
+            const preparedWorktree = String(preparedJson.worktree || '');
+            const preparedDraft = String(preparedJson.draftFile || o.draft || '');
+            const preparedDraftSha256 = String(preparedJson.draftSha256 || o.draftSha256 || '');
+            if (!isAbsolute(preparedWorktree)
+              || !isAbsolute(preparedDraft)
+              || !SHA256_RE.test(preparedDraftSha256)) {
+              return gateFail(o, B, deps, pgId, claim,
+                'prepare-regate returned an incomplete controller repair binding', plan);
+            }
+            nextOptions.worktree = preparedWorktree;
+            nextOptions.headRefOid = newHeadRefOid;
+            nextOptions.draft = preparedDraft;
+            nextOptions.draftSha256 = preparedDraftSha256;
+          }
+          log(
+            `merge: prepared ${reviewedHeadRefOid.slice(0, 8)} -> `
+            + `${newHeadRefOid.slice(0, 8)}; restarting the complete gate`,
+          );
+          const rerun = await runGate(nextOptions, deps);
+          return {
+            ...rerun,
+            plan: [...plan, ...rerun.plan],
+          };
+        }
+        if (requiresRegate && mergeRegateAttempt >= maxMergeRegates) {
+          return gateFail(o, B, deps, pgId, claim,
+            `merge regate budget exhausted (${maxMergeRegates}): ${mergeError}`, plan);
+        }
         return gateFail(o, B, deps, pgId, claim,
-          `merge failed: ${mg.timedOut ? 'timeout' : tail(mg.stderr) || `exit ${mg.code}`}`, plan);
+          `merge failed: ${mg.timedOut ? 'timeout' : mergeError || `exit ${mg.code}`}`, plan);
       }
       log(`final: MERGED reviewed head ${reviewedHeadRefOid}`);
       return { exitCode: EXIT.PUBLISHED, plan, action: 'merged', reason: 'all required gates passed' };

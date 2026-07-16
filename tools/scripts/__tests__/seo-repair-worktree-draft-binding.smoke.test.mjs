@@ -157,6 +157,33 @@ test('repair worktree binding rejects outside paths and symlink escapes', (t) =>
   assert.match(rootSymlink.reason, /root.*symlink|symlink.*root/i);
 });
 
+test('adapter rejects a symlinked controller worktree root before creating or mutating a repair worktree', (t) => {
+  assert.equal(typeof astrologyAdapter.prepareRepairWorktree, 'function');
+  const originalParent = mkdtempSync(join(tmpdir(), 'seo-repair-original-'));
+  const { repo: original } = committedRepo(t, originalParent, 'original');
+  const realRoot = mkdtempSync(join(tmpdir(), 'seo-repair-controller-real-'));
+  const aliasParent = mkdtempSync(join(tmpdir(), 'seo-repair-controller-alias-'));
+  t.after(() => rmSync(realRoot, { recursive: true, force: true }));
+  t.after(() => rmSync(aliasParent, { recursive: true, force: true }));
+  const aliasRoot = join(aliasParent, 'controller-root');
+  symlinkSync(realRoot, aliasRoot);
+  const previous = process.env.GG_SEO_REPAIR_ORACLE_WORKTREE_ROOT;
+  process.env.GG_SEO_REPAIR_ORACLE_WORKTREE_ROOT = aliasRoot;
+  t.after(() => {
+    if (previous === undefined) delete process.env.GG_SEO_REPAIR_ORACLE_WORKTREE_ROOT;
+    else process.env.GG_SEO_REPAIR_ORACLE_WORKTREE_ROOT = previous;
+  });
+
+  assert.throws(() => astrologyAdapter.prepareRepairWorktree({
+    eventId: 'event-root-symlink',
+    pageId: 'PG-CELEB-057',
+    slug: 'caitlin-clark-birth-chart',
+  }, {
+    slug: 'caitlin-clark-birth-chart',
+  }, original), /root.*symlink|symlink.*root/i);
+  assert.deepEqual(readFileSync(join(original, 'README.md'), 'utf8'), 'clean\n');
+});
+
 test('repair draft binding requires a regular exact-hash real file below the controller draft root', (t) => {
   assert.equal(typeof bindings.inspectBoundRepairDraft, 'function');
   const root = mkdtempSync(join(tmpdir(), 'seo-repair-draft-root-'));
@@ -207,6 +234,33 @@ test('repair draft binding requires a regular exact-hash real file below the con
   });
   assert.equal(linkedRegular.ok, false);
   assert.match(linkedRegular.reason, /regular file|symlink/i);
+});
+
+test('controller draft materialization rejects a pre-existing symlink before any Agent can edit it', (t) => {
+  const root = mkdtempSync(join(tmpdir(), 'seo-repair-draft-preagent-'));
+  const outside = mkdtempSync(join(tmpdir(), 'seo-repair-draft-outside-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  t.after(() => rmSync(outside, { recursive: true, force: true }));
+  const source = join(root, 'PG-CELEB-057-en.md');
+  const draftRoot = join(root, 'state', 'seo-repair-drafts');
+  const directory = join(draftRoot, 'astrologywiki', 'PG-CELEB-057');
+  const draftFile = join(directory, 'event-057.md');
+  const outsideTarget = join(outside, 'escaped.md');
+  mkdirSync(directory, { recursive: true });
+  writeFileSync(source, '# source draft\n');
+  writeFileSync(outsideTarget, '# outside target\n');
+  symlinkSync(outsideTarget, draftFile);
+
+  const result = astrologyAdapter.ensureAstrologyRepairDraft({
+    sourceFile: source,
+    draftRoot,
+    site: 'astrologywiki',
+    pageId: 'PG-CELEB-057',
+    attemptId: 'event-057',
+  });
+  assert.equal(result.ok, false);
+  assert.match(result.reason, /symlink|outside|regular file/i);
+  assert.equal(readFileSync(outsideTarget, 'utf8'), '# outside target\n');
 });
 
 test('controller draft snapshot is durable per attempt and never overwritten by later live staging drift', (t) => {

@@ -1635,6 +1635,59 @@ test('explicit controller repair binding fails closed when the remote PR head di
   assert.equal(fixture.mergeCalls().length, 0);
 });
 
+test('explicit controller repair binding advances from the original SHA to Gate repair SHA', async () => {
+  const repairWorktree = '/controller/repair-root/PG-001-event';
+  const repairDraft = '/controller/state/seo-repair-drafts/astrologywiki/PG-001/event.md';
+  const draftSha256 = '9'.repeat(64);
+  const fixture = gateRoundFixture({
+    heads: [HEAD_A, HEAD_B, HEAD_B],
+    reviewVerdicts: { schema: ['FAIL', 'PASS'] },
+    repairResult: {
+      applied: true,
+      headRefOid: HEAD_B,
+      artifactShaBefore: '4'.repeat(64),
+      artifactShaAfter: '5'.repeat(64),
+    },
+  });
+  fixture.options.worktree = repairWorktree;
+  fixture.options.headRefOid = HEAD_A;
+  fixture.options.draft = repairDraft;
+  fixture.options.draftSha256 = draftSha256;
+  const worktreeBindings = [];
+  fixture.deps.articlePaths = (_pgId, _claim, binding) => ({
+    worktree: binding.worktree,
+    articleTs: `${binding.worktree}/data/articles/chiron-in-7th-house.ts`,
+    draftMd: binding.draft,
+  });
+  fixture.deps.inspectBoundRepairWorktree = async (input) => {
+    worktreeBindings.push(input);
+    return { ok: true, realpath: input.worktree, headRefOid: input.expectedHead, dirty: false };
+  };
+  fixture.deps.inspectBoundRepairDraft = async (input) => ({
+    ok: true,
+    exists: true,
+    realpath: input.draftFile,
+    bytes: 12,
+    sha256: input.expectedSha256,
+  });
+
+  const result = await runGate(fixture.options, fixture.deps);
+
+  assert.equal(result.exitCode, 0, result.reason);
+  assert.deepEqual(
+    worktreeBindings.map(({ expectedHead, remoteHead }) => [expectedHead, remoteHead]),
+    [
+      [HEAD_A, HEAD_A],
+      [HEAD_A, HEAD_A],
+      [HEAD_B, HEAD_B],
+      [HEAD_B, HEAD_B],
+    ],
+  );
+  const mark = fixture.markVerifiedCalls()[0];
+  assert.equal(mark.args[mark.args.indexOf('--head-ref-oid') + 1], HEAD_B);
+  assert.equal(fixture.mergeCalls().length, 1);
+});
+
 test('partial controller repair override never falls back to claim worktree or live staging draft', async () => {
   const fixture = gateRoundFixture({ heads: [HEAD_A] });
   fixture.options.worktree = '/controller/repair-root/PG-001-event';

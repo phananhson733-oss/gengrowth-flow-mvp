@@ -3,9 +3,12 @@ import { createHash } from 'node:crypto';
 import {
   existsSync,
   linkSync,
+  lstatSync,
   mkdirSync,
   readFileSync,
+  realpathSync,
   readdirSync,
+  statSync,
   unlinkSync,
   writeFileSync,
 } from 'node:fs';
@@ -67,6 +70,24 @@ function safeDraftSegment(value, fallback) {
   return cleaned || fallback;
 }
 
+function verifiedControllerDirectory(path, root, label) {
+  const resolvedPath = resolve(path);
+  const resolvedRoot = resolve(root);
+  const rootStat = lstatSync(resolvedRoot);
+  if (rootStat.isSymbolicLink()) throw new Error(`${label} root must not be a symlink`);
+  if (!rootStat.isDirectory()) throw new Error(`${label} root must be a directory`);
+  const rootRealpath = realpathSync(resolvedRoot);
+  const pathStat = lstatSync(resolvedPath);
+  if (pathStat.isSymbolicLink()) throw new Error(`${label} path must not be a symlink`);
+  if (!pathStat.isDirectory()) throw new Error(`${label} path must be a directory`);
+  const pathRealpath = realpathSync(resolvedPath);
+  const rel = relative(rootRealpath, pathRealpath);
+  if (!rel || rel === '.' || rel === '..' || rel.startsWith(`..${sep}`) || isAbsolute(rel)) {
+    throw new Error(`${label} realpath is outside its controller root`);
+  }
+  return { rootRealpath, pathRealpath };
+}
+
 export function ensureAstrologyRepairDraft({
   sourceFile,
   draftRoot = repairDraftRoot(),
@@ -78,13 +99,27 @@ export function ensureAstrologyRepairDraft({
     if (!sourceFile || !existsSync(sourceFile)) {
       throw new Error(`source staging draft missing: ${sourceFile || '<missing>'}`);
     }
+    const resolvedDraftRoot = resolve(draftRoot);
+    if (!existsSync(resolvedDraftRoot)) {
+      mkdirSync(resolvedDraftRoot, { recursive: true, mode: 0o700 });
+    }
+    if (lstatSync(resolvedDraftRoot).isSymbolicLink()) {
+      throw new Error('repair draft root must not be a symlink');
+    }
+    if (!statSync(resolvedDraftRoot).isDirectory()) {
+      throw new Error('repair draft root must be a directory');
+    }
     const directory = join(
-      resolve(draftRoot),
+      resolvedDraftRoot,
       safeDraftSegment(site, 'astrologywiki'),
       safeDraftSegment(pageId, 'unknown-page'),
     );
     mkdirSync(directory, { recursive: true, mode: 0o700 });
+    verifiedControllerDirectory(directory, resolvedDraftRoot, 'repair draft');
     const draftFile = join(directory, `${safeDraftSegment(attemptId, 'attempt')}.md`);
+    if (existsSync(draftFile) && lstatSync(draftFile).isSymbolicLink()) {
+      throw new Error('controller repair draft must not be a symlink');
+    }
     if (!existsSync(draftFile)) {
       const bytes = readFileSync(sourceFile);
       if (bytes.length === 0) throw new Error('source staging draft is empty');
@@ -100,12 +135,19 @@ export function ensureAstrologyRepairDraft({
     }
     const bytes = readFileSync(draftFile);
     if (bytes.length === 0) throw new Error('controller repair draft is empty');
+    const draftSha256 = createHash('sha256').update(bytes).digest('hex');
+    const binding = inspectBoundRepairDraft({
+      draftFile,
+      expectedSha256: draftSha256,
+      root: resolvedDraftRoot,
+    });
+    if (!binding.ok) throw new Error(binding.reason);
     return {
       ok: true,
       sourceFile: resolve(sourceFile),
-      draftFile,
+      draftFile: binding.realpath,
       bytes: bytes.length,
-      draftSha256: createHash('sha256').update(bytes).digest('hex'),
+      draftSha256,
     };
   } catch (error) {
     return {
@@ -240,33 +282,41 @@ function repairWorktreeName(event) {
   return `${String(event.pageId).replace(/[^A-Za-z0-9._-]/g, '_')}-${id}`;
 }
 
-function prepareRepairWorktree(event, claim, originalWorktree) {
+export function prepareRepairWorktree(event, claim, originalWorktree) {
   const root = resolve(process.env.GG_SEO_REPAIR_ORACLE_WORKTREE_ROOT
     || join(homedir(), 'oracle-worktrees', 'seo-repair-controller'));
+  if (!existsSync(root)) mkdirSync(root, { recursive: true, mode: 0o700 });
+  if (lstatSync(root).isSymbolicLink()) {
+    throw new Error('repair worktree root must not be a symlink');
+  }
+  if (!statSync(root).isDirectory()) {
+    throw new Error('repair worktree root must be a directory');
+  }
   const worktree = join(root, repairWorktreeName(event));
   if (!existsSync(worktree)) {
-    mkdirSync(root, { recursive: true });
     const added = run([
       'git', '-C', originalWorktree, 'worktree', 'add', '--detach', worktree, 'HEAD',
     ], { cwd: originalWorktree, timeout: 180_000 });
     if (!added.ok) throw new Error(`cannot create clean repair worktree: ${added.stderr || added.code}`);
   }
-  const dirtyPaths = worktreeDirtyPaths(worktree);
+  const verifiedWorktree = verifiedControllerDirectory(worktree, root, 'repair worktree');
+  const safeWorktree = verifiedWorktree.pathRealpath;
+  const dirtyPaths = worktreeDirtyPaths(safeWorktree);
   const targetSlug = claim.slug || event.slug;
-  const mergeState = inspectAstrologyMergeState(worktree);
+  const mergeState = inspectAstrologyMergeState(safeWorktree);
   if (mergeState) {
     const provisionalTarget = {
-      worktree,
-      articleFile: join(worktree, 'data', 'articles', `${targetSlug}.ts`),
+      worktree: safeWorktree,
+      articleFile: join(safeWorktree, 'data', 'articles', `${targetSlug}.ts`),
       assetFiles: mergeState.diffAgainstMain
         .filter((file) => isSafeAstrologyTargetPath(file, targetSlug) && ASSET_RE.test(file))
-        .map((file) => join(worktree, file)),
+        .map((file) => join(safeWorktree, file)),
       supportFiles: mergeState.diffAgainstMain
         .filter((file) => file === `scripts/plans/auto-${targetSlug}.json`)
-        .map((file) => join(worktree, file)),
+        .map((file) => join(safeWorktree, file)),
     };
     if (!isSafeAstrologyMergeIndex(provisionalTarget, mergeState)) {
-      throw new Error(`repair worktree has unsafe staged merge: ${worktree}`);
+      throw new Error(`repair worktree has unsafe staged merge: ${safeWorktree}`);
     }
   } else {
     const unsafePaths = dirtyPaths.filter((file) => !isSafeAstrologyTargetPath(file, targetSlug));
@@ -275,25 +325,25 @@ function prepareRepairWorktree(event, claim, originalWorktree) {
     }
   }
   const sourceHead = run(['git', '-C', originalWorktree, 'rev-parse', 'HEAD'], { cwd: originalWorktree, timeout: 60_000 });
-  const repairHead = run(['git', '-C', worktree, 'rev-parse', 'HEAD'], { cwd: worktree, timeout: 60_000 });
+  const repairHead = run(['git', '-C', safeWorktree, 'rev-parse', 'HEAD'], { cwd: safeWorktree, timeout: 60_000 });
   if (!sourceHead.ok || !repairHead.ok) throw new Error(`cannot resolve repair branch head for ${event.pageId}`);
   if (sourceHead.stdout.trim() !== repairHead.stdout.trim()) {
     const sourceContainsRepair = run([
-      'git', '-C', worktree, 'merge-base', '--is-ancestor', repairHead.stdout.trim(), sourceHead.stdout.trim(),
-    ], { cwd: worktree, timeout: 60_000 });
+      'git', '-C', safeWorktree, 'merge-base', '--is-ancestor', repairHead.stdout.trim(), sourceHead.stdout.trim(),
+    ], { cwd: safeWorktree, timeout: 60_000 });
     if (sourceContainsRepair.code === 0) {
       const advanced = run([
-        'git', '-C', worktree, 'merge', '--ff-only', sourceHead.stdout.trim(),
-      ], { cwd: worktree, timeout: 60_000 });
+        'git', '-C', safeWorktree, 'merge', '--ff-only', sourceHead.stdout.trim(),
+      ], { cwd: safeWorktree, timeout: 60_000 });
       if (!advanced.ok) throw new Error(`cannot advance clean repair worktree: ${advanced.stderr || advanced.code}`);
     } else {
       const repairContainsSource = run([
-        'git', '-C', worktree, 'merge-base', '--is-ancestor', sourceHead.stdout.trim(), repairHead.stdout.trim(),
-      ], { cwd: worktree, timeout: 60_000 });
+        'git', '-C', safeWorktree, 'merge-base', '--is-ancestor', sourceHead.stdout.trim(), repairHead.stdout.trim(),
+      ], { cwd: safeWorktree, timeout: 60_000 });
       if (repairContainsSource.code !== 0) throw new Error(`repair worktree diverged for ${event.pageId}`);
     }
   }
-  return worktree;
+  return safeWorktree;
 }
 
 async function fetchText(url) {

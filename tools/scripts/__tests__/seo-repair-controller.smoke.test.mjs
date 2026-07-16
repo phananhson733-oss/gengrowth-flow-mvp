@@ -20,6 +20,7 @@ import {
   transitionRepairEvent,
 } from '../lib/seo-repair-events.mjs';
 import { createGengrowthRepairAdapter } from '../lib/seo-repair-adapter-gengrowth.mjs';
+import { createAstrologyWikiRepairAdapter } from '../lib/seo-repair-adapter-astrologywiki.mjs';
 import * as repairEventsModule from '../lib/seo-repair-events.mjs';
 import { compactRepairIncident } from '../lib/seo-repair-events.mjs';
 
@@ -921,6 +922,44 @@ test('controller rejects adapter human_only without nondelegable evidence', asyn
     now: new Date('2026-07-15T14:02:00.000Z'),
   });
   assert.notEqual(record.status, 'human_only');
+});
+
+test('missing authoritative source validates and reaches an evidenced human_only terminal end to end', async (t) => {
+  const { queueDir } = await fixture(t);
+  const sourceEvent = event({
+    site: 'astrologywiki',
+    lane: 'preview',
+    pageId: 'PG-CELEB-058',
+    slug: 'brad-pitt-birth-chart',
+    stage: 'preview_fact_gate',
+    errorKind: 'missing_authoritative_source',
+    summary: 'authoritative source search found conflicting birth-time evidence',
+    stderr: 'Astro-Databank rating and source note conflict; neutralization was not safe',
+  });
+  await enqueueRepairEvent(sourceEvent, { queueDir });
+  const adapter = createAstrologyWikiRepairAdapter({
+    resolveContext: async () => {
+      throw new Error('human_only terminal must not resolve or mutate a publish target');
+    },
+  });
+  const notified = [];
+  const out = await drainRepairQueue({
+    queueDir,
+    adapters: { astrologywiki: adapter },
+    notifyTerminal: async (payload) => notified.push(payload),
+    owner: 'missing-source-controller-test',
+    now: () => new Date('2026-07-15T14:02:00.000Z'),
+    maxTargets: 1,
+  });
+  assert.equal(out.processed, 1);
+  const record = await readRepairRecord(join(queueDir, `${sourceEvent.eventId}.json`));
+  assert.equal(record.status, 'human_only');
+  assert.equal(record.history.at(-1).evidence.type, 'missing_authoritative_source');
+  assert.equal(record.history.at(-1).evidence.safeAuthorizationAttempted, true);
+  assert.equal(record.history.at(-1).evidence.stillBlocked, true);
+  assert.match(record.history.at(-1).evidence.sourceSearch.summary, /conflicting/i);
+  assert.equal(notified.length, 1);
+  assert.equal(notified[0].terminal, 'human_only');
 });
 
 test('target Agent prompt contains exact evidence and safety boundaries without secrets or batch wrappers', () => {

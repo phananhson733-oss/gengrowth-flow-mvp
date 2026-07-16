@@ -79,6 +79,9 @@ export function inspectBoundRepairWorktree({
     if (String(remoteHead).toLowerCase() !== String(expectedHead).toLowerCase()) {
       throw new Error(`remote head ${remoteHead} does not match expected head ${expectedHead}`);
     }
+    if (lstatSync(resolve(worktree)).isSymbolicLink()) {
+      throw new Error('repair worktree path must not be a symlink');
+    }
     const { pathRealpath } = containedRealpath(worktree, root, 'repair worktree');
     if (!statSync(pathRealpath).isDirectory()) {
       throw new Error('repair worktree must be a directory');

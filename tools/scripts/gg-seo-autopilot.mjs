@@ -497,7 +497,16 @@ function ghPrMeta(branch) {
 function reconcileClaimsWithGitHub(claims) {
   let changed = false;
   for (const [pgId, claim] of Object.entries(claims)) {
-    if (!claim?.branch || claim.status === 'done') continue;
+    if (!claim) continue;
+    if (claim.status === 'done') {
+      if (claim.error !== undefined || claim.failedAt !== undefined) {
+        delete claim.error;
+        delete claim.failedAt;
+        changed = true;
+      }
+      continue;
+    }
+    if (!claim.branch) continue;
     const pr = ghPrMeta(claim.branch);
     if (!pr || pr.state !== 'MERGED') continue;
     claims[pgId] = {
@@ -507,6 +516,8 @@ function reconcileClaimsWithGitHub(claims) {
       mergedAt: claim.mergedAt || pr.mergedAt || new Date().toISOString(),
       reconciliationNote: claim.reconciliationNote || 'auto-reconciled from merged GitHub PR',
     };
+    delete claims[pgId].error;
+    delete claims[pgId].failedAt;
     changed = true;
   }
   return changed;
@@ -1591,7 +1602,7 @@ function doPrepareRegate(o) {
 // 合并一个已 verified-preview 的分支到 main。当前 PR head 必须仍等于 reviewed head，
 // 且 gh merge 永远携带 --match-head-commit。任何冲突/rebase 都会产生新 commit，因此这里
 // fail closed；调用方必须先修复并在新 SHA 上重跑完整 gate，禁止 verified 后 union self-heal。
-function mergeVerifiedBranch(branch, claim) {
+function mergeVerifiedBranch(branch, claim, { beforeMerge = null } = {}) {
   if (!HEAD_REF_OID_RE.test(String(claim.headRefOid || ''))) {
     throw new Error(`refusing merge for ${branch}: verified claim is missing a valid 40-hex headRefOid`);
   }
@@ -1606,6 +1617,7 @@ function mergeVerifiedBranch(branch, claim) {
       `MERGE_REGATE_REQUIRED ${branch}: PR is conflicting; additive-only repair may create a new head, then requires a full gate round`,
     );
   }
+  if (typeof beforeMerge === 'function') beforeMerge();
   sh('gh', [
     'pr', 'merge', branch,
     '--repo', 'xdawayer/oracle',
@@ -1632,24 +1644,49 @@ function doMerge(o) {
     if (!HEAD_REF_OID_RE.test(String(claim.headRefOid || ''))) {
       throw new Error(`refusing merge for ${o.branch}: verified claim is missing a valid 40-hex headRefOid`);
     }
-    // 串行发布：只允许当前 PR head 与 reviewed head 完全一致，并使用 GitHub CAS pin 合并。
-    // 冲突处理会产生新 SHA，必须退出后重新走完整 gate，不能在 verified 状态内自愈。
-    mergeVerifiedBranch(o.branch, claim);
-    // GitHub merge 是不可逆的发布语义点。必须在任何本地 cleanup/sync 之前先落回填 WAL；否则
-    // baseline 含用户改动而拒绝 sync 时，会出现“线上已发布，但 Sheet/plan/vault 没有续跑入口”。
     const slug = claim.slug;
     const planPath = latestPlan();
-    const wal = enqueueWriteback({ pageId: pgId, slug, site: 'astrologywiki', planPath, done: [] });
-    if (!wal) {
-      throw new Error(`merge succeeded for ${pgId}, but failed to create the backfill WAL`);
-    }
-    const recorded = appendPublishLog(pgId, slug);
-    cleanupWorktree(claim.worktree);
-    syncOracle();
+    // 串行发布：只允许当前 PR head 与 reviewed head 完全一致，并使用 GitHub CAS pin 合并。
+    // 冲突处理会产生新 SHA，必须退出后重新走完整 gate，不能在 verified 状态内自愈。
+    mergeVerifiedBranch(o.branch, claim, {
+      beforeMerge: () => {
+        // Write-ahead after every SHA/mergeability preflight but before the
+        // irreversible GitHub merge. If GitHub itself fails, the durable entry
+        // remains safe to retry because backfill verifies live state first.
+        const wal = enqueueWriteback({
+          pageId: pgId,
+          slug,
+          site: 'astrologywiki',
+          planPath,
+          done: [],
+        });
+        if (!wal) {
+          throw new Error(`refusing merge for ${pgId}: failed to create the backfill WAL`);
+        }
+      },
+    });
+
+    // GitHub merge is the irreversible publication point. Persist terminal
+    // claim state immediately; every operation below is replayable/best-effort
+    // and must never make Preview Gate report a published PR as gate-failed.
     claims[pgId].status = 'done';
     claims[pgId].mergedAt = new Date().toISOString();
-    checkPlanBox(pgId); // 即时勾选（锁内、本地）；下方回填事务的 plan 步骤会发现已勾=no-op。
+    delete claims[pgId].error;
+    delete claims[pgId].failedAt;
     saveClaims(claims);
+
+    const recorded = appendPublishLog(pgId, slug);
+    cleanupWorktree(claim.worktree);
+    try {
+      syncOracle();
+    } catch (e) {
+      log(`post-merge oracle sync deferred: ${errTail(e, 120)}`);
+    }
+    try {
+      checkPlanBox(pgId); // 即时勾选；下方回填事务仍会幂等补齐。
+    } catch (e) {
+      log(`post-merge plan check deferred: ${errTail(e, 120)}`);
+    }
     // writing record → ops (self-synced)；返回 promise（尾部是 published 事件通知 + 阶段4 回填事务），
     // 由顶层 dispatcher await 收尾——claims 锁在同步部分结束时即释放，不为通知/回填多持锁。
     log(`MERGED ${o.branch} → main (prod deploy triggered)`);

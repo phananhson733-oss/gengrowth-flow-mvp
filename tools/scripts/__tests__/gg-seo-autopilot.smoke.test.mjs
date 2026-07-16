@@ -1054,7 +1054,7 @@ test('--merge sends the published event through the unified notify layer (contra
   }
 });
 
-test('--merge creates the backfill WAL before a post-merge oracle sync failure', () => {
+test('--merge keeps the publish terminal and durable when post-merge oracle sync is deferred', () => {
   const h = makeHarness();
   try {
     initOracleWithOrigin(h);
@@ -1083,8 +1083,13 @@ test('--merge creates the backfill WAL before a post-merge oracle sync failure',
       GG_FLOW_STATE_DIR: state,
     });
 
-    assert.notEqual(r.status, 0, 'dirty baseline must still stop the post-merge sync');
-    assert.match(`${r.stdout}${r.stderr}`, /tracked local changes/);
+    assert.equal(r.status, 0, `${r.stdout}${r.stderr}`);
+    assert.match(`${r.stdout}${r.stderr}`, /post-merge oracle sync deferred/i);
+    const claim = JSON.parse(readFileSync(h.claimsPath, 'utf8'))['PG-TEST-001'];
+    assert.equal(claim.status, 'done');
+    assert.equal(claim.error, undefined);
+    assert.equal(claim.failedAt, undefined);
+    assert.match(claim.mergedAt, /^\d{4}-\d{2}-\d{2}T/);
     const wal = JSON.parse(readFileSync(join(state, 'pending-writeback', 'PG-TEST-001.json'), 'utf8'));
     assert.equal(wal.pageId, 'PG-TEST-001');
     assert.equal(wal.slug, 'test-slug');
@@ -1096,6 +1101,32 @@ test('--merge creates the backfill WAL before a post-merge oracle sync failure',
       /\| PG-TEST-001 \| test-slug \|/,
       'the publish register must be durable before local oracle sync',
     );
+  } finally {
+    h.cleanup();
+  }
+});
+
+test('--status removes stale failure fields from an already-done claim', () => {
+  const h = makeHarness();
+  try {
+    writeClaims(h, {
+      'PG-TEST-001': {
+        status: 'done',
+        branch: 'seo/auto/2026-06-03-PG-TEST-001',
+        slug: 'test-slug',
+        mergedAt: '2026-07-16T13:22:00.000Z',
+        error: 'stale post-merge local sync failure',
+        failedAt: '2026-07-16T13:22:01.000Z',
+      },
+    });
+
+    const r = runAuto(h, ['--status']);
+
+    assert.equal(r.status, 0, `${r.stdout}${r.stderr}`);
+    const claim = JSON.parse(readFileSync(h.claimsPath, 'utf8'))['PG-TEST-001'];
+    assert.equal(claim.status, 'done');
+    assert.equal(claim.error, undefined);
+    assert.equal(claim.failedAt, undefined);
   } finally {
     h.cleanup();
   }

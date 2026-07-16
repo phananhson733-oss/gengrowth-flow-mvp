@@ -246,13 +246,26 @@ export async function tryGateRepair({
     return { applied: false, reason: `repair commit failed: ${tail(cm.stderr) || `exit ${cm.status}`}` };
   }
   const newHead = String(git(['rev-parse', 'HEAD']).stdout || '').trim();
-  const pu = git(['push', 'origin', branch]);
+  // Controller repair worktrees are intentionally detached at the reviewed SHA.
+  // `git push origin <branch>` would therefore push the stale local branch ref,
+  // not the new detached HEAD commit, while still exiting 0 ("up to date").
+  const remoteRef = `refs/heads/${branch}`;
+  const pu = git(['push', 'origin', `HEAD:${remoteRef}`]);
   if (pu.status !== 0) {
     log(`repair[${dim}]: git push failed — local commit ${newHead.slice(0, 8)} retained as evidence`);
     return {
       applied: false,
       headRefOid: newHead,
       reason: `repair push failed; local commit ${newHead} retained: ${tail(pu.stderr) || `exit ${pu.status}`}`,
+    };
+  }
+  const remote = git(['ls-remote', 'origin', remoteRef]);
+  const remoteHead = String(remote.stdout || '').trim().split(/\s+/)[0] || '';
+  if (remote.status !== 0 || remoteHead !== newHead) {
+    return {
+      applied: false,
+      headRefOid: newHead,
+      reason: `repair push did not converge remote ${remoteRef}: ${remoteHead || '?'} != ${newHead}`,
     };
   }
   log(`repair[${dim}]: applied ${edits.length} edit(s) + pushed ${newHead.slice(0, 8)} — starting a new full gate round`);

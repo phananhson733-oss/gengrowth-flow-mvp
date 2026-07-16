@@ -41,6 +41,12 @@ const PNG = Buffer.from(
 );
 const publicResolver = async () => [{ address: '93.184.216.34', family: 4 }];
 
+function git(cwd, args) {
+  const r = spawnSync('git', ['-C', cwd, ...args], { encoding: 'utf8' });
+  assert.equal(r.status, 0, `git ${args.join(' ')} failed: ${r.stderr}`);
+  return String(r.stdout || '').trim();
+}
+
 function response({
   status = 200,
   url,
@@ -986,6 +992,62 @@ test('a repair invalidates every earlier gate result and reruns all checks on th
   });
   assert.equal(evidence.artifactSha, '1'.repeat(64));
   assert.equal(fixture.mergeCalls().length, 1);
+});
+
+test('detached repair worktree pushes the new HEAD to the exact PR branch', async () => {
+  const c = freshCase();
+  const origin = join(c.dir, 'origin.git');
+  const worktree = join(c.dir, 'repair-worktree');
+  mkdirSync(origin, { recursive: true });
+  mkdirSync(worktree, { recursive: true });
+  git(origin, ['init', '--bare']);
+  git(worktree, ['init']);
+  git(worktree, ['config', 'user.name', 'Gate Test']);
+  git(worktree, ['config', 'user.email', 'gate-test@example.com']);
+  git(worktree, ['remote', 'add', 'origin', origin]);
+  git(worktree, ['checkout', '-b', BRANCH]);
+
+  const articleDir = join(worktree, 'data', 'articles');
+  mkdirSync(articleDir, { recursive: true });
+  const article = join(articleDir, 'detached-repair.ts');
+  writeFileSync(article, 'export const article = "OLD";\n');
+  git(worktree, ['add', '--', 'data/articles/detached-repair.ts']);
+  git(worktree, ['commit', '-m', 'initial']);
+  const initialHead = git(worktree, ['rev-parse', 'HEAD']);
+  git(worktree, ['push', '-u', 'origin', BRANCH]);
+  git(worktree, ['checkout', '--detach', initialHead]);
+
+  const fakeRepair = join(c.dir, 'fake-gate-repair.mjs');
+  writeFileSync(fakeRepair, '');
+  const result = await previewGate.tryGateRepair({
+    dim: 'astrology',
+    reason: 'replace the stale value',
+    articleTs: article,
+    draftMd: null,
+    worktree,
+    branch: BRANCH,
+    expectedHead: initialHead,
+    slug: 'detached-repair',
+    node: async () => ({
+      code: 0,
+      timedOut: false,
+      stdout: `${JSON.stringify({
+        edits: [{ old_string: '"OLD"', new_string: '"NEW"' }],
+        note: 'replace stale value',
+      })}\n`,
+      stderr: '',
+    }),
+    B: { gateRepair: fakeRepair },
+    log: () => {},
+  });
+
+  assert.equal(result.applied, true);
+  const remoteHead = git(worktree, ['ls-remote', 'origin', `refs/heads/${BRANCH}`]).split(/\s+/)[0];
+  assert.equal(
+    remoteHead,
+    result.headRefOid,
+    'a detached controller worktree must publish its new commit, not the stale local branch ref',
+  );
 });
 
 test('preview-origin final assets receive bypass headers without leaking the secret to live or CDN origins', async () => {

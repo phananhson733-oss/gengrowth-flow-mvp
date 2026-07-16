@@ -144,3 +144,20 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 仅执行 `bash tools/scripts/gg-topic-register-tick.sh`，退出码为 0。隔离日志窗口为 2026-07-16 16:02:32–16:02:36 CST，`dry_run=false`、`budget_exhausted=false`，因此是本机环境启用的 applied run。astrologywiki：`candidates=0`、`updates=0`、`new_clusters=0`、`page_ids=[]`、`preprocessor=[]`、`evidence_discovery=[]`；gengrowth 相同，均为零候选 no-op。末行 `topic-register ok`，没有失败或超时。未手工编辑 Google Sheets 或 task plan，未创建额外 Feishu/Google Doc 报告。
 
 ---
+
+### Q8 — 17:31
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: 2026-07-15T21:00:28.015Z (1784149228015)
+
+Run the deterministic fixed-row index repair workflow through `bash tools/scripts/gg-index-repair-resubmit-tick.sh`. The wrapper loads the local gg environment, loops the configured products (`GG_INDEX_MONITOR_PRODUCTS`, defaulting to astrologywiki and gengrowth), processes rows marked `已修复`, syncs `结果复盘表`, and refreshes `request-indexing-queue` in each product Google Sheet. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, do not click Search Console Request Indexing unattended, and do not create Feishu or Google Doc report artifacts. After the wrapper exits, summarize per-product `process-fixed`, `sync-recap`, `sync-request-queue` counts visible in the log, plus any failures.
+
+**🤖 回答：**
+
+执行 `bash tools/scripts/gg-index-repair-resubmit-tick.sh`，退出码为 0；隔离日志窗口为 17:30:53–17:31:22 CST，末行 `index repair-resubmit ok`。astrologywiki：`process-fixed fixed=0 resubmitted=0`；`sync-recap en_rows=251 appended=0 updated=220 skipped=31`；`sync-request-queue rows=23 P0=0 P1=1 P2=4 P3=18`。gengrowth：`process-fixed fixed=0 resubmitted=0`；`sync-recap en_rows=62 appended=0 updated=47 skipped=15`；`sync-request-queue rows=2 P0=0 P1=0 P2=0 P3=2`。窗口内未出现 failure/error/exception/auth/timeout/nonzero-rc 关键词；未使用普通文章 Google Indexing API、未执行无人值守 Request Indexing 点击，也未创建 Feishu/Google Doc 报告。
+
+---

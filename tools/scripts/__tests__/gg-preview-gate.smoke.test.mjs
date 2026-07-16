@@ -1085,6 +1085,90 @@ test('global total repair edit budget is clamped and exhausted before another ed
   }
 });
 
+test('unchanged article/asset hashes never consume the repair edit budget', async () => {
+  const sameArtifacts = [HEAD_A, HEAD_B, HEAD_C].map((head) => ({
+    ok: false,
+    reviewedHeadRefOid: head,
+    artifactSha: '6'.repeat(64),
+    failureFingerprint: '5'.repeat(64),
+    final_links: {
+      ok: false,
+      checked: [],
+      failed: [{ url: '/unchanged', reason: 'still not allowed' }],
+      ignored: [],
+    },
+    final_assets: { ok: true, checked: [], failed: [], ignored: [] },
+  }));
+  const fixture = gateRoundFixture({
+    heads: [HEAD_A, HEAD_B, HEAD_C],
+    finalArtifactResults: sameArtifacts,
+    repairResult: (_input, count) => ({
+      applied: true,
+      headRefOid: count === 1 ? HEAD_B : HEAD_C,
+      artifactShaBefore: '4'.repeat(64),
+      artifactShaAfter: '4'.repeat(64),
+    }),
+  });
+
+  const result = await runGate(fixture.options, fixture.deps);
+
+  assert.equal(result.exitCode, 2);
+  assert.match(result.reason, /no_progress/i);
+  assert.equal(fixture.repairCalls.length, 2);
+  assert.deepEqual(
+    fixture.repairCalls.map((call) => call.totalRepairEdits),
+    [0, 0],
+    'unchanged byte hashes must not consume the global edit budget',
+  );
+  assert.deepEqual(
+    fixture.repairCalls.map((call) => call.repairEditsByDimension),
+    [{}, {}],
+  );
+});
+
+test('one dimension cannot consume a third repair edit even when artifacts keep changing', async () => {
+  const oldRounds = process.env.GG_GATE_REPAIR_MAX_ROUNDS;
+  process.env.GG_GATE_REPAIR_MAX_ROUNDS = '99';
+  try {
+    const artifacts = [
+      [HEAD_A, '1', 'a'],
+      [HEAD_B, '2', 'b'],
+      [HEAD_C, '3', 'c'],
+    ].map(([head, artifact, fingerprint]) => ({
+      ok: false,
+      reviewedHeadRefOid: head,
+      artifactSha: artifact.repeat(64),
+      failureFingerprint: fingerprint.repeat(64),
+      final_links: {
+        ok: false,
+        checked: [],
+        failed: [{ url: `/${artifact}`, reason: 'not allowed' }],
+        ignored: [],
+      },
+      final_assets: { ok: true, checked: [], failed: [], ignored: [] },
+    }));
+    const fixture = gateRoundFixture({
+      heads: [HEAD_A, HEAD_B, HEAD_C],
+      finalArtifactResults: artifacts,
+      repairResult: (_input, count) => ({
+        applied: true,
+        headRefOid: count === 1 ? HEAD_B : HEAD_C,
+        artifactShaBefore: `${count}`.repeat(64),
+        artifactShaAfter: `${count + 1}`.repeat(64),
+      }),
+    });
+
+    const result = await runGate(fixture.options, fixture.deps);
+
+    assert.equal(result.exitCode, 2);
+    assert.match(result.reason, /budget exhausted for final_links \(2\)/i);
+    assert.equal(fixture.repairCalls.length, 2);
+  } finally {
+    if (oldRounds === undefined) delete process.env.GG_GATE_REPAIR_MAX_ROUNDS;
+    else process.env.GG_GATE_REPAIR_MAX_ROUNDS = oldRounds;
+  }
+});
+
 test('materialized reviewer bundle reads article from the reviewed commit and freezes draft bytes outside the live worktree', async () => {
   const input = committedReviewInputs('bundle-materialization');
   const bundle = await previewGate.materializeReviewBundle({

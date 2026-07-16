@@ -8,7 +8,7 @@ import {
   rm,
   stat,
 } from 'node:fs/promises';
-import { basename, dirname, join } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 
 const TERMINAL_STATUSES = new Set(['published', 'archived', 'human_only', 'superseded', 'migration_hold']);
@@ -44,7 +44,13 @@ const INCIDENT_LOCK_LEASE_MS = 30_000;
 const INCIDENT_LOCK_TIMEOUT_MS = 10_000;
 const INCIDENT_LOCK_RETRY_MS = 10;
 const INCIDENT_LOCK_METADATA_GRACE_MS = 1_000;
-const TRANSACTION_SCHEMA_VERSION = 1;
+const TRANSACTION_SCHEMA_VERSION = 2;
+const INCIDENT_ID_PATTERN = /^[a-f0-9]{64}$/;
+const TRANSACTION_OPERATIONS = new Set(['replace_generation', 'finish_compaction', 'compact_incident']);
+const TRANSACTION_FAULT_POINTS = new Set([
+  'after-supersede-before-head-write',
+  'after-canonical-before-source-supersede',
+]);
 
 function requireString(value, field, { optional = false } = {}) {
   if (optional && (value === undefined || value === null || value === '')) return '';

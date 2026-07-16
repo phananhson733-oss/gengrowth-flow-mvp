@@ -1,5 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
 
 import {
   createGengrowthRepairAdapter,
@@ -57,6 +61,15 @@ function authoringRecord(pageId = 'PG-SDS-004') {
   });
 }
 
+async function tempArtifact(t, relativePath, content) {
+  const root = await mkdtemp(join(tmpdir(), 'seo-repair-artifact-'));
+  t.after(async () => rm(root, { recursive: true, force: true }));
+  const path = join(root, relativePath);
+  await mkdir(dirname(path), { recursive: true });
+  await writeFile(path, content, 'utf8');
+  return { root, path };
+}
+
 test('gengrowth adapter retries the exact reviewer, publishes one page, and trusts only terminal verification', async () => {
   const calls = [];
   const adapter = createGengrowthRepairAdapter({
@@ -86,6 +99,7 @@ test('gengrowth adapter retries the exact reviewer, publishes one page, and trus
     strategy: 'deterministic_retry',
   });
   assert.equal(result.terminal, 'published');
+  assert.equal(result.agentMutationInvoked, false);
   assert.deepEqual(calls, [
     ['node', '/repo/tools/scripts/gg-codex-pr-review.mjs', '--source', '/repo/_staging/PG-WLS-007-codex-v8.md'],
     ['node', '/repo/tools/scripts/gg-gengrowth-publish.mjs', '--apply', '--pages', 'PG-WLS-007', '--limit', '1'],
@@ -113,6 +127,45 @@ test('gengrowth adapter does not publish when a targeted reviewer returns a real
   assert.match(result.evidence.stdout, /VERDICT: FAIL/);
   assert.match(result.evidence.stderr, /review evidence/);
   assert.equal(calls.length, 1);
+});
+
+test('gengrowth deterministic failure fingerprints the actual article and does not claim Agent mutation', async (t) => {
+  const content = '---\nslug: measured-content\n---\n\n# Measured content\n';
+  const artifact = await tempArtifact(t, 'PG-WLS-007-codex-v8.md', content);
+  const adapter = createGengrowthRepairAdapter({
+    resolveTarget: async () => ({ mdPath: artifact.path, slug: 'measured-content' }),
+    runCommand: async () => ({
+      code: 0,
+      stdout: 'VERDICT: FAIL\nUnsupported claim',
+      stderr: 'review evidence',
+      timedOut: false,
+    }),
+  });
+  const result = await adapter.execute({
+    record: record(),
+    classification: 'transient',
+    strategy: 'deterministic_retry',
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.agentMutationInvoked, false);
+  assert.equal(
+    result.evidence.artifactSha,
+    createHash('sha256').update(content).digest('hex'),
+  );
+});
+
+test('gengrowth target-resolution failure explicitly records that no Agent mutation ran', async () => {
+  const adapter = createGengrowthRepairAdapter({
+    resolveTarget: async () => { throw new Error('draft vanished'); },
+  });
+  const result = await adapter.execute({
+    record: record(),
+    classification: 'agent_fixable',
+    strategy: 'agent_content_asset_link',
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.agentMutationInvoked, false);
+  assert.equal(result.evidence.type, 'target_resolution_failed');
 });
 
 test('gengrowth authoring repair recovers one target before resolving a publish-ready draft', async () => {
@@ -424,7 +477,64 @@ test('astrology adapter repairs one target, reruns the complete gate, and accept
     strategy: 'agent_content_asset_link',
   });
   assert.equal(result.terminal, 'published');
+  assert.equal(result.agentMutationInvoked, true);
   assert.deepEqual(calls.map(([name]) => name), ['agent', 'persist', 'regate', 'publish']);
+});
+
+test('astrology deterministic failure fingerprints worktree content and never claims Agent mutation', async (t) => {
+  const artifact = await tempArtifact(
+    t,
+    'data/articles/saturn-return-age-29.ts',
+    'export const article = { title: "first artifact" };\n',
+  );
+  const adapter = createAstrologyWikiRepairAdapter({
+    resolveContext: async () => ({
+      branch: 'seo/auto/PG-TRANS-016',
+      worktree: artifact.root,
+      articleFile: artifact.path,
+      changedFiles: ['data/articles/saturn-return-age-29.ts'],
+      linkCandidates: [],
+    }),
+    regate: async () => ({ ok: false, reason: 'same factual failure' }),
+  });
+  const input = {
+    record: {
+      fingerprint: 'fp-trans-016',
+      event: {
+        site: 'astrologywiki', pageId: 'PG-TRANS-016', slug: 'saturn-return-age-29',
+        stage: 'preview_fact_gate', errorKind: 'asset_fail', summary: 'SVG age 14', stderr: 'FAIL',
+      },
+    },
+    strategy: 'deterministic_retry',
+  };
+  const first = await adapter.execute(input);
+  assert.equal(first.ok, false);
+  assert.equal(first.agentMutationInvoked, false);
+  assert.match(first.evidence.artifactSha, /^[a-f0-9]{64}$/);
+
+  await writeFile(artifact.path, 'export const article = { title: "changed artifact" };\n', 'utf8');
+  const changed = await adapter.execute(input);
+  assert.match(changed.evidence.artifactSha, /^[a-f0-9]{64}$/);
+  assert.notEqual(changed.evidence.artifactSha, first.evidence.artifactSha);
+});
+
+test('astrology context failure explicitly records that no Agent mutation ran', async () => {
+  const adapter = createAstrologyWikiRepairAdapter({
+    resolveContext: async () => { throw new Error('worktree missing'); },
+  });
+  const result = await adapter.execute({
+    record: {
+      fingerprint: 'fp-trans-016',
+      event: {
+        site: 'astrologywiki', pageId: 'PG-TRANS-016', slug: 'saturn-return-age-29',
+        stage: 'preview_fact_gate', errorKind: 'asset_fail', summary: 'SVG age 14', stderr: 'FAIL',
+      },
+    },
+    strategy: 'agent_content_asset_link',
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.agentMutationInvoked, false);
+  assert.equal(result.evidence.type, 'target_resolution_failed');
 });
 
 test('astrology adapter never regates an Agent edit that was not committed and pushed', async () => {

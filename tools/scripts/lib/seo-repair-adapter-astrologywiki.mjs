@@ -1,4 +1,5 @@
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
@@ -429,6 +430,33 @@ async function defaultVerifyTerminal(event, target, { scriptsDir, runCommand }) 
     } catch {}
   }
   return { ok: false, terminal: 'pending', reason: result.stderr || `verifier exited ${result.code}` };
+}
+
+function astrologyArtifactSha(target) {
+  const worktree = resolve(target.worktree);
+  const candidates = [...new Set([
+    target.articleFile,
+    ...(target.changedFiles || []),
+  ].filter(Boolean).map((file) => absoluteWorktreeFile(worktree, file)))];
+  const measured = candidates
+    .map((file) => ({ file, path: relative(worktree, file) }))
+    .filter(({ path }) => path && path !== '..' && !path.startsWith(`..${sep}`) && !isAbsolute(path))
+    .sort((left, right) => left.path.localeCompare(right.path));
+  const hash = createHash('sha256');
+  let files = 0;
+  for (const entry of measured) {
+    try {
+      const content = readFileSync(entry.file);
+      hash.update(entry.path);
+      hash.update('\0');
+      hash.update(String(content.length));
+      hash.update('\0');
+      hash.update(content);
+      hash.update('\0');
+      files += 1;
+    } catch {}
+  }
+  return files > 0 ? hash.digest('hex') : null;
 }
 
 export function createAstrologyWikiRepairAdapter(deps = {}) {

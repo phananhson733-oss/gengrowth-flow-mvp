@@ -1,4 +1,5 @@
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -61,6 +62,14 @@ function parseLastJson(stdout) {
     try { return JSON.parse(line); } catch {}
   }
   return null;
+}
+
+function gengrowthArtifactSha(target) {
+  try {
+    return createHash('sha256').update(readFileSync(target.mdPath)).digest('hex');
+  } catch {
+    return null;
+  }
 }
 
 async function defaultVerifyTerminal(event, target, {
@@ -233,10 +242,22 @@ export function createGengrowthRepairAdapter(deps = {}) {
         target = recovered.target;
         authorRecoveryEvidence = recovered.evidence;
       } else {
-        target = await resolveTarget(event);
+        try {
+          target = await resolveTarget(event);
+        } catch (error) {
+          return {
+            ok: false,
+            agentMutationInvoked: false,
+            evidence: {
+              type: 'target_resolution_failed',
+              message: error instanceof Error ? error.message : String(error),
+            },
+          };
+        }
       }
       const withAuthorRecovery = (evidence) => ({
         ...(evidence || {}),
+        ...(gengrowthArtifactSha(target) ? { artifactSha: gengrowthArtifactSha(target) } : {}),
         ...(authorRecoveryEvidence ? { authorRecovery: authorRecoveryEvidence } : {}),
       });
       const context = {

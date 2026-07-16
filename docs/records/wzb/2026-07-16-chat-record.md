@@ -21,7 +21,7 @@ aliases:
 - 统一 SEO repair controller v2 已启用并完成真实故障收敛；正常写作/发布继续由 macOS `launchd` 拉起，只有异常队列触发定向 Agent，不恢复 Codex Automation，也不绕过事实门。
 - Index Repair Resubmit、Index Monitor 与 Topic Register 固定 wrapper 均成功；两个站点 Sitemap API 成功，最终索引候选队列共 25 条（P0=0、P1=1、P2=4、P3=20）。Topic Register 于 20:02 与 22:03 均为 applied no-op，两个产品均无候选；此前 18:01 run 曾为 astrologywiki 写入 5 个 brief（1 个新 cluster），gengrowth 无候选；没有无人值守 Request Indexing。
 - 结果复盘性能 wrapper 因 GSC/GA4 OAuth refresh token 过期或撤销而在扫描前停止，未写回数据或生成报告；需重新授权后重跑同一 wrapper。
-- SEO blog 零人值守链路已修复同模型回退、作者修复超时、完整失败摘要、跨产品作者锁、FAQ/对比标题误报、Preview env/baseline、合并后终态、单分支 regate fetch，以及计划积压误判整批失败等漏洞；`PG-CELEB-057/058` 已上线并完成 plan/vault/writeback，`PG-TRANS-021` 已自动生成 Phase 2 PASS 稿，相关回归 209/209 通过。仍需后续正式发布窗口接管待发布稿，并以连续自然 cron 证明最终零人值守稳定性。
+- SEO blog 零人值守链路已修复同模型回退、作者修复超时、完整失败摘要、跨产品作者锁、FAQ/对比标题误报、Preview env/baseline、合并后终态、单分支 regate fetch、计划积压误判、跨 cron 失败记忆、失败稿保留、精确修复预算与二次有界修复；Topic Register 也会只对当前未完成计划项执行语义 cluster 修复。`PG-CELEB-057/058` 已上线并完成 plan/vault/writeback，`PG-TRANS-021` 已自动生成 Phase 2 PASS 稿，最终相关回归 412/412 通过。仍需后续正式发布窗口接管 3 个待发布项，并以连续 3 个自然 cron 证明最终零人值守稳定性。
 
 ---
 
@@ -222,6 +222,10 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 
 按 TDD 修复 SEO blog 零人值守链路中的生产漏洞：Claude 主/备模型改为真正不同模型并有界回退；作者修复设定四分钟单次上限；Phase 2 反馈完整提取全部失败；增加跨产品全局作者锁；修正比较标题与 FAQ 标题误报；Preview Gate 直接加载严格环境并固定无人值守 Oracle baseline；合并成功后先持久化终态与 writeback WAL，后续本地同步降级为非阻断；regate 显式抓取目标分支；LaunchAgent 与 reconciler 仅允许正常未来计划积压，不再把长期计划未清空误判成整批失败，同时仍严格阻断 needs_human、pending writeback、活动修复和过期租约。
 
-真实恢复 `PG-CELEB-057` 与 `PG-CELEB-058`：两篇均 HTTP 200、进入 sitemap、plan 已勾选、Vault 已归档，pending writeback 清零；`PG-TRANS-021` 在第二轮自动生成 Phase 2 PASS 稿，评审改稿若回归失败会自动保留原合格稿。完成前新鲜验证为 209/209 回归通过，Shell/Node 语法与 `git diff --check` 通过，SEO reconciler LaunchAgent 最近退出码为 0，作者锁已释放。因 22:00 后不启动新发布批次，`PG-TRANS-021` 留给下一次正式 cron 扫描发布；`PG-WDIF-002`、`PG-WDIN-001` 与连续自然 cron 稳定性证明仍待后续窗口完成，本轮未强制 publish 或绕过门禁。
+针对最后三个反复打回项继续完成根因修复。作者阶段新增 `_staging/<PG>-author-failures.json`，跨尝试、跨 cron 累积并去重全部 Phase 2 约束；修复数组被错误拼成逗号字符串的问题。每次失败保留 `<PG>-last-failing-v8.md`，即使最后一次 orchestrator 未产稿也能基于上一份有效失败稿修复。确定性修复从 fixture 读取精确字数、关键词次数和每段句数预算，第一份候选仍失败时允许一次带最新失败原因的有界二次修复，并要求不回归已经通过的门禁。RL4 不再重复检查由独立结构门负责的 `Take Action`、`Related Reading`、`Sources`，而普通正文漂移仍严格拦截；包含 `Sources` 字样的 Phase 2 失败也不再误分类为 source/tool 故障。
+
+审计确认 `PG-WDIF-002` 的上游 brief 被错误绑定到职业困境 cluster，并生成过 `What Is What Is My Love Language?`。Topic Register 已规范化已有 `what is` 实体，并只审计当前计划中未勾选的活跃 page_id；对语义分数为 0 且属于确定性 scaffold 的行，可自动创建单例 cluster 并同步依赖字段。22:26:37–22:26:39 CST 通过固定 wrapper 做 verification-only dry-run，只选中 `PG-WDIF-002`，计划将 cluster 从 `why_do_i_feel_stuck_in_my_career` 修复为 `what_is_my_love_language`，`score=0`、`new_clusters=1`，没有写 Sheet、计划或启动 author/publish。
+
+真实恢复 `PG-CELEB-057` 与 `PG-CELEB-058`：两篇均 HTTP 200、进入 sitemap、plan 已勾选、Vault 已归档，pending writeback 清零；`PG-TRANS-021` 已有 1512 词的 Phase 2 `overall=pass` 稿。最终新鲜回归覆盖 16 个相关测试文件，412/412 通过；Node/Shell 语法与 `git diff --check` 全部通过。当前 W22 只剩 `PG-WDIF-002`、`PG-TRANS-021`、`PG-WDIN-001` 三项未勾选，claims 无非 `done` 记录，active repair=0、needs_human=0、通知 outbox=0、作者全局锁不存在，SEO reconciler 最近 42 次运行且 last exit=0；工作区干净，HEAD 与 `origin/main` 一致。因 22:00 后不启动新发布批次，三项留给下一次正式 cron 自然接管；最终零人值守验收仍需三项自然发布/回填完成，并取得连续 3 个自然 cron 窗口的收敛证据，本轮未强制 publish 或绕过门禁。
 
 ---

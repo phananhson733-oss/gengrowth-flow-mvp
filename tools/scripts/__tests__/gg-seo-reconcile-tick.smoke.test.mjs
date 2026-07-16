@@ -110,6 +110,7 @@ test('reconciler source contains no nightly, author, scan, or producer path', ()
   const source = readFileSync(tick, 'utf8');
   assert.doesNotMatch(source, /gg-nightly-seo\.sh|--author|\bscan\b|producer/i);
   assert.doesNotMatch(source, /rm\s+-rf/);
+  assert.match(source, /droppedWritebackAfter/);
 });
 
 test('23:00 tick runs strict reconcile/readiness without draining content repair', () => {

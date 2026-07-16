@@ -32,7 +32,7 @@ function runStrictFixture(verification, {
       deps: {
         apply: async () => { phases.push('apply'); return applyResult; },
         verify: async () => { phases.push('verify'); return verification; },
-        notify: async () => { phases.push('notify'); },
+        notify: async (event, fields) => { phases.push('notify'); phases.push({ event, fields }); },
         log: () => {},
       },
     });
@@ -56,6 +56,8 @@ function runStrictFixture(verification, {
 function zero(overrides = {}) {
   return {
     pendingWritebackAfter: 0,
+    droppedWritebackAfter: 0,
+    droppedWritebackEvidence: [],
     sheetFlipsAfter: 0,
     planUncheckedAfter: 0,
     activeRepairAfter: 0,
@@ -71,6 +73,9 @@ function defaultCliFixture({
   queue = [],
   sheetPlan = false,
   missingClaims = false,
+  pendingWritebacks = [],
+  droppedWritebacks = [],
+  quarantinedWritebacks = [],
 } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'ledger-reconcile-default-'));
   const fakeFlow = join(root, 'flow');
@@ -96,6 +101,28 @@ function defaultCliFixture({
     queue.forEach((record, index) => {
       writeFileSync(
         join(state, 'seo-repair-queue', `record-${index}.json`),
+        `${JSON.stringify(record)}\n`,
+      );
+    });
+  }
+  if (pendingWritebacks.length > 0) {
+    mkdirSync(join(state, 'pending-writeback'), { recursive: true });
+    pendingWritebacks.forEach((record, index) => {
+      writeFileSync(
+        join(state, 'pending-writeback', `${record.pageId || `pending-${index}`}.json`),
+        `${JSON.stringify(record)}\n`,
+      );
+    });
+  }
+  for (const [directory, records] of [
+    ['dropped', droppedWritebacks],
+    ['quarantined', quarantinedWritebacks],
+  ]) {
+    if (records.length === 0) continue;
+    mkdirSync(join(state, 'pending-writeback', directory), { recursive: true });
+    records.forEach((record, index) => {
+      writeFileSync(
+        join(state, 'pending-writeback', directory, `${record.pageId || `${directory}-${index}`}.json`),
         `${JSON.stringify(record)}\n`,
       );
     });
@@ -130,6 +157,8 @@ test('strict mode applies then verifies and returns exactly the required counter
   assert.deepEqual(out.json.phases, ['apply', 'verify']);
   assert.deepEqual(Object.keys(out.json.result).sort(), [
     'activeRepairAfter',
+    'droppedWritebackAfter',
+    'droppedWritebackEvidence',
     'eligibleNeedsHumanAfter',
     'errors',
     'expiredLeasesAfter',
@@ -146,6 +175,24 @@ test('pending writeback remains => strict exit 2 and pendingWritebackAfter=1', (
   assert.equal(out.status, 2, `${out.stdout}\n${out.stderr}`);
   assert.equal(out.json.result.ok, false);
   assert.equal(out.json.result.pendingWritebackAfter, 1);
+});
+
+test('dropped writeback independently blocks strict convergence with structured evidence', () => {
+  const evidence = [{
+    pageId: 'PG-CELEB-055',
+    state: 'dropped',
+    stuckSteps: ['archive'],
+    attempts: 8,
+    firstAt: '2026-07-09T10:00:00.000Z',
+    lastError: 'archive:vault unavailable',
+  }];
+  const out = runStrictFixture(zero({
+    droppedWritebackAfter: 1,
+    droppedWritebackEvidence: evidence,
+  }));
+  assert.equal(out.status, 2, `${out.stdout}\n${out.stderr}`);
+  assert.equal(out.json.result.droppedWritebackAfter, 1);
+  assert.deepEqual(out.json.result.droppedWritebackEvidence, evidence);
 });
 
 test('verification sheet flips after an earlier apply zero cannot be masked', () => {
@@ -178,6 +225,38 @@ test('strict path never sends an intermediate notification', () => {
   assert.deepEqual(out.json.phases, ['apply', 'verify']);
 });
 
+test('new terminal writeback emits one complete deduplicated notification', () => {
+  const terminal = {
+    pageId: 'PG-CELEB-055',
+    stuckSteps: ['archive'],
+    attempts: 8,
+    firstAt: '2026-07-09T10:00:00.000Z',
+    lastError: 'archive:vault unavailable',
+    terminalAt: '2026-07-16T10:00:00.000Z',
+    reason: 'max-attempts',
+    notificationKey: 'writeback-terminal:PG-CELEB-055:2026-07-09T10:00:00.000Z:8',
+  };
+  const out = runStrictFixture(zero({
+    droppedWritebackAfter: 1,
+    droppedWritebackEvidence: [{ ...terminal, state: 'dropped' }],
+  }), {
+    applyResult: { terminalNotifications: [terminal] },
+  });
+  assert.equal(out.status, 2, `${out.stdout}\n${out.stderr}`);
+  assert.equal(out.json.phases[0], 'apply');
+  assert.equal(out.json.phases[1], 'verify');
+  assert.equal(out.json.phases[2], 'notify');
+  const sent = out.json.phases[3];
+  assert.equal(sent.event, 'batch_summary');
+  assert.equal(sent.fields.partial, true);
+  assert.match(sent.fields.text, /PG-CELEB-055/);
+  assert.match(sent.fields.text, /archive/);
+  assert.match(sent.fields.text, /attempts=8/);
+  assert.match(sent.fields.text, /firstAt=2026-07-09T10:00:00.000Z/);
+  assert.match(sent.fields.text, /archive:vault unavailable/);
+  assert.match(sent.fields.msgUuid, /^[0-9a-f-]{36}$/);
+});
+
 test('legacy dry invocation preserves the best-effort apply pass before verification', () => {
   const out = runStrictFixture(zero(), { strict: false, apply: false });
   assert.equal(out.status, 0, `${out.stdout}\n${out.stderr}`);
@@ -191,6 +270,37 @@ test('strict dry verification fails closed without creating a missing state root
   assert.equal(existsSync(fixture.state), false);
   const json = JSON.parse(out.stdout);
   assert.match(json.errors.join('\n'), /flow-state/i);
+});
+
+test('production-shaped dropped/quarantined directories remain visible to strict verification', () => {
+  const fixture = defaultCliFixture({
+    claims: {},
+    droppedWritebacks: [{
+      pageId: 'PG-CELEB-055',
+      attempts: 8,
+      firstAt: '2026-07-09T10:00:00.000Z',
+      done: ['sheet', 'plan'],
+      lastError: 'archive:vault unavailable',
+    }],
+    quarantinedWritebacks: [{
+      pageId: 'PG-CELEB-056',
+      attempts: 8,
+      firstAt: '2026-07-10T10:00:00.000Z',
+      done: [],
+      lastError: 'sheet:no-token',
+    }],
+  });
+  const out = fixture.run();
+  assert.equal(out.status, 2, `${out.stdout}\n${out.stderr}`);
+  const json = JSON.parse(out.stdout);
+  assert.equal(json.droppedWritebackAfter, 2);
+  assert.deepEqual(
+    json.droppedWritebackEvidence.map((row) => [row.pageId, row.state]),
+    [
+      ['PG-CELEB-055', 'dropped'],
+      ['PG-CELEB-056', 'quarantined'],
+    ],
+  );
 });
 
 test('parseable claims with an array entry fail closed instead of becoming zero', () => {

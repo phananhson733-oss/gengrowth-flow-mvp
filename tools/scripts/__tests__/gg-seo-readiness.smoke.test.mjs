@@ -14,6 +14,8 @@ function strictZero(overrides = {}) {
   return {
     ok: true,
     pendingWritebackAfter: 0,
+    droppedWritebackAfter: 0,
+    droppedWritebackEvidence: [],
     sheetFlipsAfter: 0,
     planUncheckedAfter: 0,
     activeRepairAfter: 0,
@@ -31,6 +33,8 @@ function readinessFixture({
   strictResult = strictZero(),
   staleReport = [],
   contamination = [],
+  droppedWritebacks = [],
+  quarantinedWritebacks = [],
   missingClaims = false,
   now = '2026-07-16T11:00:00.000Z',
 } = {}) {
@@ -48,6 +52,20 @@ function readinessFixture({
   contamination.forEach((name) => {
     writeFileSync(join(state, `${name}.json`), `${JSON.stringify({ pageId: name })}\n`);
   });
+  for (const [directory, records] of [
+    ['dropped', droppedWritebacks],
+    ['quarantined', quarantinedWritebacks],
+  ]) {
+    if (records.length === 0) continue;
+    const target = join(state, 'pending-writeback', directory);
+    mkdirSync(target, { recursive: true });
+    records.forEach((record, index) => {
+      writeFileSync(
+        join(target, `${record.pageId || `${directory}-${index}`}.json`),
+        `${JSON.stringify(record, null, 2)}\n`,
+      );
+    });
+  }
   const source = `
     import { evaluateSeoReadiness } from ${JSON.stringify(readinessUrl)};
     const result = await evaluateSeoReadiness({
@@ -170,6 +188,34 @@ test('strict verification drift is carried into readiness and blocks it', () => 
   });
   assert.equal(out.status, 2, `${out.stdout}\n${out.stderr}`);
   assert.equal(out.json.sheetFlipsAfter, 2);
+});
+
+test('dropped/quarantined writeback directories block readiness even if injected strict counters claim zero', () => {
+  const out = readinessFixture({
+    droppedWritebacks: [{
+      pageId: 'PG-CELEB-055',
+      attempts: 8,
+      firstAt: '2026-07-09T10:00:00.000Z',
+      done: ['sheet', 'plan'],
+      lastError: 'archive:vault unavailable',
+    }],
+    quarantinedWritebacks: [{
+      pageId: 'PG-CELEB-056',
+      attempts: 8,
+      firstAt: '2026-07-10T10:00:00.000Z',
+      done: [],
+      lastError: 'sheet:no-token',
+    }],
+  });
+  assert.equal(out.status, 2, `${out.stdout}\n${out.stderr}`);
+  assert.equal(out.json.droppedWritebackAfter, 2);
+  assert.deepEqual(
+    out.json.droppedWritebackEvidence.map((row) => [row.pageId, row.state]),
+    [
+      ['PG-CELEB-055', 'dropped'],
+      ['PG-CELEB-056', 'quarantined'],
+    ],
+  );
 });
 
 test('conflicting latestEvent owner cannot hide an active repair from the selected site', () => {

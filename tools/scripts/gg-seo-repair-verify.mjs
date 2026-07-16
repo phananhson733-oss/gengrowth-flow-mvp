@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { homedir } from 'node:os';
@@ -19,6 +20,10 @@ import {
   CTA_TAB,
   PAGES_TAB,
 } from './gg-sheet-to-brief.mjs';
+import {
+  sitemapUrlsFromXml,
+  verifyRenderedArtifacts,
+} from './lib/seo-final-artifacts.mjs';
 
 const SCRIPT = fileURLToPath(import.meta.url);
 const SCRIPTS = dirname(SCRIPT);
@@ -120,8 +125,27 @@ export async function verifyRepairTarget(target, deps = {}) {
   checks.cta_matches_map = checks.http_200 && checks.cta_audit
     && pageLinksTo(page.text, deps.ctaAudit.cta_target_url, url);
   checks.writeback_clear = !deps.pendingWriteback;
+  const sitemapUrls = sitemapUrlsFromXml(sitemap.text || '');
+  const allowedRoutes = deps.allowedRoutes || new Set(
+    [...sitemapUrls].map((entry) => {
+      try { return new URL(entry).pathname; } catch { return ''; }
+    }).filter(Boolean),
+  );
+  const finalArtifacts = await verifyRenderedArtifacts({
+    html: page.text || '',
+    pageUrl: url,
+    allowedRoutes,
+    sitemapUrls,
+    fetch: deps.fetchArtifact || deps.fetchDocument,
+    decodeImage: deps.decodeImage,
+    articleSha: createHash('sha256').update(String(page.text || '')).digest('hex'),
+  });
+  checks.final_links = finalArtifacts.final_links;
+  checks.final_assets = finalArtifacts.final_assets;
 
-  const failed = Object.entries(checks).filter(([, ok]) => !ok).map(([name]) => name);
+  const failed = Object.entries(checks)
+    .filter(([, value]) => typeof value === 'object' ? value?.ok !== true : !value)
+    .map(([name]) => name);
   return {
     ok: failed.length === 0,
     terminal: failed.length ? 'pending' : 'published',
@@ -155,8 +179,27 @@ export async function verifyGengrowthRepairTarget(target, deps = {}) {
     && normalizedLink(sheetUrl, url) === normalizedLink(url, url);
   checks.vault_archived = deps.vaultArchived === true;
   checks.writeback_clear = !deps.pendingWriteback;
+  const sitemapUrls = sitemapUrlsFromXml(sitemap.text || '');
+  const allowedRoutes = deps.allowedRoutes || new Set(
+    [...sitemapUrls].map((entry) => {
+      try { return new URL(entry).pathname; } catch { return ''; }
+    }).filter(Boolean),
+  );
+  const finalArtifacts = await verifyRenderedArtifacts({
+    html: page.text || '',
+    pageUrl: url,
+    allowedRoutes,
+    sitemapUrls,
+    fetch: deps.fetchArtifact || deps.fetchDocument,
+    decodeImage: deps.decodeImage,
+    articleSha: createHash('sha256').update(String(page.text || '')).digest('hex'),
+  });
+  checks.final_links = finalArtifacts.final_links;
+  checks.final_assets = finalArtifacts.final_assets;
 
-  const failed = Object.entries(checks).filter(([, ok]) => !ok).map(([name]) => name);
+  const failed = Object.entries(checks)
+    .filter(([, value]) => typeof value === 'object' ? value?.ok !== true : !value)
+    .map(([name]) => name);
   return {
     ok: failed.length === 0,
     terminal: failed.length ? 'pending' : 'published',
@@ -292,6 +335,14 @@ async function fetchDocument(url) {
   }
 }
 
+async function fetchArtifact(url) {
+  return fetch(url, {
+    redirect: 'follow',
+    headers: { 'user-agent': 'gg-seo-repair-verify-artifact/1' },
+    signal: AbortSignal.timeout(15000),
+  });
+}
+
 function findGengrowthManifest(pageId, slug, stagingDir = join(FLOW, '_staging')) {
   try {
     const candidates = readdirSync(stagingDir)
@@ -374,6 +425,15 @@ async function loadGengrowthDeps(args, target) {
       fetchDocument: async (url) => url.endsWith('/sitemap.xml')
         ? { ok: true, status: 200, text: fixture.sitemapText || '' }
         : { ok: true, status: 200, text: fixture.pageHtml || '' },
+      fetchArtifact: async (url) => ({
+        ok: true,
+        status: 200,
+        url,
+        redirected: false,
+        headers: { get: () => 'text/html; charset=utf-8' },
+        text: async () => `<link rel="canonical" href="${url}">`,
+        arrayBuffer: async () => new ArrayBuffer(0),
+      }),
     };
   }
   loadEnv();
@@ -385,6 +445,7 @@ async function loadGengrowthDeps(args, target) {
     vaultArchived: vaultContainsGengrowthPage(target.pageId, target.slug),
     pendingWriteback: pendingWriteback(target.pageId),
     fetchDocument,
+    fetchArtifact,
   };
 }
 
@@ -410,6 +471,15 @@ async function loadAstrologyDeps(args, target) {
       fetchDocument: async (url) => url.endsWith('/sitemap.xml')
         ? { ok: true, status: 200, text: fixture.sitemapText || '' }
         : { ok: true, status: 200, text: fixture.pageHtml || '' },
+      fetchArtifact: async (url) => ({
+        ok: true,
+        status: 200,
+        url,
+        redirected: false,
+        headers: { get: () => 'text/html; charset=utf-8' },
+        text: async () => `<link rel="canonical" href="${url}">`,
+        arrayBuffer: async () => new ArrayBuffer(0),
+      }),
     };
   }
   const claims = readJson(args.claims || DEFAULT_CLAIMS, {});
@@ -423,6 +493,7 @@ async function loadAstrologyDeps(args, target) {
     ctaAudit: sheetContext.ctaAudits[target.pageId],
     pendingWriteback: pendingWriteback(target.pageId),
     fetchDocument,
+    fetchArtifact,
   };
 }
 
@@ -478,6 +549,7 @@ async function main() {
       ctaAudit: sheetContext.ctaAudits[target.pageId],
       pendingWriteback: pendingWriteback(target.pageId),
       fetchDocument,
+      fetchArtifact,
     });
     results.push({ pageId: target.pageId, slug: target.slug || claims[target.pageId]?.slug || '', ...verified });
   }

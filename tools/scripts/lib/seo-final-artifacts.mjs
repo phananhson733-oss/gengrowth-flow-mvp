@@ -66,7 +66,7 @@ function normalizedUrl(value, base) {
   try {
     const url = new URL(decodeEntities(value), base);
     url.hash = '';
-    url.hostname = normalizedHostname(url.hostname);
+    url.hostname = String(url.hostname || '').toLowerCase();
     if ((url.protocol === 'https:' && url.port === '443')
       || (url.protocol === 'http:' && url.port === '80')) {
       url.port = '';
@@ -354,6 +354,7 @@ function inlineIdExists(html, fragment) {
 export async function verifyFinalAssets({
   html,
   pageUrl,
+  assetBaseUrl = pageUrl,
   fetch: fetchImpl,
   decodeImage = defaultDecodeImage,
 }) {
@@ -395,7 +396,7 @@ export async function verifyFinalAssets({
     }
     let parsed;
     try {
-      parsed = new URL(raw, pageUrl);
+      parsed = new URL(raw, assetBaseUrl);
     } catch {
       failed.push({ ...reference, url: '', reason: 'invalid asset URL' });
       continue;
@@ -570,6 +571,7 @@ export function artifactShaFromFiles({
 export async function verifyRenderedArtifacts({
   html,
   pageUrl,
+  assetBaseUrl = pageUrl,
   allowedRoutes,
   sitemapUrls,
   fetch: fetchImpl,
@@ -587,6 +589,7 @@ export async function verifyRenderedArtifacts({
   const final_assets = await verifyFinalAssets({
     html,
     pageUrl,
+    assetBaseUrl,
     fetch: fetchImpl,
     decodeImage,
   });

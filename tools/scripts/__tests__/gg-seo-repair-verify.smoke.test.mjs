@@ -288,7 +288,7 @@ test('astrology verifier CLI accepts one exact page without a targets sidecar', 
     ctaAudit: goodDeps().ctaAudit,
     pendingWriteback: null,
     pageHtml: `<link rel="canonical" href="${URL}"><script type="application/ld+json">{"@type":"Article"}</script><a href="/en/birth-chart-calculator">CTA</a>`,
-    sitemapText: `<loc>${URL}</loc>`,
+    sitemapText: `<loc>${URL}</loc><loc>https://www.astrologywiki.com/en/birth-chart-calculator</loc>`,
   }));
   const result = spawnSync('node', [
     'tools/scripts/gg-seo-repair-verify.mjs',

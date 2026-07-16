@@ -339,6 +339,7 @@ async function drainWithLock(args, targetQueueDir) {
       maxTargets,
       budgetMs: budgetSeconds * 1000,
       leaseMs: (budgetSeconds + 60) * 1000,
+      attemptBudgetMs: budgetSeconds * 1000,
     });
   } finally {
     process.removeListener('exit', release);

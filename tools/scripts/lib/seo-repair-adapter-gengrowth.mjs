@@ -126,6 +126,10 @@ export async function recoverGengrowthAuthoring(event, deps = {}) {
   const runCommand = deps.runCommand || defaultRunCommand;
   const resolveAuthoredTarget = deps.resolveAuthoredTarget
     || ((value) => defaultResolveTarget(value, { flow }));
+  const nowMs = deps.nowMs || Date.now;
+  const deadlineMs = Number.isFinite(Number(deps.deadlineMs))
+    ? Number(deps.deadlineMs)
+    : nowMs() + (25 * 60 * 1000);
   const pageId = String(event?.pageId || '');
   if (!/^PG-[A-Z0-9]+-[0-9]+$/.test(pageId)) {
     return {
@@ -156,12 +160,21 @@ export async function recoverGengrowthAuthoring(event, deps = {}) {
   const results = [];
   let agentMutationInvoked = false;
   for (const command of commands) {
+    const remainingMs = deadlineMs - nowMs();
+    if (remainingMs <= 0) {
+      return {
+        target: null,
+        agentMutationInvoked,
+        evidence: { type: 'repair_deadline_exhausted', results },
+      };
+    }
+    const timeoutMs = Math.max(1, Math.min(command.timeoutMs, remainingMs));
     let result;
     try {
       result = await runCommand(command.argv, {
         cwd: flow,
         env: process.env,
-        timeoutMs: command.timeoutMs,
+        timeoutMs,
       });
     } catch (error) {
       result = {
@@ -175,6 +188,7 @@ export async function recoverGengrowthAuthoring(event, deps = {}) {
     results.push({
       role: command.role,
       argv: command.argv,
+      timeoutMs,
       code: result?.code ?? 1,
       timedOut: result?.timedOut === true,
       stdout: String(result?.stdout || '').slice(-4_096),
@@ -257,6 +271,8 @@ export function createGengrowthRepairAdapter(deps = {}) {
           flow,
           runCommand,
           resolveAuthoredTarget,
+          deadlineMs,
+          nowMs,
         });
         if (!recovered.target) {
           return {
@@ -313,7 +329,11 @@ export function createGengrowthRepairAdapter(deps = {}) {
             'node', join(scriptsDir, 'gg-seo-repair-verify.mjs'), '--site', 'gengrowth',
             '--page-id', event.pageId, '--slug', target.slug, '--json',
           ],
-        }, { record, strategy });
+        }, {
+          record,
+          strategy,
+          timeoutSeconds: Math.max(1, Math.floor(remainingTimeout(12 * 60 * 1000) / 1000)),
+        });
         if (repaired?.ok !== true) {
           return {
             ok: false,

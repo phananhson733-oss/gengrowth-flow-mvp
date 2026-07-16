@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -19,6 +19,7 @@ import {
   readRepairRecord,
   transitionRepairEvent,
 } from '../lib/seo-repair-events.mjs';
+import { createGengrowthRepairAdapter } from '../lib/seo-repair-adapter-gengrowth.mjs';
 
 const UUID_A = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const UUID_B = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
@@ -375,6 +376,44 @@ test('artifact evidence counts consecutive no-progress attempts and quarantines 
   assert.equal(terminal.lastArtifactSha, 'sha-repeat');
   assert.equal(terminal.noProgressCount, 2);
   assert.equal(terminal.history.at(-1).evidence.type, 'no_progress');
+});
+
+test('real Gengrowth article SHA drives no-progress quarantine across two failed reviews', async (t) => {
+  const { queueDir } = await fixture(t);
+  const root = await mkdtemp(join(tmpdir(), 'seo-real-artifact-'));
+  t.after(async () => rm(root, { recursive: true, force: true }));
+  const mdPath = join(root, 'PG-WLS-007-codex-v8.md');
+  await writeFile(mdPath, '---\nslug: chatgpt-seo\n---\n\n# Stable article\n', 'utf8');
+  await enqueueRepairEvent(event(), { queueDir });
+  let reviewerCalls = 0;
+  const adapter = createGengrowthRepairAdapter({
+    resolveTarget: async () => ({ mdPath, slug: 'chatgpt-seo' }),
+    runCommand: async () => {
+      reviewerCalls += 1;
+      return {
+        code: 0,
+        stdout: 'VERDICT: FAIL\nSame unsupported claim',
+        stderr: '',
+        timedOut: false,
+      };
+    },
+  });
+  const args = {
+    queueDir,
+    adapters: { gengrowth: adapter },
+    owner: 'real-artifact-controller-test',
+    now: () => new Date('2026-07-15T14:02:00.000Z'),
+    maxTargets: 1,
+    maxStrategyAttempts: 3,
+  };
+  const first = await drainRepairQueue(args);
+  assert.equal(first.terminals.length, 0);
+  const second = await drainRepairQueue(args);
+  assert.equal(reviewerCalls, 2);
+  assert.equal(second.terminals[0].terminal, 'quarantined');
+  const terminal = await readRepairRecord(join(queueDir, `${UUID_A}.json`));
+  assert.match(terminal.lastArtifactSha, /^[a-f0-9]{64}$/);
+  assert.equal(terminal.noProgressCount, 2);
 });
 
 test('a changed artifact SHA resets the consecutive no-progress count to one', async (t) => {

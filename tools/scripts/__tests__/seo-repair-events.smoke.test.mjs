@@ -527,6 +527,50 @@ test('lease acquisition is single-owner and expired leases recover to queued', a
   assert.equal(recovered.lease, null);
 });
 
+test('expired lease recovery skips a held incident and recovers an unrelated lease', async (t) => {
+  const { queueDir } = await fixture(t);
+  const held = await enqueueRepairEvent(event({
+    eventId: UUID_A,
+    pageId: 'PG-HELD-LEASE',
+  }), { queueDir });
+  const unrelated = await enqueueRepairEvent(event({
+    eventId: UUID_B,
+    pageId: 'PG-UNRELATED-LEASE',
+  }), { queueDir });
+  await acquireRepairLease(held, {
+    queueDir,
+    owner: 'held-controller',
+    now: new Date('2026-07-15T14:00:00.000Z'),
+    leaseMs: 60_000,
+  });
+  await acquireRepairLease(unrelated, {
+    queueDir,
+    owner: 'unrelated-controller',
+    now: new Date('2026-07-15T14:00:00.000Z'),
+    leaseMs: 60_000,
+  });
+  const heldIncidentId = repairIncidentId(held.event);
+  const transactionDirectory = join(queueDir, '.incident-transactions');
+  await mkdir(transactionDirectory, { recursive: true });
+  await writeFile(join(transactionDirectory, `${heldIncidentId}-corrupt.json`), '{broken', 'utf8');
+
+  let recoveredCount = null;
+  await assert.doesNotReject(async () => {
+    recoveredCount = await recoverExpiredLeases({
+      queueDir,
+      now: new Date('2026-07-15T14:01:01.000Z'),
+    });
+  });
+
+  assert.equal(recoveredCount, 1);
+  const heldAfter = await readRepairRecord(join(queueDir, `${UUID_A}.json`));
+  const unrelatedAfter = await readRepairRecord(join(queueDir, `${UUID_B}.json`));
+  assert.equal(heldAfter.status, 'repairing');
+  assert.equal(heldAfter.lease.owner, 'held-controller');
+  assert.equal(unrelatedAfter.status, 'queued');
+  assert.equal(unrelatedAfter.lease, null);
+});
+
 test('transition records strategy evidence and terminal notification key', async (t) => {
   const { queueDir } = await fixture(t);
   const queued = await enqueueRepairEvent(event(), { queueDir });
@@ -611,6 +655,69 @@ function preparedIntentV2({
     writes,
   };
 }
+
+test('quarantining one prepared intent holds its incident and stops later intents in the same pass', async (t) => {
+  const { queueDir } = await fixture(t);
+  const original = await enqueueRepairEvent(event({
+    eventId: UUID_A,
+    pageId: 'PG-QUARANTINE-STOP',
+  }), { queueDir });
+  const current = await transitionRepairEvent(original, {
+    status: 'repair_pending',
+    evidence: { advancedBeforeRecovery: true },
+  }, {
+    queueDir,
+    now: new Date('2026-07-15T14:03:02.000Z'),
+  });
+  const incidentId = repairIncidentId(original.event);
+  const staleResult = {
+    ...original,
+    status: 'repair_pending',
+    revision: Number(original.revision) + 1,
+    updatedAt: '2026-07-15T14:03:01.000Z',
+  };
+  const laterResult = {
+    ...current,
+    status: 'queued',
+    revision: Number(current.revision) + 1,
+    updatedAt: '2026-07-15T14:03:03.000Z',
+  };
+  const staleTransactionId = `${incidentId}-a-stale`;
+  const laterTransactionId = `${incidentId}-b-later`;
+  await writeLegacyTransaction(queueDir, `${staleTransactionId}.json`, preparedIntentV2({
+    transactionId: staleTransactionId,
+    incidentId,
+    causalRevision: 1,
+    expectedHead: transactionHead(original),
+    resultHead: transactionHead(staleResult),
+    writes: [{
+      filename: `${original.event.eventId}.json`,
+      expectedRevision: original.revision,
+      record: staleResult,
+    }],
+  }));
+  await writeLegacyTransaction(queueDir, `${laterTransactionId}.json`, preparedIntentV2({
+    transactionId: laterTransactionId,
+    incidentId,
+    causalRevision: 2,
+    expectedHead: transactionHead(current),
+    resultHead: transactionHead(laterResult),
+    writes: [{
+      filename: `${current.event.eventId}.json`,
+      expectedRevision: current.revision,
+      record: laterResult,
+    }],
+  }));
+
+  const records = await listRepairRecords({ queueDir });
+
+  assert.deepEqual(transactionHead(records.find((record) => record.event.eventId === UUID_A)), transactionHead(current));
+  const transactionDirectory = join(queueDir, '.incident-transactions');
+  assert.equal((await readdir(transactionDirectory)).includes(`${laterTransactionId}.json`), true);
+  assert.equal((await readdir(join(transactionDirectory, 'quarantine')))
+    .some((name) => name.includes('a-stale')), true);
+  assert.equal((await readdir(join(transactionDirectory, 'holds'))).length, 1);
+});
 
 test('prepared transaction recovery quarantines a path traversal without writing outside the queue', async (t) => {
   const { root, queueDir } = await fixture(t);

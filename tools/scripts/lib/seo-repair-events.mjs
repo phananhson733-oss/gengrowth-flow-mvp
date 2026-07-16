@@ -839,6 +839,7 @@ async function recoverIncidentTransactionsLocked(queueDir, incidentId, {
       recovered += 1;
     } catch (error) {
       await quarantineTransactionIntent(queueDir, path, error, intent, randomUUID);
+      break;
     }
   }
   return recovered;
@@ -1441,14 +1442,18 @@ export async function recoverExpiredLeases({
   if (!queueDir) throw new TypeError('queueDir is required');
   const nowDate = now instanceof Date ? now : new Date(now);
   await recoverPreparedTransactions(queueDir, { randomUUID });
+  const heldIncidentIds = await listHeldIncidentIds(queueDir);
   let count = 0;
   const candidates = await readQueueRecords(queueDir);
   for (const { path, record } of candidates) {
     if (!['repairing', 'regating'].includes(record.status)) continue;
     if (Date.parse(record.lease?.expiresAt || 0) > nowDate.getTime()) continue;
     const incidentId = recordIncidentId(record);
+    if (heldIncidentIds.has(incidentId)) continue;
     count += await withIncidentLock(queueDir, incidentId, async ({ assertOwner }) => {
+      if ((await listHeldIncidentIds(queueDir)).has(incidentId)) return 0;
       await recoverIncidentTransactionsLocked(queueDir, incidentId, { randomUUID, assertOwner });
+      if ((await listHeldIncidentIds(queueDir)).has(incidentId)) return 0;
       let current;
       try { current = await readRepairRecord(path); } catch { return 0; }
       const queueRecords = await readQueueRecords(queueDir);

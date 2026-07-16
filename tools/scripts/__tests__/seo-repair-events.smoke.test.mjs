@@ -174,6 +174,105 @@ test('changed stable error supersedes the previous generation and preserves budg
   assert.equal(records.filter((record) => isActiveRepairStatus(record.status)).length, 1);
 });
 
+test('stale transition cannot revive a superseded generation', async (t) => {
+  const { queueDir } = await fixture(t);
+  const old = await enqueueRepairEvent(event({
+    eventId: 'stale-old',
+    summary: 'missing draft',
+  }), { queueDir });
+  const leasedOld = await acquireRepairLease(old, {
+    queueDir,
+    owner: 'controller-old',
+    now: new Date('2026-07-15T14:00:00.000Z'),
+  });
+  const head = await enqueueRepairEvent(event({
+    eventId: 'fresh-head',
+    summary: 'fact gate failed',
+    createdAt: '2026-07-15T14:00:10.000Z',
+  }), { queueDir });
+
+  await assert.rejects(
+    transitionRepairEvent(leasedOld, {
+      status: 'repair_pending',
+      evidence: { staleWriter: true },
+    }, {
+      queueDir,
+      now: new Date('2026-07-15T14:00:20.000Z'),
+    }),
+    /stale|authoritative|superseded/i,
+  );
+
+  const records = await listRepairRecords({ queueDir });
+  const eligible = await listEligibleRepairEvents({
+    queueDir,
+    now: new Date('2026-07-15T14:00:30.000Z'),
+  });
+  assert.equal(records.find((record) => record.event.eventId === 'stale-old').status, 'superseded');
+  assert.deepEqual(eligible.map((record) => record.event.eventId), [head.event.eventId]);
+});
+
+test('replaying an eventId is idempotent and rejects identity collisions', async (t) => {
+  const { queueDir } = await fixture(t);
+  const original = event({ eventId: 'event-replay' });
+  const first = await enqueueRepairEvent(original, { queueDir });
+  const replay = await enqueueRepairEvent(original, { queueDir });
+
+  assert.equal(replay.observations, first.observations);
+  assert.deepEqual(replay.sourceEventIds, first.sourceEventIds);
+  assert.deepEqual(replay.sourceEvents, first.sourceEvents);
+  assert.deepEqual(replay.history, first.history);
+
+  await assert.rejects(
+    enqueueRepairEvent(event({
+      eventId: 'event-replay',
+      stderr: 'different raw evidence',
+    }), { queueDir }),
+    /eventId.*collision|identity collision/i,
+  );
+});
+
+test('enqueue recovers a durable generation transaction after an injected crash', async (t) => {
+  const { queueDir } = await fixture(t);
+  const old = await enqueueRepairEvent(event({
+    eventId: 'transaction-old',
+    summary: 'missing draft',
+  }), { queueDir });
+  await transitionRepairEvent(old, {
+    status: 'repair_pending',
+    totalAttempts: 2,
+    agentMutationAttempts: 1,
+  }, { queueDir });
+  const changed = event({
+    eventId: 'transaction-new',
+    summary: 'fact gate failed',
+    createdAt: '2026-07-15T14:01:00.000Z',
+  });
+
+  await assert.rejects(
+    enqueueRepairEvent(changed, {
+      queueDir,
+      faultInjector(point) {
+        if (point === 'after-supersede-before-head-write') {
+          throw new Error('injected transaction crash');
+        }
+      },
+    }),
+    /injected transaction crash/,
+  );
+
+  const recovered = await listEligibleRepairEvents({
+    queueDir,
+    now: new Date('2026-07-15T14:02:00.000Z'),
+  });
+  assert.equal(recovered.length, 1);
+  assert.equal(recovered[0].event.eventId, changed.eventId);
+  assert.equal(recovered[0].generation, 2);
+  assert.equal(recovered[0].totalAttempts, 2);
+  assert.equal(recovered[0].agentMutationAttempts, 1);
+  assert.equal(recovered[0].parentGenerationId, old.event.eventId);
+  assert.deepEqual(recovered[0].sourceEventIds, [changed.eventId]);
+});
+
 test('compaction is append-only, preserves source evidence, and is idempotent', async (t) => {
   const { queueDir } = await fixture(t);
   const source = await enqueueRepairEvent(event({ eventId: 'source-a' }), { queueDir });

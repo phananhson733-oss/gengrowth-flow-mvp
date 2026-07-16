@@ -90,10 +90,7 @@ function uncheckedDoneClaims(claims) {
   for (const [pageId, claim] of Object.entries(claims)) {
     if (!claim || claim.status !== 'done' || !claim.plan) continue;
     const path = planPath(claim.plan);
-    if (!existsSync(path)) {
-      count += 1;
-      continue;
-    }
+    if (!existsSync(path)) continue;
     const source = readFileSync(path, 'utf8');
     if (new RegExp(`^\\s*-\\s*\\[ \\]\\s*\`?${pageId}\`?\\b`, 'm').test(source)) count += 1;
   }

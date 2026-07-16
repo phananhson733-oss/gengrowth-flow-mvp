@@ -334,6 +334,9 @@ test('strict path never sends an intermediate notification', () => {
 });
 
 test('new terminal writeback emits one complete deduplicated notification', () => {
+  const state = mkdtempSync(join(tmpdir(), 'writeback-notify-new-terminal-'));
+  const previousState = process.env.GG_FLOW_STATE_DIR;
+  process.env.GG_FLOW_STATE_DIR = state;
   const terminal = {
     pageId: 'PG-CELEB-055',
     stuckSteps: ['archive'],
@@ -344,31 +347,36 @@ test('new terminal writeback emits one complete deduplicated notification', () =
     reason: 'max-attempts',
     notificationKey: 'writeback-terminal:PG-CELEB-055:2026-07-09T10:00:00.000Z:8',
   };
-  const out = runStrictFixture(zero({
-    droppedWritebackAfter: 1,
-    droppedWritebackEvidence: [{ ...terminal, state: 'dropped' }],
-  }), {
-    applyResult: {
-      terminalNotifications: [
-        terminal,
-        { ...terminal, lastError: 'duplicate delivery must be coalesced' },
-      ],
-    },
-  });
-  assert.equal(out.status, 2, `${out.stdout}\n${out.stderr}`);
-  assert.equal(out.json.phases[0], 'apply');
-  assert.equal(out.json.phases[1], 'verify');
-  assert.equal(out.json.phases[2], 'notify');
-  assert.equal(out.json.phases.filter((phase) => phase === 'notify').length, 1);
-  const sent = out.json.phases[3];
-  assert.equal(sent.event, 'batch_summary');
-  assert.equal(sent.fields.partial, true);
-  assert.match(sent.fields.text, /PG-CELEB-055/);
-  assert.match(sent.fields.text, /archive/);
-  assert.match(sent.fields.text, /attempts=8/);
-  assert.match(sent.fields.text, /firstAt=2026-07-09T10:00:00.000Z/);
-  assert.match(sent.fields.text, /archive:vault unavailable/);
-  assert.match(sent.fields.msgUuid, /^[0-9a-f-]{36}$/);
+  try {
+    const out = runStrictFixture(zero({
+      droppedWritebackAfter: 1,
+      droppedWritebackEvidence: [{ ...terminal, state: 'dropped' }],
+    }), {
+      applyResult: {
+        terminalNotifications: [
+          terminal,
+          { ...terminal, lastError: 'duplicate delivery must be coalesced' },
+        ],
+      },
+    });
+    assert.equal(out.status, 2, `${out.stdout}\n${out.stderr}`);
+    assert.equal(out.json.phases[0], 'apply');
+    assert.equal(out.json.phases[1], 'verify');
+    assert.equal(out.json.phases[2], 'notify');
+    assert.equal(out.json.phases.filter((phase) => phase === 'notify').length, 1);
+    const sent = out.json.phases[3];
+    assert.equal(sent.event, 'batch_summary');
+    assert.equal(sent.fields.partial, true);
+    assert.match(sent.fields.text, /PG-CELEB-055/);
+    assert.match(sent.fields.text, /archive/);
+    assert.match(sent.fields.text, /attempts=8/);
+    assert.match(sent.fields.text, /firstAt=2026-07-09T10:00:00.000Z/);
+    assert.match(sent.fields.text, /archive:vault unavailable/);
+    assert.match(sent.fields.msgUuid, /^[0-9a-f-]{36}$/);
+  } finally {
+    if (previousState === undefined) delete process.env.GG_FLOW_STATE_DIR;
+    else process.env.GG_FLOW_STATE_DIR = previousState;
+  }
 });
 
 test('silent strict terminal failure keeps durable notification; next unsilenced tick sends exactly once', async () => {

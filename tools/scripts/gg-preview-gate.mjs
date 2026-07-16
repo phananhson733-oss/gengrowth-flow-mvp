@@ -1250,14 +1250,15 @@ export async function runGate(o, deps = {}) {
   let noProgressCount = 0;
   let totalRepairEdits = 0;
   const repairEditsByDimension = {};
+  let activeExpectedHead = explicitRepairBinding ? o.headRefOid : null;
 
   for (let repairRound = 0; repairRound <= maxRepairRounds; repairRound += 1) {
     const remoteHeadRefOid = await resolveHead(o.branch, o.repo);
-    if (explicitRepairBinding && remoteHeadRefOid !== o.headRefOid) {
+    if (explicitRepairBinding && remoteHeadRefOid !== activeExpectedHead) {
       return gateFail(o, B, deps, pgId, claim,
-        `remote PR head ${remoteHeadRefOid || '?'} does not match expected repair head ${o.headRefOid}`, plan);
+        `remote PR head ${remoteHeadRefOid || '?'} does not match expected repair head ${activeExpectedHead}`, plan);
     }
-    const reviewedHeadRefOid = explicitRepairBinding ? o.headRefOid : remoteHeadRefOid;
+    const reviewedHeadRefOid = explicitRepairBinding ? activeExpectedHead : remoteHeadRefOid;
     if (!reviewedHeadRefOid) {
       return gateFail(o, B, deps, pgId, claim, 'headRefOid required before gate round', plan);
     }
@@ -1526,6 +1527,10 @@ export async function runGate(o, deps = {}) {
       return gateFail(o, B, deps, pgId, claim,
         repairResult?.reason || `${outcome.failure.reason}; repair was not applied`, plan);
     }
+    if (explicitRepairBinding && !HEAD_REF_OID_RE.test(repairResult?.headRefOid || '')) {
+      return gateFail(o, B, deps, pgId, claim,
+        'repair did not return the exact pushed head for the next bound gate round', plan);
+    }
     if (repairResult?.headRefOid === reviewedHeadRefOid) {
       return gateFail(o, B, deps, pgId, claim,
         `repair made no commit progress; head remained ${reviewedHeadRefOid}`, plan);
@@ -1542,6 +1547,7 @@ export async function runGate(o, deps = {}) {
     } else {
       log(`repair budget: unchanged artifact bytes — edit not counted (${budgetDimension})`);
     }
+    if (explicitRepairBinding) activeExpectedHead = repairResult.headRefOid;
     previousFailedHead = reviewedHeadRefOid;
   }
 

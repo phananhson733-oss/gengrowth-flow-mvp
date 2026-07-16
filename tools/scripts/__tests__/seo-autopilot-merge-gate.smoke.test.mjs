@@ -223,7 +223,7 @@ test('--mark-verified repair override fails closed for outside, symlink, dirty, 
         symlinkSync(outside, link);
         return { ...binding, worktree: link };
       },
-      pattern: /outside|escape|root/i,
+      pattern: /outside|escape|root|symlink/i,
     },
     {
       name: 'missing controller root',

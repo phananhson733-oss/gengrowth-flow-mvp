@@ -30,6 +30,7 @@ const ALLOWED_ERROR_KINDS = new Set([
   'state_fail',
   'auth',
   'source',
+  'missing_authoritative_source',
   'stale',
   'publish_fail',
   'backfill_fail',

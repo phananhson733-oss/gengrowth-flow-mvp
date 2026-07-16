@@ -211,6 +211,7 @@ export function isNondelegableEvidence(evidence) {
 export function classifyRepairEvent(event, evidence = null) {
   const kind = String(event?.errorKind || '');
   if (kind === 'stale') return 'unpublishable';
+  if (kind === 'missing_authoritative_source') return 'nondelegable';
   if (kind === 'auth' || kind === 'source') {
     return isNondelegableEvidence(evidence) ? 'nondelegable' : 'agent_fixable';
   }

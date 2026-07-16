@@ -841,6 +841,15 @@ export function createAstrologyWikiRepairAdapter(deps = {}) {
             type: 'missing_authoritative_source',
             summary: event.summary,
             action: 'human_only',
+            safeAuthorizationAttempted: true,
+            stillBlocked: true,
+            sourceSearch: {
+              summary: event.summary,
+              stderr: event.stderr || '',
+              logFile: event.logFile || null,
+              logOffsetStart: event.logOffsetStart ?? null,
+              logOffsetEnd: event.logOffsetEnd ?? null,
+            },
           },
         };
       }

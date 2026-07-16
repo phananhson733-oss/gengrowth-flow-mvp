@@ -85,6 +85,9 @@ function dimensionGuidance(dimension) {
     case 'astrology':
       return [
         'This is an astrological accuracy failure. Fix the SPECIFIC flagged placement/date/claim minimally: correct a wrong sign/placement to the accurate one, OR reframe an unverifiable placement as fan-shared/unconfirmed (never assert it). Do not restructure the article.',
+        'For planet/sign/degree mismatches, the source draft is the only allowed correction baseline unless the gate failure includes deterministic ephemeris evidence.',
+        'Align the article to that source-draft placement; never replace the source-draft value from model memory.',
+        'If the article and source draft already agree but no deterministic ephemeris evidence proves a different value, return cannot-repair instead of changing the placement.',
       ];
     case 'codex':
       return [

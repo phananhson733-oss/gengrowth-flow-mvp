@@ -105,6 +105,7 @@ const DIMENSION_CRITERIA = {
   astrology: `Dimension: ASTROLOGY CORRECTNESS & GROUNDING.
 Judge ONLY astrological substance — not schema, not links.
 - Factual / astrological errors or dubious claims (wrong rulerships, houses, aspects, dignities).
+- The source draft is the canonical placement baseline for this conversion gate. If the rendered module and source draft disagree on a planet/sign/degree, FAIL the mismatch and require the module to align with the draft; do not use model memory to declare an alternate sign correct. Only deterministic ephemeris evidence included in the review inputs may override that baseline.
 - Grounding: real, specific substance a knowledgeable reader respects vs. generic filler.
 - Usefulness: concrete, do-able reflective insight vs. padding.
 - Voice & angle: distinctive reflective lens vs. interchangeable generic blog.

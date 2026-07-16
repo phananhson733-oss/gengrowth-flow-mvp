@@ -9,7 +9,7 @@ import { test } from 'node:test';
 import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdirSync, writeFileSync, chmodSync, rmSync } from 'node:fs';
+import { mkdirSync, writeFileSync, chmodSync, rmSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -42,6 +42,18 @@ function fakeBin(payload, { exitCode = 0 } = {}) {
   // the payload is escaped via the '\'' idiom.
   const quoted = `'${payload.replace(/'/g, `'\\''`)}'`;
   const script = `#!/bin/sh\ncat >/dev/null\nprintf '%s' ${quoted}\nexit ${exitCode}\n`;
+  writeFileSync(p, script);
+  chmodSync(p, 0o755);
+  return p;
+}
+
+function capturingFakeBin(payload, capturePath) {
+  const dir = join(TMP, `bin-${Math.random().toString(36).slice(2)}`);
+  mkdirSync(dir, { recursive: true });
+  const p = join(dir, 'claude');
+  const quotedPayload = `'${payload.replace(/'/g, `'\\''`)}'`;
+  const quotedCapture = `'${capturePath.replace(/'/g, `'\\''`)}'`;
+  const script = `#!/bin/sh\ncat > ${quotedCapture}\nprintf '%s' ${quotedPayload}\n`;
   writeFileSync(p, script);
   chmodSync(p, 0o755);
   return p;
@@ -83,6 +95,23 @@ test('FAIL verdict is a SUCCESSFUL review: exit 0, verdict FAIL', () => {
   assert.equal(out.verdict, 'FAIL');
   assert.equal(out.blocking_reason, 'wrong rulership');
   assert.deepEqual(out.notes, ['fix ruler -> Venus']);
+});
+
+test('astrology reviewer prompt forbids memory-only placement overrides of the source draft', () => {
+  const capture = join(TMP, 'astrology-review-prompt.txt');
+  const fake = capturingFakeBin(
+    '{"verdict":"PASS","blocking_reason":"","notes":[]}',
+    capture,
+  );
+  const r = run(
+    ['--dimension', 'astrology', '--article', ARTICLE_TS, '--draft', DRAFT_MD, '--json'],
+    { fake },
+  );
+  assert.equal(r.status, 0, `stderr: ${r.stderr}`);
+  const prompt = readFileSync(capture, 'utf8');
+  assert.match(prompt, /source draft.*canonical.*placement baseline/i);
+  assert.match(prompt, /do not.*memory.*alternate sign/i);
+  assert.match(prompt, /deterministic ephemeris evidence/i);
 });
 
 test('prose-wrapped JSON: first object extracted', () => {

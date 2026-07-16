@@ -56,6 +56,16 @@ const TIMEOUT_MS = Number(process.env.GG_BATCH_SUMMARY_TIMEOUT_MS || 10000);
 const SITES = ['both', 'astrologywiki', 'gengrowth'];
 
 const TERMINAL_STATUSES = new Set(['published', 'archived', 'quarantined', 'human_only']);
+const REPAIR_STATUSES = new Set([
+  ...TERMINAL_STATUSES,
+  'queued',
+  'repairing',
+  'regating',
+  'repair_pending',
+  'superseded',
+  'migration_hold',
+  'recovery_hold',
+]);
 const SAFE_RUN_ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{2,127}$/;
 const USAGE = `用法：gg-batch-summary.mjs --since <ISO> --plan <absolute-plan> --run-id <safe-run-id> [--site both|astrologywiki|gengrowth] [--urls u1,u2] [--parked "PID:原因,…"] [--date YYYY-MM-DD] [--dry-run]`;
 
@@ -121,15 +131,49 @@ function readClaims() {
   if (!existsSync(CLAIMS_PATH)) return {};
   try {
     const parsed = JSON.parse(readFileSync(CLAIMS_PATH, 'utf8'));
-    return parsed && typeof parsed === 'object' ? parsed : {};
+    if (!isPlainObject(parsed)) throw new TypeError('claims ledger 根结构无效');
+    for (const [pageId, claim] of Object.entries(parsed)) {
+      if (!isPlainObject(claim)) throw new TypeError(`claims ledger 条目 ${pageId} 结构无效`);
+    }
+    return parsed;
   } catch (e) {
+    if (/claims ledger .*无效/.test(String(e?.message || ''))) throw e;
     throw new Error(`claims ledger 解析失败（${e.message}）`);
   }
 }
 
 function readPlanIds(plan) {
   const source = readFileSync(plan, 'utf8');
-  return new Set(source.match(/\bPG-[A-Z0-9]+(?:-[A-Z0-9]+)+\b/g) || []);
+  return new Set(
+    [...source.matchAll(/^\s*-\s*\[[ xX]\]\s*`?(PG-[A-Z0-9]+(?:-[A-Z0-9]+)+)`?/gm)]
+      .map((match) => match[1]),
+  );
+}
+
+function isPlainObject(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function validateRepairRecord(value, name) {
+  if (!isPlainObject(value)) throw new TypeError(`repair record ${name} 根结构无效`);
+  if (!REPAIR_STATUSES.has(value.status)) throw new TypeError(`repair record ${name} status 无效`);
+  if (!isPlainObject(value.event)) throw new TypeError(`repair record ${name} event 无效`);
+  if (typeof value.event.pageId !== 'string' || !value.event.pageId.trim()) {
+    throw new TypeError(`repair record ${name} pageId 无效`);
+  }
+  if (value.event.site !== undefined && !['astrologywiki', 'gengrowth'].includes(value.event.site)) {
+    throw new TypeError(`repair record ${name} site 无效`);
+  }
+  if (value.event.runId !== undefined && (typeof value.event.runId !== 'string' || !SAFE_RUN_ID.test(value.event.runId))) {
+    throw new TypeError(`repair record ${name} runId 无效`);
+  }
+  if (value.latestEvent !== undefined && !isPlainObject(value.latestEvent)) {
+    throw new TypeError(`repair record ${name} latestEvent 无效`);
+  }
+  if (value.history !== undefined && !Array.isArray(value.history)) {
+    throw new TypeError(`repair record ${name} history 无效`);
+  }
+  return value;
 }
 
 function repairQueueDir() {
@@ -146,8 +190,9 @@ function readRepairRecords() {
     if (!name.endsWith('.json') || name.startsWith('.')) continue;
     try {
       const value = JSON.parse(readFileSync(join(dir, name), 'utf8'));
-      if (value && typeof value === 'object') records.push(value);
+      records.push(validateRepairRecord(value, name));
     } catch (e) {
+      if (/repair record .*无效/.test(String(e?.message || ''))) throw e;
       throw new Error(`repair record ${name} 解析失败（${e.message}）`);
     }
   }
@@ -171,8 +216,15 @@ function recordSource(record) {
 }
 
 function recordTimestamp(record, source) {
-  return record?.updatedAt
-    || record?.history?.at?.(-1)?.at
+  const matchingTerminalHistory = Array.isArray(record?.history)
+    ? [...record.history].reverse().find((entry) => (
+      isPlainObject(entry)
+      && entry.status === record.status
+      && Number.isFinite(Date.parse(entry.at || ''))
+    ))
+    : null;
+  return matchingTerminalHistory?.at
+    || record?.updatedAt
     || source?.createdAt
     || null;
 }
@@ -183,8 +235,8 @@ function scopedTerminalRecords(records, { site, runId, planIds, sinceMs }) {
     const source = recordSource(record);
     const ownerSite = record?.event?.site || source?.site || null;
     const pageId = source?.pageId || record?.event?.pageId || '';
+    if (!planIds.has(pageId)) return false;
     if (ownerSite && !selectedSite(ownerSite, site)) return false;
-    if (!ownerSite && !planIds.has(pageId)) return false;
     if (source?.runId) return source.runId === runId;
     const timestamp = Date.parse(recordTimestamp(record, source) || '');
     return planIds.has(pageId) && Number.isFinite(timestamp) && timestamp >= sinceMs;

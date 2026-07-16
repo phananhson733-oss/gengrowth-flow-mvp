@@ -379,7 +379,7 @@ const SC3B_MEDIAN_FLOOR = 1;     // median sentences/para <= this = over-fragmen
 // Your Practitioner"). \bfaqs?\b so plural "FAQs" matches too. ZH FAQ: a real
 // question compound, NOT bare 问 (false-matched 访问/学问/顾问); include 繁體 so a
 // "## 常見問題" heading is still recognized (the H2 spec accepts that variant).
-export const EN_FAQ_HEADING_RE = /^##\s+[^\n]*(?:\bfaqs?\b|\bquestions?\b|\bq\s*&\s*a\b)/im;
+export const EN_FAQ_HEADING_RE = /^##\s+[^\n]*(?:\bfaqs?\b|\bquestions\b|\bq\s*&\s*a\b)/im;
 export const ZH_FAQ_HEADING_RE = /^##\s*[^\n]*(?:问题|问答|常问|疑问|問題|問答|常問|疑問)/m;
 // Table tokens are STRONG table-headers only (dropped key traits/properties/
 // signals/by-the-numbers — those false-matched narrative headings, and SC10
@@ -709,7 +709,7 @@ function sectionByHeading(lines, re) {
 // `m` flag is harmless when testing one line at a time via sectionByHeading).
 // Mirrors EN_FAQ_HEADING_RE / ZH_FAQ_HEADING_RE (defined above with the other
 // Phase C role regexes), combined for a single-pass per-line match.
-const FAQ_HEADING_REGEX = /^##\s+[^\n]*(?:\bfaqs?\b|\bquestions?\b|\bq\s*&\s*a\b|问题|问答|常问|疑问|問題|問答|常問|疑問)/i;
+const FAQ_HEADING_REGEX = /^##\s+[^\n]*(?:\bfaqs?\b|\bquestions\b|\bq\s*&\s*a\b|问题|问答|常问|疑问|問題|問答|常問|疑問)/i;
 // A question must be a WHOLE bold line ending in `?`/`？` — not an inline bold
 // fragment mid-answer (e.g. `Answer: **really?** maybe`).
 const FAQ_QUESTION_REGEX = /^\s*\*\*(?=\S)[^*\n]*[?？]\s*\*\*\s*$/;

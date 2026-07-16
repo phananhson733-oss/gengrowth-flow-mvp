@@ -115,6 +115,20 @@ test('SC5: varied EN FAQ heading "Orange Aura FAQ" → PASS', () => {
   assert.equal(checkFaqSection(draft).pass, true);
 });
 
+test('SC5: singular narrative "Question" heading before a real FAQ is ignored → PASS', () => {
+  const varied = FAQ_BLOCK.replace('## Frequently Asked Questions', '## Common Questions About Orange Aura');
+  const draft = `# Orange Aura Meaning
+
+## How to Read This Question in Your Chart
+
+This narrative section discusses one interpretive question. It is not the FAQ.
+
+${varied}`;
+  const r = checkFaqSection(draft);
+  assert.equal(r.pass, true);
+  assert.match(r.note, /3 question/i);
+});
+
 test('SC5: varied ZH FAQ heading 橙色气场常见疑问 (contains 问) → PASS', () => {
   const zh = `## 橙色气场常见疑问
 
@@ -150,7 +164,7 @@ test('EN_FAQ_HEADING_RE: matches varied FAQ headings, rejects other sections', (
   for (const h of ['## Frequently Asked Questions', '## Common Questions About Orange Aura', '## Orange Aura FAQ', '## Orange Aura FAQs', '## Questions People Ask', '## Reader Q&A']) {
     assert.ok(EN_FAQ_HEADING_RE.test(h), `should match: ${h}`);
   }
-  for (const h of ['## What is Orange Aura?', '## Reflection Prompts', '## Sources', '## How to Read Orange Aura in Yourself', '## Take Action', '## How to Ask Your Practitioner']) {
+  for (const h of ['## What is Orange Aura?', '## Reflection Prompts', '## Sources', '## How to Read Orange Aura in Yourself', '## How to Read This Question in Your Chart', '## Take Action', '## How to Ask Your Practitioner']) {
     assert.ok(!EN_FAQ_HEADING_RE.test(h), `should NOT match: ${h}`);
   }
 });

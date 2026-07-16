@@ -1,13 +1,16 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import {
   chmodSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  realpathSync,
   rmSync,
+  symlinkSync,
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -79,7 +82,41 @@ process.exit(0);
   const ghText = () => existsSync(ghCalls) ? readFileSync(ghCalls, 'utf8') : '';
   const claims = () => JSON.parse(readFileSync(claimsPath, 'utf8'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
-  return { run, ghText, claims };
+  return { root, run, ghText, claims };
+}
+
+function repairBindingFixture(t, h, {
+  pageId = 'PG-001',
+  draftText = '# repaired draft\n',
+} = {}) {
+  const repairRoot = join(h.root, 'repair-root');
+  const worktree = join(repairRoot, `${pageId}-event`);
+  mkdirSync(worktree, { recursive: true });
+  for (const args of [
+    ['init', '-q'],
+    ['config', 'user.name', 'binding-test'],
+    ['config', 'user.email', 'binding-test@example.invalid'],
+  ]) {
+    const result = spawnSync('git', ['-C', worktree, ...args], { encoding: 'utf8' });
+    assert.equal(result.status, 0, result.stderr);
+  }
+  writeFileSync(join(worktree, 'README.md'), 'clean\n');
+  spawnSync('git', ['-C', worktree, 'add', 'README.md']);
+  spawnSync('git', ['-C', worktree, 'commit', '-qm', 'binding fixture']);
+  const head = spawnSync('git', ['-C', worktree, 'rev-parse', 'HEAD'], {
+    encoding: 'utf8',
+  }).stdout.trim();
+  const draftRoot = join(h.root, 'state', 'seo-repair-drafts');
+  const draft = join(draftRoot, 'astrologywiki', pageId, 'event.md');
+  mkdirSync(join(draftRoot, 'astrologywiki', pageId), { recursive: true });
+  writeFileSync(draft, draftText);
+  return {
+    repairRoot,
+    worktree,
+    head,
+    draft,
+    draftSha256: createHash('sha256').update(draftText).digest('hex'),
+  };
 }
 
 test('--mark-verified requires a well-formed reviewed head SHA before calling gh', (t) => {
@@ -127,6 +164,97 @@ test('--mark-verified blocks head fetch failure or mismatch and persists exact m
     assert.equal(claim.headRefOid, HEAD_A);
     assert.equal(claim.verificationEvidence, 'full pinned round passed');
     assert.match(claim.reviewedAt, /^\d{4}-\d{2}-\d{2}T/);
+  }
+});
+
+test('--mark-verified persists only a clean controller worktree and exact repaired draft evidence', (t) => {
+  const h = fixture(t, { worktree: join(tmpdir(), 'original-dirty-worktree') });
+  const binding = repairBindingFixture(t, h);
+  const result = h.run([
+    '--mark-verified',
+    '--branch', BRANCH,
+    '--preview-url', 'https://preview.example.test',
+    '--head-ref-oid', binding.head,
+    '--worktree', binding.worktree,
+    '--draft', binding.draft,
+    '--draft-sha256', binding.draftSha256,
+  ], {
+    GG_TEST_GH_HEAD: binding.head,
+    GG_SEO_REPAIR_ORACLE_WORKTREE_ROOT: binding.repairRoot,
+  });
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+  const claim = h.claims()['PG-001'];
+  assert.equal(claim.status, 'verified-preview');
+  assert.equal(claim.headRefOid, binding.head);
+  assert.equal(claim.worktree, realpathSync(binding.worktree));
+  assert.equal(claim.draftFile, realpathSync(binding.draft));
+  assert.equal(claim.draftSha256, binding.draftSha256);
+});
+
+test('--mark-verified repair override fails closed for outside, symlink, dirty, head, or draft drift', (t) => {
+  const cases = [
+    {
+      name: 'outside repair root',
+      mutate(binding, h) {
+        const outside = join(h.root, 'outside-worktree');
+        spawnSync('cp', ['-R', binding.worktree, outside]);
+        return { ...binding, worktree: outside };
+      },
+      pattern: /outside|root/i,
+    },
+    {
+      name: 'symlink escape',
+      mutate(binding, h) {
+        const outside = join(h.root, 'outside-symlink-target');
+        spawnSync('cp', ['-R', binding.worktree, outside]);
+        const link = join(binding.repairRoot, 'escaped-link');
+        symlinkSync(outside, link);
+        return { ...binding, worktree: link };
+      },
+      pattern: /outside|escape|root/i,
+    },
+    {
+      name: 'dirty repair worktree',
+      mutate(binding) {
+        writeFileSync(join(binding.worktree, 'DIRTY.md'), 'dirty\n');
+        return binding;
+      },
+      pattern: /dirty|uncommitted/i,
+    },
+    {
+      name: 'repair HEAD mismatch',
+      mutate(binding) {
+        return { ...binding, head: 'e'.repeat(40) };
+      },
+      pattern: /head.*mismatch/i,
+    },
+    {
+      name: 'draft digest drift',
+      mutate(binding) {
+        return { ...binding, draftSha256: 'f'.repeat(64) };
+      },
+      pattern: /draft.*digest|digest.*mismatch|sha/i,
+    },
+  ];
+  for (const entry of cases) {
+    const h = fixture(t);
+    const original = repairBindingFixture(t, h);
+    const binding = entry.mutate(original, h);
+    const result = h.run([
+      '--mark-verified',
+      '--branch', BRANCH,
+      '--preview-url', 'https://preview.example.test',
+      '--head-ref-oid', binding.head,
+      '--worktree', binding.worktree,
+      '--draft', binding.draft,
+      '--draft-sha256', binding.draftSha256,
+    ], {
+      GG_TEST_GH_HEAD: binding.head,
+      GG_SEO_REPAIR_ORACLE_WORKTREE_ROOT: binding.repairRoot,
+    });
+    assert.notEqual(result.status, 0, `${entry.name} unexpectedly verified`);
+    assert.match(result.stderr, entry.pattern, `${entry.name}: ${result.stderr}`);
+    assert.equal(h.claims()['PG-001'].status, 'pushed-preview');
   }
 });
 

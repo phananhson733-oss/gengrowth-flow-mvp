@@ -12,7 +12,10 @@ import { homedir } from 'node:os';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { invokeTargetRepairAgent } from './seo-repair-controller.mjs';
-import { repairDraftRoot } from './seo-repair-bindings.mjs';
+import {
+  inspectBoundRepairDraft,
+  repairDraftRoot,
+} from './seo-repair-bindings.mjs';
 
 const LIB_DIR = dirname(fileURLToPath(import.meta.url));
 const DEFAULT_SCRIPTS = resolve(LIB_DIR, '..');
@@ -43,6 +46,7 @@ export async function buildAstrologyRepairTarget(event, context) {
     branch: context.branch,
     worktree: context.worktree,
     originalWorktree: context.originalWorktree || null,
+    headRefOid: context.headRefOid || null,
     articleFile: absoluteWorktreeFile(context.worktree, context.articleFile),
     changedFiles: [...new Set(changedFiles)],
     assetFiles: changedFiles.filter((file) => ASSET_RE.test(file)),
@@ -335,6 +339,33 @@ async function defaultResolveContext(event) {
   const worktree = prepareRepairWorktree(event, claim, originalWorktree);
   const articleFile = join(worktree, 'data', 'articles', `${claim.slug || event.slug}.ts`);
   if (!existsSync(articleFile)) throw new Error(`astrology article missing: ${articleFile}`);
+  const head = run(['git', '-C', worktree, 'rev-parse', 'HEAD'], { cwd: worktree, timeout: 60_000 });
+  if (!head.ok || !/^[0-9a-f]{40}$/i.test(head.stdout.trim())) {
+    throw new Error(`cannot resolve clean repair head for ${event.pageId}`);
+  }
+  const sourceDraft = join(
+    process.env.GG_FLOW_REPO || DEFAULT_FLOW,
+    '_staging',
+    `${event.pageId}-en.md`,
+  );
+  const repairedDraft = ensureAstrologyRepairDraft({
+    sourceFile: sourceDraft,
+    site: 'astrologywiki',
+    pageId: event.pageId,
+    attemptId: `${event.eventId || event.runId || 'attempt'}-g${event.generation ?? 0}`,
+  });
+  if (!repairedDraft.ok) throw new Error(repairedDraft.reason);
+  const slug = claim.slug || event.slug;
+  const assetDirectory = join(worktree, 'public', 'images', 'blog');
+  const targetAssetFiles = existsSync(assetDirectory)
+    ? readdirSync(assetDirectory)
+      .filter((name) => (
+        name.startsWith(`${slug}.`) || name.startsWith(`${slug}-`)
+      ))
+      .filter((name) => ASSET_RE.test(name))
+      .map((name) => join(assetDirectory, name))
+    : [];
+  const supportPlan = join(worktree, 'scripts', 'plans', `auto-${slug}.json`);
   const changedFiles = selectAstrologyChangedFiles({
     reviewedFiles: worktreeDiff(worktree),
     dirtyFiles: worktreeDirtyPaths(worktree),
@@ -345,18 +376,49 @@ async function defaultResolveContext(event) {
     branch: claim.branch,
     worktree,
     originalWorktree,
+    headRefOid: head.stdout.trim(),
     articleFile,
     changedFiles,
+    targetAssetFiles,
+    supportFiles: existsSync(supportPlan) ? [supportPlan] : [],
+    draftFile: repairedDraft.draftFile,
+    draftSha256: repairedDraft.draftSha256,
+    sourceDraftFile: repairedDraft.sourceFile,
     linkCandidates: await collectLinkCandidates(worktree, claim.slug || event.slug),
     allowedActions: [
       ['node', join(DEFAULT_SCRIPTS, 'gg-seo-autopilot.mjs'), '--retry-failed', '--branch', claim.branch],
-      ['node', join(DEFAULT_SCRIPTS, 'gg-preview-gate.mjs'), '--branch', claim.branch],
+      [
+        'node', join(DEFAULT_SCRIPTS, 'gg-preview-gate.mjs'),
+        '--branch', claim.branch,
+        '--worktree', worktree,
+        '--head-ref-oid', head.stdout.trim(),
+        '--draft', repairedDraft.draftFile,
+        '--draft-sha256', repairedDraft.draftSha256,
+      ],
     ],
     terminalVerifier: [
       'node', join(DEFAULT_SCRIPTS, 'gg-seo-repair-verify.mjs'),
       '--site', 'astrologywiki', '--page-id', event.pageId, '--slug', claim.slug || event.slug, '--json',
     ],
   };
+}
+
+export function astrologyRegateCommands(target, scriptsDir = DEFAULT_SCRIPTS) {
+  const headRefOid = target.persistedHeadRefOid || target.headRefOid;
+  return [
+    [
+      'node', join(scriptsDir, 'gg-seo-autopilot.mjs'),
+      '--retry-failed', '--branch', target.branch,
+    ],
+    [
+      'node', join(scriptsDir, 'gg-preview-gate.mjs'),
+      '--branch', target.branch,
+      '--worktree', target.worktree,
+      '--head-ref-oid', headRefOid,
+      '--draft', target.draftFile,
+      '--draft-sha256', target.draftSha256,
+    ],
+  ];
 }
 
 function runBeforeDeadline(argv, {
@@ -385,24 +447,43 @@ function runBeforeDeadline(argv, {
 async function defaultRegate(target, {
   deadlineMs = Number.POSITIVE_INFINITY,
   nowMs = Date.now,
+  runCommand = null,
 } = {}) {
-  const reset = runBeforeDeadline([
-    'node',
-    join(DEFAULT_SCRIPTS, 'gg-seo-autopilot.mjs'),
-    '--retry-failed',
-    '--branch',
-    target.branch,
-  ], { cwd: DEFAULT_FLOW, capMs: 180_000, deadlineMs, nowMs });
+  const execute = async (argv, capMs) => {
+    if (runCommand) {
+      const remainingMs = deadlineMs - nowMs();
+      if (remainingMs <= 0) {
+        return {
+          ok: false,
+          code: 124,
+          stdout: '',
+          stderr: 'repair deadline exhausted',
+          timedOut: true,
+          deadlineExhausted: true,
+        };
+      }
+      const result = await runCommand(argv, {
+        timeoutMs: Math.max(1, Math.min(capMs, remainingMs)),
+      });
+      return {
+        ...result,
+        ok: result?.ok === true || (result?.code === 0 && result?.timedOut !== true),
+      };
+    }
+    return runBeforeDeadline(argv, {
+      cwd: DEFAULT_FLOW,
+      capMs,
+      deadlineMs,
+      nowMs,
+    });
+  };
+  const [retryCommand, gateCommand] = astrologyRegateCommands(target);
+  const reset = await execute(retryCommand, 180_000);
   if (!reset.ok && isAlreadyPublishedRetryFailure(reset)) {
     return { ok: true, alreadyPublished: true, reset };
   }
   if (!reset.ok && !isAlreadyRegatableRetryFailure(reset)) return reset;
-  return runBeforeDeadline([
-    'node',
-    join(DEFAULT_SCRIPTS, 'gg-preview-gate.mjs'),
-    '--branch',
-    target.branch,
-  ], { cwd: DEFAULT_FLOW, capMs: 45 * 60 * 1000, deadlineMs, nowMs });
+  return execute(gateCommand, 45 * 60 * 1000);
 }
 
 export function isAlreadyRegatableRetryFailure(result) {
@@ -453,6 +534,24 @@ async function defaultPersistRepair(target, {
   });
   if (!/^seo\/auto\/[A-Za-z0-9._/-]+$/.test(String(target.branch || ''))) {
     return { ok: false, stderr: `unsafe astrology branch: ${target.branch || ''}` };
+  }
+  let draftBeforePersist = null;
+  if (target.draftFile) {
+    try {
+      const bytes = readFileSync(target.draftFile);
+      const draftSha256 = createHash('sha256').update(bytes).digest('hex');
+      const inspected = inspectBoundRepairDraft({
+        draftFile: target.draftFile,
+        expectedSha256: draftSha256,
+      });
+      if (!inspected.ok) return { ok: false, stderr: inspected.reason };
+      draftBeforePersist = inspected;
+    } catch (error) {
+      return {
+        ok: false,
+        stderr: `cannot validate repaired draft before persist: ${error?.message || String(error)}`,
+      };
+    }
   }
   const editable = new Set(editableAstrologyFiles(target));
   const status = execute([
@@ -520,13 +619,41 @@ async function defaultPersistRepair(target, {
     'git', '-C', target.worktree, 'push', 'origin', `HEAD:refs/heads/${target.branch}`,
   ], 180_000);
   if (!pushed.ok) return { ...pushed, ok: false, commit };
+  let draftSha = null;
+  if (draftBeforePersist) {
+    const draftAfterPush = inspectBoundRepairDraft({
+      draftFile: target.draftFile,
+      expectedSha256: draftBeforePersist.sha256,
+    });
+    if (!draftAfterPush.ok) {
+      return {
+        ok: false,
+        commit,
+        pushed: true,
+        stderr: `repaired draft changed during persist: ${draftAfterPush.reason}`,
+      };
+    }
+    draftSha = draftAfterPush.sha256;
+  }
+  let originalWorktreeAdvance = null;
   if (target.originalWorktree) {
     const advanced = execute([
       'git', '-C', target.originalWorktree, 'merge', '--ff-only', commit,
     ], 180_000, target.originalWorktree);
-    if (!advanced.ok) return { ...advanced, ok: false, commit };
+    originalWorktreeAdvance = {
+      ok: advanced.ok,
+      code: advanced.code,
+      stderr: advanced.stderr,
+    };
   }
-  return { ok: true, noChanges: dirty.length === 0, commit, changedFiles: dirty };
+  return {
+    ok: true,
+    noChanges: dirty.length === 0,
+    commit,
+    changedFiles: dirty,
+    ...(draftSha ? { draftSha } : {}),
+    ...(originalWorktreeAdvance ? { originalWorktreeAdvance } : {}),
+  };
 }
 
 async function defaultVerifyTerminal(event, target, {
@@ -597,7 +724,10 @@ export function createAstrologyWikiRepairAdapter(deps = {}) {
   });
   const invokeAgent = deps.invokeAgent || defaultInvokeAgent;
   const persistRepair = deps.persistRepair || defaultPersistRepair;
-  const regate = deps.regate || defaultRegate;
+  const regate = deps.regate || ((target, options = {}) => defaultRegate(target, {
+    ...options,
+    runCommand,
+  }));
   const publish = deps.publish || (async () => ({ ok: true, ownedByRegate: true }));
   const verifyTerminal = deps.verifyTerminal
     || ((event, target, options = {}) => defaultVerifyTerminal(event, target, {
@@ -718,6 +848,8 @@ export function createAstrologyWikiRepairAdapter(deps = {}) {
             ...persistedChangedFiles.map((file) => absoluteWorktreeFile(target.worktree, file)),
           ])];
           target.assetFiles = target.changedFiles.filter((file) => ASSET_RE.test(file));
+          if (persisted.commit) target.persistedHeadRefOid = persisted.commit;
+          if (persisted.draftSha) target.draftSha256 = persisted.draftSha;
         }
 
         const regateTimeoutMs = remainingTimeout(8 * 60 * 1000);

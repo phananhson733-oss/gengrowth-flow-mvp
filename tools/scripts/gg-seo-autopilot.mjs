@@ -70,6 +70,10 @@ import {
   eventFromClaim,
   persistRepairAndDrain,
 } from './lib/seo-repair-producer.mjs';
+import {
+  inspectBoundRepairDraft,
+  inspectBoundRepairWorktree,
+} from './lib/seo-repair-bindings.mjs';
 
 loadEnv();
 const ACTIVE_WORKBOOK_ID = resolveWorkbookId();
@@ -197,6 +201,9 @@ function parseArgs(argv) {
     else if (a === '--branch') o.branch = argv[++i];
     else if (a === '--preview-url') o.previewUrl = argv[++i];
     else if (a === '--head-ref-oid') o.headRefOid = argv[++i];
+    else if (a === '--worktree') o.worktree = argv[++i];
+    else if (a === '--draft') o.draft = argv[++i];
+    else if (a === '--draft-sha256') o.draftSha256 = argv[++i];
     else if (a === '--evidence') o.evidence = argv[++i];
     else if (a === '--reason') o.reason = argv[++i];
     else if (a === '--limit') o.limit = parseInt(argv[++i], 10) || 1;
@@ -1372,6 +1379,11 @@ function doMarkVerified(o) {
   if (!/^https:\/\/[^/]+/.test(o.previewUrl)) die(`invalid --preview-url: ${o.previewUrl}`, 2);
   if (!o.headRefOid) die('--mark-verified requires --head-ref-oid', 2);
   if (!HEAD_REF_OID_RE.test(o.headRefOid)) die('--head-ref-oid must be a 40-hex SHA', 2);
+  const repairBindingValues = [o.worktree, o.draft, o.draftSha256];
+  const explicitRepairBinding = repairBindingValues.some((value) => value != null && value !== '');
+  if (explicitRepairBinding && repairBindingValues.some((value) => value == null || value === '')) {
+    die('repair verification binding requires --worktree, --draft, and --draft-sha256 together', 2);
+  }
   return withClaimsLock(() => {
     const claims = loadClaims();
     const { pgId, claim } = claimForBranch(claims, o.branch);
@@ -1385,6 +1397,21 @@ function doMarkVerified(o) {
         `cannot mark ${o.branch} verified: current PR head ${currentHead} does not match reviewed head ${o.headRefOid}`,
       );
     }
+    let repairWorktree = null;
+    let repairDraft = null;
+    if (explicitRepairBinding) {
+      repairWorktree = inspectBoundRepairWorktree({
+        worktree: o.worktree,
+        expectedHead: o.headRefOid,
+        remoteHead: currentHead,
+      });
+      if (!repairWorktree.ok) throw new Error(repairWorktree.reason);
+      repairDraft = inspectBoundRepairDraft({
+        draftFile: o.draft,
+        expectedSha256: o.draftSha256,
+      });
+      if (!repairDraft.ok) throw new Error(repairDraft.reason);
+    }
     const reviewedAt = new Date().toISOString();
     claims[pgId] = {
       ...claim,
@@ -1394,6 +1421,13 @@ function doMarkVerified(o) {
       verifiedAt: reviewedAt,
       reviewedAt,
       headRefOid: o.headRefOid,
+      ...(repairWorktree
+        ? {
+            worktree: repairWorktree.realpath,
+            draftFile: repairDraft.realpath,
+            draftSha256: repairDraft.sha256,
+          }
+        : {}),
     };
     delete claims[pgId].error;
     delete claims[pgId].failedAt;

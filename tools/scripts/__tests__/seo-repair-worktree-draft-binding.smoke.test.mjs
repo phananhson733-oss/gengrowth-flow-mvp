@@ -131,6 +131,30 @@ test('repair worktree binding rejects outside paths and symlink escapes', (t) =>
   });
   assert.equal(symlinkResult.ok, false);
   assert.match(symlinkResult.reason, /symlink|outside|escape/i);
+
+  const missingRoot = bindings.inspectBoundRepairWorktree({
+    worktree: outside,
+    expectedHead: head,
+    remoteHead: head,
+    root: join(root, 'missing-root'),
+  });
+  assert.equal(missingRoot.ok, false);
+  assert.match(missingRoot.reason, /root|realpath|no such/i);
+
+  const realControllerRoot = mkdtempSync(join(tmpdir(), 'seo-repair-real-controller-root-'));
+  const { repo: realRepair, head: realHead } = committedRepo(t, realControllerRoot, 'repair');
+  const aliasParent = mkdtempSync(join(tmpdir(), 'seo-repair-root-alias-'));
+  t.after(() => rmSync(aliasParent, { recursive: true, force: true }));
+  const aliasedRoot = join(aliasParent, 'controller-root');
+  symlinkSync(realControllerRoot, aliasedRoot);
+  const rootSymlink = bindings.inspectBoundRepairWorktree({
+    worktree: join(aliasedRoot, 'repair'),
+    expectedHead: realHead,
+    remoteHead: realHead,
+    root: aliasedRoot,
+  });
+  assert.equal(rootSymlink.ok, false);
+  assert.match(rootSymlink.reason, /root.*symlink|symlink.*root/i);
 });
 
 test('repair draft binding requires a regular exact-hash real file below the controller draft root', (t) => {
@@ -234,6 +258,125 @@ test('057-style repair target exposes article, plan, matching assets, and contro
   assert.deepEqual(target.supportFiles, [
     '/repair-root/PG-CELEB-057-event/scripts/plans/auto-caitlin-clark-birth-chart.json',
   ]);
+});
+
+test('default regate command binds the clean repair worktree, pushed head, and repaired draft digest', () => {
+  assert.equal(typeof astrologyAdapter.astrologyRegateCommands, 'function');
+  const commands = astrologyAdapter.astrologyRegateCommands({
+    branch: 'seo/auto/2026-07-15-PG-CELEB-057',
+    worktree: '/repair-root/PG-CELEB-057-event',
+    persistedHeadRefOid: 'a'.repeat(40),
+    draftFile: '/state/seo-repair-drafts/astrologywiki/PG-CELEB-057/event.md',
+    draftSha256: 'b'.repeat(64),
+  }, '/repo/tools/scripts');
+  assert.deepEqual(commands, [
+    [
+      'node', '/repo/tools/scripts/gg-seo-autopilot.mjs',
+      '--retry-failed', '--branch', 'seo/auto/2026-07-15-PG-CELEB-057',
+    ],
+    [
+      'node', '/repo/tools/scripts/gg-preview-gate.mjs',
+      '--branch', 'seo/auto/2026-07-15-PG-CELEB-057',
+      '--worktree', '/repair-root/PG-CELEB-057-event',
+      '--head-ref-oid', 'a'.repeat(40),
+      '--draft', '/state/seo-repair-drafts/astrologywiki/PG-CELEB-057/event.md',
+      '--draft-sha256', 'b'.repeat(64),
+    ],
+  ]);
+});
+
+test('successful local push remains persisted when the dirty original worktree cannot fast-forward', async (t) => {
+  const root = mkdtempSync(join(tmpdir(), 'seo-repair-persist-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const oldState = process.env.GG_FLOW_STATE_DIR;
+  process.env.GG_FLOW_STATE_DIR = join(root, 'state');
+  t.after(() => {
+    if (oldState === undefined) delete process.env.GG_FLOW_STATE_DIR;
+    else process.env.GG_FLOW_STATE_DIR = oldState;
+  });
+  const origin = join(root, 'origin.git');
+  const repairRoot = join(root, 'repair-root');
+  const repair = join(repairRoot, 'PG-CELEB-057-event');
+  const original = join(root, 'original');
+  mkdirSync(repairRoot, { recursive: true });
+  execFileSync('git', ['init', '--bare', '-q', origin]);
+  execFileSync('git', ['clone', '-q', origin, repair]);
+  for (const repo of [repair]) {
+    git(repo, ['config', 'user.name', 'persist-test']);
+    git(repo, ['config', 'user.email', 'persist-test@example.invalid']);
+  }
+  const slug = 'caitlin-clark-birth-chart';
+  const article = join(repair, 'data', 'articles', `${slug}.ts`);
+  mkdirSync(join(repair, 'data', 'articles'), { recursive: true });
+  writeFileSync(article, 'export const article = { mars: "Aries" };\n');
+  git(repair, ['add', '.']);
+  git(repair, ['commit', '-qm', 'seed article']);
+  const branch = 'seo/auto/2026-07-15-PG-CELEB-057';
+  git(repair, ['push', '-q', 'origin', `HEAD:refs/heads/${branch}`]);
+  execFileSync('git', ['clone', '-q', '--branch', branch, origin, original]);
+  git(original, ['config', 'user.name', 'persist-test']);
+  git(original, ['config', 'user.email', 'persist-test@example.invalid']);
+  writeFileSync(join(original, 'ORIGINAL-DIRTY.md'), 'unrelated original worktree change\n');
+  git(original, ['add', 'ORIGINAL-DIRTY.md']);
+  git(original, ['commit', '-qm', 'diverge original worktree']);
+
+  const draftRoot = join(root, 'state', 'seo-repair-drafts');
+  const draft = join(draftRoot, 'astrologywiki', 'PG-CELEB-057', 'event.md');
+  mkdirSync(join(draftRoot, 'astrologywiki', 'PG-CELEB-057'), { recursive: true });
+  writeFileSync(draft, '# Mars in Aries\n');
+  const initialDraftSha = sha256('# Mars in Aries\n');
+  let regatedTarget = null;
+  const adapter = astrologyAdapter.createAstrologyWikiRepairAdapter({
+    resolveContext: async () => ({
+      branch,
+      worktree: repair,
+      originalWorktree: original,
+      articleFile: article,
+      changedFiles: ['data/articles/caitlin-clark-birth-chart.ts'],
+      draftFile: draft,
+      draftSha256: initialDraftSha,
+      linkCandidates: [],
+    }),
+    invokeAgent: async (target) => {
+      assert.equal(target.draftFile, draft);
+      writeFileSync(target.articleFile, 'export const article = { mars: "Pisces" };\n');
+      writeFileSync(target.draftFile, '# Mars in Pisces\n');
+      return { ok: true, evidence: { changedFiles: [target.articleFile, target.draftFile] } };
+    },
+    regate: async (target) => {
+      regatedTarget = { ...target };
+      return { ok: true };
+    },
+    publish: async () => ({ ok: true }),
+    verifyTerminal: async () => ({
+      ok: true,
+      terminal: 'published',
+      checks: { reviewed_head: true, production_200: true, writeback_clear: true },
+    }),
+  });
+
+  const result = await adapter.execute({
+    record: {
+      event: {
+        eventId: 'event-057',
+        site: 'astrologywiki',
+        pageId: 'PG-CELEB-057',
+        slug,
+        stage: 'preview_fact_gate',
+        errorKind: 'asset_fail',
+        summary: 'Mars fact mismatch',
+        stderr: 'review FAIL',
+      },
+    },
+    strategy: 'agent_content_asset_link',
+  });
+
+  assert.equal(result.terminal, 'published', JSON.stringify(result.evidence));
+  const pushedHead = git(repair, ['rev-parse', 'HEAD']);
+  assert.equal(git(repair, ['rev-parse', `refs/remotes/origin/${branch}`]), pushedHead);
+  assert.equal(git(original, ['rev-parse', 'HEAD']) === pushedHead, false);
+  assert.equal(regatedTarget.persistedHeadRefOid, pushedHead);
+  assert.equal(regatedTarget.draftSha256, sha256('# Mars in Pisces\n'));
 });
 
 test('058-style repair prompt forbids invented protected facts and allows neutralizing a contested claim', () => {

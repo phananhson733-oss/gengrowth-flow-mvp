@@ -1423,6 +1423,7 @@ function doMarkVerified(o) {
       headRefOid: o.headRefOid,
       ...(repairWorktree
         ? {
+            originalWorktree: claim.originalWorktree || claim.worktree || null,
             worktree: repairWorktree.realpath,
             draftFile: repairDraft.realpath,
             draftSha256: repairDraft.sha256,

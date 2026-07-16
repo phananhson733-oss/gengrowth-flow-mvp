@@ -31,6 +31,7 @@ function fixture(t, claim = {}) {
   const bin = join(root, 'bin');
   const claimsPath = join(tasks, '.autopilot-claims.json');
   const ghCalls = join(root, 'gh-calls.log');
+  const gitCalls = join(root, 'git-calls.log');
   mkdirSync(flow, { recursive: true });
   mkdirSync(oracle, { recursive: true });
   mkdirSync(tasks, { recursive: true });
@@ -62,6 +63,16 @@ if (args.includes('merge')) process.exit(Number(process.env.GG_TEST_GH_MERGE_EXI
 process.exit(0);
 `);
   chmodSync(gh, 0o755);
+  const gitBin = join(bin, 'git');
+  writeFileSync(gitBin, `#!/usr/bin/env node
+import { appendFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+const args = process.argv.slice(2);
+appendFileSync(${JSON.stringify(gitCalls)}, args.join(' ') + '\\n');
+const result = spawnSync('/usr/bin/git', args, { stdio: 'inherit' });
+process.exit(result.status == null ? 1 : result.status);
+`);
+  chmodSync(gitBin, 0o755);
   const env = {
     ...process.env,
     PATH: `${bin}:${process.env.PATH}`,
@@ -80,9 +91,10 @@ process.exit(0);
     timeout: 10_000,
   });
   const ghText = () => existsSync(ghCalls) ? readFileSync(ghCalls, 'utf8') : '';
+  const gitText = () => existsSync(gitCalls) ? readFileSync(gitCalls, 'utf8') : '';
   const claims = () => JSON.parse(readFileSync(claimsPath, 'utf8'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
-  return { root, run, ghText, claims };
+  return { root, run, ghText, gitText, claims };
 }
 
 function repairBindingFixture(t, h, {
@@ -256,6 +268,47 @@ test('--mark-verified repair override fails closed for outside, symlink, dirty, 
     assert.match(result.stderr, entry.pattern, `${entry.name}: ${result.stderr}`);
     assert.equal(h.claims()['PG-001'].status, 'pushed-preview');
   }
+});
+
+test('--merge cleanup targets only the verified controller worktree and never the original dirty claim path', (t) => {
+  const original = join(tmpdir(), `original-dirty-claim-${process.pid}`);
+  mkdirSync(original, { recursive: true });
+  writeFileSync(join(original, 'KEEP-ME.txt'), 'must survive merge cleanup\n');
+  t.after(() => rmSync(original, { recursive: true, force: true }));
+  const h = fixture(t, { worktree: original });
+  const binding = repairBindingFixture(t, h);
+  const marked = h.run([
+    '--mark-verified',
+    '--branch', BRANCH,
+    '--preview-url', 'https://preview.example.test',
+    '--head-ref-oid', binding.head,
+    '--worktree', binding.worktree,
+    '--draft', binding.draft,
+    '--draft-sha256', binding.draftSha256,
+  ], {
+    GG_TEST_GH_HEAD: binding.head,
+    GG_SEO_REPAIR_ORACLE_WORKTREE_ROOT: binding.repairRoot,
+  });
+  assert.equal(marked.status, 0, marked.stderr);
+  const claim = h.claims()['PG-001'];
+  assert.equal(claim.worktree, realpathSync(binding.worktree));
+  assert.equal(claim.originalWorktree, original);
+
+  h.run(['--merge', '--branch', BRANCH], {
+    GG_TEST_GH_HEAD: binding.head,
+    GG_TEST_GH_MERGE_EXIT: '0',
+    GG_SEO_REPAIR_ORACLE_WORKTREE_ROOT: binding.repairRoot,
+  });
+  const cleanupCalls = h.gitText().split('\n').filter((line) => line.includes('worktree remove'));
+  assert.ok(
+    cleanupCalls.some((line) => line.includes(realpathSync(binding.worktree))),
+    `verified repair cleanup missing:\n${h.gitText()}`,
+  );
+  assert.ok(
+    cleanupCalls.every((line) => !line.includes(original)),
+    `original dirty worktree was selected for cleanup:\n${h.gitText()}`,
+  );
+  assert.equal(readFileSync(join(original, 'KEEP-ME.txt'), 'utf8'), 'must survive merge cleanup\n');
 });
 
 test('--merge rejects missing or malformed reviewed SHA before gh pr merge', (t) => {

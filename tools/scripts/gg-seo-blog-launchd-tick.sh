@@ -72,6 +72,17 @@ if [[ "$PLAN" != /* ]]; then
   PLAN="$(cd "$(dirname "$PLAN")" && pwd -P)/$(basename "$PLAN")"
 fi
 
+flush_writeback_notifications() {
+  local notify_rc=0
+  set +e
+  GG_LARK_NOTIFY_SILENCE=0 node "$RECONCILE" --notify-only --json
+  notify_rc=$?
+  set -e
+  if [[ "$notify_rc" -ne 0 ]]; then
+    echo "writeback notification flush failed rc=$notify_rc; durable sidecars retained"
+  fi
+}
+
 if [[ "${GG_SEO_SKIP_LEGACY_CHECK:-0}" != "1" ]]; then
   uid="$(id -u)"
   legacy_labels=(
@@ -127,6 +138,7 @@ PRE_STRICT_JSON="$(GG_LARK_NOTIFY_SILENCE=1 node "$RECONCILE" --strict --json)"
 PRE_RECONCILE_RC=$?
 set -e
 printf '%s\n' "$PRE_STRICT_JSON"
+flush_writeback_notifications
 if [[ "$PRE_RECONCILE_RC" -ne 0 ]]; then
   echo "pre-fire strict reconcile failed; abort before nightly"
   exit "$PRE_RECONCILE_RC"
@@ -173,6 +185,7 @@ STRICT_JSON="$(GG_LARK_NOTIFY_SILENCE=1 node "$RECONCILE" --strict --json)"
 RECONCILE_RC=$?
 set -e
 printf '%s\n' "$STRICT_JSON"
+flush_writeback_notifications
 
 if [[ "$RECONCILE_RC" -ne 0 ]]; then
   echo "strict ledger reconcile failed; skip readiness and terminal summary"

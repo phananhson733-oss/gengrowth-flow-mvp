@@ -7,6 +7,7 @@ import {
   mkdtempSync,
   readFileSync,
   readdirSync,
+  rmSync,
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -326,13 +327,21 @@ test('new terminal writeback emits one complete deduplicated notification', () =
 test('silent strict terminal failure keeps durable notification; next unsilenced tick sends exactly once', async () => {
   const state = mkdtempSync(join(tmpdir(), 'writeback-notify-silent-'));
   const sidecar = writeNotificationSidecar(state);
+  rmSync(sidecar.path);
   const previousState = process.env.GG_FLOW_STATE_DIR;
   const previousSilence = process.env.GG_LARK_NOTIFY_SILENCE;
   process.env.GG_FLOW_STATE_DIR = state;
   process.env.GG_LARK_NOTIFY_SILENCE = '1';
   let calls = 0;
   const deps = {
-    apply: async () => ({ errors: [], summary: [] }),
+    apply: async () => ({
+      errors: [],
+      summary: [],
+      terminalNotifications: [{
+        ...sidecar.record.fields,
+        notificationKey: sidecar.record.notificationKey,
+      }],
+    }),
     verify: async () => zero({
       droppedWritebackAfter: 1,
       droppedWritebackEvidence: [{

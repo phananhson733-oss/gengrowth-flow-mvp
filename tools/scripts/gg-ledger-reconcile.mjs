@@ -563,13 +563,21 @@ function writebackNotificationText(record) {
   return terminalNotificationText(fields);
 }
 
-async function replayWritebackNotifications(deps = {}) {
-  if (process.env.GG_LARK_NOTIFY_SILENCE === '1') return;
+export async function replayWritebackNotifications(deps = {}) {
+  const pending = listPendingWritebackNotifications();
+  const outcome = {
+    pending: pending.length,
+    sent: 0,
+    failed: 0,
+    silenced: process.env.GG_LARK_NOTIFY_SILENCE === '1',
+  };
+  if (outcome.silenced) return outcome;
   const send = deps.notify || notify;
-  for (const item of listPendingWritebackNotifications()) {
+  for (const item of pending) {
     const { name, record } = item;
     if (record?.sentAt) {
-      markWritebackNotificationSent(name, record, deps);
+      if (markWritebackNotificationSent(name, record, deps)) outcome.sent += 1;
+      else outcome.failed += 1;
       continue;
     }
     try {
@@ -579,8 +587,10 @@ async function replayWritebackNotifications(deps = {}) {
         msgUuid: record.msgUuid,
       });
       if (result?.ok === true && result?.silenced !== true) {
-        markWritebackNotificationSent(name, record, deps);
+        if (markWritebackNotificationSent(name, record, deps)) outcome.sent += 1;
+        else outcome.failed += 1;
       } else {
+        outcome.failed += 1;
         recordWritebackNotificationFailure(
           name,
           record,
@@ -589,9 +599,11 @@ async function replayWritebackNotifications(deps = {}) {
         );
       }
     } catch (error) {
+      outcome.failed += 1;
       recordWritebackNotificationFailure(name, record, error, deps);
     }
   }
+  return outcome;
 }
 
 export async function runLedgerReconcile({
@@ -647,6 +659,17 @@ export async function runLedgerReconcile({
 async function main() {
   loadEnv();
   const args = new Set(process.argv.slice(2));
+  if (args.has('--notify-only')) {
+    const notificationReplay = await replayWritebackNotifications();
+    if (args.has('--json')) process.stdout.write(`${JSON.stringify(notificationReplay)}\n`);
+    else {
+      process.stdout.write(
+        `writeback notifications: pending=${notificationReplay.pending} `
+        + `sent=${notificationReplay.sent} failed=${notificationReplay.failed}\n`,
+      );
+    }
+    return;
+  }
   const strict = args.has('--strict');
   const json = args.has('--json');
   const apply = !args.has('--dry');

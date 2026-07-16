@@ -448,6 +448,7 @@ async function defaultRegate(target, {
   deadlineMs = Number.POSITIVE_INFINITY,
   nowMs = Date.now,
   runCommand = null,
+  scriptsDir = DEFAULT_SCRIPTS,
 } = {}) {
   const execute = async (argv, capMs) => {
     if (runCommand) {
@@ -477,7 +478,7 @@ async function defaultRegate(target, {
       nowMs,
     });
   };
-  const [retryCommand, gateCommand] = astrologyRegateCommands(target);
+  const [retryCommand, gateCommand] = astrologyRegateCommands(target, scriptsDir);
   const reset = await execute(retryCommand, 180_000);
   if (!reset.ok && isAlreadyPublishedRetryFailure(reset)) {
     return { ok: true, alreadyPublished: true, reset };
@@ -727,6 +728,7 @@ export function createAstrologyWikiRepairAdapter(deps = {}) {
   const regate = deps.regate || ((target, options = {}) => defaultRegate(target, {
     ...options,
     runCommand,
+    scriptsDir,
   }));
   const publish = deps.publish || (async () => ({ ok: true, ownedByRegate: true }));
   const verifyTerminal = deps.verifyTerminal
@@ -755,6 +757,17 @@ export function createAstrologyWikiRepairAdapter(deps = {}) {
           },
         };
       };
+      if (event.errorKind === 'missing_authoritative_source') {
+        return {
+          terminal: 'human_only',
+          agentMutationInvoked: false,
+          evidence: {
+            type: 'missing_authoritative_source',
+            summary: event.summary,
+            action: 'human_only',
+          },
+        };
+      }
       if (event.errorKind === 'stale') {
         return {
           terminal: 'archived',

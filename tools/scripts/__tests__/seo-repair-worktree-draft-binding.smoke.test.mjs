@@ -285,6 +285,73 @@ test('default regate command binds the clean repair worktree, pushed head, and r
   ]);
 });
 
+test('adapter default regate executes the complete bound Gate command instead of falling back to claim paths', async () => {
+  const calls = [];
+  const branch = 'seo/auto/2026-07-15-PG-CELEB-057';
+  const worktree = '/repair-root/PG-CELEB-057-event';
+  const draft = '/state/seo-repair-drafts/astrologywiki/PG-CELEB-057/event.md';
+  const head = 'a'.repeat(40);
+  const draftSha256 = 'b'.repeat(64);
+  const adapter = astrologyAdapter.createAstrologyWikiRepairAdapter({
+    scriptsDir: '/repo/tools/scripts',
+    resolveContext: async () => ({
+      branch,
+      worktree,
+      headRefOid: head,
+      articleFile: `${worktree}/data/articles/caitlin-clark-birth-chart.ts`,
+      changedFiles: ['data/articles/caitlin-clark-birth-chart.ts'],
+      draftFile: draft,
+      draftSha256,
+      linkCandidates: [],
+    }),
+    runCommand: async (argv) => {
+      calls.push(argv);
+      if (argv.includes('--retry-failed')) {
+        return {
+          code: 1,
+          stdout: '',
+          stderr: `cannot retry ${branch} from status "pushed-preview" — expected needs_human`,
+          timedOut: false,
+        };
+      }
+      if (argv[1].endsWith('gg-preview-gate.mjs')) {
+        return { code: 0, stdout: '{}', stderr: '', timedOut: false };
+      }
+      return {
+        code: 0,
+        stdout: JSON.stringify({
+          results: [{ ok: true, terminal: 'published' }],
+        }),
+        stderr: '',
+        timedOut: false,
+      };
+    },
+  });
+  const result = await adapter.execute({
+    record: {
+      event: {
+        eventId: 'event-057',
+        site: 'astrologywiki',
+        pageId: 'PG-CELEB-057',
+        slug: 'caitlin-clark-birth-chart',
+        stage: 'preview_fact_gate',
+        errorKind: 'tool_exit',
+        summary: 'retry exact gate',
+      },
+    },
+    strategy: 'deterministic_retry',
+  });
+  assert.equal(result.terminal, 'published');
+  assert.deepEqual(calls[1], [
+    'node', '/repo/tools/scripts/gg-preview-gate.mjs',
+    '--branch', branch,
+    '--worktree', worktree,
+    '--head-ref-oid', head,
+    '--draft', draft,
+    '--draft-sha256', draftSha256,
+  ]);
+});
+
 test('successful local push remains persisted when the dirty original worktree cannot fast-forward', async (t) => {
   const root = mkdtempSync(join(tmpdir(), 'seo-repair-persist-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
@@ -403,4 +470,43 @@ test('058-style repair prompt forbids invented protected facts and allows neutra
   assert.match(prompt, /do not invent|never invent/i);
   assert.match(prompt, /neutral|remove.*contested|omit.*contested/i);
   assert.match(prompt, /missing authoritative source|human_only/i);
+});
+
+test('058 missing authoritative source terminates human_only without repair, regate, or publish', async () => {
+  const calls = [];
+  const adapter = astrologyAdapter.createAstrologyWikiRepairAdapter({
+    resolveContext: async () => {
+      calls.push('resolve');
+      throw new Error('must not resolve a publish target without authoritative source');
+    },
+    invokeAgent: async () => {
+      calls.push('agent');
+      return { ok: true };
+    },
+    regate: async () => {
+      calls.push('regate');
+      return { ok: true };
+    },
+    publish: async () => {
+      calls.push('publish');
+      return { ok: true };
+    },
+  });
+  const result = await adapter.execute({
+    record: {
+      event: {
+        eventId: 'event-058',
+        site: 'astrologywiki',
+        pageId: 'PG-CELEB-058',
+        slug: 'brad-pitt-birth-chart',
+        stage: 'preview_fact_gate',
+        errorKind: 'missing_authoritative_source',
+        summary: 'birth time has no authoritative source evidence',
+      },
+    },
+    strategy: 'safe_authorization_path',
+  });
+  assert.equal(result.terminal, 'human_only');
+  assert.equal(result.agentMutationInvoked, false);
+  assert.deepEqual(calls, []);
 });

@@ -33,7 +33,11 @@ function containedRealpath(path, root, kind) {
   if (!isAbsolute(String(path || ''))) {
     throw new Error(`${kind} path must be absolute`);
   }
-  const rootRealpath = realpathSync(resolve(root));
+  const resolvedRoot = resolve(root);
+  if (lstatSync(resolvedRoot).isSymbolicLink()) {
+    throw new Error(`${kind} controller root must not be a symlink`);
+  }
+  const rootRealpath = realpathSync(resolvedRoot);
   const pathRealpath = realpathSync(resolve(path));
   const rel = relative(rootRealpath, pathRealpath);
   if (!rel || rel === '.') {

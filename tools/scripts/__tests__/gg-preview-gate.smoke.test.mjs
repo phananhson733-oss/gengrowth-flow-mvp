@@ -1068,6 +1068,12 @@ test('preview-origin final assets receive bypass headers without leaking the sec
       decodeImage: async () => true,
       fetchFinalArtifact: async (url, init = {}) => {
         calls.push({ url, headers: { ...(init.headers || {}) } });
+        if (
+          new URL(url).origin === 'https://preview.example.test'
+          && init.headers?.['x-vercel-set-bypass-cookie']
+        ) {
+          return response({ status: 307, url });
+        }
         if (url === 'https://preview.example.test/en/wiki/source') {
           return response({
             url,
@@ -1087,7 +1093,7 @@ test('preview-origin final assets receive bypass headers without leaking the sec
       (call) => call.headers['x-vercel-protection-bypass'] === 'preview-only-secret',
     ), true);
     assert.equal(previewCalls.every(
-      (call) => call.headers['x-vercel-set-bypass-cookie'] === 'true',
+      (call) => call.headers['x-vercel-set-bypass-cookie'] === undefined,
     ), true);
     for (const call of calls.filter((entry) => new URL(entry.url).origin !== 'https://preview.example.test')) {
       assert.equal(call.headers['x-vercel-protection-bypass'], undefined, call.url);
@@ -1097,6 +1103,48 @@ test('preview-origin final assets receive bypass headers without leaking the sec
     if (oldSecret === undefined) delete process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
     else process.env.VERCEL_AUTOMATION_BYPASS_SECRET = oldSecret;
   }
+});
+
+test('unavailable final-artifact input never invokes a content repair worker', async () => {
+  const reason = 'final artifact input unavailable: preview article HTTP 307';
+  const fixture = gateRoundFixture({
+    heads: [HEAD_A],
+    finalArtifactResults: [{
+      ok: false,
+      inputAvailable: false,
+      reviewedHeadRefOid: HEAD_A,
+      artifactSha: '4'.repeat(64),
+      failureFingerprint: '5'.repeat(64),
+      final_links: {
+        ok: false,
+        checked: [],
+        failed: [{ reason }],
+        ignored: [],
+      },
+      final_assets: {
+        ok: false,
+        checked: [],
+        failed: [{ reason }],
+        ignored: [],
+      },
+    }],
+    repairResult: {
+      applied: true,
+      headRefOid: HEAD_B,
+      artifactShaBefore: '4'.repeat(64),
+      artifactShaAfter: '6'.repeat(64),
+    },
+  });
+
+  const result = await runGate(fixture.options, fixture.deps);
+
+  assert.equal(
+    fixture.repairCalls.length,
+    0,
+    'transport/tooling failures must not rewrite article links or assets',
+  );
+  assert.equal(result.exitCode, 2);
+  assert.match(result.reason, /final artifact input unavailable/i);
 });
 
 test('the second consecutive identical artifact and failure fingerprint stops before a third edit', async () => {

@@ -8,6 +8,7 @@
 import { test } from 'node:test';
 import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { mkdirSync, writeFileSync, chmodSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -20,6 +21,8 @@ mkdirSync(TMP, { recursive: true });
 // Seed a tiny article .ts and source draft .md.
 const ARTICLE_TS = join(TMP, 'page_chiron_7th.ts');
 const DRAFT_MD = join(TMP, 'page_chiron_7th.md');
+const HEAD_A = 'a'.repeat(40);
+const sha256 = (value) => createHash('sha256').update(value).digest('hex');
 writeFileSync(
   ARTICLE_TS,
   `export const page = { slug: 'chiron-in-7th-house', title: 'Chiron in 7th House', schema: { '@type': 'Article' }, body: 'Chiron in the 7th house...' };\n`,
@@ -195,6 +198,60 @@ test('missing article file → exit 2', () => {
   );
   assert.equal(r.status, 2);
   assert.match(r.stderr, /not found/);
+});
+
+test('snapshot digest arguments bind the exact article and draft bytes consumed by the reviewer', () => {
+  const article = 'export const immutable = "A";\n';
+  const draft = '# Immutable draft A\n';
+  const articlePath = join(TMP, 'bound-article.ts');
+  const draftPath = join(TMP, 'bound-draft.md');
+  writeFileSync(articlePath, article);
+  writeFileSync(draftPath, draft);
+  const fake = fakeBin('{"verdict":"PASS","blocking_reason":"","notes":[]}');
+
+  const r = run([
+    '--dimension', 'schema',
+    '--article', articlePath,
+    '--draft', draftPath,
+    '--head-ref-oid', HEAD_A,
+    '--article-sha256', sha256(article),
+    '--draft-sha256', sha256(draft),
+    '--json',
+  ], { fake });
+
+  assert.equal(r.status, 0, `stderr: ${r.stderr}; stdout: ${r.stdout}`);
+  const out = JSON.parse(r.stdout.trim());
+  assert.equal(out.verdict, 'PASS');
+  assert.equal(out.reviewedHeadRefOid, HEAD_A);
+  assert.deepEqual(out.inputSha256, {
+    article: sha256(article),
+    draft: sha256(draft),
+  });
+});
+
+test('snapshot tampering after materialization is a structured SKIPPED and never reaches PASS', () => {
+  const originalArticle = 'export const immutable = "A";\n';
+  const originalDraft = '# Immutable draft A\n';
+  const articlePath = join(TMP, 'tampered-article.ts');
+  const draftPath = join(TMP, 'tampered-draft.md');
+  writeFileSync(articlePath, 'export const transient = "B";\n');
+  writeFileSync(draftPath, originalDraft);
+  const fake = fakeBin('{"verdict":"PASS","blocking_reason":"","notes":[]}');
+
+  const r = run([
+    '--dimension', 'schema',
+    '--article', articlePath,
+    '--draft', draftPath,
+    '--head-ref-oid', HEAD_A,
+    '--article-sha256', sha256(originalArticle),
+    '--draft-sha256', sha256(originalDraft),
+    '--json',
+  ], { fake });
+
+  assert.equal(r.status, 1, `stderr: ${r.stderr}; stdout: ${r.stdout}`);
+  const out = JSON.parse(r.stdout.trim());
+  assert.equal(out.verdict, 'SKIPPED');
+  assert.match(out.blocking_reason, /article snapshot digest mismatch/i);
 });
 
 test('cleanup', () => {

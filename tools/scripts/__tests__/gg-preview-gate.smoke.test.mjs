@@ -19,17 +19,21 @@
 import { test } from 'node:test';
 import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { mkdirSync, writeFileSync, chmodSync, rmSync, existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 
-import { runGate } from '../gg-preview-gate.mjs';
+import * as previewGate from '../gg-preview-gate.mjs';
+
+const { runGate } = previewGate;
 
 const SCRIPT = fileURLToPath(new URL('../gg-preview-gate.mjs', import.meta.url));
 const BRANCH = 'seo/auto/2026-06-18-12345';
 const HEAD_A = 'a'.repeat(40);
 const HEAD_B = 'b'.repeat(40);
+const sha256 = (value) => createHash('sha256').update(value).digest('hex');
 
 // A fresh sandbox per test run (pid-scoped); each test gets its own bin dir + sentinel dir.
 const ROOT = join(tmpdir(), `gg-preview-gate-test-${process.pid}`);
@@ -116,6 +120,9 @@ function fakeEnv({
   notifyOnPark,
   ghDispatch,
 }) {
+  const stagingDir = join(dir, '_staging');
+  mkdirSync(stagingDir, { recursive: true });
+  writeFileSync(join(stagingDir, 'PG-001-en.md'), '# immutable fixture draft A\n');
   const autopilot = writeAutopilotFake(dir, { statusJson, sentinelsDir });
   const previewWait = writeNodeFake(dir, 'fake-preview-wait.mjs', {
     sentinelName: 'preview-wait', sentinelsDir,
@@ -173,6 +180,7 @@ function fakeEnv({
     // file, sandboxed state dir + audit log.
     GG_LARK_API_BASE: 'http://127.0.0.1:9',
     HERMES_ENV: join(dir, 'no-such-hermes.env'),
+    GG_FLOW_REPO: dir,
     GG_FLOW_STATE_DIR: join(dir, 'flow-state'),
     GG_LARK_AUDIT_LOG: join(dir, 'lark-audit.log'),
   };
@@ -193,33 +201,73 @@ function fakeEnv({
   return env;
 }
 
+function writeReviewFake(dir, name, {
+  sentinelsDir,
+  failDimension = null,
+  failReason = 'broken internal link',
+}) {
+  const p = join(dir, name);
+  const src = `#!/usr/bin/env node
+import { appendFileSync } from 'node:fs';
+const argv = process.argv.slice(2);
+const value = (flag) => {
+  const i = argv.indexOf(flag);
+  return i >= 0 ? argv[i + 1] : '';
+};
+try { appendFileSync(${JSON.stringify(join(sentinelsDir, 'review-worker'))}, argv.join(' ') + '\\n'); } catch {}
+const dimension = value('--dimension');
+const fail = dimension === ${JSON.stringify(failDimension)};
+process.stdout.write(JSON.stringify({
+  verdict: fail ? 'FAIL' : 'PASS',
+  blocking_reason: fail ? ${JSON.stringify(failReason)} : '',
+  notes: [],
+  reviewedHeadRefOid: value('--head-ref-oid'),
+  inputSha256: {
+    article: value('--article-sha256'),
+    draft: value('--draft-sha256'),
+  },
+}));
+process.exit(0);
+`;
+  writeFileSync(p, src);
+  chmodSync(p, 0o755);
+  return p;
+}
+
 // A review-worker fake that always PASSes (json on stdout, exit 0).
 function reviewPassBin(dir, sentinelsDir) {
-  return writeNodeFake(dir, 'fake-review-pass.mjs', {
-    sentinelName: 'review-worker', sentinelsDir,
-    stdout: JSON.stringify({ verdict: 'PASS', blocking_reason: '', notes: [] }),
-    exit: 0,
-  });
+  return writeReviewFake(dir, 'fake-review-pass.mjs', { sentinelsDir });
 }
 
 // A codex fake that COMPLETES with `VERDICT: PASS` (the only outcome that lets the required gate
 // merge). Tests reaching the merge path must provide this now that codex is a required gate.
 function codexPassBin(dir, sentinelsDir) {
-  return writeNodeFake(dir, 'fake-codex-pass.mjs', {
-    sentinelName: 'codex', sentinelsDir,
-    stdout: 'reviewing facts...\nVERDICT: PASS', exit: 0,
-  });
+  const p = join(dir, 'fake-codex-pass.mjs');
+  const src = `#!/usr/bin/env node
+import { appendFileSync } from 'node:fs';
+const argv = process.argv.slice(2);
+const i = argv.indexOf('--head-ref-oid');
+const head = i >= 0 ? argv[i + 1] : '';
+try { appendFileSync(${JSON.stringify(join(sentinelsDir, 'codex'))}, argv.join(' ') + '\\n'); } catch {}
+process.stdout.write('reviewing facts...\\nVERDICT: PASS\\n');
+process.stdout.write('GG_CODEX_INPUT_EVIDENCE=' + JSON.stringify({
+  reviewedHeadRefOid: head,
+  baseRefOid: ${JSON.stringify('d'.repeat(40))},
+  inputSha256: ${JSON.stringify('c'.repeat(64))},
+  bytes: 128,
+}) + '\\n');
+`;
+  writeFileSync(p, src);
+  chmodSync(p, 0o755);
+  return p;
 }
 
 // A review-worker fake that PASSes for astrology/schema but FAILs for `failDim`.
 // Dispatches on the `--dimension <failDim>` substring of the joined argv.
 function reviewDimFailBin(dir, sentinelsDir, failDim) {
-  const passJson = JSON.stringify({ verdict: 'PASS', blocking_reason: '', notes: [] });
-  const failJson = JSON.stringify({ verdict: 'FAIL', blocking_reason: 'broken internal link', notes: [] });
-  return writeNodeFake(dir, 'fake-review-dimfail.mjs', {
-    sentinelName: 'review-worker', sentinelsDir,
-    dispatch: [{ match: `--dimension ${failDim}`, stdout: failJson, exit: 0 }],
-    stdout: passJson, exit: 0,
+  return writeReviewFake(dir, 'fake-review-dimfail.mjs', {
+    sentinelsDir,
+    failDimension: failDim,
   });
 }
 
@@ -283,13 +331,32 @@ function gateRoundFixture({
           verdict,
           blocking_reason: verdict === 'PASS' ? '' : `${dimension} failed`,
           notes: [],
+          reviewedHeadRefOid: args[args.indexOf('--head-ref-oid') + 1] || null,
+          inputSha256: {
+            article: args[args.indexOf('--article-sha256') + 1] || null,
+            draft: args[args.indexOf('--draft-sha256') + 1] || null,
+          },
         }),
         stderr: '',
         timedOut: false,
       };
     }
     if (bin === bins.codex) {
-      return { code: 0, stdout: 'VERDICT: PASS', stderr: '', timedOut: false };
+      const reviewedHeadRefOid = args[args.indexOf('--head-ref-oid') + 1] || null;
+      return {
+        code: 0,
+        stdout: [
+          'VERDICT: PASS',
+          `GG_CODEX_INPUT_EVIDENCE=${JSON.stringify({
+            reviewedHeadRefOid,
+            baseRefOid: 'd'.repeat(40),
+            inputSha256: 'c'.repeat(64),
+            bytes: 128,
+          })}`,
+        ].join('\n'),
+        stderr: '',
+        timedOut: false,
+      };
     }
     return { code: 0, stdout: '', stderr: '', timedOut: false };
   };
@@ -344,6 +411,37 @@ const CLAIM_VERIFIED = (extra = {}) => JSON.stringify({
     ...extra,
   },
 });
+
+function committedReviewInputs(name = 'snapshot') {
+  const dir = join(ROOT, `${name}-${caseSeq++}`);
+  const worktree = join(dir, 'oracle');
+  const articleTs = join(worktree, 'data', 'articles', 'chiron-in-7th-house.ts');
+  const draftMd = join(dir, 'PG-001-en.md');
+  const snapshotRoot = join(dir, 'snapshots');
+  mkdirSync(join(worktree, 'data', 'articles'), { recursive: true });
+  writeFileSync(articleTs, 'export const article = "committed-A";\n');
+  writeFileSync(draftMd, '# committed draft A\n');
+  for (const args of [
+    ['init', '-q'],
+    ['config', 'user.name', 'snapshot-test'],
+    ['config', 'user.email', 'snapshot@example.test'],
+    ['add', 'data/articles/chiron-in-7th-house.ts'],
+    ['commit', '-qm', 'seed immutable article'],
+  ]) {
+    const result = spawnSync('git', ['-C', worktree, ...args], { encoding: 'utf8' });
+    assert.equal(result.status, 0, `git ${args.join(' ')} failed: ${result.stderr}`);
+  }
+  const head = spawnSync('git', ['-C', worktree, 'rev-parse', 'HEAD'], { encoding: 'utf8' });
+  assert.equal(head.status, 0, head.stderr);
+  return {
+    dir,
+    worktree,
+    articleTs,
+    draftMd,
+    snapshotRoot,
+    reviewedHeadRefOid: head.stdout.trim(),
+  };
+}
 
 // ── (a) missing --branch → nonzero + stderr ───────────────────────────────────
 test('missing --branch → nonzero exit + stderr "--branch is required"', () => {
@@ -780,6 +878,128 @@ test('a repair invalidates every earlier gate result and reruns all checks on th
     'missing draft is recorded as an explicit immutable round state',
   );
   assert.equal(fixture.mergeCalls().length, 1);
+});
+
+test('materialized reviewer bundle reads article from the reviewed commit and freezes draft bytes outside the live worktree', async () => {
+  const input = committedReviewInputs('bundle-materialization');
+  const bundle = await previewGate.materializeReviewBundle({
+    ...input,
+    pgId: 'PG-001',
+    repairRound: 0,
+  });
+
+  assert.equal(bundle.ok, true, bundle.reason);
+  assert.equal(bundle.reviewedHeadRefOid, input.reviewedHeadRefOid);
+  assert.equal(bundle.article.gitObject, `${input.reviewedHeadRefOid}:data/articles/chiron-in-7th-house.ts`);
+  assert.equal(readFileSync(bundle.article.path, 'utf8'), 'export const article = "committed-A";\n');
+  assert.equal(readFileSync(bundle.draft.path, 'utf8'), '# committed draft A\n');
+  assert.equal(bundle.article.sha256, sha256('export const article = "committed-A";\n'));
+  assert.equal(bundle.draft.sha256, sha256('# committed draft A\n'));
+  assert.equal(bundle.article.path.startsWith(input.worktree), false);
+  assert.equal(bundle.draft.path.startsWith(input.worktree), false);
+
+  writeFileSync(input.articleTs, 'export const article = "transient-B";\n');
+  writeFileSync(input.draftMd, '# transient draft B\n');
+  assert.equal(readFileSync(bundle.article.path, 'utf8'), 'export const article = "committed-A";\n');
+  assert.equal(readFileSync(bundle.draft.path, 'utf8'), '# committed draft A\n');
+  assert.equal((await previewGate.verifyReviewBundle(bundle)).ok, true);
+});
+
+test('reviewer-time A-to-B-to-A on live inputs cannot change the immutable bytes consumed by any reviewer', async () => {
+  const input = committedReviewInputs('bundle-aba');
+  const fixture = gateRoundFixture({
+    heads: [input.reviewedHeadRefOid, input.reviewedHeadRefOid],
+  });
+  fixture.deps.articlePaths = () => ({
+    worktree: input.worktree,
+    articleTs: input.articleTs,
+    draftMd: input.draftMd,
+  });
+  fixture.deps.reviewSnapshotRoot = input.snapshotRoot;
+  const reviewerReads = [];
+  const originalNode = fixture.deps.node;
+  fixture.deps.node = async (bin, args, opts) => {
+    if (bin === 'review') {
+      const dimension = args[args.indexOf('--dimension') + 1];
+      if (dimension === 'schema') {
+        writeFileSync(input.articleTs, 'export const article = "transient-B";\n');
+        writeFileSync(input.draftMd, '# transient draft B\n');
+      }
+      reviewerReads.push({
+        dimension,
+        article: readFileSync(args[args.indexOf('--article') + 1], 'utf8'),
+        draft: readFileSync(args[args.indexOf('--draft') + 1], 'utf8'),
+      });
+      if (dimension === 'schema') {
+        writeFileSync(input.articleTs, 'export const article = "committed-A";\n');
+        writeFileSync(input.draftMd, '# committed draft A\n');
+      }
+    }
+    return originalNode(bin, args, opts);
+  };
+
+  const result = await runGate(fixture.options, fixture.deps);
+
+  assert.equal(result.exitCode, 0, result.reason);
+  assert.equal(reviewerReads.length, 3);
+  for (const read of reviewerReads) {
+    assert.equal(read.article, 'export const article = "committed-A";\n', `${read.dimension} saw live article drift`);
+    assert.equal(read.draft, '# committed draft A\n', `${read.dimension} saw live draft drift`);
+  }
+  const reviewCalls = fixture.callsFor('review');
+  assert.ok(reviewCalls.every((call) => call.args.includes('--article-sha256')));
+  assert.ok(reviewCalls.every((call) => call.args.includes('--draft-sha256')));
+  assert.equal(fixture.markVerifiedCalls().length, 1);
+  assert.equal(fixture.mergeCalls().length, 1);
+});
+
+test('review bundle materialization failure blocks every local reviewer, mark, and merge', async () => {
+  const fixture = gateRoundFixture({ heads: [HEAD_A, HEAD_A] });
+  fixture.deps.materializeReviewBundle = async () => ({
+    ok: false,
+    reason: 'review snapshot materialization failed: git object unavailable',
+  });
+
+  const result = await runGate(fixture.options, fixture.deps);
+
+  assert.equal(result.exitCode, 2);
+  assert.match(result.reason, /snapshot materialization|git object unavailable/i);
+  assert.equal(fixture.callsFor('review').length, 0);
+  assert.equal(fixture.callsFor('codex').length, 0);
+  assert.equal(fixture.markVerifiedCalls().length, 0);
+  assert.equal(fixture.mergeCalls().length, 0);
+});
+
+test('tampered review snapshot fails closed before reviewers, mark, or merge', async () => {
+  const fixture = gateRoundFixture({ heads: [HEAD_A, HEAD_A] });
+  fixture.deps.materializeReviewBundle = async () => ({
+    ok: true,
+    reviewedHeadRefOid: HEAD_A,
+    article: {
+      path: '/tmp/snapshot/article.ts',
+      gitObject: `${HEAD_A}:data/articles/x.ts`,
+      bytes: 10,
+      sha256: '1'.repeat(64),
+    },
+    draft: {
+      path: '/tmp/snapshot/draft.md',
+      bytes: 10,
+      sha256: '2'.repeat(64),
+    },
+  });
+  fixture.deps.verifyReviewBundle = async () => ({
+    ok: false,
+    reason: 'review snapshot article digest mismatch',
+  });
+
+  const result = await runGate(fixture.options, fixture.deps);
+
+  assert.equal(result.exitCode, 2);
+  assert.match(result.reason, /snapshot.*digest mismatch/i);
+  assert.equal(fixture.callsFor('review').length, 0);
+  assert.equal(fixture.callsFor('codex').length, 0);
+  assert.equal(fixture.markVerifiedCalls().length, 0);
+  assert.equal(fixture.mergeCalls().length, 0);
 });
 
 for (const localMutation of [

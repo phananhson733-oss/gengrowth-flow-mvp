@@ -377,6 +377,39 @@ test('mixed claims ledger is scoped to the selected site and pinned plan', () =>
   assert.doesNotMatch(r.stdout, /legacy-out-of-plan/);
 });
 
+test('PG ids mentioned only in plan prose are not treated as allowed checklist targets', () => {
+  const c = freshCase({});
+  writeFileSync(c.plan, [
+    '# W22 fixture',
+    '',
+    '- [ ] `PG-A-001` intended checklist target',
+    '',
+    'Historical note: PG-OUT-999 was retired and must not re-enter this batch.',
+    '',
+  ].join('\n'));
+  writeQueueRecord(c, 'prose-only-terminal', {
+    status: 'archived',
+    event: {
+      site: 'astrologywiki',
+      pageId: 'PG-OUT-999',
+      slug: 'retired',
+      createdAt: IN_WINDOW,
+    },
+    updatedAt: IN_WINDOW,
+  });
+
+  const r = run([
+    '--since', SINCE,
+    '--site', 'astrologywiki',
+    '--plan', c.plan,
+    '--run-id', 'run-1',
+    '--dry-run',
+  ], c);
+  assert.equal(r.status, 2, `${r.stdout}\n${r.stderr}`);
+  assert.doesNotMatch(r.stdout, /PG-OUT-999|retired/);
+  assert.equal(notifyCalls(c).length, 0);
+});
+
 test('existing corrupt claims ledger fails closed instead of claiming an empty or successful fire', () => {
   const c = freshCase({});
   writeFileSync(join(c.opsDir, 'inbox', '06-tasks', 'tasks', '.autopilot-claims.json'), '{"broken":');

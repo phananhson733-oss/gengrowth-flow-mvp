@@ -226,6 +226,26 @@ test('--mark-verified repair override fails closed for outside, symlink, dirty, 
       pattern: /outside|escape|root/i,
     },
     {
+      name: 'missing controller root',
+      mutate(binding, h) {
+        return { ...binding, repairRoot: join(h.root, 'missing-controller-root') };
+      },
+      pattern: /root|realpath|no such/i,
+    },
+    {
+      name: 'controller root is a symlink',
+      mutate(binding, h) {
+        const alias = join(h.root, 'controller-root-alias');
+        symlinkSync(binding.repairRoot, alias);
+        return {
+          ...binding,
+          repairRoot: alias,
+          worktree: join(alias, 'PG-001-event'),
+        };
+      },
+      pattern: /root.*symlink|symlink.*root/i,
+    },
+    {
       name: 'dirty repair worktree',
       mutate(binding) {
         writeFileSync(join(binding.worktree, 'DIRTY.md'), 'dirty\n');

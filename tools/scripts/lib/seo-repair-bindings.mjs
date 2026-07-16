@@ -80,9 +80,6 @@ export function inspectBoundRepairWorktree({
       throw new Error(`remote head ${remoteHead} does not match expected head ${expectedHead}`);
     }
     const { pathRealpath } = containedRealpath(worktree, root, 'repair worktree');
-    if (lstatSync(worktree).isSymbolicLink() && resolve(worktree) !== pathRealpath) {
-      // Symlinks are allowed only when their real target still passed the root check above.
-    }
     if (!statSync(pathRealpath).isDirectory()) {
       throw new Error('repair worktree must be a directory');
     }

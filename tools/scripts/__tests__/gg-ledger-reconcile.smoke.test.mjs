@@ -357,8 +357,44 @@ test('silent strict terminal failure keeps durable notification; next unsilenced
     log: () => {},
   };
   try {
-    const silent = await runLedgerReconcile({ apply: true, strict: true, deps });
-    assert.equal(silent.ok, false, 'strict rc2 equivalent must not erase the notification');
+    const silentSource = `
+      import { runLedgerReconcile } from ${JSON.stringify(reconcileUrl)};
+      const terminal = JSON.parse(process.env.GG_TEST_TERMINAL);
+      const result = await runLedgerReconcile({
+        apply: true,
+        strict: true,
+        deps: {
+          apply: async () => ({ errors: [], summary: [], terminalNotifications: [terminal] }),
+          verify: async () => JSON.parse(process.env.GG_TEST_VERIFY),
+          notify: async () => { throw new Error('silenced strict must not call notify'); },
+          log: () => {},
+        },
+      });
+      process.stdout.write(JSON.stringify(result));
+      if (!result.ok) process.exitCode = 2;
+    `;
+    const silent = spawnSync('node', ['--input-type=module', '-e', silentSource], {
+      cwd: flow,
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        GG_FLOW_STATE_DIR: state,
+        GG_LARK_NOTIFY_SILENCE: '1',
+        GG_TEST_TERMINAL: JSON.stringify({
+          ...sidecar.record.fields,
+          notificationKey: sidecar.record.notificationKey,
+        }),
+        GG_TEST_VERIFY: JSON.stringify(zero({
+          droppedWritebackAfter: 1,
+          droppedWritebackEvidence: [{
+            ...sidecar.record.fields,
+            state: 'dropped',
+            notificationKey: sidecar.record.notificationKey,
+          }],
+        })),
+      },
+    });
+    assert.equal(silent.status, 2, `${silent.stdout}\n${silent.stderr}`);
     assert.equal(calls, 0);
     assert.equal(readdirSync(sidecar.dir).filter((name) => name.endsWith('.json')).length, 1);
 

@@ -2,10 +2,11 @@ import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import {
   existsSync,
+  linkSync,
   mkdirSync,
   readFileSync,
   readdirSync,
-  renameSync,
+  unlinkSync,
   writeFileSync,
 } from 'node:fs';
 import { homedir } from 'node:os';
@@ -89,7 +90,13 @@ export function ensureAstrologyRepairDraft({
       if (bytes.length === 0) throw new Error('source staging draft is empty');
       const temporary = `${draftFile}.tmp.${process.pid}`;
       writeFileSync(temporary, bytes, { flag: 'wx', mode: 0o600 });
-      renameSync(temporary, draftFile);
+      try {
+        linkSync(temporary, draftFile);
+      } catch (error) {
+        if (error?.code !== 'EEXIST') throw error;
+      } finally {
+        try { unlinkSync(temporary); } catch {}
+      }
     }
     const bytes = readFileSync(draftFile);
     if (bytes.length === 0) throw new Error('controller repair draft is empty');
@@ -708,6 +715,25 @@ function astrologyArtifactSha(target) {
       hash.update(content);
       hash.update('\0');
       files += 1;
+    } catch {}
+  }
+  if (target.draftFile) {
+    try {
+      const content = readFileSync(target.draftFile);
+      const draftSha256 = createHash('sha256').update(content).digest('hex');
+      const inspected = inspectBoundRepairDraft({
+        draftFile: target.draftFile,
+        expectedSha256: draftSha256,
+      });
+      if (inspected.ok) {
+        hash.update(`draft:${target.site || 'astrologywiki'}/${target.pageId || 'unknown'}`);
+        hash.update('\0');
+        hash.update(String(content.length));
+        hash.update('\0');
+        hash.update(content);
+        hash.update('\0');
+        files += 1;
+      }
     } catch {}
   }
   return files > 0 ? hash.digest('hex') : null;

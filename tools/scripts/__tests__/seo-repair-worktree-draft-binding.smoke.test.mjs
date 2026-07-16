@@ -446,6 +446,64 @@ test('successful local push remains persisted when the dirty original worktree c
   assert.equal(regatedTarget.draftSha256, sha256('# Mars in Pisces\n'));
 });
 
+test('controller no-progress artifact SHA includes repaired draft bytes as well as committed article assets', async (t) => {
+  const root = mkdtempSync(join(tmpdir(), 'seo-repair-artifact-draft-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const oldState = process.env.GG_FLOW_STATE_DIR;
+  process.env.GG_FLOW_STATE_DIR = join(root, 'state');
+  t.after(() => {
+    if (oldState === undefined) delete process.env.GG_FLOW_STATE_DIR;
+    else process.env.GG_FLOW_STATE_DIR = oldState;
+  });
+  const article = join(root, 'worktree', 'data', 'articles', 'brad-pitt-birth-chart.ts');
+  const draft = join(
+    root,
+    'state',
+    'seo-repair-drafts',
+    'astrologywiki',
+    'PG-CELEB-058',
+    'event.md',
+  );
+  mkdirSync(join(root, 'worktree', 'data', 'articles'), { recursive: true });
+  mkdirSync(join(root, 'state', 'seo-repair-drafts', 'astrologywiki', 'PG-CELEB-058'), {
+    recursive: true,
+  });
+  writeFileSync(article, 'export const article = { time: "unknown" };\n');
+  writeFileSync(draft, '# Birth time is contested\n');
+  const adapter = astrologyAdapter.createAstrologyWikiRepairAdapter({
+    resolveContext: async () => ({
+      branch: 'seo/auto/2026-07-15-PG-CELEB-058',
+      worktree: join(root, 'worktree'),
+      articleFile: article,
+      changedFiles: ['data/articles/brad-pitt-birth-chart.ts'],
+      draftFile: draft,
+      draftSha256: sha256(readFileSync(draft)),
+      linkCandidates: [],
+    }),
+    regate: async () => ({ ok: false, reason: 'same gate failure' }),
+  });
+  const input = {
+    record: {
+      event: {
+        eventId: 'event-058',
+        site: 'astrologywiki',
+        pageId: 'PG-CELEB-058',
+        slug: 'brad-pitt-birth-chart',
+        stage: 'preview_fact_gate',
+        errorKind: 'gate_fail',
+        summary: 'birth time conflict',
+      },
+    },
+    strategy: 'deterministic_retry',
+  };
+  const first = await adapter.execute(input);
+  writeFileSync(draft, '# Exact birth time omitted pending authoritative source\n');
+  const second = await adapter.execute(input);
+  assert.match(first.evidence.artifactSha, /^[0-9a-f]{64}$/);
+  assert.match(second.evidence.artifactSha, /^[0-9a-f]{64}$/);
+  assert.notEqual(second.evidence.artifactSha, first.evidence.artifactSha);
+});
+
 test('058-style repair prompt forbids invented protected facts and allows neutralizing a contested claim', () => {
   const prompt = buildRepairAgentPrompt({
     template: 'repair one target',

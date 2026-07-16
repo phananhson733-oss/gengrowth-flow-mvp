@@ -30,10 +30,10 @@ test('SEO launchd runner owns pre/post drain, strict reconcile, readiness, then 
   assert.match(source, /gg-batch-summary\.mjs/);
   assert.doesNotMatch(source, /tomllib|automation\.toml/i);
   assert.doesNotMatch(source, /codex.*exec/is);
-  assert.ok(source.indexOf('"$REPAIR_CONTROLLER"') < source.indexOf('"$NIGHTLY"'));
-  assert.ok(source.indexOf('"$NIGHTLY"') < source.indexOf('"$REPAIR_HOOK"'));
-  assert.ok(source.lastIndexOf('"$RECONCILE"') < source.indexOf('"$READINESS"'));
-  assert.ok(source.indexOf('"$READINESS"') < source.indexOf('"$BATCH_SUMMARY"'));
+  assert.ok(source.indexOf('node "$REPAIR_CONTROLLER" drain') < source.indexOf('bash "$NIGHTLY"'));
+  assert.ok(source.indexOf('bash "$NIGHTLY"') < source.indexOf('node "$REPAIR_HOOK"'));
+  assert.ok(source.lastIndexOf('node "$RECONCILE"') < source.indexOf('node "$READINESS"'));
+  assert.ok(source.indexOf('node "$READINESS"') < source.indexOf('node "$BATCH_SUMMARY"'));
   assert.doesNotMatch(nightlySource, /gg-batch-summary/);
 });
 

@@ -18,6 +18,12 @@
 //
 // Pure Node — no deps. Mirrors red-lines.mjs structure.
 
+import { readFileSync, writeFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+
+import { resolveStructuralProfile } from './seo-structural-profile.mjs';
+import { normalizeStructuralMarkdown } from './seo-structural-normalizer.mjs';
+
 // ============================================================
 // Constants
 // ============================================================
@@ -87,6 +93,20 @@ function firstSentenceAfterH1(md) {
   return m ? m[0].trim() : para.slice(0, 200);
 }
 
+function structuralProfileFor(spec = {}) {
+  if (spec.structuralProfile?.version === 'seo-structure-v1') {
+    return spec.structuralProfile;
+  }
+  return resolveStructuralProfile({
+    site: spec.site || 'astrologywiki',
+    locale: spec.locale || spec.language || 'en',
+    template: spec.template || 'Definition',
+    intent: spec.intent || '',
+    contentTier: spec.contentTier || spec.tier || 'T2',
+    manifest: spec.manifest || spec,
+  });
+}
+
 // ============================================================
 // Individual checks
 // ============================================================
@@ -103,29 +123,34 @@ export function checkH1Count(md, spec) {
 }
 
 export function checkH2Count(md, spec) {
-  const expected = spec.h2_count ?? 7;
+  const profile = structuralProfileFor(spec);
+  const expected = profile.h2Range;
   const actual = countHeading(md, 2);
   return {
     id: 'h2_count',
-    pass: actual === expected,
-    expected,
+    pass: actual >= expected[0] && actual <= expected[1],
+    expected: expected[0] === expected[1] ? expected[0] : `${expected[0]}-${expected[1]}`,
     actual,
   };
 }
 
-export function checkH3H4Forbidden(md) {
+export function checkH3H4Forbidden(md, spec = {}) {
+  const profile = structuralProfileFor(spec);
   const h3 = countHeading(md, 3);
   const h4 = countHeading(md, 4);
+  const h3Maximum = profile.h3Range[1];
+  const h3Pass = h3 >= profile.h3Range[0] && (h3Maximum === null || h3 <= h3Maximum);
   return {
     id: 'h3_h4_forbidden',
-    pass: h3 === 0 && h4 === 0,
-    expected: '0 H3, 0 H4',
+    pass: h3Pass && h4 <= profile.maxH4,
+    expected: `${profile.h3Range[0]}-${h3Maximum ?? 'unbounded'} H3, 0 H4`,
     actual: `${h3} H3, ${h4} H4`,
   };
 }
 
 export function checkWordCount(md, spec) {
-  const [lo, hi] = spec.word_range || [1500, 1800];
+  const profile = structuralProfileFor(spec);
+  const [lo, hi] = profile.effectiveWordRange;
   const actual = wordCount(md);
   return {
     id: 'word_count',
@@ -141,7 +166,7 @@ export function checkKeywordCount(md, spec) {
   if (!target) {
     return { id: 'keyword_count', pass: true, expected: 'n/a', actual: 0, note: 'no target_keyword in spec' };
   }
-  const [lo, hi] = spec.kw_count_range || [5, 8];
+  const [lo, hi] = structuralProfileFor(spec).keywordRange;
   const escaped = target.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const re = new RegExp(`(?<![A-Za-z0-9])${escaped}(?![A-Za-z0-9])`, 'gi');
   const actual = (md.match(re) || []).length;
@@ -197,29 +222,35 @@ export function checkReflectionPrompts(md, spec) {
   };
 }
 
-export function checkQuickRefTable(md) {
+export function checkQuickRefTable(md, spec = {}) {
+  const minimum = structuralProfileFor(spec).tableMinimum;
   const sections = getH2Sections(md);
   const ref = findSection(sections, /quick\s+reference\s+table/i);
   if (!ref) {
     return {
       id: 'quick_ref_table',
       pass: false,
-      expected: '≥ 4 columns × ≥ 3 data rows',
+      expected: `≥ ${minimum.columns} columns × ≥ ${minimum.rows} data rows`,
       actual: 'no Quick Reference Table section found',
     };
   }
   const tableLines = ref.body.split('\n').filter((l) => /\|/.test(l) && (l.match(/\|/g) || []).length >= 3);
   if (tableLines.length === 0) {
-    return { id: 'quick_ref_table', pass: false, expected: '≥ 4 cols × ≥ 3 rows', actual: 'no table found' };
+    return {
+      id: 'quick_ref_table',
+      pass: false,
+      expected: `≥ ${minimum.columns} cols × ≥ ${minimum.rows} rows`,
+      actual: 'no table found',
+    };
   }
   // First row = header, second = separator, rest = data.
   const cols = (tableLines[0].match(/\|/g) || []).length - 1; // pipes - 1 ≈ columns
   const dataRows = tableLines.length - 2; // minus header + separator
-  const pass = cols >= 4 && dataRows >= 3;
+  const pass = cols >= minimum.columns && dataRows >= minimum.rows;
   return {
     id: 'quick_ref_table',
     pass,
-    expected: '≥ 4 cols × ≥ 3 rows',
+    expected: `≥ ${minimum.columns} cols × ≥ ${minimum.rows} rows`,
     actual: `${cols} cols × ${dataRows} data rows`,
   };
 }
@@ -273,22 +304,29 @@ export function checkAITells(md) {
  *                         reflection_count, reflection_max_words }
  */
 export function runStructuralChecks(draftMd, spec = {}) {
+  const structuralProfile = structuralProfileFor(spec);
+  const normalization = normalizeStructuralMarkdown(draftMd, structuralProfile);
+  const normalizedMarkdown = normalization.markdown;
+  const effectiveSpec = { ...spec, structuralProfile };
   const checks = [
-    checkH1Count(draftMd, spec),
-    checkH2Count(draftMd, spec),
-    checkH3H4Forbidden(draftMd),
-    checkWordCount(draftMd, spec),
-    checkKeywordCount(draftMd, spec),
-    checkWikilinkFormat(draftMd),
-    checkReflectionPrompts(draftMd, spec),
-    checkQuickRefTable(draftMd),
-    checkTrailingMeta(draftMd),
-    checkFirstSentenceSubject(draftMd, spec),
-    checkAITells(draftMd),
+    checkH1Count(normalizedMarkdown, effectiveSpec),
+    checkH2Count(normalizedMarkdown, effectiveSpec),
+    checkH3H4Forbidden(normalizedMarkdown, effectiveSpec),
+    checkWordCount(normalizedMarkdown, effectiveSpec),
+    checkKeywordCount(normalizedMarkdown, effectiveSpec),
+    checkWikilinkFormat(normalizedMarkdown),
+    checkReflectionPrompts(normalizedMarkdown, effectiveSpec),
+    checkQuickRefTable(normalizedMarkdown, effectiveSpec),
+    checkTrailingMeta(normalizedMarkdown),
+    checkFirstSentenceSubject(normalizedMarkdown, effectiveSpec),
+    checkAITells(normalizedMarkdown),
   ];
   return {
     all_pass: checks.every((c) => c.pass),
     checks,
+    structural_profile: structuralProfile,
+    normalization,
+    normalized_markdown: normalizedMarkdown,
   };
 }
 
@@ -296,9 +334,6 @@ export function runStructuralChecks(draftMd, spec = {}) {
 // CLI entry: `node iterate-prompt-checks.mjs <file.md> [--spec key=val ...]`
 // Prints JSON for easy parsing by the skill.
 // ============================================================
-
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 
 function parseCliArgs(argv) {
   const file = argv[2];
@@ -328,6 +363,12 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   }
   const md = readFileSync(file, 'utf8');
   const result = runStructuralChecks(md, spec);
+  if (result.normalization.changes.length > 0) {
+    if (result.normalization.protectedDigestBefore !== result.normalization.protectedDigestAfter) {
+      throw new Error('protected digest mismatch; refusing normalized iterate source');
+    }
+    writeFileSync(file, result.normalized_markdown);
+  }
   process.stdout.write(JSON.stringify(result, null, 2) + '\n');
   process.exit(result.all_pass ? 0 : 1);
 }

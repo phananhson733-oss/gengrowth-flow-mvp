@@ -121,8 +121,13 @@ function fakeEnv({ dir, sentinelsDir, statusJson, reviewBin, verifyExit = 0, ver
     sentinelName: 'notify', sentinelsDir,
     stdout: JSON.stringify({ ok: true, silenced: false, messageId: 'om_test' }), exit: 0,
   });
+  writeNodeFake(dir, 'gh', {
+    sentinelName: 'branch-head', sentinelsDir,
+    stdout: HEAD_A, exit: 0,
+  });
   const env = {
     ...process.env,
+    PATH: `${dir}:${process.env.PATH}`,
     GG_AUTOPILOT_BIN: autopilot,
     GG_PREVIEW_WAIT_BIN: previewWait,
     GG_PREVIEW_VERIFY_BIN: previewVerify,

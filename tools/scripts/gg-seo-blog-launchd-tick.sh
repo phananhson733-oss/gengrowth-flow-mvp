@@ -16,7 +16,9 @@ LOG="${GG_SEO_LAUNCHD_LOG:-$HOME/Library/Logs/gg-seo-blog-launchd.out.log}"
 ERR_LOG="${GG_SEO_LAUNCHD_ERR_LOG:-$HOME/Library/Logs/gg-seo-blog-launchd.err.log}"
 NIGHTLY="${GG_SEO_NIGHTLY_BIN:-$FLOW/tools/scripts/gg-nightly-seo.sh}"
 REPAIR_HOOK="${GG_SEO_REPAIR_HOOK_BIN:-$FLOW/tools/scripts/gg-seo-repair-hook.mjs}"
+REPAIR_CONTROLLER="${GG_SEO_REPAIR_CONTROLLER_BIN:-$FLOW/tools/scripts/gg-seo-repair-controller.mjs}"
 RECONCILE="${GG_SEO_RECONCILE_BIN:-$FLOW/tools/scripts/gg-ledger-reconcile.mjs}"
+READINESS="${GG_SEO_READINESS_BIN:-$FLOW/tools/scripts/gg-seo-readiness.mjs}"
 BATCH_SUMMARY="${GG_SEO_BATCH_SUMMARY_BIN:-$FLOW/tools/scripts/gg-batch-summary.mjs}"
 NIGHTLY_LOG="${GG_SEO_NIGHTLY_LOG:-$HOME/Library/Logs/gg-nightly-seo.log}"
 OPS="${GG_OPS_DIR:-$HOME/gengrowth-ops}"
@@ -57,7 +59,9 @@ export GG_ORACLE_DIR="$ORACLE_BASELINE"
 
 [[ -x "$NIGHTLY" ]] || { echo "nightly wrapper unavailable: $NIGHTLY"; exit 1; }
 [[ -f "$REPAIR_HOOK" ]] || { echo "repair hook unavailable: $REPAIR_HOOK"; exit 1; }
+[[ -f "$REPAIR_CONTROLLER" ]] || { echo "repair controller unavailable: $REPAIR_CONTROLLER"; exit 1; }
 [[ -f "$RECONCILE" ]] || { echo "ledger reconcile unavailable: $RECONCILE"; exit 1; }
+[[ -f "$READINESS" ]] || { echo "SEO readiness unavailable: $READINESS"; exit 1; }
 [[ -f "$BATCH_SUMMARY" ]] || { echo "batch summary unavailable: $BATCH_SUMMARY"; exit 1; }
 [[ -d "$ORACLE_BASELINE/.git" ]] || { echo "clean Oracle baseline unavailable: $ORACLE_BASELINE"; exit 1; }
 [[ -f "$PLAN" ]] || { echo "pinned SEO plan unavailable: $PLAN"; exit 1; }
@@ -105,6 +109,27 @@ export GG_SEO_REPAIR_LOG_FILE="$NIGHTLY_LOG"
 export GG_SEO_REPAIR_LOG_OFFSET_START="$LOG_OFFSET"
 unset GG_SEO_REPAIR_LOG_OFFSET_END
 
+echo "running pre-fire repair drain"
+set +e
+node "$REPAIR_CONTROLLER" drain --budget-seconds "${GG_SEO_REPAIR_BUDGET_SECONDS:-1500}"
+PRE_DRAIN_RC=$?
+set -e
+if [[ "$PRE_DRAIN_RC" -ne 0 ]]; then
+  echo "pre-fire repair drain failed; abort before nightly"
+  exit "$PRE_DRAIN_RC"
+fi
+
+echo "running pre-fire strict ledger reconcile"
+set +e
+PRE_STRICT_JSON="$(GG_LARK_NOTIFY_SILENCE=1 node "$RECONCILE" --strict --json)"
+PRE_RECONCILE_RC=$?
+set -e
+printf '%s\n' "$PRE_STRICT_JSON"
+if [[ "$PRE_RECONCILE_RC" -ne 0 ]]; then
+  echo "pre-fire strict reconcile failed; abort before nightly"
+  exit "$PRE_RECONCILE_RC"
+fi
+
 echo "single-executor preflight passed; starting deterministic SEO nightly"
 set +e
 bash "$NIGHTLY"
@@ -125,24 +150,50 @@ HOOK_RC=$?
 set -e
 
 if [[ "$HOOK_RC" -ne 0 ]]; then
-  echo "repair hook failed; skip reconcile and terminal summary"
+  echo "repair hook failed; skip post-drain, reconcile, readiness, and terminal summary"
   echo "===== seo-blog launchd tick complete nightly=$NIGHTLY_RC hook=$HOOK_RC $(date '+%F %T %Z') ====="
   exit "$HOOK_RC"
 fi
 
-echo "repair hook complete; running ledger reconcile"
+echo "repair hook complete; running post-fire repair drain"
 set +e
-GG_LARK_NOTIFY_SILENCE=1 node "$RECONCILE"
+node "$REPAIR_CONTROLLER" drain --budget-seconds "${GG_SEO_REPAIR_BUDGET_SECONDS:-1500}"
+POST_DRAIN_RC=$?
+set -e
+if [[ "$POST_DRAIN_RC" -ne 0 ]]; then
+  echo "post-fire repair drain failed; skip reconcile, readiness, and terminal summary"
+  exit "$POST_DRAIN_RC"
+fi
+
+echo "post-fire drain complete; running strict ledger reconcile"
+set +e
+STRICT_JSON="$(GG_LARK_NOTIFY_SILENCE=1 node "$RECONCILE" --strict --json)"
 RECONCILE_RC=$?
 set -e
+printf '%s\n' "$STRICT_JSON"
 
 if [[ "$RECONCILE_RC" -ne 0 ]]; then
-  echo "ledger reconcile failed; skip terminal summary"
+  echo "strict ledger reconcile failed; skip readiness and terminal summary"
   echo "===== seo-blog launchd tick complete nightly=$NIGHTLY_RC hook=$HOOK_RC reconcile=$RECONCILE_RC $(date '+%F %T %Z') ====="
   exit "$RECONCILE_RC"
 fi
 
-echo "ledger reconcile complete; emitting one terminal batch summary"
+echo "strict reconcile complete; evaluating terminal readiness"
+set +e
+GG_LARK_NOTIFY_SILENCE=1 GG_SEO_STRICT_RESULT_JSON="$STRICT_JSON" \
+  node "$READINESS" \
+  --site astrologywiki \
+  --plan "$PLAN" \
+  --run-id "$RUN_ID" \
+  --json
+READINESS_RC=$?
+set -e
+if [[ "$READINESS_RC" -ne 0 ]]; then
+  echo "readiness blocked; skip terminal summary"
+  exit "$READINESS_RC"
+fi
+
+echo "readiness confirmed; emitting one terminal batch summary"
 set +e
 node "$BATCH_SUMMARY" \
   --since "$RUN_START" \
@@ -152,9 +203,5 @@ node "$BATCH_SUMMARY" \
 SUMMARY_RC=$?
 set -e
 
-# exit 2 is the documented silent empty/in-flight-only terminal window.
-FINAL_RC="$SUMMARY_RC"
-if [[ "$SUMMARY_RC" -eq 2 ]]; then FINAL_RC=0; fi
-
-echo "===== seo-blog launchd tick complete nightly=$NIGHTLY_RC hook=$HOOK_RC reconcile=$RECONCILE_RC summary=$SUMMARY_RC $(date '+%F %T %Z') ====="
-exit "$FINAL_RC"
+echo "===== seo-blog launchd tick complete nightly=$NIGHTLY_RC hook=$HOOK_RC reconcile=$RECONCILE_RC readiness=$READINESS_RC summary=$SUMMARY_RC $(date '+%F %T %Z') ====="
+exit "$READINESS_RC"

@@ -74,6 +74,11 @@ import { checkAntiHomogenization } from './lib/anti-homogenization.mjs';
 import { isValidAuthorId, normalizeAuthorId } from './lib/author-routing.mjs';
 import { authorityNamesFor } from './lib/authority-allowlist.mjs';
 import { loadPersona } from './lib/author-personas/loader.mjs';
+import {
+  resolveStructuralProfile,
+  structuralWordFloor,
+} from './lib/seo-structural-profile.mjs';
+import { normalizeStructuralMarkdown } from './lib/seo-structural-normalizer.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO = join(__dirname, '..', '..');
@@ -185,10 +190,6 @@ const templateRaw = pick('template', 'template', 'Definition');
 // Normalize case: accept "Definition" / "definition" / "Pillar" / "pillar".
 const template = /^pillar$/i.test(templateRaw) ? 'Pillar' : 'Definition';
 
-const templateDefaults = {
-  Definition: { word_range: [1500, 1800], kw_count_range: [5, 8], expected_h2: 11 },
-  Pillar: { word_range: [2500, 3500], kw_count_range: [8, 12], expected_h2: 11 },
-};
 // EN-only (2026-07-03): zh authoring was removed from the pipeline. A zh request
 // is a hard error — rejecting loudly beats silently validating a Chinese draft
 // against the English contract and shipping garbage.
@@ -198,10 +199,39 @@ if (langRaw !== 'en') {
   process.exit(2);
 }
 const language = 'en';
-const tplDef = templateDefaults[template];
-
-const wordRange = fixture.word_range || tplDef.word_range;
-const kwRange = fixture.kw_count_range || tplDef.kw_count_range;
+const tier = pick('tier', 'tier', 'T2');
+const structuralProfile = resolveStructuralProfile({
+  site: process.env.GG_SITE || 'astrologywiki',
+  locale: language,
+  template,
+  intent: fixture.intent || '',
+  contentTier: tier,
+  manifest: fixture,
+});
+const cliWordMin = Number.parseInt(args.word_min, 10);
+const cliWordMax = Number.parseInt(args.word_max, 10);
+const cliKeywordMin = Number.parseInt(args.kw_min, 10);
+const cliKeywordMax = Number.parseInt(args.kw_max, 10);
+const cliExpectedH2 = Number.parseInt(args.expected_h2, 10);
+const h2Range = Number.isInteger(cliExpectedH2) && cliExpectedH2 > 0
+  ? [cliExpectedH2, cliExpectedH2]
+  : structuralProfile.h2Range;
+const effectiveWordRange = [
+  Number.isInteger(cliWordMin) && cliWordMin > 0
+    ? structuralWordFloor(cliWordMin)
+    : structuralProfile.effectiveWordRange[0],
+  Number.isInteger(cliWordMax) && cliWordMax > 0
+    ? cliWordMax
+    : structuralProfile.effectiveWordRange[1],
+];
+const keywordRange = [
+  Number.isInteger(cliKeywordMin) && cliKeywordMin >= 0
+    ? cliKeywordMin
+    : structuralProfile.keywordRange[0],
+  Number.isInteger(cliKeywordMax) && cliKeywordMax >= 0
+    ? cliKeywordMax
+    : structuralProfile.keywordRange[1],
+];
 
 const ctx = {
   source: req('source'),
@@ -211,7 +241,7 @@ const ctx = {
   target_keyword: pick('target_keyword', 'target_keyword', '__required__'),
   associated_keywords: associated,
   template,
-  tier: pick('tier', 'tier', 'T2'),
+  tier,
   cta_target_url: pick('cta_target_url', 'cta_target_url', ''),
   track: '量产线',
   page_role: template === 'Pillar' ? 'Hub' : 'Support',
@@ -225,17 +255,19 @@ const ctx = {
   llm_source: args.llm_source || 'unknown',
   prompt_version: promptVersion,
   language,
-  word_range_min: Number.parseInt(args.word_min, 10) || wordRange[0],
-  word_range_max: Number.parseInt(args.word_max, 10) || wordRange[1],
-  kw_min: Number.parseInt(args.kw_min, 10) || kwRange[0],
-  kw_max: Number.parseInt(args.kw_max, 10) || kwRange[1],
+  structural_profile: structuralProfile,
+  h2_range: h2Range,
+  word_range_min: effectiveWordRange[0],
+  word_range_max: effectiveWordRange[1],
+  kw_min: keywordRange[0],
+  kw_max: keywordRange[1],
   expected_h1: 1,
   // v4.4: section count is canonical per template (tplDef = 9/11). Prefer the
   // template default over a fixture sidecar so a STALE fixture (e.g. an old
   // `.gg-cache/prompts/*.json` carrying expected_h2: 7) can't silently pin the
   // pre-v4.4 count. Only an explicit CLI --expected-h2 overrides. fixture is the
   // last-resort fallback (covers templates absent from templateDefaults).
-  expected_h2: Number.parseInt(args.expected_h2, 10) || tplDef.expected_h2 || fixture.expected_h2,
+  expected_h2: h2Range[0],
   // RL7: per-author black words. Source priority: CLI --banned_tokens (comma
   // list) > fixture.banned_tokens (compiled by Lane A content-draft from the
   // chosen author persona capsule). Empty/absent → RL7 N/A (author has no list).
@@ -416,10 +448,17 @@ function structureCheck(draft) {
   const h3Count = (draft.match(/^### /gm) || []).length;
   const h4Count = (draft.match(/^#### /gm) || []).length;
   if (h1Count !== ctx.expected_h1) findings.push(`H1 count = ${h1Count}, expected ${ctx.expected_h1}`);
-  if (h2Count !== ctx.expected_h2) findings.push(`H2 count = ${h2Count}, expected ${ctx.expected_h2}`);
+  if (h2Count < ctx.h2_range[0] || h2Count > ctx.h2_range[1]) {
+    const expected = ctx.h2_range[0] === ctx.h2_range[1]
+      ? String(ctx.h2_range[0])
+      : `${ctx.h2_range[0]}-${ctx.h2_range[1]}`;
+    findings.push(`H2 count = ${h2Count}, expected ${expected}`);
+  }
   // H3 allowed both sites (user 2026-06-22: "需要有 H3，如果有必要的话"); SC3C
   // (structure-checks) governs subsection quality / wall-of-text. H4 stays banned (too deep).
-  if (h4Count !== 0) findings.push(`H4 count = ${h4Count}, expected 0`);
+  if (h4Count > ctx.structural_profile.maxH4) {
+    findings.push(`H4 count = ${h4Count}, expected ${ctx.structural_profile.maxH4}`);
+  }
 
   const words = draft.trim().split(/\s+/).filter(Boolean).length;
   // Under-min is a hard FAIL (thin content must not ship). Over-max is a soft
@@ -613,12 +652,19 @@ console.log(`LLM: ${ctx.llm_source} / prompt: ${ctx.prompt_version}`);
 console.log('━'.repeat(60));
 
 const rawSource = readFileSync(ctx.source, 'utf8');
+const normalization = normalizeStructuralMarkdown(rawSource, structuralProfile);
+if (normalization.changes.length > 0) {
+  if (normalization.protectedDigestBefore !== normalization.protectedDigestAfter) {
+    throw new Error('protected digest mismatch; refusing normalized phase2 source');
+  }
+  writeFileSync(ctx.source, normalization.markdown);
+}
 // Strip YAML frontmatter if present. Fresh LLM output has none; re-runs on
 // published files carry an auto-added frontmatter listing target_keyword +
 // associated_keywords which would otherwise double-count and falsely fail RL5.
-const draft = rawSource.startsWith('---\n')
-  ? rawSource.replace(/^---\n[\s\S]*?\n---\n+/, '')
-  : rawSource;
+const draft = normalization.markdown.startsWith('---\n')
+  ? normalization.markdown.replace(/^---\n[\s\S]*?\n---\n+/, '')
+  : normalization.markdown;
 if (!draft.match(/^#\s+.+$/m)) {
   console.error('ERROR: draft has no H1; aborting');
   process.exit(1);

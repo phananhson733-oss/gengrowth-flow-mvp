@@ -68,10 +68,10 @@ test('normalizer is deterministic, idempotent and preserves protected semantics'
 
 test('normalizer performs only the declared mechanical transformations', () => {
   const result = normalizeStructuralMarkdown(fixtureMarkdownWithProtectedContent(), profileFixture());
-  const outsideCode = result.markdown.replace(/```[\s\S]*?```/g, '');
+  const outsideCode = result.markdown.replace(/```[\s\S]*?```/g, 'CODE_BLOCK');
 
   assert.doesNotMatch(result.markdown, /\r/);
-  assert.doesNotMatch(result.markdown, / +$/m);
+  assert.doesNotMatch(outsideCode, / +$/m);
   assert.doesNotMatch(outsideCode, /\n{3,}/);
   assert.match(result.markdown, /^- First observation$/m);
   assert.match(result.markdown, /^- Second observation$/m);

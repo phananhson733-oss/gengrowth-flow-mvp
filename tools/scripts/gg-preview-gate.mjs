@@ -69,6 +69,7 @@ export const GATE_SITE = 'astrologywiki';
 export const EXIT = { PUBLISHED: 0, NOTHING_PENDING: 1, GATE_FAILED: 2 };
 export const REVIEW_DIMENSIONS = ['astrology', 'schema', 'links-seo'];
 const PREVIEW_STATUSES = new Set(['pushed-preview', 'verified-preview']);
+const HEAD_REF_OID_RE = /^[0-9a-f]{40}$/i;
 
 // Default per-step hard timeouts (ms). Each sub-process is killed if it exceeds these and the
 // step is classified as a gate failure. Conservative relative to the sub-scripts' own caps.
@@ -298,13 +299,148 @@ export function classifyCodex({ code, stdout, timedOut }) {
   return { verdict: 'PASS', reason: '' };
 }
 
+export async function resolveBranchHead(branch, repo, deps = {}) {
+  if (typeof deps.resolveBranchHead === 'function') {
+    return deps.resolveBranchHead(branch, repo);
+  }
+  const result = await runStep('gh', [
+    'pr', 'view', branch,
+    '--repo', repo,
+    '--json', 'headRefOid',
+    '-q', '.headRefOid',
+  ], { timeoutMs: DEFAULTS.statusTimeoutMs }, deps);
+  if (result.timedOut || result.code !== 0) return null;
+  const headRefOid = String(result.stdout || '').trim();
+  return headRefOid || null;
+}
+
+async function runFullGateRound({
+  o,
+  B,
+  node,
+  claim,
+  articleTs,
+  draftMd,
+  previewUrl,
+  reviewedHeadRefOid,
+  repairRound,
+  log,
+}) {
+  const checks = {};
+  let failure = null;
+  const noteFailure = (candidate) => {
+    if (!failure) failure = candidate;
+  };
+  const pinnedArgs = ['--head-ref-oid', reviewedHeadRefOid];
+
+  const verifyArgs = [
+    '--preview-url', previewUrl,
+    '--slug', String(claim.slug),
+    ...pinnedArgs,
+    '--json',
+  ];
+  log(`round[${repairRound}] verify@${reviewedHeadRefOid.slice(0, 8)}: node ${B.previewVerify} ${verifyArgs.join(' ')} (timeout ${o.verifyTimeoutMs}ms)`);
+  const vr = await node(B.previewVerify, verifyArgs, { timeoutMs: o.verifyTimeoutMs });
+  if (vr.timedOut) {
+    checks.chrome = { status: 'FAIL', reason: 'hard timeout' };
+    noteFailure({ reason: 'chrome verify: hard timeout', repairable: false, dim: 'chrome' });
+  } else {
+    const vj = safeJson(lastJsonLine(vr.stdout));
+    if (vr.code !== 0 || !vj || !vj.ok) {
+      const reason = vj && vj.failReason ? vj.failReason : tail(vr.stderr) || `verify exit ${vr.code}`;
+      checks.chrome = { status: 'FAIL', reason };
+      noteFailure({ reason: `chrome verify failed: ${reason}`, repairable: false, dim: 'chrome' });
+    } else {
+      checks.chrome = { status: 'PASS', checked: (vj.checked || []).length };
+      log(`round[${repairRound}] verify: PASS (${(vj.checked || []).length} url(s))`);
+    }
+  }
+
+  for (const dim of REVIEW_DIMENSIONS) {
+    const args = [
+      '--dimension', dim,
+      '--article', articleTs,
+      '--draft', draftMd,
+      '--timeout-ms', String(o.reviewTimeoutMs),
+      ...pinnedArgs,
+      '--json',
+    ];
+    log(`round[${repairRound}] review[${dim}]@${reviewedHeadRefOid.slice(0, 8)}: node ${B.reviewWorker}`);
+    const rr = await node(B.reviewWorker, args, { timeoutMs: o.reviewTimeoutMs + 5000 });
+    if (rr.timedOut) {
+      checks[dim] = { status: 'FAIL', reason: 'hard timeout' };
+      noteFailure({ reason: `review[${dim}]: hard timeout`, repairable: false, dim });
+      continue;
+    }
+    const rj = safeJson(lastJsonLine(rr.stdout));
+    const verdict = rj && rj.verdict ? rj.verdict : null;
+    const reason = rj && rj.blocking_reason
+      ? rj.blocking_reason
+      : (verdict || tail(rr.stderr) || `exit ${rr.code}`);
+    checks[dim] = { status: verdict || 'NO_VERDICT', reason };
+    if (verdict !== 'PASS') {
+      noteFailure({
+        reason: `review[${dim}] ${verdict || 'no-verdict'}: ${reason}`,
+        repairable: verdict === 'FAIL',
+        dim,
+      });
+    } else {
+      log(`round[${repairRound}] review[${dim}]: PASS`);
+    }
+  }
+
+  const codexRequired = process.env.GG_CODEX_GATE_REQUIRED !== '0';
+  if (!B.codex) {
+    const reason = 'codex factual review REQUIRED but GG_CODEX_BIN not configured';
+    checks.codex = { status: 'SKIPPED', reason: 'no configured bin' };
+    if (codexRequired) noteFailure({ reason, repairable: false, dim: 'codex' });
+  } else {
+    const codexArgs = [
+      '--repo', o.repo,
+      '--pr', String(claim.pr || ''),
+      '--branch', o.branch,
+      ...pinnedArgs,
+    ];
+    log(`round[${repairRound}] codex@${reviewedHeadRefOid.slice(0, 8)}: ${B.codex}`);
+    const cls = classifyCodex(await node(B.codex, codexArgs, { timeoutMs: o.codexTimeoutMs }));
+    checks.codex = { status: cls.verdict, reason: cls.reason };
+    if (cls.verdict === 'FAIL') {
+      noteFailure({
+        reason: `codex completed with ${cls.reason}`,
+        repairable: true,
+        dim: 'codex',
+      });
+    } else if (cls.verdict !== 'PASS' && codexRequired) {
+      noteFailure({
+        reason: `codex factual review could not complete (${cls.reason}) — required gate`,
+        repairable: false,
+        dim: 'codex',
+      });
+    } else {
+      log(`round[${repairRound}] codex: ${cls.verdict}${cls.reason ? ` (${cls.reason})` : ''}`);
+    }
+  }
+
+  return {
+    pass: failure === null,
+    failure,
+    checks,
+    reviewedHeadRefOid,
+    repairRound,
+  };
+}
+
 // ── the gate ──────────────────────────────────────────────────────────────────
 // Returns { exitCode, plan:[...], action, reason } — a pure-ish orchestration result. All
 // side-effects (mark-verified/merge/mark-failed/notify) happen here EXCEPT in dry-run, where
 // only the plan is built and `action` is the INTENDED-but-skipped final action.
 export async function runGate(o, deps = {}) {
   const B = deps.bins || bins();
-  const node = (binPath, args, opts) => runNode(binPath, args, opts, deps);
+  const node = deps.node || ((binPath, args, opts) => runNode(binPath, args, opts, deps));
+  const resolveHead = deps.resolveBranchHead
+    ? ((branch, repo) => deps.resolveBranchHead(branch, repo))
+    : ((branch, repo) => resolveBranchHead(branch, repo, deps));
+  const repair = deps.tryGateRepair || tryGateRepair;
   const plan = [];
   const log = (line) => plan.push(line);
 
@@ -343,8 +479,6 @@ export async function runGate(o, deps = {}) {
 
   const { articleTs, draftMd } = articlePaths(pgId, claim);
   log(`claim: pgId=${pgId} slug=${claim.slug} status=${claim.status}`);
-  // gate-repair loop-cap: at most ONE surgical repair attempt per dimension (incl. 'codex').
-  const repaired = new Set();
 
   // (2) preview URL: reuse stored on verified-preview, else preview-wait.
   let previewUrl = null;
@@ -372,127 +506,117 @@ export async function runGate(o, deps = {}) {
     }
   }
 
-  // (3) chrome verify. The bypass secret is inherited by verify from
-  // the ENV (it reads VERCEL_AUTOMATION_BYPASS_SECRET as its default) — NOT passed as argv, so it
-  // never lands in `ps`, the gate plan, or the log.
-  const verifyArgs = ['--preview-url', previewUrl, '--slug', String(claim.slug), '--json'];
-  log(`verify: node ${B.previewVerify} ${verifyArgs.join(' ')} (timeout ${o.verifyTimeoutMs}ms)`);
-  if (!o.dryRun) {
-    const vr = await node(B.previewVerify, verifyArgs, { timeoutMs: o.verifyTimeoutMs });
-    if (vr.timedOut) {
-      return gateFail(o, B, deps, pgId, claim, 'chrome verify: hard timeout', plan);
-    }
-    const vj = safeJson(lastJsonLine(vr.stdout));
-    if (vr.code !== 0 || !vj || !vj.ok) {
-      const r = vj && vj.failReason ? vj.failReason : tail(vr.stderr) || `verify exit ${vr.code}`;
-      return gateFail(o, B, deps, pgId, claim, `chrome verify failed: ${r}`, plan);
-    }
-    log(`verify: PASS (${(vj.checked || []).length} url(s))`);
-  }
-
-  // (4) three review dimensions (all REQUIRED; a SKIPPED tooling failure blocks).
-  for (const dim of REVIEW_DIMENSIONS) {
-    log(`review[${dim}]: node ${B.reviewWorker} --dimension ${dim} --article ${articleTs} --draft ${draftMd} --json (timeout ${o.reviewTimeoutMs}ms)`);
-    if (o.dryRun) continue;
-    const runReview = () => node(B.reviewWorker,
-      ['--dimension', dim, '--article', articleTs, '--draft', draftMd, '--timeout-ms', String(o.reviewTimeoutMs), '--json'],
-      { timeoutMs: o.reviewTimeoutMs + 5000 });
-    let rr = await runReview();
-    if (rr.timedOut) {
-      return gateFail(o, B, deps, pgId, claim, `review[${dim}]: hard timeout`, plan);
-    }
-    let rj = safeJson(lastJsonLine(rr.stdout));
-    let verdict = rj && rj.verdict ? rj.verdict : null;
-    // On a real content FAIL (NOT a SKIPPED tooling error), try ONE surgical repair then re-review.
-    if (verdict === 'FAIL' && !repaired.has(dim)) {
-      const why0 = rj && rj.blocking_reason ? rj.blocking_reason : (tail(rr.stderr) || 'FAIL');
-      if (await tryGateRepair({ dim, reason: why0, articleTs, draftMd, worktree: claim.worktree, branch: o.branch, node, B, log })) {
-        repaired.add(dim);
-        rr = await runReview();
-        if (rr.timedOut) {
-          return gateFail(o, B, deps, pgId, claim, `review[${dim}]: hard timeout (post-repair)`, plan);
-        }
-        rj = safeJson(lastJsonLine(rr.stdout));
-        verdict = rj && rj.verdict ? rj.verdict : null;
-      }
-    }
-    if (verdict !== 'PASS') {
-      // FAIL or SKIPPED (tooling) both block. exit-1 from the worker == SKIPPED.
-      const why = rj && rj.blocking_reason ? rj.blocking_reason : (verdict || tail(rr.stderr) || `exit ${rr.code}`);
-      return gateFail(o, B, deps, pgId, claim, `review[${dim}] ${verdict || 'no-verdict'}: ${why}`, plan);
-    }
-    log(`review[${dim}]: PASS`);
-  }
-
-  // (4b) codex factual diff review — REQUIRED by default (GG_CODEX_GATE_REQUIRED=0 ⇒ legacy
-  // best-effort). In required mode ANY non-PASS outcome parks the claim; only a completed
-  // `VERDICT: PASS` proceeds to merge. dry-run never parks — it only records the intent.
-  const codexRequired = process.env.GG_CODEX_GATE_REQUIRED !== '0';
-  let codexEvidence = B.codex ? 'no-verdict' : 'skipped-no-bin';
   if (o.dryRun) {
-    codexEvidence = B.codex ? 'dry-run' : (codexRequired ? 'would-park:no-bin' : 'skipped-no-bin');
-    log(`codex: ${B.codex ? `${B.codex} (pr=${claim.pr || '?'})` : 'no GG_CODEX_BIN'} — dry-run`
-      + `${!B.codex && codexRequired ? ' (REQUIRED — a real run would PARK)' : ''}`);
-  } else if (!B.codex) {
-    if (codexRequired) {
-      return gateFail(o, B, deps, pgId, claim,
-        'codex factual review REQUIRED but GG_CODEX_BIN not configured (set GG_CODEX_GATE_REQUIRED=0 to override)', plan);
-    }
-    log('codex: SKIPPED (no GG_CODEX_BIN configured) — GG_CODEX_GATE_REQUIRED=0, not blocking');
-  } else {
-    log(`codex: ${B.codex} (${codexRequired ? 'REQUIRED' : 'best-effort'}, pr=${claim.pr || '?'}, timeout ${o.codexTimeoutMs}ms)`);
-    const runCodex = () => node(B.codex, ['--repo', o.repo, '--pr', String(claim.pr || ''), '--branch', o.branch],
-      { timeoutMs: o.codexTimeoutMs });
-    let cls = classifyCodex(await runCodex());
-    // On a real factual FAIL (NOT a SKIPPED tooling error like exit-3/quota), try ONE surgical repair then re-run codex.
-    if (cls.verdict === 'FAIL' && !repaired.has('codex')) {
-      if (await tryGateRepair({ dim: 'codex', reason: cls.reason, articleTs, draftMd, worktree: claim.worktree, branch: o.branch, node, B, log })) {
-        repaired.add('codex');
-        cls = classifyCodex(await runCodex());
-      }
-    }
-    codexEvidence = cls.verdict === 'PASS' ? (repaired.has('codex') ? 'ran-pass-post-repair' : 'ran-pass')
-      : cls.verdict === 'FAIL' ? 'ran-fail' : `skipped:${cls.reason}`;
-    if (cls.verdict === 'FAIL') {
-      return gateFail(o, B, deps, pgId, claim, `codex completed with ${cls.reason}`, plan);
-    }
-    if (cls.verdict !== 'PASS' && codexRequired) {
-      // SKIPPED in required mode blocks: a factual review that could not COMPLETE is not a pass.
-      return gateFail(o, B, deps, pgId, claim,
-        `codex factual review could not complete (${cls.reason}) — required gate`, plan);
-    }
-    log(`codex: ${cls.verdict}${cls.reason ? ` (${cls.reason})` : ''} — ${cls.verdict === 'PASS' ? 'PASS' : 'not blocking (best-effort)'}`);
-  }
-
-  // (5) all REQUIRED gates passed → mark-verified + merge (success notify owned by --merge).
-  // evidence records the ACTUAL codex outcome (ran-pass / ran-fail / skipped:<reason> / no-bin / dry-run),
-  // not mere bin presence — so post-incident forensics on a prod auto-merge aren't misled.
-  const evidence = `chrome preview + 3-dimension review panel passed (codex: ${codexEvidence})`;
-  log(`final: mark-verified --branch ${o.branch} --preview-url ${previewUrl} --evidence "${evidence}"`);
-  log(`final: merge --branch ${o.branch} (deploys prod; --merge owns success notify)`);
-
-  if (o.dryRun) {
+    log('round[dry-run]: WOULD resolve immutable PR head and run chrome + all reviewers + codex on that SHA');
+    log(`final: WOULD mark-verified --branch ${o.branch} --preview-url ${previewUrl} --head-ref-oid <reviewed-sha>`);
+    log(`final: WOULD merge --branch ${o.branch}`);
     return { exitCode: EXIT.PUBLISHED, plan, action: 'WOULD mark-verified + merge', reason: 'dry-run' };
   }
 
-  const mv = await node(B.autopilot,
-    ['--mark-verified', '--branch', o.branch, '--preview-url', previewUrl, '--evidence', evidence],
-    { timeoutMs: o.statusTimeoutMs });
-  if (mv.timedOut || mv.code !== 0) {
-    return gateFail(o, B, deps, pgId, claim,
-      `mark-verified failed: ${mv.timedOut ? 'timeout' : tail(mv.stderr) || `exit ${mv.code}`}`, plan);
+  const configuredRounds = Number(process.env.GG_GATE_REPAIR_MAX_ROUNDS ?? 2);
+  const maxRepairRounds = Math.min(3, Math.max(0,
+    Number.isFinite(configuredRounds) ? Math.floor(configuredRounds) : 2));
+  let previousFailedHead = null;
+
+  for (let repairRound = 0; repairRound <= maxRepairRounds; repairRound += 1) {
+    const reviewedHeadRefOid = await resolveHead(o.branch, o.repo);
+    if (!reviewedHeadRefOid) {
+      return gateFail(o, B, deps, pgId, claim, 'headRefOid required before gate round', plan);
+    }
+    if (!HEAD_REF_OID_RE.test(reviewedHeadRefOid)) {
+      return gateFail(o, B, deps, pgId, claim,
+        `branch head must be a 40-hex SHA, got "${reviewedHeadRefOid}"`, plan);
+    }
+    if (previousFailedHead === reviewedHeadRefOid) {
+      return gateFail(o, B, deps, pgId, claim,
+        `repair made no commit progress; head remained ${reviewedHeadRefOid}`, plan);
+    }
+    log(`round[${repairRound}]: pinned head ${reviewedHeadRefOid}`);
+
+    const outcome = await runFullGateRound({
+      o,
+      B,
+      node,
+      claim,
+      articleTs,
+      draftMd,
+      previewUrl,
+      reviewedHeadRefOid,
+      repairRound,
+      log,
+    });
+
+    if (outcome.pass) {
+      const currentHead = await resolveHead(o.branch, o.repo);
+      if (!currentHead) {
+        return gateFail(o, B, deps, pgId, claim,
+          'headRefOid required before mark-verified/merge', plan);
+      }
+      if (!HEAD_REF_OID_RE.test(currentHead)) {
+        return gateFail(o, B, deps, pgId, claim,
+          `current PR head must be a 40-hex SHA, got "${currentHead}"`, plan);
+      }
+      if (currentHead !== reviewedHeadRefOid) {
+        return gateFail(o, B, deps, pgId, claim,
+          `head drift ${reviewedHeadRefOid} -> ${currentHead}`, plan);
+      }
+
+      const evidence = JSON.stringify({
+        reviewedHeadRefOid,
+        repairRound,
+        checks: outcome.checks,
+      });
+      log(`final: mark-verified --branch ${o.branch} --preview-url ${previewUrl} --head-ref-oid ${reviewedHeadRefOid}`);
+      const mv = await node(B.autopilot, [
+        '--mark-verified',
+        '--branch', o.branch,
+        '--preview-url', previewUrl,
+        '--evidence', evidence,
+        '--head-ref-oid', reviewedHeadRefOid,
+      ], { timeoutMs: o.statusTimeoutMs });
+      if (mv.timedOut || mv.code !== 0) {
+        return gateFail(o, B, deps, pgId, claim,
+          `mark-verified failed: ${mv.timedOut ? 'timeout' : tail(mv.stderr) || `exit ${mv.code}`}`, plan);
+      }
+
+      const mergeTimeoutMs = Number(process.env.GG_GATE_MERGE_TIMEOUT_MS) || 300000;
+      const mg = await node(B.autopilot, ['--merge', '--branch', o.branch], { timeoutMs: mergeTimeoutMs });
+      if (mg.timedOut || mg.code !== 0) {
+        return gateFail(o, B, deps, pgId, claim,
+          `merge failed: ${mg.timedOut ? 'timeout' : tail(mg.stderr) || `exit ${mg.code}`}`, plan);
+      }
+      log(`final: MERGED reviewed head ${reviewedHeadRefOid}`);
+      return { exitCode: EXIT.PUBLISHED, plan, action: 'merged', reason: 'all required gates passed' };
+    }
+
+    if (!outcome.failure?.repairable || repairRound === maxRepairRounds) {
+      return gateFail(o, B, deps, pgId, claim, outcome.failure?.reason || 'gate round failed', plan);
+    }
+    const repairResult = await repair({
+      dim: outcome.failure.dim,
+      reason: outcome.failure.reason,
+      articleTs,
+      draftMd,
+      worktree: claim.worktree,
+      branch: o.branch,
+      expectedHead: reviewedHeadRefOid,
+      node,
+      B,
+      log,
+    });
+    const applied = repairResult === true || repairResult?.applied === true;
+    if (!applied) {
+      return gateFail(o, B, deps, pgId, claim,
+        repairResult?.reason || `${outcome.failure.reason}; repair was not applied`, plan);
+    }
+    if (repairResult?.headRefOid === reviewedHeadRefOid) {
+      return gateFail(o, B, deps, pgId, claim,
+        `repair made no commit progress; head remained ${reviewedHeadRefOid}`, plan);
+    }
+    previousFailedHead = reviewedHeadRefOid;
   }
-  // --merge does real work (gh pr merge + worktree cleanup + oracle sync + index submit) that can
-  // exceed the 60s status budget; give it a dedicated wall (GG_GATE_MERGE_TIMEOUT_MS, default 5min)
-  // so the gate doesn't SIGKILL a merge mid-flight and diverge the ledger from GitHub.
-  const mergeTimeoutMs = Number(process.env.GG_GATE_MERGE_TIMEOUT_MS) || 300000;
-  const mg = await node(B.autopilot, ['--merge', '--branch', o.branch], { timeoutMs: mergeTimeoutMs });
-  if (mg.timedOut || mg.code !== 0) {
-    return gateFail(o, B, deps, pgId, claim,
-      `merge failed: ${mg.timedOut ? 'timeout' : tail(mg.stderr) || `exit ${mg.code}`}`, plan);
-  }
-  log('final: MERGED → published');
-  return { exitCode: EXIT.PUBLISHED, plan, action: 'merged', reason: 'all required gates passed' };
+
+  return gateFail(o, B, deps, pgId, claim, 'gate repair budget exhausted', plan);
 }
 
 // ── failure path: park the claim (guarded) + fire the failure Feishu notify ───

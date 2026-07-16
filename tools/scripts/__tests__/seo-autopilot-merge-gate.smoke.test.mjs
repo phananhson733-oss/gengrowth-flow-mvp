@@ -112,7 +112,7 @@ test('--mark-verified blocks head fetch failure or mismatch and persists exact m
       '--head-ref-oid', HEAD_A,
     ], { GG_TEST_GH_HEAD: HEAD_B });
     assert.notEqual(mismatch.status, 0);
-    assert.match(mismatch.stderr, /head.*mismatch|reviewed.*current/i);
+    assert.match(mismatch.stderr, /current.*reviewed|head.*does not match/i);
     assert.equal(h.claims()['PG-001'].status, 'pushed-preview');
   }
   {

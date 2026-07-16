@@ -111,6 +111,7 @@ const CLAIMS_LOCK = `${CLAIMS_PATH}.lock`;
 const CLAIMS_LOCK_TIMEOUT_MS = parseInt(process.env.GG_AUTOPILOT_LOCK_TIMEOUT_MS || '30000', 10);
 const CLAIMS_LOCK_STALE_MS = parseInt(process.env.GG_AUTOPILOT_LOCK_STALE_MS || String(2 * 60 * 60 * 1000), 10);
 const SLUG_RE = /^[a-z0-9][a-z0-9-]*$/;
+const HEAD_REF_OID_RE = /^[0-9a-f]{40}$/i;
 const execFileAsync = promisify(execFile);
 
 function sh(cmd, args, opts = {}) {
@@ -195,6 +196,7 @@ function parseArgs(argv) {
     else if (a === '--stale-report') o.staleReport = true;
     else if (a === '--branch') o.branch = argv[++i];
     else if (a === '--preview-url') o.previewUrl = argv[++i];
+    else if (a === '--head-ref-oid') o.headRefOid = argv[++i];
     else if (a === '--evidence') o.evidence = argv[++i];
     else if (a === '--reason') o.reason = argv[++i];
     else if (a === '--limit') o.limit = parseInt(argv[++i], 10) || 1;
@@ -1202,6 +1204,19 @@ function ghPrMergeState(branch) {
   } catch { return { mergeable: 'UNKNOWN', state: 'UNKNOWN', error: true }; }
 }
 
+function currentPrHead(branch) {
+  const headRefOid = sh('gh', [
+    'pr', 'view', branch,
+    '--repo', 'xdawayer/oracle',
+    '--json', 'headRefOid',
+    '-q', '.headRefOid',
+  ], { cwd: ORACLE }).trim();
+  if (!HEAD_REF_OID_RE.test(headRefOid)) {
+    throw new Error(`could not resolve a valid 40-hex PR head for ${branch}`);
+  }
+  return headRefOid;
+}
+
 // GitHub 异步计算 mergeable：刚 push 后常是 UNKNOWN，稍等几秒会落定 MERGEABLE/CONFLICTING。
 // 只对 GitHub 的 'UNKNOWN'（仍在计算）等待；gh 本身出错不会自愈，立即返回（不空等）。
 function pollMergeable(branch, tries = 6, waitMs = 2000) {
@@ -1277,26 +1292,27 @@ function unionRebaseBranch(branch, slug, expectedHead) {
 // （--match-head-commit：PR head 自 --mark-verified 后若被 push 移动则拒绝合并，防 ship 未评审/被篡改
 // 代码到 prod；旧 claim 无此字段则 unpinned 合并，向后兼容）。冲突（陈旧分支撞注册文件）→ union 自愈。
 function mergeVerifiedBranch(branch, claim) {
-  const reviewedPin = claim.headRefOid ? ['--match-head-commit', claim.headRefOid] : [];
-  const conflicting = MERGE_SELFHEAL && pollMergeable(branch).mergeable === 'CONFLICTING';
-  if (!conflicting) {
-    try {
-      sh('gh', ['pr', 'merge', branch, '--repo', 'xdawayer/oracle', '--merge', '--delete-branch', ...reviewedPin], { cwd: ORACLE });
-      return;
-    } catch (e) {
-      // 只在"像冲突"且自愈开启时才自愈；auth/网络/head 漂移等原样抛出 → park 出真实原因。
-      if (!MERGE_SELFHEAL || !looksLikeMergeConflict(`${e.stdout || ''}${e.stderr || ''}${e.message || ''}`)) throw e;
-      log(`merge ${branch}: first attempt conflicted — attempting union self-heal`);
-    }
-  } else {
-    log(`merge ${branch}: GitHub reports CONFLICTING — attempting union self-heal`);
+  if (!HEAD_REF_OID_RE.test(String(claim.headRefOid || ''))) {
+    throw new Error(`refusing merge for ${branch}: verified claim is missing a valid 40-hex headRefOid`);
   }
-  const newHead = unionRebaseBranch(branch, claim.slug, claim.headRefOid);
-  if (pollMergeable(branch).mergeable === 'CONFLICTING') {
-    throw new Error(`merge ${branch}: still CONFLICTING after union self-heal (rebuilt head ${newHead.slice(0, 8)})`);
+  const currentHead = currentPrHead(branch);
+  if (currentHead !== claim.headRefOid) {
+    throw new Error(
+      `refusing merge for ${branch}: current PR head ${currentHead} does not match reviewed head ${claim.headRefOid}`,
+    );
   }
-  sh('gh', ['pr', 'merge', branch, '--repo', 'xdawayer/oracle', '--merge', '--delete-branch', '--match-head-commit', newHead], { cwd: ORACLE });
-  log(`merge ${branch}: union self-heal merged rebuilt head ${newHead.slice(0, 8)}`);
+  if (MERGE_SELFHEAL && pollMergeable(branch).mergeable === 'CONFLICTING') {
+    throw new Error(
+      `refusing merge for ${branch}: PR is conflicting; rebase/repair creates a new head and requires a full gate round`,
+    );
+  }
+  sh('gh', [
+    'pr', 'merge', branch,
+    '--repo', 'xdawayer/oracle',
+    '--merge',
+    '--delete-branch',
+    '--match-head-commit', claim.headRefOid,
+  ], { cwd: ORACLE });
 }
 
 function doMerge(o) {
@@ -1312,6 +1328,9 @@ function doMerge(o) {
     }
     if (!claim.previewUrl) {
       throw new Error(`refusing merge for ${o.branch}: verified claim is missing previewUrl`);
+    }
+    if (!HEAD_REF_OID_RE.test(String(claim.headRefOid || ''))) {
+      throw new Error(`refusing merge for ${o.branch}: verified claim is missing a valid 40-hex headRefOid`);
     }
     // 串行发布 + union 自愈（阶段 3）：快路径 pin reviewed head 用 gh 合并（PR 干净关闭，Vercel
     // 部署 main → prod）；陈旧分支撞两个注册文件时，自动 union-rebase 到最新 main、再验后合并。
@@ -1352,6 +1371,8 @@ function doMarkVerified(o) {
   if (!o.branch) die('--mark-verified requires --branch', 2);
   if (!o.previewUrl) die('--mark-verified requires --preview-url', 2);
   if (!/^https:\/\/[^/]+/.test(o.previewUrl)) die(`invalid --preview-url: ${o.previewUrl}`, 2);
+  if (!o.headRefOid) die('--mark-verified requires --head-ref-oid', 2);
+  if (!HEAD_REF_OID_RE.test(o.headRefOid)) die('--head-ref-oid must be a 40-hex SHA', 2);
   return withClaimsLock(() => {
     const claims = loadClaims();
     const { pgId, claim } = claimForBranch(claims, o.branch);
@@ -1359,27 +1380,26 @@ function doMarkVerified(o) {
     if (!['pushed-preview', 'verified-preview'].includes(claim.status) && !retryingParkedPreview) {
       throw new Error(`cannot mark ${o.branch} verified from status "${claim.status}"`);
     }
-    // Capture the PR head SHA NOW (immediately after the review passed) so --merge can pin to the
-    // exact reviewed commit. Best-effort: if gh can't report it, merge proceeds unpinned rather
-    // than blocking a verified article.
-    let headRefOid = null;
-    try {
-      headRefOid = sh('gh', ['pr', 'view', o.branch, '--repo', 'xdawayer/oracle', '--json', 'headRefOid', '-q', '.headRefOid'], { cwd: ORACLE }).trim() || null;
-    } catch (e) {
-      log(`mark-verified: could not capture headRefOid (${errTail(e, 60)}) — merge will not pin head`);
+    const currentHead = currentPrHead(o.branch);
+    if (currentHead !== o.headRefOid) {
+      throw new Error(
+        `cannot mark ${o.branch} verified: current PR head ${currentHead} does not match reviewed head ${o.headRefOid}`,
+      );
     }
+    const reviewedAt = new Date().toISOString();
     claims[pgId] = {
       ...claim,
       status: 'verified-preview',
       previewUrl: o.previewUrl,
       verificationEvidence: o.evidence || 'codex+chrome preview verification passed',
-      verifiedAt: new Date().toISOString(),
-      ...(headRefOid ? { headRefOid } : {}),
+      verifiedAt: reviewedAt,
+      reviewedAt,
+      headRefOid: o.headRefOid,
     };
     delete claims[pgId].error;
     delete claims[pgId].failedAt;
     saveClaims(claims);
-    log(`VERIFIED ${o.branch} preview=${o.previewUrl}${headRefOid ? ` head=${headRefOid.slice(0, 8)}` : ''}`);
+    log(`VERIFIED ${o.branch} preview=${o.previewUrl} head=${o.headRefOid.slice(0, 8)}`);
   });
 }
 

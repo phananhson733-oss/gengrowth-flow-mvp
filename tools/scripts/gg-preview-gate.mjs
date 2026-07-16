@@ -279,6 +279,10 @@ export function parseArgs(argv) {
     else if (a === '--repo') o.repo = argv[++i];
     else if (a === '--dry-run') o.dryRun = true;
     else if (a === '--json') o.json = true;
+    else if (a === '--worktree') o.worktree = argv[++i];
+    else if (a === '--head-ref-oid') o.headRefOid = argv[++i];
+    else if (a === '--draft') o.draft = argv[++i];
+    else if (a === '--draft-sha256') o.draftSha256 = argv[++i];
     else if (a === '--status-timeout-ms') o.statusTimeoutMs = Number(argv[++i]);
     else if (a === '--preview-timeout-ms') o.previewTimeoutMs = Number(argv[++i]);
     else if (a === '--verify-timeout-ms') o.verifyTimeoutMs = Number(argv[++i]);

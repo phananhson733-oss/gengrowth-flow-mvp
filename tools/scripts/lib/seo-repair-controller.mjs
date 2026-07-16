@@ -109,6 +109,7 @@ export function buildRepairAgentPrompt({ template, record, strategy, target }) {
     '- For pipeline code, create an isolated git worktree and a codex/seo-repair-* branch before editing.',
     '- Treat Agent output as repair diagnostics only; deterministic regating and terminal verification run afterward.',
     '- Use only target.allowedActions and verifiedLinkCandidates; do not invent routes or bypass gates.',
+    '- Never invent protected or real-world facts. If authoritative evidence is missing, neutralize or remove the contested claim; if that cannot be done safely, leave missing authoritative source for human_only.',
     '- Do not read personal profiles and do not print or persist credentials.',
     '',
     'REPAIR_TARGET_JSON:',

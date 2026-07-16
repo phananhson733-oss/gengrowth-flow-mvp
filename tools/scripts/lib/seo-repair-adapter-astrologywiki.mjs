@@ -1,10 +1,18 @@
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, readdirSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  renameSync,
+  writeFileSync,
+} from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { invokeTargetRepairAgent } from './seo-repair-controller.mjs';
+import { repairDraftRoot } from './seo-repair-bindings.mjs';
 
 const LIB_DIR = dirname(fileURLToPath(import.meta.url));
 const DEFAULT_SCRIPTS = resolve(LIB_DIR, '..');
@@ -16,9 +24,16 @@ function absoluteWorktreeFile(worktree, file) {
 }
 
 export async function buildAstrologyRepairTarget(event, context) {
-  const changedFiles = (context.changedFiles || []).map((file) => absoluteWorktreeFile(context.worktree, file));
+  const changedFiles = [
+    ...(context.changedFiles || []),
+    ...(context.targetAssetFiles || []),
+  ].map((file) => absoluteWorktreeFile(context.worktree, file));
   const slug = event.slug || '';
   const supportPlan = resolve(context.worktree, 'scripts', 'plans', `auto-${slug}.json`);
+  const supportFiles = [
+    ...(context.supportFiles || []),
+    ...(changedFiles.includes(supportPlan) ? [supportPlan] : []),
+  ].map((file) => absoluteWorktreeFile(context.worktree, file));
   return {
     site: 'astrologywiki',
     pageId: event.pageId,
@@ -29,15 +44,64 @@ export async function buildAstrologyRepairTarget(event, context) {
     worktree: context.worktree,
     originalWorktree: context.originalWorktree || null,
     articleFile: absoluteWorktreeFile(context.worktree, context.articleFile),
-    changedFiles,
+    changedFiles: [...new Set(changedFiles)],
     assetFiles: changedFiles.filter((file) => ASSET_RE.test(file)),
-    supportFiles: changedFiles.filter((file) => file === supportPlan),
+    supportFiles: [...new Set(supportFiles.filter((file) => file === supportPlan))],
+    draftFile: context.draftFile || null,
+    draftSha256: context.draftSha256 || null,
     verifiedLinkCandidates: context.verifiedLinkCandidates || [],
     linkCandidates: context.linkCandidates || [],
     gateEvidence: [event.summary, event.stderr].filter(Boolean).join('\n'),
     allowedActions: context.allowedActions || [],
     terminalVerifier: context.terminalVerifier || [],
   };
+}
+
+function safeDraftSegment(value, fallback) {
+  const cleaned = String(value || '').replace(/[^A-Za-z0-9._-]+/g, '_');
+  return cleaned || fallback;
+}
+
+export function ensureAstrologyRepairDraft({
+  sourceFile,
+  draftRoot = repairDraftRoot(),
+  site,
+  pageId,
+  attemptId,
+}) {
+  try {
+    if (!sourceFile || !existsSync(sourceFile)) {
+      throw new Error(`source staging draft missing: ${sourceFile || '<missing>'}`);
+    }
+    const directory = join(
+      resolve(draftRoot),
+      safeDraftSegment(site, 'astrologywiki'),
+      safeDraftSegment(pageId, 'unknown-page'),
+    );
+    mkdirSync(directory, { recursive: true, mode: 0o700 });
+    const draftFile = join(directory, `${safeDraftSegment(attemptId, 'attempt')}.md`);
+    if (!existsSync(draftFile)) {
+      const bytes = readFileSync(sourceFile);
+      if (bytes.length === 0) throw new Error('source staging draft is empty');
+      const temporary = `${draftFile}.tmp.${process.pid}`;
+      writeFileSync(temporary, bytes, { flag: 'wx', mode: 0o600 });
+      renameSync(temporary, draftFile);
+    }
+    const bytes = readFileSync(draftFile);
+    if (bytes.length === 0) throw new Error('controller repair draft is empty');
+    return {
+      ok: true,
+      sourceFile: resolve(sourceFile),
+      draftFile,
+      bytes: bytes.length,
+      draftSha256: createHash('sha256').update(bytes).digest('hex'),
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      reason: `cannot materialize controller repair draft: ${error?.message || String(error)}`,
+    };
+  }
 }
 
 export function editableAstrologyFiles(target) {

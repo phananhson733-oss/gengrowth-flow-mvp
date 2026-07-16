@@ -11,7 +11,17 @@
 //
 // 契约：状态目录在 vault 外（flow-state），测试用 GG_FLOW_STATE_DIR 指向临时目录。
 
-import { mkdirSync, writeFileSync, readFileSync, readdirSync, unlinkSync, renameSync, existsSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  renameSync,
+  rmdirSync,
+  unlinkSync,
+  writeFileSync,
+} from 'node:fs';
+import { createHash, randomUUID } from 'node:crypto';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
@@ -33,6 +43,9 @@ const MAX_ATTEMPTS = 8;
 const TTL_MS = 7 * 24 * 3600 * 1000;
 const DEFAULT_BACKOFF_BASE_MS = 15 * 60 * 1000;
 const DEFAULT_BACKOFF_MAX_MS = 24 * 60 * 60 * 1000;
+const CLOCK_SKEW_TOLERANCE_MS = 5 * 60 * 1000;
+const LOCK_LEASE_MS = 15 * 60 * 1000;
+const TEST_PAGE_ID_RE = /\bPG-(?:TEST|FAKE|FIXTURE|SMOKE)[A-Z0-9-]*\b/;
 
 // 各站点 archive 调用参数（gengrowth 需覆盖 host + /en/blog/；两站都需 --oracle，否则 archive
 // 默认 /Users/wzb/Code/oracle 本机不存在 → 找不到 hero/inline 图。与 gg-gengrowth-publish 一致）。
@@ -62,39 +75,321 @@ export function readWriteback(pageId) {
   try { return JSON.parse(readFileSync(join(dir, `${safeId(pageId)}.json`), 'utf8')); } catch { return null; }
 }
 
-// 写/合并一条待回填记录（write-ahead）。done 取并集（已完成步骤不重跑）；firstAt 粘住；
-// attempts/lastError 仅在本次显式传入时覆盖。原子写。失败返回 null（状态层不搞垮业务）。
-export function enqueueWriteback(entry) {
+function atomicWriteJson(path, record) {
+  const tmp = `${path}.tmp-${process.pid}-${randomUUID()}`;
+  writeFileSync(tmp, JSON.stringify(record, null, 2) + '\n');
+  renameSync(tmp, path);
+}
+
+function mergeWriteback(prev, entry, timestamp = Date.now()) {
+  const rec = { ...prev, ...entry };
+  rec.firstAt = prev.firstAt || entry.firstAt || new Date(timestamp).toISOString();
+  rec.done = Array.from(new Set([...(prev.done || []), ...(entry.done || [])]));
+  if (entry.attempts === undefined) rec.attempts = prev.attempts || 0;
+  if (!('lastError' in entry)) rec.lastError = prev.lastError ?? null;
+  return rec;
+}
+
+function directEnqueueWriteback(entry, timestamp = Date.now()) {
   const dir = writebackDir(); if (!dir) return null;
   try {
     const prev = readWriteback(entry.pageId) || {};
-    const rec = { ...prev, ...entry };
-    rec.firstAt = prev.firstAt || entry.firstAt || new Date().toISOString();
-    rec.done = Array.from(new Set([...(prev.done || []), ...(entry.done || [])]));
-    if (entry.attempts === undefined) rec.attempts = prev.attempts || 0;
-    if (!('lastError' in entry)) rec.lastError = prev.lastError ?? null;
+    const rec = mergeWriteback(prev, entry, timestamp);
     const p = join(dir, `${safeId(entry.pageId)}.json`);
-    const tmp = `${p}.tmp-${process.pid}`;
-    writeFileSync(tmp, JSON.stringify(rec, null, 2) + '\n');
-    renameSync(tmp, p);
+    atomicWriteJson(p, rec);
     return rec;
   } catch { return null; }
 }
 
-export function resolveWriteback(pageId) {
+function lockDir() {
+  try {
+    const base = stateDir();
+    if (!base) return null;
+    return process.env.GG_WRITEBACK_LOCK_DIR || join(base, 'writeback-ledger.lock');
+  } catch {
+    return null;
+  }
+}
+
+function pidAlive(pid) {
+  if (!Number.isInteger(Number(pid)) || Number(pid) <= 0) return false;
+  try {
+    process.kill(Number(pid), 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function acquireWritebackLock(deps = {}) {
+  const dir = lockDir();
+  if (!dir) return { ok: false, busy: true, error: 'writeback lock directory unavailable' };
+  const now = nowMs(deps);
+  const token = randomUUID();
+  const owner = {
+    pid: process.pid,
+    token,
+    acquiredAt: new Date(now).toISOString(),
+    expiresAt: new Date(now + positiveMs(deps.lockLeaseMs, LOCK_LEASE_MS)).toISOString(),
+  };
+  try {
+    mkdirSync(dir);
+    atomicWriteJson(join(dir, 'owner.json'), owner);
+    return { ok: true, dir, token };
+  } catch {
+    let current = null;
+    try { current = JSON.parse(readFileSync(join(dir, 'owner.json'), 'utf8')); } catch {}
+    const expiresAt = Date.parse(current?.expiresAt || '');
+    if (current && pidAlive(current.pid)) {
+      return { ok: false, busy: true, owner: current };
+    }
+    if (Number.isFinite(expiresAt) && expiresAt > now && current?.pid) {
+      return { ok: false, busy: true, owner: current };
+    }
+    const stale = `${dir}.stale-${Date.now()}-${process.pid}-${token}`;
+    try {
+      renameSync(dir, stale);
+      mkdirSync(dir);
+      atomicWriteJson(join(dir, 'owner.json'), owner);
+      return { ok: true, dir, token, recovered: true, stale };
+    } catch (error) {
+      return {
+        ok: false,
+        busy: true,
+        error: String(error?.message || error || 'writeback lock busy'),
+      };
+    }
+  }
+}
+
+function releaseWritebackLock(lock) {
+  if (!lock?.ok || !lock.dir || !lock.token) return false;
+  try {
+    const ownerPath = join(lock.dir, 'owner.json');
+    const owner = JSON.parse(readFileSync(ownerPath, 'utf8'));
+    if (owner.token !== lock.token) return false;
+    unlinkSync(ownerPath);
+    rmdirSync(lock.dir);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function inboxDir() {
+  try {
+    const base = stateDir();
+    if (!base) return null;
+    const dir = join(base, 'pending-writeback-inbox');
+    mkdirSync(dir, { recursive: true });
+    return dir;
+  } catch {
+    return null;
+  }
+}
+
+function enqueueInbox(entry, timestamp = Date.now()) {
+  const dir = inboxDir();
+  if (!dir) return null;
+  try {
+    const record = mergeWriteback({}, entry, timestamp);
+    const path = join(
+      dir,
+      `${Date.now()}-${process.pid}-${safeId(entry.pageId)}-${randomUUID()}.json`,
+    );
+    atomicWriteJson(path, record);
+    return { ...record, queuedInbox: true };
+  } catch {
+    return null;
+  }
+}
+
+function mergeInbox() {
+  const dir = inboxDir();
+  if (!dir) return 0;
+  let merged = 0;
+  let names = [];
+  try { names = readdirSync(dir).filter((name) => name.endsWith('.json')).sort(); } catch {}
+  for (const name of names) {
+    const path = join(dir, name);
+    try {
+      const entry = JSON.parse(readFileSync(path, 'utf8'));
+      if (!entry?.pageId || !directEnqueueWriteback(entry)) continue;
+      unlinkSync(path);
+      merged += 1;
+    } catch {}
+  }
+  return merged;
+}
+
+// 写/合并一条待回填记录（write-ahead）。done 取并集（已完成步骤不重跑）；firstAt 粘住；
+// attempts/lastError 仅在本次显式传入时覆盖。共享锁忙时写 durable inbox，绝不丢更新。
+export function enqueueWriteback(entry, deps = {}) {
+  if (!entry?.pageId) return null;
+  if (deps.lockToken) return directEnqueueWriteback(entry, nowMs(deps));
+  const lock = acquireWritebackLock(deps);
+  if (!lock.ok) return enqueueInbox(entry, nowMs(deps));
+  try {
+    mergeInbox();
+    return directEnqueueWriteback(entry, nowMs(deps));
+  } finally {
+    releaseWritebackLock(lock);
+  }
+}
+
+function directResolveWriteback(pageId) {
   const dir = writebackDir(); if (!dir) return false;
   try { unlinkSync(join(dir, `${safeId(pageId)}.json`)); return true; } catch { return false; }
 }
 
+export function resolveWriteback(pageId, deps = {}) {
+  if (deps.lockToken) return directResolveWriteback(pageId);
+  const lock = acquireWritebackLock(deps);
+  if (!lock.ok) return false;
+  try { return directResolveWriteback(pageId); }
+  finally { releaseWritebackLock(lock); }
+}
+
+function notificationDirs() {
+  try {
+    const base = stateDir();
+    if (!base) return null;
+    const root = join(base, 'writeback-notifications');
+    const pending = join(root, 'pending');
+    const sent = join(root, 'sent');
+    mkdirSync(pending, { recursive: true });
+    mkdirSync(sent, { recursive: true });
+    return { root, pending, sent };
+  } catch {
+    return null;
+  }
+}
+
+function notificationUuid(key) {
+  const hex = createHash('sha256').update(String(key || '')).digest('hex').slice(0, 32).split('');
+  hex[12] = '5';
+  hex[16] = ((Number.parseInt(hex[16], 16) & 0x3) | 0x8).toString(16);
+  const value = hex.join('');
+  return `${value.slice(0, 8)}-${value.slice(8, 12)}-${value.slice(12, 16)}-${value.slice(16, 20)}-${value.slice(20)}`;
+}
+
+function notificationName(key) {
+  return `${createHash('sha256').update(String(key || '')).digest('hex')}.json`;
+}
+
+export function persistWritebackNotification(kind, fields, notificationKey, deps = {}) {
+  const dirs = notificationDirs();
+  if (!dirs || !notificationKey) return null;
+  const name = notificationName(notificationKey);
+  const pendingPath = join(dirs.pending, name);
+  const sentPath = join(dirs.sent, name);
+  try {
+    if (existsSync(sentPath)) return JSON.parse(readFileSync(sentPath, 'utf8'));
+    if (existsSync(pendingPath)) return JSON.parse(readFileSync(pendingPath, 'utf8'));
+    const record = {
+      schemaVersion: 1,
+      kind,
+      notificationKey,
+      msgUuid: notificationUuid(notificationKey),
+      createdAt: new Date(nowMs(deps)).toISOString(),
+      attempts: 0,
+      lastAttemptAt: null,
+      lastError: null,
+      fields,
+    };
+    atomicWriteJson(pendingPath, record);
+    return record;
+  } catch {
+    return null;
+  }
+}
+
+export function listPendingWritebackNotifications() {
+  const dirs = notificationDirs();
+  if (!dirs) return [];
+  try {
+    return readdirSync(dirs.pending)
+      .filter((name) => name.endsWith('.json') && !name.includes('.tmp-'))
+      .sort()
+      .map((name) => {
+        try {
+          return {
+            name,
+            path: join(dirs.pending, name),
+            record: JSON.parse(readFileSync(join(dirs.pending, name), 'utf8')),
+          };
+        } catch {
+          return null;
+        }
+      })
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+export function recordWritebackNotificationFailure(name, record, error, deps = {}) {
+  const dirs = notificationDirs();
+  if (!dirs) return false;
+  try {
+    const next = {
+      ...record,
+      attempts: Math.max(0, Number(record?.attempts) || 0) + 1,
+      lastAttemptAt: new Date(nowMs(deps)).toISOString(),
+      lastError: String(error?.message || error || 'notification send failed'),
+    };
+    atomicWriteJson(join(dirs.pending, name), next);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function markWritebackNotificationSent(name, record, deps = {}) {
+  const dirs = notificationDirs();
+  if (!dirs) return false;
+  try {
+    const source = join(dirs.pending, name);
+    const destination = join(dirs.sent, name);
+    const sent = {
+      ...record,
+      sentAt: record.sentAt || new Date(nowMs(deps)).toISOString(),
+      lastAttemptAt: new Date(nowMs(deps)).toISOString(),
+      lastError: null,
+    };
+    atomicWriteJson(source, sent);
+    if (existsSync(destination)) {
+      unlinkSync(source);
+      return true;
+    }
+    renameSync(source, destination);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // 淘汰（超 attempts/TTL）：**不静默删**，移入 dropped/ 保留供审计/人工补救（评审 CONFIRMED：
 // archive 步无对账兜底，若干净删除=该篇静默缺出 RAG）。移动失败必须保留原 WAL。
-export function dropWriteback(pageId, deps = {}) {
+export function dropWriteback(pageId, deps = {}, state = 'dropped') {
   const dir = writebackDir(); if (!dir) return false;
   try {
-    const droppedDir = join(dir, 'dropped');
+    const droppedDir = join(dir, state);
     mkdirSync(droppedDir, { recursive: true });
     const source = join(dir, `${safeId(pageId)}.json`);
-    const destination = join(droppedDir, `${safeId(pageId)}.json`);
+    let destination = join(droppedDir, `${safeId(pageId)}.json`);
+    if (existsSync(destination)) {
+      const record = JSON.parse(readFileSync(source, 'utf8'));
+      const key = record?.terminalNotification?.notificationKey
+        || `${state}:${pageId}:${record?.firstAt || ''}:${record?.attempts || 0}`;
+      destination = join(
+        droppedDir,
+        `${safeId(pageId)}--${createHash('sha256').update(key).digest('hex').slice(0, 16)}.json`,
+      );
+      if (existsSync(destination)) {
+        return { ok: false, error: `terminal evidence already exists: ${destination}` };
+      }
+    }
     const rename = deps.renameWriteback || renameSync;
     rename(source, destination);
     return { ok: true, source, destination };

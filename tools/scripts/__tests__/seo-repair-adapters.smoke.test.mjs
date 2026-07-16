@@ -168,6 +168,26 @@ test('gengrowth target-resolution failure explicitly records that no Agent mutat
   assert.equal(result.evidence.type, 'target_resolution_failed');
 });
 
+test('gengrowth Agent failure carries the current article SHA and a true invocation marker', async (t) => {
+  const content = '---\nslug: agent-failure\n---\n\n# Agent failure artifact\n';
+  const artifact = await tempArtifact(t, 'PG-WLS-007-codex-v8.md', content);
+  const adapter = createGengrowthRepairAdapter({
+    resolveTarget: async () => ({ mdPath: artifact.path, slug: 'agent-failure' }),
+    invokeAgent: async () => ({ ok: false, evidence: { type: 'agent_exit', code: 7 } }),
+  });
+  const result = await adapter.execute({
+    record: record(),
+    classification: 'agent_fixable',
+    strategy: 'agent_content_asset_link',
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.agentMutationInvoked, true);
+  assert.equal(
+    result.evidence.artifactSha,
+    createHash('sha256').update(content).digest('hex'),
+  );
+});
+
 test('gengrowth authoring repair recovers one target before resolving a publish-ready draft', async () => {
   const calls = [];
   const ready = {
@@ -487,12 +507,18 @@ test('astrology deterministic failure fingerprints worktree content and never cl
     'data/articles/saturn-return-age-29.ts',
     'export const article = { title: "first artifact" };\n',
   );
+  const assetPath = join(artifact.root, 'public/images/blog/saturn-return-age-29-i0-en.svg');
+  await mkdir(dirname(assetPath), { recursive: true });
+  await writeFile(assetPath, '<svg><text>age 14</text></svg>\n', 'utf8');
   const adapter = createAstrologyWikiRepairAdapter({
     resolveContext: async () => ({
       branch: 'seo/auto/PG-TRANS-016',
       worktree: artifact.root,
       articleFile: artifact.path,
-      changedFiles: ['data/articles/saturn-return-age-29.ts'],
+      changedFiles: [
+        'data/articles/saturn-return-age-29.ts',
+        'public/images/blog/saturn-return-age-29-i0-en.svg',
+      ],
       linkCandidates: [],
     }),
     regate: async () => ({ ok: false, reason: 'same factual failure' }),
@@ -512,7 +538,7 @@ test('astrology deterministic failure fingerprints worktree content and never cl
   assert.equal(first.agentMutationInvoked, false);
   assert.match(first.evidence.artifactSha, /^[a-f0-9]{64}$/);
 
-  await writeFile(artifact.path, 'export const article = { title: "changed artifact" };\n', 'utf8');
+  await writeFile(assetPath, '<svg><text>age 29</text></svg>\n', 'utf8');
   const changed = await adapter.execute(input);
   assert.match(changed.evidence.artifactSha, /^[a-f0-9]{64}$/);
   assert.notEqual(changed.evidence.artifactSha, first.evidence.artifactSha);

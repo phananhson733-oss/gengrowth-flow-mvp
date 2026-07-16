@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -140,6 +140,46 @@ test('author handoff restores an existing ready pair when replacement fails befo
   assert.equal(output.handedOff, true);
   assert.deepEqual(await readFile(targetMd), await readFile(built.sourceMd));
   assert.deepEqual(await readFile(targetManifest), await readFile(built.sourceManifest));
+});
+
+test('author handoff preserves rollback backups when restoring the old pair itself fails', async (t) => {
+  const built = await handoffFixture(t);
+  const targetMd = join(built.stagingDir, `${built.pageId}-claude-v8.md`);
+  const targetManifest = join(built.stagingDir, `${built.pageId}-claude-v8.manifest.json`);
+  await writeFile(targetMd, validDraft('old-live-slug'), 'utf8');
+  await writeFile(targetManifest, `${JSON.stringify({ phase2_checks: { overall: 'pass' }, version: 'old' })}\n`, 'utf8');
+
+  await assert.rejects(() => handoffGengrowthAuthor({
+    pageId: built.pageId,
+    stagingDir: built.stagingDir,
+    winner: 'claude',
+  }, {
+    faultInjector: async (point) => {
+      if (point === 'after-draft-before-manifest') throw new Error('simulated handoff cut');
+    },
+    renameFile: async (from, to) => {
+      if (from.endsWith('.md.bak')) throw new Error('simulated rollback disk failure');
+      return rename(from, to);
+    },
+  }), /handoff recovery failed/i);
+
+  const leftovers = (await readdir(built.stagingDir)).filter((name) => name.startsWith('.handoff-'));
+  assert.equal(leftovers.some((name) => name.endsWith('.md.bak')), true);
+  assert.equal(leftovers.some((name) => name.endsWith('.manifest.bak')), true);
+});
+
+test('author handoff refuses an incomplete pre-existing target pair', async (t) => {
+  const built = await handoffFixture(t);
+  await writeFile(
+    join(built.stagingDir, `${built.pageId}-claude-v8.md`),
+    validDraft('orphan-draft'),
+    'utf8',
+  );
+  await assert.rejects(() => handoffGengrowthAuthor({
+    pageId: built.pageId,
+    stagingDir: built.stagingDir,
+    winner: 'claude',
+  }), /incomplete existing target/i);
 });
 
 test('author tick delegates handoff validation and copying to the shared helper', async () => {

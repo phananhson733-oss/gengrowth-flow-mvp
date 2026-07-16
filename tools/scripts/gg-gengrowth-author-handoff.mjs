@@ -71,6 +71,7 @@ export async function handoffGengrowthAuthor({
 } = {}, {
   faultInjector,
   transactionId = randomUUID(),
+  renameFile = rename,
 } = {}) {
   pageId = String(pageId || '');
   winner = String(winner || '').toLowerCase();
@@ -125,8 +126,18 @@ export async function handoffGengrowthAuthor({
 
   const hadTargetMd = await regularFile(targetMd);
   const hadTargetManifest = await regularFile(targetManifest);
+  if (hadTargetMd !== hadTargetManifest) {
+    throw new HandoffError(
+      'incomplete_existing_target',
+      'incomplete existing target pair must be repaired before handoff',
+      2,
+    );
+  }
   let draftCommitted = false;
   let manifestCommitted = false;
+  let transactionCommitted = false;
+  let rollbackComplete = false;
+  let preserveBackups = false;
   try {
     await copyFile(sourceMd, tempMd);
     await copyFile(sourceManifest, tempManifest);
@@ -135,18 +146,17 @@ export async function handoffGengrowthAuthor({
     await fsyncDirectory(stagingDir);
 
     // Hide the passing manifest first, so the publisher cannot consume a mixed pair.
-    if (hadTargetManifest) await rename(targetManifest, backupManifest);
-    if (hadTargetMd) await rename(targetMd, backupMd);
-    await rename(tempMd, targetMd);
+    if (hadTargetManifest) await renameFile(targetManifest, backupManifest);
+    if (hadTargetMd) await renameFile(targetMd, backupMd);
+    await renameFile(tempMd, targetMd);
     draftCommitted = true;
     if (typeof faultInjector === 'function') {
       await faultInjector('after-draft-before-manifest', { pageId, targetMd, targetManifest });
     }
-    await rename(tempManifest, targetManifest);
+    await renameFile(tempManifest, targetManifest);
     manifestCommitted = true;
     await fsyncDirectory(stagingDir);
-    await rm(backupMd, { force: true });
-    await rm(backupManifest, { force: true });
+    transactionCommitted = true;
     return {
       ok: true,
       handedOff: true,
@@ -156,20 +166,52 @@ export async function handoffGengrowthAuthor({
       manifest: `${pageId}-${winner}-v8.manifest.json`,
     };
   } catch (error) {
-    if (manifestCommitted) await rm(targetManifest, { force: true });
-    if (draftCommitted) await rm(targetMd, { force: true });
-    if (hadTargetMd && await fileExists(backupMd)) await rename(backupMd, targetMd);
-    // Restore the old passing manifest last, after its matching draft is back in place.
-    if (hadTargetManifest && await fileExists(backupManifest)) {
-      await rename(backupManifest, targetManifest);
+    const rollbackErrors = [];
+    try { if (manifestCommitted) await rm(targetManifest, { force: true }); } catch (failure) {
+      rollbackErrors.push(failure);
+    }
+    try { if (draftCommitted) await rm(targetMd, { force: true }); } catch (failure) {
+      rollbackErrors.push(failure);
+    }
+    let draftRestored = !hadTargetMd;
+    if (hadTargetMd && await fileExists(backupMd)) {
+      try {
+        await renameFile(backupMd, targetMd);
+        draftRestored = true;
+      } catch (failure) {
+        rollbackErrors.push(failure);
+      }
+    }
+    // Restore the old passing manifest last, and only after its matching draft is back.
+    let manifestRestored = !hadTargetManifest;
+    if (hadTargetManifest && draftRestored && await fileExists(backupManifest)) {
+      try {
+        await renameFile(backupManifest, targetManifest);
+        manifestRestored = true;
+      } catch (failure) {
+        rollbackErrors.push(failure);
+      }
     }
     await fsyncDirectory(stagingDir);
+    rollbackComplete = rollbackErrors.length === 0 && draftRestored && manifestRestored;
+    if (!rollbackComplete) {
+      preserveBackups = true;
+      const detail = rollbackErrors
+        .map((failure) => failure instanceof Error ? failure.message : String(failure))
+        .join('; ');
+      throw new HandoffError(
+        'handoff_recovery_failed',
+        `handoff recovery failed: ${detail || 'old pair was not fully restored'}; original: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
     throw error;
   } finally {
     await rm(tempMd, { force: true });
     await rm(tempManifest, { force: true });
-    await rm(backupMd, { force: true });
-    await rm(backupManifest, { force: true });
+    if (!preserveBackups && (transactionCommitted || rollbackComplete)) {
+      await rm(backupMd, { force: true });
+      await rm(backupManifest, { force: true });
+    }
   }
 }
 

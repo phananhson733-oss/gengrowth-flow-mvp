@@ -480,54 +480,82 @@ export function createAstrologyWikiRepairAdapter(deps = {}) {
       if (event.errorKind === 'stale') {
         return {
           terminal: 'archived',
+          agentMutationInvoked: false,
           evidence: { type: 'unpublishable', summary: event.summary, logFile: event.logFile },
         };
       }
-      const context = await resolveContext(event);
-      const verifiedLinkCandidates = [];
-      for (const candidate of context.linkCandidates || []) {
-        if (await verifyLinkCandidate(candidate.slug, context)) verifiedLinkCandidates.push(candidate);
+      let target;
+      try {
+        const context = await resolveContext(event);
+        const verifiedLinkCandidates = [];
+        for (const candidate of context.linkCandidates || []) {
+          if (await verifyLinkCandidate(candidate.slug, context)) verifiedLinkCandidates.push(candidate);
+        }
+        target = await buildAstrologyRepairTarget(event, {
+          ...context,
+          verifiedLinkCandidates,
+        });
+      } catch (error) {
+        return {
+          ok: false,
+          agentMutationInvoked: false,
+          evidence: {
+            type: 'target_resolution_failed',
+            message: error instanceof Error ? error.message : String(error),
+          },
+        };
       }
-      const target = await buildAstrologyRepairTarget(event, {
-        ...context,
-        verifiedLinkCandidates,
-      });
 
       const needsAgent = ['agent_content_asset_link', 'agent_diagnosis', 'agent_code_environment']
         .includes(strategy);
-      if (needsAgent) {
-        const repaired = await invokeAgent(target, { record, strategy });
-        if (repaired?.ok !== true) {
-          return {
-            ok: false,
-            evidence: repaired?.evidence || { type: 'agent_repair_failed' },
-          };
-        }
-        const persisted = await persistRepair(target, { record, strategy, repaired });
-        if (persisted?.ok !== true) {
-          return {
-            ok: false,
-            evidence: { type: 'persist_repair_failed', result: persisted || null },
-          };
-        }
-      }
-
-      const gated = await regate(target, { record, strategy });
-      if (gated?.ok !== true) {
-        return { ok: false, evidence: { type: 'regate_failed', result: gated || null } };
-      }
-      const published = await publish(target, { record, strategy });
-      if (published?.ok !== true) {
-        return { ok: false, evidence: { type: 'publish_failed', result: published || null } };
-      }
-      const verified = await verifyTerminal(event, target);
-      if (verified?.ok === true && verified?.terminal === 'published') {
-        return { terminal: 'published', evidence: verified };
-      }
-      return {
-        ok: false,
-        evidence: { type: 'terminal_verifier_failed', verification: verified || null },
+      let agentMutationInvoked = false;
+      const failure = (evidence) => {
+        const artifactSha = astrologyArtifactSha(target);
+        return {
+          ok: false,
+          agentMutationInvoked,
+          evidence: {
+            ...(evidence || {}),
+            ...(artifactSha ? { artifactSha } : {}),
+          },
+        };
       };
+      try {
+        if (needsAgent) {
+          agentMutationInvoked = true;
+          const repaired = await invokeAgent(target, { record, strategy });
+          if (repaired?.ok !== true) {
+            return failure(repaired?.evidence || { type: 'agent_repair_failed' });
+          }
+          const persisted = await persistRepair(target, { record, strategy, repaired });
+          if (persisted?.ok !== true) {
+            return failure({ type: 'persist_repair_failed', result: persisted || null });
+          }
+        }
+
+        const gated = await regate(target, { record, strategy });
+        if (gated?.ok !== true) {
+          return failure({ type: 'regate_failed', result: gated || null });
+        }
+        const published = await publish(target, { record, strategy });
+        if (published?.ok !== true) {
+          return failure({ type: 'publish_failed', result: published || null });
+        }
+        const verified = await verifyTerminal(event, target);
+        if (verified?.ok === true && verified?.terminal === 'published') {
+          return {
+            terminal: 'published',
+            agentMutationInvoked,
+            evidence: verified,
+          };
+        }
+        return failure({ type: 'terminal_verifier_failed', verification: verified || null });
+      } catch (error) {
+        return failure({
+          type: 'adapter_execution_failed',
+          message: error instanceof Error ? error.message : String(error),
+        });
+      }
     },
   };
 }

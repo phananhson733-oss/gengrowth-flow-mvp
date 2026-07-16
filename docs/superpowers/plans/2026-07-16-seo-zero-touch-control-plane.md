@@ -205,15 +205,21 @@ Expected: FAIL because exhausted strategies return `repair_pending` forever and 
 
 - [ ] **Step 3: Implement total budget and terminal ownership**
 
-At lease acquisition increment `totalAttempts` once. Strategies named `agent_content_asset_link`, `agent_diagnosis`, or `agent_code_environment` increment `agentMutationAttempts` only when they actually invoke the Agent. Before invoking an adapter:
+Before acquiring a new attempt, quarantine a record whose existing `totalAttempts >= maxTotalAttempts`, `agentMutationAttempts >= maxAgentMutationAttempts` for an Agent strategy, or `noProgressCount >= 2`. Otherwise increment `totalAttempts` exactly once at lease acquisition; strategies named `agent_content_asset_link`, `agent_diagnosis`, or `agent_code_environment` increment `agentMutationAttempts` only when they actually invoke the Agent. A failed attempt that reaches the limit transitions directly to `quarantined` instead of `repair_pending`:
 
 ```js
-if (active.totalAttempts >= maxTotalAttempts
-  || active.agentMutationAttempts >= maxAgentMutationAttempts
-  || active.noProgressCount >= 2) {
-  return transitionToQuarantined(active, {
-    type: active.noProgressCount >= 2 ? 'no_progress' : 'repair_budget_exhausted',
+if (record.totalAttempts >= maxTotalAttempts
+  || (isAgentStrategy(record.strategy) && record.agentMutationAttempts >= maxAgentMutationAttempts)
+  || record.noProgressCount >= 2) {
+  return transitionToQuarantined(record, {
+    type: record.noProgressCount >= 2 ? 'no_progress' : 'repair_budget_exhausted',
   });
+}
+
+const active = await beginCountedAttempt(record);
+const result = await adapter.execute(...);
+if (result.ok !== true && active.totalAttempts >= maxTotalAttempts) {
+  return transitionToQuarantined(active, { type: 'repair_budget_exhausted' });
 }
 ```
 

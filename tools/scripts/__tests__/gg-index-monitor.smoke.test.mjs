@@ -9,6 +9,7 @@ import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { TABS } from '../lib/_workbook-spec.mjs';
 import { renderTemplate } from '../lib/gg-notify.mjs';
+import * as indexMonitorModule from '../gg-index-monitor.mjs';
 import {
   INDEX_TRACKING_HEADER,
   INDEX_TRACKING_TAB,
@@ -1292,6 +1293,28 @@ test('preflightGscAccess probes Search Analytics with the GSC reader SA token', 
   assert.equal(seen.token, 'gsc-sa-token');
   assert.equal(seen.init.method, 'POST');
   assert.equal(JSON.parse(seen.init.body).rowLimit, 1);
+});
+
+test('getReportingAccessToken uses reader SA with GSC and GA4 readonly scopes', async () => {
+  assert.equal(typeof indexMonitorModule.getReportingAccessToken, 'function');
+  let seen = null;
+  const token = await indexMonitorModule.getReportingAccessToken({
+    env: { GG_READER_SA_JSON: '/tmp/reader-sa.json' },
+    home: '/tmp/home',
+    tokenProvider: async (saPath, scopes) => {
+      seen = { saPath, scopes };
+      return { token: 'reporting-sa-token' };
+    },
+  });
+
+  assert.equal(token, 'reporting-sa-token');
+  assert.deepEqual(seen, {
+    saPath: '/tmp/reader-sa.json',
+    scopes: [
+      'https://www.googleapis.com/auth/webmasters.readonly',
+      'https://www.googleapis.com/auth/analytics.readonly',
+    ],
+  });
 });
 
 test('runIndexMonitor --require-gsc-auth preflights GSC service-account access when tracking rows exist', async () => {

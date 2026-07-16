@@ -131,7 +131,7 @@ case "$rc" in
     ;;
   *)
     echo "$(date '+%F %T') recap performance failed rc=$rc" >> "$LOG"
-    node "$SCRIPT_DIR/gg-notify.mjs" index_tick_fail --site flow --rc "$rc" --log "$LOG" --hint "请检查 GSC/GA4 OAuth、Sheets writer SA 与 workbook 配置。" >> "$LOG" 2>&1
+    node "$SCRIPT_DIR/gg-notify.mjs" index_tick_fail --site flow --rc "$rc" --log "$LOG" --hint "请检查 GSC reader SA Full user、GA4 reader SA Viewer、Sheets writer SA 与 workbook 配置。" >> "$LOG" 2>&1
     ;;
 esac
 

@@ -488,6 +488,28 @@ test('fetchGscUrlMetrics filters target country with ISO alpha-3 code', async ()
   assert.equal(metrics.bestPosition, 8.2);
 });
 
+test('runRecapPerformance requests a reporting token without personal OAuth options', async () => {
+  let tokenArgs = null;
+  const code = await runRecapPerformance(['--workbook', 'wb-test'], {
+    sheetToken: 'sheet-token',
+    getAnalyticsToken: async (...args) => {
+      tokenArgs = args;
+      return 'reporting-sa-token';
+    },
+    readTrackingRows: async () => [],
+    readRecapRows: async () => [],
+  });
+
+  assert.equal(code, 0);
+  assert.deepEqual(tokenArgs, []);
+});
+
+test('recap production source has no personal OAuth dependency', () => {
+  const source = readFileSync(join(SCRIPTS, 'gg-recap-performance.mjs'), 'utf8');
+  assert.doesNotMatch(source, /_oauth-token\.mjs|getUserAccessToken|\{\s*user:\s*true\s*\}/);
+  assert.match(source, /getReportingAccessToken/);
+});
+
 test('runRecapPerformance updates recap rows and writes a Markdown task list without publish side effects', async () => {
   const calls = [];
   const code = await runRecapPerformance([
@@ -569,6 +591,8 @@ test('daily wrapper loops products and only runs recap performance sync', () => 
   assert.match(wrapper, /gg-notify\.mjs" recap_performance_ok/);
   assert.match(wrapper, /recap performance ok/);
   assert.match(wrapper, /仅在 D14\/D30\/D60 节点日抓取已收录 URL 的快照/);
+  assert.match(wrapper, /GSC reader SA Full user、GA4 reader SA Viewer、Sheets writer SA 与 workbook/);
+  assert.doesNotMatch(wrapper, /GSC\/GA4 OAuth/);
   assert.doesNotMatch(wrapper, /gg-seo-author|gg-gengrowth-publish|Request Indexing|--submit-sitemap/);
 });
 

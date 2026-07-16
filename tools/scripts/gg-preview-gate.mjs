@@ -439,7 +439,7 @@ export async function verifyPreviewBinding({
           return { ok: true, method: 'github-deployment', deploymentId: deployment.id };
         }
       }
-      if (rows.length > 0) {
+      if (matching.length > 0) {
         return {
           ok: false,
           reason: `preview deployment is not bound to reviewed head ${reviewedHeadRefOid}`,

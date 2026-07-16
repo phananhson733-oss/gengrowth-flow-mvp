@@ -94,8 +94,14 @@ function inspectQueue({ queueDir, site, planIds, now, errors }) {
   let activeRepairAfter = 0;
   let expiredLeasesAfter = 0;
   const terminalPageIds = new Set();
+  const terminalPageTimes = new Map();
   if (!queueDir || !existsSync(queueDir)) {
-    return { activeRepairAfter, expiredLeasesAfter, terminalPageIds };
+    return {
+      activeRepairAfter,
+      expiredLeasesAfter,
+      terminalPageIds,
+      terminalPageTimes,
+    };
   }
   for (const name of readdirSync(queueDir)) {
     if (!name.endsWith('.json')) continue;
@@ -108,7 +114,21 @@ function inspectQueue({ queueDir, site, planIds, now, errors }) {
       if (source.site !== site) continue;
       if (source.pageId !== 'RUN' && !planIds.has(source.pageId)) continue;
       if (CLAIM_TERMINALS.has(record.status) && source.pageId !== 'RUN') {
+        const terminalRaw = record.latestEvent?.createdAt ?? record.updatedAt;
+        let terminalAt = null;
+        if (terminalRaw !== undefined && terminalRaw !== null) {
+          terminalAt = Date.parse(terminalRaw);
+          if (!Number.isFinite(terminalAt)) {
+            throw new TypeError('terminal timestamp invalid');
+          }
+        }
         terminalPageIds.add(source.pageId);
+        if (terminalAt !== null) {
+          terminalPageTimes.set(
+            source.pageId,
+            Math.max(terminalPageTimes.get(source.pageId) || 0, terminalAt),
+          );
+        }
       }
       if (ACTIVE_REPAIR.has(record.status)) {
         activeRepairAfter += 1;
@@ -122,7 +142,24 @@ function inspectQueue({ queueDir, site, planIds, now, errors }) {
       activeRepairAfter += 1;
     }
   }
-  return { activeRepairAfter, expiredLeasesAfter, terminalPageIds };
+  return {
+    activeRepairAfter,
+    expiredLeasesAfter,
+    terminalPageIds,
+    terminalPageTimes,
+  };
+}
+
+function terminalCoversClaim(queue, pageId, claim, errors) {
+  if (!queue.terminalPageIds.has(pageId)) return false;
+  if (!Object.hasOwn(claim, 'failedAt') || claim.failedAt === null) return true;
+  const failedAt = Date.parse(claim.failedAt);
+  if (!Number.isFinite(failedAt)) {
+    errors.push(`claim ${pageId}: failedAt invalid`);
+    return false;
+  }
+  const terminalAt = queue.terminalPageTimes.get(pageId);
+  return Number.isFinite(terminalAt) && terminalAt >= failedAt;
 }
 
 function collectContamination(paths) {
@@ -232,7 +269,8 @@ export async function evaluateSeoReadiness({
     try {
       plainObject(claim, `claim ${pageId}`);
       if (!plan.ids.has(pageId) || !claimMatchesSite(claim, site)) continue;
-      if (claim.status === 'needs_human' && !queue.terminalPageIds.has(pageId)) {
+      if (claim.status === 'needs_human'
+        && !terminalCoversClaim(queue, pageId, claim, errors)) {
         eligibleNeedsHumanAfter += 1;
       }
       if (ACTIVE_CLAIMS.has(claim.status)) {

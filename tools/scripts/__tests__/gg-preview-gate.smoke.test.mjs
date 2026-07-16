@@ -884,6 +884,41 @@ test('a stale Vercel PR comment cannot bind an old preview URL to the reviewed S
   assert.ok(!sentinelHit(sentinels, 'autopilot-merge'), 'merge must not run on an unbound preview');
 });
 
+test('an exact normalized Vercel commit-status URL binds the preview without PR comments', () => {
+  const { dir, sentinels } = freshCase();
+  const env = fakeEnv({
+    dir,
+    sentinelsDir: sentinels,
+    statusJson: CLAIM_VERIFIED(),
+    reviewBin: reviewPassBin(dir, sentinels),
+    codexBin: codexPassBin(dir, sentinels),
+    ghDispatch: [
+      {
+        match: 'api repos/xdawayer/oracle/deployments?ref=',
+        stdout: JSON.stringify([{ id: 9, sha: HEAD_B }]),
+        exit: 0,
+      },
+      {
+        match: `api repos/xdawayer/oracle/commits/${HEAD_A}/status`,
+        stdout: JSON.stringify({
+          statuses: [{
+            context: 'Vercel',
+            state: 'success',
+            target_url: 'https://stored-preview.example.test/',
+          }],
+        }),
+        exit: 0,
+      },
+    ],
+  });
+  const r = run(['--branch', BRANCH, '--json'], env);
+  assert.equal(r.status, 0, `expected exact commit-status URL binding; stderr: ${r.stderr}; stdout: ${r.stdout}`);
+  assert.ok(sentinelHit(sentinels, 'preview-verify'), 'Chrome should run after exact SHA/URL binding');
+  assert.ok(sentinelHit(sentinels, 'autopilot-merge'), 'merge should run after all gates pass');
+  const ghCalls = sentinelText(sentinels, 'branch-head');
+  assert.doesNotMatch(ghCalls, /\/pulls|\/comments/, 'persistent PR comments are not binding evidence');
+});
+
 test('repair rechecks worktree HEAD and cleanliness before starting the repair worker', async () => {
   const fixture = gateRoundFixture({
     heads: [HEAD_A, HEAD_B],

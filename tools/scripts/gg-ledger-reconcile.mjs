@@ -202,6 +202,8 @@ function inspectRepairState(claims, errors, base, now = new Date()) {
   let expiredLeasesAfter = 0;
   const terminalPageIds = new Set();
   const terminalOwners = new Set();
+  const terminalPageTimes = new Map();
+  const terminalOwnerTimes = new Map();
   const queue = process.env.GG_SEO_REPAIR_QUEUE_DIR
     || join(base, 'seo-repair-queue');
   if (queue && existsSync(queue)) {
@@ -230,8 +232,27 @@ function inspectRepairState(claims, errors, base, now = new Date()) {
           }
         }
         if (CLAIM_TERMINALS.has(record.status)) {
+          const terminalRaw = record.latestEvent?.createdAt ?? record.updatedAt;
+          let terminalAt = null;
+          if (terminalRaw !== undefined && terminalRaw !== null) {
+            terminalAt = Date.parse(terminalRaw);
+            if (!Number.isFinite(terminalAt)) {
+              throw new TypeError('terminal timestamp invalid');
+            }
+          }
+          const ownerKey = `${source.site}\u0000${source.pageId}`;
           terminalPageIds.add(source.pageId);
-          terminalOwners.add(`${source.site}\u0000${source.pageId}`);
+          terminalOwners.add(ownerKey);
+          if (terminalAt !== null) {
+            terminalPageTimes.set(
+              source.pageId,
+              Math.max(terminalPageTimes.get(source.pageId) || 0, terminalAt),
+            );
+            terminalOwnerTimes.set(
+              ownerKey,
+              Math.max(terminalOwnerTimes.get(ownerKey) || 0, terminalAt),
+            );
+          }
         }
         if (ACTIVE_REPAIR.has(record.status)) {
           activeRepairAfter += 1;
@@ -268,7 +289,27 @@ function inspectRepairState(claims, errors, base, now = new Date()) {
     expiredLeasesAfter,
     terminalPageIds,
     terminalOwners,
+    terminalPageTimes,
+    terminalOwnerTimes,
   };
+}
+
+function terminalCoversClaim(repair, pageId, claim, errors) {
+  const ownerKey = claim.site ? `${claim.site}\u0000${pageId}` : null;
+  const present = ownerKey
+    ? repair.terminalOwners.has(ownerKey)
+    : repair.terminalPageIds.has(pageId);
+  if (!present) return false;
+  if (!Object.hasOwn(claim, 'failedAt') || claim.failedAt === null) return true;
+  const failedAt = Date.parse(claim.failedAt);
+  if (!Number.isFinite(failedAt)) {
+    errors.push(`claim ${pageId}: failedAt invalid`);
+    return false;
+  }
+  const terminalAt = ownerKey
+    ? repair.terminalOwnerTimes.get(ownerKey)
+    : repair.terminalPageTimes.get(pageId);
+  return Number.isFinite(terminalAt) && terminalAt >= failedAt;
 }
 
 async function defaultApply({ apply, log }) {
@@ -370,9 +411,7 @@ async function defaultVerify({ log }) {
     eligibleNeedsHumanAfter: Object.entries(claims)
       .filter(([pageId, claim]) => claim
         && claim.status === 'needs_human'
-        && !(claim.site
-          ? repair.terminalOwners.has(`${claim.site}\u0000${pageId}`)
-          : repair.terminalPageIds.has(pageId))).length,
+        && !terminalCoversClaim(repair, pageId, claim, errors)).length,
     errors,
   };
   log(`verify: ${COUNTER_FIELDS.map((field) => `${field}=${result[field]}`).join(' ')} errors=${errors.length}`);

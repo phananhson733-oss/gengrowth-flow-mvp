@@ -2,7 +2,12 @@ import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
+import {
+  dirname,
+  isAbsolute,
+  join,
+  resolve,
+} from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
@@ -101,12 +106,25 @@ export function buildRepairAgentPrompt({ template, record, strategy, target }) {
       })),
     target,
   };
+  const safeTemplate = String(template || '')
+    .split(/\r?\n/)
+    .filter((line) => !/pipeline code.*repairable|for pipeline code/i.test(line))
+    .join('\n')
+    .trim();
+  const mutationScope = strategy === 'agent_content_asset_link'
+    ? [
+        '- Only edit target.articleFile, target.assetFiles, target.supportFiles, and target.draftFile.',
+        '- Do not create git worktrees or branches, and do not edit pipeline code or any path outside target.worktree and target.draftFile.',
+      ]
+    : [
+        '- Diagnose pipeline or environment failures without editing pipeline code, creating worktrees, or changing paths outside the supplied target.',
+      ];
   return [
-    String(template || '').trim(),
+    safeTemplate,
     '',
     'Runtime constraints:',
     '- Process exactly this target; never start a batch or top-level nightly wrapper.',
-    '- For pipeline code, create an isolated git worktree and a codex/seo-repair-* branch before editing.',
+    ...mutationScope,
     '- Treat Agent output as repair diagnostics only; deterministic regating and terminal verification run afterward.',
     '- Use only target.allowedActions and verifiedLinkCandidates; do not invent routes or bypass gates.',
     '- Never invent protected or real-world facts. If authoritative evidence is missing, neutralize or remove the contested claim; if that cannot be done safely, leave missing authoritative source for human_only.',
@@ -122,12 +140,29 @@ function defaultAgentRun({ prompt, target, timeoutSeconds }) {
   if (!existsSync(codexBin)) {
     return { code: 127, stdout: '', stderr: `codex binary missing: ${codexBin}`, timedOut: false };
   }
-  const cwd = target?.worktree || FLOW_DIR;
+  const cwd = target?.worktree
+    || (isAbsolute(target?.articleFile || '') ? dirname(target.articleFile) : null);
+  if (!cwd || !isAbsolute(cwd) || !existsSync(cwd)) {
+    return {
+      code: 64,
+      stdout: '',
+      stderr: 'repair target must provide an existing absolute worktree or articleFile',
+      timedOut: false,
+    };
+  }
+  const additionalWritableRoots = [...new Set([
+    ...(isAbsolute(target?.draftFile || '') ? [dirname(target.draftFile)] : []),
+  ].map((path) => resolve(path))
+    .filter((path) => path !== resolve(cwd)))];
   const codexArgs = [
     codexBin,
     'exec',
-    '--sandbox', 'danger-full-access',
+    '--ignore-user-config',
+    '--ephemeral',
+    '--sandbox', 'workspace-write',
+    '-c', 'approval_policy="never"',
     '-C', cwd,
+    ...additionalWritableRoots.flatMap((path) => ['--add-dir', path]),
     '-',
   ];
   const timeoutBin = process.env.GG_SEO_REPAIR_TIMEOUT_BIN || '/opt/homebrew/bin/gtimeout';

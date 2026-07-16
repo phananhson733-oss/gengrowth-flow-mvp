@@ -679,6 +679,53 @@ function normalizePreviewUrl(value) {
   return String(value || '').replace(/\/+$/, '');
 }
 
+function trustedVercelPreviewUrl(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return null;
+  try {
+    const url = new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(raw) ? raw : `https://${raw}`);
+    if (url.protocol !== 'https:' || !url.hostname.toLowerCase().endsWith('.vercel.app')) return null;
+    return normalizePreviewUrl(url.origin);
+  } catch {
+    return null;
+  }
+}
+
+function trustedVercelInspectorUrl(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return null;
+  try {
+    const url = new URL(raw);
+    const hostname = url.hostname.toLowerCase();
+    if (url.protocol !== 'https:' || (hostname !== 'vercel.com' && hostname !== 'www.vercel.com')) {
+      return null;
+    }
+    return normalizePreviewUrl(url.toString());
+  } catch {
+    return null;
+  }
+}
+
+function structuredVercelCommentBindings(body) {
+  const bindings = [];
+  for (const match of String(body || '').matchAll(/\[vc\]: #[^:\r\n]+:([A-Za-z0-9+/=]+)/g)) {
+    try {
+      const metadata = JSON.parse(Buffer.from(match[1], 'base64').toString('utf8'));
+      for (const project of Array.isArray(metadata?.projects) ? metadata.projects : []) {
+        const previewUrl = trustedVercelPreviewUrl(project?.previewUrl);
+        const inspectorUrl = trustedVercelInspectorUrl(project?.inspectorUrl);
+        if (!previewUrl || !inspectorUrl || String(project?.nextCommitStatus || '') !== 'DEPLOYED') continue;
+        bindings.push({
+          project: String(project?.name || ''),
+          previewUrl,
+          inspectorUrl,
+        });
+      }
+    } catch {}
+  }
+  return bindings;
+}
+
 function failedArtifactEvidence(kind, reason) {
   return {
     ok: false,
@@ -830,11 +877,13 @@ export async function verifyPreviewBinding({
     timeoutMs: DEFAULTS.statusTimeoutMs,
   }, deps);
   const targetUrl = normalizePreviewUrl(previewUrl);
+  let matchingDeploymentSeen = false;
   const deployments = await gh(['api', `repos/${repo}/deployments?ref=${encodeURIComponent(branch)}`]);
   if (deployments.code === 0) {
     const rows = safeJson(deployments.stdout);
     if (Array.isArray(rows)) {
       const matching = rows.filter((row) => String(row?.sha || '') === reviewedHeadRefOid);
+      matchingDeploymentSeen = matching.length > 0;
       for (const deployment of matching) {
         const statuses = await gh(['api', `repos/${repo}/deployments/${deployment.id}/statuses`]);
         const statusRows = statuses.code === 0 ? safeJson(statuses.stdout) : null;
@@ -847,35 +896,73 @@ export async function verifyPreviewBinding({
           return { ok: true, method: 'github-deployment', deploymentId: deployment.id };
         }
       }
-      if (matching.length > 0) {
-        return {
-          ok: false,
-          reason: `preview deployment is not bound to reviewed head ${reviewedHeadRefOid}`,
-        };
-      }
     }
   }
 
   const statusResult = await gh(['api', `repos/${repo}/commits/${reviewedHeadRefOid}/status`]);
   const statusJson = statusResult.code === 0 ? safeJson(statusResult.stdout) : null;
   const statuses = Array.isArray(statusJson?.statuses) ? statusJson.statuses : [];
-  const boundStatus = statuses.find((status) => (
+  const successfulVercelStatuses = statuses.filter((status) => (
     String(status?.context || '').toLowerCase().includes('vercel')
     && String(status?.state || '').toLowerCase() === 'success'
-    && [status?.target_url, status?.details_url, status?.environment_url]
+  ));
+  const boundStatus = successfulVercelStatuses.find((status) => (
+    [status?.target_url, status?.details_url, status?.environment_url]
       .map(normalizePreviewUrl)
       .includes(targetUrl)
   ));
-  if (!boundStatus) {
+  if (boundStatus) {
     return {
-      ok: false,
-      reason: `preview URL is not exactly bound by a successful Vercel status on reviewed head ${reviewedHeadRefOid}`,
+      ok: true,
+      method: 'vercel-commit-status-url',
+      context: String(boundStatus.context || ''),
     };
   }
+
+  const targetVercelUrl = trustedVercelPreviewUrl(targetUrl);
+  const successfulInspectorUrls = new Set(successfulVercelStatuses
+    .flatMap((status) => [status?.target_url, status?.details_url, status?.environment_url])
+    .map(trustedVercelInspectorUrl)
+    .filter(Boolean));
+  if (targetVercelUrl && successfulInspectorUrls.size > 0) {
+    const pullsResult = await gh(['api', `repos/${repo}/commits/${reviewedHeadRefOid}/pulls`]);
+    const pulls = pullsResult.code === 0 ? safeJson(pullsResult.stdout) : null;
+    const openReviewedPulls = Array.isArray(pulls)
+      ? pulls.filter((pull) => (
+        String(pull?.state || '').toLowerCase() === 'open'
+        && String(pull?.head?.sha || '') === reviewedHeadRefOid
+        && pull?.number != null
+      ))
+      : [];
+    const expectedProject = String(repo || '').split('/').at(-1);
+    for (const pull of openReviewedPulls) {
+      const commentsResult = await gh(['api', `repos/${repo}/issues/${pull.number}/comments`]);
+      const comments = commentsResult.code === 0 ? safeJson(commentsResult.stdout) : null;
+      if (!Array.isArray(comments)) continue;
+      for (let index = comments.length - 1; index >= 0; index -= 1) {
+        const comment = comments[index];
+        if (!/^vercel(\[bot\])?$/i.test(String(comment?.user?.login || '').trim())) continue;
+        const trustedBinding = structuredVercelCommentBindings(comment?.body).find((binding) => (
+          binding.project === expectedProject
+          && binding.previewUrl === targetVercelUrl
+          && successfulInspectorUrls.has(binding.inspectorUrl)
+        ));
+        if (trustedBinding) {
+          return {
+            ok: true,
+            method: 'vercel-reviewed-pr-comment',
+            pullNumber: pull.number,
+          };
+        }
+      }
+    }
+  }
+
   return {
-    ok: true,
-    method: 'vercel-commit-status-url',
-    context: String(boundStatus.context || ''),
+    ok: false,
+    reason: matchingDeploymentSeen
+      ? `preview deployment is not bound to reviewed head ${reviewedHeadRefOid}`
+      : `preview URL is not exactly bound by a successful Vercel status on reviewed head ${reviewedHeadRefOid}`,
   };
 }
 

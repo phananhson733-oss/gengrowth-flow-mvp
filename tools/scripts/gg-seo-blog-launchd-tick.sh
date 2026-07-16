@@ -100,6 +100,10 @@ LOG_OFFSET=0
 if [[ -f "$NIGHTLY_LOG" ]]; then
   LOG_OFFSET="$(wc -c < "$NIGHTLY_LOG" | tr -d ' ')"
 fi
+export GG_SEO_REPAIR_RUN_ID="$RUN_ID"
+export GG_SEO_REPAIR_LOG_FILE="$NIGHTLY_LOG"
+export GG_SEO_REPAIR_LOG_OFFSET_START="$LOG_OFFSET"
+unset GG_SEO_REPAIR_LOG_OFFSET_END
 
 echo "single-executor preflight passed; starting deterministic SEO nightly"
 set +e
@@ -128,7 +132,7 @@ fi
 
 echo "repair hook complete; running ledger reconcile"
 set +e
-node "$RECONCILE"
+GG_LARK_NOTIFY_SILENCE=1 node "$RECONCILE"
 RECONCILE_RC=$?
 set -e
 

@@ -312,6 +312,8 @@ test('notify bin 失效（ENOENT）→ exit 3 + 渲染文本直接入 outbox 兜
   const payload = JSON.parse(readFileSync(join(outbox, files[0]), 'utf8'));
   assert.match(payload.text, /批次汇总 2026-07-03/);
   assert.match(payload.lastError, /notify-(spawn|exit)/);
+  assert.equal(payload.idempotencyKey, 'batch-terminal:test-run-1');
+  assert.equal(payload.msgUuid, terminalMessageUuid('batch-terminal:test-run-1'));
 });
 
 test('mixed claims ledger is scoped to the selected site and pinned plan', () => {

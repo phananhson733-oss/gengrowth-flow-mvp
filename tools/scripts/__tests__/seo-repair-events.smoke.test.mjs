@@ -561,3 +561,96 @@ test('corrupt records are quarantined instead of silently disappearing', async (
   assert.equal(listed.length, 1);
   assert.equal((await readdir(join(queueDir, 'quarantine'))).some((name) => name.startsWith('broken.json')), true);
 });
+
+function legacyPreparedIntent({ transactionId, incidentId, writes, operation = 'replace_generation' }) {
+  return {
+    schemaVersion: 1,
+    transactionId,
+    incidentId,
+    operation,
+    phase: 'prepared',
+    createdAt: '2026-07-15T14:03:00.000Z',
+    writes,
+  };
+}
+
+async function writeLegacyTransaction(queueDir, filename, intent) {
+  const directory = join(queueDir, '.incident-transactions');
+  await mkdir(directory, { recursive: true });
+  await writeFile(join(directory, filename), `${JSON.stringify(intent, null, 2)}\n`, 'utf8');
+}
+
+test('prepared transaction recovery quarantines a path traversal without writing outside the queue', async (t) => {
+  const { root, queueDir } = await fixture(t);
+  const queued = await enqueueRepairEvent(event({ eventId: 'path-owner' }), { queueDir });
+  const incidentId = repairIncidentId(queued.event);
+  const transactionId = `${incidentId}-path-traversal`;
+  await writeLegacyTransaction(queueDir, `${transactionId}.json`, legacyPreparedIntent({
+    transactionId,
+    incidentId,
+    writes: [{
+      filename: '../escaped.json',
+      record: queued,
+    }],
+  }));
+
+  await listRepairRecords({ queueDir });
+
+  await assert.rejects(readFile(join(root, 'escaped.json'), 'utf8'), /ENOENT/);
+  const quarantine = await readdir(join(queueDir, '.incident-transactions', 'quarantine'));
+  const holds = await readdir(join(queueDir, '.incident-transactions', 'holds'));
+  assert.equal(quarantine.some((name) => name.includes('path-traversal')), true);
+  assert.equal(holds.length, 1);
+});
+
+test('corrupt prepared transaction is quarantined once, holds its inferred incident, and leaves other work operable', async (t) => {
+  const { queueDir } = await fixture(t);
+  const affected = await enqueueRepairEvent(event({
+    eventId: 'corrupt-owner',
+    pageId: 'PG-CORRUPT-001',
+  }), { queueDir });
+  const unaffected = await enqueueRepairEvent(event({
+    eventId: 'unaffected-owner',
+    pageId: 'PG-HEALTHY-001',
+  }), { queueDir });
+  const affectedIncidentId = repairIncidentId(affected.event);
+  const transactionDirectory = join(queueDir, '.incident-transactions');
+  await mkdir(transactionDirectory, { recursive: true });
+  await writeFile(join(transactionDirectory, `${affectedIncidentId}-corrupt.json`), '{broken', 'utf8');
+
+  const first = await listEligibleRepairEvents({ queueDir });
+  const second = await listEligibleRepairEvents({ queueDir });
+
+  assert.deepEqual(first.map((record) => record.event.eventId), [unaffected.event.eventId]);
+  assert.deepEqual(second.map((record) => record.event.eventId), [unaffected.event.eventId]);
+  const quarantined = await readdir(join(transactionDirectory, 'quarantine'));
+  const holds = await readdir(join(transactionDirectory, 'holds'));
+  assert.equal(quarantined.length, 1);
+  assert.equal(holds.length, 1);
+  assert.match(await readFile(join(transactionDirectory, 'holds', holds[0]), 'utf8'), /corrupt transaction intent/i);
+});
+
+test('committed transaction history is archived outside the hot scan and ordinary reads never parse the archive', async (t) => {
+  const { queueDir } = await fixture(t);
+  const queued = await enqueueRepairEvent(event({ eventId: 'archive-owner' }), { queueDir });
+  const incidentId = repairIncidentId(queued.event);
+  const transactionId = `${incidentId}-committed`;
+  await writeLegacyTransaction(queueDir, `${transactionId}.json`, {
+    ...legacyPreparedIntent({ transactionId, incidentId, writes: [] }),
+    phase: 'committed',
+    committedAt: '2026-07-15T14:04:00.000Z',
+  });
+  const instrumentation = { pendingReads: 0, committedReads: 0 };
+
+  await listRepairRecords({ queueDir, transactionInstrumentation: instrumentation });
+  assert.equal(instrumentation.pendingReads, 1);
+  assert.equal(instrumentation.committedReads, 0);
+  const committedDirectory = join(queueDir, '.incident-transactions', 'committed');
+  assert.equal((await readdir(committedDirectory)).length, 1);
+  assert.equal((await readdir(join(queueDir, '.incident-transactions'))).some((name) => name.endsWith('.json')), false);
+
+  instrumentation.pendingReads = 0;
+  instrumentation.committedReads = 0;
+  await listRepairRecords({ queueDir, transactionInstrumentation: instrumentation });
+  assert.deepEqual(instrumentation, { pendingReads: 0, committedReads: 0 });
+});

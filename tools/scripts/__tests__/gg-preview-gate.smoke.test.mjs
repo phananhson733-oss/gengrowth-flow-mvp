@@ -24,8 +24,12 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 
+import { runGate } from '../gg-preview-gate.mjs';
+
 const SCRIPT = fileURLToPath(new URL('../gg-preview-gate.mjs', import.meta.url));
 const BRANCH = 'seo/auto/2026-06-18-12345';
+const HEAD_A = 'a'.repeat(40);
+const HEAD_B = 'b'.repeat(40);
 
 // A fresh sandbox per test run (pid-scoped); each test gets its own bin dir + sentinel dir.
 const ROOT = join(tmpdir(), `gg-preview-gate-test-${process.pid}`);
@@ -182,6 +186,98 @@ function reviewDimFailBin(dir, sentinelsDir, failDim) {
 
 function run(args, env) {
   return spawnSync(process.execPath, [SCRIPT, ...args], { encoding: 'utf8', timeout: 30000, env });
+}
+
+function gateRoundFixture({
+  heads,
+  reviewVerdicts = {},
+  repairResult = { applied: true },
+} = {}) {
+  const calls = [];
+  const headQueue = [...heads];
+  const verdictQueues = Object.fromEntries(
+    Object.entries(reviewVerdicts).map(([dimension, verdicts]) => [dimension, [...verdicts]]),
+  );
+  const statusJson = CLAIM_VERIFIED();
+  const bins = {
+    autopilot: 'autopilot',
+    previewWait: 'preview-wait',
+    previewVerify: 'chrome',
+    reviewWorker: 'review',
+    notify: 'notify',
+    codex: 'codex',
+    gateRepair: 'repair',
+  };
+  const node = async (bin, args) => {
+    calls.push({ bin, args: [...args], head: args[args.indexOf('--head-ref-oid') + 1] || null });
+    if (bin === bins.autopilot && args.includes('--status')) {
+      return { code: 0, stdout: statusJson, stderr: '', timedOut: false };
+    }
+    if (bin === bins.previewWait) {
+      return {
+        code: 0,
+        stdout: JSON.stringify({ ok: true, previewUrl: 'https://preview.example.test' }),
+        stderr: '',
+        timedOut: false,
+      };
+    }
+    if (bin === bins.previewVerify) {
+      return {
+        code: 0,
+        stdout: JSON.stringify({ ok: true, checked: [{ url: 'x' }], warnings: [] }),
+        stderr: '',
+        timedOut: false,
+      };
+    }
+    if (bin === bins.reviewWorker) {
+      const dimension = args[args.indexOf('--dimension') + 1];
+      const queue = verdictQueues[dimension] || ['PASS'];
+      const verdict = queue.length > 1 ? queue.shift() : queue[0];
+      return {
+        code: 0,
+        stdout: JSON.stringify({
+          verdict,
+          blocking_reason: verdict === 'PASS' ? '' : `${dimension} failed`,
+          notes: [],
+        }),
+        stderr: '',
+        timedOut: false,
+      };
+    }
+    if (bin === bins.codex) {
+      return { code: 0, stdout: 'VERDICT: PASS', stderr: '', timedOut: false };
+    }
+    return { code: 0, stdout: '', stderr: '', timedOut: false };
+  };
+  return {
+    calls,
+    callsFor(bin) {
+      return calls.filter((call) => call.bin === bin);
+    },
+    markVerifiedCalls() {
+      return calls.filter((call) => call.bin === bins.autopilot && call.args.includes('--mark-verified'));
+    },
+    mergeCalls() {
+      return calls.filter((call) => call.bin === bins.autopilot && call.args.includes('--merge'));
+    },
+    options: {
+      branch: BRANCH,
+      repo: 'xdawayer/oracle',
+      dryRun: false,
+      json: true,
+      statusTimeoutMs: 1_000,
+      previewTimeoutMs: 1_000,
+      verifyTimeoutMs: 1_000,
+      reviewTimeoutMs: 1_000,
+      codexTimeoutMs: 1_000,
+    },
+    deps: {
+      bins,
+      node,
+      resolveBranchHead: async () => headQueue.shift() ?? null,
+      tryGateRepair: async () => repairResult,
+    },
+  };
 }
 
 const CLAIM_VERIFIED = (extra = {}) => JSON.stringify({
@@ -596,6 +692,60 @@ test('a sub-step that exceeds its timeout → exit 2, mark-failed + gate_fail no
   assert.match(notified, /^gate_fail /, 'timeout fires the failure notify (gate_fail event)');
   assert.match(notified, /--reason .*timeout/i);
   assert.ok(!sentinelHit(sentinels, 'autopilot-merge'), 'a timed-out gate must NOT merge');
+});
+
+test('a repair invalidates every earlier gate result and reruns all checks on the new SHA', async () => {
+  const fixture = gateRoundFixture({
+    heads: [HEAD_A, HEAD_B, HEAD_B],
+    reviewVerdicts: { schema: ['FAIL', 'PASS'] },
+  });
+  const result = await runGate(fixture.options, fixture.deps);
+  assert.equal(result.exitCode, 0, result.reason);
+  assert.deepEqual(fixture.callsFor('chrome').map((call) => call.head), [HEAD_A, HEAD_B]);
+  for (const dimension of ['astrology', 'schema', 'links-seo']) {
+    assert.deepEqual(
+      fixture.callsFor('review')
+        .filter((call) => call.args.includes(dimension))
+        .map((call) => call.head),
+      [HEAD_A, HEAD_B],
+    );
+  }
+  assert.deepEqual(fixture.callsFor('codex').map((call) => call.head), [HEAD_A, HEAD_B]);
+  assert.match(fixture.markVerifiedCalls()[0].args.join(' '), new RegExp(`--head-ref-oid ${HEAD_B}`));
+  assert.equal(fixture.mergeCalls().length, 1);
+});
+
+test('branch head drift during a gate round blocks verification', async () => {
+  const fixture = gateRoundFixture({ heads: [HEAD_A, HEAD_B] });
+  const result = await runGate(fixture.options, fixture.deps);
+  assert.equal(result.exitCode, 2);
+  assert.match(result.reason, /head drift/i);
+  assert.equal(fixture.markVerifiedCalls().length, 0);
+  assert.equal(fixture.mergeCalls().length, 0);
+});
+
+test('required mode cannot verify when branch head is unavailable or malformed', async () => {
+  for (const head of [null, 'not-a-sha']) {
+    const fixture = gateRoundFixture({ heads: [head] });
+    const result = await runGate(fixture.options, fixture.deps);
+    assert.equal(result.exitCode, 2);
+    assert.match(result.reason, /headRefOid required|40-hex/i);
+    assert.equal(fixture.markVerifiedCalls().length, 0);
+    assert.equal(fixture.mergeCalls().length, 0);
+  }
+});
+
+test('a repair that reports success without changing branch head stops as no progress', async () => {
+  const fixture = gateRoundFixture({
+    heads: [HEAD_A, HEAD_A],
+    reviewVerdicts: { schema: ['FAIL', 'PASS'] },
+  });
+  const result = await runGate(fixture.options, fixture.deps);
+  assert.equal(result.exitCode, 2);
+  assert.match(result.reason, /no commit progress|no.progress/i);
+  assert.equal(fixture.callsFor('chrome').length, 1);
+  assert.equal(fixture.markVerifiedCalls().length, 0);
+  assert.equal(fixture.mergeCalls().length, 0);
 });
 
 test('cleanup', () => {

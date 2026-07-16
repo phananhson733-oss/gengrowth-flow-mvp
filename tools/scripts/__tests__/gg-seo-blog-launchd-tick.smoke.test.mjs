@@ -14,7 +14,7 @@ const authorTick = resolve(flow, 'tools/scripts/gg-gengrowth-author-tick.sh');
 const seoPlist = resolve(flow, 'tools/launchd/com.gengrowth.seo-blog.plist');
 const notesPlist = resolve(wiki, 'tools/launchd/com.gengrowth.wiki-notes-digest.plist');
 
-test('SEO launchd runner owns nightly, hook, reconcile, then terminal summary', () => {
+test('SEO launchd runner owns pre/post drain, strict reconcile, readiness, then terminal summary', () => {
   assert.equal(existsSync(runner), true, `missing runner: ${runner}`);
   const source = readFileSync(runner, 'utf8');
   const nightlySource = readFileSync(resolve(flow, 'tools/scripts/gg-nightly-seo.sh'), 'utf8');
@@ -24,13 +24,16 @@ test('SEO launchd runner owns nightly, hook, reconcile, then terminal summary', 
   assert.match(source, /com\.gengrowth\.seo-nightly/);
   assert.match(source, /gg-nightly-seo\.sh/);
   assert.match(source, /gg-seo-repair-hook\.mjs/);
+  assert.match(source, /gg-seo-repair-controller\.mjs/);
   assert.match(source, /gg-ledger-reconcile\.mjs/);
+  assert.match(source, /gg-seo-readiness\.mjs/);
   assert.match(source, /gg-batch-summary\.mjs/);
   assert.doesNotMatch(source, /tomllib|automation\.toml/i);
   assert.doesNotMatch(source, /codex.*exec/is);
+  assert.ok(source.indexOf('"$REPAIR_CONTROLLER"') < source.indexOf('"$NIGHTLY"'));
   assert.ok(source.indexOf('"$NIGHTLY"') < source.indexOf('"$REPAIR_HOOK"'));
-  assert.ok(source.indexOf('"$REPAIR_HOOK"') < source.indexOf('"$RECONCILE"'));
-  assert.ok(source.indexOf('"$RECONCILE"') < source.indexOf('"$BATCH_SUMMARY"'));
+  assert.ok(source.lastIndexOf('"$RECONCILE"') < source.indexOf('"$READINESS"'));
+  assert.ok(source.indexOf('"$READINESS"') < source.indexOf('"$BATCH_SUMMARY"'));
   assert.doesNotMatch(nightlySource, /gg-batch-summary/);
 });
 
@@ -43,7 +46,9 @@ function executable(path, source) {
 function runnerHarness({
   nightlyExit = 0,
   hookExit = 0,
+  controllerExit = 0,
   reconcileExit = 0,
+  readinessExit = 0,
   summaryExit = 0,
   lockHeld = false,
 } = {}) {
@@ -56,9 +61,11 @@ function runnerHarness({
   mkdirSync(opsTasks, { recursive: true });
   const events = join(root, 'events.log');
   const hookArgs = join(root, 'hook-args.json');
+  const controllerArgs = join(root, 'controller-args.log');
   const summaryArgs = join(root, 'summary-args.json');
   const nightlyEnv = join(root, 'nightly-env.json');
   const reconcileEnv = join(root, 'reconcile-env.json');
+  const readinessArgs = join(root, 'readiness-args.json');
   const nightlyLog = join(root, 'nightly.log');
   const launchdLog = join(root, 'launchd.log');
   const launchdErr = join(root, 'launchd.err.log');
@@ -86,12 +93,28 @@ function runnerHarness({
     `process.exit(${hookExit});`,
     '',
   ].join('\n'));
+  const controller = join(root, 'controller.mjs');
+  writeFileSync(controller, [
+    "import { appendFileSync } from 'node:fs';",
+    "appendFileSync(process.env.GG_TEST_EVENTS, 'drain\\n');",
+    "appendFileSync(process.env.GG_TEST_CONTROLLER_ARGS, JSON.stringify(process.argv.slice(2)) + '\\n');",
+    `process.exit(${controllerExit});`,
+    '',
+  ].join('\n'));
   const reconcile = join(root, 'reconcile.mjs');
   writeFileSync(reconcile, [
     "import { appendFileSync, writeFileSync } from 'node:fs';",
     "appendFileSync(process.env.GG_TEST_EVENTS, 'reconcile\\n');",
     "writeFileSync(process.env.GG_TEST_RECONCILE_ENV, JSON.stringify({ silence: process.env.GG_LARK_NOTIFY_SILENCE || null }));",
     `process.exit(${reconcileExit});`,
+    '',
+  ].join('\n'));
+  const readiness = join(root, 'readiness.mjs');
+  writeFileSync(readiness, [
+    "import { appendFileSync, writeFileSync } from 'node:fs';",
+    "appendFileSync(process.env.GG_TEST_EVENTS, 'readiness\\n');",
+    "writeFileSync(process.env.GG_TEST_READINESS_ARGS, JSON.stringify(process.argv.slice(2)));",
+    `process.exit(${readinessExit});`,
     '',
   ].join('\n'));
   const summary = join(root, 'summary.mjs');
@@ -116,7 +139,9 @@ function runnerHarness({
       GG_AUTOMATION_ORACLE_DIR: oracle,
       GG_SEO_NIGHTLY_BIN: nightly,
       GG_SEO_REPAIR_HOOK_BIN: hook,
+      GG_SEO_REPAIR_CONTROLLER_BIN: controller,
       GG_SEO_RECONCILE_BIN: reconcile,
+      GG_SEO_READINESS_BIN: readiness,
       GG_SEO_BATCH_SUMMARY_BIN: summary,
       GG_SEO_NIGHTLY_LOG: nightlyLog,
       GG_SEO_LAUNCHD_LOG: launchdLog,
@@ -126,9 +151,11 @@ function runnerHarness({
       GG_SEO_CLAIMS: claims,
       GG_TEST_EVENTS: events,
       GG_TEST_HOOK_ARGS: hookArgs,
+      GG_TEST_CONTROLLER_ARGS: controllerArgs,
       GG_TEST_SUMMARY_ARGS: summaryArgs,
       GG_TEST_NIGHTLY_ENV: nightlyEnv,
       GG_TEST_RECONCILE_ENV: reconcileEnv,
+      GG_TEST_READINESS_ARGS: readinessArgs,
     },
   });
   const readMaybe = (path) => { try { return readFileSync(path, 'utf8'); } catch { return ''; } };
@@ -136,20 +163,22 @@ function runnerHarness({
     run,
     events: () => readMaybe(events).trim().split('\n').filter(Boolean),
     hookArgs: () => JSON.parse(readMaybe(hookArgs) || '[]'),
+    controllerArgs: () => readMaybe(controllerArgs).trim().split('\n').filter(Boolean).map((line) => JSON.parse(line)),
     summaryArgs: () => JSON.parse(readMaybe(summaryArgs) || '[]'),
     nightlyEnv: () => JSON.parse(readMaybe(nightlyEnv) || '{}'),
     reconcileEnv: () => JSON.parse(readMaybe(reconcileEnv) || '{}'),
+    readinessArgs: () => JSON.parse(readMaybe(readinessArgs) || '[]'),
     log: () => readMaybe(launchdLog),
     plan,
     nightlyLog,
   };
 }
 
-test('clean runner orders nightly, hook, reconcile, summary and preserves one fire-local run id', () => {
+test('clean runner orders pre/post drain, strict reconcile, readiness, summary and preserves one fire-local run id', () => {
   const h = runnerHarness({ nightlyExit: 0, hookExit: 0 });
   const result = h.run();
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}\n${h.log()}`);
-  assert.deepEqual(h.events(), ['nightly', 'hook', 'reconcile', 'summary']);
+  assert.deepEqual(h.events(), ['drain', 'reconcile', 'nightly', 'hook', 'drain', 'reconcile', 'readiness', 'summary']);
   const hookArgs = h.hookArgs();
   const summaryArgs = h.summaryArgs();
   const nightlyEnv = h.nightlyEnv();
@@ -163,13 +192,19 @@ test('clean runner orders nightly, hook, reconcile, summary and preserves one fi
   assert.equal(nightlyEnv.offsetStart, String(Buffer.byteLength('existing bytes\n')));
   assert.equal(nightlyEnv.offsetEnd, null);
   assert.equal(h.reconcileEnv().silence, '1', 'outer runner must suppress reconcile-owned batch notifications');
+  assert.equal(h.controllerArgs().length, 2);
+  assert.equal(h.controllerArgs()[0][0], 'drain');
+  assert.equal(h.controllerArgs()[1][0], 'drain');
+  const readinessArgs = h.readinessArgs();
+  assert.equal(readinessArgs[readinessArgs.indexOf('--run-id') + 1], runId);
+  assert.equal(readinessArgs[readinessArgs.indexOf('--plan') + 1], h.plan);
 });
 
 test('nightly nonzero is passed to hook and a recovered fire still reaches reconcile and summary', () => {
   const h = runnerHarness({ nightlyExit: 7, hookExit: 0 });
   const result = h.run();
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}\n${h.log()}`);
-  assert.deepEqual(h.events(), ['nightly', 'hook', 'reconcile', 'summary']);
+  assert.deepEqual(h.events(), ['drain', 'reconcile', 'nightly', 'hook', 'drain', 'reconcile', 'readiness', 'summary']);
   const args = h.hookArgs();
   assert.equal(args[args.indexOf('--run-exit') + 1], '7');
 });
@@ -178,28 +213,35 @@ test('hook failure is returned and cannot emit a false-success terminal summary'
   const h = runnerHarness({ nightlyExit: 0, hookExit: 2 });
   const result = h.run();
   assert.equal(result.status, 2, `${result.stdout}\n${result.stderr}\n${h.log()}`);
-  assert.deepEqual(h.events(), ['nightly', 'hook']);
+  assert.deepEqual(h.events(), ['drain', 'reconcile', 'nightly', 'hook']);
 });
 
-test('reconcile failure is returned and cannot emit a false-success terminal summary', () => {
+test('pre-reconcile failure is returned before nightly and cannot emit a terminal summary', () => {
   const h = runnerHarness({ reconcileExit: 4 });
   const result = h.run();
   assert.equal(result.status, 4, `${result.stdout}\n${result.stderr}\n${h.log()}`);
-  assert.deepEqual(h.events(), ['nightly', 'hook', 'reconcile']);
+  assert.deepEqual(h.events(), ['drain', 'reconcile']);
+});
+
+test('readiness failure is returned and cannot emit a false-success terminal summary', () => {
+  const h = runnerHarness({ readinessExit: 6 });
+  const result = h.run();
+  assert.equal(result.status, 6, `${result.stdout}\n${result.stderr}\n${h.log()}`);
+  assert.deepEqual(h.events(), ['drain', 'reconcile', 'nightly', 'hook', 'drain', 'reconcile', 'readiness']);
 });
 
 test('silent empty summary exit 2 is a successful completed tick', () => {
   const h = runnerHarness({ summaryExit: 2 });
   const result = h.run();
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}\n${h.log()}`);
-  assert.deepEqual(h.events(), ['nightly', 'hook', 'reconcile', 'summary']);
+  assert.deepEqual(h.events(), ['drain', 'reconcile', 'nightly', 'hook', 'drain', 'reconcile', 'readiness', 'summary']);
 });
 
-test('summary delivery failure owns the final nonzero exit', () => {
+test('readiness owns final exit after terminal summary delivery attempt', () => {
   const h = runnerHarness({ summaryExit: 3 });
   const result = h.run();
-  assert.equal(result.status, 3, `${result.stdout}\n${result.stderr}\n${h.log()}`);
-  assert.deepEqual(h.events(), ['nightly', 'hook', 'reconcile', 'summary']);
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}\n${h.log()}`);
+  assert.deepEqual(h.events(), ['drain', 'reconcile', 'nightly', 'hook', 'drain', 'reconcile', 'readiness', 'summary']);
 });
 
 test('outer lock makes a concurrent tick skip before nightly or hook', () => {

@@ -721,6 +721,41 @@ test('blocking page terminals absorb same and changed observations without reset
   }
 });
 
+test('blocking terminal observation merge deduplicates IDs and restores a missing source event body', async (t) => {
+  const { queueDir } = await fixture(t);
+  const queued = await enqueueRepairEvent(event({
+    eventId: 'terminal-source-dedupe',
+    pageId: 'PG-DEDUPE-001',
+  }), { queueDir });
+  const terminal = await transitionRepairEvent(queued, {
+    status: 'quarantined',
+    evidence: { type: 'repair_budget_exhausted' },
+  }, { queueDir });
+  const path = join(queueDir, `${terminal.event.eventId}.json`);
+  await writeFile(path, `${JSON.stringify({
+    ...terminal,
+    sourceEventIds: [terminal.event.eventId, 'terminal-ghost-observation', 'terminal-ghost-observation'],
+    sourceEvents: [terminal.event],
+  }, null, 2)}\n`, 'utf8');
+
+  const merged = await enqueueRepairEvent(event({
+    eventId: 'terminal-ghost-observation',
+    pageId: terminal.event.pageId,
+    runId: 'terminal-ghost-window',
+    summary: 'changed terminal observation with a previously orphaned id',
+    createdAt: '2026-07-16T08:00:00.000Z',
+  }), { queueDir });
+
+  assert.deepEqual(
+    merged.sourceEventIds,
+    [terminal.event.eventId, 'terminal-ghost-observation'],
+  );
+  assert.equal(
+    merged.sourceEvents.filter((item) => item.eventId === 'terminal-ghost-observation').length,
+    1,
+  );
+});
+
 test('a compacted migration hold releases exactly one versioned verification credit', async (t) => {
   const { queueDir } = await fixture(t);
   const source = await enqueueRepairEvent(event({

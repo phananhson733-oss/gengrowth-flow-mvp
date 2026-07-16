@@ -1013,13 +1013,14 @@ function mergeObservedEvent(record, event, fingerprint, incidentId, {
   preserveLatestEvent = false,
 } = {}) {
   const existingSourceEvents = record.sourceEvents || [record.event];
+  const hasSourceEvent = existingSourceEvents.some((source) => source?.eventId === event.eventId);
   const currentLatestEvent = record.latestEvent || record.event;
   const existingSourceEventIds = new Set(
     record.sourceEventIds || existingSourceEvents.map((source) => source.eventId),
   );
   const currentGenerationRunIds = new Set(existingSourceEvents.map((source) => source.runId));
-  const sourceEventIds = [...existingSourceEventIds, event.eventId];
-  const sourceEvents = existingSourceEventIds.has(event.eventId)
+  const sourceEventIds = [...new Set([...existingSourceEventIds, event.eventId])];
+  const sourceEvents = hasSourceEvent
     ? existingSourceEvents
     : [...existingSourceEvents, event];
   return {
@@ -1066,10 +1067,12 @@ export function hasAvailableVerificationCredit(record) {
     && record.verificationCredit === 1
     && record.verificationCreditRemaining === 1
     && record.verificationCreditConsumedAt == null
+    && record.verificationCreditConsumedBy == null
     && release
     && CODE_SHA_PATTERN.test(String(release.codeSha || ''))
     && typeof release.reason === 'string'
     && release.reason.trim() !== ''
+    && Number.isFinite(Date.parse(release.releasedAt || ''))
     && release.budgetEpoch === record.budgetEpoch,
   );
 }

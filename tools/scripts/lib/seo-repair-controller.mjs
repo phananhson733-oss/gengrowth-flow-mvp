@@ -403,14 +403,26 @@ export async function drainRepairQueue({
     const candidateStrategy = chainFor(candidateClassification).includes(candidate.strategy)
       ? candidate.strategy
       : initialStrategy(candidateClassification);
-    const exhausted = hasAvailableVerificationCredit(candidate)
-      ? null
-      : preAttemptQuarantineEvidence(candidate, candidateStrategy, clockValue(now), {
+    const verificationCreditAvailable = hasAvailableVerificationCredit(candidate);
+    const releasedCanonicalCredit = candidate.compaction?.canonical === true
+      && candidate.verificationCreditRelease != null;
+    const exhausted = releasedCanonicalCredit && !verificationCreditAvailable
+      ? {
+          type: 'verification_credit_state_invalid',
+          verificationCredit: candidate.verificationCredit ?? null,
+          verificationCreditRemaining: candidate.verificationCreditRemaining ?? null,
+          budgetEpoch: candidate.budgetEpoch ?? null,
+          releaseBudgetEpoch: candidate.verificationCreditRelease?.budgetEpoch ?? null,
+          consumed: candidate.verificationCreditConsumedAt != null,
+        }
+      : verificationCreditAvailable
+        ? null
+        : preAttemptQuarantineEvidence(candidate, candidateStrategy, clockValue(now), {
           maxTotalAttempts: totalAttemptLimit,
           maxAgentMutationAttempts: agentMutationLimit,
           maxWindowCount: windowLimit,
           maxIncidentAgeMs: incidentAgeLimit,
-        });
+          });
     if (exhausted) {
       processed += 1;
       try {

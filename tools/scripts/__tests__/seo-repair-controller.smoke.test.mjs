@@ -374,6 +374,69 @@ test('a production-shaped 23-attempt hold consumes one credit as attempt 24 and 
   assert.equal(built.calls.length, 1);
 });
 
+test('released canonical records with an illegal credit state quarantine before adapter execution', async (t) => {
+  const cases = [
+    {
+      name: 'remaining credit is zero before lease consumption',
+      mutate(record) {
+        return {
+          ...record,
+          verificationCreditRemaining: 0,
+          verificationCreditConsumedAt: null,
+          verificationCreditConsumedBy: null,
+        };
+      },
+    },
+    {
+      name: 'remaining credit exceeds exactly one',
+      mutate(record) {
+        return {
+          ...record,
+          verificationCreditRemaining: 2,
+        };
+      },
+    },
+    {
+      name: 'release epoch does not match the canonical budget epoch',
+      mutate(record) {
+        return {
+          ...record,
+          verificationCreditRelease: {
+            ...record.verificationCreditRelease,
+            budgetEpoch: record.budgetEpoch - 1,
+          },
+        };
+      },
+    },
+  ];
+
+  for (const item of cases) {
+    await t.test(item.name, async (tt) => {
+      const built = await creditedFixture(tt, {
+        terminal: 'published',
+        evidence: { checks: { production_200: true } },
+      });
+      const path = join(built.queueDir, `${built.released.event.eventId}.json`);
+      const invalid = item.mutate({
+        ...built.released,
+        totalAttempts: 0,
+        agentMutationAttempts: 0,
+        noProgressCount: 0,
+        windowCount: 1,
+        firstDetectedAt: '2026-07-16T08:00:00.000Z',
+      });
+      await writeFile(path, `${JSON.stringify(invalid, null, 2)}\n`, 'utf8');
+
+      const result = await drainRepairQueue(built.args);
+      assert.equal(built.calls.length, 0);
+      assert.equal(result.terminals[0].terminal, 'quarantined');
+      const terminal = await readRepairRecord(path);
+      assert.equal(terminal.status, 'quarantined');
+      assert.equal(terminal.history.at(-1).evidence.type, 'verification_credit_state_invalid');
+    });
+  }
+});
+
 test('a successful migration verification credit reaches terminal success and cannot run twice', async (t) => {
   const built = await creditedFixture(t, {
     terminal: 'published',

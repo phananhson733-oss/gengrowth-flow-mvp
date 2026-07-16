@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# macOS LaunchAgent entrypoint: run the deterministic nightly workflow, then
-# let the lightweight repair hook decide whether a one-shot Agent is required.
+# macOS LaunchAgent entrypoint: run one fire-scoped nightly workflow, drain repair,
+# reconcile ledgers, then emit exactly one terminal batch summary.
 
 set -euo pipefail
 

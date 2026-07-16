@@ -11,8 +11,8 @@
 // 数据源：
 //   · oracle 侧：claims ledger（路径解析复用 gg-seo-autopilot.mjs 的 OPS 逻辑：
 //     GG_OPS_DIR || ~/gengrowth-ops，再 inbox/06-tasks/tasks/.autopilot-claims.json）。
-//     取 status=done 且 mergedAt ≥ since 的条目 → slug → {BASE_ASTRO}/en/wiki/<slug>；
-//     status=needs_human 且 failedAt ≥ since 计入 parked（原因取 claim.error）。
+//     仅取 pinned plan 内、site 匹配且 mergedAt ≥ since 的 done 条目；
+//     controller queue 存在时，只有匹配 site + runId 的 terminal record 可贡献终态。
 //   · gengrowth 侧：无 ledger，靠 --urls 显式传入（调用方＝发布器／会话收尾）。
 //
 // 逐 URL HTTP 核实：HEAD 非 200 回退 GET，10 秒超时，整轮失败重试 1 次，判 200。
@@ -24,8 +24,8 @@
 //
 // 退出码：0＝已发送或已入 gg-notify 的 outbox（无论完成／部分；--dry-run 同为 0）；
 //         2＝窗口内无上线 URL（仅 parked 也不发送）；1＝用法错误；
-//         3＝notify 调用本身失败（ENOENT／超时／崩溃）——渲染文本已由本层直接入箱兜底。
-//         其余异常尽量吞掉并走 exit 0（通知层永不搞垮调用方）。
+//         3＝notify 调用本身失败（ENOENT／超时／崩溃）——渲染文本已由本层直接入箱兜底；
+//         4＝存在但损坏的 claims/queue 状态或其他未预期异常（fail closed）。
 //
 // env 覆盖（测试用）：
 //   GG_OPS_DIR                      ledger 沙箱
@@ -116,15 +116,14 @@ function localDate() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-// ── ledger 读取（缺文件＝空账本；损坏只警告不炸） ──────────────────────────────
+// ── ledger 读取（缺文件＝空账本；存在但损坏＝fail closed） ─────────────────────
 function readClaims() {
   if (!existsSync(CLAIMS_PATH)) return {};
   try {
     const parsed = JSON.parse(readFileSync(CLAIMS_PATH, 'utf8'));
     return parsed && typeof parsed === 'object' ? parsed : {};
   } catch (e) {
-    process.stderr.write(`gg-batch-summary：claims ledger 解析失败（${e.message}），按空账本处理\n`);
-    return {};
+    throw new Error(`claims ledger 解析失败（${e.message}）`);
   }
 }
 
@@ -149,7 +148,7 @@ function readRepairRecords() {
       const value = JSON.parse(readFileSync(join(dir, name), 'utf8'));
       if (value && typeof value === 'object') records.push(value);
     } catch (e) {
-      process.stderr.write(`gg-batch-summary：repair record ${name} 解析失败（${e.message}），跳过\n`);
+      throw new Error(`repair record ${name} 解析失败（${e.message}）`);
     }
   }
   return records;
@@ -160,9 +159,9 @@ function selectedSite(site, selected) {
 }
 
 function claimSiteAllowed(pid, claim, selected, planIds) {
+  if (!planIds.has(pid)) return false;
   const explicit = typeof claim.site === 'string' && claim.site.trim() ? claim.site.trim() : null;
   if (explicit && !selectedSite(explicit, selected)) return false;
-  if (!explicit && !planIds.has(pid)) return false;
   return true;
 }
 
@@ -389,11 +388,10 @@ async function main() {
   const idempotencyKey = `batch-terminal:${o.runId}`;
   const sent = send(text, partial, terminalMessageUuid(idempotencyKey), idempotencyKey);
   // 0＝已送达或已入 gg-notify 的 outbox；3＝notify 调用本身失败（文本已由本层入箱兜底）。
-  // 调用方（nightly 等）对本命令 `|| true`，exit 3 不会搞垮 cron，只是让失败可观测。
   process.exit(sent ? 0 : 3);
 }
 
 main().catch((e) => {
   process.stderr.write(`gg-batch-summary：异常（${e?.message || e}）\n`);
-  process.exit(0);
+  process.exit(4);
 });

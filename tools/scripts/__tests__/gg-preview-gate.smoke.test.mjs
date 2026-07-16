@@ -33,6 +33,7 @@ const SCRIPT = fileURLToPath(new URL('../gg-preview-gate.mjs', import.meta.url))
 const BRANCH = 'seo/auto/2026-06-18-12345';
 const HEAD_A = 'a'.repeat(40);
 const HEAD_B = 'b'.repeat(40);
+const HEAD_C = 'c'.repeat(40);
 const sha256 = (value) => createHash('sha256').update(value).digest('hex');
 
 // A fresh sandbox per test run (pid-scoped); each test gets its own bin dir + sentinel dir.
@@ -292,10 +293,13 @@ function gateRoundFixture({
   worktreeInspection,
   worktreeInspections,
   previewBinding,
+  finalArtifactResults,
 } = {}) {
   const calls = [];
   const repairCalls = [];
+  const finalArtifactCalls = [];
   const headQueue = [...heads];
+  const artifactQueue = finalArtifactResults ? [...finalArtifactResults] : null;
   const worktreeInspectionQueue = worktreeInspections ? [...worktreeInspections] : null;
   const verdictQueues = Object.fromEntries(
     Object.entries(reviewVerdicts).map(([dimension, verdicts]) => [dimension, [...verdicts]]),
@@ -373,6 +377,7 @@ function gateRoundFixture({
   return {
     calls,
     repairCalls,
+    finalArtifactCalls,
     callsFor(bin) {
       return calls.filter((call) => call.bin === bin);
     },
@@ -431,9 +436,20 @@ function gateRoundFixture({
       verifyPreviewBinding: async () => (
         previewBinding || { ok: true, method: 'fixture-deployment-binding' }
       ),
+      verifyFinalArtifacts: async (input) => {
+        finalArtifactCalls.push(input);
+        return artifactQueue?.shift() || {
+          ok: true,
+          reviewedHeadRefOid: input.reviewedHeadRefOid,
+          artifactSha: input.reviewBundle.article.sha256,
+          failureFingerprint: null,
+          final_links: { ok: true, checked: [], failed: [], ignored: [] },
+          final_assets: { ok: true, checked: [], failed: [], ignored: [] },
+        };
+      },
       tryGateRepair: async (input) => {
         repairCalls.push(input);
-        return repairResult;
+        return typeof repairResult === 'function' ? repairResult(input, repairCalls.length) : repairResult;
       },
     },
   };
@@ -906,6 +922,10 @@ test('a repair invalidates every earlier gate result and reruns all checks on th
     );
   }
   assert.deepEqual(fixture.callsFor('codex').map((call) => call.head), [HEAD_A, HEAD_B]);
+  assert.deepEqual(
+    fixture.finalArtifactCalls.map((call) => call.reviewedHeadRefOid),
+    [HEAD_A, HEAD_B],
+  );
   const markArgs = fixture.markVerifiedCalls()[0].args;
   assert.match(markArgs.join(' '), new RegExp(`--head-ref-oid ${HEAD_B}`));
   const evidence = JSON.parse(markArgs[markArgs.indexOf('--evidence') + 1]);
@@ -917,7 +937,142 @@ test('a repair invalidates every earlier gate result and reruns all checks on th
   assert.equal(evidence.checks.review_inputs.reviewedHeadRefOid, HEAD_B);
   assert.equal(evidence.checks.review_inputs.article.sha256, '1'.repeat(64));
   assert.equal(evidence.checks.review_inputs.draft.sha256, '2'.repeat(64));
+  assert.deepEqual(evidence.checks.final_links, {
+    ok: true, checked: [], failed: [], ignored: [],
+  });
+  assert.deepEqual(evidence.checks.final_assets, {
+    ok: true, checked: [], failed: [], ignored: [],
+  });
+  assert.equal(evidence.artifactSha, '1'.repeat(64));
   assert.equal(fixture.mergeCalls().length, 1);
+});
+
+test('the second consecutive identical artifact and failure fingerprint stops before a third edit', async () => {
+  const sameArtifacts = [HEAD_A, HEAD_B].map((head) => ({
+    ok: false,
+    reviewedHeadRefOid: head,
+    artifactSha: '9'.repeat(64),
+    failureFingerprint: '8'.repeat(64),
+    final_links: {
+      ok: false,
+      checked: [],
+      failed: [{ url: '/fabricated', reason: 'route not allowed' }],
+      ignored: [],
+    },
+    final_assets: { ok: true, checked: [], failed: [], ignored: [] },
+  }));
+  const fixture = gateRoundFixture({
+    heads: [HEAD_A, HEAD_B],
+    finalArtifactResults: sameArtifacts,
+    repairResult: {
+      applied: true,
+      headRefOid: HEAD_B,
+      artifactShaBefore: '1'.repeat(64),
+      artifactShaAfter: '2'.repeat(64),
+    },
+  });
+
+  const result = await runGate(fixture.options, fixture.deps);
+
+  assert.equal(result.exitCode, 2);
+  assert.match(result.reason, /no_progress/i);
+  assert.equal(fixture.repairCalls.length, 1, 'the repeated pair must stop before a second local edit');
+  assert.equal(fixture.markVerifiedCalls().length, 0);
+  assert.equal(fixture.mergeCalls().length, 0);
+  const markFailed = fixture.calls.find(
+    (call) => call.bin === 'autopilot' && call.args.includes('--mark-failed'),
+  );
+  assert.match(markFailed.args.join(' '), /no_progress/);
+});
+
+test('changed artifact bytes with the same failure fingerprint reset no-progress and count edits', async () => {
+  const fingerprint = '7'.repeat(64);
+  const artifactResult = (head, artifactSha, ok = false) => ({
+    ok,
+    reviewedHeadRefOid: head,
+    artifactSha,
+    failureFingerprint: ok ? null : fingerprint,
+    final_links: ok
+      ? { ok: true, checked: [], failed: [], ignored: [] }
+      : {
+          ok: false,
+          checked: [],
+          failed: [{ url: '/still-bad', reason: 'route not allowed' }],
+          ignored: [],
+        },
+    final_assets: { ok: true, checked: [], failed: [], ignored: [] },
+  });
+  const repairHeads = [HEAD_B, HEAD_C];
+  const fixture = gateRoundFixture({
+    heads: [HEAD_A, HEAD_B, HEAD_C, HEAD_C],
+    finalArtifactResults: [
+      artifactResult(HEAD_A, '1'.repeat(64)),
+      artifactResult(HEAD_B, '2'.repeat(64)),
+      artifactResult(HEAD_C, '3'.repeat(64), true),
+    ],
+    repairResult: (_input, count) => ({
+      applied: true,
+      headRefOid: repairHeads[count - 1],
+      artifactShaBefore: `${count}`.repeat(64),
+      artifactShaAfter: `${count + 1}`.repeat(64),
+    }),
+  });
+
+  const result = await runGate(fixture.options, fixture.deps);
+
+  assert.equal(result.exitCode, 0, result.reason);
+  assert.equal(fixture.repairCalls.length, 2);
+  const evidence = JSON.parse(
+    fixture.markVerifiedCalls()[0].args[
+      fixture.markVerifiedCalls()[0].args.indexOf('--evidence') + 1
+    ],
+  );
+  assert.equal(evidence.totalRepairEdits, 2);
+  assert.deepEqual(evidence.repairEditsByDimension, { final_links: 2 });
+  assert.equal(evidence.noProgressCount, 1);
+});
+
+test('global total repair edit budget is clamped and exhausted before another edit', async () => {
+  const previous = process.env.GG_GATE_REPAIR_TOTAL_BUDGET;
+  process.env.GG_GATE_REPAIR_TOTAL_BUDGET = '1';
+  try {
+    const fixture = gateRoundFixture({
+      heads: [HEAD_A, HEAD_B],
+      finalArtifactResults: [
+        {
+          ok: false,
+          reviewedHeadRefOid: HEAD_A,
+          artifactSha: '1'.repeat(64),
+          failureFingerprint: 'a'.repeat(64),
+          final_links: { ok: false, checked: [], failed: [{ url: '/a', reason: 'bad' }], ignored: [] },
+          final_assets: { ok: true, checked: [], failed: [], ignored: [] },
+        },
+        {
+          ok: false,
+          reviewedHeadRefOid: HEAD_B,
+          artifactSha: '2'.repeat(64),
+          failureFingerprint: 'b'.repeat(64),
+          final_links: { ok: false, checked: [], failed: [{ url: '/b', reason: 'bad' }], ignored: [] },
+          final_assets: { ok: true, checked: [], failed: [], ignored: [] },
+        },
+      ],
+      repairResult: {
+        applied: true,
+        headRefOid: HEAD_B,
+        artifactShaBefore: '1'.repeat(64),
+        artifactShaAfter: '2'.repeat(64),
+      },
+    });
+
+    const result = await runGate(fixture.options, fixture.deps);
+
+    assert.equal(result.exitCode, 2);
+    assert.match(result.reason, /total repair edit budget.*1/i);
+    assert.equal(fixture.repairCalls.length, 1);
+  } finally {
+    if (previous === undefined) delete process.env.GG_GATE_REPAIR_TOTAL_BUDGET;
+    else process.env.GG_GATE_REPAIR_TOTAL_BUDGET = previous;
+  }
 });
 
 test('materialized reviewer bundle reads article from the reviewed commit and freezes draft bytes outside the live worktree', async () => {

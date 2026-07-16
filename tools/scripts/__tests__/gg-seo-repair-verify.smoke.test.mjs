@@ -35,12 +35,25 @@ function goodDeps() {
     },
     pendingWriteback: null,
     fetchDocument: async (url) => url.endsWith('/sitemap.xml')
-      ? { ok: true, status: 200, text: `<url><loc>${URL}</loc></url>` }
+      ? {
+          ok: true,
+          status: 200,
+          text: `<url><loc>${URL}</loc></url><url><loc>https://www.astrologywiki.com/en/birth-chart-calculator</loc></url>`,
+        }
       : {
           ok: true,
           status: 200,
           text: `<html><head><link href="${URL}" rel="canonical"><script type="application/ld+json">{"@context":"https://schema.org","@type":"Article"}</script></head><body><a href="/en/birth-chart-calculator">Take Action</a></body></html>`,
         },
+    fetchArtifact: async (url) => ({
+      ok: true,
+      status: 200,
+      url,
+      redirected: false,
+      headers: { get: () => 'text/html; charset=utf-8' },
+      text: async () => `<link rel="canonical" href="${url}">`,
+      arrayBuffer: async () => new ArrayBuffer(0),
+    }),
   };
 }
 
@@ -48,7 +61,64 @@ test('all deterministic publish and backfill checks produce published terminal',
   const result = await verifyRepairTarget(TARGET, goodDeps());
   assert.equal(result.ok, true);
   assert.equal(result.terminal, 'published');
-  assert.deepEqual(Object.values(result.checks).every(Boolean), true);
+  assert.equal(result.checks.final_links.ok, true);
+  assert.equal(result.checks.final_assets.ok, true);
+  assert.deepEqual(
+    Object.values(result.checks).every((value) => typeof value === 'object' ? value.ok : value),
+    true,
+  );
+});
+
+test('terminal verifier emits structured final_links and final_assets and fails a fabricated rendered link', async () => {
+  const deps = goodDeps();
+  deps.fetchDocument = async (url) => url.endsWith('/sitemap.xml')
+    ? { ok: true, status: 200, text: `<loc>${URL}</loc>` }
+    : {
+        ok: true,
+        status: 200,
+        text: `<link rel="canonical" href="${URL}"><script type="application/ld+json">{"@type":"Article"}</script><a href="/en/wiki/fabricated">bad</a>`,
+      };
+  const result = await verifyRepairTarget(TARGET, deps);
+  assert.equal(result.ok, false);
+  assert.equal(result.checks.final_links.ok, false);
+  assert.equal(result.checks.final_links.failed[0].path, '/en/wiki/fabricated');
+  assert.deepEqual(result.checks.final_assets, {
+    ok: true,
+    checked: [],
+    failed: [],
+    ignored: [],
+  });
+  assert.match(result.reason, /final_links/);
+});
+
+test('terminal verifier fails closed on a rendered asset with wrong MIME', async () => {
+  const deps = goodDeps();
+  deps.fetchDocument = async (url) => url.endsWith('/sitemap.xml')
+    ? {
+        ok: true,
+        status: 200,
+        text: `<loc>${URL}</loc><loc>https://www.astrologywiki.com/en/birth-chart-calculator</loc>`,
+      }
+    : {
+        ok: true,
+        status: 200,
+        text: `<link rel="canonical" href="${URL}"><script type="application/ld+json">{"@type":"Article"}</script><a href="/en/birth-chart-calculator">CTA</a><img src="/images/hero.png">`,
+      };
+  deps.fetchArtifact = async (url) => url.endsWith('.png')
+    ? {
+        ok: true,
+        status: 200,
+        url,
+        headers: { get: () => 'text/plain' },
+        arrayBuffer: async () => Uint8Array.from([137, 80, 78, 71]).buffer,
+      }
+    : goodDeps().fetchArtifact(url);
+  const result = await verifyRepairTarget(TARGET, deps);
+  assert.equal(result.ok, false);
+  assert.equal(result.checks.final_links.ok, true);
+  assert.equal(result.checks.final_assets.ok, false);
+  assert.match(result.checks.final_assets.failed[0].reason, /MIME/i);
+  assert.match(result.reason, /final_assets/);
 });
 
 const failures = [
@@ -153,7 +223,10 @@ test('gengrowth verifier requires Supabase, live page, W25 plan, Sheet, vault, a
   const result = await verifyGengrowthRepairTarget(target, deps);
   assert.equal(result.ok, true);
   assert.equal(result.terminal, 'published');
-  assert.equal(Object.values(result.checks).every(Boolean), true);
+  assert.equal(
+    Object.values(result.checks).every((value) => typeof value === 'object' ? value.ok : value),
+    true,
+  );
 
   for (const [check, mutate] of [
     ['supabase_published', (copy) => { copy.supabaseRow = { status: 'draft' }; }],

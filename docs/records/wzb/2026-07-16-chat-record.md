@@ -16,6 +16,8 @@ aliases:
 
 ## Daily Summary
 
+- 执行固定的 Index Monitor wrapper：两个站点 Sitemap API 提交成功，AstrologyWiki 检查 1 条到期 URL 且无失败；最终候选队列共 25 条（P0=0、P1=1、P2=4、P3=20），日志未显示 Feishu 发送回执。
+
 > 【本区域在每天最后一次对话结束时生成/更新】
 
 - 统一 SEO repair controller v2 已启用并完成真实故障收敛；正常写作/发布继续由 macOS `launchd` 拉起，只有异常队列触发定向 Agent，不恢复 Codex Automation，也不绕过事实门。
@@ -66,5 +68,22 @@ Run the deterministic fixed-row index repair workflow through `bash tools/script
 **🤖 回答：**
 
 执行 `bash tools/scripts/gg-index-repair-resubmit-tick.sh`，退出码为 0；隔离日志窗口为 05:00:53–05:01:25 CST，末行 `index repair-resubmit ok`，未发现失败、错误、异常、认证、超时或非零返回码。astrologywiki：`process-fixed fixed=0 resubmitted=0`，`sync-recap en_rows=251 appended=6 updated=0 skipped=245`，`sync-request-queue rows=23 P0=0 P1=1 P2=3 P3=19`。gengrowth：`process-fixed fixed=0 resubmitted=0`，`sync-recap en_rows=60 appended=0 updated=0 skipped=60`，`sync-request-queue rows=0 P0=0 P1=0 P2=0 P3=0`。未使用普通文章 Google Indexing API，未进行无人值守 Search Console Request Indexing 点击，未创建 Feishu 或 Google Doc 报告。
+
+---
+
+### Q4 — 09:02
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Monitor
+Automation ID: gengrowth-index-monitor
+Automation memory: $CODEX_HOME/automations/gengrowth-index-monitor/memory.md
+Last run: 2026-07-15T01:01:53.692Z (1784077313692)
+
+Run the GenGrowth Phase 2 indexing workflow through the existing deterministic wrapper: `bash tools/scripts/gg-index-monitor-tick.sh`. This wrapper must refresh the live sitemap through the official Search Console Sitemaps API, inspect due URLs through URL Inspection, sync the final `结果复盘表`, generate/update `request-indexing-queue` with priority colors, and send Feishu SEO技术 group reminders for actionable candidates or failures. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, and do not click Search Console Request Indexing unattended. For Computer Use submission, only assist by opening candidate GSC inspection URLs and stop for human confirmation before the final Request Indexing click. After the wrapper exits, summarize sitemap submission status, GSC check counts/failures, queue counts by priority, and any Feishu notification outcome visible in the log.
+
+**🤖 回答：**
+
+执行 `bash tools/scripts/gg-index-monitor-tick.sh`，退出码为 0；隔离日志窗口为 09:01:20–09:02:46 CST，末行 `index monitor ok`。官方 Search Console Sitemap API：astrologywiki 与 gengrowth 均成功。URL Inspection：astrologywiki `due=1`、`checked=1`、`alerts=0`、`failures=0`，该 URL 进入 monitoring；gengrowth `due=0`，无检查。结果复盘表已同步；最终 `request-indexing-queue` 为 astrologywiki `rows=23 P0=0 P1=1 P2=4 P3=18`、gengrowth `rows=2 P0=0 P1=0 P2=0 P3=2`，合计 25（P0=0、P1=1、P2=4、P3=20）。包装器执行了通知能力步骤，但精确日志窗口没有 Feishu/Lark 明确发送成功或失败回执。未使用普通文章 Google Indexing API，未执行无人值守 Request Indexing 点击。
 
 ---

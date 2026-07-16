@@ -330,6 +330,12 @@ test('mixed claims ledger is scoped to the selected site and pinned plan', () =>
       slug: 'geng-ok',
       mergedAt: IN_WINDOW,
     },
+    'PG-ASTRO-OUT': {
+      site: 'astrologywiki',
+      status: 'done',
+      slug: 'slug-b',
+      mergedAt: IN_WINDOW,
+    },
     'PG-MISMATCH-001': {
       site: 'gengrowth',
       status: 'done',
@@ -369,6 +375,26 @@ test('mixed claims ledger is scoped to the selected site and pinned plan', () =>
   assert.doesNotMatch(r.stdout, /geng-ok/);
   assert.doesNotMatch(r.stdout, /slug-b/);
   assert.doesNotMatch(r.stdout, /legacy-out-of-plan/);
+});
+
+test('existing corrupt claims ledger fails closed instead of claiming an empty or successful fire', () => {
+  const c = freshCase({});
+  writeFileSync(join(c.opsDir, 'inbox', '06-tasks', 'tasks', '.autopilot-claims.json'), '{"broken":');
+  const r = run(['--since', SINCE, '--site', 'astrologywiki'], c);
+  assert.equal(r.status, 4, `${r.stdout}\n${r.stderr}`);
+  assert.match(r.stderr, /claims ledger 解析失败/);
+  assert.equal(notifyCalls(c).length, 0);
+});
+
+test('corrupt repair queue record fails closed instead of emitting a partial false terminal summary', () => {
+  const c = freshCase({
+    'PG-A-001': { site: 'astrologywiki', status: 'done', slug: 'slug-a', mergedAt: IN_WINDOW },
+  });
+  writeFileSync(join(c.queueDir, 'corrupt.json'), '{"broken":');
+  const r = run(['--since', SINCE, '--site', 'astrologywiki'], c);
+  assert.equal(r.status, 4, `${r.stdout}\n${r.stderr}`);
+  assert.match(r.stderr, /repair record corrupt\.json 解析失败/);
+  assert.equal(notifyCalls(c).length, 0);
 });
 
 test('controller terminal records are filtered by selected site and current run while active records stay silent', () => {

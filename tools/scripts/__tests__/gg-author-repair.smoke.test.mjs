@@ -62,6 +62,32 @@ function stdinCapturingFakeBin(payload) {
   return { bin: p, stdinLog };
 }
 
+function fallbackFakeBin({ primaryFailure = 'overloaded', primarySleepSeconds = 0 } = {}) {
+  const dir = join(TMP, `fallbackbin-${Math.random().toString(36).slice(2)}`);
+  mkdirSync(dir, { recursive: true });
+  const calls = join(dir, 'calls.txt');
+  const p = join(dir, 'claude');
+  const sleep = primarySleepSeconds > 0 ? `sleep ${primarySleepSeconds}\n` : '';
+  const script = `#!/bin/sh
+printf '%s\\n' "$*" >> '${calls}'
+cat >/dev/null
+case "$*" in
+  *claude-opus-4-8*)
+    ${sleep}printf '%s\\n' '${primaryFailure}' >&2
+    exit 1
+    ;;
+  *claude-sonnet-4-6*)
+    printf '# Fixed by fallback\\n\\nBetter body.'
+    exit 0
+    ;;
+esac
+exit 9
+`;
+  writeFileSync(p, script);
+  chmodSync(p, 0o755);
+  return { bin: p, calls };
+}
+
 function seedSource() {
   const src = join(TMP, `src-${Math.random().toString(36).slice(2)}.md`);
   writeFileSync(src, SOURCE_CONTENT);
@@ -113,6 +139,57 @@ test('repairs draft: --source UNCHANGED, --out has fixed content, NO --allowedTo
   assert.ok(argv.includes('-p'), 'expected -p flag');
   assert.ok(argv.includes('--model'), 'expected --model flag');
   assert.ok(argv.includes('--effort'), 'expected --effort flag');
+});
+
+test('transient Opus repair failure falls back once to distinct Sonnet and writes the candidate', () => {
+  const src = seedSource();
+  const out = join(TMP, `out-fallback-${Math.random().toString(36).slice(2)}.md`);
+  const { bin, calls } = fallbackFakeBin();
+  const r = run(
+    [
+      '--source', src, '--out', out, '--page-id', 'PG-X',
+      '--target-keyword', 'kw', '--author', 'a', '--failures', '- x',
+      '--model', 'claude-opus-4-8',
+    ],
+    {
+      fake: bin,
+      env: {
+        GG_AUTHOR_REPAIR_FALLBACK_MODEL: '',
+      },
+    },
+  );
+
+  assert.equal(r.status, 0, `stderr: ${r.stderr}`);
+  assert.equal(readFileSync(out, 'utf8'), '# Fixed by fallback\n\nBetter body.');
+  const invoked = readFileSync(calls, 'utf8').trim().split('\n');
+  assert.equal(invoked.length, 2);
+  assert.match(invoked[0], /claude-opus-4-8/);
+  assert.match(invoked[1], /claude-sonnet-4-6/);
+});
+
+test('timed-out repair attempt uses the same bounded distinct-model fallback', () => {
+  const src = seedSource();
+  const out = join(TMP, `out-timeout-fallback-${Math.random().toString(36).slice(2)}.md`);
+  const { bin, calls } = fallbackFakeBin({ primarySleepSeconds: 2 });
+  const r = run(
+    [
+      '--source', src, '--out', out, '--page-id', 'PG-X',
+      '--target-keyword', 'kw', '--author', 'a', '--failures', '- x',
+      '--model', 'claude-opus-4-8', '--timeout-ms', '500',
+    ],
+    {
+      fake: bin,
+      env: {
+        GG_AUTHOR_REPAIR_FALLBACK_MODEL: '',
+      },
+    },
+  );
+
+  assert.equal(r.status, 0, `stderr: ${r.stderr}`);
+  assert.equal(readFileSync(out, 'utf8'), '# Fixed by fallback\n\nBetter body.');
+  const invoked = readFileSync(calls, 'utf8').trim().split('\n');
+  assert.equal(invoked.length, 2);
+  assert.match(invoked[1], /claude-sonnet-4-6/);
 });
 
 test('strips chatbot preamble before the first H1', () => {

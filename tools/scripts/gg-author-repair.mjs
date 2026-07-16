@@ -50,9 +50,12 @@ import { WORKER_CWD } from './lib/worker-cwd.mjs';
 // replacement keeps the same model/effort behavior when the caller omits them.
 const DEFAULT_MODEL = process.env.GG_AUTHOR_REPAIR_MODEL || process.env.GG_AGENTIC_MODEL || 'claude-sonnet-4-6';
 const DEFAULT_EFFORT = process.env.GG_AUTHOR_REPAIR_EFFORT || process.env.GG_AGENTIC_EFFORT || 'high';
-// Bound a single repair call. Mirrors the agentic-rescue timeout default
-// (GG_AUTHOR_AGENTIC_TIMEOUT_MS || 1800000) so wall-clock behavior is unchanged.
-const DEFAULT_TIMEOUT_MS = parseInt(process.env.GG_AUTHOR_REPAIR_TIMEOUT_MS || '1800000', 10);
+const DEFAULT_FALLBACK_EFFORT = process.env.GG_AUTHOR_REPAIR_FALLBACK_EFFORT || 'high';
+// A repair is a surgical rewrite, not a full research/generation pass. Bound
+// each provider attempt to four minutes, then allow at most one distinct-model
+// fallback. This prevents a dead worker from occupying the single nightly
+// executor for the old 30-minute ceiling.
+const DEFAULT_TIMEOUT_MS = parseInt(process.env.GG_AUTHOR_REPAIR_TIMEOUT_MS || '240000', 10);
 
 // ── CLI parsing ─────────────────────────────────────────────────────────────
 function parseArgs(argv) {
@@ -162,6 +165,26 @@ function runWorker({ model, effort, prompt, timeoutMs }) {
   return res;
 }
 
+function distinctFallbackModel(primaryModel) {
+  const configured = String(process.env.GG_AUTHOR_REPAIR_FALLBACK_MODEL || '').trim();
+  if (configured && configured !== primaryModel) return configured;
+  return /opus/i.test(primaryModel) ? 'claude-sonnet-4-6' : 'claude-opus-4-8';
+}
+
+function isTransientWorkerFailure(res) {
+  if (res?.error?.code === 'ETIMEDOUT') return true;
+  const detail = `${res?.stderr || ''} ${res?.error?.message || ''}`;
+  return /rate.?limit|\b429\b|overloaded|over capacity|quota|usage limit|too many requests|insufficient_quota|timed?\s*out|timeout|network|ECONN|EAI_AGAIN|socket hang up|connection reset|temporar(?:y|ily) unavailable/i.test(detail);
+}
+
+function workerFailureReason(res, timeoutMs) {
+  if (res?.error?.code === 'ETIMEDOUT') return `worker timed out after ${timeoutMs}ms`;
+  if (res?.error?.code === 'ENOENT') return 'claude CLI not found in PATH';
+  if (res?.error) return `worker spawn failed (${res.error.code || res.error.message})`;
+  const tail = String(res?.stderr || '').slice(-200).replace(/\s+/g, ' ').trim();
+  return `worker exited ${res?.status}${tail ? ` (${tail})` : ''}`;
+}
+
 function fail(reason) {
   process.stderr.write(`[author-repair] tooling failure: ${reason}\n`);
   process.exit(1);
@@ -209,17 +232,31 @@ function main() {
   const failures = resolveFailures(o.failures);
   const prompt = buildPrompt({ source, targetKeyword: o.targetKeyword, author: o.author, failures });
 
-  const res = runWorker({ model, effort, prompt, timeoutMs });
+  let usedModel = model;
+  let usedEffort = effort;
+  let res = runWorker({ model, effort, prompt, timeoutMs });
+  if ((res.error || res.status !== 0) && isTransientWorkerFailure(res)) {
+    const fallbackModel = distinctFallbackModel(model);
+    process.stderr.write(
+      `[author-repair] transient worker failure on ${model}: ${workerFailureReason(res, timeoutMs)}; `
+      + `falling back once to ${fallbackModel} ${DEFAULT_FALLBACK_EFFORT}\n`,
+    );
+    usedModel = fallbackModel;
+    usedEffort = DEFAULT_FALLBACK_EFFORT;
+    res = runWorker({
+      model: fallbackModel,
+      effort: DEFAULT_FALLBACK_EFFORT,
+      prompt,
+      timeoutMs,
+    });
+  }
   if (res.error) {
     writeWorkerDebugSidecars(o.out, res);
-    if (res.error.code === 'ETIMEDOUT') return fail(`worker timed out after ${timeoutMs}ms`);
-    if (res.error.code === 'ENOENT') return fail('claude CLI not found in PATH');
-    return fail(`worker spawn failed (${res.error.code || res.error.message})`);
+    return fail(workerFailureReason(res, timeoutMs));
   }
   if (res.status !== 0) {
     writeWorkerDebugSidecars(o.out, res);
-    const tail = String(res.stderr || '').slice(-200).replace(/\s+/g, ' ').trim();
-    return fail(`worker exited ${res.status}${tail ? ` (${tail})` : ''}`);
+    return fail(workerFailureReason(res, timeoutMs));
   }
 
   // Strip any chatbot preamble before the first H1 (reuse the orchestrator's
@@ -237,7 +274,7 @@ function main() {
   } catch (e) {
     return fail(`cannot write --out: ${e.code || e.message}`);
   }
-  process.stdout.write(`[author-repair] wrote ${o.out} (${fixed.length}B, model=${model} effort=${effort})\n`);
+  process.stdout.write(`[author-repair] wrote ${o.out} (${fixed.length}B, model=${usedModel} effort=${usedEffort})\n`);
   process.exit(0);
 }
 

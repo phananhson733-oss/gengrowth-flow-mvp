@@ -802,13 +802,18 @@ function tryDeterministicRepair({ pgId, draftV8, candidate, targetKeyword, autho
   log(`deterministic repair: feedback loop failed — calling gg-author-repair on ${draftV8}`);
   const repModel = process.env.GG_AGENTIC_MODEL || 'claude-sonnet-4-6';
   const repEffort = process.env.GG_AGENTIC_EFFORT || 'high';
-  const repTimeout = parseInt(process.env.GG_AUTHOR_REPAIR_TIMEOUT_MS || process.env.GG_AUTHOR_AGENTIC_TIMEOUT_MS || '1800000', 10);
+  const repAttemptTimeout = parseInt(process.env.GG_AUTHOR_REPAIR_TIMEOUT_MS || '240000', 10);
+  // gg-author-repair may use one distinct-model fallback, so the outer process
+  // allowance covers two bounded attempts plus startup/cleanup — never the old
+  // 30-minute inherited agentic ceiling.
+  const repTimeout = (repAttemptTimeout * 2) + 60000;
   try {
     const args = [join(SCRIPTS, 'gg-author-repair.mjs'),
       '--source', draftV8, '--out', candidate, '--page-id', pgId,
       '--target-keyword', targetKeyword, '--author', author,
       '--failures', failures || '- phase2 failed',
-      '--model', repModel, '--effort', repEffort];
+      '--model', repModel, '--effort', repEffort,
+      '--timeout-ms', String(repAttemptTimeout)];
     shFlow('node', args, repTimeout);
     // WE validate the candidate (the worker never runs phase2 itself); adopt only on PASS.
     if (validate(candidate)) return true;

@@ -75,6 +75,7 @@ function gengrowthArtifactSha(target) {
 async function defaultVerifyTerminal(event, target, {
   runCommand = defaultRunCommand,
   scriptsDir = DEFAULT_SCRIPTS,
+  timeoutMs = 120_000,
 } = {}) {
   const result = await runCommand([
     'node',
@@ -83,7 +84,7 @@ async function defaultVerifyTerminal(event, target, {
     '--page-id', event.pageId,
     '--slug', target.slug,
     '--json',
-  ], { timeoutMs: 180_000 });
+  ], { timeoutMs });
   const output = parseLastJson(result.stdout);
   return output?.results?.[0] || output || {
     ok: false,
@@ -136,14 +137,14 @@ export async function recoverGengrowthAuthoring(event, deps = {}) {
     {
       role: 'retry_author',
       argv: ['node', join(scriptsDir, 'gg-seo-autopilot.mjs'), '--retry-author', '--task', pageId],
-      timeoutMs: 2 * 60 * 1000,
+      timeoutMs: 60 * 1000,
     },
     {
       role: 'author',
       argv: ['node', join(scriptsDir, 'gg-seo-autopilot.mjs'), '--author', '--task', pageId, '--limit', '1'],
       timeoutMs: Math.min(
-        20 * 60 * 1000,
-        Math.max(1, Number(process.env.GG_GENGROWTH_AUTHOR_RECOVERY_TIMEOUT_MS) || (20 * 60 * 1000)),
+        12 * 60 * 1000,
+        Math.max(1, Number(process.env.GG_GENGROWTH_AUTHOR_RECOVERY_TIMEOUT_MS) || (12 * 60 * 1000)),
       ),
     },
     {
@@ -225,13 +226,28 @@ export function createGengrowthRepairAdapter(deps = {}) {
   const resolveTarget = deps.resolveTarget || ((event) => defaultResolveTarget(event, { flow }));
   const resolveAuthoredTarget = deps.resolveAuthoredTarget || resolveTarget;
   const verifyTerminal = deps.verifyTerminal
-    || ((event, target) => defaultVerifyTerminal(event, target, { runCommand, scriptsDir }));
+    || ((event, target, options = {}) => defaultVerifyTerminal(event, target, {
+      runCommand,
+      scriptsDir,
+      timeoutMs: options.timeoutMs,
+    }));
   const invokeAgent = deps.invokeAgent
-    || ((target, context) => invokeTargetRepairAgent({ target, ...context }));
+    || ((target, context) => invokeTargetRepairAgent(
+      { target, ...context },
+      { timeoutSeconds: context.timeoutSeconds },
+    ));
+  const nowMs = deps.nowMs || Date.now;
 
   return {
-    async execute({ record, strategy }) {
+    async execute({ record, strategy, attemptDeadlineAt }) {
       const event = record.event;
+      const deadlineMs = Number.isFinite(Date.parse(attemptDeadlineAt || ''))
+        ? Date.parse(attemptDeadlineAt)
+        : nowMs() + (25 * 60 * 1000);
+      const remainingTimeout = (capMs) => Math.max(
+        1,
+        Math.min(capMs, deadlineMs - nowMs()),
+      );
       let target;
       let authorRecoveryEvidence = null;
       let authorMutationInvoked = false;
@@ -318,7 +334,10 @@ export function createGengrowthRepairAdapter(deps = {}) {
       const reviewed = await runCommand(reviewerArgv, {
         cwd: flow,
         env: process.env,
-        timeoutMs: Number(process.env.GG_CODEX_REVIEW_TIMEOUT_MS) || 600_000,
+        timeoutMs: remainingTimeout(Math.min(
+          5 * 60 * 1000,
+          Number(process.env.GG_CODEX_REVIEW_TIMEOUT_MS) || (5 * 60 * 1000),
+        )),
       });
       const verdict = classifyCodex({
         code: reviewed.code,
@@ -357,7 +376,10 @@ export function createGengrowthRepairAdapter(deps = {}) {
       const published = await runCommand(publishArgv, {
         cwd: flow,
         env: process.env,
-        timeoutMs: Number(process.env.GG_GENGROWTH_PUBLISH_TIMEOUT_MS) || 300_000,
+        timeoutMs: remainingTimeout(Math.min(
+          4 * 60 * 1000,
+          Number(process.env.GG_GENGROWTH_PUBLISH_TIMEOUT_MS) || (4 * 60 * 1000),
+        )),
       });
       if (published.code !== 0 || published.timedOut) {
         return {
@@ -374,7 +396,9 @@ export function createGengrowthRepairAdapter(deps = {}) {
         };
       }
 
-      const verified = await verifyTerminal(event, target);
+      const verified = await verifyTerminal(event, target, {
+        timeoutMs: remainingTimeout(2 * 60 * 1000),
+      });
       if (verified?.ok === true && verified?.terminal === 'published') {
         return {
           terminal: 'published',

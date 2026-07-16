@@ -296,6 +296,11 @@ test('gengrowth authoring repair salvages a passing handoff after author timeout
     ['node', '/repo/tools/scripts/gg-gengrowth-author-handoff.mjs', '--page-id', 'PG-SDS-004'],
   ]);
   assert.equal(Math.max(...timeouts.slice(0, 3)) <= 20 * 60 * 1000, true);
+  assert.equal(
+    timeouts.reduce((sum, timeoutMs) => sum + timeoutMs, 0) <= 23 * 60 * 1000,
+    true,
+    'author recovery + reviewer + publisher must reserve two minutes for terminal verification',
+  );
   assert.equal(result.terminal, 'published');
   assert.equal(result.agentMutationInvoked, true);
   assert.equal(result.evidence.authorRecovery.authorCut, true);

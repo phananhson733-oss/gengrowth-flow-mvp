@@ -518,6 +518,36 @@ test('controller notifies a terminal once and a second drain does not repeat it'
   assert.equal(terminal.terminalNotificationKey, notified[0].idempotencyKey);
 });
 
+test('controller lease outlives the shared 25-minute attempt deadline', async (t) => {
+  const { queueDir } = await fixture(t);
+  await enqueueRepairEvent(event(), { queueDir });
+  let timing;
+  const now = new Date('2026-07-15T14:02:00.000Z');
+  await drainRepairQueue({
+    queueDir,
+    adapters: {
+      gengrowth: {
+        execute: async ({ record: active, attemptDeadlineAt }) => {
+          timing = {
+            leaseExpiresAt: active.lease.expiresAt,
+            attemptDeadlineAt,
+          };
+          return {
+            terminal: 'published',
+            agentMutationInvoked: false,
+            evidence: { checks: { production_200: true, backfilled: true } },
+          };
+        },
+      },
+    },
+    owner: 'lease-deadline-test',
+    now: () => now,
+    maxTargets: 1,
+  });
+  assert.equal(Date.parse(timing.attemptDeadlineAt) - now.getTime(), 25 * 60 * 1000);
+  assert.equal(Date.parse(timing.leaseExpiresAt) >= Date.parse(timing.attemptDeadlineAt), true);
+});
+
 test('failed repair enters a new strategy without a human notification', async (t) => {
   const { queueDir } = await fixture(t);
   await enqueueRepairEvent(event({

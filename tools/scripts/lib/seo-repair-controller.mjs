@@ -332,8 +332,9 @@ export async function drainRepairQueue({
   owner = `seo-repair-controller:${process.pid}`,
   now = () => new Date(),
   maxTargets = Number.POSITIVE_INFINITY,
-  budgetMs = 15 * 60 * 1000,
+  budgetMs = 25 * 60 * 1000,
   leaseMs = 20 * 60 * 1000,
+  attemptBudgetMs = 25 * 60 * 1000,
   maxStrategyAttempts = 2,
   maxTotalAttempts = 3,
   maxAgentMutationAttempts = 2,
@@ -352,6 +353,11 @@ export async function drainRepairQueue({
   const agentMutationLimit = Math.max(1, Number(maxAgentMutationAttempts) || 2);
   const windowLimit = Math.max(1, Number(maxWindowCount) || 3);
   const incidentAgeLimit = Math.max(1, Number(maxIncidentAgeMs) || (90 * 60 * 1000));
+  const attemptLimitMs = Math.max(1, Number(attemptBudgetMs) || (25 * 60 * 1000));
+  const effectiveLeaseMs = Math.max(
+    Math.max(1, Number(leaseMs) || 1),
+    attemptLimitMs + (5 * 60 * 1000),
+  );
   const recovered = await recoverExpiredLeases({ queueDir, now: clockValue(now) });
   const terminals = [];
   const failures = [];
@@ -416,11 +422,13 @@ export async function drainRepairQueue({
       }
       continue;
     }
+    const attemptStartedAt = clockValue(now);
+    const attemptDeadlineAt = new Date(attemptStartedAt.getTime() + attemptLimitMs).toISOString();
     const leased = await acquireRepairLease(eligible[0], {
       queueDir,
       owner,
-      now: clockValue(now),
-      leaseMs,
+      now: attemptStartedAt,
+      leaseMs: effectiveLeaseMs,
     });
     if (!leased) continue;
     processed += 1;
@@ -455,6 +463,7 @@ export async function drainRepairQueue({
         record: active,
         classification,
         strategy,
+        attemptDeadlineAt,
       });
     } catch (error) {
       result = {

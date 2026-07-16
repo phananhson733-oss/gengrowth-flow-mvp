@@ -4,6 +4,7 @@ import { mkdir, mkdtemp, readdir, readFile, rm, utimes, writeFile } from 'node:f
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+import * as repairEventsModule from '../lib/seo-repair-events.mjs';
 import {
   acquireRepairLease,
   compactRepairIncident,
@@ -424,6 +425,155 @@ test('compaction is append-only, preserves source evidence, and is idempotent', 
   assert.equal(records.filter((record) => record.status === 'migration_hold').length, 1);
   assert.equal(records.filter((record) => record.status === 'superseded').length, 2);
   assert.equal(records.every((record) => record.status !== 'superseded' || record.supersededBy === first.event.eventId), true);
+});
+
+test('blocking page terminals absorb same and changed observations without resetting lifecycle budgets', async (t) => {
+  for (const terminalStatus of ['quarantined', 'human_only', 'migration_hold']) {
+    await t.test(terminalStatus, async (tt) => {
+      const { queueDir } = await fixture(tt);
+      const original = await enqueueRepairEvent(event({
+        eventId: `${terminalStatus}-source`,
+        pageId: `PG-${terminalStatus.toUpperCase().replace('_', '-')}-001`,
+      }), { queueDir });
+      let terminal;
+      if (terminalStatus === 'migration_hold') {
+        const seeded = await transitionRepairEvent(original, {
+          status: 'repair_pending',
+          budgetEpoch: 4,
+          totalAttempts: 20,
+          agentMutationAttempts: 7,
+          noProgressCount: 2,
+          terminalNotificationKey: 'terminal-owner-must-survive',
+          evidence: { seeded: true },
+        }, { queueDir });
+        terminal = await compactRepairIncident({
+          queueDir,
+          site: seeded.event.site,
+          pageId: seeded.event.pageId,
+          hold: 'migration-review',
+          verificationCredit: 1,
+        });
+      } else {
+        terminal = await transitionRepairEvent(original, {
+          status: terminalStatus,
+          budgetEpoch: 4,
+          totalAttempts: 20,
+          agentMutationAttempts: 7,
+          noProgressCount: 2,
+          terminalNotificationKey: 'terminal-owner-must-survive',
+          evidence: { seeded: true },
+        }, { queueDir });
+      }
+
+      await enqueueRepairEvent(event({
+        eventId: `${terminalStatus}-same`,
+        pageId: terminal.event.pageId,
+        runId: 'blocking-terminal-window-2',
+        createdAt: '2026-07-15T14:10:00.000Z',
+      }), { queueDir });
+      await enqueueRepairEvent(event({
+        eventId: `${terminalStatus}-changed`,
+        pageId: terminal.event.pageId,
+        runId: 'blocking-terminal-window-3',
+        summary: 'a genuinely changed stable failure observation',
+        createdAt: '2026-07-15T14:20:00.000Z',
+      }), { queueDir });
+
+      const records = await listRepairRecords({ queueDir });
+      const authoritative = records.find((record) => record.event.eventId === terminal.event.eventId);
+      assert.equal(authoritative.status, terminalStatus);
+      assert.equal(authoritative.generation, terminal.generation);
+      assert.equal(authoritative.budgetEpoch, 4);
+      assert.equal(authoritative.totalAttempts, 20);
+      assert.equal(authoritative.agentMutationAttempts, 7);
+      assert.equal(authoritative.noProgressCount, 2);
+      assert.equal(authoritative.terminalNotificationKey, terminal.terminalNotificationKey);
+      assert.equal(authoritative.observations, 3);
+      assert.equal(authoritative.latestEvent.eventId, `${terminalStatus}-changed`);
+      assert.deepEqual(
+        authoritative.sourceEventIds.slice().sort(),
+        [
+          `${terminalStatus}-source`,
+          `${terminalStatus}-same`,
+          `${terminalStatus}-changed`,
+        ].sort(),
+      );
+      assert.equal(
+        records.filter((record) => record.status !== 'superseded').length,
+        1,
+      );
+      assert.deepEqual(await listEligibleRepairEvents({
+        queueDir,
+        now: new Date('2026-07-15T14:30:00.000Z'),
+      }), []);
+    });
+  }
+});
+
+test('a compacted migration hold releases exactly one versioned verification credit', async (t) => {
+  const { queueDir } = await fixture(t);
+  const source = await enqueueRepairEvent(event({
+    eventId: 'release-hold-source',
+    pageId: 'PG-SDS-004',
+  }), { queueDir });
+  const seeded = await transitionRepairEvent(source, {
+    status: 'repair_pending',
+    budgetEpoch: 6,
+    totalAttempts: 20,
+    agentMutationAttempts: 9,
+    noProgressCount: 2,
+    evidence: { historicalAttempts: 20 },
+  }, { queueDir });
+  const hold = await compactRepairIncident({
+    queueDir,
+    site: seeded.event.site,
+    pageId: seeded.event.pageId,
+    hold: 'migration-review',
+    verificationCredit: 1,
+  });
+
+  const releaseMigrationHold = repairEventsModule.releaseMigrationHold;
+  const released = await releaseMigrationHold({
+    queueDir,
+    site: 'gengrowth',
+    pageId: 'PG-SDS-004',
+    codeSha: '0123456789abcdef0123456789abcdef01234567',
+    reason: 'verify the author-stage adapter fix once',
+    now: new Date('2026-07-16T08:00:00.000Z'),
+  });
+
+  assert.equal(released.event.eventId, hold.event.eventId);
+  assert.equal(released.status, 'queued');
+  assert.equal(released.totalAttempts, 20);
+  assert.equal(released.agentMutationAttempts, 9);
+  assert.equal(released.noProgressCount, 2);
+  assert.equal(released.budgetEpoch, hold.budgetEpoch + 1);
+  assert.equal(released.verificationCreditRemaining, 1);
+  assert.deepEqual(released.verificationCreditRelease, {
+    codeSha: '0123456789abcdef0123456789abcdef01234567',
+    reason: 'verify the author-stage adapter fix once',
+    releasedAt: '2026-07-16T08:00:00.000Z',
+    budgetEpoch: hold.budgetEpoch + 1,
+  });
+  assert.equal(released.history.at(-1).status, 'queued');
+  assert.equal(released.history.at(-1).evidence.type, 'migration_verification_credit_released');
+
+  const records = await listRepairRecords({ queueDir });
+  assert.equal(records.find((record) => record.event.eventId === source.event.eventId).status, 'superseded');
+  assert.deepEqual((await listEligibleRepairEvents({
+    queueDir,
+    now: new Date('2026-07-16T08:00:01.000Z'),
+  })).map((record) => record.event.eventId), [hold.event.eventId]);
+
+  const repeated = await releaseMigrationHold({
+    queueDir,
+    site: 'gengrowth',
+    pageId: 'PG-SDS-004',
+    codeSha: '0123456789abcdef0123456789abcdef01234567',
+    reason: 'verify the author-stage adapter fix once',
+    now: new Date('2026-07-16T08:01:00.000Z'),
+  });
+  assert.deepEqual(repeated, released);
 });
 
 test('eligible reads finish a compact transaction after canonical write crash', async (t) => {

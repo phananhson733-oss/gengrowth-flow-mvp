@@ -137,6 +137,110 @@ test('compact requires incident ownership arguments and emits one canonical JSON
   assert.equal(records.filter((record) => record.status === 'migration_hold').length, 1);
 });
 
+test('release-hold grants one idempotent verification credit with code and reason evidence', (t) => {
+  const h = harness(t);
+  const path = join(h.root, 'release-event.json');
+  writeFileSync(path, JSON.stringify(event({
+    eventId: 'release-source',
+    pageId: 'PG-SDS-004',
+  })));
+  assert.equal(h.run(['enqueue', '--event-json', path]).status, 0);
+  const compacted = h.run([
+    'compact', '--site', 'gengrowth', '--page-id', 'PG-SDS-004', '--verification-credit', '1',
+  ]);
+  assert.equal(compacted.status, 0, `${compacted.stdout}\n${compacted.stderr}`);
+
+  const args = [
+    'release-hold',
+    '--site', 'gengrowth',
+    '--page-id', 'PG-SDS-004',
+    '--code-sha', '0123456789abcdef0123456789abcdef01234567',
+    '--reason', 'verify repaired author adapter',
+  ];
+  const released = h.run(args);
+  assert.equal(released.status, 0, `${released.stdout}\n${released.stderr}`);
+  const record = h.json(released).record;
+  assert.equal(record.status, 'queued');
+  assert.equal(record.verificationCreditRemaining, 1);
+  assert.equal(record.verificationCreditRelease.codeSha, '0123456789abcdef0123456789abcdef01234567');
+  assert.equal(record.verificationCreditRelease.reason, 'verify repaired author adapter');
+
+  const repeated = h.run(args);
+  assert.equal(repeated.status, 0, `${repeated.stdout}\n${repeated.stderr}`);
+  assert.deepEqual(h.json(repeated).record, record);
+});
+
+test('release-hold malformed, missing, wrong-owner, non-hold, and zero-credit requests fail without mutation', (t) => {
+  const h = harness(t);
+  const positivePath = join(h.root, 'positive-event.json');
+  writeFileSync(positivePath, JSON.stringify(event({
+    eventId: 'positive-hold-source',
+    pageId: 'PG-SDS-004',
+  })));
+  assert.equal(h.run(['enqueue', '--event-json', positivePath]).status, 0);
+  assert.equal(h.run([
+    'compact', '--site', 'gengrowth', '--page-id', 'PG-SDS-004', '--verification-credit', '1',
+  ]).status, 0);
+  const positiveBefore = h.json(h.run(['inspect', '--page-id', 'PG-SDS-004'])).records;
+
+  const invalidCases = [
+    {
+      label: 'malformed SHA',
+      args: ['--site', 'gengrowth', '--page-id', 'PG-SDS-004', '--code-sha', 'bad-sha', '--reason', 'valid reason'],
+      pattern: /code.*sha|40.*hex/i,
+    },
+    {
+      label: 'missing reason',
+      args: ['--site', 'gengrowth', '--page-id', 'PG-SDS-004', '--code-sha', '0123456789abcdef0123456789abcdef01234567'],
+      pattern: /reason/i,
+    },
+    {
+      label: 'owner mismatch',
+      args: ['--site', 'astrologywiki', '--page-id', 'PG-SDS-004', '--code-sha', '0123456789abcdef0123456789abcdef01234567', '--reason', 'valid reason'],
+      pattern: /owner|canonical.*migration.*hold|not found/i,
+    },
+  ];
+  for (const item of invalidCases) {
+    const result = h.run(['release-hold', ...item.args]);
+    assert.equal(result.status, 2, item.label);
+    assert.match(h.json(result).error, item.pattern, item.label);
+    assert.deepEqual(h.json(h.run(['inspect', '--page-id', 'PG-SDS-004'])).records, positiveBefore);
+  }
+
+  const ordinaryPath = join(h.root, 'ordinary-event.json');
+  writeFileSync(ordinaryPath, JSON.stringify(event({
+    eventId: 'ordinary-source',
+    pageId: 'PG-ORDINARY-001',
+  })));
+  assert.equal(h.run(['enqueue', '--event-json', ordinaryPath]).status, 0);
+  const ordinaryBefore = h.json(h.run(['inspect', '--page-id', 'PG-ORDINARY-001'])).records;
+  const nonHold = h.run([
+    'release-hold', '--site', 'gengrowth', '--page-id', 'PG-ORDINARY-001',
+    '--code-sha', '0123456789abcdef0123456789abcdef01234567', '--reason', 'valid reason',
+  ]);
+  assert.equal(nonHold.status, 2);
+  assert.match(h.json(nonHold).error, /migration.*hold/i);
+  assert.deepEqual(h.json(h.run(['inspect', '--page-id', 'PG-ORDINARY-001'])).records, ordinaryBefore);
+
+  const zeroPath = join(h.root, 'zero-event.json');
+  writeFileSync(zeroPath, JSON.stringify(event({
+    eventId: 'zero-hold-source',
+    pageId: 'PG-ZERO-001',
+  })));
+  assert.equal(h.run(['enqueue', '--event-json', zeroPath]).status, 0);
+  assert.equal(h.run([
+    'compact', '--site', 'gengrowth', '--page-id', 'PG-ZERO-001', '--verification-credit', '0',
+  ]).status, 0);
+  const zeroBefore = h.json(h.run(['inspect', '--page-id', 'PG-ZERO-001'])).records;
+  const zeroCredit = h.run([
+    'release-hold', '--site', 'gengrowth', '--page-id', 'PG-ZERO-001',
+    '--code-sha', '0123456789abcdef0123456789abcdef01234567', '--reason', 'valid reason',
+  ]);
+  assert.equal(zeroCredit.status, 2);
+  assert.match(h.json(zeroCredit).error, /positive.*verification.*credit|verification.*credit/i);
+  assert.deepEqual(h.json(h.run(['inspect', '--page-id', 'PG-ZERO-001'])).records, zeroBefore);
+});
+
 test('live global lock makes a concurrent drain return busy without an adapter call', (t) => {
   const h = harness(t);
   mkdirSync(h.lockDir, { recursive: true });

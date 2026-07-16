@@ -20,6 +20,8 @@ import {
   transitionRepairEvent,
 } from '../lib/seo-repair-events.mjs';
 import { createGengrowthRepairAdapter } from '../lib/seo-repair-adapter-gengrowth.mjs';
+import * as repairEventsModule from '../lib/seo-repair-events.mjs';
+import { compactRepairIncident } from '../lib/seo-repair-events.mjs';
 
 const UUID_A = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const UUID_B = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
@@ -84,6 +86,64 @@ async function budgetFixture(t, recordOverrides = {}, adapterResult = {
       },
       owner: 'budget-controller-test',
       now: () => new Date('2026-07-15T14:02:00.000Z'),
+      maxTargets: 1,
+    },
+  };
+}
+
+async function creditedFixture(t, adapterResult) {
+  const { queueDir } = await fixture(t);
+  const queued = await enqueueRepairEvent(event({
+    eventId: 'verification-credit-source',
+    pageId: 'PG-SDS-004',
+    stage: 'authoring',
+    lane: 'gengrowth-author',
+    errorKind: 'gate_fail',
+  }), { queueDir });
+  const seeded = await transitionRepairEvent(queued, {
+    status: 'repair_pending',
+    budgetEpoch: 6,
+    totalAttempts: 20,
+    agentMutationAttempts: 9,
+    windowCount: 8,
+    firstDetectedAt: '2026-07-15T10:00:00.000Z',
+    lastArtifactSha: 'historical-sha',
+    noProgressCount: 2,
+    evidence: { historicalAttempts: 20 },
+  }, { queueDir });
+  const hold = await compactRepairIncident({
+    queueDir,
+    site: seeded.event.site,
+    pageId: seeded.event.pageId,
+    hold: 'migration-review',
+    verificationCredit: 1,
+  });
+  const released = await repairEventsModule.releaseMigrationHold({
+    queueDir,
+    site: seeded.event.site,
+    pageId: seeded.event.pageId,
+    codeSha: '0123456789abcdef0123456789abcdef01234567',
+    reason: 'one rollout verification attempt',
+    now: new Date('2026-07-16T08:00:00.000Z'),
+  });
+  const calls = [];
+  return {
+    queueDir,
+    hold,
+    released,
+    calls,
+    args: {
+      queueDir,
+      adapters: {
+        gengrowth: {
+          execute: async (input) => {
+            calls.push(input);
+            return adapterResult;
+          },
+        },
+      },
+      owner: 'verification-credit-controller',
+      now: () => new Date('2026-07-16T08:01:00.000Z'),
       maxTargets: 1,
     },
   };
@@ -253,6 +313,62 @@ test('third total attempt quarantines and a rerun cannot call the adapter again'
   });
   assert.equal(rerun.processed, 0);
   assert.equal(built.adapterCalls(), 1);
+});
+
+test('one migration verification credit bypasses historical caps, is consumed at lease, and failure immediately quarantines', async (t) => {
+  const built = await creditedFixture(t, {
+    ok: false,
+    agentMutationInvoked: true,
+    evidence: { type: 'verification_regate_failed', artifactSha: 'credited-failure-sha' },
+  });
+
+  const first = await drainRepairQueue(built.args);
+  assert.equal(built.calls.length, 1);
+  assert.equal(built.calls[0].record.totalAttempts, 21);
+  assert.equal(built.calls[0].record.verificationCreditRemaining, 0);
+  assert.equal(built.calls[0].record.lease.verificationCreditConsumed, true);
+  assert.equal(first.terminals[0].terminal, 'quarantined');
+
+  const terminal = await readRepairRecord(join(
+    built.queueDir,
+    `${built.released.event.eventId}.json`,
+  ));
+  assert.equal(terminal.status, 'quarantined');
+  assert.equal(terminal.totalAttempts, 21);
+  assert.equal(terminal.agentMutationAttempts, 10);
+  assert.equal(terminal.verificationCreditRemaining, 0);
+  assert.equal(terminal.history.at(-1).evidence.type, 'verification_credit_failed');
+  assert.equal(
+    terminal.terminalNotificationKey,
+    `quarantined:${terminal.incidentId}:${terminal.budgetEpoch}`,
+  );
+
+  const second = await drainRepairQueue(built.args);
+  assert.equal(second.processed, 0);
+  assert.equal(built.calls.length, 1);
+});
+
+test('a successful migration verification credit reaches terminal success and cannot run twice', async (t) => {
+  const built = await creditedFixture(t, {
+    terminal: 'published',
+    agentMutationInvoked: true,
+    evidence: { checks: { production_200: true, backfilled: true } },
+  });
+
+  const first = await drainRepairQueue(built.args);
+  assert.equal(first.terminals[0].terminal, 'published');
+  assert.equal(built.calls.length, 1);
+  const terminal = await readRepairRecord(join(
+    built.queueDir,
+    `${built.released.event.eventId}.json`,
+  ));
+  assert.equal(terminal.status, 'published');
+  assert.equal(terminal.totalAttempts, 21);
+  assert.equal(terminal.verificationCreditRemaining, 0);
+
+  const second = await drainRepairQueue(built.args);
+  assert.equal(second.processed, 0);
+  assert.equal(built.calls.length, 1);
 });
 
 test('pre-exhausted or no-progress incidents quarantine before adapter execution', async (t) => {

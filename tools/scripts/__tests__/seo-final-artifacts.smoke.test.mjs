@@ -176,6 +176,18 @@ test('every srcset candidate is fetched, MIME checked, and decoded', async () =>
   assert.equal(result.checked.every((entry) => /^[0-9a-f]{64}$/.test(entry.sha256)), true);
 });
 
+test('the default raster parser accepts a complete PNG and rejects a truncated signature-only file', async () => {
+  const verify = (body) => verifyFinalAssets({
+    html: '<img src="/images/hero.png">',
+    pageUrl: PAGE_URL,
+    fetch: async (url) => response({ url, contentType: 'image/png', body }),
+  });
+  assert.equal((await verify(PNG)).ok, true);
+  const truncated = await verify(PNG.subarray(0, 24));
+  assert.equal(truncated.ok, false);
+  assert.match(truncated.failed[0].reason, /PNG/i);
+});
+
 test('external SVG use validates the parser and referenced fragment', async () => {
   const result = await verifyFinalAssets({
     html: '<svg aria-hidden="true"><use href="/images/icons.svg#moon"></use></svg>',

@@ -44,6 +44,7 @@ const INCIDENT_LOCK_LEASE_MS = 30_000;
 const INCIDENT_LOCK_TIMEOUT_MS = 10_000;
 const INCIDENT_LOCK_RETRY_MS = 10;
 const INCIDENT_LOCK_METADATA_GRACE_MS = 1_000;
+const TRANSACTION_SCHEMA_VERSION = 1;
 
 function requireString(value, field, { optional = false } = {}) {
   if (optional && (value === undefined || value === null || value === '')) return '';
@@ -163,6 +164,21 @@ async function atomicWriteJson(path, value, randomUUID = defaultRandomUUID) {
   }
 }
 
+async function writeNewJson(path, value) {
+  await mkdir(dirname(path), { recursive: true });
+  const handle = await open(path, 'wx', 0o600);
+  try {
+    await handle.writeFile(`${JSON.stringify(value, null, 2)}\n`, 'utf8');
+    await handle.sync();
+  } finally {
+    await handle.close();
+  }
+  try {
+    const directory = await open(dirname(path), 'r');
+    try { await directory.sync(); } finally { await directory.close(); }
+  } catch {}
+}
+
 function pidIsAlive(pid) {
   if (!Number.isInteger(pid) || pid <= 0) return false;
   try {
@@ -177,7 +193,22 @@ async function readJson(path) {
   try { return JSON.parse(await readFile(path, 'utf8')); } catch { return null; }
 }
 
-async function withIncidentLock(queueDir, incidentId, fn) {
+async function injectFault(faultInjector, point, context = {}) {
+  if (typeof faultInjector === 'function') {
+    await faultInjector(point, context);
+  }
+}
+
+async function sameDirectory(path, expected) {
+  try {
+    const current = await stat(path);
+    return current.dev === expected.dev && current.ino === expected.ino;
+  } catch {
+    return false;
+  }
+}
+
+async function withIncidentLock(queueDir, incidentId, fn, { faultInjector } = {}) {
   const locksDir = join(queueDir, '.incident-locks');
   const path = join(locksDir, incidentId);
   const ownerPath = join(path, 'owner.json');
@@ -196,10 +227,13 @@ async function withIncidentLock(queueDir, incidentId, fn) {
     };
     try {
       await mkdir(path);
+      const ownedDirectory = await stat(path);
       try {
-        await atomicWriteJson(ownerPath, metadata);
+        await writeNewJson(ownerPath, metadata);
       } catch (error) {
-        await rm(path, { recursive: true, force: true });
+        if (await sameDirectory(path, ownedDirectory)) {
+          await rm(path, { recursive: true, force: true });
+        }
         throw error;
       }
       break;
@@ -207,12 +241,17 @@ async function withIncidentLock(queueDir, incidentId, fn) {
       if (error?.code !== 'EEXIST') throw error;
       const current = await readJson(ownerPath);
       const live = current && pidIsAlive(Number(current.pid));
-      const unexpired = current && Date.parse(current.expiresAt || 0) > Date.now();
-      let reclaimable = Boolean(current && (!live || !unexpired));
+      let reclaimable = Boolean(current && !live);
       if (!current) {
         try {
           reclaimable = Date.now() - (await stat(path)).mtimeMs > INCIDENT_LOCK_METADATA_GRACE_MS;
         } catch {}
+      }
+      if (live) {
+        await injectFault(faultInjector, 'live-lock-observed', {
+          incidentId,
+          owner: current,
+        });
       }
       if (reclaimable) {
         const confirmed = await readJson(ownerPath);
@@ -235,8 +274,18 @@ async function withIncidentLock(queueDir, incidentId, fn) {
     }
   }
 
+  const assertOwner = async () => {
+    const current = await readJson(ownerPath);
+    if (current?.token !== token || Number(current.pid) !== process.pid) {
+      throw new Error(`incident lock fencing violation: ${incidentId}`);
+    }
+  };
+
   try {
-    return await fn();
+    await assertOwner();
+    const result = await fn({ assertOwner });
+    await assertOwner();
+    return result;
   } finally {
     const current = await readJson(ownerPath);
     if (current?.token === token && Number(current.pid) === process.pid) {
@@ -282,8 +331,141 @@ async function readQueueRecords(queueDir, { quarantineCorrupt = true } = {}) {
   return records;
 }
 
+function transactionDirectory(queueDir) {
+  return join(queueDir, '.incident-transactions');
+}
+
+function transactionPath(queueDir, transactionId) {
+  return join(transactionDirectory(queueDir), `${transactionId}.json`);
+}
+
+async function listTransactionIntents(queueDir) {
+  const directory = transactionDirectory(queueDir);
+  let names;
+  try {
+    names = await readdir(directory);
+  } catch (error) {
+    if (error?.code === 'ENOENT') return [];
+    throw error;
+  }
+  const intents = [];
+  for (const name of names.filter((entry) => entry.endsWith('.json')).sort()) {
+    const path = join(directory, name);
+    const intent = JSON.parse(await readFile(path, 'utf8'));
+    if (intent?.schemaVersion !== TRANSACTION_SCHEMA_VERSION
+      || typeof intent.transactionId !== 'string'
+      || typeof intent.incidentId !== 'string'
+      || !Array.isArray(intent.writes)) {
+      throw new TypeError(`invalid repair transaction: ${path}`);
+    }
+    intents.push({ path, intent });
+  }
+  return intents;
+}
+
+function transactionWrite(filename, record, {
+  faultPointAfter = null,
+} = {}) {
+  if (basename(filename) !== filename || !filename.endsWith('.json')) {
+    throw new TypeError(`invalid transaction record path: ${filename}`);
+  }
+  return {
+    filename,
+    record,
+    ...(faultPointAfter ? { faultPointAfter } : {}),
+  };
+}
+
+async function prepareTransaction(queueDir, {
+  incidentId,
+  operation,
+  writes,
+  createdAt,
+}, {
+  randomUUID = defaultRandomUUID,
+  assertOwner,
+} = {}) {
+  const transactionId = `${incidentId}-${defaultRandomUUID()}`;
+  const intent = {
+    schemaVersion: TRANSACTION_SCHEMA_VERSION,
+    transactionId,
+    incidentId,
+    operation,
+    phase: 'prepared',
+    createdAt,
+    writes,
+  };
+  if (assertOwner) await assertOwner();
+  const path = transactionPath(queueDir, transactionId);
+  await atomicWriteJson(path, intent, randomUUID);
+  return { path, intent };
+}
+
+async function applyPreparedTransaction(queueDir, path, intent, {
+  randomUUID = defaultRandomUUID,
+  faultInjector,
+  assertOwner,
+} = {}) {
+  const latest = JSON.parse(await readFile(path, 'utf8'));
+  if (latest.phase === 'committed') return latest;
+  if (latest.transactionId !== intent.transactionId
+    || latest.incidentId !== intent.incidentId
+    || latest.phase !== 'prepared') {
+    throw new Error(`repair transaction changed unexpectedly: ${intent.transactionId}`);
+  }
+  for (const write of latest.writes) {
+    if (assertOwner) await assertOwner();
+    await atomicWriteJson(join(queueDir, write.filename), write.record, randomUUID);
+    if (write.faultPointAfter) {
+      await injectFault(faultInjector, write.faultPointAfter, {
+        incidentId: latest.incidentId,
+        transactionId: latest.transactionId,
+      });
+    }
+  }
+  const committed = {
+    ...latest,
+    phase: 'committed',
+    committedAt: new Date().toISOString(),
+  };
+  if (assertOwner) await assertOwner();
+  await atomicWriteJson(path, committed, randomUUID);
+  return committed;
+}
+
+async function recoverIncidentTransactionsLocked(queueDir, incidentId, {
+  randomUUID = defaultRandomUUID,
+  assertOwner,
+} = {}) {
+  let recovered = 0;
+  for (const { path, intent } of await listTransactionIntents(queueDir)) {
+    if (intent.incidentId !== incidentId || intent.phase === 'committed') continue;
+    await applyPreparedTransaction(queueDir, path, intent, { randomUUID, assertOwner });
+    recovered += 1;
+  }
+  return recovered;
+}
+
+async function recoverPreparedTransactions(queueDir, {
+  randomUUID = defaultRandomUUID,
+} = {}) {
+  const incidentIds = [...new Set(
+    (await listTransactionIntents(queueDir))
+      .filter(({ intent }) => intent.phase !== 'committed')
+      .map(({ intent }) => intent.incidentId),
+  )].sort();
+  let recovered = 0;
+  for (const incidentId of incidentIds) {
+    recovered += await withIncidentLock(queueDir, incidentId, async ({ assertOwner }) => (
+      recoverIncidentTransactionsLocked(queueDir, incidentId, { randomUUID, assertOwner })
+    ));
+  }
+  return recovered;
+}
+
 export async function listRepairRecords({ queueDir } = {}) {
   if (!queueDir) throw new TypeError('queueDir is required');
+  await recoverPreparedTransactions(queueDir);
   return (await readQueueRecords(queueDir)).map(({ record }) => record);
 }
 

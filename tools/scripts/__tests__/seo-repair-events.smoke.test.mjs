@@ -133,6 +133,50 @@ test('an abandoned incident lock without owner metadata is recovered after its g
   assert.equal(queued.status, 'queued');
 });
 
+test('an expired incident lock owned by a live pid is not reclaimed', async (t) => {
+  const { queueDir } = await fixture(t);
+  const incidentId = repairIncidentId(event());
+  const lockDir = join(queueDir, '.incident-locks', incidentId);
+  await mkdir(lockDir, { recursive: true });
+  await writeFile(join(lockDir, 'owner.json'), `${JSON.stringify({
+    pid: process.pid,
+    token: 'live-owner',
+    incidentId,
+    acquiredAt: '2026-07-15T12:00:00.000Z',
+    expiresAt: '2026-07-15T12:00:01.000Z',
+  })}\n`, 'utf8');
+  let observedLiveOwner = 0;
+
+  const queued = await enqueueRepairEvent(event(), {
+    queueDir,
+    async faultInjector(point) {
+      if (point !== 'live-lock-observed') return;
+      observedLiveOwner += 1;
+      await rm(lockDir, { recursive: true, force: true });
+    },
+  });
+
+  assert.equal(observedLiveOwner, 1);
+  assert.equal(queued.status, 'queued');
+});
+
+test('an incident lock owned by a dead pid is recovered', async (t) => {
+  const { queueDir } = await fixture(t);
+  const incidentId = repairIncidentId(event());
+  const lockDir = join(queueDir, '.incident-locks', incidentId);
+  await mkdir(lockDir, { recursive: true });
+  await writeFile(join(lockDir, 'owner.json'), `${JSON.stringify({
+    pid: 2_147_483_647,
+    token: 'dead-owner',
+    incidentId,
+    acquiredAt: new Date().toISOString(),
+    expiresAt: new Date(Date.now() + 60_000).toISOString(),
+  })}\n`, 'utf8');
+
+  const queued = await enqueueRepairEvent(event(), { queueDir });
+  assert.equal(queued.status, 'queued');
+});
+
 test('same active fingerprint merges observations into one atomically visible record', async (t) => {
   const { queueDir } = await fixture(t);
   const first = await enqueueRepairEvent(event(), { queueDir });
@@ -273,6 +317,37 @@ test('enqueue recovers a durable generation transaction after an injected crash'
   assert.deepEqual(recovered[0].sourceEventIds, [changed.eventId]);
 });
 
+test('stale acquire is fenced when a producer installs a newer generation first', async (t) => {
+  const { queueDir } = await fixture(t);
+  const old = await enqueueRepairEvent(event({
+    eventId: 'acquire-old',
+    summary: 'missing draft',
+  }), { queueDir });
+  const changed = event({
+    eventId: 'acquire-new',
+    summary: 'fact gate failed',
+    createdAt: '2026-07-15T14:01:00.000Z',
+  });
+  let producerHead = null;
+
+  const leased = await acquireRepairLease(old, {
+    queueDir,
+    owner: 'stale-controller',
+    async faultInjector(point) {
+      if (point === 'before-incident-lock') {
+        producerHead = await enqueueRepairEvent(changed, { queueDir });
+      }
+    },
+  });
+
+  assert.equal(leased, null);
+  const eligible = await listEligibleRepairEvents({
+    queueDir,
+    now: new Date('2026-07-15T14:02:00.000Z'),
+  });
+  assert.deepEqual(eligible.map((record) => record.event.eventId), [producerHead.event.eventId]);
+});
+
 test('compaction is append-only, preserves source evidence, and is idempotent', async (t) => {
   const { queueDir } = await fixture(t);
   const source = await enqueueRepairEvent(event({ eventId: 'source-a' }), { queueDir });
@@ -322,6 +397,36 @@ test('compaction is append-only, preserves source evidence, and is idempotent', 
   assert.equal(records.filter((record) => record.status === 'migration_hold').length, 1);
   assert.equal(records.filter((record) => record.status === 'superseded').length, 2);
   assert.equal(records.every((record) => record.status !== 'superseded' || record.supersededBy === first.event.eventId), true);
+});
+
+test('eligible reads finish a compact transaction after canonical write crash', async (t) => {
+  const { queueDir } = await fixture(t);
+  await enqueueRepairEvent(event({ eventId: 'compact-crash-source' }), { queueDir });
+
+  await assert.rejects(
+    compactRepairIncident({
+      queueDir,
+      site: 'gengrowth',
+      pageId: 'PG-WLS-007',
+      hold: 'migration-review',
+      verificationCredit: 1,
+      faultInjector(point) {
+        if (point === 'after-canonical-before-source-supersede') {
+          throw new Error('injected compact crash');
+        }
+      },
+    }),
+    /injected compact crash/,
+  );
+
+  const eligible = await listEligibleRepairEvents({
+    queueDir,
+    now: new Date('2026-07-15T14:02:00.000Z'),
+  });
+  assert.deepEqual(eligible, []);
+  const records = await listRepairRecords({ queueDir });
+  assert.equal(records.filter((record) => record.status === 'migration_hold').length, 1);
+  assert.equal(records.find((record) => record.event.eventId === 'compact-crash-source').status, 'superseded');
 });
 
 test('priority ordering prefers later stages and aging prevents starvation', async (t) => {

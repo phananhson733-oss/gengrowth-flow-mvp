@@ -35,7 +35,7 @@ BATCH_SUMMARY="${GG_SEO_BATCH_SUMMARY_BIN:-$FLOW/tools/scripts/gg-batch-summary.
 NIGHTLY_LOG="${GG_SEO_NIGHTLY_LOG:-$HOME/Library/Logs/gg-nightly-seo.log}"
 OPS="${GG_OPS_DIR:-$HOME/gengrowth-ops}"
 PLAN="${GG_SEO_PLAN:-$OPS/inbox-maboyang/06-tasks/tasks/2026-05-27-W22-blog-output-plan.md}"
-CLAIMS="${GG_SEO_CLAIMS:-$OPS/inbox-maboyang/06-tasks/tasks/.autopilot-claims.json}"
+CLAIMS="${GG_SEO_CLAIMS:-$OPS/inbox/06-tasks/tasks/.autopilot-claims.json}"
 
 mkdir -p "$(dirname "$LOG")" "$(dirname "$ERR_LOG")"
 exec >>"$LOG" 2>>"$ERR_LOG"

@@ -101,6 +101,10 @@ const SHEET_TEMPLATE_VALUES = new Set(['Definition', 'Comparison', 'Tutorial', '
 const SHEET_PAGE_ROLES = new Set(['Pillar', 'Series', 'Support', 'Tool', 'Wiki', 'Strategic']);
 const PAGE_WRITABLE_FIELDS = Object.freeze(['Associated Keywords', 'Intent', 'Tier', 'Template', 'Entity', 'Friction', 'Logic', 'CTA', 'Status', 'page_id', 'cluster_id', 'page_role', 'content_angle', 'psych_safety_flag', 'journal_prompts', 'target_keyword_zh']);
 const PAGE_TAXONOMY_WRITABLE_FIELDS = Object.freeze(PAGE_WRITABLE_FIELDS.filter((field) => !PREPROCESSOR_WRITABLE_FIELDS.includes(field)));
+export const SEMANTIC_REPAIR_WRITABLE_FIELDS = Object.freeze([
+  'Associated Keywords', 'Intent', 'Tier', 'Template', 'Entity', 'Friction',
+  'Logic', 'CTA', 'cluster_id', 'page_role', 'content_angle', 'psych_safety_flag',
+]);
 const CLOSED_PAGE_STATUSES = new Set(['已发布', '已刷新', '已合并', '暂停', '不写', '暂时不写']);
 const COUNTRY_TERMS = new Set([
   'argentina', 'brazil', 'colombia', 'portugal', 'spain', 'france', 'germany', 'italy',
@@ -1856,6 +1860,220 @@ async function batchUpdateValues(workbookId, data, token) {
   );
 }
 
+function sameStringSet(left, right) {
+  const a = [...left].sort();
+  const b = [...right].sort();
+  return a.length === b.length && a.every((value, index) => value === b[index]);
+}
+
+function parseA1Range(value) {
+  const source = String(value || '').trim();
+  const bang = source.lastIndexOf('!');
+  if (bang <= 0) return null;
+  let tab = source.slice(0, bang).trim();
+  if (tab.startsWith("'") && tab.endsWith("'")) {
+    tab = tab.slice(1, -1).replace(/''/g, "'");
+  }
+  const cells = /^\$?([A-Z]+)\$?(\d+)(?::\$?([A-Z]+)\$?(\d+))?$/i.exec(source.slice(bang + 1).trim());
+  if (!cells) return null;
+  return {
+    tab,
+    startColumn: cells[1].toUpperCase(),
+    startRow: Number(cells[2]),
+    endColumn: String(cells[3] || cells[1]).toUpperCase(),
+    endRow: Number(cells[4] || cells[2]),
+  };
+}
+
+function sameSingleCellRange(actual, expected) {
+  const got = parseA1Range(actual);
+  const want = parseA1Range(expected);
+  return Boolean(got && want
+    && got.tab === want.tab
+    && got.startColumn === want.startColumn
+    && got.startRow === want.startRow
+    && got.endColumn === want.endColumn
+    && got.endRow === want.endRow
+    && got.startColumn === got.endColumn
+    && got.startRow === got.endRow);
+}
+
+export function buildSemanticRepairWritePlan(plan) {
+  if (plan?.selectionMode !== 'semantic_repair_only') {
+    throw new Error('semantic-repair-only write plan requires semantic selection');
+  }
+  const updates = Array.isArray(plan.updates) ? plan.updates : [];
+  const newClusters = Array.isArray(plan.newClusters) ? plan.newClusters : [];
+  const allowed = new Set(SEMANTIC_REPAIR_WRITABLE_FIELDS);
+  const pageWrites = [];
+  const pageWriteCountById = new Map();
+  const repairNewClusterIds = new Set();
+
+  for (const item of updates) {
+    const pageId = String(item?.pageId || '').trim();
+    const existingPageId = String(item?.existingValues?.page_id || '').trim();
+    const provenance = String(item?.clusterDecision?.kind || '');
+    const declared = item?.forceOverwriteFields instanceof Set
+      ? item.forceOverwriteFields
+      : new Set(item?.forceOverwriteFields || []);
+    if (!pageId || pageId !== existingPageId || !/^semantic-repair(?:-new)?$/.test(provenance)) {
+      throw new Error('semantic-repair-only write plan contains an unowned page repair');
+    }
+    if (!sameStringSet(declared, allowed)) {
+      throw new Error('semantic-repair-only write plan owner allowlist mismatch');
+    }
+    const previousClusterId = String(item?.clusterDecision?.previous_cluster_id || '').trim();
+    const nextClusterId = String(item?.cluster?.cluster_id || '').trim();
+    if (!previousClusterId || !nextClusterId || previousClusterId === nextClusterId
+      || String(item?.fields?.cluster_id || '').trim() !== nextClusterId) {
+      throw new Error('semantic-repair-only write plan has invalid cluster ownership');
+    }
+    if (provenance === 'semantic-repair-new') repairNewClusterIds.add(nextClusterId);
+
+    const index = headerIndex(plan.pageHeader || []);
+    let clusterIdWrite = false;
+    for (const field of SEMANTIC_REPAIR_WRITABLE_FIELDS) {
+      if (!Object.hasOwn(item.fields || {}, field)) continue;
+      const value = String(item.fields[field] ?? '');
+      const existing = String(item.existingValues?.[field] ?? '');
+      if (value === existing) continue;
+      if (!value.trim()) {
+        throw new Error(`semantic-repair-only refuses an empty owned value for ${field}`);
+      }
+      const column = index[field];
+      if (column == null) {
+        throw new Error(`semantic-repair-only missing owned column ${field}`);
+      }
+      const range = `${PAGES_TAB}!${colLetter(column)}${item.row}`;
+      pageWrites.push({ page_id: pageId, field, range, value });
+      pageWriteCountById.set(pageId, (pageWriteCountById.get(pageId) || 0) + 1);
+      if (field === 'cluster_id') clusterIdWrite = true;
+    }
+    if (!clusterIdWrite) {
+      throw new Error(`semantic-repair-only missing required cluster_id write for ${pageId}`);
+    }
+  }
+
+  const ranges = pageWrites.map((write) => write.range);
+  if (new Set(ranges).size !== ranges.length) {
+    throw new Error('semantic-repair-only duplicate page write range');
+  }
+  const newClusterIds = newClusters.map((row) => String(row?.cluster_id || '').trim());
+  if (newClusterIds.some((clusterId) => !clusterId)
+    || new Set(newClusterIds).size !== newClusterIds.length
+    || !sameStringSet(newClusterIds, repairNewClusterIds)) {
+    throw new Error('semantic-repair-only new cluster set does not match repair provenance');
+  }
+  for (const row of newClusters) {
+    const clusterId = String(row.cluster_id);
+    const owners = updates.filter((item) => (
+      item?.clusterDecision?.kind === 'semantic-repair-new'
+      && String(item?.cluster?.cluster_id || '') === clusterId
+    ));
+    const values = clusterRowToValues(row);
+    const matchesOwner = owners.some((item) => (
+      JSON.stringify(clusterRowToValues(item.cluster)) === JSON.stringify(values)
+    ));
+    const deterministic = owners.some((item) => {
+      const expected = buildNewClusterRow({
+        product: 'astrologywiki',
+        keyword: item.target_keyword,
+        existingClusters: plan.clusters || [],
+      });
+      return JSON.stringify(clusterRowToValues(expected)) === JSON.stringify(values);
+    });
+    if (!matchesOwner || !deterministic) {
+      throw new Error(`semantic-repair-only cluster ${clusterId} is not the deterministic repair cluster`);
+    }
+  }
+
+  const pageData = pageWrites.map(({ range, value }) => ({ range, values: [[value]] }));
+  const clusterRows = newClusters.map(clusterRowToValues);
+  if (pageData.length !== pageWrites.length
+    || pageData.some((request, index) => (
+      request.range !== pageWrites[index].range
+      || request.values?.[0]?.[0] !== pageWrites[index].value
+    ))) {
+    throw new Error('semantic-repair-only request ledger mismatch');
+  }
+  return {
+    pageData,
+    clusterRows,
+    pageWrites,
+    pageWriteCounts: [...pageWriteCountById.entries()]
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([page_id, count]) => ({ page_id, count })),
+    changedPageIds: [...pageWriteCountById.keys()].sort(),
+    newClusterIds: [...newClusterIds].sort(),
+  };
+}
+
+export function verifySemanticBatchUpdateResponse(writePlan, response) {
+  const expected = writePlan?.pageData || [];
+  const responses = response?.responses;
+  if (!Array.isArray(responses) || responses.length !== expected.length) {
+    throw new Error('semantic-repair-only batch response count mismatch');
+  }
+  if (!Number.isInteger(response?.totalUpdatedCells)
+    || response.totalUpdatedCells !== expected.length) {
+    throw new Error('semantic-repair-only batch response total cell mismatch');
+  }
+  for (let index = 0; index < expected.length; index += 1) {
+    const result = responses[index];
+    if (!sameSingleCellRange(result?.updatedRange, expected[index].range)) {
+      throw new Error(`semantic-repair-only batch response range mismatch at ${index}`);
+    }
+    if (result?.updatedRows !== 1 || result?.updatedColumns !== 1 || result?.updatedCells !== 1) {
+      throw new Error(`semantic-repair-only batch response cell count mismatch at ${index}`);
+    }
+  }
+}
+
+export function verifySemanticAppendResponse(writePlan, response) {
+  const rows = writePlan?.clusterRows || [];
+  const updates = response?.updates;
+  const range = parseA1Range(updates?.updatedRange);
+  if (!updates || !range) {
+    throw new Error('semantic-repair-only append response is incomplete');
+  }
+  if (range.tab !== CLUSTERS_TAB
+    || range.startColumn !== 'A'
+    || range.endColumn !== colLetter(CLUSTER_FIELDS.length - 1)) {
+    throw new Error('semantic-repair-only append response range mismatch');
+  }
+  if (range.endRow - range.startRow + 1 !== rows.length
+    || updates.updatedRows !== rows.length) {
+    throw new Error('semantic-repair-only append response row count mismatch');
+  }
+  if (updates.updatedColumns !== CLUSTER_FIELDS.length
+    || updates.updatedCells !== rows.length * CLUSTER_FIELDS.length) {
+    throw new Error('semantic-repair-only append response cell count mismatch');
+  }
+}
+
+export async function applySemanticRepairWrites({ workbookId, token, plan, deps = {} } = {}) {
+  const writePlan = buildSemanticRepairWritePlan(plan);
+  const append = deps.appendRows || appendRows;
+  const batch = deps.batchUpdateValues || batchUpdateValues;
+  if (writePlan.clusterRows.length) {
+    const response = await append(workbookId, `${CLUSTERS_TAB}!A:S`, writePlan.clusterRows, token);
+    verifySemanticAppendResponse(writePlan, response);
+  }
+  if (writePlan.pageData.length) {
+    const response = await batch(workbookId, writePlan.pageData, token);
+    verifySemanticBatchUpdateResponse(writePlan, response);
+  }
+  return {
+    verified: true,
+    changed_page_ids: writePlan.changedPageIds,
+    page_write_counts: writePlan.pageWriteCounts,
+    page_write_count: writePlan.pageData.length,
+    new_cluster_ids: writePlan.newClusterIds,
+    new_cluster_count: writePlan.clusterRows.length,
+    cluster_cell_write_count: writePlan.clusterRows.length * CLUSTER_FIELDS.length,
+  };
+}
+
 function resolveProducts(arg) {
   const raw = arg || 'all';
   if (raw === 'all') return [PRODUCT_PROFILES.astrologywiki, PRODUCT_PROFILES.gengrowth];
@@ -2109,10 +2327,7 @@ function planRows({
       fields,
       existingValues: candidate.values,
       forceOverwriteFields: semanticClusterRepair
-        ? new Set([
-          'Associated Keywords', 'Intent', 'Tier', 'Template', 'Entity', 'Friction',
-          'Logic', 'CTA', 'cluster_id', 'page_role', 'content_angle', 'psych_safety_flag',
-        ])
+        ? new Set(SEMANTIC_REPAIR_WRITABLE_FIELDS)
         : new Set(),
       missing: candidate.missing,
       preprocessorEvidence,

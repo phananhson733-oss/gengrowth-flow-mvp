@@ -22,6 +22,7 @@ aliases:
 - 20:00 窗口按预期完成 active brief preflight、pre-drain、strict reconcile 后进入 nightly，并发布 PG-NODE-014、PG-TRANS-022、PG-TRANS-023、PG-WC-052；四篇在计划、claims、publish log、Sheet 和线上均已收敛。
 - 20:00 post-fire 终态仍有 pendingWritebackAfter=1、activeRepairAfter=1，故该窗口不能判定 clean 或 0 人值守完成。
 - 当前 PG-WC-053 已从 pushed-preview 转为 needs_human，故 claims non-done=1、needs-human drift=1；pending/dropped writeback、outbox、SEO 业务进程和锁均为 0。临时 heartbeat 删除请求持续因 Codex 应用工具超时未确认，磁盘状态仍显示 ACTIVE。
+- 按固定入口完成 Index Repair Resubmit：astrologywiki 没有已修复行、结果复盘表新增 9 行；gengrowth 没有已修复行、结果复盘表无变更；两产品请求索引队列均已同步，日志窗口无失败关键字。
 
 ---
 
@@ -60,5 +61,22 @@ aliases:
 **🤖 回答：**
 
 复核仍不通过：LaunchAgent 日志没有新增合格自然窗口，20:00 仍是唯一候选且以 reconcile=2 结束，20:30 与 21:00 无独立 tick。canonical claims 最新状态为 PG-WC-053=needs_human，因此 claims non-done=1、needs-human drift=1；pending/dropped writeback=0、outbox=0、无 SEO 业务进程和锁。再次调用 Codex automation delete 接口仍在 20 秒后超时，磁盘 automation.toml 继续显示 ACTIVE；未手工修改或删除 automation 文件。
+
+---
+
+### Q3 — 05:02
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: 2026-07-17T09:30:59.430Z (1784280659430)
+
+Run the deterministic fixed-row index repair workflow through `bash tools/scripts/gg-index-repair-resubmit-tick.sh`. The wrapper loads the local gg environment, loops the configured products (`GG_INDEX_MONITOR_PRODUCTS`, defaulting to astrologywiki and gengrowth), processes rows marked `已修复`, syncs `结果复盘表`, and refreshes `request-indexing-queue` in each product Google Sheet. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, do not click Search Console Request Indexing unattended, and do not create Feishu or Google Doc report artifacts. After the wrapper exits, summarize per-product `process-fixed`, `sync-recap`, `sync-request-queue` counts visible in the log, plus any failures.
+
+**🤖 回答：**
+
+已执行指定入口 `bash tools/scripts/gg-index-repair-resubmit-tick.sh`，05:01:30–05:01:52 CST 退出码为 0，日志以 `index repair-resubmit ok` 结束。astrologywiki：process-fixed fixed=0、resubmitted=0；sync-recap en_rows=264、appended=9、updated=0、skipped=255；sync-request-queue rows=27、P0=0、P1=3、P2=4、P3=20。gengrowth：process-fixed fixed=0、resubmitted=0；sync-recap en_rows=62、appended=0、updated=0、skipped=62；sync-request-queue rows=2、P0=0、P1=0、P2=0、P3=2。该时间窗没有 failure/error/exception/auth/timeout/nonzero-rc 关键字；遵守普通文章不使用 Google Indexing API、不进行无人值守 Search Console Request Indexing 点击、也未创建 Feishu 或 Google Doc 报告的边界。自动化记忆已在真实 EOF 追加。
 
 ---

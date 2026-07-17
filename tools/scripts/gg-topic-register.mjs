@@ -2435,24 +2435,29 @@ async function runProduct(profile, { token, args, nowDate, budget = null }) {
     };
   }
 
-  const clusterRows = plan.newClusters.map(clusterRowToValues);
-  if (clusterRows.length) {
-    await appendRows(workbookId, `${CLUSTERS_TAB}!A:S`, clusterRows, token);
+  let semanticWriteEvidence = null;
+  if (args.semantic_repair_only) {
+    semanticWriteEvidence = await applySemanticRepairWrites({ workbookId, token, plan });
+  } else {
+    const clusterRows = plan.newClusters.map(clusterRowToValues);
+    if (clusterRows.length) {
+      await appendRows(workbookId, `${CLUSTERS_TAB}!A:S`, clusterRows, token);
+    }
+    const pageData = [];
+    for (const item of plan.updates) {
+      pageData.push(...valuesBatchForPageRow({
+        tab: PAGES_TAB,
+        rowNumber: item.row,
+        header: plan.pageHeader,
+        fields: item.fields,
+        existingValues: item.existingValues,
+        forceOverwriteFields: item.forceOverwriteFields,
+        overwrite: !!args.overwrite,
+        taxonomyOnly: !!args.taxonomy_only,
+      }));
+    }
+    await batchUpdateValues(workbookId, pageData, token);
   }
-  const pageData = [];
-  for (const item of plan.updates) {
-    pageData.push(...valuesBatchForPageRow({
-      tab: PAGES_TAB,
-      rowNumber: item.row,
-      header: plan.pageHeader,
-      fields: item.fields,
-      existingValues: item.existingValues,
-      forceOverwriteFields: item.forceOverwriteFields,
-      overwrite: !!args.overwrite,
-      taxonomyOnly: !!args.taxonomy_only,
-    }));
-  }
-  await batchUpdateValues(workbookId, pageData, token);
 
   const promptPaths = args.semantic_repair_only ? [] : writePromptFiles(profile, plan.promptWrites);
 
@@ -2477,7 +2482,7 @@ async function runProduct(profile, { token, args, nowDate, budget = null }) {
   if (!args.no_notify && plan.updates.length) {
     await notifyTopicRegistered({ profile, plan });
   }
-  return { profile, workbookId, plan, applied: true, promptPaths };
+  return { profile, workbookId, plan, applied: true, promptPaths, semanticWriteEvidence };
 }
 
 // 统一事件层（NOTIFY-CONTRACT.md）：只传结构化字段，模板与 @ 策略（不@）由
@@ -2496,6 +2501,12 @@ export async function notifyTopicRegistered({ profile, plan }) {
 export function summarizeProductResult(result, { args = {} } = {}) {
   const plan = result?.plan || {};
   const updates = Array.isArray(plan.updates) ? plan.updates : [];
+  const semanticEvidence = result?.semanticWriteEvidence || null;
+  const semanticMode = Boolean(args.semantic_repair_only);
+  const changedPageIds = semanticMode && semanticEvidence
+    ? semanticEvidence.changed_page_ids
+    : updates.map((u) => u.pageId);
+  const changedPageIdSet = new Set(changedPageIds);
   const preprocessor = updates.map((u) => u.preprocessor?.status || (args.llm ? 'not-run' : 'deterministic'));
   const evidenceDiscovery = Array.isArray(plan.evidenceDiscovery) ? plan.evidenceDiscovery : [];
   const budgetExhausted = Boolean(
@@ -2509,12 +2520,16 @@ export function summarizeProductResult(result, { args = {} } = {}) {
     applied: Boolean(result?.applied),
     candidates: Array.isArray(plan.candidates) ? plan.candidates.length : 0,
     updates: updates.length,
-    new_clusters: Array.isArray(plan.newClusters) ? plan.newClusters.length : 0,
-    page_ids: updates.map((u) => u.pageId),
+    new_clusters: semanticMode && semanticEvidence
+      ? semanticEvidence.new_cluster_count
+      : (Array.isArray(plan.newClusters) ? plan.newClusters.length : 0),
+    page_ids: changedPageIds,
     created_page_ids: updates
+      .filter((u) => !semanticMode || changedPageIdSet.has(u.pageId))
       .filter((u) => !String(u.existingValues?.page_id || '').trim())
       .map((u) => u.pageId),
     cluster_repairs: updates
+      .filter((u) => !semanticMode || changedPageIdSet.has(u.pageId))
       .filter((u) => /^semantic-repair/.test(String(u.clusterDecision?.kind || '')))
       .map((u) => ({
         page_id: u.pageId,
@@ -2530,6 +2545,7 @@ export function summarizeProductResult(result, { args = {} } = {}) {
     ...(result?.skippedApply ? { skipped_apply: true } : {}),
     ...(budgetExhausted ? { budget_exhausted: true } : {}),
     ...(plan.budgetExhausted ? { budget: plan.budgetExhausted } : {}),
+    ...(semanticEvidence ? { semantic_write_evidence: semanticEvidence } : {}),
   };
 }
 
@@ -2540,6 +2556,7 @@ export function buildSemanticRepairProof({ requestedPageIds, summary }) {
   const selected = [...selectedRaw].sort();
   const createdPageIds = Array.isArray(summary?.created_page_ids) ? summary.created_page_ids : [];
   const newClusterCount = Number(summary?.new_clusters || 0);
+  const writeEvidence = summary?.semantic_write_evidence;
   const nonEmptyRequest = requested.length > 0;
   if (nonEmptyRequest && (summary?.skipped_apply || summary?.skipped)) {
     throw new Error('semantic-repair-only skipped apply cannot produce proof');
@@ -2585,6 +2602,46 @@ export function buildSemanticRepairProof({ requestedPageIds, summary }) {
   if (repairs.length !== selected.length) {
     throw new Error('semantic-repair-only changed pages require repair provenance');
   }
+  if (requested.length > 0) {
+    if (!writeEvidence || writeEvidence.verified !== true) {
+      throw new Error('semantic-repair-only requires verified Sheets write evidence');
+    }
+    const evidencePageIds = Array.isArray(writeEvidence.changed_page_ids)
+      ? [...writeEvidence.changed_page_ids].sort()
+      : null;
+    const writeCounts = Array.isArray(writeEvidence.page_write_counts)
+      ? writeEvidence.page_write_counts
+      : null;
+    const evidenceNewClusterIds = Array.isArray(writeEvidence.new_cluster_ids)
+      ? [...writeEvidence.new_cluster_ids].sort()
+      : null;
+    const repairNewClusterIds = [...new Set(
+      repairs.filter((row) => row.provenance === 'semantic-repair-new').map((row) => row.to),
+    )].sort();
+    const invalidCounts = !writeCounts
+      || writeCounts.some((row) => (
+        !row
+        || typeof row.page_id !== 'string'
+        || !Number.isInteger(row.count)
+        || row.count <= 0
+      ))
+      || new Set(writeCounts.map((row) => row.page_id)).size !== writeCounts.length
+      || writeCounts.reduce((sum, row) => sum + row.count, 0) !== writeEvidence.page_write_count;
+    if (!evidencePageIds
+      || !sameStringSet(evidencePageIds, selected)
+      || invalidCounts
+      || !sameStringSet(writeCounts.map((row) => row.page_id), selected)
+      || !Number.isInteger(writeEvidence.page_write_count)
+      || (selected.length > 0 && writeEvidence.page_write_count <= 0)
+      || (selected.length === 0 && writeEvidence.page_write_count !== 0)
+      || !evidenceNewClusterIds
+      || new Set(evidenceNewClusterIds).size !== evidenceNewClusterIds.length
+      || !sameStringSet(evidenceNewClusterIds, repairNewClusterIds)
+      || writeEvidence.new_cluster_count !== evidenceNewClusterIds.length
+      || writeEvidence.new_cluster_count !== newClusterCount) {
+      throw new Error('semantic-repair-only verified write evidence mismatch');
+    }
+  }
   return {
     mode: 'semantic-repair-only',
     status: selected.length ? 'applied' : 'noop',
@@ -2596,6 +2653,7 @@ export function buildSemanticRepairProof({ requestedPageIds, summary }) {
     new_cluster_count: newClusterCount,
     created_page_id_count: createdPageIds.length,
     cross_product_write_count: 0,
+    verified_page_write_count: Number(writeEvidence?.page_write_count || 0),
   };
 }
 

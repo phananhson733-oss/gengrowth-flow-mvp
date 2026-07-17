@@ -442,6 +442,18 @@ function completeSemanticAppendResponse(rows, { range = null } = {}) {
   };
 }
 
+function verifiedSemanticEvidence({ changedPageIds = [], newClusterIds = [] } = {}) {
+  return {
+    verified: true,
+    changed_page_ids: [...changedPageIds],
+    page_write_counts: changedPageIds.map((page_id) => ({ page_id, count: 1 })),
+    page_write_count: changedPageIds.length,
+    new_cluster_ids: [...newClusterIds],
+    new_cluster_count: newClusterIds.length,
+    cluster_cell_write_count: newClusterIds.length * CLUSTER_FIELDS.length,
+  };
+}
+
 test('semantic apply sends only changed semantic-owner cells and never fills ordinary blanks', async () => {
   assert.equal(typeof topicRegister.applySemanticRepairWrites, 'function');
   const { plan, pageHeader } = semanticRepairApplyFixture();
@@ -764,6 +776,10 @@ test('semantic proof proves only requested existing repairs', () => {
         score: 0,
         provenance: 'semantic-repair-new',
       }],
+      semantic_write_evidence: verifiedSemanticEvidence({
+        changedPageIds: ['PG-WDIF-002'],
+        newClusterIds: ['what_is_my_love_language'],
+      }),
     },
   });
   assert.equal(proof.status, 'applied');
@@ -781,6 +797,10 @@ test('semantic proof proves only requested existing repairs', () => {
         { page_id: 'PG-WDIF-002', from: 'old-a', to: 'shared-new', score: 0, provenance: 'semantic-repair-new' },
         { page_id: 'PG-WDIN-001', from: 'old-b', to: 'shared-new', score: 0, provenance: 'semantic-repair-new' },
       ],
+      semantic_write_evidence: verifiedSemanticEvidence({
+        changedPageIds: ['PG-WDIF-002', 'PG-WDIN-001'],
+        newClusterIds: ['shared-new'],
+      }),
     },
   });
   assert.equal(sharedClusterProof.new_cluster_count, 1);
@@ -846,7 +866,13 @@ test('semantic proof rejects non-empty skipped or budget-exhausted runs but pres
 
   const appliedNoop = buildSemanticRepairProof({
     requestedPageIds: ['PG-WDIF-002'],
-    summary: { applied: true, page_ids: [], new_clusters: 0, cluster_repairs: [] },
+    summary: {
+      applied: true,
+      page_ids: [],
+      new_clusters: 0,
+      cluster_repairs: [],
+      semantic_write_evidence: verifiedSemanticEvidence(),
+    },
   });
   assert.equal(appliedNoop.status, 'noop');
 

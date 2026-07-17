@@ -178,3 +178,20 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 仅执行确定性入口 `bash tools/scripts/gg-topic-register-tick.sh`，退出码 0。精确日志窗口为 18:01:50–18:01:53 CST，环境以 apply 模式运行（`dry_run=false`、`budget_exhausted=false`）。astrologywiki：candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]。gengrowth：candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]。两个产品的 evidence_discovery 均为空，未见 failures。未手工编辑 Sheet、未直接修改任务计划，亦未创建额外 Feishu 或 Google Doc 报告产物。
 
 ---
+
+### Q10 — 19:14
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-17T10:00:59.527Z (1784282459527)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅执行确定性入口 `bash tools/scripts/gg-topic-register-tick.sh`，退出码 0。精确日志窗口为 19:07:52–19:13:38 CST，环境以 apply 模式运行（`dry_run=false`、`budget_exhausted=false`）。astrologywiki：candidates=5、updates=5、new_clusters=0、page_ids=[PG-TRANS-022, PG-TRANS-023, PG-NODE-014, PG-WC-052, PG-NAKSH-020]、preprocessor=[ok, v1_fallback×4]；证据发现为 ok×2（5/5、9/8 titles/domains）及 insufficient×3。gengrowth：candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]。两个产品均无 failures。未进行手工 Sheet 编辑、未直接修改任务计划，亦未创建额外 Feishu 或 Google Doc 报告产物；所有允许的写入仅由 apply 模式下的包装器执行。
+
+---

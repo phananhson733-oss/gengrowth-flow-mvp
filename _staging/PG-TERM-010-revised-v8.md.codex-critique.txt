@@ -1,0 +1,8 @@
+- 主题跑偏：全文几乎等同于 Kundli/Jyotish → 标题和开头要明确“这是 Vedic birth chart interpretation”，或补足 Western natal chart 读法，否则不完全满足“birth chart interpretation”的广义搜索意图。
+- Rudhyar/Arroyo 引用错位 → 他们是现代西方心理占星脉络，不应作为 Kundli 解读依据；要么改成“现代反思式解读的西方影响”，要么换成 Jyotish 传统来源。
+- “十二宫源自希腊化并被 Jyotish 吸收”表述过硬 → 改成更谨慎的历史说法，并补充具体出处或删除，避免争议性断言。
+- “西方占星 Sun-forward、Vedic Moon/Lagna-heavy”过度简化 → 改为“现代大众西方占星常从太阳星座入门；严肃本命盘解读同样重视上升、月亮、宫位和相位。”
+- 实操仍偏抽象 → 在“如何读”部分加入一个小型示例链条，如“Lagna → house lord → placement → aspect → practical reflection”，让读者看到完整判断路径。
+- “dispositor chains / lordships / aspects”反复出现但没有解释 → 增加一句白话定义和一个可执行检查方法，否则新手只会觉得术语堆叠。
+- Reflection prompts 太泛 → 改成能直接对照盘面的任务，例如“找到第七宫主所在宫位，写下它把关系主题带到哪个生活领域。”
+- Sources 太弱 → 把来源改成可核验条目，分别标清“现代心理占星来源”和“Jyotish/历史来源”，不要只写人物贡献式泛评。

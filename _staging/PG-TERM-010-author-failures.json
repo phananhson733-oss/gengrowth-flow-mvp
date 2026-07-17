@@ -1,10 +1,7 @@
 {
   "schemaVersion": 1,
   "pageId": "PG-TERM-010",
-  "status": "failed",
-  "failures": [
-    "word count 1328 < min 1485",
-    "author banned token(s) matched: \"energy\""
-  ],
-  "updatedAt": "2026-07-17T11:11:28.279Z"
+  "status": "passed",
+  "failures": [],
+  "updatedAt": "2026-07-17T11:15:18.744Z"
 }

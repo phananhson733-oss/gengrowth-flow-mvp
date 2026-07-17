@@ -404,7 +404,11 @@ test('snapshot directory replacement by parent symlink fails closed and cleanup 
   assert.match(h.log(), /cleanup.*identity|ownership.*unknown|snapshot.*identity/i);
 });
 
-function nightlyArtifactHarness({ missingSnapshot = false, tamperedSnapshot = false } = {}) {
+function nightlyArtifactHarness({
+  missingSnapshot = false,
+  tamperedSnapshot = false,
+  activeSnapshotWithEmptyManifest = false,
+} = {}) {
   const root = mkdtempSync(join(tmpdir(), 'gg-nightly-artifact-guard-'));
   const flowRoot = join(root, 'flow');
   const bin = join(root, '.local/bin');
@@ -417,7 +421,9 @@ function nightlyArtifactHarness({ missingSnapshot = false, tamperedSnapshot = fa
   const lock = join(root, 'nightly.lock');
   mkdirSync(join(flowRoot, 'tools/scripts'), { recursive: true });
   mkdirSync(bin, { recursive: true });
-  const planText = '- [x] `PG-DONE-001` done\n';
+  const planText = activeSnapshotWithEmptyManifest
+    ? '- [ ] `PG-EMPTY-001` active but omitted\n'
+    : '- [x] `PG-DONE-001` done\n';
   const digest = createHash('sha256').update(planText).digest('hex');
   writeFileSync(canonical, planText);
   writeFileSync(snapshot, planText);
@@ -466,6 +472,100 @@ test('nightly rejects missing or digest-drifted snapshot before replay or any bu
     } finally {
       rmSync(h.root, { recursive: true, force: true });
     }
+  }
+});
+
+test('nightly rejects a self-consistent empty manifest when the snapshot still has an active canonical row', () => {
+  const h = nightlyArtifactHarness({ activeSnapshotWithEmptyManifest: true });
+  try {
+    assert.notEqual(h.result.status, 0, `${h.result.stdout}\n${h.result.stderr}\n${h.log}`);
+    assert.equal(h.calls, '', 'manifest disagreement must stop before replay-outbox or auto-retry');
+  } finally {
+    rmSync(h.root, { recursive: true, force: true });
+  }
+});
+
+test('queue-time snapshot mutation cannot change the private plan bytes consumed by author', () => {
+  const root = mkdtempSync(join(tmpdir(), 'gg-nightly-private-run-copy-'));
+  const pid = `PG-RUNCOPY-${process.pid}`;
+  const flowRoot = join(root, 'flow');
+  const bin = join(root, '.local/bin');
+  const canonical = join(root, 'canonical.md');
+  const snapshot = join(root, 'snapshot.md');
+  const manifest = join(root, 'attested.json');
+  const claims = join(root, 'claims.json');
+  const calls = join(root, 'calls.log');
+  const authorInput = join(root, 'author-input.md');
+  const log = join(root, 'nightly.log');
+  const lock = join(root, 'nightly.lock');
+  const rawLine = `- [ ] \`${pid}\` original keyword`;
+  const planText = `${rawLine}\n`;
+  const changedText = `- [ ] \`${pid}\` changed keyword\n`;
+  const digest = createHash('sha256').update(planText).digest('hex');
+  try {
+    mkdirSync(join(flowRoot, 'tools/scripts'), { recursive: true });
+    mkdirSync(bin, { recursive: true });
+    writeFileSync(canonical, planText);
+    writeFileSync(snapshot, planText);
+    writeFileSync(manifest, JSON.stringify({
+      version: 1,
+      plan_sha256: digest,
+      requested_page_ids: [pid],
+      rows: [{ page_id: pid, raw_line: rawLine, keyword: 'original keyword' }],
+    }));
+    writeFileSync(claims, '{}\n');
+    executable(join(bin, 'curl'), '#!/bin/sh\nexit 1\n');
+    executable(join(bin, 'node'), [
+      '#!/bin/bash',
+      'printf \'%s\\t%s\\n\' "${GG_AUTOPILOT_PLAN:-}" "$*" >> "$GG_TEST_NODE_CALLS"',
+      "if printf '%s\\n' \"$*\" | grep -q 'gg-notify.mjs replay-outbox'; then",
+      '  chmod u+w "$GG_NIGHTLY_ITEMS_PLAN"',
+      '  printf \'%s\' "$GG_TEST_CHANGED_SNAPSHOT" > "$GG_NIGHTLY_ITEMS_PLAN"',
+      'fi',
+      `if printf '%s\\n' "$*" | grep -q -- '--author --task ${pid}'; then`,
+      '  cp "$GG_AUTOPILOT_PLAN" "$GG_TEST_AUTHOR_INPUT"',
+      '  mkdir -p _staging',
+      `  : > "_staging/${pid}-en.md"`,
+      'fi',
+      "if printf '%s\\n' \"$*\" | grep -q 'gg-seo-autopilot.mjs --limit 1'; then printf 'seo/auto/2026-07-17-run-copy\\n'; fi",
+      'exit 0',
+      '',
+    ].join('\n'));
+    const result = spawnSync('bash', [resolve(flow, 'tools/scripts/gg-nightly-seo.sh')], {
+      cwd: flowRoot,
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        HOME: root,
+        GG_SEO_PLAN: canonical,
+        GG_NIGHTLY_ITEMS_PLAN: snapshot,
+        GG_NIGHTLY_ITEMS_SHA256: digest,
+        GG_NIGHTLY_ITEMS_IDENTITY: fileIdentity(snapshot),
+        GG_NIGHTLY_ITEMS_DIR_IDENTITY: fileIdentity(dirname(snapshot)),
+        GG_NIGHTLY_ATTESTED_MANIFEST: manifest,
+        GG_NIGHTLY_ATTESTED_MANIFEST_SHA256: createHash('sha256').update(readFileSync(manifest)).digest('hex'),
+        GG_NIGHTLY_ATTESTED_MANIFEST_IDENTITY: fileIdentity(manifest),
+        GG_NIGHTLY_VALIDATOR_NODE: process.execPath,
+        GG_NIGHTLY_FLOW: flowRoot,
+        GG_NIGHTLY_CLAIMS: claims,
+        GG_NIGHTLY_LOG: log,
+        GG_NIGHTLY_LOCK: lock,
+        GG_TEST_NODE_CALLS: calls,
+        GG_TEST_AUTHOR_INPUT: authorInput,
+        GG_TEST_CHANGED_SNAPSHOT: changedText,
+      },
+    });
+    const nightlyLog = existsSync(log) ? readFileSync(log, 'utf8') : '';
+    assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}\n${nightlyLog}`);
+    assert.equal(readFileSync(authorInput, 'utf8'), planText);
+    assert.doesNotMatch(readFileSync(authorInput, 'utf8'), /changed keyword/);
+    const authorCall = readFileSync(calls, 'utf8').split('\n').find((line) => line.includes(`--author --task ${pid}`));
+    assert.ok(authorCall, 'author should consume the already-attested private run input');
+    assert.notEqual(authorCall.split('\t')[0], snapshot);
+  } finally {
+    rmSync(`/tmp/nightly-plan-${pid}.md`, { force: true });
+    rmSync(`/tmp/nightly-scan-${pid}.log`, { force: true });
+    rmSync(root, { recursive: true, force: true });
   }
 });
 

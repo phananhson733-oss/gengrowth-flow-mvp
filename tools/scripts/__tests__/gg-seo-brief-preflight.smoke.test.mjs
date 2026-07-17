@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import {
   chmodSync,
   mkdirSync,
@@ -125,11 +126,13 @@ function harness({
   wrapperStderr = '',
   inherited = {},
   replacePlan = false,
+  attestedManifest = false,
 } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'gg-seo-brief-preflight-test-'));
   const planPath = join(root, 'plan.md');
   const wrapperPath = join(root, 'topic-register-wrapper.sh');
   const envFile = join(root, 'wrapper-env.json');
+  const manifestPath = join(root, 'attested-manifest.json');
   mkdirSync(dirname(planPath), { recursive: true });
   writeFileSync(planPath, plan);
   fakeWrapper(wrapperPath);
@@ -139,6 +142,7 @@ function harness({
     preflight,
     '--plan', planPath,
     '--topic-register-wrapper', wrapperPath,
+    ...(attestedManifest ? ['--attested-manifest', manifestPath] : []),
     '--json',
   ], {
     encoding: 'utf8',
@@ -160,6 +164,7 @@ function harness({
     run,
     cleanup,
     env: () => JSON.parse(readFileSync(envFile, 'utf8')),
+    manifest: () => JSON.parse(readFileSync(manifestPath, 'utf8')),
     planPath,
     wrapperPath,
   };
@@ -204,12 +209,31 @@ for (const plan of [
   '1. [ ] PG-NUM-001 numbered checkbox\n',
   '1) [ ] PG-NUM-002 numbered checkbox\n',
   '- [  ] PG-WIDE-001 malformed checkbox\n',
+  '- [ ]PG-NOSPACE-001 missing separator\n',
+  '- [ ]`PG-NOSPACE-002` missing separator\n',
   '- [ ] PG-OK-001 also PG-BAD-XYZ\n',
 ]) {
   test(`active page parser rejects unchecked checkbox-like ambiguity: ${plan.trim()}`, () => {
     assert.throws(() => activePageIdsFromPlan(plan), /active page|unchecked|canonical/i);
   });
 }
+
+test('preflight writes one exact attested queue manifest from the same validated plan parser', () => {
+  const plan = '- [ ] `PG-WDIF-002` love language -> later\n- [ ] PG-WDIN-001 intuition\n';
+  withHarness({ plan, attestedManifest: true }, (h) => {
+    const run = h.run();
+    assert.equal(run.status, 0, `${run.stdout}${run.stderr}`);
+    assert.deepEqual(h.manifest(), {
+      version: 1,
+      plan_sha256: createHash('sha256').update(plan).digest('hex'),
+      requested_page_ids: ['PG-WDIF-002', 'PG-WDIN-001'],
+      rows: [
+        { page_id: 'PG-WDIF-002', raw_line: '- [ ] `PG-WDIF-002` love language -> later', keyword: 'love language' },
+        { page_id: 'PG-WDIN-001', raw_line: '- [ ] PG-WDIN-001 intuition', keyword: 'intuition' },
+      ],
+    });
+  });
+});
 
 test('preflight derives active ids and calls the fixed wrapper with zero-touch bounds', () => {
   withHarness({}, (h) => {

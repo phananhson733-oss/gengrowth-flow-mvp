@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import test from 'node:test';
@@ -70,6 +71,8 @@ function runnerHarness({
   lockHeld = false,
   useEnvFile = false,
   collidePinnedOracle = false,
+  controllerMutatesSnapshot = false,
+  controllerReplacesSnapshotDir = false,
 } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'seo-launchd-runner-'));
   const flow = join(root, 'flow');
@@ -95,16 +98,20 @@ function runnerHarness({
   const envFile = join(root, '_gg.env');
   const plan = join(opsTasks, 'plan.md');
   const claims = join(opsTasks, '.autopilot-claims.json');
+  const victimDir = join(root, 'victim');
+  const victimFile = join(victimDir, 'active-plan.md');
   const initialPlanContent = '- [ ] `PG-A-001` alpha\n';
   writeFileSync(plan, initialPlanContent);
   writeFileSync(claims, '{}');
   writeFileSync(nightlyLog, 'existing bytes\n');
+  mkdirSync(victimDir);
+  writeFileSync(victimFile, 'VICTIM-MUST-SURVIVE\n');
   const lock = join(root, 'launchd.lock');
   if (lockHeld) mkdirSync(lock);
 
   const briefPreflight = join(root, 'brief-preflight.mjs');
   writeFileSync(briefPreflight, [
-    "import { appendFileSync, chmodSync, writeFileSync } from 'node:fs';",
+    "import { appendFileSync, chmodSync, readFileSync, writeFileSync } from 'node:fs';",
     'const args = process.argv.slice(2);',
     "appendFileSync(process.env.GG_TEST_EVENTS, 'brief-preflight\\n');",
     "writeFileSync(process.env.GG_TEST_BRIEF_PREFLIGHT_ARGS, JSON.stringify({ args, silence: process.env.GG_LARK_NOTIFY_SILENCE || null }));",
@@ -113,6 +120,8 @@ function runnerHarness({
       'chmodSync(plan, 0o600);',
       "writeFileSync(plan, '- [ ] `PG-MUTATED-001` changed during preflight\\n');",
     ] : []),
+    "const manifestIndex = args.indexOf('--attested-manifest');",
+    "if (manifestIndex >= 0) { const plan = args[args.indexOf('--plan') + 1]; const text = readFileSync(plan, 'utf8'); const digest = (await import('node:crypto')).createHash('sha256').update(text).digest('hex'); writeFileSync(args[manifestIndex + 1], JSON.stringify({ version: 1, plan_sha256: digest, requested_page_ids: ['PG-A-001'], rows: [{ page_id: 'PG-A-001', raw_line: '- [ ] `PG-A-001` alpha', keyword: 'alpha' }] })); }",
     "process.stdout.write(JSON.stringify({ mode: 'semantic-repair-only', status: 'noop' }) + '\\n');",
     `process.exit(${briefPreflightExit});`,
     '',
@@ -125,7 +134,7 @@ function runnerHarness({
   const nightly = executable(join(root, 'nightly.sh'), [
     '#!/bin/sh',
     'printf "nightly\\n" >> "$GG_TEST_EVENTS"',
-    'node -e \'const fs=require("node:fs"); fs.writeFileSync(process.env.GG_TEST_NIGHTLY_ENV, JSON.stringify({ runId: process.env.GG_SEO_REPAIR_RUN_ID || null, logFile: process.env.GG_SEO_REPAIR_LOG_FILE || null, offsetStart: process.env.GG_SEO_REPAIR_LOG_OFFSET_START || null, offsetEnd: process.env.GG_SEO_REPAIR_LOG_OFFSET_END || null, oracle: process.env.GG_AUTOMATION_ORACLE_DIR || null, canonicalPlan: process.env.GG_SEO_PLAN || null, itemsPlan: process.env.GG_NIGHTLY_ITEMS_PLAN || null, canonicalContent: fs.readFileSync(process.env.GG_SEO_PLAN, "utf8"), itemsContent: fs.readFileSync(process.env.GG_NIGHTLY_ITEMS_PLAN, "utf8") }))\'',
+    'node -e \'const fs=require("node:fs"); fs.writeFileSync(process.env.GG_TEST_NIGHTLY_ENV, JSON.stringify({ runId: process.env.GG_SEO_REPAIR_RUN_ID || null, logFile: process.env.GG_SEO_REPAIR_LOG_FILE || null, offsetStart: process.env.GG_SEO_REPAIR_LOG_OFFSET_START || null, offsetEnd: process.env.GG_SEO_REPAIR_LOG_OFFSET_END || null, oracle: process.env.GG_AUTOMATION_ORACLE_DIR || null, canonicalPlan: process.env.GG_SEO_PLAN || null, itemsPlan: process.env.GG_NIGHTLY_ITEMS_PLAN || null, itemsSha: process.env.GG_NIGHTLY_ITEMS_SHA256 || null, manifest: process.env.GG_NIGHTLY_ATTESTED_MANIFEST || null, canonicalContent: fs.readFileSync(process.env.GG_SEO_PLAN, "utf8"), itemsContent: fs.readFileSync(process.env.GG_NIGHTLY_ITEMS_PLAN, "utf8") }))\'',
     'printf "nightly body\\n" >> "$GG_SEO_NIGHTLY_LOG"',
     `exit ${nightlyExit}`,
     '',
@@ -140,9 +149,23 @@ function runnerHarness({
   ].join('\n'));
   const controller = join(root, 'controller.mjs');
   writeFileSync(controller, [
-    "import { appendFileSync } from 'node:fs';",
+    "import { appendFileSync, chmodSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';",
     "appendFileSync(process.env.GG_TEST_EVENTS, 'drain\\n');",
     "appendFileSync(process.env.GG_TEST_CONTROLLER_ARGS, JSON.stringify(process.argv.slice(2)) + '\\n');",
+    ...(controllerMutatesSnapshot ? [
+      "const preflight = JSON.parse(readFileSync(process.env.GG_TEST_BRIEF_PREFLIGHT_ARGS, 'utf8'));",
+      "const snapshot = preflight.args[preflight.args.indexOf('--plan') + 1];",
+      'chmodSync(snapshot, 0o600);',
+      "writeFileSync(snapshot, '- [ ] `PG-DRAIN-001` changed by drain\\n');",
+    ] : []),
+    ...(controllerReplacesSnapshotDir ? [
+      "const preflight = JSON.parse(readFileSync(process.env.GG_TEST_BRIEF_PREFLIGHT_ARGS, 'utf8'));",
+      "const snapshot = preflight.args[preflight.args.indexOf('--plan') + 1];",
+      "const dir = new URL('.', `file://${snapshot}`).pathname.replace(/\\/$/, '');",
+      'rmSync(snapshot);',
+      'rmSync(dir, { recursive: false });',
+      'symlinkSync(process.env.GG_TEST_VICTIM_DIR, dir, "dir");',
+    ] : []),
     `process.exit(${controllerExit});`,
     '',
   ].join('\n'));
@@ -237,6 +260,7 @@ function runnerHarness({
       GG_TEST_RECONCILE_ENV: reconcileEnv,
       GG_TEST_RECONCILE_COUNT: reconcileCount,
       GG_TEST_READINESS_ARGS: readinessArgs,
+      GG_TEST_VICTIM_DIR: victimDir,
     },
   });
   const readMaybe = (path) => { try { return readFileSync(path, 'utf8'); } catch { return ''; } };
@@ -256,6 +280,8 @@ function runnerHarness({
     topicRegister,
     nightlyLog,
     oracle,
+    victimFile,
+    root,
   };
 }
 
@@ -354,6 +380,160 @@ test('active brief snapshot mutation during preflight fails closed before drain'
   const snapshot = h.briefPreflight().args[h.briefPreflight().args.indexOf('--plan') + 1];
   assert.equal(existsSync(snapshot), false);
   assert.equal(existsSync(dirname(snapshot)), false);
+});
+
+test('snapshot changed by pre-fire drain is rejected immediately before nightly', () => {
+  const h = runnerHarness({ controllerMutatesSnapshot: true });
+  const result = h.run();
+  assert.notEqual(result.status, 0, `${result.stdout}\n${result.stderr}\n${h.log()}`);
+  assert.deepEqual(h.events(), ['brief-preflight', 'drain', 'reconcile', 'notify']);
+  assert.match(h.log(), /snapshot.*changed|identity.*failed|integrity.*failed/i);
+});
+
+test('snapshot directory replacement by parent symlink fails closed and cleanup preserves victim evidence', () => {
+  const h = runnerHarness({ controllerReplacesSnapshotDir: true });
+  const result = h.run();
+  assert.notEqual(result.status, 0, `${result.stdout}\n${result.stderr}\n${h.log()}`);
+  assert.deepEqual(h.events(), ['brief-preflight', 'drain', 'reconcile', 'notify']);
+  assert.equal(readFileSync(h.victimFile, 'utf8'), 'VICTIM-MUST-SURVIVE\n');
+  assert.match(h.log(), /cleanup.*identity|ownership.*unknown|snapshot.*identity/i);
+});
+
+function nightlyArtifactHarness({ missingSnapshot = false, tamperedSnapshot = false } = {}) {
+  const root = mkdtempSync(join(tmpdir(), 'gg-nightly-artifact-guard-'));
+  const flowRoot = join(root, 'flow');
+  const bin = join(root, '.local/bin');
+  const canonical = join(root, 'canonical.md');
+  const snapshot = join(root, 'snapshot.md');
+  const manifest = join(root, 'attested.json');
+  const claims = join(root, 'claims.json');
+  const calls = join(root, 'business-calls.log');
+  const log = join(root, 'nightly.log');
+  const lock = join(root, 'nightly.lock');
+  mkdirSync(join(flowRoot, 'tools/scripts'), { recursive: true });
+  mkdirSync(bin, { recursive: true });
+  const planText = '- [x] `PG-DONE-001` done\n';
+  const digest = createHash('sha256').update(planText).digest('hex');
+  writeFileSync(canonical, planText);
+  writeFileSync(snapshot, planText);
+  writeFileSync(manifest, JSON.stringify({ version: 1, plan_sha256: digest, requested_page_ids: [], rows: [] }));
+  writeFileSync(claims, '{}\n');
+  executable(join(bin, 'node'), '#!/bin/sh\nprintf "node\\t%s\\n" "$*" >> "$GG_TEST_BUSINESS_CALLS"\nexit 0\n');
+  executable(join(bin, 'curl'), '#!/bin/sh\nprintf "curl\\t%s\\n" "$*" >> "$GG_TEST_BUSINESS_CALLS"\nexit 0\n');
+  if (missingSnapshot) rmSync(snapshot);
+  if (tamperedSnapshot) writeFileSync(snapshot, '- [ ] `PG-DRIFT-001` drift\n');
+  const result = spawnSync('bash', [resolve(flow, 'tools/scripts/gg-nightly-seo.sh')], {
+    cwd: flowRoot,
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      HOME: root,
+      GG_SEO_PLAN: canonical,
+      GG_NIGHTLY_ITEMS_PLAN: snapshot,
+      GG_NIGHTLY_ITEMS_SHA256: digest,
+      GG_NIGHTLY_ATTESTED_MANIFEST: manifest,
+      GG_NIGHTLY_ATTESTED_MANIFEST_SHA256: createHash('sha256').update(readFileSync(manifest)).digest('hex'),
+      GG_NIGHTLY_VALIDATOR_NODE: process.execPath,
+      GG_NIGHTLY_FLOW: flowRoot,
+      GG_NIGHTLY_CLAIMS: claims,
+      GG_NIGHTLY_LOG: log,
+      GG_NIGHTLY_LOCK: lock,
+      GG_TEST_BUSINESS_CALLS: calls,
+    },
+  });
+  return {
+    root,
+    result,
+    calls: existsSync(calls) ? readFileSync(calls, 'utf8') : '',
+    log: existsSync(log) ? readFileSync(log, 'utf8') : '',
+  };
+}
+
+test('nightly rejects missing or digest-drifted snapshot before replay or any business node call', () => {
+  for (const options of [{ missingSnapshot: true }, { tamperedSnapshot: true }]) {
+    const h = nightlyArtifactHarness(options);
+    try {
+      assert.notEqual(h.result.status, 0, `${h.result.stdout}\n${h.result.stderr}\n${h.log}`);
+      assert.doesNotMatch(h.calls, /gg-notify|gg-seo-autopilot|gg-preview-gate|curl/);
+    } finally {
+      rmSync(h.root, { recursive: true, force: true });
+    }
+  }
+});
+
+test('nightly authors from the proven snapshot and stops an item when its canonical raw row changes after author', () => {
+  const root = mkdtempSync(join(tmpdir(), 'gg-nightly-row-recheck-'));
+  const suffix = String(process.pid);
+  const pid = `PG-ROW-${suffix}`;
+  const flowRoot = join(root, 'flow');
+  const bin = join(root, '.local/bin');
+  const canonical = join(root, 'canonical.md');
+  const snapshot = join(root, 'snapshot.md');
+  const manifest = join(root, 'attested.json');
+  const claims = join(root, 'claims.json');
+  const calls = join(root, 'calls.log');
+  const log = join(root, 'nightly.log');
+  const lock = join(root, 'nightly.lock');
+  const rawLine = `- [ ] \`${pid}\` old keyword`;
+  const planText = `${rawLine}\n`;
+  const digest = createHash('sha256').update(planText).digest('hex');
+  try {
+    mkdirSync(join(flowRoot, 'tools/scripts'), { recursive: true });
+    mkdirSync(bin, { recursive: true });
+    writeFileSync(canonical, planText);
+    writeFileSync(snapshot, planText);
+    writeFileSync(manifest, JSON.stringify({
+      version: 1,
+      plan_sha256: digest,
+      requested_page_ids: [pid],
+      rows: [{ page_id: pid, raw_line: rawLine, keyword: 'old keyword' }],
+    }));
+    writeFileSync(claims, '{}\n');
+    executable(join(bin, 'curl'), '#!/bin/sh\nexit 1\n');
+    executable(join(bin, 'node'), [
+      '#!/bin/bash',
+      'printf \'%s\\t%s\\n\' "${GG_AUTOPILOT_PLAN:-}" "$*" >> "$GG_TEST_NODE_CALLS"',
+      `if printf '%s\\n' "$*" | grep -q -- '--author --task ${pid}'; then`,
+      '  mkdir -p _staging',
+      `  : > "_staging/${pid}-en.md"`,
+      `  printf '%s\\n' '- [ ] \`${pid}\` changed keyword' > "$GG_SEO_PLAN"`,
+      'fi',
+      "if printf '%s\\n' \"$*\" | grep -q 'gg-seo-autopilot.mjs --limit 1'; then printf 'seo/auto/2026-07-17-row\\n'; fi",
+      'exit 0',
+      '',
+    ].join('\n'));
+    const result = spawnSync('bash', [resolve(flow, 'tools/scripts/gg-nightly-seo.sh')], {
+      cwd: flowRoot,
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        HOME: root,
+        GG_SEO_PLAN: canonical,
+        GG_NIGHTLY_ITEMS_PLAN: snapshot,
+        GG_NIGHTLY_ITEMS_SHA256: digest,
+        GG_NIGHTLY_ATTESTED_MANIFEST: manifest,
+        GG_NIGHTLY_ATTESTED_MANIFEST_SHA256: createHash('sha256').update(readFileSync(manifest)).digest('hex'),
+        GG_NIGHTLY_VALIDATOR_NODE: process.execPath,
+        GG_NIGHTLY_FLOW: flowRoot,
+        GG_NIGHTLY_CLAIMS: claims,
+        GG_NIGHTLY_LOG: log,
+        GG_NIGHTLY_LOCK: lock,
+        GG_TEST_NODE_CALLS: calls,
+      },
+    });
+    const callLog = existsSync(calls) ? readFileSync(calls, 'utf8') : '';
+    const nightlyLog = existsSync(log) ? readFileSync(log, 'utf8') : '';
+    assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}\n${nightlyLog}`);
+    assert.match(callLog, new RegExp(`^${snapshot.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&')}\\t.*--author --task ${pid} `, 'm'));
+    assert.doesNotMatch(callLog, /gg-seo-autopilot\.mjs --limit 1/);
+    assert.doesNotMatch(callLog, /gg-preview-gate\.mjs/);
+    assert.doesNotMatch(nightlyLog, /MERGED/);
+    assert.match(nightlyLog, /canonical raw row.*changed|no longer matches.*attested/i);
+  } finally {
+    rmSync(`/tmp/nightly-plan-${pid}.md`, { force: true });
+    rmSync(`/tmp/nightly-scan-${pid}.log`, { force: true });
+    rmSync(root, { recursive: true, force: true });
+  }
 });
 
 test('real nightly consumes only the proven snapshot and rechecks canonical unchecked ownership', () => {

@@ -36,6 +36,7 @@ const PROOF_KEYS = [
   'new_cluster_count',
   'created_page_id_count',
   'cross_product_write_count',
+  'verified_page_write_count',
 ];
 
 const REPAIR_KEYS = ['page_id', 'from', 'to', 'score', 'provenance'];
@@ -77,6 +78,7 @@ function validResult({
       new_cluster_count: newClusterCount,
       created_page_id_count: 0,
       cross_product_write_count: 0,
+      verified_page_write_count: changed.length,
     },
     summaries: [],
   };

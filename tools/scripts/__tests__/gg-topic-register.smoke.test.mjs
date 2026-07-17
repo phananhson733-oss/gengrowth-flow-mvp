@@ -28,6 +28,7 @@ import {
   valuesBatchForPageRow,
 } from '../gg-topic-register.mjs';
 import { renderPreprocessorPrompt } from '../lib/preprocessor-prompt.mjs';
+import * as topicRegister from '../gg-topic-register.mjs';
 
 const clusters = [
   {
@@ -349,6 +350,246 @@ test('planRows creates a singleton cluster only for a zero-score deterministic s
   assert.doesNotMatch(plan.updates[0].fields.Logic, /Career/);
 });
 
+function semanticRepairApplyFixture({ correct = false, newCluster = false } = {}) {
+  const pageHeader = [
+    'Target Keyword',
+    ...PAGE_REQUIRED_FIELDS,
+    'CTA',
+    'Status',
+    'journal_prompts',
+    'target_keyword_zh',
+  ];
+  const keyword = 'what is my love language';
+  const oldClusterId = 'why_do_i_feel_stuck_in_my_career';
+  const targetClusterId = 'love_relationships';
+  const page = {
+    'Target Keyword': keyword,
+    'Associated Keywords': 'what is my love language meaning',
+    Intent: 'Info',
+    Tier: 'T2',
+    Template: 'Definition',
+    Entity: 'What Is My Love Language',
+    Friction: newCluster
+      ? 'Readers need What Is My Love Language explained with clear interpretive boundaries instead of broad claims.'
+      : 'This manually reviewed brief explains the relationship query.',
+    Logic: newCluster
+      ? 'What Is My Love Language ↔ Why Do I Feel Stuck in My Career ↔ practical interpretation. Treat What Is My Love Language as an interpretive framework rather than a deterministic claim.'
+      : 'This manually reviewed relationship logic must replace unrelated career taxonomy.',
+    page_id: 'PG-WDIF-002',
+    cluster_id: correct ? targetClusterId : oldClusterId,
+    page_role: 'Wiki',
+    content_angle: 'Explain love language patterns with clear boundaries.',
+    psych_safety_flag: 'N',
+    CTA: '星盘页',
+    Status: '',
+    journal_prompts: '',
+    target_keyword_zh: '',
+  };
+  const cluster = (overrides) => CLUSTER_FIELDS.map((field) => overrides[field] || '');
+  const careerCluster = cluster({
+    cluster_id: oldClusterId,
+    cluster_name: 'Why Do I Feel Stuck in My Career',
+    primary_entity: 'Career Stagnation',
+    jtbd: 'Understand career stagnation',
+    content_angle: 'Career reflection',
+    keywords_included: 'career stagnation, feeling stuck at work',
+  });
+  const clusterRows = [CLUSTER_FIELDS, careerCluster];
+  if (!newCluster) {
+    clusterRows.push(cluster({
+      cluster_id: targetClusterId,
+      cluster_name: 'Love and Relationships',
+      primary_entity: 'Relationship Patterns',
+      jtbd: 'Understand love languages and relationship patterns',
+      content_angle: 'Explain love language patterns with clear boundaries',
+      keywords_included: 'love language, relationship compatibility, attachment patterns',
+      cta_primary: '星盘页',
+    }));
+  }
+  const plan = planRows({
+    profile: PRODUCT_PROFILES.astrologywiki,
+    pagesRaw: [pageHeader, pageHeader.map((field) => page[field] || '')],
+    clustersRaw: clusterRows,
+    limit: 1,
+    repairPageIds: new Set(['PG-WDIF-002']),
+    activePageIds: new Set(['PG-WDIF-002']),
+    semanticRepairOnly: true,
+  });
+  return { plan, pageHeader, page };
+}
+
+function completeSemanticBatchResponse(data) {
+  return {
+    totalUpdatedCells: data.length,
+    responses: data.map(({ range }) => ({
+      updatedRange: range,
+      updatedRows: 1,
+      updatedColumns: 1,
+      updatedCells: 1,
+    })),
+  };
+}
+
+function completeSemanticAppendResponse(rows, { range = null } = {}) {
+  const endRow = rows.length + 1;
+  return {
+    updates: {
+      updatedRange: range || `主题集群表!A2:S${endRow}`,
+      updatedRows: rows.length,
+      updatedColumns: CLUSTER_FIELDS.length,
+      updatedCells: rows.length * CLUSTER_FIELDS.length,
+    },
+  };
+}
+
+test('semantic apply sends only changed semantic-owner cells and never fills ordinary blanks', async () => {
+  assert.equal(typeof topicRegister.applySemanticRepairWrites, 'function');
+  const { plan, pageHeader } = semanticRepairApplyFixture();
+  const calls = [];
+  const evidence = await topicRegister.applySemanticRepairWrites({
+    workbookId: 'fake-workbook',
+    token: 'fake-token',
+    plan,
+    deps: {
+      appendRows: async (...args) => {
+        calls.push({ kind: 'append', args });
+        return completeSemanticAppendResponse(args[2]);
+      },
+      batchUpdateValues: async (...args) => {
+        calls.push({ kind: 'batch', args });
+        return completeSemanticBatchResponse(args[1]);
+      },
+    },
+  });
+
+  assert.deepEqual(calls.map((call) => call.kind), ['batch']);
+  const requested = calls[0].args[1];
+  const fieldByColumn = new Map(pageHeader.map((field, index) => [topicRegister.colLetter(index), field]));
+  const requestedFields = requested.map(({ range }) => fieldByColumn.get(range.match(/!([A-Z]+)\d+$/)?.[1]));
+  const expectedFields = [...plan.updates[0].forceOverwriteFields]
+    .filter((field) => String(plan.updates[0].fields[field] ?? '') !== String(plan.updates[0].existingValues[field] ?? ''));
+  assert.deepEqual(requestedFields.sort(), expectedFields.sort());
+  assert.equal(requestedFields.includes('Status'), false);
+  assert.equal(requestedFields.includes('journal_prompts'), false);
+  assert.equal(requestedFields.includes('target_keyword_zh'), false);
+  assert.equal(requested.every(({ values }) => String(values[0][0]).trim().length > 0), true);
+  assert.deepEqual(evidence.changed_page_ids, ['PG-WDIF-002']);
+  assert.equal(evidence.page_write_count, requested.length);
+  assert.equal(evidence.new_cluster_count, 0);
+});
+
+test('semantic apply no-op performs zero Sheets writes', async () => {
+  assert.equal(typeof topicRegister.applySemanticRepairWrites, 'function');
+  const { plan } = semanticRepairApplyFixture({ correct: true });
+  const evidence = await topicRegister.applySemanticRepairWrites({
+    workbookId: 'fake-workbook',
+    token: 'fake-token',
+    plan,
+    deps: {
+      appendRows: async () => assert.fail('no-op must not append'),
+      batchUpdateValues: async () => assert.fail('no-op must not batch update'),
+    },
+  });
+  assert.deepEqual(evidence.changed_page_ids, []);
+  assert.equal(evidence.page_write_count, 0);
+  assert.equal(evidence.new_cluster_count, 0);
+});
+
+test('semantic-repair-new appends only its deterministic cluster row', async () => {
+  assert.equal(typeof topicRegister.applySemanticRepairWrites, 'function');
+  const { plan } = semanticRepairApplyFixture({ newCluster: true });
+  const calls = [];
+  const evidence = await topicRegister.applySemanticRepairWrites({
+    workbookId: 'fake-workbook',
+    token: 'fake-token',
+    plan,
+    deps: {
+      appendRows: async (...args) => {
+        calls.push({ kind: 'append', args });
+        return completeSemanticAppendResponse(args[2]);
+      },
+      batchUpdateValues: async (...args) => {
+        calls.push({ kind: 'batch', args });
+        return completeSemanticBatchResponse(args[1]);
+      },
+    },
+  });
+
+  assert.deepEqual(calls.map((call) => call.kind), ['append', 'batch']);
+  assert.equal(calls[0].args[1], '主题集群表!A:S');
+  assert.deepEqual(
+    calls[0].args[2],
+    plan.newClusters.map((row) => CLUSTER_FIELDS.map((field) => String(row[field] ?? ''))),
+  );
+  assert.deepEqual(evidence.new_cluster_ids, [plan.newClusters[0].cluster_id]);
+  assert.equal(evidence.new_cluster_count, 1);
+
+  const expanded = structuredClone(plan);
+  expanded.newClusters.push({ ...plan.newClusters[0], cluster_id: 'unproven-extra-cluster' });
+  await assert.rejects(() => topicRegister.applySemanticRepairWrites({
+    workbookId: 'fake-workbook',
+    token: 'fake-token',
+    plan: expanded,
+    deps: {
+      appendRows: async () => assert.fail('invalid write plan must fail before append'),
+      batchUpdateValues: async () => assert.fail('invalid write plan must fail before batch update'),
+    },
+  }), /semantic-repair-only.*cluster/i);
+});
+
+test('semantic apply rejects incomplete extra wrong-range or wrong-cell batch responses', async () => {
+  assert.equal(typeof topicRegister.applySemanticRepairWrites, 'function');
+  const { plan } = semanticRepairApplyFixture();
+  const validData = [];
+  const capture = async (_workbookId, data) => {
+    validData.splice(0, validData.length, ...data);
+    return completeSemanticBatchResponse(data);
+  };
+  await topicRegister.applySemanticRepairWrites({
+    workbookId: 'fake-workbook', token: 'fake-token', plan,
+    deps: { appendRows: async () => assert.fail('no append'), batchUpdateValues: capture },
+  });
+  const complete = completeSemanticBatchResponse(validData);
+  const cases = [
+    { label: 'incomplete', response: { totalUpdatedCells: validData.length } },
+    { label: 'extra', response: { ...complete, responses: [...complete.responses, complete.responses[0]] } },
+    { label: 'wrong range', response: { ...complete, responses: [{ ...complete.responses[0], updatedRange: '选题登记表!A999' }, ...complete.responses.slice(1)] } },
+    { label: 'wrong response cells', response: { ...complete, responses: [{ ...complete.responses[0], updatedCells: 2 }, ...complete.responses.slice(1)] } },
+    { label: 'wrong total cells', response: { ...complete, totalUpdatedCells: validData.length + 1 } },
+  ];
+  for (const { label, response } of cases) {
+    await assert.rejects(() => topicRegister.applySemanticRepairWrites({
+      workbookId: 'fake-workbook', token: 'fake-token', plan,
+      deps: {
+        appendRows: async () => assert.fail('no append'),
+        batchUpdateValues: async () => response,
+      },
+    }), /semantic-repair-only.*(?:response|range|cell)/i, label);
+  }
+});
+
+test('semantic apply rejects incomplete wrong-range or wrong-count append responses', async () => {
+  assert.equal(typeof topicRegister.applySemanticRepairWrites, 'function');
+  const { plan } = semanticRepairApplyFixture({ newCluster: true });
+  const rows = plan.newClusters.map((row) => CLUSTER_FIELDS.map((field) => String(row[field] ?? '')));
+  const complete = completeSemanticAppendResponse(rows);
+  const cases = [
+    { label: 'incomplete', response: {} },
+    { label: 'wrong range', response: completeSemanticAppendResponse(rows, { range: '主题集群表!A2:R2' }) },
+    { label: 'wrong rows', response: { updates: { ...complete.updates, updatedRows: rows.length + 1 } } },
+    { label: 'wrong cells', response: { updates: { ...complete.updates, updatedCells: complete.updates.updatedCells + 1 } } },
+  ];
+  for (const { label, response } of cases) {
+    await assert.rejects(() => topicRegister.applySemanticRepairWrites({
+      workbookId: 'fake-workbook', token: 'fake-token', plan,
+      deps: {
+        appendRows: async () => response,
+        batchUpdateValues: async () => assert.fail('invalid append proof must stop before batch update'),
+      },
+    }), /semantic-repair-only.*(?:append|range|cell|row)/i, label);
+  }
+});
+
 test('semantic-repair-only accepts only bounded astrologywiki apply requests', () => {
   assert.deepEqual(semanticRepairRequestFromArgs({
     semantic_repair_only: true,
@@ -559,6 +800,24 @@ test('semantic proof rejects expanded or unproven writes', () => {
       cluster_repairs: [{ page_id: 'PG-WDIF-002', from: 'old', to: 'new', score: 0, provenance: 'semantic-repair' }],
     },
   }), /new cluster provenance mismatch/);
+});
+
+test('semantic proof rejects changed rows without verified Sheets write evidence', () => {
+  assert.throws(() => buildSemanticRepairProof({
+    requestedPageIds: ['PG-WDIF-002'],
+    summary: {
+      applied: true,
+      page_ids: ['PG-WDIF-002'],
+      new_clusters: 0,
+      cluster_repairs: [{
+        page_id: 'PG-WDIF-002',
+        from: 'old-cluster',
+        to: 'existing-cluster',
+        score: 0.8,
+        provenance: 'semantic-repair',
+      }],
+    },
+  }), /semantic-repair-only.*verified.*write evidence/i);
 });
 
 test('semantic proof rejects non-empty skipped or budget-exhausted runs but preserves legal noops', () => {

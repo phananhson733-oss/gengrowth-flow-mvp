@@ -22,7 +22,7 @@ aliases:
 - 执行 Phase 2 索引监控：两个产品的官方 Search Console Sitemap API 提交成功，URL Inspection 无失败。
 - astrologywiki 完成 11 条到期检查（9 条转已收录、2 条继续监控），最终申请队列为 18 条；gengrowth 无到期 URL、队列为 2 条。
 - 执行结果复盘表现同步：两个产品均成功写回，但没有恰好到 D14/D30/D60 的到期 URL；优化任务报告已生成。
-- 用户确认 SEO 0 人值守方案 A；已形成 Active Brief 确定性 Preflight 书面设计并完成自审，待书面 spec 审核后进入实现计划与 TDD。
+- 用户确认 SEO 0 人值守方案 A 及书面 spec；Active Brief Preflight 实现计划已完成自审，等待选择 inline 或 subagent-driven 执行方式后进入 TDD。
 
 ---
 
@@ -101,5 +101,17 @@ After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-s
 **🤖 回答：**
 
 用户确认采用方案 A：在同一 SEO fire 内，对 pinned W22 plan 的 unchecked page IDs 先执行 fail-closed 的确定性 Topic Register semantic-repair-only preflight，成功后才进入 nightly author / publish。已创建并自审 `docs/superpowers/specs/2026-07-17-seo-brief-preflight-design.md`，明确 existing-row-only、禁止生成新 page ID、结构化写入证明、锁忙非零、自然 cron 重试、无中间通知，以及自然发布后连续 3 个 cron 窗口的最终验收标准。按照 brainstorming 审批门槛，下一步等待用户审核书面 spec；确认后再进入实现计划与 TDD，不在本轮提前修改生产代码。
+
+---
+
+### Q5 — 12:36
+
+**🙋 提问：**
+
+确认书面 spec
+
+**🤖 回答：**
+
+用户确认书面 spec。按照 `superpowers:writing-plans` 创建并自审 `docs/superpowers/plans/2026-07-17-seo-active-brief-preflight.md`，把实现拆分为 Topic Register strict semantic-repair-only 与数据派生 proof、fixed wrapper 的 require-run/结果文件、proof validator 与 SEO launcher fail-closed 接入、全量回归及自然 cron 交接四个任务。自审补强了真实 created-page-ID 证明、唯一新 cluster provenance、重复 active ID 拒绝和 wrapper 原子结果输出。下一步按技能要求由用户选择 subagent-driven 或 inline execution；本轮未修改生产代码。
 
 ---

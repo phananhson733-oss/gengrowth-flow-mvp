@@ -1,7 +1,7 @@
 {
   "page_id": "PG-NAKSH-020",
   "prompt_path": "/Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-NAKSH-020.v8-prompt.md",
-  "started_at": "2026-07-17T12:08:46.920Z",
+  "started_at": "2026-07-17T12:15:49.556Z",
   "models_requested": [
     "claude"
   ],
@@ -34,13 +34,13 @@
           "ok": false,
           "exit_code": -2,
           "duration_s": 210.1,
-          "stderr_tail": "WATCHDOG: no CPU/output progress for 180s (deadlock); group cpu=4.8s"
+          "stderr_tail": "WATCHDOG: no CPU/output progress for 180s (deadlock); group cpu=4.9s"
         },
         {
           "try_index": 2,
           "model": "claude",
           "transient_failure_fallback_to": "claude-sonnet-4-6",
-          "fallback_reason": "WATCHDOG: no CPU/output progress for 180s (deadlock); group cpu=4.8s",
+          "fallback_reason": "WATCHDOG: no CPU/output progress for 180s (deadlock); group cpu=4.9s",
           "command": "claude -p --model claude-sonnet-4-6 --effort high < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-NAKSH-020.v8-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-NAKSH-020-claude-v8.md",
           "cost_usd": 0,
           "cumulative_cost_usd": 0,

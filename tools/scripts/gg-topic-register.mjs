@@ -1935,6 +1935,7 @@ function planRows({
   const pages = rowsToObjects(pageHeader, pagesRaw.slice(1));
   let selected;
   if (semanticRepairOnly) {
+    if (profile?.key !== 'astrologywiki') throw new Error('semantic-repair-only requires astrologywiki');
     const requested = [...repairPageIds].sort();
     const counts = new Map();
     for (const page of pages) {

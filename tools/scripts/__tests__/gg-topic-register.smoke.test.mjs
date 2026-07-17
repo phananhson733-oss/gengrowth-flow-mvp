@@ -497,6 +497,16 @@ test('semantic-repair-only selects only safe active existing mismatches and no-o
     activePageIds: new Set(),
     semanticRepairOnly: true,
   }), /inactive existing page id.*PG-WDIF-002/i);
+
+  assert.throws(() => planRows({
+    profile: PRODUCT_PROFILES.gengrowth,
+    pagesRaw: [pageHeader, correctLoveLanguageRow],
+    clustersRaw: [CLUSTER_FIELDS, loveLanguageClusterRow],
+    limit: 1,
+    repairPageIds: new Set(['PG-WDIF-002']),
+    activePageIds: new Set(['PG-WDIF-002']),
+    semanticRepairOnly: true,
+  }), /semantic-repair-only requires astrologywiki/i);
 });
 
 test('semantic proof proves only requested existing repairs', () => {
@@ -518,6 +528,19 @@ test('semantic proof proves only requested existing repairs', () => {
   assert.deepEqual(proof.changed_page_ids, ['PG-WDIF-002']);
   assert.equal(proof.created_page_id_count, 0);
   assert.equal(proof.cross_product_write_count, 0);
+
+  const sharedClusterProof = buildSemanticRepairProof({
+    requestedPageIds: ['PG-WDIF-002', 'PG-WDIN-001'],
+    summary: {
+      page_ids: ['PG-WDIF-002', 'PG-WDIN-001'],
+      new_clusters: 1,
+      cluster_repairs: [
+        { page_id: 'PG-WDIF-002', from: 'old-a', to: 'shared-new', score: 0, provenance: 'semantic-repair-new' },
+        { page_id: 'PG-WDIN-001', from: 'old-b', to: 'shared-new', score: 0, provenance: 'semantic-repair-new' },
+      ],
+    },
+  });
+  assert.equal(sharedClusterProof.new_cluster_count, 1);
 });
 
 test('semantic proof rejects expanded or unproven writes', () => {

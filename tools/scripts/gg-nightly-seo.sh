@@ -27,7 +27,9 @@ ATTESTED_MANIFEST="${GG_NIGHTLY_ATTESTED_MANIFEST:-}"
 ATTESTED_MANIFEST_SHA256="${GG_NIGHTLY_ATTESTED_MANIFEST_SHA256:-}"
 ATTESTED_MANIFEST_IDENTITY="${GG_NIGHTLY_ATTESTED_MANIFEST_IDENTITY:-}"
 VALIDATOR_NODE="${GG_NIGHTLY_VALIDATOR_NODE:-}"
-CLAIMS="${GG_NIGHTLY_CLAIMS:-$HOME/gengrowth-ops/inbox/06-tasks/tasks/.autopilot-claims.json}"
+OPS="${GG_OPS_DIR:-$HOME/gengrowth-ops}"
+CANONICAL_CLAIMS="$OPS/inbox-maboyang/06-tasks/tasks/.autopilot-claims.json"
+CLAIMS="${GG_NIGHTLY_CLAIMS:-${GG_SEO_CLAIMS:-$CANONICAL_CLAIMS}}"
 LOG="${GG_NIGHTLY_LOG:-$HOME/Library/Logs/gg-nightly-seo.log}"
 LOCK="${GG_NIGHTLY_LOCK:-/tmp/gg-nightly-seo.lock}"
 MAX="${GG_NIGHTLY_MAX:-6}"          # cap articles per night (bounds cost + risk)
@@ -48,6 +50,14 @@ mkdir -p "$(dirname "$LOG")"
 exec >>"$LOG" 2>&1
 echo ""
 echo "===== nightly-seo run $(date '+%F %T %Z') (max=$MAX) ====="
+
+if [ -n "${GG_NIGHTLY_CLAIMS:-}" ] && [ -n "${GG_SEO_CLAIMS:-}" ] \
+  && [ "$GG_NIGHTLY_CLAIMS" != "$GG_SEO_CLAIMS" ]; then
+  echo "nightly claims path mismatch"
+  exit 1
+fi
+export GG_NIGHTLY_CLAIMS="$CLAIMS"
+export GG_SEO_CLAIMS="$CLAIMS"
 
 # single-flight lock (DIRECTORY, like the other gg locks)
 if ! mkdir "$LOCK" 2>/dev/null; then echo "another nightly/publish run holds $LOCK — exit"; exit 0; fi

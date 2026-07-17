@@ -459,6 +459,7 @@ function nightlyArtifactHarness({
   missingSnapshot = false,
   tamperedSnapshot = false,
   activeSnapshotWithEmptyManifest = false,
+  activeParkedDefaultClaims = false,
 } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'gg-nightly-artifact-guard-'));
   const flowRoot = join(root, 'flow');
@@ -466,21 +467,45 @@ function nightlyArtifactHarness({
   const canonical = join(root, 'canonical.md');
   const snapshot = join(root, 'snapshot.md');
   const manifest = join(root, 'attested.json');
-  const claims = join(root, 'claims.json');
+  const ops = join(root, 'ops');
+  const claims = activeParkedDefaultClaims
+    ? join(ops, 'inbox-maboyang/06-tasks/tasks/.autopilot-claims.json')
+    : join(root, 'claims.json');
+  const legacyClaims = join(ops, 'inbox/06-tasks/tasks/.autopilot-claims.json');
   const calls = join(root, 'business-calls.log');
   const log = join(root, 'nightly.log');
   const lock = join(root, 'nightly.lock');
   mkdirSync(join(flowRoot, 'tools/scripts'), { recursive: true });
   mkdirSync(bin, { recursive: true });
+  const parkedPageId = 'PG-PARKED-001';
   const planText = activeSnapshotWithEmptyManifest
     ? '- [ ] `PG-EMPTY-001` active but omitted\n'
-    : '- [x] `PG-DONE-001` done\n';
+    : activeParkedDefaultClaims
+      ? `- [ ] \`${parkedPageId}\` parked keyword\n`
+      : '- [x] `PG-DONE-001` done\n';
   const digest = createHash('sha256').update(planText).digest('hex');
+  const manifestRows = activeParkedDefaultClaims
+    ? [{ page_id: parkedPageId, raw_line: `- [ ] \`${parkedPageId}\` parked keyword`, keyword: 'parked keyword' }]
+    : [];
   writeFileSync(canonical, planText);
   writeFileSync(snapshot, planText);
-  writeFileSync(manifest, JSON.stringify({ version: 1, plan_sha256: digest, requested_page_ids: [], rows: [] }));
-  writeFileSync(claims, '{}\n');
-  executable(join(bin, 'node'), '#!/bin/sh\nprintf "node\\t%s\\n" "$*" >> "$GG_TEST_BUSINESS_CALLS"\nexit 0\n');
+  writeFileSync(manifest, JSON.stringify({
+    version: 1,
+    plan_sha256: digest,
+    requested_page_ids: manifestRows.map((row) => row.page_id),
+    rows: manifestRows,
+  }));
+  mkdirSync(dirname(claims), { recursive: true });
+  writeFileSync(claims, activeParkedDefaultClaims
+    ? `${JSON.stringify({ [parkedPageId]: { status: 'needs_human', site: 'astrologywiki' } })}\n`
+    : '{}\n');
+  executable(join(bin, 'node'), [
+    '#!/bin/sh',
+    'if [ "${1:-}" = "-e" ]; then exec "$GG_NIGHTLY_VALIDATOR_NODE" "$@"; fi',
+    'printf "node\\t%s\\n" "$*" >> "$GG_TEST_BUSINESS_CALLS"',
+    'exit 0',
+    '',
+  ].join('\n'));
   executable(join(bin, 'curl'), '#!/bin/sh\nprintf "curl\\t%s\\n" "$*" >> "$GG_TEST_BUSINESS_CALLS"\nexit 0\n');
   if (missingSnapshot) rmSync(snapshot);
   if (tamperedSnapshot) writeFileSync(snapshot, '- [ ] `PG-DRIFT-001` drift\n');
@@ -500,7 +525,8 @@ function nightlyArtifactHarness({
       GG_NIGHTLY_ATTESTED_MANIFEST_IDENTITY: fileIdentity(manifest),
       GG_NIGHTLY_VALIDATOR_NODE: process.execPath,
       GG_NIGHTLY_FLOW: flowRoot,
-      GG_NIGHTLY_CLAIMS: claims,
+      GG_OPS_DIR: ops,
+      ...(activeParkedDefaultClaims ? {} : { GG_NIGHTLY_CLAIMS: claims }),
       GG_NIGHTLY_LOG: log,
       GG_NIGHTLY_LOCK: lock,
       GG_TEST_BUSINESS_CALLS: calls,
@@ -511,6 +537,7 @@ function nightlyArtifactHarness({
     result,
     calls: existsSync(calls) ? readFileSync(calls, 'utf8') : '',
     log: existsSync(log) ? readFileSync(log, 'utf8') : '',
+    legacyClaims,
   };
 }
 
@@ -531,6 +558,18 @@ test('nightly rejects a self-consistent empty manifest when the snapshot still h
   try {
     assert.notEqual(h.result.status, 0, `${h.result.stdout}\n${h.result.stderr}\n${h.log}`);
     assert.equal(h.calls, '', 'manifest disagreement must stop before replay-outbox or auto-retry');
+  } finally {
+    rmSync(h.root, { recursive: true, force: true });
+  }
+});
+
+test('nightly default parked decision reads only the inbox-maboyang claims ledger', () => {
+  const h = nightlyArtifactHarness({ activeParkedDefaultClaims: true });
+  try {
+    assert.equal(h.result.status, 0, `${h.result.stdout}\n${h.result.stderr}\n${h.log}`);
+    assert.match(h.log, /needs_human-parked/);
+    assert.doesNotMatch(h.calls, /--author|gg-preview-gate/);
+    assert.equal(existsSync(h.legacyClaims), false);
   } finally {
     rmSync(h.root, { recursive: true, force: true });
   }

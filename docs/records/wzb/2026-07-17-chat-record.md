@@ -22,6 +22,7 @@ aliases:
 - 执行结果复盘表现同步：两个产品均成功写回，但没有恰好到 D14/D30/D60 的到期 URL；优化任务报告已生成。
 - 用户选择 subagent-driven 执行 Active Brief Preflight；Task 1 已完成 TDD，但独立审查发现两个 plan-mandated proof 安全冲突，等待确认 fail-closed 约束优先后修复复审。
 - 执行选题登记确定性 wrapper：apply 窗口 16:02:58–16:07:07 CST；astrologywiki 更新 3 条并产生 1 个新 cluster，gengrowth 无候选；日志无失败。
+- 执行选题登记确定性 wrapper：apply 窗口 18:01:50–18:01:53 CST；两个产品均为零候选/零更新的正常 no-op，日志无失败。
 
 ---
 
@@ -158,5 +159,22 @@ Run the deterministic fixed-row index repair workflow through `bash tools/script
 **🤖 回答：**
 
 已执行确定性入口 `bash tools/scripts/gg-index-repair-resubmit-tick.sh`，运行窗口为 17:31:33–17:31:55 CST，退出码为 0，日志以 `index repair-resubmit ok` 收束。astrologywiki：`process-fixed fixed=0 resubmitted=0`；`sync-recap en_rows=255 appended=0 updated=0 skipped=255`；`sync-request-queue rows=18 P0=0 P1=3 P2=4 P3=11`。gengrowth：`process-fixed fixed=0 resubmitted=0`；`sync-recap en_rows=62 appended=0 updated=47 skipped=15`；`sync-request-queue rows=2 P0=0 P1=0 P2=0 P3=2`。本次窗口未发现失败、错误、异常、认证、超时或非零返回关键词；执行保持禁止普通文章 Google Indexing API、无人值守 Request Indexing 和 Feishu/Google Doc 报告产物的边界。
+
+---
+
+### Q9 — 18:02
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-17T08:01:59.137Z (1784275319137)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅执行确定性入口 `bash tools/scripts/gg-topic-register-tick.sh`，退出码 0。精确日志窗口为 18:01:50–18:01:53 CST，环境以 apply 模式运行（`dry_run=false`、`budget_exhausted=false`）。astrologywiki：candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]。gengrowth：candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]。两个产品的 evidence_discovery 均为空，未见 failures。未手工编辑 Sheet、未直接修改任务计划，亦未创建额外 Feishu 或 Google Doc 报告产物。
 
 ---

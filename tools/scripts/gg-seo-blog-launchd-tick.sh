@@ -36,24 +36,28 @@ NIGHTLY_LOG="${GG_SEO_NIGHTLY_LOG:-$HOME/Library/Logs/gg-nightly-seo.log}"
 OPS="${GG_OPS_DIR:-$HOME/gengrowth-ops}"
 PLAN="${GG_SEO_PLAN:-$OPS/inbox-maboyang/06-tasks/tasks/2026-05-27-W22-blog-output-plan.md}"
 CANONICAL_CLAIMS="$OPS/inbox-maboyang/06-tasks/tasks/.autopilot-claims.json"
-CLAIMS="${GG_SEO_CLAIMS:-$CANONICAL_CLAIMS}"
+CLAIMS="$CANONICAL_CLAIMS"
+INHERITED_SEO_CLAIMS="${GG_SEO_CLAIMS:-}"
 INHERITED_NIGHTLY_CLAIMS="${GG_NIGHTLY_CLAIMS:-}"
+INHERITED_AUTOPILOT_CLAIMS="${GG_AUTOPILOT_CLAIMS:-}"
 
 mkdir -p "$(dirname "$LOG")" "$(dirname "$ERR_LOG")"
 exec >>"$LOG" 2>>"$ERR_LOG"
 
 echo "===== seo-blog launchd tick $(date '+%F %T %Z') ====="
 
-if [[ "$CLAIMS" != "$CANONICAL_CLAIMS" ]]; then
-  echo "SEO claims path mismatch: expected canonical $CANONICAL_CLAIMS"
-  exit 1
-fi
-if [[ -n "$INHERITED_NIGHTLY_CLAIMS" && "$INHERITED_NIGHTLY_CLAIMS" != "$CLAIMS" ]]; then
-  echo "SEO claims path mismatch: inherited nightly claims are inconsistent"
-  exit 1
-fi
+for inherited_claims in \
+  "$INHERITED_SEO_CLAIMS" \
+  "$INHERITED_NIGHTLY_CLAIMS" \
+  "$INHERITED_AUTOPILOT_CLAIMS"; do
+  if [[ -n "$inherited_claims" && "$inherited_claims" != "$CLAIMS" ]]; then
+    echo "SEO claims path mismatch: every claims override must equal canonical $CANONICAL_CLAIMS"
+    exit 1
+  fi
+done
 export GG_SEO_CLAIMS="$CLAIMS"
 export GG_NIGHTLY_CLAIMS="$CLAIMS"
+export GG_AUTOPILOT_CLAIMS="$CLAIMS"
 
 if [[ "${GG_SEO_LAUNCHD_ALLOW_OUTSIDE_WINDOW:-0}" != "1" ]]; then
   now_hm="$(date +%H%M)"
@@ -427,6 +431,7 @@ GG_NIGHTLY_ATTESTED_MANIFEST_IDENTITY="$ATTESTED_MANIFEST_IDENTITY" \
 GG_NIGHTLY_VALIDATOR_NODE="$NODE_BIN" \
 GG_NIGHTLY_CLAIMS="$CLAIMS" \
 GG_SEO_CLAIMS="$CLAIMS" \
+GG_AUTOPILOT_CLAIMS="$CLAIMS" \
 bash "$NIGHTLY"
 NIGHTLY_RC=$?
 set -e

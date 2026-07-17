@@ -77,6 +77,7 @@ function runnerHarness({
   controllerReplacesSnapshotDir = false,
   useDefaultClaimsBinding = false,
   inconsistentNightlyClaims = false,
+  inconsistentAutopilotClaims = false,
 } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'seo-launchd-runner-'));
   const flow = join(root, 'flow');
@@ -143,7 +144,7 @@ function runnerHarness({
   const nightly = executable(join(root, 'nightly.sh'), [
     '#!/bin/sh',
     'printf "nightly\\n" >> "$GG_TEST_EVENTS"',
-    'node -e \'const fs=require("node:fs"); const claimsPath=process.env.GG_NIGHTLY_CLAIMS || null; const claims=process.env.GG_TEST_REQUIRE_CLAIMS_BINDING === "1" ? JSON.parse(fs.readFileSync(claimsPath, "utf8")) : {}; fs.writeFileSync(process.env.GG_TEST_NIGHTLY_ENV, JSON.stringify({ runId: process.env.GG_SEO_REPAIR_RUN_ID || null, logFile: process.env.GG_SEO_REPAIR_LOG_FILE || null, offsetStart: process.env.GG_SEO_REPAIR_LOG_OFFSET_START || null, offsetEnd: process.env.GG_SEO_REPAIR_LOG_OFFSET_END || null, oracle: process.env.GG_AUTOMATION_ORACLE_DIR || null, canonicalPlan: process.env.GG_SEO_PLAN || null, itemsPlan: process.env.GG_NIGHTLY_ITEMS_PLAN || null, itemsSha: process.env.GG_NIGHTLY_ITEMS_SHA256 || null, itemsDirIdentity: process.env.GG_NIGHTLY_ITEMS_DIR_IDENTITY || null, manifest: process.env.GG_NIGHTLY_ATTESTED_MANIFEST || null, nightlyClaims: claimsPath, seoClaims: process.env.GG_SEO_CLAIMS || null, parked: claims["PG-A-001"]?.status === "needs_human", canonicalContent: fs.readFileSync(process.env.GG_SEO_PLAN, "utf8"), itemsContent: fs.readFileSync(process.env.GG_NIGHTLY_ITEMS_PLAN, "utf8") }))\'',
+    'node -e \'const fs=require("node:fs"); const claimsPath=process.env.GG_NIGHTLY_CLAIMS || null; const claims=process.env.GG_TEST_REQUIRE_CLAIMS_BINDING === "1" ? JSON.parse(fs.readFileSync(claimsPath, "utf8")) : {}; fs.writeFileSync(process.env.GG_TEST_NIGHTLY_ENV, JSON.stringify({ runId: process.env.GG_SEO_REPAIR_RUN_ID || null, logFile: process.env.GG_SEO_REPAIR_LOG_FILE || null, offsetStart: process.env.GG_SEO_REPAIR_LOG_OFFSET_START || null, offsetEnd: process.env.GG_SEO_REPAIR_LOG_OFFSET_END || null, oracle: process.env.GG_AUTOMATION_ORACLE_DIR || null, canonicalPlan: process.env.GG_SEO_PLAN || null, itemsPlan: process.env.GG_NIGHTLY_ITEMS_PLAN || null, itemsSha: process.env.GG_NIGHTLY_ITEMS_SHA256 || null, itemsDirIdentity: process.env.GG_NIGHTLY_ITEMS_DIR_IDENTITY || null, manifest: process.env.GG_NIGHTLY_ATTESTED_MANIFEST || null, nightlyClaims: claimsPath, seoClaims: process.env.GG_SEO_CLAIMS || null, autopilotClaims: process.env.GG_AUTOPILOT_CLAIMS || null, parked: claims["PG-A-001"]?.status === "needs_human", canonicalContent: fs.readFileSync(process.env.GG_SEO_PLAN, "utf8"), itemsContent: fs.readFileSync(process.env.GG_NIGHTLY_ITEMS_PLAN, "utf8") }))\'',
     'printf "nightly body\\n" >> "$GG_SEO_NIGHTLY_LOG"',
     `exit ${nightlyExit}`,
     '',
@@ -161,7 +162,7 @@ function runnerHarness({
     "import { appendFileSync, chmodSync, readFileSync, rmSync, rmdirSync, symlinkSync, writeFileSync } from 'node:fs';",
     "appendFileSync(process.env.GG_TEST_EVENTS, 'drain\\n');",
     "appendFileSync(process.env.GG_TEST_CONTROLLER_ARGS, JSON.stringify(process.argv.slice(2)) + '\\n');",
-    "appendFileSync(process.env.GG_TEST_CONTROLLER_ENV, JSON.stringify({ claims: process.env.GG_SEO_CLAIMS || null }) + '\\n');",
+    "appendFileSync(process.env.GG_TEST_CONTROLLER_ENV, JSON.stringify({ claims: process.env.GG_SEO_CLAIMS || null, nightlyClaims: process.env.GG_NIGHTLY_CLAIMS || null, autopilotClaims: process.env.GG_AUTOPILOT_CLAIMS || null }) + '\\n');",
     ...(controllerMutatesSnapshot ? [
       "const preflight = JSON.parse(readFileSync(process.env.GG_TEST_BRIEF_PREFLIGHT_ARGS, 'utf8'));",
       "const snapshot = preflight.args[preflight.args.indexOf('--plan') + 1];",
@@ -186,7 +187,7 @@ function runnerHarness({
     "import { appendFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs';",
     "const notifyOnly = process.argv.includes('--notify-only');",
     "appendFileSync(process.env.GG_TEST_EVENTS, notifyOnly ? 'notify\\n' : 'reconcile\\n');",
-    "appendFileSync(process.env.GG_TEST_RECONCILE_ENV, JSON.stringify({ notifyOnly, silence: process.env.GG_LARK_NOTIFY_SILENCE || null, claims: process.env.GG_SEO_CLAIMS || null }) + '\\n');",
+    "appendFileSync(process.env.GG_TEST_RECONCILE_ENV, JSON.stringify({ notifyOnly, silence: process.env.GG_LARK_NOTIFY_SILENCE || null, claims: process.env.GG_SEO_CLAIMS || null, nightlyClaims: process.env.GG_NIGHTLY_CLAIMS || null, autopilotClaims: process.env.GG_AUTOPILOT_CLAIMS || null }) + '\\n');",
     "if (notifyOnly) process.exit(0);",
     "const previous = existsSync(process.env.GG_TEST_RECONCILE_COUNT) ? Number(readFileSync(process.env.GG_TEST_RECONCILE_COUNT, 'utf8')) || 0 : 0;",
     "const call = previous + 1;",
@@ -202,7 +203,7 @@ function runnerHarness({
     "import { appendFileSync, writeFileSync } from 'node:fs';",
     "appendFileSync(process.env.GG_TEST_EVENTS, 'readiness\\n');",
     "writeFileSync(process.env.GG_TEST_READINESS_ARGS, JSON.stringify(process.argv.slice(2)));",
-    "writeFileSync(process.env.GG_TEST_READINESS_ENV, JSON.stringify({ claims: process.env.GG_SEO_CLAIMS || null }));",
+    "writeFileSync(process.env.GG_TEST_READINESS_ENV, JSON.stringify({ claims: process.env.GG_SEO_CLAIMS || null, nightlyClaims: process.env.GG_NIGHTLY_CLAIMS || null, autopilotClaims: process.env.GG_AUTOPILOT_CLAIMS || null }));",
     `process.exit(${readinessExit});`,
     '',
   ].join('\n'));
@@ -211,7 +212,7 @@ function runnerHarness({
     "import { appendFileSync, writeFileSync } from 'node:fs';",
     "appendFileSync(process.env.GG_TEST_EVENTS, 'summary\\n');",
     "writeFileSync(process.env.GG_TEST_SUMMARY_ARGS, JSON.stringify(process.argv.slice(2)));",
-    "writeFileSync(process.env.GG_TEST_SUMMARY_ENV, JSON.stringify({ claims: process.env.GG_SEO_CLAIMS || null }));",
+    "writeFileSync(process.env.GG_TEST_SUMMARY_ENV, JSON.stringify({ claims: process.env.GG_SEO_CLAIMS || null, nightlyClaims: process.env.GG_NIGHTLY_CLAIMS || null, autopilotClaims: process.env.GG_AUTOPILOT_CLAIMS || null }));",
     `process.exit(${summaryExit});`,
     '',
   ].join('\n'));
@@ -280,11 +281,13 @@ function runnerHarness({
       GG_TEST_REQUIRE_CLAIMS_BINDING: useDefaultClaimsBinding ? '1' : '0',
       GG_TEST_VICTIM_DIR: victimDir,
       ...(inconsistentNightlyClaims ? { GG_NIGHTLY_CLAIMS: join(root, 'split-brain-claims.json') } : {}),
+      ...(inconsistentAutopilotClaims ? { GG_AUTOPILOT_CLAIMS: join(root, 'split-brain-autopilot-claims.json') } : {}),
     };
     if (useDefaultClaimsBinding) {
       delete env.GG_SEO_PLAN;
       delete env.GG_SEO_CLAIMS;
       delete env.GG_NIGHTLY_CLAIMS;
+      delete env.GG_AUTOPILOT_CLAIMS;
     }
     return spawnSync('bash', [runner], { cwd: flow, encoding: 'utf8', env });
   };
@@ -366,17 +369,33 @@ test('default launcher fire binds every claims consumer to the one inbox-maboyan
   const expected = h.claims;
   assert.equal(h.nightlyEnv().nightlyClaims, expected);
   assert.equal(h.nightlyEnv().seoClaims, expected);
+  assert.equal(h.nightlyEnv().autopilotClaims, expected);
   assert.equal(h.nightlyEnv().parked, true, 'nightly parked decision must read the canonical ledger');
   const hookArgs = h.hookArgs();
   assert.equal(hookArgs[hookArgs.indexOf('--claims') + 1], expected);
-  assert.deepEqual(h.controllerEnv().map(({ claims }) => claims), [expected, expected]);
-  assert.deepEqual(h.reconcileEnv().map(({ claims }) => claims), [expected, expected, expected, expected]);
-  assert.equal(h.readinessEnv().claims, expected);
-  assert.equal(h.summaryEnv().claims, expected);
+  for (const env of [
+    ...h.controllerEnv(),
+    ...h.reconcileEnv(),
+    h.readinessEnv(),
+    h.summaryEnv(),
+  ]) {
+    assert.deepEqual(
+      [env.claims, env.nightlyClaims, env.autopilotClaims],
+      [expected, expected, expected],
+    );
+  }
 });
 
 test('launcher fails closed before preflight when inherited nightly claims disagree', () => {
   const h = runnerHarness({ inconsistentNightlyClaims: true });
+  const result = h.run();
+  assert.notEqual(result.status, 0, `${result.stdout}\n${result.stderr}\n${h.log()}`);
+  assert.deepEqual(h.events(), []);
+  assert.match(h.log(), /claims.*mismatch|split.brain|inconsistent/i);
+});
+
+test('launcher fails closed before preflight when inherited autopilot claims disagree', () => {
+  const h = runnerHarness({ inconsistentAutopilotClaims: true });
   const result = h.run();
   assert.notEqual(result.status, 0, `${result.stdout}\n${result.stderr}\n${h.log()}`);
   assert.deepEqual(h.events(), []);
@@ -460,6 +479,7 @@ function nightlyArtifactHarness({
   tamperedSnapshot = false,
   activeSnapshotWithEmptyManifest = false,
   activeParkedDefaultClaims = false,
+  envOverridesClaims = false,
 } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'gg-nightly-artifact-guard-'));
   const flowRoot = join(root, 'flow');
@@ -473,6 +493,7 @@ function nightlyArtifactHarness({
     : join(root, 'claims.json');
   const legacyClaims = join(ops, 'inbox/06-tasks/tasks/.autopilot-claims.json');
   const calls = join(root, 'business-calls.log');
+  const claimsCapture = join(root, 'claims-capture.log');
   const log = join(root, 'nightly.log');
   const lock = join(root, 'nightly.lock');
   mkdirSync(join(flowRoot, 'tools/scripts'), { recursive: true });
@@ -499,9 +520,20 @@ function nightlyArtifactHarness({
   writeFileSync(claims, activeParkedDefaultClaims
     ? `${JSON.stringify({ [parkedPageId]: { status: 'needs_human', site: 'astrologywiki' } })}\n`
     : '{}\n');
+  if (envOverridesClaims) {
+    const configDir = join(root, '.config/gg');
+    mkdirSync(configDir, { recursive: true });
+    writeFileSync(join(configDir, '_gg.env'), [
+      `GG_SEO_CLAIMS=${join(root, 'split-seo-claims.json')}`,
+      `GG_NIGHTLY_CLAIMS=${join(root, 'split-nightly-claims.json')}`,
+      `GG_AUTOPILOT_CLAIMS=${join(root, 'split-autopilot-claims.json')}`,
+      '',
+    ].join('\n'));
+  }
   executable(join(bin, 'node'), [
     '#!/bin/sh',
     'if [ "${1:-}" = "-e" ]; then exec "$GG_NIGHTLY_VALIDATOR_NODE" "$@"; fi',
+    '"$GG_NIGHTLY_VALIDATOR_NODE" -e \'const fs=require("node:fs"); fs.appendFileSync(process.env.GG_TEST_CLAIMS_CAPTURE, JSON.stringify({ seo: process.env.GG_SEO_CLAIMS || null, nightly: process.env.GG_NIGHTLY_CLAIMS || null, autopilot: process.env.GG_AUTOPILOT_CLAIMS || null }) + "\\n")\'',
     'printf "node\\t%s\\n" "$*" >> "$GG_TEST_BUSINESS_CALLS"',
     'exit 0',
     '',
@@ -526,18 +558,25 @@ function nightlyArtifactHarness({
       GG_NIGHTLY_VALIDATOR_NODE: process.execPath,
       GG_NIGHTLY_FLOW: flowRoot,
       GG_OPS_DIR: ops,
-      ...(activeParkedDefaultClaims ? {} : { GG_NIGHTLY_CLAIMS: claims }),
+      ...(envOverridesClaims
+        ? { GG_NIGHTLY_CLAIMS: claims, GG_SEO_CLAIMS: claims, GG_AUTOPILOT_CLAIMS: claims }
+        : (activeParkedDefaultClaims ? {} : { GG_NIGHTLY_CLAIMS: claims })),
       GG_NIGHTLY_LOG: log,
       GG_NIGHTLY_LOCK: lock,
       GG_TEST_BUSINESS_CALLS: calls,
+      GG_TEST_CLAIMS_CAPTURE: claimsCapture,
     },
   });
   return {
     root,
     result,
     calls: existsSync(calls) ? readFileSync(calls, 'utf8') : '',
+    claimsEnv: existsSync(claimsCapture)
+      ? readFileSync(claimsCapture, 'utf8').trim().split('\n').filter(Boolean).map((line) => JSON.parse(line))
+      : [],
     log: existsSync(log) ? readFileSync(log, 'utf8') : '',
     legacyClaims,
+    claims,
   };
 }
 
@@ -570,6 +609,19 @@ test('nightly default parked decision reads only the inbox-maboyang claims ledge
     assert.match(h.log, /needs_human-parked/);
     assert.doesNotMatch(h.calls, /--author|gg-preview-gate/);
     assert.equal(existsSync(h.legacyClaims), false);
+  } finally {
+    rmSync(h.root, { recursive: true, force: true });
+  }
+});
+
+test('nightly restores the bound claims triple after _gg.env before any business child', () => {
+  const h = nightlyArtifactHarness({ activeParkedDefaultClaims: true, envOverridesClaims: true });
+  try {
+    assert.equal(h.result.status, 0, `${h.result.stdout}\n${h.result.stderr}\n${h.log}`);
+    assert.ok(h.claimsEnv.length >= 2, 'replay and auto-retry children must both be observed');
+    for (const env of h.claimsEnv) {
+      assert.deepEqual(env, { seo: h.claims, nightly: h.claims, autopilot: h.claims });
+    }
   } finally {
     rmSync(h.root, { recursive: true, force: true });
   }

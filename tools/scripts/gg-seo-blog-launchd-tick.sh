@@ -25,6 +25,8 @@ LOCK="${GG_SEO_LAUNCHD_LOCK:-/tmp/gg-seo-blog-launchd.lock}"
 LOG="${GG_SEO_LAUNCHD_LOG:-$HOME/Library/Logs/gg-seo-blog-launchd.out.log}"
 ERR_LOG="${GG_SEO_LAUNCHD_ERR_LOG:-$HOME/Library/Logs/gg-seo-blog-launchd.err.log}"
 NIGHTLY="${GG_SEO_NIGHTLY_BIN:-$FLOW/tools/scripts/gg-nightly-seo.sh}"
+BRIEF_PREFLIGHT="${GG_SEO_BRIEF_PREFLIGHT_BIN:-$FLOW/tools/scripts/gg-seo-brief-preflight.mjs}"
+TOPIC_REGISTER="${GG_SEO_TOPIC_REGISTER_BIN:-$FLOW/tools/scripts/gg-topic-register-tick.sh}"
 REPAIR_HOOK="${GG_SEO_REPAIR_HOOK_BIN:-$FLOW/tools/scripts/gg-seo-repair-hook.mjs}"
 REPAIR_CONTROLLER="${GG_SEO_REPAIR_CONTROLLER_BIN:-$FLOW/tools/scripts/gg-seo-repair-controller.mjs}"
 RECONCILE="${GG_SEO_RECONCILE_BIN:-$FLOW/tools/scripts/gg-ledger-reconcile.mjs}"
@@ -60,6 +62,8 @@ export GG_AUTOMATION_ORACLE_DIR="$ORACLE_BASELINE"
 export GG_ORACLE_DIR="$ORACLE_BASELINE"
 
 [[ -x "$NIGHTLY" ]] || { echo "nightly wrapper unavailable: $NIGHTLY"; exit 1; }
+[[ -f "$BRIEF_PREFLIGHT" ]] || { echo "SEO brief preflight unavailable: $BRIEF_PREFLIGHT"; exit 1; }
+[[ -x "$TOPIC_REGISTER" ]] || { echo "Topic Register wrapper unavailable: $TOPIC_REGISTER"; exit 1; }
 [[ -f "$REPAIR_HOOK" ]] || { echo "repair hook unavailable: $REPAIR_HOOK"; exit 1; }
 [[ -f "$REPAIR_CONTROLLER" ]] || { echo "repair controller unavailable: $REPAIR_CONTROLLER"; exit 1; }
 [[ -f "$RECONCILE" ]] || { echo "ledger reconcile unavailable: $RECONCILE"; exit 1; }
@@ -203,6 +207,20 @@ if [[ "${GG_SEO_SKIP_LEGACY_CHECK:-0}" != "1" ]]; then
     exit 1
   fi
 fi
+
+echo "running active brief semantic preflight"
+set +e
+GG_LARK_NOTIFY_SILENCE=1 node "$BRIEF_PREFLIGHT" \
+  --plan "$PLAN" \
+  --topic-register-wrapper "$TOPIC_REGISTER" \
+  --json
+BRIEF_PREFLIGHT_RC=$?
+set -e
+if [[ "$BRIEF_PREFLIGHT_RC" -ne 0 ]]; then
+  echo "active brief preflight failed rc=$BRIEF_PREFLIGHT_RC; abort before nightly"
+  exit "$BRIEF_PREFLIGHT_RC"
+fi
+echo "active brief preflight passed"
 
 RUN_START="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
 RUN_ID="seo-blog-$(date -u '+%Y%m%dT%H%M%SZ')-$$"

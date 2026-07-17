@@ -1,0 +1,8 @@
+- 选题角度偏“占星反思 prompt”，没有直接满足搜索者想问的“我到底该放下什么” → 增加一个更直接的编辑判断框架：按 Saturn / South Node / 12th house 分别对应“责任执念 / 旧身份惯性 / 隐性恐惧”，让读者能马上定位类型。
+- “Energy Center”表头不准确，容易让人误以为是脉轮或能量疗愈体系 → 改成“Chart Indicator”或“Where to Look in the Chart”。
+- Saturn、South Node、12th house 的解释太泛，懂占星的读者会觉得像入门模板 → 每个点补一条具体判读维度，例如 sign = style，house = life area，aspects = pressure pattern。
+- South Node 被写成“默认舒服但阻碍成长”略扁平 → 改为“熟悉、已发展过度或被过度依赖的能力”，避免把 South Node 简化成坏习惯。
+- 12th house 描述偏心理鸡汤，缺少占星边界 → 补充它常涉及 unconscious patterns, retreat, isolation, hidden fears, self-undoing，不要只说“背景 beliefs”。
+- Saturn return 段落有用但突然变成重点，可能误导成只有 29/58 岁才适用 → 明确这是一个 timing checkpoint，不是唯一适用窗口；日常也可用 natal placements 做反思。
+- 行文反复强调“不是预测”，占比过高，挤压了实用内容 → 删减重复免责声明，把篇幅换成具体问题：“我在哪里过度负责？我靠什么旧身份获得安全感？我逃避面对什么？”
+- Sources 太弱，只列人名没有作品或可核查出处 → 补成具体来源或删除“Sources”包装，避免看起来像权威背书不足。

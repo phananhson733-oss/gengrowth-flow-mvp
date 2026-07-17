@@ -618,6 +618,104 @@ Expected: clean worktree and equal hashes after the watcher checkpoint.
 
 ---
 
+### Task 4: Full regression、安全审计与自然 cron 交接
+
+**Files:**
+- Modify: `docs/superpowers/specs/2026-07-17-seo-brief-preflight-design.md`
+- Modify: `docs/superpowers/plans/2026-07-17-seo-active-brief-preflight.md`
+- Verify only: all implementation and test files from Tasks 1-3
+
+**Interfaces:**
+- Produces: clean, watcher-synced `origin/main` containing the preflight chain.
+- Produces: exact core/wrapper/validator/launcher/full-suite test evidence.
+- Hands off to: existing natural `com.gengrowth.seo-blog` fires only.
+
+- [ ] **Step 1: Run the focused regression bundle**
+
+```bash
+node --test \
+  tools/scripts/__tests__/gg-topic-register.smoke.test.mjs \
+  tools/scripts/__tests__/gg-topic-register-tick.smoke.test.mjs \
+  tools/scripts/__tests__/gg-seo-brief-preflight.smoke.test.mjs \
+  tools/scripts/__tests__/gg-seo-blog-launchd-tick.smoke.test.mjs \
+  tools/scripts/__tests__/gg-ledger-reconcile.smoke.test.mjs \
+  tools/scripts/__tests__/gg-seo-reconcile-tick.smoke.test.mjs \
+  tools/scripts/__tests__/gg-seo-autopilot.smoke.test.mjs \
+  tools/scripts/__tests__/seo-autopilot-merge-gate.smoke.test.mjs \
+  tools/scripts/__tests__/seo-autopilot-regate.smoke.test.mjs
+```
+
+Expected: all tests pass, zero failures and zero skipped safety cases.
+
+- [ ] **Step 2: Run syntax and diff gates**
+
+```bash
+node --check tools/scripts/gg-topic-register.mjs
+node --check tools/scripts/gg-seo-brief-preflight.mjs
+bash -n tools/scripts/gg-topic-register-tick.sh
+bash -n tools/scripts/gg-seo-blog-launchd-tick.sh
+git diff --check
+```
+
+Expected: every command exits 0 and `git diff --check` prints nothing.
+
+- [ ] **Step 3: Run the full scripts test suite**
+
+```bash
+node --test tools/scripts/__tests__/*.test.mjs
+```
+
+Expected: all discovered tests pass. Record exact pass/fail/skip totals from final TAP output.
+
+- [ ] **Step 4: Perform a hermetic boundary audit**
+
+```bash
+rg -n "semantic-repair-only|GG_TOPIC_REGISTER_REQUIRE_RUN|GG_TOPIC_REGISTER_RESULT_FILE|GG_SEO_BRIEF_PREFLIGHT_BIN" \
+  tools/scripts/gg-topic-register.mjs \
+  tools/scripts/gg-topic-register-tick.sh \
+  tools/scripts/gg-seo-brief-preflight.mjs \
+  tools/scripts/gg-seo-blog-launchd-tick.sh \
+  tools/scripts/__tests__
+```
+
+Confirm from exact matches that only the dedicated mode bypasses the no-LLM apply guard; default lock skip remains exit 0; launcher supplies strict mode, active IDs, apply, no-notify, no LLM and no discovery in one place; every helper has direct tests; and no code adds a scheduler, force-publish path or manual Sheet write.
+
+- [ ] **Step 5: Finalize metadata after all tests pass**
+
+Change only these frontmatter values in the spec and this plan:
+
+```yaml
+status: final
+updated: 2026-07-17
+```
+
+Check each completed plan checkbox as `[x]`. Do not rewrite either document body.
+
+- [ ] **Step 6: Wait for final watcher convergence**
+
+```bash
+git status --short
+git rev-parse HEAD
+git rev-parse origin/main
+git log -1 --format='%H %ad %s' --date=iso-strict
+```
+
+Expected: clean worktree, `HEAD == origin/main`, and latest watcher commit contains implementation plus metadata changes.
+
+- [ ] **Step 7: Hand off only to natural production fires**
+
+Do not run author/publish manually. The next approved SEO launchd log window must show this order:
+
+```text
+running active brief semantic preflight
+active brief preflight passed
+running pre-fire repair drain
+running pre-fire strict ledger reconcile
+single-executor preflight passed; starting deterministic SEO nightly
+```
+
+The first natural window must show `PG-WDIF-002` repaired, `PG-TRANS-021` preserved, `PG-WDIN-001` naturally authored/repaired, and all three reaching publish plus plan/Sheet/Vault/live convergence. Then collect three consecutive natural cron windows with claims non-done = 0, active repairs = 0, outbox = 0, needs-human/writeback drift = 0 and no manual intervention. Only after the third clean window may the parent goal be marked complete.
+
 ### Task 3: Proof validator 与 SEO launcher fail-closed 接入
 
 **Files:**

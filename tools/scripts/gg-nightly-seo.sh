@@ -1,28 +1,26 @@
 #!/bin/bash
 # gg-nightly-seo.sh — nightly autonomous SEO authoring + publishing for astrologywiki (Lane B).
 #
-# Fired by com.gengrowth.seo-nightly at 20:00 Asia/Shanghai (machine TZ = Asia/Shanghai).
-# For each UNCHECKED "- [ ] PG-XXX <keyword>" item in the pinned astrology plan, it:
+# Fired by the single SEO launchd owner during the approved Asia/Shanghai window.
+# For each UNCHECKED "- [ ] PG-XXX <keyword>" item in the proven items snapshot, it:
 #   ensure search_volume → --author (Opus orchestrator) → one-row publish scan → preview gate.
 # Clean articles merge to prod automatically; anything the codex fact-gate or links-seo gate
 # rejects PARKS at needs_human and fires a Lark notify (the safety net — full-auto never ships
 # wrong facts). Idempotent: skips items already live or already needs_human-parked.
 #
-# Anti-contamination: GG_AUTOPILOT_PLAN is PINNED to the astrology W22 plan. latestPlan() would
-# otherwise default to the later-dated gengrowth W25 plan and could sweep B2B drafts in _staging/
-# onto www.astrologywiki.com (the publish leg is hardcoded to xdawayer/oracle).
+# Anti-contamination: the launcher supplies a canonical author plan and a distinct immutable
+# queue snapshot. Authoring rechecks canonical ownership; publishing uses only a one-row plan.
 #
 # Manual run:  GG_NIGHTLY_MAX=2 bash tools/scripts/gg-nightly-seo.sh
 # Disable cron: launchctl bootout gui/$(id -u)/com.gengrowth.seo-nightly
 set -uo pipefail
 
-FLOW="$HOME/gengrowth-flow-mvp"
-OPS="$HOME/gengrowth-ops/inbox/06-tasks/tasks"
-PLAN_NAME="2026-05-27-W22-blog-output-plan.md"
-PLAN="$OPS/$PLAN_NAME"
-CLAIMS="$OPS/.autopilot-claims.json"
-LOG="$HOME/Library/Logs/gg-nightly-seo.log"
-LOCK="/tmp/gg-nightly-seo.lock"
+FLOW="${GG_NIGHTLY_FLOW:-$HOME/gengrowth-flow-mvp}"
+PLAN="${GG_SEO_PLAN:-}"
+ITEMS_PLAN="${GG_NIGHTLY_ITEMS_PLAN:-}"
+CLAIMS="${GG_NIGHTLY_CLAIMS:-$HOME/gengrowth-ops/inbox/06-tasks/tasks/.autopilot-claims.json}"
+LOG="${GG_NIGHTLY_LOG:-$HOME/Library/Logs/gg-nightly-seo.log}"
+LOCK="${GG_NIGHTLY_LOCK:-/tmp/gg-nightly-seo.lock}"
 MAX="${GG_NIGHTLY_MAX:-6}"          # cap articles per night (bounds cost + risk)
 SITE="https://www.astrologywiki.com"
 
@@ -43,6 +41,9 @@ export PATH="$HOME/.local/bin:$HOME/.npm-global/bin:/opt/homebrew/bin:/usr/local
 AUTOMATION_ORACLE_DIR="${GG_AUTOMATION_ORACLE_DIR:-}"
 set -a; . "$HOME/.config/gg/_gg.env" 2>/dev/null || true; set +a
 [ -n "$AUTOMATION_ORACLE_DIR" ] && export GG_ORACLE_DIR="$AUTOMATION_ORACLE_DIR"
+export GG_SEO_PLAN="$PLAN"
+export GG_NIGHTLY_ITEMS_PLAN="$ITEMS_PLAN"
+export GG_AUTOPILOT_PLAN="$PLAN"
 
 # 重放 outbox 里发送失败的积压通知（fail-closed 的补发闭环；无积压时零开销）。
 node "$FLOW/tools/scripts/gg-notify.mjs" replay-outbox >/dev/null 2>&1 || true
@@ -51,22 +52,48 @@ unset GG_SITE                  # oracle/astrology default; do NOT set to gengrow
 export GG_CODEX_BIN="$FLOW/tools/scripts/gg-codex-pr-review.mjs"   # plist env on the other lanes
 
 cd "$FLOW" || { echo "no $FLOW"; exit 1; }
-[ -f "$PLAN" ] || { echo "plan not found: $PLAN"; exit 1; }
+case "$PLAN" in
+  /*) ;;
+  *) echo "canonical plan must be an absolute path"; exit 1 ;;
+esac
+case "$ITEMS_PLAN" in
+  /*) ;;
+  *) echo "nightly items plan must be an absolute path"; exit 1 ;;
+esac
+[ "$PLAN" != "$ITEMS_PLAN" ] || { echo "canonical and nightly items plans must be distinct"; exit 1; }
+[ -f "$PLAN" ] || { echo "canonical plan not found: $PLAN"; exit 1; }
+[ -f "$ITEMS_PLAN" ] || { echo "nightly items plan not found: $ITEMS_PLAN"; exit 1; }
 
 # 先恢复明确属于工具/桥接层的临时 authoring park；持久化 CAP/backoff 防止无限重试。
 node "$FLOW/tools/scripts/gg-seo-autopilot.mjs" --auto-retry-parks || true
 
 # Collect unchecked plan items: "- [ ] `PG-XXX-NN` keyword..."  →  "PG-XXX-NN<TAB>keyword"
-ITEMS="$(grep -nE '^- \[ \] *`?PG-[A-Z]+-[0-9]+' "$PLAN" \
-  | sed -E 's/^[0-9]+:- \[ \] *`?(PG-[A-Z]+-[0-9]+)`? *(.*)$/\1\t\2/' \
+ITEMS="$(grep -nE '^- \[ \] *`?PG-[A-Z0-9]+-[0-9]+`?([[:space:]]|$)' "$ITEMS_PLAN" \
+  | sed -E 's/^[0-9]+:- \[ \] *`?(PG-[A-Z0-9]+-[0-9]+)`? *(.*)$/\1\t\2/' \
   | sed -E 's/[[:space:]]*->.*$//; s/`//g')"
 
 if [ -z "$ITEMS" ]; then echo "no unchecked items in plan — nothing to do"; exit 0; fi
 
 n=0
+canonical_plan_owns_unchecked_pid() {
+  local pid="$1"
+  local matches line_count token_count token_value
+  matches="$(grep -E "^- \\[ \\] *\`?${pid}\`?([[:space:]]|$)" "$PLAN" || true)"
+  line_count="$(printf '%s\n' "$matches" | awk 'NF { count += 1 } END { print count + 0 }')"
+  [ "$line_count" = "1" ] || return 1
+  token_count="$(printf '%s\n' "$matches" | grep -oE 'PG-[A-Za-z0-9-]+' | awk 'NF { count += 1 } END { print count + 0 }')"
+  [ "$token_count" = "1" ] || return 1
+  token_value="$(printf '%s\n' "$matches" | grep -oE 'PG-[A-Za-z0-9-]+' || true)"
+  [ "$token_value" = "$pid" ]
+}
+
 while IFS=$'\t' read -r pid kw; do
   [ -z "${pid:-}" ] && continue
   if [ "$n" -ge "$MAX" ]; then echo "reached MAX=$MAX — stopping (remaining items wait for tomorrow)"; break; fi
+  if ! canonical_plan_owns_unchecked_pid "$pid"; then
+    echo "$pid: no longer canonical unchecked — skip"
+    continue
+  fi
   kw="$(echo "$kw" | sed -E 's/[[:space:]]*\(.*$//; s/^[[:space:]]+//; s/[[:space:]]+$//')"
   echo ""
   echo "--- $pid :: $kw ---"
@@ -86,7 +113,7 @@ while IFS=$'\t' read -r pid kw; do
   node tools/scripts/gg-ensure-search-volume.mjs --keyword "$kw" || true
 
   # 1. author (Opus orchestrator). Leaves _staging/<pid>-en.md on PASS; parks on failure.
-  GG_AUTOPILOT_PLAN="$PLAN_NAME" node tools/scripts/gg-seo-autopilot.mjs --author --task "$pid" --limit 1 || true
+  GG_AUTOPILOT_PLAN="$PLAN" node tools/scripts/gg-seo-autopilot.mjs --author --task "$pid" --limit 1 || true
   if [ ! -f "_staging/${pid}-en.md" ]; then echo "$pid: no passing en draft (author parked) — skip publish"; continue; fi
 
   # 2. publish scan via a one-row plan (avoids doScan's plain-order claim → no cross-site sweep)

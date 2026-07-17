@@ -104,12 +104,13 @@ function runnerHarness({
 
   const briefPreflight = join(root, 'brief-preflight.mjs');
   writeFileSync(briefPreflight, [
-    "import { appendFileSync, writeFileSync } from 'node:fs';",
+    "import { appendFileSync, chmodSync, writeFileSync } from 'node:fs';",
     'const args = process.argv.slice(2);',
     "appendFileSync(process.env.GG_TEST_EVENTS, 'brief-preflight\\n');",
     "writeFileSync(process.env.GG_TEST_BRIEF_PREFLIGHT_ARGS, JSON.stringify({ args, silence: process.env.GG_LARK_NOTIFY_SILENCE || null }));",
     ...(briefPreflightMutatesPlan ? [
       "const plan = args[args.indexOf('--plan') + 1];",
+      'chmodSync(plan, 0o600);',
       "writeFileSync(plan, '- [ ] `PG-MUTATED-001` changed during preflight\\n');",
     ] : []),
     "process.stdout.write(JSON.stringify({ mode: 'semantic-repair-only', status: 'noop' }) + '\\n');",

@@ -54,7 +54,19 @@ if ! mkdir "$LOCK" 2>/dev/null; then
   echo "another SEO launchd run holds $LOCK; skip"
   exit 0
 fi
-trap 'rmdir "$LOCK" 2>/dev/null || true' EXIT
+SNAPSHOT_DIR=""
+NIGHTLY_ITEMS_PLAN=""
+cleanup_owned_snapshot_and_lock() {
+  if [[ -n "$SNAPSHOT_DIR" && -n "$NIGHTLY_ITEMS_PLAN" \
+    && "$NIGHTLY_ITEMS_PLAN" == "$SNAPSHOT_DIR/active-plan.md" ]]; then
+    if [[ -f "$NIGHTLY_ITEMS_PLAN" || -L "$NIGHTLY_ITEMS_PLAN" ]]; then
+      rm -f "$NIGHTLY_ITEMS_PLAN" 2>/dev/null || true
+    fi
+    rmdir "$SNAPSHOT_DIR" 2>/dev/null || true
+  fi
+  rmdir "$LOCK" 2>/dev/null || true
+}
+trap cleanup_owned_snapshot_and_lock EXIT
 
 # Preserve the dedicated unattended baseline even when the shared environment
 # file contains an interactive Oracle checkout.
@@ -208,14 +220,47 @@ if [[ "${GG_SEO_SKIP_LEGACY_CHECK:-0}" != "1" ]]; then
   fi
 fi
 
+plan_digest() {
+  local digest_output
+  digest_output="$(shasum -a 256 "$1" 2>/dev/null)" || return 1
+  printf '%s\n' "${digest_output%% *}"
+}
+
+if ! PLAN_DIGEST_BEFORE="$(plan_digest "$PLAN")"; then
+  echo "active brief snapshot could not be proven; abort before nightly"
+  exit 1
+fi
+if ! SNAPSHOT_DIR="$(umask 077; mktemp -d "${TMPDIR:-/tmp}/gg-seo-active-plan.XXXXXX")"; then
+  echo "active brief snapshot could not be proven; abort before nightly"
+  exit 1
+fi
+NIGHTLY_ITEMS_PLAN="$SNAPSHOT_DIR/active-plan.md"
+if ! cp "$PLAN" "$NIGHTLY_ITEMS_PLAN" || ! chmod 400 "$NIGHTLY_ITEMS_PLAN"; then
+  echo "active brief snapshot could not be proven; abort before nightly"
+  exit 1
+fi
+if ! PLAN_DIGEST_AFTER="$(plan_digest "$PLAN")" \
+  || ! SNAPSHOT_DIGEST="$(plan_digest "$NIGHTLY_ITEMS_PLAN")" \
+  || [[ -z "$PLAN_DIGEST_BEFORE" \
+    || "$PLAN_DIGEST_BEFORE" != "$PLAN_DIGEST_AFTER" \
+    || "$PLAN_DIGEST_BEFORE" != "$SNAPSHOT_DIGEST" ]]; then
+  echo "active brief snapshot could not be proven; abort before nightly"
+  exit 1
+fi
+
 echo "running active brief semantic preflight"
 set +e
 GG_LARK_NOTIFY_SILENCE=1 node "$BRIEF_PREFLIGHT" \
-  --plan "$PLAN" \
+  --plan "$NIGHTLY_ITEMS_PLAN" \
   --topic-register-wrapper "$TOPIC_REGISTER" \
   --json
 BRIEF_PREFLIGHT_RC=$?
 set -e
+if ! SNAPSHOT_DIGEST_AFTER_PREFLIGHT="$(plan_digest "$NIGHTLY_ITEMS_PLAN")" \
+  || [[ "$SNAPSHOT_DIGEST_AFTER_PREFLIGHT" != "$SNAPSHOT_DIGEST" ]]; then
+  echo "active brief snapshot changed during preflight; abort before nightly"
+  exit 1
+fi
 if [[ "$BRIEF_PREFLIGHT_RC" -ne 0 ]]; then
   echo "active brief preflight failed rc=$BRIEF_PREFLIGHT_RC; abort before nightly"
   exit "$BRIEF_PREFLIGHT_RC"
@@ -262,7 +307,7 @@ fi
 
 echo "single-executor preflight passed; starting deterministic SEO nightly"
 set +e
-bash "$NIGHTLY"
+GG_SEO_PLAN="$PLAN" GG_NIGHTLY_ITEMS_PLAN="$NIGHTLY_ITEMS_PLAN" bash "$NIGHTLY"
 NIGHTLY_RC=$?
 set -e
 

@@ -480,6 +480,7 @@ function nightlyArtifactHarness({
   activeSnapshotWithEmptyManifest = false,
   activeParkedDefaultClaims = false,
   envOverridesClaims = false,
+  initialAutopilotClaimsMismatch = false,
 } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'gg-nightly-artifact-guard-'));
   const flowRoot = join(root, 'flow');
@@ -558,7 +559,13 @@ function nightlyArtifactHarness({
       GG_NIGHTLY_VALIDATOR_NODE: process.execPath,
       GG_NIGHTLY_FLOW: flowRoot,
       GG_OPS_DIR: ops,
-      ...(envOverridesClaims
+      ...(initialAutopilotClaimsMismatch
+        ? {
+          GG_NIGHTLY_CLAIMS: claims,
+          GG_SEO_CLAIMS: claims,
+          GG_AUTOPILOT_CLAIMS: join(root, 'split-initial-autopilot-claims.json'),
+        }
+        : envOverridesClaims
         ? { GG_NIGHTLY_CLAIMS: claims, GG_SEO_CLAIMS: claims, GG_AUTOPILOT_CLAIMS: claims }
         : (activeParkedDefaultClaims ? {} : { GG_NIGHTLY_CLAIMS: claims })),
       GG_NIGHTLY_LOG: log,
@@ -622,6 +629,20 @@ test('nightly restores the bound claims triple after _gg.env before any business
     for (const env of h.claimsEnv) {
       assert.deepEqual(env, { seo: h.claims, nightly: h.claims, autopilot: h.claims });
     }
+  } finally {
+    rmSync(h.root, { recursive: true, force: true });
+  }
+});
+
+test('nightly fails closed before business work when explicit claims bindings disagree', () => {
+  const h = nightlyArtifactHarness({
+    activeParkedDefaultClaims: true,
+    initialAutopilotClaimsMismatch: true,
+  });
+  try {
+    assert.notEqual(h.result.status, 0, `${h.result.stdout}\n${h.result.stderr}\n${h.log}`);
+    assert.deepEqual(h.claimsEnv, []);
+    assert.match(h.log, /claims.*mismatch/i);
   } finally {
     rmSync(h.root, { recursive: true, force: true });
   }

@@ -29,7 +29,10 @@ ATTESTED_MANIFEST_IDENTITY="${GG_NIGHTLY_ATTESTED_MANIFEST_IDENTITY:-}"
 VALIDATOR_NODE="${GG_NIGHTLY_VALIDATOR_NODE:-}"
 OPS="${GG_OPS_DIR:-$HOME/gengrowth-ops}"
 CANONICAL_CLAIMS="$OPS/inbox-maboyang/06-tasks/tasks/.autopilot-claims.json"
-CLAIMS="${GG_NIGHTLY_CLAIMS:-${GG_SEO_CLAIMS:-$CANONICAL_CLAIMS}}"
+BOUND_NIGHTLY_CLAIMS="${GG_NIGHTLY_CLAIMS:-}"
+BOUND_SEO_CLAIMS="${GG_SEO_CLAIMS:-}"
+BOUND_AUTOPILOT_CLAIMS="${GG_AUTOPILOT_CLAIMS:-}"
+CLAIMS="${BOUND_NIGHTLY_CLAIMS:-${BOUND_SEO_CLAIMS:-${BOUND_AUTOPILOT_CLAIMS:-$CANONICAL_CLAIMS}}}"
 LOG="${GG_NIGHTLY_LOG:-$HOME/Library/Logs/gg-nightly-seo.log}"
 LOCK="${GG_NIGHTLY_LOCK:-/tmp/gg-nightly-seo.lock}"
 MAX="${GG_NIGHTLY_MAX:-6}"          # cap articles per night (bounds cost + risk)
@@ -51,13 +54,12 @@ exec >>"$LOG" 2>&1
 echo ""
 echo "===== nightly-seo run $(date '+%F %T %Z') (max=$MAX) ====="
 
-if [ -n "${GG_NIGHTLY_CLAIMS:-}" ] && [ -n "${GG_SEO_CLAIMS:-}" ] \
-  && [ "$GG_NIGHTLY_CLAIMS" != "$GG_SEO_CLAIMS" ]; then
-  echo "nightly claims path mismatch"
-  exit 1
-fi
-export GG_NIGHTLY_CLAIMS="$CLAIMS"
-export GG_SEO_CLAIMS="$CLAIMS"
+for bound_claims in "$BOUND_NIGHTLY_CLAIMS" "$BOUND_SEO_CLAIMS" "$BOUND_AUTOPILOT_CLAIMS"; do
+  if [ -n "$bound_claims" ] && [ "$bound_claims" != "$CLAIMS" ]; then
+    echo "nightly claims path mismatch"
+    exit 1
+  fi
+done
 
 # single-flight lock (DIRECTORY, like the other gg locks)
 if ! mkdir "$LOCK" 2>/dev/null; then echo "another nightly/publish run holds $LOCK — exit"; exit 0; fi
@@ -125,6 +127,15 @@ export PATH="$HOME/.local/bin:$HOME/.npm-global/bin:/opt/homebrew/bin:/usr/local
 AUTOMATION_ORACLE_DIR="${GG_AUTOMATION_ORACLE_DIR:-}"
 set -a; . "$HOME/.config/gg/_gg.env" 2>/dev/null || true; set +a
 [ -n "$AUTOMATION_ORACLE_DIR" ] && export GG_ORACLE_DIR="$AUTOMATION_ORACLE_DIR"
+export GG_NIGHTLY_CLAIMS="$CLAIMS"
+export GG_SEO_CLAIMS="$CLAIMS"
+export GG_AUTOPILOT_CLAIMS="$CLAIMS"
+if [ "$GG_NIGHTLY_CLAIMS" != "$CLAIMS" ] \
+  || [ "$GG_SEO_CLAIMS" != "$CLAIMS" ] \
+  || [ "$GG_AUTOPILOT_CLAIMS" != "$CLAIMS" ]; then
+  echo "nightly claims path mismatch after env load"
+  exit 1
+fi
 export GG_SEO_PLAN="$PLAN"
 export GG_NIGHTLY_ITEMS_PLAN="$ITEMS_PLAN"
 export GG_AUTOPILOT_PLAN="$PLAN"

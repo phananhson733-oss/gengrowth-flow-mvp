@@ -2638,7 +2638,9 @@ export function buildSemanticRepairProof({ requestedPageIds, summary }) {
       || new Set(evidenceNewClusterIds).size !== evidenceNewClusterIds.length
       || !sameStringSet(evidenceNewClusterIds, repairNewClusterIds)
       || writeEvidence.new_cluster_count !== evidenceNewClusterIds.length
-      || writeEvidence.new_cluster_count !== newClusterCount) {
+      || writeEvidence.new_cluster_count !== newClusterCount
+      || !Number.isInteger(writeEvidence.cluster_cell_write_count)
+      || writeEvidence.cluster_cell_write_count !== evidenceNewClusterIds.length * CLUSTER_FIELDS.length) {
       throw new Error('semantic-repair-only verified write evidence mismatch');
     }
   }

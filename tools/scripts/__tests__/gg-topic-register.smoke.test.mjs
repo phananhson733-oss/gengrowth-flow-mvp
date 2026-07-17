@@ -840,6 +840,49 @@ test('semantic proof rejects changed rows without verified Sheets write evidence
   }), /semantic-repair-only.*verified.*write evidence/i);
 });
 
+test('semantic proof rejects changed-id page-count or new-cluster count drift from verified writes', () => {
+  const baseSummary = {
+    applied: true,
+    page_ids: ['PG-WDIF-002'],
+    new_clusters: 1,
+    cluster_repairs: [{
+      page_id: 'PG-WDIF-002',
+      from: 'old-cluster',
+      to: 'new-cluster',
+      score: 0,
+      provenance: 'semantic-repair-new',
+    }],
+    semantic_write_evidence: verifiedSemanticEvidence({
+      changedPageIds: ['PG-WDIF-002'],
+      newClusterIds: ['new-cluster'],
+    }),
+  };
+  const evidenceCases = [
+    {
+      ...baseSummary.semantic_write_evidence,
+      changed_page_ids: ['PG-WDIF-002', 'PG-OTHER-001'],
+    },
+    {
+      ...baseSummary.semantic_write_evidence,
+      page_write_count: 2,
+    },
+    {
+      ...baseSummary.semantic_write_evidence,
+      new_cluster_count: 2,
+    },
+    {
+      ...baseSummary.semantic_write_evidence,
+      cluster_cell_write_count: 0,
+    },
+  ];
+  for (const semantic_write_evidence of evidenceCases) {
+    assert.throws(() => buildSemanticRepairProof({
+      requestedPageIds: ['PG-WDIF-002'],
+      summary: { ...baseSummary, semantic_write_evidence },
+    }), /semantic-repair-only.*verified write evidence mismatch/i);
+  }
+});
+
 test('semantic proof rejects non-empty skipped or budget-exhausted runs but preserves legal noops', () => {
   const repairSummary = {
     applied: false,

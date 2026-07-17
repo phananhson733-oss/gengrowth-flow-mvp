@@ -37,6 +37,12 @@ RUN_INPUT_PLAN=""
 RUN_INPUT_DIR_IDENTITY=""
 RUN_INPUT_FILE_IDENTITY=""
 RUN_INPUT_SHA256=""
+PUBLISH_PLAN=""
+PUBLISH_PLAN_IDENTITY=""
+PUBLISH_PLAN_SHA256=""
+SCAN_LOG=""
+SCAN_LOG_IDENTITY=""
+SCAN_LOG_SHA256=""
 
 mkdir -p "$(dirname "$LOG")"
 exec >>"$LOG" 2>&1
@@ -65,7 +71,31 @@ cleanup_private_run_input_and_lock() {
       echo "private run plan cleanup ownership unknown; evidence retained"
       cleanup_safe=0
     fi
+    if [ -n "$PUBLISH_PLAN" ] && { [ -e "$PUBLISH_PLAN" ] || [ -L "$PUBLISH_PLAN" ]; }; then
+      if [ -z "$PUBLISH_PLAN_IDENTITY" ] \
+        || [ ! -f "$PUBLISH_PLAN" ] || [ -L "$PUBLISH_PLAN" ] \
+        || [ "$(lstat_identity "$PUBLISH_PLAN" 2>/dev/null || true)" != "$PUBLISH_PLAN_IDENTITY" ]; then
+        echo "private publish plan cleanup ownership unknown; evidence retained"
+        cleanup_safe=0
+      fi
+    elif [ -n "$PUBLISH_PLAN_IDENTITY" ]; then
+      echo "private publish plan cleanup ownership unknown; evidence retained"
+      cleanup_safe=0
+    fi
+    if [ -n "$SCAN_LOG" ] && { [ -e "$SCAN_LOG" ] || [ -L "$SCAN_LOG" ]; }; then
+      if [ -z "$SCAN_LOG_IDENTITY" ] \
+        || [ ! -f "$SCAN_LOG" ] || [ -L "$SCAN_LOG" ] \
+        || [ "$(lstat_identity "$SCAN_LOG" 2>/dev/null || true)" != "$SCAN_LOG_IDENTITY" ]; then
+        echo "private scan log cleanup ownership unknown; evidence retained"
+        cleanup_safe=0
+      fi
+    elif [ -n "$SCAN_LOG_IDENTITY" ]; then
+      echo "private scan log cleanup ownership unknown; evidence retained"
+      cleanup_safe=0
+    fi
     if [ "$cleanup_safe" -eq 1 ]; then
+      if [ -n "$SCAN_LOG_IDENTITY" ]; then rm -f "$SCAN_LOG" 2>/dev/null || cleanup_safe=0; fi
+      if [ "$cleanup_safe" -eq 1 ] && [ -n "$PUBLISH_PLAN_IDENTITY" ]; then rm -f "$PUBLISH_PLAN" 2>/dev/null || cleanup_safe=0; fi
       if [ -n "$RUN_INPUT_FILE_IDENTITY" ]; then rm -f "$RUN_INPUT_PLAN" 2>/dev/null || cleanup_safe=0; fi
       if [ "$cleanup_safe" -eq 1 ] \
         && [ "$(lstat_identity "$RUN_INPUT_DIR" 2>/dev/null || true)" = "$RUN_INPUT_DIR_IDENTITY" ]; then
@@ -166,6 +196,31 @@ private_run_input_is_valid() {
     && [ -d "$RUN_INPUT_DIR" ] && [ ! -L "$RUN_INPUT_DIR" ] \
     && [ "$(lstat_identity "$RUN_INPUT_DIR" 2>/dev/null || true)" = "$RUN_INPUT_DIR_IDENTITY" ] \
     && bound_file_is_valid "$RUN_INPUT_PLAN" "$RUN_INPUT_FILE_IDENTITY" "$RUN_INPUT_SHA256"
+}
+
+private_publish_plan_is_valid() {
+  private_run_input_is_valid \
+    && [ -n "$PUBLISH_PLAN_IDENTITY" ] && [ -n "$PUBLISH_PLAN_SHA256" ] \
+    && bound_file_is_valid "$PUBLISH_PLAN" "$PUBLISH_PLAN_IDENTITY" "$PUBLISH_PLAN_SHA256"
+}
+
+private_publish_artifacts_are_valid() {
+  private_publish_plan_is_valid \
+    && [ -n "$SCAN_LOG_IDENTITY" ] && [ -n "$SCAN_LOG_SHA256" ] \
+    && bound_file_is_valid "$SCAN_LOG" "$SCAN_LOG_IDENTITY" "$SCAN_LOG_SHA256"
+}
+
+remove_private_publish_artifacts() {
+  private_publish_artifacts_are_valid || return 1
+  rm -f "$SCAN_LOG" || return 1
+  private_publish_plan_is_valid || return 1
+  rm -f "$PUBLISH_PLAN" || return 1
+  PUBLISH_PLAN=""
+  PUBLISH_PLAN_IDENTITY=""
+  PUBLISH_PLAN_SHA256=""
+  SCAN_LOG=""
+  SCAN_LOG_IDENTITY=""
+  SCAN_LOG_SHA256=""
 }
 
 if ! attested_bundle_is_valid; then
@@ -303,13 +358,60 @@ while IFS=$'\t' read -r pid kw_base64 raw_line_base64; do
 
   # 2. publish scan via a one-row plan (avoids doScan's plain-order claim → no cross-site sweep)
   if ! attested_raw_row_is_current; then echo "$pid: canonical raw row changed before publish plan — skip until next preflight"; continue; fi
-  oneplan="/tmp/nightly-plan-$pid.md"
-  printf '# nightly targeted publish\n\n%s\n' "$raw_line" > "$oneplan"
-  scanlog="/tmp/nightly-scan-$pid.log"
-  if ! attested_raw_row_is_current; then echo "$pid: canonical raw row changed before publish scan — skip until next preflight"; continue; fi
-  GG_AUTOPILOT_PLAN="$oneplan" node tools/scripts/gg-seo-autopilot.mjs --limit 1 >"$scanlog" 2>&1 || true
-  cat "$scanlog"
-  branch="$(grep -oE 'seo/auto/[0-9]{4}-[0-9]{2}-[0-9]{2}-'"$pid" "$scanlog" | head -1)"
+  PUBLISH_PLAN="$RUN_INPUT_DIR/nightly-plan-$pid.md"
+  PUBLISH_PLAN_IDENTITY=""
+  PUBLISH_PLAN_SHA256=""
+  SCAN_LOG="$RUN_INPUT_DIR/nightly-scan-$pid.log"
+  SCAN_LOG_IDENTITY=""
+  SCAN_LOG_SHA256=""
+  if ! "$VALIDATOR_NODE" -e '
+    const { writeFileSync } = require("node:fs");
+    const [path, encodedRow] = process.argv.slice(1);
+    const rawRow = Buffer.from(encodedRow, "base64").toString("utf8");
+    writeFileSync(path, `# nightly targeted publish\n\n${rawRow}\n`, { encoding: "utf8", flag: "wx", mode: 0o400 });
+  ' "$PUBLISH_PLAN" "$raw_line_base64"; then
+    echo "$pid: private publish plan could not be created exclusively"
+    exit 1
+  fi
+  PUBLISH_PLAN_IDENTITY="$(lstat_identity "$PUBLISH_PLAN" 2>/dev/null || true)"
+  PUBLISH_PLAN_SHA256="$(file_digest "$PUBLISH_PLAN" 2>/dev/null || true)"
+  if ! private_publish_plan_is_valid; then
+    echo "$pid: private publish plan identity could not be proven"
+    exit 1
+  fi
+  if ! attested_raw_row_is_current || ! private_publish_plan_is_valid; then echo "$pid: bound input changed before publish scan — stop"; exit 1; fi
+  if ! GG_AUTOPILOT_PLAN="$PUBLISH_PLAN" "$VALIDATOR_NODE" -e '
+    const { closeSync, openSync } = require("node:fs");
+    const { spawnSync } = require("node:child_process");
+    const [logPath] = process.argv.slice(1);
+    let fd;
+    try {
+      fd = openSync(logPath, "wx", 0o400);
+      const run = spawnSync("node", ["tools/scripts/gg-seo-autopilot.mjs", "--limit", "1"], {
+        env: process.env,
+        stdio: ["ignore", fd, fd],
+      });
+      if (run.error) process.exitCode = 1;
+    } catch {
+      process.exitCode = 1;
+    } finally {
+      if (fd !== undefined) closeSync(fd);
+    }
+  ' "$SCAN_LOG"; then
+    echo "$pid: private scan log could not be created exclusively"
+    exit 1
+  fi
+  SCAN_LOG_IDENTITY="$(lstat_identity "$SCAN_LOG" 2>/dev/null || true)"
+  SCAN_LOG_SHA256="$(file_digest "$SCAN_LOG" 2>/dev/null || true)"
+  if ! private_publish_artifacts_are_valid; then
+    echo "$pid: private publish artifacts could not be proven after scan"
+    exit 1
+  fi
+  cat "$SCAN_LOG" || { echo "$pid: private scan log could not be read"; exit 1; }
+  if ! private_publish_artifacts_are_valid; then echo "$pid: private publish artifacts changed while reading scan"; exit 1; fi
+  branch="$(grep -oE 'seo/auto/[0-9]{4}-[0-9]{2}-[0-9]{2}-'"$pid" "$SCAN_LOG" | head -1)"
+  if ! private_publish_artifacts_are_valid; then echo "$pid: private publish artifacts changed while deriving branch"; exit 1; fi
+  if ! remove_private_publish_artifacts; then echo "$pid: private publish artifacts cleanup could not be proven"; exit 1; fi
   if [ -z "$branch" ]; then echo "$pid: publish scan produced no branch — skip gate"; continue; fi
 
   # 3. preview gate: wait → verify → 3-dim review → codex fact gate → merge (or PARK)

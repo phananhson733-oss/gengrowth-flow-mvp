@@ -22,6 +22,7 @@ aliases:
 - 执行 Phase 2 索引监控：两个产品的官方 Search Console Sitemap API 提交成功，URL Inspection 无失败。
 - astrologywiki 完成 11 条到期检查（9 条转已收录、2 条继续监控），最终申请队列为 18 条；gengrowth 无到期 URL、队列为 2 条。
 - 执行结果复盘表现同步：两个产品均成功写回，但没有恰好到 D14/D30/D60 的到期 URL；优化任务报告已生成。
+- 用户确认 SEO 0 人值守方案 A；已形成 Active Brief 确定性 Preflight 书面设计并完成自审，待书面 spec 审核后进入实现计划与 TDD。
 
 ---
 
@@ -88,5 +89,17 @@ After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-s
 **🤖 回答：**
 
 执行唯一允许入口 `bash tools/scripts/gg-recap-performance-tick.sh`，运行窗口为 10:01:53–10:01:59 CST，退出码为 0，日志以 `recap performance ok` 收束。astrologywiki（workbook `…jyzcQc`、`sc-domain:astrologywiki.com`、GA4 `properties/524765570`）：exact-milestone rows=0、updated=229、tasks=231，D14/D30/D60 到期已收录 URL 覆盖均为 0/0；报告 `~/gengrowth-agents/reports/recap-performance/2026-07-17-astrologywiki-optimization-tasks.md`，任务 P0=11、技术排查=136、P1=9、观察=75。gengrowth（workbook `…ZTIRA8`、`sc-domain:gengrowth.ai`、同一 GA4 property）：exact-milestone rows=0、updated=47、tasks=60，D14/D30/D60 覆盖均为 0/0；报告 `~/gengrowth-agents/reports/recap-performance/2026-07-17-gengrowth-optimization-tasks.md`，任务 P0=0、技术排查=47、P1=5、观察=8。日志未输出独立非到期/跳过行计数；未见失败、凭据或 property 缺失边界。未执行手工 Sheet 编辑、repair/backfill 参数、发布、部署、页面修改、GSC Request Indexing 或 Google Indexing API。
+
+---
+
+### Q4 — 11:47
+
+**🙋 提问：**
+
+确认
+
+**🤖 回答：**
+
+用户确认采用方案 A：在同一 SEO fire 内，对 pinned W22 plan 的 unchecked page IDs 先执行 fail-closed 的确定性 Topic Register semantic-repair-only preflight，成功后才进入 nightly author / publish。已创建并自审 `docs/superpowers/specs/2026-07-17-seo-brief-preflight-design.md`，明确 existing-row-only、禁止生成新 page ID、结构化写入证明、锁忙非零、自然 cron 重试、无中间通知，以及自然发布后连续 3 个 cron 窗口的最终验收标准。按照 brainstorming 审批门槛，下一步等待用户审核书面 spec；确认后再进入实现计划与 TDD，不在本轮提前修改生产代码。
 
 ---

@@ -481,6 +481,7 @@ function nightlyArtifactHarness({
   activeParkedDefaultClaims = false,
   envOverridesClaims = false,
   initialAutopilotClaimsMismatch = false,
+  allClaimsSameSplit = false,
 } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'gg-nightly-artifact-guard-'));
   const flowRoot = join(root, 'flow');
@@ -489,9 +490,8 @@ function nightlyArtifactHarness({
   const snapshot = join(root, 'snapshot.md');
   const manifest = join(root, 'attested.json');
   const ops = join(root, 'ops');
-  const claims = activeParkedDefaultClaims
-    ? join(ops, 'inbox-maboyang/06-tasks/tasks/.autopilot-claims.json')
-    : join(root, 'claims.json');
+  const claims = join(ops, 'inbox-maboyang/06-tasks/tasks/.autopilot-claims.json');
+  const splitClaims = join(root, 'same-split-claims.json');
   const legacyClaims = join(ops, 'inbox/06-tasks/tasks/.autopilot-claims.json');
   const calls = join(root, 'business-calls.log');
   const claimsCapture = join(root, 'claims-capture.log');
@@ -521,6 +521,7 @@ function nightlyArtifactHarness({
   writeFileSync(claims, activeParkedDefaultClaims
     ? `${JSON.stringify({ [parkedPageId]: { status: 'needs_human', site: 'astrologywiki' } })}\n`
     : '{}\n');
+  writeFileSync(splitClaims, '{}\n');
   if (envOverridesClaims) {
     const configDir = join(root, '.config/gg');
     mkdirSync(configDir, { recursive: true });
@@ -565,6 +566,12 @@ function nightlyArtifactHarness({
           GG_SEO_CLAIMS: claims,
           GG_AUTOPILOT_CLAIMS: join(root, 'split-initial-autopilot-claims.json'),
         }
+        : allClaimsSameSplit
+        ? {
+          GG_NIGHTLY_CLAIMS: splitClaims,
+          GG_SEO_CLAIMS: splitClaims,
+          GG_AUTOPILOT_CLAIMS: splitClaims,
+        }
         : envOverridesClaims
         ? { GG_NIGHTLY_CLAIMS: claims, GG_SEO_CLAIMS: claims, GG_AUTOPILOT_CLAIMS: claims }
         : (activeParkedDefaultClaims ? {} : { GG_NIGHTLY_CLAIMS: claims })),
@@ -584,6 +591,7 @@ function nightlyArtifactHarness({
     log: existsSync(log) ? readFileSync(log, 'utf8') : '',
     legacyClaims,
     claims,
+    splitClaims,
   };
 }
 
@@ -641,6 +649,18 @@ test('nightly fails closed before business work when explicit claims bindings di
   });
   try {
     assert.notEqual(h.result.status, 0, `${h.result.stdout}\n${h.result.stderr}\n${h.log}`);
+    assert.deepEqual(h.claimsEnv, []);
+    assert.match(h.log, /claims.*mismatch/i);
+  } finally {
+    rmSync(h.root, { recursive: true, force: true });
+  }
+});
+
+test('nightly rejects a self-consistent split claims triple before any business child', () => {
+  const h = nightlyArtifactHarness({ allClaimsSameSplit: true });
+  try {
+    assert.notEqual(h.result.status, 0, `${h.result.stdout}\n${h.result.stderr}\n${h.log}`);
+    assert.equal(h.calls, '', 'a non-canonical claims triple must stop before business children');
     assert.deepEqual(h.claimsEnv, []);
     assert.match(h.log, /claims.*mismatch/i);
   } finally {

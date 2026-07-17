@@ -57,6 +57,19 @@ const clusters = [
   },
 ];
 
+const SEMANTIC_REPAIR_PROOF_KEYS = [
+  'mode',
+  'status',
+  'product',
+  'requested_page_ids',
+  'selected_page_ids',
+  'changed_page_ids',
+  'cluster_repairs',
+  'new_cluster_count',
+  'created_page_id_count',
+  'cross_product_write_count',
+].sort();
+
 test('celebrity and non-football athlete birth-chart topics route to celebrity_zodiac_trending', () => {
   for (const keyword of [
     'serena williams birth chart',
@@ -783,6 +796,7 @@ test('semantic proof proves only requested existing repairs', () => {
     },
   });
   assert.equal(proof.status, 'applied');
+  assert.deepEqual(Object.keys(proof).sort(), SEMANTIC_REPAIR_PROOF_KEYS);
   assert.deepEqual(proof.changed_page_ids, ['PG-WDIF-002']);
   assert.equal(proof.created_page_id_count, 0);
   assert.equal(proof.cross_product_write_count, 0);

@@ -28,6 +28,9 @@
 #   GG_TOPIC_REGISTER_TAXONOMY_ONLY=0          # repair option fields only; do not write v2 preprocessor columns
 #   GG_TOPIC_REGISTER_NO_NOTIFY=0
 #   GG_TOPIC_REGISTER_REPAIR_PAGE_IDS=""       # comma-separated PG-* ids to reassign
+#   GG_TOPIC_REGISTER_SEMANTIC_REPAIR_ONLY=0    # only repair existing semantic fields; never generate/audit/reassign
+#   GG_TOPIC_REGISTER_REQUIRE_RUN=0             # 1 = lock skip is a temporary failure (exit 75)
+#   GG_TOPIC_REGISTER_RESULT_FILE=""            # optional atomic pure-JSON result artifact
 #   GG_TOPIC_REGISTER_REPAIR_KEYWORDS=""       # comma-separated target keywords to reassign
 #   GG_TOPIC_REGISTER_REASSIGN_EXISTING=0      # ignore existing page_id/cluster_id for repair
 #   GG_TOPIC_REGISTER_TIMEOUT=900
@@ -76,6 +79,9 @@ OVERRIDE_NAMES=(
   GG_TOPIC_REGISTER_TAXONOMY_ONLY
   GG_TOPIC_REGISTER_NO_NOTIFY
   GG_TOPIC_REGISTER_REPAIR_PAGE_IDS
+  GG_TOPIC_REGISTER_SEMANTIC_REPAIR_ONLY
+  GG_TOPIC_REGISTER_REQUIRE_RUN
+  GG_TOPIC_REGISTER_RESULT_FILE
   GG_TOPIC_REGISTER_REPAIR_KEYWORDS
   GG_TOPIC_REGISTER_REASSIGN_EXISTING
   GG_TOPIC_REGISTER_TIMEOUT
@@ -119,6 +125,9 @@ OVERWRITE="${GG_TOPIC_REGISTER_OVERWRITE:-0}"
 TAXONOMY_ONLY="${GG_TOPIC_REGISTER_TAXONOMY_ONLY:-0}"
 NO_NOTIFY="${GG_TOPIC_REGISTER_NO_NOTIFY:-0}"
 REPAIR_PAGE_IDS="${GG_TOPIC_REGISTER_REPAIR_PAGE_IDS:-}"
+SEMANTIC_REPAIR_ONLY="${GG_TOPIC_REGISTER_SEMANTIC_REPAIR_ONLY:-0}"
+REQUIRE_RUN="${GG_TOPIC_REGISTER_REQUIRE_RUN:-0}"
+RESULT_FILE="${GG_TOPIC_REGISTER_RESULT_FILE:-}"
 REPAIR_KEYWORDS="${GG_TOPIC_REGISTER_REPAIR_KEYWORDS:-}"
 REASSIGN_EXISTING="${GG_TOPIC_REGISTER_REASSIGN_EXISTING:-0}"
 TIMEOUT="${GG_TOPIC_REGISTER_TIMEOUT:-900}"
@@ -165,6 +174,9 @@ build_cmd() {
   if [ -n "$REPAIR_PAGE_IDS" ]; then
     CMD+=(--repair-page-ids "$REPAIR_PAGE_IDS")
   fi
+  if [ "$SEMANTIC_REPAIR_ONLY" = "1" ]; then
+    CMD+=(--semantic-repair-only)
+  fi
   if [ -n "$REPAIR_KEYWORDS" ]; then
     CMD+=(--repair-keywords "$REPAIR_KEYWORDS")
   fi
@@ -191,25 +203,29 @@ print_cmd() {
 
 build_cmd
 
+write_result() {
+  local json="$1"
+  if [ -n "$RESULT_FILE" ]; then
+    mkdir -p "$(dirname "$RESULT_FILE")"
+    local tmp_result="${RESULT_FILE}.tmp.$$"
+    printf '%s\n' "$json" > "$tmp_result"
+    mv "$tmp_result" "$RESULT_FILE"
+  fi
+}
+
 log_skip_json() {
   local reason="$1"
   local active_pid="${2:-}"
-  local dry_run="true"
-  if [ "$APPLY" = "1" ]; then
-    dry_run="false"
+  local ok="true"
+  if [ "$REQUIRE_RUN" = "1" ]; then ok="false"; fi
+  local json
+  if [ -n "$active_pid" ]; then
+    json="$(printf '{"ok":%s,"skipped": true,"reason":"%s","active_pid":"%s"}' "$ok" "$reason" "$active_pid")"
+  else
+    json="$(printf '{"ok":%s,"skipped": true,"reason":"%s"}' "$ok" "$reason")"
   fi
-  {
-    printf '{\n'
-    printf '  "ok": true,\n'
-    printf '  "dry_run": %s,\n' "$dry_run"
-    printf '  "skipped": true,\n'
-    printf '  "reason": "%s",\n' "$reason"
-    if [ -n "$active_pid" ]; then
-      printf '  "active_pid": "%s",\n' "$active_pid"
-    fi
-    printf '  "summaries": []\n'
-    printf '}\n'
-  } >> "$LOG"
+  printf '%s\n' "$json" >> "$LOG"
+  write_result "$json"
 }
 
 if [ "${1:-}" = "--print-command" ]; then
@@ -222,6 +238,7 @@ if [ -d "$LOCK" ]; then
   if [ -n "$lock_pid" ] && kill -0 "$lock_pid" 2>/dev/null; then
     echo "$(date '+%F %T') skip — previous topic-register run (pid $lock_pid) still active" >> "$LOG"
     log_skip_json "lock_active" "$lock_pid"
+    if [ "$REQUIRE_RUN" = "1" ]; then exit 75; fi
     exit 0
   fi
   rm -rf "$LOCK" 2>/dev/null
@@ -230,6 +247,7 @@ fi
 if ! mkdir "$LOCK" 2>/dev/null; then
   echo "$(date '+%F %T') skip — lost mutex race" >> "$LOG"
   log_skip_json "lock_race"
+  if [ "$REQUIRE_RUN" = "1" ]; then exit 75; fi
   exit 0
 fi
 echo "$$" > "$LOCK/pid"
@@ -242,15 +260,16 @@ fi
 
 echo "$(date '+%F %T') topic-register start (pid $$, mode $mode, products $PRODUCTS, limit $LIMIT)" >> "$LOG"
 
-(
-  echo "$(date '+%F %T') command: $(print_cmd)"
-  if command -v gtimeout >/dev/null 2>&1; then
-    gtimeout -k 30 "$TIMEOUT" "${CMD[@]}"
-  else
-    "${CMD[@]}"
-  fi
-) >> "$LOG" 2>&1
-rc=$?
+echo "$(date '+%F %T') command: $(print_cmd)" >> "$LOG"
+if command -v gtimeout >/dev/null 2>&1; then
+  RUN_JSON="$(gtimeout -k 30 "$TIMEOUT" "${CMD[@]}" 2>> "$LOG")"
+  rc=$?
+else
+  RUN_JSON="$("${CMD[@]}" 2>> "$LOG")"
+  rc=$?
+fi
+printf '%s\n' "$RUN_JSON" >> "$LOG"
+write_result "$RUN_JSON"
 
 case "$rc" in
   0)

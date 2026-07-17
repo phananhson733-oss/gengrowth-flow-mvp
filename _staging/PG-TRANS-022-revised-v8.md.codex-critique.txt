@@ -1,0 +1,8 @@
+- “27 是固定前缘/opening boundary”说得过硬 → 改成“27 常是 pre-return 或宽泛窗口前段；精确合相多在约 29 岁，宽窗口取决于 orb、星座进入和逆行，可延到 30/31”。
+- “精确回到 natal degree”和“两到三年窗口”被混在一起 → 明确区分：精确合相是具体日期/数次命中，2-3 年是按 orb 或整星座 transit 看的 broader process。
+- “natal Saturn 度数越早越接近 27”过度简化 → 改为用星历/计算器说明：度数只决定 Saturn 进入同一星座后何时精确命中，还受出生时 Saturn 位置、逆行和实际运行速度影响。
+- Saturn square 段有明显占星时间线问题 → 修正为第一次 square 约 7 岁、opposition 约 14-15 岁、waning square 约 21-22 岁；不要说 Saturn square 通常也在 late twenties。
+- “不同网站年龄差异只是 rounding”不够准确 → 改成差异来自 exact conjunction、orb-based window、sign-based window、retrograde passes/shadow 的定义不同。
+- 内容对 house/sign 的解释太泛 → 加 3-4 个具体例子：10 宫职业/权威，7 宫关系承诺，4 宫家庭根基，2 宫金钱与自我价值，并给每个一个可执行反思问题。
+- “In my years applying pattern-recognition frameworks”像无凭据的 AI 口吻 → 若作者无真实资历就删掉，改用更具体的编辑角度：为什么 27 岁搜索者会误把焦虑当成“已经失败”。
+- Sources 目前太空泛 → 补实际出处链接/书名：NASA Saturn orbit source，以及 Rudhyar/Greene 的具体作品；否则删掉权威背书句，避免显得装饰性引用。

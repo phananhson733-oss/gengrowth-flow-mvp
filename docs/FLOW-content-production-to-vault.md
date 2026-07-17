@@ -23,7 +23,7 @@ astrologywiki.com SEO 文章从选题到上线、收录推送、知识库归档�
 
 ## 阶段 0 — 选题 + 事实核实（最关键）
 
-- 选题来自 W22 plan：`~/Code/gengrowth-ops/inbox/06-tasks/tasks/2026-05-27-W22-blog-output-plan.md`（取唯一未勾选 `[ ]` 批次）。
+- 选题来自 W22 plan：`~/Code/gengrowth-ops/inbox-maboyang/06-tasks/tasks/2026-05-27-W22-blog-output-plan.md`（取唯一未勾选 `[ ]` 批次）。
 - **先用 WebSearch 锁定每篇的真实事实**（生日→太阳星座、球队晋级、相位几何、赛程）。
   占星事实准确性是 Codex 每次必抓的失败点；**先核实再撰写**能把 Codex CRITICAL 降到 0。
 - 固定 2026 事实基准（Codex 已验证）：World Cup 6/11–7/19；开幕 Estadio Azteca（非 MetLife）；

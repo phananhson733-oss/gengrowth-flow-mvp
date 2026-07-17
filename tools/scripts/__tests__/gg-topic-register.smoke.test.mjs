@@ -9,6 +9,7 @@ import { join } from 'node:path';
 import { test } from 'node:test';
 import {
   associatedKeywordsForPage,
+  buildSemanticRepairProof,
   buildTrendEvidenceCache,
   CLUSTER_FIELDS,
   chooseClusterForKeyword,
@@ -22,6 +23,7 @@ import {
   runPreprocessorForPlan,
   scoreClusterKeyword,
   selectCandidateRowsForPlan,
+  semanticRepairRequestFromArgs,
   titleCase,
   valuesBatchForPageRow,
 } from '../gg-topic-register.mjs';
@@ -345,6 +347,192 @@ test('planRows creates a singleton cluster only for a zero-score deterministic s
   assert.equal(plan.updates[0].fields.cluster_id, 'what_is_my_love_language');
   assert.equal(plan.updates[0].fields.Entity, 'My Love Language');
   assert.doesNotMatch(plan.updates[0].fields.Logic, /Career/);
+});
+
+test('semantic-repair-only accepts only bounded astrologywiki apply requests', () => {
+  assert.deepEqual(semanticRepairRequestFromArgs({
+    semantic_repair_only: true,
+    product: 'astrologywiki',
+    apply: true,
+    no_notify: true,
+    limit: '2',
+    repair_page_ids: 'PG-WDIF-002,PG-WDIN-001',
+  }), ['PG-WDIF-002', 'PG-WDIN-001']);
+
+  const invalid = [
+    { product: 'all', apply: true, no_notify: true, limit: '1', repair_page_ids: 'PG-WDIF-002' },
+    { product: 'astrologywiki', no_notify: true, limit: '1', repair_page_ids: 'PG-WDIF-002' },
+    { product: 'astrologywiki', apply: true, limit: '1', repair_page_ids: 'PG-WDIF-002' },
+    { product: 'astrologywiki', apply: true, no_notify: true, llm: 'claude', limit: '1', repair_page_ids: 'PG-WDIF-002' },
+    { product: 'astrologywiki', apply: true, no_notify: true, discover_evidence: true, limit: '1', repair_page_ids: 'PG-WDIF-002' },
+    { product: 'astrologywiki', apply: true, no_notify: true, include_incomplete: true, limit: '1', repair_page_ids: 'PG-WDIF-002' },
+    { product: 'astrologywiki', apply: true, no_notify: true, reassign_existing: true, limit: '1', repair_page_ids: 'PG-WDIF-002' },
+    { product: 'astrologywiki', apply: true, no_notify: true, limit: '2', repair_page_ids: 'PG-WDIF-002' },
+  ];
+  for (const args of invalid) {
+    assert.throws(
+      () => semanticRepairRequestFromArgs({ semantic_repair_only: true, ...args }),
+      /semantic-repair-only/,
+    );
+  }
+});
+
+test('semantic-repair-only accepts an empty zero-write target set', () => {
+  assert.deepEqual(semanticRepairRequestFromArgs({
+    semantic_repair_only: true,
+    product: 'astrologywiki',
+    apply: true,
+    no_notify: true,
+    limit: '0',
+  }), []);
+});
+
+test('semantic-repair-only selects only safe active existing mismatches and no-ops correct rows', () => {
+  const pageHeader = ['Target Keyword', ...PAGE_REQUIRED_FIELDS, 'CTA', 'Status'];
+  const cluster = (overrides) => CLUSTER_FIELDS.map((field) => overrides[field] || '');
+  const careerClusterRow = cluster({
+    cluster_id: 'why_do_i_feel_stuck_in_my_career',
+    cluster_name: 'Why Do I Feel Stuck in My Career',
+    primary_entity: 'Career Stagnation',
+    jtbd: 'Understand career stagnation',
+    content_angle: 'Career reflection',
+    keywords_included: 'career stagnation, feeling stuck at work',
+  });
+  const loveLanguageClusterRow = cluster({
+    cluster_id: 'love_relationships',
+    cluster_name: 'Love and Relationships',
+    primary_entity: 'Relationship Patterns',
+    jtbd: 'Understand love languages and relationship patterns',
+    content_angle: 'Explain love language patterns with clear boundaries',
+    keywords_included: 'love language, relationship compatibility, attachment patterns',
+    cta_primary: '星盘页',
+  });
+  const completeRow = ({ clusterId, friction, logic }) => [
+    'what is my love language',
+    'what is my love language meaning',
+    'Info',
+    'T2',
+    'Definition',
+    'What Is My Love Language',
+    friction,
+    logic,
+    'PG-WDIF-002',
+    clusterId,
+    'Wiki',
+    'Explain love language patterns with clear boundaries.',
+    'N',
+    '星盘页',
+    '待写',
+  ];
+  const correctLoveLanguageRow = completeRow({
+    clusterId: 'love_relationships',
+    friction: 'Readers need a direct explanation with clear interpretive boundaries.',
+    logic: 'Love language patterns connect to relationship patterns without deterministic claims.',
+  });
+  const repairableWrongRow = completeRow({
+    clusterId: 'why_do_i_feel_stuck_in_my_career',
+    friction: 'This manually reviewed brief explains the relationship query.',
+    logic: 'This manually reviewed relationship logic must replace unrelated career taxonomy.',
+  });
+  const unsafeWrongRow = completeRow({
+    clusterId: 'why_do_i_feel_stuck_in_my_career',
+    friction: 'This manually researched friction is intentionally not a deterministic scaffold.',
+    logic: 'This manually researched logic is intentionally unrelated to scaffold syntax.',
+  });
+
+  const correctPlan = planRows({
+    profile: PRODUCT_PROFILES.astrologywiki,
+    pagesRaw: [pageHeader, correctLoveLanguageRow],
+    clustersRaw: [CLUSTER_FIELDS, loveLanguageClusterRow],
+    limit: 1,
+    repairPageIds: new Set(['PG-WDIF-002']),
+    activePageIds: new Set(['PG-WDIF-002']),
+    semanticRepairOnly: true,
+  });
+  assert.equal(correctPlan.selectionMode, 'semantic_repair_only');
+  assert.deepEqual(correctPlan.updates, []);
+  assert.deepEqual(correctPlan.promptWrites, []);
+
+  const repairPlan = planRows({
+    profile: PRODUCT_PROFILES.astrologywiki,
+    pagesRaw: [pageHeader, repairableWrongRow],
+    clustersRaw: [CLUSTER_FIELDS, careerClusterRow, loveLanguageClusterRow],
+    limit: 1,
+    repairPageIds: new Set(['PG-WDIF-002']),
+    activePageIds: new Set(['PG-WDIF-002']),
+    semanticRepairOnly: true,
+  });
+  assert.equal(repairPlan.selectionMode, 'semantic_repair_only');
+  assert.deepEqual(repairPlan.updates.map((item) => item.pageId), ['PG-WDIF-002']);
+  assert.equal(repairPlan.updates[0].fields.cluster_id, 'love_relationships');
+  assert.deepEqual(repairPlan.promptWrites, []);
+  assert.deepEqual(repairPlan.taskLines, []);
+
+  assert.throws(() => planRows({
+    profile: PRODUCT_PROFILES.astrologywiki,
+    pagesRaw: [pageHeader, unsafeWrongRow],
+    clustersRaw: [CLUSTER_FIELDS, careerClusterRow],
+    limit: 1,
+    repairPageIds: new Set(['PG-WDIF-002']),
+    activePageIds: new Set(['PG-WDIF-002']),
+    semanticRepairOnly: true,
+  }), /unsafe semantic mismatch.*PG-WDIF-002/i);
+
+  assert.throws(() => planRows({
+    profile: PRODUCT_PROFILES.astrologywiki,
+    pagesRaw: [pageHeader, correctLoveLanguageRow],
+    clustersRaw: [CLUSTER_FIELDS, loveLanguageClusterRow],
+    limit: 1,
+    repairPageIds: new Set(['PG-UNKNOWN-999']),
+    activePageIds: new Set(['PG-UNKNOWN-999']),
+    semanticRepairOnly: true,
+  }), /missing existing page id.*PG-UNKNOWN-999/i);
+
+  assert.throws(() => planRows({
+    profile: PRODUCT_PROFILES.astrologywiki,
+    pagesRaw: [pageHeader, correctLoveLanguageRow],
+    clustersRaw: [CLUSTER_FIELDS, loveLanguageClusterRow],
+    limit: 1,
+    repairPageIds: new Set(['PG-WDIF-002']),
+    activePageIds: new Set(),
+    semanticRepairOnly: true,
+  }), /inactive existing page id.*PG-WDIF-002/i);
+});
+
+test('semantic proof proves only requested existing repairs', () => {
+  const proof = buildSemanticRepairProof({
+    requestedPageIds: ['PG-WDIF-002', 'PG-WDIN-001'],
+    summary: {
+      page_ids: ['PG-WDIF-002'],
+      new_clusters: 1,
+      cluster_repairs: [{
+        page_id: 'PG-WDIF-002',
+        from: 'why_do_i_feel_stuck_in_my_career',
+        to: 'what_is_my_love_language',
+        score: 0,
+        provenance: 'semantic-repair-new',
+      }],
+    },
+  });
+  assert.equal(proof.status, 'applied');
+  assert.deepEqual(proof.changed_page_ids, ['PG-WDIF-002']);
+  assert.equal(proof.created_page_id_count, 0);
+  assert.equal(proof.cross_product_write_count, 0);
+});
+
+test('semantic proof rejects expanded or unproven writes', () => {
+  assert.throws(() => buildSemanticRepairProof({
+    requestedPageIds: ['PG-WDIF-002'],
+    summary: { page_ids: ['PG-OTHER-001'], new_clusters: 0, cluster_repairs: [] },
+  }), /outside request/);
+  assert.throws(() => buildSemanticRepairProof({
+    requestedPageIds: ['PG-WDIF-002'],
+    summary: {
+      page_ids: ['PG-WDIF-002'],
+      new_clusters: 1,
+      cluster_repairs: [{ page_id: 'PG-WDIF-002', from: 'old', to: 'new', score: 0, provenance: 'semantic-repair' }],
+    },
+  }), /new cluster provenance mismatch/);
 });
 
 test('runPreprocessorForPlan skips LLM work with budget_exhausted status when run budget is spent', async () => {

@@ -34,7 +34,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ARCHIVE_BIN = join(__dirname, '..', 'gg-archive-to-vault.mjs');
 const SA_DEFAULT = join(homedir(), '.config', 'gg', 'gg-writer-sa.json');
 // plan 目录（与 gg-seo-autopilot 的 PLAN_GLOB_DIR 一致）：planPath 传 basename 时在此解析。
-const PLAN_DIR = process.env.GG_PLAN_DIR || join(homedir(), 'gengrowth-ops', 'inbox', '06-tasks', 'tasks');
+const PLAN_DIR = process.env.GG_PLAN_DIR || join(homedir(), 'gengrowth-ops', 'inbox-maboyang', '06-tasks', 'tasks');
 
 // 每步失败上限：超过则从队列淘汰并告警（防无限重试毒记录）。TTL 7 天兜底。
 // 5 分钟 reconciler 不能把每个 tick 都算成一次失败：失败后持久化 nextEligibleAt，

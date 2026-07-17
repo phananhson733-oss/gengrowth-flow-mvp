@@ -53,7 +53,7 @@ export const PRODUCT_PROFILES = Object.freeze({
     label: 'astrologywiki.com',
     workbookEnv: 'GG_SHEETS_ASTROLOGY_WORKBOOK_ID',
     fallbackWorkbookEnv: 'GG_SHEETS_FLOW_MVP_WORKBOOK_ID',
-    taskPlan: '/Users/awayer_mini/gengrowth-ops/inbox/06-tasks/tasks/2026-05-27-W22-blog-output-plan.md',
+    taskPlan: '/Users/awayer_mini/gengrowth-ops/inbox-maboyang/06-tasks/tasks/2026-05-27-W22-blog-output-plan.md',
     defaults: Object.freeze({
       track: '精修线',
       content_layer: 'Wiki Support',
@@ -70,7 +70,7 @@ export const PRODUCT_PROFILES = Object.freeze({
     label: 'gengrowth.ai',
     workbookEnv: 'GG_SHEETS_GENGROWTH_WORKBOOK_ID',
     fallbackWorkbookEnv: '',
-    taskPlan: '/Users/awayer_mini/gengrowth-ops/inbox/06-tasks/tasks/2026-06-16-W25-gengrowth-blog-output-plan.md',
+    taskPlan: '/Users/awayer_mini/gengrowth-ops/inbox-maboyang/06-tasks/tasks/2026-06-16-W25-gengrowth-blog-output-plan.md',
     defaults: Object.freeze({
       track: '精修线',
       content_layer: 'Audience Education',

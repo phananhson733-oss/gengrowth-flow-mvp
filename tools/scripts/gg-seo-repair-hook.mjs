@@ -93,7 +93,7 @@ function planKeywords(planText) {
 }
 
 function archiveIds() {
-  const path = join(OPS, 'inbox/06-tasks/tasks/.flow-driver-archived.json');
+  const path = join(OPS, 'inbox-maboyang/06-tasks/tasks/.flow-driver-archived.json');
   const value = readJson(path, []);
   return new Set(Array.isArray(value) ? value : []);
 }

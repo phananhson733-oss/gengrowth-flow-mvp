@@ -26,7 +26,7 @@ const REVIEWED_HEAD = 'a'.repeat(40);
 function makeHarness() {
   const root = mkdtempSync(join(tmpdir(), 'gg-seo-autopilot-'));
   const ops = join(root, 'ops');
-  const tasks = join(ops, 'inbox', '06-tasks', 'tasks');
+  const tasks = join(ops, 'inbox-maboyang', '06-tasks', 'tasks');
   const oracle = join(root, 'oracle');
   const bin = join(root, 'bin');
   mkdirSync(tasks, { recursive: true });

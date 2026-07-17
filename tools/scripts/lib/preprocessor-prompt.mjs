@@ -10,7 +10,7 @@
 //      structured output back into sheet fields (parsePreprocessorSheetFields /
 //      parsePreprocessorV1Fields).
 //   3. the manual 变量预处理器 ChatGPT-paste prompt (prompts/variable-preprocessor.md,
-//      mirrored to gengrowth-ops/inbox/03-content-briefs/变量预处理器-pre-processor-v2.0.md).
+//      mirrored to gengrowth-ops/inbox-maboyang/03-content-briefs/变量预处理器-pre-processor-v2.0.md).
 //
 // Why this file exists (2026-06-26): the v1.0 manual prompt only produced
 // Friction + Content_Angle, but the live downstream gate (gg-content-draft.mjs)

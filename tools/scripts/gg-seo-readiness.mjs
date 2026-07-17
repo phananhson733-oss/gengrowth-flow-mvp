@@ -343,7 +343,7 @@ export async function evaluateSeoReadiness({
     || process.env.GG_SEO_CLAIMS
     || join(
       process.env.GG_PLAN_DIR
-        || join(process.env.GG_OPS_DIR || join(homedir(), 'gengrowth-ops'), 'inbox/06-tasks/tasks'),
+        || join(process.env.GG_OPS_DIR || join(homedir(), 'gengrowth-ops'), 'inbox-maboyang/06-tasks/tasks'),
       '.autopilot-claims.json',
     );
   const queueDir = deps.queueDir

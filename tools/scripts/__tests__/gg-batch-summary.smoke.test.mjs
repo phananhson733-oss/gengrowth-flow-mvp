@@ -62,7 +62,7 @@ const BASE = `http://127.0.0.1:${readFileSync(portFile, 'utf8').trim()}`;
 let caseSeq = 0;
 function freshCase(claims = {}) {
   const dir = join(ROOT, `case-${caseSeq++}`);
-  const tasksDir = join(dir, 'ops', 'inbox', '06-tasks', 'tasks');
+  const tasksDir = join(dir, 'ops', 'inbox-maboyang', '06-tasks', 'tasks');
   const stateDir = join(dir, 'flow-state');
   const queueDir = join(stateDir, 'seo-repair-queue');
   mkdirSync(tasksDir, { recursive: true });
@@ -412,7 +412,7 @@ test('PG ids mentioned only in plan prose are not treated as allowed checklist t
 
 test('existing corrupt claims ledger fails closed instead of claiming an empty or successful fire', () => {
   const c = freshCase({});
-  writeFileSync(join(c.opsDir, 'inbox', '06-tasks', 'tasks', '.autopilot-claims.json'), '{"broken":');
+  writeFileSync(join(c.opsDir, 'inbox-maboyang', '06-tasks', 'tasks', '.autopilot-claims.json'), '{"broken":');
   const r = run(['--since', SINCE, '--site', 'astrologywiki'], c);
   assert.equal(r.status, 4, `${r.stdout}\n${r.stderr}`);
   assert.match(r.stderr, /claims ledger 解析失败/);
@@ -426,7 +426,7 @@ for (const [label, invalidClaims] of [
 ]) {
   test(`parseable ${label} claims ledger fails closed`, () => {
     const c = freshCase({});
-    writeFileSync(join(c.opsDir, 'inbox', '06-tasks', 'tasks', '.autopilot-claims.json'), invalidClaims);
+    writeFileSync(join(c.opsDir, 'inbox-maboyang', '06-tasks', 'tasks', '.autopilot-claims.json'), invalidClaims);
     const r = run(['--since', SINCE, '--site', 'astrologywiki'], c);
     assert.equal(r.status, 4, `${r.stdout}\n${r.stderr}`);
     assert.match(r.stderr, /claims ledger .*无效/);

@@ -80,7 +80,7 @@ function runnerHarness({
   const flow = join(root, 'flow');
   const oracle = join(root, 'oracle');
   const dirtyOracle = join(root, 'dirty-oracle');
-  const opsTasks = join(root, 'ops/inbox/06-tasks/tasks');
+  const opsTasks = join(root, 'ops/inbox-maboyang/06-tasks/tasks');
   mkdirSync(flow, { recursive: true });
   mkdirSync(join(oracle, '.git'), { recursive: true });
   mkdirSync(join(dirtyOracle, '.git'), { recursive: true });

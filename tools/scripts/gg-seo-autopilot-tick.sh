@@ -255,7 +255,7 @@ while [ "$cycle" -lt "$MAX_CYCLES" ]; do
       # count non-terminal (status != done && != needs_human) claims and suppress if any.
       guard=$(node -e '
         try{
-          const c=require(process.env.HOME+"/gengrowth-ops/inbox/06-tasks/tasks/.autopilot-claims.json");
+          const c=require(process.env.HOME+"/gengrowth-ops/inbox-maboyang/06-tasks/tasks/.autopilot-claims.json");
           let p=0,i=0;
           for(const k of Object.keys(c)){const s=(c[k]&&c[k].status)||"";
             if(s==="needs_human")p++; else if(s!=="done")i++;}
@@ -264,7 +264,7 @@ while [ "$cycle" -lt "$MAX_CYCLES" ]; do
       parks="${guard%%|*}"; inflight="${guard##*|}"
       parks="${parks:-0}"; inflight="${inflight:-0}"
       if [ "$parks" -eq 0 ] && [ "$inflight" -eq 0 ]; then
-        pub=$(grep -cE '^\| 2026' "$HOME/gengrowth-ops/inbox/06-tasks/seo-autopilot-publish-log.md" 2>/dev/null)
+        pub=$(grep -cE '^\| 2026' "$HOME/gengrowth-ops/inbox-maboyang/06-tasks/seo-autopilot-publish-log.md" 2>/dev/null)
         # day_complete 事件（@OPS 由事件表决定，契约迁移映射 :236）。
         node "$SCRIPT_DIR/gg-notify.mjs" day_complete --site astrologywiki --date "$(date '+%Y-%m-%d')" --publishedTotal "${pub:-?}"
       else

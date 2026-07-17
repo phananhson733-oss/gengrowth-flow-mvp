@@ -246,7 +246,7 @@ async function enqueuePublisherRunFailure(error) {
 // **绝不读 GG_AUTOPILOT_PLAN**（那是 author-lane 的 ambient pin，可能指向 astrology plan → 勾错列
 // 或漏勾——评审 CONFIRMED：让正确性依赖 ambient env 违反总纲）。勾 plan box 也是 gengrowth 的
 // durable done 标记（补 3b：gengrowth 不写 claim 的幂等缺口）。
-const PLAN_DIR = process.env.GG_PLAN_DIR || join(HOME, 'gengrowth-ops', 'inbox', '06-tasks', 'tasks');
+const PLAN_DIR = process.env.GG_PLAN_DIR || join(HOME, 'gengrowth-ops', 'inbox-maboyang', '06-tasks', 'tasks');
 function gengrowthPlanFor(pageId) {
   let plans;
   try {

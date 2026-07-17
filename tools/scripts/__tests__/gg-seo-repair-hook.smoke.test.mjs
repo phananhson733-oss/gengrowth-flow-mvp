@@ -23,7 +23,7 @@ function executable(path, source) {
 function harness(options = {}) {
   const root = mkdtempSync(join(tmpdir(), 'seo-repair-hook-'));
   const ops = join(root, 'ops');
-  const tasks = join(ops, 'inbox/06-tasks/tasks');
+  const tasks = join(ops, 'inbox-maboyang/06-tasks/tasks');
   const stateDir = join(root, 'state');
   const bin = join(root, 'bin');
   const oracle = join(root, 'oracle');

@@ -29,8 +29,8 @@ const SCRIPT = fileURLToPath(import.meta.url);
 const SCRIPTS = dirname(SCRIPT);
 const FLOW = resolve(SCRIPTS, '../..');
 const OPS = process.env.GG_OPS_DIR || join(homedir(), 'gengrowth-ops');
-const DEFAULT_CLAIMS = join(OPS, 'inbox/06-tasks/tasks/.autopilot-claims.json');
-const DEFAULT_PUBLISH_LOG = join(OPS, 'inbox/06-tasks/seo-autopilot-publish-log.md');
+const DEFAULT_CLAIMS = join(OPS, 'inbox-maboyang/06-tasks/tasks/.autopilot-claims.json');
+const DEFAULT_PUBLISH_LOG = join(OPS, 'inbox-maboyang/06-tasks/seo-autopilot-publish-log.md');
 const LIVE_BASE = 'https://www.astrologywiki.com/en/wiki/';
 const SITEMAP = 'https://www.astrologywiki.com/sitemap.xml';
 
@@ -367,7 +367,7 @@ function findGengrowthManifest(pageId, slug, stagingDir = join(FLOW, '_staging')
 
 function findGengrowthPlanText(pageId, planPath) {
   if (planPath && existsSync(planPath)) return readFileSync(planPath, 'utf8');
-  const tasksDir = join(OPS, 'inbox/06-tasks/tasks');
+  const tasksDir = join(OPS, 'inbox-maboyang/06-tasks/tasks');
   try {
     const plans = readdirSync(tasksDir)
       .filter((name) => /gengrowth.*blog-output-plan.*\.md$/i.test(name))
@@ -455,7 +455,7 @@ async function loadGengrowthDeps(args, target) {
 
 function findAstrologyPlanText(pageId, planPath) {
   if (planPath && existsSync(planPath)) return readFileSync(planPath, 'utf8');
-  const tasksDir = join(OPS, 'inbox/06-tasks/tasks');
+  const tasksDir = join(OPS, 'inbox-maboyang/06-tasks/tasks');
   try {
     const plans = readdirSync(tasksDir)
       .filter((name) => /blog-output-plan.*\.md$/i.test(name) && !/gengrowth/i.test(name))

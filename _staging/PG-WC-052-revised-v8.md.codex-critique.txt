@@ -1,0 +1,8 @@
+- “这是 natal love style，不是 passing mood”容易误伤搜索意图，因为“venus in gemini”也常指行运 → 开头明确“本文主要讲本命盘 Venus in Gemini”，并另加一句区分行运 Venus in Gemini 的短期影响。
+- “Third-house themes of exchange”把 Gemini 和第三宫混同了 → 改成“Mercury/Gemini themes of exchange”，或说明只有 Venus 落第三宫时才是第三宫主题。
+- “Venus moves fast… birth moment rather than whole generation”表述不够准 → 改为“Venus changes signs roughly every few weeks, so exact birth date matters; birth time is mainly critical near sign-change days。”
+- Libra Venus 对比中过度说“Libra offers steadiness almost by default” → 改成 Libra 更重视和谐、互惠、关系定义；同时承认 Libra Venus 也可能犹豫或讨好。
+- 全文反复说“talk/variety/curiosity”，但具体场景偏少 → 增加可识别例子：多线程短信、通过提问调情、喜欢知识型约会、用幽默缓和冲突、厌倦固定脚本式约会。
+- 对读者的可执行建议还偏泛 → 增加 3-4 条具体做法：定期安排新体验、把需要空间说成请求而非撤退、用“我需要新鲜话题”替代冷处理、避免用暧昧补刺激。
+- 缺少“什么会改变这个解读”的专业层次 → 加一小段说明 Venus 宫位、Mercury 状态、以及 Saturn/Uranus/Neptune/Mars 相位会明显改变承诺感、稳定性和边界。
+- Sources 太像装饰性背书 → 给 Liz Greene / Dane Rudhyar 补具体书名或删除泛泛署名，否则会显得像权威名词填充。

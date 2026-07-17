@@ -1,10 +1,7 @@
 {
   "schemaVersion": 1,
   "pageId": "PG-WC-052",
-  "status": "failed",
-  "failures": [
-    "word count 1385 < min 1485",
-    "target_keyword count = 16 (limit 12)"
-  ],
-  "updatedAt": "2026-07-17T14:16:17.056Z"
+  "status": "passed",
+  "failures": [],
+  "updatedAt": "2026-07-17T14:23:38.570Z"
 }

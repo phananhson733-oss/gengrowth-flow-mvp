@@ -49,8 +49,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ASTRO_ARTICLE_PATH = '/en/wiki/';
 
 const OPS = process.env.GG_OPS_DIR || join(homedir(), 'gengrowth-ops');
-const CLAIMS_PATH = process.env.GG_SEO_CLAIMS
-  || join(OPS, 'inbox-maboyang', '06-tasks', 'tasks', '.autopilot-claims.json');
+const CLAIMS_PATH = join(OPS, 'inbox-maboyang', '06-tasks', 'tasks', '.autopilot-claims.json');
 const BASE_ASTRO = (process.env.GG_BATCH_SUMMARY_BASE_ASTRO || 'https://www.astrologywiki.com').replace(/\/+$/, '');
 const BASE_GENG = (process.env.GG_BATCH_SUMMARY_BASE_GENG || 'https://gengrowth.ai').replace(/\/+$/, '');
 const TIMEOUT_MS = Number(process.env.GG_BATCH_SUMMARY_TIMEOUT_MS || 10000);

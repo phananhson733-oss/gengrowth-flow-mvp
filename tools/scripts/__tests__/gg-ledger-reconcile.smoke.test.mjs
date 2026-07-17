@@ -115,6 +115,7 @@ function defaultCliFixture({
   const fakeFlow = join(root, 'flow');
   const scripts = join(fakeFlow, 'tools/scripts');
   const opsTasks = join(root, 'ops/inbox-maboyang/06-tasks/tasks');
+  const legacyClaims = join(root, 'ops/inbox/06-tasks/tasks/.autopilot-claims.json');
   const state = join(root, 'state');
   mkdirSync(scripts, { recursive: true });
   mkdirSync(opsTasks, { recursive: true });
@@ -200,8 +201,15 @@ function defaultCliFixture({
       },
     });
   };
-  return { root, state, run };
+  return { root, state, legacyClaims, run };
 }
+
+test('default strict reconcile reads only the inbox-maboyang claims ledger', () => {
+  const fixture = defaultCliFixture();
+  const out = fixture.run();
+  assert.equal(out.status, 0, `${out.stdout}\n${out.stderr}`);
+  assert.equal(existsSync(fixture.legacyClaims), false);
+});
 
 test('strict mode applies then verifies and returns exactly the required counters', () => {
   const out = runStrictFixture(zero());

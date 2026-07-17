@@ -1,0 +1,8 @@
+- “Chapman’s five love languages comes from psychology”表述过强 → 改成“popular relationship self-help framework”，避免暗示其为严格心理学或实证模型。
+- “clean, testable categories”不准确 → 改成“simple, named categories”，不要声称可测试，除非补充验证局限。
+- Rudhyar、Greene、Sasportas的引用像权威背书但未具体落到本文判断 → 要么删减到一句背景，要么补出他们分别如何支持“关系/心理占星”的解释路径。
+- Mars表格只写“Rules Aries”不完整 → 补充“traditionally also Scorpio”或避免用守护星信息做核心解释，防止懂占星读者出戏。
+- 文章回答“what is my love language”仍偏概念化 → 增加一个简短操作框：读者拿到 Venus/Mars/Moon 后分别问哪三个问题来判断自己的表达、欲望、安全感需求。
+- 缺少具体星座示例，导致占星 substance 不够 → 加 2-3 个简短例子，如 Venus in Taurus、Moon in Cancer、Mars in Aries 如何呈现不同爱的需求。
+- “不要把五种语言直接映射到星体”说得对，但读者搜索意图常想要答案 → 可加一句“如果非要对照，先从行为观察而不是行星硬配类目开始”，提高实用性。
+- 标题和正文承诺“Read Through Venus, Mars, and Moon”，但 houses/aspects 只轻触 → 要么补一句它们如何改变判断优先级，要么明确它们是进阶层，不是基础答案。

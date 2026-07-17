@@ -1,0 +1,8 @@
+- 生时处理偏弱：草稿把 4:35 a.m. 说成“仍有争议”但没交代强来源 → 改为主数据采用 Astro-Databank AA / doctor record：1935-01-08 4:35 a.m. CST, Tupelo；另注明 3:30 a.m. 只是轶事性备选。
+- 搜索意图没吃满：读者搜 “elvis birth chart” 会期待完整盘，不只是太阳星座 → 增加 birth data + sidereal placements 表，至少列 Sun、Moon、Asc、Mercury、Venus、Mars、Jupiter、Saturn 的星座/度数/宿。
+- 若采用 4:35 + Lahiri，不应完全回避 lagna → 给出主盘 sidereal Scorpio rising，并标注“若改用备选生时，宫位/上升需重算”。
+- “sidereal = actual constellations / fixed-star fidelity” 表述过头 → 改成“Vedic uses equal 30-degree signs referenced to a sidereal anchor via ayanamsa”，避免暗示它等同天文学上不等宽星座。
+- Purva Ashadha 解读太泛，只剩“popularity/reach” → 加入 Apas、水、fan/winnowing basket、Venus rulership、invincibility/宣告/净化等具体传统含义，再谨慎连接 Elvis 的舞台形象与文化扩散。
+- “popular write-ups = tidy Capricorn story” 像稻草人 → 承认西占盘本身还有 Pisces Moon、Sagittarius Rising、Capricorn Mercury/Venus、Libra Mars，再比较 Vedic 重心如何改变，而不是只打 Capricorn 标签。
+- “Energy Center” 表格像泛灵性包装且信息不准 → 改为 “Chart factor / exact placement / interpretive use / confidence level”，用具体度数和是否依赖生时来替代空泛能量词。
+- 来源不够专业：“Traditional Jyotish teachings” 太模糊 → 换成可核查来源：Astro-Databank 生时页、明确 ayanamsa 选项（如 Lahiri）、具体 nakshatra/Jyotish 参考；NASA 只保留给 precession 解释。

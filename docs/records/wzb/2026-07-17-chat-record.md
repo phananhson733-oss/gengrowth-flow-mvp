@@ -208,3 +208,20 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 确认书面 spec 与实现均以 fail-closed 为最高优先级：proof、锁、快照、账本、回写或前置检查任一不满足严格合同即停止发布并保留可恢复状态，不允许 force publish 绕过。实现已通过 focused 214/214、全量 2173/2173 和 whole-chain 独立审查；自然 cron 的连续三窗口验收仍在进行中，不提前宣称达到 0 人值守。
 
 ---
+
+### Q12 — 20:02
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-17T11:07:01.554Z (1784286421554)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅执行确定性入口 `bash tools/scripts/gg-topic-register-tick.sh`，退出码 0。精确日志窗口为 20:02:19–20:02:21 CST，环境以 apply 模式运行（`dry_run=false`、`budget_exhausted=false`）。astrologywiki：candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]。gengrowth：candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]。两个产品的 evidence_discovery 均为空，未见 failures。未手工编辑 Sheet、未直接修改任务计划，亦未创建额外 Feishu 或 Google Doc 报告产物；所有允许的写入仅由 apply 模式下的包装器执行。
+
+---

@@ -1,0 +1,8 @@
+- “NASA says”只在正文出现、来源列表没有 NASA，且“trip around zodiac”表述偏口语 → 加实际来源或改成“lunar nodes regress through the zodiac in about 18.6 years”。
+- Sasportas / Liz Greene / Tarnas 的权威引用像 E-E-A-T 装饰，未对应具体书或观点 → 要么补具体作品与相关概念，要么删掉姓名，换成实际解读逻辑。
+- “12 years…thousands of hours of chart consultation”是强资历声明，若非真实作者履历会伤可信度 → 删除或改成品牌可证明的编辑经验说明。
+- South Node 被写成“已经掌握/工作轻松的原因”，过于确定 → 改成“well-practiced default pattern”，避免把职业不适单因归给南交点。
+- 文章反复说“alignment, not verdict”，但缺少 placement-level substance → 增加 3-4 个具体例子，如 North Node in 10th/4th、Virgo/Pisces、MC Aries/Capricorn 分别怎么读。
+- “hard season can be a sign you are moving toward the direction”容易把痛苦浪漫化 → 加一句区分“growth discomfort”和长期耗竭、伤害、不安全关系/工作环境。
+- Transits 讲得太宽，“a planet crossing your Node or MC”不够专业 → 区分快行星噪音与 Saturn/Uranus/Pluto/Jupiter 等较重 transits，并说明看 conjunction/opposition/square 与 orb。
+- 搜索意图不只职业，正文过度偏 vocation/job → 补 relationship、relocation、creative calling、spiritual doubt 等场景，让“am i on the right path”覆盖真实查询者的焦虑。

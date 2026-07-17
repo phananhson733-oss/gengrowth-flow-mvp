@@ -1,10 +1,7 @@
 {
   "schemaVersion": 1,
   "pageId": "PG-NODE-014",
-  "status": "failed",
-  "failures": [
-    "word count 1431 < min 1485",
-    "author banned token(s) matched: \"guaranteed\""
-  ],
-  "updatedAt": "2026-07-17T12:27:55.847Z"
+  "status": "passed",
+  "failures": [],
+  "updatedAt": "2026-07-17T12:31:53.197Z"
 }

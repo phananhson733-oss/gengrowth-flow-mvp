@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-NODE-014",
+  "entity": "Am I on the Right Path",
+  "target_keyword": "am i on the right path",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-07-17T12:31:53.188Z",
+  "content_sha256_short": "695f45ff3f04e4af",
+  "source_path": "_staging/PG-NODE-014-claude-v8.md",
+  "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-NODE-014-en.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 1593,
+      "wikilinks": 5,
+      "tbdLinks": 5
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

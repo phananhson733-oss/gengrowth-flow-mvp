@@ -20,9 +20,10 @@ aliases:
 
 - 执行索引修复重提与 Phase 2 索引监控：两产品完成同步与检查，未发现失败；astrologywiki 11 条到期检查后队列为 18 条，gengrowth 队列为 2 条；17:31 修复重提扫描无已修复行。
 - 执行结果复盘表现同步：两个产品均成功写回，但没有恰好到 D14/D30/D60 的到期 URL；优化任务报告已生成。
-- 用户选择 subagent-driven 执行 Active Brief Preflight；Task 1 已完成 TDD，但独立审查发现两个 plan-mandated proof 安全冲突，等待确认 fail-closed 约束优先后修复复审。
-- 执行选题登记确定性 wrapper：apply 窗口 16:02:58–16:07:07 CST；astrologywiki 更新 3 条并产生 1 个新 cluster，gengrowth 无候选；日志无失败。
-- 执行选题登记确定性 wrapper：apply 窗口 18:01:50–18:01:53 CST；两个产品均为零候选/零更新的正常 no-op，日志无失败。
+- 用户确认 Active Brief Preflight 以 fail-closed 为最高优先级；实现及 whole-chain 独立审查已收口，focused 214/214、全量 2173/2173，Critical/Important/Minor 均为零。
+- fail-closed 修复覆盖严格 proof、锁语义、不可变快照、canonical claims、精确回写证据与 launcher/nightly 前置绑定；书面 spec 与实施计划均已定稿。
+- 并行 Feishu `强制启动` 导致 18:30、19:00、19:30 自然窗口被占用而不能计入验收；强制运行虽发布 5 篇，但因执行中代码并行变更以 reconcile 错误收束，不能作为零人值守证据。
+- 已冻结代码并配置 20:00、20:30、21:00 三个候选窗口的只读验收；只有连续三次自然 cron 干净收敛后才判定达到 0 人值守。
 
 ---
 
@@ -193,5 +194,17 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 仅执行确定性入口 `bash tools/scripts/gg-topic-register-tick.sh`，退出码 0。精确日志窗口为 19:07:52–19:13:38 CST，环境以 apply 模式运行（`dry_run=false`、`budget_exhausted=false`）。astrologywiki：candidates=5、updates=5、new_clusters=0、page_ids=[PG-TRANS-022, PG-TRANS-023, PG-NODE-014, PG-WC-052, PG-NAKSH-020]、preprocessor=[ok, v1_fallback×4]；证据发现为 ok×2（5/5、9/8 titles/domains）及 insufficient×3。gengrowth：candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]。两个产品均无 failures。未进行手工 Sheet 编辑、未直接修改任务计划，亦未创建额外 Feishu 或 Google Doc 报告产物；所有允许的写入仅由 apply 模式下的包装器执行。
+
+---
+
+### Q11 — 19:39
+
+**🙋 提问：**
+
+确认 fail-closed 优先
+
+**🤖 回答：**
+
+确认书面 spec 与实现均以 fail-closed 为最高优先级：proof、锁、快照、账本、回写或前置检查任一不满足严格合同即停止发布并保留可恢复状态，不允许 force publish 绕过。实现已通过 focused 214/214、全量 2173/2173 和 whole-chain 独立审查；自然 cron 的连续三窗口验收仍在进行中，不提前宣称达到 0 人值守。
 
 ---

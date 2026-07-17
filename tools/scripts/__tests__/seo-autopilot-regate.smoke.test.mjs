@@ -52,7 +52,7 @@ function fixture(t, {
   const flow = join(root, 'flow');
   const ops = join(root, 'ops');
   const state = join(root, 'state');
-  const tasks = join(ops, 'inbox', '06-tasks', 'tasks');
+  const tasks = join(ops, 'inbox-maboyang', '06-tasks', 'tasks');
   const repairRoot = join(root, 'repair-worktrees');
   const autopilotWorktreeRoot = join(root, 'autopilot-worktrees');
   const bin = join(root, 'bin');

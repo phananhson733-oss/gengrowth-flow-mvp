@@ -3,7 +3,7 @@ id: elena-vane
 display_name: Elena Vane
 primary_focus: Aura Colors / Chakras / Energy Healing
 version: "1.0"
-source_ref: gengrowth-ops/inbox/03-content-briefs/author-personas.md
+source_ref: gengrowth-ops/inbox-maboyang/03-content-briefs/author-personas.md
 banned_tokens:
   - according to a study
   - clinical trial

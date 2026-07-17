@@ -16,7 +16,7 @@ const getArg = (name) => { const i = argv.indexOf(name); return i >= 0 ? argv[i 
 // ledger 路径走 GG_OPS_DIR 单一事实源（与 gg-seo-autopilot / gg-ledger-reconcile 一致），
 // 别自己复制 homedir 路径——否则 GG_OPS_DIR 沙箱下 autopilot 写 A 处、driver 读 B 处。
 const OPS_DIR = process.env.GG_OPS_DIR || join(homedir(), 'gengrowth-ops');
-const DEFAULT_LEDGER = join(OPS_DIR, 'inbox/06-tasks/tasks/.autopilot-claims.json');
+const DEFAULT_LEDGER = join(OPS_DIR, 'inbox-maboyang/06-tasks/tasks/.autopilot-claims.json');
 const ledgerPath = getArg('--ledger') || DEFAULT_LEDGER;
 const APPLY = argv.includes('--apply');
 const REPO = process.env.GG_FLOW_DRIVER_REPO || 'xdawayer/oracle';
@@ -42,7 +42,7 @@ async function main() {
 
   // archive 幂等：driver-local sidecar 记已归档 pid(vault 外、不碰 claim 锁),避免每轮 --apply 重复通知
   // 同一死选题、也让死选题真退出 driver 队列。首次/坏文件 → 空集(不阻塞)。
-  const ARCHIVED_SIDECAR = join(OPS_DIR, 'inbox/06-tasks/tasks/.flow-driver-archived.json');
+  const ARCHIVED_SIDECAR = join(OPS_DIR, 'inbox-maboyang/06-tasks/tasks/.flow-driver-archived.json');
   let archivedSet = new Set();
   try { archivedSet = new Set(JSON.parse(readFileSync(ARCHIVED_SIDECAR, 'utf8'))); } catch { /* 首次/坏文件 → 空 */ }
 

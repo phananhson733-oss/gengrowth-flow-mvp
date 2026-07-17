@@ -10,7 +10,7 @@
 //
 // 数据源：
 //   · oracle 侧：claims ledger（路径解析复用 gg-seo-autopilot.mjs 的 OPS 逻辑：
-//     GG_OPS_DIR || ~/gengrowth-ops，再 inbox/06-tasks/tasks/.autopilot-claims.json）。
+//     GG_OPS_DIR || ~/gengrowth-ops，再 inbox-maboyang/06-tasks/tasks/.autopilot-claims.json）。
 //     仅取 pinned plan 内、site 匹配且 mergedAt ≥ since 的 done 条目；
 //     controller queue 存在时，只有匹配 site + runId 的 terminal record 可贡献终态。
 //   · gengrowth 侧：无 ledger，靠 --urls 显式传入（调用方＝发布器／会话收尾）。
@@ -49,7 +49,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ASTRO_ARTICLE_PATH = '/en/wiki/';
 
 const OPS = process.env.GG_OPS_DIR || join(homedir(), 'gengrowth-ops');
-const CLAIMS_PATH = join(OPS, 'inbox', '06-tasks', 'tasks', '.autopilot-claims.json');
+const CLAIMS_PATH = join(OPS, 'inbox-maboyang', '06-tasks', 'tasks', '.autopilot-claims.json');
 const BASE_ASTRO = (process.env.GG_BATCH_SUMMARY_BASE_ASTRO || 'https://www.astrologywiki.com').replace(/\/+$/, '');
 const BASE_GENG = (process.env.GG_BATCH_SUMMARY_BASE_GENG || 'https://gengrowth.ai').replace(/\/+$/, '');
 const TIMEOUT_MS = Number(process.env.GG_BATCH_SUMMARY_TIMEOUT_MS || 10000);

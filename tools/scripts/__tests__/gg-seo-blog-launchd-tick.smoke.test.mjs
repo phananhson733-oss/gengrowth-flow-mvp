@@ -80,7 +80,7 @@ function runnerHarness({
   const flow = join(root, 'flow');
   const oracle = join(root, 'oracle');
   const dirtyOracle = join(root, 'dirty-oracle');
-  const opsTasks = join(root, 'ops/inbox/06-tasks/tasks');
+  const opsTasks = join(root, 'ops/inbox-maboyang/06-tasks/tasks');
   mkdirSync(flow, { recursive: true });
   mkdirSync(join(oracle, '.git'), { recursive: true });
   mkdirSync(join(dirtyOracle, '.git'), { recursive: true });
@@ -660,7 +660,7 @@ test('real nightly consumes only the proven snapshot and rechecks canonical unch
   const removed = `PG-REMOVED-${suffix}`;
   const added = `PG-ADDED-${suffix}`;
   const flowRoot = join(root, 'gengrowth-flow-mvp');
-  const tasks = join(root, 'gengrowth-ops/inbox/06-tasks/tasks');
+  const tasks = join(root, 'gengrowth-ops/inbox-maboyang/06-tasks/tasks');
   const bin = join(root, '.local/bin');
   const canonical = join(tasks, '2026-05-27-W22-blog-output-plan.md');
   const snapshot = join(root, 'private-items-plan.md');

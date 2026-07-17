@@ -24,7 +24,7 @@ const BANNER = [
   '  Regenerate with: node tools/scripts/_gen-preprocessor-prompt.mjs',
   '  The automated path (gg-brief-suggest.mjs) imports the SAME module, so this manual',
   '  ChatGPT-paste prompt and the script can never diverge again.',
-  '  Ops mirror: gengrowth-ops/inbox/03-content-briefs/变量预处理器-pre-processor-v2.0.md',
+  '  Ops mirror: gengrowth-ops/inbox-maboyang/03-content-briefs/变量预处理器-pre-processor-v2.0.md',
   '-->',
   '',
 ].join('\n');

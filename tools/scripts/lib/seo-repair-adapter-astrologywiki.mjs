@@ -275,7 +275,7 @@ export function isAllowedAstrologyAuthorRetry(event, {
 function defaultAuthorRetryReleased(event) {
   const ops = process.env.GG_OPS_DIR || join(homedir(), 'gengrowth-ops');
   const claimsPath = process.env.GG_AUTOPILOT_CLAIMS
-    || join(ops, 'inbox/06-tasks/tasks/.autopilot-claims.json');
+    || join(ops, 'inbox-maboyang/06-tasks/tasks/.autopilot-claims.json');
   let claims;
   try { claims = JSON.parse(readFileSync(claimsPath, 'utf8')); }
   catch { return false; }
@@ -450,7 +450,7 @@ async function collectLinkCandidates(worktree, currentSlug) {
 async function defaultResolveContext(event) {
   const ops = process.env.GG_OPS_DIR || join(homedir(), 'gengrowth-ops');
   const claimsPath = process.env.GG_AUTOPILOT_CLAIMS
-    || join(ops, 'inbox/06-tasks/tasks/.autopilot-claims.json');
+    || join(ops, 'inbox-maboyang/06-tasks/tasks/.autopilot-claims.json');
   let claims;
   try { claims = JSON.parse(readFileSync(claimsPath, 'utf8')); }
   catch (error) { throw new Error(`cannot read astrology claims: ${error.message}`); }

@@ -92,7 +92,7 @@ self-timeout only if it ever actually bites.
 | flow repo (`GG_FLOW_REPO`) | `~/gengrowth-flow-mvp` |
 | oracle repo (`GG_ORACLE_DIR`) | `~/oracle` |
 | ops / plans (`GG_OPS_DIR`) | `~/gengrowth-ops` |
-| claims ledger | `~/gengrowth-ops/inbox/06-tasks/tasks/.autopilot-claims.json` |
+| claims ledger | `~/gengrowth-ops/inbox-maboyang/06-tasks/tasks/.autopilot-claims.json` |
 | machine env | `~/.config/gg/_gg.env` (sourced by the tick) |
 | logs | `~/gengrowth-agents/cron-sync/seo_autopilot/<date>.log` |
 

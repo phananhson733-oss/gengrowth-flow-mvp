@@ -9,8 +9,8 @@ import { join } from 'node:path';
 
 function mkOps(claims) {
   const ops = mkdtempSync(join(tmpdir(), 'tick-ops-'));
-  mkdirSync(join(ops, 'inbox/06-tasks/tasks'), { recursive: true });
-  writeFileSync(join(ops, 'inbox/06-tasks/tasks/.autopilot-claims.json'), JSON.stringify(claims));
+  mkdirSync(join(ops, 'inbox-maboyang/06-tasks/tasks'), { recursive: true });
+  writeFileSync(join(ops, 'inbox-maboyang/06-tasks/tasks/.autopilot-claims.json'), JSON.stringify(claims));
   return ops;
 }
 function runTick(ops, extraEnv = {}) {

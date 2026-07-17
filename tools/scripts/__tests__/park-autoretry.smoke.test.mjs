@@ -14,7 +14,7 @@ const AUTOPILOT = join(dirname(fileURLToPath(import.meta.url)), '..', 'gg-seo-au
 function setup(ledger, sidecar) {
   const ops = mkdtempSync(join(tmpdir(), 'ops-'));
   const state = mkdtempSync(join(tmpdir(), 'state-'));
-  const tasksDir = join(ops, 'inbox', '06-tasks', 'tasks');
+  const tasksDir = join(ops, 'inbox-maboyang', '06-tasks', 'tasks');
   mkdirSync(tasksDir, { recursive: true });
   const ledgerPath = join(tasksDir, '.autopilot-claims.json');
   writeFileSync(ledgerPath, JSON.stringify(ledger, null, 2));

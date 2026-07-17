@@ -3,7 +3,7 @@ id: aditi-sharma
 display_name: Aditi Sharma
 primary_focus: Vedic Astrology / Nakshatras
 version: "1.0"
-source_ref: gengrowth-ops/inbox/03-content-briefs/author-personas.md
+source_ref: gengrowth-ops/inbox-maboyang/03-content-briefs/author-personas.md
 banned_tokens:
   - sun sign
   - rising sign

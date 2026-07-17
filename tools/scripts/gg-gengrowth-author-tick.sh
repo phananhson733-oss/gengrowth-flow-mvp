@@ -41,7 +41,7 @@ set -uo pipefail
 export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FLOW="$(cd "$SCRIPT_DIR/../.." && pwd)"
-OPS="${GG_GENGROWTH_OPS_TASKS_DIR:-$HOME/gengrowth-ops/inbox/06-tasks/tasks}"
+OPS="${GG_GENGROWTH_OPS_TASKS_DIR:-$HOME/gengrowth-ops/inbox-maboyang/06-tasks/tasks}"
 PLAN_NAME="${GG_GENGROWTH_PLAN_NAME:-2026-06-16-W25-gengrowth-blog-output-plan.md}"
 PLAN="${GG_GENGROWTH_PLAN:-$OPS/$PLAN_NAME}"
 LOCK="${GG_GENGROWTH_AUTHOR_LOCK:-/tmp/gg-gengrowth-author.lock}"

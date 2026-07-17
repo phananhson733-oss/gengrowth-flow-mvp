@@ -117,7 +117,7 @@ const ORCHESTRATOR = join(SCRIPTS, 'gg-llm-orchestrator.mjs');
 const REVIEW = join(SCRIPTS, 'gg-author-review.mjs');
 const PHASE2 = join(SCRIPTS, '_phase2-validate.mjs');
 const CONFIG_SNAPSHOT = join(FLOW, '.gg-cache', 'config-snapshot.json');
-const PLAN_GLOB_DIR = join(OPS, 'inbox', '06-tasks', 'tasks');
+const PLAN_GLOB_DIR = join(OPS, 'inbox-maboyang', '06-tasks', 'tasks');
 const CLAIMS_PATH = join(PLAN_GLOB_DIR, '.autopilot-claims.json');
 const CLAIMS_LOCK = `${CLAIMS_PATH}.lock`;
 const CLAIMS_LOCK_TIMEOUT_MS = parseInt(process.env.GG_AUTOPILOT_LOCK_TIMEOUT_MS || '30000', 10);
@@ -2080,7 +2080,7 @@ async function notifyEvent(event, fields) {
   try { await notify(event, fields); } catch { /* best-effort; never blocks */ }
 }
 
-function opsPublishLog() { return join(OPS, 'inbox', '06-tasks', 'seo-autopilot-publish-log.md'); }
+function opsPublishLog() { return join(OPS, 'inbox-maboyang', '06-tasks', 'seo-autopilot-publish-log.md'); }
 
 function enqueueIndexTracking(pgId, slug, title, author, date) {
   if (process.env.GG_AUTOPILOT_NO_INDEX_TRACKING === '1') return;

@@ -108,7 +108,7 @@ id: ID_PLACEHOLDER
 display_name: Test Author
 primary_focus: Test Focus
 version: "1.0"
-source_ref: gengrowth-ops/inbox/03-content-briefs/author-personas.md
+source_ref: gengrowth-ops/inbox-maboyang/03-content-briefs/author-personas.md
 banned_tokens:
   - forbiddenword
 voice_rule: A calm clear voice.

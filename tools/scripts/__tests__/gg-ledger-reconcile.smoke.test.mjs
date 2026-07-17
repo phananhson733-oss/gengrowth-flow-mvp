@@ -114,7 +114,7 @@ function defaultCliFixture({
   const root = mkdtempSync(join(tmpdir(), 'ledger-reconcile-default-'));
   const fakeFlow = join(root, 'flow');
   const scripts = join(fakeFlow, 'tools/scripts');
-  const opsTasks = join(root, 'ops/inbox/06-tasks/tasks');
+  const opsTasks = join(root, 'ops/inbox-maboyang/06-tasks/tasks');
   const state = join(root, 'state');
   mkdirSync(scripts, { recursive: true });
   mkdirSync(opsTasks, { recursive: true });

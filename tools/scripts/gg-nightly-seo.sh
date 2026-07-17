@@ -128,7 +128,7 @@ if ! attested_bundle_is_valid; then
   exit 1
 fi
 
-ITEMS="$($VALIDATOR_NODE -e '
+ITEMS="$("$VALIDATOR_NODE" -e '
   const { createHash } = require("node:crypto");
   const { readFileSync } = require("node:fs");
   const [manifestPath, planPath, expectedSha] = process.argv.slice(1);

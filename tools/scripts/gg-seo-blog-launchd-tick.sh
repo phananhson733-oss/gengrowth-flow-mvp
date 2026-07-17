@@ -56,13 +56,73 @@ if ! mkdir "$LOCK" 2>/dev/null; then
 fi
 SNAPSHOT_DIR=""
 NIGHTLY_ITEMS_PLAN=""
+ATTESTED_MANIFEST=""
+SNAPSHOT_DIR_IDENTITY=""
+SNAPSHOT_FILE_IDENTITY=""
+ATTESTED_MANIFEST_IDENTITY=""
+SNAPSHOT_DIGEST=""
+ATTESTED_MANIFEST_DIGEST=""
+
+lstat_identity() {
+  if [[ "$(uname -s)" == "Darwin" ]]; then
+    stat -f '%d:%i' "$1" 2>/dev/null
+  else
+    stat -c '%d:%i' "$1" 2>/dev/null
+  fi
+}
+
+owned_snapshot_dir_is_current() {
+  [[ -n "$SNAPSHOT_DIR" && -n "$SNAPSHOT_DIR_IDENTITY" \
+    && -d "$SNAPSHOT_DIR" && ! -L "$SNAPSHOT_DIR" ]] \
+    && [[ "$(lstat_identity "$SNAPSHOT_DIR" 2>/dev/null || true)" == "$SNAPSHOT_DIR_IDENTITY" ]]
+}
+
+owned_regular_file_is_current() {
+  local path="$1"
+  local identity="$2"
+  [[ -n "$path" && -n "$identity" && -f "$path" && ! -L "$path" ]] \
+    && [[ "$(lstat_identity "$path" 2>/dev/null || true)" == "$identity" ]]
+}
+
 cleanup_owned_snapshot_and_lock() {
-  if [[ -n "$SNAPSHOT_DIR" && -n "$NIGHTLY_ITEMS_PLAN" \
-    && "$NIGHTLY_ITEMS_PLAN" == "$SNAPSHOT_DIR/active-plan.md" ]]; then
-    if [[ -f "$NIGHTLY_ITEMS_PLAN" || -L "$NIGHTLY_ITEMS_PLAN" ]]; then
-      rm -f "$NIGHTLY_ITEMS_PLAN" 2>/dev/null || true
+  local cleanup_safe=1
+  if [[ -n "$SNAPSHOT_DIR" ]]; then
+    if ! owned_snapshot_dir_is_current; then
+      echo "snapshot cleanup ownership unknown: directory identity changed; evidence retained"
+      cleanup_safe=0
     fi
-    rmdir "$SNAPSHOT_DIR" 2>/dev/null || true
+    if [[ -n "$NIGHTLY_ITEMS_PLAN" \
+      && "$NIGHTLY_ITEMS_PLAN" == "$SNAPSHOT_DIR/active-plan.md" ]]; then
+      if ! owned_regular_file_is_current "$NIGHTLY_ITEMS_PLAN" "$SNAPSHOT_FILE_IDENTITY"; then
+        echo "snapshot cleanup ownership unknown: plan identity changed; evidence retained"
+        cleanup_safe=0
+      fi
+    else
+      cleanup_safe=0
+    fi
+    if [[ -n "$ATTESTED_MANIFEST" && ( -e "$ATTESTED_MANIFEST" || -L "$ATTESTED_MANIFEST" ) ]]; then
+      if [[ "$ATTESTED_MANIFEST" != "$SNAPSHOT_DIR/attested-manifest.json" ]] \
+        || ! owned_regular_file_is_current "$ATTESTED_MANIFEST" "$ATTESTED_MANIFEST_IDENTITY"; then
+        echo "snapshot cleanup ownership unknown: manifest identity changed; evidence retained"
+        cleanup_safe=0
+      fi
+    elif [[ -n "$ATTESTED_MANIFEST_IDENTITY" ]]; then
+      echo "snapshot cleanup ownership unknown: manifest disappeared; evidence retained"
+      cleanup_safe=0
+    fi
+    if [[ "$cleanup_safe" -eq 1 ]] && owned_snapshot_dir_is_current; then
+      if [[ -n "$ATTESTED_MANIFEST_IDENTITY" ]]; then
+        rm -f "$ATTESTED_MANIFEST" 2>/dev/null || cleanup_safe=0
+      fi
+      if [[ "$cleanup_safe" -eq 1 ]] \
+        && owned_snapshot_dir_is_current \
+        && owned_regular_file_is_current "$NIGHTLY_ITEMS_PLAN" "$SNAPSHOT_FILE_IDENTITY"; then
+        rm -f "$NIGHTLY_ITEMS_PLAN" 2>/dev/null || cleanup_safe=0
+      fi
+      if [[ "$cleanup_safe" -eq 1 ]] && owned_snapshot_dir_is_current; then
+        rmdir "$SNAPSHOT_DIR" 2>/dev/null || true
+      fi
+    fi
   fi
   rmdir "$LOCK" 2>/dev/null || true
 }
@@ -81,6 +141,8 @@ export GG_ORACLE_DIR="$ORACLE_BASELINE"
 [[ -f "$RECONCILE" ]] || { echo "ledger reconcile unavailable: $RECONCILE"; exit 1; }
 [[ -f "$READINESS" ]] || { echo "SEO readiness unavailable: $READINESS"; exit 1; }
 [[ -f "$BATCH_SUMMARY" ]] || { echo "batch summary unavailable: $BATCH_SUMMARY"; exit 1; }
+NODE_BIN="$(command -v node || true)"
+[[ -n "$NODE_BIN" && -x "$NODE_BIN" ]] || { echo "node runtime unavailable"; exit 1; }
 [[ -d "$ORACLE_BASELINE/.git" ]] || { echo "clean Oracle baseline unavailable: $ORACLE_BASELINE"; exit 1; }
 [[ -f "$PLAN" ]] || { echo "pinned SEO plan unavailable: $PLAN"; exit 1; }
 [[ -f "$CLAIMS" ]] || { echo "SEO claims ledger unavailable: $CLAIMS"; exit 1; }
@@ -226,6 +288,18 @@ plan_digest() {
   printf '%s\n' "${digest_output%% *}"
 }
 
+snapshot_binding_is_valid() {
+  owned_snapshot_dir_is_current \
+    && owned_regular_file_is_current "$NIGHTLY_ITEMS_PLAN" "$SNAPSHOT_FILE_IDENTITY" \
+    && [[ "$(plan_digest "$NIGHTLY_ITEMS_PLAN" 2>/dev/null || true)" == "$SNAPSHOT_DIGEST" ]]
+}
+
+attested_bundle_is_valid() {
+  snapshot_binding_is_valid \
+    && owned_regular_file_is_current "$ATTESTED_MANIFEST" "$ATTESTED_MANIFEST_IDENTITY" \
+    && [[ "$(plan_digest "$ATTESTED_MANIFEST" 2>/dev/null || true)" == "$ATTESTED_MANIFEST_DIGEST" ]]
+}
+
 if ! PLAN_DIGEST_BEFORE="$(plan_digest "$PLAN")"; then
   echo "active brief snapshot could not be proven; abort before nightly"
   exit 1
@@ -234,16 +308,24 @@ if ! SNAPSHOT_DIR="$(umask 077; mktemp -d "${TMPDIR:-/tmp}/gg-seo-active-plan.XX
   echo "active brief snapshot could not be proven; abort before nightly"
   exit 1
 fi
+SNAPSHOT_DIR_IDENTITY="$(lstat_identity "$SNAPSHOT_DIR" 2>/dev/null || true)"
+if [[ -z "$SNAPSHOT_DIR_IDENTITY" || -L "$SNAPSHOT_DIR" ]]; then
+  echo "active brief snapshot directory identity could not be proven; abort before nightly"
+  exit 1
+fi
 NIGHTLY_ITEMS_PLAN="$SNAPSHOT_DIR/active-plan.md"
+ATTESTED_MANIFEST="$SNAPSHOT_DIR/attested-manifest.json"
 if ! cp "$PLAN" "$NIGHTLY_ITEMS_PLAN" || ! chmod 400 "$NIGHTLY_ITEMS_PLAN"; then
   echo "active brief snapshot could not be proven; abort before nightly"
   exit 1
 fi
+SNAPSHOT_FILE_IDENTITY="$(lstat_identity "$NIGHTLY_ITEMS_PLAN" 2>/dev/null || true)"
 if ! PLAN_DIGEST_AFTER="$(plan_digest "$PLAN")" \
   || ! SNAPSHOT_DIGEST="$(plan_digest "$NIGHTLY_ITEMS_PLAN")" \
-  || [[ -z "$PLAN_DIGEST_BEFORE" \
+  || [[ -z "$PLAN_DIGEST_BEFORE" || -z "$SNAPSHOT_FILE_IDENTITY" \
     || "$PLAN_DIGEST_BEFORE" != "$PLAN_DIGEST_AFTER" \
-    || "$PLAN_DIGEST_BEFORE" != "$SNAPSHOT_DIGEST" ]]; then
+    || "$PLAN_DIGEST_BEFORE" != "$SNAPSHOT_DIGEST" ]] \
+  || ! snapshot_binding_is_valid; then
   echo "active brief snapshot could not be proven; abort before nightly"
   exit 1
 fi
@@ -253,17 +335,26 @@ set +e
 GG_LARK_NOTIFY_SILENCE=1 node "$BRIEF_PREFLIGHT" \
   --plan "$NIGHTLY_ITEMS_PLAN" \
   --topic-register-wrapper "$TOPIC_REGISTER" \
+  --attested-manifest "$ATTESTED_MANIFEST" \
   --json
 BRIEF_PREFLIGHT_RC=$?
 set -e
-if ! SNAPSHOT_DIGEST_AFTER_PREFLIGHT="$(plan_digest "$NIGHTLY_ITEMS_PLAN")" \
-  || [[ "$SNAPSHOT_DIGEST_AFTER_PREFLIGHT" != "$SNAPSHOT_DIGEST" ]]; then
+if [[ -f "$ATTESTED_MANIFEST" && ! -L "$ATTESTED_MANIFEST" ]]; then
+  ATTESTED_MANIFEST_IDENTITY="$(lstat_identity "$ATTESTED_MANIFEST" 2>/dev/null || true)"
+  ATTESTED_MANIFEST_DIGEST="$(plan_digest "$ATTESTED_MANIFEST" 2>/dev/null || true)"
+fi
+if ! snapshot_binding_is_valid; then
   echo "active brief snapshot changed during preflight; abort before nightly"
   exit 1
 fi
 if [[ "$BRIEF_PREFLIGHT_RC" -ne 0 ]]; then
   echo "active brief preflight failed rc=$BRIEF_PREFLIGHT_RC; abort before nightly"
   exit "$BRIEF_PREFLIGHT_RC"
+fi
+if [[ -z "$ATTESTED_MANIFEST_IDENTITY" || -z "$ATTESTED_MANIFEST_DIGEST" ]] \
+  || ! attested_bundle_is_valid; then
+  echo "active brief attested manifest could not be proven; abort before nightly"
+  exit 1
 fi
 echo "active brief preflight passed"
 
@@ -305,9 +396,22 @@ if [[ "$PRE_RECONCILE_RC" -ne 0 ]]; then
   fi
 fi
 
+if ! attested_bundle_is_valid; then
+  echo "active brief snapshot identity or integrity failed immediately before nightly; abort"
+  exit 1
+fi
+
 echo "single-executor preflight passed; starting deterministic SEO nightly"
 set +e
-GG_SEO_PLAN="$PLAN" GG_NIGHTLY_ITEMS_PLAN="$NIGHTLY_ITEMS_PLAN" bash "$NIGHTLY"
+GG_SEO_PLAN="$PLAN" \
+GG_NIGHTLY_ITEMS_PLAN="$NIGHTLY_ITEMS_PLAN" \
+GG_NIGHTLY_ITEMS_SHA256="$SNAPSHOT_DIGEST" \
+GG_NIGHTLY_ITEMS_IDENTITY="$SNAPSHOT_FILE_IDENTITY" \
+GG_NIGHTLY_ATTESTED_MANIFEST="$ATTESTED_MANIFEST" \
+GG_NIGHTLY_ATTESTED_MANIFEST_SHA256="$ATTESTED_MANIFEST_DIGEST" \
+GG_NIGHTLY_ATTESTED_MANIFEST_IDENTITY="$ATTESTED_MANIFEST_IDENTITY" \
+GG_NIGHTLY_VALIDATOR_NODE="$NODE_BIN" \
+bash "$NIGHTLY"
 NIGHTLY_RC=$?
 set -e
 

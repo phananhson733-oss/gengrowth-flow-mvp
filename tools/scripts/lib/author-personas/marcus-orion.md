@@ -3,7 +3,7 @@ id: marcus-orion
 display_name: Marcus Orion
 primary_focus: Astrology Basics / Transits / Aspects
 version: "1.0"
-source_ref: gengrowth-ops/inbox/03-content-briefs/author-personas.md
+source_ref: gengrowth-ops/inbox-maboyang/03-content-briefs/author-personas.md
 banned_tokens:
   - energy
   - vibration

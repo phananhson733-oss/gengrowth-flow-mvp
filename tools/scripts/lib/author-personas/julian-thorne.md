@@ -3,7 +3,7 @@ id: julian-thorne
 display_name: Julian Thorne
 primary_focus: Houses / Nodes / Chiron / Healing Placements
 version: "1.0"
-source_ref: gengrowth-ops/inbox/03-content-briefs/author-personas.md
+source_ref: gengrowth-ops/inbox-maboyang/03-content-briefs/author-personas.md
 banned_tokens:
   - you will
   - this means you will

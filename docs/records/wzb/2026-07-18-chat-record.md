@@ -64,24 +64,6 @@ aliases:
 
 ---
 
-### Q3 — 05:05
-
-**🙋 提问：**
-
-<heartbeat>
-  <automation_id>seo</automation_id>
-  <current_time_iso>2026-07-17T21:05:32.312Z</current_time_iso>
-  <instructions>
-继续当前 SEO Active Brief Preflight 验收任务。仅做只读验证，严禁手工启动 launcher/nightly、强制 publish、修复、通知或 Sheet 写入。检查最近一个 macOS LaunchAgent com.gengrowth.seo-blog 自然 fire 的精确日志窗口和进程父级；人工/Hermes 强制轮不计。确认顺序 active brief preflight -> pre-drain -> strict reconcile -> nightly，最终 claims non-done=0、active repair=0、pending/dropped writeback=0、outbox=0、needs-human drift=0，且无残留 SEO 进程/锁；若有发布，核验 plan/claims/publish log/Sheet/Vault/live 收敛。逐轮记录 20:00、20:30、21:00 是否为 clean natural window；只有连续 3 个 clean natural windows 才完成父目标。遇到仍运行则等待其自然结束，不干预。21:05 验收后或第三个 clean window 后删除本临时 heartbeat。遵守仓库 AGENTS.md 的中文输出与逐轮 record 规则。
-  </instructions>
-</heartbeat>
-
-**🤖 回答：**
-
-21:05 最终只读检查仍不通过：没有新增合格自然窗口，20:00 以 reconcile=2 结束，20:30 与 21:00 没有独立 tick；PG-WC-053=needs_human，claims non-done=1、needs-human drift=1。pending/dropped writeback、outbox、SEO 业务进程和锁均为 0。按约定再次调用 automation delete，但等待 30 秒仍超时，automation.toml 继续显示 ACTIVE；为保持自动化状态一致性，未绕过 Codex 接口直接删除文件。
-
----
-
 ### Q3 — 05:02
 
 **🙋 提问：**
@@ -96,5 +78,23 @@ Run the deterministic fixed-row index repair workflow through `bash tools/script
 **🤖 回答：**
 
 已执行指定入口 `bash tools/scripts/gg-index-repair-resubmit-tick.sh`，05:01:30–05:01:52 CST 退出码为 0，日志以 `index repair-resubmit ok` 结束。astrologywiki：process-fixed fixed=0、resubmitted=0；sync-recap en_rows=264、appended=9、updated=0、skipped=255；sync-request-queue rows=27、P0=0、P1=3、P2=4、P3=20。gengrowth：process-fixed fixed=0、resubmitted=0；sync-recap en_rows=62、appended=0、updated=0、skipped=62；sync-request-queue rows=2、P0=0、P1=0、P2=0、P3=2。该时间窗没有 failure/error/exception/auth/timeout/nonzero-rc 关键字；遵守普通文章不使用 Google Indexing API、不进行无人值守 Search Console Request Indexing 点击、也未创建 Feishu 或 Google Doc 报告的边界。自动化记忆已在真实 EOF 追加。
+
+---
+
+### Q4 — 05:05
+
+**🙋 提问：**
+
+<heartbeat>
+  <automation_id>seo</automation_id>
+  <current_time_iso>2026-07-17T21:05:32.312Z</current_time_iso>
+  <instructions>
+继续当前 SEO Active Brief Preflight 验收任务。仅做只读验证，严禁手工启动 launcher/nightly、强制 publish、修复、通知或 Sheet 写入。检查最近一个 macOS LaunchAgent com.gengrowth.seo-blog 自然 fire 的精确日志窗口和进程父级；人工/Hermes 强制轮不计。确认顺序 active brief preflight -> pre-drain -> strict reconcile -> nightly，最终 claims non-done=0、active repair=0、pending/dropped writeback=0、outbox=0、needs-human drift=0，且无残留 SEO 进程/锁；若有发布，核验 plan/claims/publish log/Sheet/Vault/live 收敛。逐轮记录 20:00、20:30、21:00 是否为 clean natural window；只有连续 3 个 clean natural windows 才完成父目标。遇到仍运行则等待其自然结束，不干预。21:05 验收后或第三个 clean window 后删除本临时 heartbeat。遵守仓库 AGENTS.md 的中文输出与逐轮 record 规则。
+  </instructions>
+</heartbeat>
+
+**🤖 回答：**
+
+21:05 最终只读检查仍不通过：没有新增合格自然窗口，20:00 以 reconcile=2 结束，20:30 与 21:00 没有独立 tick；PG-WC-053=needs_human，claims non-done=1、needs-human drift=1。pending/dropped writeback、outbox、SEO 业务进程和锁均为 0。按约定再次调用 automation delete，但等待 30 秒仍超时，automation.toml 继续显示 ACTIVE；为保持自动化状态一致性，未绕过 Codex 接口直接删除文件。
 
 ---

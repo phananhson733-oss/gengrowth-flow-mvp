@@ -5,8 +5,16 @@ import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { spawn, spawnSync } from 'node:child_process';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  renameSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -14,18 +22,58 @@ const repo = join(__dirname, '..', '..', '..');
 const wrapper = join(repo, 'tools', 'scripts', 'gg-topic-register-tick.sh');
 
 function printCommand(extraEnv = {}) {
+  const tmp = mkdtempSync(join(tmpdir(), 'gg-topic-register-print-command-'));
   return spawnSync('bash', [wrapper, '--print-command'], {
     cwd: repo,
     encoding: 'utf8',
     env: {
       PATH: process.env.PATH,
-      HOME: process.env.HOME,
+      HOME: tmp,
       GG_TOPIC_REGISTER_ENV_FILE: '/dev/null',
+      GG_TOPIC_REGISTER_LOG_DIR: join(tmp, 'logs'),
       GG_TOPIC_REGISTER_PRODUCTS: 'all',
       GG_TOPIC_REGISTER_LIMIT: '10',
       ...extraEnv,
     },
   });
+}
+
+function captureExit(child) {
+  let stdout = '';
+  let stderr = '';
+  child.stdout.on('data', (chunk) => {
+    stdout += chunk;
+  });
+  child.stderr.on('data', (chunk) => {
+    stderr += chunk;
+  });
+  return new Promise((resolve, reject) => {
+    child.once('error', reject);
+    child.once('close', (code, signal) => resolve({ code, signal, stdout, stderr }));
+  });
+}
+
+async function waitFor(check, label, timeoutMs = 5000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    if (check()) return;
+    await new Promise((resolve) => setTimeout(resolve, 10));
+  }
+  throw new Error(`timed out waiting for ${label}`);
+}
+
+async function withTimeout(promise, label, timeoutMs = 5000) {
+  let timer;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`timed out waiting for ${label}`)), timeoutMs);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 test('wrapper enables v1 fallback by default when v2 preprocessor needs evidence', () => {
@@ -112,6 +160,21 @@ test('wrapper maps strict semantic repair to one bounded command', () => {
   );
 });
 
+test('_gg.env cannot overwrite an explicit semantic repair mode', () => {
+  const tmp = mkdtempSync(join(tmpdir(), 'gg-topic-register-semantic-env-'));
+  const envFile = join(tmp, '_gg.env');
+  writeFileSync(envFile, 'GG_TOPIC_REGISTER_SEMANTIC_REPAIR_ONLY=0\n');
+  const r = printCommand({
+    GG_TOPIC_REGISTER_ENV_FILE: envFile,
+    GG_TOPIC_REGISTER_LLM: 'none',
+    GG_TOPIC_REGISTER_DISCOVER_EVIDENCE: '0',
+    GG_TOPIC_REGISTER_SEMANTIC_REPAIR_ONLY: '1',
+  });
+
+  assert.equal(r.status, 0, `${r.stdout}${r.stderr}`);
+  assert.match(r.stdout, /--semantic-repair-only/);
+});
+
 test('require-run turns an active lock into structured rc 75 without stealing it', () => {
   const tmp = mkdtempSync(join(tmpdir(), 'gg-topic-register-strict-lock-'));
   const lock = join(tmp, 'lock');
@@ -143,6 +206,46 @@ test('require-run turns an active lock into structured rc 75 without stealing it
     active_pid: String(process.pid),
   });
   assert.equal(readFileSync(join(lock, 'pid'), 'utf8'), String(process.pid));
+});
+
+test('_gg.env cannot overwrite explicit require-run and result-file values', () => {
+  const tmp = mkdtempSync(join(tmpdir(), 'gg-topic-register-strict-env-'));
+  const envFile = join(tmp, '_gg.env');
+  const lock = join(tmp, 'lock');
+  const logDir = join(tmp, 'logs');
+  const resultFile = join(tmp, 'explicit-result.json');
+  const envResultFile = join(tmp, 'env-result.json');
+  mkdirSync(lock);
+  mkdirSync(logDir);
+  writeFileSync(join(lock, 'pid'), String(process.pid));
+  writeFileSync(
+    envFile,
+    `GG_TOPIC_REGISTER_REQUIRE_RUN=0\nGG_TOPIC_REGISTER_RESULT_FILE=${envResultFile}\n`,
+  );
+  const r = spawnSync('bash', [wrapper], {
+    cwd: repo,
+    encoding: 'utf8',
+    env: {
+      PATH: process.env.PATH,
+      HOME: tmp,
+      GG_TOPIC_REGISTER_ENV_FILE: envFile,
+      GG_TOPIC_REGISTER_LOCK: lock,
+      GG_TOPIC_REGISTER_LOG_DIR: logDir,
+      GG_TOPIC_REGISTER_REQUIRE_RUN: '1',
+      GG_TOPIC_REGISTER_RESULT_FILE: resultFile,
+      GG_TOPIC_REGISTER_APPLY: '1',
+      GG_TOPIC_REGISTER_LLM: 'none',
+    },
+  });
+
+  assert.equal(r.status, 75, `${r.stdout}${r.stderr}`);
+  assert.deepEqual(JSON.parse(readFileSync(resultFile, 'utf8')), {
+    ok: false,
+    skipped: true,
+    reason: 'lock_active',
+    active_pid: String(process.pid),
+  });
+  assert.equal(existsSync(envResultFile), false);
 });
 
 test('require-run turns a lost lock race into structured rc 75 without removing the lock path', () => {
@@ -216,4 +319,132 @@ test('wrapper atomically writes pure Node stdout JSON to the result artifact', (
   assert.match(log, /\{"ok":true,"payload":"node-only"\}/);
   assert.match(log, /topic-register ok/);
   assert.doesNotMatch(readFileSync(resultFile, 'utf8'), /node diagnostic|topic-register ok/);
+});
+
+test('stale-lock reclaim lets exactly one strict apply runner enter Node and preserves its lock', { timeout: 15000 }, async () => {
+  const tmp = mkdtempSync(join(tmpdir(), 'gg-topic-register-stale-race-'));
+  const harnessDir = join(tmp, 'harness');
+  const bashEnv = join(tmp, 'bash-env');
+  const lock = join(tmp, 'lock');
+  const logDir = join(tmp, 'logs');
+  const stalePid = '999999';
+  mkdirSync(harnessDir);
+  mkdirSync(lock);
+  mkdirSync(logDir);
+  writeFileSync(join(lock, 'pid'), stalePid);
+  writeFileSync(
+    bashEnv,
+    'wait_for_file() { local waited=0; while [ ! -f "$1" ]; do waited=$((waited + 1)); if [ "$waited" -ge 500 ]; then return 1; fi; /bin/sleep 0.01; done; }\n' +
+      'kill() { if [ "${1:-}" = "-0" ] && [ "${2:-}" = "$GG_TEST_STALE_PID" ]; then command touch "$GG_TEST_HARNESS/checked.$GG_TEST_ROLE"; wait_for_file "$GG_TEST_HARNESS/checked.$GG_TEST_OTHER_ROLE" || return 1; if [ "$GG_TEST_ROLE" = "B" ]; then wait_for_file "$GG_TEST_HARNESS/node.A" || return 1; fi; return 1; fi; builtin kill "$@"; }\n' +
+      'node() { command touch "$GG_TEST_HARNESS/node.$GG_TEST_ROLE"; if [ "$GG_TEST_ROLE" = "A" ]; then wait_for_file "$GG_TEST_HARNESS/release.A" || return 99; fi; printf \'{"ok":true,"role":"%s"}\\n\' "$GG_TEST_ROLE"; }\n' +
+      'gtimeout() { shift 3; "$@"; }\n',
+  );
+
+  const commonEnv = {
+    PATH: process.env.PATH,
+    HOME: tmp,
+    BASH_ENV: bashEnv,
+    GG_TOPIC_REGISTER_ENV_FILE: '/dev/null',
+    GG_TOPIC_REGISTER_LOCK: lock,
+    GG_TOPIC_REGISTER_LOG_DIR: logDir,
+    GG_TOPIC_REGISTER_REQUIRE_RUN: '1',
+    GG_TOPIC_REGISTER_APPLY: '1',
+    GG_TOPIC_REGISTER_LLM: 'none',
+    GG_TOPIC_REGISTER_DISCOVER_EVIDENCE: '0',
+    GG_TOPIC_REGISTER_TIMEOUT: '10',
+    GG_TEST_HARNESS: harnessDir,
+    GG_TEST_STALE_PID: stalePid,
+  };
+  const runnerA = spawn('bash', [wrapper], {
+    cwd: repo,
+    stdio: ['ignore', 'pipe', 'pipe'],
+    env: {
+      ...commonEnv,
+      GG_TEST_ROLE: 'A',
+      GG_TEST_OTHER_ROLE: 'B',
+      GG_TOPIC_REGISTER_RESULT_FILE: join(tmp, 'result-A.json'),
+    },
+  });
+  const runnerAExit = captureExit(runnerA);
+  const runnerB = spawn('bash', [wrapper], {
+    cwd: repo,
+    stdio: ['ignore', 'pipe', 'pipe'],
+    env: {
+      ...commonEnv,
+      GG_TEST_ROLE: 'B',
+      GG_TEST_OTHER_ROLE: 'A',
+      GG_TOPIC_REGISTER_RESULT_FILE: join(tmp, 'result-B.json'),
+    },
+  });
+  const runnerBExit = captureExit(runnerB);
+  let runnerAResult;
+
+  try {
+    const runnerBResult = await withTimeout(runnerBExit, 'runner B exit');
+    const nodeEntries = readdirSync(harnessDir)
+      .filter((entry) => entry.startsWith('node.'))
+      .sort();
+    assert.deepEqual(nodeEntries, ['node.A']);
+    assert.equal(runnerBResult.code, 75, `${runnerBResult.stdout}${runnerBResult.stderr}`);
+    assert.deepEqual(JSON.parse(readFileSync(join(tmp, 'result-B.json'), 'utf8')), {
+      ok: false,
+      skipped: true,
+      reason: 'lock_active',
+      active_pid: String(runnerA.pid),
+    });
+    assert.equal(readFileSync(join(lock, 'pid'), 'utf8').trim(), String(runnerA.pid));
+  } finally {
+    writeFileSync(join(harnessDir, 'release.A'), '');
+    runnerAResult = await withTimeout(runnerAExit, 'runner A exit');
+    if (runnerB.exitCode === null) runnerB.kill('SIGTERM');
+  }
+
+  assert.equal(runnerAResult.code, 0, `${runnerAResult.stdout}${runnerAResult.stderr}`);
+});
+
+test('EXIT cleanup preserves a successor lock not owned by the exiting process', { timeout: 10000 }, async () => {
+  const tmp = mkdtempSync(join(tmpdir(), 'gg-topic-register-owner-cleanup-'));
+  const harnessDir = join(tmp, 'harness');
+  const bashEnv = join(tmp, 'bash-env');
+  const lock = join(tmp, 'lock');
+  const displacedLock = join(tmp, 'displaced-lock');
+  const logDir = join(tmp, 'logs');
+  mkdirSync(harnessDir);
+  mkdirSync(logDir);
+  writeFileSync(
+    bashEnv,
+    'node() { command touch "$GG_TEST_HARNESS/node.entered"; local waited=0; while [ ! -f "$GG_TEST_HARNESS/release" ]; do waited=$((waited + 1)); if [ "$waited" -ge 500 ]; then return 99; fi; /bin/sleep 0.01; done; printf \'{"ok":true}\\n\'; }\n' +
+      'gtimeout() { shift 3; "$@"; }\n',
+  );
+  const runner = spawn('bash', [wrapper], {
+    cwd: repo,
+    stdio: ['ignore', 'pipe', 'pipe'],
+    env: {
+      PATH: process.env.PATH,
+      HOME: tmp,
+      BASH_ENV: bashEnv,
+      GG_TOPIC_REGISTER_ENV_FILE: '/dev/null',
+      GG_TOPIC_REGISTER_LOCK: lock,
+      GG_TOPIC_REGISTER_LOG_DIR: logDir,
+      GG_TOPIC_REGISTER_RESULT_FILE: join(tmp, 'result.json'),
+      GG_TOPIC_REGISTER_APPLY: '1',
+      GG_TOPIC_REGISTER_LLM: 'none',
+      GG_TOPIC_REGISTER_DISCOVER_EVIDENCE: '0',
+      GG_TOPIC_REGISTER_TIMEOUT: '10',
+      GG_TEST_HARNESS: harnessDir,
+    },
+  });
+  const runnerExit = captureExit(runner);
+
+  await waitFor(() => existsSync(join(harnessDir, 'node.entered')), 'runner to enter Node');
+  assert.equal(readFileSync(join(lock, 'pid'), 'utf8').trim(), String(runner.pid));
+  renameSync(lock, displacedLock);
+  mkdirSync(lock);
+  writeFileSync(join(lock, 'pid'), String(process.pid));
+  writeFileSync(join(harnessDir, 'release'), '');
+  const runnerResult = await withTimeout(runnerExit, 'owner runner exit');
+
+  assert.equal(runnerResult.code, 0, `${runnerResult.stdout}${runnerResult.stderr}`);
+  assert.equal(existsSync(lock), true, 'owner cleanup removed a successor lock');
+  assert.equal(readFileSync(join(lock, 'pid'), 'utf8').trim(), String(process.pid));
 });

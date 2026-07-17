@@ -554,6 +554,7 @@ test('real nightly consumes only the proven snapshot and rechecks canonical unch
   const bin = join(root, '.local/bin');
   const canonical = join(tasks, '2026-05-27-W22-blog-output-plan.md');
   const snapshot = join(root, 'private-items-plan.md');
+  const manifest = join(root, 'attested-manifest.json');
   const claims = join(tasks, '.autopilot-claims.json');
   const calls = join(root, 'node-calls.log');
   const log = join(root, 'nightly.log');
@@ -571,11 +572,22 @@ test('real nightly consumes only the proven snapshot and rechecks canonical unch
       `- [ ] \`${added}\` added after snapshot`,
       '',
     ].join('\n'));
-    writeFileSync(snapshot, [
+    const snapshotText = [
       `- [ ] \`${keep}\` keep keyword`,
       `- [ ] \`${removed}\` removed after snapshot`,
       '',
-    ].join('\n'));
+    ].join('\n');
+    const snapshotDigest = createHash('sha256').update(snapshotText).digest('hex');
+    writeFileSync(snapshot, snapshotText);
+    writeFileSync(manifest, JSON.stringify({
+      version: 1,
+      plan_sha256: snapshotDigest,
+      requested_page_ids: [keep, removed],
+      rows: [
+        { page_id: keep, raw_line: `- [ ] \`${keep}\` keep keyword`, keyword: 'keep keyword' },
+        { page_id: removed, raw_line: `- [ ] \`${removed}\` removed after snapshot`, keyword: 'removed after snapshot' },
+      ],
+    }));
     chmodSync(snapshot, 0o400);
     writeFileSync(claims, '{}\n');
     executable(join(bin, 'curl'), '#!/bin/sh\nexit 0\n');
@@ -609,6 +621,12 @@ test('real nightly consumes only the proven snapshot and rechecks canonical unch
         HOME: root,
         GG_SEO_PLAN: canonical,
         GG_NIGHTLY_ITEMS_PLAN: snapshot,
+        GG_NIGHTLY_ITEMS_SHA256: snapshotDigest,
+        GG_NIGHTLY_ITEMS_IDENTITY: fileIdentity(snapshot),
+        GG_NIGHTLY_ATTESTED_MANIFEST: manifest,
+        GG_NIGHTLY_ATTESTED_MANIFEST_SHA256: createHash('sha256').update(readFileSync(manifest)).digest('hex'),
+        GG_NIGHTLY_ATTESTED_MANIFEST_IDENTITY: fileIdentity(manifest),
+        GG_NIGHTLY_VALIDATOR_NODE: process.execPath,
         GG_NIGHTLY_FLOW: flowRoot,
         GG_NIGHTLY_CLAIMS: claims,
         GG_NIGHTLY_LOG: log,
@@ -620,10 +638,10 @@ test('real nightly consumes only the proven snapshot and rechecks canonical unch
     const callLog = existsSync(calls) ? readFileSync(calls, 'utf8') : '';
     const nightlyLog = existsSync(log) ? readFileSync(log, 'utf8') : '';
     assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}\n${nightlyLog}`);
-    assert.match(callLog, new RegExp(`^${canonical.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\t.*--author --task ${keep} `, 'm'));
+    assert.match(callLog, new RegExp(`^${snapshot.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\t.*--author --task ${keep} `, 'm'));
     assert.doesNotMatch(callLog, new RegExp(`--task ${removed}(?: |$)`));
     assert.doesNotMatch(callLog, new RegExp(`--task ${added}(?: |$)`));
-    assert.match(nightlyLog, new RegExp(`${removed}: no longer canonical unchecked.*skip`, 'i'));
+    assert.match(nightlyLog, new RegExp(`${removed}: canonical raw row no longer matches attested snapshot.*skip`, 'i'));
   } finally {
     for (const path of ownedTmp) rmSync(path, { force: true });
     rmSync(root, { recursive: true, force: true });

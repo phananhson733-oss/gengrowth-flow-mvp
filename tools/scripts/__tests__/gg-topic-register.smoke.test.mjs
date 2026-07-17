@@ -575,8 +575,9 @@ test('semantic proof rejects non-empty skipped or budget-exhausted runs but pres
     }],
   };
   for (const summary of [
-    { ...repairSummary, skipped_apply: true },
-    { ...repairSummary, budget_exhausted: true },
+    { ...repairSummary, applied: true, skipped_apply: true },
+    { ...repairSummary, applied: true, budget_exhausted: true },
+    repairSummary,
   ]) {
     assert.throws(
       () => buildSemanticRepairProof({ requestedPageIds: ['PG-WDIF-002'], summary }),

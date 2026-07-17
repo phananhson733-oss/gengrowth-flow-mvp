@@ -2326,7 +2326,7 @@ export function buildSemanticRepairProof({ requestedPageIds, summary }) {
   const createdPageIds = Array.isArray(summary?.created_page_ids) ? summary.created_page_ids : [];
   const newClusterCount = Number(summary?.new_clusters || 0);
   const nonEmptyRequest = requested.length > 0;
-  if (nonEmptyRequest && summary?.skipped_apply) {
+  if (nonEmptyRequest && (summary?.skipped_apply || summary?.skipped)) {
     throw new Error('semantic-repair-only skipped apply cannot produce proof');
   }
   if (nonEmptyRequest && summary?.budget_exhausted) {
@@ -2334,6 +2334,9 @@ export function buildSemanticRepairProof({ requestedPageIds, summary }) {
   }
   if (nonEmptyRequest && summary?.applied !== true) {
     throw new Error('semantic-repair-only apply did not complete');
+  }
+  if (selected.some((pageId) => !requested.includes(pageId))) {
+    throw new Error('semantic-repair-only selected page id outside request');
   }
   const allowedProvenance = new Set(['semantic-repair', 'semantic-repair-new']);
   const invalidRepair = repairs.some((row) => (
@@ -2363,9 +2366,6 @@ export function buildSemanticRepairProof({ requestedPageIds, summary }) {
     repairs.filter((row) => row.provenance === 'semantic-repair-new').map((row) => row.to),
   ).size;
   if (newClusterCount !== newRepairClusters) throw new Error('semantic-repair-only new cluster provenance mismatch');
-  if (selected.some((pageId) => !requested.includes(pageId))) {
-    throw new Error('semantic-repair-only selected page id outside request');
-  }
   if (createdPageIds.length) throw new Error('semantic-repair-only created a new page id');
   if (repairs.length !== selected.length) {
     throw new Error('semantic-repair-only changed pages require repair provenance');

@@ -330,16 +330,51 @@ Then add:
 export function buildSemanticRepairProof({ requestedPageIds, summary }) {
   const requested = [...requestedPageIds].sort();
   const repairs = Array.isArray(summary?.cluster_repairs) ? summary.cluster_repairs : [];
-  const selected = Array.isArray(summary?.page_ids) ? [...summary.page_ids].sort() : [];
+  const selectedRaw = Array.isArray(summary?.page_ids) ? summary.page_ids : [];
+  const selected = [...selectedRaw].sort();
   const createdPageIds = Array.isArray(summary?.created_page_ids) ? summary.created_page_ids : [];
   const newClusterCount = Number(summary?.new_clusters || 0);
+  const nonEmptyRequest = requested.length > 0;
+  if (nonEmptyRequest && (summary?.skipped_apply || summary?.skipped)) {
+    throw new Error('semantic-repair-only skipped apply cannot produce proof');
+  }
+  if (nonEmptyRequest && summary?.budget_exhausted) {
+    throw new Error('semantic-repair-only budget exhausted cannot produce proof');
+  }
+  if (nonEmptyRequest && summary?.applied !== true) {
+    throw new Error('semantic-repair-only apply did not complete');
+  }
+  if (selected.some((pageId) => !requested.includes(pageId))) {
+    throw new Error('semantic-repair-only selected page id outside request');
+  }
+  const allowedProvenance = new Set(['semantic-repair', 'semantic-repair-new']);
+  const invalidRepair = repairs.some((row) => (
+    !row
+    || typeof row.page_id !== 'string'
+    || !row.page_id.trim()
+    || typeof row.from !== 'string'
+    || !row.from.trim()
+    || typeof row.to !== 'string'
+    || !row.to.trim()
+    || typeof row.score !== 'number'
+    || !Number.isFinite(row.score)
+    || !allowedProvenance.has(row.provenance)
+  ));
+  const repairPageIds = repairs.map((row) => row?.page_id).sort();
+  const selectedUnique = new Set(selected);
+  const repairPageIdsUnique = new Set(repairPageIds);
+  const repairEvidenceMismatch = invalidRepair
+    || selected.some((pageId) => typeof pageId !== 'string' || !pageId.trim())
+    || selectedUnique.size !== selected.length
+    || repairPageIdsUnique.size !== repairPageIds.length
+    || repairPageIds.some((pageId) => !requested.includes(pageId))
+    || selected.length !== repairPageIds.length
+    || selected.some((pageId, index) => pageId !== repairPageIds[index]);
+  if (repairEvidenceMismatch) throw new Error('semantic-repair-only invalid repair evidence');
   const newRepairClusters = new Set(
     repairs.filter((row) => row.provenance === 'semantic-repair-new').map((row) => row.to),
   ).size;
   if (newClusterCount !== newRepairClusters) throw new Error('semantic-repair-only new cluster provenance mismatch');
-  if (selected.some((pageId) => !requested.includes(pageId))) {
-    throw new Error('semantic-repair-only selected page id outside request');
-  }
   if (createdPageIds.length) throw new Error('semantic-repair-only created a new page id');
   if (repairs.length !== selected.length) {
     throw new Error('semantic-repair-only changed pages require repair provenance');
@@ -379,7 +414,7 @@ if (semanticRepairPageIds && semanticRepairPageIds.length === 0) {
 }
 ```
 
-For non-empty strict runs attach `proof` to the root result from the single astrologywiki summary. Update `--help` with `--semantic-repair-only` and its required flags.
+For non-empty strict runs, attach `proof` to the root result from the single astrologywiki summary only after `summary.applied === true` and only when neither `skipped_apply` / `skipped` nor `budget_exhausted` is present. Any non-empty skipped, budget-exhausted, or not-applied result must throw before successful JSON/proof reaches stdout, so the CLI exits non-zero and cannot emit `ok:true` proof. The exact empty target set is the only legal `applied:false` noop and must still return exit 0 before writer-SA validation. Update `--help` with `--semantic-repair-only` and its required flags.
 
 - [ ] **Step 7: Add proof tests and verify GREEN**
 
@@ -388,6 +423,7 @@ test('semantic proof proves only requested existing repairs', () => {
   const proof = buildSemanticRepairProof({
     requestedPageIds: ['PG-WDIF-002', 'PG-WDIN-001'],
     summary: {
+      applied: true,
       page_ids: ['PG-WDIF-002'],
       new_clusters: 1,
       cluster_repairs: [{
@@ -408,11 +444,12 @@ test('semantic proof proves only requested existing repairs', () => {
 test('semantic proof rejects expanded or unproven writes', () => {
   assert.throws(() => buildSemanticRepairProof({
     requestedPageIds: ['PG-WDIF-002'],
-    summary: { page_ids: ['PG-OTHER-001'], new_clusters: 0, cluster_repairs: [] },
+    summary: { applied: true, page_ids: ['PG-OTHER-001'], new_clusters: 0, cluster_repairs: [] },
   }), /outside request/);
   assert.throws(() => buildSemanticRepairProof({
     requestedPageIds: ['PG-WDIF-002'],
     summary: {
+      applied: true,
       page_ids: ['PG-WDIF-002'],
       new_clusters: 1,
       cluster_repairs: [{ page_id: 'PG-WDIF-002', from: 'old', to: 'new', score: 0, provenance: 'semantic-repair' }],
@@ -420,6 +457,14 @@ test('semantic proof rejects expanded or unproven writes', () => {
   }), /new cluster provenance mismatch/);
 });
 ```
+
+Also add hermetic negative cases proving:
+
+- a non-empty `skipped_apply` / `skipped`, `budget_exhausted`, or `applied:false` summary cannot produce a proof;
+- selected page IDs and repair page IDs are non-empty, unique, requested, and an exact one-to-one set match;
+- repair provenance is only `semantic-repair` or `semantic-repair-new`, `from` / `to` are non-empty strings, and `score` is a finite number;
+- `new_cluster_count` equals the number of unique `to` cluster IDs among `semantic-repair-new` rows, including the case where multiple pages share one new cluster;
+- `requestedPageIds: []` with the exact zero-write summary remains a legal `noop` without writer-SA access.
 
 Run:
 

@@ -101,6 +101,10 @@ function fakeWrapper(path) {
     '  reassignExisting: process.env.GG_TOPIC_REGISTER_REASSIGN_EXISTING || null,',
     '}));\'',
     'if [ "${GG_TEST_WRITE_RESULT:-1}" = "1" ]; then',
+    '  if [ "${GG_TEST_REPLACE_PLAN:-0}" = "1" ]; then',
+    '    chmod u+w "$GG_TEST_PLAN_PATH"',
+    '    printf \'%s\\n\' \'- [ ] `PG-REPLACED-001` replaced during wrapper\' > "$GG_TEST_PLAN_PATH"',
+    '  fi',
     '  printf \'%s\' "$GG_TEST_RESULT_JSON" > "$GG_TOPIC_REGISTER_RESULT_FILE"',
     'fi',
     'if [ -n "${GG_TEST_WRAPPER_STDOUT:-}" ]; then printf \'%s\n\' "$GG_TEST_WRAPPER_STDOUT"; fi',
@@ -120,6 +124,7 @@ function harness({
   wrapperStdout = '',
   wrapperStderr = '',
   inherited = {},
+  replacePlan = false,
 } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'gg-seo-brief-preflight-test-'));
   const planPath = join(root, 'plan.md');
@@ -145,6 +150,8 @@ function harness({
       GG_TEST_WRITE_RESULT: writeResult ? '1' : '0',
       GG_TEST_WRAPPER_STDOUT: wrapperStdout,
       GG_TEST_WRAPPER_STDERR: wrapperStderr,
+      GG_TEST_REPLACE_PLAN: replacePlan ? '1' : '0',
+      GG_TEST_PLAN_PATH: planPath,
       ...inherited,
     },
   });
@@ -190,6 +197,19 @@ test('active page parser fails closed on duplicate or malformed unchecked owners
     /exactly one active page id/i,
   );
 });
+
+for (const plan of [
+  '* [ ] PG-STAR-001 non-canonical bullet\n',
+  '+ [ ] PG-PLUS-001 non-canonical bullet\n',
+  '1. [ ] PG-NUM-001 numbered checkbox\n',
+  '1) [ ] PG-NUM-002 numbered checkbox\n',
+  '- [  ] PG-WIDE-001 malformed checkbox\n',
+  '- [ ] PG-OK-001 also PG-BAD-XYZ\n',
+]) {
+  test(`active page parser rejects unchecked checkbox-like ambiguity: ${plan.trim()}`, () => {
+    assert.throws(() => activePageIdsFromPlan(plan), /active page|unchecked|canonical/i);
+  });
+}
 
 test('preflight derives active ids and calls the fixed wrapper with zero-touch bounds', () => {
   withHarness({}, (h) => {
@@ -304,6 +324,26 @@ test('preflight suppresses wrapper output and inherited sensitive sentinel value
     assert.equal(run.status, 1);
     assert.equal(run.stdout, '');
     assert.doesNotMatch(run.stderr, new RegExp(sentinel));
+  });
+});
+
+test('preflight rejects a plan replaced by the wrapper before accepting its proof', () => {
+  withHarness({ replacePlan: true }, (h) => {
+    const run = h.run();
+    assert.equal(run.status, 1, `${run.stdout}${run.stderr}`);
+    assert.equal(run.stdout, '');
+    assert.equal(run.stderr, 'active brief preflight failed: pinned plan changed during preflight\n');
+  });
+});
+
+test('malformed artifact contents never appear in CLI errors', () => {
+  const sentinel = 'SENSITIVE-DATA-SHOULD-NOT-LEAK';
+  withHarness({ mutate: () => sentinel }, (h) => {
+    const run = h.run();
+    assert.equal(run.status, 1, `${run.stdout}${run.stderr}`);
+    assert.equal(run.stdout, '');
+    assert.equal(run.stderr, 'active brief preflight failed: topic-register result is malformed JSON\n');
+    assert.doesNotMatch(run.stderr, /SENSITIVE-/);
   });
 });
 

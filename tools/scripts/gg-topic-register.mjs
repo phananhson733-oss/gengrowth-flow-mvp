@@ -2321,9 +2321,44 @@ export function summarizeProductResult(result, { args = {} } = {}) {
 export function buildSemanticRepairProof({ requestedPageIds, summary }) {
   const requested = [...requestedPageIds].sort();
   const repairs = Array.isArray(summary?.cluster_repairs) ? summary.cluster_repairs : [];
-  const selected = Array.isArray(summary?.page_ids) ? [...summary.page_ids].sort() : [];
+  const selectedRaw = Array.isArray(summary?.page_ids) ? summary.page_ids : [];
+  const selected = [...selectedRaw].sort();
   const createdPageIds = Array.isArray(summary?.created_page_ids) ? summary.created_page_ids : [];
   const newClusterCount = Number(summary?.new_clusters || 0);
+  const nonEmptyRequest = requested.length > 0;
+  if (nonEmptyRequest && summary?.skipped_apply) {
+    throw new Error('semantic-repair-only skipped apply cannot produce proof');
+  }
+  if (nonEmptyRequest && summary?.budget_exhausted) {
+    throw new Error('semantic-repair-only budget exhausted cannot produce proof');
+  }
+  if (nonEmptyRequest && summary?.applied !== true) {
+    throw new Error('semantic-repair-only apply did not complete');
+  }
+  const allowedProvenance = new Set(['semantic-repair', 'semantic-repair-new']);
+  const invalidRepair = repairs.some((row) => (
+    !row
+    || typeof row.page_id !== 'string'
+    || !row.page_id.trim()
+    || typeof row.from !== 'string'
+    || !row.from.trim()
+    || typeof row.to !== 'string'
+    || !row.to.trim()
+    || typeof row.score !== 'number'
+    || !Number.isFinite(row.score)
+    || !allowedProvenance.has(row.provenance)
+  ));
+  const repairPageIds = repairs.map((row) => row?.page_id).sort();
+  const selectedUnique = new Set(selected);
+  const repairPageIdsUnique = new Set(repairPageIds);
+  const repairEvidenceMismatch = invalidRepair
+    || selected.some((pageId) => typeof pageId !== 'string' || !pageId.trim())
+    || selectedUnique.size !== selected.length
+    || repairPageIdsUnique.size !== repairPageIds.length
+    || repairPageIds.some((pageId) => !requested.includes(pageId))
+    || selected.length !== repairPageIds.length
+    || selected.some((pageId, index) => pageId !== repairPageIds[index]);
+  if (repairEvidenceMismatch) throw new Error('semantic-repair-only invalid repair evidence');
   const newRepairClusters = new Set(
     repairs.filter((row) => row.provenance === 'semantic-repair-new').map((row) => row.to),
   ).size;

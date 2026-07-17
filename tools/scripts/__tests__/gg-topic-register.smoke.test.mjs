@@ -513,6 +513,7 @@ test('semantic proof proves only requested existing repairs', () => {
   const proof = buildSemanticRepairProof({
     requestedPageIds: ['PG-WDIF-002', 'PG-WDIN-001'],
     summary: {
+      applied: true,
       page_ids: ['PG-WDIF-002'],
       new_clusters: 1,
       cluster_repairs: [{
@@ -532,6 +533,7 @@ test('semantic proof proves only requested existing repairs', () => {
   const sharedClusterProof = buildSemanticRepairProof({
     requestedPageIds: ['PG-WDIF-002', 'PG-WDIN-001'],
     summary: {
+      applied: true,
       page_ids: ['PG-WDIF-002', 'PG-WDIN-001'],
       new_clusters: 1,
       cluster_repairs: [
@@ -546,16 +548,130 @@ test('semantic proof proves only requested existing repairs', () => {
 test('semantic proof rejects expanded or unproven writes', () => {
   assert.throws(() => buildSemanticRepairProof({
     requestedPageIds: ['PG-WDIF-002'],
-    summary: { page_ids: ['PG-OTHER-001'], new_clusters: 0, cluster_repairs: [] },
+    summary: { applied: true, page_ids: ['PG-OTHER-001'], new_clusters: 0, cluster_repairs: [] },
   }), /outside request/);
   assert.throws(() => buildSemanticRepairProof({
     requestedPageIds: ['PG-WDIF-002'],
     summary: {
+      applied: true,
       page_ids: ['PG-WDIF-002'],
       new_clusters: 1,
       cluster_repairs: [{ page_id: 'PG-WDIF-002', from: 'old', to: 'new', score: 0, provenance: 'semantic-repair' }],
     },
   }), /new cluster provenance mismatch/);
+});
+
+test('semantic proof rejects non-empty skipped or budget-exhausted runs but preserves legal noops', () => {
+  const repairSummary = {
+    applied: false,
+    page_ids: ['PG-WDIF-002'],
+    new_clusters: 0,
+    cluster_repairs: [{
+      page_id: 'PG-WDIF-002',
+      from: 'old-cluster',
+      to: 'existing-cluster',
+      score: 0.8,
+      provenance: 'semantic-repair',
+    }],
+  };
+  for (const summary of [
+    { ...repairSummary, skipped_apply: true },
+    { ...repairSummary, budget_exhausted: true },
+  ]) {
+    assert.throws(
+      () => buildSemanticRepairProof({ requestedPageIds: ['PG-WDIF-002'], summary }),
+      /semantic-repair-only.*(?:apply|skipped|budget)/i,
+    );
+  }
+
+  const appliedNoop = buildSemanticRepairProof({
+    requestedPageIds: ['PG-WDIF-002'],
+    summary: { applied: true, page_ids: [], new_clusters: 0, cluster_repairs: [] },
+  });
+  assert.equal(appliedNoop.status, 'noop');
+
+  const emptyTargetNoop = buildSemanticRepairProof({
+    requestedPageIds: [],
+    summary: { applied: false, page_ids: [], new_clusters: 0, cluster_repairs: [] },
+  });
+  assert.equal(emptyTargetNoop.status, 'noop');
+});
+
+test('semantic proof rejects malformed or non-bijective repair evidence', () => {
+  const validRepair = {
+    page_id: 'PG-WDIF-002',
+    from: 'old-cluster',
+    to: 'existing-cluster',
+    score: 0.8,
+    provenance: 'semantic-repair',
+  };
+  const cases = [
+    {
+      label: 'duplicate selected and repair ids',
+      summary: {
+        applied: true,
+        page_ids: ['PG-WDIF-002', 'PG-WDIF-002'],
+        new_clusters: 0,
+        cluster_repairs: [validRepair, { ...validRepair }],
+      },
+    },
+    {
+      label: 'repair id does not match selected id',
+      summary: {
+        applied: true,
+        page_ids: ['PG-WDIF-002'],
+        new_clusters: 0,
+        cluster_repairs: [{ ...validRepair, page_id: 'PG-WDIN-001' }],
+      },
+    },
+    {
+      label: 'invalid provenance',
+      summary: {
+        applied: true,
+        page_ids: ['PG-WDIF-002'],
+        new_clusters: 0,
+        cluster_repairs: [{ ...validRepair, provenance: 'manual-repair' }],
+      },
+    },
+    ...['page_id', 'from', 'to'].map((field) => ({
+      label: `empty ${field}`,
+      summary: {
+        applied: true,
+        page_ids: ['PG-WDIF-002'],
+        new_clusters: 0,
+        cluster_repairs: [{ ...validRepair, [field]: '' }],
+      },
+    })),
+    {
+      label: 'non-finite score',
+      summary: {
+        applied: true,
+        page_ids: ['PG-WDIF-002'],
+        new_clusters: 0,
+        cluster_repairs: [{ ...validRepair, score: Number.NaN }],
+      },
+    },
+    {
+      label: 'non-number score',
+      summary: {
+        applied: true,
+        page_ids: ['PG-WDIF-002'],
+        new_clusters: 0,
+        cluster_repairs: [{ ...validRepair, score: '0.8' }],
+      },
+    },
+  ];
+
+  for (const { label, summary } of cases) {
+    assert.throws(
+      () => buildSemanticRepairProof({
+        requestedPageIds: ['PG-WDIF-002', 'PG-WDIN-001'],
+        summary,
+      }),
+      /semantic-repair-only.*repair evidence/i,
+      label,
+    );
+  }
 });
 
 test('runPreprocessorForPlan skips LLM work with budget_exhausted status when run budget is spent', async () => {

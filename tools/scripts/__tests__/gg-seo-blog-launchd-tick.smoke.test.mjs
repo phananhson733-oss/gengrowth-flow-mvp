@@ -75,12 +75,15 @@ function runnerHarness({
   collidePinnedOracle = false,
   controllerMutatesSnapshot = false,
   controllerReplacesSnapshotDir = false,
+  useDefaultClaimsBinding = false,
+  inconsistentNightlyClaims = false,
 } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'seo-launchd-runner-'));
   const flow = join(root, 'flow');
   const oracle = join(root, 'oracle');
   const dirtyOracle = join(root, 'dirty-oracle');
-  const opsTasks = join(root, 'ops/inbox-maboyang/06-tasks/tasks');
+  const ops = join(root, 'ops');
+  const opsTasks = join(ops, 'inbox-maboyang/06-tasks/tasks');
   mkdirSync(flow, { recursive: true });
   mkdirSync(join(oracle, '.git'), { recursive: true });
   mkdirSync(join(dirtyOracle, '.git'), { recursive: true });
@@ -89,22 +92,26 @@ function runnerHarness({
   const briefPreflightArgs = join(root, 'brief-preflight-args.json');
   const hookArgs = join(root, 'hook-args.json');
   const controllerArgs = join(root, 'controller-args.log');
+  const controllerEnv = join(root, 'controller-env.log');
   const summaryArgs = join(root, 'summary-args.json');
+  const summaryEnv = join(root, 'summary-env.json');
   const nightlyEnv = join(root, 'nightly-env.json');
   const reconcileEnv = join(root, 'reconcile-env.json');
   const reconcileCount = join(root, 'reconcile-count.txt');
   const readinessArgs = join(root, 'readiness-args.json');
+  const readinessEnv = join(root, 'readiness-env.json');
   const nightlyLog = join(root, 'nightly.log');
   const launchdLog = join(root, 'launchd.log');
   const launchdErr = join(root, 'launchd.err.log');
   const envFile = join(root, '_gg.env');
-  const plan = join(opsTasks, 'plan.md');
+  const plan = join(opsTasks, useDefaultClaimsBinding ? '2026-05-27-W22-blog-output-plan.md' : 'plan.md');
   const claims = join(opsTasks, '.autopilot-claims.json');
+  const legacyClaims = join(ops, 'inbox/06-tasks/tasks/.autopilot-claims.json');
   const victimDir = join(root, 'victim');
   const victimFile = join(victimDir, 'active-plan.md');
   const initialPlanContent = '- [ ] `PG-A-001` alpha\n';
   writeFileSync(plan, initialPlanContent);
-  writeFileSync(claims, '{}');
+  writeFileSync(claims, JSON.stringify({ 'PG-A-001': { status: 'needs_human', site: 'astrologywiki' } }));
   writeFileSync(nightlyLog, 'existing bytes\n');
   mkdirSync(victimDir);
   writeFileSync(victimFile, 'VICTIM-MUST-SURVIVE\n');
@@ -136,7 +143,7 @@ function runnerHarness({
   const nightly = executable(join(root, 'nightly.sh'), [
     '#!/bin/sh',
     'printf "nightly\\n" >> "$GG_TEST_EVENTS"',
-    'node -e \'const fs=require("node:fs"); fs.writeFileSync(process.env.GG_TEST_NIGHTLY_ENV, JSON.stringify({ runId: process.env.GG_SEO_REPAIR_RUN_ID || null, logFile: process.env.GG_SEO_REPAIR_LOG_FILE || null, offsetStart: process.env.GG_SEO_REPAIR_LOG_OFFSET_START || null, offsetEnd: process.env.GG_SEO_REPAIR_LOG_OFFSET_END || null, oracle: process.env.GG_AUTOMATION_ORACLE_DIR || null, canonicalPlan: process.env.GG_SEO_PLAN || null, itemsPlan: process.env.GG_NIGHTLY_ITEMS_PLAN || null, itemsSha: process.env.GG_NIGHTLY_ITEMS_SHA256 || null, itemsDirIdentity: process.env.GG_NIGHTLY_ITEMS_DIR_IDENTITY || null, manifest: process.env.GG_NIGHTLY_ATTESTED_MANIFEST || null, canonicalContent: fs.readFileSync(process.env.GG_SEO_PLAN, "utf8"), itemsContent: fs.readFileSync(process.env.GG_NIGHTLY_ITEMS_PLAN, "utf8") }))\'',
+    'node -e \'const fs=require("node:fs"); const claimsPath=process.env.GG_NIGHTLY_CLAIMS || null; const claims=process.env.GG_TEST_REQUIRE_CLAIMS_BINDING === "1" ? JSON.parse(fs.readFileSync(claimsPath, "utf8")) : {}; fs.writeFileSync(process.env.GG_TEST_NIGHTLY_ENV, JSON.stringify({ runId: process.env.GG_SEO_REPAIR_RUN_ID || null, logFile: process.env.GG_SEO_REPAIR_LOG_FILE || null, offsetStart: process.env.GG_SEO_REPAIR_LOG_OFFSET_START || null, offsetEnd: process.env.GG_SEO_REPAIR_LOG_OFFSET_END || null, oracle: process.env.GG_AUTOMATION_ORACLE_DIR || null, canonicalPlan: process.env.GG_SEO_PLAN || null, itemsPlan: process.env.GG_NIGHTLY_ITEMS_PLAN || null, itemsSha: process.env.GG_NIGHTLY_ITEMS_SHA256 || null, itemsDirIdentity: process.env.GG_NIGHTLY_ITEMS_DIR_IDENTITY || null, manifest: process.env.GG_NIGHTLY_ATTESTED_MANIFEST || null, nightlyClaims: claimsPath, seoClaims: process.env.GG_SEO_CLAIMS || null, parked: claims["PG-A-001"]?.status === "needs_human", canonicalContent: fs.readFileSync(process.env.GG_SEO_PLAN, "utf8"), itemsContent: fs.readFileSync(process.env.GG_NIGHTLY_ITEMS_PLAN, "utf8") }))\'',
     'printf "nightly body\\n" >> "$GG_SEO_NIGHTLY_LOG"',
     `exit ${nightlyExit}`,
     '',
@@ -154,6 +161,7 @@ function runnerHarness({
     "import { appendFileSync, chmodSync, readFileSync, rmSync, rmdirSync, symlinkSync, writeFileSync } from 'node:fs';",
     "appendFileSync(process.env.GG_TEST_EVENTS, 'drain\\n');",
     "appendFileSync(process.env.GG_TEST_CONTROLLER_ARGS, JSON.stringify(process.argv.slice(2)) + '\\n');",
+    "appendFileSync(process.env.GG_TEST_CONTROLLER_ENV, JSON.stringify({ claims: process.env.GG_SEO_CLAIMS || null }) + '\\n');",
     ...(controllerMutatesSnapshot ? [
       "const preflight = JSON.parse(readFileSync(process.env.GG_TEST_BRIEF_PREFLIGHT_ARGS, 'utf8'));",
       "const snapshot = preflight.args[preflight.args.indexOf('--plan') + 1];",
@@ -178,7 +186,7 @@ function runnerHarness({
     "import { appendFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs';",
     "const notifyOnly = process.argv.includes('--notify-only');",
     "appendFileSync(process.env.GG_TEST_EVENTS, notifyOnly ? 'notify\\n' : 'reconcile\\n');",
-    "appendFileSync(process.env.GG_TEST_RECONCILE_ENV, JSON.stringify({ notifyOnly, silence: process.env.GG_LARK_NOTIFY_SILENCE || null }) + '\\n');",
+    "appendFileSync(process.env.GG_TEST_RECONCILE_ENV, JSON.stringify({ notifyOnly, silence: process.env.GG_LARK_NOTIFY_SILENCE || null, claims: process.env.GG_SEO_CLAIMS || null }) + '\\n');",
     "if (notifyOnly) process.exit(0);",
     "const previous = existsSync(process.env.GG_TEST_RECONCILE_COUNT) ? Number(readFileSync(process.env.GG_TEST_RECONCILE_COUNT, 'utf8')) || 0 : 0;",
     "const call = previous + 1;",
@@ -194,6 +202,7 @@ function runnerHarness({
     "import { appendFileSync, writeFileSync } from 'node:fs';",
     "appendFileSync(process.env.GG_TEST_EVENTS, 'readiness\\n');",
     "writeFileSync(process.env.GG_TEST_READINESS_ARGS, JSON.stringify(process.argv.slice(2)));",
+    "writeFileSync(process.env.GG_TEST_READINESS_ENV, JSON.stringify({ claims: process.env.GG_SEO_CLAIMS || null }));",
     `process.exit(${readinessExit});`,
     '',
   ].join('\n'));
@@ -202,6 +211,7 @@ function runnerHarness({
     "import { appendFileSync, writeFileSync } from 'node:fs';",
     "appendFileSync(process.env.GG_TEST_EVENTS, 'summary\\n');",
     "writeFileSync(process.env.GG_TEST_SUMMARY_ARGS, JSON.stringify(process.argv.slice(2)));",
+    "writeFileSync(process.env.GG_TEST_SUMMARY_ENV, JSON.stringify({ claims: process.env.GG_SEO_CLAIMS || null }));",
     `process.exit(${summaryExit});`,
     '',
   ].join('\n'));
@@ -216,6 +226,7 @@ function runnerHarness({
       `GG_SEO_RECONCILE_BIN=${JSON.stringify(reconcile)}`,
       `GG_SEO_READINESS_BIN=${JSON.stringify(readiness)}`,
       `GG_SEO_BATCH_SUMMARY_BIN=${JSON.stringify(summary)}`,
+      `GG_OPS_DIR=${JSON.stringify(ops)}`,
       `GG_SEO_PLAN=${JSON.stringify(plan)}`,
       `GG_SEO_CLAIMS=${JSON.stringify(claims)}`,
       `GG_AUTOMATION_ORACLE_DIR=${JSON.stringify(join(root, 'interactive-oracle'))}`,
@@ -235,13 +246,12 @@ function runnerHarness({
       GG_SEO_RECONCILE_BIN: reconcile,
       GG_SEO_READINESS_BIN: readiness,
       GG_SEO_BATCH_SUMMARY_BIN: summary,
+      GG_OPS_DIR: ops,
       GG_SEO_PLAN: plan,
       GG_SEO_CLAIMS: claims,
     };
-  const run = () => spawnSync('bash', [runner], {
-    cwd: flow,
-    encoding: 'utf8',
-    env: {
+  const run = () => {
+    const env = {
       ...process.env,
       HOME: root,
       TMPDIR: root,
@@ -259,14 +269,25 @@ function runnerHarness({
       GG_TEST_BRIEF_PREFLIGHT_ARGS: briefPreflightArgs,
       GG_TEST_HOOK_ARGS: hookArgs,
       GG_TEST_CONTROLLER_ARGS: controllerArgs,
+      GG_TEST_CONTROLLER_ENV: controllerEnv,
       GG_TEST_SUMMARY_ARGS: summaryArgs,
+      GG_TEST_SUMMARY_ENV: summaryEnv,
       GG_TEST_NIGHTLY_ENV: nightlyEnv,
       GG_TEST_RECONCILE_ENV: reconcileEnv,
       GG_TEST_RECONCILE_COUNT: reconcileCount,
       GG_TEST_READINESS_ARGS: readinessArgs,
+      GG_TEST_READINESS_ENV: readinessEnv,
+      GG_TEST_REQUIRE_CLAIMS_BINDING: useDefaultClaimsBinding ? '1' : '0',
       GG_TEST_VICTIM_DIR: victimDir,
-    },
-  });
+      ...(inconsistentNightlyClaims ? { GG_NIGHTLY_CLAIMS: join(root, 'split-brain-claims.json') } : {}),
+    };
+    if (useDefaultClaimsBinding) {
+      delete env.GG_SEO_PLAN;
+      delete env.GG_SEO_CLAIMS;
+      delete env.GG_NIGHTLY_CLAIMS;
+    }
+    return spawnSync('bash', [runner], { cwd: flow, encoding: 'utf8', env });
+  };
   const readMaybe = (path) => { try { return readFileSync(path, 'utf8'); } catch { return ''; } };
   return {
     run,
@@ -274,12 +295,17 @@ function runnerHarness({
     briefPreflight: () => JSON.parse(readMaybe(briefPreflightArgs) || '{}'),
     hookArgs: () => JSON.parse(readMaybe(hookArgs) || '[]'),
     controllerArgs: () => readMaybe(controllerArgs).trim().split('\n').filter(Boolean).map((line) => JSON.parse(line)),
+    controllerEnv: () => readMaybe(controllerEnv).trim().split('\n').filter(Boolean).map((line) => JSON.parse(line)),
     summaryArgs: () => JSON.parse(readMaybe(summaryArgs) || '[]'),
+    summaryEnv: () => JSON.parse(readMaybe(summaryEnv) || '{}'),
     nightlyEnv: () => JSON.parse(readMaybe(nightlyEnv) || '{}'),
     reconcileEnv: () => readMaybe(reconcileEnv).trim().split('\n').filter(Boolean).map((line) => JSON.parse(line)),
     readinessArgs: () => JSON.parse(readMaybe(readinessArgs) || '[]'),
+    readinessEnv: () => JSON.parse(readMaybe(readinessEnv) || '{}'),
     log: () => readMaybe(launchdLog),
     plan,
+    claims,
+    legacyClaims,
     initialPlanContent,
     topicRegister,
     nightlyLog,
@@ -330,6 +356,31 @@ test('clean runner orders pre/post drain, strict reconcile, readiness, summary a
   const readinessArgs = h.readinessArgs();
   assert.equal(readinessArgs[readinessArgs.indexOf('--run-id') + 1], runId);
   assert.equal(readinessArgs[readinessArgs.indexOf('--plan') + 1], h.plan);
+});
+
+test('default launcher fire binds every claims consumer to the one inbox-maboyang ledger', () => {
+  const h = runnerHarness({ useDefaultClaimsBinding: true });
+  const result = h.run();
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}\n${h.log()}`);
+  assert.equal(existsSync(h.legacyClaims), false, 'legacy inbox claims must never be read or created');
+  const expected = h.claims;
+  assert.equal(h.nightlyEnv().nightlyClaims, expected);
+  assert.equal(h.nightlyEnv().seoClaims, expected);
+  assert.equal(h.nightlyEnv().parked, true, 'nightly parked decision must read the canonical ledger');
+  const hookArgs = h.hookArgs();
+  assert.equal(hookArgs[hookArgs.indexOf('--claims') + 1], expected);
+  assert.deepEqual(h.controllerEnv().map(({ claims }) => claims), [expected, expected]);
+  assert.deepEqual(h.reconcileEnv().map(({ claims }) => claims), [expected, expected, expected, expected]);
+  assert.equal(h.readinessEnv().claims, expected);
+  assert.equal(h.summaryEnv().claims, expected);
+});
+
+test('launcher fails closed before preflight when inherited nightly claims disagree', () => {
+  const h = runnerHarness({ inconsistentNightlyClaims: true });
+  const result = h.run();
+  assert.notEqual(result.status, 0, `${result.stdout}\n${result.stderr}\n${h.log()}`);
+  assert.deepEqual(h.events(), []);
+  assert.match(h.log(), /claims.*mismatch|split.brain|inconsistent/i);
 });
 
 test('runner sources migration config before deriving tools and plan while retaining the pinned Oracle baseline', () => {

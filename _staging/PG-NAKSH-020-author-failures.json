@@ -5,7 +5,9 @@
   "failures": [
     "word count 1472 < min 1485",
     "author banned token(s) matched: \"rising sign\"",
-    "author banned token(s) matched: \"sun sign\""
+    "author banned token(s) matched: \"sun sign\"",
+    "word count 1328 < min 1485",
+    "target_keyword count = 14 (limit 12)"
   ],
-  "updatedAt": "2026-07-17T16:25:03.753Z"
+  "updatedAt": "2026-07-17T16:27:36.224Z"
 }

@@ -1,6 +1,15 @@
 #!/usr/bin/env node
 
-import { mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  lstatSync,
+  mkdtempSync,
+  readFileSync,
+  renameSync,
+  rmSync,
+  rmdirSync,
+  unlinkSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { isAbsolute, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -186,13 +195,69 @@ function writeAttestedManifest(path, value) {
   }
 }
 
+function boundIdentity(path, kind) {
+  const stat = lstatSync(path);
+  if (stat.isSymbolicLink()
+    || (kind === 'directory' && !stat.isDirectory())
+    || (kind === 'file' && !stat.isFile())) {
+    throw new Error(`temporary ${kind} identity is invalid`);
+  }
+  return `${stat.dev}:${stat.ino}`;
+}
+
+function optionalBoundFileIdentity(path) {
+  try {
+    return boundIdentity(path, 'file');
+  } catch (error) {
+    if (error?.code === 'ENOENT') return null;
+    throw error;
+  }
+}
+
+function temporaryWorkIsCurrent(path, identity) {
+  try {
+    return boundIdentity(path, 'directory') === identity;
+  } catch {
+    return false;
+  }
+}
+
+function cleanupTemporaryWork(work, workIdentity, knownFiles) {
+  if (!temporaryWorkIsCurrent(work, workIdentity)) return false;
+  for (const { path, identity } of knownFiles) {
+    let currentIdentity;
+    try {
+      currentIdentity = optionalBoundFileIdentity(path);
+    } catch {
+      return false;
+    }
+    if (currentIdentity === null && identity === null) continue;
+    if (currentIdentity === null || identity === null || currentIdentity !== identity) return false;
+    if (!temporaryWorkIsCurrent(work, workIdentity)) return false;
+    try {
+      unlinkSync(path);
+    } catch {
+      return false;
+    }
+  }
+  if (!temporaryWorkIsCurrent(work, workIdentity)) return false;
+  try {
+    rmdirSync(work);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function runBriefPreflight({ planPath, wrapperPath, manifestPath = null, spawn = spawnSync }) {
   const planText = readFileSync(planPath, 'utf8');
   const planDigest = createHash('sha256').update(planText).digest('hex');
   const rows = activeRowsFromPlan(planText);
   const requested = rows.map((row) => row.page_id);
   const work = mkdtempSync(join(tmpdir(), 'gg-seo-brief-preflight-'));
+  const workIdentity = boundIdentity(work, 'directory');
   const resultFile = join(work, 'topic-register-result.json');
+  let resultFileIdentity = null;
   try {
     const run = spawn('bash', [wrapperPath], {
       encoding: 'utf8',
@@ -215,6 +280,10 @@ export function runBriefPreflight({ planPath, wrapperPath, manifestPath = null, 
         GG_TOPIC_REGISTER_REASSIGN_EXISTING: '0',
       },
     });
+    if (!temporaryWorkIsCurrent(work, workIdentity)) {
+      throw new Error('temporary work directory identity changed during preflight');
+    }
+    resultFileIdentity = optionalBoundFileIdentity(resultFile);
     let planTextAfter;
     try {
       planTextAfter = readFileSync(planPath, 'utf8');
@@ -229,12 +298,17 @@ export function runBriefPreflight({ planPath, wrapperPath, manifestPath = null, 
     if (run?.status !== 0) {
       throw new Error(`topic-register wrapper failed rc=${Number.isInteger(run?.status) ? run.status : 'unknown'}`);
     }
+    if (resultFileIdentity === null) throw new Error('topic-register result is unavailable');
     let value;
     try {
       value = JSON.parse(readFileSync(resultFile, 'utf8'));
     } catch (error) {
       if (error?.code && error.code !== 'ERR_INVALID_ARG_TYPE') throw error;
       throw new Error('topic-register result is malformed JSON');
+    }
+    if (!temporaryWorkIsCurrent(work, workIdentity)
+      || optionalBoundFileIdentity(resultFile) !== resultFileIdentity) {
+      throw new Error('topic-register result identity changed during preflight');
     }
     const proof = validateSemanticRepairProof(value, requested);
     if (manifestPath) {
@@ -247,7 +321,9 @@ export function runBriefPreflight({ planPath, wrapperPath, manifestPath = null, 
     }
     return proof;
   } finally {
-    rmSync(work, { recursive: true, force: true });
+    if (!cleanupTemporaryWork(work, workIdentity, [{ path: resultFile, identity: resultFileIdentity }])) {
+      throw new Error('temporary work cleanup ownership could not be proven');
+    }
   }
 }
 

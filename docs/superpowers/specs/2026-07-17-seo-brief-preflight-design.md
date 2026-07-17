@@ -4,7 +4,7 @@ date: 2026-07-17
 updated: 2026-07-17
 type: plan
 version: v1.0
-status: review
+status: final
 owner: wzb
 tags:
   - seo

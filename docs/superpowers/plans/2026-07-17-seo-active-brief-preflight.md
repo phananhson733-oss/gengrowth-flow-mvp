@@ -4,7 +4,7 @@ date: 2026-07-17
 updated: 2026-07-17
 type: plan
 version: v1.0
-status: review
+status: final
 owner: wzb
 tags:
   - seo
@@ -99,7 +99,7 @@ The proof schema is exact:
 }
 ```
 
-- [ ] **Step 1: Write failing strict-argument tests**
+- [x] **Step 1: Write failing strict-argument tests**
 
 Import `semanticRepairRequestFromArgs` and add:
 
@@ -143,7 +143,7 @@ test('semantic-repair-only accepts an empty zero-write target set', () => {
 });
 ```
 
-- [ ] **Step 2: Write failing candidate and no-op tests**
+- [x] **Step 2: Write failing candidate and no-op tests**
 
 Use complete rows containing every `PAGE_REQUIRED_FIELDS` value and add:
 
@@ -184,7 +184,7 @@ assert.throws(() => planRows({
 
 `unsafeWrongRow` uses非 scaffold 的 `Friction`/`Logic`、零分错误 cluster，且没有得分至少 `0.55` 的 existing alternative，确保 failure 可重复。
 
-- [ ] **Step 3: Run focused tests and verify RED**
+- [x] **Step 3: Run focused tests and verify RED**
 
 Run:
 
@@ -194,7 +194,7 @@ node --test tools/scripts/__tests__/gg-topic-register.smoke.test.mjs
 
 Expected: FAIL because the validator export and `semanticRepairOnly` branch do not exist.
 
-- [ ] **Step 4: Add the strict CLI contract**
+- [x] **Step 4: Add the strict CLI contract**
 
 Add after `parseArgs`:
 
@@ -234,7 +234,7 @@ Change only the thin-brief condition:
 if (args.apply && !args.llm && !args.allow_thin_brief && !args.semantic_repair_only) {
 ```
 
-- [ ] **Step 5: Add active existing-row classification**
+- [x] **Step 5: Add active existing-row classification**
 
 Add beside `isDeterministicScaffoldPage`:
 
@@ -314,7 +314,7 @@ Keep the automatic semantic branch inside `if (!semanticRepairOnly)`. Pass the b
 const promptPaths = args.semantic_repair_only ? [] : writePromptFiles(profile, plan.promptWrites);
 ```
 
-- [ ] **Step 6: Add proof and zero-target output**
+- [x] **Step 6: Add proof and zero-target output**
 
 Add `provenance: u.clusterDecision.kind` to each `cluster_repairs` item and add this data-derived field to `summarizeProductResult`:
 
@@ -416,7 +416,7 @@ if (semanticRepairPageIds && semanticRepairPageIds.length === 0) {
 
 For non-empty strict runs, attach `proof` to the root result from the single astrologywiki summary only after `summary.applied === true` and only when neither `skipped_apply` / `skipped` nor `budget_exhausted` is present. Any non-empty skipped, budget-exhausted, or not-applied result must throw before successful JSON/proof reaches stdout, so the CLI exits non-zero and cannot emit `ok:true` proof. The exact empty target set is the only legal `applied:false` noop and must still return exit 0 before writer-SA validation. Update `--help` with `--semantic-repair-only` and its required flags.
 
-- [ ] **Step 7: Add proof tests and verify GREEN**
+- [x] **Step 7: Add proof tests and verify GREEN**
 
 ```js
 test('semantic proof proves only requested existing repairs', () => {
@@ -475,7 +475,7 @@ node --check tools/scripts/gg-topic-register.mjs
 
 Expected: all Topic Register tests pass and syntax exits 0.
 
-- [ ] **Step 8: Wait for watcher checkpoint**
+- [x] **Step 8: Wait for watcher checkpoint**
 
 ```bash
 git status --short
@@ -504,7 +504,7 @@ Expected: clean worktree and equal hashes. Do not stage or commit manually.
 - Produces result file: exact Node stdout JSON, or structured lock failure JSON
 - Preserves: default lock skip exit 0 when `GG_TOPIC_REGISTER_REQUIRE_RUN` is unset.
 
-- [ ] **Step 1: Write failing command and strict-lock tests**
+- [x] **Step 1: Write failing command and strict-lock tests**
 
 Add:
 
@@ -565,7 +565,7 @@ test('require-run turns an active lock into structured rc 75', () => {
 
 Keep the existing default lock test unchanged: it must still assert exit 0 and `"skipped": true` in the log.
 
-- [ ] **Step 2: Run wrapper tests and verify RED**
+- [x] **Step 2: Run wrapper tests and verify RED**
 
 ```bash
 node --test tools/scripts/__tests__/gg-topic-register-tick.smoke.test.mjs
@@ -573,7 +573,7 @@ node --test tools/scripts/__tests__/gg-topic-register-tick.smoke.test.mjs
 
 Expected: FAIL because the mode mapping and strict lock behavior do not exist.
 
-- [ ] **Step 3: Map new environment without changing defaults**
+- [x] **Step 3: Map new environment without changing defaults**
 
 Add these names to `OVERRIDE_NAMES` and derive them with the other settings:
 
@@ -593,7 +593,7 @@ fi
 
 `LLM=none` and `DISCOVER_EVIDENCE=0` must continue to omit both Node flags.
 
-- [ ] **Step 4: Emit one atomic result artifact**
+- [x] **Step 4: Emit one atomic result artifact**
 
 Add before lock handling:
 
@@ -652,7 +652,7 @@ write_result "$RUN_JSON"
 
 When `RESULT_FILE` is set, Node writes directly to it. Do not append wrapper status text to the result artifact. Preserve the existing `topic-register ok/failed/timeout` log lines and final exit code.
 
-- [ ] **Step 5: Verify wrapper GREEN and syntax**
+- [x] **Step 5: Verify wrapper GREEN and syntax**
 
 ```bash
 node --test tools/scripts/__tests__/gg-topic-register-tick.smoke.test.mjs
@@ -661,7 +661,7 @@ bash -n tools/scripts/gg-topic-register-tick.sh
 
 Expected: all wrapper tests pass and syntax exits 0.
 
-- [ ] **Step 6: Wait for watcher checkpoint**
+- [x] **Step 6: Wait for watcher checkpoint**
 
 ```bash
 git status --short
@@ -688,7 +688,7 @@ Expected: clean worktree and equal hashes after the watcher checkpoint.
 - Launcher env override: `GG_SEO_BRIEF_PREFLIGHT_BIN`.
 - Consumes: `GG_TOPIC_REGISTER_RESULT_FILE` from the fixed wrapper.
 
-- [ ] **Step 1: Write failing validator and fake-wrapper E2E tests**
+- [x] **Step 1: Write failing validator and fake-wrapper E2E tests**
 
 Create `gg-seo-brief-preflight.smoke.test.mjs` with a harness that writes a plan and an executable fake wrapper. The wrapper records its strict environment and writes the supplied JSON into `GG_TOPIC_REGISTER_RESULT_FILE`.
 
@@ -744,7 +744,7 @@ for (const [name, mutate] of [
 
 Add separate cases for wrapper rc 75, missing result file, duplicate active IDs, wrong new-cluster provenance, and an empty plan producing a valid no-op without Sheet credentials.
 
-- [ ] **Step 2: Run new tests and verify RED**
+- [x] **Step 2: Run new tests and verify RED**
 
 ```bash
 node --test tools/scripts/__tests__/gg-seo-brief-preflight.smoke.test.mjs
@@ -752,7 +752,7 @@ node --test tools/scripts/__tests__/gg-seo-brief-preflight.smoke.test.mjs
 
 Expected: FAIL with `ERR_MODULE_NOT_FOUND` for `gg-seo-brief-preflight.mjs`.
 
-- [ ] **Step 3: Implement exact proof validation**
+- [x] **Step 3: Implement exact proof validation**
 
 Create `gg-seo-brief-preflight.mjs` with:
 
@@ -839,7 +839,7 @@ export function validateSemanticRepairProof(value, expectedPageIds) {
 }
 ```
 
-- [ ] **Step 4: Implement wrapper orchestration and CLI**
+- [x] **Step 4: Implement wrapper orchestration and CLI**
 
 Add:
 
@@ -876,7 +876,7 @@ export function runBriefPreflight({ planPath, wrapperPath, spawn = spawnSync }) 
 
 The CLI resolves and requires `--plan` and `--topic-register-wrapper`, prints only the validated proof with `--json`, and returns 1 with one stderr reason on failure. It must not log inherited environment values or secrets.
 
-- [ ] **Step 5: Verify validator GREEN**
+- [x] **Step 5: Verify validator GREEN**
 
 ```bash
 node --test tools/scripts/__tests__/gg-seo-brief-preflight.smoke.test.mjs
@@ -885,7 +885,7 @@ node --check tools/scripts/gg-seo-brief-preflight.mjs
 
 Expected: all proof and fake-wrapper E2E tests pass.
 
-- [ ] **Step 6: Write launcher ordering and failure tests**
+- [x] **Step 6: Write launcher ordering and failure tests**
 
 Extend `runnerHarness` with `briefPreflightExit = 0` and a fake helper that appends `brief-preflight` to `GG_TEST_EVENTS`, records argv, prints valid proof JSON, and exits with the configured code. Add `GG_SEO_BRIEF_PREFLIGHT_BIN` to direct and env-file wiring.
 
@@ -912,7 +912,7 @@ test('active brief preflight failure stops before drain and nightly', () => {
 
 In the clean case assert `--plan` equals `h.plan` and `--topic-register-wrapper` equals the fixed wrapper. Keep explicit writeback notifications at exactly two, proving preflight adds none.
 
-- [ ] **Step 7: Run launcher tests and verify RED**
+- [x] **Step 7: Run launcher tests and verify RED**
 
 ```bash
 node --test tools/scripts/__tests__/gg-seo-blog-launchd-tick.smoke.test.mjs
@@ -920,7 +920,7 @@ node --test tools/scripts/__tests__/gg-seo-blog-launchd-tick.smoke.test.mjs
 
 Expected: FAIL because the runner does not resolve or call the preflight.
 
-- [ ] **Step 8: Integrate preflight before all nightly work**
+- [x] **Step 8: Integrate preflight before all nightly work**
 
 Add binary paths:
 
@@ -956,7 +956,7 @@ echo "active brief preflight passed"
 
 Do not flush writeback notifications on this failure path; preflight owns no writeback sidecars and already enforces no-notify.
 
-- [ ] **Step 9: Verify launcher GREEN and syntax**
+- [x] **Step 9: Verify launcher GREEN and syntax**
 
 ```bash
 node --test tools/scripts/__tests__/gg-seo-blog-launchd-tick.smoke.test.mjs
@@ -965,7 +965,7 @@ bash -n tools/scripts/gg-seo-blog-launchd-tick.sh
 
 Expected: clean sequence starts with preflight and every preflight failure ends before drain/nightly/hook.
 
-- [ ] **Step 10: Wait for watcher checkpoint**
+- [x] **Step 10: Wait for watcher checkpoint**
 
 ```bash
 git status --short
@@ -989,7 +989,7 @@ Expected: clean worktree and equal hashes after the watcher checkpoint.
 - Produces: exact core/wrapper/validator/launcher/full-suite test evidence.
 - Hands off to: existing natural `com.gengrowth.seo-blog` fires only.
 
-- [ ] **Step 1: Run the focused regression bundle**
+- [x] **Step 1: Run the focused regression bundle**
 
 ```bash
 node --test \
@@ -1006,7 +1006,7 @@ node --test \
 
 Expected: all tests pass, zero failures and zero skipped safety cases.
 
-- [ ] **Step 2: Run syntax and diff gates**
+- [x] **Step 2: Run syntax and diff gates**
 
 ```bash
 node --check tools/scripts/gg-topic-register.mjs
@@ -1018,7 +1018,7 @@ git diff --check
 
 Expected: every command exits 0 and `git diff --check` prints nothing.
 
-- [ ] **Step 3: Run the full scripts test suite**
+- [x] **Step 3: Run the full scripts test suite**
 
 ```bash
 node --test tools/scripts/__tests__/*.test.mjs
@@ -1026,7 +1026,7 @@ node --test tools/scripts/__tests__/*.test.mjs
 
 Expected: all discovered tests pass. Record exact pass/fail/skip totals from final TAP output.
 
-- [ ] **Step 4: Perform a hermetic boundary audit**
+- [x] **Step 4: Perform a hermetic boundary audit**
 
 ```bash
 rg -n "semantic-repair-only|GG_TOPIC_REGISTER_REQUIRE_RUN|GG_TOPIC_REGISTER_RESULT_FILE|GG_SEO_BRIEF_PREFLIGHT_BIN" \
@@ -1039,7 +1039,7 @@ rg -n "semantic-repair-only|GG_TOPIC_REGISTER_REQUIRE_RUN|GG_TOPIC_REGISTER_RESU
 
 Confirm from exact matches that only the dedicated mode bypasses the no-LLM apply guard; default lock skip remains exit 0; launcher supplies strict mode, active IDs, apply, no-notify, no LLM and no discovery in one place; every helper has direct tests; and no code adds a scheduler, force-publish path or manual Sheet write.
 
-- [ ] **Step 5: Finalize metadata after all tests pass**
+- [x] **Step 5: Finalize metadata after all tests pass**
 
 Change only these frontmatter values in the spec and this plan:
 
@@ -1050,7 +1050,7 @@ updated: 2026-07-17
 
 Check each completed plan checkbox as `[x]`. Do not rewrite either document body.
 
-- [ ] **Step 6: Wait for final watcher convergence**
+- [x] **Step 6: Wait for final watcher convergence**
 
 ```bash
 git status --short
@@ -1061,7 +1061,7 @@ git log -1 --format='%H %ad %s' --date=iso-strict
 
 Expected: clean worktree, `HEAD == origin/main`, and latest watcher commit contains implementation plus metadata changes.
 
-- [ ] **Step 7: Hand off only to natural production fires**
+- [x] **Step 7: Hand off only to natural production fires**
 
 Do not run author/publish manually. The next approved SEO launchd log window must show this order:
 

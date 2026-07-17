@@ -30,7 +30,6 @@ const PROOF_KEYS = [
   'requested_page_ids',
   'selected_page_ids',
   'status',
-  'verified_page_write_count',
 ].sort();
 const REPAIR_KEYS = ['from', 'page_id', 'provenance', 'score', 'to'].sort();
 const REPAIR_PROVENANCE = new Set(['semantic-repair', 'semantic-repair-new']);
@@ -142,13 +141,6 @@ export function validateSemanticRepairProof(value, expectedPageIds) {
 
   if (proof.created_page_id_count !== 0 || proof.cross_product_write_count !== 0) {
     throw new Error('semantic repair expanded write scope');
-  }
-  if (!Number.isInteger(proof.verified_page_write_count) || proof.verified_page_write_count < 0) {
-    throw new Error('semantic repair verified write count is invalid');
-  }
-  if ((selected.length === 0 && proof.verified_page_write_count !== 0)
-    || (selected.length > 0 && proof.verified_page_write_count <= 0)) {
-    throw new Error('semantic repair verified write count mismatches selected pages');
   }
   if (!Number.isInteger(proof.new_cluster_count) || proof.new_cluster_count < 0) {
     throw new Error('invalid new cluster count');

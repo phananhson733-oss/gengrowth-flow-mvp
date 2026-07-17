@@ -398,6 +398,12 @@ test('malformed artifact contents never appear in CLI errors', () => {
 });
 
 test('proof schema and every repair row require exact keys', () => {
+  const valid = validResult();
+  assert.deepEqual(
+    validateSemanticRepairProof(valid, ['PG-WDIF-002', 'PG-WDIN-001']),
+    valid.proof,
+  );
+
   const extraProof = validResult();
   extraProof.proof.extra = true;
   assert.throws(
@@ -415,7 +421,7 @@ test('proof schema and every repair row require exact keys', () => {
       /repair row schema/i,
     );
   }
-  assert.deepEqual(Object.keys(validResult().proof), PROOF_KEYS);
+  assert.deepEqual(Object.keys(valid.proof), PROOF_KEYS);
   assert.deepEqual(Object.keys(repair('PG-WDIF-002')), REPAIR_KEYS);
 });
 

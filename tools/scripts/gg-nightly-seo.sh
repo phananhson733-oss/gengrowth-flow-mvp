@@ -27,12 +27,11 @@ ATTESTED_MANIFEST="${GG_NIGHTLY_ATTESTED_MANIFEST:-}"
 ATTESTED_MANIFEST_SHA256="${GG_NIGHTLY_ATTESTED_MANIFEST_SHA256:-}"
 ATTESTED_MANIFEST_IDENTITY="${GG_NIGHTLY_ATTESTED_MANIFEST_IDENTITY:-}"
 VALIDATOR_NODE="${GG_NIGHTLY_VALIDATOR_NODE:-}"
-OPS="${GG_OPS_DIR:-$HOME/gengrowth-ops}"
-CANONICAL_CLAIMS="$OPS/inbox-maboyang/06-tasks/tasks/.autopilot-claims.json"
+CANONICAL_CLAIMS="${GG_OPS_DIR:-$HOME/gengrowth-ops}/inbox-maboyang/06-tasks/tasks/.autopilot-claims.json"
 BOUND_NIGHTLY_CLAIMS="${GG_NIGHTLY_CLAIMS:-}"
 BOUND_SEO_CLAIMS="${GG_SEO_CLAIMS:-}"
 BOUND_AUTOPILOT_CLAIMS="${GG_AUTOPILOT_CLAIMS:-}"
-CLAIMS="${BOUND_NIGHTLY_CLAIMS:-${BOUND_SEO_CLAIMS:-${BOUND_AUTOPILOT_CLAIMS:-$CANONICAL_CLAIMS}}}"
+CLAIMS="$CANONICAL_CLAIMS"
 LOG="${GG_NIGHTLY_LOG:-$HOME/Library/Logs/gg-nightly-seo.log}"
 LOCK="${GG_NIGHTLY_LOCK:-/tmp/gg-nightly-seo.lock}"
 MAX="${GG_NIGHTLY_MAX:-6}"          # cap articles per night (bounds cost + risk)
@@ -55,7 +54,7 @@ echo ""
 echo "===== nightly-seo run $(date '+%F %T %Z') (max=$MAX) ====="
 
 for bound_claims in "$BOUND_NIGHTLY_CLAIMS" "$BOUND_SEO_CLAIMS" "$BOUND_AUTOPILOT_CLAIMS"; do
-  if [ -n "$bound_claims" ] && [ "$bound_claims" != "$CLAIMS" ]; then
+  if [ -n "$bound_claims" ] && [ "$bound_claims" != "$CANONICAL_CLAIMS" ]; then
     echo "nightly claims path mismatch"
     exit 1
   fi
@@ -130,9 +129,9 @@ set -a; . "$HOME/.config/gg/_gg.env" 2>/dev/null || true; set +a
 export GG_NIGHTLY_CLAIMS="$CLAIMS"
 export GG_SEO_CLAIMS="$CLAIMS"
 export GG_AUTOPILOT_CLAIMS="$CLAIMS"
-if [ "$GG_NIGHTLY_CLAIMS" != "$CLAIMS" ] \
-  || [ "$GG_SEO_CLAIMS" != "$CLAIMS" ] \
-  || [ "$GG_AUTOPILOT_CLAIMS" != "$CLAIMS" ]; then
+if [ "$GG_NIGHTLY_CLAIMS" != "$CANONICAL_CLAIMS" ] \
+  || [ "$GG_SEO_CLAIMS" != "$CANONICAL_CLAIMS" ] \
+  || [ "$GG_AUTOPILOT_CLAIMS" != "$CANONICAL_CLAIMS" ]; then
   echo "nightly claims path mismatch after env load"
   exit 1
 fi

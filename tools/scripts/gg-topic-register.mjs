@@ -2655,7 +2655,6 @@ export function buildSemanticRepairProof({ requestedPageIds, summary }) {
     new_cluster_count: newClusterCount,
     created_page_id_count: createdPageIds.length,
     cross_product_write_count: 0,
-    verified_page_write_count: Number(writeEvidence?.page_write_count || 0),
   };
 }
 

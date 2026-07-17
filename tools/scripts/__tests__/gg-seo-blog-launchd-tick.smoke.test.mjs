@@ -640,7 +640,12 @@ test('nightly authors from the proven snapshot and stops keyword, checked, or re
       const callLog = existsSync(calls) ? readFileSync(calls, 'utf8') : '';
       const nightlyLog = existsSync(log) ? readFileSync(log, 'utf8') : '';
       assert.equal(result.status, 0, `${variant}: ${result.stdout}\n${result.stderr}\n${nightlyLog}`);
-      assert.match(callLog, new RegExp(`^${snapshot.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&')}\\t.*--author --task ${pid} `, 'm'), variant);
+      const authorCall = callLog.split('\n').find((line) => line.includes(`--author --task ${pid} `));
+      assert.ok(authorCall, variant);
+      const authorPlan = authorCall.split('\t')[0];
+      assert.notEqual(authorPlan, snapshot, variant);
+      assert.notEqual(authorPlan, canonical, variant);
+      assert.match(authorPlan, /\/gg-nightly-run-input\.[^/]+\/active-plan\.md$/, variant);
       assert.doesNotMatch(callLog, /gg-seo-autopilot\.mjs --limit 1/, variant);
       assert.doesNotMatch(callLog, /gg-preview-gate\.mjs/, variant);
       assert.doesNotMatch(nightlyLog, /MERGED/, variant);
@@ -749,7 +754,12 @@ test('real nightly consumes only the proven snapshot and rechecks canonical unch
     const callLog = existsSync(calls) ? readFileSync(calls, 'utf8') : '';
     const nightlyLog = existsSync(log) ? readFileSync(log, 'utf8') : '';
     assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}\n${nightlyLog}`);
-    assert.match(callLog, new RegExp(`^${snapshot.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\t.*--author --task ${keep} `, 'm'));
+    const authorCall = callLog.split('\n').find((line) => line.includes(`--author --task ${keep} `));
+    assert.ok(authorCall);
+    const authorPlan = authorCall.split('\t')[0];
+    assert.notEqual(authorPlan, snapshot);
+    assert.notEqual(authorPlan, canonical);
+    assert.match(authorPlan, /\/gg-nightly-run-input\.[^/]+\/active-plan\.md$/);
     assert.doesNotMatch(callLog, new RegExp(`--task ${removed}(?: |$)`));
     assert.doesNotMatch(callLog, new RegExp(`--task ${added}(?: |$)`));
     assert.match(nightlyLog, new RegExp(`${removed}: canonical raw row no longer matches attested snapshot.*skip`, 'i'));

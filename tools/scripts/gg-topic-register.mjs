@@ -125,6 +125,28 @@ export function parseArgs(argv) {
   return out;
 }
 
+export function semanticRepairRequestFromArgs(args = {}) {
+  if (!args.semantic_repair_only) return null;
+  const requested = [...csvSet(args.repair_page_ids)].sort();
+  const limit = Number(args.limit);
+  const forbidden = [
+    'llm', 'discover_evidence', 'include_incomplete', 'repair_keywords',
+    'reassign_existing', 'overwrite', 'taxonomy_only', 'allow_thin_brief',
+  ].filter((field) => Boolean(args[field]));
+  if (String(args.product || '') !== 'astrologywiki') {
+    throw new Error('semantic-repair-only requires --product astrologywiki');
+  }
+  if (!args.apply) throw new Error('semantic-repair-only requires --apply');
+  if (!args.no_notify) throw new Error('semantic-repair-only requires --no-notify');
+  if (forbidden.length) throw new Error(`semantic-repair-only forbids: ${forbidden.join(', ')}`);
+  if (!Number.isInteger(limit) || limit !== requested.length) {
+    throw new Error(`semantic-repair-only requires --limit ${requested.length}`);
+  }
+  const invalid = requested.filter((pageId) => !/^PG-[A-Z0-9]+-\d+$/.test(pageId));
+  if (invalid.length) throw new Error(`semantic-repair-only invalid page ids: ${invalid.join(', ')}`);
+  return requested;
+}
+
 function finitePositiveInt(value) {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 0;
@@ -1866,6 +1888,31 @@ function isDeterministicScaffoldPage(page) {
     && /↔\s*practical interpretation\.\s*Treat\b/i.test(logic);
 }
 
+export function semanticMismatchDecision({ page, clusters }) {
+  const pageId = String(page?.page_id || '').trim();
+  const targetKeyword = String(page?.['Target Keyword'] || page?.['关键词'] || '').trim();
+  const clusterId = String(page?.cluster_id || '').trim();
+  if (!pageId || !targetKeyword || !clusterId) {
+    return { status: 'unsafe', reason: 'missing page_id, target keyword, or cluster_id' };
+  }
+  const currentCluster = clusters.find((item) => item.cluster_id === clusterId);
+  if (!currentCluster) return { status: 'unsafe', reason: `missing cluster ${clusterId}` };
+  const currentScore = scoreClusterKeyword(targetKeyword, currentCluster);
+  if (currentScore >= 0.3) return { status: 'correct', currentCluster, currentScore };
+  const alternative = chooseClusterForKeyword(targetKeyword, clusters);
+  if (alternative.kind === 'existing'
+    && alternative.cluster_id !== clusterId
+    && alternative.score >= 0.55) {
+    return { status: 'repairable', currentCluster, currentScore, alternative };
+  }
+  if (alternative.kind === 'new'
+    && currentScore === 0
+    && isDeterministicScaffoldPage(page)) {
+    return { status: 'repairable-new', currentCluster, currentScore, alternative };
+  }
+  return { status: 'unsafe', reason: `unsafe semantic mismatch from ${clusterId}` };
+}
+
 function planRows({
   profile,
   pagesRaw,
@@ -1877,6 +1924,7 @@ function planRows({
   reassignExisting = false,
   completedPageIds = new Set(),
   activePageIds = new Set(),
+  semanticRepairOnly = false,
   preprocessorOutputsByKeyword = new Map(),
   preprocessorOutputsByPageId = new Map(),
   cacheRoot = join(REPO, '.gg-cache'),
@@ -1885,14 +1933,51 @@ function planRows({
   const clusterHeader = clustersRaw[0] || [];
   const clusters = rowsToObjects(clusterHeader, clustersRaw.slice(1));
   const pages = rowsToObjects(pageHeader, pagesRaw.slice(1));
-  let selected = selectCandidateRowsForPlan(pagesRaw, {
-    includeIncomplete,
-    onlyPageIds: repairPageIds,
-    onlyKeywords: repairKeywords,
-    excludePageIds: completedPageIds,
-    limit,
-  });
-  if (!includeIncomplete && repairPageIds.size === 0 && repairKeywords.size === 0 && selected.mode === 'generate') {
+  let selected;
+  if (semanticRepairOnly) {
+    const requested = [...repairPageIds].sort();
+    const counts = new Map();
+    for (const page of pages) {
+      const pageId = String(page.page_id || '').trim();
+      if (pageId) counts.set(pageId, (counts.get(pageId) || 0) + 1);
+    }
+    const missing = requested.filter((pageId) => !counts.has(pageId));
+    const duplicates = requested.filter((pageId) => counts.get(pageId) > 1);
+    const inactive = requested.filter((pageId) => !activePageIds.has(pageId));
+    if (missing.length) throw new Error(`missing existing page id: ${missing.join(', ')}`);
+    if (duplicates.length) throw new Error(`duplicate existing page id: ${duplicates.join(', ')}`);
+    if (inactive.length) throw new Error(`inactive existing page id: ${inactive.join(', ')}`);
+    const repairable = new Set();
+    for (const page of pages.filter((row) => repairPageIds.has(String(row.page_id || '').trim()))) {
+      const decision = semanticMismatchDecision({ page, clusters });
+      if (decision.status === 'unsafe') {
+        throw new Error(`unsafe semantic mismatch for ${page.page_id}: ${decision.reason}`);
+      }
+      if (decision.status === 'repairable' || decision.status === 'repairable-new') {
+        repairable.add(page.page_id);
+      }
+    }
+    selected = {
+      mode: 'semantic_repair_only',
+      candidates: repairable.size
+        ? findCandidateRows(pagesRaw, { onlyPageIds: repairable }).slice(0, limit || undefined)
+        : [],
+      audit_incomplete: 0,
+    };
+  } else {
+    selected = selectCandidateRowsForPlan(pagesRaw, {
+      includeIncomplete,
+      onlyPageIds: repairPageIds,
+      onlyKeywords: repairKeywords,
+      excludePageIds: completedPageIds,
+      limit,
+    });
+  }
+  if (!semanticRepairOnly
+    && !includeIncomplete
+    && repairPageIds.size === 0
+    && repairKeywords.size === 0
+    && selected.mode === 'generate') {
     const semanticMismatchPageIds = new Set();
     for (const page of pages) {
       const pageId = String(page.page_id || '').trim();
@@ -2047,7 +2132,7 @@ function planRows({
     newClusters: [...newClusters.values()],
     updates,
     taskLines,
-    promptWrites,
+    promptWrites: semanticRepairOnly ? [] : promptWrites,
     cacheRoot,
   };
 }
@@ -2072,7 +2157,7 @@ async function runProduct(profile, { token, args, nowDate, budget = null }) {
   // "--discover-evidence --llm claude" (DuckDuckGo/Bing HTML SERP, no creds), or pass
   // --allow-thin-brief to intentionally write the scaffold. The scheduled tick already passes
   // --llm, so it is unaffected. Fails fast, before any Sheets read/write.
-  if (args.apply && !args.llm && !args.allow_thin_brief) {
+  if (args.apply && !args.llm && !args.allow_thin_brief && !args.semantic_repair_only) {
     throw new Error(
       `${profile.key}: refusing --apply without --llm — would write template-scaffold thin briefs `
       + `(un-SERP-grounded Entity/Logic). Add "--discover-evidence --llm claude" to enrich, or `
@@ -2103,6 +2188,7 @@ async function runProduct(profile, { token, args, nowDate, budget = null }) {
     reassignExisting: !!args.reassign_existing,
     completedPageIds,
     activePageIds,
+    semanticRepairOnly: !!args.semantic_repair_only,
   });
   if (args.discover_evidence) {
     await discoverPreprocessorEvidenceForPlan(plan, { budget });
@@ -2152,7 +2238,7 @@ async function runProduct(profile, { token, args, nowDate, budget = null }) {
   }
   await batchUpdateValues(workbookId, pageData, token);
 
-  const promptPaths = writePromptFiles(profile, plan.promptWrites);
+  const promptPaths = args.semantic_repair_only ? [] : writePromptFiles(profile, plan.promptWrites);
 
   if (profile.taskPlan && existsSync(profile.taskPlan) && plan.taskLines.length) {
     const before = readFileSync(profile.taskPlan, 'utf8');
@@ -2209,6 +2295,9 @@ export function summarizeProductResult(result, { args = {} } = {}) {
     updates: updates.length,
     new_clusters: Array.isArray(plan.newClusters) ? plan.newClusters.length : 0,
     page_ids: updates.map((u) => u.pageId),
+    created_page_ids: updates
+      .filter((u) => !String(u.existingValues?.page_id || '').trim())
+      .map((u) => u.pageId),
     cluster_repairs: updates
       .filter((u) => /^semantic-repair/.test(String(u.clusterDecision?.kind || '')))
       .map((u) => ({
@@ -2216,6 +2305,7 @@ export function summarizeProductResult(result, { args = {} } = {}) {
         from: u.clusterDecision.previous_cluster_id,
         to: u.cluster.cluster_id,
         score: u.clusterDecision.score,
+        provenance: u.clusterDecision.kind,
       })),
     ...(plan.selectionMode ? { selection_mode: plan.selectionMode } : {}),
     ...(Number.isFinite(plan.auditIncomplete) ? { audit_incomplete: plan.auditIncomplete } : {}),
@@ -2227,14 +2317,47 @@ export function summarizeProductResult(result, { args = {} } = {}) {
   };
 }
 
+export function buildSemanticRepairProof({ requestedPageIds, summary }) {
+  const requested = [...requestedPageIds].sort();
+  const repairs = Array.isArray(summary?.cluster_repairs) ? summary.cluster_repairs : [];
+  const selected = Array.isArray(summary?.page_ids) ? [...summary.page_ids].sort() : [];
+  const createdPageIds = Array.isArray(summary?.created_page_ids) ? summary.created_page_ids : [];
+  const newClusterCount = Number(summary?.new_clusters || 0);
+  const newRepairClusters = new Set(
+    repairs.filter((row) => row.provenance === 'semantic-repair-new').map((row) => row.to),
+  ).size;
+  if (newClusterCount !== newRepairClusters) throw new Error('semantic-repair-only new cluster provenance mismatch');
+  if (selected.some((pageId) => !requested.includes(pageId))) {
+    throw new Error('semantic-repair-only selected page id outside request');
+  }
+  if (createdPageIds.length) throw new Error('semantic-repair-only created a new page id');
+  if (repairs.length !== selected.length) {
+    throw new Error('semantic-repair-only changed pages require repair provenance');
+  }
+  return {
+    mode: 'semantic-repair-only',
+    status: selected.length ? 'applied' : 'noop',
+    product: 'astrologywiki',
+    requested_page_ids: requested,
+    selected_page_ids: selected,
+    changed_page_ids: selected,
+    cluster_repairs: repairs,
+    new_cluster_count: newClusterCount,
+    created_page_id_count: createdPageIds.length,
+    cross_product_write_count: 0,
+  };
+}
+
 async function main(argv) {
   const args = parseArgs(argv);
+  const semanticRepairPageIds = semanticRepairRequestFromArgs(args);
   if (args.help || args.h) {
     process.stdout.write(`gg-topic-register — fill selected topic rows from cluster/page rules
 
 usage:
   node tools/scripts/gg-topic-register.mjs --product astrologywiki|gengrowth|all [--limit N]
   node tools/scripts/gg-topic-register.mjs --product gengrowth --apply
+  node tools/scripts/gg-topic-register.mjs --semantic-repair-only --product astrologywiki --apply --no-notify --limit N --repair-page-ids <ids>
 
 default:
   dry-run only. Use --apply to write Sheets, task plan files, prompt cache, and Feishu notice.
@@ -2246,6 +2369,8 @@ flags:
                      process all incomplete rows in sheet order (default: audit existing incomplete rows before generating new blank rows)
   --repair-page-ids <ids>
                      comma-separated existing PG-* ids to re-evaluate even when rows are complete
+  --semantic-repair-only
+                     repair only the exact active astrologywiki page ids; requires --apply, --no-notify, matching --limit, and no LLM/evidence/generation flags
   --repair-keywords <keywords>
                      comma-separated target keywords to re-evaluate even when rows are complete
   --reassign-existing
@@ -2259,6 +2384,22 @@ flags:
   --overwrite        overwrite existing writable cells (default: fill blanks only)
   --no-notify        skip Feishu notification during --apply
 `);
+    return 0;
+  }
+
+  if (semanticRepairPageIds && semanticRepairPageIds.length === 0) {
+    const summary = {
+      product: 'astrologywiki', applied: false, candidates: 0, updates: 0,
+      new_clusters: 0, page_ids: [], created_page_ids: [], cluster_repairs: [],
+      selection_mode: 'semantic_repair_only', preprocessor: [], evidence_discovery: [],
+    };
+    process.stdout.write(JSON.stringify({
+      ok: true,
+      dry_run: false,
+      budget_exhausted: false,
+      proof: buildSemanticRepairProof({ requestedPageIds: [], summary }),
+      summaries: [summary],
+    }, null, 2) + '\n');
     return 0;
   }
 
@@ -2302,12 +2443,16 @@ flags:
       summaries.push({ product: profile.key, ok: false, error: redactNote(e) });
     }
   }
-  process.stdout.write(JSON.stringify({
+  const output = {
     ok: failures === 0,
     dry_run: !args.apply,
     budget_exhausted: summaries.some((row) => row?.budget_exhausted),
     summaries,
-  }, null, 2) + '\n');
+  };
+  if (semanticRepairPageIds && failures === 0) {
+    output.proof = buildSemanticRepairProof({ requestedPageIds: semanticRepairPageIds, summary: summaries[0] });
+  }
+  process.stdout.write(JSON.stringify(output, null, 2) + '\n');
   return failures ? 1 : 0;
 }
 

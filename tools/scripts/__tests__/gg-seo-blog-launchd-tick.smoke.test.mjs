@@ -676,7 +676,8 @@ test('queue-time snapshot mutation cannot change the private plan bytes consumed
   const canonical = join(root, 'canonical.md');
   const snapshot = join(root, 'snapshot.md');
   const manifest = join(root, 'attested.json');
-  const claims = join(root, 'claims.json');
+  const ops = join(root, 'ops');
+  const claims = join(ops, 'inbox-maboyang/06-tasks/tasks/.autopilot-claims.json');
   const calls = join(root, 'calls.log');
   const authorInput = join(root, 'author-input.md');
   const log = join(root, 'nightly.log');
@@ -688,6 +689,7 @@ test('queue-time snapshot mutation cannot change the private plan bytes consumed
   try {
     mkdirSync(join(flowRoot, 'tools/scripts'), { recursive: true });
     mkdirSync(bin, { recursive: true });
+    mkdirSync(dirname(claims), { recursive: true });
     writeFileSync(canonical, planText);
     writeFileSync(snapshot, planText);
     writeFileSync(manifest, JSON.stringify({
@@ -730,6 +732,7 @@ test('queue-time snapshot mutation cannot change the private plan bytes consumed
         GG_NIGHTLY_ATTESTED_MANIFEST_IDENTITY: fileIdentity(manifest),
         GG_NIGHTLY_VALIDATOR_NODE: process.execPath,
         GG_NIGHTLY_FLOW: flowRoot,
+        GG_OPS_DIR: ops,
         GG_NIGHTLY_CLAIMS: claims,
         GG_NIGHTLY_LOG: log,
         GG_NIGHTLY_LOCK: lock,
@@ -760,7 +763,8 @@ test('legacy predictable nightly plan and scan paths cannot overwrite or feed pu
   const canonical = join(root, 'canonical.md');
   const snapshot = join(root, 'snapshot.md');
   const manifest = join(root, 'attested.json');
-  const claims = join(root, 'claims.json');
+  const ops = join(root, 'ops');
+  const claims = join(ops, 'inbox-maboyang/06-tasks/tasks/.autopilot-claims.json');
   const calls = join(root, 'calls.log');
   const scanInput = join(root, 'scan-input.md');
   const planVictim = join(root, 'plan-victim.txt');
@@ -775,6 +779,7 @@ test('legacy predictable nightly plan and scan paths cannot overwrite or feed pu
   try {
     mkdirSync(join(flowRoot, 'tools/scripts'), { recursive: true });
     mkdirSync(bin, { recursive: true });
+    mkdirSync(dirname(claims), { recursive: true });
     writeFileSync(canonical, planText);
     writeFileSync(snapshot, planText);
     writeFileSync(manifest, JSON.stringify({
@@ -821,6 +826,7 @@ test('legacy predictable nightly plan and scan paths cannot overwrite or feed pu
         GG_NIGHTLY_ATTESTED_MANIFEST_IDENTITY: fileIdentity(manifest),
         GG_NIGHTLY_VALIDATOR_NODE: process.execPath,
         GG_NIGHTLY_FLOW: flowRoot,
+        GG_OPS_DIR: ops,
         GG_NIGHTLY_CLAIMS: claims,
         GG_NIGHTLY_LOG: log,
         GG_NIGHTLY_LOCK: lock,
@@ -853,7 +859,8 @@ test('precreated run-private plan or scan entry stops before targeted publish', 
     const canonical = join(root, 'canonical.md');
     const snapshot = join(root, 'snapshot.md');
     const manifest = join(root, 'attested.json');
-    const claims = join(root, 'claims.json');
+    const ops = join(root, 'ops');
+    const claims = join(ops, 'inbox-maboyang/06-tasks/tasks/.autopilot-claims.json');
     const calls = join(root, 'calls.log');
     const victim = join(root, 'victim.txt');
     const log = join(root, 'nightly.log');
@@ -864,6 +871,7 @@ test('precreated run-private plan or scan entry stops before targeted publish', 
     try {
       mkdirSync(join(flowRoot, 'tools/scripts'), { recursive: true });
       mkdirSync(bin, { recursive: true });
+      mkdirSync(dirname(claims), { recursive: true });
       writeFileSync(canonical, planText);
       writeFileSync(snapshot, planText);
       writeFileSync(manifest, JSON.stringify({
@@ -905,6 +913,7 @@ test('precreated run-private plan or scan entry stops before targeted publish', 
           GG_NIGHTLY_ATTESTED_MANIFEST_IDENTITY: fileIdentity(manifest),
           GG_NIGHTLY_VALIDATOR_NODE: process.execPath,
           GG_NIGHTLY_FLOW: flowRoot,
+          GG_OPS_DIR: ops,
           GG_NIGHTLY_CLAIMS: claims,
           GG_NIGHTLY_LOG: log,
           GG_NIGHTLY_LOCK: lock,
@@ -939,7 +948,8 @@ test('nightly authors from the proven snapshot and stops keyword, checked, or re
     const canonical = join(root, 'canonical.md');
     const snapshot = join(root, 'snapshot.md');
     const manifest = join(root, 'attested.json');
-    const claims = join(root, 'claims.json');
+    const ops = join(root, 'ops');
+    const claims = join(ops, 'inbox-maboyang/06-tasks/tasks/.autopilot-claims.json');
     const calls = join(root, 'calls.log');
     const log = join(root, 'nightly.log');
     const lock = join(root, 'nightly.lock');
@@ -949,6 +959,7 @@ test('nightly authors from the proven snapshot and stops keyword, checked, or re
     try {
       mkdirSync(join(flowRoot, 'tools/scripts'), { recursive: true });
       mkdirSync(bin, { recursive: true });
+      mkdirSync(dirname(claims), { recursive: true });
       writeFileSync(canonical, planText);
       writeFileSync(snapshot, planText);
       writeFileSync(manifest, JSON.stringify({
@@ -987,6 +998,7 @@ test('nightly authors from the proven snapshot and stops keyword, checked, or re
           GG_NIGHTLY_ATTESTED_MANIFEST_IDENTITY: fileIdentity(manifest),
           GG_NIGHTLY_VALIDATOR_NODE: process.execPath,
           GG_NIGHTLY_FLOW: flowRoot,
+          GG_OPS_DIR: ops,
           GG_NIGHTLY_CLAIMS: claims,
           GG_NIGHTLY_LOG: log,
           GG_NIGHTLY_LOCK: lock,

@@ -18,11 +18,10 @@ aliases:
 
 > 【本区域在每天最后一次对话结束时生成/更新】
 
-- 执行索引修复重提固定行 workflow；两个产品均成功完成，未发现失败。
-- 执行 Phase 2 索引监控：两个产品的官方 Search Console Sitemap API 提交成功，URL Inspection 无失败。
-- astrologywiki 完成 11 条到期检查（9 条转已收录、2 条继续监控），最终申请队列为 18 条；gengrowth 无到期 URL、队列为 2 条。
+- 执行索引修复重提与 Phase 2 索引监控：两产品完成同步与检查，未发现失败；astrologywiki 11 条到期检查后队列为 18 条，gengrowth 队列为 2 条。
 - 执行结果复盘表现同步：两个产品均成功写回，但没有恰好到 D14/D30/D60 的到期 URL；优化任务报告已生成。
 - 用户选择 subagent-driven 执行 Active Brief Preflight；Task 1 已完成 TDD，但独立审查发现两个 plan-mandated proof 安全冲突，等待确认 fail-closed 约束优先后修复复审。
+- 执行选题登记确定性 wrapper：apply 窗口 16:02:58–16:07:07 CST；astrologywiki 更新 3 条并产生 1 个新 cluster，gengrowth 无候选；日志无失败。
 
 ---
 
@@ -125,5 +124,22 @@ After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-s
 **🤖 回答：**
 
 用户选择 Subagent-Driven 执行。完成基线 45/45 后，由 fresh implementer 按 TDD 实现 Task 1；RED 有效，GREEN 21/21，Node syntax、diff check、工作树及 `HEAD == origin/main` 均通过。独立 task reviewer 判定两个 Important：预算耗尽导致 `skipped_apply` 时仍可能生成 `status=applied` proof；repair proof 未强制 repair page IDs 与 selected/requested 一一对应，也未严格限制 provenance 枚举。两项缺口源自计划参考代码，但与全局 fail-closed 约束冲突。按照 subagent-driven 的 plan-mandated conflict 规则，已暂停 Task 2，建议以 fail-closed 总约束为准修复两项并重新审查，等待用户确认。
+
+---
+
+### Q7 — 16:07
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-16T14:02:24.850Z (1784210544850)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅执行确定性入口 `bash tools/scripts/gg-topic-register-tick.sh`，退出码 0。精确日志窗口为 16:02:58–16:07:07 CST，环境以 apply 模式运行（`dry_run=false`、`budget_exhausted=false`）。astrologywiki：candidates=3、updates=3、new_clusters=1、page_ids=[PG-MYTH-005, PG-TERM-010, PG-WDIF-002]、preprocessor=[ok, ok, v1_fallback]；证据发现为 ok、ok、insufficient。gengrowth：candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]。两个产品均无 failures。未手工编辑 Sheet、未直接修改任务计划，亦未创建额外 Feishu 或 Google Doc 报告产物。
 
 ---

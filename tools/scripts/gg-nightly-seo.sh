@@ -20,6 +20,7 @@ PLAN="${GG_SEO_PLAN:-}"
 ITEMS_PLAN="${GG_NIGHTLY_ITEMS_PLAN:-}"
 ITEMS_SHA256="${GG_NIGHTLY_ITEMS_SHA256:-}"
 ITEMS_IDENTITY="${GG_NIGHTLY_ITEMS_IDENTITY:-}"
+ITEMS_DIR_IDENTITY="${GG_NIGHTLY_ITEMS_DIR_IDENTITY:-}"
 ATTESTED_MANIFEST="${GG_NIGHTLY_ATTESTED_MANIFEST:-}"
 ATTESTED_MANIFEST_SHA256="${GG_NIGHTLY_ATTESTED_MANIFEST_SHA256:-}"
 ATTESTED_MANIFEST_IDENTITY="${GG_NIGHTLY_ATTESTED_MANIFEST_IDENTITY:-}"
@@ -52,6 +53,7 @@ export GG_NIGHTLY_ITEMS_PLAN="$ITEMS_PLAN"
 export GG_AUTOPILOT_PLAN="$PLAN"
 export GG_NIGHTLY_ITEMS_SHA256="$ITEMS_SHA256"
 export GG_NIGHTLY_ITEMS_IDENTITY="$ITEMS_IDENTITY"
+export GG_NIGHTLY_ITEMS_DIR_IDENTITY="$ITEMS_DIR_IDENTITY"
 export GG_NIGHTLY_ATTESTED_MANIFEST="$ATTESTED_MANIFEST"
 export GG_NIGHTLY_ATTESTED_MANIFEST_SHA256="$ATTESTED_MANIFEST_SHA256"
 export GG_NIGHTLY_ATTESTED_MANIFEST_IDENTITY="$ATTESTED_MANIFEST_IDENTITY"
@@ -79,6 +81,7 @@ esac
 [[ "$ITEMS_SHA256" =~ ^[0-9a-f]{64}$ ]] || { echo "nightly items SHA is invalid"; exit 1; }
 [[ "$ATTESTED_MANIFEST_SHA256" =~ ^[0-9a-f]{64}$ ]] || { echo "attested manifest SHA is invalid"; exit 1; }
 [ -n "$ITEMS_IDENTITY" ] || { echo "nightly items identity is required"; exit 1; }
+[ -n "$ITEMS_DIR_IDENTITY" ] || { echo "nightly items directory identity is required"; exit 1; }
 [ -n "$ATTESTED_MANIFEST_IDENTITY" ] || { echo "attested manifest identity is required"; exit 1; }
 [ -x "$VALIDATOR_NODE" ] || { echo "bound validator node is unavailable"; exit 1; }
 
@@ -105,8 +108,18 @@ bound_file_is_valid() {
     && [ "$(file_digest "$path" 2>/dev/null || true)" = "$digest" ]
 }
 
+bound_parent_dir_is_valid() {
+  local items_dir manifest_dir
+  items_dir="$(dirname "$ITEMS_PLAN")"
+  manifest_dir="$(dirname "$ATTESTED_MANIFEST")"
+  [ "$items_dir" = "$manifest_dir" ] \
+    && [ -d "$items_dir" ] && [ ! -L "$items_dir" ] \
+    && [ "$(lstat_identity "$items_dir" 2>/dev/null || true)" = "$ITEMS_DIR_IDENTITY" ]
+}
+
 attested_bundle_is_valid() {
-  bound_file_is_valid "$ITEMS_PLAN" "$ITEMS_IDENTITY" "$ITEMS_SHA256" \
+  bound_parent_dir_is_valid \
+    && bound_file_is_valid "$ITEMS_PLAN" "$ITEMS_IDENTITY" "$ITEMS_SHA256" \
     && bound_file_is_valid "$ATTESTED_MANIFEST" "$ATTESTED_MANIFEST_IDENTITY" "$ATTESTED_MANIFEST_SHA256"
 }
 

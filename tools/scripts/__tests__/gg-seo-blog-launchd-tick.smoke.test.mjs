@@ -35,6 +35,7 @@ test('SEO launchd runner owns pre/post drain, strict reconcile, readiness, then 
   assert.match(source, /gg-batch-summary\.mjs/);
   assert.match(source, /GG_WRITEBACK_LOCK_DIR/);
   assert.match(source, /GG_NIGHTLY_ITEMS_PLAN/);
+  assert.match(source, /GG_NIGHTLY_ITEMS_DIR_IDENTITY/);
   assert.match(source, /shasum -a 256/);
   assert.doesNotMatch(source, /tomllib|automation\.toml/i);
   assert.doesNotMatch(source, /codex.*exec/is);
@@ -135,7 +136,7 @@ function runnerHarness({
   const nightly = executable(join(root, 'nightly.sh'), [
     '#!/bin/sh',
     'printf "nightly\\n" >> "$GG_TEST_EVENTS"',
-    'node -e \'const fs=require("node:fs"); fs.writeFileSync(process.env.GG_TEST_NIGHTLY_ENV, JSON.stringify({ runId: process.env.GG_SEO_REPAIR_RUN_ID || null, logFile: process.env.GG_SEO_REPAIR_LOG_FILE || null, offsetStart: process.env.GG_SEO_REPAIR_LOG_OFFSET_START || null, offsetEnd: process.env.GG_SEO_REPAIR_LOG_OFFSET_END || null, oracle: process.env.GG_AUTOMATION_ORACLE_DIR || null, canonicalPlan: process.env.GG_SEO_PLAN || null, itemsPlan: process.env.GG_NIGHTLY_ITEMS_PLAN || null, itemsSha: process.env.GG_NIGHTLY_ITEMS_SHA256 || null, manifest: process.env.GG_NIGHTLY_ATTESTED_MANIFEST || null, canonicalContent: fs.readFileSync(process.env.GG_SEO_PLAN, "utf8"), itemsContent: fs.readFileSync(process.env.GG_NIGHTLY_ITEMS_PLAN, "utf8") }))\'',
+    'node -e \'const fs=require("node:fs"); fs.writeFileSync(process.env.GG_TEST_NIGHTLY_ENV, JSON.stringify({ runId: process.env.GG_SEO_REPAIR_RUN_ID || null, logFile: process.env.GG_SEO_REPAIR_LOG_FILE || null, offsetStart: process.env.GG_SEO_REPAIR_LOG_OFFSET_START || null, offsetEnd: process.env.GG_SEO_REPAIR_LOG_OFFSET_END || null, oracle: process.env.GG_AUTOMATION_ORACLE_DIR || null, canonicalPlan: process.env.GG_SEO_PLAN || null, itemsPlan: process.env.GG_NIGHTLY_ITEMS_PLAN || null, itemsSha: process.env.GG_NIGHTLY_ITEMS_SHA256 || null, itemsDirIdentity: process.env.GG_NIGHTLY_ITEMS_DIR_IDENTITY || null, manifest: process.env.GG_NIGHTLY_ATTESTED_MANIFEST || null, canonicalContent: fs.readFileSync(process.env.GG_SEO_PLAN, "utf8"), itemsContent: fs.readFileSync(process.env.GG_NIGHTLY_ITEMS_PLAN, "utf8") }))\'',
     'printf "nightly body\\n" >> "$GG_SEO_NIGHTLY_LOG"',
     `exit ${nightlyExit}`,
     '',
@@ -305,6 +306,7 @@ test('clean runner orders pre/post drain, strict reconcile, readiness, summary a
   assert.notEqual(nightlyEnv.itemsPlan, h.plan);
   assert.equal(nightlyEnv.canonicalContent, h.initialPlanContent);
   assert.equal(nightlyEnv.itemsContent, h.initialPlanContent);
+  assert.match(nightlyEnv.itemsDirIdentity, /^\d+:\d+$/);
   assert.equal(existsSync(nightlyEnv.itemsPlan), false, 'launcher removes its exact private snapshot');
   assert.equal(existsSync(dirname(nightlyEnv.itemsPlan)), false, 'launcher removes its empty private directory');
   assert.equal(hookArgs[hookArgs.indexOf('--run-exit') + 1], '0');
@@ -435,6 +437,7 @@ function nightlyArtifactHarness({ missingSnapshot = false, tamperedSnapshot = fa
       GG_NIGHTLY_ITEMS_PLAN: snapshot,
       GG_NIGHTLY_ITEMS_SHA256: digest,
       GG_NIGHTLY_ITEMS_IDENTITY: missingSnapshot ? 'missing:identity' : fileIdentity(snapshot),
+      GG_NIGHTLY_ITEMS_DIR_IDENTITY: fileIdentity(dirname(snapshot)),
       GG_NIGHTLY_ATTESTED_MANIFEST: manifest,
       GG_NIGHTLY_ATTESTED_MANIFEST_SHA256: createHash('sha256').update(readFileSync(manifest)).digest('hex'),
       GG_NIGHTLY_ATTESTED_MANIFEST_IDENTITY: fileIdentity(manifest),
@@ -466,80 +469,87 @@ test('nightly rejects missing or digest-drifted snapshot before replay or any bu
   }
 });
 
-test('nightly authors from the proven snapshot and stops an item when its canonical raw row changes after author', () => {
-  const root = mkdtempSync(join(tmpdir(), 'gg-nightly-row-recheck-'));
-  const suffix = String(process.pid);
-  const pid = `PG-ROW-${suffix}`;
-  const flowRoot = join(root, 'flow');
-  const bin = join(root, '.local/bin');
-  const canonical = join(root, 'canonical.md');
-  const snapshot = join(root, 'snapshot.md');
-  const manifest = join(root, 'attested.json');
-  const claims = join(root, 'claims.json');
-  const calls = join(root, 'calls.log');
-  const log = join(root, 'nightly.log');
-  const lock = join(root, 'nightly.lock');
-  const rawLine = `- [ ] \`${pid}\` old keyword`;
-  const planText = `${rawLine}\n`;
-  const digest = createHash('sha256').update(planText).digest('hex');
-  try {
-    mkdirSync(join(flowRoot, 'tools/scripts'), { recursive: true });
-    mkdirSync(bin, { recursive: true });
-    writeFileSync(canonical, planText);
-    writeFileSync(snapshot, planText);
-    writeFileSync(manifest, JSON.stringify({
-      version: 1,
-      plan_sha256: digest,
-      requested_page_ids: [pid],
-      rows: [{ page_id: pid, raw_line: rawLine, keyword: 'old keyword' }],
-    }));
-    writeFileSync(claims, '{}\n');
-    executable(join(bin, 'curl'), '#!/bin/sh\nexit 1\n');
-    executable(join(bin, 'node'), [
-      '#!/bin/bash',
-      'printf \'%s\\t%s\\n\' "${GG_AUTOPILOT_PLAN:-}" "$*" >> "$GG_TEST_NODE_CALLS"',
-      `if printf '%s\\n' "$*" | grep -q -- '--author --task ${pid}'; then`,
-      '  mkdir -p _staging',
-      `  : > "_staging/${pid}-en.md"`,
-      `  printf '%s\\n' '- [ ] \`${pid}\` changed keyword' > "$GG_SEO_PLAN"`,
-      'fi',
-      "if printf '%s\\n' \"$*\" | grep -q 'gg-seo-autopilot.mjs --limit 1'; then printf 'seo/auto/2026-07-17-row\\n'; fi",
-      'exit 0',
-      '',
-    ].join('\n'));
-    const result = spawnSync('bash', [resolve(flow, 'tools/scripts/gg-nightly-seo.sh')], {
-      cwd: flowRoot,
-      encoding: 'utf8',
-      env: {
-        ...process.env,
-        HOME: root,
-        GG_SEO_PLAN: canonical,
-        GG_NIGHTLY_ITEMS_PLAN: snapshot,
-        GG_NIGHTLY_ITEMS_SHA256: digest,
-        GG_NIGHTLY_ITEMS_IDENTITY: fileIdentity(snapshot),
-        GG_NIGHTLY_ATTESTED_MANIFEST: manifest,
-        GG_NIGHTLY_ATTESTED_MANIFEST_SHA256: createHash('sha256').update(readFileSync(manifest)).digest('hex'),
-        GG_NIGHTLY_ATTESTED_MANIFEST_IDENTITY: fileIdentity(manifest),
-        GG_NIGHTLY_VALIDATOR_NODE: process.execPath,
-        GG_NIGHTLY_FLOW: flowRoot,
-        GG_NIGHTLY_CLAIMS: claims,
-        GG_NIGHTLY_LOG: log,
-        GG_NIGHTLY_LOCK: lock,
-        GG_TEST_NODE_CALLS: calls,
-      },
-    });
-    const callLog = existsSync(calls) ? readFileSync(calls, 'utf8') : '';
-    const nightlyLog = existsSync(log) ? readFileSync(log, 'utf8') : '';
-    assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}\n${nightlyLog}`);
-    assert.match(callLog, new RegExp(`^${snapshot.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&')}\\t.*--author --task ${pid} `, 'm'));
-    assert.doesNotMatch(callLog, /gg-seo-autopilot\.mjs --limit 1/);
-    assert.doesNotMatch(callLog, /gg-preview-gate\.mjs/);
-    assert.doesNotMatch(nightlyLog, /MERGED/);
-    assert.match(nightlyLog, /canonical raw row.*changed|no longer matches.*attested/i);
-  } finally {
-    rmSync(`/tmp/nightly-plan-${pid}.md`, { force: true });
-    rmSync(`/tmp/nightly-scan-${pid}.log`, { force: true });
-    rmSync(root, { recursive: true, force: true });
+test('nightly authors from the proven snapshot and stops keyword, checked, or removed canonical drift after author', () => {
+  for (const [variant, mutation] of [
+    ['keyword', (pid) => `- [ ] \`${pid}\` changed keyword`],
+    ['checked', (pid) => `- [x] \`${pid}\` old keyword`],
+    ['removed', () => ''],
+  ]) {
+    const root = mkdtempSync(join(tmpdir(), `gg-nightly-row-${variant}-`));
+    const pid = `PG-ROW${variant.toUpperCase()}-${process.pid}`;
+    const flowRoot = join(root, 'flow');
+    const bin = join(root, '.local/bin');
+    const canonical = join(root, 'canonical.md');
+    const snapshot = join(root, 'snapshot.md');
+    const manifest = join(root, 'attested.json');
+    const claims = join(root, 'claims.json');
+    const calls = join(root, 'calls.log');
+    const log = join(root, 'nightly.log');
+    const lock = join(root, 'nightly.lock');
+    const rawLine = `- [ ] \`${pid}\` old keyword`;
+    const planText = `${rawLine}\n`;
+    const digest = createHash('sha256').update(planText).digest('hex');
+    try {
+      mkdirSync(join(flowRoot, 'tools/scripts'), { recursive: true });
+      mkdirSync(bin, { recursive: true });
+      writeFileSync(canonical, planText);
+      writeFileSync(snapshot, planText);
+      writeFileSync(manifest, JSON.stringify({
+        version: 1,
+        plan_sha256: digest,
+        requested_page_ids: [pid],
+        rows: [{ page_id: pid, raw_line: rawLine, keyword: 'old keyword' }],
+      }));
+      writeFileSync(claims, '{}\n');
+      executable(join(bin, 'curl'), '#!/bin/sh\nexit 1\n');
+      executable(join(bin, 'node'), [
+        '#!/bin/bash',
+        'printf \'%s\\t%s\\n\' "${GG_AUTOPILOT_PLAN:-}" "$*" >> "$GG_TEST_NODE_CALLS"',
+        `if printf '%s\\n' "$*" | grep -q -- '--author --task ${pid}'; then`,
+        '  mkdir -p _staging',
+        `  : > "_staging/${pid}-en.md"`,
+        '  printf \'%s\\n\' "$GG_TEST_CANONICAL_MUTATION" > "$GG_SEO_PLAN"',
+        'fi',
+        "if printf '%s\\n' \"$*\" | grep -q 'gg-seo-autopilot.mjs --limit 1'; then printf 'seo/auto/2026-07-17-row\\n'; fi",
+        'exit 0',
+        '',
+      ].join('\n'));
+      const result = spawnSync('bash', [resolve(flow, 'tools/scripts/gg-nightly-seo.sh')], {
+        cwd: flowRoot,
+        encoding: 'utf8',
+        env: {
+          ...process.env,
+          HOME: root,
+          GG_SEO_PLAN: canonical,
+          GG_NIGHTLY_ITEMS_PLAN: snapshot,
+          GG_NIGHTLY_ITEMS_SHA256: digest,
+          GG_NIGHTLY_ITEMS_IDENTITY: fileIdentity(snapshot),
+          GG_NIGHTLY_ITEMS_DIR_IDENTITY: fileIdentity(dirname(snapshot)),
+          GG_NIGHTLY_ATTESTED_MANIFEST: manifest,
+          GG_NIGHTLY_ATTESTED_MANIFEST_SHA256: createHash('sha256').update(readFileSync(manifest)).digest('hex'),
+          GG_NIGHTLY_ATTESTED_MANIFEST_IDENTITY: fileIdentity(manifest),
+          GG_NIGHTLY_VALIDATOR_NODE: process.execPath,
+          GG_NIGHTLY_FLOW: flowRoot,
+          GG_NIGHTLY_CLAIMS: claims,
+          GG_NIGHTLY_LOG: log,
+          GG_NIGHTLY_LOCK: lock,
+          GG_TEST_NODE_CALLS: calls,
+          GG_TEST_CANONICAL_MUTATION: mutation(pid),
+        },
+      });
+      const callLog = existsSync(calls) ? readFileSync(calls, 'utf8') : '';
+      const nightlyLog = existsSync(log) ? readFileSync(log, 'utf8') : '';
+      assert.equal(result.status, 0, `${variant}: ${result.stdout}\n${result.stderr}\n${nightlyLog}`);
+      assert.match(callLog, new RegExp(`^${snapshot.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&')}\\t.*--author --task ${pid} `, 'm'), variant);
+      assert.doesNotMatch(callLog, /gg-seo-autopilot\.mjs --limit 1/, variant);
+      assert.doesNotMatch(callLog, /gg-preview-gate\.mjs/, variant);
+      assert.doesNotMatch(nightlyLog, /MERGED/, variant);
+      assert.match(nightlyLog, /canonical raw row.*changed|no longer matches.*attested/i, variant);
+    } finally {
+      rmSync(`/tmp/nightly-plan-${pid}.md`, { force: true });
+      rmSync(`/tmp/nightly-scan-${pid}.log`, { force: true });
+      rmSync(root, { recursive: true, force: true });
+    }
   }
 });
 
@@ -623,6 +633,7 @@ test('real nightly consumes only the proven snapshot and rechecks canonical unch
         GG_NIGHTLY_ITEMS_PLAN: snapshot,
         GG_NIGHTLY_ITEMS_SHA256: snapshotDigest,
         GG_NIGHTLY_ITEMS_IDENTITY: fileIdentity(snapshot),
+        GG_NIGHTLY_ITEMS_DIR_IDENTITY: fileIdentity(dirname(snapshot)),
         GG_NIGHTLY_ATTESTED_MANIFEST: manifest,
         GG_NIGHTLY_ATTESTED_MANIFEST_SHA256: createHash('sha256').update(readFileSync(manifest)).digest('hex'),
         GG_NIGHTLY_ATTESTED_MANIFEST_IDENTITY: fileIdentity(manifest),

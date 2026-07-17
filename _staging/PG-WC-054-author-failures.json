@@ -4,7 +4,8 @@
   "status": "failed",
   "failures": [
     "word count 1406 < min 1485",
-    "target_keyword count = 10 (limit 9)"
+    "target_keyword count = 10 (limit 9)",
+    "word count 1363 < min 1485"
   ],
-  "updatedAt": "2026-07-17T17:17:05.187Z"
+  "updatedAt": "2026-07-17T17:20:27.356Z"
 }

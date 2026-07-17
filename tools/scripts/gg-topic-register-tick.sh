@@ -228,30 +228,120 @@ log_skip_json() {
   write_result "$json"
 }
 
+skip_lock_conflict() {
+  local current_pid
+  current_pid="$(cat "$LOCK/pid" 2>/dev/null)"
+  if [ -n "$current_pid" ] && kill -0 "$current_pid" 2>/dev/null; then
+    echo "$(date '+%F %T') skip — previous topic-register run (pid $current_pid) still active" >> "$LOG"
+    log_skip_json "lock_active" "$current_pid"
+  else
+    echo "$(date '+%F %T') skip — lost mutex race" >> "$LOG"
+    log_skip_json "lock_race"
+  fi
+  if [ "$REQUIRE_RUN" = "1" ]; then exit 75; fi
+  exit 0
+}
+
+release_reclaim_claim() {
+  local claim_dir="$1"
+  local claim_pid
+  local claim_quarantine="${LOCK}.reclaim-release.$$"
+  claim_pid="$(cat "$claim_dir/pid" 2>/dev/null)"
+  if [ "$claim_pid" != "$$" ]; then
+    return
+  fi
+  if [ -e "$claim_quarantine" ] || [ -L "$claim_quarantine" ]; then
+    return
+  fi
+  if mv "$claim_dir" "$claim_quarantine" 2>/dev/null; then
+    claim_pid="$(cat "$claim_quarantine/pid" 2>/dev/null)"
+    if [ "$claim_pid" = "$$" ]; then
+      rm -rf "$claim_quarantine" 2>/dev/null
+    fi
+  fi
+}
+
+cleanup_owned_lock() {
+  local current_pid
+  local owned_quarantine="${LOCK}.release.$$"
+  current_pid="$(cat "$LOCK/pid" 2>/dev/null)"
+  if [ "$current_pid" != "$$" ]; then
+    return
+  fi
+  if [ -e "$owned_quarantine" ] || [ -L "$owned_quarantine" ]; then
+    return
+  fi
+  if mv "$LOCK" "$owned_quarantine" 2>/dev/null; then
+    current_pid="$(cat "$owned_quarantine/pid" 2>/dev/null)"
+    if [ "$current_pid" = "$$" ]; then
+      rm -rf "$owned_quarantine" 2>/dev/null
+    elif [ ! -e "$LOCK" ] && [ ! -L "$LOCK" ]; then
+      mv "$owned_quarantine" "$LOCK" 2>/dev/null
+    fi
+  fi
+}
+
 if [ "${1:-}" = "--print-command" ]; then
   print_cmd
   exit 0
 fi
 
-if [ -d "$LOCK" ]; then
-  lock_pid="$(cat "$LOCK/pid" 2>/dev/null)"
-  if [ -n "$lock_pid" ] && kill -0 "$lock_pid" 2>/dev/null; then
-    echo "$(date '+%F %T') skip — previous topic-register run (pid $lock_pid) still active" >> "$LOG"
-    log_skip_json "lock_active" "$lock_pid"
-    if [ "$REQUIRE_RUN" = "1" ]; then exit 75; fi
-    exit 0
-  fi
-  rm -rf "$LOCK" 2>/dev/null
-fi
-
 if ! mkdir "$LOCK" 2>/dev/null; then
-  echo "$(date '+%F %T') skip — lost mutex race" >> "$LOG"
-  log_skip_json "lock_race"
-  if [ "$REQUIRE_RUN" = "1" ]; then exit 75; fi
-  exit 0
+  if [ ! -d "$LOCK" ]; then
+    skip_lock_conflict
+  fi
+
+  lock_pid="$(cat "$LOCK/pid" 2>/dev/null)"
+  if [ -z "$lock_pid" ]; then
+    skip_lock_conflict
+  fi
+  if kill -0 "$lock_pid" 2>/dev/null; then
+    skip_lock_conflict
+  fi
+
+  reclaim_claim="$LOCK/.reclaim"
+  if ! mkdir "$reclaim_claim" 2>/dev/null; then
+    skip_lock_conflict
+  fi
+  if ! printf '%s\n' "$$" > "$reclaim_claim/pid"; then
+    skip_lock_conflict
+  fi
+
+  current_pid="$(cat "$LOCK/pid" 2>/dev/null)"
+  if [ "$current_pid" != "$lock_pid" ]; then
+    release_reclaim_claim "$reclaim_claim"
+    skip_lock_conflict
+  fi
+  if kill -0 "$current_pid" 2>/dev/null; then
+    release_reclaim_claim "$reclaim_claim"
+    skip_lock_conflict
+  fi
+
+  stale_quarantine="${LOCK}.stale.$$"
+  if [ -e "$stale_quarantine" ] || [ -L "$stale_quarantine" ]; then
+    release_reclaim_claim "$reclaim_claim"
+    skip_lock_conflict
+  fi
+  if ! mv "$LOCK" "$stale_quarantine" 2>/dev/null; then
+    skip_lock_conflict
+  fi
+
+  moved_pid="$(cat "$stale_quarantine/pid" 2>/dev/null)"
+  claim_pid="$(cat "$stale_quarantine/.reclaim/pid" 2>/dev/null)"
+  if [ "$moved_pid" != "$lock_pid" ] || [ "$claim_pid" != "$$" ]; then
+    if [ ! -e "$LOCK" ] && [ ! -L "$LOCK" ]; then
+      mv "$stale_quarantine" "$LOCK" 2>/dev/null
+    fi
+    skip_lock_conflict
+  fi
+  rm -rf "$stale_quarantine" 2>/dev/null
+
+  if ! mkdir "$LOCK" 2>/dev/null; then
+    skip_lock_conflict
+  fi
 fi
-echo "$$" > "$LOCK/pid"
-trap 'rm -rf "$LOCK" 2>/dev/null' EXIT
+printf '%s\n' "$$" > "$LOCK/pid"
+trap 'cleanup_owned_lock' EXIT
 
 mode="dry-run"
 if [ "$APPLY" = "1" ]; then

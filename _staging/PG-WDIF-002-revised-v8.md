@@ -1,29 +1,3 @@
----
-title: What Is My Love Language
-slug: what-is-my-love-language
-date: 2026-07-17
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T2
-track: 量产线
-page_id: PG-WDIF-002
-author_id: "marcus-orion"
-author_display_name: "Marcus Orion"
-target_keyword: what is my love language
-associated_keywords:
-  - what is my love language meaning
-  - what is my love language astrology
-  - what is my love language birth chart
-  - what is my love language zodiac
-  - what is my love language interpretation
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-07-17T09:46:34.677Z
-content_sha256_short: cee0a8730862eb93
-phase2_checks: all-pass
----
-
 # What Is My Love Language, Read Through Your Venus, Mars, and Moon
 
 ## What Is My Love Language?

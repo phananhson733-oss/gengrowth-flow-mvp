@@ -13,6 +13,7 @@ import {
   readFileSync,
   readdirSync,
   renameSync,
+  utimesSync,
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -319,6 +320,190 @@ test('wrapper atomically writes pure Node stdout JSON to the result artifact', (
   assert.match(log, /\{"ok":true,"payload":"node-only"\}/);
   assert.match(log, /topic-register ok/);
   assert.doesNotMatch(readFileSync(resultFile, 'utf8'), /node diagnostic|topic-register ok/);
+});
+
+test('an old canonical lock without a pid is recovered and enters Node exactly once', () => {
+  const tmp = mkdtempSync(join(tmpdir(), 'gg-topic-register-orphan-lock-'));
+  const bashEnv = join(tmp, 'bash-env');
+  const lock = join(tmp, 'lock');
+  const logDir = join(tmp, 'logs');
+  const marker = join(tmp, 'node-calls');
+  const resultFile = join(tmp, 'result.json');
+  mkdirSync(lock);
+  mkdirSync(logDir);
+  const old = new Date(Date.now() - 10_000);
+  utimesSync(lock, old, old);
+  writeFileSync(
+    bashEnv,
+    'node() { command printf \'node\\n\' >> "$GG_TEST_NODE_MARKER"; printf \'%s\\n\' \'{"ok":true,"recovered":"orphan"}\'; }\n' +
+      'gtimeout() { shift 3; "$@"; }\n',
+  );
+
+  const r = spawnSync('bash', [wrapper], {
+    cwd: repo,
+    encoding: 'utf8',
+    env: {
+      PATH: process.env.PATH,
+      HOME: tmp,
+      BASH_ENV: bashEnv,
+      GG_TOPIC_REGISTER_ENV_FILE: '/dev/null',
+      GG_TOPIC_REGISTER_LOCK: lock,
+      GG_TOPIC_REGISTER_LOG_DIR: logDir,
+      GG_TOPIC_REGISTER_REQUIRE_RUN: '1',
+      GG_TOPIC_REGISTER_RESULT_FILE: resultFile,
+      GG_TOPIC_REGISTER_LOCK_INIT_GRACE_SECONDS: '1',
+      GG_TOPIC_REGISTER_APPLY: '1',
+      GG_TOPIC_REGISTER_LLM: 'none',
+      GG_TOPIC_REGISTER_DISCOVER_EVIDENCE: '0',
+      GG_TEST_NODE_MARKER: marker,
+    },
+  });
+
+  assert.equal(r.status, 0, `${r.stdout}${r.stderr}`);
+  assert.equal(readFileSync(marker, 'utf8'), 'node\n');
+  assert.deepEqual(JSON.parse(readFileSync(resultFile, 'utf8')), {
+    ok: true,
+    recovered: 'orphan',
+  });
+});
+
+test('abandoned reclaim claims with missing or dead pids are recovered safely', () => {
+  for (const claimState of ['missing', 'dead']) {
+    const tmp = mkdtempSync(join(tmpdir(), `gg-topic-register-abandoned-${claimState}-`));
+    const bashEnv = join(tmp, 'bash-env');
+    const lock = join(tmp, 'lock');
+    const reclaim = join(lock, '.reclaim');
+    const logDir = join(tmp, 'logs');
+    const marker = join(tmp, 'node-calls');
+    mkdirSync(reclaim, { recursive: true });
+    mkdirSync(logDir);
+    writeFileSync(join(lock, 'pid'), '999991');
+    if (claimState === 'dead') writeFileSync(join(reclaim, 'pid'), '999992');
+    const old = new Date(Date.now() - 10_000);
+    utimesSync(reclaim, old, old);
+    writeFileSync(
+      bashEnv,
+      'node() { command printf \'node\\n\' >> "$GG_TEST_NODE_MARKER"; printf \'%s\\n\' \'{"ok":true,"recovered":"claim"}\'; }\n' +
+        'gtimeout() { shift 3; "$@"; }\n',
+    );
+
+    const r = spawnSync('bash', [wrapper], {
+      cwd: repo,
+      encoding: 'utf8',
+      env: {
+        PATH: process.env.PATH,
+        HOME: tmp,
+        BASH_ENV: bashEnv,
+        GG_TOPIC_REGISTER_ENV_FILE: '/dev/null',
+        GG_TOPIC_REGISTER_LOCK: lock,
+        GG_TOPIC_REGISTER_LOG_DIR: logDir,
+        GG_TOPIC_REGISTER_REQUIRE_RUN: '1',
+        GG_TOPIC_REGISTER_RESULT_FILE: join(tmp, 'result.json'),
+        GG_TOPIC_REGISTER_LOCK_INIT_GRACE_SECONDS: '1',
+        GG_TOPIC_REGISTER_APPLY: '1',
+        GG_TOPIC_REGISTER_LLM: 'none',
+        GG_TOPIC_REGISTER_DISCOVER_EVIDENCE: '0',
+        GG_TEST_NODE_MARKER: marker,
+      },
+    });
+
+    assert.equal(r.status, 0, `${claimState}: ${r.stdout}${r.stderr}`);
+    assert.equal(readFileSync(marker, 'utf8'), 'node\n', claimState);
+  }
+});
+
+test('a pid-less lock inside initialization grace is never stolen in default or strict mode', () => {
+  for (const requireRun of ['0', '1']) {
+    const tmp = mkdtempSync(join(tmpdir(), `gg-topic-register-live-init-${requireRun}-`));
+    const bashEnv = join(tmp, 'bash-env');
+    const lock = join(tmp, 'lock');
+    const logDir = join(tmp, 'logs');
+    const marker = join(tmp, 'node-called');
+    const resultFile = join(tmp, 'result.json');
+    mkdirSync(lock);
+    mkdirSync(logDir);
+    writeFileSync(join(lock, 'initializing'), 'owner-state');
+    writeFileSync(
+      bashEnv,
+      'node() { command touch "$GG_TEST_NODE_MARKER"; printf \'%s\\n\' \'{"ok":true}\'; }\n' +
+        'gtimeout() { shift 3; "$@"; }\n',
+    );
+
+    const r = spawnSync('bash', [wrapper], {
+      cwd: repo,
+      encoding: 'utf8',
+      env: {
+        PATH: process.env.PATH,
+        HOME: tmp,
+        BASH_ENV: bashEnv,
+        GG_TOPIC_REGISTER_ENV_FILE: '/dev/null',
+        GG_TOPIC_REGISTER_LOCK: lock,
+        GG_TOPIC_REGISTER_LOG_DIR: logDir,
+        GG_TOPIC_REGISTER_REQUIRE_RUN: requireRun,
+        GG_TOPIC_REGISTER_RESULT_FILE: resultFile,
+        GG_TOPIC_REGISTER_LOCK_INIT_GRACE_SECONDS: '60',
+        GG_TOPIC_REGISTER_APPLY: '1',
+        GG_TOPIC_REGISTER_LLM: 'none',
+        GG_TOPIC_REGISTER_DISCOVER_EVIDENCE: '0',
+        GG_TEST_NODE_MARKER: marker,
+      },
+    });
+
+    assert.equal(r.status, requireRun === '1' ? 75 : 0, `${r.stdout}${r.stderr}`);
+    assert.equal(existsSync(marker), false, requireRun);
+    assert.equal(readFileSync(join(lock, 'initializing'), 'utf8'), 'owner-state');
+    assert.deepEqual(JSON.parse(readFileSync(resultFile, 'utf8')), {
+      ok: requireRun !== '1',
+      skipped: true,
+      reason: 'lock_race',
+    });
+  }
+});
+
+test('pid publication failure or unprovable ownership fails closed before Node', () => {
+  for (const failureMode of ['publish-failure', 'owner-changed']) {
+    const tmp = mkdtempSync(join(tmpdir(), `gg-topic-register-publish-${failureMode}-`));
+    const bashEnv = join(tmp, 'bash-env');
+    const lock = join(tmp, 'lock');
+    const logDir = join(tmp, 'logs');
+    const marker = join(tmp, 'node-called');
+    const resultFile = join(tmp, 'result.json');
+    mkdirSync(logDir);
+    const fault =
+      failureMode === 'publish-failure'
+        ? 'mkdir() { if [ "$#" -eq 1 ] && [ "$1" = "$GG_TOPIC_REGISTER_LOCK" ]; then command mkdir "$1" || return; command mkdir "$1/pid"; return 0; fi; command mkdir "$@"; }\n'
+        : 'mv() { if [ "$#" -eq 2 ] && [ "$2" = "$GG_TOPIC_REGISTER_LOCK/pid" ]; then command mv "$@" || return; command printf \'999993\\n\' > "$2"; return 0; fi; command mv "$@"; }\n';
+    writeFileSync(
+      bashEnv,
+      fault +
+        'node() { command touch "$GG_TEST_NODE_MARKER"; printf \'%s\\n\' \'{"ok":true}\'; }\n' +
+        'gtimeout() { shift 3; "$@"; }\n',
+    );
+
+    const r = spawnSync('bash', [wrapper], {
+      cwd: repo,
+      encoding: 'utf8',
+      env: {
+        PATH: process.env.PATH,
+        HOME: tmp,
+        BASH_ENV: bashEnv,
+        GG_TOPIC_REGISTER_ENV_FILE: '/dev/null',
+        GG_TOPIC_REGISTER_LOCK: lock,
+        GG_TOPIC_REGISTER_LOG_DIR: logDir,
+        GG_TOPIC_REGISTER_REQUIRE_RUN: '1',
+        GG_TOPIC_REGISTER_RESULT_FILE: resultFile,
+        GG_TOPIC_REGISTER_LOCK_INIT_GRACE_SECONDS: '1',
+        GG_TOPIC_REGISTER_APPLY: '1',
+        GG_TOPIC_REGISTER_LLM: 'none',
+        GG_TOPIC_REGISTER_DISCOVER_EVIDENCE: '0',
+        GG_TEST_NODE_MARKER: marker,
+      },
+    });
+
+    assert.equal(r.status, 75, `${failureMode}: ${r.stdout}${r.stderr}`);
+    assert.equal(existsSync(marker), false, failureMode);
+    assert.equal(JSON.parse(readFileSync(resultFile, 'utf8')).reason, 'lock_race');
+  }
 });
 
 test('stale-lock reclaim lets exactly one strict apply runner enter Node and preserves its lock', { timeout: 15000 }, async () => {

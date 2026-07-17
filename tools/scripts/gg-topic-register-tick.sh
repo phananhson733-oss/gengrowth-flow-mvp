@@ -31,6 +31,7 @@
 #   GG_TOPIC_REGISTER_SEMANTIC_REPAIR_ONLY=0    # only repair existing semantic fields; never generate/audit/reassign
 #   GG_TOPIC_REGISTER_REQUIRE_RUN=0             # 1 = lock skip is a temporary failure (exit 75)
 #   GG_TOPIC_REGISTER_RESULT_FILE=""            # optional atomic pure-JSON result artifact
+#   GG_TOPIC_REGISTER_LOCK_INIT_GRACE_SECONDS=5  # bounded grace before pid-less lock/claim recovery
 #   GG_TOPIC_REGISTER_REPAIR_KEYWORDS=""       # comma-separated target keywords to reassign
 #   GG_TOPIC_REGISTER_REASSIGN_EXISTING=0      # ignore existing page_id/cluster_id for repair
 #   GG_TOPIC_REGISTER_TIMEOUT=900
@@ -82,6 +83,7 @@ OVERRIDE_NAMES=(
   GG_TOPIC_REGISTER_SEMANTIC_REPAIR_ONLY
   GG_TOPIC_REGISTER_REQUIRE_RUN
   GG_TOPIC_REGISTER_RESULT_FILE
+  GG_TOPIC_REGISTER_LOCK_INIT_GRACE_SECONDS
   GG_TOPIC_REGISTER_REPAIR_KEYWORDS
   GG_TOPIC_REGISTER_REASSIGN_EXISTING
   GG_TOPIC_REGISTER_TIMEOUT
@@ -128,6 +130,10 @@ REPAIR_PAGE_IDS="${GG_TOPIC_REGISTER_REPAIR_PAGE_IDS:-}"
 SEMANTIC_REPAIR_ONLY="${GG_TOPIC_REGISTER_SEMANTIC_REPAIR_ONLY:-0}"
 REQUIRE_RUN="${GG_TOPIC_REGISTER_REQUIRE_RUN:-0}"
 RESULT_FILE="${GG_TOPIC_REGISTER_RESULT_FILE:-}"
+LOCK_INIT_GRACE_SECONDS="${GG_TOPIC_REGISTER_LOCK_INIT_GRACE_SECONDS:-5}"
+case "$LOCK_INIT_GRACE_SECONDS" in
+  ''|*[!0-9]*) LOCK_INIT_GRACE_SECONDS=5 ;;
+esac
 REPAIR_KEYWORDS="${GG_TOPIC_REGISTER_REPAIR_KEYWORDS:-}"
 REASSIGN_EXISTING="${GG_TOPIC_REGISTER_REASSIGN_EXISTING:-0}"
 TIMEOUT="${GG_TOPIC_REGISTER_TIMEOUT:-900}"
@@ -231,7 +237,7 @@ log_skip_json() {
 skip_lock_conflict() {
   local current_pid
   current_pid="$(cat "$LOCK/pid" 2>/dev/null)"
-  if [ -n "$current_pid" ] && kill -0 "$current_pid" 2>/dev/null; then
+  if pid_is_live "$current_pid"; then
     echo "$(date '+%F %T') skip — previous topic-register run (pid $current_pid) still active" >> "$LOG"
     log_skip_json "lock_active" "$current_pid"
   else
@@ -242,12 +248,74 @@ skip_lock_conflict() {
   exit 0
 }
 
+fail_lock_race() {
+  echo "$(date '+%F %T') skip — lock ownership could not be proven" >> "$LOG"
+  log_skip_json "lock_race"
+  if [ "$REQUIRE_RUN" = "1" ]; then exit 75; fi
+  exit 0
+}
+
+pid_is_live() {
+  local candidate_pid="$1"
+  case "$candidate_pid" in
+    ''|*[!0-9]*) return 1 ;;
+  esac
+  if [ "$candidate_pid" -le 0 ]; then
+    return 1
+  fi
+  kill -0 "$candidate_pid" 2>/dev/null
+}
+
+path_identity() {
+  stat -f '%d:%i' "$1" 2>/dev/null || stat -c '%d:%i' "$1" 2>/dev/null
+}
+
+path_is_past_init_grace() {
+  local target="$1"
+  local mtime
+  local now
+  local age
+  mtime="$(stat -f '%m' "$target" 2>/dev/null || stat -c '%Y' "$target" 2>/dev/null)" || return 1
+  now="$(date +%s)" || return 1
+  case "$mtime" in
+    ''|*[!0-9]*) return 1 ;;
+  esac
+  if [ "$mtime" -gt "$now" ]; then
+    return 1
+  fi
+  age=$((now - mtime))
+  [ "$age" -ge "$LOCK_INIT_GRACE_SECONDS" ]
+}
+
+publish_owner_pid() {
+  local owner_dir="$1"
+  local pid_tmp="$owner_dir/.pid.$$"
+  local published_pid
+  if [ -e "$pid_tmp" ] || [ -L "$pid_tmp" ]; then
+    return 1
+  fi
+  if ! (umask 077 && printf '%s\n' "$$" > "$pid_tmp"); then
+    return 1
+  fi
+  if ! mv "$pid_tmp" "$owner_dir/pid" 2>/dev/null; then
+    return 1
+  fi
+  published_pid="$(cat "$owner_dir/pid" 2>/dev/null)"
+  [ "$published_pid" = "$$" ]
+}
+
 release_reclaim_claim() {
   local claim_dir="$1"
   local claim_pid
+  local claim_identity
+  local moved_identity
   local claim_quarantine="${LOCK}.reclaim-release.$$"
   claim_pid="$(cat "$claim_dir/pid" 2>/dev/null)"
   if [ "$claim_pid" != "$$" ]; then
+    return
+  fi
+  claim_identity="$(path_identity "$claim_dir")"
+  if [ -z "$claim_identity" ]; then
     return
   fi
   if [ -e "$claim_quarantine" ] || [ -L "$claim_quarantine" ]; then
@@ -255,17 +323,100 @@ release_reclaim_claim() {
   fi
   if mv "$claim_dir" "$claim_quarantine" 2>/dev/null; then
     claim_pid="$(cat "$claim_quarantine/pid" 2>/dev/null)"
-    if [ "$claim_pid" = "$$" ]; then
+    moved_identity="$(path_identity "$claim_quarantine")"
+    if [ "$claim_pid" = "$$" ] && [ "$moved_identity" = "$claim_identity" ]; then
       rm -rf "$claim_quarantine" 2>/dev/null
+    elif [ ! -e "$claim_dir" ] && [ ! -L "$claim_dir" ]; then
+      mv "$claim_quarantine" "$claim_dir" 2>/dev/null
     fi
   fi
 }
 
+recover_abandoned_reclaim_claim() {
+  local claim_dir="$1"
+  local observed_pid
+  local observed_identity
+  local moved_pid
+  local moved_identity
+  local claim_quarantine="${LOCK}.reclaim-stale.$$"
+  if [ ! -d "$claim_dir" ] || [ -L "$claim_dir" ]; then
+    return 1
+  fi
+  observed_identity="$(path_identity "$claim_dir")"
+  if [ -z "$observed_identity" ]; then
+    return 1
+  fi
+  observed_pid="$(cat "$claim_dir/pid" 2>/dev/null)"
+  if pid_is_live "$observed_pid"; then
+    return 1
+  fi
+  if [ -z "$observed_pid" ] && ! path_is_past_init_grace "$claim_dir"; then
+    return 1
+  fi
+  if [ -e "$claim_quarantine" ] || [ -L "$claim_quarantine" ]; then
+    return 1
+  fi
+  if ! mv "$claim_dir" "$claim_quarantine" 2>/dev/null; then
+    return 1
+  fi
+  moved_identity="$(path_identity "$claim_quarantine")"
+  moved_pid="$(cat "$claim_quarantine/pid" 2>/dev/null)"
+  if [ "$moved_identity" != "$observed_identity" ] || [ "$moved_pid" != "$observed_pid" ] || pid_is_live "$moved_pid"; then
+    if [ ! -e "$claim_dir" ] && [ ! -L "$claim_dir" ]; then
+      mv "$claim_quarantine" "$claim_dir" 2>/dev/null
+    fi
+    return 1
+  fi
+  if [ -z "$moved_pid" ] && ! path_is_past_init_grace "$claim_quarantine"; then
+    if [ ! -e "$claim_dir" ] && [ ! -L "$claim_dir" ]; then
+      mv "$claim_quarantine" "$claim_dir" 2>/dev/null
+    fi
+    return 1
+  fi
+  rm -rf "$claim_quarantine" 2>/dev/null
+}
+
+acquire_reclaim_claim() {
+  local claim_dir="$1"
+  if ! mkdir "$claim_dir" 2>/dev/null; then
+    if ! recover_abandoned_reclaim_claim "$claim_dir"; then
+      return 1
+    fi
+    if ! mkdir "$claim_dir" 2>/dev/null; then
+      return 1
+    fi
+  fi
+  publish_owner_pid "$claim_dir"
+}
+
+OWNED_LOCK_IDENTITY=""
+
+verify_owned_lock() {
+  local current_pid
+  local current_identity
+  current_identity="$(path_identity "$LOCK")"
+  current_pid="$(cat "$LOCK/pid" 2>/dev/null)"
+  [ -n "$OWNED_LOCK_IDENTITY" ] &&
+    [ "$current_identity" = "$OWNED_LOCK_IDENTITY" ] &&
+    [ "$current_pid" = "$$" ] &&
+    [ ! -e "$LOCK/.reclaim" ] &&
+    [ ! -L "$LOCK/.reclaim" ]
+}
+
 cleanup_owned_lock() {
   local current_pid
+  local current_identity
+  local moved_identity
   local owned_quarantine="${LOCK}.release.$$"
+  if [ -z "$OWNED_LOCK_IDENTITY" ]; then
+    return
+  fi
+  current_identity="$(path_identity "$LOCK")"
   current_pid="$(cat "$LOCK/pid" 2>/dev/null)"
-  if [ "$current_pid" != "$$" ]; then
+  if [ "$current_pid" != "$$" ] || [ "$current_identity" != "$OWNED_LOCK_IDENTITY" ]; then
+    return
+  fi
+  if [ -e "$LOCK/.reclaim" ] || [ -L "$LOCK/.reclaim" ]; then
     return
   fi
   if [ -e "$owned_quarantine" ] || [ -L "$owned_quarantine" ]; then
@@ -273,7 +424,8 @@ cleanup_owned_lock() {
   fi
   if mv "$LOCK" "$owned_quarantine" 2>/dev/null; then
     current_pid="$(cat "$owned_quarantine/pid" 2>/dev/null)"
-    if [ "$current_pid" = "$$" ]; then
+    moved_identity="$(path_identity "$owned_quarantine")"
+    if [ "$current_pid" = "$$" ] && [ "$moved_identity" = "$OWNED_LOCK_IDENTITY" ]; then
       rm -rf "$owned_quarantine" 2>/dev/null
     elif [ ! -e "$LOCK" ] && [ ! -L "$LOCK" ]; then
       mv "$owned_quarantine" "$LOCK" 2>/dev/null
@@ -291,28 +443,37 @@ if ! mkdir "$LOCK" 2>/dev/null; then
     skip_lock_conflict
   fi
 
-  lock_pid="$(cat "$LOCK/pid" 2>/dev/null)"
-  if [ -z "$lock_pid" ]; then
+  lock_identity="$(path_identity "$LOCK")"
+  if [ -z "$lock_identity" ]; then
     skip_lock_conflict
   fi
-  if kill -0 "$lock_pid" 2>/dev/null; then
+  lock_pid="$(cat "$LOCK/pid" 2>/dev/null)"
+  if pid_is_live "$lock_pid"; then
+    skip_lock_conflict
+  fi
+  if [ -z "$lock_pid" ] && ! path_is_past_init_grace "$LOCK"; then
+    skip_lock_conflict
+  fi
+
+  current_identity="$(path_identity "$LOCK")"
+  current_pid="$(cat "$LOCK/pid" 2>/dev/null)"
+  if [ "$current_identity" != "$lock_identity" ] || [ "$current_pid" != "$lock_pid" ]; then
     skip_lock_conflict
   fi
 
   reclaim_claim="$LOCK/.reclaim"
-  if ! mkdir "$reclaim_claim" 2>/dev/null; then
-    skip_lock_conflict
-  fi
-  if ! printf '%s\n' "$$" > "$reclaim_claim/pid"; then
+  if ! acquire_reclaim_claim "$reclaim_claim"; then
     skip_lock_conflict
   fi
 
+  current_identity="$(path_identity "$LOCK")"
   current_pid="$(cat "$LOCK/pid" 2>/dev/null)"
-  if [ "$current_pid" != "$lock_pid" ]; then
+  claim_pid="$(cat "$reclaim_claim/pid" 2>/dev/null)"
+  if [ "$current_identity" != "$lock_identity" ] || [ "$current_pid" != "$lock_pid" ] || [ "$claim_pid" != "$$" ]; then
     release_reclaim_claim "$reclaim_claim"
     skip_lock_conflict
   fi
-  if kill -0 "$current_pid" 2>/dev/null; then
+  if pid_is_live "$current_pid"; then
     release_reclaim_claim "$reclaim_claim"
     skip_lock_conflict
   fi
@@ -327,8 +488,9 @@ if ! mkdir "$LOCK" 2>/dev/null; then
   fi
 
   moved_pid="$(cat "$stale_quarantine/pid" 2>/dev/null)"
+  moved_identity="$(path_identity "$stale_quarantine")"
   claim_pid="$(cat "$stale_quarantine/.reclaim/pid" 2>/dev/null)"
-  if [ "$moved_pid" != "$lock_pid" ] || [ "$claim_pid" != "$$" ]; then
+  if [ "$moved_identity" != "$lock_identity" ] || [ "$moved_pid" != "$lock_pid" ] || [ "$claim_pid" != "$$" ]; then
     if [ ! -e "$LOCK" ] && [ ! -L "$LOCK" ]; then
       mv "$stale_quarantine" "$LOCK" 2>/dev/null
     fi
@@ -340,7 +502,13 @@ if ! mkdir "$LOCK" 2>/dev/null; then
     skip_lock_conflict
   fi
 fi
-printf '%s\n' "$$" > "$LOCK/pid"
+if ! publish_owner_pid "$LOCK"; then
+  fail_lock_race
+fi
+OWNED_LOCK_IDENTITY="$(path_identity "$LOCK")"
+if ! verify_owned_lock; then
+  fail_lock_race
+fi
 trap 'cleanup_owned_lock' EXIT
 
 mode="dry-run"
@@ -351,6 +519,9 @@ fi
 echo "$(date '+%F %T') topic-register start (pid $$, mode $mode, products $PRODUCTS, limit $LIMIT)" >> "$LOG"
 
 echo "$(date '+%F %T') command: $(print_cmd)" >> "$LOG"
+if ! verify_owned_lock; then
+  fail_lock_race
+fi
 if command -v gtimeout >/dev/null 2>&1; then
   RUN_JSON="$(gtimeout -k 30 "$TIMEOUT" "${CMD[@]}" 2>> "$LOG")"
   rc=$?

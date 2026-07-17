@@ -569,6 +569,180 @@ test('queue-time snapshot mutation cannot change the private plan bytes consumed
   }
 });
 
+test('legacy predictable nightly plan and scan paths cannot overwrite or feed publish', () => {
+  const root = mkdtempSync(join(tmpdir(), 'gg-nightly-legacy-path-attack-'));
+  const pid = `PG-LEGACYPATH-${process.pid}`;
+  const flowRoot = join(root, 'flow');
+  const bin = join(root, '.local/bin');
+  const canonical = join(root, 'canonical.md');
+  const snapshot = join(root, 'snapshot.md');
+  const manifest = join(root, 'attested.json');
+  const claims = join(root, 'claims.json');
+  const calls = join(root, 'calls.log');
+  const scanInput = join(root, 'scan-input.md');
+  const planVictim = join(root, 'plan-victim.txt');
+  const scanVictim = join(root, 'scan-victim.txt');
+  const log = join(root, 'nightly.log');
+  const lock = join(root, 'nightly.lock');
+  const legacyPlan = `/tmp/nightly-plan-${pid}.md`;
+  const legacyScan = `/tmp/nightly-scan-${pid}.log`;
+  const rawLine = `- [ ] \`${pid}\` safe keyword`;
+  const planText = `${rawLine}\n`;
+  const digest = createHash('sha256').update(planText).digest('hex');
+  try {
+    mkdirSync(join(flowRoot, 'tools/scripts'), { recursive: true });
+    mkdirSync(bin, { recursive: true });
+    writeFileSync(canonical, planText);
+    writeFileSync(snapshot, planText);
+    writeFileSync(manifest, JSON.stringify({
+      version: 1,
+      plan_sha256: digest,
+      requested_page_ids: [pid],
+      rows: [{ page_id: pid, raw_line: rawLine, keyword: 'safe keyword' }],
+    }));
+    writeFileSync(claims, '{}\n');
+    writeFileSync(planVictim, 'PLAN-VICTIM-MUST-SURVIVE\n');
+    writeFileSync(scanVictim, 'SCAN-VICTIM-MUST-SURVIVE\n');
+    rmSync(legacyPlan, { force: true });
+    rmSync(legacyScan, { force: true });
+    symlinkSync(planVictim, legacyPlan);
+    symlinkSync(scanVictim, legacyScan);
+    executable(join(bin, 'curl'), '#!/bin/sh\nexit 1\n');
+    executable(join(bin, 'node'), [
+      '#!/bin/bash',
+      'printf \'%s\\t%s\\n\' "${GG_AUTOPILOT_PLAN:-}" "$*" >> "$GG_TEST_NODE_CALLS"',
+      `if printf '%s\\n' "$*" | grep -q -- '--author --task ${pid}'; then`,
+      '  mkdir -p _staging',
+      `  : > "_staging/${pid}-en.md"`,
+      'fi',
+      "if printf '%s\\n' \"$*\" | grep -q 'gg-seo-autopilot.mjs --limit 1'; then",
+      '  cp "$GG_AUTOPILOT_PLAN" "$GG_TEST_SCAN_INPUT"',
+      `  printf 'seo/auto/2026-07-17-${pid}\\n'`,
+      'fi',
+      'exit 0',
+      '',
+    ].join('\n'));
+    const result = spawnSync('bash', [resolve(flow, 'tools/scripts/gg-nightly-seo.sh')], {
+      cwd: flowRoot,
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        HOME: root,
+        GG_SEO_PLAN: canonical,
+        GG_NIGHTLY_ITEMS_PLAN: snapshot,
+        GG_NIGHTLY_ITEMS_SHA256: digest,
+        GG_NIGHTLY_ITEMS_IDENTITY: fileIdentity(snapshot),
+        GG_NIGHTLY_ITEMS_DIR_IDENTITY: fileIdentity(dirname(snapshot)),
+        GG_NIGHTLY_ATTESTED_MANIFEST: manifest,
+        GG_NIGHTLY_ATTESTED_MANIFEST_SHA256: createHash('sha256').update(readFileSync(manifest)).digest('hex'),
+        GG_NIGHTLY_ATTESTED_MANIFEST_IDENTITY: fileIdentity(manifest),
+        GG_NIGHTLY_VALIDATOR_NODE: process.execPath,
+        GG_NIGHTLY_FLOW: flowRoot,
+        GG_NIGHTLY_CLAIMS: claims,
+        GG_NIGHTLY_LOG: log,
+        GG_NIGHTLY_LOCK: lock,
+        GG_TEST_NODE_CALLS: calls,
+        GG_TEST_SCAN_INPUT: scanInput,
+      },
+    });
+    const nightlyLog = existsSync(log) ? readFileSync(log, 'utf8') : '';
+    assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}\n${nightlyLog}`);
+    assert.equal(readFileSync(planVictim, 'utf8'), 'PLAN-VICTIM-MUST-SURVIVE\n');
+    assert.equal(readFileSync(scanVictim, 'utf8'), 'SCAN-VICTIM-MUST-SURVIVE\n');
+    assert.equal(readFileSync(scanInput, 'utf8'), `# nightly targeted publish\n\n${rawLine}\n`);
+    const scanCall = readFileSync(calls, 'utf8').split('\n').find((line) => line.includes('gg-seo-autopilot.mjs --limit 1'));
+    assert.ok(scanCall);
+    assert.notEqual(scanCall.split('\t')[0], legacyPlan);
+    assert.notEqual(scanCall.split('\t')[0], planVictim);
+  } finally {
+    rmSync(legacyPlan, { force: true });
+    rmSync(legacyScan, { force: true });
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('precreated run-private plan or scan entry stops before targeted publish', () => {
+  for (const attackedName of ['nightly-plan', 'nightly-scan']) {
+    const root = mkdtempSync(join(tmpdir(), `gg-nightly-private-${attackedName}-attack-`));
+    const pid = `PG-${attackedName === 'nightly-plan' ? 'PLAN' : 'SCAN'}ATTACK-${process.pid}`;
+    const flowRoot = join(root, 'flow');
+    const bin = join(root, '.local/bin');
+    const canonical = join(root, 'canonical.md');
+    const snapshot = join(root, 'snapshot.md');
+    const manifest = join(root, 'attested.json');
+    const claims = join(root, 'claims.json');
+    const calls = join(root, 'calls.log');
+    const victim = join(root, 'victim.txt');
+    const log = join(root, 'nightly.log');
+    const lock = join(root, 'nightly.lock');
+    const rawLine = `- [ ] \`${pid}\` safe keyword`;
+    const planText = `${rawLine}\n`;
+    const digest = createHash('sha256').update(planText).digest('hex');
+    try {
+      mkdirSync(join(flowRoot, 'tools/scripts'), { recursive: true });
+      mkdirSync(bin, { recursive: true });
+      writeFileSync(canonical, planText);
+      writeFileSync(snapshot, planText);
+      writeFileSync(manifest, JSON.stringify({
+        version: 1,
+        plan_sha256: digest,
+        requested_page_ids: [pid],
+        rows: [{ page_id: pid, raw_line: rawLine, keyword: 'safe keyword' }],
+      }));
+      writeFileSync(claims, '{}\n');
+      writeFileSync(victim, 'ATTACKER-CONTENT-MUST-SURVIVE\n');
+      executable(join(bin, 'curl'), '#!/bin/sh\nexit 1\n');
+      const attackedFile = `${attackedName}-${pid}.${attackedName === 'nightly-plan' ? 'md' : 'log'}`;
+      executable(join(bin, 'node'), [
+        '#!/bin/bash',
+        'printf \'%s\\t%s\\n\' "${GG_AUTOPILOT_PLAN:-}" "$*" >> "$GG_TEST_NODE_CALLS"',
+        `if printf '%s\\n' "$*" | grep -q -- '--author --task ${pid}'; then`,
+        '  private_dir="$(dirname "$GG_AUTOPILOT_PLAN")"',
+        `  ln -s "$GG_TEST_ATTACK_VICTIM" "$private_dir/${attackedFile}"`,
+        '  mkdir -p _staging',
+        `  : > "_staging/${pid}-en.md"`,
+        'fi',
+        "if printf '%s\\n' \"$*\" | grep -q 'gg-seo-autopilot.mjs --limit 1'; then printf 'seo/auto/2026-07-17-attack\\n'; fi",
+        'exit 0',
+        '',
+      ].join('\n'));
+      const result = spawnSync('bash', [resolve(flow, 'tools/scripts/gg-nightly-seo.sh')], {
+        cwd: flowRoot,
+        encoding: 'utf8',
+        env: {
+          ...process.env,
+          HOME: root,
+          GG_SEO_PLAN: canonical,
+          GG_NIGHTLY_ITEMS_PLAN: snapshot,
+          GG_NIGHTLY_ITEMS_SHA256: digest,
+          GG_NIGHTLY_ITEMS_IDENTITY: fileIdentity(snapshot),
+          GG_NIGHTLY_ITEMS_DIR_IDENTITY: fileIdentity(dirname(snapshot)),
+          GG_NIGHTLY_ATTESTED_MANIFEST: manifest,
+          GG_NIGHTLY_ATTESTED_MANIFEST_SHA256: createHash('sha256').update(readFileSync(manifest)).digest('hex'),
+          GG_NIGHTLY_ATTESTED_MANIFEST_IDENTITY: fileIdentity(manifest),
+          GG_NIGHTLY_VALIDATOR_NODE: process.execPath,
+          GG_NIGHTLY_FLOW: flowRoot,
+          GG_NIGHTLY_CLAIMS: claims,
+          GG_NIGHTLY_LOG: log,
+          GG_NIGHTLY_LOCK: lock,
+          GG_TEST_NODE_CALLS: calls,
+          GG_TEST_ATTACK_VICTIM: victim,
+        },
+      });
+      const callLog = existsSync(calls) ? readFileSync(calls, 'utf8') : '';
+      const nightlyLog = existsSync(log) ? readFileSync(log, 'utf8') : '';
+      assert.notEqual(result.status, 0, `${attackedName}: ${result.stdout}\n${result.stderr}\n${nightlyLog}`);
+      assert.doesNotMatch(callLog, /gg-seo-autopilot\.mjs --limit 1/, attackedName);
+      assert.doesNotMatch(callLog, /gg-preview-gate\.mjs/, attackedName);
+      assert.equal(readFileSync(victim, 'utf8'), 'ATTACKER-CONTENT-MUST-SURVIVE\n');
+    } finally {
+      rmSync(`/tmp/nightly-plan-${pid}.md`, { force: true });
+      rmSync(`/tmp/nightly-scan-${pid}.log`, { force: true });
+      rmSync(root, { recursive: true, force: true });
+    }
+  }
+});
+
 test('nightly authors from the proven snapshot and stops keyword, checked, or removed canonical drift after author', () => {
   for (const [variant, mutation] of [
     ['keyword', (pid) => `- [ ] \`${pid}\` changed keyword`],

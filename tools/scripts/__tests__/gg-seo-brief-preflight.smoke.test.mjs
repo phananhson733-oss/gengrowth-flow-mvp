@@ -3,6 +3,7 @@ import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import {
   chmodSync,
+  existsSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -108,6 +109,9 @@ function fakeWrapper(path) {
     '  fi',
     '  printf \'%s\' "$GG_TEST_RESULT_JSON" > "$GG_TOPIC_REGISTER_RESULT_FILE"',
     'fi',
+    'if [ "${GG_TEST_REPLACE_WORK_DIR:-0}" = "1" ]; then',
+    '  node -e \'const fs = require("node:fs"); const path = require("node:path"); const work = path.dirname(process.env.GG_TOPIC_REGISTER_RESULT_FILE); fs.renameSync(work, process.env.GG_TEST_ORIGINAL_WORK_DIR); fs.mkdirSync(work); fs.writeFileSync(path.join(work, "VICTIM-MUST-SURVIVE.txt"), "VICTIM-MUST-SURVIVE\\n"); fs.writeFileSync(process.env.GG_TEST_SWAP_PATH_FILE, work);\'',
+    'fi',
     'if [ -n "${GG_TEST_WRAPPER_STDOUT:-}" ]; then printf \'%s\n\' "$GG_TEST_WRAPPER_STDOUT"; fi',
     'if [ -n "${GG_TEST_WRAPPER_STDERR:-}" ]; then printf \'%s\n\' "$GG_TEST_WRAPPER_STDERR" >&2; fi',
     'exit "${GG_TEST_WRAPPER_RC:-0}"',
@@ -126,6 +130,7 @@ function harness({
   wrapperStderr = '',
   inherited = {},
   replacePlan = false,
+  replaceWorkDir = false,
   attestedManifest = false,
 } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'gg-seo-brief-preflight-test-'));
@@ -133,6 +138,8 @@ function harness({
   const wrapperPath = join(root, 'topic-register-wrapper.sh');
   const envFile = join(root, 'wrapper-env.json');
   const manifestPath = join(root, 'attested-manifest.json');
+  const originalWorkDir = join(root, 'original-preflight-work');
+  const swapPathFile = join(root, 'swapped-work-path.txt');
   mkdirSync(dirname(planPath), { recursive: true });
   writeFileSync(planPath, plan);
   fakeWrapper(wrapperPath);
@@ -155,16 +162,25 @@ function harness({
       GG_TEST_WRAPPER_STDOUT: wrapperStdout,
       GG_TEST_WRAPPER_STDERR: wrapperStderr,
       GG_TEST_REPLACE_PLAN: replacePlan ? '1' : '0',
+      GG_TEST_REPLACE_WORK_DIR: replaceWorkDir ? '1' : '0',
+      GG_TEST_ORIGINAL_WORK_DIR: originalWorkDir,
+      GG_TEST_SWAP_PATH_FILE: swapPathFile,
       GG_TEST_PLAN_PATH: planPath,
       ...inherited,
     },
   });
-  const cleanup = () => rmSync(root, { recursive: true, force: true });
+  const cleanup = () => {
+    if (existsSync(swapPathFile)) {
+      rmSync(readFileSync(swapPathFile, 'utf8'), { recursive: true, force: true });
+    }
+    rmSync(root, { recursive: true, force: true });
+  };
   return {
     run,
     cleanup,
     env: () => JSON.parse(readFileSync(envFile, 'utf8')),
     manifest: () => JSON.parse(readFileSync(manifestPath, 'utf8')),
+    swappedWorkPath: () => readFileSync(swapPathFile, 'utf8'),
     planPath,
     wrapperPath,
   };
@@ -357,6 +373,16 @@ test('preflight rejects a plan replaced by the wrapper before accepting its proo
     assert.equal(run.status, 1, `${run.stdout}${run.stderr}`);
     assert.equal(run.stdout, '');
     assert.equal(run.stderr, 'active brief preflight failed: pinned plan changed during preflight\n');
+  });
+});
+
+test('preflight never recursively deletes a replacement directory when wrapper changes work ownership', () => {
+  withHarness({ replaceWorkDir: true }, (h) => {
+    const run = h.run();
+    const swappedWork = h.swappedWorkPath();
+    assert.equal(run.status, 1, `${run.stdout}${run.stderr}`);
+    assert.equal(readFileSync(join(swappedWork, 'VICTIM-MUST-SURVIVE.txt'), 'utf8'), 'VICTIM-MUST-SURVIVE\n');
+    assert.match(run.stderr, /temporary|cleanup|ownership|identity/i);
   });
 });
 

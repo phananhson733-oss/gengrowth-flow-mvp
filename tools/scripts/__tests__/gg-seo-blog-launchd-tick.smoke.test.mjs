@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import test from 'node:test';
@@ -14,6 +14,7 @@ const runner = resolve(flow, 'tools/scripts/gg-seo-blog-launchd-tick.sh');
 const authorTick = resolve(flow, 'tools/scripts/gg-gengrowth-author-tick.sh');
 const seoPlist = resolve(flow, 'tools/launchd/com.gengrowth.seo-blog.plist');
 const notesPlist = resolve(wiki, 'tools/launchd/com.gengrowth.wiki-notes-digest.plist');
+const fileIdentity = (path) => `${lstatSync(path).dev}:${lstatSync(path).ino}`;
 
 test('SEO launchd runner owns pre/post drain, strict reconcile, readiness, then terminal summary', () => {
   assert.equal(existsSync(runner), true, `missing runner: ${runner}`);
@@ -162,6 +163,8 @@ function runnerHarness({
       "const preflight = JSON.parse(readFileSync(process.env.GG_TEST_BRIEF_PREFLIGHT_ARGS, 'utf8'));",
       "const snapshot = preflight.args[preflight.args.indexOf('--plan') + 1];",
       "const dir = new URL('.', `file://${snapshot}`).pathname.replace(/\\/$/, '');",
+      "const manifestIndex = preflight.args.indexOf('--attested-manifest');",
+      "if (manifestIndex >= 0) rmSync(preflight.args[manifestIndex + 1]);",
       'rmSync(snapshot);',
       'rmdirSync(dir);',
       'symlinkSync(process.env.GG_TEST_VICTIM_DIR, dir, "dir");',
@@ -431,8 +434,10 @@ function nightlyArtifactHarness({ missingSnapshot = false, tamperedSnapshot = fa
       GG_SEO_PLAN: canonical,
       GG_NIGHTLY_ITEMS_PLAN: snapshot,
       GG_NIGHTLY_ITEMS_SHA256: digest,
+      GG_NIGHTLY_ITEMS_IDENTITY: missingSnapshot ? 'missing:identity' : fileIdentity(snapshot),
       GG_NIGHTLY_ATTESTED_MANIFEST: manifest,
       GG_NIGHTLY_ATTESTED_MANIFEST_SHA256: createHash('sha256').update(readFileSync(manifest)).digest('hex'),
+      GG_NIGHTLY_ATTESTED_MANIFEST_IDENTITY: fileIdentity(manifest),
       GG_NIGHTLY_VALIDATOR_NODE: process.execPath,
       GG_NIGHTLY_FLOW: flowRoot,
       GG_NIGHTLY_CLAIMS: claims,
@@ -511,8 +516,10 @@ test('nightly authors from the proven snapshot and stops an item when its canoni
         GG_SEO_PLAN: canonical,
         GG_NIGHTLY_ITEMS_PLAN: snapshot,
         GG_NIGHTLY_ITEMS_SHA256: digest,
+        GG_NIGHTLY_ITEMS_IDENTITY: fileIdentity(snapshot),
         GG_NIGHTLY_ATTESTED_MANIFEST: manifest,
         GG_NIGHTLY_ATTESTED_MANIFEST_SHA256: createHash('sha256').update(readFileSync(manifest)).digest('hex'),
+        GG_NIGHTLY_ATTESTED_MANIFEST_IDENTITY: fileIdentity(manifest),
         GG_NIGHTLY_VALIDATOR_NODE: process.execPath,
         GG_NIGHTLY_FLOW: flowRoot,
         GG_NIGHTLY_CLAIMS: claims,

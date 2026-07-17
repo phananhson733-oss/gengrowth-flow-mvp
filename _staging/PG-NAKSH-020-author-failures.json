@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "pageId": "PG-NAKSH-020",
+  "status": "failed",
+  "failures": [
+    "word count 1472 < min 1485",
+    "author banned token(s) matched: \"rising sign\""
+  ],
+  "updatedAt": "2026-07-17T16:19:20.828Z"
+}

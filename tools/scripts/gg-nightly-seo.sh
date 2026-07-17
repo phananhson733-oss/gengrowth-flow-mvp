@@ -16,6 +16,8 @@
 set -uo pipefail
 
 FLOW="${GG_NIGHTLY_FLOW:-$HOME/gengrowth-flow-mvp}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+PARSER_MODULE="$SCRIPT_DIR/gg-seo-brief-preflight.mjs"
 PLAN="${GG_SEO_PLAN:-}"
 ITEMS_PLAN="${GG_NIGHTLY_ITEMS_PLAN:-}"
 ITEMS_SHA256="${GG_NIGHTLY_ITEMS_SHA256:-}"
@@ -30,6 +32,11 @@ LOG="${GG_NIGHTLY_LOG:-$HOME/Library/Logs/gg-nightly-seo.log}"
 LOCK="${GG_NIGHTLY_LOCK:-/tmp/gg-nightly-seo.lock}"
 MAX="${GG_NIGHTLY_MAX:-6}"          # cap articles per night (bounds cost + risk)
 SITE="https://www.astrologywiki.com"
+RUN_INPUT_DIR=""
+RUN_INPUT_PLAN=""
+RUN_INPUT_DIR_IDENTITY=""
+RUN_INPUT_FILE_IDENTITY=""
+RUN_INPUT_SHA256=""
 
 mkdir -p "$(dirname "$LOG")"
 exec >>"$LOG" 2>&1
@@ -38,7 +45,37 @@ echo "===== nightly-seo run $(date '+%F %T %Z') (max=$MAX) ====="
 
 # single-flight lock (DIRECTORY, like the other gg locks)
 if ! mkdir "$LOCK" 2>/dev/null; then echo "another nightly/publish run holds $LOCK — exit"; exit 0; fi
-trap 'rmdir "$LOCK" 2>/dev/null || true' EXIT
+cleanup_private_run_input_and_lock() {
+  local cleanup_safe=1
+  if [ -n "$RUN_INPUT_DIR" ]; then
+    if [ -z "$RUN_INPUT_DIR_IDENTITY" ] \
+      || [ ! -d "$RUN_INPUT_DIR" ] || [ -L "$RUN_INPUT_DIR" ] \
+      || [ "$(lstat_identity "$RUN_INPUT_DIR" 2>/dev/null || true)" != "$RUN_INPUT_DIR_IDENTITY" ]; then
+      echo "private run input cleanup ownership unknown; evidence retained"
+      cleanup_safe=0
+    fi
+    if [ -e "$RUN_INPUT_PLAN" ] || [ -L "$RUN_INPUT_PLAN" ]; then
+      if [ -z "$RUN_INPUT_FILE_IDENTITY" ] \
+        || [ ! -f "$RUN_INPUT_PLAN" ] || [ -L "$RUN_INPUT_PLAN" ] \
+        || [ "$(lstat_identity "$RUN_INPUT_PLAN" 2>/dev/null || true)" != "$RUN_INPUT_FILE_IDENTITY" ]; then
+        echo "private run plan cleanup ownership unknown; evidence retained"
+        cleanup_safe=0
+      fi
+    elif [ -n "$RUN_INPUT_FILE_IDENTITY" ]; then
+      echo "private run plan cleanup ownership unknown; evidence retained"
+      cleanup_safe=0
+    fi
+    if [ "$cleanup_safe" -eq 1 ]; then
+      if [ -n "$RUN_INPUT_FILE_IDENTITY" ]; then rm -f "$RUN_INPUT_PLAN" 2>/dev/null || cleanup_safe=0; fi
+      if [ "$cleanup_safe" -eq 1 ] \
+        && [ "$(lstat_identity "$RUN_INPUT_DIR" 2>/dev/null || true)" = "$RUN_INPUT_DIR_IDENTITY" ]; then
+        rmdir "$RUN_INPUT_DIR" 2>/dev/null || true
+      fi
+    fi
+  fi
+  rmdir "$LOCK" 2>/dev/null || true
+}
+trap cleanup_private_run_input_and_lock EXIT
 
 # full cron env (a bare cron inherits neither _gg.env nor the plist env)
 export PATH="$HOME/.local/bin:$HOME/.npm-global/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
@@ -84,6 +121,7 @@ esac
 [ -n "$ITEMS_DIR_IDENTITY" ] || { echo "nightly items directory identity is required"; exit 1; }
 [ -n "$ATTESTED_MANIFEST_IDENTITY" ] || { echo "attested manifest identity is required"; exit 1; }
 [ -x "$VALIDATOR_NODE" ] || { echo "bound validator node is unavailable"; exit 1; }
+[ -f "$PARSER_MODULE" ] && [ ! -L "$PARSER_MODULE" ] || { echo "bound active-row parser is unavailable"; exit 1; }
 
 lstat_identity() {
   if [ "$(uname -s)" = "Darwin" ]; then
@@ -123,22 +161,43 @@ attested_bundle_is_valid() {
     && bound_file_is_valid "$ATTESTED_MANIFEST" "$ATTESTED_MANIFEST_IDENTITY" "$ATTESTED_MANIFEST_SHA256"
 }
 
+private_run_input_is_valid() {
+  [ -n "$RUN_INPUT_DIR_IDENTITY" ] && [ -n "$RUN_INPUT_FILE_IDENTITY" ] \
+    && [ -d "$RUN_INPUT_DIR" ] && [ ! -L "$RUN_INPUT_DIR" ] \
+    && [ "$(lstat_identity "$RUN_INPUT_DIR" 2>/dev/null || true)" = "$RUN_INPUT_DIR_IDENTITY" ] \
+    && bound_file_is_valid "$RUN_INPUT_PLAN" "$RUN_INPUT_FILE_IDENTITY" "$RUN_INPUT_SHA256"
+}
+
 if ! attested_bundle_is_valid; then
   echo "nightly attested snapshot binding failed before business work"
   exit 1
 fi
 
+if ! RUN_INPUT_DIR="$(umask 077; mktemp -d "${TMPDIR:-/tmp}/gg-nightly-run-input.XXXXXX")"; then
+  echo "private nightly run input could not be created"
+  exit 1
+fi
+RUN_INPUT_PLAN="$RUN_INPUT_DIR/active-plan.md"
+RUN_INPUT_DIR_IDENTITY="$(lstat_identity "$RUN_INPUT_DIR" 2>/dev/null || true)"
+if [ -z "$RUN_INPUT_DIR_IDENTITY" ] || [ -L "$RUN_INPUT_DIR" ]; then
+  echo "private nightly run input identity could not be proven"
+  exit 1
+fi
+
 ITEMS="$("$VALIDATOR_NODE" -e '
   const { createHash } = require("node:crypto");
-  const { readFileSync } = require("node:fs");
-  const [manifestPath, planPath, expectedSha] = process.argv.slice(1);
+  const { readFileSync, writeFileSync } = require("node:fs");
+  const { pathToFileURL } = require("node:url");
+  const [manifestPath, planPath, expectedSha, parserPath, runPlanPath] = process.argv.slice(1);
   const exactKeys = (value, keys) => value && typeof value === "object" && !Array.isArray(value)
     && JSON.stringify(Object.keys(value).sort()) === JSON.stringify([...keys].sort());
   const idPattern = /^PG-[A-Z0-9]+-\d+$/;
-  try {
+  (async () => { try {
     const planText = readFileSync(planPath, "utf8");
     const digest = createHash("sha256").update(planText).digest("hex");
     if (digest !== expectedSha) throw new Error();
+    const { activeRowsFromPlan } = await import(pathToFileURL(parserPath).href);
+    const parsedRows = activeRowsFromPlan(planText);
     const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
     if (!exactKeys(manifest, ["version", "plan_sha256", "requested_page_ids", "rows"])
       || manifest.version !== 1 || manifest.plan_sha256 !== expectedSha
@@ -148,6 +207,8 @@ ITEMS="$("$VALIDATOR_NODE" -e '
       || new Set(ids).size !== ids.length
       || JSON.stringify(ids) !== JSON.stringify([...ids].sort())
       || manifest.rows.length !== ids.length) throw new Error();
+    if (JSON.stringify(ids) !== JSON.stringify(parsedRows.map((row) => row.page_id))
+      || JSON.stringify(manifest.rows) !== JSON.stringify(parsedRows)) throw new Error();
     const lines = planText.split(/\r?\n/);
     for (let index = 0; index < manifest.rows.length; index += 1) {
       const row = manifest.rows[index];
@@ -162,18 +223,27 @@ ITEMS="$("$VALIDATOR_NODE" -e '
       if (keyword !== row.keyword) throw new Error();
       process.stdout.write(`${row.page_id}\t${Buffer.from(row.keyword).toString("base64")}\t${Buffer.from(row.raw_line).toString("base64")}\n`);
     }
+    writeFileSync(runPlanPath, planText, { encoding: "utf8", flag: "wx", mode: 0o400 });
   } catch {
     process.stderr.write("attested queue validation failed\n");
     process.exit(1);
-  }
-' "$ATTESTED_MANIFEST" "$ITEMS_PLAN" "$ITEMS_SHA256")"
+  } })();
+' "$ATTESTED_MANIFEST" "$ITEMS_PLAN" "$ITEMS_SHA256" "$PARSER_MODULE" "$RUN_INPUT_PLAN")"
 QUEUE_RC=$?
+if [ -f "$RUN_INPUT_PLAN" ] && [ ! -L "$RUN_INPUT_PLAN" ]; then
+  RUN_INPUT_FILE_IDENTITY="$(lstat_identity "$RUN_INPUT_PLAN" 2>/dev/null || true)"
+  RUN_INPUT_SHA256="$(file_digest "$RUN_INPUT_PLAN" 2>/dev/null || true)"
+fi
 if [ "$QUEUE_RC" -ne 0 ]; then
   echo "nightly attested queue could not be read"
   exit 1
 fi
 if ! attested_bundle_is_valid; then
   echo "nightly attested snapshot changed while reading queue"
+  exit 1
+fi
+if [ "$RUN_INPUT_SHA256" != "$ITEMS_SHA256" ] || ! private_run_input_is_valid; then
+  echo "private nightly run input could not be proven"
   exit 1
 fi
 
@@ -192,7 +262,8 @@ decode_base64() {
 
 attested_raw_row_is_current() {
   [ -f "$PLAN" ] && [ ! -L "$PLAN" ] \
-    && [ "$(grep -Fxc -- "$raw_line" "$PLAN" 2>/dev/null || true)" = "1" ]
+    && [ "$(grep -Fxc -- "$raw_line" "$PLAN" 2>/dev/null || true)" = "1" ] \
+    && private_run_input_is_valid
 }
 
 while IFS=$'\t' read -r pid kw_base64 raw_line_base64; do
@@ -226,7 +297,7 @@ while IFS=$'\t' read -r pid kw_base64 raw_line_base64; do
 
   # 1. author (Opus orchestrator). Leaves _staging/<pid>-en.md on PASS; parks on failure.
   if ! attested_raw_row_is_current; then echo "$pid: canonical raw row changed before author — skip until next preflight"; continue; fi
-  GG_AUTOPILOT_PLAN="$ITEMS_PLAN" node tools/scripts/gg-seo-autopilot.mjs --author --task "$pid" --limit 1 || true
+  GG_AUTOPILOT_PLAN="$RUN_INPUT_PLAN" node tools/scripts/gg-seo-autopilot.mjs --author --task "$pid" --limit 1 || true
   if ! attested_raw_row_is_current; then echo "$pid: canonical raw row changed after author — skip until next preflight"; continue; fi
   if [ ! -f "_staging/${pid}-en.md" ]; then echo "$pid: no passing en draft (author parked) — skip publish"; continue; fi
 

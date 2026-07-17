@@ -316,19 +316,31 @@ const promptPaths = args.semantic_repair_only ? [] : writePromptFiles(profile, p
 
 - [ ] **Step 6: Add proof and zero-target output**
 
-Add `provenance: u.clusterDecision.kind` to each `cluster_repairs` item, then add:
+Add `provenance: u.clusterDecision.kind` to each `cluster_repairs` item and add this data-derived field to `summarizeProductResult`:
+
+```js
+created_page_ids: updates
+  .filter((u) => !String(u.existingValues?.page_id || '').trim())
+  .map((u) => u.pageId),
+```
+
+Then add:
 
 ```js
 export function buildSemanticRepairProof({ requestedPageIds, summary }) {
   const requested = [...requestedPageIds].sort();
   const repairs = Array.isArray(summary?.cluster_repairs) ? summary.cluster_repairs : [];
   const selected = Array.isArray(summary?.page_ids) ? [...summary.page_ids].sort() : [];
+  const createdPageIds = Array.isArray(summary?.created_page_ids) ? summary.created_page_ids : [];
   const newClusterCount = Number(summary?.new_clusters || 0);
-  const newRepairCount = repairs.filter((row) => row.provenance === 'semantic-repair-new').length;
-  if (newClusterCount !== newRepairCount) throw new Error('semantic-repair-only new cluster provenance mismatch');
+  const newRepairClusters = new Set(
+    repairs.filter((row) => row.provenance === 'semantic-repair-new').map((row) => row.to),
+  ).size;
+  if (newClusterCount !== newRepairClusters) throw new Error('semantic-repair-only new cluster provenance mismatch');
   if (selected.some((pageId) => !requested.includes(pageId))) {
     throw new Error('semantic-repair-only selected page id outside request');
   }
+  if (createdPageIds.length) throw new Error('semantic-repair-only created a new page id');
   if (repairs.length !== selected.length) {
     throw new Error('semantic-repair-only changed pages require repair provenance');
   }
@@ -341,7 +353,7 @@ export function buildSemanticRepairProof({ requestedPageIds, summary }) {
     changed_page_ids: selected,
     cluster_repairs: repairs,
     new_cluster_count: newClusterCount,
-    created_page_id_count: 0,
+    created_page_id_count: createdPageIds.length,
     cross_product_write_count: 0,
   };
 }
@@ -353,7 +365,7 @@ Before writer-SA validation, return this exact empty-request result:
 if (semanticRepairPageIds && semanticRepairPageIds.length === 0) {
   const summary = {
     product: 'astrologywiki', applied: false, candidates: 0, updates: 0,
-    new_clusters: 0, page_ids: [], cluster_repairs: [],
+    new_clusters: 0, page_ids: [], created_page_ids: [], cluster_repairs: [],
     selection_mode: 'semantic_repair_only', preprocessor: [], evidence_discovery: [],
   };
   process.stdout.write(JSON.stringify({
@@ -578,21 +590,19 @@ if [ "$REQUIRE_RUN" = "1" ]; then exit 75; fi
 exit 0
 ```
 
-Capture pure Node stdout while preserving stderr and the daily log:
+Capture pure Node stdout in memory, then atomically write the optional result artifact while preserving stderr and the daily log:
 
 ```bash
-RUN_OUTPUT="${RESULT_FILE:-${TMPDIR:-/tmp}/gg-topic-register-result.$$.json}"
-RUN_OUTPUT_TEMP=0
-if [ -z "$RESULT_FILE" ]; then RUN_OUTPUT_TEMP=1; fi
 echo "$(date '+%F %T') command: $(print_cmd)" >> "$LOG"
 if command -v gtimeout >/dev/null 2>&1; then
-  gtimeout -k 30 "$TIMEOUT" "${CMD[@]}" > "$RUN_OUTPUT" 2>> "$LOG"
+  RUN_JSON="$(gtimeout -k 30 "$TIMEOUT" "${CMD[@]}" 2>> "$LOG")"
+  rc=$?
 else
-  "${CMD[@]}" > "$RUN_OUTPUT" 2>> "$LOG"
+  RUN_JSON="$("${CMD[@]}" 2>> "$LOG")"
+  rc=$?
 fi
-rc=$?
-if [ -f "$RUN_OUTPUT" ]; then cat "$RUN_OUTPUT" >> "$LOG"; fi
-if [ "$RUN_OUTPUT_TEMP" = "1" ]; then rm -f "$RUN_OUTPUT"; fi
+printf '%s\n' "$RUN_JSON" >> "$LOG"
+write_result "$RUN_JSON"
 ```
 
 When `RESULT_FILE` is set, Node writes directly to it. Do not append wrapper status text to the result artifact. Preserve the existing `topic-register ok/failed/timeout` log lines and final exit code.
@@ -615,106 +625,6 @@ git rev-parse origin/main
 ```
 
 Expected: clean worktree and equal hashes after the watcher checkpoint.
-
----
-
-### Task 4: Full regression、安全审计与自然 cron 交接
-
-**Files:**
-- Modify: `docs/superpowers/specs/2026-07-17-seo-brief-preflight-design.md`
-- Modify: `docs/superpowers/plans/2026-07-17-seo-active-brief-preflight.md`
-- Verify only: all implementation and test files from Tasks 1-3
-
-**Interfaces:**
-- Produces: clean, watcher-synced `origin/main` containing the preflight chain.
-- Produces: exact core/wrapper/validator/launcher/full-suite test evidence.
-- Hands off to: existing natural `com.gengrowth.seo-blog` fires only.
-
-- [ ] **Step 1: Run the focused regression bundle**
-
-```bash
-node --test \
-  tools/scripts/__tests__/gg-topic-register.smoke.test.mjs \
-  tools/scripts/__tests__/gg-topic-register-tick.smoke.test.mjs \
-  tools/scripts/__tests__/gg-seo-brief-preflight.smoke.test.mjs \
-  tools/scripts/__tests__/gg-seo-blog-launchd-tick.smoke.test.mjs \
-  tools/scripts/__tests__/gg-ledger-reconcile.smoke.test.mjs \
-  tools/scripts/__tests__/gg-seo-reconcile-tick.smoke.test.mjs \
-  tools/scripts/__tests__/gg-seo-autopilot.smoke.test.mjs \
-  tools/scripts/__tests__/seo-autopilot-merge-gate.smoke.test.mjs \
-  tools/scripts/__tests__/seo-autopilot-regate.smoke.test.mjs
-```
-
-Expected: all tests pass, zero failures and zero skipped safety cases.
-
-- [ ] **Step 2: Run syntax and diff gates**
-
-```bash
-node --check tools/scripts/gg-topic-register.mjs
-node --check tools/scripts/gg-seo-brief-preflight.mjs
-bash -n tools/scripts/gg-topic-register-tick.sh
-bash -n tools/scripts/gg-seo-blog-launchd-tick.sh
-git diff --check
-```
-
-Expected: every command exits 0 and `git diff --check` prints nothing.
-
-- [ ] **Step 3: Run the full scripts test suite**
-
-```bash
-node --test tools/scripts/__tests__/*.test.mjs
-```
-
-Expected: all discovered tests pass. Record exact pass/fail/skip totals from final TAP output.
-
-- [ ] **Step 4: Perform a hermetic boundary audit**
-
-```bash
-rg -n "semantic-repair-only|GG_TOPIC_REGISTER_REQUIRE_RUN|GG_TOPIC_REGISTER_RESULT_FILE|GG_SEO_BRIEF_PREFLIGHT_BIN" \
-  tools/scripts/gg-topic-register.mjs \
-  tools/scripts/gg-topic-register-tick.sh \
-  tools/scripts/gg-seo-brief-preflight.mjs \
-  tools/scripts/gg-seo-blog-launchd-tick.sh \
-  tools/scripts/__tests__
-```
-
-Confirm from exact matches that only the dedicated mode bypasses the no-LLM apply guard; default lock skip remains exit 0; launcher supplies strict mode, active IDs, apply, no-notify, no LLM and no discovery in one place; every helper has direct tests; and no code adds a scheduler, force-publish path or manual Sheet write.
-
-- [ ] **Step 5: Finalize metadata after all tests pass**
-
-Change only these frontmatter values in the spec and this plan:
-
-```yaml
-status: final
-updated: 2026-07-17
-```
-
-Check each completed plan checkbox as `[x]`. Do not rewrite either document body.
-
-- [ ] **Step 6: Wait for final watcher convergence**
-
-```bash
-git status --short
-git rev-parse HEAD
-git rev-parse origin/main
-git log -1 --format='%H %ad %s' --date=iso-strict
-```
-
-Expected: clean worktree, `HEAD == origin/main`, and latest watcher commit contains implementation plus metadata changes.
-
-- [ ] **Step 7: Hand off only to natural production fires**
-
-Do not run author/publish manually. The next approved SEO launchd log window must show this order:
-
-```text
-running active brief semantic preflight
-active brief preflight passed
-running pre-fire repair drain
-running pre-fire strict ledger reconcile
-single-executor preflight passed; starting deterministic SEO nightly
-```
-
-The first natural window must show `PG-WDIF-002` repaired, `PG-TRANS-021` preserved, `PG-WDIN-001` naturally authored/repaired, and all three reaching publish plus plan/Sheet/Vault/live convergence. Then collect three consecutive natural cron windows with claims non-done = 0, active repairs = 0, outbox = 0, needs-human/writeback drift = 0 and no manual intervention. Only after the third clean window may the parent goal be marked complete.
 
 ### Task 3: Proof validator 与 SEO launcher fail-closed 接入
 
@@ -757,7 +667,7 @@ test('preflight derives active ids and calls the fixed wrapper with zero-touch b
     llm: 'none',
     discover: '0',
     apply: '1',
-    notify: '1',
+    noNotify: '1',
     targets: 'PG-WDIF-002,PG-WDIN-001',
     semantic: '1',
     requireRun: '1',
@@ -807,10 +717,14 @@ import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { parseArgs, uncheckedTaskPageIds } from './gg-topic-register.mjs';
+import { parseArgs } from './gg-topic-register.mjs';
 
 export function activePageIdsFromPlan(text) {
-  return [...uncheckedTaskPageIds(text)].sort();
+  const ids = [...String(text || '').matchAll(/^\s*-\s+\[\s\]\s+`?(PG-[A-Z0-9]+-\d+)`?/gm)]
+    .map((match) => match[1]);
+  const unique = [...new Set(ids)].sort();
+  if (unique.length !== ids.length) throw new Error('pinned plan contains duplicate active page ids');
+  return unique;
 }
 
 function sameArray(actual, expected) {
@@ -864,9 +778,13 @@ export function validateSemanticRepairProof(value, expectedPageIds) {
   if (!sameArray(repairIds, [...proof.changed_page_ids].sort())) {
     throw new Error('repair provenance page ids mismatch');
   }
-  const newRepairs = proof.cluster_repairs.filter((row) => row.provenance === 'semantic-repair-new');
+  const newRepairClusters = new Set(
+    proof.cluster_repairs
+      .filter((row) => row.provenance === 'semantic-repair-new')
+      .map((row) => row.to),
+  );
   if (proof.cluster_repairs.some((row) => !['semantic-repair', 'semantic-repair-new'].includes(row.provenance))
-    || newRepairs.length !== proof.new_cluster_count) {
+    || newRepairClusters.size !== proof.new_cluster_count) {
     throw new Error('new cluster provenance mismatch');
   }
   if ((proof.status === 'noop') !== (proof.changed_page_ids.length === 0)) {
@@ -1011,3 +929,103 @@ git rev-parse origin/main
 ```
 
 Expected: clean worktree and equal hashes after the watcher checkpoint.
+
+---
+
+### Task 4: Full regression、安全审计与自然 cron 交接
+
+**Files:**
+- Modify: `docs/superpowers/specs/2026-07-17-seo-brief-preflight-design.md`
+- Modify: `docs/superpowers/plans/2026-07-17-seo-active-brief-preflight.md`
+- Verify only: all implementation and test files from Tasks 1-3
+
+**Interfaces:**
+- Produces: clean, watcher-synced `origin/main` containing the preflight chain.
+- Produces: exact core/wrapper/validator/launcher/full-suite test evidence.
+- Hands off to: existing natural `com.gengrowth.seo-blog` fires only.
+
+- [ ] **Step 1: Run the focused regression bundle**
+
+```bash
+node --test \
+  tools/scripts/__tests__/gg-topic-register.smoke.test.mjs \
+  tools/scripts/__tests__/gg-topic-register-tick.smoke.test.mjs \
+  tools/scripts/__tests__/gg-seo-brief-preflight.smoke.test.mjs \
+  tools/scripts/__tests__/gg-seo-blog-launchd-tick.smoke.test.mjs \
+  tools/scripts/__tests__/gg-ledger-reconcile.smoke.test.mjs \
+  tools/scripts/__tests__/gg-seo-reconcile-tick.smoke.test.mjs \
+  tools/scripts/__tests__/gg-seo-autopilot.smoke.test.mjs \
+  tools/scripts/__tests__/seo-autopilot-merge-gate.smoke.test.mjs \
+  tools/scripts/__tests__/seo-autopilot-regate.smoke.test.mjs
+```
+
+Expected: all tests pass, zero failures and zero skipped safety cases.
+
+- [ ] **Step 2: Run syntax and diff gates**
+
+```bash
+node --check tools/scripts/gg-topic-register.mjs
+node --check tools/scripts/gg-seo-brief-preflight.mjs
+bash -n tools/scripts/gg-topic-register-tick.sh
+bash -n tools/scripts/gg-seo-blog-launchd-tick.sh
+git diff --check
+```
+
+Expected: every command exits 0 and `git diff --check` prints nothing.
+
+- [ ] **Step 3: Run the full scripts test suite**
+
+```bash
+node --test tools/scripts/__tests__/*.test.mjs
+```
+
+Expected: all discovered tests pass. Record exact pass/fail/skip totals from final TAP output.
+
+- [ ] **Step 4: Perform a hermetic boundary audit**
+
+```bash
+rg -n "semantic-repair-only|GG_TOPIC_REGISTER_REQUIRE_RUN|GG_TOPIC_REGISTER_RESULT_FILE|GG_SEO_BRIEF_PREFLIGHT_BIN" \
+  tools/scripts/gg-topic-register.mjs \
+  tools/scripts/gg-topic-register-tick.sh \
+  tools/scripts/gg-seo-brief-preflight.mjs \
+  tools/scripts/gg-seo-blog-launchd-tick.sh \
+  tools/scripts/__tests__
+```
+
+Confirm from exact matches that only the dedicated mode bypasses the no-LLM apply guard; default lock skip remains exit 0; launcher supplies strict mode, active IDs, apply, no-notify, no LLM and no discovery in one place; every helper has direct tests; and no code adds a scheduler, force-publish path or manual Sheet write.
+
+- [ ] **Step 5: Finalize metadata after all tests pass**
+
+Change only these frontmatter values in the spec and this plan:
+
+```yaml
+status: final
+updated: 2026-07-17
+```
+
+Check each completed plan checkbox as `[x]`. Do not rewrite either document body.
+
+- [ ] **Step 6: Wait for final watcher convergence**
+
+```bash
+git status --short
+git rev-parse HEAD
+git rev-parse origin/main
+git log -1 --format='%H %ad %s' --date=iso-strict
+```
+
+Expected: clean worktree, `HEAD == origin/main`, and latest watcher commit contains implementation plus metadata changes.
+
+- [ ] **Step 7: Hand off only to natural production fires**
+
+Do not run author/publish manually. The next approved SEO launchd log window must show this order:
+
+```text
+running active brief semantic preflight
+active brief preflight passed
+running pre-fire repair drain
+running pre-fire strict ledger reconcile
+single-executor preflight passed; starting deterministic SEO nightly
+```
+
+The first natural window must show `PG-WDIF-002` repaired, `PG-TRANS-021` preserved, `PG-WDIN-001` naturally authored/repaired, and all three reaching publish plus plan/Sheet/Vault/live convergence. Then collect three consecutive natural cron windows with claims non-done = 0, active repairs = 0, outbox = 0, needs-human/writeback drift = 0 and no manual intervention. Only after the third clean window may the parent goal be marked complete.

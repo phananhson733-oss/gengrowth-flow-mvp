@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { isAbsolute, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -53,11 +53,11 @@ function validatePageIdArray(value, label, { sorted = true } = {}) {
   return value;
 }
 
-export function activePageIdsFromPlan(text) {
-  const ids = [];
+export function activeRowsFromPlan(text) {
+  const rows = [];
   for (const line of String(text || '').split(/\r?\n/)) {
-    const checkboxLike = /^\s*(?:[-+*]|\d+[.)])\s+\[\s*\]\s+/.test(line);
-    const canonicalUnchecked = /^\s*-\s+\[ \]\s+/.test(line);
+    const checkboxLike = /^\s*(?:[-+*]|\d+[.)])\s+\[\s*\]/.test(line);
+    const canonicalUnchecked = /^- \[ \] /.test(line);
     if (checkboxLike && !canonicalUnchecked) {
       throw new Error('pinned plan contains a non-canonical unchecked row');
     }
@@ -72,14 +72,24 @@ export function activePageIdsFromPlan(text) {
     if (pageIdTokens.length !== 1) {
       throw new Error('unchecked plan row must contain exactly one active page id');
     }
-    const match = line.match(/^\s*-\s+\[\s\]\s+`?(PG-[A-Z0-9]+-\d+)`?(?=\s|$)/);
+    const match = line.match(/^- \[ \] (`?)(PG-[A-Z0-9]+-\d+)\1(?=\s|$)(.*)$/);
     if (!match) throw new Error('cannot parse active page id from pinned plan');
-    ids.push(match[1]);
+    const keyword = match[3]
+      .replace(/\s*->.*$/, '')
+      .replace(/`/g, '')
+      .replace(/\s*\(.*$/, '')
+      .trim();
+    rows.push({ page_id: match[2], raw_line: line, keyword });
   }
+  const ids = rows.map((row) => row.page_id);
   if (new Set(ids).size !== ids.length) {
     throw new Error('pinned plan contains duplicate active page ids');
   }
-  return [...ids].sort();
+  return [...rows].sort((a, b) => a.page_id.localeCompare(b.page_id));
+}
+
+export function activePageIdsFromPlan(text) {
+  return activeRowsFromPlan(text).map((row) => row.page_id);
 }
 
 export function validateSemanticRepairProof(value, expectedPageIds) {
@@ -166,10 +176,21 @@ export function validateSemanticRepairProof(value, expectedPageIds) {
   return proof;
 }
 
-export function runBriefPreflight({ planPath, wrapperPath, spawn = spawnSync }) {
+function writeAttestedManifest(path, value) {
+  const temporary = `${path}.tmp-${process.pid}`;
+  try {
+    writeFileSync(temporary, `${JSON.stringify(value)}\n`, { encoding: 'utf8', flag: 'wx', mode: 0o400 });
+    renameSync(temporary, path);
+  } finally {
+    rmSync(temporary, { force: true });
+  }
+}
+
+export function runBriefPreflight({ planPath, wrapperPath, manifestPath = null, spawn = spawnSync }) {
   const planText = readFileSync(planPath, 'utf8');
   const planDigest = createHash('sha256').update(planText).digest('hex');
-  const requested = activePageIdsFromPlan(planText);
+  const rows = activeRowsFromPlan(planText);
+  const requested = rows.map((row) => row.page_id);
   const work = mkdtempSync(join(tmpdir(), 'gg-seo-brief-preflight-'));
   const resultFile = join(work, 'topic-register-result.json');
   try {
@@ -215,7 +236,16 @@ export function runBriefPreflight({ planPath, wrapperPath, spawn = spawnSync }) 
       if (error?.code && error.code !== 'ERR_INVALID_ARG_TYPE') throw error;
       throw new Error('topic-register result is malformed JSON');
     }
-    return validateSemanticRepairProof(value, requested);
+    const proof = validateSemanticRepairProof(value, requested);
+    if (manifestPath) {
+      writeAttestedManifest(manifestPath, {
+        version: 1,
+        plan_sha256: planDigest,
+        requested_page_ids: requested,
+        rows,
+      });
+    }
+    return proof;
   } finally {
     rmSync(work, { recursive: true, force: true });
   }
@@ -223,9 +253,12 @@ export function runBriefPreflight({ planPath, wrapperPath, spawn = spawnSync }) 
 
 function cli(argv) {
   const args = parseArgs(argv);
-  const allowed = ['json', 'plan', 'topic_register_wrapper'];
-  if (argv.length !== 5 || !sameArray(Object.keys(args).sort(), allowed)) {
-    throw new Error('usage: --plan <absolute.md> --topic-register-wrapper <absolute.sh> --json');
+  const keys = Object.keys(args).sort();
+  const baseAllowed = ['json', 'plan', 'topic_register_wrapper'];
+  const manifestAllowed = ['attested_manifest', ...baseAllowed].sort();
+  if (!((argv.length === 5 && sameArray(keys, baseAllowed))
+    || (argv.length === 7 && sameArray(keys, manifestAllowed)))) {
+    throw new Error('usage: --plan <absolute.md> --topic-register-wrapper <absolute.sh> [--attested-manifest <absolute.json>] --json');
   }
   if (args.json !== true || typeof args.plan !== 'string'
     || typeof args.topic_register_wrapper !== 'string') {
@@ -234,9 +267,14 @@ function cli(argv) {
   if (!isAbsolute(args.plan) || !isAbsolute(args.topic_register_wrapper)) {
     throw new Error('plan and topic-register wrapper paths must be absolute');
   }
+  if (args.attested_manifest !== undefined
+    && (typeof args.attested_manifest !== 'string' || !isAbsolute(args.attested_manifest))) {
+    throw new Error('attested manifest path must be absolute');
+  }
   const proof = runBriefPreflight({
     planPath: args.plan,
     wrapperPath: args.topic_register_wrapper,
+    manifestPath: args.attested_manifest || null,
   });
   process.stdout.write(`${JSON.stringify(proof)}\n`);
 }

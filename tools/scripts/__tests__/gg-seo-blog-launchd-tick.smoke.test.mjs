@@ -149,7 +149,7 @@ function runnerHarness({
   ].join('\n'));
   const controller = join(root, 'controller.mjs');
   writeFileSync(controller, [
-    "import { appendFileSync, chmodSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';",
+    "import { appendFileSync, chmodSync, readFileSync, rmSync, rmdirSync, symlinkSync, writeFileSync } from 'node:fs';",
     "appendFileSync(process.env.GG_TEST_EVENTS, 'drain\\n');",
     "appendFileSync(process.env.GG_TEST_CONTROLLER_ARGS, JSON.stringify(process.argv.slice(2)) + '\\n');",
     ...(controllerMutatesSnapshot ? [
@@ -163,7 +163,7 @@ function runnerHarness({
       "const snapshot = preflight.args[preflight.args.indexOf('--plan') + 1];",
       "const dir = new URL('.', `file://${snapshot}`).pathname.replace(/\\/$/, '');",
       'rmSync(snapshot);',
-      'rmSync(dir, { recursive: false });',
+      'rmdirSync(dir);',
       'symlinkSync(process.env.GG_TEST_VICTIM_DIR, dir, "dir");',
     ] : []),
     `process.exit(${controllerExit});`,

@@ -3,7 +3,8 @@
   "pageId": "PG-WC-053",
   "status": "failed",
   "failures": [
-    "word count 1438 < min 1485"
+    "word count 1438 < min 1485",
+    "word count 1460 < min 1485"
   ],
-  "updatedAt": "2026-07-17T16:46:05.349Z"
+  "updatedAt": "2026-07-17T16:49:03.099Z"
 }

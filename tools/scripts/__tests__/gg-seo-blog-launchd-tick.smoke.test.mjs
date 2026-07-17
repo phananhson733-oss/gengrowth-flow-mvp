@@ -32,6 +32,8 @@ test('SEO launchd runner owns pre/post drain, strict reconcile, readiness, then 
   assert.match(source, /gg-seo-readiness\.mjs/);
   assert.match(source, /gg-batch-summary\.mjs/);
   assert.match(source, /GG_WRITEBACK_LOCK_DIR/);
+  assert.match(source, /GG_NIGHTLY_ITEMS_PLAN/);
+  assert.match(source, /shasum -a 256/);
   assert.doesNotMatch(source, /tomllib|automation\.toml/i);
   assert.doesNotMatch(source, /codex.*exec/is);
   assert.ok(source.indexOf('node "$BRIEF_PREFLIGHT"') < source.indexOf('node "$REPAIR_CONTROLLER" drain'));
@@ -40,6 +42,10 @@ test('SEO launchd runner owns pre/post drain, strict reconcile, readiness, then 
   assert.ok(source.lastIndexOf('node "$RECONCILE"') < source.indexOf('node "$READINESS"'));
   assert.ok(source.indexOf('node "$READINESS"') < source.indexOf('node "$BATCH_SUMMARY"'));
   assert.doesNotMatch(nightlySource, /gg-batch-summary/);
+  assert.match(nightlySource, /GG_SEO_PLAN/);
+  assert.match(nightlySource, /GG_NIGHTLY_ITEMS_PLAN/);
+  assert.doesNotMatch(nightlySource, /2026-05-27-W22-blog-output-plan\.md|PLAN_NAME=/);
+  assert.doesNotMatch(nightlySource, /GG_AUTOPILOT_PLAN="\$PLAN_NAME"/);
 });
 
 function executable(path, source) {
@@ -50,6 +56,7 @@ function executable(path, source) {
 
 function runnerHarness({
   briefPreflightExit = 0,
+  briefPreflightMutatesPlan = false,
   nightlyExit = 0,
   hookExit = 0,
   controllerExit = 0,
@@ -88,7 +95,8 @@ function runnerHarness({
   const envFile = join(root, '_gg.env');
   const plan = join(opsTasks, 'plan.md');
   const claims = join(opsTasks, '.autopilot-claims.json');
-  writeFileSync(plan, '- [ ] `PG-A-001` alpha\n');
+  const initialPlanContent = '- [ ] `PG-A-001` alpha\n';
+  writeFileSync(plan, initialPlanContent);
   writeFileSync(claims, '{}');
   writeFileSync(nightlyLog, 'existing bytes\n');
   const lock = join(root, 'launchd.lock');
@@ -97,8 +105,13 @@ function runnerHarness({
   const briefPreflight = join(root, 'brief-preflight.mjs');
   writeFileSync(briefPreflight, [
     "import { appendFileSync, writeFileSync } from 'node:fs';",
+    'const args = process.argv.slice(2);',
     "appendFileSync(process.env.GG_TEST_EVENTS, 'brief-preflight\\n');",
-    "writeFileSync(process.env.GG_TEST_BRIEF_PREFLIGHT_ARGS, JSON.stringify({ args: process.argv.slice(2), silence: process.env.GG_LARK_NOTIFY_SILENCE || null }));",
+    "writeFileSync(process.env.GG_TEST_BRIEF_PREFLIGHT_ARGS, JSON.stringify({ args, silence: process.env.GG_LARK_NOTIFY_SILENCE || null }));",
+    ...(briefPreflightMutatesPlan ? [
+      "const plan = args[args.indexOf('--plan') + 1];",
+      "writeFileSync(plan, '- [ ] `PG-MUTATED-001` changed during preflight\\n');",
+    ] : []),
     "process.stdout.write(JSON.stringify({ mode: 'semantic-repair-only', status: 'noop' }) + '\\n');",
     `process.exit(${briefPreflightExit});`,
     '',
@@ -111,7 +124,7 @@ function runnerHarness({
   const nightly = executable(join(root, 'nightly.sh'), [
     '#!/bin/sh',
     'printf "nightly\\n" >> "$GG_TEST_EVENTS"',
-    'node -e \'require("node:fs").writeFileSync(process.env.GG_TEST_NIGHTLY_ENV, JSON.stringify({ runId: process.env.GG_SEO_REPAIR_RUN_ID || null, logFile: process.env.GG_SEO_REPAIR_LOG_FILE || null, offsetStart: process.env.GG_SEO_REPAIR_LOG_OFFSET_START || null, offsetEnd: process.env.GG_SEO_REPAIR_LOG_OFFSET_END || null, oracle: process.env.GG_AUTOMATION_ORACLE_DIR || null }))\'',
+    'node -e \'const fs=require("node:fs"); fs.writeFileSync(process.env.GG_TEST_NIGHTLY_ENV, JSON.stringify({ runId: process.env.GG_SEO_REPAIR_RUN_ID || null, logFile: process.env.GG_SEO_REPAIR_LOG_FILE || null, offsetStart: process.env.GG_SEO_REPAIR_LOG_OFFSET_START || null, offsetEnd: process.env.GG_SEO_REPAIR_LOG_OFFSET_END || null, oracle: process.env.GG_AUTOMATION_ORACLE_DIR || null, canonicalPlan: process.env.GG_SEO_PLAN || null, itemsPlan: process.env.GG_NIGHTLY_ITEMS_PLAN || null, canonicalContent: fs.readFileSync(process.env.GG_SEO_PLAN, "utf8"), itemsContent: fs.readFileSync(process.env.GG_NIGHTLY_ITEMS_PLAN, "utf8") }))\'',
     'printf "nightly body\\n" >> "$GG_SEO_NIGHTLY_LOG"',
     `exit ${nightlyExit}`,
     '',
@@ -203,6 +216,7 @@ function runnerHarness({
     env: {
       ...process.env,
       HOME: root,
+      TMPDIR: root,
       GG_ENV_FILE: useEnvFile ? envFile : '/dev/null',
       GG_SEO_LAUNCHD_ALLOW_OUTSIDE_WINDOW: '1',
       GG_SEO_SKIP_LEGACY_CHECK: '1',
@@ -237,6 +251,7 @@ function runnerHarness({
     readinessArgs: () => JSON.parse(readMaybe(readinessArgs) || '[]'),
     log: () => readMaybe(launchdLog),
     plan,
+    initialPlanContent,
     topicRegister,
     nightlyLog,
     oracle,
@@ -249,13 +264,19 @@ test('clean runner orders pre/post drain, strict reconcile, readiness, summary a
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}\n${h.log()}`);
   assert.deepEqual(h.events(), ['brief-preflight', 'drain', 'reconcile', 'notify', 'nightly', 'hook', 'drain', 'reconcile', 'notify', 'readiness', 'summary']);
   const briefPreflight = h.briefPreflight();
-  assert.equal(briefPreflight.args[briefPreflight.args.indexOf('--plan') + 1], h.plan);
+  const nightlyEnv = h.nightlyEnv();
+  assert.equal(briefPreflight.args[briefPreflight.args.indexOf('--plan') + 1], nightlyEnv.itemsPlan);
   assert.equal(briefPreflight.args[briefPreflight.args.indexOf('--topic-register-wrapper') + 1], h.topicRegister);
   assert.ok(briefPreflight.args.includes('--json'));
   assert.equal(briefPreflight.silence, '1');
   const hookArgs = h.hookArgs();
   const summaryArgs = h.summaryArgs();
-  const nightlyEnv = h.nightlyEnv();
+  assert.equal(nightlyEnv.canonicalPlan, h.plan);
+  assert.notEqual(nightlyEnv.itemsPlan, h.plan);
+  assert.equal(nightlyEnv.canonicalContent, h.initialPlanContent);
+  assert.equal(nightlyEnv.itemsContent, h.initialPlanContent);
+  assert.equal(existsSync(nightlyEnv.itemsPlan), false, 'launcher removes its exact private snapshot');
+  assert.equal(existsSync(dirname(nightlyEnv.itemsPlan)), false, 'launcher removes its empty private directory');
   assert.equal(hookArgs[hookArgs.indexOf('--run-exit') + 1], '0');
   const runId = hookArgs[hookArgs.indexOf('--run-id') + 1];
   assert.match(runId, /^seo-blog-\d{8}T\d{6}Z-\d+$/);
@@ -284,7 +305,7 @@ test('runner sources migration config before deriving tools and plan while retai
   const result = h.run();
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}\n${h.log()}`);
   assert.deepEqual(h.events(), ['brief-preflight', 'drain', 'reconcile', 'notify', 'nightly', 'hook', 'drain', 'reconcile', 'notify', 'readiness', 'summary']);
-  assert.equal(h.briefPreflight().args[h.briefPreflight().args.indexOf('--plan') + 1], h.plan);
+  assert.equal(h.briefPreflight().args[h.briefPreflight().args.indexOf('--plan') + 1], h.nightlyEnv().itemsPlan);
   assert.equal(h.briefPreflight().args[h.briefPreflight().args.indexOf('--topic-register-wrapper') + 1], h.topicRegister);
   assert.equal(h.nightlyEnv().oracle, h.oracle);
   assert.equal(h.hookArgs()[h.hookArgs().indexOf('--plan') + 1], h.plan);
@@ -321,6 +342,104 @@ test('active brief preflight failure stops before drain and nightly without noti
   assert.deepEqual(h.events(), ['brief-preflight']);
   assert.match(h.log(), /active brief preflight failed.*abort before nightly/i);
   assert.doesNotMatch(h.log(), /running pre-fire repair drain/i);
+});
+
+test('active brief snapshot mutation during preflight fails closed before drain', () => {
+  const h = runnerHarness({ briefPreflightMutatesPlan: true });
+  const result = h.run();
+  assert.equal(result.status, 1, `${result.stdout}\n${result.stderr}\n${h.log()}`);
+  assert.deepEqual(h.events(), ['brief-preflight']);
+  assert.match(h.log(), /active brief snapshot changed during preflight.*abort before nightly/i);
+  const snapshot = h.briefPreflight().args[h.briefPreflight().args.indexOf('--plan') + 1];
+  assert.equal(existsSync(snapshot), false);
+  assert.equal(existsSync(dirname(snapshot)), false);
+});
+
+test('real nightly consumes only the proven snapshot and rechecks canonical unchecked ownership', () => {
+  const root = mkdtempSync(join(tmpdir(), 'gg-nightly-snapshot-contract-'));
+  const suffix = String(process.pid);
+  const keep = `PG-KEEP-${suffix}`;
+  const removed = `PG-REMOVED-${suffix}`;
+  const added = `PG-ADDED-${suffix}`;
+  const flowRoot = join(root, 'gengrowth-flow-mvp');
+  const tasks = join(root, 'gengrowth-ops/inbox/06-tasks/tasks');
+  const bin = join(root, '.local/bin');
+  const canonical = join(tasks, '2026-05-27-W22-blog-output-plan.md');
+  const snapshot = join(root, 'private-items-plan.md');
+  const claims = join(tasks, '.autopilot-claims.json');
+  const calls = join(root, 'node-calls.log');
+  const log = join(root, 'nightly.log');
+  const lock = join(root, 'nightly.lock');
+  const ownedTmp = [keep, removed, added].flatMap((pageId) => [
+    `/tmp/nightly-plan-${pageId}.md`,
+    `/tmp/nightly-scan-${pageId}.log`,
+  ]);
+  try {
+    mkdirSync(join(flowRoot, 'tools/scripts'), { recursive: true });
+    mkdirSync(tasks, { recursive: true });
+    mkdirSync(bin, { recursive: true });
+    writeFileSync(canonical, [
+      `- [ ] \`${keep}\` keep keyword`,
+      `- [ ] \`${added}\` added after snapshot`,
+      '',
+    ].join('\n'));
+    writeFileSync(snapshot, [
+      `- [ ] \`${keep}\` keep keyword`,
+      `- [ ] \`${removed}\` removed after snapshot`,
+      '',
+    ].join('\n'));
+    chmodSync(snapshot, 0o400);
+    writeFileSync(claims, '{}\n');
+    executable(join(bin, 'curl'), '#!/bin/sh\nexit 0\n');
+    executable(join(bin, 'node'), [
+      '#!/bin/bash',
+      'printf \'%s\\t%s\\n\' "${GG_AUTOPILOT_PLAN:-}" "$*" >> "$GG_TEST_NODE_CALLS"',
+      'pid=""',
+      'previous=""',
+      'for arg in "$@"; do',
+      '  if [ "$previous" = "--task" ]; then pid="$arg"; fi',
+      '  previous="$arg"',
+      'done',
+      'if [ -n "$pid" ] && printf \'%s\\n\' "$*" | grep -q -- \'--author\'; then',
+      '  mkdir -p _staging',
+      '  : > "_staging/${pid}-en.md"',
+      'fi',
+      'if printf \'%s\\n\' "$*" | grep -q \'gg-seo-autopilot.mjs --limit 1\'; then',
+      '  scan_pid="${GG_AUTOPILOT_PLAN##*/nightly-plan-}"',
+      '  scan_pid="${scan_pid%.md}"',
+      '  printf \'seo/auto/2026-07-17-%s\\n\' "$scan_pid"',
+      'fi',
+      'exit 0',
+      '',
+    ].join('\n'));
+
+    const result = spawnSync('bash', [resolve(flow, 'tools/scripts/gg-nightly-seo.sh')], {
+      cwd: flowRoot,
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        HOME: root,
+        GG_SEO_PLAN: canonical,
+        GG_NIGHTLY_ITEMS_PLAN: snapshot,
+        GG_NIGHTLY_FLOW: flowRoot,
+        GG_NIGHTLY_CLAIMS: claims,
+        GG_NIGHTLY_LOG: log,
+        GG_NIGHTLY_LOCK: lock,
+        GG_NIGHTLY_MAX: '10',
+        GG_TEST_NODE_CALLS: calls,
+      },
+    });
+    const callLog = existsSync(calls) ? readFileSync(calls, 'utf8') : '';
+    const nightlyLog = existsSync(log) ? readFileSync(log, 'utf8') : '';
+    assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}\n${nightlyLog}`);
+    assert.match(callLog, new RegExp(`^${canonical.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\t.*--author --task ${keep} `, 'm'));
+    assert.doesNotMatch(callLog, new RegExp(`--task ${removed}(?: |$)`));
+    assert.doesNotMatch(callLog, new RegExp(`--task ${added}(?: |$)`));
+    assert.match(nightlyLog, new RegExp(`${removed}: no longer canonical unchecked.*skip`, 'i'));
+  } finally {
+    for (const path of ownedTmp) rmSync(path, { force: true });
+    rmSync(root, { recursive: true, force: true });
+  }
 });
 
 test('pre-fire reconcile tolerates only plan and needs-human drift so the natural run can repair it', () => {

@@ -4,6 +4,7 @@ import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { isAbsolute, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 
 import { parseArgs } from './gg-topic-register.mjs';
 
@@ -55,10 +56,18 @@ function validatePageIdArray(value, label, { sorted = true } = {}) {
 export function activePageIdsFromPlan(text) {
   const ids = [];
   for (const line of String(text || '').split(/\r?\n/)) {
-    if (!/^\s*-\s+\[\s\]\s+/.test(line)) continue;
-    const pageIdTokens = line.match(/\bPG-[A-Za-z0-9]+-\d+\b/g) || [];
+    const checkboxLike = /^\s*(?:[-+*]|\d+[.)])\s+\[\s*\]\s+/.test(line);
+    const canonicalUnchecked = /^\s*-\s+\[ \]\s+/.test(line);
+    if (checkboxLike && !canonicalUnchecked) {
+      throw new Error('pinned plan contains a non-canonical unchecked row');
+    }
+    if (!canonicalUnchecked) continue;
+    const pageIdTokens = line.match(/\bPG-[A-Za-z0-9-]+/g) || [];
     if (pageIdTokens.length === 0) {
       throw new Error('cannot parse active page id from pinned plan');
+    }
+    if (pageIdTokens.some((pageId) => !PAGE_ID_PATTERN.test(pageId))) {
+      throw new Error('pinned plan contains a malformed active page id');
     }
     if (pageIdTokens.length !== 1) {
       throw new Error('unchecked plan row must contain exactly one active page id');
@@ -158,7 +167,9 @@ export function validateSemanticRepairProof(value, expectedPageIds) {
 }
 
 export function runBriefPreflight({ planPath, wrapperPath, spawn = spawnSync }) {
-  const requested = activePageIdsFromPlan(readFileSync(planPath, 'utf8'));
+  const planText = readFileSync(planPath, 'utf8');
+  const planDigest = createHash('sha256').update(planText).digest('hex');
+  const requested = activePageIdsFromPlan(planText);
   const work = mkdtempSync(join(tmpdir(), 'gg-seo-brief-preflight-'));
   const resultFile = join(work, 'topic-register-result.json');
   try {
@@ -183,11 +194,27 @@ export function runBriefPreflight({ planPath, wrapperPath, spawn = spawnSync }) 
         GG_TOPIC_REGISTER_REASSIGN_EXISTING: '0',
       },
     });
+    let planTextAfter;
+    try {
+      planTextAfter = readFileSync(planPath, 'utf8');
+    } catch {
+      throw new Error('pinned plan changed during preflight');
+    }
+    const planDigestAfter = createHash('sha256').update(planTextAfter).digest('hex');
+    if (planTextAfter !== planText || planDigestAfter !== planDigest) {
+      throw new Error('pinned plan changed during preflight');
+    }
     if (run?.error) throw new Error('topic-register wrapper could not start');
     if (run?.status !== 0) {
       throw new Error(`topic-register wrapper failed rc=${Number.isInteger(run?.status) ? run.status : 'unknown'}`);
     }
-    const value = JSON.parse(readFileSync(resultFile, 'utf8'));
+    let value;
+    try {
+      value = JSON.parse(readFileSync(resultFile, 'utf8'));
+    } catch (error) {
+      if (error?.code && error.code !== 'ERR_INVALID_ARG_TYPE') throw error;
+      throw new Error('topic-register result is malformed JSON');
+    }
     return validateSemanticRepairProof(value, requested);
   } finally {
     rmSync(work, { recursive: true, force: true });

@@ -1,0 +1,8 @@
+- 将“traditionally tied to the Moon and the fourth house”改准 → 保留“Cancer is ruled by the Moon / Jupiter is exalted in Cancer”，把“四宫”改为现代类比，或仅在 Jupiter 实际落四宫时讨论。
+- 补充 transit/search intent → 增加一小段区分“natal Jupiter in Cancer”和“Jupiter transiting Cancer”，并给出 2025-06-09 到 2026-06-30 的 transit 时间窗。
+- 个人资历段太像 AI 伪 E-E-A-T → 删除或替换为真实作者可验证经验；不要写“twelve years / thousands of hours”这类无法证明的权威声明。
+- “over-giving / caretaker”角度重复过重 → 加入更具体的 Jupiter-in-Cancer 表现：祖辈与家族资源、房产/土地、食物与 hospitality、保护弱者、家族信念、情绪记忆如何放大人生选择。
+- “alongside Chiron and the twelfth house”逻辑牵强 → 删除这组比较，或只保留 Moon in Cancer 对比；Chiron/十二宫会把文章带偏到创伤主题。
+- “to lean fully into expansive warmth here, you give up some detachment”过于绝对 → 改成条件式：在压力、硬相位或边界薄弱时，慷慨可能变成情绪卷入。
+- “How to Read This Placement”仍偏抽象 → 增加可操作判断：看 house、aspects to Moon/Saturn/Venus、Jupiter condition、sect/essential dignity，并给每项一个现实例子。
+- 表格里的“Energy Center”不专业 → 改成“Element / Mode / Rulership”或删掉该列，避免把传统术语和模糊能量语言混在一起。

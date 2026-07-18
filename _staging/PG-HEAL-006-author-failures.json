@@ -1,22 +1,7 @@
 {
   "schemaVersion": 1,
   "pageId": "PG-HEAL-006",
-  "status": "failed",
-  "failures": [
-    "SC3c section scatter: 1 section(s) with >3 scattered prose paragraphs",
-    "L11: 子节 prose 段过多 (4 > 3); 用 `### ` H3 小标题把长叙述分组(每组 ≤3 段)，或改成「引子 + 编号列表」(v4.5.1 / 2026-06-09 H3)",
-    "missing required disclaimer line (\"This is not a clinical/mental health interpretation/advice\")",
-    "drifted sections: \"How to Read This Placement in Your Chart\" (jaccard=0.000, shingle=0.000, target-recall=0.00); \"Common Misreadings\" (jaccard=0.000, shingle=0.000, target-recall=0.00); \"Common Questions About This Placement\" (jaccard=0.000, shingle=0.000, target-recall=0.33) (skipped 5 structural: \"Jupiter in Cancer at a Glance\", \"Reflection Prompts\", \"Related Reading\", \"Take Action\", \"Sources\")",
-    "psych-safety blacklist word matched: \"treats\"",
-    "author banned token(s) matched: \"guaranteed\"",
-    "word count 1333 < min 1485",
-    "word count 1475 < min 1485",
-    "word count 1444 < min 1485",
-    "author banned token(s) matched: \"you will\"",
-    "word count 1412 < min 1485",
-    "target_keyword count = 15 (limit 12)",
-    "psych-safety blacklist word matched: \"treat\"",
-    "missing required H2: \"## <entity> vs <real adjacent concept> (comparison section; no \"Adjacent Concepts\" boilerplate)\""
-  ],
-  "updatedAt": "2026-07-18T13:33:53.038Z"
+  "status": "passed",
+  "failures": [],
+  "updatedAt": "2026-07-18T13:45:12.325Z"
 }

@@ -14,7 +14,8 @@
     "word count 1444 < min 1485",
     "author banned token(s) matched: \"you will\"",
     "word count 1412 < min 1485",
-    "target_keyword count = 15 (limit 12)"
+    "target_keyword count = 15 (limit 12)",
+    "psych-safety blacklist word matched: \"treat\""
   ],
-  "updatedAt": "2026-07-18T12:13:05.764Z"
+  "updatedAt": "2026-07-18T12:19:32.933Z"
 }

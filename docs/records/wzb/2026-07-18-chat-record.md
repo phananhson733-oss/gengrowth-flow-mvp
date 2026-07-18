@@ -23,7 +23,7 @@ aliases:
 - 按固定入口完成结果复盘表性能更新：两站均无 D14/D30/D60 到期行；astrologywiki 更新 235 行、生成 237 项优化任务，gengrowth 更新 49 行、生成 62 项任务；日志无失败。
 - 按固定入口完成本轮选题登记：apply 模式更新 astrologywiki 的 6 个候选（PG-TRANS-024、PG-TRANS-025、PG-MOON-009、PG-NAKSH-021、PG-HEAL-006、PG-CELEB-059），其中预处理 ok=2、v1_fallback=4；gengrowth 为零候选，日志无失败。
 - 按固定入口再次完成选题登记：本地 apply 模式为 astrologywiki 新增 PG-FE3P-001（候选/更新/新簇均为 1，预处理 v1_fallback、证据 insufficient）；gengrowth 为零候选，日志无失败。
-- 按固定入口完成 20:02 选题登记：本地 apply 模式下 astrologywiki 与 gengrowth 均为零候选、零更新、零新簇，日志无失败。
+- 按固定入口完成 20:02 与 22:01 两轮选题登记：两轮均为本地 apply 模式，astrologywiki 与 gengrowth 均为零候选、零更新、零新簇，日志无失败。
 
 ---
 
@@ -212,3 +212,20 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 仅运行指定入口 `bash tools/scripts/gg-topic-register-tick.sh`，退出码为 0。20:02:12–20:02:14 CST 的独立日志窗口显示本地环境已启用 apply（`dry_run=false`、`budget_exhausted=false`）。astrologywiki 与 gengrowth 均为 candidates=0、updates=0、new_clusters=0，page_ids、preprocessor、evidence_discovery 均为空。窗口以 `topic-register ok` 结束，未发现失败或预算耗尽；未进行手工 Sheet 写入、未直接编辑任务计划，也未创建额外 Feishu 或 Google Doc 报告。自动化记忆已追加到真实 EOF。
+
+---
+
+### Q11 — 22:01
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-18T12:01:36.092Z (1784376096092)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行指定入口 `bash tools/scripts/gg-topic-register-tick.sh`，退出码为 0。22:01:53–22:01:56 CST 的独立日志窗口显示本地环境已启用 apply（`dry_run=false`、`budget_exhausted=false`）。astrologywiki 与 gengrowth 均为 candidates=0、updates=0、new_clusters=0，page_ids、preprocessor、evidence_discovery 均为空；窗口以 `topic-register ok` 结束，未发现失败或预算耗尽。未进行手工 Sheet 写入、未直接编辑任务计划，也未创建额外 Feishu 或 Google Doc 报告；自动化记忆已追加到真实 EOF。

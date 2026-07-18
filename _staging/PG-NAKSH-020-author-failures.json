@@ -1,16 +1,7 @@
 {
   "schemaVersion": 1,
   "pageId": "PG-NAKSH-020",
-  "status": "failed",
-  "failures": [
-    "word count 1472 < min 1485",
-    "author banned token(s) matched: \"rising sign\"",
-    "author banned token(s) matched: \"sun sign\"",
-    "word count 1328 < min 1485",
-    "target_keyword count = 14 (limit 12)",
-    "word count 1332 < min 1485",
-    "SC3 paragraph length: 1 block(s) over wall limit",
-    "L23: prose paragraph wall (9 句 > 7); 把多要点改成「引子 + 编号列表」，或拆成连贯短段 (v4.5.1)"
-  ],
-  "updatedAt": "2026-07-18T11:42:52.337Z"
+  "status": "passed",
+  "failures": [],
+  "updatedAt": "2026-07-18T11:48:24.425Z"
 }

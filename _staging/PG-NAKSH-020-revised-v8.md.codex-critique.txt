@@ -1,0 +1,8 @@
+- Jyotish 段落漏掉 Capricorn 的完整 nakshatra 范围 → 补上 Dhanishta，并明确 Capricorn sidereal 包含 Uttara Ashadha、Shravana、Dhanishta 的对应度数/分段。
+- “Western = psychological and little more” 过窄 → 加入 Western 也会看 Moon in detriment、house、aspects、Saturn condition，不只是性格速写。
+- 表格里把 Capricorn 和 “10th-house themes” 绑定过紧 → 改为 Saturn rulership / cardinal earth；只有实际 Moon 落 10 宫时才谈 10 宫。
+- “In my decade…” 的第一人称资历声明风险很高 → 若品牌没有真实作者背书，删除或改成非个人化编辑语气。
+- 文章反复强调 restraint/self-reliance，信息有点打转 → 增加更具体场景：冲突中如何表达需求、休息为什么困难、怎样向伴侣提出支持。
+- “self-parenting instinct” 容易过度推断早年经历 → 改成可能性，并说明需结合 4 宫、Moon-Saturn 相位、Saturn 状态确认。
+- SEO 意图还缺常见搜索需求 → 增补 Moon in Capricorn traits、love/relationships、strengths/challenges、how to work with it 的具体小节或段落。
+- Sources 太泛，权威感不足 → 引用具体文本/版本或删掉无法支撑的权威包装，尤其是 Parashara、B. V. Raman 和 NASA 说法。

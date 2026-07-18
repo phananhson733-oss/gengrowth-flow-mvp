@@ -8,9 +8,9 @@
   "track": "量产线",
   "generated_by": "unknown",
   "prompt_version": "v8",
-  "generated_at": "2026-07-18T11:48:24.422Z",
-  "content_sha256_short": "82b63aaa64880ca0",
-  "source_path": "_staging/PG-NAKSH-020-claude-v8.md",
+  "generated_at": "2026-07-18T11:53:29.382Z",
+  "content_sha256_short": "d842290760c86493",
+  "source_path": "_staging/PG-NAKSH-020-revised-v8.md",
   "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-NAKSH-020-en.md",
   "phase2_checks": {
     "overall": "pass",
@@ -19,7 +19,7 @@
       "h2Count": 11,
       "h3Count": 0,
       "h4Count": 0,
-      "words": 1653,
+      "words": 1587,
       "wikilinks": 5,
       "tbdLinks": 5
     },

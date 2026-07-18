@@ -1,29 +1,3 @@
----
-title: Moon In Capricorn
-slug: moon-in-capricorn
-date: 2026-07-18
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T2
-track: 量产线
-page_id: PG-NAKSH-020
-author_id: "aditi-sharma"
-author_display_name: "Aditi Sharma"
-target_keyword: moon in capricorn
-associated_keywords:
-  - moon in capricorn meaning
-  - moon in capricorn astrology
-  - moon in capricorn birth chart
-  - moon in capricorn zodiac
-  - moon in capricorn interpretation
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-07-18T11:53:29.382Z
-content_sha256_short: d842290760c86493
-phase2_checks: all-pass
----
-
 # What Moon in Capricorn Reveals About Your Emotional World
 
 ## What Is Moon in Capricorn?

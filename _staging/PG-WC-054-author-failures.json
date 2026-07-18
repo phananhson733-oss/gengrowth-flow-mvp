@@ -7,7 +7,8 @@
     "target_keyword count = 10 (limit 9)",
     "word count 1363 < min 1485",
     "SC3c section scatter: 1 section(s) with >3 scattered prose paragraphs",
-    "L27: 子节 prose 段过多 (4 > 3); 用 `### ` H3 小标题把长叙述分组(每组 ≤3 段)，或改成「引子 + 编号列表」(v4.5.1 / 2026-06-09 H3)"
+    "L27: 子节 prose 段过多 (4 > 3); 用 `### ` H3 小标题把长叙述分组(每组 ≤3 段)，或改成「引子 + 编号列表」(v4.5.1 / 2026-06-09 H3)",
+    "word count 1340 < min 1485"
   ],
-  "updatedAt": "2026-07-17T17:26:02.782Z"
+  "updatedAt": "2026-07-18T14:35:05.729Z"
 }

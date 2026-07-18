@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "pageId": "PG-NAKSH-021",
+  "status": "failed",
+  "failures": [
+    "drifted sections: \"Why It Matters for Self-Awareness\" (jaccard=0.000, shingle=0.000, target-recall=0.00); \"Cancer Moon vs Cancer Sun: What Actually Differs\" (jaccard=0.000, shingle=0.000, target-recall=0.00); \"Common Misreadings\" (jaccard=0.000, shingle=0.000, target-recall=0.00) (skipped 5 structural: \"Cancer Moon at a Glance\", \"Reflection Prompts\", \"Related Reading\", \"Take Action\", \"Sources\")",
+    "author banned token(s) matched: \"rising sign\""
+  ],
+  "updatedAt": "2026-07-18T12:38:05.535Z"
+}

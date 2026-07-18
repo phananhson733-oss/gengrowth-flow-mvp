@@ -1,0 +1,8 @@
+- 搜索意图偏离：标题说“prediction”，正文几乎全在解释“不能预测” → 增加一段明确的赛前倾向判断，例如“France edge / England edge / volatile draw-like energy”，并说明依据。
+- 缺少具体赛事锚点：没有交代是哪场第三名赛、日期、开球时间、地点、赛事背景 → 补入 fixture 信息，否则读者会觉得是套壳文章。
+- “France national chart / England national chart”过于含糊且有争议 → 明确采用哪一张国家/球队相关 chart（如法国第五共和国、英格兰足协或英国 chart），并说明为什么选它。
+- 法国“flair/pride”、英格兰“steadiness/grit”像体育刻板印象，不像占星推导 → 改成由具体太阳、月亮、火星、上升或事件盘相位推出的描述。
+- 占星分析没有实际相位 → 加入当日 Moon、Mars、Saturn、Jupiter 等与两方 chart 的具体角度、容许度和解释，删除空泛“tone/tension/momentum”重复句。
+- 第三名赛“closure/low-stakes”写得太泛 → 连接到两队真实半决赛失利后的心理状态、轮换可能、动力差异，否则像任何 consolation match 都能用。
+- “watch for fouls or momentum swings”暗示相位可对应具体比赛事件，和“不预测结果”冲突 → 改成“interpret emotionally after the fact”，或给出更谨慎的观察语言。
+- Sources 只有人名没有作品或出处 → 换成具体参考书/作者，例如 Campion、Carter、Hand 的具体著作，并只保留能支撑 mundane astrology 方法的来源。

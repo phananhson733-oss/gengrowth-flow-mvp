@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "pageId": "PG-TRANS-024",
+  "status": "failed",
+  "failures": [
+    "word count 1370 < min 1485",
+    "drifted sections: \"How to Read This Return in Your Timing\" (jaccard=0.000, shingle=0.000, target-recall=0.00); \"Common Misreadings\" (jaccard=0.000, shingle=0.000, target-recall=0.00) (skipped 5 structural: \"Saturn Return in Aries at a Glance\", \"Reflection Prompts\", \"Related Reading\", \"Take Action\", \"Sources\")",
+    "target_keyword count = 11 (limit 9)"
+  ],
+  "updatedAt": "2026-07-18T13:02:41.256Z"
+}

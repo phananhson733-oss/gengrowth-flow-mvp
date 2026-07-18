@@ -1,29 +1,3 @@
----
-title: Moon In Cancer
-slug: moon-in-cancer
-date: 2026-07-18
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T2
-track: 量产线
-page_id: PG-NAKSH-021
-author_id: "aditi-sharma"
-author_display_name: "Aditi Sharma"
-target_keyword: moon in cancer
-associated_keywords:
-  - moon in cancer meaning
-  - moon in cancer astrology
-  - moon in cancer birth chart
-  - moon in cancer zodiac
-  - moon in cancer interpretation
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-07-18T12:48:21.806Z
-content_sha256_short: d9f7b0c430404d69
-phase2_checks: all-pass
----
-
 # What Moon in Cancer Really Signals About Emotional Needs
 
 ## What Is Moon in Cancer?

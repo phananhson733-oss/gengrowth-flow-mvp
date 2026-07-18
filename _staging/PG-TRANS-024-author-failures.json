@@ -5,7 +5,9 @@
   "failures": [
     "word count 1370 < min 1485",
     "drifted sections: \"How to Read This Return in Your Timing\" (jaccard=0.000, shingle=0.000, target-recall=0.00); \"Common Misreadings\" (jaccard=0.000, shingle=0.000, target-recall=0.00) (skipped 5 structural: \"Saturn Return in Aries at a Glance\", \"Reflection Prompts\", \"Related Reading\", \"Take Action\", \"Sources\")",
-    "target_keyword count = 11 (limit 9)"
+    "target_keyword count = 11 (limit 9)",
+    "word count 1361 < min 1485",
+    "author banned token(s) matched: \"energy\""
   ],
-  "updatedAt": "2026-07-18T13:02:41.256Z"
+  "updatedAt": "2026-07-18T13:04:33.432Z"
 }

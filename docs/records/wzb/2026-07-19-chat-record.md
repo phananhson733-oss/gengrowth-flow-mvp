@@ -23,6 +23,7 @@ aliases:
 - 当前 canonical claims 为 done=18、needs_human=1（PG-WC-053）；active repair=0、pending writeback=1（PG-WC-054 verify-live pending）、dropped=0、outbox=0、eligible needs-human drift=0，且无 SEO 进程或锁。
 - PG-WC-054 的 PR #412 已合并且 Vercel check PASS，但线上 URL 回落首页 canonical、无 Article JSON-LD、未进入 sitemap；plan/claims/publish log 已标完成，而 Sheet 仍为待写，证明 pending writeback 是真实不一致而非门槛过严。
 - 04:35 复核时上述状态均未自行收敛；临时 heartbeat 的 automation delete 请求再次等待 20 秒超时，磁盘状态仍为 ACTIVE，未绕过 Codex 接口手工删除。
+- 05:02 运行固定索引修复重提入口成功；astrologywiki 复盘表新增 9 行、请求队列 30 行，gengrowth 无队列，两个产品均无“已修复”行重提。
 
 ---
 
@@ -61,5 +62,22 @@ aliases:
 **🤖 回答：**
 
 复核无变化：最新 LaunchAgent 日志仍停在 7 月 18 日 23:02:28，没有新自然窗口；PG-WC-053=needs_human，claims non-done=1，PG-WC-054 pending writeback 仍为 verify-live pending/attempts=5，active repair=0、dropped=0、outbox=0，且无 SEO 进程或锁。PG-WC-054 线上仍为 HTTP 200 但 canonical 到首页、Article JSON-LD=0、sitemap=false，pending 文件 mtime 未变化。automation delete 再次等待 20 秒超时，状态仍 ACTIVE；未手工删除 automation 文件。
+
+---
+
+### Q3 — 05:02
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: 2026-07-18T09:31:35.455Z (1784367095455)
+
+Run the deterministic fixed-row index repair workflow through `bash tools/scripts/gg-index-repair-resubmit-tick.sh`. The wrapper loads the local gg environment, loops the configured products (`GG_INDEX_MONITOR_PRODUCTS`, defaulting to astrologywiki and gengrowth), processes rows marked `已修复`, syncs `结果复盘表`, and refreshes `request-indexing-queue` in each product Google Sheet. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, do not click Search Console Request Indexing unattended, and do not create Feishu or Google Doc report artifacts. After the wrapper exits, summarize per-product `process-fixed`, `sync-recap`, `sync-request-queue` counts visible in the log, plus any failures.
+
+**🤖 回答：**
+
+已执行指定固定入口，退出码 0；本轮日志窗口为 05:02:09–05:02:32，结尾为 `index repair-resubmit ok`。astrologywiki：process-fixed fixed=0、resubmitted=0；sync-recap en_rows=273、appended=9、updated=0、skipped=264；sync-request-queue rows=30（P0=0、P1=3、P2=4、P3=23）。gengrowth：process-fixed fixed=0、resubmitted=0；sync-recap en_rows=62、appended=0、updated=0、skipped=62；sync-request-queue rows=0（所有优先级为 0）。无失败、错误、异常、认证或超时记录；固定入口不含普通文章 Google Indexing API 或无人值守 Request Indexing 点击，本轮未创建飞书或 Google Doc 报告产物。
 
 ---

@@ -24,6 +24,7 @@ aliases:
 - 21:05 最终检查时 PG-WC-053=needs_human，故 claims non-done=1、needs-human drift=1；pending/dropped writeback、outbox、SEO 业务进程和锁均为 0。临时 heartbeat 删除请求持续因 Codex 应用工具超时未确认，磁盘状态仍显示 ACTIVE。
 - 按固定入口完成 Index Repair Resubmit：astrologywiki 没有已修复行、结果复盘表新增 9 行；gengrowth 没有已修复行、结果复盘表无变更；两产品请求索引队列均已同步，日志窗口无失败关键字。
 - 按固定入口完成 Phase 2 Index Monitor：两站官方 Sitemap API 均成功；共检查 8 条 URL、零告警和零失败，全部转为已收录；最终请求索引队列为 21 条（P0=0、P1=3、P2=4、P3=14），日志未提供明确飞书发送回执。
+- 按固定入口完成结果复盘表性能更新：两站均无 D14/D30/D60 到期行；astrologywiki 更新 235 行、生成 237 项优化任务，gengrowth 更新 49 行、生成 62 项优化任务；日志无失败。
 
 ---
 
@@ -116,3 +117,31 @@ Run the GenGrowth Phase 2 indexing workflow through the existing deterministic w
 已执行指定入口 `bash tools/scripts/gg-index-monitor-tick.sh`，09:02:43–09:04:41 CST 退出码为 0，日志以 `index monitor ok` 结束。两站官方 Search Console Sitemap API 均成功：astrologywiki 与 gengrowth。URL Inspection：astrologywiki due=6、checked=6、alerts=0、failures=0，6 条均转为已收录；gengrowth due=2、checked=2、alerts=0、failures=0，2 条均转为已收录。结果复盘表已同步；最终请求索引队列为 astrologywiki 21 条（P0=0、P1=3、P2=4、P3=14）、gengrowth 0 条，合计 21 条（P0=0、P1=3、P2=4、P3=14）。精确日志窗口未出现明确 Feishu/Lark 发送成功或失败回执，仅可确认包装器的通知能力步骤已运行。未使用普通文章 Google Indexing API，亦未进行无人值守的 Request Indexing 点击；自动化记忆已追加至真实 EOF。
 
 ---
+
+### Q6 — 10:01
+
+**🙋 提问：**
+
+Automation: 结果复盘表更新
+Automation ID: gengrowth-recap-performance
+Automation memory: $CODEX_HOME/automations/gengrowth-recap-performance/memory.md
+Last run: 2026-07-17T02:01:27.928Z (1784253687928)
+
+Run the deterministic GenGrowth results-recap performance workflow through `bash tools/scripts/gg-recap-performance-tick.sh`.
+
+The wrapper loads the local gg environment, scans the configured products (`GG_RECAP_PERFORMANCE_PRODUCTS`, defaulting to astrologywiki and gengrowth), reads `index-tracking` and `结果复盘表`, and only fetches D14/D30/D60 GSC/GA4 snapshot metrics for indexed URLs whose current age is exactly at one of those milestones. Non-milestone rows and already-filled milestone cells must keep their existing values; historical repair/backfill is only allowed through the wrapper's explicit repair modes such as `--fill-pending` / `--verify-zero-metrics`, not by ad-hoc daily refresh.
+
+The wrapper preserves manual recap decisions/notes, writes wrapper-owned generated performance fields back to the Sheet, and writes the optimization task report under `~/gengrowth-agents/reports/recap-performance/`.
+
+Safety boundary:
+- Do not bypass the wrapper or pass ad-hoc write flags directly to the Node script.
+- Do not hand-edit Google Sheets outside the wrapper.
+- Do not publish content, deploy sites, modify page source, submit GSC Request Indexing, or use the Google Indexing API.
+- Do not overwrite manual fields such as `决策` or human notes; only the wrapper-owned generated recap segment may be refreshed.
+- Do not create extra Feishu/Google Doc artifacts unless the wrapper already does so.
+
+After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/recap_performance/` and summarize per-product workbook/site/property, exact-milestone rows processed, updated recap row counts, generated report path, D14/D30/D60 coverage for due indexed rows, optimization task counts by priority, skipped/non-due rows, and any failures. If the wrapper fails or required credentials/properties are missing, report the exact missing boundary from the log without attempting a manual replacement workflow.
+
+**🤖 回答：**
+
+执行指定 wrapper `bash tools/scripts/gg-recap-performance-tick.sh`，退出码 0；2026-07-18 10:01:07–10:01:13 CST 日志以 `recap performance ok` 结束。astrologywiki（wb=…jyzcQc，sc-domain:astrologywiki.com，GA4 properties/524765570）：到期处理 rows=0、结果复盘表 generated segment 更新 235 行、任务 237；D14/D30/D60 覆盖均为 0/0；报告为 `/Users/awayer_mini/gengrowth-agents/reports/recap-performance/2026-07-18-astrologywiki-optimization-tasks.md`，分桶 P0=11、技术排查=142、P1=9、观察=75。gengrowth（wb=…ZTIRA8，sc-domain:gengrowth.ai，同一 GA4 property）：rows=0、更新 49 行、任务 62；D14/D30/D60 覆盖均为 0/0；报告为 `/Users/awayer_mini/gengrowth-agents/reports/recap-performance/2026-07-18-gengrowth-optimization-tasks.md`，分桶 P0=0、技术排查=49、P1=5、观察=8。日志没有单独输出非到期/跳过行计数，故未推断该值；无失败、凭据或 property 缺失。未手工编辑 Sheet、未使用 repair/backfill flag、未发布/部署/改源代码/提交 GSC Request Indexing/使用 Google Indexing API；wrapper 自身发送了一条成功的 Feishu 卡片通知。

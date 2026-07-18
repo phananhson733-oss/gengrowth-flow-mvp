@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-MOON-009",
+  "entity": "How Do I Stop Burnout",
+  "target_keyword": "how do i stop burnout",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-07-18T10:23:26.695Z",
+  "content_sha256_short": "28917d14c97fa8be",
+  "source_path": "_staging/PG-MOON-009-claude-v8.md",
+  "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-MOON-009-en.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 3,
+      "h4Count": 0,
+      "words": 1704,
+      "wikilinks": 5,
+      "tbdLinks": 5
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

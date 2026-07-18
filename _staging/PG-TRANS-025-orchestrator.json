@@ -1,0 +1,52 @@
+{
+  "page_id": "PG-TRANS-025",
+  "prompt_path": "/Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-TRANS-025.v8-prompt.md",
+  "started_at": "2026-07-18T14:08:21.249Z",
+  "models_requested": [
+    "claude"
+  ],
+  "retry": 0,
+  "diversify_on_fail": false,
+  "max_cost_usd_per_page": 5,
+  "budget_exceeded_models": [],
+  "ok_count": 1,
+  "total_cost_estimate_usd": 0.0541,
+  "results": {
+    "claude": {
+      "model": "claude",
+      "active_model": "claude",
+      "diversified": false,
+      "ok": true,
+      "output_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-TRANS-025-claude-v8.md",
+      "retries": 0,
+      "duration_s": 186.3,
+      "cost_estimate_usd": {
+        "usd": 0.0541,
+        "input_tokens_est": 8219,
+        "output_tokens_est": 1963,
+        "pricing_note": "Sonnet 4.6 xhigh"
+      },
+      "cumulative_cost_usd": 0.0541,
+      "budget_exceeded": false,
+      "budget_usd": 5,
+      "attempts": [
+        {
+          "try_index": 1,
+          "model": "claude",
+          "command": "claude -p --model claude-opus-4-8 --effort high < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-TRANS-025.v8-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-TRANS-025-claude-v8.md",
+          "cost_usd": 0.0541,
+          "cumulative_cost_usd": 0.0541,
+          "ok": true,
+          "exit_code": 0,
+          "duration_s": 186.3,
+          "stderr_tail": "",
+          "stdout_bytes": 8892,
+          "sonnet_guard": {
+            "downgraded": false,
+            "bytes": 8936
+          }
+        }
+      ]
+    }
+  }
+}

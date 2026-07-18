@@ -3,7 +3,8 @@
   "pageId": "PG-TRANS-025",
   "status": "failed",
   "failures": [
-    "author banned token(s) matched: \"energy\""
+    "author banned token(s) matched: \"energy\"",
+    "word count 1449 < min 1485"
   ],
-  "updatedAt": "2026-07-18T14:08:25.396Z"
+  "updatedAt": "2026-07-18T14:12:19.916Z"
 }

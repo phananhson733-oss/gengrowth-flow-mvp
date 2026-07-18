@@ -4,7 +4,8 @@
   "status": "failed",
   "failures": [
     "author banned token(s) matched: \"energy\"",
-    "word count 1449 < min 1485"
+    "word count 1449 < min 1485",
+    "word count 1379 < min 1485"
   ],
-  "updatedAt": "2026-07-18T14:12:19.916Z"
+  "updatedAt": "2026-07-18T14:16:16.592Z"
 }

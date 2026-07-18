@@ -3,7 +3,9 @@
   "pageId": "PG-MOON-009",
   "status": "failed",
   "failures": [
-    "author banned token(s) matched: \"energy\""
+    "author banned token(s) matched: \"energy\"",
+    "word count 1461 < min 1485",
+    "target_keyword count = 10 (limit 8)"
   ],
-  "updatedAt": "2026-07-18T10:16:51.642Z"
+  "updatedAt": "2026-07-18T10:19:16.393Z"
 }

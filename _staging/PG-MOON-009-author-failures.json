@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "pageId": "PG-MOON-009",
+  "status": "failed",
+  "failures": [
+    "author banned token(s) matched: \"energy\""
+  ],
+  "updatedAt": "2026-07-18T10:16:51.642Z"
+}

@@ -10,7 +10,9 @@
     "psych-safety blacklist word matched: \"treats\"",
     "author banned token(s) matched: \"guaranteed\"",
     "word count 1333 < min 1485",
-    "word count 1475 < min 1485"
+    "word count 1475 < min 1485",
+    "word count 1444 < min 1485",
+    "author banned token(s) matched: \"you will\""
   ],
-  "updatedAt": "2026-07-18T11:18:22.463Z"
+  "updatedAt": "2026-07-18T11:21:32.386Z"
 }

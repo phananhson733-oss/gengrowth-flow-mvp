@@ -18,13 +18,10 @@ aliases:
 
 > 【本区域在每天最后一次对话结束时生成/更新】
 
-- 对 7 月 17 日 20:00、20:30、21:00 SEO LaunchAgent 候选窗口执行只读验收；20:00 自然 fire 以 reconcile=2 结束，后两次没有形成独立 tick，因此连续三窗口标准未成立。
-- 20:00 窗口按预期完成 active brief preflight、pre-drain、strict reconcile 后进入 nightly，并发布 PG-NODE-014、PG-TRANS-022、PG-TRANS-023、PG-WC-052；四篇在计划、claims、publish log、Sheet 和线上均已收敛。
-- 20:00 post-fire 终态仍有 pendingWritebackAfter=1、activeRepairAfter=1，故该窗口不能判定 clean 或 0 人值守完成。
-- 21:05 最终检查时 PG-WC-053=needs_human，故 claims non-done=1、needs-human drift=1；pending/dropped writeback、outbox、SEO 业务进程和锁均为 0。临时 heartbeat 删除请求持续因 Codex 应用工具超时未确认，磁盘状态仍显示 ACTIVE。
-- 按固定入口完成 Index Repair Resubmit：astrologywiki 没有已修复行、结果复盘表新增 9 行；gengrowth 没有已修复行、结果复盘表无变更；两产品请求索引队列均已同步，日志窗口无失败关键字。
-- 按固定入口完成 Phase 2 Index Monitor：两站官方 Sitemap API 均成功；共检查 8 条 URL、零告警和零失败，全部转为已收录；最终请求索引队列为 21 条（P0=0、P1=3、P2=4、P3=14），日志未提供明确飞书发送回执。
-- 按固定入口完成结果复盘表性能更新：两站均无 D14/D30/D60 到期行；astrologywiki 更新 235 行、生成 237 项优化任务，gengrowth 更新 49 行、生成 62 项优化任务；日志无失败。
+- 对 7 月 17 日 20:00、20:30、21:00 SEO LaunchAgent 候选窗口执行只读验收；20:00 自然 fire 虽发布四篇并完成多端收敛，但以 reconcile=2、pendingWritebackAfter=1、activeRepairAfter=1 结束，后两次没有独立 tick，连续三窗口标准未成立；21:05 PG-WC-053=needs_human，claims non-done=1、needs-human drift=1。
+- 按固定入口完成 Index Repair Resubmit 与 Phase 2 Index Monitor：已修复行均为 0、两产品 Sheet 队列同步；Sitemap API 成功、检查 8 条 URL 且零告警/失败，最终队列共 21 条（P0=0、P1=3、P2=4、P3=14）。
+- 按固定入口完成结果复盘表性能更新：两站均无 D14/D30/D60 到期行；astrologywiki 更新 235 行、生成 237 项优化任务，gengrowth 更新 49 行、生成 62 项任务；日志无失败。
+- 按固定入口完成本轮选题登记：apply 模式更新 astrologywiki 的 6 个候选（PG-TRANS-024、PG-TRANS-025、PG-MOON-009、PG-NAKSH-021、PG-HEAL-006、PG-CELEB-059），其中预处理 ok=2、v1_fallback=4；gengrowth 为零候选，日志无失败。
 
 ---
 
@@ -145,3 +142,20 @@ After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-s
 **🤖 回答：**
 
 执行指定 wrapper `bash tools/scripts/gg-recap-performance-tick.sh`，退出码 0；2026-07-18 10:01:07–10:01:13 CST 日志以 `recap performance ok` 结束。astrologywiki（wb=…jyzcQc，sc-domain:astrologywiki.com，GA4 properties/524765570）：到期处理 rows=0、结果复盘表 generated segment 更新 235 行、任务 237；D14/D30/D60 覆盖均为 0/0；报告为 `/Users/awayer_mini/gengrowth-agents/reports/recap-performance/2026-07-18-astrologywiki-optimization-tasks.md`，分桶 P0=11、技术排查=142、P1=9、观察=75。gengrowth（wb=…ZTIRA8，sc-domain:gengrowth.ai，同一 GA4 property）：rows=0、更新 49 行、任务 62；D14/D30/D60 覆盖均为 0/0；报告为 `/Users/awayer_mini/gengrowth-agents/reports/recap-performance/2026-07-18-gengrowth-optimization-tasks.md`，分桶 P0=0、技术排查=49、P1=5、观察=8。日志没有单独输出非到期/跳过行计数，故未推断该值；无失败、凭据或 property 缺失。未手工编辑 Sheet、未使用 repair/backfill flag、未发布/部署/改源代码/提交 GSC Request Indexing/使用 Google Indexing API；wrapper 自身发送了一条成功的 Feishu 卡片通知。
+
+---
+
+### Q7 — 16:10
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-17T14:01:00.335Z (1784296860335)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行 `bash tools/scripts/gg-topic-register-tick.sh`，退出码 0。精确日志窗口 2026-07-18 16:02:42–16:10:07 CST 为 apply（`dry_run=false`、`budget_exhausted=false`）。astrologywiki：candidates=6、updates=6、new_clusters=0，page_ids=PG-TRANS-024、PG-TRANS-025、PG-MOON-009、PG-NAKSH-021、PG-HEAL-006、PG-CELEB-059；preprocessor 为 ok×2、v1_fallback×4，evidence discovery 为 ok×2、insufficient×4。gengrowth：candidates=0、updates=0、new_clusters=0，page_ids/preprocessor/evidence_discovery 均为空。窗口无 failure、timeout 或 budget exhaustion；未手工编辑 Sheet、未直接修改任务计划，也未额外创建 Feishu/Google Doc 报告。

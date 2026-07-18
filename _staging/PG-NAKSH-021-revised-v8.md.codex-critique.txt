@@ -1,0 +1,8 @@
+- “Vedic also treats Moon as emotional core”过于西化 → 改成 Jyotish 中 Moon 主要关联 `manas`、习惯、感受力与心理安稳，再说明这与现代西占“情绪核心”相近但不完全等同。
+- “my years reading classical Sanskrit charts”像伪个人资历 → 删除或改为非人格化表述，如“Traditional Jyotish readings often emphasize...”
+- Nakshatra 说明不够准 → 写清 sidereal Cancer 包含 Punarvasu 第4 pada、Pushya、Ashlesha；不要说 Cancer 被简单“分割”为这些 nakshatras。
+- Cancer Moon vs Cancer Sun 段落太绝对，尤其“sacrifice outer steadiness / moods move visibly” → 改成“may need more emotional recovery time”，并补一句 house、aspects、Moon phase 会显著改变表现。
+- 全文反复讲 safety/home/care，信息密度开始稀释 → 合并重复句，把空间留给更具体的表现：边界、家庭记忆、依恋模式、压力下如何自我安抚。
+- 搜索意图覆盖不全 → 增加简短但实用的 Cancer Moon in love/relationships、strengths/challenges、compatibility 或 “how to work with this placement” 内容。
+- “feeding and remembering birthdays”例子偏窄且重复 → 换成更成熟的可操作建议，如建立恢复性家庭仪式、在照顾别人前确认自身容量、用书面方式区分直觉和情绪投射。
+- Sources 太像权威名词堆放 → 给 Parashara / B. V. Raman 补具体书名或删除；NASA 轨道数据也应在正文对应处明确来源用途，避免看起来像拿科学背书占星结论。

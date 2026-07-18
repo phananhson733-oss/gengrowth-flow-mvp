@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-FE3P-001",
+  "entity": "France England 3rd Place Match Astrology Prediction",
+  "target_keyword": "france england 3rd place match astrology prediction",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-07-18T10:57:43.913Z",
+  "content_sha256_short": "d5cc63c181ec962c",
+  "source_path": "_staging/PG-FE3P-001-claude-v8.md",
+  "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-FE3P-001-en.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 6,
+      "h4Count": 0,
+      "words": 1747,
+      "wikilinks": 5,
+      "tbdLinks": 5
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

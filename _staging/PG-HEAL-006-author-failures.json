@@ -9,7 +9,8 @@
     "drifted sections: \"How to Read This Placement in Your Chart\" (jaccard=0.000, shingle=0.000, target-recall=0.00); \"Common Misreadings\" (jaccard=0.000, shingle=0.000, target-recall=0.00); \"Common Questions About This Placement\" (jaccard=0.000, shingle=0.000, target-recall=0.33) (skipped 5 structural: \"Jupiter in Cancer at a Glance\", \"Reflection Prompts\", \"Related Reading\", \"Take Action\", \"Sources\")",
     "psych-safety blacklist word matched: \"treats\"",
     "author banned token(s) matched: \"guaranteed\"",
-    "word count 1333 < min 1485"
+    "word count 1333 < min 1485",
+    "word count 1475 < min 1485"
   ],
-  "updatedAt": "2026-07-18T10:04:38.414Z"
+  "updatedAt": "2026-07-18T11:13:50.892Z"
 }

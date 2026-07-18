@@ -1,11 +1,7 @@
 {
   "schemaVersion": 1,
   "pageId": "PG-CELEB-059",
-  "status": "failed",
-  "failures": [
-    "word count 1375 < min 1485",
-    "word count 1313 < min 1485",
-    "word count 1334 < min 1485"
-  ],
-  "updatedAt": "2026-07-18T09:32:10.986Z"
+  "status": "passed",
+  "failures": [],
+  "updatedAt": "2026-07-18T09:35:07.950Z"
 }

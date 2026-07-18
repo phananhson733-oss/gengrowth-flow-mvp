@@ -15,7 +15,8 @@
     "author banned token(s) matched: \"you will\"",
     "word count 1412 < min 1485",
     "target_keyword count = 15 (limit 12)",
-    "psych-safety blacklist word matched: \"treat\""
+    "psych-safety blacklist word matched: \"treat\"",
+    "missing required H2: \"## <entity> vs <real adjacent concept> (comparison section; no \"Adjacent Concepts\" boilerplate)\""
   ],
-  "updatedAt": "2026-07-18T12:25:23.004Z"
+  "updatedAt": "2026-07-18T13:33:53.038Z"
 }

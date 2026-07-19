@@ -24,6 +24,7 @@ aliases:
 - PG-WC-054 的 PR #412 已合并且 Vercel check PASS，但线上 URL 回落首页 canonical、无 Article JSON-LD、未进入 sitemap；plan/claims/publish log 已标完成，而 Sheet 仍为待写，证明 pending writeback 是真实不一致而非门槛过严。
 - 21:05 最终复核时上述状态均未自行收敛；临时 heartbeat 的 automation delete 请求再次等待 30 秒超时，磁盘状态仍为 ACTIVE，未绕过 Codex 接口手工删除。
 - 05:02 运行固定索引修复重提入口成功；astrologywiki 复盘表新增 9 行、请求队列 30 行，gengrowth 无队列，两个产品均无“已修复”行重提。
+- 09:01–09:03 运行固定索引监控入口成功；两个站点 Sitemap API 成功，astrologywiki 检查 4 条且均转为已收录，最终请求索引队列共 26 条（P1=3、P2=4、P3=19），无检查失败。
 
 ---
 
@@ -97,5 +98,22 @@ Run the deterministic fixed-row index repair workflow through `bash tools/script
 **🤖 回答：**
 
 21:05 最终只读检查仍不通过：最新 SEO 日志仍停在 7 月 18 日 23:02:28，三个自然窗口均被外部任务占锁，clean=0；PG-WC-053=needs_human，claims non-done=1，PG-WC-054 pending writeback 仍为 verify-live pending/attempts=5。active repair、dropped writeback、outbox、SEO 进程和锁均为 0。PG-WC-054 线上仍是 HTTP 200 但 canonical 到首页、Article JSON-LD=0、sitemap=false。按约定再次调用 automation delete，但等待 30 秒仍超时，状态继续为 ACTIVE；未手工删除 automation 文件。
+
+---
+
+### Q5 — 09:03
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Monitor
+Automation ID: gengrowth-index-monitor
+Automation memory: $CODEX_HOME/automations/gengrowth-index-monitor/memory.md
+Last run: 2026-07-18T01:02:03.232Z (1784336523232)
+
+Run the GenGrowth Phase 2 indexing workflow through the existing deterministic wrapper: `bash tools/scripts/gg-index-monitor-tick.sh`. This wrapper must refresh the live sitemap through the official Search Console Sitemaps API, inspect due URLs through URL Inspection, sync the final `结果复盘表`, generate/update `request-indexing-queue` with priority colors, and send Feishu SEO技术 group reminders for actionable candidates or failures. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, and do not click Search Console Request Indexing unattended. For Computer Use submission, only assist by opening candidate GSC inspection URLs and stop for human confirmation before the final Request Indexing click. After the wrapper exits, summarize sitemap submission status, GSC check counts/failures, queue counts by priority, and any Feishu notification outcome visible in the log.
+
+**🤖 回答：**
+
+已运行指定固定入口，退出码 0；精确日志窗口为 09:01:34–09:03:09，结束为 `index monitor ok`。astrologywiki 与 gengrowth 的官方 Search Console Sitemap API 提交均成功。astrologywiki：`rows=273 due=4`、`checked=4 alerts=0 failures=0`，四条 URL 均转为已收录；gengrowth：`rows=62 due=0`，无 URL 检查。结果复盘表已同步；请求索引队列为 astrologywiki 26 条（P0=0、P1=3、P2=4、P3=19），gengrowth 为 0 条，合计 26 条（P0=0、P1=3、P2=4、P3=19）。日志未显示任何 Feishu/Lark 发送成功或失败回执，仅能确认通知能力步骤已执行。未调用普通文章 Google Indexing API，且未进行无人值守 GSC Request Indexing 点击。
 
 ---

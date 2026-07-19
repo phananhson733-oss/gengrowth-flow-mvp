@@ -22,7 +22,7 @@ aliases:
 - 固定索引修复入口分别在 05:02 与 17:31 完成；两个产品均无已修复行重提，AstrologyWiki 请求队列最终为 26 行、GenGrowth 为 0，窗口内无失败。
 - 固定索引监控入口在 09:01–09:03 完成；两个站点 Sitemap API 成功，AstrologyWiki 检查 4 条且均已收录，最终请求索引队列共 26 条（P1=3、P2=4、P3=19）。
 - 结果复盘固定入口在 10:01–10:02 完成；AstrologyWiki 更新 239 行/生成 241 项任务，GenGrowth 精确到期行 3/更新 49 行/生成 62 项任务，均无失败或凭据边界。
-- 关键词补充 brief 固定入口在 16:01 与 18:01 均完成 apply；两个产品均无候选、更新、新簇或页面 ID，预处理与证据发现均为空，无失败。
+- 关键词补充 brief 固定入口在 16:01、18:01 与 20:03 均完成 apply；两个产品均无候选、更新、新簇或页面 ID，预处理与证据发现均为空，无失败。
 
 ---
 
@@ -194,5 +194,22 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 仅运行指定 wrapper，退出码 0；精确日志窗口为 18:01:43–18:01:46，`dry_run=false`、`budget_exhausted=false`，为环境授权的 apply。astrologywiki 与 gengrowth 均为 candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]、evidence_discovery=[]，无失败。未在 wrapper 外手改 Sheet 或任务计划，也未创建额外 Feishu/Google Doc 报告产物。
+
+---
+
+### Q10 — 20:03
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-19T10:00:41.975Z (1784455241975)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行指定 wrapper，退出码 0；精确日志窗口为 20:03:06–20:03:08，`dry_run=false`、`budget_exhausted=false`，为环境授权的 apply。astrologywiki 与 gengrowth 均为 candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]、evidence_discovery=[]，无失败。未在 wrapper 外手改 Sheet 或任务计划，也未创建额外 Feishu/Google Doc 报告产物。
 
 ---

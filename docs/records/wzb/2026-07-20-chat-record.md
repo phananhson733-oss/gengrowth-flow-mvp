@@ -22,7 +22,7 @@ aliases:
 - 20:00、20:30、21:00 三个目标窗口均在 pre-fire strict reconcile 发现 pendingWritebackAfter=1 后 abort before nightly，clean window=0；fail-closed 行为正确，但 0 人值守验收仍失败。
 - 当前 claims done=18、non-done=1（PG-WC-053=needs_human）；active repair=0、pending writeback=1（PG-WC-054 verify-live pending，attempts=7）、dropped=0、outbox=0、eligible needs-human drift=0，且无 SEO 进程或锁。
 - PG-WC-054 线上仍为 HTTP 200 但 canonical 到首页、Article JSON-LD=0、未进入 sitemap，证明 strict reconcile 拦截的是实际未上线状态。
-- 04:37 复核时上述状态无变化；临时 heartbeat 的 automation delete 再次等待 20 秒超时，磁盘状态仍为 ACTIVE，未绕过 Codex 接口手工删除。05:03 固定行索引修复重提 wrapper 成功执行，两个产品均无 `已修复` 行需要重提，结果复盘表和请求索引队列已刷新。
+- 21:05 最终复核时上述状态无变化；临时 heartbeat 的 automation delete 再次等待 30 秒超时，磁盘状态仍为 ACTIVE，未绕过 Codex 接口手工删除。05:03 固定行索引修复重提 wrapper 成功执行，两个产品均无 `已修复` 行需要重提，结果复盘表和请求索引队列已刷新。
 
 ---
 
@@ -78,5 +78,23 @@ Run the deterministic fixed-row index repair workflow through `bash tools/script
 **🤖 回答：**
 
 执行固定入口 `bash tools/scripts/gg-index-repair-resubmit-tick.sh`，退出码为 0；本次独立日志窗口为 05:03:06–05:03:27 CST，最终为 `index repair-resubmit ok`。astrologywiki：process-fixed fixed=0/resubmitted=0，sync-recap en_rows=273/appended=0/updated=0/skipped=273，sync-request-queue rows=26（P0=0/P1=3/P2=4/P3=19）。gengrowth：process-fixed fixed=0/resubmitted=0，sync-recap en_rows=62/appended=0/updated=0/skipped=62，sync-request-queue rows=0（P0–P3 均为 0）。日志无 failure/error/exception/auth/timeout/nonzero-rc；未使用普通文章 Google Indexing API、无人值守 GSC Request Indexing，亦未创建 Feishu 或 Google Doc 报告产物。自动化记忆已在真 EOF 追加。
+
+---
+
+### Q4 — 05:07
+
+**🙋 提问：**
+
+<heartbeat>
+  <automation_id>seo</automation_id>
+  <current_time_iso>2026-07-19T21:07:15.020Z</current_time_iso>
+  <instructions>
+继续当前 SEO Active Brief Preflight 验收任务。仅做只读验证，严禁手工启动 launcher/nightly、强制 publish、修复、通知或 Sheet 写入。检查最近一个 macOS LaunchAgent com.gengrowth.seo-blog 自然 fire 的精确日志窗口和进程父级；人工/Hermes 强制轮不计。确认顺序 active brief preflight -> pre-drain -> strict reconcile -> nightly，最终 claims non-done=0、active repair=0、pending/dropped writeback=0、outbox=0、needs-human drift=0，且无残留 SEO 进程/锁；若有发布，核验 plan/claims/publish log/Sheet/Vault/live 收敛。逐轮记录 20:00、20:30、21:00 是否为 clean natural window；只有连续 3 个 clean natural windows 才完成父目标。遇到仍运行则等待其自然结束，不干预。21:05 验收后或第三个 clean window 后删除本临时 heartbeat。遵守仓库 AGENTS.md 的中文输出与逐轮 record 规则。
+  </instructions>
+</heartbeat>
+
+**🤖 回答：**
+
+21:05 最终只读状态无变化：最新 SEO 日志仍停在 7 月 19 日 21:30:04；PG-WC-053=needs_human、claims non-done=1，PG-WC-054 pending writeback=1（verify-live pending/attempts=7）。active repair、dropped writeback、outbox、SEO 进程和锁均为 0。automation delete 再次等待 30 秒超时，状态仍 ACTIVE；未手工删除 automation 文件。
 
 ---

@@ -18,14 +18,11 @@ aliases:
 
 > 【本区域在每天最后一次对话结束时生成/更新】
 
-- 只读验收 7 月 18 日 20:00、20:30、21:00 三个 LaunchAgent 自然 fire；三次均因外部非日历长任务持有 launchd lock 而 skip，0 个 clean window，父目标未完成。
-- 外部轮分别从 18:52、20:08、21:28 附近启动并以 reconcile=2 结束；这些非日历轮不计入自然验收。
-- 当前 canonical claims 为 done=18、needs_human=1（PG-WC-053）；active repair=0、pending writeback=1（PG-WC-054 verify-live pending）、dropped=0、outbox=0、eligible needs-human drift=0，且无 SEO 进程或锁。
-- PG-WC-054 的 PR #412 已合并且 Vercel check PASS，但线上 URL 回落首页 canonical、无 Article JSON-LD、未进入 sitemap；plan/claims/publish log 已标完成，而 Sheet 仍为待写，证明 pending writeback 是真实不一致而非门槛过严。
-- 21:05 最终复核时上述状态均未自行收敛；临时 heartbeat 的 automation delete 请求再次等待 30 秒超时，磁盘状态仍为 ACTIVE，未绕过 Codex 接口手工删除。
-- 05:02 运行固定索引修复重提入口成功；astrologywiki 复盘表新增 9 行、请求队列 30 行，gengrowth 无队列，两个产品均无“已修复”行重提。
-- 09:01–09:03 运行固定索引监控入口成功；两个站点 Sitemap API 成功，astrologywiki 检查 4 条且均转为已收录，最终请求索引队列共 26 条（P1=3、P2=4、P3=19），无检查失败。
-- 10:01–10:02 运行结果复盘固定入口成功；AstrologyWiki 精确到期行 0、更新 239 行、生成 241 项任务，GenGrowth 精确到期行 3、更新 49 行、生成 62 项任务；无失败或凭据/属性边界。
+- SEO 自然窗口验收仍未通过：三个自然 fire 均因外部任务持锁跳过；claims 尚有 PG-WC-053=needs_human，PG-WC-054 存在 verify-live pending writeback，且线上 canonical/JSON-LD/sitemap 未收敛。
+- 固定索引修复入口在 05:02 完成；AstrologyWiki 复盘表新增 9 行、请求队列 30 行，GenGrowth 无队列，两个产品均无已修复行重提。
+- 固定索引监控入口在 09:01–09:03 完成；两个站点 Sitemap API 成功，AstrologyWiki 检查 4 条且均已收录，最终请求索引队列共 26 条（P1=3、P2=4、P3=19）。
+- 结果复盘固定入口在 10:01–10:02 完成；AstrologyWiki 更新 239 行/生成 241 项任务，GenGrowth 精确到期行 3/更新 49 行/生成 62 项任务，均无失败或凭据边界。
+- 关键词补充 brief 固定入口在 16:01–16:01 完成 apply；两个产品均无候选、更新、新簇或页面 ID，预处理与证据发现均为空，无失败。
 
 ---
 
@@ -146,5 +143,22 @@ After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-s
 **🤖 回答：**
 
 仅运行 `bash tools/scripts/gg-recap-performance-tick.sh`，退出码 0；日志窗口为 10:01:35–10:01:47，结尾 `recap performance ok`。AstrologyWiki（workbook=…jyzcQc、`sc-domain:astrologywiki.com`、GA4 `properties/524765570`）：精确到期行 0、更新复盘行 239、任务 241；分桶 P0=11、技术排查=146、P1=9、观察=75，报告为 `~/gengrowth-agents/reports/recap-performance/2026-07-19-astrologywiki-optimization-tasks.md`。GenGrowth（workbook=…ZTIRA8、`sc-domain:gengrowth.ai`、同一 GA4 属性）：精确到期行 3、更新复盘行 49、任务 62；分桶 P0=0、技术排查=49、P1=5、观察=8，报告为 `~/gengrowth-agents/reports/recap-performance/2026-07-19-gengrowth-optimization-tasks.md`。默认非 repair 路径仅选取已收录且年龄精确为 D14/D30/D60、尚缺该窗口指标的行；本日志只提供合计 `rows`，未输出 D14/D30/D60 逐档拆分或非到期/已填单元格跳过数量，故未额外访问或手改表格推断。无失败、认证或属性缺失。未使用 repair 标志、未手改 Sheet，且未发布、部署、修改页面、提交 GSC Request Indexing 或使用 Google Indexing API。
+
+---
+
+### Q7 — 16:01
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-18T14:01:06.622Z (1784383266622)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行指定 wrapper，退出码 0；精确日志窗口为 16:01:14–16:01:17，`dry_run=false`、`budget_exhausted=false`，为环境授权的 apply。astrologywiki 与 gengrowth 均为 candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]、evidence_discovery=[]，无失败。未在 wrapper 外手改 Sheet 或任务计划，也未创建额外 Feishu/Google Doc 报告产物。
 
 ---

@@ -19,11 +19,10 @@ aliases:
 > 【本区域在每天最后一次对话结束时生成/更新】
 
 - SEO 自然窗口验收仍未通过：三个自然 fire 均因外部任务持锁跳过；claims 尚有 PG-WC-053=needs_human，PG-WC-054 存在 verify-live pending writeback，且线上 canonical/JSON-LD/sitemap 未收敛。
-- 固定索引修复入口在 05:02 完成；AstrologyWiki 复盘表新增 9 行、请求队列 30 行，GenGrowth 无队列，两个产品均无已修复行重提。
+- 固定索引修复入口分别在 05:02 与 17:31 完成；两个产品均无已修复行重提，AstrologyWiki 请求队列最终为 26 行、GenGrowth 为 0，窗口内无失败。
 - 固定索引监控入口在 09:01–09:03 完成；两个站点 Sitemap API 成功，AstrologyWiki 检查 4 条且均已收录，最终请求索引队列共 26 条（P1=3、P2=4、P3=19）。
 - 结果复盘固定入口在 10:01–10:02 完成；AstrologyWiki 更新 239 行/生成 241 项任务，GenGrowth 精确到期行 3/更新 49 行/生成 62 项任务，均无失败或凭据边界。
-- 关键词补充 brief 固定入口在 16:01–16:01 完成 apply；两个产品均无候选、更新、新簇或页面 ID，预处理与证据发现均为空，无失败。
-- 固定索引修复入口在 17:31–17:31 完成；两个产品均无已修复行重提，AstrologyWiki 请求队列为 26 行，GenGrowth 队列为 0，日志无失败。
+- 关键词补充 brief 固定入口在 16:01 与 18:01 均完成 apply；两个产品均无候选、更新、新簇或页面 ID，预处理与证据发现均为空，无失败。
 
 ---
 
@@ -178,5 +177,22 @@ Run the deterministic fixed-row index repair workflow through `bash tools/script
 **🤖 回答：**
 
 运行指定固定入口，退出码 0；精确日志窗口为 17:31:36–17:31:57，结尾为 `index repair-resubmit ok`。astrologywiki：process-fixed fixed=0、resubmitted=0；sync-recap en_rows=273、appended=0、updated=0、skipped=273；sync-request-queue rows=26（P0=0、P1=3、P2=4、P3=19）。gengrowth：process-fixed fixed=0、resubmitted=0；sync-recap en_rows=62、appended=0、updated=49、skipped=13；sync-request-queue rows=0（P0–P3 均为 0）。窗口内无失败、错误、异常、认证、超时或非零返回记录；未使用普通文章 Google Indexing API、未进行无人值守 GSC Request Indexing 点击，且未创建飞书或 Google Doc 报告产物。
+
+---
+
+### Q9 — 18:02
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-19T08:00:41.428Z (1784448041428)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行指定 wrapper，退出码 0；精确日志窗口为 18:01:43–18:01:46，`dry_run=false`、`budget_exhausted=false`，为环境授权的 apply。astrologywiki 与 gengrowth 均为 candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]、evidence_discovery=[]，无失败。未在 wrapper 外手改 Sheet 或任务计划，也未创建额外 Feishu/Google Doc 报告产物。
 
 ---

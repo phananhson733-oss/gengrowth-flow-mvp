@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "pageId": "PG-TRANS-027",
+  "status": "failed",
+  "failures": [
+    "author banned token(s) matched: \"energy\""
+  ],
+  "updatedAt": "2026-07-20T14:08:46.459Z"
+}

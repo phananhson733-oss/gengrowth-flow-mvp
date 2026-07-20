@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-CELEB-060",
+  "entity": "Ferran Torres birth chart",
+  "target_keyword": "Ferran Torres birth chart",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-07-20T12:21:35.546Z",
+  "content_sha256_short": "b9a6ebbfc7baf5ad",
+  "source_path": "_staging/PG-CELEB-060-claude-v8.md",
+  "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-CELEB-060-en.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 5,
+      "h4Count": 0,
+      "words": 1805,
+      "wikilinks": 6,
+      "tbdLinks": 6
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

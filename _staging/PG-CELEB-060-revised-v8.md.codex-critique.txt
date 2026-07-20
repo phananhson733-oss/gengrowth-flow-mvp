@@ -1,0 +1,8 @@
+- 无出生时间却把“Capricorn Moon”写得过稳 → 改成“likely Capricorn Moon”并说明需用星历确认当天月亮是否跨 Sagittarius/Capricorn；别把它当已核实事实。
+- “Gemini Ascendant”逻辑自相矛盾 → 既然出生时间未公开，就不要把 rising sign 放进核心 triad；改为“reported/unverified Gemini rising”或另写成可选附注。
+- 行星落点缺少校验来源 → Mercury in Pisces、Venus in Aquarius、Mars in Aries 需要用可靠星历核对后再保留；否则删掉或标注为“if calculated from available date data”。
+- 足球事实表述有明显风险 → “scores in World Cup finals”不准确/易误导；改成更稳的已知成就或具体比赛事实，别用夸张泛称支撑性格判断。
+- 观察依据太泛，像把任意球员套进星座模板 → 加入2-3个具体职业节点、比赛风格或公开访谈例子来支撑“reset after a miss”“versatile public image”等判断。
+- “cold / calculating / colder moments”语气过重且无证据 → 改成“composed, pragmatic, emotionally contained”，避免把竞技冷静写成负面人格判断。
+- SEO intent 没有直接给出完整 chart data → 在前段增加“known/unknown chart facts”小表：birth date, place, time unknown, confirmed Sun, time-sensitive Moon/Ascendant status。
+- 结尾 CTA 偏长且重复 triad 概念 → 压缩为一句行动建议，把篇幅让给更有价值的出生时间不确定性说明和可验证 chart placements。

@@ -1,0 +1,8 @@
+- 月亮被写成确定的双鱼月 → 改为“圣胡斯托当地约 23:06 前为双鱼月，之后可能为白羊月”；所有基于 Pisces Moon / Pisces cluster 的判断改成条件式。
+- “Scorpio stellium (Jupiter, Pluto, North Node)”不严谨 → 北交点不是行星，改为“Scorpio emphasis”或“Jupiter-Pluto in Scorpio with North Node”。
+- “Cancer/Pisces clusters”“Capricorn group”说过头 → 两个点不算强集群；把个人行星和天王/海王/冥王这类世代行星分开解读。
+- 搜索意图还不够直接 → 增加完整的无时辰可确认配置表：Sun Cancer、Mercury Cancer Rx、Venus Leo、Mars Taurus、Jupiter Scorpio、Saturn Pisces Rx、Uranus/Neptune Capricorn、Pluto Scorpio、Node Scorpio、Moon 条件式，并明确无上升/宫位。
+- Paredes 本人存在感偏弱 → 用 2-3 个可核验的足球生涯/场上角色事实替换部分 Pew/Rudhyar/Liz Greene 泛论，只做“象征性呼应”，不要说成证明。
+- “How to Observe”像在引导确认偏误 → 要么用已引用事实支撑“loyalty / intense bonds / retreat time”，要么改成读者自查提示，不要伪装成对 Paredes 的观察。
+- Sources 太薄 → 补一个星历/排盘来源；Pew、Rudhyar、Greene 若保留，给具体作品或链接，否则删掉这些权威名词。
+- “water-heavy character”角度太泛 → 收束成更具体的张力：Cancer/Mercury 的情绪记忆、Taurus Mars 的固定耐力、Leo Venus 的可见性需求、Scorpio 的强度。

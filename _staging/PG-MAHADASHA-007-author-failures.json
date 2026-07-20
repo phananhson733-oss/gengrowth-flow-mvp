@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "pageId": "PG-MAHADASHA-007",
+  "status": "failed",
+  "failures": [
+    "drifted sections: \"How to Read This Placement in Your Chart\" (jaccard=0.000, shingle=0.000, target-recall=0.33); \"Common Misreadings\" (jaccard=0.000, shingle=0.000, target-recall=0.00) (skipped 5 structural: \"Venus in Taurus at a Glance\", \"Reflection Prompts\", \"Related Reading\", \"Take Action\", \"Sources\")",
+    "author banned token(s) matched: \"rising sign\""
+  ],
+  "updatedAt": "2026-07-20T12:52:16.167Z"
+}

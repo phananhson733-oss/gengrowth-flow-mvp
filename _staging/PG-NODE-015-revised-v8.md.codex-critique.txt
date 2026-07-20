@@ -1,0 +1,8 @@
+- “Eighth-house themes”直接绑定 Scorpio → 改为“Scorpio themes”，或明确说明这是现代自然宫位类比，避免把星座等同宫位。
+- “Mars spends only weeks in a sign”过度简化 → 改成平均约 6-8 周、逆行时可停留数月，并说明 natal 解读需看宫位、相位和逆行状态。
+- 文章反复使用“controlled intensity / depth / power / control”但展开不足 → 增加具体场景：恋爱、性吸引、冲突、工作目标、报复心/边界感各如何表现。
+- “十二年、数千次咨询”像未经证实的 E-E-A-T 声明 → 若不是作者真实资历就删除，改为可验证的传统/现代占星依据。
+- 搜索意图没有完全兜住 → 开头明确这是“natal Mars in Scorpio”解读，并加一句区分“transiting Mars in Scorpio”会如何不同。
+- Mars in Aries 对比写得太二元化 → 弱化“牺牲/换取”的绝对说法，改为倾向差异，并提醒相位、宫位会改变表达。
+- FAQ 中 Mars vs Pluto in Scorpio 过浅 → 补一句 Pluto by sign is generational, but house/aspects/angularity can make it personally prominent.
+- 实用建议偏少 → 在 Take Action 或正文加入可执行做法：识别隐藏动机、给愤怒出口、直接提出需求、避免 loyalty tests、设定控制感失衡时的沟通规则。

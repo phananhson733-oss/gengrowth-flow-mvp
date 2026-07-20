@@ -18,12 +18,10 @@ aliases:
 
 > 【本区域在每天最后一次对话结束时生成/更新】
 
-- 只读验收 7 月 19 日晚 7 个 LaunchAgent 自然 fire；本日没有外部重试污染，所有 fire 均通过 active brief preflight 与 pre-drain。
-- 20:00、20:30、21:00 三个目标窗口均在 pre-fire strict reconcile 发现 pendingWritebackAfter=1 后 abort before nightly，clean window=0；fail-closed 行为正确，但 0 人值守验收仍失败。
-- 当前 claims done=18、non-done=1（PG-WC-053=needs_human）；active repair=0、pending writeback=1（PG-WC-054 verify-live pending，attempts=7）、dropped=0、outbox=0、eligible needs-human drift=0，且无 SEO 进程或锁。
-- PG-WC-054 线上仍为 HTTP 200 但 canonical 到首页、Article JSON-LD=0、未进入 sitemap，证明 strict reconcile 拦截的是实际未上线状态。
-- 21:05 最终复核时上述状态无变化；临时 heartbeat 的 automation delete 再次等待 30 秒超时，磁盘状态仍为 ACTIVE，未绕过 Codex 接口手工删除。05:03 固定行索引修复重提 wrapper 成功执行，两个产品均无 `已修复` 行需要重提；09:01–09:03 索引监控 wrapper 也成功刷新两产品 sitemap、结果复盘表与请求索引队列。
-- 10:01–10:02 结果复盘性能 wrapper 成功完成；两产品均无 D14/D30/D60 到期未填行，托管字段与任务报告已刷新，日志未报告失败或凭据边界。
+- SEO 自然 fire 验收仍被 PG-WC-054 的 pending writeback 拦截；三次目标窗口均 fail-closed，未触发 nightly。
+- 05:03 索引修复重提、09:01–09:03 索引监控和 10:01–10:02 结果复盘性能包装器均成功运行，日志无失败或凭据边界。
+- 16:01–16:08 关键词补充 brief 包装器在 apply 模式成功执行；astrologywiki 新增并更新 7 个候选，gengrowth 无候选，未出现失败。
+- 本日所有涉及 Sheet、任务计划和通知的变更均只通过各自确定性包装器执行，未进行手工替代操作。
 
 ---
 
@@ -144,3 +142,20 @@ After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-s
 **🤖 回答：**
 
 仅执行指定 `bash tools/scripts/gg-recap-performance-tick.sh`，退出码 0；独立日志窗口为 10:01:40–10:01:46 CST，最终为 `recap performance ok`。astrologywiki（wb=…jyzcQc、`sc-domain:astrologywiki.com`、GA4 `properties/524765570`）：精确里程碑行 rows=0、托管复盘字段 updated=249、任务=251，报告为 `/Users/awayer_mini/gengrowth-agents/reports/recap-performance/2026-07-20-astrologywiki-optimization-tasks.md`；任务 P0=11、技术=156、P1=9、观察=75。gengrowth（wb=…ZTIRA8、`sc-domain:gengrowth.ai`、同一 GA4 property）：rows=0、updated=49、任务=62，报告为 `/Users/awayer_mini/gengrowth-agents/reports/recap-performance/2026-07-20-gengrowth-optimization-tasks.md`；任务 P0=0、技术=49、P1=5、观察=8。两站 D14/D30/D60 均为 0/0；日志未单列 non-due/已填充跳过数。无失败、凭据/属性缺失边界或非零退出；未进行手工 Sheet 编辑、repair/backfill、发布、部署、页面改动或 GSC 提交。
+
+---
+
+### Q7 — 16:08
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-19T14:02:13.037Z (1784469733037)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行指定 `bash tools/scripts/gg-topic-register-tick.sh`，退出码 0。精确日志窗口为 16:01:29–16:08:10 CST，环境启用 apply（`dry_run=false`、`budget_exhausted=false`）。astrologywiki：candidates=7、updates=7、new_clusters=1，page_ids 为 PG-CELEB-060、PG-TRANS-026、PG-TRANS-027、PG-AIMB-001、PG-NODE-015、PG-MAHADASHA-007、PG-CELEB-061；preprocessor 为 ok×1、v1_fallback×6；evidence discovery 为 ok×1（Ferran Torres：7 标题/7 域名）和 insufficient×6。gengrowth：candidates=0、updates=0、new_clusters=0，page_ids/preprocessor/evidence discovery 均为空。日志 `ok=true`，无失败；未进行手工 Sheet 或任务计划编辑，亦未创建额外 Feishu/Google Doc 报告产物。自动化记忆已在真 EOF 追加。

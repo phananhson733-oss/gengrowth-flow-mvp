@@ -23,6 +23,7 @@ aliases:
 - 当前 claims done=18、non-done=1（PG-WC-053=needs_human）；active repair=0、pending writeback=1（PG-WC-054 verify-live pending，attempts=7）、dropped=0、outbox=0、eligible needs-human drift=0，且无 SEO 进程或锁。
 - PG-WC-054 线上仍为 HTTP 200 但 canonical 到首页、Article JSON-LD=0、未进入 sitemap，证明 strict reconcile 拦截的是实际未上线状态。
 - 21:05 最终复核时上述状态无变化；临时 heartbeat 的 automation delete 再次等待 30 秒超时，磁盘状态仍为 ACTIVE，未绕过 Codex 接口手工删除。05:03 固定行索引修复重提 wrapper 成功执行，两个产品均无 `已修复` 行需要重提；09:01–09:03 索引监控 wrapper 也成功刷新两产品 sitemap、结果复盘表与请求索引队列。
+- 10:01–10:02 结果复盘性能 wrapper 成功完成；两产品均无 D14/D30/D60 到期未填行，托管字段与任务报告已刷新，日志未报告失败或凭据边界。
 
 ---
 
@@ -115,3 +116,31 @@ Run the GenGrowth Phase 2 indexing workflow through the existing deterministic w
 执行固定入口 `bash tools/scripts/gg-index-monitor-tick.sh`，退出码为 0；本次精确日志窗口为 09:01:33–09:03:51 CST，最终为 `index monitor ok`。官方 Search Console Sitemap API：astrologywiki 与 gengrowth 均提交成功。URL Inspection：astrologywiki rows=273/due=10/checked=10/alerts=0/failures=0，10 个 URL 均转为 indexed；gengrowth rows=62/due=0，无需检查。结果复盘表已同步：astrologywiki en_rows=273、updated=273；gengrowth en_rows=62、updated=49、skipped=13。最终 request-indexing-queue：astrologywiki rows=16（P0=0/P1=3/P2=3/P3=10），gengrowth rows=0，合计 rows=16（P0=0/P1=3/P2=3/P3=10）。wrapper 调用了可通知步骤，但本次窗口没有可见的 Feishu/Lark 发送成功或失败回执。未使用普通文章 Google Indexing API，且未进行无人值守 Request Indexing 点击；候选 URL 仅可由 Computer Use 打开，最终点击仍需人工确认。自动化记忆已在真 EOF 追加。
 
 ---
+
+### Q6 — 10:02
+
+**🙋 提问：**
+
+Automation: 结果复盘表更新
+Automation ID: gengrowth-recap-performance
+Automation memory: $CODEX_HOME/automations/gengrowth-recap-performance/memory.md
+Last run: 2026-07-19T02:01:09.810Z (1784426469810)
+
+Run the deterministic GenGrowth results-recap performance workflow through `bash tools/scripts/gg-recap-performance-tick.sh`.
+
+The wrapper loads the local gg environment, scans the configured products (`GG_RECAP_PERFORMANCE_PRODUCTS`, defaulting to astrologywiki and gengrowth), reads `index-tracking` and `结果复盘表`, and only fetches D14/D30/D60 GSC/GA4 snapshot metrics for indexed URLs whose current age is exactly at one of those milestones. Non-milestone rows and already-filled milestone cells must keep their existing values; historical repair/backfill is only allowed through the wrapper's explicit repair modes such as `--fill-pending` / `--verify-zero-metrics`, not by ad-hoc daily refresh.
+
+The wrapper preserves manual recap decisions/notes, writes wrapper-owned generated performance fields back to the Sheet, and writes the optimization task report under `~/gengrowth-agents/reports/recap-performance/`.
+
+Safety boundary:
+- Do not bypass the wrapper or pass ad-hoc write flags directly to the Node script.
+- Do not hand-edit Google Sheets outside the wrapper.
+- Do not publish content, deploy sites, modify page source, submit GSC Request Indexing, or use the Google Indexing API.
+- Do not overwrite manual fields such as `决策` or human notes; only the wrapper-owned generated recap segment may be refreshed.
+- Do not create extra Feishu/Google Doc artifacts unless the wrapper already does so.
+
+After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/recap_performance/` and summarize per-product workbook/site/property, exact-milestone rows processed, updated recap row counts, generated report path, D14/D30/D60 coverage for due indexed rows, optimization task counts by priority, skipped/non-due rows, and any failures. If the wrapper fails or required credentials/properties are missing, report the exact missing boundary from the log without attempting a manual replacement workflow.
+
+**🤖 回答：**
+
+仅执行指定 `bash tools/scripts/gg-recap-performance-tick.sh`，退出码 0；独立日志窗口为 10:01:40–10:01:46 CST，最终为 `recap performance ok`。astrologywiki（wb=…jyzcQc、`sc-domain:astrologywiki.com`、GA4 `properties/524765570`）：精确里程碑行 rows=0、托管复盘字段 updated=249、任务=251，报告为 `/Users/awayer_mini/gengrowth-agents/reports/recap-performance/2026-07-20-astrologywiki-optimization-tasks.md`；任务 P0=11、技术=156、P1=9、观察=75。gengrowth（wb=…ZTIRA8、`sc-domain:gengrowth.ai`、同一 GA4 property）：rows=0、updated=49、任务=62，报告为 `/Users/awayer_mini/gengrowth-agents/reports/recap-performance/2026-07-20-gengrowth-optimization-tasks.md`；任务 P0=0、技术=49、P1=5、观察=8。两站 D14/D30/D60 均为 0/0；日志未单列 non-due/已填充跳过数。无失败、凭据/属性缺失边界或非零退出；未进行手工 Sheet 编辑、repair/backfill、发布、部署、页面改动或 GSC 提交。

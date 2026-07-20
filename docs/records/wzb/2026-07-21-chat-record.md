@@ -18,11 +18,10 @@ aliases:
 
 > 【本区域在每天最后一次对话结束时生成/更新】
 
-- 7 月 20 日 20:00 SEO LaunchAgent 自然 fire 完整执行 preflight、pre-drain、strict reconcile 与 nightly，但 post-reconcile 因 active repair 和 needs-human drift 各 1 而失败；20:30、21:00 未形成独立窗口，clean=0。
-- 当晚自动发布 5 篇文章，plan、claims、publish log、Google Sheet、Vault、oracle main 与 live 均已收敛；其中两篇由后台修复控制器在主轮结束前后完成自动修复和合并。
+- 7 月 20 日 20:00 SEO LaunchAgent 自然 fire 完整执行 preflight、pre-drain、strict reconcile 与 nightly，但 post-reconcile 因 active repair 和 needs-human drift 各 1 而失败；20:30、21:00 未形成独立窗口，clean=0。当晚自动发布的 5 篇文章最终全链路收敛。
 - 当前终态为 claims non-done=1（PG-WC-053 needs_human），active repair、pending/dropped writeback、outbox、needs-human drift、SEO 进程和锁均为 0，父目标仍未达到连续 3 个 clean window。
 - 验收暴露的主要问题是主轮与异步修复之间的终态竞态，以及长轮次吞掉后续日历窗口；不是放宽内容事实门禁即可解决的问题。
-- 临时 heartbeat 在 04:12 与 04:37 两次删除接口调用均超时，配置仍为 ACTIVE，未手工改动自动化文件。
+- 临时 heartbeat 在 04:12、04:37 与 05:08 三次删除接口调用均超时，配置仍为 ACTIVE，未手工改动自动化文件。
 - 05:00 固定入口 `gg-index-repair-resubmit-tick.sh` 成功完成 astrologywiki 与 gengrowth 的已修复行处理、结果复盘表同步和请求索引队列刷新；无失败信号，未触及普通文章 Indexing API、无人值守 GSC 请求或报告产物。
 
 ---
@@ -81,5 +80,23 @@ Run the deterministic fixed-row index repair workflow through `bash tools/script
 **🤖 回答：**
 
 已按固定入口运行，退出码为 0；本次日志窗口为 05:00:43–05:01:09 CST，末行 `index repair-resubmit ok`，无 failure/error/exception/auth/timeout/nonzero-rc 信号。astrologywiki：process-fixed fixed=0、resubmitted=0；sync-recap en_rows=278、appended=5、updated=0、skipped=273；sync-request-queue rows=21、P0=0、P1=3、P2=3、P3=15。gengrowth：process-fixed fixed=0、resubmitted=0；sync-recap en_rows=62、appended=0、updated=0、skipped=62；sync-request-queue rows=0、P0=0、P1=0、P2=0、P3=0。未使用普通文章 Google Indexing API、未进行无人值守 Search Console Request Indexing 点击，未创建 Feishu 或 Google Doc 报告产物；已更新 automation memory。
+
+---
+
+### Q4 — 05:08
+
+**🙋 提问：**
+
+<heartbeat>
+  <automation_id>seo</automation_id>
+  <current_time_iso>2026-07-20T21:07:21.478Z</current_time_iso>
+  <instructions>
+继续当前 SEO Active Brief Preflight 验收任务。仅做只读验证，严禁手工启动 launcher/nightly、强制 publish、修复、通知或 Sheet 写入。检查最近一个 macOS LaunchAgent com.gengrowth.seo-blog 自然 fire 的精确日志窗口和进程父级；人工/Hermes 强制轮不计。确认顺序 active brief preflight -> pre-drain -> strict reconcile -> nightly，最终 claims non-done=0、active repair=0、pending/dropped writeback=0、outbox=0、needs-human drift=0，且无残留 SEO 进程/锁；若有发布，核验 plan/claims/publish log/Sheet/Vault/live 收敛。逐轮记录 20:00、20:30、21:00 是否为 clean natural window；只有连续 3 个 clean natural windows 才完成父目标。遇到仍运行则等待其自然结束，不干预。21:05 验收后或第三个 clean window 后删除本临时 heartbeat。遵守仓库 AGENTS.md 的中文输出与逐轮 record 规则。
+  </instructions>
+</heartbeat>
+
+**🤖 回答：**
+
+05:08 最终只读检查仍无变化：LaunchAgent 日志继续停在 2026-07-20 22:48:22 CST 的第 746 行，`runs=25`、`last exit code=2`；20:00 非 clean，20:30 与 21:00 无独立窗口，最终 clean=0/3。当前 claims done=23、non-done=1（PG-WC-053=needs_human），active repair、pending/dropped writeback、outbox、eligible needs-human drift、SEO 进程和相关锁均为 0。没有新增发布。临时 heartbeat 删除接口再次等待 30 秒超时，配置仍为 ACTIVE，未手工改动；父目标继续保持 in_progress。
 
 ---

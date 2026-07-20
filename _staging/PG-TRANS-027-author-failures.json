@@ -1,10 +1,7 @@
 {
   "schemaVersion": 1,
   "pageId": "PG-TRANS-027",
-  "status": "failed",
-  "failures": [
-    "author banned token(s) matched: \"energy\"",
-    "drifted sections: \"How to Read This Transit in Your Timing\" (jaccard=0.033, shingle=0.000, target-recall=0.33); \"Common Misreadings\" (jaccard=0.000, shingle=0.000, target-recall=0.00) (skipped 5 structural: \"Surviving Saturn Return at a Glance\", \"Reflection Prompts\", \"Related Reading\", \"Take Action\", \"Sources\")"
-  ],
-  "updatedAt": "2026-07-20T14:16:02.996Z"
+  "status": "passed",
+  "failures": [],
+  "updatedAt": "2026-07-20T14:19:23.695Z"
 }

@@ -6,7 +6,8 @@
     "word count 1310 < min 1485",
     "SC3c section scatter: 1 section(s) with >3 scattered prose paragraphs",
     "L13: 子节 prose 段过多 (4 > 3); 用 `### ` H3 小标题把长叙述分组(每组 ≤3 段)，或改成「引子 + 编号列表」(v4.5.1 / 2026-06-09 H3)",
-    "word count 1301 < min 1485"
+    "word count 1301 < min 1485",
+    "drifted sections: \"Why It Matters for Self-Awareness\" (jaccard=0.000, shingle=0.000, target-recall=0.00); \"The Pisces Sun Label vs the Whole Birth Chart Triad\" (jaccard=0.000, shingle=0.000, target-recall=0.00) (skipped 6 structural: \"Common Misreadings\", \"The Ferran Torres Chart at a Glance\", \"Reflection Prompts\", \"Related Reading\", \"Take Action\", \"Sources\")"
   ],
-  "updatedAt": "2026-07-20T10:37:31.590Z"
+  "updatedAt": "2026-07-20T12:09:06.118Z"
 }

@@ -23,6 +23,7 @@ aliases:
 - 当前终态为 claims non-done=1（PG-WC-053 needs_human），active repair、pending/dropped writeback、outbox、needs-human drift、SEO 进程和锁均为 0，父目标仍未达到连续 3 个 clean window。
 - 验收暴露的主要问题是主轮与异步修复之间的终态竞态，以及长轮次吞掉后续日历窗口；不是放宽内容事实门禁即可解决的问题。
 - 临时 heartbeat 在 04:12 与 04:37 两次删除接口调用均超时，配置仍为 ACTIVE，未手工改动自动化文件。
+- 05:00 固定入口 `gg-index-repair-resubmit-tick.sh` 成功完成 astrologywiki 与 gengrowth 的已修复行处理、结果复盘表同步和请求索引队列刷新；无失败信号，未触及普通文章 Indexing API、无人值守 GSC 请求或报告产物。
 
 ---
 
@@ -63,5 +64,22 @@ aliases:
 **🤖 回答：**
 
 04:37 只读复核无变化：LaunchAgent 日志仍停在 2026-07-20 22:48:22 CST 的第 746 行，`runs=25`、`last exit code=2`，没有 20:30 或 21:00 独立窗口；20:00 仍为非 clean，clean=0/3。当前 claims done=23、non-done=1（PG-WC-053=needs_human），active repair、pending/dropped writeback、outbox、eligible needs-human drift、SEO 进程及所有相关锁均为 0。没有新增发布，因此沿用上一轮已经完成的五篇全链路收敛证据。临时 heartbeat 删除接口再次等待 20 秒超时，配置仍为 ACTIVE，未手工改动；父目标保持 in_progress。
+
+---
+
+### Q3 — 05:01
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: 2026-07-20T09:31:18.171Z (1784539878171)
+
+Run the deterministic fixed-row index repair workflow through `bash tools/scripts/gg-index-repair-resubmit-tick.sh`. The wrapper loads the local gg environment, loops the configured products (`GG_INDEX_MONITOR_PRODUCTS`, defaulting to astrologywiki and gengrowth), processes rows marked `已修复`, syncs `结果复盘表`, and refreshes `request-indexing-queue` in each product Google Sheet. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, do not click Search Console Request Indexing unattended, and do not create Feishu or Google Doc report artifacts. After the wrapper exits, summarize per-product `process-fixed`, `sync-recap`, `sync-request-queue` counts visible in the log, plus any failures.
+
+**🤖 回答：**
+
+已按固定入口运行，退出码为 0；本次日志窗口为 05:00:43–05:01:09 CST，末行 `index repair-resubmit ok`，无 failure/error/exception/auth/timeout/nonzero-rc 信号。astrologywiki：process-fixed fixed=0、resubmitted=0；sync-recap en_rows=278、appended=5、updated=0、skipped=273；sync-request-queue rows=21、P0=0、P1=3、P2=3、P3=15。gengrowth：process-fixed fixed=0、resubmitted=0；sync-recap en_rows=62、appended=0、updated=0、skipped=62；sync-request-queue rows=0、P0=0、P1=0、P2=0、P3=0。未使用普通文章 Google Indexing API、未进行无人值守 Search Console Request Indexing 点击，未创建 Feishu 或 Google Doc 报告产物；已更新 automation memory。
 
 ---

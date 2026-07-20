@@ -20,7 +20,7 @@ aliases:
 
 - SEO 自然 fire 验收仍被 PG-WC-054 的 pending writeback 拦截；三次目标窗口均 fail-closed，未触发 nightly。
 - 05:03 索引修复重提、09:01–09:03 索引监控和 10:01–10:02 结果复盘性能包装器均成功运行，日志无失败或凭据边界。
-- 16:01–16:08 关键词补充 brief 包装器在 apply 模式成功执行，astrologywiki 新增并更新 7 个候选；18:02 再次运行时两产品均无候选，均未出现失败。
+- 16:01–16:08 关键词补充 brief 包装器在 apply 模式成功执行，astrologywiki 新增并更新 7 个候选；18:02 与 20:02 再次运行时两产品均无候选，均未出现失败。
 - 本日所有涉及 Sheet、任务计划和通知的变更均只通过各自确定性包装器执行，未进行手工替代操作。
 - 17:31–17:32 索引修复重提包装器成功运行；两产品均无已修复行重提，astrologywiki 辅助请求队列为 16 条，日志无失败。
 
@@ -194,3 +194,20 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 仅运行指定 `bash tools/scripts/gg-topic-register-tick.sh`，退出码 0。精确日志窗口为 18:02:23–18:02:26 CST，环境启用 apply（`dry_run=false`、`budget_exhausted=false`）。astrologywiki 与 gengrowth 均为 candidates=0、updates=0、new_clusters=0，page_ids 和 preprocessor 均为空；日志 `ok=true`，无失败。未进行手工 Sheet 写入或直接任务计划编辑，亦未创建额外 Feishu/Google Doc 报告产物。自动化记忆已在真 EOF 追加。
+
+---
+
+### Q10 — 20:02
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-20T10:01:48.312Z (1784541708312)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行指定 `bash tools/scripts/gg-topic-register-tick.sh`，退出码 0。精确日志窗口为 20:02:18–20:02:22 CST，环境启用 apply（`dry_run=false`、`budget_exhausted=false`）。astrologywiki 与 gengrowth 均为 candidates=0、updates=0、new_clusters=0，page_ids、preprocessor、evidence_discovery 均为空；日志 `ok=true`，无 failure 或 timeout。未进行手工 Sheet 写入或直接任务计划编辑，亦未创建额外 Feishu/Google Doc 报告产物。自动化记忆已在真 EOF 追加。

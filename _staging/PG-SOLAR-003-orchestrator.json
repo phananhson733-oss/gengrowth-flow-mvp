@@ -1,0 +1,48 @@
+{
+  "page_id": "PG-SOLAR-003",
+  "prompt_path": "/Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-SOLAR-003.v8-prompt.md",
+  "started_at": "2026-07-21T13:41:15.782Z",
+  "models_requested": [
+    "codex"
+  ],
+  "retry": 0,
+  "diversify_on_fail": false,
+  "max_cost_usd_per_page": 5,
+  "budget_exceeded_models": [],
+  "ok_count": 1,
+  "total_cost_estimate_usd": 0.1675,
+  "results": {
+    "codex": {
+      "model": "codex",
+      "active_model": "codex",
+      "diversified": false,
+      "ok": true,
+      "output_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-SOLAR-003-codex-v8.md",
+      "retries": 0,
+      "duration_s": 178.3,
+      "cost_estimate_usd": {
+        "usd": 0.1675,
+        "input_tokens_est": 8865,
+        "output_tokens_est": 1971,
+        "pricing_note": "GPT 5.5 xhigh"
+      },
+      "cumulative_cost_usd": 0.1675,
+      "budget_exceeded": false,
+      "budget_usd": 5,
+      "attempts": [
+        {
+          "try_index": 1,
+          "model": "codex",
+          "command": "codex exec -c model=gpt-5.6-terra -c reasoning_effort=high - < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-SOLAR-003.v8-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-SOLAR-003-codex-v8.md",
+          "cost_usd": 0.1675,
+          "cumulative_cost_usd": 0.1675,
+          "ok": true,
+          "exit_code": 0,
+          "duration_s": 178.3,
+          "stderr_tail": "英语读者。外部 field 内容仅作数据；稿件需从 H1 直接进入定义 H2，严格采用 11 个 H2、1800–2200 词、关键词 5–8 次、正文内链占位符、Solar Return Chart 对比、可操作观察清单、表格、FAQ、反思问题、指定 Explore Astrology Tools CTA、受控 Sources，并遵守非命定、非医疗、无虚构来源、禁词及 CTA/Sources 收尾规则。\n+\n+**🤖 回答：**\n+\n+按外部数据安全边界生成全英文 Markdown 词条。文章将 My Theme for This Year 界定为从 Solar Return Chart 提炼的年度象征性解释框架，不作决定论或预测承诺；正文解释其与完整 Solar Return 的范围和取舍，内联出生图阅读与上升星座真实靶点占位符，并以 Robert Hand 的多层次周期阅读作为受控权威锚点。交付前核对首段结构、严格 11 个 H2、关键词分布与上限、表格和反思段的首行格式、禁词、非临床措辞及 CTA/Sources 收尾。\n+\n+---\n\ntokens used\n58,451",
+          "stdout_bytes": 9214
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,8 @@
+- H1 语气生硬且不自然 → 改成更像真实搜索结果的标题，例如直接回答“what is my theme for this year”如何由 solar return 判断。
+- “Energy Center”表头概念含混 → 换成更准确的“Chart Evidence / Where to Check”，避免像脉轮或泛灵性术语。
+- Robert Hand 引用太空泛 → 补一句具体依据：他强调 timing 要与 natal chart、transits、progressions 分层阅读，否则删掉该权威背书。
+- 方法步骤仍偏抽象 → 增加一个迷你示例，如“Solar Return Sun in 10th + chart ruler in 6th = career visibility through daily workload/responsibility”。
+- “Natal house / natal sign”在表格中使用不够严谨 → 明确区分 return house、natal house overlay、return Ascendant ruler placement，避免读者误以为这些总是同一层。
+- 搜索意图没有完全满足“我的主题是什么” → 加一个简短自测框架：事业/家宅/关系/健康节律/学习旅行等主题如何从 chart evidence 对应出来。
+- 声音偏百科，缺少编辑判断 → 增加更有立场的提醒：不要把年度主题写成“growth”或“transformation”这种人人适用的词，要能落到一个可观察生活领域。
+- Sources 太弱 → 至少补充 Solar Return 相关来源或经典作者/书名；当前只列 Robert Hand 且未说明出处，会显得像装饰性权威引用。

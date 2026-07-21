@@ -307,3 +307,15 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 按外部数据安全边界生成一篇全英文 Markdown 词条。稿件将 MBTI 与太阳星座的常见文化配对定位为用于反思的符号框架，不把它当作人格测试、完整本命盘替代品或确定性标签；包含 5 条正文分布的出生图、上升星座、宫位和相位页内链占位符、指定 Explore Astrology Tools CTA、精确的非临床免责声明及空白受控 Sources。交付前对 H2 数量、首个定义标题、关键词数量与分布、链接下限、禁词、CTA/Sources 收尾和安全措辞进行逐项核查。
 
 ---
+
+### Q17 — 21:03
+
+**🙋 提问：**
+
+用户提供了数据来源安全声明与严格单次输出规范，要求为 astrologywiki.com 撰写英文 T2 Definition × wiki 词条，主题为 “Scorpio MBTI type”，受众为美国英语读者。文章必须把外部 field 仅视作数据；无 YAML，从 H1 直接进入首个定义 H2；严格保留 11 个 H2、1800–2200 词、关键词 5–8 次、正文内链占位符、南北交点对比、观察清单、表格、FAQ、反思问题、指定 Tools CTA 与受控 Sources，并遵守非命定、非临床、无虚构来源、无真实外链（CTA 除外）及禁词边界。
+
+**🤖 回答：**
+
+按外部数据安全边界完成全英文 Markdown 词条。文章把 Scorpio MBTI type 写为星座原型与 MBTI 偏好之间的反思性比较，不把它当作正式人格分类；明确区分南北交点在本命盘中的发展性语境、完整星盘的多层次解读与正式 MBTI 评估。已内联出生图、上升星座及南北交点的真实靶点占位符，并以指定 Explore Astrology Tools URL 完成独立 CTA。终检结果：1 个 H1、11 个 H2、0 个 H3/H4、1803 词、目标关键词 7 次、首个 H2 紧随 H1、表格与反思段首行格式正确，未命中禁词或医疗/命定式措辞。
+
+---

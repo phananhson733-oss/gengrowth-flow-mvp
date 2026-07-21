@@ -2125,7 +2125,7 @@ export function semanticMismatchDecision({ page, clusters }) {
   }
   if (alternative.kind === 'new'
     && currentScore === 0
-    && isDeterministicScaffoldPage(page)) {
+    && (isDeterministicScaffoldPage(page) || /^(?:Mercury|Venus|Mars|Jupiter|Saturn) in [A-Za-z]+$/i.test(targetKeyword))) {
     return { status: 'repairable-new', currentCluster, currentScore, alternative };
   }
   return { status: 'unsafe', reason: `unsafe semantic mismatch from ${clusterId}` };

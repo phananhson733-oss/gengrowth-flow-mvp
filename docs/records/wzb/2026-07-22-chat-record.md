@@ -1,11 +1,15 @@
 ---
+title: 对话记录 — 2026-07-22
 date: 2026-07-22
+updated: 2026-07-22
 type: chat-record
 author: xdawayer
 agent: codex
 tags:
   - record
   - daily
+aliases:
+  - 2026-07-22 对话记录
 ---
 
 # 对话记录 — 2026-07-22
@@ -17,6 +21,8 @@ tags:
 - 编写了一篇面向美国 B2B SaaS 受众的 Agentic AI Marketing Automation T2 指南稿，按给定结构、关键词、内链和事实诚信约束组织。
 - 编写了一篇面向美国 B2B SaaS 受众的 YouTube AI search authority 2026 T2 指南稿，遵循一次性输出、11 个 H2、关键词、CTA 与引用边界。
 - 再次按同一受控数据来源、结构、字数、关键词和事实诚信门禁生成该主题的英文 T2 指南稿。
+- 7 月 21 日 SEO 自然窗口验收仍为 0/3：18:30–19:30 preflight 因真实语义/cluster 不一致失败，19:52 非日历直跑占锁，导致 20:00、20:30、21:00 三个自然 fire 全部跳过；该外部轮发布的两篇文章最终全链路收敛。
+- 当前 SEO 终态为 claims non-done=1（PG-WC-053 needs_human），active repair、pending/dropped writeback、outbox、needs-human drift、相关进程和锁均为 0；临时 heartbeat 删除接口继续超时且仍为 ACTIVE。
 
 ---
 
@@ -79,5 +85,25 @@ tags:
 **🤖 回答：**
 
 生成一篇英文 T2 指南：将该主题界定为用可观察的频道、视频和受众证据判断 AI 发现可能性的解释性框架，而非官方平台分数或保证；以白标审核、SaaS 上线与销售支持等场景说明判断和执行路径，提供决策表、评估清单、编号实施步骤、FAQ、合规内部链接占位符、指定 Use Cases CTA。Sources 只保留 GenGrowth 团队观察的方法说明，未引入未经核查的第三方资料或数据。
+
+---
+
+### Q6 — 04:11
+
+**🙋 提问：**
+
+<heartbeat>
+  <automation_id>seo</automation_id>
+  <current_time_iso>2026-07-21T20:05:20.791Z</current_time_iso>
+  <instructions>
+继续当前 SEO Active Brief Preflight 验收任务。仅做只读验证，严禁手工启动 launcher/nightly、强制 publish、修复、通知或 Sheet 写入。检查最近一个 macOS LaunchAgent com.gengrowth.seo-blog 自然 fire 的精确日志窗口和进程父级；人工/Hermes 强制轮不计。确认顺序 active brief preflight -> pre-drain -> strict reconcile -> nightly，最终 claims non-done=0、active repair=0、pending/dropped writeback=0、outbox=0、needs-human drift=0，且无残留 SEO 进程/锁；若有发布，核验 plan/claims/publish log/Sheet/Vault/live 收敛。逐轮记录 20:00、20:30、21:00 是否为 clean natural window；只有连续 3 个 clean natural windows 才完成父目标。遇到仍运行则等待其自然结束，不干预。21:05 验收后或第三个 clean window 后删除本临时 heartbeat。遵守仓库 AGENTS.md 的中文输出与逐轮 record 规则。
+  </instructions>
+</heartbeat>
+
+**🤖 回答：**
+
+只读验收仍未通过。LaunchAgent `runs` 从 25 增至 32，恰好对应 18:30、19:00、19:30、20:00、20:30、21:00、21:30 七个日历触发；固定 ProgramArguments 与 XPC service 支持这些日志头为自然 fire，19:52:25 的非日历直跑不计。18:30 natural preflight 因 `PG-RISE-010` unsafe semantic mismatch 失败，19:00 与 19:30 因 `PG-WC-053` 缺失 `worldcup2026_astrology` cluster 失败。19:52 外部轮通过 preflight → pre-drain → strict reconcile 后启动 nightly，长时间持有 `/tmp/gg-seo-blog-launchd.lock`，使 20:00、20:30、21:00 三个自然 fire 均仅输出持锁 skip，因此 clean=0/3；外部轮最终又因 `pendingWritebackAfter=1` 以 reconcile=2 结束，不能替代自然验收。
+
+外部轮发布 `PG-MCMT-001` 与 `PG-SOLAR-003`；两篇均已在 W22 plan 勾选、claims=done、publish log=published、Google Sheet=已发布且 URL 精确、Vault 资产存在、pinned oracle origin/main 含文章与索引，live 均 HTTP 200、精确 canonical、Article JSON-LD 存在并进入 sitemap。检查期间独立 GenGrowth 修复进程仍在自然运行，已等待至其 04:09:52 自行退出；最终 claims done=25、non-done=1（PG-WC-053=needs_human），active repair=0、pending/dropped writeback=0、outbox=0、eligible needs-human drift=0，无相关进程或锁。临时 heartbeat 删除接口等待 30 秒后再次超时，配置仍为 ACTIVE，未手工改动；父目标保持 in_progress。
 
 ---

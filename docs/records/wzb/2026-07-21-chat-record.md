@@ -164,3 +164,20 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 仅运行固定入口 `bash tools/scripts/gg-topic-register-tick.sh`，退出码 0。精确日志窗口为 15:25:10–15:33:12 CST，`topic-register ok`；本地环境启用 apply（`dry_run=false`、`budget_exhausted=false`）。astrologywiki：candidates=7、updates=7、new_clusters=1、page_ids=PG-TRANS-028、PG-TRANS-029、PG-SOLAR-003、PG-RISE-009、PG-HEAL-007、PG-NODE-016、PG-MCMT-001；preprocessor 为 ok×2、v1_fallback×5；evidence discovery 为 ok×2（9/8 与 10/9 个 SERP 标题/域名）、insufficient×5。gengrowth：candidates=0、updates=0、new_clusters=0、page_ids/preprocessor/evidence discovery 均为空。日志无失败或超时；未进行手工 Sheet 写入、直接任务计划编辑或额外 Feishu/Google Doc 报告产物。自动化记忆已于 15:34 CST 追加终态。
 
 ---
+
+### Q8 — 16:02
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-21T07:24:07.133Z (1784618647133)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行固定入口 `bash tools/scripts/gg-topic-register-tick.sh`，退出码 0。精确日志窗口为 16:01:54–16:02:00 CST，`topic-register ok`；本地环境启用 apply（`dry_run=false`、`budget_exhausted=false`）。astrologywiki：candidates=0、updates=0、new_clusters=0、page_ids/preprocessor/evidence discovery 均为空。gengrowth：candidates=0、updates=0、new_clusters=0、page_ids/preprocessor/evidence discovery 均为空。日志无失败或超时；未进行手工 Sheet 写入、直接任务计划编辑或额外 Feishu/Google Doc 报告产物。自动化记忆已于 16:02 CST 追加终态。
+
+---

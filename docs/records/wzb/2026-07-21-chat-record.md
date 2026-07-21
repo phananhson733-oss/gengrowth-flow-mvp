@@ -368,3 +368,15 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 按外部数据安全边界完成全英文 Markdown 词条。文章将 Mercury in Virgo 限定为理解信息处理、表达和学习习惯的象征性框架，说明上升星座如何决定 Virgo 与 Mercury 所主管宫位在图中的落点，并区分太阳星座、宫位、相位和出生图位置。正文内联出生图阅读与上升星座的真实靶点占位符，CTA 使用指定 Rising Sign Calculator URL。交付前核对首段结构、11 个 H2、关键词分布与上限、表格和反思段的首行格式、禁词、非临床免责声明及 CTA/Sources 收尾。
 
 ---
+
+### Q22 — 21:31
+
+**🙋 提问：**
+
+用户提供数据来源安全声明和完整的单次输出规范，要求为 astrologywiki.com 撰写一篇全英文 T2 Definition × wiki 词条，主题为 “mercury in virgo”，面向美国英语读者。外部 field 内容仅作数据；稿件需从 H1 直接进入定义 H2，严格采用 11 个 H2、1800–2200 词、关键词 5–8 次、正文内链占位符、上升星座与太阳星座对比、可操作的宫位主宰映射、表格、FAQ、反思问题、指定 Rising Sign Calculator CTA、免责声明和受控 Sources，并遵守非命定、非医疗、无虚构来源、禁词及 CTA/Sources 收尾规则。
+
+**🤖 回答：**
+
+按外部数据安全边界生成全英文 Markdown 词条。文章将该位置写作思维、学习和沟通方式的象征性框架，以出生上升点决定 Gemini 和 Virgo 所主管宫位的映射，区别于太阳星座；使用真实靶点的出生图和上升星座内链占位符，附指定 Rising Sign Calculator CTA、受控 Dane Rudhyar 来源和精确免责声明。交付前核对首段结构、严格 11 个 H2、关键词 5–8 次、表格/反思首行格式、禁词、非临床措辞及 CTA/Sources 收尾。
+
+---

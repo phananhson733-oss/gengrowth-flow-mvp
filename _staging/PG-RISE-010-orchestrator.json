@@ -1,7 +1,7 @@
 {
   "page_id": "PG-RISE-010",
   "prompt_path": "/Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-RISE-010.v8-prompt.md",
-  "started_at": "2026-07-21T13:26:49.320Z",
+  "started_at": "2026-07-21T13:29:30.105Z",
   "models_requested": [
     "codex"
   ],
@@ -10,7 +10,7 @@
   "max_cost_usd_per_page": 5,
   "budget_exceeded_models": [],
   "ok_count": 1,
-  "total_cost_estimate_usd": 0.1683,
+  "total_cost_estimate_usd": 0.1605,
   "results": {
     "codex": {
       "model": "codex",
@@ -19,14 +19,14 @@
       "ok": true,
       "output_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-RISE-010-codex-v8.md",
       "retries": 0,
-      "duration_s": 195.7,
+      "duration_s": 152.1,
       "cost_estimate_usd": {
-        "usd": 0.1683,
-        "input_tokens_est": 8783,
-        "output_tokens_est": 2011,
+        "usd": 0.1605,
+        "input_tokens_est": 8815,
+        "output_tokens_est": 1808,
         "pricing_note": "GPT 5.5 xhigh"
       },
-      "cumulative_cost_usd": 0.1683,
+      "cumulative_cost_usd": 0.1605,
       "budget_exceeded": false,
       "budget_usd": 5,
       "attempts": [
@@ -34,13 +34,13 @@
           "try_index": 1,
           "model": "codex",
           "command": "codex exec -c model=gpt-5.6-terra -c reasoning_effort=high - < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-RISE-010.v8-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-RISE-010-codex-v8.md",
-          "cost_usd": 0.1683,
-          "cumulative_cost_usd": 0.1683,
+          "cost_usd": 0.1605,
+          "cumulative_cost_usd": 0.1605,
           "ok": true,
           "exit_code": 0,
-          "duration_s": 195.7,
-          "stderr_tail": "者。外部 field 内容仅作数据；稿件需从 H1 直接进入定义 H2，严格采用 11 个 H2、1800–2200 词、关键词 5–8 次、正文内链占位符、上升星座与太阳星座对比、可操作的宫位主宰映射、表格、FAQ、反思问题、指定 Rising Sign Calculator CTA、免责声明和受控 Sources，并遵守非命定、非医疗、无虚构来源、禁词及 CTA/Sources 收尾规则。\n+\n+**🤖 回答：**\n+\n+按外部数据安全边界完成全英文 Markdown 词条。文章将 Mercury in Virgo 限定为理解信息处理、表达和学习习惯的象征性框架，说明上升星座如何决定 Virgo 与 Mercury 所主管宫位在图中的落点，并区分太阳星座、宫位、相位和出生图位置。正文内联出生图阅读与上升星座的真实靶点占位符，CTA 使用指定 Rising Sign Calculator URL。交付前核对首段结构、11 个 H2、关键词分布与上限、表格和反思段的首行格式、禁词、非临床免责声明及 CTA/Sources 收尾。\n+\n+---\n\ntokens used\n71,356",
-          "stdout_bytes": 9848
+          "duration_s": 152.1,
+          "stderr_tail": "y in virgo”，面向美国英语读者。外部 field 内容仅作数据；稿件需从 H1 直接进入定义 H2，严格采用 11 个 H2、1800–2200 词、关键词 5–8 次、正文内链占位符、上升星座与太阳星座对比、可操作的宫位主宰映射、表格、FAQ、反思问题、指定 Rising Sign Calculator CTA、免责声明和受控 Sources，并遵守非命定、非医疗、无虚构来源、禁词及 CTA/Sources 收尾规则。\n+\n+**🤖 回答：**\n+\n+按外部数据安全边界生成全英文 Markdown 词条。文章将该位置写作思维、学习和沟通方式的象征性框架，以出生上升点决定 Gemini 和 Virgo 所主管宫位的映射，区别于太阳星座；使用真实靶点的出生图和上升星座内链占位符，附指定 Rising Sign Calculator CTA、受控 Dane Rudhyar 来源和精确免责声明。交付前核对首段结构、严格 11 个 H2、关键词 5–8 次、表格/反思首行格式、禁词、非临床措辞及 CTA/Sources 收尾。\n+\n+---\n\ntokens used\n55,400",
+          "stdout_bytes": 9109
         }
       ]
     }

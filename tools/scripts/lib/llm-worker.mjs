@@ -14,7 +14,8 @@
 
 const DEFAULT_CLAUDE_MODEL = process.env.GG_CLAUDE_MODEL || 'claude-sonnet-4-6';
 const DEFAULT_CLAUDE_EFFORT = process.env.GG_CLAUDE_EFFORT || 'high';
-const DEFAULT_CODEX_EFFORT = process.env.GG_CODEX_EFFORT || 'xhigh';
+const DEFAULT_CODEX_MODEL = process.env.GG_CODEX_MODEL || 'gpt-5.6-terra';
+const DEFAULT_CODEX_EFFORT = process.env.GG_CODEX_EFFORT || 'high';
 
 // Build the argv array for one model. `bin` is resolved via PATH on spawn by
 // the caller. Returns only {bin, args}; the orchestrator layers
@@ -36,7 +37,7 @@ export function buildWorkerCommand(model, opts = {}) {
     case 'codex':
       return {
         bin: 'codex',
-        args: ['exec', '-c', 'model=gpt-5.5', '-c', `reasoning_effort=${opts.codexEffort || DEFAULT_CODEX_EFFORT}`, '-'],
+        args: ['exec', '-c', `model=${DEFAULT_CODEX_MODEL}`, '-c', `reasoning_effort=${opts.codexEffort || DEFAULT_CODEX_EFFORT}`, '-'],
       };
     case 'gemini':
       return {

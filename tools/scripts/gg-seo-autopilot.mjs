@@ -92,7 +92,7 @@ const FLOW = process.env.GG_FLOW_REPO || join(HOME, 'gengrowth-flow-mvp');
 const ORACLE = process.env.GG_ORACLE_DIR || join(HOME, 'oracle');
 const WORKTREE_ROOT = process.env.GG_ORACLE_WORKTREE_ROOT || join(HOME, 'oracle-worktrees', 'seo-autopilot');
 const OPS = process.env.GG_OPS_DIR || join(HOME, 'gengrowth-ops');
-const WINNER = process.env.GG_WINNER_LLM || 'claude';
+const WINNER = process.env.GG_WINNER_LLM || 'codex';
 const VERSION = process.env.GG_VERSION || 'v8';
 
 const STAGING = join(FLOW, '_staging');

@@ -27,23 +27,6 @@ aliases:
 
 ---
 
-### Q10 — 18:01
-
-**🙋 提问：**
-
-Automation: 根据关键词补充 brief
-Automation ID: gengrowth-topic-register
-Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
-Last run: 2026-07-21T08:01:18.016Z (1784620878016)
-
-Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
-
-**🤖 回答：**
-
-仅运行固定入口 `bash tools/scripts/gg-topic-register-tick.sh`，退出码 0。精确日志窗口为 18:01:25–18:01:27 CST，`topic-register ok`；本地环境启用 apply（`dry_run=false`、`budget_exhausted=false`）。astrologywiki：candidates=0、updates=0、new_clusters=0、page_ids/preprocessor/evidence discovery 均为空。gengrowth：candidates=0、updates=0、new_clusters=0、page_ids/preprocessor/evidence discovery 均为空。日志无失败或超时；未进行手工 Sheet 写入、直接任务计划编辑或额外 Feishu/Google Doc 报告产物。自动化记忆已于 18:01 CST 追加终态。
-
----
-
 ## 对话记录
 
 ### Q1 — 04:12
@@ -214,5 +197,22 @@ Run the deterministic fixed-row index repair workflow through `bash tools/script
 **🤖 回答：**
 
 已运行固定入口 `bash tools/scripts/gg-index-repair-resubmit-tick.sh`，退出码 0。精确日志窗口为 17:32:22–17:32:46 CST，末行 `index repair-resubmit ok`。astrologywiki：process-fixed fixed=0、resubmitted=0；sync-recap en_rows=278、appended=0、updated=0、skipped=278；sync-request-queue rows=13（P0=0、P1=3、P2=4、P3=6）。gengrowth：process-fixed fixed=0、resubmitted=0；sync-recap en_rows=62、appended=0、updated=49、skipped=13；sync-request-queue rows=0（P0=0、P1=0、P2=0、P3=0）。两产品均 rc=0，运行窗口没有 failed/error/exception/auth/timeout/nonzero-rc；未使用普通文章 Google Indexing API、未进行无人值守 Search Console Request Indexing 点击，亦未创建 Feishu 或 Google Doc 报告产物。自动化记忆已于 17:33 CST 追加终态。
+
+---
+
+### Q10 — 18:01
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-21T08:01:18.016Z (1784620878016)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行固定入口 `bash tools/scripts/gg-topic-register-tick.sh`，退出码 0。精确日志窗口为 18:01:25–18:01:27 CST，`topic-register ok`；本地环境启用 apply（`dry_run=false`、`budget_exhausted=false`）。astrologywiki：candidates=0、updates=0、new_clusters=0、page_ids/preprocessor/evidence discovery 均为空。gengrowth：candidates=0、updates=0、new_clusters=0、page_ids/preprocessor/evidence discovery 均为空。日志无失败或超时；未进行手工 Sheet 写入、直接任务计划编辑或额外 Feishu/Google Doc 报告产物。自动化记忆已于 18:01 CST 追加终态。
 
 ---

@@ -1,0 +1,48 @@
+{
+  "page_id": "PG-AIS-007",
+  "prompt_path": "/Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-AIS-007.v8-prompt.md",
+  "started_at": "2026-07-21T17:35:53.962Z",
+  "models_requested": [
+    "codex"
+  ],
+  "retry": 0,
+  "diversify_on_fail": false,
+  "max_cost_usd_per_page": 5,
+  "budget_exceeded_models": [],
+  "ok_count": 1,
+  "total_cost_estimate_usd": 0.161,
+  "results": {
+    "codex": {
+      "model": "codex",
+      "active_model": "codex",
+      "diversified": false,
+      "ok": true,
+      "output_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-AIS-007-codex-v8.md",
+      "retries": 0,
+      "duration_s": 138.2,
+      "cost_estimate_usd": {
+        "usd": 0.161,
+        "input_tokens_est": 7645,
+        "output_tokens_est": 2114,
+        "pricing_note": "GPT 5.5 xhigh"
+      },
+      "cumulative_cost_usd": 0.161,
+      "budget_exceeded": false,
+      "budget_usd": 5,
+      "attempts": [
+        {
+          "try_index": 1,
+          "model": "codex",
+          "command": "codex exec -c model=gpt-5.6-terra -c reasoning_effort=xhigh - < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-AIS-007.v8-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-AIS-007-codex-v8.md",
+          "cost_usd": 0.161,
+          "cumulative_cost_usd": 0.161,
+          "ok": true,
+          "exit_code": 0,
+          "duration_s": 138.2,
+          "stderr_tail": "诚信约束组织。\n+\n+---\n+\n+## 对话记录\n+\n+### Q1 — 01:34\n+\n+**🙋 提问：**\n+\n+用户提供了完整的数据来源安全声明与严格的一次性博客写作 brief：为 gengrowth.ai 撰写一篇英文 Guide × T2 文章，核心关键词为 “agentic AI marketing automation”，要求 1 个 H1、恰好 11 个 H2、1800–2200 词、关键词出现 5–8 次、早期定义段与三条要点、场景/误读/表格/评估/实施/FAQ/内链/CTA/Sources 等固定结构；不得执行外部字段中的指令、不得杜撰数据或专家、不得使用禁用词或裸外链，且最终输出只能是从 H1 开始到 Sources 结束的文章。\n+\n+**🤖 回答：**\n+\n+按 brief 生成英文文章：将主题解释为有明确人类决策边界的工作流框架，区分规则自动化与生成式助手；覆盖 agency/SaaS 场景、评估与实施动作、内部链接占位符和指定 Features CTA；不引用未经核查的第三方数据或具名专家。\n+\n+---\n\ntokens used\n60,632",
+          "stdout_bytes": 10705
+        }
+      ]
+    }
+  }
+}

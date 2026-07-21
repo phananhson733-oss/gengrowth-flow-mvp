@@ -1,0 +1,8 @@
+- “white-label rollouts we’ve audited” is an unsupported authority claim → either cite/anonymize one concrete pattern with evidence or soften to “in practice.”
+- Definition is solid but generic → add 2-3 named capabilities readers expect: memory/state, tool use, multi-step planning, approval gates, audit logs.
+- Implementation section lacks operational detail → add a concrete pilot example with inputs, allowed actions, stop conditions, owner, and success metric.
+- SEO intent likely includes vendor/tool evaluation → add how to compare platforms: integrations, permissions, observability, human review, data provenance, rollback.
+- “Agentic” vs standard automation is repeated but not sharpened → include one clear contrast example showing the same workflow done by Zapier-style rules vs an AI agent.
+- Claims about publishing/content safety are cautious but abstract → specify review thresholds for factual claims, regulated claims, brand voice, and customer-facing pages.
+- Voice is competent but interchangeable → add GenGrowth-specific angle around decision-led SEO fulfillment, white-label delivery, or inspectable handoffs.
+- Source note weakens credibility → replace “no third-party study is cited” with either credible external sources or remove claims that sound research-backed.

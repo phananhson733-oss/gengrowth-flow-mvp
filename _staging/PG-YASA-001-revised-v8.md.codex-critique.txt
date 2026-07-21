@@ -1,0 +1,8 @@
+- “2026” is underused → add 2-3 current YouTube-specific anchors, especially Ask YouTube/conversational search and official Search factors: relevance, engagement, quality/authority.
+- The core framework feels invented but not operational enough → map “authority” to inspectable YouTube assets: title, description, transcript, chapters, pinned comment, playlist/series depth, proof moments, and retention/query engagement.
+- “Across the white-label rollouts we’ve audited” is a dubious unsupported claim → either add real internal evidence or soften to “in client operations reviews” without implying a dataset.
+- Too much SaaS/agency abstraction, not enough YouTube execution → add a concrete pre-publish checklist a team can actually use before uploading.
+- Search intent is only partly answered → include a direct “how to build YouTube AI search authority in 2026” section with do-able steps, not just evaluation philosophy.
+- Examples are generic → replace at least one scenario with a specific mini-example showing a weak video claim, the proof needed, and the revised video angle.
+- The article ignores YouTube’s own quality/authority language → explicitly distinguish this editorial framework from YouTube’s expertise/authoritativeness/trustworthiness signals.
+- “Sources” weakens credibility by admitting no third-party citation → add official YouTube Search/Discovery and Ask YouTube references, then keep GenGrowth observations as secondary.

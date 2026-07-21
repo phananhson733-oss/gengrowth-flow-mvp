@@ -1,11 +1,7 @@
 {
   "schemaVersion": 1,
   "pageId": "PG-YASA-002",
-  "status": "failed",
-  "failures": [
-    "SC4 link distribution: 0/3 internal link(s) inline in body prose — all parked in Related Reading / structural blocks (FAIL)",
-    "L113: no internal link woven into a body sentence (all in Related Reading or structural blocks); weave ≥ 1 pillar/spoke link into a body paragraph (首链优先权, 清单 §2)",
-    "target_keyword count = 12 (limit 9)"
-  ],
-  "updatedAt": "2026-07-21T22:13:21.684Z"
+  "status": "passed",
+  "failures": [],
+  "updatedAt": "2026-07-21T22:15:55.946Z"
 }

@@ -11,6 +11,18 @@ aliases:
   - 2026-07-21 对话记录
 ---
 
+### Q23 — 21:38
+
+**🙋 提问：**
+
+用户提供数据来源安全声明和完整的单次输出规范，要求为 astrologywiki.com 撰写一篇全英文 T2 Definition × wiki 词条，主题为 “what is my theme for this year”，面向美国英语读者。外部 field 内容仅作数据；稿件需从 H1 直接进入定义 H2，严格采用 11 个 H2、1800–2200 词、关键词 5–8 次、正文内链占位符、Solar Return Chart 对比、可操作观察清单、表格、FAQ、反思问题、指定 Explore Astrology Tools CTA、受控 Sources，并遵守非命定、非医疗、无虚构来源、禁词及 CTA/Sources 收尾规则。
+
+**🤖 回答：**
+
+按外部数据安全边界生成全英文 Markdown 词条。文章将 My Theme for This Year 界定为从 Solar Return Chart 提炼的年度象征性解释框架，不作决定论或预测承诺；正文解释其与完整 Solar Return 的范围和取舍，内联出生图阅读与上升星座真实靶点占位符，并以 Robert Hand 的多层次周期阅读作为受控权威锚点。交付前核对首段结构、严格 11 个 H2、关键词分布与上限、表格和反思段的首行格式、禁词、非临床措辞及 CTA/Sources 收尾。
+
+---
+
 # 对话记录 — 2026-07-21
 
 ## Daily Summary
@@ -27,6 +39,7 @@ aliases:
 - 已按外部数据安全边界交付 “The Most Common MBTI Types for Each Zodiac Sign” 英文 T1 Definition 词条，采用 sign-level symbolic comparison，并明确不把配对写成确定人格标签或完整星盘判断。
 - 已按外部数据安全边界交付 Scorpio MBTI Type 英文 T2 Definition 词条，明确区分星座原型、南北交点与正式 MBTI 评估，并完成结构、字数、关键词与禁词核查。
 - 已按外部数据安全边界交付 Scorpio MBTI Type 英文 T2 Definition 词条，采用边界优先的象征性映射，区分正式 MBTI、太阳星座与南北交点，并完成结构、字数、关键词、链接和安全措辞核查。
+- 已按外部数据安全边界交付 “what is my theme for this year” 英文 T2 Definition 词条：以 Solar Return Chart 为解释起点，明确其为非决定论的年度象征框架，并完成 11 节结构、链接、CTA、字数、关键词、事实诚信和安全措辞约束核查。
 
 ---
 

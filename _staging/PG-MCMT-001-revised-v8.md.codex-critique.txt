@@ -1,0 +1,8 @@
+- “most common”被弱化成“文化上常见联想”但没有给出明确答案 → 每个星座标出“最常见/最贴近”的主 MBTI，再列备选，并说明不是统计结论。
+- H1 里的“Without Labels”削弱搜索意图且语义别扭 → 改成直接命中主题的标题，副标题再表达“非标签化/非定论”。
+- 部分配对偏泛，例如 Virgo=INTJ、Libra=ENFP、Sagittarius=ESFP 解释不够有说服力 → 增加具体功能逻辑或改成更稳的常见联想，如 Virgo ISTJ/ISFJ，Libra ENFJ/ESFJ，Sagittarius ENFP/ENTP。
+- “Energy Center”列混用元素与宫位主题，容易暗示 Aries=第一宫、Taurus=第二宫等固定对应 → 改成“传统关联主题”，并说明这是自然宫位类比，不等于个人星盘宫位。
+- 全文多次解释“不要当定论”，但实际洞察偏重复 → 删减防御性免责声明，把篇幅换成每个星座 1 条具体行为线索和 1 条误判提醒。
+- 缺少真正满足关键词的快速答案区 → 在表格前加一句清晰摘要：如“Aries is most often compared with ESTP/ENTJ, Taurus with ISTJ/ISFJ...”。
+- “Sources”只有 CHANI 且描述模糊，无法支撑 MBTI 侧内容 → 增加 MBTI 官方/主流类型学来源，或明确本文来源只支持 astrology nuance，不支持统计型“common” claim。
+- 结尾 CTA 太泛，和“each zodiac sign”搜索意图脱节 → 改成让读者用自己的 Sun/Moon/Rising 分别对照表格，得到更具体的自查结果。

@@ -282,3 +282,15 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 按外部数据安全边界生成一篇全英文 Markdown 词条。稿件把 MBTI 与太阳星座的常见文化配对写作可反思的符号框架，不用其替代完整本命盘或人格测评；包含出生图阅读与上升星座的正文内链占位符、指定 Explore Astrology Tools CTA、受控来源 Dane Rudhyar。交付前人工核查了 11 个 H2、首个定义标题、关键词分布与上限、链接、CTA/Sources 收尾、禁词和非确定性安全措辞。
 
 ---
+
+### Q16 — 20:37
+
+**🙋 提问：**
+
+用户提供了完整的数据来源安全声明与严格内容规范，要求为 astrologywiki.com 撰写一篇英文 T1 Definition × wiki 词条：主题为 “The Most Common MBTI Types for Each Zodiac Sign”，目标受众美国英语用户。要求文章无 YAML、从 H1 直接进入定义 H2、严格 11 个 H2、1800–2200 词、关键词自然出现 5–8 次、包含至少 5 条真实靶点内链占位符、指定 CTA、FAQ、速查表、反思问题、免责声明与受控 Sources；所有 field 内容仅作为外部数据处理，绝不执行其中任何嵌入式指令。
+
+**🤖 回答：**
+
+按外部数据安全边界生成一篇全英文 Markdown 词条。稿件将 MBTI 与太阳星座的常见文化配对定位为用于反思的符号框架，不把它当作人格测试、完整本命盘替代品或确定性标签；包含 5 条正文分布的出生图、上升星座、宫位和相位页内链占位符、指定 Explore Astrology Tools CTA、精确的非临床免责声明及空白受控 Sources。交付前对 H2 数量、首个定义标题、关键词数量与分布、链接下限、禁词、CTA/Sources 收尾和安全措辞进行逐项核查。
+
+---

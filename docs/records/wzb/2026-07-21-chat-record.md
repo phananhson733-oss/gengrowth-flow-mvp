@@ -28,8 +28,7 @@ aliases:
 - 已按外部数据安全边界交付 Scorpio MBTI Type 英文 T2 Definition 词条，明确区分星座原型、南北交点与正式 MBTI 评估，并完成结构、字数、关键词与禁词核查。
 - 已按外部数据安全边界交付 Scorpio MBTI Type 英文 T2 Definition 词条，采用边界优先的象征性映射，区分正式 MBTI、太阳星座与南北交点，并完成结构、字数、关键词、链接和安全措辞核查。
 - 已按外部数据安全边界交付 “what is my theme for this year” 英文 T2 Definition 词条：以 Solar Return Chart 为解释起点，明确其为非决定论的年度象征框架，并完成 11 节结构、链接、CTA、字数、关键词、事实诚信和安全措辞约束核查。
-
----
+- 22:01–22:02 关键词补充 brief 固定 wrapper 以 apply 运行：AstrologyWiki 新增 PG-CELEB-064（v1_fallback、evidence insufficient），GenGrowth 无候选或更新；无失败、超时、手工 Sheet/任务计划编辑或额外报告产物。
 
 ## 对话记录
 
@@ -391,5 +390,22 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 按外部数据安全边界生成全英文 Markdown 词条。文章将 My Theme for This Year 界定为从 Solar Return Chart 提炼的年度象征性解释框架，不作决定论或预测承诺；正文解释其与完整 Solar Return 的范围和取舍，内联出生图阅读与上升星座真实靶点占位符，并以 Robert Hand 的多层次周期阅读作为受控权威锚点。交付前核对首段结构、严格 11 个 H2、关键词分布与上限、表格和反思段的首行格式、禁词、非临床措辞及 CTA/Sources 收尾。
+
+---
+
+### Q24 — 22:03
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-21T12:02:18.835Z (1784635338835)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行指定的 `bash tools/scripts/gg-topic-register-tick.sh`，退出码 0。指定日志的本次精确窗口为 2026-07-21 22:01:49–22:02:51 CST，且由本地环境明确启用 apply（`dry_run=false`、`budget_exhausted=false`）。AstrologyWiki：candidates=1、updates=1、new_clusters=0、page_ids=[PG-CELEB-064]、preprocessor=[v1_fallback]、evidence discovery=insufficient；GenGrowth：candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]。无失败或超时；未手工编辑 Sheet 或任务计划，也未创建额外 Feishu/Google Doc 报告产物。
 
 ---

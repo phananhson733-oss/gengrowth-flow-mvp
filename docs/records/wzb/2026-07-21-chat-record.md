@@ -18,12 +18,11 @@ aliases:
 
 > 【本区域在每天最后一次对话结束时生成/更新】
 
-- 7 月 20 日 20:00 SEO LaunchAgent 自然 fire 完整执行 preflight、pre-drain、strict reconcile 与 nightly，但 post-reconcile 因 active repair 和 needs-human drift 各 1 而失败；20:30、21:00 未形成独立窗口，clean=0。当晚自动发布的 5 篇文章最终全链路收敛。
-- 当前终态为 claims non-done=1（PG-WC-053 needs_human），active repair、pending/dropped writeback、outbox、needs-human drift、SEO 进程和锁均为 0，父目标仍未达到连续 3 个 clean window。
-- 验收暴露的主要问题是主轮与异步修复之间的终态竞态，以及长轮次吞掉后续日历窗口；不是放宽内容事实门禁即可解决的问题。
+- 7 月 20 日 20:00 SEO LaunchAgent 自然 fire 完整执行 preflight、pre-drain、strict reconcile 与 nightly，但 post-reconcile 因 active repair 和 needs-human drift 各 1 而失败；20:30、21:00 未形成独立窗口，clean=0；当晚自动发布的 5 篇文章最终全链路收敛。
+- 当前终态为 claims non-done=1（PG-WC-053 needs_human），其余 active repair、pending/dropped writeback、outbox、needs-human drift、SEO 进程和锁均为 0；父目标未达到连续 3 个 clean window，根因是主轮与异步修复的终态竞态及长轮次吞掉后续窗口。
 - 临时 heartbeat 在 04:12、04:37 与 05:08 三次删除接口调用均超时，配置仍为 ACTIVE，未手工改动自动化文件。
-- 05:00 固定入口 `gg-index-repair-resubmit-tick.sh` 与 09:02 固定入口 `gg-index-monitor-tick.sh` 均成功完成两产品的结果复盘表同步和请求索引队列刷新；后者站点地图 API 提交成功、检查 11 条且无失败，未触及普通文章 Indexing API、无人值守 GSC 请求或报告产物。
-- 10:01 固定入口 `gg-recap-performance-tick.sh` 成功刷新两产品的 wrapper-owned 复盘性能字段与优化任务报告；AstrologyWiki 有 6 条已收录且未填的 D14/D30/D60 节点计划行，GenGrowth 无到期行，未绕过 wrapper 或触及人工决策字段。
+- 05:00 索引修复、09:02 索引监控与 10:01 复盘性能固定入口均完成预期同步；未使用普通文章 Indexing API、无人值守 GSC 请求或额外报告产物，AstrologyWiki 有 6 条已收录且待填 D14/D30/D60 节点行。
+- 15:25 关键词补充 brief 的固定 wrapper 以 apply 模式成功完成：AstrologyWiki 新增 7 个页面（1 个新集群），GenGrowth 无候选；日志无失败或超时。
 
 ---
 
@@ -146,5 +145,22 @@ After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-s
 **🤖 回答：**
 
 已仅运行固定入口 `bash tools/scripts/gg-recap-performance-tick.sh`，预检 `bash -n` 通过，wrapper 退出码 0；精确日志窗口为 10:01:57–10:02:12 CST，末行 `recap performance ok`，无 warn/error/failed/partial 信号。AstrologyWiki 使用 workbook `1CkjOCgYbRfXGYc6l2FJOaxUIzxT0NBVUhUpgCjyzcQc`、`sc-domain:astrologywiki.com`、GA4 `properties/524765570`：精确节点计划行 rows=6，更新 recap 生成字段 257，报告任务 259（P0=11、技术排查=158、P1=10、P2=2、观察=78）。GenGrowth 使用 workbook `1RRxsyFmdWgtd6tojjze_8lxwSUTTZKm4TqU4gZTIRA8`、`sc-domain:gengrowth.ai`、同一 GA4 property：rows=0、updated=49、tasks=62（P0=0、技术排查=49、P1=5、P2=0、观察=8）。日志中 rows 是已收录且未填的 D14/D30/D60 节点总数；GenGrowth 覆盖为 D14/D30/D60 各 0/0，AstrologyWiki 仅可确认总计 6，wrapper 日志未输出 D14/D30/D60 分桶，也未输出单独的非节点/已填跳过数，未为补齐而绕过 wrapper。报告写入 `~/gengrowth-agents/reports/recap-performance/2026-07-21-{astrologywiki,gengrowth}-optimization-tasks.md`；未手工编辑 Sheet、未使用 repair/backfill flag、未发布/部署/改源文件、未提交 GSC Request Indexing 或使用 Google Indexing API。
+
+---
+
+### Q7 — 15:34
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: never
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行固定入口 `bash tools/scripts/gg-topic-register-tick.sh`，退出码 0。精确日志窗口为 15:25:10–15:33:12 CST，`topic-register ok`；本地环境启用 apply（`dry_run=false`、`budget_exhausted=false`）。astrologywiki：candidates=7、updates=7、new_clusters=1、page_ids=PG-TRANS-028、PG-TRANS-029、PG-SOLAR-003、PG-RISE-009、PG-HEAL-007、PG-NODE-016、PG-MCMT-001；preprocessor 为 ok×2、v1_fallback×5；evidence discovery 为 ok×2（9/8 与 10/9 个 SERP 标题/域名）、insufficient×5。gengrowth：candidates=0、updates=0、new_clusters=0、page_ids/preprocessor/evidence discovery 均为空。日志无失败或超时；未进行手工 Sheet 写入、直接任务计划编辑或额外 Feishu/Google Doc 报告产物。自动化记忆已于 15:34 CST 追加终态。
 
 ---

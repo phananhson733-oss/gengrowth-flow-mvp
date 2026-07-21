@@ -6,7 +6,10 @@
     "missing required H2: \"## <entity> vs <real adjacent concept> (comparison section; no \"Adjacent Concepts\" boilerplate)\"",
     "SC3 paragraph length: 1 block(s) over wall limit",
     "L21: prose paragraph wall (181 words > 180); 把多要点改成「引子 + 编号列表」，或拆成连贯短段 (v4.5.1)",
-    "word count 1293 < min 1485"
+    "word count 1293 < min 1485",
+    "word count 1361 < min 1485",
+    "SC5 FAQ section: FAQ section has only 0 question(s) (need >= 3)",
+    "L19: FAQ 段至少需 3 个问答（每个问题写成加粗整行并以 ?/？ 结尾），当前 0 个"
   ],
-  "updatedAt": "2026-07-21T13:08:56.888Z"
+  "updatedAt": "2026-07-21T13:12:02.933Z"
 }

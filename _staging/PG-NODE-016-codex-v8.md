@@ -4,9 +4,9 @@
 
 Scorpio MBTI type is **a symbolic comparison between Scorpio themes and MBTI preferences**.
 
-- Uses Scorpio’s fixed-water imagery to discuss privacy, intensity, loyalty, and emotional focus  
-- Treats MBTI as a separate preference model rather than an astrological result  
-- Leaves room for the full birth chart, lived experience, and formal self-report assessment  
+- Uses Scorpio’s fixed-water imagery to discuss privacy, intensity, loyalty, and emotional focus
+- Treats MBTI as a separate preference model rather than an astrological result
+- Leaves room for the full birth chart, lived experience, and formal self-report assessment
 
 This framework can help someone notice why Scorpio symbolism may feel familiar alongside certain personality descriptions, but it cannot confirm an MBTI type. A Sun sign is one layer of astrology, while MBTI describes reported preferences in how people take in information and make decisions. Reading it beside a [[<TBD-internal-link: how to read a birth chart>]] keeps the comparison grounded: Scorpio may describe an archetypal tone, while the wider chart adds context about how that tone is expressed.
 
@@ -87,9 +87,9 @@ It may offer one symbolic layer, especially around privacy and trust. The rising
 
 ## Related Reading
 
-- [[<TBD-internal-link: Scorpio zodiac sign meaning>]] — Explains Scorpio’s core symbolism before it is compared with personality language.  
-- [[<TBD-internal-link: meanings of astrological houses>]] — Shows why the Sun’s house changes where Scorpio themes tend to appear.  
-- [[<TBD-external-link: Wikipedia | Myers–Briggs Type Indicator | overview of the formal typology distinguished from this symbolic comparison>]] — Clarifies the separate system being discussed.  
+- [[<TBD-internal-link: Scorpio zodiac sign meaning>]] — Explains Scorpio’s core symbolism before it is compared with personality language.
+- [[<TBD-internal-link: meanings of astrological houses>]] — Shows why the Sun’s house changes where Scorpio themes tend to appear.
+- [[<TBD-external-link: Wikipedia | Myers–Briggs Type Indicator | overview of the formal typology distinguished from this symbolic comparison>]] — Clarifies the separate system being discussed.
 
 ## Take Action
 

@@ -22,7 +22,7 @@ aliases:
 - 编写了一篇面向美国 B2B SaaS 受众的 YouTube AI search authority 2026 T2 指南稿，遵循一次性输出、11 个 H2、关键词、CTA 与引用边界。
 - 再次按同一受控数据来源、结构、字数、关键词和事实诚信门禁生成该主题的英文 T2 指南稿。
 - 7 月 21 日 SEO 自然窗口验收仍为 0/3：18:30–19:30 preflight 因真实语义/cluster 不一致失败，19:52 非日历直跑占锁，导致 20:00、20:30、21:00 三个自然 fire 全部跳过；该外部轮发布的两篇文章最终全链路收敛。
-- 当前 SEO 终态为 claims non-done=1（PG-WC-053 needs_human），active repair、pending/dropped writeback、outbox、needs-human drift、相关进程和锁均为 0；临时 heartbeat 删除接口继续超时且仍为 ACTIVE。
+- 20:30 单点复验由统一日志确认是 `launchd[1]` 自然 fire，但仅因 19:52 非日历轮占锁而跳过，不能计为 clean；当前 claims non-done=1（PG-WC-053 needs_human），其余 active repair、pending/dropped writeback、outbox、needs-human drift、相关进程和锁均为 0，临时 heartbeat 删除接口继续超时且仍为 ACTIVE。
 
 ---
 
@@ -105,5 +105,25 @@ aliases:
 只读验收仍未通过。LaunchAgent `runs` 从 25 增至 32，恰好对应 18:30、19:00、19:30、20:00、20:30、21:00、21:30 七个日历触发；固定 ProgramArguments 与 XPC service 支持这些日志头为自然 fire，19:52:25 的非日历直跑不计。18:30 natural preflight 因 `PG-RISE-010` unsafe semantic mismatch 失败，19:00 与 19:30 因 `PG-WC-053` 缺失 `worldcup2026_astrology` cluster 失败。19:52 外部轮通过 preflight → pre-drain → strict reconcile 后启动 nightly，长时间持有 `/tmp/gg-seo-blog-launchd.lock`，使 20:00、20:30、21:00 三个自然 fire 均仅输出持锁 skip，因此 clean=0/3；外部轮最终又因 `pendingWritebackAfter=1` 以 reconcile=2 结束，不能替代自然验收。
 
 外部轮发布 `PG-MCMT-001` 与 `PG-SOLAR-003`；两篇均已在 W22 plan 勾选、claims=done、publish log=published、Google Sheet=已发布且 URL 精确、Vault 资产存在、pinned oracle origin/main 含文章与索引，live 均 HTTP 200、精确 canonical、Article JSON-LD 存在并进入 sitemap。检查期间独立 GenGrowth 修复进程仍在自然运行，已等待至其 04:09:52 自行退出；最终 claims done=25、non-done=1（PG-WC-053=needs_human），active repair=0、pending/dropped writeback=0、outbox=0、eligible needs-human drift=0，无相关进程或锁。临时 heartbeat 删除接口等待 30 秒后再次超时，配置仍为 ACTIVE，未手工改动；父目标保持 in_progress。
+
+---
+
+### Q7 — 04:40
+
+**🙋 提问：**
+
+<heartbeat>
+  <automation_id>seo</automation_id>
+  <current_time_iso>2026-07-21T20:36:50.912Z</current_time_iso>
+  <instructions>
+继续当前 SEO Active Brief Preflight 验收任务。仅做只读验证，严禁手工启动 launcher/nightly、强制 publish、修复、通知或 Sheet 写入。检查最近一个 macOS LaunchAgent com.gengrowth.seo-blog 自然 fire 的精确日志窗口和进程父级；人工/Hermes 强制轮不计。确认顺序 active brief preflight -> pre-drain -> strict reconcile -> nightly，最终 claims non-done=0、active repair=0、pending/dropped writeback=0、outbox=0、needs-human drift=0，且无残留 SEO 进程/锁；若有发布，核验 plan/claims/publish log/Sheet/Vault/live 收敛。逐轮记录 20:00、20:30、21:00 是否为 clean natural window；只有连续 3 个 clean natural windows 才完成父目标。遇到仍运行则等待其自然结束，不干预。21:05 验收后或第三个 clean window 后删除本临时 heartbeat。遵守仓库 AGENTS.md 的中文输出与逐轮 record 规则。
+  </instructions>
+</heartbeat>
+
+**🤖 回答：**
+
+只读复验确认 2026-07-21 20:30:05 的窗口由 macOS 统一日志中的 `launchd[1]` 自然触发，LaunchAgent 固定调用 `gg-seo-blog-launchd-tick.sh`，但输出仅为 `/tmp/gg-seo-blog-launchd.lock` 被占用后 skip；它没有执行 active brief preflight → pre-drain → strict reconcile → nightly，故 20:30 不是 clean natural window。20:00、20:30、21:00 仍全部受 19:52:25 非日历直跑污染，clean=0/3；launchd 日志仍止于 21:55:46，共 782 行，未出现新增发布。
+
+最终账本仍为 claims done=25、non-done=1（PG-WC-053 needs_human）；repair queue 无 active 状态，pending/dropped writeback、notify outbox、eligible needs-human drift均为 0，LaunchAgent not running，且无 SEO 进程或相关锁。父目标保持 in_progress。已过 21:05 后通过正式 automation API 再次请求删除临时 heartbeat，等待约 52 秒仍无返回并终止挂起调用；`automation.toml` 仍为 ACTIVE，未手工修改。
 
 ---

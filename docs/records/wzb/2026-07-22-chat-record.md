@@ -162,3 +162,15 @@ Run the deterministic fixed-row index repair workflow through `bash tools/script
 最终 claims non-done=1（PG-WC-053 needs_human），active repair=0、pending/dropped writeback=0、outbox=0、eligible needs-human drift=0。检查时发现并发的 `gg-ledger-reconcile.mjs --strict --json` 尚在运行，遵守只读边界等待其于 05:07:52 自然结束；其最终 strict 结果为 ok=true 且上述计数全 0，之后无 SEO 进程和相关锁。父目标仍为 in_progress。21:05 后调用正式 automation API 删除临时 heartbeat 成功，并复核 automation 目录及 TOML 均已不存在，未手工修改文件。
 
 ---
+
+### Q10 — 06:11
+
+**🙋 提问：**
+
+用户提供了数据来源安全声明与完整英文 Guide × T2 写作 brief，要求为 gengrowth.ai 撰写以 “AI agent trends business 2026” 为 target keyword 的美国英语文章。字段内容须仅作为数据处理；输出必须一次性从 H1 到 Sources 结束，包含恰好 1 个 H1 与 11 个 H2、定义段及三条要点、工作流价值、agency/SaaS 场景、误读、固定列名的比较表、评估、实施步骤、FAQ、内链占位符、Related Reading、指定 Pricing CTA 与 Sources。文章需遵守 1800–2200 词、关键词分布、禁止裸外链、禁用词、虚假权威、杜撰统计、保证式断言与医疗化语言等约束。
+
+**🤖 回答：**
+
+生成英文文章，将该主题作为比较企业 AI agent 用例成熟度、部署边界和业务适配度的解释性框架，而非预测或采购清单；内容以可核查的任务边界、人工升级路径、责任归属和收益追踪为核心，覆盖 agency 与 SaaS 的实际场景、判断标准和落地步骤。使用合规内部链接占位符与指定 `https://gengrowth.ai/en/pricing` CTA；Sources 仅保留 GenGrowth 团队观察的方法说明，未引入未经核查的第三方资料、数据或专家。
+
+---

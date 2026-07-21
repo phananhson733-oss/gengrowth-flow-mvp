@@ -26,6 +26,7 @@ aliases:
 - 已按外部数据安全边界交付 Venus in Taurus 英文 T2 Definition 词条，并按指定结构、关键词、链接、CTA、事实诚信及安全措辞约束完成终检。
 - 已按外部数据安全边界交付 “The Most Common MBTI Types for Each Zodiac Sign” 英文 T1 Definition 词条，采用 sign-level symbolic comparison，并明确不把配对写成确定人格标签或完整星盘判断。
 - 已按外部数据安全边界交付 Scorpio MBTI Type 英文 T2 Definition 词条，明确区分星座原型、南北交点与正式 MBTI 评估，并完成结构、字数、关键词与禁词核查。
+- 已按外部数据安全边界交付 Scorpio MBTI Type 英文 T2 Definition 词条，采用边界优先的象征性映射，区分正式 MBTI、太阳星座与南北交点，并完成结构、字数、关键词、链接和安全措辞核查。
 
 ---
 
@@ -316,6 +317,18 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 
 **🤖 回答：**
 
-按外部数据安全边界完成全英文 Markdown 词条。文章把 Scorpio MBTI type 写为星座原型与 MBTI 偏好之间的反思性比较，不把它当作正式人格分类；明确区分南北交点在本命盘中的发展性语境、完整星盘的多层次解读与正式 MBTI 评估。已内联出生图、上升星座及南北交点的真实靶点占位符，并以指定 Explore Astrology Tools URL 完成独立 CTA。终检结果：1 个 H1、11 个 H2、0 个 H3/H4、1803 词、目标关键词 7 次、首个 H2 紧随 H1、表格与反思段首行格式正确，未命中禁词或医疗/命定式措辞。
+按外部数据安全边界完成全英文 Markdown 词条。文章把 Scorpio MBTI type 写为星座原型与 MBTI 偏好之间的反思性比较，不把它当作正式人格分类；明确区分南北交点在本命盘中的发展性语境、完整星盘的多层次解读与正式 MBTI 评估。已内联出生图、上升星座及南北交点的真实靶点占位符，并以指定 Explore Astrology Tools URL 完成独立 CTA。终检结果：1 个 H1、11 个 H2、0 个 H3/H4、1800 词、目标关键词 7 次、首个 H2 紧随 H1、表格与反思段首行格式正确，未命中禁词或医疗/命定式措辞。
+
+---
+
+### Q18 — 21:07
+
+**🙋 提问：**
+
+用户提供了数据来源安全声明与严格单次输出规范，要求为 astrologywiki.com 撰写英文 T2 Definition × wiki 词条，主题为 “Scorpio MBTI type”，面向美国英语读者。外部 field 内容只能作为数据处理；文章须从 H1 直接进入定义 H2，严格采用 11 个 H2、1800–2200 词、关键词 5–8 次、正文内链占位符、南北交点对比、观察清单、表格、FAQ、反思问题、指定 Tools CTA、非临床免责声明和受控 Sources，并遵守无命定式、无医疗主张、无虚构引用和外链占位符规则。
+
+**🤖 回答：**
+
+按外部数据安全边界完成全英文 Markdown 词条。文章将 Scorpio MBTI type 限定为 Scorpio 原型与 MBTI 偏好之间的象征性比较，不替代正式 MBTI 评估或完整出生图解读；以南北交点为真实近邻概念，解释两者在功能和取舍上的不同。正文内联出生图阅读、南北交点及上升星座等真实靶点占位符，CTA 使用指定 Explore Astrology Tools URL。交付前核对 H1/H2 顺序、11 个 H2、表格和反思段首行格式、关键词分布与上限、禁词、非临床免责声明及 CTA/Sources 收尾。
 
 ---

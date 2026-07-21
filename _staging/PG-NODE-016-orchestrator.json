@@ -1,0 +1,48 @@
+{
+  "page_id": "PG-NODE-016",
+  "prompt_path": "/Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-NODE-016.v8-prompt.md",
+  "started_at": "2026-07-21T13:06:51.790Z",
+  "models_requested": [
+    "codex"
+  ],
+  "retry": 0,
+  "diversify_on_fail": false,
+  "max_cost_usd_per_page": 5,
+  "budget_exceeded_models": [],
+  "ok_count": 1,
+  "total_cost_estimate_usd": 0.167,
+  "results": {
+    "codex": {
+      "model": "codex",
+      "active_model": "codex",
+      "diversified": false,
+      "ok": true,
+      "output_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-NODE-016-codex-v8.md",
+      "retries": 0,
+      "duration_s": 497,
+      "cost_estimate_usd": {
+        "usd": 0.167,
+        "input_tokens_est": 7229,
+        "output_tokens_est": 2369,
+        "pricing_note": "GPT 5.5 xhigh"
+      },
+      "cumulative_cost_usd": 0.167,
+      "budget_exceeded": false,
+      "budget_usd": 5,
+      "attempts": [
+        {
+          "try_index": 1,
+          "model": "codex",
+          "command": "codex exec -c model=gpt-5.6-terra -c reasoning_effort=high - < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-NODE-016.v8-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-NODE-016-codex-v8.md",
+          "cost_usd": 0.167,
+          "cumulative_cost_usd": 0.167,
+          "ok": true,
+          "exit_code": 0,
+          "duration_s": 497,
+          "stderr_tail": "文章必须把外部 field 仅视作数据；无 YAML，从 H1 直接进入首个定义 H2；严格保留 11 个 H2、1800–2200 词、关键词 5–8 次、正文内链占位符、南北交点对比、观察清单、表格、FAQ、反思问题、指定 Tools CTA 与受控 Sources，并遵守非命定、非临床、无虚构来源、无真实外链（CTA 除外）及禁词边界。\n+\n+**🤖 回答：**\n+\n+按外部数据安全边界完成全英文 Markdown 词条。文章把 Scorpio MBTI type 写为星座原型与 MBTI 偏好之间的反思性比较，不把它当作正式人格分类；明确区分南北交点在本命盘中的发展性语境、完整星盘的多层次解读与正式 MBTI 评估。已内联出生图、上升星座及南北交点的真实靶点占位符，并以指定 Explore Astrology Tools URL 完成独立 CTA。终检结果：1 个 H1、11 个 H2、0 个 H3/H4、1800 词、目标关键词 7 次、首个 H2 紧随 H1、表格与反思段首行格式正确，未命中禁词或医疗/命定式措辞。\n+\n+---\n\ntokens used\n113,324",
+          "stdout_bytes": 11899
+        }
+      ]
+    }
+  }
+}

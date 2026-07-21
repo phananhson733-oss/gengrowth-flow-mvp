@@ -25,6 +25,7 @@ aliases:
 - 20:03–20:12 同一固定 wrapper 新增 8 个页面：AstrologyWiki 3 页（无新集群）与 GenGrowth 5 页（2 个新集群）；preprocessor 为 ok×1、v1_fallback×7，日志无失败或超时，未手工写入 Sheet 或任务计划，亦未创建额外报告产物。
 - 已按外部数据安全边界交付 Venus in Taurus 英文 T2 Definition 词条，并按指定结构、关键词、链接、CTA、事实诚信及安全措辞约束完成终检。
 - 已按外部数据安全边界交付 “The Most Common MBTI Types for Each Zodiac Sign” 英文 T1 Definition 词条，采用 sign-level symbolic comparison，并明确不把配对写成确定人格标签或完整星盘判断。
+- 已按外部数据安全边界交付 Scorpio MBTI Type 英文 T2 Definition 词条，明确区分星座原型、南北交点与正式 MBTI 评估，并完成结构、字数、关键词与禁词核查。
 
 ---
 

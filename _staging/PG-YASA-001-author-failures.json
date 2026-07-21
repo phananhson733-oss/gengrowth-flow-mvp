@@ -5,7 +5,9 @@
   "failures": [
     "word count 1421 < min 1485",
     "target_keyword count = 14 (limit 8)",
-    "target_keyword count = 12 (limit 8)"
+    "target_keyword count = 12 (limit 8)",
+    "SC3c section scatter: 1 section(s) with >3 scattered prose paragraphs",
+    "L13: 子节 prose 段过多 (4 > 3); 用 `### ` H3 小标题把长叙述分组(每组 ≤3 段)，或改成「引子 + 编号列表」(v4.5.1 / 2026-06-09 H3)"
   ],
-  "updatedAt": "2026-07-21T19:49:19.843Z"
+  "updatedAt": "2026-07-21T19:52:53.208Z"
 }

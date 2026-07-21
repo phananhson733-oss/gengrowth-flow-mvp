@@ -1,7 +1,7 @@
 {
   "page_id": "PG-HEAL-007",
   "prompt_path": "/Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-HEAL-007.v8-prompt.md",
-  "started_at": "2026-07-21T11:59:53.531Z",
+  "started_at": "2026-07-21T12:02:04.317Z",
   "models_requested": [
     "codex"
   ],
@@ -10,7 +10,7 @@
   "max_cost_usd_per_page": 5,
   "budget_exceeded_models": [],
   "ok_count": 1,
-  "total_cost_estimate_usd": 0.1627,
+  "total_cost_estimate_usd": 0.1662,
   "results": {
     "codex": {
       "model": "codex",
@@ -19,14 +19,14 @@
       "ok": true,
       "output_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-HEAL-007-codex-v8.md",
       "retries": 0,
-      "duration_s": 126.3,
+      "duration_s": 127.6,
       "cost_estimate_usd": {
-        "usd": 0.1627,
-        "input_tokens_est": 9043,
-        "output_tokens_est": 1806,
+        "usd": 0.1662,
+        "input_tokens_est": 9061,
+        "output_tokens_est": 1890,
         "pricing_note": "GPT 5.5 xhigh"
       },
-      "cumulative_cost_usd": 0.1627,
+      "cumulative_cost_usd": 0.1662,
       "budget_exceeded": false,
       "budget_usd": 5,
       "attempts": [
@@ -34,13 +34,13 @@
           "try_index": 1,
           "model": "codex",
           "command": "codex exec -c model=gpt-5.6-terra -c reasoning_effort=high - < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-HEAL-007.v8-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-HEAL-007-codex-v8.md",
-          "cost_usd": 0.1627,
-          "cumulative_cost_usd": 0.1627,
+          "cost_usd": 0.1662,
+          "cumulative_cost_usd": 0.1662,
           "ok": true,
           "exit_code": 0,
-          "duration_s": 126.3,
-          "stderr_tail": "ion\n\nUse [Explore Astrology Tools](https://astrologywiki.com/en/tools) to calculate or review your birth chart.\n\nYou will get a clearer view of Mars by sign, house, and major aspects instead of relying on a single placement.\n\nA useful chart reading does not hand down a verdict; it helps turn recurring choices into something you can notice with more honesty.\n\n## Sources\n\n- Dane Rudhyar — helped establish a psychological, person-centered approach to astrological interpretation.\ntokens used\n64,647",
-          "stdout_bytes": 8774
+          "duration_s": 127.6,
+          "stderr_tail": "chart and locate Mars by sign, house, and aspects.\n\nThat chart view gives you a clearer record of the factors that shape how direct action may appear in your life.\n\nSeeing those factors together can turn a quick self-label into a more honest understanding of when to move, when to pause, and how to choose both on purpose.\n\n## Sources\n\n- Dane Rudhyar — developed a person-centered approach to astrological interpretation that emphasizes meaning and individual self-understanding.\ntokens used\n60,293",
+          "stdout_bytes": 9400
         }
       ]
     }

@@ -7,7 +7,9 @@
     "missing required H2: \"## <entity> vs <real adjacent concept> (comparison section; no \"Adjacent Concepts\" boilerplate)\"",
     "drifted sections: \"How to Read Mars in Aries in Your Chart\" (jaccard=0.000, shingle=0.000, target-recall=0.33); \"Common Misreadings\" (jaccard=0.000, shingle=0.000, target-recall=0.00); \"Common Questions About Mars in Aries\" (jaccard=0.000, shingle=0.000, target-recall=0.33) (skipped 5 structural: \"Mars in Aries at a Glance\", \"Reflection Prompts\", \"Related Reading\", \"Take Action\", \"Sources\")",
     "word count 1389 < min 1485",
-    "target_keyword count = 20 (limit 12)"
+    "target_keyword count = 20 (limit 12)",
+    "word count 1454 < min 1485",
+    "psych-safety blacklist word matched: \"treats\""
   ],
-  "updatedAt": "2026-07-21T11:59:56.583Z"
+  "updatedAt": "2026-07-21T12:02:07.569Z"
 }

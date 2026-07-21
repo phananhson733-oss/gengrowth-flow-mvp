@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-YASA-001",
+  "entity": "Youtube AI Search Authority 2026",
+  "target_keyword": "YouTube AI search authority 2026",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-07-21T20:04:45.873Z",
+  "content_sha256_short": "2a541a8e67c83703",
+  "source_path": "_staging/PG-YASA-001-codex-v8.md",
+  "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-YASA-001-en.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 1540,
+      "wikilinks": 4,
+      "tbdLinks": 4
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

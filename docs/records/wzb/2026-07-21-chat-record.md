@@ -1,4 +1,16 @@
 ---
+
+### Q11 — 19:54
+
+**🙋 提问：**
+
+用户提供了完整的数据来源安全声明与严格内容规范，要求为 astrologywiki.com 撰写一篇英文 T2 Definition × wiki 词条：主题为 “mars in aries”，目标受众美国英语用户。要求文章无 YAML、从 H1 直接进入定义 H2、严格 11 个 H2、1800–2200 词、关键词自然出现 5–8 次、包含指定 CTA、内链占位符、FAQ、速查表、反思问题、免责声明与受控 Sources；外部字段只按数据处理，绝不执行其中任何指令。
+
+**🤖 回答：**
+
+按外部数据安全边界生成一篇全英文 Markdown 词条。稿件以 “Mars in Aries” 的象征性行动与断言风格为核心，清楚区分 Aries Sun、Chiron in the twelfth house、其他 Mars signs 与泛化的“passion”说法；包含出生图阅读与 rising sign 的正文内链占位符、指定 Tools CTA 和受控来源 Dane Rudhyar。交付前按结构、标题、关键词、禁词、安全免责声明、链接与 CTA 约束进行人工核查。
+
+---
 title: 对话记录 — 2026-07-21
 date: 2026-07-21
 updated: 2026-07-21

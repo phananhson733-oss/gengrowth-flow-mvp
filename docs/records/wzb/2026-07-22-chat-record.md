@@ -23,6 +23,7 @@ aliases:
 - 再次按同一受控数据来源、结构、字数、关键词和事实诚信门禁生成该主题的英文 T2 指南稿。
 - 7 月 21 日 SEO 自然窗口验收仍为 0/3：18:30–19:30 preflight 因真实语义/cluster 不一致失败，19:52 非日历直跑占锁，导致 20:00、20:30、21:00 三个自然 fire 全部跳过；该外部轮发布的两篇文章最终全链路收敛。
 - 20:30 单点复验由统一日志确认是 `launchd[1]` 自然 fire，但仅因 19:52 非日历轮占锁而跳过，不能计为 clean；当前 claims non-done=1（PG-WC-053 needs_human），其余 active repair、pending/dropped writeback、outbox、needs-human drift、相关进程和锁均为 0，临时 heartbeat 删除接口继续超时且仍为 ACTIVE。
+- 执行固定行 Index Repair Resubmit：2026-07-22 05:00–05:01 CST 脚本 exit 0；astrologywiki 新增 2 条英文复盘且队列为 15（P1=3/P2=4/P3=8），gengrowth 无变更且队列为 0；运行窗口无错误关键词，未触发普通文章 Indexing API、无人值守 Search Console 点击或 Feishu/Google Doc 报告。
 
 ---
 
@@ -125,5 +126,22 @@ aliases:
 只读复验确认 2026-07-21 20:30:05 的窗口由 macOS 统一日志中的 `launchd[1]` 自然触发，LaunchAgent 固定调用 `gg-seo-blog-launchd-tick.sh`，但输出仅为 `/tmp/gg-seo-blog-launchd.lock` 被占用后 skip；它没有执行 active brief preflight → pre-drain → strict reconcile → nightly，故 20:30 不是 clean natural window。20:00、20:30、21:00 仍全部受 19:52:25 非日历直跑污染，clean=0/3；launchd 日志仍止于 21:55:46，共 782 行，未出现新增发布。
 
 最终账本仍为 claims done=25、non-done=1（PG-WC-053 needs_human）；repair queue 无 active 状态，pending/dropped writeback、notify outbox、eligible needs-human drift均为 0，LaunchAgent not running，且无 SEO 进程或相关锁。父目标保持 in_progress。已过 21:05 后通过正式 automation API 再次请求删除临时 heartbeat，等待约 52 秒仍无返回并终止挂起调用；`automation.toml` 仍为 ACTIVE，未手工修改。
+
+---
+
+### Q8 — 05:01
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: 2026-07-21T09:31:48.336Z (1784626308336)
+
+Run the deterministic fixed-row index repair workflow through `bash tools/scripts/gg-index-repair-resubmit-tick.sh`. The wrapper loads the local gg environment, loops the configured products (`GG_INDEX_MONITOR_PRODUCTS`, defaulting to astrologywiki and gengrowth), processes rows marked `已修复`, syncs `结果复盘表`, and refreshes `request-indexing-queue` in each product Google Sheet. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, do not click Search Console Request Indexing unattended, and do not create Feishu or Google Doc report artifacts. After the wrapper exits, summarize per-product `process-fixed`, `sync-recap`, `sync-request-queue` counts visible in the log, plus any failures.
+
+**🤖 回答：**
+
+执行指定脚本 `bash tools/scripts/gg-index-repair-resubmit-tick.sh`，05:00:46–05:01:10 CST 完成并退出 0，日志以 `index repair-resubmit ok` 收尾。astrologywiki：process-fixed fixed=0/resubmitted=0；sync-recap en_rows=280/appended=2/updated=0/skipped=278；sync-request-queue rows=15（P0=0/P1=3/P2=4/P3=8）。gengrowth：process-fixed fixed=0/resubmitted=0；sync-recap en_rows=62/appended=0/updated=0/skipped=62；sync-request-queue rows=0（P0–P3 均为 0）。窗口内无 failure/error/exception/auth/timeout/nonzero-rc；脚本契约未调用普通文章 Google Indexing API、未作无人值守 Search Console Request Indexing 点击，且未创建 Feishu/Google Doc 报告物。
 
 ---

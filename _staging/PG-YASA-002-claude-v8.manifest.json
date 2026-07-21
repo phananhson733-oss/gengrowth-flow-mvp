@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-YASA-002",
+  "entity": "AI Agent Trends Business 2026",
+  "target_keyword": "AI agent trends business 2026",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-07-21T22:15:55.934Z",
+  "content_sha256_short": "7f0bc750d09d60ca",
+  "source_path": "_staging/PG-YASA-002-codex-v8.md",
+  "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-YASA-002-en.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 1567,
+      "wikilinks": 4,
+      "tbdLinks": 4
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

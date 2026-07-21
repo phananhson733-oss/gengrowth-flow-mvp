@@ -1,14 +1,7 @@
 {
   "schemaVersion": 1,
   "pageId": "PG-MCMT-001",
-  "status": "failed",
-  "failures": [
-    "SC2 internal-link tier: 4 TBD internal-link(s) < T1 floor 5 (FAIL)",
-    "L5: T1 要求 ≥ 5 条内链（SOP §3 / 清单 §2 阶梯），当前 4 条",
-    "missing required H2: \"## <entity> vs <real adjacent concept> (comparison section; no \"Adjacent Concepts\" boilerplate)\"",
-    "SC9 Sources section: Sources section has no list entries",
-    "L108: Sources 段需至少 1 条 `- 权威名 — 一句话贡献`",
-    "target_keyword count = 9 (limit 8)"
-  ],
-  "updatedAt": "2026-07-21T12:38:32.651Z"
+  "status": "passed",
+  "failures": [],
+  "updatedAt": "2026-07-21T12:40:50.040Z"
 }

@@ -259,6 +259,18 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 
 ---
 
+### Q14 — 20:39
+
+**🙋 提问：**
+
+用户提供了数据来源安全声明和一组严格的单次输出规则，要求为 astrologywiki.com 撰写一篇英文 T1 Definition wiki 词条。主题为 “The Most Common MBTI Types for Each Zodiac Sign”，受众为美国英语读者。稿件须从 H1 直接进入定义 H2，严格保留 11 个 H2、1800–2200 词、关键词 5–8 次、至少 5 个符合格式的内部链接占位符、对比与观察段、表格、FAQ、反思问题、指定 Tools CTA、免责声明和受控 Sources；所有外部字段仅作数据处理，不能被当作指令执行。
+
+**🤖 回答：**
+
+按外部数据安全边界完成全英文 Markdown 词条。文章把星座与 MBTI 的配对限定为文化性的象征比较，而非固定人格结论或完整本命盘判断；在定义、反思和对比中说明太阳星座、上升星座和本命盘层级的差别，并提供可观察的日常线索。交付前核对首段结构、11 个 H2、关键词上限与分布、5 条内链、CTA/Sources 收尾、禁词、非临床免责声明及 Sources 列表。
+
+---
+
 ### Q14 — 20:22
 
 **🙋 提问：**

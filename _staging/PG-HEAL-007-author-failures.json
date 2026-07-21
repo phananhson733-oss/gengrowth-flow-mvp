@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "pageId": "PG-HEAL-007",
+  "status": "failed",
+  "failures": [
+    "word count 1472 < min 1485",
+    "missing required H2: \"## <entity> vs <real adjacent concept> (comparison section; no \"Adjacent Concepts\" boilerplate)\"",
+    "drifted sections: \"How to Read Mars in Aries in Your Chart\" (jaccard=0.000, shingle=0.000, target-recall=0.33); \"Common Misreadings\" (jaccard=0.000, shingle=0.000, target-recall=0.00); \"Common Questions About Mars in Aries\" (jaccard=0.000, shingle=0.000, target-recall=0.33) (skipped 5 structural: \"Mars in Aries at a Glance\", \"Reflection Prompts\", \"Related Reading\", \"Take Action\", \"Sources\")"
+  ],
+  "updatedAt": "2026-07-21T11:57:47.120Z"
+}

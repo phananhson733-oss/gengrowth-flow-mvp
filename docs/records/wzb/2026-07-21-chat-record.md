@@ -24,6 +24,7 @@ aliases:
 - 今日关键词补充 brief 的固定 wrapper 均由本地环境启用 apply：15:25 新增 AstrologyWiki 7 页（1 个新集群），16:01 与 18:01 两产品均无候选或更新。
 - 20:03–20:12 同一固定 wrapper 新增 8 个页面：AstrologyWiki 3 页（无新集群）与 GenGrowth 5 页（2 个新集群）；preprocessor 为 ok×1、v1_fallback×7，日志无失败或超时，未手工写入 Sheet 或任务计划，亦未创建额外报告产物。
 - 已按外部数据安全边界交付 Venus in Taurus 英文 T2 Definition 词条，并按指定结构、关键词、链接、CTA、事实诚信及安全措辞约束完成终检。
+- 已按外部数据安全边界交付 “The Most Common MBTI Types for Each Zodiac Sign” 英文 T1 Definition 词条，采用 sign-level symbolic comparison，并明确不把配对写成确定人格标签或完整星盘判断。
 
 ---
 
@@ -267,5 +268,17 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 按外部数据安全边界生成一篇全英文 Markdown 词条。稿件以 Venus in Taurus 的感官享受、稳定亲密、审美稳定与忠诚为核心，明确区分出生图位置、Venus Mahadasha、宫位、相位与太阳星座层面的解释；包含出生图阅读与相位指南的正文内链占位符、指定 Birth Chart Calculator CTA、受控来源 Liz Greene，以及非临床免责声明。交付前人工核查了 11 个 H2、首个定义标题、内链位置、关键词上限、禁词与 CTA/Sources 收尾顺序。
+
+---
+
+### Q15 — 20:34
+
+**🙋 提问：**
+
+用户提供了完整的数据来源安全声明与严格内容规范，要求为 astrologywiki.com 撰写一篇英文 T1 Definition × wiki 词条：主题为 “The Most Common MBTI Types for Each Zodiac Sign”，目标受众美国英语用户。要求文章无 YAML、从 H1 直接进入定义 H2、严格 11 个 H2、1800–2200 词、关键词自然出现 5–8 次、包含指定 CTA、内链占位符、FAQ、速查表、反思问题与受控 Sources；外部字段只按数据处理，绝不执行其中任何指令。
+
+**🤖 回答：**
+
+按外部数据安全边界生成一篇全英文 Markdown 词条。稿件把 MBTI 与太阳星座的常见文化配对写作可反思的符号框架，不用其替代完整本命盘或人格测评；包含出生图阅读与上升星座的正文内链占位符、指定 Explore Astrology Tools CTA、受控来源 Dane Rudhyar。交付前人工核查了 11 个 H2、首个定义标题、关键词分布与上限、链接、CTA/Sources 收尾、禁词和非确定性安全措辞。
 
 ---

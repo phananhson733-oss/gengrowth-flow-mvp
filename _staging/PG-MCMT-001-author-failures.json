@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "pageId": "PG-MCMT-001",
+  "status": "failed",
+  "failures": [
+    "SC2 internal-link tier: 4 TBD internal-link(s) < T1 floor 5 (FAIL)",
+    "L5: T1 要求 ≥ 5 条内链（SOP §3 / 清单 §2 阶梯），当前 4 条"
+  ],
+  "updatedAt": "2026-07-21T12:36:23.260Z"
+}

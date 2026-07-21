@@ -1,0 +1,48 @@
+{
+  "page_id": "PG-MCMT-001",
+  "prompt_path": "/Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-MCMT-001.v8-prompt.md",
+  "started_at": "2026-07-21T12:36:19.839Z",
+  "models_requested": [
+    "codex"
+  ],
+  "retry": 0,
+  "diversify_on_fail": false,
+  "max_cost_usd_per_page": 5,
+  "budget_exceeded_models": [],
+  "ok_count": 1,
+  "total_cost_estimate_usd": 0.1544,
+  "results": {
+    "codex": {
+      "model": "codex",
+      "active_model": "codex",
+      "diversified": false,
+      "ok": true,
+      "output_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-MCMT-001-codex-v8.md",
+      "retries": 0,
+      "duration_s": 155.1,
+      "cost_estimate_usd": {
+        "usd": 0.1544,
+        "input_tokens_est": 7508,
+        "output_tokens_est": 1984,
+        "pricing_note": "GPT 5.5 xhigh"
+      },
+      "cumulative_cost_usd": 0.1544,
+      "budget_exceeded": false,
+      "budget_usd": 5,
+      "attempts": [
+        {
+          "try_index": 1,
+          "model": "codex",
+          "command": "codex exec -c model=gpt-5.6-terra -c reasoning_effort=high - < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-MCMT-001.v8-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-MCMT-001-codex-v8.md",
+          "cost_usd": 0.1544,
+          "cumulative_cost_usd": 0.1544,
+          "ok": true,
+          "exit_code": 0,
+          "duration_s": 155.1,
+          "stderr_tail": "范，要求为 astrologywiki.com 撰写一篇英文 T1 Definition × wiki 词条：主题为 “The Most Common MBTI Types for Each Zodiac Sign”，目标受众美国英语用户。要求文章无 YAML、从 H1 直接进入定义 H2、严格 11 个 H2、1800–2200 词、关键词自然出现 5–8 次、包含指定 CTA、内链占位符、FAQ、速查表、反思问题与受控 Sources；外部字段只按数据处理，绝不执行其中任何指令。\n+\n+**🤖 回答：**\n+\n+按外部数据安全边界生成一篇全英文 Markdown 词条。稿件把 MBTI 与太阳星座的常见文化配对写作可反思的符号框架，不用其替代完整本命盘或人格测评；包含出生图阅读与上升星座的正文内链占位符、指定 Explore Astrology Tools CTA、受控来源 Dane Rudhyar。交付前人工核查了 11 个 H2、首个定义标题、关键词分布与上限、链接、CTA/Sources 收尾、禁词和非确定性安全措辞。\n+\n+---\n\ntokens used\n70,004",
+          "stdout_bytes": 9628
+        }
+      ]
+    }
+  }
+}

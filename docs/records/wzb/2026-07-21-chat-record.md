@@ -23,6 +23,7 @@ aliases:
 - 验收暴露的主要问题是主轮与异步修复之间的终态竞态，以及长轮次吞掉后续日历窗口；不是放宽内容事实门禁即可解决的问题。
 - 临时 heartbeat 在 04:12、04:37 与 05:08 三次删除接口调用均超时，配置仍为 ACTIVE，未手工改动自动化文件。
 - 05:00 固定入口 `gg-index-repair-resubmit-tick.sh` 与 09:02 固定入口 `gg-index-monitor-tick.sh` 均成功完成两产品的结果复盘表同步和请求索引队列刷新；后者站点地图 API 提交成功、检查 11 条且无失败，未触及普通文章 Indexing API、无人值守 GSC 请求或报告产物。
+- 10:01 固定入口 `gg-recap-performance-tick.sh` 成功刷新两产品的 wrapper-owned 复盘性能字段与优化任务报告；AstrologyWiki 有 6 条已收录且未填的 D14/D30/D60 节点计划行，GenGrowth 无到期行，未绕过 wrapper 或触及人工决策字段。
 
 ---
 
@@ -115,5 +116,35 @@ Run the GenGrowth Phase 2 indexing workflow through the existing deterministic w
 **🤖 回答：**
 
 已运行固定封装，退出码 0；精确日志窗口为 09:02:19–09:04:56 CST，末行 `index monitor ok`。两产品的官方 Search Console Sitemap API 提交均成功；astrologywiki 检查 11 条、alerts=0、failures=0，其中 8 条转为已收录、3 条继续监控；gengrowth 无到期 URL。结果复盘表已同步。最终请求索引队列：astrologywiki rows=13（P0=0、P1=3、P2=4、P3=6），gengrowth rows=0，合计 rows=13（P0=0、P1=3、P2=4、P3=6）。精确日志窗口未见 Feishu/Lark 发送成功或失败回执；notify 步骤已被封装调用。未使用普通文章 Google Indexing API，亦未进行无人值守 Search Console Request Indexing 点击。
+
+---
+
+### Q6 — 10:03
+
+**🙋 提问：**
+
+Automation: 结果复盘表更新
+Automation ID: gengrowth-recap-performance
+Automation memory: $CODEX_HOME/automations/gengrowth-recap-performance/memory.md
+Last run: 2026-07-20T02:01:16.168Z (1784512876168)
+
+Run the deterministic GenGrowth results-recap performance workflow through `bash tools/scripts/gg-recap-performance-tick.sh`.
+
+The wrapper loads the local gg environment, scans the configured products (`GG_RECAP_PERFORMANCE_PRODUCTS`, defaulting to astrologywiki and gengrowth), reads `index-tracking` and `结果复盘表`, and only fetches D14/D30/D60 GSC/GA4 snapshot metrics for indexed URLs whose current age is exactly at one of those milestones. Non-milestone rows and already-filled milestone cells must keep their existing values; historical repair/backfill is only allowed through the wrapper's explicit repair modes such as `--fill-pending` / `--verify-zero-metrics`, not by ad-hoc daily refresh.
+
+The wrapper preserves manual recap decisions/notes, writes wrapper-owned generated performance fields back to the Sheet, and writes the optimization task report under `~/gengrowth-agents/reports/recap-performance/`.
+
+Safety boundary:
+- Do not bypass the wrapper or pass ad-hoc write flags directly to the Node script.
+- Do not hand-edit Google Sheets outside the wrapper.
+- Do not publish content, deploy sites, modify page source, submit GSC Request Indexing, or use the Google Indexing API.
+- Do not overwrite manual fields such as `决策` or human notes; only the wrapper-owned generated recap segment may be refreshed.
+- Do not create extra Feishu/Google Doc artifacts unless the wrapper already does so.
+
+After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/recap_performance/` and summarize per-product workbook/site/property, exact-milestone rows processed, updated recap row counts, generated report path, D14/D30/D60 coverage for due indexed rows, optimization task counts by priority, skipped/non-due rows, and any failures. If the wrapper fails or required credentials/properties are missing, report the exact missing boundary from the log without attempting a manual replacement workflow.
+
+**🤖 回答：**
+
+已仅运行固定入口 `bash tools/scripts/gg-recap-performance-tick.sh`，预检 `bash -n` 通过，wrapper 退出码 0；精确日志窗口为 10:01:57–10:02:12 CST，末行 `recap performance ok`，无 warn/error/failed/partial 信号。AstrologyWiki 使用 workbook `1CkjOCgYbRfXGYc6l2FJOaxUIzxT0NBVUhUpgCjyzcQc`、`sc-domain:astrologywiki.com`、GA4 `properties/524765570`：精确节点计划行 rows=6，更新 recap 生成字段 257，报告任务 259（P0=11、技术排查=158、P1=10、P2=2、观察=78）。GenGrowth 使用 workbook `1RRxsyFmdWgtd6tojjze_8lxwSUTTZKm4TqU4gZTIRA8`、`sc-domain:gengrowth.ai`、同一 GA4 property：rows=0、updated=49、tasks=62（P0=0、技术排查=49、P1=5、P2=0、观察=8）。日志中 rows 是已收录且未填的 D14/D30/D60 节点总数；GenGrowth 覆盖为 D14/D30/D60 各 0/0，AstrologyWiki 仅可确认总计 6，wrapper 日志未输出 D14/D30/D60 分桶，也未输出单独的非节点/已填跳过数，未为补齐而绕过 wrapper。报告写入 `~/gengrowth-agents/reports/recap-performance/2026-07-21-{astrologywiki,gengrowth}-optimization-tasks.md`；未手工编辑 Sheet、未使用 repair/backfill flag、未发布/部署/改源文件、未提交 GSC Request Indexing 或使用 Google Indexing API。
 
 ---

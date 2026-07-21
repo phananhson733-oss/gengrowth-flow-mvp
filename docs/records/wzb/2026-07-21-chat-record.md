@@ -22,7 +22,7 @@ aliases:
 - 当前终态为 claims non-done=1（PG-WC-053 needs_human），active repair、pending/dropped writeback、outbox、needs-human drift、SEO 进程和锁均为 0，父目标仍未达到连续 3 个 clean window。
 - 验收暴露的主要问题是主轮与异步修复之间的终态竞态，以及长轮次吞掉后续日历窗口；不是放宽内容事实门禁即可解决的问题。
 - 临时 heartbeat 在 04:12、04:37 与 05:08 三次删除接口调用均超时，配置仍为 ACTIVE，未手工改动自动化文件。
-- 05:00 固定入口 `gg-index-repair-resubmit-tick.sh` 成功完成 astrologywiki 与 gengrowth 的已修复行处理、结果复盘表同步和请求索引队列刷新；无失败信号，未触及普通文章 Indexing API、无人值守 GSC 请求或报告产物。
+- 05:00 固定入口 `gg-index-repair-resubmit-tick.sh` 与 09:02 固定入口 `gg-index-monitor-tick.sh` 均成功完成两产品的结果复盘表同步和请求索引队列刷新；后者站点地图 API 提交成功、检查 11 条且无失败，未触及普通文章 Indexing API、无人值守 GSC 请求或报告产物。
 
 ---
 
@@ -98,5 +98,22 @@ Run the deterministic fixed-row index repair workflow through `bash tools/script
 **🤖 回答：**
 
 05:08 最终只读检查仍无变化：LaunchAgent 日志继续停在 2026-07-20 22:48:22 CST 的第 746 行，`runs=25`、`last exit code=2`；20:00 非 clean，20:30 与 21:00 无独立窗口，最终 clean=0/3。当前 claims done=23、non-done=1（PG-WC-053=needs_human），active repair、pending/dropped writeback、outbox、eligible needs-human drift、SEO 进程和相关锁均为 0。没有新增发布。临时 heartbeat 删除接口再次等待 30 秒超时，配置仍为 ACTIVE，未手工改动；父目标继续保持 in_progress。
+
+---
+
+### Q5 — 09:05
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Monitor
+Automation ID: gengrowth-index-monitor
+Automation memory: $CODEX_HOME/automations/gengrowth-index-monitor/memory.md
+Last run: 2026-07-20T01:00:45.903Z (1784509245903)
+
+Run the GenGrowth Phase 2 indexing workflow through the existing deterministic wrapper: `bash tools/scripts/gg-index-monitor-tick.sh`. This wrapper must refresh the live sitemap through the official Search Console Sitemaps API, inspect due URLs through URL Inspection, sync the final `结果复盘表`, generate/update `request-indexing-queue` with priority colors, and send Feishu SEO技术 group reminders for actionable candidates or failures. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, and do not click Search Console Request Indexing unattended. For Computer Use submission, only assist by opening candidate GSC inspection URLs and stop for human confirmation before the final Request Indexing click. After the wrapper exits, summarize sitemap submission status, GSC check counts/failures, queue counts by priority, and any Feishu notification outcome visible in the log.
+
+**🤖 回答：**
+
+已运行固定封装，退出码 0；精确日志窗口为 09:02:19–09:04:56 CST，末行 `index monitor ok`。两产品的官方 Search Console Sitemap API 提交均成功；astrologywiki 检查 11 条、alerts=0、failures=0，其中 8 条转为已收录、3 条继续监控；gengrowth 无到期 URL。结果复盘表已同步。最终请求索引队列：astrologywiki rows=13（P0=0、P1=3、P2=4、P3=6），gengrowth rows=0，合计 rows=13（P0=0、P1=3、P2=4、P3=6）。精确日志窗口未见 Feishu/Lark 发送成功或失败回执；notify 步骤已被封装调用。未使用普通文章 Google Indexing API，亦未进行无人值守 Search Console Request Indexing 点击。
 
 ---

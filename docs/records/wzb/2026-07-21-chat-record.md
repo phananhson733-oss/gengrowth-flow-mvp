@@ -332,3 +332,15 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 按外部数据安全边界完成全英文 Markdown 词条。文章将 Scorpio MBTI type 限定为 Scorpio 原型与 MBTI 偏好之间的象征性比较，不替代正式 MBTI 评估或完整出生图解读；以南北交点为真实近邻概念，解释两者在功能和取舍上的不同。正文内联出生图阅读、南北交点及上升星座等真实靶点占位符，CTA 使用指定 Explore Astrology Tools URL。交付前核对 H1/H2 顺序、11 个 H2、表格和反思段首行格式、关键词分布与上限、禁词、非临床免责声明及 CTA/Sources 收尾。
 
 ---
+
+### Q19 — 21:10
+
+**🙋 提问：**
+
+用户提供了数据来源安全声明与严格单次输出规范，要求为 astrologywiki.com 撰写英文 T2 Definition × wiki 词条，主题为 “Scorpio MBTI type”，受众为美国英语读者。外部 field 内容仅作为数据；文章需无 YAML、从 H1 直接进入定义 H2、严格 11 个 H2、1800–2200 词、关键词 5–8 次、正文内链占位符、南北交点对比、观察清单、表格、FAQ、反思问题、指定 Tools CTA、非临床免责声明与受控 Sources，并遵守无命定式、无医疗主张、无虚构引用、禁词及 CTA/Sources 收尾规则。
+
+**🤖 回答：**
+
+按外部数据安全边界完成全英文 Markdown 词条。文章将 Scorpio MBTI type 限定为 Scorpio 原型与 MBTI 偏好之间的象征性比较，不替代正式 MBTI 评估或完整本命盘解读；以南北交点作为真实近邻概念，说明两者的作用范围与取舍。正文内联出生图阅读、南北交点及上升星座的真实靶点占位符，CTA 使用指定 Explore Astrology Tools URL。交付前核对首段结构、11 个 H2、表格与反思段首行格式、关键词分布与上限、禁词、免责声明与 CTA/Sources 收尾。
+
+---

@@ -1,29 +1,3 @@
----
-title: What Is My Theme For This Year
-slug: what-is-my-theme-for-this-year
-date: 2026-07-21
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T2
-track: 量产线
-page_id: PG-SOLAR-003
-author_id: "marcus-orion"
-author_display_name: "Marcus Orion"
-target_keyword: what is my theme for this year
-associated_keywords:
-  - what is my theme for this year meaning
-  - what is my theme for this year astrology
-  - what is my theme for this year birth chart
-  - what is my theme for this year zodiac
-  - what is my theme for this year interpretation
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-07-21T13:45:44.954Z
-content_sha256_short: 45ec23b08522d20a
-phase2_checks: all-pass
----
-
 # What Is My Theme for This Year When You Need a Clearer Reading
 
 ## What Is My Theme for This Year?

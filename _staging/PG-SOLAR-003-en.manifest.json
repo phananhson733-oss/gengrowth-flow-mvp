@@ -8,9 +8,9 @@
   "track": "量产线",
   "generated_by": "unknown",
   "prompt_version": "v8",
-  "generated_at": "2026-07-21T13:41:17.976Z",
-  "content_sha256_short": "f9771cbfe3faa642",
-  "source_path": "_staging/PG-SOLAR-003-codex-v8.md",
+  "generated_at": "2026-07-21T13:45:44.954Z",
+  "content_sha256_short": "45ec23b08522d20a",
+  "source_path": "_staging/PG-SOLAR-003-revised-v8.md",
   "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-SOLAR-003-en.md",
   "phase2_checks": {
     "overall": "pass",
@@ -19,7 +19,7 @@
       "h2Count": 11,
       "h3Count": 0,
       "h4Count": 0,
-      "words": 1516,
+      "words": 1564,
       "wikilinks": 4,
       "tbdLinks": 4
     },

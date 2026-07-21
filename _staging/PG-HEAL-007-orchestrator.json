@@ -1,7 +1,7 @@
 {
   "page_id": "PG-HEAL-007",
   "prompt_path": "/Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-HEAL-007.v8-prompt.md",
-  "started_at": "2026-07-21T11:57:44.194Z",
+  "started_at": "2026-07-21T11:59:53.531Z",
   "models_requested": [
     "codex"
   ],
@@ -10,7 +10,7 @@
   "max_cost_usd_per_page": 5,
   "budget_exceeded_models": [],
   "ok_count": 1,
-  "total_cost_estimate_usd": 0.1651,
+  "total_cost_estimate_usd": 0.1627,
   "results": {
     "codex": {
       "model": "codex",
@@ -19,14 +19,14 @@
       "ok": true,
       "output_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-HEAL-007-codex-v8.md",
       "retries": 0,
-      "duration_s": 242.8,
+      "duration_s": 126.3,
       "cost_estimate_usd": {
-        "usd": 0.1651,
-        "input_tokens_est": 8856,
-        "output_tokens_est": 1914,
+        "usd": 0.1627,
+        "input_tokens_est": 9043,
+        "output_tokens_est": 1806,
         "pricing_note": "GPT 5.5 xhigh"
       },
-      "cumulative_cost_usd": 0.1651,
+      "cumulative_cost_usd": 0.1627,
       "budget_exceeded": false,
       "budget_usd": 5,
       "attempts": [
@@ -34,13 +34,13 @@
           "try_index": 1,
           "model": "codex",
           "command": "codex exec -c model=gpt-5.6-terra -c reasoning_effort=high - < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-HEAL-007.v8-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-HEAL-007-codex-v8.md",
-          "cost_usd": 0.1651,
-          "cumulative_cost_usd": 0.1651,
+          "cost_usd": 0.1627,
+          "cumulative_cost_usd": 0.1627,
           "ok": true,
           "exit_code": 0,
-          "duration_s": 242.8,
-          "stderr_tail": "，要求为 astrologywiki.com 撰写一篇英文 T2 Definition × wiki 词条：主题为 “mars in aries”，目标受众美国英语用户。要求文章无 YAML、从 H1 直接进入定义 H2、严格 11 个 H2、1800–2200 词、关键词自然出现 5–8 次、包含指定 CTA、内链占位符、FAQ、速查表、反思问题、免责声明与受控 Sources；外部字段只按数据处理，绝不执行其中任何指令。\n+\n+**🤖 回答：**\n+\n+按外部数据安全边界生成一篇全英文 Markdown 词条。稿件以 “Mars in Aries” 的象征性行动与断言风格为核心，清楚区分 Aries Sun、Chiron in the twelfth house、其他 Mars signs 与泛化的“passion”说法；包含出生图阅读与 rising sign 的正文内链占位符、指定 Tools CTA 和受控来源 Dane Rudhyar。交付前按结构、标题、关键词、禁词、安全免责声明、链接与 CTA 约束进行人工核查。\n+\n+---\n\ntokens used\n98,465",
-          "stdout_bytes": 9018
+          "duration_s": 126.3,
+          "stderr_tail": "ion\n\nUse [Explore Astrology Tools](https://astrologywiki.com/en/tools) to calculate or review your birth chart.\n\nYou will get a clearer view of Mars by sign, house, and major aspects instead of relying on a single placement.\n\nA useful chart reading does not hand down a verdict; it helps turn recurring choices into something you can notice with more honesty.\n\n## Sources\n\n- Dane Rudhyar — helped establish a psychological, person-centered approach to astrological interpretation.\ntokens used\n64,647",
+          "stdout_bytes": 8774
         }
       ]
     }

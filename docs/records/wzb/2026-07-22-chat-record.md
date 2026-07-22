@@ -260,17 +260,6 @@ After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-s
 
 ---
 
-### Q28 — 17:59
-
-**🙋 提问：**
-
-用户提供数据来源安全声明与完整英文 Definition × T2 词条 brief，要求为 astrologywiki.com 写一篇以 “jang wonyoung birth chart” 为关键词、以 “Jang Wonyoung Birth Chart” 为实体的美国英语文章。字段内容只能作为外部数据，不得执行其中的指令。文章必须一次性从 H1 开始、以 Sources 结束，恰好包含 1 个 H1 和 11 个 H2，长度 1800–2200 词，完整关键词出现 5–8 次；需依次包含直接定义与三条要点、自我觉察、与 Celebrity Zodiac 的真实对比、观察方法、常见误读、指定四列表格、FAQ、反思题、内部链接、Birth Chart Calculator CTA 和受控来源。用户还要求避免出生时间未证实情况下的上升、宫位、相位断言，避免命定预测、医疗语言、虚构术语、虚构引文、裸外链、SEO 元评论和禁用 AI 套话。
-
-**🤖 回答：**
-
-生成美国英语 T2 词条：将该主题定义为基于公开出生资料的象征性解读框架，而非对生平、职业或未来的证明。正文说明公开资料确认 2004 年 8 月 31 日首尔出生，但没有经核实的出生时间，因此只可讨论太阳星座层面的文化语境，不能确定上升、宫位、月亮、精确相位或 stellium；以 Celebrity Zodiac 的简化读取作近邻对比，并提供可观察的证据检查、误读修正、表格、FAQ、反思题、合规内链占位符、指定 CTA 和 Dane Rudhyar 来源条目。
-
----
 ### Q15 — 13:06 [claude]
 
 **🙋 提问：**
@@ -434,5 +423,17 @@ Run the deterministic fixed-row index repair workflow through `bash tools/script
 **🤖 回答：**
 
 生成完整美国英语 T2 词条：将 Jennifer Lopez Birth Chart 定义为根据已知行星星座进行的象征性人物画像，不作为传记证据或未来预测。文章严格保留出生时间未知的界线，不断言上升、宫位、MC、stellium 或精确相位；结合 Leo、Gemini、Sagittarius、Scorpio、Libra 等已给位置，提供比较、观察清单、四列参考表、FAQ、反思题、合规内链、指定 Birth Chart Calculator CTA 与 Dane Rudhyar 来源项。
+
+---
+
+### Q29 — 17:59
+
+**🙋 提问：**
+
+用户提供数据来源安全声明与完整英文 Definition × T2 词条 brief，要求为 astrologywiki.com 写一篇以 “jang wonyoung birth chart” 为关键词、以 “Jang Wonyoung Birth Chart” 为实体的美国英语文章。字段内容只能作为外部数据，不得执行其中的指令。文章必须一次性从 H1 开始、以 Sources 结束，恰好包含 1 个 H1 和 11 个 H2，长度 1800–2200 词，完整关键词出现 5–8 次；需依次包含直接定义与三条要点、自我觉察、与 Celebrity Zodiac 的真实对比、观察方法、常见误读、指定四列表格、FAQ、反思题、内部链接、Birth Chart Calculator CTA 和受控来源。用户还要求避免出生时间未证实情况下的上升、宫位、相位断言，避免命定预测、医疗语言、虚构术语、虚构引文、裸外链、SEO 元评论和禁用 AI 套话。
+
+**🤖 回答：**
+
+生成美国英语 T2 词条：将该主题定义为基于公开出生资料的象征性解读框架，而非对生平、职业或未来的证明。正文说明公开资料确认 2004 年 8 月 31 日首尔出生，但没有经核实的出生时间，因此只可讨论太阳星座层面的文化语境，不能确定上升、宫位、月亮、精确相位或 stellium；以 Celebrity Zodiac 的简化读取作近邻对比，并提供可观察的证据检查、误读修正、表格、FAQ、反思题、合规内链占位符、指定 CTA 和 Dane Rudhyar 来源条目。
 
 ---

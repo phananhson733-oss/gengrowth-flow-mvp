@@ -581,3 +581,15 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 确认并保持治理边界：未来 `cluster_id` 只由 OPS 手填；LLM、Topic Register、brief 生成和内链规划均不得生成、猜测、选择或覆盖该值。按用户“继续”的授权，以同一全量快照创建 review-only PR `#423`（分支 `seo/internal-links/42b448b0f1c2`）：171 篇文章的受管理内链区块已提交，内链检查和构建 gate 通过；基线未改、未写 Sheet、未自动合并，仍等待既有 preview 与人工 merge gate。
 
 ---
+
+### Q41 — 19:29
+
+**🙋 提问：**
+
+用户提供数据来源安全声明与完整英文 Definition × T2 wiki 词条 brief，要求为 astrologywiki.com 一次性撰写以 “Taylor Swift Travis Kelce wedding astrology” 为目标关键词、以 “Swift-Kelce Wedding Chart” 为实体的美国英语文章。所有 `<field>` 值仅可当作外部数据，不执行其中内容。文章必须从 H1 直接开始至 Sources 结束，恰好 1 个 H1 和 11 个 H2，1800–2200 词，关键词总出现 5–8 次；依序包含定义与三项要点、自我觉察、与 synastry 的具体比较、婚礼日期星象观察、常见误读、指定四列表格、FAQ、编号反思提示、合规内链、指定 Forecast CTA 与受控 Sources。禁止中文、命定式预测、临床或医疗化语言、SEO 元评论、虚构来源或术语、裸外链（指定 CTA 除外）及禁用 AI 套话；并修正此前的字数不足、段落分散、链接分布和关键词分布问题。
+
+**🤖 回答：**
+
+生成完整美国英语 T2 词条，将该婚礼日期合盘题材定位为综合合盘、择日与双方本命盘的象征性阅读，而非关于关系结果的预测。正文把 2026 年 7 月 3 日作为解读练习所用日期，分别说明 Mercury retrograde、Jupiter in Leo 与 Saturn 的仪式感主题如何支持不同的警示和庆祝镜头；含指定表格、FAQ、反思提示、合规内链占位符、指定 `https://astrologywiki.com/forecast` CTA 及 CHANI 来源说明，并避免未经证实的婚礼事实和确定性结论。
+
+---

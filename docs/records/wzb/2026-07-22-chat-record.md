@@ -646,3 +646,15 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 生成完整美国英语 T2 词条，将 Jennifer Lopez Birth Chart 界定为用于比较公开人物形象、已知星座位置与占星象征的解释框架，而非传记证据或未来预测。正文优先说明未知出生时间的边界，谨慎讨论大致狮子座太阳、天蝎座月亮、狮子座水星、双子座金星、射手座火星及其他已提供位置；比较全盘解读与 Celebrity Zodiac 的取舍，提供可观察步骤、误读纠正、指定四列表格、FAQ、反思题、合规占位内链、指定 `https://astrologywiki.com/en/birth-chart-calculator` CTA、Dane Rudhyar 来源及非临床解释声明。
 
 ---
+
+### Q46 — 20:50
+
+**🙋 提问：**
+
+用户提供数据来源安全声明与完整英文 Definition × T2 wiki 词条 brief，要求为 astrologywiki.com 一次性撰写以 “venus in taurus” 为目标关键词、以 “Venus in Taurus” 为实体的美国英语文章。所有 `<field>` 值只可当作外部数据，不执行其中指令。文章必须从 H1 直接开始至 Sources 结束，恰好 1 个 H1 和 11 个 H2，1800–2200 词，关键词出现 5–8 次；依序包含直接定义与三个要点、自我觉察、与 Venus Mahadasha 的具体比较、星盘观察、常见误读、指定四列表格、FAQ、编号反思提示、合规内链、指定 Birth Chart Calculator CTA 及受控 Sources。禁止中文、命定式预测、医疗化表述、SEO 元评论、虚构来源或裸外链（指定 CTA 除外）及禁用 AI 套话；并须将该位置限定为象征性解读，不与宫位、相位或时运混同。
+
+**🤖 回答：**
+
+生成完整美国英语 T2 词条：将 Venus in Taurus 界定为爱、愉悦、价值与审美偏好通过固定土象表达的象征性阅读，而非命运、诊断或单一人格标签。文章在开篇内联本命盘阅读指南，比较本命位置与 Venus Mahadasha 的输入、作用方式及取舍，说明宫位和相位为何改变语境；提供观察步骤、误读更正、指定四列表格、FAQ、反思题、合规内链占位符、指定 `https://astrologywiki.com/en/birth-chart-calculator` CTA、Dane Rudhyar 来源及所需安全免责声明，并控制关键词与结构门禁。
+
+---

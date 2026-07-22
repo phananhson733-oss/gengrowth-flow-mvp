@@ -247,3 +247,14 @@ After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-s
 执行唯一允许入口 `bash tools/scripts/gg-recap-performance-tick.sh`，2026-07-22 10:02:31–10:02:59 CST 退出 0，并由最新日志确认 `recap performance ok`。astrologywiki（wb=…jyzcQc、`sc-domain:astrologywiki.com`、GA4 `properties/524765570`）处理 5 条精确到期且未填充的 D14/D30/D60 合并行，更新 260 条复盘，任务 261；gengrowth（wb=…ZTIRA8、`sc-domain:gengrowth.ai`、同一 GA4 property）处理 8 条、更新 49 条、任务 62。生成报告分别为 `~/gengrowth-agents/reports/recap-performance/2026-07-22-astrologywiki-optimization-tasks.md` 与 `~/gengrowth-agents/reports/recap-performance/2026-07-22-gengrowth-optimization-tasks.md`。任务分桶：astrologywiki P0=11、技术=160、P1=11、观察=79；gengrowth P0=0、技术=48、P1=5、观察=9。日志不输出 D14/D30/D60 各自拆分或单独的非到期/已填充跳过数，故只能确认合并到期覆盖为 5/5 与 8/8；无 failure/error/缺失凭据或属性边界。未绕过 wrapper、未使用 repair flags、未手工编辑 Sheet、未发布/部署/改源/提交 GSC 索引或调用 Google Indexing API；wrapper 自带 Feishu 成功回执 `messageId=om_x100b693603a58ca8b2871c292ee0494`。
 
 ---
+### Q15 — 13:06 [claude]
+
+**🙋 提问：**
+
+（定时任务 gsc-index-daily）每天跑一轮 GSC 手动 Request Indexing（astrologywiki.com）。本机(awayer_mini) Chrome 驱动，全新会话。只对真未收录的提交，已收录的一律跳过；提交后回填 index-tracking 与 结果复盘表，收尾 sync + 飞书通知。
+
+**🤖 回答：**
+
+从 canonical workbook 结果复盘表取到 5 个候选（申请时间空 & 未收录），先用 curl 预检 5 篇 live 页面均渲染正常（专属 title、无 "Failed to fetch wiki item"）且全部在 sitemap 内，再经 Chrome MCP 在 GSC 逐条检查——5 条状态均为「已发现-尚未编入索引」健康态，全部点「请求编入索引」成功，无配额错误：`what-is-my-theme-for-this-year`、`the-most-common-mbti-types-for-each-zodiac-sign`、`leandro-paredes-birth-chart`、`am-i-meant-to-be-my-own-boss`、`messi-vs-yamal-astrology`。其中 messi-vs-yamal 07-20 曾因未进部署 bundle 被判软404 拒收，本轮已自愈并提交成功，印证"软404 跳过等 build 自愈"的 SOP。已按日期 2026-07-22 回填 index-tracking（resubmitted_at + fix_status=已重新提交）与 结果复盘表（申请时间 + 索引修复状态），并跑 sync-recap / sync-request-queue，剩余候选清零；飞书 SEO技术群已推汇总。
+
+---

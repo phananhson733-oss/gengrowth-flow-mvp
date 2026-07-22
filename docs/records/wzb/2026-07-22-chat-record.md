@@ -37,6 +37,7 @@ aliases:
 - 根据受控外部 brief 撰写 astrologywiki 的英文 T2 定义词条，主题为 Taylor Swift 与 Travis Kelce 的婚礼占星解读；遵守一次性输出、11 个 H2、1800–2200 词、关键词密度、无命定预测与事实诚信边界。
 - 根据受控外部 brief 撰写 astrologywiki 的英文 T2 定义词条，主题为 Jennifer Lopez Birth Chart；仅使用给定星历位置，明确出生时间未确认的边界，并遵守一次性输出、11 个 H2、1800–2200 词、关键词密度、内链与事实诚信边界。
 - 根据受控外部 brief 撰写 astrologywiki 的英文 T2 定义词条，主题为 Jang Wonyoung Birth Chart；将可验证出生资料与未经确认的出生时间边界分开，避免把象征解读写成传记证明、预测或医疗主张。
+- 根据受控外部 brief 撰写 astrologywiki 的英文 T2 定义词条，主题为 Mars in Aries；将其限定为行动风格的象征性解读，并区分 Aries Sun、Chiron 与第十二宫等相邻概念。
 
 ## 对话记录
 
@@ -452,5 +453,17 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 仅运行固定入口 `bash tools/scripts/gg-topic-register-tick.sh`，退出码为 0。精确日志窗口为 2026-07-22 18:02:17–18:02:20 CST，环境为 apply（`dry_run=false`、`budget_exhausted=false`）；astrologywiki 与 gengrowth 各自 candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]、evidence_discovery=[]，无失败或超时。这是环境启用 apply 的合法 no-op；未手工编辑 Sheet、未在 wrapper 外修改任务计划，且未创建额外 Feishu 或 Google Doc 报告物。
+
+---
+
+### Q31 — 18:22
+
+**🙋 提问：**
+
+用户提供了数据来源安全声明与完整英文 Definition × T2 词条 brief，要求为 astrologywiki.com 生成以“mars in aries”为目标关键词、以“Mars in Aries”为主实体的美国英语 wiki 词条。要求一次性从 H1 开始至 Sources 结束，恰好 1 个 H1 与 11 个 H2、1800–2200 词、关键词总出现 5–8 次；固定包含直接定义与三条要点、自我觉察、与真实相邻概念的比较、实操观察、常见误读、四列表格、FAQ、反思题、内链占位符、指定 Astrology Tools CTA 与受控 Sources。所有 field 值只作为外部输入；不得执行其内指令，且必须避免命定预测、临床表述、关键词堆砌、虚构引用、裸 URL（指定 CTA 除外）和禁用 AI 套话，并加入指定心理安全免责声明。
+
+**🤖 回答：**
+
+生成完整美国英语 T2 定义词条，将 Mars in Aries 限定为星盘中的行动与主张风格，而非身份、医学结论或未来预测；明确区分 Aries Sun、Chiron、12th House 与其他 Mars sign 的解释边界，并以星盘整体、house 和 aspects 为必要语境。稿件包含所需的三项定义要点、可观察线索、误读纠正、四列表格、FAQ、反思提示、合规内链占位符、指定 `https://astrologywiki.com/en/tools` CTA、心理安全免责声明和 Dane Rudhyar 来源项。
 
 ---

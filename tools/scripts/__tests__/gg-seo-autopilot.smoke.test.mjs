@@ -362,6 +362,17 @@ test('--merge refuses a pushed-preview branch that has not been marked verified'
   }
 });
 
+test('--cluster-link-dry-run requires an explicit attested input instead of falling back to article publishing', () => {
+  const h = makeHarness();
+  try {
+    const r = runAuto(h, ['--cluster-link-dry-run']);
+    assert.notEqual(r.status, 0, `${r.stdout}${r.stderr}`);
+    assert.match(`${r.stdout}${r.stderr}`, /cluster-link-input/i);
+  } finally {
+    h.cleanup();
+  }
+});
+
 test('--mark-verified records preview evidence and allows the subsequent merge command to reach gh', () => {
   const h = makeHarness();
   try {

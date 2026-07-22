@@ -30,6 +30,7 @@
 //   node gg-seo-autopilot.mjs --retry-failed --branch seo/auto/<date>-<PID> --evidence "fixed ..."
 //   node gg-seo-autopilot.mjs --prepare-regate --branch seo/auto/<date>-<PID>
 //   node gg-seo-autopilot.mjs --reconcile-published [--task <PID>]
+//   node gg-seo-autopilot.mjs --cluster-link-dry-run --cluster-link-input <attested.json>
 //   node gg-seo-autopilot.mjs --merge --branch seo/auto/<date>-<PID>
 //   node gg-seo-autopilot.mjs --status
 //
@@ -99,6 +100,7 @@ const STAGING = join(FLOW, '_staging');
 const CONV = join(FLOW, 'tools', 'scripts', 'gg-md-to-oracle-ts.mjs');
 const REG = join(FLOW, 'tools', 'scripts', 'gg-oracle-register-index.mjs');
 const INDEX_MONITOR = join(FLOW, 'tools', 'scripts', 'gg-index-monitor.mjs');
+const CLUSTER_LINKER = join(FLOW, 'tools', 'scripts', 'gg-cluster-internal-links.mjs');
 
 // upstream authoring-stage scripts (used by --author when a plan task has no
 // passing draft yet): bridge → RAG → render → orchestrator → phase2.
@@ -204,6 +206,8 @@ function parseArgs(argv) {
     else if (a === '--retry-author') o.retryAuthor = true;
     else if (a === '--prepare-regate') o.prepareRegate = true;
     else if (a === '--reconcile-published') o.reconcilePublished = true;
+    else if (a === '--cluster-link-dry-run') o.clusterLinkDryRun = true;
+    else if (a === '--cluster-link-input') o.clusterLinkInput = argv[++i];
     else if (a === '--auto-retry-parks') o.autoRetryParks = true;
     else if (a === '--clear-needs-hero') o.clearNeedsHero = true;
     else if (a === '--status') o.status = true;
@@ -219,7 +223,7 @@ function parseArgs(argv) {
     else if (a === '--limit') o.limit = parseInt(argv[++i], 10) || 1;
     else if (a === '--task') o.task = argv[++i];
   }
-  if (!o.scan && !o.author && !o.nextUnauthored && !o.merge && !o.markVerified && !o.markFailed && !o.retryFailed && !o.retryAuthor && !o.prepareRegate && !o.reconcilePublished && !o.autoRetryParks && !o.status && !o.staleReport) o.scan = true;
+  if (!o.scan && !o.author && !o.nextUnauthored && !o.merge && !o.markVerified && !o.markFailed && !o.retryFailed && !o.retryAuthor && !o.prepareRegate && !o.reconcilePublished && !o.clusterLinkDryRun && !o.autoRetryParks && !o.status && !o.staleReport) o.scan = true;
   return o;
 }
 
@@ -2181,6 +2185,13 @@ function doStaleReport() {
   }, null, 2) + '\n');
 }
 
+function doClusterLinkDryRun(o) {
+  if (!o.clusterLinkInput) throw new Error('--cluster-link-dry-run requires --cluster-link-input <attested.json>');
+  if (!existsSync(o.clusterLinkInput)) throw new Error(`cluster-link input is missing: ${o.clusterLinkInput}`);
+  const output = sh('node', [CLUSTER_LINKER, '--input', o.clusterLinkInput, '--oracle', ORACLE], { cwd: FLOW });
+  process.stdout.write(output);
+}
+
 const o = parseArgs(process.argv.slice(2));
 // Hard publish-only gate (2026-06-17): in GG_AUTOPILOT_MODE=publish-only the driver REFUSES to
 // author or select an unauthored task, even if --author/--next-unauthored is passed — defense in
@@ -2201,6 +2212,7 @@ try {
   else if (o.retryAuthor) doRetryAuthor(o);
   else if (o.prepareRegate) doPrepareRegate(o);
   else if (o.reconcilePublished) await doReconcilePublished(o);
+  else if (o.clusterLinkDryRun) doClusterLinkDryRun(o);
   else if (o.autoRetryParks) await doAutoRetryParks(); // async 尾巴 = 升级通知（ESM 顶层 await）
   else doScan(o);
 } catch (e) {

@@ -4,6 +4,7 @@ import test from 'node:test';
 import {
   buildClusterLinkPlan,
   buildClusterLinkInput,
+  parsePublishedArticleLog,
   renderManagedClusterLinks,
   replaceManagedClusterLinks,
   validateClusterLinkInput,
@@ -98,5 +99,23 @@ test('canonical rows create a deterministic attested input and fail closed for a
       publishedArticles,
     }),
     /PG-001.*missing cluster_id/i,
+  );
+});
+
+test('published-register parser accepts only unique published Page ID to slug records', () => {
+  const log = [
+    '| 日期 | PG-id | slug | 标题 | 作者 | 线上 URL | 状态 |',
+    '|---|---|---|---|---|---|---|',
+    '| 2026-07-20 | PG-001 | aura-colors-guide | Aura Colors Guide | editor | https://example.test/en/wiki/aura-colors-guide | published |',
+    '| 2026-07-21 | PG-002 | blue-aura-meaning | Blue Aura Meaning | editor | https://example.test/en/wiki/blue-aura-meaning | published |',
+    '| 2026-07-22 | PG-003 | draft-page | Draft Page | editor | https://example.test/en/wiki/draft-page | planned |',
+  ].join('\n');
+  assert.deepEqual(parsePublishedArticleLog(log), [
+    { page_id: 'PG-001', slug: 'aura-colors-guide', title: 'Aura Colors Guide' },
+    { page_id: 'PG-002', slug: 'blue-aura-meaning', title: 'Blue Aura Meaning' },
+  ]);
+  assert.throws(
+    () => parsePublishedArticleLog(`${log}\n| 2026-07-22 | PG-001 | renamed | Renamed | editor | https://example.test/en/wiki/renamed | published |`),
+    /duplicate published page_id PG-001/i,
   );
 });

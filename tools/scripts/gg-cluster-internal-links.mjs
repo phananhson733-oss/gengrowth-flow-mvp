@@ -148,6 +148,26 @@ export function buildClusterLinkInput({ pagesRaw, clustersRaw, publishedArticles
   return validateClusterLinkInput({ ...snapshot, snapshot_id });
 }
 
+export function parsePublishedArticleLog(markdown) {
+  const records = [];
+  const seen = new Set();
+  for (const line of String(markdown || '').split(/\r?\n/)) {
+    if (!/^\|/.test(line) || !/\|\s*$/.test(line)) continue;
+    const cells = line.split('|').slice(1, -1).map((cell) => text(cell));
+    if (cells.length < 7 || text(cells[1]).toLowerCase() === 'pg-id') continue;
+    const [,, slug, title,,, status] = cells;
+    const page_id = text(cells[1]);
+    if (!/^(published|live|已发布)$/i.test(status)) continue;
+    if (!page_id || !SLUG_RE.test(slug) || !title) {
+      throw new Error('published register row requires page_id, valid slug, and title');
+    }
+    if (seen.has(page_id)) throw new Error(`duplicate published page_id ${page_id}`);
+    seen.add(page_id);
+    records.push({ page_id, slug, title });
+  }
+  return records.sort((a, b) => a.page_id.localeCompare(b.page_id));
+}
+
 export function buildClusterLinkPlan(pages, { maxHubLinks = 3, maxSiblingLinks = 2 } = {}) {
   const groups = new Map();
   for (const page of pages || []) {

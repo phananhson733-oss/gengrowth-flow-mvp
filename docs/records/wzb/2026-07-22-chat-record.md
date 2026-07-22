@@ -18,13 +18,11 @@ aliases:
 
 > 【本区域在每天最后一次对话结束时生成/更新】
 
-- 编写了一篇面向美国 B2B SaaS 受众的 Agentic AI Marketing Automation T2 指南稿，按给定结构、关键词、内链和事实诚信约束组织。
-- 编写并复生成面向美国 B2B SaaS 受众的 YouTube AI search authority 2026 T2 指南稿，均遵循受控数据来源、一次性输出、11 个 H2、关键词、CTA 与事实诚信边界。
+- 编写多篇面向美国 B2B SaaS 受众的 T2 指南稿，覆盖 Agentic AI Marketing Automation、YouTube AI Search Authority 2026、AI Agent Trends Business 2026 与 First Party Data AI Personalization，均遵循固定结构、关键词、内链、CTA 和事实诚信边界。
 - 7 月 21 日 SEO 自然窗口验收为 0/3：18:30–19:30 preflight 因真实语义/cluster 不一致失败，19:52 非日历直跑占锁，导致 20:00、20:30、21:00 三个 `launchd[1]` 自然 fire 全部跳过；外部轮发布的两篇文章已全链路收敛，但当前仍有 PG-WC-053 needs_human。21:05 后最终账本除 claims non-done=1 外其余目标计数、进程和锁均为 0，临时 heartbeat 已通过正式接口删除。
-- 执行固定行 Index Repair Resubmit：2026-07-22 05:00–05:01 CST 脚本 exit 0；astrologywiki 新增 2 条英文复盘且队列为 15（P1=3/P2=4/P3=8），gengrowth 无变更且队列为 0；运行窗口无错误关键词，未触发普通文章 Indexing API、无人值守 Search Console 点击或 Feishu/Google Doc 报告。
-- 编写面向美国 B2B SaaS 受众的 AI Agent Trends Business 2026 T2 指南稿，按受控来源、固定 11 节结构、关键词、内链占位符、指定 Pricing CTA 与事实诚信边界组织。
-- 运行 Phase 2 Index Monitor：两站官方 Search Console sitemap 提交均成功；astrologywiki 检查 5 条且 0 失败，gengrowth 无到期 URL；最终候选队列合计 12 条（P1=2、P2=1、P3=9），日志未显示飞书发送回执。
-- 运行结果复盘表现固定 wrapper：astrologywiki 处理 5 条、更新 260 条复盘、生成 261 项任务；gengrowth 处理 8 条、更新 49 条复盘、生成 62 项任务。两站共用 GA4 `properties/524765570`，运行无失败；日志仅提供 D14/D30/D60 合并到期数及不单列跳过数。
+- 执行固定行 Index Repair Resubmit：astrologywiki 新增 2 条英文复盘且队列为 15（P1=3/P2=4/P3=8），gengrowth 无变更；运行窗口无错误，未触发普通文章 Indexing API 或无人值守 Search Console 点击。
+- 运行 Phase 2 Index Monitor 与结果复盘表现固定 wrapper：两站 sitemap 提交成功；最终候选队列合计 12 条（P1=2/P2=1/P3=9）；astrologywiki 更新 260 条复盘并生成 261 项任务，gengrowth 更新 49 条复盘并生成 62 项任务，均无失败。
+- 完成 astrologywiki 当日 5 条 GSC 手动 Request Indexing、Sheet 回填与队列清零；随后启动 Cluster ID 与内链结构优化需求的只读审阅，因 gstack 一次性隐私设置确认暂停，尚未修改需求文档、代码或表格。
 
 ## 对话记录
 
@@ -256,5 +254,17 @@ After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-s
 **🤖 回答：**
 
 从 canonical workbook 结果复盘表取到 5 个候选（申请时间空 & 未收录），先用 curl 预检 5 篇 live 页面均渲染正常（专属 title、无 "Failed to fetch wiki item"）且全部在 sitemap 内，再经 Chrome MCP 在 GSC 逐条检查——5 条状态均为「已发现-尚未编入索引」健康态，全部点「请求编入索引」成功，无配额错误：`what-is-my-theme-for-this-year`、`the-most-common-mbti-types-for-each-zodiac-sign`、`leandro-paredes-birth-chart`、`am-i-meant-to-be-my-own-boss`、`messi-vs-yamal-astrology`。其中 messi-vs-yamal 07-20 曾因未进部署 bundle 被判软404 拒收，本轮已自愈并提交成功，印证"软404 跳过等 build 自愈"的 SOP。已按日期 2026-07-22 回填 index-tracking（resubmitted_at + fix_status=已重新提交）与 结果复盘表（申请时间 + 索引修复状态），并跑 sync-recap / sync-request-queue，剩余候选清零；飞书 SEO技术群已推汇总。
+
+---
+
+### Q16 — 15:27
+
+**🙋 提问：**
+
+有一个需要优化的点：gengrowth-ops/inbox-maboyang/00-inbox/2026-07-21-内链结构优化需求文档.md 我们值钱的 cluster 是支持 llm 自动生成的，所以导致会出现混乱的情况。同时新增一部分的 clusterid，以及优化之前的 cluster，但是需要注意，同时需要增加一下这个内链的优化。你先看需求，不急着动手
+
+**🤖 回答：**
+
+确认先做只读审阅，不修改需求文档、代码或表格；计划核对现有 LLM 自动生成 Cluster、Cluster ID 新增与存量 Cluster 优化、内链规则三部分的关系。按项目技能规则调用 `gstack-investigate`，并在自动升级设置下将 gstack 从 1.58.4.0 安全快进至 1.60.1.0；随后因技能触发一次性 artifacts/GBrain 隐私同步选择而暂停，等待用户决定同步范围后继续读取需求。
 
 ---

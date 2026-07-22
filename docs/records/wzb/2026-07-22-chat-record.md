@@ -22,7 +22,7 @@ aliases:
 - 7 月 21 日 SEO 自然窗口验收为 0/3：18:30–19:30 preflight 因真实语义/cluster 不一致失败，19:52 非日历直跑占锁，导致 20:00、20:30、21:00 三个 `launchd[1]` 自然 fire 全部跳过；外部轮发布的两篇文章已全链路收敛，但当前仍有 PG-WC-053 needs_human。21:05 后最终账本除 claims non-done=1 外其余目标计数、进程和锁均为 0，临时 heartbeat 已通过正式接口删除。
 - 执行固定行 Index Repair Resubmit：astrologywiki 新增 2 条英文复盘且队列为 15（P1=3/P2=4/P3=8），gengrowth 无变更；运行窗口无错误，未触发普通文章 Indexing API 或无人值守 Search Console 点击。
 - 运行 Phase 2 Index Monitor 与结果复盘表现固定 wrapper：两站 sitemap 提交成功；最终候选队列合计 12 条（P1=2/P2=1/P3=9）；astrologywiki 更新 260 条复盘并生成 261 项任务，gengrowth 更新 49 条复盘并生成 62 项任务，均无失败。
-- 完成 astrologywiki 当日 5 条 GSC 手动 Request Indexing、Sheet 回填与队列清零；随后启动 Cluster ID 与内链结构优化实现，确认根因是 LLM 提案与持久化主键权限混用，现有 `gg-topic-register.mjs` 仍按语义选群；已确认后续 Cluster ID 由 OPS 在 brief 生成前手动填写，LLM 不得新增、猜测或覆盖，待确认严格硬门与确定性内链图的实现边界后改代码。
+- 完成 astrologywiki 当日 5 条 GSC 手动 Request Indexing、Sheet 回填与队列清零；随后启动 Cluster ID 与内链结构优化实现，确认根因是 LLM 提案与持久化主键权限混用，现有 `gg-topic-register.mjs` 仍按语义选群；已确认后续 Cluster ID 由 OPS 在 brief 生成前手动填写，LLM 不得新增、猜测或覆盖。实现范围收敛为本地 Flow 的只读硬校验，以及 cron SEO blog 的确定性文章内链与发布后回填；待确认存量文章是否纳入首批后改代码。
 
 ## 对话记录
 
@@ -302,5 +302,17 @@ A
 **🤖 回答：**
 
 开始落地前完成现状核对：`gg-topic-register.mjs` 当前会按语义给关键词选择既有 Cluster，必须移除；`gg-sheet-to-brief.mjs` 已能在 `cluster_id` 不存在时阻断生成，可作为严格准入门。提出三种实现路径：仅禁用自动选群；禁用自动选群并把手填 Cluster ID 设为生成 brief 的硬门；在此基础上新增确定性集群内链图与可重复回填。推荐第三种，既落实 OPS 手填治理，也修复 Hub/Spoke 时序内链缺失；等待用户确认设计边界后，按 TDD 修改代码并验证。
+
+---
+
+### Q20 — 15:45
+
+**🙋 提问：**
+
+我们应该是需要优化本地的 gengrowth-flow-mvp 和 cron SEO blog 的文章
+
+**🤖 回答：**
+
+实现范围已收敛为两段：本地 `gengrowth-flow-mvp` 取消 Cluster ID 语义选择与 cron 中的自动 Sheet 修复，仅校验 OPS 在 brief 生成前已手填且已注册的 Cluster ID；cron SEO blog 则根据该值生成确定性内链，并在发布后为同 Cluster 的已有文章补链。已核实 cron 当前会调用 `gg-seo-brief-preflight.mjs` 和 `gg-topic-register-tick.sh` 执行 `semantic-repair-only` 写入，因此必须切断该调用；待确认首批是否包含全部历史文章回填后，完成设计确认、TDD 实现与回归验证。
 
 ---

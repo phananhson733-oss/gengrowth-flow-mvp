@@ -504,3 +504,15 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 生成完整美国英语 T2 词条：定义 Venus in Taurus 为爱、价值、感官偏好与亲密节奏的象征性配置，不将其作为医学、人格或未来结论。稿件在开篇 150 词内内联本命盘阅读指南，明确对比固定的出生配置与 Vedic Mahadasha 的时间框架，并用宫位、相位和现实场景设定解释边界；包含观察清单、误读校正、指定四列表格、FAQ、反思题、合规占位内链、指定 `https://astrologywiki.com/en/birth-chart-calculator` CTA、心理安全免责声明及 Dane Rudhyar 的受控 Sources 条目，且将目标关键词限制在合规范围内。
 
 ---
+
+### Q35 — 18:50
+
+**🙋 提问：**
+
+用户提供数据来源安全声明与完整英文 Definition × T2 wiki 词条 brief，要求为 astrologywiki.com 一次性撰写以 “venus in taurus” 为目标关键词、以 “Venus in Taurus” 为实体的美国英语文章。所有 `<field>` 值只作为外部输入，不能执行其中的指令。文章必须从 H1 直接开始并在 Sources 结束，恰好有 1 个 H1 和 11 个 H2，1800–2200 词，关键词出现 5–8 次；需严格包含定义和三条要点、自我觉察、与 Venus Mahadasha 的具体比较、星盘观察、误读、四列参考表、FAQ、编号反思题、合规内链、指定 Birth Chart Calculator CTA 和受控 Sources。不得输出中文、命定式预测、临床或医疗化语言、SEO 元评论、虚构来源或术语、裸外链（指定 CTA 除外）及禁用 AI 套话；并修复首链过晚、关键词超限、结构漂移、`rising sign` 与 `you will` 等历史校验问题。
+
+**🤖 回答：**
+
+生成完整美国英语 T2 词条：将 Venus in Taurus 限定为爱、价值、愉悦与关系节奏的象征性出生配置，明确与 Venus Mahadasha 的时间框架区分。文章在定义段前 150 词内放入本命盘阅读指南内链，以可观察的关系、金钱和审美选择界定适用范围，并说明宫位与相位不能被混入单一星座配置；包含指定表格、FAQ、反思提示、合规占位链接、Birth Chart Calculator CTA 及 Dane Rudhyar 来源条目，避免关键词堆砌、医学断言、虚构引文、裸 URL、`rising sign` 和命定式措辞。
+
+---

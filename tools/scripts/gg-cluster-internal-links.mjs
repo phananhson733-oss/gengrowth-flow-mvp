@@ -2,8 +2,10 @@
 
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
+import { getAccessToken } from './lib/_oauth-token.mjs';
+import { CLUSTERS_TAB, DEFAULT_TAB, fetchTab, loadEnv } from './gg-sheet-pull.mjs';
 
 const START = '<!-- gg-cluster-links:start -->';
 const END = '<!-- gg-cluster-links:end -->';
@@ -168,6 +170,23 @@ export function parsePublishedArticleLog(markdown) {
   return records.sort((a, b) => a.page_id.localeCompare(b.page_id));
 }
 
+export async function readCanonicalClusterRows({ readRows = null } = {}) {
+  let reader = readRows;
+  if (!reader) {
+    loadEnv();
+    const workbookId = text(process.env.GG_SHEETS_FLOW_MVP_WORKBOOK_ID)
+      || text(process.env.GG_SHEETS_WORKBOOK_ID);
+    if (!workbookId) throw new Error('canonical workbook id is missing');
+    const token = await getAccessToken();
+    reader = (tab) => fetchTab(workbookId, tab, token);
+  }
+  const [pagesRaw, clustersRaw] = await Promise.all([
+    reader(DEFAULT_TAB),
+    reader(CLUSTERS_TAB),
+  ]);
+  return { pagesRaw, clustersRaw };
+}
+
 export function buildClusterLinkPlan(pages, { maxHubLinks = 3, maxSiblingLinks = 2 } = {}) {
   const groups = new Map();
   for (const page of pages || []) {
@@ -238,10 +257,39 @@ function assertCleanOracle(oracleDir) {
   if (status) throw new Error('Oracle baseline is dirty; refuse article link backfill');
 }
 
-function main(argv) {
+function assertRegisteredOracleArticles(oracleDir, articles) {
+  const index = join(oracleDir, 'data', 'articles', 'index.ts');
+  if (!existsSync(index)) throw new Error('Oracle article index is missing');
+  const source = readFileSync(index, 'utf8');
+  for (const article of articles) {
+    const file = join(oracleDir, 'data', 'articles', `${article.slug}.ts`);
+    if (!existsSync(file)) throw new Error(`${article.page_id} has no registered Oracle article file`);
+    if (!source.includes(`from "./${article.slug}"`) && !source.includes(`from './${article.slug}'`)) {
+      throw new Error(`${article.page_id} is not registered in Oracle article index`);
+    }
+  }
+}
+
+async function main(argv) {
   const args = parseArgs(argv);
   if (args.help || args.h) {
-    process.stdout.write('usage: --input <pages.json> --oracle <clean-oracle-dir> [--apply]\n');
+    process.stdout.write('usage: --input <attested-pages.json> --oracle <clean-oracle-dir> [--apply]\n');
+    process.stdout.write('       --build-input --published-log <publish-log.md> --oracle <oracle-dir> --out <attested-pages.json>\n');
+    return;
+  }
+  if (args.build_input) {
+    if (typeof args.published_log !== 'string' || typeof args.oracle !== 'string' || typeof args.out !== 'string') {
+      throw new Error('--build-input requires --published-log, --oracle, and --out');
+    }
+    const oracleDir = resolve(args.oracle);
+    const publishedArticles = parsePublishedArticleLog(readFileSync(resolve(args.published_log), 'utf8'));
+    assertRegisteredOracleArticles(oracleDir, publishedArticles);
+    const { pagesRaw, clustersRaw } = await readCanonicalClusterRows();
+    const input = buildClusterLinkInput({ pagesRaw, clustersRaw, publishedArticles });
+    const out = resolve(args.out);
+    mkdirSync(dirname(out), { recursive: true });
+    writeFileSync(out, `${JSON.stringify(input, null, 2)}\n`);
+    process.stdout.write(`${JSON.stringify({ built_input: true, snapshot_id: input.snapshot_id, page_ids: input.pages.map((page) => page.page_id) })}\n`);
     return;
   }
   if (typeof args.input !== 'string' || typeof args.oracle !== 'string') {
@@ -268,10 +316,8 @@ function main(argv) {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  try {
-    main(process.argv.slice(2));
-  } catch (error) {
+  main(process.argv.slice(2)).catch((error) => {
     process.stderr.write(`cluster internal links failed: ${String(error?.message || error)}\n`);
     process.exit(1);
-  }
+  });
 }

@@ -9,7 +9,8 @@
     "word count 1389 < min 1485",
     "target_keyword count = 20 (limit 12)",
     "word count 1454 < min 1485",
-    "psych-safety blacklist word matched: \"treats\""
+    "psych-safety blacklist word matched: \"treats\"",
+    "word count 1291 < min 1485"
   ],
-  "updatedAt": "2026-07-21T12:02:07.569Z"
+  "updatedAt": "2026-07-22T10:25:16.909Z"
 }

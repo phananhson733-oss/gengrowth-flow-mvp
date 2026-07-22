@@ -5,6 +5,7 @@ import {
   buildClusterLinkPlan,
   buildClusterLinkInput,
   parsePublishedArticleLog,
+  readCanonicalClusterRows,
   renderManagedClusterLinks,
   replaceManagedClusterLinks,
   validateClusterLinkInput,
@@ -118,4 +119,16 @@ test('published-register parser accepts only unique published Page ID to slug re
     () => parsePublishedArticleLog(`${log}\n| 2026-07-22 | PG-001 | renamed | Renamed | editor | https://example.test/en/wiki/renamed | published |`),
     /duplicate published page_id PG-001/i,
   );
+});
+
+test('canonical reader fetches only Pages and Cluster tabs from one injected read boundary', async () => {
+  const calls = [];
+  const rows = await readCanonicalClusterRows({
+    readRows: async (tab) => {
+      calls.push(tab);
+      return [[tab]];
+    },
+  });
+  assert.deepEqual(calls, ['选题登记表', '主题集群表']);
+  assert.deepEqual(rows, { pagesRaw: [['选题登记表']], clustersRaw: [['主题集群表']] });
 });

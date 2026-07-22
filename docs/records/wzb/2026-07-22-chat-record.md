@@ -516,3 +516,15 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 生成完整美国英语 T2 词条：将 Venus in Taurus 限定为爱、价值、愉悦与关系节奏的象征性出生配置，明确与 Venus Mahadasha 的时间框架区分。文章在定义段前 150 词内放入本命盘阅读指南内链，以可观察的关系、金钱和审美选择界定适用范围，并说明宫位与相位不能被混入单一星座配置；包含指定表格、FAQ、反思提示、合规占位链接、Birth Chart Calculator CTA 及 Dane Rudhyar 来源条目，避免关键词堆砌、医学断言、虚构引文、裸 URL、`rising sign` 和命定式措辞。
 
 ---
+
+### Q36 — 18:53
+
+**🙋 提问：**
+
+具体是哪些冲突或者会所重复
+
+**🤖 回答：**
+
+对当前 `主题集群表` 做只读逐字段核对，发现 9 组重复 `cluster_id`：`lunar_nodes_path`（4/47）、`healing_placements`（8/46）、`worldcup2026_astro`（10/49）、`transit_events`（12/44）、`astrocartography_map`（14/29）、`ai_astrology`（15/28）、`rising_sign_profiles`（16/27）、`vedic_mahadashas`（18/48）、`solar_return_reading`（20/45）。前三个旧残留组是 14/29、15/28、16/27：前行缺大部分治理字段，后行完整；其余六组均在 cluster 名称、内容层、业务角色、pillar、关键词、内链规则、周次/指标等字段冲突。高风险语义冲突包括 `healing_placements` 的 `psych_safety_flag=Y` vs `N`、CTA Newsletter vs 星盘页，以及多组的 pillar 是专属页面 vs 通用 `/en/wiki/how-to-read-birth-chart`。因此 Flow 不能自动合并；OPS 应为每组保留一个权威定义或改为不同 `cluster_id`。
+
+---

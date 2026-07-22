@@ -23,6 +23,7 @@ aliases:
 - 7 月 21 日 SEO 自然窗口验收为 0/3：18:30–19:30 preflight 因真实语义/cluster 不一致失败，19:52 非日历直跑占锁，导致 20:00、20:30、21:00 三个 `launchd[1]` 自然 fire 全部跳过；外部轮发布的两篇文章已全链路收敛，但当前仍有 PG-WC-053 needs_human。21:05 后最终账本除 claims non-done=1 外其余目标计数、进程和锁均为 0，临时 heartbeat 已通过正式接口删除。
 - 执行固定行 Index Repair Resubmit：2026-07-22 05:00–05:01 CST 脚本 exit 0；astrologywiki 新增 2 条英文复盘且队列为 15（P1=3/P2=4/P3=8），gengrowth 无变更且队列为 0；运行窗口无错误关键词，未触发普通文章 Indexing API、无人值守 Search Console 点击或 Feishu/Google Doc 报告。
 - 编写面向美国 B2B SaaS 受众的 AI Agent Trends Business 2026 T2 指南稿，按受控来源、固定 11 节结构、关键词、内链占位符、指定 Pricing CTA 与事实诚信边界组织。
+- 运行 Phase 2 Index Monitor：两站官方 Search Console sitemap 提交均成功；astrologywiki 检查 5 条且 0 失败，gengrowth 无到期 URL；最终候选队列合计 12 条（P1=2、P2=1、P3=9），日志未显示飞书发送回执。
 
 ## 对话记录
 
@@ -196,5 +197,22 @@ Run the deterministic fixed-row index repair workflow through `bash tools/script
 **🤖 回答：**
 
 生成英文 T2 指南稿，将 First Party Data AI Personalization 解释为基于直接收集且经许可的客户信号进行个性化决策的实践框架，而非 CDP、通用个性化或单一软件采购结论。内容围绕代理商和 SaaS 的生命周期触发、白标交付与运营交接，给出误读修正、选择比较、可观察评估项、分步实施与简短 FAQ；正文早期分布合规的内部链接占位符，CTA 指向指定 Features 页面，Sources 仅使用 GenGrowth 团队观察的方法说明，未添加第三方统计、专家或不可核查引用。
+
+---
+
+### Q13 — 09:02
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Monitor
+Automation ID: gengrowth-index-monitor
+Automation memory: $CODEX_HOME/automations/gengrowth-index-monitor/memory.md
+Last run: never
+
+Run the GenGrowth Phase 2 indexing workflow through the existing deterministic wrapper: `bash tools/scripts/gg-index-monitor-tick.sh`. This wrapper must refresh the live sitemap through the official Search Console Sitemaps API, inspect due URLs through URL Inspection, sync the final `结果复盘表`, generate/update `request-indexing-queue` with priority colors, and send Feishu SEO技术 group reminders for actionable candidates or failures. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, and do not click Search Console Request Indexing unattended. For Computer Use submission, only assist by opening candidate GSC inspection URLs and stop for human confirmation before the final Request Indexing click. After the wrapper exits, summarize sitemap submission status, GSC check counts/failures, queue counts by priority, and any Feishu notification outcome visible in the log.
+
+**🤖 回答：**
+
+执行固定入口 `bash tools/scripts/gg-index-monitor-tick.sh`；09:02:14–09:04:01 CST 退出 0，日志以 `index monitor ok` 收尾。官方 Search Console sitemap 提交：astrologywiki 与 gengrowth 均为 `ok`。URL Inspection：astrologywiki due=5，checked=5、alerts=0、failures=0，5 条转为 indexed；gengrowth due=0，无待检 URL。最终 request-indexing-queue：astrologywiki 10 条（P0=0/P1=2/P2=1/P3=7），gengrowth 2 条（P0=0/P1=0/P2=0/P3=2），合计 12 条（P0=0/P1=2/P2=1/P3=9）。日志无明确飞书成功或失败回执（仅表明 notify-capable 步骤已由 wrapper 调用）。未使用普通文章 Google Indexing API，未进行无人值守的 Request Indexing 点击；Sheet/复盘表和队列同步均由 wrapper 完成。
 
 ---

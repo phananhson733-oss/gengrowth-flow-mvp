@@ -11,7 +11,8 @@
     "author banned token(s) matched: \"you will\"",
     "word count 1302 < min 1485",
     "word count 1366 < min 1485",
-    "target_keyword count = 14 (limit 12)"
+    "target_keyword count = 14 (limit 12)",
+    "word count 1204 < min 1485"
   ],
-  "updatedAt": "2026-07-21T12:24:58.234Z"
+  "updatedAt": "2026-07-22T10:46:03.849Z"
 }

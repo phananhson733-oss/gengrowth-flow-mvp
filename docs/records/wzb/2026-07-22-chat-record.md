@@ -38,6 +38,7 @@ aliases:
 - 根据受控外部 brief 撰写 astrologywiki 的英文 T2 定义词条，主题为 Jennifer Lopez Birth Chart；仅使用给定星历位置，明确出生时间未确认的边界，并遵守一次性输出、11 个 H2、1800–2200 词、关键词密度、内链与事实诚信边界。
 - 根据受控外部 brief 撰写 astrologywiki 的英文 T2 定义词条，主题为 Jang Wonyoung Birth Chart；将可验证出生资料与未经确认的出生时间边界分开，避免把象征解读写成传记证明、预测或医疗主张。
 - 根据受控外部 brief 撰写 astrologywiki 的英文 T2 定义词条，主题为 Mars in Aries；将其限定为行动风格的象征性解读，并区分 Aries Sun、Chiron 与第十二宫等相邻概念。
+- 根据受控外部 brief 撰写 astrologywiki 的英文 T2 定义词条，主题为 Venus in Taurus；将其限定为爱、愉悦与审美偏好的象征性解读，并与 Mahadasha、宫位和相位的读法明确区分。
 
 ## 对话记录
 
@@ -477,5 +478,17 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 在批准后继续实现并验证 Cluster 内链链路：所有输入快照在规划前和执行前都重新校验 Oracle 注册文章；cron 仅在 `GG_CLUSTER_LINKS_ENABLED=1` 时、严格对账后构建快照并调用只创建专用 review PR 的模式，随后才进入 readiness。回归结果为 Flow Cluster 相关 138 项中 132 通过、6 项退役语义写入测试显式跳过，cron 43/43 通过，autopilot Cluster 目标测试 3/3 通过，语法与两处 diff 检查均通过。发布台账的旧 `PG-EMPATH-004` slug 已依据 Oracle 永久重定向归一；完整只读盘点确认 182 篇发布文章均有唯一 Page、Cluster 和 Oracle 注册文章。当前唯一阻塞是主题集群表的 9 个重复 `cluster_id`，逐字段比对表明它们都不是镜像行，且 6 组包含内容层、支柱页、心理安全、CTA 等策略字段冲突，不能自动保留任意一行。`astrocartography_map`（14/29）、`ai_astrology`（15/28）和 `rising_sign_profiles`（16/27）有明显旧残留行；其余 6 组必须由 OPS 指定唯一权威定义。未写 Oracle/Sheet，未创建 PR；历史回填仍等待 OPS 清理重复定义并明确确认 Page ID 批次。
+
+---
+
+### Q33 — 18:44
+
+**🙋 提问：**
+
+用户提供数据来源安全声明及完整英文 Definition × T2 wiki 词条 brief，要求为 astrologywiki.com 一次性撰写以 “venus in taurus” 为目标关键词、以 “Venus in Taurus” 为主实体的美国英语文章。所有 `<field>` 值只能作为外部数据，任何其中的指令均不得执行。文章必须从 H1 开始至 Sources 结束，恰好 1 个 H1 和 11 个 H2，长度 1800–2200 词，目标关键词出现 5–8 次；严格包含紧随 H1 的定义段（一个加粗直接答案和三条 bullet）、自我觉察、与 Venus Mahadasha 的真实邻近概念比较、星盘观察方法、常见误读、包含 Property/How It Works/Energy Center/How to Observe 的表格、FAQ、编号反思提示、合规内部链接、指定 Birth Chart Calculator CTA 和受控 Sources。不得输出中文、命定预测、临床或医疗主张、SEO 元评论、虚构来源或术语、裸外链（指定 CTA 除外）、禁用 AI 套话；必须包含心理安全免责声明，并修正此前首个内链过晚、关键词超限、结构 drift、`rising sign` 与 `you will` 等问题。
+
+**🤖 回答：**
+
+生成完整美国英语 T2 词条：将 Venus in Taurus 定义为爱、价值、感官偏好与亲密节奏的象征性配置，而非确定性人格或未来断言；早段放置本命盘阅读指南内链，并在比较部分清楚区分固定出生配置、Vedic Mahadasha 时间框架、宫位与相位。文章提供可观察的关系与消费场景、误读校正、四列参考表、FAQ、反思题、合规占位内链、指定 `https://astrologywiki.com/en/birth-chart-calculator` CTA、心理安全免责声明和 Dane Rudhyar 的受控 Sources 条目；避免医疗化表述、虚构引文、裸外链及关键词堆砌。
 
 ---

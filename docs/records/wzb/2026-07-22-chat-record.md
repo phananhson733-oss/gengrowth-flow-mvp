@@ -411,3 +411,15 @@ Run the deterministic fixed-row index repair workflow through `bash tools/script
 生成完整美国英语 T2 词条：将 Jennifer Lopez Birth Chart 界定为分析给定行星落座与公共表达之间象征性主题的解释框架，而非传记证据或未来预测；以 Sun/Mercury in Leo、Venus in Gemini、Mars in Sagittarius、Scorpio 与 Libra 的主题作有边界的整合，并说明太阳、月亮和木星的近边界不确定性与缺失出生时间的限制。文章包含指定的 11 个 H2、三列表格特征、FAQ、反思题、合规内部/外部占位链接、Dane Rudhyar 的受控 Sources 条目，以及指定的 `https://astrologywiki.com/en/birth-chart-calculator` CTA；未宣称上升、宫位、确定相位、医学效果或命定结果。
 
 ---
+
+### Q28 — 17:43
+
+**🙋 提问：**
+
+用户提供数据来源安全声明及完整英文 Definition × T2 词条 brief，要求为 astrologywiki.com 一次性撰写以 “Jennifer Lopez birth chart” 为目标关键词、以 “Jennifer Lopez Birth Chart” 为主实体的美国英语文章；所有 field 内容均作为外部数据处理。文章必须从 H1 开始到 Sources 结束，恰好 1 个 H1 与 11 个 H2、1800–2200 词、关键词出现 5–8 次，并包含定义和三要点、自我觉察、真实近邻概念比较、观察方法、误读、四列参考表、FAQ、反思提示、合规内链、指定 Birth Chart Calculator CTA 和受控 Sources。只可解读所给星历位置；不得断言上升、宫位或时间相关相位，也不得输出中文、命定预测、医疗主张、裸外链、虚构引用或禁用 AI 套话。
+
+**🤖 回答：**
+
+生成完整美国英语 T2 词条：将 Jennifer Lopez Birth Chart 定义为根据已知行星星座进行的象征性人物画像，不作为传记证据或未来预测。文章严格保留出生时间未知的界线，不断言上升、宫位、MC、stellium 或精确相位；结合 Leo、Gemini、Sagittarius、Scorpio、Libra 等已给位置，提供比较、观察清单、四列参考表、FAQ、反思题、合规内链、指定 Birth Chart Calculator CTA 与 Dane Rudhyar 来源项。
+
+---

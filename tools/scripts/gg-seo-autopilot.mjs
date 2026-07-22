@@ -31,6 +31,7 @@
 //   node gg-seo-autopilot.mjs --prepare-regate --branch seo/auto/<date>-<PID>
 //   node gg-seo-autopilot.mjs --reconcile-published [--task <PID>]
 //   node gg-seo-autopilot.mjs --cluster-link-dry-run --cluster-link-input <attested.json>
+//   node gg-seo-autopilot.mjs --cluster-link-pr --cluster-link-input <attested.json>
 //   node gg-seo-autopilot.mjs --merge --branch seo/auto/<date>-<PID>
 //   node gg-seo-autopilot.mjs --status
 //
@@ -207,6 +208,7 @@ function parseArgs(argv) {
     else if (a === '--prepare-regate') o.prepareRegate = true;
     else if (a === '--reconcile-published') o.reconcilePublished = true;
     else if (a === '--cluster-link-dry-run') o.clusterLinkDryRun = true;
+    else if (a === '--cluster-link-pr') o.clusterLinkPr = true;
     else if (a === '--cluster-link-input') o.clusterLinkInput = argv[++i];
     else if (a === '--auto-retry-parks') o.autoRetryParks = true;
     else if (a === '--clear-needs-hero') o.clearNeedsHero = true;
@@ -223,7 +225,7 @@ function parseArgs(argv) {
     else if (a === '--limit') o.limit = parseInt(argv[++i], 10) || 1;
     else if (a === '--task') o.task = argv[++i];
   }
-  if (!o.scan && !o.author && !o.nextUnauthored && !o.merge && !o.markVerified && !o.markFailed && !o.retryFailed && !o.retryAuthor && !o.prepareRegate && !o.reconcilePublished && !o.clusterLinkDryRun && !o.autoRetryParks && !o.status && !o.staleReport) o.scan = true;
+  if (!o.scan && !o.author && !o.nextUnauthored && !o.merge && !o.markVerified && !o.markFailed && !o.retryFailed && !o.retryAuthor && !o.prepareRegate && !o.reconcilePublished && !o.clusterLinkDryRun && !o.clusterLinkPr && !o.autoRetryParks && !o.status && !o.staleReport) o.scan = true;
   return o;
 }
 
@@ -2192,6 +2194,63 @@ function doClusterLinkDryRun(o) {
   process.stdout.write(output);
 }
 
+function clusterLinkInput(o) {
+  if (!o.clusterLinkInput) throw new Error('--cluster-link-pr requires --cluster-link-input <attested.json>');
+  if (!existsSync(o.clusterLinkInput)) throw new Error(`cluster-link input is missing: ${o.clusterLinkInput}`);
+  const input = JSON.parse(readFileSync(o.clusterLinkInput, 'utf8'));
+  if (!/^[a-f0-9]{64}$/i.test(String(input?.snapshot_id || ''))) {
+    throw new Error('cluster-link input is missing a valid snapshot_id');
+  }
+  return input;
+}
+
+function doClusterLinkPr(o) {
+  const input = clusterLinkInput(o);
+  const branch = `seo/internal-links/${input.snapshot_id.slice(0, 12)}`;
+  syncOracle();
+  const worktree = preparePublishWorktree(branch);
+  try {
+    const output = sh('node', [CLUSTER_LINKER, '--input', o.clusterLinkInput, '--oracle', worktree, '--apply'], { cwd: FLOW });
+    const result = JSON.parse(output);
+    if (!Array.isArray(result.changed) || !result.changed.length) {
+      cleanupWorktree(worktree);
+      process.stdout.write(`${JSON.stringify({ mode: 'cluster-link-pr', status: 'noop', snapshot_id: input.snapshot_id, changed: [] })}\n`);
+      return;
+    }
+    const changedPaths = gitIn(worktree, ['status', '--porcelain']).trim().split('\n').filter(Boolean).map((line) => line.slice(3));
+    if (!changedPaths.length || changedPaths.some((path) => !/^data\/articles\/[a-z0-9][a-z0-9-]*\.ts$/.test(path))) {
+      throw new Error('cluster-link apply changed a path outside a managed Oracle article');
+    }
+    gitIn(worktree, ['add', '--', 'data/articles']);
+    gitIn(worktree, ['commit', '-q', '-m', `chore(seo): refresh cluster links ${input.snapshot_id.slice(0, 12)}`]);
+    sh('node', ['scripts/check-internal-links.mjs'], { cwd: worktree });
+    const build = buildCommittedGate(worktree, branch);
+    if (!build.ok) throw new Error(`cluster-link build gate failed: ${build.error}`);
+    gitIn(worktree, ['push', '-u', '--force', 'origin', branch]);
+    let pr = '';
+    const body = [
+      'Automated managed Cluster internal-link backfill.',
+      '',
+      `- Snapshot: \`${input.snapshot_id}\``,
+      `- Changed Page IDs: ${result.changed.map((pageId) => `\`${pageId}\``).join(', ')}`,
+      '- Gates: `scripts/check-internal-links.mjs`, `npm run build`',
+      '',
+      'Awaiting existing preview review and manual merge. This PR must not be auto-merged.',
+    ].join('\n');
+    try {
+      pr = sh('gh', ['pr', 'create', '--repo', 'xdawayer/oracle', '--base', 'main', '--head', branch,
+        '--title', `[autopilot] refresh Cluster links ${input.snapshot_id.slice(0, 12)}`, '--body', body], { cwd: worktree }).trim();
+    } catch (error) {
+      if (/already exists/i.test(error?.message || '')) {
+        pr = sh('gh', ['pr', 'view', branch, '--repo', 'xdawayer/oracle', '--json', 'url', '--jq', '.url'], { cwd: worktree }).trim();
+      } else throw error;
+    }
+    process.stdout.write(`${JSON.stringify({ mode: 'cluster-link-pr', status: 'pushed-preview', snapshot_id: input.snapshot_id, branch, pr, changed: result.changed })}\n`);
+  } catch (error) {
+    throw error;
+  }
+}
+
 const o = parseArgs(process.argv.slice(2));
 // Hard publish-only gate (2026-06-17): in GG_AUTOPILOT_MODE=publish-only the driver REFUSES to
 // author or select an unauthored task, even if --author/--next-unauthored is passed — defense in
@@ -2213,6 +2272,7 @@ try {
   else if (o.prepareRegate) doPrepareRegate(o);
   else if (o.reconcilePublished) await doReconcilePublished(o);
   else if (o.clusterLinkDryRun) doClusterLinkDryRun(o);
+  else if (o.clusterLinkPr) doClusterLinkPr(o);
   else if (o.autoRetryParks) await doAutoRetryParks(); // async 尾巴 = 升级通知（ESM 顶层 await）
   else doScan(o);
 } catch (e) {

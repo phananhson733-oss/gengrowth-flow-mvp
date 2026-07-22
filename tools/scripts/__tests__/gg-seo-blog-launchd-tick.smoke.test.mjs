@@ -33,6 +33,9 @@ test('SEO launchd runner owns pre/post drain, strict reconcile, readiness, then 
   assert.match(source, /--notify-only/);
   assert.match(source, /gg-seo-readiness\.mjs/);
   assert.match(source, /gg-batch-summary\.mjs/);
+  assert.match(source, /GG_CLUSTER_LINKS_ENABLED/);
+  assert.match(source, /gg-cluster-internal-links\.mjs/);
+  assert.match(source, /--cluster-link-pr/);
   assert.match(source, /GG_WRITEBACK_LOCK_DIR/);
   assert.match(source, /GG_NIGHTLY_ITEMS_PLAN/);
   assert.match(source, /GG_NIGHTLY_ITEMS_DIR_IDENTITY/);
@@ -43,6 +46,7 @@ test('SEO launchd runner owns pre/post drain, strict reconcile, readiness, then 
   assert.ok(source.indexOf('node "$REPAIR_CONTROLLER" drain') < source.indexOf('bash "$NIGHTLY"'));
   assert.ok(source.indexOf('bash "$NIGHTLY"') < source.indexOf('node "$REPAIR_HOOK"'));
   assert.ok(source.lastIndexOf('node "$RECONCILE"') < source.indexOf('node "$READINESS"'));
+  assert.ok(source.indexOf('cluster-link-pr') < source.indexOf('node "$READINESS"'));
   assert.ok(source.indexOf('node "$READINESS"') < source.indexOf('node "$BATCH_SUMMARY"'));
   assert.doesNotMatch(nightlySource, /gg-batch-summary/);
   assert.match(nightlySource, /GG_SEO_PLAN/);

@@ -31,8 +31,13 @@ REPAIR_CONTROLLER="${GG_SEO_REPAIR_CONTROLLER_BIN:-$FLOW/tools/scripts/gg-seo-re
 RECONCILE="${GG_SEO_RECONCILE_BIN:-$FLOW/tools/scripts/gg-ledger-reconcile.mjs}"
 READINESS="${GG_SEO_READINESS_BIN:-$FLOW/tools/scripts/gg-seo-readiness.mjs}"
 BATCH_SUMMARY="${GG_SEO_BATCH_SUMMARY_BIN:-$FLOW/tools/scripts/gg-batch-summary.mjs}"
+CLUSTER_LINKER="${GG_CLUSTER_LINKER_BIN:-$FLOW/tools/scripts/gg-cluster-internal-links.mjs}"
+SEO_AUTOPILOT="${GG_SEO_AUTOPILOT_BIN:-$FLOW/tools/scripts/gg-seo-autopilot.mjs}"
 NIGHTLY_LOG="${GG_SEO_NIGHTLY_LOG:-$HOME/Library/Logs/gg-nightly-seo.log}"
 OPS="${GG_OPS_DIR:-$HOME/gengrowth-ops}"
+CLUSTER_LINKS_ENABLED="${GG_CLUSTER_LINKS_ENABLED:-0}"
+CLUSTER_LINK_INPUT_DIR="${GG_CLUSTER_LINK_INPUT_DIR:-$FLOW/.gg-cache/cluster-links}"
+PUBLISH_LOG="${GG_SEO_AUTOPILOT_PUBLISH_LOG:-$OPS/inbox-maboyang/06-tasks/seo-autopilot-publish-log.md}"
 PLAN="${GG_SEO_PLAN:-$OPS/inbox-maboyang/06-tasks/tasks/2026-05-27-W22-blog-output-plan.md}"
 CANONICAL_CLAIMS="$OPS/inbox-maboyang/06-tasks/tasks/.autopilot-claims.json"
 CLAIMS="$CANONICAL_CLAIMS"
@@ -479,6 +484,39 @@ if [[ "$RECONCILE_RC" -ne 0 ]]; then
     echo "===== seo-blog launchd tick complete nightly=$NIGHTLY_RC hook=$HOOK_RC reconcile=$RECONCILE_RC $(date '+%F %T %Z') ====="
     exit "$RECONCILE_RC"
   fi
+fi
+
+if [[ "$CLUSTER_LINKS_ENABLED" == "1" ]]; then
+  [[ -f "$CLUSTER_LINKER" ]] || { echo "cluster linker unavailable: $CLUSTER_LINKER"; exit 1; }
+  [[ -f "$SEO_AUTOPILOT" ]] || { echo "SEO autopilot unavailable: $SEO_AUTOPILOT"; exit 1; }
+  CLUSTER_LINK_INPUT="$CLUSTER_LINK_INPUT_DIR/$RUN_ID.json"
+  mkdir -p "$CLUSTER_LINK_INPUT_DIR"
+  echo "strict reconcile complete; building OPS-approved Cluster link snapshot"
+  set +e
+  GG_FLOW_REPO="$FLOW" GG_OPS_DIR="$OPS" GG_ORACLE_DIR="$ORACLE_BASELINE" \
+    node "$CLUSTER_LINKER" \
+      --build-input \
+      --published-log "$PUBLISH_LOG" \
+      --oracle "$ORACLE_BASELINE" \
+      --out "$CLUSTER_LINK_INPUT"
+  CLUSTER_INPUT_RC=$?
+  set -e
+  if [[ "$CLUSTER_INPUT_RC" -ne 0 ]]; then
+    echo "Cluster link input build failed; skip readiness and terminal summary"
+    exit "$CLUSTER_INPUT_RC"
+  fi
+  echo "Cluster link snapshot ready; creating review-gated Oracle PR when links changed"
+  set +e
+  GG_FLOW_REPO="$FLOW" GG_OPS_DIR="$OPS" GG_ORACLE_DIR="$ORACLE_BASELINE" \
+    node "$SEO_AUTOPILOT" --cluster-link-pr --cluster-link-input "$CLUSTER_LINK_INPUT"
+  CLUSTER_PR_RC=$?
+  set -e
+  if [[ "$CLUSTER_PR_RC" -ne 0 ]]; then
+    echo "Cluster link PR stage failed; skip readiness and terminal summary"
+    exit "$CLUSTER_PR_RC"
+  fi
+else
+  echo "Cluster link PR stage disabled (set GG_CLUSTER_LINKS_ENABLED=1 after OPS Cluster migration readiness)"
 fi
 
 echo "strict reconcile complete; evaluating terminal readiness"

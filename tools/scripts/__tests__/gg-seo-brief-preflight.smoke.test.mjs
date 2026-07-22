@@ -614,7 +614,7 @@ test('empty plan invokes strict zero-target wrapper and accepts a legal no-op', 
   });
 });
 
-test('empty plan works through the real fixed wrapper without a writer identity file', () => {
+test('legacy real Topic Register wrapper mode no longer permits semantic Cluster repair', () => {
   const root = mkdtempSync(join(tmpdir(), 'gg-seo-brief-empty-real-wrapper-'));
   try {
     const planPath = join(root, 'plan.md');
@@ -635,10 +635,7 @@ test('empty plan works through the real fixed wrapper without a writer identity 
         GG_WRITER_SA_JSON: join(root, 'missing-writer-sa.json'),
       },
     });
-    assert.equal(run.status, 0, `${run.stdout}${run.stderr}`);
-    const proof = JSON.parse(run.stdout);
-    assert.equal(proof.status, 'noop');
-    assert.deepEqual(proof.requested_page_ids, []);
+    assert.notEqual(run.status, 0, `${run.stdout}${run.stderr}`);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

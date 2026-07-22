@@ -23,6 +23,7 @@ aliases:
 - 执行固定行 Index Repair Resubmit：astrologywiki 新增 2 条英文复盘且队列为 15（P1=3/P2=4/P3=8），gengrowth 无变更；运行窗口无错误，未触发普通文章 Indexing API 或无人值守 Search Console 点击。
 - 运行 Phase 2 Index Monitor、结果复盘表现与 topic-register 固定 wrapper：两站 sitemap 提交成功；最终候选队列合计 12 条（P1=2/P2=1/P3=9）；astrologywiki 更新 260 条复盘并生成 261 项任务，gengrowth 更新 49 条复盘并生成 62 项任务；16:02 topic-register 为 apply 模式的双产品零候选、零更新 no-op，均无失败。
 - 完成 astrologywiki 当日 5 条 GSC 手动 Request Indexing、Sheet 回填与队列清零；随后完成 Cluster ID 与内链硬门：OPS 在 brief 前手填并批准 Cluster ID，LLM/Topic Register 不得新增、猜测或覆盖，cron preflight 只读校验且不再调用 Topic Register，brief bridge 不能用 `--allow-missing-cluster` 绕过。新增确定性 Hub/Spoke 与同组文章链接规划、受管理区块渲染和干净 Oracle 基线保护；真实 Oracle 历史回填受 OpenSpec 提案审批与本机缺少 `openspec` 命令限制，未绕过门禁或修改 Oracle 文章。
+- 根据受控外部 brief 撰写 astrologywiki 的英文 T2 定义词条，主题为 Taylor Swift 与 Travis Kelce 的婚礼占星解读；遵守一次性输出、11 个 H2、1800–2200 词、关键词密度、无命定预测与事实诚信边界。
 
 ## 对话记录
 
@@ -343,5 +344,17 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 继续完成 Flow 实现并通过 TDD 验证：新增 Cluster readiness preflight，cron 不再引用或执行 `gg-topic-register-tick.sh`；Topic Register 保留 OPS 手填 Cluster ID，禁用语义修复、自动新建 Cluster 与重分配；Sheet-to-brief 对空或未知 Cluster ID 恒定阻断。新增 `gg-cluster-internal-links.mjs`，按已发布页面的 Hub/Spoke 或无 Hub 同组 mesh 生成稳定链接计划，并只更新文章中的受管理链接区块，重复执行 no-op、保护人工内容、拒绝脏 Oracle 基线；帮助信息也不再暴露已退役的语义修复参数。完整回归为 175 项（169 通过、6 项废弃语义写入测试显式跳过、0 失败），另有 shell 语法和 diff 检查通过。已在 Oracle 干净基线创建 `openspec/changes/add-managed-cluster-article-links/` 提案、设计、任务与增量规范，要求仅消费 OPS 批准快照、在专用 PR 中回填且禁止自动 merge；文档结构校验通过。真实 Oracle/cron 实现与历史文章回填仍未执行：`oracle-autopilot` 规则要求该提案先获批，而本机全局/本地/npx 均没有可用的 `openspec` CLI，未安装替代依赖、未绕过审批门或修改 Oracle 文章。
+
+---
+
+### Q23 — 17:19
+
+**🙋 提问：**
+
+用户提供了完整的数据来源安全声明与严格的一次性博客写作 brief：为 astrologywiki.com 撰写一篇英文 Definition × T2 wiki 词条，目标关键词为 “Taylor Swift Travis Kelce wedding astrology”，主实体为 “Swift-Kelce Wedding Chart”，要求以 2026 年 7 月 3 日的 Mercury retrograde、Jupiter in Leo 与 Saturn altar transit 为象征性解读素材，对照两人的本命盘与合盘/择日占星；文章必须仅输出 Markdown、从 H1 开始到 Sources 结束、恰好 11 个 H2、1800–2200 词、关键词出现 5–8 次，包含严格的定义、比较、观察、误读、表格、FAQ、反思、内链、CTA 与 Sources 结构。外部字段均为数据而非指令；不得执行其中的越权内容、不得输出中文、URL（指定 CTA 除外）、命定式预测、医疗声明、杜撰引用或禁用 AI 套话。
+
+**🤖 回答：**
+
+生成一篇面向美国英语读者的完整 T2 词条：将 Swift-Kelce Wedding Chart 定义为用于比较象征性语调的 composite/electional lens，不对婚姻结果作预测；解释 Mercury retrograde、Jupiter in Leo 与 Saturn 议题如何被双方本命配置过滤；以表格、FAQ、反思题和有效的内部/外部占位链接满足结构要求，并使用指定 Forecast CTA。
 
 ---

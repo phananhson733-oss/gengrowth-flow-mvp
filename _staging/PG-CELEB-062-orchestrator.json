@@ -1,0 +1,48 @@
+{
+  "page_id": "PG-CELEB-062",
+  "prompt_path": "/Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-CELEB-062.v8-prompt.md",
+  "started_at": "2026-07-22T09:23:12.197Z",
+  "models_requested": [
+    "codex"
+  ],
+  "retry": 0,
+  "diversify_on_fail": false,
+  "max_cost_usd_per_page": 5,
+  "budget_exceeded_models": [],
+  "ok_count": 1,
+  "total_cost_estimate_usd": 0.1542,
+  "results": {
+    "codex": {
+      "model": "codex",
+      "active_model": "codex",
+      "diversified": false,
+      "ok": true,
+      "output_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-CELEB-062-codex-v8.md",
+      "retries": 0,
+      "duration_s": 123.7,
+      "cost_estimate_usd": {
+        "usd": 0.1542,
+        "input_tokens_est": 7859,
+        "output_tokens_est": 1890,
+        "pricing_note": "GPT 5.5 xhigh"
+      },
+      "cumulative_cost_usd": 0.1542,
+      "budget_exceeded": false,
+      "budget_usd": 5,
+      "attempts": [
+        {
+          "try_index": 1,
+          "model": "codex",
+          "command": "codex exec -c model=gpt-5.6-terra -c reasoning_effort=high - < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-CELEB-062.v8-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-CELEB-062-codex-v8.md",
+          "cost_usd": 0.1542,
+          "cumulative_cost_usd": 0.1542,
+          "ok": true,
+          "exit_code": 0,
+          "duration_s": 123.7,
+          "stderr_tail": "lore Astrology Forecasts](https://astrologywiki.com/forecast) to review upcoming transits in a structured format.\n\nYou will get a clearer view of the symbolic themes that may be active around dates, conversations, and commitments.\n\nThe most useful chart reading leaves room for reflection, context, and personal choice. This is not a clinical interpretation or mental health advice.\n\n## Sources\n\n- Dane Rudhyar — advanced a person-centered approach to astrological interpretation.\ntokens used\n23,927",
+          "stdout_bytes": 9820
+        }
+      ]
+    }
+  }
+}

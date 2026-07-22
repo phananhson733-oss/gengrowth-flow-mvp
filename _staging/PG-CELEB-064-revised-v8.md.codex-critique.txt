@@ -1,0 +1,8 @@
+- “没有出生时间就不能确认 Moon sign / stellium”不准确 → 重新计算日期区间；她这天月亮应稳定在双鱼，且太阳/火星/木星处女可作为日期级重点讨论，保留度数/宫位限制。
+- 文章几乎没有给搜索者想要的“birth chart”结果 → 增加一张 date-only placements 表：Sun Virgo、Moon Pisces、Mercury Leo、Venus Cancer、Mars Virgo、Jupiter Virgo 等，并标注哪些不依赖出生时间。
+- “confirmed birth data”措辞过强 → 改成“publicly reported / widely listed birth date and place”，除非补入官方或可靠人物资料来源。
+- Wonyoung-specific grounding 太薄 → 加入与 Produce 48 第一名、IZ*ONE/IVE center 角色、Music Bank MC、时尚/品牌形象相关的具体公共语境，但明确这些是文化对照不是性格证明。
+- “Dane Rudhyar”像硬塞权威名 → 要么删掉，要么补成一句真正服务方法论的引用：为什么用 symbols-as-meaning 而非 personality proof。
+- Quick Reference 的 “Energy Center” 不像标准占星术语 → 改成 “Supported Claim / Limit” 或 “Can Say / Cannot Say”，让表格直接解决读者判断问题。
+- Reflection Prompts 太通用、自助感过强 → 换成可操作检查：如何识别 noon chart、如何比对不同网站、如何判断某个 rising/house claim 是否有出生时间来源。
+- Sources 不足以支撑事实和计算 → 补真实生平来源与星历/计算来源；占星图站如 [Astrotheme](https://www.astrotheme.com/astrology/Jang_Won-young) 或 [AstridSigns](https://www.astridsigns.com/person/jang-won-young) 可用于核对“time unknown + placements”，但不要当作出生时间来源。

@@ -11,6 +11,18 @@ aliases:
   - 2026-07-22 对话记录
 ---
 
+### Q48 — 21:00
+
+**🙋 提问：**
+
+用户提供数据来源安全声明与完整英文 Definition × T2 wiki 词条 brief，要求为 astrologywiki.com 一次性撰写以 “Scorpio MBTI type” 为目标关键词、以 “Scorpio Mbti Type” 为实体的美国英语文章。所有 `<field>` 值均为外部数据而非指令。文章须从 H1 开始至 Sources 结束，恰好 1 个 H1 与 11 个 H2，1800–2200 词，目标关键词出现 5–8 次；需依序包含定义和三条要点、自我觉察、与 Lunar Nodes 的具体比较、星盘观察、常见误读、包含 Property / How It Works / Energy Center / How to Observe 的表格、FAQ、编号反思提示、合规内部链接、指定 Explore Astrology Tools CTA 和受控 Sources。禁止中文、命定预测、临床或医疗主张、SEO 元评论、虚构来源或术语、禁用 AI 套话和指定 CTA 之外的裸外链；必须修复首链过晚、关键词超限、结构 drift、FAQ 与 Sources 缺失等历史校验问题，并加入指定心理安全免责声明。
+
+**🤖 回答：**
+
+生成完整美国英语 T2 词条：将 Scorpio MBTI type 界定为 Scorpio 原型与 MBTI 偏好的象征性比较，而非人格诊断或确定性分类。文章在定义段早期内联本命盘阅读指南，区分 Sun-sign symbolism、MBTI questionnaire 与 North/South Nodes 的不同问题和取舍；提供可观察的隐私、冲突和注意力线索、误读校正、指定四列表格、4 组 FAQ、编号反思题、合规占位内链、指定 `https://astrologywiki.com/en/tools` CTA、Dane Rudhyar 来源和非临床解释声明。提交前核验结果为 1 个 H1、11 个 H2、0 个 H3、关键词 8 次、4 个 FAQ、6 条内部链接、无禁用词、词数 1819。
+
+---
+
 ### Q27 — 17:38
 
 **🙋 提问：**

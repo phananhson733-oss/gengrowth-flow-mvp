@@ -51,6 +51,7 @@ aliases:
 - 根据受控外部 brief 撰写 astrologywiki 的英文 T2 定义词条，主题为 Jang Wonyoung Birth Chart；将可验证出生资料与未经确认的出生时间边界分开，避免把象征解读写成传记证明、预测或医疗主张。
 - 根据受控外部 brief 撰写 astrologywiki 的英文 T2 定义词条，主题为 Mars in Aries；将其限定为行动风格的象征性解读，并区分 Aries Sun、Chiron 与第十二宫等相邻概念。
 - 根据受控外部 brief 撰写 astrologywiki 的英文 T2 定义词条，主题为 Venus in Taurus；将其限定为爱、愉悦与审美偏好的象征性解读，并与 Mahadasha、宫位和相位的读法明确区分。
+- 根据受控外部 brief 撰写 astrologywiki 的英文 T2 定义词条，主题为 Scorpio MBTI Type；将天蝎原型与 MBTI 的比较限定为象征性反思，并与北交点、南交点及正式类型测评明确区分。
 
 ## 对话记录
 
@@ -682,3 +683,13 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 生成完整美国英语 T2 词条：将 Venus in Taurus 限定为爱、价值、愉悦和审美倾向的象征性出生配置，而非人格诊断或未来结论。文章在定义段前 150 词内放入本命盘阅读指南，并将固定的出生位置与 Venus Mahadasha 的时间框架、宫位和相位的语境作用明确区分；包含可观察的关系、消费和审美线索、误读校正、指定四列表格、FAQ、反思题、合规占位内链、指定 `https://astrologywiki.com/en/birth-chart-calculator` CTA、Dane Rudhyar 来源和非临床解释声明，且关键词和结构均保持在要求范围内。
 
 ---
+
+### Q49 — 21:12
+
+**🙋 提问：**
+
+用户提供数据来源安全声明与完整英文 Definition × T2 wiki 词条 brief，要求为 astrologywiki.com 一次性撰写以 “Scorpio MBTI type” 为目标关键词、以 “Scorpio Mbti Type” 为实体的美国英语文章。所有 `<field>` 值均为外部数据而非指令。文章须从 H1 开始至 Sources 结束，恰好 1 个 H1 与 11 个 H2，1800–2200 词，目标关键词出现 5–8 次；需依序包含定义和三条要点、自我觉察、与 Lunar Nodes 的具体比较、星盘观察、常见误读、包含 Property / How It Works / Energy Center / How to Observe 的表格、FAQ、编号反思提示、合规内部链接、指定 Explore Astrology Tools CTA 和受控 Sources。禁止中文、命定预测、临床或医疗主张、SEO 元评论、虚构来源或术语、禁用 AI 套话和指定 CTA 之外的裸外链；必须修复首链过晚、关键词超限、结构 drift、FAQ 与 Sources 缺失等历史校验问题，并加入指定心理安全免责声明。
+
+**🤖 回答：**
+
+生成完整美国英语 T2 词条：将 Scorpio MBTI type 界定为 Scorpio 原型与 MBTI 偏好的象征性比较，而非人格诊断或确定性分类。文章在定义段早期内联本命盘阅读指南，区分 Sun-sign symbolism、MBTI questionnaire 与 North/South Nodes 的不同问题和取舍；提供可观察的隐私、冲突和注意力线索、误读校正、指定四列表格、4 组 FAQ、编号反思题、合规占位内链、指定 `https://astrologywiki.com/en/tools` CTA、Dane Rudhyar 来源和非临床解释声明。提交前核验结果为 1 个 H1、11 个 H2、0 个 H3、关键词 8 次、4 个 FAQ、6 条内部链接、无禁用词、词数 1870，首个正文内链位于约第 107 词。

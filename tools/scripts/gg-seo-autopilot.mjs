@@ -62,6 +62,7 @@ import { buildAuthorMap, resolveAuthor, isValidAuthorId, normalizeAuthorId } fro
 import { detectProtectedFactDrift, summarizeProtectedFactDrift } from './lib/review-fact-guard.mjs';
 import { loadEnv, resolveWorkbookId } from './lib/gg-shared.mjs';
 import { slugifyPageId } from './gg-sheet-pull.mjs';
+import { validateClusterLinkInput } from './gg-cluster-internal-links.mjs';
 import { illustrate } from './lib/illustrate.mjs';
 import { keywordLiveSlug } from './lib/oracle-live.mjs';
 import { notify } from './lib/gg-notify.mjs';
@@ -2197,11 +2198,7 @@ function doClusterLinkDryRun(o) {
 function clusterLinkInput(o) {
   if (!o.clusterLinkInput) throw new Error('--cluster-link-pr requires --cluster-link-input <attested.json>');
   if (!existsSync(o.clusterLinkInput)) throw new Error(`cluster-link input is missing: ${o.clusterLinkInput}`);
-  const input = JSON.parse(readFileSync(o.clusterLinkInput, 'utf8'));
-  if (!/^[a-f0-9]{64}$/i.test(String(input?.snapshot_id || ''))) {
-    throw new Error('cluster-link input is missing a valid snapshot_id');
-  }
-  return input;
+  return validateClusterLinkInput(JSON.parse(readFileSync(o.clusterLinkInput, 'utf8')));
 }
 
 function doClusterLinkPr(o) {
@@ -2217,9 +2214,9 @@ function doClusterLinkPr(o) {
       process.stdout.write(`${JSON.stringify({ mode: 'cluster-link-pr', status: 'noop', snapshot_id: input.snapshot_id, changed: [] })}\n`);
       return;
     }
-    const changedPaths = gitIn(worktree, ['status', '--porcelain']).trim().split('\n').filter(Boolean).map((line) => line.slice(3));
+    const changedPaths = gitIn(worktree, ['status', '--porcelain']).trim().split('\n').filter(Boolean).map((line) => line.slice(2).trim());
     if (!changedPaths.length || changedPaths.some((path) => !/^data\/articles\/[a-z0-9][a-z0-9-]*\.ts$/.test(path))) {
-      throw new Error('cluster-link apply changed a path outside a managed Oracle article');
+      throw new Error(`cluster-link apply changed a path outside a managed Oracle article: ${changedPaths.join(', ')}`);
     }
     gitIn(worktree, ['add', '--', 'data/articles']);
     gitIn(worktree, ['commit', '-q', '-m', `chore(seo): refresh cluster links ${input.snapshot_id.slice(0, 12)}`]);

@@ -1,16 +1,7 @@
 {
   "schemaVersion": 1,
   "pageId": "PG-HEAL-007",
-  "status": "failed",
-  "failures": [
-    "word count 1472 < min 1485",
-    "missing required H2: \"## <entity> vs <real adjacent concept> (comparison section; no \"Adjacent Concepts\" boilerplate)\"",
-    "drifted sections: \"How to Read Mars in Aries in Your Chart\" (jaccard=0.000, shingle=0.000, target-recall=0.33); \"Common Misreadings\" (jaccard=0.000, shingle=0.000, target-recall=0.00); \"Common Questions About Mars in Aries\" (jaccard=0.000, shingle=0.000, target-recall=0.33) (skipped 5 structural: \"Mars in Aries at a Glance\", \"Reflection Prompts\", \"Related Reading\", \"Take Action\", \"Sources\")",
-    "word count 1389 < min 1485",
-    "target_keyword count = 20 (limit 12)",
-    "word count 1454 < min 1485",
-    "psych-safety blacklist word matched: \"treats\"",
-    "word count 1291 < min 1485"
-  ],
-  "updatedAt": "2026-07-22T10:25:16.909Z"
+  "status": "passed",
+  "failures": [],
+  "updatedAt": "2026-07-22T10:30:27.905Z"
 }

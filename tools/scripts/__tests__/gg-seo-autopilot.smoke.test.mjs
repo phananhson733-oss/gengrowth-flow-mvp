@@ -384,6 +384,68 @@ test('--cluster-link-pr requires an explicit attested input before it can touch 
   }
 });
 
+test('--cluster-link-pr rejects an invalid input before attempting Oracle synchronization', () => {
+  const h = makeHarness();
+  try {
+    const input = join(h.root, 'invalid-cluster-links.json');
+    writeFileSync(input, JSON.stringify({ version: 1, snapshot_id: 'c'.repeat(64), approved_cluster_ids: [], pages: [] }));
+    const r = runAuto(h, ['--cluster-link-pr', '--cluster-link-input', input]);
+    assert.notEqual(r.status, 0, `${r.stdout}${r.stderr}`);
+    assert.match(`${r.stdout}${r.stderr}`, /approved_cluster_ids/i);
+    assert.doesNotMatch(`${r.stdout}${r.stderr}`, /synced oracle/i);
+  } finally {
+    h.cleanup();
+  }
+});
+
+test('--cluster-link-pr changes only a dedicated review branch and never the Oracle baseline', () => {
+  const h = makeHarness();
+  try {
+    initOracleWithOrigin(h);
+    const articles = join(h.oracle, 'data', 'articles');
+    const alpha = join(articles, 'alpha.ts');
+    const beta = join(articles, 'beta.ts');
+    writeFileSync(alpha, 'export const alpha = { content: `# Alpha\n\n## Related Reading\n\n- Manual alpha\n` };\n');
+    writeFileSync(beta, 'export const beta = { content: `# Beta\n\n## Related Reading\n\n- Manual beta\n` };\n');
+    writeFileSync(join(articles, 'index.ts'), 'import { alpha } from "./alpha";\nimport { beta } from "./beta";\nexport { alpha, beta };\n');
+    writeFileSync(join(h.oracle, 'scripts', 'check-internal-links.mjs'), 'process.exit(0);\n');
+    writeFileSync(join(h.oracle, 'package.json'), JSON.stringify({ scripts: { build: 'true' } }));
+    git(h.oracle, ['add', '.']);
+    git(h.oracle, ['commit', '-m', 'seed articles']);
+    git(h.oracle, ['push', 'origin', 'main']);
+    const input = join(h.root, 'cluster-links.json');
+    const snapshot = 'b'.repeat(64);
+    writeFileSync(input, JSON.stringify({
+      version: 1,
+      snapshot_id: snapshot,
+      approved_cluster_ids: ['test_cluster'],
+      pages: [
+        { page_id: 'PG-001', cluster_id: 'test_cluster', page_role: 'Hub', slug: 'alpha', title: 'Alpha', published: true },
+        { page_id: 'PG-002', cluster_id: 'test_cluster', page_role: 'Spoke', slug: 'beta', title: 'Beta', published: true },
+      ],
+    }));
+    writeFileSync(join(h.bin, 'gh'), '#!/bin/sh\nif [ "$1" = "pr" ] && [ "$2" = "create" ]; then printf "%s\\n" "https://example.test/pr/cluster"; exit 0; fi\nexit 1\n', { mode: 0o755 });
+
+    const r = runAuto(h, ['--cluster-link-pr', '--cluster-link-input', input], {
+      GG_ORACLE_WORKTREE_ROOT: join(h.root, 'worktrees'),
+    });
+
+    assert.equal(r.status, 0, `${r.stdout}${r.stderr}`);
+    const result = JSON.parse(r.stdout);
+    assert.equal(result.status, 'pushed-preview');
+    assert.equal(result.pr, 'https://example.test/pr/cluster');
+    assert.doesNotMatch(readFileSync(alpha, 'utf8'), /gg-cluster-links:start/);
+    const origin = join(h.root, 'origin.git');
+    const branch = `refs/heads/seo/internal-links/${snapshot.slice(0, 12)}`;
+    const pushed = git(h.root, [`--git-dir=${origin}`, 'show', `${branch}:data/articles/alpha.ts`]);
+    assert.match(pushed, /gg-cluster-links:start/);
+    const main = git(h.root, [`--git-dir=${origin}`, 'show', 'refs/heads/main:data/articles/alpha.ts']);
+    assert.doesNotMatch(main, /gg-cluster-links:start/);
+  } finally {
+    h.cleanup();
+  }
+});
+
 test('--mark-verified records preview evidence and allows the subsequent merge command to reach gh', () => {
   const h = makeHarness();
   try {

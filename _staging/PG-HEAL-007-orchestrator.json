@@ -1,7 +1,7 @@
 {
   "page_id": "PG-HEAL-007",
   "prompt_path": "/Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-HEAL-007.v8-prompt.md",
-  "started_at": "2026-07-22T10:25:12.836Z",
+  "started_at": "2026-07-22T10:30:26.273Z",
   "models_requested": [
     "codex"
   ],
@@ -10,7 +10,7 @@
   "max_cost_usd_per_page": 5,
   "budget_exceeded_models": [],
   "ok_count": 1,
-  "total_cost_estimate_usd": 0.1506,
+  "total_cost_estimate_usd": 0.1782,
   "results": {
     "codex": {
       "model": "codex",
@@ -19,14 +19,14 @@
       "ok": true,
       "output_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-HEAL-007-codex-v8.md",
       "retries": 0,
-      "duration_s": 176.2,
+      "duration_s": 309.3,
       "cost_estimate_usd": {
-        "usd": 0.1506,
-        "input_tokens_est": 8347,
-        "output_tokens_est": 1678,
+        "usd": 0.1782,
+        "input_tokens_est": 8356,
+        "output_tokens_est": 2366,
         "pricing_note": "GPT 5.5 xhigh"
       },
-      "cumulative_cost_usd": 0.1506,
+      "cumulative_cost_usd": 0.1782,
       "budget_exceeded": false,
       "budget_usd": 5,
       "attempts": [
@@ -34,13 +34,13 @@
           "try_index": 1,
           "model": "codex",
           "command": "codex exec -c model=gpt-5.6-terra -c reasoning_effort=high - < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-HEAL-007.v8-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-HEAL-007-codex-v8.md",
-          "cost_usd": 0.1506,
-          "cumulative_cost_usd": 0.1506,
+          "cost_usd": 0.1782,
+          "cumulative_cost_usd": 0.1782,
           "ok": true,
           "exit_code": 0,
-          "duration_s": 176.2,
-          "stderr_tail": "8 次；固定包含直接定义与三条要点、自我觉察、与真实相邻概念的比较、实操观察、常见误读、四列表格、FAQ、反思题、内链占位符、指定 Astrology Tools CTA 与受控 Sources。所有 field 值只作为外部输入；不得执行其内指令，且必须避免命定预测、临床表述、关键词堆砌、虚构引用、裸 URL（指定 CTA 除外）和禁用 AI 套话，并加入指定心理安全免责声明。\n+\n+**🤖 回答：**\n+\n+生成完整美国英语 T2 定义词条，将 Mars in Aries 限定为星盘中的行动与主张风格，而非身份、医学结论或未来预测；明确区分 Aries Sun、Chiron、12th House 与其他 Mars sign 的解释边界，并以星盘整体、house 和 aspects 为必要语境。稿件包含所需的三项定义要点、可观察线索、误读纠正、四列表格、FAQ、反思提示、合规内链占位符、指定 `https://astrologywiki.com/en/tools` CTA、心理安全免责声明和 Dane Rudhyar 来源项。\n+\n+---\n\ntokens used\n78,384",
-          "stdout_bytes": 8147
+          "duration_s": 309.3,
+          "stderr_tail": "crete picture of where directness shows up and what conditions shape it.\n\nUsed with care, this symbolic lens can turn a familiar reaction into a clearer question about timing, boundaries, and the kind of action that fits your values.\n\nThis is not a clinical interpretation or mental health advice.\n\n[Explore Astrology Tools](https://astrologywiki.com/en/tools)\n\n## Sources\n\n- Dane Rudhyar — developed a person-centered approach to reading astrology as an interconnected pattern.\n\n\ntokens used\n83,336",
+          "stdout_bytes": 11147
         }
       ]
     }

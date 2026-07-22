@@ -19,7 +19,7 @@ aliases:
 
 - 编写多篇面向美国 B2B SaaS 受众的 T2 指南稿，覆盖 Agentic AI Marketing Automation、YouTube AI Search Authority 2026、AI Agent Trends Business 2026 与 First Party Data AI Personalization，均遵循固定结构、关键词、内链、CTA 和事实诚信边界。
 - 7 月 21 日 SEO 自然窗口验收为 0/3：18:30–19:30 preflight 因真实语义/cluster 不一致失败，19:52 非日历直跑占锁，导致 20:00、20:30、21:00 三个 `launchd[1]` 自然 fire 全部跳过；外部轮发布的两篇文章已全链路收敛，但当前仍有 PG-WC-053 needs_human。21:05 后最终账本除 claims non-done=1 外其余目标计数、进程和锁均为 0，临时 heartbeat 已通过正式接口删除。
-- 执行固定行 Index Repair Resubmit：astrologywiki 新增 2 条英文复盘且队列为 15（P1=3/P2=4/P3=8），gengrowth 无变更；运行窗口无错误，未触发普通文章 Indexing API 或无人值守 Search Console 点击。
+- 执行固定行 Index Repair Resubmit 两次：05:00 运行中 astrologywiki 新增 2 条英文复盘且队列为 15（P1=3/P2=4/P3=8），17:32 运行再新增 1 条（总 281）且队列为 11（P1=2/P2=1/P3=8）；gengrowth 的最新队列为 2（P3=2）。两次均无错误，未触发普通文章 Indexing API 或无人值守 Search Console 点击。
 - 运行 Phase 2 Index Monitor、结果复盘表现与 topic-register 固定 wrapper：两站 sitemap 提交成功；最终候选队列合计 12 条（P1=2/P2=1/P3=9）；astrologywiki 更新 260 条复盘并生成 261 项任务，gengrowth 更新 49 条复盘并生成 62 项任务；16:02 topic-register 为 apply 模式的双产品零候选、零更新 no-op，均无失败。
 - 完成 astrologywiki 当日 5 条 GSC 手动 Request Indexing、Sheet 回填与队列清零；随后完成 Cluster ID 与内链硬门：OPS 在 brief 前手填并批准 Cluster ID，LLM/Topic Register 不得新增、猜测或覆盖，cron preflight 只读校验且不再调用 Topic Register，brief bridge 不能用 `--allow-missing-cluster` 绕过。新增确定性 Hub/Spoke 与同组文章链接规划、受管理区块渲染和干净 Oracle 基线保护；真实 Oracle 历史回填受 OpenSpec 提案审批与本机缺少 `openspec` 命令限制，未绕过门禁或修改 Oracle 文章。
 - 根据受控外部 brief 撰写 astrologywiki 的英文 T2 定义词条，主题为 Taylor Swift 与 Travis Kelce 的婚礼占星解读；遵守一次性输出、11 个 H2、1800–2200 词、关键词密度、无命定预测与事实诚信边界。
@@ -367,5 +367,22 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 生成英文词条，将 Swift-Kelce Wedding Chart 定义为把婚礼日期的象征性星象与两人的本命资料和关系图层并读的解释框架；对比 composite chart 与 electional astrology，说明 Mercury retrograde、Jupiter in Leo 和 Saturn 的不同诠释为何可同时导向谨慎或庆祝语气。文章包含可观察步骤、误读校正、所需表格和 FAQ、合规内部链接占位符、指定 `https://astrologywiki.com/forecast` CTA 与 Dane Rudhyar 的受控 Sources 项；不把任何读法当作事实、因果或预测。
+
+---
+
+### Q25 — 17:33
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: 2026-07-21T21:00:20.989Z (1784667620989)
+
+Run the deterministic fixed-row index repair workflow through `bash tools/scripts/gg-index-repair-resubmit-tick.sh`. The wrapper loads the local gg environment, loops the configured products (`GG_INDEX_MONITOR_PRODUCTS`, defaulting to astrologywiki and gengrowth), processes rows marked `已修复`, syncs `结果复盘表`, and refreshes `request-indexing-queue` in each product Google Sheet. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, do not click Search Console Request Indexing unattended, and do not create Feishu or Google Doc report artifacts. After the wrapper exits, summarize per-product `process-fixed`, `sync-recap`, `sync-request-queue` counts visible in the log, plus any failures.
+
+**🤖 回答：**
+
+按指定固定入口运行，退出码为 0；当日日志中的精确窗口为 17:32:29–17:33:28 CST，末行是 `index repair-resubmit ok`。astrologywiki：`process-fixed fixed=0 resubmitted=0`、`sync-recap en_rows=281 appended=1 updated=0 skipped=280`、`sync-request-queue rows=11 P0=0 P1=2 P2=1 P3=8`。gengrowth：`process-fixed fixed=0 resubmitted=0`、`sync-recap en_rows=64 appended=0 updated=49 skipped=15`、`sync-request-queue rows=2 P0=0 P1=0 P2=0 P3=2`。隔离窗口内无 failure/error/exception/auth/timeout/nonzero-rc 标记；未使用普通文章 Google Indexing API、未无人值守点击 Search Console Request Indexing，且未创建 Feishu 或 Google Doc 报告物。
 
 ---

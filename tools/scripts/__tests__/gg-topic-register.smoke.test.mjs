@@ -2,6 +2,7 @@
 // Run: node --test tools/scripts/__tests__/gg-topic-register.smoke.test.mjs
 
 import { strict as assert } from 'node:assert';
+import { spawnSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
@@ -29,6 +30,8 @@ import {
 } from '../gg-topic-register.mjs';
 import { renderPreprocessorPrompt } from '../lib/preprocessor-prompt.mjs';
 import * as topicRegister from '../gg-topic-register.mjs';
+
+const topicRegisterCli = new URL('../gg-topic-register.mjs', import.meta.url).pathname;
 
 const clusters = [
   {
@@ -636,6 +639,12 @@ test('semantic-repair-only rejects empty target sets too', () => {
     no_notify: true,
     limit: '0',
   }), /disabled.*OPS.*cluster_id/i);
+});
+
+test('help does not advertise the retired semantic Cluster repair flag', () => {
+  const run = spawnSync('node', [topicRegisterCli, '--help'], { encoding: 'utf8' });
+  assert.equal(run.status, 0, `${run.stdout}${run.stderr}`);
+  assert.doesNotMatch(run.stdout, /--semantic-repair-only/);
 });
 
 test.skip('obsolete semantic candidate selection is disabled because OPS owns Cluster IDs', () => {

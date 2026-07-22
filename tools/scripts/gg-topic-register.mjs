@@ -2547,7 +2547,6 @@ async function main(argv) {
 usage:
   node tools/scripts/gg-topic-register.mjs --product astrologywiki|gengrowth|all [--limit N]
   node tools/scripts/gg-topic-register.mjs --product gengrowth --apply
-  node tools/scripts/gg-topic-register.mjs --semantic-repair-only --product astrologywiki --apply --no-notify --limit N --repair-page-ids <ids>
 
 default:
   dry-run only. Use --apply to write Sheets, task plan files, prompt cache, and Feishu notice.
@@ -2559,8 +2558,6 @@ flags:
                      process all incomplete rows in sheet order (default: audit existing incomplete rows before generating new blank rows)
   --repair-page-ids <ids>
                      comma-separated existing PG-* ids to re-evaluate even when rows are complete
-  --semantic-repair-only
-                     repair only the exact active astrologywiki page ids; requires --apply, --no-notify, matching --limit, and no LLM/evidence/generation flags
   --repair-keywords <keywords>
                      comma-separated target keywords to re-evaluate even when rows are complete
   --reassign-existing

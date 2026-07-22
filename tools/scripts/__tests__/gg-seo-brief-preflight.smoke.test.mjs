@@ -614,7 +614,7 @@ test('empty plan invokes strict zero-target wrapper and accepts a legal no-op', 
   });
 });
 
-test('legacy real Topic Register wrapper mode no longer permits semantic Cluster repair', () => {
+test('CLI explicitly rejects the retired Topic Register wrapper route', () => {
   const root = mkdtempSync(join(tmpdir(), 'gg-seo-brief-empty-real-wrapper-'));
   try {
     const planPath = join(root, 'plan.md');

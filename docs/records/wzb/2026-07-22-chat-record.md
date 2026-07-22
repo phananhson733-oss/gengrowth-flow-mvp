@@ -23,6 +23,7 @@ aliases:
 - 执行固定行 Index Repair Resubmit：astrologywiki 新增 2 条英文复盘且队列为 15（P1=3/P2=4/P3=8），gengrowth 无变更；运行窗口无错误，未触发普通文章 Indexing API 或无人值守 Search Console 点击。
 - 运行 Phase 2 Index Monitor 与结果复盘表现固定 wrapper：两站 sitemap 提交成功；最终候选队列合计 12 条（P1=2/P2=1/P3=9）；astrologywiki 更新 260 条复盘并生成 261 项任务，gengrowth 更新 49 条复盘并生成 62 项任务，均无失败。
 - 完成 astrologywiki 当日 5 条 GSC 手动 Request Indexing、Sheet 回填与队列清零；随后启动 Cluster ID 与内链结构优化实现，确认根因是 LLM 提案与持久化主键权限混用，现有 `gg-topic-register.mjs` 仍按语义选群；已确认后续 Cluster ID 由 OPS 在 brief 生成前手动填写，LLM 不得新增、猜测或覆盖。实现范围收敛为本地 Flow 的只读硬校验，以及 cron SEO blog 的确定性文章内链与发布后回填；待确认存量文章是否纳入首批后改代码。
+- 完成 Cluster ID 硬门实现：cron preflight 只读校验手填且注册的 Cluster ID，不再调用 Topic Register；Topic Register 禁用 semantic repair / reassign，并将未知 Cluster 返回 OPS 阻断；brief bridge 不再允许 `--allow-missing-cluster` 绕过。新增确定性 Hub/Spoke 与同组文章链接规划、受管理区块渲染和干净 Oracle 基线保护。
 
 ## 对话记录
 
@@ -314,5 +315,34 @@ A
 **🤖 回答：**
 
 实现范围已收敛为两段：本地 `gengrowth-flow-mvp` 取消 Cluster ID 语义选择与 cron 中的自动 Sheet 修复，仅校验 OPS 在 brief 生成前已手填且已注册的 Cluster ID；cron SEO blog 则根据该值生成确定性内链，并在发布后为同 Cluster 的已有文章补链。已核实 cron 当前会调用 `gg-seo-brief-preflight.mjs` 和 `gg-topic-register-tick.sh` 执行 `semantic-repair-only` 写入，因此必须切断该调用；待确认首批是否包含全部历史文章回填后，完成设计确认、TDD 实现与回归验证。
+
+---
+
+### Q21 — 16:02
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-21T14:00:49.314Z (1784642449314)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行 `bash tools/scripts/gg-topic-register-tick.sh`；16:02:00–16:02:03 CST 退出 0。最新日志的精确窗口为 apply（`dry_run=false`、`budget_exhausted=false`）：astrologywiki 与 gengrowth 各自 candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]、evidence_discovery=[]；无失败或超时。这是环境启用 apply 的合法 no-op，未手工编辑 Sheet、未在 wrapper 外修改任务计划，且未创建额外 Feishu 或 Google Doc 报告物。
+
+---
+
+### Q22 — 16:04
+
+**🙋 提问：**
+
+继续
+
+**🤖 回答：**
+
+继续完成 Flow 实现并通过 TDD 验证：新增 Cluster readiness preflight，cron 不再引用或执行 `gg-topic-register-tick.sh`；Topic Register 保留 OPS 手填 Cluster ID，禁用语义修复、自动新建 Cluster 与重分配；Sheet-to-brief 对空或未知 Cluster ID 恒定阻断。新增 `gg-cluster-internal-links.mjs`，按已发布页面的 Hub/Spoke 或无 Hub 同组 mesh 生成稳定链接计划，并只更新文章中的受管理链接区块，重复执行 no-op、保护人工内容、拒绝脏 Oracle 基线。真实 Oracle 历史文章回填尚未执行：`oracle-autopilot` 规则要求 OpenSpec 提案获批后才可实现，但本机 `openspec` 命令不可用；未绕过审批门或修改 Oracle 文章。
 
 ---

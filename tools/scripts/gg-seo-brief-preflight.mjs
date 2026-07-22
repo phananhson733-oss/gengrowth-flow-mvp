@@ -16,6 +16,8 @@ import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 
 import { parseArgs } from './gg-topic-register.mjs';
+import { buildClusterMap } from './gg-sheet-to-brief.mjs';
+import { mapRowToBrief, resolvePageId } from './gg-sheet-pull.mjs';
 
 const PAGE_ID_PATTERN = /^PG-[A-Z0-9]+-\d+$/;
 const ROOT_KEYS = ['budget_exhausted', 'dry_run', 'ok', 'proof', 'summaries'].sort();
@@ -99,6 +101,48 @@ export function activeRowsFromPlan(text) {
 
 export function activePageIdsFromPlan(text) {
   return activeRowsFromPlan(text).map((row) => row.page_id);
+}
+
+export function validateActiveClusterReadiness({ activeRows, pagesRaw, clustersRaw }) {
+  if (!Array.isArray(activeRows) || !Array.isArray(pagesRaw) || pagesRaw.length < 1
+    || !Array.isArray(clustersRaw) || clustersRaw.length < 1) {
+    throw new Error('cluster readiness input is incomplete');
+  }
+  const byPageId = new Map();
+  const header = pagesRaw[0];
+  for (const rawRow of pagesRaw.slice(1)) {
+    const { brief } = mapRowToBrief(header, rawRow || []);
+    const pageId = resolvePageId(brief, true);
+    if (!pageId) continue;
+    if (byPageId.has(pageId)) throw new Error(`duplicate page_id "${pageId}" in 选题登记表`);
+    byPageId.set(pageId, brief);
+  }
+
+  const clusterMap = buildClusterMap(clustersRaw);
+  const requested = activeRows.map((row) => String(row?.page_id || '').trim()).sort();
+  if (requested.some((pageId) => !PAGE_ID_PATTERN.test(pageId))) {
+    throw new Error('active plan contains an invalid page id');
+  }
+  if (new Set(requested).size !== requested.length) {
+    throw new Error('active plan contains duplicate page ids');
+  }
+
+  for (const pageId of requested) {
+    const brief = byPageId.get(pageId);
+    if (!brief) throw new Error(`${pageId}: missing existing row in 选题登记表`);
+    const clusterId = String(brief.cluster_id || '').trim();
+    if (!clusterId) throw new Error(`${pageId}: missing cluster_id; OPS must fill it before brief generation`);
+    if (!clusterMap.has(clusterId)) {
+      throw new Error(`${pageId}: unknown cluster_id "${clusterId}"; OPS must use a registered Cluster ID`);
+    }
+  }
+
+  return {
+    mode: 'cluster-readiness',
+    status: 'ready',
+    requested_page_ids: requested,
+    ready_page_ids: requested,
+  };
 }
 
 export function validateSemanticRepairProof(value, expectedPageIds) {

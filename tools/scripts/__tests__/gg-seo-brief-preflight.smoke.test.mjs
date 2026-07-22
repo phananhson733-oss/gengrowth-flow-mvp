@@ -17,6 +17,7 @@ import { fileURLToPath } from 'node:url';
 
 import {
   activePageIdsFromPlan,
+  validateActiveClusterReadiness,
   validateSemanticRepairProof,
 } from '../gg-seo-brief-preflight.mjs';
 
@@ -39,6 +40,58 @@ const PROOF_KEYS = [
 ];
 
 const REPAIR_KEYS = ['page_id', 'from', 'to', 'score', 'provenance'];
+
+test('Cluster readiness accepts only OPS-assigned registered Cluster IDs', () => {
+  const activeRows = [
+    { page_id: 'PG-CLUSTER-001', keyword: 'alpha' },
+    { page_id: 'PG-CLUSTER-002', keyword: 'beta' },
+  ];
+  const clustersRaw = [
+    ['cluster_id', 'cluster_name'],
+    ['approved_alpha', 'Approved Alpha'],
+    ['approved_beta', 'Approved Beta'],
+  ];
+  const pagesRaw = [
+    ['Target Keyword', 'page_id', 'cluster_id', 'page_role'],
+    ['alpha', 'PG-CLUSTER-001', 'approved_alpha', 'Spoke'],
+    ['beta', 'PG-CLUSTER-002', 'approved_beta', 'Hub'],
+  ];
+
+  assert.deepEqual(
+    validateActiveClusterReadiness({ activeRows, pagesRaw, clustersRaw }),
+    {
+      mode: 'cluster-readiness',
+      status: 'ready',
+      requested_page_ids: ['PG-CLUSTER-001', 'PG-CLUSTER-002'],
+      ready_page_ids: ['PG-CLUSTER-001', 'PG-CLUSTER-002'],
+    },
+  );
+});
+
+test('Cluster readiness fails missing or unknown OPS Cluster IDs instead of semantic repair', () => {
+  const clustersRaw = [
+    ['cluster_id', 'cluster_name'],
+    ['approved_alpha', 'Approved Alpha'],
+  ];
+  const pageHeader = ['Target Keyword', 'page_id', 'cluster_id', 'page_role'];
+
+  assert.throws(
+    () => validateActiveClusterReadiness({
+      activeRows: [{ page_id: 'PG-CLUSTER-003', keyword: 'missing' }],
+      pagesRaw: [pageHeader, ['missing', 'PG-CLUSTER-003', '', 'Spoke']],
+      clustersRaw,
+    }),
+    /PG-CLUSTER-003.*missing cluster_id/i,
+  );
+  assert.throws(
+    () => validateActiveClusterReadiness({
+      activeRows: [{ page_id: 'PG-CLUSTER-004', keyword: 'unknown' }],
+      pagesRaw: [pageHeader, ['unknown', 'PG-CLUSTER-004', 'not_registered', 'Spoke']],
+      clustersRaw,
+    }),
+    /PG-CLUSTER-004.*unknown cluster_id "not_registered"/i,
+  );
+});
 
 function repair(pageId, overrides = {}) {
   return {

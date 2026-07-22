@@ -26,7 +26,7 @@ test('SEO launchd runner owns pre/post drain, strict reconcile, readiness, then 
   assert.match(source, /com\.gengrowth\.seo-nightly/);
   assert.match(source, /gg-nightly-seo\.sh/);
   assert.match(source, /gg-seo-brief-preflight\.mjs/);
-  assert.match(source, /gg-topic-register-tick\.sh/);
+  assert.doesNotMatch(source, /gg-topic-register-tick\.sh/);
   assert.match(source, /gg-seo-repair-hook\.mjs/);
   assert.match(source, /gg-seo-repair-controller\.mjs/);
   assert.match(source, /gg-ledger-reconcile\.mjs/);

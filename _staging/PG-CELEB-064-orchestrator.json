@@ -1,0 +1,48 @@
+{
+  "page_id": "PG-CELEB-064",
+  "prompt_path": "/Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-CELEB-064.v8-prompt.md",
+  "started_at": "2026-07-22T10:04:18.012Z",
+  "models_requested": [
+    "codex"
+  ],
+  "retry": 0,
+  "diversify_on_fail": false,
+  "max_cost_usd_per_page": 5,
+  "budget_exceeded_models": [],
+  "ok_count": 1,
+  "total_cost_estimate_usd": 0.165,
+  "results": {
+    "codex": {
+      "model": "codex",
+      "active_model": "codex",
+      "diversified": false,
+      "ok": true,
+      "output_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-CELEB-064-codex-v8.md",
+      "retries": 0,
+      "duration_s": 345.3,
+      "cost_estimate_usd": {
+        "usd": 0.165,
+        "input_tokens_est": 7333,
+        "output_tokens_est": 2291,
+        "pricing_note": "GPT 5.5 xhigh"
+      },
+      "cumulative_cost_usd": 0.165,
+      "budget_exceeded": false,
+      "budget_usd": 5,
+      "attempts": [
+        {
+          "try_index": 1,
+          "model": "codex",
+          "command": "codex exec -c model=gpt-5.6-terra -c reasoning_effort=high - < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-CELEB-064.v8-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-CELEB-064-codex-v8.md",
+          "cost_usd": 0.165,
+          "cumulative_cost_usd": 0.165,
+          "ok": true,
+          "exit_code": 0,
+          "duration_s": 345.3,
+          "stderr_tail": "和 11 个 H2，长度 1800–2200 词，完整关键词出现 5–8 次；需依次包含直接定义与三条要点、自我觉察、与 Celebrity Zodiac 的真实对比、观察方法、常见误读、指定四列表格、FAQ、反思题、内部链接、Birth Chart Calculator CTA 和受控来源。用户还要求避免出生时间未证实情况下的上升、宫位、相位断言，避免命定预测、医疗语言、虚构术语、虚构引文、裸外链、SEO 元评论和禁用 AI 套话。\n+\n+**🤖 回答：**\n+\n+生成美国英语 T2 词条：将该主题定义为基于公开出生资料的象征性解读框架，而非对生平、职业或未来的证明。正文说明公开资料确认 2004 年 8 月 31 日首尔出生，但没有经核实的出生时间，因此只可讨论太阳星座层面的文化语境，不能确定上升、宫位、月亮、精确相位或 stellium；以 Celebrity Zodiac 的简化读取作近邻对比，并提供可观察的证据检查、误读修正、表格、FAQ、反思题、合规内链占位符、指定 CTA 和 Dane Rudhyar 来源条目。\n+\n+---\n\ntokens used\n96,150",
+          "stdout_bytes": 11372
+        }
+      ]
+    }
+  }
+}

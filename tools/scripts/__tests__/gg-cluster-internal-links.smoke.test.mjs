@@ -10,6 +10,7 @@ import {
   buildClusterLinkInput,
   parsePublishedArticleLog,
   readCanonicalClusterRows,
+  resolveOraclePublishedArticles,
   renderManagedClusterLinks,
   replaceManagedClusterLinks,
   validateClusterLinkInput,
@@ -153,6 +154,31 @@ test('Oracle registration verifier rejects a missing or unregistered article bef
     assert.throws(
       () => assertRegisteredOracleArticles(root, [{ page_id: 'PG-002', slug: 'beta' }]),
       /PG-002.*registered in Oracle article index/i,
+    );
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('published-log slugs resolve only through an Oracle permanent English wiki redirect', () => {
+  const root = mkdtempSync(join(tmpdir(), 'gg-cluster-links-redirect-'));
+  try {
+    const articles = join(root, 'data', 'articles');
+    mkdirSync(articles, { recursive: true });
+    writeFileSync(join(articles, 'index.ts'), 'import { canonical } from "./canonical";\n');
+    writeFileSync(join(articles, 'canonical.ts'), 'export const canonical = {};\n');
+    writeFileSync(join(root, 'vercel.json'), JSON.stringify({ redirects: [
+      { source: '/en/wiki/retired', destination: '/en/wiki/canonical', permanent: true },
+      { source: '/en/wiki/temporary', destination: '/en/wiki/canonical', permanent: false },
+    ] }));
+
+    assert.deepEqual(
+      resolveOraclePublishedArticles(root, [{ page_id: 'PG-001', slug: 'retired', title: 'Canonical title' }]),
+      [{ page_id: 'PG-001', slug: 'canonical', title: 'Canonical title' }],
+    );
+    assert.throws(
+      () => assertRegisteredOracleArticles(root, resolveOraclePublishedArticles(root, [{ page_id: 'PG-002', slug: 'temporary', title: 'Temporary' }])),
+      /PG-002.*registered Oracle article file/i,
     );
   } finally {
     rmSync(root, { recursive: true, force: true });

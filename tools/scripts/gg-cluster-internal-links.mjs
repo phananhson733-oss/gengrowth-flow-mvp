@@ -170,6 +170,50 @@ export function parsePublishedArticleLog(markdown) {
   return records.sort((a, b) => a.page_id.localeCompare(b.page_id));
 }
 
+function englishWikiSlug(pathname) {
+  const match = text(pathname).match(/^\/en\/wiki\/([a-z0-9][a-z0-9-]*)$/);
+  return match ? match[1] : '';
+}
+
+function permanentEnglishRedirects(oracleDir) {
+  const config = join(oracleDir, 'vercel.json');
+  if (!existsSync(config)) return new Map();
+  let redirects;
+  try {
+    redirects = JSON.parse(readFileSync(config, 'utf8')).redirects;
+  } catch {
+    throw new Error('Oracle vercel.json is not valid JSON');
+  }
+  if (redirects === undefined) return new Map();
+  if (!Array.isArray(redirects)) throw new Error('Oracle vercel.json redirects must be an array');
+  const aliases = new Map();
+  for (const redirect of redirects) {
+    if (redirect?.permanent !== true) continue;
+    const source = englishWikiSlug(redirect.source);
+    const destination = englishWikiSlug(redirect.destination);
+    if (!source || !destination || source === destination) continue;
+    if (aliases.has(source) && aliases.get(source) !== destination) {
+      throw new Error(`Oracle permanent redirect is ambiguous for slug ${source}`);
+    }
+    aliases.set(source, destination);
+  }
+  return aliases;
+}
+
+export function resolveOraclePublishedArticles(oracleDir, articles) {
+  const aliases = permanentEnglishRedirects(oracleDir);
+  return articles.map((article) => {
+    const seen = new Set();
+    let slug = text(article?.slug);
+    while (aliases.has(slug)) {
+      if (seen.has(slug)) throw new Error(`Oracle permanent redirect cycle for slug ${slug}`);
+      seen.add(slug);
+      slug = aliases.get(slug);
+    }
+    return { ...article, slug };
+  });
+}
+
 export async function readCanonicalClusterRows({ readRows = null } = {}) {
   let reader = readRows;
   if (!reader) {
@@ -282,7 +326,10 @@ async function main(argv) {
       throw new Error('--build-input requires --published-log, --oracle, and --out');
     }
     const oracleDir = resolve(args.oracle);
-    const publishedArticles = parsePublishedArticleLog(readFileSync(resolve(args.published_log), 'utf8'));
+    const publishedArticles = resolveOraclePublishedArticles(
+      oracleDir,
+      parsePublishedArticleLog(readFileSync(resolve(args.published_log), 'utf8')),
+    );
     assertRegisteredOracleArticles(oracleDir, publishedArticles);
     const { pagesRaw, clustersRaw } = await readCanonicalClusterRows();
     const input = buildClusterLinkInput({ pagesRaw, clustersRaw, publishedArticles });

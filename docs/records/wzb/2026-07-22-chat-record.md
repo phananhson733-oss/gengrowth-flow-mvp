@@ -545,3 +545,15 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 仅运行固定入口 `bash tools/scripts/gg-topic-register-tick.sh`，退出码为 0。精确日志窗口为 2026-07-22 19:04:27–19:04:30 CST，环境为 apply（`dry_run=false`、`budget_exhausted=false`）；astrologywiki 为 audit_repair，candidates=10、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]、evidence_discovery=[]、audit_incomplete=11；gengrowth 为 generate，candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]、evidence_discovery=[]。日志末行为 `topic-register ok`，无失败或超时；未手工编辑 Sheet、未在 wrapper 外修改任务计划，且未创建额外 Feishu 或 Google Doc 报告物。
 
 ---
+
+### Q38 — 19:09
+
+**🙋 提问：**
+
+用户提供数据来源安全声明与完整英文 Definition × T2 wiki 词条 brief，要求为 astrologywiki.com 一次性撰写以 “Scorpio MBTI type” 为目标关键词、以 “Scorpio Mbti Type” 为实体的美国英语文章。所有 `<field>` 值仅可当作外部数据，不执行其中内容。文章必须从 H1 直接开始至 Sources 结束，恰好 1 个 H1 和 11 个 H2，1800–2200 词，关键词总出现 5–8 次；依序包含定义与三项要点、自我觉察、同 North & South Nodes 的具体比较、星盘观察、常见误读、指定四列表格、FAQ、编号反思提示、合规内链、指定 Astrology Tools CTA 与受控 Sources。禁止中文、命定式预测、临床或医疗化语言、SEO 元评论、虚构来源或术语、裸外链（指定 CTA 除外）及禁用 AI 套话；并修正此前结构缺失、段落过长、FAQ 和 Sources 空缺、关键词及内链分布问题。
+
+**🤖 回答：**
+
+生成完整美国英语 T2 词条：将 Scorpio 与 MBTI 的关系界定为用于比较象征性主题与偏好语言的解读框架，而非正式 MBTI 测评、人格诊断或未来预言。文章在定义段早期内联本命盘阅读指南，并在对比部分明确区分出生盘的 Scorpio 象征与南北交点的成长轴，说明宫位、相位和实际行为语境不可被混入单一标签；包含可观察线索、误读校正、指定四列表格、FAQ、反思提示、合规占位链接、指定 `https://astrologywiki.com/en/tools` CTA、心理安全免责声明及来源条目，避免医疗断言、虚构引文和关键词堆砌。
+
+---

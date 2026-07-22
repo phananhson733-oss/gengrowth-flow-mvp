@@ -87,11 +87,6 @@ function approvedClusterIds(clustersRaw) {
     rowsById.get(id).push(index + 2);
     ids.push(id);
   }
-  const duplicates = [...rowsById.entries()]
-    .filter(([, rows]) => rows.length > 1)
-    .map(([id, rows]) => `${id} (rows ${rows.join(', ')})`)
-    .sort();
-  if (duplicates.length) throw new Error(`canonical Cluster rows have duplicate cluster_id: ${duplicates.join('; ')}`);
   if (!ids.length) throw new Error('canonical Cluster rows have no approved cluster_id');
   return [...rowsById.keys()].sort();
 }

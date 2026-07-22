@@ -108,7 +108,7 @@ test('canonical rows create a deterministic attested input and fail closed for a
   );
 });
 
-test('canonical Cluster validation reports every duplicate ID with its Sheet rows', () => {
+test('duplicate OPS Cluster metadata rows remain one approved Cluster ID without selecting metadata', () => {
   const pagesRaw = [
     ['Target Keyword', 'page_id', 'cluster_id', 'page_role'],
     ['Aura colors', 'PG-001', 'aura_colors', 'Hub'],
@@ -120,14 +120,13 @@ test('canonical Cluster validation reports every duplicate ID with its Sheet row
     ['moon_signs', 'Moon Signs'],
     ['moon_signs', 'Legacy Moon Signs'],
   ];
-  assert.throws(
-    () => buildClusterLinkInput({
-      pagesRaw,
-      clustersRaw,
-      publishedArticles: [{ page_id: 'PG-001', slug: 'aura-colors-guide', title: 'Aura Colors Guide' }],
-    }),
-    /duplicate cluster_id: aura_colors \(rows 2, 3\); moon_signs \(rows 4, 5\)/i,
-  );
+  const input = buildClusterLinkInput({
+    pagesRaw,
+    clustersRaw,
+    publishedArticles: [{ page_id: 'PG-001', slug: 'aura-colors-guide', title: 'Aura Colors Guide' }],
+  });
+  assert.deepEqual(input.approved_cluster_ids, ['aura_colors', 'moon_signs']);
+  assert.deepEqual(input.pages.map((page) => page.page_id), ['PG-001']);
 });
 
 test('published-register parser accepts only unique published Page ID to slug records', () => {

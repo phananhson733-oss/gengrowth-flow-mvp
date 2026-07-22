@@ -79,16 +79,21 @@ function approvedClusterIds(clustersRaw) {
   const clusterIndex = columnIndex(clustersRaw[0], 'cluster_id');
   if (clusterIndex < 0) throw new Error('canonical Cluster rows are missing cluster_id');
   const ids = [];
-  const seen = new Set();
-  for (const row of clustersRaw.slice(1)) {
+  const rowsById = new Map();
+  for (const [index, row] of clustersRaw.slice(1).entries()) {
     const id = text(row?.[clusterIndex]);
     if (!id) continue;
-    if (seen.has(id)) throw new Error(`canonical Cluster rows have duplicate cluster_id ${id}`);
-    seen.add(id);
+    if (!rowsById.has(id)) rowsById.set(id, []);
+    rowsById.get(id).push(index + 2);
     ids.push(id);
   }
+  const duplicates = [...rowsById.entries()]
+    .filter(([, rows]) => rows.length > 1)
+    .map(([id, rows]) => `${id} (rows ${rows.join(', ')})`)
+    .sort();
+  if (duplicates.length) throw new Error(`canonical Cluster rows have duplicate cluster_id: ${duplicates.join('; ')}`);
   if (!ids.length) throw new Error('canonical Cluster rows have no approved cluster_id');
-  return ids.sort();
+  return [...rowsById.keys()].sort();
 }
 
 export function buildClusterLinkInput({ pagesRaw, clustersRaw, publishedArticles }) {

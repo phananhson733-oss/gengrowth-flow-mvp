@@ -41,7 +41,7 @@ aliases:
 - `tools/scripts/gg-seo-blog-launchd-tick.sh`：移除 Topic Register 路径、可执行性检查与参数；预检改名为 Cluster readiness preflight；仅在 `GG_CLUSTER_LINKS_ENABLED=1` 时，于严格对账后构建输入快照并调用 review-PR 模式，随后才进入 readiness。
 - `tools/scripts/gg-topic-register.mjs`：在自动候选/生成路径中禁止填充或改写 `cluster_id`，将缺失值作为 `needs_ops_cluster_id` 反馈；保留显式人工填写后的普通元数据补全。
 - `tools/scripts/gg-sheet-to-brief.mjs`：确保 Cluster 缺失或未知永远无法被宽松 flag 降级为可 author 的 brief。
-- `tools/scripts/gg-cluster-internal-links.mjs`（新增）：纯函数内链规划、受管理区块渲染与干净 Oracle 文章回填 CLI；任何输入快照都必须再次通过 Oracle 文件与文章注册表校验。
+- `tools/scripts/gg-cluster-internal-links.mjs`（新增）：纯函数内链规划、受管理区块渲染与干净 Oracle 文章回填 CLI；任何输入快照都必须再次通过 Oracle 文件与文章注册表校验；发布台账旧 slug 仅可依据 Oracle `vercel.json` 的永久英文 wiki 重定向归一。
 
 ### 测试
 
@@ -49,7 +49,7 @@ aliases:
 - `tools/scripts/__tests__/gg-seo-blog-launchd-tick.smoke.test.mjs`：launcher 不再引用或执行 Topic Register，预检失败时 nightly 不启动；Cluster 开关启用时先构建快照、创建 review PR，再执行 readiness。
 - `tools/scripts/__tests__/gg-topic-register.smoke.test.mjs`：无论关键词语义多匹配，自动计划都不产生 Cluster ID 写入；缺失 Cluster 给出 OPS 处理状态。
 - `tools/scripts/__tests__/gg-sheet-to-brief.smoke.test.mjs`：`--allow-missing-cluster` 不得越过 author 准入。
-- `tools/scripts/__tests__/gg-cluster-internal-links.smoke.test.mjs`（新增）：Hub/Spoke、同组 mesh、延后 Hub、去重、自链、人工链接保护、幂等与脏工作树拒绝。
+- `tools/scripts/__tests__/gg-cluster-internal-links.smoke.test.mjs`（新增）：Hub/Spoke、同组 mesh、延后 Hub、去重、自链、人工链接保护、幂等、Oracle 注册与永久重定向归一、重复 Cluster 行号诊断和脏工作树拒绝。
 
 ## 执行步骤
 
@@ -58,8 +58,8 @@ aliases:
 - [x] 收紧 Topic Register 与 sheet-to-brief 的 Cluster 权限边界；运行相关 unit/smoke tests。
 - [x] 先写内链规划与受管理回填区块的失败测试，再实现纯函数与 CLI。
 - [ ] 用临时干净 Oracle fixture 做回填 dry-run、apply、第二次 no-op 验证；不触碰交互 Oracle 工作树。
-- [x] 运行完整相关测试组、shell 语法检查和 diff 检查；`gg-seo-blog-launchd-tick` 43 项、Cluster planner 7 项、autopilot Cluster 目标测试 3 项均通过。
-- [x] 对真实发布台账执行只读输入构建预检；在 `PG-EMPATH-004` 缺少固定 Oracle 基线的注册文章文件时 fail closed，未创建输入快照、未改 Oracle、未写 Sheet。
+- [x] 运行完整相关测试组、shell 语法检查和 diff 检查；`gg-seo-blog-launchd-tick` 43 项、Cluster planner 9 项、autopilot Cluster 目标测试 3 项均通过。
+- [x] 对真实发布台账执行只读输入构建预检；`PG-EMPATH-004` 已由 Oracle 永久重定向安全归一。当前因 `主题集群表` 存在 9 个重复 `cluster_id` 而 fail closed，未创建输入快照、未改 Oracle、未写 Sheet；OPS 需合并 `ai_astrology`、`astrocartography_map`、`healing_placements`、`lunar_nodes_path`、`rising_sign_profiles`、`solar_return_reading`、`transit_events`、`vedic_mahadashas`、`worldcup2026_astro` 的历史重复行。
 - [ ] 只有在 cron 的实际干净发布基线可用且用户确认历史文章批次范围后，执行真实历史文章回填；再次验证生成页面与链接清单。
 
 ## OpenSpec 审批状态

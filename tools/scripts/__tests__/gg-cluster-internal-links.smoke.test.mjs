@@ -108,6 +108,28 @@ test('canonical rows create a deterministic attested input and fail closed for a
   );
 });
 
+test('canonical Cluster validation reports every duplicate ID with its Sheet rows', () => {
+  const pagesRaw = [
+    ['Target Keyword', 'page_id', 'cluster_id', 'page_role'],
+    ['Aura colors', 'PG-001', 'aura_colors', 'Hub'],
+  ];
+  const clustersRaw = [
+    ['cluster_id', 'cluster_name'],
+    ['aura_colors', 'Aura Colors'],
+    ['aura_colors', 'Legacy Aura Colors'],
+    ['moon_signs', 'Moon Signs'],
+    ['moon_signs', 'Legacy Moon Signs'],
+  ];
+  assert.throws(
+    () => buildClusterLinkInput({
+      pagesRaw,
+      clustersRaw,
+      publishedArticles: [{ page_id: 'PG-001', slug: 'aura-colors-guide', title: 'Aura Colors Guide' }],
+    }),
+    /duplicate cluster_id: aura_colors \(rows 2, 3\); moon_signs \(rows 4, 5\)/i,
+  );
+});
+
 test('published-register parser accepts only unique published Page ID to slug records', () => {
   const log = [
     '| 日期 | PG-id | slug | 标题 | 作者 | 线上 URL | 状态 |',

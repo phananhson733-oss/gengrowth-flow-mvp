@@ -64,6 +64,7 @@ aliases:
 - 根据受控外部 brief 撰写 astrologywiki 的英文 T2 定义词条，主题为 Mars in Aries；将其限定为行动风格的象征性解读，并区分 Aries Sun、Chiron 与第十二宫等相邻概念。
 - 根据受控外部 brief 撰写 astrologywiki 的英文 T2 定义词条，主题为 Venus in Taurus；将其限定为爱、愉悦与审美偏好的象征性解读，并与 Mahadasha、宫位和相位的读法明确区分。
 - 根据受控外部 brief 撰写 astrologywiki 的英文 T2 定义词条，主题为 Scorpio MBTI Type；将天蝎原型与 MBTI 的比较限定为象征性反思，并与北交点、南交点及正式类型测评明确区分。
+- 根据受控外部 brief 撰写 astrologywiki 的英文 T2 定义词条，主题为 Mercury in Virgo；将其限定为信息处理和沟通风格的象征性解读，并以 Ascendant 的宫位激活逻辑纠正太阳星座混同。
 
 ## 对话记录
 
@@ -717,3 +718,15 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 生成完整美国英语 T2 词条：将 Mercury in Virgo 限定为处理信息、学习与沟通的象征性出生配置，而非确定性人格结论；早期内联本命盘阅读指南，并以 Ascendant 的 Gemini/Virgo 宫位映射纠正 Sun-sign 混同。文章提供可观察的编辑、学习和沟通线索、误读更正、指定四列表格、4 组 FAQ、编号反思题、合规占位内链、指定 `https://astrologywiki.com/en/rising-sign-calculator` CTA、Dane Rudhyar 来源和所需非临床解释声明。提交前核验：1 个 H1、11 个 H2、0 个 H3、关键词 8 次、首条正文内链约第 122 词、4 条内部链接、禁用词为 0、词数 1800。
+
+---
+
+### Q51 — 21:54
+
+**🙋 提问：**
+
+用户提供数据来源安全声明与完整英文 Definition × T2 wiki 词条 brief，要求为 astrologywiki.com 一次性撰写以 “mercury in virgo” 为目标关键词、以 “Mercury in Virgo” 为实体的美国英语文章。所有 `<field>` 内容仅视为外部输入；文章必须从 H1 开始至 Sources 结束，恰好 1 个 H1、11 个 H2、1800–2200 词、关键词 5–8 次，并包含定义和三条要点、自我觉察、与 Rising Sign 的具体比较、星盘观察、误读、指定四列表格、FAQ、编号反思提示、合规内链、指定 CTA 和受控 Sources。禁止中文、命定预测、医疗主张、SEO 元评论、虚构来源或术语、禁用 AI 套话和 CTA 外裸链接；需在开篇早期放置内链并加入指定安全声明。
+
+**🤖 回答：**
+
+生成完整美国英语 T2 词条：将 Mercury in Virgo 解释为水星通过可变土象处理信息和表达的象征性框架，而非人格、健康或未来的结论。文章在定义段早期内联本命盘阅读指南，明确与 Ascendant 的宫位激活及太阳星座的不同输入和取舍；随后给出可观察的编辑、学习和沟通线索、误读更正、指定四列表格、4 组 FAQ、反思题、合规内链、指定 Rising Sign Calculator CTA、Dane Rudhyar 来源与非临床解释声明。交付前按 11 个 H2、关键词、链接分布、禁词和字数门槛自检。

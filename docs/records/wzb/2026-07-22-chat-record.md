@@ -24,6 +24,7 @@ aliases:
 - 执行固定行 Index Repair Resubmit：2026-07-22 05:00–05:01 CST 脚本 exit 0；astrologywiki 新增 2 条英文复盘且队列为 15（P1=3/P2=4/P3=8），gengrowth 无变更且队列为 0；运行窗口无错误关键词，未触发普通文章 Indexing API、无人值守 Search Console 点击或 Feishu/Google Doc 报告。
 - 编写面向美国 B2B SaaS 受众的 AI Agent Trends Business 2026 T2 指南稿，按受控来源、固定 11 节结构、关键词、内链占位符、指定 Pricing CTA 与事实诚信边界组织。
 - 运行 Phase 2 Index Monitor：两站官方 Search Console sitemap 提交均成功；astrologywiki 检查 5 条且 0 失败，gengrowth 无到期 URL；最终候选队列合计 12 条（P1=2、P2=1、P3=9），日志未显示飞书发送回执。
+- 运行结果复盘表现固定 wrapper：astrologywiki 处理 5 条、更新 260 条复盘、生成 261 项任务；gengrowth 处理 8 条、更新 49 条复盘、生成 62 项任务。两站共用 GA4 `properties/524765570`，运行无失败；日志仅提供 D14/D30/D60 合并到期数及不单列跳过数。
 
 ## 对话记录
 
@@ -214,5 +215,35 @@ Run the GenGrowth Phase 2 indexing workflow through the existing deterministic w
 **🤖 回答：**
 
 执行固定入口 `bash tools/scripts/gg-index-monitor-tick.sh`；09:02:14–09:04:01 CST 退出 0，日志以 `index monitor ok` 收尾。官方 Search Console sitemap 提交：astrologywiki 与 gengrowth 均为 `ok`。URL Inspection：astrologywiki due=5，checked=5、alerts=0、failures=0，5 条转为 indexed；gengrowth due=0，无待检 URL。最终 request-indexing-queue：astrologywiki 10 条（P0=0/P1=2/P2=1/P3=7），gengrowth 2 条（P0=0/P1=0/P2=0/P3=2），合计 12 条（P0=0/P1=2/P2=1/P3=9）。日志无明确飞书成功或失败回执（仅表明 notify-capable 步骤已由 wrapper 调用）。未使用普通文章 Google Indexing API，未进行无人值守的 Request Indexing 点击；Sheet/复盘表和队列同步均由 wrapper 完成。
+
+---
+
+### Q14 — 10:03
+
+**🙋 提问：**
+
+Automation: 结果复盘表更新
+Automation ID: gengrowth-recap-performance
+Automation memory: $CODEX_HOME/automations/gengrowth-recap-performance/memory.md
+Last run: never
+
+Run the deterministic GenGrowth results-recap performance workflow through `bash tools/scripts/gg-recap-performance-tick.sh`.
+
+The wrapper loads the local gg environment, scans the configured products (`GG_RECAP_PERFORMANCE_PRODUCTS`, defaulting to astrologywiki and gengrowth), reads `index-tracking` and `结果复盘表`, and only fetches D14/D30/D60 GSC/GA4 snapshot metrics for indexed URLs whose current age is exactly at one of those milestones. Non-milestone rows and already-filled milestone cells must keep their existing values; historical repair/backfill is only allowed through the wrapper's explicit repair modes such as `--fill-pending` / `--verify-zero-metrics`, not by ad-hoc daily refresh.
+
+The wrapper preserves manual recap decisions/notes, writes wrapper-owned generated performance fields back to the Sheet, and writes the optimization task report under `~/gengrowth-agents/reports/recap-performance/`.
+
+Safety boundary:
+- Do not bypass the wrapper or pass ad-hoc write flags directly to the Node script.
+- Do not hand-edit Google Sheets outside the wrapper.
+- Do not publish content, deploy sites, modify page source, submit GSC Request Indexing, or use the Google Indexing API.
+- Do not overwrite manual fields such as `决策` or human notes; only the wrapper-owned generated recap segment may be refreshed.
+- Do not create extra Feishu/Google Doc artifacts unless the wrapper already does so.
+
+After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/recap_performance/` and summarize per-product workbook/site/property, exact-milestone rows processed, updated recap row counts, generated report path, D14/D30/D60 coverage for due indexed rows, optimization task counts by priority, skipped/non-due rows, and any failures. If the wrapper fails or required credentials/properties are missing, report the exact missing boundary from the log without attempting a manual replacement workflow.
+
+**🤖 回答：**
+
+执行唯一允许入口 `bash tools/scripts/gg-recap-performance-tick.sh`，2026-07-22 10:02:31–10:02:59 CST 退出 0，并由最新日志确认 `recap performance ok`。astrologywiki（wb=…jyzcQc、`sc-domain:astrologywiki.com`、GA4 `properties/524765570`）处理 5 条精确到期且未填充的 D14/D30/D60 合并行，更新 260 条复盘，任务 261；gengrowth（wb=…ZTIRA8、`sc-domain:gengrowth.ai`、同一 GA4 property）处理 8 条、更新 49 条、任务 62。生成报告分别为 `~/gengrowth-agents/reports/recap-performance/2026-07-22-astrologywiki-optimization-tasks.md` 与 `~/gengrowth-agents/reports/recap-performance/2026-07-22-gengrowth-optimization-tasks.md`。任务分桶：astrologywiki P0=11、技术=160、P1=11、观察=79；gengrowth P0=0、技术=48、P1=5、观察=9。日志不输出 D14/D30/D60 各自拆分或单独的非到期/已填充跳过数，故只能确认合并到期覆盖为 5/5 与 8/8；无 failure/error/缺失凭据或属性边界。未绕过 wrapper、未使用 repair flags、未手工编辑 Sheet、未发布/部署/改源/提交 GSC 索引或调用 Google Indexing API；wrapper 自带 Feishu 成功回执 `messageId=om_x100b693603a58ca8b2871c292ee0494`。
 
 ---

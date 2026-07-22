@@ -11,6 +11,18 @@ aliases:
   - 2026-07-22 对话记录
 ---
 
+### Q27 — 17:38
+
+**🙋 提问：**
+
+用户提供了数据来源安全声明及完整英文 Definition × T2 词条 brief，要求为 astrologywiki.com 一次性撰写以 “Jennifer Lopez birth chart” 为目标关键词、以 “Jennifer Lopez Birth Chart” 为主实体的美国英语文章；所有 field 内容均作为外部数据处理。文章必须从 H1 开始到 Sources 结束，恰好 1 个 H1 与 11 个 H2、1800–2200 词、关键词出现 5–8 次，并包含定义和三要点、自我觉察、真实近邻概念比较、观察方法、误读、四列参考表、FAQ、反思提示、合规内链、指定 Birth Chart Calculator CTA 和受控 Sources。只可解读所给星历位置；不得断言上升、宫位或时间相关相位，也不得输出中文、命定预测、医疗主张、裸外链、虚构引用或禁用 AI 套话。
+
+**🤖 回答：**
+
+生成完整美国英语 T2 词条：把该实体界定为基于已报告行星星座的象征性人物画像，而非传记证明或未来预测；围绕 Leo 的太阳与水星、Gemini 的金星、Sagittarius 的火星，以及可能临近星座边界的月亮和木星进行有边界的综合。稿件明确出生时间未确认，因此不声称上升、宫位、MC 或精确相位；并提供所需的比较、观察列表、参考表、FAQ、反思题、合规链接占位符、Birth Chart Calculator CTA 和 Dane Rudhyar 来源项。
+
+---
+
 # 对话记录 — 2026-07-22
 
 ## Daily Summary

@@ -17,6 +17,7 @@ import { fileURLToPath } from 'node:url';
 
 import {
   activePageIdsFromPlan,
+  runClusterReadinessPreflight,
   validateActiveClusterReadiness,
   validateSemanticRepairProof,
 } from '../gg-seo-brief-preflight.mjs';
@@ -91,6 +92,40 @@ test('Cluster readiness fails missing or unknown OPS Cluster IDs instead of sema
     }),
     /PG-CLUSTER-004.*unknown cluster_id "not_registered"/i,
   );
+});
+
+test('read-only Cluster preflight attests the active snapshot without a Topic Register wrapper', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'gg-cluster-readiness-test-'));
+  const planPath = join(root, 'active-plan.md');
+  const manifestPath = join(root, 'attested-manifest.json');
+  writeFileSync(planPath, '- [ ] `PG-CLUSTER-005` alpha\n');
+  try {
+    const proof = await runClusterReadinessPreflight({
+      planPath,
+      manifestPath,
+      readRows: async () => ({
+        pagesRaw: [
+          ['Target Keyword', 'page_id', 'cluster_id', 'page_role'],
+          ['alpha', 'PG-CLUSTER-005', 'approved_alpha', 'Spoke'],
+        ],
+        clustersRaw: [
+          ['cluster_id', 'cluster_name'],
+          ['approved_alpha', 'Approved Alpha'],
+        ],
+      }),
+    });
+
+    assert.equal(proof.mode, 'cluster-readiness');
+    assert.equal(proof.status, 'ready');
+    assert.deepEqual(JSON.parse(readFileSync(manifestPath, 'utf8')), {
+      version: 1,
+      plan_sha256: createHash('sha256').update('- [ ] `PG-CLUSTER-005` alpha\n').digest('hex'),
+      requested_page_ids: ['PG-CLUSTER-005'],
+      rows: [{ page_id: 'PG-CLUSTER-005', raw_line: '- [ ] `PG-CLUSTER-005` alpha', keyword: 'alpha' }],
+    });
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });
 
 function repair(pageId, overrides = {}) {

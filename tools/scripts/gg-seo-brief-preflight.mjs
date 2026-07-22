@@ -17,7 +17,8 @@ import { createHash } from 'node:crypto';
 
 import { parseArgs } from './gg-topic-register.mjs';
 import { buildClusterMap } from './gg-sheet-to-brief.mjs';
-import { mapRowToBrief, resolvePageId } from './gg-sheet-pull.mjs';
+import { getAccessToken } from './lib/_oauth-token.mjs';
+import { loadEnv, mapRowToBrief, resolvePageId } from './gg-sheet-pull.mjs';
 
 const PAGE_ID_PATTERN = /^PG-[A-Z0-9]+-\d+$/;
 const ROOT_KEYS = ['budget_exhausted', 'dry_run', 'ok', 'proof', 'summaries'].sort();
@@ -143,6 +144,57 @@ export function validateActiveClusterReadiness({ activeRows, pagesRaw, clustersR
     requested_page_ids: requested,
     ready_page_ids: requested,
   };
+}
+
+async function readCanonicalClusterRows() {
+  loadEnv();
+  const workbookId = String(
+    process.env.GG_SHEETS_FLOW_MVP_WORKBOOK_ID || process.env.GG_SHEETS_WORKBOOK_ID || '',
+  ).trim();
+  if (!workbookId) {
+    throw new Error('workbook id missing (GG_SHEETS_FLOW_MVP_WORKBOOK_ID / GG_SHEETS_WORKBOOK_ID)');
+  }
+  const token = await getAccessToken();
+  const fetchTab = async (tab) => {
+    const range = encodeURIComponent(`${tab}!A:AC`);
+    const response = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${workbookId}/values/${range}?majorDimension=ROWS`,
+      { headers: { authorization: `Bearer ${token}` } },
+    );
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(`Sheets fetch failed for ${tab} (${response.status}): ${body.error?.message || response.statusText}`);
+    }
+    return Array.isArray(body.values) ? body.values : [];
+  };
+  const [pagesRaw, clustersRaw] = await Promise.all([fetchTab('选题登记表'), fetchTab('主题集群表')]);
+  return { pagesRaw, clustersRaw };
+}
+
+export async function runClusterReadinessPreflight({
+  planPath,
+  manifestPath = null,
+  readRows = readCanonicalClusterRows,
+}) {
+  const planText = readFileSync(planPath, 'utf8');
+  const planDigest = createHash('sha256').update(planText).digest('hex');
+  const rows = activeRowsFromPlan(planText);
+  const { pagesRaw, clustersRaw } = await readRows();
+  const planTextAfter = readFileSync(planPath, 'utf8');
+  const planDigestAfter = createHash('sha256').update(planTextAfter).digest('hex');
+  if (planTextAfter !== planText || planDigestAfter !== planDigest) {
+    throw new Error('pinned plan changed during Cluster readiness preflight');
+  }
+  const proof = validateActiveClusterReadiness({ activeRows: rows, pagesRaw, clustersRaw });
+  if (manifestPath) {
+    writeAttestedManifest(manifestPath, {
+      version: 1,
+      plan_sha256: planDigest,
+      requested_page_ids: proof.requested_page_ids,
+      rows,
+    });
+  }
+  return proof;
 }
 
 export function validateSemanticRepairProof(value, expectedPageIds) {
@@ -371,14 +423,29 @@ export function runBriefPreflight({ planPath, wrapperPath, manifestPath = null, 
   }
 }
 
-function cli(argv) {
+async function cli(argv) {
   const args = parseArgs(argv);
   const keys = Object.keys(args).sort();
   const baseAllowed = ['json', 'plan', 'topic_register_wrapper'];
   const manifestAllowed = ['attested_manifest', ...baseAllowed].sort();
+  const readinessAllowed = ['attested_manifest', 'json', 'plan'];
+  if (argv.length === 5 && sameArray(keys, readinessAllowed)) {
+    if (args.json !== true || typeof args.plan !== 'string' || typeof args.attested_manifest !== 'string') {
+      throw new Error('plan, attested manifest, and --json are required');
+    }
+    if (!isAbsolute(args.plan) || !isAbsolute(args.attested_manifest)) {
+      throw new Error('plan and attested manifest paths must be absolute');
+    }
+    const proof = await runClusterReadinessPreflight({
+      planPath: args.plan,
+      manifestPath: args.attested_manifest,
+    });
+    process.stdout.write(`${JSON.stringify(proof)}\n`);
+    return;
+  }
   if (!((argv.length === 5 && sameArray(keys, baseAllowed))
     || (argv.length === 7 && sameArray(keys, manifestAllowed)))) {
-    throw new Error('usage: --plan <absolute.md> --topic-register-wrapper <absolute.sh> [--attested-manifest <absolute.json>] --json');
+    throw new Error('usage: --plan <absolute.md> --attested-manifest <absolute.json> --json');
   }
   if (args.json !== true || typeof args.plan !== 'string'
     || typeof args.topic_register_wrapper !== 'string') {
@@ -400,11 +467,9 @@ function cli(argv) {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  try {
-    cli(process.argv.slice(2));
-  } catch (error) {
+  cli(process.argv.slice(2)).catch((error) => {
     const reason = String(error?.message || error || 'unknown error').replace(/[\r\n]+/g, ' ').trim();
     process.stderr.write(`active brief preflight failed: ${reason || 'unknown error'}\n`);
     process.exit(1);
-  }
+  });
 }

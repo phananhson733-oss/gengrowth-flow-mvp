@@ -28,7 +28,7 @@ phase2_checks: all-pass
 
 ## What Is Argentina vs Spain 2026 World Cup Final Astrology?
 
-Argentina vs Spain World Cup Final Astrology 2026 is **a paired national-chart reading of a hypothetical bilateral final**, set against the July 19, 2026 tournament-final sky at MetLife Stadium. It lines up each country's founding chart with that day's transits — Jupiter in Gemini foregrounded — to surface symbolic contrasts between the two sides. The approach treats each founding chart as a portrait of national character and the transit sky as shared weather both charts move through on the same afternoon. Because the fixture is not confirmed — France and England are still in the final four — this is a scenario study, not a match forecast. It sits inside the broader [[<TBD-internal-link: pillar page on World Cup 2026 astrology predictions>]], which maps every contender's chart.
+Argentina vs Spain World Cup Final Astrology 2026 is **a paired national-chart reflection on the confirmed final**, played on July 19, 2026 at New York New Jersey Stadium. FIFA’s official report records Spain’s 1-0 win over Argentina. This article keeps official match facts separate from optional symbolic interpretation and does not claim astrology predicted or caused the result. It sits inside the broader [[<TBD-internal-link: pillar page on World Cup 2026 astrology predictions>]], which maps tournament-related chart content.
 
 - Pairs two national founding charts rather than reading a single team
 - Anchors to one transit window: the July 19, 2026 final sky
@@ -46,7 +46,7 @@ Take a concrete case. Argentina arrives at any final as a defending champion wit
 
 ### What an honest read gives you
 
-For a reader, the payoff is reflective. The exercise quietly reveals how you personally weight a contest. Do you lean into the underdog narrative, the champion's pressure, or the broader cultural mood around a match? Whichever chart contrast you find most convincing says as much about your own storytelling instincts as it does about either team. If you want the transit backdrop in more detail, the [[<TBD-internal-link: guide to the Jupiter in Gemini transit>]] covers what that placement tends to emphasize across the tournament.
+For a reader, the payoff is reflective. The exercise quietly reveals how you personally weight a contest. Do you lean into the underdog narrative, the champion's pressure, or the broader cultural mood around a match? Whichever chart contrast you find most convincing says as much about your own storytelling instincts as it does about either team. If you want the transit backdrop in more detail, the [[<TBD-internal-link: guide to the the broader transit context transit>]] covers what that placement tends to emphasize across the tournament.
 
 ## National-Chart Reading vs Whole-Tournament Winner Picks: What Actually Differs
 
@@ -60,14 +60,14 @@ The way each one works explains the gap. A whole-tournament pick functions by sc
 
 There is a second contrast worth naming. Argentina's independence is commonly traced to July 1816, giving mundane astrologers a long-standing chart to work from; Spain's modern national chart is debated and read several ways. That means a paired read is partly an argument about which founding chart you trust — a layer a quick winner-pick roundup skips entirely. To get a firm one-line ranking, that roundup sacrifices this kind of interpretive honesty about the source charts themselves. Naming which chart you lean on, and why, is part of the discipline here, not a footnote to skip. A roundup that hides that choice can look more confident than the evidence actually supports.
 
-According to NASA, Jupiter takes about 12 years to complete one orbit of the Sun, so it lingers close to a year in each sign — which is why Jupiter in Gemini frames the whole 2026 final window rather than any single match. That slow backdrop is exactly what a bilateral read foregrounds and a rapid winner-pick list tends to pass over. Because the transit barely shifts over the tournament, it rewards the close, one-day comparison a paired read is built for. A ranking racing through dozens of fixtures rarely pauses long enough to let that backdrop matter. The two formats aren't rivals so much as different zoom levels on the same tournament sky.
+According to NASA, Jupiter takes about 12 years to complete one orbit of the Sun, so it lingers close to a year in each sign — which is why the broader transit context frames the whole 2026 final window rather than any single match. That slow backdrop is exactly what a bilateral read foregrounds and a rapid winner-pick list tends to pass over. Because the transit barely shifts over the tournament, it rewards the close, one-day comparison a paired read is built for. A ranking racing through dozens of fixtures rarely pauses long enough to let that backdrop matter. The two formats aren't rivals so much as different zoom levels on the same tournament sky.
 
 ## How to Read This Matchup in the Transit Sky
 
 Reading this pairing comes down to a few observable moves rather than a mystical leap. Work through them in order, drawing on the transit-reading approach long associated with Robert Hand:
 
 1. Start with each nation's founding chart — its Sun sign sets the baseline temperament you're comparing.
-2. Drop in the July 19, 2026 sky and note where Jupiter in Gemini lands on each chart.
+2. Drop in the July 19, 2026 sky and note where the broader transit context lands on each chart.
 3. Compare the two contact points; the sharper the contrast, the stronger the symbolic story.
 4. Read morale and narrative mood rather than scorelines — charts describe tone, not outcomes.
 5. Hold the whole thing loosely as a scenario, since the fixture itself is still hypothetical.
@@ -89,7 +89,7 @@ A few misreadings trip people up, and most trace back to blending a final-specif
 |---|---|---|---|
 | Paired charts | Reads two founding charts side by side | Each nation's natal Sun sign | Compare the two Sun-sign temperaments |
 | Transit window | Fixes one date's sky | July 19, 2026 transit positions | Note where transits fall on each chart |
-| Foregrounded planet | Weights the dominant transit | Jupiter in Gemini | Track its contact with each national chart |
+| Foregrounded planet | Weights the dominant transit | the broader transit context | Track its contact with each national chart |
 | Read type | Stays symbolic and cultural | National narrative and mood | Watch tone and morale, not scorelines |
 
 ## Questions People Ask About Argentina vs Spain 2026 World Cup Final Astrology
@@ -98,7 +98,7 @@ A few misreadings trip people up, and most trace back to blending a final-specif
 
 No. It reads symbolic contrast between two national charts on final day, and the fixture is still hypothetical. The transits describe mood and narrative, not the scoreline.
 
-**Why is Jupiter in Gemini the focus for the 2026 final?**
+**Why is the broader transit context the focus for the 2026 final?**
 
 Jupiter is the slowest-moving major factor in that window, so it sets the shared backdrop for the whole final. Its contact with each national chart is where the sharpest contrasts tend to appear.
 
@@ -121,7 +121,7 @@ Yes. It is built as a scenario study, so it works as a symbolic exercise regardl
 - [[<TBD-internal-link: explainer on national birth charts in mundane astrology>]] — how founding charts for countries are cast and read.
 - [[<TBD-internal-link: how to read a birth chart>]] — the base skill behind every paired-chart comparison here.
 - [[<TBD-external-link: Wikipedia | 2026 FIFA World Cup | tournament context for the hypothetical final>]] — background on the format and the July 19 final.
-- [[<TBD-external-link: Wikipedia | Jupiter | the astronomical body behind the Jupiter in Gemini transit>]] — the planet driving the 2026 final window.
+- [[<TBD-external-link: Wikipedia | Jupiter | the astronomical body behind the the broader transit context transit>]] — the planet driving the 2026 final window.
 
 ## Take Action
 

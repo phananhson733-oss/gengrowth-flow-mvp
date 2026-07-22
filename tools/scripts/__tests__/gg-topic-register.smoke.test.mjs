@@ -286,10 +286,11 @@ test('planRows preserves an OPS-assigned Cluster ID even when a semantic matcher
     pagesRaw: [pageHeader, completeWrongRow, blankNewRow],
     clustersRaw,
     limit: 10,
+    repairPageIds: new Set(['PG-WDIF-002']),
     activePageIds: new Set(['PG-WDIF-002']),
   });
 
-  assert.equal(plan.selectionMode, 'generate');
+  assert.equal(plan.selectionMode, 'explicit_repair');
   assert.deepEqual(plan.updates.map((item) => item.pageId), ['PG-WDIF-002']);
   assert.equal(plan.updates[0].cluster.cluster_id, 'why_do_i_feel_stuck_in_my_career');
   assert.equal(plan.updates[0].fields.cluster_id, 'why_do_i_feel_stuck_in_my_career');
@@ -309,12 +310,12 @@ test('planRows preserves an OPS-assigned Cluster ID even when a semantic matcher
   const logicColumn = pageHeader.indexOf('Logic');
   const entityColumn = pageHeader.indexOf('Entity');
   assert.equal(writtenColumns.has(String.fromCharCode(65 + clusterColumn)), false, 'cluster_id must never be overwritten');
-  assert.ok(writtenColumns.has(String.fromCharCode(65 + logicColumn)), 'Logic must be overwritten');
-  assert.ok(writtenColumns.has(String.fromCharCode(65 + entityColumn)), 'Entity must be normalized');
+  assert.equal(writtenColumns.has(String.fromCharCode(65 + logicColumn)), false, 'manual Logic must not be overwritten');
+  assert.equal(writtenColumns.has(String.fromCharCode(65 + entityColumn)), false, 'manual Entity must not be overwritten');
   assert.equal(plan.taskLines.length, 0, 'existing page id must preserve the task line');
 });
 
-test('planRows creates a singleton cluster only for a zero-score deterministic scaffold with no relevant existing cluster', () => {
+test('planRows blocks an unregistered Cluster ID instead of creating a singleton cluster', () => {
   const pageHeader = ['Target Keyword', ...PAGE_REQUIRED_FIELDS, 'CTA', 'Status'];
   const row = [
     'what is my love language',
@@ -340,7 +341,7 @@ test('planRows creates a singleton cluster only for a zero-score deterministic s
     clustersRaw: [
       CLUSTER_FIELDS,
       cluster({
-        cluster_id: 'why_do_i_feel_stuck_in_my_career',
+        cluster_id: 'some_other_registered_cluster',
         cluster_name: 'Why Do I Feel Stuck in My Career',
         primary_entity: 'Career Stagnation',
         jtbd: 'Understand career stagnation',
@@ -349,17 +350,19 @@ test('planRows creates a singleton cluster only for a zero-score deterministic s
       }),
     ],
     limit: 10,
+    repairPageIds: new Set(['PG-WDIF-002']),
     activePageIds: new Set(['PG-WDIF-002']),
   });
 
-  assert.equal(plan.selectionMode, 'semantic_repair');
-  assert.equal(plan.newClusters.length, 1);
-  assert.equal(plan.updates[0].pageId, 'PG-WDIF-002');
-  assert.equal(plan.updates[0].clusterDecision.kind, 'semantic-repair-new');
-  assert.equal(plan.updates[0].clusterDecision.previous_cluster_id, 'why_do_i_feel_stuck_in_my_career');
-  assert.equal(plan.updates[0].fields.cluster_id, 'what_is_my_love_language');
-  assert.equal(plan.updates[0].fields.Entity, 'My Love Language');
-  assert.doesNotMatch(plan.updates[0].fields.Logic, /Career/);
+  assert.equal(plan.selectionMode, 'explicit_repair');
+  assert.deepEqual(plan.newClusters, []);
+  assert.deepEqual(plan.updates, []);
+  assert.deepEqual(plan.opsBlocked, [{
+    page_id: 'PG-WDIF-002',
+    target_keyword: 'what is my love language',
+    reason: 'unknown_cluster_id',
+    cluster_id: 'why_do_i_feel_stuck_in_my_career',
+  }]);
 });
 
 function semanticRepairApplyFixture({ correct = false, newCluster = false } = {}) {
@@ -466,7 +469,7 @@ function verifiedSemanticEvidence({ changedPageIds = [], newClusterIds = [] } = 
   };
 }
 
-test('semantic apply sends only changed semantic-owner cells and never fills ordinary blanks', async () => {
+test.skip('obsolete semantic apply writes are disabled because OPS owns Cluster IDs', async () => {
   assert.equal(typeof topicRegister.applySemanticRepairWrites, 'function');
   const { plan, pageHeader } = semanticRepairApplyFixture();
   const calls = [];
@@ -502,7 +505,7 @@ test('semantic apply sends only changed semantic-owner cells and never fills ord
   assert.equal(evidence.new_cluster_count, 0);
 });
 
-test('semantic apply no-op performs zero Sheets writes', async () => {
+test.skip('obsolete semantic apply no-op is disabled because OPS owns Cluster IDs', async () => {
   assert.equal(typeof topicRegister.applySemanticRepairWrites, 'function');
   const { plan } = semanticRepairApplyFixture({ correct: true });
   const evidence = await topicRegister.applySemanticRepairWrites({
@@ -519,7 +522,7 @@ test('semantic apply no-op performs zero Sheets writes', async () => {
   assert.equal(evidence.new_cluster_count, 0);
 });
 
-test('semantic-repair-new appends only its deterministic cluster row', async () => {
+test.skip('obsolete semantic Cluster creation is disabled because OPS owns Cluster IDs', async () => {
   assert.equal(typeof topicRegister.applySemanticRepairWrites, 'function');
   const { plan } = semanticRepairApplyFixture({ newCluster: true });
   const calls = [];
@@ -561,7 +564,7 @@ test('semantic-repair-new appends only its deterministic cluster row', async () 
   }), /semantic-repair-only.*cluster/i);
 });
 
-test('semantic apply rejects incomplete extra wrong-range or wrong-cell batch responses', async () => {
+test.skip('obsolete semantic batch response validation is disabled with semantic writes', async () => {
   assert.equal(typeof topicRegister.applySemanticRepairWrites, 'function');
   const { plan } = semanticRepairApplyFixture();
   const validData = [];
@@ -592,7 +595,7 @@ test('semantic apply rejects incomplete extra wrong-range or wrong-cell batch re
   }
 });
 
-test('semantic apply rejects incomplete wrong-range or wrong-count append responses', async () => {
+test.skip('obsolete semantic append response validation is disabled with semantic writes', async () => {
   assert.equal(typeof topicRegister.applySemanticRepairWrites, 'function');
   const { plan } = semanticRepairApplyFixture({ newCluster: true });
   const rows = plan.newClusters.map((row) => CLUSTER_FIELDS.map((field) => String(row[field] ?? '')));
@@ -614,45 +617,28 @@ test('semantic apply rejects incomplete wrong-range or wrong-count append respon
   }
 });
 
-test('semantic-repair-only accepts only bounded astrologywiki apply requests', () => {
-  assert.deepEqual(semanticRepairRequestFromArgs({
+test('semantic-repair-only is rejected because OPS owns Cluster ID assignment', () => {
+  assert.throws(() => semanticRepairRequestFromArgs({
     semantic_repair_only: true,
     product: 'astrologywiki',
     apply: true,
     no_notify: true,
     limit: '2',
     repair_page_ids: 'PG-WDIF-002,PG-WDIN-001',
-  }), ['PG-WDIF-002', 'PG-WDIN-001']);
-
-  const invalid = [
-    { product: 'all', apply: true, no_notify: true, limit: '1', repair_page_ids: 'PG-WDIF-002' },
-    { product: 'astrologywiki', no_notify: true, limit: '1', repair_page_ids: 'PG-WDIF-002' },
-    { product: 'astrologywiki', apply: true, limit: '1', repair_page_ids: 'PG-WDIF-002' },
-    { product: 'astrologywiki', apply: true, no_notify: true, llm: 'claude', limit: '1', repair_page_ids: 'PG-WDIF-002' },
-    { product: 'astrologywiki', apply: true, no_notify: true, discover_evidence: true, limit: '1', repair_page_ids: 'PG-WDIF-002' },
-    { product: 'astrologywiki', apply: true, no_notify: true, include_incomplete: true, limit: '1', repair_page_ids: 'PG-WDIF-002' },
-    { product: 'astrologywiki', apply: true, no_notify: true, reassign_existing: true, limit: '1', repair_page_ids: 'PG-WDIF-002' },
-    { product: 'astrologywiki', apply: true, no_notify: true, limit: '2', repair_page_ids: 'PG-WDIF-002' },
-  ];
-  for (const args of invalid) {
-    assert.throws(
-      () => semanticRepairRequestFromArgs({ semantic_repair_only: true, ...args }),
-      /semantic-repair-only/,
-    );
-  }
+  }), /disabled.*OPS.*cluster_id/i);
 });
 
-test('semantic-repair-only accepts an empty zero-write target set', () => {
-  assert.deepEqual(semanticRepairRequestFromArgs({
+test('semantic-repair-only rejects empty target sets too', () => {
+  assert.throws(() => semanticRepairRequestFromArgs({
     semantic_repair_only: true,
     product: 'astrologywiki',
     apply: true,
     no_notify: true,
     limit: '0',
-  }), []);
+  }), /disabled.*OPS.*cluster_id/i);
 });
 
-test('semantic-repair-only selects only safe active existing mismatches and no-ops correct rows', () => {
+test.skip('obsolete semantic candidate selection is disabled because OPS owns Cluster IDs', () => {
   const pageHeader = ['Target Keyword', ...PAGE_REQUIRED_FIELDS, 'CTA', 'Status'];
   const cluster = (overrides) => CLUSTER_FIELDS.map((field) => overrides[field] || '');
   const careerClusterRow = cluster({

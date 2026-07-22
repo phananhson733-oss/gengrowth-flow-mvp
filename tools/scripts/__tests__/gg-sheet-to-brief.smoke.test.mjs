@@ -501,6 +501,13 @@ test('composeOverride: missing cluster emits warning, blanks cluster fields', ()
   assert.ok(warnings.some((w) => w.includes('clu_does_not_exist')));
 });
 
+test('composeOverride: blank cluster_id is a hard OPS join failure', () => {
+  const row = makeRow({ cluster_id: '' });
+  const { joinFailures, warnings } = composeOverride(row, makeCtx());
+  assert.deepEqual(joinFailures, [{ kind: 'cluster_id', missing: '' }]);
+  assert.ok(warnings.some((warning) => /cluster_id.*OPS/i.test(warning)));
+});
+
 test('composeOverride: missing CTA emits warning, blanks cta fields', () => {
   const row = makeRow({ page_role: 'Wiki' }); // not in our test CTA map
   const onlyIneligible = buildCtaMap([

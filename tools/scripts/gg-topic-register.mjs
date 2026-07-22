@@ -131,24 +131,7 @@ export function parseArgs(argv) {
 
 export function semanticRepairRequestFromArgs(args = {}) {
   if (!args.semantic_repair_only) return null;
-  const requested = [...csvSet(args.repair_page_ids)].sort();
-  const limit = Number(args.limit);
-  const forbidden = [
-    'llm', 'discover_evidence', 'include_incomplete', 'repair_keywords',
-    'reassign_existing', 'overwrite', 'taxonomy_only', 'allow_thin_brief',
-  ].filter((field) => Boolean(args[field]));
-  if (String(args.product || '') !== 'astrologywiki') {
-    throw new Error('semantic-repair-only requires --product astrologywiki');
-  }
-  if (!args.apply) throw new Error('semantic-repair-only requires --apply');
-  if (!args.no_notify) throw new Error('semantic-repair-only requires --no-notify');
-  if (forbidden.length) throw new Error(`semantic-repair-only forbids: ${forbidden.join(', ')}`);
-  if (!Number.isInteger(limit) || limit !== requested.length) {
-    throw new Error(`semantic-repair-only requires --limit ${requested.length}`);
-  }
-  const invalid = requested.filter((pageId) => !/^PG-[A-Z0-9]+-\d+$/.test(pageId));
-  if (invalid.length) throw new Error(`semantic-repair-only invalid page ids: ${invalid.join(', ')}`);
-  return requested;
+  throw new Error('semantic-repair-only is disabled: OPS must manually assign cluster_id before brief generation');
 }
 
 function finitePositiveInt(value) {
@@ -2151,146 +2134,44 @@ function planRows({
   const clusterHeader = clustersRaw[0] || [];
   const clusters = rowsToObjects(clusterHeader, clustersRaw.slice(1));
   const pages = rowsToObjects(pageHeader, pagesRaw.slice(1));
-  let selected;
   if (semanticRepairOnly) {
-    if (profile?.key !== 'astrologywiki') throw new Error('semantic-repair-only requires astrologywiki');
-    const requested = [...repairPageIds].sort();
-    const counts = new Map();
-    for (const page of pages) {
-      const pageId = String(page.page_id || '').trim();
-      if (pageId) counts.set(pageId, (counts.get(pageId) || 0) + 1);
-    }
-    const missing = requested.filter((pageId) => !counts.has(pageId));
-    const duplicates = requested.filter((pageId) => counts.get(pageId) > 1);
-    const inactive = requested.filter((pageId) => !activePageIds.has(pageId));
-    if (missing.length) throw new Error(`missing existing page id: ${missing.join(', ')}`);
-    if (duplicates.length) throw new Error(`duplicate existing page id: ${duplicates.join(', ')}`);
-    if (inactive.length) throw new Error(`inactive existing page id: ${inactive.join(', ')}`);
-    const repairable = new Set();
-    for (const page of pages.filter((row) => repairPageIds.has(String(row.page_id || '').trim()))) {
-      const decision = semanticMismatchDecision({ page, clusters });
-      if (decision.status === 'unsafe') {
-        throw new Error(`unsafe semantic mismatch for ${page.page_id}: ${decision.reason}`);
-      }
-      if (decision.status === 'repairable' || decision.status === 'repairable-new') {
-        repairable.add(page.page_id);
-      }
-    }
-    selected = {
-      mode: 'semantic_repair_only',
-      candidates: repairable.size
-        ? findCandidateRows(pagesRaw, { onlyPageIds: repairable }).slice(0, limit || undefined)
-        : [],
-      audit_incomplete: 0,
-    };
-  } else {
-    selected = selectCandidateRowsForPlan(pagesRaw, {
-      includeIncomplete,
-      onlyPageIds: repairPageIds,
-      onlyKeywords: repairKeywords,
-      excludePageIds: completedPageIds,
-      limit,
-    });
+    throw new Error('semantic-repair-only is disabled: OPS must manually assign cluster_id before brief generation');
   }
-  if (!semanticRepairOnly
-    && !includeIncomplete
-    && repairPageIds.size === 0
-    && repairKeywords.size === 0
-    && selected.mode === 'generate') {
-    const semanticMismatchPageIds = new Set();
-    for (const page of pages) {
-      const pageId = String(page.page_id || '').trim();
-      const targetKeyword = String(page['Target Keyword'] || page['关键词'] || '').trim();
-      const clusterId = String(page.cluster_id || '').trim();
-      const status = String(page.Status || '').trim();
-      if (!pageId || !targetKeyword || !clusterId || completedPageIds.has(pageId) || CLOSED_PAGE_STATUSES.has(status)) continue;
-      if (activePageIds.size > 0 && !activePageIds.has(pageId)) continue;
-      const currentCluster = clusters.find((item) => item.cluster_id === clusterId);
-      if (!currentCluster || scoreClusterKeyword(targetKeyword, currentCluster) >= 0.3) continue;
-      const alternative = chooseClusterForKeyword(targetKeyword, clusters);
-      if (alternative.kind === 'existing'
-        && alternative.cluster_id !== clusterId
-        && alternative.score >= 0.55) {
-        semanticMismatchPageIds.add(pageId);
-      } else if (alternative.kind === 'new'
-        && scoreClusterKeyword(targetKeyword, currentCluster) === 0
-        && isDeterministicScaffoldPage(page)) {
-        semanticMismatchPageIds.add(pageId);
-      }
-    }
-    if (semanticMismatchPageIds.size) {
-      const candidates = findCandidateRows(pagesRaw, {
-        onlyPageIds: semanticMismatchPageIds,
-        excludePageIds: completedPageIds,
-      }).slice(0, limit || undefined);
-      selected = {
-        mode: 'semantic_repair',
-        candidates,
-        audit_incomplete: 0,
-      };
-    }
+  if (reassignExisting) {
+    throw new Error('reassign-existing is disabled: OPS owns every cluster_id assignment');
   }
+  let selected;
+  selected = selectCandidateRowsForPlan(pagesRaw, {
+    includeIncomplete,
+    onlyPageIds: repairPageIds,
+    onlyKeywords: repairKeywords,
+    excludePageIds: completedPageIds,
+    limit,
+  });
   const candidates = selected.candidates;
-  const newClusters = new Map();
+  const opsBlocked = [];
   const updates = [];
   const taskLines = [];
   const promptWrites = [];
 
   for (const candidate of candidates) {
-    const existingClusterId = reassignExisting ? '' : candidate.values.cluster_id;
-    let cluster = existingClusterId ? clusters.find((c) => c.cluster_id === existingClusterId) : null;
-    let clusterDecision = null;
-    let semanticClusterRepair = false;
-    if (cluster && scoreClusterKeyword(candidate.target_keyword, cluster) < 0.3) {
-      const alternative = chooseClusterForKeyword(candidate.target_keyword, clusters);
-      if (alternative.kind === 'existing'
-        && alternative.cluster_id !== cluster.cluster_id
-        && alternative.score >= 0.55) {
-        clusterDecision = {
-          ...alternative,
-          kind: 'semantic-repair',
-          previous_cluster_id: cluster.cluster_id,
-        };
-        cluster = alternative.cluster;
-        semanticClusterRepair = true;
-      } else if (alternative.kind === 'new'
-        && scoreClusterKeyword(candidate.target_keyword, cluster) === 0
-        && isDeterministicScaffoldPage(candidate.values)) {
-        clusterDecision = {
-          ...alternative,
-          kind: 'semantic-repair-new',
-          previous_cluster_id: cluster.cluster_id,
-        };
-        cluster = null;
-        semanticClusterRepair = true;
-      }
-    }
+    const existingClusterId = String(candidate.values.cluster_id || '').trim();
+    const cluster = existingClusterId ? clusters.find((item) => item.cluster_id === existingClusterId) : null;
     if (!cluster) {
-      const nextDecision = chooseClusterForKeyword(candidate.target_keyword, [...clusters, ...newClusters.values()]);
-      clusterDecision = clusterDecision || nextDecision;
-      if (nextDecision.kind === 'existing') {
-        cluster = nextDecision.cluster;
-      } else {
-        cluster = buildNewClusterRow({
-          product: profile.key,
-          keyword: candidate.target_keyword,
-          existingClusters: [...clusters, ...newClusters.values()],
-        });
-        newClusters.set(cluster.cluster_id, cluster);
-      }
+      opsBlocked.push({
+        page_id: String(candidate.values.page_id || '').trim(),
+        target_keyword: candidate.target_keyword,
+        reason: existingClusterId ? 'unknown_cluster_id' : 'missing_cluster_id',
+        cluster_id: existingClusterId,
+      });
+      continue;
     }
 
-    const pageId = reassignExisting
-      ? inferNextPageId({
-        product: profile.key,
-        clusterId: cluster.cluster_id,
-        pages: [...pages, ...updates.map((u) => ({ page_id: u.pageId, cluster_id: u.cluster.cluster_id }))],
-      })
-      : (candidate.values.page_id || inferNextPageId({
+    const pageId = candidate.values.page_id || inferNextPageId({
       product: profile.key,
       clusterId: cluster.cluster_id,
       pages: [...pages, ...updates.map((u) => ({ page_id: u.pageId, cluster_id: u.cluster.cluster_id }))],
-    }));
+    });
     let fields = pageRowFields({
       targetKeyword: candidate.target_keyword,
       pageId,
@@ -2323,16 +2204,14 @@ function planRows({
       target_keyword: candidate.target_keyword,
       pageId,
       cluster,
-      clusterDecision: clusterDecision || { kind: 'existing-present', cluster_id: cluster.cluster_id, score: 1 },
+      clusterDecision: { kind: 'ops-assigned', cluster_id: cluster.cluster_id, score: 1 },
       fields,
       existingValues: candidate.values,
-      forceOverwriteFields: semanticClusterRepair
-        ? new Set(SEMANTIC_REPAIR_WRITABLE_FIELDS)
-        : new Set(),
+      forceOverwriteFields: new Set(),
       missing: candidate.missing,
       preprocessorEvidence,
     });
-    if (reassignExisting || !String(candidate.values.page_id || '').trim()) {
+    if (!String(candidate.values.page_id || '').trim()) {
       taskLines.push(buildTaskLine({ pageId, keyword: candidate.target_keyword }));
     }
     promptWrites.push({ pageId, prompt });
@@ -2345,10 +2224,11 @@ function planRows({
     candidates,
     selectionMode: selected.mode,
     auditIncomplete: selected.audit_incomplete,
-    newClusters: [...newClusters.values()],
+    newClusters: [],
     updates,
+    opsBlocked,
     taskLines,
-    promptWrites: semanticRepairOnly ? [] : promptWrites,
+    promptWrites,
     cacheRoot,
   };
 }

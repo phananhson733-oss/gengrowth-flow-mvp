@@ -257,7 +257,7 @@ function assertCleanOracle(oracleDir) {
   if (status) throw new Error('Oracle baseline is dirty; refuse article link backfill');
 }
 
-function assertRegisteredOracleArticles(oracleDir, articles) {
+export function assertRegisteredOracleArticles(oracleDir, articles) {
   const index = join(oracleDir, 'data', 'articles', 'index.ts');
   if (!existsSync(index)) throw new Error('Oracle article index is missing');
   const source = readFileSync(index, 'utf8');

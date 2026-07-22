@@ -1,0 +1,8 @@
+- `Aries Sun` 对比段开头突然引入 Chiron 和 12th house，像串稿/跑题 → 删除这段或移到“不要混淆的配置”小节，先直接回答 Sun vs Mars。
+- 没有明确讲 Mars 在 Aries 的传统地位：Mars 入庙/守护 Aries → 在定义和 FAQ 中补一句“为什么会被读作更直接、更容易发动”，再说明不等于绝对强。
+- 搜索意图覆盖偏窄，读者通常想知道性格、行动、怒气、欲望、恋爱、工作表现 → 增加短小分区或 FAQ，分别给出具体表现与注意点。
+- “clean first move”这个角度不错但后文没有持续使用 → 用“干净的第一步 vs 冲动反应”贯穿每节，给出判断标准。
+- 实用建议仍偏抽象 → 加入可执行工具，如“发消息前等 10 分钟”“先说需求而非控诉”“长期项目用外部截止日期/伙伴监督”。
+- 表格里的 `Energy Center` 用词不准，容易让人以为在讲脉轮/能量中心 → 改成 `Astrological Factor`、`Chart Factor` 或 `Why It Matters`。
+- 语气过度免责声明化，很多句子在说“不能简化、要看全盘” → 保留边界，但删减重复防御句，换成更有判断力的具体例子。
+- `Sources` 太薄，只列 Rudhyar 且与 Mars in Aries 的核心技术点关系弱 → 增补关于 Mars、Aries、essential dignity/planetary rulership 的基础来源或把 Rudhyar引用放到“interpretive approach”语境中。

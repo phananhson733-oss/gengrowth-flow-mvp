@@ -1,8 +1,12 @@
 import assert from 'node:assert/strict';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import test from 'node:test';
 
 import {
   buildClusterLinkPlan,
+  assertRegisteredOracleArticles,
   buildClusterLinkInput,
   parsePublishedArticleLog,
   readCanonicalClusterRows,
@@ -131,4 +135,26 @@ test('canonical reader fetches only Pages and Cluster tabs from one injected rea
   });
   assert.deepEqual(calls, ['选题登记表', '主题集群表']);
   assert.deepEqual(rows, { pagesRaw: [['选题登记表']], clustersRaw: [['主题集群表']] });
+});
+
+test('Oracle registration verifier rejects a missing or unregistered article before apply', () => {
+  const root = mkdtempSync(join(tmpdir(), 'gg-cluster-links-oracle-'));
+  try {
+    const articles = join(root, 'data', 'articles');
+    mkdirSync(articles, { recursive: true });
+    writeFileSync(join(articles, 'index.ts'), 'import { alpha } from "./alpha";\n');
+    writeFileSync(join(articles, 'alpha.ts'), 'export const alpha = {};\n');
+    assert.doesNotThrow(() => assertRegisteredOracleArticles(root, [{ page_id: 'PG-001', slug: 'alpha' }]));
+    assert.throws(
+      () => assertRegisteredOracleArticles(root, [{ page_id: 'PG-002', slug: 'beta' }]),
+      /PG-002.*registered Oracle article file/i,
+    );
+    writeFileSync(join(articles, 'beta.ts'), 'export const beta = {};\n');
+    assert.throws(
+      () => assertRegisteredOracleArticles(root, [{ page_id: 'PG-002', slug: 'beta' }]),
+      /PG-002.*registered in Oracle article index/i,
+    );
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });

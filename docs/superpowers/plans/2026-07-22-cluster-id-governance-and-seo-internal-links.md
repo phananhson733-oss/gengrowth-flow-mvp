@@ -60,3 +60,9 @@ aliases:
 - [ ] 用临时干净 Oracle fixture 做回填 dry-run、apply、第二次 no-op 验证；不触碰交互 Oracle 工作树。
 - [x] 运行完整相关测试组、shell 语法检查和 diff 检查；复核每项不变量（175 项：169 通过、6 项废弃语义写入测试显式跳过、0 失败）。
 - [ ] 只有在 cron 的实际干净发布基线可用且用户确认历史文章批次范围后，执行真实历史文章回填；再次验证生成页面与链接清单。
+
+## OpenSpec 审批状态
+
+- [x] 已在 Oracle 干净基线创建 `openspec/changes/add-managed-cluster-article-links/` 提案、设计、任务与增量规范；它要求内链只消费 OPS 批准的 Cluster 快照，并通过专用 PR 进入既有 preview/人工 merge gate。
+- [ ] 等待该提案获得审批后，才开始 Oracle/cron 实现与历史文章 dry-run。
+- [ ] `openspec validate add-managed-cluster-article-links --strict` 仍待执行：本机全局命令、项目 `node_modules/.bin` 与 `npx --no-install` 均无可用 OpenSpec CLI；不得以安装或手工替代为由绕过审批。

@@ -1,0 +1,8 @@
+- 未说明“July 3, 2026 scenario”来源 → 先交代这是假设日期、传闻日期还是示例 electional chart，避免读者以为已确认婚期。
+- 缺少两人的真实 natal 锚点 → 加入 Taylor Sun Sagittarius / Travis Sun Libra 等可核验基础配置，并说明出生时间不确定会限制宫位、角度判断。
+- “Jupiter in Leo / Mercury retrograde / Saturn symbolism”太悬空 → 给出 2026-07-03 的具体星座位置与逆行状态，再解释各自为什么相关。
+- 没有回答核心搜索意图“这天适不适合结婚” → 增加明确编辑判断：此日期的优势、风险、适合的婚礼风格、需要避开的操作。
+- composite chart 被反复提到但没有任何 composite 内容 → 要么提供具体 composite 主题/相位，要么删弱 composite 论述，改成“因缺出生时间只能做有限读法”。
+- “Saturn’s altar symbolism”像泛化术语 → 改成具体可执行含义，例如 vows、legal paperwork、family duty、privacy boundaries、schedule discipline。
+- 文章声音过于免责声明化 → 减少“symbolic framework / not a verdict”重复句，替换为更有编辑判断的段落：public spectacle vs private containment 是这对情侣的真正角度。
+- Take Action 太泛 → 改成实用清单：确认 Mercury retrograde 期间的合同、旅行、宾客沟通、媒体边界、备用时间表。

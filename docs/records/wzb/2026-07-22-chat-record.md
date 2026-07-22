@@ -22,7 +22,7 @@ aliases:
 - 7 月 21 日 SEO 自然窗口验收为 0/3：18:30–19:30 preflight 因真实语义/cluster 不一致失败，19:52 非日历直跑占锁，导致 20:00、20:30、21:00 三个 `launchd[1]` 自然 fire 全部跳过；外部轮发布的两篇文章已全链路收敛，但当前仍有 PG-WC-053 needs_human。21:05 后最终账本除 claims non-done=1 外其余目标计数、进程和锁均为 0，临时 heartbeat 已通过正式接口删除。
 - 执行固定行 Index Repair Resubmit：astrologywiki 新增 2 条英文复盘且队列为 15（P1=3/P2=4/P3=8），gengrowth 无变更；运行窗口无错误，未触发普通文章 Indexing API 或无人值守 Search Console 点击。
 - 运行 Phase 2 Index Monitor 与结果复盘表现固定 wrapper：两站 sitemap 提交成功；最终候选队列合计 12 条（P1=2/P2=1/P3=9）；astrologywiki 更新 260 条复盘并生成 261 项任务，gengrowth 更新 49 条复盘并生成 62 项任务，均无失败。
-- 完成 astrologywiki 当日 5 条 GSC 手动 Request Indexing、Sheet 回填与队列清零；随后启动 Cluster ID 与内链结构优化需求的只读审阅，因 gstack 一次性隐私设置确认暂停，尚未修改需求文档、代码或表格。
+- 完成 astrologywiki 当日 5 条 GSC 手动 Request Indexing、Sheet 回填与队列清零；随后只读审阅 Cluster ID 与内链结构优化需求，确认根因是 LLM 提案与持久化主键权限混用，并发现数据模型、枚举、数量、执行表覆盖、回填闭环和旧内链需求合并等多处开发前缺口；未修改业务文档、代码或表格。
 
 ## 对话记录
 
@@ -266,5 +266,17 @@ After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-s
 **🤖 回答：**
 
 确认先做只读审阅，不修改需求文档、代码或表格；计划核对现有 LLM 自动生成 Cluster、Cluster ID 新增与存量 Cluster 优化、内链规则三部分的关系。按项目技能规则调用 `gstack-investigate`，并在自动升级设置下将 gstack 从 1.58.4.0 安全快进至 1.60.1.0；随后因技能触发一次性 artifacts/GBrain 隐私同步选择而暂停，等待用户决定同步范围后继续读取需求。
+
+---
+
+### Q17 — 15:33
+
+**🙋 提问：**
+
+A
+
+**🤖 回答：**
+
+将 gstack artifacts 同步范围设为 `full` 并记录隐私选择；因私有 artifacts 仓库尚未初始化，本轮未创建外部仓库，但该事项不阻塞需求审阅。完成 `gengrowth-ops` 内只读核对：需求正确识别错分 Cluster 与发布时序缺链，但 LLM 仍缺少“仅提案、不得直接激活持久化 cluster_id”的权限边界；当前 `cluster_map` 无法表达无单一 Pillar 或一个 Cluster 多个艺人级 Hub，且 `Series/Spoke`、`pillar_page` 标题/slug、自由文本内链规则存在 schema 漂移。数量核验显示 MBTI 45 条、K-pop 34 条、虚构角色 32 条、流行音乐 22 条，连同 Rising Sign 10 条和 Planet 新增 2 条共 145 条，文档“约 137 条”不符；`fiction_friends`/`fiction_disney` 被使用但未定义，执行表另有 7 条有效流行音乐选题未注册（含首日 Beyoncé）。发布后回填还缺“Pillar 晚于 Spoke 发布”的反向补链、重复执行去重/人工链接保护/失败回滚，并且尚未合并 7 月 19 日工具路由、相关文章组件与健康扫描需求。结论为先修订 PRD 和数据契约，再进入开发；本轮未修改业务文件、代码或表格。
 
 ---

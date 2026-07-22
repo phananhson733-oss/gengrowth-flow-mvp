@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "pageId": "PG-CELEB-063",
+  "status": "failed",
+  "failures": [
+    "word count 1375 < min 1485",
+    "missing required H2: \"## <entity> vs <real adjacent concept> (comparison section; no \"Adjacent Concepts\" boilerplate)\""
+  ],
+  "updatedAt": "2026-07-22T09:38:30.180Z"
+}

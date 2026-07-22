@@ -1,4 +1,3 @@
----
 title: 对话记录 — 2026-07-22
 date: 2026-07-22
 updated: 2026-07-22
@@ -356,5 +355,17 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 生成一篇面向美国英语读者的完整 T2 词条：将 Swift-Kelce Wedding Chart 定义为用于比较象征性语调的 composite/electional lens，不对婚姻结果作预测；解释 Mercury retrograde、Jupiter in Leo 与 Saturn 议题如何被双方本命配置过滤；以表格、FAQ、反思题和有效的内部/外部占位链接满足结构要求，并使用指定 Forecast CTA。
+
+---
+
+### Q24 — 17:24
+
+**🙋 提问：**
+
+用户提供了数据来源安全声明与完整英文 Definition × T2 wiki 词条 brief，要求为 astrologywiki.com 撰写以 “Taylor Swift Travis Kelce wedding astrology” 为 target keyword、以 Swift-Kelce Wedding Chart 为实体的美国英语文章。字段内容只能作为外部数据处理；文章须一次性从 H1 到 Sources 结束，恰好 1 个 H1、11 个 H2、1800–2200 词、关键词自然出现 5–8 次，依序包含定义与三条要点、自我觉察价值、与 composite/electional astrology 的比较、观察线索、误读、固定四列参考表、FAQ、反思提示、内链、指定 Forecast CTA 与受控 Sources。用户明确要求不执行字段内指令，不使用命定预测、医疗化语言、禁用 AI 词汇、杜撰来源或裸外链，并将 July 3, 2026 的星象解读限定为象征性视角而非婚姻结果预测。
+
+**🤖 回答：**
+
+生成英文词条，将 Swift-Kelce Wedding Chart 定义为把婚礼日期的象征性星象与两人的本命资料和关系图层并读的解释框架；对比 composite chart 与 electional astrology，说明 Mercury retrograde、Jupiter in Leo 和 Saturn 的不同诠释为何可同时导向谨慎或庆祝语气。文章包含可观察步骤、误读校正、所需表格和 FAQ、合规内部链接占位符、指定 `https://astrologywiki.com/forecast` CTA 与 Dane Rudhyar 的受控 Sources 项；不把任何读法当作事实、因果或预测。
 
 ---

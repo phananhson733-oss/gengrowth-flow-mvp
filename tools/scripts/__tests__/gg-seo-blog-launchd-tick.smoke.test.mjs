@@ -326,7 +326,7 @@ test('clean runner orders pre/post drain, strict reconcile, readiness, summary a
   const briefPreflight = h.briefPreflight();
   const nightlyEnv = h.nightlyEnv();
   assert.equal(briefPreflight.args[briefPreflight.args.indexOf('--plan') + 1], nightlyEnv.itemsPlan);
-  assert.equal(briefPreflight.args[briefPreflight.args.indexOf('--topic-register-wrapper') + 1], h.topicRegister);
+  assert.equal(briefPreflight.args.includes('--topic-register-wrapper'), false);
   assert.ok(briefPreflight.args.includes('--json'));
   assert.equal(briefPreflight.silence, '1');
   const hookArgs = h.hookArgs();
@@ -408,7 +408,7 @@ test('runner sources migration config before deriving tools and plan while retai
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}\n${h.log()}`);
   assert.deepEqual(h.events(), ['brief-preflight', 'drain', 'reconcile', 'notify', 'nightly', 'hook', 'drain', 'reconcile', 'notify', 'readiness', 'summary']);
   assert.equal(h.briefPreflight().args[h.briefPreflight().args.indexOf('--plan') + 1], h.nightlyEnv().itemsPlan);
-  assert.equal(h.briefPreflight().args[h.briefPreflight().args.indexOf('--topic-register-wrapper') + 1], h.topicRegister);
+  assert.equal(h.briefPreflight().args.includes('--topic-register-wrapper'), false);
   assert.equal(h.nightlyEnv().oracle, h.oracle);
   assert.equal(h.hookArgs()[h.hookArgs().indexOf('--plan') + 1], h.plan);
   assert.equal(h.readinessArgs()[h.readinessArgs().indexOf('--plan') + 1], h.plan);

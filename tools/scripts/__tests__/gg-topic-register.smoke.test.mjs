@@ -239,7 +239,7 @@ test('default candidate selection audits incomplete existing rows before generat
   assert.equal(generated.audit_incomplete, 0);
 });
 
-test('planRows automatically repairs a complete unpublished row whose existing cluster is semantically unrelated', () => {
+test('planRows preserves an OPS-assigned Cluster ID even when a semantic matcher prefers another Cluster', () => {
   const pageHeader = ['Target Keyword', ...PAGE_REQUIRED_FIELDS, 'CTA', 'Status'];
   const completeWrongRow = [
     'what is my love language',
@@ -289,13 +289,12 @@ test('planRows automatically repairs a complete unpublished row whose existing c
     activePageIds: new Set(['PG-WDIF-002']),
   });
 
-  assert.equal(plan.selectionMode, 'semantic_repair');
+  assert.equal(plan.selectionMode, 'generate');
   assert.deepEqual(plan.updates.map((item) => item.pageId), ['PG-WDIF-002']);
-  assert.equal(plan.updates[0].cluster.cluster_id, 'love_relationships');
-  assert.equal(plan.updates[0].fields.cluster_id, 'love_relationships');
+  assert.equal(plan.updates[0].cluster.cluster_id, 'why_do_i_feel_stuck_in_my_career');
+  assert.equal(plan.updates[0].fields.cluster_id, 'why_do_i_feel_stuck_in_my_career');
   assert.equal(plan.updates[0].fields.Entity, 'My Love Language');
-  assert.match(plan.updates[0].fields.Logic, /Relationship Patterns/);
-  assert.doesNotMatch(plan.updates[0].fields.Logic, /Career/);
+  assert.match(plan.updates[0].fields.Logic, /Career Stagnation/);
 
   const writes = valuesBatchForPageRow({
     tab: '选题登记表',
@@ -309,10 +308,10 @@ test('planRows automatically repairs a complete unpublished row whose existing c
   const clusterColumn = pageHeader.indexOf('cluster_id');
   const logicColumn = pageHeader.indexOf('Logic');
   const entityColumn = pageHeader.indexOf('Entity');
-  assert.ok(writtenColumns.has(String.fromCharCode(65 + clusterColumn)), 'cluster_id must be overwritten');
+  assert.equal(writtenColumns.has(String.fromCharCode(65 + clusterColumn)), false, 'cluster_id must never be overwritten');
   assert.ok(writtenColumns.has(String.fromCharCode(65 + logicColumn)), 'Logic must be overwritten');
   assert.ok(writtenColumns.has(String.fromCharCode(65 + entityColumn)), 'Entity must be normalized');
-  assert.equal(plan.taskLines.length, 0, 'semantic repair must preserve the existing page id and task line');
+  assert.equal(plan.taskLines.length, 0, 'existing page id must preserve the task line');
 });
 
 test('planRows creates a singleton cluster only for a zero-score deterministic scaffold with no relevant existing cluster', () => {

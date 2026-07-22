@@ -3,8 +3,10 @@ import test from 'node:test';
 
 import {
   buildClusterLinkPlan,
+  buildClusterLinkInput,
   renderManagedClusterLinks,
   replaceManagedClusterLinks,
+  validateClusterLinkInput,
 } from '../gg-cluster-internal-links.mjs';
 
 const pages = [
@@ -38,4 +40,63 @@ test('managed Cluster links replace only their own block and are idempotent', ()
   assert.match(once, /Manual item/);
   assert.match(once, /<!-- gg-cluster-links:start -->/);
   assert.equal(renderManagedClusterLinks(links).match(/aura-colors-guide/g).length, 1);
+});
+
+test('Cluster link input accepts only one published OPS-approved page per page ID and slug', () => {
+  const input = {
+    version: 1,
+    snapshot_id: 'a'.repeat(64),
+    approved_cluster_ids: ['aura_colors'],
+    pages: [{
+      page_id: 'PG-001',
+      cluster_id: 'aura_colors',
+      page_role: 'Hub',
+      slug: 'aura-colors-guide',
+      title: 'Aura Colors Guide',
+      published: true,
+    }],
+  };
+  assert.deepEqual(validateClusterLinkInput(input), input);
+  assert.throws(
+    () => validateClusterLinkInput({ ...input, approved_cluster_ids: ['other_cluster'] }),
+    /PG-001.*unapproved cluster_id/i,
+  );
+  assert.throws(
+    () => validateClusterLinkInput({ ...input, pages: [...input.pages, { ...input.pages[0] }] }),
+    /duplicate page_id.*PG-001/i,
+  );
+  assert.throws(
+    () => validateClusterLinkInput({ ...input, pages: [{ ...input.pages[0], published: false }] }),
+    /PG-001.*not published/i,
+  );
+});
+
+test('canonical rows create a deterministic attested input and fail closed for a published page without OPS Cluster ID', () => {
+  const pagesRaw = [
+    ['Target Keyword', 'page_id', 'cluster_id', 'page_role'],
+    ['Aura colors', 'PG-001', 'aura_colors', 'Hub'],
+    ['Blue aura', 'PG-002', 'aura_colors', 'Spoke'],
+  ];
+  const clustersRaw = [
+    ['cluster_id', 'cluster_name'],
+    ['aura_colors', 'Aura Colors'],
+  ];
+  const publishedArticles = [
+    { page_id: 'PG-001', slug: 'aura-colors-guide', title: 'Aura Colors Guide' },
+    { page_id: 'PG-002', slug: 'blue-aura-meaning', title: 'Blue Aura Meaning' },
+  ];
+  const first = buildClusterLinkInput({ pagesRaw, clustersRaw, publishedArticles });
+  const second = buildClusterLinkInput({ pagesRaw, clustersRaw, publishedArticles });
+  assert.deepEqual(first, second);
+  assert.match(first.snapshot_id, /^[a-f0-9]{64}$/);
+  assert.deepEqual(first.approved_cluster_ids, ['aura_colors']);
+  assert.equal(first.pages[1].published, true);
+  assert.throws(
+    () => buildClusterLinkInput({
+      pagesRaw: [pagesRaw[0], [pagesRaw[1][0], pagesRaw[1][1], '', pagesRaw[1][3]], pagesRaw[2]],
+      clustersRaw,
+      publishedArticles,
+    }),
+    /PG-001.*missing cluster_id/i,
+  );
 });

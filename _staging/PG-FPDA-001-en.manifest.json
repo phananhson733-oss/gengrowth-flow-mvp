@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-FPDA-001",
+  "entity": "First Party Data AI Personalization",
+  "target_keyword": "first party data AI personalization",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-07-22T00:23:34.387Z",
+  "content_sha256_short": "f40a18a402d67d23",
+  "source_path": "_staging/PG-FPDA-001-codex-v8.md",
+  "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-FPDA-001-en.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 1659,
+      "wikilinks": 4,
+      "tbdLinks": 4
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

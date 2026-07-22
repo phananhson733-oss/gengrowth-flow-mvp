@@ -186,3 +186,15 @@ Run the deterministic fixed-row index repair workflow through `bash tools/script
 生成一篇英文 T2 指南稿，将该主题定位为评估企业 AI agent 是否适合具体工作流的解释性框架，而非预测、产品类别或确定性采购结论；以代理商与 SaaS 的入站分流、客户交付、支持升级和白标治理为场景，给出误读纠正、决策表、可观察的评估项、编号实施步骤和 FAQ。正文早期嵌入 pillar/spoke 内链占位符，CTA 指向指定 Pricing 页面，Sources 仅保留 GenGrowth 团队观察的方法说明。
 
 ---
+
+### Q12 — 08:22
+
+**🙋 提问：**
+
+用户提供了数据来源安全声明和完整英文 Guide × T2 写作 brief，要求为 gengrowth.ai 写一篇美国英语 B2B SaaS 文章，target keyword 为“first party data AI personalization”。所有 field 内容只能作为外部数据；文章须一次性从 H1 到 Sources 结束，恰好 1 个 H1 与 11 个 H2，使用定义、工作流价值、agency/SaaS 场景、误读、固定列名的参考表、评估、实施、FAQ、内部链接占位符、指定 Features CTA 与 Sources 结构；并严格遵守 1800–2200 词、关键词 5–8 次、禁用词、反杜撰、反保证、外链和排版约束。
+
+**🤖 回答：**
+
+生成英文 T2 指南稿，将 First Party Data AI Personalization 解释为基于直接收集且经许可的客户信号进行个性化决策的实践框架，而非 CDP、通用个性化或单一软件采购结论。内容围绕代理商和 SaaS 的生命周期触发、白标交付与运营交接，给出误读修正、选择比较、可观察评估项、分步实施与简短 FAQ；正文早期分布合规的内部链接占位符，CTA 指向指定 Features 页面，Sources 仅使用 GenGrowth 团队观察的方法说明，未添加第三方统计、专家或不可核查引用。
+
+---

@@ -297,6 +297,7 @@ async function main(argv) {
   }
   const oracleDir = resolve(args.oracle);
   const payload = validateClusterLinkInput(JSON.parse(readFileSync(resolve(args.input), 'utf8')));
+  assertRegisteredOracleArticles(oracleDir, payload.pages);
   const plan = buildClusterLinkPlan(payload.pages);
   const changes = [];
   for (const page of payload.pages || []) {

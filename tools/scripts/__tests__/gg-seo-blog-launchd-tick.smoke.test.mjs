@@ -82,6 +82,7 @@ function runnerHarness({
   useDefaultClaimsBinding = false,
   inconsistentNightlyClaims = false,
   inconsistentAutopilotClaims = false,
+  clusterLinksEnabled = false,
 } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'seo-launchd-runner-'));
   const flow = join(root, 'flow');
@@ -105,6 +106,8 @@ function runnerHarness({
   const reconcileCount = join(root, 'reconcile-count.txt');
   const readinessArgs = join(root, 'readiness-args.json');
   const readinessEnv = join(root, 'readiness-env.json');
+  const clusterInputDir = join(root, 'cluster-inputs');
+  const publishLog = join(ops, 'inbox-maboyang/06-tasks/seo-autopilot-publish-log.md');
   const nightlyLog = join(root, 'nightly.log');
   const launchdLog = join(root, 'launchd.log');
   const launchdErr = join(root, 'launchd.err.log');
@@ -117,6 +120,7 @@ function runnerHarness({
   const initialPlanContent = '- [ ] `PG-A-001` alpha\n';
   writeFileSync(plan, initialPlanContent);
   writeFileSync(claims, JSON.stringify({ 'PG-A-001': { status: 'needs_human', site: 'astrologywiki' } }));
+  writeFileSync(publishLog, '| 日期 | PG-id | slug | 标题 | 作者 | 线上 URL | 状态 |\n');
   writeFileSync(nightlyLog, 'existing bytes\n');
   mkdirSync(victimDir);
   writeFileSync(victimFile, 'VICTIM-MUST-SURVIVE\n');
@@ -220,6 +224,23 @@ function runnerHarness({
     `process.exit(${summaryExit});`,
     '',
   ].join('\n'));
+  const clusterLinker = join(root, 'cluster-linker.mjs');
+  writeFileSync(clusterLinker, [
+    "import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs';",
+    "import { dirname } from 'node:path';",
+    "appendFileSync(process.env.GG_TEST_EVENTS, 'cluster-build\\n');",
+    "const args = process.argv.slice(2);",
+    "const out = args[args.indexOf('--out') + 1];",
+    "mkdirSync(dirname(out), { recursive: true });",
+    "writeFileSync(out, '{}\\n');",
+    '',
+  ].join('\n'));
+  const seoAutopilot = join(root, 'seo-autopilot.mjs');
+  writeFileSync(seoAutopilot, [
+    "import { appendFileSync } from 'node:fs';",
+    "appendFileSync(process.env.GG_TEST_EVENTS, 'cluster-pr\\n');",
+    '',
+  ].join('\n'));
 
   if (useEnvFile) {
     writeFileSync(envFile, [
@@ -251,6 +272,11 @@ function runnerHarness({
       GG_SEO_RECONCILE_BIN: reconcile,
       GG_SEO_READINESS_BIN: readiness,
       GG_SEO_BATCH_SUMMARY_BIN: summary,
+      GG_CLUSTER_LINKER_BIN: clusterLinker,
+      GG_SEO_AUTOPILOT_BIN: seoAutopilot,
+      GG_CLUSTER_LINKS_ENABLED: clusterLinksEnabled ? '1' : '0',
+      GG_CLUSTER_LINK_INPUT_DIR: clusterInputDir,
+      GG_SEO_AUTOPILOT_PUBLISH_LOG: publishLog,
       GG_OPS_DIR: ops,
       GG_SEO_PLAN: plan,
       GG_SEO_CLAIMS: claims,
@@ -363,6 +389,13 @@ test('clean runner orders pre/post drain, strict reconcile, readiness, summary a
   const readinessArgs = h.readinessArgs();
   assert.equal(readinessArgs[readinessArgs.indexOf('--run-id') + 1], runId);
   assert.equal(readinessArgs[readinessArgs.indexOf('--plan') + 1], h.plan);
+});
+
+test('enabled Cluster link stage builds an attested input then opens a dedicated review PR before readiness', () => {
+  const h = runnerHarness({ clusterLinksEnabled: true });
+  const result = h.run();
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}\n${h.log()}`);
+  assert.deepEqual(h.events(), ['brief-preflight', 'drain', 'reconcile', 'notify', 'nightly', 'hook', 'drain', 'reconcile', 'notify', 'cluster-build', 'cluster-pr', 'readiness', 'summary']);
 });
 
 test('default launcher fire binds every claims consumer to the one inbox-maboyang ledger', () => {

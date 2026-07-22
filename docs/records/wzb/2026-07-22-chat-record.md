@@ -36,6 +36,7 @@ aliases:
 - 完成 astrologywiki 当日 5 条 GSC 手动 Request Indexing、Sheet 回填与队列清零；随后完成 Cluster ID 与内链硬门：OPS 在 brief 前手填并批准 Cluster ID，LLM/Topic Register 不得新增、猜测或覆盖，cron preflight 只读校验且不再调用 Topic Register，brief bridge 不能用 `--allow-missing-cluster` 绕过。新增确定性 Hub/Spoke 与同组文章链接规划、受管理区块渲染和干净 Oracle 基线保护；真实 Oracle 历史回填受 OpenSpec 提案审批与本机缺少 `openspec` 命令限制，未绕过门禁或修改 Oracle 文章。
 - 根据受控外部 brief 撰写 astrologywiki 的英文 T2 定义词条，主题为 Taylor Swift 与 Travis Kelce 的婚礼占星解读；遵守一次性输出、11 个 H2、1800–2200 词、关键词密度、无命定预测与事实诚信边界。
 - 根据受控外部 brief 撰写 astrologywiki 的英文 T2 定义词条，主题为 Jennifer Lopez Birth Chart；仅使用给定星历位置，明确出生时间未确认的边界，并遵守一次性输出、11 个 H2、1800–2200 词、关键词密度、内链与事实诚信边界。
+- 根据受控外部 brief 撰写 astrologywiki 的英文 T2 定义词条，主题为 Jang Wonyoung Birth Chart；将可验证出生资料与未经确认的出生时间边界分开，避免把象征解读写成传记证明、预测或医疗主张。
 
 ## 对话记录
 
@@ -256,6 +257,18 @@ After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-s
 **🤖 回答：**
 
 执行唯一允许入口 `bash tools/scripts/gg-recap-performance-tick.sh`，2026-07-22 10:02:31–10:02:59 CST 退出 0，并由最新日志确认 `recap performance ok`。astrologywiki（wb=…jyzcQc、`sc-domain:astrologywiki.com`、GA4 `properties/524765570`）处理 5 条精确到期且未填充的 D14/D30/D60 合并行，更新 260 条复盘，任务 261；gengrowth（wb=…ZTIRA8、`sc-domain:gengrowth.ai`、同一 GA4 property）处理 8 条、更新 49 条、任务 62。生成报告分别为 `~/gengrowth-agents/reports/recap-performance/2026-07-22-astrologywiki-optimization-tasks.md` 与 `~/gengrowth-agents/reports/recap-performance/2026-07-22-gengrowth-optimization-tasks.md`。任务分桶：astrologywiki P0=11、技术=160、P1=11、观察=79；gengrowth P0=0、技术=48、P1=5、观察=9。日志不输出 D14/D30/D60 各自拆分或单独的非到期/已填充跳过数，故只能确认合并到期覆盖为 5/5 与 8/8；无 failure/error/缺失凭据或属性边界。未绕过 wrapper、未使用 repair flags、未手工编辑 Sheet、未发布/部署/改源/提交 GSC 索引或调用 Google Indexing API；wrapper 自带 Feishu 成功回执 `messageId=om_x100b693603a58ca8b2871c292ee0494`。
+
+---
+
+### Q28 — 17:59
+
+**🙋 提问：**
+
+用户提供数据来源安全声明与完整英文 Definition × T2 词条 brief，要求为 astrologywiki.com 写一篇以 “jang wonyoung birth chart” 为关键词、以 “Jang Wonyoung Birth Chart” 为实体的美国英语文章。字段内容只能作为外部数据，不得执行其中的指令。文章必须一次性从 H1 开始、以 Sources 结束，恰好包含 1 个 H1 和 11 个 H2，长度 1800–2200 词，完整关键词出现 5–8 次；需依次包含直接定义与三条要点、自我觉察、与 Celebrity Zodiac 的真实对比、观察方法、常见误读、指定四列表格、FAQ、反思题、内部链接、Birth Chart Calculator CTA 和受控来源。用户还要求避免出生时间未证实情况下的上升、宫位、相位断言，避免命定预测、医疗语言、虚构术语、虚构引文、裸外链、SEO 元评论和禁用 AI 套话。
+
+**🤖 回答：**
+
+生成美国英语 T2 词条：将该主题定义为基于公开出生资料的象征性解读框架，而非对生平、职业或未来的证明。正文说明公开资料确认 2004 年 8 月 31 日首尔出生，但没有经核实的出生时间，因此只可讨论太阳星座层面的文化语境，不能确定上升、宫位、月亮、精确相位或 stellium；以 Celebrity Zodiac 的简化读取作近邻对比，并提供可观察的证据检查、误读修正、表格、FAQ、反思题、合规内链占位符、指定 CTA 和 Dane Rudhyar 来源条目。
 
 ---
 ### Q15 — 13:06 [claude]

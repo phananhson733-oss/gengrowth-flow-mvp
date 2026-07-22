@@ -56,7 +56,7 @@ aliases:
 - 编写多篇面向美国 B2B SaaS 受众的 T2 指南稿，覆盖 Agentic AI Marketing Automation、YouTube AI Search Authority 2026、AI Agent Trends Business 2026 与 First Party Data AI Personalization，均遵循固定结构、关键词、内链、CTA 和事实诚信边界。
 - 7 月 21 日 SEO 自然窗口验收为 0/3：18:30–19:30 preflight 因真实语义/cluster 不一致失败，19:52 非日历直跑占锁，导致 20:00、20:30、21:00 三个 `launchd[1]` 自然 fire 全部跳过；外部轮发布的两篇文章已全链路收敛，但当前仍有 PG-WC-053 needs_human。21:05 后最终账本除 claims non-done=1 外其余目标计数、进程和锁均为 0，临时 heartbeat 已通过正式接口删除。
 - 执行固定行 Index Repair Resubmit 两次：05:00 运行中 astrologywiki 新增 2 条英文复盘且队列为 15（P1=3/P2=4/P3=8），17:32 运行再新增 1 条（总 281）且队列为 11（P1=2/P2=1/P3=8）；gengrowth 的最新队列为 2（P3=2）。两次均无错误，未触发普通文章 Indexing API 或无人值守 Search Console 点击。
-- 运行 Phase 2 Index Monitor、结果复盘表现与 topic-register 固定 wrapper：两站 sitemap 提交成功；最终候选队列合计 12 条（P1=2/P2=1/P3=9）；astrologywiki 更新 260 条复盘并生成 261 项任务，gengrowth 更新 49 条复盘并生成 62 项任务；最新 20:02 topic-register 为 apply 模式，astrologywiki candidates=10、updates=0（audit_repair，audit_incomplete=11），gengrowth 全零，均无失败。
+- 运行 Phase 2 Index Monitor、结果复盘表现与 topic-register 固定 wrapper：两站 sitemap 提交成功；最终候选队列合计 12 条（P1=2/P2=1/P3=9）；astrologywiki 更新 260 条复盘并生成 261 项任务，gengrowth 更新 49 条复盘并生成 62 项任务；最新 22:03 topic-register 为 apply 模式，astrologywiki candidates=10、updates=0（audit_repair，audit_incomplete=11），gengrowth 全零，均无失败。
 - 完成 astrologywiki 当日 5 条 GSC 手动 Request Indexing、Sheet 回填与队列清零；随后完成 Cluster ID 与内链硬门：OPS 在 brief 前手填并批准 Cluster ID，LLM/Topic Register 不得新增、猜测或覆盖，cron preflight 只读校验且不再调用 Topic Register，brief bridge 不能用 `--allow-missing-cluster` 绕过。用户已批准 OpenSpec 提案，cron 只会在开关启用后构建受证明快照并创建 review PR；真实台账中的 `PG-EMPATH-004` 已由 Oracle 永久重定向安全归一，但 `主题集群表` 的 9 个重复 Cluster ID 使输入构建按设计阻断，未改文章、Sheet 或创建 PR。
 - 根据受控外部 brief 撰写 astrologywiki 的英文 T2 定义词条，主题为 Taylor Swift 与 Travis Kelce 的婚礼占星解读；遵守一次性输出、11 个 H2、1800–2200 词、关键词密度、无命定预测与事实诚信边界。
 - 根据受控外部 brief 撰写 astrologywiki 的英文 T2 定义词条，主题为 Jennifer Lopez Birth Chart；仅使用给定星历位置，明确出生时间未确认的边界，并遵守一次性输出、11 个 H2、1800–2200 词、关键词密度、内链与事实诚信边界。
@@ -742,3 +742,20 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 生成完整美国英语 T2 词条：将 Saturn Return Career Change 限定为审视职业承诺、职责与长期方向的象征性框架，而非辞职预言或决定性因果。文章在定义段早期内联本命盘阅读指南，具体对比 Saturn Return 与 Solar Return 的时间范围、输入和取舍，并说明与 Saturn square 的区别；随后提供时间与本命盘观察线索、误读校正、指定四列表格、4 组 FAQ、编号反思题、合规占位链接、指定 `https://astrologywiki.com/en/saturn-return-calculator` CTA、Robert Hand 受控来源和所需非临床解释声明。草稿按 1 个 H1、11 个 H2、0 个 H3、关键词 8 次和约 1800 词的门槛编排。
+
+---
+
+### Q53 — 22:03
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-22T12:01:24.206Z (1784721684206)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行固定入口 `bash tools/scripts/gg-topic-register-tick.sh`，退出码为 0。精确日志窗口为 2026-07-22 22:03:02–22:03:05 CST，环境为 apply（`dry_run=false`、`budget_exhausted=false`）；astrologywiki 为 audit_repair，candidates=10、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]、evidence_discovery=[]、audit_incomplete=11；gengrowth 为 generate，candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]、evidence_discovery=[]。日志末行为 `topic-register ok`，无失败或超时；未手工编辑 Sheet、未在 wrapper 外修改任务计划，且未创建额外 Feishu 或 Google Doc 报告物。

@@ -1,0 +1,8 @@
+- “Saturn near the tenth house”表述不准 → 改为“Saturn in/near the 10th house or aspecting the MC”，避免把宫位和角度含混处理。
+- 过度强调“不一定要辞职”，但对“career change”意图回答偏保守 → 增加具体判断框架：何时适合留、转岗、换行业、创业、进修。
+- 缺少不同宫位的职业差异 → 加入 2宫、6宫、10宫、11宫的简短职业场景示例，让读者能对号入座。
+- “Energy Center”列不符合传统占星术语 → 改成“Chart Factor”或“Primary Indicator”，避免显得像混入脉轮/泛灵性语言。
+- Robert Hand 来源太笼统 → 指明具体作品或删除人名；否则像权威装饰而非可核查引用。
+- 实操步骤还不够可执行 → 加入一个“career audit”清单：收入、技能缺口、责任边界、储蓄 runway、时间线、谈判事项。
+- SEO 搜索意图覆盖不足 → 明确回答“Saturn return career change symptoms/signs”“should I quit?”“best timing”等高意图问题。
+- 结尾 CTA 偏单一 → 在 calculator 之后补一句让读者记录 exact dates、retrograde passes 和当前职业决策窗口，而不是只“探索”。

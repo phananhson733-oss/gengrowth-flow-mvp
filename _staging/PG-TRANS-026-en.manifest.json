@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-TRANS-026",
+  "entity": "Saturn Return Career Change",
+  "target_keyword": "saturn return career change",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-07-22T14:04:02.458Z",
+  "content_sha256_short": "1136d40cc3d28bc1",
+  "source_path": "_staging/PG-TRANS-026-codex-v8.md",
+  "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-TRANS-026-en.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 1835,
+      "wikilinks": 6,
+      "tbdLinks": 6
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

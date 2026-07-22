@@ -557,3 +557,27 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 生成完整美国英语 T2 词条：将 Scorpio 与 MBTI 的关系界定为用于比较象征性主题与偏好语言的解读框架，而非正式 MBTI 测评、人格诊断或未来预言。文章在定义段早期内联本命盘阅读指南，并在对比部分明确区分出生盘的 Scorpio 象征与南北交点的成长轴，说明宫位、相位和实际行为语境不可被混入单一标签；包含可观察线索、误读校正、指定四列表格、FAQ、反思提示、合规占位链接、指定 `https://astrologywiki.com/en/tools` CTA、心理安全免责声明及来源条目，避免医疗断言、虚构引文和关键词堆砌。
 
 ---
+
+### Q39 — 19:17
+
+**🙋 提问：**
+
+没关系，cluster 不删除，继续
+
+**🤖 回答：**
+
+按指示保留全部 Cluster 元数据行。内链输入只将同名 `cluster_id` 归并为一个 OPS 批准身份键，不读取、选择或改写重复元数据的业务字段；相应回归测试通过。真实只读输入构建成功：183 篇已发布文章、35 个唯一 Cluster ID、快照 `42b448b0f1c2…c987`。随后无写入 dry-run 显示 171 篇将变更、12 篇 no-op。
+
+---
+
+### Q40 — 19:17
+
+**🙋 提问：**
+
+后续的 cluster 会由ops 手动填写
+
+**🤖 回答：**
+
+确认并保持治理边界：未来 `cluster_id` 只由 OPS 手填；LLM、Topic Register、brief 生成和内链规划均不得生成、猜测、选择或覆盖该值。按用户“继续”的授权，以同一全量快照创建 review-only PR `#423`（分支 `seo/internal-links/42b448b0f1c2`）：171 篇文章的受管理内链区块已提交，内链检查和构建 gate 通过；基线未改、未写 Sheet、未自动合并，仍等待既有 preview 与人工 merge gate。
+
+---

@@ -5,7 +5,8 @@
   "failures": [
     "word count 1375 < min 1485",
     "missing required H2: \"## <entity> vs <real adjacent concept> (comparison section; no \"Adjacent Concepts\" boilerplate)\"",
-    "word count 1453 < min 1485"
+    "word count 1453 < min 1485",
+    "word count 1480 < min 1485"
   ],
-  "updatedAt": "2026-07-22T09:41:52.630Z"
+  "updatedAt": "2026-07-22T09:45:27.638Z"
 }

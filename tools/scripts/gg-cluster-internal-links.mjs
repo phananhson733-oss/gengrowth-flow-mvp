@@ -75,8 +75,8 @@ export function replaceManagedClusterLinks(content, links) {
   const managed = renderManagedClusterLinks(links);
   let next = String(content || '').replace(new RegExp(`\\n?${START}[\\s\\S]*?${END}\\n?`, 'g'), '\n');
   if (!managed) return next;
-  const heading = /^## Related Reading\s*$/m;
-  if (heading.test(next)) return next.replace(heading, (match) => `${match}\n\n${managed}`);
+  const heading = /^## Related Reading\s*\n*/m;
+  if (heading.test(next)) return next.replace(heading, () => `## Related Reading\n\n${managed}\n`);
   return `${next.replace(/\s*$/, '')}\n\n## Related Reading\n\n${managed}\n`;
 }
 

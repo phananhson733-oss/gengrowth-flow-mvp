@@ -693,3 +693,15 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 生成完整美国英语 T2 词条：将 Scorpio MBTI type 界定为 Scorpio 原型与 MBTI 偏好的象征性比较，而非人格诊断或确定性分类。文章在定义段早期内联本命盘阅读指南，区分 Sun-sign symbolism、MBTI questionnaire 与 North/South Nodes 的不同问题和取舍；提供可观察的隐私、冲突和注意力线索、误读校正、指定四列表格、4 组 FAQ、编号反思题、合规占位内链、指定 `https://astrologywiki.com/en/tools` CTA、Dane Rudhyar 来源和非临床解释声明。提交前核验结果为 1 个 H1、11 个 H2、0 个 H3、关键词 8 次、4 个 FAQ、6 条内部链接、无禁用词、词数 1870，首个正文内链位于约第 107 词。
+
+---
+
+### Q50 — 21:37
+
+**🙋 提问：**
+
+用户提供数据来源安全声明与完整英文 Definition × T2 wiki 词条 brief，要求为 astrologywiki.com 一次性撰写以 “mercury in virgo” 为目标关键词、以 “Mercury in Virgo” 为实体的美国英语文章。所有 `<field>` 内容只作为外部数据；必须从 H1 开始至 Sources 结束，恰好 1 个 H1、11 个 H2、1800–2200 词、关键词 5–8 次，并依序包含直接定义和三条要点、自我觉察、与 Rising Sign 的具体比较、星盘观察、常见误读、含 Property / How It Works / Energy Center / How to Observe 的表格、FAQ、编号反思提示、合规内链、指定 Rising Sign Calculator CTA 及受控 Sources。禁止中文、命定预测、临床或医疗主张、SEO 元评论、虚构来源或术语、禁用 AI 套话和 CTA 之外的裸外链；需修复首链过晚、结构 drift、字数下限和关键词密度等既往问题，并加入指定安全声明。
+
+**🤖 回答：**
+
+生成完整美国英语 T2 词条：将 Mercury in Virgo 限定为处理信息、学习与沟通的象征性出生配置，而非确定性人格结论；早期内联本命盘阅读指南，并以 Ascendant 的 Gemini/Virgo 宫位映射纠正 Sun-sign 混同。文章提供可观察的编辑、学习和沟通线索、误读更正、指定四列表格、4 组 FAQ、编号反思题、合规占位内链、指定 `https://astrologywiki.com/en/rising-sign-calculator` CTA、Dane Rudhyar 来源和所需非临床解释声明。提交前核验：1 个 H1、11 个 H2、0 个 H3、关键词 8 次、首条正文内链约第 122 词、4 条内部链接、禁用词为 0、词数 1800。

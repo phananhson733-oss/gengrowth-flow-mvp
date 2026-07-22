@@ -528,3 +528,20 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 对当前 `主题集群表` 做只读逐字段核对，发现 9 组重复 `cluster_id`：`lunar_nodes_path`（4/47）、`healing_placements`（8/46）、`worldcup2026_astro`（10/49）、`transit_events`（12/44）、`astrocartography_map`（14/29）、`ai_astrology`（15/28）、`rising_sign_profiles`（16/27）、`vedic_mahadashas`（18/48）、`solar_return_reading`（20/45）。前三个旧残留组是 14/29、15/28、16/27：前行缺大部分治理字段，后行完整；其余六组均在 cluster 名称、内容层、业务角色、pillar、关键词、内链规则、周次/指标等字段冲突。高风险语义冲突包括 `healing_placements` 的 `psych_safety_flag=Y` vs `N`、CTA Newsletter vs 星盘页，以及多组的 pillar 是专属页面 vs 通用 `/en/wiki/how-to-read-birth-chart`。因此 Flow 不能自动合并；OPS 应为每组保留一个权威定义或改为不同 `cluster_id`。
 
 ---
+
+### Q37 — 19:04
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-22T10:01:23.812Z (1784714483812)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行固定入口 `bash tools/scripts/gg-topic-register-tick.sh`，退出码为 0。精确日志窗口为 2026-07-22 19:04:27–19:04:30 CST，环境为 apply（`dry_run=false`、`budget_exhausted=false`）；astrologywiki 为 audit_repair，candidates=10、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]、evidence_discovery=[]、audit_incomplete=11；gengrowth 为 generate，candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]、evidence_discovery=[]。日志末行为 `topic-register ok`，无失败或超时；未手工编辑 Sheet、未在 wrapper 外修改任务计划，且未创建额外 Feishu 或 Google Doc 报告物。
+
+---

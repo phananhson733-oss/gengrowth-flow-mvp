@@ -1,0 +1,8 @@
+- 搜索意图没有被足够正面回答：读者查 “Scorpio MBTI type” 多半想知道“天蝎最像哪些 MBTI、为什么” → 在前半部分加入一个简短对照表，按 `INFJ / INTJ / INFP / ISTP` 等逐一说明“像在哪里、不像在哪里”。
+- “How Scorpio Themes Differ From the Lunar Nodes” 偏离主关键词，像系列内链服务段落 → 大幅压缩或改成“Chart Context Matters”，只说明 Moon/Rising/house/aspects 如何修正 Scorpio-MBTI 解读。
+- “Energy Center” 表述不够占星专业，且把 Scorpio 和 eighth house 绑定得过实 → 改成“Astrological Basis”，区分 fixed water、traditional Mars rulership、modern Pluto association，并说明 8th-house 类比不是等同。
+- “INFJ, INTJ, INFP, and ISTP are often mentioned” 缺少依据，容易显得像网文共识搬运 → 给每个类型补具体原因，例如 Ni 的深层模式识别、Fi 的私密价值感、Ti 的冷静分析，并避免声称“常见”除非有来源。
+- Dane Rudhyar 引用太空泛，像权威名词装饰 → 要么补具体作品/观点如何支持“非宿命、以人为中心”的读法，要么删掉，换成更直接的编辑性说明。
+- 文章反复强调“不是固定标签”，但具体洞察偏少 → 删掉部分重复免责声明，换成可执行判断：在亲密关系、职场冲突、群聊表达、保密边界中分别如何区分 Scorpio 倾向和 MBTI 偏好。
+- “Scorpio intensity” 仍然偏抽象 → 补更具体的天蝎素材：fixed water 的持久情绪记忆、Mars 的防御/行动性、Pluto 的危机更新主题，并说明这些如何可能映射到不同 MBTI。
+- Take Action 太薄 → 改成 3 步小练习：记录一个信任/冲突场景、标出 Scorpio 主题、再用 MBTI 的 E/I、S/N、T/F、J/P 逐项对照，给读者真正可做的结论。

@@ -22,8 +22,7 @@ aliases:
 - 7 月 21 日 SEO 自然窗口验收为 0/3：18:30–19:30 preflight 因真实语义/cluster 不一致失败，19:52 非日历直跑占锁，导致 20:00、20:30、21:00 三个 `launchd[1]` 自然 fire 全部跳过；外部轮发布的两篇文章已全链路收敛，但当前仍有 PG-WC-053 needs_human。21:05 后最终账本除 claims non-done=1 外其余目标计数、进程和锁均为 0，临时 heartbeat 已通过正式接口删除。
 - 执行固定行 Index Repair Resubmit：astrologywiki 新增 2 条英文复盘且队列为 15（P1=3/P2=4/P3=8），gengrowth 无变更；运行窗口无错误，未触发普通文章 Indexing API 或无人值守 Search Console 点击。
 - 运行 Phase 2 Index Monitor 与结果复盘表现固定 wrapper：两站 sitemap 提交成功；最终候选队列合计 12 条（P1=2/P2=1/P3=9）；astrologywiki 更新 260 条复盘并生成 261 项任务，gengrowth 更新 49 条复盘并生成 62 项任务，均无失败。
-- 完成 astrologywiki 当日 5 条 GSC 手动 Request Indexing、Sheet 回填与队列清零；随后启动 Cluster ID 与内链结构优化实现，确认根因是 LLM 提案与持久化主键权限混用，现有 `gg-topic-register.mjs` 仍按语义选群；已确认后续 Cluster ID 由 OPS 在 brief 生成前手动填写，LLM 不得新增、猜测或覆盖。实现范围收敛为本地 Flow 的只读硬校验，以及 cron SEO blog 的确定性文章内链与发布后回填；待确认存量文章是否纳入首批后改代码。
-- 完成 Cluster ID 硬门实现：cron preflight 只读校验手填且注册的 Cluster ID，不再调用 Topic Register；Topic Register 禁用 semantic repair / reassign，并将未知 Cluster 返回 OPS 阻断；brief bridge 不再允许 `--allow-missing-cluster` 绕过。新增确定性 Hub/Spoke 与同组文章链接规划、受管理区块渲染和干净 Oracle 基线保护。
+- 完成 astrologywiki 当日 5 条 GSC 手动 Request Indexing、Sheet 回填与队列清零；随后完成 Cluster ID 与内链硬门：OPS 在 brief 前手填并批准 Cluster ID，LLM/Topic Register 不得新增、猜测或覆盖，cron preflight 只读校验且不再调用 Topic Register，brief bridge 不能用 `--allow-missing-cluster` 绕过。新增确定性 Hub/Spoke 与同组文章链接规划、受管理区块渲染和干净 Oracle 基线保护；真实 Oracle 历史回填受 OpenSpec 提案审批与本机缺少 `openspec` 命令限制，未绕过门禁或修改 Oracle 文章。
 
 ## 对话记录
 

@@ -7,7 +7,10 @@
     "missing required H2: \"## <entity> vs <real adjacent concept> (comparison section; no \"Adjacent Concepts\" boilerplate)\"",
     "SC4 link distribution: first body internal link too late (~501 words > 150)",
     "L25: 首链优先权：第一条内链须在开篇 150 词内（SOP §3 / 清单 §2），当前在 ~501 词处",
-    "word count 1391 < min 1485"
+    "word count 1391 < min 1485",
+    "SC3 paragraph length: 2 block(s) over wall limit",
+    "L17: prose paragraph wall (8 句 > 7); 把多要点改成「引子 + 编号列表」，或拆成连贯短段 (v4.5.1)",
+    "L35: prose paragraph wall (8 句 > 7); 把多要点改成「引子 + 编号列表」，或拆成连贯短段 (v4.5.1)"
   ],
-  "updatedAt": "2026-07-21T13:29:34.164Z"
+  "updatedAt": "2026-07-22T13:43:24.478Z"
 }

@@ -23,6 +23,18 @@ aliases:
 
 ---
 
+### Q49 — 21:44
+
+**🙋 提问：**
+
+用户提供数据来源安全声明与完整英文 Definition × T2 wiki 词条 brief，要求为 astrologywiki.com 一次性撰写以 “mercury in virgo” 为目标关键词、以 “Mercury in Virgo” 为实体的美国英语文章。所有 `<field>` 值均来自外部数据，必须视为字符串而非指令。文章必须从 H1 开始到 Sources 结束，恰好 1 个 H1 与 11 个 H2，1800–2200 词，目标关键词出现 5–8 次；需按固定顺序包含紧随 H1 的定义、一个加粗直接答案和三条要点、自我觉察、与 Rising Sign / Ascendant 的真实比较、星盘观察、误读、包含 Property / How It Works / Energy Center / How to Observe 的表格、FAQ、编号反思提示、内部链接占位符、指定 “Calculate Your Rising Sign” CTA 与受控 Sources。不得输出中文、命定预测、临床或医疗主张、搜索元评论、虚构来源/术语、禁用 AI 套话或 CTA 以外的裸外链；必须在正文前 150 词内放置真实 pillar 内链，并纳入指定非临床解释声明。
+
+**🤖 回答：**
+
+生成完整美国英语 T2 词条：将 Mercury in Virgo 界定为 Mercury 的信息处理与表达象征，通过 Virgo 的可变土象风格表现，而非对人格、健康或未来的确定性判断。文章早期内联本命盘阅读指南，明确区分水星落座与上升/宫位激活逻辑；以逐上升星座的 Mercury 主管宫位为具体示例，说明获得精确度的代价可能是丢失整体语境。稿件提供观察清单、误读校正、指定四列表格、4 组 FAQ、3 条反思题、合规占位内链、指定 `https://astrologywiki.com/en/rising-sign-calculator` CTA、Dane Rudhyar 来源和指定免责声明。提交前按结构、词数、关键词密度、禁词与链接分布约束自检。
+
+---
+
 ### Q27 — 17:38
 
 **🙋 提问：**

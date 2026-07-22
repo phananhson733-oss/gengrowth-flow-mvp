@@ -15,7 +15,8 @@
     "word count 1204 < min 1485",
     "word count 1482 < min 1485",
     "drifted sections: \"How to Read This Placement in Your Chart\" (jaccard=0.015, shingle=0.000, target-recall=0.33); \"Common Misreadings\" (jaccard=0.048, shingle=0.000, target-recall=0.33); \"Questions About This Taurus Venus Placement\" (jaccard=0.000, shingle=0.000, target-recall=0.00) (skipped 5 structural: \"Venus in Taurus at a Glance\", \"Reflection Prompts\", \"Related Reading\", \"Take Action\", \"Sources\")",
-    "word count 1317 < min 1485"
+    "word count 1317 < min 1485",
+    "word count 1330 < min 1485"
   ],
-  "updatedAt": "2026-07-22T10:51:28.101Z"
+  "updatedAt": "2026-07-22T12:53:33.361Z"
 }

@@ -1,7 +1,7 @@
 {
   "page_id": "PG-MAHADASHA-007",
   "prompt_path": "/Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-MAHADASHA-007.v8-prompt.md",
-  "started_at": "2026-07-22T10:51:21.194Z",
+  "started_at": "2026-07-22T12:53:30.043Z",
   "models_requested": [
     "codex"
   ],
@@ -10,7 +10,7 @@
   "max_cost_usd_per_page": 5,
   "budget_exceeded_models": [],
   "ok_count": 1,
-  "total_cost_estimate_usd": 0.1476,
+  "total_cost_estimate_usd": 0.1612,
   "results": {
     "codex": {
       "model": "codex",
@@ -19,28 +19,28 @@
       "ok": true,
       "output_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-MAHADASHA-007-codex-v8.md",
       "retries": 0,
-      "duration_s": 112.9,
+      "duration_s": 208,
       "cost_estimate_usd": {
-        "usd": 0.1476,
-        "input_tokens_est": 7907,
-        "output_tokens_est": 1712,
+        "usd": 0.1612,
+        "input_tokens_est": 9200,
+        "output_tokens_est": 1729,
         "pricing_note": "GPT 5.5 xhigh"
       },
-      "cumulative_cost_usd": 0.1476,
+      "cumulative_cost_usd": 0.1612,
       "budget_exceeded": false,
       "budget_usd": 5,
       "attempts": [
         {
           "try_index": 1,
           "model": "codex",
-          "command": "codex exec -c model=gpt-5.6-terra -c reasoning_effort=high - < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-MAHADASHA-007.v8-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-MAHADASHA-007-codex-v8.md",
-          "cost_usd": 0.1476,
-          "cumulative_cost_usd": 0.1476,
+          "command": "codex exec -c model=gpt-5.6-terra -c reasoning_effort=xhigh - < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-MAHADASHA-007.v8-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-MAHADASHA-007-codex-v8.md",
+          "cost_usd": 0.1612,
+          "cumulative_cost_usd": 0.1612,
           "ok": true,
           "exit_code": 0,
-          "duration_s": 112.9,
-          "stderr_tail": "盘观察、误读、四列参考表、FAQ、编号反思题、合规内链、指定 Birth Chart Calculator CTA 和受控 Sources。不得输出中文、命定式预测、临床或医疗化语言、SEO 元评论、虚构来源或术语、裸外链（指定 CTA 除外）及禁用 AI 套话；并修复首链过晚、关键词超限、结构漂移、`rising sign` 与 `you will` 等历史校验问题。\n+\n+**🤖 回答：**\n+\n+生成完整美国英语 T2 词条：将 Venus in Taurus 限定为爱、价值、愉悦与关系节奏的象征性出生配置，明确与 Venus Mahadasha 的时间框架区分。文章在定义段前 150 词内放入本命盘阅读指南内链，以可观察的关系、金钱和审美选择界定适用范围，并说明宫位与相位不能被混入单一星座配置；包含指定表格、FAQ、反思提示、合规占位链接、Birth Chart Calculator CTA 及 Dane Rudhyar 来源条目，避免关键词堆砌、医学断言、虚构引文、裸 URL、`rising sign` 和命定式措辞。\n+\n+---\n\ntokens used\n56,866",
-          "stdout_bytes": 8549
+          "duration_s": 208,
+          "stderr_tail": "enus Mahadasha 的具体比较、星盘观察、常见误读、指定四列表格、FAQ、编号反思提示、合规内链、指定 Birth Chart Calculator CTA 及受控 Sources。禁止中文、命定式预测、医疗化表述、SEO 元评论、虚构来源或裸外链（指定 CTA 除外）及禁用 AI 套话；并须将该位置限定为象征性解读，不与宫位、相位或时运混同。\n+\n+**🤖 回答：**\n+\n+生成完整美国英语 T2 词条：将 Venus in Taurus 界定为爱、愉悦、价值与审美偏好通过固定土象表达的象征性阅读，而非命运、诊断或单一人格标签。文章在开篇内联本命盘阅读指南，比较本命位置与 Venus Mahadasha 的输入、作用方式及取舍，说明宫位和相位为何改变语境；提供观察步骤、误读更正、指定四列表格、FAQ、反思题、合规内链占位符、指定 `https://astrologywiki.com/en/birth-chart-calculator` CTA、Dane Rudhyar 来源及所需安全免责声明，并控制关键词与结构门禁。\n+\n+---\n\ntokens used\n74,006",
+          "stdout_bytes": 8805
         }
       ]
     }

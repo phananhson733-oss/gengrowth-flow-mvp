@@ -8,7 +8,9 @@
     "SC3c section scatter: 1 section(s) with >3 scattered prose paragraphs",
     "L19: 子节 prose 段过多 (4 > 3); 用 `### ` H3 小标题把长叙述分组(每组 ≤3 段)，或改成「引子 + 编号列表」(v4.5.1 / 2026-06-09 H3)",
     "word count 1338 < min 1485",
-    "word count 1456 < min 1485"
+    "word count 1456 < min 1485",
+    "word count 1373 < min 1485",
+    "missing required H2: \"## <entity> vs <real adjacent concept> (comparison section; no \"Adjacent Concepts\" boilerplate)\""
   ],
-  "updatedAt": "2026-07-22T11:34:29.836Z"
+  "updatedAt": "2026-07-22T11:36:59.595Z"
 }

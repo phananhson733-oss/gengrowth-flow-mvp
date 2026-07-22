@@ -1,7 +1,7 @@
 {
   "page_id": "PG-CELEB-062",
   "prompt_path": "/Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-CELEB-062.v8-prompt.md",
-  "started_at": "2026-07-22T11:34:22.111Z",
+  "started_at": "2026-07-22T11:36:55.043Z",
   "models_requested": [
     "codex"
   ],
@@ -10,7 +10,7 @@
   "max_cost_usd_per_page": 5,
   "budget_exceeded_models": [],
   "ok_count": 1,
-  "total_cost_estimate_usd": 0.1549,
+  "total_cost_estimate_usd": 0.1507,
   "results": {
     "codex": {
       "model": "codex",
@@ -19,14 +19,14 @@
       "ok": true,
       "output_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-CELEB-062-codex-v8.md",
       "retries": 0,
-      "duration_s": 144.8,
+      "duration_s": 145,
       "cost_estimate_usd": {
-        "usd": 0.1549,
-        "input_tokens_est": 7917,
-        "output_tokens_est": 1893,
+        "usd": 0.1507,
+        "input_tokens_est": 7926,
+        "output_tokens_est": 1785,
         "pricing_note": "GPT 5.5 xhigh"
       },
-      "cumulative_cost_usd": 0.1549,
+      "cumulative_cost_usd": 0.1507,
       "budget_exceeded": false,
       "budget_usd": 5,
       "attempts": [
@@ -34,13 +34,13 @@
           "try_index": 1,
           "model": "codex",
           "command": "codex exec -c model=gpt-5.6-terra -c reasoning_effort=xhigh - < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-CELEB-062.v8-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-CELEB-062-codex-v8.md",
-          "cost_usd": 0.1549,
-          "cumulative_cost_usd": 0.1549,
+          "cost_usd": 0.1507,
+          "cumulative_cost_usd": 0.1507,
           "ok": true,
           "exit_code": 0,
-          "duration_s": 144.8,
-          "stderr_tail": "出现 5–8 次；依序包含定义与三项要点、自我觉察、与 synastry 的具体比较、婚礼日期星象观察、常见误读、指定四列表格、FAQ、编号反思提示、合规内链、指定 Forecast CTA 与受控 Sources。禁止中文、命定式预测、临床或医疗化语言、SEO 元评论、虚构来源或术语、裸外链（指定 CTA 除外）及禁用 AI 套话；并修正此前的字数不足、段落分散、链接分布和关键词分布问题。\n+\n+**🤖 回答：**\n+\n+生成完整美国英语 T2 词条，将该婚礼日期合盘题材定位为综合合盘、择日与双方本命盘的象征性阅读，而非关于关系结果的预测。正文把 2026 年 7 月 3 日作为解读练习所用日期，分别说明 Mercury retrograde、Jupiter in Leo 与 Saturn 的仪式感主题如何支持不同的警示和庆祝镜头；含指定表格、FAQ、反思提示、合规内链占位符、指定 `https://astrologywiki.com/forecast` CTA 及 CHANI 来源说明，并避免未经证实的婚礼事实和确定性结论。\n+\n+---\n\ntokens used\n59,017",
-          "stdout_bytes": 9838
+          "duration_s": 145,
+          "stderr_tail": "ding、指定 Forecast CTA 与 Sources。文章不得输出中文、预测婚姻结果、医疗化表述、虚构来源或裸外链；必须将 2026-07-03 的 Mercury retrograde、Jupiter in Leo、Saturn altar transit 仅作为象征性解读条件，保留内链占位符和受控来源规则。\n+\n+**🤖 回答：**\n+\n+生成完整英文 T2 词条，将 Swift-Kelce Wedding Chart 界定为把公开讨论的婚礼日期、双方出生资料和关系合盘用于观察象征基调的解释框架，而非婚姻结果预测或事实认证。文章比较 electional astrology 与 composite-chart reading 的不同输入和取舍，解释 Jupiter in Leo、Mercury retrograde 与 Saturn 的象征性强调，提供可观察的阅读步骤、误读校正、四列表格、FAQ、反思问题、合规内部链接占位符、指定 Forecast CTA 和 Dane Rudhyar 来源项，并加入非临床解释声明。\n+\n+---\n\ntokens used\n63,808",
+          "stdout_bytes": 9192
         }
       ]
     }

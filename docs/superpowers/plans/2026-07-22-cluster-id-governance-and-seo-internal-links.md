@@ -4,7 +4,7 @@ date: 2026-07-22
 updated: 2026-07-22
 type: plan
 version: v1.0
-status: draft
+status: in-progress
 owner: wzb
 tags:
   - cluster-id
@@ -37,7 +37,7 @@ aliases:
 
 ### 修改
 
-- `tools/scripts/gg-seo-brief-preflight.mjs`：删除 semantic repair wrapper/证明契约，改为只读 active-plan Cluster 校验与 attested manifest。
+- `tools/scripts/gg-seo-brief-preflight.mjs`：cron 入口改为只读 active-plan Cluster 校验与 attested manifest，不再调用 Topic Register；历史 semantic repair 证明代码仅保留为不可达兼容测试对象。
 - `tools/scripts/gg-seo-blog-launchd-tick.sh`：移除 Topic Register 路径、可执行性检查与参数；预检改名为 Cluster readiness preflight。
 - `tools/scripts/gg-topic-register.mjs`：在自动候选/生成路径中禁止填充或改写 `cluster_id`，将缺失值作为 `needs_ops_cluster_id` 反馈；保留显式人工填写后的普通元数据补全。
 - `tools/scripts/gg-sheet-to-brief.mjs`：确保 Cluster 缺失或未知永远无法被宽松 flag 降级为可 author 的 brief。
@@ -45,7 +45,7 @@ aliases:
 
 ### 测试
 
-- `tools/scripts/__tests__/gg-seo-brief-preflight.smoke.test.mjs`：没有 wrapper、没有子进程写入；缺失/未知 Cluster 阻断；manifest 只绑定 active IDs。
+- `tools/scripts/__tests__/gg-seo-brief-preflight.smoke.test.mjs`：Cluster readiness 不需要 wrapper；缺失/未知 Cluster 阻断；manifest 只绑定 active IDs；历史 wrapper 路径必须失败。
 - `tools/scripts/__tests__/gg-seo-blog-launchd-tick.smoke.test.mjs`：launcher 不再引用或执行 Topic Register，预检失败时 nightly 不启动。
 - `tools/scripts/__tests__/gg-topic-register.smoke.test.mjs`：无论关键词语义多匹配，自动计划都不产生 Cluster ID 写入；缺失 Cluster 给出 OPS 处理状态。
 - `tools/scripts/__tests__/gg-sheet-to-brief.smoke.test.mjs`：`--allow-missing-cluster` 不得越过 author 准入。
@@ -53,10 +53,10 @@ aliases:
 
 ## 执行步骤
 
-- [ ] 先写并运行 Flow Cluster 硬门的失败测试，确认当前 semantic repair / 自动选群行为会被捕获。
-- [ ] 以最小改动移除 cron 的 wrapper 调用，并把 preflight 改为只读 Cluster readiness 校验；运行对应 smoke tests。
-- [ ] 收紧 Topic Register 与 sheet-to-brief 的 Cluster 权限边界；运行相关 unit/smoke tests。
-- [ ] 先写内链规划与受管理回填区块的失败测试，再实现纯函数与 CLI。
+- [x] 先写并运行 Flow Cluster 硬门的失败测试，确认当前 semantic repair / 自动选群行为会被捕获。
+- [x] 以最小改动移除 cron 的 wrapper 调用，并把 preflight 改为只读 Cluster readiness 校验；运行对应 smoke tests。
+- [x] 收紧 Topic Register 与 sheet-to-brief 的 Cluster 权限边界；运行相关 unit/smoke tests。
+- [x] 先写内链规划与受管理回填区块的失败测试，再实现纯函数与 CLI。
 - [ ] 用临时干净 Oracle fixture 做回填 dry-run、apply、第二次 no-op 验证；不触碰交互 Oracle 工作树。
-- [ ] 运行完整相关测试组、shell 语法检查和 diff 检查；复核每项不变量。
+- [x] 运行完整相关测试组、shell 语法检查和 diff 检查；复核每项不变量（175 项：169 通过、6 项废弃语义写入测试显式跳过、0 失败）。
 - [ ] 只有在 cron 的实际干净发布基线可用且用户确认历史文章批次范围后，执行真实历史文章回填；再次验证生成页面与链接清单。

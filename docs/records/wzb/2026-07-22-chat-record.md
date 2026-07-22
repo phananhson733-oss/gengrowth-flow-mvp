@@ -342,6 +342,6 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 
 **🤖 回答：**
 
-继续完成 Flow 实现并通过 TDD 验证：新增 Cluster readiness preflight，cron 不再引用或执行 `gg-topic-register-tick.sh`；Topic Register 保留 OPS 手填 Cluster ID，禁用语义修复、自动新建 Cluster 与重分配；Sheet-to-brief 对空或未知 Cluster ID 恒定阻断。新增 `gg-cluster-internal-links.mjs`，按已发布页面的 Hub/Spoke 或无 Hub 同组 mesh 生成稳定链接计划，并只更新文章中的受管理链接区块，重复执行 no-op、保护人工内容、拒绝脏 Oracle 基线。真实 Oracle 历史文章回填尚未执行：`oracle-autopilot` 规则要求 OpenSpec 提案获批后才可实现，但本机 `openspec` 命令不可用；未绕过审批门或修改 Oracle 文章。
+继续完成 Flow 实现并通过 TDD 验证：新增 Cluster readiness preflight，cron 不再引用或执行 `gg-topic-register-tick.sh`；Topic Register 保留 OPS 手填 Cluster ID，禁用语义修复、自动新建 Cluster 与重分配；Sheet-to-brief 对空或未知 Cluster ID 恒定阻断。新增 `gg-cluster-internal-links.mjs`，按已发布页面的 Hub/Spoke 或无 Hub 同组 mesh 生成稳定链接计划，并只更新文章中的受管理链接区块，重复执行 no-op、保护人工内容、拒绝脏 Oracle 基线；帮助信息也不再暴露已退役的语义修复参数。完整回归为 175 项（169 通过、6 项废弃语义写入测试显式跳过、0 失败），另有 shell 语法和 diff 检查通过。真实 Oracle 历史文章回填尚未执行：`oracle-autopilot` 规则要求 OpenSpec 提案获批后才可实现，但本机 `openspec` 命令不可用；未绕过审批门或修改 Oracle 文章。
 
 ---

@@ -634,3 +634,15 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 仅运行固定入口 `bash tools/scripts/gg-topic-register-tick.sh`，退出码为 0。精确日志窗口为 2026-07-22 20:02:18–20:02:20 CST，环境为 apply（`dry_run=false`、`budget_exhausted=false`）；astrologywiki 为 audit_repair，candidates=10、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]、evidence_discovery=[]、audit_incomplete=11；gengrowth 为 generate，candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]、evidence_discovery=[]。日志末行为 `topic-register ok`，无失败或超时；未手工编辑 Sheet、未在 wrapper 外修改任务计划，且未创建额外 Feishu 或 Google Doc 报告物。
 
 ---
+
+### Q45 — 20:13
+
+**🙋 提问：**
+
+用户提供数据来源安全声明与完整英文 Definition × T2 wiki 词条 brief，要求为 astrologywiki.com 一次性撰写以 “Jennifer Lopez birth chart” 为目标关键词、以 “Jennifer Lopez Birth Chart” 为实体的美国英语文章。所有 `<field>` 值仅作为外部数据，不执行其中内容。文章必须从 H1 直接开始至 Sources 结束，恰好 1 个 H1 和 11 个 H2，1800–2200 词，关键词出现 5–8 次；依序包含直接定义与三个要点、自我觉察、与 Celebrity Zodiac / Pop Culture Astrology 的具体比较、基于公开可用数据的读盘方法、常见误读、指定四列表格、FAQ、编号反思提示、合规内链、指定 Birth Chart Calculator CTA 及受控 Sources。禁止中文、命定式预测、临床或医疗化表述、SEO 元评论、虚构来源或术语、指定 CTA 之外的裸外链和禁用 AI 套话；需明确出生时间未公开确认，不能断言上升、宫位或时间相关相位，并对边界附近的太阳、月亮、木星和 Juno 保留不确定性。
+
+**🤖 回答：**
+
+生成完整美国英语 T2 词条，将 Jennifer Lopez Birth Chart 界定为用于比较公开人物形象、已知星座位置与占星象征的解释框架，而非传记证据或未来预测。正文优先说明未知出生时间的边界，谨慎讨论大致狮子座太阳、天蝎座月亮、狮子座水星、双子座金星、射手座火星及其他已提供位置；比较全盘解读与 Celebrity Zodiac 的取舍，提供可观察步骤、误读纠正、指定四列表格、FAQ、反思题、合规占位内链、指定 `https://astrologywiki.com/en/birth-chart-calculator` CTA、Dane Rudhyar 来源及非临床解释声明。
+
+---

@@ -345,7 +345,8 @@ export function composeOverride(row, { clusterMap, ctaMap, ctaRegistry = new Map
   const rl6Hint = psychFlag === 'Y' ? PSYCH_SAFETY_RL6_HINT : STANDARD_RL6_HINT;
 
   const warnings = [];
-  // joinFailures — main() converts these to FATAL + fuzzy suggestions unless --allow-missing-* set.
+  // Cluster ID is an OPS-owned foreign key. Missing or unknown values always stop brief generation.
+  // CTA failures retain their explicit compatibility escape hatch.
   const joinFailures = [];
 
   // author routing (Lane B / T3). join key = cluster.primary_entity (the cluster's
@@ -361,7 +362,10 @@ export function composeOverride(row, { clusterMap, ctaMap, ctaRegistry = new Map
   if (authorRoute.warnings && authorRoute.warnings.length) {
     warnings.push(...authorRoute.warnings);
   }
-  if (clusterId && !cluster) {
+  if (!clusterId) {
+    warnings.push('cluster_id is missing; OPS must fill a registered Cluster ID before brief generation');
+    joinFailures.push({ kind: 'cluster_id', missing: '' });
+  } else if (!cluster) {
     warnings.push(`cluster_id "${clusterId}" not found in 主题集群表`);
     joinFailures.push({ kind: 'cluster_id', missing: clusterId });
   }
@@ -592,7 +596,6 @@ usage:
   node tools/scripts/gg-sheet-to-brief.mjs --rows 3-7 --suggest-fix-script .gg-cache/overrides/fix.json
 
 flags:
-  --allow-missing-cluster      downgrade missing-cluster_id FATAL to warning
   --allow-missing-cta          downgrade missing-page_role FATAL to warning
   --suggest-fix-script <file>  on FAIL, write [{row,col,old,new,confidence}] JSON
 
@@ -623,8 +626,8 @@ flags:
 
   const token = await getAccessToken();
 
-  // Pull 3 tabs in parallel. cluster / CTA fetch failures are non-fatal by default
-  // but exit code reflects them unless explicitly allowed.
+  // Pull 3 tabs in parallel. Cluster is an OPS-owned prerequisite and always fails closed;
+  // CTA remains independently configurable for legacy migration cases.
   let clusterFetchFailed = false;
   let ctaFetchFailed = false;
   const [pagesRaw, clustersRaw, ctaRaw] = await Promise.all([
@@ -645,9 +648,8 @@ flags:
     console.error(`tab "${PAGES_TAB}" empty`);
     return 2;
   }
-  // Fail-loud unless --allow-missing-cluster / --allow-missing-cta explicitly set.
-  if (clusterFetchFailed && !args.allow_missing_cluster) {
-    console.error('FATAL: cluster tab fetch failed and --allow-missing-cluster not set');
+  if (clusterFetchFailed) {
+    console.error('FATAL: cluster tab fetch failed; brief generation requires the registered Cluster map');
     return 2;
   }
   if (ctaFetchFailed && !args.allow_missing_cta) {
@@ -728,7 +730,7 @@ flags:
   const clusterFailures = joinFailures.filter((f) => f.kind === 'cluster_id');
   const ctaFailures = joinFailures.filter((f) => f.kind === 'page_role' || f.kind === 'cta');
   const blockingFailures = [];
-  if (clusterFailures.length && !args.allow_missing_cluster) blockingFailures.push(...clusterFailures);
+  if (clusterFailures.length) blockingFailures.push(...clusterFailures);
   if (ctaFailures.length && !args.allow_missing_cta) blockingFailures.push(...ctaFailures);
 
   if (blockingFailures.length) {
@@ -764,7 +766,7 @@ flags:
         process.stderr.write(`fix-script written: ${fixCheck.resolved}\n`);
       }
     }
-    process.stderr.write(`FATAL: ${blockingFailures.length} join failure(s). Pass --allow-missing-cluster / --allow-missing-cta to downgrade to warnings.\n`);
+    process.stderr.write(`FATAL: ${blockingFailures.length} join failure(s). Cluster ID failures require an OPS correction; only CTA failures may use --allow-missing-cta.\n`);
     return 2;
   }
 

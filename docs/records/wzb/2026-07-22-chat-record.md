@@ -33,7 +33,7 @@ aliases:
 - 7 月 21 日 SEO 自然窗口验收为 0/3：18:30–19:30 preflight 因真实语义/cluster 不一致失败，19:52 非日历直跑占锁，导致 20:00、20:30、21:00 三个 `launchd[1]` 自然 fire 全部跳过；外部轮发布的两篇文章已全链路收敛，但当前仍有 PG-WC-053 needs_human。21:05 后最终账本除 claims non-done=1 外其余目标计数、进程和锁均为 0，临时 heartbeat 已通过正式接口删除。
 - 执行固定行 Index Repair Resubmit 两次：05:00 运行中 astrologywiki 新增 2 条英文复盘且队列为 15（P1=3/P2=4/P3=8），17:32 运行再新增 1 条（总 281）且队列为 11（P1=2/P2=1/P3=8）；gengrowth 的最新队列为 2（P3=2）。两次均无错误，未触发普通文章 Indexing API 或无人值守 Search Console 点击。
 - 运行 Phase 2 Index Monitor、结果复盘表现与 topic-register 固定 wrapper：两站 sitemap 提交成功；最终候选队列合计 12 条（P1=2/P2=1/P3=9）；astrologywiki 更新 260 条复盘并生成 261 项任务，gengrowth 更新 49 条复盘并生成 62 项任务；16:02 topic-register 为 apply 模式的双产品零候选、零更新 no-op，均无失败。
-- 完成 astrologywiki 当日 5 条 GSC 手动 Request Indexing、Sheet 回填与队列清零；随后完成 Cluster ID 与内链硬门：OPS 在 brief 前手填并批准 Cluster ID，LLM/Topic Register 不得新增、猜测或覆盖，cron preflight 只读校验且不再调用 Topic Register，brief bridge 不能用 `--allow-missing-cluster` 绕过。新增确定性 Hub/Spoke 与同组文章链接规划、受管理区块渲染和干净 Oracle 基线保护；真实 Oracle 历史回填受 OpenSpec 提案审批与本机缺少 `openspec` 命令限制，未绕过门禁或修改 Oracle 文章。
+- 完成 astrologywiki 当日 5 条 GSC 手动 Request Indexing、Sheet 回填与队列清零；随后完成 Cluster ID 与内链硬门：OPS 在 brief 前手填并批准 Cluster ID，LLM/Topic Register 不得新增、猜测或覆盖，cron preflight 只读校验且不再调用 Topic Register，brief bridge 不能用 `--allow-missing-cluster` 绕过。用户已批准 OpenSpec 提案，cron 只会在开关启用后构建受证明快照并创建 review PR；真实台账预检在 `PG-EMPATH-004` 缺 Oracle 注册文件时 fail closed，未改文章、Sheet 或创建 PR。
 - 根据受控外部 brief 撰写 astrologywiki 的英文 T2 定义词条，主题为 Taylor Swift 与 Travis Kelce 的婚礼占星解读；遵守一次性输出、11 个 H2、1800–2200 词、关键词密度、无命定预测与事实诚信边界。
 - 根据受控外部 brief 撰写 astrologywiki 的英文 T2 定义词条，主题为 Jennifer Lopez Birth Chart；仅使用给定星历位置，明确出生时间未确认的边界，并遵守一次性输出、11 个 H2、1800–2200 词、关键词密度、内链与事实诚信边界。
 - 根据受控外部 brief 撰写 astrologywiki 的英文 T2 定义词条，主题为 Jang Wonyoung Birth Chart；将可验证出生资料与未经确认的出生时间边界分开，避免把象征解读写成传记证明、预测或医疗主张。
@@ -465,5 +465,17 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 生成完整美国英语 T2 定义词条，将 Mars in Aries 限定为星盘中的行动与主张风格，而非身份、医学结论或未来预测；明确区分 Aries Sun、Chiron、12th House 与其他 Mars sign 的解释边界，并以星盘整体、house 和 aspects 为必要语境。稿件包含所需的三项定义要点、可观察线索、误读纠正、四列表格、FAQ、反思提示、合规内链占位符、指定 `https://astrologywiki.com/en/tools` CTA、心理安全免责声明和 Dane Rudhyar 来源项。
+
+---
+
+### Q32 — 18:37
+
+**🙋 提问：**
+
+批准
+
+**🤖 回答：**
+
+在批准后继续实现并验证 Cluster 内链链路：所有输入快照在规划前和执行前都重新校验 Oracle 注册文章；cron 仅在 `GG_CLUSTER_LINKS_ENABLED=1` 时、严格对账后构建快照并调用只创建专用 review PR 的模式，随后才进入 readiness。回归结果为 Flow Cluster 相关 138 项中 132 通过、6 项退役语义写入测试显式跳过，cron 43/43 通过，autopilot Cluster 目标测试 3/3 通过，语法与两处 diff 检查均通过。真实发布台账的只读预检因 `PG-EMPATH-004` 缺少固定 Oracle 基线的注册文件而按设计阻断；未写 Oracle/Sheet，未创建 PR。历史回填仍等待 OPS 提供已修复注册问题且明确确认的 Page ID 批次。
 
 ---

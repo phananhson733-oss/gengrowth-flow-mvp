@@ -72,3 +72,15 @@ tags:
 交付英文词条，以“Venus in Taurus Brings Steady Affection Into Focus”为 H1；严格设置 11 个 H2，早期内联本命盘阅读指南，并把出生盘位置与 Vedic Venus Mahadasha 明确区分。文章含可观察信号、误读纠正、四列表格、四问 FAQ、三条编号反思提示、剩余相关阅读链接、指定出生盘计算器 CTA 与受控 Woolfolk 来源；保持象征性、非医疗、非命定的解释边界。
 
 ---
+
+### Q5 — 20:08 [claude]
+
+**🙋 提问：**
+
+（SEO Content Variable Pre-processor v2.0，target_keyword=leo rising，T2/Definition，cluster=Rising Sign Profiles 上升星座画像；Raw_Friction 只给了单条泛述；SERP_Snapshot 未附）
+
+**🤖 回答：**
+
+按预处理器 hard-abort 规则判定 Status = Needs More Evidence 并停止合成。命中两个阻断条件：SERP_Snapshot distinct titles < 3（未提供）+ Raw_Friction 是单条泛述无具名来源用户抱怨/SERP-news 标题证据。全部 SHEET_FIELDS 与 REVIEW_METADATA 五要素留空，仅输出 Evidence_Notes / Confidence=Low / Abort_Reason，并给出补齐指引（Google en-US 前 5–10 SERP + Reddit/Quora/CafeAstrology 具名抱怨 ≥2 verbatim + 可选 Ascendant vs Sun sign entity-passport）。
+
+---

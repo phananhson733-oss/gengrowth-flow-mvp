@@ -323,15 +323,22 @@ export function composeOverride(row, { clusterMap, ctaMap, ctaRegistry = new Map
 
   const pageRole = String(brief.page_role || '').trim();
   const track = cluster ? cluster.track : '';
+  const effectiveCtaRegistry = ctaRegistry && ctaRegistry.size
+    ? ctaRegistry
+    : (ctaMap && ctaMap.registry ? ctaMap.registry : ctaRegistry);
   const explicitCtaRaw = String(brief.cta_target_url || '').trim();
+  const clusterPrimaryCta = cluster ? String(cluster.cta_primary || '').trim() : '';
+  const explicitCta = explicitCtaRaw && !legacyToolIntent(explicitCtaRaw)
+    ? resolveCtaTargetUrl(explicitCtaRaw, effectiveCtaRegistry)
+    : (effectiveCtaRegistry && effectiveCtaRegistry.has(clusterPrimaryCta) ? clusterPrimaryCta : '');
   const ctaChoice = selectCta({
-    candidates: ctaSelectorCandidates(ctaMap, ctaRegistry),
+    candidates: ctaSelectorCandidates(ctaMap, effectiveCtaRegistry),
     context: {
       target_keyword: brief.target_keyword,
       entity: brief.entity,
       associated_keywords: Array.isArray(brief.associated_keywords) ? brief.associated_keywords.join(';') : brief.associated_keywords,
       content_angle: brief.content_angle || (cluster ? cluster.content_angle : ''),
-      explicit_cta: legacyToolIntent(explicitCtaRaw) ? '' : resolveCtaTargetUrl(explicitCtaRaw, ctaRegistry),
+      explicit_cta: explicitCta,
       preferred_kind: legacyToolIntent(explicitCtaRaw) ? 'tool' : '',
     },
     allowedHost: siteCtaHost(),

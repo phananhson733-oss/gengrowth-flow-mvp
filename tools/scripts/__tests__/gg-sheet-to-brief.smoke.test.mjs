@@ -375,6 +375,48 @@ test('composeOverride produces all 13 cfg fields for a full Sheet row', () => {
   assert.equal(warnings.length, 0);
 });
 
+test('composeOverride honors the OPS-selected Cluster primary CTA catalog id', () => {
+  const clusterMap = new Map([[
+    'oracle_matrix',
+    {
+      cluster_id: 'oracle_matrix',
+      track: '量产线',
+      jtbd: 'interpret a natal chart question',
+      content_angle: 'plain-language interpretation framework',
+      internal_link_rule: 'Pillar↔Series',
+      cta_primary: 'Oracle 工具页',
+      child_entities: [],
+    },
+  ]]);
+  const ctaMap = buildCtaMap([
+    CTA_HEADER,
+    ['Oracle 工具页', 'Tool_Page', 'Ask Oracle About Your Birth Chart', 'https://astrologywiki.com/oracle', 'oracle_cta_click', '量产线', 'Oracle tool', 'tool', 'oracle', 'TRUE', '100', 'oracle'],
+  ]);
+  const row = {
+    source_row: 73,
+    page_id: 'PG-ORACLE-001',
+    brief: {
+      target_keyword: 'what does my natal chart mean',
+      associated_keywords: [],
+      tier: 'T2',
+      template: 'Definition',
+      entity: 'Natal chart interpretation',
+      cluster_id: 'oracle_matrix',
+      page_role: 'Series',
+    },
+  };
+  const { entry, warnings } = withGgSite(undefined, () => composeOverride(row, {
+    clusterMap,
+    ctaMap,
+    ctaRegistry: ctaMap.registry,
+    repo: '/tmp/__nonexistent_repo_for_test',
+  }));
+  assert.equal(entry.cta_id, 'Oracle 工具页');
+  assert.equal(entry.cta_target_url, 'https://astrologywiki.com/oracle');
+  assert.equal(entry.cta_selection_reason, 'explicit_catalog_cta:Oracle 工具页');
+  assert.equal(warnings.length, 0);
+});
+
 test('composeOverride: warns when entity and target_keyword are the same topic worded differently (duplicate-content guard)', () => {
   const row = makeRow({
     entity: "Signs of a Highly Sensitive Person",

@@ -22,6 +22,7 @@ aliases:
 - 运行 Phase 2 Index Monitor：官方 Sitemap API 两站均成功；astrologywiki 检查 5 条、无失败，gengrowth 无到期检查；最终辅助队列合计 16 条（P1=4、P2=1、P3=11），日志未见飞书发送回执。
 - 运行结果复盘表更新：固定 wrapper 成功处理 astrologywiki 5 条、gengrowth 18 条精确 D14/D30/D60 到期已收录行，并写入两站生成字段与优化任务报告；日志未输出单独里程碑拆分或非到期/已填跳过数。
 - 核实本地 `gengrowth-ops`：工作树和远端同步状态均干净；后台 vault 同步进程正在运行并产生自动提交/推送，而 Obsidian Git 插件自身的自动提交、推送、拉取均关闭。该机制不代替 OPS 在 Sheet 手填 Cluster ID。
+- 运行关键词补充 brief 固定 wrapper：环境为 apply，但 astrologywiki 审计修复候选 10 条未更新（audit_incomplete=11），gengrowth 无候选；两站均无 page_id、预处理或证据发现记录，日志无失败。
 
 ---
 
@@ -100,3 +101,20 @@ ops 是一个本地的文件夹，会自动提交吧
 **🤖 回答：**
 
 已核实 `/Users/awayer_mini/gengrowth-ops` 是本地 Git 仓库，当前工作树干净且与 `origin/main` 无领先/落后。后台 `obsidian_vault_git_sync.py` 进程正在运行，最近可见 `vault backup` 自动提交，因而该目录会自动提交并同步；但 Obsidian Git 插件配置的 `autoSaveInterval`、`autoPushInterval`、`autoPullInterval` 都是 0，实际来源是后台 vault 同步进程。自动同步只处理本地仓库文件，不会读写 Google Sheet，也不生成或替代 OPS 手动填写 Cluster ID。
+
+---
+
+### Q5 — 13:33
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-22T14:02:24.660Z (1784728944660)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅执行指定入口 `bash tools/scripts/gg-topic-register-tick.sh`，退出码 0。最新日志窗口为 2026-07-23 13:33:26–13:33:29 CST，`dry_run=false`、`budget_exhausted=false`，即环境启用的 apply 模式。astrologywiki：selection_mode=audit_repair，candidates=10、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]、evidence_discovery=[]、audit_incomplete=11；gengrowth：selection_mode=generate，candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]、evidence_discovery=[]、audit_incomplete=0。JSON 为 `ok=true` 且窗口以 `topic-register ok` 收尾，未见失败、超时或异常；未进行手工 Sheet 写入、直接 task-plan 编辑或额外 Feishu/Google Doc 报告物创建。

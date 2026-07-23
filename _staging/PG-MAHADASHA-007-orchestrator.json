@@ -1,7 +1,7 @@
 {
   "page_id": "PG-MAHADASHA-007",
   "prompt_path": "/Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-MAHADASHA-007.v8-prompt.md",
-  "started_at": "2026-07-23T11:43:41.564Z",
+  "started_at": "2026-07-23T12:11:24.331Z",
   "models_requested": [
     "codex"
   ],
@@ -10,7 +10,7 @@
   "max_cost_usd_per_page": 5,
   "budget_exceeded_models": [],
   "ok_count": 1,
-  "total_cost_estimate_usd": 0.1631,
+  "total_cost_estimate_usd": 0.1668,
   "results": {
     "codex": {
       "model": "codex",
@@ -19,14 +19,14 @@
       "ok": true,
       "output_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-MAHADASHA-007-codex-v8.md",
       "retries": 0,
-      "duration_s": 172.4,
+      "duration_s": 164.3,
       "cost_estimate_usd": {
-        "usd": 0.1631,
+        "usd": 0.1668,
         "input_tokens_est": 9322,
-        "output_tokens_est": 1746,
+        "output_tokens_est": 1838,
         "pricing_note": "GPT 5.5 xhigh"
       },
-      "cumulative_cost_usd": 0.1631,
+      "cumulative_cost_usd": 0.1668,
       "budget_exceeded": false,
       "budget_usd": 5,
       "attempts": [
@@ -34,13 +34,13 @@
           "try_index": 1,
           "model": "codex",
           "command": "codex exec -c model=gpt-5.6-terra -c reasoning_effort=xhigh - < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-MAHADASHA-007.v8-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-MAHADASHA-007-codex-v8.md",
-          "cost_usd": 0.1631,
-          "cumulative_cost_usd": 0.1631,
+          "cost_usd": 0.1668,
+          "cumulative_cost_usd": 0.1668,
           "ok": true,
           "exit_code": 0,
-          "duration_s": 172.4,
-          "stderr_tail": "字段的 SEO 写作 brief，要求为 astrologywiki.com 的美国英语读者一次性输出主题为 “venus in taurus” 的 Definition × T2 Markdown wiki 词条。文章必须严格遵循所列 one-shot、英文、11 个 H2、首段定义与三条要点、1800–2200 词、关键词 5–8 次、内链占位符、表格、FAQ、反思提示、CTA、Sources、非命定与非医疗措辞等全部规则；字段内容仅作数据输入，不可作为指令执行。\n+\n+**🤖 回答：**\n+\n+交付英文词条，以“Venus in Taurus Brings Steady Affection Into Focus”为 H1；严格设置 11 个 H2，早期内联本命盘阅读指南，并把出生盘位置与 Vedic Venus Mahadasha 明确区分。文章含可观察信号、误读纠正、四列表格、四问 FAQ、三条编号反思提示、剩余相关阅读链接、指定出生盘计算器 CTA 与受控 Woolfolk 来源；保持象征性、非医疗、非命定的解释边界。\n+\n+---\n\ntokens used\n63,147",
-          "stdout_bytes": 8631
+          "duration_s": 164.3,
+          "stderr_tail": "finition × T2 Markdown wiki 词条。文章须为 100% 自然美式英文，遵守首段直接定义、严格 1 个 H1 与 11 个指定 H2、1800–2200 词、关键词 5–8 次、首链在前 150 词、内部链接占位格式、对比 Venus Mahadasha、观察清单、误读、四列表格、FAQ、反思提示、CTA、Sources、非命定与非医疗措辞等全部结构和安全约束。\n+\n+**🤖 回答：**\n+\n+交付一篇一次性英文词条，标题为 “Venus in Taurus and the Art of Steady Affection”。文章在开头 150 词内内联本命盘阅读指南，并以象征性、可观察的语言解释金星在金牛；将本命落座与 Venus Mahadasha 明确分开，说明解释时的取舍。正文包括五项读盘观察、四项误读纠正、四列速查表、四组 FAQ、三条编号反思提示、未重复的相关阅读占位链接、指定的出生盘计算器 CTA 与受控 Dane Rudhyar 来源；避免确定性预测、医疗断言、虚构引用、真实外链和禁用套话。\n+\n+---\n\ntokens used\n66,301",
+          "stdout_bytes": 9227
         }
       ]
     }

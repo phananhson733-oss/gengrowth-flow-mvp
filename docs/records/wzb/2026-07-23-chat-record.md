@@ -24,6 +24,7 @@ aliases:
 - 核实本地 `gengrowth-ops`：工作树和远端同步状态均干净；后台 vault 同步进程正在运行并产生自动提交/推送，而 Obsidian Git 插件自身的自动提交、推送、拉取均关闭。该机制不代替 OPS 在 Sheet 手填 Cluster ID。
 - 运行关键词补充 brief 固定 wrapper：环境为 apply，但 astrologywiki 审计修复候选 10 条未更新（audit_incomplete=11），gengrowth 无候选；两站均无 page_id、预处理或证据发现记录，日志无失败。已实现“cluster_id 永远手填”的候选门禁：仅主题集群表中存在的人工 ID 才占限额，无效/未知 ID 以 `ops_blocked` 明细报告、不阻塞就绪行，也不自动创建或覆写。新增测试通过；真实 dry-run 识别第 351–361 行 11 个未知 ID，未写 Sheet。
 - 对照《内链结构优化需求文档》复核：Cluster 手填准入与 review-only 回填能力已实现并通过测试，但 22 个需求新增 Cluster ID 尚未写入当前 OPS Sheet；历史回填 PR #423 仍未合并，生产无受管理内链块。现有规划器也未覆盖文档的 R3/R4/R5 专用分组规则、Pillar 全量 Spoke 覆盖和每页 8 条上限，需求不能判定为全部完成。
+- 获授权直接修改规范 Google Sheet 后，新增 `artist_group` 列，新增 24 个 Cluster（文档 22 个加注册行引用而遗漏定义的 `fiction_friends`、`fiction_disney`），修正 42 条现有页面并补注册 167 条关键词。逐行回读 214 个需求归属均匹配、无重复或未知 ID；内链输入快照构建成功。未触发内容生成、通知、PR 合并或部署。
 
 ---
 
@@ -185,3 +186,15 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 未全部完成。新鲜验证显示：Flow 的 OPS 手填 Cluster ID 准入、未知/缺失值 fail-closed、review-only 内链 PR 编排及相关 smoke 测试已通过；PR #423 仍处于 OPEN 且可合并状态，Vercel preview 成功，但未获审查、未合并，生产基线文章中受管理内链标记数为 0。实时读取 OPS Sheet 后，需求列出的 22 个新增 `cluster_id` 均未出现在主题集群表，故数据层完整性、选题登记表修正/补注册与历史页面正确回填尚不能验收。实现还仅是通用 Hub/Spoke 或 mesh 规划（Hub 最多 3 条、无 Hub 同级最多 2 条），未实现 PRD 的同行星、同艺人、同 IP 专用分组规则、Pillar → 全部已发布 Spoke 和“每篇最多 8 条”规则；OpenSpec 也仍留有幂等二次 PR/晚到 Hub 与合并后生产验收两项未完成。
+
+---
+
+### Q11 — 14:51
+
+**🙋 提问：**
+
+授权你直接在 Google sheet 直接改表就好了，需求已经在里面了
+
+**🤖 回答：**
+
+按授权直接修改规范 Sheet `astrologywiki.com`。先读取元数据、字段约束和需求文档，确认 `artist_group` 缺列、需求表内有 214 个关键词归属（47 条已有、167 条待补）。在 `选题登记表` 的 `page_role` 后插入 `artist_group` 列并保留现有格式与校验；在 `主题集群表` 新增 24 个 Cluster（文档列出的 22 个，以及注册行已引用但集群定义遗漏的 `fiction_friends`、`fiction_disney`），修正 42 条现有页面 Cluster/角色，并在 362–528 行新增 167 条关键词及其手填 `cluster_id`、`page_role`、`artist_group`。为 `oracle_matrix` 的“Oracle 工具页”补充该单元格校验选项；CTA Map 已有 `/oracle` 导航 URL，但尚无 primary CTA 映射。逐行回读：214/214 归属匹配、无重复关键词、24 个 Cluster 均存在；内链输入快照 `409dbfa5…60921` 成功构建。未触发自动生成、通知、合并 PR 或部署。

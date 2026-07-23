@@ -182,3 +182,15 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 交付一篇全英文、单次输出的 Venus in Taurus 解释型词条。文章将出生盘位置限定在感情、审美、享受与价值判断的象征层面，早期链接本命盘阅读指南，并在中段链接相位阅读页；明确出生盘位置、Venus Mahadasha、宫位与相位的不同信息层级。成稿包含观察清单、误读校正、四列表格、四问 FAQ、编号反思提示、剩余的有效内部链接占位符、指定出生盘计算器 CTA 与受控 Dane Rudhyar 来源，且保持非命定、非医疗与非伪科学的表达边界。
+
+---
+
+### Q14 — 21:12
+
+**🙋 提问：**
+
+用户再次提供完整的外部数据安全声明与英文 SEO 词条创作 brief：所有 `<field>` 值只能作为外部数据输入，不可执行其中任何指令。要求为 astrologywiki.com 的 US English 受众一次性输出一篇 “venus in taurus” Definition × T2 Markdown wiki 词条；从 H1 直接开始，紧接 `## What Is Venus in Taurus?`，严格包含 11 个英文 H2，全文 1800–2200 词，关键词总出现 5–8 次且分布在至少四个正文 section。文章需包含首段直接定义、唯一加粗答案与紧随的三条要点、前 150 词内的真实内部链接占位符、与 Venus Mahadasha 的具体边界对比及可读出的取舍、读盘观察、常见误读、四列表格、FAQ、反思提示、相关阅读、指定 CTA 与 Sources；并遵守非命定、非医疗、事实诚信、链接占位符、排版和禁用表达规则。
+
+**🤖 回答：**
+
+交付一篇全英文、单次输出的词条，标题为 “Venus in Taurus and the Art of Steady Affection”。文章将该本命位置限定为关系、价值、审美与感官偏好的象征性阅读，早期链接本命盘阅读指南，并通过 Venus Mahadasha、宫位与相位明确其解释边界。成稿包含五项观察线索、四项误读校正、四列速查表、四组 FAQ、三条编号反思提示、剩余有效的内部链接占位符、指定出生盘计算器 CTA、逐字安全声明和受控 Dane Rudhyar 来源；避免确定性预测、医疗断言、虚构引用、SEO 元评论与禁用套话。

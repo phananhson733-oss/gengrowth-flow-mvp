@@ -148,3 +148,15 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 确认需求为 cluster_id 永远由人工在 Sheet 填写，自动化不得推断、创建或改写。完成源码和现有 smoke 测试检查后，提出待确认设计：筛选阶段仅把已填且存在于主题集群表的 cluster_id 行计入候选和 limit；未填或未知 cluster_id 行不阻塞其后合法行，但在 JSON 中以 `ops_blocked` 分组输出 keyword、行号、原因和 cluster_id。保留现有安全契约（无自动聚类、无 cluster_id 覆写、无有效人工集群则不写入），并以先失败后通过的测试验证“阻塞行不占额度、有效手填行仍被补全”。未改动生产代码，等待用户确认设计。
+
+---
+
+### Q8 — 14:21
+
+**🙋 提问：**
+
+确认
+
+**🤖 回答：**
+
+用户确认筛选与 `ops_blocked` 报告设计。准备按 brainstorming 流程创建设计 spec 时发现两个合理路径：仓库 README 指向 `docs/spec/`，而该流程指定 `docs/superpowers/specs/`；按项目文档路由规则，未在用户选择路径前创建文档或开始实现。生产代码、Sheet、任务计划均未改动。

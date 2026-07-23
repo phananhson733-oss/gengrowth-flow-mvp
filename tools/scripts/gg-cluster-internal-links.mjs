@@ -11,6 +11,13 @@ const START = '<!-- gg-cluster-links:start -->';
 const END = '<!-- gg-cluster-links:end -->';
 const SNAPSHOT_ID_RE = /^[a-f0-9]{64}$/;
 const SLUG_RE = /^[a-z0-9][a-z0-9-]*$/;
+const PLANETARY_CLUSTER_ID = 'planetary_placements_natal';
+const POP_MUSIC_CLUSTER_ID = 'pop_music_birthchart';
+const BIRTH_CHART_CALCULATOR = Object.freeze({
+  page_id: 'tool:birth-chart-calculator',
+  href: '/en/birth-chart-calculator',
+  title: 'Free Birth Chart Calculator',
+});
 
 function text(value) {
   return String(value || '').trim();
@@ -31,6 +38,32 @@ function validPage(page) {
 
 function stablePages(items) {
   return [...items].sort((a, b) => text(a.page_id).localeCompare(text(b.page_id)));
+}
+
+function pageLink(page) {
+  return { page_id: page.page_id, slug: page.slug, title: page.title };
+}
+
+function linkHref(link) {
+  return text(link?.href) || (text(link?.slug) ? `/en/wiki/${text(link.slug)}` : '');
+}
+
+function uniqueLinks(source, candidates) {
+  const links = [];
+  const hrefs = new Set();
+  for (const candidate of candidates || []) {
+    if (!candidate || candidate.page_id === source.page_id) continue;
+    const href = linkHref(candidate);
+    if (!href || !text(candidate.title) || hrefs.has(href)) continue;
+    hrefs.add(href);
+    links.push(candidate);
+  }
+  return links;
+}
+
+function planetGroup(page) {
+  const match = text(page?.slug).match(/^([a-z]+)-in-[a-z0-9-]+$/);
+  return match ? match[1] : '';
 }
 
 export function validateClusterLinkInput(input) {
@@ -64,6 +97,9 @@ export function validateClusterLinkInput(input) {
     slugs.add(slug);
     if (!text(page?.title)) throw new Error(`${pageId} title is required`);
     if (!published(page?.published)) throw new Error(`${pageId} is not published`);
+    if (clusterId === POP_MUSIC_CLUSTER_ID && !text(page?.artist_group)) {
+      throw new Error(`${pageId} in ${POP_MUSIC_CLUSTER_ID} requires artist_group`);
+    }
   }
   return input;
 }
@@ -103,9 +139,10 @@ export function buildClusterLinkInput({ pagesRaw, clustersRaw, publishedArticles
     page_id: columnIndex(header, 'page_id'),
     cluster_id: columnIndex(header, 'cluster_id'),
     page_role: columnIndex(header, 'page_role'),
+    artist_group: columnIndex(header, 'artist_group'),
     title: columnIndex(header, 'Target Keyword'),
   };
-  for (const [field, index] of Object.entries(indexes)) {
+  for (const [field, index] of Object.entries(indexes).filter(([field]) => field !== 'artist_group')) {
     if (index < 0) throw new Error(`canonical Pages rows are missing ${field}`);
   }
   const publishedById = new Map();
@@ -132,6 +169,7 @@ export function buildClusterLinkInput({ pagesRaw, clustersRaw, publishedArticles
       page_id: pageId,
       cluster_id: clusterId,
       page_role: text(row?.[indexes.page_role]),
+      artist_group: indexes.artist_group < 0 ? '' : text(row?.[indexes.artist_group]),
       slug: text(article.slug),
       title: text(article.title),
       published: true,
@@ -231,7 +269,7 @@ export async function readCanonicalClusterRows({ readRows = null } = {}) {
   return { pagesRaw, clustersRaw };
 }
 
-export function buildClusterLinkPlan(pages, { maxHubLinks = 3, maxSiblingLinks = 2 } = {}) {
+export function buildClusterLinkPlan(pages, { maxSiblingLinks = 2, maxFictionSiblingLinks = 3 } = {}) {
   const groups = new Map();
   for (const page of pages || []) {
     if (!validPage(page)) continue;
@@ -240,26 +278,57 @@ export function buildClusterLinkPlan(pages, { maxHubLinks = 3, maxSiblingLinks =
     groups.get(clusterId).push(page);
   }
   const result = new Map();
-  for (const members of groups.values()) {
+  for (const [clusterId, members] of groups.entries()) {
     const ordered = stablePages(members);
     const hubs = ordered.filter((page) => role(page.page_role) === 'hub');
     const spokes = ordered.filter((page) => role(page.page_role) !== 'hub');
+
+    if (clusterId === PLANETARY_CLUSTER_ID) {
+      for (const source of ordered) {
+        const group = planetGroup(source);
+        const targets = group
+          ? ordered.filter((candidate) => candidate.page_id !== source.page_id && planetGroup(candidate) === group).map(pageLink)
+          : [];
+        targets.push(BIRTH_CHART_CALCULATOR);
+        const links = uniqueLinks(source, targets);
+        if (links.length) result.set(source.page_id, links);
+      }
+      continue;
+    }
+
+    if (clusterId === POP_MUSIC_CLUSTER_ID) {
+      for (const source of ordered) {
+        const group = text(source.artist_group);
+        const artistMembers = group ? ordered.filter((candidate) => text(candidate.artist_group) === group) : [];
+        const targets = role(source.page_role) === 'hub'
+          ? artistMembers.filter((candidate) => role(candidate.page_role) !== 'hub').map(pageLink)
+          : artistMembers.filter((candidate) => role(candidate.page_role) === 'hub').map(pageLink);
+        const links = uniqueLinks(source, targets);
+        if (links.length) result.set(source.page_id, links);
+      }
+      continue;
+    }
+
+    const fictionCluster = clusterId.startsWith('fiction_');
     for (const source of ordered) {
       let targets;
       if (hubs.length) {
         targets = role(source.page_role) === 'hub'
-          ? spokes.slice(0, maxHubLinks)
-          : hubs.slice(0, 1);
+          ? spokes.map(pageLink)
+          : hubs.slice(0, 1).map(pageLink);
+        if (fictionCluster && role(source.page_role) !== 'hub') {
+          targets.push(...spokes
+            .filter((candidate) => candidate.page_id !== source.page_id)
+            .slice(0, maxFictionSiblingLinks)
+            .map(pageLink));
+        }
       } else {
-        targets = ordered.filter((candidate) => candidate.page_id !== source.page_id).slice(0, maxSiblingLinks);
+        targets = ordered
+          .filter((candidate) => candidate.page_id !== source.page_id)
+          .slice(0, maxSiblingLinks)
+          .map(pageLink);
       }
-      const unique = [];
-      const slugs = new Set();
-      for (const target of targets) {
-        if (target.page_id === source.page_id || slugs.has(target.slug)) continue;
-        slugs.add(target.slug);
-        unique.push({ page_id: target.page_id, slug: target.slug, title: target.title });
-      }
+      const unique = uniqueLinks(source, targets);
       if (unique.length) result.set(source.page_id, unique);
     }
   }
@@ -268,8 +337,8 @@ export function buildClusterLinkPlan(pages, { maxHubLinks = 3, maxSiblingLinks =
 
 export function renderManagedClusterLinks(links) {
   const normalized = (links || [])
-    .filter((link) => text(link?.slug) && text(link?.title))
-    .map((link) => `- [${text(link.title)}](/en/wiki/${text(link.slug)})`);
+    .filter((link) => linkHref(link) && text(link?.title))
+    .map((link) => `- [${text(link.title)}](${linkHref(link)})`);
   if (!normalized.length) return '';
   return `${START}\n${normalized.join('\n')}\n${END}`;
 }

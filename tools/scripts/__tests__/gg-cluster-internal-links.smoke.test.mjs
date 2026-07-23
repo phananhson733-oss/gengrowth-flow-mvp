@@ -30,11 +30,69 @@ test('Hub/Spoke links are deterministic, published-only, deduplicated, and never
   assert.deepEqual(plan.get('PG-002').map((link) => link.page_id), ['PG-001']);
   assert.deepEqual(plan.get('PG-001').map((link) => link.page_id), ['PG-002', 'PG-003']);
   assert.equal(plan.has('PG-004'), false);
-  assert.deepEqual(plan.get('PG-005').map((link) => link.page_id), ['PG-006']);
+  assert.deepEqual(plan.get('PG-005').map((link) => link.page_id), ['tool:birth-chart-calculator']);
   for (const [pageId, links] of plan) {
     assert.equal(new Set(links.map((link) => link.slug)).size, links.length);
     assert.equal(links.some((link) => link.page_id === pageId), false);
   }
+});
+
+test('PRD cluster rules keep planet, artist, and IP links inside their declared group', () => {
+  const planned = buildClusterLinkPlan([
+    { page_id: 'P-01', cluster_id: 'planetary_placements_natal', page_role: 'Series', slug: 'venus-in-gemini', title: 'Venus in Gemini', published: true },
+    { page_id: 'P-02', cluster_id: 'planetary_placements_natal', page_role: 'Series', slug: 'venus-in-taurus', title: 'Venus in Taurus', published: true },
+    { page_id: 'P-03', cluster_id: 'planetary_placements_natal', page_role: 'Series', slug: 'mars-in-scorpio', title: 'Mars in Scorpio', published: true },
+    { page_id: 'M-01', cluster_id: 'pop_music_birthchart', page_role: 'Pillar', artist_group: 'rihanna', slug: 'rihanna-birth-chart', title: 'Rihanna Birth Chart', published: true },
+    { page_id: 'M-02', cluster_id: 'pop_music_birthchart', page_role: 'Series', artist_group: 'rihanna', slug: 'rihanna-zodiac-sign', title: 'Rihanna Zodiac Sign', published: true },
+    { page_id: 'M-03', cluster_id: 'pop_music_birthchart', page_role: 'Pillar', artist_group: 'selena_gomez', slug: 'selena-gomez-birth-chart', title: 'Selena Gomez Birth Chart', published: true },
+    { page_id: 'M-04', cluster_id: 'pop_music_birthchart', page_role: 'Series', artist_group: 'selena_gomez', slug: 'selena-gomez-zodiac-sign', title: 'Selena Gomez Zodiac Sign', published: true },
+    { page_id: 'F-01', cluster_id: 'fiction_hp', page_role: 'Pillar', slug: 'harry-potter-characters-zodiac-signs', title: 'Harry Potter Characters', published: true },
+    { page_id: 'F-02', cluster_id: 'fiction_hp', page_role: 'Series', slug: 'harry-potter-zodiac-sign', title: 'Harry Potter', published: true },
+    { page_id: 'F-03', cluster_id: 'fiction_hp', page_role: 'Series', slug: 'hermione-granger-zodiac-sign', title: 'Hermione Granger', published: true },
+    { page_id: 'F-04', cluster_id: 'fiction_hp', page_role: 'Series', slug: 'draco-malfoy-zodiac-sign', title: 'Draco Malfoy', published: true },
+    { page_id: 'F-05', cluster_id: 'fiction_hp', page_role: 'Series', slug: 'ron-weasley-zodiac-sign', title: 'Ron Weasley', published: true },
+    { page_id: 'K-01', cluster_id: 'kpop_bts', page_role: 'Pillar', slug: 'bts-members-zodiac-signs', title: 'BTS Members', published: true },
+    { page_id: 'K-02', cluster_id: 'kpop_bts', page_role: 'Series', slug: 'jungkook-birth-chart', title: 'Jungkook Birth Chart', published: true },
+    { page_id: 'K-03', cluster_id: 'kpop_blackpink', page_role: 'Pillar', slug: 'blackpink-zodiac-signs', title: 'BLACKPINK Members', published: true },
+  ]);
+
+  assert.deepEqual(
+    planned.get('P-01').map((link) => link.href || `/en/wiki/${link.slug}`),
+    ['/en/wiki/venus-in-taurus', '/en/birth-chart-calculator'],
+  );
+  assert.deepEqual(planned.get('M-02').map((link) => link.page_id), ['M-01']);
+  assert.deepEqual(planned.get('M-01').map((link) => link.page_id), ['M-02']);
+  assert.deepEqual(planned.get('M-04').map((link) => link.page_id), ['M-03']);
+  assert.deepEqual(planned.get('F-02').map((link) => link.page_id), ['F-01', 'F-03', 'F-04', 'F-05']);
+  assert.deepEqual(planned.get('F-01').map((link) => link.page_id), ['F-02', 'F-03', 'F-04', 'F-05']);
+  assert.deepEqual(planned.get('K-02').map((link) => link.page_id), ['K-01']);
+  assert.equal(planned.get('K-02').some((link) => link.page_id === 'K-03'), false);
+});
+
+test('Pillar links include every published Series and canonical input attests artist_group', () => {
+  const spokes = Array.from({ length: 10 }, (_, index) => ({
+    page_id: `S-${String(index + 1).padStart(2, '0')}`,
+    cluster_id: 'saturn_return',
+    page_role: 'Series',
+    slug: `saturn-return-topic-${index + 1}`,
+    title: `Saturn Return Topic ${index + 1}`,
+    published: true,
+  }));
+  const planned = buildClusterLinkPlan([
+    { page_id: 'H-01', cluster_id: 'saturn_return', page_role: 'Pillar', slug: 'saturn-return-guide', title: 'Saturn Return Guide', published: true },
+    ...spokes,
+  ]);
+  assert.deepEqual(planned.get('H-01').map((link) => link.page_id), spokes.map((page) => page.page_id));
+
+  const input = buildClusterLinkInput({
+    pagesRaw: [
+      ['Target Keyword', 'page_id', 'cluster_id', 'page_role', 'artist_group'],
+      ['Rihanna birth chart', 'M-01', 'pop_music_birthchart', 'Pillar', 'rihanna'],
+    ],
+    clustersRaw: [['cluster_id'], ['pop_music_birthchart']],
+    publishedArticles: [{ page_id: 'M-01', slug: 'rihanna-birth-chart', title: 'Rihanna Birth Chart' }],
+  });
+  assert.equal(input.pages[0].artist_group, 'rihanna');
 });
 
 test('managed Cluster links replace only their own block and are idempotent', () => {

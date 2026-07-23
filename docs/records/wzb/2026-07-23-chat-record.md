@@ -30,6 +30,7 @@ aliases:
 - 用户确认不新增 `cluster_link_targets` 字段，并将 `gemini-zodiac-sign`、`venus-astrology` 两篇不存在页面的验收项视为误报而排除。重新运行三组回归测试 112/112 通过；本期实现以 PR #428 的人工审核合并为唯一剩余发布关口。
 - 回填 OPS 文档状态：7/21 集群优化 PRD 标为“已实现（待 PR #428 人工合并）”，记录数据、规则、CTA、调度、验证与误报排除；7/19 总体内链 PRD 标为“部分实施”，明确仅交付集群回填基础，其余 Req 1–5 原范围未被误标完成。
 - 重新按 7/21 集群优化 PRD 验收：实现与测试层完成，但生产未完成；PR #428 仍 OPEN、无 review decision、GitHub mergeStateStatus=UNKNOWN。另发现 PRD 的“选题登记表+结果复盘表联合查询”尚未逐字实现（当前以登记表+发布日志+Oracle 注册为准），以及“正文最多 8 条”依赖受管 Related Reading 块能否被产品认定为组件级链接，需在合并前明确。已据此将 7/21 PRD 状态纠正为“部分完成（待 PR #428 合并与规格对齐）”。
+- 获授权合并后，Oracle PR #428 已合并上线；生产验收发现受管边界标记泄漏为可见正文。以失败回归测试驱动修复静态 SEO 与 SPA 两个渲染器，PR #429 经 Vercel 通过后合并上线；生产抽验 Venus in Gemini 与 Saturn Return Guide 均已无标记且保留目标内链。7/21 PRD 已回填为“部分完成（已上线，待两项规格验收）”，仅余结果复盘表直接联合读取与 8 条上限/组件例外的产品判定。
 
 ---
 
@@ -275,3 +276,15 @@ inbox-maboyang/00-inbox/2026-07-21-内链结构优化需求文档 应该是这�
 **🤖 回答：**
 
 按 7/21 PRD 严格列出四项仍未闭环：PR #428 尚未人工审核合并，178 篇回填未进入生产；合并后的真实页面抽验尚未完成（Pillar 全量 Spoke、Smart Backfill、新发布文章回填、无 BTS→BLACKPINK 错链）；已发布页来源尚未按文档直接联合「选题登记表+结果复盘表」（当前实现是选题登记表+发布日志+Oracle 注册）；Pillar 全量 Series 与“正文最多 8 条”的关系尚未确认受管 Related Reading 块是否属于组件级例外。`gemini-zodiac-sign`/`venus-astrology` 验收项为用户确认的误报，不计入；7 个孤立 Oracle 旧 Cluster 的删除也不计入，因为用户明确要求 Cluster 不删除。数据表、手填 Cluster、专用规则、CTA、每日 review-only 触发器和测试均已完成。
+
+---
+
+### Q18 — 16:04
+
+**🙋 提问：**
+
+去落地。授权你合并
+
+**🤖 回答：**
+
+按授权合并 Oracle PR #428（merge commit `1ee727c2`）。生产验收发现 `gg-cluster-links` 管理边界被静态 SEO 转换器与 SPA Markdown 渲染器当作正文展示；先新增两条失败回归测试，再分别在两个渲染器过滤精确边界行。聚焦测试 40/40 通过，内链检查与完整生产构建通过，静态产物确认保留 Birth Chart Calculator 链接且无边界标记。修复由 Oracle PR #429 合并（merge commit `22105c95`，Vercel 通过）；生产轮询确认 `/en/wiki/venus-in-gemini`、`/en/wiki/saturn-return-guide` 无可见标记且目标内链仍在。回填 7/21 OPS PRD 状态为“部分完成（已上线，待两项规格验收）”；剩余仅为「结果复盘表」直接联合读取与 8 条正文上限/组件级例外的规格确认。

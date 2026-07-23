@@ -23,7 +23,9 @@
     "word count 1421 < min 1485",
     "SC3c section scatter: 1 section(s) with >3 scattered prose paragraphs",
     "L19: 子节 prose 段过多 (4 > 3); 用 `### ` H3 小标题把长叙述分组(每组 ≤3 段)，或改成「引子 + 编号列表」(v4.5.1 / 2026-06-09 H3)",
-    "target_keyword count = 14 (limit 13)"
+    "target_keyword count = 14 (limit 13)",
+    "word count 1249 < min 1485",
+    "target_keyword count = 12 (limit 11)"
   ],
-  "updatedAt": "2026-07-23T10:45:03.365Z"
+  "updatedAt": "2026-07-23T11:10:00.481Z"
 }

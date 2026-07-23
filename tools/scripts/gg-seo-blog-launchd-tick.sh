@@ -32,6 +32,7 @@ RECONCILE="${GG_SEO_RECONCILE_BIN:-$FLOW/tools/scripts/gg-ledger-reconcile.mjs}"
 READINESS="${GG_SEO_READINESS_BIN:-$FLOW/tools/scripts/gg-seo-readiness.mjs}"
 BATCH_SUMMARY="${GG_SEO_BATCH_SUMMARY_BIN:-$FLOW/tools/scripts/gg-batch-summary.mjs}"
 CLUSTER_LINKER="${GG_CLUSTER_LINKER_BIN:-$FLOW/tools/scripts/gg-cluster-internal-links.mjs}"
+INDEX_MONITOR="${GG_INDEX_MONITOR_BIN:-$FLOW/tools/scripts/gg-index-monitor.mjs}"
 SEO_AUTOPILOT="${GG_SEO_AUTOPILOT_BIN:-$FLOW/tools/scripts/gg-seo-autopilot.mjs}"
 NIGHTLY_LOG="${GG_SEO_NIGHTLY_LOG:-$HOME/Library/Logs/gg-nightly-seo.log}"
 OPS="${GG_OPS_DIR:-$HOME/gengrowth-ops}"
@@ -488,9 +489,13 @@ fi
 
 if [[ "$CLUSTER_LINKS_ENABLED" == "1" ]]; then
   [[ -f "$CLUSTER_LINKER" ]] || { echo "cluster linker unavailable: $CLUSTER_LINKER"; exit 1; }
+  [[ -f "$INDEX_MONITOR" ]] || { echo "index monitor unavailable: $INDEX_MONITOR"; exit 1; }
   [[ -f "$SEO_AUTOPILOT" ]] || { echo "SEO autopilot unavailable: $SEO_AUTOPILOT"; exit 1; }
   CLUSTER_LINK_INPUT="$CLUSTER_LINK_INPUT_DIR/$RUN_ID.json"
   mkdir -p "$CLUSTER_LINK_INPUT_DIR"
+  echo "strict reconcile complete; syncing published pages into Result Recap before Cluster link snapshot"
+  node "$INDEX_MONITOR" --sync-published --write-sheet
+  node "$INDEX_MONITOR" --sync-recap --write-sheet
   echo "strict reconcile complete; building OPS-approved Cluster link snapshot"
   set +e
   GG_FLOW_REPO="$FLOW" GG_OPS_DIR="$OPS" GG_ORACLE_DIR="$ORACLE_BASELINE" \

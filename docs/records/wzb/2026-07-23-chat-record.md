@@ -22,7 +22,7 @@ aliases:
 - 运行 Phase 2 Index Monitor：官方 Sitemap API 两站均成功；astrologywiki 检查 5 条、无失败，gengrowth 无到期检查；最终辅助队列合计 16 条（P1=4、P2=1、P3=11），日志未见飞书发送回执。
 - 运行结果复盘表更新：固定 wrapper 成功处理 astrologywiki 5 条、gengrowth 18 条精确 D14/D30/D60 到期已收录行，并写入两站生成字段与优化任务报告；日志未输出单独里程碑拆分或非到期/已填跳过数。
 - 核实本地 `gengrowth-ops`：工作树和远端同步状态均干净；后台 vault 同步进程正在运行并产生自动提交/推送，而 Obsidian Git 插件自身的自动提交、推送、拉取均关闭。该机制不代替 OPS 在 Sheet 手填 Cluster ID。
-- 运行关键词补充 brief 固定 wrapper：环境为 apply，但 astrologywiki 审计修复候选 10 条未更新（audit_incomplete=11），gengrowth 无候选；两站均无 page_id、预处理或证据发现记录，日志无失败。
+- 运行关键词补充 brief 固定 wrapper：环境为 apply，但 astrologywiki 审计修复候选 10 条未更新（audit_incomplete=11），gengrowth 无候选；两站均无 page_id、预处理或证据发现记录，日志无失败。源码追踪确认候选均缺少或无法解析到现有主题集群的 `cluster_id`，按 OPS 所有权规则 fail-closed，待人工分配集群后再由 wrapper 补全。
 
 ---
 
@@ -118,3 +118,21 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 仅执行指定入口 `bash tools/scripts/gg-topic-register-tick.sh`，退出码 0。最新日志窗口为 2026-07-23 13:33:26–13:33:29 CST，`dry_run=false`、`budget_exhausted=false`，即环境启用的 apply 模式。astrologywiki：selection_mode=audit_repair，candidates=10、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]、evidence_discovery=[]、audit_incomplete=11；gengrowth：selection_mode=generate，candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]、evidence_discovery=[]、audit_incomplete=0。JSON 为 `ok=true` 且窗口以 `topic-register ok` 收尾，未见失败、超时或异常；未进行手工 Sheet 写入、直接 task-plan 编辑或额外 Feishu/Google Doc 报告物创建。
+
+---
+
+### Q6 — 13:40
+
+**🙋 提问：**
+
+# Files mentioned by the user:
+
+## codex-clipboard-530eb9cd-4a0a-4152-99e3-2157d0d0e0fe.png: /var/folders/c8/k7q0dcp13rd8590xbtxs_9n80000gn/T/codex-clipboard-530eb9cd-4a0a-4152-99e3-2157d0d0e0fe.png
+
+## My request for Codex:
+
+<image name=[Image #1] path="/var/folders/c8/k7q0dcp13rd8590xbtxs_9n80000gn/T/codex-clipboard-530eb9cd-4a0a-4152-99e3-2157d0d0e0fe.png">
+
+**🤖 回答：**
+
+截图中「选题登记表」第 351–361 行只有 Target Keyword，和上轮 `audit_incomplete=11` 相符。按 `superpowers:systematic-debugging` 只读追踪：`audit_repair` 选中前 10 行后，`planRows` 仅会在缺少或找不到现有主题集群的 `cluster_id` 时将候选列入 `opsBlocked` 并跳过；本轮 candidates=10、updates=0 证明该阻断发生在全部候选。`cluster_id` 的指定权属于 OPS，且语义修复/自动分配已被明确禁用；因此不可由 Agent 手改 Sheet。OPS 为这 11 行分配主题集群表已有的 `cluster_id` 后，下一次固定 wrapper 即可生成 page_id、执行预处理并补全 brief。

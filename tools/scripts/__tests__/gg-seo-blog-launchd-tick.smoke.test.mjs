@@ -253,6 +253,7 @@ function runnerHarness({
       `GG_SEO_RECONCILE_BIN=${JSON.stringify(reconcile)}`,
       `GG_SEO_READINESS_BIN=${JSON.stringify(readiness)}`,
       `GG_SEO_BATCH_SUMMARY_BIN=${JSON.stringify(summary)}`,
+      'GG_CLUSTER_LINKS_ENABLED=0',
       `GG_OPS_DIR=${JSON.stringify(ops)}`,
       `GG_SEO_PLAN=${JSON.stringify(plan)}`,
       `GG_SEO_CLAIMS=${JSON.stringify(claims)}`,

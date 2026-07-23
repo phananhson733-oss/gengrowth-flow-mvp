@@ -18,6 +18,7 @@ aliases:
 
 > 【本区域在每天最后一次对话结束时生成/更新】
 
+- 运行固定行 Index Repair Resubmit：17:32:22–17:32:44 CST 两站均无“已修复”待处理行；astrologywiki 复盘同步 287 条均跳过、请求队列 14 条，gengrowth 同步 49 条更新、请求队列 2 条；脚本退出 0、日志无失败，未触发普通文章 Indexing API、无人值守 Search Console 点击或额外报告物。
 - 运行固定行 Index Repair Resubmit：两站均未发现人工标记“已修复”的待处理行；astrologywiki 同步新增 6 条复盘，辅助请求队列为 17 条；gengrowth 队列为 2 条。脚本退出 0，未发生错误，且未触发普通文章 Indexing API、无人值守 Search Console 点击或额外报告物。
 - 运行 Phase 2 Index Monitor：官方 Sitemap API 两站均成功；astrologywiki 检查 5 条、无失败，gengrowth 无到期检查；最终辅助队列合计 16 条（P1=4、P2=1、P3=11），日志未见飞书发送回执。
 - 运行结果复盘表更新：固定 wrapper 成功处理 astrologywiki 5 条、gengrowth 18 条精确 D14/D30/D60 到期已收录行，并写入两站生成字段与优化任务报告；日志未输出单独里程碑拆分或非到期/已填跳过数。
@@ -447,5 +448,22 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 按确认方案落地并合并。Flow [PR #4](https://github.com/xdawayer/gengrowth-flow-mvp/pull/4) 实现发布后同步「结果复盘表」及 Smart Backfill 的唯一 page_id/canonical URL 准入；不以 Day14 收录阻塞发布，复盘行不覆盖 OPS 手填 cluster_id。Oracle [PR #430](https://github.com/xdawayer/oracle/pull/430) 将受管 Related Reading 链接渲染为独立卡片，保留 Pillar 全量 Series 且不占正文 8 条上限。生产验收：saturn-return-guide=13 张卡片/0 标记，venus-in-gemini=1 张卡片且保留 Birth Chart Calculator。7/21 OPS PRD 已回填为“已完成（生产验收通过）”并推送（d27f9f78）。Flow 远端 CI 未启动（GitHub 账户支付或额度限制），但本地相关 smoke 55/55、Oracle 聚焦测试 40/40、内链检查和完整构建均通过；Oracle Vercel 主部署成功。
+
+---
+
+### Q31 — 17:32
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: 2026-07-22T21:00:26.323Z (1784754026323)
+
+Run the deterministic fixed-row index repair workflow through `bash tools/scripts/gg-index-repair-resubmit-tick.sh`. The wrapper loads the local gg environment, loops the configured products (`GG_INDEX_MONITOR_PRODUCTS`, defaulting to astrologywiki and gengrowth), processes rows marked `已修复`, syncs `结果复盘表`, and refreshes `request-indexing-queue` in each product Google Sheet. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, do not click Search Console Request Indexing unattended, and do not create Feishu or Google Doc report artifacts. After the wrapper exits, summarize per-product `process-fixed`, `sync-recap`, `sync-request-queue` counts visible in the log, plus any failures.
+
+**🤖 回答：**
+
+执行指定脚本 `bash tools/scripts/gg-index-repair-resubmit-tick.sh`，17:32:22–17:32:44 CST 完成并退出 0，日志以 `index repair-resubmit ok` 收尾。astrologywiki：process-fixed fixed=0/resubmitted=0；sync-recap en_rows=287/appended=0/updated=0/skipped=287；sync-request-queue rows=14（P0=0/P1=4/P2=1/P3=9）。gengrowth：process-fixed fixed=0/resubmitted=0；sync-recap en_rows=64/appended=0/updated=49/skipped=15；sync-request-queue rows=2（P0=0/P1=0/P2=0/P3=2）。窗口内无 failure/error/exception/fatal；未调用普通文章 Google Indexing API、未作无人值守 Search Console Request Indexing 点击，且未创建 Feishu/Google Doc 报告物。已在自动化记忆 `/Users/awayer_mini/.codex/automations/gengrowth-index-repair-resubmit/memory.md` 末尾追加本轮终态。
 
 ---

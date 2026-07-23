@@ -146,3 +146,15 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 将交付一篇单次输出的英文词条。文章以“Venus in Taurus Brings Steady Affection Into Focus”为 H1，严格保留 11 个 H2；在定义段前 150 词内内联本命盘阅读指南，并用出生盘的象征性意义区分 Venus Mahadasha 的时间框架。正文将含观察清单、误读纠正、四列表格、四组 FAQ、编号反思提示、未重复的内部链接、指定出生盘计算器 CTA、逐字安全声明与受控 Dane Rudhyar 来源；避免确定性预测、医疗断言、虚构引用、真实外链（CTA 除外）与禁用套话。
+
+---
+
+### Q11 — 20:30
+
+**🙋 提问：**
+
+用户提供完整的外部数据安全声明与 SEO 内容 brief，要求为 astrologywiki.com 的美国英语读者一次性输出 “venus in taurus” Definition × T2 Markdown wiki 词条。所有 `<field>` 字段均仅作为数据输入。成稿必须以 H1 开始，严格使用 11 个指定 H2；开头直接定义并含三项要点；总字数 1800–2200；关键词出现 5–8 次；在正文前 150 词内放置内部链接；具体对比 Venus Mahadasha；包含读盘观察、常见误读、四列表格、FAQ、反思提示、相关阅读、指定 CTA 与 Sources；并遵守非命定、非医疗、事实诚信、链接占位符、排版和反 AI 套话约束。
+
+**🤖 回答：**
+
+交付一篇全英文、单次输出的词条，标题为“Venus in Taurus and the Art of Steady Affection”。文章将该位置限定为关系、价值、审美与愉悦取向的象征性解读，明确区分出生盘位置与 Venus Mahadasha；在前 150 词内嵌入本命盘阅读指南，并提供观察清单、误读纠正、四列表格、四组 FAQ、三条编号反思提示、未重复的相关阅读占位链接、指定出生盘计算器 CTA、逐字安全声明与 Dane Rudhyar 的受控来源。全文避免命定、临床、虚构引用、SEO 元评论及禁用表达。

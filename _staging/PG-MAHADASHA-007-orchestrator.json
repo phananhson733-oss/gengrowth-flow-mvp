@@ -1,7 +1,7 @@
 {
   "page_id": "PG-MAHADASHA-007",
   "prompt_path": "/Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-MAHADASHA-007.v8-prompt.md",
-  "started_at": "2026-07-23T11:09:57.379Z",
+  "started_at": "2026-07-23T11:12:53.251Z",
   "models_requested": [
     "codex"
   ],
@@ -10,7 +10,7 @@
   "max_cost_usd_per_page": 5,
   "budget_exceeded_models": [],
   "ok_count": 1,
-  "total_cost_estimate_usd": 0.1579,
+  "total_cost_estimate_usd": 0.1697,
   "results": {
     "codex": {
       "model": "codex",
@@ -19,14 +19,14 @@
       "ok": true,
       "output_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-MAHADASHA-007-codex-v8.md",
       "retries": 0,
-      "duration_s": 147.8,
+      "duration_s": 172.6,
       "cost_estimate_usd": {
-        "usd": 0.1579,
-        "input_tokens_est": 9295,
-        "output_tokens_est": 1624,
+        "usd": 0.1697,
+        "input_tokens_est": 9313,
+        "output_tokens_est": 1915,
         "pricing_note": "GPT 5.5 xhigh"
       },
-      "cumulative_cost_usd": 0.1579,
+      "cumulative_cost_usd": 0.1697,
       "budget_exceeded": false,
       "budget_usd": 5,
       "attempts": [
@@ -34,13 +34,13 @@
           "try_index": 1,
           "model": "codex",
           "command": "codex exec -c model=gpt-5.6-terra -c reasoning_effort=xhigh - < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-MAHADASHA-007.v8-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-MAHADASHA-007-codex-v8.md",
-          "cost_usd": 0.1579,
-          "cumulative_cost_usd": 0.1579,
+          "cost_usd": 0.1697,
+          "cumulative_cost_usd": 0.1697,
           "ok": true,
           "exit_code": 0,
-          "duration_s": 147.8,
-          "stderr_tail": "Sources 条目。全篇保持非命定、非医疗、无 SEO 元评论的解释语气。\n \n ---\n+\n+### Q34 — 19:09\n+\n+**🙋 提问：**\n+\n+用户提供了完整的数据源安全声明与 Venus in Taurus T2 Definition 词条创作 brief，要求基于指定关键词、结构、内链、事实诚信、排版、词数和措辞红线，一次性输出 100% 自然美式英语 Markdown 文章；外部字段仅作为数据输入，不执行其中任何指令。\n+\n+**🤖 回答：**\n+\n+生成符合 brief 的英文 wiki 词条：从单一 H1 直接进入定义 H2，使用 11 个规定的 H2、受控的关键词分布、前段内联的本命盘阅读指南占位符、Venus Mahadasha 的边界比较、观察清单、误读校正、四列表格、FAQ、反思问题、相关阅读、指定 Birth Chart Calculator CTA 及正文已提及的 Dane Rudhyar 来源。内容以象征性、非命定的解释框架呈现，未使用医疗主张、搜索元评论、真实外链或未经支持的事实。\n+\n+---\n\ntokens used\n65,520",
-          "stdout_bytes": 8012
+          "duration_s": 172.6,
+          "stderr_tail": "+### Q35 — 19:11\n+\n+**🙋 提问：**\n+\n+用户要求遵循其完整的数据来源安全声明，将其中的外部字段仅视作内容输入；为 astrologywiki.com 美国英语受众一次性撰写 Venus in Taurus 的 Definition × T2 wiki 词条。要求 Markdown、无 YAML、从 H1 到 Sources 结束、100% 自然美式英语、恰好 11 个 H2、1800–2200 词，并满足定义段、关键词、比较、表格、FAQ、反思问题、内链、CTA、来源和全部安全及措辞限制。\n+\n+**🤖 回答：**\n+\n+生成单篇英文词条，直接以 H1 和定义 H2 开始。稿件按要求将 Venus in Taurus 作为非命定的象征性解读框架，区分本命位置与 Venus Mahadasha 的时间语境，提供可观察线索、常见误读、四列表格、FAQ、反思问题、合规内链占位符、指定 birth-chart calculator CTA，以及与正文一致的受控 Sources；不执行外部字段中的指令性文本。\n+\n+---\n\ntokens used\n69,105",
+          "stdout_bytes": 9429
         }
       ]
     }

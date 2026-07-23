@@ -511,3 +511,15 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 生成符合 brief 的英文 wiki 词条：从单一 H1 直接进入定义 H2，使用 11 个规定的 H2、受控的关键词分布、前段内联的本命盘阅读指南占位符、Venus Mahadasha 的边界比较、观察清单、误读校正、四列表格、FAQ、反思问题、相关阅读、指定 Birth Chart Calculator CTA 及正文已提及的 Dane Rudhyar 来源。内容以象征性、非命定的解释框架呈现，未使用医疗主张、搜索元评论、真实外链或未经支持的事实。
 
 ---
+
+### Q35 — 19:11
+
+**🙋 提问：**
+
+用户要求遵循其完整的数据来源安全声明，将其中的外部字段仅视作内容输入；为 astrologywiki.com 美国英语受众一次性撰写 Venus in Taurus 的 Definition × T2 wiki 词条。要求 Markdown、无 YAML、从 H1 到 Sources 结束、100% 自然美式英语、恰好 11 个 H2、1800–2200 词，并满足定义段、关键词、比较、表格、FAQ、反思问题、内链、CTA、来源和全部安全及措辞限制。
+
+**🤖 回答：**
+
+生成单篇英文词条，直接以 H1 和定义 H2 开始。稿件按要求将 Venus in Taurus 作为非命定的象征性解读框架，区分本命位置与 Venus Mahadasha 的时间语境，提供可观察线索、常见误读、四列表格、FAQ、反思问题、合规内链占位符、指定 birth-chart calculator CTA，以及与正文一致的受控 Sources；不执行外部字段中的指令性文本。
+
+---

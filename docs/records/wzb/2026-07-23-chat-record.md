@@ -21,6 +21,7 @@ aliases:
 - 运行固定行 Index Repair Resubmit：两站均未发现人工标记“已修复”的待处理行；astrologywiki 同步新增 6 条复盘，辅助请求队列为 17 条；gengrowth 队列为 2 条。脚本退出 0，未发生错误，且未触发普通文章 Indexing API、无人值守 Search Console 点击或额外报告物。
 - 运行 Phase 2 Index Monitor：官方 Sitemap API 两站均成功；astrologywiki 检查 5 条、无失败，gengrowth 无到期检查；最终辅助队列合计 16 条（P1=4、P2=1、P3=11），日志未见飞书发送回执。
 - 运行结果复盘表更新：固定 wrapper 成功处理 astrologywiki 5 条、gengrowth 18 条精确 D14/D30/D60 到期已收录行，并写入两站生成字段与优化任务报告；日志未输出单独里程碑拆分或非到期/已填跳过数。
+- 核实本地 `gengrowth-ops`：工作树和远端同步状态均干净；后台 vault 同步进程正在运行并产生自动提交/推送，而 Obsidian Git 插件自身的自动提交、推送、拉取均关闭。该机制不代替 OPS 在 Sheet 手填 Cluster ID。
 
 ---
 
@@ -87,3 +88,15 @@ After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-s
 **🤖 回答：**
 
 执行唯一指定入口 `bash tools/scripts/gg-recap-performance-tick.sh`，10:00:59–10:01:35 CST 退出 0，日志以 `recap performance ok` 收尾。astrologywiki（wb=…jyzcQc、sc-domain:astrologywiki.com、GA4 properties/524765570）：精确里程碑计划 rows=5，写入更新=262，任务=262；报告 `~/gengrowth-agents/reports/recap-performance/2026-07-23-astrologywiki-optimization-tasks.md`，任务桶 P0=11、技术排查=158、P1=12、P2=0、观察=81。gengrowth（wb=…ZTIRA8、sc-domain:gengrowth.ai、同一 GA4 property）：rows=18，写入更新=51，任务=61；报告 `~/gengrowth-agents/reports/recap-performance/2026-07-23-gengrowth-optimization-tasks.md`，任务桶 P0=0、技术排查=47、P1=5、P2=0、观察=9。`rows` 是合并 D14/D30/D60 的已收录且未填节点计划数；日志没有输出 D14/D30/D60 单独拆分，也没有单独的非节点/已填跳过计数。日志未见 warn/error/fail/timeout 或凭据、property、workbook 缺失边界。未使用 repair 参数，未手改 Sheet、未发布/部署/改源文件、未提交 GSC Request Indexing 或调用 Google Indexing API；wrapper 自身按既有行为发送了成功通知。
+
+---
+
+### Q4 — 12:32
+
+**🙋 提问：**
+
+ops 是一个本地的文件夹，会自动提交吧
+
+**🤖 回答：**
+
+已核实 `/Users/awayer_mini/gengrowth-ops` 是本地 Git 仓库，当前工作树干净且与 `origin/main` 无领先/落后。后台 `obsidian_vault_git_sync.py` 进程正在运行，最近可见 `vault backup` 自动提交，因而该目录会自动提交并同步；但 Obsidian Git 插件配置的 `autoSaveInterval`、`autoPushInterval`、`autoPullInterval` 都是 0，实际来源是后台 vault 同步进程。自动同步只处理本地仓库文件，不会读写 Google Sheet，也不生成或替代 OPS 手动填写 Cluster ID。

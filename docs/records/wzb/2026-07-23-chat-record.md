@@ -25,6 +25,7 @@ aliases:
 - 运行关键词补充 brief 固定 wrapper：环境为 apply，但 astrologywiki 审计修复候选 10 条未更新（audit_incomplete=11），gengrowth 无候选；两站均无 page_id、预处理或证据发现记录，日志无失败。已实现“cluster_id 永远手填”的候选门禁：仅主题集群表中存在的人工 ID 才占限额，无效/未知 ID 以 `ops_blocked` 明细报告、不阻塞就绪行，也不自动创建或覆写。新增测试通过；真实 dry-run 识别第 351–361 行 11 个未知 ID，未写 Sheet。
 - 对照《内链结构优化需求文档》复核：Cluster 手填准入与 review-only 回填能力已实现并通过测试，但 22 个需求新增 Cluster ID 尚未写入当前 OPS Sheet；历史回填 PR #423 仍未合并，生产无受管理内链块。现有规划器也未覆盖文档的 R3/R4/R5 专用分组规则、Pillar 全量 Spoke 覆盖和每页 8 条上限，需求不能判定为全部完成。
 - 获授权直接修改规范 Google Sheet 后，新增 `artist_group` 列，新增 24 个 Cluster（文档 22 个加注册行引用而遗漏定义的 `fiction_friends`、`fiction_disney`），修正 42 条现有页面并补注册 167 条关键词。逐行回读 214 个需求归属均匹配、无重复或未知 ID；内链输入快照构建成功。未触发内容生成、通知、PR 合并或部署。
+- 最新验收结论：数据治理层已通过（24 个 Cluster 与 214 条关键词归属均正确，且无自动语义分配）；端到端内链需求尚未通过。当前规划器仍缺同行星/同艺人/同 IP 规则与 Pillar 全量 Spoke，当前快照仅 dry-run 178 篇；PR #423 未合并且生产标记数为 0，Oracle 主 CTA 也尚无映射。
 
 ---
 
@@ -198,3 +199,15 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 按授权直接修改规范 Sheet `astrologywiki.com`。先读取元数据、字段约束和需求文档，确认 `artist_group` 缺列、需求表内有 214 个关键词归属（47 条已有、167 条待补）。在 `选题登记表` 的 `page_role` 后插入 `artist_group` 列并保留现有格式与校验；在 `主题集群表` 新增 24 个 Cluster（文档列出的 22 个，以及注册行已引用但集群定义遗漏的 `fiction_friends`、`fiction_disney`），修正 42 条现有页面 Cluster/角色，并在 362–528 行新增 167 条关键词及其手填 `cluster_id`、`page_role`、`artist_group`。为 `oracle_matrix` 的“Oracle 工具页”补充该单元格校验选项；CTA Map 已有 `/oracle` 导航 URL，但尚无 primary CTA 映射。逐行回读：214/214 归属匹配、无重复关键词、24 个 Cluster 均存在；内链输入快照 `409dbfa5…60921` 成功构建。未触发自动生成、通知、合并 PR 或部署。
+
+---
+
+### Q12 — 14:59
+
+**🙋 提问：**
+
+验收一下是否和需求已经匹配
+
+**🤖 回答：**
+
+按需求逐项以当前 Sheet、代码、测试、PR 和生产状态验收。数据治理层通过：需求的 214 条关键词归属全部匹配，24 个相关 Cluster 均存在，`artist_group` 字段已加入，且 OPS 手填 ID 的 fail-closed/不自动语义分配测试通过。端到端内链需求未通过：规划器仍为 Hub 最多 3 条、同级最多 2 条的通用策略，未实现同行星、同艺人、同 IP、Pillar 覆盖全部已发布 Series 等规则；当前新快照只生成了 178 篇 dry-run，未应用。PR #423 仍 OPEN、未审查合并，生产文章受管理内链标记为 0，因此无法证明 Venus 链接、无跨 Cluster 错链和发布后回填。`oracle_matrix` 的 CTA 值已可填，但 CTA Map 尚无 Oracle 主 CTA 映射。结论为“数据层已匹配，完整需求尚未匹配”。

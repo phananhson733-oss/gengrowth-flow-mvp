@@ -26,6 +26,7 @@ aliases:
 - 对照《内链结构优化需求文档》复核：Cluster 手填准入与 review-only 回填能力已实现并通过测试，但 22 个需求新增 Cluster ID 尚未写入当前 OPS Sheet；历史回填 PR #423 仍未合并，生产无受管理内链块。现有规划器也未覆盖文档的 R3/R4/R5 专用分组规则、Pillar 全量 Spoke 覆盖和每页 8 条上限，需求不能判定为全部完成。
 - 获授权直接修改规范 Google Sheet 后，新增 `artist_group` 列，新增 24 个 Cluster（文档 22 个加注册行引用而遗漏定义的 `fiction_friends`、`fiction_disney`），修正 42 条现有页面并补注册 167 条关键词。逐行回读 214 个需求归属均匹配、无重复或未知 ID；内链输入快照构建成功。未触发内容生成、通知、PR 合并或部署。
 - 最新验收结论：数据治理层已通过（24 个 Cluster 与 214 条关键词归属均正确，且无自动语义分配）；端到端内链需求尚未通过。当前规划器仍缺同行星/同艺人/同 IP 规则与 Pillar 全量 Spoke，当前快照仅 dry-run 178 篇；PR #423 未合并且生产标记数为 0，Oracle 主 CTA 也尚无映射。
+- 按已授权的 PRD 落地：实现并测试同行星、同艺人、同 IP 与 Pillar→全部已发布 Series 的受管内链规则；启用每日创建审核 PR 阶段；补齐 Oracle 主 CTA。新快照已创建 Oracle PR #428，内链检查、构建和 Vercel Preview 通过，仍等待人工审核合并；`gemini-zodiac-sign`、`venus-astrology` 尚未注册/发布，故其指向 Venus 页面这一条只能待内容入库后自动回填。
 
 ---
 
@@ -211,3 +212,15 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 按需求逐项以当前 Sheet、代码、测试、PR 和生产状态验收。数据治理层通过：需求的 214 条关键词归属全部匹配，24 个相关 Cluster 均存在，`artist_group` 字段已加入，且 OPS 手填 ID 的 fail-closed/不自动语义分配测试通过。端到端内链需求未通过：规划器仍为 Hub 最多 3 条、同级最多 2 条的通用策略，未实现同行星、同艺人、同 IP、Pillar 覆盖全部已发布 Series 等规则；当前新快照只生成了 178 篇 dry-run，未应用。PR #423 仍 OPEN、未审查合并，生产文章受管理内链标记为 0，因此无法证明 Venus 链接、无跨 Cluster 错链和发布后回填。`oracle_matrix` 的 CTA 值已可填，但 CTA Map 尚无 Oracle 主 CTA 映射。结论为“数据层已匹配，完整需求尚未匹配”。
+
+---
+
+### Q13 — 15:21
+
+**🙋 提问：**
+
+去优化，按照需求落地
+
+**🤖 回答：**
+
+按已批准的需求直接落地。以先失败后通过的测试实现专用受管内链规则：`planetary_placements_natal` 仅同行星互链并指向 Birth Chart Calculator；`pop_music_birthchart` 按必填 `artist_group` 隔离；`fiction_*` Series→Pillar+最多 3 篇同 IP Series、Pillar→全部已发布 Series；通用 Cluster 保持 Hub/Series 规则。`gg-sheet-to-brief.mjs` 现优先解析 OPS 在 Cluster 表选择的 CTA Map `cta_id`；CTA Map 新增并回读 `Oracle 工具页`（Tool、https://www.astrologywiki.com/oracle、oracle_cta_click）。每日 launchd tick 默认启用 Cluster 审核 PR 阶段，不会自动合并。三组 smoke 测试合计 112 通过/0 失败；新鲜快照覆盖 187 页、计划更新 178 页，`scripts/check-internal-links.mjs` 与 `npm run build` 均通过。已创建 Oracle PR #428，Vercel Preview 成功、状态 OPEN/CLEAN，等待人工审核合并。PRD 点名的 `gemini-zodiac-sign` 与 `venus-astrology` 当前既未在 Oracle 文章目录/索引中注册，也不在发布日志或快照里，因此不能伪造其到 `venus-in-gemini` 的链接；待 OPS 注册发布后会由规则自动回填。

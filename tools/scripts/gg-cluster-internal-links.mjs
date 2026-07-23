@@ -13,6 +13,7 @@ const SNAPSHOT_ID_RE = /^[a-f0-9]{64}$/;
 const SLUG_RE = /^[a-z0-9][a-z0-9-]*$/;
 const PLANETARY_CLUSTER_ID = 'planetary_placements_natal';
 const POP_MUSIC_CLUSTER_ID = 'pop_music_birthchart';
+const RECAP_TAB = '结果复盘表';
 const BIRTH_CHART_CALCULATOR = Object.freeze({
   page_id: 'tool:birth-chart-calculator',
   href: '/en/birth-chart-calculator',
@@ -46,6 +47,25 @@ function pageLink(page) {
 
 function linkHref(link) {
   return text(link?.href) || (text(link?.slug) ? `/en/wiki/${text(link.slug)}` : '');
+}
+
+function recapWikiPath(value) {
+  try {
+    return new URL(text(value)).pathname.replace(/\/$/, '');
+  } catch {
+    return '';
+  }
+}
+
+export function assertRecapGate(publishedArticles, recapRows) {
+  if (!Array.isArray(recapRows)) throw new Error('result recap rows are required');
+  for (const article of publishedArticles) {
+    const expected = `/en/wiki/${text(article.slug)}`;
+    const matched = recapRows.filter((row) => text(row?.page_id) === text(article.page_id) && recapWikiPath(row?.url) === expected);
+    if (matched.length !== 1) {
+      throw new Error(`recap_gate_failed page_id=${text(article.page_id)} expected_url=${expected}`);
+    }
+  }
 }
 
 function uniqueLinks(source, candidates) {
@@ -127,11 +147,12 @@ function approvedClusterIds(clustersRaw) {
   return [...rowsById.keys()].sort();
 }
 
-export function buildClusterLinkInput({ pagesRaw, clustersRaw, publishedArticles }) {
+export function buildClusterLinkInput({ pagesRaw, clustersRaw, publishedArticles, recapRows }) {
   if (!Array.isArray(pagesRaw) || !Array.isArray(pagesRaw[0])) {
     throw new Error('canonical Pages rows are required');
   }
   if (!Array.isArray(publishedArticles)) throw new Error('published articles are required');
+  if (recapRows !== undefined) assertRecapGate(publishedArticles, recapRows);
   const approved = approvedClusterIds(clustersRaw);
   const approvedSet = new Set(approved);
   const header = pagesRaw[0];
@@ -262,11 +283,12 @@ export async function readCanonicalClusterRows({ readRows = null } = {}) {
     const token = await getAccessToken();
     reader = (tab) => fetchTab(workbookId, tab, token);
   }
-  const [pagesRaw, clustersRaw] = await Promise.all([
+  const [pagesRaw, clustersRaw, recapRows] = await Promise.all([
     reader(DEFAULT_TAB),
     reader(CLUSTERS_TAB),
+    reader(RECAP_TAB),
   ]);
-  return { pagesRaw, clustersRaw };
+  return { pagesRaw, clustersRaw, recapRows };
 }
 
 export function buildClusterLinkPlan(pages, { maxSiblingLinks = 2, maxFictionSiblingLinks = 3 } = {}) {
@@ -400,8 +422,8 @@ async function main(argv) {
       parsePublishedArticleLog(readFileSync(resolve(args.published_log), 'utf8')),
     );
     assertRegisteredOracleArticles(oracleDir, publishedArticles);
-    const { pagesRaw, clustersRaw } = await readCanonicalClusterRows();
-    const input = buildClusterLinkInput({ pagesRaw, clustersRaw, publishedArticles });
+    const { pagesRaw, clustersRaw, recapRows } = await readCanonicalClusterRows();
+    const input = buildClusterLinkInput({ pagesRaw, clustersRaw, publishedArticles, recapRows });
     const out = resolve(args.out);
     mkdirSync(dirname(out), { recursive: true });
     writeFileSync(out, `${JSON.stringify(input, null, 2)}\n`);

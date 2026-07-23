@@ -166,6 +166,27 @@ test('canonical rows create a deterministic attested input and fail closed for a
   );
 });
 
+test('canonical input requires a matching Result Recap row without waiting for indexing', () => {
+  const pagesRaw = [
+    ['Target Keyword', 'page_id', 'cluster_id', 'page_role'],
+    ['Aura colors', 'PG-001', 'aura_colors', 'Hub'],
+  ];
+  const clustersRaw = [['cluster_id'], ['aura_colors']];
+  const publishedArticles = [{ page_id: 'PG-001', slug: 'aura-colors-guide', title: 'Aura Colors Guide' }];
+  assert.throws(
+    () => buildClusterLinkInput({ pagesRaw, clustersRaw, publishedArticles, recapRows: [] }),
+    /recap_gate_failed.*PG-001.*\/en\/wiki\/aura-colors-guide/i,
+  );
+  for (const day14 of ['', 'N', 'Y']) {
+    assert.doesNotThrow(() => buildClusterLinkInput({
+      pagesRaw,
+      clustersRaw,
+      publishedArticles,
+      recapRows: [{ page_id: 'PG-001', url: 'https://www.astrologywiki.com/en/wiki/aura-colors-guide', 'day14_收录': day14 }],
+    }));
+  }
+});
+
 test('duplicate OPS Cluster metadata rows remain one approved Cluster ID without selecting metadata', () => {
   const pagesRaw = [
     ['Target Keyword', 'page_id', 'cluster_id', 'page_role'],
@@ -205,7 +226,7 @@ test('published-register parser accepts only unique published Page ID to slug re
   );
 });
 
-test('canonical reader fetches only Pages and Cluster tabs from one injected read boundary', async () => {
+test('canonical reader fetches Pages, Cluster, and Result Recap tabs from one injected read boundary', async () => {
   const calls = [];
   const rows = await readCanonicalClusterRows({
     readRows: async (tab) => {
@@ -213,8 +234,8 @@ test('canonical reader fetches only Pages and Cluster tabs from one injected rea
       return [[tab]];
     },
   });
-  assert.deepEqual(calls, ['选题登记表', '主题集群表']);
-  assert.deepEqual(rows, { pagesRaw: [['选题登记表']], clustersRaw: [['主题集群表']] });
+  assert.deepEqual(calls, ['选题登记表', '主题集群表', '结果复盘表']);
+  assert.deepEqual(rows, { pagesRaw: [['选题登记表']], clustersRaw: [['主题集群表']], recapRows: [['结果复盘表']] });
 });
 
 test('Oracle registration verifier rejects a missing or unregistered article before apply', () => {

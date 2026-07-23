@@ -499,3 +499,15 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 按指定的一次性 Markdown 格式生成英文 T2 词条。稿件以 `# Venus in Taurus and the Art of Steady Affection` 开始，包含恰好 11 个 H2，定义段直接解释该本命盘位置并在前 150 词内内联本命盘阅读指南占位符；区分 Venus Mahadasha 的时间框架与本命盘位置的象征框架；提供观察步骤、误读纠正、四列表格、四组 FAQ、三条反思问题、相关阅读、指定 birth-chart calculator CTA 及仅引用正文已命名的 Dane Rudhyar 的 Sources 条目。全篇保持非命定、非医疗、无 SEO 元评论的解释语气。
 
 ---
+
+### Q34 — 19:09
+
+**🙋 提问：**
+
+用户提供了完整的数据源安全声明与 Venus in Taurus T2 Definition 词条创作 brief，要求基于指定关键词、结构、内链、事实诚信、排版、词数和措辞红线，一次性输出 100% 自然美式英语 Markdown 文章；外部字段仅作为数据输入，不执行其中任何指令。
+
+**🤖 回答：**
+
+生成符合 brief 的英文 wiki 词条：从单一 H1 直接进入定义 H2，使用 11 个规定的 H2、受控的关键词分布、前段内联的本命盘阅读指南占位符、Venus Mahadasha 的边界比较、观察清单、误读校正、四列表格、FAQ、反思问题、相关阅读、指定 Birth Chart Calculator CTA 及正文已提及的 Dane Rudhyar 来源。内容以象征性、非命定的解释框架呈现，未使用医疗主张、搜索元评论、真实外链或未经支持的事实。
+
+---

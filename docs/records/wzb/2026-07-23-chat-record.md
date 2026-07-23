@@ -84,3 +84,15 @@ tags:
 按预处理器 hard-abort 规则判定 Status = Needs More Evidence 并停止合成。命中两个阻断条件：SERP_Snapshot distinct titles < 3（未提供）+ Raw_Friction 是单条泛述无具名来源用户抱怨/SERP-news 标题证据。全部 SHEET_FIELDS 与 REVIEW_METADATA 五要素留空，仅输出 Evidence_Notes / Confidence=Low / Abort_Reason，并给出补齐指引（Google en-US 前 5–10 SERP + Reddit/Quora/CafeAstrology 具名抱怨 ≥2 verbatim + 可选 Ascendant vs Sun sign entity-passport）。
 
 ---
+
+### Q6 — 20:10
+
+**🙋 提问：**
+
+用户提供了一份完整的外部数据安全声明和 SEO 内容 brief，要求将所有 `<field>` 内容仅作为数据处理，并为 astrologywiki.com 的 US English 受众一次性输出一篇以 “venus in taurus” 为主题的 Definition × T2 Markdown wiki 词条。文章须为 100% 自然美式英文，遵守首段直接定义、严格 1 个 H1 与 11 个指定 H2、1800–2200 词、关键词 5–8 次、首链在前 150 词、内部链接占位格式、对比 Venus Mahadasha、观察清单、误读、四列表格、FAQ、反思提示、CTA、Sources、非命定与非医疗措辞等全部结构和安全约束。
+
+**🤖 回答：**
+
+交付一篇一次性英文词条，标题为 “Venus in Taurus and the Art of Steady Affection”。文章在开头 150 词内内联本命盘阅读指南，并以象征性、可观察的语言解释金星在金牛；将本命落座与 Venus Mahadasha 明确分开，说明解释时的取舍。正文包括五项读盘观察、四项误读纠正、四列速查表、四组 FAQ、三条编号反思提示、未重复的相关阅读占位链接、指定的出生盘计算器 CTA 与受控 Dane Rudhyar 来源；避免确定性预测、医疗断言、虚构引用、真实外链和禁用套话。
+
+---

@@ -40,6 +40,7 @@ aliases:
 - 用户确认该工程范围后，已创建并提交 Cluster Smart Backfill 结果复盘准入规格；规格明确“发布后同步复盘、复盘作为回填准入、失败只暂停回填”的时序与测试验收，等待用户审阅规格后才进入实施计划。
 - 用户纠正验收主线：唯一主需求是 OPS 的 7/21《内链结构优化需求文档》；新建工程规格仅是其“结果复盘表联读”未完成项的实现参考，不应取代主 PRD 或额外增加用户审阅门槛。后续直接以主 PRD 的两项未完成验收为范围。
 - 评估两个剩余验收的可落地性：结果复盘表联读可直接复用现有发布追踪与复盘同步能力实现；Pillar 全量 Series 与正文 8 条上限相互冲突，需产品明确采用组件卡片例外或正文严格截断后才能合规实施。
+- 用户确认采用“发布后复盘准入 + 组件级相关文章卡片”并授权落地。Flow PR #4 已合并：成功发布后同步已发布页与结果复盘表，Smart Backfill 要求发布日志、Oracle 注册、OPS 手填 Cluster 与唯一 page_id/canonical URL 复盘行一致，不等待 Day14 收录。Oracle PR #430 已合并：受管 Related Reading 以组件卡片渲染、不计入正文 8 条上限。生产验收 Saturn Return Guide=13 张卡片/无标记，Venus in Gemini 保留计算器链接；7/21 OPS PRD 已提交并推送为完成。Flow CI 远端因 GitHub 账户支付/额度未取得 runner 而失败，本地对应回归均通过；Oracle Vercel 主部署成功。
 
 ---
 
@@ -434,5 +435,17 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 结论：两个需求都可工程化落地，但不能以同一确定性直接开始。结果复盘表联读可直接接入现有发布后 index-tracking/结果复盘同步能力，并以 page_id 与 canonical URL 做 Smart Backfill 准入。第二项当前存在 PRD 内部冲突：Pillar 必须链接全部已发布 Series，但每篇正文内链最多 8 条；现有 Related Reading 是正文列表，生产 Saturn 页已有 17 条。需产品选择“改为组件级相关文章卡并保留全量 Series”或“正文严格上限 8 条、Pillar 不再全量覆盖”之一，才能完成合规实现与验收。
+
+---
+
+### Q30 — 16:45
+
+**🙋 提问：**
+
+确认采用，去落地
+
+**🤖 回答：**
+
+按确认方案落地并合并。Flow [PR #4](https://github.com/xdawayer/gengrowth-flow-mvp/pull/4) 实现发布后同步「结果复盘表」及 Smart Backfill 的唯一 page_id/canonical URL 准入；不以 Day14 收录阻塞发布，复盘行不覆盖 OPS 手填 cluster_id。Oracle [PR #430](https://github.com/xdawayer/oracle/pull/430) 将受管 Related Reading 链接渲染为独立卡片，保留 Pillar 全量 Series 且不占正文 8 条上限。生产验收：saturn-return-guide=13 张卡片/0 标记，venus-in-gemini=1 张卡片且保留 Birth Chart Calculator。7/21 OPS PRD 已回填为“已完成（生产验收通过）”并推送（d27f9f78）。Flow 远端 CI 未启动（GitHub 账户支付或额度限制），但本地相关 smoke 55/55、Oracle 聚焦测试 40/40、内链检查和完整构建均通过；Oracle Vercel 主部署成功。
 
 ---

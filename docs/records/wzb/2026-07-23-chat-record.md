@@ -301,3 +301,17 @@ inbox-maboyang/00-inbox/2026-07-21-内链结构优化需求文档 应该是这�
 **🤖 回答：**
 
 按 7/21 PRD 的原文逐项验收，两个剩余项均不接受关闭。其一，Smart Backfill 的实现只以发布日志和 Oracle 文章注册构成发布集合，未读取「结果复盘表」，未满足“选题登记表 + 结果复盘表联合查询”。其二，受管内链被写入 `## Related Reading` 的普通 Markdown 列表并由文章正文渲染器输出；生产 `/en/wiki/saturn-return-guide` 的该段有 17 条链接，超过正文上限 8 条，不能认定为“工具/相关文章卡”组件例外。建议后续分别实施复盘表联读，以及在“组件卡片化”和“正文硬限 8 条”之间做产品决策后再关闭。
+
+---
+
+### Q20 — 16:10 [claude]
+
+**🙋 提问：**
+
+用户提交了一份 v2.0 SEO Content Variable Pre-processor 任务：Target_Keyword=Jungkook birth chart，Tier=T2/Definition，Cluster=BTS Birth Charts & Zodiac Signs，Raw_Friction=Readers need Jungkook Birth Chart framed as an interpretive profile, not a claim that astrology verifies biography or outcomes；Draft_Angle/SERP_Snapshot/Entity_RAG 均为占位符未提供。
+
+**🤖 回答：**
+
+按任务内 Hard-abort 条款执行 STOP：SERP_Snapshot 未提供（distinct-title=0，< 3 阈值），Raw_Friction 为单条无来源的框架陈述、无 sourced 用户抱怨或 SERP/news 命名域名证据；两项硬阻断同时命中。未合成 Entity/Friction/Logic/Content_Angle，输出 Status=Needs More Evidence、Confidence=Low、Draft_Angle_Disposition=N/A（占位符）。补齐建议：SERP top 5-10、≥2 条 sourced verbatim 或 ≥3 条命名域名 SERP/news 标题、明确 Draft_Angle 假设。未写 Sheet、未生产内容、未通知。
+
+---

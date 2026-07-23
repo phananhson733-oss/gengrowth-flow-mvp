@@ -20,6 +20,7 @@ aliases:
 
 - 运行固定行 Index Repair Resubmit：两站均未发现人工标记“已修复”的待处理行；astrologywiki 同步新增 6 条复盘，辅助请求队列为 17 条；gengrowth 队列为 2 条。脚本退出 0，未发生错误，且未触发普通文章 Indexing API、无人值守 Search Console 点击或额外报告物。
 - 运行 Phase 2 Index Monitor：官方 Sitemap API 两站均成功；astrologywiki 检查 5 条、无失败，gengrowth 无到期检查；最终辅助队列合计 16 条（P1=4、P2=1、P3=11），日志未见飞书发送回执。
+- 运行结果复盘表更新：固定 wrapper 成功处理 astrologywiki 5 条、gengrowth 18 条精确 D14/D30/D60 到期已收录行，并写入两站生成字段与优化任务报告；日志未输出单独里程碑拆分或非到期/已填跳过数。
 
 ---
 
@@ -56,3 +57,33 @@ Run the GenGrowth Phase 2 indexing workflow through the existing deterministic w
 **🤖 回答：**
 
 执行指定固定入口 `bash tools/scripts/gg-index-monitor-tick.sh`，09:01:42–09:03:36 CST 退出 0，日志以 `index monitor ok` 收尾。官方 Sitemap API：astrologywiki 与 gengrowth 均成功。URL Inspection：astrologywiki 到期 5 条，已检查 5 条、alerts=0、failures=0（3 条已收录、2 条继续监控）；gengrowth 到期 0 条，未检查。复盘表同步：astrologywiki en_rows=287/appended=0/updated=287/skipped=0；gengrowth en_rows=64/appended=0/updated=51/skipped=13。请求队列：astrologywiki 14（P0=0/P1=4/P2=1/P3=9），gengrowth 2（P0=0/P1=0/P2=0/P3=2），合计 16（P0=0/P1=4/P2=1/P3=11）。日志窗口未见明确 Feishu/Lark 发送成功或失败回执；notify 步骤已执行。未调用普通文章 Google Indexing API，未进行无人值守 Request Indexing 点击。
+
+---
+
+### Q3 — 10:02
+
+**🙋 提问：**
+
+Automation: 结果复盘表更新
+Automation ID: gengrowth-recap-performance
+Automation memory: $CODEX_HOME/automations/gengrowth-recap-performance/memory.md
+Last run: 2026-07-22T02:01:52.238Z (1784685712238)
+
+Run the deterministic GenGrowth results-recap performance workflow through `bash tools/scripts/gg-recap-performance-tick.sh`.
+
+The wrapper loads the local gg environment, scans the configured products (`GG_RECAP_PERFORMANCE_PRODUCTS`, defaulting to astrologywiki and gengrowth), reads `index-tracking` and `结果复盘表`, and only fetches D14/D30/D60 GSC/GA4 snapshot metrics for indexed URLs whose current age is exactly at one of those milestones. Non-milestone rows and already-filled milestone cells must keep their existing values; historical repair/backfill is only allowed through the wrapper's explicit repair modes such as `--fill-pending` / `--verify-zero-metrics`, not by ad-hoc daily refresh.
+
+The wrapper preserves manual recap decisions/notes, writes wrapper-owned generated performance fields back to the Sheet, and writes the optimization task report under `~/gengrowth-agents/reports/recap-performance/`.
+
+Safety boundary:
+- Do not bypass the wrapper or pass ad-hoc write flags directly to the Node script.
+- Do not hand-edit Google Sheets outside the wrapper.
+- Do not publish content, deploy sites, modify page source, submit GSC Request Indexing, or use the Google Indexing API.
+- Do not overwrite manual fields such as `决策` or human notes; only the wrapper-owned generated recap segment may be refreshed.
+- Do not create extra Feishu/Google Doc artifacts unless the wrapper already does so.
+
+After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/recap_performance/` and summarize per-product workbook/site/property, exact-milestone rows processed, updated recap row counts, generated report path, D14/D30/D60 coverage for due indexed rows, optimization task counts by priority, skipped/non-due rows, and any failures. If the wrapper fails or required credentials/properties are missing, report the exact missing boundary from the log without attempting a manual replacement workflow.
+
+**🤖 回答：**
+
+执行唯一指定入口 `bash tools/scripts/gg-recap-performance-tick.sh`，10:00:59–10:01:35 CST 退出 0，日志以 `recap performance ok` 收尾。astrologywiki（wb=…jyzcQc、sc-domain:astrologywiki.com、GA4 properties/524765570）：精确里程碑计划 rows=5，写入更新=262，任务=262；报告 `~/gengrowth-agents/reports/recap-performance/2026-07-23-astrologywiki-optimization-tasks.md`，任务桶 P0=11、技术排查=158、P1=12、P2=0、观察=81。gengrowth（wb=…ZTIRA8、sc-domain:gengrowth.ai、同一 GA4 property）：rows=18，写入更新=51，任务=61；报告 `~/gengrowth-agents/reports/recap-performance/2026-07-23-gengrowth-optimization-tasks.md`，任务桶 P0=0、技术排查=47、P1=5、P2=0、观察=9。`rows` 是合并 D14/D30/D60 的已收录且未填节点计划数；日志没有输出 D14/D30/D60 单独拆分，也没有单独的非节点/已填跳过计数。日志未见 warn/error/fail/timeout 或凭据、property、workbook 缺失边界。未使用 repair 参数，未手改 Sheet、未发布/部署/改源文件、未提交 GSC Request Indexing 或调用 Google Indexing API；wrapper 自身按既有行为发送了成功通知。

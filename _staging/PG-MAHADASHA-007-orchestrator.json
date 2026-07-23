@@ -1,7 +1,7 @@
 {
   "page_id": "PG-MAHADASHA-007",
   "prompt_path": "/Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-MAHADASHA-007.v8-prompt.md",
-  "started_at": "2026-07-23T13:15:17.801Z",
+  "started_at": "2026-07-23T13:21:30.636Z",
   "models_requested": [
     "codex"
   ],
@@ -10,7 +10,7 @@
   "max_cost_usd_per_page": 5,
   "budget_exceeded_models": [],
   "ok_count": 1,
-  "total_cost_estimate_usd": 0.1619,
+  "total_cost_estimate_usd": 0.1872,
   "results": {
     "codex": {
       "model": "codex",
@@ -19,14 +19,14 @@
       "ok": true,
       "output_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-MAHADASHA-007-codex-v8.md",
       "retries": 0,
-      "duration_s": 234.9,
+      "duration_s": 369.1,
       "cost_estimate_usd": {
-        "usd": 0.1619,
+        "usd": 0.1872,
         "input_tokens_est": 9322,
-        "output_tokens_est": 1716,
+        "output_tokens_est": 2349,
         "pricing_note": "GPT 5.5 xhigh"
       },
-      "cumulative_cost_usd": 0.1619,
+      "cumulative_cost_usd": 0.1872,
       "budget_exceeded": false,
       "budget_usd": 5,
       "attempts": [
@@ -34,13 +34,13 @@
           "try_index": 1,
           "model": "codex",
           "command": "codex exec -c model=gpt-5.6-terra -c reasoning_effort=xhigh - < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-MAHADASHA-007.v8-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-MAHADASHA-007-codex-v8.md",
-          "cost_usd": 0.1619,
-          "cumulative_cost_usd": 0.1619,
+          "cost_usd": 0.1872,
+          "cumulative_cost_usd": 0.1872,
           "ok": true,
           "exit_code": 0,
-          "duration_s": 234.9,
-          "stderr_tail": "0 词，关键词总出现 5–8 次且分布在至少四个正文 section。文章需包含首段直接定义、唯一加粗答案与紧随的三条要点、前 150 词内的真实内部链接占位符、与 Venus Mahadasha 的具体边界对比及可读出的取舍、读盘观察、常见误读、四列表格、FAQ、反思提示、相关阅读、指定 CTA 与 Sources；并遵守非命定、非医疗、事实诚信、链接占位符、排版和禁用表达规则。\n+\n+**🤖 回答：**\n+\n+交付一篇全英文、单次输出的词条，标题为 “Venus in Taurus and the Art of Steady Affection”。文章将该本命位置限定为关系、价值、审美与感官偏好的象征性阅读，早期链接本命盘阅读指南，并通过 Venus Mahadasha、宫位与相位明确其解释边界。成稿包含五项观察线索、四项误读校正、四列速查表、四组 FAQ、三条编号反思提示、剩余有效的内部链接占位符、指定出生盘计算器 CTA、逐字安全声明和受控 Dane Rudhyar 来源；避免确定性预测、医疗断言、虚构引用、SEO 元评论与禁用套话。\n\ntokens used\n84,258",
-          "stdout_bytes": 8522
+          "duration_s": 369.1,
+          "stderr_tail": "ion。文章需包含首段直接定义、唯一加粗答案与紧随的三条要点、前 150 词内的真实内部链接占位符、与 Venus Mahadasha 的具体边界对比及可读出的取舍、读盘编号观察、常见误读、四列表格、FAQ、反思提示、相关阅读、三段 CTA（指定 URL）与仅限正文具名权威的 Sources。另要求避免确定性预测、医疗主张、虚构引文、SEO 元评论、真实 URL（CTA 例外）、禁用 AI 套话及不存在的内部链接；不得输出文章外的聊天文字。\n+\n+**🤖 回答：**\n+\n+交付一篇通过预交付结构扫描的英文词条：1 个 H1、11 个 H2、无 H3，开篇定义段与三条要点，首个内部链接在约第 108 个单词处，关键词共 7 次。正文将本命 Venus 落金牛与 Venus Mahadasha、其他金牛落点、宫位及相位分层区分；提供六项观察、五项误读校正、五行四列表、四问 FAQ、三条编号反思提示、剩余有效内部链接、指定 CTA、逐字安全声明和受控 Dane Rudhyar 来源。文章保持非命定、非医疗、非伪科学与非 SEO 元评论的表达边界。\n\ntokens used\n109,716",
+          "stdout_bytes": 11529
         }
       ]
     }

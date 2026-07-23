@@ -15,6 +15,7 @@ tags:
 
 - 完成一篇面向 astrologywiki.com 美国英语受众的 Venus in Taurus 定义型 T2 SEO 词条。
 - 通过既定 topic-register wrapper 完成一次 apply 运行；astrologywiki 更新 10 条 brief，gengrowth 无候选，且无失败记录。
+- 再次通过既定 topic-register wrapper 完成 apply 运行；astrologywiki 更新 10 条 audit_repair brief，gengrowth 无候选，且无失败记录。
 
 ## 对话记录
 
@@ -206,3 +207,22 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 交付一篇通过预交付结构扫描的英文词条：1 个 H1、11 个 H2、无 H3，开篇定义段与三条要点，首个内部链接在约第 108 个单词处，关键词共 7 次。正文将本命 Venus 落金牛与 Venus Mahadasha、其他金牛落点、宫位及相位分层区分；提供六项观察、五项误读校正、五行四列表、四问 FAQ、三条编号反思提示、剩余有效内部链接、指定 CTA、逐字安全声明和受控 Dane Rudhyar 来源。文章保持非命定、非医疗、非伪科学与非 SEO 元评论的表达边界。
+
+---
+
+### Q16 — 22:14
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-23T12:01:26.309Z (1784808086309)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅执行 `bash tools/scripts/gg-topic-register-tick.sh`，进程以退出码 0 结束。日志窗口 22:02:04–22:13:40 CST 为 apply（`dry_run=false`、`budget_exhausted=false`、`ok=true`）：astrologywiki 在 audit_repair 模式处理 10 个候选并更新 10 条，未建集群，page_ids 为 PG-RISE-016 至 PG-RISE-020 和 PG-MZ-002 至 PG-MZ-006；预处理器为 ok×1、v1_fallback×9，证据发现为 ok×2、insufficient×8。gengrowth 无候选、更新或新集群。日志未出现 failed、timeout 或 error；未手工编辑 Sheet、任务计划，也未生成额外 Feishu/Google Doc 报告。
+
+---

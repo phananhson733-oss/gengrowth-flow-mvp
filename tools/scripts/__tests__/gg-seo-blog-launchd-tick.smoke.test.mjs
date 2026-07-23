@@ -34,6 +34,7 @@ test('SEO launchd runner owns pre/post drain, strict reconcile, readiness, then 
   assert.match(source, /gg-seo-readiness\.mjs/);
   assert.match(source, /gg-batch-summary\.mjs/);
   assert.match(source, /GG_CLUSTER_LINKS_ENABLED/);
+  assert.match(source, /CLUSTER_LINKS_ENABLED="\$\{GG_CLUSTER_LINKS_ENABLED:-1\}"/);
   assert.match(source, /gg-cluster-internal-links\.mjs/);
   assert.match(source, /--cluster-link-pr/);
   assert.match(source, /GG_WRITEBACK_LOCK_DIR/);

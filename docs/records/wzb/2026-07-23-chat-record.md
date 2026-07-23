@@ -22,7 +22,7 @@ aliases:
 - 运行 Phase 2 Index Monitor：官方 Sitemap API 两站均成功；astrologywiki 检查 5 条、无失败，gengrowth 无到期检查；最终辅助队列合计 16 条（P1=4、P2=1、P3=11），日志未见飞书发送回执。
 - 运行结果复盘表更新：固定 wrapper 成功处理 astrologywiki 5 条、gengrowth 18 条精确 D14/D30/D60 到期已收录行，并写入两站生成字段与优化任务报告；日志未输出单独里程碑拆分或非到期/已填跳过数。
 - 核实本地 `gengrowth-ops`：工作树和远端同步状态均干净；后台 vault 同步进程正在运行并产生自动提交/推送，而 Obsidian Git 插件自身的自动提交、推送、拉取均关闭。该机制不代替 OPS 在 Sheet 手填 Cluster ID。
-- 运行关键词补充 brief 固定 wrapper：环境为 apply，但 astrologywiki 审计修复候选 10 条未更新（audit_incomplete=11），gengrowth 无候选；两站均无 page_id、预处理或证据发现记录，日志无失败。源码追踪确认候选均缺少或无法解析到现有主题集群的 `cluster_id`，按 OPS 所有权规则 fail-closed。用户已要求未来 cluster_id 始终手填，待确认筛选与结构化阻塞报告的实现设计后再改动自动化。
+- 运行关键词补充 brief 固定 wrapper：环境为 apply，但 astrologywiki 审计修复候选 10 条未更新（audit_incomplete=11），gengrowth 无候选；两站均无 page_id、预处理或证据发现记录，日志无失败。已实现“cluster_id 永远手填”的候选门禁：仅主题集群表中存在的人工 ID 才占限额，无效/未知 ID 以 `ops_blocked` 明细报告、不阻塞就绪行，也不自动创建或覆写。新增测试通过；真实 dry-run 识别第 351–361 行 11 个未知 ID，未写 Sheet。
 
 ---
 
@@ -160,3 +160,15 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 用户确认筛选与 `ops_blocked` 报告设计。准备按 brainstorming 流程创建设计 spec 时发现两个合理路径：仓库 README 指向 `docs/spec/`，而该流程指定 `docs/superpowers/specs/`；按项目文档路由规则，未在用户选择路径前创建文档或开始实现。生产代码、Sheet、任务计划均未改动。
+
+---
+
+### Q9 — 14:36
+
+**🙋 提问：**
+
+去落地
+
+**🤖 回答：**
+
+按已确认设计直接实现，不创建额外 spec。采用测试先行：新增“无效手填 cluster_id 不占 limit，后续有效人工集群行仍入选”和“摘要输出 ops_blocked”两项测试，先观察旧逻辑失败，再实现候选分流。`gg-topic-register.mjs` 现从主题集群表构建有效 ID 集合，只将可解析人工 ID 作为 candidates；未填/未知 ID 记录 row、page_id、keyword、reason、cluster_id，`summarizeProductResult` 输出 `ops_blocked_count` 与 `ops_blocked`。`gg-topic-register-tick.sh` 同步更新运行契约说明。聚焦测试 2/2 通过，topic-register smoke 27 通过/0 失败/6 历史跳过；显式 `apply=0` wrapper dry-run（无 LLM、无通知）退出 0，astrologywiki 为 `awaiting_ops`、candidates=0、ops_blocked_count=11，行 351–361 均为 unknown_cluster_id；无业务写入。全量脚本测试 2181 通过、7 失败、6 跳过；失败涉及 gg-author-repair 超时、gg-seo-autopilot 缺 main_module、lib-llm-worker 旧模型断言，与本次 3 个变更文件无交集。后台 vault 同步已将实现纳入 HEAD `0bc1a19e`。

@@ -1,7 +1,7 @@
 {
   "page_id": "PG-MAHADASHA-007",
   "prompt_path": "/Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-MAHADASHA-007.v8-prompt.md",
-  "started_at": "2026-07-23T10:43:00.487Z",
+  "started_at": "2026-07-23T10:45:00.129Z",
   "models_requested": [
     "codex"
   ],
@@ -10,7 +10,7 @@
   "max_cost_usd_per_page": 5,
   "budget_exceeded_models": [],
   "ok_count": 1,
-  "total_cost_estimate_usd": 0.1663,
+  "total_cost_estimate_usd": 0.1734,
   "results": {
     "codex": {
       "model": "codex",
@@ -19,14 +19,14 @@
       "ok": true,
       "output_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-MAHADASHA-007-codex-v8.md",
       "retries": 0,
-      "duration_s": 220.9,
+      "duration_s": 116.3,
       "cost_estimate_usd": {
-        "usd": 0.1663,
-        "input_tokens_est": 9237,
-        "output_tokens_est": 1847,
+        "usd": 0.1734,
+        "input_tokens_est": 9295,
+        "output_tokens_est": 2011,
         "pricing_note": "GPT 5.5 xhigh"
       },
-      "cumulative_cost_usd": 0.1663,
+      "cumulative_cost_usd": 0.1734,
       "budget_exceeded": false,
       "budget_usd": 5,
       "attempts": [
@@ -34,13 +34,13 @@
           "try_index": 1,
           "model": "codex",
           "command": "codex exec -c model=gpt-5.6-terra -c reasoning_effort=xhigh - < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-MAHADASHA-007.v8-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-MAHADASHA-007-codex-v8.md",
-          "cost_usd": 0.1663,
-          "cumulative_cost_usd": 0.1663,
+          "cost_usd": 0.1734,
+          "cumulative_cost_usd": 0.1734,
           "ok": true,
           "exit_code": 0,
-          "duration_s": 220.9,
-          "stderr_tail": "our Free Birth Chart](https://astrologywiki.com/en/birth-chart-calculator).\n\nThe result gives you a chart-based view of where Venus themes appear and which other placements modify them.\n\nSeeing the full pattern can turn a simple preference for comfort, loyalty, or beauty into a more useful question about what you value and how you choose to show it.\n\n## Sources\n\n- Dane Rudhyar — developed a person-centered approach to reading astrological symbols within the wider birth chart.\ntokens used\n91,119",
-          "stdout_bytes": 9072
+          "duration_s": 116.3,
+          "stderr_tail": "sign, house, and major aspects: [Generate Your Free Birth Chart](https://astrologywiki.com/en/birth-chart-calculator).\n\nThe result gives you the placement in context instead of reducing it to a single sign description.\n\nSeeing that context can turn a broad symbol into a more useful way to reflect on what steadiness, pleasure, and value mean in your own life.\n\n## Sources\n\n- Dane Rudhyar — developed a psychological, person-centered approach to interpreting astrological symbols.\ntokens used\n67,721",
+          "stdout_bytes": 10223
         }
       ]
     }

@@ -32,6 +32,7 @@ aliases:
 - 重新按 7/21 集群优化 PRD 验收：实现与测试层完成，但生产未完成；PR #428 仍 OPEN、无 review decision、GitHub mergeStateStatus=UNKNOWN。另发现 PRD 的“选题登记表+结果复盘表联合查询”尚未逐字实现（当前以登记表+发布日志+Oracle 注册为准），以及“正文最多 8 条”依赖受管 Related Reading 块能否被产品认定为组件级链接，需在合并前明确。已据此将 7/21 PRD 状态纠正为“部分完成（待 PR #428 合并与规格对齐）”。
 - 获授权合并后，Oracle PR #428 已合并上线；生产验收发现受管边界标记泄漏为可见正文。以失败回归测试驱动修复静态 SEO 与 SPA 两个渲染器，PR #429 经 Vercel 通过后合并上线；生产抽验 Venus in Gemini 与 Saturn Return Guide 均已无标记且保留目标内链。7/21 PRD 已回填为“部分完成（已上线，待两项规格验收）”，仅余结果复盘表直接联合读取与 8 条上限/组件例外的产品判定。
 - 对剩余两项做严格验收：发布集合代码仅读取发布日志和 Oracle 注册，不读取结果复盘表，未达“联合查询”；受管 Related Reading 是普通正文 Markdown 列表，生产 Saturn Return Guide 共 17 条相关链接，超过 8 条且非组件卡。两项均不接受关闭，等待产品决策“实施联读”与“卡片化或限额”的后续范围。
+- 用户确认将「结果复盘表」提升为发布前置；已核对该表字段，提出不以 Day14 收录为门槛、而以 page_id 与 canonical URL 的复盘行存在作为 fail-closed 前置的设计确认，等待用户确认具体口径后再创建设计文档与实施计划。
 
 ---
 
@@ -313,5 +314,17 @@ inbox-maboyang/00-inbox/2026-07-21-内链结构优化需求文档 应该是这�
 **🤖 回答：**
 
 按任务内 Hard-abort 条款执行 STOP：SERP_Snapshot 未提供（distinct-title=0，< 3 阈值），Raw_Friction 为单条无来源的框架陈述、无 sourced 用户抱怨或 SERP/news 命名域名证据；两项硬阻断同时命中。未合成 Entity/Friction/Logic/Content_Angle，输出 Status=Needs More Evidence、Confidence=Low、Draft_Angle_Disposition=N/A（占位符）。补齐建议：SERP top 5-10、≥2 条 sourced verbatim 或 ≥3 条命名域名 SERP/news 标题、明确 Draft_Angle 假设。未写 Sheet、未生产内容、未通知。
+
+---
+
+### Q21 — 16:13
+
+**🙋 提问：**
+
+1.可以把结果复盘表拉起作为发布的前置要求之一
+
+**🤖 回答：**
+
+确认将「结果复盘表」作为发布前置的方向。核对现有表字段后发现其没有独立“已发布”列，仅有 page_id、url 与索引状态；因此不建议以 `day14_收录=Y` 作为门槛，否则内链会被至少延后 14 天。提出待确认设计：发布流程先同步一条与选题登记表 `page_id` 和 canonical `/en/wiki/<slug>` 精确匹配的复盘行，Smart Backfill 仅处理同时存在发布日志、Oracle 注册及该复盘行的页面；缺失即 fail-closed、生成审核 PR 前停止。等待用户确认该复盘行存在即表示“已发布前置”后，再编写设计文档和实施计划。
 
 ---

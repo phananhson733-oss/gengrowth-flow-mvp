@@ -522,42 +522,75 @@ function isExistingIncompleteCandidate(candidate, requiredFields = PAGE_REQUIRED
     || Boolean(String(values.Status || '').trim());
 }
 
+function partitionManualClusterCandidates(candidates, knownClusterIds) {
+  if (!(knownClusterIds instanceof Set)) {
+    return { ready: candidates, opsBlocked: [] };
+  }
+  const ready = [];
+  const opsBlocked = [];
+  for (const candidate of candidates) {
+    const clusterId = String(candidate.values?.cluster_id || '').trim();
+    if (!clusterId || !knownClusterIds.has(clusterId)) {
+      opsBlocked.push({
+        row: candidate.row,
+        page_id: String(candidate.values?.page_id || '').trim(),
+        target_keyword: candidate.target_keyword,
+        reason: clusterId ? 'unknown_cluster_id' : 'missing_cluster_id',
+        cluster_id: clusterId,
+      });
+      continue;
+    }
+    ready.push(candidate);
+  }
+  return { ready, opsBlocked };
+}
+
 export function selectCandidateRowsForPlan(rows, {
   requiredFields = PAGE_REQUIRED_FIELDS,
   includeIncomplete = false,
   onlyPageIds = new Set(),
   onlyKeywords = new Set(),
   excludePageIds = new Set(),
+  knownClusterIds = null,
   limit = 0,
 } = {}) {
   const explicitSelection = onlyPageIds.size > 0 || onlyKeywords.size > 0;
   const take = (items) => items.slice(0, limit || undefined);
+  const allMissingRows = findCandidateRows(rows, {
+    requiredFields,
+    blankOnly: false,
+    onlyPageIds,
+    onlyKeywords,
+    excludePageIds,
+  });
+  const { ready, opsBlocked } = partitionManualClusterCandidates(allMissingRows, knownClusterIds);
+
   if (explicitSelection || includeIncomplete) {
-    const candidates = take(findCandidateRows(rows, {
-      requiredFields,
-      blankOnly: false,
-      onlyPageIds,
-      onlyKeywords,
-      excludePageIds,
-    }));
+    const candidates = take(ready);
     return {
       mode: explicitSelection ? 'explicit_repair' : 'include_incomplete',
       candidates,
       audit_incomplete: candidates.filter((row) => isExistingIncompleteCandidate(row, requiredFields)).length,
+      opsBlocked,
     };
   }
 
-  const allMissingRows = findCandidateRows(rows, {
-    requiredFields,
-    blankOnly: false,
-    excludePageIds,
-  });
-  const auditRows = allMissingRows.filter((row) => isExistingIncompleteCandidate(row, requiredFields));
+  const auditRows = ready.filter((row) => isExistingIncompleteCandidate(row, requiredFields));
   if (auditRows.length) {
     return {
       mode: 'audit_repair',
       candidates: take(auditRows),
       audit_incomplete: auditRows.length,
+      opsBlocked,
+    };
+  }
+
+  if (knownClusterIds instanceof Set) {
+    return {
+      mode: opsBlocked.length ? 'awaiting_ops' : 'generate',
+      candidates: [],
+      audit_incomplete: 0,
+      opsBlocked,
     };
   }
 
@@ -569,6 +602,7 @@ export function selectCandidateRowsForPlan(rows, {
       excludePageIds,
     })),
     audit_incomplete: 0,
+    opsBlocked,
   };
 }
 
@@ -2146,10 +2180,15 @@ function planRows({
     onlyPageIds: repairPageIds,
     onlyKeywords: repairKeywords,
     excludePageIds: completedPageIds,
+    knownClusterIds: new Set(
+      clusters
+        .map((item) => String(item.cluster_id || '').trim())
+        .filter(Boolean),
+    ),
     limit,
   });
   const candidates = selected.candidates;
-  const opsBlocked = [];
+  const opsBlocked = [...(selected.opsBlocked || [])];
   const updates = [];
   const taskLines = [];
   const promptWrites = [];
@@ -2381,6 +2420,7 @@ export async function notifyTopicRegistered({ profile, plan }) {
 export function summarizeProductResult(result, { args = {} } = {}) {
   const plan = result?.plan || {};
   const updates = Array.isArray(plan.updates) ? plan.updates : [];
+  const opsBlocked = Array.isArray(plan.opsBlocked) ? plan.opsBlocked : [];
   const semanticEvidence = result?.semanticWriteEvidence || null;
   const semanticMode = Boolean(args.semantic_repair_only);
   const changedPageIds = semanticMode && semanticEvidence
@@ -2420,6 +2460,8 @@ export function summarizeProductResult(result, { args = {} } = {}) {
       })),
     ...(plan.selectionMode ? { selection_mode: plan.selectionMode } : {}),
     ...(Number.isFinite(plan.auditIncomplete) ? { audit_incomplete: plan.auditIncomplete } : {}),
+    ops_blocked_count: opsBlocked.length,
+    ops_blocked: opsBlocked,
     preprocessor,
     evidence_discovery: evidenceDiscovery,
     ...(result?.skippedApply ? { skipped_apply: true } : {}),

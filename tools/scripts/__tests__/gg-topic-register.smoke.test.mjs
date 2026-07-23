@@ -242,6 +242,70 @@ test('default candidate selection audits incomplete existing rows before generat
   assert.equal(generated.audit_incomplete, 0);
 });
 
+test('manual Cluster IDs filter unresolved rows before the candidate limit is applied', () => {
+  const header = ['Target Keyword', ...PAGE_REQUIRED_FIELDS];
+  const row = (values = {}) => header.map((field) => values[field] || '');
+  const selected = selectCandidateRowsForPlan([
+    header,
+    row({ 'Target Keyword': 'saturn return in virgo' }),
+    row({ 'Target Keyword': 'saturn return relationships', cluster_id: 'retired_cluster' }),
+    row({
+      'Target Keyword': 'saturn return breakup',
+      cluster_id: 'saturn_return',
+    }),
+  ], {
+    knownClusterIds: new Set(['saturn_return']),
+    limit: 1,
+  });
+
+  assert.equal(selected.mode, 'audit_repair');
+  assert.deepEqual(selected.candidates.map((candidate) => candidate.target_keyword), ['saturn return breakup']);
+  assert.deepEqual(selected.opsBlocked, [
+    {
+      row: 2,
+      page_id: '',
+      target_keyword: 'saturn return in virgo',
+      reason: 'missing_cluster_id',
+      cluster_id: '',
+    },
+    {
+      row: 3,
+      page_id: '',
+      target_keyword: 'saturn return relationships',
+      reason: 'unknown_cluster_id',
+      cluster_id: 'retired_cluster',
+    },
+  ]);
+});
+
+test('product summary reports manual Cluster ID blockers', () => {
+  const summary = topicRegister.summarizeProductResult({
+    profile: { key: 'astrologywiki' },
+    applied: false,
+    plan: {
+      candidates: [],
+      updates: [],
+      newClusters: [],
+      opsBlocked: [{
+        row: 351,
+        page_id: '',
+        target_keyword: 'saturn return in virgo',
+        reason: 'missing_cluster_id',
+        cluster_id: '',
+      }],
+    },
+  });
+
+  assert.equal(summary.ops_blocked_count, 1);
+  assert.deepEqual(summary.ops_blocked, [{
+    row: 351,
+    page_id: '',
+    target_keyword: 'saturn return in virgo',
+    reason: 'missing_cluster_id',
+    cluster_id: '',
+  }]);
+});
+
 test('planRows preserves an OPS-assigned Cluster ID even when a semantic matcher prefers another Cluster', () => {
   const pageHeader = ['Target Keyword', ...PAGE_REQUIRED_FIELDS, 'CTA', 'Status'];
   const completeWrongRow = [
@@ -361,6 +425,7 @@ test('planRows blocks an unregistered Cluster ID instead of creating a singleton
   assert.deepEqual(plan.newClusters, []);
   assert.deepEqual(plan.updates, []);
   assert.deepEqual(plan.opsBlocked, [{
+    row: 2,
     page_id: 'PG-WDIF-002',
     target_keyword: 'what is my love language',
     reason: 'unknown_cluster_id',

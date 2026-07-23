@@ -38,9 +38,10 @@
 #   GG_TOPIC_REGISTER_RUN_BUDGET_MS=""          # default: outer timeout minus 60s, passed to Node for graceful summary
 #
 # Learned operating contract:
-#   - Periodic runs audit the full configured Sheet before generating. If any
-#     existing topic row has missing required fields, repair those rows first;
-#     only generate new page_ids when no existing incomplete rows remain.
+#   - Periodic runs only process rows whose cluster_id was manually assigned
+#     by OPS and still resolves in 主题集群表. Missing/unknown IDs are reported as
+#     `ops_blocked`, do not consume the candidate limit, and are never inferred,
+#     created, or overwritten by this automation.
 #   - Do not use manual Codex/websearch output as production evidence. Search must
 #     enter the deterministic run through a script-callable provider and cache.
 #   - Bing is opt-in only (`GG_TOPIC_REGISTER_SEARCH_PROVIDERS=...,bing`) because

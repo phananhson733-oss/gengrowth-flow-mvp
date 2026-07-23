@@ -36,6 +36,9 @@ test('SEO launchd runner owns pre/post drain, strict reconcile, readiness, then 
   assert.match(source, /GG_CLUSTER_LINKS_ENABLED/);
   assert.match(source, /CLUSTER_LINKS_ENABLED="\$\{GG_CLUSTER_LINKS_ENABLED:-1\}"/);
   assert.match(source, /gg-cluster-internal-links\.mjs/);
+  assert.match(source, /gg-index-monitor\.mjs/);
+  assert.ok(source.indexOf('--sync-published --write-sheet') < source.indexOf('--build-input'));
+  assert.ok(source.indexOf('--sync-recap --write-sheet') < source.indexOf('--build-input'));
   assert.match(source, /--cluster-link-pr/);
   assert.match(source, /GG_WRITEBACK_LOCK_DIR/);
   assert.match(source, /GG_NIGHTLY_ITEMS_PLAN/);
@@ -236,6 +239,12 @@ function runnerHarness({
     "writeFileSync(out, '{}\\n');",
     '',
   ].join('\n'));
+  const indexMonitor = join(root, 'index-monitor.mjs');
+  writeFileSync(indexMonitor, [
+    "import { appendFileSync } from 'node:fs';",
+    "appendFileSync(process.env.GG_TEST_EVENTS, `index-monitor ${process.argv.slice(2).join(' ')}\\n`);",
+    '',
+  ].join('\n'));
   const seoAutopilot = join(root, 'seo-autopilot.mjs');
   writeFileSync(seoAutopilot, [
     "import { appendFileSync } from 'node:fs';",
@@ -275,6 +284,7 @@ function runnerHarness({
       GG_SEO_READINESS_BIN: readiness,
       GG_SEO_BATCH_SUMMARY_BIN: summary,
       GG_CLUSTER_LINKER_BIN: clusterLinker,
+      GG_INDEX_MONITOR_BIN: indexMonitor,
       GG_SEO_AUTOPILOT_BIN: seoAutopilot,
       GG_CLUSTER_LINKS_ENABLED: clusterLinksEnabled ? '1' : '0',
       GG_CLUSTER_LINK_INPUT_DIR: clusterInputDir,
@@ -393,11 +403,11 @@ test('clean runner orders pre/post drain, strict reconcile, readiness, summary a
   assert.equal(readinessArgs[readinessArgs.indexOf('--plan') + 1], h.plan);
 });
 
-test('enabled Cluster link stage builds an attested input then opens a dedicated review PR before readiness', () => {
+test('enabled Cluster link stage syncs published pages and Result Recap before building an attested input and opening a review PR', () => {
   const h = runnerHarness({ clusterLinksEnabled: true });
   const result = h.run();
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}\n${h.log()}`);
-  assert.deepEqual(h.events(), ['brief-preflight', 'drain', 'reconcile', 'notify', 'nightly', 'hook', 'drain', 'reconcile', 'notify', 'cluster-build', 'cluster-pr', 'readiness', 'summary']);
+  assert.deepEqual(h.events(), ['brief-preflight', 'drain', 'reconcile', 'notify', 'nightly', 'hook', 'drain', 'reconcile', 'notify', 'index-monitor --sync-published --write-sheet', 'index-monitor --sync-recap --write-sheet', 'cluster-build', 'cluster-pr', 'readiness', 'summary']);
 });
 
 test('default launcher fire binds every claims consumer to the one inbox-maboyang ledger', () => {

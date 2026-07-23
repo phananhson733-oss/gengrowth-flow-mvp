@@ -29,7 +29,7 @@ aliases:
 - 按已授权的 PRD 落地：实现并测试同行星、同艺人、同 IP 与 Pillar→全部已发布 Series 的受管内链规则；启用每日创建审核 PR 阶段；补齐 Oracle 主 CTA。新快照已创建 Oracle PR #428，内链检查、构建和 Vercel Preview 通过，仍等待人工审核合并；`gemini-zodiac-sign`、`venus-astrology` 尚未注册/发布，故其指向 Venus 页面这一条只能待内容入库后自动回填。
 - 用户确认不新增 `cluster_link_targets` 字段，并将 `gemini-zodiac-sign`、`venus-astrology` 两篇不存在页面的验收项视为误报而排除。重新运行三组回归测试 112/112 通过；本期实现以 PR #428 的人工审核合并为唯一剩余发布关口。
 - 回填 OPS 文档状态：7/21 集群优化 PRD 标为“已实现（待 PR #428 人工合并）”，记录数据、规则、CTA、调度、验证与误报排除；7/19 总体内链 PRD 标为“部分实施”，明确仅交付集群回填基础，其余 Req 1–5 原范围未被误标完成。
-- 重新按 7/21 集群优化 PRD 验收：实现与测试层完成，但生产未完成；PR #428 仍 OPEN、无 review decision、GitHub mergeStateStatus=UNKNOWN。另发现 PRD 的“选题登记表+结果复盘表联合查询”尚未逐字实现（当前以登记表+发布日志+Oracle 注册为准），以及“正文最多 8 条”依赖受管 Related Reading 块能否被产品认定为组件级链接，需在合并前明确。
+- 重新按 7/21 集群优化 PRD 验收：实现与测试层完成，但生产未完成；PR #428 仍 OPEN、无 review decision、GitHub mergeStateStatus=UNKNOWN。另发现 PRD 的“选题登记表+结果复盘表联合查询”尚未逐字实现（当前以登记表+发布日志+Oracle 注册为准），以及“正文最多 8 条”依赖受管 Related Reading 块能否被产品认定为组件级链接，需在合并前明确。已据此将 7/21 PRD 状态纠正为“部分完成（待 PR #428 合并与规格对齐）”。
 
 ---
 
@@ -262,4 +262,16 @@ inbox-maboyang/00-inbox/2026-07-21-内链结构优化需求文档 应该是这�
 
 **🤖 回答：**
 
-确认主需求是 `2026-07-21-内链结构优化需求文档.md`；7/19 文档只用于标注关联关系，不是本期验收基准。新鲜读取 PR #428：state=OPEN、reviewDecision 为空、mergeStateStatus=UNKNOWN；Vercel 与 Preview Comments 成功，因此 178 篇存量回填尚未进入 `main` 或生产，人工审核/合并和合并后生产抽验仍未完成。新鲜运行专用规则 smoke 11/11 和每日调度 smoke 43/43 均通过，证明代码编排而非生产生效。还识别两项需显式处理的 PRD 偏差：当前 published 集合由选题登记表、发布日志和 Oracle 注册组成，未直接联合读取结果复盘表；`Pillar → 全部已发布 Series` 可产生超过 8 条受管 Related Reading 条目，是否属于“组件级链接”例外需在 PR 合并前由产品/工程确认。两篇不存在页面的验收项已由用户确认为误报，不计入未完成。
+确认主需求是 `2026-07-21-内链结构优化需求文档.md`；7/19 文档只用于标注关联关系，不是本期验收基准。新鲜读取 PR #428：state=OPEN、reviewDecision 为空、mergeStateStatus=UNKNOWN；Vercel 与 Preview Comments 成功，因此 178 篇存量回填尚未进入 `main` 或生产，人工审核/合并和合并后生产抽验仍未完成。新鲜运行专用规则 smoke 11/11 和每日调度 smoke 43/43 均通过，证明代码编排而非生产生效。还识别两项需显式处理的 PRD 偏差：当前 published 集合由选题登记表、发布日志和 Oracle 注册组成，未直接联合读取结果复盘表；`Pillar → 全部已发布 Series` 可产生超过 8 条受管 Related Reading 条目，是否属于“组件级链接”例外需在 PR 合并前由产品/工程确认。两篇不存在页面的验收项已由用户确认为误报，不计入未完成。已将 OPS 主 PRD 状态修正为“部分完成（待 PR #428 合并与规格对齐）”。
+
+---
+
+### Q17 — 15:50
+
+**🙋 提问：**
+
+还有哪些内容没完成。7/21 的那份需求
+
+**🤖 回答：**
+
+按 7/21 PRD 严格列出四项仍未闭环：PR #428 尚未人工审核合并，178 篇回填未进入生产；合并后的真实页面抽验尚未完成（Pillar 全量 Spoke、Smart Backfill、新发布文章回填、无 BTS→BLACKPINK 错链）；已发布页来源尚未按文档直接联合「选题登记表+结果复盘表」（当前实现是选题登记表+发布日志+Oracle 注册）；Pillar 全量 Series 与“正文最多 8 条”的关系尚未确认受管 Related Reading 块是否属于组件级例外。`gemini-zodiac-sign`/`venus-astrology` 验收项为用户确认的误报，不计入；7 个孤立 Oracle 旧 Cluster 的删除也不计入，因为用户明确要求 Cluster 不删除。数据表、手填 Cluster、专用规则、CTA、每日 review-only 触发器和测试均已完成。

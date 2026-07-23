@@ -29,6 +29,7 @@ aliases:
 - 按已授权的 PRD 落地：实现并测试同行星、同艺人、同 IP 与 Pillar→全部已发布 Series 的受管内链规则；启用每日创建审核 PR 阶段；补齐 Oracle 主 CTA。新快照已创建 Oracle PR #428，内链检查、构建和 Vercel Preview 通过，仍等待人工审核合并；`gemini-zodiac-sign`、`venus-astrology` 尚未注册/发布，故其指向 Venus 页面这一条只能待内容入库后自动回填。
 - 用户确认不新增 `cluster_link_targets` 字段，并将 `gemini-zodiac-sign`、`venus-astrology` 两篇不存在页面的验收项视为误报而排除。重新运行三组回归测试 112/112 通过；本期实现以 PR #428 的人工审核合并为唯一剩余发布关口。
 - 回填 OPS 文档状态：7/21 集群优化 PRD 标为“已实现（待 PR #428 人工合并）”，记录数据、规则、CTA、调度、验证与误报排除；7/19 总体内链 PRD 标为“部分实施”，明确仅交付集群回填基础，其余 Req 1–5 原范围未被误标完成。
+- 重新按 7/21 集群优化 PRD 验收：实现与测试层完成，但生产未完成；PR #428 仍 OPEN、无 review decision、GitHub mergeStateStatus=UNKNOWN。另发现 PRD 的“选题登记表+结果复盘表联合查询”尚未逐字实现（当前以登记表+发布日志+Oracle 注册为准），以及“正文最多 8 条”依赖受管 Related Reading 块能否被产品认定为组件级链接，需在合并前明确。
 
 ---
 
@@ -250,3 +251,15 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 在 `gengrowth-ops/inbox-maboyang/00-inbox/` 回填两份关联 PRD 状态。`2026-07-21-内链结构优化需求文档.md` 补齐 Obsidian 元数据、状态改为“已实现（待 PR #428 人工合并）”，并新增实施状态区，逐项记录 Google Sheet 数据、专用内链规则、Oracle CTA、每日 review-only PR、测试/构建/Preview、178 篇回填 PR 与已排除的两篇误报。`2026-07-19-内链系统需求文档-astrologywiki.md` 状态改为“部分实施（集群回填基础已交付）”，明确本次仅覆盖 Req 4 的集群数据/回填基础，Req 1/2、Req 3、Req 4 可视化卡片/GA4、Req 5 仍不视为完成。运行 `git diff --check` 无格式错误；未修改历史分析报告、未创建额外任务或自动合并 PR。
+
+---
+
+### Q16 — 15:44
+
+**🙋 提问：**
+
+inbox-maboyang/00-inbox/2026-07-21-内链结构优化需求文档 应该是这个需求吧，好友什么没完成
+
+**🤖 回答：**
+
+确认主需求是 `2026-07-21-内链结构优化需求文档.md`；7/19 文档只用于标注关联关系，不是本期验收基准。新鲜读取 PR #428：state=OPEN、reviewDecision 为空、mergeStateStatus=UNKNOWN；Vercel 与 Preview Comments 成功，因此 178 篇存量回填尚未进入 `main` 或生产，人工审核/合并和合并后生产抽验仍未完成。新鲜运行专用规则 smoke 11/11 和每日调度 smoke 43/43 均通过，证明代码编排而非生产生效。还识别两项需显式处理的 PRD 偏差：当前 published 集合由选题登记表、发布日志和 Oracle 注册组成，未直接联合读取结果复盘表；`Pillar → 全部已发布 Series` 可产生超过 8 条受管 Related Reading 条目，是否属于“组件级链接”例外需在 PR 合并前由产品/工程确认。两篇不存在页面的验收项已由用户确认为误报，不计入未完成。

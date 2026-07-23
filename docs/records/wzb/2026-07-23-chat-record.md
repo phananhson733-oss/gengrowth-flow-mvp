@@ -23,6 +23,7 @@ aliases:
 - 运行结果复盘表更新：固定 wrapper 成功处理 astrologywiki 5 条、gengrowth 18 条精确 D14/D30/D60 到期已收录行，并写入两站生成字段与优化任务报告；日志未输出单独里程碑拆分或非到期/已填跳过数。
 - 核实本地 `gengrowth-ops`：工作树和远端同步状态均干净；后台 vault 同步进程正在运行并产生自动提交/推送，而 Obsidian Git 插件自身的自动提交、推送、拉取均关闭。该机制不代替 OPS 在 Sheet 手填 Cluster ID。
 - 运行关键词补充 brief 固定 wrapper：环境为 apply，但 astrologywiki 审计修复候选 10 条未更新（audit_incomplete=11），gengrowth 无候选；两站均无 page_id、预处理或证据发现记录，日志无失败。已实现“cluster_id 永远手填”的候选门禁：仅主题集群表中存在的人工 ID 才占限额，无效/未知 ID 以 `ops_blocked` 明细报告、不阻塞就绪行，也不自动创建或覆写。新增测试通过；真实 dry-run 识别第 351–361 行 11 个未知 ID，未写 Sheet。
+- 对照《内链结构优化需求文档》复核：Cluster 手填准入与 review-only 回填能力已实现并通过测试，但 22 个需求新增 Cluster ID 尚未写入当前 OPS Sheet；历史回填 PR #423 仍未合并，生产无受管理内链块。现有规划器也未覆盖文档的 R3/R4/R5 专用分组规则、Pillar 全量 Spoke 覆盖和每页 8 条上限，需求不能判定为全部完成。
 
 ---
 
@@ -172,3 +173,15 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 按已确认设计直接实现，不创建额外 spec。采用测试先行：新增“无效手填 cluster_id 不占 limit，后续有效人工集群行仍入选”和“摘要输出 ops_blocked”两项测试，先观察旧逻辑失败，再实现候选分流。`gg-topic-register.mjs` 现从主题集群表构建有效 ID 集合，只将可解析人工 ID 作为 candidates；未填/未知 ID 记录 row、page_id、keyword、reason、cluster_id，`summarizeProductResult` 输出 `ops_blocked_count` 与 `ops_blocked`。`gg-topic-register-tick.sh` 同步更新运行契约说明。聚焦测试 2/2 通过，topic-register smoke 27 通过/0 失败/6 历史跳过；显式 `apply=0` wrapper dry-run（无 LLM、无通知）退出 0，astrologywiki 为 `awaiting_ops`、candidates=0、ops_blocked_count=11，行 351–361 均为 unknown_cluster_id；无业务写入。全量脚本测试 2181 通过、7 失败、6 跳过；失败涉及 gg-author-repair 超时、gg-seo-autopilot 缺 main_module、lib-llm-worker 旧模型断言，与本次 3 个变更文件无交集。后台 vault 同步已将实现纳入 HEAD `0bc1a19e`。
+
+---
+
+### Q10 — 14:40
+
+**🙋 提问：**
+
+确认一下当前的需求是否已经全部完成inbox-maboyang/00-inbox/2026-07-21-内链结构优化需求文档
+
+**🤖 回答：**
+
+未全部完成。新鲜验证显示：Flow 的 OPS 手填 Cluster ID 准入、未知/缺失值 fail-closed、review-only 内链 PR 编排及相关 smoke 测试已通过；PR #423 仍处于 OPEN 且可合并状态，Vercel preview 成功，但未获审查、未合并，生产基线文章中受管理内链标记数为 0。实时读取 OPS Sheet 后，需求列出的 22 个新增 `cluster_id` 均未出现在主题集群表，故数据层完整性、选题登记表修正/补注册与历史页面正确回填尚不能验收。实现还仅是通用 Hub/Spoke 或 mesh 规划（Hub 最多 3 条、无 Hub 同级最多 2 条），未实现 PRD 的同行星、同艺人、同 IP 专用分组规则、Pillar → 全部已发布 Spoke 和“每篇最多 8 条”规则；OpenSpec 也仍留有幂等二次 PR/晚到 Hub 与合并后生产验收两项未完成。

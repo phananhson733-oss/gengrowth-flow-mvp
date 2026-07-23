@@ -22,7 +22,7 @@ aliases:
 - 运行 Phase 2 Index Monitor：官方 Sitemap API 两站均成功；astrologywiki 检查 5 条、无失败，gengrowth 无到期检查；最终辅助队列合计 16 条（P1=4、P2=1、P3=11），日志未见飞书发送回执。
 - 运行结果复盘表更新：固定 wrapper 成功处理 astrologywiki 5 条、gengrowth 18 条精确 D14/D30/D60 到期已收录行，并写入两站生成字段与优化任务报告；日志未输出单独里程碑拆分或非到期/已填跳过数。
 - 核实本地 `gengrowth-ops`：工作树和远端同步状态均干净；后台 vault 同步进程正在运行并产生自动提交/推送，而 Obsidian Git 插件自身的自动提交、推送、拉取均关闭。该机制不代替 OPS 在 Sheet 手填 Cluster ID。
-- 运行关键词补充 brief 固定 wrapper：环境为 apply，但 astrologywiki 审计修复候选 10 条未更新（audit_incomplete=11），gengrowth 无候选；两站均无 page_id、预处理或证据发现记录，日志无失败。源码追踪确认候选均缺少或无法解析到现有主题集群的 `cluster_id`，按 OPS 所有权规则 fail-closed，待人工分配集群后再由 wrapper 补全。
+- 运行关键词补充 brief 固定 wrapper：环境为 apply，但 astrologywiki 审计修复候选 10 条未更新（audit_incomplete=11），gengrowth 无候选；两站均无 page_id、预处理或证据发现记录，日志无失败。源码追踪确认候选均缺少或无法解析到现有主题集群的 `cluster_id`，按 OPS 所有权规则 fail-closed。用户已要求未来 cluster_id 始终手填，待确认筛选与结构化阻塞报告的实现设计后再改动自动化。
 
 ---
 
@@ -136,3 +136,15 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 截图中「选题登记表」第 351–361 行只有 Target Keyword，和上轮 `audit_incomplete=11` 相符。按 `superpowers:systematic-debugging` 只读追踪：`audit_repair` 选中前 10 行后，`planRows` 仅会在缺少或找不到现有主题集群的 `cluster_id` 时将候选列入 `opsBlocked` 并跳过；本轮 candidates=10、updates=0 证明该阻断发生在全部候选。`cluster_id` 的指定权属于 OPS，且语义修复/自动分配已被明确禁用；因此不可由 Agent 手改 Sheet。OPS 为这 11 行分配主题集群表已有的 `cluster_id` 后，下一次固定 wrapper 即可生成 page_id、执行预处理并补全 brief。
+
+---
+
+### Q7 — 14:10
+
+**🙋 提问：**
+
+我需要修改这个 automatic。以后的 cluster id 都会由手填
+
+**🤖 回答：**
+
+确认需求为 cluster_id 永远由人工在 Sheet 填写，自动化不得推断、创建或改写。完成源码和现有 smoke 测试检查后，提出待确认设计：筛选阶段仅把已填且存在于主题集群表的 cluster_id 行计入候选和 limit；未填或未知 cluster_id 行不阻塞其后合法行，但在 JSON 中以 `ops_blocked` 分组输出 keyword、行号、原因和 cluster_id。保留现有安全契约（无自动聚类、无 cluster_id 覆写、无有效人工集群则不写入），并以先失败后通过的测试验证“阻塞行不占额度、有效手填行仍被补全”。未改动生产代码，等待用户确认设计。

@@ -22,7 +22,7 @@ aliases:
 - 运行 Phase 2 Index Monitor：官方 Sitemap API 两站均成功；astrologywiki 检查 5 条、无失败，gengrowth 无到期检查；最终辅助队列合计 16 条（P1=4、P2=1、P3=11），日志未见飞书发送回执。
 - 运行结果复盘表更新：固定 wrapper 成功处理 astrologywiki 5 条、gengrowth 18 条精确 D14/D30/D60 到期已收录行，并写入两站生成字段与优化任务报告；日志未输出单独里程碑拆分或非到期/已填跳过数。
 - 核实本地 `gengrowth-ops`：工作树和远端同步状态均干净；后台 vault 同步进程正在运行并产生自动提交/推送，而 Obsidian Git 插件自身的自动提交、推送、拉取均关闭。该机制不代替 OPS 在 Sheet 手填 Cluster ID。
-- 运行关键词补充 brief 固定 wrapper：环境为 apply，但 astrologywiki 审计修复候选 10 条未更新（audit_incomplete=11），gengrowth 无候选；两站均无 page_id、预处理或证据发现记录，日志无失败。已实现“cluster_id 永远手填”的候选门禁：仅主题集群表中存在的人工 ID 才占限额，无效/未知 ID 以 `ops_blocked` 明细报告、不阻塞就绪行，也不自动创建或覆写。新增测试通过；真实 dry-run 识别第 351–361 行 11 个未知 ID，未写 Sheet。
+- 运行关键词补充 brief 固定 wrapper：16:02:55–16:14:35 CST 环境为 apply，astrologywiki 审计修复候选/更新均为 10、无新增 Cluster，写入 PG-TRANS-030/031/032、PG-HEAL-008/009、PG-MZ-001、PG-KB-001/002、PG-FH-001、PG-VEDIC-007；预处理均为 v1_fallback，证据发现均 insufficient；gengrowth 无候选。JSON 为 ok=true、dry_run=false、budget_exhausted=false，窗口无失败或超时；无手工 Sheet/任务计划编辑或额外 Feishu/Google Doc 报告物。
 - 对照《内链结构优化需求文档》复核：Cluster 手填准入与 review-only 回填能力已实现并通过测试，但 22 个需求新增 Cluster ID 尚未写入当前 OPS Sheet；历史回填 PR #423 仍未合并，生产无受管理内链块。现有规划器也未覆盖文档的 R3/R4/R5 专用分组规则、Pillar 全量 Spoke 覆盖和每页 8 条上限，需求不能判定为全部完成。
 - 获授权直接修改规范 Google Sheet 后，新增 `artist_group` 列，新增 24 个 Cluster（文档 22 个加注册行引用而遗漏定义的 `fiction_friends`、`fiction_disney`），修正 42 条现有页面并补注册 167 条关键词。逐行回读 214 个需求归属均匹配、无重复或未知 ID；内链输入快照构建成功。未触发内容生成、通知、PR 合并或部署。
 - 最新验收结论：数据治理层已通过（24 个 Cluster 与 214 条关键词归属均正确，且无自动语义分配）；端到端内链需求尚未通过。当前规划器仍缺同行星/同艺人/同 IP 规则与 Pillar 全量 Spoke，当前快照仅 dry-run 178 篇；PR #423 未合并且生产标记数为 0，Oracle 主 CTA 也尚无映射。
@@ -33,6 +33,7 @@ aliases:
 - 获授权合并后，Oracle PR #428 已合并上线；生产验收发现受管边界标记泄漏为可见正文。以失败回归测试驱动修复静态 SEO 与 SPA 两个渲染器，PR #429 经 Vercel 通过后合并上线；生产抽验 Venus in Gemini 与 Saturn Return Guide 均已无标记且保留目标内链。7/21 PRD 已回填为“部分完成（已上线，待两项规格验收）”，仅余结果复盘表直接联合读取与 8 条上限/组件例外的产品判定。
 - 对剩余两项做严格验收：发布集合代码仅读取发布日志和 Oracle 注册，不读取结果复盘表，未达“联合查询”；受管 Related Reading 是普通正文 Markdown 列表，生产 Saturn Return Guide 共 17 条相关链接，超过 8 条且非组件卡。两项均不接受关闭，等待产品决策“实施联读”与“卡片化或限额”的后续范围。
 - 用户确认将「结果复盘表」提升为发布前置；已核对该表字段，提出不以 Day14 收录为门槛、而以 page_id 与 canonical URL 的复盘行存在作为 fail-closed 前置的设计确认，等待用户确认具体口径后再创建设计文档与实施计划。
+- 解释发布前置的含义：页面发布后先在结果复盘表留下与选题登记表 page_id 和 URL 对应的记录，才允许加入 Smart Backfill；这只证明页面已纳入运营追踪，不等待 Day14 Google 收录，避免把内链延后 14 天。缺少记录时停止回填，防止未发布页进入内链图。
 
 ---
 
@@ -326,5 +327,34 @@ inbox-maboyang/00-inbox/2026-07-21-内链结构优化需求文档 应该是这�
 **🤖 回答：**
 
 确认将「结果复盘表」作为发布前置的方向。核对现有表字段后发现其没有独立“已发布”列，仅有 page_id、url 与索引状态；因此不建议以 `day14_收录=Y` 作为门槛，否则内链会被至少延后 14 天。提出待确认设计：发布流程先同步一条与选题登记表 `page_id` 和 canonical `/en/wiki/<slug>` 精确匹配的复盘行，Smart Backfill 仅处理同时存在发布日志、Oracle 注册及该复盘行的页面；缺失即 fail-closed、生成审核 PR 前停止。等待用户确认该复盘行存在即表示“已发布前置”后，再编写设计文档和实施计划。
+
+---
+
+### Q22 — 16:14
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-23T05:32:34.202Z (1784784754202)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+只运行指定 wrapper，退出 0。日志精确窗口为 16:02:55–16:14:35 CST：本机环境进入 apply（dry_run=false，budget_exhausted=false，ok=true）。astrologywiki 为 audit_repair，candidates=10、updates=10、new_clusters=0、audit_incomplete=178，page_ids=PG-TRANS-030/031/032、PG-HEAL-008/009、PG-MZ-001、PG-KB-001/002、PG-FH-001、PG-VEDIC-007；10 条 preprocessor 均 v1_fallback，10 条 evidence_discovery 均 insufficient。gengrowth 为 generate，candidates=0、updates=0、new_clusters=0、page_ids/preprocessor/evidence_discovery 均为空。窗口无 failed、timeout 或 error；未手工编辑 Sheet 或任务计划，且未创建额外 Feishu/Google Doc 报告物。
+
+---
+
+### Q23 — 16:15
+
+**🙋 提问：**
+
+你说的这条是什么意思
+
+**🤖 回答：**
+
+解释为：页面上线后，发布流程先在「结果复盘表」写入一条与选题登记表完全对应的记录（相同 page_id 和 URL），再允许它参与 Smart Backfill。该记录只证明页面已进入运营追踪，并不要求 Google 已收录；`day14_收录=Y` 是发布 14 天后的收录检查，若把它设为门槛，内链会被无谓延后。若复盘记录缺失，系统停止该页回填，不产生审核 PR，从而避免计划页或未真实上线页进入内链图。
 
 ---

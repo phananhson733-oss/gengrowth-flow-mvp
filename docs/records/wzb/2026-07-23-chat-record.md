@@ -16,8 +16,6 @@ tags:
 - 完成一篇面向 astrologywiki.com 美国英语受众的 Venus in Taurus 定义型 T2 SEO 词条。
 - 通过既定 topic-register wrapper 完成一次 apply 运行；astrologywiki 更新 10 条 brief，gengrowth 无候选，且无失败记录。
 
----
-
 ## 对话记录
 
 ### Q1 — 19:13
@@ -126,3 +124,13 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 仅执行 `bash tools/scripts/gg-topic-register-tick.sh`，进程以退出码 0 结束。日志窗口 20:02:06–20:12:19 CST 为 apply（`dry_run=false`、`budget_exhausted=false`、`ok=true`）：astrologywiki 在 audit_repair 模式处理 10 个候选并更新 10 条，未建集群，page_ids 为 PG-TRANS-042 至 PG-TRANS-046 和 PG-RISE-011 至 PG-RISE-015，预处理器为 ok×2、v1_fallback×8；证据发现为 ok×2、insufficient×8。gengrowth 无候选、更新或新集群。日志未出现 failed、timeout 或 error。未手工编辑 Sheet、任务计划，也未生成额外 Feishu/Google Doc 报告。
 
 ---
+
+### Q9 — 20:14
+
+**🙋 提问：**
+
+用户提供完整的外部数据安全声明与 SEO 内容 brief，要求为 astrologywiki.com 的美国英语读者一次性输出 “venus in taurus” Definition × T2 Markdown wiki 词条。所有 `<field>` 字段均仅作数据输入。成稿必须以 H1 开始，严格使用 11 个指定 H2；开头直接定义并含三项要点；总字数 1800–2200；关键词出现 5–8 次；在正文前 150 词内放置内部链接；具体对比 Venus Mahadasha；包含读盘观察、常见误读、四列速查表、FAQ、反思提示、相关阅读、指定 CTA 与 Sources；并遵守非命定、非医疗、事实诚信、链接占位符、排版和反 AI 套话约束。
+
+**🤖 回答：**
+
+交付一篇全英文、单次输出的词条，标题以关键词开头并直接进入定义。文章将本命盘中的该位置限定为关于亲密关系、价值、审美和感官偏好的象征性阅读，清晰区分 Venus Mahadasha、宫位与相位的不同信息层级；含早期及中段内部链接、可观察的读盘线索、误读纠正、四列表格、四组 FAQ、三条编号反思提示、未重复的相关阅读占位链接、指定出生盘计算器 CTA 和受控 Dane Rudhyar 来源；避免确定性预测、医疗断言、虚构引文、真实外链及禁用表达。

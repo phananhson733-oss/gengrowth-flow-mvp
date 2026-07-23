@@ -27,6 +27,7 @@ aliases:
 - 获授权直接修改规范 Google Sheet 后，新增 `artist_group` 列，新增 24 个 Cluster（文档 22 个加注册行引用而遗漏定义的 `fiction_friends`、`fiction_disney`），修正 42 条现有页面并补注册 167 条关键词。逐行回读 214 个需求归属均匹配、无重复或未知 ID；内链输入快照构建成功。未触发内容生成、通知、PR 合并或部署。
 - 最新验收结论：数据治理层已通过（24 个 Cluster 与 214 条关键词归属均正确，且无自动语义分配）；端到端内链需求尚未通过。当前规划器仍缺同行星/同艺人/同 IP 规则与 Pillar 全量 Spoke，当前快照仅 dry-run 178 篇；PR #423 未合并且生产标记数为 0，Oracle 主 CTA 也尚无映射。
 - 按已授权的 PRD 落地：实现并测试同行星、同艺人、同 IP 与 Pillar→全部已发布 Series 的受管内链规则；启用每日创建审核 PR 阶段；补齐 Oracle 主 CTA。新快照已创建 Oracle PR #428，内链检查、构建和 Vercel Preview 通过，仍等待人工审核合并；`gemini-zodiac-sign`、`venus-astrology` 尚未注册/发布，故其指向 Venus 页面这一条只能待内容入库后自动回填。
+- 用户确认不新增 `cluster_link_targets` 字段，并将 `gemini-zodiac-sign`、`venus-astrology` 两篇不存在页面的验收项视为误报而排除。重新运行三组回归测试 112/112 通过；本期实现以 PR #428 的人工审核合并为唯一剩余发布关口。
 
 ---
 
@@ -224,3 +225,15 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 按已批准的需求直接落地。以先失败后通过的测试实现专用受管内链规则：`planetary_placements_natal` 仅同行星互链并指向 Birth Chart Calculator；`pop_music_birthchart` 按必填 `artist_group` 隔离；`fiction_*` Series→Pillar+最多 3 篇同 IP Series、Pillar→全部已发布 Series；通用 Cluster 保持 Hub/Series 规则。`gg-sheet-to-brief.mjs` 现优先解析 OPS 在 Cluster 表选择的 CTA Map `cta_id`；CTA Map 新增并回读 `Oracle 工具页`（Tool、https://www.astrologywiki.com/oracle、oracle_cta_click）。每日 launchd tick 默认启用 Cluster 审核 PR 阶段，不会自动合并。三组 smoke 测试合计 112 通过/0 失败；新鲜快照覆盖 187 页、计划更新 178 页，`scripts/check-internal-links.mjs` 与 `npm run build` 均通过。已创建 Oracle PR #428，Vercel Preview 成功、状态 OPEN/CLEAN，等待人工审核合并。PRD 点名的 `gemini-zodiac-sign` 与 `venus-astrology` 当前既未在 Oracle 文章目录/索引中注册，也不在发布日志或快照里，因此不能伪造其到 `venus-in-gemini` 的链接；待 OPS 注册发布后会由规则自动回填。
+
+---
+
+### Q14 — 15:41
+
+**🙋 提问：**
+
+1.暂时不需要增加；2.OPS 需先注册并发布 gemini-zodiac-sign、venus-astrology，当前 Sheet 与 Oracle 源码均不存在它们这条验收标准先不处理，应该是误报
+
+**🤖 回答：**
+
+按用户确认收敛范围：不新增 `cluster_link_targets` 或任何额外 Sheet 字段；将 `gemini-zodiac-sign`、`venus-astrology` 的入链验收项排除为误报，不再要求 OPS 注册或发布这两个页面。重新读取工作树与 PR #428：Flow 工作树无未提交业务改动；Oracle PR 仍 OPEN，Vercel Preview 两项成功。新鲜运行 `gg-cluster-internal-links`、`gg-sheet-to-brief`、`gg-seo-blog-launchd-tick` 三组 smoke 测试，共 112 通过、0 失败。其余需求保持已实现状态，PR 继续等待既定人工审核合并，未自动合并或直接改生产。

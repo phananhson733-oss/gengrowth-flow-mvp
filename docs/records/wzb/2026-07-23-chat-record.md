@@ -28,6 +28,7 @@ aliases:
 - 最新验收结论：数据治理层已通过（24 个 Cluster 与 214 条关键词归属均正确，且无自动语义分配）；端到端内链需求尚未通过。当前规划器仍缺同行星/同艺人/同 IP 规则与 Pillar 全量 Spoke，当前快照仅 dry-run 178 篇；PR #423 未合并且生产标记数为 0，Oracle 主 CTA 也尚无映射。
 - 按已授权的 PRD 落地：实现并测试同行星、同艺人、同 IP 与 Pillar→全部已发布 Series 的受管内链规则；启用每日创建审核 PR 阶段；补齐 Oracle 主 CTA。新快照已创建 Oracle PR #428，内链检查、构建和 Vercel Preview 通过，仍等待人工审核合并；`gemini-zodiac-sign`、`venus-astrology` 尚未注册/发布，故其指向 Venus 页面这一条只能待内容入库后自动回填。
 - 用户确认不新增 `cluster_link_targets` 字段，并将 `gemini-zodiac-sign`、`venus-astrology` 两篇不存在页面的验收项视为误报而排除。重新运行三组回归测试 112/112 通过；本期实现以 PR #428 的人工审核合并为唯一剩余发布关口。
+- 回填 OPS 文档状态：7/21 集群优化 PRD 标为“已实现（待 PR #428 人工合并）”，记录数据、规则、CTA、调度、验证与误报排除；7/19 总体内链 PRD 标为“部分实施”，明确仅交付集群回填基础，其余 Req 1–5 原范围未被误标完成。
 
 ---
 
@@ -237,3 +238,15 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 按用户确认收敛范围：不新增 `cluster_link_targets` 或任何额外 Sheet 字段；将 `gemini-zodiac-sign`、`venus-astrology` 的入链验收项排除为误报，不再要求 OPS 注册或发布这两个页面。重新读取工作树与 PR #428：Flow 工作树无未提交业务改动；Oracle PR 仍 OPEN，Vercel Preview 两项成功。新鲜运行 `gg-cluster-internal-links`、`gg-sheet-to-brief`、`gg-seo-blog-launchd-tick` 三组 smoke 测试，共 112 通过、0 失败。其余需求保持已实现状态，PR 继续等待既定人工审核合并，未自动合并或直接改生产。
+
+---
+
+### Q15 — 15:43
+
+**🙋 提问：**
+
+然后回填一些这个 ops 的文档，标注修改状态
+
+**🤖 回答：**
+
+在 `gengrowth-ops/inbox-maboyang/00-inbox/` 回填两份关联 PRD 状态。`2026-07-21-内链结构优化需求文档.md` 补齐 Obsidian 元数据、状态改为“已实现（待 PR #428 人工合并）”，并新增实施状态区，逐项记录 Google Sheet 数据、专用内链规则、Oracle CTA、每日 review-only PR、测试/构建/Preview、178 篇回填 PR 与已排除的两篇误报。`2026-07-19-内链系统需求文档-astrologywiki.md` 状态改为“部分实施（集群回填基础已交付）”，明确本次仅覆盖 Req 4 的集群数据/回填基础，Req 1/2、Req 3、Req 4 可视化卡片/GA4、Req 5 仍不视为完成。运行 `git diff --check` 无格式错误；未修改历史分析报告、未创建额外任务或自动合并 PR。

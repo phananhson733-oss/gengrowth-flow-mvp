@@ -1,4 +1,16 @@
 ---
+
+### Q2 — 19:36
+
+**🙋 提问：**
+
+用户要求根据给定的外部字段，为 astrologywiki.com 美国英语读者一次性输出一篇 Markdown 格式的 Definition × T2 词条，主题为 “venus in taurus”。要求全英文、无前言、1 个 H1 和严格 11 个 H2、1800–2200 词、关键词出现 5–8 次、首段直定义与三项要点、正文内链分布、指定的对比/观察/误读/表格/FAQ/反思/CTA/Sources 结构，并遵守非命定、非医疗、事实诚信、反 AI 套话、链接占位符与排版约束。
+
+**🤖 回答：**
+
+交付一篇英文词条，标题为 “Venus in Taurus and the Art of Steady Affection”。文章把该位置限定为关系、审美与价值取向的象征性阅读，明确区分出生盘位置与 Venus Mahadasha；包含可观察线索、常见误读、四列速查表、四组 FAQ、三条反思提示、未重复的内部链接占位符、指定出生盘计算器 CTA，以及 Dane Rudhyar 的受控来源条目。全文避免确定性预测、临床措辞、虚构引文与禁用词。
+
+---
 date: 2026-07-23
 type: chat-record
 author: xdawayer

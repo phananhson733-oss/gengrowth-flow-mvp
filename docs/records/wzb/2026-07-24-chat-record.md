@@ -104,3 +104,20 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 仅执行 `bash tools/scripts/gg-topic-register-tick.sh`，退出码 0。隔离日志窗口为 16:01:46–16:13:03 CST，`dry_run=false`、`budget_exhausted=false`、`ok=true`，因此为环境显式启用的 apply。astrologywiki：selection_mode=audit_repair，candidates=10、updates=10、new_clusters=0、audit_incomplete=138，page_ids=[PG-MZ-007, PG-MZ-008, PG-MZ-009, PG-MZ-010, PG-MZ-011, PG-MZ-012, PG-MZ-013, PG-MZ-014, PG-MZ-015, PG-MZ-016]；preprocessor 为 v1_fallback×10，evidence_discovery 为 insufficient×10。gengrowth：selection_mode=generate，candidates=0、updates=0、new_clusters=0、audit_incomplete=0，page_ids/preprocessor/evidence_discovery 均为空。日志窗口无 failure、timeout 或 budget_exhausted。未进行手工 Sheet 写入、wrapper 外 task-plan 编辑，或额外 Feishu/Google Doc 报告产物；自动化记忆已追加。
 
 ---
+
+### Q5 — 17:32
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: 2026-07-23T21:00:28.134Z (1784840428134)
+
+Run the deterministic fixed-row index repair workflow through `bash tools/scripts/gg-index-repair-resubmit-tick.sh`. The wrapper loads the local gg environment, loops the configured products (`GG_INDEX_MONITOR_PRODUCTS`, defaulting to astrologywiki and gengrowth), processes rows marked `已修复`, syncs `结果复盘表`, and refreshes `request-indexing-queue` in each product Google Sheet. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, do not click Search Console Request Indexing unattended, and do not create Feishu or Google Doc report artifacts. After the wrapper exits, summarize per-product `process-fixed`, `sync-recap`, `sync-request-queue` counts visible in the log, plus any failures.
+
+**🤖 回答：**
+
+执行 `bash tools/scripts/gg-index-repair-resubmit-tick.sh`；隔离日志窗口为 17:31:11–17:31:56 CST，两个产品均为 rc=0，末行 `index repair-resubmit ok`。astrologywiki：process-fixed fixed=0/resubmitted=0，sync-recap en_rows=287/appended=0/updated=0/skipped=287，sync-request-queue rows=12（P0=0/P1=4/P2=1/P3=7）。gengrowth：process-fixed fixed=0/resubmitted=0，sync-recap en_rows=64/appended=0/updated=49/skipped=15，sync-request-queue rows=1（P0=0/P1=0/P2=1/P3=0）。失败关键字扫描（failure/error/exception/fatal/auth/timeout/nonzero）为空。未使用普通文章 Google Indexing API、无人值守 Search Console Request Indexing 点击，且未创建 Feishu/Google Doc 报告产物；自动化记忆已追加到对应 memory.md。
+
+---

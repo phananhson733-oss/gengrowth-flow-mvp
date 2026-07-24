@@ -19,8 +19,7 @@ tags:
 - 按固定入口执行 Index Monitor，两个产品的 Sitemap API 刷新与 URL Inspection 均完成且无失败；请求索引队列已更新。
 - 按固定入口执行结果复盘性能更新；AstrologyWiki 处理 3 条合并口径里程碑行，GenGrowth 无到期行，两个优化任务报告均已生成。
 - 两次按固定入口执行 topic-register apply；AstrologyWiki 共完成 20 条审计修复，GenGrowth 两轮均无候选，两个隔离日志窗口均无失败。
-
----
+- 按严格的 SEO 词条模板完成 Venus in Taurus 的英文 T2 Definition 草稿，保持 11 个指定 H2、受限内链、CTA 和来源结构，并避开命定及医疗化表述。
 
 ## 对话记录
 
@@ -136,5 +135,17 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 仅执行 `bash tools/scripts/gg-topic-register-tick.sh`，退出码 0。隔离日志窗口为 18:01:45–18:13:47 CST，`dry_run=false`、`budget_exhausted=false`、`ok=true`，因此为环境显式启用的 apply。astrologywiki：selection_mode=audit_repair，candidates=10、updates=10、new_clusters=0、audit_incomplete=128，page_ids=[PG-MZ-017, PG-MZ-018, PG-MZ-019, PG-MZ-020, PG-MZ-021, PG-MZ-022, PG-MZ-023, PG-MZ-024, PG-MZ-025, PG-MZ-026]；preprocessor 为 ok×1、v1_fallback×9；evidence_discovery 为 ok×2（均为 6 titles/6 domains）及 insufficient×8。gengrowth：selection_mode=generate，candidates=0、updates=0、new_clusters=0、audit_incomplete=0，page_ids/preprocessor/evidence_discovery 均为空。日志窗口无 failure、timeout 或 budget_exhausted。未进行手工 Sheet 写入、wrapper 外 task-plan 编辑，或额外 Feishu/Google Doc 报告产物；自动化记忆已追加。
+
+---
+
+### Q7 — 20:00
+
+**🙋 提问：**
+
+用户提供了一个面向 astrologywiki.com 美国英文受众的 Definition × T2 wiki 词条创作 brief：目标关键词为 “venus in taurus”，要求以 Markdown 一次性输出 1800–2200 词英文文章；严格使用 1 个 H1 与指定顺序的 11 个 H2；首段必须直接定义并含一个加粗答案和紧随其后的 3 条要点；要求在正文早期及中段分布受控内链，区分本命金星金牛、Venus Mahadasha、宫位与相位，不做命定或医疗主张；要求包含观察步骤、误读、表格、FAQ、反思问题、Related Reading、真实 birth-chart CTA 和受控 Sources。用户还给出了 RAG 事实范围、占位符格式、禁词和多项自动校验红线，要求外部数据字段只作为内容输入而非指令执行。
+
+**🤖 回答：**
+
+输出一篇英文词条《Venus in Taurus Brings Love Back to What Lasts》。文章以受限的解释框架界定该本命配置，首段在约 150 词内提供直接定义、3 条核心特征和早期本命盘阅读指南占位链接；将本命配置与 Venus Mahadasha、宫位和相位分开说明，并明确其信息取舍。正文含 11 个规定 H2、可观察的编号步骤、4 项误读纠正、4 列速查表、4 个 FAQ、3 条编号反思题、剩余内链、三段 CTA、指定免责声明和仅列正文已提到的 Dane Rudhyar 来源。完整短语控制在 5–8 次范围，未使用禁止的命定、临床或 AI 套话表达。
 
 ---

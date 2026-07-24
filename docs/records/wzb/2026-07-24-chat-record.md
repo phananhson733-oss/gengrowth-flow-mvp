@@ -149,3 +149,15 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 输出一篇英文词条《Venus in Taurus Brings Love Back to What Lasts》。文章以受限的解释框架界定该本命配置，首段在约 150 词内提供直接定义、3 条核心特征和早期本命盘阅读指南占位链接；将本命配置与 Venus Mahadasha、宫位和相位分开说明，并明确其信息取舍。正文含 11 个规定 H2、可观察的编号步骤、4 项误读纠正、4 列速查表、4 个 FAQ、3 条编号反思题、剩余内链、三段 CTA、指定免责声明和仅列正文已提到的 Dane Rudhyar 来源。完整短语控制在 5–8 次范围，未使用禁止的命定、临床或 AI 套话表达。
 
 ---
+
+### Q8 — 20:05 [claude]
+
+**🙋 提问：**
+
+用户以 SEO Content Variable Pre-processor v2.0 合约身份下达任务，Target_Keyword=Cancer MBTI、Tier=T2/Definition、Cluster=MBTI × Zodiac Signs，Raw_Friction 只给了一句概括性的读者需求（需要 Cancer MBTI 的清晰解释边界，避免宽泛主张或相邻话题混淆），Draft_Angle/SERP_Snapshot/Entity_RAG 均为模板占位未实际提供；合约要求先做 Trust+Safety 隔离并按 Entity/Entity_Topology/Friction/Logic/Content_Angle/Draft_Angle_Disposition/Alignment/Evidence+Confidence+Abort 八步产出 SHEET_FIELDS 与 REVIEW_METADATA，同时规定 SERP<3 或无带出处用户抱怨/Case Study 命名域名证据时必须硬中止并输出 Status: Needs More Evidence。
+
+**🤖 回答：**
+
+判为硬中止：SERP_Snapshot 缺失（0 titles）、Raw_Friction 是无出处的概括、Draft_Angle/Entity_RAG 皆占位，命中合约 §Evidence + Confidence + Abort。SHEET_FIELDS 五项全部留 `—` 不合成，REVIEW_METADATA 记 Confidence=Low、Status=Needs More Evidence、Abort_Reason=SERP<3 且无 sourced complaint。同时给出补足清单：SERP top 5–10（含引擎/日期/title+domain）、≥2 条带出处用户原话或 named-domain SERP/news 证据、Draft_Angle 真实假设、可选 Entity_RAG safety facts。
+
+---

@@ -18,7 +18,7 @@ tags:
 - 两次按固定入口执行 Index Repair Resubmit，均无已修复行重提；结果复盘表与请求索引队列已同步，日志窗口无失败并保持索引合规边界。
 - 按固定入口执行 Index Monitor，两个产品的 Sitemap API 刷新与 URL Inspection 均完成且无失败；请求索引队列已更新。
 - 按固定入口执行结果复盘性能更新；AstrologyWiki 处理 3 条合并口径里程碑行，GenGrowth 无到期行，两个优化任务报告均已生成。
-- 按固定入口执行 topic-register apply；AstrologyWiki 完成 10 条审计修复，GenGrowth 本轮无候选，隔离日志窗口无失败。
+- 两次按固定入口执行 topic-register apply；AstrologyWiki 共完成 20 条审计修复，GenGrowth 两轮均无候选，两个隔离日志窗口均无失败。
 
 ---
 
@@ -119,5 +119,22 @@ Run the deterministic fixed-row index repair workflow through `bash tools/script
 **🤖 回答：**
 
 执行 `bash tools/scripts/gg-index-repair-resubmit-tick.sh`；隔离日志窗口为 17:31:11–17:31:56 CST，两个产品均为 rc=0，末行 `index repair-resubmit ok`。astrologywiki：process-fixed fixed=0/resubmitted=0，sync-recap en_rows=287/appended=0/updated=0/skipped=287，sync-request-queue rows=12（P0=0/P1=4/P2=1/P3=7）。gengrowth：process-fixed fixed=0/resubmitted=0，sync-recap en_rows=64/appended=0/updated=49/skipped=15，sync-request-queue rows=1（P0=0/P1=0/P2=1/P3=0）。失败关键字扫描（failure/error/exception/fatal/auth/timeout/nonzero）为空。未使用普通文章 Google Indexing API、无人值守 Search Console Request Indexing 点击，且未创建 Feishu/Google Doc 报告产物；自动化记忆已追加到对应 memory.md。
+
+---
+
+### Q6 — 18:14
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-24T08:01:00.503Z (1784880060503)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅执行 `bash tools/scripts/gg-topic-register-tick.sh`，退出码 0。隔离日志窗口为 18:01:45–18:13:47 CST，`dry_run=false`、`budget_exhausted=false`、`ok=true`，因此为环境显式启用的 apply。astrologywiki：selection_mode=audit_repair，candidates=10、updates=10、new_clusters=0、audit_incomplete=128，page_ids=[PG-MZ-017, PG-MZ-018, PG-MZ-019, PG-MZ-020, PG-MZ-021, PG-MZ-022, PG-MZ-023, PG-MZ-024, PG-MZ-025, PG-MZ-026]；preprocessor 为 ok×1、v1_fallback×9；evidence_discovery 为 ok×2（均为 6 titles/6 domains）及 insufficient×8。gengrowth：selection_mode=generate，candidates=0、updates=0、new_clusters=0、audit_incomplete=0，page_ids/preprocessor/evidence_discovery 均为空。日志窗口无 failure、timeout 或 budget_exhausted。未进行手工 Sheet 写入、wrapper 外 task-plan 编辑，或额外 Feishu/Google Doc 报告产物；自动化记忆已追加。
 
 ---

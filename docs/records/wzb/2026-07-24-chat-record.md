@@ -20,6 +20,7 @@ tags:
 - 已核对本次独立日志窗口无失败标记，且保持不使用普通文章 Indexing API、无人值守 GSC 点击及飞书/Google Doc 报告产物的边界。
 - 按固定入口执行 Index Monitor，两个产品的 Sitemap API 刷新与 URL Inspection 均完成且无失败；请求索引队列已更新。
 - 按固定入口执行结果复盘性能更新；AstrologyWiki 处理 3 条合并口径里程碑行，GenGrowth 无到期行，两个优化任务报告均已生成。
+- 按固定入口执行 topic-register apply；AstrologyWiki 完成 10 条审计修复，GenGrowth 本轮无候选，隔离日志窗口无失败。
 
 ---
 
@@ -86,5 +87,22 @@ After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-s
 **🤖 回答：**
 
 执行指定入口 `bash tools/scripts/gg-recap-performance-tick.sh`，退出码为 0；最新日志窗口为 10:01:26–10:01:36 CST，末尾为 `recap performance ok`。astrologywiki（wb=…jyzcQc，`sc-domain:astrologywiki.com`，GA4 `properties/524765570`）：合并 D14/D30/D60 到期未填充行 rows=3，结果复盘表更新 updated=262，任务总数=264，报告为 `~/gengrowth-agents/reports/recap-performance/2026-07-24-astrologywiki-optimization-tasks.md`，P0=11/技术=157/P1=12/P2=1/观察=83。gengrowth（wb=…ZTIRA8，`sc-domain:gengrowth.ai`，同一 GA4 property）：rows=0、updated=49、tasks=62，报告为 `~/gengrowth-agents/reports/recap-performance/2026-07-24-gengrowth-optimization-tasks.md`，P0=0/技术=48/P1=5/P2=0/观察=9。日志仅给出 D14/D30/D60 合并 rows，未给逐档覆盖或独立非到期/已填充跳过计数；因此 AstrologyWiki 逐档覆盖不可从日志分解，GenGrowth 因无到期行各档均为 0/0。无失败、凭据或 property 缺失边界；未使用 repair/backfill 标志、手工 Sheet 编辑、发布、部署、GSC 提交或 Google Indexing API。自动化记忆已追加。
+
+---
+
+### Q4 — 16:13
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-23T14:01:26.631Z (1784815286631)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅执行 `bash tools/scripts/gg-topic-register-tick.sh`，退出码 0。隔离日志窗口为 16:01:46–16:13:03 CST，`dry_run=false`、`budget_exhausted=false`、`ok=true`，因此为环境显式启用的 apply。astrologywiki：selection_mode=audit_repair，candidates=10、updates=10、new_clusters=0、audit_incomplete=138，page_ids=[PG-MZ-007, PG-MZ-008, PG-MZ-009, PG-MZ-010, PG-MZ-011, PG-MZ-012, PG-MZ-013, PG-MZ-014, PG-MZ-015, PG-MZ-016]；preprocessor 为 v1_fallback×10，evidence_discovery 为 insufficient×10。gengrowth：selection_mode=generate，candidates=0、updates=0、new_clusters=0、audit_incomplete=0，page_ids/preprocessor/evidence_discovery 均为空。日志窗口无 failure、timeout 或 budget_exhausted。未进行手工 Sheet 写入、wrapper 外 task-plan 编辑，或额外 Feishu/Google Doc 报告产物；自动化记忆已追加。
 
 ---

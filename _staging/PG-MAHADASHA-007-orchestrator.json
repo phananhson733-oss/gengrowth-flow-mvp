@@ -1,7 +1,7 @@
 {
   "page_id": "PG-MAHADASHA-007",
   "prompt_path": "/Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-MAHADASHA-007.v8-prompt.md",
-  "started_at": "2026-07-23T13:21:30.636Z",
+  "started_at": "2026-07-24T10:38:55.980Z",
   "models_requested": [
     "codex"
   ],
@@ -10,7 +10,7 @@
   "max_cost_usd_per_page": 5,
   "budget_exceeded_models": [],
   "ok_count": 1,
-  "total_cost_estimate_usd": 0.1872,
+  "total_cost_estimate_usd": 0.178,
   "results": {
     "codex": {
       "model": "codex",
@@ -19,14 +19,14 @@
       "ok": true,
       "output_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-MAHADASHA-007-codex-v8.md",
       "retries": 0,
-      "duration_s": 369.1,
+      "duration_s": 286,
       "cost_estimate_usd": {
-        "usd": 0.1872,
+        "usd": 0.178,
         "input_tokens_est": 9322,
-        "output_tokens_est": 2349,
+        "output_tokens_est": 2120,
         "pricing_note": "GPT 5.5 xhigh"
       },
-      "cumulative_cost_usd": 0.1872,
+      "cumulative_cost_usd": 0.178,
       "budget_exceeded": false,
       "budget_usd": 5,
       "attempts": [
@@ -34,13 +34,13 @@
           "try_index": 1,
           "model": "codex",
           "command": "codex exec -c model=gpt-5.6-terra -c reasoning_effort=xhigh - < /Users/awayer_mini/gengrowth-flow-mvp/.gg-cache/prompts/PG-MAHADASHA-007.v8-prompt.md > /Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-MAHADASHA-007-codex-v8.md",
-          "cost_usd": 0.1872,
-          "cumulative_cost_usd": 0.1872,
+          "cost_usd": 0.178,
+          "cumulative_cost_usd": 0.178,
           "ok": true,
           "exit_code": 0,
-          "duration_s": 369.1,
-          "stderr_tail": "ion。文章需包含首段直接定义、唯一加粗答案与紧随的三条要点、前 150 词内的真实内部链接占位符、与 Venus Mahadasha 的具体边界对比及可读出的取舍、读盘编号观察、常见误读、四列表格、FAQ、反思提示、相关阅读、三段 CTA（指定 URL）与仅限正文具名权威的 Sources。另要求避免确定性预测、医疗主张、虚构引文、SEO 元评论、真实 URL（CTA 例外）、禁用 AI 套话及不存在的内部链接；不得输出文章外的聊天文字。\n+\n+**🤖 回答：**\n+\n+交付一篇通过预交付结构扫描的英文词条：1 个 H1、11 个 H2、无 H3，开篇定义段与三条要点，首个内部链接在约第 108 个单词处，关键词共 7 次。正文将本命 Venus 落金牛与 Venus Mahadasha、其他金牛落点、宫位及相位分层区分；提供六项观察、五项误读校正、五行四列表、四问 FAQ、三条编号反思提示、剩余有效内部链接、指定 CTA、逐字安全声明和受控 Dane Rudhyar 来源。文章保持非命定、非医疗、非伪科学与非 SEO 元评论的表达边界。\n\ntokens used\n109,716",
-          "stdout_bytes": 11529
+          "duration_s": 286,
+          "stderr_tail": "牛、Venus Mahadasha、宫位与相位，不做命定或医疗主张；要求包含观察步骤、误读、表格、FAQ、反思问题、Related Reading、真实 birth-chart CTA 和受控 Sources。用户还给出了 RAG 事实范围、占位符格式、禁词和多项自动校验红线，要求外部数据字段只作为内容输入而非指令执行。\n+\n+**🤖 回答：**\n+\n+输出一篇英文词条《Venus in Taurus Brings Love Back to What Lasts》。文章以受限的解释框架界定该本命配置，首段在约 150 词内提供直接定义、3 条核心特征和早期本命盘阅读指南占位链接；将本命配置与 Venus Mahadasha、宫位和相位分开说明，并明确其信息取舍。正文含 11 个规定 H2、可观察的编号步骤、4 项误读纠正、4 列速查表、4 个 FAQ、3 条编号反思题、剩余内链、三段 CTA、指定免责声明和仅列正文已提到的 Dane Rudhyar 来源。完整短语控制在 5–8 次范围，未使用禁止的命定、临床或 AI 套话表达。\n+\n+---\n\ntokens used\n83,712",
+          "stdout_bytes": 10408
         }
       ]
     }

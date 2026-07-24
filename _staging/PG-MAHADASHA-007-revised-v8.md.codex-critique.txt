@@ -1,0 +1,8 @@
+- “Energy Center” 表述不清且像 chakra 术语 → 改成更准确的 “Astrological Factor” 或 “Reading Lens”。
+- 表格把 Taurus 直接绑定 “second-house themes” → 避免 sign-house 混同，改为“Venus rules Taurus；若落二宫才涉及二宫议题”。
+- Venus Mahadasha 段落占比过高、偏离 “venus in taurus” 搜索意图 → 缩短为 FAQ 一题，主文回到 natal Venus in Taurus meaning。
+- 爱情层面的具体度不够 → 增加可执行细节：慢热、身体触碰、稳定约会节奏、礼物偏好、冲突中需要可预期行动。
+- “quality / comfort / consistency” 重复较多 → 用具体场景替换抽象词，例如消费、家居审美、饮食、亲密关系、承诺方式。
+- “strong placement” 答案应更专业 → 明确说 Venus is in domicile/rulership in Taurus，不是 exaltation；并说明 dignity 不等于人生结果顺利。
+- Rudhyar 来源像泛泛背书 → 要么补充其与“整体读盘”相关的具体参考，要么删除，避免显得硬塞权威。
+- Take Action 太通用 → 加一句让读者实际检查 Venus 的 house、aspects、degree/orb，并记录 3 个生活证据来验证解读。

@@ -1,29 +1,3 @@
----
-title: Venus In Taurus
-slug: venus-in-taurus
-date: 2026-07-24
-status: ready-to-review
-type: wiki-entry
-template: Definition
-tier: T2
-track: 量产线
-page_id: PG-MAHADASHA-007
-author_id: "marcus-orion"
-author_display_name: "Marcus Orion"
-target_keyword: venus in taurus
-associated_keywords:
-  - venus in taurus meaning
-  - venus in taurus astrology
-  - venus in taurus birth chart
-  - venus in taurus zodiac
-  - venus in taurus interpretation
-generated_by: unknown
-prompt_version: v8
-generated_at: 2026-07-24T10:44:47.272Z
-content_sha256_short: d070fec1cbcbf326
-phase2_checks: all-pass
----
-
 # Venus in Taurus Brings Love Back to What Lasts
 
 ## What Is Venus in Taurus?

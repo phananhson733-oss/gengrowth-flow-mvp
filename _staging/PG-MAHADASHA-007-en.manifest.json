@@ -8,9 +8,9 @@
   "track": "量产线",
   "generated_by": "unknown",
   "prompt_version": "v8",
-  "generated_at": "2026-07-24T10:38:58.155Z",
-  "content_sha256_short": "fbade02510e2cbcc",
-  "source_path": "_staging/PG-MAHADASHA-007-codex-v8.md",
+  "generated_at": "2026-07-24T10:44:47.272Z",
+  "content_sha256_short": "d070fec1cbcbf326",
+  "source_path": "_staging/PG-MAHADASHA-007-revised-v8.md",
   "staging_path": "/Users/awayer_mini/gengrowth-flow-mvp/_staging/PG-MAHADASHA-007-en.md",
   "phase2_checks": {
     "overall": "pass",
@@ -19,7 +19,7 @@
       "h2Count": 11,
       "h3Count": 0,
       "h4Count": 0,
-      "words": 1631,
+      "words": 1667,
       "wikilinks": 4,
       "tbdLinks": 4
     },

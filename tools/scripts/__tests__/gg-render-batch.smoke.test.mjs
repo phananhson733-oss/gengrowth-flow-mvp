@@ -222,6 +222,15 @@ test('composeCfg: override.author_id wins over brief.author', () => {
   assert.equal(cfg.author_id, 'elena-vane');
 });
 
+test('composeCfg accepts the sheet-to-brief override author field', () => {
+  const { cfg } = composeCfg(
+    { brief: { entity: 'E', target_keyword: 'k' }, page_id: 'page_x' },
+    { author: 'marcus-orion', author_source: 'override' },
+  );
+  assert.equal(cfg.author_id, 'marcus-orion');
+  assert.equal(cfg.author_source, 'override');
+});
+
 test('composeCfg: no author → cfg omits author_id (clean fixture)', () => {
   const { cfg } = composeCfg({ brief: { entity: 'E', target_keyword: 'k' }, page_id: 'page_x' }, {});
   assert.ok(!('author_id' in cfg), 'author_id must be omitted when no author resolved');

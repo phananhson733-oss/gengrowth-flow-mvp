@@ -13,7 +13,7 @@ import {
   buildIllustrationRunEnv,
 } from '../lib/illustrate.mjs';
 
-test('celebrity birth-chart topics use stylized portrait guidance', () => {
+test('celebrity birth-chart topics put a person and natal chart into one concrete action', () => {
   const theme = classifyHeroTheme({
     slug: 'arthur-fery-birth-chart',
     title: 'What the Arthur Fery Birth Chart Shows Beyond His Cancer Sun',
@@ -26,6 +26,9 @@ test('celebrity birth-chart topics use stylized portrait guidance', () => {
     content: 'Arthur Fery was born on July 12, 2002.',
   });
   assert.match(prompt, /stylized editorial portrait/i);
+  assert.match(prompt, /actively consults/i);
+  assert.match(prompt, /circular natal chart/i);
+  assert.doesNotMatch(prompt, /standalone chart wheel/i);
   assert.doesNotMatch(prompt, /no human faces/i);
 });
 
@@ -76,6 +79,13 @@ test('LLM planning rules require Brief-first visual evidence', () => {
   assert.match(rules, /concrete setting/i);
   assert.match(rules, /reader task/i);
   assert.match(rules, /fictional-character-scene/i);
+});
+
+test('LLM planning rules keep birth-chart visuals grounded in the person and reading action', () => {
+  const rules = buildHeroPlanningRules();
+  assert.match(rules, /birth-chart articles/i);
+  assert.match(rules, /person.*chart-reading action/i);
+  assert.match(rules, /not a standalone diagram/i);
 });
 
 test('image sizing rules document hero and Google structured-data variants', () => {

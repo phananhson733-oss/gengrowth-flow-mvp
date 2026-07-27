@@ -20,7 +20,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync, statSync, mkdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 
-const BASE_STYLE = 'deep indigo-to-near-black palette (#16112c fading to #0b0a1b), soft gold accents (#d4af6a), teal-and-gold nebula wash, painterly editorial illustration, full-bleed wide 16:9 composition that fills the entire frame, ONE single continuous scene, no split screen, no diptych, no two panels, no diagram, no chart wheel, no central framed card, no text or letters or numerals';
+const BASE_STYLE = 'deep indigo-to-near-black palette (#16112c fading to #0b0a1b), soft gold accents (#d4af6a), teal-and-gold nebula wash, painterly editorial illustration, full-bleed wide 16:9 composition that fills the entire frame, ONE single continuous scene, no split screen, no diptych, no two panels, no standalone diagram, no central framed card, no text or letters or numerals';
 const ABSTRACT_STYLE = `${BASE_STYLE}, no human faces`;
 
 const IMAGES_SUBDIR = 'public/images/blog';   // single dir for cron-generated assets
@@ -68,10 +68,14 @@ export function classifyHeroTheme({ slug = '', title = '', content = '' } = {}) 
   return 'abstract-atmospheric';
 }
 
+function isBirthChartTopic({ slug = '', title = '', content = '' } = {}) {
+  return /\b(birth chart|birth-chart|natal chart|natal-chart)\b/i.test(`${slug} ${title} ${content}`);
+}
+
 export function buildHeroPlanningRules() {
   return [
     `Before writing hero.prompt, classify the article into exactly one hero theme:`,
-    `- celebrity-portrait: named-person birth chart or zodiac-sign articles. Use a stylized editorial portrait or character-study scene inspired by the public figure, with recognizable career/context cues, non-photoreal, not a literal photo. Do not include "no human faces".`,
+    `- celebrity-portrait: named-person birth-chart or zodiac-sign articles. Use a stylized editorial portrait or character-study scene with recognizable career/context cues, non-photoreal, and never a literal photo or celebrity likeness. For birth-chart articles, show an original person plus an unlabeled circular natal chart in a physical chart-reading action (holding, comparing, or studying it) inside that career/context setting; it is not a standalone diagram. Do not include "no human faces".`,
     `- relationship-scene: wedding, synastry, compatibility, dating, or named-couple articles. Use two stylized figures and relationship geometry in one continuous scene, not a split-screen comparison.`,
     `- sports-matchup: football/soccer, World Cup, country-vs-country, or national-team matchup articles. Use a stadium or pitch scene with two teams/countries expressed through color, motion, banners without text, and celestial tension.`,
     `- country-astrology: clear country, national event, eclipse, or calendar themes. Use a concrete symbolic national/event scene, not a generic nebula.`,
@@ -96,6 +100,9 @@ export function buildHeroImageSizingRules() {
 export function buildTemplateHeroPrompt({ title, slug = '', content = '' }) {
   const theme = classifyHeroTheme({ slug, title, content });
   if (theme === 'celebrity-portrait') {
+    if (isBirthChartTopic({ title, slug, content })) {
+      return `A stylized editorial portrait inspired by "${title}": an original non-photoreal public-figure archetype in a concrete career-context scene actively consults an unlabeled circular natal chart and a plain birth-data card, with the person, chart-reading action, and role-specific setting all visibly connected in one continuous composition; soft celestial light supports the scene without imitating a photograph or celebrity likeness, ${BASE_STYLE}`;
+    }
     return `A stylized editorial portrait inspired by "${title}": a public figure rendered as an elegant non-photoreal character study, subtle career and era cues woven into clothing, posture, and background symbols, soft celestial light shaping the face and shoulders without imitating a photograph, ${BASE_STYLE}`;
   }
   if (theme === 'relationship-scene') {
@@ -161,7 +168,7 @@ function planPromptFor(repo, slug) {
     `HERO PROMPT RULES — the hero must match the article's concrete subject and the site's house style:`,
     buildHeroPlanningRules(),
     buildHeroImageSizingRules(),
-    `Derive a UNIQUE visual idea from what THIS article argues. For clear person/couple/matchup/event topics, keep that subject visible in the scene. Never a chart wheel, never a centred diagram/emblem, never text.`,
+    `Derive a UNIQUE visual idea from what THIS article argues. For clear person/couple/matchup/event topics, keep that subject visible in the scene. For a named-person birth-chart article, the person must physically read, hold, or compare an unlabeled circular natal chart within a concrete role-specific setting; it is not a standalone diagram. Never use a centred diagram/emblem or text.`,
     ``,
     `INLINE RULES — include inline ONLY for genuinely data-bearing sections (an enumeration, a comparison, a time-ordered process). Definition/short articles often need 0-1; pillar/guide 2-3. ALL data (names, years, orderings) MUST be faithfully extracted from the article text. afterHeadingEn MUST be a verbatim "## " H2 heading line that exists in the EN content — VERIFY each with: grep -nF '## <heading>' ${join(repo, artRel)}. Drop any anchor you cannot verify.`,
     ``,

@@ -172,7 +172,9 @@ export function composeCfg(row, override) {
     // (gg-sheet-pull). renderAuraPrompt writes it + banned_tokens into the fixture
     // so the batch publish path carries the persona through to the oracle. Omitted
     // when empty so EN fixtures without an author stay clean.
-    ...(o.author_id || b.author ? { author_id: o.author_id || b.author } : {}),
+    // sheet-to-brief override entries use `author`; earlier hand-authored fixtures
+    // use `author_id`. Accept both so a Sheet-resolved byline reaches Phase 2.
+    ...(o.author_id || o.author || b.author ? { author_id: o.author_id || o.author || b.author } : {}),
     ...(o.author_source || b.author_source ? { author_source: o.author_source || b.author_source } : {}),
   };
   return { cfg, warnings: [tpl.warning].filter(Boolean) };

@@ -48,12 +48,34 @@ test('relationship and sports-match topics get concrete scene guidance', () => {
   );
 });
 
+test('fictional character zodiac topics use a non-actor ensemble in a story setting', () => {
+  const input = {
+    slug: 'harry-potter-characters-zodiac-signs',
+    title: 'Harry Potter Characters Zodiac Signs Explained Through Story Archetypes',
+    content: 'A fictional character zodiac sign guide comparing major magical-school characters through story behavior.',
+  };
+  assert.equal(classifyHeroTheme(input), 'fictional-character-scene');
+  const prompt = buildTemplateHeroPrompt(input);
+  assert.match(prompt, /non-actor/i);
+  assert.match(prompt, /role-based ensemble/i);
+  assert.match(prompt, /story setting/i);
+});
+
 test('LLM planning rules require specific subject classification before abstract fallback', () => {
   const rules = buildHeroPlanningRules();
   assert.match(rules, /celebrity-portrait/i);
   assert.match(rules, /relationship-scene/i);
   assert.match(rules, /sports-matchup/i);
   assert.match(rules, /only use abstract-atmospheric/i);
+});
+
+test('LLM planning rules require Brief-first visual evidence', () => {
+  const rules = buildHeroPlanningRules();
+  assert.match(rules, /subject/i);
+  assert.match(rules, /key relationship/i);
+  assert.match(rules, /concrete setting/i);
+  assert.match(rules, /reader task/i);
+  assert.match(rules, /fictional-character-scene/i);
 });
 
 test('image sizing rules document hero and Google structured-data variants', () => {

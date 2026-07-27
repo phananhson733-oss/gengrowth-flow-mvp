@@ -569,6 +569,14 @@ test('composeOverride: page.content_angle empty → falls back to cluster.conten
   assert.equal(entry.content_angle, 'cluster-level angle (fallback)');
 });
 
+test('composeOverride: a sentinel content_angle recovers a long migrated brief from artist_group', () => {
+  const migratedAngle =
+    'A source-aware birth-chart explainer that separates date-based placements from claims that need a birth time.';
+  const row = makeRow({ content_angle: 'N', artist_group: migratedAngle });
+  const { entry } = composeOverride(row, makeCtx());
+  assert.equal(entry.content_angle, migratedAngle);
+});
+
 test('composeOverride: --skip-non-v8 skips Tutorial/Comparison/Programmatic/Case Study', () => {
   for (const tpl of ['Tutorial', 'Comparison', 'Programmatic', 'Case Study']) {
     const row = makeRow({ template: tpl });
@@ -711,4 +719,7 @@ test('PAGES_FIX_COL 与 _workbook-spec 选题登记表 header 同源（防 schem
   };
   assert.equal(PAGES_FIX_COL.cluster_id, colOf('cluster_id'));
   assert.equal(PAGES_FIX_COL.page_role, colOf('page_role'));
+  assert.equal(pages.header.indexOf('artist_group'), 18);
+  assert.equal(pages.header.indexOf('content_angle'), 19);
+  assert.equal(pages.header.indexOf('author'), 23);
 });

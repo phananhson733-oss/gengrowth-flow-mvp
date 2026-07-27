@@ -8,7 +8,7 @@
 // 派生规则：
 //   target_keyword / associated_keywords / search_volume / entity / tier / template
 //                                          ← brief（直通 8 个字段）
-//   content_angle  ← page.content_angle || cluster.content_angle
+//   content_angle  ← page.content_angle || migrated page.artist_group brief || cluster.content_angle
 //   cluster_jtbd   ← cluster_table[cluster_id].jtbd
 //   internal_link_rule  ← cluster_table[cluster_id].internal_link_rule
 //   cta_text + cta_target_url  ← CTA Map semantic selector (keywords / desc / eligibility)
@@ -84,6 +84,20 @@ export const PSYCH_SAFETY_RL6_HINT =
   '并严格禁用 healing / therapy / diagnose(s) / treat(s) / cure(s) / remedy / prescribe(s) / ' +
   'prescription / disorder / syndrome 等 RL6 黑名单词。改用 reflection / journaling / ' +
   'self-awareness / interpretive framework 类语言。';
+
+// Some rows created during the artist_group migration have a literal "N" in
+// content_angle while their long, page-specific editorial brief remains in the
+// preceding artist_group cell. That value is not an artist label; recover it
+// only when it is clearly prose, so normal values such as "bts" stay untouched.
+export function resolveContentAngle(brief, cluster) {
+  const pageAngle = String(brief?.content_angle || '').trim();
+  const artistGroup = String(brief?.artist_group || '').trim();
+  const isSentinel = /^(?:n|none|n\/a)$/i.test(pageAngle);
+  const migratedBrief = artistGroup.length >= 40 && /\s/.test(artistGroup);
+  if (pageAngle && !isSentinel) return pageAngle;
+  if (migratedBrief) return artistGroup;
+  return pageAngle || String(cluster?.content_angle || '').trim();
+}
 
 // ---------- pure helpers (exported for tests) ----------
 
@@ -320,6 +334,7 @@ export function composeOverride(row, { clusterMap, ctaMap, ctaRegistry = new Map
 
   const clusterId = String(brief.cluster_id || '').trim();
   const cluster = clusterId ? clusterMap.get(clusterId) : null;
+  const contentAngle = resolveContentAngle(brief, cluster);
 
   const pageRole = String(brief.page_role || '').trim();
   const track = cluster ? cluster.track : '';
@@ -330,7 +345,7 @@ export function composeOverride(row, { clusterMap, ctaMap, ctaRegistry = new Map
       target_keyword: brief.target_keyword,
       entity: brief.entity,
       associated_keywords: Array.isArray(brief.associated_keywords) ? brief.associated_keywords.join(';') : brief.associated_keywords,
-      content_angle: brief.content_angle || (cluster ? cluster.content_angle : ''),
+      content_angle: contentAngle,
       explicit_cta: legacyToolIntent(explicitCtaRaw) ? '' : resolveCtaTargetUrl(explicitCtaRaw, ctaRegistry),
       preferred_kind: legacyToolIntent(explicitCtaRaw) ? 'tool' : '',
     },
@@ -414,7 +429,7 @@ export function composeOverride(row, { clusterMap, ctaMap, ctaRegistry = new Map
     associated_keywords: Array.isArray(brief.associated_keywords) ? brief.associated_keywords : [],
     search_volume: brief.search_volume || '',
     cluster_jtbd: cluster ? cluster.jtbd : '',
-    content_angle: brief.content_angle || (cluster ? cluster.content_angle : ''),
+    content_angle: contentAngle,
     internal_link_rule: cluster ? cluster.internal_link_rule : '',
     cta_id: ctaChoice.ok ? ctaChoice.cta_id : '',
     cta_text: ctaChoice.ok ? ctaChoice.cta_text : '',

@@ -37,6 +37,7 @@ import {
   serpSnippetsBlock,
   obsidianRagBlock,
   buildPageRowMap,
+  resolveContentAngle,
   safeField,
   xmlEscape,
   cleanReason,
@@ -1046,6 +1047,17 @@ test('Sheet v3.3 production columns keep artist metadata ahead of the author fie
       journal_prompts: 21,
       author: 23,
     },
+  );
+});
+
+test('Sheet v3.3 recovers a long migrated brief when content_angle is a sentinel', () => {
+  const page = [];
+  page[PAGE_COLS.content_angle] = 'N';
+  page[PAGE_COLS.artist_group] =
+    'A source-aware birth-chart explainer that separates date-based placements from claims requiring a birth time.';
+  assert.equal(
+    resolveContentAngle(page, []),
+    page[PAGE_COLS.artist_group],
   );
 });
 

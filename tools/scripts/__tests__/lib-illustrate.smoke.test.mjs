@@ -29,6 +29,7 @@ test('celebrity birth-chart topics put a person and natal chart into one concret
   assert.match(prompt, /actively consults/i);
   assert.match(prompt, /circular natal chart/i);
   assert.doesNotMatch(prompt, /standalone chart wheel/i);
+  assert.doesNotMatch(prompt, /nebula wash/i);
   assert.doesNotMatch(prompt, /no human faces/i);
 });
 
@@ -86,6 +87,7 @@ test('LLM planning rules keep birth-chart visuals grounded in the person and rea
   assert.match(rules, /birth-chart articles/i);
   assert.match(rules, /person.*chart-reading action/i);
   assert.match(rules, /not a standalone diagram/i);
+  assert.match(rules, /celestial motifs only as subordinate texture/i);
 });
 
 test('image sizing rules document hero and Google structured-data variants', () => {

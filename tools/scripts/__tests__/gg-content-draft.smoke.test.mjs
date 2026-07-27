@@ -51,6 +51,7 @@ import {
   MAX_REASON_LEN,
   parseArgs,
 } from '../gg-content-draft.mjs';
+import * as contentDraftModule from '../gg-content-draft.mjs';
 
 import { redact } from '../lib/gg-shared.mjs';
 
@@ -1025,6 +1026,27 @@ test('buildPageRowMap: rows → page_id-indexed map', () => {
   const map = buildPageRowMap([r1, r2]);
   assert.equal(map['p1'], 2);
   assert.equal(map['p2'], 3);
+});
+
+test('Sheet v3.3 production columns keep artist metadata ahead of the author field', () => {
+  // The current 选题登记表 has artist_group after page_role and the explicit
+  // author field at X. Rihanna is row 504, so the content tool must read past
+  // the old row-300 ceiling as well as use the current field offsets.
+  assert.equal(contentDraftModule.PAGE_RANGE, '选题登记表!A2:X2000');
+  assert.deepEqual(
+    {
+      content_angle: PAGE_COLS.content_angle,
+      psych_safety_flag: PAGE_COLS.psych_safety_flag,
+      journal_prompts: PAGE_COLS.journal_prompts,
+      author: PAGE_COLS.author,
+    },
+    {
+      content_angle: 19,
+      psych_safety_flag: 20,
+      journal_prompts: 21,
+      author: 23,
+    },
+  );
 });
 
 // ============================================================

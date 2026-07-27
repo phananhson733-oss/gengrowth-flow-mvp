@@ -116,12 +116,16 @@ const PAGE_COLS = Object.freeze({
   page_id: 15,
   cluster_id: 16,
   page_role: 17,
-  content_angle: 18,
-  psych_safety_flag: 19,
-  journal_prompts: 20,
+  // v3.3 inserts artist_group before the editorial fields. Keep this explicit
+  // rather than silently treating an artist label as the content angle.
+  artist_group: 18,
+  content_angle: 19,
+  psych_safety_flag: 20,
+  journal_prompts: 21,
+  target_keyword_zh: 22,
   // Lane A author signing columns. Lane B routing writes these; content-draft reads them.
-  author: 21,        // column V — author_id (kebab), e.g. "marcus-orion"
-  author_source: 22, // column W — provenance: where the assignment came from (default passthrough)
+  author: 23,        // column X — author_id (kebab), e.g. "marcus-orion"
+  author_source: 24, // column Y — optional provenance; currently absent in the source sheet
 });
 
 // 主题集群表 columns (0-indexed).
@@ -171,7 +175,9 @@ const CLUSTER_SHEET = '主题集群表';
 const CTA_SHEET = 'CTA Map';
 
 // Sheet ranges (read-only).
-const PAGE_RANGE = `${PAGE_SHEET}!A2:W300`;
+// The production queue now extends beyond row 500. Read its current v3.3
+// columns through X so page-id lookup and author routing use the same record.
+const PAGE_RANGE = `${PAGE_SHEET}!A2:X2000`;
 const CLUSTER_RANGE = `${CLUSTER_SHEET}!A2:T200`;
 const CTA_RANGE = `${CTA_SHEET}!A2:L500`;
 
@@ -262,7 +268,7 @@ flags:
   --staging-dir <dir>      default _staging
   --prompt-out <dir>       default .gg-cache/prompts
   --serp-dir <dir>         default .gg-cache/serp
-  --workbook-id <id>       default $GG_SHEETS_WORKBOOK_ID
+  --workbook-id <id>       default $GG_SHEETS_FLOW_MVP_WORKBOOK_ID (then legacy $GG_SHEETS_WORKBOOK_ID)
   --dry-run                no disk writes, no Sheets writes
   --allow-missing-serp     skip RL3 when SERP cache missing (requires --reason)
   --allow-missing-rag      skip Phase 0 RAG source injection when entity-passport / friction-mine caches missing (requires --reason)
@@ -453,7 +459,7 @@ function resolveAuthor(pageRow, clusterRow, pageId, authorMap) {
       reason:
         `no author assigned for ${pageId}: sheet author column empty (or override rejected) ` +
         `and no author.map match for domain "${routed.cluster_domain || '(none)'}". ` +
-        `Set author in 选题登记表 (column V) or add author.map.<domain> in the config tab.`,
+        `Set author in 选题登记表 (column X) or add author.map.<domain> in the config tab.`,
     };
   }
   // loadPersona throws on unknown id / missing field / malformed card — let it
@@ -849,7 +855,7 @@ async function runPhase1(args, env) {
     author = resolveAuthor(pageRow, clusterRow, pageId);
   } catch (e) {
     recordFail('author gate', e,
-      `check 选题登记表 column V (author) value against tools/scripts/lib/author-personas/<id>.md`);
+      `check 选题登记表 column X (author) value against tools/scripts/lib/author-personas/<id>.md`);
     await writeRunsRow({
       ...env, dryRun: args.dryRun,
       payload: { phase: 1, page_id: pageId, fail_kind: 'gate', detail: formatErr(e) },
@@ -859,7 +865,7 @@ async function runPhase1(args, env) {
   }
   if (!author.ok) {
     recordFail('author gate', new Error(author.reason),
-      'set the author column (V) in 选题登记表; routing is owned upstream (Lane B)');
+      'set the author column (X) in 选题登记表; routing is owned upstream (Lane B)');
     await writeRunsRow({
       ...env, dryRun: args.dryRun,
       payload: { phase: 1, page_id: pageId, fail_kind: 'gate', detail: author.reason },
@@ -1281,7 +1287,7 @@ async function runPhase2(args, env) {
     author = resolveAuthor(pageRow, clusterRow, pageId);
   } catch (e) {
     recordFail('author gate', e,
-      'check 选题登记表 column V (author) against tools/scripts/lib/author-personas/<id>.md');
+      'check 选题登记表 column X (author) against tools/scripts/lib/author-personas/<id>.md');
     await writeRunsRow({
       ...env, dryRun: args.dryRun,
       payload: { phase: 2, page_id: pageId, fail_kind: 'gate', detail: formatErr(e) },
@@ -1291,7 +1297,7 @@ async function runPhase2(args, env) {
   }
   if (!author.ok) {
     recordFail('author gate', new Error(author.reason),
-      'set the author column (V) in 选题登记表 before Phase 2');
+      'set the author column (X) in 选题登记表 before Phase 2');
     await writeRunsRow({
       ...env, dryRun: args.dryRun,
       payload: { phase: 2, page_id: pageId, fail_kind: 'gate', detail: author.reason },
@@ -1755,9 +1761,11 @@ async function main() {
   }
   console.log(`env file:   ${envPath || '(none — using process.env)'}\n`);
 
-  const workbookId = args.workbookId || process.env.GG_SHEETS_WORKBOOK_ID;
+  const workbookId = args.workbookId
+    || process.env.GG_SHEETS_FLOW_MVP_WORKBOOK_ID
+    || process.env.GG_SHEETS_WORKBOOK_ID;
   if (!workbookId) {
-    console.error('ERROR: GG_SHEETS_WORKBOOK_ID missing (set in ~/.config/gg/_gg.env or pass --workbook-id)');
+    console.error('ERROR: GG_SHEETS_FLOW_MVP_WORKBOOK_ID / GG_SHEETS_WORKBOOK_ID missing (set in ~/.config/gg/_gg.env or pass --workbook-id)');
     process.exit(EXIT.CLI);
   }
   // Codex round 2 LOW-2: workbook id format whitelist (skip in test mode where 'fake_workbook' is used).
@@ -1844,6 +1852,7 @@ export {
   cleanReason,
   formatErr,
   PAGE_COLS,
+  PAGE_RANGE,
   CLUSTER_COLS,
   CTA_COLS,
   EXIT,

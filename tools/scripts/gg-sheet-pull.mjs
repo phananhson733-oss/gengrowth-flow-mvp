@@ -170,6 +170,7 @@ const HEADER_MAP = {
   'page_id': 'page_id_sheet',
   'cluster_id': 'cluster_id',
   'page_role': 'page_role',
+  'artist_group': 'artist_group',
   'content_angle': 'content_angle',
   'psych_safety_flag': 'psych_safety_flag',
   'journal_prompts': 'journal_prompts',

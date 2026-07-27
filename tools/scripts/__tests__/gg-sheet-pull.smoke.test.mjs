@@ -222,6 +222,21 @@ test('mapRowToBrief picks up the 6 v0.18 columns when they are populated', () =>
   assert.equal(brief.friction_brief, 'shade confusion');
 });
 
+test('mapRowToBrief preserves artist_group separately from a migrated content_angle', () => {
+  const header = [
+    'Target Keyword', 'Associated Keywords', '月搜索量', 'KD', 'Intent', 'Tier',
+    'Template', 'Entity', 'Friction', 'Logic', 'CTA', 'GSC Keywords', 'Status',
+    'URL', 'Last Audit', 'page_id', 'cluster_id', 'page_role', 'artist_group',
+    'content_angle', 'psych_safety_flag', 'journal_prompts', 'target_keyword_zh', 'author',
+  ];
+  const row = new Array(header.length).fill('');
+  row[18] = 'A source-aware birth-chart explainer that keeps birth-time limits visible.';
+  row[19] = 'N';
+  const { brief } = mapRowToBrief(header, row);
+  assert.equal(brief.artist_group, row[18]);
+  assert.equal(brief.content_angle, 'N');
+});
+
 test('resolvePageId: sheet page_id wins over auto-slugified keyword', () => {
   const brief = { page_id_sheet: 'page_chiron_7th_house', target_keyword: 'chiron in 7th house' };
   assert.equal(resolvePageId(brief, true), 'page_chiron_7th_house');

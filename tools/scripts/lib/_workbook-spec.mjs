@@ -274,26 +274,24 @@ export const TABS = [
   {
     name: '选题登记表',
     type: 'standard',
-    // bilingual-v9: col 22 target_keyword_zh added for ZH main long-tail (ops
-    // hand-fills; LLM derivation is fallback). gg-sheet-pull picks this up
-    // automatically via header_map; composeCfg transfers it to fixture; phase2
-    // RL4/RL5 prefer it over H1-derive.
-    header: ['Target Keyword', 'Associated Keywords', '月搜索量', 'KD', 'Intent', 'Tier', 'Template', 'Entity', 'Friction', 'Logic', 'CTA', 'GSC Keywords', 'Status', 'URL', 'Last Audit', 'page_id', 'cluster_id', 'page_role', 'content_angle', 'psych_safety_flag', 'journal_prompts', 'target_keyword_zh'],
+    // v3.3 artist_group precedes the editorial fields. target_keyword_zh remains
+    // retained for legacy compatibility; author is the explicit Lane-A byline.
+    header: ['Target Keyword', 'Associated Keywords', '月搜索量', 'KD', 'Intent', 'Tier', 'Template', 'Entity', 'Friction', 'Logic', 'CTA', 'GSC Keywords', 'Status', 'URL', 'Last Audit', 'page_id', 'cluster_id', 'page_role', 'artist_group', 'content_angle', 'psych_safety_flag', 'journal_prompts', 'target_keyword_zh', 'author'],
     headerColorByCol: {
       // navy: 3 4 (VLOOKUP)
-      // green: 1 5 6 7 8 13 16 17 18 20
-      // slate: 2 9 10 11 12 14 15 19 21 22
+      // green: 1 5 6 7 8 13 16 17 18 20 24
+      // slate: 2 9 10 11 12 14 15 19 21 22 23
       1: 'green', 2: 'slate', 3: 'navy', 4: 'navy', 5: 'green', 6: 'green', 7: 'green',
       8: 'green', 9: 'slate', 10: 'slate', 11: 'slate', 12: 'slate', 13: 'green',
       14: 'slate', 15: 'slate', 16: 'green', 17: 'green', 18: 'green', 19: 'slate',
-      20: 'green', 21: 'slate', 22: 'slate',
+      20: 'green', 21: 'slate', 22: 'slate', 23: 'slate', 24: 'green',
     },
     extras: {
       frozenRows: 1,
       headerFontColor: 'white',
       headerBold: true,
       headerFontSize: 11,
-      columnWidths: [180, 220, 80, 55, 80, 55, 110, 110, 150, 150, 90, 140, 70, 200, 90, 130, 150, 80, 180, 100, 200, 180],
+      columnWidths: [180, 220, 80, 55, 80, 55, 110, 110, 150, 150, 90, 140, 70, 200, 90, 130, 150, 80, 110, 180, 100, 200, 180, 130],
       formulas: {
         C2: `=IF($A2="","",IFERROR(VLOOKUP($A2,'关键词主表'!$A:$X,3,FALSE),"未找到"))`,
         D2: `=IF($A2="","",IFERROR(VLOOKUP($A2,'关键词主表'!$A:$X,4,FALSE),"未找到"))`,
@@ -305,7 +303,7 @@ export const TABS = [
         { range: 'G2:G1500', list: ['Definition', 'Comparison', 'Tutorial', 'Programmatic', 'Case Study'] },
         { range: 'M2:M1500', list: ['待写', '写作中', '质检', '已发布', '已刷新'] },
         { range: 'R2:R1500', list: ['Pillar', 'Series', 'Support', 'Tool', 'Wiki', 'Strategic'] },
-        { range: 'T2:T1500', list: ['Y', 'N'] },
+        { range: 'U2:U1500', list: ['Y', 'N'] },
       ],
       notes: {
         A1: 'Target Keyword：本页核心词。集群可用「主行/留空/次行」排版，但页面角色以 R 列 page_role 为准（不靠行位置）。',
@@ -326,10 +324,12 @@ export const TABS = [
         P1: 'page_id：6-ID 主键，如 page_chiron_7th_house。手工编号，命名稳定。',
         Q1: 'cluster_id：外键 → 主题集群表。每个页面必须归属一个集群，无 cluster_id 的页面属违规（PRD v0.7 §2.3）。',
         R1: 'page_role：Pillar / Series / Support / Tool / Wiki / Strategic。决定页面广深、内链方向、CTA 选择。显式列，不靠行位置。',
-        S1: 'content_angle：精修线必填（差异化角度），量产线留空（用模板默认）。PRD v0.7 附录 C。',
-        T1: 'psych_safety_flag：Y/N。Y 触发心理安全 QA——必须用反思性、非临床语言（附录 B），不做诊断/治疗承诺。默认 N。',
-        U1: 'journal_prompts：仅精修线 product-led / healing 页填（如 chiron 反思 prompts）。量产线 aura/Vedic 长尾页留空。',
-        V1: 'target_keyword_zh：已废弃（2026-07-03 EN-only，zh 撰写链路全量移除）。列保留仅为兼容现有表结构，流水线无消费者——不需要再填。',
+        S1: 'artist_group：艺人/组合标签，用于艺人页归类；不是内容角度字段。',
+        T1: 'content_angle：精修线必填（差异化角度），量产线留空（用模板默认）。PRD v0.7 附录 C。',
+        U1: 'psych_safety_flag：Y/N。Y 触发心理安全 QA——必须用反思性、非临床语言（附录 B），不做诊断/治疗承诺。默认 N。',
+        V1: 'journal_prompts：仅精修线 product-led / healing 页填（如 chiron 反思 prompts）。量产线 aura/Vedic 长尾页留空。',
+        W1: 'target_keyword_zh：已废弃（2026-07-03 EN-only，zh 撰写链路全量移除）。列保留仅为兼容现有表结构，流水线无消费者——不需要再填。',
+        X1: 'author：作者人格 ID（如 marcus-orion）；为空时按主题域自动路由，路由无法判定则阻断生产。',
       },
     },
   },

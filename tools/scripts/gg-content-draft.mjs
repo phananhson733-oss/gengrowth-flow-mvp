@@ -181,6 +181,20 @@ const PAGE_RANGE = `${PAGE_SHEET}!A2:X2000`;
 const CLUSTER_RANGE = `${CLUSTER_SHEET}!A2:T200`;
 const CTA_RANGE = `${CTA_SHEET}!A2:L500`;
 
+// The current Sheet has artist_group before content_angle. A subset of migrated
+// rows stores a long editorial brief in artist_group while content_angle is the
+// literal sentinel "N". Treat only prose-length values as this fallback, so an
+// ordinary artist label such as "bts" can never become the article brief.
+function resolveContentAngle(pageRow, clusterRow) {
+  const pageAngle = String(pageRow?.[PAGE_COLS.content_angle] || '').trim();
+  const artistGroup = String(pageRow?.[PAGE_COLS.artist_group] || '').trim();
+  const isSentinel = /^(?:n|none|n\/a)$/i.test(pageAngle);
+  const migratedBrief = artistGroup.length >= 40 && /\s/.test(artistGroup);
+  if (pageAngle && !isSentinel) return pageAngle;
+  if (migratedBrief) return artistGroup;
+  return pageAngle || String(clusterRow?.[CLUSTER_COLS.content_angle] || '').trim();
+}
+
 // Placeholder detection for newsletter target_url (spec §2.2 H2).
 const PLACEHOLDER_REGEX = /(待搭建|占位|TODO|PLACEHOLDER|（[^）]*URL[^）]*）)/i;
 
@@ -504,7 +518,7 @@ function resolveCta(pageRow, clusterRow, ctaRows) {
       target_keyword: pageRow[PAGE_COLS.target_keyword],
       entity: pageRow[PAGE_COLS.entity],
       associated_keywords: pageRow[PAGE_COLS.associated_keywords],
-      content_angle: pageRow[PAGE_COLS.content_angle] || clusterRow[CLUSTER_COLS.content_angle],
+      content_angle: resolveContentAngle(pageRow, clusterRow),
       explicit_cta: legacyTool ? '' : pageCta,
       preferred_kind: legacyTool ? 'tool' : '',
     },
@@ -1045,7 +1059,7 @@ async function runPhase1(args, env) {
     // <field>-wrapped block only when non-empty (else placeholder → '').
     journalPrompts: pageRow[PAGE_COLS.journal_prompts] || '',
     clusterJtbd: clusterRow[CLUSTER_COLS.jtbd],
-    contentAngle: pageRow[PAGE_COLS.content_angle] || clusterRow[CLUSTER_COLS.content_angle],
+    contentAngle: resolveContentAngle(pageRow, clusterRow),
     internalLinkRule: clusterRow[CLUSTER_COLS.internal_link_rule],
     cta,
     effectivePsychSafety,
@@ -1533,8 +1547,7 @@ async function runPhase2(args, env) {
     cluster_domain: author.clusterDomain,
     persona_version: author.persona.version,
     intent: String(pageRow[PAGE_COLS.intent] || '').trim(),
-    content_angle: String(pageRow[PAGE_COLS.content_angle] || '').trim() ||
-      String(clusterRow[CLUSTER_COLS.content_angle] || '').trim(),
+    content_angle: resolveContentAngle(pageRow, clusterRow),
     psych_safety_flag: pageSafety || 'N',
     effective_psych_safety: effectivePsychSafety,
     effective_psych_safety_source: effectivePsychSafetySource,
@@ -1846,6 +1859,7 @@ export {
   serpSnippetsBlock,
   obsidianRagBlock,
   buildPageRowMap,
+  resolveContentAngle,
   // codex round 2 fixes — exported so smoke tests can directly assert.
   safeField,
   xmlEscape,

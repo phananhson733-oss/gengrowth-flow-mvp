@@ -20,7 +20,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync, statSync, mkdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 
-const BASE_STYLE = 'deep indigo-to-near-black palette (#16112c fading to #0b0a1b), soft gold accents (#d4af6a), teal-and-gold nebula wash, painterly editorial illustration, full-bleed wide 16:9 composition that fills the entire frame, ONE single continuous scene, no split screen, no diptych, no two panels, no standalone diagram, no central framed card, no text or letters or numerals';
+const BASE_STYLE = 'deep indigo-to-near-black palette (#16112c fading to #0b0a1b), restrained soft-gold accents (#d4af6a), painterly editorial illustration, a background drawn from the article’s concrete setting, with celestial motifs only as subordinate texture, full-bleed wide 16:9 composition that fills the entire frame, ONE single continuous scene, no split screen, no diptych, no two panels, no standalone diagram, no central framed card, no text or letters or numerals';
 const ABSTRACT_STYLE = `${BASE_STYLE}, no human faces`;
 
 const IMAGES_SUBDIR = 'public/images/blog';   // single dir for cron-generated assets

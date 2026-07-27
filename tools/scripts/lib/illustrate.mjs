@@ -60,6 +60,9 @@ export function classifyHeroTheme({ slug = '', title = '', content = '' } = {}) 
     || (/\b(vs|versus)\b/.test(text) && /\b(country|nation|team|cup|football|soccer|argentina|brazil|portugal|colombia|jordan|scotland|norway|england|morocco|egypt)\b/.test(text));
   if (sports) return 'sports-matchup';
 
+  const fictionalCharacter = /\b(harry potter|hogwarts|wizarding world|fictional characters?|character zodiac|character astrology|novel characters?|film characters?|tv characters?|anime characters?|game characters?)\b/.test(text);
+  if (fictionalCharacter) return 'fictional-character-scene';
+
   if (/\b(birth chart|birth-chart|zodiac sign|zodiac-sign)\b/.test(text)) return 'celebrity-portrait';
   if (/\b(country|nation|national|pluto return|eclipse|astrology calendar)\b/.test(text)) return 'country-astrology';
   return 'abstract-atmospheric';
@@ -72,9 +75,11 @@ export function buildHeroPlanningRules() {
     `- relationship-scene: wedding, synastry, compatibility, dating, or named-couple articles. Use two stylized figures and relationship geometry in one continuous scene, not a split-screen comparison.`,
     `- sports-matchup: football/soccer, World Cup, country-vs-country, or national-team matchup articles. Use a stadium or pitch scene with two teams/countries expressed through color, motion, banners without text, and celestial tension.`,
     `- country-astrology: clear country, national event, eclipse, or calendar themes. Use a concrete symbolic national/event scene, not a generic nebula.`,
-    `- abstract-atmospheric: only use abstract-atmospheric when the article has no concrete person, couple, country, event, or matchup.`,
+    `- fictional-character-scene: fictional IP, novel, film, television, anime, or game character articles. Use a non-actor, non-photoreal role-based ensemble in a concrete story setting; express the article's character archetypes without copying actor likenesses or relying on generic celestial scenery.`,
+    `- abstract-atmospheric: only use abstract-atmospheric when the article has no concrete person, character/IP, couple, country, event, or matchup.`,
     `For every non-abstract theme, keep the specific subject matter visible. Never collapse a clear subject into a generic celestial landscape.`,
-    `Use the article brief and converted article content as the source of truth for prompt design; do not reuse a generic abstract prompt when the brief names a concrete person, couple, country, match, event, product, or comparison.`,
+    `Before composing a hero prompt, extract four visual facts from the article Brief and converted content: the subject, key relationship, concrete setting, and reader task. Make each visible in the single-scene composition.`,
+    `Use the article Brief and converted article content as the source of truth for prompt design; do not reuse a generic abstract prompt when the Brief names a concrete person, character/IP, couple, country, match, event, product, or comparison.`,
     `House style base clause for non-abstract themes: "${BASE_STYLE}"`,
     `House style clause for abstract-atmospheric only: "${ABSTRACT_STYLE}"`,
   ].join('\n');
@@ -101,6 +106,9 @@ export function buildTemplateHeroPrompt({ title, slug = '', content = '' }) {
   }
   if (theme === 'country-astrology') {
     return `A concrete editorial astrology scene evoking "${title}": a symbolic national or event landscape under a vast night sky, recognizable civic or seasonal motifs transformed into celestial light, ${BASE_STYLE}`;
+  }
+  if (theme === 'fictional-character-scene') {
+    return `A non-actor, non-photoreal role-based ensemble for "${title}": distinct fictional character archetypes gathered in a concrete story setting, with the article's central relationships and zodiac motifs woven into the action, never copying an actor likeness and never replacing the narrative scene with generic celestial scenery, ${BASE_STYLE}`;
   }
   return `An atmospheric painterly editorial scene evoking the theme of "${title}": a serene natural landscape — a still lake, open plain, or misty horizon — under a vast night sky, the subject suggested through soft glowing celestial forms woven into the scene, ${ABSTRACT_STYLE}`;
 }

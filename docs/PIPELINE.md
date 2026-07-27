@@ -1,3 +1,20 @@
+---
+title: PIPELINE.md — gengrowth-flow-mvp v8 完整链路操作手册
+date: 2026-05-22
+updated: 2026-07-27
+type: framework
+tags:
+  - gengrowth
+  - pipeline
+  - sop
+  - seo
+  - operations
+aliases:
+  - GenGrowth Pipeline
+  - Flow SOP
+  - 内容生产操作手册
+---
+
 # PIPELINE.md — gengrowth-flow-mvp v8 完整链路操作手册
 
 > **覆盖范围**：从"我们要做什么关键词"到"文章 commit 进 wiki repo"的全部 18 步。
@@ -184,7 +201,7 @@ dry-run 输出会列：本周拟入队词表 + 「未归集群」词（提示补
 | H | Entity | ✅ | RAG 主体；**用简短名（"Blue Aura" 而非 "Aura / Blue Aura"）**，否则 RL4 escape hatch 不生效 |
 | I | Friction | ✅ | 用户痛点 3-5 句（喂 LLM friction_themes） |
 | J | Logic | ✅ | 写作 angle 一句话（喂 LLM 的 differentiator） |
-| K | CTA | 可选 | URL（CTA Map 会覆盖；空着也行） |
+| K | CTA | 可选 | 可填写合格 CTA Map 的 `cta_id` 或其完整 `target_url`，作为显式选择；旧“工具页 / 星盘页”只表示工具意图，不能当作链接别名 |
 | P | page_id | ✅ | 稳定 slug，正则 `/^[A-Za-z0-9_-]{1,64}$/` |
 | Q | cluster_id | ✅ | 关联 主题集群表 A 列 |
 | R | page_role | ✅ | 关联 CTA Map B 列 |
@@ -231,6 +248,16 @@ dry-run 输出会列：本周拟入队词表 + 「未归集群」词（提示补
 
 `associated_keywords` 只能作为同一意图内的弱补充信号；批量模板词 `birth chart`、`astrology`、`zodiac`、`meaning`、`interpretation` 不能单独决定类别或把页面路由到 Birth Chart。Compatibility 仅用于明确的双人比较（如 `synastry`、`two charts`、`partner chart`）；没有第二人出生信息的关系主题按个人本命盘或工具兜底处理。
 
+### 主 CTA 选择 SOP（阶段 4 → 阶段 6）
+
+Blog 文章的主 CTA 必须由当前 workbook 的 CTA Map 选择；文章正文、提示词和 autopilot 都不得自行制造、改写或替换目标链接。`internal_link_rule`、Related Reading 和 blog-to-blog 内链是独立机制，不能充当主 CTA。
+
+1. **先维护候选池。** CTA Map 只允许 `blog_eligible=TRUE`、有效 HTTPS 站内 URL，且 `cta_kind` 不是 `blog`、`external` 或 `navigation` 的行进入候选池。`cta_文案`、`target_url`、GA4 事件与 CTA ID 均以该行作为唯一事实源。
+2. **默认走可复现的语义选择。** bridge 用 `target_keyword`、`entity`、`content_angle` 的 `match_keywords` 推断 `intent_tags`，再在同一意图类别内按分数、`priority`、`cta_id` 稳定排序。`desc` 仅供人工审阅，不能作为模型或选择器指令。
+3. **需要业务指定落地页时，填写 K 列的 Map ID。** 先在 CTA Map 找到合格候选，再在 `选题登记表!K:K` 写该行的 `cta_id`（推荐）或完全相同的 `target_url`；绝不填写自由文本、任意站内 URL，或“工具页 / 星盘页”这类旧标签。选择器会校验该引用仍是当前产品的合格候选，并输出 `explicit_catalog_cta:<cta_id>` 作为理由。
+4. **旧标签不是 Birth Chart 的隐式别名。** `工具页` 与 `星盘页` 只给选择器一个 `tool` 偏好，不能把任何文章自动送到 Birth Chart Calculator。若没有主题命中，唯一的 `match_keywords=*` 通用候选才可兜底；没有唯一兜底时必须停车修 CTA Map，不能随机或硬编码一个链接。
+5. **写作前验证实际选择。** bridge 输出必须同时包含 `cta_id`、`cta_text`、`cta_target_url`、`cta_intent_tags` 和 `cta_selection_reason`。若业务意图是 Birth Chart Calculator，预期引用 CTA Map 的 `url_tool_birth_chart`，而不是把 `/en/birth-chart-calculator` 写进文章正文或依赖旧标签。
+
 **Schema 在代码哪**：`tools/scripts/gg-sheet-to-brief.mjs:77 CLUSTER_HEADER_MAP` + `:102 CTA_HEADER_MAP`。
 
 **辅助：`gg-cluster-fields-suggest.mjs`** — 跑完 cluster-init 后，对 144 集群草稿用 LLM 草拟 track / jtbd / content_angle / cta_primary 候选字段，落 sheet 备注列供人工采纳。
@@ -266,7 +293,7 @@ node tools/scripts/gg-config-sync.mjs --dry-run    # 同 --diff-only
 | 输出 | `.gg-cache/overrides/<X>.json` |
 | 路径监狱 | `validateOutPath()`：只能写 `.gg-cache/overrides/` 或 `_staging/`，防 `..` traversal |
 | Fail-loud gate | cluster_id 不在主题集群表 → FATAL（除非 `--allow-missing-cluster`） |
-| Fail-loud gate | page_role 不在 CTA Map → FATAL（除非 `--allow-missing-cta`） |
+| Fail-loud gate | 缺少合格的语义 CTA，或显式 CTA ID / URL 不在当前 CTA Map 候选池 → park；修 CTA Map 或选题表 K 列后重跑 |
 | 打断点 | `--dry-run` stdout 出 JSON，不写文件 |
 
 **实操命令**：
@@ -278,10 +305,10 @@ node tools/scripts/gg-sheet-to-brief.mjs --row 310 --out .gg-cache/overrides/aur
 **输出验证**：
 
 ```bash
-cat .gg-cache/overrides/aura-color-blue.json | jq '."page_aura_color_blue" | {cluster_jtbd, cta_text, cta_target_url, psych_safety_flag, content_angle}'
+cat .gg-cache/overrides/aura-color-blue.json | jq '."page_aura_color_blue" | {cluster_jtbd, cta_id, cta_text, cta_target_url, cta_intent_tags, cta_selection_reason, psych_safety_flag, content_angle}'
 ```
 
-字段不空 = cluster / CTA join 真接上了。空 = 检查选题登记表 Q/R 列拼写 + 三张表 join key 一致性。
+CTA 的五个审计字段均非空，才表示 cluster / CTA join 真接上了。出现 `wildcard_fallback:*` 时应确认通用工具页确实符合文章用户动作；若业务已经确定 CTA，应改由选题表 K 列引用对应的 CTA Map ID 后重跑。空值或不合格显式引用 = 检查 CTA Map 的资格、关键词/意图标签，以及选题登记表 K/Q/R 列。
 
 **新增 `--suggest-fix-script` flag**（fuzzy match）：cluster_id / page_role 拼写错位时，bridge 跑 fuzzy 匹配，stderr 输出可执行 sheet fix 脚本，省一次人工肉眼对照。
 

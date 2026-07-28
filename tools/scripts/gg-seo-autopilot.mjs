@@ -85,10 +85,12 @@ import {
   inspectBoundRepairDraft,
   inspectBoundRepairWorktree,
 } from './lib/seo-repair-bindings.mjs';
+import { resolveOracleGithubRepo } from './lib/github-repo-config.mjs';
 
 loadEnv();
 const ACTIVE_WORKBOOK_ID = resolveWorkbookId();
 if (ACTIVE_WORKBOOK_ID) process.env.GG_SHEETS_WORKBOOK_ID = ACTIVE_WORKBOOK_ID;
+const ORACLE_GITHUB_REPO = resolveOracleGithubRepo();
 
 const HOME = homedir();
 const FLOW = process.env.GG_FLOW_REPO || join(HOME, 'gengrowth-flow-mvp');
@@ -499,7 +501,7 @@ function ghPrMeta(branch) {
   try {
     return JSON.parse(sh(
       'gh',
-      ['pr', 'view', branch, '--repo', 'xdawayer/oracle', '--json', 'state,mergedAt,closedAt,url'],
+      ['pr', 'view', branch, '--repo', ORACLE_GITHUB_REPO, '--json', 'state,mergedAt,closedAt,url'],
       { cwd: ORACLE },
     ));
   } catch {
@@ -1419,7 +1421,7 @@ function publishOne(o, t) {
   // Open a PR so Vercel posts a Preview deployment; merge happens in --merge after the gate passes.
   let prUrl = '';
   try {
-    prUrl = sh('gh', ['pr', 'create', '--repo', 'xdawayer/oracle', '--base', 'main', '--head', branch,
+    prUrl = sh('gh', ['pr', 'create', '--repo', ORACLE_GITHUB_REPO, '--base', 'main', '--head', branch,
       '--title', `[autopilot] publish ${t.slug}`,
       '--body', `Automated SEO publish of \`${t.pgId}\` → \`${t.slug}\` (EN-only).\n\nAwaiting codex review + chrome MCP verification on the Vercel preview before merge.`],
       { cwd: publishRepo }).trim();
@@ -1427,7 +1429,7 @@ function publishOne(o, t) {
     // Re-publish of the same date+pgId branch hits "a pull request already exists" — fine (we
     // force-pushed the fixed content); reuse the existing PR URL so verify/notify have a number.
     if (/already exists/i.test(e.message || '')) {
-      try { prUrl = sh('gh', ['pr', 'view', branch, '--repo', 'xdawayer/oracle', '--json', 'url', '--jq', '.url'], { cwd: publishRepo }).trim(); }
+      try { prUrl = sh('gh', ['pr', 'view', branch, '--repo', ORACLE_GITHUB_REPO, '--json', 'url', '--jq', '.url'], { cwd: publishRepo }).trim(); }
       catch { prUrl = ''; }
     }
     if (!prUrl) prUrl = `(pr-create-failed: ${e.message})`;
@@ -1451,7 +1453,7 @@ const MERGE_SELFHEAL = process.env.GG_MERGE_UNION_SELFHEAL !== '0';
 
 function ghPrMergeState(branch) {
   try {
-    const out = sh('gh', ['pr', 'view', branch, '--repo', 'xdawayer/oracle', '--json', 'mergeable,mergeStateStatus'], { cwd: ORACLE });
+    const out = sh('gh', ['pr', 'view', branch, '--repo', ORACLE_GITHUB_REPO, '--json', 'mergeable,mergeStateStatus'], { cwd: ORACLE });
     const j = JSON.parse(out);
     return { mergeable: j.mergeable || 'UNKNOWN', state: j.mergeStateStatus || 'UNKNOWN' };
   } catch { return { mergeable: 'UNKNOWN', state: 'UNKNOWN', error: true }; }
@@ -1460,7 +1462,7 @@ function ghPrMergeState(branch) {
 function currentPrHead(branch) {
   const headRefOid = sh('gh', [
     'pr', 'view', branch,
-    '--repo', 'xdawayer/oracle',
+    '--repo', ORACLE_GITHUB_REPO,
     '--json', 'headRefOid',
     '-q', '.headRefOid',
   ], { cwd: ORACLE }).trim();
@@ -1726,7 +1728,7 @@ function mergeVerifiedBranch(branch, claim, { beforeMerge = null } = {}) {
   if (typeof beforeMerge === 'function') beforeMerge();
   sh('gh', [
     'pr', 'merge', branch,
-    '--repo', 'xdawayer/oracle',
+    '--repo', ORACLE_GITHUB_REPO,
     '--merge',
     '--delete-branch',
     '--match-head-commit', claim.headRefOid,
@@ -2235,11 +2237,11 @@ function doClusterLinkPr(o) {
       'Awaiting existing preview review and manual merge. This PR must not be auto-merged.',
     ].join('\n');
     try {
-      pr = sh('gh', ['pr', 'create', '--repo', 'xdawayer/oracle', '--base', 'main', '--head', branch,
+      pr = sh('gh', ['pr', 'create', '--repo', ORACLE_GITHUB_REPO, '--base', 'main', '--head', branch,
         '--title', `[autopilot] refresh Cluster links ${input.snapshot_id.slice(0, 12)}`, '--body', body], { cwd: worktree }).trim();
     } catch (error) {
       if (/already exists/i.test(error?.message || '')) {
-        pr = sh('gh', ['pr', 'view', branch, '--repo', 'xdawayer/oracle', '--json', 'url', '--jq', '.url'], { cwd: worktree }).trim();
+        pr = sh('gh', ['pr', 'view', branch, '--repo', ORACLE_GITHUB_REPO, '--json', 'url', '--jq', '.url'], { cwd: worktree }).trim();
       } else throw error;
     }
     process.stdout.write(`${JSON.stringify({ mode: 'cluster-link-pr', status: 'pushed-preview', snapshot_id: input.snapshot_id, branch, pr, changed: result.changed })}\n`);

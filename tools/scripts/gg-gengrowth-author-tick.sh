@@ -22,7 +22,7 @@
 #
 # ANTI-CONTAMINATION is CODE, not convention: this tick pins GG_AUTOPILOT_PLAN to the gengrowth W25
 # plan and the gengrowth workbook; the astrology autopilot's latestPlan() EXCLUDES gengrowth plans and
-# its publish leg is hardcoded to xdawayer/oracle, and the gengrowth publisher is prefix-gated to
+# its publish leg targets phananhson733-oss/oracle, and the gengrowth publisher is prefix-gated to
 # W25_PREFIXES (DRAFT_RE). This tick NEVER touches the oracle repo. A gengrowth draft cannot reach
 # astrologywiki, nor an astrology draft gengrowth.
 #

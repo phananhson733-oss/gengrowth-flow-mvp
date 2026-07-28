@@ -81,6 +81,10 @@ import {
   inspectBoundRepairWorktree,
 } from './lib/seo-repair-bindings.mjs';
 import { loadEnv } from './lib/gg-shared.mjs';
+import {
+  DEFAULT_ORACLE_GITHUB_REPO,
+  resolveOracleGithubRepo,
+} from './lib/github-repo-config.mjs';
 
 const HERE = (() => {
   try { return fileURLToPath(new URL('.', import.meta.url)); } catch { return process.cwd(); }
@@ -89,7 +93,7 @@ const HOME = homedir();
 const FLOW = process.env.GG_FLOW_REPO || join(HOME, 'gengrowth-flow-mvp');
 const SCRIPTS = process.env.GG_SCRIPTS_DIR || join(FLOW, 'tools', 'scripts');
 
-export const DEFAULT_REPO = 'xdawayer/oracle';
+export const DEFAULT_REPO = DEFAULT_ORACLE_GITHUB_REPO;
 // 本 gate 只服务 oracle → astrologywiki.com 一条发布线；事件层的站点标签是字段不是品牌前缀。
 export const GATE_SITE = 'astrologywiki';
 export const EXIT = { PUBLISHED: 0, NOTHING_PENDING: 1, GATE_FAILED: 2 };
@@ -282,7 +286,7 @@ export async function tryGateRepair({
 export function parseArgs(argv) {
   const o = {
     branch: null,
-    repo: DEFAULT_REPO,
+    repo: resolveOracleGithubRepo(),
     dryRun: false,
     json: false,
     statusTimeoutMs: DEFAULTS.statusTimeoutMs,

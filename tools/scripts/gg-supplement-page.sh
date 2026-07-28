@@ -271,7 +271,7 @@ run_finish() {
   echo "  3. commit + push both repos:"
   echo "     - flow-mvp: feat(content): v8 supplement <slug>"
   echo "     - oracle:   feat(wiki): N new articles + relink"
-  echo "     gh api repos/xdawayer/oracle/commits/<sha>/status → expect state=success"
+  echo "     gh api repos/phananhson733-oss/oracle/commits/<sha>/status → expect state=success"
 }
 
 case "$PHASE" in

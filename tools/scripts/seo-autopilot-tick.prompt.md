@@ -11,15 +11,15 @@ The wrapper already ran the deterministic scan (sync + claim + convert + build-g
 If the entry is already `verified-preview`, skip to Step 4 and merge using the stored `previewUrl`.
 
 The push triggers a Vercel Preview deployment. Poll for it (up to ~5 min):
-    gh api "repos/xdawayer/oracle/deployments?ref=<branch>" --jq '.[0].id'
-    gh api "repos/xdawayer/oracle/deployments/<id>/statuses" --jq '.[0] | {state,environment_url}'
+    gh api "repos/phananhson733-oss/oracle/deployments?ref=<branch>" --jq '.[0].id'
+    gh api "repos/phananhson733-oss/oracle/deployments/<id>/statuses" --jq '.[0] | {state,environment_url}'
 Wait until `state=="success"` and capture `environment_url` (the preview base URL). If it never succeeds, treat as a FAIL (Step 4 park).
 
 ## Step 3 — verify on the preview (this is the gate)
 The REQUIRED content gates are (b) chrome preview + (c) the 3-subagent panel — BOTH must pass. (a) codex is an advisory 4th opinion, BEST-EFFORT only: a TOOLING failure (codex can't run / hangs / EACCES) must NOT block the merge; only a codex review that actually RUNS and flags a concrete publish-blocker counts against the gate.
 
 (a) codex review of the diff — BEST-EFFORT (the global `/codex` skill is flaky here: broken npm cache perms + `codex exec` has hung for ~19 min). Use the WORKING npm-global binary with a HARD timeout, never the `/codex` skill:
-    DIFF=$(gh pr diff <pr> --repo xdawayer/oracle 2>/dev/null | head -c 80000)
+    DIFF=$(gh pr diff <pr> --repo phananhson733-oss/oracle 2>/dev/null | head -c 80000)
     printf 'Review this astrology-wiki article PR diff. Flag only publish-BLOCKERS: invalid WikiArticle shape, broken/TBD links, JSON-LD/schema errors, placeholder leakage, wrong/missing CTA, bad SEO title/description. End with one line: VERDICT: PASS or VERDICT: FAIL — <reason>.\n\n%s' "$DIFF" | timeout 240 ~/.npm-global/bin/codex exec -s read-only -c model=gpt-5.5 -c reasoning_effort=high --output-last-message /tmp/codex-rev.txt - >/dev/null 2>&1; cat /tmp/codex-rev.txt 2>/dev/null
     If codex times out / errors / writes nothing → treat as SKIPPED (tooling), record "codex: skipped (tooling)", and DO NOT block. Only `VERDICT: FAIL` from a codex run that completed counts.
 

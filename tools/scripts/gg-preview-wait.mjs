@@ -3,8 +3,8 @@
 // branch, replacing the autopilot prompt gate's "Step 2 — get the Vercel preview URL".
 //
 // The old prompt step (seo-autopilot-tick.prompt.md Step 2) asked the LLM to poll:
-//     gh api "repos/xdawayer/oracle/deployments?ref=<branch>" --jq '.[0].id'
-//     gh api "repos/xdawayer/oracle/deployments/<id>/statuses" --jq '.[0] | {state,environment_url}'
+//     gh api "repos/phananhson733-oss/oracle/deployments?ref=<branch>" --jq '.[0].id'
+//     gh api "repos/phananhson733-oss/oracle/deployments/<id>/statuses" --jq '.[0] | {state,environment_url}'
 // until state=="success", capturing environment_url. This script does that
 // deterministically. It also enforces its OWN hard timeout: the call site
 // (gg-seo-autopilot-tick.sh publish_if_pending) previously wrapped the whole
@@ -13,7 +13,7 @@
 //
 // CLI:
 //   --branch <ref>        REQUIRED. error '--branch is required' + nonzero if missing.
-//   --repo <owner/repo>   default 'xdawayer/oracle'
+//   --repo <owner/repo>   default 'phananhson733-oss/oracle'
 //   --timeout-ms <n>      default 600000 (10 min)
 //   --poll-ms <n>         default 10000
 //   --json                emit a single JSON line to stdout
@@ -28,8 +28,12 @@
 // Run: node gg-preview-wait.mjs --branch <ref> [--repo o/r] [--timeout-ms n] [--poll-ms n] [--json]
 
 import { spawn } from 'node:child_process';
+import {
+  DEFAULT_ORACLE_GITHUB_REPO,
+  resolveOracleGithubRepo,
+} from './lib/github-repo-config.mjs';
 
-export const DEFAULT_REPO = 'xdawayer/oracle';
+export const DEFAULT_REPO = DEFAULT_ORACLE_GITHUB_REPO;
 // 600000ms = 10 min, intentionally ~2x the prompt's "~5 min" guidance: Vercel
 // preview builds for this repo routinely exceed 5 min under cold caches / queueing,
 // and this script now owns the hard cap that the old `gtimeout 1800` gate provided.
@@ -49,7 +53,7 @@ export const EXIT = { OK: 0, FAIL: 1, ARGS: 2 };
 export function parseArgs(argv) {
   const o = {
     branch: null,
-    repo: DEFAULT_REPO,
+    repo: resolveOracleGithubRepo(),
     timeoutMs: DEFAULT_TIMEOUT_MS,
     pollMs: DEFAULT_POLL_MS,
     json: false,

@@ -30,6 +30,7 @@ import { existsSync, readFileSync, rmSync } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
+import { resolveOracleGithubRepo } from './lib/github-repo-config.mjs';
 
 const HOME = homedir();
 // codex lives in ~/.npm-global/bin on the publish node (matches gg-author-review.mjs); some hosts
@@ -47,7 +48,7 @@ const DIFF_BUDGET = 200000; // max PR-diff bytes fed to codex; OVER budget = fai
 
 function parseArgs(argv) {
   const o = {
-    repo: 'xdawayer/oracle',
+    repo: resolveOracleGithubRepo(),
     pr: '',
     branch: '',
     source: '', // Lane A (gengrowth): fact-check a standalone article md, no PR/branch/gh

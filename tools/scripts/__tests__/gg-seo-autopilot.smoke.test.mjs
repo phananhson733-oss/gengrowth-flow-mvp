@@ -734,7 +734,7 @@ test('--retry-failed restores a human-fixed parked preview without bypassing ver
         status: 'needs_human',
         branch: 'seo/auto/2026-06-03-PG-TEST-001',
         slug: 'test-slug',
-        pr: 'https://github.com/xdawayer/oracle/pull/123',
+        pr: 'https://github.com/phananhson733-oss/oracle/pull/123',
         needs_hero: true,
         error: 'review[schema] FAIL: description truncated',
         failedAt: '2026-06-03T00:00:00.000Z',
@@ -879,7 +879,7 @@ test('--scan updates /oracle main first, then publishes from a separate worktree
       'exit 0',
       '',
     ].join('\n'), { mode: 0o755 });
-    writeFileSync(join(h.bin, 'gh'), '#!/bin/sh\nprintf "https://github.com/xdawayer/oracle/pull/123\\n"\n', { mode: 0o755 });
+    writeFileSync(join(h.bin, 'gh'), '#!/bin/sh\nprintf "https://github.com/phananhson733-oss/oracle/pull/123\\n"\n', { mode: 0o755 });
     writeFileSync(join(h.tasks, '2026-06-03-blog-output-plan.md'), '- [ ] `PG-TEST-001` test keyword\n');
 
     const r = runAuto(h, ['--scan', '--limit', '1'], {
@@ -936,7 +936,7 @@ test('--scan never re-claims a checked done task, even with a leftover zh-demo d
     const flow = writeStubFlow(h, 'test-slug', { zh: true });
     const worktreeRoot = join(h.root, 'oracle-worktrees');
     writeFileSync(join(h.bin, 'npm'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
-    writeFileSync(join(h.bin, 'gh'), '#!/bin/sh\nprintf "https://github.com/xdawayer/oracle/pull/456\\n"\n', { mode: 0o755 });
+    writeFileSync(join(h.bin, 'gh'), '#!/bin/sh\nprintf "https://github.com/phananhson733-oss/oracle/pull/456\\n"\n', { mode: 0o755 });
     writeFileSync(join(h.tasks, '2026-06-03-blog-output-plan.md'), '- [x] `PG-TEST-001` test keyword\n');
     writeClaims(h, {
       'PG-TEST-001': {

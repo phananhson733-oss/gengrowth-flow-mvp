@@ -10,6 +10,7 @@ import { homedir } from 'node:os';
 import { planDriverActions } from './lib/flow-driver.mjs';
 import { driveApply, buildSummaryMessage } from './lib/flow-driver-apply.mjs';
 import { runBackfillLoop } from './lib/flow-backfill.mjs';
+import { resolveOracleGithubRepo } from './lib/github-repo-config.mjs';
 
 const argv = process.argv.slice(2);
 const getArg = (name) => { const i = argv.indexOf(name); return i >= 0 ? argv[i + 1] : ''; };
@@ -19,7 +20,7 @@ const OPS_DIR = process.env.GG_OPS_DIR || join(homedir(), 'gengrowth-ops');
 const DEFAULT_LEDGER = join(OPS_DIR, 'inbox-maboyang/06-tasks/tasks/.autopilot-claims.json');
 const ledgerPath = getArg('--ledger') || DEFAULT_LEDGER;
 const APPLY = argv.includes('--apply');
-const REPO = process.env.GG_FLOW_DRIVER_REPO || 'xdawayer/oracle';
+const REPO = process.env.GG_FLOW_DRIVER_REPO || resolveOracleGithubRepo();
 const SITE = process.env.GG_FLOW_DRIVER_SITE || 'astrologywiki';
 const MAX_FIX = Number(process.env.GG_FLOW_DRIVER_MAX_FIX || 1);
 const MAX_ARCHIVE = Number(process.env.GG_FLOW_DRIVER_MAX_ARCHIVE || 5);

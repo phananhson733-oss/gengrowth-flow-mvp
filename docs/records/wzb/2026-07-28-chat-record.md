@@ -473,3 +473,15 @@ Example:
 触发契约 v2.0 的硬性 abort：SERP_Snapshot 未提供（distinct titles < 3），Raw_Friction 为单句程式化描述，无具名来源用户抱怨/问题，也无具名域名的 Case Study SERP/news 证据。按 "Do NOT synthesize Entity / Friction / Logic / Content_Angle from insufficient input" 停止，SHEET_FIELDS 五项全部留空；REVIEW_METADATA 输出 Status=Needs More Evidence、Confidence=Low、Draft_Angle_Disposition=N/A（占位符）、Aligned=N/A、Evidence_Notes 记录缺项，并给出上游需补齐的三项（SERP top 5–10、逐字用户抱怨或 Case Study 具名域名标题证据、Draft_Angle 具体假设）。
 
 ---
+
+### Q25 — 16:10 [claude]
+
+**🙋 提问：**
+
+调用 SEO Content Variable Pre-processor v2.0，对 Target_Keyword「Gojo Satoru zodiac sign」（T2 / Definition，Cluster `Jujutsu Kaisen Characters Zodiac Signs`）产出 Entity / Entity_Topology / Friction / Logic / Content_Angle 与审计元数据。Raw_Friction 为"读者需将 Gojo Satoru Zodiac Sign 与整盘分析、名人传记、命定式性格论述分离"，Draft_Angle 与 SERP_Snapshot 均为占位符，未提供 Entity_RAG。
+
+**🤖 回答：**
+
+同上一条 JJK 集群的判定路径，v2.0 硬性 abort 再次触发：SERP_Snapshot 显式未提供（distinct titles=0、domains=0），Raw_Friction 为模板套话无 sourced 用户抱怨或具名域名 Case Study 证据，Draft_Angle 亦为占位符。按契约拒绝合成，SHEET_FIELDS 五项留空；REVIEW_METADATA 输出 Status=Needs More Evidence、Confidence=Low、Draft_Angle_Disposition=N/A、Aligned=N/A、Evidence_Notes 记录缺项，Abort_Reason 逐条援引两条硬性条件；补齐建议指向 gg-topic-register 上游需附 Google SERP 5–10 具名标题（虚构角色走 Case Study 路径，可用 fandom/官方设定聚合域名）+ ≥1 条 sourced 抱怨或 ≥3 域名标题证据 + Draft_Angle 实际假设句。
+
+---

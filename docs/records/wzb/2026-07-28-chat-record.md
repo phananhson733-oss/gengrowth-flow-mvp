@@ -622,3 +622,20 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 仅运行指定 wrapper，退出码为 1。精确日志窗口 20:01:06–20:12:44 CST 为 apply（`dry_run=false`、`budget_exhausted=false`、`ok=false`）。astrologywiki 在证据发现 apply 门禁被拒绝：日志报 `ERR_OTHER`，至少 PG-FS-002、PG-FB-001 证据不足，后续 ID 在日志内被截断；该产品没有输出 candidates、updates、new_clusters、page_ids 或 preprocessor 数组，均不可推断。gengrowth 的 applied generate 通过但无候选：candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]、evidence_discovery=[]。窗口以 `topic-register failed rc=1` 收束，未进行 wrapper 外的 Sheet、任务计划、Feishu 或 Google Doc 写入。
 
 ---
+
+### Q35 — 22:13
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-28T12:00:25.624Z (1785240025624)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行指定 wrapper，退出码为 1。精确日志窗口 22:01:00–22:12:48 CST 为 apply（`dry_run=false`、`budget_exhausted=false`、`ok=false`）。astrologywiki 在证据发现 apply 门禁被拒绝：日志报 `ERR_OTHER`，至少 PG-FS-002、PG-FB-002 证据不足，后续 ID 在日志内被截断；该产品没有输出 candidates、updates、new_clusters、page_ids 或 preprocessor 数组，均不可推断。gengrowth 的 applied generate 通过但无候选：candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]、evidence_discovery=[]。窗口以 `topic-register failed rc=1` 收束，未进行 wrapper 外的 Sheet、任务计划、Feishu 或 Google Doc 写入。
+
+---

@@ -15,15 +15,11 @@
 
 export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LOCK="/tmp/gg-gengrowth-publish.lock"
-LOG_DIR="$HOME/gengrowth-agents/cron-sync/gengrowth-publish"
+LOCK="${GG_GENGROWTH_PUBLISH_LOCK:-/tmp/gg-gengrowth-publish.lock}"
+LOG_DIR="${GG_GENGROWTH_PUBLISH_LOG_DIR:-$HOME/gengrowth-agents/cron-sync/gengrowth-publish}"
 mkdir -p "$LOG_DIR"
 LOG="$LOG_DIR/$(date +%Y-%m-%d).log"
 export GG_GENGROWTH_PUBLISH_LOG_FILE="$LOG"
-SB_PROJECT_REF="qeeocwurjslqppjxlsbk"
-export SB_URL="https://${SB_PROJECT_REF}.supabase.co"
-SB_KEYCHAIN_ACCOUNT="gengrowth-publish"
-SB_KEYCHAIN_SERVICE="com.gengrowth.supabase.api-key.${SB_PROJECT_REF}"
 
 # ── PID-liveness mutex (same pattern as the SEO autopilot) ───────────────────
 if [ -d "$LOCK" ]; then
@@ -42,6 +38,26 @@ set -a; . "$HOME/.config/gg/_gg.env" 2>/dev/null; set +a
 
 # 重放 outbox 里发送失败的积压通知（fail-closed 的补发闭环；无积压时零开销）。
 node "$SCRIPT_DIR/gg-notify.mjs" replay-outbox >/dev/null 2>&1 || true
+
+# The former gengrowth-agents backend moved to Nevermore. Nevermore v0.3 has an
+# explicit no-external-writes boundary, so the legacy direct blog_posts writer
+# stays off unless a later production release deliberately opts back in.
+if [ "${GG_GENGROWTH_PUBLISH_ENABLED:-0}" != "1" ]; then
+  echo "$(date '+%F %T') gengrowth-publish disabled — Nevermore v0.3 external-write boundary (no legacy blog_posts writes)" >> "$LOG"
+  echo "$(date '+%F %T') gengrowth-publish tick end (rc=0)" >> "$LOG"
+  node "$SCRIPT_DIR/gg-notify.mjs" heartbeat com.gengrowth.gengrowth-publish >/dev/null 2>&1 || true
+  exit 0
+fi
+
+SB_PROJECT_REF="${GG_GENGROWTH_PUBLISH_PROJECT_REF:-}"
+if [ -z "$SB_PROJECT_REF" ]; then
+  echo "$(date '+%F %T') project ref unavailable — skipping this tick" >> "$LOG"
+  node "$SCRIPT_DIR/gg-notify.mjs" auth_missing --site gengrowth --what project_ref --hint "configure GG_GENGROWTH_PUBLISH_PROJECT_REF" >/dev/null 2>&1 || true
+  exit 0
+fi
+export SB_URL="https://${SB_PROJECT_REF}.supabase.co"
+SB_KEYCHAIN_ACCOUNT="gengrowth-publish"
+SB_KEYCHAIN_SERVICE="com.gengrowth.supabase.api-key.${SB_PROJECT_REF}"
 
 # Prefer the dedicated server-side key stored in macOS Keychain. Keep the legacy
 # service_role lookup as a compatibility fallback while Supabase still exposes it.

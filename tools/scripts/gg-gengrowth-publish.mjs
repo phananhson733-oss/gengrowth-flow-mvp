@@ -379,14 +379,16 @@ async function liveStatus(SB_URL, SB_KEY, slug, locale) {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  const SB_URL = process.env.SB_URL || 'https://qeeocwurjslqppjxlsbk.supabase.co';
+  const SB_URL = process.env.SB_URL || '';
   const SB_KEY = process.env.SB_KEY || '';
   const mode = args.apply ? 'APPLY' : 'DRY-RUN';
 
-  if (args.apply && !SB_KEY) {
+  if (args.apply && (!SB_URL || !SB_KEY)) {
     // FAIL-SAFE: never crash the cron on missing auth; alert + clean exit.
-    console.error('gg-gengrowth-publish: --apply but SB_KEY missing — skipping (auth not available).');
-    await notify('auth_missing', { site: 'gengrowth', what: 'backend_secret', hint: 'configure Supabase backend secret' });
+    const what = !SB_URL ? 'backend_url' : 'backend_secret';
+    const hint = !SB_URL ? 'configure SB_URL' : 'configure Supabase backend secret';
+    console.error(`gg-gengrowth-publish: --apply but ${!SB_URL ? 'SB_URL' : 'SB_KEY'} missing — skipping (backend not configured).`);
+    await notify('auth_missing', { site: 'gengrowth', what, hint });
     process.exit(0);
   }
 

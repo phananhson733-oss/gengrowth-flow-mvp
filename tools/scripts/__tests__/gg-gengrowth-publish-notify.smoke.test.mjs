@@ -185,6 +185,17 @@ test('auth_missing: --apply 无 SB_KEY → 逐字模板 + OPS @ + exit 0', async
   ]);
 });
 
+test('auth_missing: --apply 无 SB_URL → 不回退旧项目，逐字模板 + OPS @ + exit 0', async () => {
+  const { staging, env } = caseEnv('backend-url-missing');
+  delete env.SB_URL;
+  const r = await runPublisher(['--apply', '--staging-dir', staging], env);
+  assert.equal(r.status, 0, `fail-safe 必须 exit 0（stderr: ${r.stderr}）`);
+  assert.match(r.stderr, /SB_URL missing/);
+  assert.deepEqual(mock.larkMsgs, [
+    `${AT_OPS}⚠️ [gengrowth] 凭据缺失：backend_url，本轮跳过。恢复：configure SB_URL`,
+  ]);
+});
+
 // ── (2) fact_gate_fail（.mjs :299）：codex FAIL → 停发 + PM+OPS @（有意的 @ 策略变更）──
 test('fact_gate_fail: codex FAIL → 逐字模板 + PM+OPS @，bridge 未被调用', async () => {
   const { dir, staging, env } = caseEnv('fact-gate-fail');
@@ -341,9 +352,37 @@ test('迁移完备性：.mjs/.sh 不再引用 gg-lark-notify.sh / larkBestEffort
   const sh = readFileSync(TICK_SH, 'utf8');
   assert.doesNotMatch(sh, /gg-lark-notify\.sh/, '.sh 不得再走 shell 通知壳');
   assert.doesNotMatch(sh, /GG_LARK_NOTIFY_AT_/, '.sh 的 @ 由 auth_missing 事件表决定');
+  assert.doesNotMatch(sh, /qeeocwurjslqppjxlsbk/, '迁移后 wrapper 不得再写死已暂停的 Agents project ref');
+  assert.match(sh, /GG_GENGROWTH_PUBLISH_ENABLED:-0/, 'Nevermore v0.3 期间 legacy 外部写入必须默认关闭');
+  assert.match(sh, /GG_GENGROWTH_PUBLISH_PROJECT_REF:-/, '未来重新启用必须显式提供 project ref');
   assert.match(sh, /security find-generic-password.*SB_KEYCHAIN_ACCOUNT.*SB_KEYCHAIN_SERVICE.*-w/);
   assert.match(sh, /gg-notify\.mjs" auth_missing --site gengrowth --what backend_secret --hint "configure Supabase backend secret"/);
   assert.match(sh, /gg-seo-repair-controller\.mjs" drain/, '自然 publish wrapper 必须在 v2 下拉起统一修复 controller');
+});
+
+test('Nevermore v0.3: tick 默认 no-op、保留心跳且不产生凭据告警', () => {
+  const { dir, home, env } = caseEnv('tick-disabled-v03');
+  const logDir = join(dir, 'publish-log');
+  const lockDir = join(dir, 'publish.lock');
+  const r = spawnSync('bash', [TICK_SH], {
+    encoding: 'utf8',
+    env: {
+      ...env,
+      HOME: home,
+      GG_GENGROWTH_PUBLISH_ENABLED: '',
+      GG_GENGROWTH_PUBLISH_LOG_DIR: logDir,
+      GG_GENGROWTH_PUBLISH_LOCK: lockDir,
+      GG_LARK_NOTIFY_SILENCE: '1',
+    },
+  });
+  assert.equal(r.status, 0, `disabled tick 应 clean exit（stdout=${r.stdout}, stderr=${r.stderr}）`);
+  const logs = readdirSync(logDir).filter((name) => name.endsWith('.log'));
+  assert.equal(logs.length, 1);
+  const text = readFileSync(join(logDir, logs[0]), 'utf8');
+  assert.match(text, /Nevermore v0\.3 external-write boundary/);
+  assert.match(text, /gengrowth-publish tick end \(rc=0\)/);
+  assert.doesNotMatch(text, /backend secret unavailable|project ref unavailable|SB_KEY unavailable/);
+  assert.equal(mock.larkMsgs.length, 0, 'disabled tick 不得发送 auth_missing');
 });
 
 // ── (8) tick.sh 语法完好（bash -n）──

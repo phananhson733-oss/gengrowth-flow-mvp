@@ -60,6 +60,7 @@ tags:
 - 按该文档受控回填 Google Sheet：核验 150 条 v2 页面映射，修正 Rihanna 与 Selena Gomez 的 `artist_group`，回读确认全部映射一致；JTBD 等未在文档定义的字段仍保留人工待定。
 - 修复 `gg-topic-register` 的 apply 门禁：显式证据采集不足或预处理失败/预算耗尽时拒绝写入；一次失败运行产生的两条不合格 page brief 已精确回退，未发布内容。
 - 运行关键词 brief 登记 wrapper：astrologywiki 处理 10 条，内部预算耗尽但结构化结果正常收尾；gengrowth 无候选，窗口内无失败或超时标记。
+- 尝试补齐剩余选题关键词时，wrapper 因 astrologywiki 的证据发现门禁拒绝 apply 而停驻；保留门禁，未降级或手工写入。
 
 ---
 
@@ -504,5 +505,17 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 仅运行指定 wrapper，退出码为 0。日志窗口 16:01:44–16:13:48 为 apply（`dry_run=false`、`ok=true`）且内部运行预算耗尽。astrologywiki 的 audit_repair 处理候选 10 条、更新 10 条、新集群 0；page_ids 为 PG-FA-002、PG-FD-001、PG-FD-002、PG-FJ-001、PG-FJ-002、PG-FM-001、PG-FM-002、PG-FN-001、PG-FN-002、PG-FS-001；预处理状态为 ok×2、v1_fallback×6、budget_exhausted×2。gengrowth 的 generate 无候选、无更新、无新集群，page_ids 与预处理数组均为空。窗口以 `topic-register ok` 收尾，未检测到 failed/error/timeout 标记；未进行 wrapper 外的 Sheet、任务计划、Feishu 或 Google Doc 写入。
+
+---
+
+### Q27 — 16:48
+
+**🙋 提问：**
+
+补齐所有的剩余尚未完成的选题关键词
+
+**🤖 回答：**
+
+基于上一批已验证的 astrologywiki `audit_incomplete=40`，仅按默认参数串行运行既有 `gg-topic-register-tick.sh`。该批在 apply 模式失败（exit 1）：证据发现门禁拒绝处理至少 PG-FN-002 与 PG-FS-001，日志还显示有截断的额外页面 ID；gengrowth 零候选完成。为保持“证据不足不得 apply”的安全契约，已停止后续批次，未降级证据门禁、未手工编辑 Sheet、未直接改任务计划或另行发送通知；剩余数量仍只能以前一批已核验的 40 条为准。
 
 ---

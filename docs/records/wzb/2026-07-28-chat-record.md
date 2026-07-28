@@ -49,6 +49,7 @@ tags:
 > 用 3-5 个要点概括当天所有对话的核心内容、关键决策和产出成果。
 
 - 执行固定行索引修复重提工作流；两个产品均完成同步，无失败标记。
+- 17:31 再次执行固定行索引修复重提工作流；astrologywiki 与 gengrowth 均以 rc=0 完成，未处理新增已修复行。
 - 执行 Phase 2 索引监控工作流；双站点地图提交成功，两个 astrologywiki URL 进入需关注队列。
 - 执行结果复盘表性能同步；astrologywiki 处理 5 条到期行，gengrowth 无到期行，两个站点均生成优化任务报告。
 - 将 Oracle GitHub 主线以非强推桥接方式迁移到 `phananhson733-oss/oracle`，本机 `origin` 已切换并保留 `legacy/main`。
@@ -567,5 +568,22 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 确认选择“合格页继续、证据不足页停驻”的测试先行 runner 改造。源代码设计核对表明：需要在证据发现后把非 `ok`/`cached` 条目以结构化 `ops_blocked` 报告，并从写入、任务行、prompt 和预处理队列移除；证据阈值和既有 wrapper 写入路径不变。当前 checkout 位于 `main`，根据隔离工作区规则，等待用户同意创建 worktree 后再开始实现。
+
+---
+
+### Q32 — 17:33
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: 2026-07-27T21:01:52.532Z (1785186112532)
+
+Run the deterministic fixed-row index repair workflow through `bash tools/scripts/gg-index-repair-resubmit-tick.sh`. The wrapper loads the local gg environment, loops the configured products (`GG_INDEX_MONITOR_PRODUCTS`, defaulting to astrologywiki and gengrowth), processes rows marked `已修复`, syncs `结果复盘表`, and refreshes `request-indexing-queue` in each product Google Sheet. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, do not click Search Console Request Indexing unattended, and do not create Feishu or Google Doc report artifacts. After the wrapper exits, summarize per-product `process-fixed`, `sync-recap`, `sync-request-queue` counts visible in the log, plus any failures.
+
+**🤖 回答：**
+
+执行指定 `bash tools/scripts/gg-index-repair-resubmit-tick.sh`，退出码为 0。2026-07-28 17:31:51–17:32:34 CST 的独立日志窗口以 `index repair-resubmit ok` 收束：astrologywiki 的 process-fixed 为 fixed=0、resubmitted=0，sync-recap 为 en_rows=303、appended=0、updated=0、skipped=303，request-indexing-queue 为 rows=15（P0=0、P1=4、P2=0、P3=11）；gengrowth 的 process-fixed 为 fixed=0、resubmitted=0，sync-recap 为 en_rows=64、appended=0、updated=50、skipped=14，request-indexing-queue 为 rows=0（P0=0、P1=0、P2=0、P3=0）。窗口未发现 failure/error/exception/fatal/auth/timeout/nonzero-rc 标记。未使用普通文章 Google Indexing API、未执行无人值守 Search Console 请求编入索引，且未创建飞书或 Google Doc 报告产物。
 
 ---

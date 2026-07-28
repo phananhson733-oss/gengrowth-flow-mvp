@@ -56,6 +56,7 @@ tags:
 - 核验内容生产执行表 v2 的 2026-07-28 队列与生产基线；修复迁移后可能回退生产内容的 Git 历史分叉，并定位首项因标准 bridge 缺少 `cluster_jtbd` 而被渲染门禁停驻。
 - 使用本地 `gg-cluster-fields-suggest.mjs` 为 7 月 28 日所需的 5 个集群生成 JTBD 等业务字段候选并写入审核备注列；候选均为低置信，尚未覆盖正式字段或启动发布。
 - 明确现有 cluster 为人工权威数据：现有工具只能起草审核备注，缺少将人工确认值受控回填正式字段的自动入口。
+- 对照内链结构优化文档与当前 Sheet：文档完整覆盖 v2 的 cluster/page 拓扑，但未提供完整 JTBD 等内容生产业务字段。
 
 ---
 
@@ -433,5 +434,17 @@ Example:
 **🤖 回答：**
 
 确认判断正确。现有 `gg-cluster-fields-suggest.mjs` 的职责仅是将 Codex/LLM 草稿写入 `主题集群表` T 列；`gg-topic-register.mjs` 对已有 cluster 的缺失字段会按 OPS 人工所有权停驻，且不会自动新建或改写 cluster。已提出最小受控入口设计：仅接受显式列出的既有 `cluster_id` 与人工已确认的 C/G/H/O/Q/R 值，先 dry-run 展示精确 diff，显式 `--apply` 后才批量写入；拒绝未知 ID、空/未确认值、T 列低置信草稿自动提升，且不创建 cluster、不改 page_id、不触发发布。等待用户确认该设计后再按测试先行实现。
+
+---
+
+### Q22 — 15:33
+
+**🙋 提问：**
+
+这里有之前的 cluster：都填了吗inbox-maboyang/00-inbox/2026-07-21-内链结构优化需求文档
+
+**🤖 回答：**
+
+逐项对照该文档与当前 `主题集群表`。文档已完整定义 v2 的结构性字段：`cluster_id`、量产线 track、Pillar/Series slug、内链规则、CTA，以及页面级 `cluster_id`/`page_role`/`artist_group`；但它并未填完整个内容生产 schema。当前 21 个 v2 集群中，只有 `kpop_bts`、`kpop_blackpink`、`fiction_hp`、`pop_music_birthchart` 的 `jtbd` 非空，其他 17 个（包括 `mbti_zodiac`、Stray Kids/aespa/NewJeans、Marvel 等）为空；`primary_entity`、`content_angle`、`psych_safety_flag`、`priority`、`week`、`success_metric` 对这 21 个均为空。文档首页“已完成”指内链拓扑与生产回填验收，不等于 v8 prompt 所需业务字段完整，因此它可作为人工维护的 cluster/page 映射权威来源，不能单独解除 `cluster_jtbd` 渲染门禁。
 
 ---

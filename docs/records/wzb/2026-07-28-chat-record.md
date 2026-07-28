@@ -461,3 +461,15 @@ Example:
 按 `inbox-maboyang/00-inbox/2026-07-21-内链结构优化需求文档.md` 的明确字段执行最小范围回填。审计确认 v2 范围 150 条页面的 `cluster_id`、`page_role`、slug 和适用的 `artist_group` 均可在选题登记表找到，原有 148 条已一致；仅修正 S504 `Rihanna birth chart` 为 `rihanna`、S505 `Selena Gomez birth chart` 为 `selena_gomez`。批量写入后回读确认 150 条映射零差异，两个单元格的格式、行高与页面角色下拉校验保持不变。文档未定义的 JTBD、内容角度、优先级等字段未自动填充，继续由人工维护。
 
 ---
+
+### Q24 — 16:07 [claude]
+
+**🙋 提问：**
+
+调用 SEO Content Variable Pre-processor v2.0，对 Target_Keyword「Jujutsu Kaisen zodiac signs」（T2 / Definition，Cluster `Jujutsu Kaisen Characters Zodiac Signs`）产出 Entity / Entity_Topology / Friction / Logic / Content_Angle 与审计元数据。Raw_Friction 为“读者需将 Jujutsu Kaisen Zodiac Signs 与整盘分析、名人传记、命定式性格论述分离”，Draft_Angle 与 SERP_Snapshot 均为占位符，未提供 Entity_RAG。
+
+**🤖 回答：**
+
+触发契约 v2.0 的硬性 abort：SERP_Snapshot 未提供（distinct titles < 3），Raw_Friction 为单句程式化描述，无具名来源用户抱怨/问题，也无具名域名的 Case Study SERP/news 证据。按 "Do NOT synthesize Entity / Friction / Logic / Content_Angle from insufficient input" 停止，SHEET_FIELDS 五项全部留空；REVIEW_METADATA 输出 Status=Needs More Evidence、Confidence=Low、Draft_Angle_Disposition=N/A（占位符）、Aligned=N/A、Evidence_Notes 记录缺项，并给出上游需补齐的三项（SERP top 5–10、逐字用户抱怨或 Case Study 具名域名标题证据、Draft_Angle 具体假设）。
+
+---

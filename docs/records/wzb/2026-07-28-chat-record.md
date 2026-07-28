@@ -64,6 +64,7 @@ tags:
 - 尝试补齐剩余选题关键词时，wrapper 因 astrologywiki 的证据发现门禁拒绝 apply 而停驻；保留门禁，未降级或手工写入。
 - 定位到该门禁为批次级全拒绝；现有 wrapper 不能自动跳过证据不足行并选择后续 brief，需先恢复证据来源或获准改造为合格页继续处理。
 - 用户选择“合格页继续、证据不足页停驻”的 runner 改造；已完成源代码设计核对，等待隔离 worktree 授权后测试先行实现。
+- 运行关键词 brief 登记 wrapper 时再次触发 astrologywiki 证据发现门禁；该产品未输出业务计数，gengrowth 零候选完成，窗口以受控失败收束，未进行 wrapper 外写入。
 
 ---
 
@@ -585,5 +586,22 @@ Run the deterministic fixed-row index repair workflow through `bash tools/script
 **🤖 回答：**
 
 执行指定 `bash tools/scripts/gg-index-repair-resubmit-tick.sh`，退出码为 0。2026-07-28 17:31:51–17:32:34 CST 的独立日志窗口以 `index repair-resubmit ok` 收束：astrologywiki 的 process-fixed 为 fixed=0、resubmitted=0，sync-recap 为 en_rows=303、appended=0、updated=0、skipped=303，request-indexing-queue 为 rows=15（P0=0、P1=4、P2=0、P3=11）；gengrowth 的 process-fixed 为 fixed=0、resubmitted=0，sync-recap 为 en_rows=64、appended=0、updated=50、skipped=14，request-indexing-queue 为 rows=0（P0=0、P1=0、P2=0、P3=0）。窗口未发现 failure/error/exception/fatal/auth/timeout/nonzero-rc 标记。未使用普通文章 Google Indexing API、未执行无人值守 Search Console 请求编入索引，且未创建飞书或 Google Doc 报告产物。
+
+---
+
+### Q33 — 18:14
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-28T08:00:54.768Z (1785225654768)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行指定 wrapper，退出码为 1。精确日志窗口 18:02:04–18:13:14 CST 为 apply（`dry_run=false`、`budget_exhausted=false`、`ok=false`）。astrologywiki 在证据发现 apply 门禁被拒绝：日志报 `ERR_OTHER`，至少 PG-FS-002、PG-FB-001 证据不足，后续 ID 在日志内被截断；该产品没有输出 candidates、updates、new_clusters、page_ids 或 preprocessor 数组，均不可推断。gengrowth 的 applied generate 通过但无候选：candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]、evidence_discovery=[]。窗口以 `topic-register failed rc=1` 收束，未进行 wrapper 外的 Sheet、任务计划、Feishu 或 Google Doc 写入。
 
 ---

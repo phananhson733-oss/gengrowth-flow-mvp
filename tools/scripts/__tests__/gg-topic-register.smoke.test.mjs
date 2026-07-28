@@ -173,6 +173,32 @@ test('preprocessor prompt uses the relaxed three-title evidence floor', () => {
   assert.doesNotMatch(prompt, /SERP < 5/i);
 });
 
+test('apply gate rejects an explicitly requested evidence run when discovery is insufficient', () => {
+  assert.throws(
+    () => topicRegister.assertApplyEligibility({
+      args: { apply: true, discover_evidence: true, llm: 'codex' },
+      plan: {
+        updates: [{ pageId: 'PG-TEST-001', preprocessor: { status: 'failed' } }],
+        evidenceDiscovery: [{ pageId: 'PG-TEST-001', status: 'insufficient' }],
+      },
+    }),
+    /refusing --apply.*evidence.*insufficient/i,
+  );
+});
+
+test('apply gate rejects a budget-exhausted preprocessor before any writes', () => {
+  assert.throws(
+    () => topicRegister.assertApplyEligibility({
+      args: { apply: true, llm: 'codex' },
+      plan: {
+        updates: [{ pageId: 'PG-TEST-002', preprocessor: { status: 'budget_exhausted' } }],
+        evidenceDiscovery: [],
+      },
+    }),
+    /refusing --apply.*preprocessor.*budget_exhausted/i,
+  );
+});
+
 test('default candidate selection audits incomplete existing rows before generating new rows', () => {
   const header = [
     'Target Keyword',

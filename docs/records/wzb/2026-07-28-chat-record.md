@@ -58,6 +58,7 @@ tags:
 - 明确现有 cluster 为人工权威数据：现有工具只能起草审核备注，缺少将人工确认值受控回填正式字段的自动入口。
 - 对照内链结构优化文档与当前 Sheet：文档完整覆盖 v2 的 cluster/page 拓扑，但未提供完整 JTBD 等内容生产业务字段。
 - 按该文档受控回填 Google Sheet：核验 150 条 v2 页面映射，修正 Rihanna 与 Selena Gomez 的 `artist_group`，回读确认全部映射一致；JTBD 等未在文档定义的字段仍保留人工待定。
+- 运行关键词 brief 登记 wrapper：astrologywiki 处理 10 条，内部预算耗尽但结构化结果正常收尾；gengrowth 无候选，窗口内无失败或超时标记。
 
 ---
 
@@ -483,5 +484,22 @@ Example:
 **🤖 回答：**
 
 同上一条 JJK 集群的判定路径，v2.0 硬性 abort 再次触发：SERP_Snapshot 显式未提供（distinct titles=0、domains=0），Raw_Friction 为模板套话无 sourced 用户抱怨或具名域名 Case Study 证据，Draft_Angle 亦为占位符。按契约拒绝合成，SHEET_FIELDS 五项留空；REVIEW_METADATA 输出 Status=Needs More Evidence、Confidence=Low、Draft_Angle_Disposition=N/A、Aligned=N/A、Evidence_Notes 记录缺项，Abort_Reason 逐条援引两条硬性条件；补齐建议指向 gg-topic-register 上游需附 Google SERP 5–10 具名标题（虚构角色走 Case Study 路径，可用 fandom/官方设定聚合域名）+ ≥1 条 sourced 抱怨或 ≥3 域名标题证据 + Draft_Angle 实际假设句。
+
+---
+
+### Q26 — 16:14
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-27T14:02:20.954Z (1785160940954)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行指定 wrapper，退出码为 0。日志窗口 16:01:44–16:13:48 为 apply（`dry_run=false`、`ok=true`）且内部运行预算耗尽。astrologywiki 的 audit_repair 处理候选 10 条、更新 10 条、新集群 0；page_ids 为 PG-FA-002、PG-FD-001、PG-FD-002、PG-FJ-001、PG-FJ-002、PG-FM-001、PG-FM-002、PG-FN-001、PG-FN-002、PG-FS-001；预处理状态为 ok×2、v1_fallback×6、budget_exhausted×2。gengrowth 的 generate 无候选、无更新、无新集群，page_ids 与预处理数组均为空。窗口以 `topic-register ok` 收尾，未检测到 failed/error/timeout 标记；未进行 wrapper 外的 Sheet、任务计划、Feishu 或 Google Doc 写入。
 
 ---

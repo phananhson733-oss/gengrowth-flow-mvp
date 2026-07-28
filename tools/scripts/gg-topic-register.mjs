@@ -1808,6 +1808,33 @@ export async function runPreprocessorForPlan(plan, {
   return plan;
 }
 
+export function assertApplyEligibility({ args = {}, plan = {} } = {}) {
+  if (!args.apply || !(plan?.updates || []).length) return;
+
+  if (args.discover_evidence) {
+    const insufficientEvidence = (plan.evidenceDiscovery || [])
+      .filter((item) => !['ok', 'cached'].includes(String(item?.status || '')))
+      .map((item) => String(item?.pageId || '').trim())
+      .filter(Boolean);
+    if (insufficientEvidence.length) {
+      throw new Error(
+        `refusing --apply: evidence discovery insufficient for ${insufficientEvidence.join(', ')}`,
+      );
+    }
+  }
+
+  if (args.llm) {
+    const invalidPreprocessor = (plan.updates || [])
+      .filter((item) => !['ok', 'v1_fallback'].includes(String(item?.preprocessor?.status || '')))
+      .map((item) => `${item.pageId || 'unknown'}:${item?.preprocessor?.status || 'not-run'}`);
+    if (invalidPreprocessor.length) {
+      throw new Error(
+        `refusing --apply: preprocessor incomplete for ${invalidPreprocessor.join(', ')}`,
+      );
+    }
+  }
+}
+
 function clusterRowToValues(row) {
   return CLUSTER_FIELDS.map((field) => row[field] == null ? '' : String(row[field]));
 }
@@ -2336,6 +2363,8 @@ async function runProduct(profile, { token, args, nowDate, budget = null }) {
       budget,
     });
   }
+
+  assertApplyEligibility({ args, plan });
 
   if (!args.apply) {
     return { profile, workbookId, plan, applied: false, promptPaths: [] };

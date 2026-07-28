@@ -1,4 +1,37 @@
 ---
+
+### Q16 — 15:13
+
+**🙋 提问：**
+
+You are an SEO program manager for astrologywiki.com. Suggest the 6 business
+fields for one keyword cluster. Respond with a single fenced ```json block, nothing else.
+
+Cluster: kpop_newjeans — NewJeans Birth Charts & Zodiac Signs
+Keyword count: 0
+Top keywords (up to 20):
+
+
+Field rules (pick EXACTLY one allowed value per enum field; free-text for jtbd & content_angle):
+  track         : one of ["量产线","精修线"]  (量产线 if ≥10 templatable kws; 精修线 if needs differentiated angle)
+  jtbd          : free-text Chinese, 1 sentence ("用户带着什么任务来 X")
+  content_angle : free-text Chinese, 1 sentence (精修线必填差异化角度；量产线 "模板默认")
+  cta_primary   : one of ["Newsletter","工具页","星盘页","注册"]  (Newsletter: aura/full-moon/lunar; 工具页/星盘页: birth-chart; 注册: quiz/past-life/HSP)
+  priority      : one of ["P0","P1","P2"]  (P0 if family >40 kws or in [aura/lunar-nodes/birth-chart/HSP/past-life/full-moon/pisces-transit])
+  week          : one of ["Week 1","Week 2","Week 3","Backlog"]  (P0→Week 1; high P1→Week 2; low P1→Week 3; P2→Backlog)
+
+Also include: confidence ("high"|"medium"|"low") and rationale (1 short Chinese sentence — why).
+
+Example:
+```json
+{"track":"量产线","jtbd":"用户想知道自己 aura 颜色含义并做情绪映射","content_angle":"8 颜色 pillar+子页，每页配 color quiz","cta_primary":"Newsletter","priority":"P0","week":"Week 1","confidence":"high","rationale":"高频族群，pillar+series 模板友好"}
+```
+
+**🤖 回答：**
+
+按给定枚举输出单个 JSON：`kpop_newjeans` 因关键词数为 0 且需要粉丝向成员星座/星盘差异化角度，建议走 `精修线`、`P2`、`Backlog`；CTA 选择星盘页承接 Birth Charts 意图，置信度为低。
+
+---
 date: 2026-07-28
 type: chat-record
 author: xdawayer
@@ -21,6 +54,7 @@ tags:
 - 将 Oracle GitHub 主线以非强推桥接方式迁移到 `phananhson733-oss/oracle`，本机 `origin` 已切换并保留 `legacy/main`。
 - 发布脚本的仓库标识已集中迁移并通过 135/135 个相关回归测试；Vercel 已重连 `phananhson733-oss/oracle`，并完成 Git 触发的生产部署与主页 HTTP 200 核验。
 - 核验内容生产执行表 v2 的 2026-07-28 队列与生产基线；修复迁移后可能回退生产内容的 Git 历史分叉，并定位首项因标准 bridge 缺少 `cluster_jtbd` 而被渲染门禁停驻。
+- 使用本地 `gg-cluster-fields-suggest.mjs` 为 7 月 28 日所需的 5 个集群生成 JTBD 等业务字段候选并写入审核备注列；候选均为低置信，尚未覆盖正式字段或启动发布。
 
 ---
 
@@ -284,5 +318,83 @@ Example:
 **🤖 回答：**
 
 按给定枚举输出单个 JSON：`kpop_straykids` 因关键词数为 0 且需粉丝向差异化角度，建议走 `精修线`、`P2`、`Backlog`；CTA 选择星盘页承接 Birth Charts 意图，置信度为低。
+
+---
+
+### Q15 — 15:11
+
+**🙋 提问：**
+
+You are an SEO program manager for astrologywiki.com. Suggest the 6 business
+fields for one keyword cluster. Respond with a single fenced ```json block, nothing else.
+
+Cluster: kpop_aespa — aespa Birth Charts & Zodiac Signs
+Keyword count: 0
+Top keywords (up to 20):
+
+
+Field rules (pick EXACTLY one allowed value per enum field; free-text for jtbd & content_angle):
+  track         : one of ["量产线","精修线"]  (量产线 if ≥10 templatable kws; 精修线 if needs differentiated angle)
+  jtbd          : free-text Chinese, 1 sentence ("用户带着什么任务来 X")
+  content_angle : free-text Chinese, 1 sentence (精修线必填差异化角度；量产线 "模板默认")
+  cta_primary   : one of ["Newsletter","工具页","星盘页","注册"]  (Newsletter: aura/full-moon/lunar; 工具页/星盘页: birth-chart; 注册: quiz/past-life/HSP)
+  priority      : one of ["P0","P1","P2"]  (P0 if family >40 kws or in [aura/lunar-nodes/birth-chart/HSP/past-life/full-moon/pisces-transit])
+  week          : one of ["Week 1","Week 2","Week 3","Backlog"]  (P0→Week 1; high P1→Week 2; low P1→Week 3; P2→Backlog)
+
+Also include: confidence ("high"|"medium"|"low") and rationale (1 short Chinese sentence — why).
+
+Example:
+```json
+{"track":"量产线","jtbd":"用户想知道自己 aura 颜色含义并做情绪映射","content_angle":"8 颜色 pillar+子页，每页配 color quiz","cta_primary":"Newsletter","priority":"P0","week":"Week 1","confidence":"high","rationale":"高频族群，pillar+series 模板友好"}
+```
+
+**🤖 回答：**
+
+按给定枚举输出单个 JSON：`kpop_aespa` 因关键词数为 0 且需要粉丝向成员星座/星盘差异化角度，建议走 `精修线`、`P2`、`Backlog`；CTA 选择星盘页承接 Birth Charts 意图，置信度为低。
+
+---
+
+### Q17 — 15:14
+
+**🙋 提问：**
+
+You are an SEO program manager for astrologywiki.com. Suggest the 6 business
+fields for one keyword cluster. Respond with a single fenced ```json block, nothing else.
+
+Cluster: fiction_marvel — Marvel Characters Zodiac Signs
+Keyword count: 0
+Top keywords (up to 20):
+
+
+Field rules (pick EXACTLY one allowed value per enum field; free-text for jtbd & content_angle):
+  track         : one of ["量产线","精修线"]  (量产线 if ≥10 templatable kws; 精修线 if needs differentiated angle)
+  jtbd          : free-text Chinese, 1 sentence ("用户带着什么任务来 X")
+  content_angle : free-text Chinese, 1 sentence (精修线必填差异化角度；量产线 "模板默认")
+  cta_primary   : one of ["Newsletter","工具页","星盘页","注册"]  (Newsletter: aura/full-moon/lunar; 工具页/星盘页: birth-chart; 注册: quiz/past-life/HSP)
+  priority      : one of ["P0","P1","P2"]  (P0 if family >40 kws or in [aura/lunar-nodes/birth-chart/HSP/past-life/full-moon/pisces-transit])
+  week          : one of ["Week 1","Week 2","Week 3","Backlog"]  (P0→Week 1; high P1→Week 2; low P1→Week 3; P2→Backlog)
+
+Also include: confidence ("high"|"medium"|"low") and rationale (1 short Chinese sentence — why).
+
+Example:
+```json
+{"track":"量产线","jtbd":"用户想知道自己 aura 颜色含义并做情绪映射","content_angle":"8 颜色 pillar+子页，每页配 color quiz","cta_primary":"Newsletter","priority":"P0","week":"Week 1","confidence":"high","rationale":"高频族群，pillar+series 模板友好"}
+```
+
+**🤖 回答：**
+
+按给定枚举输出单个 JSON：`fiction_marvel` 因关键词数为 0 且需要角色人格/剧情向差异化角度，建议走 `精修线`、`P2`、`Backlog`；CTA 选择星盘页承接用户对自身星座匹配的延伸意图，置信度为低。
+
+---
+
+### Q18 — 15:16
+
+**🙋 提问：**
+
+本地有工具可以做 jtdb 这些工具
+
+**🤖 回答：**
+
+定位并执行既有 `gg-cluster-fields-suggest.mjs`。默认 Hermes 后端因本机缺少 `OPENROUTER_API_KEY` 仅能退回低置信 heuristic，改用本地 Codex 后端为 `mbti_zodiac`、`kpop_straykids`、`kpop_aespa`、`kpop_newjeans`、`fiction_marvel` 生成建议，并通过该工具写入 `主题集群表` T 列（审核备注）。回读核验五个建议均落在正确行，正式 G 列 `jtbd` 未被改动。工具契约是“草稿入 T 列、人工审核后写入 C/G/H/O/Q/R”；当前候选都标记 low，且 MBTI 建议的 track/CTA 与 v2 排期不一致，因此未越过审核门禁或启动内容发布。
 
 ---

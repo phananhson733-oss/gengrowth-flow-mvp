@@ -18,7 +18,7 @@ tags:
 - 两次按固定入口执行 Index Repair Resubmit，均无已修复行重提；结果复盘表与请求索引队列已同步，日志窗口无失败并保持索引合规边界。
 - 按固定入口执行 Index Monitor，两个产品的 Sitemap API 刷新与 URL Inspection 均完成且无失败；请求索引队列已更新。
 - 按固定入口执行结果复盘性能更新；AstrologyWiki 处理 3 条合并口径里程碑行，GenGrowth 无到期行，两个优化任务报告均已生成。
-- 三次按固定入口执行 topic-register apply；AstrologyWiki 共完成 30 条审计修复，GenGrowth 三轮均无候选，三个隔离日志窗口均无失败。
+- 四次按固定入口执行 topic-register apply；AstrologyWiki 共完成 40 条审计修复，GenGrowth 四轮均无候选，四个隔离日志窗口均无失败。
 - 按严格的 SEO 词条模板完成 Venus in Taurus 的英文 T2 Definition 草稿，保持 11 个指定 H2、受限内链、CTA 和来源结构，并避开命定及医疗化表述。
 
 ## 对话记录
@@ -176,5 +176,22 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 仅执行 `bash tools/scripts/gg-topic-register-tick.sh`，退出码 0。隔离日志窗口为 20:02:14–20:14:09 CST，`dry_run=false`、`budget_exhausted=false`、`ok=true`，因此为环境显式启用的 apply。astrologywiki：selection_mode=audit_repair，candidates=10、updates=10、new_clusters=0、audit_incomplete=118，page_ids=[PG-MZ-027, PG-MZ-028, PG-MZ-029, PG-MZ-030, PG-MZ-031, PG-MZ-032, PG-MZ-033, PG-MZ-034, PG-MZ-035, PG-MZ-036]；preprocessor 为 ok×2、v1_fallback×8；evidence_discovery 为 ok×2（Sagittarius MBTI：5 titles/5 domains；Leo MBTI：6 titles/5 domains）及 insufficient×8。gengrowth：selection_mode=generate，candidates=0、updates=0、new_clusters=0、audit_incomplete=0，page_ids/preprocessor/evidence_discovery 均为空。日志窗口无 failure、timeout 或 budget_exhausted。未进行手工 Sheet 写入、wrapper 外 task-plan 编辑，或额外 Feishu/Google Doc 报告产物；自动化记忆已追加。
+
+---
+
+### Q10 — 22:12
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-24T12:01:31.432Z (1784894491432)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅执行 `bash tools/scripts/gg-topic-register-tick.sh`，退出码 0。隔离日志窗口为 22:01:57–22:12:11 CST，`dry_run=false`、`budget_exhausted=false`、`ok=true`，因此为环境显式启用的 apply。astrologywiki：selection_mode=audit_repair，candidates=10、updates=10、new_clusters=0、audit_incomplete=108，page_ids=[PG-MZ-037, PG-MZ-038, PG-MZ-039, PG-MZ-040, PG-MZ-041, PG-MZ-042, PG-MZ-043, PG-MZ-044, PG-MZ-045, PG-KB-003]；preprocessor 为 v1_fallback×10，evidence_discovery 为 insufficient×10。gengrowth：selection_mode=generate，candidates=0、updates=0、new_clusters=0、audit_incomplete=0，page_ids/preprocessor/evidence_discovery 均为空。日志窗口无 failure、timeout 或 budget_exhausted。未进行手工 Sheet 写入、wrapper 外 task-plan 编辑，或额外 Feishu/Google Doc 报告产物；自动化记忆已追加。
 
 ---

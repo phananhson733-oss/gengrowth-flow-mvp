@@ -55,6 +55,7 @@ tags:
 - 发布脚本的仓库标识已集中迁移并通过 135/135 个相关回归测试；Vercel 已重连 `phananhson733-oss/oracle`，并完成 Git 触发的生产部署与主页 HTTP 200 核验。
 - 核验内容生产执行表 v2 的 2026-07-28 队列与生产基线；修复迁移后可能回退生产内容的 Git 历史分叉，并定位首项因标准 bridge 缺少 `cluster_jtbd` 而被渲染门禁停驻。
 - 使用本地 `gg-cluster-fields-suggest.mjs` 为 7 月 28 日所需的 5 个集群生成 JTBD 等业务字段候选并写入审核备注列；候选均为低置信，尚未覆盖正式字段或启动发布。
+- 明确现有 cluster 为人工权威数据：现有工具只能起草审核备注，缺少将人工确认值受控回填正式字段的自动入口。
 
 ---
 
@@ -420,5 +421,17 @@ Example:
 **🤖 回答：**
 
 按用户确认直接推送，未使用强推、硬重置、清理或删除操作。`gengrowth-flow-mvp` 的目标 `main` 是本地提交链祖先，已普通快进同步；三个仓库均将 `origin` 替换为 `phananhson733-oss`，旧地址保留为 `legacy-origin`，并执行远端 SHA 与未合并状态核验。
+
+---
+
+### Q21 — 15:31
+
+**🙋 提问：**
+
+本地有 codex 的 automatic 工具，可以实现把。而且我们的 cluster 都是人工填写，不应该自动生成吧
+
+**🤖 回答：**
+
+确认判断正确。现有 `gg-cluster-fields-suggest.mjs` 的职责仅是将 Codex/LLM 草稿写入 `主题集群表` T 列；`gg-topic-register.mjs` 对已有 cluster 的缺失字段会按 OPS 人工所有权停驻，且不会自动新建或改写 cluster。已提出最小受控入口设计：仅接受显式列出的既有 `cluster_id` 与人工已确认的 C/G/H/O/Q/R 值，先 dry-run 展示精确 diff，显式 `--apply` 后才批量写入；拒绝未知 ID、空/未确认值、T 列低置信草稿自动提升，且不创建 cluster、不改 page_id、不触发发布。等待用户确认该设计后再按测试先行实现。
 
 ---

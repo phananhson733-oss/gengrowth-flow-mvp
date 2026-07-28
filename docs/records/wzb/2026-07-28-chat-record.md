@@ -519,3 +519,15 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 基于上一批已验证的 astrologywiki `audit_incomplete=40`，仅按默认参数串行运行既有 `gg-topic-register-tick.sh`。该批在 apply 模式失败（exit 1）：证据发现门禁拒绝处理至少 PG-FN-002 与 PG-FS-001，日志还显示有截断的额外页面 ID；gengrowth 零候选完成。为保持“证据不足不得 apply”的安全契约，已停止后续批次，未降级证据门禁、未手工编辑 Sheet、未直接改任务计划或另行发送通知；剩余数量仍只能以前一批已核验的 40 条为准。
 
 ---
+
+### Q28 — 16:50
+
+**🙋 提问：**
+
+现在是卡住了吗
+
+**🤖 回答：**
+
+不是进程卡死。最新日志显示 wrapper 已在 16:48:27 以 `topic-register failed rc=1` 结束；失败是 astrologywiki 的证据发现门禁拒绝 apply（至少 PG-FN-002、PG-FS-001 证据不足），不是超时、锁冲突或仍在运行。当前是受控阻断状态，等待上游确定性证据发现补齐后才能安全重跑。
+
+---

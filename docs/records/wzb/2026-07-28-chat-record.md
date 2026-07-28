@@ -398,3 +398,27 @@ Example:
 定位并执行既有 `gg-cluster-fields-suggest.mjs`。默认 Hermes 后端因本机缺少 `OPENROUTER_API_KEY` 仅能退回低置信 heuristic，改用本地 Codex 后端为 `mbti_zodiac`、`kpop_straykids`、`kpop_aespa`、`kpop_newjeans`、`fiction_marvel` 生成建议，并通过该工具写入 `主题集群表` T 列（审核备注）。回读核验五个建议均落在正确行，正式 G 列 `jtbd` 未被改动。工具契约是“草稿入 T 列、人工审核后写入 C/G/H/O/Q/R”；当前候选都标记 low，且 MBTI 建议的 track/CTA 与 v2 排期不一致，因此未越过审核门禁或启动内容发布。
 
 ---
+
+### Q19 — 15:28
+
+**🙋 提问：**
+
+本地的 gengrowth-wiki gengrowth-ops gengrowth-flow-mvp 这 3 个 repo，提交和同步到新的 github：phananhson733-oss，这 3 个库已经有了，但是需要同步，同时替换掉 github
+
+**🤖 回答：**
+
+完成三个本地仓库的变更盘点、提交、测试与远端历史核验。迁移目标为 `phananhson733-oss` 下同名仓库；针对各仓库不同的远端关系分别采用快进或“以新远端为基线、叠加本地内容”的方式，避免覆盖目标仓库已有历史。
+
+---
+
+### Q20 — 15:28
+
+**🙋 提问：**
+
+不用，直接推送，注意不要覆盖，注意合并的问题
+
+**🤖 回答：**
+
+按用户确认直接推送，未使用强推、硬重置、清理或删除操作。`gengrowth-flow-mvp` 的目标 `main` 是本地提交链祖先，已普通快进同步；三个仓库均将 `origin` 替换为 `phananhson733-oss`，旧地址保留为 `legacy-origin`，并执行远端 SHA 与未合并状态核验。
+
+---

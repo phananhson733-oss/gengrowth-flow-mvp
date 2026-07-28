@@ -24,6 +24,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 import { PM_OPEN_ID, OPS_OPEN_ID } from '../lib/lark-send.mjs';
+import { supabaseRestHeaders } from '../lib/supabase-auth.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SCRIPTS = resolve(__dirname, '..');
@@ -40,6 +41,7 @@ const AT_OPS = `<at user_id="${OPS_OPEN_ID}"></at> `;
 const mock = {
   larkMsgs: [], // 每条 = 解析后的 content.text
   restPosts: [], // bridge 的 upsert 请求 url
+  restHeaders: [], // Supabase REST 请求头（验证 opaque secret 不被误当 Bearer JWT）
   live: false, // GET blog_posts → live ? [{status:'published'}] : []
   upsert500: false, // POST blog_posts → 500（制造 bridge 失败 → publish_fail）
 };
@@ -66,6 +68,7 @@ before(async () => {
         return;
       }
       if (req.url.startsWith('/rest/v1/blog_posts')) {
+        mock.restHeaders.push(req.headers);
         if (req.method === 'POST') {
           mock.restPosts.push(req.url);
           if (mock.upsert500) {
@@ -107,7 +110,7 @@ function writeFakeCodexExit3(dir) {
 }
 
 // 每个 case 独立沙箱：假凭据 + 独立 state/audit/HOME + 独立 staging 目录。
-function caseEnv(name, { sbKey = 'sb-test-key' } = {}) {
+function caseEnv(name, { sbKey = 'sb_secret_test_key' } = {}) {
   const dir = join(ROOT, name);
   const home = join(dir, 'home');
   const staging = join(dir, 'staging');
@@ -117,6 +120,7 @@ function caseEnv(name, { sbKey = 'sb-test-key' } = {}) {
   writeFileSync(hermes, 'FEISHU_APP_ID=cli_test\nFEISHU_APP_SECRET=sec_test\n');
   mock.larkMsgs.length = 0;
   mock.restPosts.length = 0;
+  mock.restHeaders.length = 0;
   mock.live = false;
   mock.upsert500 = false;
   const env = {
@@ -177,7 +181,7 @@ test('auth_missing: --apply 无 SB_KEY → 逐字模板 + OPS @ + exit 0', async
   assert.equal(r.status, 0, `fail-safe 必须 exit 0（stderr: ${r.stderr}）`);
   assert.match(r.stderr, /SB_KEY missing/);
   assert.deepEqual(mock.larkMsgs, [
-    `${AT_OPS}⚠️ [gengrowth] 凭据缺失：SB_KEY，本轮跳过。恢复：supabase login`,
+    `${AT_OPS}⚠️ [gengrowth] 凭据缺失：backend_secret，本轮跳过。恢复：configure Supabase backend secret`,
   ]);
 });
 
@@ -226,6 +230,11 @@ test('published: 全链路成功 → 逐字模板（extra=gengrowth.ai 博客）
   assert.match(r.stdout, /verified live: test-published-guide/);
   assert.equal(mock.restPosts.length, 1, 'bridge 应恰好 upsert 一次');
   assert.match(mock.restPosts[0], /on_conflict=slug,locale/);
+  assert.ok(mock.restHeaders.length >= 3, 'live check + upsert + verify-live 都应命中 mock REST');
+  for (const headers of mock.restHeaders) {
+    assert.equal(headers.apikey, 'sb_secret_test_key');
+    assert.equal(headers.authorization, undefined, 'opaque sb_secret key 不能放进 Bearer Authorization');
+  }
   assert.deepEqual(mock.larkMsgs, [
     '✅ [gengrowth] 已发布上线：发布成功测试文章\nhttps://gengrowth.ai/en/blog/test-published-guide\n（gengrowth.ai 博客）',
   ]);
@@ -316,7 +325,7 @@ test('GG_LARK_NOTIFY_SILENCE=1: 事件只写 audit（SILENCED），mock 收不�
   assert.equal(r.status, 0);
   assert.equal(mock.larkMsgs.length, 0, 'SILENCE 时绝不打消息 API');
   const audit = readFileSync(join(dir, 'audit.log'), 'utf8');
-  assert.match(audit, /\tSILENCED\t.*凭据缺失：SB_KEY/);
+  assert.match(audit, /\tSILENCED\t.*凭据缺失：backend_secret/);
 });
 
 // ── (7) 源码断言：裸拼字符串 + 散装 AT env 的旧机制已从两个文件中拆除 ──
@@ -332,7 +341,8 @@ test('迁移完备性：.mjs/.sh 不再引用 gg-lark-notify.sh / larkBestEffort
   const sh = readFileSync(TICK_SH, 'utf8');
   assert.doesNotMatch(sh, /gg-lark-notify\.sh/, '.sh 不得再走 shell 通知壳');
   assert.doesNotMatch(sh, /GG_LARK_NOTIFY_AT_/, '.sh 的 @ 由 auth_missing 事件表决定');
-  assert.match(sh, /gg-notify\.mjs" auth_missing --site gengrowth --what service_role --hint "supabase login"/);
+  assert.match(sh, /security find-generic-password.*SB_KEYCHAIN_ACCOUNT.*SB_KEYCHAIN_SERVICE.*-w/);
+  assert.match(sh, /gg-notify\.mjs" auth_missing --site gengrowth --what backend_secret --hint "configure Supabase backend secret"/);
   assert.match(sh, /gg-seo-repair-controller\.mjs" drain/, '自然 publish wrapper 必须在 v2 下拉起统一修复 controller');
 });
 
@@ -343,15 +353,28 @@ test('gg-gengrowth-publish-tick.sh: bash -n 通过', () => {
 });
 
 // ── (9) .sh 的 auth_missing 事件端到端渲染（黑盒跑 CLI，同 .sh 里的调用形态）──
-test('CLI auth_missing --what service_role: 渲染与 .sh 调用点一致 + OPS @', async () => {
+test('CLI auth_missing --what backend_secret: 渲染与 .sh 调用点一致 + OPS @', async () => {
   const { env } = caseEnv('sh-auth-missing');
   const r = await runAsync(
     'node',
-    [join(SCRIPTS, 'gg-notify.mjs'), 'auth_missing', '--site', 'gengrowth', '--what', 'service_role', '--hint', 'supabase login'],
+    [join(SCRIPTS, 'gg-notify.mjs'), 'auth_missing', '--site', 'gengrowth', '--what', 'backend_secret', '--hint', 'configure Supabase backend secret'],
     env, 30000,
   );
   assert.equal(r.status, 0, 'gg-notify CLI 契约 exit 永远 0');
   assert.deepEqual(mock.larkMsgs, [
-    `${AT_OPS}⚠️ [gengrowth] 凭据缺失：service_role，本轮跳过。恢复：supabase login`,
+    `${AT_OPS}⚠️ [gengrowth] 凭据缺失：backend_secret，本轮跳过。恢复：configure Supabase backend secret`,
   ]);
+});
+
+test('supabaseRestHeaders: legacy JWT retains Bearer while opaque keys use apikey only', () => {
+  assert.deepEqual(supabaseRestHeaders('legacy.jwt.key'), {
+    apikey: 'legacy.jwt.key',
+    Authorization: 'Bearer legacy.jwt.key',
+  });
+  assert.deepEqual(supabaseRestHeaders('sb_secret_backend'), {
+    apikey: 'sb_secret_backend',
+  });
+  assert.deepEqual(supabaseRestHeaders('sb_publishable_client'), {
+    apikey: 'sb_publishable_client',
+  });
 });

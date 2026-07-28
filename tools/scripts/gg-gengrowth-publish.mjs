@@ -50,6 +50,7 @@ import { classifyCodex } from './gg-preview-gate.mjs';
 import { backfillOnLive } from './lib/backfill-tx.mjs';
 import { stateDir } from './lib/flow-state.mjs';
 import { enqueueRepairEvent } from './lib/seo-repair-events.mjs';
+import { supabaseRestHeaders } from './lib/supabase-auth.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO = resolve(__dirname, '..', '..');
@@ -368,7 +369,7 @@ async function liveStatus(SB_URL, SB_KEY, slug, locale) {
   if (!SB_URL || !SB_KEY || !slug) return { known: false };
   try {
     const r = await fetch(`${SB_URL}/rest/v1/blog_posts?slug=eq.${encodeURIComponent(slug)}&locale=eq.${locale}&select=status`, {
-      headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` },
+      headers: supabaseRestHeaders(SB_KEY),
     });
     if (!r.ok) return { known: false, err: `GET ${r.status}` };
     const rows = await r.json();
@@ -385,7 +386,7 @@ async function main() {
   if (args.apply && !SB_KEY) {
     // FAIL-SAFE: never crash the cron on missing auth; alert + clean exit.
     console.error('gg-gengrowth-publish: --apply but SB_KEY missing — skipping (auth not available).');
-    await notify('auth_missing', { site: 'gengrowth', what: 'SB_KEY', hint: 'supabase login' });
+    await notify('auth_missing', { site: 'gengrowth', what: 'backend_secret', hint: 'configure Supabase backend secret' });
     process.exit(0);
   }
 

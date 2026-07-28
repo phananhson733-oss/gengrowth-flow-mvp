@@ -42,6 +42,7 @@ import {
   transformBody,
   atomicWrite,
 } from './gg-md-to-oracle-ts.mjs';
+import { supabaseRestHeaders } from './lib/supabase-auth.mjs';
 
 // ── site constants ───────────────────────────────────────────────────────────
 // The gengrowth blog uses a single fixed byline (no authors table / FK); all
@@ -275,8 +276,9 @@ function mergeIntoSqlFile(outPath, block, slug, locale) {
   return `${existing.replace(/\n+$/, '\n')}\n${block}\n`;
 }
 
-// ── emit: REST upsert via the CLI-fetched service_role key (the proven CLI flow) ──
-// Mirrors wzb's live path: `supabase projects api-keys -o json` -> service_role ->
+// ── emit: REST upsert via a server-side Supabase key ──────────────────────────
+// The launchd wrapper prefers a dedicated secret key from macOS Keychain and
+// falls back to the legacy CLI-fetched service_role key while it remains available.
 // POST /rest/v1/blog_posts. Upsert on the (slug,locale) unique constraint via PostgREST
 // on_conflict + merge-duplicates. Omits id + created_at so the DB fills them on insert
 // and PRESERVES them on conflict (matches the seed ON CONFLICT, which excludes both).
@@ -295,7 +297,10 @@ async function emitRest(row, { dryRun }) {
   if (!SB_URL || !SB_KEY) throw new Error('--emit rest needs SB_URL + SB_KEY env. Fetch: SB_KEY=$(supabase projects api-keys --project-ref <ref> -o json | node tools/scripts/oneoff/_emit-sb-key.mjs); SB_URL=https://<ref>.supabase.co');
   const res = await fetch(`${SB_URL}/rest/v1/blog_posts?on_conflict=slug,locale`, {
     method: 'POST',
-    headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=representation' },
+    headers: supabaseRestHeaders(SB_KEY, {
+      'Content-Type': 'application/json',
+      Prefer: 'resolution=merge-duplicates,return=representation',
+    }),
     body: JSON.stringify(payload),
   });
   const body = await res.text();

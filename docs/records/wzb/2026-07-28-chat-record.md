@@ -62,6 +62,7 @@ tags:
 - 运行关键词 brief 登记 wrapper：astrologywiki 处理 10 条，内部预算耗尽但结构化结果正常收尾；gengrowth 无候选，窗口内无失败或超时标记。
 - 尝试补齐剩余选题关键词时，wrapper 因 astrologywiki 的证据发现门禁拒绝 apply 而停驻；保留门禁，未降级或手工写入。
 - 定位到该门禁为批次级全拒绝；现有 wrapper 不能自动跳过证据不足行并选择后续 brief，需先恢复证据来源或获准改造为合格页继续处理。
+- 用户选择“合格页继续、证据不足页停驻”的 runner 改造；已完成源代码设计核对，等待隔离 worktree 授权后测试先行实现。
 
 ---
 
@@ -554,5 +555,17 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 现有 `repair-page-ids` 仅复查明确指定的既有页面，不能自动排除证据不足项并选择后续未完成 brief；默认批次会继续被同一门禁拒绝。因此，补齐其它 brief 需要先获准实施“合格页继续、证据不足页停驻”的受控 runner 改造，或先恢复所有候选的确定性证据来源；在未决定前未进行绕过门禁的写入或重跑。
+
+---
+
+### Q31 — 16:56
+
+**🙋 提问：**
+
+2
+
+**🤖 回答：**
+
+确认选择“合格页继续、证据不足页停驻”的测试先行 runner 改造。源代码设计核对表明：需要在证据发现后把非 `ok`/`cached` 条目以结构化 `ops_blocked` 报告，并从写入、任务行、prompt 和预处理队列移除；证据阈值和既有 wrapper 写入路径不变。当前 checkout 位于 `main`，根据隔离工作区规则，等待用户同意创建 worktree 后再开始实现。
 
 ---

@@ -57,6 +57,7 @@ tags:
 - 使用本地 `gg-cluster-fields-suggest.mjs` 为 7 月 28 日所需的 5 个集群生成 JTBD 等业务字段候选并写入审核备注列；候选均为低置信，尚未覆盖正式字段或启动发布。
 - 明确现有 cluster 为人工权威数据：现有工具只能起草审核备注，缺少将人工确认值受控回填正式字段的自动入口。
 - 对照内链结构优化文档与当前 Sheet：文档完整覆盖 v2 的 cluster/page 拓扑，但未提供完整 JTBD 等内容生产业务字段。
+- 按该文档受控回填 Google Sheet：核验 150 条 v2 页面映射，修正 Rihanna 与 Selena Gomez 的 `artist_group`，回读确认全部映射一致；JTBD 等未在文档定义的字段仍保留人工待定。
 
 ---
 
@@ -446,5 +447,17 @@ Example:
 **🤖 回答：**
 
 逐项对照该文档与当前 `主题集群表`。文档已完整定义 v2 的结构性字段：`cluster_id`、量产线 track、Pillar/Series slug、内链规则、CTA，以及页面级 `cluster_id`/`page_role`/`artist_group`；但它并未填完整个内容生产 schema。当前 21 个 v2 集群中，只有 `kpop_bts`、`kpop_blackpink`、`fiction_hp`、`pop_music_birthchart` 的 `jtbd` 非空，其他 17 个（包括 `mbti_zodiac`、Stray Kids/aespa/NewJeans、Marvel 等）为空；`primary_entity`、`content_angle`、`psych_safety_flag`、`priority`、`week`、`success_metric` 对这 21 个均为空。文档首页“已完成”指内链拓扑与生产回填验收，不等于 v8 prompt 所需业务字段完整，因此它可作为人工维护的 cluster/page 映射权威来源，不能单独解除 `cluster_jtbd` 渲染门禁。
+
+---
+
+### Q23 — 16:05
+
+**🙋 提问：**
+
+按照这个填写 Google sheet
+
+**🤖 回答：**
+
+按 `inbox-maboyang/00-inbox/2026-07-21-内链结构优化需求文档.md` 的明确字段执行最小范围回填。审计确认 v2 范围 150 条页面的 `cluster_id`、`page_role`、slug 和适用的 `artist_group` 均可在选题登记表找到，原有 148 条已一致；仅修正 S504 `Rihanna birth chart` 为 `rihanna`、S505 `Selena Gomez birth chart` 为 `selena_gomez`。批量写入后回读确认 150 条映射零差异，两个单元格的格式、行高与页面角色下拉校验保持不变。文档未定义的 JTBD、内容角度、优先级等字段未自动填充，继续由人工维护。
 
 ---

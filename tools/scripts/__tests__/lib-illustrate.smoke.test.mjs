@@ -122,3 +122,106 @@ test('flow defaults hero generation to Hermes image2 while allowing overrides', 
   assert.equal(override.GG_HERMES_AGENT_DIR, '/custom/hermes');
   assert.equal(override.GG_HERMES_PYTHON, '/custom/python');
 });
+
+// --- typology-concept ---------------------------------------------------------
+// "INTP zodiac sign" contains "zodiac sign", which the celebrity-portrait catch-all
+// swallowed — so a concept article with no person in it was being drawn as a
+// public-figure portrait. The v2 calendar queues ~40 more MBTI × sign crossovers.
+test('MBTI × sign crossovers are a concept scene, not a celebrity portrait', () => {
+  for (const [slug, title] of [
+    ['intp-zodiac-sign', 'Reading the INTP Zodiac Sign Without Blurring Systems'],
+    ['esfp-zodiac-sign', 'Reading the ESFP Zodiac Sign Without Fixed Labels'],
+    ['enfp-gemini', 'Reading ENFP Gemini Without Blurring Type and Sign'],
+    ['mbti-zodiac-compatibility', 'MBTI Zodiac Compatibility Explained'],
+  ]) {
+    assert.equal(classifyHeroTheme({ slug, title, content: '' }), 'typology-concept', slug);
+  }
+  const prompt = buildTemplateHeroPrompt({
+    slug: 'intp-zodiac-sign', title: 'Reading the INTP Zodiac Sign Without Blurring Systems', content: '',
+  });
+  assert.match(prompt, /two distinct symbolic systems/i);
+  assert.match(prompt, /no faces/i);
+  assert.doesNotMatch(prompt, /stylized editorial portrait/i);
+});
+
+// The typology signal is read from slug+title only. An unrelated article that says
+// "personality type" once in prose must keep its own theme — this is exactly how the
+// Wanda Maximoff page first misclassified.
+test('a passing "personality type" mention in prose does not hijack the theme', () => {
+  assert.equal(
+    classifyHeroTheme({
+      slug: 'wanda-maximoff-zodiac-sign',
+      title: 'Wanda Maximoff Zodiac Sign Reads Grief Through Aquarius',
+      content: 'A sign is not a personality type, and the character arc is fiction.',
+    }),
+    'fictional-character-scene',
+  );
+});
+
+// --- group-roster -------------------------------------------------------------
+test('idol-group rosters are an ensemble, not one portrait or a couple scene', () => {
+  for (const [slug, title] of [
+    ['ive-members-zodiac-signs', 'IVE Members Zodiac Signs Read as a Verified Sun-Sign Map'],
+    ['seventeen-zodiac-signs', 'SEVENTEEN Zodiac Signs by Member With Official Dates'],
+    ['bts-members-zodiac-signs', "All Seven BTS Members' Zodiac Signs, Explained"],
+  ]) {
+    assert.equal(classifyHeroTheme({ slug, title, content: '' }), 'group-roster', slug);
+  }
+  const prompt = buildTemplateHeroPrompt({
+    slug: 'ive-members-zodiac-signs', title: 'IVE Members Zodiac Signs', content: '',
+  });
+  assert.match(prompt, /ensemble/i);
+  assert.match(prompt, /different silhouette/i);
+});
+
+// A group's internal compatibility is still the group — the bare "compatibility"
+// keyword otherwise routed it to the two-person relationship scene.
+test('group compatibility stays a roster, not a two-person romance scene', () => {
+  assert.equal(
+    classifyHeroTheme({
+      slug: 'bts-compatibility-zodiac',
+      title: 'BTS Compatibility Zodiac Without Matchmaking Myths',
+      content: 'Symbolic Sun-sign compatibility across the seven members.',
+    }),
+    'group-roster',
+  );
+});
+
+// A real named couple must still reach relationship-scene.
+test('a named couple is still a relationship scene', () => {
+  assert.equal(
+    classifyHeroTheme({
+      slug: 'taylor-swift-and-travis-kelce',
+      title: 'What the Taylor Swift and Travis Kelce Synastry Chart Reveals',
+      content: 'A two-person synastry comparison.',
+    }),
+    'relationship-scene',
+  );
+});
+
+// --- fictional figures --------------------------------------------------------
+// Named comic / mythological figures are fiction, not public figures. Before this,
+// "Thor zodiac sign" fell through to celebrity-portrait and would have been drawn as
+// a real person consulting a natal chart.
+test('named comic and mythological figures are fictional, not celebrities', () => {
+  for (const [slug, title] of [
+    ['thor-zodiac-sign', 'What the Thor Zodiac Sign Really Means in Astrology'],
+    ['wanda-maximoff-zodiac-sign', 'Wanda Maximoff Zodiac Sign Reads Grief Through Aquarius'],
+    ['marvel-characters-zodiac-signs', 'Marvel Characters Zodiac Signs Without Canon Confusion'],
+    ['eren-yeager-zodiac-sign', 'Eren Yeager Zodiac Sign'],
+    ['jon-snow-zodiac-sign', 'Jon Snow Zodiac Sign'],
+  ]) {
+    assert.equal(classifyHeroTheme({ slug, title, content: '' }), 'fictional-character-scene', slug);
+  }
+});
+
+// Guard the other direction: a real public figure must NOT drift into fiction.
+test('a real public figure stays a celebrity portrait', () => {
+  for (const [slug, title] of [
+    ['billie-eilish-birth-chart', 'Billie Eilish Birth Chart Without Guessing Her Rising Sign'],
+    ['sabrina-carpenter-zodiac-sign', 'Sabrina Carpenter Zodiac Sign and What It Actually Shows'],
+    ['rihanna-birth-chart', 'How to Read the Rihanna Birth Chart With Care'],
+  ]) {
+    assert.equal(classifyHeroTheme({ slug, title, content: '' }), 'celebrity-portrait', slug);
+  }
+});

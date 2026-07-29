@@ -52,6 +52,29 @@ export function buildIllustrationRunEnv({ env = process.env, exists = existsSync
 
 export function classifyHeroTheme({ slug = '', title = '', content = '' } = {}) {
   const text = `${slug} ${title} ${content}`.toLowerCase();
+
+  // Typology crossovers (MBTI / enneagram × sign) have NO person in them, but they
+  // do contain "zodiac sign", which the celebrity-portrait catch-all near the bottom
+  // used to swallow — so "INTP zodiac sign" was being drawn as a public-figure
+  // portrait. The 执行表 v2 calendar has ~40 more of these queued, so they get their
+  // own theme rather than a per-article workaround.
+  //
+  // Matched on slug+title ONLY, never body prose: a typology crossover always names
+  // the type up front, while an unrelated article can mention "personality type" once
+  // in passing — which is exactly how the Wanda Maximoff page first landed here.
+  const heading = `${slug} ${title}`.toLowerCase();
+  if (/\b(mbti|myers[- ]briggs|enneagram|cognitive function|personality type)\b/.test(heading)
+      || /\b(intj|intp|entj|entp|infj|infp|enfj|enfp|istj|isfj|estj|esfj|istp|isfp|estp|esfp)\b/.test(heading)) {
+    return 'typology-concept';
+  }
+
+  // A multi-member group roster is neither one portrait nor a couple. Sits above the
+  // relationship rule so "BTS compatibility zodiac" reads as a 7-member group, not a
+  // two-person romance scene.
+  const groupNamed = /\b(bts|blackpink|seventeen|ive|stray kids|aespa|newjeans|twice|itzy|le sserafim|exo|nct|k-pop|kpop)\b/.test(text);
+  const rosterShape = /\bmembers['’]?\s*zodiac\b|\bmember zodiac\b|\bgroup (members|roster|lineup)\b|\b(band|group) members\b/.test(text);
+  if (groupNamed && (rosterShape || /\bzodiac signs?\b|\bcompatibilit/.test(text))) return 'group-roster';
+
   const relationship = /\b(wedding|synastry|compatibility|relationship|couple|girlfriend|boyfriend|marriage)\b/.test(text)
     || /-[a-z]+-and-[a-z]+-/.test(`-${slug}-`);
   if (relationship) return 'relationship-scene';
@@ -60,7 +83,14 @@ export function classifyHeroTheme({ slug = '', title = '', content = '' } = {}) 
     || (/\b(vs|versus)\b/.test(text) && /\b(country|nation|team|cup|football|soccer|argentina|brazil|portugal|colombia|jordan|scotland|norway|england|morocco|egypt)\b/.test(text));
   if (sports) return 'sports-matchup';
 
-  const fictionalCharacter = /\b(harry potter|hogwarts|wizarding world|fictional characters?|character zodiac|character astrology|novel characters?|film characters?|tv characters?|anime characters?|game characters?)\b/.test(text);
+  // Named fictional/mythological figures are fictional-character-scene, not celebrity
+  // portraits. Without these, "Thor zodiac sign" fell through to celebrity-portrait
+  // and would have been drawn as a real public figure consulting a natal chart. The
+  // named IPs are the ones the 执行表 v2 实验八 calendar actually schedules.
+  const fictionalCharacter = /\b(harry potter|hogwarts|wizarding world|fictional characters?|character zodiac|character astrology|novel characters?|film characters?|tv characters?|anime characters?|game characters?)\b/.test(text)
+    || /\bmarvel\s+(characters?|comics?|cinematic|universe|heroes)\b|\bmcu\b|\bdc comics\b|\bsuperhero\b|\bavengers\b/.test(text)
+    || /\b(wanda maximoff|scarlet witch|tony stark|iron man|spider[- ]man|peter parker|black widow|natasha romanoff|steve rogers|captain america|bruce banner|loki|thor|jon snow|eleven|eren yeager|tanjiro|gojo satoru|naruto uzumaki|deku|severus snape|dumbledore|hermione granger|draco malfoy)\b/.test(text)
+    || /\b(stranger things|bridgerton|game of thrones|demon slayer|jujutsu kaisen|attack on titan|my hero academia|naruto|friends characters|disney princess)\b/.test(text);
   if (fictionalCharacter) return 'fictional-character-scene';
 
   if (/\b(birth chart|birth-chart|zodiac sign|zodiac-sign)\b/.test(text)) return 'celebrity-portrait';
@@ -79,7 +109,9 @@ export function buildHeroPlanningRules() {
     `- relationship-scene: wedding, synastry, compatibility, dating, or named-couple articles. Use two stylized figures and relationship geometry in one continuous scene, not a split-screen comparison.`,
     `- sports-matchup: football/soccer, World Cup, country-vs-country, or national-team matchup articles. Use a stadium or pitch scene with two teams/countries expressed through color, motion, banners without text, and celestial tension.`,
     `- country-astrology: clear country, national event, eclipse, or calendar themes. Use a concrete symbolic national/event scene, not a generic nebula.`,
-    `- fictional-character-scene: fictional IP, novel, film, television, anime, or game character articles. Use a non-actor, non-photoreal role-based ensemble in a concrete story setting; express the article's character archetypes without copying actor likenesses or relying on generic celestial scenery.`,
+    `- fictional-character-scene: fictional IP, novel, film, television, anime, comic, or mythological character articles — including named figures such as Thor, Wanda Maximoff, or Severus Snape. Use a non-actor, non-photoreal role-based ensemble in a concrete story setting; express the article's character archetypes without copying actor likenesses or relying on generic celestial scenery.`,
+    `- typology-concept: MBTI / Myers-Briggs / enneagram / cognitive-function crossovers with a sign. These have NO person in them — do not draw a portrait. Show the two symbolic systems side by side as complementary diagrams in one composition, no faces, no readable text.`,
+    `- group-roster: a named band or idol group's member zodiac signs, or that group's internal compatibility. Draw the whole line-up as distinct original archetypes with different silhouettes and color accents — not one portrait, and not a two-person romance scene.`,
     `- abstract-atmospheric: only use abstract-atmospheric when the article has no concrete person, character/IP, couple, country, event, or matchup.`,
     `For every non-abstract theme, keep the specific subject matter visible. Never collapse a clear subject into a generic celestial landscape.`,
     `Before composing a hero prompt, extract four visual facts from the article Brief and converted content: the subject, key relationship, concrete setting, and reader task. Make each visible in the single-scene composition.`,
@@ -99,6 +131,12 @@ export function buildHeroImageSizingRules() {
 
 export function buildTemplateHeroPrompt({ title, slug = '', content = '' }) {
   const theme = classifyHeroTheme({ slug, title, content });
+  if (theme === 'typology-concept') {
+    return `A clean editorial conceptual scene for "${title}": two distinct symbolic systems shown side by side as complementary diagrams — one a set of four paired cognitive-preference markers, the other an unlabeled circular zodiac wheel — held in one continuous composition by a single anonymous pair of hands comparing them, no faces and no readable text, ${BASE_STYLE}`;
+  }
+  if (theme === 'group-roster') {
+    return `A cinematic editorial ensemble scene for "${title}": a row of distinct original non-photoreal performer archetypes on a concert-stage or photocall setting, each figure given a different silhouette, posture, and color accent so the group reads as individuals rather than one repeated face, an unlabeled circular zodiac wheel glowing softly behind the line-up, never imitating a real idol's likeness and never collapsing into generic celestial scenery, ${BASE_STYLE}`;
+  }
   if (theme === 'celebrity-portrait') {
     if (isBirthChartTopic({ title, slug, content })) {
       return `A stylized editorial portrait inspired by "${title}": an original non-photoreal public-figure archetype in a concrete career-context scene actively consults an unlabeled circular natal chart and a plain birth-data card, with the person, chart-reading action, and role-specific setting all visibly connected in one continuous composition; soft celestial light supports the scene without imitating a photograph or celebrity likeness, ${BASE_STYLE}`;

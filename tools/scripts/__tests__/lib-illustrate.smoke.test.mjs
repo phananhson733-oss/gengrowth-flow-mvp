@@ -25,9 +25,11 @@ test('celebrity birth-chart topics put a person and natal chart into one concret
     slug: 'arthur-fery-birth-chart',
     content: 'Arthur Fery was born on July 12, 2002.',
   });
-  assert.match(prompt, /stylized editorial portrait/i);
-  assert.match(prompt, /actively consults/i);
-  assert.match(prompt, /circular natal chart/i);
+  // Asserts the CONTRACT, not the wording: a person, an unlabeled circular chart, a
+  // reading action, no celebrity likeness — and never the abstract clause's face ban.
+  assert.match(prompt, /editorial portrait/i);
+  assert.match(prompt, /studies an unlabeled circular natal chart/i);
+  assert.match(prompt, /no celebrity likeness/i);
   assert.doesNotMatch(prompt, /standalone chart wheel/i);
   assert.doesNotMatch(prompt, /nebula wash/i);
   assert.doesNotMatch(prompt, /no human faces/i);
@@ -60,9 +62,10 @@ test('fictional character zodiac topics use a non-actor ensemble in a story sett
   };
   assert.equal(classifyHeroTheme(input), 'fictional-character-scene');
   const prompt = buildTemplateHeroPrompt(input);
-  assert.match(prompt, /non-actor/i);
-  assert.match(prompt, /role-based ensemble/i);
-  assert.match(prompt, /story setting/i);
+  assert.match(prompt, /non-actor character archetypes/i);
+  assert.match(prompt, /concrete setting from the narrative/i);
+  // Added after a Marvel roster came back wearing recognizable DC chest emblems.
+  assert.match(prompt, /no real emblems or actor likeness/i);
 });
 
 test('LLM planning rules require specific subject classification before abstract fallback', () => {
@@ -139,9 +142,10 @@ test('MBTI × sign crossovers are a concept scene, not a celebrity portrait', ()
   const prompt = buildTemplateHeroPrompt({
     slug: 'intp-zodiac-sign', title: 'Reading the INTP Zodiac Sign Without Blurring Systems', content: '',
   });
-  assert.match(prompt, /two distinct symbolic systems/i);
+  assert.match(prompt, /four paired brass markers/i);   // the type system, as objects
+  assert.match(prompt, /unlabeled circular zodiac wheel/i); // the sign system
   assert.match(prompt, /no faces/i);
-  assert.doesNotMatch(prompt, /stylized editorial portrait/i);
+  assert.doesNotMatch(prompt, /editorial portrait/i);
 });
 
 // The typology signal is read from slug+title only. An unrelated article that says
@@ -170,8 +174,12 @@ test('idol-group rosters are an ensemble, not one portrait or a couple scene', (
   const prompt = buildTemplateHeroPrompt({
     slug: 'ive-members-zodiac-signs', title: 'IVE Members Zodiac Signs', content: '',
   });
-  assert.match(prompt, /ensemble/i);
-  assert.match(prompt, /different silhouette/i);
+  // group-roster is deliberately PEOPLE-FREE: three rounds of crowd prompts could not
+  // hold a member count, kept returning backlit silhouettes seen from behind, and put
+  // recognizable DC emblems on a Marvel roster. A still life carries the same reading
+  // with none of the count, likeness, or trademark risk.
+  assert.match(prompt, /no people/i);
+  assert.match(prompt, /one prop per member/i);
 });
 
 // A group's internal compatibility is still the group — the bare "compatibility"
@@ -224,4 +232,36 @@ test('a real public figure stays a celebrity portrait', () => {
   ]) {
     assert.equal(classifyHeroTheme({ slug, title, content: '' }), 'celebrity-portrait', slug);
   }
+});
+
+// --- CLIP token budget -------------------------------------------------------
+// FLUX conditions on CLIP (hard 77-token limit) as well as T5. On 2026-07-29 the
+// old 63-word BASE_STYLE pushed the whole style tail — including its own no-text
+// rule — past that window; the generator logged "input was truncated because CLIP
+// can only handle sequences up to 77 tokens" and two heroes came back carrying
+// invented watermark signatures. A scene description runs ~35 words, so the style
+// tail has roughly 20 to spend. This guards the budget, not the wording.
+test('template hero prompts stay inside the CLIP token budget', () => {
+  const cases = [
+    { slug: 'intp-zodiac-sign', title: 'Reading the INTP Zodiac Sign Without Blurring Systems' },
+    { slug: 'ive-members-zodiac-signs', title: 'IVE Members Zodiac Signs Read as a Verified Sun-Sign Map' },
+    { slug: 'thor-zodiac-sign', title: 'What the Thor Zodiac Sign Really Means in Astrology' },
+    { slug: 'billie-eilish-birth-chart', title: 'Billie Eilish Birth Chart Without Guessing Her Rising Sign' },
+    { slug: 'taylor-swift-and-travis-kelce', title: 'What the Swift-Kelce Synastry Chart Reveals' },
+    { slug: 'saturn-return', title: 'Saturn Return Explained' },
+  ];
+  for (const c of cases) {
+    const words = buildTemplateHeroPrompt({ ...c, content: '' }).split(/\s+/).length;
+    // ~77 tokens is roughly 55-60 English words; punctuation and hex codes cost extra,
+    // so 60 is the ceiling a whole prompt may reach before CLIP starts dropping the tail.
+    assert.ok(words <= 60, `${c.slug}: ${words} words exceeds the CLIP budget`);
+  }
+});
+
+// Hex colour codes tokenize character by character and are disproportionately
+// expensive; the palette must be named rather than spelled out.
+test('the style clause names the palette instead of spelling hex codes', () => {
+  const prompt = buildTemplateHeroPrompt({ slug: 'saturn-return', title: 'Saturn Return', content: '' });
+  assert.doesNotMatch(prompt, /#[0-9a-f]{6}/i);
+  assert.match(prompt, /no watermark/i);
 });

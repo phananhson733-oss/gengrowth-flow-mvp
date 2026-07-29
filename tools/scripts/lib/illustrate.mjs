@@ -20,7 +20,16 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync, statSync, mkdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 
-const BASE_STYLE = 'deep indigo-to-near-black palette (#16112c fading to #0b0a1b), restrained soft-gold accents (#d4af6a), painterly editorial illustration, a background drawn from the article’s concrete setting, with celestial motifs only as subordinate texture, full-bleed wide 16:9 composition that fills the entire frame, ONE single continuous scene, no split screen, no diptych, no two panels, no standalone diagram, no central framed card, no text or letters or numerals';
+// KEEP THIS SHORT. FLUX conditions on CLIP (hard 77-token limit) as well as T5, and
+// the 2026-07-29 batch showed the old 63-word clause pushing the whole style tail —
+// including the no-text rule — past that window: `mflux`/diffusers both logged
+// "input was truncated because CLIP can only handle sequences up to 77 tokens", and
+// two heroes came back carrying invented watermark signatures despite the clause
+// nominally forbidding text. A scene description runs ~35 words, so the style tail
+// has roughly 20 to spend. Anything longer only reaches T5 and is silently dropped
+// from the stronger conditioning path. Hex codes are especially expensive — each one
+// tokenizes character by character — so the palette is named, not spelled out.
+const BASE_STYLE = 'painterly editorial illustration, deep indigo and near-black with soft gold accents, wide 16:9, one continuous scene, no text, no watermark';
 const ABSTRACT_STYLE = `${BASE_STYLE}, no human faces`;
 
 const IMAGES_SUBDIR = 'public/images/blog';   // single dir for cron-generated assets
@@ -114,6 +123,8 @@ export function buildHeroPlanningRules() {
     `- group-roster: a named band or idol group's member zodiac signs, or that group's internal compatibility. Draw the whole line-up as distinct original archetypes with different silhouettes and color accents — not one portrait, and not a two-person romance scene.`,
     `- abstract-atmospheric: only use abstract-atmospheric when the article has no concrete person, character/IP, couple, country, event, or matchup.`,
     `For every non-abstract theme, keep the specific subject matter visible. Never collapse a clear subject into a generic celestial landscape.`,
+    `Keep celestial motifs only as subordinate texture: a zodiac wheel or star field belongs small and off to one side, never centred and never the largest element in the frame. This rule lives here rather than in the style clause because the style clause has to stay inside the image model's CLIP token budget.`,
+    `Never write a member or character COUNT into the prompt and expect it to hold — image models do not count. When an article covers a whole group, prefer a people-free staged still life (one prop per member) over a crowd.`,
     `Before composing a hero prompt, extract four visual facts from the article Brief and converted content: the subject, key relationship, concrete setting, and reader task. Make each visible in the single-scene composition.`,
     `Use the article Brief and converted article content as the source of truth for prompt design; do not reuse a generic abstract prompt when the Brief names a concrete person, character/IP, couple, country, match, event, product, or comparison.`,
     `House style base clause for non-abstract themes: "${BASE_STYLE}"`,
@@ -132,30 +143,38 @@ export function buildHeroImageSizingRules() {
 export function buildTemplateHeroPrompt({ title, slug = '', content = '' }) {
   const theme = classifyHeroTheme({ slug, title, content });
   if (theme === 'typology-concept') {
-    return `A clean editorial conceptual scene for "${title}": two distinct symbolic systems shown side by side as complementary diagrams — one a set of four paired cognitive-preference markers, the other an unlabeled circular zodiac wheel — held in one continuous composition by a single anonymous pair of hands comparing them, no faces and no readable text, ${BASE_STYLE}`;
+    return `Desk scene for "${title}": anonymous hands sort four paired brass markers beside an unlabeled circular zodiac wheel, no faces, ${BASE_STYLE}`;
   }
   if (theme === 'group-roster') {
-    return `A cinematic editorial ensemble scene for "${title}": a row of distinct original non-photoreal performer archetypes on a concert-stage or photocall setting, each figure given a different silhouette, posture, and color accent so the group reads as individuals rather than one repeated face, an unlabeled circular zodiac wheel glowing softly behind the line-up, never imitating a real idol's likeness and never collapsing into generic celestial scenery, ${BASE_STYLE}`;
+    // Deliberately PEOPLE-FREE. Three rounds of crowd prompts on 2026-07-29 failed the
+    // same way every time: the model cannot hold a member count (six members came back
+    // as forty), it defaults to backlit silhouettes seen from behind however explicitly
+    // you forbid it, and on the Marvel roster it painted recognizable DC chest emblems
+    // straight after being told "no recognizable emblems". A staged still life carries
+    // the same "here is a group" reading with none of the count, likeness, or trademark
+    // risk — and the first still-life attempt landed the member count correctly, because
+    // objects are countable in a way crowds are not.
+    return `Empty rehearsal space for "${title}": one prop per member in a row, microphone stands or lit mirrors, a small zodiac wheel to one side, no people, ${BASE_STYLE}`;
   }
   if (theme === 'celebrity-portrait') {
     if (isBirthChartTopic({ title, slug, content })) {
-      return `A stylized editorial portrait inspired by "${title}": an original non-photoreal public-figure archetype in a concrete career-context scene actively consults an unlabeled circular natal chart and a plain birth-data card, with the person, chart-reading action, and role-specific setting all visibly connected in one continuous composition; soft celestial light supports the scene without imitating a photograph or celebrity likeness, ${BASE_STYLE}`;
+      return `Editorial portrait for "${title}": an original non-photoreal figure in their working setting studies an unlabeled circular natal chart and a plain birth-data card, no celebrity likeness, ${BASE_STYLE}`;
     }
-    return `A stylized editorial portrait inspired by "${title}": a public figure rendered as an elegant non-photoreal character study, subtle career and era cues woven into clothing, posture, and background symbols, soft celestial light shaping the face and shoulders without imitating a photograph, ${BASE_STYLE}`;
+    return `Editorial portrait for "${title}": an original non-photoreal character study, career and era cues in the clothing and setting, no celebrity likeness, ${BASE_STYLE}`;
   }
   if (theme === 'relationship-scene') {
-    return `A cinematic relationship astrology scene evoking "${title}": two stylized figures sharing one continuous environment, warm and cool celestial currents meeting between them, subtle wedding or compatibility symbolism integrated into the landscape, ${BASE_STYLE}`;
+    return `Relationship scene for "${title}": two stylized figures in one shared environment, warm and cool currents meeting between them, ${BASE_STYLE}`;
   }
   if (theme === 'sports-matchup') {
-    return `A cinematic football astrology scene evoking "${title}": a night stadium and pitch under a charged sky, two countries or teams expressed through opposing color currents and motion, distant athletic silhouettes and banners without readable text, ${BASE_STYLE}`;
+    return `Night stadium scene for "${title}": two teams expressed through opposing colour currents across the pitch, banners without text, ${BASE_STYLE}`;
   }
   if (theme === 'country-astrology') {
-    return `A concrete editorial astrology scene evoking "${title}": a symbolic national or event landscape under a vast night sky, recognizable civic or seasonal motifs transformed into celestial light, ${BASE_STYLE}`;
+    return `Editorial scene for "${title}": a symbolic national or seasonal landscape under a night sky, civic motifs in celestial light, ${BASE_STYLE}`;
   }
   if (theme === 'fictional-character-scene') {
-    return `A non-actor, non-photoreal role-based ensemble for "${title}": distinct fictional character archetypes gathered in a concrete story setting, with the article's central relationships and zodiac motifs woven into the action, never copying an actor likeness and never replacing the narrative scene with generic celestial scenery, ${BASE_STYLE}`;
+    return `Story scene for "${title}": original non-actor character archetypes in a concrete setting from the narrative, invented costumes only, no real emblems or actor likeness, ${BASE_STYLE}`;
   }
-  return `An atmospheric painterly editorial scene evoking the theme of "${title}": a serene natural landscape — a still lake, open plain, or misty horizon — under a vast night sky, the subject suggested through soft glowing celestial forms woven into the scene, ${ABSTRACT_STYLE}`;
+  return `Atmospheric scene for "${title}": a still lake, open plain, or misty horizon under a night sky, the theme suggested in soft glowing forms, ${ABSTRACT_STYLE}`;
 }
 
 // ── provider cooldown (avoid burning time re-trying a dead image provider) ──

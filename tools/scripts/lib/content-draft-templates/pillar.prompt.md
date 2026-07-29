@@ -118,8 +118,13 @@
    - **🚫 硬禁止 SEO / 搜索元评论填充**：绝不写关于"搜索 / SERP / 搜索结果 / 排名页面"的自我指涉句（如 `searchers conflate X with adjacent topics`、`SERP titles mix definitions, tools, and broad advice`、`top-ranking pages pull readers in different directions`、`search results feel scattered`）。Friction 字段只作背景输入，请转化成对主题的正面解释，不要把"读者被搜索结果搞晕"写进正文。
 3. **The {{entity}} at a Glance**（H2，字面 H2 = `## The {{entity}} at a Glance`）— Markdown 表格 ≥ 4 列 × ≥ {{child_count}} 行（每个 child entity 一行）。
    - **`## The {{entity}} at a Glance` 标题之后第一个非空段必须直接是 markdown 表格本身**（以 `|` 开头），不能加 prose intro / SEO 解释段，否则 Phase 2 RL4 drift 检测 fail
-   - 4 列建议：`| {{child entity type}} | Core Theme | Energy Center / Domain | Common Misread |`
-   - Energy Center 列按 entity 类型适配（aura→chakra；transit→placement；sign/planet→element/house）—**严禁跨类乱搭**
+   - 4 列建议：`| {{child entity type}} | Core Theme | <第 3 列，按 entity 类型命名> | Common Misread |`
+   - **第 3 列的列名和语义都按 entity 类型适配**：aura/color/chakra → `Energy Center`（脉轮名）；
+     transit/cycle → `Natal Placement`；sign/planet → `Element & Mode`；
+     person/character/group（名人、虚构角色、团体名单）→ `Symbolic Frame`；MBTI/typology → `Type Parallel`。
+     **严禁跨类乱搭。**
+   - ⚠️ **「Energy Center」只许用在 aura/color/chakra 类 entity 上**：它是 `marcus-orion` 作者卡的
+     RL7 banned token，用在他署名的名人/角色/团体页上 = 整篇 fail + 重写，语义上也是气场词汇而非星盘词汇。
 4. **The {{child_count}} {{entity}}: Quick Guide**（H2）— **每个 child entity 80-120 词 brief** + 内链到 Definition 页。
    - 形如 `**Blue aura** — short brief paragraph here...`（粗体 child name 起手，紧跟 brief，结尾给 wikilink）
    - **不要**写到 200+ 词的深度（深度交给 Definition 页）；这里是 hub overview

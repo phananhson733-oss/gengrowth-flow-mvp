@@ -72,3 +72,30 @@ const SITE_CTA_HOST = { oracle: 'astrologywiki.com', gengrowth: 'gengrowth.ai' }
 export function siteCtaHost(env = process.env) {
   return SITE_CTA_HOST[activeSite(env)] || null;
 }
+
+// GitHub `owner/name` of the site's publish repo — the slug every `gh` call in the
+// publish path (PR create/view/merge, deployment + commit-status polling, the codex
+// fact-check gate's compare-diff fetch) passes as --repo.
+//
+// WHY THIS LIVES HERE: it was copy-pasted as a literal into 4 scripts / 8 call sites.
+// When the oracle repo moved GitHub accounts on 2026-07-27 the old slug started
+// resolving to a 404, so every one of those `gh` calls was primed to fail the moment
+// autopilot restarted — silently, because the gate reads a failed review as SKIPPED.
+// One constant, one place to change on the next migration.
+//
+// Override with GG_PUBLISH_REPO. Empty/whitespace falls back to the default rather
+// than passing an empty --repo, which gh would interpret against the cwd remote.
+//
+// Only the oracle line has a GitHub publish repo: the gengrowth lane writes its
+// posts directly and makes no `gh` calls at all, so there is deliberately no slug
+// mapped for it. If that ever changes, add the map here rather than a second literal.
+export const DEFAULT_PUBLISH_REPO = 'phananhson733-oss/oracle'; // migrated 2026-07-27 from xdawayer/oracle (now 404)
+
+/**
+ * GitHub owner/name of the publish repo for `gh --repo`.
+ * @param {NodeJS.ProcessEnv} [env]
+ * @returns {string}
+ */
+export function publishRepo(env = process.env) {
+  return String(env.GG_PUBLISH_REPO || '').trim() || DEFAULT_PUBLISH_REPO;
+}

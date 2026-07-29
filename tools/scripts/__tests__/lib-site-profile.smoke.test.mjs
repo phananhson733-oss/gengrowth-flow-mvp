@@ -17,6 +17,8 @@ import {
   activeSite,
   isDefaultSite,
   configSnapshotPath,
+  DEFAULT_PUBLISH_REPO,
+  publishRepo,
 } from '../lib/site-profile.mjs';
 
 const ROOT = '/repo';
@@ -62,4 +64,31 @@ test('configSnapshotPath: default and non-default never collide', () => {
   const def = configSnapshotPath(ROOT, {});
   const gg = configSnapshotPath(ROOT, { GG_SITE: 'gengrowth' });
   assert.notEqual(def, gg);
+});
+
+// --- publishRepo: the `gh --repo` slug ---------------------------------------
+// The slug was copy-pasted into 4 scripts / 8 call sites. When the oracle repo
+// moved GitHub accounts on 2026-07-27 the old one started 404ing, priming every
+// publish-path `gh` call to fail the moment autopilot restarted.
+
+test('publishRepo: defaults to the current publish repo', () => {
+  assert.equal(publishRepo({}), DEFAULT_PUBLISH_REPO);
+  assert.equal(publishRepo({ GG_SITE: 'oracle' }), DEFAULT_PUBLISH_REPO);
+});
+
+test('publishRepo: GG_PUBLISH_REPO overrides', () => {
+  assert.equal(publishRepo({ GG_PUBLISH_REPO: 'someone/fork' }), 'someone/fork');
+});
+
+test('publishRepo: blank override falls back rather than emitting an empty --repo', () => {
+  // An empty --repo makes gh resolve against the cwd remote, which silently
+  // targets whatever repo the caller happens to be standing in.
+  for (const blank of ['', '   ', '\t']) {
+    assert.equal(publishRepo({ GG_PUBLISH_REPO: blank }), DEFAULT_PUBLISH_REPO);
+  }
+});
+
+test('publishRepo: the retired slug is gone', () => {
+  assert.notEqual(DEFAULT_PUBLISH_REPO, 'xdawayer/oracle');
+  assert.match(DEFAULT_PUBLISH_REPO, /^[\w.-]+\/[\w.-]+$/, 'must be owner/name for gh --repo');
 });

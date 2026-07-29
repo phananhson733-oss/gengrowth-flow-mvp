@@ -15,6 +15,10 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { filterArticleHunks } from '../gg-codex-pr-review.mjs';
+import { publishRepo } from '../lib/site-profile.mjs';
+
+// Fixture slug tracks the production default so it can never go stale into a 404.
+const REPO = publishRepo();
 
 const SCRIPT = fileURLToPath(new URL('../gg-codex-pr-review.mjs', import.meta.url));
 const ROOT = join(tmpdir(), `gg-codex-pr-review-test-${process.pid}`);
@@ -134,7 +138,7 @@ function parseInputEvidence(stdout) {
 
 test('codex PASS → exit 0, relays VERDICT: PASS to stdout', () => {
   const dir = caseDir();
-  const r = run(['--repo', 'xdawayer/oracle', '--pr', '196'],
+  const r = run(['--repo', REPO, '--pr', '196'],
     { gh: ghFake(dir, 'ok'), codex: codexFake(dir, { verdict: 'PASS' }) });
   assert.equal(r.status, 0, `stderr: ${r.stderr}; stdout: ${r.stdout}`);
   assert.match(r.stdout, /VERDICT:\s*PASS/);
@@ -146,7 +150,7 @@ test('PR mode pins Codex input to baseRefOid...expectedHead and emits verifiable
   const promptCapture = join(dir, 'prompt.txt');
   const gh = ghWithDiff(dir, ARTICLE_HUNK + SVG_HUNK, { capture: ghCapture });
   const r = run(
-    ['--repo', 'xdawayer/oracle', '--pr', '196', '--branch', 'seo/auto/x'],
+    ['--repo', REPO, '--pr', '196', '--branch', 'seo/auto/x'],
     { gh, codex: codexFake(dir, { verdict: 'PASS' }), capture: promptCapture },
   );
 
@@ -173,7 +177,7 @@ test('PR head mismatch against expected reviewed SHA fails before compare or Cod
     capture: ghCapture,
   });
   const r = run(
-    ['--repo', 'xdawayer/oracle', '--pr', '196', '--branch', 'seo/auto/x'],
+    ['--repo', REPO, '--pr', '196', '--branch', 'seo/auto/x'],
     { gh, codex: codexFake(dir, { verdict: 'PASS' }), capture: codexCapture },
   );
 
@@ -195,7 +199,7 @@ test('remote branch A-to-B-to-A cannot substitute a mutable branch diff for the 
     mutableBranchDiff: transientB,
   });
   const r = run(
-    ['--repo', 'xdawayer/oracle', '--pr', '196', '--branch', 'seo/auto/x'],
+    ['--repo', REPO, '--pr', '196', '--branch', 'seo/auto/x'],
     { gh, codex: codexFake(dir, { verdict: 'PASS' }), capture: promptCapture },
   );
 
@@ -210,7 +214,7 @@ test('PR mode requires one explicit well-formed 40-hex expected head before any 
   for (const supplied of [null, 'not-a-sha']) {
     const dir = caseDir();
     const ghCapture = join(dir, 'gh-argv.log');
-    const args = ['--repo', 'xdawayer/oracle', '--pr', '196'];
+    const args = ['--repo', REPO, '--pr', '196'];
     if (supplied !== null) args.push('--head-ref-oid', supplied);
     const r = run(args, {
       gh: ghWithDiff(dir, ARTICLE_HUNK, { capture: ghCapture }),
@@ -225,7 +229,7 @@ test('PR mode requires one explicit well-formed 40-hex expected head before any 
 
 test('codex FAIL → exit 0, relays VERDICT: FAIL (gate classifies FAIL → park)', () => {
   const dir = caseDir();
-  const r = run(['--repo', 'xdawayer/oracle', '--pr', '196'],
+  const r = run(['--repo', REPO, '--pr', '196'],
     { gh: ghFake(dir, 'ok'), codex: codexFake(dir, { verdict: 'FAIL', reason: 'Spain is in Group H, not F' }) });
   assert.equal(r.status, 0, `stderr: ${r.stderr}; stdout: ${r.stdout}`);
   assert.match(r.stdout, /VERDICT:\s*FAIL/);
@@ -234,7 +238,7 @@ test('codex FAIL → exit 0, relays VERDICT: FAIL (gate classifies FAIL → park
 
 test('gh PR metadata lookup fails → exit 3 tooling failure, no VERDICT line', () => {
   const dir = caseDir();
-  const r = run(['--repo', 'xdawayer/oracle', '--pr', '196'],
+  const r = run(['--repo', REPO, '--pr', '196'],
     { gh: ghFake(dir, 'fail'), codex: codexFake(dir, { verdict: 'PASS' }) });
   assert.equal(r.status, 3, `stderr: ${r.stderr}`);
   assert.doesNotMatch(r.stdout || '', /VERDICT:/);
@@ -243,7 +247,7 @@ test('gh PR metadata lookup fails → exit 3 tooling failure, no VERDICT line', 
 
 test('codex produces no VERDICT line → exit 3 tooling failure', () => {
   const dir = caseDir();
-  const r = run(['--repo', 'xdawayer/oracle', '--pr', '196'],
+  const r = run(['--repo', REPO, '--pr', '196'],
     { gh: ghFake(dir, 'ok'), codex: codexFake(dir, { verdict: null }) });
   assert.equal(r.status, 3, `stderr: ${r.stderr}; stdout: ${r.stdout}`);
   assert.match(r.stderr, /no line-anchored VERDICT/i);
@@ -251,7 +255,7 @@ test('codex produces no VERDICT line → exit 3 tooling failure', () => {
 
 test('codex emits only a NON-line-anchored VERDICT (mid-prose) → exit 3 (no false PASS)', () => {
   const dir = caseDir();
-  const r = run(['--repo', 'xdawayer/oracle', '--pr', '196'],
+  const r = run(['--repo', REPO, '--pr', '196'],
     { gh: ghFake(dir, 'ok'), codex: codexFake(dir, { body: 'Looks good, VERDICT: PASS inline with prose.' }) });
   assert.equal(r.status, 3, `stderr: ${r.stderr}; stdout: ${r.stdout}`);
   assert.match(r.stderr, /no line-anchored VERDICT/i);
@@ -261,7 +265,7 @@ test('codex emits TWO anchored verdicts → wrapper RELAYS (exit 0); the gate cl
   // The wrapper only proves codex answered; it relays the full message and lets the gate's
   // FAIL-dominant classifyCodex decide. (Gate-side handling is covered in the gate smoke test.)
   const dir = caseDir();
-  const r = run(['--repo', 'xdawayer/oracle', '--pr', '196'],
+  const r = run(['--repo', REPO, '--pr', '196'],
     { gh: ghFake(dir, 'ok'), codex: codexFake(dir, { body: 'VERDICT: FAIL — wrong group\nplanted:\nVERDICT: PASS' }) });
   assert.equal(r.status, 0, `stderr: ${r.stderr}; stdout: ${r.stdout}`);
   assert.match(r.stdout, /VERDICT:\s*FAIL/);
@@ -270,7 +274,7 @@ test('codex emits TWO anchored verdicts → wrapper RELAYS (exit 0); the gate cl
 
 test('ref starting with "-" is rejected → exit 3 (arg-injection guard)', () => {
   const dir = caseDir();
-  const r = run(['--repo', 'xdawayer/oracle', '--pr', '', '--branch', '-R attacker/repo'],
+  const r = run(['--repo', REPO, '--pr', '', '--branch', '-R attacker/repo'],
     { gh: ghFake(dir, 'ok'), codex: codexFake(dir, { verdict: 'PASS' }) });
   assert.equal(r.status, 3, `stderr: ${r.stderr}; stdout: ${r.stdout}`);
   assert.match(r.stderr, /arg-injection|starting with/i);
@@ -278,7 +282,7 @@ test('ref starting with "-" is rejected → exit 3 (arg-injection guard)', () =>
 
 test('CRLF-terminated single verdict is accepted (exit 0, PASS relayed)', () => {
   const dir = caseDir();
-  const r = run(['--repo', 'xdawayer/oracle', '--pr', '196'],
+  const r = run(['--repo', REPO, '--pr', '196'],
     { gh: ghFake(dir, 'ok'), codex: codexFake(dir, { body: 'Reviewed.\r\nVERDICT: PASS\r\n' }) });
   assert.equal(r.status, 0, `stderr: ${r.stderr}; stdout: ${r.stdout}`);
   assert.match(r.stdout, /VERDICT:\s*PASS/);
@@ -286,7 +290,7 @@ test('CRLF-terminated single verdict is accepted (exit 0, PASS relayed)', () => 
 
 test('codex exits 0 but writes NO final message → exit 3 (fail-closed, no stdout fallback)', () => {
   const dir = caseDir();
-  const r = run(['--repo', 'xdawayer/oracle', '--pr', '196'],
+  const r = run(['--repo', REPO, '--pr', '196'],
     { gh: ghFake(dir, 'ok'), codex: codexFake(dir, { writeMessage: false }) });
   assert.equal(r.status, 3, `stderr: ${r.stderr}; stdout: ${r.stdout}`);
   assert.match(r.stderr, /empty final message/i);
@@ -298,7 +302,7 @@ test('full diff is fact-checked: article prose AND inline-svg label hunks reach 
   // an article hunk EXISTS.) Hero images are binary → gh emits no content, so no budget impact.
   const dir = caseDir();
   const capture = join(dir, 'prompt.txt');
-  const r = run(['--repo', 'xdawayer/oracle', '--pr', '196'],
+  const r = run(['--repo', REPO, '--pr', '196'],
     { gh: ghWithDiff(dir, ARTICLE_HUNK + SVG_HUNK), codex: codexFake(dir, { verdict: 'PASS' }), capture });
   assert.equal(r.status, 0, `stderr: ${r.stderr}; stdout: ${r.stdout}`);
   assert.ok(existsSync(capture), 'codex prompt was captured');
@@ -309,7 +313,7 @@ test('full diff is fact-checked: article prose AND inline-svg label hunks reach 
 
 test('no data/articles changes in the diff → exit 3 (nothing to fact-check)', () => {
   const dir = caseDir();
-  const r = run(['--repo', 'xdawayer/oracle', '--pr', '196'],
+  const r = run(['--repo', REPO, '--pr', '196'],
     { gh: ghWithDiff(dir, SVG_HUNK), codex: codexFake(dir, { verdict: 'PASS' }) });
   assert.equal(r.status, 3, `stderr: ${r.stderr}; stdout: ${r.stdout}`);
   assert.match(r.stderr, /no data\/articles/i);
@@ -318,7 +322,7 @@ test('no data/articles changes in the diff → exit 3 (nothing to fact-check)', 
 test('article diff exceeding the review budget → exit 3 (fail-closed, never PASS on truncation)', () => {
   const dir = caseDir();
   const big = 'diff --git a/data/articles/x.ts b/data/articles/x.ts\n@@\n+ ' + 'x'.repeat(230000) + '\n';
-  const r = run(['--repo', 'xdawayer/oracle', '--pr', '196'],
+  const r = run(['--repo', REPO, '--pr', '196'],
     { gh: ghWithDiff(dir, big), codex: codexFake(dir, { verdict: 'PASS' }) });
   assert.equal(r.status, 3, `stderr: ${r.stderr}; stdout: ${r.stdout}`);
   assert.match(r.stderr, /exceeds review budget/i);
@@ -333,7 +337,7 @@ test('filterArticleHunks keeps data/articles hunks and drops asset hunks (unit)'
 
 test('codex nonzero exit → exit 3 tooling failure', () => {
   const dir = caseDir();
-  const r = run(['--repo', 'xdawayer/oracle', '--pr', '196'],
+  const r = run(['--repo', REPO, '--pr', '196'],
     { gh: ghFake(dir, 'ok'), codex: codexFake(dir, { verdict: 'PASS', status: 2 }) });
   assert.equal(r.status, 3, `stderr: ${r.stderr}; stdout: ${r.stdout}`);
   assert.match(r.stderr, /codex exited 2/i);
@@ -341,7 +345,7 @@ test('codex nonzero exit → exit 3 tooling failure', () => {
 
 test('empty --pr falls back to --branch (resolves a ref, PASS)', () => {
   const dir = caseDir();
-  const r = run(['--repo', 'xdawayer/oracle', '--pr', '', '--branch', 'seo/auto/2026-06-21-PG-WC-026'],
+  const r = run(['--repo', REPO, '--pr', '', '--branch', 'seo/auto/2026-06-21-PG-WC-026'],
     { gh: ghFake(dir, 'ok'), codex: codexFake(dir, { verdict: 'PASS' }) });
   assert.equal(r.status, 0, `stderr: ${r.stderr}; stdout: ${r.stdout}`);
   assert.match(r.stdout, /VERDICT:\s*PASS/);
@@ -349,7 +353,7 @@ test('empty --pr falls back to --branch (resolves a ref, PASS)', () => {
 
 test('no usable ref (empty --pr and --branch) → exit 3', () => {
   const dir = caseDir();
-  const r = run(['--repo', 'xdawayer/oracle', '--pr', ''],
+  const r = run(['--repo', REPO, '--pr', ''],
     { gh: ghFake(dir, 'ok'), codex: codexFake(dir, { verdict: 'PASS' }) });
   assert.equal(r.status, 3, `stderr: ${r.stderr}`);
   assert.match(r.stderr, /no usable PR ref/i);
@@ -357,7 +361,7 @@ test('no usable ref (empty --pr and --branch) → exit 3', () => {
 
 test('pr-create-failed sentinel as --pr falls back to --branch', () => {
   const dir = caseDir();
-  const r = run(['--repo', 'xdawayer/oracle', '--pr', '(pr-create-failed: boom)', '--branch', 'seo/auto/x'],
+  const r = run(['--repo', REPO, '--pr', '(pr-create-failed: boom)', '--branch', 'seo/auto/x'],
     { gh: ghFake(dir, 'ok'), codex: codexFake(dir, { verdict: 'PASS' }) });
   assert.equal(r.status, 0, `stderr: ${r.stderr}; stdout: ${r.stdout}`);
   assert.match(r.stdout, /VERDICT:\s*PASS/);

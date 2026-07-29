@@ -27,6 +27,12 @@ import { fileURLToPath } from 'node:url';
 
 import * as previewGate from '../gg-preview-gate.mjs';
 
+// Track the production default rather than re-stating the slug: the gh fakes below
+// dispatch on `api repos/<owner>/<name>/…`, so a hardcoded literal silently stops
+// matching the moment the publish repo moves (it did, 2026-07-27) and every gate
+// test fails for a reason unrelated to what it is testing.
+const REPO = previewGate.DEFAULT_REPO;
+
 const { runGate } = previewGate;
 
 const SCRIPT = fileURLToPath(new URL('../gg-preview-gate.mjs', import.meta.url));
@@ -192,12 +198,12 @@ function fakeEnv({
     sentinelName: 'branch-head', sentinelsDir,
     dispatch: ghDispatch || [
       {
-        match: 'api repos/xdawayer/oracle/deployments?ref=',
+        match: `api repos/${REPO}/deployments?ref=`,
         stdout: JSON.stringify([{ id: 1, sha: HEAD_A }]),
         exit: 0,
       },
       {
-        match: 'api repos/xdawayer/oracle/deployments/1/statuses',
+        match: `api repos/${REPO}/deployments/1/statuses`,
         stdout: JSON.stringify([
           { state: 'success', environment_url: 'https://stored-preview.example.test' },
           { state: 'success', environment_url: 'https://preview.example.test' },
@@ -436,7 +442,7 @@ function gateRoundFixture({
     },
     options: {
       branch: BRANCH,
-      repo: 'xdawayer/oracle',
+      repo: REPO,
       dryRun: false,
       json: true,
       statusTimeoutMs: 1_000,
@@ -2003,12 +2009,12 @@ test('a stale Vercel PR comment cannot bind an old preview URL to the reviewed S
     codexBin: codexPassBin(dir, sentinels),
     ghDispatch: [
       {
-        match: 'api repos/xdawayer/oracle/deployments?ref=',
+        match: `api repos/${REPO}/deployments?ref=`,
         stdout: JSON.stringify([]),
         exit: 0,
       },
       {
-        match: `api repos/xdawayer/oracle/commits/${HEAD_A}/status`,
+        match: `api repos/${REPO}/commits/${HEAD_A}/status`,
         stdout: JSON.stringify({
           statuses: [{
             context: 'Vercel',
@@ -2019,12 +2025,12 @@ test('a stale Vercel PR comment cannot bind an old preview URL to the reviewed S
         exit: 0,
       },
       {
-        match: `api repos/xdawayer/oracle/commits/${HEAD_A}/pulls`,
+        match: `api repos/${REPO}/commits/${HEAD_A}/pulls`,
         stdout: JSON.stringify([{ number: 123 }]),
         exit: 0,
       },
       {
-        match: 'api repos/xdawayer/oracle/issues/123/comments',
+        match: `api repos/${REPO}/issues/123/comments`,
         stdout: JSON.stringify([{
           user: { login: 'vercel[bot]' },
           body: 'Deployment ready: https://stored-preview.example.test',
@@ -2062,24 +2068,24 @@ test('a trusted Vercel comment binds its branch alias through the reviewed-head 
     codexBin: codexPassBin(dir, sentinels),
     ghDispatch: [
       {
-        match: 'api repos/xdawayer/oracle/deployments?ref=',
+        match: `api repos/${REPO}/deployments?ref=`,
         stdout: JSON.stringify([{ id: 57, sha: HEAD_A }]),
         exit: 0,
       },
       {
-        match: 'api repos/xdawayer/oracle/deployments/57/statuses',
+        match: `api repos/${REPO}/deployments/57/statuses`,
         stdout: JSON.stringify([{ state: 'success', environment_url: deploymentUrl }]),
         exit: 0,
       },
       {
-        match: `api repos/xdawayer/oracle/commits/${HEAD_A}/status`,
+        match: `api repos/${REPO}/commits/${HEAD_A}/status`,
         stdout: JSON.stringify({
           statuses: [{ context: 'Vercel', state: 'success', target_url: inspectorUrl }],
         }),
         exit: 0,
       },
       {
-        match: `api repos/xdawayer/oracle/commits/${HEAD_A}/pulls`,
+        match: `api repos/${REPO}/commits/${HEAD_A}/pulls`,
         stdout: JSON.stringify([{
           number: 384,
           state: 'open',
@@ -2088,7 +2094,7 @@ test('a trusted Vercel comment binds its branch alias through the reviewed-head 
         exit: 0,
       },
       {
-        match: 'api repos/xdawayer/oracle/issues/384/comments',
+        match: `api repos/${REPO}/issues/384/comments`,
         stdout: JSON.stringify([{
           user: { login: 'vercel[bot]' },
           body: `[vc]: #deployment-pg-057:${metadata}`,
@@ -2115,12 +2121,12 @@ test('an exact normalized Vercel commit-status URL binds the preview without PR 
     codexBin: codexPassBin(dir, sentinels),
     ghDispatch: [
       {
-        match: 'api repos/xdawayer/oracle/deployments?ref=',
+        match: `api repos/${REPO}/deployments?ref=`,
         stdout: JSON.stringify([{ id: 9, sha: HEAD_B }]),
         exit: 0,
       },
       {
-        match: `api repos/xdawayer/oracle/commits/${HEAD_A}/status`,
+        match: `api repos/${REPO}/commits/${HEAD_A}/status`,
         stdout: JSON.stringify({
           statuses: [{
             context: 'Vercel',

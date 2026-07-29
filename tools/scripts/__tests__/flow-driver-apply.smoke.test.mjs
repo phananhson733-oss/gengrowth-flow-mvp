@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { buildActionCommands } from '../lib/flow-driver-apply.mjs';
 
-const CFG = { repo: 'xdawayer/oracle', site: 'astrologywiki' };
+const CFG = { repo: 'phananhson733-oss/oracle', site: 'astrologywiki' };
 
 test('buildActionCommands: archive → sidecar-only(不再 per-park 派通知,终态进每轮一条汇总)', () => {
   const r = buildActionCommands({ pid: 'PG-X', action: 'archive', slug: 'foo', stage: 'pushed-preview', branch: 'seo/auto/x', reason: '死选题' }, CFG);
@@ -16,7 +16,7 @@ test('buildActionCommands: fix(gate 阶段有 branch) → retry-failed + preview
   assert.equal(r.kind, 'fix');
   assert.equal(r.commands.length, 2);
   assert.match(r.commands[0].args.join(' '), /--retry-failed --branch seo\/auto\/y/);
-  assert.match(r.commands[1].args.join(' '), /--branch seo\/auto\/y --repo xdawayer\/oracle/);
+  assert.match(r.commands[1].args.join(' '), /--branch seo\/auto\/y --repo phananhson733-oss\/oracle/);
   assert.match(r.commands[1].bin, /gg-preview-gate\.mjs$/);
 });
 

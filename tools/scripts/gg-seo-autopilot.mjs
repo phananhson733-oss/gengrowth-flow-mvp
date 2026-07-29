@@ -65,6 +65,7 @@ import { keywordLiveSlug } from './lib/oracle-live.mjs';
 import { notify } from './lib/gg-notify.mjs';
 import { unionMergeIntoWorktree } from './lib/merge-union.mjs';
 import { backfillOnLive, enqueueWriteback } from './lib/backfill-tx.mjs';
+import { publishRepo } from './lib/site-profile.mjs';
 import { classifyPark } from './lib/park-classify.mjs';
 import { stateDir } from './lib/flow-state.mjs';
 import { summarizePhase2Failure } from './lib/phase2-failure-summary.mjs';
@@ -90,6 +91,9 @@ if (ACTIVE_WORKBOOK_ID) process.env.GG_SHEETS_WORKBOOK_ID = ACTIVE_WORKBOOK_ID;
 const HOME = homedir();
 const FLOW = process.env.GG_FLOW_REPO || join(HOME, 'gengrowth-flow-mvp');
 const ORACLE = process.env.GG_ORACLE_DIR || join(HOME, 'oracle');
+// GitHub owner/name every `gh` call below passes as --repo. Single source of truth in
+// lib/site-profile.mjs so a repo migration is one edit, not six scattered literals.
+const REPO = publishRepo();
 const WORKTREE_ROOT = process.env.GG_ORACLE_WORKTREE_ROOT || join(HOME, 'oracle-worktrees', 'seo-autopilot');
 const OPS = process.env.GG_OPS_DIR || join(HOME, 'gengrowth-ops');
 const WINNER = process.env.GG_WINNER_LLM || 'claude';
@@ -492,7 +496,7 @@ function ghPrMeta(branch) {
   try {
     return JSON.parse(sh(
       'gh',
-      ['pr', 'view', branch, '--repo', 'xdawayer/oracle', '--json', 'state,mergedAt,closedAt,url'],
+      ['pr', 'view', branch, '--repo', REPO, '--json', 'state,mergedAt,closedAt,url'],
       { cwd: ORACLE },
     ));
   } catch {
@@ -1412,7 +1416,7 @@ function publishOne(o, t) {
   // Open a PR so Vercel posts a Preview deployment; merge happens in --merge after the gate passes.
   let prUrl = '';
   try {
-    prUrl = sh('gh', ['pr', 'create', '--repo', 'xdawayer/oracle', '--base', 'main', '--head', branch,
+    prUrl = sh('gh', ['pr', 'create', '--repo', REPO, '--base', 'main', '--head', branch,
       '--title', `[autopilot] publish ${t.slug}`,
       '--body', `Automated SEO publish of \`${t.pgId}\` → \`${t.slug}\` (EN-only).\n\nAwaiting codex review + chrome MCP verification on the Vercel preview before merge.`],
       { cwd: publishRepo }).trim();
@@ -1420,7 +1424,7 @@ function publishOne(o, t) {
     // Re-publish of the same date+pgId branch hits "a pull request already exists" — fine (we
     // force-pushed the fixed content); reuse the existing PR URL so verify/notify have a number.
     if (/already exists/i.test(e.message || '')) {
-      try { prUrl = sh('gh', ['pr', 'view', branch, '--repo', 'xdawayer/oracle', '--json', 'url', '--jq', '.url'], { cwd: publishRepo }).trim(); }
+      try { prUrl = sh('gh', ['pr', 'view', branch, '--repo', REPO, '--json', 'url', '--jq', '.url'], { cwd: publishRepo }).trim(); }
       catch { prUrl = ''; }
     }
     if (!prUrl) prUrl = `(pr-create-failed: ${e.message})`;
@@ -1444,7 +1448,7 @@ const MERGE_SELFHEAL = process.env.GG_MERGE_UNION_SELFHEAL !== '0';
 
 function ghPrMergeState(branch) {
   try {
-    const out = sh('gh', ['pr', 'view', branch, '--repo', 'xdawayer/oracle', '--json', 'mergeable,mergeStateStatus'], { cwd: ORACLE });
+    const out = sh('gh', ['pr', 'view', branch, '--repo', REPO, '--json', 'mergeable,mergeStateStatus'], { cwd: ORACLE });
     const j = JSON.parse(out);
     return { mergeable: j.mergeable || 'UNKNOWN', state: j.mergeStateStatus || 'UNKNOWN' };
   } catch { return { mergeable: 'UNKNOWN', state: 'UNKNOWN', error: true }; }
@@ -1453,7 +1457,7 @@ function ghPrMergeState(branch) {
 function currentPrHead(branch) {
   const headRefOid = sh('gh', [
     'pr', 'view', branch,
-    '--repo', 'xdawayer/oracle',
+    '--repo', REPO,
     '--json', 'headRefOid',
     '-q', '.headRefOid',
   ], { cwd: ORACLE }).trim();
@@ -1719,7 +1723,7 @@ function mergeVerifiedBranch(branch, claim, { beforeMerge = null } = {}) {
   if (typeof beforeMerge === 'function') beforeMerge();
   sh('gh', [
     'pr', 'merge', branch,
-    '--repo', 'xdawayer/oracle',
+    '--repo', REPO,
     '--merge',
     '--delete-branch',
     '--match-head-commit', claim.headRefOid,

@@ -23,7 +23,7 @@ aliases:
 - 本次未处理任何已修复行，且日志窗口内无失败标记；未触发普通文章 Indexing API、无人值守 GSC 请求、飞书或 Google Doc 报告。
 - 运行指定的 Phase 2 索引监控 wrapper；两个产品的 Sitemap API 均成功，因无到期 URL 未触发 URL Inspection，结果复盘表与请求队列已同步。
 - 运行结果复盘性能 wrapper；两个产品均按到期里程碑写回包装器所属字段并生成优化任务报告，日志未提供 D14/D30/D60 分项或非到期跳过计数。
-- 运行关键词补充 brief wrapper；本机 apply 模式下 astrologywiki 因证据发现门禁拒绝而失败，gengrowth 为零候选，未作任何人工替代写入。
+- 两次运行关键词补充 brief wrapper；本机 apply 模式下 astrologywiki 均因证据发现门禁拒绝而失败，gengrowth 均为零候选，未作任何人工替代写入。
 
 ---
 
@@ -136,5 +136,22 @@ Run the deterministic fixed-row index repair workflow through `bash tools/script
 **🤖 回答：**
 
 运行 `bash tools/scripts/gg-index-repair-resubmit-tick.sh`，17:31:28–17:31:51 CST 以 rc=0 结束且日志终态为 `index repair-resubmit ok`。astrologywiki：process-fixed fixed=0/resubmitted=0，sync-recap en_rows=303/appended=0/updated=0/skipped=303，request queue rows=15（P0=0/P1=4/P2=0/P3=11）。gengrowth：process-fixed fixed=0/resubmitted=0，sync-recap en_rows=64/appended=0/updated=50/skipped=14，request queue rows=0（P0–P3 均为0）。窗口内无 failure/error/exception/fatal/auth/timeout/nonzero-rc 标记；未使用普通文章 Google Indexing API、未做无人值守 GSC 请求，未创建 Feishu 或 Google Doc 报告。
+
+---
+
+### Q7 — 18:13
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-29T08:01:30.320Z (1785312090320)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行 `bash tools/scripts/gg-topic-register-tick.sh`；18:01:22–18:13:20 CST 为 apply（`dry_run=false`）窗口，包装器以 rc=1 及 `topic-register failed rc=1` 结束。astrologywiki 在证据发现 apply 门禁被拒绝（`ERR_OTHER`，日志明确列出 PG-FS-002、PG-FG-001，余项被截断），因此候选、updates、new_clusters、page_ids 和预处理状态均未输出，标记为不可用。gengrowth：candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]、evidence_discovery=[]。未手工编辑 Sheet 或任务计划，未创建额外 Feishu/Google Doc 报告。
 
 ---

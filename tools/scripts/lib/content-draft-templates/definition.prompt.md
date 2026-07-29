@@ -47,13 +47,20 @@
 - voice_rule: <field name="author_voice_rule">{{author_voice_rule}}</field>
 - allowed_moves: <field name="author_allowed_moves">{{author_allowed_moves}}</field>
 - forbidden_moves: <field name="author_forbidden_moves">{{author_forbidden_moves}}</field>
-- author_credential（用于一次正文 credential integration + byline）: <field name="author_credential_meta">{{author_credential_meta}}</field>
+- author_credential（**仅作 byline / metadata 提示，不得写进正文**）: <field name="author_credential_meta">{{author_credential_meta}}</field>
 
-**第一人称受控开放（credential integration）**：正文（article body）默认第三人称客观叙述；
-**允许且仅允许一次**用第一人称把署名作家的真实背景自然织入叙事（取材自上面的
-author_credential），放在首个解读密集段附近，例如 "In my years working with aura color, ..."
-或 "In my data-driven analysis of chart structures, ..."。**其余正文一律保持第三人称**，
-不得重复自我介绍、不得用 "in my experience" 给经验/生理/科学声明背书（科学边界规则仍然适用）。
+**第一人称受控开放（方法，不是资历）**：正文（article body）默认第三人称客观叙述；
+**允许且仅允许一次**用第一人称说明**你怎么做这件事**（方法/取舍/阅读顺序），放在首个解读密集段附近，
+例如 "I keep three categories separate before reading any placement: public data, calculated
+placements, and interpretation." 或 "I start from the date and refuse to fill in what the source
+does not give."。**其余正文一律保持第三人称**，不得重复自我介绍，不得用 "in my experience" 给
+经验/生理/科学声明背书（科学边界规则仍然适用）。
+
+⚠️ **严禁把 author_credential 的资历句写进正文**——尤其是任何可被当成事实核查的量化声明：
+从业年数（"Twelve years…" / "After seven years in…"）、咨询/客户数量（"thousands of hours of
+chart consultation"）、证书、机构从业经历。署名作家是**披露式编辑人格**，这类声明无法核实，
+codex 事实审会直接判 FAIL 整篇重写，读者层面也是信任问题。资历只出现在 byline / 作者页 metadata。
+第一人称写"我怎么读"，不写"我是谁、我干了多少年"。
 capsule 用于决定**怎么解释**（措辞、对比角度、例子选择、章节内的强调点），不用于改变**写什么结构**。
 
 {{TIER_GATE_BLOCK}}

@@ -501,8 +501,15 @@ export const TBD_LINK_RULES = [
   })),
 ];
 
-export function resolveTbdLink(description) {
+// `selfSlug` suppresses self-links. An article naturally names its own entity in
+// Related Reading ("Billie Eilish zodiac sign", "Billie Eilish moon sign"), and a
+// person/character rule keyed on that name then resolves every one of them back to
+// the page you are already on — 4 self-links on one page in the 7/29 batch. A
+// self-link is dead weight for readers and passes no PageRank, so it de-links to
+// italic instead. Callers that do not know the target slug simply omit it.
+export function resolveTbdLink(description, selfSlug = '') {
   const d = description.trim();
+  const selfHref = selfSlug ? `/en/wiki/${selfSlug}` : null;
   // TBD descriptions may be single-segment ("astrology houses overview") or the
   // three-part "anchor | context | reason" form the v8 prompt teaches. Match on
   // the full string (context/reason add recall) but only ever SHOW the anchor —
@@ -510,7 +517,10 @@ export function resolveTbdLink(description) {
   // the rendered link text. Single-segment descriptions are unaffected.
   const anchor = d.split('|')[0].trim();
   for (const rule of TBD_LINK_RULES) {
-    if (rule.match.test(d)) return `[${anchor}](${rule.href})`;
+    if (rule.match.test(d)) {
+      if (selfHref && rule.href === selfHref) return `*${anchor}*`;
+      return `[${anchor}](${rule.href})`;
+    }
   }
   return `*${anchor}*`;
 }
@@ -537,11 +547,11 @@ export function autoLinkBareUrls(s) {
   });
 }
 
-export function transformBody(body) {
+export function transformBody(body, selfSlug = '') {
   let out = body;
   out = out.replace(
     /\[\[<TBD-internal-link:\s*([^>]+)>\]\]/g,
-    (_m, desc) => resolveTbdLink(desc),
+    (_m, desc) => resolveTbdLink(desc, selfSlug),
   );
   out = out.replace(
     /\[\[<\s*TBD-external-link:\s*([^|>]+?)\s*\|\s*([^|>]+?)\s*\|\s*[^>]*?>\]\]/g,
@@ -631,7 +641,7 @@ function convertOne({ source, slug, out }) {
   const tgtKw = fm.target_keyword || '';
   const assoc = Array.isArray(fm.associated_keywords) ? fm.associated_keywords : [];
   const keywords = [tgtKw, ...assoc].filter(Boolean);
-  const transformedBody = transformBody(body);
+  const transformedBody = transformBody(body, resolvedSlug);
   const description = deriveDescription(transformedBody);
   const varName = slugToCamel(resolvedSlug, 'En');
   // T10: carry author identity into publish metadata. content-draft's

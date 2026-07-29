@@ -98,3 +98,22 @@ test('ENFP Gemini beats the bare Gemini sign page', () => {
 test('author surname "Thorne" does not route to the Thor spoke', () => {
   assert.ok(resolveTbdLink('Julian Thorne on psychological astrology').startsWith('*'));
 });
+
+// --- self-link 抑制 ---
+// An article names its own entity in Related Reading ("Billie Eilish zodiac sign",
+// "Billie Eilish moon sign"), and the person rule then points every one of them back
+// at the page the reader is already on — 4 self-links on one page in the 7/29 batch.
+test('resolveTbdLink suppresses a self-link when selfSlug is given', () => {
+  const desc = 'Billie Eilish moon sign';
+  assert.equal(href(resolveTbdLink(desc)), '/en/wiki/billie-eilish-birth-chart');
+  assert.ok(resolveTbdLink(desc, 'billie-eilish-birth-chart').startsWith('*'),
+    'same description must de-link to italic on its own page');
+});
+
+test('self-link suppression does not affect other targets', () => {
+  // On the Billie page, a Sabrina link must still resolve.
+  assert.equal(href(resolveTbdLink('Sabrina Carpenter zodiac sign', 'billie-eilish-birth-chart')),
+    '/en/wiki/sabrina-carpenter-zodiac-sign');
+  // And omitting selfSlug keeps the old behaviour for every caller that has no slug.
+  assert.equal(href(resolveTbdLink('Thor zodiac sign')), '/en/wiki/thor-zodiac-sign');
+});

@@ -320,10 +320,32 @@ export function loadFrictionThemes(repo, pageId, brief) {
   return fallbackFrictionThemes(brief.friction_brief, brief.target_keyword);
 }
 
+// 选题登记表的 Entity 列是 Title Case 的，会把缩写和品牌写坏：INTP→"Intp"、BTS→"Bts"、
+// IVE→"Ive"（读成 "I've"）。entity 直接进 v8 prompt 并变成文章的 `## What Is <entity>?`
+// H2，所以这些坏拼写会一路渗到线上标题。这里在组 brief 时把已知缩写/品牌还原回官方写法。
+// 只按整词匹配，不碰其他词，也不动 cluster 的 primary_entity join key。
+const ENTITY_STYLIZATIONS = [
+  // MBTI 16 型
+  'INTJ', 'INTP', 'ENTJ', 'ENTP', 'INFJ', 'INFP', 'ENFJ', 'ENFP',
+  'ISTJ', 'ISFJ', 'ESTJ', 'ESFJ', 'ISTP', 'ISFP', 'ESTP', 'ESFP',
+  // K-pop 团体 / 常见全大写品牌
+  'BTS', 'IVE', 'MBTI', 'HSP', 'RM', 'SZA', 'IP', 'NBA', 'MLB',
+];
+const ENTITY_STYLIZATION_RE = new RegExp(`\\b(${ENTITY_STYLIZATIONS.join('|')})\\b`, 'gi');
+
+export function restoreEntityStylization(raw) {
+  if (raw == null) return raw;
+  return String(raw).replace(ENTITY_STYLIZATION_RE, (m) => {
+    const hit = ENTITY_STYLIZATIONS.find((s) => s.toLowerCase() === m.toLowerCase());
+    return hit || m;
+  });
+}
+
 // 单个 row → override entry（核心派生逻辑）
 // 返回 { entry: ... , warnings: [...] } 或 { skip: true, reason: '...' }。
 export function composeOverride(row, { clusterMap, ctaMap, ctaRegistry = new Map(), repo, skipNonV8 = false, authorMap = new Map() }) {
-  const brief = row.brief || {};
+  const brief = { ...(row.brief || {}) };
+  if (brief.entity) brief.entity = restoreEntityStylization(brief.entity);
   const pageId = row.page_id;
   if (!pageId) return { skip: true, reason: 'no page_id (sheet col 16 empty and target_keyword blank)' };
 

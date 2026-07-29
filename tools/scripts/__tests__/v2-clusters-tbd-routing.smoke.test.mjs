@@ -60,3 +60,41 @@ test('bare "Brunson" does not route to the Jalen Brunson spoke', () => {
 test('Swift-Kelce synastry still routes to the live page', () => {
   assert.equal(href(resolveTbdLink('Taylor Swift and Travis Kelce synastry')), '/en/wiki/taylor-swift-and-travis-kelce');
 });
+
+// --- 7/29 v2 全速期批次 ---
+const JUL29 = [
+  ['ENFP Gemini', '/en/wiki/enfp-gemini'],
+  ['INTP zodiac sign', '/en/wiki/intp-zodiac-sign'],
+  ['ESFP zodiac sign', '/en/wiki/esfp-zodiac-sign'],
+  ['BTS compatibility zodiac', '/en/wiki/bts-compatibility-zodiac'],
+  ['IVE members zodiac signs', '/en/wiki/ive-members-zodiac-signs'],
+  ['SEVENTEEN zodiac signs', '/en/wiki/seventeen-zodiac-signs'],
+  ['Marvel characters zodiac signs', '/en/wiki/marvel-characters-zodiac-signs'],
+  ['Wanda Maximoff zodiac sign', '/en/wiki/wanda-maximoff-zodiac-sign'],
+  ['Thor zodiac sign', '/en/wiki/thor-zodiac-sign'],
+  ['Billie Eilish birth chart', '/en/wiki/billie-eilish-birth-chart'],
+  ['Sabrina Carpenter zodiac sign', '/en/wiki/sabrina-carpenter-zodiac-sign'],
+];
+
+for (const [desc, expected] of JUL29) {
+  test(`TBD "${desc}" -> ${expected}`, () => {
+    const out = resolveTbdLink(desc);
+    assert.ok(!out.startsWith('*'), `routed (not italic): ${out}`);
+    assert.equal(href(out), expected);
+  });
+}
+
+// Marvel character spokes must win over the Marvel pillar (first-match ordering).
+test('Marvel character spoke wins over the Marvel pillar', () => {
+  assert.equal(href(resolveTbdLink('Wanda Maximoff in the Marvel characters zodiac signs hub')), '/en/wiki/wanda-maximoff-zodiac-sign');
+});
+
+// The ENFP-Gemini crossover must not be captured by the /gemini/ sign rule.
+test('ENFP Gemini beats the bare Gemini sign page', () => {
+  assert.equal(href(resolveTbdLink('the ENFP Gemini crossover')), '/en/wiki/enfp-gemini');
+});
+
+// "Thorne" (the author surname) must not trigger the Thor spoke.
+test('author surname "Thorne" does not route to the Thor spoke', () => {
+  assert.ok(resolveTbdLink('Julian Thorne on psychological astrology').startsWith('*'));
+});

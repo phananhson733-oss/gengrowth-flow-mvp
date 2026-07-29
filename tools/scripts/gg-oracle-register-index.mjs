@@ -83,6 +83,24 @@ export function registerInIndex(indexSrc, { slug, lang = 'en' }) {
   return result;
 }
 
+// Registering in index.ts makes an article reachable in the app, but NOT in the
+// sitemap: scripts/generate-seo-pages.mjs keeps its own ARTICLE_SLUGS_EN_ONLY
+// list, and a slug missing from it gets no crawler-readable stub and no <loc>.
+// That split has bitten every batch since 6/18 — the article looks published,
+// Search Console never sees it. Register both from one call.
+export function registerInSeoSlugs(seoSrc, { slug }) {
+  const anchor = 'const ARTICLE_SLUGS_EN_ONLY = [';
+  const open = seoSrc.indexOf(anchor);
+  if (open === -1) throw new Error(`generate-seo-pages.mjs: cannot find "${anchor}" anchor`);
+  const close = seoSrc.indexOf('];', open);
+  if (close === -1) throw new Error('generate-seo-pages.mjs: cannot find closing "];" for ARTICLE_SLUGS_EN_ONLY');
+  const body = seoSrc.slice(open, close);
+  if (new RegExp(`['"\`]${slug.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}['"\`]`).test(body)) {
+    return { src: seoSrc, added: false };
+  }
+  return { src: seoSrc.slice(0, close) + `  '${slug}',\n` + seoSrc.slice(close), added: true };
+}
+
 function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.help || !args.articlesDir || !args.slug) {
@@ -102,16 +120,29 @@ function main() {
   const { varName, arrayName, importAdded, arrayAdded, src } =
     registerInIndex(before, { slug: args.slug, lang: args.lang });
 
-  if (!importAdded && !arrayAdded) {
-    console.log(`✓ ${varName} already registered in ${arrayName} — no change`);
+  // scripts/generate-seo-pages.mjs sits one level up from data/articles/.
+  const seoPath = join(args.articlesDir, '..', '..', 'scripts', 'generate-seo-pages.mjs');
+  let seoAdded = false;
+  let seoSrc = null;
+  if (existsSync(seoPath)) {
+    const r = registerInSeoSlugs(readFileSync(seoPath, 'utf8'), { slug: args.slug });
+    seoAdded = r.added;
+    seoSrc = r.src;
+  } else {
+    console.warn(`⚠ generate-seo-pages.mjs not found at ${seoPath} — sitemap slug NOT registered`);
+  }
+
+  if (!importAdded && !arrayAdded && !seoAdded) {
+    console.log(`✓ ${varName} already registered in ${arrayName} + ARTICLE_SLUGS_EN_ONLY — no change`);
     return;
   }
   if (args.dryRun) {
-    console.log(`[dry-run] would register ${varName}: import=${importAdded} array=${arrayAdded}`);
+    console.log(`[dry-run] would register ${varName}: import=${importAdded} array=${arrayAdded} sitemap=${seoAdded}`);
     return;
   }
-  writeFileSync(indexPath, src);
-  console.log(`✓ registered ${varName} (import=${importAdded} array=${arrayAdded}) in ${indexPath}`);
+  if (importAdded || arrayAdded) writeFileSync(indexPath, src);
+  if (seoAdded) writeFileSync(seoPath, seoSrc);
+  console.log(`✓ registered ${varName} (import=${importAdded} array=${arrayAdded} sitemap=${seoAdded})`);
 }
 
 // Only run when invoked directly (allows importing registerInIndex in tests).

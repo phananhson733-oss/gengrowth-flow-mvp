@@ -234,6 +234,19 @@ export const TBD_LINK_RULES = [
   // and points it at /en/wiki/north-node-in-scorpio.
   { match: /scorpio\s+mbti|mbti\s+type\s+for\s+scorpio/i, href: '/en/wiki/scorpio-mbti-type' },
   { match: /(zodiac\s+signs?\s+as\s+mbti|mbti\s+(types?\s+)?for\s+each\s+zodiac|what\s+mbti\s+is\s+each\s+zodiac|most\s+common\s+mbti\s+types?)/i, href: '/en/wiki/the-most-common-mbti-types-for-each-zodiac-sign' },
+  // --- 7/29 v2 全速期批次. Type/character spokes precede their pillar, and the
+  // ENFP-Gemini crossover precedes the bare ENFP rule so the more specific page wins. ---
+  { match: /enfp\s+gemini|gemini\s+enfp/i, href: '/en/wiki/enfp-gemini' },
+  { match: /\bintp\b[^.\n]{0,20}\b(zodiac|sun|star)\s*sign|\bintp\s+zodiac\b/i, href: '/en/wiki/intp-zodiac-sign' },
+  { match: /\besfp\b[^.\n]{0,20}\b(zodiac|sun|star)\s*sign|\besfp\s+zodiac\b/i, href: '/en/wiki/esfp-zodiac-sign' },
+  { match: /bts\s+(zodiac\s+)?compatibilit|compatibilit\w*\s+(between\s+)?bts\s+members/i, href: '/en/wiki/bts-compatibility-zodiac' },
+  { match: /\bive\s+(members['’]?\s+)?zodiac\s+signs?|jang\s+wonyoung|아이브/i, href: '/en/wiki/ive-members-zodiac-signs' },
+  { match: /seventeen\s+(members['’]?\s+)?zodiac\s+signs?/i, href: '/en/wiki/seventeen-zodiac-signs' },
+  { match: /wanda\s+maximoff|scarlet\s+witch/i, href: '/en/wiki/wanda-maximoff-zodiac-sign' },
+  { match: /\bthor\b[^.\n]{0,24}\b(zodiac|sun|star)\s*sign|\bthor\s+zodiac\b/i, href: '/en/wiki/thor-zodiac-sign' },
+  { match: /marvel\s+(characters['’]?\s+)?zodiac\s+signs?|漫威.{0,4}星座/i, href: '/en/wiki/marvel-characters-zodiac-signs' },
+  { match: /billie\s+eilish/i, href: '/en/wiki/billie-eilish-birth-chart' },
+  { match: /sabrina\s+carpenter/i, href: '/en/wiki/sabrina-carpenter-zodiac-sign' },
   // --- 6/16 World Cup 2026 astrology cluster (pillar + player / team / national
   // spokes). Specific spokes precede the general pillar rule (first-match-wins),
   // and the whole block sits at the TOP so "germany ... birth chart" routes to its

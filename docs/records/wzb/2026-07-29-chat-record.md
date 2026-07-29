@@ -91,3 +91,15 @@ After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-s
 仅运行 `bash tools/scripts/gg-recap-performance-tick.sh`，其以 rc=0 结束；最新日志窗口为 10:01:25–10:01:44 CST，终态 `recap performance ok`。astrologywiki（wb=…jyzcQc，sc-domain:astrologywiki.com，GA4 properties/524765570）：精确里程碑待处理 rows=8，结果复盘更新 updated=273，报告任务=274；分桶 P0=11、技术排查=155、P1=14、P2=1、观察=93，报告路径为 `/Users/awayer_mini/gengrowth-agents/reports/recap-performance/2026-07-29-astrologywiki-optimization-tasks.md`。gengrowth（wb=…ZTIRA8，sc-domain:gengrowth.ai，同一 GA4 property）：rows=2、updated=50、tasks=63；分桶 P0=0、技术排查=48、P1=5、P2=0、观察=10，报告路径为 `/Users/awayer_mini/gengrowth-agents/reports/recap-performance/2026-07-29-gengrowth-optimization-tasks.md`。日志仅给出合并 D14/D30/D60 里程碑 rows，未给各里程碑分项覆盖率，也未给非到期或已填单元格的独立跳过数，故标记为未提供。日志无失败、凭据或 property 缺失边界；未使用 repair/backfill 参数、未手改 Sheet、未发布/部署/改源、未提交 GSC Request Indexing 或使用 Google Indexing API。
 
 ---
+
+### Q4 — 13:07 [claude]
+
+**🙋 提问：**
+
+（原生 cron 每日任务 gsc-index-daily）每天跑一轮 GSC 手动 Request Indexing（astrologywiki.com）。本机(awayer_mini) Chrome 驱动，全新会话。只对真未收录的提交，已收录的一律跳过；候选取自 canonical workbook 结果复盘表（申请时间空 & day14_收录≠Y），从底部/最新往上；排除 kylian-mbappe/kylian-mbapp 两个 canonical 收口重复页。提交成功后回填 index-tracking 与结果复盘表，收尾跑 sync-recap + sync-request-queue 并推飞书（0 提交则不推）。
+
+**🤖 回答：**
+
+候选=1（`venus-in-taurus` r292）。curl 预检**本轮首次全过**——静态 stub `<title>` 已是专属标题、body 25,750 bytes、sitemap.xml 命中该 `<loc>`，说明卡了 5 天（07-25→07-29）的软 404 已自愈，按 SOP 属必提候选。但**本机 Claude-in-Chrome 扩展未连接**（`list_connected_browsers` 两次返 `[]`、`tabs_context_mcp` 两次报 not connected；Chrome 进程本身在跑，即扩展未装/未登录/未同账号），无替代路径（in-app Browser 无 GSC 登录态），故如实报告**未提交、未回填**。已跑 sync-published(en=336)/sync-recap(en_rows=303,updated=273)/sync-request-queue(rows=15)；0 提交按规则未推飞书。已把阻塞与自愈数据点写入 reminders.md 与 memory。
+
+---

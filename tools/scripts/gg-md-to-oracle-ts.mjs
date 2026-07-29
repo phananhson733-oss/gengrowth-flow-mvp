@@ -206,6 +206,34 @@ export function deriveDescription(body, maxLen = 160) {
 // substring/regex. Patterns are intentionally narrow to avoid mis-routing.
 // Anything unmatched falls through to an italic placeholder (no fake link).
 export const TBD_LINK_RULES = [
+  // --- 7/27 执行表 v2 clusters: 实验七 K-pop 星盘 / 实验八 虚构角色 / 实验九 流行音乐,
+  // plus the 7/24 celebrity-athlete spokes. Sits at the TOP because every entry is a
+  // proper noun — matching a person or character name can never mis-route a generic
+  // description, and these MUST precede the broad /(natal|birth) chart/ rule below or
+  // "Suga BTS birth chart" resolves to the how-to-read pillar instead of its own spoke.
+  // Within the block, member/character spokes precede their group pillar (first-match-
+  // wins) so "Jisoo birth chart" never gets swallowed by the BLACKPINK pillar rule.
+  // NOTE: `jalen brunson` is matched by FULL name — the live quinta-brunson-birth-chart
+  // page would otherwise collide on a bare /brunson/ match.
+  { match: /suga(\s+bts)?\s+birth\s+chart|min\s+yoongi|\bsuga['’]?s?\s+(natal\s+)?chart/i, href: '/en/wiki/suga-bts-birth-chart' },
+  { match: /\brm(\s+bts)?\s+birth\s+chart|kim\s+namjoon|namjoon/i, href: '/en/wiki/rm-bts-birth-chart' },
+  { match: /jisoo/i, href: '/en/wiki/jisoo-birth-chart' },
+  { match: /bts\s+(members['’]?\s+)?zodiac\s+signs?|防弹少年团.{0,4}星座/i, href: '/en/wiki/bts-members-zodiac-signs' },
+  { match: /blackpink\s+(members['’]?\s+)?zodiac\s+signs?|blackpink\s+成员?.{0,4}星座/i, href: '/en/wiki/blackpink-zodiac-signs' },
+  { match: /severus\s+snape|\bsnape\b/i, href: '/en/wiki/severus-snape-zodiac-sign' },
+  { match: /dumbledore|邓布利多/i, href: '/en/wiki/dumbledore-zodiac-sign' },
+  { match: /harry\s+potter\s+(characters['’]?\s+)?zodiac\s+signs?|哈利.?波特.{0,6}星座/i, href: '/en/wiki/harry-potter-characters-zodiac-signs' },
+  { match: /rihanna|robyn\s+fenty|蕾哈娜/i, href: '/en/wiki/rihanna-birth-chart' },
+  { match: /selena\s+gomez|赛琳娜.?戈麦斯/i, href: '/en/wiki/selena-gomez-birth-chart' },
+  { match: /jalen\s+brunson/i, href: '/en/wiki/jalen-brunson-birth-chart' },
+  { match: /robert\s+downey(\s+jr\.?)?|小罗伯特.?唐尼/i, href: '/en/wiki/robert-downey-jr-birth-chart' },
+  { match: /shohei\s+ohtani|\bohtani\b|大谷翔平/i, href: '/en/wiki/shohei-ohtani-birth-chart' },
+  { match: /victor\s+wembanyama|wembanyama|文班亚马/i, href: '/en/wiki/victor-wembanyama-zodiac-sign' },
+  // 实验六 MBTI × 星座. MUST sit above the generic sign rules at the bottom of this array
+  // AND above the /\bscorpio\b/ north-node rule, which otherwise swallows "Scorpio MBTI"
+  // and points it at /en/wiki/north-node-in-scorpio.
+  { match: /scorpio\s+mbti|mbti\s+type\s+for\s+scorpio/i, href: '/en/wiki/scorpio-mbti-type' },
+  { match: /(zodiac\s+signs?\s+as\s+mbti|mbti\s+(types?\s+)?for\s+each\s+zodiac|what\s+mbti\s+is\s+each\s+zodiac|most\s+common\s+mbti\s+types?)/i, href: '/en/wiki/the-most-common-mbti-types-for-each-zodiac-sign' },
   // --- 6/16 World Cup 2026 astrology cluster (pillar + player / team / national
   // spokes). Specific spokes precede the general pillar rule (first-match-wins),
   // and the whole block sits at the TOP so "germany ... birth chart" routes to its
@@ -438,6 +466,26 @@ export const TBD_LINK_RULES = [
   { match: /行星.{0,6}(星盘|本命|含义|意义)|星盘里.{0,4}行星|planets?\s+in\s+the\s+(natal|birth)/i, href: '/en/wiki/how-to-read-birth-chart' },
   // Nodal methodology / generic nodal-sign placement → nodes pillar.
   { match: /\b(true node|mean node|evolutionary astrolog\w*|nodal sign)\b/i, href: '/en/wiki/north-node-vs-south-node' },
+  // --- 12 sign pages (/en/wiki/<sign>), all live. Added 2026-07-29: there was NO rule
+  // pointing at any of them, so every "what a Capricorn Sun means" / "Aquarius sign
+  // meaning" placeholder in a celebrity, K-pop, or fictional-character article de-linked
+  // to a dead italic — a standing internal-link leak across the whole content line.
+  //
+  // Deliberately INTENT-GATED and placed LAST: a bare sign name is far too common to
+  // route on (it appears in "Scorpio MBTI", "Cancer season 2026", "Virgo rising",
+  // "Cancer North Node", every rulership fallback above). The anchor must be ABOUT the
+  // sign itself — "<sign> Sun", "<sign> sign meaning/means", "<sign> archetype" — and
+  // must NOT be about a rising sign, a Moon placement, or MBTI, all of which have their
+  // own pages. Every more specific rule already ran by the time we get here.
+  ...['aries', 'taurus', 'gemini', 'cancer', 'leo', 'virgo', 'libra', 'scorpio', 'sagittarius', 'capricorn', 'aquarius', 'pisces'].map((sign) => ({
+    match: new RegExp(
+      `(?!.*\\b(rising|moon|mbti|north\\s+node|south\\s+node|season)\\b)`
+      + `\\b${sign}\\b(?:[^.\\n]{0,24}?\\b(?:sun|sun[-\\s]sign|archetype)\\b`
+      + `|\\s+(?:zodiac\\s+)?sign\\s+(?:meaning|means|explained|in\\s+detail))`,
+      'i',
+    ),
+    href: `/en/wiki/${sign}`,
+  })),
 ];
 
 export function resolveTbdLink(description) {

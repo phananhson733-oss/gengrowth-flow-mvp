@@ -24,7 +24,7 @@ aliases:
 - 流程在合规边界内完成，未发现失败标记。
 - 按固定入口完成 Phase 2 Index Monitor；两站点 Sitemap API 成功，astrologywiki 检查 10 条并全部转为已索引。
 - 执行结果复盘表性能更新；astrologywiki 因 Google 503 未完成，gengrowth 完成 50 行生成字段刷新并产出 63 项优化任务。
-- 执行关键词补充 brief 包装器三次；astrologywiki 均因证据发现门禁拒绝 apply，gengrowth 无候选、无更新。
+- 执行关键词补充 brief 包装器四次；astrologywiki 均因证据发现门禁拒绝 apply，gengrowth 无候选、无更新。
 - 按固定入口完成 Index Repair Resubmit 下午例行执行；两产品无已修复行，复盘与请求队列已刷新且无失败标记。
 
 ---
@@ -160,5 +160,22 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 仅运行指定包装器（20:02:57–20:14:55 CST），整体退出码 1；日志为 apply（`dry_run=false`、`budget_exhausted=false`、`ok=false`）。astrologywiki 在 evidence-discovery apply 门禁被拒绝：`ERR_OTHER`，日志明确列出 PG-FS-002、PG-FD-003，后续 ID 被截断；其 candidates、updates、new_clusters、page_ids、preprocessor 均未输出，故为不可用而非零。gengrowth 已执行但无候选：candidates=0、updates=0、new_clusters=0、page_ids=[]、created_page_ids=[]、preprocessor=[]、evidence_discovery=[]、audit_incomplete=0、ops_blocked_count=0。终态为 `topic-register failed rc=1`。工作区复核为空；未手工编辑 Sheet、未绕过包装器修改任务计划，未创建额外 Feishu/Google Doc 产物。
+
+---
+
+### Q8 — 22:13
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-30T12:02:06.814Z (1785412926814)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行指定包装器（22:01:17–22:12:52 CST），整体退出码 1；日志为 apply（`dry_run=false`、`budget_exhausted=false`、`ok=false`）。astrologywiki 在 evidence-discovery apply 门禁被拒绝：`ERR_OTHER`，日志明确列出 PG-FS-002、PG-FD-003，后续 ID 被截断；其 candidates、updates、new_clusters、page_ids、preprocessor 均未输出，故为不可用而非零。gengrowth 已执行但无候选：candidates=0、updates=0、new_clusters=0、page_ids=[]、created_page_ids=[]、preprocessor=[]、evidence_discovery=[]、audit_incomplete=0、ops_blocked_count=0。终态为 `topic-register failed rc=1`。工作区复核为空；未手工编辑 Sheet、未绕过包装器修改任务计划，未创建额外 Feishu/Google Doc 产物。
 
 ---

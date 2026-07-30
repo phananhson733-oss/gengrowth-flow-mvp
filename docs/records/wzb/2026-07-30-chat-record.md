@@ -25,6 +25,7 @@ aliases:
 - 按固定入口完成 Phase 2 Index Monitor；两站点 Sitemap API 成功，astrologywiki 检查 10 条并全部转为已索引。
 - 执行结果复盘表性能更新；astrologywiki 因 Google 503 未完成，gengrowth 完成 50 行生成字段刷新并产出 63 项优化任务。
 - 执行关键词补充 brief 包装器；astrologywiki 因证据发现门禁拒绝 apply，gengrowth 无候选、无更新。
+- 按固定入口完成 Index Repair Resubmit 下午例行执行；两产品无已修复行，复盘与请求队列已刷新且无失败标记。
 
 ---
 
@@ -108,5 +109,22 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 仅运行指定包装器（16:02:19–16:14:29 CST），整体退出码 1；日志为 apply（`dry_run=false`、`budget_exhausted=false`、`ok=false`）。astrologywiki 在 evidence-discovery apply 门禁被拒绝：`ERR_OTHER`，日志明确列出 PG-FS-002、PG-FF-001，后续 ID 被截断；其 candidates、updates、new_clusters、page_ids、preprocessor 均未输出，故为不可用而非零。gengrowth 已执行但无候选：candidates=0、updates=0、new_clusters=0、page_ids=[]、created_page_ids=[]、preprocessor=[]、evidence_discovery=[]、audit_incomplete=0、ops_blocked_count=0。终态为 `topic-register failed rc=1`。未手工编辑 Sheet、未绕过包装器修改任务计划，未创建额外 Feishu/Google Doc 产物。
+
+---
+
+### Q5 — 17:31
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: 2026-07-29T21:02:03.379Z (1785358923379)
+
+Run the deterministic fixed-row index repair workflow through `bash tools/scripts/gg-index-repair-resubmit-tick.sh`. The wrapper loads the local gg environment, loops the configured products (`GG_INDEX_MONITOR_PRODUCTS`, defaulting to astrologywiki and gengrowth), processes rows marked `已修复`, syncs `结果复盘表`, and refreshes `request-indexing-queue` in each product Google Sheet. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, do not click Search Console Request Indexing unattended, and do not create Feishu or Google Doc report artifacts. After the wrapper exits, summarize per-product `process-fixed`, `sync-recap`, `sync-request-queue` counts visible in the log, plus any failures.
+
+**🤖 回答：**
+
+执行指定包装器（17:30:57–17:31:20 CST），退出码为 0，日志以 `index repair-resubmit ok` 结束。astrologywiki：fixed=0、resubmitted=0；recap en_rows=312、appended=0、updated=0、skipped=312；queue rows=14、P0=0、P1=4、P2=0、P3=10。gengrowth：fixed=0、resubmitted=0；recap en_rows=64、appended=0、updated=50、skipped=14；queue rows=0、P0=0、P1=0、P2=0、P3=0。两产品 rc=0；时间窗口内未检出失败、错误、异常、认证、超时或非零 rc 标记。未进行普通文章 Google Indexing API 或无人值守 GSC Request Indexing 点击，且未手动创建 Feishu 或 Google Doc 报告产物。
 
 ---

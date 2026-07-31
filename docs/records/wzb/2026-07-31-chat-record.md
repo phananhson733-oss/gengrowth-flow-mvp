@@ -19,11 +19,11 @@ aliases:
 > 【本区域在每天最后一次对话结束时生成/更新】
 > 用 3-5 个要点概括当天所有对话的核心内容、关键决策和产出成果。
 
-- 执行固定行索引修复重提封装脚本，两个产品均成功完成。
-- 仅同步结果复盘表与辅助请求索引队列；未执行普通文章 Indexing API 或无人值守 GSC 请求索引。
+- 执行固定行索引修复重提封装脚本，两个产品均成功完成，仅同步结果复盘表与辅助请求索引队列；未执行普通文章 Indexing API 或无人值守 GSC 请求索引。
 - 执行 Phase 2 索引监控封装脚本；两个站点站点地图提交成功，astrologywiki 完成 1 条 URL Inspection，未触发失败或无人值守请求索引。
 - 执行结果复盘表现封装脚本；两个产品完成精确里程碑行处理并生成优化任务报告。
 - 确认 GitHub 新账号 `phananhson733-oss` 下的 `gengrowth-flow-mvp` 仓库已存在，向其 `main` 分支提交并推送本轮记录。
+- 执行关键词 brief 注册封装脚本；apply 模式下 astrologywiki 因证据门拒绝，gengrowth 零候选完成，未手工写入外部系统。
 
 ## 对话记录
 
@@ -100,5 +100,22 @@ commit 到新的 repo：phananhson733-oss，如果没有 repo。可以新建一�
 **🤖 回答：**
 
 确认 `phananhson733-oss` 是当前已登录的 GitHub 账号，目标仓库 `phananhson733-oss/gengrowth-flow-mvp` 已存在且可访问，`origin` 已指向该仓库，因此未重复创建仓库。将本轮对话记录作为独立提交推送到 `main`，并验证本地与远端提交一致。
+
+---
+
+### Q5 — 16:14
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-30T14:00:37.311Z (1785420037311)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行指定封装脚本，退出码为 1；权威日志窗口为 16:01:36–16:14:09 CST，模式为 apply（`dry_run=false`、`budget_exhausted=false`、`ok=false`），以 `topic-register failed rc=1` 结束。astrologywiki 被证据发现 apply 门拒绝：`ERR_OTHER: refusing --apply: evidence discovery insufficient for PG-FS-002, PG-VEDIC-009`；未输出其 candidates、updates、new_clusters、page_ids、preprocessor，均不可用。gengrowth 已应用但零候选：candidates=0、updates=0、new_clusters=0、page_ids=[]、created_page_ids=[]、preprocessor=[]、evidence_discovery=[]、audit_incomplete=0、ops_blocked_count=0。未手工编辑 Google Sheet、任务计划或创建额外 Feishu/Google Doc 产物；运行记忆已追加。
 
 ---

@@ -49,6 +49,17 @@ import { supabaseRestHeaders } from './lib/supabase-auth.mjs';
 // existing seeded rows use 'GenGrowth Team'.
 const AUTHOR_BY_LOCALE = { en: 'GenGrowth Team' };
 
+// heroImage/heroImageAlt are REQUIRED by the site schema, but a staged draft carries no
+// hero art. Match what the site's own legacy migration already chose for cover-less rows
+// (docs/marketing-blog-migration.md: "Missing legacy cover fields use the existing public
+// /images/og-default.svg asset") so migrated and newly published posts look consistent.
+// Visible tech debt: override per-article with --hero / --hero-alt once real art exists
+// under public/images/blog/<slug>/.
+const DEFAULT_HERO_IMAGE = '/images/og-default.svg';
+const heroAltFor = (title) => `Cover illustration for ${title}`;
+
+// blog_posts.category
+
 // blog_posts.category is a TEXT CHECK limited to 4 content-TYPE values; the W25 SEO
 // clusters are TOPICS, none of which match. `category` collapses to a valid enum
 // (methodology = how-to/framework guide, the shape every W25 post takes). Zero schema change.
@@ -95,6 +106,8 @@ function parseArgs(argv) {
     else if (k === '--page-id') a.pageId = next();
     else if (k === '--category') a.category = next();
     else if (k === '--pillar') a.pillar = next();
+    else if (k === '--hero') a.heroImage = next();
+    else if (k === '--hero-alt') a.heroImageAlt = next();
     else if (k === '--dry-run') a.dryRun = true;
     else if (k === '--help' || k === '-h') a.help = true;
   }
@@ -221,7 +234,65 @@ function buildRow(args) {
     status: 'published', // the ONLY go-live gate (read path filters status='published')
     created_at: publishedAt,
   };
-  return { row, meta: { pageId, pillar, words, scrubbed, sourceAbs } };
+  // `markdown` is the resolved+scrubbed Markdown that `content` was rendered FROM.
+  // --emit md ships this instead of the HTML: the site's canonical source is now a
+  // Markdown file, and re-deriving Markdown from sanitized HTML would be lossy.
+  return { row, meta: { pageId, pillar, words, scrubbed, sourceAbs, markdown: scrubbedMd } };
+}
+
+// ── emit: canonical Markdown file for nevermore's content/blog/<locale>/<slug>.md ──
+//
+// WHY THIS EXISTS: gengrowth.ai used to render from Supabase `blog_posts`, so this
+// bridge emitted sanitized HTML. The site moved its canonical source to versioned
+// Markdown in the app repo (apps/marketing/content/blog/README.md), keeping Supabase
+// only as a removable, opt-in read bridge. Publishing through Supabase therefore no
+// longer puts an article on the site — it just writes a row nothing reads.
+//
+// The site parses frontmatter with a deliberately small scalar-only reader
+// (src/lib/blog-content.ts) and validates it with a `.strict()` zod schema, so:
+//   - keys are camelCase and an unknown key FAILS THE BUILD (no extra fields),
+//   - `localeExclusive` is the STRING "true"/"false", not a boolean,
+//   - `publishedAt`/`updatedAt` are calendar dates (YYYY-MM-DD), not ISO datetimes.
+const SITE_FRONTMATTER_KEYS = [
+  'title', 'excerpt', 'author', 'category', 'pillar', 'status',
+  'publishedAt', 'updatedAt', 'heroImage', 'heroImageAlt', 'localeExclusive',
+];
+
+// The site's reader does NOT understand escape sequences — unquoteFrontmatterValue only
+// strips a matching leading/trailing quote pair. So a value must never rely on `\"`.
+// Its key regex `^([A-Za-z][A-Za-z0-9]*):\s*(.*)$` keeps everything after the FIRST
+// colon, which makes colons inside a value safe. That leaves two real hazards:
+// embedded newlines (the reader is line-based) and a value that itself begins and ends
+// with the same quote (it would be silently unwrapped).
+export function siteFrontmatterScalar(value) {
+  const flat = String(value ?? '').replace(/\s*[\r\n]+\s*/g, ' ').trim();
+  if (!flat) return '';
+  const quoted = (q) => flat.length >= 2 && flat.startsWith(q) && flat.endsWith(q);
+  if (quoted('"')) return `'${flat}'`;   // wrap in the other quote so one pair survives
+  if (quoted("'")) return `"${flat}"`;
+  return flat;                            // bare is safest: no escaping is ever applied
+}
+
+const dateOnly = (iso) => String(iso).slice(0, 10);
+
+export function buildSiteMarkdown(row, meta, opts = {}) {
+  const fm = {
+    title: row.title,
+    excerpt: row.excerpt,
+    author: row.author,
+    category: row.category,
+    pillar: row.pillar_slug,
+    status: row.status,
+    publishedAt: dateOnly(row.published_at),
+    updatedAt: dateOnly(row.updated_at),
+    heroImage: opts.heroImage || DEFAULT_HERO_IMAGE,
+    heroImageAlt: opts.heroImageAlt || heroAltFor(row.title),
+    localeExclusive: row.locale_exclusive ? 'true' : 'false',
+  };
+  const lines = SITE_FRONTMATTER_KEYS
+    .filter((k) => fm[k] !== undefined && fm[k] !== '')
+    .map((k) => `${k}: ${siteFrontmatterScalar(fm[k])}`);
+  return `---\n${lines.join('\n')}\n---\n\n${String(meta.markdown).trim()}\n`;
 }
 
 // ── emit: idempotent SQL upsert, merged-by-(slug,locale) within --out file ────
@@ -315,7 +386,7 @@ async function main() {
     process.stdout.write(readFileSync(fileURLToPath(import.meta.url), 'utf8').split('\n').filter((l) => l.startsWith('//')).join('\n') + '\n');
     process.exit(args.source ? 0 : 1);
   }
-  if (!['sql', 'rest'].includes(args.emit)) throw new Error(`--emit must be 'sql' or 'rest' (got '${args.emit}')`);
+  if (!['sql', 'rest', 'md'].includes(args.emit)) throw new Error(`--emit must be 'sql', 'rest' or 'md' (got '${args.emit}')`);
 
   const { row, meta } = buildRow(args);
 
@@ -335,6 +406,16 @@ async function main() {
     `content bytes: ${row.content.length}`,
     `excerpt:       ${row.excerpt}`,
   ].join('\n');
+
+  if (args.emit === 'md') {
+    const doc = buildSiteMarkdown(row, meta, { heroImage: args.heroImage, heroImageAlt: args.heroImageAlt });
+    if (args.dryRun) { process.stdout.write(`\n[DRY-RUN --emit md] ${meta.sourceAbs}\n${summary}\n\n--- content/blog/${row.locale}/${row.slug}.md ---\n${doc}`); return; }
+    if (!args.out) throw new Error("--out <content/blog/<locale>/<slug>.md> required when not --dry-run");
+    const outAbs = resolve(args.out);
+    atomicWrite(outAbs, doc);
+    process.stdout.write(`\n✓ wrote ${outAbs}\n${summary}\n`);
+    return;
+  }
 
   if (args.emit === 'rest') {
     const returned = await emitRest(row, args);

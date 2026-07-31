@@ -457,14 +457,20 @@ async function main() {
       const ok = after.known && after.exists && after.status === 'published';
       if (ok) { verified++; console.log(`  ✓ verified live: ${d.slug}`); }
       else console.log(`  ⚠️ ${d.slug} upserted but verify says: ${JSON.stringify(after)}`);
-      // ── 阶段 4 回填事务：verify-live（此处 Supabase status=published 已确认，即 ok）成功后
-      // 一个函数写全套账本 —— 选题登记表 已发布+URL / plan 勾选 / vault 归档。verifyLive 注入
-      // ()=>true（上游 Supabase 已是权威 live 信号，无需再等 sitemap）。任一步失败入
-      // pending-writeback 由每日 gg-ledger-reconcile 重试。backfillOnLive 永不抛。
+      // ── 阶段 4 回填事务：sitemap 确认真上线后，一个函数写全套账本 —— 选题登记表
+      // 已发布+URL / plan 勾选 / vault 归档。任一步失败入 pending-writeback 由每日
+      // gg-ledger-reconcile 重试。backfillOnLive 永不抛。
+      //
+      // 这里曾经注入 { verifyLive: async () => true }，理由是「上游 Supabase 已是权威
+      // live 信号，无需再等 sitemap」。那个前提在站点把 canonical 内容源换成仓库里的
+      // Markdown、Supabase 降级成可选只读桥之后就不成立了：写进 blog_posts 不再等于
+      // 文章能被打开。结果是选题登记表 55 行标「已发布」而线上只有 1 行真能访问，
+      // 其余 52 行全是 404 —— 账本把这个不变量记反了，且没有任何一处会报警。
+      // 现在走 backfill-tx 真正的 verifyLive：查 PRODUCTS.gengrowth.sitemap，
+      // 没进 sitemap 就留在 pending-writeback 等重试，宁可迟报也不误报已发布。
       if (ok) {
         const bf = await backfillOnLive(
           { pageId: d.pageId, slug: d.slug, site: 'gengrowth', url: `${SITE_HOST}${URL_PATH}${d.slug}`, planPath: gengrowthPlanFor(d.pageId) },
-          { verifyLive: async () => true },
         );
         if (bf.ok) console.log(`  backfill: ${d.pageId} sheet+plan+archive done`);
         else console.log(`  backfill: ${d.pageId} ${bf.reason || (bf.failed || []).map((f) => f.step).join(',')} — queued for daily reconcile`);

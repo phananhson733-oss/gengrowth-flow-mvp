@@ -136,3 +136,20 @@ Run the deterministic fixed-row index repair workflow through `bash tools/script
 已通过指定封装脚本完成运行，退出码为 0；独立日志窗口为 17:31:50–17:32:16 CST，并以 `index repair-resubmit ok` 结束。astrologywiki：process-fixed fixed=0、resubmitted=0；sync-recap en_rows=312、appended=0、updated=0、skipped=312；队列 rows=13（P0=0、P1=4、P2=0、P3=9）。gengrowth：process-fixed fixed=0、resubmitted=0；sync-recap en_rows=64、appended=0、updated=50、skipped=14；队列 rows=0（P0–P3 均为 0）。窗口内无失败、错误、异常或非零 rc 标记；未使用普通文章 Google Indexing API，未执行无人值守 GSC Request Indexing，且未创建额外 Feishu 或 Google Doc 产物。自动化记忆已追加。
 
 ---
+
+### Q7 — 18:16
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-07-31T08:01:11.495Z (1785484871495)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行指定封装脚本，退出码为 1；权威日志窗口为 18:02:40–18:15:45 CST。模式为 apply（`dry_run=false`、`budget_exhausted=false`、`ok=false`），以 `topic-register failed rc=1` 结束。astrologywiki 被证据发现 apply 门拒绝：`ERR_OTHER: refusing --apply: evidence discovery insufficient for PG-FS-002`；未输出其 candidates、updates、new_clusters、page_ids、preprocessor，均不可用。gengrowth 已应用但零候选：candidates=0、updates=0、new_clusters=0、page_ids=[]、created_page_ids=[]、preprocessor=[]、evidence_discovery=[]、audit_incomplete=0、ops_blocked_count=0。未手工编辑 Google Sheet、任务计划或创建额外 Feishu/Google Doc 产物；新建自动化运行记忆并写入本轮结论。
+
+---

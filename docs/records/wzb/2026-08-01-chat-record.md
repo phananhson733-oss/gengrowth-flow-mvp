@@ -1,11 +1,15 @@
 ---
+title: 对话记录 — 2026-08-01
 date: 2026-08-01
+updated: 2026-08-01
 type: chat-record
 author: wzb
 agent: codex
 tags:
   - record
   - daily
+aliases:
+  - 2026-08-01 对话记录
 ---
 
 # 对话记录 — 2026-08-01

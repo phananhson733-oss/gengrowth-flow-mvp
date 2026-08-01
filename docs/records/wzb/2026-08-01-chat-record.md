@@ -19,12 +19,11 @@ aliases:
 > 【本区域在每天最后一次对话结束时生成/更新】
 > 用 3-5 个要点概括当天所有对话的核心内容、关键决策和产出成果。
 
-- 两次运行固定行索引修复重提 wrapper；两个产品均成功结束，未出现失败标记，最新队列为 astrologywiki P1=4、gengrowth=0。
-- astrologywiki 与 gengrowth 均无人工标记为“已修复”的待处理行，复盘表与请求队列已刷新。
-- 运行 Phase 2 索引监控 wrapper；两个站点 Sitemap API 提交成功，astrologywiki 完成 9 次 URL Inspection 且零失败，gengrowth 无到期 URL。
-- 最终请求索引队列仅 astrologywiki 有 4 条 P1；日志未给出 Feishu 发送回执，未执行无人值守 Request Indexing 点击。
+- 两次运行固定行索引修复重提 wrapper；两个产品均成功结束，最新队列为 astrologywiki P1=4、gengrowth=0，且无人工标记为“已修复”的待处理行。
+- 运行 Phase 2 索引监控 wrapper；两个站点 Sitemap API 均提交成功，astrologywiki 完成 9 次 URL Inspection 且零失败，gengrowth 无到期 URL；未执行无人值守 Request Indexing 点击。
 - 运行结果复盘性能 wrapper；两个产品均完成精确里程碑快照写回并生成当日优化任务报告，日志未单列 D14/D30/D60 拆分与非节点跳过数。
-- 两次运行选题登记 wrapper；环境启用 apply，但 astrologywiki 均因 PG-FS-002 证据不足被安全门拒绝，gengrowth 均为零候选完整结果。
+- 三次运行选题登记 wrapper 均为环境启用 apply、非预算耗尽；astrologywiki 均因 PG-FS-002 证据不足被安全门拒绝，gengrowth 均为零候选完整结果。
+- 以上运行均未采用 wrapper 外 Sheet/任务计划写入，也未创建额外 Feishu 或 Google Doc 报告。
 
 ---
 
@@ -142,5 +141,22 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 仅运行 `bash tools/scripts/gg-topic-register-tick.sh`。本次精确窗口为 18:02:25–18:14:25 CST，环境启用 apply（`dry_run=false`），但以退出码 1 和 `topic-register failed rc=1` 结束，非预算耗尽（`budget_exhausted=false`）。astrologywiki 被证据发现 apply 门拒绝：`ERR_OTHER: refusing --apply: evidence discovery insufficient for PG-FS-002`；其 candidates、updates、new_clusters、page_ids、preprocessor 与 evidence_discovery 均未输出，必须标记为不可用而非零。gengrowth 独立完整结果为 applied=true、candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]、evidence_discovery=[]。未进行 wrapper 外 Sheet、任务计划、Feishu 或 Google Doc 写入，未直接重试或手动绕过证据门。
+
+---
+
+### Q7 — 20:13
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-08-01T10:01:48.066Z (1785578508066)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行 `bash tools/scripts/gg-topic-register-tick.sh`。本次精确窗口为 20:01:12–20:13:43 CST，环境启用 apply（`dry_run=false`），以退出码 1 和 `topic-register failed rc=1` 结束，非预算耗尽（`budget_exhausted=false`）。astrologywiki 被证据发现 apply 门拒绝：`ERR_OTHER: refusing --apply: evidence discovery insufficient for PG-FS-002`；其 candidates、updates、new_clusters、page_ids、preprocessor 与 evidence_discovery 均未输出，标记为不可用。gengrowth 独立完整结果为 applied=true、candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]、evidence_discovery=[]。未进行 wrapper 外 Sheet、任务计划、Feishu 或 Google Doc 写入，未直接重试或手动绕过证据门。
 
 ---

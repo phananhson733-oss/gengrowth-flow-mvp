@@ -22,6 +22,7 @@ aliases:
 - 已同步 astrologywiki 与 gengrowth 的结果复盘表和请求收录队列，未发生失败或越过索引提交合规边界。
 - 执行 Phase 2 索引监控封装流程；两个站点 Sitemap API 成功，均无到期 URL，最终仅保留 4 个 P1 队列项。
 - 执行结果复盘性能封装流程；两个产品均无 D14/D30/D60 到期行，已生成当日优化任务报告。
+- 执行关键词补充 brief 的选题登记 wrapper；apply 模式下 astrologywiki 因 PG-FS-002 证据门失败，gengrowth 零候选且零更新。
 
 ---
 
@@ -100,5 +101,22 @@ After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-s
 **🤖 回答：**
 
 本轮候选为 0，未开浏览器、未提交、未发飞书。先跑 `--sync-published`（en_urls=361，appended/updated 均 0）与 `--sync-recap`（en_rows=312，updated=289）刷新表，再按「申请时间空 & day14_收录≠Y」筛选：结果复盘表 315 行中「申请时间」为空的 24 行，`day14_收录` 全部已翻 `Y`（含 07-31 曾观望的 enfp-gemini），故真候选=0，印证 08-01 记的"表列滞后 1–2 天会自行追平、不必改检测逻辑"。另核 `request-indexing-queue` 剩 4 行 P1（north-node-in-aquarius-2026 / why-am-i-afraid-of-commitment / ferran-torres-birth-chart / mars-in-scorpio），均为 07-14~07-20 首追踪、已提交过且 GSC 状态仍是「已抓取-尚未编入索引」的老观察项，不属本轮"未申请"候选，重复提交无收益，跳过。收尾已跑 `--sync-request-queue`（rows=4）。
+
+---
+
+### Q5 — 16:14
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-08-01T14:01:49.170Z (1785592909170)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅执行 `bash tools/scripts/gg-topic-register-tick.sh`，退出码为 1；最新日志窗口为 2026-08-02 16:00:59–16:13:43 CST，`dry_run=false`、`budget_exhausted=false`，即环境启用的 apply 模式。astrologywiki 在 apply 前被 `ERR_OTHER: refusing --apply: evidence discovery insufficient for PG-FS-002` 阻止；故候选、updates、new_clusters、page_ids 和 preprocessor 均未产出，不可记为零。gengrowth 已应用但 candidates=0、updates=0、new_clusters=0、page_ids=[]、created_page_ids=[]、preprocessor=[]，evidence_discovery=[]。本轮未执行 wrapper 外的 Sheet 或任务计划写入，也未额外创建 Feishu 或 Google Doc 报告。
 
 ---

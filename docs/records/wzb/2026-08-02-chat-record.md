@@ -90,3 +90,15 @@ After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-s
 仅执行 `bash tools/scripts/gg-recap-performance-tick.sh`，退出码为 0；日志窗口为 2026-08-02 10:01:44–10:01:50 CST，并以 `recap performance ok` 结束。astrologywiki：workbook `…jyzcQc`、Search Console `sc-domain:astrologywiki.com`、GA4 `properties/524765570`，精确里程碑行 0、更新复盘行 289、任务 291；D14/D30/D60 覆盖均为 0/0，报告为 `2026-08-02-astrologywiki-optimization-tasks.md`，优先级 P0=11、技术排查=161、P1=14、P2=0、P3=0、观察=105。gengrowth：workbook `…ZTIRA8`、Search Console `sc-domain:gengrowth.ai`、同一 GA4 属性，精确里程碑行 0、更新复盘行 50、任务 63；三项覆盖均为 0/0，报告为 `2026-08-02-gengrowth-optimization-tasks.md`，P0=0、技术排查=48、P1=5、P2=0、P3=0、观察=10。日志未输出独立的非到期/已填充跳过计数，故该字段不可用；未见失败、凭证或属性缺失。未进行手工 Sheet 修改、修复参数、发布、部署、源码修改、GSC Request Indexing 或 Google Indexing API 调用。
 
 ---
+
+### Q4 — 13:10 [claude]
+
+**🙋 提问：**
+
+（scheduled task `gsc-index-daily` 自动触发）每天跑一轮 GSC 手动 Request Indexing（astrologywiki.com）。本机(awayer_mini) Chrome 驱动，全新会话。……只对真未收录的提交，已收录的一律跳过。取 worklist（先做，便宜；没候选就别开浏览器）：候选=「申请时间空 & day14_收录≠Y」，从底部/最新往上，排除 kylian-mbappe-birth-chart / kylian-mbapp-birth-chart。若排除后候选=0 → 直接报告"无新候选，未提交"并结束。……若本轮 0 提交（无候选或全已收录），跳过飞书别发噪音。
+
+**🤖 回答：**
+
+本轮候选为 0，未开浏览器、未提交、未发飞书。先跑 `--sync-published`（en_urls=361，appended/updated 均 0）与 `--sync-recap`（en_rows=312，updated=289）刷新表，再按「申请时间空 & day14_收录≠Y」筛选：结果复盘表 315 行中「申请时间」为空的 24 行，`day14_收录` 全部已翻 `Y`（含 07-31 曾观望的 enfp-gemini），故真候选=0，印证 08-01 记的"表列滞后 1–2 天会自行追平、不必改检测逻辑"。另核 `request-indexing-queue` 剩 4 行 P1（north-node-in-aquarius-2026 / why-am-i-afraid-of-commitment / ferran-torres-birth-chart / mars-in-scorpio），均为 07-14~07-20 首追踪、已提交过且 GSC 状态仍是「已抓取-尚未编入索引」的老观察项，不属本轮"未申请"候选，重复提交无收益，跳过。收尾已跑 `--sync-request-queue`（rows=4）。
+
+---

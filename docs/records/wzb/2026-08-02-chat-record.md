@@ -18,7 +18,7 @@ aliases:
 
 > 【本区域在每天最后一次对话结束时生成/更新】
 
-- 执行 GenGrowth 固定行索引修复重提封装流程；两个产品均成功完成，未处理任何已修复行。
+- 执行 GenGrowth 固定行索引修复重提封装流程（05:00 与 17:31）；两个产品均成功完成，未处理任何已修复行。
 - 已同步 astrologywiki 与 gengrowth 的结果复盘表和请求收录队列，未发生失败或越过索引提交合规边界。
 - 执行 Phase 2 索引监控封装流程；两个站点 Sitemap API 成功，均无到期 URL，最终仅保留 4 个 P1 队列项。
 - 执行结果复盘性能封装流程；两个产品均无 D14/D30/D60 到期行，已生成当日优化任务报告。
@@ -118,5 +118,22 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 仅执行 `bash tools/scripts/gg-topic-register-tick.sh`，退出码为 1；最新日志窗口为 2026-08-02 16:00:59–16:13:43 CST，`dry_run=false`、`budget_exhausted=false`，即环境启用的 apply 模式。astrologywiki 在 apply 前被 `ERR_OTHER: refusing --apply: evidence discovery insufficient for PG-FS-002` 阻止；故候选、updates、new_clusters、page_ids 和 preprocessor 均未产出，不可记为零。gengrowth 已应用但 candidates=0、updates=0、new_clusters=0、page_ids=[]、created_page_ids=[]、preprocessor=[]，evidence_discovery=[]。本轮未执行 wrapper 外的 Sheet 或任务计划写入，也未额外创建 Feishu 或 Google Doc 报告。
+
+---
+
+### Q6 — 17:31
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: 2026-08-01T21:00:21.039Z (1785618021039)
+
+Run the deterministic fixed-row index repair workflow through `bash tools/scripts/gg-index-repair-resubmit-tick.sh`. The wrapper loads the local gg environment, loops the configured products (`GG_INDEX_MONITOR_PRODUCTS`, defaulting to astrologywiki and gengrowth), processes rows marked `已修复`, syncs `结果复盘表`, and refreshes `request-indexing-queue` in each product Google Sheet. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, do not click Search Console Request Indexing unattended, and do not create Feishu or Google Doc report artifacts. After the wrapper exits, summarize per-product `process-fixed`, `sync-recap`, `sync-request-queue` counts visible in the log, plus any failures.
+
+**🤖 回答：**
+
+执行 `bash tools/scripts/gg-index-repair-resubmit-tick.sh`，退出码为 0；本次独立日志窗口为 2026-08-02 17:31:20–17:31:52 CST，并以 `index repair-resubmit ok` 结束。astrologywiki：process-fixed fixed=0、resubmitted=0；sync-recap en_rows=312、appended=0、updated=0、skipped=312；sync-request-queue rows=4、P0=0、P1=4、P2=0、P3=0。gengrowth：process-fixed fixed=0、resubmitted=0；sync-recap en_rows=64、appended=0、updated=50、skipped=14；sync-request-queue rows=0、P0=0、P1=0、P2=0、P3=0。两个产品均为 rc=0，窗口内未见失败、错误、异常、认证、超时或 nonzero-rc 标记；未调用普通文章 Google Indexing API、未执行无人值守 Search Console Request Indexing，也未创建飞书或 Google Doc 报告。
 
 ---

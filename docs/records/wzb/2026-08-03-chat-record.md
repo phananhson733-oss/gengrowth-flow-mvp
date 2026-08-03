@@ -91,3 +91,20 @@ After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-s
 仅运行 `bash tools/scripts/gg-recap-performance-tick.sh`，退出码为 0。2026-08-03 10:01:31–10:01:48 CST 日志以 `recap performance ok` 结束。astrologywiki（wb=…jyzcQc，`sc-domain:astrologywiki.com`，GA4 `properties/524765570`）：精确到期未填行 4，`updated=289`，`tasks=291`；D14/D30/D60 分项未由日志输出，合计成功覆盖 4/4；报告为 `2026-08-03-astrologywiki-optimization-tasks.md`，P0=11、技术排查=158、P1=14、P2=1、P3=0、观察=107。gengrowth（wb=…ZTIRA8，`sc-domain:gengrowth.ai`，同一 GA4 property）：到期行 0，`updated=50`，`tasks=63`，D14/D30/D60 各 0/0；报告为 `2026-08-03-gengrowth-optimization-tasks.md`，P0=0、技术排查=48、P1=5、P2=0、P3=0、观察=10。两个产品的非到期/已填充跳过数均未单列，记为不可用；无失败、认证或 property 缺失边界。未使用 repair/backfill 参数、手工表格编辑、发布/部署、GSC Request Indexing 或 Google Indexing API。
 
 ---
+
+### Q4 — 16:16
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-08-02T14:01:55.630Z (1785679315630)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行 `bash tools/scripts/gg-topic-register-tick.sh`，退出码为 1。2026-08-03 16:02:50–16:16:35 CST 日志窗口为环境启用的 apply 模式（`dry_run=false`、`budget_exhausted=true`），以 `topic-register failed rc=1` 结束。astrologywiki 在 `PG-FS-002` 证据发现 gate 失败，未输出 candidates、updates、new_clusters、page_ids 或 preprocessor 状态，均不可用。gengrowth 在 `product_start` 前因剩余 17,348 ms 小于所需 30,000 ms 被跳过；日志内 candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[] 是 skipped summary 默认值，不代表完成扫描或已验证的零候选。未进行 wrapper 外的 Sheet、任务计划、Feishu 或 Google Doc 写入。
+
+---

@@ -25,6 +25,7 @@ aliases:
 - 执行了 GenGrowth Phase 2 索引监控；两个站点地图提交均成功，astrologywiki 有 2 条 URL 转为待关注。
 - 执行了结果复盘性能封装流程；AstrologyWiki 处理 4 条精确里程碑行，GenGrowth 无到期行，未越过任何手工或索引边界。
 - 执行了选题登记封装流程；apply 模式下 AstrologyWiki 的证据发现 gate 失败，GenGrowth 因运行预算耗尽而跳过，未验证到下游写入。
+- 执行了第二轮固定行索引修复与重提封装流程；两个产品均无 `已修复` 行，复盘表和请求队列同步完成且无失败标记。
 
 ## 对话记录
 

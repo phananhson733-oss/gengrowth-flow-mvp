@@ -23,7 +23,8 @@ aliases:
 - 已从当天独立日志核对复盘表与请求队列同步计数，并完成失败关键词复核。
 - 运行 Phase 2 索引监控；两产品站点地图提交成功，astrologywiki 检查 2 条到期 URL，未见失败或飞书回执。
 - 未越过普通文章 Indexing API、无人值守 Search Console 或额外报告工件边界。
-- 通过指定 wrapper 更新结果复盘表；两产品分别处理 2 与 5 条精确里程碑行，未发现凭据或属性边界失败；选题注册在两次运行中均受 astrologywiki 的 PG-FS-002 证据门阻断，gengrowth 无候选。
+- 通过指定 wrapper 更新结果复盘表；两产品分别处理 2 与 5 条精确里程碑行，未发现凭据或属性边界失败。
+- 选题注册三次均在 apply 门禁阶段失败；最新一轮 astrologywiki 受 PG-FS-002 证据不足拒绝，gengrowth 受 PG-SPD-001 预处理未完成拒绝，未输出业务计数。
 
 ---
 
@@ -141,5 +142,22 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 仅运行 `bash tools/scripts/gg-topic-register-tick.sh`，退出码为 1。当天日志精确窗口为 18:02:19–18:14:39 CST（运行时长 12 分 20 秒），`dry_run=false`、`budget_exhausted=false`，为环境启用的 apply 模式。astrologywiki 因 `ERR_OTHER: refusing --apply: evidence discovery insufficient for PG-FS-002` 失败；其 candidates、updates、new_clusters、page_ids、preprocessor 均未输出，故不可用。gengrowth 独立结果为 `applied=true`，candidates=0、updates=0、new_clusters=0、page_ids/created_page_ids/preprocessor/evidence_discovery 均为空；selection_mode=generate、audit_incomplete=0、ops_blocked_count=0。窗口未含 Feishu 回执，通知状态不可确认。未执行任何 wrapper 外的 Sheet、任务计划、Feishu 或 Google Doc 写入。
+
+---
+
+### Q7 — 20:15
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-08-04T10:01:36.509Z (1785837696509)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行 `bash tools/scripts/gg-topic-register-tick.sh`，退出码为 1。精确日志窗口为 20:02:09–20:14:45 CST，`dry_run=false`、`budget_exhausted=false`，故为环境启用的 apply 模式。astrologywiki 因 `ERR_OTHER: refusing --apply: evidence discovery insufficient for PG-FS-002` 失败；gengrowth 因 `ERR_OTHER: refusing --apply: preprocessor incomplete for PG-SPD-001:budget_exhausted, PG...` 失败（原始日志即截断）。两个产品仅输出 product/ok/error，均未输出 candidates、updates、new_clusters、page_ids 或完整 preprocessor 状态，故上述业务字段全部不可用，不能写作 0；窗口没有 Feishu 回执。未执行任何 wrapper 外的 Sheet、任务计划、Feishu 或 Google Doc 写入。
 
 ---

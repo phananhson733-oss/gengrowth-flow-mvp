@@ -27,6 +27,7 @@ aliases:
 - 执行了 GenGrowth Phase 2 索引监控 wrapper；两个站点站点地图提交成功、到期 URL 均为零，未触发人工 GSC 提交或飞书通知。
 - 执行了结果复盘性能 wrapper；AstrologyWiki 有 6 条精确里程碑计划行、GenGrowth 为 0，两个产品均完成 wrapper 所有者字段刷新并生成优化任务报告。
 - 执行了关键词补充 brief 的 topic-register wrapper；apply 模式在两项安全 gate 被拒绝后失败，未推断未发出的产品计数或下游写入。
+- 执行了第二次固定行索引修复重提 wrapper；两个产品均无已修复行需要重提，回顾表和请求索引队列的本轮同步已由独立日志窗口核验。
 
 ---
 
@@ -110,5 +111,22 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 仅执行 `bash tools/scripts/gg-topic-register-tick.sh`，退出码为 1。以 `~/gengrowth-agents/cron-sync/topic_register/2026-08-05.log` 中 16:01:56–16:15:27 CST 的独立窗口核验：环境启用 apply 模式（`dry_run=false`、`budget_exhausted=false`），但窗口以 `topic-register failed rc=1` 结束。astrologywiki 被 evidence-discovery apply gate 拒绝：`PG-FS-002` 证据不足；gengrowth 被 preprocessor 完整性 gate 拒绝：`PG-SPD-001:budget_exhausted, PG...`（日志截断后续 ID）。两产品仅发出 `product`、`ok=false` 与 `error`，故 candidates、updates、new_clusters、page_ids、preprocessor statuses 均不可用而非零；日志没有 Feishu 回执，通知结果也不可用。未进行 wrapper 外 Sheet 写入、任务计划编辑、Feishu 或 Google Doc 报告产物创建。
+
+---
+
+### Q5 — 17:33
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: 2026-08-04T21:01:08.970Z (1785877268970)
+
+Run the deterministic fixed-row index repair workflow through `bash tools/scripts/gg-index-repair-resubmit-tick.sh`. The wrapper loads the local gg environment, loops the configured products (`GG_INDEX_MONITOR_PRODUCTS`, defaulting to astrologywiki and gengrowth), processes rows marked `已修复`, syncs `结果复盘表`, and refreshes `request-indexing-queue` in each product Google Sheet. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, do not click Search Console Request Indexing unattended, and do not create Feishu or Google Doc report artifacts. After the wrapper exits, summarize per-product `process-fixed`, `sync-recap`, `sync-request-queue` counts visible in the log, plus any failures.
+
+**🤖 回答：**
+
+已执行 `bash tools/scripts/gg-index-repair-resubmit-tick.sh`，退出码为 0。以 2026-08-05 17:32:38–17:33:14 CST 的独立日志窗口核验：astrologywiki 的 process-fixed 为 fixed=0/resubmitted=0，sync-recap 为 en_rows=312/appended=0/updated=290/skipped=22，sync-request-queue 为 rows=2/P0=0/P1=2/P2=0/P3=0；gengrowth 的 process-fixed 为 0/0，sync-recap 为 64/0/50/14，队列为 0。窗口以 `index repair-resubmit ok` 结束，失败关键词扫描为空；该 wrapper 不使用普通文章 Google Indexing API，也不执行无人值守 Request Indexing 点击，未创建 Feishu 或 Google Doc 报告产物。
 
 ---

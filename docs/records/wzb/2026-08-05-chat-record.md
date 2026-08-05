@@ -26,7 +26,24 @@ aliases:
 - 05:01:39–05:02:09 CST 的索引修复日志无失败标记，且未跨越受限 Indexing API、无人值守点击或额外报告产物边界。
 - 执行了 GenGrowth Phase 2 索引监控 wrapper；两个站点站点地图提交成功、到期 URL 均为零，未触发人工 GSC 提交或飞书通知。
 - 执行了结果复盘性能 wrapper；AstrologyWiki 有 6 条精确里程碑计划行、GenGrowth 为 0，两个产品均完成 wrapper 所有者字段刷新并生成优化任务报告。
-- 在 16:01、18:01 与 20:02 执行了关键词补充 brief 的 topic-register wrapper；apply 模式均在 evidence 与 preprocessor 安全 gate 被拒绝后失败，未推断未发出的产品计数或下游写入。
+- 在 16:01、18:01、20:02 与 22:01 执行了关键词补充 brief 的 topic-register wrapper；apply 模式均在 evidence 与 preprocessor 安全 gate 被拒绝后失败，未推断未发出的产品计数或下游写入。
+
+---
+
+### Q8 — 22:14
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-08-05T12:01:42.459Z (1785931302459)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅执行 `bash tools/scripts/gg-topic-register-tick.sh`，退出码为 1。以 `~/gengrowth-agents/cron-sync/topic_register/2026-08-05.log` 中 22:01:56–22:13:56 CST 的独立窗口核验：本地环境启用 apply 模式（`dry_run=false`、`budget_exhausted=false`），但窗口以 `topic-register failed rc=1` 结束。astrologywiki 被 evidence-discovery apply gate 拒绝：`PG-FS-002` 证据不足；gengrowth 被 preprocessor 完整性 gate 拒绝：`PG-SPD-001:budget_exhausted, PG...`（日志截断后续 ID）。两产品仅发出 `product`、`ok=false` 与 `error`，故 candidates、updates、new_clusters、page_ids、preprocessor statuses 均不可用而非零；日志没有 Feishu 回执，通知结果也不可用。未进行 wrapper 外 Sheet 写入、任务计划编辑、Feishu 或 Google Doc 报告产物创建。
 
 ---
 

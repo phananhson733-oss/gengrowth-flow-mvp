@@ -128,3 +128,22 @@ Run the deterministic fixed-row index repair workflow through `bash tools/script
 运行 `bash tools/scripts/gg-index-repair-resubmit-tick.sh`；以 2026-08-06 17:31:50–17:32:23 CST 的独立日志窗口为证，任务以 `index repair-resubmit ok` 结束，两个产品均为 `rc=0`。astrologywiki：`process-fixed fixed=0 resubmitted=0`，`sync-recap en_rows=312 appended=0 updated=0 skipped=312`，`sync-request-queue rows=2 P0=0 P1=2 P2=0 P3=0`。gengrowth：`process-fixed fixed=0 resubmitted=0`，`sync-recap en_rows=64 appended=0 updated=50 skipped=14`，`sync-request-queue rows=0 P0=0 P1=0 P2=0 P3=0`。未发现失败、错误、异常、认证、超时或非零返回标记；`skipped` 仅出现于 recap 计数。未使用普通文章 Google Indexing API，未执行无人值守 Search Console Request Indexing 点击，且未创建 Feishu 或 Google Doc 报告。
 
 ---
+
+### Q6 — 18:13
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-08-06T08:01:47.199Z (1786003307199)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行 `bash tools/scripts/gg-topic-register-tick.sh`，退出码为 1。以 2026-08-06 18:01:01–18:13:21 CST 的独立日志窗口为证：环境启用了 apply（`dry_run=false`），且 `budget_exhausted=false`。astrologywiki 在写入前因 `PG-FS-002` 的 evidence discovery 不足被拒绝；gengrowth 在写入前因 `PG-SPD-001:budget_exhausted, PG...` 的预处理器不完整被拒绝（日志本身截断其余 ID）。两个产品仅输出 `product/ok=false/error`，故 candidates、updates、new_clusters、page_ids、preprocessor statuses 均为不可用，而非零；窗口未出现 Feishu 投递回执。未手改 Sheet、未直接编辑 task plan，未创建额外 Feishu 或 Google Doc 报告。
+
+---
+
+---

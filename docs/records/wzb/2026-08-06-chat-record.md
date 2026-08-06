@@ -24,7 +24,7 @@ aliases:
 - 已完成固定行索引修复、Phase 2 索引监控与结果复盘工作流；各项均以独立闭合日志窗口核验。
 - 固定行修复没有有效待处理行；索引监控的两个站点 Sitemap API 成功，且只有 astrologywiki 留有 2 条 P1 人工候选。
 - 结果复盘显示 astrologywiki 有 6 条精确里程碑待处理行，gengrowth 为 0；报告已由 wrapper 生成。
-- 今日三次关键词补充 brief 的 apply 运行均在写入前安全闸失败；最新 20:03 窗口仍未输出候选、更新、聚类、页面 ID 或预处理器明细。
+- 今日四次关键词补充 brief 的 apply 运行均在写入前安全闸失败；最新 22:01 窗口仍未输出候选、更新、聚类、页面 ID 或预处理器明细。
 - 17:31 固定行索引修复重提再次完成；两个产品均无已修复行，astrologywiki 保留 2 条 P1 人工候选。
 
 ---
@@ -162,5 +162,22 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 仅运行 `bash tools/scripts/gg-topic-register-tick.sh`，退出码为 1。以 2026-08-06 20:03:03–20:03:45 CST 的独立日志窗口为证：环境启用了 apply（`dry_run=false`），且 `budget_exhausted=false`。astrologywiki 在写入前因 `PG-FS-002` 的 evidence discovery 不足被拒绝；gengrowth 在写入前因 `PG-SPD-001:v1_deterministic_fal...` 的预处理器不完整被拒绝，日志本身截断了完整状态。两个产品均仅输出 `product/ok=false/error`，因此 candidates、updates、new_clusters、page_ids、preprocessor statuses 均不可用，而非零；窗口中未出现 Feishu 投递回执。未手改 Sheet、未直接编辑 task plan，未创建额外 Feishu 或 Google Doc 报告。
+
+---
+
+### Q8 — 22:02
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-08-06T12:02:18.177Z (1786017738177)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行 `bash tools/scripts/gg-topic-register-tick.sh`，退出码为 1。以 2026-08-06 22:01:19–22:02:00 CST 的独立日志窗口为证：环境启用了 apply（`dry_run=false`），且 `budget_exhausted=false`。astrologywiki 在写入前因 `PG-FS-002` 的 evidence discovery 不足被拒绝；gengrowth 在写入前因 `PG-SPD-001:v1_deterministic_fal...` 的预处理器不完整被拒绝，日志本身截断了完整状态。两个产品均仅输出 `product/ok=false/error`，因此 candidates、updates、new_clusters、page_ids、preprocessor statuses 均不可用，而非零；窗口中未出现 Feishu 投递回执。未手改 Sheet、未直接编辑 task plan，未创建额外 Feishu 或 Google Doc 报告。
 
 ---

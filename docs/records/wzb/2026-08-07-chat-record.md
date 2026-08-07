@@ -90,3 +90,15 @@ After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-s
 **🤖 回答：**
 
 仅执行 `bash tools/scripts/gg-recap-performance-tick.sh`，标准输出为空但进程退出码为 0；再以 2026-08-07 10:01:45–10:02:21 CST 的最新日志窗口核验，终态为 `recap performance ok`，无 metrics fetch 警告或失败。AstrologyWiki（工作簿尾号 `jyzcQc`，`sc-domain:astrologywiki.com`，GA4 `properties/524765570`）：精确到期且未填节点计划行聚合 `rows=11`，写回变更行 `updated=291`，任务 292（P0=16、技术排查=148、P1=12、P2=0、P3=0、观察=116），报告为 `~/gengrowth-agents/reports/recap-performance/2026-08-07-astrologywiki-optimization-tasks.md`。GenGrowth（工作簿尾号 `ZTIRA8`，`sc-domain:gengrowth.ai`，相同 GA4）：`rows=4`，`updated=50`，任务 63（P0=0、技术排查=47、P1=5、P2=0、P3=0、观察=11），报告为 `~/gengrowth-agents/reports/recap-performance/2026-08-07-gengrowth-optimization-tasks.md`。日志仅提供 D14/D30/D60 到期行聚合，未拆分各节点覆盖与非到期/已填跳过数，故这些字段如实标记为不可用，不从聚合数推断；未手工改表、未使用 Indexing API 或执行 GSC Request Indexing。
+
+### Q4 — 13:13 [claude]
+
+**🙋 提问：**
+
+（原生 cron 自动任务 gsc-index-daily）每天跑一轮 GSC 手动 Request Indexing（astrologywiki.com）。本机(awayer_mini) Chrome 驱动，全新会话。只对真未收录的提交，已收录的一律跳过；候选=0 则不开浏览器。
+
+**🤖 回答：**
+
+本轮 GSC 提交 0 篇：`--sync-published` 得 en_urls=361 / appended=0，recap 候选筛出 0 条（申请时间空且 day14 未收录），按任务约定未开浏览器、未消耗配额。但 en_urls 已连续第 9 天冻在 361（07-30→08-07），按 memory 判据重跑升级排查诊断三连，结论与 08-06 逐字一致且**无人处置**：plan mtime 仍是 08-05 17:57，`com.gengrowth.seo-blog` 最后一次 `tick complete` 停在 07-24 19:08（硬停第 14 天），err.log 尾部仍为 `pinned plan contains duplicate active page ids`（累计 16 次），根因是 W22 plan 第 515/518 行重复的 `- [ ] PG-KB-002`；删掉重复行后第 678/679 行 `PG-VEDIC-009/010` 的 missing-row 会立刻回来（选题登记表 VEDIC 只到 008/row361），保活三 plist（lane-watchdog / flow-driver / ledger-reconcile）也仍未 `launchctl load`。修复属运营写操作，本 cron 未擅自动手，已发飞书告警（`gg-notify raw` 返回 ok:true 确认送达）并刷新 `ai-profile/reminders.md` 与 memory；另收尾跑了 `--sync-recap`（en_rows=312/updated=291）与 `--sync-request-queue`（rows=2, P1=2）。
+
+---

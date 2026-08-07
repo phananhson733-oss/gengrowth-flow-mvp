@@ -286,19 +286,36 @@ export function buildTierGateBlock({ tier, template, entity, friction_brief, log
   ].join('\n');
 }
 
-// 从 brief.friction_brief 生成 3 条 TODO friction_themes（fallback，无真实 RAG 数据时）。
+// 从 brief.friction_brief 生成 3 条 friction_themes（fallback，无真实 RAG 数据时）。
+//
+// 这些条目会被 _render-aura-shared.frictionMineBlock() 渲染成
+//   <field name="…" source="…" mentions="N">…</field>
+// 直接喂给写手。它们此前伪造了 source_id='reddit#1' / domain='old.reddit.com' /
+// mention_count=5 —— 一份从未被抓取过的 Reddit 溯源。写手把它当成真实社区证据，
+// 于是产出"Reddit 用户反复抱怨…"这类无法核实的第三方引述；W25 追溯扫描在 31 篇
+// gengrowth 文章里查出 15 篇有事实问题，"第三方逐字引述无法核实"正是其中一类。
+// 现在 fallback 明确自我声明为未溯源的编辑判断：source 标 unsourced#N、mentions=0、
+// 正文前缀 UNSOURCED，写手看到就不会把它当引述用。真实数据仍优先走
+// .gg-cache/<page_id>/friction-mine.rag.json（见下面 loadFrictionThemes）。
 export function fallbackFrictionThemes(friction_brief, target_keyword) {
   const trimmed = friction_brief ? String(friction_brief).trim() : '';
   const themeName = trimmed
     ? trimmed.split(/[,，、\n.;]+/)[0].trim().toLowerCase().replace(/\s+/g, '_').slice(0, 30) || 'theme_1'
     : 'theme_1';
   const quote = trimmed
-    ? `Reddit-style scrubbed quote capturing: ${trimmed.slice(0, 100)}`
-    : `TODO: scrubbed Reddit quote about searching "${target_keyword}"`;
+    ? `UNSOURCED editorial friction statement (no community quote was mined — do NOT attribute this to any user, forum or study): ${trimmed.slice(0, 200)}`
+    : `UNSOURCED: no friction evidence mined for "${target_keyword}" — do NOT invent a user quote; write the friction from the brief instead`;
+  const unsourced = (n, text) => ({
+    theme: n === 1 ? themeName : `${themeName}_${'abc'[n - 1]}`,
+    scrubbed_quote: text,
+    source_id: `unsourced#${n}`,
+    domain: '',
+    mention_count: 0,
+  });
   return [
-    { theme: themeName, scrubbed_quote: quote, source_id: 'reddit#1', domain: 'old.reddit.com', mention_count: 5 },
-    { theme: `${themeName}_b`, scrubbed_quote: `TODO: 2nd scrubbed quote (frustration with current top-10 results)`, source_id: 'reddit#2', domain: 'old.reddit.com', mention_count: 4 },
-    { theme: `${themeName}_c`, scrubbed_quote: `TODO: 3rd scrubbed quote (specific question users keep asking)`, source_id: 'reddit#3', domain: 'old.reddit.com', mention_count: 3 },
+    unsourced(1, quote),
+    unsourced(2, 'UNSOURCED: second friction slot empty — no mined evidence. Do NOT fabricate a quote to fill it.'),
+    unsourced(3, 'UNSOURCED: third friction slot empty — no mined evidence. Do NOT fabricate a quote to fill it.'),
   ];
 }
 

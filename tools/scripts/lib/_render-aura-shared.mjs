@@ -81,6 +81,22 @@ export function authorPromptCapsule(cfg) {
 // string. Names are safeField-escaped (defense-in-depth; they are not user data
 // but the renderer wraps everything else, so we stay consistent).
 export function authorityAllowlist(cfg) {
+  // SITE GATE (2026-08-07). Every persona in authority-allowlist.json is an ASTROLOGY
+  // lineage, because the allowlist is keyed by author_id and all four personas are
+  // astrology personas. gengrowth (B2B SEO) has no persona of its own, so author
+  // routing falls back to marcus-orion — and the rendered prompt for a post about
+  // KEYWORD RESEARCH was telling the writer "仅允许命名以下真实奠基人来锚定权威:
+  // Dane Rudhyar, Robert Hand, Stephen Arroyo, Liz Greene, Richard Tarnas".
+  // Verified in .gg-cache/prompts/PG-KOD-001.v8-prompt.md before this gate existed.
+  // Mis-attributed / fabricated sources is precisely what the W25 retro found in
+  // 15 of 31 published gengrowth articles.
+  //
+  // gengrowth must NOT inherit it, and needs no replacement list: its citation
+  // integrity is enforced by its own red line (red-lines.gengrowth.checkRL12 —
+  // real markdown links, "Author (year)", or an explicit [[<TBD-external-link>]]),
+  // not by a curated name lineage. '' is the documented neutral default below.
+  // Same GG_SITE test as the template switch further down in this file.
+  if (process.env.GG_SITE === 'gengrowth') return '';
   const names = authorityNamesFor(cfg && cfg.author_id);
   if (!names.length) return '';
   const list = names.map((n) => safeField(n)).join(', ');

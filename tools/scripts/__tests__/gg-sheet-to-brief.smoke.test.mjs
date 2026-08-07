@@ -277,7 +277,22 @@ test('fallbackFrictionThemes returns exactly 3 entries', () => {
   for (const t of themes) {
     assert.ok(t.theme);
     assert.ok(t.scrubbed_quote);
-    assert.equal(t.domain, 'old.reddit.com');
+  }
+});
+
+// The fallback runs when NO friction was ever mined. It used to hand the writer
+// source_id='reddit#1' / domain='old.reddit.com' / mention_count=5 — a citation
+// for a scrape that never happened — and the writer duly produced unverifiable
+// "Reddit users keep complaining…" lines. Nothing here may look like a real source.
+test('fallbackFrictionThemes never fabricates a community source', () => {
+  for (const brief of ['shade confusion is the main issue', '']) {
+    for (const t of fallbackFrictionThemes(brief, 'orange aura')) {
+      assert.equal(t.domain, '', 'no domain may be claimed for unmined friction');
+      assert.equal(t.mention_count, 0, 'no mention count may be claimed for unmined friction');
+      assert.match(t.source_id, /^unsourced#\d+$/, `source_id must self-declare as unsourced, got ${t.source_id}`);
+      assert.doesNotMatch(t.source_id, /reddit/i);
+      assert.match(t.scrubbed_quote, /UNSOURCED/, 'the quote text must warn the writer it is not a quote');
+    }
   }
 });
 
@@ -289,7 +304,7 @@ test('fallbackFrictionThemes derives theme name from first friction phrase', () 
 test('fallbackFrictionThemes handles empty friction_brief', () => {
   const themes = fallbackFrictionThemes('', 'x meaning');
   assert.equal(themes.length, 3);
-  assert.match(themes[0].scrubbed_quote, /TODO/);
+  assert.match(themes[0].scrubbed_quote, /UNSOURCED/);
 });
 
 // ---------- composeOverride ----------

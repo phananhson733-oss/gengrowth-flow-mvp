@@ -45,10 +45,15 @@ import { existsSync, readFileSync, writeFileSync, statSync } from 'node:fs';
 import { stripPreH1 } from './lib/strip-preamble.mjs';
 import { WORKER_CWD } from './lib/worker-cwd.mjs';
 
-// Defaults mirror the agentic-rescue knobs in gg-seo-autopilot.mjs
-// (GG_AGENTIC_MODEL || 'claude-sonnet-4-6', GG_AGENTIC_EFFORT || 'high') so the
-// replacement keeps the same model/effort behavior when the caller omits them.
-const DEFAULT_MODEL = process.env.GG_AUTHOR_REPAIR_MODEL || process.env.GG_AGENTIC_MODEL || 'claude-sonnet-4-6';
+// FRONTIER-ONLY (wzb 2026-05-23, docs/OPS_OVERVIEW.md "LLM 选择策略"): never Sonnet/Haiku/mini
+// for content generation — the cost delta is dwarfed by ranking ROI. This script REWRITES
+// ARTICLE PROSE that ships to production, so it is squarely inside that policy, yet it was
+// the one generation-path script still defaulting to Sonnet while _call-hermes /
+// gg-brief-suggest / gg-phase2-fix / gg-llm-orchestrator all declare FRONTIER-ONLY.
+// Caught 2026-08-07 when a repair run on PG-ILA-001 spawned `claude -p --model claude-sonnet-4-6`.
+// Override per-call with --model or GG_AUTHOR_REPAIR_MODEL; GG_AGENTIC_MODEL still wins if set,
+// so an operator who deliberately configured the agentic tier keeps that choice.
+const DEFAULT_MODEL = process.env.GG_AUTHOR_REPAIR_MODEL || process.env.GG_AGENTIC_MODEL || 'claude-opus-4-8';
 const DEFAULT_EFFORT = process.env.GG_AUTHOR_REPAIR_EFFORT || process.env.GG_AGENTIC_EFFORT || 'high';
 const DEFAULT_FALLBACK_EFFORT = process.env.GG_AUTHOR_REPAIR_FALLBACK_EFFORT || 'high';
 // A repair is a surgical rewrite, not a full research/generation pass. Bound

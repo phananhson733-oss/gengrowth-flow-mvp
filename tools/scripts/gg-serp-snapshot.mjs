@@ -62,7 +62,14 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = join(__dirname, '..', '..');
 const DEFAULT_SERP_DIR = join(REPO_ROOT, '.gg-cache', 'serp');
 
-const PAGE_ID_RE = /^page_[a-z0-9_]{3,80}$/;
+// Matches the repo-wide page_id contract (gg-content-draft / gg-friction-mine /
+// gg-entity-passport / gg-brief-suggest all use this exact regex). It used to be
+// `/^page_[a-z0-9_]{3,80}$/`, which predates the PG-<CLUSTER>-NNN ids the sheet has
+// issued since PIPELINE stage 3.6 — so every PG-* page (all of gengrowth, plus newer
+// astrology pages) was REJECTED here and could never get a SERP cache, which in turn
+// made gg-brief-suggest hard-abort on "SERP < 5 distinct titles" forever. Still safe
+// for the `${pageId}.json` path join: no dots, no slashes, so no traversal.
+const PAGE_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
 const MAX_PASTE_BYTES = 1024 * 1024; // 1 MB
 const DEFAULT_MAX_SNIPPETS = 10;
 const DEFAULT_MAX_LEN = 500;

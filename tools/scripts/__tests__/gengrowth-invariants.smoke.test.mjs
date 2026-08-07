@@ -17,7 +17,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -278,4 +278,133 @@ test('invariant 2: a gengrowth plan filename would be filtered out by the real p
 
   // And it must still pass the discovery glob the filter is chained onto.
   assert.match(keep, /blog-output-plan.*\.md$/, 'non-gengrowth plan must match the discovery glob');
+});
+
+// ── invariant 3: the astrology authority allowlist must never reach a gengrowth prompt ──
+//
+// authority-allowlist.json is keyed by author_id, and all four personas in it are ASTROLOGY
+// personas. gengrowth (B2B SEO) has no persona of its own, so gg-seo-autopilot's author
+// routing falls back to marcus-orion — which used to render, into a post about keyword
+// research, "仅允许命名以下真实奠基人来锚定权威: Dane Rudhyar, Robert Hand, …".
+// Fabricated / mis-attributed sources is what the W25 retro found in 15 of 31 published
+// gengrowth articles. gengrowth needs no replacement list: red-lines.gengrowth.checkRL12
+// enforces citation integrity via real markdown links instead.
+test('invariant 3: authorityAllowlist() is empty for gengrowth, unchanged for oracle', async () => {
+  const { authorityAllowlist } = await import(
+    pathToFileURL(resolve(REPO, 'tools', 'scripts', 'lib', '_render-aura-shared.mjs')).href
+  );
+  const cfg = { author_id: 'marcus-orion' };
+  const prev = process.env.GG_SITE;
+  try {
+    // Default (oracle) path must keep naming the astrology lineage.
+    process.env.GG_SITE = '';
+    const oracle = authorityAllowlist(cfg);
+    assert.ok(oracle.length > 0, 'oracle must still receive its authority allowlist block');
+    assert.match(oracle, /Rudhyar/, 'oracle allowlist content changed unexpectedly');
+
+    // gengrowth must receive nothing at all.
+    process.env.GG_SITE = 'gengrowth';
+    const gg = authorityAllowlist(cfg);
+    assert.equal(gg, '', 'gengrowth must get an EMPTY authority allowlist block');
+    for (const name of ['Rudhyar', 'Liz Greene', 'Robert Hand', 'Stephen Arroyo', 'Tarnas']) {
+      assert.doesNotMatch(gg, new RegExp(name, 'i'), `astrology authority "${name}" leaked into a gengrowth prompt`);
+    }
+  } finally {
+    if (prev === undefined) delete process.env.GG_SITE; else process.env.GG_SITE = prev;
+  }
+});
+
+// ── invariant 4: every gengrowth cluster prefix must be publishable ──
+//
+// A prefix missing from W25_PREFIXES does not fail loudly: scanReady just never matches the
+// draft, and the finished article sits authored-but-unpublished forever. These three were
+// added on 2026-08-07 with the keyword_opportunity / search_performance_diagnosis /
+// internal_link_architecture clusters.
+test('invariant 4: DRAFT_RE accepts the 2026-08-07 cluster prefixes', () => {
+  const src = readFileSync(PUBLISH_SRC_PATH, 'utf8');
+  const m = src.match(/const W25_PREFIXES = \[([\s\S]*?)\];/);
+  assert.ok(m, 'W25_PREFIXES literal not found in gg-gengrowth-publish.mjs');
+  const prefixes = [...m[1].matchAll(/'([A-Z0-9]+)'/g)].map((x) => x[1]);
+  for (const p of ['KOD', 'SPD', 'ILA']) {
+    assert.ok(prefixes.includes(p), `prefix ${p} missing — its articles would never publish`);
+  }
+  const re = new RegExp(`^(PG-(?:${prefixes.join('|')})-\\d+)-[a-z0-9]+-v8\\.md$`, 'i');
+  for (const f of ['PG-KOD-001-claude-v8.md', 'PG-SPD-001-claude-v8.md', 'PG-ILA-001-claude-v8.md']) {
+    assert.match(f, re, `${f} must be recognized as a publishable gengrowth draft`);
+  }
+  // An astrology draft in the same shared _staging/ must still be rejected.
+  assert.doesNotMatch('PG-HOUSE-001-claude-v8.md', re, 'astrology draft must not be publishable to gengrowth');
+});
+
+// ── invariant 5: gengrowth internal links must actually resolve ──────────────
+//
+// transformBody() is imported from the ORACLE bridge and its default TBD_LINK_RULES are
+// all `/en/wiki/<astrology-slug>`. Before the gengrowth catalog existed, every
+// [[<TBD-internal-link: …>]] in every gengrowth draft matched nothing and de-linked to
+// italic text — measured on PG-KOD-001: 5 of 5 internal links dropped. The cluster link
+// topology in 主题集群表 `internal_link_rule` had therefore never shipped.
+test('invariant 5: gengrowth TBD internal links resolve to /blog/ hrefs, not italic', async () => {
+  const { transformBody } = await import(
+    pathToFileURL(resolve(REPO, 'tools', 'scripts', 'gg-md-to-oracle-ts.mjs')).href
+  );
+  const src = readFileSync(resolve(REPO, 'tools', 'scripts', 'gg-md-to-gengrowth-blog.mjs'), 'utf8');
+  assert.match(src, /GENGROWTH_TBD_LINK_RULES/, 'gengrowth internal-link catalog missing');
+  assert.match(
+    src,
+    /transformBody\(bodyNoH1,\s*slug,\s*GENGROWTH_LINK_OPTS\)/,
+    'gengrowth bridge must pass its own link catalog (and selfSlug) to transformBody',
+  );
+  assert.match(src, /pathPrefix:\s*'\/blog\/'/, "gengrowth links must use /blog/ (the /en/ form 308-redirects)");
+
+  // The oracle default must still behave exactly as before for an astrology description.
+  const oracleOut = transformBody('see [[<TBD-internal-link: Rihanna birth chart>]] here');
+  assert.match(oracleOut, /\]\(\/en\/wiki\/rihanna-birth-chart\)/, 'oracle default link resolution regressed');
+});
+
+// ── invariant 6: no fabricated external citation URLs ────────────────────────
+//
+// resolveExternalTbdLink must only ever emit a REAL href from a rule. The astrology path
+// synthesizes a wikipedia.org URL from the topic; the gengrowth rules carry hard-coded
+// official-documentation URLs. An unmatched service must de-link (italic), never guess.
+test('invariant 6: an unknown external source de-links instead of inventing a URL', async () => {
+  const { resolveExternalTbdLink } = await import(
+    pathToFileURL(resolve(REPO, 'tools', 'scripts', 'gg-md-to-oracle-ts.mjs')).href
+  );
+  const out = resolveExternalTbdLink('Some Analytics Vendor', 'Quarterly Benchmark Report');
+  assert.equal(out, '*Quarterly Benchmark Report*', 'unmatched external source must not become a link');
+  assert.doesNotMatch(out, /https?:\/\//, 'no URL may be fabricated for an unmatched source');
+
+  // A gengrowth rule must return its own hard-coded href, not one derived from the topic.
+  const rules = [{ match: /search[\s-]*console/i, href: 'https://support.google.com/webmasters/answer/7042828', label: 'GSC docs' }];
+  const hit = resolveExternalTbdLink('Google Search Central', 'Search Console overview', { externalRules: rules });
+  assert.equal(hit, '[GSC docs](https://support.google.com/webmasters/answer/7042828)');
+});
+
+// ── invariant 7: a derived excerpt must never end mid-phrase ────────────────
+//
+// The excerpt becomes the page's meta description and the blog-card subtitle, so a
+// truncation that stops on a dash, a comma, or a dangling function word is user-visible.
+// Two real defects found on the 2026-08-07 batch: an em dash was not in the trailing-
+// punctuation class ("…though published definitions vary —"), and stripping a dangling
+// function word EXPOSED a comma that nothing stripped afterwards ("…in Ahrefs, or as"
+// → "…in Ahrefs,"). Backticks also survived into the description as literal characters.
+test('invariant 7: deriveDescription never ends on dangling punctuation or markup', async () => {
+  const { deriveDescription } = await import(
+    pathToFileURL(resolve(REPO, 'tools', 'scripts', 'gg-md-to-oracle-ts.mjs')).href
+  );
+  const bodies = [
+    // em dash right at the truncation boundary
+    '## H\n\nStriking distance keywords are **queries where your pages already rank close to the top — typically the 5–20 position range, though published definitions vary** — existing pages close enough to the top that targeted on-page changes tend to move them up, rather than requiring new content.',
+    // inline code + a comma that only appears after a function word is stripped
+    '## H\n\nZero search volume keywords are search queries that keyword tools report as having no measurable monthly searches — typically shown as `0` in Ahrefs, or as `n/a` in Semrush, which applies that label when a keyword falls under 10 average monthly searches.',
+    // short body: must pass through untouched
+    '## H\n\nA low-hanging fruit keyword is **a search term you can realistically rank for with the authority your site already has**.',
+  ];
+  for (const body of bodies) {
+    const d = deriveDescription(body, 160);
+    assert.ok(d.length > 0, 'excerpt must not be empty');
+    assert.doesNotMatch(d, /[—–―,，;；:]$/u, `excerpt ends on dangling punctuation: "…${d.slice(-40)}"`);
+    assert.doesNotMatch(d, /`/, `excerpt leaked a literal backtick: "…${d.slice(-40)}"`);
+    assert.doesNotMatch(d, /\s(of|the|a|an|and|or|to|by|in|on|for|with|at|as)$/i, `excerpt ends on a dangling function word: "…${d.slice(-40)}"`);
+  }
 });

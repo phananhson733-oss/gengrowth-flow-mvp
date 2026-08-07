@@ -142,6 +142,10 @@ export function deriveDescription(body, maxLen = 160) {
   let cleaned = para
     .replace(/\*\*([^*]+)\*\*/g, '$1')
     .replace(/\*([^*]+)\*/g, '$1')
+    // Inline code: a description is plain text, so backticks must not survive into
+    // the meta description (they render literally). Seen 2026-08-07 on a draft whose
+    // first paragraph read "typically shown as `0` in Ahrefs".
+    .replace(/`([^`]+)`/g, '$1')
     .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
     .replace(/\[\[<TBD-internal-link:\s*([^>]+)>\]\]/g, '$1')
     .replace(/\[\[<\s*TBD-external-link:[^|>]*\|\s*([^|>]+?)\s*\|[^>]*>\]\]/g, '$1')
@@ -192,9 +196,19 @@ export function deriveDescription(body, maxLen = 160) {
       // article/conjunction (e.g. "…the deity of" → "…by Yama").
       const clause = Math.max(window.lastIndexOf('; '), window.lastIndexOf('；'));
       let cut = clause >= 80 ? window.slice(0, clause) : window.replace(/\s+\S*$/, '');
-      cut = cut.replace(/[，、；,;:\s]+$/u, '').trim();
+      // Dashes belong in this class: an em/en dash is a clause opener, so a description
+      // ending on one reads as a sentence that was cut off ("…definitions vary —").
+      const danglingPunct = /[，、；,;:–—―–—-]+\s*$|[\s]+$/u;
       const danglingTail = /\s+(of|the|a|an|and|or|to|by|in|on|for|with|at|as|from|into|over|under|that|this|these|those|its|their|his|her|is|are|was|were|be|been)$/i;
-      while (danglingTail.test(cut)) cut = cut.replace(danglingTail, '');
+      // Alternate until stable: stripping a dangling function word can EXPOSE a trailing
+      // comma ("…in Ahrefs, or as" → "…in Ahrefs,"), and stripping punctuation can expose
+      // another function word. Running each once, in a fixed order, left both behind.
+      let prev;
+      do {
+        prev = cut;
+        cut = cut.replace(danglingPunct, '');
+        cut = cut.replace(danglingTail, '');
+      } while (cut !== prev && cut.length > 0);
       cleaned = cut.trim();
     }
   }
@@ -507,16 +521,25 @@ export const TBD_LINK_RULES = [
 // the page you are already on — 4 self-links on one page in the 7/29 batch. A
 // self-link is dead weight for readers and passes no PageRank, so it de-links to
 // italic instead. Callers that do not know the target slug simply omit it.
-export function resolveTbdLink(description, selfSlug = '') {
+//
+// `opts.rules` / `opts.pathPrefix` let a SECOND site reuse this resolver with its own
+// catalog. Every rule in TBD_LINK_RULES points at `/en/wiki/<slug>` on astrologywiki, so
+// gengrowth.ai (which reuses this whole bridge via gg-md-to-gengrowth-blog.mjs) matched
+// NOTHING and every internal link in every gengrowth article silently de-linked to italic
+// text — the cluster link topology the 主题集群表 specifies has never actually shipped.
+// Defaults reproduce the original oracle behavior exactly.
+export function resolveTbdLink(description, selfSlug = '', opts = {}) {
+  const rules = opts.rules || TBD_LINK_RULES;
+  const pathPrefix = opts.pathPrefix || '/en/wiki/';
   const d = description.trim();
-  const selfHref = selfSlug ? `/en/wiki/${selfSlug}` : null;
+  const selfHref = selfSlug ? `${pathPrefix}${selfSlug}` : null;
   // TBD descriptions may be single-segment ("astrology houses overview") or the
   // three-part "anchor | context | reason" form the v8 prompt teaches. Match on
   // the full string (context/reason add recall) but only ever SHOW the anchor —
   // the first `|`-segment — so the internal authoring metadata never leaks into
   // the rendered link text. Single-segment descriptions are unaffected.
   const anchor = d.split('|')[0].trim();
-  for (const rule of TBD_LINK_RULES) {
+  for (const rule of rules) {
     if (rule.match.test(d)) {
       if (selfHref && rule.href === selfHref) return `*${anchor}*`;
       return `[${anchor}](${rule.href})`;
@@ -529,9 +552,22 @@ export function resolveTbdLink(description, selfSlug = '') {
 // Only Wikipedia is recognized (the sole external source the content cites); the
 // Topic field becomes the article slug. An unknown service falls through to an
 // italic flag (no fabricated URL), mirroring resolveTbdLink's unmatched behavior.
-export function resolveExternalTbdLink(service, topic) {
+//
+// `opts.externalRules` adds site-specific recognized sources ahead of the Wikipedia rule.
+// astrologywiki cites only Wikipedia; a B2B SEO article's canonical sources are official
+// product/search documentation (Google Search Central etc.), which would otherwise de-link
+// to italic and lose the citation entirely. Each rule is {match, href, label}; the FIRST
+// match wins, and an unmatched service still falls through to the italic no-fabrication
+// default. Rules must carry a REAL href — never synthesize a URL from the topic text.
+export function resolveExternalTbdLink(service, topic, opts = {}) {
   const t = topic.trim();
-  if (!/wikipedia/i.test(service)) return `*${t}*`;
+  const s = String(service || '');
+  for (const rule of (opts.externalRules || [])) {
+    if (rule.match.test(s) || rule.match.test(t)) {
+      return `[${rule.label || t}](${rule.href})`;
+    }
+  }
+  if (!/wikipedia/i.test(s)) return `*${t}*`;
   const url = `https://en.wikipedia.org/wiki/${encodeURI(t.replace(/ /g, '_'))}`;
   return `[${t} (Wikipedia)](${url})`;
 }
@@ -547,15 +583,18 @@ export function autoLinkBareUrls(s) {
   });
 }
 
-export function transformBody(body, selfSlug = '') {
+// `opts` is forwarded verbatim to resolveTbdLink / resolveExternalTbdLink so a second
+// site can supply its own catalog ({rules, pathPrefix, externalRules}). Omitted → the
+// original astrologywiki behavior.
+export function transformBody(body, selfSlug = '', opts = {}) {
   let out = body;
   out = out.replace(
     /\[\[<TBD-internal-link:\s*([^>]+)>\]\]/g,
-    (_m, desc) => resolveTbdLink(desc, selfSlug),
+    (_m, desc) => resolveTbdLink(desc, selfSlug, opts),
   );
   out = out.replace(
     /\[\[<\s*TBD-external-link:\s*([^|>]+?)\s*\|\s*([^|>]+?)\s*\|\s*[^>]*?>\]\]/g,
-    (_m, service, topic) => resolveExternalTbdLink(service, topic),
+    (_m, service, topic) => resolveExternalTbdLink(service, topic, opts),
   );
   // Catch-all: any remaining TBD-external-link that ISN'T the canonical
   // `Service | Topic | desc` triple (e.g. a single-segment bare description the

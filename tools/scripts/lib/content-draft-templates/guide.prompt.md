@@ -217,6 +217,14 @@
    - **CTA 三段公式硬要求**：CTA 必须符合 `Action → Output → Business Insight`（行动 → 产出 → 业务洞察）三段结构 —— 先给一个具体行动，说明读者会得到什么产出，再落到一句业务 / 决策层面的洞察。
    - **真实 URL 硬要求**：必须使用**真实 CTA URL**（来自 <field name="cta_target_url">{{cta_target_url}}</field> 变量），**禁止**占位符式 URL（如 `https://example.com` / `[link]`）。
    - **锚文本硬要求**：**禁止** "click here" / "read more" / "here" 这类无信息锚文本；锚文本必须描述目标内容（如 "the free content gap checklist"）。
+   - **🔴 产品能力硬要求（2026-08-07 事实审新增）**：CTA 的「产出」那一段**只能复述 <field name="cta_text">{{cta_text}}</field> 里已经写明的东西**，
+     **绝不允许推断或美化目标页能做什么**。读者会点进去，当场就能验证。具体禁止：
+     - ❌ 目标页文案说的是 "Join the … Waitlist"，正文却写 "you will get a ranked shortlist in one view" —— 工具根本没上线。
+     - ❌ 凭 URL 里的名词想象功能（`/tools/keyword-map` ≠ 它会给你一张关键词地图）。
+     - ❌ 把需要连账号的工具写成"立即可跑"，或把要付费/有数据成本的写成 "free"。
+     - ✅ cta_text 说 waitlist → 正文就写"加入等候名单，上线时收到通知"，并把读者**今天**能用的东西写清楚。
+     - ✅ cta_text 说 "Connect Search Console and …" → 正文必须提到需要连接 Search Console。
+     这一条曾在 gengrowth 线真实翻车：CTA 承诺一个页面上写着 "This tool is not available yet" 的工具。**宁可 CTA 平淡，也不能承诺不存在的能力。**
 11. **Sources**（H2，字面 H2 = `## Sources`）— **受控引用**：只列出**正文中已经具名提及、且真实可核查**的来源（真实机构报告 / 真实工具官方文档 / 真实标准）。**若没有可核查来源 → 写成一句简短的方法论说明**（如 `- Based on patterns GenGrowth has observed across white-label SEO rollouts; no third-party study is cited.`），**绝不杜撰**。
    - 格式：每行一个 `- 来源名 — 一句话说明其与本文的关系`。
    - **严禁杜撰个人专家名 / 书名 / 年份 / URL / DOI / 统计数字**；若确需外链，只能用 `[[<TBD-external-link: ...>]]` 占位符。
@@ -287,6 +295,18 @@ target_keyword = **「{{target_keyword}}」**（完整短语）。**SEO + RL4 bi
 
 - 不能**全用代词**「this approach」「the service」「the workflow」「it」代替 target_keyword — 这会触发 RL4 jaccard / shingle 漂移检测，整篇 fail
 
+- **🔴 同义术语不算数（2026-08-07 实际翻车 3 次）**：当 target_keyword 有一个圈内更常用的同义说法时，
+  漂移检测**只认 target_keyword 本身**，同义词一次都不顶。最容易中招的就是这种选题 ——
+  读者搜的是 A，但行业内写这个主题时习惯说 B：
+  - `pagerank sculpting`（目标词） vs `internal link equity` / `link structure`（顺手就写成这个）
+  - `striking distance keywords` vs `position 11-20` / `quick wins`
+  - `low hanging fruit keywords` vs `easy keywords` / `low competition terms`
+  实际后果：一篇 1849 词、目标词全文出现 13 次、H2 标题里也有的稿子，仍然因为**那几节的正文**
+  只说同义词而被判 4 节漂移，连续 3 次重写全 fail。
+  **做法**：先写你想写的句子，然后回头检查——这一节的**正文**（不是标题）里，
+  完整的 `{{target_keyword}}` 出现过吗？没有就把其中一处同义词换回目标词。**标题里有不算**，
+  漂移检测读的是正文。
+
 - 也不能塞超 {{KW_COUNT_RANGE}} 上限 — 走中庸：**4 sections × 1 次 + 1 次在 H1 + 1 次在第 1 段定义句** ≈ 6 次（落在 {{KW_COUNT_RANGE}} 的舒适区）
 
 ✅ **正确范例**（每个 H2 section 开头自然带入完整短语）：
@@ -343,6 +363,24 @@ target_keyword = **「{{target_keyword}}」**（完整短语）。**SEO + RL4 bi
    - ❌ `studies show white-label SEO improves retention by 40%`（无来源数字）
    - ❌ `research confirms…` / `data shows…`（不归因）
    - ✅ 真实带单位 + 真实归因（`according to a 2024 report by <真实机构>, …`）；查不到真实出处就**省略数字**，用定性表述代替。
+
+2b. **🔴 SEO 工具 / 平台事实清单（2026-08-07 事实审沉淀 —— 以下每条都曾被写错并被抓出）**：
+   读者是 SEO 从业者和 agency，写错这些他们一眼就看出来。**没有把握就不写这条断言**，而不是写个大概。
+   - **Keyword Difficulty（KD）不是"从不看谁在排"**。Ahrefs / Semrush / Moz 三家**都先读当前 top 10 排名页**，
+     只是**只测那些页的链接权重**。Ahrefs 官方：KD 来自 top 10 页的 referring domains 数，并明说 **忽略 on-page 因素**；
+     Semrush 还叠加 ranking domains 的 Authority Score 与 SERP feature。
+     - ❌ `the score never reads who currently ranks`
+     - ✅ `the score reads the top ten only through their link profiles — it ignores content, format and intent match`
+   - **Google Search Console 不能按 position 过滤**。position 是 **metric** 不是 **dimension**；GSC 只支持按
+     query / page / country / device / search type / search appearance / date 过滤。要按位置筛必须**先导出再在表格里筛**。
+     - ❌ `filter Search Console to positions 5-20`
+     - ✅ `export the query table, then filter to average positions 5-20 in the spreadsheet`
+     - 顺带：GSC 会**隐去匿名化 query**，且 position 是**按展示加权的平均值**，不是精确排名。
+   - **DR（Domain Rating）是 Ahrefs 专有指标**，Semrush 叫 Authority Score、Moz 叫 Domain Authority。
+     首次出现必须点名是哪家的指标，或写成 "the equivalent authority score in your tool"。
+   - **不要把某一家工具的行为泛化成"所有工具"**。要么点名，要么只说三家共有的部分。
+   - **Google 官方文档有两个不同站点**：`support.google.com/webmasters` = **Search Console Help（帮助中心）**；
+     `developers.google.com/search` = **Search Central**。**混称 = 误引官方文档**，是历史高发错误。
 
 3. **绝不自创术语 / 框架名**（任一违反 = 整篇作废）：如果某概念不是 SEO / GEO / 增长圈广为使用的标准术语，**用日常英文描述这个概念**，不要给它造一个名字。
    - ❌ `the recursive authority loop`（自创框架名）

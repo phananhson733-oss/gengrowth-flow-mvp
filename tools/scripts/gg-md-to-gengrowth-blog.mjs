@@ -48,6 +48,109 @@ import {
 // existing seeded rows use 'GenGrowth Team'.
 const AUTHOR_BY_LOCALE = { en: 'GenGrowth Team' };
 
+// ── internal-link catalog (2026-08-07) ───────────────────────────────────────
+// WHY THIS EXISTS: transformBody() is imported from the ORACLE bridge, and its default
+// TBD_LINK_RULES are all `/en/wiki/<astrology-slug>`. A gengrowth draft's
+// `[[<TBD-internal-link: ...>]]` therefore matched nothing and de-linked to italic text —
+// so EVERY internal link in EVERY gengrowth article silently vanished, and the Pillar→
+// Series→tool topology that 主题集群表 `internal_link_rule` specifies has never shipped.
+// Verified on PG-KOD-001 before this catalog existed: 5 of 5 internal links were dropped.
+//
+// PATH: the site serves `/blog/<slug>` — the `/en/` prefixed form 308-redirects to it
+// (checked live 2026-08-07), and an internal link should never burn a redirect hop.
+//
+// MATCHING: first match wins, so specific spokes MUST precede their broader pillar.
+// Patterns are deliberately narrow (multi-word, anchored on the distinguishing noun) —
+// a loose pattern mis-routes a link, which is worse than dropping it.
+// MAINTENANCE: add a rule when a new gengrowth article goes live, or later articles
+// cannot link to it.
+const GENGROWTH_TBD_LINK_RULES = [
+  // -- 2026-08-07 batch: keyword_opportunity / search_performance_diagnosis / internal_link_architecture
+  // The two zero-volume rules precede the generic low-hanging-fruit pillar so a
+  // "zero search volume" description resolves to the Series, not the Pillar.
+  { match: /zero[\s-]*(search[\s-]*)?volume|no[\s-]*search[\s-]*volume|zero[\s-]*volume/i, href: '/blog/zero-search-volume-keywords' },
+  { match: /serp[\s-]*first[\s-]*keyword[\s-]*vetting|validat\w*[^.\n]{0,30}search[\s-]*volume/i, href: '/blog/zero-search-volume-keywords' },
+  { match: /low[\s-]*hanging[\s-]*fruit|keyword[\s-]*difficulty|easy[\s-]*keywords?[\s-]*to[\s-]*rank|low[\s-]*competition[\s-]*keywords?|(search|keyword)[\s-]*opportunit(y|ies)|hidden[\s-]*keywords?/i, href: '/blog/how-to-find-low-hanging-fruit-keywords' },
+  // "search performance diagnosis" in any order, plus the Search-Console-diagnosis phrasings
+  // the writers actually produce ("reading Search Console data for SEO diagnosis").
+  { match: /striking[\s-]*distance|search[\s-]*performance[\s-]*diagnos|diagnos\w*[^.\n]{0,40}search[\s-]*(performance|console)|search[\s-]*console[^.\n]{0,40}(diagnos|impression|position)|average[\s-]*position|content[\s-]*refresh[\s-]*prioriti|quick[\s-]*wins?/i, href: '/blog/striking-distance-keywords' },
+  { match: /pagerank[\s-]*sculpt|link[\s-]*equity|orphan[\s-]*pages?|crawl[\s-]*depth|internal[\s-]*link[\s-]*(architecture|structure)/i, href: '/blog/pagerank-sculpting' },
+  // Cross-cluster: traffic-drop / core-update work lives on the live google-july-2026-update page.
+  // NOTE: `cannibali[sz]ation` was deliberately REMOVED from this rule. That page is about the
+  // July 2026 core update and says nothing about cannibalization, so the rule was sending readers
+  // who were promised a cannibalization how-to to an algorithm-update post. A wrong destination is
+  // worse than no link — an unmatched description de-links to italic, which is the correct outcome
+  // until a cannibalization article actually exists.
+  { match: /traffic[\s-]*drop|core[\s-]*update/i, href: '/blog/google-july-2026-update' },
+  { match: /segment\w*[^.\n]{0,40}(country|device)/i, href: '/blog/striking-distance-keywords' },
+  // -- live articles most likely to be referenced by the clusters above --
+  { match: /google[\s-]*(july[\s-]*)?2026[\s-]*(core[\s-]*)?update|core[\s-]*update/i, href: '/blog/google-july-2026-update' },
+  { match: /website[\s-]*health[\s-]*score/i, href: '/blog/website-health-score' },
+  { match: /seo[\s-]*audit[\s-]*checklist/i, href: '/blog/seo-audit-checklist' },
+  { match: /technical[\s-]*seo[\s-]*audit|site[\s-]*audit[\s-]*report/i, href: '/blog/seo-audit-checklist' },
+  { match: /generative[\s-]*engine[\s-]*optimi[sz]ation|\bgeo\b[^.\n]{0,20}optimi/i, href: '/blog/generative-engine-optimization' },
+  { match: /ai[\s-]*search[\s-]*visibility|chatgpt[\s-]*citation/i, href: '/blog/ai-search-visibility' },
+  { match: /best[\s-]*ai[\s-]*seo[\s-]*tools?/i, href: '/blog/best-ai-seo-tools' },
+  { match: /seo[\s-]*automation/i, href: '/blog/seo-automation' },
+  { match: /seo[\s-]*for[\s-]*saas[\s-]*startups?/i, href: '/blog/seo-for-saas-startups' },
+  { match: /b2b[\s-]*saas[\s-]*seo/i, href: '/blog/b2b-saas-seo' },
+  { match: /seo[\s-]*for[\s-]*saas|saas[\s-]*seo[\s-]*(strategy|platform)/i, href: '/blog/seo-for-saas' },
+  { match: /seo[\s-]*for[\s-]*technology[\s-]*companies|b2b[\s-]*seo/i, href: '/blog/seo-for-technology-companies' },
+  { match: /startup[\s-]*seo|diy[\s-]*seo/i, href: '/blog/startup-seo' },
+  { match: /white[\s-]*label[\s-]*keyword[\s-]*research/i, href: '/blog/white-label-keyword-research' },
+  { match: /agency[\s-]*rank[\s-]*tracking|rank[\s-]*tracking[\s-]*tool/i, href: '/blog/agency-rank-tracking' },
+  { match: /local[\s-]*seo[\s-]*audit/i, href: '/blog/local-seo-audit' },
+  { match: /backlink[\s-]*monitor/i, href: '/blog/why-use-a-backlink-monitor-tool' },
+  // Sits AFTER the pagerank-sculpting rule so "internal link structure/architecture" still
+  // resolves there; this catches the audit/crawl-methodology phrasing instead.
+  { match: /bounded[\s-]*internal[\s-]*link|internal[\s-]*link[\s-]*(audit|crawl)|link[\s-]*crawl[\s-]*method/i, href: '/blog/bounded-internal-link-crawl' },
+  { match: /broken[\s-]*link|4xx|dead[\s-]*link/i, href: '/blog/seo-audit-checklist' },
+];
+
+// External sources a B2B SEO article legitimately cites. Wikipedia (the oracle default)
+// is not one of them; official documentation is. hrefs are REAL, verified URLs — the
+// resolver must never synthesize one from the topic text.
+const GENGROWTH_EXTERNAL_TBD_RULES = [
+  // NOTE: support.google.com/webmasters = Search Console HELP CENTER; developers.google.com/search
+  // = Search CENTRAL. Two different Google properties — labelling one as the other is exactly the
+  // "误引 Google 官方文档" failure the W25 retro found, so the labels below name each precisely.
+  {
+    match: /search[\s-]*console/i,
+    href: 'https://support.google.com/webmasters/answer/7042828',
+    label: 'Google Search Console Help: impressions, position, and clicks',
+  },
+  {
+    match: /crawlable[\s-]*links?|link[\s-]*best[\s-]*practices?/i,
+    href: 'https://developers.google.com/search/docs/crawling-indexing/links-crawlable',
+    label: "Google's link best practices (Search Central)",
+  },
+  {
+    match: /nofollow|qualify[\s-]*(your[\s-]*)?outbound[\s-]*links?/i,
+    href: 'https://developers.google.com/search/docs/crawling-indexing/qualify-outbound-links',
+    label: 'Google: qualify your outbound links (Search Central)',
+  },
+  {
+    match: /search[\s-]*central|google[\s-]*seo[\s-]*(starter[\s-]*guide|documentation)/i,
+    href: 'https://developers.google.com/search/docs',
+    label: 'Google Search Central documentation',
+  },
+];
+
+const GENGROWTH_LINK_OPTS = Object.freeze({
+  rules: GENGROWTH_TBD_LINK_RULES,
+  pathPrefix: '/blog/',
+  externalRules: GENGROWTH_EXTERNAL_TBD_RULES,
+});
+
+// heroImage/heroImageAlt are REQUIRED by the site schema, but a staged draft carries no
+// hero art. Match what the site's own legacy migration already chose for cover-less rows
+// (docs/marketing-blog-migration.md: "Missing legacy cover fields use the existing public
+// /images/og-default.svg asset") so migrated and newly published posts look consistent.
+// Visible tech debt: override per-article with --hero / --hero-alt once real art exists
+// under public/images/blog/<slug>/.
+const DEFAULT_HERO_IMAGE = '/images/og-default.svg';
+const heroAltFor = (title) => `Cover illustration for ${title}`;
+
 // blog_posts.category is a TEXT CHECK limited to 4 content-TYPE values; the W25 SEO
 // clusters are TOPICS, none of which match. `category` collapses to a valid enum
 // (methodology = how-to/framework guide, the shape every W25 post takes). Zero schema change.
@@ -94,6 +197,8 @@ function parseArgs(argv) {
     else if (k === '--page-id') a.pageId = next();
     else if (k === '--category') a.category = next();
     else if (k === '--pillar') a.pillar = next();
+    else if (k === '--hero') a.heroImage = next();
+    else if (k === '--hero-alt') a.heroImageAlt = next();
     else if (k === '--dry-run') a.dryRun = true;
     else if (k === '--help' || k === '-h') a.help = true;
   }
@@ -189,7 +294,9 @@ function buildRow(args) {
   const excerpt = deriveDescription(rawBody, 160);
 
   // markdown -> resolve TBD/links -> scrub cross-site -> HTML -> sanitize (render-path policy).
-  const resolvedMd = transformBody(bodyNoH1);
+  // selfSlug suppresses self-links (an article naming its own topic in Related Reading
+  // would otherwise resolve back to itself — dead weight that passes no PageRank).
+  const resolvedMd = transformBody(bodyNoH1, slug, GENGROWTH_LINK_OPTS);
   const { md: scrubbedMd, scrubbed } = scrubCrossSiteLinks(resolvedMd);
   const rawHtml = marked.parse(scrubbedMd, { gfm: true, async: false });
   const content = sanitizeHtml(rawHtml, {
@@ -220,7 +327,65 @@ function buildRow(args) {
     status: 'published', // the ONLY go-live gate (read path filters status='published')
     created_at: publishedAt,
   };
-  return { row, meta: { pageId, pillar, words, scrubbed, sourceAbs } };
+  // `markdown` is the resolved+scrubbed Markdown that `content` was rendered FROM.
+  // --emit md ships this instead of the HTML: the site's canonical source is now a
+  // Markdown file, and re-deriving Markdown from sanitized HTML would be lossy.
+  return { row, meta: { pageId, pillar, words, scrubbed, sourceAbs, markdown: scrubbedMd } };
+}
+
+// ── emit: canonical Markdown file for nevermore's content/blog/<locale>/<slug>.md ──
+//
+// WHY THIS EXISTS: gengrowth.ai used to render from Supabase `blog_posts`, so this
+// bridge emitted sanitized HTML. The site moved its canonical source to versioned
+// Markdown in the app repo (apps/marketing/content/blog/README.md), keeping Supabase
+// only as a removable, opt-in read bridge. Publishing through Supabase therefore no
+// longer puts an article on the site — it just writes a row nothing reads.
+//
+// The site parses frontmatter with a deliberately small scalar-only reader
+// (src/lib/blog-content.ts) and validates it with a `.strict()` zod schema, so:
+//   - keys are camelCase and an unknown key FAILS THE BUILD (no extra fields),
+//   - `localeExclusive` is the STRING "true"/"false", not a boolean,
+//   - `publishedAt`/`updatedAt` are calendar dates (YYYY-MM-DD), not ISO datetimes.
+const SITE_FRONTMATTER_KEYS = [
+  'title', 'excerpt', 'author', 'category', 'pillar', 'status',
+  'publishedAt', 'updatedAt', 'heroImage', 'heroImageAlt', 'localeExclusive',
+];
+
+// The site's reader does NOT understand escape sequences — unquoteFrontmatterValue only
+// strips a matching leading/trailing quote pair. So a value must never rely on `\"`.
+// Its key regex `^([A-Za-z][A-Za-z0-9]*):\s*(.*)$` keeps everything after the FIRST
+// colon, which makes colons inside a value safe. That leaves two real hazards:
+// embedded newlines (the reader is line-based) and a value that itself begins and ends
+// with the same quote (it would be silently unwrapped).
+export function siteFrontmatterScalar(value) {
+  const flat = String(value ?? '').replace(/\s*[\r\n]+\s*/g, ' ').trim();
+  if (!flat) return '';
+  const quoted = (q) => flat.length >= 2 && flat.startsWith(q) && flat.endsWith(q);
+  if (quoted('"')) return `'${flat}'`;   // wrap in the other quote so one pair survives
+  if (quoted("'")) return `"${flat}"`;
+  return flat;                            // bare is safest: no escaping is ever applied
+}
+
+const dateOnly = (iso) => String(iso).slice(0, 10);
+
+export function buildSiteMarkdown(row, meta, opts = {}) {
+  const fm = {
+    title: row.title,
+    excerpt: row.excerpt,
+    author: row.author,
+    category: row.category,
+    pillar: row.pillar_slug,
+    status: row.status,
+    publishedAt: dateOnly(row.published_at),
+    updatedAt: dateOnly(row.updated_at),
+    heroImage: opts.heroImage || DEFAULT_HERO_IMAGE,
+    heroImageAlt: opts.heroImageAlt || heroAltFor(row.title),
+    localeExclusive: row.locale_exclusive ? 'true' : 'false',
+  };
+  const lines = SITE_FRONTMATTER_KEYS
+    .filter((k) => fm[k] !== undefined && fm[k] !== '')
+    .map((k) => `${k}: ${siteFrontmatterScalar(fm[k])}`);
+  return `---\n${lines.join('\n')}\n---\n\n${String(meta.markdown).trim()}\n`;
 }
 
 // ── emit: idempotent SQL upsert, merged-by-(slug,locale) within --out file ────
@@ -310,7 +475,7 @@ async function main() {
     process.stdout.write(readFileSync(fileURLToPath(import.meta.url), 'utf8').split('\n').filter((l) => l.startsWith('//')).join('\n') + '\n');
     process.exit(args.source ? 0 : 1);
   }
-  if (!['sql', 'rest'].includes(args.emit)) throw new Error(`--emit must be 'sql' or 'rest' (got '${args.emit}')`);
+  if (!['sql', 'rest', 'md'].includes(args.emit)) throw new Error(`--emit must be 'sql', 'rest' or 'md' (got '${args.emit}')`);
 
   const { row, meta } = buildRow(args);
 
@@ -330,6 +495,16 @@ async function main() {
     `content bytes: ${row.content.length}`,
     `excerpt:       ${row.excerpt}`,
   ].join('\n');
+
+  if (args.emit === 'md') {
+    const doc = buildSiteMarkdown(row, meta, { heroImage: args.heroImage, heroImageAlt: args.heroImageAlt });
+    if (args.dryRun) { process.stdout.write(`\n[DRY-RUN --emit md] ${meta.sourceAbs}\n${summary}\n\n--- content/blog/${row.locale}/${row.slug}.md ---\n${doc}`); return; }
+    if (!args.out) throw new Error("--out <content/blog/<locale>/<slug>.md> required when not --dry-run");
+    const outAbs = resolve(args.out);
+    atomicWrite(outAbs, doc);
+    process.stdout.write(`\n✓ wrote ${outAbs}\n${summary}\n`);
+    return;
+  }
 
   if (args.emit === 'rest') {
     const returned = await emitRest(row, args);

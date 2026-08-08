@@ -22,6 +22,24 @@ aliases:
 - 执行了规定的 `gg-topic-register-tick.sh` wrapper，未绕过其模式或加入写入参数。
 - 本轮由本地环境启用了 apply：gengrowth 无候选、无更新、无新增 cluster、无 page ID 和 preprocessor 项。
 - astrologywiki 因 `PG-FS-002` 证据发现不足被安全拒绝；整体以 rc=1 结束，未进行任何手工外部写入或额外通知。
+- 执行了规定的 `gg-index-repair-resubmit-tick.sh` wrapper；astrologywiki 与 gengrowth 均完成固定行处理、结果复盘和请求索引队列同步，未发生失败。
+
+---
+
+### Q2 — 17:33
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: 2026-08-07T21:00:26.136Z (1786136426136)
+
+Run the deterministic fixed-row index repair workflow through `bash tools/scripts/gg-index-repair-resubmit-tick.sh`. The wrapper loads the local gg environment, loops the configured products (`GG_INDEX_MONITOR_PRODUCTS`, defaulting to astrologywiki and gengrowth), processes rows marked `已修复`, syncs `结果复盘表`, and refreshes `request-indexing-queue` in each product Google Sheet. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, do not click Search Console Request Indexing unattended, and do not create Feishu or Google Doc report artifacts. After the wrapper exits, summarize per-product `process-fixed`, `sync-recap`, `sync-request-queue` counts visible in the log, plus any failures.
+
+**🤖 回答：**
+
+运行了指定 wrapper；本轮日志窗口为 2026-08-08 17:32:28–17:33:01 CST，最终标记为 `index repair-resubmit ok`，两产品均 `rc=0`。astrologywiki：process-fixed fixed=0、resubmitted=0；sync-recap en_rows=312、appended=0、updated=0、skipped=312；sync-request-queue rows=2（P0=0、P1=2、P2=0、P3=0）。gengrowth：process-fixed fixed=0、resubmitted=0；sync-recap en_rows=64、appended=0、updated=51、skipped=13；sync-request-queue rows=0（P0=0、P1=0、P2=0、P3=0）。日志未见失败、异常、认证、超时或非零返回标记；未使用普通文章 Google Indexing API，未进行无人值守 Request Indexing 点击，未创建 Feishu 或 Google Doc 报告工件。
 
 ---
 

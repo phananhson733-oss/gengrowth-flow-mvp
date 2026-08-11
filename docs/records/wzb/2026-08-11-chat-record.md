@@ -21,6 +21,7 @@ aliases:
 
 - 运行了 GenGrowth Phase 2 索引监控确定性封装；两站 Sitemap API 成功、无到期 URL，队列仅 AstrologyWiki 保留 2 个 P1 项。
 - 运行了结果复盘表确定性封装；两产品均无未填的节点日快照，已写入受 wrapper 管理的复盘字段并生成优化任务报告。
+- 运行了选题登记确定性封装；apply 模式在证据与预处理门被安全拒绝，未证明任何下游写入。
 
 ---
 
@@ -81,5 +82,22 @@ After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-s
 **🤖 回答：**
 
 本轮候选=0，未开浏览器、0 提交。`--sync-published` 显示 prod `en_urls=361 / appended=0`，已连续 13 天持平（07-30→08-11）→ 按 SOP 判据这不是"都收录了"，而是发布链路停摆，遂升级排查。诊断三连结果与 08-06/07/08/09/10 **逐字相同**：plan mtime 仍 `08-05 17:57`（六天无人动）、`PG-KB-002` 仍在第 515/518 行重复、`PG-VEDIC-009/010` 仍在 plan 第 678/679 行而选题登记表复验仍只到 VEDIC-008(row361)、err.log `duplicate active page ids` 37→44（**+7** = 昨日 7 次 tick 全 abort，lane 活着但每次卡 preflight）、`tick complete` 仍停 07-24 19:08、三个保活 plist 仍未 `launchctl load`。授稿 lane 硬停第 18 天。已发飞书升级告警并自检送达（`ok:true`，`om_x100b689ea66f38a4b24cf4ee7883103`），累计 6 次告警仅 08-04 一次引发动作；修复属运营写操作（改 plan / 补 sheet 行 / load plist），本 cron 不擅自动手。已同步 recap 与 request-queue 表，并更新 `reminders.md` 与 memory（新增"plan mtime + err.log 尾部错误文本"作为短路判据，两者不变即可复用上轮结论）。
+
+---
+
+### Q4 — 16:16
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-08-10T14:01:13.018Z (1786370473018)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行 `bash tools/scripts/gg-topic-register-tick.sh`。权威日志窗口为 16:03:05–16:15:47 CST，终止标记 `topic-register failed rc=1`；环境为 apply（`dry_run=false`）且 `budget_exhausted=false`。AstrologyWiki 在证据门 `PG-FS-002` 被拒绝；GenGrowth 在 `PG-CMP-005:budget_exhausted` 预处理完整性门被拒绝。两产品都只输出错误对象，因此 candidates、updates、new_clusters、page_ids 与 preprocessor 状态均不可用，不能报告为零。日志未提供 Feishu 回执或成功外部写入证据；没有手工编辑 Sheet、任务计划或创建额外 Feishu/Google Doc 报告。
 
 ---

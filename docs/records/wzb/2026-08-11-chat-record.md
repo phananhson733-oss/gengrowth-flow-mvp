@@ -22,6 +22,7 @@ aliases:
 - 运行了 GenGrowth Phase 2 索引监控确定性封装；两站 Sitemap API 成功、无到期 URL，队列仅 AstrologyWiki 保留 2 个 P1 项。
 - 运行了结果复盘表确定性封装；两产品均无未填的节点日快照，已写入受 wrapper 管理的复盘字段并生成优化任务报告。
 - 运行了选题登记确定性封装；apply 模式在证据与预处理门被安全拒绝，未证明任何下游写入。
+- 运行了固定行索引修复重提确定性封装；两产品无已修复行，结果复盘表与请求索引队列均已按 wrapper 同步，未出现失败标记。
 
 ---
 
@@ -99,5 +100,22 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 仅运行 `bash tools/scripts/gg-topic-register-tick.sh`。权威日志窗口为 16:03:05–16:15:47 CST，终止标记 `topic-register failed rc=1`；环境为 apply（`dry_run=false`）且 `budget_exhausted=false`。AstrologyWiki 在证据门 `PG-FS-002` 被拒绝；GenGrowth 在 `PG-CMP-005:budget_exhausted` 预处理完整性门被拒绝。两产品都只输出错误对象，因此 candidates、updates、new_clusters、page_ids 与 preprocessor 状态均不可用，不能报告为零。日志未提供 Feishu 回执或成功外部写入证据；没有手工编辑 Sheet、任务计划或创建额外 Feishu/Google Doc 报告。
+
+---
+
+### Q5 — 17:31
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: 2026-08-10T21:00:44.665Z (1786395644665)
+
+Run the deterministic fixed-row index repair workflow through `bash tools/scripts/gg-index-repair-resubmit-tick.sh`. The wrapper loads the local gg environment, loops the configured products (`GG_INDEX_MONITOR_PRODUCTS`, defaulting to astrologywiki and gengrowth), processes rows marked `已修复`, syncs `结果复盘表`, and refreshes `request-indexing-queue` in each product Google Sheet. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, do not click Search Console Request Indexing unattended, and do not create Feishu or Google Doc report artifacts. After the wrapper exits, summarize per-product `process-fixed`, `sync-recap`, `sync-request-queue` counts visible in the log, plus any failures.
+
+**🤖 回答：**
+
+仅运行指定的 `bash tools/scripts/gg-index-repair-resubmit-tick.sh`，退出码为 0。权威日志窗口为 17:31:10–17:31:36 CST，终止标记 `index repair-resubmit ok`。AstrologyWiki：`process-fixed fixed=0 resubmitted=0`，`sync-recap en_rows=312 appended=0 updated=0 skipped=312`，`sync-request-queue rows=2 P0=0 P1=2 P2=0 P3=0`。GenGrowth：`process-fixed fixed=0 resubmitted=0`，`sync-recap en_rows=64 appended=0 updated=50 skipped=14`，`sync-request-queue rows=0 P0=0 P1=0 P2=0 P3=0`。两产品均为 rc=0；失败关键词扫描为空。未单独执行 GSC Request Indexing 页面操作、普通文章 Google Indexing API 调用，或创建 Feishu/Google Doc 报告。
 
 ---

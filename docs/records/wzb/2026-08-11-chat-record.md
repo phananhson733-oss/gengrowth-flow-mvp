@@ -24,25 +24,6 @@ aliases:
 - 两次运行选题登记确定性封装；apply 模式均在证据与预处理门被安全拒绝，未证明任何下游写入。
 - 运行了固定行索引修复重提确定性封装；两产品无已修复行，结果复盘表与请求索引队列均已按 wrapper 同步，未出现失败标记。
 
----
-
-### Q6 — 18:14
-
-**🙋 提问：**
-
-Automation: 根据关键词补充 brief
-Automation ID: gengrowth-topic-register
-Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
-Last run: 2026-08-11T08:02:11.797Z (1786435331797)
-
-Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
-
-**🤖 回答：**
-
-仅运行 `bash tools/scripts/gg-topic-register-tick.sh`。权威日志窗口为 18:01:53–18:14:10 CST，终止标记 `topic-register failed rc=1`；环境为 apply（`dry_run=false`）且 `budget_exhausted=false`。AstrologyWiki 在证据门 `PG-FS-002` 被拒绝；GenGrowth 在 `PG-CMP-005:budget_exhausted` 预处理完整性门被拒绝。两产品都只输出错误对象，因此 candidates、updates、new_clusters、page_ids、preprocessor 与 evidence_discovery 均不可用，不能报告为零。日志未提供 Feishu 回执或成功外部写入证据；没有手工编辑 Sheet、任务计划或创建额外 Feishu/Google Doc 报告。
-
----
-
 ## 对话记录
 
 ### Q1 — 09:04
@@ -134,5 +115,22 @@ Run the deterministic fixed-row index repair workflow through `bash tools/script
 **🤖 回答：**
 
 仅运行指定的 `bash tools/scripts/gg-index-repair-resubmit-tick.sh`，退出码为 0。权威日志窗口为 17:31:10–17:31:36 CST，终止标记 `index repair-resubmit ok`。AstrologyWiki：`process-fixed fixed=0 resubmitted=0`，`sync-recap en_rows=312 appended=0 updated=0 skipped=312`，`sync-request-queue rows=2 P0=0 P1=2 P2=0 P3=0`。GenGrowth：`process-fixed fixed=0 resubmitted=0`，`sync-recap en_rows=64 appended=0 updated=50 skipped=14`，`sync-request-queue rows=0 P0=0 P1=0 P2=0 P3=0`。两产品均为 rc=0；失败关键词扫描为空。未单独执行 GSC Request Indexing 页面操作、普通文章 Google Indexing API 调用，或创建 Feishu/Google Doc 报告。
+
+---
+
+### Q6 — 18:14
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-08-11T08:02:11.797Z (1786435331797)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行 `bash tools/scripts/gg-topic-register-tick.sh`。权威日志窗口为 18:01:53–18:14:10 CST，终止标记 `topic-register failed rc=1`；环境为 apply（`dry_run=false`）且 `budget_exhausted=false`。AstrologyWiki 在证据门 `PG-FS-002` 被拒绝；GenGrowth 在 `PG-CMP-005:budget_exhausted` 预处理完整性门被拒绝。两产品都只输出错误对象，因此 candidates、updates、new_clusters、page_ids、preprocessor 与 evidence_discovery 均不可用，不能报告为零。日志未提供 Feishu 回执或成功外部写入证据；没有手工编辑 Sheet、任务计划或创建额外 Feishu/Google Doc 报告。
 
 ---

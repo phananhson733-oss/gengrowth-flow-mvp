@@ -21,7 +21,7 @@ aliases:
 
 - 运行了 GenGrowth Phase 2 索引监控确定性封装；两站 Sitemap API 成功、无到期 URL，队列仅 AstrologyWiki 保留 2 个 P1 项。
 - 运行了结果复盘表确定性封装；两产品均无未填的节点日快照，已写入受 wrapper 管理的复盘字段并生成优化任务报告。
-- 三次运行选题登记确定性封装；apply 模式均在证据与预处理门被安全拒绝，未证明任何下游写入。
+- 四次运行选题登记确定性封装；apply 模式均在证据与预处理门被安全拒绝，未证明任何下游写入。
 - 运行了固定行索引修复重提确定性封装；两产品无已修复行，结果复盘表与请求索引队列均已按 wrapper 同步，未出现失败标记。
 
 ## 对话记录
@@ -149,5 +149,22 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 仅运行唯一允许的 `bash tools/scripts/gg-topic-register-tick.sh`。权威日志窗口为 20:01:15–20:13:38 CST，终止标记 `topic-register failed rc=1`；环境为 apply（`dry_run=false`）且 `budget_exhausted=false`。AstrologyWiki 被 `PG-FS-002` 的证据发现不足门拒绝；GenGrowth 被 `PG-CMP-005:budget_exhausted` 的预处理完整性门拒绝。两产品均只输出错误对象，故 candidates、updates、new_clusters、page_ids 与完整 preprocessor 状态均不可用，不能报告为零。日志没有 Feishu 回执或成功下游写入证据；没有手工编辑 Sheet 或任务计划，亦未创建额外 Feishu/Google Doc 报告。
+
+---
+
+### Q8 — 22:16
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-08-11T12:00:42.348Z (1786449642348)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行唯一允许的 `bash tools/scripts/gg-topic-register-tick.sh`，wrapper 退出码为 1。权威日志窗口为 22:02:48–22:15:44 CST，终止标记 `topic-register failed rc=1`；环境为 apply（`dry_run=false`）且顶层 `budget_exhausted=false`。AstrologyWiki 被 `PG-FS-002` 的证据发现不足门拒绝；GenGrowth 被预处理完整性门拒绝，日志可见的首项为 `PG-CMP-005:budget_exhausted`。两产品均只输出错误对象，故 candidates、updates、new_clusters、page_ids 与完整 preprocessor 状态均不可用，不能报告为零；同样没有 Feishu 回执或成功下游写入证据。未手工编辑 Sheet、任务计划，也未创建额外 Feishu/Google Doc 报告。
 
 ---

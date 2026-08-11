@@ -72,3 +72,14 @@ After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-s
 已运行唯一允许的 `bash tools/scripts/gg-recap-performance-tick.sh`，退出码为 0。权威日志窗口为 10:01:43–10:01:49 CST，终止标记为 `recap performance ok`。AstrologyWiki（wb 后缀 `jyzcQc`，`sc-domain:astrologywiki.com`，GA4 `properties/524765570`）：未填精确节点快照行 `rows=0`、已更新复盘行 287、任务 289；报告为 `~/gengrowth-agents/reports/recap-performance/2026-08-11-astrologywiki-optimization-tasks.md`，P0=17、技术排查=140、P1=12、观察=120。GenGrowth（wb 后缀 `ZTIRA8`，`sc-domain:gengrowth.ai`，GA4 同为 `properties/524765570`）：`rows=0`、已更新 50、任务 63；报告为 `~/gengrowth-agents/reports/recap-performance/2026-08-11-gengrowth-optimization-tasks.md`，技术排查=47、P1=5、观察=11。日志未细分 D14/D30/D60 到期已收录行、已填节点或非到期行，以上字段均为未提供，不能从 `rows=0` 推断分项覆盖率；日志没有 warn/error/fatal、部分失败或超时标记。未绕过 wrapper、未手工编辑 Sheet，未进行发布、部署或任何索引提交。
 
 ---
+### Q3 — 13:10 [claude]
+
+**🙋 提问：**
+
+（scheduled task · gsc-index-daily）每天跑一轮 GSC 手动 Request Indexing（astrologywiki.com）。本机(awayer_mini) Chrome 驱动，全新会话。
+
+**🤖 回答：**
+
+本轮候选=0，未开浏览器、0 提交。`--sync-published` 显示 prod `en_urls=361 / appended=0`，已连续 13 天持平（07-30→08-11）→ 按 SOP 判据这不是"都收录了"，而是发布链路停摆，遂升级排查。诊断三连结果与 08-06/07/08/09/10 **逐字相同**：plan mtime 仍 `08-05 17:57`（六天无人动）、`PG-KB-002` 仍在第 515/518 行重复、`PG-VEDIC-009/010` 仍在 plan 第 678/679 行而选题登记表复验仍只到 VEDIC-008(row361)、err.log `duplicate active page ids` 37→44（**+7** = 昨日 7 次 tick 全 abort，lane 活着但每次卡 preflight）、`tick complete` 仍停 07-24 19:08、三个保活 plist 仍未 `launchctl load`。授稿 lane 硬停第 18 天。已发飞书升级告警并自检送达（`ok:true`，`om_x100b689ea66f38a4b24cf4ee7883103`），累计 6 次告警仅 08-04 一次引发动作；修复属运营写操作（改 plan / 补 sheet 行 / load plist），本 cron 不擅自动手。已同步 recap 与 request-queue 表，并更新 `reminders.md` 与 memory（新增"plan mtime + err.log 尾部错误文本"作为短路判据，两者不变即可复用上轮结论）。
+
+---

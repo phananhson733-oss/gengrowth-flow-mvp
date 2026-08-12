@@ -19,7 +19,7 @@ tags:
 - AstrologyWiki 结果复盘表 312 行、辅助请求队列保留 2 条 P1；GenGrowth 结果复盘表 64 行、队列为空。
 - 全程仅通过批准 wrapper 维护 Sheet 与人工确认队列，未触发普通文章 Indexing API 或无人值守 GSC 请求。
 - 执行结果复盘表现更新 wrapper；AstrologyWiki 处理 15 个精确里程碑行，GenGrowth 无到期行；两份优化任务报告已生成并核验。
-- 选题登记 wrapper 在 apply 模式下被证据与预处理安全门拒绝；两产品仅输出错误对象，未将缺失业务字段误报为零或已写入。
+- 选题登记 wrapper 在 16:01 与 18:02 的 apply 运行中均被证据与预处理安全门拒绝；两产品仅输出错误对象，未将缺失业务字段误报为零或已写入。
 
 ---
 
@@ -103,5 +103,22 @@ Run the deterministic fixed-row index repair workflow through `bash tools/script
 **🤖 回答：**
 
 通过指定 wrapper 运行，退出码为 0。权威日志窗口为 17:31:22–17:31:51 CST，以 `index repair-resubmit ok` 结束。astrologywiki：process-fixed fixed=0、resubmitted=0；sync-recap en_rows=312、appended=0、updated=0、skipped=312；sync-request-queue rows=2（P1=2）。gengrowth：process-fixed fixed=0、resubmitted=0；sync-recap en_rows=64、appended=0、updated=51、skipped=13；sync-request-queue rows=0。窗口内无失败标记；未使用普通文章 Google Indexing API，未作无人值守 Search Console Request Indexing，未创建飞书或 Google Doc 报告。
+
+---
+
+### Q5 — 18:14
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-08-12T08:00:24.345Z (1786521624345)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行批准的 `gg-topic-register-tick.sh` wrapper。权威日志窗口为 2026-08-12 18:02:10–18:14:26 CST；环境实际为 apply（`dry_run=false`，`budget_exhausted=false`），以 `topic-register failed rc=1` 结束。AstrologyWiki 被 `PG-FS-002` 的证据发现不足拒绝；GenGrowth 被 `PG-CMP-005:budget_exhausted` 的预处理不完整拒绝，后续标识在日志中截断。两产品均只输出 error 对象，candidates、updates、new_clusters、page_ids、preprocessor 状态均为 unavailable，且不存在下游 Sheet、任务计划或飞书写入证据。未执行手工 Sheet 写入、直接任务计划编辑或额外飞书/Google Doc 报告。
 
 ---

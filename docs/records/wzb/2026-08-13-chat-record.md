@@ -20,7 +20,7 @@ aliases:
 > 【本区域在每天最后一次对话结束时生成/更新】
 > 用 3-5 个要点概括当天所有对话的核心内容、关键决策和产出成果。
 
-- 按批准的固定行索引修复重提 wrapper 完成一次成功运行，两个产品均无已修复行需要重提；astrologywiki 复盘表保持 312 行、辅助请求队列为 2 个 P1，gengrowth 复盘表保持 64 行、请求队列为空。
+- 固定行索引修复重提 wrapper 上午成功运行；傍晚运行在 gengrowth 的辅助请求队列写入阶段因 Google Sheets 每用户写入配额 HTTP 429 失败。astrologywiki 完整完成，gengrowth 的队列计数不可用。
 - 本轮完整索引监控窗口以 `index monitor ok` 结束；两站 Sitemap API 成功、均无 due URL，Feishu 投递在日志中未获回执。
 - 两次工作均未越过普通文章 Google Indexing API、无人值守 GSC 点击或额外报告产物边界。
 - 已通过固定结果复盘 wrapper 同步两产品：AstrologyWiki 处理 7 条到期行、更新 281 行；GenGrowth 无到期行、更新 50 行。
@@ -108,5 +108,22 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 已只运行批准的 `bash tools/scripts/gg-topic-register-tick.sh`。日志窗口 2026-08-13 16:01:38–16:13:46 CST 以 `topic-register failed rc=1` 结束；local 环境选择 apply（`dry_run: false`），但没有成功产品摘要或任何可验证的写入计数。astrologywiki 在 apply 门被 `PG-FS-002` 的 evidence discovery insufficient 拒绝；gengrowth 因 `PG-CMP-005:budget_exhausted` 的 preprocessor incomplete 被拒绝，持久化错误文本将其余 page id 截断为 `PG...`。顶层 `budget_exhausted=false`，不等同于该单页预处理器预算耗尽。两产品的 candidates、updates、new_clusters、page_ids、Sheet/任务计划/Feishu 写入均不可用，不能记为零；未进行手工 Sheet 或任务计划修改，也未创建额外 Feishu/Google Doc 报告。
+
+---
+
+### Q5 — 17:32
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: 2026-08-12T21:00:56.870Z (1786568456870)
+
+Run the deterministic fixed-row index repair workflow through `bash tools/scripts/gg-index-repair-resubmit-tick.sh`. The wrapper loads the local gg environment, loops the configured products (`GG_INDEX_MONITOR_PRODUCTS`, defaulting to astrologywiki and gengrowth), processes rows marked `已修复`, syncs `结果复盘表`, and refreshes `request-indexing-queue` in each product Google Sheet. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, do not click Search Console Request Indexing unattended, and do not create Feishu or Google Doc report artifacts. After the wrapper exits, summarize per-product `process-fixed`, `sync-recap`, `sync-request-queue` counts visible in the log, plus any failures.
+
+**🤖 回答：**
+
+已运行批准的 `bash tools/scripts/gg-index-repair-resubmit-tick.sh`。2026-08-13 17:31:31–17:31:58 CST 的日志窗口以 `index repair-resubmit failed rc=1` 结束，wrapper 退出码为 1。astrologywiki：fixed=0、resubmitted=0；recap en_rows=312、appended=0、updated=0、skipped=312；queue rows=2（P0=0、P1=2、P2=0、P3=0），产品 rc=0。gengrowth：fixed=0、resubmitted=0；recap en_rows=64、appended=0、updated=50、skipped=14；在 `sync-request-queue` 写入前因 Google Sheets API HTTP 429（每用户每分钟写请求配额 60）失败，队列计数不可用，产品 rc=1。wrapper 的内置失败通知已返回成功回执；未使用普通文章 Google Indexing API、无人值守 GSC Request Indexing，且未创建 Google Doc 报告产物。
 
 ---

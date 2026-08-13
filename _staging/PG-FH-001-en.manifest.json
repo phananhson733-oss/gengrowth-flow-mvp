@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-FH-001",
+  "entity": "Harry Potter Characters Zodiac Signs",
+  "target_keyword": "Harry Potter characters zodiac signs",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-07-27T09:53:41.676Z",
+  "content_sha256_short": "b6c6ebd7c39ab1e6",
+  "source_path": "_staging/PG-FH-001-last-failing-v8.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-FH-001-en.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 1,
+      "h4Count": 0,
+      "words": 2110,
+      "wikilinks": 4,
+      "tbdLinks": 4
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "page_id": "page_rihanna_birth_chart",
+  "prompt_path": "/Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/page_rihanna_birth_chart.v8-prompt.md",
+  "started_at": "2026-07-27T10:47:32.649Z",
+  "models_requested": [
+    "codex"
+  ],
+  "retry": 0,
+  "diversify_on_fail": false,
+  "max_cost_usd_per_page": 5,
+  "budget_exceeded_models": [],
+  "ok_count": 1,
+  "total_cost_estimate_usd": 0.1486,
+  "results": {
+    "codex": {
+      "model": "codex",
+      "active_model": "codex",
+      "diversified": false,
+      "ok": true,
+      "output_path": "/Users/wzb/gengrowth-flow-mvp/_staging/page_rihanna_birth_chart-codex-v8.md",
+      "retries": 0,
+      "duration_s": 131.7,
+      "cost_estimate_usd": {
+        "usd": 0.1486,
+        "input_tokens_est": 7323,
+        "output_tokens_est": 1885,
+        "pricing_note": "GPT 5.5 xhigh"
+      },
+      "cumulative_cost_usd": 0.1486,
+      "budget_exceeded": false,
+      "budget_usd": 5,
+      "attempts": [
+        {
+          "try_index": 1,
+          "model": "codex",
+          "command": "codex exec -c model=gpt-5.5 -c reasoning_effort=xhigh - < /Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/page_rihanna_birth_chart.v8-prompt.md > /Users/wzb/gengrowth-flow-mvp/_staging/page_rihanna_birth_chart-codex-v8.md",
+          "cost_usd": 0.1486,
+          "cumulative_cost_usd": 0.1486,
+          "ok": true,
+          "exit_code": 0,
+          "duration_s": 131.7,
+          "stderr_tail": "time. The calculator gives you a personal natal chart with signs, planets, houses, and angles when the data is available. Reading your own chart with the same evidence-first mindset can turn astrology into a clearer self-reflection tool rather than a pile of labels.\n\n## Sources\n\n- Dane Rudhyar — helped define a psychological, person-centered approach to modern astrology\n- Robert Hand — known for clear interpretive astrology that treats chart symbols as patterns for reflection\ntokens used\n51,039",
+          "stdout_bytes": 9079
+        }
+      ]
+    }
+  }
+}

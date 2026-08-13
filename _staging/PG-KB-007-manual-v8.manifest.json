@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-KB-007",
+  "entity": "Suga Bts Birth Chart",
+  "target_keyword": "Suga BTS birth chart",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-07-27T11:16:03.878Z",
+  "content_sha256_short": "866c336424935894",
+  "source_path": "_staging/PG-KB-007-manual-v8.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-KB-007-manual-v8.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 1485,
+      "wikilinks": 0,
+      "tbdLinks": 0
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

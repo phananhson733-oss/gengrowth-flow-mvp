@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-KOD-001",
+  "entity": "Low Hanging Fruit Keywords / Keyword Difficulty",
+  "target_keyword": "how to find low hanging fruit keywords",
+  "template": "Definition",
+  "tier": "T1",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-08-07T12:12:06.195Z",
+  "content_sha256_short": "f02404567525b271",
+  "source_path": "_staging/PG-KOD-001-en.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-KOD-001-en.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 0,
+      "h4Count": 0,
+      "words": 1745,
+      "wikilinks": 6,
+      "tbdLinks": 6
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

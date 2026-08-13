@@ -1,0 +1,59 @@
+{
+  "page_id": "page_sabrina_carpenter_zodiac_sign",
+  "prompt_path": "/Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/page_sabrina_carpenter_zodiac_sign.v8-prompt.md",
+  "started_at": "2026-07-29T07:08:45.700Z",
+  "models_requested": [
+    "codex"
+  ],
+  "retry": 2,
+  "diversify_on_fail": false,
+  "max_cost_usd_per_page": 5,
+  "budget_exceeded_models": [],
+  "ok_count": 1,
+  "total_cost_estimate_usd": 0.1724,
+  "results": {
+    "codex": {
+      "model": "codex",
+      "active_model": "codex",
+      "diversified": false,
+      "ok": true,
+      "output_path": "/Users/wzb/gengrowth-flow-mvp/_staging/page_sabrina_carpenter_zodiac_sign-codex-v8.md",
+      "retries": 1,
+      "duration_s": 922.1,
+      "cost_estimate_usd": {
+        "usd": 0.1724,
+        "input_tokens_est": 7420,
+        "output_tokens_est": 2456,
+        "pricing_note": "GPT 5.5 xhigh"
+      },
+      "cumulative_cost_usd": 0.1724,
+      "budget_exceeded": false,
+      "budget_usd": 5,
+      "attempts": [
+        {
+          "try_index": 1,
+          "model": "codex",
+          "command": "codex exec -c model=gpt-5.5 -c reasoning_effort=xhigh - < /Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/page_sabrina_carpenter_zodiac_sign.v8-prompt.md > /Users/wzb/gengrowth-flow-mvp/_staging/page_sabrina_carpenter_zodiac_sign-codex-v8.md",
+          "cost_usd": 0,
+          "cumulative_cost_usd": 0,
+          "ok": false,
+          "exit_code": -2,
+          "duration_s": 270.1,
+          "stderr_tail": "WATCHDOG: no CPU/output progress for 190s (deadlock); group cpu=2.6s"
+        },
+        {
+          "try_index": 2,
+          "model": "codex",
+          "command": "codex exec -c model=gpt-5.5 -c reasoning_effort=xhigh - < /Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/page_sabrina_carpenter_zodiac_sign.v8-prompt.md > /Users/wzb/gengrowth-flow-mvp/_staging/page_sabrina_carpenter_zodiac_sign-codex-v8.md",
+          "cost_usd": 0.1724,
+          "cumulative_cost_usd": 0.1724,
+          "ok": true,
+          "exit_code": 0,
+          "duration_s": 652,
+          "stderr_tail": "ime 时不能声明 rising sign 或 house claims；把 stage persona 当作文化材料而非 chart evidence。\n+\n+**🤖 回答：**\n+\n+使用 `article-writing` skill；读取跨会话提醒；按 brief 准备英文 Markdown 词条，H1 计划包含 `Sabrina Carpenter Zodiac Sign`，结构为 1 个 H1、11 个 H2、0 个 H3/H4；正文将 Sabrina Carpenter 的公开出生日期 May 11, 1999 归因为 Wikipedia，并计算为 Taurus Sun。文章会明确区分公开资料、Sun-sign calculation 与象征性解读，避免 rising-sign/house 断言、医学化语言、命定式预测、`mechanism` 一词、禁用词和虚构来源；CTA 使用 `Explore Astrology Tools` 链接到 `https://astrologywiki.com/en/tools`。\n+\n+---\n\ntokens used\n114,378",
+          "stdout_bytes": 12095
+        }
+      ]
+    }
+  }
+}

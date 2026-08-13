@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "pageId": "PG-ILA-001",
+  "status": "failed",
+  "failures": [
+    "drifted sections: \"Why It Matters for Your Workflow\" (jaccard=0.000, shingle=0.000, target-recall=0.00); \"How Link Equity Actually Flows Through Your Site\" (jaccard=0.000, shingle=0.000, target-recall=0.00); \"How to Evaluate Your Internal Link Equity\" (jaccard=0.000, shingle=0.000, target-recall=0.00); \"How to Build a Cleaner Internal Link Structure Step by Step\" (jaccard=0.000, shingle=0.000, target-recall=0.00) (skipped 4 structural: \"Internal Link Equity at a Glance — Quick Reference\", \"Related Reading\", \"Take Action\", \"Sources\")",
+    "SOP §7 banned jargon (FAIL): \"architecture\" (L43), \"architecture\" (L44), \"architecture\" (L51), \"architecture\" (L89), \"architecture\" (L89)",
+    "drifted sections: \"How PageRank Sculpting Plays Out in Real Site Structures\" (jaccard=0.000, shingle=0.000, target-recall=0.00); \"Common Implementation Misreadings\" (jaccard=0.000, shingle=0.000, target-recall=0.00); \"How to Evaluate Your Internal Link Equity\" (jaccard=0.000, shingle=0.000, target-recall=0.00); \"How to Implement a Cleaner Internal Link Structure Step by Step\" (jaccard=0.000, shingle=0.000, target-recall=0.00) (skipped 4 structural: \"PageRank Sculpting at a Glance — Quick Reference\", \"Related Reading\", \"Take Action\", \"Sources\")",
+    "drifted sections: \"Common Implementation Misreadings\" (jaccard=0.000, shingle=0.000, target-recall=0.00); \"How to Evaluate Your Internal Link Equity\" (jaccard=0.000, shingle=0.000, target-recall=0.00); \"How to Implement a Cleaner Internal Link Structure Step by Step\" (jaccard=0.000, shingle=0.000, target-recall=0.00); \"Common Questions About PageRank Sculpting\" (jaccard=0.000, shingle=0.000, target-recall=0.00) (skipped 4 structural: \"PageRank Sculpting at a Glance — Quick Reference\", \"Related Reading\", \"Take Action\", \"Sources\")"
+  ],
+  "updatedAt": "2026-08-07T12:20:36.377Z"
+}

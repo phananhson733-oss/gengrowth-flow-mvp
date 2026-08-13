@@ -1,0 +1,48 @@
+{
+  "page_id": "PG-WC-056",
+  "prompt_path": "/Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/PG-WC-056.v8-prompt.md",
+  "started_at": "2026-07-29T06:50:17.050Z",
+  "models_requested": [
+    "codex"
+  ],
+  "retry": 2,
+  "diversify_on_fail": false,
+  "max_cost_usd_per_page": 5,
+  "budget_exceeded_models": [],
+  "ok_count": 1,
+  "total_cost_estimate_usd": 0.1759,
+  "results": {
+    "codex": {
+      "model": "codex",
+      "active_model": "codex",
+      "diversified": false,
+      "ok": true,
+      "output_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-WC-056-codex-v8.md",
+      "retries": 0,
+      "duration_s": 463.5,
+      "cost_estimate_usd": {
+        "usd": 0.1759,
+        "input_tokens_est": 7612,
+        "output_tokens_est": 2495,
+        "pricing_note": "GPT 5.5 xhigh"
+      },
+      "cumulative_cost_usd": 0.1759,
+      "budget_exceeded": false,
+      "budget_usd": 5,
+      "attempts": [
+        {
+          "try_index": 1,
+          "model": "codex",
+          "command": "codex exec -c model=gpt-5.5 -c reasoning_effort=xhigh - < /Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/PG-WC-056.v8-prompt.md > /Users/wzb/gengrowth-flow-mvp/_staging/PG-WC-056-codex-v8.md",
+          "cost_usd": 0.1759,
+          "cumulative_cost_usd": 0.1759,
+          "ok": true,
+          "exit_code": 0,
+          "duration_s": 463.5,
+          "stderr_tail": "eene、Richard Tarnas。\n+\n+**🤖 回答：**\n+\n+按任务要求准备一篇 Markdown 英文词条，H1 为 `Marvel Characters Zodiac Signs Without Canon Confusion`；正文严格包含 1 个 H1 与 11 个 H2；将 Marvel 角色星座映射作为区分少量 canon-dated clues 与多数 fandom attributions 的象征性解释框架，而非确定性人格结论或完整 birth chart analysis；正文内联 `guide to how to read a birth chart` 与 `rising sign meaning` placeholder；CTA 使用 `Explore Astrology Tools` 链接到 `https://astrologywiki.com/en/tools`；输出前执行标题层级、词数、关键词次数、首段 snippet、表格/Reflection 首行、禁词与 Sources 约束检查。\n+\n+---\n\ntokens used\n119,542",
+          "stdout_bytes": 12526
+        }
+      ]
+    }
+  }
+}

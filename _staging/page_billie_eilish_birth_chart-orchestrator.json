@@ -1,0 +1,48 @@
+{
+  "page_id": "page_billie_eilish_birth_chart",
+  "prompt_path": "/Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/page_billie_eilish_birth_chart.v8-prompt.md",
+  "started_at": "2026-07-29T07:05:07.618Z",
+  "models_requested": [
+    "codex"
+  ],
+  "retry": 2,
+  "diversify_on_fail": false,
+  "max_cost_usd_per_page": 5,
+  "budget_exceeded_models": [],
+  "ok_count": 1,
+  "total_cost_estimate_usd": 0.1718,
+  "results": {
+    "codex": {
+      "model": "codex",
+      "active_model": "codex",
+      "diversified": false,
+      "ok": true,
+      "output_path": "/Users/wzb/gengrowth-flow-mvp/_staging/page_billie_eilish_birth_chart-codex-v8.md",
+      "retries": 0,
+      "duration_s": 703.9,
+      "cost_estimate_usd": {
+        "usd": 0.1718,
+        "input_tokens_est": 7409,
+        "output_tokens_est": 2444,
+        "pricing_note": "GPT 5.5 xhigh"
+      },
+      "cumulative_cost_usd": 0.1718,
+      "budget_exceeded": false,
+      "budget_usd": 5,
+      "attempts": [
+        {
+          "try_index": 1,
+          "model": "codex",
+          "command": "codex exec -c model=gpt-5.5 -c reasoning_effort=xhigh - < /Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/page_billie_eilish_birth_chart.v8-prompt.md > /Users/wzb/gengrowth-flow-mvp/_staging/page_billie_eilish_birth_chart-codex-v8.md",
+          "cost_usd": 0.1718,
+          "cumulative_cost_usd": 0.1718,
+          "ok": true,
+          "exit_code": 0,
+          "duration_s": 703.9,
+          "stderr_tail": "准备英文 Markdown 词条。自检结果：约 1877 词、target_keyword `Billie Eilish birth chart` 出现 8 次、1 个 H1、11 个 H2、0 个 H3/H4；首个 H2 紧跟 H1；Section 1 约 138 词，包含 1 个加粗 direct answer 与 3 个 bullet；Quick Reference 标题后首行即表格，Reflection Prompts 标题后首行即编号项。正文以 Wikipedia 归因 Billie Eilish 出生日期为 2001-12-18，并严格把 Sagittarius Sun 解读限定为象征性、date-based reading，不做 rising sign、houses 或 exact Moon degree claim；CTA 使用真实 calculator URL；Sources 仅列正文具名的 Dane Rudhyar 与 Robert Hand。\n+\n+---\n+\n ### Q5 — 14:51\n \n **🙋 提问：**\n\ntokens used\n113,649",
+          "stdout_bytes": 11671
+        }
+      ]
+    }
+  }
+}

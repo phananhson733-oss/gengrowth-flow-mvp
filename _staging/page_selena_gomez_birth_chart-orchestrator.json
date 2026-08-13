@@ -1,0 +1,48 @@
+{
+  "page_id": "page_selena_gomez_birth_chart",
+  "prompt_path": "/Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/page_selena_gomez_birth_chart.v8-prompt.md",
+  "started_at": "2026-07-27T11:03:27.657Z",
+  "models_requested": [
+    "codex"
+  ],
+  "retry": 0,
+  "diversify_on_fail": false,
+  "max_cost_usd_per_page": 5,
+  "budget_exceeded_models": [],
+  "ok_count": 1,
+  "total_cost_estimate_usd": 0.152,
+  "results": {
+    "codex": {
+      "model": "codex",
+      "active_model": "codex",
+      "diversified": false,
+      "ok": true,
+      "output_path": "/Users/wzb/gengrowth-flow-mvp/_staging/page_selena_gomez_birth_chart-codex-v8.md",
+      "retries": 0,
+      "duration_s": 257.9,
+      "cost_estimate_usd": {
+        "usd": 0.152,
+        "input_tokens_est": 7485,
+        "output_tokens_est": 1929,
+        "pricing_note": "GPT 5.5 xhigh"
+      },
+      "cumulative_cost_usd": 0.152,
+      "budget_exceeded": false,
+      "budget_usd": 5,
+      "attempts": [
+        {
+          "try_index": 1,
+          "model": "codex",
+          "command": "codex exec -c model=gpt-5.5 -c reasoning_effort=xhigh - < /Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/page_selena_gomez_birth_chart.v8-prompt.md > /Users/wzb/gengrowth-flow-mvp/_staging/page_selena_gomez_birth_chart-codex-v8.md",
+          "cost_usd": 0.152,
+          "cumulative_cost_usd": 0.152,
+          "ok": true,
+          "exit_code": 0,
+          "duration_s": 257.9,
+          "stderr_tail": "data with interpretation, so your self-read starts from a source-aware foundation instead of a loose label.\n\n## Sources\n\n- Dane Rudhyar — helped shape psychological, person-centered astrology as a language of symbolic development\n- Liz Greene — advanced modern psychological chart interpretation with attention to inner patterns and archetypal themes\n- Robert Hand — contributed to contemporary astrology’s careful treatment of natal placements, transits, and interpretive limits\ntokens used\n61,301",
+          "stdout_bytes": 9377
+        }
+      ]
+    }
+  }
+}

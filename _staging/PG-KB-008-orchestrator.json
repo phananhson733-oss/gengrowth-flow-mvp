@@ -1,0 +1,42 @@
+{
+  "page_id": "PG-KB-008",
+  "prompt_path": "/Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/PG-KB-008.v8-prompt.md",
+  "started_at": "2026-07-27T11:03:09.867Z",
+  "models_requested": [
+    "codex"
+  ],
+  "retry": 0,
+  "diversify_on_fail": false,
+  "max_cost_usd_per_page": 5,
+  "budget_exceeded_models": [],
+  "ok_count": 0,
+  "total_cost_estimate_usd": 0,
+  "results": {
+    "codex": {
+      "model": "codex",
+      "active_model": "codex",
+      "diversified": false,
+      "ok": false,
+      "output_path": null,
+      "retries": 0,
+      "duration_s": 240.1,
+      "cost_estimate_usd": null,
+      "cumulative_cost_usd": 0,
+      "budget_exceeded": false,
+      "budget_usd": 5,
+      "attempts": [
+        {
+          "try_index": 1,
+          "model": "codex",
+          "command": "codex exec -c model=gpt-5.5 -c reasoning_effort=xhigh - < /Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/PG-KB-008.v8-prompt.md > /Users/wzb/gengrowth-flow-mvp/_staging/PG-KB-008-codex-v8.md",
+          "cost_usd": 0,
+          "cumulative_cost_usd": 0,
+          "ok": false,
+          "exit_code": -2,
+          "duration_s": 240.1,
+          "stderr_tail": "WATCHDOG: no CPU/output progress for 180s (deadlock); group cpu=3.8s"
+        }
+      ]
+    }
+  }
+}

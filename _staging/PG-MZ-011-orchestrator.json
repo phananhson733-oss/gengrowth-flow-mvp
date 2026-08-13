@@ -1,0 +1,48 @@
+{
+  "page_id": "PG-MZ-011",
+  "prompt_path": "/Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/PG-MZ-011.v8-prompt.md",
+  "started_at": "2026-07-29T06:35:05.311Z",
+  "models_requested": [
+    "codex"
+  ],
+  "retry": 2,
+  "diversify_on_fail": false,
+  "max_cost_usd_per_page": 5,
+  "budget_exceeded_models": [],
+  "ok_count": 1,
+  "total_cost_estimate_usd": 0.1707,
+  "results": {
+    "codex": {
+      "model": "codex",
+      "active_model": "codex",
+      "diversified": false,
+      "ok": true,
+      "output_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-MZ-011-codex-v8.md",
+      "retries": 0,
+      "duration_s": 496.6,
+      "cost_estimate_usd": {
+        "usd": 0.1707,
+        "input_tokens_est": 7563,
+        "output_tokens_est": 2376,
+        "pricing_note": "GPT 5.5 xhigh"
+      },
+      "cumulative_cost_usd": 0.1707,
+      "budget_exceeded": false,
+      "budget_usd": 5,
+      "attempts": [
+        {
+          "try_index": 1,
+          "model": "codex",
+          "command": "codex exec -c model=gpt-5.5 -c reasoning_effort=xhigh - < /Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/PG-MZ-011.v8-prompt.md > /Users/wzb/gengrowth-flow-mvp/_staging/PG-MZ-011-codex-v8.md",
+          "cost_usd": 0.1707,
+          "cumulative_cost_usd": 0.1707,
+          "ok": true,
+          "exit_code": 0,
+          "duration_s": 496.6,
+          "stderr_tail": "`，主题为将 INTP cognitive traits 与 zodiac archetypes 做象征性对照。原始 prompt 包含数据来源安全声明、字段化 brief、作者声音胶囊、Tier Gate、11-section 固定结构、AI Overview 开头规则、标题层级规则、段落排版规则、内链 placeholder 规则、关键词分布规则、外部数据源、事实诚信红线、GEO 事实锚点建议、Anti-AI 词汇 blocklist、6 条内容红线、输出格式与词数要求。\n+\n+**🤖 回答：**\n+\n+按任务要求产出一篇 Markdown 英文词条：从 H1 开始，到 Sources 最后一条结束；严格包含 1 个 H1 与 11 个 H2；使用 `Explore Astrology Tools` CTA 链接到 `https://astrologywiki.com/en/tools`；正文将 INTP 与 zodiac signs 作为象征性解释框架处理，而非决定论、诊断或完整 natal chart reading。\n+\n+---\n\ntokens used\n135,119",
+          "stdout_bytes": 12012
+        }
+      ]
+    }
+  }
+}

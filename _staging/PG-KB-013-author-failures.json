@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "pageId": "PG-KB-013",
+  "status": "failed",
+  "failures": [
+    "SC3 paragraph length: 2 block(s) over wall limit",
+    "L13: prose paragraph wall (8 句 > 7); 把多要点改成「引子 + 编号列表」，或拆成连贯短段 (v4.5.1)",
+    "L21: prose paragraph wall (9 句 > 7); 把多要点改成「引子 + 编号列表」，或拆成连贯短段 (v4.5.1)",
+    "SC3c section scatter: 1 section(s) with >3 scattered prose paragraphs",
+    "L13: 子节 prose 段过多 (4 > 3); 用 `### ` H3 小标题把长叙述分组(每组 ≤3 段)，或改成「引子 + 编号列表」(v4.5.1 / 2026-06-09 H3)",
+    "SC4 link distribution: 0/4 internal link(s) inline in body prose — all parked in Related Reading / structural blocks (FAIL)",
+    "L96: no internal link woven into a body sentence (all in Related Reading or structural blocks); weave ≥ 1 pillar/spoke link into a body paragraph (首链优先权, 清单 §2)",
+    "drifted sections: \"Sun Sign Profiles vs Full Birth Chart Analysis: What Each Actually Shows\" (jaccard=0.000, shingle=0.000, target-recall=0.00); \"Common Misreadings\" (jaccard=0.042, shingle=0.000, target-recall=0.33) (skipped 5 structural: \"BLACKPINK Member Signs at a Glance\", \"Reflection Prompts\", \"Related Reading\", \"Take Action\", \"Sources\")",
+    "drifted sections: \"Why It Matters for Self-Awareness\" (jaccard=0.015, shingle=0.000, target-recall=0.33); \"How to Read BLACKPINK Member Signs in Their Public Personas\" (jaccard=0.000, shingle=0.000, target-recall=0.00) (skipped 5 structural: \"BLACKPINK Member Signs at a Glance\", \"Reflection Prompts\", \"Related Reading\", \"Take Action\", \"Sources\")"
+  ],
+  "updatedAt": "2026-07-27T09:18:38.925Z"
+}

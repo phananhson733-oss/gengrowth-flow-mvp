@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-KB-001",
+  "entity": "Bts Members Zodiac Signs",
+  "target_keyword": "BTS members zodiac signs",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-07-27T08:52:17.537Z",
+  "content_sha256_short": "f8bbc625d59b6e1e",
+  "source_path": "_staging/PG-KB-001-last-failing-v8.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-KB-001-en.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 2,
+      "h4Count": 0,
+      "words": 1726,
+      "wikilinks": 6,
+      "tbdLinks": 6
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

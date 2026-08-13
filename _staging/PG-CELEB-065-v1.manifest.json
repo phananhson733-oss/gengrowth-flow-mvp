@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-CELEB-065",
+  "entity": "Jalen Brunson Birth Chart",
+  "target_keyword": "Jalen Brunson birth chart",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-07-24T12:17:40.119Z",
+  "content_sha256_short": "b3b20e88ee9b17da",
+  "source_path": "/private/tmp/claude-501/-Users-wzb-gengrowth-flow-mvp/1eac3387-ed38-4c87-97ae-e076ee089908/scratchpad/articles/jalen-brunson-birth-chart.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-CELEB-065-v1.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 4,
+      "h4Count": 0,
+      "words": 1588,
+      "wikilinks": 0,
+      "tbdLinks": 0
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

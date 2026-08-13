@@ -1,0 +1,48 @@
+{
+  "page_id": "PG-KI-001",
+  "prompt_path": "/Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/PG-KI-001.v8-prompt.md",
+  "started_at": "2026-07-29T06:53:21.109Z",
+  "models_requested": [
+    "codex"
+  ],
+  "retry": 2,
+  "diversify_on_fail": false,
+  "max_cost_usd_per_page": 5,
+  "budget_exceeded_models": [],
+  "ok_count": 1,
+  "total_cost_estimate_usd": 0.175,
+  "results": {
+    "codex": {
+      "model": "codex",
+      "active_model": "codex",
+      "diversified": false,
+      "ok": true,
+      "output_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-KI-001-codex-v8.md",
+      "retries": 0,
+      "duration_s": 647.6,
+      "cost_estimate_usd": {
+        "usd": 0.175,
+        "input_tokens_est": 7757,
+        "output_tokens_est": 2436,
+        "pricing_note": "GPT 5.5 xhigh"
+      },
+      "cumulative_cost_usd": 0.175,
+      "budget_exceeded": false,
+      "budget_usd": 5,
+      "attempts": [
+        {
+          "try_index": 1,
+          "model": "codex",
+          "command": "codex exec -c model=gpt-5.5 -c reasoning_effort=xhigh - < /Users/wzb/gengrowth-flow-mvp/.gg-cache/prompts/PG-KI-001.v8-prompt.md > /Users/wzb/gengrowth-flow-mvp/_staging/PG-KI-001-codex-v8.md",
+          "cost_usd": 0.175,
+          "cumulative_cost_usd": 0.175,
+          "ok": true,
+          "exit_code": 0,
+          "duration_s": 647.6,
+          "stderr_tail": "ng Wonyoung 2004-08-31、Liz 2004-11-21、Leeseo 2007-02-21。按 brief 准备英文 Markdown 词条，H1 为 `IVE Members Zodiac Signs Read as a Verified Sun-Sign Map`；正文将 IVE 成员星座作为 verified Sun-sign reference 与象征性 group-dynamic lens，而非完整 birth chart、rising-sign claim、house claim 或确定性人格标签。已用本地脚本检查：约 1816 词、1 个 H1、11 个 H2、0 个 H3/H4、target_keyword 出现 7 次、首个 H2 紧跟 H1、定义段仅 1 个加粗 snippet、Quick Reference 标题后首行即表格、Reflection Prompts 标题后首行即编号项，未命中列出的禁词与 `you will feel/experience/find/attract` 模式。\n+\n+---\n\ntokens used\n207,651",
+          "stdout_bytes": 11930
+        }
+      ]
+    }
+  }
+}

@@ -20,11 +20,11 @@ aliases:
 > 【本区域在每天最后一次对话结束时生成/更新】
 > 用 3-5 个要点概括当天所有对话的核心内容、关键决策和产出成果。
 
-- 按批准的固定行索引修复重提 wrapper 完成一次成功运行，两个产品均无已修复行需要重提。
-- astrologywiki 复盘表保持 312 行、辅助请求队列为 2 个 P1；gengrowth 复盘表保持 64 行、请求队列为空。
+- 按批准的固定行索引修复重提 wrapper 完成一次成功运行，两个产品均无已修复行需要重提；astrologywiki 复盘表保持 312 行、辅助请求队列为 2 个 P1，gengrowth 复盘表保持 64 行、请求队列为空。
 - 本轮完整索引监控窗口以 `index monitor ok` 结束；两站 Sitemap API 成功、均无 due URL，Feishu 投递在日志中未获回执。
 - 两次工作均未越过普通文章 Google Indexing API、无人值守 GSC 点击或额外报告产物边界。
 - 已通过固定结果复盘 wrapper 同步两产品：AstrologyWiki 处理 7 条到期行、更新 281 行；GenGrowth 无到期行、更新 50 行。
+- 关键词补充 brief 的 topic-register wrapper 在 apply 模式被 fail-closed 门拒绝：astrologywiki 缺少 PG-FS-002 的发现证据，gengrowth 的 PG-CMP-005 预处理器预算耗尽；未获得写入计数。
 
 ---
 
@@ -91,5 +91,22 @@ After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-s
 **🤖 回答：**
 
 已仅运行批准的 `bash tools/scripts/gg-recap-performance-tick.sh`。2026-08-13 10:01:56–10:02:14 CST 的日志以 `recap performance ok` 结束，退出码为 0。AstrologyWiki（workbook `…jyzcQc`、GSC `sc-domain:astrologywiki.com`、GA4 `properties/524765570`）：精确里程碑行=7、更新=281、任务=283；报告分桶 P0=18、技术排查=132、P1=11、观察=122。GenGrowth（workbook `…ZTIRA8`、GSC `sc-domain:gengrowth.ai`、同一 GA4）：精确里程碑行=0、更新=50、任务=63；报告分桶技术排查=47、P1=5、观察=11。两个报告均已生成。日志及报告未提供 D14/D30/D60 分项覆盖，以及非到期/已填充跳过数，均记为不可用；日志未出现失败、缺少凭据或属性的边界。未使用人工 Sheet 写入、发布、部署、GSC Request Indexing 或 Google Indexing API。
+
+---
+
+### Q4 — 16:13
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-08-12T14:00:55.539Z (1786543255539)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+已只运行批准的 `bash tools/scripts/gg-topic-register-tick.sh`。日志窗口 2026-08-13 16:01:38–16:13:46 CST 以 `topic-register failed rc=1` 结束；local 环境选择 apply（`dry_run: false`），但没有成功产品摘要或任何可验证的写入计数。astrologywiki 在 apply 门被 `PG-FS-002` 的 evidence discovery insufficient 拒绝；gengrowth 因 `PG-CMP-005:budget_exhausted` 的 preprocessor incomplete 被拒绝，持久化错误文本将其余 page id 截断为 `PG...`。顶层 `budget_exhausted=false`，不等同于该单页预处理器预算耗尽。两产品的 candidates、updates、new_clusters、page_ids、Sheet/任务计划/Feishu 写入均不可用，不能记为零；未进行手工 Sheet 或任务计划修改，也未创建额外 Feishu/Google Doc 报告。
 
 ---

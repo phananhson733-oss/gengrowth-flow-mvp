@@ -24,7 +24,7 @@ aliases:
 - 本轮完整索引监控窗口以 `index monitor ok` 结束；两站 Sitemap API 成功、均无 due URL，Feishu 投递在日志中未获回执。
 - 两次工作均未越过普通文章 Google Indexing API、无人值守 GSC 点击或额外报告产物边界。
 - 已通过固定结果复盘 wrapper 同步两产品：AstrologyWiki 处理 7 条到期行、更新 281 行；GenGrowth 无到期行、更新 50 行。
-- 两次关键词补充 brief 的 topic-register wrapper 均在 apply 模式被 fail-closed 门拒绝：astrologywiki 缺少 PG-FS-002 的发现证据，gengrowth 的 PG-CMP-005 预处理器预算耗尽；两次均未获得写入计数。
+- 三次关键词补充 brief 的 topic-register wrapper 均在 apply 模式被 fail-closed 门拒绝：astrologywiki 缺少 PG-FS-002 的发现证据；前两次 gengrowth 因 PG-CMP-005 预处理器预算耗尽而无完整汇总，本次独立完成零候选扫描（无更新）。
 
 ---
 
@@ -176,5 +176,22 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 写完 `ahrefs alternative`(PG-CMP-005) 与 `semrush alternatives`(PG-CMP-006) 两篇 T1 对比文并已上线 gengrowth.ai，补齐 `seo_tools_comparison` 簇预留的 Series 位。**四个 cron 写作 lane 已停**（seo-blog / gengrowth-author / seo-author / seo-autopilot，bootout+disable，进程已杀）。**重大发现：gengrowth 发布路径已于 07-28 迁移** —— 旧的直写 Supabase `blog_posts` 通道被有意关闭（Nevermore v0.3 no-external-writes 边界）且旧库 `Agents` project 已 INACTIVE，现在博客是 Nevermore 仓库内容化（`apps/marketing/content/blog/en/<slug>.md`）；因此改走 clone nevermore → 转格式（去 H1、内链 `/en/blog/`→`/blog/`、换 zod strict frontmatter）→ PR #141 合并上线。**codex 事实门抓出两个真错且两次都对**：Ahrefs 并非每个付费套餐含 1 用户（Enterprise 起 3），Semrush $139 SEO 套餐本就含 AI 搜索追踪与自定义提示词监控（上层加的是每日配额而非功能）——第二处是我第一次 WebFetch 摘要漏行导致写反，改后作为文章论点。**回填已完成**：选题登记表 Status+URL、主题集群表 page_assets 去「(新)」、vault 归档、飞书汇总（`gg-reconcile-status` 对新 `/blog/` 路径失效需手写）。**追问的 gpt-image-2 确实可用且不需要 OPENAI_API_KEY**（Hermes `plugins/image_gen/openai-codex` 复用 codex 登录态），已用它重出两张 hero 图替换我原先手绘的 SVG（PR #142 已合并，prod 验证 213KB/182KB）。
+
+---
+
+### Q10 — 20:14
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-08-13T10:01:59.402Z (1786615319402)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+已只运行批准的 `bash tools/scripts/gg-topic-register-tick.sh`。日志窗口 2026-08-13 20:01:15–20:13:46 CST 以 `topic-register failed rc=1` 结束，wrapper 退出码为 1；环境处于 apply（`dry_run: false`）、顶层 `budget_exhausted: false`。astrologywiki 在 apply 门被 `PG-FS-002` 的 evidence discovery insufficient 拒绝，candidates、updates、new_clusters、page_ids、preprocessor 均未发出，记为不可用。gengrowth 独立完成：`applied=true`、candidates=0、updates=0、new_clusters=0、page_ids=[]、preprocessor=[]、evidence_discovery=[]，是有效的零候选扫描。日志无 Feishu 回执；未发现可验证的下游写入，也未进行手工 Sheet/任务计划修改或创建额外 Feishu/Google Doc 报告。
 
 ---

@@ -124,6 +124,6 @@ Run the deterministic fixed-row index repair workflow through `bash tools/script
 
 **🤖 回答：**
 
-已运行批准的 `bash tools/scripts/gg-index-repair-resubmit-tick.sh`。2026-08-13 17:31:31–17:31:58 CST 的日志窗口以 `index repair-resubmit failed rc=1` 结束，wrapper 退出码为 1。astrologywiki：fixed=0、resubmitted=0；recap en_rows=312、appended=0、updated=0、skipped=312；queue rows=2（P0=0、P1=2、P2=0、P3=0），产品 rc=0。gengrowth：fixed=0、resubmitted=0；recap en_rows=64、appended=0、updated=50、skipped=14；在 `sync-request-queue` 写入前因 Google Sheets API HTTP 429（每用户每分钟写请求配额 60）失败，队列计数不可用，产品 rc=1。wrapper 的内置失败通知已返回成功回执；未使用普通文章 Google Indexing API、无人值守 GSC Request Indexing，且未创建 Google Doc 报告产物。
+已运行批准的 `bash tools/scripts/gg-index-repair-resubmit-tick.sh`。2026-08-13 17:31:31–17:31:58 CST 的日志窗口以 `index repair-resubmit failed rc=1` 结束，wrapper 退出码为 1。astrologywiki：fixed=0、resubmitted=0；recap en_rows=312、appended=0、updated=0、skipped=312；queue rows=2（P0=0、P1=2、P2=0、P3=0），产品 rc=0。gengrowth：fixed=0、resubmitted=0；recap en_rows=64、appended=0、updated=50、skipped=14；在 `sync-request-queue` 写入前因 Google Sheets API HTTP 429（每用户每分钟写请求配额 60）失败，队列计数不可用，产品 rc=1。wrapper 的内置失败分支发送了一条 Feishu 告警回执（非手工、非额外产物）；未使用普通文章 Google Indexing API、无人值守 GSC Request Indexing，且未创建 Google Doc 报告产物。
 
 ---

@@ -166,3 +166,15 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 按 operating-gengrowth-flow skill 执行授稿 lane 硬停 20 天的三步修复，全部完成并实跑验证。① plan 重复块：实测是 514–516 三行被整块重复粘贴到 517–519（记录只说了 518 一行），已删整块。② `PG-VEDIC-009`/`PG-VEDIC-010` 改为引用块 `>` 形式暂缓（保留选题信息 + 恢复说明），因为补 sheet 行需要真实 cluster_id/关键词数据属 OPS 活、不能编造。③ 三个保活 plist 的根因比记录更深：不是"未加载"而是被 `launchctl disable` **显式禁用**，所以 `load`/`bootstrap` 都报 `Bootstrap failed: 5: Input/output error`；正确修法是先 `launchctl enable gui/$UID/<label>` 再 `bootstrap` —— 三个现已全部 LOADED。修前先写只读诊断脚本一次性扫全部 133 个 active PID，确认无第三个坑（避免"修一个暴露一个"）。验证链：真 preflight 返回 `{"mode":"cluster-readiness","status":"ready"}` exit 0 → `kickstart` 后进程表出现 `gg-seo-autopilot.mjs --author --task PG-FA-001 --limit 1`，**授稿真的跑起来了**。另发现 `com.gengrowth.seo-author`/`seo-autopilot` 的 plist 文件根本不存在（授稿实际走 `com.gengrowth.seo-blog`）。已更新 reminders 与 memory 三条。
 
 ---
+### Q9 — 19:12 [claude]
+
+**🙋 提问：**
+
+[图片：选题登记表 76/77 行] 写一下这两篇文章，提交到 gengrowth.ai。同时停掉 cron 写作。注意回填
+（追问）图片呢，有没有 gpt-image 2 生成图吗
+
+**🤖 回答：**
+
+写完 `ahrefs alternative`(PG-CMP-005) 与 `semrush alternatives`(PG-CMP-006) 两篇 T1 对比文并已上线 gengrowth.ai，补齐 `seo_tools_comparison` 簇预留的 Series 位。**四个 cron 写作 lane 已停**（seo-blog / gengrowth-author / seo-author / seo-autopilot，bootout+disable，进程已杀）。**重大发现：gengrowth 发布路径已于 07-28 迁移** —— 旧的直写 Supabase `blog_posts` 通道被有意关闭（Nevermore v0.3 no-external-writes 边界）且旧库 `Agents` project 已 INACTIVE，现在博客是 Nevermore 仓库内容化（`apps/marketing/content/blog/en/<slug>.md`）；因此改走 clone nevermore → 转格式（去 H1、内链 `/en/blog/`→`/blog/`、换 zod strict frontmatter）→ PR #141 合并上线。**codex 事实门抓出两个真错且两次都对**：Ahrefs 并非每个付费套餐含 1 用户（Enterprise 起 3），Semrush $139 SEO 套餐本就含 AI 搜索追踪与自定义提示词监控（上层加的是每日配额而非功能）——第二处是我第一次 WebFetch 摘要漏行导致写反，改后作为文章论点。**回填已完成**：选题登记表 Status+URL、主题集群表 page_assets 去「(新)」、vault 归档、飞书汇总（`gg-reconcile-status` 对新 `/blog/` 路径失效需手写）。**追问的 gpt-image-2 确实可用且不需要 OPENAI_API_KEY**（Hermes `plugins/image_gen/openai-codex` 复用 codex 登录态），已用它重出两张 hero 图替换我原先手绘的 SVG（PR #142 已合并，prod 验证 213KB/182KB）。
+
+---

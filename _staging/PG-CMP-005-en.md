@@ -1,11 +1,21 @@
 ---
-title: Ahrefs Alternative — When the Seat Math Stops Making Sense
+title: Ahrefs Alternative
 slug: ahrefs-alternative
-entity: Ahrefs Alternative / SEO Tool Comparison
-target_keyword: ahrefs alternative
-template: Comparison / Alternative
+date: 2026-08-13
+status: ready-to-review
+type: wiki-entry
+template: Definition
 tier: T1
-track: 精修线
+track: 量产线
+page_id: PG-CMP-005
+target_keyword: ahrefs alternative
+associated_keywords:
+
+generated_by: claude-opus-5
+prompt_version: v8
+generated_at: 2026-08-13T11:12:49.865Z
+content_sha256_short: 676b942cb250f424
+phase2_checks: all-pass
 ---
 
 # Most Teams Do Not Outgrow Ahrefs — They Outgrow Paying Per Seat For It

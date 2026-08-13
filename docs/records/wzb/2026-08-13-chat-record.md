@@ -144,3 +144,14 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 已只运行批准的 `bash tools/scripts/gg-topic-register-tick.sh`。日志窗口 2026-08-13 18:02:34–18:14:56 CST 以 `topic-register failed rc=1` 结束，wrapper 退出码为 1。local 环境选择 apply（`dry_run: false`），但没有成功产品摘要或任何可验证的写入计数。astrologywiki 在 apply 门被 `PG-FS-002` 的 evidence discovery insufficient 拒绝；gengrowth 因 `PG-CMP-005:budget_exhausted` 的 preprocessor incomplete 被拒绝，持久化错误文本将其余 page id 截断为 `PG...`。顶层 `budget_exhausted=false`，不等同于该单页预处理器预算耗尽。两产品的 candidates、updates、new_clusters、page_ids、Sheet/任务计划/Feishu 写入均不可用，不能记为零；未进行手工 Sheet 或任务计划修改，也未创建额外 Feishu/Google Doc 报告。
 
 ---
+### Q7 — 18:48 [claude]
+
+**🙋 提问：**
+
+本地这个库应该是 phananhson733-oss/gengrowth-flow-mvp 这个 repo，注意先统一一下
+
+**🤖 回答：**
+
+复核后确认：flow-mvp 与 oracle 两个仓库的 remote **已经统一**到 `phananhson733-oss`（flow-mvp 与远端 0/0 同步；`gh api user` = phananhson733-oss；运行时默认 slug `tools/scripts/lib/github-repo-config.mjs:1` 已是 `phananhson733-oss/oracle`），无需改动。残留的 `xdawayer/oracle` 字面量只在 test fixture 参数和历史 docs 中，不影响运行时。发现两处真实不一致：① `~/oracle` 本地 clone 停在 `codex/wiki-content-conversion-p1-p2` 分支、落后 origin/main **292 commits** 且有大量未提交改动；② `~/gengrowth-agents-repo` 的 remote 仍指向已消失的 `xdawayer/gengrowth-agents`（旧账号 404，新账号下无此 repo，脚本注释显示该后端已迁往 Nevermore）。已就 gengrowth-agents 的处置向用户确认。
+
+---

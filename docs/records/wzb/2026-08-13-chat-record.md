@@ -155,3 +155,14 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 复核后确认：flow-mvp 与 oracle 两个仓库的 remote **已经统一**到 `phananhson733-oss`（flow-mvp 与远端 0/0 同步；`gh api user` = phananhson733-oss；运行时默认 slug `tools/scripts/lib/github-repo-config.mjs:1` 已是 `phananhson733-oss/oracle`），无需改动。残留的 `xdawayer/oracle` 字面量只在 test fixture 参数和历史 docs 中，不影响运行时。发现两处真实不一致：① `~/oracle` 本地 clone 停在 `codex/wiki-content-conversion-p1-p2` 分支、落后 origin/main **292 commits** 且有大量未提交改动；② `~/gengrowth-agents-repo` 的 remote 仍指向不可达的 `xdawayer/gengrowth-agents`。**wzb 澄清 `xdawayer` 是被封停而非注销** —— 封停账号在 API 上表现为 404（`Repository not found`），不能据此判断 repo 被删。决策：agents repo 确认废弃不管（后端已迁 Nevermore）；oracle clone 先只诊断不动。oracle 诊断结果：该分支无自己的 commit（就是 main 旧点 7624bf9d/07-10），工作树挂着一份**从未 land** 的 wiki-content-conversion P1-P2 改动（842 modified + 1932 untracked，但 1745 是 `public/og` 生成物，真源码新增仅 ~19 个），与 origin/main **312 文件重叠**（含 App.tsx / WikiArticleDetailPage / WikiChartCTA / AuthorByline）→ 直接 pull 会大冲突或丢工作。已写入 memory 两条。
 
 ---
+### Q8 — 19:05 [claude]
+
+**🙋 提问：**
+
+修复
+
+**🤖 回答：**
+
+按 operating-gengrowth-flow skill 执行授稿 lane 硬停 20 天的三步修复，全部完成并实跑验证。① plan 重复块：实测是 514–516 三行被整块重复粘贴到 517–519（记录只说了 518 一行），已删整块。② `PG-VEDIC-009`/`PG-VEDIC-010` 改为引用块 `>` 形式暂缓（保留选题信息 + 恢复说明），因为补 sheet 行需要真实 cluster_id/关键词数据属 OPS 活、不能编造。③ 三个保活 plist 的根因比记录更深：不是"未加载"而是被 `launchctl disable` **显式禁用**，所以 `load`/`bootstrap` 都报 `Bootstrap failed: 5: Input/output error`；正确修法是先 `launchctl enable gui/$UID/<label>` 再 `bootstrap` —— 三个现已全部 LOADED。修前先写只读诊断脚本一次性扫全部 133 个 active PID，确认无第三个坑（避免"修一个暴露一个"）。验证链：真 preflight 返回 `{"mode":"cluster-readiness","status":"ready"}` exit 0 → `kickstart` 后进程表出现 `gg-seo-autopilot.mjs --author --task PG-FA-001 --limit 1`，**授稿真的跑起来了**。另发现 `com.gengrowth.seo-author`/`seo-autopilot` 的 plist 文件根本不存在（授稿实际走 `com.gengrowth.seo-blog`）。已更新 reminders 与 memory 三条。
+
+---

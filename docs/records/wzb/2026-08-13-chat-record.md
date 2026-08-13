@@ -152,6 +152,6 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 
 **🤖 回答：**
 
-复核后确认：flow-mvp 与 oracle 两个仓库的 remote **已经统一**到 `phananhson733-oss`（flow-mvp 与远端 0/0 同步；`gh api user` = phananhson733-oss；运行时默认 slug `tools/scripts/lib/github-repo-config.mjs:1` 已是 `phananhson733-oss/oracle`），无需改动。残留的 `xdawayer/oracle` 字面量只在 test fixture 参数和历史 docs 中，不影响运行时。发现两处真实不一致：① `~/oracle` 本地 clone 停在 `codex/wiki-content-conversion-p1-p2` 分支、落后 origin/main **292 commits** 且有大量未提交改动；② `~/gengrowth-agents-repo` 的 remote 仍指向已消失的 `xdawayer/gengrowth-agents`（旧账号 404，新账号下无此 repo，脚本注释显示该后端已迁往 Nevermore）。已就 gengrowth-agents 的处置向用户确认。
+复核后确认：flow-mvp 与 oracle 两个仓库的 remote **已经统一**到 `phananhson733-oss`（flow-mvp 与远端 0/0 同步；`gh api user` = phananhson733-oss；运行时默认 slug `tools/scripts/lib/github-repo-config.mjs:1` 已是 `phananhson733-oss/oracle`），无需改动。残留的 `xdawayer/oracle` 字面量只在 test fixture 参数和历史 docs 中，不影响运行时。发现两处真实不一致：① `~/oracle` 本地 clone 停在 `codex/wiki-content-conversion-p1-p2` 分支、落后 origin/main **292 commits** 且有大量未提交改动；② `~/gengrowth-agents-repo` 的 remote 仍指向不可达的 `xdawayer/gengrowth-agents`。**wzb 澄清 `xdawayer` 是被封停而非注销** —— 封停账号在 API 上表现为 404（`Repository not found`），不能据此判断 repo 被删。决策：agents repo 确认废弃不管（后端已迁 Nevermore）；oracle clone 先只诊断不动。oracle 诊断结果：该分支无自己的 commit（就是 main 旧点 7624bf9d/07-10），工作树挂着一份**从未 land** 的 wiki-content-conversion P1-P2 改动（842 modified + 1932 untracked，但 1745 是 `public/og` 生成物，真源码新增仅 ~19 个），与 origin/main **312 文件重叠**（含 App.tsx / WikiArticleDetailPage / WikiChartCTA / AuthorByline）→ 直接 pull 会大冲突或丢工作。已写入 memory 两条。
 
 ---

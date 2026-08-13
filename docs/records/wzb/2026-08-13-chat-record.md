@@ -1,34 +1,4 @@
 ---
-
-### Q3 — 10:03
-
-**🙋 提问：**
-
-Automation: 结果复盘表更新
-Automation ID: gengrowth-recap-performance
-Automation memory: $CODEX_HOME/automations/gengrowth-recap-performance/memory.md
-Last run: 2026-08-12T02:01:15.105Z (1786500075105)
-
-Run the deterministic GenGrowth results-recap performance workflow through `bash tools/scripts/gg-recap-performance-tick.sh`.
-
-The wrapper loads the local gg environment, scans the configured products (`GG_RECAP_PERFORMANCE_PRODUCTS`, defaulting to astrologywiki and gengrowth), reads `index-tracking` and `结果复盘表`, and only fetches D14/D30/D60 GSC/GA4 snapshot metrics for indexed URLs whose current age is exactly at one of those milestones. Non-milestone rows and already-filled milestone cells must keep their existing values; historical repair/backfill is only allowed through the wrapper's explicit repair modes such as `--fill-pending` / `--verify-zero-metrics`, not by ad-hoc daily refresh.
-
-The wrapper preserves manual recap decisions/notes, writes wrapper-owned generated performance fields back to the Sheet, and writes the optimization task report under `~/gengrowth-agents/reports/recap-performance/`.
-
-Safety boundary:
-- Do not bypass the wrapper or pass ad-hoc write flags directly to the Node script.
-- Do not hand-edit Google Sheets outside the wrapper.
-- Do not publish content, deploy sites, modify page source, submit GSC Request Indexing, or use the Google Indexing API.
-- Do not overwrite manual fields such as `决策` or human notes; only the wrapper-owned generated recap segment may be refreshed.
-- Do not create extra Feishu/Google Doc artifacts unless the wrapper already does so.
-
-After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/recap_performance/` and summarize per-product workbook/site/property, exact-milestone rows processed, updated recap row counts, generated report path, D14/D30/D60 coverage for due indexed rows, optimization task counts by priority, skipped/non-due rows, and any failures. If the wrapper fails or required credentials/properties are missing, report the exact missing boundary from the log without attempting a manual replacement workflow.
-
-**🤖 回答：**
-
-已仅运行批准的 `bash tools/scripts/gg-recap-performance-tick.sh`。2026-08-13 10:01:56–10:02:14 CST 的日志以 `recap performance ok` 结束，退出码为 0。AstrologyWiki（workbook `…jyzcQc`、GSC `sc-domain:astrologywiki.com`、GA4 `properties/524765570`）：精确里程碑行=7、更新=281、任务=283；报告分桶 P0=18、技术排查=132、P1=11、观察=122。GenGrowth（workbook `…ZTIRA8`、GSC `sc-domain:gengrowth.ai`、同一 GA4）：精确里程碑行=0、更新=50、任务=63；报告分桶技术排查=47、P1=5、观察=11。两个报告均已生成。日志及报告未提供 D14/D30/D60 分项覆盖，以及非到期/已填充跳过数，均记为不可用；日志未出现失败、缺少凭据或属性的边界。未使用人工 Sheet 写入、发布、部署、GSC Request Indexing 或 Google Indexing API。
-
----
 title: 对话记录 — 2026-08-13
 date: 2026-08-13
 updated: 2026-08-13
@@ -54,6 +24,7 @@ aliases:
 - astrologywiki 复盘表保持 312 行、辅助请求队列为 2 个 P1；gengrowth 复盘表保持 64 行、请求队列为空。
 - 本轮完整索引监控窗口以 `index monitor ok` 结束；两站 Sitemap API 成功、均无 due URL，Feishu 投递在日志中未获回执。
 - 两次工作均未越过普通文章 Google Indexing API、无人值守 GSC 点击或额外报告产物边界。
+- 已通过固定结果复盘 wrapper 同步两产品：AstrologyWiki 处理 7 条到期行、更新 281 行；GenGrowth 无到期行、更新 50 行。
 
 ---
 
@@ -90,5 +61,35 @@ Run the GenGrowth Phase 2 indexing workflow through the existing deterministic w
 **🤖 回答：**
 
 已运行批准的 `bash tools/scripts/gg-index-monitor-tick.sh`。2026-08-13 09:01:52–09:02:59 CST 的日志窗口以 `index monitor ok` 结束，退出码为 0。astrologywiki 与 gengrowth 均完成官方 Search Console Sitemaps API 刷新。astrologywiki：追踪行 312、due=0，URL Inspection 检查=0、失败=0；结果复盘表 en_rows=312、updated=312；request-indexing-queue rows=2（P0=0、P1=2、P2=0、P3=0）。gengrowth：追踪行 64、due=0，URL Inspection 检查=0、失败=0；结果复盘表 en_rows=64、updated=51、skipped=13；request-indexing-queue rows=0（P0=0、P1=0、P2=0、P3=0）。日志窗口没有 Feishu/Lark 通知标记、回执或失败标记，故投递状态不可验证；由于无 due URL，没有打开候选 GSC 检查页，也未发生 Request Indexing 点击。已核对脚本未使用普通文章 Google Indexing API。
+
+---
+
+### Q3 — 10:03
+
+**🙋 提问：**
+
+Automation: 结果复盘表更新
+Automation ID: gengrowth-recap-performance
+Automation memory: $CODEX_HOME/automations/gengrowth-recap-performance/memory.md
+Last run: 2026-08-12T02:01:15.105Z (1786500075105)
+
+Run the deterministic GenGrowth results-recap performance workflow through `bash tools/scripts/gg-recap-performance-tick.sh`.
+
+The wrapper loads the local gg environment, scans the configured products (`GG_RECAP_PERFORMANCE_PRODUCTS`, defaulting to astrologywiki and gengrowth), reads `index-tracking` and `结果复盘表`, and only fetches D14/D30/D60 GSC/GA4 snapshot metrics for indexed URLs whose current age is exactly at one of those milestones. Non-milestone rows and already-filled milestone cells must keep their existing values; historical repair/backfill is only allowed through the wrapper's explicit repair modes such as `--fill-pending` / `--verify-zero-metrics`, not by ad-hoc daily refresh.
+
+The wrapper preserves manual recap decisions/notes, writes wrapper-owned generated performance fields back to the Sheet, and writes the optimization task report under `~/gengrowth-agents/reports/recap-performance/`.
+
+Safety boundary:
+- Do not bypass the wrapper or pass ad-hoc write flags directly to the Node script.
+- Do not hand-edit Google Sheets outside the wrapper.
+- Do not publish content, deploy sites, modify page source, submit GSC Request Indexing, or use the Google Indexing API.
+- Do not overwrite manual fields such as `决策` or human notes; only the wrapper-owned generated recap segment may be refreshed.
+- Do not create extra Feishu/Google Doc artifacts unless the wrapper already does so.
+
+After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/recap_performance/` and summarize per-product workbook/site/property, exact-milestone rows processed, updated recap row counts, generated report path, D14/D30/D60 coverage for due indexed rows, optimization task counts by priority, skipped/non-due rows, and any failures. If the wrapper fails or required credentials/properties are missing, report the exact missing boundary from the log without attempting a manual replacement workflow.
+
+**🤖 回答：**
+
+已仅运行批准的 `bash tools/scripts/gg-recap-performance-tick.sh`。2026-08-13 10:01:56–10:02:14 CST 的日志以 `recap performance ok` 结束，退出码为 0。AstrologyWiki（workbook `…jyzcQc`、GSC `sc-domain:astrologywiki.com`、GA4 `properties/524765570`）：精确里程碑行=7、更新=281、任务=283；报告分桶 P0=18、技术排查=132、P1=11、观察=122。GenGrowth（workbook `…ZTIRA8`、GSC `sc-domain:gengrowth.ai`、同一 GA4）：精确里程碑行=0、更新=50、任务=63；报告分桶技术排查=47、P1=5、观察=11。两个报告均已生成。日志及报告未提供 D14/D30/D60 分项覆盖，以及非到期/已填充跳过数，均记为不可用；日志未出现失败、缺少凭据或属性的边界。未使用人工 Sheet 写入、发布、部署、GSC Request Indexing 或 Google Indexing API。
 
 ---

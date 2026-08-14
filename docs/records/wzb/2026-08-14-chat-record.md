@@ -22,7 +22,7 @@ aliases:
 - 按指定确定性 wrapper 完成 fixed-row 索引修复重提；两个产品均成功，未处理到已修复行。
 - 按指定确定性 wrapper 完成 Phase 2 索引监控；两个站点 Sitemap API 提交成功，均无到期 URL，未触发人工 Request Indexing。
 - 按指定确定性 wrapper 完成结果复盘表绩效更新；两产品写入成功，D14/D30/D60 及跳过行分项未由日志提供。
-- 按指定确定性 wrapper 两次运行选题登记；环境启用 apply，AstrologyWiki 均在 PG-FS-002 证据门禁失败，GenGrowth 均完成零候选扫描。
+- 按指定确定性 wrapper 四次运行选题登记；环境启用 apply，AstrologyWiki 均在 PG-FS-002 证据门禁失败，GenGrowth 均完成零候选扫描。
 - 按指定确定性 wrapper 完成当日第二次 fixed-row 索引修复重提；两个产品均成功，未处理到已修复行。
 - 按指定确定性 wrapper 第三次运行选题登记；环境启用 apply，AstrologyWiki 继续因 PG-FS-002 证据不足 fail-closed，GenGrowth 仍为零候选。
 
@@ -159,3 +159,22 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 仅运行指定 `bash tools/scripts/gg-topic-register-tick.sh`，退出码 1；权威日志窗口为 2026-08-14 20:02:14–20:15:37 CST，终止标记为 `topic-register failed rc=1`。本地环境显式启用 apply（`dry_run=false`），顶层 `budget_exhausted=false`。AstrologyWiki 在 `PG-FS-002` 因证据发现不足被 fail-closed 拒绝；其 candidates、updates、new_clusters、page_ids、preprocessor 与 evidence_discovery 均未输出，属于不可用而非 0。GenGrowth 独立完成扫描：`applied=true`，candidates=0、updates=0、new_clusters=0、page_ids/created_page_ids/preprocessor/evidence_discovery 均为空，`audit_incomplete=0`、`ops_blocked_count=0`。日志没有 Feishu 回执或下游 Sheet/任务计划写入计数，相关写入状态未验证。未绕过 wrapper、未手工编辑 Sheet/任务计划，未创建额外 Feishu 或 Google Doc 报告产物；已创建自动化 memory。
+
+---
+
+### Q8 — 22:16
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-08-14T12:01:34.575Z (1786708894575)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行指定 `bash tools/scripts/gg-topic-register-tick.sh`，退出码 1；权威日志窗口为 2026-08-14 22:02:45–22:15:06 CST，终止标记为 `topic-register failed rc=1`。本地环境显式启用 apply（`dry_run=false`），顶层 `budget_exhausted=false`。AstrologyWiki 在 `PG-FS-002` 因证据发现不足被 fail-closed 拒绝；其 candidates、updates、new_clusters、page_ids、preprocessor 与 evidence_discovery 均未输出，属于不可用而非 0。GenGrowth 独立完成扫描：`applied=true`，candidates=0、updates=0、new_clusters=0、page_ids/created_page_ids/preprocessor/evidence_discovery 均为空，`audit_incomplete=0`、`ops_blocked_count=0`。日志没有 Feishu 回执或下游 Sheet/任务计划写入计数，相关写入状态未验证。未绕过 wrapper、未手工编辑 Sheet/任务计划，未创建额外 Feishu 或 Google Doc 报告产物；已写入自动化 memory。
+
+---

@@ -23,7 +23,7 @@ aliases:
 - 运行固定 GenGrowth 索引修复重提入口；两产品均完成同步且无失败标记。
 - 运行 Phase 2 索引监控入口；两个产品的 Sitemap API 成功，均无到期 URL。
 - 运行结果复盘性能入口；两个产品均写回复盘表并生成优化任务报告。
-- 本日两次运行选题登记入口；均为 apply 模式，AstrologyWiki 因证据不足 fail-closed，GenGrowth 产出明确零候选，未见可独立验证的下游写入回执。
+- 本日三次运行选题登记入口；均为 apply 模式，AstrologyWiki 因证据不足 fail-closed，GenGrowth 产出明确零候选，未见可独立验证的下游写入回执。
 
 ---
 
@@ -141,5 +141,22 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 仅执行 `bash tools/scripts/gg-topic-register-tick.sh`，退出码为 1 且 stdout 为空。权威日志窗口为 2026-08-15 18:02:29–18:14:29 CST，以 `topic-register failed rc=1` 结束。wrapper 为 apply 模式（`dry_run=false`），顶层 `ok=false`、`budget_exhausted=false`。astrologywiki 因 `ERR_OTHER: refusing --apply: evidence discovery insufficient for PG-FS-002` fail-closed；候选、更新、new_clusters、page_ids 与 preprocessor 字段未输出，均为不可用而非零。gengrowth 独立结果为 `applied=true`、candidates=0、updates=0、new_clusters=0、page_ids/created_page_ids/cluster_repairs/preprocessor/evidence_discovery 均为空、audit_incomplete=0、ops_blocked_count=0。日志没有 Feishu 回执或独立的 Sheet/任务计划写入计数，故下游写入未验证；未进行手工 Sheet/任务计划编辑，也未创建额外 Feishu 或 Google Doc 产物。
+
+---
+
+### Q7 — 20:16
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-08-15T10:01:39.443Z (1786788099443)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅执行 `bash tools/scripts/gg-topic-register-tick.sh`，退出码为 1 且 stdout 为空。权威日志窗口为 2026-08-15 20:03:33–20:15:44 CST，以 `topic-register failed rc=1` 结束。wrapper 为 apply 模式（`dry_run=false`），顶层 `ok=false`、`budget_exhausted=false`。astrologywiki 因 `ERR_OTHER: refusing --apply: evidence discovery insufficient for PG-FS-002` fail-closed；候选、更新、new_clusters、page_ids 与 preprocessor 字段未输出，均为不可用而非零。gengrowth 独立结果为 `applied=true`、candidates=0、updates=0、new_clusters=0、page_ids/created_page_ids/cluster_repairs/preprocessor/evidence_discovery 均为空、audit_incomplete=0、ops_blocked_count=0。日志没有 Feishu 回执或独立的 Sheet/任务计划写入计数，故下游写入未验证；未进行手工 Sheet/任务计划编辑，也未创建额外 Feishu 或 Google Doc 产物。
 
 ---

@@ -23,7 +23,7 @@ aliases:
 - 运行固定 GenGrowth 索引修复重提入口；两产品均完成同步且未记录失败。
 - 运行 Phase 2 索引监控 wrapper；两产品 Sitemap API 提交成功、无到期 URL，队列维持 astrologywiki P1=2、gengrowth 为零。
 - 运行结果复盘性能 wrapper；两产品完成结果复盘写回并生成优化任务报告，节点/覆盖/跳过拆分未由日志输出。
-- 运行关键词补充 brief wrapper；apply 环境下 GenGrowth 完整零扫描，AstrologyWiki 因 PG-FS-002 证据不足而 fail-closed。
+- 两次运行关键词补充 brief wrapper；apply 环境下 GenGrowth 均为完整零扫描，AstrologyWiki 均因 PG-FS-002 证据不足而 fail-closed。
 
 ---
 
@@ -124,5 +124,22 @@ Run the deterministic fixed-row index repair workflow through `bash tools/script
 **🤖 回答：**
 
 执行 `bash tools/scripts/gg-index-repair-resubmit-tick.sh`，退出码为 0；权威日志窗口为 2026-08-16 17:32:23–17:32:43 CST，并以 `index repair-resubmit ok` 结束。astrologywiki：process-fixed fixed=0/resubmitted=0，sync-recap en_rows=312/appended=0/updated=0/skipped=312，sync-request-queue rows=2（P0=0/P1=2/P2=0/P3=0）。gengrowth：process-fixed fixed=0/resubmitted=0，sync-recap en_rows=64/appended=0/updated=0/skipped=64，sync-request-queue rows=0（P0=0/P1=0/P2=0/P3=0）。限定窗口未出现失败；未使用普通文章 Google Indexing API、未无人值守点击 Search Console Request Indexing，且未创建 Feishu 或 Google Doc 报告产物。
+
+---
+
+### Q6 — 18:14
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-08-16T08:01:44.409Z (1786867304409)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅执行 `bash tools/scripts/gg-topic-register-tick.sh`；权威日志窗口为 2026-08-16 18:01:16–18:14:21 CST，以 `topic-register failed rc=1` 结束。实际为 apply 模式（`dry_run=false`），顶层 `ok=false`、`budget_exhausted=false`。AstrologyWiki 在 `PG-FS-002` 的 evidence discovery 不足处 fail-closed；未输出 candidates、updates、new_clusters、page_ids 或 preprocessor，均为不可用而非零。GenGrowth 独立输出 `applied=true` 的完整零扫描：candidates=0、updates=0、new_clusters=0、page_ids/created_page_ids/cluster_repairs/preprocessor/evidence_discovery 均为空，audit_incomplete=0、ops_blocked_count=0。日志未输出 Feishu 回执或可独立验证的 Sheet/任务计划写入数；未进行手工恢复、旁路写入或额外 Feishu/Google Doc 报告。
 
 ---

@@ -109,3 +109,20 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 仅执行 `bash tools/scripts/gg-topic-register-tick.sh`，进程退出码为 1、stdout 为空；权威日志窗口为 2026-08-16 16:02:23–16:14:34 CST，以 `topic-register failed rc=1` 结束。实际为 apply 模式（`dry_run=false`），顶层 `ok=false`、`budget_exhausted=false`。AstrologyWiki 在 `PG-FS-002` 的 evidence discovery 不足处 fail-closed；未输出 candidates、updates、new_clusters、page_ids 或 preprocessor，均为不可用而非零。GenGrowth 独立输出 `applied=true` 的完整零扫描：candidates=0、updates=0、new_clusters=0、page_ids/created_page_ids/cluster_repairs/preprocessor/evidence_discovery 均为空，audit_incomplete=0、ops_blocked_count=0。日志未输出 Feishu 回执或可独立验证的 Sheet/任务计划写入数；未进行手工恢复、旁路写入或额外 Feishu/Google Doc 报告。
 
 ---
+
+### Q5 — 17:32
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: 2026-08-15T21:01:11.965Z (1786827671965)
+
+Run the deterministic fixed-row index repair workflow through `bash tools/scripts/gg-index-repair-resubmit-tick.sh`. The wrapper loads the local gg environment, loops the configured products (`GG_INDEX_MONITOR_PRODUCTS`, defaulting to astrologywiki and gengrowth), processes rows marked `已修复`, syncs `结果复盘表`, and refreshes `request-indexing-queue` in each product Google Sheet. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, do not click Search Console Request Indexing unattended, and do not create Feishu or Google Doc report artifacts. After the wrapper exits, summarize per-product `process-fixed`, `sync-recap`, `sync-request-queue` counts visible in the log, plus any failures.
+
+**🤖 回答：**
+
+执行 `bash tools/scripts/gg-index-repair-resubmit-tick.sh`，退出码为 0；权威日志窗口为 2026-08-16 17:32:23–17:32:43 CST，并以 `index repair-resubmit ok` 结束。astrologywiki：process-fixed fixed=0/resubmitted=0，sync-recap en_rows=312/appended=0/updated=0/skipped=312，sync-request-queue rows=2（P0=0/P1=2/P2=0/P3=0）。gengrowth：process-fixed fixed=0/resubmitted=0，sync-recap en_rows=64/appended=0/updated=0/skipped=64，sync-request-queue rows=0（P0=0/P1=0/P2=0/P3=0）。限定窗口未出现失败；未使用普通文章 Google Indexing API、未无人值守点击 Search Console Request Indexing，且未创建 Feishu 或 Google Doc 报告产物。
+
+---

@@ -73,8 +73,19 @@ const GENGROWTH_TBD_LINK_RULES = [
   { match: /low[\s-]*hanging[\s-]*fruit|keyword[\s-]*difficulty|easy[\s-]*keywords?[\s-]*to[\s-]*rank|low[\s-]*competition[\s-]*keywords?|(search|keyword)[\s-]*opportunit(y|ies)|hidden[\s-]*keywords?/i, href: '/blog/how-to-find-low-hanging-fruit-keywords' },
   // "search performance diagnosis" in any order, plus the Search-Console-diagnosis phrasings
   // the writers actually produce ("reading Search Console data for SEO diagnosis").
-  { match: /striking[\s-]*distance|search[\s-]*performance[\s-]*diagnos|diagnos\w*[^.\n]{0,40}search[\s-]*(performance|console)|search[\s-]*console[^.\n]{0,40}(diagnos|impression|position)|average[\s-]*position|content[\s-]*refresh[\s-]*prioriti|quick[\s-]*wins?/i, href: '/blog/striking-distance-keywords' },
+  // The trailing `search console` alternatives were added 2026-08-17: the previous form
+  // required a diagnos/impression/position word NEAR "Search Console", so the anchor the
+  // 8/17 brief actually specifies — "the pillar on reading your own Search Console data"
+  // — matched nothing and de-linked to italic. Reading your own Search Console data IS
+  // what this Pillar covers, so a bare mention is a correct destination, not a guess.
+  { match: /striking[\s-]*distance|search[\s-]*performance[\s-]*diagnos|diagnos\w*[^.\n]{0,40}search[\s-]*(performance|console)|search[\s-]*console[^.\n]{0,40}(diagnos|impression|position)|average[\s-]*position|content[\s-]*refresh[\s-]*prioriti|quick[\s-]*wins?|(read|reading|your[\s-]*own)[^.\n]{0,24}search[\s-]*console|search[\s-]*console[\s-]*(data|export)/i, href: '/blog/striking-distance-keywords' },
   { match: /pagerank[\s-]*sculpt|link[\s-]*equity|orphan[\s-]*pages?|crawl[\s-]*depth|internal[\s-]*link[\s-]*(architecture|structure)/i, href: '/blog/pagerank-sculpting' },
+  // 2026-08-17: the August volatility post (Series under search_performance_diagnosis).
+  // This MUST precede the two `core update` rules below. A description like "our August 2026
+  // core update check" would otherwise be swallowed by the generic /core[\s-]*update/ rule and
+  // land on the July page. Gated on August 2026 being NAMED — a bare "core update" still means
+  // July, which is correct: August 2026 had no confirmed core update (Search Status Dashboard).
+  { match: /august[\s-]*2026|unconfirmed[\s-]*volatilit/i, href: '/blog/google-algorithm-update-august-2026' },
   // Cross-cluster: traffic-drop / core-update work lives on the live google-july-2026-update page.
   // NOTE: `cannibali[sz]ation` was deliberately REMOVED from this rule. That page is about the
   // July 2026 core update and says nothing about cannibalization, so the rule was sending readers
@@ -84,7 +95,10 @@ const GENGROWTH_TBD_LINK_RULES = [
   { match: /traffic[\s-]*drop|core[\s-]*update/i, href: '/blog/google-july-2026-update' },
   { match: /segment\w*[^.\n]{0,40}(country|device)/i, href: '/blog/striking-distance-keywords' },
   // -- live articles most likely to be referenced by the clusters above --
-  { match: /google[\s-]*(july[\s-]*)?2026[\s-]*(core[\s-]*)?update|core[\s-]*update/i, href: '/blog/google-july-2026-update' },
+  // `july[\s-]*2026` stands alone (added 2026-08-17). The old form required "update" to
+  // follow, so "our earlier walkthrough of the July 2026 change" — the exact anchor the
+  // 8/17 brief specifies — de-linked. Naming the month is enough to identify the page.
+  { match: /july[\s-]*2026|google[\s-]*2026[\s-]*(core[\s-]*)?update|core[\s-]*update/i, href: '/blog/google-july-2026-update' },
   { match: /website[\s-]*health[\s-]*score/i, href: '/blog/website-health-score' },
   { match: /seo[\s-]*audit[\s-]*checklist/i, href: '/blog/seo-audit-checklist' },
   { match: /technical[\s-]*seo[\s-]*audit|site[\s-]*audit[\s-]*report/i, href: '/blog/seo-audit-checklist' },

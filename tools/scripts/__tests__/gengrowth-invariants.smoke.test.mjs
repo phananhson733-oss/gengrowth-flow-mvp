@@ -324,7 +324,9 @@ test('invariant 4: DRAFT_RE accepts the 2026-08-07 cluster prefixes', () => {
   const src = readFileSync(PUBLISH_SRC_PATH, 'utf8');
   const m = src.match(/const W25_PREFIXES = \[([\s\S]*?)\];/);
   assert.ok(m, 'W25_PREFIXES literal not found in gg-gengrowth-publish.mjs');
-  const prefixes = [...m[1].matchAll(/'([A-Z0-9]+)'/g)].map((x) => x[1]);
+  // Comments stripped first — see invariant 8 for why a quoted prefix inside a comment
+  // must not be read as an array element.
+  const prefixes = [...m[1].replace(/\/\/[^\n]*/g, '').matchAll(/'([A-Z0-9]+)'/g)].map((x) => x[1]);
   for (const p of ['KOD', 'SPD', 'ILA']) {
     assert.ok(prefixes.includes(p), `prefix ${p} missing — its articles would never publish`);
   }
@@ -406,5 +408,66 @@ test('invariant 7: deriveDescription never ends on dangling punctuation or marku
     assert.doesNotMatch(d, /[—–―,，;；:]$/u, `excerpt ends on dangling punctuation: "…${d.slice(-40)}"`);
     assert.doesNotMatch(d, /`/, `excerpt leaked a literal backtick: "…${d.slice(-40)}"`);
     assert.doesNotMatch(d, /\s(of|the|a|an|and|or|to|by|in|on|for|with|at|as)$/i, `excerpt ends on a dangling function word: "…${d.slice(-40)}"`);
+  }
+});
+
+// ── invariant 8: a new cluster's prefix must be publishable AND unambiguous ──
+//
+// Same silent-failure class as invariant 4, plus the collision half. `ai_search_visibility`
+// (calendar 8/21 `agentic seo` onward) can NOT reuse 'AIS' — that prefix already carries the
+// ai_seo_automation cluster (PG-AIS-006/007 are live). Two clusters behind one prefix makes
+// page_id → cluster ambiguous for anything mapping backwards from the id, and the breakage
+// shows up as mis-clustered internal links, not as an error.
+test('invariant 8: ASV is publishable and does not collide with the ai_seo_automation prefix', () => {
+  const src = readFileSync(PUBLISH_SRC_PATH, 'utf8');
+  const m = src.match(/const W25_PREFIXES = \[([\s\S]*?)\];/);
+  assert.ok(m, 'W25_PREFIXES literal not found');
+  // Strip // comments BEFORE extracting. A quoted prefix mentioned inside an explanatory
+  // comment (e.g. "NOT 'AIS' — that one belongs to ai_seo_automation") is not an array
+  // element, and counting it produced a phantom duplicate on the very commit that added it.
+  const prefixes = [...m[1].replace(/\/\/[^\n]*/g, '').matchAll(/'([A-Z0-9]+)'/g)].map((x) => x[1]);
+  assert.ok(prefixes.includes('ASV'), "prefix ASV missing — ai_search_visibility articles would never publish");
+  assert.ok(prefixes.includes('AIS'), 'prefix AIS (ai_seo_automation) must remain');
+  assert.equal(new Set(prefixes).size, prefixes.length, 'W25_PREFIXES contains a duplicate prefix');
+  const re = new RegExp(`^(PG-(?:${prefixes.join('|')})-\\d+)-[a-z0-9]+-v8\\.md$`, 'i');
+  assert.match('PG-ASV-001-claude-v8.md', re, 'ai_search_visibility draft must be publishable');
+});
+
+// ── invariant 9: "August 2026" must not be swallowed by the core-update rule ──
+//
+// GENGROWTH_TBD_LINK_RULES is FIRST-MATCH-WINS and order is load-bearing. The generic
+// /traffic[\s-]*drop|core[\s-]*update/ rule points at the July 2026 page; a description like
+// "our August 2026 core update check" hits `core update` and would land on July unless the
+// August rule precedes it. Nothing errors — readers just get the wrong article. This test
+// exists so that reordering the catalog fails loudly instead of silently.
+test('invariant 9: August 2026 descriptions resolve to the August post, not July', async () => {
+  const { resolveTbdLink } = await import(
+    pathToFileURL(resolve(REPO, 'tools', 'scripts', 'gg-md-to-oracle-ts.mjs')).href
+  );
+  const src = readFileSync(resolve(REPO, 'tools', 'scripts', 'gg-md-to-gengrowth-blog.mjs'), 'utf8');
+  const body = src.match(/const GENGROWTH_TBD_LINK_RULES = \[([\s\S]*?)\n\];/);
+  assert.ok(body, 'GENGROWTH_TBD_LINK_RULES literal not found');
+  const augIdx = body[1].indexOf('google-algorithm-update-august-2026');
+  const julIdx = body[1].indexOf('google-july-2026-update');
+  assert.ok(augIdx !== -1, 'August 2026 rule missing from the catalog');
+  assert.ok(augIdx < julIdx, 'the August rule must precede the July/core-update rules (first match wins)');
+
+  const opts = { rules: eval(`[${body[1]}]`), pathPrefix: '/blog/' };
+  for (const [desc, want] of [
+    ['our August 2026 core update check', '/blog/google-algorithm-update-august-2026'],
+    ['the unconfirmed volatility we tracked', '/blog/google-algorithm-update-august-2026'],
+    // A bare "core update" still means July — August 2026 had no confirmed core update.
+    ['what to do about a sudden traffic drop', '/blog/google-july-2026-update'],
+    // The four anchors the 8/17 brief (B8) specifies VERBATIM. Two of them de-linked when
+    // first measured: the rules existed and the slugs were live, but the phrasing the brief
+    // actually asks writers to use matched nothing. Asserting on slug presence alone hid it —
+    // these assert on the sentence a writer will really type.
+    ['the pillar on reading your own Search Console data', '/blog/striking-distance-keywords'],
+    ['our earlier walkthrough of the July 2026 change', '/blog/google-july-2026-update'],
+    ['how internal link structure moves authority', '/blog/pagerank-sculpting'],
+    ['what a zero-volume reading actually means', '/blog/zero-search-volume-keywords'],
+  ]) {
+    const out = resolveTbdLink(desc, '', opts);
+    assert.ok(out && out.includes(want), `"${desc}" resolved to ${out} — expected ${want}`);
   }
 });

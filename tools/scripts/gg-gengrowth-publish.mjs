@@ -85,6 +85,11 @@ const W25_PREFIXES = [
   'WLS', 'ART', 'SFS', 'EOS', 'AIS', 'TAS', 'SDS', 'B2B', 'CMP', 'SLB', 'SMS',
   'BBDM', 'TSWB', 'SPPG', 'AEWG', 'GJ2U', 'WHS',
   'KOD', 'SPD', 'ILA', 'YASA', 'FPDA',
+  // 2026-08-17: ai_search_visibility cluster (calendar 8/21 `agentic seo` onward).
+  // NOT 'AIS' — that prefix is already taken by the ai_seo_automation cluster
+  // (PG-AIS-006/007), and two clusters sharing a prefix makes page_id → cluster
+  // ambiguous for anything that maps backwards from the id.
+  'ASV',
 ];
 const DRAFT_RE = new RegExp(`^(PG-(?:${W25_PREFIXES.join('|')})-\\d+)-[a-z0-9]+-v8\\.md$`, 'i');
 

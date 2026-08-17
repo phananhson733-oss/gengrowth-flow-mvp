@@ -20,6 +20,7 @@ tags:
 - 已通过指定 `gg-index-monitor-tick.sh` 刷新两站 Search Console Sitemap，并完成索引追踪复盘和请求队列同步；无待检查或待人工请求编入索引的 URL。
 - 全程未触发普通文章 Google Indexing API、无人值守 Search Console 请求、飞书或 Google Doc 报告。
 - 已通过指定 `gg-recap-performance-tick.sh` 写回两站 wrapper-owned 结果复盘字段，并生成 2026-08-17 优化任务报告；未进行人工 Sheet 编辑或索引/发布动作。
+- 已为每日账本对账的同一失败摘要增加跨运行去重；首次、错误变化及错误恢复后的再次发生仍会保留提醒。
 
 ---
 
@@ -86,5 +87,19 @@ After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-s
 **🤖 回答：**
 
 已运行指定 wrapper（退出码 0），并从 `~/gengrowth-agents/cron-sync/recap_performance/2026-08-17.log` 的 10:01:53–10:02:06 CST 完整窗口核验。AstrologyWiki：workbook `…jyzcQc`、GSC `sc-domain:astrologywiki.com`、GA4 `properties/524765570`，精确节点聚合行 9，结果复盘写回更新 285；报告 `~/gengrowth-agents/reports/recap-performance/2026-08-17-astrologywiki-optimization-tasks.md`，任务 P0=22、技术排查=132、P1=11、观察=122（共 287）。GenGrowth：workbook `…ZTIRA8`、GSC `sc-domain:gengrowth.ai`、GA4 `properties/524765570`，精确节点聚合行 0，结果复盘写回更新 50；报告 `~/gengrowth-agents/reports/recap-performance/2026-08-17-gengrowth-optimization-tasks.md`，任务技术排查=47、P1=5、观察=11（共 63）。日志未输出 D14/D30/D60 分项或覆盖率，且未输出 skipped/非节点行计数，均标记为不可用；没有失败或凭据/属性缺失。wrapper 的 Feishu 回执为 `ok:true`。未执行手工 Sheet 编辑、内容发布/部署、GSC Request Indexing 或 Google Indexing API。
+
+---
+
+### Q4 — 14:30
+
+**🙋 提问：**
+
+这些重复的提示没有必要吧
+
+（附飞书群内重复“每日账本对账：reconcile-published: exit 1”截图）
+
+**🤖 回答：**
+
+确认同一失败摘要被每日任务重复投递，原因是 `gg-ledger-reconcile.mjs` 只依赖单次消息 UUID，未跨运行保存已发送状态。已为非 strict 的每日摘要增加持久化去重：同一摘要仅在首次成功投递时发送；投递失败或静默不占用状态；摘要清空会解除抑制，后续同一错误再次出现仍会提醒。已先执行红测，再运行 `node --check` 与账本对账 smoke 测试（34/34 通过）。launchd 直接运行此源脚本，已写入当前已发错误的运行态标记，下一次同样失败将不再重复刷屏。根因 Oracle 工作区存在未处理改动，未做破坏性重置。
 
 ---

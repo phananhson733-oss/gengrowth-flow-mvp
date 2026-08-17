@@ -4,6 +4,7 @@
 
 import {
   existsSync,
+  mkdirSync,
   readFileSync,
   readdirSync,
   writeFileSync,
@@ -184,6 +185,42 @@ async function sweepPlanBoxesBySheet(token, apply, strict = false) {
 
 function flowStateRoot() {
   return process.env.GG_FLOW_STATE_DIR || join(HOME, 'gengrowth-agents', 'flow-state');
+}
+
+function summaryNotificationPath() {
+  return join(flowStateRoot(), 'ledger-reconcile-summary-notification.json');
+}
+
+function lastSummaryNotificationKey() {
+  try {
+    const record = JSON.parse(readFileSync(summaryNotificationPath(), 'utf8'));
+    return typeof record?.summaryKey === 'string' ? record.summaryKey : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveSummaryNotificationKey(summaryKey) {
+  const path = summaryNotificationPath();
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, `${JSON.stringify({ schemaVersion: 1, summaryKey }, null, 2)}\n`);
+}
+
+async function notifySummaryOnce(summary, deps) {
+  const summaryKey = JSON.stringify(summary.map(String));
+  if (lastSummaryNotificationKey() === summaryKey) return;
+  const send = deps.notify || notify;
+  try {
+    const sent = await send('batch_summary', {
+      text: `🧾 每日账本对账：${summary.join('；')}`,
+      partial: false,
+    });
+    if (sent?.ok === true && sent?.silenced !== true) saveSummaryNotificationKey(summaryKey);
+  } catch {}
+}
+
+function clearSummaryNotificationAfterRecovery() {
+  if (lastSummaryNotificationKey() !== null) saveSummaryNotificationKey(null);
 }
 
 function inspectWriteback(errors, base) {
@@ -646,14 +683,9 @@ export async function runLedgerReconcile({
     }
   }
   if (apply) await replayWritebackNotifications(deps);
-  if (!strict && apply && Array.isArray(applied?.summary) && applied.summary.length > 0) {
-    const send = deps.notify || notify;
-    try {
-      await send('batch_summary', {
-        text: `🧾 每日账本对账：${applied.summary.join('；')}`,
-        partial: false,
-      });
-    } catch {}
+  if (!strict && apply && Array.isArray(applied?.summary)) {
+    if (applied.summary.length > 0) await notifySummaryOnce(applied.summary, deps);
+    else clearSummaryNotificationAfterRecovery();
   }
   return result;
 }

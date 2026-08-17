@@ -382,6 +382,30 @@ target_keyword = **「{{target_keyword}}」**（完整短语）。**SEO + RL4 bi
    - **Google 官方文档有两个不同站点**：`support.google.com/webmasters` = **Search Console Help（帮助中心）**；
      `developers.google.com/search` = **Search Central**。**混称 = 误引官方文档**，是历史高发错误。
 
+2c. **🔴 竞品事实硬要求（仅当本文比较第三方产品时生效 —— `{竞品} alternatives` / `{竞品} review` / `A vs B` / `best-X` 词族）**：
+
+   这类文章每篇会产生 10–20 条**可证伪**的第三方断言，是全线错误密度最高的内容型。写错竞品事实除了失信，
+   在比较广告语境下还可能被对方追究。**每一条竞品事实要么有官方出处，要么不写。**
+
+   - **定价必须带核实日期，且只认官方定价页**。SaaS 定价随时改，一个无日期的价格半年后一定是错的。
+     - ❌ `Outrank costs $49/month`
+     - ✅ `Outrank listed a $49/month starting tier on its pricing page as of <核实日期>`
+     - 价格后面跟 `[[<TBD-external-link: …>]]` 占位符指向该竞品官方定价页（外链规则见第 6 条，仍然禁止裸 URL）。
+   - **功能有无只以竞品官方文档 / 定价页 / 更新日志为准。绝对禁止采信第三方目录站**
+     （G2 / Capterra / WebCatalog / Aitoolnet / GetLatka / Crozdesk / HyperGPT / Spotsaas 等）。
+     这些站的条目大量错配、过期、由第三方代填。**已实测证据**：`arvow alternatives` 的 G2 结果返回的是
+     Canva / SOCi / Birdeye（完全无关）；`abun ai alternatives` 前排有两条结果的标题写的是 Autoblogging.ai 而不是 Abun。
+     **目录站排在 SERP 前面不代表它写对了。**
+   - **否定式断言最危险，必须降级为「未列出」**。证明「某产品没有某功能」几乎不可能，而这正是对比文最爱写的句式。
+     - ❌ `Byword has no internal linking feature`
+     - ✅ `Byword's feature page did not list internal linking as of <核实日期>`
+   - **绝不编造竞品的用户数、融资、团队规模、客户 logo**。查不到就完全不提这个维度。
+     - ❌ `Abun serves over 2,000 agencies`
+   - **主动写出我们自己的短板** —— 这是本簇 `content_angle` 的明确要求，不是可选的礼貌：
+     我们的工具**止于观察，还不会告诉你下一步做什么**；**当付费工具确实是更好的选择时，直说**。
+     一篇通篇只讲自己好的对比文，读者一眼看穿，也拿不到这个词族的信任红利。
+   - **拿不准的竞品事实 → 整条略去**，不要写「大概」「据说」「据报道」。省略不扣分，写错要重发。
+
 3. **绝不自创术语 / 框架名**（任一违反 = 整篇作废）：如果某概念不是 SEO / GEO / 增长圈广为使用的标准术语，**用日常英文描述这个概念**，不要给它造一个名字。
    - ❌ `the recursive authority loop`（自创框架名）
    - ❌ `the white-label conversion engine`（自创 + 禁词 engine）

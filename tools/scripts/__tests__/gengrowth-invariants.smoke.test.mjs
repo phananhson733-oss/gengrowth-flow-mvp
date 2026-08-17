@@ -60,7 +60,12 @@ const MANGLED_NAME = 'PG-WLS-001-claude.md';
 function loadRealDraftRe(src) {
   const arrM = src.match(/const W25_PREFIXES = \[([^\]]*)\];/);
   assert.ok(arrM, 'W25_PREFIXES array literal must still be present in gg-gengrowth-publish.mjs');
+  // Strip // comments before splitting on commas. A prose comment inside the array (they
+  // carry commas and parentheses) would otherwise be split into fake "prefixes" and joined
+  // into DRAFT_RE as extra alternation branches — the real module is unaffected, but the
+  // regex under test would stop being byte-for-byte the publisher's, which is the whole point.
   const W25_PREFIXES = arrM[1]
+    .replace(/\/\/[^\n]*/g, '')
     .split(',')
     .map((s) => s.trim().replace(/^['"]|['"]$/g, ''))
     .filter(Boolean);
@@ -469,5 +474,42 @@ test('invariant 9: August 2026 descriptions resolve to the August post, not July
   ]) {
     const out = resolveTbdLink(desc, '', opts);
     assert.ok(out && out.includes(want), `"${desc}" resolved to ${out} — expected ${want}`);
+  }
+});
+
+// ── invariant 10: comparison articles must carry the competitor-fact rules ───
+//
+// gengrowth has no comparison.prompt.md. The router in _render-aura-shared.mjs sends
+// everything that is not `Pillar` to guide.prompt.md, so the entire B-line (12 `{competitor}
+// alternatives` articles on the 8/18–8/30 calendar) is written by the Guide template. That
+// routing is one inline ternary and nothing asserted on it. If someone adds a real
+// comparison template or changes the ternary, these rules must move with it — otherwise the
+// highest-error-density content type on the calendar silently loses its only guardrails.
+test('invariant 10: the Comparison route reaches guide.prompt.md and it carries the competitor-fact rules', () => {
+  const shared = readFileSync(resolve(REPO, 'tools', 'scripts', 'lib', '_render-aura-shared.mjs'), 'utf8');
+  assert.match(
+    shared,
+    /_baseTemplate\s*=\s*\/\^pillar\$\/i\.test/,
+    'template router changed shape — re-check where Comparison lands',
+  );
+  assert.match(
+    shared,
+    /GG_SITE === 'gengrowth' && _baseTemplate === 'definition' \? 'guide'/,
+    "gengrowth non-Pillar templates (incl. Comparison) must route to guide.prompt.md",
+  );
+
+  const guide = readFileSync(
+    resolve(REPO, 'tools', 'scripts', 'lib', 'content-draft-templates', 'guide.prompt.md'),
+    'utf8',
+  );
+  // The directory-site ban is the load-bearing one: measured wrong twice on 2026-08-13
+  // (G2 returned Canva/SOCi/Birdeye for `arvow alternatives`).
+  for (const [needle, why] of [
+    ['竞品事实硬要求', 'competitor-fact section missing'],
+    ['Capterra', 'directory-site ban must name the sites — a generic warning does not stick'],
+    ['核实日期', 'pricing claims must carry a verification date'],
+    ['未列出', 'negative claims must be downgraded to "did not list"'],
+  ]) {
+    assert.ok(guide.includes(needle), `guide.prompt.md: ${why}`);
   }
 });

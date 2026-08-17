@@ -1,25 +1,21 @@
 ---
-title: Autoblogging AI Alternatives
+title: Autoblogging Ai Alternatives
 slug: autoblogging-ai-alternatives
-date: 2026-08-19
+date: 2026-08-17
 status: ready-to-review
 type: wiki-entry
-template: Comparison
+template: Definition
 tier: T2
-track: 精修线
+track: 量产线
 page_id: PG-CMP-008
-author_id: "marcus-orion"
-author_display_name: "Marcus Orion"
 target_keyword: autoblogging ai alternatives
 associated_keywords:
   - autoblogging.ai alternatives
-  - autoblogging ai review
   - bulk ai article generator
-  - automated content publishing tools
-hero_alt: Technical blueprint illustration of a wide conveyor carrying many identical small crates while a single narrow gate ahead admits only one crate at a time, with the gate opening glowing green and cyan.
-generated_by: claude-opus-5
+generated_by: unknown
 prompt_version: v8
-generated_at: 2026-08-19T08:00:00.000Z
+generated_at: 2026-08-17T05:54:51.887Z
+content_sha256_short: 100fbcf3fe64a437
 phase2_checks: all-pass
 ---
 

@@ -1,25 +1,20 @@
 ---
 title: Outrank Alternatives
 slug: outrank-alternatives
-date: 2026-08-18
+date: 2026-08-17
 status: ready-to-review
 type: wiki-entry
-template: Comparison
+template: Definition
 tier: T2
-track: 精修线
+track: 量产线
 page_id: PG-CMP-007
-author_id: "marcus-orion"
-author_display_name: "Marcus Orion"
 target_keyword: outrank alternatives
 associated_keywords:
-  - outrank.so alternatives
-  - outrank review
-  - ai seo content automation tools
-  - automated blog posting tools
-hero_alt: Technical blueprint illustration of a three stage inline machine, three housings bolted together in a row, with the middle housing unbolted and lifted clear while the empty socket it left behind glows green and cyan.
-generated_by: claude-opus-5
+
+generated_by: unknown
 prompt_version: v8
-generated_at: 2026-08-18T08:00:00.000Z
+generated_at: 2026-08-17T05:56:16.089Z
+content_sha256_short: 5b69c756f861745b
 phase2_checks: all-pass
 ---
 

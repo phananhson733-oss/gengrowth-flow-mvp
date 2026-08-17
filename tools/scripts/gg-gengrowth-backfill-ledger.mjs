@@ -26,7 +26,17 @@ import { join } from 'node:path';
 import { homedir } from 'node:os';
 loadEnv();
 
-const WB = process.env.GG_SHEETS_FLOW_MVP_WORKBOOK_ID || '1RRxsyFmdWgtd6tojjze_8lxwSUTTZKm4TqU4gZTIRA8';
+// 表 ID 走 gengrowth 专属变量，**不是** GG_SHEETS_FLOW_MVP_WORKBOOK_ID —— 那个变量在
+// .env 里指向 astrologywiki 主表（1CkjOC…）。第一版从通用变量取，结果这个脚本会安静地
+// 去 astrologywiki 的账本里找 gengrowth 的 page_id：这次只因为没有同名 id 才没写错表，
+// 换一批 id 就是往另一个站的生产账本写数据，而且不会报错。
+const GENGROWTH_WB = '1RRxsyFmdWgtd6tojjze_8lxwSUTTZKm4TqU4gZTIRA8';
+const ASTROLOGYWIKI_WB = '1CkjOCgYbRfXGYc6l2FJOaxUIzxT0NBVUhUpgCjyzcQc';
+const WB = process.env.GG_GENGROWTH_WORKBOOK_ID || GENGROWTH_WB;
+if (WB === ASTROLOGYWIKI_WB) {
+  console.error(`拒绝执行：解析出的表是 astrologywiki 主表，这个脚本只写 gengrowth 账本。\n检查 GG_GENGROWTH_WORKBOOK_ID。`);
+  process.exit(2);
+}
 const TAB = '选题登记表';
 const HOST = 'https://gengrowth.ai';
 const SA = join(homedir(), '.config', 'gg', 'gg-writer-sa.json');

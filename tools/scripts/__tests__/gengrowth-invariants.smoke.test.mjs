@@ -471,6 +471,13 @@ test('invariant 9: August 2026 descriptions resolve to the August post, not July
     ['our earlier walkthrough of the July 2026 change', '/blog/google-july-2026-update'],
     ['how internal link structure moves authority', '/blog/pagerank-sculpting'],
     ['what a zero-volume reading actually means', '/blog/zero-search-volume-keywords'],
+    // The seo_tools_comparison Pillar backlink. Every one of the twelve B-line
+    // `{competitor} alternatives` articles (8/18–8/30) is a Series that must link back to it.
+    // Measured de-linked on PG-CMP-007 before the rule existed — one missing rule would have
+    // cost the whole B-line its Pillar<->Series topology, silently.
+    ['our guide to cheap SEO tools', '/blog/best-cheap-seo-tools'],
+    // `affordable` is a different live page and must not collapse onto the cheap-tools Pillar.
+    ['a rundown of affordable SEO tools', '/blog/affordable-seo-tools'],
   ]) {
     const out = resolveTbdLink(desc, '', opts);
     assert.ok(out && out.includes(want), `"${desc}" resolved to ${out} — expected ${want}`);

@@ -105,6 +105,13 @@ const GENGROWTH_TBD_LINK_RULES = [
   { match: /generative[\s-]*engine[\s-]*optimi[sz]ation|\bgeo\b[^.\n]{0,20}optimi/i, href: '/blog/generative-engine-optimization' },
   { match: /ai[\s-]*search[\s-]*visibility|chatgpt[\s-]*citation/i, href: '/blog/ai-search-visibility' },
   { match: /best[\s-]*ai[\s-]*seo[\s-]*tools?/i, href: '/blog/best-ai-seo-tools' },
+  // seo_tools_comparison Pillar (added 2026-08-17). Every article on the 8/18–8/30 B-line is a
+  // Series under best-cheap-seo-tools and has to link back to it; measured on PG-CMP-007, the
+  // anchor de-linked because no rule existed, which would have dropped the Pillar<->Series
+  // topology for all twelve. `affordable` is a SEPARATE live page — keep the two rules distinct
+  // so "affordable seo tools" does not get pulled onto the cheap-tools Pillar.
+  { match: /affordable[\s-]*seo[\s-]*tools?/i, href: '/blog/affordable-seo-tools' },
+  { match: /(cheap|budget|low[\s-]*cost|inexpensive)[\s-]*seo[\s-]*tools?|seo[\s-]*tools?[\s-]*on[\s-]*a[\s-]*budget/i, href: '/blog/best-cheap-seo-tools' },
   { match: /seo[\s-]*automation/i, href: '/blog/seo-automation' },
   { match: /seo[\s-]*for[\s-]*saas[\s-]*startups?/i, href: '/blog/seo-for-saas-startups' },
   { match: /b2b[\s-]*saas[\s-]*seo/i, href: '/blog/b2b-saas-seo' },

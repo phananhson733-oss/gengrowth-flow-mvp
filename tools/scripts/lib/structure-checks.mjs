@@ -1132,9 +1132,17 @@ function extractSourceName(bulletText) {
   // Drop the leading list marker (NOT BULLET_LINE_REGEX — that one also consumes
   // the first content char), then strip markdown emphasis / link syntax.
   let s = bulletText.replace(/^\s*([-*+]|\d+[.)])\s+/, '');
+  // Strip markdown BEFORE splitting (fixed 2026-08-17). Splitting first cuts inside
+  // `[link text](url)` whenever the link TEXT contains a separator — which most real
+  // source titles do ("Publisher — Title", "Title: Subtitle"). That left a truncated
+  // `[Publisher` fragment: the link-stripping regex could no longer match (its `](…)`
+  // half had been cut away), so the leading `[` survived into the name. A token
+  // starting with `[` can never appear in prose, so the check reported a correctly
+  // cited source as a dangling/fabricated one. Every Sources bullet whose link text
+  // carried a colon or dash was hitting this.
+  s = s.replace(/\*\*/g, '').replace(/\[([^\]]+)\]\([^)]*\)/g, '$1');
   s = s.split(SOURCE_NAME_SPLIT_REGEX)[0] || '';
-  s = s.replace(/\*\*/g, '').replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').trim();
-  return s;
+  return s.trim();
 }
 
 export function checkSourcesNamesInBody(draft) {

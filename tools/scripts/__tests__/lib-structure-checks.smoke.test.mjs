@@ -17,6 +17,7 @@ import {
   checkSectionScatter,
   checkLinkDistribution,
   checkParagraphFragmentation,
+  checkSourcesNamesInBody,
 } from '../lib/structure-checks.mjs';
 
 // ============================================================
@@ -584,4 +585,36 @@ test('SC4: ZH 延伸阅读 split — all dumped at end → FAIL', () => {
   const r = checkLinkDistribution(draft);
   assert.equal(r.pass, false);
   assert.ok(/0\/2/.test(r.note));
+});
+
+// ── SC9b: a real markdown-linked source must not read as fabricated ──────────
+//
+// extractSourceName() used to split on the separator BEFORE stripping markdown, so a
+// bullet like `- [Publisher — Title](url) — note` was cut inside the link text. The
+// link-stripping regex then failed (its `](…)` half was gone) and a `[Publisher`
+// fragment survived. No prose contains `[`, so a properly cited source was reported as
+// dangling/fabricated. Real source titles almost all carry a colon or a dash, so this
+// fired constantly — and "fabricated citation" is the one warning nobody should learn
+// to ignore.
+test('SC9b: a markdown-linked source whose title contains a dash is recognized in body', () => {
+  const draft = [
+    '# Title',
+    '',
+    '## Body',
+    '',
+    "Digital Applied's tracker roundup counted six unconfirmed spikes.",
+    'Seer Interactive measured the same drop across ten thousand keywords.',
+    '',
+    '## Sources',
+    '',
+    '- [Digital Applied — Google ranking volatility on 12–13 August 2026](https://example.com/a) — published 13 August 2026.',
+    '- [Seer Interactive: AI Overviews and CTR](https://example.com/b) — January 2024 to January 2025 sample.',
+  ].join('\n');
+  const res = checkSourcesNamesInBody(draft);
+  assert.equal(res.pass, true, `both sources are named in the body: ${JSON.stringify(res.violations)}`);
+
+  // The check must still catch a source that genuinely never appears in the prose.
+  const bad = draft.replace("Digital Applied's tracker roundup counted six unconfirmed spikes.", 'Some other sentence.');
+  const badRes = checkSourcesNamesInBody(bad);
+  assert.equal(badRes.pass, false, 'a source absent from the body must still be flagged');
 });

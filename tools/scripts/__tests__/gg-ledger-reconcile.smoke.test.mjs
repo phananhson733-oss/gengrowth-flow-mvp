@@ -341,6 +341,36 @@ test('strict path never sends an intermediate notification', () => {
   assert.deepEqual(out.json.phases, ['apply', 'verify']);
 });
 
+test('non-strict summary only notifies on a new error state or after recovery', async () => {
+  const state = mkdtempSync(join(tmpdir(), 'ledger-reconcile-summary-notify-'));
+  const previousState = process.env.GG_FLOW_STATE_DIR;
+  process.env.GG_FLOW_STATE_DIR = state;
+  const sent = [];
+  const deps = {
+    apply: async () => ({ errors: [], summary: ['⚠️reconcile-published: exit 1'] }),
+    verify: async () => zero(),
+    notify: async (_event, fields) => {
+      sent.push(fields.text);
+      return { ok: true, silenced: false, messageId: `m${sent.length}` };
+    },
+    log: () => {},
+  };
+  try {
+    await runLedgerReconcile({ apply: true, strict: false, deps });
+    await runLedgerReconcile({ apply: true, strict: false, deps });
+    assert.equal(sent.length, 1, 'unchanged summary must be coalesced');
+
+    deps.apply = async () => ({ errors: [], summary: [] });
+    await runLedgerReconcile({ apply: true, strict: false, deps });
+    deps.apply = async () => ({ errors: [], summary: ['⚠️reconcile-published: exit 1'] });
+    await runLedgerReconcile({ apply: true, strict: false, deps });
+    assert.equal(sent.length, 2, 'a recovered error may notify again');
+  } finally {
+    if (previousState === undefined) delete process.env.GG_FLOW_STATE_DIR;
+    else process.env.GG_FLOW_STATE_DIR = previousState;
+  }
+});
+
 test('new terminal writeback emits one complete deduplicated notification', () => {
   const state = mkdtempSync(join(tmpdir(), 'writeback-notify-new-terminal-'));
   const previousState = process.env.GG_FLOW_STATE_DIR;

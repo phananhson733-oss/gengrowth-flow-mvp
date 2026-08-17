@@ -1,0 +1,65 @@
+{
+  "_README": "B 线（seo_tools_comparison）竞品定价的已核验事实。每条都来自厂商**自己的定价页**，禁止用 G2/Capterra/WebCatalog 等目录站补充（2026-08-13 实测：G2 在 `arvow alternatives` 返回 Canva/SOCi/Birdeye）。每条必须带 verified_on；引用前先看这个日期是否还新鲜——SaaS 定价随时改，而写错定价是这类文章最容易被投诉的一类错。",
+  "_BILLING_TERM_WARNING": "最容易犯的错：把年付承诺价当月付价。Autoblogging 和 Arvow 的定价页把年付月均价显示在月付价旁边；BabyLoveGrowth 的划线价则是**促销**（明写 Billed monthly），两者结构不同。对照表必须有独立的『计费周期』列。",
+  "verified_on": "2026-08-17",
+  "vendors": {
+    "outrank": {
+      "source": "https://www.outrank.so/pricing",
+      "entry_monthly_usd": 99,
+      "annual_total_usd": 999,
+      "billing_note": "月付 $99；年付 $999/年（省 $189）",
+      "included_at_entry": "30 篇自动生成并发布/月、自动关键词研究、backlink exchange、AI 图片、无限用户、全部发布集成（WordPress/Webflow/Shopify/Framer/Wix/Notion/Ghost/webhook）",
+      "addons": { "60_articles": 85, "90_articles": 160, "human_curated": 1399, "backlink_premium": 199, "backlink_enterprise": 899, "free_tools_builder": 199, "premium_images": 49, "directory_submission_onetime": 500 },
+      "volume_discounts": "2-4 站 10%、5-19 站 15%、20-25 站 20%",
+      "trial": "免费试用，试用文章带 Outrank 水印",
+      "backlink_exchange": "有，官方 FAQ 描述为『hosting relevant backlinks 赚积分、spend credits 换取外链，自动验证』——机制有官方描述"
+    },
+    "arvow": {
+      "source": "https://arvow.com/pricing",
+      "entry_monthly_usd": 99,
+      "entry_annual_monthly_usd": 39,
+      "billing_note": "⚠️ $39/$69/$249 是**年付承诺**价；月付是 $99/$149/$449。页面标 LIMITED TIME，Summer Sale 明写 on Yearly Plans",
+      "tiers": { "solo": { "monthly": 99, "annual_monthly": 39, "credits": 1000, "sites": 1 }, "business": { "monthly": 149, "annual_monthly": 69, "credits": 2000, "sites": 5 }, "ultimate": { "monthly": 449, "annual_monthly": 249, "credits": 8000, "sites": "unlimited" } },
+      "credit_rules": "每篇约 10 credits；**超过 18 个标题的长文双倍**；AI 图 3 credits；订阅 credits 每月重置不累积，但单独购买的 top-up credits 不过期",
+      "managed_service": "Human + AI SEO Service 起价 $2,000/月"
+    },
+    "rightblogger": {
+      "source": "https://rightblogger.com/pricing",
+      "entry_monthly_usd": 59,
+      "billing_note": "月付；另有年付 $49/$69/$199（文章未引用）",
+      "tiers": { "solo": { "monthly": 59, "sites": 1, "seo_reports": 30 }, "pro": { "monthly": 89, "sites": 3, "seo_reports": 90 }, "agency": { "monthly": 299, "sites": "10+", "seo_reports": 300 } },
+      "trial": "7 天免费试用（$0 due today）+ 30 天退款保证",
+      "backlink_exchange": "⚠️ 功能列表里有『Backlink Exchange』标签，但**定价页没有描述机制**——不能与 Outrank 并列引用 Google 链接政策，只能分别陈述"
+    },
+    "byword": {
+      "source": "https://byword.ai/pricing",
+      "entry_monthly_usd": 99,
+      "billing_note": "月付",
+      "tiers": { "starter": { "monthly": 99, "articles": 25 }, "standard": { "monthly": 299, "articles": 80 }, "scale": { "monthly": 999, "articles": 300 } },
+      "free": "Start free with 5 articles",
+      "extraction_note": "页面是 JS shell，naive fetch 只拿得到 <title>。数据在其**自己页面的 meta description / og:description** 里——这是第一方来源，不是第三方站。引用时说明出处是页面 metadata。"
+    },
+    "babylovegrowth": {
+      "source": "https://babylovegrowth.ai/pricing",
+      "entry_monthly_usd": 99,
+      "list_price_usd": 247,
+      "billing_note": "⚠️ $247→$99 是**促销划线价**，页面明写『Billed monthly · cancel anytime』——不是年付价。另有年付 -25%。与 Arvow/Autoblogging 的年付结构不同，别混为一谈",
+      "tiers": { "grow": { "monthly": 99, "list": 247, "articles": 30 }, "scale": { "monthly": 299, "list": 599 } },
+      "included_at_entry": "30 篇 SEO & AI 优化文章/月、自动发布（WordPress/Shopify/Webflow 等）、宣称 $800+/mo 外链来自 4,000+ 合作站、AI 可见度优化（ChatGPT/Perplexity/Gemini）、站点审计、AI 引用追踪、Reddit AI agent 品牌提及、自动关键词研究+SERP 聚类",
+      "scale_extra": "专属 1-on-1 SEO/GEO 专家（含每月 2 小时）、额外 3 种语言、beta 早期访问、优先支持",
+      "guarantee": "90 天退款保证（流量不涨退款）；3 天免费试用",
+      "backlink_exchange": "有，其 FAQ 有『How does the backlink exchange work?』条目",
+      "extraction_note": "Next.js RSC，curl 拿到的是序列化 payload。用真浏览器（Chrome MCP get_page_text）才拿到干净数据。"
+    },
+    "autoblogging_ai": {
+      "source": "https://autoblogging.ai/pricing",
+      "entry_monthly_usd": 19,
+      "billing_note": "⚠️ 每档显示两个数字：前者月付、后者年付月均。/pricing 与 /plans 都会跳到首页，价格在**原始 HTML** 里（curl 可取，浏览器渲染后反而看不到）",
+      "tiers": { "starter": { "monthly": 19, "annual_monthly": 12, "annual_total": 148 }, "regular": { "monthly": 49, "annual_monthly": 32, "annual_total": 382 }, "premium": { "monthly": 249, "annual_monthly": 162, "annual_total": 1942 }, "enterprise": { "monthly": 999, "annual_monthly": 649, "annual_total": 7792 } },
+      "features": "7 AI modes、35+ 语言、Bulk Generation 每批最多 500 篇（CSV 上传）；SERP competitor analysis / semantic SEO / GEO optimisation / AI visibility tracking / site optimiser 均标 STARTER+；Quick Mode 与 Fan Out Queries 标 FREE",
+      "free": "Start Free，宣称无需信用卡",
+      "no_bundled_links": "未见捆绑外链网络或included strategist——这是入门价低一个数量级的主要原因",
+      "marketing_note": "⚠️ 首页客户证言（署名 Julian Goldie, GoldieAgency）提到结果覆盖 'personal sites, parasite SEO, affiliates'。parasite SEO 对应 Google 的 site reputation abuse 政策。引用时只陈述事实，不得断言使用该工具会被惩罚。"
+    }
+  }
+}

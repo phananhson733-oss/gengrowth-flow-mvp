@@ -22,7 +22,7 @@ aliases:
 - 按批准的固定行索引修复 wrapper 完成 AstrologyWiki 与 GenGrowth 的表格同步；两产品均无已修复行，流程成功。
 - 按批准的 Phase 2 索引监控 wrapper 完成双产品 sitemap、复盘表及请求队列同步；均无到期 URL，未触发人工 GSC 提交。
 - 按批准的结果复盘 performance wrapper 完成双产品刷新；本轮无 D14/D30/D60 到期索引行，分别更新 285 与 50 条复盘记录并生成优化任务报告。
-- 两次按指定 topic-register wrapper 完成 apply 模式扫描；AstrologyWiki 均在 PG-FS-002 证据门 fail-closed，GenGrowth 均独立完成零候选扫描，未见可验证的下游写入或飞书回执。
+- 三次按指定 topic-register wrapper 完成 apply 模式扫描；AstrologyWiki 均在 PG-FS-002 证据门 fail-closed，GenGrowth 均独立完成零候选扫描，未见可验证的下游写入或飞书回执。
 - 再次按固定行索引修复 wrapper 完成双产品同步；无已修复行、无失败，且未触发任何人工 GSC 请求提交。
 
 ## 对话记录

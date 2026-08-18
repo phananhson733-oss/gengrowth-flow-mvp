@@ -10,11 +10,10 @@ track: 量产线
 page_id: PG-CMP-008
 target_keyword: autoblogging ai alternatives
 associated_keywords:
-  - autoblogging.ai alternatives
-  - bulk ai article generator
+
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-08-17T05:54:51.887Z
+generated_at: 2026-08-17T06:13:16.733Z
 content_sha256_short: 100fbcf3fe64a437
 phase2_checks: all-pass
 ---

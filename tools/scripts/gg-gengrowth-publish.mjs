@@ -81,7 +81,11 @@ const URL_PATH = '/en/blog/';
 //               ILA (internal_link_architecture)
 //   also long-pending in the W25 plan and blocked by this same gap:
 //               YASA (youtube_ai_search_authority_2026) FPDA (first_party_data_ai_personalization)
-const W25_PREFIXES = [
+// Exported (2026-08-18) so gg-gengrowth-cron-tick.mjs shares this exact list rather than
+// re-deriving it. A second copy of the anti-contamination gate is how an astrologywiki draft
+// eventually reaches gengrowth.ai: the two lists drift, and only one of them is the one that
+// gets updated when a cluster is added.
+export const W25_PREFIXES = [
   'WLS', 'ART', 'SFS', 'EOS', 'AIS', 'TAS', 'SDS', 'B2B', 'CMP', 'SLB', 'SMS',
   'BBDM', 'TSWB', 'SPPG', 'AEWG', 'GJ2U', 'WHS',
   'KOD', 'SPD', 'ILA', 'YASA', 'FPDA',

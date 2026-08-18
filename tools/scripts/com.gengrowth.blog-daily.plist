@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- gengrowth.ai 博客每日发布定时器 (2026-08-18)。
+     每天把**人已经备好并过审**的那一篇送上线；它不写作、不做事实审 —— 判定逻辑和边界
+     见 gg-gengrowth-cron-tick.mjs 顶部注释。
+
+     INSTALL（在本机跑）：
+       cp tools/scripts/com.gengrowth.blog-daily.plist ~/Library/LaunchAgents/
+       launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.gengrowth.blog-daily.plist
+     STOP：
+       launchctl bootout gui/$(id -u)/com.gengrowth.blog-daily
+     手动触发一次：
+       launchctl kickstart -k gui/$(id -u)/com.gengrowth.blog-daily
+
+     一天触发 3 次是**重试**不是发 3 篇：state 文件（~/gengrowth-agents/flow-state/
+     gengrowth-blog-daily.json）记着当天发过没有，发过就直接退出；告警也按天去重。
+     3 次的意义是 09:30 机器睡着/网络不通时，12:30、16:30 还能补上。
+
+     跑在用户 (Aqua) 会话里：需要 $HOME 才能找到 ~/.config/gg/gg-writer-sa.json（回填选题
+     登记表用的 service account）。不要设 LimitLoadToSessionType=Background —— 那会把它钉在
+     登录前会话，读不到用户目录。ProcessType=Background 只是调度优先级，可以留。
+
+     路径写死了 /Users/wzb 和 /usr/local/bin/node（plist 不做变量展开）。换机器或 node 换装
+     位置就要改这两处 —— launchd 找不到二进制时是静默不跑，不会报错。 -->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.gengrowth.blog-daily</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/local/bin/node</string>
+    <string>/Users/wzb/gengrowth-flow-mvp/tools/scripts/gg-gengrowth-cron-tick.mjs</string>
+    <string>--publish</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/wzb/gengrowth-flow-mvp</string>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <!-- launchd 的 PATH 极简，默认找不到 node/git/curl/sips，而 gg-gengrowth-daily.sh 四个都要用。 -->
+    <key>PATH</key>
+    <string>/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+  </dict>
+
+  <key>StartCalendarInterval</key>
+  <array>
+    <dict><key>Hour</key><integer>9</integer><key>Minute</key><integer>30</integer></dict>
+    <dict><key>Hour</key><integer>12</integer><key>Minute</key><integer>30</integer></dict>
+    <dict><key>Hour</key><integer>16</integer><key>Minute</key><integer>30</integer></dict>
+  </array>
+
+  <!-- 登录/加载时不要立刻发一篇：安装这个定时器本身不应该是一次发布动作。 -->
+  <key>RunAtLoad</key>
+  <false/>
+
+  <key>StandardOutPath</key>
+  <string>/Users/wzb/gengrowth-agents/cron-sync/gengrowth-blog-daily/launchd.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/wzb/gengrowth-agents/cron-sync/gengrowth-blog-daily/launchd.err.log</string>
+
+  <key>ProcessType</key>
+  <string>Background</string>
+</dict>
+</plist>

@@ -112,6 +112,11 @@ const GENGROWTH_TBD_LINK_RULES = [
   // so "affordable seo tools" does not get pulled onto the cheap-tools Pillar.
   { match: /affordable[\s-]*seo[\s-]*tools?/i, href: '/blog/affordable-seo-tools' },
   { match: /(cheap|budget|low[\s-]*cost|inexpensive)[\s-]*seo[\s-]*tools?|seo[\s-]*tools?[\s-]*on[\s-]*a[\s-]*budget/i, href: '/blog/best-cheap-seo-tools' },
+  // B 线各篇 alternatives 页（随每篇上线当天加）。互链是这批 12 篇彼此之间唯一的拓扑：
+  // 每上线一篇却不加规则，后面写到它的锚文本就会静默退化成斜体 —— 不报错，链接就是没了。
+  // 放在 `seo tools` 系列规则之后、`seo automation` 之前：这些锚文本里带竞品名，
+  // 不会被上面的通用规则抢走。
+  { match: /outrank[\s-]*(\.so\s*)?(alternatives?|comparison|review)/i, href: '/blog/outrank-alternatives' },
   { match: /seo[\s-]*automation/i, href: '/blog/seo-automation' },
   { match: /seo[\s-]*for[\s-]*saas[\s-]*startups?/i, href: '/blog/seo-for-saas-startups' },
   { match: /b2b[\s-]*saas[\s-]*seo/i, href: '/blog/b2b-saas-seo' },

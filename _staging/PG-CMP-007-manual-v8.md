@@ -1,7 +1,7 @@
 ---
 title: Outrank Alternatives
 slug: outrank-alternatives
-date: 2026-08-17
+date: 2026-08-18
 status: ready-to-review
 type: wiki-entry
 template: Definition
@@ -13,7 +13,7 @@ associated_keywords:
 
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-08-17T06:13:16.466Z
+generated_at: 2026-08-18T02:36:37.325Z
 content_sha256_short: 5b69c756f861745b
 phase2_checks: all-pass
 ---

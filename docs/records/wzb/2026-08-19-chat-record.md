@@ -59,3 +59,14 @@ Run the GenGrowth Phase 2 indexing workflow through the existing deterministic w
 已运行指定 wrapper，并以 09:02:03–09:03:34 CST 的单一日志窗口核验终态 `index monitor ok`。AstrologyWiki sitemap 提交成功，GSC 检查 2 条（PG-CELEB-060、PG-NODE-015）且均转为已收录，failures=0；结果复盘表 312 行均更新；请求队列 P0/P1/P2/P3=0/0/0/0。GenGrowth sitemap 提交成功，due=0、无 GSC 检查；结果复盘表 64 行（updated=51、skipped=13）；请求队列 P0/P1/P2/P3=0/0/0/0。无可操作候选，因此未打开或点击 GSC Request Indexing，日志中也无 Feishu 可操作候选或失败通知；未使用普通文章 Google Indexing API。
 
 ---
+### Q3 — 13:07 [claude]
+
+**🙋 提问：**
+
+（原生 cron 自动触发）每天跑一轮 GSC 手动 Request Indexing（astrologywiki.com）。本机(awayer_mini) Chrome 驱动，全新会话。
+
+**🤖 回答：**
+
+本轮 **0 提交**：候选（申请时间空 & day14_收录≠Y）= 0，按 SOP 未开浏览器、未发飞书。同步结果：sync-published `en_urls=361 appended=0`、sync-recap `en_rows=312 appended=0`、sync-request-queue `rows=0 P0-P3=0`；recap 表最新 6 行全部是 07-30 提交且 `day14=Y` 已收录。按 memory 要求核查 `en_urls` 停滞：仍为 361（08-14 reminders 记录已是 361/第 16 天）→ 发布链持续停摆已约 21 天。**根因状态有变化**：授稿 lane `com.gengrowth.seo-blog` 08-14 时是"纯未 bootstrap"，现已变成**持久 disabled**（出现在 `launchctl print-disabled` 中），必须先 `launchctl enable` 再 `bootstrap`，直接 bootstrap 会 EIO 5；同批 disabled 的还有 seo-nightly / seo-author / seo-author-kicker / gengrowth-author / index-monitor / seo-autopilot。lane 日志止于 08-13 19:00:29 "starting deterministic SEO nightly"（即那次被 Terminated:15 腰斩的 tick），之后无任何运行。修 lane 属运营写操作，GSC cron 未擅自动手，仅报告。
+
+---

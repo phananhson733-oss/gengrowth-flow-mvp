@@ -1,11 +1,15 @@
 ---
+title: 对话记录 — 2026-08-20
 date: 2026-08-20
+updated: 2026-08-20
 type: chat-record
 author: xdawayer
 agent: codex
 tags:
   - record
   - daily
+aliases:
+  - 2026-08-20 对话记录
 ---
 
 # 对话记录 — 2026-08-20

@@ -23,6 +23,7 @@ aliases:
 - 两个产品均完成有效的零修复、零重新提交处理。
 - 已完成 Phase 2 索引监控：AstrologyWiki 检查 2 条并确认已收录，GenGrowth 无到期 URL。
 - 两轮均同步结果复盘与人工辅助请求队列，未产生失败或人工提交候选。
+- Topic-register 的环境授权 apply 运行在 AstrologyWiki 的 PG-FS-002 证据门失败；GenGrowth 完成有效零候选扫描，未证明任何下游写入。
 
 ## 对话记录
 
@@ -68,5 +69,22 @@ Run the GenGrowth Phase 2 indexing workflow through the existing deterministic w
 **🤖 回答：**
 
 本轮 **0 提交**：候选（申请时间空 & day14_收录≠Y）= 0，按 SOP 未开浏览器、未发飞书。同步结果：sync-published `en_urls=361 appended=0`、sync-recap `en_rows=312 appended=0`、sync-request-queue `rows=0 P0-P3=0`；recap 表最新 6 行全部是 07-30 提交且 `day14=Y` 已收录。按 memory 要求核查 `en_urls` 停滞：仍为 361（08-14 reminders 记录已是 361/第 16 天）→ 发布链持续停摆已约 21 天。**根因状态有变化**：授稿 lane `com.gengrowth.seo-blog` 08-14 时是"纯未 bootstrap"，现已变成**持久 disabled**（出现在 `launchctl print-disabled` 中），必须先 `launchctl enable` 再 `bootstrap`，直接 bootstrap 会 EIO 5；同批 disabled 的还有 seo-nightly / seo-author / seo-author-kicker / gengrowth-author / index-monitor / seo-autopilot。lane 日志止于 08-13 19:00:29 "starting deterministic SEO nightly"（即那次被 Terminated:15 腰斩的 tick），之后无任何运行。修 lane 属运营写操作，GSC cron 未擅自动手，仅报告。
+
+---
+
+### Q4 — 16:01
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-08-18T14:02:01.343Z (1787061721343)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行指定 wrapper。日志窗口 16:01:02–16:13:17 CST 显示环境启用 apply（`dry_run=false`），全局 `ok=false`、`budget_exhausted=false`、终态 `topic-register failed rc=1`。AstrologyWiki 在 apply 前被 `ERR_OTHER: refusing --apply: evidence discovery insufficient for PG-FS-002` fail-closed 拒绝，因此其 candidates、updates、new_clusters、page_ids、preprocessor 与 evidence 字段均不可用。GenGrowth 独立完成 `applied=true` 的有效零候选扫描：candidates/updates/new_clusters=0，page_ids 与 preprocessor/evidence 数组均为空，`audit_incomplete=0`、`ops_blocked_count=0`。日志没有独立证明任何 Sheet、任务计划或 Feishu 写入，均记为未验证；未执行手工写入或额外报告产物。
 
 ---

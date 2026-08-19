@@ -19,7 +19,7 @@ aliases:
 > 【本区域在每天最后一次对话结束时生成/更新】
 > 用 3-5 个要点概括当天所有对话的核心内容、关键决策和产出成果。
 
-- 运行既定的 GenGrowth 修复重提索引 wrapper。
+- 运行两轮既定的 GenGrowth 修复重提索引 wrapper，均以日志终态核验成功。
 - 两个产品均完成有效的零修复、零重新提交处理。
 - 已完成 Phase 2 索引监控：AstrologyWiki 检查 2 条并确认已收录，GenGrowth 无到期 URL。
 - 两轮均同步结果复盘与人工辅助请求队列，未产生失败或人工提交候选。
@@ -86,5 +86,22 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 仅运行指定 wrapper。日志窗口 16:01:02–16:13:17 CST 显示环境启用 apply（`dry_run=false`），全局 `ok=false`、`budget_exhausted=false`、终态 `topic-register failed rc=1`。AstrologyWiki 在 apply 前被 `ERR_OTHER: refusing --apply: evidence discovery insufficient for PG-FS-002` fail-closed 拒绝，因此其 candidates、updates、new_clusters、page_ids、preprocessor 与 evidence 字段均不可用。GenGrowth 独立完成 `applied=true` 的有效零候选扫描：candidates/updates/new_clusters=0，page_ids 与 preprocessor/evidence 数组均为空，`audit_incomplete=0`、`ops_blocked_count=0`。日志没有独立证明任何 Sheet、任务计划或 Feishu 写入，均记为未验证；未执行手工写入或额外报告产物。
+
+---
+
+### Q5 — 17:31
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: 2026-08-18T21:01:32.550Z (1787086892550)
+
+Run the deterministic fixed-row index repair workflow through `bash tools/scripts/gg-index-repair-resubmit-tick.sh`. The wrapper loads the local gg environment, loops the configured products (`GG_INDEX_MONITOR_PRODUCTS`, defaulting to astrologywiki and gengrowth), processes rows marked `已修复`, syncs `结果复盘表`, and refreshes `request-indexing-queue` in each product Google Sheet. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, do not click Search Console Request Indexing unattended, and do not create Feishu or Google Doc report artifacts. After the wrapper exits, summarize per-product `process-fixed`, `sync-recap`, `sync-request-queue` counts visible in the log, plus any failures.
+
+**🤖 回答：**
+
+已运行指定 wrapper，退出码 0。以 17:30:59–17:31:22 CST 的单一日志窗口为证：AstrologyWiki fixed/resubmitted=0/0，recap=312/0/0/312，queue=0/0/0/0/0；GenGrowth fixed/resubmitted=0/0，recap=64/0/0/64，queue=0/0/0/0/0。两个产品 rc=0，终态为 `index repair-resubmit ok`，无失败标记；未执行普通文章 Google Indexing API、无人值守 GSC Request Indexing 或额外 Feishu/Google Doc 产物操作。
 
 ---

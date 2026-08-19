@@ -117,6 +117,7 @@ const GENGROWTH_TBD_LINK_RULES = [
   // 放在 `seo tools` 系列规则之后、`seo automation` 之前：这些锚文本里带竞品名，
   // 不会被上面的通用规则抢走。
   { match: /outrank[\s-]*(\.so\s*)?(alternatives?|comparison|review)/i, href: '/blog/outrank-alternatives' },
+  { match: /autoblogging[\s-]*(\.?ai)?[\s-]*(alternatives?|comparison|review)/i, href: '/blog/autoblogging-ai-alternatives' },
   { match: /seo[\s-]*automation/i, href: '/blog/seo-automation' },
   { match: /seo[\s-]*for[\s-]*saas[\s-]*startups?/i, href: '/blog/seo-for-saas-startups' },
   { match: /b2b[\s-]*saas[\s-]*seo/i, href: '/blog/b2b-saas-seo' },

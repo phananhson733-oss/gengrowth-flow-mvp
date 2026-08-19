@@ -169,6 +169,23 @@ function heroProblem(pageId) {
   return null;
 }
 
+/**
+ * 每上线一篇，都要往 GENGROWTH_TBD_LINK_RULES 加一条规则，后面的文章才链得到它 ——
+ * 少了规则不会报错，锚文本会**静默退化成斜体**，链接就是没了。
+ * gg-gengrowth-daily.sh 结尾会打一行提醒，但定时器跑起来之后没人看 launchd 日志，
+ * 所以这里实测规则在不在，缺了才把提醒带进飞书（在的话一个字都不说，避免变成背景噪音）。
+ * 返回空串表示规则已就位。
+ */
+export function linkRuleReminder(slug) {
+  try {
+    const src = readFileSync(join(__dirname, 'gg-md-to-gengrowth-blog.mjs'), 'utf8');
+    if (src.includes(`/blog/${slug}'`) || src.includes(`/blog/${slug}"`)) return '';
+  } catch {
+    return ''; // 读不到就别乱报警
+  }
+  return ` ⚠️ 还要往 flow-mvp 的 GENGROWTH_TBD_LINK_RULES 加 ${slug} 的内链规则，否则后面的文章链不到这篇（锚文本会静默变斜体）。`;
+}
+
 const STATE_FILE = () => {
   const dir = stateDir();
   return dir ? join(dir, 'gengrowth-blog-daily.json') : null;
@@ -286,8 +303,9 @@ function main() {
       ? `⚠️ 缓冲只剩 ${upcoming.length} 篇，再不补稿明天就断档。`
       : `缓冲还有 ${upcoming.length} 篇。`;
   alert(
-    `gengrowth 每日发布：${pick.slug} 已上线 https://gengrowth.ai/blog/${pick.slug}${overdue}。${bufferWarn}`,
-    { atOps: true, atPm: upcoming.length < 2 },
+    `gengrowth 每日发布：${pick.slug} 已上线 https://gengrowth.ai/blog/${pick.slug}${overdue}。` +
+      `${bufferWarn}${linkRuleReminder(pick.slug)}`,
+    { atOps: true, atPm: upcoming.length < 2 || Boolean(linkRuleReminder(pick.slug)) },
   );
   log('完成');
 }

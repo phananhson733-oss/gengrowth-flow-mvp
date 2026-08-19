@@ -111,3 +111,15 @@ test('plist 指向的脚本路径和参数与实际脚本一致', () => {
   // PATH 必须覆盖 node/git/curl/sips —— gg-gengrowth-daily.sh 四个都要用
   assert.match(plist, /<key>PATH<\/key>/, 'launchd 的 PATH 极简，必须显式给');
 });
+
+// ── 上线后必须补的那条内链规则 ──
+// 少了规则不报错，锚文本静默退化成斜体 —— 链接就是没了。定时器跑起来之后没人看 launchd
+// 日志，所以提醒必须进飞书；但已经加过的不能再提，否则变成每天都有的背景噪音，就等于没提。
+test('内链规则已存在时不提醒，缺失时提醒', async () => {
+  const { linkRuleReminder } = await import('../gg-gengrowth-cron-tick.mjs');
+  // 8/17-8/19 三篇已上线且规则已补
+  assert.equal(linkRuleReminder('outrank-alternatives'), '');
+  assert.equal(linkRuleReminder('autoblogging-ai-alternatives'), '');
+  // 编造一个绝不会存在的 slug
+  assert.match(linkRuleReminder('a-slug-that-will-never-exist'), /GENGROWTH_TBD_LINK_RULES/);
+});

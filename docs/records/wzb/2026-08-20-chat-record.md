@@ -24,6 +24,7 @@ aliases:
 - 日志窗口以 `index repair-resubmit ok` 闭合，未发现失败标记，合规边界保持不变。
 - 已运行 `gg-index-monitor-tick.sh`；两站 Sitemap API 成功、无到期 URL，未进行 GSC 检查或 Request Indexing。
 - 已复核历史 SEO 阻塞批次：4 个目标均已发布且线上 HTTP 200，无需再次触发会产生发布副作用的 gate。
+- 已运行 `gg-topic-register-tick.sh`；apply 模式在 AstrologyWiki 的 `PG-FS-002` 证据门安全停止，GenGrowth 完成有效零候选扫描，未验证任何下游写入。
 
 ---
 
@@ -72,5 +73,22 @@ work kanban task t_eb98eb6c
 **🤖 回答：**
 
 已复核任务指定的 AstrologyWiki SEO 阻塞批次。当前 autopilot ledger 中不再存在 PG-CELEB-025/026/027/028 的活动 claim；四个线上 URL 均返回 HTTP 200。Oracle 提交历史显示四篇均已发布；028 的历史修复提交移除了 stray keyword `emma watson zodiac sign`。未重跑会修改 ledger 或触发发布的 gate；回归测试确认 `--retry-failed` 不会绕过 verified-preview 门槛。完整 smoke 文件另有 4 项与本任务无关的 authoring-harness 失败，原因是 Node v25 下 chart-inject fixture 的 `MODULE_NOT_FOUND`，未修改无关生产逻辑。
+
+---
+
+### Q4 — 16:15
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-08-19T14:01:35.290Z (1787148095290)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行指定 wrapper，进程退出码为 1。日志窗口 16:02:19–16:14:46 CST，环境启用 apply（`dry_run=false`、`budget_exhausted=false`），以 `topic-register failed rc=1` 结束。AstrologyWiki 在 `PG-FS-002` 因证据发现不足 fail-closed；其 candidates、updates、new_clusters、page_ids 与 preprocessor 字段未输出，均为不可用而非零。GenGrowth 独立完成 `applied=true` 的有效零候选扫描：candidates/updates/new_clusters=0/0/0，page_ids/created_page_ids/preprocessor/evidence_discovery 均为空，selection_mode=generate，audit_incomplete=0、ops_blocked_count=0。日志未独立证明任何 Google Sheets、任务计划或飞书写入/回执；未执行 wrapper 外手写或额外报告产物。
 
 ---

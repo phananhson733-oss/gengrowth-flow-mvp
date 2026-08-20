@@ -24,7 +24,7 @@ aliases:
 - 日志窗口以 `index repair-resubmit ok` 闭合，未发现失败标记，合规边界保持不变。
 - 已运行 `gg-index-monitor-tick.sh`；两站 Sitemap API 成功、无到期 URL，未进行 GSC 检查或 Request Indexing。
 - 已复核历史 SEO 阻塞批次：4 个目标均已发布且线上 HTTP 200，无需再次触发会产生发布副作用的 gate。
-- 已两次运行 `gg-topic-register-tick.sh`；apply 模式均在 AstrologyWiki 的 `PG-FS-002` 证据门安全停止，GenGrowth 完成有效零候选扫描，未验证任何下游写入。
+- 已三次运行 `gg-topic-register-tick.sh`；apply 模式均在 AstrologyWiki 的 `PG-FS-002` 证据门安全停止，GenGrowth 完成有效零候选扫描，未验证任何下游写入。
 
 ---
 
@@ -153,5 +153,22 @@ Draft_Angle / SERP_Snapshot / Entity_RAG: 未提供
 **🤖 回答：**
 
 证据充足未触发 abort：5 titles / 5 domains + Case Study SERP 属 Medium confidence，无 verbatim 用户投诉。产出 Entity=Bridgerton Zodiac Archetypes（cluster 内独占），Friction 定位在 SERP 情报的意图分裂——cast→sign 映射 vs 反向 "which character are you" 测验被同一 query 混淆。Logic 首句折叠 topology triad 并锚定象征/解释框架、明确非诊断/非官方设定的边界。Content_Angle 用"给出单一 cast-wide 映射 + 明示与反向测验切分"填补 SERP gap。Draft_Angle 因输入为模板占位符标 REJECTED，evidence_notes 逐条列出 domain 归属。
+
+---
+
+### Q9 — 20:13
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-08-20T10:01:08.740Z (1787220068740)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行指定 wrapper，进程退出码为 1。日志窗口 20:01:25–20:13:24 CST，环境启用 apply（`dry_run=false`、`budget_exhausted=false`），以 `topic-register failed rc=1` 结束。AstrologyWiki 在 `PG-FS-002` 因证据发现不足 fail-closed；其 candidates、updates、new_clusters、page_ids、preprocessor 与 evidence_discovery 字段均未输出，均为不可用而非零。GenGrowth 独立完成 `applied=true` 的有效零候选扫描：candidates/updates/new_clusters=0/0/0，page_ids/created_page_ids/preprocessor/evidence_discovery 均为空，selection_mode=generate，audit_incomplete=0、ops_blocked_count=0。日志未独立证明任何 Google Sheets、任务计划或飞书写入/回执；未执行 wrapper 外手写或额外报告产物。
 
 ---

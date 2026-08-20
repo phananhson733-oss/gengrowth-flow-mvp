@@ -1,7 +1,7 @@
 ---
 title: Babylovegrowth Alternatives
 slug: babylovegrowth-alternatives
-date: 2026-08-17
+date: 2026-08-20
 status: ready-to-review
 type: wiki-entry
 template: Definition
@@ -13,7 +13,7 @@ associated_keywords:
 
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-08-17T06:16:56.830Z
+generated_at: 2026-08-20T01:30:06.778Z
 content_sha256_short: 91c050e31e719642
 phase2_checks: all-pass
 ---

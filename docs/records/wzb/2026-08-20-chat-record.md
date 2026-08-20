@@ -23,6 +23,7 @@ aliases:
 - AstrologyWiki 与 GenGrowth 均为有效零修复；复盘和请求队列已完成写入同步。
 - 日志窗口以 `index repair-resubmit ok` 闭合，未发现失败标记，合规边界保持不变。
 - 已运行 `gg-index-monitor-tick.sh`；两站 Sitemap API 成功、无到期 URL，未进行 GSC 检查或 Request Indexing。
+- 已复核历史 SEO 阻塞批次：4 个目标均已发布且线上 HTTP 200，无需再次触发会产生发布副作用的 gate。
 
 ---
 
@@ -59,5 +60,17 @@ Run the GenGrowth Phase 2 indexing workflow through the existing deterministic w
 **🤖 回答：**
 
 已运行指定 wrapper，日志窗口 09:02:37–09:03:35 CST，以 `index monitor ok` 闭合且进程退出 0。AstrologyWiki：Sitemap API 提交成功；rows/due=312/0，因此 URL Inspection 检查/失败=0/0；结果复盘表 en_rows/appended/updated/skipped=312/0/312/0；请求队列 rows/P0/P1/P2/P3=0/0/0/0/0。GenGrowth：Sitemap API 提交成功；rows/due=64/0，检查/失败=0/0；结果复盘表=64/0/51/13；请求队列=0/0/0/0/0。无可操作候选或失败，未打开或点击 GSC Request Indexing；日志没有 Feishu 发送回执或失败标记，故本轮无须通知且投递状态不应臆测。未使用普通文章 Google Indexing API。
+
+---
+
+### Q3 — 15:12
+
+**🙋 提问：**
+
+work kanban task t_eb98eb6c
+
+**🤖 回答：**
+
+已复核任务指定的 AstrologyWiki SEO 阻塞批次。当前 autopilot ledger 中不再存在 PG-CELEB-025/026/027/028 的活动 claim；四个线上 URL 均返回 HTTP 200。Oracle 提交历史显示四篇均已发布；028 的历史修复提交移除了 stray keyword `emma watson zodiac sign`。未重跑会修改 ledger 或触发发布的 gate；回归测试确认 `--retry-failed` 不会绕过 verified-preview 门槛。完整 smoke 文件另有 4 项与本任务无关的 authoring-harness 失败，原因是 Node v25 下 chart-inject fixture 的 `MODULE_NOT_FOUND`，未修改无关生产逻辑。
 
 ---

@@ -126,3 +126,20 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 仅运行指定 wrapper，进程退出码为 1。日志窗口 18:02:35–18:14:45 CST，环境启用 apply（`dry_run=false`、`budget_exhausted=false`），以 `topic-register failed rc=1` 结束。AstrologyWiki 在 `PG-FS-002` 因证据发现不足 fail-closed；其 candidates、updates、new_clusters、page_ids、preprocessor 与 evidence_discovery 字段均未输出，均为不可用而非零。GenGrowth 独立完成 `applied=true` 的有效零候选扫描：candidates/updates/new_clusters=0/0/0，page_ids/created_page_ids/preprocessor/evidence_discovery 均为空，selection_mode=generate，audit_incomplete=0、ops_blocked_count=0。日志未独立证明任何 Google Sheets、任务计划或飞书写入/回执；未执行 wrapper 外手写或额外报告产物。
 
 ---
+
+### Q7 — 20:04 [claude]
+
+**🙋 提问：**
+
+（SEO Content Variable Pre-processor v2.0 输入包）
+Target_Keyword: Eleven zodiac sign
+Tier / Template: T2 / Definition
+Cluster_Context: Stranger Things Characters Zodiac Signs
+Raw_Friction: Readers need Eleven Zodiac Sign separated from full-chart analysis, celebrity biography, and deterministic personality claims.
+Draft_Angle / SERP_Snapshot / Entity_RAG: 未提供
+
+**🤖 回答：**
+
+按 preprocessor 自身的 Hard-Abort 规则命中两条：SERP_Snapshot 提供的 distinct titles=0（<3），Raw_Friction 是编辑口吻的转述、无 sourced verbatim 用户投诉、无 named-domain SERP/新闻 title 证据。输出 Status: Needs More Evidence 并停止合成；SHEET_FIELDS 全部标 blocked，不写 Entity/Friction/Logic/Content_Angle。补齐 SERP top 5–10 + 真实 verbatim 引文（含来源）+ 真 Draft_Angle 后再跑；同时提醒确认 cluster 内 sibling 页未占用 sovereign entity 避免撞车。
+
+---

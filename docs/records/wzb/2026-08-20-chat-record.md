@@ -143,3 +143,15 @@ Draft_Angle / SERP_Snapshot / Entity_RAG: 未提供
 按 preprocessor 自身的 Hard-Abort 规则命中两条：SERP_Snapshot 提供的 distinct titles=0（<3），Raw_Friction 是编辑口吻的转述、无 sourced verbatim 用户投诉、无 named-domain SERP/新闻 title 证据。输出 Status: Needs More Evidence 并停止合成；SHEET_FIELDS 全部标 blocked，不写 Entity/Friction/Logic/Content_Angle。补齐 SERP top 5–10 + 真实 verbatim 引文（含来源）+ 真 Draft_Angle 后再跑；同时提醒确认 cluster 内 sibling 页未占用 sovereign entity 避免撞车。
 
 ---
+
+### Q8 — 20:06 [claude]
+
+**🙋 提问：**
+
+跑 SEO Content Variable Pre-processor (v2.0)，目标关键词 "Bridgerton characters zodiac signs"（T2/Definition，cluster=Bridgerton Characters Zodiac Signs），Raw_Friction 为 5 条 SERP 标题证据（bornundersaturn / oprahdaily / buzzfeed / pride / screenrant），SERP_Snapshot 5 distinct titles / 5 distinct domains，Draft_Angle 空，Entity_RAG 未提供。
+
+**🤖 回答：**
+
+证据充足未触发 abort：5 titles / 5 domains + Case Study SERP 属 Medium confidence，无 verbatim 用户投诉。产出 Entity=Bridgerton Zodiac Archetypes（cluster 内独占），Friction 定位在 SERP 情报的意图分裂——cast→sign 映射 vs 反向 "which character are you" 测验被同一 query 混淆。Logic 首句折叠 topology triad 并锚定象征/解释框架、明确非诊断/非官方设定的边界。Content_Angle 用"给出单一 cast-wide 映射 + 明示与反向测验切分"填补 SERP gap。Draft_Angle 因输入为模板占位符标 REJECTED，evidence_notes 逐条列出 domain 归属。
+
+---

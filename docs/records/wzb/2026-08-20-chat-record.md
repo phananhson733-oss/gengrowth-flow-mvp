@@ -24,7 +24,7 @@ aliases:
 - 日志窗口以 `index repair-resubmit ok` 闭合，未发现失败标记，合规边界保持不变。
 - 已运行 `gg-index-monitor-tick.sh`；两站 Sitemap API 成功、无到期 URL，未进行 GSC 检查或 Request Indexing。
 - 已复核历史 SEO 阻塞批次：4 个目标均已发布且线上 HTTP 200，无需再次触发会产生发布副作用的 gate。
-- 已运行 `gg-topic-register-tick.sh`；apply 模式在 AstrologyWiki 的 `PG-FS-002` 证据门安全停止，GenGrowth 完成有效零候选扫描，未验证任何下游写入。
+- 已两次运行 `gg-topic-register-tick.sh`；apply 模式均在 AstrologyWiki 的 `PG-FS-002` 证据门安全停止，GenGrowth 完成有效零候选扫描，未验证任何下游写入。
 
 ---
 
@@ -107,5 +107,22 @@ Run the deterministic fixed-row index repair workflow through `bash tools/script
 **🤖 回答：**
 
 已运行指定 wrapper。日志窗口 17:32:26–17:33:08 CST，退出码 0，终态 `index repair-resubmit ok`。AstrologyWiki：process-fixed fixed/resubmitted=0/0；sync-recap en_rows/appended/updated/skipped=312/0/0/312；sync-request-queue rows/P0/P1/P2/P3=0/0/0/0/0。GenGrowth：process-fixed=0/0；sync-recap=64/0/0/64；sync-request-queue=0/0/0/0/0。失败扫描为空；未进行普通文章 Google Indexing API、无人值守 GSC Request Indexing 或额外 Feishu/Google Doc 报告操作。
+
+---
+
+### Q6 — 18:15
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-08-20T08:01:08.368Z (1787212868368)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行指定 wrapper，进程退出码为 1。日志窗口 18:02:35–18:14:45 CST，环境启用 apply（`dry_run=false`、`budget_exhausted=false`），以 `topic-register failed rc=1` 结束。AstrologyWiki 在 `PG-FS-002` 因证据发现不足 fail-closed；其 candidates、updates、new_clusters、page_ids、preprocessor 与 evidence_discovery 字段均未输出，均为不可用而非零。GenGrowth 独立完成 `applied=true` 的有效零候选扫描：candidates/updates/new_clusters=0/0/0，page_ids/created_page_ids/preprocessor/evidence_discovery 均为空，selection_mode=generate，audit_incomplete=0、ops_blocked_count=0。日志未独立证明任何 Google Sheets、任务计划或飞书写入/回执；未执行 wrapper 外手写或额外报告产物。
 
 ---

@@ -10,6 +10,14 @@ updated: 2026-06-18
 
 ## 待完成
 
+- [ ] 2026-08-21 13:15 | **P1 · gengrowth.ai 索引监控静默失效 23 天，且 cron 全程报 `ok`（fail-open）** —— 由 GSC 每日 cron 只读诊断查出，未擅自动手。
+  - **现象**：`index_monitor` 里 `product=gengrowth` 的 `sync-published` 自 **2026-07-29 起 `en_urls=0`**（07-21→07-28 稳定 62~64，07-31 有过一次 12 的回光），连带 `sync-url-inventory rows=0` → gengrowth 的 url-inventory / 收录跟踪表这 23 天全是空转，且每天日志都写 `index monitor ok`，从未告警。
+  - **时间点强相关**：07-28 gengrowth 发布迁移到 Nevermore，次日归零。
+  - **根因**：`tools/scripts/gg-index-monitor.mjs` 的 `isEnWikiArticleUrl()`（~413 行）只认 `/en/wiki/` 与 `/en/blog/` 形状；迁移后 gengrowth.ai sitemap 共 **170 条 URL、带 `/en/` 的 0 条**（实际是 `https://gengrowth.ai/agents`、`/resources`、`/prompts` 这类裸路径）。
+  - ⚠️ **是坑但不是根因，别只修这个**：配置里硬编码的 `https://www.gengrowth.ai/sitemap.xml` 现已 **301 → no-www**（默认值散落 4 处：`gg-index-monitor-tick.sh:70`、`gg-index-repair-resubmit-tick.sh:56`、`lib/flow-backfill.mjs:30`、`gg-reconcile-status.mjs:58`，可用 `GG_GENGROWTH_SITEMAP_URL` 覆盖）。**实测把 `--sitemap-url` 换成正确的 no-www 后 `en_urls` 仍是 0**，证明路径过滤器才是根因。对照组 astrologywiki 的 www sitemap 正常（200 / 70KB / en_urls=361）。
+  - **建议**：① 让 `isEnWikiArticleUrl` 按站点参数化（gengrowth 用裸路径判定）；② 把 `en_urls=0` 改成 fail-closed 告警，否则这类归零还会再静默 23 天。
+- [ ] 2026-08-21 13:15 | **（判读提醒，非待办）今早 09:02 `index_monitor` 的 `rc=1` 已确认是瞬时抖动，不要去改 GSC 权限** —— astrologywiki 三条腿撞 Google API `503` + 两个 `404`，13:1x 逐条重跑全过（en_urls=361 / rows=421 / fixed=0）。该 cron 的飞书告警模板会自动附一句「常见原因是 GSC reader SA 权限不足」，**是模板猜测不是诊断**。确认 07-21→08-20 该 cron 均为 `ok`，仅 08-21 这一次失败。
+
 - [ ] 2026-08-14 13:20 | **🚨 授稿仍 0 产出：08-13 的修复只解决第一层，查出两个新 blocker（`en_urls=361` 连续第 16 天）** —— 08-13 19:00 那次 tick 的 preflight 确实首次 `status:"ready"` 通过并进入 nightly（第一层已修好），但：
   - **① P0 回归 · 唯一授稿 lane `com.gengrowth.seo-blog` 现在【未加载】。** `launchctl print gui/$UID/com.gengrowth.seo-blog` → `Could not find service`，而 plist 文件在 `~/Library/LaunchAgents/` 且**不在** `launchctl print-disabled` 里 → 属**纯未 bootstrap**（与 08-13 修的那三个 disabled 态不是一回事，**不要 `enable`，直接 bootstrap**）：`launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.gengrowth.seo-blog.plist`。**诱因推测=08-13 晚给三个保活 plist 做 enable/bootstrap 时把它顺带 bootout 了**——证据是那次 nightly 跑到第 4 篇 `PG-FD-002` 时被 `Terminated: 15` 腰斩，日志停在 `starting deterministic SEO nightly` 而无 `tick complete`。教训：改 launchd 后必须复验本来在跑的 lane 还在不在。
   - **② 第二层根因 · 即使 lane 活着也每篇必 park。** 08-13 实跑的 4 篇（`PG-FA-001`/`PG-FA-002`/`PG-FD-001`/`PG-FD-002`）全部 `PARK(author) … render produced no v8 prompt`。手动复现拿到准确原因（只读，可照抄）：`node tools/scripts/gg-render-batch.mjs --batch .gg-cache/batches/PG-FA-001.json` → `skipped — missing cfg fields: cluster_jtbd, internal_link_rule, cta_text, tier_gate_block, rl6_hint, friction_themes (add to overrides.json[PG-FA-001])`（同样信息也在 batch fixture 的 `todo` 数组里）。即这批 anime 系列新 PID 在选题登记表/overrides **缺 6 个 render 必需字段**，需 OPS 补录。⚠️ 注意 `ensure-search-volume` 已经跑过并写了 `C486="0"`，**所以这不是老的"空 search_volume→render park"那个坑**，别照旧结论下药。

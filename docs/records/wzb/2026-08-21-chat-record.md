@@ -73,3 +73,14 @@ Run the GenGrowth Phase 2 indexing workflow through the existing deterministic w
 没有。今天（08-21）零产出：`_staging/` 无任何新文件（最新草稿仍是 08-13 19:19 的 PG-CMP-005/006），ledger 停在 07-16，两条 lane 日志今天均无写入。根因是两条授稿 lane 被 launchd **持久 disabled**——`launchctl print-disabled gui/$(id -u)` 显示 `com.gengrowth.seo-blog` 与 `com.gengrowth.gengrowth-author` 均为 `disabled`（`gengrowth-publish` / `flow-driver` 为 enabled 且在跑）。授稿 lane 最后一次 tick 是 08-13 19:00，那次 preflight 首次通过并进入 nightly，此后再无 tick，与 08-13「修保活 lane 时把授稿 lane 弄没了」的历史记录吻合，已停摆 8 天。恢复需先 `launchctl enable` 再 `bootstrap`（直接 bootstrap 会报 EIO 5），未擅自动手，等确认。
 
 ---
+### Q4 — 16:05 [claude]
+
+**🙋 提问：**
+
+我指的是写作给 gengrowth.ai。但是我已经昨天在提交了不少
+
+**🤖 回答：**
+
+范围纠正：上一轮查的是 oracle/astrologywiki 授稿 lane，而 gengrowth.ai 是手工流程、走 `phananhson733-oss/nevermore`，两者无关。gengrowth.ai **今天的文章已写完、已提交、已上线**：08-21 09:30 commit `39bddaa content(blog): agentic-seo`，已在 `origin/main`，文件 `apps/marketing/content/blog/en/agentic-seo.md`（2016 词，frontmatter `status: published` / `publishedAt: 2026-08-21`，配图 `agentic-seo.jpg` 同批入库）。线上验证通过：`https://gengrowth.ai/blog/agentic-seo` 返回 200、`<h1>` 已渲染（94.7 KB）、已进 sitemap（共 170 条），`/en/blog/` 别名同样 200。发布节奏 08-17 起每天一篇、08-19/20/21 连续三天都在 09:30，博客总量 82 篇；昨天 08-20 除 `babylovegrowth-alternatives` 外还合了 #187/#188 等 marketing 代码 PR（#186 仍 OPEN）。上一轮报告的 seo-blog / gengrowth-author lane disabled 仍属实，但只影响 astrologywiki。
+
+---

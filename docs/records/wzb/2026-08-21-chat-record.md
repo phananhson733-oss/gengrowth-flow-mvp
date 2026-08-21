@@ -62,3 +62,14 @@ Run the GenGrowth Phase 2 indexing workflow through the existing deterministic w
 运行 `bash tools/scripts/gg-index-monitor-tick.sh`。2026-08-21 09:02:42–09:08:20 CST 有界日志以 `index monitor failed rc=1` 结束，原因是 AstrologyWiki 前置同步出现 Google API `503 UNAVAILABLE` 及两次 `404 NOT_FOUND`。两站 Sitemap API 仍均为 `ok`；AstrologyWiki 为 rows=312、due=0、URL Inspection 检查/失败 0/0、recap 312/0/312/0、queue rows=0（P0/P1/P2/P3 均 0）；GenGrowth 为 rows=64、due=0、检查/失败 0/0、recap 64/0/51/13、queue rows=0（P0/P1/P2/P3 均 0）。无候选 URL，未打开/点击 GSC Request Indexing；失败飞书通知有明确 `ok:true` 回执（message ID 已写入自动化记忆）。
 
 ---
+### Q3 — 16:00 [claude]
+
+**🙋 提问：**
+
+今天的文章写完和提交了吗
+
+**🤖 回答：**
+
+没有。今天（08-21）零产出：`_staging/` 无任何新文件（最新草稿仍是 08-13 19:19 的 PG-CMP-005/006），ledger 停在 07-16，两条 lane 日志今天均无写入。根因是两条授稿 lane 被 launchd **持久 disabled**——`launchctl print-disabled gui/$(id -u)` 显示 `com.gengrowth.seo-blog` 与 `com.gengrowth.gengrowth-author` 均为 `disabled`（`gengrowth-publish` / `flow-driver` 为 enabled 且在跑）。授稿 lane 最后一次 tick 是 08-13 19:00，那次 preflight 首次通过并进入 nightly，此后再无 tick，与 08-13「修保活 lane 时把授稿 lane 弄没了」的历史记录吻合，已停摆 8 天。恢复需先 `launchctl enable` 再 `bootstrap`（直接 bootstrap 会报 EIO 5），未擅自动手，等确认。
+
+---

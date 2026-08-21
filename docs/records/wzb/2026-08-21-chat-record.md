@@ -24,6 +24,7 @@ aliases:
 - AstrologyWiki 与 GenGrowth 均以退出码 0 完成，未发现已修复行。
 - 仅同步 Sheet 复盘与请求队列；未触发普通文章 Indexing API、无人值守 GSC 或额外报告产物。
 - 执行 `gg-index-monitor-tick.sh`；AstrologyWiki 前置同步出现 Google API 503/404，整轮以 rc=1 结束，但两站 sitemap 提交与零候选检查均完成，失败飞书提醒已有回执。
+- 执行 `gg-topic-register-tick.sh`；环境 apply 模式下 AstrologyWiki 因 PG-FS-002 证据门禁失败，GenGrowth 完成零候选扫描，未有独立下游写入或飞书回执证据。
 
 ---
 
@@ -83,7 +84,6 @@ Run the GenGrowth Phase 2 indexing workflow through the existing deterministic w
 
 范围纠正：上一轮查的是 oracle/astrologywiki 授稿 lane，而 gengrowth.ai 是手工流程、走 `phananhson733-oss/nevermore`，两者无关。gengrowth.ai **今天的文章已写完、已提交、已上线**：08-21 09:30 commit `39bddaa content(blog): agentic-seo`，已在 `origin/main`，文件 `apps/marketing/content/blog/en/agentic-seo.md`（2016 词，frontmatter `status: published` / `publishedAt: 2026-08-21`，配图 `agentic-seo.jpg` 同批入库）。线上验证通过：`https://gengrowth.ai/blog/agentic-seo` 返回 200、`<h1>` 已渲染（94.7 KB）、已进 sitemap（共 170 条），`/en/blog/` 别名同样 200。发布节奏 08-17 起每天一篇、08-19/20/21 连续三天都在 09:30，博客总量 82 篇；昨天 08-20 除 `babylovegrowth-alternatives` 外还合了 #187/#188 等 marketing 代码 PR（#186 仍 OPEN）。上一轮报告的 seo-blog / gengrowth-author lane disabled 仍属实，但只影响 astrologywiki。
 
----
 ### Q5 — 16:20 [claude]
 
 **🙋 提问：**
@@ -98,7 +98,7 @@ Run the GenGrowth Phase 2 indexing workflow through the existing deterministic w
 
 ---
 
-+### Q6 — 16:14
+### Q6 — 16:14
 
 **🙋 提问：**
 

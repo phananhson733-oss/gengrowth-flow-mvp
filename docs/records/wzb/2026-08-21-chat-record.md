@@ -24,7 +24,7 @@ aliases:
 - AstrologyWiki 与 GenGrowth 在 05:01 与 17:32 的修复同步均以退出码 0 完成，未发现已修复行或待人工提交队列。
 - 仅同步 Sheet 复盘与请求队列；未触发普通文章 Indexing API、无人值守 GSC 或额外报告产物。
 - 执行 `gg-index-monitor-tick.sh`；AstrologyWiki 前置同步出现 Google API 503/404，整轮以 rc=1 结束，但两站 sitemap 提交与零候选检查均完成，失败飞书提醒已有回执。
-- 两次执行 `gg-topic-register-tick.sh`；环境 apply 模式下 AstrologyWiki 均因 PG-FS-002 证据门禁失败，GenGrowth 均完成零候选扫描，未有独立下游写入或飞书回执证据。
+- 三次执行 `gg-topic-register-tick.sh`；环境 apply 模式下 AstrologyWiki 均因 PG-FS-002 证据门禁失败，GenGrowth 均完成零候选扫描，未有独立下游写入或飞书回执证据。
 
 ---
 
@@ -144,5 +144,22 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 仅运行 `bash tools/scripts/gg-topic-register-tick.sh`，退出码为 1。2026-08-21 18:01:55–18:15:01 CST 的有界日志显示环境启用 apply（`dry_run=false`、`budget_exhausted=false`），最终为 `topic-register failed rc=1`。AstrologyWiki 在写入前因 `PG-FS-002` 证据发现不足被 fail-closed 拒绝，候选、更新、新集群、page_ids 和预处理状态均不可用；GenGrowth 独立完成有效 applied 零扫描（candidates/updates/new_clusters 均为 0，page_ids/preprocessor/evidence_discovery 均为空，selection_mode=generate）。日志没有独立证明任何 Google Sheet、任务计划或飞书写入/回执；未做手工 Sheet/任务计划编辑，也未创建额外 Feishu 或 Google Doc 报告。自动化记忆已追加。
+
+---
+
+### Q9 — 20:14
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-08-21T10:01:12.800Z (1787306472800)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行 `bash tools/scripts/gg-topic-register-tick.sh`，退出码为 1。2026-08-21 20:00:55–20:14:17 CST 的有界日志显示环境启用 apply（`dry_run=false`、`budget_exhausted=false`），最终为 `topic-register failed rc=1`。AstrologyWiki 在写入前因 `PG-FS-002` 证据发现不足被 fail-closed 拒绝，候选、更新、新集群、page_ids 和预处理状态均不可用；GenGrowth 独立完成有效 applied 零扫描（candidates/updates/new_clusters 均为 0，page_ids/preprocessor/evidence_discovery 均为空，selection_mode=generate）。日志没有独立证明任何 Google Sheet、任务计划或飞书写入/回执；未做手工 Sheet/任务计划编辑，也未创建额外 Feishu 或 Google Doc 报告。自动化记忆已追加。
 
 ---

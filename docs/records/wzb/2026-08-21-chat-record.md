@@ -84,3 +84,14 @@ Run the GenGrowth Phase 2 indexing workflow through the existing deterministic w
 范围纠正：上一轮查的是 oracle/astrologywiki 授稿 lane，而 gengrowth.ai 是手工流程、走 `phananhson733-oss/nevermore`，两者无关。gengrowth.ai **今天的文章已写完、已提交、已上线**：08-21 09:30 commit `39bddaa content(blog): agentic-seo`，已在 `origin/main`，文件 `apps/marketing/content/blog/en/agentic-seo.md`（2016 词，frontmatter `status: published` / `publishedAt: 2026-08-21`，配图 `agentic-seo.jpg` 同批入库）。线上验证通过：`https://gengrowth.ai/blog/agentic-seo` 返回 200、`<h1>` 已渲染（94.7 KB）、已进 sitemap（共 170 条），`/en/blog/` 别名同样 200。发布节奏 08-17 起每天一篇、08-19/20/21 连续三天都在 09:30，博客总量 82 篇；昨天 08-20 除 `babylovegrowth-alternatives` 外还合了 #187/#188 等 marketing 代码 PR（#186 仍 OPEN）。上一轮报告的 seo-blog / gengrowth-author lane disabled 仍属实，但只影响 astrologywiki。
 
 ---
+### Q5 — 16:20 [claude]
+
+**🙋 提问：**
+
+回填都处理了吗
+
+**🤖 回答：**
+
+只处理了一项，另外三项全没做。✅ **选题登记表**（workbook `1RRxs…`）已回填：本周 5 篇（PG-ASV-001 / PG-CMP-007-009 / PG-SPD-002）全部 `Status=已发布` + 完整 URL + cluster_id，64 已发布/8 待写，无「已发布但 URL 空」。❌ **主题集群表 page_assets** 漏 4 篇：`ai_search_visibility` 仍写「无（预留位）」但 agentic-seo 已上线，`seo_tools_comparison` 的 Series 停在 08-13 那批（缺 outrank / autoblogging / babylovegrowth），`search_performance_diagnosis` 仍写「新增待产出 1 篇」。❌ **vault 归档**最后一次是 08-13，本周 5 篇一篇没归；且 `gg-archive-to-vault.mjs` 只从 `_staging/` 读源，而这 5 个 PID 在 `_staging` 里 0 个 md（都是直接手写进 nevermore 的）→ 直接跑会全部 SKIP，得先把 md 落回 `_staging/<PID>-en.md`。❌ **收录跟踪四表全面失守**：`url-inventory` 0 行、`request-indexing-queue` 0 行、`index-tracking` 64 行但 URL 全是过期的 `/en/blog/` 形状且 published_at 最晚停在 07-21、`结果复盘表` 无本周任何一篇。按 slug 对账：线上 77 篇 vs 跟踪表 64 篇 → **21 篇从未进过跟踪表 + 8 条已下线/改名的僵尸行**。根因就是 reminders 里那条 P1（`isEnWikiArticleUrl()` 只认 `/en/wiki/`、`/en/blog/`，迁移后 sitemap 全是裸 `/blog/` → `en_urls=0` 且 cron 天天报 ok）——**没修这个之前补了也会再漂**。
+
+---

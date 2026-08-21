@@ -21,7 +21,7 @@ aliases:
 > 用 3-5 个要点概括当天所有对话的核心内容、关键决策和产出成果。
 
 - 执行获准的 `gg-index-repair-resubmit-tick.sh` 确定性索引修复与同步流程。
-- AstrologyWiki 与 GenGrowth 均以退出码 0 完成，未发现已修复行。
+- AstrologyWiki 与 GenGrowth 在 05:01 与 17:32 的修复同步均以退出码 0 完成，未发现已修复行或待人工提交队列。
 - 仅同步 Sheet 复盘与请求队列；未触发普通文章 Indexing API、无人值守 GSC 或额外报告产物。
 - 执行 `gg-index-monitor-tick.sh`；AstrologyWiki 前置同步出现 Google API 503/404，整轮以 rc=1 结束，但两站 sitemap 提交与零候选检查均完成，失败飞书提醒已有回执。
 - 执行 `gg-topic-register-tick.sh`；环境 apply 模式下 AstrologyWiki 因 PG-FS-002 证据门禁失败，GenGrowth 完成零候选扫描，未有独立下游写入或飞书回执证据。
@@ -110,5 +110,22 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 仅运行 `bash tools/scripts/gg-topic-register-tick.sh`，退出码为 1。2026-08-21 16:01:35–16:14:17 CST 的有界日志显示环境启用 apply（`dry_run=false`、`budget_exhausted=false`），最终为 `topic-register failed rc=1`。AstrologyWiki 在写入前因 `PG-FS-002` 证据发现不足被 fail-closed 拒绝，候选、更新、新集群、page_ids 和预处理状态均不可用；GenGrowth 独立完成有效 applied 零扫描（candidates/updates/new_clusters 均为 0，page_ids/preprocessor/evidence_discovery 均为空，selection_mode=generate）。日志没有独立证明任何 Google Sheet、任务计划或飞书写入/回执；未做手工 Sheet/任务计划编辑，也未创建额外 Feishu 或 Google Doc 报告。
+
+---
+
+### Q7 — 17:32
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Repair Resubmit
+Automation ID: gengrowth-index-repair-resubmit
+Automation memory: $CODEX_HOME/automations/gengrowth-index-repair-resubmit/memory.md
+Last run: 2026-08-20T21:01:10.686Z (1787259670686)
+
+Run the deterministic fixed-row index repair workflow through `bash tools/scripts/gg-index-repair-resubmit-tick.sh`. The wrapper loads the local gg environment, loops the configured products (`GG_INDEX_MONITOR_PRODUCTS`, defaulting to astrologywiki and gengrowth), processes rows marked `已修复`, syncs `结果复盘表`, and refreshes `request-indexing-queue` in each product Google Sheet. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, do not click Search Console Request Indexing unattended, and do not create Feishu or Google Doc report artifacts. After the wrapper exits, summarize per-product `process-fixed`, `sync-recap`, `sync-request-queue` counts visible in the log, plus any failures.
+
+**🤖 回答：**
+
+运行指定 wrapper，退出码为 0。2026-08-21 17:32:30–17:32:49 CST 的有界日志以 `index repair-resubmit ok` 结束；AstrologyWiki：fixed/resubmitted 0/0、recap 312/0/0/312、queue 0/0/0/0/0；GenGrowth：fixed/resubmitted 0/0、recap 64/0/0/64、queue 0/0/0/0/0。两产品均 rc=0，失败关键词扫描为空。未使用普通文章 Google Indexing API，未执行无人值守 GSC Request Indexing，未创建 Feishu 或 Google Doc 报告产物；自动化记忆已创建并追加本次摘要。
 
 ---

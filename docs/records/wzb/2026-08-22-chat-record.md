@@ -61,3 +61,14 @@ Run the GenGrowth Phase 2 indexing workflow through the existing deterministic w
 已仅运行 `bash tools/scripts/gg-index-monitor-tick.sh`。有界日志窗口 09:01:54–09:03:00 CST 以 `index monitor ok` 结束：AstrologyWiki sitemap-submit=ok，due/checked/failures=0/0/0，结果复盘表 sync-recap 为 en_rows=312、appended=0、updated=312、skipped=0，request-indexing-queue 为 rows=0、P0=0、P1=0、P2=0、P3=0；GenGrowth sitemap-submit=ok，due/checked/failures=0/0/0，sync-recap 为 en_rows=64、appended=0、updated=51、skipped=13，队列同为 rows=0、各优先级=0。没有候选 GSC URL，未打开浏览器或进行 Request Indexing 点击；未使用普通文章 Google Indexing API。窗口内无飞书成功回执或失败标记，投递状态为未验证。另见 GenGrowth `sync-published en_urls=0` 与 url-inventory=0，属于已知迁移后路径过滤 fail-open 状态，本次未擅自修改。
 
 ---
+### Q3 — 13:10 [claude]
+
+**🙋 提问：**
+
+（原生 cron · gsc-index-daily）每天跑一轮 GSC 手动 Request Indexing（astrologywiki.com）。本机(awayer_mini) Chrome 驱动，全新会话。
+
+**🤖 回答：**
+
+本轮 **0 提交、未开浏览器**。候选=0（结果复盘表 315 行「申请时间空 且 day14_收录≠Y」为空集），按任务契约在取 worklist 阶段即短路，不做浏览器驱动。sitemap `en_urls=361` 连续第 24 天持平（07-30→08-22），`sync-request-queue` rows=0（P0~P3 全 0）。三项停摆判据逐字同 08-15：`.gg-cache` mtime 冻结 `08-13 19:04`、`gg-seo-blog-launchd.{err,out}.log` mtime 冻结 `08-13 19:00`、`launchctl` 仍无 `com.gengrowth.seo-blog` / `gengrowth-author`（两个 plist 都在盘 = 纯未 bootstrap）；末次 `tick complete` 仍是 `2026-07-24 19:08` → 授稿链停摆第 29 天、P0 回归第 9 天、第 13 次零动作。第四项判据（飞书 audit log 尾部）确认今早 09:02 index-monitor cron 恢复 `ok`，反证 08-21 那次 `rc=1` 确为 Google API 瞬时抖动、与 GSC 权限无关。按任务契约「0 提交则跳过飞书别发噪音」，本轮未发飞书。未做任何写操作（除三张表的例行 sync）。
+
+---

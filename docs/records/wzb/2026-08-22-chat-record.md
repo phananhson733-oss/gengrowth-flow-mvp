@@ -22,6 +22,7 @@ aliases:
 - 运行确定性索引修复与重提同步 wrapper；AstrologyWiki 与 GenGrowth 均成功结束。
 - 两产品均无已修复行、无请求队列行；结果复盘表同步未新增或更新记录。
 - 已遵守普通文章不使用 Google Indexing API、无人值守不点击 GSC 请求编入索引、且不产生飞书或 Google Doc 报告的边界。
+- 运行 Phase 2 索引监控 wrapper；两份 sitemap 刷新成功、无到期 URL、两产品请求队列均为零，飞书投递未获日志回执。
 
 ---
 
@@ -41,5 +42,22 @@ Run the deterministic fixed-row index repair workflow through `bash tools/script
 **🤖 回答：**
 
 已仅运行 `bash tools/scripts/gg-index-repair-resubmit-tick.sh`，退出码为 0。日志窗口 05:02:15–05:02:34 以 `index repair-resubmit ok` 结束：AstrologyWiki 的 process-fixed 为 fixed=0、resubmitted=0；sync-recap 为 en_rows=312、appended=0、updated=0、skipped=312；sync-request-queue 为 rows=0、P0=0、P1=0、P2=0、P3=0。GenGrowth 的 process-fixed 为 fixed=0、resubmitted=0；sync-recap 为 en_rows=64、appended=0、updated=0、skipped=64；sync-request-queue 为 rows=0、P0=0、P1=0、P2=0、P3=0。两产品 rc=0，窗口内无失败；未使用普通文章 Indexing API、未无人值守点击 GSC 请求编入索引，亦未创建飞书或 Google Doc 报告。
+
+---
+
+### Q2 — 09:03
+
+**🙋 提问：**
+
+Automation: GenGrowth Index Monitor
+Automation ID: gengrowth-index-monitor
+Automation memory: $CODEX_HOME/automations/gengrowth-index-monitor/memory.md
+Last run: 2026-08-21T01:02:11.382Z (1787274131382)
+
+Run the GenGrowth Phase 2 indexing workflow through the existing deterministic wrapper: `bash tools/scripts/gg-index-monitor-tick.sh`. This wrapper must refresh the live sitemap through the official Search Console Sitemaps API, inspect due URLs through URL Inspection, sync the final `结果复盘表`, generate/update `request-indexing-queue` with priority colors, and send Feishu SEO技术 group reminders for actionable candidates or failures. Preserve the compliance boundary: do not use the Google Indexing API for ordinary articles, and do not click Search Console Request Indexing unattended. For Computer Use submission, only assist by opening candidate GSC inspection URLs and stop for human confirmation before the final Request Indexing click. After the wrapper exits, summarize sitemap submission status, GSC check counts/failures, queue counts by priority, and any Feishu notification outcome visible in the log.
+
+**🤖 回答：**
+
+已仅运行 `bash tools/scripts/gg-index-monitor-tick.sh`。有界日志窗口 09:01:54–09:03:00 CST 以 `index monitor ok` 结束：AstrologyWiki sitemap-submit=ok，due/checked/failures=0/0/0，结果复盘表 sync-recap 为 en_rows=312、appended=0、updated=312、skipped=0，request-indexing-queue 为 rows=0、P0=0、P1=0、P2=0、P3=0；GenGrowth sitemap-submit=ok，due/checked/failures=0/0/0，sync-recap 为 en_rows=64、appended=0、updated=51、skipped=13，队列同为 rows=0、各优先级=0。没有候选 GSC URL，未打开浏览器或进行 Request Indexing 点击；未使用普通文章 Google Indexing API。窗口内无飞书成功回执或失败标记，投递状态为未验证。另见 GenGrowth `sync-published en_urls=0` 与 url-inventory=0，属于已知迁移后路径过滤 fail-open 状态，本次未擅自修改。
 
 ---

@@ -10,6 +10,14 @@ updated: 2026-06-18
 
 ## 待完成
 
+- [ ] 2026-08-23 13:15 | **P1 · `com.gengrowth.index-monitor` 每日 cron 今天起停跑（首次缺勤）** —— 由 GSC 每日 cron 只读诊断查出，未擅自动手 launchctl。
+  - **现象**：`~/gengrowth-agents/cron-sync/index_monitor/` 里 08-17→08-22 每天都有日志（固定 09:01–09:02 启动，08-22 以 `index monitor ok` 正常收尾），**08-23 无日志文件**；13:10 复查仍无，缺勤 >4h，不是延迟。
+  - **launchd 侧**：`launchctl print gui/501/com.gengrowth.index-monitor` 与 `user/501/...` 均 `Could not find service`；`launchctl print-disabled gui/501` 里它是 **disabled**（与 `seo-blog`/`gengrowth-author` 同列）。plist **只在 repo `tools/scripts/com.gengrowth.index-monitor.plist`**，从未装进 `~/Library/LaunchAgents`（该目录 mtime 仍 07-22）。无重启（uptime 5 天，末次 boot 08-17 22:59）。
+  - **watchdog 已在报但不修**：`lane_watchdog` 每 30min 一条 `index-monitor not-loaded age=28.0h`，已超 `lanes-manifest.mjs` 里的 `maxGapSec=26h`；`GG_WATCHDOG_AUTOHEAL` 未开 → 只读诊断。
+  - **影响**：两站的 url-inventory / index-tracking / 结果复盘表 / request-queue 每日自动回填 + sitemap 每日 Sitemaps API 刷新全停。
+  - **今日已人工兜底**（astrologywiki 腿）：`--sync-published/--sync-url-inventory/--check-due/--sync-recap/--sync-request-queue`，数字与 08-22 一致（en_urls=361、rows=421 untracked=112 indexed=309、due=0、queue rows=0）。gengrowth 腿未补（其 `en_urls=0` 是上面 08-21 那条 P1 的已知根因）。
+  - **建议**：`launchctl enable gui/$(id -u)/com.gengrowth.index-monitor` 后 `bootstrap` repo 那份 plist；⚠️ 参照 08-13 前车之鉴（修保活 lane 时把授稿 lane 弄没了），改完必须复验原本在跑的 lane 还在不在；另注意该 plist 含 `LimitLoadToSessionType=Background`。
+
 - [ ] 2026-08-21 13:15 | **P1 · gengrowth.ai 索引监控静默失效 23 天，且 cron 全程报 `ok`（fail-open）** —— 由 GSC 每日 cron 只读诊断查出，未擅自动手。
   - **现象**：`index_monitor` 里 `product=gengrowth` 的 `sync-published` 自 **2026-07-29 起 `en_urls=0`**（07-21→07-28 稳定 62~64，07-31 有过一次 12 的回光），连带 `sync-url-inventory rows=0` → gengrowth 的 url-inventory / 收录跟踪表这 23 天全是空转，且每天日志都写 `index monitor ok`，从未告警。
   - **时间点强相关**：07-28 gengrowth 发布迁移到 Nevermore，次日归零。

@@ -86,12 +86,16 @@ const GENGROWTH_TBD_LINK_RULES = [
   // land on the July page. Gated on August 2026 being NAMED — a bare "core update" still means
   // July, which is correct: August 2026 had no confirmed core update (Search Status Dashboard).
   { match: /august[\s-]*2026|unconfirmed[\s-]*volatilit/i, href: '/blog/google-algorithm-update-august-2026' },
+  // 2026-08-24: the cannibalization article now exists (PG-SPD-003). This rule closes the hole
+  // the note below describes — descriptions promising a cannibalization how-to finally have a
+  // correct destination. Sits BEFORE the traffic-drop/core-update rule so nothing re-swallows it.
+  { match: /cannibali[sz]|multiple[\s-]*pages[\s-]*(rank|compet)/i, href: '/blog/multiple-pages-ranking-for-same-keyword' },
   // Cross-cluster: traffic-drop / core-update work lives on the live google-july-2026-update page.
   // NOTE: `cannibali[sz]ation` was deliberately REMOVED from this rule. That page is about the
   // July 2026 core update and says nothing about cannibalization, so the rule was sending readers
   // who were promised a cannibalization how-to to an algorithm-update post. A wrong destination is
-  // worse than no link — an unmatched description de-links to italic, which is the correct outcome
-  // until a cannibalization article actually exists.
+  // worse than no link — an unmatched description de-linked to italic, which was the correct outcome
+  // until the cannibalization article above existed.
   { match: /traffic[\s-]*drop|core[\s-]*update/i, href: '/blog/google-july-2026-update' },
   { match: /segment\w*[^.\n]{0,40}(country|device)/i, href: '/blog/striking-distance-keywords' },
   // -- live articles most likely to be referenced by the clusters above --

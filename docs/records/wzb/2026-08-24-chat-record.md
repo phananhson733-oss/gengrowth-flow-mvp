@@ -44,6 +44,6 @@ aliases:
 
 **🤖 回答：**
 
-一次补齐三天断档并全部上线回填：8/22 档 frase-alternatives（R83）、8/23 档 byword-ai-alternatives（R84）、8/24 档 A 线 multiple-pages-ranking-for-same-keyword（R85，同类相食一手数据篇）。每篇走完整 SOP：五家竞品定价浏览器核验入存档（Surfer 价格藏在 DOM data 属性里）、三路对抗事实审（累计抓出 4 个 CRITICAL：Surfer 入门价虚高一倍、工具能力过度声明、给 Google 文档塞私货、数据窗口日期写错）、codex image_gen 出 hero、gg-gengrowth-daily.sh 六步发布、GSC 三条逐一请求索引。顺带补了 4 条内链规则（agentic-seo/frase/byword/cannibalization）、拦下 16:30 定时器抢发未审稿、发现自家产品页文案漂移（已开 agentic-seo 热修任务），执行回执已写进发布日历。遗留：8/25/8/26 稿未写（缓冲仍为 0）。
+一次补齐三天断档并全部上线回填：8/22 档 frase-alternatives（R83）、8/23 档 byword-ai-alternatives（R84）、8/24 档 A 线 multiple-pages-ranking-for-same-keyword（R85，同类相食一手数据篇）。每篇走完整 SOP：五家竞品定价浏览器核验入存档（Surfer 价格藏在 DOM data 属性里）、三路对抗事实审（累计抓出 4 个 CRITICAL：Surfer 入门价虚高一倍、工具能力过度声明、给 Google 文档塞私货、数据窗口日期写错）、codex image_gen 出 hero、gg-gengrowth-daily.sh 六步发布、GSC 三条逐一请求索引。顺带补了 4 条内链规则（agentic-seo/frase/byword/cannibalization）、拦下 16:30 定时器抢发未审稿、发现自家产品页文案漂移（已开 agentic-seo 热修任务），执行回执已写进发布日历。随后顺势把 8/25 的 rightblogger-alternatives（PG-CMP-012，R86）也备好：稿 + hero + 表行 + 三路事实审全过（抓到一条我读错的 CRITICAL——把功能网格的「30 篇待发队列」当成月配额，低估竞品 5 倍，已按 FAQ 原文改正），dry-run 六步全绿，cron dry-run 确认「未来备着 1」，明早 09:30 定时器自动发。缓冲从 0 恢复到 1 篇。
 
 ---

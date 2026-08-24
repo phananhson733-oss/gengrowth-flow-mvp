@@ -88,12 +88,17 @@
       "managed_service": "Human + AI SEO Service 起价 $2,000/月"
     },
     "rightblogger": {
+      "verified_on": "2026-08-24",
       "source": "https://rightblogger.com/pricing",
       "entry_monthly_usd": 59,
-      "billing_note": "月付；另有年付 $49/$69/$199（文章未引用）",
-      "tiers": { "solo": { "monthly": 59, "sites": 1, "seo_reports": 30 }, "pro": { "monthly": 89, "sites": 3, "seo_reports": 90 }, "agency": { "monthly": 299, "sites": "10+", "seo_reports": 300 } },
+      "entry_annual_monthly_usd": 49,
+      "billing_note": "月付 $59/$89/$299；年付均摊 $49/$69/$199（$588/$828/$2,388/年，Save $120/$240/$1,200）",
+      "tiers": { "solo": { "monthly": 59, "annual_monthly": 49, "sites": 1, "seo_reports": 30, "chat_credits": 100, "automations": 1, "site_agent": "weekly audits" }, "pro": { "monthly": 89, "annual_monthly": 69, "sites": 3, "seo_reports": 90, "seats": 3, "chat_credits": 300, "automations": 3 }, "agency": { "monthly": 299, "annual_monthly": 199, "sites": "10+", "seo_reports": 300, "seats": 5, "chat_credits": 1000, "automations": 10, "site_agent": "daily audits", "white_label": true } },
+      "positioning_2026": "按站点数计价（'Plans scale with how many sites you run'），**全档 Unlimited AI words**——与按篇/按 credit 的品类互为反面；真正的限额是站点数/SEO reports/自动化数/scheduled posts（30/月、每站每天 5 篇）",
+      "free": "免费账户每月 2,000 free words、无需信用卡；7 天试用 $0 due today；30 天退款",
       "trial": "7 天免费试用（$0 due today）+ 30 天退款保证",
-      "backlink_exchange": "⚠️ 功能列表里有『Backlink Exchange』标签，但**定价页没有描述机制**——不能与 Outrank 并列引用 Google 链接政策，只能分别陈述"
+      "backlink_exchange": "⚠️ 功能网格里全档标 Backlink Exchange，但**定价页仍未描述机制**（8/24 复核不变）——不能与 Outrank 并列引用 Google 链接政策，只能分别陈述",
+      "misc_20260824": "宣称 709,498+ articles written / 51,000+ marketers；页面有 'See machine-readable pricing (for AI agents)' 链接"
     },
     "byword": {
       "verified_on": "2026-08-24",

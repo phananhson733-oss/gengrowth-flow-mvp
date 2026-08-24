@@ -23,7 +23,7 @@ aliases:
 - 运行了 GenGrowth Phase 2 索引监控的既定 deterministic wrapper，日志以 `index monitor ok` 收尾；两个站点的 Sitemap API 刷新成功且无到期 URL，无需人工 GSC 请求收录。
 - 两站最终 request-indexing-queue 均为 0；日志未显示飞书发送回执或失败。
 - GenGrowth live sitemap 仍解析为 `en_urls=0`，保留为既有 P1 裸路径解析缺陷，未在本轮改动。
-- 选题登记 wrapper 三次均由环境启用 apply：16:01 轮 AstrologyWiki 因 `PG-FS-002` 证据门 fail-closed、GenGrowth 完成零候选扫描；18:03 与 20:01 轮 AstrologyWiki 同一门禁失败、GenGrowth 遭遇 Google 503，均未证明下游写入。
+- 选题登记 wrapper 四次均由环境启用 apply：16:01 与 22:01 轮 AstrologyWiki 因 `PG-FS-002` 证据门 fail-closed、GenGrowth 完成零候选扫描；18:03 与 20:01 轮 AstrologyWiki 同一门禁失败、GenGrowth 遭遇 Google 503，均未证明下游写入。
 - 已运行索引修复重提 wrapper；两站无 `已修复` 行，复盘与辅助请求队列均已同步为零。
 
 ## 对话记录
@@ -110,5 +110,22 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 仅运行 `bash tools/scripts/gg-topic-register-tick.sh`；本次精确日志窗口为 20:01:09–20:14:09 CST，环境启用 apply（`dry_run=false`、`budget_exhausted=false`），wrapper 以 `rc=1` 和 `topic-register failed rc=1` 结束。AstrologyWiki 仅返回 `ERR_OTHER: refusing --apply: evidence discovery insufficient for PG-FS-002`；GenGrowth 仅返回 `ERR_OTHER: 503 Service Unavailable`。两产品均没有完整业务摘要，故 candidates、updates、new_clusters、page_ids、preprocessor 与 evidence_discovery 均不可用，而非零；日志未独立证明 Google Sheets、任务计划或飞书写入/发送。未进行任何手工下游写入、直接任务计划编辑或额外飞书/Google Doc 报告产物创建。
+
+---
+
+### Q6 — 22:14
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-08-24T12:00:26.527Z (1787572826527)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行 `bash tools/scripts/gg-topic-register-tick.sh`；本次精确日志窗口为 22:01:43–22:14:08 CST，环境启用 apply（`dry_run=false`、`budget_exhausted=false`），wrapper 以 `rc=1` 和 `topic-register failed rc=1` 结束。AstrologyWiki 在 `PG-FS-002` 因证据发现不足 fail-closed，未产生完整业务摘要，故 candidates、updates、new_clusters、page_ids、preprocessor 与 evidence_discovery 均不可用。GenGrowth 独立完成有效 applied 扫描：candidates/updates/new_clusters 均为 0，page_ids/created_page_ids/cluster_repairs/preprocessor/evidence_discovery 均为空，`selection_mode=generate`、`audit_incomplete=0`、`ops_blocked_count=0`。日志未独立证明 Google Sheets、任务计划或飞书写入/发送；未进行任何手工下游写入或额外报告产物创建。
 
 ---

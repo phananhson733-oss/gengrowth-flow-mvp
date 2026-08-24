@@ -103,6 +103,11 @@ const GENGROWTH_TBD_LINK_RULES = [
   { match: /seo[\s-]*audit[\s-]*checklist/i, href: '/blog/seo-audit-checklist' },
   { match: /technical[\s-]*seo[\s-]*audit|site[\s-]*audit[\s-]*report/i, href: '/blog/seo-audit-checklist' },
   { match: /generative[\s-]*engine[\s-]*optimi[sz]ation|\bgeo\b[^.\n]{0,20}optimi/i, href: '/blog/generative-engine-optimization' },
+  // agentic-seo (Series under ai_search_visibility, live 2026-08-21). Sits BEFORE the
+  // pillar rule so an anchor naming the agentic piece is not swallowed by a broader
+  // visibility phrasing in the same description. Gated on "agentic" being NAMED —
+  // a bare "seo agent" is the PRODUCT page (/agents/seo, a full URL, never a TBD link).
+  { match: /agentic[\s-]*seo|refusal[\s-]*list[^.\n]{0,30}seo[\s-]*agent/i, href: '/blog/agentic-seo' },
   { match: /ai[\s-]*search[\s-]*visibility|chatgpt[\s-]*citation/i, href: '/blog/ai-search-visibility' },
   { match: /best[\s-]*ai[\s-]*seo[\s-]*tools?/i, href: '/blog/best-ai-seo-tools' },
   // seo_tools_comparison Pillar (added 2026-08-17). Every article on the 8/18–8/30 B-line is a

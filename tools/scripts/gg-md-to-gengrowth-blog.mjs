@@ -124,6 +124,8 @@ const GENGROWTH_TBD_LINK_RULES = [
   { match: /outrank[\s-]*(\.so\s*)?(alternatives?|comparison|review)/i, href: '/blog/outrank-alternatives' },
   { match: /autoblogging[\s-]*(\.?ai)?[\s-]*(alternatives?|comparison|review)/i, href: '/blog/autoblogging-ai-alternatives' },
   { match: /babylovegrowth[\s-]*(\.?ai)?[\s-]*(alternatives?|comparison|review)/i, href: '/blog/babylovegrowth-alternatives' },
+  { match: /frase[\s-]*(\.?io)?[\s-]*(alternatives?|comparison|review)/i, href: '/blog/frase-alternatives' },
+  { match: /byword[\s-]*(\.?ai)?[\s-]*(alternatives?|comparison|review)/i, href: '/blog/byword-ai-alternatives' },
   { match: /seo[\s-]*automation/i, href: '/blog/seo-automation' },
   { match: /seo[\s-]*for[\s-]*saas[\s-]*startups?/i, href: '/blog/seo-for-saas-startups' },
   { match: /b2b[\s-]*saas[\s-]*seo/i, href: '/blog/b2b-saas-seo' },

@@ -30,19 +30,19 @@ phase2_checks: all-pass
 **Scalenut's pricing page now leads with AI visibility, and its Starter plan tracks 10 prompts for a $59 monthly list price — which works out to $5.90 per prompt, the highest rate in this comparison** (checked 25 August 2026).
 
 - **Its banner offer reads "Claim 60% off and double your limits on our Starter, Plus, and Professional plans"** — both halves stated on the page, giving discounted annual rates of $24, $36 and $80 against list rates of $59, $89 and $199.
-- **The doubling covers articles, clusters, audit pages and images** — Starter goes from 5 articles to 10, audit coverage from 200 webpages to 400. **The tracked-prompt allowance is not doubled**: the compare table lists 10, 25 and 100 prompts in both views.
+- **The doubling covers articles, clusters, audit pages and images** — Starter goes from 5 articles to 10 and 25 images to 50. Audit coverage is not part of Starter at all: it starts at Plus, where it doubles from 200 webpages to 400. **The tracked-prompt allowance is not doubled** — the compare table lists 10, 25 and 100 prompts in both views.
 - **Prompt tracking covers ChatGPT and Google AI Overviews at every tier**, with Perplexity listed only at the $199 Professional tier, and the refresh rate listed as weekly across all three.
-- **Auto-publishing to WordPress and Shopify is listed from the Plus tier**, alongside a 7-day free trial.
+- **Auto-publishing to WordPress and Shopify is listed from the Plus tier.** The page offers a 7-day free trial across plans.
 
 That $5.90 is the number worth carrying into any comparison, because the same line item on other vendors' pages costs as little as $0.60. The wider budget market this sits in is mapped in [[<TBD-internal-link: our guide to cheap SEO tools>]].
 
 ## Why It Matters That the Prompt-Tracking Label Has Converged
 
-Every vendor in the table below now lists some form of AI-visibility prompt tracking on its pricing page. The label reads almost identically everywhere. The rate behind it does not.
+Five of the tools here — Frase, NeuronWriter, Clearscope, Surfer and Scalenut — now list a countable tracked-prompt allowance on their pricing pages. The label reads almost identically everywhere. The rate behind it does not.
 
-Divide each vendor's list price by the prompts that tier tracks and the range runs from **$0.60 to $5.90 per prompt per month — close to ten times**, for a feature that looks like one line on every page. The pattern inside that range is the useful part: the cheapest prompts come from platforms that treat tracking as one component of a content subscription, and the dearest come from the entry tiers that market tracking hardest.
+Divide each vendor's list price by the prompts that tier tracks and the range runs from **$0.60 to $5.90 per prompt per month — close to ten times**, for a feature that looks like one line on every page.
 
-You are, in effect, paying a premium proportional to how prominently a vendor advertises the feature.
+Across these five vendors the pattern is consistent: the lowest per-prompt rates sit inside broader content subscriptions where tracking is one row among many, and the highest sit on the tiers that foreground tracking in their marketing.
 
 ## How Scalenut Alternatives Actually Differ in Real GEO Workflows
 
@@ -52,10 +52,10 @@ Sort candidates by what a tracked prompt costs at monthly list price, then check
 
 At monthly list prices, of the plans compared here:
 
-1. **Frase is the cheapest source of tracked prompts at every tier** — its plan table lists 50 prompts on the $49 Starter, 200 on the $129 Professional and 500 on the $299 Scale, which is $0.98, $0.65 and $0.60 per prompt.
-2. **NeuronWriter's monitoring add-on is the cheapest way to buy prompts on their own** at $0.90 each — its pricing data lists an AI Tracker add-on of 10 prompts for $9/month — though it attaches to a plan rather than standing alone.
+1. **Frase's upper tiers are the cheapest prompts anywhere in this set** — its plan table lists 50 prompts on the $49 Starter, 200 on the $129 Professional and 500 on the $299 Scale, which works out to $0.98, $0.65 and $0.60 per prompt.
+2. **NeuronWriter's AI Tracker add-on sits just above them and is the cheapest way to buy prompts by the block**: its pricing data lists tiers of 10, 25, 50, 100, 250 and 500 prompts at $9, $22, $43, $83, $199 and $389 a month — $0.90 down to $0.78 each. It attaches to a base plan rather than standing alone, so budget both.
 3. **Then the dedicated tracking tiers**: Clearscope Business at $1.33 ($399 for 300 prompts), Surfer's standalone AI Search Analytics plan at $1.85 ($185 for 100 monthly, $158 billed yearly), Scalenut Professional at $1.99 ($199 for 100).
-4. **The most expensive prompts are on entry tiers that foreground the feature**: NeuronWriter Bronze at $4.60 ($23 for 5), Surfer Standard at $4.76 ($119 for 25), Scalenut Starter at $5.90.
+4. **The most expensive prompts are on the tiers that foreground the feature**: NeuronWriter Bronze at $4.60 ($23 for 5), Surfer Standard at $4.76 ($119 for 25), Scalenut Starter at $5.90.
 
 ### If You Want Content and Tracking Together
 
@@ -63,7 +63,9 @@ Scalenut Plus at $89 pairs 30 articles with 25 prompts and auto-publishing. Fras
 
 ### If Volume Is the Job and Tracking Is Incidental
 
-Per-article and credit tools price content far below any of these: Byword at $99 for 25 articles, Autoblogging.ai from $19 on a credit meter, RightBlogger at $59 with unlimited AI words on one site. None of the three lists a countable prompt allowance on its pricing page — Autoblogging.ai's page does list AI visibility tracking from its $19 tier, but without a prompt quota there is nothing to divide. The comparisons live in [[<TBD-internal-link: our byword ai alternatives comparison>]] and [[<TBD-internal-link: our rightblogger alternatives comparison>]].
+Per-article and credit tools price content far below any of these: Byword from $99/month (its page metadata lists 25 articles at that tier), Autoblogging.ai from $19 on a credit meter, RightBlogger at $59 with unlimited AI words on one site. The comparisons live in [[<TBD-internal-link: our byword ai alternatives comparison>]] and [[<TBD-internal-link: our rightblogger alternatives comparison>]].
+
+None of the three prices tracked prompts the way the five above do. Autoblogging.ai comes closest: its pricing table includes 5 free AI-visibility keywords a month at the $19 Starter tier, rising to 200 at the top, then charges 5 credits per keyword beyond that. A metered keyword is a different line item from a tracked-prompt allowance, so we have left it out of the per-prompt column rather than divide across units.
 
 ### Where We Are Not an Alternative
 
@@ -73,7 +75,7 @@ We do not generate articles, publish them, or track prompts in any AI engine, so
 
 1. **Assuming a doubled-limits promotion doubles everything.** Scalenut's offer states 60% off with doubled limits, and the doubling is real — Starter's articles go 5 to 10, so unit cost per article drops from $11.80 to $2.40, a factor of 4.9 rather than the 2.5 the price alone suggests. The prompt allowance is the exception: it stays at 10, so the promotional per-prompt rate is $2.40, not half of that.
 2. **Comparing prompt counts without dividing.** Scalenut Professional's 100 prompts at $199 and Clearscope Business's 300 at $399 look close on the sticker and sit 1.5x apart per prompt. Frase Scale's 500 at $299 is a different order of magnitude again.
-3. **Reading a tier name as an entry price.** Surfer's entry plan is Discovery at $59/month, and its pages list no prompt tracking on that tier — the $119 Standard is simply the cheapest Surfer plan that tracks prompts at all. Frase Scale is $299 monthly and $239 billed yearly; quoting the yearly figure beside other vendors' monthly ones understates it by 20%.
+3. **Reading a tier name as an entry price.** Surfer's entry plan is Discovery at $59/month ($49 billed yearly), and its pages list no prompt tracking on that tier — the $119 Standard ($99 yearly) is simply the cheapest Surfer plan that tracks prompts at all. Frase Scale is $299 monthly and $239 billed yearly; quoting the yearly figure beside other vendors' monthly ones understates it by 20%.
 4. **Assuming the tracked models and refresh rates match.** Scalenut lists ChatGPT and Google AI Overviews at every tier with Perplexity at $199 and weekly refresh throughout; Surfer's compare table lists ChatGPT, Perplexity, Google AI Mode, AI Overviews and Gemini, refreshing weekly on Standard and daily above it; Clearscope's page describes ChatGPT and Gemini; Frase lists ChatGPT and Google AI at Starter, adding Perplexity at Professional and Claude and Gemini at Scale.
 
 ## Scalenut Alternatives at a Glance
@@ -81,14 +83,16 @@ We do not generate articles, publish them, or track prompts in any AI engine, so
 | Tool | Cheapest tier with prompt tracking | Prompts there | Cost per prompt | Noted on its pricing page |
 |---|---|---|---|---|
 | Frase | $49/mo Starter ($39 yearly) | 50 | **$0.98** ($0.65 at $129, $0.60 at $299 Scale) | Claude and Gemini listed only at Scale |
-| NeuronWriter | $23/mo Bronze | 5 (+10 via a $9 add-on) | $4.60 ($0.90 on the add-on) | Integrations listed from $69 Gold |
+| NeuronWriter | $23/mo Bronze | 5 (add-on blocks of 10–500) | $4.60 ($0.90–$0.78 on the add-on) | Integrations listed from $69 Gold |
 | Clearscope | $129/mo Essentials | 50 | $2.58 ($1.33 at $399 Business) | No auto-publish loop on its pricing page |
-| Surfer | $119/mo Standard | 25 | $4.76 ($1.85 on the $185 standalone plan) | Entry tier is Discovery $59 with no prompt tracking |
+| Surfer | $119/mo Standard ($99 yearly) | 25 | $4.76 ($1.85 on the $185 standalone plan) | Entry tier is Discovery $59/mo ($49 yearly) with no prompt tracking |
 | Scalenut | $59/mo Starter list ($24 discounted annual) | 10 (unchanged by the promotion) | $5.90 list, $2.40 discounted | Perplexity listed only at the $199 tier |
-| Byword / Autoblogging.ai / RightBlogger | — | Not listed | Not comparable | No countable prompt allowance on their pricing pages |
+| Byword / Autoblogging.ai / RightBlogger | — | No tracked-prompt allowance | Not comparable | Autoblogging.ai lists AI-visibility keywords instead, metered per keyword |
 | Our SEO agent | n/a | None | n/a | No prompt tracking of any kind |
 
-All figures and page observations are from each vendor's own pricing page, checked 25 August 2026. Per-prompt rates are monthly list price divided by the prompts that tier tracks. Vendors change pricing without notice — re-check before committing.
+Figures and page observations come from each vendor's own pricing page on the date noted in Sources, 25 August 2026 unless stated otherwise. Per-prompt rates are monthly list price divided by the prompts that tier tracks.
+
+Vendors change pricing without notice — re-check before committing.
 
 ## How to Evaluate a Scalenut Alternative
 
@@ -112,7 +116,9 @@ If prompt tracking is not actually why you are switching, the content-volume col
 
 **What is the cheapest Scalenut alternative?**
 
-For prompt tracking, Frase — $49/month for 50 prompts is $0.98 each, and its higher tiers go to $0.60. For the lowest entry outlay, NeuronWriter Bronze is $23 with 5 monitored questions. For content volume rather than tracking, Autoblogging.ai starts at $19 on a credit meter.
+For prompt tracking, Frase: 50 prompts on its $49 Starter works out at $0.98 each, and its higher tiers reach the lowest rate in this comparison.
+
+For the lowest entry outlay, NeuronWriter Bronze at $23 carries 5 monitored questions, with add-on blocks priced below a dollar a prompt. For content volume rather than tracking, Autoblogging.ai starts at $19 on a credit meter.
 
 **Is Scalenut's 60% discount worth taking?**
 
@@ -136,7 +142,7 @@ Because tracking is bundled differently everywhere — as an entry-tier headline
 
 **Do I need any of this if my pages are not being cited at all?**
 
-A tracker reports whether you were cited; diagnosing why is a separate job. If the markup on those pages is not in the state you intended, that is cheaper to check first, and it is the only job our agent does.
+A tracker reports whether you were cited; diagnosing why is a separate job. If the markup on those pages is not in the state you intended, that is cheaper to check first, and that is the job our agent does.
 
 ## Related Reading
 

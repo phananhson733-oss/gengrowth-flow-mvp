@@ -23,7 +23,7 @@ aliases:
 - 执行了 Phase 2 索引监控包装器；两站 Sitemap API 成功，结果复盘表同步与请求索引队列均为零变更。
 - GenGrowth 仍受裸路径 sitemap 解析缺口影响（en_urls=0），已保持为独立 P1 问题。
 - 两轮均未触发人工 Search Console 请求、普通文章 Indexing API 或可验证的飞书投递。
-- 题库登记包装器在 apply 模式下：16:15 两产品均于预写入阶段失败；18:13 AstrologyWiki 被证据门禁拦截、GenGrowth 完成零候选扫描，未做人工补写或额外报告产物。
+- 题库登记包装器三轮均为环境启用的 apply：16:15 两产品预写入失败；18:13 与 20:14 AstrologyWiki 被证据门禁拦截、GenGrowth 完成零候选扫描；未做人工补写或额外报告产物。
 
 ---
 
@@ -111,5 +111,22 @@ Run the deterministic Sheet topic registration workflow through `bash tools/scri
 **🤖 回答：**
 
 仅运行指定 wrapper，未传入绕过或写入参数。精确日志窗口为 2026-08-25 18:01:17–18:13:47 CST，环境启用了 apply（`dry_run=false`），`budget_exhausted=false`，wrapper 以 `rc=1` 和 `topic-register failed rc=1` 结束。AstrologyWiki 在 `PG-FS-002` 因证据发现不足被门禁拒绝，未产生业务摘要，因此 candidates、updates、new_clusters、page_ids 与 preprocessor 状态均不可用而非零。GenGrowth 独立完成 applied 零候选扫描：candidates=0、updates=0、new_clusters=0，page_ids 与 preprocessor 为空（selection_mode=generate，audit_incomplete=0，ops_blocked_count=0）。没有人工 Google Sheets 或任务计划写入，也没有额外 Feishu/Google Docs 报告；日志未提供任何下游写入或 Feishu 送达回执。
+
+---
+
+### Q6 — 20:15
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-08-25T10:00:30.976Z (1787652030976)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行指定 wrapper，未传入绕过或写入参数。精确日志窗口为 2026-08-25 20:01:13–20:14:35 CST，环境启用了 apply（`dry_run=false`），`budget_exhausted=false`，wrapper 以 `rc=1` 和 `topic-register failed rc=1` 结束，锁已释放。AstrologyWiki 在 `PG-FS-002` 因证据发现不足被门禁拒绝，未产生业务摘要，因此 candidates、updates、new_clusters、page_ids 与 preprocessor 状态均不可用而非零。GenGrowth 独立完成 applied 零候选扫描：candidates=0、updates=0、new_clusters=0，page_ids 与 preprocessor 为空（selection_mode=generate，audit_incomplete=0，ops_blocked_count=0）。没有人工 Google Sheets 或任务计划写入，也没有额外 Feishu/Google Docs 报告；日志未提供任何下游写入或 Feishu 送达回执。
 
 ---

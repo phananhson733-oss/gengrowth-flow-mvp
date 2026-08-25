@@ -84,13 +84,19 @@
       "backlink_exchange": "有，官方 FAQ 描述为『hosting relevant backlinks 赚积分、spend credits 换取外链，自动验证』——机制有官方描述"
     },
     "arvow": {
+      "verified_on": "2026-08-25",
       "source": "https://arvow.com/pricing",
       "entry_monthly_usd": 99,
       "entry_annual_monthly_usd": 39,
-      "billing_note": "⚠️ $39/$69/$249 是**年付承诺**价；月付是 $99/$149/$449。页面标 LIMITED TIME，Summer Sale 明写 on Yearly Plans",
+      "billing_note": "⚠️ $39/$69/$249 是**年付承诺**价；月付是 $99/$149/$449。8/25 复核：促销标语已从 'LIMITED TIME / Summer Sale on Yearly Plans' 改为 'Save 50%+'，价格本身未变；年付省 $720/$960/$2,400",
       "tiers": { "solo": { "monthly": 99, "annual_monthly": 39, "credits": 1000, "sites": 1 }, "business": { "monthly": 149, "annual_monthly": 69, "credits": 2000, "sites": 5 }, "ultimate": { "monthly": 449, "annual_monthly": 249, "credits": 8000, "sites": "unlimited" } },
-      "credit_rules": "每篇约 10 credits；**超过 18 个标题的长文双倍**；AI 图 3 credits；订阅 credits 每月重置不累积，但单独购买的 top-up credits 不过期",
-      "managed_service": "Human + AI SEO Service 起价 $2,000/月"
+      "credit_rules": "FAQ「How do credits work?」原文（8/25 复核仍在，但**折叠在 FAQ 里、正文抓不到**）：'Each article requires ~10 credits, very large articles with more than 18 headings will cost double. AI images cost 3 credits each. Site optimization costs 1 credit per page. Your subscription plan credits reset every month, but if you run out of credits, you can always top up with additional credits, which do not expire.'",
+      "credit_pool_note": "🔴 **同一个 credit 池同时喂文章 / AI 图 / 站点优化三件事**，所以『1,000 credits ÷ 10 = 100 篇』只在不配图不优化时成立。配 2 张图的一篇 = 16 credits → 约 62 篇；长文(>18 标题)+2 图 = 26 credits → 约 38 篇。这是 PG-CMP-014 的核心角度",
+      "new_20260825": "Business 档新增 **LLM Brand Visibility**（AI 可见度功能，但页面未给 prompt 数量，无法算 per-prompt）；Ultimate 加 'Limited Launch Offer: Only Accepting 5 Companies at this Rate'",
+      "managed_service": "Human + AI SEO Service 起价 $2,000/月，页面写 'Guaranteed 25% increase in traffic in 90 days (or you don't pay)'。⚠️ 该区块把 Business 标为 '($129/mo value)'，与定价卡的月付 $149 / 年付均摊 $69 **都对不上**——引用时只陈述『页面这么写』，不要当作第三个价格",
+      "extraction_note": "credit 规则在 FAQ 折叠区，get_page_text 抓不到，要点开或读 innerText 里 'How do credits work' 之后的段落",
+      "no_trial": "🔴 **Arvow 定价页没有任何免费试用 / 退款 / money-back 表述**（正则全扫零命中），只有 'Cancel anytime'。与 Frase/Surfer/Scalenut/RightBlogger 都不同——写『两周试用』类章节前必须先确认该厂商有试用，PG-CMP-014 初稿因此虚构了一个不存在的试用期",
+      "hidden_limited_time": "DOM 里仍有 3 个 'LIMITED TIME' 元素，但在月付/年付两个视图下都是隐藏的（getBoundingClientRect + computed style 验证）——访客看不到，所以『页面标的是 Save 50%+ 而非限时』对可见内容成立；但它可能被重新启用，引用促销框架时最好只描述价格本身"
     },
     "rightblogger": {
       "verified_on": "2026-08-24",
@@ -115,7 +121,9 @@
       "billing_note": "月付",
       "tiers": { "starter": { "monthly": 99, "articles": 25 }, "standard": { "monthly": 299, "articles": 80 }, "scale": { "monthly": 999, "articles": 300 } },
       "free": "Start free with 5 articles",
-      "extraction_note": "页面是 JS shell，naive fetch 只拿得到 <title>。数据在其**自己页面的 meta description / og:description** 里——这是第一方来源，不是第三方站。引用时说明出处是页面 metadata。"
+      "extraction_note": "⚠️ **2026-08-25 起页面已可正常渲染读取，不再是 JS shell**——旧的『只能读 meta description』注记已过期，直接读渲染后的定价表即可，溯源也不该再写 'per its page metadata'。",
+      "live_20260825": "Starter $99/mo · 25 articles/month · **$3.50 per extra article** · Solo use · 5 domains；Standard $299；'Every account starts with 5 free articles. No credit card required.'；COMPARE FEATURES 表列有 **Internal linking**（全档勾选）/ Content optimization / Keyword explorer / Research dashboard / Google indexing；全页 **零次**出现 'backlink'，也无 AI-visibility 功能",
+      "negative_claim_guard": "🔴 不得再写『Byword 没有链接/审计功能』——它列了 Internal linking。可写的否定只有『其定价页未列出 backlink exchange 或 AI-visibility 追踪』"
     },
     "babylovegrowth": {
       "source": "https://babylovegrowth.ai/pricing",

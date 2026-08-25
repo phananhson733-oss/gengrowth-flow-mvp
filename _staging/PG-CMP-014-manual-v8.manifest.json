@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "page_id": "PG-CMP-014",
+  "entity": "Arvow Alternatives",
+  "target_keyword": "arvow alternatives",
+  "template": "Definition",
+  "tier": "T2",
+  "track": "量产线",
+  "generated_by": "unknown",
+  "prompt_version": "v8",
+  "generated_at": "2026-08-25T07:04:26.802Z",
+  "content_sha256_short": "7059c8e91f40d235",
+  "source_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-CMP-014-en.md",
+  "staging_path": "/Users/wzb/gengrowth-flow-mvp/_staging/PG-CMP-014-manual-v8.md",
+  "phase2_checks": {
+    "overall": "pass",
+    "structure": {
+      "h1Count": 1,
+      "h2Count": 11,
+      "h3Count": 7,
+      "h4Count": 0,
+      "words": 2313,
+      "wikilinks": 10,
+      "tbdLinks": 10
+    },
+    "rl1": true,
+    "rl2": true,
+    "rl3": true,
+    "rl4": true,
+    "rl5": true,
+    "rl6": true
+  }
+}

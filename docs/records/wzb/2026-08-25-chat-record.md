@@ -1,0 +1,52 @@
+---
+title: 对话记录 — 2026-08-25
+date: 2026-08-25
+updated: 2026-08-25
+type: chat-record
+author: wzb
+agent: claude
+tags:
+  - record
+  - daily
+aliases:
+  - 2026-08-25 chat record
+  - 对话记录 2026-08-25
+---
+
+# 对话记录 — 2026-08-25
+
+## Daily Summary
+
+- **托管链路首次跑通「隔夜备稿 → 次日无人值守自动发」**：8/25 `rightblogger-alternatives`（PG-CMP-012，R86）由定时器 09:30 自动发布 + 回填，人工只补内链规则与 GSC 索引提交。
+- 8/26 的 `scalenut-alternatives`（PG-CMP-013，R87）备稿完成，三路事实审 + 一轮复审共抓出 **7 个 CRITICAL**，导致整篇重写。
+- 最大一条：**Frase 定价页有 prompt 计数行**（8/24 首次核验漏读），使 Frase 成为全品类最便宜（$0.60/条），推翻原排序；新论点更硬——「为 AI 可见度付的溢价正比于厂商强调它的程度」。
+- 沉淀三条抓取层系统性坑进竞品定价存档：同类信息可能有两行、"2X limits" 不覆盖所有额度、滑杆价格只在原始 HTML 的 JSON 里。
+- 固化一条流程铁律：**审完之前 hero 不进 `_staging/`**，缺 hero 是拦住定时器抢发未审稿的天然保险丝。
+
+---
+
+## 对话记录
+
+### Q1 — 14:04 [claude]
+
+**🙋 提问：**
+
+今天的文章写完提交了吗
+
+**🤖 回答：**
+
+已经写完、发布、回填了，而且全程是定时器自动完成的：`rightblogger-alternatives`（PG-CMP-012）09:30 上线，六步全过，选题登记表行 86 的 Status/URL 已回填，sitemap 收录，blog 达 90 篇。这是托管链路第一次跑通「前一天备稿 → 次日无人值守自动发」。我补了定时器做不了的两件事：内链规则入 `GENGROWTH_TBD_LINK_RULES`（27 测试绿）+ GSC 请求编入索引（该篇显示「已发现-尚未编入索引」，发现来源是自家 sitemap，说明通道已生效）。顺带确认 sitemap 从 173→178 多出的 4 条是别的线新增的 `/prompts/` 页面，与内容线无关。随后按滚动缓冲继续备 8/26 的 scalenut。
+
+---
+
+### Q2 — 15:20 [claude]（后台审稿结果处理，非用户提问）
+
+**🙋 提问：**
+
+（goal 驱动的续作：备 8/26 稿件）
+
+**🤖 回答：**
+
+`scalenut-alternatives`（PG-CMP-013，R87）三路事实审 + 一轮复审抓出 7 个 CRITICAL，整篇重写。最关键一条是 Frase 定价页对照表有两行 AI Visibility（模型分档 + prompts tracked 50/200/500），8/24 只读了第一行，导致初稿断言「Frase 不按 prompt 计数」——实际它每条 prompt $0.60–$0.98 是全品类最便宜，比主打 AI 可见度的 Scalenut Starter（$5.90）低近十倍，整个排序推翻。另两条：Scalenut 促销的「双倍额度」不含 prompts（且 Starter 根本没有 audit 额度），Surfer 入门档写成 $119 Standard 的错误连续两天复发。复审与外部审对 NeuronWriter 加购结论矛盾，回原始 HTML 自行裁定（`ai-tracker-10..500` = $9..$389，渲染层的 `$0/month` 是滑杆占位符）。hero 隐喻也被指出方向反了（真实加油站大价牌显示的就是单价），改成超市货架标签重出。终稿 phase2 PASS、内链全解析、dry-run 六步绿，明早定时器自动发。
+
+---

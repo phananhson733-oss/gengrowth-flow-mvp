@@ -10,6 +10,12 @@ updated: 2026-06-18
 
 ## 待完成
 
+- [ ] 2026-08-25 13:15 | **P1 · 昨天(08-24)有人把 `seo-blog` 和 `seo-reconcile` 两条 plist 重命名停用了；astrologywiki 发布链已彻底静止** —— 由 GSC 每日 cron 只读诊断查出，未擅自动手。
+  - **新增证据**：`~/Library/LaunchAgents/com.gengrowth.seo-blog.plist.disabled-20260824`、`com.gengrowth.seo-reconcile.plist.disabled-20260824`（后缀日期=昨天；文件 mtime 分别是 7/13、7/16，即只改了名没改内容）。这动作看着是人为的，**需 wzb 确认是有意为之还是排障留下的**。
+  - **连带现状**：`launchctl list` 里 seo-* 一条不剩；`print-disabled` 显示 `seo-nightly / seo-blog / seo-author-kicker / seo-autopilot / seo-author / gengrowth-author / recap-performance` 全 disabled。lane_watchdog 每 30min 报 5/7 violating：`seo-author` age=1065h、`seo-autopilot` age=1064h（≈44 天，末次日志 2026-07-12）、`gengrowth-author`/`seo-nightly` age≈283h。
+  - **对 SEO 的实际影响**：`sync-published` 的 `en_urls` 从 **2026-07-30 到 08-25 连续 27 天恒为 361**，一篇新文都没上线。所以今天 GSC 待提交候选=0 **不是好事**——是上游没产出，不是全收录了。url-inventory 侧 rows=421 / indexed=309 / untracked=112 也 4 天没动。
+  - **建议**：先确认停用意图；若要恢复，`mv` 回 `.plist` + `launchctl enable` + `bootstrap`，⚠️按 08-13 教训改完复验 `gengrowth-publish`/`ledger-reconcile`/`flow-driver` 这三条本来在跑的 lane 还在不在。
+
 - [ ] 2026-08-23 13:15 | **P1 · `com.gengrowth.index-monitor` 每日 cron 今天起停跑（首次缺勤）** —— 由 GSC 每日 cron 只读诊断查出，未擅自动手 launchctl。
   - **现象**：`~/gengrowth-agents/cron-sync/index_monitor/` 里 08-17→08-22 每天都有日志（固定 09:01–09:02 启动，08-22 以 `index monitor ok` 正常收尾），**08-23 无日志文件**；13:10 复查仍无，缺勤 >4h，不是延迟。
   - **launchd 侧**：`launchctl print gui/501/com.gengrowth.index-monitor` 与 `user/501/...` 均 `Could not find service`；`launchctl print-disabled gui/501` 里它是 **disabled**（与 `seo-blog`/`gengrowth-author` 同列）。plist **只在 repo `tools/scripts/com.gengrowth.index-monitor.plist`**，从未装进 `~/Library/LaunchAgents`（该目录 mtime 仍 07-22）。无重启（uptime 5 天，末次 boot 08-17 22:59）。
@@ -17,6 +23,7 @@ updated: 2026-06-18
   - **影响**：两站的 url-inventory / index-tracking / 结果复盘表 / request-queue 每日自动回填 + sitemap 每日 Sitemaps API 刷新全停。
   - **今日已人工兜底**（astrologywiki 腿）：`--sync-published/--sync-url-inventory/--check-due/--sync-recap/--sync-request-queue`，数字与 08-22 一致（en_urls=361、rows=421 untracked=112 indexed=309、due=0、queue rows=0）。gengrowth 腿未补（其 `en_urls=0` 是上面 08-21 那条 P1 的已知根因）。
   - **建议**：`launchctl enable gui/$(id -u)/com.gengrowth.index-monitor` 后 `bootstrap` repo 那份 plist；⚠️ 参照 08-13 前车之鉴（修保活 lane 时把授稿 lane 弄没了），改完必须复验原本在跑的 lane 还在不在；另注意该 plist 含 `LimitLoadToSessionType=Background`。
+  - **08-25 13:xx 复查（GSC 每日 cron）**：已自行恢复运行 —— 08-24 09:02、08-25 09:02 两天日志齐全且均以 `index monitor ok` 收尾（08-23 仍缺勤，只丢那一天）。但 launchd 侧**依旧没修**：`~/Library/LaunchAgents` 里无 `com.gengrowth.index-monitor.plist`、`print-disabled` 仍是 `disabled`，说明它不是被 launchd 拉起的（另有调度源）。lane_watchdog 因此继续报 `index-monitor not-loaded`，但 age 只有 4.0h（跟着实际日志走）→ **该告警现在是 launchd 注册缺失的误报，不是真停跑**。要么补 plist、要么把 watchdog 的判据从「launchd 已加载」改成「日志新鲜度」，二选一。
 
 - [ ] 2026-08-21 13:15 | **P1 · gengrowth.ai 索引监控静默失效 23 天，且 cron 全程报 `ok`（fail-open）** —— 由 GSC 每日 cron 只读诊断查出，未擅自动手。
   - **现象**：`index_monitor` 里 `product=gengrowth` 的 `sync-published` 自 **2026-07-29 起 `en_urls=0`**（07-21→07-28 稳定 62~64，07-31 有过一次 12 的回光），连带 `sync-url-inventory rows=0` → gengrowth 的 url-inventory / 收录跟踪表这 23 天全是空转，且每天日志都写 `index monitor ok`，从未告警。

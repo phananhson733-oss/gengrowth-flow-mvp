@@ -23,6 +23,7 @@ aliases:
 - 执行了 Phase 2 索引监控包装器；两站 Sitemap API 成功，结果复盘表同步与请求索引队列均为零变更。
 - GenGrowth 仍受裸路径 sitemap 解析缺口影响（en_urls=0），已保持为独立 P1 问题。
 - 两轮均未触发人工 Search Console 请求、普通文章 Indexing API 或可验证的飞书投递。
+- 题库登记包装器在 apply 模式下两产品均于预写入阶段失败；所有业务计数保持为不可用，未做人工补写或额外报告产物。
 
 ---
 
@@ -59,5 +60,22 @@ Run the GenGrowth Phase 2 indexing workflow through the existing deterministic w
 **🤖 回答：**
 
 仅运行了指定的确定性包装器。日志窗口为 2026-08-25 09:02:15–09:03:17 CST，终止标记 `index monitor ok`，shell 退出码 0，锁已释放。AstrologyWiki：Sitemaps API 成功，live sitemap en_urls=361；index-tracking rows=312、due=0，URL Inspection 实际检查=0、失败=0；结果复盘表同步 en_rows=312、updated=0、skipped=312；请求索引队列 0（P0=0、P1=0、P2=0、P3=0）。GenGrowth：Sitemaps API 成功，但 live sitemap en_urls=0（既有裸路径 parser P1）；index-tracking rows=64、due=0，URL Inspection 实际检查=0、失败=0；结果复盘表同步 en_rows=64、updated=0、skipped=64；请求索引队列 0（P0=0、P1=0、P2=0、P3=0）。有界日志没有可见的飞书/Lark 成功或失败回执，通知投递不可验证；没有普通文章 Google Indexing API 调用，也没有无人值守的 Request Indexing 点击。
+
+---
+
+### Q3 — 16:15
+
+**🙋 提问：**
+
+Automation: 根据关键词补充 brief
+Automation ID: gengrowth-topic-register
+Automation memory: $CODEX_HOME/automations/gengrowth-topic-register/memory.md
+Last run: 2026-08-24T14:00:56.921Z (1787580056921)
+
+Run the deterministic Sheet topic registration workflow through `bash tools/scripts/gg-topic-register-tick.sh`. The wrapper loads the local gg environment, scans the configured products, and defaults to dry-run; do not bypass the wrapper or pass write flags directly. It should only write Google Sheets, task plans, or Feishu notifications when the local environment explicitly enables the wrapper's apply mode. After the wrapper exits, inspect the latest log under `~/gengrowth-agents/cron-sync/topic_register/` and summarize whether it was dry-run or applied, per-product candidates, updates, new_clusters, page_ids, preprocessor statuses, and any failures. Preserve the safety boundary: no hand-edited Sheet writes, no direct task-plan edits outside the wrapper, and no extra Feishu/Google Doc report artifacts.
+
+**🤖 回答：**
+
+仅运行指定 wrapper，未传入绕过或写入参数。精确日志窗口为 2026-08-25 16:02:32–16:15:06 CST，环境启用了 apply（`dry_run=false`），`budget_exhausted=false`，wrapper 以 `rc=1` 和 `topic-register failed rc=1` 结束，锁已释放。AstrologyWiki 仅返回 `ERR_OTHER: refusing --apply: evidence discovery insufficient for PG-FS-002`；GenGrowth 仅返回 `ERR_NETWORK: fetch failed`。两者均未产生已完成的产品摘要，因此 candidates、updates、new_clusters、page_ids 与 preprocessor 状态均不可用而非零。没有人工 Google Sheets 或任务计划写入，也没有额外 Feishu/Google Docs 报告；日志未提供任何下游写入或 Feishu 送达回执。
 
 ---

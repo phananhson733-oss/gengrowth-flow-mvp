@@ -1,7 +1,7 @@
 ---
 title: 跨会话待办提醒
 type: reminders
-updated: 2026-06-18
+updated: 2026-08-26
 ---
 
 # 跨会话待办提醒（Reminders）
@@ -9,6 +9,15 @@ updated: 2026-06-18
 > 会话开始时若有 `- [ ]` 未完成条目，在第一条回复前列出（见 AGENTS.md §七）。
 
 ## 待完成
+
+- [ ] 2026-08-26 13:15 | **P1 · 08-25 20:09:40 的一次 `launchctl disable`（很可能连带 bootout）把 `lane-watchdog` 和 `index-monitor` 两条保活/监控 lane 踢停了** —— 由 GSC 每日 cron 只读诊断查出，未擅自动手 launchctl。
+  - **铁证（时间线严丝合缝）**：`/var/db/com.apple.xpc.launchd/disabled.501.plist` mtime = **`2026-08-25 20:09:40`**；`lane_watchdog` 日志最后一轮是 **`08-25 20:04:39 watchdog done`**（本应每 30min 一轮，20:34 那轮起再没出现）；`index_monitor` 最后日志是 `08-25 09:03`，**08-26 09:02 那轮缺勤**（13:11 复查仍无 `2026-08-26.log` → 缺勤而非延迟）。即：disable 动作发生在 20:09，之后两条 lane 的运行实例全部消失。
+  - **`print-disabled gui/501` 现状**（比 08-25 记录多出 `gengrowth-publish` / `lane-watchdog` / `baoxiao-watch` / `baoxiao-daily` / `baoxiao-drop`）：`seo-nightly`、`seo-blog`、`seo-author-kicker`、`seo-autopilot`、`seo-author`、`gengrowth-author`、`recap-performance`、`index-monitor`、`gengrowth-publish`、`lane-watchdog`、`baoxiao-*` 全 disabled；仅 `flow-driver` / `ledger-reconcile` / `seo-reconcile` 是 enabled。
+  - **⚠️ 判读修正 · `gengrowth-publish` 被 disable 属合理清理，别当故障去恢复**：它最后 6 轮日志每轮都是 `gengrowth-publish disabled — Nevermore v0.3 external-write boundary (no legacy blog_posts writes)` + `rc=0`，即 07-28 迁 Nevermore 后它早已是 no-op 空转（见 [[gengrowth-cmp-005-006-fact-corrections]]）。**真正需要恢复的只有 `lane-watchdog` 和 `index-monitor`。**
+  - **仍活着的 lane（复验用）**：`flow-driver`（08-26 12:58 刚跑完，parks=0 回填收敛）、`ledger-reconcile`（08-26 09:05）。`launchctl list | grep gengrowth` = 12 条，含 baoxiao-month-*/miraa-kb-refresh/outreach-verify/research-monitor/wiki-notes-digest/backlink-*/comfyui/cloudflared-feishu。
+  - **影响**：① 两站的 url-inventory / index-tracking / 结果复盘表 / request-queue 每日自动回填 + sitemap 每日 Sitemaps API 刷新全停（`gg-lark-notify.log` 里 08-24、08-25 都有 09:02/09:03 两条「sitemap 已刷新」回执，**08-26 没有**）。② 保活的 watchdog 自己没活着，其余 lane 再静默死亡将无人知——这是 [[flow-reliability-audit-0703]] 记的核心病第 N 次重演。
+  - **今日已人工兜底**（astrologywiki 腿全套）：`--sync-published/--sync-url-inventory/--check-due/--sync-recap/--sync-request-queue`，数字与 08-22/08-23 逐字一致（en_urls=361 appended=0 / rows=421 untracked=112 indexed=309 / due=0 / en_rows=312 / queue rows=0）。gengrowth 腿未补（其 `en_urls=0` 是 08-21 那条 P1 的已知根因，补也无意义）。
+  - **建议**：先确认 08-25 20:09 那次 disable 是不是有意为之（与 08-24 重命名 `seo-blog`/`seo-reconcile` plist 像是同一批人为清理）。若要恢复：`launchctl enable gui/$(id -u)/com.gengrowth.lane-watchdog` + `bootstrap ~/Library/LaunchAgents/com.gengrowth.lane-watchdog.plist`；index-monitor 的 plist **只在 repo `tools/scripts/com.gengrowth.index-monitor.plist`**（从未装进 `~/Library/LaunchAgents`，见 08-23 条），需 enable 后 bootstrap 那一份，注意它含 `LimitLoadToSessionType=Background`。⚠️ 按 08-13 前车之鉴，改完必须复验 `flow-driver`/`ledger-reconcile` 这两条**本来在跑**的 lane 还在不在。
 
 - [ ] 2026-08-25 13:15 | **P1 · 昨天(08-24)有人把 `seo-blog` 和 `seo-reconcile` 两条 plist 重命名停用了；astrologywiki 发布链已彻底静止** —— 由 GSC 每日 cron 只读诊断查出，未擅自动手。
   - **新增证据**：`~/Library/LaunchAgents/com.gengrowth.seo-blog.plist.disabled-20260824`、`com.gengrowth.seo-reconcile.plist.disabled-20260824`（后缀日期=昨天；文件 mtime 分别是 7/13、7/16，即只改了名没改内容）。这动作看着是人为的，**需 wzb 确认是有意为之还是排障留下的**。

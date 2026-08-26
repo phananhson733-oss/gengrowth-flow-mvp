@@ -33,7 +33,11 @@
       "billing_note": "⚠️ 页面默认显示年付均摊价且价格数字带滚动动画，肉眼读数会抓到中间值；真实价格在 DOM data-monthly/data-yearly 属性里。Standard $119 月付/$99 年付；Pro $219/$182；Peace of Mind $359/$299；Discovery $59/$49；Enterprise $999+ 定制",
       "tiers": { "discovery": { "monthly": 59, "annual_monthly": 49, "documents_monthly": 10 }, "standard": { "monthly": 119, "annual_monthly": 99, "documents_monthly": 30, "ai_prompts": 25 }, "pro": { "monthly": 219, "annual_monthly": 182, "documents_monthly": 30, "ai_prompts": 50, "cannibalization_report": true }, "peace_of_mind": { "monthly": 359, "annual_monthly": 299, "documents": "unlimited", "ai_prompts": 100, "api": true } },
       "documents_display_note": "⚠️ 年付视图显示 '360 Documents'（年额度），月付视图显示 30/月——同一额度两种口径，引用时统一写 30 docs/月",
-      "standalone": "AI Search Analytics 单卖：100 prompts $185 月付/$158 年付均摊（50 prompts $95/$82，200 $365/$308）",
+      "standalone": "AI Search Analytics 单卖（源码 STOPS 数组，8/26 复核）：50 prompts $95月付/$82年付『Good for a first test — one brand, core queries.』；100 $185/$158『Most brands start here』；200 $365/$308；另有 unlimited 档",
+      "standalone_vs_bundled": "🔴 **同一家、同一功能，单卖比套餐内便宜约 2.6 倍**：Standard $119÷25 = $4.76/条 vs 单卖 100 条 $185÷100 = $1.85/条。更尖锐的是 **$95 单卖给 50 条，比 $119 的 Standard（25 条）更便宜且多一倍**——若买 Standard 主要图 AI 可见度追踪就是买错产品。主套餐的溢价买的是内容功能（documents/优化/协作），不是 prompt",
+      "per_prompt_bundled": "Standard $4.76 / Pro $4.38 / Peace of Mind $3.59（$359÷100）；Discovery 无 prompt 追踪、documents 年付视图 120 = 10/月",
+      "standalone_refresh": "✅ 单卖档是**每日刷新**（8/26 页面双证据：滑杆问句 'How many prompts do you want to track daily?' + 卡片列项 'Track 100 AI Prompts, refreshed daily'）。存档此前只记了套餐档刷新率，导致 8/26 事实审误判为无据——补记于此",
+      "pro_extras": "Pro 除 prompt 数与每日刷新外还加 Cannibalization Report；Peace of Mind 加 API access。写『升级只买到 prompt 和刷新频率』会漏掉这两项",
       "positioning_2026": "页面主标题 'for teams that want to win AI search'；AI visibility 跟踪（ChatGPT/Perplexity/Google AI Mode/AIO/Gemini）已并入主套餐",
       "extraction_note": "价格用 JS 读 DOM data 属性（data-monthly/data-yearly），文本层数字是动画中间值不可信"
     },
@@ -45,6 +49,7 @@
       "promo_2x_scope": "🔴 **翻倍只覆盖 articles / clusters / audit webpages / AI images，不含 prompts**。prompt 行在月付与促销两个视图都是单值 10/25/100（对照表 `#prompts analyzed per month`），而 articles 行渲染成 `5 10` 这样的划线对。PG-CMP-013 初稿据『2X limits』推断 prompts 也翻倍→算出 $1.20/prompt，被 8/25 事实审判 CRITICAL；正确促销单价是 $24÷10=$2.40",
       "tiers": { "starter": { "monthly": 59, "promo_annual_monthly": 24, "articles": 5, "articles_promo_2x": 10, "prompts": 10 }, "plus": { "monthly": 89, "promo_annual_monthly": 36, "articles": 30, "articles_promo_2x": 60, "prompts": 25, "auto_publish": "WordPress/Shopify" }, "professional": { "monthly": 199, "promo_annual_monthly": 80, "articles": 75, "articles_promo_2x": 150, "prompts": 100, "cannibalization": true } },
       "positioning_2026": "整页已转向 GEO/AI visibility（'Maximize Your AI Visibility'）；prompts 跟踪 ChatGPT/Google AIO（Professional 加 Perplexity）",
+      "refresh_rate": "对照表 `Refresh rate` 行三档均为 **Weekly**（8/24 抓取原文 'Weekly Weekly Weekly'）——与 Surfer 的 Standard 周更 / Pro 起日更形成对比",
       "addons": "AI Link Manager / Backlinks Marketplace / Social Upreach / AI Detector & Humanizer / OnPage Pro",
       "trial": "7 天免费试用",
       "extraction_note": "真浏览器 get_page_text 可读全表；促销数字排版是『划线原额度+双倍额度』并列，容易看串行"

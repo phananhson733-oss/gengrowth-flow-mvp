@@ -13,8 +13,8 @@ associated_keywords:
 
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-08-26T06:10:09.107Z
-content_sha256_short: 6d0dee2d8d335080
+generated_at: 2026-08-26T06:13:21.046Z
+content_sha256_short: fb5c9218fbfa333e
 phase2_checks: all-pass
 ---
 
@@ -26,8 +26,8 @@ phase2_checks: all-pass
 
 - **Per article**: Byword lists $99 for 25 a month; Outrank lists $99 for a fixed 30 with publishing and a backlink exchange.
 - **Per credit**: Arvow lists $99 for 1,000 credits, where its FAQ prices articles at about 10 credits, images at 3 each and site optimization at 1 per page; Autoblogging.ai lists $19 for a credit allowance across seven generation modes.
-- **Per connected site**: RightBlogger lists $59 for one site with what its page calls "unlimited AI words," with the automated path capped at five published posts a day per site.
-- **Per tracked prompt**: Scalenut, Frase, Clearscope and Surfer all meter AI-visibility prompts, at rates from $0.60 to $5.90 each.
+- **Per connected site**: RightBlogger lists $59 for one site with what its page calls "Unlimited AI words," with the automated path capped at five published posts a day per site.
+- **Per tracked prompt**: Scalenut, Frase, Clearscope and Surfer all meter AI-visibility prompts, from $0.60 each on Frase's $299 Scale tier to $5.90 on Scalenut's $59 Starter — the cheap end requires the expensive plan.
 
 A ranking built on the headline numbers is mostly an artifact of which unit each vendor picked. The conversion below is the part the lists skip, and the budget end of the market is mapped in [[<TBD-internal-link: our guide to cheap SEO tools>]].
 
@@ -35,7 +35,7 @@ A ranking built on the headline numbers is mostly an artifact of which unit each
 
 Search for the best autoblogging software and look at the domains. A substantial share of the ranked roundups are published on the blogs of vendors who appear in their own lists.
 
-That is not an accusation of dishonesty — a vendor writing about its own category is normal, and some of those posts are well researched. It is a disclosure question, and it has a one-second test: check whether the publisher appears in the ranking. If it does, you are reading positioning as well as analysis, and you should weight it accordingly.
+That is not an accusation of dishonesty — a vendor writing about its own category is normal, some of those posts are well researched, and at least one of them carries an explicit disclosure and still ranks itself first. The test is not whether disclosure is present but whether the publisher is in the ranking at all: if it is, you are reading positioning as well as analysis, and you should weight it accordingly.
 
 Applying the test to this page: **we do not sell autoblogging software.** We sell an audit that reads pages you already published. That is why this page ranks nobody — we have no product to place first, and a ranking would be worth less to you than the conversion method.
 
@@ -45,8 +45,8 @@ Normalize every plan to cost per published article at monthly list rates and the
 
 ### The Conversion
 
-1. **Arvow is cheapest on paper and the most variable in practice** — about $0.99 per article for plain text, but roughly $2.61 once a piece carries two images and runs past 18 headings, because the same credit pool pays for images and site optimization. The full arithmetic is in [[<TBD-internal-link: our arvow alternatives comparison>]].
-2. **Outrank and BabyLoveGrowth both land at $3.30** — $99 for 30 articles, though BabyLoveGrowth's $99 is a promotional rate against a $247 list price, and the bundles differ sharply in what else they include.
+1. **Arvow is cheapest on paper and the most variable in practice** — about $0.99 per article for plain text, but roughly $2.61 once a piece carries two images and runs past 18 headings, because the same credit pool pays for images and site optimization. (That $2.61 divides the plan price by the 38 whole articles the pool actually yields at 26 credits each, rather than pricing credits marginally.) The full arithmetic is in [[<TBD-internal-link: our arvow alternatives comparison>]].
+2. **Outrank and BabyLoveGrowth both land at $3.30** — $99 for 30 articles. The pairing is fragile: Outrank's $99 is its standing rate, while BabyLoveGrowth's is promotional against a $247 list, which would put it at $8.23 if the promotion lapses. The bundles also differ sharply in what else they include.
 3. **Byword is $3.96** at $99 for 25, with extras at $3.50 each and 5 free articles to start.
 4. **Frase is $4.90** at $49 for 10, but that plan also carries 50 audit pages and 50 tracked prompts, so per-article is the wrong lens if you would use either.
 5. **Scalenut is $11.80 at list** ($59 for 5) and $2.40 on its promotional annual rate ($24 for 10) — the widest gap between list and promotion in the set.
@@ -57,7 +57,7 @@ Credit pools change cost with article shape rather than article count, so a hous
 
 ### What Does Not Convert at All
 
-RightBlogger cannot be expressed per article, because it does not meter articles — it meters sites, and its automation caps output per day rather than per month. Surfer does not generate articles at all; it optimizes documents. Putting either in a per-article ranking produces a number that means nothing.
+RightBlogger cannot be expressed per article, because it does not meter articles — it meters sites, and its automation caps output per day rather than per month. Surfer meters documents you "create or optimize" rather than articles published, so no per-article rate is derivable from its plans either. Putting either in a per-article ranking produces a number that means nothing.
 
 ## Common Misreadings When Comparing Autoblogging Software
 
@@ -72,7 +72,7 @@ RightBlogger cannot be expressed per article, because it does not meter articles
 |---|---|---|---:|---|
 | Arvow | $99 | Credit pool (1,000) | $0.99 bare, ~$2.61 illustrated long-form | Images and site optimization draw on the same pool |
 | Outrank | $99 | 30-article bundle | $3.30 | Includes publishing and a backlink exchange |
-| BabyLoveGrowth | $99 promotional (list $247) | 30-article bundle | $3.30 at the promotional rate | Four-part bundle including a link network |
+| BabyLoveGrowth | $99 promotional (list $247) | 30-article bundle | $3.30 at the promotional rate; $8.23 at list | Multi-part bundle including a partner link network |
 | Byword | $99 | Articles (25) | $3.96 | $3.50 per extra article, 5 free to start |
 | Frase | $49 | Articles (10) + audit pages | $4.90 | Also carries 50 audit pages and 50 prompts |
 | Scalenut | $59 list, $24 promotional annual | Articles (5, or 10 on promotion) | $11.80 list, $2.40 promotional | Doubling promotion does not cover prompts |
@@ -80,7 +80,7 @@ RightBlogger cannot be expressed per article, because it does not meter articles
 | Autoblogging.ai | $19 | Credits by mode | No published per-article rate | Seven generation modes, 40 entry credits |
 | Our SEO agent | n/a | — | Generates nothing | Audit of existing pages only |
 
-Prices are monthly list rates from each vendor's own pricing page, checked between 17 and 26 August 2026 as noted in Sources. Per-article figures are computed, not published by the vendors.
+Prices are monthly list rates from each vendor's own pricing page, checked between 17 and 25 August 2026 as noted in Sources. Per-article figures are computed, not published by the vendors.
 
 Vendors change pricing without notice — re-check before committing.
 
@@ -100,7 +100,7 @@ If your honest volume is a handful of articles a month, most of this category is
 2. **Price that shape in each vendor's unit** using its own published rates rather than a roundup's summary.
 3. **Add the renewal price beside the promotional one** for any vendor running a discount, and budget the higher figure.
 4. **Subtract the bundled features you would not switch on.** A backlink network or prompt tracker you never open is not a discount on the articles.
-5. **Check the base before you scale it.** [Run our SEO agent over the site](https://gengrowth.ai/agents/seo) — it needs a verified sign-in and a few product profile fields, then reports on metadata, heading structure and JSON-LD conditions for the pages already live. Automation compounds whatever it starts from, and the diagnosis workflow is in [[<TBD-internal-link: the pillar on reading your own Search Console data>]].
+5. **Check the base before you scale it.** [Run our SEO agent over the site](https://gengrowth.ai/agents/seo) — it needs a verified sign-in and a few product profile fields, then runs a bounded crawl of discoverable same-origin static HTML and reports on metadata, heading structure and JSON-LD conditions. Automation compounds whatever it starts from, and the diagnosis workflow is in [[<TBD-internal-link: the pillar on reading your own Search Console data>]].
 
 ## Common Questions About Autoblogging Software
 
@@ -110,11 +110,11 @@ By entry price, Autoblogging.ai at $19/month. By computed cost per plain article
 
 **Which one is actually best?**
 
-That depends on which jobs beyond drafting you want, and this page deliberately does not rank them. We do not sell a product in this category, so the useful thing we can offer is the conversion method rather than an ordering.
+That depends on which jobs beyond drafting you want, and this page deliberately does not name a winner. It orders the tools on one measurable axis — cost per published article — which is not the same as ranking them overall, because the axis ignores output quality, publishing integrations and everything bundled around the draft. We do not sell a product in this category, so the useful thing we can offer is the conversion method rather than a verdict.
 
 **Is autoblogging safe for SEO?**
 
-The volume is not the variable — what you publish is. Google's guidance is about whether content is helpful and original rather than how it was produced, and every tool here will publish whatever quality you configure it to publish.
+Google's helpful-content guidance addresses production method directly, so treat "it was automated" as something to handle rather than something that does not matter. Two things it says are worth reading before you scale: it asks whether "the use of automation, including AI-generation, [is] self-evident to visitors through disclosures or in other ways," and it states that "if you use automation, including AI-generation, to produce content for the primary purpose of manipulating search rankings, that's a violation of our spam policies." Volume is part of that picture — Google's spam policies name scaled content abuse as its own category — so the honest answer is that these tools make it cheap to cross a line that is defined by intent and quality, not that the line does not exist.
 
 **Why do the rankings differ so much between lists?**
 
@@ -148,4 +148,6 @@ Before you buy volume in any unit, find out what shape the pages you already hav
 - [Scalenut pricing](https://www.scalenut.com/pricing) — Starter list and promotional annual rates, article allowances and the scope of the doubling promotion, checked 25 August 2026.
 - [RightBlogger pricing](https://rightblogger.com/pricing) — Solo tier, unlimited-words claim and the per-day publishing cap, checked 24 August 2026.
 - [Autoblogging.ai](https://autoblogging.ai/) — entry tier, credit allowance and generation modes from its homepage pricing table, checked 17 August 2026.
-- [Google Search Central: creating helpful, reliable, people-first content](https://developers.google.com/search/docs/fundamentals/creating-helpful-content) — Google's guidance on content quality irrespective of production method.
+- [Clearscope pricing](https://www.clearscope.io/pricing) — tracked-prompt counts and monthly rates, checked 25 August 2026.
+- [Surfer pricing](https://surferseo.com/pricing/) — the "create or optimize" document metering and prompt allowances by tier, checked 26 August 2026.
+- [Google Search Central: creating helpful, reliable, people-first content](https://developers.google.com/search/docs/fundamentals/creating-helpful-content) — its questions on disclosing automation and AI-generation, and its statement that automation used primarily to manipulate rankings violates the spam policies.

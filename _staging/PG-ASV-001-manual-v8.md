@@ -1,7 +1,7 @@
 ---
 title: Agentic Seo
 slug: agentic-seo
-date: 2026-08-19
+date: 2026-08-21
 status: ready-to-review
 type: wiki-entry
 template: Definition
@@ -13,7 +13,7 @@ associated_keywords:
 
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-08-19T06:26:40.993Z
+generated_at: 2026-08-21T01:30:06.465Z
 content_sha256_short: 72689736ba786d77
 phase2_checks: all-pass
 ---

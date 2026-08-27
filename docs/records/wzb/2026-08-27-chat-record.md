@@ -21,7 +21,7 @@ aliases:
 - **08-26 那条 P1 未修且恶化**：`index-monitor` 与 `lane-watchdog` 从「缺勤 1 天」升级为**连续 2 天全停**；`disabled.501.plist` mtime 仍冻结在 `08-25 20:09:40`，说明无新的 disable 动作，纯粹是那一次动作的后果在延续。
 - **本轮新增事实**：`index_repair_resubmit` 属同一批停摆（最后日志 08-25 17:31），此前未被单独点名；它与 `index-monitor` 同样不在 `print-disabled` 列表里 → 两者共享同一个非 launchd 调度源，修复验收应把它一并纳入。
 - **一条判读修正（避免误报）**：飞书里的 `⚠️reconcile-published: exit 1` 经查从 08-14 起每天恰好 1 次、连续 14 天，是**既有长期噪音而非新故障**；`ledger-reconcile` 整体 rc=0 且所有漂移计数器全为 0。
-- 已人工兜底 astrologywiki 腿全套同步，五项数字与 08-22/08-23/08-26 逐字一致；按 08-22 规则本轮未发飞书。18:19 安全拉取 flow-mvp 的 `origin/main`（本地与远端均为 `a7b0d6a98`）；18:20 按用户明确要求删除 reminders 中全部 21 条未完成待办。
+- 已人工兜底 astrologywiki 腿全套同步；18:19 安全拉取 flow-mvp；18:20 删除 reminders 全部 21 条未完成待办；18:25 完成 DramaShortsTV SOP 与现有 Oracle/GenGrowth pipeline 的只读对比，结论是应新增“内容生产 + Git 文档交付”独立第三 lane，而非复用任何现有网站 publisher。
 
 ---
 
@@ -66,5 +66,17 @@ aliases:
 **🤖 回答：**
 
 按用户明确授权，删除 `ai-profile/reminders.md` 的“待完成”区域内全部 21 条未完成待办及其子项，保留 reminders 文件结构和“已完成”历史；同步更新文档元数据。核验结果为 `pending_count=0`、`completed_count=4`，`git diff --check` 通过。
+
+---
+
+### Q4 — 18:25 [codex]
+
+**🙋 提问：**
+
+我们这个 flow-mvp 之前是主要服务于 oracle 和 gengrowth.ai。现在增加了一个 blog 和网站需求：inbox-maboyang/05-blog/dramashortstv/2026-08-26-dramashortstv-blog写作SOP-v1.0。你现看看需求，这个大体的流程是一致的，但是最终只输出文档到本地的 gengrowth-ops。然后提交到 github，而不是提交到网站。也不生成 hero 或者图片。你可以先看看流程对比一下
+
+**🤖 回答：**
+
+只读检查 DramaShortsTV SOP、两篇样稿、关键词/选词文档，以及 flow-mvp 的 Oracle 与 GenGrowth 授稿、Phase 2、事实审、配图和发布代码。结论：可复用任务状态、LLM 编排、事实审、失败停放/修复与日志能力；不可直接复用现有 Sheet/CTA/T1-T3 输入、固定 11-H2 模板、Oracle/Gengrowth red-line、illustrate、网站 build/preview、Supabase、sitemap/indexing/backfill。应新增独立 DramaShortsTV lane：本地文档 intake → 四字段搜证 → 六类模板写作 → SOP 专属 QA → 原子写入 `gengrowth-ops/inbox-maboyang/05-blog/dramashortstv/` → 仅提交该文档到 `phananhson733-oss/gengrowth-ops` 并回读远端 SHA；完成状态应命名为 Git 已交付而非已发布。当前仅完成对比，未改 flow 代码、未写 ops 文档、未推 GitHub。
 
 ---

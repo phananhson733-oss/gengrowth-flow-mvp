@@ -132,6 +132,7 @@ const GENGROWTH_TBD_LINK_RULES = [
   { match: /byword[\s-]*(\.?ai)?[\s-]*(alternatives?|comparison|review)/i, href: '/blog/byword-ai-alternatives' },
   { match: /rightblogger[\s-]*(alternatives?|comparison|review)/i, href: '/blog/rightblogger-alternatives' },
   { match: /scalenut[\s-]*(alternatives?|comparison|review)/i, href: '/blog/scalenut-alternatives' },
+  { match: /arvow[\s-]*(alternatives?|comparison|review)/i, href: '/blog/arvow-alternatives' },
   { match: /seo[\s-]*automation/i, href: '/blog/seo-automation' },
   { match: /seo[\s-]*for[\s-]*saas[\s-]*startups?/i, href: '/blog/seo-for-saas-startups' },
   { match: /b2b[\s-]*saas[\s-]*seo/i, href: '/blog/b2b-saas-seo' },

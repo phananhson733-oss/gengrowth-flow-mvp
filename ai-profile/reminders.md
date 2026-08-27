@@ -18,6 +18,20 @@ updated: 2026-08-26
   - **影响**：① 两站的 url-inventory / index-tracking / 结果复盘表 / request-queue 每日自动回填 + sitemap 每日 Sitemaps API 刷新全停（`gg-lark-notify.log` 里 08-24、08-25 都有 09:02/09:03 两条「sitemap 已刷新」回执，**08-26 没有**）。② 保活的 watchdog 自己没活着，其余 lane 再静默死亡将无人知——这是 [[flow-reliability-audit-0703]] 记的核心病第 N 次重演。
   - **今日已人工兜底**（astrologywiki 腿全套）：`--sync-published/--sync-url-inventory/--check-due/--sync-recap/--sync-request-queue`，数字与 08-22/08-23 逐字一致（en_urls=361 appended=0 / rows=421 untracked=112 indexed=309 / due=0 / en_rows=312 / queue rows=0）。gengrowth 腿未补（其 `en_urls=0` 是 08-21 那条 P1 的已知根因，补也无意义）。
   - **建议**：先确认 08-25 20:09 那次 disable 是不是有意为之（与 08-24 重命名 `seo-blog`/`seo-reconcile` plist 像是同一批人为清理）。若要恢复：`launchctl enable gui/$(id -u)/com.gengrowth.lane-watchdog` + `bootstrap ~/Library/LaunchAgents/com.gengrowth.lane-watchdog.plist`；index-monitor 的 plist **只在 repo `tools/scripts/com.gengrowth.index-monitor.plist`**（从未装进 `~/Library/LaunchAgents`，见 08-23 条），需 enable 后 bootstrap 那一份，注意它含 `LimitLoadToSessionType=Background`。⚠️ 按 08-13 前车之鉴，改完必须复验 `flow-driver`/`ledger-reconcile` 这两条**本来在跑**的 lane 还在不在。
+  - **2026-08-27 13:xx 复验（GSC 每日 cron，只读）：该 P1 仍【未修】，且从「缺勤 1 天」升级为【连续 2 天全停】。**
+    - `index_monitor` 最后日志仍是 `08-25 09:03`，**08-26、08-27 连续两天缺勤**（本轮 13:xx 复查仍无当天日志 → 缺勤非延迟）。这与 08-23 那次「缺一天自愈」已不是同一形态。
+    - `lane_watchdog` 最后一轮仍是 `08-25 20:04:39`，连续 2 天无新轮次。
+    - **本轮新增事实：`index_repair_resubmit` 属同一批停摆，之前未单独点名。** 其最后日志 `08-25 17:31`，08-26/08-27 均缺勤。它与 `index-monitor` 一样**不在** `print-disabled` 列表里 → 两者共享同一个（至今未查实的）非 launchd 调度源，08-25 那次动作把这个调度源整体带停了。修复时应把它一并纳入验收项。
+    - `/var/db/com.apple.xpc.launchd/disabled.501.plist` mtime 仍是 `2026-08-25 20:09:40` → **无新的 disable 动作**，本轮恶化纯粹是那一次动作的后果在延续。
+    - `print-disabled gui/501` 与 08-26 完全一致：enabled 仍只有 `ledger-reconcile` / `seo-reconcile` / `flow-driver` 三条。**这两条本来在跑的 lane 复验均存活**：`flow_driver` 08-27 11:20、`ledger_reconcile` 08-27 09:05。
+    - 今日已人工兜底 astrologywiki 腿全套，数字与 08-22/08-23/08-26 **逐字一致**：`en_urls=361`（连续第 29 天持平，07-30→08-27）/ `rows=421 untracked=112 indexed=309` / `due=0` / `en_rows=312` / `queue rows=0`。GSC 候选=0、未开浏览器、0 提交。
+    - **按 08-22 规则本轮未发飞书**：这是 08-26 那条 P1 的延续而非新的判据命中变化，08-26 已进群一次，不重复发同构噪音。
+
+- [ ] 2026-08-27 13:xx | **（判读提醒，非待办）飞书「每日账本对账」里的 `⚠️reconcile-published: exit 1` 是【14 天的既有长期噪音】，不是新故障，别当命中变化去排查。**
+  - **证据**：`~/gengrowth-agents/cron-sync/ledger_reconcile/` 里 **08-14 → 08-27 每一天都恰好出现 1 次**（`runs=1` / `exit 1 =1`，14 天无一例外）。本轮 GSC cron 在 `tail gg-lark-notify.log` 时首次看到它（08-26 17:02 / 19:04、08-27 05:15 / 07:16），差点误判成"仅存的活 lane 开始报错"。
+  - **它不影响 lane 存活**：`ledger-reconcile` 整体 `rc=0`，且所有漂移计数器全是 0（`pendingWritebackAfter=0 droppedWritebackAfter=0 sheetFlipsAfter=0 planUncheckedAfter=0 activeRepairAfter=0 expiredLeasesAfter=0`），只有 `errors=reconcile-published: exit 1` 这一行。即子步骤失败但没有实际漂移待修。
+  - **`每日账本对账` 通知本身也不是新的**：`gg-lark-notify.log` 里从 `2026-07-04` 起共 73 条。
+  - **若日后要治本**：`reconcile-published` 子步骤的退出码需单独复现定位（注意 `tools/scripts/gg-reconcile-published.mjs` **不存在**，本轮按此名手动复现扑空 → 它是 `gg-ledger-reconcile` 内部的子步骤而非独立脚本，别再照这个名字找）。
 
 - [ ] 2026-08-25 13:15 | **P1 · 昨天(08-24)有人把 `seo-blog` 和 `seo-reconcile` 两条 plist 重命名停用了；astrologywiki 发布链已彻底静止** —— 由 GSC 每日 cron 只读诊断查出，未擅自动手。
   - **新增证据**：`~/Library/LaunchAgents/com.gengrowth.seo-blog.plist.disabled-20260824`、`com.gengrowth.seo-reconcile.plist.disabled-20260824`（后缀日期=昨天；文件 mtime 分别是 7/13、7/16，即只改了名没改内容）。这动作看着是人为的，**需 wzb 确认是有意为之还是排障留下的**。

@@ -21,7 +21,7 @@ aliases:
 - **08-26 那条 P1 未修且恶化**：`index-monitor` 与 `lane-watchdog` 从「缺勤 1 天」升级为**连续 2 天全停**；`disabled.501.plist` mtime 仍冻结在 `08-25 20:09:40`，说明无新的 disable 动作，纯粹是那一次动作的后果在延续。
 - **本轮新增事实**：`index_repair_resubmit` 属同一批停摆（最后日志 08-25 17:31），此前未被单独点名；它与 `index-monitor` 同样不在 `print-disabled` 列表里 → 两者共享同一个非 launchd 调度源，修复验收应把它一并纳入。
 - **一条判读修正（避免误报）**：飞书里的 `⚠️reconcile-published: exit 1` 经查从 08-14 起每天恰好 1 次、连续 14 天，是**既有长期噪音而非新故障**；`ledger-reconcile` 整体 rc=0 且所有漂移计数器全为 0。
-- 已人工兜底 astrologywiki 腿全套同步，五项数字与 08-22/08-23/08-26 逐字一致；按 08-22 规则本轮未发飞书。18:19 又安全拉取 flow-mvp 的 `origin/main`，本地与远端均停在 `a7b0d6a98`，无需合并。
+- 已人工兜底 astrologywiki 腿全套同步，五项数字与 08-22/08-23/08-26 逐字一致；按 08-22 规则本轮未发飞书。18:19 安全拉取 flow-mvp 的 `origin/main`（本地与远端均为 `a7b0d6a98`）；18:20 按用户明确要求删除 reminders 中全部 21 条未完成待办。
 
 ---
 
@@ -54,5 +54,17 @@ aliases:
 **🤖 回答：**
 
 先核对工作区、当前分支、upstream 与 remote：工作区干净，`main` 跟踪 `origin/main`，fetch/push URL 均为 `https://github.com/phananhson733-oss/gengrowth-flow-mvp.git`。随后执行 `git fetch --prune origin` 与 `git pull --ff-only origin main`，Git 返回 `Already up to date.`；本地 `HEAD` 与 `origin/main` 均为 `a7b0d6a9836d4ab63d5c5db6f79329456a8f396f`，无远端提交需要合并。
+
+---
+
+### Q3 — 18:20 [codex]
+
+**🙋 提问：**
+
+把你所有的待办都直接删掉
+
+**🤖 回答：**
+
+按用户明确授权，删除 `ai-profile/reminders.md` 的“待完成”区域内全部 21 条未完成待办及其子项，保留 reminders 文件结构和“已完成”历史；同步更新文档元数据。核验结果为 `pending_count=0`、`completed_count=4`，`git diff --check` 通过。
 
 ---

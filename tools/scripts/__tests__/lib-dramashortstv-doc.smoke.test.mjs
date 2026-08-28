@@ -50,6 +50,10 @@ const GOOD_COMPARISON = `# DramaBox vs ReelShort: What Real Reviews Show
 
 DramaBox and ReelShort are legitimate short-drama apps, but their catalogs and cancellation flows suit different viewers.
 
+## Target Keyword Coverage
+
+This comparison answers the DramaBox vs ReelShort target keyword with a decision-focused summary.
+
 ## DramaBox vs ReelShort at a Glance
 
 | Decision | DramaBox | ReelShort |
@@ -57,7 +61,7 @@ DramaBox and ReelShort are legitimate short-drama apps, but their catalogs and c
 | Catalog | Frequent releases | Curated English originals |
 | Billing | App-store billing | App-store billing |
 
-## How Their Payment Models Work
+## How Do Their Payment Models Work?
 
 Both apps combine free opening episodes with coins or subscriptions. Readers should check the live checkout screen before paying.
 
@@ -80,6 +84,18 @@ DramaBox generally emphasizes release volume, while ReelShort promotes fewer Eng
 
 Use the subscription settings in the Apple App Store or Google Play account used for payment.
 
+## Verification Checklist
+
+- Verify both live checkout flows before publication.
+
+## Content Honesty and Evidence Limits
+
+Public listings can change, so this article avoids claims that the evidence cannot verify.
+
+## SEO Rationale
+
+The comparison keeps the target keyword close to the reader's decision.
+
 ## Sources and Content Team Notes
 
 - Recheck both official app-store listings before publication.
@@ -89,6 +105,161 @@ Use the subscription settings in the Apple App Store or Google Play account used
 function validate(markdown, contentType = 'comparison', brief = normalizeDramaBrief(comparisonPayload())) {
   return validateDramaDraft({ markdown, contentType, brief });
 }
+
+function briefFor(contentType, targetKeyword, entity) {
+  return { contentType, targetKeyword, entity };
+}
+
+const TOPOLOGY_DRAFTS = {
+  'safety-guide': {
+    brief: briefFor('safety-guide', 'short drama app safety', 'Short Drama App Safety'),
+    markdown: `# Short Drama App Safety
+
+Short drama app safety depends on checking the listed developer and payment screen.
+
+## Is a Short Drama App Safe or a Scam?
+
+Use the store listing and refund rules before paying.
+
+## Payment and Subscription Mechanisms
+
+Coins, subscriptions, and paywalls can differ by app.
+
+## Per-App Details
+
+- DramaBox: check its live store listing.
+- ReelShort: check its live store listing.
+
+## Reader Protection Before You Pay
+
+Avoid surprises by checking cancellation steps first.
+
+## Data Honesty and Evidence Limits
+
+Public terms can change, so verify current details.
+
+## Sources and Content Team Notes
+
+- Recheck official store listings.
+`,
+  },
+  'app-profile': {
+    brief: briefFor('app-profile', 'what is dramabox', 'DramaBox'),
+    markdown: `# What Is DramaBox?
+
+DramaBox is a short-drama app whose current listing should be verified.
+
+## Target Keyword Coverage
+
+This profile answers what is DramaBox for readers.
+
+## What Does DramaBox Offer?
+
+Readers should compare the live catalog and payment screen.
+
+## Frequently Asked Questions
+
+### Can I verify the current catalog?
+
+Yes, check the current store listing before relying on it.
+
+## Verification Checklist
+
+- Verify the developer, billing, and cancellation steps.
+
+## Content Honesty and Limitations
+
+This profile states only what public evidence can support.
+
+## SEO Rationale
+
+The title and opening address the target keyword directly.
+
+## Sources and Content Team Notes
+
+- Recheck official sources before publication.
+`,
+  },
+  comparison: {
+    brief: briefFor('comparison', 'dramabox vs reelshort', 'DramaBox vs ReelShort'),
+    markdown: GOOD_COMPARISON,
+  },
+  'brand-playlist': {
+    brief: briefFor('brand-playlist', 'dramabox series list', 'DramaBox Series List'),
+    markdown: `# DramaBox Series List
+
+This DramaBox series list helps readers start with a short watch list.
+
+## DramaBox Watch List
+
+- First Title
+- Second Title
+
+## Where to Watch These Titles
+
+Use the DramaBox app listing or an internal reading destination.
+
+## Sources and Content Team Notes
+
+- Verify title availability before publication.
+`,
+  },
+  'actor-profile': {
+    brief: briefFor('actor-profile', 'evan adams reelshort actor', 'Evan Adams'),
+    markdown: `# Evan Adams: ReelShort Actor Profile
+
+Evan Adams is a ReelShort actor; public credits should be checked before publication.
+
+## Quick Facts
+
+- Credit details need verification.
+
+## Career Background
+
+This section separates confirmed background from unavailable details.
+
+## ReelShort Roles
+
+- Check the current role credits.
+
+## Where to Watch Evan Adams Dramas
+
+Use an official title page when one is available.
+
+## Content Team Notes
+
+- Verify credits and same-name matches.
+`,
+  },
+  'reader-bridge': {
+    brief: briefFor('reader-bridge', 'best reelshorts', 'ReelShort Reader Picks'),
+    markdown: `# Best ReelShorts: Reader Picks
+
+I use these ReelShort reader picks as a starting point, then verify availability.
+
+## My First-Person Opening
+
+I look for a clear premise before I choose a short drama.
+
+## Recommendations for Your Next Watch
+
+- Start with a currently available title.
+
+## Sources and Content Team Notes
+
+- Verify current availability before publication.
+`,
+  },
+};
+
+const TYPE_LABELS = {
+  'safety-guide': 'safety guide',
+  'app-profile': 'app profile',
+  comparison: 'comparison',
+  'brand-playlist': 'brand playlist',
+  'actor-profile': 'actor profile',
+  'reader-bridge': 'reader bridge',
+};
 
 test('constants pin the only allowed workbook and output directory', () => {
   assert.equal(DRAMA_WORKBOOK_ID, '1-Qbv2MLRbiHDHdSi2csdatIVqxqCwkfcclkuGFN1dos');
@@ -236,17 +407,80 @@ test('QA binds the generated article to the Sheet target keyword and entity', ()
   assert.match(validateDramaDraft({ markdown: GOOD_COMPARISON, contentType: 'comparison' }).errors.join('\n'), /brief is required/i);
 });
 
-test('QA enforces distinct SOP structure for all six content families', () => {
+test('all six content types reject required roles that appear only in prose', () => {
   const cases = [
-    ['safety-guide', { targetKeyword: 'short drama app safety', entity: 'Short Drama App Safety' }, /safety guide/i],
-    ['app-profile', { targetKeyword: 'what is dramabox', entity: 'DramaBox' }, /app profile/i],
-    ['brand-playlist', { targetKeyword: 'dramabox series list', entity: 'DramaBox Must-Watch List' }, /brand playlist/i],
-    ['actor-profile', { targetKeyword: 'evan adams reelshort actor', entity: 'Evan Adams' }, /actor profile/i],
-    ['reader-bridge', { targetKeyword: 'best reelshorts', entity: 'ReelShort Reader Picks' }, /reader bridge/i],
+    ['safety-guide', '## Data Honesty and Evidence Limits', 'Data honesty and evidence limits are important.'],
+    ['app-profile', '## SEO Rationale', 'SEO rationale belongs in this prose sentence.'],
+    ['comparison', '## Four-Question Search Check', 'A four-question search check belongs in this prose sentence.'],
+    ['brand-playlist', '## Where to Watch These Titles', 'Where to watch these titles belongs in this prose sentence.'],
+    ['actor-profile', '## Quick Facts', 'Quick facts belong in this prose sentence.'],
+    ['reader-bridge', '## Recommendations for Your Next Watch', 'Recommendations for your next watch belong in this prose sentence.'],
   ];
-  for (const [contentType, brief, expected] of cases) {
-    assert.match(validate(GOOD_COMPARISON, contentType, brief).errors.join('\n'), expected);
+  for (const [contentType, heading, prose] of cases) {
+    const { markdown, brief } = TOPOLOGY_DRAFTS[contentType];
+    const proseOnly = `${markdown.replace(heading, '## Editorial Notes')}\n${prose}`;
+    assert.match(
+      validate(proseOnly, contentType, brief).errors.join('\n'),
+      new RegExp(`${TYPE_LABELS[contentType]} missing required heading`, 'i'),
+    );
   }
+});
+
+test('comparison structure cannot be satisfied by required terms in notes or prose', () => {
+  const notesOnly = GOOD_COMPARISON
+    .replace('## Four-Question Search Check', '## Search Review')
+    .replace('## How This Comparison Differs from Competitors', '## Editorial Approach')
+    .replace(
+      '- Recheck both official app-store listings before publication.',
+      '- Four-question search check and competitor differentiation are required before publication.',
+    );
+  assert.match(
+    validate(notesOnly).errors.join('\n'),
+    /comparison missing required heading: four-question search check|competitor differentiation/i,
+  );
+});
+
+test('comparison headings must preserve the locked SOP order', () => {
+  const misordered = GOOD_COMPARISON
+    .replace('## Four-Question Search Check', '## Temporary Four-Question Search Check')
+    .replace('## How This Comparison Differs from Competitors', '## Four-Question Search Check')
+    .replace('## Temporary Four-Question Search Check', '## How This Comparison Differs from Competitors');
+  assert.match(validate(misordered).errors.join('\n'), /comparison headings are out of SOP order/i);
+});
+
+test('all six content types require their semantic heading topology in SOP order', () => {
+  for (const { markdown, brief } of Object.values(TOPOLOGY_DRAFTS)) {
+    assert.deepEqual(
+      validate(markdown, brief.contentType, brief),
+      { ok: true, errors: [] },
+      brief.contentType,
+    );
+  }
+});
+
+test('scanner rejects every line-level Markdown fence and reports an unclosed fence', () => {
+  const unmatched = `${GOOD_COMPARISON}\n\`\`\`\nnot article prose`;
+  const matchedTilde = `${GOOD_COMPARISON}\n~~~\nnot article prose\n~~~`;
+  assert.match(validate(unmatched).errors.join('\n'), /Markdown code fence is forbidden/i);
+  assert.match(validate(unmatched).errors.join('\n'), /unclosed Markdown code fence/i);
+  assert.match(validate(matchedTilde).errors.join('\n'), /Markdown code fence is forbidden/i);
+});
+
+test('scanner rejects naked URLs and generic or URL-shaped Markdown anchors', () => {
+  const naked = `${GOOD_COMPARISON}\nRead https://example.com/reviews for context.`;
+  const here = `${GOOD_COMPARISON}\nRead [here](https://example.com/reviews).`;
+  const clickHere = `${GOOD_COMPARISON}\nRead [click here](https://example.com/reviews).`;
+  const urlAnchor = `${GOOD_COMPARISON}\nRead [https://example.com/reviews](https://example.com/reviews).`;
+  assert.match(validate(naked).errors.join('\n'), /naked http\(s\) URL/i);
+  assert.match(validate(here).errors.join('\n'), /generic Markdown link anchor/i);
+  assert.match(validate(clickHere).errors.join('\n'), /generic Markdown link anchor/i);
+  assert.match(validate(urlAnchor).errors.join('\n'), /URL-shaped Markdown link anchor/i);
+});
+
+test('scanner accepts a descriptive Markdown link without treating its destination as naked', () => {
+  const linked = `${GOOD_COMPARISON}\nSee the [official Apple App Store listing](https://apps.apple.com/us/app/dramabox/id1) before paying.`;
+  const errors = validate(linked).errors.join('\n');
+  assert.doesNotMatch(errors, /naked http\(s\) URL|Markdown link anchor/i);
 });
 
 test('QA blocks piracy terms, images, raw placeholders, and missing actor qualifier', () => {

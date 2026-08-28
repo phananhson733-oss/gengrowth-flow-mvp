@@ -32,20 +32,22 @@ const TYPE_RULES = Object.freeze({
   'safety-guide': {
     label: 'safety guide',
     faq: false,
-    required: [
-      ['direct safety answer', /safe|legit|scam/iu],
-      ['payment mechanism', /payment|paywall|coin|subscription/iu],
+    sections: [
+      ['direct safety answer', /(?:\b(?:safe|legit|scam)\b.*\b(?:answer|verdict|guide)\b|\b(?:is|are|can|should)\b.*\b(?:safe|legit|scam)\b)/iu],
+      ['payment mechanism', /payment|billing|paywall|coin|subscription/iu],
+      ['per-app details', /per[- ]?app|app details|each app|platform details|(?:dramabox|reelshort).*?(?:details|guide|profile)/iu],
       ['reader protection', /avoid|protect|cancel|before you pay/iu],
-      ['data honesty statement', /data honesty|evidence limit|verified data|tested data/iu],
+      ['data honesty statement', /data honesty|evidence limit|verified data|tested data|limitations/iu],
     ],
   },
   'app-profile': {
     label: 'app profile',
     faq: true,
-    required: [
+    sections: [
       ['keyword coverage', /keyword coverage|target keyword/iu],
-      ['question-led body', /^##\s+.*\?/imu],
-      ['verification checklist', /must verify|verification checklist|content team notes/iu],
+      ['question-led body', /\?$/u],
+      ['FAQ', /FAQ|Frequently Asked|Questions/iu],
+      ['verification checklist', /must verify|verification checklist|verification notes/iu],
       ['content honesty', /content honesty|honesty boundary|limitations/iu],
       ['SEO rationale', /SEO (?:execution|rationale|notes)/iu],
     ],
@@ -53,27 +55,34 @@ const TYPE_RULES = Object.freeze({
   comparison: {
     label: 'comparison',
     faq: true,
-    required: [
+    sections: [
+      ['keyword coverage', /keyword coverage|target keyword/iu],
       ['decision comparison', /at a glance|comparison table|compared/iu],
+      ['question-led body', /\?$/u],
       ['four-question search check', /four-question|four question|四问/iu],
       ['competitor differentiation', /differs from competitors|differenti|competitor/iu],
+      ['FAQ', /FAQ|Frequently Asked|Questions/iu],
+      ['verification checklist', /must verify|verification checklist|verification notes/iu],
+      ['content honesty', /content honesty|honesty boundary|limitations/iu],
+      ['SEO rationale', /SEO (?:execution|rationale|notes)/iu],
     ],
   },
   'brand-playlist': {
     label: 'brand playlist',
     faq: false,
-    required: [
+    sections: [
       ['brand watch list', /must-watch|watch list|drama list|series list|playlist/iu],
-      ['multiple titles', /(?:^|\n)(?:[-*]|\d+[.)])\s+\S/mu],
+      ['watch or internal-link destination', /where to watch|watch .*titles|internal link|reading destination/iu],
     ],
+    bodyChecks: ['multiple titles'],
   },
   'actor-profile': {
     label: 'actor profile',
     faq: false,
-    required: [
+    sections: [
       ['Quick Facts', /quick facts/iu],
       ['career background', /before ReelShort|career|background/iu],
-      ['drama roles', /dramas|roles|works/iu],
+      ['ReelShort roles', /ReelShort.*(?:dramas|roles|works)|(?:dramas|roles|works).*ReelShort/iu],
       ['watching entry', /where to watch|watch .*dramas/iu],
       ['content team notes', /content team notes/iu],
     ],
@@ -81,10 +90,11 @@ const TYPE_RULES = Object.freeze({
   'reader-bridge': {
     label: 'reader bridge',
     faq: false,
-    required: [
-      ['first-person reader voice', /\bI\b|\bmy\b|as a reader|as a viewer/iu],
-      ['recommendations', /recommend|picks|worth watching|watched/iu],
+    sections: [
+      ['first-person opening', /first[- ]person|\bmy\b.*(?:opening|take|view|experience|read|watch)|as a reader|as a viewer/iu],
+      ['recommendations or reader destination', /recommend|picks|worth watching|where to (?:read|watch)|reader destination/iu],
     ],
+    bodyChecks: ['first-person opening'],
   },
 });
 
@@ -124,13 +134,98 @@ function yamlString(value) {
   return JSON.stringify(String(value));
 }
 
-function proseParagraphs(markdown) {
-  const body = stripFrontmatter(markdown).replace(/```[\s\S]*?```/g, '');
-  return body
+function parseDramaMarkdown(markdown) {
+  const source = stripFrontmatter(markdown);
+  const lines = source.split('\n');
+  const visibleLines = [];
+  const headings = [];
+  const fences = [];
+  const links = [];
+  const nakedUrls = [];
+  let openFence = null;
+
+  for (let index = 0; index < lines.length; index++) {
+    const line = lines[index];
+    const fence = line.match(/^\s{0,3}(`{3,}|~{3,})(?:.*)$/u);
+    if (fence) {
+      const marker = fence[1];
+      fences.push({ line: index + 1, marker });
+      if (!openFence) {
+        openFence = { character: marker[0], length: marker.length, line: index + 1 };
+      } else if (marker[0] === openFence.character && marker.length >= openFence.length) {
+        openFence = null;
+      }
+      visibleLines.push('');
+      continue;
+    }
+    if (openFence) {
+      visibleLines.push('');
+      continue;
+    }
+
+    visibleLines.push(line);
+    const heading = line.match(/^(#{1,6})\s+(.+?)\s*#*\s*$/u);
+    if (heading) headings.push({ level: heading[1].length, text: heading[2].trim(), line: index + 1 });
+
+    const linkPattern = /(?<!!)\[([^\]\n]+)\]\(\s*(https?:\/\/[^\s)]+)(?:\s+(?:"[^"]*"|'[^']*'|\([^)]*\)))?\s*\)/giu;
+    let match;
+    while ((match = linkPattern.exec(line))) {
+      links.push({ anchor: match[1].trim(), destination: match[2], line: index + 1 });
+    }
+    const withoutLinks = line.replace(linkPattern, '');
+    const urlPattern = /https?:\/\/[^\s<>()]+/giu;
+    while ((match = urlPattern.exec(withoutLinks))) nakedUrls.push({ value: match[0], line: index + 1 });
+  }
+
+  const prose = visibleLines.join('\n')
     .split(/\n\s*\n/)
     .map((part) => part.trim())
     .filter(Boolean)
     .filter((part) => !/^(?:#{1,6}\s|[-*+]\s|\d+[.)]\s|>|\|)/u.test(part));
+  return {
+    source,
+    lines: visibleLines,
+    visibleText: visibleLines.join('\n'),
+    headings,
+    h1s: headings.filter((heading) => heading.level === 1),
+    h2s: headings.filter((heading) => heading.level === 2),
+    fences,
+    openFence,
+    links,
+    nakedUrls,
+    prose,
+  };
+}
+
+function validateHeadingTopology(rule, headings, errors) {
+  let cursor = -1;
+  for (const [name, pattern] of rule.sections || []) {
+    const next = headings.findIndex((heading, index) => index > cursor && pattern.test(heading.text));
+    if (next === -1) {
+      if (headings.some((heading) => pattern.test(heading.text))) {
+        errors.push(`${rule.label} headings are out of SOP order`);
+      } else {
+        errors.push(`${rule.label} missing required heading: ${name}`);
+      }
+      return;
+    }
+    cursor = next;
+  }
+}
+
+function validateBodyTopology(contentType, view, errors) {
+  if (contentType === 'brand-playlist') {
+    const titleEntries = view.lines.filter((line) => /^(?:[-*]|\d+[.)])\s+\S/u.test(line));
+    if (titleEntries.length < 2) errors.push('brand playlist missing multiple title entries');
+  }
+  if (contentType === 'reader-bridge') {
+    const firstH1 = view.lines.findIndex((line) => /^#\s+/.test(line));
+    const nextHeading = view.lines.findIndex((line, index) => index > firstH1 && /^##\s+/.test(line));
+    const opening = view.lines.slice(firstH1, nextHeading === -1 ? view.lines.length : nextHeading).join(' ');
+    if (!/\bI\b|\bmy\b|as a reader|as a viewer/iu.test(opening)) {
+      errors.push('reader bridge missing first-person voice in opening');
+    }
+  }
 }
 
 function sanitizeUntrustedValue(value) {
@@ -307,7 +402,8 @@ export function buildDramaPrompt({ brief, sopText, evidence }) {
 
 export function validateDramaDraft({ markdown, contentType, brief }) {
   const errors = [];
-  const body = stripFrontmatter(markdown);
+  const view = parseDramaMarkdown(markdown);
+  const body = view.visibleText;
   const rule = TYPE_RULES[contentType];
   if (!rule) errors.push(`unsupported content type: ${contentType}`);
   if (!brief || !text(brief.targetKeyword) || !text(brief.entity)) {
@@ -316,10 +412,8 @@ export function validateDramaDraft({ markdown, contentType, brief }) {
     if (!hasSemanticCoverage(body, brief.targetKeyword)) errors.push('article is not bound to the Sheet target keyword');
     if (!hasSemanticCoverage(body, brief.entity, 0.75)) errors.push('article is not bound to the Sheet entity');
   }
-  const h1s = body.match(/^#\s+.+$/gm) || [];
-  if (h1s.length !== 1) errors.push(`expected exactly one H1, got ${h1s.length}`);
-  const h2s = body.match(/^##\s+.+$/gm) || [];
-  if (h2s.length < 2) errors.push(`expected at least two H2 sections, got ${h2s.length}`);
+  if (view.h1s.length !== 1) errors.push(`expected exactly one H1, got ${view.h1s.length}`);
+  if (view.h2s.length < 2) errors.push(`expected at least two H2 sections, got ${view.h2s.length}`);
   if (!/^\|.+\|$/m.test(body) && !/^[-*+]\s+\S/m.test(body) && !/^\d+[.)]\s+\S/m.test(body)) {
     errors.push('missing decision-support table or list');
   }
@@ -327,18 +421,24 @@ export function validateDramaDraft({ markdown, contentType, brief }) {
   if (IMAGE_RE.test(body)) errors.push('image or media asset syntax is forbidden');
   if (PLACEHOLDER_RE.test(body)) errors.push('raw placeholder is forbidden');
   if (sanitize(body) !== body) errors.push('prompt-injection phrase or unsafe control sequence is forbidden');
-  if (rule) {
-    for (const [name, pattern] of rule.required) {
-      if (!pattern.test(body)) errors.push(`${rule.label} missing required section: ${name}`);
+  for (const fence of view.fences) errors.push(`Markdown code fence is forbidden at line ${fence.line}`);
+  if (view.openFence) errors.push(`unclosed Markdown code fence opened at line ${view.openFence.line}`);
+  for (const link of view.links) {
+    if (/^(?:here|click here|this link|link|read more|more|source)$/iu.test(link.anchor)) {
+      errors.push(`generic Markdown link anchor at line ${link.line}`);
+    } else if (/^(?:https?:\/\/|www\.)/iu.test(link.anchor)) {
+      errors.push(`URL-shaped Markdown link anchor at line ${link.line}`);
     }
   }
-  if (rule?.faq && !/^##\s+.*(?:FAQ|Frequently Asked|Questions)/im.test(body)) {
-    errors.push(`${rule.label} requires a FAQ section`);
+  for (const url of view.nakedUrls) errors.push(`naked http(s) URL at line ${url.line}`);
+  if (rule) {
+    validateHeadingTopology(rule, view.h2s, errors);
+    validateBodyTopology(contentType, view, errors);
   }
-  if (!/^##\s+.*(?:Sources|Content Team Notes)/im.test(body)) {
+  if (!view.h2s.some((heading) => /(?:Sources|Content Team Notes)/iu.test(heading.text))) {
     errors.push('missing sources or content-team notes section');
   }
-  for (const paragraph of proseParagraphs(body)) {
+  for (const paragraph of view.prose) {
     const words = paragraph.split(/\s+/).filter(Boolean).length;
     if (words > 60) {
       errors.push(`prose paragraph exceeds 60 words (${words})`);
@@ -350,7 +450,7 @@ export function validateDramaDraft({ markdown, contentType, brief }) {
       break;
     }
   }
-  const bodyLines = body.split('\n');
+  const bodyLines = view.lines;
   for (let index = 0; index < bodyLines.length; index++) {
     if (/^###\s+.*\?\s*$/u.test(bodyLines[index]) && bodyLines[index + 1] !== '') {
       errors.push('FAQ question must be followed by a blank line before its answer');

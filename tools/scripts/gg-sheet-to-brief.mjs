@@ -424,6 +424,13 @@ export function composeOverride(row, { clusterMap, ctaMap, ctaRegistry = new Map
     target_keyword: brief.target_keyword || null,
     associated_keywords: Array.isArray(brief.associated_keywords) ? brief.associated_keywords : [],
     search_volume: brief.search_volume || '',
+    // Preserve the source business fields used to construct the generic prompt.
+    // Downstream site-specific normalizers need the original values, not only
+    // astrology-flavoured tier_gate_block prose derived from them.
+    cluster_id: clusterId,
+    page_role: pageRole,
+    friction_brief: brief.friction_brief || '',
+    logic_brief: brief.logic_brief || '',
     cluster_jtbd: cluster ? cluster.jtbd : '',
     content_angle: brief.content_angle || (cluster ? cluster.content_angle : ''),
     internal_link_rule: cluster ? cluster.internal_link_rule : '',

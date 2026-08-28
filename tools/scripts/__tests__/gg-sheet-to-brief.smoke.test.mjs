@@ -360,6 +360,10 @@ test('composeOverride produces all 13 cfg fields for a full Sheet row', () => {
   assert.equal(entry.target_keyword, 'orange aura meaning');
   assert.deepEqual(entry.associated_keywords, ['orange aura']);
   assert.equal(entry.search_volume, '5400');
+  assert.equal(entry.cluster_id, 'clu_aura_colors');
+  assert.equal(entry.page_role, 'Series');
+  assert.equal(entry.friction_brief, 'shade confusion');
+  assert.equal(entry.logic_brief, 'interpretive framework not anatomy');
   assert.equal(entry.cluster_jtbd, 'understand my aura color');
   assert.equal(entry.content_angle, 'creative/playful angle');
   assert.equal(entry.internal_link_rule, 'Pillar↔Series');

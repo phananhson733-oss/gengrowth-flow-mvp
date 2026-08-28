@@ -118,9 +118,10 @@ export function normalizeDramaBrief(payload) {
       if (value) removedKeywordNotes.push(value);
       return false;
     });
-  const friction = extractTierGateField(row.tier_gate_block, 'Friction')
+  const friction = text(row.friction_brief)
+    || extractTierGateField(row.tier_gate_block, 'Friction')
     || text(row.friction_themes?.[0]?.scrubbed_quote);
-  const logic = extractTierGateField(row.tier_gate_block, 'Logic');
+  const logic = text(row.logic_brief) || extractTierGateField(row.tier_gate_block, 'Logic');
   if (!friction) throw new Error('DramaShortsTV Sheet row missing required Friction');
   if (!logic) throw new Error('DramaShortsTV Sheet row missing required Logic');
 

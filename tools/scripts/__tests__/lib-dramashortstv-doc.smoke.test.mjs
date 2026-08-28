@@ -101,6 +101,16 @@ test('normalizer keeps business fields and strips astrology/author/CTA contamina
   assert.doesNotMatch(JSON.stringify(brief), /interpretive framework|tier_gate_block|cta_target_url|author/);
 });
 
+test('normalizer prefers preserved source Friction and Logic over derived tier prose', () => {
+  const brief = normalizeDramaBrief(comparisonPayload({
+    friction_brief: 'Direct Sheet friction.',
+    logic_brief: 'Direct Sheet logic.',
+    tier_gate_block: '',
+  }));
+  assert.equal(brief.friction, 'Direct Sheet friction.');
+  assert.equal(brief.logic, 'Direct Sheet logic.');
+});
+
 test('normalizer removes actor metadata masquerading as associated keywords', () => {
   const payload = comparisonPayload();
   delete payload.page_dramabox_vs_reelshort;

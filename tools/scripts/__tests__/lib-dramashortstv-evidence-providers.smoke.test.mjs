@@ -20,6 +20,8 @@ const successfulTasks = (items) => ({
   tasks: [{ status_code: 20000, result: [{ items }] }],
 });
 
+const successfulTask = ({ tag, result }) => ({ status_code: 20000, tag, result: [result] });
+
 test('DataForSEO rejects HTTP, top-level, and task failures', async () => {
   const request = {
     endpoint: 'serp/google/organic/live/advanced',
@@ -44,10 +46,13 @@ test('Google SERP preserves real organic URLs and each query purpose', async () 
     password: 'password',
     fetchImpl: async (_url, init) => {
       seen = JSON.parse(init.body);
-      return jsonResponse(successfulTasks([
-        { type: 'organic', rank_absolute: 1, title: 'DramaBox reviews', description: 'Useful evidence', url: 'https://reviews.example/dramabox' },
-        { type: 'organic', rank_absolute: 2, title: 'Ignore', url: 'not-a-url' },
-      ]));
+      return jsonResponse({ status_code: 20000, tasks: [
+        successfulTask({ tag: 'friction', result: { items: [
+          { type: 'organic', rank_absolute: 1, title: 'DramaBox reviews', description: 'Useful evidence', url: 'https://reviews.example/dramabox' },
+          { type: 'organic', rank_absolute: 2, title: 'Ignore', url: 'not-a-url' },
+        ] } }),
+        successfulTask({ tag: 'app-store', result: { items: [] } }),
+      ] });
     },
   });
   assert.deepEqual(seen.map((task) => task.tag), ['friction', 'app-store']);
@@ -61,9 +66,15 @@ test('Google SERP preserves real organic URLs and each query purpose', async () 
     snippet: 'Useful evidence',
     domain: 'reviews.example',
   }]);
+
+  await assert.rejects(() => fetchGoogleSerpEvidence({
+    querySpecs: [{ query: 'DramaBox reviews', purpose: 'friction' }, { query: 'DramaBox app', purpose: 'app-store' }],
+    login: 'login', password: 'password',
+    fetchImpl: async () => jsonResponse({ status_code: 20000, tasks: [successfulTask({ tag: 'friction', result: { items: [] } })] }),
+  }), /task count|purpose\/tag/i);
 });
 
-test('Google Trends preserves check_url and fails closed for all-zero or missing data', async () => {
+test('Google Trends uses the official request/response shape and fails closed for all-zero or missing graph data', async () => {
   let requestUrl = '';
   let requestBody;
   const nonZero = await fetchGoogleTrendsEvidence({
@@ -71,25 +82,29 @@ test('Google Trends preserves check_url and fails closed for all-zero or missing
     fetchImpl: async (url, init) => {
       requestUrl = url;
       requestBody = JSON.parse(init.body);
-      return jsonResponse(successfulTasks([{ check_url: 'https://trends.google.com/explore?q=DramaBox', data: [{ values: [0, 4, 0] }] }]));
+      return jsonResponse({ status_code: 20000, tasks: [successfulTask({ result: {
+        check_url: 'https://trends.google.com/trends/explore?q=DramaBox',
+        items: [{ type: 'google_trends_graph', data: [{ values: [0, 4, 0] }] }],
+      } })] });
     },
   });
   assert.match(requestUrl, /keywords_data\/google_trends\/explore\/live$/);
-  assert.equal(requestBody[0].date_from, 'past_12_months');
-  assert.equal(requestBody[0].type, 'google_trends_graph');
-  assert.equal(nonZero.checkUrl, 'https://trends.google.com/explore?q=DramaBox');
+  assert.deepEqual(requestBody[0].keywords, ['DramaBox']);
+  assert.equal(requestBody[0].time_range, 'past_12_months');
+  assert.deepEqual(requestBody[0].item_types, ['google_trends_graph']);
+  assert.equal(nonZero.checkUrl, 'https://trends.google.com/trends/explore?q=DramaBox');
   assert.equal(nonZero.status, 'ok');
 
   for (const item of [
-    { check_url: 'https://trends.google.com/explore?q=DramaBox', data: [{ values: [0, 0] }] },
-    { check_url: 'https://trends.google.com/explore?q=DramaBox' },
+    { check_url: 'https://trends.google.com/trends/explore?q=DramaBox', items: [{ type: 'google_trends_graph', data: [{ values: [0, 0] }] }] },
+    { check_url: 'https://trends.google.com/trends/explore?q=DramaBox', items: [] },
   ]) {
     const insufficient = await fetchGoogleTrendsEvidence({
       keyword: 'DramaBox', login: 'login', password: 'password',
-      fetchImpl: async () => jsonResponse(successfulTasks([item])),
+      fetchImpl: async () => jsonResponse({ status_code: 20000, tasks: [successfulTask({ result: item })] }),
     });
     assert.equal(insufficient.status, 'insufficient');
-    assert.equal(insufficient.checkUrl, 'https://trends.google.com/explore?q=DramaBox');
+    assert.equal(insufficient.checkUrl, 'https://trends.google.com/trends/explore?q=DramaBox');
   }
 });
 
@@ -102,6 +117,7 @@ test('Apple evidence only keeps results whose app name matches relevant entity t
       return jsonResponse({ results: [
         { trackId: 1, trackName: 'DramaBox: Short Drama', trackViewUrl: 'https://apps.apple.com/us/app/dramabox/id1', description: 'episodes' },
         { trackId: 2, trackName: 'Unrelated Weather', trackViewUrl: 'https://apps.apple.com/us/app/weather/id2', description: 'forecast' },
+        { trackId: 3, trackName: 'DramaBox Copy', trackViewUrl: 'https://example.test/app/dramabox', description: 'not Apple' },
       ] });
     },
   });

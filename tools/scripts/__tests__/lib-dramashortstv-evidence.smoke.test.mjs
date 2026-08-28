@@ -25,20 +25,20 @@ function serpResults({ count = 5, domains = ['a.example', 'b.example', 'c.exampl
     url: `https://${domains[index % domains.length]}/dramabox/${index + 1}`,
     title: `DramaBox review ${index + 1}`,
     snippet: 'Independent DramaBox review',
-    domain: domains[index % domains.length],
+    domain: 'forged.invalid',
   }));
 }
 
 function validSources() {
   const serp = serpResults();
-  serp.push({ id: 'serp:imdb:1', type: 'organic', purpose: 'imdb', url: 'https://www.imdb.com/title/tt1234567/', title: 'DramaBox title', snippet: 'SERP result', domain: 'imdb.com' });
+  serp.push({ id: 'serp:imdb:1', type: 'organic', purpose: 'imdb', url: 'https://www.imdb.com/title/tt1234567/', title: 'DramaBox title', snippet: 'SERP result', domain: 'forged.invalid' });
   return {
     serp: { status: 'ok', collectedAt: NOW, results: serp },
-    appStore: { status: 'ok', collectedAt: NOW, results: [{ id: 'apple:1', name: 'DramaBox Short Drama', url: 'https://apps.apple.com/us/app/dramabox/id1', snippet: 'Episodes' }] },
+    appStore: { status: 'ok', provider: 'apple-itunes', collectedAt: NOW, results: [{ id: 'apple:1', name: 'DramaBox Short Drama', url: 'https://apps.apple.com/us/app/dramabox/id1', snippet: 'Episodes' }] },
     reddit: { status: 'ok', collectedAt: NOW, results: [{ id: 'reddit:1', url: 'https://www.reddit.com/r/shortdrama/comments/1/dramabox', title: 'DramaBox billing', snippet: 'Cancellation is confusing.' }] },
     imdb: { status: 'ok', collectedAt: NOW, origin: 'serp', results: [{ id: 'imdb:1', url: 'https://www.imdb.com/title/tt1234567/', title: 'DramaBox title', snippet: 'SERP result' }] },
-    trends: { status: 'ok', collectedAt: NOW, checkUrl: 'https://trends.google.com/explore?q=DramaBox', values: [1, 4, 2] },
-    sameName: { status: 'ok', collectedAt: NOW, results: [] },
+    trends: { status: 'ok', provider: 'dataforseo-google-trends', collectedAt: NOW, checkUrl: 'https://trends.google.com/trends/explore?q=DramaBox', values: [1, 4, 2], results: [{ id: 'trends:graph:1', type: 'google_trends_graph', values: [1, 4, 2] }] },
+    sameName: { status: 'ok', collectedAt: NOW, results: [{ id: 'same-name:default', type: 'organic', url: 'https://people.example/dramabox', title: 'Different DramaBox', snippet: 'Distinct entity' }], pollution: true, qualifierRequired: true },
   };
 }
 
@@ -72,6 +72,21 @@ test('SERP coverage requires five relevant organic results across three domains'
   assert.match(result.errors.join('\n'), /five.*three domains/i);
 });
 
+test('source identity derives domains from URLs and rejects generic SERP relevance or forged provider sources', () => {
+  const forgedDomains = baseEvidence();
+  assert.equal(validateDramaEvidence({ brief: brief(), evidence: forgedDomains, now: NOW }).ok, true);
+
+  const genericOnly = baseEvidence();
+  genericOnly.sources.serp.results = genericOnly.sources.serp.results.map((result) => ({ ...result, title: 'Reviews for apps', snippet: 'Short drama reviews', url: `https://review${result.id}.example/reviews` }));
+  seal(genericOnly);
+  assert.match(validateDramaEvidence({ brief: brief(), evidence: genericOnly, now: NOW }).errors.join('\n'), /five.*three domains/i);
+
+  const forgedApple = baseEvidence();
+  forgedApple.sources.appStore.results[0].url = 'https://example.test/app/dramabox';
+  seal(forgedApple);
+  assert.match(validateDramaEvidence({ brief: brief(), evidence: forgedApple, now: NOW }).errors.join('\n'), /app-store/i);
+});
+
 test('friction accepts a real Reddit post or a Google result on Reddit/App Store', () => {
   const redditOnly = baseEvidence();
   assert.equal(validateDramaEvidence({ brief: brief(), evidence: redditOnly, now: NOW }).ok, true);
@@ -103,7 +118,7 @@ test('IMDb accepts only canonical name or title URLs from real Google SERP evide
 
 test('actor same-name search records pollution and requires a qualifier', () => {
   const evidence = baseEvidence('actor-profile');
-  evidence.sources.sameName = { status: 'ok', collectedAt: NOW, results: [{ id: 'same-name:1', url: 'https://people.example/evan-adams', title: 'Evan Adams', snippet: 'Different person' }], pollution: true, qualifierRequired: true };
+  evidence.sources.sameName = { status: 'ok', collectedAt: NOW, results: [{ id: 'same-name:1', type: 'organic', url: 'https://people.example/evan-adams', title: 'Evan Adams', snippet: 'Different person' }], pollution: true, qualifierRequired: true };
   seal(evidence);
   assert.equal(validateDramaEvidence({ brief: brief('actor-profile'), evidence, now: NOW }).ok, true);
   evidence.sources.sameName.qualifierRequired = false;
@@ -155,6 +170,24 @@ test('tampered evidence, invalid now, and non-organic SERP evidence all fail clo
   nonOrganic.sources.serp.results = nonOrganic.sources.serp.results.map((result) => ({ ...result, type: 'paid' }));
   seal(nonOrganic);
   assert.match(validateDramaEvidence({ brief: brief(), evidence: nonOrganic, now: NOW }).errors.join('\n'), /five.*three domains/i);
+});
+
+test('current brief identity binds evidence and collection never calls a discarded imdb provider', async () => {
+  const sources = validSources();
+  let imdbCalls = 0;
+  const evidence = await collectDramaEvidence({
+    brief: brief(),
+    providers: { ...providersFrom(sources), imdb: async () => { imdbCalls += 1; throw new Error('must not run'); } },
+    now: NOW,
+  });
+  assert.equal(imdbCalls, 0);
+
+  for (const [field, value] of Object.entries({ schemaVersion: '2', pageId: 'other-page', entity: 'Other entity', targetKeyword: 'other keyword' })) {
+    const mismatched = structuredClone(evidence);
+    mismatched[field] = value;
+    seal(mismatched);
+    assert.match(validateDramaEvidence({ brief: brief(), evidence: mismatched, now: NOW }).errors.join('\n'), /brief|schemaVersion/i, field);
+  }
 });
 
 test('evidence block allowlists metadata before marking it untrusted', () => {

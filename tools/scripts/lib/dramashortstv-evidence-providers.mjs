@@ -25,6 +25,15 @@ function taskItems(task) {
   return Array.isArray(task?.result?.[0]?.items) ? task.result[0].items : [];
 }
 
+function isCanonicalAppleAppUrl(value) {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && url.hostname === 'apps.apple.com' && /^\/[a-z]{2}\/app\//i.test(url.pathname);
+  } catch {
+    return false;
+  }
+}
+
 export async function dataForSeoLive({ endpoint, tasks, login, password, fetchImpl = fetch }) {
   if (!endpoint || !Array.isArray(tasks) || !login || !password) {
     throw new Error('DataForSEO endpoint, tasks, login, and password are required');
@@ -67,6 +76,14 @@ export async function fetchGoogleSerpEvidence({ querySpecs, login, password, fet
     password,
     fetchImpl,
   });
+  const expectedPurposes = querySpecs.map(({ purpose }) => purpose);
+  const returnedPurposes = payload.tasks.map((task) => task?.tag);
+  if (payload.tasks.length !== expectedPurposes.length
+    || new Set(expectedPurposes).size !== expectedPurposes.length
+    || new Set(returnedPurposes).size !== returnedPurposes.length
+    || expectedPurposes.some((purpose) => !returnedPurposes.includes(purpose))) {
+    throw new Error('DataForSEO task count or purpose/tag set mismatch');
+  }
   const results = [];
   for (let index = 0; index < payload.tasks.length; index += 1) {
     const task = payload.tasks[index];
@@ -87,7 +104,7 @@ export async function fetchGoogleSerpEvidence({ querySpecs, login, password, fet
       });
     }
   }
-  return { status: results.length ? 'ok' : 'insufficient', collectedAt: now, results };
+  return { status: results.length ? 'ok' : 'insufficient', provider: 'dataforseo-google-serp', collectedAt: now, results };
 }
 
 function trendValues(value, out = []) {
@@ -102,20 +119,23 @@ function trendValues(value, out = []) {
 export async function fetchGoogleTrendsEvidence({ keyword, login, password, fetchImpl = fetch, now = new Date().toISOString() }) {
   const payload = await dataForSeoLive({
     endpoint: 'keywords_data/google_trends/explore/live',
-    tasks: [{ keyword, location_code: 2840, language_code: 'en', date_from: 'past_12_months', type: 'google_trends_graph' }],
+    tasks: [{ keywords: [keyword], location_code: 2840, language_code: 'en', time_range: 'past_12_months', item_types: ['google_trends_graph'] }],
     login,
     password,
     fetchImpl,
   });
   const firstResult = payload.tasks[0]?.result?.[0];
-  const item = Array.isArray(firstResult?.items) ? firstResult.items[0] : firstResult;
-  const checkUrl = safeUrl(item?.check_url);
-  const values = trendValues(item?.data?.map((point) => point?.values));
+  const graph = Array.isArray(firstResult?.items) ? firstResult.items.find((item) => item?.type === 'google_trends_graph') : null;
+  const checkUrl = safeUrl(firstResult?.check_url);
+  const values = trendValues(graph?.data?.map((point) => point?.values));
+  const results = graph ? [{ id: 'trends:graph:1', type: 'google_trends_graph', values }] : [];
   return {
     status: checkUrl && values.some((value) => value > 0) ? 'ok' : 'insufficient',
+    provider: 'dataforseo-google-trends',
     collectedAt: now,
     checkUrl,
     values,
+    results,
   };
 }
 
@@ -136,10 +156,10 @@ export async function fetchAppleAppEvidence({ entity, fetchImpl = fetch, now = n
   const results = (Array.isArray(payload?.results) ? payload.results : []).flatMap((item) => {
     const name = cleanText(item?.trackName);
     const trackUrl = safeUrl(item?.trackViewUrl);
-    if (!name || !trackUrl || !tokens.some((token) => name.toLowerCase().includes(token))) return [];
+    if (!name || !trackUrl || !isCanonicalAppleAppUrl(trackUrl) || !tokens.some((token) => name.toLowerCase().includes(token))) return [];
     return [{ id: `apple:${item.trackId ?? trackUrl}`, name, url: trackUrl, snippet: cleanText(item.description) }];
   });
-  return { status: results.length ? 'ok' : 'insufficient', collectedAt: now, results };
+  return { status: results.length ? 'ok' : 'insufficient', provider: 'apple-itunes', collectedAt: now, results };
 }
 
 export async function fetchRedditEvidence({ query, redditSearchImpl = redditSearch, now = new Date().toISOString() }) {
@@ -156,5 +176,5 @@ export async function fetchRedditEvidence({ query, redditSearchImpl = redditSear
       subreddit: cleanText(data?.subreddit),
     }];
   });
-  return { status: results.length ? 'ok' : 'insufficient', collectedAt: now, results };
+  return { status: results.length ? 'ok' : 'insufficient', provider: 'reddit-oauth', collectedAt: now, results };
 }

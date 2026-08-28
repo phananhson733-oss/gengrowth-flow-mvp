@@ -23,7 +23,7 @@ aliases:
 - **授稿链根因逐字复读**：seo-blog err/out.log 冻结 `08-13 19:00`、`duplicate` 计数 59（+0）、`tick complete` 停 `07-24 19:08`、`launchctl` 无 `seo-blog`/`gengrowth-author`、`disabled.501.plist` mtime 仍 `08-25 20:09:40`（无新 disable 动作）。
 - **08-26 那条 P1 延续到第 3 天**：`index_monitor` / `lane_watchdog` / `index_repair_resubmit` 三条末日志仍停 `2026-08-25`，08-26/27/28 均缺勤。属既有 P1 的延续而非新命中变化，按 08-22 规则不重复进群。
 - **本轮唯一新信号：flow-driver 09:05 一轮回填 11 步全失败，但同日已自愈** —— 04:26/06:27/08:28/10:30/12:32 五轮全部 `backfillConverged=true`，仅 09:05 那一簇失败，且恰好撞上 `ledger-reconcile` 的运行窗口（09:05:18→09:05:39）。手动重跑同样几步全部成功 → 判为瞬时抖动（并发限流/lock 争用），按先例下轮重试，不改配置。
-- **方法论与新产品线收敛**：DramaShortsTV 第三 lane 显式绑定专用 Google Sheet；指定 SOP 是写作规则 SSOT，最终业务产物仅为 `gengrowth-ops/inbox-maboyang/05-blog/dramashortstv/` 下的一份 Markdown。用户已确认文档写完后由 flow 直接 commit/push 到 `phananhson733-oss/gengrowth-ops`；设计推荐只 stage 目标文件、普通推 main、远端 SHA 回读，绝不带入其他本地改动。
+- **方法论与新产品线收敛**：DramaShortsTV 第三 lane 显式绑定专用 Google Sheet；指定 SOP 是写作规则 SSOT，最终业务产物仅为 `gengrowth-ops/inbox-maboyang/05-blog/dramashortstv/` 下的一份 Markdown。用户批准文档级精确 commit/push 方案；正式设计已写入 `docs/superpowers/specs/2026-08-28-dramashortstv-sheet-to-gengrowth-ops-design.md` 并单文件提交为 `e94117e34`，等待用户审阅后再写实现计划。
 
 ---
 
@@ -86,5 +86,17 @@ aliases:
 **🤖 回答：**
 
 Git 责任已确认：文章 Markdown 原子写入 `gengrowth-ops/inbox-maboyang/05-blog/dramashortstv/` 后，由 flow 直接提交到 `phananhson733-oss/gengrowth-ops`。只读核验当前 ops 仓库为干净 `main`、`HEAD...origin/main=0/0`、fetch/push remote 均正确。对比三种交付方式：推荐文档级精确 commit/push（仅 stage 目标文件、普通 push main、回读远端 SHA）；不推荐调用三仓 vault sync（可能带入不相关改动），PR 模式则对纯文档交付过重。等待用户批准该 Git 交付设计后，再按 brainstorming 流程写正式设计文档，尚未实施。
+
+---
+
+### Q6 — 16:00 [codex]
+
+**🙋 提问：**
+
+批准。
+
+**🤖 回答：**
+
+按 `superpowers:brainstorming` 批准后流程，将正式设计写入 `docs/superpowers/specs/2026-08-28-dramashortstv-sheet-to-gengrowth-ops-design.md`。设计明确：Sheet 只读、SOP 为写作 SSOT、最终仅写一个 Ops Markdown、禁用图片与网站发布、只 stage 目标文档、普通 push `gengrowth-ops/main`、远端 SHA/blob 回读、任何无关改动或分叉 fail-closed。完成 Obsidian frontmatter、占位符/矛盾/范围/歧义自检，`git diff --check` 通过；仅该设计文件提交，commit=`e94117e34fda3b18ebd2695882ba68a16564ed85`。提交后由现有外部同步机制推进到远端，本地 HEAD、`origin/main` 与 `git ls-remote` 三方均为该 SHA；未进入实现，现等待用户审阅设计文档。
 
 ---

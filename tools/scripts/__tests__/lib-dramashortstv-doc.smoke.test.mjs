@@ -680,6 +680,38 @@ test('inline code spans never create citations and leave URLs naked', () => {
   assert.match(errors, /naked http\(s\) URL/i);
 });
 
+test('multiline inline code spans cannot cite a number and leave their URL naked', () => {
+  const coded = GOOD_COMPARISON.replace(
+    'Both apps combine free opening episodes with coins or subscriptions.',
+    'DramaBox has 100 releases via `\n[verified](https://example.com/archive)\n`.',
+  );
+  const errors = validate(coded).errors.join('\n');
+  assert.match(errors, /unsourced factual number/i);
+  assert.match(errors, /naked http\(s\) URL/i);
+});
+
+test('multiline inline code spans hide headings until the matching delimiter closes', () => {
+  const hiddenHeading = GOOD_COMPARISON.replace(
+    '## SEO Rationale',
+    '`\n## SEO Rationale\n`',
+  );
+  assert.match(
+    validate(hiddenHeading).errors.join('\n'),
+    /comparison missing required heading: SEO rationale/i,
+  );
+});
+
+test('a shorter backtick run cannot close a multiline code span', () => {
+  const doubleDelimiter = GOOD_COMPARISON.replace(
+    '## SEO Rationale',
+    '``\n`\n## SEO Rationale\n``',
+  );
+  assert.match(
+    validate(doubleDelimiter).errors.join('\n'),
+    /comparison missing required heading: SEO rationale/i,
+  );
+});
+
 test('scanner accepts descriptive escaped and nested-bracket anchors', () => {
   const nested = `${GOOD_COMPARISON}\nSee [official \\[archive\\]](https://example.com/archive) before paying.`;
   assert.doesNotMatch(validate(nested).errors.join('\n'), /naked http\(s\) URL|Markdown link anchor/i);

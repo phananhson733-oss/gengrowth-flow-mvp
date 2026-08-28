@@ -193,22 +193,45 @@ function findClosingBracket(line, start) {
   return -1;
 }
 
-function maskInlineCodeSpans(line) {
-  const masked = [...line];
-  for (let start = 0; start < line.length; start++) {
-    if (line[start] !== '`') continue;
-    let runLength = 1;
-    while (line[start + runLength] === '`') runLength++;
-    const delimiter = '`'.repeat(runLength);
-    const end = line.indexOf(delimiter, start + runLength);
-    if (end === -1) {
-      start += runLength - 1;
+function backtickRunLength(line, start) {
+  let length = 0;
+  while (line[start + length] === '`') length++;
+  return length;
+}
+
+function matchingBacktickRun(line, start, delimiterLength) {
+  for (let index = start; index < line.length; index++) {
+    if (line[index] !== '`') continue;
+    const length = backtickRunLength(line, index);
+    if (length === delimiterLength) return index;
+    index += length - 1;
+  }
+  return -1;
+}
+
+function maskInlineCodeSpanLine(line, openDelimiterLength) {
+  const masked = line.split('');
+  let cursor = 0;
+  let delimiterLength = openDelimiterLength;
+  while (cursor < line.length) {
+    if (delimiterLength) {
+      const close = matchingBacktickRun(line, cursor, delimiterLength);
+      const end = close === -1 ? line.length : close + delimiterLength;
+      for (let index = cursor; index < end; index++) masked[index] = ' ';
+      cursor = end;
+      if (close === -1) break;
+      delimiterLength = 0;
       continue;
     }
-    for (let index = start; index < end + runLength; index++) masked[index] = ' ';
-    start = end + runLength - 1;
+    if (line[cursor] !== '`') {
+      cursor++;
+      continue;
+    }
+    delimiterLength = backtickRunLength(line, cursor);
+    for (let index = cursor; index < cursor + delimiterLength; index++) masked[index] = ' ';
+    cursor += delimiterLength;
   }
-  return masked.join('');
+  return { masked: masked.join(''), openDelimiterLength: delimiterLength };
 }
 
 function parseInlineLinks(line) {
@@ -332,6 +355,7 @@ function parseDramaMarkdown(markdown) {
   const definitions = new Map();
   const lineDetails = [];
   let openFence = null;
+  let inlineCodeDelimiterLength = 0;
 
   for (let index = 0; index < lines.length; index++) {
     const line = lines[index];
@@ -353,7 +377,9 @@ function parseDramaMarkdown(markdown) {
       continue;
     }
 
-    const definition = parseReferenceDefinition(line);
+    const code = maskInlineCodeSpanLine(line, inlineCodeDelimiterLength);
+    inlineCodeDelimiterLength = code.openDelimiterLength;
+    const definition = parseReferenceDefinition(code.masked);
     if (definition) {
       visibleLines.push('');
       const detail = { line, definition, definitionLine: true };
@@ -364,14 +390,14 @@ function parseDramaMarkdown(markdown) {
       continue;
     }
 
-    visibleLines.push(line);
-    const detail = { line, candidates: parseInlineLinks(maskInlineCodeSpans(line)), definition: null };
+    visibleLines.push(code.masked);
+    const detail = { line, candidates: parseInlineLinks(code.masked), definition: null };
     lineDetails.push(detail);
     if (detail.definition?.validSyntax && !definitions.has(detail.definition.label)) {
       definitions.set(detail.definition.label, { ...detail.definition, line: index + 1 });
     }
     for (const candidate of detail.candidates) candidates.push({ ...candidate, line: index + 1, detail });
-    const heading = line.match(/^(#{1,6})\s+(.+?)\s*#*\s*$/u);
+    const heading = code.masked.match(/^(#{1,6})\s+(.+?)\s*#*\s*$/u);
     if (heading) headings.push({ level: heading[1].length, text: heading[2].trim(), line: index + 1 });
   }
 

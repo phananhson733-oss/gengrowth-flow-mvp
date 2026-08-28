@@ -17,6 +17,7 @@ import {
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { sanitize } from './gg-shared.mjs';
+import { parseDramaComparisonSides } from './dramashortstv-evidence-providers.mjs';
 
 export const DRAMA_WORKBOOK_ID = '1-Qbv2MLRbiHDHdSi2csdatIVqxqCwkfcclkuGFN1dos';
 export const DRAMA_OUTPUT_SUBDIR = 'inbox-maboyang/05-blog/dramashortstv';
@@ -136,6 +137,24 @@ function yamlString(value) {
 
 function withoutHtmlComments(markdown) {
   return String(markdown).replace(/<!--[\s\S]*?(?:-->|$)/gu, (comment) => comment.replace(/[^\n]/gu, ' '));
+}
+
+function sourceIdCommentsForLine(line, lineNumber) {
+  const comments = [];
+  let cursor = 0;
+  while (cursor < line.length) {
+    const start = line.indexOf('<!--', cursor);
+    if (start === -1) break;
+    const close = line.indexOf('-->', start + 4);
+    const end = close === -1 ? line.length : close + 3;
+    const content = line.slice(start + 4, close === -1 ? line.length : close).trim();
+    if (/^source-id\s*:/iu.test(content)) {
+      const match = content.match(/^source-id\s*:\s*([^\s]+)\s*$/iu);
+      comments.push({ id: match?.[1] || '', line: lineNumber, start, end, malformed: !match || close === -1 });
+    }
+    cursor = end;
+  }
+  return comments;
 }
 
 function fenceMarkerForLine(line) {
@@ -344,13 +363,16 @@ function proseParagraphs(lines) {
 }
 
 function parseDramaMarkdown(markdown) {
-  const source = withoutHtmlComments(stripFrontmatter(markdown));
+  const rawSource = stripFrontmatter(markdown);
+  const rawLines = rawSource.split('\n');
+  const source = withoutHtmlComments(rawSource);
   const lines = source.split('\n');
   const visibleLines = [];
   const headings = [];
   const fences = [];
   const links = [];
   const nakedUrls = [];
+  const sourceIdComments = [];
   const candidates = [];
   const definitions = new Map();
   const lineDetails = [];
@@ -359,6 +381,7 @@ function parseDramaMarkdown(markdown) {
 
   for (let index = 0; index < lines.length; index++) {
     const line = lines[index];
+    const rawLine = rawLines[index] || '';
     const marker = fenceMarkerForLine(line);
     if (marker) {
       fences.push({ line: index + 1, marker });
@@ -376,6 +399,8 @@ function parseDramaMarkdown(markdown) {
       lineDetails.push({ line, hidden: true });
       continue;
     }
+
+    sourceIdComments.push(...sourceIdCommentsForLine(rawLine, index + 1));
 
     const code = maskInlineCodeSpanLine(line, inlineCodeDelimiterLength);
     inlineCodeDelimiterLength = code.openDelimiterLength;
@@ -406,7 +431,7 @@ function parseDramaMarkdown(markdown) {
   for (const candidate of candidates) {
     if (candidate.type === 'inline') {
       if (!candidate.validSyntax) continue;
-      links.push({ anchor: candidate.anchor, destination: candidate.destination, line: candidate.line, external: /^https?:\/\//iu.test(candidate.destination) });
+      links.push({ anchor: candidate.anchor, destination: candidate.destination, line: candidate.line, start: candidate.start, end: candidate.end, external: /^https?:\/\//iu.test(candidate.destination) });
       if (candidate.anchor) {
         const ranges = consumedRangesByLine.get(candidate.line) || [];
         ranges.push({ start: candidate.start, end: candidate.end });
@@ -416,7 +441,7 @@ function parseDramaMarkdown(markdown) {
     }
     const definition = definitions.get(candidate.label);
     if (!definition) continue;
-    links.push({ anchor: candidate.anchor, destination: definition.destination, line: candidate.line, external: /^https?:\/\//iu.test(definition.destination) });
+    links.push({ anchor: candidate.anchor, destination: definition.destination, line: candidate.line, start: candidate.start, end: candidate.end, external: /^https?:\/\//iu.test(definition.destination) });
     if (candidate.anchor) usedDefinitions.add(candidate.label);
   }
 
@@ -444,9 +469,122 @@ function parseDramaMarkdown(markdown) {
     fences,
     openFence,
     links,
+    sourceIdComments,
+    rawLines,
     nakedUrls,
     prose,
   };
+}
+
+function canonicalExternalUrl(value) {
+  try {
+    const url = new URL(String(value || ''));
+    return ['http:', 'https:'].includes(url.protocol) ? url.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
+function evidenceCitationIndex(evidence, errors) {
+  const byId = new Map();
+  for (const source of Object.values(evidence?.sources || {})) {
+    for (const result of Array.isArray(source?.results) ? source.results : []) {
+      const id = text(result?.id);
+      if (!id) continue;
+      if (byId.has(id)) {
+        errors.push(`duplicate evidence citation id: ${id}`);
+        continue;
+      }
+      const rawUrl = text(result?.url);
+      const url = rawUrl ? canonicalExternalUrl(rawUrl) : null;
+      if (rawUrl && !url) errors.push(`malformed canonical evidence URL for ${id}`);
+      const entities = [...new Set([
+        ...(Array.isArray(result?.entities) ? result.entities : []),
+        result?.entity,
+        result?.side,
+      ].map(text).filter(Boolean))];
+      byId.set(id, { id, url, entities });
+    }
+  }
+  return byId;
+}
+
+function normalizedAnchorText(value) {
+  return String(value || '')
+    .replace(/\\([\\`*{}\[\]()#+\-.!_>~])/gu, '$1')
+    .replace(/[*_~`]+/gu, '')
+    .trim();
+}
+
+function includesEntity(value, entity) {
+  return String(value || '').toLocaleLowerCase('en-US').includes(String(entity || '').toLocaleLowerCase('en-US'));
+}
+
+function validateCitationClosure({ view, contentType, brief, evidence, errors }) {
+  const externalLinks = view.links.filter((link) => link.external);
+  if (!externalLinks.length && !view.sourceIdComments.length) return;
+  if (!evidence || typeof evidence !== 'object') {
+    errors.push('evidence is required to validate external source-id citations');
+    return;
+  }
+  const byId = evidenceCitationIndex(evidence, errors);
+  const usedComments = new Set();
+  const usedIds = new Set();
+  const citationForLink = new Map();
+  for (const link of externalLinks) {
+    const canonicalLink = canonicalExternalUrl(link.destination);
+    const knownUrl = canonicalLink && [...byId.values()].some((entry) => entry.url === canonicalLink);
+    if (!knownUrl) errors.push(`unknown external URL at line ${link.line}: ${link.destination}`);
+    const candidates = view.sourceIdComments
+      .map((comment, index) => ({ comment, index }))
+      .filter(({ comment, index }) => !usedComments.has(index)
+        && comment.line === link.line
+        && comment.start >= link.end
+        && /^\s*$/u.test((view.rawLines[link.line - 1] || '').slice(link.end, comment.start)))
+      .sort((left, right) => left.comment.start - right.comment.start);
+    const adjacent = candidates[0];
+    if (!adjacent) {
+      errors.push(`external citation at line ${link.line} missing adjacent source-id comment`);
+      continue;
+    }
+    usedComments.add(adjacent.index);
+    const { comment } = adjacent;
+    if (comment.malformed || !comment.id) {
+      errors.push(`malformed source-id comment at line ${comment.line}`);
+      continue;
+    }
+    if (usedIds.has(comment.id)) errors.push(`duplicate source-id use: ${comment.id}`);
+    usedIds.add(comment.id);
+    const entry = byId.get(comment.id);
+    if (!entry) {
+      errors.push(`unknown evidence source-id: ${comment.id}`);
+      continue;
+    }
+    if (!entry.url || entry.url !== canonicalLink) {
+      errors.push(`source-id URL mismatch for ${comment.id} at line ${link.line}`);
+      continue;
+    }
+    citationForLink.set(link, entry);
+  }
+  for (let index = 0; index < view.sourceIdComments.length; index++) {
+    if (!usedComments.has(index)) errors.push(`orphan source-id comment at line ${view.sourceIdComments[index].line}`);
+  }
+  if (contentType !== 'comparison') return;
+  const sides = parseDramaComparisonSides(brief);
+  if (sides.length !== 2) {
+    errors.push('comparison brief must contain exactly two sides around vs or versus');
+    return;
+  }
+  for (const paragraph of view.prose) {
+    const mentioned = sides.filter((side) => includesEntity(paragraph.text, side));
+    if (mentioned.length !== 1) continue;
+    for (const link of externalLinks.filter((item) => item.line >= paragraph.startLine && item.line <= paragraph.endLine)) {
+      const entry = citationForLink.get(link);
+      if (entry && !entry.entities.some((entity) => includesEntity(entity, mentioned[0]) || includesEntity(mentioned[0], entity))) {
+        errors.push(`comparison-side citation for ${mentioned[0]} lacks matching evidence metadata`);
+      }
+    }
+  }
 }
 
 function validateHeadingTopology(rule, headings, errors) {
@@ -659,7 +797,7 @@ export function buildDramaPrompt({ brief, sopText, evidence }) {
   ].join('\n');
 }
 
-export function validateDramaDraft({ markdown, contentType, brief }) {
+export function validateDramaDraft({ markdown, contentType, brief, evidence }) {
   const errors = [];
   const rawSource = stripFrontmatter(markdown);
   const view = parseDramaMarkdown(markdown);
@@ -686,12 +824,13 @@ export function validateDramaDraft({ markdown, contentType, brief }) {
   for (const link of view.links) {
     if (!link.anchor) {
       errors.push(`empty Markdown link anchor at line ${link.line}`);
-    } else if (/^(?:here|click here|this link|link|read more|more|source)$/iu.test(link.anchor)) {
+    } else if (/^(?:here|click here|this link|link|read more|more|source)$/iu.test(normalizedAnchorText(link.anchor))) {
       errors.push(`generic Markdown link anchor at line ${link.line}`);
     } else if (/^(?:https?:\/\/|www\.)/iu.test(link.anchor)) {
       errors.push(`URL-shaped Markdown link anchor at line ${link.line}`);
     }
   }
+  validateCitationClosure({ view, contentType, brief, evidence, errors });
   for (const url of view.nakedUrls) errors.push(`naked http(s) URL at line ${url.line}`);
   if (rule) {
     validateHeadingTopology(rule, view.h2s, errors);
@@ -726,7 +865,13 @@ export function validateDramaDraft({ markdown, contentType, brief }) {
     const firstH1 = bodyLines.findIndex((line) => /^#\s+/.test(line));
     const nextHeading = bodyLines.findIndex((line, index) => index > firstH1 && /^##\s+/.test(line));
     const opening = bodyLines.slice(firstH1, nextHeading === -1 ? bodyLines.length : nextHeading).join(' ');
-    if (!/ReelShort\s+actor/iu.test(opening)) errors.push('actor profile missing same-name qualifier "ReelShort actor" in H1/opening');
+    const sameName = evidence?.sources?.sameName;
+    const resolvedClean = sameName?.classification === 'clean'
+      && sameName?.pollution === false
+      && sameName?.qualifierRequired === false;
+    if (!resolvedClean && !/ReelShort\s+actor/iu.test(opening)) {
+      errors.push('actor profile missing same-name qualifier "ReelShort actor" in H1/opening');
+    }
   }
   return { ok: errors.length === 0, errors };
 }

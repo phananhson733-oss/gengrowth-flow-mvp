@@ -15,16 +15,19 @@ import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { classifyCodex } from './gg-preview-gate.mjs';
+import { parseReviewedInputDigest } from './gg-codex-pr-review.mjs';
 import { loadEnv } from './lib/gg-shared.mjs';
 import { stripPreH1 } from './lib/strip-preamble.mjs';
 import { WORKER_CWD } from './lib/worker-cwd.mjs';
 import {
   buildDramaEvidenceBlock,
+  classifyActorSameNameEvidence,
   collectDramaEvidence,
   sha256Text,
   validateDramaEvidence,
 } from './lib/dramashortstv-evidence.mjs';
 import {
+  buildDramaResearchPlan,
   fetchAppleAppEvidence,
   fetchGoogleSerpEvidence,
   fetchGoogleTrendsEvidence,
@@ -227,6 +230,10 @@ export function prepareDramaFactualReviewInput({ cacheDir, pageId, draft, eviden
   return { path, draftSha256, evidenceSha256, inputSha256 };
 }
 
+export function parseReviewerInputDigest(stdout, expectedInputSha256) {
+  return parseReviewedInputDigest(stdout, expectedInputSha256);
+}
+
 export function realFactualReview({ draft, brief, evidence }) {
   const cacheDir = join(FLOW, '.gg-cache', 'sites', 'dramashortstv', brief.pageId);
   const pinned = prepareDramaFactualReviewInput({ cacheDir, pageId: brief.pageId, draft, evidence });
@@ -234,7 +241,11 @@ export function realFactualReview({ draft, brief, evidence }) {
   if (sha256Text(immediateBytes) !== pinned.inputSha256) {
     throw new Error(`immutable factual-review input changed before review: ${pinned.path}`);
   }
-  const result = spawnSync(process.execPath, [FACTUAL_REVIEW, '--source', pinned.path], {
+  const result = spawnSync(process.execPath, [
+    FACTUAL_REVIEW,
+    '--source', pinned.path,
+    '--expected-source-sha256', pinned.inputSha256,
+  ], {
     cwd: FLOW,
     encoding: 'utf8',
     timeout: 10 * 60 * 1000,
@@ -246,12 +257,19 @@ export function realFactualReview({ draft, brief, evidence }) {
     stdout: result.stdout,
     timedOut,
   });
+  let reviewedInputSha256;
+  if ((result.status ?? 1) === 0) {
+    reviewedInputSha256 = parseReviewerInputDigest(result.stdout, pinned.inputSha256);
+  }
   return {
     verdict: classified.verdict,
     reason: classified.reason,
     stderr: String(result.stderr || result.error?.message || ''),
-    reviewedDraftSha256: pinned.draftSha256,
-    reviewedEvidenceSha256: pinned.evidenceSha256,
+    ...(reviewedInputSha256 ? {
+      reviewedInputSha256,
+      reviewedDraftSha256: pinned.draftSha256,
+      reviewedEvidenceSha256: pinned.evidenceSha256,
+    } : {}),
   };
 }
 
@@ -275,37 +293,41 @@ async function realCollectEvidence({ brief }) {
     const login = process.env.GG_DATAFORSEO_LOGIN;
     const password = process.env.GG_DATAFORSEO_PASSWORD;
     if (!login || !password) throw new Error('GG_DATAFORSEO_LOGIN / GG_DATAFORSEO_PASSWORD missing for DramaShortsTV research');
+    const plan = buildDramaResearchPlan(brief);
     const providers = {
-      serp: ({ brief: current, now }) => fetchGoogleSerpEvidence({
-        querySpecs: [
-          { query: current.targetKeyword, purpose: 'research' },
-          { query: `${current.entity} reviews complaints cancellation`, purpose: 'friction' },
-          { query: `site:imdb.com ${current.entity}`, purpose: 'imdb' },
-        ],
+      serp: ({ now }) => fetchGoogleSerpEvidence({
+        querySpecs: plan.serpQuerySpecs,
         login,
         password,
         now,
       }),
-      appStore: ({ brief: current, now }) => fetchAppleAppEvidence({ entity: current.entity, now }),
-      reddit: ({ brief: current, now }) => fetchRedditEvidence({ query: `${current.entity} reviews cancellation`, now }),
-      trends: ({ brief: current, now }) => fetchGoogleTrendsEvidence({ keyword: current.targetKeyword, login, password, now }),
-      sameName: async ({ brief: current, now }) => {
+      appStore: ({ now }) => fetchAppleAppEvidence({ entities: plan.appStoreEntities, now }),
+      reddit: async ({ now, entities }) => {
+        const results = [];
+        for (const entity of entities) {
+          const found = await fetchRedditEvidence({ query: `${entity} reviews cancellation`, entity, now });
+          results.push(...found.results);
+        }
+        return { status: results.length ? 'ok' : 'insufficient', provider: 'reddit-oauth', collectedAt: now, results };
+      },
+      trends: ({ now }) => fetchGoogleTrendsEvidence({ keyword: plan.trendsKeyword, login, password, now }),
+      sameName: async ({ now }) => {
         const result = await fetchGoogleSerpEvidence({
-          querySpecs: [{ query: `"${current.entity}"`, purpose: 'same-name' }],
+          querySpecs: plan.sameNameQuerySpecs,
           login,
           password,
           now,
         });
+        const classification = classifyActorSameNameEvidence({ brief, source: result });
         return {
           ...result,
           origin: 'serp',
           purpose: 'same-name',
-          pollution: result.results.length > 0,
-          qualifierRequired: true,
+          ...classification,
         };
       },
     };
-    return collectDramaEvidence({ brief, providers });
+    return collectDramaEvidence({ brief, providers, plan });
   });
 }
 
@@ -422,7 +444,7 @@ export async function runDramaShortsDelivery(args, deps = realDependencies()) {
   const evidenceSha256 = sha256Text(evidenceBlock);
   const prompt = await deps.buildPrompt({ brief, sopText, evidence: evidenceBlock, evidenceSha256 });
   const draft = await deps.generate({ prompt, brief, model: args.model });
-  const qa = await deps.validate({ markdown: draft, contentType: brief.contentType, brief });
+  const qa = await deps.validate({ markdown: draft, contentType: brief.contentType, brief, evidence });
   if (!qa?.ok) throw new Error(`DramaShortsTV QA failed: ${(qa?.errors || ['unknown QA failure']).join(' | ')}`);
   const draftSha256 = sha256Text(draft);
   const factual = await deps.factualReview({

@@ -4,12 +4,21 @@ import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 
 import {
+  buildDramaResearchPlan,
   dataForSeoLive,
   fetchAppleAppEvidence,
   fetchGoogleSerpEvidence,
   fetchGoogleTrendsEvidence,
   fetchRedditEvidence,
 } from '../lib/dramashortstv-evidence-providers.mjs';
+
+function planBrief(contentType) {
+  return {
+    contentType,
+    targetKeyword: contentType === 'comparison' ? 'dramabox vs reelshort' : 'dramabox reviews',
+    entity: contentType === 'comparison' ? 'DramaBox vs ReelShort' : contentType === 'actor-profile' ? 'Evan Adams' : 'DramaBox',
+  };
+}
 
 function jsonResponse(body, { ok = true, status = 200 } = {}) {
   return { ok, status, json: async () => body, text: async () => JSON.stringify(body) };
@@ -33,6 +42,26 @@ test('DataForSEO rejects HTTP, top-level, and task failures', async () => {
   await assert.rejects(() => dataForSeoLive({ ...request, fetchImpl: async () => jsonResponse({}, { ok: false, status: 429 }) }), /HTTP 429/);
   await assert.rejects(() => dataForSeoLive({ ...request, fetchImpl: async () => jsonResponse({ status_code: 40100, status_message: 'bad top level' }) }), /top-level/i);
   await assert.rejects(() => dataForSeoLive({ ...request, fetchImpl: async () => jsonResponse({ status_code: 20000, tasks: [{ status_code: 40500, status_message: 'bad task' }] }) }), /task/i);
+});
+
+test('research plans select exact providers and query purposes for all six content types', () => {
+  const expected = {
+    'safety-guide': { providers: ['serp', 'appStore'], purposes: ['research', 'friction'] },
+    'app-profile': { providers: ['serp', 'appStore'], purposes: ['research', 'friction'] },
+    comparison: { providers: ['serp', 'appStore'], purposes: ['research', 'friction', 'research', 'friction'] },
+    'actor-profile': { providers: ['serp', 'sameName'], purposes: ['research', 'imdb'] },
+    'brand-playlist': { providers: ['serp', 'trends'], purposes: ['research', 'imdb'] },
+    'reader-bridge': { providers: ['serp'], purposes: ['research', 'friction'] },
+  };
+  for (const [contentType, contract] of Object.entries(expected)) {
+    const plan = buildDramaResearchPlan(planBrief(contentType));
+    assert.deepEqual(plan.mandatoryProviders, contract.providers, contentType);
+    assert.deepEqual(plan.serpQuerySpecs.map(({ purpose }) => purpose), contract.purposes, contentType);
+    assert.equal(plan.redditFallback, ['safety-guide', 'app-profile', 'comparison', 'reader-bridge'].includes(contentType), contentType);
+  }
+  const actor = buildDramaResearchPlan(planBrief('actor-profile'));
+  assert.deepEqual(actor.sameNameQuerySpecs.map(({ purpose }) => purpose), ['same-name-exact', 'same-name-qualified']);
+  assert.throws(() => buildDramaResearchPlan(planBrief('unsupported')), /unsupported/i);
 });
 
 test('Google SERP issues one Live API task per query and reads purpose only from task.data.tag', async () => {
@@ -66,6 +95,7 @@ test('Google SERP issues one Live API task per query and reads purpose only from
     title: 'DramaBox reviews',
     snippet: 'Useful evidence',
     domain: 'reviews.example',
+    entities: [],
   }]);
 
   await assert.rejects(() => fetchGoogleSerpEvidence({
@@ -98,6 +128,7 @@ test('Google Trends uses the official request/response shape and fails closed fo
   assert.deepEqual(requestBody[0].item_types, ['google_trends_graph']);
   assert.equal(nonZero.checkUrl, 'https://trends.google.com/trends/explore?q=DramaBox');
   assert.equal(nonZero.status, 'ok');
+  assert.equal(nonZero.results[0].url, nonZero.checkUrl);
 
   for (const item of [
     { check_url: 'https://trends.google.com/trends/explore?q=DramaBox', items: [{ type: 'google_trends_graph', data: [{ values: [0, 0] }] }] },
@@ -129,6 +160,25 @@ test('Apple evidence only keeps results whose app name matches relevant entity t
   assert.match(appleUrl, /country=us/);
   assert.match(appleUrl, /entity=software/);
   assert.deepEqual(result.results.map((item) => item.name), ['DramaBox: Short Drama']);
+});
+
+test('comparison Apple evidence queries and annotates each side independently', async () => {
+  const requested = [];
+  const result = await fetchAppleAppEvidence({
+    entities: ['DramaBox', 'ReelShort'],
+    fetchImpl: async (url) => {
+      const term = new URL(url).searchParams.get('term');
+      requested.push(term);
+      return jsonResponse({ results: [{
+        trackId: term === 'DramaBox' ? 1 : 2,
+        trackName: `${term}: Short Drama`,
+        trackViewUrl: `https://apps.apple.com/us/app/${term.toLowerCase()}/id${term === 'DramaBox' ? 1 : 2}`,
+        description: `${term} episodes`,
+      }] });
+    },
+  });
+  assert.deepEqual(requested, ['DramaBox', 'ReelShort']);
+  assert.deepEqual(result.results.map(({ entities }) => entities), [['DramaBox'], ['ReelShort']]);
 });
 
 test('Reddit evidence is site-wide, drops author, and sanitizes untrusted title/body', async () => {

@@ -82,7 +82,7 @@ function fakeDeps(calls, overrides = {}, captures = {}) {
     buildEvidenceBlock: () => EVIDENCE_BLOCK,
     buildPrompt: (input) => { calls.push('prompt'); captures.prompt = input; return '# Prompt\n' + 'prompt '.repeat(300); },
     generate: async () => { calls.push('generate'); return DRAFT; },
-    validate: () => { calls.push('qa'); return { ok: true, errors: [] }; },
+    validate: (input) => { calls.push('qa'); captures.qa = input; return { ok: true, errors: [] }; },
     factualReview: async (input) => {
       calls.push('factual-review');
       captures.factualReview = input;
@@ -298,6 +298,7 @@ test('prompt and factual review are bound to the exact same evidence-block SHA',
   const evidenceSha256 = sha256Text(EVIDENCE_BLOCK);
   assert.equal(captures.prompt.evidence, EVIDENCE_BLOCK);
   assert.equal(captures.prompt.evidenceSha256, evidenceSha256);
+  assert.equal(captures.qa.evidence, EVIDENCE);
   assert.equal(captures.factualReview.evidence, EVIDENCE_BLOCK);
   assert.equal(captures.factualReview.evidenceSha256, evidenceSha256);
 });
@@ -396,6 +397,24 @@ test('factual review inputs are immutable and addressed by both draft and eviden
   } finally {
     rmSync(cacheDir, { recursive: true, force: true });
   }
+});
+
+test('Drama factual review accepts exactly one matching reviewer-emitted input digest', () => {
+  assert.equal(typeof dramaCli.parseReviewerInputDigest, 'function');
+  const expected = 'a'.repeat(64);
+  assert.equal(
+    dramaCli.parseReviewerInputDigest(`Reviewed.\nREVIEWED_INPUT_SHA256: ${expected}\nVERDICT: PASS\n`, expected),
+    expected,
+  );
+  assert.throws(() => dramaCli.parseReviewerInputDigest('VERDICT: PASS\n', expected), /digest|sha256/i);
+  assert.throws(
+    () => dramaCli.parseReviewerInputDigest(`REVIEWED_INPUT_SHA256: ${'b'.repeat(64)}\nVERDICT: PASS\n`, expected),
+    /mismatch/i,
+  );
+  assert.throws(
+    () => dramaCli.parseReviewerInputDigest(`REVIEWED_INPUT_SHA256: ${expected}\nREVIEWED_INPUT_SHA256: ${expected}\nVERDICT: PASS\n`, expected),
+    /exactly one|duplicate/i,
+  );
 });
 
 test('apply returns already-delivered before SOP or LLM generation', async () => {

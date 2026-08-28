@@ -85,13 +85,23 @@ remote 或不可验证 SHA 都会 fail-closed；不会自动 stash、reset、mer
 ### 5.1 Apply 前置条件与 provider 用量
 
 `--apply` 会进行真实搜证；必须先在受限的环境文件中配置
-`GG_DATAFORSEO_LOGIN` 和 `GG_DATAFORSEO_PASSWORD`。每篇尝试固定发起 **5 次** DataForSEO Live
-请求：Google Organic 分别查询目标词、真实 friction 和 IMDb（3 次，每个请求严格只有一个 task），
-Google Trends（1 次），以及演员同名污染查询（1 次）。Apple Search 不要求本地凭据。
+`GG_DATAFORSEO_LOGIN` 和 `GG_DATAFORSEO_PASSWORD`。Research plan 会按内容类型只调用必需来源；每个
+DataForSEO Live 请求严格只有一个 task，精确请求数如下：
 
-Reddit OAuth（`GG_REDDIT_CLIENT_ID`、`GG_REDDIT_CLIENT_SECRET`，以及可选的用户名/密码）只有在
-Google SERP 已给出可验证的真实 friction（规范 Reddit 帖子或 Apple App Store 结果）时才是可选项。
-若没有这类 Google 结果，必须有有效 Reddit OAuth 证据；两者都缺失时不得生成或交付。
+| 内容类型 | DataForSEO Live | Apple Search | Reddit fallback |
+| --- | ---: | ---: | ---: |
+| safety guide / app profile | 2 次 Organic（research、friction） | 1 次 | 0–1 次 |
+| comparison | 4 次 Organic（两边各 research、friction） | 2 次（每边一次） | 0–2 次（只查缺 friction 的侧） |
+| actor profile | 4 次 Organic（research、IMDb、exact-name、qualified actor） | 0 次 | 0 次 |
+| brand playlist | 2 次 Organic（research、IMDb）+ 1 次 Trends | 0 次 | 0 次 |
+| reader bridge | 2 次 Organic（research、friction） | 0 次 | 0–1 次 |
+
+IMDb 只从同批 Google SERP 结果派生，不发直接 IMDb 请求；未被当前类型需要的来源会记录为
+`unavailable/not-required`，不会产生 I/O。Apple Search 不要求本地凭据。
+
+Reddit OAuth（`GG_REDDIT_CLIENT_ID`、`GG_REDDIT_CLIENT_SECRET`，以及可选的用户名/密码）仅在
+Google SERP 没有给出可验证的真实 friction（规范 Reddit 帖子或 Apple App Store 结果）时调用。
+comparison 按侧判断 fallback；任一侧缺少 SERP/App Store/friction 证据都不得生成或交付。
 
 ### 5.2 证据与事实审缓存
 
@@ -102,13 +112,16 @@ Google SERP 已给出可验证的真实 friction（规范 Reddit 帖子或 Apple
 
 事实审输入是同一缓存目录内不可变的
 `<page_id>.factual-source.<draft-sha256>.<evidence-sha256>.md`。该文件含经清洗、标记为不可信的证据
-及草稿，并在创建后回读校验字节和 SHA-256；并发运行不会复用可覆盖的审稿输入。
+及草稿，并在创建后回读校验字节和 SHA-256；并发运行不会复用可覆盖的审稿输入。Drama lane 还会把
+combined-input SHA-256 传给 Codex source strict mode；只有 reviewer 自己恰好回显一行匹配的
+`REVIEWED_INPUT_SHA256`，其 `PASS` 才有效，父进程不会自行补写 digest。
 
 ### 5.3 Fail-closed 与 dry-run 边界
 
 任何必需证据缺失、来源身份不匹配、DataForSEO HTTP/顶层/task 错误、无效或过期证据、Evidence SHA
-不匹配、草稿 QA 失败、事实审不是 `PASS`、事实审的 draft/evidence SHA 不匹配，或 Ops Git preflight
-失败，都会在写 Ops Markdown 或 Git 交付之前停止。
+不匹配、外部 citation 的 ID/URL/同行 comment 闭环失败、演员同名分类为 uncertain、comparison 任一侧
+缺少 SERP/App Store/friction、草稿 QA 失败、事实审不是 `PASS`、reviewer input digest 或事实审的
+draft/evidence SHA 不匹配，或 Ops Git preflight 失败，都会在写 Ops Markdown 或 Git 交付之前停止。
 
 未传 `--apply` 时是只读 dry-run：它只通过 Sheet bridge 读取指定 Google Sheet 并规划目标路径；不会
 调用 DataForSEO、Apple、Reddit 等 research provider，不会调用 Claude/事实审 LLM，不会读取或写入 Ops

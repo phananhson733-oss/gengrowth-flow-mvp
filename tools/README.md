@@ -1,7 +1,7 @@
 ---
 title: 工具区
 date: 2026-04-14
-updated: 2026-04-16
+updated: 2026-08-28
 type: index
 tags:
   - tools
@@ -47,3 +47,33 @@ aliases:
 2. 纯说明性、分析性、学习型文档优先放 `参考资料/`，不要混入工具目录。
 3. `Clippings/` 是系统自动落盘入口，不属于 `tools/`，本轮迁移保持冻结。
 4. `wechat-cli` 这类外部代码仓，如需纳入本仓，目标位置统一为 `external/`。
+
+---
+
+## 5. DramaShortsTV 文档生产线
+
+`scripts/gg-dramashortstv-doc.mjs` 从指定 Google Sheet 只读获取一个选题，按
+`gengrowth-ops/inbox-maboyang/05-blog/dramashortstv/2026-08-26-dramashortstv-blog写作SOP-v1.0.md`
+生成并质检一份 Markdown。它不生成 hero 或任何图片，也不调用网站、Oracle、GenGrowth、
+Supabase、Vercel、sitemap 或 indexing 发布路径。
+
+只读预检：
+
+```bash
+node tools/scripts/gg-dramashortstv-doc.mjs \
+  --workbook 1-Qbv2MLRbiHDHdSi2csdatIVqxqCwkfcclkuGFN1dos \
+  --row 4 --json
+```
+
+实际生成与交付：
+
+```bash
+node tools/scripts/gg-dramashortstv-doc.mjs \
+  --workbook 1-Qbv2MLRbiHDHdSi2csdatIVqxqCwkfcclkuGFN1dos \
+  --row 4 --apply --json
+```
+
+`--apply` 只有在 QA、事实审和 Git preflight 全部通过时，才会原子写入
+`~/gengrowth-ops/inbox-maboyang/05-blog/dramashortstv/`，并且只 stage 目标 Markdown，普通
+push 到 `phananhson733-oss/gengrowth-ops` 的 `main`。任何无关本地修改、远端分叉、错误
+remote 或不可验证 SHA 都会 fail-closed；不会自动 stash、reset、merge、rebase、clean 或 force push。

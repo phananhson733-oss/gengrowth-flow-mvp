@@ -1,13 +1,18 @@
 #!/usr/bin/env node
 
 import { strict as assert } from 'node:assert';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { test } from 'node:test';
+import { fileURLToPath } from 'node:url';
 
 import {
   parseDramaArgs,
   runDramaShortsDelivery,
 } from '../gg-dramashortstv-doc.mjs';
 import { DRAMA_WORKBOOK_ID } from '../lib/dramashortstv-doc.mjs';
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 
 const NORMALIZED = {
   pageId: 'page_dramabox_vs_reelshort',
@@ -152,4 +157,12 @@ test('parser rejects unsafe rows, page ids, models, and unknown flags', () => {
   assert.throws(() => parseDramaArgs(['--workbook', DRAMA_WORKBOOK_ID, '--page-id', '../escape']), /page-id/i);
   assert.throws(() => parseDramaArgs(['--workbook', DRAMA_WORKBOOK_ID, '--row', '4', '--model', 'other']), /model/i);
   assert.throws(() => parseDramaArgs(['--workbook', DRAMA_WORKBOOK_ID, '--row', '4', '--surprise']), /unknown flag/i);
+});
+
+test('tools README documents DramaShortsTV hard boundaries', () => {
+  const readme = readFileSync(join(ROOT, 'tools', 'README.md'), 'utf8');
+  assert.match(readme, /gg-dramashortstv-doc\.mjs/);
+  assert.match(readme, /Google Sheet.*只读|Google Sheet.*read-only/iu);
+  assert.match(readme, /不生成.*图片|no hero/iu);
+  assert.match(readme, /phananhson733-oss\/gengrowth-ops/);
 });

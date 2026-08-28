@@ -23,7 +23,7 @@ aliases:
 - **授稿链根因逐字复读**：seo-blog err/out.log 冻结 `08-13 19:00`、`duplicate` 计数 59（+0）、`tick complete` 停 `07-24 19:08`、`launchctl` 无 `seo-blog`/`gengrowth-author`、`disabled.501.plist` mtime 仍 `08-25 20:09:40`（无新 disable 动作）。
 - **08-26 那条 P1 延续到第 3 天**：`index_monitor` / `lane_watchdog` / `index_repair_resubmit` 三条末日志仍停 `2026-08-25`，08-26/27/28 均缺勤。属既有 P1 的延续而非新命中变化，按 08-22 规则不重复进群。
 - **本轮唯一新信号：flow-driver 09:05 一轮回填 11 步全失败，但同日已自愈** —— 04:26/06:27/08:28/10:30/12:32 五轮全部 `backfillConverged=true`，仅 09:05 那一簇失败，且恰好撞上 `ledger-reconcile` 的运行窗口（09:05:18→09:05:39）。手动重跑同样几步全部成功 → 判为瞬时抖动（并发限流/lock 争用），按先例下轮重试，不改配置。
-- **方法论与新产品线收敛**：判据 ① 在 `seo-blog` lane 未加载时应跳过；DramaShortsTV 第三 lane 改为显式绑定专用 Google Sheet。实测现有 Sheet bridge 在兼容模式下生成 `ready=6 skipped=0 warnings=10`，说明 Sheet 接入可复用，待补的是独立站点 profile、模板、CTA 策略与 Git 文档交付器。
+- **方法论与新产品线收敛**：DramaShortsTV 第三 lane 显式绑定专用 Google Sheet；Sheet bridge 已验证可复用（`ready=6 skipped=0 warnings=10`），但当前代码尚无 DramaShortsTV site profile、专属模板/QA、Ops Markdown 交付与 Git 推送闭环，因此现在还不能直接完成 Sheet→文章→GitHub，需实现后才可长期使用。
 
 ---
 
@@ -50,5 +50,17 @@ aliases:
 **🤖 回答：**
 
 只读检查指定 workbook（`1-Qbv2MLRbiHDHdSi2csdatIVqxqCwkfcclkuGFN1dos`）的 metadata、9 个关键 tab、表头与样例行，并用现有 `gg-sheet-to-brief.mjs --workbook <id> --dry-run` 做兼容性调试。严格读取 rows 2-8 因 7 个不可用/TBD CTA 与 row 8 缺 `cluster_id/page_role` 共 8 个 join failure 正确 fail-closed；使用 `--allow-missing-cta` 读取 rows 2-7 成功得到 `ready=6 skipped=0 warnings=10`。六行核心字段、page_id 与 cluster join 均兼容；余下阻塞是 DramaShortsTV 未注册 site profile、Comparison/Case Study/Brand Playlist 模板会回退 Definition、CTA 仍为占位、author 为空、现有 tier gate/rl6_hint 带占星语义，以及演员行的说明文字被误拆为 associated keywords。设计改为显式绑定该 Google Sheet 作为上游 SSOT，继续保持下游只写 `gengrowth-ops` Markdown、GitHub 交付、禁用 hero/图片和网站发布。本轮未写 Sheet、未改 flow 代码、未推 GitHub。
+
+---
+
+### Q3 — 15:46 [codex]
+
+**🙋 提问：**
+
+1.那么以后我可以用这个 flow-mvp，根据 Google sheet 中的内容，然后生成文章，同时写入到 github（gengrowth-ops）中了吗
+
+**🤖 回答：**
+
+结论分为当前与目标状态：当前还不可以，仓库中只完成了 Google Sheet→brief 的只读兼容性验证，尚未实现 DramaShortsTV site profile、专属模板/QA、写入 `gengrowth-ops` Markdown、精确 Git commit/push、远端 SHA 回读和 Sheet 状态回填；未知 `GG_SITE` 当前仍回落 Oracle。完成第三 lane 改造后可以实现用户期望的流程，并保持禁用 hero/图片、不发布网站。建议最终入口显式携带该 workbook ID 与选题 row/page_id，完成证据为本地文档路径、Git commit/远端 SHA 及 Sheet `Git已交付` 状态。
 
 ---

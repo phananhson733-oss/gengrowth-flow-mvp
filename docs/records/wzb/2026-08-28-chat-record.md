@@ -23,7 +23,7 @@ aliases:
 - **授稿链根因逐字复读**：seo-blog err/out.log 冻结 `08-13 19:00`、`duplicate` 计数 59（+0）、`tick complete` 停 `07-24 19:08`、`launchctl` 无 `seo-blog`/`gengrowth-author`、`disabled.501.plist` mtime 仍 `08-25 20:09:40`（无新 disable 动作）。
 - **08-26 那条 P1 延续到第 3 天**：`index_monitor` / `lane_watchdog` / `index_repair_resubmit` 三条末日志仍停 `2026-08-25`，08-26/27/28 均缺勤。属既有 P1 的延续而非新命中变化，按 08-22 规则不重复进群。
 - **本轮唯一新信号：flow-driver 09:05 一轮回填 11 步全失败，但同日已自愈** —— 04:26/06:27/08:28/10:30/12:32 五轮全部 `backfillConverged=true`，仅 09:05 那一簇失败，且恰好撞上 `ledger-reconcile` 的运行窗口（09:05:18→09:05:39）。手动重跑同样几步全部成功 → 判为瞬时抖动（并发限流/lock 争用），按先例下轮重试，不改配置。
-- **DramaShortsTV 第三 lane 已落地**：显式绑定专用 Google Sheet，指定 SOP 为写作 SSOT，最终只生成一个 `gengrowth-ops/.../dramashortstv/` Markdown；无工具 Claude worker、brief/六类 QA、prompt-injection 清洗、page_id 幂等、symlink/no-clobber、staged blob 与固定 remote push/readback 全部编码并合入 `main`。108 个 focused tests 全绿，真实 Sheet dry-run 通过；全量 2259 项中新增 44 个 PASS，仍仅有 main 基线同一 6 个失败。
+- **DramaShortsTV 第三 lane 已落地但验收未通过**：实现已合入 `main`，108 个 focused tests 全绿且真实 Sheet dry-run 通过；`review-agent` 复核仍发现生成前缺真实搜证、事实审共享稿件竞态、六类结构校验可绕过等 P1，以及行号宽松解析、page_id 1000 行截断、Markdown fence 与链接红线漏检等 P2。首次真实 `--apply` 前需修复并补回归测试。
 
 ---
 
@@ -110,5 +110,17 @@ Git 责任已确认：文章 Markdown 原子写入 `gengrowth-ops/inbox-maboyang
 **🤖 回答：**
 
 按批准设计完成实现计划、隔离 worktree、TDD、审查修复、fast-forward 合并与主 checkout 复验。新增 `gg-dramashortstv-doc.mjs` 单一入口、`dramashortstv-doc.mjs` 文档/SOP/QA 契约、`dramashortstv-git.mjs` 精确 Git 交付模块、site profile、Sheet bridge source-field 保留、README 与 44 个新增通过测试。独立审查先报 2 Critical + 5 Important；全部用 RED→GREEN 修复：Claude worker 显式 `--tools ""`、safe-mode/no-chrome/空 MCP/repo 外 cwd；QA 绑定 target/entity 与六类结构；page_id 远端幂等短路；realpath/lstat symlink jail；link no-clobber；staged/committed blob 绑定；固定 expectedRemote 显式 SHA refspec push/readback。合并后 focused `108/108 PASS`，真实 Sheet `page_dramabox_vs_reelshort` dry-run 成功且 Ops 仍 clean `0/0`。全量 `2259` tests=`2247 pass / 6 fail / 6 skipped`，失败与 main 基线完全相同（4 个旧 autopilot mock/repair + 2 个旧 Codex 模型期望），无新增失败。未运行真实 `--apply`，因此未生成/提交文章、图片或网站发布物。
+
+---
+
+### Q8 — 17:12 [codex]
+
+**🙋 提问：**
+
+[$review-agent](/Users/awayer_mini/.codex/skills/.system/review-agent/SKILL.md) 验收一下这个 sop 的改动
+
+**🤖 回答：**
+
+按指定 `review-agent` 对实现范围 `46afeeb30..a63cc1f61` 做只读缺陷优先验收，结论为 **NOT READY**。确认 3 项 P1：缺少 SOP 要求的真实 SERP/App Store/Reddit/IMDb/Google Trends 搜证阶段；同一 `page_id` 的并发任务共用事实审稿件文件，可能让审核结论与最终提交稿错配；六类锁定结构只搜正文关键词、不校验 H2 与顺序，可被无关文本绕过。另确认 4 项 P2：`--row` 接受尾缀脏值、page_id 查找截断在第 1000 行、生成稿残留 Markdown fence 可通过、描述性锚文本及裸 URL 红线未落实。最小复现均已验证；focused tests 虽为 108/108，通过面尚未覆盖这些缺陷。未修改业务代码，建议修复 P1/P2 并补并发与端到端回归后再执行首次真实 `--apply`。
 
 ---

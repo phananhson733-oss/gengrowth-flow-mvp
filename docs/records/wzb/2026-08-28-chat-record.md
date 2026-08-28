@@ -23,7 +23,7 @@ aliases:
 - **授稿链根因逐字复读**：seo-blog err/out.log 冻结 `08-13 19:00`、`duplicate` 计数 59（+0）、`tick complete` 停 `07-24 19:08`、`launchctl` 无 `seo-blog`/`gengrowth-author`、`disabled.501.plist` mtime 仍 `08-25 20:09:40`（无新 disable 动作）。
 - **08-26 那条 P1 延续到第 3 天**：`index_monitor` / `lane_watchdog` / `index_repair_resubmit` 三条末日志仍停 `2026-08-25`，08-26/27/28 均缺勤。属既有 P1 的延续而非新命中变化，按 08-22 规则不重复进群。
 - **本轮唯一新信号：flow-driver 09:05 一轮回填 11 步全失败，但同日已自愈** —— 04:26/06:27/08:28/10:30/12:32 五轮全部 `backfillConverged=true`，仅 09:05 那一簇失败，且恰好撞上 `ledger-reconcile` 的运行窗口（09:05:18→09:05:39）。手动重跑同样几步全部成功 → 判为瞬时抖动（并发限流/lock 争用），按先例下轮重试，不改配置。
-- **DramaShortsTV 第三 lane 已落地但验收未通过**：实现已合入 `main`，108 个 focused tests 全绿且真实 Sheet dry-run 通过；`review-agent` 复核仍发现生成前缺真实搜证、事实审共享稿件竞态、六类结构校验可绕过等 P1，以及行号宽松解析、page_id 1000 行截断、Markdown fence 与链接红线漏检等 P2。首次真实 `--apply` 前需修复并补回归测试。
+- **DramaShortsTV SOP 全量整改已通过终审**：在隔离分支完成真实证据 provider/按类型调用矩阵、citation ID/URL/claim 闭环、conditional same-name、Comparison 双边证据、不可变事实审、严格 selector 与六类 Markdown lexer；终审 `Ready to merge: Yes`。fresh 集成 `192/192`，全仓 `2335 pass / 6 个既有 fail / 6 skipped`；两个真实 Sheet dry-run 同选 row 4/page-id/path，Ops 前后不变。未执行真实 `--apply`、付费 provider、LLM 或 Ops/Git 交付，当前等待分支整合方式确认。
 
 ---
 
@@ -122,5 +122,17 @@ Git 责任已确认：文章 Markdown 原子写入 `gengrowth-ops/inbox-maboyang
 **🤖 回答：**
 
 按指定 `review-agent` 对实现范围 `46afeeb30..a63cc1f61` 做只读缺陷优先验收，结论为 **NOT READY**。确认 3 项 P1：缺少 SOP 要求的真实 SERP/App Store/Reddit/IMDb/Google Trends 搜证阶段；同一 `page_id` 的并发任务共用事实审稿件文件，可能让审核结论与最终提交稿错配；六类锁定结构只搜正文关键词、不校验 H2 与顺序，可被无关文本绕过。另确认 4 项 P2：`--row` 接受尾缀脏值、page_id 查找截断在第 1000 行、生成稿残留 Markdown fence 可通过、描述性锚文本及裸 URL 红线未落实。最小复现均已验证；focused tests 虽为 108/108，通过面尚未覆盖这些缺陷。未修改业务代码，建议修复 P1/P2 并补并发与端到端回归后再执行首次真实 `--apply`。
+
+---
+
+### Q9 — 21:01 [codex]
+
+**🙋 提问：**
+
+全量修复
+
+**🤖 回答：**
+
+在隔离分支 `codex/dramashortstv-sop-remediation` 按 TDD 全量修复上轮 3 项 P1 与 4 项 P2，并通过多轮任务级和整分支独立复审。新增真实 DataForSEO Google SERP/Trends、Apple Search、Reddit fallback 的按内容类型搜证计划与错误透传；evidence 绑定 page/entity/keyword/hash，外部引用强制 source-id/URL/相邻 claim 闭环，Comparison 要求双边 SERP/App Store/friction，演员同名采用 clean/polluted/uncertain 三态；事实审输入以 draft/evidence 双 hash 内容寻址并要求 reviewer 回显 combined-input digest；Sheet row 严格解析、page-id 单快照无界唯一匹配、dry-run 不触达 Ops/research/LLM；六类 SOP H2 顺序、fence、HTML comment、inline code、reference links、裸 URL 与描述性锚文本由统一 Markdown lexer fail-closed。最终整分支审查为 `Ready to merge: Yes`；fresh 静态检查通过、集成 `192/192`，全仓 `2347 tests = 2335 pass / 6 个既有 fail / 6 skipped`，六个失败与改动前基线同名；row 4 与 page-id 的真实 Sheet dry-run 都选择 `page_dramabox_vs_reelshort` 和同一路径，Ops branch/status/HEAD/divergence/file hash 前后相同。未运行真实 `--apply`、付费 provider、LLM、文章写入或 push；分支当前等待用户选择本地合并、PR、保留或放弃。
 
 ---

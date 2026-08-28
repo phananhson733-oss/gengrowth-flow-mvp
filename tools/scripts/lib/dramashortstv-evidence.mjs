@@ -225,8 +225,8 @@ export function validateDramaEvidence({ brief, evidence, now = new Date().toISOS
     if (requirement === 'friction') {
       const reddit = sources.reddit;
       const serp = sources.serp;
-      const validReddit = hasFreshSource(reddit, 'reddit', nowMs) && reddit.results.some(isRedditResult);
-      const validGoogleFriction = hasFreshSource(serp, 'serp', nowMs) && serp.results.some(isFrictionSerp);
+      const validReddit = hasFreshSource(reddit, 'reddit', nowMs) && reddit.provider === 'reddit-oauth' && reddit.results.some(isRedditResult);
+      const validGoogleFriction = hasFreshSource(serp, 'serp', nowMs) && serp.provider === 'dataforseo-google-serp' && serp.results.some(isFrictionSerp);
       if (validReddit || validGoogleFriction) passed.push(requirement);
       else { blocked.push(requirement); errors.push('friction requires a real Reddit post or Google result on Reddit/App Store'); }
       continue;
@@ -247,7 +247,7 @@ export function validateDramaEvidence({ brief, evidence, now = new Date().toISOS
       if (source.origin === 'serp' && source.results.some((result) => isCanonicalImdb(result) && serpImdbUrls.has(canonicalUrl(result.url)))) passed.push(requirement);
       else { blocked.push(requirement); errors.push('IMDb requires a canonical IMDb /name/nm or /title/tt URL from Google SERP evidence'); }
     } else if (requirement === 'same-name') {
-      if (source.pollution === true && source.qualifierRequired === true && source.results.some(isRealSameNameResult)) passed.push(requirement);
+      if (source.provider === 'dataforseo-google-serp' && source.origin === 'serp' && source.purpose === 'same-name' && source.pollution === true && source.qualifierRequired === true && source.results.some(isRealSameNameResult)) passed.push(requirement);
       else { blocked.push(requirement); errors.push('same-name evidence must record pollution and require a qualifier'); }
     } else if (requirement === 'trends') {
       if (source.provider === 'dataforseo-google-trends' && isCanonicalTrendsUrl(source.checkUrl) && source.results.some((result) => result?.type === 'google_trends_graph' && Array.isArray(result.values) && result.values.some((value) => Number(value) > 0))) passed.push(requirement);

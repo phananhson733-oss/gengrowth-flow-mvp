@@ -33,12 +33,12 @@ function validSources() {
   const serp = serpResults();
   serp.push({ id: 'serp:imdb:1', type: 'organic', purpose: 'imdb', url: 'https://www.imdb.com/title/tt1234567/', title: 'DramaBox title', snippet: 'SERP result', domain: 'forged.invalid' });
   return {
-    serp: { status: 'ok', collectedAt: NOW, results: serp },
+    serp: { status: 'ok', provider: 'dataforseo-google-serp', collectedAt: NOW, results: serp },
     appStore: { status: 'ok', provider: 'apple-itunes', collectedAt: NOW, results: [{ id: 'apple:1', name: 'DramaBox Short Drama', url: 'https://apps.apple.com/us/app/dramabox/id1', snippet: 'Episodes' }] },
-    reddit: { status: 'ok', collectedAt: NOW, results: [{ id: 'reddit:1', url: 'https://www.reddit.com/r/shortdrama/comments/1/dramabox', title: 'DramaBox billing', snippet: 'Cancellation is confusing.' }] },
+    reddit: { status: 'ok', provider: 'reddit-oauth', collectedAt: NOW, results: [{ id: 'reddit:1', url: 'https://www.reddit.com/r/shortdrama/comments/1/dramabox', title: 'DramaBox billing', snippet: 'Cancellation is confusing.' }] },
     imdb: { status: 'ok', collectedAt: NOW, origin: 'serp', results: [{ id: 'imdb:1', url: 'https://www.imdb.com/title/tt1234567/', title: 'DramaBox title', snippet: 'SERP result' }] },
     trends: { status: 'ok', provider: 'dataforseo-google-trends', collectedAt: NOW, checkUrl: 'https://trends.google.com/trends/explore?q=DramaBox', values: [1, 4, 2], results: [{ id: 'trends:graph:1', type: 'google_trends_graph', values: [1, 4, 2] }] },
-    sameName: { status: 'ok', collectedAt: NOW, results: [{ id: 'same-name:default', type: 'organic', url: 'https://people.example/dramabox', title: 'Different DramaBox', snippet: 'Distinct entity' }], pollution: true, qualifierRequired: true },
+    sameName: { status: 'ok', provider: 'dataforseo-google-serp', origin: 'serp', purpose: 'same-name', collectedAt: NOW, results: [{ id: 'same-name:default', type: 'organic', url: 'https://people.example/dramabox', title: 'Different DramaBox', snippet: 'Distinct entity' }], pollution: true, qualifierRequired: true },
   };
 }
 
@@ -95,6 +95,11 @@ test('friction accepts a real Reddit post or a Google result on Reddit/App Store
   googleFriction.sources.serp.results[0] = { ...googleFriction.sources.serp.results[0], url: 'https://www.reddit.com/r/shortdrama/comments/1/dramabox', domain: 'reddit.com' };
   seal(googleFriction);
   assert.equal(validateDramaEvidence({ brief: brief(), evidence: googleFriction, now: NOW }).ok, true);
+
+  const forgedReddit = baseEvidence('reader-bridge');
+  delete forgedReddit.sources.reddit.provider;
+  seal(forgedReddit);
+  assert.match(validateDramaEvidence({ brief: brief('reader-bridge'), evidence: forgedReddit, now: NOW }).errors.join('\n'), /friction/i);
 });
 
 test('IMDb accepts only canonical name or title URLs from real Google SERP evidence', () => {
@@ -118,13 +123,18 @@ test('IMDb accepts only canonical name or title URLs from real Google SERP evide
 
 test('actor same-name search records pollution and requires a qualifier', () => {
   const evidence = baseEvidence('actor-profile');
-  evidence.sources.sameName = { status: 'ok', collectedAt: NOW, results: [{ id: 'same-name:1', type: 'organic', url: 'https://people.example/evan-adams', title: 'Evan Adams', snippet: 'Different person' }], pollution: true, qualifierRequired: true };
+  evidence.sources.sameName = { status: 'ok', provider: 'dataforseo-google-serp', origin: 'serp', purpose: 'same-name', collectedAt: NOW, results: [{ id: 'same-name:1', type: 'organic', url: 'https://people.example/evan-adams', title: 'Evan Adams', snippet: 'Different person' }], pollution: true, qualifierRequired: true };
   seal(evidence);
   assert.equal(validateDramaEvidence({ brief: brief('actor-profile'), evidence, now: NOW }).ok, true);
   evidence.sources.sameName.qualifierRequired = false;
   seal(evidence);
   const result = validateDramaEvidence({ brief: brief('actor-profile'), evidence, now: NOW });
   assert.match(result.errors.join('\n'), /qualifier/i);
+
+  const forgedSource = baseEvidence('actor-profile');
+  delete forgedSource.sources.sameName.provider;
+  seal(forgedSource);
+  assert.match(validateDramaEvidence({ brief: brief('actor-profile'), evidence: forgedSource, now: NOW }).errors.join('\n'), /same-name/i);
 });
 
 test('evidence older than its TTL fails closed', () => {

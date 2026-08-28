@@ -1,7 +1,7 @@
 ---
 title: Internal Links Not Improving Rankings
 slug: internal-links-not-improving-rankings
-date: 2026-08-25
+date: 2026-08-28
 status: ready-to-review
 type: wiki-entry
 template: Definition
@@ -13,7 +13,7 @@ associated_keywords:
 
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-08-25T07:25:10.509Z
+generated_at: 2026-08-28T01:30:07.072Z
 content_sha256_short: b880d9498d8b3a6e
 phase2_checks: all-pass
 ---

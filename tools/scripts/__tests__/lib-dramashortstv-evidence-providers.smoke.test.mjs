@@ -20,7 +20,7 @@ const successfulTasks = (items) => ({
   tasks: [{ status_code: 20000, result: [{ items }] }],
 });
 
-const successfulTask = ({ tag, result }) => ({ status_code: 20000, tag, result: [result] });
+const successfulTask = ({ tag, result, topLevelTag }) => ({ status_code: 20000, tag: topLevelTag, data: tag ? { tag } : {}, result: [result] });
 
 test('DataForSEO rejects HTTP, top-level, and task failures', async () => {
   const request = {
@@ -35,8 +35,8 @@ test('DataForSEO rejects HTTP, top-level, and task failures', async () => {
   await assert.rejects(() => dataForSeoLive({ ...request, fetchImpl: async () => jsonResponse({ status_code: 20000, tasks: [{ status_code: 40500, status_message: 'bad task' }] }) }), /task/i);
 });
 
-test('Google SERP preserves real organic URLs and each query purpose', async () => {
-  let seen;
+test('Google SERP issues one Live API task per query and reads purpose only from task.data.tag', async () => {
+  const seen = [];
   const result = await fetchGoogleSerpEvidence({
     querySpecs: [
       { query: 'DramaBox reviews', purpose: 'friction' },
@@ -45,17 +45,18 @@ test('Google SERP preserves real organic URLs and each query purpose', async () 
     login: 'login',
     password: 'password',
     fetchImpl: async (_url, init) => {
-      seen = JSON.parse(init.body);
-      return jsonResponse({ status_code: 20000, tasks: [
-        successfulTask({ tag: 'friction', result: { items: [
+      const tasks = JSON.parse(init.body);
+      seen.push(tasks);
+      const [{ keyword, tag }] = tasks;
+      return jsonResponse({ status_code: 20000, tasks: [successfulTask({ tag, topLevelTag: 'ignored-top-level-tag', result: { items: keyword.includes('reviews') ? [
           { type: 'organic', rank_absolute: 1, title: 'DramaBox reviews', description: 'Useful evidence', url: 'https://reviews.example/dramabox' },
           { type: 'organic', rank_absolute: 2, title: 'Ignore', url: 'not-a-url' },
-        ] } }),
-        successfulTask({ tag: 'app-store', result: { items: [] } }),
-      ] });
+        ] : [] } })] });
     },
   });
-  assert.deepEqual(seen.map((task) => task.tag), ['friction', 'app-store']);
+  assert.equal(seen.length, 2);
+  assert.deepEqual(seen.map((tasks) => tasks.length), [1, 1]);
+  assert.deepEqual(seen.map((tasks) => tasks[0].tag), ['friction', 'app-store']);
   assert.equal(result.status, 'ok');
   assert.deepEqual(result.results, [{
     id: 'serp:friction:1',
@@ -70,7 +71,10 @@ test('Google SERP preserves real organic URLs and each query purpose', async () 
   await assert.rejects(() => fetchGoogleSerpEvidence({
     querySpecs: [{ query: 'DramaBox reviews', purpose: 'friction' }, { query: 'DramaBox app', purpose: 'app-store' }],
     login: 'login', password: 'password',
-    fetchImpl: async () => jsonResponse({ status_code: 20000, tasks: [successfulTask({ tag: 'friction', result: { items: [] } })] }),
+    fetchImpl: async (_url, init) => {
+      const [{ tag }] = JSON.parse(init.body);
+      return jsonResponse({ status_code: 20000, tasks: [successfulTask({ tag: tag === 'friction' ? tag : 'wrong-purpose', result: { items: [] } })] });
+    },
   }), /task count|purpose\/tag/i);
 });
 

@@ -63,31 +63,25 @@ export async function fetchGoogleSerpEvidence({ querySpecs, login, password, fet
   if (!Array.isArray(querySpecs) || querySpecs.some(({ query, purpose }) => !query || !purpose)) {
     throw new Error('querySpecs must contain query and purpose');
   }
-  const payload = await dataForSeoLive({
-    endpoint: 'serp/google/organic/live/advanced',
-    tasks: querySpecs.map(({ query, purpose }) => ({
-      keyword: query,
-      location_code: 2840,
-      language_code: 'en',
-      depth: 10,
-      tag: purpose,
-    })),
-    login,
-    password,
-    fetchImpl,
-  });
-  const expectedPurposes = querySpecs.map(({ purpose }) => purpose);
-  const returnedPurposes = payload.tasks.map((task) => task?.tag);
-  if (payload.tasks.length !== expectedPurposes.length
-    || new Set(expectedPurposes).size !== expectedPurposes.length
-    || new Set(returnedPurposes).size !== returnedPurposes.length
-    || expectedPurposes.some((purpose) => !returnedPurposes.includes(purpose))) {
-    throw new Error('DataForSEO task count or purpose/tag set mismatch');
-  }
   const results = [];
-  for (let index = 0; index < payload.tasks.length; index += 1) {
-    const task = payload.tasks[index];
-    const purpose = cleanText(task.tag || querySpecs[index].purpose);
+  for (const { query, purpose } of querySpecs) {
+    const payload = await dataForSeoLive({
+      endpoint: 'serp/google/organic/live/advanced',
+      tasks: [{
+        keyword: query,
+        location_code: 2840,
+        language_code: 'en',
+        depth: 10,
+        tag: purpose,
+      }],
+      login,
+      password,
+      fetchImpl,
+    });
+    const task = payload.tasks[0];
+    if (payload.tasks.length !== 1 || task?.data?.tag !== purpose) {
+      throw new Error('DataForSEO task count or purpose/tag set mismatch');
+    }
     for (const item of taskItems(task)) {
       if (item?.type !== 'organic') continue;
       const url = safeUrl(item.url);

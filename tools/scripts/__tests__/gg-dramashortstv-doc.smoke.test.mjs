@@ -14,7 +14,7 @@ import {
 } from '../gg-dramashortstv-doc.mjs';
 import * as dramaCli from '../gg-dramashortstv-doc.mjs';
 import { sha256Text } from '../lib/dramashortstv-evidence.mjs';
-import { DRAMA_WORKBOOK_ID } from '../lib/dramashortstv-doc.mjs';
+import { DRAMA_OUTPUT_SUBDIR, DRAMA_WORKBOOK_ID, resolveDramaOutputPath } from '../lib/dramashortstv-doc.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 
@@ -72,6 +72,7 @@ function fakeDeps(calls, overrides = {}, captures = {}) {
     today: () => '2026-08-28',
     readSheet: async () => { calls.push('sheet'); return { row: {} }; },
     normalize: () => { calls.push('normalize'); return NORMALIZED; },
+    planOutputPath: () => '/tmp/gengrowth-ops/inbox-maboyang/05-blog/dramashortstv/2026-08-28-dramashortstv-blog-dramabox-vs-reelshort.md',
     resolveOutputPath: () => '/tmp/gengrowth-ops/inbox-maboyang/05-blog/dramashortstv/2026-08-28-dramashortstv-blog-dramabox-vs-reelshort.md',
     gitPreflight: async () => { calls.push('git-preflight'); return { head: 'a'.repeat(40) }; },
     findExisting: async () => { calls.push('git-existing'); return null; },
@@ -131,29 +132,69 @@ test('page-id mode invokes the unbounded bridge selector directly without gg-she
   assert.doesNotMatch(source, /gg-sheet-pull|SHEET_PULL/);
 });
 
-test('provider secrets loaded for research are restored before later stages', async () => {
-  assert.equal(typeof dramaCli.withDramaResearchEnvironment, 'function');
-  const keys = ['GG_DATAFORSEO_LOGIN', 'GG_DATAFORSEO_PASSWORD'];
+async function withTemporaryEnv(keys, callback) {
   const previous = Object.fromEntries(keys.map((key) => [key, process.env[key]]));
-  for (const key of keys) delete process.env[key];
   try {
-    await dramaCli.withDramaResearchEnvironment(async () => {
-      assert.equal(process.env.GG_DATAFORSEO_LOGIN, 'test-login');
-      assert.equal(process.env.GG_DATAFORSEO_PASSWORD, 'test-password');
-    }, {
-      loadEnvImpl: () => {
-        process.env.GG_DATAFORSEO_LOGIN = 'test-login';
-        process.env.GG_DATAFORSEO_PASSWORD = 'test-password';
-      },
-    });
-    assert.equal(process.env.GG_DATAFORSEO_LOGIN, undefined);
-    assert.equal(process.env.GG_DATAFORSEO_PASSWORD, undefined);
+    for (const key of keys) delete process.env[key];
+    return await callback();
   } finally {
     for (const key of keys) {
       if (previous[key] === undefined) delete process.env[key];
       else process.env[key] = previous[key];
     }
   }
+}
+
+test('research environment restores the complete process.env after success', async () => {
+  const keys = ['GG_TEST_EXISTING_ENV', 'GG_TEST_LOADER_ENV', 'GG_TEST_CALLBACK_ENV'];
+  await withTemporaryEnv(keys, async () => {
+    process.env.GG_TEST_EXISTING_ENV = 'before';
+    await dramaCli.withDramaResearchEnvironment(async () => {
+      assert.equal(process.env.GG_TEST_EXISTING_ENV, 'loader-change');
+      assert.equal(process.env.GG_TEST_LOADER_ENV, 'loaded');
+      process.env.GG_TEST_CALLBACK_ENV = 'callback-change';
+    }, {
+      loadEnvImpl: () => {
+        process.env.GG_TEST_EXISTING_ENV = 'loader-change';
+        process.env.GG_TEST_LOADER_ENV = 'loaded';
+      },
+    });
+    assert.equal(process.env.GG_TEST_EXISTING_ENV, 'before');
+    assert.equal(process.env.GG_TEST_LOADER_ENV, undefined);
+    assert.equal(process.env.GG_TEST_CALLBACK_ENV, undefined);
+  });
+});
+
+test('research environment restores the complete process.env when callback throws', async () => {
+  const keys = ['GG_TEST_THROW_EXISTING', 'GG_TEST_THROW_LOADER', 'GG_TEST_THROW_CALLBACK'];
+  await withTemporaryEnv(keys, async () => {
+    process.env.GG_TEST_THROW_EXISTING = 'before';
+    await assert.rejects(
+      () => dramaCli.withDramaResearchEnvironment(async () => {
+        process.env.GG_TEST_THROW_CALLBACK = 'callback-change';
+        throw new Error('research callback failed');
+      }, {
+        loadEnvImpl: () => {
+          process.env.GG_TEST_THROW_EXISTING = 'loader-change';
+          process.env.GG_TEST_THROW_LOADER = 'loaded';
+        },
+      }),
+      /research callback failed/,
+    );
+    assert.equal(process.env.GG_TEST_THROW_EXISTING, 'before');
+    assert.equal(process.env.GG_TEST_THROW_LOADER, undefined);
+    assert.equal(process.env.GG_TEST_THROW_CALLBACK, undefined);
+  });
+});
+
+test('research environment never leaks an arbitrary non-whitelist fake secret', async () => {
+  const key = 'GG_TEST_NON_WHITELIST_FAKE_SECRET';
+  await withTemporaryEnv([key], async () => {
+    await dramaCli.withDramaResearchEnvironment(async () => {
+      assert.equal(process.env[key], 'fake-secret');
+    }, { loadEnvImpl: () => { process.env[key] = 'fake-secret'; } });
+    assert.equal(process.env[key], undefined);
+  });
 });
 
 test('generation worker is Claude-only with all tools and integrations disabled', () => {
@@ -189,6 +230,36 @@ test('dry-run reads and normalizes Sheet data without LLM, file, or Git calls', 
   assert.equal(result.pageId, 'page_dramabox_vs_reelshort');
   assert.equal(result.contentType, 'comparison');
   assert.match(result.targetPath, /gengrowth-ops.*dramabox-vs-reelshort\.md/);
+});
+
+test('dry-run plans its target path without touching a nonexistent Ops root', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'gg-drama-dry-plan-'));
+  const missingOps = join(root, 'missing-ops');
+  const calls = [];
+  const deps = fakeDeps(calls, {
+    opsDir: missingOps,
+    resolveOutputPath: resolveDramaOutputPath,
+    planOutputPath: ({ opsDir, date, topicSlug }) => join(
+      opsDir,
+      DRAMA_OUTPUT_SUBDIR,
+      `${date}-dramashortstv-blog-${topicSlug}.md`,
+    ),
+  });
+  try {
+    const result = await runDramaShortsDelivery(
+      parseDramaArgs(['--workbook', DRAMA_WORKBOOK_ID, '--row', '4']),
+      deps,
+    );
+    assert.equal(result.mode, 'dry-run');
+    assert.equal(result.targetPath, join(
+      missingOps,
+      DRAMA_OUTPUT_SUBDIR,
+      '2026-08-28-dramashortstv-blog-dramabox-vs-reelshort.md',
+    ));
+    assert.deepEqual(calls, ['sheet', 'normalize']);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });
 
 test('apply follows the fail-closed generation and delivery order', async () => {

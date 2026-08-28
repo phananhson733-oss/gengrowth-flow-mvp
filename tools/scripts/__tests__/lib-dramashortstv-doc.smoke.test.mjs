@@ -17,6 +17,7 @@ import {
   resolveDramaOutputPath,
   validateDramaDraft,
 } from '../lib/dramashortstv-doc.mjs';
+import * as dramaDoc from '../lib/dramashortstv-doc.mjs';
 
 function comparisonPayload(overrides = {}) {
   return {
@@ -182,6 +183,23 @@ test('prompt sanitizes untrusted Sheet instructions before interpolation', () =>
   assert.match(prompt, /untrusted Sheet data/i);
 });
 
+test('prompt brief boundary contains multiline three/four-backtick Sheet data as escaped JSON', () => {
+  const brief = normalizeDramaBrief(comparisonPayload());
+  brief.contentAngle = `line one
+\`\`\`
+fence-three
+\`\`\`\`
+fence-four`;
+  const prompt = buildDramaPrompt({ brief, sopText: '# SOP\nKeep facts sourced.', evidence: '<evidence>safe</evidence>' });
+  const section = prompt.slice(
+    prompt.indexOf('## Normalized Sheet Brief'),
+    prompt.indexOf('## Prevalidated Research Evidence'),
+  );
+  assert.ok(section.includes('line one\\n```\\nfence-three\\n````\\nfence-four'));
+  assert.equal(section.split('\n').filter((line) => line === '```').length, 1);
+  assert.equal(section.split('\n').filter((line) => line === '````').length, 0);
+});
+
 test('prompt fails closed without a prevalidated evidence block', () => {
   const brief = normalizeDramaBrief(comparisonPayload());
   assert.throws(() => buildDramaPrompt({ brief, sopText: '# SOP\nKeep facts sourced.' }), /evidence/i);
@@ -315,6 +333,24 @@ test('output path stays jailed below the DramaShortsTV Ops folder', () => {
     );
   } finally {
     rmSync(ops, { recursive: true, force: true });
+  }
+});
+
+test('pure output planner works without an Ops filesystem while apply resolver stays fail-closed', () => {
+  assert.equal(typeof dramaDoc.planDramaOutputPath, 'function');
+  const root = mkdtempSync(join(tmpdir(), 'gg-drama-plan-'));
+  const missingOps = join(root, 'missing-ops');
+  try {
+    assert.equal(
+      dramaDoc.planDramaOutputPath({ opsDir: missingOps, date: '2026-08-28', topicSlug: 'article' }),
+      join(missingOps, DRAMA_OUTPUT_SUBDIR, '2026-08-28-dramashortstv-blog-article.md'),
+    );
+    assert.throws(
+      () => resolveDramaOutputPath({ opsDir: missingOps, date: '2026-08-28', topicSlug: 'article' }),
+      /does not exist/i,
+    );
+  } finally {
+    rmSync(root, { recursive: true, force: true });
   }
 });
 

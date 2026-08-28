@@ -36,6 +36,7 @@ import {
   buildDramaPrompt,
   formatDramaDocument,
   normalizeDramaBrief,
+  planDramaOutputPath,
   resolveDramaOutputPath,
   validateDramaDraft,
 } from './lib/dramashortstv-doc.mjs';
@@ -53,20 +54,6 @@ const FACTUAL_REVIEW = join(HERE, 'gg-codex-pr-review.mjs');
 const EXPECTED_OPS_REMOTE = 'https://github.com/phananhson733-oss/gengrowth-ops.git';
 const PAGE_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
 const MODELS = new Set(['claude']);
-const PROVIDER_SECRET_KEYS = Object.freeze([
-  'GG_DATAFORSEO_LOGIN',
-  'GG_DATAFORSEO_PASSWORD',
-  'GG_REDDIT_CLIENT_ID',
-  'GG_REDDIT_CLIENT_SECRET',
-  'GG_REDDIT_USER_AGENT',
-  'GG_REDDIT_USERNAME',
-  'GG_REDDIT_PASSWORD',
-  'REDDIT_CLIENT_ID',
-  'REDDIT_CLIENT_SECRET',
-  'REDDIT_USER_AGENT',
-  'REDDIT_USERNAME',
-  'REDDIT_PASSWORD',
-]);
 
 function usage() {
   return `gg-dramashortstv-doc.mjs — read-only Sheet to exact gengrowth-ops Markdown/Git delivery
@@ -269,14 +256,16 @@ export function realFactualReview({ draft, brief, evidence }) {
 }
 
 export async function withDramaResearchEnvironment(callback, { loadEnvImpl = loadEnv } = {}) {
-  const previous = new Map(PROVIDER_SECRET_KEYS.map((key) => [key, process.env[key]]));
+  const previous = new Map(Object.entries(process.env));
   try {
     loadEnvImpl({ strict: true, requireMode: 0o600 });
     return await callback();
   } finally {
+    for (const key of Object.keys(process.env)) {
+      if (!previous.has(key)) delete process.env[key];
+    }
     for (const [key, value] of previous) {
-      if (value === undefined) delete process.env[key];
-      else process.env[key] = value;
+      process.env[key] = value;
     }
   }
 }
@@ -329,6 +318,7 @@ function realDependencies() {
     today: () => shanghaiDate(),
     readSheet: realReadSheet,
     normalize: normalizeDramaBrief,
+    planOutputPath: planDramaOutputPath,
     resolveOutputPath: resolveDramaOutputPath,
     gitPreflight: () => preflightDramaOpsRepo({ opsDir, expectedRemote: EXPECTED_OPS_REMOTE }),
     findExisting: ({ brief }) => findDeliveredDramaDocument({
@@ -394,7 +384,7 @@ export async function runDramaShortsDelivery(args, deps = realDependencies()) {
   const brief = await deps.normalize(payload);
   const date = deps.today();
   const slug = topicSlug(brief.targetKeyword);
-  const targetPath = deps.resolveOutputPath({ opsDir: deps.opsDir, date, topicSlug: slug });
+  const plannedTargetPath = deps.planOutputPath({ opsDir: deps.opsDir, date, topicSlug: slug });
   if (!args.apply) {
     return {
       mode: 'dry-run',
@@ -402,10 +392,11 @@ export async function runDramaShortsDelivery(args, deps = realDependencies()) {
       sourceRow: brief.sourceRow,
       pageId: brief.pageId,
       contentType: brief.contentType,
-      targetPath,
+      targetPath: plannedTargetPath,
     };
   }
 
+  const targetPath = deps.resolveOutputPath({ opsDir: deps.opsDir, date, topicSlug: slug });
   const preflight = await deps.gitPreflight({ targetPath, brief });
   const existing = await deps.findExisting({ targetPath, brief });
   if (existing) {

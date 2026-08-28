@@ -395,12 +395,21 @@ export function formatDramaDocument({ draft, brief, date }) {
   return lines.join('\n');
 }
 
-export function resolveDramaOutputPath({ opsDir, date, topicSlug }) {
+export function planDramaOutputPath({ opsDir, date, topicSlug }) {
   if (!opsDir) throw new Error('opsDir is required');
   if (!DATE_RE.test(String(date || ''))) throw new Error(`invalid output date: ${date}`);
   if (!SLUG_RE.test(String(topicSlug || ''))) throw new Error(`unsafe topic slug: ${topicSlug}`);
   const base = resolve(opsDir, DRAMA_OUTPUT_SUBDIR);
   const target = resolve(base, `${date}-dramashortstv-blog-${topicSlug}.md`);
+  const relativeTarget = relative(base, target);
+  if (!relativeTarget || relativeTarget === '..' || relativeTarget.startsWith(`..${sep}`) || !target.endsWith('.md')) {
+    throw new Error(`unsafe DramaShortsTV planned output path: ${target}`);
+  }
+  return target;
+}
+
+export function resolveDramaOutputPath({ opsDir, date, topicSlug }) {
+  const target = planDramaOutputPath({ opsDir, date, topicSlug });
   return assertSafeOpsPath(opsDir, target).target;
 }
 

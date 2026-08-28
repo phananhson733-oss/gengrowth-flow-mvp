@@ -305,3 +305,103 @@ Review the entire branch diff against the seven findings, the authoritative SOP 
 git add tools/README.md docs/superpowers/plans/2026-08-28-dramashortstv-sop-remediation.md
 git commit -m "docs(dramashortstv): document evidence-gated delivery"
 ```
+
+---
+
+### Task 5: 整分支终审整改 — citation 闭环、provider 矩阵、同名条件与 Comparison 双边证据
+
+**Files:**
+- Modify: `tools/scripts/gg-dramashortstv-doc.mjs`
+- Modify: `tools/scripts/gg-codex-pr-review.mjs`
+- Modify: `tools/scripts/lib/dramashortstv-evidence-providers.mjs`
+- Modify: `tools/scripts/lib/dramashortstv-evidence.mjs`
+- Modify: `tools/scripts/lib/dramashortstv-doc.mjs`
+- Modify: `tools/scripts/__tests__/gg-dramashortstv-doc.smoke.test.mjs`
+- Modify: `tools/scripts/__tests__/gg-codex-pr-review.smoke.test.mjs`
+- Modify: `tools/scripts/__tests__/lib-dramashortstv-evidence-providers.smoke.test.mjs`
+- Modify: `tools/scripts/__tests__/lib-dramashortstv-evidence.smoke.test.mjs`
+- Modify: `tools/scripts/__tests__/lib-dramashortstv-doc.smoke.test.mjs`
+- Modify: `tools/README.md`
+
+**Interfaces:**
+- Produces: `buildDramaResearchPlan(brief)` with exact per-content-type providers/query purposes.
+- Produces: evidence entries with unique `id`, canonical `url`, and comparison-side metadata where applicable.
+- Changes: `validateDramaDraft({ markdown, contentType, brief, evidence })` validates external citation ID/URL adjacency and optional actor qualifier.
+- Changes: Drama factual review requires the reviewer to echo the immutable combined-input SHA-256 before a PASS is accepted.
+
+- [ ] **Step 1: Write citation-closure RED tests**
+
+Add an evidence fixture whose source map contains `apple:dramabox → https://apps.apple.com/us/app/dramabox/id1`. Assert the following drafts fail before factual review:
+
+```markdown
+[fabricated report](https://evil.example/fabricated) <!-- source-id: made-up:999 -->
+[official listing](https://apps.apple.com/us/app/dramabox/id1) <!-- source-id: made-up:999 -->
+[official listing](https://evil.example/fabricated) <!-- source-id: apple:dramabox -->
+[official listing](https://apps.apple.com/us/app/dramabox/id1)
+<!-- source-id: apple:dramabox -->
+```
+
+Require a same-line adjacent, unique `<!-- source-id: ... -->` whose ID and canonical URL match the evidence map. Reject orphan/duplicate source-id comments. Normalize generic-anchor checks after removing Markdown emphasis/code formatting so `[**here**](...)` still fails.
+
+- [ ] **Step 2: Verify citation tests RED**
+
+Run `lib-dramashortstv-doc.smoke.test.mjs` and `gg-dramashortstv-doc.smoke.test.mjs`; expected failures are unknown evidence URL/ID and missing evidence argument currently passing.
+
+- [ ] **Step 3: Implement deterministic citation closure**
+
+Pass the original validated evidence object into draft QA, not only its rendered block. Build a unique evidence `id → canonical URL + entities` map; validation must fail on duplicate IDs, malformed canonical URLs, unknown IDs, unknown external URLs, non-adjacent/missing comments and ID/URL mismatch. Internal relative links remain descriptive-link-only and require no evidence source ID. For comparison paragraphs that mention exactly one side, the cited evidence entry must declare that side.
+
+- [ ] **Step 4: Write and implement reviewer input-digest RED/GREEN**
+
+Extend source mode with an optional strict flag carrying the expected 64-hex immutable source SHA. Before calling Codex, compute the source bytes' SHA and reject a mismatch. The factual prompt must require:
+
+```text
+REVIEWED_INPUT_SHA256: <exact expected SHA>
+VERDICT: PASS|FAIL ...
+```
+
+After Codex returns, require exactly one matching digest line before exit zero. Drama `realFactualReview()` must parse that reviewer-emitted digest and require it equals the pinned combined input SHA before returning the draft/evidence hashes. Existing non-Drama callers without the strict flag keep their current behavior.
+
+- [ ] **Step 5: Write provider-plan/error RED tests**
+
+For all six content types, inject counting providers and assert only required calls occur:
+
+- safety/app-profile/comparison: SERP + App Store; Reddit only when SERP lacks qualifying friction;
+- actor-profile: SERP + same-name; IMDb is derived from SERP;
+- brand-playlist: SERP + Trends; IMDb is derived from SERP;
+- reader-bridge: SERP; Reddit only when SERP lacks qualifying friction.
+
+Assert a DataForSEO `429` reason survives into the final evidence-QA error rather than becoming only `serp evidence is unavailable`.
+
+- [ ] **Step 6: Implement content-type research plans**
+
+`buildDramaResearchPlan()` must generate only needed SERP query purposes. `collectDramaEvidence()` first collects mandatory non-fallback sources, derives IMDb, then calls Reddit only when the validated Google SERP lacks canonical Reddit/App Store friction. Sources not required for the current type remain explicit `unavailable/not-required` values without I/O. Update README request counts from a fixed five to the exact per-type behavior.
+
+- [ ] **Step 7: Write same-name clean/polluted RED tests**
+
+Use two search sets for actor profiles: exact-name and qualified `"<name>" "ReelShort actor"`. Require:
+
+- at least one qualified actor result plus fewer than two unrelated exact-name results → `classification: clean`, `pollution:false`, `qualifierRequired:false`, evidence PASS, draft need not use the qualifier;
+- at least two unrelated exact-name results → `classification: polluted`, `pollution:true`, `qualifierRequired:true`, and draft H1/opening must contain `ReelShort actor`;
+- absent qualified identity or inadequate data → `classification: uncertain`, evidence fails closed.
+
+- [ ] **Step 8: Implement conditional actor qualifier**
+
+Validate same-name evidence as a resolved clean/polluted state with `qualifierRequired === pollution`. Pass the flag into draft QA through evidence; only polluted actors require the H1/opening qualifier.
+
+- [ ] **Step 9: Write Comparison bilateral RED tests**
+
+Parse exactly two comparison sides from `entity`/`targetKeyword` around `vs` or `versus`. A fixture with five DramaBox-only SERP entries, one DramaBox Apple listing and one DramaBox friction source must fail for missing ReelShort coverage. Add a valid fixture where each side has relevant organic SERP, canonical App Store evidence and sourced friction; it must pass. Comparison evidence entries must carry side/entity metadata used by citation validation.
+
+- [ ] **Step 10: Implement bilateral evidence coverage**
+
+Apple search must query/match each side independently and annotate results. SERP validation must prove every side appears in relevant organic evidence; friction validation must prove every side has a canonical Reddit/App Store source; App Store validation must prove every side has a canonical listing. Fail with the missing side named.
+
+- [ ] **Step 11: Run focused tests and commit**
+
+```bash
+node --test tools/scripts/__tests__/gg-codex-pr-review.smoke.test.mjs tools/scripts/__tests__/gg-dramashortstv-doc.smoke.test.mjs tools/scripts/__tests__/lib-dramashortstv-evidence-providers.smoke.test.mjs tools/scripts/__tests__/lib-dramashortstv-evidence.smoke.test.mjs tools/scripts/__tests__/lib-dramashortstv-doc.smoke.test.mjs
+node --test tools/scripts/__tests__/lib-dramashortstv-evidence-providers.smoke.test.mjs tools/scripts/__tests__/lib-dramashortstv-evidence.smoke.test.mjs tools/scripts/__tests__/lib-dramashortstv-doc.smoke.test.mjs tools/scripts/__tests__/lib-dramashortstv-git.smoke.test.mjs tools/scripts/__tests__/gg-dramashortstv-doc.smoke.test.mjs tools/scripts/__tests__/gg-sheet-to-brief.smoke.test.mjs tools/scripts/__tests__/lib-site-profile.smoke.test.mjs
+git add tools/scripts/gg-dramashortstv-doc.mjs tools/scripts/gg-codex-pr-review.mjs tools/scripts/lib/dramashortstv-evidence-providers.mjs tools/scripts/lib/dramashortstv-evidence.mjs tools/scripts/lib/dramashortstv-doc.mjs tools/scripts/__tests__/gg-dramashortstv-doc.smoke.test.mjs tools/scripts/__tests__/gg-codex-pr-review.smoke.test.mjs tools/scripts/__tests__/lib-dramashortstv-evidence-providers.smoke.test.mjs tools/scripts/__tests__/lib-dramashortstv-evidence.smoke.test.mjs tools/scripts/__tests__/lib-dramashortstv-doc.smoke.test.mjs tools/README.md
+git commit -m "fix(dramashortstv): close evidence semantics"
+```

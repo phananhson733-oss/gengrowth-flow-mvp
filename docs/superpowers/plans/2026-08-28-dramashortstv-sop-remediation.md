@@ -150,8 +150,10 @@ git commit -m "feat(dramashortstv): add fail-closed evidence collection"
 
 **Files:**
 - Modify: `tools/scripts/gg-dramashortstv-doc.mjs`
+- Modify: `tools/scripts/gg-sheet-to-brief.mjs`
 - Modify: `tools/scripts/lib/dramashortstv-doc.mjs`
 - Modify: `tools/scripts/__tests__/gg-dramashortstv-doc.smoke.test.mjs`
+- Modify: `tools/scripts/__tests__/gg-sheet-to-brief.smoke.test.mjs`
 - Modify: `tools/scripts/__tests__/lib-dramashortstv-doc.smoke.test.mjs`
 
 **Interfaces:**
@@ -167,7 +169,7 @@ assert.throws(() => parseDramaArgs(['--workbook', DRAMA_WORKBOOK_ID, '--row', '4
 assert.throws(() => parseDramaArgs(['--workbook', DRAMA_WORKBOOK_ID, '--row', '4.9']));
 ```
 
-Also assert page-id lookup omits `--rows 2-1000` and uses an effectively unbounded limit; research/evidence validation occurs before prompt/generation; evidence failure prevents SOP/LLM/Ops/Git; prompt and factual review receive the same evidence SHA; factual PASS with mismatched draft/evidence SHA is rejected.
+Also assert `gg-sheet-to-brief --page-id <id>` uniquely matches the complete unbounded `选题登记表!A:AC` snapshot, rejects duplicates, and emits only that row; Drama page-id mode must call this bridge selector directly instead of resolving a row with a separate `gg-sheet-pull` process. Assert research/evidence validation occurs before prompt/generation; evidence failure prevents SOP/LLM/Ops/Git; prompt and factual review receive the same evidence SHA; factual PASS with mismatched draft/evidence SHA is rejected.
 
 - [ ] **Step 2: Verify orchestration tests RED**
 
@@ -175,11 +177,11 @@ Also assert page-id lookup omits `--rows 2-1000` and uses an effectively unbound
 node --test tools/scripts/__tests__/gg-dramashortstv-doc.smoke.test.mjs
 ```
 
-Expected: failures for permissive row parsing, capped page-id lookup, absent research calls and absent hash binding.
+Expected: failures for permissive row parsing, missing bridge page-id selector, absent research calls and absent hash binding.
 
 - [ ] **Step 3: Implement strict selectors and evidence stage**
 
-Validate the raw row token with `/^[0-9]+$/` before numeric conversion. For page-id lookup, let `gg-sheet-pull` fetch its native unbounded `A:AC` range and pass a limit above Google Sheets' maximum possible data rows; do not pass a bounded `--rows` slice.
+Validate the raw row token with `/^[0-9]+$/` before numeric conversion. Add a mutually exclusive `--page-id` selector to `gg-sheet-to-brief.mjs`; after its existing single unbounded pages fetch, find exactly one matching raw row, derive its Sheet row number, and run the normal join/normalization path for that row. Drama page-id mode must invoke that selector directly, eliminating both the 1000-row cap and the two-read row-shift window.
 
 Load secrets through the existing local env loader only inside apply-mode research. Dry-run must remain Sheet-only and must not call research, LLM, DataForSEO, Apple, Reddit, Ops writes or Git delivery.
 
@@ -195,7 +197,7 @@ Change `buildDramaPrompt({ brief, sopText, evidence })` so the evidence block is
 
 ```bash
 node --test tools/scripts/__tests__/gg-dramashortstv-doc.smoke.test.mjs tools/scripts/__tests__/lib-dramashortstv-doc.smoke.test.mjs
-git add tools/scripts/gg-dramashortstv-doc.mjs tools/scripts/lib/dramashortstv-doc.mjs tools/scripts/__tests__/gg-dramashortstv-doc.smoke.test.mjs tools/scripts/__tests__/lib-dramashortstv-doc.smoke.test.mjs
+git add tools/scripts/gg-dramashortstv-doc.mjs tools/scripts/gg-sheet-to-brief.mjs tools/scripts/lib/dramashortstv-doc.mjs tools/scripts/__tests__/gg-dramashortstv-doc.smoke.test.mjs tools/scripts/__tests__/gg-sheet-to-brief.smoke.test.mjs tools/scripts/__tests__/lib-dramashortstv-doc.smoke.test.mjs
 git commit -m "fix(dramashortstv): bind evidence and factual review"
 ```
 

@@ -188,6 +188,14 @@ function removeRanges(line, ranges) {
   return result + line.slice(cursor);
 }
 
+function replaceRanges(line, replacements) {
+  let result = line;
+  for (const { start, end, value } of [...replacements].sort((left, right) => right.start - left.start)) {
+    result = `${result.slice(0, start)}${value}${result.slice(end)}`;
+  }
+  return result;
+}
+
 function normalizeReferenceLabel(value) {
   return String(value || '').trim().replace(/\s+/gu, ' ').toLowerCase();
 }
@@ -459,6 +467,11 @@ function parseDramaMarkdown(markdown) {
   }
 
   const prose = proseParagraphs(visibleLines);
+  const renderedLines = visibleLines.map((line, index) => replaceRanges(
+    line,
+    links.filter((link) => link.line === index + 1).map((link) => ({ start: link.start, end: link.end, value: link.anchor })),
+  ));
+  const renderedProse = proseParagraphs(renderedLines);
   return {
     source,
     lines: visibleLines,
@@ -473,6 +486,8 @@ function parseDramaMarkdown(markdown) {
     rawLines,
     nakedUrls,
     prose,
+    renderedLines,
+    renderedProse,
   };
 }
 
@@ -529,7 +544,6 @@ function validateCitationClosure({ view, contentType, brief, evidence, errors })
   }
   const byId = evidenceCitationIndex(evidence, errors);
   const usedComments = new Set();
-  const usedIds = new Set();
   const citationForLink = new Map();
   for (const link of externalLinks) {
     const canonicalLink = canonicalExternalUrl(link.destination);
@@ -553,8 +567,6 @@ function validateCitationClosure({ view, contentType, brief, evidence, errors })
       errors.push(`malformed source-id comment at line ${comment.line}`);
       continue;
     }
-    if (usedIds.has(comment.id)) errors.push(`duplicate source-id use: ${comment.id}`);
-    usedIds.add(comment.id);
     const entry = byId.get(comment.id);
     if (!entry) {
       errors.push(`unknown evidence source-id: ${comment.id}`);
@@ -570,19 +582,21 @@ function validateCitationClosure({ view, contentType, brief, evidence, errors })
     if (!usedComments.has(index)) errors.push(`orphan source-id comment at line ${view.sourceIdComments[index].line}`);
   }
   if (contentType !== 'comparison') return;
-  const sides = parseDramaComparisonSides(brief);
-  if (sides.length !== 2) {
-    errors.push('comparison brief must contain exactly two sides around vs or versus');
+  let sides;
+  try {
+    sides = parseDramaComparisonSides(brief);
+  } catch (error) {
+    errors.push(error?.message || 'comparison sides are invalid');
     return;
   }
-  for (const paragraph of view.prose) {
-    const mentioned = sides.filter((side) => includesEntity(paragraph.text, side));
+  for (const link of externalLinks) {
+    const paragraph = view.renderedProse.find((item) => link.line >= item.startLine && link.line <= item.endLine);
+    const unitText = paragraph?.text || view.renderedLines[link.line - 1] || '';
+    const mentioned = sides.filter((side) => includesEntity(unitText, side));
     if (mentioned.length !== 1) continue;
-    for (const link of externalLinks.filter((item) => item.line >= paragraph.startLine && item.line <= paragraph.endLine)) {
-      const entry = citationForLink.get(link);
-      if (entry && !entry.entities.some((entity) => includesEntity(entity, mentioned[0]) || includesEntity(mentioned[0], entity))) {
-        errors.push(`comparison-side citation for ${mentioned[0]} lacks matching evidence metadata`);
-      }
+    const entry = citationForLink.get(link);
+    if (entry && !entry.entities.some((entity) => includesEntity(entity, mentioned[0]) || includesEntity(mentioned[0], entity))) {
+      errors.push(`comparison-side citation for ${mentioned[0]} lacks matching evidence metadata`);
     }
   }
 }

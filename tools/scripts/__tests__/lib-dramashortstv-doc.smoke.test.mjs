@@ -512,12 +512,12 @@ test('external citations require one adjacent evidence ID whose canonical URL ma
   assert.match(validate(valid).errors.join('\n'), /evidence.*required|source-id/i);
 });
 
-test('citation comments cannot be orphaned or reused and generic anchors ignore Markdown formatting', () => {
+test('citation comments cannot be orphaned or repeated on one link and generic anchors ignore Markdown formatting', () => {
   const orphan = `${GOOD_COMPARISON}\n<!-- source-id: apple:dramabox -->`;
-  const duplicate = `${GOOD_COMPARISON}\n[official listing](https://apps.apple.com/us/app/dramabox/id1) <!-- source-id: apple:dramabox --> and [store evidence](https://apps.apple.com/us/app/dramabox/id1) <!-- source-id: apple:dramabox -->`;
+  const duplicate = `${GOOD_COMPARISON}\n[official listing](https://apps.apple.com/us/app/dramabox/id1) <!-- source-id: apple:dramabox --> <!-- source-id: apple:dramabox -->`;
   const formattedGeneric = `${GOOD_COMPARISON}\n[**here**](https://apps.apple.com/us/app/dramabox/id1) <!-- source-id: apple:dramabox -->`;
   assert.match(validate(orphan, 'comparison', normalizeDramaBrief(comparisonPayload()), CITATION_EVIDENCE).errors.join('\n'), /orphan.*source-id/i);
-  assert.match(validate(duplicate, 'comparison', normalizeDramaBrief(comparisonPayload()), CITATION_EVIDENCE).errors.join('\n'), /duplicate.*source-id|used more than once/i);
+  assert.match(validate(duplicate, 'comparison', normalizeDramaBrief(comparisonPayload()), CITATION_EVIDENCE).errors.join('\n'), /orphan.*source-id|duplicate.*comment/i);
   assert.match(validate(formattedGeneric, 'comparison', normalizeDramaBrief(comparisonPayload()), CITATION_EVIDENCE).errors.join('\n'), /generic Markdown link anchor/i);
 
   const duplicateEvidenceIds = structuredClone(CITATION_EVIDENCE);
@@ -529,6 +529,21 @@ test('citation comments cannot be orphaned or reused and generic anchors ignore 
   assert.match(validate(formattedGeneric, 'comparison', normalizeDramaBrief(comparisonPayload()), malformedCanonicalUrl).errors.join('\n'), /malformed.*evidence.*URL/i);
 });
 
+test('different claims may reuse one evidence ID while one link cannot own extra comments', () => {
+  const reused = `${GOOD_COMPARISON}
+DramaBox billing appears in the [official listing](https://apps.apple.com/us/app/dramabox/id1) <!-- source-id: apple:dramabox -->.
+
+DramaBox availability also comes from the [same official listing](https://apps.apple.com/us/app/dramabox/id1) <!-- source-id: apple:dramabox -->.`;
+  const reusedErrors = validate(reused, 'comparison', normalizeDramaBrief(comparisonPayload()), CITATION_EVIDENCE).errors.join('\n');
+  assert.doesNotMatch(reusedErrors, /duplicate source-id|used more than once/i);
+
+  const extraComment = `${GOOD_COMPARISON}\n[official listing](https://apps.apple.com/us/app/dramabox/id1) <!-- source-id: apple:dramabox --> <!-- source-id: conflicting:id -->`;
+  assert.match(
+    validate(extraComment, 'comparison', normalizeDramaBrief(comparisonPayload()), CITATION_EVIDENCE).errors.join('\n'),
+    /orphan source-id|duplicate.*comment|conflicting.*comment/i,
+  );
+});
+
 test('comparison paragraph mentioning one side requires cited evidence metadata for that side', () => {
   const wrongSide = `${GOOD_COMPARISON}\nDramaBox billing is documented in the [official listing](https://apps.apple.com/us/app/dramabox/id1) <!-- source-id: apple:dramabox -->.`;
   const evidence = structuredClone(CITATION_EVIDENCE);
@@ -537,6 +552,32 @@ test('comparison paragraph mentioning one side requires cited evidence metadata 
     validate(wrongSide, 'comparison', normalizeDramaBrief(comparisonPayload()), evidence).errors.join('\n'),
     /DramaBox.*citation|citation.*DramaBox|comparison side/i,
   );
+});
+
+test('comparison claim-side binding uses rendered prose, list, and table units without link destinations', () => {
+  const evidence = {
+    sources: {
+      appStore: {
+        results: [
+          { id: 'apple:dramabox', url: 'https://apps.apple.com/us/app/dramabox/id1', entities: ['DramaBox'] },
+          { id: 'apple:reelshort', url: 'https://apps.apple.com/us/app/reelshort/id2', entities: ['ReelShort'] },
+        ],
+      },
+    },
+  };
+  const wrongCitation = '[official app listing](https://apps.apple.com/us/app/reelshort/id2) <!-- source-id: apple:reelshort -->';
+  const units = [
+    `DramaBox billing is documented by the ${wrongCitation}.`,
+    `- DramaBox billing evidence: ${wrongCitation}`,
+    `| DramaBox billing | ${wrongCitation} |`,
+  ];
+  for (const unit of units) {
+    assert.match(
+      validate(`${GOOD_COMPARISON}\n${unit}`, 'comparison', normalizeDramaBrief(comparisonPayload()), evidence).errors.join('\n'),
+      /comparison-side citation.*DramaBox|DramaBox.*matching evidence metadata/i,
+      unit,
+    );
+  }
 });
 
 test('scanner ignores headings, links, URLs, and fences inside HTML comments', () => {

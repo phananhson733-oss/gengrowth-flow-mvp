@@ -11,8 +11,17 @@ import {
   fetchGoogleTrendsEvidence,
   fetchRedditEvidence,
 } from '../lib/dramashortstv-evidence-providers.mjs';
+import * as evidenceProviders from '../lib/dramashortstv-evidence-providers.mjs';
 
 function planBrief(contentType) {
+  if (contentType === 'safety-guide') {
+    return {
+      contentType,
+      targetKeyword: 'is reelshort safe',
+      associatedKeywords: ['is dramabox app safe to use'],
+      entity: 'Short Drama App Safety (Coin Paywall Model)',
+    };
+  }
   return {
     contentType,
     targetKeyword: contentType === 'comparison' ? 'dramabox vs reelshort' : 'dramabox reviews',
@@ -46,7 +55,7 @@ test('DataForSEO rejects HTTP, top-level, and task failures', async () => {
 
 test('research plans select exact providers and query purposes for all six content types', () => {
   const expected = {
-    'safety-guide': { providers: ['serp', 'appStore'], purposes: ['research', 'friction'] },
+    'safety-guide': { providers: ['serp', 'appStore'], purposes: ['research', 'friction', 'research', 'friction'] },
     'app-profile': { providers: ['serp', 'appStore'], purposes: ['research', 'friction'] },
     comparison: { providers: ['serp', 'appStore'], purposes: ['research', 'friction', 'research', 'friction'] },
     'actor-profile': { providers: ['serp', 'sameName'], purposes: ['research', 'imdb'] },
@@ -62,6 +71,50 @@ test('research plans select exact providers and query purposes for all six conte
   const actor = buildDramaResearchPlan(planBrief('actor-profile'));
   assert.deepEqual(actor.sameNameQuerySpecs.map(({ purpose }) => purpose), ['same-name-exact', 'same-name-qualified']);
   assert.throws(() => buildDramaResearchPlan(planBrief('unsupported')), /unsupported/i);
+  assert.throws(
+    () => buildDramaResearchPlan({
+      ...planBrief('comparison'),
+      entity: 'DramaBox vs ReelShort',
+      targetKeyword: 'dramabox vs shortmax',
+    }),
+    /comparison.*(?:conflict|inconsistent)|sides.*(?:conflict|inconsistent)/i,
+  );
+});
+
+test('safety app extraction normalizes aliases, deduplicates, and drives per-app query counts', () => {
+  assert.equal(typeof evidenceProviders.extractSafetyAppEntities, 'function');
+  const safetyBrief = {
+    contentType: 'safety-guide',
+    entity: 'Short Drama App Safety (Coin Paywall Model)',
+    targetKeyword: 'is reelshort safe',
+    associatedKeywords: [
+      'is Reel Short app safe to use',
+      'is dramabox safe',
+      'is shortmax app safe',
+      'is netshort safe to use',
+      'is good short safe',
+      'is flick reels app safe to use',
+      'short drama app safety',
+    ],
+  };
+  const apps = evidenceProviders.extractSafetyAppEntities(safetyBrief);
+  assert.deepEqual(apps, ['ReelShort', 'DramaBox', 'ShortMax', 'NetShort', 'GoodShort', 'FlickReels']);
+  const plan = buildDramaResearchPlan(safetyBrief);
+  assert.equal(plan.serpQuerySpecs.length, 2 * apps.length);
+  assert.deepEqual(plan.appStoreEntities, apps);
+  assert.deepEqual(plan.frictionEntities, apps);
+});
+
+test('safety plan fails with fewer than two explicit app-safe query entities', () => {
+  assert.throws(
+    () => buildDramaResearchPlan({
+      contentType: 'safety-guide',
+      entity: 'Short Drama App Safety',
+      targetKeyword: 'is reelshort safe',
+      associatedKeywords: ['short drama app safety'],
+    }),
+    /safety.*at least two.*app/i,
+  );
 });
 
 test('Google SERP issues one Live API task per query and reads purpose only from task.data.tag', async () => {

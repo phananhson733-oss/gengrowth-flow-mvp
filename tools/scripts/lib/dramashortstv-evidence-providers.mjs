@@ -5,11 +5,21 @@ const DATAFORSEO_BASE = 'https://api.dataforseo.com/v3/';
 const APPLE_SEARCH_URL = 'https://itunes.apple.com/search';
 
 export function parseDramaComparisonSides(brief) {
-  for (const value of [brief?.entity, brief?.targetKeyword]) {
+  const fields = [
+    ['entity', brief?.entity],
+    ['targetKeyword', brief?.targetKeyword],
+  ].map(([label, value]) => {
     const sides = String(value || '').split(/\s+(?:vs\.?|versus)\s+/iu).map((side) => side.trim()).filter(Boolean);
-    if (sides.length === 2) return sides;
+    if (sides.length !== 2) throw new Error(`comparison ${label} requires exactly two sides around vs or versus`);
+    return { label, sides, normalized: sides.map((side) => side.normalize('NFKD').replace(/\p{M}+/gu, '').toLowerCase().replace(/[^a-z0-9]+/g, '')) };
+  });
+  const [entity, keyword] = fields;
+  if (new Set(entity.normalized).size !== 2
+    || new Set(keyword.normalized).size !== 2
+    || entity.normalized.some((side) => !keyword.normalized.includes(side))) {
+    throw new Error('comparison entity and targetKeyword sides conflict');
   }
-  return [];
+  return entity.sides;
 }
 
 function actorBaseName(value) {
@@ -18,6 +28,27 @@ function actorBaseName(value) {
 
 function queryKey(value) {
   return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'query';
+}
+
+const SAFETY_APP_ALIASES = new Map([
+  ['reelshort', 'ReelShort'],
+  ['dramabox', 'DramaBox'],
+  ['shortmax', 'ShortMax'],
+  ['netshort', 'NetShort'],
+  ['goodshort', 'GoodShort'],
+  ['flickreels', 'FlickReels'],
+]);
+
+export function extractSafetyAppEntities(brief) {
+  const values = [brief?.targetKeyword, ...(Array.isArray(brief?.associatedKeywords) ? brief.associatedKeywords : [])];
+  const entities = [];
+  for (const value of values) {
+    const match = String(value || '').trim().match(/^is\s+(.+?)\s+(?:app\s+)?safe(?:\s+to\s+use)?\s*\??$/iu);
+    if (!match) continue;
+    const canonical = SAFETY_APP_ALIASES.get(match[1].toLowerCase().replace(/[^a-z0-9]+/g, ''));
+    if (canonical && !entities.includes(canonical)) entities.push(canonical);
+  }
+  return entities;
 }
 
 export function buildDramaResearchPlan(brief) {
@@ -29,9 +60,13 @@ export function buildDramaResearchPlan(brief) {
   if (contentType === 'comparison' && comparisonSides.length !== 2) {
     throw new Error('comparison requires exactly two sides around vs or versus');
   }
-  const entities = comparisonSides.length === 2 ? comparisonSides : [entity];
+  const safetyApps = contentType === 'safety-guide' ? extractSafetyAppEntities(brief) : [];
+  if (contentType === 'safety-guide' && safetyApps.length < 2) {
+    throw new Error('safety guide requires at least two explicit app-safe query entities');
+  }
+  const entities = safetyApps.length ? safetyApps : comparisonSides.length === 2 ? comparisonSides : [entity];
   const researchAndFriction = entities.flatMap((side) => [
-    { query: contentType === 'comparison' ? `${side} reviews` : targetKeyword, purpose: 'research', queryKey: `research-${queryKey(side)}`, entities: [side] },
+    { query: ['comparison', 'safety-guide'].includes(contentType) ? `${side} reviews` : targetKeyword, purpose: 'research', queryKey: `research-${queryKey(side)}`, entities: [side] },
     { query: `${side} reviews complaints cancellation`, purpose: 'friction', queryKey: `friction-${queryKey(side)}`, entities: [side] },
   ]);
   const base = {

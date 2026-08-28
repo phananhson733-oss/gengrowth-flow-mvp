@@ -90,7 +90,8 @@ DataForSEO Live 请求严格只有一个 task，精确请求数如下：
 
 | 内容类型 | DataForSEO Live | Apple Search | Reddit fallback |
 | --- | ---: | ---: | ---: |
-| safety guide / app profile | 2 次 Organic（research、friction） | 1 次 | 0–1 次 |
+| safety guide | `2 × App 数` 次 Organic（每 App 各 research、friction） | `App 数` 次 | 0–`App 数` 次（每个缺 friction 的 App 至多一次） |
+| app profile | 2 次 Organic（research、friction） | 1 次 | 0–1 次 |
 | comparison | 4 次 Organic（两边各 research、friction） | 2 次（每边一次） | 0–2 次（只查缺 friction 的侧） |
 | actor profile | 4 次 Organic（research、IMDb、exact-name、qualified actor） | 0 次 | 0 次 |
 | brand playlist | 2 次 Organic（research、IMDb）+ 1 次 Trends | 0 次 | 0 次 |
@@ -98,6 +99,8 @@ DataForSEO Live 请求严格只有一个 task，精确请求数如下：
 
 IMDb 只从同批 Google SERP 结果派生，不发直接 IMDb 请求；未被当前类型需要的来源会记录为
 `unavailable/not-required`，不会产生 I/O。Apple Search 不要求本地凭据。
+Safety guide 的 App 列表只从 target/associated keyword 的 `is <app> [app] safe [to use]` 结构提取并规范别名；
+少于两个明确 App 时会在任何 provider I/O 前 fail-closed。
 
 Reddit OAuth（`GG_REDDIT_CLIENT_ID`、`GG_REDDIT_CLIENT_SECRET`，以及可选的用户名/密码）仅在
 Google SERP 没有给出可验证的真实 friction（规范 Reddit 帖子或 Apple App Store 结果）时调用。

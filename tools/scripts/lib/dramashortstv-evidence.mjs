@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 
 import { sanitize, scrubPII } from './gg-shared.mjs';
-import { buildDramaResearchPlan, parseDramaComparisonSides } from './dramashortstv-evidence-providers.mjs';
+import { buildDramaResearchPlan, extractSafetyAppEntities, parseDramaComparisonSides } from './dramashortstv-evidence-providers.mjs';
 
 const REQUIRED_BY_CONTENT_TYPE = Object.freeze({
   'safety-guide': ['serp', 'app-store', 'friction'],
@@ -133,8 +133,9 @@ function resultMentionsEntity(result, entity) {
 function missingSerpFrictionEntities(source, entities, now) {
   const requested = Array.isArray(entities) ? entities : [];
   if (source?.provider !== 'dataforseo-google-serp' || !hasFreshSource(source, 'serp', Date.parse(now))) return requested;
-  const requireMetadata = requested.length > 1;
-  return requested.filter((entity) => !source?.results?.some((result) => isFrictionSerp(result) && resultCoversEntity(result, entity, requireMetadata)));
+  return requested.filter((entity) => !source?.results?.some((result) => isFrictionSerp(result)
+    && resultCoversEntity(result, entity, true)
+    && resultMentionsEntity(result, entity)));
 }
 
 function hostnameFor(result) {
@@ -192,9 +193,14 @@ function actorNameTokens(brief) {
 
 function isQualifiedActorResult(brief, result) {
   if (!isRealSameNameResult(result)) return false;
-  const haystack = `${result.title || ''} ${result.snippet || ''} ${result.url || ''}`.toLowerCase();
   const tokens = actorNameTokens(brief);
-  return tokens.length > 0 && tokens.every((token) => haystack.includes(token)) && haystack.includes('reelshort');
+  const urlText = String(result?.url || '').toLowerCase();
+  return tokens.length > 0 && tokens.every((token) => urlText.includes(token));
+}
+
+function isExplicitDifferentIdentity(result) {
+  const haystack = `${result?.title || ''} ${result?.snippet || ''}`.toLowerCase();
+  return /\b(?:american football|football player|soccer player|professor|politician|doctor|physician|surgeon|attorney|lawyer|athlete|coach|mayor|senator|representative|researcher|scientist|musician|singer|author|journalist)\b/u.test(haystack);
 }
 
 export function classifyActorSameNameEvidence({ brief, source }) {
@@ -204,7 +210,14 @@ export function classifyActorSameNameEvidence({ brief, source }) {
   if (!qualified.length || !exact.length) {
     return { classification: 'uncertain', pollution: null, qualifierRequired: null };
   }
-  const unrelatedExact = exact.filter((result) => !isQualifiedActorResult(brief, result));
+  const confirmedSameUrls = new Set(qualified.map((result) => canonicalUrl(result.url)).filter(Boolean));
+  const confirmedSameExact = exact.filter((result) => confirmedSameUrls.has(canonicalUrl(result.url))
+    || (isQualifiedActorResult(brief, result) && `${result.title || ''} ${result.snippet || ''} ${result.url || ''}`.toLowerCase().includes('reelshort')));
+  const unrelatedExact = exact.filter((result) => !confirmedSameExact.includes(result) && isExplicitDifferentIdentity(result));
+  const ambiguousExact = exact.filter((result) => !confirmedSameExact.includes(result) && !unrelatedExact.includes(result));
+  if (ambiguousExact.length) {
+    return { classification: 'uncertain', pollution: null, qualifierRequired: null };
+  }
   const pollution = unrelatedExact.length >= 2;
   return {
     classification: pollution ? 'polluted' : 'clean',
@@ -284,9 +297,18 @@ export function validateDramaEvidence({ brief, evidence, now = new Date().toISOS
   const errors = [];
   const passed = [];
   const blocked = [];
-  const comparisonSides = brief?.contentType === 'comparison' ? parseDramaComparisonSides(brief) : [];
-  if (brief?.contentType === 'comparison' && comparisonSides.length !== 2) {
-    errors.push('comparison requires exactly two sides around vs or versus');
+  let comparisonSides = [];
+  if (brief?.contentType === 'comparison') {
+    try {
+      comparisonSides = parseDramaComparisonSides(brief);
+    } catch (error) {
+      errors.push(cleanText(error?.message || 'comparison sides are invalid'));
+    }
+  }
+  let safetyApps = [];
+  if (brief?.contentType === 'safety-guide') {
+    safetyApps = extractSafetyAppEntities(brief);
+    if (safetyApps.length < 2) errors.push('safety guide requires at least two explicit app-safe query entities');
   }
   if (typeof evidence?.sha256 !== 'string' || evidence.sha256 !== sha256Text(canonicalJson(evidence))) {
     errors.push('evidence sha256 is missing or does not match canonical JSON');
@@ -302,23 +324,21 @@ export function validateDramaEvidence({ brief, evidence, now = new Date().toISOS
       const serp = sources.serp;
       const validRedditSource = hasFreshSource(reddit, 'reddit', nowMs) && reddit.provider === 'reddit-oauth';
       const validSerpSource = hasFreshSource(serp, 'serp', nowMs) && serp.provider === 'dataforseo-google-serp';
-      if (comparisonSides.length === 2) {
-        const missing = comparisonSides.filter((side) => {
-          const inReddit = validRedditSource && reddit.results.some((result) => isRedditResult(result) && resultCoversEntity(result, side, true) && resultMentionsEntity(result, side));
-          const inSerp = validSerpSource && serp.results.some((result) => isFrictionSerp(result) && resultCoversEntity(result, side, true) && resultMentionsEntity(result, side));
-          return !inReddit && !inSerp;
-        });
-        if (!missing.length) passed.push(requirement);
-        else { blocked.push(requirement); errors.push(`friction missing canonical Reddit/App Store evidence for comparison side: ${missing.join(', ')}`); }
-      } else {
-        const validReddit = validRedditSource && reddit.results.some(isRedditResult);
-        const validGoogleFriction = validSerpSource && serp.results.some(isFrictionSerp);
-        if (validReddit || validGoogleFriction) passed.push(requirement);
-        else {
-          const reason = [serp?.reason, reddit?.reason].map(cleanText).filter(Boolean).join(' | ');
-          blocked.push(requirement);
-          errors.push(`friction requires a real Reddit post or Google result on Reddit/App Store${reason ? `: ${reason}` : ''}`);
-        }
+      const frictionEntities = safetyApps.length ? safetyApps : comparisonSides.length === 2 ? comparisonSides : [cleanText(brief?.entity)].filter(Boolean);
+      const missing = frictionEntities.filter((entity) => {
+        const inReddit = validRedditSource && reddit.results.some((result) => isRedditResult(result)
+          && resultCoversEntity(result, entity, true)
+          && resultMentionsEntity(result, entity));
+        const inSerp = validSerpSource && serp.results.some((result) => isFrictionSerp(result)
+          && resultCoversEntity(result, entity, true)
+          && resultMentionsEntity(result, entity));
+        return !inReddit && !inSerp;
+      });
+      if (!missing.length) passed.push(requirement);
+      else {
+        const reason = [serp?.reason, reddit?.reason].map(cleanText).filter(Boolean).join(' | ');
+        blocked.push(requirement);
+        errors.push(`friction missing relevant canonical Reddit/App Store evidence for: ${missing.join(', ')}${reason ? `: ${reason}` : ''}`);
       }
       continue;
     }
@@ -339,8 +359,9 @@ export function validateDramaEvidence({ brief, evidence, now = new Date().toISOS
           : 'SERP requires at least five relevant organic results across three domains');
       }
     } else if (requirement === 'app-store') {
-      const missing = comparisonSides.length === 2
-        ? comparisonSides.filter((side) => !source.results.some((result) => isCanonicalAppleApp(result) && resultCoversEntity(result, side, true) && resultMentionsEntity(result, side)))
+      const appStoreEntities = safetyApps.length ? safetyApps : comparisonSides;
+      const missing = appStoreEntities.length
+        ? appStoreEntities.filter((side) => !source.results.some((result) => isCanonicalAppleApp(result) && resultCoversEntity(result, side, true) && resultMentionsEntity(result, side)))
         : [];
       if (source.provider === 'apple-itunes' && source.results.some(isCanonicalAppleApp) && !missing.length) passed.push(requirement);
       else {

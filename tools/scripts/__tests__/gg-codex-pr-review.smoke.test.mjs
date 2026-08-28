@@ -391,7 +391,10 @@ test('--source strict SHA validates bytes and requires the reviewer to echo the 
   });
   assert.equal(r.status, 0, `stderr: ${r.stderr}; stdout: ${r.stdout}`);
   assert.match(r.stdout, new RegExp(`^REVIEWED_INPUT_SHA256: ${expected}$`, 'm'));
-  assert.match(readFileSync(capture, 'utf8'), new RegExp(`REVIEWED_INPUT_SHA256: ${expected}`));
+  const prompt = readFileSync(capture, 'utf8');
+  assert.match(prompt, new RegExp(`REVIEWED_INPUT_SHA256: ${expected}`));
+  assert.match(prompt, /draft citation.*source-id.*URL.*Prevalidated Evidence/is);
+  assert.match(prompt, /source.*support.*adjacent claim/is);
 });
 
 test('--source strict SHA rejects byte mismatch before Codex runs', () => {

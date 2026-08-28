@@ -21,6 +21,12 @@ function brief(contentType = 'comparison') {
   if (contentType === 'actor-profile') {
     return { pageId: 'page-actor-profile', contentType, targetKeyword: 'evan adams reelshort actor', entity: 'Evan Adams' };
   }
+  if (contentType === 'safety-guide') {
+    return {
+      pageId: 'page-safety-guide', contentType, entity: 'Short Drama App Safety (Coin Paywall Model)',
+      targetKeyword: 'is reelshort safe', associatedKeywords: ['is dramabox app safe to use'],
+    };
+  }
   return { pageId: `page-${contentType}`, contentType, targetKeyword: 'DramaBox reviews', entity: 'DramaBox' };
 }
 
@@ -92,6 +98,26 @@ test('collectDramaEvidence uses the exact six-family source matrix and a stable 
   }
 });
 
+test('invalid safety app scope fails before any provider call', async () => {
+  let calls = 0;
+  const providers = Object.fromEntries(['serp', 'appStore', 'reddit', 'trends', 'sameName'].map((name) => [name, async () => {
+    calls += 1;
+    return validSources()[name];
+  }]));
+  await assert.rejects(
+    () => collectDramaEvidence({
+      brief: {
+        pageId: 'page-safety-guide', contentType: 'safety-guide', entity: 'Short Drama App Safety',
+        targetKeyword: 'is reelshort safe', associatedKeywords: ['short drama safety'],
+      },
+      providers,
+      now: NOW,
+    }),
+    /safety.*at least two.*app/i,
+  );
+  assert.equal(calls, 0);
+});
+
 test('collection calls only planned providers and skips Reddit when SERP already has qualifying friction', async () => {
   const expected = {
     'safety-guide': ['serp', 'appStore'],
@@ -108,7 +134,7 @@ test('collection calls only planned providers and skips Reddit when SERP already
       id: 'serp:friction:canonical', type: 'organic', purpose: 'friction',
       url: 'https://www.reddit.com/r/shortdrama/comments/friction/dramabox', title: 'DramaBox cancellation', snippet: 'DramaBox billing friction', entities: ['DramaBox'],
     });
-    if (contentType === 'comparison') sources.serp.results.push({
+    if (['comparison', 'safety-guide'].includes(contentType)) sources.serp.results.push({
       id: 'serp:friction:reelshort', type: 'organic', purpose: 'friction',
       url: 'https://www.reddit.com/r/shortdrama/comments/friction/reelshort', title: 'ReelShort cancellation', snippet: 'ReelShort billing friction', entities: ['ReelShort'],
     });
@@ -147,6 +173,37 @@ test('Reddit fallback does not trust canonical-looking friction from an unvalida
   }]));
   await collectDramaEvidence({ brief: brief('safety-guide'), providers, now: NOW });
   assert.equal(calls.filter((name) => name === 'reddit').length, 1);
+});
+
+test('WeatherApp friction cannot satisfy DramaBox fallback or final Reddit evidence relevance', async () => {
+  const sources = validSources();
+  sources.serp.results.push({
+    id: 'serp:friction:weather', type: 'organic', purpose: 'friction',
+    url: 'https://www.reddit.com/r/weather/comments/weather/app',
+    title: 'WeatherApp billing', snippet: 'WeatherApp cancellation complaints', entities: ['DramaBox'],
+  });
+  let redditCalls = 0;
+  const evidence = await collectDramaEvidence({
+    brief: brief('app-profile'),
+    providers: {
+      ...providersFrom(sources),
+      reddit: async () => {
+        redditCalls += 1;
+        return {
+          status: 'ok', provider: 'reddit-oauth', collectedAt: NOW,
+          results: [{
+            id: 'reddit:weather', url: 'https://www.reddit.com/r/weather/comments/weather/app',
+            title: 'WeatherApp billing', snippet: 'WeatherApp cancellation complaints', entities: ['DramaBox'],
+          }],
+        };
+      },
+    },
+    now: NOW,
+  });
+  assert.equal(redditCalls, 1, 'irrelevant SERP friction must trigger Reddit fallback');
+  const result = validateDramaEvidence({ brief: brief('app-profile'), evidence, now: NOW });
+  assert.equal(result.ok, false);
+  assert.match(result.errors.join('\n'), /friction.*DramaBox|DramaBox.*friction/i);
 });
 
 test('sanitized DataForSEO 429 reason survives collection into final evidence QA', async () => {
@@ -322,6 +379,33 @@ test('same-name classification is uncertain without qualified identity or adequa
     assert.equal(result.ok, false);
     assert.match(result.errors.join('\n'), /same-name.*uncertain|uncertain.*same-name/i);
   }
+});
+
+test('same-name classification distinguishes confirmed same, ambiguous, and explicit different identities', () => {
+  const actorPage = { url: 'https://www.reelshort.com/actor/evan-adams', title: 'Evan Adams', snippet: 'Official profile' };
+  const sameOrAmbiguous = sameNameSource({
+    exact: [
+      actorPage,
+      { url: 'https://www.imdb.com/name/nm1234567/', title: 'Evan Adams', snippet: 'Actor credits' },
+      { url: 'https://evanadams.example/profile', title: 'Evan Adams official profile', snippet: 'Biography' },
+    ],
+    qualified: [actorPage],
+  });
+  assert.notEqual(sameOrAmbiguous.classification, 'polluted');
+
+  const qualifiedByNameUrl = { url: 'https://casting.example/evan-adams', title: 'Evan Adams', snippet: 'Actor credits' };
+  const trulyPolluted = sameNameSource({
+    exact: [
+      qualifiedByNameUrl,
+      { url: 'https://sports.example/evan-adams', title: 'Evan Adams football player', snippet: 'Professional football career' },
+      { url: 'https://university.example/evan-adams', title: 'Professor Evan Adams', snippet: 'University professor' },
+    ],
+    qualified: [qualifiedByNameUrl],
+  });
+  assert.deepEqual(
+    { classification: trulyPolluted.classification, pollution: trulyPolluted.pollution, qualifierRequired: trulyPolluted.qualifierRequired },
+    { classification: 'polluted', pollution: true, qualifierRequired: true },
+  );
 });
 
 function comparisonBrief(entity = 'DramaBox vs ReelShort', targetKeyword = 'dramabox vs reelshort') {

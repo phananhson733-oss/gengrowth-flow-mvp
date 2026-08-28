@@ -177,11 +177,45 @@ function isAllowedLinkTitle(value) {
   return value === '' || /^\s+(?:"[^"]*"|'[^']*'|\([^)]*\))\s*$/u.test(value);
 }
 
+function findClosingBracket(line, start) {
+  let depth = 1;
+  for (let index = start + 1; index < line.length; index++) {
+    if (line[index] === '\\') {
+      index++;
+      continue;
+    }
+    if (line[index] === '[') depth++;
+    if (line[index] === ']') {
+      depth--;
+      if (depth === 0) return index;
+    }
+  }
+  return -1;
+}
+
+function maskInlineCodeSpans(line) {
+  const masked = [...line];
+  for (let start = 0; start < line.length; start++) {
+    if (line[start] !== '`') continue;
+    let runLength = 1;
+    while (line[start + runLength] === '`') runLength++;
+    const delimiter = '`'.repeat(runLength);
+    const end = line.indexOf(delimiter, start + runLength);
+    if (end === -1) {
+      start += runLength - 1;
+      continue;
+    }
+    for (let index = start; index < end + runLength; index++) masked[index] = ' ';
+    start = end + runLength - 1;
+  }
+  return masked.join('');
+}
+
 function parseInlineLinks(line) {
   const candidates = [];
   for (let start = 0; start < line.length; start++) {
     if (line[start] !== '[' || line[start - 1] === '!') continue;
-    const anchorEnd = line.indexOf(']', start + 1);
+    const anchorEnd = findClosingBracket(line, start);
     if (anchorEnd === -1) continue;
     const anchor = line.slice(start + 1, anchorEnd).trim();
     if (line[anchorEnd + 1] === '(') {
@@ -240,9 +274,14 @@ function parseInlineLinks(line) {
 }
 
 function parseReferenceDefinition(line) {
-  const match = line.match(/^\s{0,3}\[([^\]\n]+)\]\s*:\s*(.+?)\s*$/u);
-  if (!match) return null;
-  const [, rawLabel, rawDestination] = match;
+  if (!/^\s{0,3}\[/u.test(line)) return null;
+  const labelStart = line.indexOf('[');
+  const labelEnd = findClosingBracket(line, labelStart);
+  if (labelEnd === -1) return null;
+  const separator = line.slice(labelEnd + 1).match(/^\s*:\s*(.+?)\s*$/u);
+  if (!separator) return null;
+  const rawLabel = line.slice(labelStart + 1, labelEnd);
+  const rawDestination = separator[1];
   let destination = '';
   let validSyntax = false;
   if (rawDestination.startsWith('<')) {
@@ -314,8 +353,19 @@ function parseDramaMarkdown(markdown) {
       continue;
     }
 
+    const definition = parseReferenceDefinition(line);
+    if (definition) {
+      visibleLines.push('');
+      const detail = { line, definition, definitionLine: true };
+      lineDetails.push(detail);
+      if (definition.validSyntax && !definitions.has(definition.label)) {
+        definitions.set(definition.label, { ...definition, line: index + 1 });
+      }
+      continue;
+    }
+
     visibleLines.push(line);
-    const detail = { line, candidates: parseInlineLinks(line), definition: parseReferenceDefinition(line) };
+    const detail = { line, candidates: parseInlineLinks(maskInlineCodeSpans(line)), definition: null };
     lineDetails.push(detail);
     if (detail.definition?.validSyntax && !definitions.has(detail.definition.label)) {
       definitions.set(detail.definition.label, { ...detail.definition, line: index + 1 });

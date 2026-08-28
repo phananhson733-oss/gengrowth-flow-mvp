@@ -545,6 +545,13 @@ test('scanner leaves malformed and unused external definitions for naked-URL val
   assert.match(validate(unused).errors.join('\n'), /naked http\(s\) URL/i);
 });
 
+test('definition lines never self-consume or enter prose validation', () => {
+  const unused = `${GOOD_COMPARISON}\n\n[unused] : https://example.com/archive/2026`;
+  const errors = validate(unused).errors.join('\n');
+  assert.match(errors, /naked http\(s\) URL/i);
+  assert.doesNotMatch(errors, /unsourced factual number|60 words/i);
+});
+
 test('scanner rejects empty and generic anchors across inline and reference uses', () => {
   const empty = `${GOOD_COMPARISON}\n[ ](https://example.com)`;
   const generic = `${GOOD_COMPARISON}
@@ -652,6 +659,30 @@ test('QA accepts numeric prose cited by a resolved external reference link', () 
     'DramaBox has 100 releases via the [verified archive][archive].',
   ) + '\n\n[archive]: https://example.com/archive';
   assert.doesNotMatch(validate(cited).errors.join('\n'), /unsourced factual number/i);
+});
+
+test('used external definition lines stay outside prose and numeric citation checks', () => {
+  const cited = GOOD_COMPARISON.replace(
+    'Both apps combine free opening episodes with coins or subscriptions.',
+    'DramaBox has 100 releases via [verified archive][archive].',
+  ) + '\n\n[archive]: https://example.com/archive/2026';
+  const errors = validate(cited).errors.join('\n');
+  assert.doesNotMatch(errors, /unsourced factual number|naked http\(s\) URL/i);
+});
+
+test('inline code spans never create citations and leave URLs naked', () => {
+  const coded = GOOD_COMPARISON.replace(
+    'Both apps combine free opening episodes with coins or subscriptions.',
+    'DramaBox has 100 releases via `[verified archive](https://example.com/archive)`.',
+  );
+  const errors = validate(coded).errors.join('\n');
+  assert.match(errors, /unsourced factual number/i);
+  assert.match(errors, /naked http\(s\) URL/i);
+});
+
+test('scanner accepts descriptive escaped and nested-bracket anchors', () => {
+  const nested = `${GOOD_COMPARISON}\nSee [official \\[archive\\]](https://example.com/archive) before paying.`;
+  assert.doesNotMatch(validate(nested).errors.join('\n'), /naked http\(s\) URL|Markdown link anchor/i);
 });
 
 test('QA rejects numeric prose when its external definition is unused or malformed', () => {

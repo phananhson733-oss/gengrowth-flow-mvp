@@ -169,9 +169,16 @@ function removeRanges(line, ranges) {
   return result + line.slice(cursor);
 }
 
+function normalizeReferenceLabel(value) {
+  return String(value || '').trim().replace(/\s+/gu, ' ').toLowerCase();
+}
+
+function isAllowedLinkTitle(value) {
+  return value === '' || /^\s+(?:"[^"]*"|'[^']*'|\([^)]*\))\s*$/u.test(value);
+}
+
 function parseInlineLinks(line) {
-  const links = [];
-  const ranges = [];
+  const candidates = [];
   for (let start = 0; start < line.length; start++) {
     if (line[start] !== '[' || line[start - 1] === '!') continue;
     const anchorEnd = line.indexOf(']', start + 1);
@@ -180,54 +187,98 @@ function parseInlineLinks(line) {
     if (line[anchorEnd + 1] === '(') {
       let cursor = anchorEnd + 2;
       let depth = 1;
-      let angleDestination = false;
+      let destination = '';
+      let validSyntax = false;
       if (line[cursor] === '<') {
-        angleDestination = true;
-        cursor++;
-      }
-      for (; cursor < line.length; cursor++) {
-        if (angleDestination) {
-          if (line[cursor] === '>') {
-            cursor++;
-            while (/\s/u.test(line[cursor] || '')) cursor++;
-            if (line[cursor] === ')') {
+        const destinationEnd = line.indexOf('>', cursor + 1);
+        if (destinationEnd !== -1) {
+          destination = line.slice(cursor + 1, destinationEnd);
+          cursor = destinationEnd + 1;
+          const close = line.indexOf(')', cursor);
+          if (close !== -1 && destination && isAllowedLinkTitle(line.slice(cursor, close))) {
+            validSyntax = true;
+            cursor = close + 1;
+          }
+        }
+      } else {
+        const contentStart = cursor;
+        for (; cursor < line.length; cursor++) {
+          if (line[cursor] === '(') depth++;
+          if (line[cursor] === ')') {
+            depth--;
+            if (depth === 0) {
+              const content = line.slice(contentStart, cursor);
+              const destinationMatch = content.match(/^(\S+)([\s\S]*)$/u);
+              if (destinationMatch) {
+                destination = destinationMatch[1];
+                validSyntax = isAllowedLinkTitle(destinationMatch[2]);
+              }
               cursor++;
-              links.push({ anchor, line: 0 });
-              ranges.push({ start, end: cursor });
+              break;
             }
-            break;
-          }
-          continue;
-        }
-        if (line[cursor] === '(') depth++;
-        if (line[cursor] === ')') {
-          depth--;
-          if (depth === 0) {
-            cursor++;
-            links.push({ anchor, line: 0 });
-            ranges.push({ start, end: cursor });
-            break;
           }
         }
       }
+      candidates.push({ type: 'inline', anchor, destination, start, end: cursor, validSyntax });
       start = cursor - 1;
       continue;
     }
     if (line[anchorEnd + 1] === '[') {
       const referenceEnd = line.indexOf(']', anchorEnd + 2);
       if (referenceEnd !== -1) {
-        links.push({ anchor, line: 0 });
-        ranges.push({ start, end: referenceEnd + 1 });
+        const label = line.slice(anchorEnd + 2, referenceEnd).trim() || anchor;
+        candidates.push({ type: 'reference', anchor, label: normalizeReferenceLabel(label), start, end: referenceEnd + 1 });
         start = referenceEnd;
       }
+      continue;
+    }
+    if (line[anchorEnd + 1] !== ':') {
+      candidates.push({ type: 'reference', anchor, label: normalizeReferenceLabel(anchor), start, end: anchorEnd + 1 });
     }
   }
-  return { links, ranges };
+  return candidates;
 }
 
 function parseReferenceDefinition(line) {
-  const match = line.match(/^\s{0,3}\[([^\]\n]+)\]:\s*(?:<[^>]+>|\S+)(?:\s+.*)?$/u);
-  return match ? { start: 0, end: line.length } : null;
+  const match = line.match(/^\s{0,3}\[([^\]\n]+)\]\s*:\s*(.+?)\s*$/u);
+  if (!match) return null;
+  const [, rawLabel, rawDestination] = match;
+  let destination = '';
+  let validSyntax = false;
+  if (rawDestination.startsWith('<')) {
+    const destinationEnd = rawDestination.indexOf('>');
+    if (destinationEnd !== -1) {
+      destination = rawDestination.slice(1, destinationEnd);
+      validSyntax = Boolean(destination) && isAllowedLinkTitle(rawDestination.slice(destinationEnd + 1));
+    }
+  } else {
+    const destinationMatch = rawDestination.match(/^(\S+)([\s\S]*)$/u);
+    if (destinationMatch) {
+      destination = destinationMatch[1];
+      validSyntax = isAllowedLinkTitle(destinationMatch[2]);
+    }
+  }
+  return {
+    label: normalizeReferenceLabel(rawLabel),
+    destination,
+    validSyntax,
+    start: 0,
+    end: line.length,
+  };
+}
+
+function proseParagraphs(lines) {
+  const paragraphs = [];
+  let start = 0;
+  for (let index = 0; index <= lines.length; index++) {
+    if (index !== lines.length && lines[index].trim()) continue;
+    const paragraph = lines.slice(start, index).join('\n').trim();
+    if (paragraph && !/^(?:#{1,6}\s|[-*+]\s|\d+[.)]\s|>|\|)/u.test(paragraph)) {
+      paragraphs.push({ text: paragraph, startLine: start + 1, endLine: index });
+    }
+    start = index + 1;
+  }
+  return paragraphs;
 }
 
 function parseDramaMarkdown(markdown) {
@@ -238,6 +289,9 @@ function parseDramaMarkdown(markdown) {
   const fences = [];
   const links = [];
   const nakedUrls = [];
+  const candidates = [];
+  const definitions = new Map();
+  const lineDetails = [];
   let openFence = null;
 
   for (let index = 0; index < lines.length; index++) {
@@ -251,31 +305,59 @@ function parseDramaMarkdown(markdown) {
         openFence = null;
       }
       visibleLines.push('');
+      lineDetails.push({ line, hidden: true });
       continue;
     }
     if (openFence) {
       visibleLines.push('');
+      lineDetails.push({ line, hidden: true });
       continue;
     }
 
     visibleLines.push(line);
+    const detail = { line, candidates: parseInlineLinks(line), definition: parseReferenceDefinition(line) };
+    lineDetails.push(detail);
+    if (detail.definition?.validSyntax && !definitions.has(detail.definition.label)) {
+      definitions.set(detail.definition.label, { ...detail.definition, line: index + 1 });
+    }
+    for (const candidate of detail.candidates) candidates.push({ ...candidate, line: index + 1, detail });
     const heading = line.match(/^(#{1,6})\s+(.+?)\s*#*\s*$/u);
     if (heading) headings.push({ level: heading[1].length, text: heading[2].trim(), line: index + 1 });
+  }
 
-    const inline = parseInlineLinks(line);
-    for (const link of inline.links) links.push({ ...link, line: index + 1 });
-    const definition = parseReferenceDefinition(line);
-    const withoutLinks = removeRanges(line, definition ? [{ start: 0, end: line.length }] : inline.ranges);
+  const usedDefinitions = new Set();
+  const consumedRangesByLine = new Map();
+  for (const candidate of candidates) {
+    if (candidate.type === 'inline') {
+      if (!candidate.validSyntax) continue;
+      links.push({ anchor: candidate.anchor, destination: candidate.destination, line: candidate.line, external: /^https?:\/\//iu.test(candidate.destination) });
+      if (candidate.anchor) {
+        const ranges = consumedRangesByLine.get(candidate.line) || [];
+        ranges.push({ start: candidate.start, end: candidate.end });
+        consumedRangesByLine.set(candidate.line, ranges);
+      }
+      continue;
+    }
+    const definition = definitions.get(candidate.label);
+    if (!definition) continue;
+    links.push({ anchor: candidate.anchor, destination: definition.destination, line: candidate.line, external: /^https?:\/\//iu.test(definition.destination) });
+    if (candidate.anchor) usedDefinitions.add(candidate.label);
+  }
+
+  for (let index = 0; index < lineDetails.length; index++) {
+    const detail = lineDetails[index];
+    if (detail.hidden) continue;
+    const definition = detail.definition;
+    const ranges = definition && usedDefinitions.has(definition.label)
+      ? [{ start: definition.start, end: definition.end }]
+      : consumedRangesByLine.get(index + 1) || [];
+    const withoutLinks = removeRanges(detail.line, ranges);
     const urlPattern = /https?:\/\/[^\s<>()]+/giu;
     let match;
     while ((match = urlPattern.exec(withoutLinks))) nakedUrls.push({ value: match[0], line: index + 1 });
   }
 
-  const prose = visibleLines.join('\n')
-    .split(/\n\s*\n/)
-    .map((part) => part.trim())
-    .filter(Boolean)
-    .filter((part) => !/^(?:#{1,6}\s|[-*+]\s|\d+[.)]\s|>|\|)/u.test(part));
+  const prose = proseParagraphs(visibleLines);
   return {
     source,
     lines: visibleLines,
@@ -503,6 +585,7 @@ export function buildDramaPrompt({ brief, sopText, evidence }) {
 
 export function validateDramaDraft({ markdown, contentType, brief }) {
   const errors = [];
+  const rawSource = stripFrontmatter(markdown);
   const view = parseDramaMarkdown(markdown);
   const body = view.visibleText;
   const rule = TYPE_RULES[contentType];
@@ -518,14 +601,16 @@ export function validateDramaDraft({ markdown, contentType, brief }) {
   if (!/^\|.+\|$/m.test(body) && !/^[-*+]\s+\S/m.test(body) && !/^\d+[.)]\s+\S/m.test(body)) {
     errors.push('missing decision-support table or list');
   }
-  if (PIRACY_RE.test(body)) errors.push('piracy-related term is forbidden');
-  if (IMAGE_RE.test(body)) errors.push('image or media asset syntax is forbidden');
-  if (PLACEHOLDER_RE.test(body)) errors.push('raw placeholder is forbidden');
-  if (sanitize(body) !== body) errors.push('prompt-injection phrase or unsafe control sequence is forbidden');
+  if (PIRACY_RE.test(rawSource)) errors.push('piracy-related term is forbidden');
+  if (IMAGE_RE.test(rawSource)) errors.push('image or media asset syntax is forbidden');
+  if (PLACEHOLDER_RE.test(rawSource)) errors.push('raw placeholder is forbidden');
+  if (sanitize(rawSource) !== rawSource) errors.push('prompt-injection phrase or unsafe control sequence is forbidden');
   for (const fence of view.fences) errors.push(`Markdown code fence is forbidden at line ${fence.line}`);
   if (view.openFence) errors.push(`unclosed Markdown code fence opened at line ${view.openFence.line}`);
   for (const link of view.links) {
-    if (/^(?:here|click here|this link|link|read more|more|source)$/iu.test(link.anchor)) {
+    if (!link.anchor) {
+      errors.push(`empty Markdown link anchor at line ${link.line}`);
+    } else if (/^(?:here|click here|this link|link|read more|more|source)$/iu.test(link.anchor)) {
       errors.push(`generic Markdown link anchor at line ${link.line}`);
     } else if (/^(?:https?:\/\/|www\.)/iu.test(link.anchor)) {
       errors.push(`URL-shaped Markdown link anchor at line ${link.line}`);
@@ -540,13 +625,16 @@ export function validateDramaDraft({ markdown, contentType, brief }) {
     errors.push('missing sources or content-team notes section');
   }
   for (const paragraph of view.prose) {
-    const words = paragraph.split(/\s+/).filter(Boolean).length;
+    const words = paragraph.text.split(/\s+/).filter(Boolean).length;
     if (words > 60) {
       errors.push(`prose paragraph exceeds 60 words (${words})`);
       break;
     }
-    if (/\b\d[\d,.]*(?:%|[KMB]\+?)?\b/u.test(paragraph)
-      && !/(?:according to|source|official|app[ -]store|Google Play|Apple|IMDb|Fandom|\]\(https?:\/\/)/iu.test(paragraph)) {
+    const hasExternalCitation = view.links.some((link) => link.external
+      && link.line >= paragraph.startLine && link.line <= paragraph.endLine);
+    if (/\b\d[\d,.]*(?:%|[KMB]\+?)?\b/u.test(paragraph.text)
+      && !hasExternalCitation
+      && !/(?:according to|source|official|app[ -]store|Google Play|Apple|IMDb|Fandom)/iu.test(paragraph.text)) {
       errors.push('unsourced factual number in prose');
       break;
     }

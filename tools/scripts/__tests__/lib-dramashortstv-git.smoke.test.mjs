@@ -137,6 +137,27 @@ test('delivery refuses an unrelated change without creating a commit', () => {
   }
 });
 
+test('delivery checks staged bytes for whitespace errors before commit', () => {
+  const env = setupRepo();
+  try {
+    preflightDramaOpsRepo({ opsDir: env.work, expectedRemote: env.remote });
+    const before = git(env.work, ['rev-parse', 'HEAD']);
+    write(env.work, ARTICLE, '# Article with trailing spaces  \n');
+    assert.throws(
+      () => commitAndPushDramaDocument({
+        opsDir: env.work,
+        relativePath: ARTICLE,
+        topicSlug: 'dramabox-vs-reelshort',
+        expectedRemote: env.remote,
+      }),
+      /staged document.*diff check/i,
+    );
+    assert.equal(git(env.work, ['rev-parse', 'HEAD']), before);
+  } finally {
+    rmSync(env.root, { recursive: true, force: true });
+  }
+});
+
 test('ordinary push rejection preserves the local document commit', () => {
   const env = setupRepo();
   try {

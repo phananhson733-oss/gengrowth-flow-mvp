@@ -123,8 +123,9 @@ export function commitAndPushDramaDocument({
   try {
     git(['diff', '--check', '--', safePath]);
     git(['add', '--', safePath]);
+    git(['diff', '--cached', '--check', '--', safePath]);
   } catch (error) {
-    throw commandError('Git staging failed', error);
+    throw commandError('Git staged document failed diff check or staging', error);
   }
   const cached = git(['diff', '--cached', '--name-only']).split('\n').filter(Boolean);
   if (cached.length !== 1 || cached[0] !== safePath) {

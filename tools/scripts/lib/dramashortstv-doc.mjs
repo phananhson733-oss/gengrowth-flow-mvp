@@ -5,14 +5,16 @@ import {
   closeSync,
   existsSync,
   fsyncSync,
+  linkSync,
+  lstatSync,
   mkdirSync,
   openSync,
   readFileSync,
-  renameSync,
+  realpathSync,
   rmSync,
   writeFileSync,
 } from 'node:fs';
-import { dirname, join, resolve, sep } from 'node:path';
+import { dirname, join, relative, resolve, sep } from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { sanitize } from './gg-shared.mjs';
 
@@ -27,13 +29,66 @@ const IMAGE_RE = /!\[[^\]]*\]\([^)]*\)|<img\b|https?:\/\/\S+\.(?:png|jpe?g|gif|w
 const PLACEHOLDER_RE = /\b(?:TBD|TODO)\b|\[\[</u;
 
 const TYPE_RULES = Object.freeze({
-  'safety-guide': { label: '安全指南聚合页', faq: false, marker: /safe|legit|avoid|payment|paywall/iu },
-  'app-profile': { label: 'App 档案页', faq: true, marker: /profile|subscription|owner|review|price/iu },
-  comparison: { label: '对比测评', faq: true, marker: /at a glance|compar|versus|\bvs\b/iu },
-  'brand-playlist': { label: '品牌剧单', faq: false, marker: /watch|drama|series|playlist|list/iu },
-  'actor-profile': { label: '演员/角色内容', faq: false, marker: /quick facts|dramas|roles|works/iu },
-  'reader-bridge': { label: '题材枢纽页/读者视角桥接', faq: false, marker: /reader|watched|picks|recommend/iu },
+  'safety-guide': {
+    label: 'safety guide',
+    faq: false,
+    required: [
+      ['direct safety answer', /safe|legit|scam/iu],
+      ['payment mechanism', /payment|paywall|coin|subscription/iu],
+      ['reader protection', /avoid|protect|cancel|before you pay/iu],
+      ['data honesty statement', /data honesty|evidence limit|verified data|tested data/iu],
+    ],
+  },
+  'app-profile': {
+    label: 'app profile',
+    faq: true,
+    required: [
+      ['keyword coverage', /keyword coverage|target keyword/iu],
+      ['question-led body', /^##\s+.*\?/imu],
+      ['verification checklist', /must verify|verification checklist|content team notes/iu],
+      ['content honesty', /content honesty|honesty boundary|limitations/iu],
+      ['SEO rationale', /SEO (?:execution|rationale|notes)/iu],
+    ],
+  },
+  comparison: {
+    label: 'comparison',
+    faq: true,
+    required: [
+      ['decision comparison', /at a glance|comparison table|compared/iu],
+      ['four-question search check', /four-question|four question|四问/iu],
+      ['competitor differentiation', /differs from competitors|differenti|competitor/iu],
+    ],
+  },
+  'brand-playlist': {
+    label: 'brand playlist',
+    faq: false,
+    required: [
+      ['brand watch list', /must-watch|watch list|drama list|series list|playlist/iu],
+      ['multiple titles', /(?:^|\n)(?:[-*]|\d+[.)])\s+\S/mu],
+    ],
+  },
+  'actor-profile': {
+    label: 'actor profile',
+    faq: false,
+    required: [
+      ['Quick Facts', /quick facts/iu],
+      ['career background', /before ReelShort|career|background/iu],
+      ['drama roles', /dramas|roles|works/iu],
+      ['watching entry', /where to watch|watch .*dramas/iu],
+      ['content team notes', /content team notes/iu],
+    ],
+  },
+  'reader-bridge': {
+    label: 'reader bridge',
+    faq: false,
+    required: [
+      ['first-person reader voice', /\bI\b|\bmy\b|as a reader|as a viewer/iu],
+      ['recommendations', /recommend|picks|worth watching|watched/iu],
+    ],
+  },
 });
+
+const SEMANTIC_STOPWORDS = new Set(['a', 'an', 'and', 'are', 'for', 'how', 'in', 'is', 'of', 'on', 'or', 'the', 'to', 'what']);
 
 function text(value) {
   return value == null ? '' : String(value).trim();
@@ -85,6 +140,55 @@ function sanitizeUntrustedValue(value) {
     return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, sanitizeUntrustedValue(item)]));
   }
   return value;
+}
+
+function semanticTokens(value) {
+  return String(value || '')
+    .normalize('NFKD')
+    .replace(/\p{M}+/gu, '')
+    .toLowerCase()
+    .match(/[a-z0-9]+/g)?.filter((token) => !SEMANTIC_STOPWORDS.has(token)) || [];
+}
+
+function hasSemanticCoverage(body, value, ratio = 0.6) {
+  const tokens = [...new Set(semanticTokens(value))];
+  if (!tokens.length) return false;
+  const haystack = new Set(semanticTokens(body));
+  const hits = tokens.filter((token) => haystack.has(token)).length;
+  return hits >= Math.max(1, Math.ceil(tokens.length * ratio));
+}
+
+function assertSafeOpsPath(opsDir, targetPath) {
+  const opsLexical = resolve(opsDir);
+  if (!existsSync(opsLexical)) throw new Error(`gengrowth-ops root does not exist: ${opsLexical}`);
+  if (lstatSync(opsLexical).isSymbolicLink()) throw new Error(`gengrowth-ops root must not be a symlink: ${opsLexical}`);
+  const opsReal = realpathSync(opsLexical);
+  const target = resolve(targetPath);
+  const relativeTarget = relative(opsLexical, target);
+  if (!relativeTarget || relativeTarget === '..' || relativeTarget.startsWith(`..${sep}`)) {
+    throw new Error(`unsafe DramaShortsTV output path outside gengrowth-ops: ${target}`);
+  }
+  const base = resolve(opsReal, DRAMA_OUTPUT_SUBDIR);
+  const canonicalTarget = resolve(opsReal, relativeTarget);
+  if (!canonicalTarget.startsWith(`${base}${sep}`) || !canonicalTarget.endsWith('.md')) {
+    throw new Error(`unsafe DramaShortsTV output path outside gengrowth-ops: ${target}`);
+  }
+  const parent = dirname(target);
+  const parts = relative(opsLexical, parent).split(sep).filter(Boolean);
+  let cursor = opsLexical;
+  for (const part of parts) {
+    cursor = join(cursor, part);
+    if (!existsSync(cursor)) continue;
+    if (lstatSync(cursor).isSymbolicLink()) throw new Error(`symlink forbidden in DramaShortsTV output path: ${cursor}`);
+    const real = realpathSync(cursor);
+    if (real !== opsReal && !real.startsWith(`${opsReal}${sep}`)) {
+      throw new Error(`DramaShortsTV output ancestor resolves outside gengrowth-ops: ${cursor}`);
+    }
+  }
+  if (existsSync(target) && lstatSync(target).isSymbolicLink()) {
+    throw new Error(`symlink forbidden at DramaShortsTV target: ${target}`);
+  }
+  return { opsReal, base, target };
 }
 
 export function contentTypeFor({ clusterId, template }) {
@@ -185,11 +289,17 @@ export function buildDramaPrompt({ brief, sopText }) {
   ].join('\n');
 }
 
-export function validateDramaDraft({ markdown, contentType }) {
+export function validateDramaDraft({ markdown, contentType, brief }) {
   const errors = [];
   const body = stripFrontmatter(markdown);
   const rule = TYPE_RULES[contentType];
   if (!rule) errors.push(`unsupported content type: ${contentType}`);
+  if (!brief || !text(brief.targetKeyword) || !text(brief.entity)) {
+    errors.push('normalized brief is required for target keyword and entity binding');
+  } else {
+    if (!hasSemanticCoverage(body, brief.targetKeyword)) errors.push('article is not bound to the Sheet target keyword');
+    if (!hasSemanticCoverage(body, brief.entity, 0.75)) errors.push('article is not bound to the Sheet entity');
+  }
   const h1s = body.match(/^#\s+.+$/gm) || [];
   if (h1s.length !== 1) errors.push(`expected exactly one H1, got ${h1s.length}`);
   const h2s = body.match(/^##\s+.+$/gm) || [];
@@ -201,7 +311,11 @@ export function validateDramaDraft({ markdown, contentType }) {
   if (IMAGE_RE.test(body)) errors.push('image or media asset syntax is forbidden');
   if (PLACEHOLDER_RE.test(body)) errors.push('raw placeholder is forbidden');
   if (sanitize(body) !== body) errors.push('prompt-injection phrase or unsafe control sequence is forbidden');
-  if (rule && !rule.marker.test(body)) errors.push(`missing ${rule.label} structure marker`);
+  if (rule) {
+    for (const [name, pattern] of rule.required) {
+      if (!pattern.test(body)) errors.push(`${rule.label} missing required section: ${name}`);
+    }
+  }
   if (rule?.faq && !/^##\s+.*(?:FAQ|Frequently Asked|Questions)/im.test(body)) {
     errors.push(`${rule.label} requires a FAQ section`);
   }
@@ -271,14 +385,13 @@ export function resolveDramaOutputPath({ opsDir, date, topicSlug }) {
   if (!SLUG_RE.test(String(topicSlug || ''))) throw new Error(`unsafe topic slug: ${topicSlug}`);
   const base = resolve(opsDir, DRAMA_OUTPUT_SUBDIR);
   const target = resolve(base, `${date}-dramashortstv-blog-${topicSlug}.md`);
-  if (!target.startsWith(`${base}${sep}`) || !target.endsWith('.md')) {
-    throw new Error(`unsafe DramaShortsTV output path: ${target}`);
-  }
-  return target;
+  return assertSafeOpsPath(opsDir, target).target;
 }
 
-export function atomicWriteDramaDocument({ targetPath, content }) {
+export function atomicWriteDramaDocument({ opsDir, targetPath, content, beforePublish = null }) {
+  if (!opsDir) throw new Error('opsDir is required for DramaShortsTV atomic write');
   if (!targetPath || !targetPath.endsWith('.md')) throw new Error('targetPath must be a Markdown file');
+  assertSafeOpsPath(opsDir, targetPath);
   const bytes = String(content);
   if (existsSync(targetPath)) {
     const current = readFileSync(targetPath, 'utf8');
@@ -286,6 +399,7 @@ export function atomicWriteDramaDocument({ targetPath, content }) {
     throw new Error(`refusing to overwrite existing DramaShortsTV document: ${targetPath}`);
   }
   mkdirSync(dirname(targetPath), { recursive: true });
+  assertSafeOpsPath(opsDir, targetPath);
   const tempPath = `${targetPath}.${process.pid}.${randomBytes(6).toString('hex')}.tmp`;
   let fd;
   try {
@@ -294,7 +408,16 @@ export function atomicWriteDramaDocument({ targetPath, content }) {
     fsyncSync(fd);
     closeSync(fd);
     fd = undefined;
-    renameSync(tempPath, targetPath);
+    if (beforePublish) beforePublish(tempPath, targetPath);
+    try {
+      linkSync(tempPath, targetPath);
+    } catch (error) {
+      if (error?.code !== 'EEXIST') throw error;
+      assertSafeOpsPath(opsDir, targetPath);
+      const current = readFileSync(targetPath, 'utf8');
+      if (current === bytes) return { status: 'unchanged' };
+      throw new Error(`refusing to overwrite existing DramaShortsTV document: ${targetPath}`);
+    }
     return { status: 'created' };
   } finally {
     if (fd !== undefined) closeSync(fd);

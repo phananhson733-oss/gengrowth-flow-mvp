@@ -7,6 +7,7 @@ import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 import {
+  buildDramaWorkerCommand,
   parseDramaArgs,
   runDramaShortsDelivery,
 } from '../gg-dramashortstv-doc.mjs';
@@ -63,6 +64,7 @@ function fakeDeps(calls, overrides = {}) {
     normalize: () => { calls.push('normalize'); return NORMALIZED; },
     resolveOutputPath: () => '/tmp/gengrowth-ops/inbox-maboyang/05-blog/dramashortstv/2026-08-28-dramashortstv-blog-dramabox-vs-reelshort.md',
     gitPreflight: async () => { calls.push('git-preflight'); return { head: 'a'.repeat(40) }; },
+    findExisting: async () => { calls.push('git-existing'); return null; },
     readSop: async () => { calls.push('sop'); return '# SOP\n' + 'rules '.repeat(300); },
     buildPrompt: () => { calls.push('prompt'); return '# Prompt\n' + 'prompt '.repeat(300); },
     generate: async () => { calls.push('generate'); return DRAFT; },
@@ -89,6 +91,27 @@ test('argument parser requires explicit workbook and exactly one selector', () =
   assert.equal(parseDramaArgs(['--workbook', DRAMA_WORKBOOK_ID, '--page-id', 'page_x', '--apply']).apply, true);
 });
 
+test('generation worker is Claude-only with all tools and integrations disabled', () => {
+  const command = buildDramaWorkerCommand({
+    model: 'claude-sonnet-4-6',
+    effort: 'high',
+  });
+  assert.equal(command.bin, 'claude');
+  assert.deepEqual(command.args, [
+    '-p',
+    '--model', 'claude-sonnet-4-6',
+    '--effort', 'high',
+    '--tools', '',
+    '--safe-mode',
+    '--no-chrome',
+    '--strict-mcp-config',
+    '--mcp-config', '{"mcpServers":{}}',
+    '--permission-mode', 'dontAsk',
+    '--no-session-persistence',
+    '--max-budget-usd', '5',
+  ]);
+});
+
 test('dry-run reads and normalizes Sheet data without LLM, file, or Git calls', async () => {
   const calls = [];
   const deps = fakeDeps(calls);
@@ -113,6 +136,7 @@ test('apply follows the fail-closed generation and delivery order', async () => 
     'sheet',
     'normalize',
     'git-preflight',
+    'git-existing',
     'sop',
     'prompt',
     'generate',
@@ -135,7 +159,7 @@ test('QA failure prevents factual review, Ops write, and Git delivery', async ()
     () => runDramaShortsDelivery(parseDramaArgs(['--workbook', DRAMA_WORKBOOK_ID, '--row', '4', '--apply']), deps),
     /QA failed.*piracy-related term/i,
   );
-  assert.deepEqual(calls, ['sheet', 'normalize', 'git-preflight', 'sop', 'prompt', 'generate', 'qa']);
+  assert.deepEqual(calls, ['sheet', 'normalize', 'git-preflight', 'git-existing', 'sop', 'prompt', 'generate', 'qa']);
 });
 
 test('non-PASS factual review prevents document formatting and Git delivery', async () => {
@@ -148,14 +172,36 @@ test('non-PASS factual review prevents document formatting and Git delivery', as
     /factual review failed.*unsupported ownership claim/i,
   );
   assert.deepEqual(calls, [
-    'sheet', 'normalize', 'git-preflight', 'sop', 'prompt', 'generate', 'qa', 'factual-review',
+    'sheet', 'normalize', 'git-preflight', 'git-existing', 'sop', 'prompt', 'generate', 'qa', 'factual-review',
   ]);
+});
+
+test('apply returns already-delivered before SOP or LLM generation', async () => {
+  const calls = [];
+  const existing = {
+    status: 'already-delivered',
+    commitSha: 'c'.repeat(40),
+    remoteSha: 'c'.repeat(40),
+    relativePath: 'inbox-maboyang/05-blog/dramashortstv/2026-08-25-dramashortstv-blog-dramabox-vs-reelshort.md',
+    blobSha: 'd'.repeat(40),
+  };
+  const deps = fakeDeps(calls, {
+    findExisting: async () => { calls.push('git-existing'); return existing; },
+  });
+  const result = await runDramaShortsDelivery(
+    parseDramaArgs(['--workbook', DRAMA_WORKBOOK_ID, '--row', '4', '--apply']),
+    deps,
+  );
+  assert.deepEqual(calls, ['sheet', 'normalize', 'git-preflight', 'git-existing']);
+  assert.equal(result.git.status, 'already-delivered');
+  assert.match(result.targetPath, /2026-08-25-/);
 });
 
 test('parser rejects unsafe rows, page ids, models, and unknown flags', () => {
   assert.throws(() => parseDramaArgs(['--workbook', DRAMA_WORKBOOK_ID, '--row', '1']), /row/i);
   assert.throws(() => parseDramaArgs(['--workbook', DRAMA_WORKBOOK_ID, '--page-id', '../escape']), /page-id/i);
   assert.throws(() => parseDramaArgs(['--workbook', DRAMA_WORKBOOK_ID, '--row', '4', '--model', 'other']), /model/i);
+  assert.throws(() => parseDramaArgs(['--workbook', DRAMA_WORKBOOK_ID, '--row', '4', '--model', 'codex']), /model/i);
   assert.throws(() => parseDramaArgs(['--workbook', DRAMA_WORKBOOK_ID, '--row', '4', '--surprise']), /unknown flag/i);
 });
 

@@ -41,8 +41,8 @@ function validateRelativePath(relativePath) {
   return raw;
 }
 
-function remoteHead(git) {
-  const raw = git(['ls-remote', 'origin', 'refs/heads/main']);
+function remoteHead(git, remote = 'origin') {
+  const raw = git(['ls-remote', remote, 'refs/heads/main']);
   const sha = raw.split(/\s+/)[0] || '';
   if (!SHA_RE.test(sha)) throw new Error(`unverifiable remote main SHA: ${raw}`);
   return sha;
@@ -90,6 +90,42 @@ export function preflightDramaOpsRepo({ opsDir, expectedRemote, runGit = null })
   return { branch, remoteUrl: fetchUrl, ahead, behind, head };
 }
 
+export function findDeliveredDramaDocument({
+  opsDir,
+  pageId,
+  expectedRemote,
+  runGit = null,
+}) {
+  if (!opsDir) throw new Error('opsDir is required');
+  if (!/^[A-Za-z0-9_-]{1,64}$/.test(String(pageId || ''))) {
+    throw new Error(`unsafe DramaShortsTV page_id: ${pageId}`);
+  }
+  const git = gitRunner(opsDir, runGit);
+  verifyRepositoryIdentity(git, expectedRemote);
+  const status = git(['status', '--porcelain=v1', '--untracked-files=all']);
+  if (status) throw new Error(`cannot inspect delivered page_id in dirty Ops repository: ${status.split('\n')[0]}`);
+  const commitSha = git(['rev-parse', 'HEAD']);
+  const remoteSha = remoteHead(git, expectedRemote);
+  if (commitSha !== remoteSha) {
+    throw new Error(`cannot inspect delivered page_id with divergent remote: local=${commitSha} remote=${remoteSha}`);
+  }
+  let matches = [];
+  try {
+    matches = git([
+      'grep', '-l', '-F', `page_id: "${pageId}"`, 'HEAD', '--', OUTPUT_PREFIX,
+    ]).split('\n').filter(Boolean).map((match) => match.replace(/^HEAD:/, ''));
+  } catch (error) {
+    if (error?.status !== 1) throw commandError('Git page_id lookup failed', error);
+  }
+  if (matches.length === 0) return null;
+  if (matches.length > 1) {
+    throw new Error(`multiple DramaShortsTV documents found for page_id ${pageId}: ${matches.join(', ')}`);
+  }
+  const relativePath = validateRelativePath(matches[0]);
+  const blobSha = verifyDeliveredBlob(git, relativePath, commitSha);
+  return { status: 'already-delivered', commitSha, remoteSha, relativePath, blobSha };
+}
+
 export function commitAndPushDramaDocument({
   opsDir,
   relativePath,
@@ -108,7 +144,7 @@ export function commitAndPushDramaDocument({
 
   if (!status) {
     const commitSha = git(['rev-parse', 'HEAD']);
-    const remoteSha = remoteHead(git);
+    const remoteSha = remoteHead(git, expectedRemote);
     if (commitSha !== remoteSha) {
       throw new Error(`clean repository is not remotely delivered: local=${commitSha} remote=${remoteSha}`);
     }
@@ -131,6 +167,8 @@ export function commitAndPushDramaDocument({
   if (cached.length !== 1 || cached[0] !== safePath) {
     throw new Error(`Git staging escaped target document: ${cached.join(', ')}`);
   }
+  const approvedBlobSha = git(['rev-parse', `:${safePath}`]);
+  if (!SHA_RE.test(approvedBlobSha)) throw new Error(`invalid staged document blob: ${approvedBlobSha}`);
   const afterStage = git(['status', '--porcelain=v1', '--untracked-files=all']).split('\n').filter(Boolean);
   if (afterStage.length !== 1 || afterStage[0].slice(3) !== safePath) {
     throw new Error(`unrelated changes appeared before commit: ${afterStage.join(' | ')}`);
@@ -142,6 +180,10 @@ export function commitAndPushDramaDocument({
     throw commandError('Git commit failed', error);
   }
   const commitSha = git(['rev-parse', 'HEAD']);
+  const committedBlobSha = git(['rev-parse', `${commitSha}:${safePath}`]);
+  if (committedBlobSha !== approvedBlobSha) {
+    throw new Error(`document bytes changed after staged QA; local commit preserved at ${commitSha}`);
+  }
   const committedPaths = git(['show', '--format=', '--name-only', 'HEAD']).split('\n').filter(Boolean);
   if (committedPaths.length !== 1 || committedPaths[0] !== safePath) {
     throw new Error(`Git commit escaped target document; local commit preserved at ${commitSha}: ${committedPaths.join(', ')}`);
@@ -152,11 +194,11 @@ export function commitAndPushDramaDocument({
   }
   verifyRepositoryIdentity(git, expectedRemote);
   try {
-    git(['push', 'origin', 'main']);
+    git(['push', expectedRemote, `${commitSha}:refs/heads/main`]);
   } catch (error) {
     throw commandError(`Git push failed; local commit preserved at ${commitSha}`, error);
   }
-  const remoteSha = remoteHead(git);
+  const remoteSha = remoteHead(git, expectedRemote);
   if (commitSha !== remoteSha) {
     throw new Error(`Git remote verification failed: local=${commitSha} remote=${remoteSha}`);
   }

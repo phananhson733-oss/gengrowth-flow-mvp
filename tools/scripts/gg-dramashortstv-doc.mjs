@@ -2,12 +2,14 @@
 // Google Sheet -> SOP article -> one gengrowth-ops Markdown -> exact Git delivery.
 
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { classifyCodex } from './gg-preview-gate.mjs';
+import { stripPreH1 } from './lib/strip-preamble.mjs';
+import { WORKER_CWD } from './lib/worker-cwd.mjs';
 import {
   DRAMA_WORKBOOK_ID,
   atomicWriteDramaDocument,
@@ -19,6 +21,7 @@ import {
 } from './lib/dramashortstv-doc.mjs';
 import {
   commitAndPushDramaDocument,
+  findDeliveredDramaDocument,
   preflightDramaOpsRepo,
 } from './lib/dramashortstv-git.mjs';
 
@@ -27,11 +30,10 @@ const FLOW = resolve(HERE, '..', '..');
 const HOME = homedir();
 const SHEET_BRIDGE = join(HERE, 'gg-sheet-to-brief.mjs');
 const SHEET_PULL = join(HERE, 'gg-sheet-pull.mjs');
-const ORCHESTRATOR = join(HERE, 'gg-llm-orchestrator.mjs');
 const FACTUAL_REVIEW = join(HERE, 'gg-codex-pr-review.mjs');
 const EXPECTED_OPS_REMOTE = 'https://github.com/phananhson733-oss/gengrowth-ops.git';
 const PAGE_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
-const MODELS = new Set(['claude', 'codex', 'gemini']);
+const MODELS = new Set(['claude']);
 
 function usage() {
   return `gg-dramashortstv-doc.mjs — read-only Sheet to exact gengrowth-ops Markdown/Git delivery
@@ -126,22 +128,50 @@ async function realReadSheet(args) {
   return args.pageId ? filterPayloadToPageId(payload, args.pageId) : payload;
 }
 
+export function buildDramaWorkerCommand({ model, effort }) {
+  return {
+    bin: 'claude',
+    args: [
+      '-p',
+      '--model', model,
+      '--effort', effort,
+      '--tools', '',
+      '--safe-mode',
+      '--no-chrome',
+      '--strict-mcp-config',
+      '--mcp-config', '{"mcpServers":{}}',
+      '--permission-mode', 'dontAsk',
+      '--no-session-persistence',
+      '--max-budget-usd', '5',
+    ],
+  };
+}
+
 function realGenerate({ prompt, brief, model }) {
+  if (model !== 'claude') throw new Error(`unsupported DramaShortsTV generation provider: ${model}`);
   const cacheDir = join(FLOW, '.gg-cache', 'sites', 'dramashortstv', brief.pageId);
   mkdirSync(cacheDir, { recursive: true });
   const promptPath = join(cacheDir, `${brief.pageId}.prompt.md`);
   writeFileSync(promptPath, prompt);
-  spawnNode(ORCHESTRATOR, [
-    '--prompt', promptPath,
-    '--page-id', brief.pageId,
-    '--models', model,
-    '--out-dir', cacheDir,
-    '--retry', '0',
-  ], { timeout: 30 * 60 * 1000 });
-  const draftPath = join(cacheDir, `${brief.pageId}-${model}-v8.md`);
-  if (!existsSync(draftPath)) throw new Error(`orchestrator produced no DramaShortsTV draft: ${draftPath}`);
-  const draft = readFileSync(draftPath, 'utf8');
-  if (!draft.trim()) throw new Error(`orchestrator produced an empty DramaShortsTV draft: ${draftPath}`);
+  const command = buildDramaWorkerCommand({
+    model: process.env.GG_DRAMASHORTSTV_CLAUDE_MODEL || 'claude-sonnet-4-6',
+    effort: process.env.GG_DRAMASHORTSTV_CLAUDE_EFFORT || 'high',
+  });
+  const result = spawnSync(command.bin, command.args, {
+    cwd: WORKER_CWD,
+    input: prompt,
+    encoding: 'utf8',
+    timeout: 30 * 60 * 1000,
+    maxBuffer: 64 * 1024 * 1024,
+  });
+  if (result.error || result.status !== 0) {
+    const detail = String(result.stderr || result.error?.message || '').trim().split('\n').slice(-5).join(' | ');
+    throw new Error(`DramaShortsTV text worker failed${detail ? `: ${detail}` : ''}`);
+  }
+  const draft = stripPreH1(String(result.stdout || '')).trim();
+  if (!draft) throw new Error('DramaShortsTV text worker produced an empty draft');
+  const draftPath = join(cacheDir, `${brief.pageId}-claude-v8.md`);
+  writeFileSync(draftPath, `${draft}\n`);
   return draft;
 }
 
@@ -176,6 +206,11 @@ function realDependencies() {
     normalize: normalizeDramaBrief,
     resolveOutputPath: resolveDramaOutputPath,
     gitPreflight: () => preflightDramaOpsRepo({ opsDir, expectedRemote: EXPECTED_OPS_REMOTE }),
+    findExisting: ({ brief }) => findDeliveredDramaDocument({
+      opsDir,
+      pageId: brief.pageId,
+      expectedRemote: EXPECTED_OPS_REMOTE,
+    }),
     readSop: () => readFileSync(sopPath, 'utf8'),
     buildPrompt: buildDramaPrompt,
     generate: realGenerate,
@@ -240,17 +275,31 @@ export async function runDramaShortsDelivery(args, deps = realDependencies()) {
   }
 
   const preflight = await deps.gitPreflight({ targetPath, brief });
+  const existing = await deps.findExisting({ targetPath, brief });
+  if (existing) {
+    return {
+      mode: 'apply',
+      workbook: args.workbook,
+      sourceRow: brief.sourceRow,
+      pageId: brief.pageId,
+      contentType: brief.contentType,
+      targetPath: resolve(deps.opsDir, existing.relativePath),
+      preflight,
+      write: { status: 'unchanged' },
+      git: existing,
+    };
+  }
   const sopText = await deps.readSop({ brief });
   const prompt = await deps.buildPrompt({ brief, sopText });
   const draft = await deps.generate({ prompt, brief, model: args.model });
-  const qa = await deps.validate({ markdown: draft, contentType: brief.contentType });
+  const qa = await deps.validate({ markdown: draft, contentType: brief.contentType, brief });
   if (!qa?.ok) throw new Error(`DramaShortsTV QA failed: ${(qa?.errors || ['unknown QA failure']).join(' | ')}`);
   const factual = await deps.factualReview({ draft, brief });
   if (factual?.verdict !== 'PASS') {
     throw new Error(`DramaShortsTV factual review failed: ${factual?.reason || factual?.verdict || 'unverified'}`);
   }
   const document = await deps.format({ draft, brief, date });
-  const writeResult = await deps.write({ targetPath, content: document });
+  const writeResult = await deps.write({ opsDir: deps.opsDir, targetPath, content: document });
   const git = await deps.gitDeliver({ targetPath, topicSlug: slug, brief });
   return {
     mode: 'apply',

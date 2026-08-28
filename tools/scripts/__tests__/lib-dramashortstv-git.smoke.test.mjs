@@ -9,6 +9,7 @@ import { test } from 'node:test';
 
 import {
   commitAndPushDramaDocument,
+  findDeliveredDramaDocument,
   preflightDramaOpsRepo,
 } from '../lib/dramashortstv-git.mjs';
 
@@ -209,6 +210,54 @@ test('identical remotely delivered document returns idempotent no-op', () => {
   }
 });
 
+test('page_id lookup short-circuits generation across date-based filenames', () => {
+  const env = setupRepo();
+  try {
+    preflightDramaOpsRepo({ opsDir: env.work, expectedRemote: env.remote });
+    write(env.work, ARTICLE, '---\npage_id: "page_dramabox_vs_reelshort"\n---\n\n# Article\n');
+    const delivered = commitAndPushDramaDocument({
+      opsDir: env.work,
+      relativePath: ARTICLE,
+      topicSlug: 'dramabox-vs-reelshort',
+      expectedRemote: env.remote,
+    });
+    const found = findDeliveredDramaDocument({
+      opsDir: env.work,
+      pageId: 'page_dramabox_vs_reelshort',
+      expectedRemote: env.remote,
+    });
+    assert.equal(found.status, 'already-delivered');
+    assert.equal(found.relativePath, ARTICLE);
+    assert.equal(found.commitSha, delivered.commitSha);
+  } finally {
+    rmSync(env.root, { recursive: true, force: true });
+  }
+});
+
+test('page_id lookup returns null for no match and fails on duplicates', () => {
+  const env = setupRepo();
+  try {
+    preflightDramaOpsRepo({ opsDir: env.work, expectedRemote: env.remote });
+    assert.equal(findDeliveredDramaDocument({
+      opsDir: env.work,
+      pageId: 'page_missing',
+      expectedRemote: env.remote,
+    }), null);
+    write(env.work, ARTICLE, '---\npage_id: "page_duplicate"\n---\n\n# One\n');
+    const second = 'inbox-maboyang/05-blog/dramashortstv/2026-08-29-dramashortstv-blog-two.md';
+    write(env.work, second, '---\npage_id: "page_duplicate"\n---\n\n# Two\n');
+    git(env.work, ['add', '--', ARTICLE, second]);
+    git(env.work, ['commit', '-m', 'seed duplicate page ids']);
+    git(env.work, ['push', 'origin', 'main']);
+    assert.throws(
+      () => findDeliveredDramaDocument({ opsDir: env.work, pageId: 'page_duplicate', expectedRemote: env.remote }),
+      /multiple.*page_id/i,
+    );
+  } finally {
+    rmSync(env.root, { recursive: true, force: true });
+  }
+});
+
 test('delivery rechecks branch and remote identity after preflight', () => {
   const env = setupRepo();
   try {
@@ -257,6 +306,66 @@ test('concurrent staged file cannot enter the target commit or get pushed', () =
     );
     assert.deepEqual(git(env.work, ['show', '--format=', '--name-only', 'HEAD']).split('\n').filter(Boolean), [ARTICLE]);
     assert.equal(git(env.work, ['ls-remote', 'origin', 'refs/heads/main']).split(/\s+/)[0], remoteBefore);
+  } finally {
+    rmSync(env.root, { recursive: true, force: true });
+  }
+});
+
+test('concurrent target rewrite after staged QA cannot be pushed', () => {
+  const env = setupRepo();
+  try {
+    preflightDramaOpsRepo({ opsDir: env.work, expectedRemote: env.remote });
+    write(env.work, ARTICLE, '# QA approved bytes\n');
+    const remoteBefore = git(env.work, ['ls-remote', 'origin', 'refs/heads/main']).split(/\s+/)[0];
+    let injected = false;
+    const racingGit = (repo, args) => {
+      if (!injected && args[0] === 'commit') {
+        injected = true;
+        write(repo, ARTICLE, '# unreviewed concurrent rewrite\n');
+      }
+      return git(repo, args);
+    };
+    assert.throws(
+      () => commitAndPushDramaDocument({
+        opsDir: env.work,
+        relativePath: ARTICLE,
+        topicSlug: 'dramabox-vs-reelshort',
+        expectedRemote: env.remote,
+        runGit: racingGit,
+      }),
+      /document bytes changed after staged QA/i,
+    );
+    assert.equal(git(env.work, ['ls-remote', 'origin', 'refs/heads/main']).split(/\s+/)[0], remoteBefore);
+  } finally {
+    rmSync(env.root, { recursive: true, force: true });
+  }
+});
+
+test('push and readback use fixed expectedRemote even if origin is replaced at push time', () => {
+  const env = setupRepo();
+  try {
+    const wrongRemote = join(env.root, 'wrong.git');
+    execFileSync('git', ['init', '--bare', '--initial-branch=main', wrongRemote]);
+    preflightDramaOpsRepo({ opsDir: env.work, expectedRemote: env.remote });
+    write(env.work, ARTICLE, '# Article\n');
+    let injected = false;
+    const racingGit = (repo, args) => {
+      if (!injected && args[0] === 'push') {
+        injected = true;
+        git(repo, ['remote', 'set-url', 'origin', wrongRemote]);
+      }
+      return git(repo, args);
+    };
+    const result = commitAndPushDramaDocument({
+      opsDir: env.work,
+      relativePath: ARTICLE,
+      topicSlug: 'dramabox-vs-reelshort',
+      expectedRemote: env.remote,
+      runGit: racingGit,
+    });
+    assert.equal(result.status, 'delivered');
+    assert.equal(result.commitSha, git(env.work, ['ls-remote', env.remote, 'refs/heads/main']).split(/\s+/)[0]);
+    assert.equal(git(env.work, ['ls-remote', wrongRemote, 'refs/heads/main']), '');
   } finally {
     rmSync(env.root, { recursive: true, force: true });
   }

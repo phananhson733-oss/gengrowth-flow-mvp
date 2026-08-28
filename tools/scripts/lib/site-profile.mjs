@@ -20,7 +20,7 @@ export const DEFAULT_SITE = 'oracle';
 // Non-default sites we recognize. Anything else (unset/empty/'oracle'/typo)
 // resolves to DEFAULT_SITE so a stray env value can never silently divert the
 // oracle line onto a half-built profile.
-export const KNOWN_SITES = new Set(['gengrowth']);
+export const KNOWN_SITES = new Set(['gengrowth', 'dramashortstv']);
 
 /**
  * Resolve the active site id from the environment.
@@ -62,7 +62,11 @@ export function configSnapshotPath(repoRoot, env = process.env) {
 // host and rejects cross-product, blog, external and placeholder rows before
 // ranking semantic candidates. There is intentionally no code-level default CTA:
 // each workbook owns its single wildcard fallback in CTA Map.
-const SITE_CTA_HOST = { oracle: 'astrologywiki.com', gengrowth: 'gengrowth.ai' };
+const SITE_CTA_HOST = {
+  oracle: 'astrologywiki.com',
+  gengrowth: 'gengrowth.ai',
+  dramashortstv: 'dramashortstv.com',
+};
 
 /**
  * Returns the required CTA host for the active product.

@@ -17,6 +17,7 @@ import {
   activeSite,
   isDefaultSite,
   configSnapshotPath,
+  siteCtaHost,
 } from '../lib/site-profile.mjs';
 
 const ROOT = '/repo';
@@ -56,6 +57,16 @@ test('configSnapshotPath: recognized site → isolated per-site path', () => {
     configSnapshotPath(ROOT, { GG_SITE: 'gengrowth' }),
     join(ROOT, '.gg-cache', 'sites', 'gengrowth', 'config-snapshot.json'),
   );
+});
+
+test('dramashortstv resolves to its own isolated site profile', () => {
+  assert.equal(activeSite({ GG_SITE: 'dramashortstv' }), 'dramashortstv');
+  assert.equal(isDefaultSite({ GG_SITE: 'dramashortstv' }), false);
+  assert.equal(
+    configSnapshotPath(ROOT, { GG_SITE: 'dramashortstv' }),
+    join(ROOT, '.gg-cache', 'sites', 'dramashortstv', 'config-snapshot.json'),
+  );
+  assert.equal(siteCtaHost({ GG_SITE: 'dramashortstv' }), 'dramashortstv.com');
 });
 
 test('configSnapshotPath: default and non-default never collide', () => {

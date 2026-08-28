@@ -81,3 +81,37 @@ node tools/scripts/gg-dramashortstv-doc.mjs \
 `~/gengrowth-ops/inbox-maboyang/05-blog/dramashortstv/`，并且只 stage 目标 Markdown，普通
 push 到 `phananhson733-oss/gengrowth-ops` 的 `main`。任何无关本地修改、远端分叉、错误
 remote 或不可验证 SHA 都会 fail-closed；不会自动 stash、reset、merge、rebase、clean 或 force push。
+
+### 5.1 Apply 前置条件与 provider 用量
+
+`--apply` 会进行真实搜证；必须先在受限的环境文件中配置
+`GG_DATAFORSEO_LOGIN` 和 `GG_DATAFORSEO_PASSWORD`。每篇尝试固定发起 **5 次** DataForSEO Live
+请求：Google Organic 分别查询目标词、真实 friction 和 IMDb（3 次，每个请求严格只有一个 task），
+Google Trends（1 次），以及演员同名污染查询（1 次）。Apple Search 不要求本地凭据。
+
+Reddit OAuth（`GG_REDDIT_CLIENT_ID`、`GG_REDDIT_CLIENT_SECRET`，以及可选的用户名/密码）只有在
+Google SERP 已给出可验证的真实 friction（规范 Reddit 帖子或 Apple App Store 结果）时才是可选项。
+若没有这类 Google 结果，必须有有效 Reddit OAuth 证据；两者都缺失时不得生成或交付。
+
+### 5.2 证据与事实审缓存
+
+证据对象固定为 `schemaVersion: '1'`，并绑定当前 `pageId`、`entity`、`targetKeyword`、采集时间、
+按来源分组的结果、coverage 与 canonical `sha256`。它只能在 `.gg-cache/sites/dramashortstv/<page_id>/`
+中留下本次运行的缓存；业务产物始终且只会是
+`gengrowth-ops/inbox-maboyang/05-blog/dramashortstv/` 下的一份 Markdown。
+
+事实审输入是同一缓存目录内不可变的
+`<page_id>.factual-source.<draft-sha256>.<evidence-sha256>.md`。该文件含经清洗、标记为不可信的证据
+及草稿，并在创建后回读校验字节和 SHA-256；并发运行不会复用可覆盖的审稿输入。
+
+### 5.3 Fail-closed 与 dry-run 边界
+
+任何必需证据缺失、来源身份不匹配、DataForSEO HTTP/顶层/task 错误、无效或过期证据、Evidence SHA
+不匹配、草稿 QA 失败、事实审不是 `PASS`、事实审的 draft/evidence SHA 不匹配，或 Ops Git preflight
+失败，都会在写 Ops Markdown 或 Git 交付之前停止。
+
+未传 `--apply` 时是只读 dry-run：它只通过 Sheet bridge 读取指定 Google Sheet 并规划目标路径；不会
+调用 DataForSEO、Apple、Reddit 等 research provider，不会调用 Claude/事实审 LLM，不会读取或写入 Ops
+目录，也不会进行 Git 预检、暂存、提交、push 或其他 Git 操作。Sheet 的只读 API 获取不属于 research
+provider 调用。该 lane 从不生成 hero、图片、图片 prompt、网站内容或发布/站点历史，也不会写 Sheet、
+Supabase、Vercel、sitemap 或 indexing。

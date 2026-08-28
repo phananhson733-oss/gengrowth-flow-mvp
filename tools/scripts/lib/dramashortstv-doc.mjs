@@ -46,7 +46,7 @@ const TYPE_RULES = Object.freeze({
     sections: [
       ['keyword coverage', /keyword coverage|target keyword/iu],
       ['question-led body', /\?$/u],
-      ['FAQ', /FAQ|Frequently Asked|Questions/iu],
+      ['FAQ', /(?:\bFAQs?\b|Frequently Asked Questions)/iu],
       ['verification checklist', /must verify|verification checklist|verification notes/iu],
       ['content honesty', /content honesty|honesty boundary|limitations/iu],
       ['SEO rationale', /SEO (?:execution|rationale|notes)/iu],
@@ -61,7 +61,7 @@ const TYPE_RULES = Object.freeze({
       ['question-led body', /\?$/u],
       ['four-question search check', /four-question|four question|四问/iu],
       ['competitor differentiation', /differs from competitors|differenti|competitor/iu],
-      ['FAQ', /FAQ|Frequently Asked|Questions/iu],
+      ['FAQ', /(?:\bFAQs?\b|Frequently Asked Questions)/iu],
       ['verification checklist', /must verify|verification checklist|verification notes/iu],
       ['content honesty', /content honesty|honesty boundary|limitations/iu],
       ['SEO rationale', /SEO (?:execution|rationale|notes)/iu],
@@ -134,8 +134,104 @@ function yamlString(value) {
   return JSON.stringify(String(value));
 }
 
+function withoutHtmlComments(markdown) {
+  return String(markdown).replace(/<!--[\s\S]*?(?:-->|$)/gu, (comment) => comment.replace(/[^\n]/gu, ' '));
+}
+
+function fenceMarkerForLine(line) {
+  let rest = line;
+  let changed = true;
+  while (changed) {
+    changed = false;
+    const quote = rest.replace(/^\s{0,3}>\s?/u, '');
+    if (quote !== rest) {
+      rest = quote;
+      changed = true;
+      continue;
+    }
+    const list = rest.replace(/^\s{0,3}(?:[-+*]|\d+[.)])\s+/u, '');
+    if (list !== rest) {
+      rest = list;
+      changed = true;
+    }
+  }
+  return rest.match(/^\s{0,3}(`{3,}|~{3,})(?:.*)$/u)?.[1] || null;
+}
+
+function removeRanges(line, ranges) {
+  let result = '';
+  let cursor = 0;
+  for (const { start, end } of ranges.sort((left, right) => left.start - right.start)) {
+    if (start < cursor) continue;
+    result += line.slice(cursor, start);
+    cursor = end;
+  }
+  return result + line.slice(cursor);
+}
+
+function parseInlineLinks(line) {
+  const links = [];
+  const ranges = [];
+  for (let start = 0; start < line.length; start++) {
+    if (line[start] !== '[' || line[start - 1] === '!') continue;
+    const anchorEnd = line.indexOf(']', start + 1);
+    if (anchorEnd === -1) continue;
+    const anchor = line.slice(start + 1, anchorEnd).trim();
+    if (line[anchorEnd + 1] === '(') {
+      let cursor = anchorEnd + 2;
+      let depth = 1;
+      let angleDestination = false;
+      if (line[cursor] === '<') {
+        angleDestination = true;
+        cursor++;
+      }
+      for (; cursor < line.length; cursor++) {
+        if (angleDestination) {
+          if (line[cursor] === '>') {
+            cursor++;
+            while (/\s/u.test(line[cursor] || '')) cursor++;
+            if (line[cursor] === ')') {
+              cursor++;
+              links.push({ anchor, line: 0 });
+              ranges.push({ start, end: cursor });
+            }
+            break;
+          }
+          continue;
+        }
+        if (line[cursor] === '(') depth++;
+        if (line[cursor] === ')') {
+          depth--;
+          if (depth === 0) {
+            cursor++;
+            links.push({ anchor, line: 0 });
+            ranges.push({ start, end: cursor });
+            break;
+          }
+        }
+      }
+      start = cursor - 1;
+      continue;
+    }
+    if (line[anchorEnd + 1] === '[') {
+      const referenceEnd = line.indexOf(']', anchorEnd + 2);
+      if (referenceEnd !== -1) {
+        links.push({ anchor, line: 0 });
+        ranges.push({ start, end: referenceEnd + 1 });
+        start = referenceEnd;
+      }
+    }
+  }
+  return { links, ranges };
+}
+
+function parseReferenceDefinition(line) {
+  const match = line.match(/^\s{0,3}\[([^\]\n]+)\]:\s*(?:<[^>]+>|\S+)(?:\s+.*)?$/u);
+  return match ? { start: 0, end: line.length } : null;
+}
+
 function parseDramaMarkdown(markdown) {
-  const source = stripFrontmatter(markdown);
+  const source = withoutHtmlComments(stripFrontmatter(markdown));
   const lines = source.split('\n');
   const visibleLines = [];
   const headings = [];
@@ -146,9 +242,8 @@ function parseDramaMarkdown(markdown) {
 
   for (let index = 0; index < lines.length; index++) {
     const line = lines[index];
-    const fence = line.match(/^\s{0,3}(`{3,}|~{3,})(?:.*)$/u);
-    if (fence) {
-      const marker = fence[1];
+    const marker = fenceMarkerForLine(line);
+    if (marker) {
       fences.push({ line: index + 1, marker });
       if (!openFence) {
         openFence = { character: marker[0], length: marker.length, line: index + 1 };
@@ -167,13 +262,12 @@ function parseDramaMarkdown(markdown) {
     const heading = line.match(/^(#{1,6})\s+(.+?)\s*#*\s*$/u);
     if (heading) headings.push({ level: heading[1].length, text: heading[2].trim(), line: index + 1 });
 
-    const linkPattern = /(?<!!)\[([^\]\n]+)\]\(\s*(https?:\/\/[^\s)]+)(?:\s+(?:"[^"]*"|'[^']*'|\([^)]*\)))?\s*\)/giu;
-    let match;
-    while ((match = linkPattern.exec(line))) {
-      links.push({ anchor: match[1].trim(), destination: match[2], line: index + 1 });
-    }
-    const withoutLinks = line.replace(linkPattern, '');
+    const inline = parseInlineLinks(line);
+    for (const link of inline.links) links.push({ ...link, line: index + 1 });
+    const definition = parseReferenceDefinition(line);
+    const withoutLinks = removeRanges(line, definition ? [{ start: 0, end: line.length }] : inline.ranges);
     const urlPattern = /https?:\/\/[^\s<>()]+/giu;
+    let match;
     while ((match = urlPattern.exec(withoutLinks))) nakedUrls.push({ value: match[0], line: index + 1 });
   }
 
@@ -215,13 +309,20 @@ function validateHeadingTopology(rule, headings, errors) {
 
 function validateBodyTopology(contentType, view, errors) {
   if (contentType === 'brand-playlist') {
-    const titleEntries = view.lines.filter((line) => /^(?:[-*]|\d+[.)])\s+\S/u.test(line));
+    const watchList = view.h2s.find((heading) => TYPE_RULES['brand-playlist'].sections[0][1].test(heading.text));
+    const nextH2 = view.h2s.find((heading) => heading.line > watchList?.line);
+    const sectionLines = watchList ? view.lines.slice(watchList.line, nextH2 ? nextH2.line - 1 : view.lines.length) : [];
+    const titleEntries = sectionLines.filter((line) => /^(?:[-*]|\d+[.)])\s+\S/u.test(line));
     if (titleEntries.length < 2) errors.push('brand playlist missing multiple title entries');
   }
   if (contentType === 'reader-bridge') {
-    const firstH1 = view.lines.findIndex((line) => /^#\s+/.test(line));
-    const nextHeading = view.lines.findIndex((line, index) => index > firstH1 && /^##\s+/.test(line));
-    const opening = view.lines.slice(firstH1, nextHeading === -1 ? view.lines.length : nextHeading).join(' ');
+    const firstH1 = view.h1s[0];
+    const nextH2 = view.h2s.find((heading) => heading.line > firstH1?.line);
+    const opening = firstH1
+      ? view.lines.slice(firstH1.line, nextH2 ? nextH2.line - 1 : view.lines.length)
+        .filter((line) => !/^#{1,6}\s+/u.test(line))
+        .join(' ')
+      : '';
     if (!/\bI\b|\bmy\b|as a reader|as a viewer/iu.test(opening)) {
       errors.push('reader bridge missing first-person voice in opening');
     }

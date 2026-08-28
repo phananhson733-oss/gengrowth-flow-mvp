@@ -483,6 +483,76 @@ test('scanner accepts a descriptive Markdown link without treating its destinati
   assert.doesNotMatch(errors, /naked http\(s\) URL|Markdown link anchor/i);
 });
 
+test('scanner ignores headings, links, URLs, and fences inside HTML comments', () => {
+  const commented = GOOD_COMPARISON.replace(
+    '## SEO Rationale',
+    '<!--\n## SEO Rationale\n[here](https://example.com)\nhttps://example.com\n```\n-->',
+  );
+  const errors = validate(commented).errors.join('\n');
+  assert.match(errors, /comparison missing required heading: SEO rationale/i);
+  assert.doesNotMatch(errors, /Markdown code fence|generic Markdown link anchor|naked http\(s\) URL/i);
+});
+
+test('scanner validates generic anchors for relative and reference links', () => {
+  const relative = `${GOOD_COMPARISON}\nRead [here](/apps/dramabox).`;
+  const reference = `${GOOD_COMPARISON}\nRead [here][drama].\n\n[drama]: https://example.com/dramabox`;
+  assert.match(validate(relative).errors.join('\n'), /generic Markdown link anchor/i);
+  assert.match(validate(reference).errors.join('\n'), /generic Markdown link anchor/i);
+});
+
+test('scanner accepts descriptive relative, angle, balanced, and reference links', () => {
+  const links = `${GOOD_COMPARISON}
+Read the [official DramaBox app page](/apps/dramabox), [official Apple App Store listing](<https://apps.apple.com/us/app/dramabox/id1>), and [detailed review source](https://example.com/reviews_(2026)).
+
+[official DramaBox archive][dramabox-archive]
+
+[dramabox-archive]: https://example.com/dramabox`;
+  const errors = validate(links).errors.join('\n');
+  assert.doesNotMatch(errors, /naked http\(s\) URL|Markdown link anchor/i);
+});
+
+test('scanner rejects a naked autolink', () => {
+  assert.match(
+    validate(`${GOOD_COMPARISON}\n<https://example.com/dramabox>`).errors.join('\n'),
+    /naked http\(s\) URL/i,
+  );
+});
+
+test('scanner rejects fenced blocks inside blockquotes and list containers', () => {
+  const quoteFence = `${GOOD_COMPARISON}\n> ~~~\n> quoted code\n> ~~~`;
+  const listFence = `${GOOD_COMPARISON}\n- \`\`\`\n  list code\n  \`\`\``;
+  assert.match(validate(quoteFence).errors.join('\n'), /Markdown code fence is forbidden/i);
+  assert.match(validate(listFence).errors.join('\n'), /Markdown code fence is forbidden/i);
+});
+
+test('FAQ topology rejects an ambiguous Open Questions heading', () => {
+  const { markdown, brief } = TOPOLOGY_DRAFTS['app-profile'];
+  const ambiguous = markdown.replace('## Frequently Asked Questions', '## Open Questions');
+  assert.match(validate(ambiguous, 'app-profile', brief).errors.join('\n'), /app profile missing required heading: FAQ/i);
+});
+
+test('brand title entries must occur inside the watch-list section', () => {
+  const { markdown, brief } = TOPOLOGY_DRAFTS['brand-playlist'];
+  const notesOnly = markdown
+    .replace('- First Title\n- Second Title', 'No title entries are available in this watch list.')
+    .replace('- Verify title availability before publication.', '- Editorial note one.\n- Editorial note two.');
+  assert.match(
+    validate(notesOnly, 'brand-playlist', brief).errors.join('\n'),
+    /brand playlist missing multiple title entries/i,
+  );
+});
+
+test('reader bridge opening excludes H1 text and requires first-person prose', () => {
+  const { markdown, brief } = TOPOLOGY_DRAFTS['reader-bridge'];
+  const titleOnly = markdown
+    .replace('# Best ReelShorts: Reader Picks', '# My Best ReelShorts: Reader Picks')
+    .replace('I use these ReelShort reader picks as a starting point, then verify availability.', 'These ReelShort reader picks are a starting point, then availability needs verification.');
+  assert.match(
+    validate(titleOnly, 'reader-bridge', brief).errors.join('\n'),
+    /reader bridge missing first-person voice in opening/i,
+  );
+});
+
 test('QA blocks piracy terms, images, raw placeholders, and missing actor qualifier', () => {
   assert.match(
     validate(`${GOOD_COMPARISON}\nfree coins`).errors.join('\n'),

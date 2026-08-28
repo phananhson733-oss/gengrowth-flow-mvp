@@ -22,9 +22,9 @@ aliases:
 
 **Goal:** Build an isolated DramaShortsTV document-delivery lane that reads one explicit Google Sheet row, generates and validates an SOP-compliant Markdown article, writes only that document to `gengrowth-ops`, and commits/pushes only that document to `phananhson733-oss/gengrowth-ops`.
 
-**Architecture:** Add a recognized `dramashortstv` site profile plus focused pure modules for brief normalization, SOP prompt/QA, Markdown output, and Git delivery. A thin CLI composes existing Sheet, LLM orchestrator, and Codex factual-review primitives through dependency injection so tests use fixtures and temporary Git remotes without touching the live Sheet or Ops repository.
+**Architecture:** Add a recognized `dramashortstv` site profile plus focused pure modules for brief normalization, SOP prompt/QA, Markdown output, and Git delivery. A thin CLI composes the existing read-only Sheet bridge, a Claude-only no-tools text worker, and the Codex factual-review primitive through dependency injection so tests use fixtures and temporary Git remotes without touching the live Sheet or Ops repository.
 
-**Tech Stack:** Node.js ESM, built-in `node:test`, existing OAuth/Sheet bridge, existing `gg-llm-orchestrator.mjs`, existing `gg-codex-pr-review.mjs`, Git CLI.
+**Tech Stack:** Node.js ESM, built-in `node:test`, existing OAuth/Sheet bridge, Claude print-mode with all tools disabled, existing `gg-codex-pr-review.mjs`, Git CLI.
 
 ## Global Constraints
 
@@ -44,7 +44,7 @@ aliases:
 
 - Create `tools/scripts/lib/dramashortstv-doc.mjs`: workbook/paths constants, content-type mapping, Sheet brief normalization, SOP prompt builder, deterministic QA, final Markdown formatting, output path jail, and atomic write.
 - Create `tools/scripts/lib/dramashortstv-git.mjs`: Ops repository preflight, exact staging, commit/push, and remote SHA/blob verification.
-- Create `tools/scripts/gg-dramashortstv-doc.mjs`: CLI parsing and orchestration of Sheet bridge, SOP, LLM generation, QA, factual review, document write, and Git delivery.
+- Create `tools/scripts/gg-dramashortstv-doc.mjs`: CLI parsing and orchestration of Sheet bridge, SOP, no-tools Claude generation, QA, factual review, document write, and Git delivery.
 - Modify `tools/scripts/lib/site-profile.mjs`: recognize `dramashortstv` and expose its CTA host without changing Oracle/GenGrowth behavior.
 - Modify `tools/scripts/__tests__/lib-site-profile.smoke.test.mjs`: cover DramaShortsTV site isolation.
 - Create `tools/scripts/__tests__/lib-dramashortstv-doc.smoke.test.mjs`: pure normalizer, prompt, QA, formatting, and path tests.
@@ -322,7 +322,7 @@ git commit -m "feat: add exact DramaShortsTV Git delivery"
 
 **Interfaces:**
 - Produces `parseDramaArgs(argv)` and `runDramaShortsDelivery(args, deps)`.
-- Real dependencies call `gg-sheet-to-brief.mjs`, `gg-llm-orchestrator.mjs`, `gg-codex-pr-review.mjs`, the document module, and Git module.
+- Real dependencies call `gg-sheet-to-brief.mjs`, a repo-isolated Claude text worker, `gg-codex-pr-review.mjs`, the document module, and Git module.
 - Dry-run returns `{ mode: 'dry-run', brief, targetPath, contentType }` without creating files or invoking LLM/Git.
 
 - [ ] **Step 1: Write failing CLI argument tests**
@@ -375,7 +375,7 @@ GG_SITE=dramashortstv node tools/scripts/gg-sheet-to-brief.mjs \
   --workbook <id> --row <n> --dry-run --allow-missing-cta
 ```
 
-The generator writes prompt/draft only below `.gg-cache/sites/dramashortstv/<page_id>/` and invokes the existing orchestrator with one requested model. The factual reviewer runs `node gg-codex-pr-review.mjs --source <draft>` and accepts only an exit-0 line-anchored `VERDICT: PASS`.
+The generator writes prompt/draft only below `.gg-cache/sites/dramashortstv/<page_id>/` and invokes Claude in print mode from the repo-isolated worker cwd with `--tools ""`, safe-mode, no-chrome, strict empty MCP config, `dontAsk`, and no session persistence. Only `--model claude` is accepted at the public CLI. The factual reviewer runs `node gg-codex-pr-review.mjs --source <draft>` and accepts only an exit-0 line-anchored `VERDICT: PASS`.
 
 - [ ] **Step 7: Run CLI tests and verify GREEN**
 

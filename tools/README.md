@@ -57,6 +57,10 @@ aliases:
 生成并质检一份 Markdown。它不生成 hero 或任何图片，也不调用网站、Oracle、GenGrowth、
 Supabase、Vercel、sitemap 或 indexing 发布路径。
 
+正文生成固定使用 Claude 无工具文本 worker：`--tools` 为空，并启用 safe-mode、no-chrome、
+空 MCP 配置和 repo 外 cwd。模型不能读写文件或调用外部工具；只有确定性父进程能写 Flow cache
+及最终 Markdown。
+
 只读预检：
 
 ```bash

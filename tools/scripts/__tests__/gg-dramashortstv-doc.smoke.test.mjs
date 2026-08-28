@@ -211,4 +211,5 @@ test('tools README documents DramaShortsTV hard boundaries', () => {
   assert.match(readme, /Google Sheet.*只读|Google Sheet.*read-only/iu);
   assert.match(readme, /不生成.*图片|no hero/iu);
   assert.match(readme, /phananhson733-oss\/gengrowth-ops/);
+  assert.match(readme, /Claude.*(?:无工具|tools disabled)|--tools.*空/iu);
 });

@@ -187,6 +187,7 @@ function realDependencies() {
       opsDir,
       relativePath: relative(opsDir, targetPath).replaceAll('\\', '/'),
       topicSlug: slug,
+      expectedRemote: EXPECTED_OPS_REMOTE,
     }),
   };
 }

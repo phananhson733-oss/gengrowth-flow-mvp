@@ -106,6 +106,7 @@ test('delivery stages, commits, pushes, and verifies only the target document', 
       opsDir: env.work,
       relativePath: ARTICLE,
       topicSlug: 'dramabox-vs-reelshort',
+      expectedRemote: env.remote,
     });
     assert.equal(result.status, 'delivered');
     assert.equal(result.commitSha, result.remoteSha);
@@ -126,7 +127,7 @@ test('delivery refuses an unrelated change without creating a commit', () => {
     write(env.work, ARTICLE, '# Article\n');
     write(env.work, 'unrelated.md', 'do not commit\n');
     assert.throws(
-      () => commitAndPushDramaDocument({ opsDir: env.work, relativePath: ARTICLE, topicSlug: 'dramabox-vs-reelshort' }),
+      () => commitAndPushDramaDocument({ opsDir: env.work, relativePath: ARTICLE, topicSlug: 'dramabox-vs-reelshort', expectedRemote: env.remote }),
       /exactly one target document/i,
     );
     assert.equal(git(env.work, ['rev-parse', 'HEAD']), before);
@@ -150,7 +151,7 @@ test('ordinary push rejection preserves the local document commit', () => {
     const remoteBefore = git(competitor, ['rev-parse', 'HEAD']);
 
     assert.throws(
-      () => commitAndPushDramaDocument({ opsDir: env.work, relativePath: ARTICLE, topicSlug: 'dramabox-vs-reelshort' }),
+      () => commitAndPushDramaDocument({ opsDir: env.work, relativePath: ARTICLE, topicSlug: 'dramabox-vs-reelshort', expectedRemote: env.remote }),
       /push failed/i,
     );
     const localAfter = git(env.work, ['rev-parse', 'HEAD']);
@@ -171,15 +172,70 @@ test('identical remotely delivered document returns idempotent no-op', () => {
       opsDir: env.work,
       relativePath: ARTICLE,
       topicSlug: 'dramabox-vs-reelshort',
+      expectedRemote: env.remote,
     });
     const second = commitAndPushDramaDocument({
       opsDir: env.work,
       relativePath: ARTICLE,
       topicSlug: 'dramabox-vs-reelshort',
+      expectedRemote: env.remote,
     });
     assert.equal(second.status, 'already-delivered');
     assert.equal(second.commitSha, first.commitSha);
     assert.equal(git(env.work, ['rev-list', '--count', 'HEAD']), '2');
+  } finally {
+    rmSync(env.root, { recursive: true, force: true });
+  }
+});
+
+test('delivery rechecks branch and remote identity after preflight', () => {
+  const env = setupRepo();
+  try {
+    preflightDramaOpsRepo({ opsDir: env.work, expectedRemote: env.remote });
+    write(env.work, ARTICLE, '# Article\n');
+    git(env.work, ['remote', 'set-url', '--push', 'origin', join(env.root, 'wrong.git')]);
+    assert.throws(
+      () => commitAndPushDramaDocument({
+        opsDir: env.work,
+        relativePath: ARTICLE,
+        topicSlug: 'dramabox-vs-reelshort',
+        expectedRemote: env.remote,
+      }),
+      /remote mismatch/i,
+    );
+    assert.equal(git(env.work, ['rev-list', '--count', 'HEAD']), '1');
+  } finally {
+    rmSync(env.root, { recursive: true, force: true });
+  }
+});
+
+test('concurrent staged file cannot enter the target commit or get pushed', () => {
+  const env = setupRepo();
+  try {
+    preflightDramaOpsRepo({ opsDir: env.work, expectedRemote: env.remote });
+    write(env.work, ARTICLE, '# Article\n');
+    const remoteBefore = git(env.work, ['ls-remote', 'origin', 'refs/heads/main']).split(/\s+/)[0];
+    let injected = false;
+    const racingGit = (repo, args) => {
+      if (!injected && args[0] === 'commit') {
+        injected = true;
+        write(repo, 'concurrent.md', 'concurrent writer\n');
+        git(repo, ['add', '--', 'concurrent.md']);
+      }
+      return git(repo, args);
+    };
+    assert.throws(
+      () => commitAndPushDramaDocument({
+        opsDir: env.work,
+        relativePath: ARTICLE,
+        topicSlug: 'dramabox-vs-reelshort',
+        expectedRemote: env.remote,
+        runGit: racingGit,
+      }),
+      /unrelated changes appeared after commit/i,
+    );
+    assert.deepEqual(git(env.work, ['show', '--format=', '--name-only', 'HEAD']).split('\n').filter(Boolean), [ARTICLE]);
+    assert.equal(git(env.work, ['ls-remote', 'origin', 'refs/heads/main']).split(/\s+/)[0], remoteBefore);
   } finally {
     rmSync(env.root, { recursive: true, force: true });
   }

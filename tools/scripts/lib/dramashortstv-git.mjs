@@ -57,10 +57,8 @@ function verifyDeliveredBlob(git, relativePath, commitSha) {
   return blobSha;
 }
 
-export function preflightDramaOpsRepo({ opsDir, expectedRemote, runGit = null }) {
-  if (!opsDir) throw new Error('opsDir is required');
+function verifyRepositoryIdentity(git, expectedRemote) {
   if (!expectedRemote) throw new Error('expectedRemote is required');
-  const git = gitRunner(opsDir, runGit);
   const branch = git(['branch', '--show-current']);
   if (branch !== 'main') throw new Error(`DramaShortsTV Git delivery requires branch main, got ${branch || '(detached)'}`);
   const fetchUrl = git(['remote', 'get-url', 'origin']);
@@ -68,6 +66,14 @@ export function preflightDramaOpsRepo({ opsDir, expectedRemote, runGit = null })
   if (fetchUrl !== expectedRemote || pushUrl !== expectedRemote) {
     throw new Error(`DramaShortsTV Git remote mismatch: fetch=${fetchUrl} push=${pushUrl} expected=${expectedRemote}`);
   }
+  return { branch, fetchUrl, pushUrl };
+}
+
+export function preflightDramaOpsRepo({ opsDir, expectedRemote, runGit = null }) {
+  if (!opsDir) throw new Error('opsDir is required');
+  if (!expectedRemote) throw new Error('expectedRemote is required');
+  const git = gitRunner(opsDir, runGit);
+  const { branch, fetchUrl } = verifyRepositoryIdentity(git, expectedRemote);
   try {
     git(['fetch', '--prune', 'origin']);
   } catch (error) {
@@ -88,6 +94,7 @@ export function commitAndPushDramaDocument({
   opsDir,
   relativePath,
   topicSlug,
+  expectedRemote,
   runGit = null,
 }) {
   if (!opsDir) throw new Error('opsDir is required');
@@ -96,6 +103,7 @@ export function commitAndPushDramaDocument({
   }
   const safePath = validateRelativePath(relativePath);
   const git = gitRunner(opsDir, runGit);
+  verifyRepositoryIdentity(git, expectedRemote);
   const status = git(['status', '--porcelain=v1', '--untracked-files=all']);
 
   if (!status) {
@@ -126,12 +134,22 @@ export function commitAndPushDramaDocument({
   if (afterStage.length !== 1 || afterStage[0].slice(3) !== safePath) {
     throw new Error(`unrelated changes appeared before commit: ${afterStage.join(' | ')}`);
   }
+  verifyRepositoryIdentity(git, expectedRemote);
   try {
-    git(['commit', '-m', `content(dramashortstv): add ${topicSlug}`]);
+    git(['commit', '--only', '-m', `content(dramashortstv): add ${topicSlug}`, '--', safePath]);
   } catch (error) {
     throw commandError('Git commit failed', error);
   }
   const commitSha = git(['rev-parse', 'HEAD']);
+  const committedPaths = git(['show', '--format=', '--name-only', 'HEAD']).split('\n').filter(Boolean);
+  if (committedPaths.length !== 1 || committedPaths[0] !== safePath) {
+    throw new Error(`Git commit escaped target document; local commit preserved at ${commitSha}: ${committedPaths.join(', ')}`);
+  }
+  const postCommitStatus = git(['status', '--porcelain=v1', '--untracked-files=all']);
+  if (postCommitStatus) {
+    throw new Error(`unrelated changes appeared after commit; local commit preserved at ${commitSha}: ${postCommitStatus.split('\n')[0]}`);
+  }
+  verifyRepositoryIdentity(git, expectedRemote);
   try {
     git(['push', 'origin', 'main']);
   } catch (error) {

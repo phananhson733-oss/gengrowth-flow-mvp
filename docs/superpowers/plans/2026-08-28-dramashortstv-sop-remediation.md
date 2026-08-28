@@ -169,7 +169,7 @@ assert.throws(() => parseDramaArgs(['--workbook', DRAMA_WORKBOOK_ID, '--row', '4
 assert.throws(() => parseDramaArgs(['--workbook', DRAMA_WORKBOOK_ID, '--row', '4.9']));
 ```
 
-Also assert `gg-sheet-to-brief --page-id <id>` uniquely matches the complete unbounded `选题登记表!A:AC` snapshot, rejects duplicates, and emits only that row; Drama page-id mode must call this bridge selector directly instead of resolving a row with a separate `gg-sheet-pull` process. Assert research/evidence validation occurs before prompt/generation; evidence failure prevents SOP/LLM/Ops/Git; prompt and factual review receive the same evidence SHA; factual PASS with mismatched draft/evidence SHA is rejected.
+Also assert `gg-sheet-to-brief --page-id <id>` uniquely matches the complete unbounded `选题登记表!A:AC` snapshot, rejects duplicates, and emits only that row; Drama page-id mode must call this bridge selector directly instead of resolving a row with a separate `gg-sheet-pull` process. Assert research/evidence validation occurs before prompt/generation; SOP may be read first because it is the local authoritative input, but evidence failure must prevent prompt/LLM/Ops/Git; prompt and factual review receive the same evidence SHA; factual PASS with mismatched draft/evidence SHA is rejected.
 
 - [ ] **Step 2: Verify orchestration tests RED**
 

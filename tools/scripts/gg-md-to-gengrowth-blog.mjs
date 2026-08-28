@@ -79,6 +79,12 @@ const GENGROWTH_TBD_LINK_RULES = [
   // — matched nothing and de-linked to italic. Reading your own Search Console data IS
   // what this Pillar covers, so a bare mention is a correct destination, not a guess.
   { match: /striking[\s-]*distance|search[\s-]*performance[\s-]*diagnos|diagnos\w*[^.\n]{0,40}search[\s-]*(performance|console)|search[\s-]*console[^.\n]{0,40}(diagnos|impression|position)|average[\s-]*position|content[\s-]*refresh[\s-]*prioriti|quick[\s-]*wins?|(read|reading|your[\s-]*own)[^.\n]{0,24}search[\s-]*console|search[\s-]*console[\s-]*(data|export)/i, href: '/blog/striking-distance-keywords' },
+  // 2026-08-28: PG-ILA-002 — 「加了内链但排名没动」的一手数据篇。MUST precede the
+  // pagerank-sculpting rule: an anchor like "internal links that did not move rankings"
+  // shares the `internal link` stem, and sculpting is about WHERE equity flows, not about
+  // whether adding links changed anything. Gated on a negation so ordinary architecture
+  // anchors still land on the sculpting Pillar.
+  { match: /internal[\s-]*links?[^.\n]{0,40}(not|no|didn't|failed?)[^.\n]{0,24}(improv|mov|chang|help|rank)|internal[\s-]*link[\s-]*experiment/i, href: '/blog/internal-links-not-improving-rankings' },
   { match: /pagerank[\s-]*sculpt|link[\s-]*equity|orphan[\s-]*pages?|crawl[\s-]*depth|internal[\s-]*link[\s-]*(architecture|structure)/i, href: '/blog/pagerank-sculpting' },
   // 2026-08-17: the August volatility post (Series under search_performance_diagnosis).
   // This MUST precede the two `core update` rules below. A description like "our August 2026

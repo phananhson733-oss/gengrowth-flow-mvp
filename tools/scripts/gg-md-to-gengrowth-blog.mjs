@@ -139,6 +139,12 @@ const GENGROWTH_TBD_LINK_RULES = [
   { match: /rightblogger[\s-]*(alternatives?|comparison|review)/i, href: '/blog/rightblogger-alternatives' },
   { match: /scalenut[\s-]*(alternatives?|comparison|review)/i, href: '/blog/scalenut-alternatives' },
   { match: /arvow[\s-]*(alternatives?|comparison|review)/i, href: '/blog/arvow-alternatives' },
+  { match: /surfer[\s-]*(seo[\s-]*)?(alternatives?|comparison|review)/i, href: '/blog/surfer-seo-alternatives' },
+  // 2026-08-30: the alternatives cluster's category-closing page. Sits AFTER every
+  // per-vendor rule above so a named-competitor anchor still reaches its own comparison,
+  // and only a category-level phrasing ("best autoblogging software", "autoblogging tools")
+  // lands here.
+  { match: /best[\s-]*autoblogging[\s-]*(software|tools?)|autoblogging[\s-]*(software|tools?)[\s-]*(compar|round[\s-]*up)|cost[\s-]*per[\s-]*published[\s-]*article/i, href: '/blog/best-autoblogging-software' },
   { match: /seo[\s-]*automation/i, href: '/blog/seo-automation' },
   { match: /seo[\s-]*for[\s-]*saas[\s-]*startups?/i, href: '/blog/seo-for-saas-startups' },
   { match: /b2b[\s-]*saas[\s-]*seo/i, href: '/blog/b2b-saas-seo' },

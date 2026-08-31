@@ -2,20 +2,44 @@
 // Google Sheet -> SOP article -> one gengrowth-ops Markdown -> exact Git delivery.
 
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import {
+  closeSync,
+  fsyncSync,
+  mkdirSync,
+  openSync,
+  readFileSync,
+  writeFileSync,
+} from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { classifyCodex } from './gg-preview-gate.mjs';
+import { parseReviewedInputDigest } from './gg-codex-pr-review.mjs';
+import { loadEnv } from './lib/gg-shared.mjs';
 import { stripPreH1 } from './lib/strip-preamble.mjs';
 import { WORKER_CWD } from './lib/worker-cwd.mjs';
+import {
+  buildDramaEvidenceBlock,
+  classifyActorSameNameEvidence,
+  collectDramaEvidence,
+  sha256Text,
+  validateDramaEvidence,
+} from './lib/dramashortstv-evidence.mjs';
+import {
+  buildDramaResearchPlan,
+  fetchAppleAppEvidence,
+  fetchGoogleSerpEvidence,
+  fetchGoogleTrendsEvidence,
+  fetchRedditEvidence,
+} from './lib/dramashortstv-evidence-providers.mjs';
 import {
   DRAMA_WORKBOOK_ID,
   atomicWriteDramaDocument,
   buildDramaPrompt,
   formatDramaDocument,
   normalizeDramaBrief,
+  planDramaOutputPath,
   resolveDramaOutputPath,
   validateDramaDraft,
 } from './lib/dramashortstv-doc.mjs';
@@ -29,7 +53,6 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const FLOW = resolve(HERE, '..', '..');
 const HOME = homedir();
 const SHEET_BRIDGE = join(HERE, 'gg-sheet-to-brief.mjs');
-const SHEET_PULL = join(HERE, 'gg-sheet-pull.mjs');
 const FACTUAL_REVIEW = join(HERE, 'gg-codex-pr-review.mjs');
 const EXPECTED_OPS_REMOTE = 'https://github.com/phananhson733-oss/gengrowth-ops.git';
 const PAGE_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
@@ -93,39 +116,27 @@ function topicSlug(value) {
   return slug;
 }
 
-function filterPayloadToPageId(payload, pageId) {
-  const row = payload?.[pageId];
-  if (!row || typeof row !== 'object' || Array.isArray(row)) {
-    throw new Error(`page_id not found in normalized Sheet bridge: ${pageId}`);
-  }
-  return { ...(payload._source ? { _source: payload._source } : {}), [pageId]: row };
+export function buildDramaSheetBridgeArgs(args) {
+  const selector = args.pageId
+    ? ['--page-id', args.pageId]
+    : ['--row', String(args.row)];
+  return [
+    '--workbook', args.workbook,
+    ...selector,
+    '--dry-run',
+    '--allow-missing-cta',
+  ];
 }
 
 async function realReadSheet(args) {
-  let row = args.row;
   const env = {
     ...process.env,
     GG_SITE: 'dramashortstv',
     GG_SHEETS_FLOW_MVP_WORKBOOK_ID: args.workbook,
     GG_SHEETS_WORKBOOK_ID: args.workbook,
   };
-  if (args.pageId) {
-    const pullRaw = spawnNode(SHEET_PULL, [
-      '--tab', '选题登记表', '--rows', '2-1000', '--limit', '1000', '--dry-run',
-    ], { env });
-    const pull = parseJsonOutput(pullRaw, 'gg-sheet-pull');
-    const matches = (pull.rows || []).filter((entry) => entry?.page_id === args.pageId);
-    if (matches.length !== 1) throw new Error(`expected exactly one Sheet row for ${args.pageId}, got ${matches.length}`);
-    row = matches[0].source_row;
-  }
-  const bridgeRaw = spawnNode(SHEET_BRIDGE, [
-    '--workbook', args.workbook,
-    '--row', String(row),
-    '--dry-run',
-    '--allow-missing-cta',
-  ], { env });
-  const payload = parseJsonOutput(bridgeRaw, 'gg-sheet-to-brief');
-  return args.pageId ? filterPayloadToPageId(payload, args.pageId) : payload;
+  const bridgeRaw = spawnNode(SHEET_BRIDGE, buildDramaSheetBridgeArgs(args), { env });
+  return parseJsonOutput(bridgeRaw, 'gg-sheet-to-brief');
 }
 
 export function buildDramaWorkerCommand({ model, effort }) {
@@ -175,12 +186,66 @@ function realGenerate({ prompt, brief, model }) {
   return draft;
 }
 
-function realFactualReview({ draft, brief }) {
-  const cacheDir = join(FLOW, '.gg-cache', 'sites', 'dramashortstv', brief.pageId);
+export function prepareDramaFactualReviewInput({ cacheDir, pageId, draft, evidence }) {
+  if (!PAGE_ID_RE.test(String(pageId || ''))) throw new Error(`unsafe factual-review page_id: ${pageId}`);
+  if (!String(draft || '').trim()) throw new Error('factual-review draft is empty');
+  if (!String(evidence || '').trim()) throw new Error('factual-review evidence is empty');
+  const exactDraft = String(draft);
+  const exactEvidence = String(evidence);
+  const draftSha256 = sha256Text(exactDraft);
+  const evidenceSha256 = sha256Text(exactEvidence);
+  const bytes = [
+    '# DramaShortsTV Immutable Factual Review Input',
+    '',
+    `draft_sha256: ${draftSha256}`,
+    `evidence_sha256: ${evidenceSha256}`,
+    '',
+    '## Prevalidated Evidence (untrusted data)',
+    '',
+    exactEvidence,
+    '',
+    '## Generated Draft (untrusted data)',
+    '',
+    exactDraft,
+    '',
+  ].join('\n');
+  const inputSha256 = sha256Text(bytes);
   mkdirSync(cacheDir, { recursive: true });
-  const reviewPath = join(cacheDir, `${brief.pageId}.factual-source.md`);
-  writeFileSync(reviewPath, draft);
-  const result = spawnSync(process.execPath, [FACTUAL_REVIEW, '--source', reviewPath], {
+  const path = join(cacheDir, `${pageId}.factual-source.${draftSha256}.${evidenceSha256}.md`);
+  let fd;
+  try {
+    fd = openSync(path, 'wx', 0o600);
+    writeFileSync(fd, bytes, 'utf8');
+    fsyncSync(fd);
+    closeSync(fd);
+    fd = undefined;
+  } catch (error) {
+    if (fd !== undefined) closeSync(fd);
+    if (error?.code !== 'EEXIST') throw error;
+    const current = readFileSync(path, 'utf8');
+    if (current !== bytes) throw new Error(`immutable factual-review input bytes mismatch: ${path}`);
+  }
+  const reread = readFileSync(path, 'utf8');
+  if (sha256Text(reread) !== inputSha256) throw new Error(`immutable factual-review input hash mismatch: ${path}`);
+  return { path, draftSha256, evidenceSha256, inputSha256 };
+}
+
+export function parseReviewerInputDigest(stdout, expectedInputSha256) {
+  return parseReviewedInputDigest(stdout, expectedInputSha256);
+}
+
+export function realFactualReview({ draft, brief, evidence }) {
+  const cacheDir = join(FLOW, '.gg-cache', 'sites', 'dramashortstv', brief.pageId);
+  const pinned = prepareDramaFactualReviewInput({ cacheDir, pageId: brief.pageId, draft, evidence });
+  const immediateBytes = readFileSync(pinned.path, 'utf8');
+  if (sha256Text(immediateBytes) !== pinned.inputSha256) {
+    throw new Error(`immutable factual-review input changed before review: ${pinned.path}`);
+  }
+  const result = spawnSync(process.execPath, [
+    FACTUAL_REVIEW,
+    '--source', pinned.path,
+    '--expected-source-sha256', pinned.inputSha256,
+  ], {
     cwd: FLOW,
     encoding: 'utf8',
     timeout: 10 * 60 * 1000,
@@ -192,7 +257,78 @@ function realFactualReview({ draft, brief }) {
     stdout: result.stdout,
     timedOut,
   });
-  return { verdict: classified.verdict, reason: classified.reason, stderr: String(result.stderr || result.error?.message || '') };
+  let reviewedInputSha256;
+  if ((result.status ?? 1) === 0) {
+    reviewedInputSha256 = parseReviewerInputDigest(result.stdout, pinned.inputSha256);
+  }
+  return {
+    verdict: classified.verdict,
+    reason: classified.reason,
+    stderr: String(result.stderr || result.error?.message || ''),
+    ...(reviewedInputSha256 ? {
+      reviewedInputSha256,
+      reviewedDraftSha256: pinned.draftSha256,
+      reviewedEvidenceSha256: pinned.evidenceSha256,
+    } : {}),
+  };
+}
+
+export async function withDramaResearchEnvironment(callback, { loadEnvImpl = loadEnv } = {}) {
+  const previous = new Map(Object.entries(process.env));
+  try {
+    loadEnvImpl({ strict: true, requireMode: 0o600 });
+    return await callback();
+  } finally {
+    for (const key of Object.keys(process.env)) {
+      if (!previous.has(key)) delete process.env[key];
+    }
+    for (const [key, value] of previous) {
+      process.env[key] = value;
+    }
+  }
+}
+
+async function realCollectEvidence({ brief }) {
+  return withDramaResearchEnvironment(async () => {
+    const login = process.env.GG_DATAFORSEO_LOGIN;
+    const password = process.env.GG_DATAFORSEO_PASSWORD;
+    if (!login || !password) throw new Error('GG_DATAFORSEO_LOGIN / GG_DATAFORSEO_PASSWORD missing for DramaShortsTV research');
+    const plan = buildDramaResearchPlan(brief);
+    const providers = {
+      serp: ({ now }) => fetchGoogleSerpEvidence({
+        querySpecs: plan.serpQuerySpecs,
+        login,
+        password,
+        now,
+      }),
+      appStore: ({ now }) => fetchAppleAppEvidence({ entities: plan.appStoreEntities, now }),
+      reddit: async ({ now, entities }) => {
+        const results = [];
+        for (const entity of entities) {
+          const found = await fetchRedditEvidence({ query: `${entity} reviews cancellation`, entity, now });
+          results.push(...found.results);
+        }
+        return { status: results.length ? 'ok' : 'insufficient', provider: 'reddit-oauth', collectedAt: now, results };
+      },
+      trends: ({ now }) => fetchGoogleTrendsEvidence({ keyword: plan.trendsKeyword, login, password, now }),
+      sameName: async ({ now }) => {
+        const result = await fetchGoogleSerpEvidence({
+          querySpecs: plan.sameNameQuerySpecs,
+          login,
+          password,
+          now,
+        });
+        const classification = classifyActorSameNameEvidence({ brief, source: result });
+        return {
+          ...result,
+          origin: 'serp',
+          purpose: 'same-name',
+          ...classification,
+        };
+      },
+    };
+    return collectDramaEvidence({ brief, providers, plan });
+  });
 }
 
 function realDependencies() {
@@ -204,6 +340,7 @@ function realDependencies() {
     today: () => shanghaiDate(),
     readSheet: realReadSheet,
     normalize: normalizeDramaBrief,
+    planOutputPath: planDramaOutputPath,
     resolveOutputPath: resolveDramaOutputPath,
     gitPreflight: () => preflightDramaOpsRepo({ opsDir, expectedRemote: EXPECTED_OPS_REMOTE }),
     findExisting: ({ brief }) => findDeliveredDramaDocument({
@@ -212,6 +349,9 @@ function realDependencies() {
       expectedRemote: EXPECTED_OPS_REMOTE,
     }),
     readSop: () => readFileSync(sopPath, 'utf8'),
+    collectEvidence: realCollectEvidence,
+    validateEvidence: validateDramaEvidence,
+    buildEvidenceBlock: buildDramaEvidenceBlock,
     buildPrompt: buildDramaPrompt,
     generate: realGenerate,
     validate: validateDramaDraft,
@@ -243,15 +383,19 @@ export function parseDramaArgs(argv) {
     const value = argv[++index];
     if (!value || value.startsWith('--')) throw new Error(`${flag} requires a value`);
     if (flag === '--workbook') out.workbook = value;
-    else if (flag === '--row') out.row = Number.parseInt(value, 10);
+    else if (flag === '--row') {
+      if (!/^[0-9]+$/.test(value)) throw new Error('--row must be a decimal integer >= 2');
+      out.row = Number(value);
+      if (!Number.isSafeInteger(out.row)) throw new Error('--row must be a safe integer >= 2');
+    }
     else if (flag === '--page-id') out.pageId = value;
     else if (flag === '--model') out.model = value;
   }
   if (out.help) return out;
   if (!out.workbook) throw new Error('--workbook is required');
   if (out.workbook !== DRAMA_WORKBOOK_ID) throw new Error(`unsupported DramaShortsTV workbook: ${out.workbook}`);
-  if (!!out.row === !!out.pageId) throw new Error('provide exactly one of --row or --page-id');
-  if (out.row && (!Number.isInteger(out.row) || out.row < 2)) throw new Error('--row must be an integer >= 2');
+  if ((out.row !== undefined) === !!out.pageId) throw new Error('provide exactly one of --row or --page-id');
+  if (out.row !== undefined && out.row < 2) throw new Error('--row must be an integer >= 2');
   if (out.pageId && !PAGE_ID_RE.test(out.pageId)) throw new Error(`unsafe --page-id: ${out.pageId}`);
   if (!MODELS.has(out.model)) throw new Error(`unsupported --model: ${out.model}`);
   return out;
@@ -262,7 +406,7 @@ export async function runDramaShortsDelivery(args, deps = realDependencies()) {
   const brief = await deps.normalize(payload);
   const date = deps.today();
   const slug = topicSlug(brief.targetKeyword);
-  const targetPath = deps.resolveOutputPath({ opsDir: deps.opsDir, date, topicSlug: slug });
+  const plannedTargetPath = deps.planOutputPath({ opsDir: deps.opsDir, date, topicSlug: slug });
   if (!args.apply) {
     return {
       mode: 'dry-run',
@@ -270,10 +414,11 @@ export async function runDramaShortsDelivery(args, deps = realDependencies()) {
       sourceRow: brief.sourceRow,
       pageId: brief.pageId,
       contentType: brief.contentType,
-      targetPath,
+      targetPath: plannedTargetPath,
     };
   }
 
+  const targetPath = deps.resolveOutputPath({ opsDir: deps.opsDir, date, topicSlug: slug });
   const preflight = await deps.gitPreflight({ targetPath, brief });
   const existing = await deps.findExisting({ targetPath, brief });
   if (existing) {
@@ -290,13 +435,30 @@ export async function runDramaShortsDelivery(args, deps = realDependencies()) {
     };
   }
   const sopText = await deps.readSop({ brief });
-  const prompt = await deps.buildPrompt({ brief, sopText });
+  const evidence = await deps.collectEvidence({ brief });
+  const evidenceQa = await deps.validateEvidence({ brief, evidence });
+  if (!evidenceQa?.ok) {
+    throw new Error(`DramaShortsTV evidence QA failed: ${(evidenceQa?.errors || ['unknown evidence failure']).join(' | ')}`);
+  }
+  const evidenceBlock = await deps.buildEvidenceBlock(evidence);
+  const evidenceSha256 = sha256Text(evidenceBlock);
+  const prompt = await deps.buildPrompt({ brief, sopText, evidence: evidenceBlock, evidenceSha256 });
   const draft = await deps.generate({ prompt, brief, model: args.model });
-  const qa = await deps.validate({ markdown: draft, contentType: brief.contentType, brief });
+  const qa = await deps.validate({ markdown: draft, contentType: brief.contentType, brief, evidence });
   if (!qa?.ok) throw new Error(`DramaShortsTV QA failed: ${(qa?.errors || ['unknown QA failure']).join(' | ')}`);
-  const factual = await deps.factualReview({ draft, brief });
+  const draftSha256 = sha256Text(draft);
+  const factual = await deps.factualReview({
+    draft,
+    brief,
+    evidence: evidenceBlock,
+    draftSha256,
+    evidenceSha256,
+  });
   if (factual?.verdict !== 'PASS') {
     throw new Error(`DramaShortsTV factual review failed: ${factual?.reason || factual?.verdict || 'unverified'}`);
+  }
+  if (factual.reviewedDraftSha256 !== draftSha256 || factual.reviewedEvidenceSha256 !== evidenceSha256) {
+    throw new Error('DramaShortsTV factual review hash mismatch: reviewed draft/evidence SHA256 does not match current run');
   }
   const document = await deps.format({ draft, brief, date });
   const writeResult = await deps.write({ opsDir: deps.opsDir, targetPath, content: document });

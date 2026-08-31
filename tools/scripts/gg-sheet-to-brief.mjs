@@ -51,6 +51,7 @@ export const SCHEMA_VERSION = '1';
 export const PAGES_TAB = '选题登记表';
 export const CLUSTERS_TAB = '主题集群表';
 export const CTA_TAB = 'CTA Map';
+const PAGE_ID_SELECTOR_RE = /^[A-Za-z0-9_-]{1,64}$/;
 
 // 选题登记表 字段 → A1 列字母，从 canonical spec header 派生（不再硬编码，防列位漂移）。
 // 历史 bug：曾硬编码 page_role:'P'，但 P 是 page_id 的列、page_role 实际在 R —— join 失败时
@@ -593,7 +594,28 @@ export function parseArgs(argv) {
     if (next === undefined || next.startsWith('--')) out[key] = true;
     else { out[key] = next; i++; }
   }
+  if (out.page_id) {
+    if (out.row || out.rows) throw new Error('--page-id is mutually exclusive with --row/--rows selectors');
+    if (out.page_id === true || !PAGE_ID_SELECTOR_RE.test(String(out.page_id))) {
+      throw new Error(`unsafe --page-id selector: ${out.page_id}`);
+    }
+  }
   return out;
+}
+
+export function selectUniquePageIdRow(pagesRaw, pageId) {
+  if (!Array.isArray(pagesRaw) || pagesRaw.length === 0) {
+    throw new Error(`expected exactly one Sheet row for ${pageId}, got 0`);
+  }
+  if (!PAGE_ID_SELECTOR_RE.test(String(pageId || ''))) throw new Error(`unsafe --page-id selector: ${pageId}`);
+  const pageIdIndex = (pagesRaw[0] || []).findIndex((cell) => String(cell || '').trim() === 'page_id');
+  if (pageIdIndex < 0) throw new Error(`tab "${PAGES_TAB}" is missing page_id header`);
+  const matches = [];
+  for (let index = 1; index < pagesRaw.length; index++) {
+    if (String(pagesRaw[index]?.[pageIdIndex] ?? '') === pageId) matches.push(index + 1);
+  }
+  if (matches.length !== 1) throw new Error(`expected exactly one Sheet row for ${pageId}, got ${matches.length}`);
+  return matches[0];
 }
 
 // ---------- main ----------
@@ -605,6 +627,7 @@ async function main(argv) {
 usage:
   node tools/scripts/gg-sheet-to-brief.mjs --rows 3-7
   node tools/scripts/gg-sheet-to-brief.mjs --row 3 --out path/to/override.json
+  node tools/scripts/gg-sheet-to-brief.mjs --page-id page_dramabox_vs_reelshort --dry-run
   node tools/scripts/gg-sheet-to-brief.mjs --rows 3-7 --skip-non-v8
   node tools/scripts/gg-sheet-to-brief.mjs --rows 3-7 --dry-run
   node tools/scripts/gg-sheet-to-brief.mjs --rows 3-7 --suggest-fix-script .gg-cache/overrides/fix.json
@@ -685,7 +708,10 @@ flags:
 
   const header = pagesRaw[0];
   const dataRows = pagesRaw.slice(1);
-  const slice = parseSlice(args.row || args.rows, dataRows.length);
+  const selectedPageRow = args.page_id ? selectUniquePageIdRow(pagesRaw, args.page_id) : null;
+  const slice = selectedPageRow
+    ? { start: selectedPageRow, end: selectedPageRow }
+    : parseSlice(args.row || args.rows, dataRows.length);
   const startIdx = Math.max(0, slice.start - 2);
   const endIdx = Math.min(dataRows.length - 1, slice.end - 2);
   if (startIdx > endIdx) {

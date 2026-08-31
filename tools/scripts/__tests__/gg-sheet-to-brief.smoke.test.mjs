@@ -23,6 +23,7 @@ import {
   parseArgs,
   PAGES_FIX_COL,
 } from '../gg-sheet-to-brief.mjs';
+import * as sheetBridge from '../gg-sheet-to-brief.mjs';
 import { TABS } from '../lib/_workbook-spec.mjs';
 
 // composeOverride's CTA composition reads GG_SITE from the environment: a
@@ -741,6 +742,30 @@ test('parseArgs handles --skip-non-v8 boolean flag', () => {
   const args = parseArgs(['--rows', '3-7', '--skip-non-v8']);
   assert.equal(args.rows, '3-7');
   assert.equal(args.skip_non_v8, true);
+});
+
+test('--page-id is mutually exclusive with row selectors', () => {
+  assert.throws(() => parseArgs(['--page-id', 'page_target', '--row', '4']), /selector|page-id|exclusive/i);
+  assert.throws(() => parseArgs(['--page-id', 'page_target', '--rows', '4-5']), /selector|page-id|exclusive/i);
+  assert.equal(parseArgs(['--page-id', 'page_target']).page_id, 'page_target');
+});
+
+test('page-id uniquely selects one row from the complete unbounded pages snapshot', () => {
+  assert.equal(typeof sheetBridge.selectUniquePageIdRow, 'function');
+  const header = TABS.find((tab) => tab.name === PAGES_TAB).header;
+  const pageIdIndex = header.indexOf('page_id');
+  const blank = () => Array(header.length).fill('');
+  const pagesRaw = [header];
+  for (let index = 0; index < 1000; index++) pagesRaw.push(blank());
+  const target = blank();
+  target[pageIdIndex] = 'page_beyond_cap';
+  pagesRaw.push(target);
+  assert.equal(sheetBridge.selectUniquePageIdRow(pagesRaw, 'page_beyond_cap'), 1002);
+  assert.throws(() => sheetBridge.selectUniquePageIdRow(pagesRaw, 'page_missing'), /exactly one|got 0/i);
+  const duplicate = blank();
+  duplicate[pageIdIndex] = 'page_beyond_cap';
+  pagesRaw.push(duplicate);
+  assert.throws(() => sheetBridge.selectUniquePageIdRow(pagesRaw, 'page_beyond_cap'), /exactly one|got 2/i);
 });
 
 // ---------- PAGES_FIX_COL (选题登记表 字段 → 列字母，防漂移) ----------

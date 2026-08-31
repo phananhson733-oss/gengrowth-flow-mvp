@@ -379,6 +379,62 @@ test('--source PASS → exit 0, relays VERDICT: PASS (no gh used)', () => {
   assert.match(r.stdout, /VERDICT:\s*PASS/);
 });
 
+test('--source strict SHA validates bytes and requires the reviewer to echo the exact digest', () => {
+  const dir = caseDir();
+  const capture = join(dir, 'prompt.txt');
+  const source = srcFile(dir);
+  const expected = sha256(readFileSync(source));
+  const r = run(['--source', source, '--expected-source-sha256', expected], {
+    gh: ghFake(dir, 'fail'),
+    codex: codexFake(dir, { body: `Reviewed.\nREVIEWED_INPUT_SHA256: ${expected}\nVERDICT: PASS` }),
+    capture,
+  });
+  assert.equal(r.status, 0, `stderr: ${r.stderr}; stdout: ${r.stdout}`);
+  assert.match(r.stdout, new RegExp(`^REVIEWED_INPUT_SHA256: ${expected}$`, 'm'));
+  const prompt = readFileSync(capture, 'utf8');
+  assert.match(prompt, new RegExp(`REVIEWED_INPUT_SHA256: ${expected}`));
+  assert.match(prompt, /draft citation.*source-id.*URL.*Prevalidated Evidence/is);
+  assert.match(prompt, /source.*support.*adjacent claim/is);
+});
+
+test('--source strict SHA rejects byte mismatch before Codex runs', () => {
+  const dir = caseDir();
+  const capture = join(dir, 'prompt.txt');
+  const r = run(['--source', srcFile(dir), '--expected-source-sha256', '0'.repeat(64)], {
+    gh: ghFake(dir, 'fail'), codex: codexFake(dir, { verdict: 'PASS' }), capture,
+  });
+  assert.equal(r.status, 3, `stderr: ${r.stderr}; stdout: ${r.stdout}`);
+  assert.match(r.stderr, /source.*sha256.*mismatch|hash mismatch/i);
+  assert.equal(existsSync(capture), false);
+});
+
+test('--source strict SHA flag without one 64-hex value fails closed before Codex', () => {
+  const dir = caseDir();
+  const capture = join(dir, 'prompt.txt');
+  const r = run(['--source', srcFile(dir), '--expected-source-sha256'], {
+    gh: ghFake(dir, 'fail'), codex: codexFake(dir, { verdict: 'PASS' }), capture,
+  });
+  assert.equal(r.status, 3, `stderr: ${r.stderr}; stdout: ${r.stdout}`);
+  assert.match(r.stderr, /expected-source-sha256.*64|requires.*value/i);
+  assert.equal(existsSync(capture), false);
+});
+
+test('--source strict SHA rejects missing, wrong, or duplicate reviewer digest lines', () => {
+  for (const kind of ['missing', 'wrong', 'duplicate']) {
+    const dir = caseDir();
+    const source = srcFile(dir);
+    const expected = sha256(readFileSync(source));
+    const digestLines = kind === 'missing' ? ''
+      : kind === 'wrong' ? `REVIEWED_INPUT_SHA256: ${'f'.repeat(64)}\n`
+        : `REVIEWED_INPUT_SHA256: ${expected}\nREVIEWED_INPUT_SHA256: ${expected}\n`;
+    const r = run(['--source', source, '--expected-source-sha256', expected], {
+      gh: ghFake(dir, 'fail'), codex: codexFake(dir, { body: `${digestLines}VERDICT: PASS` }),
+    });
+    assert.equal(r.status, 3, `${kind}; stderr: ${r.stderr}; stdout: ${r.stdout}`);
+    assert.match(r.stderr, /reviewed_input_sha256|reviewer.*digest|digest.*mismatch/i, kind);
+  }
+});
+
 test('--source FAIL → exit 0, relays VERDICT: FAIL (publish gate parks)', () => {
   const dir = caseDir();
   const r = run(['--source', srcFile(dir)],

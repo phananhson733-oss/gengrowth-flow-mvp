@@ -1,7 +1,7 @@
 ---
 title: Surfer Seo Alternatives
 slug: surfer-seo-alternatives
-date: 2026-08-26
+date: 2026-08-29
 status: ready-to-review
 type: wiki-entry
 template: Definition
@@ -13,7 +13,7 @@ associated_keywords:
 
 generated_by: unknown
 prompt_version: v8
-generated_at: 2026-08-26T06:10:08.948Z
+generated_at: 2026-08-29T01:30:04.525Z
 content_sha256_short: 00e2297fbb0070de
 phase2_checks: all-pass
 ---

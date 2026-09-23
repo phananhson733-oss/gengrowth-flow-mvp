@@ -3,7 +3,7 @@
 #
 # Runs at 09:05 (just after index-monitor's 09:00 so sitemap/index-tracking are fresh):
 #   drainPending WAL → reconcile-published (ledger↔GitHub/live) → reconcile-status
-#   (选题登记表↔sitemap, both sites) → plan-box sweep → Feishu summary on drift.
+#   (选题登记表↔sitemap, both sites) → plan-box sweep → summary in log (Feishu summary disabled by plist).
 #
 # ledger = 唯一权威；把三处账本拉到"落后 ≤24h"。幂等、best-effort、只在有漂移时通知。
 

@@ -3,7 +3,7 @@
        (1) RunAtLoad false — 加载不立即跑；
        (2) tick 默认 dry-run — 只有 ~/.config/gg/_gg.env 里 GG_FLOW_DRIVER_APPLY=1 才接侧效(archive/fix→可能 merge)。
      这个 lane 是 SEO 自动化 overlay 的"大脑"：扫 needs_human park，分诊自修(fix→重过门,门=保证)/归档
-     stale(archive 记 sidecar 幂等)/transient 交现有 auto-retry lane。每轮只发一条飞书汇总(无终态静默)。
+     stale(archive 记 sidecar 幂等)/transient 交现有 auto-retry lane。汇总保留在日志，飞书汇总已关闭。
 
      灰度启用(人工，监督第一轮)：
        cp tools/scripts/com.gengrowth.flow-driver.plist ~/Library/LaunchAgents/
@@ -26,6 +26,11 @@
   </array>
   <key>StartInterval</key>
   <integer>7200</integer>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>GG_FLOW_DRIVER_SUMMARY_NOTIFY</key>
+    <string>0</string>
+  </dict>
   <key>RunAtLoad</key>
   <false/>
   <key>StandardOutPath</key>

@@ -207,6 +207,7 @@ function saveSummaryNotificationKey(summaryKey) {
 }
 
 async function notifySummaryOnce(summary, deps) {
+  if (process.env.GG_LEDGER_RECONCILE_SUMMARY_NOTIFY === '0') return;
   const summaryKey = JSON.stringify(summary.map(String));
   if (lastSummaryNotificationKey() === summaryKey) return;
   const send = deps.notify || notify;

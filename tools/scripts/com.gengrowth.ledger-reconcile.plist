@@ -12,6 +12,12 @@
     <string>/Users/awayer_mini/gengrowth-flow-mvp/tools/scripts/gg-ledger-reconcile-tick.sh</string>
   </array>
 
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>GG_LEDGER_RECONCILE_SUMMARY_NOTIFY</key>
+    <string>0</string>
+  </dict>
+
   <key>StartCalendarInterval</key>
   <dict>
     <key>Hour</key>

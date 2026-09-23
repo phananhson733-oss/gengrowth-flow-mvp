@@ -9,7 +9,8 @@
 # （_gg.env 在下方**早于** APPLY 判断 source——否则文档的启用路径失效、lane 永久 dry-run。评审 finding①。）
 #
 # Knobs: GG_FLOW_DRIVER_APPLY(=1 接侧效,默认 dry-run) · GG_FLOW_DRIVER_MAX_FIX(默1)/MAX_ARCHIVE(默5) ·
-#        GG_FLOW_DRIVER_TICK_TIMEOUT(默1800s) · GG_FLOW_DRIVER_LOCK · GG_FLOW_DRIVER_LOG_DIR · GG_ENV_FILE。
+#        GG_FLOW_DRIVER_TICK_TIMEOUT(默1800s) · GG_FLOW_DRIVER_LOCK · GG_FLOW_DRIVER_LOG_DIR · GG_ENV_FILE ·
+#        GG_FLOW_DRIVER_SUMMARY_NOTIFY(=0 只停飞书汇总，保留回填和日志)。
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GG_ENV_FILE="${GG_ENV_FILE:-$HOME/.config/gg/_gg.env}"
@@ -54,7 +55,7 @@ printf '%s\n' "$OUT" >> "$LOG"
 # relay 一条终态汇总。用 tail -1：真 FLOW_DRIVER_SUMMARY 永远最后一行(plan 列表里 reason 若含伪造
 # FLOW_DRIVER_SUMMARY 行也在其之前)——防 reason 注入顶替真汇总(评审 finding②)。无该行 → 静默不发。
 SUMMARY=$(printf '%s\n' "$OUT" | sed -n 's/^FLOW_DRIVER_SUMMARY: //p' | tail -1)
-if [ -n "$SUMMARY" ] && [ -x "$SCRIPT_DIR/gg-lark-notify.sh" ]; then
+if [ -n "$SUMMARY" ] && [ "${GG_FLOW_DRIVER_SUMMARY_NOTIFY:-1}" != "0" ] && [ -x "$SCRIPT_DIR/gg-lark-notify.sh" ]; then
   "$SCRIPT_DIR/gg-lark-notify.sh" "$SUMMARY" >> "$LOG" 2>&1 || true
 fi
 exit 0

@@ -371,6 +371,35 @@ test('non-strict summary only notifies on a new error state or after recovery', 
   }
 });
 
+test('daily summary can be muted without suppressing reconciliation', async () => {
+  const state = mkdtempSync(join(tmpdir(), 'ledger-reconcile-muted-summary-'));
+  const previousState = process.env.GG_FLOW_STATE_DIR;
+  const previousNotify = process.env.GG_LEDGER_RECONCILE_SUMMARY_NOTIFY;
+  process.env.GG_FLOW_STATE_DIR = state;
+  process.env.GG_LEDGER_RECONCILE_SUMMARY_NOTIFY = '0';
+  let applied = 0;
+  let sent = 0;
+  const deps = {
+    apply: async () => { applied++; return { errors: [], summary: ['⚠️reconcile-published: exit 1'] }; },
+    verify: async () => zero(),
+    notify: async () => { sent++; return { ok: true, silenced: false }; },
+    log: () => {},
+  };
+  try {
+    await runLedgerReconcile({ apply: true, strict: false, deps });
+    assert.equal(applied, 1);
+    assert.equal(sent, 0);
+    process.env.GG_LEDGER_RECONCILE_SUMMARY_NOTIFY = '1';
+    await runLedgerReconcile({ apply: true, strict: false, deps });
+    assert.equal(sent, 1, 're-enabled summary should report the still-active error');
+  } finally {
+    if (previousState === undefined) delete process.env.GG_FLOW_STATE_DIR;
+    else process.env.GG_FLOW_STATE_DIR = previousState;
+    if (previousNotify === undefined) delete process.env.GG_LEDGER_RECONCILE_SUMMARY_NOTIFY;
+    else process.env.GG_LEDGER_RECONCILE_SUMMARY_NOTIFY = previousNotify;
+  }
+});
+
 test('new terminal writeback emits one complete deduplicated notification', () => {
   const state = mkdtempSync(join(tmpdir(), 'writeback-notify-new-terminal-'));
   const previousState = process.env.GG_FLOW_STATE_DIR;

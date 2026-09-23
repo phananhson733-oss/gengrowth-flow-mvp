@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, writeFileSync, mkdirSync, readdirSync, readFileSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, mkdirSync, readdirSync, readFileSync, copyFileSync, chmodSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -55,4 +55,29 @@ test('tick 启用路径：_gg.env 里 GG_FLOW_DRIVER_APPLY=1 → 真 --apply(治
 test('tick 空 ledger dry-run：exit 0 不崩', () => {
   const { r } = runTick(mkOps({}));
   assert.equal(r.status, 0, r.stderr);
+});
+
+test('summary notification switch mutes Feishu relay while preserving the summary log', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'tick-summary-mute-'));
+  const logDir = join(dir, 'logs');
+  mkdirSync(logDir);
+  copyFileSync('tools/scripts/gg-flow-driver-tick.sh', join(dir, 'gg-flow-driver-tick.sh'));
+  writeFileSync(join(dir, 'gg-flow-driver.mjs'), "console.log('FLOW_DRIVER_SUMMARY: flow-driver [astrologywiki]；回填补齐(1轮变更)');\n");
+  const marker = join(dir, 'notified');
+  writeFileSync(join(dir, 'gg-lark-notify.sh'), `#!/bin/bash\nprintf '%s' "$1" > "${marker}"\n`);
+  chmodSync(join(dir, 'gg-lark-notify.sh'), 0o755);
+  const r = spawnSync('bash', [join(dir, 'gg-flow-driver-tick.sh')], {
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      GG_ENV_FILE: '/dev/null',
+      GG_FLOW_DRIVER_LOCK: join(dir, 'lock'),
+      GG_FLOW_DRIVER_LOG_DIR: logDir,
+      GG_FLOW_DRIVER_SUMMARY_NOTIFY: '0',
+    },
+  });
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(existsSync(marker), false);
+  const log = readdirSync(logDir).map((name) => readFileSync(join(logDir, name), 'utf8')).join('\n');
+  assert.match(log, /FLOW_DRIVER_SUMMARY: flow-driver \[astrologywiki\]；回填补齐/);
 });
